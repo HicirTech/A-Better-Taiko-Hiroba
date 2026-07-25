@@ -2,11 +2,7 @@
 
 [中文](README.zh-CN.md)
 
-A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko
-no Tatsujin. It browses and changes your own play data — scores, profile, My Don, settings — from
-a desktop app, an Android app, or the command line, with an interface that stays out of your way.
-It runs on your own device and talks to Hiroba directly; none of your data passes through a server
-of ours.
+A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses and changes your own play data — scores, profile, My Don, settings — from a desktop app, an Android app, or the command line, with an interface that stays out of your way. It runs on your own device and talks to Hiroba directly; none of your data passes through a server of ours.
 
 ## What it will do
 
@@ -34,21 +30,15 @@ of ours.
 
 ## Honest notes
 
-**Unofficial.** This project is not affiliated with, endorsed by, or connected to Bandai Namco
-Entertainment. Taiko no Tatsujin and Donder Hiroba are theirs.
+**Unofficial.** This project is not affiliated with, endorsed by, or connected to Bandai Namco Entertainment. Taiko no Tatsujin and Donder Hiroba are theirs.
 
-**Polite by default.** Hiroba is someone else's service. Fetching is deliberately slow and
-incremental, and it backs off when the site pushes back. Fetching more is always something you ask
-for, never something that happens on its own.
+**Polite by default.** Hiroba is someone else's service. Fetching is deliberately slow and incremental, and it backs off when the site pushes back. Fetching more is always something you ask for, never something that happens on its own.
 
-**Your account, your call.** The toolkit signs in as you and can change your real Taiko profile.
-Every change shows you what it will do first and how to put it back — but the account it touches
-is yours, and so is the responsibility.
+**Your account, your call.** The toolkit signs in as you and can change your real Taiko profile. Every change shows you what it will do first and how to put it back — but the account it touches is yours, and so is the responsibility.
 
 ## More
 
-- [Wiki](https://github.com/HicirTech/A-Better-Taiko-Hiroba/wiki) — how Donder Hiroba itself works:
-  every page, every write endpoint with its real request and response, and what is still unknown
+- [Wiki](https://github.com/HicirTech/A-Better-Taiko-Hiroba/wiki) — how Donder Hiroba itself works: every page, every write endpoint with its real request and response, and what is still unknown
 
 ## License
 
