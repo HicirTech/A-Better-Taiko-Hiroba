@@ -25,7 +25,7 @@ A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-dat
 - [ ] Run as an iOS app — later
 - [ ] Run as a web app — later
 - [ ] Drive the same core from a script, through a programmatic API
-- [ ] Speak English, Japanese and Chinese
+- [ ] Provide an i18n framework for translating the interface
 - [ ] Upload your scores to Kinoko
 
 ## Honest notes
