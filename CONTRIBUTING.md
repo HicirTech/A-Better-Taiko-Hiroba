@@ -22,10 +22,36 @@ The engineering standard for all code is `tim-style-code`. User-facing and ticke
 - **Atomic and precise to the line.** One concern per commit. Stage only the lines that belong to
   that concern; do not fold unrelated edits into a commit.
 - **Conventional Commits 1.0.0** (https://www.conventionalcommits.org/en/v1.0.0/). One-line
-  subject, imperative mood. Examples:
+  subject in the imperative mood, at most 72 characters. Examples:
   - `feat(core): parse score list across all levels`
   - `fix(cli): recover session after interrupted sync`
   - `test(core): cover not-played score detail fixture`
+- **The types, and what each one is for:**
+
+  | Type | Use it for |
+  |---|---|
+  | `feat` | behaviour someone can use that was not there before |
+  | `fix` | a defect corrected |
+  | `docs` | documentation only |
+  | `test` | tests only |
+  | `refactor` | same behaviour, different shape |
+  | `perf` | same behaviour, faster |
+  | `style` | formatting only, no code change |
+  | `build` | toolchain, dependencies, packaging |
+  | `ci` | the workflow that runs the checks |
+  | `chore` | repository housekeeping that is none of the above |
+  | `revert` | undo an earlier commit |
+
+- **Activate the hooks once per clone:**
+
+  ```bash
+  git config core.hooksPath .githooks
+  ```
+
+  The `commit-msg` hook checks the subject with commitlint before it reaches history, which is the
+  only moment a typo is cheap to fix. It is a convenience rather than a gate: `--no-verify` skips
+  it, and a clone that never runs the command above never sees it.
+
 - All code is written to `tim-style-code`: fit the existing conventions, keep changes narrow,
   make behavior explicit, verify in proportion to risk.
 
