@@ -56,10 +56,11 @@ const profileWithoutDan: Profile = {
   nickname: "Donder",
   title: "電脳 神化 3.0",
   region: "香港",
-  danLabel: null,
+  danLabelImageUrl: null,
   medal: { name: "どんメダル2026", count: 37 },
   myDonImageUrl: "https://donderhiroba.jp/imgsrc_mydon.php?taiko_no=000000000000",
   summary: {
+    countLevel: 5,
     crownCounts: { silver: 128, gold: 45, donderful: 3 },
     rankCounts: { 2: 4, 3: 11, 4: 25, 5: 40, 6: 52, 7: 30, 8: 14 },
   },

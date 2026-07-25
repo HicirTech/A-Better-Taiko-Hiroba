@@ -18,8 +18,12 @@ export interface Profile {
   readonly nickname: string;
   readonly title: string;
   readonly region: string | null;
-  /** The dan as the page names it. Null is a normal state: plenty of accounts hold no dan. */
-  readonly danLabel: string | null;
+  /**
+   * The dan label image the page shows (`imgsrc_danlabel.php?taiko_no=…`), or null when absent.
+   * The dan appears on this page only as a server-rendered image — there is no text to read —
+   * and having no dan is a normal state: plenty of accounts hold none.
+   */
+  readonly danLabelImageUrl: string | null;
   readonly medal: Medal | null;
   readonly myDonImageUrl: string | null;
   readonly summary: ProfileSummary;
@@ -33,6 +37,12 @@ export interface Medal {
 }
 
 export interface ProfileSummary {
+  /**
+   * Which panel the counts belong to, read from `total_score_image_<N>.png`. The page shows one
+   * panel; the counts are whatever Hiroba put on it, recorded with its own level number rather
+   * than presumed to cover the whole account.
+   */
+  readonly countLevel: number;
   readonly crownCounts: CrownCounts;
   /** `best_rank_score_2` .. `_8`, keyed by the rank image number. */
   readonly rankCounts: Readonly<Record<ScoreRank, number>>;
