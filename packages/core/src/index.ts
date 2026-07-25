@@ -11,5 +11,6 @@
  * owns its public list and doc comment. Cross-domain imports go through that `index.ts`, never
  * into a domain's internals. This file only re-exports domains, one line each.
  */
+export * from "./hiroba-dom-parser";
 export type * from "./hiroba-models";
 export * from "./operation-results";
