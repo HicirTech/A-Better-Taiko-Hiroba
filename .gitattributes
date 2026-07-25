@@ -1,0 +1,3 @@
+# The repository stores LF and checkouts get LF, on every platform. Without this, a Windows clone
+# writes CRLF into the working tree and every formatter run looks like a rewrite of the whole file.
+* text=auto eol=lf
