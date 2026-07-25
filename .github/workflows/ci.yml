@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch makes the older run pointless. Cancel it rather than pay for it,
+# except on main, where every commit's result is worth keeping.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Pinned, not "latest": a toolchain that changes without a commit makes a green run
+          # unrepeatable. Keep this in step with engines.bun in package.json.
+          bun-version: 1.2.19
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install
+        # Frozen: CI resolves exactly what the lockfile says, or it fails. A run that silently
+        # installs something else is not testing this commit.
+        run: bun install --frozen-lockfile
+
+      # Four separate steps rather than one combined command, so a red run names what broke
+      # without anyone opening the log.
+      - name: Format
+        run: bun run format:check
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun test
