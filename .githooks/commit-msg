@@ -1,0 +1,7 @@
+#!/bin/sh
+# Checks the commit message against commitlint.config.js.
+#
+# This is a local convenience, not a gate: `--no-verify` skips it, and a clone that never runs the
+# activation command in CONTRIBUTING never sees it. It exists to catch a typo before it is written
+# into history, which is the only moment fixing one is cheap.
+exec bunx --bun commitlint --edit "$1"
