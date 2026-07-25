@@ -1,0 +1,63 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+
+  // Biome only looks at files git would track, so build output and dependencies need no rules here.
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "files": { "ignoreUnknown": false },
+
+  "formatter": {
+    "enabled": true,
+    // Two spaces and LF, matching what the repository already stores; see .gitattributes.
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    // Wide enough for a Hiroba URL or a long selector to stay on one line, narrow enough to read
+    // two files side by side.
+    "lineWidth": 100
+  },
+
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended",
+
+      "correctness": {
+        // An import kept alive by nothing is either a leftover or a missing call. Both are worth a
+        // failure rather than a shrug.
+        "noUnusedImports": "error"
+      },
+
+      "style": {
+        // tsconfig sets verbatimModuleSyntax, so importing a type without `type` emits a real
+        // runtime import. The compiler allows it; it is still a mistake.
+        "useImportType": "error",
+        // `!` silently undoes noUncheckedIndexedAccess, which was enabled on purpose. Prove the
+        // value exists, or handle its absence.
+        "noNonNullAssertion": "error"
+      }
+    }
+  },
+
+  "assist": {
+    "enabled": true,
+    "actions": { "source": { "organizeImports": "on" } }
+  },
+
+  "overrides": [
+    {
+      // Library packages speak in values, not in output. Writing to the console there is also how a
+      // credential reaches a log line, which the API's design forbids — see epic #1. Applications
+      // are where output belongs.
+      "includes": ["packages/**"],
+      "linter": { "rules": { "suspicious": { "noConsole": "error" } } }
+    }
+  ]
+}
