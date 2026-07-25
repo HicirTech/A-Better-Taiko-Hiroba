@@ -7,5 +7,12 @@
  * it surface as a dozen missing fields, and requireMarker() turns an absent element into a
  * failure naming the page and the selector, so a broken parse says where to look.
  */
+export { parseCostumePage } from "./costume-page";
 export { parsePage, requireMarker } from "./parser";
-export type { LoggedOutFailure, MissingMarkerFailure, ParseFailure } from "./types";
+export { parseProfilePage } from "./profile-page";
+export type {
+  LoggedOutFailure,
+  MissingMarkerFailure,
+  ParseFailure,
+  UnreadableValueFailure,
+} from "./types";
