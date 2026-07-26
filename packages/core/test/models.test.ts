@@ -5,7 +5,7 @@
  */
 import { describe, expect, test } from "bun:test";
 
-import type { DanRecord, Profile, Score } from "../src/index";
+import { type DanRecord, isBetterDanClearState, type Profile, type Score } from "../src/index";
 
 function roundTrip<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -70,6 +70,7 @@ const profileWithoutDan: Profile = {
 const danRecord: DanRecord = {
   taikoNo: "000000000000",
   dan: 9,
+  clearState: "redClear",
   totalScore: 2691580,
   conditions: [
     { name: "魂ゲージ", requirement: "98%以上", achieved: "100%" },
@@ -96,6 +97,23 @@ describe("the model survives JSON whole", () => {
 
   test("a dan record with mixed-unit conditions kept as printed", () => {
     expect(roundTrip(danRecord)).toEqual(danRecord);
+  });
+});
+
+describe("dan clear states rank the way the game ranks them", () => {
+  test("the tier outranks the frame: a rainbow red pass is below a plain gold pass", () => {
+    expect(isBetterDanClearState("goldClear", "redDonderful")).toBe(true);
+    expect(isBetterDanClearState("redDonderful", "goldClear")).toBe(false);
+  });
+
+  test("within a tier, the frame decides", () => {
+    expect(isBetterDanClearState("redFullCombo", "redClear")).toBe(true);
+    expect(isBetterDanClearState("goldDonderful", "goldFullCombo")).toBe(true);
+  });
+
+  test("nothing beats itself, and everything beats none", () => {
+    expect(isBetterDanClearState("goldDonderful", "goldDonderful")).toBe(false);
+    expect(isBetterDanClearState("redClear", "none")).toBe(true);
   });
 });
 
