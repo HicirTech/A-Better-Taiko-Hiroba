@@ -159,7 +159,10 @@ describe("parseRecentPlaysPage", () => {
       throw new Error("expected a reading");
     }
     expect(result.value.map((play) => play.songTitle)).toEqual(["一番新しい", "その次"]);
-    expect(result.value.every((play) => !("playedAt" in play))).toBe(true);
+    // Order is the only recency there is: nothing dated may appear on a play.
+    for (const play of result.value) {
+      expect(Object.keys(play).sort()).toEqual(["crown", "level", "record", "songTitle"]);
+    }
   });
 
   test("fewer than five rows is a quiet account, not a failure", () => {
@@ -217,6 +220,44 @@ describe("parseRecentPlaysPage", () => {
 
   test("a row with an unranked chart reads no rank rather than guessing one", () => {
     expect(firstPlay(page([row({ rank: null })])).record.scoreRank).toBeNull();
+  });
+
+  test("a count cell holding something that is not a count fails carrying the text", () => {
+    const broken = page([row({})]).replace(">45回<", ">ー<");
+
+    const result = parseRecentPlaysPage(broken);
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "unreadableValue",
+      page: "history_recent_score.php",
+      marker: ".playDataScore (ng)",
+      raw: "ー",
+    });
+  });
+
+  test("an option row that is no longer five cells fails rather than reading them by position", () => {
+    const broken = page([row({})]).replace('<div class="playDataArea option">&nbsp;</div>', "");
+
+    const result = parseRecentPlaysPage(broken);
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "unreadableValue",
+      page: "history_recent_score.php",
+      marker: ".playDataArea.option",
+      raw: "4 cells",
+    });
+  });
+
+  test("a count written with a thousands separator is still a number", () => {
+    const withComma = page([row({ score: "1,234,567点" })]);
+
+    expect(firstPlay(withComma).record.highScore).toBe(1234567);
   });
 });
 

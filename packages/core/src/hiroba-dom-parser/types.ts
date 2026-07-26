@@ -17,9 +17,9 @@ export interface ScoreListReading {
  * One row of the recent-plays page: a chart's full record, named only by title.
  *
  * The page carries no song number anywhere — no anchor, no query string — so a row cannot become
- * a Score on its own. Everything else is there: read on both pages, one chart's row and its
- * detail page agree field for field, and the row additionally knows サポート譜面. Order is the
- * page's, newest first; there are no timestamps to carry.
+ * a Score on its own. Everything else is there: a row holds the same record the chart's detail
+ * page holds, and additionally knows サポート譜面. Order is the page's, newest first; there are no
+ * timestamps to carry.
  */
 export interface RecentPlay {
   readonly songTitle: string;

@@ -1,15 +1,16 @@
 import type { HTMLElement } from "node-html-parser";
 
-import type {
-  CrownState,
-  Level,
-  PlayOptions,
-  Score,
-  ScoreRank,
-  ScoreRecord,
+import {
+  type CrownState,
+  type Level,
+  type PlayOptions,
+  playedOrNone,
+  type Score,
+  type ScoreRank,
+  type ScoreRecord,
 } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
-import { findImageBySrc } from "./element-readers";
+import { findImageBySrc, readCountText } from "./element-readers";
 import { parsePage, requireMarker } from "./parser";
 import { decodePlayOptions } from "./play-options";
 import type { ParseFailure, RecentPlay } from "./types";
@@ -45,7 +46,7 @@ const COUNT_KEYS: Readonly<Record<string, keyof ScoreRecord>> = {
   dondaful_combo: "donderfulComboCount",
 };
 
-/** The five option cells, in the order the page lays them out. */
+/** サポート譜面 / ランダム / あべこべ / ドロン / 速度 — a row that has more or fewer has changed. */
 const OPTION_CELL_COUNT = 5;
 
 /**
@@ -134,7 +135,7 @@ function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
     return err({ kind: "unreadableValue", page: PAGE, marker: "img.crownIcon", raw: rankSrc });
   }
 
-  const highScore = readNumber(row.querySelector(".scoreScore")?.text ?? null);
+  const highScore = readCountText(row.querySelector(".scoreScore")?.text ?? null);
   if (highScore === null) {
     return err({
       kind: "unreadableValue",
@@ -154,12 +155,10 @@ function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
     return options;
   }
 
-  const stageCount = counts.value.stageCount;
   return ok({
     songTitle,
     level: level as Level,
-    // The same asymmetry the detail page has: no crown plus plays is what `played` looks like.
-    crown: crown === "none" && stageCount > 0 ? "played" : crown,
+    crown: crown === "none" ? playedOrNone(counts.value.stageCount) : crown,
     record: {
       scoreRank: scoreRank as ScoreRank | null,
       highScore,
@@ -182,7 +181,7 @@ function readCounts(row: HTMLElement): Result<Counts, ParseFailure> {
     }
     const cell = label.closest(".playDataArea");
     const raw = cell?.querySelector(".playDataScore")?.text ?? null;
-    const value = readNumber(raw);
+    const value = readCountText(raw);
     if (value === null) {
       return err({
         kind: "unreadableValue",
@@ -213,8 +212,8 @@ function readCounts(row: HTMLElement): Result<Counts, ParseFailure> {
 /**
  * Reads the five option cells. The first is サポート譜面 — the one place on the site that shows it
  * — and it always ships an image, blank when the option was off. The other four hold the shared
- * `status_10_<code>` vocabulary, so the support cell is deliberately kept out of the decoder: its
- * "on" image has never been seen, and it must not be mistaken for an unknown option code.
+ * `status_10_<code>` vocabulary. The support cell stays out of that decoder on purpose: its image
+ * when the option is on is not a code we know, and it must not be refused as if it were one.
  */
 function readOptions(row: HTMLElement): Result<PlayOptions, ParseFailure> {
   const cells = row.querySelectorAll(".playDataArea.option");
@@ -234,13 +233,4 @@ function readOptions(row: HTMLElement): Result<PlayOptions, ParseFailure> {
     .flatMap((cell) => cell.querySelectorAll("img").map((img) => img.getAttribute("src") ?? ""));
 
   return decodePlayOptions(sources, supportChart, PAGE, ".playDataArea.option img");
-}
-
-/** Reads `851850点` or `618回`, with or without thousands separators. */
-function readNumber(raw: string | null): number | null {
-  const digits = raw
-    ?.trim()
-    .match(/^([\d,]+)[点回]?$/)?.[1]
-    ?.replaceAll(",", "");
-  return digits === undefined || digits === "" ? null : Number(digits);
 }

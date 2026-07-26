@@ -1,6 +1,6 @@
-import type { Level, Score, ScoreRank } from "../hiroba-models";
+import { type Level, playedOrNone, type Score, type ScoreRank } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
-import { findImageBySrc } from "./element-readers";
+import { findImageBySrc, readCountText } from "./element-readers";
 import { parsePage, requireMarker } from "./parser";
 import { decodePlayOptions } from "./play-options";
 import type { ParseFailure } from "./types";
@@ -94,11 +94,11 @@ export function parseScoreDetailPage(
       return block;
     }
     const raw = block.value.querySelector("span")?.text.trim() ?? "";
-    const digits = raw.match(/^([\d,]+)[点回]?$/)?.[1]?.replaceAll(",", "");
-    if (digits === undefined) {
+    const value = readCountText(raw);
+    if (value === null) {
       return err({ kind: "unreadableValue", page: PAGE, marker, raw });
     }
-    counts[field] = Number(digits);
+    counts[field] = value;
   }
 
   // Blanks pad the unused slots, and this page never shows サポート譜面 — only the recent-plays
@@ -118,12 +118,9 @@ export function parseScoreDetailPage(
     taikoNo,
     songNo,
     level,
-    // The one place `played` can be told apart from `none` on this page.
     crown:
       crownStatus === 0
-        ? stageCount > 0
-          ? "played"
-          : "none"
+        ? playedOrNone(stageCount)
         : crownStatus === 1
           ? "silver"
           : crownStatus === 2
