@@ -5,7 +5,7 @@
  */
 import { describe, expect, test } from "bun:test";
 
-import { type Genre, mergeGenreIntoCatalogue, type Song } from "../src/index";
+import { type Genre, mergeGenreIntoCatalogue, type Song, updateCatalogue } from "../src/index";
 
 function song(songNo: string, title: string, ...genres: Genre[]): Song {
   return { songNo, title, genres };
@@ -95,5 +95,60 @@ describe("mergeGenreIntoCatalogue", () => {
 
     expect(merged).toHaveLength(2);
     expect(merged[1]).toBe(known[0] as Song);
+  });
+});
+
+describe("updateCatalogue", () => {
+  test("a full read folded into an empty catalogue is the whole song table", () => {
+    const catalogue = updateCatalogue(
+      [],
+      [
+        { genre: 1, songs: [song("1001", "一の歌", 1), song("1005", "共有の歌", 1)] },
+        { genre: 4, songs: [song("1002", "四の歌", 4), song("1005", "共有の歌", 4)] },
+      ],
+    );
+
+    expect(catalogue).toEqual([
+      song("1001", "一の歌", 1),
+      song("1002", "四の歌", 4),
+      song("1005", "共有の歌", 1, 4),
+    ]);
+  });
+
+  test("the same readings build the same catalogue in any order", () => {
+    const readings = [
+      { genre: 1 as Genre, songs: [song("1001", "一の歌", 1), song("1005", "共有の歌", 1)] },
+      { genre: 4 as Genre, songs: [song("1002", "四の歌", 4), song("1005", "共有の歌", 4)] },
+    ];
+
+    const forward = updateCatalogue([], readings);
+    const backward = updateCatalogue([], [...readings].reverse());
+
+    expect(forward).toEqual(backward);
+  });
+
+  test("a partial update adds the new song and touches nothing outside its genres", () => {
+    const known = updateCatalogue(
+      [],
+      [
+        { genre: 1, songs: [song("1001", "一の歌", 1)] },
+        { genre: 4, songs: [song("1002", "四の歌", 4)] },
+      ],
+    );
+
+    const updated = updateCatalogue(known, [
+      { genre: 1, songs: [song("1001", "一の歌", 1), song("1500", "新曲", 1)] },
+    ]);
+
+    expect(updated).toHaveLength(3);
+    expect(updated[0]).toBe(known[0] as Song);
+    expect(updated[1]).toBe(known[1] as Song);
+    expect(updated[2]).toEqual(song("1500", "新曲", 1));
+  });
+
+  test("no readings leave the catalogue exactly as it was", () => {
+    const known = [song("1001", "一の歌", 1)];
+
+    expect(updateCatalogue(known, [])).toBe(known);
   });
 });

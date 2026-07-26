@@ -70,6 +70,34 @@ export function mergeGenreIntoCatalogue(
   return [...merged.values()].sort((a, b) => Number(a.songNo) - Number(b.songNo));
 }
 
+/** One genre's freshly parsed songs, ready to fold into the catalogue. */
+export interface GenreReading {
+  readonly genre: Genre;
+  readonly songs: readonly Song[];
+}
+
+/**
+ * Updates the catalogue with any number of freshly read genres. This is the whole-catalogue
+ * operation: a full eight-genre read folded into an empty catalogue **is** the complete song
+ * table, every `songNo` the site knows, and the same call with fewer readings is the incremental
+ * path — new songs arrive as additions, known songs stay the same objects, and genres the
+ * readings do not carry are never touched.
+ *
+ * Order independence is inherited from the per-genre fold, and holds because the site renders one
+ * title for one song number everywhere; if two readings in a batch ever disagreed, the later one
+ * would win, the same way a fresher read outranks a stale catalogue.
+ */
+export function updateCatalogue(
+  known: readonly Song[],
+  readings: readonly GenreReading[],
+): readonly Song[] {
+  let catalogue = known;
+  for (const reading of readings) {
+    catalogue = mergeGenreIntoCatalogue(catalogue, reading.genre, reading.songs);
+  }
+  return catalogue;
+}
+
 function sortedGenres(genres: readonly Genre[]): readonly Genre[] {
   return [...new Set(genres)].sort((a, b) => a - b);
 }
