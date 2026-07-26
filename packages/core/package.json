@@ -8,6 +8,7 @@
     ".": "./src/index.ts"
   },
   "dependencies": {
+    "fast-png": "8.0.0",
     "node-html-parser": "9.0.0"
   }
 }
