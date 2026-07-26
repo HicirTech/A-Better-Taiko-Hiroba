@@ -1,5 +1,17 @@
+import type { Score, Song } from "../hiroba-models";
+
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */
 export type ParseFailure = LoggedOutFailure | MissingMarkerFailure | UnreadableValueFailure;
+
+/**
+ * One genre's score list, read whole: the songs it names and one list-fidelity Score per chart.
+ * Nothing is filtered out — `none` and `played` rows are information, and any narrowing is the
+ * caller's choice, never the parser's.
+ */
+export interface ScoreListReading {
+  readonly songs: readonly Song[];
+  readonly scores: readonly Score[];
+}
 
 export interface LoggedOutFailure {
   readonly kind: "loggedOut";
