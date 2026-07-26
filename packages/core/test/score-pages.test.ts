@@ -2,6 +2,9 @@
  * Excerpts, not captured pages — see README.md for why. The list excerpt mirrors the real block
  * shape (`li.contentBox` → `.songName` + one detail anchor per chart), the detail excerpt the real
  * named count blocks, both taken from the captured pages' structure with no real account data.
+ *
+ * Image names are the **site's**, not the model's, spelling included: `crown_button_donderfull`
+ * with two l's is the file the site actually serves.
  */
 import { describe, expect, test } from "bun:test";
 
@@ -35,11 +38,20 @@ const LIST_EXCERPT = `<html><body><ul>
     [3, "silver"],
     [4, "gold"],
   ])}
-  ${songBlock("1002", "二番目の歌", [[4, "donderful"]])}
+  ${songBlock("1002", "二番目の歌", [[4, "donderfull"]])}
   ${songBlock("1002", "二番目の歌", [[5, "silver"]], true)}
 </ul></body></html>`;
 
 describe("parseScoreListPage", () => {
+  test("the site's donderfull, with two l's, is the model's donderful", () => {
+    const result = parseScoreListPage(LIST_EXCERPT, "000000000000", 1, T);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a reading, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.scores.filter((score) => score.crown === "donderful")).toHaveLength(1);
+  });
+
   test("one Score per chart, every crown state kept — the old silver-and-above filter is gone", () => {
     const result = parseScoreListPage(LIST_EXCERPT, "000000000000", 1, T);
 

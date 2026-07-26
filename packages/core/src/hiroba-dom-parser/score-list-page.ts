@@ -5,7 +5,19 @@ import type { ParseFailure, ScoreListReading } from "./types";
 
 const PAGE = "score_list.php";
 
-const CROWN_STATES: readonly CrownState[] = ["none", "played", "silver", "gold", "donderful"];
+/**
+ * The site's crown names, which are not the model's. This page spells the top state
+ * **`donderfull`**, with two l's — `crown_button_donderful_8_640.png` is a 404 on the site — while
+ * the detail page classes the same idea `dondaful_combo_cnt` and the profile `donderful_crown_count`.
+ * Every page gets its own spelling; the model keeps one and the parsers translate.
+ */
+const CROWN_NAMES: Readonly<Record<string, CrownState>> = {
+  none: "none",
+  played: "played",
+  silver: "silver",
+  gold: "gold",
+  donderfull: "donderful",
+};
 
 /**
  * Parses one genre's `score_list.php` page: every song at every level, with no pagination.
@@ -57,7 +69,7 @@ export function parseScoreListPage(
 
     const crownSrc = anchor.querySelector("img")?.getAttribute("src") ?? "";
     const crownRaw = crownSrc.match(/crown_button_([a-z]+)_/)?.[1];
-    const crown = CROWN_STATES.find((state) => state === crownRaw);
+    const crown = crownRaw === undefined ? undefined : CROWN_NAMES[crownRaw];
     if (crown === undefined) {
       return err({
         kind: "unreadableValue",
