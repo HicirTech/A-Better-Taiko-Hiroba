@@ -19,7 +19,8 @@
  * something consumes them — an addition then, not a rework now.
  */
 export type { Costume } from "./costume";
-export type { DanCondition, DanRecord, DanSongResult } from "./dan";
+export { DAN_CLEAR_STATE_ORDER, isBetterDanClearState } from "./dan";
+export type { DanClearState, DanCondition, DanRecord, DanSongResult } from "./dan";
 export type { CrownCounts, Medal, Player, Profile, ProfileSummary } from "./player";
 export type { PlayOptions, RandomMode, Score, ScoreFidelity, ScoreRecord } from "./score";
 export type { Chart, Song } from "./song";
