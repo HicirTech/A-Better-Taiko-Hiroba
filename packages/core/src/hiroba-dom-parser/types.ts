@@ -1,5 +1,5 @@
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */
-export type ParseFailure = LoggedOutFailure | MissingMarkerFailure;
+export type ParseFailure = LoggedOutFailure | MissingMarkerFailure | UnreadableValueFailure;
 
 export interface LoggedOutFailure {
   readonly kind: "loggedOut";
@@ -12,4 +12,13 @@ export interface MissingMarkerFailure {
   readonly page: string;
   /** The CSS selector that found nothing. */
   readonly marker: string;
+}
+
+/** The marker was found, but what it held could not be read as the expected shape. */
+export interface UnreadableValueFailure {
+  readonly kind: "unreadableValue";
+  readonly page: string;
+  readonly marker: string;
+  /** What the page actually held there, for the log that investigates this. */
+  readonly raw: string;
 }
