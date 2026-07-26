@@ -10,6 +10,11 @@ const PAGE = "score_detail.php";
 /**
  * The count blocks, exactly as the page classes them — including the site's own spelling of
  * `dondaful_combo_cnt`. Each holds a `<span>` like `933050点` or `3回`.
+ *
+ * None of these markers is unique in the document: the 区間毎詳細成績 blocks further down repeat
+ * `.high_score`, `.good_cnt`, `.ng_cnt`, `.ok_cnt`, `.pound_cnt` and the `crown_large_*` images,
+ * one set per section. The main record always precedes them, so every read here takes the first
+ * match — collecting all matches, or taking the last, would mix the sections into the record.
  */
 const COUNT_MARKERS = {
   highScore: ".high_score",
