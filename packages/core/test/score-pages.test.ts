@@ -126,6 +126,7 @@ function detailExcerpt(options: {
   rank: number | null;
   stage: number;
   optionCodes: readonly string[];
+  withSections?: boolean;
 }): string {
   const rank =
     options.rank === null
@@ -135,6 +136,23 @@ function detailExcerpt(options: {
     .map((code) => `<img src="image/sp/640/status_10_${code}_640.png" />`)
     .concat(['<img src="image/sp/640/blank_640.gif" />'])
     .join("");
+  // 区間毎詳細成績, as the real page shapes it: each section repeats the main record's
+  // markers — its own crown_large image and the same count classes with other numbers.
+  const sections = !options.withSections
+    ? ""
+    : [1, 2, 3]
+        .map(
+          (n) => `<div>
+            <div class="section_lavel"><span>区間${n}</span></div>
+            <div class="section_crown"><img class="crown" src="image/sp/640/crown_large_3_640.png"></div>
+            <div class="high_score"><span>272,440点</span></div>
+            <div class="good_cnt"><span>93回</span></div>
+            <div class="ng_cnt"><span>0回</span></div>
+            <div class="ok_cnt"><span>10回</span></div>
+            <div class="pound_cnt"><span>0回</span></div>
+          </div>`,
+        )
+        .join("");
   return `<html><body>
     <h2 class="songNameFontjpop">テスト曲</h2>
     <img src="image/sp/640/crown_large_${options.crown}_640.png" />${rank}
@@ -151,6 +169,7 @@ function detailExcerpt(options: {
       <div class="full_combo_cnt"><img src="x.png" /><span>1回</span></div>
       <div class="dondaful_combo_cnt"><img src="x.png" /><span>0回</span></div>
     </div>
+    ${sections}
   </body></html>`;
 }
 
@@ -170,6 +189,27 @@ describe("parseScoreDetailPage", () => {
     expect(result.value.crown).toBe("gold");
     expect(result.value.record?.scoreRank).toBe(6);
     expect(result.value.record?.options.speed).toBe(2);
+  });
+
+  test("the per-section blocks repeat the record's markers and must not bleed into it", () => {
+    const result = parseScoreDetailPage(
+      detailExcerpt({ crown: 2, rank: 6, stage: 3, optionCodes: [], withSections: true }),
+      "000000000000",
+      "1178",
+      4,
+      T,
+    );
+
+    if (!isOk(result) || result.value.record === null) {
+      throw new Error("expected a record");
+    }
+    // The sections carry crown_large_3 and other numbers; the record is the main block's.
+    expect(result.value.crown).toBe("gold");
+    expect(result.value.record.highScore).toBe(933050);
+    expect(result.value.record.good).toBe(308);
+    expect(result.value.record.ok).toBe(49);
+    expect(result.value.record.bad).toBe(0);
+    expect(result.value.record.drumroll).toBe(87);
   });
 
   test("可 is read apart from 不可 — distinct blocks, distinct numbers", () => {
