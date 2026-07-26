@@ -24,4 +24,5 @@ export type { DanClearState, DanCondition, DanRecord, DanSongResult } from "./da
 export type { CrownCounts, Medal, Player, Profile, ProfileSummary } from "./player";
 export type { PlayOptions, RandomMode, Score, ScoreFidelity, ScoreRecord } from "./score";
 export type { Chart, Song } from "./song";
+export { playedOrNone } from "./vocabulary";
 export type { CrownState, Genre, Level, ScoreRank } from "./vocabulary";

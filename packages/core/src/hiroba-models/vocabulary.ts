@@ -22,3 +22,13 @@ export type ScoreRank = 2 | 3 | 4 | 5 | 6 | 7 | 8;
  * express together.
  */
 export type CrownState = "none" | "played" | "silver" | "gold" | "donderful";
+
+/**
+ * What a no-crown image means, given how often the chart was played. The score list has a marker
+ * of its own for played-but-not-cleared; the detail and recent-plays pages show the same crownless
+ * image either way and leave the play count to say which it is. The rule lives here so those two
+ * pages cannot drift apart on it.
+ */
+export function playedOrNone(stageCount: number): CrownState {
+  return stageCount > 0 ? "played" : "none";
+}

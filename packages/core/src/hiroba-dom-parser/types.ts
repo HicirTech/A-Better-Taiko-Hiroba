@@ -1,4 +1,4 @@
-import type { Score, Song } from "../hiroba-models";
+import type { CrownState, Level, Score, ScoreRecord, Song } from "../hiroba-models";
 
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */
 export type ParseFailure = LoggedOutFailure | MissingMarkerFailure | UnreadableValueFailure;
@@ -11,6 +11,21 @@ export type ParseFailure = LoggedOutFailure | MissingMarkerFailure | UnreadableV
 export interface ScoreListReading {
   readonly songs: readonly Song[];
   readonly scores: readonly Score[];
+}
+
+/**
+ * One row of the recent-plays page: a chart's full record, named only by title.
+ *
+ * The page carries no song number anywhere — no anchor, no query string — so a row cannot become
+ * a Score on its own. Everything else is there: a row holds the same record the chart's detail
+ * page holds, and additionally knows サポート譜面. Order is the page's, newest first; there are no
+ * timestamps to carry.
+ */
+export interface RecentPlay {
+  readonly songTitle: string;
+  readonly level: Level;
+  readonly crown: CrownState;
+  readonly record: ScoreRecord;
 }
 
 export interface LoggedOutFailure {

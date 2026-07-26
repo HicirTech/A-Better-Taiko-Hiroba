@@ -4,17 +4,31 @@ import { HTMLElement } from "node-html-parser";
 import { err, ok, type Result } from "../operation-results";
 import type { ParseFailure } from "./types";
 
-/** Reads an element's text as a whole non-negative integer, or fails naming what it held. */
+/**
+ * Reads a count the way Hiroba writes one: `933,050点`, `3回`, or a bare number. The separator and
+ * the unit are the page's decoration; the number is the value. Null when the text is not a count
+ * at all, so the caller decides whether that is a failure or a legitimate absence.
+ */
+export function readCountText(raw: string | null | undefined): number | null {
+  const digits = raw
+    ?.trim()
+    .match(/^([\d,]+)[点回]?$/)?.[1]
+    ?.replaceAll(",", "");
+  return digits === undefined || digits === "" ? null : Number(digits);
+}
+
+/** Reads an element's text as a count, or fails naming what it held instead. */
 export function readCount(
   element: HTMLElement,
   marker: string,
   page: string,
 ): Result<number, ParseFailure> {
   const raw = element.text.trim();
-  if (!/^\d+$/.test(raw)) {
+  const count = readCountText(raw);
+  if (count === null) {
     return err({ kind: "unreadableValue", page, marker, raw });
   }
-  return ok(Number(raw));
+  return ok(count);
 }
 
 /** The element children of a node, in document order. */
