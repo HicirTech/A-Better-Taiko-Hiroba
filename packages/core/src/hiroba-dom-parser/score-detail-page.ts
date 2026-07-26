@@ -1,7 +1,8 @@
-import type { Level, PlayOptions, RandomMode, Score, ScoreRank } from "../hiroba-models";
+import type { Level, Score, ScoreRank } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { findImageBySrc } from "./element-readers";
 import { parsePage, requireMarker } from "./parser";
+import { decodePlayOptions } from "./play-options";
 import type { ParseFailure } from "./types";
 
 const PAGE = "score_detail.php";
@@ -23,24 +24,7 @@ const COUNT_MARKERS = {
   donderfulComboCount: ".dondaful_combo_cnt",
 } as const;
 
-/** The speed codes of the `status_10_<code>` option vocabulary. */
-const SPEED_CODES: Readonly<Record<string, number>> = {
-  a10: 1,
-  a11: 1.1,
-  a12: 1.2,
-  a13: 1.3,
-  a14: 1.4,
-  a15: 1.5,
-  a16: 1.6,
-  a17: 1.7,
-  a18: 1.8,
-  a19: 1.9,
-  a3: 2,
-  a25: 2.5,
-  a4: 3,
-  a35: 3.5,
-  a5: 4,
-};
+const OPTION_MARKER = ".optionImage img";
 
 /**
  * Parses one chart's `score_detail.php` into a detail-fidelity Score.
@@ -117,7 +101,14 @@ export function parseScoreDetailPage(
     counts[field] = Number(digits);
   }
 
-  const options = readOptions(root);
+  // Blanks pad the unused slots, and this page never shows サポート譜面 — only the recent-plays
+  // page can know it.
+  const options = decodePlayOptions(
+    root.querySelectorAll(OPTION_MARKER).map((img) => img.getAttribute("src") ?? ""),
+    null,
+    PAGE,
+    OPTION_MARKER,
+  );
   if (isErr(options)) {
     return options;
   }
@@ -155,36 +146,4 @@ export function parseScoreDetailPage(
     },
     fetchedAt,
   });
-}
-
-/** Decodes the `status_10_<code>` images inside `.optionImage`; blanks carry no code. */
-function readOptions(root: Parameters<typeof requireMarker>[0]): Result<PlayOptions, ParseFailure> {
-  let speed = 1;
-  let doron = false;
-  let abekobe = false;
-  let random: RandomMode = "none";
-  for (const img of root.querySelectorAll(".optionImage img")) {
-    const src = img.getAttribute("src") ?? "";
-    const code = src.match(/status_10_([a-z0-9]+)_/)?.[1];
-    if (code === undefined) {
-      continue; // blank_640.gif fills the unused slots
-    }
-    const asSpeed = SPEED_CODES[code];
-    if (asSpeed !== undefined) {
-      speed = asSpeed;
-    } else if (code === "a1") {
-      doron = true;
-    } else if (code === "a2") {
-      abekobe = true;
-    } else if (code === "a6") {
-      random = "kimagure";
-    } else if (code === "a7") {
-      random = "detarame";
-    } else {
-      // A code outside the known vocabulary is new knowledge, not something to shrug past.
-      return err({ kind: "unreadableValue", page: PAGE, marker: ".optionImage img", raw: src });
-    }
-  }
-  // The detail page never shows サポート譜面; only the recent-plays page can know it.
-  return ok({ speed, doron, abekobe, random, supportChart: null });
 }
