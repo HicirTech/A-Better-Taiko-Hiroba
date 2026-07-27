@@ -49,8 +49,9 @@ export interface Medal {
 export interface FavoriteSong {
   /**
    * Read from the block's hidden `song_no` input — the only place the block exposes a number.
-   * The input belongs to the picker form, so it may sit empty while a title is shown; the title
-   * is the field the page always renders.
+   * My page fills it whenever a favourite is set, so a title normally arrives with its number.
+   * Nullable because the title is the field the page is built around and a reader that has one
+   * without the other should still hand back what it read.
    */
   readonly songNo: string | null;
   readonly title: string;

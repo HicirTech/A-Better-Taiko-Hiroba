@@ -19,8 +19,9 @@ const DEFAULT_FAVORITE = { songNo: "1346", title: "サンプル曲アルファ" 
 const DEFAULT_FOLDER = ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲デルタ"];
 
 /**
- * The 大好きな曲 block. Only its unset form is confirmed against the real page; the set form here
- * assumes the same markup with a title in place of 未設定 and the hidden input carrying its number.
+ * The 大好きな曲 block, in both the forms the real page renders. A set song is written like any
+ * other title, genre and all; 未設定 is the only text that arrives with a suffix-less
+ * `songNameFont`, and it comes with an empty `song_no`.
  */
 function favoriteSongBlock(song: { songNo: string; title: string } | null): string {
   return `
@@ -32,7 +33,7 @@ function favoriteSongBlock(song: { songNo: string; title: string } | null): stri
         <ul id="songList" style="clear:both;">
           <li class="contentBox songLisrArea mypageSongListArea">
             <div class="songNameArea clearfix">
-              <div class="name"><span class="songName songNameFont">${song?.title ?? "未設定"}</span></div>
+              <div class="name"><span class="songName ${song === null ? "songNameFont" : "songNameFontnamco"}">${song?.title ?? "未設定"}</span></div>
             </div>
           </li>
         </ul>
@@ -200,7 +201,10 @@ describe("parseProfilePage", () => {
     expect(result.value.favoriteFolderTitles).toEqual(titles);
   });
 
-  test("a 大好きな曲 the page names without a number keeps the title", () => {
+  // my-page always fills the input for a set song, so this shape is not something the page is
+  // known to produce. It is pinned as tolerance: a title is worth keeping even where the number
+  // that goes with it is not there to read.
+  test("a title arriving without its number is kept rather than dropped", () => {
     const excerpt = profileExcerpt({ withDan: true }).replace(
       `<input type="hidden" name="song_no" id="song_no" value="1346">`,
       `<input type="hidden" name="song_no" id="song_no" value="">`,
