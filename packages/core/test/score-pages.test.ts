@@ -4,7 +4,8 @@
  * named count blocks, both taken from the captured pages' structure with no real account data.
  *
  * Image names are the **site's**, not the model's, spelling included: `crown_button_donderfull`
- * with two l's is the file the site actually serves.
+ * with two l's is the file the site actually serves. The list excerpt names every state-and-suffix
+ * combination a real genre page has been seen to serve.
  */
 import { describe, expect, test } from "bun:test";
 
@@ -34,39 +35,66 @@ function songBlock(
 const LIST_EXCERPT = `<html><body><ul>
   ${songBlock("1001", "最初の歌", [
     [1, "none"],
-    [2, "played"],
-    [3, "silver"],
-    [4, "gold"],
+    [2, "played_0"],
+    [3, "played_2"],
+    [4, "played_3"],
   ])}
-  ${songBlock("1002", "二番目の歌", [[4, "donderfull"]])}
-  ${songBlock("1002", "二番目の歌", [[5, "silver"]], true)}
+  ${songBlock("1002", "二番目の歌", [
+    [1, "silver_2"],
+    [2, "silver_3"],
+    [3, "silver_4"],
+    [4, "silver_5"],
+  ])}
+  ${songBlock("1002", "二番目の歌", [[5, "silver_6"]], true)}
+  ${songBlock("1003", "三番目の歌", [
+    [1, "silver_7"],
+    [2, "silver_8"],
+    [3, "gold_0"],
+    [4, "gold_5"],
+  ])}
+  ${songBlock("1004", "四番目の歌", [
+    [1, "gold_6"],
+    [2, "gold_7"],
+    [3, "gold_8"],
+    [4, "donderfull_8"],
+  ])}
 </ul></body></html>`;
+
+function listScores(html: string) {
+  const result = parseScoreListPage(html, "000000000000", 1, T);
+  if (!isOk(result)) {
+    throw new Error(`expected a reading, got ${JSON.stringify(result.error)}`);
+  }
+  return result.value;
+}
 
 describe("parseScoreListPage", () => {
   test("the site's donderfull, with two l's, is the model's donderful", () => {
-    const result = parseScoreListPage(LIST_EXCERPT, "000000000000", 1, T);
-
-    if (!isOk(result)) {
-      throw new Error(`expected a reading, got ${JSON.stringify(result.error)}`);
-    }
-    expect(result.value.scores.filter((score) => score.crown === "donderful")).toHaveLength(1);
+    expect(listScores(LIST_EXCERPT).scores.filter((s) => s.crown === "donderful")).toHaveLength(1);
   });
 
   test("one Score per chart, every crown state kept — the old silver-and-above filter is gone", () => {
-    const result = parseScoreListPage(LIST_EXCERPT, "000000000000", 1, T);
+    const { scores } = listScores(LIST_EXCERPT);
 
-    if (!isOk(result)) {
-      throw new Error(`expected a reading, got ${JSON.stringify(result.error)}`);
-    }
-    const { scores } = result.value;
-    expect(scores).toHaveLength(6);
+    expect(scores).toHaveLength(17);
     expect(scores.map((s) => s.crown)).toEqual([
       "none",
       "played",
+      "played",
+      "played",
+      "silver",
+      "silver",
+      "silver",
+      "silver",
+      "silver",
+      "silver",
       "silver",
       "gold",
+      "gold",
+      "gold",
+      "gold",
+      "gold",
       "donderful",
-      "silver",
     ]);
     for (const score of scores) {
       expect(score.fidelity).toBe("list");
@@ -74,14 +102,50 @@ describe("parseScoreListPage", () => {
     }
   });
 
-  test("ura is level 5 of the same song: one Song, two blocks, shared songNo", () => {
-    const result = parseScoreListPage(LIST_EXCERPT, "000000000000", 1, T);
+  test("the crown image's suffix is the score rank, so the list already knows it", () => {
+    const { scores } = listScores(LIST_EXCERPT);
 
-    if (!isOk(result)) {
-      throw new Error("expected a reading");
-    }
-    const { songs, scores } = result.value;
-    expect(songs.map((s) => s.songNo)).toEqual(["1001", "1002"]);
+    expect(scores.map((s) => s.scoreRank)).toEqual([
+      null,
+      null,
+      2,
+      3,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      null,
+      5,
+      6,
+      7,
+      8,
+      8,
+    ]);
+  });
+
+  test("crown and rank are independent axes: gold_0 has no rank and played_2 has one", () => {
+    const byImage = new Map(
+      listScores(LIST_EXCERPT).scores.map((s) => [`${s.crown}/${s.scoreRank}`, s]),
+    );
+
+    expect(byImage.has("gold/null")).toBe(true);
+    expect(byImage.has("played/2")).toBe(true);
+  });
+
+  test("crown_button_none names no suffix at all, and that is data rather than a failure", () => {
+    const none = listScores(LIST_EXCERPT).scores[0];
+
+    expect(none?.crown).toBe("none");
+    expect(none?.scoreRank).toBeNull();
+  });
+
+  test("ura is level 5 of the same song: one Song, two blocks, shared songNo", () => {
+    const { songs, scores } = listScores(LIST_EXCERPT);
+
+    expect(songs.map((s) => s.songNo)).toEqual(["1001", "1002", "1003", "1004"]);
     const ura = scores.find((s) => s.level === 5);
     expect(ura?.songNo).toBe("1002");
   });
@@ -96,7 +160,7 @@ describe("parseScoreListPage", () => {
   });
 
   test("an unknown crown image is refused with its src, never guessed", () => {
-    const broken = LIST_EXCERPT.replace("crown_button_played_640", "crown_button_platinum_640");
+    const broken = LIST_EXCERPT.replace("crown_button_played_0_640", "crown_button_platinum_0_640");
 
     const result = parseScoreListPage(broken, "000000000000", 1, T);
 
@@ -107,9 +171,28 @@ describe("parseScoreListPage", () => {
       kind: "unreadableValue",
       page: "score_list.php",
       marker: "img (crown_button)",
-      raw: "image/sp/640/crown_button_platinum_640.png",
+      raw: "image/sp/640/crown_button_platinum_0_640.png",
     });
   });
+
+  test.each(["crown_button_silver_1_640", "crown_button_silver_9_640", "crown_button_silver_640"])(
+    "%s is a rank the vocabulary does not have, so it fails carrying the src",
+    (replacement) => {
+      const broken = LIST_EXCERPT.replace("crown_button_silver_2_640", replacement);
+
+      const result = parseScoreListPage(broken, "000000000000", 1, T);
+
+      if (!isErr(result)) {
+        throw new Error("expected a failure");
+      }
+      expect(result.error).toEqual({
+        kind: "unreadableValue",
+        page: "score_list.php",
+        marker: "img (crown_button rank)",
+        raw: `image/sp/640/${replacement}.png`,
+      });
+    },
+  );
 
   test("a page with no chart anchors at all fails naming the marker", () => {
     const result = parseScoreListPage("<html><body><p>empty</p></body></html>", "0", 1, T);
