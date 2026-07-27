@@ -1,4 +1,6 @@
-import type { Medal, Profile, ScoreRank } from "../hiroba-models";
+import type { HTMLElement } from "node-html-parser";
+
+import type { FavoriteSong, Medal, Profile, ScoreRank } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { parsePage, requireMarker } from "./parser";
 import { elementChildren, findImageBySrc, readCount } from "./element-readers";
@@ -7,6 +9,18 @@ import type { ParseFailure } from "./types";
 const PAGE = "mypage_top.php";
 
 const RANKS: readonly ScoreRank[] = [2, 3, 4, 5, 6, 7, 8];
+
+/**
+ * Both favourite sections are `div.favoriteSong`, and both wrap their songs in a list carrying the
+ * same `songList` id, so neither the class nor the id can tell them apart. The heading is the only
+ * thing that does — hence a lookup by heading text rather than by selector or position.
+ */
+const FAVORITE_BLOCK_MARKER = "div.favoriteSong";
+const FAVORITE_SONG_HEADING = "大好きな曲";
+const FAVORITE_FOLDER_HEADING = "お気に入りの曲";
+
+/** How the page writes a slot that holds no song, in both blocks and in the folder editor. */
+const UNSET_LABEL = "未設定";
 
 /**
  * Parses `mypage_top.php` into a Profile.
@@ -111,6 +125,16 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     return medal;
   }
 
+  const favoriteSong = readFavoriteSong(root);
+  if (isErr(favoriteSong)) {
+    return favoriteSong;
+  }
+
+  const favoriteFolderTitles = readFavoriteFolderTitles(root);
+  if (isErr(favoriteFolderTitles)) {
+    return favoriteFolderTitles;
+  }
+
   return ok({
     taikoNo,
     nickname,
@@ -119,6 +143,8 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     danLabelImageUrl,
     medal: medal === null ? null : medal.value,
     myDonImageUrl,
+    favoriteSong: favoriteSong.value,
+    favoriteFolderTitles: favoriteFolderTitles.value,
     summary: {
       countLevel,
       crownCounts: {
@@ -169,4 +195,64 @@ function readMedal(root: Parameters<typeof requireMarker>[0]): Result<Medal, Par
     return count;
   }
   return ok({ name, count: count.value });
+}
+
+/** The favourite block under the given heading, or a failure naming which of the two is absent. */
+function findFavoriteBlock(root: HTMLElement, heading: string): Result<HTMLElement, ParseFailure> {
+  const block = root
+    .querySelectorAll(FAVORITE_BLOCK_MARKER)
+    .find((candidate) => candidate.querySelector("h2")?.text.trim() === heading);
+  if (block === undefined) {
+    return err({
+      kind: "missingMarker",
+      page: PAGE,
+      marker: `${FAVORITE_BLOCK_MARKER} (${heading})`,
+    });
+  }
+  return ok(block);
+}
+
+/**
+ * The song titles a favourite block lists, in page order. Empty slots are dropped rather than
+ * carried: `未設定` is the page's word for "no song here", not a title anyone can look up.
+ */
+function songTitlesIn(block: HTMLElement): string[] {
+  return block
+    .querySelectorAll("li .songName")
+    .map((name) => name.text.trim())
+    .filter((title) => title !== "" && title !== UNSET_LABEL);
+}
+
+/**
+ * Reads the 大好きな曲 block, which holds at most one song.
+ *
+ * The block always renders its one list entry, and writes 未設定 in it when the profile has no
+ * favourite — so an unset favourite is an entry to skip, never a missing block.
+ */
+function readFavoriteSong(root: HTMLElement): Result<FavoriteSong | null, ParseFailure> {
+  const block = findFavoriteBlock(root, FAVORITE_SONG_HEADING);
+  if (isErr(block)) {
+    return block;
+  }
+  const title = songTitlesIn(block.value)[0];
+  if (title === undefined) {
+    return ok(null);
+  }
+  const songNo = block.value.querySelector('input[name="song_no"]')?.getAttribute("value")?.trim();
+  return ok({ songNo: songNo === undefined || songNo === "" ? null : songNo, title });
+}
+
+/**
+ * Reads the お気に入りの曲 folder, up to 30 songs in page order.
+ *
+ * Titles only: the block gives each song a name and nothing else — no number, link or data
+ * attribute — so this cannot be turned back into song numbers without the catalogue. An empty
+ * folder is a normal state and reads as an empty list.
+ */
+function readFavoriteFolderTitles(root: HTMLElement): Result<readonly string[], ParseFailure> {
+  const block = findFavoriteBlock(root, FAVORITE_FOLDER_HEADING);
+  if (isErr(block)) {
+    return block;
+  }
+  return ok(songTitlesIn(block.value));
 }

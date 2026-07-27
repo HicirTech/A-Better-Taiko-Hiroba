@@ -59,6 +59,8 @@ const profileWithoutDan: Profile = {
   danLabelImageUrl: null,
   medal: { name: "どんメダル2026", count: 37 },
   myDonImageUrl: "https://donderhiroba.jp/imgsrc_mydon.php?taiko_no=000000000000",
+  favoriteSong: { songNo: "1346", title: "サンプル曲アルファ" },
+  favoriteFolderTitles: ["サンプル曲ベータ", "サンプル曲ガンマ"],
   summary: {
     countLevel: 5,
     crownCounts: { silver: 128, gold: 45, donderful: 3 },
