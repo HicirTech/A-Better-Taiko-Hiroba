@@ -94,6 +94,7 @@ export function parseScoreListPage(
       songNo,
       level: levelRaw as Level,
       crown,
+      scoreRank: null,
       fidelity: "list",
       record: null,
       fetchedAt,

@@ -95,6 +95,7 @@ export function scoreFromRecentPlay(
     songNo,
     level: play.level,
     crown: play.crown,
+    scoreRank: play.scoreRank,
     fidelity: "recent",
     record: play.record,
     fetchedAt,
@@ -159,8 +160,8 @@ function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
     songTitle,
     level: level as Level,
     crown: crown === "none" ? playedOrNone(counts.value.stageCount) : crown,
+    scoreRank: scoreRank as ScoreRank | null,
     record: {
-      scoreRank: scoreRank as ScoreRank | null,
       highScore,
       ...counts.value,
       options: options.value,
@@ -168,7 +169,7 @@ function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
   });
 }
 
-type Counts = Omit<ScoreRecord, "scoreRank" | "highScore" | "options">;
+type Counts = Omit<ScoreRecord, "highScore" | "options">;
 
 /** Reads the nine count cells by their label images; a cell the page does not name is skipped. */
 function readCounts(row: HTMLElement): Result<Counts, ParseFailure> {

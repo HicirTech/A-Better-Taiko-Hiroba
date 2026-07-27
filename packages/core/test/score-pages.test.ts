@@ -187,7 +187,7 @@ describe("parseScoreDetailPage", () => {
       throw new Error(`expected a reading, got ${JSON.stringify(result.error)}`);
     }
     expect(result.value.crown).toBe("gold");
-    expect(result.value.record?.scoreRank).toBe(6);
+    expect(result.value.scoreRank).toBe(6);
     expect(result.value.record?.options.speed).toBe(2);
   });
 
@@ -242,7 +242,7 @@ describe("parseScoreDetailPage", () => {
       throw new Error("expected a reading");
     }
     expect(result.value.crown).toBe("played");
-    expect(result.value.record?.scoreRank).toBeNull();
+    expect(result.value.scoreRank).toBeNull();
   });
 
   test("crown 0 with zero plays stays none", () => {
@@ -273,6 +273,7 @@ describe("parseScoreDetailPage", () => {
       songNo: "1515",
       level: 4,
       crown: "none",
+      scoreRank: null,
       fidelity: "detail",
       record: null,
       fetchedAt: T,

@@ -105,8 +105,8 @@ describe("parseRecentPlaysPage", () => {
       songTitle: "テスト曲",
       level: 4,
       crown: "silver",
+      scoreRank: 5,
       record: {
-        scoreRank: 5,
         highScore: 851850,
         good: 618,
         ok: 159,
@@ -161,7 +161,13 @@ describe("parseRecentPlaysPage", () => {
     expect(result.value.map((play) => play.songTitle)).toEqual(["一番新しい", "その次"]);
     // Order is the only recency there is: nothing dated may appear on a play.
     for (const play of result.value) {
-      expect(Object.keys(play).sort()).toEqual(["crown", "level", "record", "songTitle"]);
+      expect(Object.keys(play).sort()).toEqual([
+        "crown",
+        "level",
+        "record",
+        "scoreRank",
+        "songTitle",
+      ]);
     }
   });
 
@@ -219,7 +225,7 @@ describe("parseRecentPlaysPage", () => {
   });
 
   test("a row with an unranked chart reads no rank rather than guessing one", () => {
-    expect(firstPlay(page([row({ rank: null })])).record.scoreRank).toBeNull();
+    expect(firstPlay(page([row({ rank: null })])).scoreRank).toBeNull();
   });
 
   test("a count cell holding something that is not a count fails carrying the text", () => {
@@ -272,6 +278,7 @@ describe("scoreFromRecentPlay", () => {
       songNo: "1061",
       level: 4,
       crown: "silver",
+      scoreRank: 5,
       fidelity: "recent",
       record: play.record,
       fetchedAt: "2026-07-27T00:00:00.000Z",

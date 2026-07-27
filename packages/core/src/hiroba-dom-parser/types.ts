@@ -1,4 +1,4 @@
-import type { CrownState, Level, Score, ScoreRecord, Song } from "../hiroba-models";
+import type { CrownState, Level, Score, ScoreRank, ScoreRecord, Song } from "../hiroba-models";
 
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */
 export type ParseFailure = LoggedOutFailure | MissingMarkerFailure | UnreadableValueFailure;
@@ -25,6 +25,8 @@ export interface RecentPlay {
   readonly songTitle: string;
   readonly level: Level;
   readonly crown: CrownState;
+  /** Beside `crown` rather than inside the record, so it sits where a Score's rank sits. */
+  readonly scoreRank: ScoreRank | null;
   readonly record: ScoreRecord;
 }
 
