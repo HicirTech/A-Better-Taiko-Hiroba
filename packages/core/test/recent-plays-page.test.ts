@@ -21,6 +21,8 @@ const COUNTS = {
 
 function row(options: {
   title?: string;
+  /** The suffix of the title's font class, which is the page's only genre signal. */
+  font?: string;
   level?: number;
   crown?: number;
   rank?: number | null;
@@ -55,7 +57,7 @@ function row(options: {
     .join("");
   return `<div class="scoreUser">
     <div class="contentBox songLisrAreanamco"><ul>
-      <li class="songNameTitleScore"><h2 class="songNameFontnamco">${options.title ?? "テスト曲"}</h2></li>
+      <li class="songNameTitleScore"><h2 class="songNameFont${options.font ?? "namco"}">${options.title ?? "テスト曲"}</h2></li>
     </ul></div>
     <div class="scoreDetailArea">
       <div>
@@ -103,10 +105,11 @@ describe("parseRecentPlaysPage", () => {
 
     expect(play).toEqual({
       songTitle: "テスト曲",
+      genre: 6,
       level: 4,
       crown: "silver",
+      scoreRank: 5,
       record: {
-        scoreRank: 5,
         highScore: 851850,
         good: 618,
         ok: 159,
@@ -146,6 +149,17 @@ describe("parseRecentPlaysPage", () => {
     expect(on.record.options.supportChart).toBe(true);
   });
 
+  test("the title's font class carries the row's genre, as Hiroba numbers genres", () => {
+    expect(firstPlay(page([row({ font: "jpop" })])).genre).toBe(1);
+    expect(firstPlay(page([row({ font: "vocaloid" })])).genre).toBe(4);
+    expect(firstPlay(page([row({ font: "classic" })])).genre).toBe(8);
+  });
+
+  test("a font class outside the eight genres reads as no genre, not as a broken page", () => {
+    // A ninth genre would be an addition to the site, and the play itself is still complete.
+    expect(firstPlay(page([row({ font: "newgenre" })])).genre).toBeNull();
+  });
+
   test("an ura row is level 5: the level icon says so, the ura badge is decoration", () => {
     expect(firstPlay(page([row({ level: 5 })])).level).toBe(5);
   });
@@ -161,7 +175,14 @@ describe("parseRecentPlaysPage", () => {
     expect(result.value.map((play) => play.songTitle)).toEqual(["一番新しい", "その次"]);
     // Order is the only recency there is: nothing dated may appear on a play.
     for (const play of result.value) {
-      expect(Object.keys(play).sort()).toEqual(["crown", "level", "record", "songTitle"]);
+      expect(Object.keys(play).sort()).toEqual([
+        "crown",
+        "genre",
+        "level",
+        "record",
+        "scoreRank",
+        "songTitle",
+      ]);
     }
   });
 
@@ -219,7 +240,7 @@ describe("parseRecentPlaysPage", () => {
   });
 
   test("a row with an unranked chart reads no rank rather than guessing one", () => {
-    expect(firstPlay(page([row({ rank: null })])).record.scoreRank).toBeNull();
+    expect(firstPlay(page([row({ rank: null })])).scoreRank).toBeNull();
   });
 
   test("a count cell holding something that is not a count fails carrying the text", () => {
@@ -272,6 +293,7 @@ describe("scoreFromRecentPlay", () => {
       songNo: "1061",
       level: 4,
       crown: "silver",
+      scoreRank: 5,
       fidelity: "recent",
       record: play.record,
       fetchedAt: "2026-07-27T00:00:00.000Z",

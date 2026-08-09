@@ -1,4 +1,4 @@
-import type { CrownState, Genre, Level, Score, Song } from "../hiroba-models";
+import type { CrownState, Genre, Level, Score, ScoreRank, Song } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { parsePage } from "./parser";
 import type { ParseFailure, ScoreListReading } from "./types";
@@ -20,12 +20,39 @@ const CROWN_NAMES: Readonly<Record<string, CrownState>> = {
 };
 
 /**
+ * One image names both axes: `crown_button_<state>_<rank>_640.png`. `crown_button_none` is the one
+ * image that names no rank at all, so the suffix is optional here and required by `readRank`
+ * everywhere else.
+ */
+const CROWN_PATTERN = /crown_button_([a-z]+)(?:_(\d+))?_640\./;
+
+/**
+ * The suffix is the chart's score rank, and it is independent of the crown: `gold_0` and
+ * `played_2` both occur live, so neither axis may be inferred from the other. `0` is the site's
+ * way of saying no rank — never rank zero, which does not exist. Any other number outside 2–8, or
+ * a missing suffix on a state that always carries one, is new knowledge and is refused rather
+ * than guessed; `undefined` is that refusal.
+ */
+function readRank(crown: CrownState, raw: string | undefined): ScoreRank | null | undefined {
+  if (raw === undefined) {
+    return crown === "none" ? null : undefined;
+  }
+  const rank = Number(raw);
+  if (rank === 0) {
+    return null;
+  }
+  return rank >= 2 && rank <= 8 ? (rank as ScoreRank) : undefined;
+}
+
+/**
  * Parses one genre's `score_list.php` page: every song at every level, with no pagination.
  *
  * Each song is an `li.contentBox` holding the title and one detail anchor per chart; an ura
  * difficulty arrives as its own block carrying the same `song_no` at `level=5`, so songs are
- * de-duplicated by number while every chart stays its own Score. The crown state rides in the
- * anchor's image name, and every state is returned — `played` and `none` included.
+ * de-duplicated by number while every chart stays its own Score. The anchor's image name carries
+ * both the crown state and the score rank, and every state is returned — `played` and `none`
+ * included. One genre page therefore already knows the rank of every chart in it, and no detail
+ * fetch is owed for the rank alone.
  */
 export function parseScoreListPage(
   html: string,
@@ -68,13 +95,22 @@ export function parseScoreListPage(
     }
 
     const crownSrc = anchor.querySelector("img")?.getAttribute("src") ?? "";
-    const crownRaw = crownSrc.match(/crown_button_([a-z]+)_/)?.[1];
+    const [, crownRaw, rankRaw] = crownSrc.match(CROWN_PATTERN) ?? [];
     const crown = crownRaw === undefined ? undefined : CROWN_NAMES[crownRaw];
     if (crown === undefined) {
       return err({
         kind: "unreadableValue",
         page: PAGE,
         marker: "img (crown_button)",
+        raw: crownSrc,
+      });
+    }
+    const scoreRank = readRank(crown, rankRaw);
+    if (scoreRank === undefined) {
+      return err({
+        kind: "unreadableValue",
+        page: PAGE,
+        marker: "img (crown_button rank)",
         raw: crownSrc,
       });
     }
@@ -94,6 +130,7 @@ export function parseScoreListPage(
       songNo,
       level: levelRaw as Level,
       crown,
+      scoreRank,
       fidelity: "list",
       record: null,
       fetchedAt,

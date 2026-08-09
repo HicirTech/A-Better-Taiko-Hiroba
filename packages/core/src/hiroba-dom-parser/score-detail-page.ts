@@ -58,6 +58,7 @@ export function parseScoreDetailPage(
       songNo,
       level,
       crown: "none",
+      scoreRank: null,
       fidelity: "detail",
       record: null,
       fetchedAt,
@@ -131,9 +132,9 @@ export function parseScoreDetailPage(
           : crownStatus === 2
             ? "gold"
             : "donderful",
+    scoreRank: scoreRank as ScoreRank | null,
     fidelity: "detail",
     record: {
-      scoreRank: scoreRank as ScoreRank | null,
       highScore: counts.highScore as number,
       good: counts.good as number,
       ok: counts.ok as number,

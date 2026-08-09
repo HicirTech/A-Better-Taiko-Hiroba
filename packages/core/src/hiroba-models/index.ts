@@ -12,7 +12,9 @@
  * #13).
  *
  * Layout follows ownership: `vocabulary.ts` holds Hiroba's shared enumerations, and each entity
- * file owns one concept. Files depend only on the vocabulary, never on each other.
+ * file owns one concept. Entity files depend only on the vocabulary, never on each other; a file
+ * holding an operation over an entity, as `song-resolution.ts` does, imports that entity's type
+ * and nothing further.
  *
  * Named but not shaped, on purpose: rewards and unlocks, friends, competitions and challenges,
  * news and title history. They are mapped in the wiki's Reading pages and get a file here the day
@@ -25,5 +27,7 @@ export type { CrownCounts, FavoriteSong, Medal, Player, Profile, ProfileSummary 
 export type { PlayOptions, RandomMode, Score, ScoreFidelity, ScoreRecord } from "./score";
 export { mergeGenreIntoCatalogue, updateCatalogue } from "./song";
 export type { Chart, GenreReading, Song } from "./song";
+export { resolveSongTitle } from "./song-resolution";
+export type { AmbiguousTitle, ResolvedSong, SongResolution, UnknownTitle } from "./song-resolution";
 export { playedOrNone } from "./vocabulary";
 export type { CrownState, Genre, Level, ScoreRank } from "./vocabulary";
