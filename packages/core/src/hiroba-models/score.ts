@@ -3,7 +3,7 @@ import type { CrownState, Level, ScoreRank } from "./vocabulary";
 
 /**
  * Which viewport last filled a score, in increasing order of completeness of source:
- * the genre list (crown only), the detail page (everything), or the recent-plays page
+ * the genre list (crown and rank only), the detail page (everything), or the recent-plays page
  * (everything, for the last five plays).
  */
 export type ScoreFidelity = "list" | "detail" | "recent";
@@ -21,6 +21,12 @@ export interface Score {
   readonly songNo: string;
   readonly level: Level;
   readonly crown: CrownState;
+  /**
+   * Null when the chart has no ranked score. The rank sits beside `crown` rather than inside
+   * the record because the genre list names both in one image — so a score's rank is knowable
+   * at list fidelity, while the rest of its record is not.
+   */
+  readonly scoreRank: ScoreRank | null;
   readonly fidelity: ScoreFidelity;
   readonly record: ScoreRecord | null;
   readonly fetchedAt: string;
@@ -28,8 +34,6 @@ export interface Score {
 
 /** The full record the detail and recent-plays pages carry. */
 export interface ScoreRecord {
-  /** Null when the chart has no ranked clear yet. */
-  readonly scoreRank: ScoreRank | null;
   readonly highScore: number;
   /** 良 hits. */
   readonly good: number;

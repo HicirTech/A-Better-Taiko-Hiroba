@@ -16,6 +16,7 @@ const listOnlyScore: Score = {
   songNo: "1178",
   level: 4,
   crown: "played",
+  scoreRank: 3,
   fidelity: "list",
   record: null,
   fetchedAt: "2026-07-26T09:00:00.000Z",
@@ -26,9 +27,9 @@ const detailScore: Score = {
   songNo: "1178",
   level: 4,
   crown: "gold",
+  scoreRank: 6,
   fidelity: "detail",
   record: {
-    scoreRank: 6,
     highScore: 968200,
     good: 1710,
     ok: 41,
@@ -126,7 +127,18 @@ describe("the shaping decisions hold", () => {
   });
 
   test("a detail-fidelity score may hold a null record: Hiroba's own not-played answer", () => {
-    const notPlayed: Score = { ...listOnlyScore, fidelity: "detail", crown: "none" };
+    const notPlayed: Score = {
+      ...listOnlyScore,
+      fidelity: "detail",
+      crown: "none",
+      scoreRank: null,
+    };
     expect(notPlayed.record).toBeNull();
+  });
+
+  test("a rank is knowable while the record is not, so it sits outside the record", () => {
+    // The genre list names crown and rank in one image, and its Score has no record at all.
+    expect(listOnlyScore.record).toBeNull();
+    expect(listOnlyScore.scoreRank).toBe(3);
   });
 });
