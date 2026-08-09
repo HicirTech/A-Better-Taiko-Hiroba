@@ -9,9 +9,15 @@ export interface Player {
 /**
  * Identity and the account-wide summary.
  *
- * The summary counts are computed by Hiroba over the whole account, while the local cache may
- * legitimately cover less. So the summary is stored as the snapshot it is — never derived from
- * cached scores, and never used to correct them.
+ * The summary counts are Hiroba's own, and they cover **おに and 裏おに only** — levels 4 and 5
+ * together, not the whole account. Measured against the same day's genre lists, de-duplicated by
+ * chart: gold and donderful match exactly, five of the seven rank buckets match exactly, and a
+ * small unexplained residual remains. Level-4-only and all-levels are both wrong by hundreds.
+ *
+ * So the summary is stored as the snapshot it is — never derived from cached scores, and never
+ * used to correct them. It is also not a total you can recompute: the rank buckets count charts
+ * that carry a rank, the crown counts count charts that carry a crown, and the difference is the
+ * charts played but not cleared that still earned one.
  */
 export interface Profile {
   readonly taikoNo: string;
