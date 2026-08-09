@@ -16,8 +16,8 @@
  * holding an operation over an entity, as `song-resolution.ts` does, imports that entity's type
  * and nothing further.
  *
- * Named but not shaped, on purpose: rewards and unlocks, friends, competitions and challenges,
- * news and title history. They are mapped in the wiki's Reading pages and get a file here the day
+ * Named but not shaped, on purpose: rewards and unlocks, friends, other players, rankings,
+ * competitions and challenges, the settings surface, news and title history. They are mapped in the wiki's Reading pages and get a file here the day
  * something consumes them — an addition then, not a rework now.
  */
 export type { Costume } from "./costume";

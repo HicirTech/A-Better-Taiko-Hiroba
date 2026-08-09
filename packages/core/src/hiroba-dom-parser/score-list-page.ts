@@ -27,11 +27,15 @@ const CROWN_NAMES: Readonly<Record<string, CrownState>> = {
 const CROWN_PATTERN = /crown_button_([a-z]+)(?:_(\d+))?_640\./;
 
 /**
- * The suffix is the chart's score rank, and it is independent of the crown: `gold_0` and
- * `played_2` both occur live, so neither axis may be inferred from the other. `0` is the site's
- * way of saying no rank — never rank zero, which does not exist. Any other number outside 2–8, or
- * a missing suffix on a state that always carries one, is new knowledge and is refused rather
- * than guessed; `undefined` is that refusal.
+ * The suffix is the chart's score rank, and it is independent of the crown: `played_5` and
+ * `gold_5` both occur, so neither axis may be inferred from the other. `0` is the site's way of
+ * saying no rank — never rank zero, which does not exist. Any other number outside 2–8, or a
+ * missing suffix on a state that always carries one, is new knowledge and is refused rather than
+ * guessed; `undefined` is that refusal.
+ *
+ * `gold_0` is still accepted and still unseen: an earlier version of this comment cited it as
+ * occurring live, and it does not appear once in the captured genre pages of two accounts. Keep
+ * accepting it — refusing a legal-looking suffix would fail a whole genre over one row.
  */
 function readRank(crown: CrownState, raw: string | undefined): ScoreRank | null | undefined {
   if (raw === undefined) {

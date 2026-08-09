@@ -5,8 +5,11 @@
  * The game grades a dan on two axes, and the stamp draws both: the 合格 tier (赤 or 金, set by
  * how far past the pass conditions the attempt went) and the 枠 frame (銀 クリア, 金 フルコンボ,
  * 虹 ドンダフルコンボ), which the stamp shows as the swirl behind the glyphs. Six passing
- * combinations, all observed on real plates and in the site's own row text. The same six apply
- * to the named ranks 玄人 through 達人 exactly as they do to the numbered dan.
+ * combinations. All six appear in the site's own row text across 600 sampled players; as *plates*
+ * two of them — 赤フルコン and 赤ドンダフル — rest on two images each, so the classifier's
+ * thresholds are better evidenced for the other four. That the same six apply to the named ranks
+ * 玄人 through 達人 is the game's documented rule, not something anyone has seen: no account
+ * holding one has ever been reachable.
  */
 export type DanClearState =
   | "none"

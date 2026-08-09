@@ -9,13 +9,27 @@ export interface Player {
 /**
  * Identity and the account-wide summary.
  *
- * The summary counts are computed by Hiroba over the whole account, while the local cache may
- * legitimately cover less. So the summary is stored as the snapshot it is — never derived from
- * cached scores, and never used to correct them.
+ * The summary counts are Hiroba's own, and they cover **おに and 裏おに only** — levels 4 and 5
+ * together, not the whole account. Measured against the same day's genre lists, de-duplicated by
+ * chart: gold and donderful match exactly, five of the seven rank buckets match exactly, and a
+ * small unexplained residual remains. Level-4-only and all-levels are both wrong by hundreds.
+ *
+ * So the summary is stored as the snapshot it is — never derived from cached scores, and never
+ * used to correct them. It is also not a total you can recompute: the rank buckets count charts
+ * that carry a rank, the crown counts count charts that carry a crown, and the difference is the
+ * charts played but not cleared that still earned one.
  */
 export interface Profile {
   readonly taikoNo: string;
   readonly nickname: string;
+  /**
+   * The displayed title, as a string rather than an id, because an id cannot hold every state.
+   * A title picked from the list has one; a title **composed from parts** does not — the write
+   * that sets one answers with an empty `value`, the composer page clears its slots on load, and
+   * my page shows only the rendered text. So nothing on the site can turn a composed title back
+   * into the three part ids, and a client that writes one has to keep them itself. Executed
+   * 2026-08-09.
+   */
   readonly title: string;
   readonly region: string | null;
   /**

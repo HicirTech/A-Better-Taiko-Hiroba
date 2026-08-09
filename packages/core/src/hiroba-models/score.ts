@@ -4,7 +4,7 @@ import type { CrownState, Level, ScoreRank } from "./vocabulary";
 /**
  * Which viewport last filled a score, in increasing order of completeness of source:
  * the genre list (crown and rank only), the detail page (everything), or the recent-plays page
- * (everything, for the last five plays).
+ * (everything, for five recently played charts a page at a time).
  */
 export type ScoreFidelity = "list" | "detail" | "recent";
 
