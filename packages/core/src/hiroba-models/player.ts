@@ -99,7 +99,7 @@ export interface CrownCounts {
  * `open` shows everything below; `achievementsHidden` still names the player, their prefecture and
  * their 大好きな曲 but serves **no score panel at all**; `closed` renders `※プロフィール非公開`
  * where the details go, keeping only the title, the nickname and the My Don. Measured over seven
- * captured profiles on 2026-08-09 — four open, one achievements-hidden, two closed.
+ * captured profiles on 2026-08-09 — three open, one achievements-hidden, three closed.
  */
 export type ProfileVisibility = "open" | "achievementsHidden" | "closed";
 
@@ -139,7 +139,8 @@ export interface PublicProfile {
    * The one 大好きな曲, **title only**: this page's block carries no `song_no` input and no
    * `score_detail` link, unlike my page's. Turning the title back into a number is the catalogue's
    * job. Null when the block is absent, which is every closed profile — what an *unset* favourite
-   * looks like on someone else's page has not been observed, all four open captures had one set.
+   * looks like on someone else's page has **not been observed**: all four non-closed captures had
+   * one set, so null here means "no block", never "the page said 未設定".
    */
   readonly favoriteSong: FavoriteSong | null;
   /** Null unless `visibility` is `open`: the other two shapes serve no panel to read. */

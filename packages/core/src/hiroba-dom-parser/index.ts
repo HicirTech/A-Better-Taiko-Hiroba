@@ -10,6 +10,7 @@
 export { parseCostumePage } from "./costume-page";
 export { parsePage, requireMarker } from "./parser";
 export { parseProfilePage } from "./profile-page";
+export { parsePublicProfilePage } from "./public-profile-page";
 export { parseRecentPlaysPage, scoreFromRecentPlay } from "./recent-plays-page";
 export { parseScoreDetailPage } from "./score-detail-page";
 export { parseScoreListPage } from "./score-list-page";
@@ -20,4 +21,5 @@ export type {
   RecentPlay,
   ScoreListReading,
   UnreadableValueFailure,
+  WrongPageFailure,
 } from "./types";
