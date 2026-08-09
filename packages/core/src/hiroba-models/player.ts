@@ -138,9 +138,10 @@ export interface PublicProfile {
   /**
    * The one 大好きな曲, **title only**: this page's block carries no `song_no` input and no
    * `score_detail` link, unlike my page's. Turning the title back into a number is the catalogue's
-   * job. Null when the block is absent, which is every closed profile — what an *unset* favourite
-   * looks like on someone else's page has **not been observed**: all four non-closed captures had
-   * one set, so null here means "no block", never "the page said 未設定".
+   * job. Null covers both ways the page can say "none": a closed profile drops the block entirely,
+   * and an open profile with no favourite **keeps it and writes `未設定` in it** — the same word my
+   * page uses, observed on three profiles 2026-08-09. An earlier version of this comment called the
+   * second case unobserved, and the reader duly handed back `未設定` as if it were a song title.
    */
   readonly favoriteSong: FavoriteSong | null;
   /** Null unless `visibility` is `open`: the other two shapes serve no panel to read. */

@@ -136,6 +136,15 @@ describe("parsePublicProfilePage", () => {
     expect(profile.favoriteSong?.title).toBe("サンプル曲アルファ");
   });
 
+  test("an open profile with no favourite keeps the block and writes 未設定 in it", () => {
+    // The block does not disappear — it renders one row holding the site's word for "none",
+    // exactly as my page does. Reading that back as a song title is the bug this pins.
+    const profile = parseOrThrow(excerpt({ favoriteTitle: "未設定" }));
+
+    expect(profile.visibility).toBe("open");
+    expect(profile.favoriteSong).toBeNull();
+  });
+
   test("a closed profile reads as little rather than failing", () => {
     const profile = parseOrThrow(excerpt({ visibility: "closed" }));
 

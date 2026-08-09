@@ -40,6 +40,16 @@ const MY_PAGE_MARKER = "div.favoriteSong";
 const CLOSED_TEXT = "プロフィール非公開";
 
 /**
+ * The page's word for "no song here", written into the block rather than omitting it.
+ *
+ * An open profile with no 大好きな曲 **keeps the section** and fills its one row with this, exactly
+ * as my page does. Observed on three profiles, 2026-08-09. The set rows carry a genre suffix on
+ * their classes (`songLisrAreanamco`, `songNameFontnamco`) and the unset row does not, but the text
+ * is the reliable signal and the one my page's reader already uses.
+ */
+const UNSET_LABEL = "未設定";
+
+/**
  * Parses `user_profile.php?taiko_no=T` — another player's public profile.
  *
  * `taikoNo` is what was requested, not what was read: a closed profile prints no taiko number at
@@ -139,6 +149,7 @@ export function parsePublicProfilePage(
       : "open";
 
   const favoriteTitle = root.querySelector("#songList .songName")?.text.trim() ?? "";
+  const favoriteIsSet = favoriteTitle !== "" && favoriteTitle !== UNSET_LABEL;
 
   return ok({
     taikoNo,
@@ -148,7 +159,7 @@ export function parsePublicProfilePage(
     danLabelImageUrl: findImageBySrc(root, "imgsrc_danlabel")?.getAttribute("src") ?? null,
     myDonImageUrl: root.querySelector("img.customd_mydon")?.getAttribute("src") ?? null,
     // Title only: this page's block carries no song_no input and no score_detail link.
-    favoriteSong: favoriteTitle === "" ? null : { songNo: null, title: favoriteTitle },
+    favoriteSong: favoriteIsSet ? { songNo: null, title: favoriteTitle } : null,
     summary: summary.value,
     visibility,
     fetchedAt,
