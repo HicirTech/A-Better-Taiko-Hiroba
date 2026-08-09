@@ -68,7 +68,11 @@ const COUNT_KEYS: Readonly<Record<string, keyof ScoreRecord>> = {
 const OPTION_CELL_COUNT = 5;
 
 /**
- * Parses `history_recent_score.php` — the last five charts played, newest first.
+ * Parses `history_recent_score.php` — five recently played charts, one page's worth.
+ *
+ * The page paginates (`?page=2` holds a different five), and this function is never told which page
+ * it was handed, so a reading carries no ordinal. Two captures taken hours apart also disagree with
+ * the news feed about ordering, so treat the row order as "these changed", not as a clock.
  *
  * Each row carries what that chart's detail page carries, field for field, plus the サポート譜面
  * slot no other page exposes. What it does not carry is a song number: nothing on the page names
