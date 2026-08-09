@@ -81,3 +81,62 @@ export interface DanSongResult {
   readonly drumroll: number;
   readonly maxCombo: number;
 }
+
+/**
+ * The fifteen dan names Hiroba prints, in board order, so `DAN_NAMES[n - 1]` is dan `n`.
+ *
+ * The numbers are the ones `dan_detail.php?dan=N` uses and the ones `DanRecord.dan` and the plate
+ * reader already speak. This table exists so a **row of text** — the friend lists and the player
+ * search are the only place on the site where a dan appears as text rather than as pixels — lands
+ * on that same vocabulary instead of a second one.
+ *
+ * Fifteen and no more: the four named ranks (玄人 名人 超人 達人) have never appeared in a row,
+ * because the search's `dan_id` filter stops at 十段 and a player whose highest dan is a named rank
+ * is not listed under 十段. Derived from all 600 rows of the player sweep, which use exactly these
+ * fifteen and nothing else.
+ */
+export const DAN_NAMES: readonly string[] = [
+  "五級",
+  "四級",
+  "三級",
+  "二級",
+  "一級",
+  "初段",
+  "二段",
+  "三段",
+  "四段",
+  "五段",
+  "六段",
+  "七段",
+  "八段",
+  "九段",
+  "十段",
+];
+
+/** The board number for a printed dan name, or null for anything outside the fifteen. */
+export function danNumberFromName(name: string): number | null {
+  const index = DAN_NAMES.indexOf(name);
+  return index === -1 ? null : index + 1;
+}
+
+/**
+ * How a row abbreviates each clear tier, mapped onto the vocabulary the plate reader produces.
+ *
+ * **The site abbreviates in text what it spells in full elsewhere**: フルコン for フルコンボ and
+ * ドンダフル for ドンダフルコンボ. All six occur in the 600-row sweep — the rarest, 赤ドンダフル,
+ * four times — so this table is measured rather than assumed, and the row and the plate can be
+ * compared directly.
+ */
+const ROW_CLEAR_TIERS: Readonly<Record<string, DanClearState>> = {
+  赤クリア: "redClear",
+  赤フルコン: "redFullCombo",
+  赤ドンダフル: "redDonderful",
+  金クリア: "goldClear",
+  金フルコン: "goldFullCombo",
+  金ドンダフル: "goldDonderful",
+};
+
+/** The clear state a row's tier text names, or null when it is not one of the six. */
+export function danClearStateFromRowTier(tier: string): DanClearState | null {
+  return ROW_CLEAR_TIERS[tier] ?? null;
+}

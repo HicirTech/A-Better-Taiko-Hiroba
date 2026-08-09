@@ -21,7 +21,13 @@
  * something consumes them — an addition then, not a rework now.
  */
 export type { Costume } from "./costume";
-export { DAN_CLEAR_STATE_ORDER, isBetterDanClearState } from "./dan";
+export {
+  DAN_CLEAR_STATE_ORDER,
+  DAN_NAMES,
+  danClearStateFromRowTier,
+  danNumberFromName,
+  isBetterDanClearState,
+} from "./dan";
 export type { DanClearState, DanCondition, DanRecord, DanSongResult } from "./dan";
 export type {
   CrownCounts,
