@@ -35,8 +35,10 @@ const ROW_CROWNS: Readonly<Record<string, CrownState>> = {
 };
 
 /**
- * The page's only genre signal is the suffix of the title's font class, `songNameFont<name>`,
- * which these names map onto the genre numbers `score_list.php?genre=N` uses. A name outside this
+ * The genre arrives as a name, not a number: the suffix of the title's font class,
+ * `songNameFont<name>`, which these names map onto the genre numbers `score_list.php?genre=N` uses.
+ * The row carries the same suffix a second time, on its `songLisrArea<name>` wrapper, and the two
+ * agree on every captured row — so either will do, and neither is a number. A name outside this
  * table reads as no genre rather than failing: the site may add a genre, and a row whose genre is
  * merely unknown is still a complete play.
  */
