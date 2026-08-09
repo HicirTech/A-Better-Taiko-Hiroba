@@ -28,7 +28,14 @@ export {
   danNumberFromName,
   isBetterDanClearState,
 } from "./dan";
-export type { DanClearState, DanCondition, DanRecord, DanSongResult } from "./dan";
+export type {
+  DanClearState,
+  DanCondition,
+  DanConditionStep,
+  DanRecord,
+  DanSongCounts,
+  DanSongResult,
+} from "./dan";
 export type {
   CrownCounts,
   FavoriteSong,

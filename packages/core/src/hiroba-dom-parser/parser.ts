@@ -10,6 +10,19 @@ import type { ParseFailure } from "./types";
 const LOGIN_FORM_MARKER = "form#login_form";
 
 /**
+ * The site's own error page, which arrives at **HTTP 200** with an ordinary content type, so
+ * nothing below the body distinguishes it from a page that worked.
+ *
+ * Matched on the heading rather than on any message. Four messages are known and a fifth should be
+ * expected; a detector keyed on the text misses whichever one nobody has met yet. Note this is not
+ * the site's *other* no-data container (`div#error.contentBox.errorArea`, which an empty list or a
+ * ranking with no entries uses) — that one is an ordinary page saying it has nothing, and reading
+ * it as a failure would turn "no friends yet" into an error.
+ */
+const ERROR_SHELL_MARKER = "h1";
+const ERROR_SHELL_HEADING = "エラー";
+
+/**
  * Parses a fetched Hiroba page and refuses the login page.
  *
  * `page` is the page that was requested (for example "mypage_top.php"); it travels into every
@@ -21,6 +34,13 @@ export function parsePage(html: string, page: string): Result<HTMLElement, Parse
   const root = parse(html);
   if (root.querySelector(LOGIN_FORM_MARKER) !== null) {
     return err({ kind: "loggedOut", page });
+  }
+  if (root.querySelector(ERROR_SHELL_MARKER)?.text.trim() === ERROR_SHELL_HEADING) {
+    return err({
+      kind: "siteError",
+      page,
+      message: root.querySelector("table")?.text.trim().replace(/\s+/g, " ") ?? "",
+    });
   }
   return ok(root);
 }

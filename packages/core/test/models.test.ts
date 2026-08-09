@@ -74,13 +74,34 @@ const danRecord: DanRecord = {
   taikoNo: "000000000000",
   dan: 9,
   clearState: "redClear",
+  hasRecord: true,
   totalScore: 2691580,
+  totalCounts: { good: 1710, ok: 400, bad: 25, drumroll: 146, maxCombo: 1219, hits: 2256 },
   conditions: [
-    { name: "魂ゲージ", requirement: "98%以上", achieved: "100%" },
-    { name: "良", requirement: "1653以上", achieved: "1710回" },
+    { kind: "course", name: "魂ゲージ", requirement: "98%以上", achieved: "100%" },
+    // The same condition, tightened song by song — one pair per 課題曲, not one for the run.
+    {
+      kind: "perSong",
+      name: "可",
+      songs: [
+        { requirement: "18未満", achieved: "14回" },
+        { requirement: "25未満", achieved: "22回" },
+        { requirement: "30未満", achieved: "-回" },
+      ],
+    },
   ],
-  conditionBests: [{ name: "不可", requirement: "33未満", achieved: "25回" }],
-  songs: [{ title: "課題曲その一", good: 570, ok: 14, bad: 8, drumroll: 49, maxCombo: 300 }],
+  conditionBests: [{ kind: "course", name: "不可", requirement: "33未満", achieved: "25回" }],
+  songs: [
+    {
+      title: "課題曲その一",
+      level: 4,
+      record: { good: 570, ok: 14, bad: 8, drumroll: 49, maxCombo: 300, hits: 641 },
+    },
+    // Reached, played, and the run ended here — the third was never started.
+    { title: "課題曲その二", level: 5, record: null },
+    // 十段 masks its later songs outright, so there is no title to carry either.
+    { title: null, level: null, record: null },
+  ],
   updatedAt: "2026/06/15 16:20:59",
   fetchedAt: "2026-07-26T09:00:00.000Z",
 };
