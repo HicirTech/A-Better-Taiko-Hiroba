@@ -22,6 +22,14 @@ export interface Player {
 export interface Profile {
   readonly taikoNo: string;
   readonly nickname: string;
+  /**
+   * The displayed title, as a string rather than an id, because an id cannot hold every state.
+   * A title picked from the list has one; a title **composed from parts** does not — the write
+   * that sets one answers with an empty `value`, the composer page clears its slots on load, and
+   * my page shows only the rendered text. So nothing on the site can turn a composed title back
+   * into the three part ids, and a client that writes one has to keep them itself. Executed
+   * 2026-08-09.
+   */
   readonly title: string;
   readonly region: string | null;
   /**
