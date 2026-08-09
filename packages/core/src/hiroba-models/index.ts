@@ -23,7 +23,16 @@
 export type { Costume } from "./costume";
 export { DAN_CLEAR_STATE_ORDER, isBetterDanClearState } from "./dan";
 export type { DanClearState, DanCondition, DanRecord, DanSongResult } from "./dan";
-export type { CrownCounts, FavoriteSong, Medal, Player, Profile, ProfileSummary } from "./player";
+export type {
+  CrownCounts,
+  FavoriteSong,
+  Medal,
+  Player,
+  Profile,
+  ProfileSummary,
+  ProfileVisibility,
+  PublicProfile,
+} from "./player";
 export type { PlayOptions, RandomMode, Score, ScoreFidelity, ScoreRecord } from "./score";
 export { mergeGenreIntoCatalogue, updateCatalogue } from "./song";
 export type { Chart, GenreReading, Song } from "./song";

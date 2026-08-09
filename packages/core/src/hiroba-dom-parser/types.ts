@@ -9,7 +9,11 @@ import type {
 } from "../hiroba-models";
 
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */
-export type ParseFailure = LoggedOutFailure | MissingMarkerFailure | UnreadableValueFailure;
+export type ParseFailure =
+  | LoggedOutFailure
+  | MissingMarkerFailure
+  | UnreadableValueFailure
+  | WrongPageFailure;
 
 /**
  * One genre's score list, read whole: the songs it names and one list-fidelity Score per chart.
@@ -53,6 +57,25 @@ export interface MissingMarkerFailure {
   readonly kind: "missingMarker";
   readonly page: string;
   /** The CSS selector that found nothing. */
+  readonly marker: string;
+}
+
+/**
+ * Hiroba answered with a different page than the one that was requested, and said so in its markup
+ * rather than in a status code or a redirect the fetcher could see.
+ *
+ * Distinct from `missingMarker` on purpose. A missing marker says "this page changed"; this says
+ * "this is not that page", and the two want opposite responses — one is a bug to investigate, the
+ * other is the site behaving as documented. The known case: `user_profile.php` with your **own**
+ * taiko number serves my page instead, which would otherwise be parsed as a stranger whose profile
+ * happens to carry a favourites folder.
+ */
+export interface WrongPageFailure {
+  readonly kind: "wrongPage";
+  /** The page that was requested. */
+  readonly page: string;
+  /** The page the body actually looks like, and the marker that identified it. */
+  readonly looksLike: string;
   readonly marker: string;
 }
 
