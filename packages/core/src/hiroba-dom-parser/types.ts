@@ -1,4 +1,12 @@
-import type { CrownState, Level, Score, ScoreRank, ScoreRecord, Song } from "../hiroba-models";
+import type {
+  CrownState,
+  Genre,
+  Level,
+  Score,
+  ScoreRank,
+  ScoreRecord,
+  Song,
+} from "../hiroba-models";
 
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */
 export type ParseFailure = LoggedOutFailure | MissingMarkerFailure | UnreadableValueFailure;
@@ -23,6 +31,11 @@ export interface ScoreListReading {
  */
 export interface RecentPlay {
   readonly songTitle: string;
+  /**
+   * The row's genre, carried only by the title's font class, and the one signal that can separate
+   * two songs sharing a title. Null when the class names a genre outside Hiroba's eight.
+   */
+  readonly genre: Genre | null;
   readonly level: Level;
   readonly crown: CrownState;
   /** Beside `crown` rather than inside the record, so it sits where a Score's rank sits. */

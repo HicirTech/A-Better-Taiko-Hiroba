@@ -2,6 +2,7 @@ import type { HTMLElement } from "node-html-parser";
 
 import {
   type CrownState,
+  type Genre,
   type Level,
   type PlayOptions,
   playedOrNone,
@@ -33,6 +34,23 @@ const ROW_CROWNS: Readonly<Record<string, CrownState>> = {
   "4": "donderful",
 };
 
+/**
+ * The page's only genre signal is the suffix of the title's font class, `songNameFont<name>`,
+ * which these names map onto the genre numbers `score_list.php?genre=N` uses. A name outside this
+ * table reads as no genre rather than failing: the site may add a genre, and a row whose genre is
+ * merely unknown is still a complete play.
+ */
+const ROW_GENRES: Readonly<Record<string, Genre>> = {
+  jpop: 1,
+  anime: 2,
+  kids: 3,
+  vocaloid: 4,
+  game: 5,
+  namco: 6,
+  variety: 7,
+  classic: 8,
+};
+
 /** Each count cell is named by its label image, `score_name_<key>_640.png`. */
 const COUNT_KEYS: Readonly<Record<string, keyof ScoreRecord>> = {
   good: "good",
@@ -55,8 +73,9 @@ const OPTION_CELL_COUNT = 5;
  * Each row carries what that chart's detail page carries, field for field, plus the サポート譜面
  * slot no other page exposes. What it does not carry is a song number: nothing on the page names
  * one, so a row stays a `RecentPlay` until a caller resolves its title and can call
- * `scoreFromRecentPlay`. Recency is the array's order and nothing more — the rows have no
- * timestamps, and none are invented.
+ * `scoreFromRecentPlay`. The row's genre travels with it for that resolver's sake: it is the only
+ * signal on the page that can separate two songs sharing a title. Recency is the array's order and
+ * nothing more — the rows have no timestamps, and none are invented.
  */
 export function parseRecentPlaysPage(html: string): Result<readonly RecentPlay[], ParseFailure> {
   const page = parsePage(html, PAGE);
@@ -103,10 +122,13 @@ export function scoreFromRecentPlay(
 }
 
 function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
-  const songTitle = row.querySelector("li.songNameTitleScore h2")?.text.trim() ?? "";
+  const titleNode = row.querySelector("li.songNameTitleScore h2");
+  const songTitle = titleNode?.text.trim() ?? "";
   if (songTitle === "") {
     return err({ kind: "missingMarker", page: PAGE, marker: "li.songNameTitleScore h2" });
   }
+  const genreName = titleNode?.getAttribute("class")?.match(/songNameFont(\w+)/)?.[1] ?? "";
+  const genre = ROW_GENRES[genreName] ?? null;
 
   // The level icon already says 5 for an ura chart; the ura badge beside the title is decoration.
   const levelSrc = row.querySelector("img.levelIcon")?.getAttribute("src") ?? "";
@@ -158,6 +180,7 @@ function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
 
   return ok({
     songTitle,
+    genre,
     level: level as Level,
     crown: crown === "none" ? playedOrNone(counts.value.stageCount) : crown,
     scoreRank: scoreRank as ScoreRank | null,
