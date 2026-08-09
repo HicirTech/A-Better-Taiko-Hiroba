@@ -26,6 +26,15 @@ export interface Profile {
   readonly danLabelImageUrl: string | null;
   readonly medal: Medal | null;
   readonly myDonImageUrl: string | null;
+  /** The single 大好きな曲 the profile shows, or null when it is 未設定 — a normal state. */
+  readonly favoriteSong: FavoriteSong | null;
+  /**
+   * The お気に入り folder (up to 30 songs) in page order, empty being a normal state. The page
+   * names these songs by title only — no song number, link or data attribute anywhere in the
+   * block — so titles are all this can carry; resolving a title back to a song number is the
+   * song catalogue's job, not this page's.
+   */
+  readonly favoriteFolderTitles: readonly string[];
   readonly summary: ProfileSummary;
   readonly fetchedAt: string;
 }
@@ -34,6 +43,18 @@ export interface Profile {
 export interface Medal {
   readonly name: string;
   readonly count: number;
+}
+
+/** The one song a profile shows as its 大好きな曲. */
+export interface FavoriteSong {
+  /**
+   * Read from the block's hidden `song_no` input — the only place the block exposes a number.
+   * My page fills it whenever a favourite is set, so a title normally arrives with its number.
+   * Nullable because the title is the field the page is built around and a reader that has one
+   * without the other should still hand back what it read.
+   */
+  readonly songNo: string | null;
+  readonly title: string;
 }
 
 export interface ProfileSummary {
