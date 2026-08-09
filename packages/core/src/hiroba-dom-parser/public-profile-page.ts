@@ -99,8 +99,11 @@ export function parsePublicProfilePage(
     });
   }
   const title = titleBlock.text.trim();
-  // The nickname block's own contents differ between captures — two nested divs on some profiles,
-  // none on others — so its text is taken whole rather than from a child at a fixed position.
+  // The nickname block's own contents are decided by whether the player has a dan: with a dan
+  // label it is a two-child flex row, without one the text sits directly in the block. 19 of 19
+  // captured profiles agree. That is why a reader lifted from my page fails here — my page always
+  // has a label, so the flat form never appears there — and why this takes the text whole rather
+  // than descending to a child at a fixed position.
   const nickname = nicknameBlock.text.trim();
   if (nickname === "") {
     return err({
