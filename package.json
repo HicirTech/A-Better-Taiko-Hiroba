@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit -p packages/core",
     "format": "biome format --write .",
     "format:check": "biome format .",
-    "lint": "biome lint ."
+    "lint": "biome lint .",
+    "check:corpus": "bun run packages/core/scripts/check-corpus.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.5",

@@ -5,6 +5,7 @@
  */
 import { describe, expect, test } from "bun:test";
 
+import type { Genre } from "../src/index";
 import { isErr, isOk, parseRecentPlaysPage, scoreFromRecentPlay } from "../src/index";
 
 const COUNTS = {
@@ -150,9 +151,22 @@ describe("parseRecentPlaysPage", () => {
   });
 
   test("the title's font class carries the row's genre, as Hiroba numbers genres", () => {
-    expect(firstPlay(page([row({ font: "jpop" })])).genre).toBe(1);
-    expect(firstPlay(page([row({ font: "vocaloid" })])).genre).toBe(4);
-    expect(firstPlay(page([row({ font: "classic" })])).genre).toBe(8);
+    // All eight, because the real corpus decodes all eight — genre 3 from exactly one row, which
+    // is precisely the kind of value an excerpt test has to hold once the corpus goes away.
+    const genres: [string, Genre][] = [
+      ["jpop", 1],
+      ["anime", 2],
+      ["kids", 3],
+      ["vocaloid", 4],
+      ["game", 5],
+      ["namco", 6],
+      ["variety", 7],
+      ["classic", 8],
+    ];
+
+    for (const [font, genre] of genres) {
+      expect(firstPlay(page([row({ font })])).genre).toBe(genre);
+    }
   });
 
   test("a font class outside the eight genres reads as no genre, not as a broken page", () => {
