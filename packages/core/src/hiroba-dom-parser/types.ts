@@ -201,3 +201,98 @@ export interface DanBoardPanel {
 export interface DanBoardReading {
   readonly panels: readonly DanBoardPanel[];
 }
+
+/**
+ * Which of the three tables a ranking reading holds, from the page's own `#rank` input.
+ *
+ * The three are the **same markup** — same rows, same pager, same everything — and differ only in
+ * that hidden value and, on the detail page, the banner image. So a reading that did not carry this
+ * could be compared against the wrong table without anything looking wrong, which is why it is a
+ * required field rather than an optional hint.
+ */
+export type RankScope = "japan" | "prefecture" | "world";
+
+/** One row of `rank_detail.php`. */
+export interface RankingEntry {
+  /** `1位` read as `1`. */
+  readonly position: number;
+  /**
+   * The player's Donder name. It sits inside `.rankingDetailScore`, not in a field of its own —
+   * that block holds the name in a `<span>` and the score as a bare text node after a `<br>`.
+   */
+  readonly playerName: string;
+  /** From the row's profile link, the only place the row names an id. */
+  readonly taikoNo: string;
+  /** `1015360点` read as `1015360`. */
+  readonly score: number;
+  readonly myDonImageUrl: string | null;
+  /**
+   * `score_detail.php?taiko_no=…` for this player's chart, or null.
+   *
+   * The `.rankingDetailMore` div is always emitted; the **anchor inside it** is what is optional,
+   * and it appears exactly when that player's profile is open. A null here is their privacy
+   * setting, not a gap in the page — and following the link for a player who has none answers the
+   * site's `※プロフィール非公開のため閲覧できません` page.
+   */
+  readonly detailUrl: string | null;
+}
+
+/**
+ * One page of one chart's ranking table.
+ *
+ * **Nothing here is current.** The site says so itself on every one of these pages, and
+ * `stalenessNotice` carries that sentence out of the parser so a caller cannot present a ranking as
+ * live: the tables are rebuilt once a day at 10:00 JST and show play up to the previous day. A
+ * score set today is not in here.
+ */
+export interface RankingReading {
+  readonly scope: RankScope;
+  /**
+   * Which chart this table is for, read back from the page's header block.
+   *
+   * **Not in the rows** — a row names only a player — and the caller already knows what it asked
+   * for, so this is here for the same reason `scope` is: a reading that cannot say which chart it
+   * holds can be filed against the wrong one without anything looking wrong. `.songName` does not
+   * exist on this page; the title is an `h2` inside `div.songNameBox<genre>`.
+   */
+  readonly songTitle: string;
+  readonly level: number | null;
+  /** The prefecture id for a `prefecture` reading, null for the other two. */
+  readonly area: number | null;
+  readonly entries: readonly RankingEntry[];
+  /** The `page=N` the pager offers in each direction, or null where it offers none. */
+  readonly nextPage: number | null;
+  readonly previousPage: number | null;
+  /**
+   * The site's own daily-staleness sentence, verbatim. Present on every captured `rank_detail.php`
+   * and on **no** `rank_list.php`; null would mean the site stopped saying it.
+   */
+  readonly stalenessNotice: string | null;
+  /**
+   * The in-page notice when the table has no rows at all — `ランキングデータがありません`.
+   *
+   * A chart nobody has ranked is an ordinary answer, **not** the site's error page: it arrives at
+   * 200 with the banner, the song box and the pager all intact and only the row list missing. The
+   * error page is a different thing and a different failure.
+   */
+  readonly notice: string | null;
+}
+
+/** One song on `rank_list.php`, and the ranking table for each of its charts. */
+export interface RankListSong {
+  readonly title: string;
+  /** `level` → the `rank_detail.php` URL the page offers for that chart. */
+  readonly chartUrls: Readonly<Record<number, string>>;
+}
+
+/**
+ * `rank_list.php` — a genre's songs and where each chart's table is.
+ *
+ * The point of reading this page rather than synthesising the URLs is that it is the only thing
+ * that says **which songs are ranked at all**: it omits 【双打】 songs, which the score list carries.
+ * It is otherwise information-free — no crown, no rank, no played flag.
+ */
+export interface RankListReading {
+  readonly scope: RankScope;
+  readonly songs: readonly RankListSong[];
+}
