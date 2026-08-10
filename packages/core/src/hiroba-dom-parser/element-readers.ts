@@ -5,14 +5,14 @@ import { err, ok, type Result } from "../operation-results";
 import type { ParseFailure } from "./types";
 
 /**
- * Reads a count the way Hiroba writes one: `933,050点`, `3回`, or a bare number. The separator and
- * the unit are the page's decoration; the number is the value. Null when the text is not a count
- * at all, so the caller decides whether that is a failure or a legitimate absence.
+ * Reads a count the way Hiroba writes one: `933,050点`, `3回`, `1位`, or a bare number. The
+ * separator and the unit are the page's decoration; the number is the value. Null when the text is
+ * not a count at all, so the caller decides whether that is a failure or a legitimate absence.
  */
 export function readCountText(raw: string | null | undefined): number | null {
   const digits = raw
     ?.trim()
-    .match(/^([\d,]+)[点回]?$/)?.[1]
+    .match(/^([\d,]+)[点回位]?$/)?.[1]
     ?.replaceAll(",", "");
   return digits === undefined || digits === "" ? null : Number(digits);
 }
