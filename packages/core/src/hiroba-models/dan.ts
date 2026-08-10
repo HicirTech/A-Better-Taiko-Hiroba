@@ -1,3 +1,5 @@
+import type { Level } from "./vocabulary";
+
 /**
  * Whether a dan is passed, and how well. It exists nowhere in Hiroba's HTML — it is baked into
  * the plate image as a 合格 stamp and read back out of the image bytes.
@@ -43,10 +45,20 @@ export function isBetterDanClearState(candidate: DanClearState, current: DanClea
 }
 
 /**
- * A dan-course record — its own model, not a score. 段位道場 is a separate game mode: three set
- * songs, pass conditions with thresholds, and per-condition bests that need not come from one
- * attempt. Dan is absent by default; most fields survive exactly as Hiroba prints them because
- * the units are mixed (percent, counts) and the print is the contract.
+ * A dan-course record — its own model, not a score. 段位道場 is a separate game mode with rules the
+ * rest of the site does not share, and two of them shape everything here:
+ *
+ * **Passing belongs to the dan, not to a song.** There is one verdict per dan — `clearState` — and
+ * it is not assembled from the three songs. A song has a record; it does not have a pass.
+ *
+ * **The run can end before the songs do.** The three 課題曲 are played in order and a condition
+ * broken on the first ends the attempt there, so the second and third are never reached. So a
+ * missing song record is an ordinary outcome of a *played* dan, not only of an unplayed one, and
+ * nothing may infer "not attempted" from it.
+ *
+ * Dan is absent by default — most accounts hold none, and that is not a parse failure. Most fields
+ * survive exactly as Hiroba prints them because the units are mixed (percent, counts) and the print
+ * is the contract.
  */
 export interface DanRecord {
   readonly taikoNo: string;
@@ -54,7 +66,23 @@ export interface DanRecord {
   readonly dan: number;
   /** From the plate image — the one place Hiroba records it. */
   readonly clearState: DanClearState;
+  /**
+   * Whether the page holds a record for this dan at all, from its own `p.head_error`: empty when
+   * there is one, `スコアが登録されてないドン！` when there is not.
+   *
+   * **It says "no score registered", which is not the same as "not passed"** — a dan attempted and
+   * failed has a score. No capture separates the two, because this account has no failed dan, so
+   * treating a false here as "unpassed" reads more into the page than it says. The verdict is
+   * `clearState`, and it comes from the plate.
+   */
+  readonly hasRecord: boolean;
   readonly totalScore: number | null;
+  /**
+   * The best attempt's six counts across the whole run, or null when the page shows `-` for every
+   * one of them. Not derivable from `songs`: `maxCombo` chains across songs rather than summing,
+   * and a run that ended early has counts for fewer songs than the total covers.
+   */
+  readonly totalCounts: DanSongCounts | null;
   /** The best attempt's conditions: requirement vs achieved. */
   readonly conditions: readonly DanCondition[];
   /** 条件毎の成績 — the best per condition, which need not come from the same attempt. */
@@ -65,21 +93,83 @@ export interface DanRecord {
   readonly fetchedAt: string;
 }
 
-/** One pass condition as Hiroba prints it, e.g. 魂ゲージ / 98%以上 / 100%. */
-export interface DanCondition {
-  readonly name: string;
+/**
+ * One pass condition. **A condition is judged against the dan, never against a song** — see
+ * `DanRecord` — but the page prints it in two shapes and they are not interchangeable.
+ *
+ * `course` is one threshold for the whole run: 魂ゲージ 100%以上. `perSong` is the *same* condition
+ * tightened song by song — 可 under 18, then under 25, then under 30 — so it carries one
+ * (requirement, achieved) pair per 課題曲 rather than one for the run. A reader that assumes one
+ * pair per condition silently drops two thirds of the second shape.
+ *
+ * Both shapes appear on the same page: of the captured detail pages, 十段 mixes two of each and
+ * 九段 three course conditions with one per-song. `requirement` and `achieved` stay as Hiroba
+ * prints them, units and all (`100%以上`, `-回`), because the units are mixed and the print is the
+ * contract.
+ */
+export type DanCondition =
+  | {
+      readonly kind: "course";
+      readonly name: string;
+      readonly requirement: string;
+      readonly achieved: string;
+    }
+  | {
+      readonly kind: "perSong";
+      readonly name: string;
+      /** One entry per 課題曲, in play order. Three on every captured page. */
+      readonly songs: readonly DanConditionStep[];
+    };
+
+/** One 課題曲's threshold for a per-song condition, and what was achieved against it. */
+export interface DanConditionStep {
   readonly requirement: string;
   readonly achieved: string;
 }
 
-/** One of the three 課題曲 and its counts. */
+/**
+ * One of the three 課題曲.
+ *
+ * Every field is nullable, and each null means a different thing the page states plainly:
+ *
+ * - `title` is null when the page **masks** the song as `？？？`. 十段 does this to its second and
+ *   third songs even though the dan is merely unattempted, while 九段 in the same state names all
+ *   three — so masking is that dan's property, not a consequence of not having played it.
+ * - `level` is null on a masked song, which ships no level icon at all. It can be `5`: a dan course
+ *   may set an **ura** chart, and 四段's third song is one.
+ * - `record` is null when there is no per-song record to show. An unattempted dan renders no
+ *   `.scoreDetailTable` for any song. **A dan run can also stop early** — failing the first song
+ *   ends the attempt, so the second and third are never played — and what the page renders for a
+ *   song reached that way has **not been observed**: no captured dan is half-played, and
+ *   `dan_detail.php` takes no `taiko_no`, so only this account's own history can produce one.
+ */
 export interface DanSongResult {
-  readonly title: string;
+  readonly title: string | null;
+  readonly level: Level | null;
+  readonly record: DanSongCounts | null;
+}
+
+/**
+ * The six counts this page keeps, per 課題曲 and again for the whole run.
+ *
+ * `hits` (叩けた数) is the sixth and is easy to miss — the score pages do not carry it. The
+ * mapping from the site's `score_name_*` / `txt_score_00N` labels was settled by arithmetic on a
+ * real record rather than by reading the labels: five of the six whole-run figures are exactly the
+ * sum of their per-song values (良 1710, 可 400, 不可 25, 連打 146, 叩けた数 2256).
+ *
+ * **`maxCombo` is the exception and must never be summed**, because in this mode **the combo carries
+ * across songs**. On the same record the three songs give 765, 454 and 252 while the run gives
+ * 1219 — which is 765 + 454, the first two chained, with the third broken by that song's 24 不可.
+ * So the whole-run figure is the longest unbroken run of the attempt and is neither the sum of the
+ * three nor the largest of them.
+ */
+export interface DanSongCounts {
   readonly good: number;
   readonly ok: number;
   readonly bad: number;
   readonly drumroll: number;
   readonly maxCombo: number;
+  readonly hits: number;
 }
 
 /**

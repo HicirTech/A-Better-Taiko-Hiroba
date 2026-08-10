@@ -10,6 +10,7 @@
 export { parseCostumePage } from "./costume-page";
 export { parsePage, requireMarker } from "./parser";
 export { parseProfilePage } from "./profile-page";
+export { parseDanBoardPage, parseDanDetailPage } from "./dan-pages";
 export { parsePlayerRowsPage } from "./player-rows";
 export { parsePublicProfilePage } from "./public-profile-page";
 export { parseRecentPlaysPage, scoreFromRecentPlay } from "./recent-plays-page";
@@ -23,7 +24,10 @@ export type {
   PlayerRow,
   PlayerRowDan,
   RecentPlay,
+  DanBoardPanel,
+  DanBoardReading,
   ScoreListReading,
+  SiteErrorFailure,
   UnreadableValueFailure,
   WrongPageFailure,
 } from "./types";

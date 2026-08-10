@@ -13,6 +13,7 @@ import type {
 export type ParseFailure =
   | LoggedOutFailure
   | MissingMarkerFailure
+  | SiteErrorFailure
   | UnreadableValueFailure
   | WrongPageFailure;
 
@@ -52,6 +53,25 @@ export interface LoggedOutFailure {
   readonly kind: "loggedOut";
   /** The page that was requested — not the login page Hiroba answered with. */
   readonly page: string;
+}
+
+/**
+ * Hiroba answered with its own error page — **at HTTP 200**, like everything else it serves.
+ *
+ * Detected on the *shell* (`<h1>エラー</h1>` plus a bare table and no login form), never on the
+ * message: four messages are known, a fifth should be expected, and a message-matching detector
+ * falls straight through it. The message is carried so a caller can say which mistake was made —
+ * a bad or missing parameter, a value that does not exist, a request refused for want of
+ * `X-Requested-With`, or another player's privacy setting — but it is an explanation, not the test.
+ *
+ * Distinct from `missingMarker`, which says "this page changed"; this says "this is the error
+ * page", and the two want opposite responses.
+ */
+export interface SiteErrorFailure {
+  readonly kind: "siteError";
+  readonly page: string;
+  /** The message the shell carried, verbatim; empty when it carried none. */
+  readonly message: string;
 }
 
 export interface MissingMarkerFailure {
@@ -148,4 +168,36 @@ export interface PlayerListReading {
   readonly pageCount: number | null;
   /** The site's own in-page notice when there is nothing to show, verbatim; null when absent. */
   readonly notice: string | null;
+}
+
+/**
+ * One of the nineteen panels on `dan_top.php`.
+ *
+ * The board is the one page that says which dan exist and in what order, and it says nothing else:
+ * **whether a dan is passed is not in this HTML at all**, only in the plate image's pixels. So a
+ * panel carries the image's URL and leaves the verdict to `readDanPlate`.
+ */
+export interface DanBoardPanel {
+  /** Board order, 1–19. 1–15 are 五級…十段; 16–19 are the four named ranks. */
+  readonly dan: number;
+  /** The romanised name the panel prints — `FIFTH KYU`, `TENTH DAN`, `KUROTO`. */
+  readonly name: string;
+  readonly plateImageUrl: string;
+  /**
+   * True when the plate is rendered for this account (`imgsrc_dani.php?taiko_no=…`), false when
+   * the board serves shared static art instead.
+   *
+   * On the only account seen, the fifteen numbered dan are rendered and the four named ranks serve
+   * `dani_plate_16..19_no_640.png` — the `_no` form. **What the board renders for an *earned*
+   * named rank has never been seen**, so nothing here may treat static art as proof of anything
+   * beyond "not rendered for you".
+   */
+  readonly plateIsRendered: boolean;
+  /** `dan_detail.php?dan=N` for 1–15; null for the named ranks, which have no detail page. */
+  readonly detailUrl: string | null;
+}
+
+/** The board, in board order. */
+export interface DanBoardReading {
+  readonly panels: readonly DanBoardPanel[];
 }
