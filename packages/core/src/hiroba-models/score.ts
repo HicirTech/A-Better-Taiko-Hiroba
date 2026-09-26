@@ -43,8 +43,10 @@ export interface Score {
  * **null where the page does not print them, never 0**: a 0 would be stored as a fact about the
  * player. My detail page and the recent-plays page print all four on every capture, and their
  * readers require them, so a record from either never holds a null. Another player's detail page
- * printed none of the four on the one capture there is (one player, 2026-08-09); whether that is the
- * page's rule for other players or that player's setting is not known.
+ * printed none of the four on the one capture there is (one player, 2026-08-09). Why is not known,
+ * and there are three candidates: the page's rule for other players, that player's setting, or the
+ * request, which carried no `other=1&mode=0`. The wiki's score detail page says which captures
+ * would tell them apart.
  */
 export interface ScoreRecord {
   readonly highScore: number;
