@@ -13,7 +13,8 @@
     "build:web": "bun --bun vite build",
     "build:electron": "bun scripts/build-electron.ts",
     "build": "bun run build:web && bun run build:electron",
-    "start": "electron ."
+    "start": "electron .",
+    "e2e:desktop": "bun run build && bun scripts/e2e-desktop.ts"
   },
   "devDependencies": {
     "@abth/core": "workspace:*",
