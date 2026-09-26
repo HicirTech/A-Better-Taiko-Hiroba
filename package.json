@@ -11,7 +11,7 @@
   },
   "scripts": {
     "test": "bun test",
-    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/i18n",
+    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/i18n && tsc --noEmit -p apps/gui && tsc --noEmit -p apps/gui/tsconfig.node.json",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome lint ."
