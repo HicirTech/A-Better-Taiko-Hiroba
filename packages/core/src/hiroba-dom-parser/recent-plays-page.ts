@@ -198,7 +198,11 @@ function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
   });
 }
 
-type Counts = Omit<ScoreRecord, "highScore" | "options">;
+/**
+ * Every row prints all nine counts, so none is ever null here — the record's four nullable play
+ * counts are only ever null on another player's detail page.
+ */
+type Counts = Readonly<Record<Exclude<keyof ScoreRecord, "highScore" | "options">, number>>;
 
 /** Reads the nine count cells by their label images; a cell the page does not name is skipped. */
 function readCounts(row: HTMLElement): Result<Counts, ParseFailure> {

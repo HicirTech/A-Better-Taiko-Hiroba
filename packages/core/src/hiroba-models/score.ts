@@ -3,8 +3,12 @@ import type { CrownState, Level, ScoreRank } from "./vocabulary";
 
 /**
  * Which viewport last filled a score, in increasing order of completeness of source:
- * the genre list (crown and rank only), the detail page (everything), or the recent-plays page
- * (everything, for five recently played charts a page at a time).
+ * the genre list (crown and rank only), the detail page (everything it prints), or the recent-plays
+ * page (everything, for five recently played charts a page at a time).
+ *
+ * **`detail` does not mean every field is known.** Another player's detail page has been seen
+ * printing four counts fewer than mine, and those come back null — see `ScoreRecord`. A sync that
+ * asks "is this chart complete?" reads the nulls, not the fidelity.
  */
 export type ScoreFidelity = "list" | "detail" | "recent";
 
@@ -32,7 +36,16 @@ export interface Score {
   readonly fetchedAt: string;
 }
 
-/** The full record the detail and recent-plays pages carry. */
+/**
+ * The record the detail and recent-plays pages carry.
+ *
+ * The four play counts — `stageCount`, `clearCount`, `fullComboCount`, `donderfulComboCount` — are
+ * **null where the page does not print them, never 0**: a 0 would be stored as a fact about the
+ * player. My detail page and the recent-plays page print all four on every capture, and their
+ * readers require them, so a record from either never holds a null. Another player's detail page
+ * printed none of the four on the one capture there is (one player, 2026-08-09); whether that is the
+ * page's rule for other players or that player's setting is not known.
+ */
 export interface ScoreRecord {
   readonly highScore: number;
   /** 良 hits. */
@@ -44,10 +57,14 @@ export interface ScoreRecord {
   /** 連打 hits. */
   readonly drumroll: number;
   readonly maxCombo: number;
-  readonly stageCount: number;
-  readonly clearCount: number;
-  readonly fullComboCount: number;
-  readonly donderfulComboCount: number;
+  /** Times played. Null where the page does not print it — see above. */
+  readonly stageCount: number | null;
+  /** Times cleared. Null where the page does not print it. */
+  readonly clearCount: number | null;
+  /** Full combos. Null where the page does not print it. */
+  readonly fullComboCount: number | null;
+  /** Donderful combos. Null where the page does not print it. */
+  readonly donderfulComboCount: number | null;
   readonly options: PlayOptions;
 }
 
