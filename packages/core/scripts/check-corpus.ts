@@ -25,6 +25,7 @@ import {
   parsePlayerRowsPage,
   parseProfilePage,
   parsePublicProfilePage,
+  parsePublicScoreDetailPage,
   parseRankDetailPage,
   parseRankListPage,
   parseRecentPlaysPage,
@@ -61,9 +62,10 @@ interface Route {
   readonly run: (html: string, file: string) => { failure: ParseFailure | null; value: unknown };
   /**
    * A refusal this capture is expected to produce, with the reason. Anything else from this route
-   * is unexplained and fails the run.
+   * is unexplained and fails the run. Most routes decide on the filename alone; a route that also
+   * checks the failure's kind says so.
    */
-  readonly expect?: (file: string) => string | null;
+  readonly expect?: (file: string, failure: ParseFailure) => string | null;
 }
 
 /** The genre a score-list capture was fetched for, from its name. */
@@ -72,14 +74,26 @@ function genreOf(file: string): Genre {
   return (digit >= 1 && digit <= 8 ? digit : 1) as Genre;
 }
 
-/** The chart a score-detail capture was fetched for, from its name. */
+/** The chart one of my score-detail captures was fetched for, from its name. */
 function chartOf(file: string): [string, Level] {
   const songNo = file.match(/score-detail-(\d+)/)?.[1] ?? "0";
   const level = Number(file.match(/lvl(\d)/)?.[1] ?? 4);
   return [songNo, (level >= 1 && level <= 5 ? level : 4) as Level];
 }
 
-/** The profile's subject: from the filename when it says, otherwise from the page itself. */
+/**
+ * The chart another player's detail capture shows, from the page's own ranking link — those files
+ * are named after the player, so `chartOf` would read the taiko number as a song number. Falls back
+ * like `chartOf` where the page has no link: only the closed-profile shell, which never parses, so
+ * the guess never reaches the coverage ledger.
+ */
+function chartOnPage(html: string): [string, Level] {
+  const link = html.match(/rank_detail\.php\?rank=\d&song_no=(\d+)&level=(\d)/);
+  const level = Number(link?.[2] ?? 4);
+  return [link?.[1] ?? "0", (level >= 1 && level <= 5 ? level : 4) as Level];
+}
+
+/** A capture's subject: from the filename when it says, otherwise from the page itself. */
 function subjectOf(html: string, file: string): string {
   return file.match(/(\d{12})/)?.[1] ?? html.match(/太鼓番：(\d{12})/)?.[1] ?? TAIKO_NO;
 }
@@ -93,17 +107,8 @@ function attempt<T>(result: { ok: true; value: T } | { ok: false; error: ParseFa
 /** The site's own error page is a property of the request, never of the parser. */
 const SITE_ERROR = "the site's error page — a bad parameter or a value that does not exist";
 const LOGGED_OUT = "captured while logged out, on purpose";
-
-/**
- * Another player's `score_detail.php` is a **different shape**, exactly as their profile was.
- *
- * Measured: it carries no `.stage_cnt` and no `.clear_cnt` at all — no play count, no clear count —
- * and one record block where my page has six, because it has no 区間毎の成績 sections. So this is
- * not a defect in `parseScoreDetailPage`, which is my page's reader; it is a page nobody has
- * written a reader for. Reachable in practice: a ranking row links straight to it.
- */
-const OTHER_PLAYERS_DETAIL =
-  "another player's detail page — no .stage_cnt/.clear_cnt and no 区間 blocks; needs its own reader";
+/** The same error page, carrying a privacy refusal rather than a bad request. */
+const CLOSED_PROFILE = "the site's error page — this player has closed their profile";
 
 const ROUTES: readonly Route[] = [
   {
@@ -114,20 +119,29 @@ const ROUTES: readonly Route[] = [
     run: (html, file) => attempt(parseScoreListPage(html, TAIKO_NO, genreOf(file), FETCHED_AT)),
   },
   {
+    // Another player's detail page. The files are named after the player, so the subject comes
+    // from the filename and the chart from the page. This must sit above my page's route, whose
+    // pattern matches these files too. The closed profile is expected as `siteError` and nothing
+    // else: any other refusal from it would be a finding.
+    match: /^score-detail-\d{12}-/,
+    parser: "parsePublicScoreDetailPage",
+    run: (html, file) => {
+      const [songNo, level] = chartOnPage(html);
+      return attempt(
+        parsePublicScoreDetailPage(html, subjectOf(html, file), songNo, level, FETCHED_AT),
+      );
+    },
+    expect: (file, failure) =>
+      file.includes("-private") && failure.kind === "siteError" ? CLOSED_PROFILE : null,
+  },
+  {
     match: /^score-detail-/,
     parser: "parseScoreDetailPage",
     run: (html, file) => {
       const [songNo, level] = chartOf(file);
       return attempt(parseScoreDetailPage(html, TAIKO_NO, songNo, level, FETCHED_AT));
     },
-    expect: (file) =>
-      file.includes("loggedout")
-        ? LOGGED_OUT
-        : file.includes("private")
-          ? SITE_ERROR
-          : file.includes("-public")
-            ? OTHER_PLAYERS_DETAIL
-            : null,
+    expect: (file) => (file.includes("loggedout") ? LOGGED_OUT : null),
   },
   {
     match: /^history-recent/,
@@ -236,7 +250,7 @@ async function main(): Promise<number> {
       file,
       parser: route.parser,
       failure,
-      expected: failure === null ? null : (route.expect?.(base) ?? null),
+      expected: failure === null ? null : (route.expect?.(base, failure) ?? null),
       value,
     });
   }
