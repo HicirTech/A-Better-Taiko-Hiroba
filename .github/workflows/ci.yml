@@ -25,7 +25,7 @@ jobs:
         with:
           # Pinned, not "latest": a toolchain that changes without a commit makes a green run
           # unrepeatable. Keep this in step with engines.bun in package.json.
-          bun-version: 1.2.19
+          bun-version: 1.4.2
 
       - name: Cache dependencies
         uses: actions/cache@v4
