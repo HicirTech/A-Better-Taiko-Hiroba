@@ -9,3 +9,7 @@ coverage/
 *.db
 .env
 .env.*
+# Android release signing: the key and its passwords never enter git.
+*.jks
+*.keystore
+keystore.properties

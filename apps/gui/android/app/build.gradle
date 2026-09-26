@@ -1,5 +1,13 @@
 apply plugin: 'com.android.application'
 
+// A local release key, made once with `bun run android:keystore`. The key and its passwords stay
+// out of git (*.jks, keystore.properties); without them a release build is left unsigned.
+def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 android {
     namespace = "com.hicirtech.taikohiroba"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -19,12 +27,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile rootProject.file(keystoreProperties["storeFile"])
+                storePassword keystoreProperties["storePassword"]
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+            }
+        }
+    }
     buildTypes {
         debug {
             applicationIdSuffix ".debug"
             manifestPlaceholders = [appLabel: "A Better Taiko Hiroba (debug)"]
         }
         release {
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

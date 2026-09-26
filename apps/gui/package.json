@@ -20,7 +20,10 @@
     "smoke:packaged": "bun scripts/smoke-packaged.ts",
     "android:apk": "bun scripts/android.ts apk",
     "android:run": "bun scripts/android.ts run",
-    "android:live": "bun scripts/android.ts live"
+    "android:live": "bun scripts/android.ts live",
+    "android:keystore": "bun scripts/android.ts keystore",
+    "android:release": "bun scripts/android.ts release",
+    "android:install-release": "bun scripts/android.ts install-release"
   },
   "build": {
     "appId": "com.hicirtech.taikohiroba",
