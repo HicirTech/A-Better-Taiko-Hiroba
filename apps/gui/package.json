@@ -17,7 +17,10 @@
     "e2e:desktop": "bun run build && bun scripts/e2e-desktop.ts",
     "dist:dir": "bun run build && electron-builder --win --dir",
     "dist:win": "bun run build && electron-builder --win nsis portable",
-    "smoke:packaged": "bun scripts/smoke-packaged.ts"
+    "smoke:packaged": "bun scripts/smoke-packaged.ts",
+    "android:apk": "bun scripts/android.ts apk",
+    "android:run": "bun scripts/android.ts run",
+    "android:live": "bun scripts/android.ts live"
   },
   "build": {
     "appId": "com.hicirtech.taikohiroba",
@@ -50,6 +53,9 @@
   "devDependencies": {
     "@abth/core": "workspace:*",
     "@abth/i18n": "workspace:*",
+    "@capacitor/android": "8.5.2",
+    "@capacitor/cli": "8.5.2",
+    "@capacitor/core": "8.5.2",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@fontsource/roboto": "5.3.0",
