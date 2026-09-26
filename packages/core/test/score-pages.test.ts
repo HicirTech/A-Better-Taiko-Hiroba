@@ -257,8 +257,8 @@ function detailExcerpt(options: {
       <div class="optionImage">${optionImages}</div>
       <div class="stage_cnt"><img src="x.png" /><span>${options.stage}回</span></div>
       <div class="clear_cnt"><img src="x.png" /><span>3回</span></div>
-      <div class="full_combo_cnt"><img src="x.png" /><span>1回</span></div>
-      <div class="dondaful_combo_cnt"><img src="x.png" /><span>0回</span></div>
+      <div class="full_combo_cnt"><img src="x.png" /><span>2回</span></div>
+      <div class="dondaful_combo_cnt"><img src="x.png" /><span>1回</span></div>
     </div>
     ${sections}
   </body></html>`;
@@ -280,6 +280,43 @@ describe("parseScoreDetailPage", () => {
     expect(result.value.crown).toBe("gold");
     expect(result.value.scoreRank).toBe(6);
     expect(result.value.record?.options.speed).toBe(2);
+  });
+
+  test("my page's record carries all four play counts, each from its own block", () => {
+    // The type lets these four be null, for another player's page. On mine, only this pins them.
+    const result = parseScoreDetailPage(
+      detailExcerpt({ crown: 2, rank: 6, stage: 4, optionCodes: ["a3"] }),
+      "000000000000",
+      "1178",
+      4,
+      T,
+    );
+
+    if (!isOk(result)) {
+      throw new Error(`expected a reading, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value).toEqual({
+      taikoNo: "000000000000",
+      songNo: "1178",
+      level: 4,
+      crown: "gold",
+      scoreRank: 6,
+      fidelity: "detail",
+      record: {
+        highScore: 933050,
+        good: 308,
+        ok: 49,
+        bad: 0,
+        drumroll: 87,
+        maxCombo: 357,
+        stageCount: 4,
+        clearCount: 3,
+        fullComboCount: 2,
+        donderfulComboCount: 1,
+        options: { speed: 2, doron: false, abekobe: false, random: "none", supportChart: null },
+      },
+      fetchedAt: T,
+    });
   });
 
   test("the per-section blocks repeat the record's markers and must not bleed into it", () => {
@@ -429,6 +466,23 @@ describe("parseScoreDetailPage", () => {
       marker: ".pound_cnt",
     });
   });
+
+  test.each([".stage_cnt", ".clear_cnt", ".full_combo_cnt", ".dondaful_combo_cnt"])(
+    "my page always prints %s, so a page without it is refused rather than read as null",
+    (marker) => {
+      const broken = detailExcerpt({ crown: 2, rank: 6, stage: 4, optionCodes: [] }).replace(
+        marker.slice(1),
+        "gone",
+      );
+
+      const result = parseScoreDetailPage(broken, "0", "1", 4, T);
+
+      if (!isErr(result)) {
+        throw new Error("expected a failure");
+      }
+      expect(result.error).toEqual({ kind: "missingMarker", page: "score_detail.php", marker });
+    },
+  );
 
   test("another player's page is still refused here, naming the first play count it lacks", () => {
     const result = parseScoreDetailPage(
