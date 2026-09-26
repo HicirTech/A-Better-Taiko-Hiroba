@@ -6,11 +6,11 @@ export interface HirobaEndpoints {
   readonly idpHost: string;
 }
 
-/** Where a URL seen during sign-in is, judged by host and path only, never by substring. */
+/** Where a URL seen during sign-in is, judged by origin and path only, never by substring. */
 export type SignInStep =
   /** login.php or login_process.php: the user has not reached the ID form yet. */
   | "hirobaLogin"
-  /** The Bandai Namco ID host: the form, the passkey interstitial. */
+  /** The Bandai Namco ID host on Hiroba's scheme: the form, the passkey interstitial. */
   | "idp"
   /** login_select.php: a card is still to be chosen; leaving now ends the card session. */
   | "cardSelect"
@@ -18,5 +18,5 @@ export type SignInStep =
   | "landed"
   /** Any other Hiroba page, including the callback hop whose name nobody has recorded. */
   | "otherHiroba"
-  /** Neither host. */
+  /** Neither origin, including either host on another scheme or port. */
   | "elsewhere";

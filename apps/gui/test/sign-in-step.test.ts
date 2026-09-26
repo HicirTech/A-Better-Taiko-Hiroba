@@ -27,6 +27,34 @@ describe("signInStep", () => {
     );
   });
 
+  test("compares origins, so either host on another scheme or port is elsewhere", () => {
+    expect(signInStep("http://hiroba.test/index.php", ENDPOINTS)).toBe("elsewhere");
+    expect(signInStep("http://hiroba.test/login.php", ENDPOINTS)).toBe("elsewhere");
+    expect(signInStep("ws://hiroba.test/index.php", ENDPOINTS)).toBe("elsewhere");
+    expect(signInStep("https://hiroba.test:8443/index.php", ENDPOINTS)).toBe("elsewhere");
+    expect(signInStep("http://id.test/login.html", ENDPOINTS)).toBe("elsewhere");
+    expect(signInStep("https://id.test:8443/login.html", ENDPOINTS)).toBe("elsewhere");
+  });
+
+  test("normalizes the origin before comparing it", () => {
+    expect(signInStep("https://HIROBA.test:443/index.php", ENDPOINTS)).toBe("landed");
+    expect(signInStep("https://ID.test:443/login.html", ENDPOINTS)).toBe("idp");
+  });
+
+  test("follows a plain-http stand-in on both hosts", () => {
+    const mock = { hirobaOrigin: "http://hiroba.test:8807", idpHost: "id.test:8808" };
+    expect(signInStep("http://hiroba.test:8807/index.php", mock)).toBe("landed");
+    expect(signInStep("http://id.test:8808/login.html", mock)).toBe("idp");
+    expect(signInStep("https://hiroba.test:8807/index.php", mock)).toBe("elsewhere");
+    expect(signInStep("http://id.test/login.html", mock)).toBe("elsewhere");
+  });
+
+  test("fails closed when the endpoints do not parse", () => {
+    const broken = { hirobaOrigin: "not an origin", idpHost: "id.test" };
+    expect(signInStep("https://hiroba.test/index.php", broken)).toBe("elsewhere");
+    expect(signInStep("https://id.test/login.html", broken)).toBe("elsewhere");
+  });
+
   test("treats a missing or unparseable URL as elsewhere", () => {
     expect(signInStep(undefined, ENDPOINTS)).toBe("elsewhere");
     expect(signInStep("not a url", ENDPOINTS)).toBe("elsewhere");

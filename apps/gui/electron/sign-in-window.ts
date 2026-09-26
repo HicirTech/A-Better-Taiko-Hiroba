@@ -24,9 +24,10 @@ export interface SignInAttempt {
  *
  * The partition name has no `persist:` prefix and is new for every attempt, so nothing the sign-in
  * sets reaches the disk and no attempt inherits another's cookies. The window has no preload and
- * may only navigate between Hiroba and the Bandai Namco ID host. When the main frame finishes
- * loading index.php, the session cookie is read from that partition, handed back, and the window
- * closes; closing clears the partition either way.
+ * may only navigate between Hiroba's origin and the Bandai Namco ID host on the same scheme; it has
+ * no address bar, so a plain-http page on either host is refused rather than shown. When the main
+ * frame finishes loading index.php, the session cookie is read from that partition, handed back,
+ * and the window closes; closing clears the partition either way.
  */
 export function openSignInWindow(
   parent: BrowserWindow,
