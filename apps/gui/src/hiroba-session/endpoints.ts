@@ -15,3 +15,22 @@ export const loginPageUrl = (endpoints: HirobaEndpoints): string =>
 /** The first read: the signed-in player's own page. */
 export const myPageUrl = (endpoints: HirobaEndpoints): string =>
   `${endpoints.hirobaOrigin}/mypage_top.php`;
+
+/**
+ * Development only: the endpoints a local stand-in asks for. Both overrides or neither; one alone
+ * would quietly leave the other on the real site, so it stops the app instead.
+ */
+export function endpointsFromOverrides(
+  hirobaOrigin: string | undefined,
+  idpHost: string | undefined,
+): HirobaEndpoints {
+  const origin = hirobaOrigin ?? "";
+  const host = idpHost ?? "";
+  if (origin === "" && host === "") {
+    return HIROBA_ENDPOINTS;
+  }
+  if (origin === "" || host === "") {
+    throw new Error("Set both development endpoint overrides, or neither.");
+  }
+  return { hirobaOrigin: origin, idpHost: host };
+}

@@ -1,9 +1,36 @@
-import { app, BrowserWindow, Menu, session } from "electron";
+import { join } from "node:path";
+import { err } from "@abth/core";
+import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
 
+import {
+  endpointsFromOverrides,
+  HIROBA_ENDPOINTS,
+  type HirobaEndpoints,
+  readProfile,
+} from "../src/hiroba-session";
+import { BRIDGE_CHANNELS, type HirobaSessionPort, type SignInOutcome } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
+import { createHirobaTransport } from "./hiroba-transport";
+import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
 
-// Development only, and never in a packaged build: the renderer from Vite's dev server.
+// Development only, and never in a packaged build: the renderer from Vite's dev server, and a
+// local stand-in for Hiroba and the ID host so the whole sign-in can run without the real sites.
+// Setting only one of the two endpoint overrides stops the app rather than half-reaching Hiroba.
 const devServerUrl = app.isPackaged ? undefined : process.env.ABTH_DEV_SERVER_URL;
+const endpoints: HirobaEndpoints = app.isPackaged ? HIROBA_ENDPOINTS : developmentEndpoints();
+
+function developmentEndpoints(): HirobaEndpoints {
+  try {
+    return endpointsFromOverrides(
+      process.env.ABTH_DEV_HIROBA_ORIGIN,
+      process.env.ABTH_DEV_IDP_HOST,
+    );
+  } catch (error) {
+    // Not thrown: an uncaught error in the main process opens a dialog and waits.
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exit(1);
+  }
+}
 
 // Hiroba answers anything that does not look like a complete browser with a data-less page. The
 // default string also names Electron and the app, so it is replaced with plain Chrome's, in the
@@ -19,6 +46,20 @@ if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
 
 app.enableSandbox();
 registerAppScheme();
+
+/** The session cookie: in this process's memory only, never logged, never sent to a renderer. */
+let sessionCookie: string | null = null;
+let signInAttempt: SignInAttempt | null = null;
+const transport = createHirobaTransport({
+  session: {
+    get: () => sessionCookie,
+    set: (value) => {
+      sessionCookie = value;
+    },
+  },
+  userAgent,
+  hirobaOrigin: endpoints.hirobaOrigin,
+});
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -37,6 +78,7 @@ app.whenReady().then(async () => {
     width: 960,
     height: 720,
     webPreferences: {
+      preload: join(app.getAppPath(), "out", "electron", "preload.cjs"),
       sandbox: true,
       contextIsolation: true,
       nodeIntegration: false,
@@ -44,6 +86,62 @@ app.whenReady().then(async () => {
   });
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
+
+  const port: HirobaSessionPort = {
+    async signIn(): Promise<SignInOutcome> {
+      signInAttempt?.cancel();
+      sessionCookie = null;
+      const attempt = openSignInWindow(mainWindow, endpoints, userAgent);
+      signInAttempt = attempt;
+      const result = await attempt.result;
+      if (signInAttempt === attempt) {
+        signInAttempt = null;
+      }
+      if (result.kind !== "captured") {
+        return result;
+      }
+      sessionCookie = result.cookie;
+      return { kind: "signedIn" };
+    },
+    async cancelSignIn() {
+      signInAttempt?.cancel();
+    },
+    async readProfile() {
+      if (sessionCookie === null) {
+        return err({ kind: "notSignedIn" });
+      }
+      const read = await readProfile(transport, endpoints);
+      if (
+        !read.ok &&
+        (read.error.kind === "loggedOut" || read.error.kind === "cardSelectUnfinished")
+      ) {
+        sessionCookie = null;
+      }
+      return read;
+    },
+    async signOut() {
+      sessionCookie = null;
+    },
+  };
+
+  // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.
+  const originOf = (raw: string) => {
+    const url = new URL(raw);
+    return `${url.protocol}//${url.host}`;
+  };
+  const expectedOrigin = originOf(devServerUrl ?? APP_ORIGIN);
+  const trusted = (event: IpcMainInvokeEvent) => {
+    const url = event.senderFrame?.url;
+    return url !== undefined && originOf(url) === expectedOrigin;
+  };
+  for (const [method, channel] of Object.entries(BRIDGE_CHANNELS)) {
+    ipcMain.handle(channel, (event) => {
+      if (!trusted(event)) {
+        throw new Error(`Refused ${channel} from an untrusted frame`);
+      }
+      return port[method as keyof HirobaSessionPort]();
+    });
+  }
 
   await mainWindow.loadURL(devServerUrl ?? `${APP_ORIGIN}/`);
 });

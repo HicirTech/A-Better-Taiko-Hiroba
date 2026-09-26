@@ -1,8 +1,9 @@
 /**
  * The contract between the interface and a platform layer: what the interface may ask, and the
- * only shapes that come back. Values here are plain data; nothing imports the parser, so the
- * Electron preload can use this domain without bundling it.
+ * only shapes that come back. Values here are plain data and channel names; nothing imports the
+ * parser, so the Electron preload can use this domain without bundling it.
  */
+export { BRIDGE_CHANNELS } from "./bridge-channels";
 export type {
   HirobaSessionPort,
   ProfileView,

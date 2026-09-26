@@ -1,6 +1,6 @@
 /**
  * The desktop dev loop: Vite's dev server for the renderer (hot reload) runs inside this Bun
- * process; Electron's main process is rebuilt and Electron restarted when its code changes.
+ * process; the main process and preload are rebuilt and Electron restarted when they change.
  *
  *   bun run dev             against scripts/mock-hiroba.ts, started here: nothing reaches Hiroba
  *   bun run dev -- --real   against the real Hiroba and Bandai Namco ID, for a person signing in
