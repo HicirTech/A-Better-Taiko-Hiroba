@@ -5,6 +5,7 @@
 export {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
+  idpOrigin,
   loginPageUrl,
   myPageUrl,
   SESSION_COOKIE_NAME,

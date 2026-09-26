@@ -16,6 +16,10 @@ export const loginPageUrl = (endpoints: HirobaEndpoints): string =>
 export const myPageUrl = (endpoints: HirobaEndpoints): string =>
   `${endpoints.hirobaOrigin}/mypage_top.php`;
 
+/** The ID host's origin. It is served on the same scheme as Hiroba: https, or http for the mock. */
+export const idpOrigin = (endpoints: HirobaEndpoints): string =>
+  `${new URL(endpoints.hirobaOrigin).protocol}//${endpoints.idpHost}`;
+
 /**
  * Development only: the endpoints a local stand-in asks for. Both overrides or neither; one alone
  * would quietly leave the other on the real site, so it stops the app instead.

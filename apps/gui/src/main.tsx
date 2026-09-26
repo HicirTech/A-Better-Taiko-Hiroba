@@ -21,7 +21,7 @@ const container = document.getElementById("root");
 if (container === null) {
   throw new Error("index.html has no #root");
 }
-const platform = connectPlatform();
+const platform = await connectPlatform(i18n);
 createRoot(container).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
