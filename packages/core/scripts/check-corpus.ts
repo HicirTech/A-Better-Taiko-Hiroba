@@ -14,6 +14,7 @@
  * Exit code is 0 only when every refusal is explained. An unexplained refusal, or a capture no
  * parser claims, fails the run — that is the gate on closing E6.
  */
+import { join } from "node:path";
 import type { Genre, Level } from "../src/index";
 import {
   isErr,
@@ -31,7 +32,8 @@ import {
   parseScoreListPage,
 } from "../src/index";
 
-const DEFAULT_CORPUS = "/root/hs_workspace/TaikoElaboation/ai-context/reference/hiroba-pages";
+/** `ai-context/` sits beside the repository, so this holds on any machine with that layout. */
+const DEFAULT_CORPUS = join(import.meta.dir, "../../../../ai-context/reference/hiroba-pages");
 const TAIKO_NO = "000000000000";
 const FETCHED_AT = "2026-01-01T00:00:00.000Z";
 
@@ -207,7 +209,10 @@ const UNROUTED: readonly { readonly match: RegExp; readonly reason: string }[] =
 
 async function main(): Promise<number> {
   const corpus = process.env.CORPUS ?? DEFAULT_CORPUS;
-  const files = [...new Bun.Glob("**/*.html").scanSync(corpus)].sort();
+  // The glob answers in the platform's separator; routing and the report both read `/`.
+  const files = [...new Bun.Glob("**/*.html").scanSync(corpus)]
+    .map((file) => file.replaceAll("\\", "/"))
+    .sort();
   if (files.length === 0) {
     console.error(`no captures under ${corpus} — set CORPUS to where they live`);
     return 1;
