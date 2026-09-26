@@ -54,9 +54,10 @@
   "overrides": [
     {
       // Library packages speak in values, not in output. Writing to the console there is also how a
-      // credential reaches a log line, which the API's design forbids — see epic #1. Applications
-      // are where output belongs.
-      "includes": ["packages/**"],
+      // credential reaches a log line, which the API's design forbids — see epic #1. The app's own
+      // code holds the session itself, so the same rule covers it; only its developer scripts,
+      // which never see a real session, may print.
+      "includes": ["packages/**", "apps/gui/src/**", "apps/gui/electron/**"],
       "linter": { "rules": { "suspicious": { "noConsole": "error" } } }
     }
   ]
