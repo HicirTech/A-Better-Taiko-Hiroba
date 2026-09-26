@@ -39,6 +39,10 @@ const RECORD_MARKERS = {
 /**
  * The four play counts, in the same block shape — including the site's own spelling of
  * `dondaful_combo_cnt`. None of them repeats in the section blocks.
+ *
+ * My page prints all four on every capture. Another player's page printed **none of the four** on
+ * the one capture there is (2026-08-09) — the full-combo and donderful-combo blocks go too, not
+ * only the play and clear counts.
  */
 const PLAY_COUNT_MARKERS = {
   stageCount: ".stage_cnt",
@@ -47,7 +51,24 @@ const PLAY_COUNT_MARKERS = {
   donderfulComboCount: ".dondaful_combo_cnt",
 } as const;
 
+type PlayCounts = Readonly<Record<keyof typeof PLAY_COUNT_MARKERS, number>>;
+
+/** What a record says where the page prints no play counts: unknown, never 0. */
+const PLAY_COUNTS_NOT_PRINTED = {
+  stageCount: null,
+  clearCount: null,
+  fullComboCount: null,
+  donderfulComboCount: null,
+} as const;
+
 const OPTION_MARKER = ".optionImage img";
+
+/**
+ * The link around the My Don, `user_profile.php?taiko_no=<T>`, which names whose chart this is.
+ * Present on all six captures that render a detail page at all — five of mine, one of another
+ * player's (2026-08-09). Nothing on the page names the viewer.
+ */
+const SUBJECT_MARKER = ".scoreDetailMydonImage a";
 
 /** `crown_large_<N>` above 0. What 0 means is each reader's own question. */
 const CLEARED_CROWNS: Readonly<Record<number, CrownState>> = {
@@ -63,6 +84,9 @@ const CLEARED_CROWNS: Readonly<Record<number, CrownState>> = {
  * Score says `record: null` rather than failing. On a played chart, `crown_large_0` with a
  * positive stage count is what `played` looks like: the detail page has no marker of its own for
  * played-but-not-cleared, which is exactly the asymmetry the model's CrownState preserves.
+ *
+ * This is my page's reader, and it requires everything my page always prints. Another player's
+ * page prints less and is `parsePublicScoreDetailPage`'s.
  */
 export function parseScoreDetailPage(
   html: string,
@@ -113,6 +137,113 @@ export function parseScoreDetailPage(
     record: { ...counts.value, options: options.value },
     fetchedAt,
   });
+}
+
+/**
+ * Parses another player's `score_detail.php?taiko_no=T&song_no=S&level=L` — the page a ranking
+ * row's `.rankingDetailMore` link opens.
+ *
+ * **One capture, of one player, on one date (2026-08-09)**, and that player is the one open profile
+ * in the corpus that hides its score panel. So everything this reader treats as optional is optional
+ * because that one page lacked it, not because the site is known to withhold it:
+ *
+ * - **The four play counts.** That page printed none of them. Where the page prints them they are
+ *   read, and required as a set; where it prints none they are null, never 0.
+ * - **The 区間毎詳細成績 sections.** That page had none, and neither do three of my five captures.
+ *   Neither reader asks for them.
+ *
+ * Everything else is required exactly as `parseScoreDetailPage` requires it, so the two readers do
+ * not collapse into one that is lenient for both.
+ *
+ * With no play count to consult, `crown_large_0` reads as `played`: on this template a never-played
+ * chart serves no crown image at all (measured on my page, one capture), and `crown_large_0` has
+ * only ever been served for a played chart (two of mine). **That is an inference for another
+ * player's page**, where `crown_large_0` has never been seen. Their never-played chart has never
+ * been captured either, so such a page is refused on the missing crown rather than guessed at.
+ *
+ * **Play options may not be what the player used.** That capture's four option slots are all blank,
+ * which decodes as 1× with nothing on — and is also what a page hiding another player's options
+ * would look like. No played chart of mine has ever shown four blanks, so one capture cannot tell
+ * the two apart.
+ *
+ * `taikoNo`, `songNo` and `level` are what was requested; a ranking row's link carries all three.
+ * The page names its subject, and a different one is refused. A closed profile answers the site's
+ * error page, which `parsePage` refuses as `siteError` before anything here is read.
+ */
+export function parsePublicScoreDetailPage(
+  html: string,
+  taikoNo: string,
+  songNo: string,
+  level: Level,
+  fetchedAt: string,
+): Result<Score, ParseFailure> {
+  const page = parsePage(html, PAGE);
+  if (isErr(page)) {
+    return page;
+  }
+  const root = page.value;
+
+  const subject = requireMarker(root, SUBJECT_MARKER, PAGE);
+  if (isErr(subject)) {
+    return subject;
+  }
+  const subjectHref = subject.value.getAttribute("href") ?? "";
+  const shown = subjectHref.match(/[?&]taiko_no=([^&]*)/)?.[1];
+  if (shown !== taikoNo) {
+    return err({
+      kind: "unreadableValue",
+      page: PAGE,
+      marker: `${SUBJECT_MARKER} (taiko_no)`,
+      raw: shown ?? subjectHref,
+    });
+  }
+
+  const head = readCrownAndRank(root);
+  if (isErr(head)) {
+    return head;
+  }
+  const counts = readCounts(root, RECORD_MARKERS);
+  if (isErr(counts)) {
+    return counts;
+  }
+  const playCounts = readPlayCountsIfPrinted(root);
+  if (isErr(playCounts)) {
+    return playCounts;
+  }
+  const options = readOptions(root);
+  if (isErr(options)) {
+    return options;
+  }
+
+  const zeroCrown: CrownState =
+    playCounts.value === null ? "played" : playedOrNone(playCounts.value.stageCount);
+  return ok({
+    taikoNo,
+    songNo,
+    level,
+    crown: CLEARED_CROWNS[head.value.crownStatus] ?? zeroCrown,
+    scoreRank: head.value.scoreRank,
+    fidelity: "detail",
+    record: {
+      ...counts.value,
+      ...(playCounts.value ?? PLAY_COUNTS_NOT_PRINTED),
+      options: options.value,
+    },
+    fetchedAt,
+  });
+}
+
+/**
+ * The four play counts where the page prints them, or null where it prints none of them.
+ *
+ * Whole or not at all. A page printing some of the four and not the others is a shape nobody has
+ * seen, so it fails naming the first one missing — exactly what my page's reader says about it.
+ */
+function readPlayCountsIfPrinted(root: HTMLElement): Result<PlayCounts | null, ParseFailure> {
+  const printed = Object.values(PLAY_COUNT_MARKERS).some(
+    (marker) => root.querySelector(marker) !== null,
+  );
+  return printed ? readCounts(root, PLAY_COUNT_MARKERS) : ok(null);
 }
 
 /**

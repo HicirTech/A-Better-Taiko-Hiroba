@@ -2,6 +2,8 @@
  * Excerpts, not captured pages — see README.md for why. The list excerpt mirrors the real block
  * shape (`li.contentBox` → `.songName` + one detail anchor per chart), the detail excerpt the real
  * named count blocks, both taken from the captured pages' structure with no real account data.
+ * The public detail excerpt mirrors another player's `score_detail.php?taiko_no=`: the same blocks
+ * minus the four play counts and the sections, with the subject's number on the My Don link.
  *
  * Image names are the **site's**, not the model's, spelling included: `crown_button_donderfull`
  * with two l's is the file the site actually serves. The list excerpt names every state-and-suffix
@@ -9,7 +11,13 @@
  */
 import { describe, expect, test } from "bun:test";
 
-import { isErr, isOk, parseScoreDetailPage, parseScoreListPage } from "../src/index";
+import {
+  isErr,
+  isOk,
+  parsePublicScoreDetailPage,
+  parseScoreDetailPage,
+  parseScoreListPage,
+} from "../src/index";
 
 const T = "2026-07-26T12:00:00.000Z";
 
@@ -419,6 +427,319 @@ describe("parseScoreDetailPage", () => {
       kind: "missingMarker",
       page: "score_detail.php",
       marker: ".pound_cnt",
+    });
+  });
+
+  test("another player's page is still refused here, naming the first play count it lacks", () => {
+    const result = parseScoreDetailPage(
+      publicDetailExcerpt({ crown: 3, rank: 8 }),
+      "000000000000",
+      "1061",
+      5,
+      T,
+    );
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "missingMarker",
+      page: "score_detail.php",
+      marker: ".stage_cnt",
+    });
+  });
+});
+
+const TAIKO_NO = "000000000000";
+
+const BLANK_OPTION_SLOT = '<img src="image/sp/640/blank_640.gif" />';
+
+interface PublicDetailOptions {
+  /**
+   * `crown_large_<N>`, or null for no crown image at all — what my never-played page serves. The
+   * one capture of this page carries 3.
+   */
+  crown: number | null;
+  /** `best_score_rank_<N>`, or null for no rank image at all. */
+  rank: number | null;
+  /** Whose chart the My Don link names. */
+  subject?: string;
+  /**
+   * `status_10_<code>` images, padded with blanks to four slots. The one capture of this page
+   * carries four blanks, which is also what the reader makes of no codes at all.
+   */
+  optionCodes?: readonly string[];
+  /**
+   * The four play-count blocks, which the one capture of this page does not carry. Given here
+   * only to show what the reader does if another player's page ever prints them.
+   */
+  playCounts?: {
+    readonly stage: number;
+    readonly clear: number;
+    readonly fullCombo: number;
+    readonly donderfulCombo: number;
+  };
+}
+
+function publicDetailExcerpt(options: PublicDetailOptions): string {
+  const { crown, rank, subject = TAIKO_NO, playCounts, optionCodes = [] } = options;
+  const crownImage =
+    crown === null ? "" : `<img class="crown" src="image/sp/640/crown_large_${crown}_640.png" />`;
+  const optionSlots = optionCodes
+    .map((code) => `<img src="image/sp/640/status_10_${code}_640.png" />`)
+    .concat(Array.from({ length: 4 - optionCodes.length }, () => BLANK_OPTION_SLOT))
+    .join("");
+  const rankImage =
+    rank === null
+      ? ""
+      : `<img class="best_score_icon" src="image/sp/640/best_score_rank_${rank}_640.png" />`;
+  const playCountBlocks =
+    playCounts === undefined
+      ? ""
+      : `<div class="stage_cnt"><img src="image/sp/640/score_name_stage_640.png" /><span>${playCounts.stage}回</span></div>
+        <div class="clear_cnt"><img src="image/sp/640/score_name_clear_640.png" /><span>${playCounts.clear}回</span></div>
+        <div class="full_combo_cnt"><img src="image/sp/640/score_name_full_combo_640.png" /><span>${playCounts.fullCombo}回</span></div>
+        <div class="dondaful_combo_cnt"><img src="image/sp/640/score_name_dondaful_combo_640.png" /><span>${playCounts.donderfulCombo}回</span></div>`;
+  // div.ranking is populated on this page, and a shape-based scan would take it for a count.
+  return `<html><body>
+    <div class="scoreDetail">
+      <div class="scoreDetailMydonImage">
+        <a href="user_profile.php?taiko_no=${subject}"><img src="https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_${subject}"></a>
+      </div>
+      <div class="scoreDetailStatus">
+        ${crownImage}${rankImage}
+      </div>
+      <div class="scoreDetailTable">
+        <div class="ranking"><img src="image/sp/640/ranking_all_back_640.png" /><span>3位</span></div>
+        <div class="high_score"><img src="image/sp/640/score_back_0_640.png" /><span>1001230点</span></div>
+        <div class="good_cnt"><img src="image/sp/640/score_name_good_640.png" /><span>512回</span></div>
+        <div class="combo_cnt"><img src="image/sp/640/score_name_combo_640.png" /><span>498回</span></div>
+        <div class="ok_cnt"><img src="image/sp/640/score_name_ok_640.png" /><span>3回</span></div>
+        <div class="pound_cnt"><img src="image/sp/640/score_name_pound_640.png" /><span>27回</span></div>
+        <div class="ng_cnt"><img src="image/sp/640/score_name_ng_640.png" /><span>1回</span></div>
+        <div class="optionImage">${optionSlots}</div>
+        ${playCountBlocks}
+      </div>
+    </div>
+  </body></html>`;
+}
+
+/** The site's error page as a closed profile answers it: the shell, the caution image, one line. */
+const CLOSED_PROFILE_PAGE = `<html><body>
+  <header><h1>エラー</h1><ul class="left "><li class="boxLink"><a href="index.php"></a></li></ul></header>
+  <div id="content"><div><table><tr>
+    <td><img src="image/sp/640/caution_640.png"></td>
+    <td>※プロフィール非公開のため閲覧できません</td>
+  </tr></table></div></div>
+</body></html>`;
+
+function readPublic(html: string, taikoNo = TAIKO_NO) {
+  const result = parsePublicScoreDetailPage(html, taikoNo, "1061", 5, T);
+  if (!isOk(result)) {
+    throw new Error(`expected a reading, got ${JSON.stringify(result.error)}`);
+  }
+  return result.value;
+}
+
+describe("parsePublicScoreDetailPage", () => {
+  test("reads into the same Score as my page, with no 区間 sections to need", () => {
+    expect(readPublic(publicDetailExcerpt({ crown: 3, rank: 8 }))).toEqual({
+      taikoNo: TAIKO_NO,
+      songNo: "1061",
+      level: 5,
+      crown: "donderful",
+      scoreRank: 8,
+      fidelity: "detail",
+      record: {
+        highScore: 1001230,
+        good: 512,
+        ok: 3,
+        bad: 1,
+        drumroll: 27,
+        maxCombo: 498,
+        stageCount: null,
+        clearCount: null,
+        fullComboCount: null,
+        donderfulComboCount: null,
+        options: { speed: 1, doron: false, abekobe: false, random: "none", supportChart: null },
+      },
+      fetchedAt: T,
+    });
+  });
+
+  test("the play counts the page does not print are null, never an invented 0", () => {
+    const { record } = readPublic(publicDetailExcerpt({ crown: 2, rank: 6 }));
+
+    expect(record?.stageCount).toBeNull();
+    expect(record?.clearCount).toBeNull();
+    expect(record?.fullComboCount).toBeNull();
+    expect(record?.donderfulComboCount).toBeNull();
+  });
+
+  test("option slots the page fills are decoded, not taken as the blank default", () => {
+    const { record } = readPublic(publicDetailExcerpt({ crown: 3, rank: 8, optionCodes: ["a3"] }));
+
+    expect(record?.options).toEqual({
+      speed: 2,
+      doron: false,
+      abekobe: false,
+      random: "none",
+      supportChart: null,
+    });
+  });
+
+  test("crown 0 reads as played: there is no play count to ask, and the crown image is there", () => {
+    const score = readPublic(publicDetailExcerpt({ crown: 0, rank: null }));
+
+    expect(score.crown).toBe("played");
+    expect(score.scoreRank).toBeNull();
+  });
+
+  test("play counts the page does print are read, not thrown away", () => {
+    const score = readPublic(
+      publicDetailExcerpt({
+        crown: 0,
+        rank: null,
+        playCounts: { stage: 7, clear: 5, fullCombo: 2, donderfulCombo: 1 },
+      }),
+    );
+
+    expect(score.crown).toBe("played");
+    expect(score.record?.stageCount).toBe(7);
+    expect(score.record?.clearCount).toBe(5);
+    expect(score.record?.fullComboCount).toBe(2);
+    expect(score.record?.donderfulComboCount).toBe(1);
+  });
+
+  test("a printed play count decides crown 0, as on my page: zero plays stay none", () => {
+    const score = readPublic(
+      publicDetailExcerpt({
+        crown: 0,
+        rank: null,
+        playCounts: { stage: 0, clear: 0, fullCombo: 0, donderfulCombo: 0 },
+      }),
+    );
+
+    expect(score.crown).toBe("none");
+    expect(score.record?.stageCount).toBe(0);
+  });
+
+  test("a page with no crown image is refused, not read as played or as never played", () => {
+    // My never-played page serves no crown image. Another player's never-played chart has never
+    // been captured, and this refusal is what keeps crown 0's "played" from being guessed at.
+    const result = parsePublicScoreDetailPage(
+      publicDetailExcerpt({ crown: null, rank: null }),
+      TAIKO_NO,
+      "1061",
+      5,
+      T,
+    );
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "missingMarker",
+      page: "score_detail.php",
+      marker: 'img[src*="crown_large_"]',
+    });
+  });
+
+  test("some play counts without the rest is a shape nobody has seen, so it fails naming the gap", () => {
+    const broken = publicDetailExcerpt({
+      crown: 1,
+      rank: 5,
+      playCounts: { stage: 7, clear: 5, fullCombo: 2, donderfulCombo: 1 },
+    }).replace("clear_cnt", "clear_gone");
+
+    const result = parsePublicScoreDetailPage(broken, TAIKO_NO, "1061", 5, T);
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "missingMarker",
+      page: "score_detail.php",
+      marker: ".clear_cnt",
+    });
+  });
+
+  test("a count block the page does carry is still required", () => {
+    const broken = publicDetailExcerpt({ crown: 3, rank: 8 }).replace("pound_cnt", "pound_gone");
+
+    const result = parsePublicScoreDetailPage(broken, TAIKO_NO, "1061", 5, T);
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "missingMarker",
+      page: "score_detail.php",
+      marker: ".pound_cnt",
+    });
+  });
+
+  test("a page naming a different player than the one requested is refused", () => {
+    const result = parsePublicScoreDetailPage(
+      publicDetailExcerpt({ crown: 3, rank: 8, subject: "111111111111" }),
+      TAIKO_NO,
+      "1061",
+      5,
+      T,
+    );
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "unreadableValue",
+      page: "score_detail.php",
+      marker: ".scoreDetailMydonImage a (taiko_no)",
+      raw: "111111111111",
+    });
+  });
+
+  test("a page with no My Don link names nobody, so it is refused", () => {
+    const broken = publicDetailExcerpt({ crown: 3, rank: 8 }).replace(
+      "scoreDetailMydonImage",
+      "scoreDetailMydonGone",
+    );
+
+    const result = parsePublicScoreDetailPage(broken, TAIKO_NO, "1061", 5, T);
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "missingMarker",
+      page: "score_detail.php",
+      marker: ".scoreDetailMydonImage a",
+    });
+  });
+
+  test("a logged-out answer fails as loggedOut, not as missing fields", () => {
+    const loggedOut = `<html><body>
+      <form name="login_form" id="login_form" method="get" action="./login_process.php"></form>
+    </body></html>`;
+
+    const result = parsePublicScoreDetailPage(loggedOut, TAIKO_NO, "1061", 5, T);
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({ kind: "loggedOut", page: "score_detail.php" });
+  });
+
+  test("a closed profile's answer is the site's error page, not a missing marker", () => {
+    const result = parsePublicScoreDetailPage(CLOSED_PROFILE_PAGE, TAIKO_NO, "1061", 5, T);
+
+    if (!isErr(result)) {
+      throw new Error("expected a failure");
+    }
+    expect(result.error).toEqual({
+      kind: "siteError",
+      page: "score_detail.php",
+      message: "※プロフィール非公開のため閲覧できません",
     });
   });
 });
