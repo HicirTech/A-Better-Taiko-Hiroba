@@ -5,9 +5,10 @@ export const en: Messages = {
   "signIn.intro":
     "Sign in with your Bandai Namco ID to read your Donder Hiroba profile. The sign-in page is Hiroba's own; this app never sees your password.",
   "signIn.action": "Sign in to Hiroba",
-  "signIn.inProgress": "Finish signing in, including choosing your card, in the sign-in window.",
+  "signIn.inProgress":
+    "Finish signing in, including choosing your card, in the sign-in window. On Android, if it stays open once your card is chosen, tap Done: the sign-in still counts.",
   "signIn.cancel": "Cancel sign-in",
-  "signIn.closeBrowser": "Close",
+  "signIn.closeBrowser": "Done",
   "signIn.cancelled": "Sign-in was cancelled.",
   "signIn.noSession": "Sign-in finished, but Hiroba did not start a session. Please try again.",
   "signIn.unavailable": "The sign-in window could not be opened. Please try again.",

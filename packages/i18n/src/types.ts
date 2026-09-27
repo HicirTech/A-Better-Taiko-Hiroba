@@ -16,7 +16,11 @@ export interface Messages {
   "signIn.action": string;
   "signIn.inProgress": string;
   "signIn.cancel": string;
-  /** The in-app browser's own close button (Android). */
+  /**
+   * The in-app browser's own close button (Android). Worded as finishing, not abandoning: closing
+   * it after the card is chosen completes the sign-in, and on a slow real sign-in the browser has
+   * been seen to stay open there (2026-09-27).
+   */
   "signIn.closeBrowser": string;
   "signIn.cancelled": string;
   "signIn.noSession": string;
