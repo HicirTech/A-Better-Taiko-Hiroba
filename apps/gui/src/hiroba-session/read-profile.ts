@@ -3,6 +3,7 @@ import {
   isErr,
   ok,
   type ParseFailure,
+  type Profile,
   parseProfilePage,
   type Result,
   type Transport,
@@ -65,8 +66,46 @@ export async function readProfile(
         : { kind },
     );
   }
-  const { nickname, title, summary, fetchedAt } = parsed.value;
-  return ok({ nickname, title, crowns: summary.crownCounts, fetchedAt });
+  return ok(profileView(parsed.value));
+}
+
+/**
+ * What of my page crosses to the interface. Every field is copied by name, so nothing the parser
+ * adds later crosses without a decision here: not the taiko number, and no URL, the dan label's
+ * least of all, since it carries the taiko number in its query.
+ */
+function profileView(profile: Profile): ProfileView {
+  const { crownCounts, rankCounts, countLevel } = profile.summary;
+  return {
+    nickname: profile.nickname,
+    title: profile.title,
+    region: profile.region,
+    hasDan: profile.danLabelImageUrl !== null,
+    crowns: {
+      silver: crownCounts.silver,
+      gold: crownCounts.gold,
+      donderful: crownCounts.donderful,
+    },
+    panel: {
+      countLevel,
+      ranks: {
+        2: rankCounts[2],
+        3: rankCounts[3],
+        4: rankCounts[4],
+        5: rankCounts[5],
+        6: rankCounts[6],
+        7: rankCounts[7],
+        8: rankCounts[8],
+      },
+    },
+    medal:
+      profile.medal === null
+        ? null
+        : { name: profile.medal.name, progress: profile.medal.progress },
+    favoriteSong: profile.favoriteSong?.title ?? null,
+    favoriteFolder: profile.favoriteFolderTitles,
+    fetchedAt: profile.fetchedAt,
+  };
 }
 
 /**

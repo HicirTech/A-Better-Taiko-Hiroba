@@ -13,28 +13,31 @@ const NOW = () => new Date("2026-09-27T00:00:00.000Z");
 const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 <div id="mydon_area">
   <div>サンプルの称号</div>
-  <div><div>サンプルどん</div><div></div></div>
+  <div><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>
   <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div>
     <div class="mydon_image"><img class="customd_mydon" src="https://img.test/mydon.png"></div></div>
   <div class="total_score">
     <img src="image/sp/640/total_score_image_5.png">
-    <div class="best_rank_score_8 total_panel_display">0</div>
-    <div class="best_rank_score_7 total_panel_display">0</div>
-    <div class="best_rank_score_6 total_panel_display">0</div>
-    <div class="best_rank_score_5 total_panel_display">0</div>
-    <div class="best_rank_score_4 total_panel_display">0</div>
-    <div class="best_rank_score_3 total_panel_display">0</div>
-    <div class="best_rank_score_2 total_panel_display">0</div>
+    <div class="best_rank_score_8 total_panel_display">7</div>
+    <div class="best_rank_score_7 total_panel_display">6</div>
+    <div class="best_rank_score_6 total_panel_display">5</div>
+    <div class="best_rank_score_5 total_panel_display">4</div>
+    <div class="best_rank_score_4 total_panel_display">3</div>
+    <div class="best_rank_score_3 total_panel_display">2</div>
+    <div class="best_rank_score_2 total_panel_display">1</div>
     <div class="silver_crown_count total_panel_crown_display">11</div>
     <div class="gold_crown_count total_panel_crown_display">2</div>
     <div class="donderful_crown_count total_panel_crown_display">1</div>
   </div>
+  <div><img src="imgsrc_tokenplate.php?id=placeholder">
+    <div class="token_name token_info_display">どんメダル2026秋</div>
+    <div class="token_complete token_info_display">COMPLETE</div></div>
 </div>
 <div class="favoriteSong"><h2 class="subtitleMypage">大好きな曲</h2><div class="mypageInfoArea">
   <ul id="songList"><li><div class="name"><span class="songName songNameFont">未設定</span></div></li></ul>
   <input type="hidden" name="song_no" id="song_no" value=""></div></div>
 <div class="favoriteSong"><h2 class="subtitleMypage">お気に入りの曲</h2><div class="mypageInfoArea">
-  <ul id="songList"></ul></div></div>
+  <ul id="songList"><li><span class="songName">サンプル曲</span></li></ul></div></div>
 </body></html>`;
 
 const LOGIN_PAGE_EXCERPT = `<html><body><form id="login_form" action="./login_process.php"></form></body></html>`;
@@ -65,16 +68,31 @@ describe("readProfile", () => {
     expect(requests).toEqual([{ method: "GET", url: "https://hiroba.test/mypage_top.php" }]);
   });
 
-  test("keeps nickname, title, crowns and the read time", async () => {
+  test("carries identity, the panel, the medal and favourites to the view", async () => {
     const transport = fakeTransport("https://hiroba.test/mypage_top.php", MY_PAGE_EXCERPT);
     expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(
       ok({
         nickname: "サンプルどん",
         title: "サンプルの称号",
+        region: "サンプル",
+        hasDan: true,
         crowns: { silver: 11, gold: 2, donderful: 1 },
+        panel: { countLevel: 5, ranks: { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7 } },
+        medal: { name: "どんメダル2026秋", progress: { kind: "complete" } },
+        favoriteSong: null,
+        favoriteFolder: ["サンプル曲"],
         fetchedAt: "2026-09-27T00:00:00.000Z",
       }),
     );
+  });
+
+  test("lets neither the taiko number nor any URL through to the view", async () => {
+    const transport = fakeTransport("https://hiroba.test/mypage_top.php", MY_PAGE_EXCERPT);
+    const view = JSON.stringify(await readProfile(transport, ENDPOINTS, NOW));
+    expect(MY_PAGE_EXCERPT).toContain("taiko_no=000000000000");
+    expect(view).not.toContain("000000000000");
+    expect(view).not.toContain("imgsrc");
+    expect(view).not.toContain("http");
   });
 
   test("reads a redirect to the login page as a lost session, without parsing", async () => {

@@ -1,4 +1,4 @@
-import type { Result } from "@abth/core";
+import type { MedalProgress, Result, ScoreRank } from "@abth/core";
 
 export type SignInOutcome =
   | { readonly kind: "signedIn" }
@@ -15,11 +15,34 @@ export type SignInOutcome =
    */
   | { readonly kind: "refused"; readonly host: string };
 
-/** What the interface shows of a profile. The taiko number is deliberately not part of it. */
+/**
+ * What the interface shows of a profile: plain data that survives JSON. The taiko number is
+ * deliberately not part of it, and neither is any URL — the dan label's carries the taiko number,
+ * so only whether there is one crosses.
+ */
 export interface ProfileView {
   readonly nickname: string;
+  /** "" when the player wears no title, a normal state. */
   readonly title: string;
+  /** Null when the page gives none, or 未設定. */
+  readonly region: string | null;
+  /** Whether my page shows a dan label. Which dan it is exists only as an image, not read yet. */
+  readonly hasDan: boolean;
   readonly crowns: { readonly silver: number; readonly gold: number; readonly donderful: number };
+  /** Hiroba's overall panel: the number on its image, and the count in each score rank. */
+  readonly panel: {
+    readonly countLevel: number;
+    readonly ranks: Readonly<Record<ScoreRank, number>>;
+  };
+  /**
+   * The どんメダル plate, or null when the page shows none, a normal state. An `unrecognised`
+   * plate carries a code, never the page's text.
+   */
+  readonly medal: { readonly name: string; readonly progress: MedalProgress } | null;
+  /** The 大好きな曲's title, or null when it is 未設定. */
+  readonly favoriteSong: string | null;
+  /** The お気に入り folder's titles in page order; empty is a normal state. */
+  readonly favoriteFolder: readonly string[];
   /** ISO 8601, when the page was read. */
   readonly fetchedAt: string;
 }
