@@ -26,6 +26,14 @@
  * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
  * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
  *
+ * The costume editor, mypage_kisekae.php, and the two posts a costume write sends,
+ * ajax/check_ip_kisekae.php and ajax/change_mydon.php, are scripts/mock-costume.ts: stateful, with
+ * hooks of their own listed there. Like Hiroba, an ajax post without X-Requested-With gets the
+ * site's error page at 200; one without a session is sent to the login page. Two more hooks cover
+ * every request: /__log (each non-hook request so far, as "METHOD /path"; /__log-reset clears it)
+ * and /__post-to-login?on=1 or 0 (every ajax post answers with a redirect to the login page, the
+ * session left as it was).
+ *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
  *   ABTH_DEV_HIROBA_ORIGIN=http://hiroba.127.0.0.1.sslip.io:8807 \
@@ -37,6 +45,7 @@
  *   VITE_ABTH_DEV_IDP_HOST=id.<LAN IP>.sslip.io:8808 \
  *   bun run android:live -- <adb serial> <LAN IP>
  */
+import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
@@ -48,12 +57,16 @@ const HIROBA = `http://${HIROBA_HOST}:${HIROBA_PORT}`;
 const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
 const IDP_AUTH = `http://auth.${IDP_HOST}:${IDP_PORT}`;
 
-const sessions = new Map<string, { cardChosen: boolean }>();
+const sessions = new Map<string, MockSession>();
 let lastIssued = "";
 let rotateNext = false;
 let holdIdForm = false;
 let sendOffsite = false;
+let postToLogin = false;
 const hits = new Map<string, number>();
+/** Every request that is not a hook, in order, as "METHOD /path". */
+const requestLog: string[] = [];
+const costume = createCostumeEditor();
 /** Also searched for by scripts/e2e-desktop.ts. */
 const IDP_MARKER = "abth-mock-idp-marker";
 /** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
@@ -62,7 +75,7 @@ const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 const newToken = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(26)), (b) => ALPHABET[b % 36]).join("");
 
-function sessionOf(request: Request): { cardChosen: boolean } | undefined {
+function sessionOf(request: Request): MockSession | undefined {
   const cookies = (request.headers.get("cookie") ?? "").split(/;\s*/);
   const token = cookies.find((c) => c.startsWith("_token_v2="))?.slice("_token_v2=".length);
   return token === undefined ? undefined : sessions.get(token);
@@ -163,6 +176,9 @@ Bun.serve({
     const session = sessionOf(request);
     log("hiroba", request);
     hits.set(pathname, (hits.get(pathname) ?? 0) + 1);
+    if (!pathname.startsWith("/__")) {
+      requestLog.push(`${request.method} ${pathname}`);
+    }
     if (
       !pathname.startsWith("/__") &&
       !COMPLETE_BROWSER.test(request.headers.get("user-agent") ?? "")
@@ -217,6 +233,28 @@ Bun.serve({
           });
         }
         return page(myPage());
+      }
+      case "/mypage_kisekae.php":
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        return page(costume.page(session));
+      case "/ajax/check_ip_kisekae.php":
+      case "/ajax/change_mydon.php": {
+        if (request.method !== "POST") {
+          return new Response("not found", { status: 404 });
+        }
+        const form = new URLSearchParams(await request.text());
+        costume.record(pathname, request, form, session);
+        if (request.headers.get("x-requested-with") !== "XMLHttpRequest") {
+          return page(ERROR_SHELL_BODY);
+        }
+        if (postToLogin || !session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        return pathname === "/ajax/check_ip_kisekae.php"
+          ? costume.precheck()
+          : costume.save(session, form, () => sessions.clear());
       }
       case "/imgsrc_danlabel.php":
         // Public, as Hiroba's is: the query picks whose label, and no session is asked for.
@@ -273,8 +311,16 @@ Bun.serve({
         return redirect("/__echo-cookie");
       case "/__echo-cookie":
         return Response.json({ cookieArrived: request.headers.has("cookie") });
+      case "/__log":
+        return Response.json(requestLog);
+      case "/__log-reset":
+        requestLog.length = 0;
+        return new Response("reset");
+      case "/__post-to-login":
+        postToLogin = searchParams.get("on") === "1";
+        return new Response(postToLogin ? "to login" : "answering");
       default:
-        return new Response("not found", { status: 404 });
+        return costume.hook(pathname, searchParams) ?? new Response("not found", { status: 404 });
     }
   },
 });
