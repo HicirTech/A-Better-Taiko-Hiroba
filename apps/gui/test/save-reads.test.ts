@@ -175,6 +175,39 @@ describe("saveReads", () => {
     }
   });
 
+  test("keeps only the latest costume preview, and none of them in the history", async () => {
+    const folder = newFolder();
+    const first = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x01]);
+    const second = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x02]);
+    const preview = (face: number) =>
+      `https://hiroba.test/imgsrc_mydon.php?face=${face}&body=1&limb=1&cos1=0&cos2=0&cos3=0&cos4=0&cos5=0`;
+    const saving = saveReads(
+      answering({
+        [preview(1)]: ["image/png", first],
+        [preview(2)]: ["image/png", second],
+        [EDITOR]: ["text/html; charset=utf-8", PAGE_WITH_TOKENS],
+      }),
+      folder,
+      () => new Date("2026-09-28T01:02:03.000Z"),
+    );
+    await saving.send({ method: "GET", url: EDITOR });
+    await saving.send({ method: "GET", url: preview(1) });
+    await saving.send({ method: "GET", url: preview(2) });
+    await saving.send({ method: "GET", url: EDITOR });
+    expect(new Uint8Array(readFileSync(join(folder, "imgsrc_mydon.php.png")))).toEqual(second);
+    expect(JSON.parse(readFileSync(join(folder, "imgsrc_mydon.php.json"), "utf8"))).toEqual({
+      status: 200,
+      path: "/imgsrc_mydon.php",
+      contentType: "image/png",
+    });
+    expect(readdirSync(join(folder, "history")).sort()).toEqual([
+      "20260928-010203-001-GET-mypage_kisekae.php.html",
+      "20260928-010203-001-GET-mypage_kisekae.php.json",
+      "20260928-010203-002-GET-mypage_kisekae.php.html",
+      "20260928-010203-002-GET-mypage_kisekae.php.json",
+    ]);
+  });
+
   test("hands the answer back as it came when its copy cannot be written", async () => {
     // A folder where the label's copy would go: the write fails, as a file held open would.
     const folder = newFolder();

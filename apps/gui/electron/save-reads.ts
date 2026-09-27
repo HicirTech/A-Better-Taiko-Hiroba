@@ -12,6 +12,14 @@ const IMAGE_EXTENSIONS: Readonly<Record<string, string>> = {
 const TOKEN_STAND_IN = "<tckt>";
 
 /**
+ * Pages kept as their latest copy alone, and never in the history. The costume editor asks for
+ * Hiroba's picture of the set after every pick, so a while of picking would fill the history with
+ * pictures of outfits nobody saved. The latest picture and its status file show what Hiroba last
+ * answered, which is all a preview needs for debugging.
+ */
+const LATEST_ONLY_PATHS: ReadonlySet<string> = new Set(["/imgsrc_mydon.php"]);
+
+/**
  * For debugging against the live site only, and off unless ABTH_DEBUG_SAVE_READS=1: every page a
  * read brings back is written to `folder`, named after the page asked for — my page as
  * mypage_top.php.html, and its status, final path and content type as mypage_top.php.json — so a
@@ -23,7 +31,8 @@ const TOKEN_STAND_IN = "<tckt>";
  * under `folder/history`: `<time>-<n>-<METHOD>-<page>.<ext>` and its `.json` (time, method, status,
  * final path, content type), so a write can be followed request by request — the editor before, the
  * pre-check's and the save's answers, the read-back. Of a post, only the answer is kept, never the
- * form it sent.
+ * form it sent. The editor's preview, imgsrc_mydon.php, is the one page kept as its latest copy
+ * alone, never in the history (LATEST_ONLY_PATHS).
  * Every form token (`_tckt`) a page carries is replaced with `<tckt>` before the page reaches the
  * disk, so no saved page holds one that could be posted.
  *
@@ -45,13 +54,18 @@ export function saveReads(
     async send(request, signal) {
       const sent = await transport.send(request, signal);
       if (sent.ok) {
-        count += 1;
+        const latestOnly = request.method === "GET" && LATEST_ONLY_PATHS.has(pathOf(request.url));
+        if (!latestOnly) {
+          count += 1;
+        }
         try {
           if (request.method === "GET") {
             keep(folder, request.url, sent.value);
           }
-          const history = join(folder, "history");
-          keepInHistory(history, now(), count, request.method, request.url, sent.value);
+          if (!latestOnly) {
+            const history = join(folder, "history");
+            keepInHistory(history, now(), count, request.method, request.url, sent.value);
+          }
         } catch {
           // Only the debugging copy is lost; the read goes on as if it had not been asked for.
         }
