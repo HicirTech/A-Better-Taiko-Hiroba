@@ -53,6 +53,17 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
       marker: "#mydon_area > div (title, name row)",
     });
   }
+  // Position is the only thing telling the title from the name, so check that it holds: on every
+  // capture the div after the name row is the one holding .detail. A page that dropped its title
+  // line would otherwise hand the name row in as the title and the details block as the name.
+  const detailBlock = divs[2];
+  if (detailBlock === undefined || detailBlock.querySelector(".detail") === null) {
+    return err({
+      kind: "missingMarker",
+      page: PAGE,
+      marker: "#mydon_area > div (.detail after the name row)",
+    });
+  }
   // An empty title line is a player wearing no title, not a page that failed to render one.
   const title = titleDiv.text.trim();
   // The name row takes one of two shapes, decided by the dan. With a dan label it is a flex row of

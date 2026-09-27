@@ -244,6 +244,22 @@ describe("parseProfilePage", () => {
     expect(result.value.nickname).toBe("Donder");
   });
 
+  test("a page without its title line fails, rather than read the name row as the title", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      `<div style="height: 20px;text-align: center;">黒薔薇の使徒</div>`,
+      "",
+    );
+
+    expect(parseProfilePage(excerpt, FETCHED_AT)).toEqual({
+      ok: false,
+      error: {
+        kind: "missingMarker",
+        page: "mypage_top.php",
+        marker: "#mydon_area > div (.detail after the name row)",
+      },
+    });
+  });
+
   test("an unset 大好きな曲 is a normal state, read as null", () => {
     const result = parseProfilePage(
       profileExcerpt({ withDan: true, favoriteSong: null }),
