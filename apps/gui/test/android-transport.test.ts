@@ -22,7 +22,7 @@ describe("createAndroidTransport", () => {
     await createAndroidTransport(UA).send({
       method: "GET",
       url: URL_,
-      headers: { Cookie: "x=1", "user-agent": "curl" },
+      headers: { Cookie: "x=1", "user-agent": "curl", "Content-Type": "text/plain" },
     });
     expect(native.httpRequests[0]?.headers).toEqual({ "User-Agent": UA });
     expect(native.httpRequests[0]?.responseType).toBe("arraybuffer");
@@ -80,6 +80,17 @@ describe("createAndroidTransport", () => {
     const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
     expect(sent.ok && sent.value.status).toBe(404);
     expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe("not found");
+  });
+
+  test("refuses a post without sending anything: Android sends no writes yet", async () => {
+    native.httpAnswer = async () => ({ status: 200, url: URL_, headers: {}, data: "" });
+    const posting = createAndroidTransport(UA).send({
+      method: "POST",
+      url: "https://hiroba.test/ajax/change_mydon.php",
+      form: [["color_face", "3"]],
+    });
+    await expect(posting).rejects.toThrow("does not post");
+    expect(native.httpRequests).toEqual([]);
   });
 
   test("tells a connect or read timeout from other failures by the native class name", async () => {

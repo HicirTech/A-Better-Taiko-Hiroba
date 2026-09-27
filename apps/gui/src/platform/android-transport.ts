@@ -2,8 +2,11 @@ import { err, ok, type Transport, type TransportFailure } from "@abth/core";
 import { CapacitorHttp } from "@capacitor/core";
 
 const TIMEOUT_MS = 20_000;
-/** A caller never supplies these two: the session and the browser identity are this transport's. */
-const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent"]);
+/**
+ * A caller never supplies these: the session and the browser identity are this transport's, and so
+ * is a body's type, per the Transport contract.
+ */
+const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent", "content-type"]);
 
 /**
  * Android's Transport: Capacitor's native HTTP client, which takes cookies from the WebView's own
@@ -13,10 +16,18 @@ const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent"]);
  *
  * The body is asked for as `arraybuffer`, so an image arrives byte for byte and a page arrives as
  * the bytes Hiroba sent, for decoding as UTF-8. See `bodyBytes` for what Capacitor hands back.
+ *
+ * It reads and never posts. Writes are the desktop's alone for now (the user's call, 2026-09-27),
+ * and a post here would need what this does not do: Capacitor drops a form body sent without a
+ * Content-Type, and follows a post's redirects natively, repeating a 307 or 308. The Android port
+ * enables no write, so a post that reaches this is a programming error, and throws.
  */
 export function createAndroidTransport(userAgent: string = navigator.userAgent): Transport {
   return {
     async send(request, signal) {
+      if (request.method !== "GET") {
+        throw new Error("Android's transport does not post forms");
+      }
       const failure = (kind: TransportFailure["kind"]) => err({ kind, url: request.url });
       if (signal?.aborted) {
         return failure("cancelled");
