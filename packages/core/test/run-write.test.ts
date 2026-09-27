@@ -247,12 +247,12 @@ describe("runWrite", () => {
     }
   });
 
-  test("with the cross-check, reads the other page before the pre-check and after the read-back", async () => {
+  test("with the cross-check, reads the other page first, so the editor's token is the last one issued", async () => {
     const { hiroba } = fakeHiroba();
     const { outcome } = await write(hiroba.transport, 2, { crossCheck: true });
     expect(hiroba.requests).toEqual([
-      "GET edit.php",
       "GET cross.php",
+      "GET edit.php",
       "POST ajax/check.php",
       "POST ajax/save.php",
       "GET edit.php",
@@ -300,7 +300,7 @@ describe("runWrite", () => {
       crossCheck: true,
     });
     expect(stopped.outcome).toEqual({ kind: "maintenance" });
-    expect(beforeThePrecheck.hiroba.requests).toEqual(["GET edit.php", "GET cross.php"]);
+    expect(beforeThePrecheck.hiroba.requests).toEqual(["GET cross.php", "GET edit.php"]);
 
     const beforeTheSave = fakeHiroba();
     const { outcome } = await write(beforeTheSave.hiroba.transport, 2, {
@@ -338,7 +338,7 @@ describe("runWrite", () => {
     const { hiroba } = fakeHiroba();
     const { outcome } = await write(hiroba.transport, 2, { undoFails: true, crossCheck: true });
     expect(outcome).toEqual({ kind: "undoNotSaved" });
-    expect(hiroba.requests).toEqual(["GET edit.php", "GET cross.php"]);
+    expect(hiroba.requests).toEqual(["GET cross.php", "GET edit.php"]);
   });
 
   test("a session gone before the first post is sessionGone, and nothing was posted", async () => {

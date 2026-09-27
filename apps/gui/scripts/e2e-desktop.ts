@@ -80,10 +80,13 @@ const savedCostume = async () =>
 const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
 const resetLog = () => fetch(`${HIROBA}/__log-reset`);
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
-/** A colour change's requests: the editor, the title, the pre-check, one save, the read-backs. */
+/**
+ * A colour change's requests: the title, then the editor — last before the posts, since my page's
+ * forms issue a token too and would void the editor's — the pre-check, one save, the read-backs.
+ */
 const WRITE_REQUESTS = [
-  "GET /mypage_kisekae.php",
   "GET /mypage_top.php",
+  "GET /mypage_kisekae.php",
   "POST /ajax/check_ip_kisekae.php",
   "POST /ajax/change_mydon.php",
   "GET /mypage_kisekae.php",
@@ -378,11 +381,13 @@ try {
     !(await exists("#costume-undo"));
 
   // #22: a piece beside a きぐるみ, which Hiroba would answer 0 to and ignore, is refused unsent.
+  // While costume is unverified the title is read first, before the editor, so the trap costs that
+  // read too — but no post.
   await resetLog();
   const trap = await bridgeChange({ ...START, costume1: 36 });
   results.trapRefusedUnsent =
     same(trap, { kind: "invalidTarget", field: "costume1" }) &&
-    same(await requestLog(), ["GET /mypage_kisekae.php"]);
+    same(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
 
   // A save that answers 0 and moves nothing reads as not applied, whatever it said.
   await fetch(`${HIROBA}/__noop-save`);

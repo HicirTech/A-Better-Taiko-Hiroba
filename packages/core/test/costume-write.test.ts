@@ -216,9 +216,10 @@ describe("changeCostume", () => {
     const { hiroba, transport } = fakeHiroba();
     const suited = { ...WORN, costume1: 36, costume2: 0, costume3: 0, costume4: 0, costume5: 0 };
     const outcome = await change(transport, suited, true);
+    // My page first: its forms issue a token too, so the editor has to be read last before the posts.
     expect(hiroba.requests.map(routeOf)).toEqual([
-      "GET mypage_kisekae.php",
       "GET mypage_top.php",
+      "GET mypage_kisekae.php",
       "POST ajax/check_ip_kisekae.php",
       "POST ajax/change_mydon.php",
       "GET mypage_kisekae.php",

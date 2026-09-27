@@ -36,8 +36,14 @@ const STOP_REASON = {
  * 5. the save post, sent exactly once, whatever happens to it;
  * 6. read the whole set back, and judge by what it shows rather than by what the site said.
  *
- * With `crossCheck`, another page is read before the pre-check and after the read-back, to see it
- * did not move. Nothing is retried and nothing loops: every request above is sent at most once,
+ * With `crossCheck`, another page is read first — before the editor — and again after the
+ * read-back, to see it did not move. First, and not between the editor and the posts: the editor's
+ * token has to be the last one the site issued before the posts. On 2026-09-28 a real costume save
+ * whose token came from the editor, with my page read in between, answered 705 (更新に失敗しました。
+ * 再度画面の読み込みを行ってください。) and changed nothing, although its pre-check had answered false.
+ * The likely reading is that rendering a page with a form re-issues the session's token and voids
+ * the one before; that is not settled, and this order holds either way.
+ * Nothing is retried and nothing loops: every request above is sent at most once,
  * except the read-back, which is also the one GET that settles whether a pre-check that ended on
  * the login page ended the session.
  *
@@ -52,6 +58,11 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
 ): Promise<WriteOutcome<S>> {
   if (inMaintenance(deps.now())) {
     return { kind: "maintenance" };
+  }
+  const cross = deps.crossCheck ? spec.cross : undefined;
+  const crossBefore = cross === undefined ? null : await cross.read(deps);
+  if (crossBefore !== null && isErr(crossBefore)) {
+    return beforeAnyPost(crossBefore.error);
   }
   const editor = await spec.readEditor(deps);
   if (isErr(editor)) {
@@ -68,11 +79,6 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   const expectedAfter = spec.expectedAfter(before, body.value);
   if (spec.same(expectedAfter, before)) {
     return { kind: "nothingToChange" };
-  }
-  const cross = deps.crossCheck ? spec.cross : undefined;
-  const crossBefore = cross === undefined ? null : await cross.read(deps);
-  if (crossBefore !== null && isErr(crossBefore)) {
-    return beforeAnyPost(crossBefore.error);
   }
   try {
     await deps.beginUndo(before, expectedAfter);

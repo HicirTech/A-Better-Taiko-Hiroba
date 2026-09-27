@@ -173,10 +173,11 @@ describe("createDesktopWrites", () => {
     expect((await writes.undo("costume")).kind).toBe("applied");
     expect(await saved()).toEqual(START);
     expect(await writes.pendingUndo()).toEqual([]);
-    // An undo is a write like any other: a fresh editor, the cross-checks, the pre-check, one save.
+    // An undo is a write like any other: the cross-check, a fresh editor last before the posts, the
+    // pre-check, one save.
     expect(hiroba.log).toEqual([
-      "GET /mypage_kisekae.php",
       "GET /mypage_top.php",
+      "GET /mypage_kisekae.php",
       "POST /ajax/check_ip_kisekae.php",
       "POST /ajax/change_mydon.php",
       "GET /mypage_kisekae.php",
