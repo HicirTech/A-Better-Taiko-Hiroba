@@ -29,7 +29,7 @@ createRoot(container).render(
       {platform === null ? (
         <Alert severity="info">{i18n.t("platform.unsupported")}</Alert>
       ) : (
-        <App port={platform.port} shell={platform.shell} i18n={i18n} />
+        <App port={platform.port} i18n={i18n} />
       )}
     </ThemeProvider>
   </StrictMode>,

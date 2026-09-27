@@ -50,6 +50,8 @@ export interface ReadFailure {
  * layer into the interface. No cookie, no URL and no page text is part of it.
  */
 export interface HirobaSessionPort {
+  /** Whether this device holds a session from an earlier sign-in. Asks Hiroba nothing. */
+  isSignedIn(): Promise<boolean>;
   signIn(): Promise<SignInOutcome>;
   /** Closes an open sign-in; its `signIn()` then resolves as cancelled. Harmless when none is open. */
   cancelSignIn(): Promise<void>;

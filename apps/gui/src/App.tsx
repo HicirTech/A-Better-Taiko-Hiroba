@@ -9,9 +9,8 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { Shell } from "./platform";
 import type {
   HirobaSessionPort,
   ProfileView,
@@ -20,6 +19,7 @@ import type {
 } from "./session-port";
 
 type Screen =
+  | { readonly name: "checking" }
   | {
       readonly name: "signedOut";
       readonly notice: MessageKey | null;
@@ -49,12 +49,6 @@ const SIGN_IN_NOTICE = {
   refused: "signIn.refused",
 } as const satisfies Record<Exclude<SignInOutcome["kind"], "signedIn">, MessageKey>;
 
-/** What the shell keeps between launches differs, so the footer says it per shell. */
-const SESSION_NOTE = {
-  desktop: "signOut.note.desktop",
-  android: "signOut.note.android",
-} as const satisfies Record<Shell, MessageKey>;
-
 /** Failures after which the platform has already dropped the session: back to signing in. */
 const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
   "notSignedIn",
@@ -62,19 +56,11 @@ const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
   "cardSelectUnfinished",
 ]);
 
-export function App({
-  port,
-  shell,
-  i18n,
-}: {
-  port: HirobaSessionPort;
-  shell: Shell;
-  i18n: Translator;
-}) {
+export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator }) {
   const { t } = i18n;
-  const [screen, setScreen] = useState<Screen>({ name: "signedOut", notice: null });
+  const [screen, setScreen] = useState<Screen>({ name: "checking" });
 
-  const read = async () => {
+  const read = useCallback(async () => {
     setScreen({ name: "reading" });
     const result = await port.readProfile();
     if (result.ok) {
@@ -84,7 +70,7 @@ export function App({
     } else {
       setScreen({ name: "readFailed", ...result.error });
     }
-  };
+  }, [port]);
 
   const signIn = async () => {
     setScreen({ name: "signingIn" });
@@ -104,6 +90,24 @@ export function App({
     await port.signOut();
     setScreen({ name: "signedOut", notice: null });
   };
+
+  // A session kept from an earlier launch is read once on opening: that is what opening the app
+  // asks for. Once, not per render — StrictMode runs effects twice in development, and a second
+  // run would be a second request to Hiroba.
+  const opened = useRef(false);
+  useEffect(() => {
+    if (opened.current) {
+      return;
+    }
+    opened.current = true;
+    void port.isSignedIn().then((signedIn) => {
+      if (signedIn) {
+        void read();
+      } else {
+        setScreen({ name: "signedOut", notice: null });
+      }
+    });
+  }, [port, read]);
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
@@ -135,6 +139,8 @@ export function App({
             </Button>
           </>
         )}
+
+        {screen.name === "checking" && <CircularProgress size={24} />}
 
         {screen.name === "reading" && (
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
@@ -172,7 +178,7 @@ export function App({
         )}
 
         <Typography variant="body2" color="text.secondary">
-          {t(SESSION_NOTE[shell])}
+          {t("signOut.note")}
         </Typography>
       </Stack>
     </Container>

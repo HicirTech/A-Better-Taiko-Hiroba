@@ -55,6 +55,10 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   };
 
   return {
+    async isSignedIn() {
+      return signedIn;
+    },
+
     async signIn() {
       await forget();
       await InAppBrowser.removeAllListeners();

@@ -14,9 +14,7 @@ export const en: Messages = {
   "signIn.refused":
     "Sign-in stopped: it was sent to {host}, which this app does not open. Please report that host name.",
   "signOut.action": "Sign out",
-  "signOut.note.desktop": "This app forgets your session when you sign out or close it.",
-  "signOut.note.android":
-    "Sign out to end your session on this device. If you close the app instead, the session stays stored on this device until the app next opens.",
+  "signOut.note": "You stay signed in on this device until you sign out.",
   "profile.reading": "Reading your profile from Hiroba…",
   "profile.readAgain": "Read again",
   "profile.title": "Title: {title}",

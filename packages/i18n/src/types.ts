@@ -24,10 +24,8 @@ export interface Messages {
   /** Param: {host}, the host name the sign-in was sent to. */
   "signIn.refused": string;
   "signOut.action": string;
-  /** What the desktop keeps: memory only, gone when the app closes. */
-  "signOut.note.desktop": string;
-  /** What Android keeps: the WebView's cookie store, on disk until sign-out or the next launch. */
-  "signOut.note.android": string;
+  /** The session stays on the device, across launches, until the user signs out. */
+  "signOut.note": string;
   "profile.reading": string;
   "profile.readAgain": string;
   /** Param: {title}. */

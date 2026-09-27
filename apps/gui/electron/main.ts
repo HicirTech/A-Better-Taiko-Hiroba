@@ -94,6 +94,9 @@ app.whenReady().then(async () => {
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
   const port: HirobaSessionPort = {
+    async isSignedIn() {
+      return sessionCookie !== null;
+    },
     async signIn(): Promise<SignInOutcome> {
       signInAttempt?.cancel();
       sessionCookie = null;
