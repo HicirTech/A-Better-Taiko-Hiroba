@@ -28,7 +28,7 @@ type Screen =
   | { readonly name: "signingIn" }
   | { readonly name: "reading" }
   | { readonly name: "profile"; readonly profile: ProfileView }
-  | { readonly name: "readFailed"; readonly kind: ReadFailureKind };
+  | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
 const FAILURE_MESSAGE = {
   notSignedIn: "failure.notSignedIn",
@@ -82,7 +82,7 @@ export function App({
     } else if (SESSION_GONE.has(result.error.kind)) {
       setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
     } else {
-      setScreen({ name: "readFailed", kind: result.error.kind });
+      setScreen({ name: "readFailed", ...result.error });
     }
   };
 
@@ -146,7 +146,18 @@ export function App({
         {screen.name === "profile" && <ProfileCard profile={screen.profile} i18n={i18n} />}
 
         {screen.name === "readFailed" && (
-          <Alert severity="warning">{t(FAILURE_MESSAGE[screen.kind])}</Alert>
+          <Alert severity="warning">
+            {t(FAILURE_MESSAGE[screen.kind])}
+            {screen.detail !== undefined && (
+              <Typography
+                id="failure-detail"
+                variant="body2"
+                sx={{ mt: 1, fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
+              >
+                {t("failure.detail", { detail: screen.detail })}
+              </Typography>
+            )}
+          </Alert>
         )}
 
         {(screen.name === "profile" || screen.name === "readFailed") && (

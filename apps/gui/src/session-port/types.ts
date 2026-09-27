@@ -37,6 +37,12 @@ export type ReadFailureKind =
 
 export interface ReadFailure {
   readonly kind: ReadFailureKind;
+  /**
+   * For `unexpectedPage` only: where the read ended and what the parser said, as codes a user can
+   * copy into a report — path, status, content type, size, parser verdict and selector. Never page
+   * text, never a query string, never a cookie.
+   */
+  readonly detail?: string;
 }
 
 /**

@@ -6,16 +6,18 @@ import {
   parseProfilePage,
   type Result,
   type Transport,
+  type TransportResponse,
 } from "@abth/core";
 
 import type { ProfileView, ReadFailure, ReadFailureKind } from "../session-port";
 import { myPageUrl } from "./endpoints";
 import { signInStep } from "./sign-in-step";
-import type { HirobaEndpoints } from "./types";
+import type { HirobaEndpoints, SignInStep } from "./types";
 
 /**
- * Only the kind leaves this module. A ParseFailure can carry page text (the taiko-number line, the
- * site's error message), so it is never shown, logged or sent anywhere verbatim.
+ * Only the kind leaves this module, plus the codes `describe` builds. A ParseFailure can carry page
+ * text (the taiko-number line, the site's error message) in `raw`, so that is never shown, logged
+ * or sent anywhere.
  */
 const READ_FAILURE_OF_PARSE_FAILURE = {
   loggedOut: "loggedOut",
@@ -42,7 +44,8 @@ export async function readProfile(
     return err({ kind: sent.error.kind });
   }
   const response = sent.value;
-  switch (signInStep(response.url, endpoints)) {
+  const step = signInStep(response.url, endpoints);
+  switch (step) {
     case "hirobaLogin":
       return err({ kind: "loggedOut" });
     case "cardSelect":
@@ -50,13 +53,43 @@ export async function readProfile(
     case "otherHiroba":
       break;
     default:
-      return err({ kind: "unexpectedPage" });
+      return err({ kind: "unexpectedPage", detail: describe(response, step) });
   }
   const html = new TextDecoder("utf-8").decode(response.body);
   const parsed = parseProfilePage(html, now().toISOString());
   if (isErr(parsed)) {
-    return err({ kind: READ_FAILURE_OF_PARSE_FAILURE[parsed.error.kind] });
+    const kind = READ_FAILURE_OF_PARSE_FAILURE[parsed.error.kind];
+    return err(
+      kind === "unexpectedPage"
+        ? { kind, detail: describe(response, step, parsed.error) }
+        : { kind },
+    );
   }
   const { nickname, title, summary, fetchedAt } = parsed.value;
   return ok({ nickname, title, crowns: summary.crownCounts, fetchedAt });
+}
+
+/**
+ * Codes for a report of a page this app did not expect: where the read ended, what came back, and
+ * what the parser said. The path is kept and the query dropped; the parser's `marker` is a
+ * selector this code wrote, and its `raw` (page text) is left out.
+ */
+function describe(response: TransportResponse, step: SignInStep, parse?: ParseFailure): string {
+  let path = "?";
+  try {
+    path = new URL(response.url).pathname;
+  } catch {
+    // The final URL did not parse; "?" says so.
+  }
+  const parts = [
+    `step=${step}`,
+    `path=${path}`,
+    `status=${response.status}`,
+    `type=${response.headers["content-type"] ?? "-"}`,
+    `bytes=${response.body.byteLength}`,
+  ];
+  if (parse !== undefined) {
+    parts.push(`parse=${parse.kind}${"marker" in parse ? `@${parse.marker}` : ""}`);
+  }
+  return parts.join(" ");
 }

@@ -33,5 +33,6 @@ export const en: Messages = {
   "failure.siteError":
     "Hiroba answered with an error. It is closed for maintenance every day from 05:00 to 07:00 JST.",
   "failure.unexpectedPage": "Hiroba answered with a page this app did not expect.",
+  "failure.detail": "Details for a report: {detail}",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
 };

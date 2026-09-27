@@ -94,12 +94,29 @@ describe("readProfile", () => {
     );
   });
 
-  test("reports a page of another shape by kind only", async () => {
-    const transport = fakeTransport(
-      "https://hiroba.test/mypage_top.php",
-      "<html><body></body></html>",
+  test("reports a page of another shape with codes for a report, not its text", async () => {
+    const page = "<html><body><p>サンプルの本文 000000000000</p></body></html>";
+    const transport = fakeTransport("https://hiroba.test/mypage_top.php?x=secret", page);
+    const read = await readProfile(transport, ENDPOINTS, NOW);
+    expect(read.ok).toBe(false);
+    if (read.ok) return;
+    expect(read.error.kind).toBe("unexpectedPage");
+    const detail = read.error.detail ?? "";
+    expect(detail).toStartWith("step=otherHiroba path=/mypage_top.php status=200 type=- bytes=");
+    expect(detail).toMatch(/ parse=missingMarker@\S+$/);
+    expect(detail).not.toContain("secret");
+    expect(detail).not.toContain("サンプル");
+    expect(detail).not.toContain("000000000000");
+  });
+
+  test("names where the read ended when it is not a Hiroba page it can read", async () => {
+    const transport = fakeTransport("https://hiroba.test/index.php", "<html></html>");
+    expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(
+      err({
+        kind: "unexpectedPage",
+        detail: "step=landed path=/index.php status=200 type=- bytes=13",
+      }),
     );
-    expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "unexpectedPage" }));
   });
 
   test("passes a transport failure on by kind", async () => {

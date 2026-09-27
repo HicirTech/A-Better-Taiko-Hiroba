@@ -44,6 +44,8 @@ export interface Messages {
   "failure.cancelled": string;
   "failure.siteError": string;
   "failure.unexpectedPage": string;
+  /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
+  "failure.detail": string;
   "platform.unsupported": string;
 }
 
