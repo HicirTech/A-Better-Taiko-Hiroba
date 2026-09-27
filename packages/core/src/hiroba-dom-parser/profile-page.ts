@@ -53,10 +53,8 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
       marker: "#mydon_area > div (title, name row)",
     });
   }
+  // An empty title line is a player wearing no title, not a page that failed to render one.
   const title = titleDiv.text.trim();
-  if (title === "") {
-    return err({ kind: "unreadableValue", page: PAGE, marker: "#mydon_area title line", raw: "" });
-  }
   // The name row takes one of two shapes, decided by the dan. With a dan label it is a flex row of
   // two divs, the nickname in the first and the label in the second. Without one, the nickname
   // sits directly in the row: that is how user_profile.php, whose name row is the same markup,

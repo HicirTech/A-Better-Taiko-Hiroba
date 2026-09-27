@@ -32,6 +32,10 @@ export interface Profile {
    * my page shows only the rendered text. So nothing on the site can turn a composed title back
    * into the three part ids, and a client that writes one has to keep them itself. Executed
    * 2026-08-09.
+   *
+   * `""` is no title, a normal state: the page keeps the title line and leaves it empty. Seen on my
+   * page after a write that set all three title parts to 0 (executed 2026-08-09), and on 2 of the
+   * 19 other players' profiles on disk.
    */
   readonly title: string;
   readonly region: string | null;

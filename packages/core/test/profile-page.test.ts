@@ -229,6 +229,21 @@ describe("parseProfilePage", () => {
     expect(result.value.danLabelImageUrl).toBeNull();
   });
 
+  test("an empty title line is no title, a normal state, read as an empty string", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      `<div style="height: 20px;text-align: center;">黒薔薇の使徒</div>`,
+      `<div style="height: 20px;text-align: center;">\n\t\t\t</div>`,
+    );
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.title).toBe("");
+    expect(result.value.nickname).toBe("Donder");
+  });
+
   test("an unset 大好きな曲 is a normal state, read as null", () => {
     const result = parseProfilePage(
       profileExcerpt({ withDan: true, favoriteSong: null }),
