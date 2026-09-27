@@ -34,8 +34,8 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 
 | Script | What it does |
 |---|---|
-| `bun run dev` | Starts the local stand-in for Hiroba (`scripts/mock-hiroba.ts`), Vite's dev server and Electron. Nothing reaches the real sites. |
-| `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID. Only for a person signing in with their own account. |
+| `bun run dev` | Starts the local stand-in for Hiroba (`scripts/mock-hiroba.ts`), Vite's dev server and Electron. Nothing reaches the real sites, and the app keeps its data in `out/dev-user-data`, never in the installed app's folder: a session or undo record kept there is neither sent to the stand-in nor cleared or overwritten by it. |
+| `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
 | `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. With the write gate open, it changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
@@ -75,7 +75,8 @@ post from the app at all.
 
 **Before you start.** Pick a time outside 05:00–07:00 JST. Close any other copy of the app. The run
 below uses the same data folder as the installed app, `%APPDATA%\A Better Taiko Hiroba`, so it
-opens signed in if you are signed in there.
+opens signed in if you are signed in there. A plain `bun run dev`, against the stand-in, keeps its
+own folder and never touches this one.
 
 **1. Start the development run with the gate open.** From this folder, in Git Bash:
 

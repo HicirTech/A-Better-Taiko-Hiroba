@@ -49,7 +49,8 @@ const chromeMajor = process.versions.chrome.split(".")[0];
 const userAgent = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeMajor}.0.0.0 Safari/537.36`;
 app.userAgentFallback = userAgent;
 
-// Development only: lets the end-to-end run keep its profile out of the real %APPDATA%.
+// Development only: lets the end-to-end run and the dev run against the mock keep their profiles
+// out of the real %APPDATA%, where the installed app keeps its session and undo record.
 if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
   app.setPath("userData", process.env.ABTH_DEV_USER_DATA);
 }

@@ -4,6 +4,10 @@
  *
  *   bun run dev             against scripts/mock-hiroba.ts, started here: nothing reaches Hiroba
  *   bun run dev -- --real   against the real Hiroba and Bandai Namco ID, for a person signing in
+ *
+ * Against the mock, the app keeps its data in out/dev-user-data, never in the installed app's
+ * %APPDATA% folder: that one holds the real session and undo record, which a mock run would
+ * otherwise send to the mock, drop as ended, and overwrite. Only --real uses the installed app's.
  */
 import { watch } from "node:fs";
 import { join } from "node:path";
@@ -24,6 +28,7 @@ const mockEnv = real
   : {
       ABTH_DEV_HIROBA_ORIGIN: "http://hiroba.127.0.0.1.sslip.io:8807",
       ABTH_DEV_IDP_HOST: "id.127.0.0.1.sslip.io:8808",
+      ABTH_DEV_USER_DATA: join(root, "out", "dev-user-data"),
     };
 
 const vite = await createServer({ configFile: join(root, "vite.config.ts"), root });
