@@ -13,3 +13,10 @@ export {
 export { readProfile } from "./read-profile";
 export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep } from "./types";
+export {
+  enabledWrites,
+  unverifiedWritesOpen,
+  VERIFIED_WRITES,
+  WRITE_KINDS,
+  type WriteGateInput,
+} from "./verified-writes";

@@ -7,9 +7,11 @@ export { type ArgumentCheck, PORT_ARGUMENTS } from "./arguments";
 export { BRIDGE_CHANNELS } from "./bridge-channels";
 export type {
   DanView,
+  EnabledWrite,
   HirobaSessionPort,
   ProfileView,
   ReadFailure,
   ReadFailureKind,
   SignInOutcome,
+  WriteKind,
 } from "./types";

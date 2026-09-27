@@ -79,6 +79,19 @@ export interface ReadFailure {
   readonly detail?: string;
 }
 
+/** The kinds of write the app knows how to send. One so far: the costume, きせかえ. */
+export type WriteKind = "costume";
+
+/**
+ * A kind of write this run may send. `verified` is whether its first real write from the app has
+ * been made and recorded; until then the interface asks for an extra confirmation, and each write
+ * also reads another page before and after.
+ */
+export interface EnabledWrite {
+  readonly kind: WriteKind;
+  readonly verified: boolean;
+}
+
 /**
  * Everything the interface can ask of the platform, and everything that crosses from the platform
  * layer into the interface. No cookie, no URL and no page text is part of it.
