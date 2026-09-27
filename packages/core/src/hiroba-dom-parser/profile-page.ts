@@ -42,8 +42,7 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
   }
 
   // Title and nickname carry no class or id; their position is the only contract the page
-  // offers. The first div child of #mydon_area is the title line, the second is the name row,
-  // whose own first div is the nickname.
+  // offers. The first div child of #mydon_area is the title line, the second is the name row.
   const divs = elementChildren(area.value).filter((el) => el.rawTagName.toLowerCase() === "div");
   const titleDiv = divs[0];
   const nameRow = divs[1];
@@ -58,8 +57,13 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
   if (title === "") {
     return err({ kind: "unreadableValue", page: PAGE, marker: "#mydon_area title line", raw: "" });
   }
+  // The name row takes one of two shapes, decided by the dan. With a dan label it is a flex row of
+  // two divs, the nickname in the first and the label in the second. Without one, the nickname
+  // sits directly in the row: that is how user_profile.php, whose name row is the same markup,
+  // writes all eight dan-less players on disk. No dan-less my page has been captured, so the flat
+  // form here is inferred from theirs.
   const nickDiv = elementChildren(nameRow).find((el) => el.rawTagName.toLowerCase() === "div");
-  const nickname = nickDiv?.text.trim() ?? "";
+  const nickname = (nickDiv ?? nameRow).text.trim();
   if (nickname === "") {
     return err({ kind: "unreadableValue", page: PAGE, marker: "#mydon_area name row", raw: "" });
   }

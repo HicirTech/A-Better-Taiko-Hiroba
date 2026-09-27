@@ -8,6 +8,11 @@ import { isErr, isOk, parseProfilePage, type Profile } from "../src/index";
 
 interface ExcerptOptions {
   withDan: boolean;
+  /**
+   * The name row as one flat div holding the nickname, the way user_profile.php writes a dan-less
+   * player. Implies no dan: only the flex row has a second div for the label.
+   */
+  flatNameRow?: boolean;
   /** null renders the block the way the page renders an unset 大好きな曲. */
   favoriteSong?: { songNo: string; title: string } | null;
   folderTitles?: readonly string[];
@@ -85,15 +90,19 @@ function profileExcerpt(options: ExcerptOptions): string {
     : favoriteSongBlock(
         options.favoriteSong === undefined ? DEFAULT_FAVORITE : options.favoriteSong,
       ) + favoriteFolderBlock(options.folderTitles ?? DEFAULT_FOLDER);
+  const nameRow = options.flatNameRow
+    ? `<div style="height:24px;text-align:center;">
+    Donder\t\t</div>`
+    : `<div style="display:flex">
+    <div style="width:135px;">Donder</div>
+    <div style="width:135px;text-align:center">${dan}</div>
+  </div>`;
   return `
 <html><body>
 <div id="mydon_area" class="mydon_area">
   <img src="imgsrc_titleplate.php">
   <div style="height: 20px;text-align: center;">黒薔薇の使徒</div>
-  <div style="display:flex">
-    <div style="width:135px;">Donder</div>
-    <div style="width:135px;text-align:center">${dan}</div>
-  </div>
+  ${nameRow}
   <div style="background-color:#FC0;">
     <div class="detail">
       <p>国・地域 ：香港</p>
@@ -202,6 +211,21 @@ describe("parseProfilePage", () => {
     if (!isOk(result)) {
       throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
     }
+    expect(result.value.danLabelImageUrl).toBeNull();
+  });
+
+  // No dan-less my page has been captured. user_profile.php, whose name row is the same markup,
+  // writes every dan-less player this way, so a dan-less my page is expected to as well.
+  test("a dan-less name row that is one flat div still gives the nickname", () => {
+    const result = parseProfilePage(
+      profileExcerpt({ withDan: false, flatNameRow: true }),
+      FETCHED_AT,
+    );
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.nickname).toBe("Donder");
     expect(result.value.danLabelImageUrl).toBeNull();
   });
 
