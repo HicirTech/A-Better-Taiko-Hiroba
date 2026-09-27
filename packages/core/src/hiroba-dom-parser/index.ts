@@ -15,7 +15,7 @@ export { parsePlayerRowsPage } from "./player-rows";
 export { parseRankDetailPage, parseRankListPage } from "./ranking-pages";
 export { parsePublicProfilePage } from "./public-profile-page";
 export { parseRecentPlaysPage, scoreFromRecentPlay } from "./recent-plays-page";
-export { parseScoreDetailPage } from "./score-detail-page";
+export { parsePublicScoreDetailPage, parseScoreDetailPage } from "./score-detail-page";
 export { parseScoreListPage } from "./score-list-page";
 export type {
   LoggedOutFailure,
