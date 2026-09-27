@@ -201,7 +201,11 @@ export type CrossVerdict = "off" | "unchanged" | "changed" | "unknown";
  * carries the set before it, and `save` only annotates.
  */
 export type WriteOutcome<S> =
-  /** 05:00–07:00 JST: nothing was sent at all. */
+  /**
+   * 05:00–07:00 JST: no save was sent. A write started in the break sent nothing at all; one the
+   * break began during stopped before its next post, having sent at most its pre-check, which
+   * changes nothing.
+   */
   | { readonly kind: "maintenance" }
   /** A read before any post failed; nothing was posted. */
   | { readonly kind: "readFailed"; readonly failure: HirobaReadFailure }

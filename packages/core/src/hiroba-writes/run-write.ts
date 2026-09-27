@@ -39,7 +39,11 @@ const STOP_REASON = {
  * With `crossCheck`, another page is read before the pre-check and after the read-back, to see it
  * did not move. Nothing is retried and nothing loops: every request above is sent at most once,
  * except the read-back, which is also the one GET that settles whether a pre-check that ended on
- * the login page ended the session. Between 05:00 and 07:00 JST nothing is sent at all.
+ * the login page ended the session.
+ *
+ * No post goes out between 05:00 and 07:00 JST. The clock is looked at before the first request
+ * and again just before each post, since the reads before a post can take their full timeout: a
+ * write started at 04:59 stops at 05:00 rather than posting into the break.
  */
 export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   spec: WriteSpec<S, T, B, E, C>,
@@ -77,6 +81,9 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   }
 
   if (spec.precheck !== undefined) {
+    if (inMaintenance(deps.now())) {
+      return { kind: "maintenance" };
+    }
     const answer = await postAjax(
       deps.transport,
       deps.hirobaOrigin,
@@ -98,6 +105,10 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
     }
   }
 
+  // A pre-check changes nothing, so a break that began after it still leaves nothing saved.
+  if (inMaintenance(deps.now())) {
+    return { kind: "maintenance" };
+  }
   const save = readSave(
     await postAjax(deps.transport, deps.hirobaOrigin, spec.save(editor.value, body.value)),
   );

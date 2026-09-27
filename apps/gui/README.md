@@ -60,7 +60,8 @@ Every write goes the same way: read the editor for a fresh form token and the wh
 undo record in `undo.json` in the app's data folder, send the pre-check, send the save exactly
 once, and read the whole set back. The set read back decides the outcome, not Hiroba's answer.
 While a kind is not verified, each write also reads your title on my page before and after. No
-request is retried, and nothing is sent between 05:00 and 07:00 JST, Hiroba's daily maintenance.
+request is retried, and no post goes out between 05:00 and 07:00 JST, Hiroba's daily maintenance:
+the clock is looked at before a write starts and again just before each post.
 
 Two more variables apply to unpackaged runs only: `ABTH_DEV_NOW` (an ISO time) fixes the clock the
 maintenance check uses, for tests, and `ABTH_DEBUG_SAVE_READS=1` keeps each page a read brings back

@@ -181,14 +181,20 @@ interface Run {
 async function write(
   transport: Transport,
   target: number,
-  options: { expected?: number; crossCheck?: boolean; now?: Date; undoFails?: boolean } = {},
+  options: {
+    expected?: number;
+    crossCheck?: boolean;
+    now?: Date;
+    clock?: () => Date;
+    undoFails?: boolean;
+  } = {},
   spec: WriteSpec<Value, Value, Value, EditorReading<Value>, string> = SPEC,
 ): Promise<Run> {
   const undo: [Value, Value][] = [];
   const deps: WriteDeps<Value> = {
     transport,
     hirobaOrigin: ORIGIN,
-    now: () => options.now ?? NOON_JST,
+    now: options.clock ?? (() => options.now ?? NOON_JST),
     crossCheck: options.crossCheck ?? false,
     beginUndo: async (before, expectedAfter) => {
       if (options.undoFails) {
@@ -279,6 +285,30 @@ describe("runWrite", () => {
     });
     expect(outcome).toEqual({ kind: "maintenance" });
     expect(hiroba.requests).toEqual([]);
+  });
+
+  test("looks at the clock again before each post, so a write crossing 05:00 saves nothing", async () => {
+    /** 04:59:59 JST for the first `calm` looks at the clock, and 05:00:30 JST after them. */
+    const crossingAfter = (calm: number) => {
+      let looks = 0;
+      return () => new Date(looks++ < calm ? "2026-09-26T19:59:59Z" : "2026-09-26T20:00:30Z");
+    };
+
+    const beforeThePrecheck = fakeHiroba();
+    const stopped = await write(beforeThePrecheck.hiroba.transport, 2, {
+      clock: crossingAfter(1),
+      crossCheck: true,
+    });
+    expect(stopped.outcome).toEqual({ kind: "maintenance" });
+    expect(beforeThePrecheck.hiroba.requests).toEqual(["GET edit.php", "GET cross.php"]);
+
+    const beforeTheSave = fakeHiroba();
+    const { outcome } = await write(beforeTheSave.hiroba.transport, 2, {
+      clock: crossingAfter(2),
+    });
+    expect(outcome).toEqual({ kind: "maintenance" });
+    expect(beforeTheSave.hiroba.requests).toEqual(["GET edit.php", "POST ajax/check.php"]);
+    expect(beforeTheSave.hiroba.state).toBe(1);
   });
 
   test("posts nothing when the set changed since the change was made", async () => {
