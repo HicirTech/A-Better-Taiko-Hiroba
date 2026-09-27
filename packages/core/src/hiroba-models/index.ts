@@ -16,9 +16,14 @@
  * holding an operation over an entity, as `song-resolution.ts` does, imports that entity's type
  * and nothing further.
  *
- * Named but not shaped, on purpose: rewards and unlocks, friends, other players, rankings,
- * competitions and challenges, the settings surface, news and title history. They are mapped in the wiki's Reading pages and get a file here the day
- * something consumes them — an addition then, not a rework now.
+ * Named but not shaped, on purpose: rewards and unlocks, friends, rankings, competitions and
+ * challenges, news and title history, the settings surface, the login and card layer, and a
+ * written composition's part ids. They are mapped in the wiki and get a file here the day something
+ * consumes them — an addition then, not a rework now. The part ids are the one with a deadline,
+ * since nothing on the site gives them back once written — see `Profile.title`. Friend rows and
+ * ranking rows are read, but into the parsers' own row types, not into an entity here. Other
+ * players left this list when their pages got readers: `PublicProfile` is their profile, and their
+ * score detail is a `Score` whose record carries null for any play count the page does not print.
  */
 export type { Costume } from "./costume";
 export {

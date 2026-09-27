@@ -52,6 +52,26 @@ const detailScore: Score = {
   fetchedAt: "2026-07-26T09:00:00.000Z",
 };
 
+/** Another player's chart, read off a detail page that prints no play counts. */
+const publicDetailScore: Score = {
+  ...detailScore,
+  crown: "donderful",
+  scoreRank: 8,
+  record: {
+    highScore: 1001230,
+    good: 512,
+    ok: 3,
+    bad: 1,
+    drumroll: 27,
+    maxCombo: 498,
+    stageCount: null,
+    clearCount: null,
+    fullComboCount: null,
+    donderfulComboCount: null,
+    options: { speed: 1, doron: false, abekobe: false, random: "none", supportChart: null },
+  },
+};
+
 const profileWithoutDan: Profile = {
   taikoNo: "000000000000",
   nickname: "Donder",
@@ -113,6 +133,15 @@ describe("the model survives JSON whole", () => {
 
   test("a detail-fidelity score carrying the full record", () => {
     expect(roundTrip(detailScore)).toEqual(detailScore);
+  });
+
+  test("another player's detail score, whose missing play counts stay null through JSON", () => {
+    // Null survives JSON where an optional field would vanish, and 0 would be a claim.
+    const back = roundTrip(publicDetailScore);
+
+    expect(back).toEqual(publicDetailScore);
+    expect(back.record?.stageCount).toBeNull();
+    expect(back.record?.donderfulComboCount).toBeNull();
   });
 
   test("a profile whose missing dan is a normal state", () => {
