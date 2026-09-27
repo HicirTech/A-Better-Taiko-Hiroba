@@ -86,6 +86,25 @@ describe("readProfile", () => {
     );
   });
 
+  test("carries a set 大好きな曲 to the view as its title alone", async () => {
+    const page = MY_PAGE_EXCERPT.replace(
+      '<span class="songName songNameFont">未設定</span>',
+      '<span class="songName songNameFontnamco">サンプル曲アルファ</span>',
+    ).replace('id="song_no" value=""', 'id="song_no" value="1346"');
+    expect(page).toContain("サンプル曲アルファ");
+    expect(page).toContain('value="1346"');
+    const read = await readProfile(
+      fakeTransport("https://hiroba.test/mypage_top.php", page),
+      ENDPOINTS,
+      NOW,
+    );
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(read.value.favoriteSong).toBe("サンプル曲アルファ");
+    expect(read.value.favoriteFolder).toEqual(["サンプル曲"]);
+    expect(JSON.stringify(read.value)).not.toContain("1346");
+  });
+
   test("lets neither the taiko number nor any URL through to the view", async () => {
     const transport = fakeTransport("https://hiroba.test/mypage_top.php", MY_PAGE_EXCERPT);
     const view = JSON.stringify(await readProfile(transport, ENDPOINTS, NOW));
