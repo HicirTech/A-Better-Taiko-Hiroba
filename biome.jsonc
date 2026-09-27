@@ -58,6 +58,13 @@
       // are where output belongs.
       "includes": ["packages/**"],
       "linter": { "rules": { "suspicious": { "noConsole": "error" } } }
+    },
+    {
+      // The corpus checker is a report — printing is the whole point of it, and it never ships as
+      // part of the library. The rule above still applies to everything else under packages/, and
+      // its reason survives here: the checker redacts taiko numbers before printing a filename.
+      "includes": ["packages/core/scripts/**"],
+      "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
     }
   ]
 }
