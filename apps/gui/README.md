@@ -126,8 +126,9 @@ and after. Tick it and press **Save to Hiroba**. The dialog shows "Saving… the
 while the app sends, in this order and once each (a picture asked for as you picked may come
 before or after these, never between them):
 
-1. `GET mypage_kisekae.php`: a fresh token and the whole set, checked against what the editor showed;
-2. `GET mypage_top.php`: your title, before;
+1. `GET mypage_top.php`: your title, before — read first, since my page's forms issue a token too;
+2. `GET mypage_kisekae.php`: a fresh token and the whole set, checked against what the editor showed;
+   the last page read before the posts, so its token is the one Hiroba accepts;
 3. `POST ajax/check_ip_kisekae.php`: the pre-check, which changes nothing; only the answer
    `{"result":false}` lets the app go on;
 4. `POST ajax/change_mydon.php`: the save, sent once;
