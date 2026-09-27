@@ -1,0 +1,204 @@
+/**
+ * The desktop's write verbs against the mock's own costume editor (scripts/mock-costume.ts), in
+ * process, with the undo slots on disk in a temporary folder: the gate, the undo record's life, and
+ * the session dropped when Hiroba ends it.
+ */
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { type CostumeSet, ok, type Transport } from "@abth/core";
+
+import { createDesktopWrites } from "../electron/desktop-writes";
+import { createUndoStore } from "../electron/undo-store";
+import { createCostumeEditor, INITIAL_COSTUME, type MockSession } from "../scripts/mock-costume";
+
+const ORIGIN = "https://hiroba.test";
+const ENDPOINTS = { hirobaOrigin: ORIGIN, idpHost: "id.test", idpDomain: "id.test" };
+const OPEN = { isPackaged: false, env: { ABTH_UNVERIFIED_WRITES: "1" } };
+const NOON_JST = () => new Date("2026-09-27T03:00:00Z");
+const OWNER = "000000000000";
+
+/** My page, cut down to what the parser needs. */
+const MY_PAGE = `<div id="mydon_area"><div>サンプルの称号</div><div><div>サンプルどん</div></div>
+<div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：${OWNER}</p></div></div>
+<div class="total_score"><img src="image/sp/640/total_score_image_5.png">
+${[8, 7, 6, 5, 4, 3, 2].map((rank) => `<div class="best_rank_score_${rank}">1</div>`).join("")}
+<div class="silver_crown_count">1</div><div class="gold_crown_count">1</div><div class="donderful_crown_count">1</div></div></div>
+<div class="favoriteSong"><h2 class="subtitleMypage">大好きな曲</h2><div class="mypageInfoArea">
+<ul id="songList"><li><div class="name"><span class="songName songNameFont">未設定</span></div></li></ul></div></div>
+<div class="favoriteSong"><h2 class="subtitleMypage">お気に入りの曲</h2><div class="mypageInfoArea"><ul id="songList"></ul></div></div>`;
+
+/** The mock's field names, as the app's set names them. */
+const fromMock = (state: Record<string, number>): CostumeSet => ({
+  colorBody: state.color_body ?? -1,
+  colorLimb: state.color_limb ?? -1,
+  colorFace: state.color_face ?? -1,
+  costume1: state.costume_1 ?? -1,
+  costume2: state.costume_2 ?? -1,
+  costume3: state.costume_3 ?? -1,
+  costume4: state.costume_4 ?? -1,
+  costume5: state.costume_5 ?? -1,
+});
+const START = fromMock(INITIAL_COSTUME);
+
+const folders: string[] = [];
+afterEach(() => {
+  for (const folder of folders.splice(0)) {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+/** The mock's editor behind a transport, and the desktop's writes over both. */
+function setUp(options: { gate?: typeof OPEN; owner?: string | null } = {}) {
+  const editor = createCostumeEditor();
+  const session: MockSession = { cardChosen: true };
+  const hiroba = { ended: false, log: [] as string[], endedByApp: 0 };
+  const answer = async (url: string, response: Response) =>
+    ok({
+      status: response.status,
+      url,
+      headers: { "content-type": response.headers.get("content-type") ?? "" },
+      body: new Uint8Array(await response.arrayBuffer()),
+    });
+  const html = (body: string) =>
+    new Response(body, { headers: { "content-type": "text/html; charset=utf-8" } });
+  const transport: Transport = {
+    async send(request) {
+      const path = new URL(request.url).pathname;
+      hiroba.log.push(`${request.method} ${path}`);
+      if (hiroba.ended) {
+        return answer(`${ORIGIN}/login.php`, html(`<form id="login_form"></form>`));
+      }
+      if (request.method === "GET") {
+        return answer(
+          request.url,
+          html(path === "/mypage_kisekae.php" ? editor.page(session) : MY_PAGE),
+        );
+      }
+      const form = new URLSearchParams();
+      for (const [name, value] of request.form) {
+        form.append(name, value);
+      }
+      return answer(
+        request.url,
+        path === "/ajax/check_ip_kisekae.php"
+          ? editor.precheck()
+          : editor.save(session, form, () => {
+              hiroba.ended = true;
+            }),
+      );
+    },
+  };
+  const folder = mkdtempSync(join(tmpdir(), "abth-writes-"));
+  folders.push(folder);
+  const undoPath = join(folder, "undo.json");
+  let signedIn = true;
+  const writes = createDesktopWrites({
+    transport,
+    endpoints: ENDPOINTS,
+    gate: options.gate ?? OPEN,
+    now: NOON_JST,
+    undoStore: createUndoStore(undoPath),
+    signedIn: () => signedIn,
+    endSession: () => {
+      signedIn = false;
+      hiroba.endedByApp += 1;
+    },
+    owner: () => (options.owner === undefined ? OWNER : options.owner),
+  });
+  const saved = async () =>
+    fromMock(
+      (await editor.hook("/__state", new URLSearchParams())?.json()) as Record<string, number>,
+    );
+  const setElsewhere = (params: string) => editor.hook("/__state", new URLSearchParams(params));
+  const signInAgain = () => {
+    hiroba.ended = false;
+    signedIn = true;
+  };
+  return { editor, hiroba, writes, saved, setElsewhere, signInAgain, undoPath };
+}
+
+describe("createDesktopWrites", () => {
+  test("with the gate shut, enables nothing, offers no undo and sends nothing", async () => {
+    const { hiroba, writes } = setUp({ gate: { isPackaged: true, env: OPEN.env } });
+    expect(await writes.enabledWrites()).toEqual([]);
+    expect(
+      await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } }),
+    ).toEqual({ kind: "notEnabled" });
+    expect(await writes.undo("costume")).toEqual({ kind: "notEnabled" });
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(hiroba.log).toEqual([]);
+  });
+
+  test("posts nothing before my page has said whose set this is", async () => {
+    const { hiroba, writes } = setUp({ owner: null });
+    const outcome = await writes.changeCostume({
+      expected: START,
+      target: { ...START, colorFace: 3 },
+    });
+    expect(outcome).toEqual({ kind: "undoNotSaved" });
+    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
+  });
+
+  test("a change leaves an undo on disk, and the undo puts the whole set back", async () => {
+    const { editor, hiroba, writes, saved, undoPath } = setUp();
+    const suited = { ...START, costume1: 36, costume2: 0, costume3: 0, costume4: 0, costume5: 0 };
+    expect((await writes.changeCostume({ expected: START, target: suited })).kind).toBe("applied");
+    expect(await saved()).toEqual(suited);
+    expect(await writes.pendingUndo()).toEqual([
+      { kind: "costume", at: NOON_JST().toISOString(), before: START, after: suited },
+    ]);
+    const tickets = (await editor.hook("/__tickets", new URLSearchParams())?.json()) as string[];
+    const onDisk = readFileSync(undoPath, "utf8");
+    expect(tickets.some((ticket) => onDisk.includes(ticket))).toBe(false);
+
+    hiroba.log.length = 0;
+    expect((await writes.undo("costume")).kind).toBe("applied");
+    expect(await saved()).toEqual(START);
+    expect(await writes.pendingUndo()).toEqual([]);
+    // An undo is a write like any other: a fresh editor, the cross-checks, the pre-check, one save.
+    expect(hiroba.log).toEqual([
+      "GET /mypage_kisekae.php",
+      "GET /mypage_top.php",
+      "POST /ajax/check_ip_kisekae.php",
+      "POST /ajax/change_mydon.php",
+      "GET /mypage_kisekae.php",
+      "GET /mypage_top.php",
+    ]);
+  });
+
+  test("an undo after a change made elsewhere changes nothing, and is no longer offered", async () => {
+    const { writes, saved, setElsewhere } = setUp();
+    await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } });
+    setElsewhere("color_body=40");
+    const outcome = await writes.undo("costume");
+    expect(outcome.kind).toBe("changedSincePreview");
+    expect((await saved()).colorBody).toBe(40);
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(await writes.undo("costume")).toEqual({ kind: "nothingToUndo" });
+  });
+
+  test("a session Hiroba ends after the save is dropped, and the undo settles on the next read", async () => {
+    const { editor, hiroba, writes, signInAgain } = setUp();
+    editor.hook("/__expire-on-save", new URLSearchParams());
+    const target = { ...START, colorFace: 3 };
+    const outcome = await writes.changeCostume({ expected: START, target });
+    expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
+    expect(hiroba.endedByApp).toBe(1);
+    expect(await writes.pendingUndo()).toEqual([]);
+
+    signInAgain();
+    const opened = await writes.openCostumeEditor();
+    expect(opened.ok && opened.value.state).toEqual(target);
+    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
+  });
+
+  test("reads no editor while signed out", async () => {
+    const { hiroba, writes } = setUp();
+    hiroba.ended = true;
+    expect((await writes.openCostumeEditor()).ok).toBe(false);
+    expect(hiroba.endedByApp).toBe(1);
+    expect(await writes.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+  });
+});

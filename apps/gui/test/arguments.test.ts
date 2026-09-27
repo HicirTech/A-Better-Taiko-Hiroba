@@ -16,7 +16,7 @@ const SET = {
 
 describe("PORT_ARGUMENTS", () => {
   test("a verb that takes nothing accepts no arguments, and refuses any", () => {
-    const { changeCostume: _takesOne, ...takingNothing } = PORT_ARGUMENTS;
+    const { changeCostume: _change, undo: _undo, ...takingNothing } = PORT_ARGUMENTS;
     for (const check of Object.values(takingNothing)) {
       expect(check([])).toBe(true);
       expect(check([undefined])).toBe(false);
@@ -49,6 +49,16 @@ describe("PORT_ARGUMENTS", () => {
       [Object.assign(Object.create({ inherited: true }), { expected: SET, target: SET })],
     ];
     for (const args of refused) {
+      expect(check(args)).toBe(false);
+    }
+  });
+});
+
+describe("PORT_ARGUMENTS.undo", () => {
+  test("takes one kind of write the app knows, and nothing else", () => {
+    const check = PORT_ARGUMENTS.undo;
+    expect(check(["costume"])).toBe(true);
+    for (const args of [[], ["title"], ["costume", "costume"], [{ kind: "costume" }], [null]]) {
       expect(check(args)).toBe(false);
     }
   });

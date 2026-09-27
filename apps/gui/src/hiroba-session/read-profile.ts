@@ -45,6 +45,19 @@ export async function readProfile(
   endpoints: HirobaEndpoints,
   now: () => Date = () => new Date(),
 ): Promise<Result<ProfileView, ReadFailure>> {
+  const read = await readOwnProfile(transport, endpoints, now);
+  return isErr(read) ? read : ok(read.value.view);
+}
+
+/**
+ * `readProfile` for a platform layer, which also learns whose page it read: the taiko number stays
+ * with the platform, to tell whose undo record is whose, and never reaches the view.
+ */
+export async function readOwnProfile(
+  transport: Transport,
+  endpoints: HirobaEndpoints,
+  now: () => Date = () => new Date(),
+): Promise<Result<{ readonly view: ProfileView; readonly taikoNo: string }, ReadFailure>> {
   const sent = await transport.send({ method: "GET", url: myPageUrl(endpoints) });
   if (isErr(sent)) {
     return err({ kind: sent.error.kind });
@@ -73,7 +86,7 @@ export async function readProfile(
   }
   const label = parsed.value.danLabelImageUrl;
   const dan = label === null ? null : await readDan(transport, endpoints, label);
-  return ok(profileView(parsed.value, dan));
+  return ok({ view: profileView(parsed.value, dan), taikoNo: parsed.value.taikoNo });
 }
 
 /**

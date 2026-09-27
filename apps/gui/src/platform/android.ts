@@ -194,6 +194,14 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     async changeCostume() {
       return { kind: "notEnabled" };
     },
+
+    async pendingUndo() {
+      return [];
+    },
+
+    async undo() {
+      return { kind: "notEnabled" };
+    },
   };
 }
 

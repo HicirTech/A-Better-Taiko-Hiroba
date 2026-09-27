@@ -1,15 +1,12 @@
 import { join } from "node:path";
-import { err } from "@abth/core";
+import { err, ok } from "@abth/core";
 import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
 
 import {
-  changeCostume,
-  enabledWrites,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
-  openCostumeEditor,
-  readProfile,
+  readOwnProfile,
 } from "../src/hiroba-session";
 import {
   BRIDGE_CHANNELS,
@@ -19,10 +16,12 @@ import {
   type SignInOutcome,
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
+import { createDesktopWrites } from "./desktop-writes";
 import { createHirobaTransport } from "./hiroba-transport";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
+import { createUndoStore } from "./undo-store";
 
 // Development only, and never in a packaged build: the renderer from Vite's dev server, and a
 // local stand-in for Hiroba and the ID host so the whole sign-in can run without the real sites.
@@ -76,9 +75,17 @@ registerAppScheme();
  */
 let sessionCookie: string | null = null;
 let sessionStore: SessionStore | null = null;
+/**
+ * Whose my page this run last read: the taiko number, which tells whose undo record is whose. It
+ * stays in this process and is forgotten with the session.
+ */
+let owner: string | null = null;
 const setSession = (value: string | null) => {
   sessionCookie = value;
   sessionStore?.save(value);
+  if (value === null) {
+    owner = null;
+  }
 };
 let signInAttempt: SignInAttempt | null = null;
 const transport = createHirobaTransport({
@@ -144,6 +151,18 @@ app.whenReady().then(async () => {
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
+  // The writes: the gate, the undo record on disk, and the session dropped when Hiroba ends it.
+  const writes = createDesktopWrites({
+    transport: readTransport,
+    endpoints,
+    gate: writeGate,
+    now: writeClock,
+    undoStore: createUndoStore(join(app.getPath("userData"), "undo.json")),
+    signedIn: () => sessionCookie !== null,
+    endSession: () => setSession(null),
+    owner: () => owner,
+  });
+
   const port: HirobaSessionPort = {
     async isSignedIn() {
       return sessionCookie !== null;
@@ -170,49 +189,24 @@ app.whenReady().then(async () => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
-      const read = await readProfile(readTransport, endpoints);
-      if (!read.ok && sessionEnded(read.error)) {
-        setSession(null);
+      const read = await readOwnProfile(readTransport, endpoints);
+      if (!read.ok) {
+        if (sessionEnded(read.error)) {
+          setSession(null);
+        }
+        return read;
       }
-      return read;
+      owner = read.value.taikoNo;
+      return ok(read.value.view);
     }),
     async signOut() {
       setSession(null);
     },
-    async enabledWrites() {
-      return enabledWrites(writeGate);
-    },
-    openCostumeEditor: oneAtATime(async () => {
-      if (sessionCookie === null) {
-        return err({ kind: "notSignedIn" });
-      }
-      const read = await openCostumeEditor(readTransport, endpoints);
-      if (!read.ok && sessionEnded(read.error)) {
-        setSession(null);
-      }
-      return read;
-    }),
-    changeCostume: oneAtATime(async (change) => {
-      // The gate is checked here, where the write is sent, and not only by what the window shows.
-      const enabled = enabledWrites(writeGate).find((write) => write.kind === "costume");
-      if (enabled === undefined) {
-        return { kind: "notEnabled" };
-      }
-      if (sessionCookie === null) {
-        return { kind: "notSignedIn" };
-      }
-      const outcome = await changeCostume(readTransport, endpoints, change, {
-        now: writeClock,
-        crossCheck: !enabled.verified,
-        // The undo record comes with its own store; until then, nothing is kept.
-        beginUndo: async () => {},
-      });
-      // Hiroba ended the session: dropped here as a read that finds it gone drops it.
-      if (outcome.kind === "sessionGone") {
-        setSession(null);
-      }
-      return outcome;
-    }),
+    enabledWrites: writes.enabledWrites,
+    openCostumeEditor: oneAtATime(writes.openCostumeEditor),
+    changeCostume: oneAtATime(writes.changeCostume),
+    pendingUndo: writes.pendingUndo,
+    undo: oneAtATime(writes.undo),
   };
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

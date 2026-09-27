@@ -8,4 +8,6 @@ export const BRIDGE_CHANNELS = {
   enabledWrites: "abth:enabled-writes",
   openCostumeEditor: "abth:open-costume-editor",
   changeCostume: "abth:change-costume",
+  pendingUndo: "abth:pending-undo",
+  undo: "abth:undo",
 } as const;

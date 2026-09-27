@@ -147,7 +147,7 @@ describe("createAndroidPort", () => {
 describe("createAndroidPort's writes", () => {
   beforeEach(() => native.reset());
 
-  test("enables no write, and a costume change sends nothing", async () => {
+  test("enables no write, offers no undo, and a costume change sends nothing", async () => {
     const port = await createAndroidPort({
       closeLabel: CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
@@ -166,6 +166,8 @@ describe("createAndroidPort's writes", () => {
     expect(await port.changeCostume({ expected: set, target: { ...set, colorFace: 2 } })).toEqual({
       kind: "notEnabled",
     });
+    expect(await port.pendingUndo()).toEqual([]);
+    expect(await port.undo("costume")).toEqual({ kind: "notEnabled" });
     expect(native.httpRequests).toEqual([]);
   });
 

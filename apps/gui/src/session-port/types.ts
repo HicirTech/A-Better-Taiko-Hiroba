@@ -110,12 +110,27 @@ export interface CostumeChange {
 
 /**
  * How a write ended, as the core's `runWrite` judged it, or refused by the platform before it
- * began: `notEnabled` when this run may not send that kind, `notSignedIn` with no session.
+ * began: `notEnabled` when this run may not send that kind, `notSignedIn` with no session, and
+ * `nothingToUndo` when an undo was asked for and this device holds none it can offer.
  */
 export type WriteOutcomeView =
   | WriteOutcome<CostumeSet>
   | { readonly kind: "notEnabled" }
-  | { readonly kind: "notSignedIn" };
+  | { readonly kind: "notSignedIn" }
+  | { readonly kind: "nothingToUndo" };
+
+/**
+ * The last write of one kind, as an undo can be offered for it: the set before it, which the undo
+ * writes back, and the set it was read back as. Offered only while that set is still what this
+ * device last saw, and only for the player signed in now.
+ */
+export interface UndoSummary {
+  readonly kind: WriteKind;
+  /** ISO 8601, when the write was started. */
+  readonly at: string;
+  readonly before: CostumeSet;
+  readonly after: CostumeSet;
+}
 
 /**
  * Everything the interface can ask of the platform, and everything that crosses from the platform
@@ -145,4 +160,12 @@ export interface HirobaSessionPort {
    * and after. Never retried. `notEnabled`, sending nothing, when this run may not write costumes.
    */
   changeCostume(change: CostumeChange): Promise<WriteOutcomeView>;
+  /** The undo this device can offer, one per kind at most. Asks Hiroba nothing. */
+  pendingUndo(): Promise<readonly UndoSummary[]>;
+  /**
+   * Undoes the last write of `kind`: a write like any other, from the set it was read back as to
+   * the set before it, with a fresh token, the pre-check and a read-back. A set changed anywhere
+   * since stops it (`changedSincePreview`), and the undo is then no longer offered.
+   */
+  undo(kind: WriteKind): Promise<WriteOutcomeView>;
 }

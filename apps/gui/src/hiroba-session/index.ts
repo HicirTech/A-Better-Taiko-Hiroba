@@ -13,13 +13,12 @@ export {
 } from "./endpoints";
 export { type CostumeWriteOptions, changeCostume } from "./change-costume";
 export { openCostumeEditor } from "./open-costume-editor";
-export { readProfile } from "./read-profile";
+export { readOwnProfile, readProfile } from "./read-profile";
 export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep } from "./types";
 export {
   enabledWrites,
   unverifiedWritesOpen,
   VERIFIED_WRITES,
-  WRITE_KINDS,
   type WriteGateInput,
 } from "./verified-writes";

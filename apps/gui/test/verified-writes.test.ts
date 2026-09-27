@@ -1,12 +1,8 @@
 /** Which writes a desktop run may send: the gate, as a pure function of the build and its env. */
 import { describe, expect, test } from "bun:test";
 
-import {
-  enabledWrites,
-  unverifiedWritesOpen,
-  VERIFIED_WRITES,
-  WRITE_KINDS,
-} from "../src/hiroba-session";
+import { enabledWrites, unverifiedWritesOpen, VERIFIED_WRITES } from "../src/hiroba-session";
+import { WRITE_KINDS } from "../src/session-port";
 
 const OPEN = { ABTH_UNVERIFIED_WRITES: "1" };
 

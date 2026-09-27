@@ -1,6 +1,11 @@
-import { type CostumeSet, changeCostume as change, type Transport } from "@abth/core";
+import {
+  type CostumeSet,
+  changeCostume as change,
+  type Transport,
+  type WriteOutcome,
+} from "@abth/core";
 
-import type { CostumeChange, WriteOutcomeView } from "../session-port";
+import type { CostumeChange } from "../session-port";
 import type { HirobaEndpoints } from "./types";
 
 /** What a platform decides for one write: the clock, the cross-check, and where undo is kept. */
@@ -21,7 +26,7 @@ export function changeCostume(
   endpoints: HirobaEndpoints,
   { expected, target }: CostumeChange,
   options: CostumeWriteOptions,
-): Promise<WriteOutcomeView> {
+): Promise<WriteOutcome<CostumeSet>> {
   return change(
     { expected, target },
     { transport, hirobaOrigin: endpoints.hirobaOrigin, ...options },

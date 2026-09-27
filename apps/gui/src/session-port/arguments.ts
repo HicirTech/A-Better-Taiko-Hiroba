@@ -1,4 +1,7 @@
-import type { CostumeSet, HirobaSessionPort } from "./types";
+import type { CostumeSet, HirobaSessionPort, WriteKind } from "./types";
+
+/** Every kind of write the app can send, whether or not a run may send it. */
+export const WRITE_KINDS: readonly WriteKind[] = ["costume"];
 
 /** Whether one verb's arguments, as they arrived from the interface, are ones it takes. */
 export type ArgumentCheck = (args: readonly unknown[]) => boolean;
@@ -32,7 +35,8 @@ function hasExactly(value: unknown, keys: readonly string[]): value is Record<st
   return own.length === keys.length && keys.every((key) => own.includes(key));
 }
 
-function isCostumeSet(value: unknown): boolean {
+/** Eight whole numbers from 0 to 9999, under a costume set's own keys and no others. */
+export function isCostumeSet(value: unknown): value is CostumeSet {
   return (
     hasExactly(value, COSTUME_KEYS) &&
     COSTUME_KEYS.every((key) => {
@@ -49,6 +53,10 @@ const costumeChange: ArgumentCheck = (args) =>
   isCostumeSet(args[0].expected) &&
   isCostumeSet(args[0].target);
 
+/** undo: one argument, a kind of write the app knows. */
+const writeKind: ArgumentCheck = (args) =>
+  args.length === 1 && WRITE_KINDS.includes(args[0] as WriteKind);
+
 /**
  * What each verb of the port accepts from the interface, checked where the interface's call
  * arrives — on the desktop, in the main process, after the frame it came from is checked and before
@@ -64,4 +72,6 @@ export const PORT_ARGUMENTS = {
   enabledWrites: none,
   openCostumeEditor: none,
   changeCostume: costumeChange,
+  pendingUndo: none,
+  undo: writeKind,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

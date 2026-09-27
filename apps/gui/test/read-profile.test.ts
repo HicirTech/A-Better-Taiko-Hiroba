@@ -8,7 +8,7 @@ import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 import { encode } from "fast-png";
 
 import { danLabelPng, NO_LABEL_GIF } from "../scripts/mock-dan-label";
-import { readProfile } from "../src/hiroba-session";
+import { readOwnProfile, readProfile } from "../src/hiroba-session";
 
 const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idpDomain: "id.test" };
 const NOW = () => new Date("2026-09-27T00:00:00.000Z");
@@ -146,6 +146,25 @@ describe("readProfile", () => {
       expect(view).not.toContain("imgsrc");
       expect(view).not.toContain("http");
     }
+  });
+
+  test("hands the platform the taiko number beside the view, and never inside it", async () => {
+    const own = await readOwnProfile(
+      fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT)),
+      ENDPOINTS,
+      NOW,
+    );
+    const view = await readProfile(
+      fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT)),
+      ENDPOINTS,
+      NOW,
+    );
+    if (!own.ok || !view.ok) {
+      throw new Error("expected both reads to succeed");
+    }
+    expect(own.value.taikoNo).toBe("000000000000");
+    expect(own.value.view).toEqual(view.value);
+    expect(JSON.stringify(own.value.view)).not.toContain("000000000000");
   });
 
   test("reads a redirect to the login page as a lost session, without parsing or a label", async () => {

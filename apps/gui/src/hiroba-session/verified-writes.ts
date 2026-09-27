@@ -1,7 +1,4 @@
-import type { EnabledWrite, WriteKind } from "../session-port";
-
-/** Every kind of write the app can send, whether or not this run may send it. */
-export const WRITE_KINDS: readonly WriteKind[] = ["costume"];
+import { type EnabledWrite, WRITE_KINDS, type WriteKind } from "../session-port";
 
 /**
  * The kinds whose first real write from the app has been made, by the user, on the desktop, and
