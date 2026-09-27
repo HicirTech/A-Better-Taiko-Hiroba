@@ -57,6 +57,33 @@ try {
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
   results.profileShown = (await textOf("#crowns-silver")) === "11";
+  // What the panel card adds up from the mock's fixed counts: crowns 11, 2 and 1, and ranks 8 down
+  // to 2 at 3, 12, 25, 31, 18, 9 and 4. Each total's id names the ranks it adds up.
+  const panelTotals: Record<string, string> = {
+    "#crowns-cleared": "14",
+    "#crowns-full-combo": "3",
+    "#ranks-total-2-3-4": "31",
+    "#ranks-total-5-6-7": "68",
+    "#ranks-total-8": "3",
+    "#ranks-total-5-6-7-8": "71",
+    "#panel-level": "panel 5",
+  };
+  const shownTotals: Record<string, string | null> = {};
+  for (const selector of Object.keys(panelTotals)) {
+    shownTotals[selector] = await textOf(selector);
+  }
+  results.panelTotalsShown =
+    JSON.stringify(shownTotals) === JSON.stringify(panelTotals) &&
+    (await page.evaluate<string | null>(
+      `document.querySelector("#ranks-total-5-6-7-8")?.previousElementSibling?.textContent ?? null`,
+    )) === "雅 tier or better";
+  // The crowns cover the panel's charts only, so they sit under its heading and footnote with the
+  // ranks, not in a card of their own that reads as every chart the account has cleared.
+  results.crownsUnderPanelNote =
+    (await textOf("#panel h2")) === "Hiroba's overall panel" &&
+    (await page.evaluate<boolean>(
+      `["#crowns", "#ranks", "#panel-footnote"].every((part) => document.querySelector("#panel " + part) !== null)`,
+    ));
   const rendered = await page.evaluate<string>("document.documentElement.outerHTML");
   results.tokenInRendererDom = rendered.includes(tokens[0] ?? "?");
   // The mock's dan label URL carries a taiko number, as Hiroba's does: only "a dan is shown" may
