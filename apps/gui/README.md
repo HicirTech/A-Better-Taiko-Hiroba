@@ -38,7 +38,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. With the write gate open, it changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. With the write gate open, it changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
@@ -54,7 +54,9 @@ The installers are not code-signed, so Windows SmartScreen warns before the firs
 The desktop app can change one thing on Hiroba so far: the costume. No kind of write has been
 verified against the real site yet, so **no packaged build can send one**. A kind that is not
 verified opens only in an unpackaged run started with `ABTH_UNVERIFIED_WRITES=1`; a packaged build
-ignores that variable. Android sends no write at all for now.
+ignores that variable. Android sends no write at all for now. In a run that may not change the
+costume, the identity card shows **Change costume** disabled, with a line saying it is not open in
+this build yet.
 
 Every write goes the same way: read the editor for a fresh form token and the whole set, keep an
 undo record in `undo.json` in the app's data folder, send the pre-check, send the save exactly

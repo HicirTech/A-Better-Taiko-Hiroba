@@ -96,6 +96,11 @@ export interface Messages {
   "platform.unsupported": string;
   /** The identity card's button that opens the costume editor. */
   "costume.open": string;
+  /**
+   * Under that button, disabled, when this run may not change the costume: why. True on every shell
+   * while no kind is verified; say it again once one is, since Android enables none either way.
+   */
+  "costume.notOpen": string;
   /** The editor's heading: the site's own word, きせかえ. */
   "costume.title": string;
   "costume.reading": string;

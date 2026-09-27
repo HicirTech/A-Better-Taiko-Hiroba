@@ -60,6 +60,8 @@ export const en: Messages = {
   "failure.detail": "Details for a report: {detail}",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
   "costume.open": "Change costume",
+  "costume.notOpen":
+    "Not open in this build yet: the first real costume change from the app has still to be made and checked.",
   "costume.title": "きせかえ",
   "costume.reading": "Reading your costume from Hiroba…",
   "costume.tab.colours": "いろ",

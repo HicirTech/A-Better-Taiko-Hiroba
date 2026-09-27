@@ -5,11 +5,11 @@
  * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
  * change made elsewhere, and a session that ends before and after a save), a lost session, cancel,
  * a sign-in sent off both sites, a reopen that keeps the session and the undo, Hiroba's daily
- * break, sign-out, and a reopen that stays signed out with the write gate shut, against
- * scripts/mock-hiroba.ts, over the Chrome DevTools Protocol. It counts the reads the mock saw and
- * checks each write sent exactly the requests planned, then searches the app's user-data folder
- * for every session token and form token the mock issued and for what the mock ID host left
- * behind. Run `bun run build` first.
+ * break, sign-out, and a reopen that stays signed out with the write gate shut and, signed in,
+ * shows the editor's button shut and why, against scripts/mock-hiroba.ts, over the Chrome DevTools
+ * Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
+ * planned, then searches the app's user-data folder for every session token and form token the
+ * mock issued and for what the mock ID host left behind. Run `bun run build` first.
  */
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -292,7 +292,9 @@ try {
   results.writeGateOpen =
     same(await page.evaluate("window.abth.enabledWrites()"), [
       { kind: "costume", verified: false },
-    ]) && (await exists("#costume-open"));
+    ]) &&
+    (await page.evaluate<boolean>(`document.querySelector("#costume-open")?.disabled === false`)) &&
+    !(await exists("#costume-not-open"));
 
   // A colour alone: exactly the planned requests, the ajax headers on both posts, one field moved.
   await resetLog();
@@ -552,6 +554,19 @@ try {
   results.gateShutWithoutTheFlag =
     same(shut, [[], [], { kind: "notEnabled" }, { kind: "notEnabled" }]) &&
     same(await requestLog(), []);
+  // Signed in, the card shows the editor's button shut, and says why, rather than no way to change
+  // anything at all. Signed out again after, so the session is not left for the scan below.
+  await running.click("#sign-in");
+  await running.until("サンプルどん");
+  tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  results.shutGateSaysWhy =
+    (await running.page.evaluate<boolean>(
+      `document.querySelector("#costume-open")?.disabled === true`,
+    )) &&
+    (await running.textOf("#costume-not-open")) ===
+      "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
+  await running.click("#sign-out");
+  await running.until("Sign in to Hiroba");
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
 } finally {
   await stop(running);

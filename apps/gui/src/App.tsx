@@ -234,22 +234,26 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
         {screen.name === "profile" && (
           <Stack spacing={2}>
             <ProfileCard profile={screen.profile} i18n={i18n}>
-              {costumeWrite !== undefined && (
-                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
-                  <Button
-                    id="costume-open"
-                    variant="outlined"
-                    disabled={undoing}
-                    onClick={openEditor}
-                  >
-                    {t("costume.open")}
+              <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+                <Button
+                  id="costume-open"
+                  variant="outlined"
+                  disabled={costumeWrite === undefined || undoing}
+                  onClick={openEditor}
+                >
+                  {t("costume.open")}
+                </Button>
+                {undoable !== null && (
+                  <Button id="costume-undo" variant="text" disabled={undoing} onClick={undo}>
+                    {t("costume.undoLast")}
                   </Button>
-                  {undoable !== null && (
-                    <Button id="costume-undo" variant="text" disabled={undoing} onClick={undo}>
-                      {t("costume.undoLast")}
-                    </Button>
-                  )}
-                </Stack>
+                )}
+              </Stack>
+              {/* Shut on purpose, and saying so, rather than a card with no way to change anything. */}
+              {costumeWrite === undefined && (
+                <Typography id="costume-not-open" variant="body2" color="text.secondary">
+                  {t("costume.notOpen")}
+                </Typography>
               )}
               {undoable !== null && (
                 <Typography id="undo-when" variant="body2" color="text.secondary">
@@ -347,7 +351,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
 /**
  * The identity card. The dan is the name read off my page's label, as Hiroba prints it. A label
  * that did not read is a neutral chip with its code under the row, and the rest of the card stands.
- * `children` are the card's actions, the writes this run may send.
+ * `children` are the card's actions: the writes this run may send, and, shut, those it may not.
  */
 function ProfileCard({
   profile,
