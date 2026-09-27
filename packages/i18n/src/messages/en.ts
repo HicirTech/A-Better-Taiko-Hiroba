@@ -100,7 +100,8 @@ export const en: Messages = {
     "Saved, but your title could not be read again to check it. Look at it on your page.",
   "write.appliedNotSynced":
     "Hiroba saved it but couldn't reach the game server. Set it again to pass it on.",
-  "write.notApplied.unchanged": "Hiroba said it saved, but nothing changed.",
+  "write.notApplied.unchanged":
+    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the costume as it was.",
   "write.notApplied.refused": "Hiroba refused the change (code {code}). Nothing changed.",
   "write.notApplied.stale": "The editor had gone stale. Open it again and retry. Nothing changed.",
   "write.notApplied.siteMaintenance": "Hiroba is in maintenance. Nothing changed.",
