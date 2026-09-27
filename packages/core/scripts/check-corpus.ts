@@ -20,6 +20,7 @@ import type { Genre, Level } from "../src/index";
 import {
   isErr,
   type ParseFailure,
+  parseCostumeEditorPage,
   parseCostumePage,
   parseDanBoardPage,
   parseDanDetailPage,
@@ -189,6 +190,12 @@ const ROUTES: readonly Route[] = [
     match: /^(costume|mypage-kisekae-\d|mypage-kisekae\.)/,
     parser: "parseCostumePage",
     run: (html) => attempt(parseCostumePage(html, TAIKO_NO, FETCHED_AT)),
+  },
+  {
+    // The same page again, as the editor a costume write goes through.
+    match: /^(costume|mypage-kisekae-\d|mypage-kisekae\.)/,
+    parser: "parseCostumeEditorPage",
+    run: (html) => attempt(parseCostumeEditorPage(html)),
   },
   {
     match: /^(friend-|block-list|user-search-)/,

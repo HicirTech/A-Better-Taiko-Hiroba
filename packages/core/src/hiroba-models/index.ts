@@ -26,7 +26,7 @@
  * players left this list when their pages got readers: `PublicProfile` is their profile, and their
  * score detail is a `Score` whose record carries null for any play count the page does not print.
  */
-export type { Costume } from "./costume";
+export type { Costume, CostumeSet } from "./costume";
 export { FormToken } from "./form-token";
 export {
   DAN_CLEAR_STATE_ORDER,
