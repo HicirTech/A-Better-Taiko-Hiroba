@@ -232,6 +232,8 @@ Bun.serve({
             "set-cookie": `_token_v2=${lastIssued}; Domain=.${HIROBA_HOST}; Path=/; Max-Age=2592000`,
           });
         }
+        // My page carries forms (rename, 大好きな曲) with a token, so reading it issues a new one.
+        costume.issueTicket(session);
         return page(myPage());
       }
       case "/mypage_kisekae.php":

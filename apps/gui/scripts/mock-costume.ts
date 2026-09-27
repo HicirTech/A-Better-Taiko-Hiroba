@@ -107,12 +107,25 @@ export function createCostumeEditor() {
 
   const json = (value: unknown) => Response.json(value);
 
+  /** A fresh token for `session`, voiding the one it had: the one token the save accepts. */
+  const issue = (session: MockSession): string => {
+    const ticket = newTicket();
+    session.ticket = ticket;
+    issued.push(ticket);
+    return ticket;
+  };
+
   return {
+    /**
+     * Any other page with a form, my page included, issues the session a token too, and so voids the
+     * editor's: taken to be how the real site behaves after a save whose token came from the editor,
+     * with my page read in between, answered 705 (2026-09-28).
+     */
+    issueTicket: issue,
+
     /** The editor page for `session`, handing it a fresh token. */
     page(session: MockSession): string {
-      const ticket = newTicket();
-      session.ticket = ticket;
-      issued.push(ticket);
+      const ticket = issue(session);
       const hidden = (id: string, name: string, value: number) =>
         `<input type="hidden" id="${id}" name="${name}" value="${value}">`;
       const palette = Array.from(
@@ -208,15 +221,18 @@ ${slotTabs}
     },
 
     /**
-     * ajax/change_mydon.php. A wrong token answers 1 to 999 with a message and a new token, as the
-     * site's script expects; a right one saves by the server model and is spent.
+     * ajax/change_mydon.php. A token that is not the session's latest answers 705 with the message
+     * the real site gave on 2026-09-28, and a new token, as the site's script expects; a right one
+     * saves by the server model and is spent.
      */
     save(session: MockSession, form: URLSearchParams, endAllSessions: () => void): Response {
       if (session.ticket === undefined || form.get("_tckt") !== session.ticket) {
-        const ticket = newTicket();
-        session.ticket = ticket;
-        issued.push(ticket);
-        return json({ result: 1, errmsg: "（モック）トークンが一致しません", _tckt: ticket });
+        const ticket = issue(session);
+        return json({
+          result: 705,
+          errmsg: "更新に失敗しました。再度画面の読み込みを行ってください。",
+          _tckt: ticket,
+        });
       }
       if (nextResult !== null) {
         const result = nextResult;
