@@ -9,7 +9,8 @@
  * Two rules hold across every file here. Identifiers are strings and quantities are numbers — a
  * taiko number is never arithmetic. And every value is JSON-serializable end to end: timestamps
  * are ISO 8601 strings, because the use-case boundary serializes everything it returns (see epic
- * #13).
+ * #13). The one exception is `FormToken`, a write's credential, which serialises to a stand-in on
+ * purpose and never crosses that boundary.
  *
  * Layout follows ownership: `vocabulary.ts` holds Hiroba's shared enumerations, and each entity
  * file owns one concept. Entity files depend only on the vocabulary, never on each other; a file
@@ -26,6 +27,7 @@
  * score detail is a `Score` whose record carries null for any play count the page does not print.
  */
 export type { Costume } from "./costume";
+export { FormToken } from "./form-token";
 export {
   DAN_CLEAR_STATE_ORDER,
   DAN_NAMES,
