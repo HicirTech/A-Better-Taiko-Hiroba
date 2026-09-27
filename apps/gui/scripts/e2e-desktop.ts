@@ -327,16 +327,26 @@ try {
         same(post.fields, ["_tckt", ...COSTUME_FIELDS]) &&
         post.ticketMatched,
     );
+  // The change's undo is offered once the editor is closed, never over it.
+  await Bun.sleep(500);
+  const snackbarOverTheEditor = await exists("#snackbar-undo");
   await closeEditor();
 
   // Undone from the Snackbar the change offered: the whole set back, by a write like any other.
+  // Pressed twice, as a double-click would: the second press finds it shut and sends nothing.
   await waitFor(async () => (await exists("#snackbar-undo")) || undefined);
   await resetLog();
+  await click("#snackbar-undo");
+  const secondPressShut = await page.evaluate<boolean>(
+    `(() => { const undo = document.querySelector("#snackbar-undo"); if (undo === null) return true; const shut = undo.disabled; undo.click(); return shut; })()`,
+  );
+  await Bun.sleep(200);
   results.colourUndoneFromSnackbar =
-    (await undoFrom("#snackbar-undo")) === "applied" &&
+    (await waitFor(async () => (await cardOutcome()) ?? undefined)) === "applied" &&
     (await textOf("#profile #write-outcome")) === "Undone. Hiroba shows the costume as it was." &&
     same(await savedCostume(), START) &&
     same(await requestLog(), WRITE_REQUESTS);
+  results.snackbarUndoOncePerPress = !snackbarOverTheEditor && secondPressShut;
 
   // A きぐるみ: the window warns, the four pieces come off, and one undo puts all eight back.
   const kigurumiOutcome = await changeInTheWindow(async () => {

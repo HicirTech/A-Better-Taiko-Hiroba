@@ -108,10 +108,14 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
     };
   }, [port]);
 
+  // One press sends one write: a second that lands before the step leaves "confirming" is turned
+  // away here rather than sent as a second write of the same draft.
+  const saveStarted = useRef(false);
   const save = async () => {
-    if (step.name !== "confirming") {
+    if (step.name !== "confirming" || saveStarted.current) {
       return;
     }
+    saveStarted.current = true;
     const { editor, draft } = step;
     setStep({ name: "saving", editor, draft });
     let outcome: WriteOutcomeView;
@@ -122,6 +126,7 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
       // known, and the dialog must not stay on "Saving…" with Close shut.
       outcome = { kind: "interrupted" };
     }
+    saveStarted.current = false;
     if (mounted.current) {
       setStep({ name: "done", editor: refreshed(editor, outcome), outcome });
     }

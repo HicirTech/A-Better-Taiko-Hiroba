@@ -134,8 +134,23 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     }
   };
 
-  /** Undoes the last costume change: a write like any other, its outcome shown on the card. */
+  /** Opens the editor. The Snackbar's undo goes: a new change is being made, not the last one. */
+  const openEditor = () => {
+    setJustSaved(false);
+    setCostumeOpen(true);
+  };
+
+  /**
+   * Undoes the last costume change: a write like any other, its outcome shown on the card. One
+   * press starts one undo: the ref turns away a second press that lands before the buttons are
+   * disabled, as a double-click on the Snackbar's, still there while it slides out, would.
+   */
+  const undoStarted = useRef(false);
   const undo = async () => {
+    if (undoStarted.current) {
+      return;
+    }
+    undoStarted.current = true;
     setJustSaved(false);
     setCostumeOpen(false);
     setUndoing(true);
@@ -148,6 +163,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
       // "Undoing…" with its buttons shut.
       outcome = { kind: "interrupted" };
     }
+    undoStarted.current = false;
     setUndoing(false);
     setUndoOutcome(outcome);
     writeEnded(outcome, true);
@@ -220,7 +236,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
                     id="costume-open"
                     variant="outlined"
                     disabled={undoing}
-                    onClick={() => setCostumeOpen(true)}
+                    onClick={openEditor}
                   >
                     {t("costume.open")}
                   </Button>
@@ -302,13 +318,20 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
           onOutcome={(outcome) => writeEnded(outcome)}
         />
       )}
+      {/* Offered once the editor is closed: over an open dialog it would undo under it. */}
       <Snackbar
-        open={justSaved && undoable !== null && screen.name === "profile"}
+        open={justSaved && undoable !== null && screen.name === "profile" && !costumeOpen}
         autoHideDuration={20_000}
         onClose={(_event, reason) => reason !== "clickaway" && setJustSaved(false)}
         message={t("write.applied")}
         action={
-          <Button id="snackbar-undo" color="secondary" size="small" onClick={undo}>
+          <Button
+            id="snackbar-undo"
+            color="secondary"
+            size="small"
+            disabled={undoing}
+            onClick={undo}
+          >
             {t("write.undo")}
           </Button>
         }
