@@ -12,10 +12,9 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { CrownsCard } from "./my-page/crowns-card";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
-import { RanksCard } from "./my-page/ranks-card";
+import { PanelCard } from "./my-page/panel-card";
 import type {
   HirobaSessionPort,
   ProfileView,
@@ -157,8 +156,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
         {screen.name === "profile" && (
           <Stack spacing={2}>
             <ProfileCard profile={screen.profile} i18n={i18n} />
-            <CrownsCard crowns={screen.profile.crowns} i18n={i18n} />
-            <RanksCard panel={screen.profile.panel} i18n={i18n} />
+            <PanelCard crowns={screen.profile.crowns} panel={screen.profile.panel} i18n={i18n} />
             <MedalCard medal={screen.profile.medal} i18n={i18n} />
             <FavoritesCard
               favoriteSong={screen.profile.favoriteSong}

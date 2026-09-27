@@ -36,6 +36,7 @@ export const en: Messages = {
   "panel.heading": "Hiroba's overall panel",
   "panel.level": "panel {level}",
   "panel.footnote": "Checked on one account with default settings: おに＋おに裏, 双打 excluded.",
+  "panel.ranks": "Score ranks",
   "panel.tierTotal": "{tier} total",
   "panel.miyabiOrBetter": "雅 tier or better",
   "medal.heading": "Seasonal medals",

@@ -53,12 +53,17 @@ export interface Messages {
   "crowns.clearedOrBetter": string;
   /** Gold and donderful added up. */
   "crowns.fullComboOrBetter": string;
-  /** Neutral on purpose: what the panel covers is an inference, checked on one account only. */
+  /**
+   * Neutral on purpose: what the panel covers is an inference, checked on one account only. It
+   * heads the crowns and the score ranks both, which the panel gives over the same charts.
+   */
   "panel.heading": string;
   /** Param: {level}, the number on the panel's image, shown as data and never interpreted. */
   "panel.level": string;
   /** What the counts were checked against, and on how little. Site words kept as written. */
   "panel.footnote": string;
+  /** The score-rank ladder, under the panel heading beside the crowns. */
+  "panel.ranks": string;
   /** Param: {tier}, a tier's kanji as the rank icons show it: 粋, 雅 or 極. */
   "panel.tierTotal": string;
   /** Ranks 5 to 8 added up. */
