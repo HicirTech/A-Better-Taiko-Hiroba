@@ -2,7 +2,9 @@
 
 The desktop and Android app of A Better Taiko Hiroba. One React and Material UI web bundle runs in
 two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
-pages, reads your own page, and shows your nickname, title and crown counts.
+pages and reads your own page, one request per read. It shows your nickname, title and region, your
+crowns with cleared and full-combo totals, the seven score ranks by tier, the season's どんメダル
+plate, and your favourite songs.
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
