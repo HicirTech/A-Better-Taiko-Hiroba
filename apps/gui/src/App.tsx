@@ -7,6 +7,7 @@ import {
   Chip,
   CircularProgress,
   Container,
+  Snackbar,
   Stack,
   Typography,
 } from "@mui/material";
@@ -16,6 +17,7 @@ import { CostumeDialog } from "./my-page/costume-dialog";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
 import { PanelCard } from "./my-page/panel-card";
+import { WriteOutcomeNotice } from "./my-page/write-outcome";
 import { FAILURE_MESSAGE } from "./read-failure-message";
 import type {
   EnabledWrite,
@@ -23,6 +25,7 @@ import type {
   ProfileView,
   ReadFailureKind,
   SignInOutcome,
+  UndoSummary,
   WriteOutcomeView,
 } from "./session-port";
 
@@ -60,19 +63,33 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
   const [writes, setWrites] = useState<readonly EnabledWrite[]>([]);
   const [costumeOpen, setCostumeOpen] = useState(false);
   const costumeWrite = writes.find((write) => write.kind === "costume");
+  /** The costume undo this device offers now, if any: asks the platform, never Hiroba. */
+  const [undoable, setUndoable] = useState<UndoSummary | null>(null);
+  /** A costume write just read back as planned: the Snackbar offering to undo it. */
+  const [justSaved, setJustSaved] = useState(false);
+  const [undoing, setUndoing] = useState(false);
+  /** How the last undo ended, shown on the card until the next one or the next read. */
+  const [undoOutcome, setUndoOutcome] = useState<WriteOutcomeView | null>(null);
+
+  const refreshUndo = useCallback(async () => {
+    const offered = await port.pendingUndo();
+    setUndoable(offered.find((one) => one.kind === "costume") ?? null);
+  }, [port]);
 
   const read = useCallback(async () => {
     setScreen({ name: "reading" });
     const result = await port.readProfile();
     if (result.ok) {
       setWrites(await port.enabledWrites());
+      await refreshUndo();
+      setUndoOutcome(null);
       setScreen({ name: "profile", profile: result.value });
     } else if (SESSION_GONE.has(result.error.kind)) {
       setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
     } else {
       setScreen({ name: "readFailed", ...result.error });
     }
-  }, [port]);
+  }, [port, refreshUndo]);
 
   const signIn = async () => {
     setScreen({ name: "signingIn" });
@@ -93,9 +110,17 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setScreen({ name: "signedOut", notice: null });
   };
 
-  /** A write ended. One that found the session gone goes back to signing in, as a read does. */
-  const writeEnded = (outcome: WriteOutcomeView) => {
+  /**
+   * A write ended: the undo on offer is asked for again, and a change that read back as planned
+   * offers its undo at once. One that found the session gone goes back to signing in, as a read
+   * does.
+   */
+  const writeEnded = (outcome: WriteOutcomeView, asUndo = false) => {
+    setJustSaved(!asUndo && outcome.kind === "applied");
+    void refreshUndo();
     if (outcome.kind === "sessionGone" || outcome.kind === "notSignedIn") {
+      setJustSaved(false);
+      setUndoable(null);
       setCostumeOpen(false);
       setScreen({
         name: "signedOut",
@@ -107,6 +132,18 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
               : "write.sessionGone",
       });
     }
+  };
+
+  /** Undoes the last costume change: a write like any other, its outcome shown on the card. */
+  const undo = async () => {
+    setJustSaved(false);
+    setCostumeOpen(false);
+    setUndoing(true);
+    setUndoOutcome(null);
+    const outcome = await port.undo("costume");
+    setUndoing(false);
+    setUndoOutcome(outcome);
+    writeEnded(outcome, true);
   };
 
   // A session kept from an earlier launch is read once on opening: that is what opening the app
@@ -171,11 +208,37 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
           <Stack spacing={2}>
             <ProfileCard profile={screen.profile} i18n={i18n}>
               {costumeWrite !== undefined && (
-                <Stack direction="row" spacing={1}>
-                  <Button id="costume-open" variant="outlined" onClick={() => setCostumeOpen(true)}>
+                <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+                  <Button
+                    id="costume-open"
+                    variant="outlined"
+                    disabled={undoing}
+                    onClick={() => setCostumeOpen(true)}
+                  >
                     {t("costume.open")}
                   </Button>
+                  {undoable !== null && (
+                    <Button id="costume-undo" variant="text" disabled={undoing} onClick={undo}>
+                      {t("costume.undoLast")}
+                    </Button>
+                  )}
                 </Stack>
+              )}
+              {undoable !== null && (
+                <Typography id="undo-when" variant="body2" color="text.secondary">
+                  {t("costume.undoWhen", {
+                    time: new Date(undoable.at).toLocaleString(i18n.locale),
+                  })}
+                </Typography>
+              )}
+              {undoing && (
+                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                  <CircularProgress size={20} />
+                  <Typography variant="body2">{t("costume.undoing")}</Typography>
+                </Stack>
+              )}
+              {undoOutcome !== null && (
+                <WriteOutcomeNotice outcome={undoOutcome} i18n={i18n} asUndo />
               )}
             </ProfileCard>
             <PanelCard crowns={screen.profile.crowns} panel={screen.profile.panel} i18n={i18n} />
@@ -229,9 +292,20 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
           i18n={i18n}
           verified={costumeWrite.verified}
           onClose={() => setCostumeOpen(false)}
-          onOutcome={writeEnded}
+          onOutcome={(outcome) => writeEnded(outcome)}
         />
       )}
+      <Snackbar
+        open={justSaved && undoable !== null && screen.name === "profile"}
+        autoHideDuration={20_000}
+        onClose={(_event, reason) => reason !== "clickaway" && setJustSaved(false)}
+        message={t("write.applied")}
+        action={
+          <Button id="snackbar-undo" color="secondary" size="small" onClick={undo}>
+            {t("write.undo")}
+          </Button>
+        }
+      />
     </Container>
   );
 }

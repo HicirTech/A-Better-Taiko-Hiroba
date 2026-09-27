@@ -143,6 +143,7 @@ export function describeOutcome(
     case "stoppedBeforeWrite":
       return { ...plain("warning"), codes: [`${outcome.reason} ${outcome.code}`] };
     case "changedSincePreview":
+      return plain("warning", asUndo ? "write.undoStale" : "write.changedSincePreview");
     case "needsConfirmation":
       return plain("warning");
     case "undoNotSaved":

@@ -121,6 +121,8 @@ export const en: Messages = {
     "Hiroba ended the session. Whether the change was saved is unknown; check it after signing in.",
   "write.changedSincePreview":
     "Your costume was changed elsewhere since the editor was opened. Nothing was sent; the editor now shows it as it is.",
+  "write.undoStale":
+    "Your costume was changed elsewhere after that change, so it was not undone. The undo is no longer offered.",
   "write.invalidTarget": "This app refused the change before sending it: {field}.",
   "write.nothingToChange": "That is the costume already. Nothing was sent.",
   "write.maintenance":

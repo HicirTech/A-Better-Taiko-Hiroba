@@ -171,6 +171,8 @@ export interface Messages {
   "write.sessionGone": string;
   "write.sessionGoneAfterSave": string;
   "write.changedSincePreview": string;
+  /** An undo stopped because the set moved since the change it would reverse. */
+  "write.undoStale": string;
   /** Param: {field}, which value of the set was refused, as a costume.part text. */
   "write.invalidTarget": string;
   "write.nothingToChange": string;
