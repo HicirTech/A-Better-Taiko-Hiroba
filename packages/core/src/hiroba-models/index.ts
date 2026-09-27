@@ -45,6 +45,8 @@ export type {
   CrownCounts,
   FavoriteSong,
   Medal,
+  MedalProgress,
+  MedalUnrecognisedReason,
   Player,
   Profile,
   ProfileSummary,
@@ -56,5 +58,5 @@ export { mergeGenreIntoCatalogue, updateCatalogue } from "./song";
 export type { Chart, GenreReading, Song } from "./song";
 export { resolveSongTitle } from "./song-resolution";
 export type { AmbiguousTitle, ResolvedSong, SongResolution, UnknownTitle } from "./song-resolution";
-export { playedOrNone } from "./vocabulary";
-export type { CrownState, Genre, Level, ScoreRank } from "./vocabulary";
+export { playedOrNone, SCORE_RANK_NAMES, SCORE_RANK_TIERS } from "./vocabulary";
+export type { CrownState, Genre, Level, ScoreRank, ScoreRankTier } from "./vocabulary";

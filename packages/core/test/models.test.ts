@@ -5,7 +5,14 @@
  */
 import { describe, expect, test } from "bun:test";
 
-import { type DanRecord, isBetterDanClearState, type Profile, type Score } from "../src/index";
+import {
+  type DanRecord,
+  isBetterDanClearState,
+  type Profile,
+  SCORE_RANK_NAMES,
+  SCORE_RANK_TIERS,
+  type Score,
+} from "../src/index";
 
 function roundTrip<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
@@ -78,7 +85,7 @@ const profileWithoutDan: Profile = {
   title: "電脳 神化 3.0",
   region: "香港",
   danLabelImageUrl: null,
-  medal: { name: "どんメダル2026", count: 37 },
+  medal: { name: "どんメダル2026", progress: { kind: "collecting", count: 37 } },
   myDonImageUrl: "https://donderhiroba.jp/imgsrc_mydon.php?taiko_no=000000000000",
   favoriteSong: { songNo: "1346", title: "サンプル曲アルファ" },
   favoriteFolderTitles: ["サンプル曲ベータ", "サンプル曲ガンマ"],
@@ -167,6 +174,29 @@ describe("dan clear states rank the way the game ranks them", () => {
   test("nothing beats itself, and everything beats none", () => {
     expect(isBetterDanClearState("goldDonderful", "goldDonderful")).toBe(false);
     expect(isBetterDanClearState("redClear", "none")).toBe(true);
+  });
+});
+
+describe("the score ranks carry the names their icons show", () => {
+  test("each of the seven has its own name", () => {
+    expect(SCORE_RANK_NAMES).toEqual({
+      2: "白粋",
+      3: "銅粋",
+      4: "銀粋",
+      5: "金雅",
+      6: "桃雅",
+      7: "紫雅",
+      8: "虹極",
+    });
+  });
+
+  test("the tiers take every rank once, in order, each rank named after its tier", () => {
+    expect(SCORE_RANK_TIERS.flatMap((tier) => tier.ranks)).toEqual([2, 3, 4, 5, 6, 7, 8]);
+    for (const tier of SCORE_RANK_TIERS) {
+      for (const rank of tier.ranks) {
+        expect(SCORE_RANK_NAMES[rank]).toEndWith(tier.name);
+      }
+    }
   });
 });
 

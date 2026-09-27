@@ -19,8 +19,9 @@ export interface Player {
  *
  * So the summary is stored as the snapshot it is — never derived from cached scores, and never
  * used to correct them. It is also not a total you can recompute: the rank buckets count charts
- * that carry a rank, the crown counts count charts that carry a crown, and the difference is the
- * charts played but not cleared that still earned one.
+ * that carry a rank and the crown counts count charts that carry a crown. Do not subtract one from
+ * the other: the difference is negative on 7 of the 10 other players' panels on disk (−9 to −309),
+ * because a crowned chart can be unranked, so it counts nothing.
  */
 export interface Profile {
   readonly taikoNo: string;
@@ -32,8 +33,13 @@ export interface Profile {
    * my page shows only the rendered text. So nothing on the site can turn a composed title back
    * into the three part ids, and a client that writes one has to keep them itself. Executed
    * 2026-08-09.
+   *
+   * `""` is no title, a normal state: the page keeps the title line and leaves it empty. Seen on my
+   * page after a write that set all three title parts to 0 (executed 2026-08-09), and on 2 of the
+   * 19 other players' profiles on disk.
    */
   readonly title: string;
+  /** The value after the region line's colon; null when there is none or it reads 未設定. */
   readonly region: string | null;
   /**
    * The dan label image the page shows (`imgsrc_danlabel.php?taiko_no=…`), or null when absent.
@@ -56,11 +62,54 @@ export interface Profile {
   readonly fetchedAt: string;
 }
 
-/** The seasonal どんメダル and how many the account holds. */
+/**
+ * The seasonal どんメダル, and where the account stands in collecting it.
+ *
+ * What the count means, in the two accounts there are:
+ * - Hiroba's FAQ (`other-faq.html`, `li#answer_148`): a medal comes with each play made with a
+ *   Bandai Namco Passport; medals are traded in the game's どんメダルショップ for the newest reward
+ *   songs; the songs change each season, and the medals held are reset when they do. My page shows
+ *   the number currently held.
+ * - The user, who plays the game (2026-09-27): it is the number of medals collected for the season,
+ *   a non-negative integer, and the plate shows COMPLETE once the season's set is done.
+ *
+ * The model follows the user's account: the count is progress through the season, `collecting`,
+ * and COMPLETE ends it, `complete`.
+ *
+ * `name` is the plate's own text (`どんメダル2026秋`), kept opaque: nothing reads a year or a season
+ * out of it. It is `""` only for a plate whose progress is `unrecognised` for that reason.
+ */
 export interface Medal {
   readonly name: string;
-  readonly count: number;
+  readonly progress: MedalProgress;
 }
+
+/**
+ * While the season's set is being collected the plate prints a count. Once it is complete the plate
+ * prints COMPLETE in that place and no number at all, so a complete medal has no count — absent, not
+ * a guessed total. Seen on a live my page on 2026-09-27; every earlier capture was collecting.
+ *
+ * `unrecognised` is a plate of any other shape. It carries a code, never the page's text, and it
+ * costs only this field: the rest of the page reads as usual. The corpus check counts it as
+ * unexplained, so a new shape cannot pass unnoticed.
+ */
+export type MedalProgress =
+  | { readonly kind: "collecting"; readonly count: number }
+  | { readonly kind: "complete" }
+  | { readonly kind: "unrecognised"; readonly reason: MedalUnrecognisedReason };
+
+/** Which part of a plate did not read, as a code for a report. */
+export type MedalUnrecognisedReason =
+  /** The name line is there, and empty. */
+  | "emptyName"
+  /** A name, with neither a count nor COMPLETE after it. */
+  | "noCountNoComplete"
+  /** The count holds something other than a whole number. */
+  | "countNotNumber"
+  /** The complete line holds something other than COMPLETE. */
+  | "completeLabelOther"
+  /** Both a count and a complete line, where a page has only ever printed one. */
+  | "countAndComplete";
 
 /** The one song a profile shows as its 大好きな曲. */
 export interface FavoriteSong {

@@ -1,0 +1,3 @@
+# Build output: the web bundle and the Electron main/preload bundles, then the installers.
+/out/
+/release/

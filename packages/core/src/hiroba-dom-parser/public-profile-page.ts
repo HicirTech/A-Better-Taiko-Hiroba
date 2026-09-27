@@ -101,9 +101,9 @@ export function parsePublicProfilePage(
   const title = titleBlock.text.trim();
   // The nickname block's own contents are decided by whether the player has a dan: with a dan
   // label it is a two-child flex row, without one the text sits directly in the block. 19 of 19
-  // captured profiles agree. That is why a reader lifted from my page fails here — my page always
-  // has a label, so the flat form never appears there — and why this takes the text whole rather
-  // than descending to a child at a fixed position.
+  // captured profiles agree. My page's reader takes both forms as well: the one account captured
+  // there happens to have a dan, and a dan-less my page is expected to write this same flat row.
+  // Taking the text whole, rather than descending to a child at a fixed position, reads either.
   const nickname = nicknameBlock.text.trim();
   if (nickname === "") {
     return err({

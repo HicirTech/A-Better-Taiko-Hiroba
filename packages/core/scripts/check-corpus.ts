@@ -11,8 +11,9 @@
  *   bun run check:corpus                 # the default corpus location
  *   CORPUS=/some/where bun run check:corpus
  *
- * Exit code is 0 only when every refusal is explained. An unexplained refusal, or a capture no
- * parser claims, fails the run — that is the gate on closing E6.
+ * Exit code is 0 only when every refusal is explained. An unexplained refusal, a reading that kept a
+ * field as unrecognised, or a capture no parser claims, fails the run — that is the gate on closing
+ * E6.
  */
 import { join } from "node:path";
 import type { Genre, Level } from "../src/index";
@@ -31,6 +32,7 @@ import {
   parseRecentPlaysPage,
   parseScoreDetailPage,
   parseScoreListPage,
+  type Profile,
 } from "../src/index";
 
 /** `ai-context/` sits beside the repository, so this holds on any machine with that layout. */
@@ -45,6 +47,8 @@ interface Outcome {
   readonly failure: ParseFailure | null;
   /** Set when a failure is a known property of the page rather than a defect. */
   readonly expected: string | null;
+  /** Set when the page parsed but a field of it read as unrecognised: a code naming which. */
+  readonly unrecognised: string | null;
   /** Whatever the reading produced, for the coverage pass. */
   readonly value: unknown;
 }
@@ -66,6 +70,12 @@ interface Route {
    * checks the failure's kind says so.
    */
   readonly expect?: (file: string, failure: ParseFailure) => string | null;
+  /**
+   * A field this route's reading keeps as unrecognised instead of failing the page on, as a code.
+   * The page parsed, but part of it has a shape nobody has seen, so the run counts it as
+   * unexplained rather than let the degraded field pass quietly.
+   */
+  readonly unrecognised?: (value: unknown) => string | null;
 }
 
 /** The genre a score-list capture was fetched for, from its name. */
@@ -152,6 +162,10 @@ const ROUTES: readonly Route[] = [
     match: /^(profile|mypage-top)/,
     parser: "parseProfilePage",
     run: (html) => attempt(parseProfilePage(html, FETCHED_AT)),
+    unrecognised: (value) => {
+      const progress = (value as Profile).medal?.progress;
+      return progress?.kind === "unrecognised" ? `medal=${progress.reason}` : null;
+    },
   },
   {
     // The subject is in the filename; passing the wrong one would trip the parser's own
@@ -251,13 +265,16 @@ async function main(): Promise<number> {
       parser: route.parser,
       failure,
       expected: failure === null ? null : (route.expect?.(base, failure) ?? null),
+      unrecognised: failure === null ? (route.unrecognised?.(value) ?? null) : null,
       value,
     });
   }
 
   report(outcomes, unrouted, skipped, files.length);
 
-  const unexplained = outcomes.filter((one) => one.failure !== null && one.expected === null);
+  const unexplained = outcomes.filter(
+    (one) => (one.failure !== null && one.expected === null) || one.unrecognised !== null,
+  );
   return unexplained.length === 0 && unrouted.length === 0 ? 0 : 1;
 }
 
@@ -270,12 +287,13 @@ function report(
   const parsed = outcomes.filter((one) => one.failure === null);
   const explained = outcomes.filter((one) => one.failure !== null && one.expected !== null);
   const unexplained = outcomes.filter((one) => one.failure !== null && one.expected === null);
+  const unrecognised = parsed.filter((one) => one.unrecognised !== null);
 
   console.log(`corpus: ${total} captures under review`);
-  console.log(`  ${parsed.length} parsed`);
+  console.log(`  ${parsed.length - unrecognised.length} parsed`);
   console.log(`  ${explained.length} refused as expected`);
   console.log(`  ${skipped.length} not routed to any parser, by decision`);
-  console.log(`  ${unexplained.length} unexplained`);
+  console.log(`  ${unexplained.length + unrecognised.length} unexplained`);
   console.log(`  ${unrouted.length} claimed by nothing at all`);
 
   if (explained.length > 0) {
@@ -289,6 +307,15 @@ function report(
     console.log("\nUNEXPLAINED REFUSALS — each is a parser defect or a value nobody has seen:");
     for (const one of unexplained) {
       console.log(redact(`  ${one.file}  [${one.parser}]\n    ${describe(one.failure)}`));
+    }
+  }
+
+  if (unrecognised.length > 0) {
+    console.log(
+      "\nUNRECOGNISED FIELDS — the page parsed, but part of it has a shape nobody has seen:",
+    );
+    for (const one of unrecognised) {
+      console.log(redact(`  ${one.file}  [${one.parser}]\n    ${one.unrecognised}`));
     }
   }
 

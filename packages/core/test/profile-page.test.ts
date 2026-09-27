@@ -4,10 +4,21 @@
  */
 import { describe, expect, test } from "bun:test";
 
-import { isErr, isOk, parseProfilePage, type Profile } from "../src/index";
+import {
+  isErr,
+  isOk,
+  type MedalUnrecognisedReason,
+  parseProfilePage,
+  type Profile,
+} from "../src/index";
 
 interface ExcerptOptions {
   withDan: boolean;
+  /**
+   * The name row as one flat div holding the nickname, the way user_profile.php writes a dan-less
+   * player. Implies no dan: only the flex row has a second div for the label.
+   */
+  flatNameRow?: boolean;
   /** null renders the block the way the page renders an unset 大好きな曲. */
   favoriteSong?: { songNo: string; title: string } | null;
   folderTitles?: readonly string[];
@@ -85,15 +96,19 @@ function profileExcerpt(options: ExcerptOptions): string {
     : favoriteSongBlock(
         options.favoriteSong === undefined ? DEFAULT_FAVORITE : options.favoriteSong,
       ) + favoriteFolderBlock(options.folderTitles ?? DEFAULT_FOLDER);
+  const nameRow = options.flatNameRow
+    ? `<div style="height:24px;text-align:center;">
+    Donder\t\t</div>`
+    : `<div style="display:flex">
+    <div style="width:135px;">Donder</div>
+    <div style="width:135px;text-align:center">${dan}</div>
+  </div>`;
   return `
 <html><body>
 <div id="mydon_area" class="mydon_area">
   <img src="imgsrc_titleplate.php">
   <div style="height: 20px;text-align: center;">黒薔薇の使徒</div>
-  <div style="display:flex">
-    <div style="width:135px;">Donder</div>
-    <div style="width:135px;text-align:center">${dan}</div>
-  </div>
+  ${nameRow}
   <div style="background-color:#FC0;">
     <div class="detail">
       <p>国・地域 ：香港</p>
@@ -115,15 +130,23 @@ function profileExcerpt(options: ExcerptOptions): string {
     <div class="silver_crown_count total_panel_crown_display">464</div>
     <div class="gold_crown_count total_panel_crown_display">316</div>
     <div class="donderful_crown_count total_panel_crown_display">0</div>
-  </div>
+  </div>${MEDAL_PLATE}
+</div>${favorites}
+</body></html>`;
+}
+
+/** The どんメダル plate as every capture before 2026-09-27 wrote it: a name and a count. */
+const MEDAL_PLATE = `
   <div>
     <img src="imgsrc_tokenplate.php?id=placeholder">
     <div class="token_name token_info_display">どんメダル2026夏</div>
     <div class="token_count token_info_display">0</div>
-  </div>
-</div>${favorites}
-</body></html>`;
-}
+  </div>`;
+const NAME_LINE = `<div class="token_name token_info_display">どんメダル2026夏</div>`;
+const COUNT_LINE = `<div class="token_count token_info_display">0</div>`;
+/** How a live my page wrote it on 2026-09-27: COMPLETE where the count was, and no count at all. */
+const completeLine = (label: string) =>
+  `<div class="token_complete token_info_display">\n\t\t\t\t\t${label}\n\t\t\t\t</div>`;
 
 const FETCHED_AT = "2026-07-26T12:00:00.000Z";
 
@@ -140,7 +163,7 @@ describe("parseProfilePage", () => {
       title: "黒薔薇の使徒",
       region: "香港",
       danLabelImageUrl: "imgsrc_danlabel.php?taiko_no=000000000000",
-      medal: { name: "どんメダル2026夏", count: 0 },
+      medal: { name: "どんメダル2026夏", progress: { kind: "collecting", count: 0 } },
       myDonImageUrl: "https://img.example/imgsrc.php?kind=mydon&fn=mydon_000000000000",
       favoriteSong: { songNo: "1346", title: "サンプル曲アルファ" },
       favoriteFolderTitles: ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲デルタ"],
@@ -154,6 +177,99 @@ describe("parseProfilePage", () => {
     expect(result.value).toEqual(expected);
   });
 
+  describe("a medal set that is complete", () => {
+    test("reads as complete, with no count — absent, not zero", () => {
+      const page = profileExcerpt({ withDan: true }).replace(COUNT_LINE, completeLine("COMPLETE"));
+      const result = parseProfilePage(page, FETCHED_AT);
+
+      if (!isOk(result)) {
+        throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+      }
+      expect(result.value.medal).toEqual({
+        name: "どんメダル2026夏",
+        progress: { kind: "complete" },
+      });
+    });
+  });
+
+  // A plate of a shape nobody has seen costs the medal field alone, never the page: the first real
+  // sign-in lost crowns and all to a plate the parser did not know.
+  describe("a どんメダル plate of a new shape", () => {
+    const cases: readonly [string, string, string, MedalUnrecognisedReason, string][] = [
+      [
+        "an empty name",
+        NAME_LINE,
+        `<div class="token_name token_info_display"> </div>`,
+        "emptyName",
+        "",
+      ],
+      ["neither a count nor COMPLETE", COUNT_LINE, "", "noCountNoComplete", "どんメダル2026夏"],
+      [
+        "a count that is not a number",
+        COUNT_LINE,
+        `<div class="token_count token_info_display">ほぼ</div>`,
+        "countNotNumber",
+        "どんメダル2026夏",
+      ],
+      [
+        "other text where COMPLETE goes",
+        COUNT_LINE,
+        completeLine("ほぼ完成"),
+        "completeLabelOther",
+        "どんメダル2026夏",
+      ],
+      [
+        "both a count and COMPLETE",
+        COUNT_LINE,
+        `${COUNT_LINE}${completeLine("COMPLETE")}`,
+        "countAndComplete",
+        "どんメダル2026夏",
+      ],
+    ];
+
+    for (const [shape, from, to, reason, name] of cases) {
+      test(`${shape} reads as unrecognised, ${reason}, and the rest of the page still reads`, () => {
+        const withPlate = profileExcerpt({ withDan: true });
+        const page = withPlate.replace(from, to);
+        expect(page).not.toBe(withPlate);
+
+        const result = parseProfilePage(page, FETCHED_AT);
+
+        if (!isOk(result)) {
+          throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+        }
+        expect(result.value.medal).toEqual({ name, progress: { kind: "unrecognised", reason } });
+        expect(result.value.nickname).toBe("Donder");
+        expect(result.value.title).toBe("黒薔薇の使徒");
+        expect(result.value.summary.crownCounts).toEqual({ silver: 464, gold: 316, donderful: 0 });
+        expect(result.value.summary.rankCounts[8]).toBe(5);
+        expect(result.value.favoriteFolderTitles).toHaveLength(3);
+      });
+    }
+
+    test("keeps a code for what did not read, never the page's text there", () => {
+      const page = profileExcerpt({ withDan: true }).replace(COUNT_LINE, completeLine("ほぼ完成"));
+      expect(JSON.stringify(parseProfilePage(page, FETCHED_AT))).not.toContain("ほぼ完成");
+    });
+  });
+
+  // Never seen on my page: every capture and the live page carry a plate. Nothing on the site says
+  // one is always there, and another player's profile, in the same markup, never has one.
+  test("no どんメダル plate is a normal state, read as no medal", () => {
+    const withPlate = profileExcerpt({ withDan: true });
+    const excerpt = withPlate.replace(MEDAL_PLATE, "");
+    expect(excerpt).not.toBe(withPlate);
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.medal).toBeNull();
+    expect(result.value.nickname).toBe("Donder");
+    expect(result.value.summary.crownCounts).toEqual({ silver: 464, gold: 316, donderful: 0 });
+  });
+
   test("no dan is a normal state, not a failure", () => {
     const result = parseProfilePage(profileExcerpt({ withDan: false }), FETCHED_AT);
 
@@ -161,6 +277,66 @@ describe("parseProfilePage", () => {
       throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
     }
     expect(result.value.danLabelImageUrl).toBeNull();
+  });
+
+  // No dan-less my page has been captured. user_profile.php, whose name row is the same markup,
+  // writes every dan-less player this way, so a dan-less my page is expected to as well.
+  test("a dan-less name row that is one flat div still gives the nickname", () => {
+    const result = parseProfilePage(
+      profileExcerpt({ withDan: false, flatNameRow: true }),
+      FETCHED_AT,
+    );
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.nickname).toBe("Donder");
+    expect(result.value.danLabelImageUrl).toBeNull();
+  });
+
+  test("an empty title line is no title, a normal state, read as an empty string", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      `<div style="height: 20px;text-align: center;">黒薔薇の使徒</div>`,
+      `<div style="height: 20px;text-align: center;">\n\t\t\t</div>`,
+    );
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.title).toBe("");
+    expect(result.value.nickname).toBe("Donder");
+  });
+
+  test("a region that reads 未設定 is no region, read as null", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      "<p>国・地域 ：香港</p>",
+      "<p>都道府県 ：未設定</p>",
+    );
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.region).toBeNull();
+  });
+
+  test("a page without its title line fails, rather than read the name row as the title", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      `<div style="height: 20px;text-align: center;">黒薔薇の使徒</div>`,
+      "",
+    );
+
+    expect(parseProfilePage(excerpt, FETCHED_AT)).toEqual({
+      ok: false,
+      error: {
+        kind: "missingMarker",
+        page: "mypage_top.php",
+        marker: "#mydon_area > div (.detail after the name row)",
+      },
+    });
   });
 
   test("an unset 大好きな曲 is a normal state, read as null", () => {

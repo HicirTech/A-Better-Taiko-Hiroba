@@ -1,9 +1,9 @@
 import type { HTMLElement } from "node-html-parser";
 
-import type { FavoriteSong, Medal, Profile, ScoreRank } from "../hiroba-models";
+import type { FavoriteSong, Medal, MedalProgress, Profile, ScoreRank } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { parsePage, requireMarker } from "./parser";
-import { elementChildren, findImageBySrc, readCount } from "./element-readers";
+import { elementChildren, findImageBySrc, readCount, readCountText } from "./element-readers";
 import type { ParseFailure } from "./types";
 
 const PAGE = "mypage_top.php";
@@ -19,7 +19,11 @@ const FAVORITE_BLOCK_MARKER = "div.favoriteSong";
 const FAVORITE_SONG_HEADING = "大好きな曲";
 const FAVORITE_FOLDER_HEADING = "お気に入りの曲";
 
-/** How the page writes a slot that holds no song, in both blocks and in the folder editor. */
+/**
+ * How the site writes a value nobody set: a slot that holds no song, in both favourite blocks and in
+ * the folder editor, and a region the player never chose. The region form is copied from another
+ * player's profile (`都道府県 ：未設定`); my page shares that details markup.
+ */
 const UNSET_LABEL = "未設定";
 
 /**
@@ -42,8 +46,7 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
   }
 
   // Title and nickname carry no class or id; their position is the only contract the page
-  // offers. The first div child of #mydon_area is the title line, the second is the name row,
-  // whose own first div is the nickname.
+  // offers. The first div child of #mydon_area is the title line, the second is the name row.
   const divs = elementChildren(area.value).filter((el) => el.rawTagName.toLowerCase() === "div");
   const titleDiv = divs[0];
   const nameRow = divs[1];
@@ -54,12 +57,26 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
       marker: "#mydon_area > div (title, name row)",
     });
   }
-  const title = titleDiv.text.trim();
-  if (title === "") {
-    return err({ kind: "unreadableValue", page: PAGE, marker: "#mydon_area title line", raw: "" });
+  // Position is the only thing telling the title from the name, so check that it holds: on every
+  // capture the div after the name row is the one holding .detail. A page that dropped its title
+  // line would otherwise hand the name row in as the title and the details block as the name.
+  const detailBlock = divs[2];
+  if (detailBlock === undefined || detailBlock.querySelector(".detail") === null) {
+    return err({
+      kind: "missingMarker",
+      page: PAGE,
+      marker: "#mydon_area > div (.detail after the name row)",
+    });
   }
+  // An empty title line is a player wearing no title, not a page that failed to render one.
+  const title = titleDiv.text.trim();
+  // The name row takes one of two shapes, decided by the dan. With a dan label it is a flex row of
+  // two divs, the nickname in the first and the label in the second. Without one, the nickname
+  // sits directly in the row: that is how user_profile.php, whose name row is the same markup,
+  // writes all eight dan-less players on disk. No dan-less my page has been captured, so the flat
+  // form here is inferred from theirs.
   const nickDiv = elementChildren(nameRow).find((el) => el.rawTagName.toLowerCase() === "div");
-  const nickname = nickDiv?.text.trim() ?? "";
+  const nickname = (nickDiv ?? nameRow).text.trim();
   if (nickname === "") {
     return err({ kind: "unreadableValue", page: PAGE, marker: "#mydon_area name row", raw: "" });
   }
@@ -71,7 +88,8 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
   if (details.length < 2) {
     return err({ kind: "missingMarker", page: PAGE, marker: ".detail p" });
   }
-  const region = afterColon(regionLine) || null;
+  const regionValue = afterColon(regionLine);
+  const region = regionValue === "" || regionValue === UNSET_LABEL ? null : regionValue;
   const taikoNo = afterColon(taikoLine);
   if (!/^\d{12}$/.test(taikoNo)) {
     return err({
@@ -121,9 +139,6 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
   const rankCounts = rankEntries as Record<ScoreRank, number>;
 
   const medal = readMedal(root);
-  if (medal !== null && isErr(medal)) {
-    return medal;
-  }
 
   const favoriteSong = readFavoriteSong(root);
   if (isErr(favoriteSong)) {
@@ -141,7 +156,7 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     title,
     region,
     danLabelImageUrl,
-    medal: medal === null ? null : medal.value,
+    medal,
     myDonImageUrl,
     favoriteSong: favoriteSong.value,
     favoriteFolderTitles: favoriteFolderTitles.value,
@@ -176,25 +191,57 @@ function readCrown(
   return readCount(el.value, marker, PAGE);
 }
 
-/** The medal block is optional; when the name is present the count must be readable. */
-function readMedal(root: Parameters<typeof requireMarker>[0]): Result<Medal, ParseFailure> | null {
+/** What `.token_complete` holds, copied from a live page (2026-09-27), whitespace aside. */
+const MEDAL_COMPLETE_LABEL = "COMPLETE";
+
+/**
+ * The medal block is optional. When the name is present, exactly one of two things follows it:
+ * `.token_count` while the set is being collected, or `.token_complete` reading COMPLETE once it is
+ * done, with no count anywhere.
+ *
+ * A plate of any other shape reads as `unrecognised`, with a code saying which, and never fails the
+ * page: a new plate once took the whole read down with it, crowns and all, on the first real sign-in
+ * (2026-09-27). The page's own text in that spot is not kept, only the code.
+ */
+function readMedal(root: HTMLElement): Medal | null {
   const nameEl = root.querySelector(".token_name");
   if (nameEl === null) {
     return null;
   }
   const name = nameEl.text.trim();
+  return {
+    name,
+    progress: readMedalProgress(
+      name,
+      root.querySelector(".token_count"),
+      root.querySelector(".token_complete"),
+    ),
+  };
+}
+
+function readMedalProgress(
+  name: string,
+  countEl: HTMLElement | null,
+  completeEl: HTMLElement | null,
+): MedalProgress {
   if (name === "") {
-    return err({ kind: "unreadableValue", page: PAGE, marker: ".token_name", raw: "" });
+    return { kind: "unrecognised", reason: "emptyName" };
   }
-  const countEl = requireMarker(root, ".token_count", PAGE);
-  if (isErr(countEl)) {
-    return countEl;
+  if (countEl !== null && completeEl !== null) {
+    return { kind: "unrecognised", reason: "countAndComplete" };
   }
-  const count = readCount(countEl.value, ".token_count", PAGE);
-  if (isErr(count)) {
-    return count;
+  if (completeEl !== null) {
+    return completeEl.text.trim() === MEDAL_COMPLETE_LABEL
+      ? { kind: "complete" }
+      : { kind: "unrecognised", reason: "completeLabelOther" };
   }
-  return ok({ name, count: count.value });
+  if (countEl === null) {
+    return { kind: "unrecognised", reason: "noCountNoComplete" };
+  }
+  const count = readCountText(countEl.text);
+  return count === null
+    ? { kind: "unrecognised", reason: "countNotNumber" }
+    : { kind: "collecting", count };
 }
 
 /** The favourite block under the given heading, or a failure naming which of the two is absent. */
