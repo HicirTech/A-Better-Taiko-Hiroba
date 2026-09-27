@@ -209,9 +209,15 @@ function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator
           <Typography variant="h6" component="h2">
             {profile.nickname}
           </Typography>
-          <Typography color="text.secondary">
-            {t("profile.title", { title: profile.title })}
-          </Typography>
+          {profile.title === "" ? (
+            <Typography id="no-title" color="text.disabled" sx={{ fontStyle: "italic" }}>
+              {t("profile.noTitle")}
+            </Typography>
+          ) : (
+            <Typography color="text.secondary">
+              {t("profile.title", { title: profile.title })}
+            </Typography>
+          )}
         </Stack>
       </CardContent>
     </Card>
