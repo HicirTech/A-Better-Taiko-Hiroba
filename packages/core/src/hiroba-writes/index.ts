@@ -17,6 +17,12 @@ export {
   draftCostumeChange,
   sameCostume,
 } from "./costume-rule";
+export {
+  COSTUME_WRITE,
+  type CostumeEditorView,
+  changeCostume,
+  openCostumeEditor,
+} from "./costume-write";
 export { inMaintenance } from "./maintenance";
 export { readHirobaPage, sessionEnded } from "./read-page";
 export { runWrite } from "./run-write";
