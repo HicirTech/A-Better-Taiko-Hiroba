@@ -13,6 +13,7 @@ import {
   idpOrigin,
   loginPageUrl,
   readProfile,
+  SESSION_COOKIE_NAME,
   signInStep,
 } from "../hiroba-session";
 import type { HirobaSessionPort, SignInOutcome } from "../session-port";
@@ -35,19 +36,19 @@ export interface AndroidPortOptions {
 
 /**
  * The Android platform layer. The session lives only in the WebView's cookie store: the in-app
- * browser shares it (isIsolated: false), and Capacitor's HTTP client reads it. This code knows
- * whether a sign-in finished, never the cookie's value.
+ * browser shares it (isIsolated: false), and Capacitor's HTTP client sends it. This code asks
+ * whether the session cookie is there, never what it holds.
  *
- * The store writes its cookies to app-private storage, so everything in it is wiped at every
- * launch, when a sign-in starts or is abandoned, at sign-out and when the session is found gone;
- * that is how "no sign-in between launches" holds here. After a sign-in, the ID host's own
- * cookies are cleared as far as the platform allows: clearCookies({url}) removes host cookies, not
- * Domain cookies, which is also why the session itself is only ever cleared with clearAllCookies.
+ * The store keeps its cookies in app-private storage across launches, so a user stays signed in
+ * until they sign out or Hiroba ends the session (the user's call, 2026-09-27). It is wiped when a
+ * sign-in starts or is abandoned, at sign-out and when the session is found gone. After a sign-in,
+ * the ID host's own cookies are cleared as far as the platform allows: clearCookies({url}) removes
+ * host cookies, not Domain cookies, which is also why the session itself is only ever cleared with
+ * clearAllCookies.
  */
 export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
-  await CapacitorCookies.clearAllCookies();
   const transport = createAndroidTransport();
-  let signedIn = false;
+  let signedIn = await holdsSession();
 
   const forget = async () => {
     signedIn = false;
@@ -131,4 +132,10 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     signOut: forget,
   };
+}
+
+/** Whether the WebView's cookie store holds a Hiroba session, by name only: the value is not read. */
+async function holdsSession(): Promise<boolean> {
+  const cookies = await CapacitorCookies.getCookies({ url: `${endpoints.hirobaOrigin}/` });
+  return Object.hasOwn(cookies, SESSION_COOKIE_NAME);
 }

@@ -1,6 +1,7 @@
 /**
  * Android's platform layer against stand-ins for the in-app browser and the cookie store: how the
- * browser is opened, when a sign-in counts, and when the cookie store is wiped.
+ * browser is opened, when a sign-in counts, when the cookie store is wiped, and that a session the
+ * store already holds survives a launch.
  */
 import { beforeEach, describe, expect, test } from "bun:test";
 
@@ -29,9 +30,18 @@ async function startSignIn() {
 describe("createAndroidPort", () => {
   beforeEach(() => native.reset());
 
-  test("wipes the cookie store as it starts", async () => {
-    await createAndroidPort({ closeLabel: CLOSE_LABEL });
-    expect(native.cookieCalls).toEqual(["clearAllCookies"]);
+  test("keeps a session the cookie store already holds, and wipes nothing as it starts", async () => {
+    native.cookies = { _token_v2: "kept-from-the-last-launch" };
+    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL });
+    expect(await port.isSignedIn()).toBe(true);
+    expect(native.cookieCalls).toEqual([]);
+  });
+
+  test("starts signed out when the store holds no session", async () => {
+    native.cookies = { some_other_cookie: "x" };
+    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL });
+    expect(await port.isSignedIn()).toBe(false);
+    expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
 
   test("opens Hiroba's sign-in in a shared view that closes on the back key", async () => {
@@ -54,7 +64,6 @@ describe("createAndroidPort", () => {
     expect(await outcome).toEqual({ kind: "signedIn" });
     expect(native.closeCalls).toBe(1);
     expect(native.cookieCalls).toEqual([
-      "clearAllCookies",
       "clearAllCookies",
       "clearCookies https://account.bandainamcoid.com/",
     ]);
