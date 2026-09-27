@@ -38,7 +38,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. With the write gate open, it changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
@@ -72,6 +72,19 @@ in the data folder's `debug` folder, named after the page, with every form token
 time, so a write can be followed step by step; of a post, only Hiroba's answer is kept, never the
 form the app sent.
 
+### The costume preview
+
+The costume editor shows at its top Hiroba's own picture of the set as picked, as Hiroba's editor
+does in its 今のきせかえセット box: `imgsrc_mydon.php` with the three colours and five slots in its
+query. The platform fetches it with the session and hands the window a `data:` URL, so neither the
+address nor the cookie reaches the window. It asks once when the editor opens, then once per pause
+in the picks (300 ms), one request at a time and never retried, and nothing once the editor is
+closed; a set already drawn in that opening is shown again without asking. It is a read, so no
+write gate stands in front of it, and Android allows it too. A picture that does not come leaves
+"Preview unavailable" and a code for a report; the editor works without it. With
+`ABTH_DEBUG_SAVE_READS=1`, only the latest picture is kept, as `debug\imgsrc_mydon.php.png`, and
+none in `debug\history`.
+
 ## The first real costume write
 
 The first real write of each kind is made by you, on the desktop, with your own account. Start with
@@ -98,18 +111,20 @@ $env:ABTH_UNVERIFIED_WRITES = "1"; $env:ABTH_DEBUG_SAVE_READS = "1"; bun run dev
 The app reads your page as usual (sign in first if it asks). The identity card now has a
 **Change costume** button; only a run started this way shows it.
 
-**2. Open the editor and check it.** Press **Change costume**: one read of `mypage_kisekae.php`.
-Under **いろ**, each of かお, どう and てあし outlines the colour you wear; under **きせかえ**, each slot
-highlights the item you wear, or はずす. **Changes** says "Nothing changed yet."
+**2. Open the editor and check it.** Press **Change costume**: one read of `mypage_kisekae.php`,
+then one of `imgsrc_mydon.php` for the picture at the top, which shows your Don as it is dressed
+now. Under **いろ**, each of かお, どう and てあし outlines the colour you wear; under **きせかえ**,
+each slot highlights the item you wear, or はずす. **Changes** says "Nothing changed yet."
 
 **3. Change one colour, and nothing else.** Under いろ, pick かお (or どう, or てあし) and press a
-different swatch. **Changes** must list exactly one line, such as `かお: #8 → #3`. Do not touch
-きせかえ.
+different swatch; the picture redraws in it. **Changes** must list exactly one line, such as
+`かお: #8 → #3`. Do not touch きせかえ.
 
 **4. Review and save.** Press **Review**. The dialog repeats the one change, and asks you to tick
 "This is the first write of this kind from the app…", noting that it also reads your title before
 and after. Tick it and press **Save to Hiroba**. The dialog shows "Saving… then reading it back"
-while the app sends, in this order and once each:
+while the app sends, in this order and once each (a picture asked for as you picked may come
+before or after these, never between them):
 
 1. `GET mypage_kisekae.php`: a fresh token and the whole set, checked against what the editor showed;
 2. `GET mypage_top.php`: your title, before;
@@ -140,9 +155,9 @@ sending the save and says so.
 step 3. Close the app.
 
 **What is left on disk.** `%APPDATA%\A Better Taiko Hiroba\debug` holds the pages the run read
-(`mypage_kisekae.php.html`, `mypage_top.php.html`, `imgsrc_danlabel.php.png` and a `.json` for
-each), with each form token replaced; they carry your nickname and taiko number, so delete them
-once they are not needed. If an earlier version of the app left `last-read.html` and
+(`mypage_kisekae.php.html`, `mypage_top.php.html`, `imgsrc_danlabel.php.png`,
+`imgsrc_mydon.php.png` and a `.json` for each), with each form token replaced; they carry your
+nickname and taiko number, so delete them once they are not needed. If an earlier version of the app left `last-read.html` and
 `last-read.json` there, delete those too: they carry the same.
 
 `undo.json` there keeps, under your taiko number, the undo record of your last change not yet
