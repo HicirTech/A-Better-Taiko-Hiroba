@@ -38,6 +38,12 @@ export interface Messages {
   "profile.region": string;
   /** A chip: my page shows a dan label. Which dan is not read yet; it exists only as an image. */
   "profile.danShown": string;
+  /** Param: {dan}, the dan's name as Hiroba prints it, 五級 to 十段, read off my page's label. */
+  "profile.dan": string;
+  /** My page shows a dan label that did not read. Neutral: the rest of the page still read. */
+  "profile.danUnreadable": string;
+  /** Param: {code}, why the label did not read, such as dan=notPng; never page text or a URL. */
+  "profile.danCode": string;
   "profile.favorites": string;
   /** Param: {title}, the 大好きな曲 as the page writes it. */
   "profile.favoriteSong": string;
