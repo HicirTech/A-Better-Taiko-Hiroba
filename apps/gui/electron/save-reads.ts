@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Transport } from "@abth/core";
+import type { Transport, TransportResponse } from "@abth/core";
 
 /** Image types kept under their own extension, so the file opens as what it is. */
 const IMAGE_EXTENSIONS: Readonly<Record<string, string>> = {
@@ -26,26 +26,39 @@ const TOKEN_STAND_IN = "<tckt>";
  * The page is the signed-in player's own and carries their identity, so it stays in this local
  * folder. Nothing written here holds the session cookie: no request headers, and of the response
  * headers only the content type.
+ *
+ * Keeping a copy never changes what the read gets: a copy that cannot be written — a full disk, a
+ * file another program holds open, a folder where the file should be — is dropped, and the answer
+ * goes back as it came.
  */
 export function saveReads(transport: Transport, folder: string): Transport {
   return {
     async send(request, signal) {
       const sent = await transport.send(request, signal);
       if (sent.ok && request.method === "GET") {
-        const { status, url, headers, body } = sent.value;
-        const contentType = headers["content-type"] ?? null;
-        const mediaType = (contentType ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
-        const isImage = mediaType.startsWith("image/");
-        const name = fileNameOf(request.url);
-        const extension = isImage ? (IMAGE_EXTENSIONS[mediaType] ?? "bin") : "html";
-        mkdirSync(folder, { recursive: true });
-        writeFileSync(join(folder, `${name}.${extension}`), isImage ? body : withoutTokens(body));
-        const meta = { status, path: pathOf(url), contentType };
-        writeFileSync(join(folder, `${name}.json`), `${JSON.stringify(meta, null, 2)}\n`);
+        try {
+          keep(folder, request.url, sent.value);
+        } catch {
+          // Only the debugging copy is lost; the read goes on as if it had not been asked for.
+        }
       }
       return sent;
     },
   };
+}
+
+/** Writes one answer's copy and its status file. Throws when either cannot be written. */
+function keep(folder: string, asked: string, response: TransportResponse): void {
+  const { status, url, headers, body } = response;
+  const contentType = headers["content-type"] ?? null;
+  const mediaType = (contentType ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+  const isImage = mediaType.startsWith("image/");
+  const name = fileNameOf(asked);
+  const extension = isImage ? (IMAGE_EXTENSIONS[mediaType] ?? "bin") : "html";
+  mkdirSync(folder, { recursive: true });
+  writeFileSync(join(folder, `${name}.${extension}`), isImage ? body : withoutTokens(body));
+  const meta = { status, path: pathOf(url), contentType };
+  writeFileSync(join(folder, `${name}.json`), `${JSON.stringify(meta, null, 2)}\n`);
 }
 
 /**

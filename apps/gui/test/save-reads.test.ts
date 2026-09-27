@@ -3,7 +3,7 @@
  * folder of its own under the system's temporary directory.
  */
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ok, type Transport, type TransportResponse } from "@abth/core";
@@ -122,5 +122,27 @@ describe("saveReads", () => {
     const sent = await saving.send({ method: "POST", url: SAVE, form: [["_tckt", TOKEN]] });
     expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe(`{"result":0,"_tckt":""}`);
     expect(readdirSync(folder)).toEqual([]);
+  });
+
+  test("hands the answer back as it came when its copy cannot be written", async () => {
+    // A folder where the label's copy would go: the write fails, as a file held open would.
+    const folder = newFolder();
+    mkdirSync(join(folder, "imgsrc_danlabel.php.png"));
+    const image = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x00, 0xff]);
+    const label = "https://hiroba.test/imgsrc_danlabel.php?taiko_no=000000000000";
+    const sent = await saveReads(answering({ [label]: ["image/png", image] }), folder).send({
+      method: "GET",
+      url: label,
+    });
+    expect(sent.ok && sent.value.body).toEqual(image);
+
+    // A file where the folder would go: nothing can be written under it.
+    const inTheWay = join(newFolder(), "debug");
+    writeFileSync(inTheWay, "");
+    const read = await saveReads(
+      answering({ [EDITOR]: ["text/html; charset=utf-8", PAGE_WITH_TOKENS] }),
+      inTheWay,
+    ).send({ method: "GET", url: EDITOR });
+    expect(read.ok && new TextDecoder().decode(read.value.body)).toBe(PAGE_WITH_TOKENS);
   });
 });
