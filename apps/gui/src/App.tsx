@@ -223,7 +223,7 @@ function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator
               {t("profile.title", { title: profile.title })}
             </Typography>
           )}
-          {(profile.region !== null || profile.hasDan) && (
+          {(profile.region !== null || profile.dan !== null) && (
             <Stack
               direction="row"
               spacing={1}
@@ -235,7 +235,7 @@ function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator
                   {t("profile.region", { region: profile.region })}
                 </Typography>
               )}
-              {profile.hasDan && (
+              {profile.dan !== null && (
                 <Chip
                   id="dan-shown"
                   label={t("profile.danShown")}

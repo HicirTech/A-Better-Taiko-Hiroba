@@ -5,6 +5,7 @@
  */
 export { BRIDGE_CHANNELS } from "./bridge-channels";
 export type {
+  DanView,
   HirobaSessionPort,
   ProfileView,
   ReadFailure,

@@ -16,9 +16,17 @@ export type SignInOutcome =
   | { readonly kind: "refused"; readonly host: string };
 
 /**
+ * The dan my page's label names: its name as Hiroba prints it, 五級 to 十段. A label that did not
+ * read is `unreadable`, with codes a user can copy into a report: why, and what came back.
+ */
+export type DanView =
+  | { readonly name: string }
+  | { readonly unreadable: true; readonly code: string };
+
+/**
  * What the interface shows of a profile: plain data that survives JSON. The taiko number is
  * deliberately not part of it, and neither is any URL — the dan label's carries the taiko number,
- * so only whether there is one crosses.
+ * so only the dan read off it crosses.
  */
 export interface ProfileView {
   readonly nickname: string;
@@ -26,8 +34,11 @@ export interface ProfileView {
   readonly title: string;
   /** Null when the page gives none, or 未設定. */
   readonly region: string | null;
-  /** Whether my page shows a dan label. Which dan it is exists only as an image, not read yet. */
-  readonly hasDan: boolean;
+  /**
+   * The dan, read off the label my page shows. Null when my page shows none, a normal state:
+   * plenty of accounts hold no dan.
+   */
+  readonly dan: DanView | null;
   readonly crowns: { readonly silver: number; readonly gold: number; readonly donderful: number };
   /** Hiroba's overall panel: the number on its image, and the count in each score rank. */
   readonly panel: {
@@ -78,7 +89,10 @@ export interface HirobaSessionPort {
   signIn(): Promise<SignInOutcome>;
   /** Closes an open sign-in; its `signIn()` then resolves as cancelled. Harmless when none is open. */
   cancelSignIn(): Promise<void>;
-  /** One request to Hiroba per call. Never retries by itself. */
+  /**
+   * My page, then the dan label it shows, if it shows one: one request to Hiroba per call, or two
+   * with a dan. Never retries by itself.
+   */
   readProfile(): Promise<Result<ProfileView, ReadFailure>>;
   /** Forgets the session on this device. Hiroba is not told. */
   signOut(): Promise<void>;

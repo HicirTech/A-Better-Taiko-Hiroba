@@ -3,9 +3,9 @@
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, a lost session, cancel, a sign-in sent off both sites, a reopen that
  * keeps the session, sign-out, and a reopen that stays signed out, against scripts/mock-hiroba.ts,
- * over the Chrome DevTools Protocol. It counts the reads the mock saw, then searches the app's
- * user-data folder for every token the mock issued and for what the mock ID host left behind. Run
- * `bun run build` first.
+ * over the Chrome DevTools Protocol. It counts the reads the mock saw, the dan label's among them,
+ * then searches the app's user-data folder for every token the mock issued and for what the mock
+ * ID host left behind. Run `bun run build` first.
  */
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -17,6 +17,7 @@ const CDP_PORT = 9333;
 const IDP_HOST = "id.127.0.0.1.sslip.io:8808";
 const IDP_MARKER = "abth-mock-idp-marker";
 const MY_PAGE = "/mypage_top.php";
+const DAN_LABEL = "/imgsrc_danlabel.php";
 const USER_DATA = join(root, "out", "e2e-user-data");
 rmSync(USER_DATA, { recursive: true, force: true });
 
@@ -40,8 +41,11 @@ results.uaGateActive = (await (await fetch(`${HIROBA}${MY_PAGE}`)).text()).inclu
 await fetch(`${HIROBA}/__hits-reset`);
 
 const tokens: string[] = [];
-const myPageHits = async () =>
-  Number(await (await fetch(`${HIROBA}/__hits?path=${MY_PAGE}`)).text());
+const hitsOn = async (path: string) =>
+  Number(await (await fetch(`${HIROBA}/__hits?path=${path}`)).text());
+const myPageHits = () => hitsOn(MY_PAGE);
+/** Every request a read makes: my page, and the dan label when my page shows one. */
+const readHits = async () => (await hitsOn(MY_PAGE)) + (await hitsOn(DAN_LABEL));
 const SESSION_FILE = join(USER_DATA, "session.json");
 
 let running = await launch();
@@ -116,13 +120,14 @@ try {
     !(await text()).includes("ended");
 
   // Every shape my page can take is a normal state: each renders in its place with the rest of
-  // the page around it, and each read is one request. The mock starts on a count, read above.
+  // the page around it. Each read is two requests while my page shows a dan, my page and its
+  // label, and one without. The mock starts on a count, read above.
   const readShowing = async (selector: string) => {
-    const before = await myPageHits();
+    const before = await readHits();
     await click("#read-again");
     await waitFor(async () => ((await textOf(selector)) === null ? undefined : true));
     await Bun.sleep(300);
-    return (await myPageHits()) - before;
+    return (await readHits()) - before;
   };
   const requestsPerRead: number[] = [];
   await fetch(`${HIROBA}/__medal?state=complete`);
@@ -172,7 +177,9 @@ try {
     closedAtFirst &&
     JSON.stringify(folderRows) ===
       JSON.stringify(["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]);
-  results.oneRequestPerRead = requestsPerRead.every((count) => count === 1);
+  // Three reads with a dan (complete, odd and no medal), then two without (dan-less, favourites).
+  results.twoRequestsWithDanOneWithout =
+    JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 1]);
   await fetch(`${HIROBA}/__variant?dan=14&title=set&region=set&favorites=unset`);
 
   await fetch(`${HIROBA}/__expire`);
