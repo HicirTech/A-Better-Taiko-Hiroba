@@ -114,7 +114,14 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
     }
     const { editor, draft } = step;
     setStep({ name: "saving", editor, draft });
-    const outcome = await port.changeCostume({ expected: editor.state, target: draft });
+    let outcome: WriteOutcomeView;
+    try {
+      outcome = await port.changeCostume({ expected: editor.state, target: draft });
+    } catch {
+      // The call itself failed, as a bridge that refused it does: how the write ended is not
+      // known, and the dialog must not stay on "Saving…" with Close shut.
+      outcome = { kind: "interrupted" };
+    }
     if (mounted.current) {
       setStep({ name: "done", editor: refreshed(editor, outcome), outcome });
     }

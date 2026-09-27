@@ -140,7 +140,14 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setCostumeOpen(false);
     setUndoing(true);
     setUndoOutcome(null);
-    const outcome = await port.undo("costume");
+    let outcome: WriteOutcomeView;
+    try {
+      outcome = await port.undo("costume");
+    } catch {
+      // The call itself failed: how the undo ended is not known, and the card must not stay on
+      // "Undoing…" with its buttons shut.
+      outcome = { kind: "interrupted" };
+    }
     setUndoing(false);
     setUndoOutcome(outcome);
     writeEnded(outcome, true);
