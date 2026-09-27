@@ -7,7 +7,7 @@ import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 
 import { readProfile } from "../src/hiroba-session";
 
-const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test" };
+const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idpDomain: "id.test" };
 const NOW = () => new Date("2026-09-27T00:00:00.000Z");
 
 const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head><body>

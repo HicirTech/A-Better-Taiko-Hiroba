@@ -3,6 +3,7 @@ import type { HirobaEndpoints } from "./types";
 export const HIROBA_ENDPOINTS: HirobaEndpoints = {
   hirobaOrigin: "https://donderhiroba.jp",
   idpHost: "account.bandainamcoid.com",
+  idpDomain: "bandainamcoid.com",
 };
 
 /** The one cookie that is the Hiroba session. Only a platform transport ever reads its value. */
@@ -22,7 +23,8 @@ export const idpOrigin = (endpoints: HirobaEndpoints): string =>
 
 /**
  * Development only: the endpoints a local stand-in asks for. Both overrides or neither; one alone
- * would quietly leave the other on the real site, so it stops the app instead.
+ * would quietly leave the other on the real site, so it stops the app instead. The stand-in's ID
+ * domain is its ID host's name, so its hops live on that host and on names under it.
  */
 export function endpointsFromOverrides(
   hirobaOrigin: string | undefined,
@@ -36,5 +38,5 @@ export function endpointsFromOverrides(
   if (origin === "" || host === "") {
     throw new Error("Set both development endpoint overrides, or neither.");
   }
-  return { hirobaOrigin: origin, idpHost: host };
+  return { hirobaOrigin: origin, idpHost: host, idpDomain: host.replace(/:\d+$/, "") };
 }
