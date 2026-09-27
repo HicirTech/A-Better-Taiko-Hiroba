@@ -89,6 +89,15 @@ export interface ReadFailure {
   readonly detail?: string;
 }
 
+/**
+ * Why Hiroba's picture of a costume set did not come, as codes a user can copy into a report: why,
+ * then the status, content type and size, and the final path when it is not the picture's own.
+ * Never the picture's URL or its query, never a cookie.
+ */
+export interface CostumePreviewFailure {
+  readonly code: string;
+}
+
 /** The kinds of write the app knows how to send. One so far: the costume, きせかえ. */
 export type WriteKind = "costume";
 
@@ -163,6 +172,13 @@ export interface HirobaSessionPort {
   enabledWrites(): Promise<readonly EnabledWrite[]>;
   /** The costume editor: one GET. Its form token stays with the platform. */
   openCostumeEditor(): Promise<Result<CostumeEditorView, ReadFailure>>;
+  /**
+   * Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried,
+   * answered as a `data:image/png` URL. A read that changes nothing, so every shell allows it while
+   * signed in, and no write gate stands in front of it. The session and the picture's URL stay with
+   * the platform; a failure is codes. How often it is asked for is the interface's to keep down.
+   */
+  previewCostume(set: CostumeSet): Promise<Result<string, CostumePreviewFailure>>;
   /**
    * One costume write, the way every write goes: the editor, the pre-check, one save and the
    * read-back, four requests; six while costume writes are not verified, with my page read before

@@ -13,6 +13,7 @@ export {
 } from "./endpoints";
 export { type CostumeWriteOptions, changeCostume } from "./change-costume";
 export { openCostumeEditor } from "./open-costume-editor";
+export { previewCostume, previewUrl } from "./preview-costume";
 export { readOwnProfile, readProfile } from "./read-profile";
 export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep } from "./types";

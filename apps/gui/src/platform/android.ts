@@ -13,6 +13,7 @@ import {
   idpOrigin,
   loginPageUrl,
   openCostumeEditor,
+  previewCostume,
   readProfile,
   signInStep,
 } from "../hiroba-session";
@@ -189,6 +190,15 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         await saveCookieStore();
       }
       return read;
+    },
+
+    // A read that changes nothing, allowed here as on the desktop. Its failure forgets nothing: the
+    // next read of a page says whether the session is over.
+    async previewCostume(set) {
+      if (!signedIn) {
+        return err({ code: "preview=notSignedIn" });
+      }
+      return previewCostume(transport, endpoints, set);
     },
 
     async changeCostume() {

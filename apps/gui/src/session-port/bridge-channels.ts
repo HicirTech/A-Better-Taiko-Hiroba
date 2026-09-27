@@ -7,6 +7,7 @@ export const BRIDGE_CHANNELS = {
   signOut: "abth:sign-out",
   enabledWrites: "abth:enabled-writes",
   openCostumeEditor: "abth:open-costume-editor",
+  previewCostume: "abth:preview-costume",
   changeCostume: "abth:change-costume",
   pendingUndo: "abth:pending-undo",
   undo: "abth:undo",

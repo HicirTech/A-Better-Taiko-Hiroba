@@ -16,7 +16,12 @@ const SET = {
 
 describe("PORT_ARGUMENTS", () => {
   test("a verb that takes nothing accepts no arguments, and refuses any", () => {
-    const { changeCostume: _change, undo: _undo, ...takingNothing } = PORT_ARGUMENTS;
+    const {
+      changeCostume: _change,
+      previewCostume: _preview,
+      undo: _undo,
+      ...takingNothing
+    } = PORT_ARGUMENTS;
     for (const check of Object.values(takingNothing)) {
       expect(check([])).toBe(true);
       expect(check([undefined])).toBe(false);
@@ -47,6 +52,30 @@ describe("PORT_ARGUMENTS", () => {
       [{ expected: null, target: SET }],
       [[SET, SET]],
       [Object.assign(Object.create({ inherited: true }), { expected: SET, target: SET })],
+    ];
+    for (const args of refused) {
+      expect(check(args)).toBe(false);
+    }
+  });
+});
+
+describe("PORT_ARGUMENTS.previewCostume", () => {
+  test("takes one set of eight whole numbers from 0 to 9999, and nothing else", () => {
+    const check = PORT_ARGUMENTS.previewCostume;
+    expect(check([SET])).toBe(true);
+    expect(check([{ ...SET, costume1: 9999, colorFace: 0 }])).toBe(true);
+    const refused: unknown[][] = [
+      [],
+      [SET, SET],
+      [{ ...SET, colorFace: -1 }],
+      [{ ...SET, colorFace: 10000 }],
+      [{ ...SET, colorFace: 0.5 }],
+      [{ ...SET, colorFace: "8&taiko_no=1" }],
+      [{ ...SET, url: "https://example.test/" }],
+      [{ expected: SET, target: SET }],
+      [[SET]],
+      [null],
+      [Object.assign(Object.create({ inherited: true }), SET)],
     ];
     for (const args of refused) {
       expect(check(args)).toBe(false);

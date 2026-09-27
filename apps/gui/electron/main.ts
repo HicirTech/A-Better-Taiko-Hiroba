@@ -6,10 +6,12 @@ import {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
+  previewCostume,
   readOwnProfile,
 } from "../src/hiroba-session";
 import {
   BRIDGE_CHANNELS,
+  type CostumeSet,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
   type ReadFailure,
@@ -200,6 +202,16 @@ app.whenReady().then(async () => {
     },
     enabledWrites: writes.enabledWrites,
     openCostumeEditor: oneAtATime(writes.openCostumeEditor),
+    // A read that changes nothing, so no write gate: in the queue like every request to Hiroba, so
+    // it never lands between a write's posts and its read-back. Its failure leaves the session be:
+    // the next read of a page says whether it is over. Kept as its latest copy alone when reads are
+    // saved for debugging (save-reads.ts).
+    previewCostume: oneAtATime(async (set: CostumeSet) => {
+      if (sessionCookie === null) {
+        return err({ code: "preview=notSignedIn" });
+      }
+      return previewCostume(readTransport, endpoints, set);
+    }),
     changeCostume: oneWriteAtATime(writes.changeCostume, BUSY),
     pendingUndo: writes.pendingUndo,
     undo: oneWriteAtATime(writes.undo, BUSY),

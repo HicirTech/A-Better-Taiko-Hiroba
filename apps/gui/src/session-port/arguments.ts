@@ -53,6 +53,12 @@ const costumeChange: ArgumentCheck = (args) =>
   isCostumeSet(args[0].expected) &&
   isCostumeSet(args[0].target);
 
+/**
+ * previewCostume: one argument, a set of eight whole numbers. They become the picture's query, so
+ * nothing but those numbers can reach it.
+ */
+const costumeSet: ArgumentCheck = (args) => args.length === 1 && isCostumeSet(args[0]);
+
 /** undo: one argument, a kind of write the app knows. */
 const writeKind: ArgumentCheck = (args) =>
   args.length === 1 && WRITE_KINDS.includes(args[0] as WriteKind);
@@ -71,6 +77,7 @@ export const PORT_ARGUMENTS = {
   signOut: none,
   enabledWrites: none,
   openCostumeEditor: none,
+  previewCostume: costumeSet,
   changeCostume: costumeChange,
   pendingUndo: none,
   undo: writeKind,

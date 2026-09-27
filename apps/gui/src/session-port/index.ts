@@ -8,6 +8,7 @@ export { BRIDGE_CHANNELS } from "./bridge-channels";
 export type {
   CostumeChange,
   CostumeEditorView,
+  CostumePreviewFailure,
   CostumeSet,
   DanView,
   EnabledWrite,
