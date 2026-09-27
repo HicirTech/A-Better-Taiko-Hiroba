@@ -1,15 +1,22 @@
 /**
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
- * filled favourites folder, a lost session, cancel, a sign-in sent off both sites, a reopen that
- * keeps the session, sign-out, and a reopen that stays signed out, against scripts/mock-hiroba.ts,
- * over the Chrome DevTools Protocol. It counts the reads the mock saw, the dan label's among them,
- * then searches the app's user-data folder for every token the mock issued and for what the mock
- * ID host left behind. Run `bun run build` first.
+ * filled favourites folder, costume writes (a colour and a きぐるみ, each undone, the #22 trap, a
+ * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
+ * change made elsewhere, and a session that ends before and after a save), a lost session, cancel,
+ * a sign-in sent off both sites, a reopen that keeps the session and the undo, Hiroba's daily
+ * break, sign-out, and a reopen that stays signed out with the write gate shut, against
+ * scripts/mock-hiroba.ts, over the Chrome DevTools Protocol. It counts the reads the mock saw and
+ * checks each write sent exactly the requests planned, then searches the app's user-data folder
+ * for every session token and form token the mock issued and for what the mock ID host left
+ * behind. Run `bun run build` first.
  */
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
+
+import { BRIDGE_CHANNELS } from "../src/session-port";
+import { COSTUME_FIELDS, type CostumeState, INITIAL_COSTUME } from "./mock-costume";
 
 const root = join(import.meta.dir, "..");
 const HIROBA = "http://hiroba.127.0.0.1.sslip.io:8807";
@@ -19,7 +26,26 @@ const IDP_MARKER = "abth-mock-idp-marker";
 const MY_PAGE = "/mypage_top.php";
 const DAN_LABEL = "/imgsrc_danlabel.php";
 const USER_DATA = join(root, "out", "e2e-user-data");
+/** Noon JST, outside Hiroba's daily break, whatever the hour the run is made at. */
+const NOON_JST = "2026-09-27T03:00:00Z";
+/** 05:30 JST, inside the break. */
+const IN_THE_BREAK = "2026-09-26T20:30:00Z";
 rmSync(USER_DATA, { recursive: true, force: true });
+
+/** The app's name for each of the mock's costume fields, and the mock's set as the app's. */
+const APP_FIELD: Readonly<Record<(typeof COSTUME_FIELDS)[number], string>> = {
+  color_body: "colorBody",
+  color_limb: "colorLimb",
+  color_face: "colorFace",
+  costume_1: "costume1",
+  costume_2: "costume2",
+  costume_3: "costume3",
+  costume_4: "costume4",
+  costume_5: "costume5",
+};
+const asAppSet = (state: CostumeState) =>
+  Object.fromEntries(COSTUME_FIELDS.map((field) => [APP_FIELD[field], state[field]]));
+const START = asAppSet(INITIAL_COSTUME);
 
 const results: Record<string, unknown> = {};
 
@@ -47,14 +73,35 @@ const myPageHits = () => hitsOn(MY_PAGE);
 /** Every request a read makes: my page, and the dan label when my page shows one. */
 const readHits = async () => (await hitsOn(MY_PAGE)) + (await hitsOn(DAN_LABEL));
 const SESSION_FILE = join(USER_DATA, "session.json");
+/** The mock's saved costume, as the app names its values. */
+const savedCostume = async () =>
+  asAppSet((await (await fetch(`${HIROBA}/__state`)).json()) as CostumeState);
+/** Every request the mock saw since the last reset, as "METHOD /path". */
+const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
+const resetLog = () => fetch(`${HIROBA}/__log-reset`);
+const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
+/** A colour change's requests: the editor, the title, the pre-check, one save, the read-backs. */
+const WRITE_REQUESTS = [
+  "GET /mypage_kisekae.php",
+  "GET /mypage_top.php",
+  "POST /ajax/check_ip_kisekae.php",
+  "POST /ajax/change_mydon.php",
+  "GET /mypage_kisekae.php",
+  "GET /mypage_top.php",
+];
 
-let running = await launch();
+let running = await launch({ writes: true, now: NOON_JST });
 try {
   const { page, text, textOf, click, clickButton, until } = running;
   await until("Sign in to Hiroba");
 
   results.surface = await page.evaluate(
     `({ bridge: Object.keys(window.abth ?? {}), require: typeof require, process: typeof process, cookie: document.cookie })`,
+  );
+  // The window gets the port's verbs, each with its channel, and nothing else.
+  results.bridgeIsThePortVerbs = same(
+    (results.surface as { bridge: string[] }).bridge,
+    Object.keys(BRIDGE_CHANNELS),
   );
 
   await click("#sign-in");
@@ -198,6 +245,236 @@ try {
     JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 1, 2]);
   await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set&favorites=unset`);
 
+  // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the card
+  // offers the editor, and every write is unverified: a tick to confirm, and the title read twice.
+  const exists = (selector: string) =>
+    page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  const dialogOutcome = () =>
+    page.evaluate<string | null>(
+      `document.querySelector("#costume-dialog #write-outcome")?.dataset.outcome ?? null`,
+    );
+  const cardOutcome = () =>
+    page.evaluate<string | null>(
+      `document.querySelector("#profile #write-outcome")?.dataset.outcome ?? null`,
+    );
+  /** Opens the editor, makes a pick, confirms with the tick, saves, and waits for the outcome. */
+  const changeInTheWindow = async (pick: () => Promise<unknown>) => {
+    await click("#costume-open");
+    await waitFor(async () => (await exists("#costume-review")) || undefined);
+    await pick();
+    await click("#costume-review");
+    await waitFor(async () => (await exists("#costume-first-write")) || undefined);
+    await click("#costume-first-write");
+    await waitFor(async () =>
+      (await page.evaluate<boolean>(`!document.querySelector("#costume-save").disabled`))
+        ? true
+        : undefined,
+    );
+    await click("#costume-save");
+    return waitFor(async () => (await dialogOutcome()) ?? undefined);
+  };
+  const closeEditor = async () => {
+    await click("#costume-close");
+    await waitFor(async () => ((await exists("#costume-dialog")) ? undefined : true));
+  };
+  /** Waits for the card's undo to end, from the Snackbar or the card's own button. */
+  const undoFrom = async (selector: string) => {
+    await click(selector);
+    await Bun.sleep(200);
+    return waitFor(async () => (await cardOutcome()) ?? undefined);
+  };
+  /** A write straight through the bridge, as the renderer would ask for one. */
+  const bridgeChange = (target: Record<string, number>, expected = START) =>
+    page.evaluate<{ kind: string; [key: string]: unknown }>(
+      `window.abth.changeCostume(${JSON.stringify({ expected, target })})`,
+    );
+
+  results.writeGateOpen =
+    same(await page.evaluate("window.abth.enabledWrites()"), [
+      { kind: "costume", verified: false },
+    ]) && (await exists("#costume-open"));
+
+  // A colour alone: exactly the planned requests, the ajax headers on both posts, one field moved.
+  await resetLog();
+  await fetch(`${HIROBA}/__posts?reset=1`);
+  const colourOutcome = await changeInTheWindow(() => click("#swatch-colorFace-3"));
+  results.colourApplied = colourOutcome === "applied";
+  results.colourSentOnlyThePlannedRequests = same(await requestLog(), [
+    "GET /mypage_kisekae.php",
+    ...WRITE_REQUESTS,
+  ]);
+  results.colourMovedOneField = same(await savedCostume(), { ...START, colorFace: 3 });
+  const posts = (await (await fetch(`${HIROBA}/__posts`)).json()) as {
+    path: string;
+    xRequestedWith: string | null;
+    origin: string | null;
+    referer: string | null;
+    contentType: string | null;
+    fields: string[];
+    ticketMatched: boolean;
+  }[];
+  results.postsCarryTheAjaxShape =
+    same(
+      posts.map((post) => post.path),
+      ["/ajax/check_ip_kisekae.php", "/ajax/change_mydon.php"],
+    ) &&
+    posts.every(
+      (post) =>
+        post.xRequestedWith === "XMLHttpRequest" &&
+        post.origin === HIROBA &&
+        post.referer === `${HIROBA}/mypage_kisekae.php` &&
+        post.contentType === "application/x-www-form-urlencoded; charset=UTF-8" &&
+        same(post.fields, ["_tckt", ...COSTUME_FIELDS]) &&
+        post.ticketMatched,
+    );
+  await closeEditor();
+
+  // Undone from the Snackbar the change offered: the whole set back, by a write like any other.
+  await waitFor(async () => (await exists("#snackbar-undo")) || undefined);
+  await resetLog();
+  results.colourUndoneFromSnackbar =
+    (await undoFrom("#snackbar-undo")) === "applied" &&
+    (await textOf("#profile #write-outcome")) === "Undone. Hiroba shows the costume as it was." &&
+    same(await savedCostume(), START) &&
+    same(await requestLog(), WRITE_REQUESTS);
+
+  // A きぐるみ: the window warns, the four pieces come off, and one undo puts all eight back.
+  const kigurumiOutcome = await changeInTheWindow(async () => {
+    await click("#costume-tab-items");
+    await waitFor(async () => (await exists("#item-costume1-36")) || undefined);
+    await click("#item-costume1-36");
+    await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
+  });
+  results.kigurumiEmptiesThePieces =
+    kigurumiOutcome === "applied" &&
+    same(await savedCostume(), {
+      ...START,
+      costume1: 36,
+      costume2: 0,
+      costume3: 0,
+      costume4: 0,
+      costume5: 0,
+    });
+  await closeEditor();
+  const savesBeforeUndo = await hitsOn("/ajax/change_mydon.php");
+  results.kigurumiUndoneInOnePost =
+    (await undoFrom("#costume-undo")) === "applied" &&
+    same(await savedCostume(), START) &&
+    (await hitsOn("/ajax/change_mydon.php")) - savesBeforeUndo === 1 &&
+    !(await exists("#costume-undo"));
+
+  // #22: a piece beside a きぐるみ, which Hiroba would answer 0 to and ignore, is refused unsent.
+  await resetLog();
+  const trap = await bridgeChange({ ...START, costume1: 36 });
+  results.trapRefusedUnsent =
+    same(trap, { kind: "invalidTarget", field: "costume1" }) &&
+    same(await requestLog(), ["GET /mypage_kisekae.php"]);
+
+  // A save that answers 0 and moves nothing reads as not applied, whatever it said.
+  await fetch(`${HIROBA}/__noop-save`);
+  const noop = await bridgeChange({ ...START, colorLimb: 20 });
+  results.noopSaveNotApplied =
+    noop.kind === "notApplied" &&
+    same(noop.reason, { kind: "unchanged" }) &&
+    same(await savedCostume(), START);
+
+  // A pre-check that asks for a confirmation stops the write before its save.
+  const savesBeforePrechecks = await hitsOn("/ajax/change_mydon.php");
+  const stops: string[] = [];
+  for (const answer of ["true", "1", "string1", "0", "html"]) {
+    await fetch(`${HIROBA}/__precheck?answer=${answer}`);
+    stops.push((await bridgeChange({ ...START, colorLimb: 20 })).kind);
+  }
+  await fetch(`${HIROBA}/__precheck?answer=false`);
+  results.precheckStopsTheSave =
+    same(stops, [
+      "needsConfirmation",
+      "needsConfirmation",
+      "needsConfirmation",
+      "stoppedBeforeWrite",
+      "stoppedBeforeWrite",
+    ]) && (await hitsOn("/ajax/change_mydon.php")) === savesBeforePrechecks;
+
+  // A post answered with the login page is only a signal: one GET finds the session still good.
+  await fetch(`${HIROBA}/__post-to-login?on=1`);
+  const atLogin = await bridgeChange({ ...START, colorLimb: 20 });
+  await fetch(`${HIROBA}/__post-to-login?on=0`);
+  results.postToLoginKeepsTheSession =
+    atLogin.kind === "stoppedBeforeWrite" &&
+    atLogin.reason === "precheckAtLogin" &&
+    (await page.evaluate<boolean>("window.abth.isSignedIn()"));
+
+  // Changed elsewhere after a change: its undo stops unsent, says why, and is withdrawn.
+  const changedElsewhere = await bridgeChange({ ...START, colorLimb: 20 });
+  await click("#read-again");
+  await waitFor(async () => (await exists("#costume-undo")) || undefined);
+  await fetch(`${HIROBA}/__state?color_body=40`);
+  const savesBeforeStaleUndo = await hitsOn("/ajax/change_mydon.php");
+  results.staleUndoWithdrawn =
+    changedElsewhere.kind === "applied" &&
+    (await undoFrom("#costume-undo")) === "changedSincePreview" &&
+    (await hitsOn("/ajax/change_mydon.php")) === savesBeforeStaleUndo &&
+    !(await exists("#costume-undo")) &&
+    (await savedCostume()).colorBody === 40;
+  await fetch(`${HIROBA}/__state?reset=1`);
+  // No form token the mock handed out reaches the window.
+  const handedOut = (await (await fetch(`${HIROBA}/__tickets`)).json()) as string[];
+  const windowNow = await page.evaluate<string>("document.documentElement.outerHTML");
+  results.formTokensKeptOutOfDom =
+    handedOut.length > 0 && !handedOut.some((ticket) => windowNow.includes(ticket));
+
+  // The session ends while the change is being reviewed: nothing is posted, and it is back to
+  // signing in.
+  await click("#read-again");
+  await until("Read at");
+  const postsBeforeExpiry = await hitsOn("/ajax/check_ip_kisekae.php");
+  await click("#costume-open");
+  await waitFor(async () => (await exists("#swatch-colorFace-9")) || undefined);
+  await click("#swatch-colorFace-9");
+  await click("#costume-review");
+  await waitFor(async () => (await exists("#costume-first-write")) || undefined);
+  await click("#costume-first-write");
+  await fetch(`${HIROBA}/__expire`);
+  await Bun.sleep(100);
+  await click("#costume-save");
+  await until("Hiroba ended the session before anything was saved");
+  results.sessionGoneBeforeSaveSendsNothing =
+    (await hitsOn("/ajax/check_ip_kisekae.php")) === postsBeforeExpiry &&
+    (await exists("#sign-in")) &&
+    !(await page.evaluate<boolean>("window.abth.isSignedIn()"));
+
+  // The session ends after the save: the session is dropped, whether it saved is unknown, and
+  // the next editor read settles the undo from what the costume is.
+  await click("#sign-in");
+  await until("サンプルどん");
+  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
+  await fetch(`${HIROBA}/__expire-on-save`);
+  const afterSave = await bridgeChange({ ...START, colorFace: 7 });
+  const droppedAfterSave =
+    afterSave.kind === "sessionGone" &&
+    afterSave.writeMayHaveHappened === true &&
+    !(await page.evaluate<boolean>("window.abth.isSignedIn()"));
+  await click("#read-again");
+  await until("You are not signed in.");
+  await click("#sign-in");
+  await until("サンプルどん");
+  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
+  const noUndoBeforeTheRead = same(await page.evaluate("window.abth.pendingUndo()"), []);
+  await page.evaluate("window.abth.openCostumeEditor()");
+  results.sessionGoneAfterSaveSettlesOnNextRead =
+    droppedAfterSave &&
+    noUndoBeforeTheRead &&
+    same(await page.evaluate("window.abth.pendingUndo()"), [
+      {
+        kind: "costume",
+        at: new Date(NOON_JST).toISOString(),
+        before: START,
+        after: { ...START, colorFace: 7 },
+      },
+    ]);
+  // Back where it started, and the undo on offer left for the reopen to find.
+  await fetch(`${HIROBA}/__state?reset=1&color_face=7`);
+
   await fetch(`${HIROBA}/__expire`);
   await click("#read-again");
   await until("Your Hiroba session has ended");
@@ -224,38 +501,66 @@ try {
   results.sessionKept =
     existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
 
-  // Reopened, the app is still signed in and reads once, by itself.
+  // Reopened, the app is still signed in and reads once, by itself. The undo kept on disk is still
+  // offered. Its clock is in Hiroba's daily break, and a write then sends nothing at all.
   const readsBeforeReopen = await myPageHits();
   await stop(running);
-  running = await launch();
+  running = await launch({ writes: true, now: IN_THE_BREAK });
   await running.until("サンプルどん");
   results.signedInAfterReopen = true;
   results.readsOnReopen = (await myPageHits()) - readsBeforeReopen;
+  results.undoOfferedAfterReopen = await waitFor(
+    async () =>
+      (await running.page.evaluate<boolean>(`document.querySelector("#costume-undo") !== null`)) ||
+      undefined,
+  );
+  await resetLog();
+  const inTheBreak = await running.page.evaluate(
+    `window.abth.changeCostume(${JSON.stringify({ expected: { ...START, colorFace: 7 }, target: START })})`,
+  );
+  results.breakSendsNothing =
+    same(inTheBreak, { kind: "maintenance" }) && same(await requestLog(), []);
 
   await running.click("#sign-out");
   await running.until("Sign in to Hiroba");
   results.signOutHandled = !existsSync(SESSION_FILE);
 
-  // Reopened after signing out, it stays signed out and asks Hiroba nothing.
+  // Reopened after signing out, it stays signed out and asks Hiroba nothing. Started without
+  // ABTH_UNVERIFIED_WRITES, it may send no write, and one asked for anyway sends nothing.
   const readsBeforeSecondReopen = await myPageHits();
   await stop(running);
-  running = await launch();
+  running = await launch({ writes: false, now: NOON_JST });
   await running.until("Sign in to Hiroba");
   await Bun.sleep(500);
   results.signedOutAfterReopen = (await myPageHits()) === readsBeforeSecondReopen;
+  await resetLog();
+  const shut = await running.page.evaluate(
+    `Promise.all([window.abth.enabledWrites(), window.abth.pendingUndo(), window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorFace: 3 } })}), window.abth.undo("costume")])`,
+  );
+  results.gateShutWithoutTheFlag =
+    same(shut, [[], [], { kind: "notEnabled" }, { kind: "notEnabled" }]) &&
+    same(await requestLog(), []);
+  tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
 } finally {
   await stop(running);
   mock.kill();
 }
 
-/** Starts the app on the stand-in and attaches to its window over the DevTools protocol. */
-async function launch() {
+/**
+ * Starts the app on the stand-in and attaches to its window over the DevTools protocol. `writes`
+ * opens the gate for writes not yet verified; `now` fixes the clock a write checks Hiroba's daily
+ * break against. Every run keeps what it reads in the debug folder, so the scan below covers it.
+ */
+async function launch({ writes, now }: { writes: boolean; now: string }) {
   const proc = Bun.spawn([String(electronPath), root, `--remote-debugging-port=${CDP_PORT}`], {
     env: {
       ...process.env,
       ABTH_DEV_HIROBA_ORIGIN: HIROBA,
       ABTH_DEV_IDP_HOST: IDP_HOST,
       ABTH_DEV_USER_DATA: USER_DATA,
+      ABTH_DEV_NOW: now,
+      ABTH_DEBUG_SAVE_READS: "1",
+      ...(writes ? { ABTH_UNVERIFIED_WRITES: "1" } : { ABTH_UNVERIFIED_WRITES: "" }),
     },
     stdout: "ignore",
     stderr: "ignore",
@@ -324,6 +629,11 @@ for (const file of walk(USER_DATA)) {
 }
 results.userDataHits = hits;
 results.partitionsFolder = readdirSync(USER_DATA).includes("Partitions");
+// The editor page kept for debugging holds its form token replaced, and the undo file holds none.
+const savedEditor = join(USER_DATA, "debug", "mypage_kisekae.php.html");
+results.debugReadsRedacted =
+  existsSync(savedEditor) && readFileSync(savedEditor, "utf8").includes(`value="<tckt>"`);
+results.undoKeptOnDisk = existsSync(join(USER_DATA, "undo.json"));
 console.log(JSON.stringify(results, null, 2));
 
 function* walk(dir: string): Generator<string> {
@@ -375,7 +685,7 @@ async function connect(url: string) {
         JSON.stringify({
           id,
           method: "Runtime.evaluate",
-          params: { expression, returnByValue: true },
+          params: { expression, returnByValue: true, awaitPromise: true },
         }),
       );
       return new Promise((resolve) => waiting.set(id, resolve as (value: unknown) => void));
