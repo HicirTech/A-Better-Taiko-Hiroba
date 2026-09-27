@@ -21,8 +21,8 @@ const IMAGE_EXTENSIONS: Readonly<Record<string, string>> = {
  */
 export function saveReads(transport: Transport, folder: string): Transport {
   return {
-    async send(request) {
-      const sent = await transport.send(request);
+    async send(request, signal) {
+      const sent = await transport.send(request, signal);
       if (sent.ok) {
         const { status, url, headers, body } = sent.value;
         const contentType = headers["content-type"] ?? null;
