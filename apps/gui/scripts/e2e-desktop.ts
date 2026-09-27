@@ -1,11 +1,11 @@
 /**
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session, a
- * lost session, cancel, a sign-in sent off both sites, and sign-out against scripts/mock-hiroba.ts,
- * over the Chrome DevTools
+ * lost session, cancel, a sign-in sent off both sites, a reopen that keeps the session, sign-out,
+ * and a reopen that stays signed out, against scripts/mock-hiroba.ts, over the Chrome DevTools
  * Protocol. It counts the reads the mock saw, then searches the app's user-data folder for every
  * token the mock issued and for what the mock ID host left behind. Run `bun run build` first.
  */
-import { readdirSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
 
@@ -36,38 +36,15 @@ results.uaGateActive = (await (await fetch(`${HIROBA}${MY_PAGE}`)).text()).inclu
   "recommended browsers",
 );
 await fetch(`${HIROBA}/__hits-reset`);
-const app = Bun.spawn([String(electronPath), root, `--remote-debugging-port=${CDP_PORT}`], {
-  env: {
-    ...process.env,
-    ABTH_DEV_HIROBA_ORIGIN: HIROBA,
-    ABTH_DEV_IDP_HOST: IDP_HOST,
-    ABTH_DEV_USER_DATA: USER_DATA,
-  },
-  stdout: "ignore",
-  stderr: "ignore",
-});
 
 const tokens: string[] = [];
 const myPageHits = async () =>
   Number(await (await fetch(`${HIROBA}/__hits?path=${MY_PAGE}`)).text());
+const SESSION_FILE = join(USER_DATA, "session.json");
+
+let running = await launch();
 try {
-  const target = await waitFor(async () => {
-    const list = (await (await fetch(`http://127.0.0.1:${CDP_PORT}/json/list`)).json()) as {
-      url: string;
-      webSocketDebuggerUrl: string;
-    }[];
-    return list.find((t) => t.url.startsWith("app://gui/"));
-  });
-  const page = await connect(target.webSocketDebuggerUrl);
-  const text = () => page.evaluate<string>("document.body.textContent");
-  const click = (selector: string) =>
-    page.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
-  const clickButton = (label: string) =>
-    page.evaluate(
-      `[...document.querySelectorAll("button")].find((b) => b.textContent.trim() === ${JSON.stringify(label)}).click()`,
-    );
-  const until = (needle: string) =>
-    waitFor(async () => (await text()).includes(needle) || undefined);
+  const { page, text, click, clickButton, until } = running;
   await until("Sign in to Hiroba");
 
   results.surface = await page.evaluate(
@@ -124,14 +101,91 @@ try {
 
   await click("#sign-in");
   await until("サンプルどん");
-  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
-  await click("#sign-out");
-  await until("Sign in to Hiroba");
-  results.signOutHandled = true;
+  const kept = (await (await fetch(`${HIROBA}/__last-token`)).text()).trim();
+  tokens.push(kept);
+  // Kept on disk for the next launch: the user chose staying signed in over a memory-only session.
+  results.sessionKept =
+    existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
+
+  // Reopened, the app is still signed in and reads once, by itself.
+  const readsBeforeReopen = await myPageHits();
+  await stop(running);
+  running = await launch();
+  await running.until("サンプルどん");
+  results.signedInAfterReopen = true;
+  results.readsOnReopen = (await myPageHits()) - readsBeforeReopen;
+
+  await running.click("#sign-out");
+  await running.until("Sign in to Hiroba");
+  results.signOutHandled = !existsSync(SESSION_FILE);
+
+  // Reopened after signing out, it stays signed out and asks Hiroba nothing.
+  const readsBeforeSecondReopen = await myPageHits();
+  await stop(running);
+  running = await launch();
+  await running.until("Sign in to Hiroba");
+  await Bun.sleep(500);
+  results.signedOutAfterReopen = (await myPageHits()) === readsBeforeSecondReopen;
 } finally {
-  app.kill();
-  await app.exited;
+  await stop(running);
   mock.kill();
+}
+
+/** Starts the app on the stand-in and attaches to its window over the DevTools protocol. */
+async function launch() {
+  const proc = Bun.spawn([String(electronPath), root, `--remote-debugging-port=${CDP_PORT}`], {
+    env: {
+      ...process.env,
+      ABTH_DEV_HIROBA_ORIGIN: HIROBA,
+      ABTH_DEV_IDP_HOST: IDP_HOST,
+      ABTH_DEV_USER_DATA: USER_DATA,
+    },
+    stdout: "ignore",
+    stderr: "ignore",
+  });
+  const target = await waitFor(async () => {
+    const list = (await (await fetch(`http://127.0.0.1:${CDP_PORT}/json/list`)).json()) as {
+      url: string;
+      webSocketDebuggerUrl: string;
+    }[];
+    return list.find((t) => t.url.startsWith("app://gui/"));
+  });
+  const page = await connect(target.webSocketDebuggerUrl);
+  const text = () => page.evaluate<string>("document.body.textContent");
+  const click = (selector: string) =>
+    page.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
+  const clickButton = (label: string) =>
+    page.evaluate(
+      `[...document.querySelectorAll("button")].find((b) => b.textContent.trim() === ${JSON.stringify(label)}).click()`,
+    );
+  const until = (needle: string) =>
+    waitFor(async () => (await text()).includes(needle) || undefined);
+  return { proc, page, text, click, clickButton, until };
+}
+
+/**
+ * Closes the app the way a user does, through the browser's own close, so it shuts down and saves
+ * its state; only an app that has not gone after ten seconds is killed.
+ */
+async function stop(app: { proc: ReturnType<typeof Bun.spawn> }) {
+  try {
+    const version = (await (await fetch(`http://127.0.0.1:${CDP_PORT}/json/version`)).json()) as {
+      webSocketDebuggerUrl: string;
+    };
+    const browser = new WebSocket(version.webSocketDebuggerUrl);
+    await new Promise((resolve) => browser.addEventListener("open", resolve, { once: true }));
+    browser.send(JSON.stringify({ id: 1, method: "Browser.close" }));
+  } catch {
+    // Already gone, or never came up: the kill below settles it.
+  }
+  const exited = await Promise.race([
+    app.proc.exited.then(() => true),
+    Bun.sleep(10_000).then(() => false),
+  ]);
+  if (!exited) {
+    app.proc.kill();
+    await app.proc.exited;
+  }
 }
 
 const hits: string[] = [];
