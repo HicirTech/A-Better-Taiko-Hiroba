@@ -1,9 +1,9 @@
 import type { HTMLElement } from "node-html-parser";
 
-import type { FavoriteSong, Medal, Profile, ScoreRank } from "../hiroba-models";
+import type { FavoriteSong, Medal, MedalProgress, Profile, ScoreRank } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { parsePage, requireMarker } from "./parser";
-import { elementChildren, findImageBySrc, readCount } from "./element-readers";
+import { elementChildren, findImageBySrc, readCount, readCountText } from "./element-readers";
 import type { ParseFailure } from "./types";
 
 const PAGE = "mypage_top.php";
@@ -139,9 +139,6 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
   const rankCounts = rankEntries as Record<ScoreRank, number>;
 
   const medal = readMedal(root);
-  if (medal !== null && isErr(medal)) {
-    return medal;
-  }
 
   const favoriteSong = readFavoriteSong(root);
   if (isErr(favoriteSong)) {
@@ -159,7 +156,7 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     title,
     region,
     danLabelImageUrl,
-    medal: medal === null ? null : medal.value,
+    medal,
     myDonImageUrl,
     favoriteSong: favoriteSong.value,
     favoriteFolderTitles: favoriteFolderTitles.value,
@@ -200,35 +197,51 @@ const MEDAL_COMPLETE_LABEL = "COMPLETE";
 /**
  * The medal block is optional. When the name is present, exactly one of two things follows it:
  * `.token_count` while the set is being collected, or `.token_complete` reading COMPLETE once it is
- * done, with no count anywhere. Any other text there, or both at once, is refused by name.
+ * done, with no count anywhere.
+ *
+ * A plate of any other shape reads as `unrecognised`, with a code saying which, and never fails the
+ * page: a new plate once took the whole read down with it, crowns and all, on the first real sign-in
+ * (2026-09-27). The page's own text in that spot is not kept, only the code.
  */
-function readMedal(root: Parameters<typeof requireMarker>[0]): Result<Medal, ParseFailure> | null {
+function readMedal(root: HTMLElement): Medal | null {
   const nameEl = root.querySelector(".token_name");
   if (nameEl === null) {
     return null;
   }
   const name = nameEl.text.trim();
+  return {
+    name,
+    progress: readMedalProgress(
+      name,
+      root.querySelector(".token_count"),
+      root.querySelector(".token_complete"),
+    ),
+  };
+}
+
+function readMedalProgress(
+  name: string,
+  countEl: HTMLElement | null,
+  completeEl: HTMLElement | null,
+): MedalProgress {
   if (name === "") {
-    return err({ kind: "unreadableValue", page: PAGE, marker: ".token_name", raw: "" });
+    return { kind: "unrecognised", reason: "emptyName" };
   }
-  const countEl = root.querySelector(".token_count");
-  const completeEl = root.querySelector(".token_complete");
+  if (countEl !== null && completeEl !== null) {
+    return { kind: "unrecognised", reason: "countAndComplete" };
+  }
   if (completeEl !== null) {
-    const label = completeEl.text.trim();
-    if (countEl !== null || label !== MEDAL_COMPLETE_LABEL) {
-      return err({ kind: "unreadableValue", page: PAGE, marker: ".token_complete", raw: label });
-    }
-    return ok({ name, progress: { kind: "complete" } });
+    return completeEl.text.trim() === MEDAL_COMPLETE_LABEL
+      ? { kind: "complete" }
+      : { kind: "unrecognised", reason: "completeLabelOther" };
   }
-  const requiredCountEl = requireMarker(root, ".token_count", PAGE);
-  if (isErr(requiredCountEl)) {
-    return requiredCountEl;
+  if (countEl === null) {
+    return { kind: "unrecognised", reason: "noCountNoComplete" };
   }
-  const count = readCount(requiredCountEl.value, ".token_count", PAGE);
-  if (isErr(count)) {
-    return count;
-  }
-  return ok({ name, progress: { kind: "collecting", count: count.value } });
+  const count = readCountText(countEl.text);
+  return count === null
+    ? { kind: "unrecognised", reason: "countNotNumber" }
+    : { kind: "collecting", count };
 }
 
 /** The favourite block under the given heading, or a failure naming which of the two is absent. */

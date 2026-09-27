@@ -46,6 +46,7 @@ export type {
   FavoriteSong,
   Medal,
   MedalProgress,
+  MedalUnrecognisedReason,
   Player,
   Profile,
   ProfileSummary,

@@ -61,7 +61,23 @@ export interface Profile {
   readonly fetchedAt: string;
 }
 
-/** The seasonal どんメダル, and where the account stands in collecting it. */
+/**
+ * The seasonal どんメダル, and where the account stands in collecting it.
+ *
+ * What the count means, in the two accounts there are:
+ * - Hiroba's FAQ (`other-faq.html`, `li#answer_148`): a medal comes with each play made with a
+ *   Bandai Namco Passport; medals are traded in the game's どんメダルショップ for the newest reward
+ *   songs; the songs change each season, and the medals held are reset when they do. My page shows
+ *   the number currently held.
+ * - The user, who plays the game (2026-09-27): it is the number of medals collected for the season,
+ *   a non-negative integer, and the plate shows COMPLETE once the season's set is done.
+ *
+ * The model follows the user's account: the count is progress through the season, `collecting`,
+ * and COMPLETE ends it, `complete`.
+ *
+ * `name` is the plate's own text (`どんメダル2026秋`), kept opaque: nothing reads a year or a season
+ * out of it. It is `""` only for a plate whose progress is `unrecognised` for that reason.
+ */
 export interface Medal {
   readonly name: string;
   readonly progress: MedalProgress;
@@ -71,10 +87,28 @@ export interface Medal {
  * While the season's set is being collected the plate prints a count. Once it is complete the plate
  * prints COMPLETE in that place and no number at all, so a complete medal has no count — absent, not
  * a guessed total. Seen on a live my page on 2026-09-27; every earlier capture was collecting.
+ *
+ * `unrecognised` is a plate of any other shape. It carries a code, never the page's text, and it
+ * costs only this field: the rest of the page reads as usual. The corpus check counts it as
+ * unexplained, so a new shape cannot pass unnoticed.
  */
 export type MedalProgress =
   | { readonly kind: "collecting"; readonly count: number }
-  | { readonly kind: "complete" };
+  | { readonly kind: "complete" }
+  | { readonly kind: "unrecognised"; readonly reason: MedalUnrecognisedReason };
+
+/** Which part of a plate did not read, as a code for a report. */
+export type MedalUnrecognisedReason =
+  /** The name line is there, and empty. */
+  | "emptyName"
+  /** A name, with neither a count nor COMPLETE after it. */
+  | "noCountNoComplete"
+  /** The count holds something other than a whole number. */
+  | "countNotNumber"
+  /** The complete line holds something other than COMPLETE. */
+  | "completeLabelOther"
+  /** Both a count and a complete line, where a page has only ever printed one. */
+  | "countAndComplete";
 
 /** The one song a profile shows as its 大好きな曲. */
 export interface FavoriteSong {

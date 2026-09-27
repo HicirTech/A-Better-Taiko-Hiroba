@@ -4,7 +4,13 @@
  */
 import { describe, expect, test } from "bun:test";
 
-import { isErr, isOk, parseProfilePage, type Profile } from "../src/index";
+import {
+  isErr,
+  isOk,
+  type MedalUnrecognisedReason,
+  parseProfilePage,
+  type Profile,
+} from "../src/index";
 
 interface ExcerptOptions {
   withDan: boolean;
@@ -136,6 +142,11 @@ const MEDAL_PLATE = `
     <div class="token_name token_info_display">どんメダル2026夏</div>
     <div class="token_count token_info_display">0</div>
   </div>`;
+const NAME_LINE = `<div class="token_name token_info_display">どんメダル2026夏</div>`;
+const COUNT_LINE = `<div class="token_count token_info_display">0</div>`;
+/** How a live my page wrote it on 2026-09-27: COMPLETE where the count was, and no count at all. */
+const completeLine = (label: string) =>
+  `<div class="token_complete token_info_display">\n\t\t\t\t\t${label}\n\t\t\t\t</div>`;
 
 const FETCHED_AT = "2026-07-26T12:00:00.000Z";
 
@@ -167,11 +178,6 @@ describe("parseProfilePage", () => {
   });
 
   describe("a medal set that is complete", () => {
-    // How a live my page wrote it on 2026-09-27: COMPLETE where the count was, and no count at all.
-    const COUNT_LINE = `<div class="token_count token_info_display">0</div>`;
-    const completeLine = (label: string) =>
-      `<div class="token_complete token_info_display">\n\t\t\t\t\t${label}\n\t\t\t\t</div>`;
-
     test("reads as complete, with no count — absent, not zero", () => {
       const page = profileExcerpt({ withDan: true }).replace(COUNT_LINE, completeLine("COMPLETE"));
       const result = parseProfilePage(page, FETCHED_AT);
@@ -184,27 +190,66 @@ describe("parseProfilePage", () => {
         progress: { kind: "complete" },
       });
     });
+  });
 
-    test("refuses any other text in the complete slot, naming it", () => {
-      const page = profileExcerpt({ withDan: true }).replace(COUNT_LINE, completeLine("ほぼ完成"));
-      expect(parseProfilePage(page, FETCHED_AT)).toEqual({
-        ok: false,
-        error: {
-          kind: "unreadableValue",
-          page: "mypage_top.php",
-          marker: ".token_complete",
-          raw: "ほぼ完成",
-        },
-      });
-    });
-
-    test("refuses a plate that carries both a count and COMPLETE rather than pick one", () => {
-      const page = profileExcerpt({ withDan: true }).replace(
+  // A plate of a shape nobody has seen costs the medal field alone, never the page: the first real
+  // sign-in lost crowns and all to a plate the parser did not know.
+  describe("a どんメダル plate of a new shape", () => {
+    const cases: readonly [string, string, string, MedalUnrecognisedReason, string][] = [
+      [
+        "an empty name",
+        NAME_LINE,
+        `<div class="token_name token_info_display"> </div>`,
+        "emptyName",
+        "",
+      ],
+      ["neither a count nor COMPLETE", COUNT_LINE, "", "noCountNoComplete", "どんメダル2026夏"],
+      [
+        "a count that is not a number",
+        COUNT_LINE,
+        `<div class="token_count token_info_display">ほぼ</div>`,
+        "countNotNumber",
+        "どんメダル2026夏",
+      ],
+      [
+        "other text where COMPLETE goes",
+        COUNT_LINE,
+        completeLine("ほぼ完成"),
+        "completeLabelOther",
+        "どんメダル2026夏",
+      ],
+      [
+        "both a count and COMPLETE",
         COUNT_LINE,
         `${COUNT_LINE}${completeLine("COMPLETE")}`,
-      );
-      const result = parseProfilePage(page, FETCHED_AT);
-      expect(isOk(result)).toBe(false);
+        "countAndComplete",
+        "どんメダル2026夏",
+      ],
+    ];
+
+    for (const [shape, from, to, reason, name] of cases) {
+      test(`${shape} reads as unrecognised, ${reason}, and the rest of the page still reads`, () => {
+        const withPlate = profileExcerpt({ withDan: true });
+        const page = withPlate.replace(from, to);
+        expect(page).not.toBe(withPlate);
+
+        const result = parseProfilePage(page, FETCHED_AT);
+
+        if (!isOk(result)) {
+          throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+        }
+        expect(result.value.medal).toEqual({ name, progress: { kind: "unrecognised", reason } });
+        expect(result.value.nickname).toBe("Donder");
+        expect(result.value.title).toBe("黒薔薇の使徒");
+        expect(result.value.summary.crownCounts).toEqual({ silver: 464, gold: 316, donderful: 0 });
+        expect(result.value.summary.rankCounts[8]).toBe(5);
+        expect(result.value.favoriteFolderTitles).toHaveLength(3);
+      });
+    }
+
+    test("keeps a code for what did not read, never the page's text there", () => {
+      const page = profileExcerpt({ withDan: true }).replace(COUNT_LINE, completeLine("ほぼ完成"));
+      expect(JSON.stringify(parseProfilePage(page, FETCHED_AT))).not.toContain("ほぼ完成");
     });
   });
 
