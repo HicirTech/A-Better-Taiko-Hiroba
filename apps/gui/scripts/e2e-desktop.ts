@@ -1,9 +1,10 @@
 /**
- * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session, a
- * lost session, cancel, a sign-in sent off both sites, a reopen that keeps the session, sign-out,
- * and a reopen that stays signed out, against scripts/mock-hiroba.ts, over the Chrome DevTools
- * Protocol. It counts the reads the mock saw, then searches the app's user-data folder for every
- * token the mock issued and for what the mock ID host left behind. Run `bun run build` first.
+ * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
+ * every どんメダル state and a dan-less, title-less, region-less my page, a lost session, cancel, a
+ * sign-in sent off both sites, a reopen that keeps the session, sign-out, and a reopen that stays
+ * signed out, against scripts/mock-hiroba.ts, over the Chrome DevTools Protocol. It counts the
+ * reads the mock saw, then searches the app's user-data folder for every token the mock issued and
+ * for what the mock ID host left behind. Run `bun run build` first.
  */
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -55,9 +56,14 @@ try {
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
   results.profileShown = (await textOf("#crowns-silver")) === "11";
-  results.tokenInRendererDom = (
-    await page.evaluate<string>("document.documentElement.outerHTML")
-  ).includes(tokens[0] ?? "?");
+  const rendered = await page.evaluate<string>("document.documentElement.outerHTML");
+  results.tokenInRendererDom = rendered.includes(tokens[0] ?? "?");
+  // The mock's dan label URL carries a taiko number, as Hiroba's does: only "a dan is shown" may
+  // reach the window, never the URL or the number.
+  results.taikoNoAndUrlsKeptOutOfDom =
+    (await textOf("#dan-shown")) === "Dan shown" &&
+    !rendered.includes("000000000000") &&
+    !rendered.includes("imgsrc");
   results.readsAfterSignIn = await myPageHits();
 
   // Read again: one more request, no more.
@@ -80,6 +86,40 @@ try {
     tokens[1] !== tokens[0] &&
     (await textOf("#crowns-silver")) === "11" &&
     !(await text()).includes("ended");
+
+  // Every shape my page can take is a normal state: each renders in its place with the rest of
+  // the page around it, and each read is one request. The mock starts on a count, read above.
+  const readShowing = async (selector: string) => {
+    const before = await myPageHits();
+    await click("#read-again");
+    await waitFor(async () => ((await textOf(selector)) === null ? undefined : true));
+    await Bun.sleep(300);
+    return (await myPageHits()) - before;
+  };
+  const requestsPerRead: number[] = [];
+  await fetch(`${HIROBA}/__medal?state=complete`);
+  requestsPerRead.push(await readShowing("#medal-complete"));
+  results.medalCompleteShown =
+    (await textOf("#medal-complete")) === "COMPLETE" && (await textOf("#medal-count")) === null;
+  await fetch(`${HIROBA}/__medal?state=odd`);
+  requestsPerRead.push(await readShowing("#medal-code"));
+  results.medalOddShownWithTheRest =
+    (await textOf("#medal-code")) === "Code for a report: medal=noCountNoComplete" &&
+    (await textOf("#crowns-silver")) === "11" &&
+    (await textOf("#rank-8")) === "3" &&
+    !(await text()).includes("did not expect");
+  await fetch(`${HIROBA}/__medal?state=none`);
+  requestsPerRead.push(await readShowing("#medal-none"));
+  results.medalNoneShown = (await textOf("#medal-name")) === null;
+  await fetch(`${HIROBA}/__medal?state=collecting`);
+  await fetch(`${HIROBA}/__variant?dan=0&title=empty&region=unset`);
+  requestsPerRead.push(await readShowing("#no-title"));
+  results.medalCountShown = (await textOf("#medal-count")) === "Medals: 12";
+  results.danLessRowRead =
+    (await text()).includes("サンプルどん") && (await textOf("#dan-shown")) === null;
+  results.unsetRegionLeftOut = (await textOf("#region")) === null;
+  results.oneRequestPerRead = requestsPerRead.every((count) => count === 1);
+  await fetch(`${HIROBA}/__variant?dan=1&title=set&region=set`);
 
   await fetch(`${HIROBA}/__expire`);
   await click("#read-again");
