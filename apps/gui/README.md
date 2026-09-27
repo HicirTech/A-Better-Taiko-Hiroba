@@ -39,7 +39,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. It then searches the app's data folder for anything the session left behind. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
-| `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in". |
+| `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
 
 A packaged build talks only to the real sites. The stand-in is reachable only from an unpackaged
 build, and only when both `ABTH_DEV_HIROBA_ORIGIN` and `ABTH_DEV_IDP_HOST` are set; one without the

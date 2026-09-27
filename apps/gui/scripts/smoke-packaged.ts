@@ -1,10 +1,20 @@
 /**
  * Starts the packaged desktop app and checks its first screen, then quits. It never presses
- * "Sign in": a packaged build talks only to the real Hiroba, which a test must not touch.
+ * "Sign in": a packaged build talks only to the real Hiroba, which a test must not touch. It will
+ * not start at all while the packaged app keeps a session (`refusalToStart`): opened, the app would
+ * read the real my page by itself.
  *
  *   bun run dist:dir && bun scripts/smoke-packaged.ts
  */
 import { join } from "node:path";
+
+import { refusalToStart } from "./packaged-session";
+
+const refusal = refusalToStart(process.env.APPDATA);
+if (refusal !== null) {
+  console.error(refusal);
+  process.exit(1);
+}
 
 const root = join(import.meta.dir, "..");
 const exe = join(root, "release", "win-unpacked", "A Better Taiko Hiroba.exe");
