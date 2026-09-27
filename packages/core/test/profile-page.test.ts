@@ -244,6 +244,20 @@ describe("parseProfilePage", () => {
     expect(result.value.nickname).toBe("Donder");
   });
 
+  test("a region that reads 未設定 is no region, read as null", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      "<p>国・地域 ：香港</p>",
+      "<p>都道府県 ：未設定</p>",
+    );
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.region).toBeNull();
+  });
+
   test("a page without its title line fails, rather than read the name row as the title", () => {
     const excerpt = profileExcerpt({ withDan: true }).replace(
       `<div style="height: 20px;text-align: center;">黒薔薇の使徒</div>`,

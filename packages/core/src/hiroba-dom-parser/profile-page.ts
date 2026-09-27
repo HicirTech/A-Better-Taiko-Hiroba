@@ -19,7 +19,11 @@ const FAVORITE_BLOCK_MARKER = "div.favoriteSong";
 const FAVORITE_SONG_HEADING = "大好きな曲";
 const FAVORITE_FOLDER_HEADING = "お気に入りの曲";
 
-/** How the page writes a slot that holds no song, in both blocks and in the folder editor. */
+/**
+ * How the site writes a value nobody set: a slot that holds no song, in both favourite blocks and in
+ * the folder editor, and a region the player never chose. The region form is copied from another
+ * player's profile (`都道府県 ：未設定`); my page shares that details markup.
+ */
 const UNSET_LABEL = "未設定";
 
 /**
@@ -84,7 +88,8 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
   if (details.length < 2) {
     return err({ kind: "missingMarker", page: PAGE, marker: ".detail p" });
   }
-  const region = afterColon(regionLine) || null;
+  const regionValue = afterColon(regionLine);
+  const region = regionValue === "" || regionValue === UNSET_LABEL ? null : regionValue;
   const taikoNo = afterColon(taikoLine);
   if (!/^\d{12}$/.test(taikoNo)) {
     return err({

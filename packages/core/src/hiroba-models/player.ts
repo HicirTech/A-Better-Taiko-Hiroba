@@ -38,6 +38,7 @@ export interface Profile {
    * 19 other players' profiles on disk.
    */
   readonly title: string;
+  /** The value after the region line's colon; null when there is none or it reads 未設定. */
   readonly region: string | null;
   /**
    * The dan label image the page shows (`imgsrc_danlabel.php?taiko_no=…`), or null when absent.
