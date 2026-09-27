@@ -5,7 +5,7 @@
  */
 import { beforeEach, describe, expect, test } from "bun:test";
 
-import { native } from "./capacitor-fakes";
+import { native, nativeBase64 } from "./capacitor-fakes";
 
 const { createAndroidPort } = await import("../src/platform/android");
 
@@ -121,7 +121,7 @@ describe("createAndroidPort", () => {
       status: 200,
       url: `${HIROBA}/login.php`,
       headers: {},
-      data: "<form id=login_form></form>",
+      data: nativeBase64("<form id=login_form></form>"),
     });
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "loggedOut" } });
     expect(native.httpRequests).toHaveLength(1);

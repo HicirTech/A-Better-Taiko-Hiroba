@@ -14,6 +14,16 @@ export interface NativeHttpRequest {
 
 type Listener = (event: { url?: string }) => void;
 
+/**
+ * A body as Capacitor hands back an `arraybuffer` answer: base64 as android.util.Base64.DEFAULT
+ * writes it, in lines of 76 characters, each ending in a line break. Text is taken as UTF-8.
+ */
+export function nativeBase64(body: Uint8Array | string): string {
+  const bytes = typeof body === "string" ? new TextEncoder().encode(body) : body;
+  const base64 = btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""));
+  return base64.replace(/.{1,76}/g, (line) => `${line}\n`);
+}
+
 export const native = {
   httpRequests: [] as NativeHttpRequest[],
   httpAnswer: (async () => ({})) as () => Promise<unknown>,

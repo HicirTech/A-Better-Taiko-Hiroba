@@ -4,7 +4,7 @@
  */
 import { beforeEach, describe, expect, test } from "bun:test";
 
-import { native } from "./capacitor-fakes";
+import { native, nativeBase64 } from "./capacitor-fakes";
 
 const { createAndroidTransport } = await import("../src/platform/android-transport");
 
@@ -25,20 +25,61 @@ describe("createAndroidTransport", () => {
       headers: { Cookie: "x=1", "user-agent": "curl" },
     });
     expect(native.httpRequests[0]?.headers).toEqual({ "User-Agent": UA });
-    expect(native.httpRequests[0]?.responseType).toBe("text");
+    expect(native.httpRequests[0]?.responseType).toBe("arraybuffer");
   });
 
-  test("hands back the final URL, lower-cased headers without set-cookie, and UTF-8 bytes", async () => {
+  test("hands back the final URL, lower-cased headers without set-cookie, and the page as sent", async () => {
     native.httpAnswer = async () => ({
       status: 200,
       url: "https://hiroba.test/login.php",
       headers: { "Content-Type": "text/html", "Set-Cookie": "_token_v2=x" },
-      data: "ドンだー",
+      data: nativeBase64("ドンだー\r\n\n"),
     });
     const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
     expect(sent.ok && sent.value.url).toBe("https://hiroba.test/login.php");
     expect(sent.ok && sent.value.headers).toEqual({ "content-type": "text/html" });
-    expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe("ドンだー");
+    expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe("ドンだー\r\n\n");
+  });
+
+  test("brings an image back byte for byte, across Capacitor's base64 lines", async () => {
+    const pngSignature = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+    const image = new Uint8Array([...pngSignature, ...Array.from({ length: 256 }, (_, i) => i)]);
+    native.httpAnswer = async () => ({
+      status: 200,
+      url: URL_,
+      headers: { "Content-Type": "image/png" },
+      data: nativeBase64(image),
+    });
+    const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+    expect(nativeBase64(image).split("\n").length).toBeGreaterThan(2);
+    expect(sent.ok && [...sent.value.body]).toEqual([...image]);
+  });
+
+  test("keeps a JSON answer, which Capacitor parses whatever was asked for, as JSON text", async () => {
+    const bodyOf = async (data: unknown) => {
+      native.httpAnswer = async () => ({
+        status: 200,
+        url: URL_,
+        headers: { "Content-Type": "application/json; charset=UTF-8" },
+        data,
+      });
+      const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+      return sent.ok ? new TextDecoder().decode(sent.value.body) : null;
+    };
+    expect(await bodyOf({ result: 1 })).toBe('{"result":1}');
+    expect(await bodyOf("unquoted")).toBe("unquoted");
+  });
+
+  test("reads an answer of 400 or more as the text Capacitor reads it as", async () => {
+    native.httpAnswer = async () => ({
+      status: 404,
+      url: URL_,
+      headers: { "Content-Type": "text/html" },
+      data: "not found",
+    });
+    const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+    expect(sent.ok && sent.value.status).toBe(404);
+    expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe("not found");
   });
 
   test("tells a connect or read timeout from other failures by the native class name", async () => {

@@ -11,11 +11,8 @@ const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent"]);
  * TypeScript ever holds its value. Sending a Cookie header here would add a second one, not
  * replace the stored one, which is why a caller's is dropped.
  *
- * The body comes back as the platform's UTF-8 text (`responseType: "text"`) and is re-encoded.
- * Capacitor reads it line by line, so line breaks come back as `\n` and the last one is dropped,
- * and it parses a JSON answer whatever the response type says (HttpRequestHandler.readData), so
- * that comes back re-serialised. Neither matters to a page parser. Images will need
- * `arraybuffer`, which Capacitor returns as base64; that belongs to the later HirobaClient.
+ * The body is asked for as `arraybuffer`, so an image arrives byte for byte and a page arrives as
+ * the bytes Hiroba sent, for decoding as UTF-8. See `bodyBytes` for what Capacitor hands back.
  */
 export function createAndroidTransport(userAgent: string = navigator.userAgent): Transport {
   return {
@@ -37,7 +34,7 @@ export function createAndroidTransport(userAgent: string = navigator.userAgent):
             url: request.url,
             method: request.method,
             headers,
-            responseType: "text",
+            responseType: "arraybuffer",
             connectTimeout: TIMEOUT_MS,
             readTimeout: TIMEOUT_MS,
           }),
@@ -53,18 +50,45 @@ export function createAndroidTransport(userAgent: string = navigator.userAgent):
             responseHeaders[lower] = value;
           }
         }
-        const text = typeof answer.data === "string" ? answer.data : JSON.stringify(answer.data);
         return ok({
           status: answer.status,
           url: answer.url,
           headers: responseHeaders,
-          body: new TextEncoder().encode(text),
+          body: bodyBytes(answer.data, answer.status, responseHeaders["content-type"]),
         });
       } catch (error) {
         return failure(isTimeout(error) ? "timedOut" : "unreachable");
       }
     },
   };
+}
+
+/**
+ * The body as bytes. Asked for `arraybuffer`, Capacitor 8.5 answers in one of three ways
+ * (HttpRequestHandler.readData):
+ *
+ * - base64 of the exact bytes, in lines of 76 (android.util.Base64.DEFAULT): every answer below 400
+ *   whose content type does not contain `application/json`, pages and images alike;
+ * - a value it parsed, whatever was asked for, when the content type contains `application/json`:
+ *   an object, a number, a boolean, or a string with its quotes taken off;
+ * - text, read line by line so line breaks become `\n` and the last is dropped, for an answer of 400
+ *   or more: it reads those from the error stream and never as base64.
+ *
+ * Only the first is exact. The other two are re-encoded as UTF-8, as every page was before.
+ */
+function bodyBytes(data: unknown, status: number, contentType = ""): Uint8Array {
+  if (typeof data !== "string") {
+    return new TextEncoder().encode(JSON.stringify(data));
+  }
+  if (status >= 400 || contentType.toLowerCase().includes("application/json")) {
+    return new TextEncoder().encode(data);
+  }
+  const binary = atob(data.replace(/\s+/g, ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
 
 function abortion(signal: AbortSignal | undefined): Promise<"cancelled"> {

@@ -29,10 +29,11 @@ export interface TransportResponse {
   /** Names lower-cased. Never contains `set-cookie`: the session stays with the transport. */
   readonly headers: Readonly<Record<string, string>>;
   /**
-   * The page, for decoding as UTF-8. Exact bytes where the platform gives them (the desktop). On
-   * Android it is the platform's own UTF-8 text re-encoded: line breaks become `\n`, the last one
-   * is dropped, and a JSON answer comes back re-serialised. Page parsers are indifferent to both;
-   * anything that needs exact bytes (images) needs a binary mode first.
+   * The body as the server sent it: a page to decode as UTF-8, or an image's bytes. Two answers
+   * come back re-encoded from the platform's text on Android, where Capacitor hands over no bytes
+   * for them: one with a JSON content type, re-serialised, and one of status 400 or more, whose
+   * line breaks become `\n` with the last dropped. Page parsers are indifferent to both, and
+   * neither is an image.
    */
   readonly body: Uint8Array;
 }
