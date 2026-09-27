@@ -108,9 +108,9 @@ export function readDanLabel(bytes: Uint8Array): Result<LabelReading, DanImageFa
  * The current dan, derived: the highest plate carrying a stamp. Null when nothing is passed —
  * a normal state, not a failure.
  *
- * The my-page label shows the same thing and would be a one-request cross-check, but nothing wires
- * the two together yet: `readDanLabel` has no caller outside its own tests. Until something does,
- * this is the only answer, not the corroborated one.
+ * The my-page label shows the same thing and would be a one-request cross-check. The app reads
+ * that label for my page with `readDanLabel`, but nothing compares the two answers yet, so where
+ * the board is read, this is its only answer, not the corroborated one.
  */
 export function highestPassedDan(states: ReadonlyMap<number, DanClearState>): number | null {
   let highest: number | null = null;

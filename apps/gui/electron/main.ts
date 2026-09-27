@@ -1,19 +1,31 @@
 import { join } from "node:path";
-import { err } from "@abth/core";
+import { err, ok } from "@abth/core";
 import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
 
 import {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
-  readProfile,
+  previewCostume,
+  readOwnProfile,
 } from "../src/hiroba-session";
-import { BRIDGE_CHANNELS, type HirobaSessionPort, type SignInOutcome } from "../src/session-port";
+import {
+  BRIDGE_CHANNELS,
+  type CostumeSet,
+  type HirobaSessionPort,
+  PORT_ARGUMENTS,
+  type ReadFailure,
+  type SignInOutcome,
+  type WriteOutcomeView,
+} from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
+import { createDesktopWrites } from "./desktop-writes";
+import { createHirobaQueue } from "./hiroba-queue";
 import { createHirobaTransport } from "./hiroba-transport";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
+import { createUndoStore } from "./undo-store";
 
 // Development only, and never in a packaged build: the renderer from Vite's dev server, and a
 // local stand-in for Hiroba and the ID host so the whole sign-in can run without the real sites.
@@ -41,9 +53,22 @@ const chromeMajor = process.versions.chrome.split(".")[0];
 const userAgent = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeMajor}.0.0.0 Safari/537.36`;
 app.userAgentFallback = userAgent;
 
-// Development only: lets the end-to-end run keep its profile out of the real %APPDATA%.
+// Development only: lets the end-to-end run and the dev run against the mock keep their profiles
+// out of the real %APPDATA%, where the installed app keeps its session and undo record.
 if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
   app.setPath("userData", process.env.ABTH_DEV_USER_DATA);
+}
+
+// Which writes this run may send: the verified ones, and every other only in an unpackaged run
+// started with ABTH_UNVERIFIED_WRITES=1. A packaged build ignores that variable.
+const writeGate = { isPackaged: app.isPackaged, env: process.env };
+// The clock a write checks Hiroba's daily break against. Development only: ABTH_DEV_NOW (an ISO
+// time) fixes it, so a test runs at any hour and can try the break itself.
+const writeClock = developmentClock();
+
+function developmentClock(): () => Date {
+  const fixed = app.isPackaged ? Number.NaN : Date.parse(process.env.ABTH_DEV_NOW ?? "");
+  return Number.isNaN(fixed) ? () => new Date() : () => new Date(fixed);
 }
 
 app.enableSandbox();
@@ -55,9 +80,17 @@ registerAppScheme();
  */
 let sessionCookie: string | null = null;
 let sessionStore: SessionStore | null = null;
+/**
+ * Whose my page this run last read: the taiko number, which tells whose undo record is whose. It
+ * stays in this process and is forgotten with the session.
+ */
+let owner: string | null = null;
 const setSession = (value: string | null) => {
   sessionCookie = value;
   sessionStore?.save(value);
+  if (value === null) {
+    owner = null;
+  }
 };
 let signInAttempt: SignInAttempt | null = null;
 const transport = createHirobaTransport({
@@ -74,6 +107,18 @@ const readTransport =
   process.env.ABTH_DEBUG_SAVE_READS === "1"
     ? saveReads(transport, join(app.getPath("userData"), "debug"))
     : transport;
+
+/**
+ * Every verb that asks Hiroba something runs one at a time: a read never lands between a write's
+ * posts and its read-back, and two writes never interleave. A write asked for while another is
+ * queued or running answers `busy` and sends nothing.
+ */
+const { oneAtATime, oneWriteAtATime } = createHirobaQueue();
+const BUSY: WriteOutcomeView = { kind: "busy" };
+
+/** A read that found the login page, or a card still to choose: the session is over. */
+const sessionEnded = (failure: ReadFailure) =>
+  failure.kind === "loggedOut" || failure.kind === "cardSelectUnfinished";
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -104,6 +149,18 @@ app.whenReady().then(async () => {
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
+  // The writes: the gate, the undo record on disk, and the session dropped when Hiroba ends it.
+  const writes = createDesktopWrites({
+    transport: readTransport,
+    endpoints,
+    gate: writeGate,
+    now: writeClock,
+    undoStore: createUndoStore(join(app.getPath("userData"), "undo.json")),
+    signedIn: () => sessionCookie !== null,
+    endSession: () => setSession(null),
+    owner: () => owner,
+  });
+
   const port: HirobaSessionPort = {
     async isSignedIn() {
       return sessionCookie !== null;
@@ -126,22 +183,38 @@ app.whenReady().then(async () => {
     async cancelSignIn() {
       signInAttempt?.cancel();
     },
-    async readProfile() {
+    readProfile: oneAtATime(async () => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
-      const read = await readProfile(readTransport, endpoints);
-      if (
-        !read.ok &&
-        (read.error.kind === "loggedOut" || read.error.kind === "cardSelectUnfinished")
-      ) {
-        setSession(null);
+      const read = await readOwnProfile(readTransport, endpoints);
+      if (!read.ok) {
+        if (sessionEnded(read.error)) {
+          setSession(null);
+        }
+        return read;
       }
-      return read;
-    },
+      owner = read.value.taikoNo;
+      return ok(read.value.view);
+    }),
     async signOut() {
       setSession(null);
     },
+    enabledWrites: writes.enabledWrites,
+    openCostumeEditor: oneAtATime(writes.openCostumeEditor),
+    // A read that changes nothing, so no write gate: in the queue like every request to Hiroba, so
+    // it never lands between a write's posts and its read-back. Its failure leaves the session be:
+    // the next read of a page says whether it is over. Kept as its latest copy alone when reads are
+    // saved for debugging (save-reads.ts).
+    previewCostume: oneAtATime(async (set: CostumeSet) => {
+      if (sessionCookie === null) {
+        return err({ code: "preview=notSignedIn" });
+      }
+      return previewCostume(readTransport, endpoints, set);
+    }),
+    changeCostume: oneWriteAtATime(writes.changeCostume, BUSY),
+    pendingUndo: writes.pendingUndo,
+    undo: oneWriteAtATime(writes.undo, BUSY),
   };
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.
@@ -155,11 +228,16 @@ app.whenReady().then(async () => {
     return url !== undefined && originOf(url) === expectedOrigin;
   };
   for (const [method, channel] of Object.entries(BRIDGE_CHANNELS)) {
-    ipcMain.handle(channel, (event) => {
+    const verb = method as keyof HirobaSessionPort;
+    ipcMain.handle(channel, (event, ...args: unknown[]) => {
       if (!trusted(event)) {
         throw new Error(`Refused ${channel} from an untrusted frame`);
       }
-      return port[method as keyof HirobaSessionPort]();
+      // The arguments are the renderer's, so they are checked before the verb sees them.
+      if (!PORT_ARGUMENTS[verb](args)) {
+        throw new Error(`Refused ${channel}: arguments it does not take`);
+      }
+      return (port[verb] as (...values: unknown[]) => Promise<unknown>)(...args);
     });
   }
 

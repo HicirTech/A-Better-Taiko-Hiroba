@@ -12,10 +12,12 @@ import {
   type HirobaEndpoints,
   idpOrigin,
   loginPageUrl,
+  openCostumeEditor,
+  previewCostume,
   readProfile,
   signInStep,
 } from "../hiroba-session";
-import type { HirobaSessionPort, SignInOutcome } from "../session-port";
+import type { HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
 import { createAndroidTransport } from "./android-transport";
 
 // Development only (the Vite dev server behind live reload): a local stand-in for Hiroba and the ID
@@ -160,10 +162,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         return err({ kind: "notSignedIn" });
       }
       const read = await readProfile(transport, endpoints);
-      if (
-        !read.ok &&
-        (read.error.kind === "loggedOut" || read.error.kind === "cardSelectUnfinished")
-      ) {
+      if (!read.ok && sessionEnded(read.error)) {
         await forget();
       } else {
         // A read can carry a session Hiroba renewed on the way; keep that one, not the old.
@@ -173,7 +172,52 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     },
 
     signOut: forget,
+
+    // Writes are the desktop's alone for now (the user's call, 2026-09-27): Android enables none,
+    // sends none, and its transport refuses a post outright.
+    async enabledWrites() {
+      return [];
+    },
+
+    async openCostumeEditor() {
+      if (!signedIn) {
+        return err({ kind: "notSignedIn" });
+      }
+      const read = await openCostumeEditor(transport, endpoints);
+      if (!read.ok && sessionEnded(read.error)) {
+        await forget();
+      } else {
+        await saveCookieStore();
+      }
+      return read;
+    },
+
+    // A read that changes nothing, allowed here as on the desktop. Its failure forgets nothing: the
+    // next read of a page says whether the session is over.
+    async previewCostume(set) {
+      if (!signedIn) {
+        return err({ code: "preview=notSignedIn" });
+      }
+      return previewCostume(transport, endpoints, set);
+    },
+
+    async changeCostume() {
+      return { kind: "notEnabled" };
+    },
+
+    async pendingUndo() {
+      return [];
+    },
+
+    async undo() {
+      return { kind: "notEnabled" };
+    },
   };
+}
+
+/** A read that found the login page, or a card still to choose: the session is over. */
+function sessionEnded(failure: ReadFailure): boolean {
+  return failure.kind === "loggedOut" || failure.kind === "cardSelectUnfinished";
 }
 
 /**

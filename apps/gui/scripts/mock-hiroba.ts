@@ -17,9 +17,23 @@
  * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), and two that shape
  * the next my page: /__medal?state=none|collecting|complete|odd (the どんメダル plate: absent, a
  * count, COMPLETE, or a name alone, a shape no page has shown) and
- * /__variant?dan=0|1&title=empty|set&region=unset|set&favorites=unset|set (each optional; dan=0
- * writes the name row flat, as other players' dan-less profiles do; favorites=set sets the
- * 大好きな曲 and fills the お気に入り folder with three songs, two of them sharing a title).
+ * /__variant?dan=0|1…15&label=png|gif&title=empty|set&region=unset|set&favorites=unset|set (each
+ * optional; dan=0 writes the name row flat, as other players' dan-less profiles do, and dan=N
+ * shows the label of dan N, 14 (九段) at first; label=gif answers the label with the 43-byte 1×1
+ * GIF Hiroba sends when it has nothing to draw; favorites=set sets the 大好きな曲 and fills the
+ * お気に入り folder with three songs, two of them sharing a title).
+ *
+ * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
+ * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
+ *
+ * The costume editor, mypage_kisekae.php, its preview, imgsrc_mydon.php (drawn for a session only,
+ * as Hiroba's is), and the two posts a costume write sends, ajax/check_ip_kisekae.php and
+ * ajax/change_mydon.php, are scripts/mock-costume.ts: stateful, with hooks of their own listed
+ * there. Like Hiroba, an ajax post without X-Requested-With gets the site's error page at 200; one
+ * without a session is sent to the login page. Two more hooks cover
+ * every request: /__log (each non-hook request so far, as "METHOD /path"; /__log-reset clears it)
+ * and /__post-to-login?on=1 or 0 (every ajax post answers with a redirect to the login page, the
+ * session left as it was).
  *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
@@ -32,6 +46,9 @@
  *   VITE_ABTH_DEV_IDP_HOST=id.<LAN IP>.sslip.io:8808 \
  *   bun run android:live -- <adb serial> <LAN IP>
  */
+import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
+import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
+
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
 const IDP_HOST = `id.${IP}.sslip.io`;
@@ -41,12 +58,16 @@ const HIROBA = `http://${HIROBA_HOST}:${HIROBA_PORT}`;
 const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
 const IDP_AUTH = `http://auth.${IDP_HOST}:${IDP_PORT}`;
 
-const sessions = new Map<string, { cardChosen: boolean }>();
+const sessions = new Map<string, MockSession>();
 let lastIssued = "";
 let rotateNext = false;
 let holdIdForm = false;
 let sendOffsite = false;
+let postToLogin = false;
 const hits = new Map<string, number>();
+/** Every request that is not a hook, in order, as "METHOD /path". */
+const requestLog: string[] = [];
+const costume = createCostumeEditor();
 /** Also searched for by scripts/e2e-desktop.ts. */
 const IDP_MARKER = "abth-mock-idp-marker";
 /** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
@@ -55,7 +76,7 @@ const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 const newToken = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(26)), (b) => ALPHABET[b % 36]).join("");
 
-function sessionOf(request: Request): { cardChosen: boolean } | undefined {
+function sessionOf(request: Request): MockSession | undefined {
   const cookies = (request.headers.get("cookie") ?? "").split(/;\s*/);
   const token = cookies.find((c) => c.startsWith("_token_v2="))?.slice("_token_v2=".length);
   return token === undefined ? undefined : sessions.get(token);
@@ -83,7 +104,14 @@ const submitSoon = (id: string) =>
 type MedalState = "none" | "collecting" | "complete" | "odd";
 /** What /__medal and /__variant set; every read of my page is rendered from them. */
 let medalState: MedalState = "collecting";
-const variant = { dan: true, title: true, region: true, favorites: false };
+const variant = {
+  /** 0 for no dan, or the dan, 1 to 15, whose label my page shows. */
+  dan: 14,
+  label: "png" as "png" | "gif",
+  title: true,
+  region: true,
+  favorites: false,
+};
 
 /** The count in each score rank, 8 down to 2: every bucket non-zero, so each bar has a length. */
 const RANK_COUNTS: readonly [number, number][] = [
@@ -108,9 +136,10 @@ const MEDAL_PLATE: Readonly<Record<MedalState, string>> = {
 
 /** My page as /__medal and /__variant last shaped it. */
 function myPage(): string {
-  const nameRow = variant.dan
-    ? `<div style="display:flex"><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>`
-    : `<div style="height:24px;">サンプルどん</div>`;
+  const nameRow =
+    variant.dan > 0
+      ? `<div style="display:flex"><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>`
+      : `<div style="height:24px;">サンプルどん</div>`;
   const song = variant.favorites
     ? `<span class="songName songNameFontnamco">サンプル曲アルファ</span>`
     : `<span class="songName songNameFont">未設定</span>`;
@@ -148,6 +177,9 @@ Bun.serve({
     const session = sessionOf(request);
     log("hiroba", request);
     hits.set(pathname, (hits.get(pathname) ?? 0) + 1);
+    if (!pathname.startsWith("/__")) {
+      requestLog.push(`${request.method} ${pathname}`);
+    }
     if (
       !pathname.startsWith("/__") &&
       !COMPLETE_BROWSER.test(request.headers.get("user-agent") ?? "")
@@ -201,8 +233,42 @@ Bun.serve({
             "set-cookie": `_token_v2=${lastIssued}; Domain=.${HIROBA_HOST}; Path=/; Max-Age=2592000`,
           });
         }
+        // My page carries forms (rename, 大好きな曲) with a token, so reading it issues a new one.
+        costume.issueTicket(session);
         return page(myPage());
       }
+      case "/mypage_kisekae.php":
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        return page(costume.page(session));
+      case "/ajax/check_ip_kisekae.php":
+      case "/ajax/change_mydon.php": {
+        if (request.method !== "POST") {
+          return new Response("not found", { status: 404 });
+        }
+        const form = new URLSearchParams(await request.text());
+        costume.record(pathname, request, form, session);
+        if (request.headers.get("x-requested-with") !== "XMLHttpRequest") {
+          return page(ERROR_SHELL_BODY);
+        }
+        if (postToLogin || !session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        if (pathname === "/ajax/check_ip_kisekae.php") {
+          await costume.precheckLetThrough();
+          return costume.precheck();
+        }
+        return costume.save(session, form, () => sessions.clear());
+      }
+      case "/imgsrc_mydon.php":
+        return costume.preview(new URL(request.url).search, session?.cardChosen === true);
+      case "/imgsrc_danlabel.php":
+        // Public, as Hiroba's is: the query picks whose label, and no session is asked for.
+        if (variant.dan === 0 || variant.label === "gif" || !searchParams.has("taiko_no")) {
+          return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
+        }
+        return new Response(danLabelPng(variant.dan), { headers: { "content-type": "image/png" } });
       // Test hooks, loopback only.
       case "/__last-token":
         return new Response(lastIssued);
@@ -233,7 +299,14 @@ Bun.serve({
       case "/__variant": {
         const flag = (name: string, on: string) =>
           searchParams.has(name) ? searchParams.get(name) === on : undefined;
-        variant.dan = flag("dan", "1") ?? variant.dan;
+        const dan = searchParams.get("dan") ?? "";
+        if (/^\d+$/.test(dan) && Number(dan) <= 15) {
+          variant.dan = Number(dan);
+        }
+        const label = searchParams.get("label");
+        if (label === "png" || label === "gif") {
+          variant.label = label;
+        }
         variant.title = flag("title", "set") ?? variant.title;
         variant.region = flag("region", "set") ?? variant.region;
         variant.favorites = flag("favorites", "set") ?? variant.favorites;
@@ -245,8 +318,16 @@ Bun.serve({
         return redirect("/__echo-cookie");
       case "/__echo-cookie":
         return Response.json({ cookieArrived: request.headers.has("cookie") });
+      case "/__log":
+        return Response.json(requestLog);
+      case "/__log-reset":
+        requestLog.length = 0;
+        return new Response("reset");
+      case "/__post-to-login":
+        postToLogin = searchParams.get("on") === "1";
+        return new Response(postToLogin ? "to login" : "answering");
       default:
-        return new Response("not found", { status: 404 });
+        return costume.hook(pathname, searchParams) ?? new Response("not found", { status: 404 });
     }
   },
 });

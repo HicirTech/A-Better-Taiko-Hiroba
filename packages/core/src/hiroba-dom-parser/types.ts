@@ -1,6 +1,8 @@
 import type {
+  CostumeSet,
   CrownState,
   DanClearState,
+  FormToken,
   Genre,
   Level,
   Score,
@@ -8,6 +10,28 @@ import type {
   ScoreRecord,
   Song,
 } from "../hiroba-models";
+
+/**
+ * The costume editor as a write reads it: the saved set, the token that writes it, and the page's
+ * own lists a target is checked against.
+ */
+export interface CostumeEditorReading {
+  readonly state: CostumeSet;
+  readonly token: FormToken;
+  /** Every colour the page offers, ids 0 to 62 on the pages seen, in page order. */
+  readonly palette: readonly CostumeSwatch[];
+  /**
+   * The items owned in each slot, five lists in slot order, きぐるみ first, each in page order.
+   * 0, はずす, is not listed: it is always allowed.
+   */
+  readonly slots: readonly (readonly number[])[];
+}
+
+/** One colour of the palette: its id, and the colour the page draws it in, `#RRGGBB`. */
+export interface CostumeSwatch {
+  readonly id: number;
+  readonly hex: string;
+}
 
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */
 export type ParseFailure =

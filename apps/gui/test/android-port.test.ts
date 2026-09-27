@@ -5,7 +5,7 @@
  */
 import { beforeEach, describe, expect, test } from "bun:test";
 
-import { native } from "./capacitor-fakes";
+import { native, nativeBase64 } from "./capacitor-fakes";
 
 const { createAndroidPort } = await import("../src/platform/android");
 
@@ -121,7 +121,7 @@ describe("createAndroidPort", () => {
       status: 200,
       url: `${HIROBA}/login.php`,
       headers: {},
-      data: "<form id=login_form></form>",
+      data: nativeBase64("<form id=login_form></form>"),
     });
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "loggedOut" } });
     expect(native.httpRequests).toHaveLength(1);
@@ -141,5 +141,104 @@ describe("createAndroidPort", () => {
     expect(native.cookieCalls).toEqual(["clearAllCookies"]);
     expect(flag.get()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+  });
+});
+
+describe("createAndroidPort's writes", () => {
+  beforeEach(() => native.reset());
+
+  test("enables no write, offers no undo, and a costume change sends nothing", async () => {
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    expect(await port.enabledWrites()).toEqual([]);
+    const set = {
+      colorBody: 1,
+      colorLimb: 1,
+      colorFace: 1,
+      costume1: 0,
+      costume2: 0,
+      costume3: 0,
+      costume4: 0,
+      costume5: 0,
+    };
+    expect(await port.changeCostume({ expected: set, target: { ...set, colorFace: 2 } })).toEqual({
+      kind: "notEnabled",
+    });
+    expect(await port.pendingUndo()).toEqual([]);
+    expect(await port.undo("costume")).toEqual({ kind: "notEnabled" });
+    expect(native.httpRequests).toEqual([]);
+  });
+
+  test("reads no costume editor while signed out", async () => {
+    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+    expect(native.httpRequests).toEqual([]);
+  });
+});
+
+describe("createAndroidPort's costume preview", () => {
+  beforeEach(() => native.reset());
+
+  const SET = {
+    colorBody: 12,
+    colorLimb: 13,
+    colorFace: 5,
+    costume1: 0,
+    costume2: 21,
+    costume3: 68,
+    costume4: 37,
+    costume5: 140,
+  };
+  const PREVIEW_URL = `${HIROBA}/imgsrc_mydon.php?face=5&body=12&limb=13&cos1=0&cos2=21&cos3=68&cos4=37&cos5=140`;
+
+  test("asks nothing while signed out", async () => {
+    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    expect(await port.previewCostume(SET)).toEqual({
+      ok: false,
+      error: { code: "preview=notSignedIn" },
+    });
+    expect(native.httpRequests).toEqual([]);
+  });
+
+  test("signed in, one GET through the WebView's cookie store, answered as a data: URL", async () => {
+    const picture = new Uint8Array(2048);
+    picture.set([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    native.httpAnswer = async () => ({
+      status: 200,
+      url: PREVIEW_URL,
+      headers: { "Content-Type": "image/png" },
+      data: nativeBase64(picture),
+    });
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    const preview = await port.previewCostume(SET);
+    expect(preview.ok && preview.value.startsWith("data:image/png;base64,iVBORw0KGgo")).toBe(true);
+    expect(native.httpRequests.map(({ url, method }) => ({ url, method }))).toEqual([
+      { url: PREVIEW_URL, method: "GET" },
+    ]);
+    expect(native.httpRequests[0]?.headers).not.toHaveProperty("Cookie");
+    // A preview is not a read of the session: it neither saves nor wipes the cookie store.
+    expect(native.cookieCalls).toEqual([]);
+  });
+
+  test("a no-session GIF is a failure with codes, and forgets nothing", async () => {
+    const flag = memoryFlag(true);
+    native.httpAnswer = async () => ({
+      status: 200,
+      url: PREVIEW_URL,
+      headers: { "Content-Type": "image/gif" },
+      data: nativeBase64(new Uint8Array(43)),
+    });
+    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: flag });
+    expect(await port.previewCostume(SET)).toEqual({
+      ok: false,
+      error: { code: "preview=notPng status=200 type=image/gif bytes=43" },
+    });
+    expect(native.cookieCalls).toEqual([]);
+    expect(flag.get()).toBe(true);
   });
 });

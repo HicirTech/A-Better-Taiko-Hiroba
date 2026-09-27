@@ -1,6 +1,6 @@
 /**
  * The desktop transport against a stand-in for fetch: which hop gets the cookie, how redirects and
- * a new session cookie are taken up, and what the caller gets back.
+ * a new session cookie are taken up, how a form is posted, and what the caller gets back.
  */
 import { describe, expect, test } from "bun:test";
 
@@ -13,7 +13,9 @@ const NOW = Date.parse("2026-09-27T00:00:00Z");
 
 interface Sent {
   readonly url: string;
+  readonly method: string | undefined;
   readonly headers: Record<string, string>;
+  readonly body: unknown;
 }
 
 function setUp(answers: Response[], cookie: string | null = "sample-session") {
@@ -33,7 +35,12 @@ function setUp(answers: Response[], cookie: string | null = "sample-session") {
     hirobaOrigin: ORIGIN,
     now: () => NOW,
     fetch: async (url, init) => {
-      sent.push({ url, headers: init.headers as Record<string, string> });
+      sent.push({
+        url,
+        method: init.method,
+        headers: init.headers as Record<string, string>,
+        body: init.body,
+      });
       const answer = answers.shift();
       if (answer === undefined) {
         throw new Error("no answer left");
@@ -46,8 +53,21 @@ function setUp(answers: Response[], cookie: string | null = "sample-session") {
 
 const page = (body = "<p>page</p>", headers: [string, string][] = []) =>
   new Response(body, { headers: [["content-type", "text/html; charset=utf-8"], ...headers] });
-const redirect = (location: string, headers: [string, string][] = []) =>
-  new Response(null, { status: 302, headers: [["location", location], ...headers] });
+const redirect = (location: string, headers: [string, string][] = [], status = 302) =>
+  new Response(null, { status, headers: [["location", location], ...headers] });
+const FORM_TYPE = "application/x-www-form-urlencoded; charset=UTF-8";
+/** A post as a write sends one: a token first, then the fields, in the page's order. */
+const post = (url: string, headers: Record<string, string> = {}) =>
+  ({
+    method: "POST",
+    url,
+    headers,
+    form: [
+      ["_tckt", "sample-ticket"],
+      ["color_face", "3"],
+      ["note", "a b&c=~"],
+    ],
+  }) as const;
 
 describe("createHirobaTransport", () => {
   test("adds the session and the browser identity, and drops a caller's own", async () => {
@@ -152,5 +172,81 @@ describe("createHirobaTransport", () => {
     controller.abort();
     const cancelled = await transport.send({ method: "GET", url: `${ORIGIN}/` }, controller.signal);
     expect(cancelled).toEqual({ ok: false, error: { kind: "cancelled", url: `${ORIGIN}/` } });
+  });
+});
+
+describe("createHirobaTransport posting a form", () => {
+  test("encodes the form in its order and sets the form's type, dropping a caller's", async () => {
+    const { sent, transport } = setUp([page(`{"result":0}`)]);
+    await transport.send(
+      post(`${ORIGIN}/ajax/change_mydon.php`, {
+        "content-type": "text/plain",
+        "X-Requested-With": "XMLHttpRequest",
+      }),
+    );
+    expect(sent).toEqual([
+      {
+        url: `${ORIGIN}/ajax/change_mydon.php`,
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "User-Agent": UA,
+          "Content-Type": FORM_TYPE,
+          Cookie: "_token_v2=sample-session",
+        },
+        body: "_tckt=sample-ticket&color_face=3&note=a+b%26c%3D%7E",
+      },
+    ]);
+  });
+
+  test("follows a 301, 302 or 303 after a post with one GET that carries no body", async () => {
+    for (const status of [301, 302, 303]) {
+      const { sent, transport } = setUp([redirect("/login.php", [], status), page()]);
+      const sentBack = await transport.send(post(`${ORIGIN}/ajax/change_mydon.php`));
+      expect(sent.map((s) => [s.method, s.url, s.headers["Content-Type"], s.body])).toEqual([
+        ["POST", `${ORIGIN}/ajax/change_mydon.php`, FORM_TYPE, sent[0]?.body],
+        ["GET", `${ORIGIN}/login.php`, undefined, undefined],
+      ]);
+      expect(sent[0]?.body).toBeString();
+      expect(sentBack.ok && sentBack.value.url).toBe(`${ORIGIN}/login.php`);
+    }
+  });
+
+  test("hands back a 307 or 308 after a post, and never sends the post again", async () => {
+    for (const status of [307, 308]) {
+      const { sent, transport } = setUp([redirect("/ajax/again.php", [], status), page()]);
+      const sentBack = await transport.send(post(`${ORIGIN}/ajax/change_mydon.php`));
+      expect(sent).toHaveLength(1);
+      expect(sentBack.ok && sentBack.value.status).toBe(status);
+      expect(sentBack.ok && sentBack.value.url).toBe(`${ORIGIN}/ajax/change_mydon.php`);
+    }
+  });
+
+  test("follows a 307 after a GET as before", async () => {
+    const { sent, transport } = setUp([redirect("/mypage_top.php?again", [], 307), page()]);
+    await transport.send({ method: "GET", url: `${ORIGIN}/mypage_top.php` });
+    expect(sent.map((s) => [s.method, s.url])).toEqual([
+      ["GET", `${ORIGIN}/mypage_top.php`],
+      ["GET", `${ORIGIN}/mypage_top.php?again`],
+    ]);
+  });
+
+  test("keeps the session and the body off a hop to another origin", async () => {
+    const { sent, transport } = setUp([redirect("https://id.test/landing"), page()]);
+    await transport.send(post(`${ORIGIN}/ajax/change_mydon.php`));
+    expect(sent[1]).toEqual({
+      url: "https://id.test/landing",
+      method: "GET",
+      headers: { "User-Agent": UA },
+      body: undefined,
+    });
+  });
+
+  test("takes up a session cookie Hiroba sets on the post's own answer", async () => {
+    const { session, transport } = setUp([
+      page(`{"result":0}`, [["set-cookie", "_token_v2=rotated-session; Path=/"]]),
+    ]);
+    await transport.send(post(`${ORIGIN}/ajax/change_mydon.php`));
+    expect(session.value).toBe("rotated-session");
   });
 });

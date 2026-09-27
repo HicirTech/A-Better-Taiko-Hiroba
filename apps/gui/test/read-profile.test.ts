@@ -1,14 +1,19 @@
 /**
  * The one read, against a fake Transport. The page is a hand-written excerpt holding only what
- * parseProfilePage needs; no real account data (see packages/core/test/README.md).
+ * parseProfilePage needs; no real account data (see packages/core/test/README.md). The dan label is
+ * the mock's, drawn from core's templates.
  */
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport, type TransportRequest } from "@abth/core";
+import { encode } from "fast-png";
 
-import { readProfile } from "../src/hiroba-session";
+import { danLabelPng, NO_LABEL_GIF } from "../scripts/mock-dan-label";
+import { readOwnProfile, readProfile } from "../src/hiroba-session";
 
 const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idpDomain: "id.test" };
 const NOW = () => new Date("2026-09-27T00:00:00.000Z");
+const MY_PAGE_URL = "https://hiroba.test/mypage_top.php";
+const LABEL_URL = "https://hiroba.test/imgsrc_danlabel.php?taiko_no=000000000000";
 
 const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 <div id="mydon_area">
@@ -40,42 +45,73 @@ const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head
   <ul id="songList"><li><span class="songName">サンプル曲</span></li></ul></div></div>
 </body></html>`;
 
+/** The name row as a dan-less my page writes it: one flat div, no label. */
+const DAN_LESS_EXCERPT = MY_PAGE_EXCERPT.replace(
+  '<div><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>',
+  '<div style="height:24px;">サンプルどん</div>',
+);
+
 const LOGIN_PAGE_EXCERPT = `<html><body><form id="login_form" action="./login_process.php"></form></body></html>`;
 
-/** Answers every request with one fixed page and remembers what it was asked. */
+type Answer = Awaited<ReturnType<Transport["send"]>>;
+
+/** A page answered at 200, ending at `url`. */
+const page = (url: string, html: string): Answer =>
+  ok({ status: 200, url, headers: {}, body: new TextEncoder().encode(html) });
+
+/** The label request's answer: bytes of a content type, at a status. */
+const labelAnswer = (type: string, body: Uint8Array, status = 200, url = LABEL_URL): Answer =>
+  ok({ status, url, headers: { "content-type": type }, body });
+
+/** The mock's 九段 label, as Hiroba serves a label. */
+const NINTH_DAN = labelAnswer("image/png", danLabelPng(14));
+
+/**
+ * Answers the dan label's path with `label` and every other request with `myPage`, and remembers
+ * what it was asked.
+ */
 function fakeTransport(
-  finalUrl: string,
-  html: string,
+  myPage: Answer,
+  label: Answer = NINTH_DAN,
   requests: TransportRequest[] = [],
 ): Transport {
   return {
     async send(request) {
       requests.push(request);
-      return ok({ status: 200, url: finalUrl, headers: {}, body: new TextEncoder().encode(html) });
+      return new URL(request.url).pathname === "/imgsrc_danlabel.php" ? label : myPage;
     },
   };
 }
 
+/** A PNG of any size, all transparent. */
+function blankPng(width: number, height: number): Uint8Array {
+  return new Uint8Array(
+    encode({ width, height, data: new Uint8Array(width * height * 4), channels: 4 }),
+  );
+}
+
 describe("readProfile", () => {
-  test("asks for my page once, with nothing but the method and the URL", async () => {
+  test("asks for my page, then the dan label it shows, with nothing but the method and the URL", async () => {
     const requests: TransportRequest[] = [];
-    const transport = fakeTransport(
-      "https://hiroba.test/mypage_top.php",
-      MY_PAGE_EXCERPT,
-      requests,
+    await readProfile(
+      fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT), NINTH_DAN, requests),
+      ENDPOINTS,
+      NOW,
     );
-    await readProfile(transport, ENDPOINTS, NOW);
-    expect(requests).toEqual([{ method: "GET", url: "https://hiroba.test/mypage_top.php" }]);
+    expect(requests).toEqual([
+      { method: "GET", url: MY_PAGE_URL },
+      { method: "GET", url: LABEL_URL },
+    ]);
   });
 
-  test("carries identity, the panel, the medal and favourites to the view", async () => {
-    const transport = fakeTransport("https://hiroba.test/mypage_top.php", MY_PAGE_EXCERPT);
+  test("carries identity, the dan, the panel, the medal and favourites to the view", async () => {
+    const transport = fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT));
     expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(
       ok({
         nickname: "サンプルどん",
         title: "サンプルの称号",
         region: "サンプル",
-        hasDan: true,
+        dan: { name: "九段" },
         crowns: { silver: 11, gold: 2, donderful: 1 },
         panel: { countLevel: 5, ranks: { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7 } },
         medal: { name: "どんメダル2026秋", progress: { kind: "complete" } },
@@ -87,17 +123,13 @@ describe("readProfile", () => {
   });
 
   test("carries a set 大好きな曲 to the view as its title alone", async () => {
-    const page = MY_PAGE_EXCERPT.replace(
+    const set = MY_PAGE_EXCERPT.replace(
       '<span class="songName songNameFont">未設定</span>',
       '<span class="songName songNameFontnamco">サンプル曲アルファ</span>',
     ).replace('id="song_no" value=""', 'id="song_no" value="1346"');
-    expect(page).toContain("サンプル曲アルファ");
-    expect(page).toContain('value="1346"');
-    const read = await readProfile(
-      fakeTransport("https://hiroba.test/mypage_top.php", page),
-      ENDPOINTS,
-      NOW,
-    );
+    expect(set).toContain("サンプル曲アルファ");
+    expect(set).toContain('value="1346"');
+    const read = await readProfile(fakeTransport(page(MY_PAGE_URL, set)), ENDPOINTS, NOW);
     expect(read.ok).toBe(true);
     if (!read.ok) return;
     expect(read.value.favoriteSong).toBe("サンプル曲アルファ");
@@ -105,35 +137,62 @@ describe("readProfile", () => {
     expect(JSON.stringify(read.value)).not.toContain("1346");
   });
 
-  test("lets neither the taiko number nor any URL through to the view", async () => {
-    const transport = fakeTransport("https://hiroba.test/mypage_top.php", MY_PAGE_EXCERPT);
-    const view = JSON.stringify(await readProfile(transport, ENDPOINTS, NOW));
+  test("lets neither the taiko number nor any URL through to the view, dan read or not", async () => {
     expect(MY_PAGE_EXCERPT).toContain("taiko_no=000000000000");
-    expect(view).not.toContain("000000000000");
-    expect(view).not.toContain("imgsrc");
-    expect(view).not.toContain("http");
+    for (const label of [NINTH_DAN, labelAnswer("image/gif", NO_LABEL_GIF)]) {
+      const transport = fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT), label);
+      const view = JSON.stringify(await readProfile(transport, ENDPOINTS, NOW));
+      expect(view).not.toContain("000000000000");
+      expect(view).not.toContain("imgsrc");
+      expect(view).not.toContain("http");
+    }
   });
 
-  test("reads a redirect to the login page as a lost session, without parsing", async () => {
-    const transport = fakeTransport("https://hiroba.test/login.php", LOGIN_PAGE_EXCERPT);
+  test("hands the platform the taiko number beside the view, and never inside it", async () => {
+    const own = await readOwnProfile(
+      fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT)),
+      ENDPOINTS,
+      NOW,
+    );
+    const view = await readProfile(
+      fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT)),
+      ENDPOINTS,
+      NOW,
+    );
+    if (!own.ok || !view.ok) {
+      throw new Error("expected both reads to succeed");
+    }
+    expect(own.value.taikoNo).toBe("000000000000");
+    expect(own.value.view).toEqual(view.value);
+    expect(JSON.stringify(own.value.view)).not.toContain("000000000000");
+  });
+
+  test("reads a redirect to the login page as a lost session, without parsing or a label", async () => {
+    const requests: TransportRequest[] = [];
+    const transport = fakeTransport(
+      page("https://hiroba.test/login.php", LOGIN_PAGE_EXCERPT),
+      NINTH_DAN,
+      requests,
+    );
     expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "loggedOut" }));
+    expect(requests).toHaveLength(1);
   });
 
   test("reads a login form served at my page's own URL as a lost session", async () => {
-    const transport = fakeTransport("https://hiroba.test/mypage_top.php", LOGIN_PAGE_EXCERPT);
+    const transport = fakeTransport(page(MY_PAGE_URL, LOGIN_PAGE_EXCERPT));
     expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "loggedOut" }));
   });
 
   test("names an unfinished card select instead of an unreadable page", async () => {
-    const transport = fakeTransport("https://hiroba.test/login_select.php", "<html></html>");
+    const transport = fakeTransport(page("https://hiroba.test/login_select.php", "<html></html>"));
     expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(
       err({ kind: "cardSelectUnfinished" }),
     );
   });
 
   test("reports a page of another shape with codes for a report, not its text", async () => {
-    const page = "<html><body><p>サンプルの本文 000000000000</p></body></html>";
-    const transport = fakeTransport("https://hiroba.test/mypage_top.php?x=secret", page);
+    const other = "<html><body><p>サンプルの本文 000000000000</p></body></html>";
+    const transport = fakeTransport(page("https://hiroba.test/mypage_top.php?x=secret", other));
     const read = await readProfile(transport, ENDPOINTS, NOW);
     expect(read.ok).toBe(false);
     if (read.ok) return;
@@ -147,7 +206,7 @@ describe("readProfile", () => {
   });
 
   test("names where the read ended when it is not a Hiroba page it can read", async () => {
-    const transport = fakeTransport("https://hiroba.test/index.php", "<html></html>");
+    const transport = fakeTransport(page("https://hiroba.test/index.php", "<html></html>"));
     expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(
       err({
         kind: "unexpectedPage",
@@ -161,5 +220,95 @@ describe("readProfile", () => {
       send: async (request) => err({ kind: "timedOut", url: request.url }),
     };
     expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "timedOut" }));
+  });
+});
+
+describe("readProfile's dan label", () => {
+  /** The dan a read of my page carries, whatever `label` the label request is answered with. */
+  async function danAfter(label: Answer, html = MY_PAGE_EXCERPT) {
+    const requests: TransportRequest[] = [];
+    const read = await readProfile(
+      fakeTransport(page(MY_PAGE_URL, html), label, requests),
+      ENDPOINTS,
+      NOW,
+    );
+    if (!read.ok) {
+      throw new Error(`the profile failed: ${JSON.stringify(read.error)}`);
+    }
+    return { dan: read.value.dan, requests: requests.length };
+  }
+
+  test("a dan-less my page asks for no label and carries no dan", async () => {
+    expect(await danAfter(NINTH_DAN, DAN_LESS_EXCERPT)).toEqual({ dan: null, requests: 1 });
+  });
+
+  test("a label that never arrives leaves the profile standing, with the failure's kind", async () => {
+    const lost = err({ kind: "timedOut" as const, url: LABEL_URL });
+    expect(await danAfter(lost)).toEqual({
+      dan: { unreadable: true, code: "dan=timedOut" },
+      requests: 2,
+    });
+  });
+
+  test("Hiroba's 43-byte GIF at 200, its answer when it has nothing to draw, is no dan", async () => {
+    expect((await danAfter(labelAnswer("image/gif", NO_LABEL_GIF))).dan).toEqual({
+      unreadable: true,
+      code: "dan=notPng status=200 type=image/gif bytes=43",
+    });
+  });
+
+  test("decides by the type and the bytes, whatever the status", async () => {
+    const at404 = labelAnswer("image/png", danLabelPng(14), 404);
+    expect((await danAfter(at404)).dan).toEqual({ name: "九段" });
+  });
+
+  test("a PNG of another size is not a label, and says what size it was", async () => {
+    const small = blankPng(10, 10);
+    expect((await danAfter(labelAnswer("image/png", small))).dan).toEqual({
+      unreadable: true,
+      code: `dan=notAnImage size=10x10 status=200 type=image/png bytes=${small.byteLength}`,
+    });
+  });
+
+  test("a blank label, whose glyph matches no dan, is unreadable rather than guessed", async () => {
+    const blank = blankPng(96, 40);
+    expect((await danAfter(labelAnswer("image/png; charset=binary", blank))).dan).toEqual({
+      unreadable: true,
+      code: `dan=unreadableGlyph status=200 type=image/png; charset=binary bytes=${blank.byteLength}`,
+    });
+  });
+
+  test("an answer far larger than a label is refused before it is decoded", async () => {
+    const huge = new Uint8Array(64 * 1024 + 1);
+    expect((await danAfter(labelAnswer("image/png", huge))).dan).toEqual({
+      unreadable: true,
+      code: "dan=tooLarge status=200 type=image/png bytes=65537",
+    });
+  });
+
+  test("an answer that ended on another page names its path, never the query", async () => {
+    const login = labelAnswer(
+      "text/html; charset=UTF-8",
+      new TextEncoder().encode(LOGIN_PAGE_EXCERPT),
+      200,
+      "https://hiroba.test/login.php?redirect=secret",
+    );
+    const { dan } = await danAfter(login);
+    expect(dan).toEqual({
+      unreadable: true,
+      code: `dan=notPng path=/login.php status=200 type=text/html; charset=UTF-8 bytes=${LOGIN_PAGE_EXCERPT.length}`,
+    });
+  });
+
+  test("a label source that leads off Hiroba is not asked for", async () => {
+    const offsite = MY_PAGE_EXCERPT.replace(
+      'src="imgsrc_danlabel.php?',
+      'src="https://elsewhere.test/imgsrc_danlabel.php?',
+    );
+    expect(offsite).toContain("elsewhere.test");
+    expect(await danAfter(NINTH_DAN, offsite)).toEqual({
+      dan: { unreadable: true, code: "dan=unexpectedSrc" },
+      requests: 1,
+    });
   });
 });

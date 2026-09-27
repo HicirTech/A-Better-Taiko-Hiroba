@@ -10,8 +10,9 @@ import {
   type TransportResponse,
 } from "@abth/core";
 
-import type { ProfileView, ReadFailure, ReadFailureKind } from "../session-port";
+import type { DanView, ProfileView, ReadFailure, ReadFailureKind } from "../session-port";
 import { myPageUrl } from "./endpoints";
+import { readDan } from "./read-dan";
 import { signInStep } from "./sign-in-step";
 import type { HirobaEndpoints, SignInStep } from "./types";
 
@@ -31,15 +32,32 @@ const READ_FAILURE_OF_PARSE_FAILURE = {
 /**
  * Reads the signed-in player's own page once and keeps what the interface shows.
  *
- * The starting point's only read, in the one file a later HirobaClient replaces. One request, no
- * retry. The final URL is read before the body: Hiroba answers a lost session with its login page
+ * The starting point's only read, in the one file a later HirobaClient replaces. One request for
+ * the page, no retry. The final URL is read before the body: Hiroba answers a lost session with its login page
  * at 200, and an unfinished card select would otherwise parse as a misleading unreadable value.
+ *
+ * My page shows the dan only as a picture, so a page that parsed and shows a dan label costs one
+ * more request, for the label (`readDan`). Nothing that happens to that request fails the read: a
+ * label that does not arrive or does not read is shown as such beside the rest of the page.
  */
 export async function readProfile(
   transport: Transport,
   endpoints: HirobaEndpoints,
   now: () => Date = () => new Date(),
 ): Promise<Result<ProfileView, ReadFailure>> {
+  const read = await readOwnProfile(transport, endpoints, now);
+  return isErr(read) ? read : ok(read.value.view);
+}
+
+/**
+ * `readProfile` for a platform layer, which also learns whose page it read: the taiko number stays
+ * with the platform, to tell whose undo record is whose, and never reaches the view.
+ */
+export async function readOwnProfile(
+  transport: Transport,
+  endpoints: HirobaEndpoints,
+  now: () => Date = () => new Date(),
+): Promise<Result<{ readonly view: ProfileView; readonly taikoNo: string }, ReadFailure>> {
   const sent = await transport.send({ method: "GET", url: myPageUrl(endpoints) });
   if (isErr(sent)) {
     return err({ kind: sent.error.kind });
@@ -66,21 +84,23 @@ export async function readProfile(
         : { kind },
     );
   }
-  return ok(profileView(parsed.value));
+  const label = parsed.value.danLabelImageUrl;
+  const dan = label === null ? null : await readDan(transport, endpoints, label);
+  return ok({ view: profileView(parsed.value, dan), taikoNo: parsed.value.taikoNo });
 }
 
 /**
  * What of my page crosses to the interface. Every field is copied by name, so nothing the parser
  * adds later crosses without a decision here: not the taiko number, and no URL, the dan label's
- * least of all, since it carries the taiko number in its query.
+ * least of all, since it carries the taiko number in its query. Only the dan read off it crosses.
  */
-function profileView(profile: Profile): ProfileView {
+function profileView(profile: Profile, dan: DanView | null): ProfileView {
   const { crownCounts, rankCounts, countLevel } = profile.summary;
   return {
     nickname: profile.nickname,
     title: profile.title,
     region: profile.region,
-    hasDan: profile.danLabelImageUrl !== null,
+    dan,
     crowns: {
       silver: crownCounts.silver,
       gold: crownCounts.gold,

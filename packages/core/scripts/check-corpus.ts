@@ -20,6 +20,7 @@ import type { Genre, Level } from "../src/index";
 import {
   isErr,
   type ParseFailure,
+  parseCostumeEditorPage,
   parseCostumePage,
   parseDanBoardPage,
   parseDanDetailPage,
@@ -59,6 +60,11 @@ interface Outcome {
  * Routing is by filename because the corpus is named after what was fetched. A capture matching no
  * rule is a finding in its own right — either a page nobody parses yet or a naming slip — so the
  * run fails on it rather than skipping it quietly.
+ *
+ * Every route whose pattern matches runs, not only the first: one page can feed more than one
+ * parser — the costume page is both a costume to read and an editor to write through — and each
+ * outcome is kept by file and parser. So two patterns that match the same capture are two claims
+ * on it, and one that is not meant to must exclude the other's files itself.
  */
 interface Route {
   readonly match: RegExp;
@@ -130,9 +136,9 @@ const ROUTES: readonly Route[] = [
   },
   {
     // Another player's detail page. The files are named after the player, so the subject comes
-    // from the filename and the chart from the page. This must sit above my page's route, whose
-    // pattern matches these files too. The closed profile is expected as `siteError` and nothing
-    // else: any other refusal from it would be a finding.
+    // from the filename and the chart from the page. My page's route below leaves these files out.
+    // The closed profile is expected as `siteError` and nothing else: any other refusal from it
+    // would be a finding.
     match: /^score-detail-\d{12}-/,
     parser: "parsePublicScoreDetailPage",
     run: (html, file) => {
@@ -145,7 +151,8 @@ const ROUTES: readonly Route[] = [
       file.includes("-private") && failure.kind === "siteError" ? CLOSED_PROFILE : null,
   },
   {
-    match: /^score-detail-/,
+    // My own detail pages: every score-detail capture not named after another player.
+    match: /^score-detail-(?!\d{12}-)/,
     parser: "parseScoreDetailPage",
     run: (html, file) => {
       const [songNo, level] = chartOf(file);
@@ -183,6 +190,12 @@ const ROUTES: readonly Route[] = [
     match: /^(costume|mypage-kisekae-\d|mypage-kisekae\.)/,
     parser: "parseCostumePage",
     run: (html) => attempt(parseCostumePage(html, TAIKO_NO, FETCHED_AT)),
+  },
+  {
+    // The same page again, as the editor a costume write goes through.
+    match: /^(costume|mypage-kisekae-\d|mypage-kisekae\.)/,
+    parser: "parseCostumeEditorPage",
+    run: (html) => attempt(parseCostumeEditorPage(html)),
   },
   {
     match: /^(friend-|block-list|user-search-)/,
@@ -252,22 +265,24 @@ async function main(): Promise<number> {
 
   for (const file of files) {
     const base = file.replace(/^.*\//, "");
-    const route = ROUTES.find((candidate) => candidate.match.test(base));
-    if (route === undefined) {
+    const routes = ROUTES.filter((candidate) => candidate.match.test(base));
+    if (routes.length === 0) {
       const known = UNROUTED.find((candidate) => candidate.match.test(base));
       (known === undefined ? unrouted : skipped).push(file);
       continue;
     }
     const html = await Bun.file(`${corpus}/${file}`).text();
-    const { failure, value } = route.run(html, base);
-    outcomes.push({
-      file,
-      parser: route.parser,
-      failure,
-      expected: failure === null ? null : (route.expect?.(base, failure) ?? null),
-      unrecognised: failure === null ? (route.unrecognised?.(value) ?? null) : null,
-      value,
-    });
+    for (const route of routes) {
+      const { failure, value } = route.run(html, base);
+      outcomes.push({
+        file,
+        parser: route.parser,
+        failure,
+        expected: failure === null ? null : (route.expect?.(base, failure) ?? null),
+        unrecognised: failure === null ? (route.unrecognised?.(value) ?? null) : null,
+        value,
+      });
+    }
   }
 
   report(outcomes, unrouted, skipped, files.length);

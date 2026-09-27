@@ -6,8 +6,15 @@ const TIMEOUT_MS = 20_000;
 /** Chrome's own limit. */
 const MAX_REDIRECTS = 20;
 const REDIRECT_STATUSES: ReadonlySet<number> = new Set([301, 302, 303, 307, 308]);
-/** Names a caller may not set: the session and the browser identity belong to this transport. */
-const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent"]);
+/** The redirects a browser follows after a post, with a GET that has no body. */
+const POST_FOLLOWED_AS_GET: ReadonlySet<number> = new Set([301, 302, 303]);
+/**
+ * Names a caller may not set: the session and the browser identity belong to this transport, and
+ * so does the type of the body it encodes.
+ */
+const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent", "content-type"]);
+/** What a browser sends with a form, and what jQuery sends with the ajax posts Hiroba makes. */
+const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded; charset=UTF-8";
 
 /** Where the desktop keeps the session: main-process memory, behind these two calls. */
 export interface SessionCookieHolder {
@@ -35,6 +42,10 @@ export interface HirobaTransportOptions {
  * `_token_v2` Hiroba sets on any hop is taken up the way a browser would. `set-cookie` never
  * leaves this function.
  *
+ * A post is sent once. Its form goes on the first hop only, encoded in the order given; a 301, 302
+ * or 303 after it is followed with a bodyless GET, as a browser does, and a 307 or 308, which asks
+ * for the post again, is handed back rather than followed.
+ *
  * Electron's net.fetch is not used: it reports an empty `url` after a redirect, and its session
  * cookie jar overrides an explicit Cookie header.
  */
@@ -53,6 +64,8 @@ export function createHirobaTransport(options: HirobaTransportOptions): Transpor
         }
       }
       let url = request.url;
+      let method = request.method;
+      let payload = request.method === "POST" ? encodeForm(request.form) : undefined;
       try {
         for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
           const onHiroba = originOf(url) === options.hirobaOrigin;
@@ -60,15 +73,19 @@ export function createHirobaTransport(options: HirobaTransportOptions): Transpor
             ...callerHeaders,
             "User-Agent": options.userAgent,
           };
+          if (payload !== undefined) {
+            headers["Content-Type"] = FORM_CONTENT_TYPE;
+          }
           const cookie = options.session.get();
           if (onHiroba && cookie !== null) {
             headers.Cookie = `${SESSION_COOKIE_NAME}=${cookie}`;
           }
           const response = await fetchHop(url, {
-            method: request.method,
+            method,
             headers,
             redirect: "manual",
             signal: abort,
+            ...(payload !== undefined && { body: payload }),
           });
           if (onHiroba) {
             takeUpSessionCookie(
@@ -79,13 +96,20 @@ export function createHirobaTransport(options: HirobaTransportOptions): Transpor
             );
           }
           const location = response.headers.get("location");
-          if (REDIRECT_STATUSES.has(response.status) && location !== null) {
+          // A 307 or 308 after a post asks for the post again: that answer goes back unfollowed.
+          const followed =
+            REDIRECT_STATUSES.has(response.status) &&
+            (method === "GET" || POST_FOLLOWED_AS_GET.has(response.status));
+          if (followed && location !== null) {
             await response.body?.cancel();
             const next = resolveRedirect(location, url);
             if (next === null) {
               return failure("unreachable");
             }
             url = next;
+            // Every hop after the first is a GET with no body, whatever the first one was.
+            method = "GET";
+            payload = undefined;
             continue;
           }
           const responseHeaders: Record<string, string> = {};
@@ -107,6 +131,15 @@ export function createHirobaTransport(options: HirobaTransportOptions): Transpor
       }
     },
   };
+}
+
+/** The form as a browser encodes it: each pair in the order given, spaces as `+`. */
+function encodeForm(form: readonly (readonly [string, string])[]): string {
+  const encoded = new URLSearchParams();
+  for (const [name, value] of form) {
+    encoded.append(name, value);
+  }
+  return encoded.toString();
 }
 
 /**

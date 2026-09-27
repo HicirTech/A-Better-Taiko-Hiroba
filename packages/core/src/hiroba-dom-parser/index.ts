@@ -7,6 +7,7 @@
  * it surface as a dozen missing fields, and requireMarker() turns an absent element into a
  * failure naming the page and the selector, so a broken parse says where to look.
  */
+export { parseCostumeEditorPage } from "./costume-editor-page";
 export { parseCostumePage } from "./costume-page";
 export { parsePage, requireMarker } from "./parser";
 export { parseProfilePage } from "./profile-page";
@@ -18,6 +19,8 @@ export { parseRecentPlaysPage, scoreFromRecentPlay } from "./recent-plays-page";
 export { parsePublicScoreDetailPage, parseScoreDetailPage } from "./score-detail-page";
 export { parseScoreListPage } from "./score-list-page";
 export type {
+  CostumeEditorReading,
+  CostumeSwatch,
   LoggedOutFailure,
   MissingMarkerFailure,
   ParseFailure,

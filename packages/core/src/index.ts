@@ -17,5 +17,6 @@
 export * from "./hiroba-dan-images";
 export * from "./hiroba-dom-parser";
 export * from "./hiroba-models";
+export * from "./hiroba-writes";
 export * from "./http-transport";
 export * from "./operation-results";
