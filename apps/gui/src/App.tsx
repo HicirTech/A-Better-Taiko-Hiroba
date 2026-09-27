@@ -1,4 +1,4 @@
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { MessageKey, TranslateParams, Translator } from "@abth/i18n";
 import {
   Alert,
   Button,
@@ -20,7 +20,11 @@ import type {
 } from "./session-port";
 
 type Screen =
-  | { readonly name: "signedOut"; readonly notice: MessageKey | null }
+  | {
+      readonly name: "signedOut";
+      readonly notice: MessageKey | null;
+      readonly noticeParams?: TranslateParams;
+    }
   | { readonly name: "signingIn" }
   | { readonly name: "reading" }
   | { readonly name: "profile"; readonly profile: ProfileView }
@@ -42,6 +46,7 @@ const SIGN_IN_NOTICE = {
   cancelled: "signIn.cancelled",
   noSession: "signIn.noSession",
   unavailable: "signIn.unavailable",
+  refused: "signIn.refused",
 } as const satisfies Record<Exclude<SignInOutcome["kind"], "signedIn">, MessageKey>;
 
 /** What the shell keeps between launches differs, so the footer says it per shell. */
@@ -87,7 +92,11 @@ export function App({
     if (outcome.kind === "signedIn") {
       await read();
     } else {
-      setScreen({ name: "signedOut", notice: SIGN_IN_NOTICE[outcome.kind] });
+      setScreen({
+        name: "signedOut",
+        notice: SIGN_IN_NOTICE[outcome.kind],
+        ...(outcome.kind === "refused" && { noticeParams: { host: outcome.host } }),
+      });
     }
   };
 
@@ -105,7 +114,9 @@ export function App({
 
         {screen.name === "signedOut" && (
           <>
-            {screen.notice !== null && <Alert severity="info">{t(screen.notice)}</Alert>}
+            {screen.notice !== null && (
+              <Alert severity="info">{t(screen.notice, screen.noticeParams)}</Alert>
+            )}
             <Typography>{t("signIn.intro")}</Typography>
             <Button id="sign-in" variant="contained" onClick={signIn}>
               {t("signIn.action")}

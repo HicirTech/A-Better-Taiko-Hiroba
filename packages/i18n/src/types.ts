@@ -21,6 +21,8 @@ export interface Messages {
   "signIn.cancelled": string;
   "signIn.noSession": string;
   "signIn.unavailable": string;
+  /** Param: {host}, the host name the sign-in was sent to. */
+  "signIn.refused": string;
   "signOut.action": string;
   /** What the desktop keeps: memory only, gone when the app closes. */
   "signOut.note.desktop": string;

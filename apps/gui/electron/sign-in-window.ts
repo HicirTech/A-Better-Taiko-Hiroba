@@ -11,7 +11,8 @@ import {
 export type SignInResult =
   | { readonly kind: "captured"; readonly cookie: string }
   | { readonly kind: "cancelled" }
-  | { readonly kind: "noSession" };
+  | { readonly kind: "noSession" }
+  | { readonly kind: "refused"; readonly host: string };
 
 export interface SignInAttempt {
   readonly result: Promise<SignInResult>;
@@ -24,8 +25,9 @@ export interface SignInAttempt {
  *
  * The partition name has no `persist:` prefix and is new for every attempt, so nothing the sign-in
  * sets reaches the disk and no attempt inherits another's cookies. The window has no preload and
- * may only navigate between Hiroba's origin and the Bandai Namco ID host on the same scheme; it has
- * no address bar, so a plain-http page on either host is refused rather than shown. When the main
+ * may only navigate between Hiroba's origin and the Bandai Namco ID domain on the same scheme; it
+ * has no address bar, so a plain-http page on either site is refused rather than shown, and the
+ * refusal ends the attempt with the host it was sent to. When the main
  * frame finishes loading index.php, the session cookie is read from that partition, handed back,
  * and the window closes; closing clears the partition either way.
  */
@@ -48,18 +50,6 @@ export function openSignInWindow(
     webPreferences: { partition, sandbox: true, contextIsolation: true, nodeIntegration: false },
   });
   const contents = window.webContents;
-  const allowed = (url: string) => signInStep(url, endpoints) !== "elsewhere";
-  contents.setWindowOpenHandler(() => ({ action: "deny" }));
-  contents.on("will-navigate", (event) => {
-    if (!allowed(event.url)) {
-      event.preventDefault();
-    }
-  });
-  contents.on("will-redirect", (event) => {
-    if (event.isMainFrame && !allowed(event.url)) {
-      event.preventDefault();
-    }
-  });
 
   let settle: (result: SignInResult) => void = () => undefined;
   const result = new Promise<SignInResult>((resolve) => {
@@ -70,6 +60,25 @@ export function openSignInWindow(
         resolve(value);
       }
     };
+  });
+
+  // A refused navigation ends the attempt and names the host. Refusing it quietly left the window
+  // sitting on the page it came from, which looked exactly like a button that does nothing.
+  const refuse = (event: { preventDefault(): void }, url: string) => {
+    event.preventDefault();
+    settle({ kind: "refused", host: hostOf(url) });
+    window.close();
+  };
+  contents.setWindowOpenHandler(() => ({ action: "deny" }));
+  contents.on("will-navigate", (event) => {
+    if (signInStep(event.url, endpoints) === "elsewhere") {
+      refuse(event, event.url);
+    }
+  });
+  contents.on("will-redirect", (event) => {
+    if (event.isMainFrame && signInStep(event.url, endpoints) === "elsewhere") {
+      refuse(event, event.url);
+    }
   });
 
   contents.on("did-finish-load", async () => {
@@ -99,6 +108,15 @@ export function openSignInWindow(
       }
     },
   };
+}
+
+/** The host only: a sign-in URL's path and query carry OAuth state that must not reach the UI. */
+function hostOf(url: string): string {
+  try {
+    return new URL(url).host || "?";
+  } catch {
+    return "?";
+  }
 }
 
 /**

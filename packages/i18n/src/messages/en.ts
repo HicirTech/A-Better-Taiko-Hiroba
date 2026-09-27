@@ -11,6 +11,8 @@ export const en: Messages = {
   "signIn.cancelled": "Sign-in was cancelled.",
   "signIn.noSession": "Sign-in finished, but Hiroba did not start a session. Please try again.",
   "signIn.unavailable": "The sign-in window could not be opened. Please try again.",
+  "signIn.refused":
+    "Sign-in stopped: it was sent to {host}, which this app does not open. Please report that host name.",
   "signOut.action": "Sign out",
   "signOut.note.desktop": "This app forgets your session when you sign out or close it.",
   "signOut.note.android":

@@ -7,7 +7,13 @@ export type SignInOutcome =
   /** Landed, but no session cookie was there to take. */
   | { readonly kind: "noSession" }
   /** The platform could not open a sign-in view at all. */
-  | { readonly kind: "unavailable" };
+  | { readonly kind: "unavailable" }
+  /**
+   * The sign-in view was sent off the two sites it may open, and stopped there. Only the host
+   * crosses, never a path or query: those carry the OAuth state. Only the desktop sign-in window
+   * refuses navigations, so only the desktop reports this.
+   */
+  | { readonly kind: "refused"; readonly host: string };
 
 /** What the interface shows of a profile. The taiko number is deliberately not part of it. */
 export interface ProfileView {
