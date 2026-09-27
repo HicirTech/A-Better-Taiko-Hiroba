@@ -8,7 +8,12 @@ import {
   type HirobaEndpoints,
   readProfile,
 } from "../src/hiroba-session";
-import { BRIDGE_CHANNELS, type HirobaSessionPort, type SignInOutcome } from "../src/session-port";
+import {
+  BRIDGE_CHANNELS,
+  type HirobaSessionPort,
+  PORT_ARGUMENTS,
+  type SignInOutcome,
+} from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createHirobaTransport } from "./hiroba-transport";
 import { saveReads } from "./save-reads";
@@ -155,11 +160,16 @@ app.whenReady().then(async () => {
     return url !== undefined && originOf(url) === expectedOrigin;
   };
   for (const [method, channel] of Object.entries(BRIDGE_CHANNELS)) {
-    ipcMain.handle(channel, (event) => {
+    const verb = method as keyof HirobaSessionPort;
+    ipcMain.handle(channel, (event, ...args: unknown[]) => {
       if (!trusted(event)) {
         throw new Error(`Refused ${channel} from an untrusted frame`);
       }
-      return port[method as keyof HirobaSessionPort]();
+      // The arguments are the renderer's, so they are checked before the verb sees them.
+      if (!PORT_ARGUMENTS[verb](args)) {
+        throw new Error(`Refused ${channel}: arguments it does not take`);
+      }
+      return (port[verb] as (...values: unknown[]) => Promise<unknown>)(...args);
     });
   }
 
