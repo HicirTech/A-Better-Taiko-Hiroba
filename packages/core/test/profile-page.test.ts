@@ -124,15 +124,18 @@ function profileExcerpt(options: ExcerptOptions): string {
     <div class="silver_crown_count total_panel_crown_display">464</div>
     <div class="gold_crown_count total_panel_crown_display">316</div>
     <div class="donderful_crown_count total_panel_crown_display">0</div>
-  </div>
+  </div>${MEDAL_PLATE}
+</div>${favorites}
+</body></html>`;
+}
+
+/** The どんメダル plate as every capture before 2026-09-27 wrote it: a name and a count. */
+const MEDAL_PLATE = `
   <div>
     <img src="imgsrc_tokenplate.php?id=placeholder">
     <div class="token_name token_info_display">どんメダル2026夏</div>
     <div class="token_count token_info_display">0</div>
-  </div>
-</div>${favorites}
-</body></html>`;
-}
+  </div>`;
 
 const FETCHED_AT = "2026-07-26T12:00:00.000Z";
 
@@ -203,6 +206,23 @@ describe("parseProfilePage", () => {
       const result = parseProfilePage(page, FETCHED_AT);
       expect(isOk(result)).toBe(false);
     });
+  });
+
+  // Never seen on my page: every capture and the live page carry a plate. Nothing on the site says
+  // one is always there, and another player's profile, in the same markup, never has one.
+  test("no どんメダル plate is a normal state, read as no medal", () => {
+    const withPlate = profileExcerpt({ withDan: true });
+    const excerpt = withPlate.replace(MEDAL_PLATE, "");
+    expect(excerpt).not.toBe(withPlate);
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.medal).toBeNull();
+    expect(result.value.nickname).toBe("Donder");
+    expect(result.value.summary.crownCounts).toEqual({ silver: 464, gold: 316, donderful: 0 });
   });
 
   test("no dan is a normal state, not a failure", () => {
