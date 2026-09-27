@@ -90,12 +90,12 @@ try {
     ));
   const rendered = await page.evaluate<string>("document.documentElement.outerHTML");
   results.tokenInRendererDom = rendered.includes(tokens[0] ?? "?");
-  // The mock's dan label URL carries a taiko number, as Hiroba's does: only "a dan is shown" may
-  // reach the window, never the URL or the number.
+  // The mock serves the 九段 label at first. Its URL carries a taiko number, as Hiroba's does: only
+  // the dan read off it may reach the window, never the URL or the number.
+  results.danShownByName =
+    (await textOf("#dan")) === "Dan: 九段" && (await textOf("#dan-unreadable")) === null;
   results.taikoNoAndUrlsKeptOutOfDom =
-    (await textOf("#dan-shown")) === "Dan shown" &&
-    !rendered.includes("000000000000") &&
-    !rendered.includes("imgsrc");
+    !rendered.includes("000000000000") && !rendered.includes("imgsrc");
   results.readsAfterSignIn = await myPageHits();
 
   // Read again: one more request, no more.
@@ -149,7 +149,9 @@ try {
   requestsPerRead.push(await readShowing("#no-title"));
   results.medalCountShown = (await textOf("#medal-count")) === "Medals: 12";
   results.danLessRowRead =
-    (await text()).includes("サンプルどん") && (await textOf("#dan-shown")) === null;
+    (await text()).includes("サンプルどん") &&
+    (await textOf("#dan")) === null &&
+    (await textOf("#dan-unreadable")) === null;
   results.unsetRegionLeftOut = (await textOf("#region")) === null;
   // Unset so far: no favourite song and an empty folder. Set, the song shows by title and the
   // folder, closed at first, opens on request with every song in it, the two that share a title
@@ -177,10 +179,24 @@ try {
     closedAtFirst &&
     JSON.stringify(folderRows) ===
       JSON.stringify(["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]);
-  // Three reads with a dan (complete, odd and no medal), then two without (dan-less, favourites).
+  // A label that does not read, here the 43-byte GIF Hiroba sends when it has nothing to draw,
+  // costs the dan alone: a neutral line and a code, the rest of the page as it was, still no URL.
+  await fetch(`${HIROBA}/__variant?dan=14&label=gif`);
+  requestsPerRead.push(await readShowing("#dan-unreadable"));
+  const afterGif = await page.evaluate<string>("document.documentElement.outerHTML");
+  results.unreadableDanShownWithTheRest =
+    (await textOf("#dan-unreadable")) === "Dan: couldn't read" &&
+    (await textOf("#dan-code")) ===
+      "Code for a report: dan=notPng status=200 type=image/gif bytes=43" &&
+    (await textOf("#dan")) === null &&
+    (await textOf("#crowns-silver")) === "11" &&
+    !afterGif.includes("000000000000") &&
+    !afterGif.includes("imgsrc");
+  // Three reads with a dan (complete, odd and no medal), two without (dan-less, favourites), and
+  // one with a label that did not read.
   results.twoRequestsWithDanOneWithout =
-    JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 1]);
-  await fetch(`${HIROBA}/__variant?dan=14&title=set&region=set&favorites=unset`);
+    JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 1, 2]);
+  await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set&favorites=unset`);
 
   await fetch(`${HIROBA}/__expire`);
   await click("#read-again");

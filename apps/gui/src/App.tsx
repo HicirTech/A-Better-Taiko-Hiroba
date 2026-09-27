@@ -205,8 +205,13 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
   );
 }
 
+/**
+ * The identity card. The dan is the name read off my page's label, as Hiroba prints it. A label
+ * that did not read is a neutral chip with its code under the row, and the rest of the card stands.
+ */
 function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator }) {
   const { t } = i18n;
+  const { dan } = profile;
   return (
     <Card id="profile" variant="outlined">
       <CardContent>
@@ -223,7 +228,7 @@ function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator
               {t("profile.title", { title: profile.title })}
             </Typography>
           )}
-          {(profile.region !== null || profile.dan !== null) && (
+          {(profile.region !== null || dan !== null) && (
             <Stack
               direction="row"
               spacing={1}
@@ -235,15 +240,34 @@ function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator
                   {t("profile.region", { region: profile.region })}
                 </Typography>
               )}
-              {profile.dan !== null && (
+              {dan !== null && "name" in dan && (
                 <Chip
-                  id="dan-shown"
-                  label={t("profile.danShown")}
+                  id="dan"
+                  label={t("profile.dan", { dan: dan.name })}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                />
+              )}
+              {dan !== null && "unreadable" in dan && (
+                <Chip
+                  id="dan-unreadable"
+                  label={t("profile.danUnreadable")}
                   size="small"
                   variant="outlined"
                 />
               )}
             </Stack>
+          )}
+          {dan !== null && "unreadable" in dan && (
+            <Typography
+              id="dan-code"
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
+            >
+              {t("profile.danCode", { code: dan.code })}
+            </Typography>
           )}
         </Stack>
       </CardContent>

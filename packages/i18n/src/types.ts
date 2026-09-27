@@ -36,8 +36,6 @@ export interface Messages {
   "profile.noTitle": string;
   /** Param: {region}, as the page writes it. */
   "profile.region": string;
-  /** A chip: my page shows a dan label. Which dan is not read yet; it exists only as an image. */
-  "profile.danShown": string;
   /** Param: {dan}, the dan's name as Hiroba prints it, 五級 to 十段, read off my page's label. */
   "profile.dan": string;
   /** My page shows a dan label that did not read. Neutral: the rest of the page still read. */

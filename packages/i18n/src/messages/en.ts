@@ -21,7 +21,6 @@ export const en: Messages = {
   "profile.fetchedAt": "Read at {time}. Hiroba itself can be up to a day behind.",
   "profile.noTitle": "No title",
   "profile.region": "Region: {region}",
-  "profile.danShown": "Dan shown",
   "profile.dan": "Dan: {dan}",
   "profile.danUnreadable": "Dan: couldn't read",
   "profile.danCode": "Code for a report: {code}",
