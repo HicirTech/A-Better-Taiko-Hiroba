@@ -3,15 +3,19 @@ import { err } from "@abth/core";
 import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
 
 import {
+  changeCostume,
+  enabledWrites,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
+  openCostumeEditor,
   readProfile,
 } from "../src/hiroba-session";
 import {
   BRIDGE_CHANNELS,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
+  type ReadFailure,
   type SignInOutcome,
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
@@ -51,6 +55,18 @@ if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
   app.setPath("userData", process.env.ABTH_DEV_USER_DATA);
 }
 
+// Which writes this run may send: the verified ones, and every other only in an unpackaged run
+// started with ABTH_UNVERIFIED_WRITES=1. A packaged build ignores that variable.
+const writeGate = { isPackaged: app.isPackaged, env: process.env };
+// The clock a write checks Hiroba's daily break against. Development only: ABTH_DEV_NOW (an ISO
+// time) fixes it, so a test runs at any hour and can try the break itself.
+const writeClock = developmentClock();
+
+function developmentClock(): () => Date {
+  const fixed = app.isPackaged ? Number.NaN : Date.parse(process.env.ABTH_DEV_NOW ?? "");
+  return Number.isNaN(fixed) ? () => new Date() : () => new Date(fixed);
+}
+
 app.enableSandbox();
 registerAppScheme();
 
@@ -79,6 +95,25 @@ const readTransport =
   process.env.ABTH_DEBUG_SAVE_READS === "1"
     ? saveReads(transport, join(app.getPath("userData"), "debug"))
     : transport;
+
+/**
+ * Every verb that asks Hiroba something runs one at a time: a read never lands between a write's
+ * posts and its read-back, and two writes never interleave.
+ */
+let hirobaQueue: Promise<unknown> = Promise.resolve();
+function oneAtATime<A extends unknown[], R>(
+  run: (...args: A) => Promise<R>,
+): (...args: A) => Promise<R> {
+  return (...args) => {
+    const turn = hirobaQueue.then(() => run(...args));
+    hirobaQueue = turn.catch(() => undefined);
+    return turn;
+  };
+}
+
+/** A read that found the login page, or a card still to choose: the session is over. */
+const sessionEnded = (failure: ReadFailure) =>
+  failure.kind === "loggedOut" || failure.kind === "cardSelectUnfinished";
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -131,22 +166,53 @@ app.whenReady().then(async () => {
     async cancelSignIn() {
       signInAttempt?.cancel();
     },
-    async readProfile() {
+    readProfile: oneAtATime(async () => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
       const read = await readProfile(readTransport, endpoints);
-      if (
-        !read.ok &&
-        (read.error.kind === "loggedOut" || read.error.kind === "cardSelectUnfinished")
-      ) {
+      if (!read.ok && sessionEnded(read.error)) {
         setSession(null);
       }
       return read;
-    },
+    }),
     async signOut() {
       setSession(null);
     },
+    async enabledWrites() {
+      return enabledWrites(writeGate);
+    },
+    openCostumeEditor: oneAtATime(async () => {
+      if (sessionCookie === null) {
+        return err({ kind: "notSignedIn" });
+      }
+      const read = await openCostumeEditor(readTransport, endpoints);
+      if (!read.ok && sessionEnded(read.error)) {
+        setSession(null);
+      }
+      return read;
+    }),
+    changeCostume: oneAtATime(async (change) => {
+      // The gate is checked here, where the write is sent, and not only by what the window shows.
+      const enabled = enabledWrites(writeGate).find((write) => write.kind === "costume");
+      if (enabled === undefined) {
+        return { kind: "notEnabled" };
+      }
+      if (sessionCookie === null) {
+        return { kind: "notSignedIn" };
+      }
+      const outcome = await changeCostume(readTransport, endpoints, change, {
+        now: writeClock,
+        crossCheck: !enabled.verified,
+        // The undo record comes with its own store; until then, nothing is kept.
+        beginUndo: async () => {},
+      });
+      // Hiroba ended the session: dropped here as a read that finds it gone drops it.
+      if (outcome.kind === "sessionGone") {
+        setSession(null);
+      }
+      return outcome;
+    }),
   };
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

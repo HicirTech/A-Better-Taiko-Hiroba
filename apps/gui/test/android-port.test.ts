@@ -143,3 +143,35 @@ describe("createAndroidPort", () => {
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
 });
+
+describe("createAndroidPort's writes", () => {
+  beforeEach(() => native.reset());
+
+  test("enables no write, and a costume change sends nothing", async () => {
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    expect(await port.enabledWrites()).toEqual([]);
+    const set = {
+      colorBody: 1,
+      colorLimb: 1,
+      colorFace: 1,
+      costume1: 0,
+      costume2: 0,
+      costume3: 0,
+      costume4: 0,
+      costume5: 0,
+    };
+    expect(await port.changeCostume({ expected: set, target: { ...set, colorFace: 2 } })).toEqual({
+      kind: "notEnabled",
+    });
+    expect(native.httpRequests).toEqual([]);
+  });
+
+  test("reads no costume editor while signed out", async () => {
+    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+    expect(native.httpRequests).toEqual([]);
+  });
+});

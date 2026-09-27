@@ -5,4 +5,7 @@ export const BRIDGE_CHANNELS = {
   cancelSignIn: "abth:cancel-sign-in",
   readProfile: "abth:read-profile",
   signOut: "abth:sign-out",
+  enabledWrites: "abth:enabled-writes",
+  openCostumeEditor: "abth:open-costume-editor",
+  changeCostume: "abth:change-costume",
 } as const;

@@ -6,6 +6,9 @@
 export { type ArgumentCheck, PORT_ARGUMENTS } from "./arguments";
 export { BRIDGE_CHANNELS } from "./bridge-channels";
 export type {
+  CostumeChange,
+  CostumeEditorView,
+  CostumeSet,
   DanView,
   EnabledWrite,
   HirobaSessionPort,
@@ -14,4 +17,5 @@ export type {
   ReadFailureKind,
   SignInOutcome,
   WriteKind,
+  WriteOutcomeView,
 } from "./types";

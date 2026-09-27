@@ -9,6 +9,9 @@ const port: HirobaSessionPort = {
   cancelSignIn: () => ipcRenderer.invoke(BRIDGE_CHANNELS.cancelSignIn),
   readProfile: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readProfile),
   signOut: () => ipcRenderer.invoke(BRIDGE_CHANNELS.signOut),
+  enabledWrites: () => ipcRenderer.invoke(BRIDGE_CHANNELS.enabledWrites),
+  openCostumeEditor: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openCostumeEditor),
+  changeCostume: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeCostume, change),
 };
 
 contextBridge.exposeInMainWorld("abth", port);

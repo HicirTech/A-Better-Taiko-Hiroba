@@ -1,4 +1,14 @@
-import type { MedalProgress, Result, ScoreRank } from "@abth/core";
+import type {
+  CostumeEditorView,
+  CostumeSet,
+  MedalProgress,
+  Result,
+  ScoreRank,
+  WriteOutcome,
+} from "@abth/core";
+
+/** The core's own shapes for the costume, which cross the port unchanged. */
+export type { CostumeEditorView, CostumeSet };
 
 export type SignInOutcome =
   | { readonly kind: "signedIn" }
@@ -92,9 +102,25 @@ export interface EnabledWrite {
   readonly verified: boolean;
 }
 
+/** A costume write as the interface asks for it: the set it was made against, and the set wanted. */
+export interface CostumeChange {
+  readonly expected: CostumeSet;
+  readonly target: CostumeSet;
+}
+
+/**
+ * How a write ended, as the core's `runWrite` judged it, or refused by the platform before it
+ * began: `notEnabled` when this run may not send that kind, `notSignedIn` with no session.
+ */
+export type WriteOutcomeView =
+  | WriteOutcome<CostumeSet>
+  | { readonly kind: "notEnabled" }
+  | { readonly kind: "notSignedIn" };
+
 /**
  * Everything the interface can ask of the platform, and everything that crosses from the platform
- * layer into the interface. No cookie, no URL and no page text is part of it.
+ * layer into the interface. No cookie, no URL, no form token and no page text is part of it, but
+ * for the message Hiroba answers a write with, which the interface shows as plain text.
  */
 export interface HirobaSessionPort {
   /** Whether this device holds a session from an earlier sign-in. Asks Hiroba nothing. */
@@ -109,4 +135,14 @@ export interface HirobaSessionPort {
   readProfile(): Promise<Result<ProfileView, ReadFailure>>;
   /** Forgets the session on this device. Hiroba is not told. */
   signOut(): Promise<void>;
+  /** The kinds of write this run may send. Asks Hiroba nothing. */
+  enabledWrites(): Promise<readonly EnabledWrite[]>;
+  /** The costume editor: one GET. Its form token stays with the platform. */
+  openCostumeEditor(): Promise<Result<CostumeEditorView, ReadFailure>>;
+  /**
+   * One costume write, the way every write goes: the editor, the pre-check, one save and the
+   * read-back, four requests; six while costume writes are not verified, with my page read before
+   * and after. Never retried. `notEnabled`, sending nothing, when this run may not write costumes.
+   */
+  changeCostume(change: CostumeChange): Promise<WriteOutcomeView>;
 }
