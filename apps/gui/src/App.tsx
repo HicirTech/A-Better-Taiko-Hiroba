@@ -4,6 +4,7 @@ import {
   Button,
   Card,
   CardContent,
+  Chip,
   CircularProgress,
   Container,
   Stack,
@@ -12,6 +13,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CrownsCard } from "./my-page/crowns-card";
+import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
 import { RanksCard } from "./my-page/ranks-card";
 import type {
@@ -158,6 +160,11 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
             <CrownsCard crowns={screen.profile.crowns} i18n={i18n} />
             <RanksCard panel={screen.profile.panel} i18n={i18n} />
             <MedalCard medal={screen.profile.medal} i18n={i18n} />
+            <FavoritesCard
+              favoriteSong={screen.profile.favoriteSong}
+              folder={screen.profile.favoriteFolder}
+              i18n={i18n}
+            />
             <Typography variant="body2" color="text.secondary">
               {t("profile.fetchedAt", {
                 time: new Date(screen.profile.fetchedAt).toLocaleString(i18n.locale),
@@ -217,6 +224,28 @@ function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator
             <Typography color="text.secondary">
               {t("profile.title", { title: profile.title })}
             </Typography>
+          )}
+          {(profile.region !== null || profile.hasDan) && (
+            <Stack
+              direction="row"
+              spacing={1}
+              useFlexGap
+              sx={{ alignItems: "center", flexWrap: "wrap" }}
+            >
+              {profile.region !== null && (
+                <Typography id="region" variant="body2">
+                  {t("profile.region", { region: profile.region })}
+                </Typography>
+              )}
+              {profile.hasDan && (
+                <Chip
+                  id="dan-shown"
+                  label={t("profile.danShown")}
+                  size="small"
+                  variant="outlined"
+                />
+              )}
+            </Stack>
           )}
         </Stack>
       </CardContent>
