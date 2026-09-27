@@ -155,6 +155,9 @@ export function createCostumeEditor() {
   const issued: string[] = [];
   const posts: PostRecord[] = [];
   let precheckAnswer: PrecheckAnswer = "false";
+  /** Set while /__hold-precheck?on=1 holds every pre-check's answer back; lets them all go. */
+  let releasePrechecks: (() => void) | null = null;
+  let prechecksHeld: Promise<void> = Promise.resolve();
   let nextResult: number | null = null;
   let noopNext = false;
   let expireNext = false;
@@ -269,6 +272,11 @@ ${slotTabs}
       });
     },
 
+    /** Settles once pre-checks may be answered: at once, unless /__hold-precheck holds them. */
+    precheckLetThrough(): Promise<void> {
+      return prechecksHeld;
+    },
+
     /** ajax/check_ip_kisekae.php: the boolean false, unless a test asked for another answer. */
     precheck(): Response {
       switch (precheckAnswer) {
@@ -340,8 +348,10 @@ ${slotTabs}
      * The costume's test hooks, or null for a path that is not one:
      * /__state (the saved costume; with field=value pairs, set those, as a change made elsewhere;
      * with reset=1, back to the start), /__precheck?answer=false|true|1|string1|0|null|html (what
-     * every pre-check answers from now on), /__next-result?code=N (the next valid save answers N and
-     * saves nothing), /__noop-save (the next valid save answers 0 and saves nothing),
+     * every pre-check answers from now on), /__hold-precheck?on=1 or 0 (pre-checks are held
+     * unanswered, so a test can ask for more while a write waits in its middle; 0 lets every held
+     * one go), /__next-result?code=N (the next valid save answers N and saves nothing),
+     * /__noop-save (the next valid save answers 0 and saves nothing),
      * /__expire-on-save (the next valid save saves, then every session ends), /__tickets (every
      * token the editor handed out), /__posts (every ajax post as it arrived; ?reset=1 clears),
      * /__previews (the query of every preview asked for, in order; ?reset=1 clears) and
@@ -367,6 +377,19 @@ ${slotTabs}
             precheckAnswer = answer as PrecheckAnswer;
           }
           return new Response(precheckAnswer);
+        }
+        case "/__hold-precheck": {
+          const on = params.get("on");
+          if (on === "1" && releasePrechecks === null) {
+            prechecksHeld = new Promise((resolve) => {
+              releasePrechecks = resolve;
+            });
+          } else if (on === "0") {
+            releasePrechecks?.();
+            releasePrechecks = null;
+            prechecksHeld = Promise.resolve();
+          }
+          return new Response(releasePrechecks === null ? "flowing" : "holding");
         }
         case "/__next-result": {
           const code = params.get("code") ?? "";

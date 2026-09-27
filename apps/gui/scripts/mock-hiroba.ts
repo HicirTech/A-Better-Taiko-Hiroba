@@ -255,9 +255,11 @@ Bun.serve({
         if (postToLogin || !session?.cardChosen) {
           return redirect("/login.php");
         }
-        return pathname === "/ajax/check_ip_kisekae.php"
-          ? costume.precheck()
-          : costume.save(session, form, () => sessions.clear());
+        if (pathname === "/ajax/check_ip_kisekae.php") {
+          await costume.precheckLetThrough();
+          return costume.precheck();
+        }
+        return costume.save(session, form, () => sessions.clear());
       }
       case "/imgsrc_mydon.php":
         return costume.preview(new URL(request.url).search, session?.cardChosen === true);

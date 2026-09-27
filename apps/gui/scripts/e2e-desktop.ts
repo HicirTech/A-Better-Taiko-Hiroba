@@ -2,8 +2,8 @@
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, the editor's picture of the set (on opening, after a pick, one request
- * for a burst of picks, one that does not come, none once shut), costume writes (a colour and a
- * きぐるみ, each undone, the #22 trap, a
+ * for a burst of picks, one that does not come, none once shut, none inside a write), costume
+ * writes (a colour and a きぐるみ, each undone, the #22 trap, a
  * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
  * change made elsewhere, and a session that ends before and after a save), a lost session, cancel,
  * a sign-in sent off both sites, a reopen that keeps the session and the undo, Hiroba's daily
@@ -79,12 +79,23 @@ const SESSION_FILE = join(USER_DATA, "session.json");
 const savedCostume = async () =>
   asAppSet((await (await fetch(`${HIROBA}/__state`)).json()) as CostumeState);
 const PREVIEW = "GET /imgsrc_mydon.php";
+/** Every request the mock saw since the last reset, as "METHOD /path", in the order they came. */
+const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
 /**
- * Every request the mock saw since the last reset, as "METHOD /path", but the editor's pictures of
- * the set: those go as the picks pause, not in step with a write, and are counted on their own.
+ * Whether `log` is the requests `before`, then a write's `run` with nothing inside it, and the
+ * editor's pictures of the set anywhere else. The pictures go as the picks pause, not in step with
+ * a write, but main queues them with the writes: one goes before a write or after it, never between
+ * its requests.
  */
-const requestLog = async () =>
-  ((await (await fetch(`${HIROBA}/__log`)).json()) as string[]).filter((line) => line !== PREVIEW);
+const sentAsPlanned = (log: string[], before: string[], run: string[]) => {
+  const planned = log.flatMap((line, index) => (line === PREVIEW ? [] : [index]));
+  return (
+    same(
+      planned.map((index) => log[index]),
+      [...before, ...run],
+    ) && (planned[planned.length - 1] ?? 0) - (planned[before.length] ?? 0) === run.length - 1
+  );
+};
 /** The query of every picture of the set the app asked for since the last reset, in order. */
 const previewQueries = async () => (await (await fetch(`${HIROBA}/__previews`)).json()) as string[];
 /** A set as the preview's query names it: the site's names, in the site's order. */
@@ -384,14 +395,16 @@ try {
   results.previewNoneOnceShut = same(await previewQueries(), []);
 
   // A colour alone: exactly the planned requests, the ajax headers on both posts, one field moved.
+  // The pick's picture goes about when Review and Save are pressed: before the write or after it.
   await resetLog();
   await fetch(`${HIROBA}/__posts?reset=1`);
   const colourOutcome = await changeInTheWindow(() => click("#swatch-colorFace-3"));
   results.colourApplied = colourOutcome === "applied";
-  results.colourSentOnlyThePlannedRequests = same(await requestLog(), [
-    "GET /mypage_kisekae.php",
-    ...WRITE_REQUESTS,
-  ]);
+  results.colourSentOnlyThePlannedRequests = sentAsPlanned(
+    await requestLog(),
+    ["GET /mypage_kisekae.php"],
+    WRITE_REQUESTS,
+  );
   results.colourMovedOneField = same(await savedCostume(), { ...START, colorFace: 3 });
   const posts = (await (await fetch(`${HIROBA}/__posts`)).json()) as {
     path: string;
@@ -472,6 +485,26 @@ try {
   results.trapRefusedUnsent =
     same(trap, { kind: "invalidTarget", field: "costume1" }) &&
     same(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
+
+  // A picture asked for while a write waits on its pre-check waits for the whole write, read-back
+  // and all: held there, it would otherwise go between the pre-check and the save.
+  await resetLog();
+  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  const prechecksBeforeHeld = await hitsOn("/ajax/check_ip_kisekae.php");
+  const heldWrite = bridgeChange({ ...START, colorLimb: 20 });
+  await waitFor(
+    async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeHeld || undefined,
+  );
+  const previewDuringWrite = page.evaluate<boolean>(
+    `window.abth.previewCostume(${JSON.stringify(START)}).then((result) => result.ok)`,
+  );
+  await Bun.sleep(300);
+  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  results.previewWaitsOutAWrite =
+    (await heldWrite).kind === "applied" &&
+    (await previewDuringWrite) &&
+    same(await requestLog(), [...WRITE_REQUESTS, PREVIEW]);
+  await fetch(`${HIROBA}/__state?reset=1`);
 
   // A save that answers 0 and moves nothing reads as not applied, whatever it said.
   await fetch(`${HIROBA}/__noop-save`);
