@@ -9,6 +9,14 @@
  * once, read the whole set back, and judge by the state rather than by the site's answer.
  */
 export { postAjax, readPrecheck, readSaveCode, readSaveMessage } from "./ajax";
+export {
+  COSTUME_SLOT_KEYS,
+  type CostumeSlot,
+  checkCostumeTarget,
+  costumeAfter,
+  draftCostumeChange,
+  sameCostume,
+} from "./costume-rule";
 export { inMaintenance } from "./maintenance";
 export { readHirobaPage, sessionEnded } from "./read-page";
 export { runWrite } from "./run-write";
