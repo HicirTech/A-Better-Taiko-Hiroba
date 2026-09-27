@@ -10,16 +10,20 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
+import { CostumeDialog } from "./my-page/costume-dialog";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
 import { PanelCard } from "./my-page/panel-card";
+import { FAILURE_MESSAGE } from "./read-failure-message";
 import type {
+  EnabledWrite,
   HirobaSessionPort,
   ProfileView,
   ReadFailureKind,
   SignInOutcome,
+  WriteOutcomeView,
 } from "./session-port";
 
 type Screen =
@@ -33,17 +37,6 @@ type Screen =
   | { readonly name: "reading" }
   | { readonly name: "profile"; readonly profile: ProfileView }
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
-
-const FAILURE_MESSAGE = {
-  notSignedIn: "failure.notSignedIn",
-  loggedOut: "failure.loggedOut",
-  cardSelectUnfinished: "failure.cardSelectUnfinished",
-  unreachable: "failure.unreachable",
-  timedOut: "failure.timedOut",
-  cancelled: "failure.cancelled",
-  siteError: "failure.siteError",
-  unexpectedPage: "failure.unexpectedPage",
-} as const satisfies Record<ReadFailureKind, MessageKey>;
 
 /** What each way a sign-in can end without a session says on the start screen. */
 const SIGN_IN_NOTICE = {
@@ -63,11 +56,16 @@ const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
 export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator }) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
+  /** The kinds of write this run may send, asked once a profile has been read. */
+  const [writes, setWrites] = useState<readonly EnabledWrite[]>([]);
+  const [costumeOpen, setCostumeOpen] = useState(false);
+  const costumeWrite = writes.find((write) => write.kind === "costume");
 
   const read = useCallback(async () => {
     setScreen({ name: "reading" });
     const result = await port.readProfile();
     if (result.ok) {
+      setWrites(await port.enabledWrites());
       setScreen({ name: "profile", profile: result.value });
     } else if (SESSION_GONE.has(result.error.kind)) {
       setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
@@ -93,6 +91,22 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
   const signOut = async () => {
     await port.signOut();
     setScreen({ name: "signedOut", notice: null });
+  };
+
+  /** A write ended. One that found the session gone goes back to signing in, as a read does. */
+  const writeEnded = (outcome: WriteOutcomeView) => {
+    if (outcome.kind === "sessionGone" || outcome.kind === "notSignedIn") {
+      setCostumeOpen(false);
+      setScreen({
+        name: "signedOut",
+        notice:
+          outcome.kind === "notSignedIn"
+            ? "failure.notSignedIn"
+            : outcome.writeMayHaveHappened
+              ? "write.sessionGoneAfterSave"
+              : "write.sessionGone",
+      });
+    }
   };
 
   // A session kept from an earlier launch is read once on opening: that is what opening the app
@@ -155,7 +169,15 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
 
         {screen.name === "profile" && (
           <Stack spacing={2}>
-            <ProfileCard profile={screen.profile} i18n={i18n} />
+            <ProfileCard profile={screen.profile} i18n={i18n}>
+              {costumeWrite !== undefined && (
+                <Stack direction="row" spacing={1}>
+                  <Button id="costume-open" variant="outlined" onClick={() => setCostumeOpen(true)}>
+                    {t("costume.open")}
+                  </Button>
+                </Stack>
+              )}
+            </ProfileCard>
             <PanelCard crowns={screen.profile.crowns} panel={screen.profile.panel} i18n={i18n} />
             <MedalCard medal={screen.profile.medal} i18n={i18n} />
             <FavoritesCard
@@ -201,6 +223,15 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
           {t("signOut.note")}
         </Typography>
       </Stack>
+      {costumeOpen && screen.name === "profile" && costumeWrite !== undefined && (
+        <CostumeDialog
+          port={port}
+          i18n={i18n}
+          verified={costumeWrite.verified}
+          onClose={() => setCostumeOpen(false)}
+          onOutcome={writeEnded}
+        />
+      )}
     </Container>
   );
 }
@@ -208,8 +239,17 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
 /**
  * The identity card. The dan is the name read off my page's label, as Hiroba prints it. A label
  * that did not read is a neutral chip with its code under the row, and the rest of the card stands.
+ * `children` are the card's actions, the writes this run may send.
  */
-function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator }) {
+function ProfileCard({
+  profile,
+  i18n,
+  children,
+}: {
+  profile: ProfileView;
+  i18n: Translator;
+  children?: ReactNode;
+}) {
   const { t } = i18n;
   const { dan } = profile;
   return (
@@ -269,6 +309,7 @@ function ProfileCard({ profile, i18n }: { profile: ProfileView; i18n: Translator
               {t("profile.danCode", { code: dan.code })}
             </Typography>
           )}
+          {children}
         </Stack>
       </CardContent>
     </Card>
