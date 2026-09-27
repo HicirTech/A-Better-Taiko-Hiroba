@@ -12,8 +12,9 @@
  *
  * Test hooks: /__last-token (the token issued last), /__expire (every session ends), /__rotate
  * (the next my-page read hands out a new token and ends the old one), /__hits?path=/mypage_top.php
- * (requests so far to that path), /__hits-reset, and /__hold?on=1 or 0 (the ID form waits for a
- * tap instead of submitting itself, so a cancel or the back key can be tried there).
+ * (requests so far to that path), /__hits-reset, /__hold?on=1 or 0 (the ID form waits for a
+ * tap instead of submitting itself, so a cancel or the back key can be tried there), and
+ * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site).
  *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
@@ -39,6 +40,7 @@ const sessions = new Map<string, { cardChosen: boolean }>();
 let lastIssued = "";
 let rotateNext = false;
 let holdIdForm = false;
+let sendOffsite = false;
 const hits = new Map<string, number>();
 /** Also searched for by scripts/e2e-desktop.ts. */
 const IDP_MARKER = "abth-mock-idp-marker";
@@ -111,6 +113,9 @@ Bun.serve({
           `<form id="login_form" action="./login_process.php"><input type="hidden" name="mode" value="exec"></form>${submitSoon("login_form")}`,
         );
       case "/login_process.php":
+        if (sendOffsite) {
+          return redirect(`http://offsite.${IP}.sslip.io:${IDP_PORT}/login.html`);
+        }
         return redirect(
           `${IDP_AUTH}/v2/oauth2/auth?redirect_uri=${encodeURIComponent(`${HIROBA}/callback.php`)}`,
         );
@@ -168,6 +173,9 @@ Bun.serve({
       case "/__hold":
         holdIdForm = searchParams.get("on") === "1";
         return new Response(holdIdForm ? "holding" : "flowing");
+      case "/__offsite":
+        sendOffsite = searchParams.get("on") === "1";
+        return new Response(sendOffsite ? "offsite" : "onsite");
       case "/__cross-origin":
         return redirect(`${IDP}/__echo-cookie`);
       case "/__same-origin":

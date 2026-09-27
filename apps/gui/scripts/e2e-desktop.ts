@@ -1,6 +1,7 @@
 /**
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session, a
- * lost session, cancel and sign-out against scripts/mock-hiroba.ts, over the Chrome DevTools
+ * lost session, cancel, a sign-in sent off both sites, and sign-out against scripts/mock-hiroba.ts,
+ * over the Chrome DevTools
  * Protocol. It counts the reads the mock saw, then searches the app's user-data folder for every
  * token the mock issued and for what the mock ID host left behind. Run `bun run build` first.
  */
@@ -113,6 +114,13 @@ try {
   await clickButton("Cancel sign-in");
   await until("Sign-in was cancelled.");
   results.cancelHandled = true;
+
+  // Sent off both sites: the attempt ends and names the host, instead of sitting there silently.
+  await fetch(`${HIROBA}/__offsite?on=1`);
+  await click("#sign-in");
+  await until("offsite.127.0.0.1.sslip.io:8808, which this app does not open");
+  await fetch(`${HIROBA}/__offsite?on=0`);
+  results.refusalNamed = true;
 
   await click("#sign-in");
   await until("サンプルどん");
