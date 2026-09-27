@@ -120,8 +120,6 @@ export interface Messages {
   "costume.id": string;
   /** Empties a slot: the site's own button, はずす. */
   "costume.remove": string;
-  /** Beside the value the costume holds now. */
-  "costume.current": string;
   /** Shown while a きぐるみ is picked: the four pieces come off with it. */
   "costume.kigurumiWarning": string;
   "costume.changesHeading": string;

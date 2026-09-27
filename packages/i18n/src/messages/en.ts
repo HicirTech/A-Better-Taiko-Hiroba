@@ -76,7 +76,6 @@ export const en: Messages = {
   "costume.part.costume5": "ぷちキャラ",
   "costume.id": "#{id}",
   "costume.remove": "はずす",
-  "costume.current": "now",
   "costume.kigurumiWarning": "A きぐるみ takes off あたま, からだ, メイク and ぷちキャラ.",
   "costume.changesHeading": "Changes",
   "costume.change": "{part}: {from} → {to}",
