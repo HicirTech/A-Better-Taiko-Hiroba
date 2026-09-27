@@ -17,7 +17,7 @@ type Listener = (event: { url?: string }) => void;
 export const native = {
   httpRequests: [] as NativeHttpRequest[],
   httpAnswer: (async () => ({})) as () => Promise<unknown>,
-  /** Every cookie-store call, in order: "clearAllCookies" or "clearCookies <url>". */
+  /** Every cookie-store call, in order: "clearAllCookies", "clearCookies <url>" or "deleteCookie <key>". */
   cookieCalls: [] as string[],
   openedWith: [] as { url: string; options: Record<string, unknown> }[],
   closeCalls: 0,
@@ -54,6 +54,9 @@ mock.module("@capacitor/core", () => ({
   CapacitorCookies: {
     clearAllCookies: async () => {
       native.cookieCalls.push("clearAllCookies");
+    },
+    deleteCookie: async ({ key, url }: { key: string; url?: string }) => {
+      native.cookieCalls.push(`deleteCookie ${key}${url === undefined ? "" : ` ${url}`}`);
     },
     clearCookies: async ({ url }: { url: string }) => {
       native.cookieCalls.push(`clearCookies ${url}`);

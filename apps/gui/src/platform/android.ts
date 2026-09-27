@@ -145,6 +145,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       // Whether a session really exists is settled by the first read, not here: the cookie's value
       // is out of reach by design.
       await CapacitorCookies.clearCookies({ url: `${idpOrigin(endpoints)}/` });
+      await saveCookieStore();
       signedIn = true;
       flag.set(true);
       return { kind: "signedIn" } satisfies SignInOutcome;
@@ -164,10 +165,24 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         (read.error.kind === "loggedOut" || read.error.kind === "cardSelectUnfinished")
       ) {
         await forget();
+      } else {
+        // A read can carry a session Hiroba renewed on the way; keep that one, not the old.
+        await saveCookieStore();
       }
       return read;
     },
 
     signOut: forget,
   };
+}
+
+/**
+ * Writes the WebView's cookie store to disk now. Left alone it saves on its own schedule, so an app
+ * swiped away soon after a sign-in could come back without the session, and a user must never be
+ * asked to sign in again for that. Capacitor has no flush call, but every cookie write it makes ends
+ * in one: deleting a cookie that does not exist, on the app's own origin (no url given), is a write
+ * with no other effect.
+ */
+async function saveCookieStore(): Promise<void> {
+  await CapacitorCookies.deleteCookie({ key: "abth-save" });
 }

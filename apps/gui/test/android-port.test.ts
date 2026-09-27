@@ -56,7 +56,7 @@ describe("createAndroidPort", () => {
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
 
-  test("a landed sign-in whose browser stays open still counts when the user taps Done", async () => {
+  test("a landed sign-in whose browser stays open still counts when the user closes it", async () => {
     native.closeIgnored = true;
     const flag = memoryFlag();
     const { outcome } = await startSignIn(flag);
@@ -86,9 +86,11 @@ describe("createAndroidPort", () => {
     native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
     expect(await outcome).toEqual({ kind: "signedIn" });
     expect(native.closeCalls).toBe(1);
+    // The last call writes the store to disk, so the session outlives an app swiped away.
     expect(native.cookieCalls).toEqual([
       "clearAllCookies",
       "clearCookies https://account.bandainamcoid.com/",
+      "deleteCookie abth-save",
     ]);
   });
 
