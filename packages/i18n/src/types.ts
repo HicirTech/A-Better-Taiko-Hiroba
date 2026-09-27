@@ -66,8 +66,8 @@ export interface Messages {
   "panel.ranks": string;
   /** Param: {tier}, a tier's kanji as the rank icons show it: 粋, 雅 or 極. */
   "panel.tierTotal": string;
-  /** Ranks 5 to 8 added up. */
-  "panel.miyabiOrBetter": string;
+  /** Param: {tier}, the lowest tier the total counts (雅); its ranks and all above added up. */
+  "panel.tierOrBetter": string;
   "medal.heading": string;
   /** Param: {count}, the medals collected this season. */
   "medal.count": string;

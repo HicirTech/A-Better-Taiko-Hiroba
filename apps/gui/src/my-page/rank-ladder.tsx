@@ -19,8 +19,14 @@ const RANK_COLOUR: Readonly<Record<ScoreRank, string>> = {
   8: "linear-gradient(90deg, #ff5f6d, #ffc371, #47e891, #4facfe, #a86cf5)",
 };
 
-/** Ids for the tier totals, so a test can find them without a kanji in a selector. */
-const TIER_ID: Readonly<Record<string, string>> = { 粋: "iki", 雅: "miyabi", 極: "kiwami" };
+/**
+ * The tiers the "or better" total adds up: every tier above the lowest, 粋, so 雅 and 極. Taken
+ * from SCORE_RANK_TIERS, like the tier totals, so the ladder writes out no tier of its own.
+ */
+const OR_BETTER_TIERS = SCORE_RANK_TIERS.slice(1);
+
+/** A total's id names the ranks it adds up, so a test finds it without a kanji in a selector. */
+const totalId = (of: readonly ScoreRank[]) => `ranks-total-${of.join("-")}`;
 
 /**
  * The panel's seven score ranks as a ladder, best first, with a total per tier (粋, 雅, 極) and one
@@ -37,6 +43,8 @@ export function RankLadder({
   const { t, locale } = i18n;
   const largest = Math.max(...Object.values(ranks));
   const sum = (of: readonly ScoreRank[]) => of.reduce((total, rank) => total + ranks[rank], 0);
+  const orBetterFrom = OR_BETTER_TIERS[0];
+  const orBetterRanks = OR_BETTER_TIERS.flatMap((tier) => tier.ranks);
   return (
     <Box id="ranks" component="section">
       <Typography variant="subtitle2" component="h3">
@@ -97,7 +105,7 @@ export function RankLadder({
               {t("panel.tierTotal", { tier: tier.name })}
             </Typography>
             <Typography
-              id={`ranks-${TIER_ID[tier.name] ?? tier.name}`}
+              id={totalId(tier.ranks)}
               variant="body2"
               color="text.secondary"
               sx={{ textAlign: "right", fontVariantNumeric: "tabular-nums", mb: 0.5 }}
@@ -107,17 +115,23 @@ export function RankLadder({
           </Fragment>
         ))}
       </Box>
-      <Divider sx={{ my: 1.5 }} />
-      <Stack direction="row" sx={{ justifyContent: "space-between" }}>
-        <Typography variant="body2">{t("panel.miyabiOrBetter")}</Typography>
-        <Typography
-          id="ranks-miyabi-or-better"
-          variant="body2"
-          sx={{ fontWeight: 500, fontVariantNumeric: "tabular-nums" }}
-        >
-          {sum([5, 6, 7, 8]).toLocaleString(locale)}
-        </Typography>
-      </Stack>
+      {orBetterFrom !== undefined && (
+        <>
+          <Divider sx={{ my: 1.5 }} />
+          <Stack direction="row" sx={{ justifyContent: "space-between" }}>
+            <Typography variant="body2">
+              {t("panel.tierOrBetter", { tier: orBetterFrom.name })}
+            </Typography>
+            <Typography
+              id={totalId(orBetterRanks)}
+              variant="body2"
+              sx={{ fontWeight: 500, fontVariantNumeric: "tabular-nums" }}
+            >
+              {sum(orBetterRanks).toLocaleString(locale)}
+            </Typography>
+          </Stack>
+        </>
+      )}
     </Box>
   );
 }
