@@ -13,8 +13,12 @@
  * Test hooks: /__last-token (the token issued last), /__expire (every session ends), /__rotate
  * (the next my-page read hands out a new token and ends the old one), /__hits?path=/mypage_top.php
  * (requests so far to that path), /__hits-reset, /__hold?on=1 or 0 (the ID form waits for a
- * tap instead of submitting itself, so a cancel or the back key can be tried there), and
- * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site).
+ * tap instead of submitting itself, so a cancel or the back key can be tried there),
+ * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), and two that shape
+ * the next my page: /__medal?state=none|collecting|complete|odd (the どんメダル plate: absent, a
+ * count, COMPLETE, or a name alone, a shape no page has shown) and
+ * /__variant?dan=0|1&title=empty|set&region=unset|set&favorites=unset|set (each optional; dan=0
+ * writes the name row flat, as other players' dan-less profiles do).
  *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
@@ -75,23 +79,64 @@ const RECOMMENDED_BROWSERS = page("<p>Please use one of the recommended browsers
 const submitSoon = (id: string) =>
   `<script>setTimeout(() => document.getElementById("${id}").submit(), 500)</script>`;
 
-const MY_PAGE = `
+type MedalState = "none" | "collecting" | "complete" | "odd";
+/** What /__medal and /__variant set; every read of my page is rendered from them. */
+let medalState: MedalState = "collecting";
+const variant = { dan: true, title: true, region: true, favorites: false };
+
+/** The count in each score rank, 8 down to 2: every bucket non-zero, so each bar has a length. */
+const RANK_COUNTS: readonly [number, number][] = [
+  [8, 3],
+  [7, 12],
+  [6, 25],
+  [5, 31],
+  [4, 18],
+  [3, 9],
+  [2, 4],
+];
+
+/** The plate in each state; the names and the count are placeholders, not a real account's. */
+const MEDAL_PLATE: Readonly<Record<MedalState, string>> = {
+  none: "",
+  collecting: `<div><img src="imgsrc_tokenplate.php?id=placeholder"><div class="token_name token_info_display">どんメダル2026秋</div>
+    <div class="token_count token_info_display">12</div></div>`,
+  complete: `<div><img src="imgsrc_tokenplate.php?id=placeholder"><div class="token_name token_info_display">どんメダル2026秋</div>
+    <div class="token_complete token_info_display">\n\t\t\t\t\tCOMPLETE\n\t\t\t\t</div></div>`,
+  odd: `<div><img src="imgsrc_tokenplate.php?id=placeholder"><div class="token_name token_info_display">どんメダル2026秋</div></div>`,
+};
+
+/** My page as /__medal and /__variant last shaped it. */
+function myPage(): string {
+  const nameRow = variant.dan
+    ? `<div style="display:flex"><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>`
+    : `<div style="height:24px;">サンプルどん</div>`;
+  const song = variant.favorites
+    ? `<span class="songName songNameFontnamco">サンプル曲アルファ</span>`
+    : `<span class="songName songNameFont">未設定</span>`;
+  const folder = variant.favorites
+    ? ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲デルタ"]
+        .map((title) => `<li><span class="songName songNameFontnamco">${title}</span></li>`)
+        .join("")
+    : "";
+  return `
 <div id="mydon_area">
-  <div>サンプルの称号</div>
-  <div><div>サンプルどん</div><div></div></div>
-  <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div>
+  <div>${variant.title ? "サンプルの称号" : "\n\t\t"}</div>
+  ${nameRow}
+  <div><div class="detail"><p>国・地域 ：${variant.region ? "サンプル" : "未設定"}</p><p>太鼓番：000000000000</p></div>
     <div class="mydon_image"><img class="customd_mydon" src="data:,"></div></div>
   <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
-    ${[8, 7, 6, 5, 4, 3, 2].map((r) => `<div class="best_rank_score_${r} total_panel_display">0</div>`).join("")}
+    ${RANK_COUNTS.map(([rank, count]) => `<div class="best_rank_score_${rank} total_panel_display">${count}</div>`).join("")}
     <div class="silver_crown_count total_panel_crown_display">11</div>
     <div class="gold_crown_count total_panel_crown_display">2</div>
     <div class="donderful_crown_count total_panel_crown_display">1</div></div>
+  ${MEDAL_PLATE[medalState]}
 </div>
 <div class="favoriteSong"><h2 class="subtitleMypage">大好きな曲</h2><div class="mypageInfoArea">
-  <ul id="songList"><li><div class="name"><span class="songName songNameFont">未設定</span></div></li></ul>
-  <input type="hidden" name="song_no" id="song_no" value=""></div></div>
+  <ul id="songList"><li><div class="name">${song}</div></li></ul>
+  <input type="hidden" name="song_no" id="song_no" value="${variant.favorites ? "1346" : ""}"></div></div>
 <div class="favoriteSong"><h2 class="subtitleMypage">お気に入りの曲</h2><div class="mypageInfoArea">
-  <ul id="songList"></ul></div></div>`;
+  <ul id="songList">${folder}</ul></div></div>`;
+}
 
 Bun.serve({
   hostname: IP,
@@ -154,7 +199,7 @@ Bun.serve({
             "set-cookie": `_token_v2=${lastIssued}; Domain=.${HIROBA_HOST}; Path=/; Max-Age=2592000`,
           });
         }
-        return page(MY_PAGE);
+        return page(myPage());
       }
       // Test hooks, loopback only.
       case "/__last-token":
@@ -176,6 +221,22 @@ Bun.serve({
       case "/__offsite":
         sendOffsite = searchParams.get("on") === "1";
         return new Response(sendOffsite ? "offsite" : "onsite");
+      case "/__medal": {
+        const state = searchParams.get("state");
+        if (state === "none" || state === "collecting" || state === "complete" || state === "odd") {
+          medalState = state;
+        }
+        return new Response(medalState);
+      }
+      case "/__variant": {
+        const flag = (name: string, on: string) =>
+          searchParams.has(name) ? searchParams.get(name) === on : undefined;
+        variant.dan = flag("dan", "1") ?? variant.dan;
+        variant.title = flag("title", "set") ?? variant.title;
+        variant.region = flag("region", "set") ?? variant.region;
+        variant.favorites = flag("favorites", "set") ?? variant.favorites;
+        return Response.json(variant);
+      }
       case "/__cross-origin":
         return redirect(`${IDP}/__echo-cookie`);
       case "/__same-origin":
