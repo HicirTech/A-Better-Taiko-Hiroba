@@ -355,6 +355,8 @@ try {
     await click("#item-costume1-36");
     await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
   });
+  // The card no longer says the costume is as it was before the colour: that undo is behind it.
+  results.undoneNoteClearedByNextChange = (await cardOutcome()) === null;
   results.kigurumiEmptiesThePieces =
     kigurumiOutcome === "applied" &&
     same(await savedCostume(), {

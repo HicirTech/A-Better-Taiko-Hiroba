@@ -68,7 +68,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
   /** A costume write just read back as planned: the Snackbar offering to undo it. */
   const [justSaved, setJustSaved] = useState(false);
   const [undoing, setUndoing] = useState(false);
-  /** How the last undo ended, shown on the card until the next one or the next read. */
+  /** How the last undo ended, shown on the card until the next write or the next read. */
   const [undoOutcome, setUndoOutcome] = useState<WriteOutcomeView | null>(null);
 
   const refreshUndo = useCallback(async () => {
@@ -112,11 +112,15 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
 
   /**
    * A write ended: the undo on offer is asked for again, and a change that read back as planned
-   * offers its undo at once. One that found the session gone goes back to signing in, as a read
-   * does.
+   * offers its undo at once. A change also clears what the card said of the last undo, which no
+   * longer describes the costume. One that found the session gone goes back to signing in, as a
+   * read does.
    */
   const writeEnded = (outcome: WriteOutcomeView, asUndo = false) => {
     setJustSaved(!asUndo && outcome.kind === "applied");
+    if (!asUndo) {
+      setUndoOutcome(null);
+    }
     void refreshUndo();
     if (outcome.kind === "sessionGone" || outcome.kind === "notSignedIn") {
       setJustSaved(false);
