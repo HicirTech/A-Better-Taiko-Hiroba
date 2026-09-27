@@ -133,6 +133,8 @@ export const en: Messages = {
   "write.stoppedBeforeWrite": "Hiroba didn't accept the app's request. Nothing was changed.",
   "write.notEnabled": "This build does not send this kind of change.",
   "write.nothingToUndo": "There is no change to undo.",
+  "write.interrupted":
+    "The app stopped before it knew how this ended, so it may or may not have been saved. Open the editor again and look before trying again.",
   "write.code": "Code for a report: {code}",
   "write.before": "Before",
   "write.planned": "Planned",

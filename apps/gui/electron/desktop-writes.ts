@@ -9,6 +9,7 @@ import {
   type Transport,
   type UndoSlot,
   undoInput,
+  type WriteOutcome,
 } from "@abth/core";
 
 import {
@@ -83,24 +84,31 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
     // Whose set this is, for the whole write: the read that settles it is this player's too.
     const taikoNo = options.owner();
     let began = false;
-    const outcome = await changeCostume(options.transport, options.endpoints, input, {
-      now: options.now,
-      crossCheck: !gate.verified,
-      beginUndo: async (before, expectedAfter) => {
-        if (taikoNo === null) {
-          throw new Error("Whose set this is is not known before my page is read");
-        }
-        const slot = reconcile(undoStore.load(KIND, taikoNo), before, sameCostume);
-        const at = options.now().toISOString();
-        // Throws when it cannot be written, and the write then stops with nothing sent.
-        undoStore.save(
-          KIND,
-          taikoNo,
-          beginPending(slot, { taikoNo, before, expectedAfter, at, purpose }),
-        );
-        began = true;
-      },
-    });
+    let outcome: WriteOutcome<CostumeSet>;
+    try {
+      outcome = await changeCostume(options.transport, options.endpoints, input, {
+        now: options.now,
+        crossCheck: !gate.verified,
+        beginUndo: async (before, expectedAfter) => {
+          if (taikoNo === null) {
+            throw new Error("Whose set this is is not known before my page is read");
+          }
+          const slot = reconcile(undoStore.load(KIND, taikoNo), before, sameCostume);
+          const at = options.now().toISOString();
+          // Throws when it cannot be written, and the write then stops with nothing sent.
+          undoStore.save(
+            KIND,
+            taikoNo,
+            beginPending(slot, { taikoNo, before, expectedAfter, at, purpose }),
+          );
+          began = true;
+        },
+      });
+    } catch {
+      // A fault in this app, not an answer from Hiroba, and it may have come after the save. The
+      // pending write stays as it is on disk, for the next editor read to settle.
+      return { kind: "interrupted" };
+    }
     if (taikoNo !== null && began) {
       keep(taikoNo, settle(undoStore.load(KIND, taikoNo), outcome, sameCostume));
     } else if (taikoNo !== null && outcome.kind === "changedSincePreview") {

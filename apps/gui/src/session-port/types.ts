@@ -112,12 +112,17 @@ export interface CostumeChange {
  * How a write ended, as the core's `runWrite` judged it, or refused by the platform before it
  * began: `notEnabled` when this run may not send that kind, `notSignedIn` with no session, and
  * `nothingToUndo` when an undo was asked for and this device holds none it can offer.
+ *
+ * `interrupted` is a write this app stopped with no judgement: a fault in the app, not an answer
+ * from Hiroba. A post may have gone out, so whether anything was saved is not known; the pending
+ * undo stays, and the next editor read settles it.
  */
 export type WriteOutcomeView =
   | WriteOutcome<CostumeSet>
   | { readonly kind: "notEnabled" }
   | { readonly kind: "notSignedIn" }
-  | { readonly kind: "nothingToUndo" };
+  | { readonly kind: "nothingToUndo" }
+  | { readonly kind: "interrupted" };
 
 /**
  * The last write of one kind, as an undo can be offered for it: the set before it, which the undo

@@ -35,6 +35,7 @@ const OUTCOME_MESSAGE = {
   notEnabled: "write.notEnabled",
   notSignedIn: "failure.notSignedIn",
   nothingToUndo: "write.nothingToUndo",
+  interrupted: "write.interrupted",
 } as const satisfies Record<WriteOutcomeView["kind"], MessageKey>;
 
 /** Each reason a save left the set as it was, worded. */
@@ -145,6 +146,7 @@ export function describeOutcome(
     case "changedSincePreview":
       return plain("warning", asUndo ? "write.undoStale" : "write.changedSincePreview");
     case "needsConfirmation":
+    case "interrupted":
       return plain("warning");
     case "undoNotSaved":
     case "notEnabled":

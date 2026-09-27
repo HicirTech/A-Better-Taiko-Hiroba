@@ -57,7 +57,14 @@ function setUp(
 ) {
   const editor = createCostumeEditor();
   const session: MockSession = { cardChosen: true };
-  const hiroba = { ended: false, log: [] as string[], endedByApp: 0 };
+  const hiroba = {
+    ended: false,
+    log: [] as string[],
+    endedByApp: 0,
+    /** The first GET after a save throws, as a transport with a fault in it would. */
+    throwAfterSave: false,
+    saved: false,
+  };
   const answer = async (url: string, response: Response) =>
     ok({
       status: response.status,
@@ -75,11 +82,16 @@ function setUp(
         return answer(`${ORIGIN}/login.php`, html(`<form id="login_form"></form>`));
       }
       if (request.method === "GET") {
+        if (hiroba.throwAfterSave && hiroba.saved) {
+          hiroba.throwAfterSave = false;
+          throw new Error("EBUSY: resource busy or locked");
+        }
         return answer(
           request.url,
           html(path === "/mypage_kisekae.php" ? editor.page(session) : MY_PAGE),
         );
       }
+      hiroba.saved ||= path === "/ajax/change_mydon.php";
       const form = new URLSearchParams();
       for (const [name, value] of request.form) {
         form.append(name, value);
@@ -232,6 +244,24 @@ describe("createDesktopWrites", () => {
     // And the other card's undo is still there for it, current.
     whose = OTHER;
     expect(await writes.pendingUndo()).toMatchObject([{ before: theirs, after: changed }]);
+  });
+
+  test("a write that throws after its save ends interrupted, and its pending undo is kept", async () => {
+    const { hiroba, writes, saved } = setUp();
+    hiroba.throwAfterSave = true;
+    const target = { ...START, colorFace: 3 };
+    expect(await writes.changeCostume({ expected: START, target })).toEqual({
+      kind: "interrupted",
+    });
+    expect(hiroba.log.filter((request) => request === "POST /ajax/change_mydon.php")).toHaveLength(
+      1,
+    );
+    expect(await saved()).toEqual(target);
+    expect(await writes.pendingUndo()).toEqual([]);
+
+    // The next editor read finds the save landed, and settles the pending write into an undo.
+    await writes.openCostumeEditor();
+    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
   });
 
   test("reads no editor while signed out", async () => {

@@ -183,6 +183,8 @@ export interface Messages {
   "write.stoppedBeforeWrite": string;
   "write.notEnabled": string;
   "write.nothingToUndo": string;
+  /** The app stopped a write before judging it: whether it saved is not known. */
+  "write.interrupted": string;
   /** Param: {code}, report codes: where an answer ended, status, type and size; never page text. */
   "write.code": string;
   /** The comparison under a write that did not go as planned. */
