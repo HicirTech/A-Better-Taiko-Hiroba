@@ -44,7 +44,7 @@ const SESSION_FILE = join(USER_DATA, "session.json");
 
 let running = await launch();
 try {
-  const { page, text, click, clickButton, until } = running;
+  const { page, text, textOf, click, clickButton, until } = running;
   await until("Sign in to Hiroba");
 
   results.surface = await page.evaluate(
@@ -54,7 +54,7 @@ try {
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
-  results.profileShown = (await text()).includes("Silver 11");
+  results.profileShown = (await textOf("#crowns-silver")) === "11";
   results.tokenInRendererDom = (
     await page.evaluate<string>("document.documentElement.outerHTML")
   ).includes(tokens[0] ?? "?");
@@ -78,7 +78,7 @@ try {
   await until("Read at");
   results.rotationTakenUp =
     tokens[1] !== tokens[0] &&
-    (await text()).includes("Silver 11") &&
+    (await textOf("#crowns-silver")) === "11" &&
     !(await text()).includes("ended");
 
   await fetch(`${HIROBA}/__expire`);
@@ -152,6 +152,11 @@ async function launch() {
   });
   const page = await connect(target.webSocketDebuggerUrl);
   const text = () => page.evaluate<string>("document.body.textContent");
+  /** One element's text, or null when nothing on the page matches the selector. */
+  const textOf = (selector: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.textContent ?? null`,
+    );
   const click = (selector: string) =>
     page.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
   const clickButton = (label: string) =>
@@ -160,7 +165,7 @@ async function launch() {
     );
   const until = (needle: string) =>
     waitFor(async () => (await text()).includes(needle) || undefined);
-  return { proc, page, text, click, clickButton, until };
+  return { proc, page, text, textOf, click, clickButton, until };
 }
 
 /**

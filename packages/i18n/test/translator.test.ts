@@ -9,11 +9,9 @@ describe("createTranslator", () => {
     expect(t("profile.fetchedAt", { time: "12:00" })).toStartWith("Read at 12:00.");
   });
 
-  test("fills every parameter of a whole sentence", () => {
+  test("fills a number parameter, zero included", () => {
     const { t } = createTranslator("en");
-    expect(t("profile.crowns", { silver: 11, gold: 2, donderful: 1 })).toBe(
-      "Crowns (Oni and Ura Oni): Silver 11 · Gold 2 · Donderful 1",
-    );
+    expect(t("medal.count", { count: 0 })).toBe("Medals: 0");
   });
 
   test("leaves a placeholder without a parameter as written", () => {

@@ -18,8 +18,6 @@ export const en: Messages = {
   "profile.reading": "Reading your profile from Hiroba…",
   "profile.readAgain": "Read again",
   "profile.title": "Title: {title}",
-  "profile.crowns":
-    "Crowns (Oni and Ura Oni): Silver {silver} · Gold {gold} · Donderful {donderful}",
   "profile.fetchedAt": "Read at {time}. Hiroba itself can be up to a day behind.",
   "profile.noTitle": "No title",
   "profile.region": "Region: {region}",

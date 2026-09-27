@@ -30,8 +30,6 @@ export interface Messages {
   "profile.readAgain": string;
   /** Param: {title}. */
   "profile.title": string;
-  /** Params: {silver}, {gold}, {donderful}. */
-  "profile.crowns": string;
   /** Param: {time}, already formatted for display. */
   "profile.fetchedAt": string;
   /** Shown in place of the title when the player wears none, a normal state. */
