@@ -34,6 +34,48 @@ export interface Messages {
   "profile.crowns": string;
   /** Param: {time}, already formatted for display. */
   "profile.fetchedAt": string;
+  /** Shown in place of the title when the player wears none, a normal state. */
+  "profile.noTitle": string;
+  /** Param: {region}, as the page writes it. */
+  "profile.region": string;
+  /** A chip: my page shows a dan label. Which dan is not read yet; it exists only as an image. */
+  "profile.danShown": string;
+  "profile.favorites": string;
+  /** Param: {title}, the 大好きな曲 as the page writes it. */
+  "profile.favoriteSong": string;
+  "profile.favoriteSongNone": string;
+  /** Param: {count}, how many songs the お気に入り folder holds. */
+  "profile.favoriteFolder": string;
+  "profile.favoriteFolderEmpty": string;
+  "crowns.heading": string;
+  "crowns.silver": string;
+  "crowns.gold": string;
+  "crowns.donderful": string;
+  /** Silver, gold and donderful added up: each crown is exclusive, and each one is a clear. */
+  "crowns.clearedOrBetter": string;
+  /** Gold and donderful added up. */
+  "crowns.fullComboOrBetter": string;
+  /** Neutral on purpose: what the panel covers is an inference, checked on one account only. */
+  "panel.heading": string;
+  /** Param: {level}, the number on the panel's image, shown as data and never interpreted. */
+  "panel.level": string;
+  /** What the counts were checked against, and on how little. Site words kept as written. */
+  "panel.footnote": string;
+  /** Param: {tier}, a tier's kanji as the rank icons show it: 粋, 雅 or 極. */
+  "panel.tierTotal": string;
+  /** Ranks 5 to 8 added up. */
+  "panel.miyabiOrBetter": string;
+  "medal.heading": string;
+  /** Param: {count}, the medals collected this season. */
+  "medal.count": string;
+  /** The chip for a season whose set is done; the plate prints COMPLETE in place of the count. */
+  "medal.complete": string;
+  /** No plate on the page: a normal state, not a failure. */
+  "medal.none": string;
+  /** A plate of a shape this version does not know. The rest of the page still reads. */
+  "medal.unrecognised": string;
+  /** Param: {code}, which part of the plate did not read, such as medal=noCountNoComplete. */
+  "medal.code": string;
   "failure.notSignedIn": string;
   "failure.loggedOut": string;
   "failure.cardSelectUnfinished": string;
