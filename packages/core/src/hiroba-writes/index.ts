@@ -12,6 +12,15 @@ export { postAjax, readPrecheck, readSaveCode, readSaveMessage } from "./ajax";
 export { inMaintenance } from "./maintenance";
 export { readHirobaPage, sessionEnded } from "./read-page";
 export { runWrite } from "./run-write";
+export {
+  beginPending,
+  EMPTY_UNDO_SLOT,
+  offeredUndo,
+  reconcile,
+  settle,
+  undoInput,
+} from "./undo-record";
+export type { PendingUndo, UndoRecord, UndoSlot } from "./undo-record";
 export type {
   AjaxAnswer,
   AjaxPost,
