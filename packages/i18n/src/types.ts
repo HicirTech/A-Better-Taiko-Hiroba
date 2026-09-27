@@ -185,6 +185,8 @@ export interface Messages {
   "write.nothingToUndo": string;
   /** The app stopped a write before judging it: whether it saved is not known. */
   "write.interrupted": string;
+  /** A write asked for while another was still being sent: this one sent nothing. */
+  "write.busy": string;
   /** Param: {code}, report codes: where an answer ended, status, type and size; never page text. */
   "write.code": string;
   /** The comparison under a write that did not go as planned. */

@@ -14,9 +14,11 @@ import {
   PORT_ARGUMENTS,
   type ReadFailure,
   type SignInOutcome,
+  type WriteOutcomeView,
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createDesktopWrites } from "./desktop-writes";
+import { createHirobaQueue } from "./hiroba-queue";
 import { createHirobaTransport } from "./hiroba-transport";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
@@ -106,18 +108,11 @@ const readTransport =
 
 /**
  * Every verb that asks Hiroba something runs one at a time: a read never lands between a write's
- * posts and its read-back, and two writes never interleave.
+ * posts and its read-back, and two writes never interleave. A write asked for while another is
+ * queued or running answers `busy` and sends nothing.
  */
-let hirobaQueue: Promise<unknown> = Promise.resolve();
-function oneAtATime<A extends unknown[], R>(
-  run: (...args: A) => Promise<R>,
-): (...args: A) => Promise<R> {
-  return (...args) => {
-    const turn = hirobaQueue.then(() => run(...args));
-    hirobaQueue = turn.catch(() => undefined);
-    return turn;
-  };
-}
+const { oneAtATime, oneWriteAtATime } = createHirobaQueue();
+const BUSY: WriteOutcomeView = { kind: "busy" };
 
 /** A read that found the login page, or a card still to choose: the session is over. */
 const sessionEnded = (failure: ReadFailure) =>
@@ -205,9 +200,9 @@ app.whenReady().then(async () => {
     },
     enabledWrites: writes.enabledWrites,
     openCostumeEditor: oneAtATime(writes.openCostumeEditor),
-    changeCostume: oneAtATime(writes.changeCostume),
+    changeCostume: oneWriteAtATime(writes.changeCostume, BUSY),
     pendingUndo: writes.pendingUndo,
-    undo: oneAtATime(writes.undo),
+    undo: oneWriteAtATime(writes.undo, BUSY),
   };
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

@@ -36,6 +36,7 @@ const OUTCOME_MESSAGE = {
   notSignedIn: "failure.notSignedIn",
   nothingToUndo: "write.nothingToUndo",
   interrupted: "write.interrupted",
+  busy: "write.busy",
 } as const satisfies Record<WriteOutcomeView["kind"], MessageKey>;
 
 /** Each reason a save left the set as it was, worded. */
@@ -155,6 +156,7 @@ export function describeOutcome(
     case "nothingToChange":
     case "notSignedIn":
     case "nothingToUndo":
+    case "busy":
       return plain("info");
   }
 }

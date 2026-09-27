@@ -116,13 +116,17 @@ export interface CostumeChange {
  * `interrupted` is a write this app stopped with no judgement: a fault in the app, not an answer
  * from Hiroba. A post may have gone out, so whether anything was saved is not known; the pending
  * undo stays, and the next editor read settles it.
+ *
+ * `busy` is a write asked for while another was queued or running: it sent nothing, and is never
+ * queued to run after the other has ended.
  */
 export type WriteOutcomeView =
   | WriteOutcome<CostumeSet>
   | { readonly kind: "notEnabled" }
   | { readonly kind: "notSignedIn" }
   | { readonly kind: "nothingToUndo" }
-  | { readonly kind: "interrupted" };
+  | { readonly kind: "interrupted" }
+  | { readonly kind: "busy" };
 
 /**
  * The last write of one kind, as an undo can be offered for it: the set before it, which the undo
@@ -162,7 +166,8 @@ export interface HirobaSessionPort {
   /**
    * One costume write, the way every write goes: the editor, the pre-check, one save and the
    * read-back, four requests; six while costume writes are not verified, with my page read before
-   * and after. Never retried. `notEnabled`, sending nothing, when this run may not write costumes.
+   * and after. Never retried. `notEnabled`, sending nothing, when this run may not write costumes;
+   * `busy`, sending nothing, while another write is queued or running.
    */
   changeCostume(change: CostumeChange): Promise<WriteOutcomeView>;
   /** The undo this device can offer, one per kind at most. Asks Hiroba nothing. */
