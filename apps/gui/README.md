@@ -2,9 +2,10 @@
 
 The desktop and Android app of A Better Taiko Hiroba. One React and Material UI web bundle runs in
 two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
-pages and reads your own page, one request per read. It shows your nickname, title and region, your
-crowns with cleared and full-combo totals, the seven score ranks by tier, the season's どんメダル
-plate, and your favourite songs.
+pages and reads your own page: one request per read, and one more for your dan label when the page
+shows one, since the page gives the dan only as that picture. It shows your nickname, title, region
+and dan, your crowns with cleared and full-combo totals, the seven score ranks by tier, the season's
+どんメダル plate, and your favourite songs.
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -35,7 +36,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in. It then searches the app's data folder for anything the session left behind. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the read counts are `1` and `2`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. It then searches the app's data folder for anything the session left behind. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in". |
