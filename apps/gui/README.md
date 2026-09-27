@@ -183,14 +183,16 @@ have to uninstall it first.
 Hiroba's session is one cookie, `_token_v2`. No code in the interface ever holds its value.
 
 **Desktop.** The sign-in window runs on an in-memory browser session, new for every attempt and
-cleared when the window closes. The cookie is kept only in the main process's memory. Signing out
-or closing the app forgets it; nothing reaches the disk.
+cleared when the window closes. The cookie is held in the main process, and kept on disk, in plain
+text, in `session.json` in the app's data folder (`%APPDATA%\A Better Taiko Hiroba`), so you stay
+signed in across launches until you sign out or Hiroba ends the session: the user's call,
+2026-09-27. Signing out, or a read or write that finds the session gone, deletes the file.
 
 **Android.** The sign-in runs in the in-app browser, which shares the app's WebView cookie store,
-and Capacitor's native HTTP client reads Hiroba through that same store. The app wipes every
-cookie at each launch, when a sign-in starts, when one is cancelled or cannot open, at sign-out,
-and when a read finds the session gone. Between a sign-in and the next sign-out or launch, the
-app's private storage holds:
+and Capacitor's native HTTP client reads Hiroba through that same store. The store is kept across
+launches, so you stay signed in there too. The app wipes every cookie when a sign-in starts, when
+one is cancelled or cannot open, at sign-out, and when a read finds the session gone. Between a
+sign-in and the next sign-out, the app's private storage holds:
 
 - `_token_v2`, in plain text, in the WebView cookie database (`app_webview/Default/Cookies`);
 - the Bandai Namco ID host's Domain cookies (its host-only cookies are cleared after sign-in);
