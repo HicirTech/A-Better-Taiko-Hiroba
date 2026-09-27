@@ -7,4 +7,5 @@
  * builds a post, and so the only code that reveals a form token.
  */
 export { postAjax, readPrecheck, readSaveCode, readSaveMessage } from "./ajax";
+export { inMaintenance } from "./maintenance";
 export type { AjaxAnswer, AjaxPost, PrecheckVerdict } from "./types";
