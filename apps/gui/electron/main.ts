@@ -11,6 +11,7 @@ import {
 import { BRIDGE_CHANNELS, type HirobaSessionPort, type SignInOutcome } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createHirobaTransport } from "./hiroba-transport";
+import { saveReads } from "./save-reads";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
 
 // Development only, and never in a packaged build: the renderer from Vite's dev server, and a
@@ -60,6 +61,11 @@ const transport = createHirobaTransport({
   userAgent,
   hirobaOrigin: endpoints.hirobaOrigin,
 });
+// Debugging against the live site: keep each page a read brings back, in a local folder.
+const readTransport =
+  process.env.ABTH_DEBUG_SAVE_READS === "1"
+    ? saveReads(transport, join(app.getPath("userData"), "debug"))
+    : transport;
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -110,7 +116,7 @@ app.whenReady().then(async () => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
-      const read = await readProfile(transport, endpoints);
+      const read = await readProfile(readTransport, endpoints);
       if (
         !read.ok &&
         (read.error.kind === "loggedOut" || read.error.kind === "cardSelectUnfinished")
