@@ -19,8 +19,9 @@ export interface Player {
  *
  * So the summary is stored as the snapshot it is — never derived from cached scores, and never
  * used to correct them. It is also not a total you can recompute: the rank buckets count charts
- * that carry a rank, the crown counts count charts that carry a crown, and the difference is the
- * charts played but not cleared that still earned one.
+ * that carry a rank and the crown counts count charts that carry a crown. Do not subtract one from
+ * the other: the difference is negative on 7 of the 10 other players' panels on disk (−9 to −309),
+ * because a crowned chart can be unranked, so it counts nothing.
  */
 export interface Profile {
   readonly taikoNo: string;
