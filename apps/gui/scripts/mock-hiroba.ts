@@ -17,9 +17,14 @@
  * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), and two that shape
  * the next my page: /__medal?state=none|collecting|complete|odd (the どんメダル plate: absent, a
  * count, COMPLETE, or a name alone, a shape no page has shown) and
- * /__variant?dan=0|1&title=empty|set&region=unset|set&favorites=unset|set (each optional; dan=0
- * writes the name row flat, as other players' dan-less profiles do; favorites=set sets the
- * 大好きな曲 and fills the お気に入り folder with three songs, two of them sharing a title).
+ * /__variant?dan=0|1…15&label=png|gif&title=empty|set&region=unset|set&favorites=unset|set (each
+ * optional; dan=0 writes the name row flat, as other players' dan-less profiles do, and dan=N
+ * shows the label of dan N, 14 (九段) at first; label=gif answers the label with the 43-byte 1×1
+ * GIF Hiroba sends when it has nothing to draw; favorites=set sets the 大好きな曲 and fills the
+ * お気に入り folder with three songs, two of them sharing a title).
+ *
+ * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
+ * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
  *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
@@ -32,6 +37,8 @@
  *   VITE_ABTH_DEV_IDP_HOST=id.<LAN IP>.sslip.io:8808 \
  *   bun run android:live -- <adb serial> <LAN IP>
  */
+import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
+
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
 const IDP_HOST = `id.${IP}.sslip.io`;
@@ -83,7 +90,14 @@ const submitSoon = (id: string) =>
 type MedalState = "none" | "collecting" | "complete" | "odd";
 /** What /__medal and /__variant set; every read of my page is rendered from them. */
 let medalState: MedalState = "collecting";
-const variant = { dan: true, title: true, region: true, favorites: false };
+const variant = {
+  /** 0 for no dan, or the dan, 1 to 15, whose label my page shows. */
+  dan: 14,
+  label: "png" as "png" | "gif",
+  title: true,
+  region: true,
+  favorites: false,
+};
 
 /** The count in each score rank, 8 down to 2: every bucket non-zero, so each bar has a length. */
 const RANK_COUNTS: readonly [number, number][] = [
@@ -108,9 +122,10 @@ const MEDAL_PLATE: Readonly<Record<MedalState, string>> = {
 
 /** My page as /__medal and /__variant last shaped it. */
 function myPage(): string {
-  const nameRow = variant.dan
-    ? `<div style="display:flex"><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>`
-    : `<div style="height:24px;">サンプルどん</div>`;
+  const nameRow =
+    variant.dan > 0
+      ? `<div style="display:flex"><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>`
+      : `<div style="height:24px;">サンプルどん</div>`;
   const song = variant.favorites
     ? `<span class="songName songNameFontnamco">サンプル曲アルファ</span>`
     : `<span class="songName songNameFont">未設定</span>`;
@@ -203,6 +218,12 @@ Bun.serve({
         }
         return page(myPage());
       }
+      case "/imgsrc_danlabel.php":
+        // Public, as Hiroba's is: the query picks whose label, and no session is asked for.
+        if (variant.dan === 0 || variant.label === "gif" || !searchParams.has("taiko_no")) {
+          return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
+        }
+        return new Response(danLabelPng(variant.dan), { headers: { "content-type": "image/png" } });
       // Test hooks, loopback only.
       case "/__last-token":
         return new Response(lastIssued);
@@ -233,7 +254,14 @@ Bun.serve({
       case "/__variant": {
         const flag = (name: string, on: string) =>
           searchParams.has(name) ? searchParams.get(name) === on : undefined;
-        variant.dan = flag("dan", "1") ?? variant.dan;
+        const dan = searchParams.get("dan") ?? "";
+        if (/^\d+$/.test(dan) && Number(dan) <= 15) {
+          variant.dan = Number(dan);
+        }
+        const label = searchParams.get("label");
+        if (label === "png" || label === "gif") {
+          variant.label = label;
+        }
         variant.title = flag("title", "set") ?? variant.title;
         variant.region = flag("region", "set") ?? variant.region;
         variant.favorites = flag("favorites", "set") ?? variant.favorites;

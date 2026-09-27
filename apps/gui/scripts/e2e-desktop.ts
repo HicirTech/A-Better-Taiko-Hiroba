@@ -173,7 +173,7 @@ try {
     JSON.stringify(folderRows) ===
       JSON.stringify(["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]);
   results.oneRequestPerRead = requestsPerRead.every((count) => count === 1);
-  await fetch(`${HIROBA}/__variant?dan=1&title=set&region=set&favorites=unset`);
+  await fetch(`${HIROBA}/__variant?dan=14&title=set&region=set&favorites=unset`);
 
   await fetch(`${HIROBA}/__expire`);
   await click("#read-again");
