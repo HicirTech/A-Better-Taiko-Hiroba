@@ -19,7 +19,11 @@ const TOKEN_STAND_IN = "<tckt>";
  * editor, my page) do not overwrite each other. An image, such as the dan label a read asks for
  * after my page, keeps its own extension: imgsrc_danlabel.php.png (.gif, or .bin for another type).
  *
- * Only GETs are kept. A post is a write: neither what it sent nor what came back is written here.
+ * The latest copy of each page sits in `folder`. Every answer is also kept, in the order it came,
+ * under `folder/history`: `<time>-<n>-<METHOD>-<page>.<ext>` and its `.json` (time, method, status,
+ * final path, content type), so a write can be followed request by request — the editor before, the
+ * pre-check's and the save's answers, the read-back. Of a post, only the answer is kept, never the
+ * form it sent.
  * Every form token (`_tckt`) a page carries is replaced with `<tckt>` before the page reaches the
  * disk, so no saved page holds one that could be posted.
  *
@@ -31,13 +35,23 @@ const TOKEN_STAND_IN = "<tckt>";
  * file another program holds open, a folder where the file should be — is dropped, and the answer
  * goes back as it came.
  */
-export function saveReads(transport: Transport, folder: string): Transport {
+export function saveReads(
+  transport: Transport,
+  folder: string,
+  now: () => Date = () => new Date(),
+): Transport {
+  let count = 0;
   return {
     async send(request, signal) {
       const sent = await transport.send(request, signal);
-      if (sent.ok && request.method === "GET") {
+      if (sent.ok) {
+        count += 1;
         try {
-          keep(folder, request.url, sent.value);
+          if (request.method === "GET") {
+            keep(folder, request.url, sent.value);
+          }
+          const history = join(folder, "history");
+          keepInHistory(history, now(), count, request.method, request.url, sent.value);
         } catch {
           // Only the debugging copy is lost; the read goes on as if it had not been asked for.
         }
@@ -59,6 +73,33 @@ function keep(folder: string, asked: string, response: TransportResponse): void 
   writeFileSync(join(folder, `${name}.${extension}`), isImage ? body : withoutTokens(body));
   const meta = { status, path: pathOf(url), contentType };
   writeFileSync(join(folder, `${name}.json`), `${JSON.stringify(meta, null, 2)}\n`);
+}
+
+/** One answer in the history: its copy and a status file, named to sort in the order they came. */
+function keepInHistory(
+  folder: string,
+  at: Date,
+  count: number,
+  method: string,
+  asked: string,
+  response: TransportResponse,
+): void {
+  const { status, url, headers, body } = response;
+  const contentType = headers["content-type"] ?? null;
+  const mediaType = (contentType ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
+  const isImage = mediaType.startsWith("image/");
+  // 2026-09-28T01:02:03.456Z → 20260928-010203: sorts by time, and a file name can hold it.
+  const stamp = at.toISOString().slice(0, 19).replace(/[-:]/g, "").replace("T", "-");
+  const name = `${stamp}-${String(count).padStart(3, "0")}-${method}-${fileNameOf(asked)}`;
+  const extension = isImage ? (IMAGE_EXTENSIONS[mediaType] ?? "bin") : "html";
+  mkdirSync(folder, { recursive: true });
+  writeFileSync(join(folder, `${name}.${extension}`), isImage ? body : withoutTokens(body));
+  const meta = { at: at.toISOString(), method, status, path: pathOf(url), contentType };
+  writeFileSync(
+    join(folder, `${name}.json`),
+    `${JSON.stringify(meta, null, 2)}
+`,
+  );
 }
 
 /**

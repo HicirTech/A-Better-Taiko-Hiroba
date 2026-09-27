@@ -77,6 +77,7 @@ describe("saveReads", () => {
     await saving.send({ method: "GET", url: MY_PAGE });
     await saving.send({ method: "GET", url: EDITOR });
     expect(readdirSync(folder).sort()).toEqual([
+      "history",
       "mypage_kisekae.php.html",
       "mypage_kisekae.php.json",
       "mypage_top.php.html",
@@ -113,15 +114,65 @@ describe("saveReads", () => {
     );
   });
 
-  test("writes nothing for a post, and still hands its answer back", async () => {
+  test("keeps a post's answer only in the history, token replaced, never the form it sent", async () => {
     const folder = newFolder();
     const saving = saveReads(
-      answering({ [SAVE]: ["application/json", `{"result":0,"_tckt":""}`] }),
+      answering({ [SAVE]: ["application/json", `{"result":705,"_tckt":"${TOKEN}"}`] }),
       folder,
+      () => new Date("2026-09-28T01:02:03.456Z"),
     );
     const sent = await saving.send({ method: "POST", url: SAVE, form: [["_tckt", TOKEN]] });
-    expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe(`{"result":0,"_tckt":""}`);
-    expect(readdirSync(folder)).toEqual([]);
+    expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe(
+      `{"result":705,"_tckt":"${TOKEN}"}`,
+    );
+    expect(readdirSync(folder)).toEqual(["history"]);
+    const history = join(folder, "history");
+    expect(readdirSync(history).sort()).toEqual([
+      "20260928-010203-001-POST-change_mydon.php.html",
+      "20260928-010203-001-POST-change_mydon.php.json",
+    ]);
+    const answer = readFileSync(
+      join(history, "20260928-010203-001-POST-change_mydon.php.html"),
+      "utf8",
+    );
+    expect(answer).toBe(`{"result":705,"_tckt":"<tckt>"}`);
+    expect(
+      JSON.parse(
+        readFileSync(join(history, "20260928-010203-001-POST-change_mydon.php.json"), "utf8"),
+      ),
+    ).toEqual({
+      at: "2026-09-28T01:02:03.456Z",
+      method: "POST",
+      status: 200,
+      path: "/ajax/change_mydon.php",
+      contentType: "application/json",
+    });
+  });
+
+  test("numbers every answer in the order it came, reads and posts alike", async () => {
+    const folder = newFolder();
+    const saving = saveReads(
+      answering({
+        [EDITOR]: ["text/html; charset=utf-8", PAGE_WITH_TOKENS],
+        [SAVE]: ["application/json", `{"result":0,"_tckt":""}`],
+      }),
+      folder,
+      () => new Date("2026-09-28T01:02:03.000Z"),
+    );
+    await saving.send({ method: "GET", url: EDITOR });
+    await saving.send({ method: "POST", url: SAVE, form: [["_tckt", TOKEN]] });
+    await saving.send({ method: "GET", url: EDITOR });
+    const pages = readdirSync(join(folder, "history"))
+      .filter((name) => name.endsWith(".html"))
+      .sort();
+    expect(pages).toEqual([
+      "20260928-010203-001-GET-mypage_kisekae.php.html",
+      "20260928-010203-002-POST-change_mydon.php.html",
+      "20260928-010203-003-GET-mypage_kisekae.php.html",
+    ]);
+    for (const page of pages) {
+      expect(readFileSync(join(folder, "history", page), "utf8")).not.toContain(TOKEN);
+    }
   });
 
   test("hands the answer back as it came when its copy cannot be written", async () => {

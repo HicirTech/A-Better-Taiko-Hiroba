@@ -68,7 +68,9 @@ the clock is looked at before a write starts and again just before each post.
 Two more variables apply to unpackaged runs only: `ABTH_DEV_NOW` (an ISO time) fixes the clock the
 maintenance check uses, for tests, and `ABTH_DEBUG_SAVE_READS=1` keeps each page a read brings back
 in the data folder's `debug` folder, named after the page, with every form token replaced by
-`<tckt>`. Posts are never kept there.
+`<tckt>`. Every answer is also kept in `debug\history`, in the order it came and with its
+time, so a write can be followed step by step; of a post, only Hiroba's answer is kept, never the
+form the app sent.
 
 ## The first real costume write
 
