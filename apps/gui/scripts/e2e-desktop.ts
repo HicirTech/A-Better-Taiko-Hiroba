@@ -1,7 +1,9 @@
 /**
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
- * filled favourites folder, costume writes (a colour and a きぐるみ, each undone, the #22 trap, a
+ * filled favourites folder, the editor's picture of the set (on opening, after a pick, one request
+ * for a burst of picks, one that does not come, none once shut), costume writes (a colour and a
+ * きぐるみ, each undone, the #22 trap, a
  * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
  * change made elsewhere, and a session that ends before and after a save), a lost session, cancel,
  * a sign-in sent off both sites, a reopen that keeps the session and the undo, Hiroba's daily
@@ -76,8 +78,29 @@ const SESSION_FILE = join(USER_DATA, "session.json");
 /** The mock's saved costume, as the app names its values. */
 const savedCostume = async () =>
   asAppSet((await (await fetch(`${HIROBA}/__state`)).json()) as CostumeState);
-/** Every request the mock saw since the last reset, as "METHOD /path". */
-const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
+const PREVIEW = "GET /imgsrc_mydon.php";
+/**
+ * Every request the mock saw since the last reset, as "METHOD /path", but the editor's pictures of
+ * the set: those go as the picks pause, not in step with a write, and are counted on their own.
+ */
+const requestLog = async () =>
+  ((await (await fetch(`${HIROBA}/__log`)).json()) as string[]).filter((line) => line !== PREVIEW);
+/** The query of every picture of the set the app asked for since the last reset, in order. */
+const previewQueries = async () => (await (await fetch(`${HIROBA}/__previews`)).json()) as string[];
+/** A set as the preview's query names it: the site's names, in the site's order. */
+const previewQuery = (set: Record<string, number>) =>
+  [
+    ["face", "colorFace"],
+    ["body", "colorBody"],
+    ["limb", "colorLimb"],
+    ["cos1", "costume1"],
+    ["cos2", "costume2"],
+    ["cos3", "costume3"],
+    ["cos4", "costume4"],
+    ["cos5", "costume5"],
+  ]
+    .map(([name, part]) => `${name}=${set[part as string]}`)
+    .join("&");
 const resetLog = () => fetch(`${HIROBA}/__log-reset`);
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
 /**
@@ -298,6 +321,67 @@ try {
     ]) &&
     (await page.evaluate<boolean>(`document.querySelector("#costume-open")?.disabled === false`)) &&
     !(await exists("#costume-not-open"));
+
+  // The editor's picture of the set, which the mock draws from the query and for a session only:
+  // a picture shown means the session went with the request. One request on opening, by the
+  // site's names in the site's order, then one per pause in the picks; in the window, a data: URL.
+  const previewSrc = () =>
+    page.evaluate<string | null>(
+      `document.querySelector("#costume-preview-image")?.getAttribute("src") ?? null`,
+    );
+  /** The picture once it is settled and is not `before`: no spinner, and a picture shown. */
+  const previewOtherThan = (before: string | null) =>
+    waitFor(async () => {
+      const src = await previewSrc();
+      const loading = await exists("#costume-preview-loading");
+      return src !== null && src !== before && !loading ? src : undefined;
+    });
+  await fetch(`${HIROBA}/__previews?reset=1`);
+  await click("#costume-open");
+  const onOpen = await previewOtherThan(null);
+  await Bun.sleep(500);
+  results.previewShownOnOpen =
+    onOpen.startsWith("data:image/png;base64,") &&
+    same(await previewQueries(), [previewQuery(START)]);
+  await click("#swatch-colorFace-3");
+  const afterColour = await previewOtherThan(onOpen);
+  results.previewChangesAfterColour =
+    afterColour.startsWith("data:image/png;base64,") &&
+    same(await previewQueries(), [previewQuery(START), previewQuery({ ...START, colorFace: 3 })]);
+  // Five picks, each well inside the pause after the one before: one request, for the last.
+  await fetch(`${HIROBA}/__previews?reset=1`);
+  for (const id of [7, 9, 11, 13, 15]) {
+    await click(`#swatch-colorFace-${id}`);
+    await Bun.sleep(40);
+  }
+  const afterBurst = await previewOtherThan(afterColour);
+  await Bun.sleep(800);
+  results.previewBurstSendsOne =
+    afterBurst.startsWith("data:image/png;base64,") &&
+    same(await previewQueries(), [previewQuery({ ...START, colorFace: 15 })]);
+  const withPreview = await page.evaluate<string>("document.documentElement.outerHTML");
+  results.previewAddressAndCookieKeptOutOfDom =
+    !withPreview.includes("imgsrc") &&
+    !withPreview.includes("cos1=") &&
+    !withPreview.includes("_token_v2") &&
+    !tokens.some((token) => withPreview.includes(token));
+  // A picture that does not come, here the GIF Hiroba draws nothing with: the last picture stays,
+  // a note and a code say so, and the editor works as before.
+  await fetch(`${HIROBA}/__preview?answer=gif`);
+  await click("#swatch-colorFace-20");
+  await waitFor(async () => (await exists("#costume-preview-unavailable")) || undefined);
+  results.previewFailureLeavesTheEditor =
+    (await textOf("#costume-preview-code")) ===
+      "Code for a report: preview=notPng status=200 type=image/gif bytes=43" &&
+    (await previewSrc()) === afterBurst &&
+    (await page.evaluate<boolean>(`document.querySelector("#costume-review").disabled === false`));
+  await fetch(`${HIROBA}/__preview?answer=png`);
+  // Shut, the editor asks for nothing more.
+  await fetch(`${HIROBA}/__previews?reset=1`);
+  await click("#swatch-colorFace-21");
+  await closeEditor();
+  await Bun.sleep(800);
+  results.previewNoneOnceShut = same(await previewQueries(), []);
 
   // A colour alone: exactly the planned requests, the ajax headers on both posts, one field moved.
   await resetLog();
