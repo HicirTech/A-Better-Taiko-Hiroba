@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { CrownsCard } from "./my-page/crowns-card";
+import { MedalCard } from "./my-page/medal-card";
 import { RanksCard } from "./my-page/ranks-card";
 import type {
   HirobaSessionPort,
@@ -156,6 +157,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
             <ProfileCard profile={screen.profile} i18n={i18n} />
             <CrownsCard crowns={screen.profile.crowns} i18n={i18n} />
             <RanksCard panel={screen.profile.panel} i18n={i18n} />
+            <MedalCard medal={screen.profile.medal} i18n={i18n} />
             <Typography variant="body2" color="text.secondary">
               {t("profile.fetchedAt", {
                 time: new Date(screen.profile.fetchedAt).toLocaleString(i18n.locale),
