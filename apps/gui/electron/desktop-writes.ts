@@ -54,6 +54,9 @@ export type DesktopWrites = Pick<
  * The desktop's writes: the gate, checked where each write is sent; the undo record, kept on disk
  * before a write's first post and settled by its outcome; and the session, dropped when Hiroba
  * ends it. An undo is an ordinary write, from the record's read-back set to its set before.
+ *
+ * Every undo slot read or written is the signed-in player's own, by taiko number: another
+ * player's record or pending write, left on this device, is theirs, and nothing here touches it.
  */
 export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrites {
   const { undoStore } = options;
@@ -61,20 +64,12 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
     enabledWrites(options.gate).find((write: EnabledWrite) => write.kind === KIND);
 
   /**
-   * Settles a slot against the set as it is now, but only the signed-in player's own: another
-   * player's record, left on this device, is theirs to settle.
+   * A player's slot written after the fact: if it cannot be, the pending write settles from a
+   * later read.
    */
-  const reconciled = (slot: UndoSlot<CostumeSet>, current: CostumeSet) => {
-    const whose = slot.pending?.taikoNo ?? slot.record?.taikoNo;
-    return whose === undefined || whose === options.owner()
-      ? reconcile(slot, current, sameCostume)
-      : slot;
-  };
-
-  /** A slot written after the fact: if it cannot be, the pending write settles from a later read. */
-  const keep = (slot: UndoSlot<CostumeSet>) => {
+  const keep = (taikoNo: string, slot: UndoSlot<CostumeSet>) => {
     try {
-      undoStore.save(KIND, slot);
+      undoStore.save(KIND, taikoNo, slot);
     } catch {
       // Nothing more to do here: the slot on disk still holds the pending write.
     }
@@ -85,26 +80,31 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
     purpose: "change" | "undo",
     gate: EnabledWrite,
   ): Promise<WriteOutcomeView> {
+    // Whose set this is, for the whole write: the read that settles it is this player's too.
+    const taikoNo = options.owner();
     let began = false;
     const outcome = await changeCostume(options.transport, options.endpoints, input, {
       now: options.now,
       crossCheck: !gate.verified,
       beginUndo: async (before, expectedAfter) => {
-        const taikoNo = options.owner();
         if (taikoNo === null) {
           throw new Error("Whose set this is is not known before my page is read");
         }
-        const slot = reconciled(undoStore.load(KIND), before);
+        const slot = reconcile(undoStore.load(KIND, taikoNo), before, sameCostume);
         const at = options.now().toISOString();
         // Throws when it cannot be written, and the write then stops with nothing sent.
-        undoStore.save(KIND, beginPending(slot, { taikoNo, before, expectedAfter, at, purpose }));
+        undoStore.save(
+          KIND,
+          taikoNo,
+          beginPending(slot, { taikoNo, before, expectedAfter, at, purpose }),
+        );
         began = true;
       },
     });
-    if (began) {
-      keep(settle(undoStore.load(KIND), outcome, sameCostume));
-    } else if (outcome.kind === "changedSincePreview") {
-      keep(reconciled(undoStore.load(KIND), outcome.current));
+    if (taikoNo !== null && began) {
+      keep(taikoNo, settle(undoStore.load(KIND, taikoNo), outcome, sameCostume));
+    } else if (taikoNo !== null && outcome.kind === "changedSincePreview") {
+      keep(taikoNo, reconcile(undoStore.load(KIND, taikoNo), outcome.current, sameCostume));
     }
     if (outcome.kind === "sessionGone") {
       options.endSession();
@@ -121,11 +121,12 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
       if (!options.signedIn()) {
         return err({ kind: "notSignedIn" });
       }
+      const taikoNo = options.owner();
       const read = await openCostumeEditor(options.transport, options.endpoints);
-      if (read.ok) {
+      if (read.ok && taikoNo !== null) {
         // The set as it is now settles a write whose end was not known, and dates a stale record.
-        keep(reconciled(undoStore.load(KIND), read.value.state));
-      } else if (sessionEnded(read.error)) {
+        keep(taikoNo, reconcile(undoStore.load(KIND, taikoNo), read.value.state, sameCostume));
+      } else if (!read.ok && sessionEnded(read.error)) {
         options.endSession();
       }
       return read;
@@ -143,10 +144,11 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
     },
 
     async pendingUndo() {
-      if (costumeGate() === undefined) {
+      const taikoNo = options.owner();
+      if (costumeGate() === undefined || taikoNo === null) {
         return [];
       }
-      const record = offeredUndo(undoStore.load(KIND), options.owner());
+      const record = offeredUndo(undoStore.load(KIND, taikoNo), taikoNo);
       return record === null
         ? []
         : [{ kind: KIND, at: record.at, before: record.before, after: record.after }];
@@ -160,7 +162,8 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
-      const record = offeredUndo(undoStore.load(KIND), options.owner());
+      const taikoNo = options.owner();
+      const record = taikoNo === null ? null : offeredUndo(undoStore.load(KIND, taikoNo), taikoNo);
       if (record === null) {
         return { kind: "nothingToUndo" };
       }

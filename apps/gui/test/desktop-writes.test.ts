@@ -18,6 +18,8 @@ const ENDPOINTS = { hirobaOrigin: ORIGIN, idpHost: "id.test", idpDomain: "id.tes
 const OPEN = { isPackaged: false, env: { ABTH_UNVERIFIED_WRITES: "1" } };
 const NOON_JST = () => new Date("2026-09-27T03:00:00Z");
 const OWNER = "000000000000";
+/** Another card, as one Bandai Namco ID can hold. */
+const OTHER = "111111111111";
 
 /** My page, cut down to what the parser needs. */
 const MY_PAGE = `<div id="mydon_area"><div>サンプルの称号</div><div><div>サンプルどん</div></div>
@@ -50,7 +52,9 @@ afterEach(() => {
 });
 
 /** The mock's editor behind a transport, and the desktop's writes over both. */
-function setUp(options: { gate?: typeof OPEN; owner?: string | null } = {}) {
+function setUp(
+  options: { gate?: typeof OPEN; owner?: string | null; whose?: () => string | null } = {},
+) {
   const editor = createCostumeEditor();
   const session: MockSession = { cardChosen: true };
   const hiroba = { ended: false, log: [] as string[], endedByApp: 0 };
@@ -105,7 +109,7 @@ function setUp(options: { gate?: typeof OPEN; owner?: string | null } = {}) {
       signedIn = false;
       hiroba.endedByApp += 1;
     },
-    owner: () => (options.owner === undefined ? OWNER : options.owner),
+    owner: options.whose ?? (() => (options.owner === undefined ? OWNER : options.owner)),
   });
   const saved = async () =>
     fromMock(
@@ -192,6 +196,42 @@ describe("createDesktopWrites", () => {
     const opened = await writes.openCostumeEditor();
     expect(opened.ok && opened.value.state).toEqual(target);
     expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
+  });
+
+  test("keeps each player's undo apart, whatever another card writes in between", async () => {
+    let whose = OWNER;
+    const { editor, writes, setElsewhere, signInAgain } = setUp({ whose: () => whose });
+    // A change of this player's that ends unknown after its save: a pending write, kept.
+    editor.hook("/__expire-on-save", new URLSearchParams());
+    const mine = { ...START, colorFace: 3 };
+    const unknown = await writes.changeCostume({ expected: START, target: mine });
+    expect(unknown).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
+    signInAgain();
+
+    // Another card on the same ID, wearing its own set: a save that moves nothing, then a change.
+    whose = OTHER;
+    setElsewhere("reset=1&color_body=40");
+    const theirs = { ...START, colorBody: 40 };
+    const changed = { ...theirs, colorLimb: 20 };
+    expect(await writes.pendingUndo()).toEqual([]);
+    editor.hook("/__noop-save", new URLSearchParams());
+    expect((await writes.changeCostume({ expected: theirs, target: changed })).kind).toBe(
+      "notApplied",
+    );
+    expect((await writes.changeCostume({ expected: theirs, target: changed })).kind).toBe(
+      "applied",
+    );
+    expect(await writes.pendingUndo()).toMatchObject([{ before: theirs, after: changed }]);
+
+    // Back on the first card, as its save left it: its pending write settles into its own undo.
+    whose = OWNER;
+    setElsewhere("reset=1&color_face=3");
+    expect(await writes.pendingUndo()).toEqual([]);
+    await writes.openCostumeEditor();
+    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: mine }]);
+    // And the other card's undo is still there for it, current.
+    whose = OTHER;
+    expect(await writes.pendingUndo()).toMatchObject([{ before: theirs, after: changed }]);
   });
 
   test("reads no editor while signed out", async () => {
