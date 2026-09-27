@@ -26,10 +26,11 @@
  * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
  * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
  *
- * The costume editor, mypage_kisekae.php, and the two posts a costume write sends,
- * ajax/check_ip_kisekae.php and ajax/change_mydon.php, are scripts/mock-costume.ts: stateful, with
- * hooks of their own listed there. Like Hiroba, an ajax post without X-Requested-With gets the
- * site's error page at 200; one without a session is sent to the login page. Two more hooks cover
+ * The costume editor, mypage_kisekae.php, its preview, imgsrc_mydon.php (drawn for a session only,
+ * as Hiroba's is), and the two posts a costume write sends, ajax/check_ip_kisekae.php and
+ * ajax/change_mydon.php, are scripts/mock-costume.ts: stateful, with hooks of their own listed
+ * there. Like Hiroba, an ajax post without X-Requested-With gets the site's error page at 200; one
+ * without a session is sent to the login page. Two more hooks cover
  * every request: /__log (each non-hook request so far, as "METHOD /path"; /__log-reset clears it)
  * and /__post-to-login?on=1 or 0 (every ajax post answers with a redirect to the login page, the
  * session left as it was).
@@ -258,6 +259,8 @@ Bun.serve({
           ? costume.precheck()
           : costume.save(session, form, () => sessions.clear());
       }
+      case "/imgsrc_mydon.php":
+        return costume.preview(new URL(request.url).search, session?.cardChosen === true);
       case "/imgsrc_danlabel.php":
         // Public, as Hiroba's is: the query picks whose label, and no session is asked for.
         if (variant.dan === 0 || variant.label === "gif" || !searchParams.has("taiko_no")) {

@@ -10,7 +10,14 @@
  * The save follows the server model the executed writes of 2026-08-09 fit: store the body, then, if
  * the posted きぐるみ (costume_1) is not 0, set the four pieces to 0 whatever the body said. So a
  * body naming a piece beside a きぐるみ moves nothing and still answers 0 (write #22).
+ *
+ * It also draws the editor's preview, imgsrc_mydon.php, as Hiroba does for a session only: a small
+ * PNG made from the query's eight values, so two sets never share a picture, and without a session
+ * the 43-byte GIF Hiroba draws nothing with, at 200.
  */
+import { encode } from "fast-png";
+
+import { NO_LABEL_GIF } from "./mock-dan-label";
 
 /** The eight values, in the order the page's form holds them after `_tckt`. */
 export const COSTUME_FIELDS = [
@@ -92,9 +99,56 @@ const HEX = "0123456789abcdef";
 const newTicket = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => HEX[b % 16]).join("");
 
-/** A colour for each palette id: spread out, and the same on every run. */
+/** A colour for each palette id, as red, green and blue: spread out, and the same on every run. */
+const swatchRgb = (id: number) => [37, 91, 151].map((step) => (id * step) % 256);
 const swatch = (id: number) =>
-  `#${[37, 91, 151].map((step) => ((id * step) % 256).toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+  `#${swatchRgb(id)
+    .map((channel) => channel.toString(16).padStart(2, "0"))
+    .join("")}`.toUpperCase();
+
+/** The preview's parameters, in the order mydon.js writes them. */
+export const PREVIEW_PARAMETERS = [
+  "face",
+  "body",
+  "limb",
+  "cos1",
+  "cos2",
+  "cos3",
+  "cos4",
+  "cos5",
+] as const;
+const PREVIEW_SIDE = 48;
+
+/**
+ * The preview for a query: かお over どう over てあし, a band of each one's swatch, with noise seeded
+ * from all eight values in the low bits, so every set has its own picture and each is well over
+ * the kilobyte the app asks of one. No Bandai Namco art.
+ */
+function previewPng(params: URLSearchParams): Uint8Array {
+  let seed = 0x811c9dc5;
+  for (const name of PREVIEW_PARAMETERS) {
+    seed = Math.imul(seed ^ Number(params.get(name) ?? 0), 0x01000193) >>> 0;
+  }
+  const next = () => {
+    seed = (seed ^ (seed << 13)) >>> 0;
+    seed = (seed ^ (seed >>> 17)) >>> 0;
+    seed = (seed ^ (seed << 5)) >>> 0;
+    return seed;
+  };
+  const bands = ["face", "body", "limb"].map((name) => swatchRgb(Number(params.get(name) ?? 0)));
+  const data = new Uint8Array(PREVIEW_SIDE * PREVIEW_SIDE * 4);
+  for (let y = 0; y < PREVIEW_SIDE; y++) {
+    const [r = 0, g = 0, b = 0] = bands[Math.floor((y * bands.length) / PREVIEW_SIDE)] ?? [];
+    for (let x = 0; x < PREVIEW_SIDE; x++) {
+      const noise = next();
+      data.set(
+        [r ^ (noise & 31), g ^ ((noise >>> 5) & 31), b ^ ((noise >>> 10) & 31), 255],
+        (y * PREVIEW_SIDE + x) * 4,
+      );
+    }
+  }
+  return new Uint8Array(encode({ width: PREVIEW_SIDE, height: PREVIEW_SIDE, data, channels: 4 }));
+}
 
 export function createCostumeEditor() {
   let state: CostumeState = { ...INITIAL_COSTUME };
@@ -104,6 +158,9 @@ export function createCostumeEditor() {
   let nextResult: number | null = null;
   let noopNext = false;
   let expireNext = false;
+  /** The query of every preview asked for, in order, as it came. */
+  const previews: string[] = [];
+  let previewAnswer: "png" | "gif" = "png";
 
   const json = (value: unknown) => Response.json(value);
 
@@ -171,6 +228,20 @@ ${slotTabs}
   </div>
 </div>
 </div>`;
+    },
+
+    /**
+     * imgsrc_mydon.php: the picture of whatever set `search` names, for a session only. Without
+     * one, or after /__preview?answer=gif, the 43-byte GIF Hiroba draws nothing with, at 200.
+     */
+    preview(search: string, signedIn: boolean): Response {
+      previews.push(search.replace(/^\?/, ""));
+      if (!signedIn || previewAnswer === "gif") {
+        return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
+      }
+      return new Response(previewPng(new URLSearchParams(search)), {
+        headers: { "content-type": "image/png" },
+      });
     },
 
     /** Keeps what a post to either endpoint carried, before anything answers it. */
@@ -272,7 +343,9 @@ ${slotTabs}
      * every pre-check answers from now on), /__next-result?code=N (the next valid save answers N and
      * saves nothing), /__noop-save (the next valid save answers 0 and saves nothing),
      * /__expire-on-save (the next valid save saves, then every session ends), /__tickets (every
-     * token the editor handed out), /__posts (every ajax post as it arrived; ?reset=1 clears).
+     * token the editor handed out), /__posts (every ajax post as it arrived; ?reset=1 clears),
+     * /__previews (the query of every preview asked for, in order; ?reset=1 clears) and
+     * /__preview?answer=png|gif (what every preview answers a session with from now on).
      */
     hook(pathname: string, params: URLSearchParams): Response | null {
       switch (pathname) {
@@ -313,6 +386,18 @@ ${slotTabs}
             posts.length = 0;
           }
           return json(posts);
+        case "/__previews":
+          if (params.get("reset") === "1") {
+            previews.length = 0;
+          }
+          return json(previews);
+        case "/__preview": {
+          const answer = params.get("answer");
+          if (answer === "png" || answer === "gif") {
+            previewAnswer = answer;
+          }
+          return new Response(previewAnswer);
+        }
         default:
           return null;
       }
