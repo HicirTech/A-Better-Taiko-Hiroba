@@ -67,8 +67,9 @@ export function FavoritesCard({
           </AccordionSummary>
           <AccordionDetails sx={{ pt: 0 }}>
             <List dense disablePadding>
-              {folder.map((title) => (
-                <ListItem key={title} disableGutters>
+              {folder.map((title, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: ten titles belong to more than one song, and each read replaces the list whole.
+                <ListItem key={index} disableGutters>
                   <ListItemText primary={title} />
                 </ListItem>
               ))}
