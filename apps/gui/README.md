@@ -5,7 +5,9 @@ two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hir
 pages and reads your own page: one request per read, and one more for your dan label when the page
 shows one, since the page gives the dan only as that picture. It shows your nickname, title, region
 and dan, your crowns with cleared and full-combo totals, the seven score ranks by tier, the season's
-どんメダル plate, and your favourite songs.
+どんメダル plate, and your favourite songs. On the desktop it can also change your costume
+(きせかえ), but only in a development run opened for it, until the first real write has been made
+and recorded (see [The first real costume write](#the-first-real-costume-write)).
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -46,6 +48,101 @@ build, and only when both `ABTH_DEV_HIROBA_ORIGIN` and `ABTH_DEV_IDP_HOST` are s
 other stops the app.
 
 The installers are not code-signed, so Windows SmartScreen warns before the first run.
+
+### Writes
+
+The desktop app can change one thing on Hiroba so far: the costume. No kind of write has been
+verified against the real site yet, so **no packaged build can send one**. A kind that is not
+verified opens only in an unpackaged run started with `ABTH_UNVERIFIED_WRITES=1`; a packaged build
+ignores that variable. Android sends no write at all for now.
+
+Every write goes the same way: read the editor for a fresh form token and the whole set, keep an
+undo record in `undo.json` in the app's data folder, send the pre-check, send the save exactly
+once, and read the whole set back. The set read back decides the outcome, not Hiroba's answer.
+While a kind is not verified, each write also reads your title on my page before and after. No
+request is retried, and nothing is sent between 05:00 and 07:00 JST, Hiroba's daily maintenance.
+
+Two more variables apply to unpackaged runs only: `ABTH_DEV_NOW` (an ISO time) fixes the clock the
+maintenance check uses, for tests, and `ABTH_DEBUG_SAVE_READS=1` keeps each page a read brings back
+in the data folder's `debug` folder, named after the page, with every form token replaced by
+`<tckt>`. Posts are never kept there.
+
+## The first real costume write
+
+The first real write of each kind is made by you, on the desktop, with your own account. Start with
+a single colour. The app has only ever written to the stand-in; this checks that Hiroba accepts a
+post from the app at all.
+
+**Before you start.** Pick a time outside 05:00–07:00 JST. Close any other copy of the app. The run
+below uses the same data folder as the installed app, `%APPDATA%\A Better Taiko Hiroba`, so it
+opens signed in if you are signed in there.
+
+**1. Start the development run with the gate open.** From this folder, in Git Bash:
+
+```bash
+ABTH_UNVERIFIED_WRITES=1 ABTH_DEBUG_SAVE_READS=1 bun run dev -- --real
+```
+
+or in PowerShell:
+
+```powershell
+$env:ABTH_UNVERIFIED_WRITES = "1"; $env:ABTH_DEBUG_SAVE_READS = "1"; bun run dev -- --real
+```
+
+The app reads your page as usual (sign in first if it asks). The identity card now has a
+**Change costume** button; only a run started this way shows it.
+
+**2. Open the editor and check it.** Press **Change costume**: one read of `mypage_kisekae.php`.
+Under **いろ**, each of かお, どう and てあし outlines the colour you wear; under **きせかえ**, each slot
+highlights the item you wear, or はずす. **Changes** says "Nothing changed yet."
+
+**3. Change one colour, and nothing else.** Under いろ, pick かお (or どう, or てあし) and press a
+different swatch. **Changes** must list exactly one line, such as `かお: #8 → #3`. Do not touch
+きせかえ.
+
+**4. Review and save.** Press **Review**. The dialog repeats the one change, and asks you to tick
+"This is the first write of this kind from the app…", noting that it also reads your title before
+and after. Tick it and press **Save to Hiroba**. The dialog shows "Saving… then reading it back"
+while the app sends, in this order and once each:
+
+1. `GET mypage_kisekae.php`: a fresh token and the whole set, checked against what the editor showed;
+2. `GET mypage_top.php`: your title, before;
+3. `POST ajax/check_ip_kisekae.php`: the pre-check, which changes nothing; only the answer
+   `{"result":false}` lets the app go on;
+4. `POST ajax/change_mydon.php`: the save, sent once;
+5. `GET mypage_kisekae.php`: the whole set read back;
+6. `GET mypage_top.php`: your title, after.
+
+**5. Read what it says.**
+
+- "Saved. Hiroba now shows the new costume.", in green, and a Snackbar offering **Undo**: it
+  worked. The read-back shows exactly the one colour changed and the title unchanged.
+- "Hiroba didn't accept the app's request. Nothing was changed.", with a code for a report: the
+  pre-check did not answer `false`. Hiroba may refuse posts from a client that is not a browser.
+  Nothing was saved. Stop here and keep the code.
+- "Hiroba asked for a confirmation this app does not give yet…": nothing was saved. Stop here.
+- Anything else says whether something may have changed. "Couldn't read the result back" means
+  open the editor again and look; do not save again first.
+
+**6. Undo.** Press **Undo** in the Snackbar, or **Undo last costume change** on the identity card,
+which stays after the Snackbar goes and across restarts. It is a write like the first, the same
+six requests, from the colour you set back to the one you had. Expect "Undone. Hiroba shows the
+costume as it was." If the costume was changed anywhere else in between, the undo stops without
+sending the save and says so.
+
+**7. Check.** Press **Read again**, open the editor, and see all eight values as they were before
+step 3. Close the app.
+
+**What is left on disk.** `%APPDATA%\A Better Taiko Hiroba\debug` holds the pages the run read
+(`mypage_kisekae.php.html`, `mypage_top.php.html`, `imgsrc_danlabel.php.png` and a `.json` for
+each), with each form token replaced; they carry your nickname and taiko number, so delete them
+once they are not needed.
+`undo.json` there holds the last write's undo record, your taiko number included, and no token.
+
+**Then.** Tell the session the outcome, the codes shown if any, so the write is recorded with the
+other executed writes and in the wiki. The next check is a きぐるみ and its undo, the same way;
+after both, costume writes can be marked verified for the desktop in a commit of their own, and
+only then can a packaged build send them.
 
 ## Android
 
