@@ -25,7 +25,10 @@ export interface AjaxPost {
  * which can hold a fresh form token.
  */
 export type AjaxAnswer =
-  /** JSON, as every answer the site's handlers were seen to give. `value` stays in the core. */
+  /**
+   * JSON with a 2xx status, on Hiroba's own origin, as every answer the site's handlers were seen
+   * to give. `value` stays in the core.
+   */
   | { readonly kind: "json"; readonly value: unknown; readonly code: string }
   /**
    * The site's own error page at 200 (`<h1>エラー</h1>`, a bare table, no login form): the handler
@@ -39,7 +42,10 @@ export type AjaxAnswer =
   | { readonly kind: "endedAtLogin"; readonly code: string }
   /** A plain 404: the endpoint is not there. */
   | { readonly kind: "endpointMissing"; readonly code: string }
-  /** Anything else, JSON that does not parse included. */
+  /**
+   * Anything else: JSON that does not parse, JSON with an error status, and any answer that ended
+   * off Hiroba's origin, whatever it holds.
+   */
   | { readonly kind: "unexpected"; readonly code: string }
   /** The post produced no answer. After a save, that does not mean nothing was saved. */
   | {

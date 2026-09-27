@@ -121,6 +121,27 @@ describe("postAjax", () => {
     expect((await sortedAs(response("", "text/plain", 500))).kind).toBe("unexpected");
   });
 
+  test("reads JSON only from Hiroba's origin with a 2xx, so no stray false clears a write", async () => {
+    const offOrigin = await sortedAs(
+      response(`{"result":false}`, "application/json", 200, "https://elsewhere.test/landing"),
+    );
+    expect(offOrigin).toEqual({
+      kind: "unexpected",
+      code: "landing=elsewhere path=/landing status=200 type=application/json bytes=16",
+    });
+    expect(readPrecheck(offOrigin)).toBe("unexpected");
+
+    const serverError = await sortedAs(response(`{"result":false}`, "application/json", 500));
+    expect(serverError).toEqual({
+      kind: "unexpected",
+      code: "path=/ajax/change_mydon.php status=500 type=application/json bytes=16",
+    });
+    expect(readPrecheck(serverError)).toBe("unexpected");
+    expect((await sortedAs(response(`{"result":false}`, "application/json", 404))).kind).toBe(
+      "endpointMissing",
+    );
+  });
+
   test("an answer that never came is noAnswer, by kind only", async () => {
     expect(
       await sortedAs(err({ kind: "timedOut", url: `${ORIGIN}/ajax/change_mydon.php` })),

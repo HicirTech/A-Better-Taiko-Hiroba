@@ -17,9 +17,10 @@ const ACCEPT_JSON = "application/json, text/javascript, */*; q=0.01";
  *
  * `X-Requested-With` goes on every post: without it Hiroba answers its error page at 200 and the
  * write does not happen (executed on update_score.php, 2026-08-09). The order of the sorting is
- * the order of trust: no answer; an answer that ended on the login or card-select page; JSON,
- * which is how every handler seen answers; the site's error page; a 404; anything else. Nothing
- * here retries.
+ * the order of trust: no answer; an answer that ended on the login or card-select page; one that
+ * ended off Hiroba's origin, which is unexpected whatever it says; JSON with a 2xx status, which
+ * is how every handler seen answers; the site's error page; a 404; anything else, JSON with an
+ * error status included. Nothing here retries.
  */
 export async function postAjax(
   transport: Transport,
@@ -50,9 +51,14 @@ export async function postAjax(
   if (landing === "login" || landing === "cardSelect") {
     return { kind: "endedAtLogin", code };
   }
+  // Only Hiroba's own answer is the handler's: one that ended anywhere else is not read at all.
+  if (landing === "elsewhere") {
+    return { kind: "unexpected", code: `landing=elsewhere ${code}` };
+  }
   const type = mediaTypeOf(response);
   const text = new TextDecoder("utf-8").decode(response.body);
-  if (type === "application/json") {
+  // JSON is read only from a 2xx: an error status with a JSON body is no handler's answer.
+  if (type === "application/json" && response.status >= 200 && response.status < 300) {
     try {
       return { kind: "json", value: JSON.parse(text.replace(/^﻿/, "")), code };
     } catch {
