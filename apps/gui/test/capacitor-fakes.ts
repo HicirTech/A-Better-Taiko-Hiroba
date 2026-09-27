@@ -17,20 +17,20 @@ type Listener = (event: { url?: string }) => void;
 export const native = {
   httpRequests: [] as NativeHttpRequest[],
   httpAnswer: (async () => ({})) as () => Promise<unknown>,
-  /** Every cookie-store write, in order: "clearAllCookies" or "clearCookies <url>". */
+  /** Every cookie-store call, in order: "clearAllCookies" or "clearCookies <url>". */
   cookieCalls: [] as string[],
-  /** The cookies the store holds, by name, as getCookies answers for Hiroba. */
-  cookies: {} as Record<string, string>,
   openedWith: [] as { url: string; options: Record<string, unknown> }[],
   closeCalls: 0,
   openFails: false,
+  /** close() resolves but the browser stays open, as seen on a slow real sign-in (2026-09-27). */
+  closeIgnored: false,
   listeners: new Map<string, Listener>(),
 
   reset(): void {
     this.httpRequests.length = 0;
     this.httpAnswer = async () => ({});
     this.cookieCalls.length = 0;
-    this.cookies = {};
+    this.closeIgnored = false;
     this.openedWith.length = 0;
     this.closeCalls = 0;
     this.openFails = false;
@@ -52,10 +52,8 @@ mock.module("@capacitor/core", () => ({
     },
   },
   CapacitorCookies: {
-    getCookies: async () => ({ ...native.cookies }),
     clearAllCookies: async () => {
       native.cookieCalls.push("clearAllCookies");
-      native.cookies = {};
     },
     clearCookies: async ({ url }: { url: string }) => {
       native.cookieCalls.push(`clearCookies ${url}`);
@@ -93,7 +91,9 @@ mock.module("@capacitor/inappbrowser", () => ({
     },
     close: async () => {
       native.closeCalls += 1;
-      queueMicrotask(() => native.emit("browserClosed"));
+      if (!native.closeIgnored) {
+        queueMicrotask(() => native.emit("browserClosed"));
+      }
     },
   },
 }));

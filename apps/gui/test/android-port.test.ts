@@ -1,7 +1,7 @@
 /**
  * Android's platform layer against stand-ins for the in-app browser and the cookie store: how the
- * browser is opened, when a sign-in counts, when the cookie store is wiped, and that a session the
- * store already holds survives a launch.
+ * browser is opened, when a sign-in counts, when the cookie store is wiped, and that a finished
+ * sign-in is remembered across launches.
  */
 import { beforeEach, describe, expect, test } from "bun:test";
 
@@ -12,6 +12,17 @@ const { createAndroidPort } = await import("../src/platform/android");
 const HIROBA = "https://donderhiroba.jp";
 const CLOSE_LABEL = "Close sign-in";
 
+/** A signed-in flag in memory, in place of the page's localStorage. */
+function memoryFlag(initial = false) {
+  let value = initial;
+  return {
+    get: () => value,
+    set: (next: boolean) => {
+      value = next;
+    },
+  };
+}
+
 async function until(condition: () => boolean): Promise<void> {
   for (let tries = 0; tries < 100 && !condition(); tries++) {
     await Bun.sleep(1);
@@ -20,8 +31,8 @@ async function until(condition: () => boolean): Promise<void> {
 }
 
 /** Starts a sign-in and waits until the in-app browser is open. */
-async function startSignIn() {
-  const port = await createAndroidPort({ closeLabel: CLOSE_LABEL });
+async function startSignIn(signedInFlag = memoryFlag()) {
+  const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag });
   const outcome = port.signIn();
   await until(() => native.openedWith.length === 1);
   return { port, outcome };
@@ -30,18 +41,30 @@ async function startSignIn() {
 describe("createAndroidPort", () => {
   beforeEach(() => native.reset());
 
-  test("keeps a session the cookie store already holds, and wipes nothing as it starts", async () => {
-    native.cookies = { _token_v2: "kept-from-the-last-launch" };
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL });
+  test("opens signed in after an earlier sign-in, and wipes nothing as it starts", async () => {
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
     expect(await port.isSignedIn()).toBe(true);
     expect(native.cookieCalls).toEqual([]);
   });
 
-  test("starts signed out when the store holds no session", async () => {
-    native.cookies = { some_other_cookie: "x" };
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL });
+  test("opens signed out when no sign-in was remembered", async () => {
+    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
     expect(await port.isSignedIn()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+  });
+
+  test("a landed sign-in whose browser stays open still counts when the user taps Done", async () => {
+    native.closeIgnored = true;
+    const flag = memoryFlag();
+    const { outcome } = await startSignIn(flag);
+    native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
+    expect(native.closeCalls).toBe(1);
+    native.emit("browserClosed");
+    expect(await outcome).toEqual({ kind: "signedIn" });
+    expect(flag.get()).toBe(true);
   });
 
   test("opens Hiroba's sign-in in a shared view that closes on the back key", async () => {
@@ -86,8 +109,9 @@ describe("createAndroidPort", () => {
     expect(native.listeners.size).toBe(0);
   });
 
-  test("a read that finds the session gone wipes the cookie store", async () => {
-    const { port, outcome } = await startSignIn();
+  test("a read that finds the session gone wipes the cookie store and forgets the sign-in", async () => {
+    const flag = memoryFlag();
+    const { port, outcome } = await startSignIn(flag);
     native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
     await outcome;
     native.cookieCalls.length = 0;
@@ -100,16 +124,20 @@ describe("createAndroidPort", () => {
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "loggedOut" } });
     expect(native.httpRequests).toHaveLength(1);
     expect(native.cookieCalls).toEqual(["clearAllCookies"]);
+    expect(flag.get()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
 
-  test("sign-out wipes the cookie store", async () => {
-    const { port, outcome } = await startSignIn();
+  test("sign-out wipes the cookie store and forgets the sign-in", async () => {
+    const flag = memoryFlag();
+    const { port, outcome } = await startSignIn(flag);
     native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
     await outcome;
     native.cookieCalls.length = 0;
+    expect(flag.get()).toBe(true);
     await port.signOut();
     expect(native.cookieCalls).toEqual(["clearAllCookies"]);
+    expect(flag.get()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
 });

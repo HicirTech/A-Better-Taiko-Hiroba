@@ -13,7 +13,6 @@ import {
   idpOrigin,
   loginPageUrl,
   readProfile,
-  SESSION_COOKIE_NAME,
   signInStep,
 } from "../hiroba-session";
 import type { HirobaSessionPort, SignInOutcome } from "../session-port";
@@ -32,26 +31,64 @@ const endpoints: HirobaEndpoints = import.meta.env.DEV
 export interface AndroidPortOptions {
   /** The in-app browser's close button, from the catalog. */
   readonly closeLabel: string;
+  /** Where "a sign-in finished here" is remembered across launches. The page's localStorage. */
+  readonly signedInFlag?: SignedInFlag;
 }
+
+/** One remembered yes or no. */
+export interface SignedInFlag {
+  get(): boolean;
+  set(value: boolean): void;
+}
+
+const SIGNED_IN_KEY = "abth.signedIn";
+
+/** The app page's localStorage. Its origin is the app's own, so it survives launches. */
+const localStorageFlag: SignedInFlag = {
+  get: () => {
+    try {
+      return globalThis.localStorage?.getItem(SIGNED_IN_KEY) === "1";
+    } catch {
+      return false;
+    }
+  },
+  set: (value) => {
+    try {
+      if (value) {
+        globalThis.localStorage?.setItem(SIGNED_IN_KEY, "1");
+      } else {
+        globalThis.localStorage?.removeItem(SIGNED_IN_KEY);
+      }
+    } catch {
+      // Storage refused: the next launch asks for a sign-in, which is safe.
+    }
+  },
+};
 
 /**
  * The Android platform layer. The session lives only in the WebView's cookie store: the in-app
- * browser shares it (isIsolated: false), and Capacitor's HTTP client sends it. This code asks
- * whether the session cookie is there, never what it holds.
+ * browser shares it (isIsolated: false), and Capacitor's HTTP client sends it. This code never
+ * sees the cookie, and cannot even ask whether it is there: CapacitorCookies.getCookies ignores the
+ * URL it is given and answers with the app page's own document.cookie (seen in Capacitor 8.5's
+ * source, and on the tablet on 2026-09-27, where every relaunch read as signed out).
  *
- * The store keeps its cookies in app-private storage across launches, so a user stays signed in
- * until they sign out or Hiroba ends the session (the user's call, 2026-09-27). It is wiped when a
- * sign-in starts or is abandoned, at sign-out and when the session is found gone. After a sign-in,
+ * So whether a sign-in finished here is remembered separately, in `signedInFlag`, and the first
+ * read settles whether the session is still good: a gone session reads as loggedOut and clears the
+ * flag. The store keeps its cookies across launches, so a user stays signed in until they sign out
+ * or Hiroba ends the session (the user's call, 2026-09-27). It is wiped when a sign-in starts or
+ * is abandoned, at sign-out and when the session is found gone. After a sign-in,
  * the ID host's own cookies are cleared as far as the platform allows: clearCookies({url}) removes
  * host cookies, not Domain cookies, which is also why the session itself is only ever cleared with
  * clearAllCookies.
  */
 export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
   const transport = createAndroidTransport();
-  let signedIn = await holdsSession();
+  const flag = options.signedInFlag ?? localStorageFlag;
+  let signedIn = flag.get();
 
   const forget = async () => {
     signedIn = false;
+    flag.set(false);
     await CapacitorCookies.clearAllCookies();
   };
 
@@ -109,6 +146,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       // is out of reach by design.
       await CapacitorCookies.clearCookies({ url: `${idpOrigin(endpoints)}/` });
       signedIn = true;
+      flag.set(true);
       return { kind: "signedIn" } satisfies SignInOutcome;
     },
 
@@ -132,10 +170,4 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     signOut: forget,
   };
-}
-
-/** Whether the WebView's cookie store holds a Hiroba session, by name only: the value is not read. */
-async function holdsSession(): Promise<boolean> {
-  const cookies = await CapacitorCookies.getCookies({ url: `${endpoints.hirobaOrigin}/` });
-  return Object.hasOwn(cookies, SESSION_COOKIE_NAME);
 }
