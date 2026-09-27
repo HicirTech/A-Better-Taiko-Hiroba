@@ -200,11 +200,15 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
                     />
                   ))}
                 </Tabs>
+                {/* Hiroba's own grid: nine to a row, seven rows, in id order, each swatch framed in
+                    one black pixel (mydon.css #palette .color), so a colour sits where the site has
+                    it and looks as it does there. */}
                 <Box
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(32px, 1fr))",
+                    gridTemplateColumns: "repeat(9, 32px)",
                     gap: 0.75,
+                    p: 0.5,
                   }}
                 >
                   {step.editor.palette.map((swatch) => {
@@ -218,11 +222,15 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
                         title={t("costume.id", { id: swatch.id })}
                         onClick={() => pickColour(colourPart, swatch.id)}
                         sx={{
+                          width: 32,
                           height: 32,
-                          borderRadius: 1,
                           bgcolor: swatch.hex,
-                          border: 3,
-                          borderColor: chosen ? "primary.main" : "divider",
+                          border: "1px solid",
+                          borderColor: "common.black",
+                          // The choice is marked outside the swatch, never over its colour.
+                          outline: chosen ? "3px solid" : "none",
+                          outlineColor: "primary.main",
+                          outlineOffset: "2px",
                         }}
                       />
                     );
