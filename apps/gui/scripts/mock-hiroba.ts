@@ -18,7 +18,8 @@
  * the next my page: /__medal?state=none|collecting|complete|odd (the どんメダル plate: absent, a
  * count, COMPLETE, or a name alone, a shape no page has shown) and
  * /__variant?dan=0|1&title=empty|set&region=unset|set&favorites=unset|set (each optional; dan=0
- * writes the name row flat, as other players' dan-less profiles do).
+ * writes the name row flat, as other players' dan-less profiles do; favorites=set sets the
+ * 大好きな曲 and fills the お気に入り folder with three songs, two of them sharing a title).
  *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
@@ -113,8 +114,9 @@ function myPage(): string {
   const song = variant.favorites
     ? `<span class="songName songNameFontnamco">サンプル曲アルファ</span>`
     : `<span class="songName songNameFont">未設定</span>`;
+  // Two of the three share a title, as ten catalogue titles are carried by more than one song.
   const folder = variant.favorites
-    ? ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲デルタ"]
+    ? ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]
         .map((title) => `<li><span class="songName songNameFontnamco">${title}</span></li>`)
         .join("")
     : "";

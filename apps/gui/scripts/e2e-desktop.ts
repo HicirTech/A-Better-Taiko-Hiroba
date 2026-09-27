@@ -1,10 +1,11 @@
 /**
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
- * every どんメダル state and a dan-less, title-less, region-less my page, a lost session, cancel, a
- * sign-in sent off both sites, a reopen that keeps the session, sign-out, and a reopen that stays
- * signed out, against scripts/mock-hiroba.ts, over the Chrome DevTools Protocol. It counts the
- * reads the mock saw, then searches the app's user-data folder for every token the mock issued and
- * for what the mock ID host left behind. Run `bun run build` first.
+ * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
+ * filled favourites folder, a lost session, cancel, a sign-in sent off both sites, a reopen that
+ * keeps the session, sign-out, and a reopen that stays signed out, against scripts/mock-hiroba.ts,
+ * over the Chrome DevTools Protocol. It counts the reads the mock saw, then searches the app's
+ * user-data folder for every token the mock issued and for what the mock ID host left behind. Run
+ * `bun run build` first.
  */
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -118,8 +119,34 @@ try {
   results.danLessRowRead =
     (await text()).includes("サンプルどん") && (await textOf("#dan-shown")) === null;
   results.unsetRegionLeftOut = (await textOf("#region")) === null;
+  // Unset so far: no favourite song and an empty folder. Set, the song shows by title and the
+  // folder, closed at first, opens on request with every song in it, the two that share a title
+  // included.
+  results.favoritesUnsetShown =
+    (await textOf("#favorite-song")) === "Favourite song: none" &&
+    (await textOf("#favorite-folder-empty")) !== null;
+  await fetch(`${HIROBA}/__variant?favorites=set`);
+  requestsPerRead.push(await readShowing("#favorite-folder"));
+  const folderSummary = "#favorite-folder .MuiAccordionSummary-root";
+  const folderOpen = () =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(folderSummary)})?.getAttribute("aria-expanded") ?? null`,
+    );
+  const closedAtFirst = (await folderOpen()) === "false";
+  await click(folderSummary);
+  await waitFor(async () => ((await folderOpen()) === "true" ? true : undefined));
+  const folderRows = await page.evaluate<string[]>(
+    `[...document.querySelectorAll("#favorite-folder li")].map((row) => row.textContent)`,
+  );
+  results.favoritesSetShown =
+    (await textOf("#favorite-song")) === "Favourite song: サンプル曲アルファ" &&
+    (await textOf(folderSummary)) === "Favourites folder (3)" &&
+    (await textOf("#favorite-folder-empty")) === null &&
+    closedAtFirst &&
+    JSON.stringify(folderRows) ===
+      JSON.stringify(["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]);
   results.oneRequestPerRead = requestsPerRead.every((count) => count === 1);
-  await fetch(`${HIROBA}/__variant?dan=1&title=set&region=set`);
+  await fetch(`${HIROBA}/__variant?dan=1&title=set&region=set&favorites=unset`);
 
   await fetch(`${HIROBA}/__expire`);
   await click("#read-again");
