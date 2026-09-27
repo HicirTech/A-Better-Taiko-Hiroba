@@ -140,7 +140,7 @@ describe("parseProfilePage", () => {
       title: "黒薔薇の使徒",
       region: "香港",
       danLabelImageUrl: "imgsrc_danlabel.php?taiko_no=000000000000",
-      medal: { name: "どんメダル2026夏", count: 0 },
+      medal: { name: "どんメダル2026夏", progress: { kind: "collecting", count: 0 } },
       myDonImageUrl: "https://img.example/imgsrc.php?kind=mydon&fn=mydon_000000000000",
       favoriteSong: { songNo: "1346", title: "サンプル曲アルファ" },
       favoriteFolderTitles: ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲デルタ"],
@@ -152,6 +152,48 @@ describe("parseProfilePage", () => {
       fetchedAt: FETCHED_AT,
     };
     expect(result.value).toEqual(expected);
+  });
+
+  describe("a medal set that is complete", () => {
+    // How a live my page wrote it on 2026-09-27: COMPLETE where the count was, and no count at all.
+    const COUNT_LINE = `<div class="token_count token_info_display">0</div>`;
+    const completeLine = (label: string) =>
+      `<div class="token_complete token_info_display">\n\t\t\t\t\t${label}\n\t\t\t\t</div>`;
+
+    test("reads as complete, with no count — absent, not zero", () => {
+      const page = profileExcerpt({ withDan: true }).replace(COUNT_LINE, completeLine("COMPLETE"));
+      const result = parseProfilePage(page, FETCHED_AT);
+
+      if (!isOk(result)) {
+        throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+      }
+      expect(result.value.medal).toEqual({
+        name: "どんメダル2026夏",
+        progress: { kind: "complete" },
+      });
+    });
+
+    test("refuses any other text in the complete slot, naming it", () => {
+      const page = profileExcerpt({ withDan: true }).replace(COUNT_LINE, completeLine("ほぼ完成"));
+      expect(parseProfilePage(page, FETCHED_AT)).toEqual({
+        ok: false,
+        error: {
+          kind: "unreadableValue",
+          page: "mypage_top.php",
+          marker: ".token_complete",
+          raw: "ほぼ完成",
+        },
+      });
+    });
+
+    test("refuses a plate that carries both a count and COMPLETE rather than pick one", () => {
+      const page = profileExcerpt({ withDan: true }).replace(
+        COUNT_LINE,
+        `${COUNT_LINE}${completeLine("COMPLETE")}`,
+      );
+      const result = parseProfilePage(page, FETCHED_AT);
+      expect(isOk(result)).toBe(false);
+    });
   });
 
   test("no dan is a normal state, not a failure", () => {

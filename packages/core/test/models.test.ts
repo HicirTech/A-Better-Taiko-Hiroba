@@ -58,7 +58,7 @@ const profileWithoutDan: Profile = {
   title: "電脳 神化 3.0",
   region: "香港",
   danLabelImageUrl: null,
-  medal: { name: "どんメダル2026", count: 37 },
+  medal: { name: "どんメダル2026", progress: { kind: "collecting", count: 37 } },
   myDonImageUrl: "https://donderhiroba.jp/imgsrc_mydon.php?taiko_no=000000000000",
   favoriteSong: { songNo: "1346", title: "サンプル曲アルファ" },
   favoriteFolderTitles: ["サンプル曲ベータ", "サンプル曲ガンマ"],

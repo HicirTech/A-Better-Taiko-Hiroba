@@ -56,11 +56,20 @@ export interface Profile {
   readonly fetchedAt: string;
 }
 
-/** The seasonal どんメダル and how many the account holds. */
+/** The seasonal どんメダル, and where the account stands in collecting it. */
 export interface Medal {
   readonly name: string;
-  readonly count: number;
+  readonly progress: MedalProgress;
 }
+
+/**
+ * While the season's set is being collected the plate prints a count. Once it is complete the plate
+ * prints COMPLETE in that place and no number at all, so a complete medal has no count — absent, not
+ * a guessed total. Seen on a live my page on 2026-09-27; every earlier capture was collecting.
+ */
+export type MedalProgress =
+  | { readonly kind: "collecting"; readonly count: number }
+  | { readonly kind: "complete" };
 
 /** The one song a profile shows as its 大好きな曲. */
 export interface FavoriteSong {

@@ -40,6 +40,7 @@ export type {
   CrownCounts,
   FavoriteSong,
   Medal,
+  MedalProgress,
   Player,
   Profile,
   ProfileSummary,

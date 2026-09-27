@@ -176,7 +176,14 @@ function readCrown(
   return readCount(el.value, marker, PAGE);
 }
 
-/** The medal block is optional; when the name is present the count must be readable. */
+/** What `.token_complete` holds, copied from a live page (2026-09-27), whitespace aside. */
+const MEDAL_COMPLETE_LABEL = "COMPLETE";
+
+/**
+ * The medal block is optional. When the name is present, exactly one of two things follows it:
+ * `.token_count` while the set is being collected, or `.token_complete` reading COMPLETE once it is
+ * done, with no count anywhere. Any other text there, or both at once, is refused by name.
+ */
 function readMedal(root: Parameters<typeof requireMarker>[0]): Result<Medal, ParseFailure> | null {
   const nameEl = root.querySelector(".token_name");
   if (nameEl === null) {
@@ -186,15 +193,24 @@ function readMedal(root: Parameters<typeof requireMarker>[0]): Result<Medal, Par
   if (name === "") {
     return err({ kind: "unreadableValue", page: PAGE, marker: ".token_name", raw: "" });
   }
-  const countEl = requireMarker(root, ".token_count", PAGE);
-  if (isErr(countEl)) {
-    return countEl;
+  const countEl = root.querySelector(".token_count");
+  const completeEl = root.querySelector(".token_complete");
+  if (completeEl !== null) {
+    const label = completeEl.text.trim();
+    if (countEl !== null || label !== MEDAL_COMPLETE_LABEL) {
+      return err({ kind: "unreadableValue", page: PAGE, marker: ".token_complete", raw: label });
+    }
+    return ok({ name, progress: { kind: "complete" } });
   }
-  const count = readCount(countEl.value, ".token_count", PAGE);
+  const requiredCountEl = requireMarker(root, ".token_count", PAGE);
+  if (isErr(requiredCountEl)) {
+    return requiredCountEl;
+  }
+  const count = readCount(requiredCountEl.value, ".token_count", PAGE);
   if (isErr(count)) {
     return count;
   }
-  return ok({ name, count: count.value });
+  return ok({ name, progress: { kind: "collecting", count: count.value } });
 }
 
 /** The favourite block under the given heading, or a failure naming which of the two is absent. */
