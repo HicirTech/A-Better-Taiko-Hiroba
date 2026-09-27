@@ -140,8 +140,13 @@ step 3. Close the app.
 **What is left on disk.** `%APPDATA%\A Better Taiko Hiroba\debug` holds the pages the run read
 (`mypage_kisekae.php.html`, `mypage_top.php.html`, `imgsrc_danlabel.php.png` and a `.json` for
 each), with each form token replaced; they carry your nickname and taiko number, so delete them
-once they are not needed.
-`undo.json` there holds the last write's undo record, your taiko number included, and no token.
+once they are not needed. If an earlier version of the app left `last-read.html` and
+`last-read.json` there, delete those too: they carry the same.
+
+`undo.json` there keeps, under your taiko number, the undo record of your last change not yet
+undone, and a write whose end is not known yet; never a token. The undo in step 6 spends the
+record, so after it your entry is gone and the file holds no taiko number. If you stop after step
+5, the record, with your taiko number, stays there until it is undone.
 
 **Then.** Tell the session the outcome, the codes shown if any, so the write is recorded with the
 other executed writes and in the wiki. The next check is a きぐるみ and its undo, the same way;
