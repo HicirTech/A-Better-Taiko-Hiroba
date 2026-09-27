@@ -12,6 +12,7 @@ import { BRIDGE_CHANNELS, type HirobaSessionPort, type SignInOutcome } from "../
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createHirobaTransport } from "./hiroba-transport";
 import { saveReads } from "./save-reads";
+import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
 
 // Development only, and never in a packaged build: the renderer from Vite's dev server, and a
@@ -48,15 +49,22 @@ if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
 app.enableSandbox();
 registerAppScheme();
 
-/** The session cookie: in this process's memory only, never logged, never sent to a renderer. */
+/**
+ * The session cookie: held in this process, and kept on disk by `sessionStore` so the user stays
+ * signed in across launches. Never logged, never sent to a renderer.
+ */
 let sessionCookie: string | null = null;
+let sessionStore: SessionStore | null = null;
+const setSession = (value: string | null) => {
+  sessionCookie = value;
+  sessionStore?.save(value);
+};
 let signInAttempt: SignInAttempt | null = null;
 const transport = createHirobaTransport({
   session: {
     get: () => sessionCookie,
-    set: (value) => {
-      sessionCookie = value;
-    },
+    // A token Hiroba rotates, or ends, on a redirect hop is kept on disk as well.
+    set: setSession,
   },
   userAgent,
   hirobaOrigin: endpoints.hirobaOrigin,
@@ -76,6 +84,9 @@ app.whenReady().then(async () => {
     Menu.setApplicationMenu(null);
   }
   serveWebBundle();
+  // The session kept from the last launch, if any; the renderer asks for it through isSignedIn.
+  sessionStore = createSessionStore(join(app.getPath("userData"), "session.json"));
+  sessionCookie = sessionStore.load();
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) =>
     callback(false),
   );
@@ -99,7 +110,7 @@ app.whenReady().then(async () => {
     },
     async signIn(): Promise<SignInOutcome> {
       signInAttempt?.cancel();
-      sessionCookie = null;
+      setSession(null);
       const attempt = openSignInWindow(mainWindow, endpoints, userAgent);
       signInAttempt = attempt;
       const result = await attempt.result;
@@ -109,7 +120,7 @@ app.whenReady().then(async () => {
       if (result.kind !== "captured") {
         return result;
       }
-      sessionCookie = result.cookie;
+      setSession(result.cookie);
       return { kind: "signedIn" };
     },
     async cancelSignIn() {
@@ -124,12 +135,12 @@ app.whenReady().then(async () => {
         !read.ok &&
         (read.error.kind === "loggedOut" || read.error.kind === "cardSelectUnfinished")
       ) {
-        sessionCookie = null;
+        setSession(null);
       }
       return read;
     },
     async signOut() {
-      sessionCookie = null;
+      setSession(null);
     },
   };
 
