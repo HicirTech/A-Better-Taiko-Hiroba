@@ -39,6 +39,7 @@ import {
   SLOT_PARTS,
   type SlotPart,
 } from "./costume-parts";
+import { CostumePreviewBox, useCostumePreview } from "./costume-preview-box";
 import { WriteOutcomeNotice } from "./write-outcome";
 
 type Step =
@@ -73,9 +74,9 @@ export interface CostumeDialogProps {
 
 /**
  * The costume editor: the three colours and the five slots, by number, with the palette's own
- * colours and no pictures. Mounted only while open. Opening reads the editor once; a pick makes a
- * draft by the site's own rule, so a きぐるみ empties the pieces and a piece takes the きぐるみ
- * off; saving lists every change first and sends exactly the draft.
+ * colours, under Hiroba's own picture of the set as picked. Mounted only while open. Opening reads
+ * the editor once; a pick makes a draft by the site's own rule, so a きぐるみ empties the pieces and
+ * a piece takes the きぐるみ off; saving lists every change first and sends exactly the draft.
  */
 export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: CostumeDialogProps) {
   const { t } = i18n;
@@ -145,6 +146,16 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
     }
   };
 
+  // The picture shows the draft while there is one, and after a write the set as it read back,
+  // which is the draft's own picture when the write applied, so that asks nothing more.
+  const previewSet =
+    step.name === "editing" || step.name === "confirming" || step.name === "saving"
+      ? step.draft
+      : step.name === "done"
+        ? step.editor.state
+        : null;
+  const preview = useCostumePreview(port, previewSet);
+
   const busy = step.name === "saving";
   return (
     <Dialog
@@ -157,6 +168,8 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
     >
       <DialogTitle>{t("costume.title")}</DialogTitle>
       <DialogContent dividers>
+        {previewSet !== null && <CostumePreviewBox preview={preview} i18n={i18n} />}
+
         {step.name === "loading" && (
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <CircularProgress size={24} />

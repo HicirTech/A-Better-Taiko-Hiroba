@@ -104,6 +104,17 @@ export interface Messages {
   /** The editor's heading: the site's own word, きせかえ. */
   "costume.title": string;
   "costume.reading": string;
+  /**
+   * The picture at the top of the editor, Hiroba's own drawing of the set as picked, as its
+   * 今のきせかえセット box shows one: its alternative text.
+   */
+  "costume.preview.alt": string;
+  /** Beside the last picture while the one for the latest pick is on its way. */
+  "costume.preview.loading": string;
+  /** The picture for the latest pick did not come. Neutral: the editor works without it. */
+  "costume.preview.unavailable": string;
+  /** Param: {code}, why it did not come, such as preview=notPng; never a URL or a query. */
+  "costume.preview.code": string;
   /** The top tabs, in the site's words: いろ (colours) and きせかえ (items). */
   "costume.tab.colours": string;
   "costume.tab.items": string;
