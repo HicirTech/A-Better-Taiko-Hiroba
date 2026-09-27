@@ -6,7 +6,9 @@
  * Like Hiroba, it answers a User-Agent that is not a complete browser string with a data-less
  * "recommended browsers" page. Like an ID provider, its ID host leaves cookies of its own (one
  * host-only, one Domain) and a localStorage entry behind, all marked with IDP_MARKER so a test can
- * look for them on disk.
+ * look for them on disk. Like the real walk, it reaches the ID form through an OAuth hop on a
+ * second ID host (auth.<ID host>, standing in for www.bandainamcoid.com), so a sign-in window that
+ * allows only the form's host stops there, as the real one did on 2026-09-27.
  *
  * Test hooks: /__last-token (the token issued last), /__expire (every session ends), /__rotate
  * (the next my-page read hands out a new token and ends the old one), /__hits?path=/mypage_top.php
@@ -31,6 +33,7 @@ const HIROBA_PORT = 8807;
 const IDP_PORT = 8808;
 const HIROBA = `http://${HIROBA_HOST}:${HIROBA_PORT}`;
 const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
+const IDP_AUTH = `http://auth.${IDP_HOST}:${IDP_PORT}`;
 
 const sessions = new Map<string, { cardChosen: boolean }>();
 let lastIssued = "";
@@ -109,7 +112,7 @@ Bun.serve({
         );
       case "/login_process.php":
         return redirect(
-          `${IDP}/login.html?redirect_uri=${encodeURIComponent(`${HIROBA}/callback.php`)}`,
+          `${IDP_AUTH}/v2/oauth2/auth?redirect_uri=${encodeURIComponent(`${HIROBA}/callback.php`)}`,
         );
       case "/callback.php": {
         lastIssued = newToken();
@@ -184,6 +187,10 @@ Bun.serve({
     const url = new URL(request.url);
     log("idp", request);
     switch (url.pathname) {
+      case "/v2/oauth2/auth":
+        return redirect(
+          `${IDP}/login.html?redirect_uri=${encodeURIComponent(url.searchParams.get("redirect_uri") ?? "")}`,
+        );
       case "/login.html":
         return page(
           `<form id="f" method="post" action="/login"><input name="back" type="hidden" value="${url.searchParams.get("redirect_uri") ?? ""}"></form><button form="f">Sign in</button><script>localStorage.setItem("abth_mock_idp", "${IDP_MARKER}-storage")</script>${holdIdForm ? "" : submitSoon("f")}`,
