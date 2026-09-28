@@ -29,11 +29,13 @@ import { createAndroidTransport } from "./android-transport";
 
 // Development only (the Vite dev server behind live reload): a local stand-in for Hiroba and the ID
 // host. A production build replaces import.meta.env.DEV with false and drops this branch; setting
-// only one of the two stops the app rather than half-reaching the real sites.
+// only one of the two stops the app rather than half-reaching the real sites. The picture host's
+// is optional: without it, a stand-in run asks no picture host anything.
 const endpoints: HirobaEndpoints = import.meta.env.DEV
   ? endpointsFromOverrides(
       import.meta.env.VITE_ABTH_DEV_HIROBA_ORIGIN,
       import.meta.env.VITE_ABTH_DEV_IDP_HOST,
+      import.meta.env.VITE_ABTH_DEV_IMG_ORIGIN,
     )
   : HIROBA_ENDPOINTS;
 

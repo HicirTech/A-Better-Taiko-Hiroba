@@ -11,7 +11,12 @@ import { danLabelPng, NO_LABEL_GIF } from "../scripts/mock-dan-label";
 import { readOwnProfile, readProfile } from "../src/hiroba-session";
 import { pngDataUrl } from "../src/hiroba-session/png-answer";
 
-const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idpDomain: "id.test" };
+const ENDPOINTS = {
+  hirobaOrigin: "https://hiroba.test",
+  idpHost: "id.test",
+  idpDomain: "id.test",
+  imgOrigin: null,
+};
 const NOW = () => new Date("2026-09-27T00:00:00.000Z");
 const MY_PAGE_URL = "https://hiroba.test/mypage_top.php";
 const LABEL_URL = "https://hiroba.test/imgsrc_danlabel.php?taiko_no=000000000000";

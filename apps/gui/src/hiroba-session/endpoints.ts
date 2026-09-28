@@ -4,6 +4,7 @@ export const HIROBA_ENDPOINTS: HirobaEndpoints = {
   hirobaOrigin: "https://donderhiroba.jp",
   idpHost: "account.bandainamcoid.com",
   idpDomain: "bandainamcoid.com",
+  imgOrigin: "https://img.taiko-p.jp",
 };
 
 /** The one cookie that is the Hiroba session. Only a platform transport ever reads its value. */
@@ -25,18 +26,31 @@ export const idpOrigin = (endpoints: HirobaEndpoints): string =>
  * Development only: the endpoints a local stand-in asks for. Both overrides or neither; one alone
  * would quietly leave the other on the real site, so it stops the app instead. The stand-in's ID
  * domain is its ID host's name, so its hops live on that host and on names under it.
+ *
+ * The picture host's override is a third, and optional: without it, a stand-in run has no picture
+ * host at all, so it can never reach the real one. Set without the other two, it stops the app as
+ * one of them alone does.
  */
 export function endpointsFromOverrides(
   hirobaOrigin: string | undefined,
   idpHost: string | undefined,
+  imgOrigin?: string,
 ): HirobaEndpoints {
   const origin = hirobaOrigin ?? "";
   const host = idpHost ?? "";
-  if (origin === "" && host === "") {
+  const pictures = imgOrigin ?? "";
+  if (origin === "" && host === "" && pictures === "") {
     return HIROBA_ENDPOINTS;
   }
   if (origin === "" || host === "") {
-    throw new Error("Set both development endpoint overrides, or neither.");
+    throw new Error(
+      "Set both development endpoint overrides, or neither, and the picture host's only with both.",
+    );
   }
-  return { hirobaOrigin: origin, idpHost: host, idpDomain: host.replace(/:\d+$/, "") };
+  return {
+    hirobaOrigin: origin,
+    idpHost: host,
+    idpDomain: host.replace(/:\d+$/, ""),
+    imgOrigin: pictures === "" ? null : pictures,
+  };
 }

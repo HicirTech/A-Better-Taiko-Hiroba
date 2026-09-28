@@ -14,7 +14,12 @@ import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, INITIAL_COSTUME, type MockSession } from "../scripts/mock-costume";
 
 const ORIGIN = "https://hiroba.test";
-const ENDPOINTS = { hirobaOrigin: ORIGIN, idpHost: "id.test", idpDomain: "id.test" };
+const ENDPOINTS = {
+  hirobaOrigin: ORIGIN,
+  idpHost: "id.test",
+  idpDomain: "id.test",
+  imgOrigin: null,
+};
 const OPEN = { isPackaged: false, env: { ABTH_UNVERIFIED_WRITES: "1" } };
 const NOON_JST = () => new Date("2026-09-27T03:00:00Z");
 const OWNER = "000000000000";

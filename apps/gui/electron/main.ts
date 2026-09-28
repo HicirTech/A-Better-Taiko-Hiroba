@@ -35,6 +35,7 @@ import { createUndoStore } from "./undo-store";
 // Development only, and never in a packaged build: the renderer from Vite's dev server, and a
 // local stand-in for Hiroba and the ID host so the whole sign-in can run without the real sites.
 // Setting only one of the two endpoint overrides stops the app rather than half-reaching Hiroba.
+// The picture host's is optional: without it, a stand-in run asks no picture host anything.
 const devServerUrl = app.isPackaged ? undefined : process.env.ABTH_DEV_SERVER_URL;
 const endpoints: HirobaEndpoints = app.isPackaged ? HIROBA_ENDPOINTS : developmentEndpoints();
 
@@ -43,6 +44,7 @@ function developmentEndpoints(): HirobaEndpoints {
     return endpointsFromOverrides(
       process.env.ABTH_DEV_HIROBA_ORIGIN,
       process.env.ABTH_DEV_IDP_HOST,
+      process.env.ABTH_DEV_IMG_ORIGIN,
     );
   } catch (error) {
     // Not thrown: an uncaught error in the main process opens a dialog and waits.

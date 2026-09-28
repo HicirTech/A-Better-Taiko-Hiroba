@@ -2,7 +2,12 @@ import { describe, expect, test } from "bun:test";
 
 import { HIROBA_ENDPOINTS, signInStep } from "../src/hiroba-session";
 
-const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idpDomain: "id.test" };
+const ENDPOINTS = {
+  hirobaOrigin: "https://hiroba.test",
+  idpHost: "id.test",
+  idpDomain: "id.test",
+  imgOrigin: null,
+};
 
 describe("signInStep", () => {
   test.each([
@@ -46,6 +51,7 @@ describe("signInStep", () => {
       hirobaOrigin: "http://hiroba.test:8807",
       idpHost: "id.test:8808",
       idpDomain: "id.test",
+      imgOrigin: null,
     };
     expect(signInStep("http://hiroba.test:8807/index.php", mock)).toBe("landed");
     expect(signInStep("http://id.test:8808/login.html", mock)).toBe("idp");
@@ -78,7 +84,12 @@ describe("signInStep", () => {
   });
 
   test("fails closed when the endpoints do not parse", () => {
-    const broken = { hirobaOrigin: "not an origin", idpHost: "id.test", idpDomain: "id.test" };
+    const broken = {
+      hirobaOrigin: "not an origin",
+      idpHost: "id.test",
+      idpDomain: "id.test",
+      imgOrigin: null,
+    };
     expect(signInStep("https://hiroba.test/index.php", broken)).toBe("elsewhere");
     expect(signInStep("https://id.test/login.html", broken)).toBe("elsewhere");
   });

@@ -26,7 +26,12 @@ import {
 } from "../src/hiroba-session";
 
 const ORIGIN = "https://hiroba.test";
-const ENDPOINTS = { hirobaOrigin: ORIGIN, idpHost: "id.test", idpDomain: "id.test" };
+const ENDPOINTS = {
+  hirobaOrigin: ORIGIN,
+  idpHost: "id.test",
+  idpDomain: "id.test",
+  imgOrigin: null,
+};
 const THUMB_URL = `${ORIGIN}/imgsrc_kisekae.php?cos=36&type=1`;
 const WANT = { kind: "costumeItem", slot: 1, id: 36 } as const;
 const OFFERED = new Set([offerKey(1, 36), offerKey(1, 4), offerKey(2, 21)]);

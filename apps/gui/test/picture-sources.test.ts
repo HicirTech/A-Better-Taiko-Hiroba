@@ -7,7 +7,12 @@ import type { Medal, Profile } from "@abth/core";
 
 import { pictureSourcesOf } from "../src/hiroba-session";
 
-const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idpDomain: "id.test" };
+const ENDPOINTS = {
+  hirobaOrigin: "https://hiroba.test",
+  idpHost: "id.test",
+  idpDomain: "id.test",
+  imgOrigin: null,
+};
 
 /**
  * A my page as the parser reads one, placeholders throughout; only the plates, the title and the
