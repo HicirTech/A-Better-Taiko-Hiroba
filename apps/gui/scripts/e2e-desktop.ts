@@ -6,7 +6,8 @@
  * kept across sign-outs and launches), Hiroba's score panel (a stand-in while its art does not
  * come, asked for again after each read until it does, the counts written over the art where my
  * page writes them, the art kept across launches and sign-outs), the My Don
- * portrait (from the picture host with no cookie, a first one that does not come coded and asked
+ * portrait (a button to the editor, with an edit badge and its name on hover, from the picture
+ * host with no cookie, a first one that does not come coded and asked
  * for again after a read, kept across launches and sign-ins, fetched anew on Read again and after a
  * write applies, the kept one still shown when a fresh one does not come), the どんメダル
  * plate (asked for only on screen, its words over it, one plate per season and state, one that
@@ -1204,6 +1205,27 @@ try {
       `window.abth.changeCostume(${JSON.stringify({ expected, target })})`,
     );
 
+  // No "Change costume" button: the portrait opens the editor (the user's call, 2026-09-29). It is
+  // a button named for that, and a pointer resting on it shows a small edit badge and the name.
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  const badgeOpacity = () =>
+    page.evaluate<string>(
+      `getComputedStyle(document.querySelector("#costume-open-badge")).opacity`,
+    );
+  const badgeAtRest = await badgeOpacity();
+  await hoverOver(page, "#costume-open");
+  const badgeOnHover = await waitFor(async () => (await badgeOpacity()) === "1" || undefined);
+  const nameOnHover = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  results.portraitOpensEditor =
+    (await page.evaluate<boolean>(
+      `(() => { const portrait = document.querySelector("#costume-open"); return portrait?.tagName === "BUTTON" && portrait.querySelector("#my-don") !== null && [...document.querySelectorAll("button")].every((button) => button.textContent.trim() !== "Change costume"); })()`,
+    )) &&
+    (await attribute("#costume-open", "aria-label")) === "Change costume" &&
+    badgeAtRest === "0" &&
+    badgeOnHover &&
+    nameOnHover === "Change costume";
+
   results.writeGateOpen =
     same(await page.evaluate("window.abth.enabledWrites()"), [
       { kind: "costume", verified: false },
@@ -1840,8 +1862,9 @@ try {
   results.gateShutWithoutTheFlag =
     same(shut, [[], [], { kind: "notEnabled" }, { kind: "notEnabled" }]) &&
     same(await requestLog(), []);
-  // Signed in, the portrait opens nothing, and is no button: it says why, rather than leave no way
-  // to change anything at all. Signed out again after, so the session is not left for the scan below.
+  // Signed in, the portrait opens nothing, and is no button: it says why, to screen readers and in
+  // its tooltip, rather than leave no way to change anything at all. Signed out again after, so the
+  // session is not left for the scan below.
   const platesSignedOut = (await platesAsked()).length;
   const myDonsSignedOut = (await myDonsAsked()).length;
   const medalPlatesSignedOut = await hitsOn(MEDAL_PLATE);
@@ -1849,12 +1872,19 @@ try {
   await running.click("#sign-in");
   await running.until("サンプルどん");
   tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  const NOT_OPEN =
+    "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
+  await hoverOver(running.page, "#my-don");
+  const whyOnHover = await waitFor(
+    async () => (await running.textOf('[role="tooltip"]')) ?? undefined,
+  );
+  await running.page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   results.shutGateSaysWhy =
     (await running.page.evaluate<boolean>(
       `(() => { const tile = document.querySelector("#my-don"); return document.querySelector("#costume-open") === null && tile !== null && tile.closest("button, [role=button], [tabindex]") === null; })()`,
     )) &&
-    (await running.textOf("#costume-not-open")) ===
-      "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
+    (await running.textOf("#costume-not-open")) === NOT_OPEN &&
+    whyOnHover === NOT_OPEN;
   // Signed out on the last launch and in again on this one, the plate and the thumbnails kept on
   // disk are still there, and Hiroba is asked for none of them (the user's call, 2026-09-28: no
   // picture is deleted at sign-out). This build opens no editor, so a thumbnail is asked for through
@@ -2085,6 +2115,17 @@ function* walk(dir: string): Generator<string> {
       yield path;
     }
   }
+}
+
+/** Rests the mouse on the middle of `selector`, as a pointer over it would. */
+async function hoverOver(
+  page: Awaited<ReturnType<typeof connect>>,
+  selector: string,
+): Promise<void> {
+  const middle = await page.evaluate<{ x: number; y: number }>(
+    `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: box.left + box.width / 2, y: box.top + box.height / 2 }; })()`,
+  );
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...middle });
 }
 
 /**
