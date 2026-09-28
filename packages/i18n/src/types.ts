@@ -1,5 +1,5 @@
 /** The locales the catalog carries, in the order a language picker lists them. */
-export const LOCALES = ["en"] as const;
+export const LOCALES = ["en", "ja"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 
@@ -7,7 +7,10 @@ export const DEFAULT_LOCALE: Locale = "en";
  * Each locale's name in its own language, as a language picker lists it: someone who cannot read the
  * language the app is in can still find their own.
  */
-export const LOCALE_NAMES: Readonly<Record<Locale, string>> = { en: "English" };
+export const LOCALE_NAMES: Readonly<Record<Locale, string>> = {
+  en: "English",
+  ja: "日本語",
+};
 
 /**
  * Every message key, and the one place that says which keys exist: a catalog missing a key, or

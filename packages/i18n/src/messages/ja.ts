@@ -1,0 +1,163 @@
+import type { Messages } from "../types";
+
+/** 日本語. The site is ドンだーひろば, or ひろば for short; its own words stay as it writes them. */
+export const ja: Messages = {
+  "app.title": "A Better Taiko Hiroba",
+  "language.picker": "言語：{name}",
+  "signIn.intro":
+    "バンダイナムコIDでログインすると、ドンだーひろばのプロフィールを読み込めます。ログイン画面はひろば公式のもので、このアプリがパスワードを見ることはありません。",
+  "signIn.action": "ドンだーひろばにログイン",
+  "signIn.inProgress": "ログイン画面で、カードの選択まで済ませてください。",
+  "signIn.cancel": "ログインをやめる",
+  "signIn.closeBrowser": "閉じる",
+  "signIn.cancelled": "ログインを中止しました。",
+  "signIn.noSession":
+    "ログインは終わりましたが、ひろばのセッションが始まりませんでした。もう一度お試しください。",
+  "signIn.unavailable": "ログイン画面を開けませんでした。もう一度お試しください。",
+  "signIn.refused":
+    "ログインを止めました：このアプリが開かない {host} に送られたためです。このホスト名を報告してください。",
+  "signOut.action": "ログアウト",
+  "signOut.note": "ログアウトするまで、この端末ではログインしたままです。",
+  "profile.reading": "ひろばからプロフィールを読み込み中…",
+  "profile.readAgain": "再読み込み",
+  "profile.title": "称号：{title}",
+  "profile.fetchedAt": "{time} に読み込み。ひろば側の反映は最大1日遅れることがあります。",
+  "profile.noTitle": "称号なし",
+  "profile.dan": "段位：{dan}",
+  "profile.danUnreadable": "段位：読み取れませんでした",
+  "profile.danCode": "報告用コード：{code}",
+  "profile.favorites": "お気に入り",
+  "profile.favoriteSong": "大好きな曲：{title}",
+  "profile.favoriteSongNone": "大好きな曲：なし",
+  "profile.favoriteFolder": "お気に入りフォルダ（{count}）",
+  "profile.favoriteFolderEmpty": "お気に入りフォルダは空です。",
+  "pictures.loading": "ひろばの画像を読み込み中…",
+  "pictures.unavailable": "ひろばの画像の一部を読み込めなかったため、簡易表示にしています。",
+  "pictures.code": "報告用コード：{code}",
+  "crowns.heading": "王冠",
+  "crowns.silver": "銀",
+  "crowns.gold": "金",
+  "crowns.donderful": "ドンダフル",
+  "panel.footnote": "初期設定の1アカウントで確認：おに＋おに裏、双打は除く。",
+  "panel.ranks": "スコアランク",
+  "panel.countOf": "{count}（全{total}）",
+  "panel.countTitle": "{name}：{count}（全{total}）",
+  "medal.heading": "どんメダル",
+  "medal.count": "獲得数：{count}枚",
+  "medal.complete": "COMPLETE",
+  "medal.none": "今はひろばにどんメダルのプレートが出ていません。",
+  "medal.unrecognised": "このバージョンでは、ひろばのどんメダルのプレートをまだ読み取れません。",
+  "medal.code": "報告用コード：{code}",
+  "failure.notSignedIn": "ログインしていません。",
+  "failure.loggedOut": "ひろばのセッションが切れました。もう一度ログインしてください。",
+  "failure.cardSelectUnfinished":
+    "カードを選ぶ前にログインが止まりました。もう一度ログインして、カードを選んでください。",
+  "failure.unreachable":
+    "ひろばに接続できませんでした。通信環境を確認して、もう一度お試しください。",
+  "failure.timedOut": "ひろばの応答に時間がかかりすぎました。もう一度お試しください。",
+  "failure.cancelled": "リクエストを中止しました。",
+  "failure.siteError":
+    "ひろばがエラーを返しました。毎日 05:00〜07:00（日本時間）はメンテナンスで使えません。",
+  "failure.unexpectedPage": "ひろばから想定外のページが返ってきました。",
+  "failure.detail": "報告用の詳細：{detail}",
+  "platform.unsupported": "このビルドは、デスクトップ版か Android 版のアプリの中でしか動きません。",
+  "costume.open": "きせかえを変更",
+  "costume.notOpen":
+    "このビルドではまだ使えません：アプリからの実際の変更が、まだ一度も確かめられていません。",
+  "costume.title": "きせかえ",
+  "costume.reading": "ひろばからきせかえを読み込み中…",
+  "costume.preview.alt": "このきせかえのマイどん（ひろばの画像）",
+  "costume.preview.loading": "プレビューを更新中…",
+  "costume.preview.unavailable": "プレビューを表示できません",
+  "costume.preview.code": "報告用コード：{code}",
+  "costume.tab.colours": "いろ",
+  "costume.tab.items": "きせかえ",
+  "costume.part.colorFace": "かお",
+  "costume.part.colorBody": "どう",
+  "costume.part.colorLimb": "てあし",
+  "costume.part.costume1": "きぐるみ",
+  "costume.part.costume2": "あたま",
+  "costume.part.costume3": "からだ",
+  "costume.part.costume4": "メイク",
+  "costume.part.costume5": "ぷちキャラ",
+  "costume.id": "#{id}",
+  "costume.remove": "はずす",
+  "costume.item.label": "{part} #{id}",
+  "costume.thumbnails.unavailable":
+    "サムネイルを {count} 件読み込めなかったため、番号で表示しています。",
+  "costume.thumbnails.code": "報告用コード：{code}",
+  "costume.scroll.up": "1行上へ",
+  "costume.scroll.down": "1行下へ",
+  "costume.kigurumiWarning": "きぐるみにすると、あたま・からだ・メイク・ぷちキャラははずれます。",
+  "costume.changesHeading": "変更点",
+  "costume.change": "{part}：{from} → {to}",
+  "costume.noChanges": "まだ何も変えていません。",
+  "costume.review": "内容を確認",
+  "costume.back": "戻る",
+  "costume.save": "ひろばに保存",
+  "costume.close": "閉じる",
+  "costume.confirmIntro": "ひろばに次の変更を依頼します：",
+  "costume.firstWrite":
+    "この種類の書き込みは、アプリからは初めてです。元に戻すための記録を残し、結果を読み直して確かめます。",
+  "costume.crossCheck": "ほかに何も変わっていないか、前後で称号も読み取ります。",
+  "costume.saving": "保存中…そのあと読み直します",
+  "costume.undoLast": "直前のきせかえの変更を元に戻す",
+  "costume.undoWhen": "{time} に変更",
+  "costume.undoing": "元に戻しています…そのあと読み直します",
+  "write.applied": "保存しました。ひろばに新しいきせかえが反映されています。",
+  "write.undone": "元に戻しました。ひろばのきせかえは元どおりです。",
+  "write.undo": "元に戻す",
+  "write.siteNote": "ひろばはコード {code} を返しましたが、読み直すと変更は反映されています。",
+  "write.crossUnknown":
+    "保存しましたが、確認のための称号の再読み込みができませんでした。マイページで確かめてください。",
+  "write.appliedNotSynced":
+    "ひろばには保存されましたが、ゲームサーバーに届きませんでした。届けるには、もう一度設定してください。",
+  "write.notApplied.unchanged":
+    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すときせかえは元のままでした。",
+  "write.notApplied.refused":
+    "ひろばが変更を受け付けませんでした（コード {code}）。何も変わっていません。",
+  "write.notApplied.stale":
+    "エディターの情報が古くなっていました。開き直してやり直してください。何も変わっていません。",
+  "write.notApplied.siteMaintenance": "ひろばはメンテナンス中です。何も変わっていません。",
+  "write.notApplied.failed": "ひろばで保存できませんでした。何も変わっていません。",
+  "write.notApplied.noAnswer": "ひろばから保存の応答がなく、何も変わっていません。",
+  "write.notApplied.rejected":
+    "ひろばがアプリのリクエストを受け付けませんでした。何も変わっていません。",
+  "write.notApplied.endedAtLogin":
+    "ひろばが保存をログインページに回しました。何も変わっていません。",
+  "write.notApplied.endpointMissing":
+    "ひろばに、これを保存するページがなくなっています。何も変わっていません。",
+  "write.notApplied.unexpected":
+    "ひろばから保存に対して想定外の応答がありました。何も変わっていません。",
+  "write.siteMessage": "ひろばからのメッセージ：{message}",
+  "write.diverged": "きせかえが予定どおりになりませんでした。下で比べてください。",
+  "write.crossChanged": "称号も変わっています。",
+  "write.outcomeUnknown":
+    "結果を読み直せませんでした。やり直す前に、エディターを開き直してください。",
+  "write.sessionGone":
+    "何も保存される前に、ひろばのセッションが切れました。もう一度ログインしてください。",
+  "write.sessionGoneAfterSave":
+    "ひろばのセッションが切れました。変更が保存されたかはわかりません。ログインしてから確かめてください。",
+  "write.changedSincePreview":
+    "エディターを開いたあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
+  "write.undoStale":
+    "その変更のあとにきせかえがほかの場所で変更されたため、元に戻しませんでした。この取り消しはもう使えません。",
+  "write.invalidTarget": "送信する前に、アプリが変更を止めました：{field}。",
+  "write.nothingToChange": "すでにそのきせかえです。何も送信していません。",
+  "write.maintenance":
+    "ひろばは毎日 05:00〜07:00（日本時間）がメンテナンスです。変更は送信していません。",
+  "write.undoNotSaved": "元に戻すための記録を残せなかったため、何も送信していません。",
+  "write.needsConfirmation":
+    "ひろばが、このアプリではまだ答えられない確認を求めたため、何も変更していません。ひろばのメッセージ：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
+  "write.stoppedBeforeWrite":
+    "ひろばがアプリのリクエストを受け付けませんでした。何も変更していません。",
+  "write.notEnabled": "このビルドでは、この種類の変更は送信しません。",
+  "write.nothingToUndo": "元に戻せる変更はありません。",
+  "write.busy": "別の変更を送信中のため、この変更は送信していません。",
+  "write.interrupted":
+    "結果がわかる前にアプリが止まったため、保存されたかどうかわかりません。やり直す前に、エディターを開き直して確かめてください。",
+  "write.code": "報告用コード：{code}",
+  "write.before": "変更前",
+  "write.planned": "予定",
+  "write.now": "現在",
+};

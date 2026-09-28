@@ -43,13 +43,13 @@ describe("the translator's formats", () => {
   });
 });
 
-describe("the English catalog", () => {
-  test("is the only locale so far", () => {
-    expect([...LOCALES]).toEqual(["en"]);
+describe("the catalog", () => {
+  test("carries these locales, in the picker's order", () => {
+    expect([...LOCALES]).toEqual(["en", "ja"]);
   });
 
   test("names each locale in its own language", () => {
-    expect(LOCALES.map((locale) => LOCALE_NAMES[locale])).toEqual(["English"]);
+    expect(LOCALES.map((locale) => LOCALE_NAMES[locale])).toEqual(["English", "日本語"]);
   });
 });
 

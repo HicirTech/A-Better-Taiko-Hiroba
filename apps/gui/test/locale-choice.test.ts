@@ -38,6 +38,7 @@ const refusing: Storage = {
 describe("startingLocale", () => {
   test("follows the system until a language is picked", () => {
     expect(startingLocale(memoryStorage(), ["en-NZ"])).toBe("en");
+    expect(startingLocale(memoryStorage(), ["ja-JP"])).toBe("ja");
   });
 
   test("falls back to English for a language the catalog does not carry", () => {
@@ -47,9 +48,9 @@ describe("startingLocale", () => {
 
   test("opens in the language picked on this device", () => {
     const storage = memoryStorage();
-    rememberLocale("en", storage);
-    expect(pickedLocale(storage)).toBe("en");
-    expect(startingLocale(storage, ["ko-KR"])).toBe("en");
+    rememberLocale("ja", storage);
+    expect(pickedLocale(storage)).toBe("ja");
+    expect(startingLocale(storage, ["en-US"])).toBe("ja");
   });
 
   test("ignores a kept value that names no locale", () => {
