@@ -3,9 +3,9 @@
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, the identity card on Hiroba's title plate (its text over it, one plate
  * per title, one that does not come, the plate kept across sign-outs and launches), the My Don
- * portrait (from the picture host with no cookie, kept across launches and sign-ins, fetched anew
- * on Read again and after a write applies, the kept one still shown when a fresh one does not
- * come), the どんメダル
+ * portrait (from the picture host with no cookie, a first one that does not come coded and asked
+ * for again after a read, kept across launches and sign-ins, fetched anew on Read again and after a
+ * write applies, the kept one still shown when a fresh one does not come), the どんメダル
  * plate (asked for only on screen, its words over it, one plate per season and state, one that
  * does not come, its id never in the window or on disk, the plate kept across sign-outs and
  * launches), the editor's
@@ -341,6 +341,8 @@ try {
     Object.keys(BRIDGE_CHANNELS),
   );
 
+  // The player's first My Don ever does not come: checked under the plate, below.
+  await fetch(`${HIROBA}/__mydon?answer=gif`);
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
@@ -410,6 +412,17 @@ try {
       `document.querySelector(${JSON.stringify(selector)})?.getAttribute(${JSON.stringify(name)}) ?? null`,
     );
   await waitForSeen(page, async () => (await attribute("#title-plate-image", "src")) ?? undefined);
+  // The player's first My Don ever, asked for after the plate, is the GIF the picture host draws
+  // nothing with: the tile stays empty, with no spinner, and the line under the card gives its
+  // code, which names the portrait alone, as the plate came.
+  await waitForSeen(page, async () => (await textOf("#pictures-code")) ?? undefined);
+  const MY_DON_GIF_CODE = "Code for a report: myDon=notPng status=200 type=image/gif bytes=43";
+  const myDonFailureAtSignIn =
+    (await myDonsSettled()) === 1 &&
+    !(await exists("#my-don-image")) &&
+    (await attribute("#my-don", "aria-busy")) === "false" &&
+    (await exists("#title-plate-image")) &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
   const plateBox = await page.evaluate<{ width: number; height: number }>(
     `(() => { const box = document.querySelector("#title-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
   );
@@ -420,7 +433,7 @@ try {
     (await textOf("#profile h2")) === "サンプルどん" &&
     (await textOf("#dan")) === "Dan: 九段" &&
     (await textOf("#title-plate-stand-in")) === null &&
-    (await textOf("#pictures-unavailable")) === null;
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
   // The plate sits on the app's own surface (the user's call, 2026-09-28): nothing from it up to
   // the card paints the yellow Hiroba draws around it, #FFCC00.
   results.plateOnAppSurface = await page.evaluate<boolean>(
@@ -439,30 +452,6 @@ try {
     !withPlate.includes("_token_v2") &&
     !tokens.some((token) => withPlate.includes(token));
   const platesAtSignIn = await platesSettled();
-
-  // The player's My Don under the plate, from the mock's picture host, the first time ever: once,
-  // square on its tile, named for screen readers, and neither its address nor its host in the window.
-  await waitForSeen(page, async () => (await attribute("#my-don-image", "src")) ?? undefined);
-  const myDonsAtSignIn = await myDonsSettled();
-  const tile = await page.evaluate<{ width: number; height: number }>(
-    `(() => { const box = document.querySelector("#my-don").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
-  );
-  results.myDonShown =
-    myDonsAtSignIn === 1 &&
-    (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true &&
-    (await attribute("#my-don-image", "alt")) === "Your マイどん, as Hiroba draws it" &&
-    tile.width > 0 &&
-    Math.abs(tile.width - tile.height) < 1 &&
-    !(await exists("#my-don-loading")) &&
-    !(await exists("#pictures-unavailable"));
-  const withMyDon = withoutPictureBytes(
-    await page.evaluate<string>("document.documentElement.outerHTML"),
-  );
-  results.myDonAddressKeptOutOfDom =
-    !withMyDon.includes("mydon_") &&
-    !withMyDon.includes("imgsrc") &&
-    !withMyDon.includes("img.127.0.0.1") &&
-    !withMyDon.includes("000000000000");
 
   // Picked while the profile is shown, a language redraws the screen in place: counts, percents and
   // times in its own forms, Hiroba's words as they were, and nothing asked of Hiroba, there or back.
@@ -518,11 +507,53 @@ try {
   await Bun.sleep(300);
   results.readsAfterReadAgain = await myPageHits();
 
+  // A first My Don that did not come is asked for once more after a read, as the plates are. It
+  // does not come this time either: the tile stays empty, and the line with it.
+  await waitForSeen(page, async () => (await myDonsAsked()).length > 1 || undefined);
+  const myDonsFailed = await myDonsSettled();
+  results.myDonFailureCoded =
+    myDonFailureAtSignIn &&
+    myDonsFailed === 2 &&
+    !(await exists("#my-don-image")) &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+
+  // Once the picture host draws it, the next Read again shows the player's My Don under the plate,
+  // the first time ever: once, square on its tile, named for screen readers, no line under the card,
+  // and neither its address nor its host in the window.
+  await fetch(`${HIROBA}/__mydon?answer=png`);
+  await click("#read-again");
+  await Bun.sleep(300);
+  await until("Read at");
+  await waitForSeen(page, async () => (await attribute("#my-don-image", "src")) ?? undefined);
+  const myDonsAtFirst = await myDonsSettled();
+  const tile = await page.evaluate<{ width: number; height: number }>(
+    `(() => { const box = document.querySelector("#my-don").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+  );
+  results.myDonShown =
+    myDonsAtFirst === myDonsFailed + 1 &&
+    (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true &&
+    (await attribute("#my-don-image", "alt")) === "Your マイどん, as Hiroba draws it" &&
+    tile.width > 0 &&
+    Math.abs(tile.width - tile.height) < 1 &&
+    !(await exists("#my-don-loading")) &&
+    !(await exists("#pictures-unavailable"));
+  const withMyDon = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.myDonAddressKeptOutOfDom =
+    !withMyDon.includes("mydon_") &&
+    !withMyDon.includes("imgsrc") &&
+    !withMyDon.includes("img.127.0.0.1") &&
+    !withMyDon.includes("000000000000");
+
   // The user's Read again renews the My Don: fetched anew once it is on screen, once, and kept.
-  await waitForSeen(page, async () => (await myDonsAsked()).length > myDonsAtSignIn || undefined);
+  await click("#read-again");
+  await Bun.sleep(300);
+  await until("Read at");
+  await waitForSeen(page, async () => (await myDonsAsked()).length > myDonsAtFirst || undefined);
   const myDonsAfterReadAgain = await myDonsSettled();
   results.myDonAgainOnReadAgain =
-    myDonsAfterReadAgain === myDonsAtSignIn + 1 &&
+    myDonsAfterReadAgain === myDonsAtFirst + 1 &&
     (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true;
   // One that does not come leaves the one kept on its tile, and no line under the card says so.
   const keptMyDon = await attribute("#my-don-image", "src");
