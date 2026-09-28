@@ -51,6 +51,7 @@ export const zhHant: Messages = {
   "panel.ranks": "分數評級",
   "panel.countOf": "{count}（共 {total}）",
   "panel.countTitle": "{name}：{count}（共 {total}）",
+  "panel.art": "成績面板",
   "medal.heading": "どんメダル",
   "medal.count": "已獲得：{count} 枚",
   "medal.complete": "COMPLETE",

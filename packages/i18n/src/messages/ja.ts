@@ -51,6 +51,7 @@ export const ja: Messages = {
   "panel.ranks": "スコアランク",
   "panel.countOf": "{count}（全{total}）",
   "panel.countTitle": "{name}：{count}（全{total}）",
+  "panel.art": "成績パネル",
   "medal.heading": "どんメダル",
   "medal.count": "獲得数：{count}枚",
   "medal.complete": "COMPLETE",

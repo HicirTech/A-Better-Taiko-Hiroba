@@ -50,6 +50,7 @@ export const en: Messages = {
   "panel.ranks": "Score ranks",
   "panel.countOf": "{count} of {total}",
   "panel.countTitle": "{name}: {count} of {total}",
+  "panel.art": "Score panel",
   "medal.heading": "どんメダル",
   "medal.count": "Collected: {count}",
   "medal.complete": "COMPLETE",

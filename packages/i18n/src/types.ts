@@ -122,6 +122,11 @@ export interface Messages {
   "panel.countOf": string;
   /** The same count, named, as the title of its legend item and its part of the bar. Adds {name}. */
   "panel.countTitle": string;
+  /**
+   * Names, for screen readers, Hiroba's own score panel at the top of the Overview: its art with the
+   * counts written over it. It has no heading to see, as on Hiroba.
+   */
+  "panel.art": string;
   "medal.heading": string;
   /** Param: {count}, the medals collected this season. */
   "medal.count": string;
