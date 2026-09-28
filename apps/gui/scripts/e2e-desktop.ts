@@ -2,7 +2,9 @@
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, the identity card on Hiroba's title plate (its text over it, one plate
- * per title, one that does not come, the plate kept across sign-outs and launches), the どんメダル
+ * per title, one that does not come, the plate kept across sign-outs and launches), the My Don
+ * portrait (from the picture host with no cookie, kept across launches and sign-ins, fetched anew
+ * on Read again, the kept one still shown when a fresh one does not come), the どんメダル
  * plate (asked for only on screen, its words over it, one plate per season and state, one that
  * does not come, its id never in the window or on disk, the plate kept across sign-outs and
  * launches), the editor's
@@ -163,6 +165,24 @@ const platesSettled = async () => {
     await Bun.sleep(1000);
   }
   return platesAsked();
+};
+/** A My Don portrait as the mock's picture host saw it asked for, with its cookies' names. */
+type PortraitAsked = { query: string; referer: string | null; cookies: string[] };
+/** Every portrait the app asked for this run, in order. */
+const myDonsAsked = async () =>
+  (await (await fetch(`${HIROBA}/__mydons`)).json()) as PortraitAsked[];
+/** The portraits asked for, once none more has been for a second. */
+const myDonsSettled = async () => {
+  let last = -1;
+  for (let tries = 0; tries < 30; tries++) {
+    const now = (await myDonsAsked()).length;
+    if (now === last) {
+      break;
+    }
+    last = now;
+    await Bun.sleep(1000);
+  }
+  return last;
 };
 /** Each plate asked for as my page asks for it: bare, with my page as the Referer, signed in. */
 const askedAsMyPage = (plates: PlateAsked[]) =>
@@ -419,6 +439,30 @@ try {
     !tokens.some((token) => withPlate.includes(token));
   const platesAtSignIn = await platesSettled();
 
+  // The player's My Don under the plate, from the mock's picture host, the first time ever: once,
+  // square on its tile, named for screen readers, and neither its address nor its host in the window.
+  await waitForSeen(page, async () => (await attribute("#my-don-image", "src")) ?? undefined);
+  const myDonsAtSignIn = await myDonsSettled();
+  const tile = await page.evaluate<{ width: number; height: number }>(
+    `(() => { const box = document.querySelector("#my-don").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+  );
+  results.myDonShown =
+    myDonsAtSignIn === 1 &&
+    (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true &&
+    (await attribute("#my-don-image", "alt")) === "Your マイどん, as Hiroba draws it" &&
+    tile.width > 0 &&
+    Math.abs(tile.width - tile.height) < 1 &&
+    !(await exists("#my-don-loading")) &&
+    !(await exists("#pictures-unavailable"));
+  const withMyDon = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.myDonAddressKeptOutOfDom =
+    !withMyDon.includes("mydon_") &&
+    !withMyDon.includes("imgsrc") &&
+    !withMyDon.includes("img.127.0.0.1") &&
+    !withMyDon.includes("000000000000");
+
   // Picked while the profile is shown, a language redraws the screen in place: counts, percents and
   // times in its own forms, Hiroba's words as they were, and nothing asked of Hiroba, there or back.
   const pickLanguage = async (locale: string) => {
@@ -472,6 +516,29 @@ try {
   await until("Read at");
   await Bun.sleep(300);
   results.readsAfterReadAgain = await myPageHits();
+
+  // The user's Read again renews the My Don: fetched anew once it is on screen, once, and kept.
+  await waitForSeen(page, async () => (await myDonsAsked()).length > myDonsAtSignIn || undefined);
+  const myDonsAfterReadAgain = await myDonsSettled();
+  results.myDonAgainOnReadAgain =
+    myDonsAfterReadAgain === myDonsAtSignIn + 1 &&
+    (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true;
+  // One that does not come leaves the one kept on its tile, and no line under the card says so.
+  const keptMyDon = await attribute("#my-don-image", "src");
+  await fetch(`${HIROBA}/__mydon?answer=gif`);
+  await click("#read-again");
+  await Bun.sleep(300);
+  await until("Read at");
+  await waitForSeen(
+    page,
+    async () => (await myDonsAsked()).length > myDonsAfterReadAgain || undefined,
+  );
+  const myDonsAfterGif = await myDonsSettled();
+  results.myDonMissingKeepsTheLast =
+    myDonsAfterGif === myDonsAfterReadAgain + 1 &&
+    (await attribute("#my-don-image", "src")) === keptMyDon &&
+    !(await exists("#pictures-unavailable"));
+  await fetch(`${HIROBA}/__mydon?answer=png`);
 
   // Hiroba hands out a new token on a redirect hop and ends the old one: the next read must still
   // work, and so must the one after it, which only the new token can pass.
@@ -1293,6 +1360,7 @@ try {
   // offered. Its clock is in Hiroba's daily break, and a write then sends nothing at all.
   const readsBeforeReopen = await myPageHits();
   const platesBeforeReopen = (await platesSettled()).length;
+  const myDonsBeforeReopen = await myDonsSettled();
   const medalPlatesBeforeReopen = await medalPlatesSettled();
   const thumbsBeforeReopen = (await thumbsSettled()).length;
   await stop(running);
@@ -1315,6 +1383,16 @@ try {
       )) || undefined,
   );
   results.plateOncePerDevice = (await platesSettled()).length === platesBeforeReopen;
+  // So does the My Don: the launch's read is the session's first, which renews nothing.
+  const myDonShownOn = (app: typeof running) =>
+    waitForSeen(
+      app.page,
+      async () =>
+        (await app.page.evaluate<boolean>(`document.querySelector("#my-don-image") !== null`)) ||
+        undefined,
+    );
+  await myDonShownOn(running);
+  results.myDonOncePerLaunch = (await myDonsSettled()) === myDonsBeforeReopen;
   /** Scrolls to the どんメダル plate, waits for its picture, and scrolls back to the top. */
   const medalPlateShown = async () => {
     await running.page.evaluate(
@@ -1381,6 +1459,7 @@ try {
   // Signed in, the card shows the editor's button shut, and says why, rather than no way to change
   // anything at all. Signed out again after, so the session is not left for the scan below.
   const platesSignedOut = (await platesAsked()).length;
+  const myDonsSignedOut = (await myDonsAsked()).length;
   const medalPlatesSignedOut = await hitsOn(MEDAL_PLATE);
   const thumbsSignedOut = (await thumbs()).length;
   await running.click("#sign-in");
@@ -1411,6 +1490,9 @@ try {
     (await platesSettled()).length === platesSignedOut &&
     (await thumbs()).length === thumbsSignedOut;
   results.medalPlateSurvivesSignOut = (await medalPlateShown()) === medalPlatesSignedOut;
+  // The My Don kept on disk too: a sign-in's read is its session's first, which renews nothing.
+  await myDonShownOn(running);
+  results.myDonKeptAtSignIn = (await myDonsSettled()) === myDonsSignedOut;
   // Signed out and in again, in the same run. A plate no later read has confirmed is not kept:
   // Hiroba draws a blank one for a session it ended unseen, so it is asked for again. Once a read
   // has confirmed it, it is kept, and the read after the next sign-in asks Hiroba for no plate
@@ -1450,6 +1532,17 @@ try {
   await running.click("#sign-out");
   await running.until("Sign in to Hiroba");
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
+  // Every portrait this run asked for went to the picture host as my page's src names it, with
+  // Hiroba's origin alone as the Referer, and with no cookie at all: the session is Hiroba's.
+  const portraits = await myDonsAsked();
+  results.myDonSentNoCookie =
+    portraits.length > 3 &&
+    portraits.every(
+      (portrait) =>
+        portrait.cookies.length === 0 &&
+        portrait.referer === `${HIROBA}/` &&
+        portrait.query === "?v=&kind=mydon&fn=mydon_000000000000",
+    );
 } finally {
   await stop(running);
   mock.kill();
