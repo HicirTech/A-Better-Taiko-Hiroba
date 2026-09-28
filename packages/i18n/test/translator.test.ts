@@ -41,6 +41,15 @@ describe("the translator's formats", () => {
     expect(dateTime(at)).toBe(new Date(at).toLocaleString("en"));
     expect(dateTime(Date.parse(at))).toBe(dateTime(new Date(at)));
   });
+
+  test.each([...LOCALES])("writes a moment it cannot read as a dash in %s", (locale) => {
+    const { dateTime } = createTranslator(locale);
+    expect([dateTime("not a time"), dateTime(Number.NaN), dateTime(new Date(""))]).toEqual([
+      "—",
+      "—",
+      "—",
+    ]);
+  });
 });
 
 describe("the catalog", () => {

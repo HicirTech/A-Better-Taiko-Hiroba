@@ -18,7 +18,10 @@ export interface Translator {
   t(key: MessageKey, params?: TranslateParams): string;
   /** A count as the locale writes it: 1,234 in English. */
   number(value: number): string;
-  /** A moment as the locale writes a date and a time of day, in the device's own time zone. */
+  /**
+   * A moment as the locale writes a date and a time of day, in the device's own time zone; a dash
+   * for one that reads as no date.
+   */
   dateTime(value: Date | number | string): string;
 }
 
@@ -42,6 +45,12 @@ const DATE_TIME: Intl.DateTimeFormatOptions = {
   second: "numeric",
 };
 
+/**
+ * A moment that reads as no date, such as one from a damaged record on disk. Intl throws on it,
+ * which would take the whole window down while it renders; a mark reads the same in every language.
+ */
+const UNKNOWN_TIME = "—";
+
 export function createTranslator(locale: Locale = DEFAULT_LOCALE): Translator {
   const table = CATALOG[locale];
   const numbers = new Intl.NumberFormat(locale);
@@ -50,6 +59,9 @@ export function createTranslator(locale: Locale = DEFAULT_LOCALE): Translator {
     locale,
     t: (key, params) => interpolate(table[key], params),
     number: (value) => numbers.format(value),
-    dateTime: (value) => dates.format(new Date(value)),
+    dateTime: (value) => {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? UNKNOWN_TIME : dates.format(date);
+    },
   };
 }
