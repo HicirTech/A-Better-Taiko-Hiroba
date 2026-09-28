@@ -7,4 +7,11 @@
  */
 export { detectLocale, isLocale, localeOfTag, matchLocale } from "./locale";
 export { createTranslator, type TranslateParams, type Translator } from "./translator";
-export { DEFAULT_LOCALE, LOCALES, type Locale, type MessageKey, type Messages } from "./types";
+export {
+  DEFAULT_LOCALE,
+  LOCALE_NAMES,
+  LOCALES,
+  type Locale,
+  type MessageKey,
+  type Messages,
+} from "./types";

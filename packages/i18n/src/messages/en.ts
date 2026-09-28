@@ -2,6 +2,7 @@ import type { Messages } from "../types";
 
 export const en: Messages = {
   "app.title": "A Better Taiko Hiroba",
+  "language.picker": "Language: {name}",
   "signIn.intro":
     "Sign in with your Bandai Namco ID to read your Donder Hiroba profile. The sign-in page is Hiroba's own; this app never sees your password.",
   "signIn.action": "Sign in to Hiroba",

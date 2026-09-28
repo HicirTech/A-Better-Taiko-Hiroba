@@ -1,7 +1,13 @@
-/** The locales the catalog carries. English only for now; ja and zh join here, not elsewhere. */
+/** The locales the catalog carries, in the order a language picker lists them. */
 export const LOCALES = ["en"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
+
+/**
+ * Each locale's name in its own language, as a language picker lists it: someone who cannot read the
+ * language the app is in can still find their own.
+ */
+export const LOCALE_NAMES: Readonly<Record<Locale, string>> = { en: "English" };
 
 /**
  * Every message key, and the one place that says which keys exist: a catalog missing a key, or
@@ -12,6 +18,11 @@ export const DEFAULT_LOCALE: Locale = "en";
  */
 export interface Messages {
   "app.title": string;
+  /**
+   * The app bar's language picker, for screen readers and as its tooltip. Param: {name}, the
+   * language the app is in, in its own words (LOCALE_NAMES).
+   */
+  "language.picker": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;

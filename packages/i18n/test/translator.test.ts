@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createTranslator, LOCALES } from "../src/index";
+import { createTranslator, LOCALE_NAMES, LOCALES } from "../src/index";
 import { en } from "../src/messages/en";
 
 describe("createTranslator", () => {
@@ -52,5 +52,9 @@ describe("the English catalog", () => {
 
   test("is the only locale so far", () => {
     expect([...LOCALES]).toEqual(["en"]);
+  });
+
+  test("names each locale in its own language", () => {
+    expect(LOCALES.map((locale) => LOCALE_NAMES[locale])).toEqual(["English"]);
   });
 });
