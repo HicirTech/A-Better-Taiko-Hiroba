@@ -17,11 +17,18 @@
  * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), and two that shape
  * the next my page: /__medal?state=none|collecting|complete|odd (the どんメダル plate: absent, a
  * count, COMPLETE, or a name alone, a shape no page has shown) and
- * /__variant?dan=0|1…15&label=png|gif&title=empty|set&region=unset|set&favorites=unset|set (each
- * optional; dan=0 writes the name row flat, as other players' dan-less profiles do, and dan=N
+ * /__variant?dan=0|1…15&label=png|gif&title=empty|set|other&region=unset|set&favorites=unset|set
+ * (each optional; dan=0 writes the name row flat, as other players' dan-less profiles do, and dan=N
  * shows the label of dan N, 14 (九段) at first; label=gif answers the label with the 43-byte 1×1
- * GIF Hiroba sends when it has nothing to draw; favorites=set sets the 大好きな曲 and fills the
- * お気に入り folder with three songs, two of them sharing a title).
+ * GIF Hiroba sends when it has nothing to draw; title=other wears a second title; favorites=set
+ * sets the 大好きな曲 and fills the お気に入り folder with three songs, two of them sharing a title).
+ *
+ * My page shows its title plate, imgsrc_titleplate.php with no query, as #mydon_area's first child,
+ * as Hiroba's does. As on Hiroba, the plate is drawn for a session only: a PNG of its own for each
+ * title (scripts/mock-pictures.ts), and without one a blank plate, a PNG as well, at 200. Its hooks:
+ * /__titleplate?answer=png|blank|gif (what the plate answers from now on: as described, the blank
+ * plate even with a session, or the 43-byte GIF) and /__titleplates (every plate asked for, in
+ * order, as {query, referer, session}; ?reset=1 clears).
  *
  * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
  * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
@@ -48,6 +55,7 @@
  */
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
+import { blankPlatePng, titlePlatePng } from "./mock-pictures";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
@@ -108,10 +116,17 @@ const variant = {
   /** 0 for no dan, or the dan, 1 to 15, whose label my page shows. */
   dan: 14,
   label: "png" as "png" | "gif",
-  title: true,
+  title: "set" as "set" | "other" | "empty",
   region: true,
   favorites: false,
 };
+
+/** The title my page shows in each title variant; each is a plate of its own. */
+const TITLES = { set: "サンプルの称号", other: "別のサンプル称号", empty: "" } as const;
+/** What the title plate answers, as /__titleplate last set it. */
+let titlePlateAnswer: "png" | "blank" | "gif" = "png";
+/** A title plate as it was asked for: its query, the page the request named, and a session. */
+const titlePlates: { query: string; referer: string | null; session: boolean }[] = [];
 
 /** The count in each score rank, 8 down to 2: every bucket non-zero, so each bar has a length. */
 const RANK_COUNTS: readonly [number, number][] = [
@@ -151,7 +166,8 @@ function myPage(): string {
     : "";
   return `
 <div id="mydon_area">
-  <div>${variant.title ? "サンプルの称号" : "\n\t\t"}</div>
+  <img src="imgsrc_titleplate.php" style="width: 100%;margin-bottom: -24px;position:relative;z-index:0;">
+  <div>${variant.title === "empty" ? "\n\t\t" : TITLES[variant.title]}</div>
   ${nameRow}
   <div><div class="detail"><p>国・地域 ：${variant.region ? "サンプル" : "未設定"}</p><p>太鼓番：000000000000</p></div>
     <div class="mydon_image"><img class="customd_mydon" src="data:,"></div></div>
@@ -269,6 +285,23 @@ Bun.serve({
           session?.cardChosen === true,
           request.headers.get("referer"),
         );
+      case "/imgsrc_titleplate.php": {
+        // Drawn for the session: whoever holds it, wearing what my page shows now.
+        const signedIn = session?.cardChosen === true;
+        titlePlates.push({
+          query: new URL(request.url).search,
+          referer: request.headers.get("referer"),
+          session: signedIn,
+        });
+        if (titlePlateAnswer === "gif") {
+          return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
+        }
+        const plate =
+          signedIn && titlePlateAnswer === "png"
+            ? titlePlatePng(TITLES[variant.title])
+            : blankPlatePng();
+        return new Response(plate, { headers: { "content-type": "image/png" } });
+      }
       case "/imgsrc_danlabel.php":
         // Public, as Hiroba's is: the query picks whose label, and no session is asked for.
         if (variant.dan === 0 || variant.label === "gif" || !searchParams.has("taiko_no")) {
@@ -313,11 +346,26 @@ Bun.serve({
         if (label === "png" || label === "gif") {
           variant.label = label;
         }
-        variant.title = flag("title", "set") ?? variant.title;
+        const title = searchParams.get("title");
+        if (title === "set" || title === "other" || title === "empty") {
+          variant.title = title;
+        }
         variant.region = flag("region", "set") ?? variant.region;
         variant.favorites = flag("favorites", "set") ?? variant.favorites;
         return Response.json(variant);
       }
+      case "/__titleplate": {
+        const answer = searchParams.get("answer");
+        if (answer === "png" || answer === "blank" || answer === "gif") {
+          titlePlateAnswer = answer;
+        }
+        return new Response(titlePlateAnswer);
+      }
+      case "/__titleplates":
+        if (searchParams.get("reset") === "1") {
+          titlePlates.length = 0;
+        }
+        return Response.json(titlePlates);
       case "/__cross-origin":
         return redirect(`${IDP}/__echo-cookie`);
       case "/__same-origin":
