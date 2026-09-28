@@ -14,7 +14,9 @@
  * (the next my-page read hands out a new token and ends the old one), /__hits?path=/mypage_top.php
  * (requests so far to that path), /__hits-reset, /__hold?on=1 or 0 (the ID form waits for a
  * tap instead of submitting itself, so a cancel or the back key can be tried there),
- * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), and two that shape
+ * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), /__hold-read?on=1
+ * or 0 (each read of my page is held unanswered, so a test can look at the app while it reads; 0
+ * lets every held one go), and two that shape
  * the next my page: /__medal?state=none|collecting|complete|odd&season=1|2 (the どんメダル plate:
  * absent, a count, COMPLETE, or a name alone, a shape no page has shown; each optional, and season
  * 2 is a new season, with a name and a plate id of its own) and
@@ -109,6 +111,9 @@ let rotateNext = false;
 let holdIdForm = false;
 let sendOffsite = false;
 let postToLogin = false;
+/** Set while /__hold-read?on=1 holds every read of my page unanswered; lets them all go. */
+let releaseReads: (() => void) | null = null;
+let readsHeld: Promise<void> = Promise.resolve();
 const hits = new Map<string, number>();
 /** Every request that is not a hook, in order, as "METHOD /path". */
 const requestLog: string[] = [];
@@ -373,6 +378,7 @@ Bun.serve({
             "set-cookie": `_token_v2=${lastIssued}; Domain=.${HIROBA_HOST}; Path=/; Max-Age=2592000`,
           });
         }
+        await readsHeld;
         // My page carries forms (rename, 大好きな曲) with a token, so reading it issues a new one.
         costume.issueTicket(session);
         return page(myPage());
@@ -471,6 +477,19 @@ Bun.serve({
       case "/__offsite":
         sendOffsite = searchParams.get("on") === "1";
         return new Response(sendOffsite ? "offsite" : "onsite");
+      case "/__hold-read": {
+        const on = searchParams.get("on");
+        if (on === "1" && releaseReads === null) {
+          readsHeld = new Promise((resolve) => {
+            releaseReads = resolve;
+          });
+        } else if (on === "0") {
+          releaseReads?.();
+          releaseReads = null;
+          readsHeld = Promise.resolve();
+        }
+        return new Response(releaseReads === null ? "flowing" : "holding");
+      }
       case "/__medal": {
         const state = searchParams.get("state");
         if (state === "none" || state === "collecting" || state === "complete" || state === "odd") {
