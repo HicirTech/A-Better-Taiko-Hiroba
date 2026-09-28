@@ -6,7 +6,7 @@ import { HIROBA_LANG } from "../language/show-language";
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
-import { HIROBA_BLOCK, hirobaPx, ONE_LINE, VISUALLY_HIDDEN } from "./hiroba-px";
+import { HIROBA_BLOCK, hirobaPx, ONE_LINE, OUTLINED, VISUALLY_HIDDEN } from "./hiroba-px";
 import { MyDonPortrait } from "./my-don-portrait";
 
 /** Hiroba's header, #mydon_area: the plate is 290 pixels wide. */
@@ -29,10 +29,6 @@ const ON_PLATE = "#000";
 const BAND = "#fff1c2";
 const NAME_BOX = "#f8f0e0";
 const DAN_BOX = "#5a8df2";
-/** A dan's name drawn without its label: white, outlined in a dark 1px line all round. */
-const OUTLINED = ["-1px -1px", "1px -1px", "-1px 1px", "1px 1px"]
-  .map((offset) => `${offset} 0 #1a1a1a`)
-  .join(", ");
 const PLATE: PictureWant = { kind: "titlePlate" };
 const MY_DON: PictureWant = { kind: "myDon" };
 

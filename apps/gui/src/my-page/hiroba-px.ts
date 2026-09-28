@@ -41,3 +41,8 @@ export const ONE_LINE = {
   overflow: "hidden",
   textOverflow: "ellipsis",
 } as const;
+
+/** A text shadow that outlines light words in a dark 1px line all round, as Hiroba draws some. */
+export const OUTLINED = ["-1px -1px", "1px -1px", "-1px 1px", "1px 1px"]
+  .map((offset) => `${offset} 0 #1a1a1a`)
+  .join(", ");
