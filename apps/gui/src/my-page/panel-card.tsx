@@ -1,4 +1,4 @@
-import { SCORE_RANK_NAMES, type ScoreRank } from "@abth/core";
+import { SCORE_RANK_NAMES, SCORE_RANK_TIERS, type ScoreRank } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Card, CardContent, Stack, Typography } from "@mui/material";
 
@@ -23,8 +23,8 @@ const RANK_COLOUR: Readonly<Record<ScoreRank, string>> = {
   8: RAINBOW,
 };
 
-/** The seven ranks, best first, as the user listed them. */
-const RANKS_BEST_FIRST: readonly ScoreRank[] = [8, 7, 6, 5, 4, 3, 2];
+/** The seven ranks from 白粋 to 虹極, left to right (the user's call, 2026-09-29). */
+const RANKS_WORST_FIRST: readonly ScoreRank[] = SCORE_RANK_TIERS.flatMap((tier) => tier.ranks);
 
 /**
  * Each crown's colour, the mean of its icon's coloured pixels (reference/crown-icons): silver
@@ -52,7 +52,7 @@ export function PanelCard({
   i18n: Translator;
 }) {
   const { t } = i18n;
-  const rankItems: ShareItem[] = RANKS_BEST_FIRST.map((rank) => ({
+  const rankItems: ShareItem[] = RANKS_WORST_FIRST.map((rank) => ({
     id: `rank-${rank}`,
     name: SCORE_RANK_NAMES[rank],
     lang: HIROBA_LANG,

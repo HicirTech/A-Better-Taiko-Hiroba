@@ -349,18 +349,19 @@ try {
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
   results.profileShown = (await textOf("#crowns-silver")) === "11 of 14";
   // The panel drawn as GitHub's "Languages" box (the user's call, 2026-09-28), from the mock's fixed
-  // counts: ranks 8 down to 2 at 3, 12, 25, 31, 18, 9 and 4, and crowns 11, 2 and 1. Each legend
+  // counts: ranks 2 up to 8 at 4, 9, 18, 31, 25, 12 and 3, and crowns 11, 2 and 1. Each legend
   // item is a name, its share of its block and, for screen readers, its count; each part of a bar
-  // names its count in its title. The ranks best first, the crowns silver, gold and donderful.
+  // names its count in its title. The ranks from 白粋 to 虹極, left to right (the user's call,
+  // 2026-09-29), the crowns silver, gold and donderful.
   type Share = readonly [name: string, percent: string, count: number];
   const RANK_SHARES: readonly Share[] = [
-    ["虹極", "2.9%", 3],
-    ["紫雅", "11.8%", 12],
-    ["桃雅", "24.5%", 25],
-    ["金雅", "30.4%", 31],
-    ["銀粋", "17.6%", 18],
-    ["銅粋", "8.8%", 9],
     ["白粋", "3.9%", 4],
+    ["銅粋", "8.8%", 9],
+    ["銀粋", "17.6%", 18],
+    ["金雅", "30.4%", 31],
+    ["桃雅", "24.5%", 25],
+    ["紫雅", "11.8%", 12],
+    ["虹極", "2.9%", 3],
   ];
   const CROWN_SHARES: readonly Share[] = [
     ["Silver", "78.6%", 11],
@@ -498,7 +499,7 @@ try {
       await page.evaluate<string[]>(
         `[...document.querySelectorAll('#ranks [lang="ja"]')].map((node) => node.textContent)`,
       ),
-      ["虹極", "紫雅", "桃雅", "金雅", "銀粋", "銅粋", "白粋"],
+      ["白粋", "銅粋", "銀粋", "金雅", "桃雅", "紫雅", "虹極"],
     ) &&
     (await page.evaluate<number>(`document.querySelectorAll("#crowns [lang]").length`)) === 0;
 
@@ -716,13 +717,13 @@ try {
   await click("#read-again");
   await waitFor(async () => ((await textOf("#crowns-silver")) === "0 of 0" ? true : undefined));
   const ZERO_RANK_SHARES: readonly Share[] = [
-    ["虹極", "0.0%", 0],
-    ["紫雅", "12.1%", 12],
-    ["桃雅", "25.3%", 25],
-    ["金雅", "31.3%", 31],
-    ["銀粋", "18.2%", 18],
-    ["銅粋", "9.1%", 9],
     ["白粋", "4.0%", 4],
+    ["銅粋", "9.1%", 9],
+    ["銀粋", "18.2%", 18],
+    ["金雅", "31.3%", 31],
+    ["桃雅", "25.3%", 25],
+    ["紫雅", "12.1%", 12],
+    ["虹極", "0.0%", 0],
   ];
   const ZERO_CROWN_SHARES: readonly Share[] = CROWN_SHARES.map(([name]) => [name, "0.0%", 0]);
   const trackOf = (bar: string) =>
@@ -732,7 +733,7 @@ try {
   const NO_TRACK = "rgba(0, 0, 0, 0)";
   results.panelZerosShown =
     same(await allOf("#ranks li", "textContent"), legendOf(ZERO_RANK_SHARES, 99)) &&
-    same(await allOf("#ranks-bar > *", "title"), barOf(ZERO_RANK_SHARES.slice(1), 99)) &&
+    same(await allOf("#ranks-bar > *", "title"), barOf(ZERO_RANK_SHARES.slice(0, -1), 99)) &&
     same(await allOf("#crowns li", "textContent"), legendOf(ZERO_CROWN_SHARES, 0)) &&
     (await allOf("#crowns-bar > *", "title")).length === 0 &&
     (await trackOf("#crowns-bar")) !== NO_TRACK &&
