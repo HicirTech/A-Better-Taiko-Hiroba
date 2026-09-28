@@ -208,6 +208,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
+      // Every read but the session's first is the user's Read again: the portrait is renewed.
+      pictures.myPageAsked();
       const read = await readOwnProfile(transport, endpoints);
       if (!read.ok && sessionEnded(read.error)) {
         await forget();

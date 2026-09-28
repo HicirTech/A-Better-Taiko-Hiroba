@@ -149,3 +149,54 @@ describe("pictureSourcesOf, the どんメダル plate", () => {
     }
   });
 });
+
+describe("pictureSourcesOf, the My Don portrait", () => {
+  const WITH_HOST = { ...ENDPOINTS, imgOrigin: "https://img.test" };
+  const PORTRAIT = "https://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
+  /** A page showing the portrait `src`. */
+  const withPortrait = (src: string | null): Profile => ({
+    ...profile("imgsrc_titleplate.php"),
+    myDonImageUrl: src,
+  });
+
+  test("takes the portrait my page shows, on the picture host, by the page's own number", () => {
+    expect(pictureSourcesOf(withPortrait(PORTRAIT), WITH_HOST).myDon).toEqual({ v: "" });
+    expect(
+      pictureSourcesOf(withPortrait(PORTRAIT.replace("v=", "v=2026.09-a")), WITH_HOST).myDon,
+    ).toEqual({ v: "2026.09-a" });
+  });
+
+  test("a page that shows none has none", () => {
+    expect(pictureSourcesOf(withPortrait(null), WITH_HOST).myDon).toBe("notShown");
+  });
+
+  test("holds no source to a picture host there is none of", () => {
+    expect(pictureSourcesOf(withPortrait(PORTRAIT), ENDPOINTS).myDon).toBe("unexpectedSrc");
+  });
+
+  test("refuses any other source, rather than correct it", () => {
+    for (const src of [
+      "https://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_111111111111",
+      "https://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000&x=1",
+      "https://img.test/imgsrc.php?kind=mydon&v=&fn=mydon_000000000000",
+      "https://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000#top",
+      "https://img.test/imgsrc.php?v=a%2Fb&kind=mydon&fn=mydon_000000000000",
+      `https://img.test/imgsrc.php?v=${"a".repeat(33)}&kind=mydon&fn=mydon_000000000000`,
+      "https://img.test/imgsrc.php?v=&kind=other&fn=mydon_000000000000",
+      "https://img.test/imgsrc.phpx?v=&kind=mydon&fn=mydon_000000000000",
+      "https://img.test/other/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000",
+      "http://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000",
+      "https://user@img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000",
+      "https://elsewhere.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000",
+      "imgsrc.php?v=&kind=mydon&fn=mydon_000000000000",
+      "https://hiroba.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000",
+      "data:image/png;base64,AAAA",
+      "http://[",
+    ]) {
+      expect([src, pictureSourcesOf(withPortrait(src), WITH_HOST).myDon]).toEqual([
+        src,
+        "unexpectedSrc",
+      ]);
+    }
+  });
+});

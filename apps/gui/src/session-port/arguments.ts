@@ -51,7 +51,7 @@ const isWhole = (value: unknown, least: number, most: number): value is number =
   Number.isInteger(value) && (value as number) >= least && (value as number) <= most;
 
 /** The kinds of picture that name nothing but their kind: the platform knows which one it means. */
-const KIND_ONLY_PICTURES: readonly string[] = ["titlePlate", "medalPlate"];
+const KIND_ONLY_PICTURES: readonly string[] = ["titlePlate", "medalPlate", "myDon"];
 
 /**
  * A picture the interface may ask for, and nothing else: a kind, and for an item's thumbnail its

@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
-import { medalPlatePng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
+import { medalPlatePng, myDonPng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
 import { native, nativeBase64 } from "./capacitor-fakes";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
@@ -333,6 +333,7 @@ describe("createAndroidPort's pictures", () => {
   const THUMB = { kind: "costumeItem", slot: 1, id: 36 } as const;
   const PLATE = { kind: "titlePlate" } as const;
   const MEDAL = { kind: "medalPlate" } as const;
+  const MY_DON = { kind: "myDon" } as const;
 
   /** Answers the editor with the mock's page and a thumbnail with the mock's picture. */
   function answerAsHiroba() {
@@ -594,6 +595,59 @@ describe("createAndroidPort's pictures", () => {
       `${HIROBA}/mypage_top.php`,
     ]);
     expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/mypage_top.php` });
+  });
+
+  test("asks for the My Don off Hiroba once, keeps it across launches, and anew after Read again", async () => {
+    const portrait = "https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
+    const withPortrait = MY_PAGE.replace(
+      "<p>太鼓番：000000000000</p></div></div>",
+      `<p>太鼓番：000000000000</p></div>
+    <div class="mydon_image"><img class="customd_mydon" src="${portrait}"></div></div>`,
+    );
+    let wearing = [12, 12, 5, 0, 0, 68, 0, 0];
+    native.httpAnswer = async () => {
+      const asked = native.httpRequests.at(-1)?.url ?? "";
+      const drawn = asked === portrait;
+      return {
+        status: 200,
+        url: asked,
+        headers: { "Content-Type": drawn ? "image/png" : "text/html; charset=UTF-8" },
+        data: nativeBase64(drawn ? myDonPng(wearing) : withPortrait),
+      };
+    };
+    const indexedDb = createFakeIndexedDb();
+    const launch = () =>
+      createAndroidPort({
+        closeLabel: () => CLOSE_LABEL,
+        signedInFlag: memoryFlag(true),
+        indexedDb: indexedDb.factory,
+      });
+    const first = await launch();
+    const read = await first.readProfile();
+    const before = await first.readPicture(MY_DON);
+    expect(before.ok && [before.value.width, before.value.height]).toEqual([290, 290]);
+    expect(await first.readPicture(MY_DON)).toEqual(before);
+    // The address names the taiko number: the platform's alone.
+    expect(JSON.stringify(read)).not.toMatch(/mydon|taiko-p/);
+    // Changed elsewhere, then the user's Read again: fetched anew, once.
+    wearing = [12, 12, 3, 0, 0, 68, 0, 0];
+    await first.readProfile();
+    const after = await first.readPicture(MY_DON);
+    expect(after).not.toEqual(before);
+    expect(await first.readPicture(MY_DON)).toEqual(after);
+
+    const relaunched = await launch();
+    await relaunched.readProfile();
+    expect(await relaunched.readPicture(MY_DON)).toEqual(after);
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_top.php`,
+      portrait,
+      `${HIROBA}/mypage_top.php`,
+      portrait,
+      `${HIROBA}/mypage_top.php`,
+    ]);
+    expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/` });
+    expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
   });
 
   test("forgets what the editor offered when the session goes", async () => {

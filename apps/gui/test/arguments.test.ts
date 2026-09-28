@@ -92,9 +92,10 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     expect(check([{ id: 1, slot: 3, kind: "costumeItem" }])).toBe(true);
   });
 
-  test("takes the title plate and the どんメダル plate by their kind alone", () => {
+  test("takes the title plate, the どんメダル plate and the My Don by their kind alone", () => {
     expect(PORT_ARGUMENTS.readPicture([{ kind: "titlePlate" }])).toBe(true);
     expect(PORT_ARGUMENTS.readPicture([{ kind: "medalPlate" }])).toBe(true);
+    expect(PORT_ARGUMENTS.readPicture([{ kind: "myDon" }])).toBe(true);
   });
 
   test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
@@ -122,6 +123,9 @@ describe("PORT_ARGUMENTS.readPicture", () => {
       [{ kind: "medalPlate", id: "0123456789abcdef0123456789abcdef0123456789abcdef" }],
       [{ kind: "medalPlate", src: "imgsrc_tokenplate.php?id=0123456789abcdef" }],
       [{ kind: "medalPlate", progress: "complete" }],
+      [{ kind: "myDon", fn: "mydon_111111111111" }],
+      [{ kind: "myDon", url: "https://example.test/imgsrc.php?v=&kind=mydon" }],
+      [{ kind: "myDon", fresh: true }],
       [{ kind: "costumeItem" }],
       [{ kind: "scorePanel" }],
       [{ kind: "toString" }],

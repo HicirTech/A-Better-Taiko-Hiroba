@@ -18,12 +18,21 @@ import {
 import type { HirobaQueue } from "./hiroba-queue";
 import {
   MEDAL_PLATE_PATH,
+  MY_DON_PATH,
   type MedalPlateSource,
+  type MyDonSource,
   type NoPictureSource,
   type PictureSources,
   TITLE_PLATE_PATH,
 } from "./picture-sources";
-import { checkPng, describeAnswer, type PngRefusal, type PngRules, pngDataUrl } from "./png-answer";
+import {
+  type AskedPlace,
+  checkPng,
+  describeAnswer,
+  type PngRefusal,
+  type PngRules,
+  pngDataUrl,
+} from "./png-answer";
 import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "./picture-store";
 import type { HirobaEndpoints } from "./types";
 
@@ -43,6 +52,11 @@ const ITEM_RULES = { minBytes: 128, maxBytes: 64 * 1024, maxSide: 512 } as const
  * 1280 pixels wide or 400 high is not one either.
  */
 const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280, maxHeight: 400 };
+/**
+ * The My Don portrait, 62842 B the one time it was fetched (wiki: Page Map). Under 5 KiB is not a
+ * portrait; over 512 KiB or 640 pixels a side is not one either.
+ */
+const MY_DON_RULES = { minBytes: 5 * 1024, maxBytes: 512 * 1024, maxSide: 640 } as const;
 /** The slot each costume value of a set is in, きぐるみ first. */
 const WORN = ["costume1", "costume2", "costume3", "costume4", "costume5"] as const;
 
@@ -125,6 +139,13 @@ export interface PictureReader {
    */
   confirm(owner: string): Promise<void>;
   /**
+   * A read of my page is about to go out. A session's first is the one opening the app or a
+   * sign-in makes; each after it is the user's own Read again, after which the My Don portrait, the
+   * one kept picture that can change under the same address, is fetched anew the next time it is
+   * asked for: it may show a costume changed anywhere since.
+   */
+  myPageAsked(): void;
+  /**
    * Forgets the run's pictures on their way, and the plates not yet confirmed: they are neither
    * shared with a later call nor kept. Called whenever the session goes.
    */
@@ -157,9 +178,9 @@ export function offeredOf(editor: CostumeEditorView): ReadonlySet<string> {
 interface PictureRequest {
   readonly kind: PictureWant["kind"];
   readonly url: string;
-  readonly path: string;
   readonly referer: string;
-  readonly rules: PngRules;
+  /** Where the answer must come from is among them: on Hiroba, or on the picture host. */
+  readonly rules: PngRules & { readonly at: AskedPlace };
   readonly key: PictureKey;
   /**
    * Kept only once a later read of my page finds the session good, and shown till then: the bare
@@ -171,9 +192,9 @@ interface PictureRequest {
 /**
  * Why the platform's state allows no request for a picture, before anything is sent: an item the
  * last editor read did not offer; a picture of my page before the run's first read of it, one the
- * page did not show, or one whose source failed its pattern.
+ * page did not show, or one whose source failed its pattern; the portrait with no picture host.
  */
-type Refusal = "notOffered" | "notRead" | "notShown" | "unexpectedSrc";
+type Refusal = "notOffered" | "notRead" | "notShown" | "unexpectedSrc" | "noHost";
 
 /**
  * The request for `want`, built from a fixed path and what `state` holds, or why there is none.
@@ -192,7 +213,6 @@ function requestOf(
     return {
       kind: want.kind,
       url: `${origin}${ITEM_PATH}?cos=${want.id}&type=${want.slot}`,
-      path: ITEM_PATH,
       // As Hiroba's own editor loads them, and as the preview is asked for.
       referer: `${origin}/mypage_kisekae.php`,
       rules: { ...ITEM_RULES, at: { origin, path: ITEM_PATH } },
@@ -214,6 +234,9 @@ function requestOf(
   if (want.kind === "medalPlate") {
     return medalPlateRequest(sources.medalPlate, owner, origin);
   }
+  if (want.kind === "myDon") {
+    return myDonRequest(sources.myDon, owner, endpoints);
+  }
   const plate = sources.titlePlate;
   if (typeof plate === "string") {
     return plate;
@@ -223,7 +246,6 @@ function requestOf(
   return {
     kind: want.kind,
     url: `${origin}${TITLE_PLATE_PATH}${query}`,
-    path: TITLE_PLATE_PATH,
     // As my page loads it.
     referer: `${origin}/mypage_top.php`,
     rules: { ...PLATE_RULES, at: { origin, path: TITLE_PLATE_PATH } },
@@ -252,7 +274,6 @@ function medalPlateRequest(
   return {
     kind: "medalPlate",
     url: `${origin}${MEDAL_PLATE_PATH}?id=${plate.id}`,
-    path: MEDAL_PLATE_PATH,
     // As my page loads it.
     referer: `${origin}/mypage_top.php`,
     rules: { ...PLATE_RULES, at: { origin, path: MEDAL_PLATE_PATH } },
@@ -270,6 +291,37 @@ function medalPlateRequest(
 }
 
 /**
+ * The request for the My Don portrait `portrait` names, on `owner`'s page, from the picture host
+ * off Hiroba, or why there is none. Never sent the session: the transports keep it for Hiroba.
+ */
+function myDonRequest(
+  portrait: MyDonSource | NoPictureSource,
+  owner: string,
+  endpoints: HirobaEndpoints,
+): PictureRequest | Refusal {
+  const origin = endpoints.imgOrigin;
+  if (origin === null) {
+    return "noHost";
+  }
+  if (typeof portrait === "string") {
+    return portrait;
+  }
+  return {
+    kind: "myDon",
+    url: `${origin}${MY_DON_PATH}?v=${portrait.v}&kind=mydon&fn=mydon_${owner}`,
+    // What a browser sends another site from my page: Hiroba's origin alone.
+    referer: `${endpoints.hirobaOrigin}/`,
+    rules: { ...MY_DON_RULES, at: { origin, path: MY_DON_PATH } },
+    // The player's own, under them alone, and one only: the last fetched, which a costume changed
+    // since leaves behind, so it is fetched anew then (`myPageAsked`). The name is hashed before it
+    // is filed, the player too.
+    key: { scope: "player", player: owner, name: `${PICTURE_EPOCH}/mydon` },
+    // Keyed by the taiko number, public: the same with a session or without one (wiki: Page Map).
+    keptAfterRead: false,
+  };
+}
+
+/**
  * The pictures of Hiroba the window may show, fetched by the platform with the session and handed
  * over as bytes, for both shells. The window names what it wants; the address is built here from a
  * fixed path and checked numbers, or what the platform read off my page, and only for what its
@@ -282,6 +334,10 @@ function medalPlateRequest(
  * not the picture is a failure with codes, which is neither kept nor the end of the session. A bare
  * plate is kept only once a later read of my page confirms it, and until then answers repeats
  * within its session.
+ *
+ * The My Don portrait, from the picture host off Hiroba and never with the session, is the one kept
+ * picture that can change under its address: it is kept, one per player, and fetched anew when next
+ * asked for after the user's Read again (`myPageAsked`). If that fetch fails, the one kept answers.
  */
 export function createPictureReader(options: PictureReaderOptions): PictureReader {
   const { transport, endpoints, store, queue, limits } = options;
@@ -300,6 +356,18 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
    */
   const unconfirmed = new Map<string, { readonly key: PictureKey; readonly bytes: Uint8Array }>();
   const idOf = (key: PictureKey) => `${key.scope}|${key.player ?? ""}|${key.name}`;
+  /** Reads of my page asked for in this session: its first is not the user's Read again. */
+  let myPageReads = 0;
+  /**
+   * How many times this run the portrait may have changed, and as of which of them the one kept was
+   * fetched: kept as of an earlier one, it is fetched anew when next asked for. A change is one
+   * whoever signs in next, so neither goes with the session.
+   */
+  let myDonChanges = 0;
+  let myDonKeptAsOf = 0;
+  /** Whether `request` is the portrait, kept from before a change and not fetched since. */
+  const isStale = (request: PictureRequest) =>
+    request.kind === "myDon" && myDonKeptAsOf < myDonChanges;
 
   const failed = (
     kind: string,
@@ -310,7 +378,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   ): Result<never, PictureFailure> => {
     const parts = [`${kind}=${why}`];
     if (response !== undefined && request !== undefined) {
-      parts.push(describeAnswer(response, { path: request.path, origin: endpoints.hirobaOrigin }));
+      parts.push(describeAnswer(response, request.rules.at));
     }
     if (refusal?.why === "badSize") {
       parts.push(`size=${refusal.width}x${refusal.height}`);
@@ -344,6 +412,19 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     }
   };
 
+  /**
+   * `failure`, or, for a stale portrait, the one kept from before, which stays stale: where the
+   * network is poor, as at an arcade, the last costume shown is better than none.
+   */
+  const orKept = async (
+    stale: boolean,
+    request: PictureRequest,
+    failure: Result<never, PictureFailure>,
+  ): Promise<Result<PictureView, PictureFailure>> => {
+    const before = stale ? await kept(request) : null;
+    return before === null ? failure : ok(before);
+  };
+
   const fetchPicture = async (
     want: PictureWant,
     since: number,
@@ -364,12 +445,15 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         fetched -= 1;
         return failed(want.kind, request);
       }
-      // That title's plate may be kept already: then the store answers, and nothing is sent.
-      const view = await kept(request);
+      // That title's plate may be kept already: then the store answers, and nothing is sent. A stale
+      // portrait is fetched anew.
+      const stale = isStale(request);
+      const view = stale ? null : await kept(request);
       if (view !== null) {
         fetched -= 1;
         return ok(view);
       }
+      const asOf = myDonChanges;
       const signal = limits.timeoutMs === null ? undefined : AbortSignal.timeout(limits.timeoutMs);
       const sent = await transport.send(
         {
@@ -382,18 +466,25 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       lastFetchEnded = clock.now();
       if (isErr(sent)) {
         const gaveUp = sent.error.kind === "cancelled" && signal?.aborted === true;
-        return failed(request.kind, gaveUp ? "timedOut" : sent.error.kind);
+        return orKept(stale, request, failed(request.kind, gaveUp ? "timedOut" : sent.error.kind));
       }
       const checked = checkPng(sent.value, request.rules);
       if (isErr(checked) || checked.value.size === null) {
         const refusal: PngRefusal = isErr(checked) ? checked.error : { why: "notPngBytes" };
-        return failed(request.kind, refusal.why, sent.value, request, refusal);
+        return orKept(
+          stale,
+          request,
+          failed(request.kind, refusal.why, sent.value, request, refusal),
+        );
       }
       if (since === generation && request.keptAfterRead) {
         unconfirmed.set(idOf(request.key), { key: request.key, bytes: checked.value.bytes });
       } else if (since === generation) {
         try {
           await store.put(request.key, checked.value.bytes);
+          if (request.kind === "myDon") {
+            myDonKeptAsOf = Math.max(myDonKeptAsOf, asOf);
+          }
         } catch {
           // Only the store's copy is lost: the picture is fetched again the next time.
         }
@@ -415,7 +506,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       if (typeof request === "string") {
         return failed(want.kind, request);
       }
-      const view = await kept(request);
+      const view = isStale(request) ? null : await kept(request);
       if (view !== null) {
         return ok(view);
       }
@@ -448,8 +539,15 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         unconfirmed.delete(id);
       }
     },
+    myPageAsked() {
+      myPageReads += 1;
+      if (myPageReads > 1) {
+        myDonChanges += 1;
+      }
+    },
     forget() {
       generation += 1;
+      myPageReads = 0;
       inFlight.clear();
       unconfirmed.clear();
     },

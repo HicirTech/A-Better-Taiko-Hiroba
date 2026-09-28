@@ -15,7 +15,7 @@ const ENDPOINTS = {
   hirobaOrigin: "https://hiroba.test",
   idpHost: "id.test",
   idpDomain: "id.test",
-  imgOrigin: null,
+  imgOrigin: "https://img.test",
 };
 const NOW = () => new Date("2026-09-27T00:00:00.000Z");
 const MY_PAGE_URL = "https://hiroba.test/mypage_top.php";
@@ -29,7 +29,7 @@ const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head
   <div>サンプルの称号</div>
   <div><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>
   <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div>
-    <div class="mydon_image"><img class="customd_mydon" src="https://img.test/mydon.png"></div></div>
+    <div class="mydon_image"><img class="customd_mydon" src="https://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000"></div></div>
   <div class="total_score">
     <img src="image/sp/640/total_score_image_5.png">
     <div class="best_rank_score_8 total_panel_display">7</div>
@@ -186,6 +186,7 @@ describe("readProfile", () => {
     expect(own.value.pictures).toEqual({
       titlePlate: { form: "bare", title: "サンプルの称号" },
       medalPlate: { id: MEDAL_PLATE_ID, progress: "complete" },
+      myDon: { v: "" },
     });
     expect(own.value.view).toEqual(view.value);
     const shown = withoutPictureBytes(JSON.stringify(own.value.view));
@@ -193,6 +194,8 @@ describe("readProfile", () => {
     expect(shown).not.toContain("titleplate");
     expect(shown).not.toContain("tokenplate");
     expect(shown).not.toContain(MEDAL_PLATE_ID);
+    expect(shown).not.toContain("mydon");
+    expect(shown).not.toContain("img.test");
   });
 
   test("reads a redirect to the login page as a lost session, without parsing or a label", async () => {

@@ -25,6 +25,7 @@ export {
 } from "./picture-store";
 export {
   type MedalPlateSource,
+  type MyDonSource,
   type NoPictureSource,
   type PictureSources,
   pictureSourcesOf,

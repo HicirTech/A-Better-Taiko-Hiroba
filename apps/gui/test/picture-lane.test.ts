@@ -15,6 +15,7 @@ const item = (id: number, slot: 1 | 2 | 3 | 4 | 5 = 1): PictureWant => ({
 });
 const PLATE: PictureWant = { kind: "titlePlate" };
 const MEDAL: PictureWant = { kind: "medalPlate" };
+const MY_DON: PictureWant = { kind: "myDon" };
 const view = (id: number): PictureView => ({
   src: `data:image/png;base64,${id}`,
   width: 40,
@@ -149,6 +150,20 @@ describe("createPictureLane", () => {
     await port.answer(ok(view(2)));
     expect(port.asked).toEqual(["titlePlate", "medalPlate", "1/10"]);
     expect(lane.peek(MEDAL)).toEqual({ view: view(2) });
+  });
+
+  test("asks for the My Don after my page's plates, before thumbnails", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(item(10), { order: 0 });
+    lane.ask(MY_DON, { order: 0 });
+    lane.ask(MEDAL, { order: 1 });
+    lane.ask(PLATE, { order: 5 });
+    await advance(150);
+    await port.answer(ok(view(1)));
+    await port.answer(ok(view(2)));
+    await port.answer(ok(view(3)));
+    expect(port.asked).toEqual(["titlePlate", "medalPlate", "myDon", "1/10"]);
+    expect(lane.peek(MY_DON)).toEqual({ view: view(3) });
   });
 
   test("forgets the failures of one kind only, a kind with no numbers among them", async () => {

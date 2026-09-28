@@ -118,6 +118,8 @@ export type CostumeSlot = 1 | 2 | 3 | 4 | 5;
  *   under the title it showed. It names nothing more: the platform knows whose page it read.
  * - `medalPlate`: the どんメダル plate the medal card is drawn on, as the last read of my page
  *   showed it. Its id stays with the platform: it names the player's season.
+ * - `myDon`: the player's My Don portrait, as the last read of my page showed it, from the one
+ *   picture host off Hiroba. Its address names the taiko number, which stays with the platform.
  */
 export type PictureWant =
   | {
@@ -126,7 +128,8 @@ export type PictureWant =
       readonly id: number;
     }
   | { readonly kind: "titlePlate" }
-  | { readonly kind: "medalPlate" };
+  | { readonly kind: "medalPlate" }
+  | { readonly kind: "myDon" };
 
 /**
  * A picture as it crosses to the interface: its bytes as a `data:image/png` URL, a picture and not
@@ -232,7 +235,12 @@ export interface HirobaSessionPort {
    * asking Hiroba nothing, or else one GET in the queue with every other request, never retried and
    * never between a write's requests. Answered as a `data:image/png` URL and its size, or as codes.
    * Refused unsent while signed out, for an item the last editor read did not offer, for a picture
-   * of my page before my page is read or when it showed none, and past the run's budget. How often and how many are asked for is the interface's to keep down.
+   * of my page before my page is read or when it showed none, for the portrait with no picture host,
+   * and past the run's budget. How often and how many are asked for is the interface's to keep down.
+   *
+   * The My Don portrait is the one kept picture that can change under the same address: the store
+   * answers it too, and it is fetched anew only after a read of my page other than a session's
+   * first, which only the user's Read again makes.
    */
   readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /**

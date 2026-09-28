@@ -222,6 +222,8 @@ app.whenReady().then(async () => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
+      // Every read but the session's first is the user's Read again: the portrait is renewed.
+      pictures.myPageAsked();
       const read = await readOwnProfile(readTransport, endpoints);
       if (!read.ok) {
         if (sessionEnded(read.error)) {

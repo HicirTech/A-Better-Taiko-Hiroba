@@ -10,6 +10,7 @@ import { NO_LABEL_GIF } from "../scripts/mock-dan-label";
 import {
   blankPlatePng,
   medalPlatePng,
+  myDonPng,
   thumbnailPng,
   titlePlatePng,
 } from "../scripts/mock-pictures";
@@ -17,6 +18,7 @@ import {
   createMemoryPictureStore,
   createPictureReader,
   DESKTOP_PICTURE_LIMITS,
+  type HirobaEndpoints,
   offeredOf,
   offerKey,
   type PictureLimits,
@@ -26,11 +28,13 @@ import {
 } from "../src/hiroba-session";
 
 const ORIGIN = "https://hiroba.test";
-const ENDPOINTS = {
+/** The picture host off Hiroba, where the My Don portrait is. */
+const IMG_ORIGIN = "https://img.test";
+const ENDPOINTS: HirobaEndpoints = {
   hirobaOrigin: ORIGIN,
   idpHost: "id.test",
   idpDomain: "id.test",
-  imgOrigin: null,
+  imgOrigin: IMG_ORIGIN,
 };
 const THUMB_URL = `${ORIGIN}/imgsrc_kisekae.php?cos=36&type=1`;
 const WANT = { kind: "costumeItem", slot: 1, id: 36 } as const;
@@ -62,6 +66,7 @@ function setUp(
     state?: PictureReadState;
     limits?: PictureLimits;
     store?: PictureStore;
+    endpoints?: HirobaEndpoints;
   } = {},
 ) {
   const sent: { request: TransportRequest; signal: AbortSignal | undefined }[] = [];
@@ -85,7 +90,7 @@ function setUp(
   const store = options.store ?? createMemoryPictureStore();
   const reader = createPictureReader({
     transport,
-    endpoints: ENDPOINTS,
+    endpoints: options.endpoints ?? ENDPOINTS,
     store,
     queue,
     limits: options.limits ?? LIMITS,
@@ -178,6 +183,7 @@ describe("createPictureReader, an item's thumbnail", () => {
       { ...WANT, slot: 6 },
       { ...WANT, id: 1.5 },
       { kind: "titlePlate", url: `${ORIGIN}/imgsrc_titleplate.php` },
+      { kind: "myDon", fn: "mydon_111111111111" },
       { kind: "scorePanel" },
       null,
     ]) {
@@ -323,7 +329,7 @@ describe("createPictureReader, the title plate", () => {
   const readState = (title = TITLE, owner = OWNER): PictureReadState => ({
     ...STATE,
     owner,
-    sources: { titlePlate: { form: "bare", title }, medalPlate: "notShown" },
+    sources: { titlePlate: { form: "bare", title }, medalPlate: "notShown", myDon: "notShown" },
   });
   /** Answers a plate for `title`, whatever the request, at the address asked. */
   const plateOf = (title: string) => async (request: TransportRequest) =>
@@ -359,7 +365,11 @@ describe("createPictureReader, the title plate", () => {
     const { reader, sent } = setUp({
       state: {
         ...readState(),
-        sources: { titlePlate: { form: "byTaikoNo", title: TITLE }, medalPlate: "notShown" },
+        sources: {
+          titlePlate: { form: "byTaikoNo", title: TITLE },
+          medalPlate: "notShown",
+          myDon: "notShown",
+        },
       },
       answer: plateOf(TITLE),
     });
@@ -373,7 +383,11 @@ describe("createPictureReader, the title plate", () => {
       store,
       state: {
         ...readState(),
-        sources: { titlePlate: { form: "byTaikoNo", title: TITLE }, medalPlate: "notShown" },
+        sources: {
+          titlePlate: { form: "byTaikoNo", title: TITLE },
+          medalPlate: "notShown",
+          myDon: "notShown",
+        },
       },
       answer: plateOf(TITLE),
     });
@@ -387,7 +401,10 @@ describe("createPictureReader, the title plate", () => {
     expect(await unread.reader.read(PLATE)).toEqual(err({ code: "titlePlate=notRead" }));
     for (const titlePlate of ["notShown", "unexpectedSrc"] as const) {
       const { reader, sent } = setUp({
-        state: { ...readState(), sources: { titlePlate, medalPlate: "notShown" } },
+        state: {
+          ...readState(),
+          sources: { titlePlate, medalPlate: "notShown", myDon: "notShown" },
+        },
       });
       expect(await reader.read(PLATE)).toEqual(err({ code: `titlePlate=${titlePlate}` }));
       expect(sent).toEqual([]);
@@ -582,6 +599,7 @@ describe("createPictureReader, the どんメダル plate", () => {
     sources: {
       titlePlate: "notShown" as const,
       medalPlate: { id, progress },
+      myDon: "notShown" as const,
     },
   });
   /** Answers the plate the asked id names, drawn as the season stands in `state()`. */
@@ -626,7 +644,10 @@ describe("createPictureReader, the どんメダル plate", () => {
     expect(await unread.reader.read(MEDAL)).toEqual(err({ code: "medalPlate=notRead" }));
     for (const medalPlate of ["notShown", "unexpectedSrc"] as const) {
       const { reader, sent } = setUp({
-        state: { ...readState(), sources: { titlePlate: "notShown", medalPlate } },
+        state: {
+          ...readState(),
+          sources: { titlePlate: "notShown", medalPlate, myDon: "notShown" },
+        },
       });
       expect(await reader.read(MEDAL)).toEqual(err({ code: `medalPlate=${medalPlate}` }));
       expect(sent).toEqual([]);
@@ -699,6 +720,191 @@ describe("createPictureReader, the どんメダル plate", () => {
     ]);
     for (const code of codes) {
       expect(code).not.toMatch(/0123456789abcdef|000000000000|hiroba\.test|http|\?|id=/);
+    }
+    expect(await gif.store.get(keyOf())).toBeNull();
+  });
+});
+
+describe("createPictureReader, the My Don portrait", () => {
+  const MY_DON = { kind: "myDon" } as const;
+  const OWNER = "000000000000";
+  const OTHER = "111111111111";
+  const PORTRAIT_URL = `${IMG_ORIGIN}/imgsrc.php?v=&kind=mydon&fn=mydon_${OWNER}`;
+  /** Two costumes, as the eight values the portrait is drawn from. */
+  const BEFORE = [12, 12, 5, 0, 0, 68, 0, 0];
+  const AFTER = [12, 12, 3, 0, 0, 68, 0, 0];
+  /** My page read, showing the portrait, for `owner`. */
+  const readState = (owner = OWNER): PictureReadState => ({
+    ...STATE,
+    owner,
+    sources: { titlePlate: "notShown", medalPlate: "notShown", myDon: { v: "" } },
+  });
+  /** Where `owner`'s portrait is kept: one for each player, whatever it shows. */
+  const keyOf = (owner = OWNER) => ({ scope: "player" as const, player: owner, name: "v1/mydon" });
+  /** Answers the portrait of whoever wears `set()` now, at the address asked. */
+  const portraitOf = (set: () => readonly number[]) => async (request: TransportRequest) =>
+    png(request.url, myDonPng(set()));
+  const GIF: Answer = ok({
+    status: 200,
+    url: PORTRAIT_URL,
+    headers: { "content-type": "image/gif" },
+    body: NO_LABEL_GIF,
+  });
+  const codeOf = async (read: Promise<unknown>) =>
+    ((await read) as { error: { code: string } }).error.code;
+
+  test("asks once, off Hiroba, as my page does: its origin alone as the Referer", async () => {
+    const { reader, sent, events } = setUp({
+      state: readState(),
+      answer: portraitOf(() => BEFORE),
+    });
+    const read = await reader.read(MY_DON);
+    expect(sent.map(({ request }) => request)).toEqual([
+      {
+        method: "GET",
+        url: PORTRAIT_URL,
+        headers: {
+          Referer: `${ORIGIN}/`,
+          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        },
+      },
+    ]);
+    expect(events).toEqual(["sleep 37", "queue", `send ?v=&kind=mydon&fn=mydon_${OWNER}`]);
+    expect(read.ok && decode(read.value.src)).toEqual(myDonPng(BEFORE));
+    expect(read.ok && [read.value.width, read.value.height]).toEqual([290, 290]);
+  });
+
+  test("sends nothing with no picture host, before my page is read, or when it showed none", async () => {
+    const noHost = setUp({ state: readState(), endpoints: { ...ENDPOINTS, imgOrigin: null } });
+    expect(await noHost.reader.read(MY_DON)).toEqual(err({ code: "myDon=noHost" }));
+    const unread = setUp();
+    expect(await unread.reader.read(MY_DON)).toEqual(err({ code: "myDon=notRead" }));
+    for (const myDon of ["notShown", "unexpectedSrc"] as const) {
+      const { reader, sent } = setUp({
+        state: {
+          ...readState(),
+          sources: { titlePlate: "notShown", medalPlate: "notShown", myDon },
+        },
+      });
+      expect(await reader.read(MY_DON)).toEqual(err({ code: `myDon=${myDon}` }));
+      expect(sent).toEqual([]);
+    }
+    const signedOut = setUp({ state: { ...readState(), signedIn: false } });
+    expect(await signedOut.reader.read(MY_DON)).toEqual(err({ code: "myDon=notSignedIn" }));
+    expect([...noHost.sent, ...unread.sent, ...signedOut.sent]).toEqual([]);
+  });
+
+  test("keeps the portrait at once under its player, and answers it from then on", async () => {
+    const store = createMemoryPictureStore();
+    const { reader, sent, setState } = setUp({
+      store,
+      state: readState(),
+      answer: portraitOf(() => BEFORE),
+    });
+    reader.myPageAsked();
+    await reader.read(MY_DON);
+    await reader.read(MY_DON);
+    expect(sent).toHaveLength(1);
+    expect(await store.get(keyOf())).toEqual(myDonPng(BEFORE));
+    expect(pictureKeyPath(keyOf())).not.toContain(OWNER);
+    // Kept at sign-out, and answered at the next sign-in's read, the session's first.
+    reader.forget();
+    reader.myPageAsked();
+    await reader.read(MY_DON);
+    expect(sent).toHaveLength(1);
+    // Another player is never given this one's portrait.
+    setState(readState(OTHER));
+    await reader.read(MY_DON);
+    expect(sent).toHaveLength(2);
+  });
+
+  test("fetches it anew once after each read of my page but a session's first, keeping the new one", async () => {
+    const store = createMemoryPictureStore();
+    let wearing = BEFORE;
+    const { reader, sent } = setUp({
+      store,
+      state: readState(),
+      answer: portraitOf(() => wearing),
+    });
+    reader.myPageAsked();
+    await reader.read(MY_DON);
+    // Changed elsewhere, then the user's Read again.
+    wearing = AFTER;
+    reader.myPageAsked();
+    const renewed = await reader.read(MY_DON);
+    expect(renewed.ok && decode(renewed.value.src)).toEqual(myDonPng(AFTER));
+    expect(await reader.read(MY_DON)).toEqual(renewed);
+    expect(sent).toHaveLength(2);
+    expect(await store.get(keyOf())).toEqual(myDonPng(AFTER));
+    // Signed in again: the session's first read renews nothing.
+    reader.forget();
+    reader.myPageAsked();
+    expect(await reader.read(MY_DON)).toEqual(renewed);
+    expect(sent).toHaveLength(2);
+  });
+
+  test("a portrait fetched anew that does not come leaves the one kept, and is asked for once more", async () => {
+    const store = createMemoryPictureStore();
+    let answer: Answer = png(PORTRAIT_URL, myDonPng(BEFORE));
+    const { reader, sent } = setUp({ store, state: readState(), answer: async () => answer });
+    reader.myPageAsked();
+    const first = await reader.read(MY_DON);
+    reader.myPageAsked();
+    answer = GIF;
+    expect(await reader.read(MY_DON)).toEqual(first);
+    answer = err({ kind: "unreachable", url: PORTRAIT_URL });
+    expect(await reader.read(MY_DON)).toEqual(first);
+    answer = png(PORTRAIT_URL, myDonPng(AFTER));
+    const renewed = await reader.read(MY_DON);
+    expect(renewed.ok && decode(renewed.value.src)).toEqual(myDonPng(AFTER));
+    expect(sent).toHaveLength(4);
+  });
+
+  test("one on its way as the portrait may change is fetched once more when next asked for", async () => {
+    let release: () => void = () => undefined;
+    let wearing = BEFORE;
+    const { reader, sent } = setUp({
+      state: readState(),
+      answer: (request) =>
+        new Promise((resolve) => {
+          const drawn = myDonPng(wearing);
+          release = () => resolve(png(request.url, drawn));
+        }),
+    });
+    reader.myPageAsked();
+    const onItsWay = reader.read(MY_DON);
+    await Bun.sleep(1);
+    wearing = AFTER;
+    reader.myPageAsked();
+    release();
+    await onItsWay;
+    const renewing = reader.read(MY_DON);
+    await Bun.sleep(1);
+    release();
+    const renewed = await renewing;
+    expect(renewed.ok && decode(renewed.value.src)).toEqual(myDonPng(AFTER));
+    expect(sent).toHaveLength(2);
+  });
+
+  test("a failure is codes that hold neither a host, the taiko number nor the query", async () => {
+    const gif = setUp({ state: readState(), answer: async () => GIF });
+    const login = setUp({
+      state: readState(),
+      answer: async () =>
+        ok({
+          status: 200,
+          url: `${ORIGIN}/login.php?back=${encodeURIComponent(PORTRAIT_URL)}`,
+          headers: { "content-type": "text/html" },
+          body: new TextEncoder().encode("<html></html>"),
+        }),
+    });
+    const codes = [await codeOf(gif.reader.read(MY_DON)), await codeOf(login.reader.read(MY_DON))];
+    expect(codes).toEqual([
+      "myDon=notPng status=200 type=image/gif bytes=43",
+      "myDon=notPng offHost path=/login.php status=200 type=text/html bytes=13",
+    ]);
+    for (const code of codes) {
+      expect(code).not.toMatch(/000000000000|img\.test|hiroba\.test|http|\?|mydon_|fn=/);
     }
     expect(await gif.store.get(keyOf())).toBeNull();
   });
