@@ -1113,10 +1113,15 @@ try {
  * break against. Every run keeps what it reads in the debug folder, so the scan below covers it.
  *
  * A window other windows cover counts as hidden on Windows, and a hidden page sees nothing, so it
- * asks for no picture: the switch keeps the window seen however it is covered.
+ * asks for no picture: the switch keeps the window seen however it is covered. `--lang` gives the
+ * app English as the system's language, since the checks read its English words.
  */
 async function launch({ writes, now }: { writes: boolean; now: string }) {
-  const args = [`--remote-debugging-port=${CDP_PORT}`, "--disable-backgrounding-occluded-windows"];
+  const args = [
+    `--remote-debugging-port=${CDP_PORT}`,
+    "--disable-backgrounding-occluded-windows",
+    "--lang=en-US",
+  ];
   const proc = Bun.spawn([String(electronPath), root, ...args], {
     env: {
       ...process.env,
