@@ -5,14 +5,24 @@ import type { PictureFailure, PictureView, PictureWant } from "../session-port";
 /** What the lane knows of one picture: the picture, or the code of why it did not come. */
 export type PictureAnswer = { readonly view: PictureView } | { readonly failure: string };
 
-/** A timer that can be cleared: the page's own, or a test's. */
+/** Timers that can be cleared, and the clock they run on: the page's own, or a test's. */
 export interface LaneTimers {
   set(run: () => void, ms: number): unknown;
   clear(timer: unknown): void;
+  /** The time now, in milliseconds, on the timers' clock. */
+  now(): number;
 }
 
 /** How long a picture must stay on screen before it is asked for, so a fling past it asks nothing. */
 export const PICTURE_DWELL_MS = 150;
+
+/**
+ * How close to its end a dwell counts as over, about a frame. Cells that come on screen together
+ * each hear of it from their own observer, a little apart and in no set order, so their dwells end
+ * a little apart too: when the first ends, those ending within this are taken as over with it, and
+ * the pictures go in their order on screen, not in the order their timers happen to fire.
+ */
+export const PICTURE_TOGETHER_MS = 16;
 
 export interface PictureLaneOptions {
   /** One picture from the platform: the port's readPicture. */
@@ -62,6 +72,7 @@ export const wantKey = (want: PictureWant): string => `${want.kind}/${want.slot}
 const PAGE_TIMERS: LaneTimers = {
   set: (run, ms) => setTimeout(run, ms),
   clear: (timer) => clearTimeout(timer as ReturnType<typeof setTimeout>),
+  now: () => performance.now(),
 };
 
 interface Waiter {
@@ -69,6 +80,9 @@ interface Waiter {
   readonly key: string;
   readonly order: number;
   readonly seq: number;
+  /** When its dwell ends, on the timers' clock. */
+  readonly due: number;
+  /** Its dwell's timer has fired. */
   ready: boolean;
   timer: unknown;
 }
@@ -88,7 +102,6 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
   const listeners = new Set<() => void>();
   let held = 0;
   let sending = false;
-  let pumpTimer: unknown = null;
   let seq = 0;
   let changes = 0;
   /** Bumped by forget(): an answer asked for before it is dropped. */
@@ -110,9 +123,11 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
     if (held > 0 || sending) {
       return;
     }
+    const soon = timers.now() + PICTURE_TOGETHER_MS;
     let next: Waiter | null = null;
     for (const waiter of waiters) {
-      if (waiter.ready && (next === null || before(waiter, next) < 0)) {
+      const over = waiter.ready || waiter.due <= soon;
+      if (over && (next === null || before(waiter, next) < 0)) {
         next = waiter;
       }
     }
@@ -145,19 +160,6 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
       });
   };
 
-  /**
-   * Pumps once every dwell ending now has ended: pictures that came on screen together are then
-   * asked for in their order, not in the order their dwells happened to end.
-   */
-  const pumpSoon = () => {
-    if (pumpTimer === null) {
-      pumpTimer = timers.set(() => {
-        pumpTimer = null;
-        pump();
-      }, 0);
-    }
-  };
-
   return {
     peek(want) {
       return answers.get(wantKey(want));
@@ -167,12 +169,20 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
       if (answers.has(key)) {
         return () => undefined;
       }
-      const waiter: Waiter = { want, key, order, seq: seq++, ready: false, timer: null };
+      const waiter: Waiter = {
+        want,
+        key,
+        order,
+        seq: seq++,
+        due: timers.now() + dwellMs,
+        ready: false,
+        timer: null,
+      };
       waiters.add(waiter);
       waiter.timer = timers.set(() => {
         waiter.timer = null;
         waiter.ready = true;
-        pumpSoon();
+        pump();
       }, dwellMs);
       return () => {
         if (waiters.delete(waiter)) {

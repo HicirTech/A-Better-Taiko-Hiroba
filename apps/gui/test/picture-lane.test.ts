@@ -33,6 +33,7 @@ function manualTimers() {
     clear: (timer) => {
       pending.delete(timer as number);
     },
+    now: () => now,
   };
   /** Moves the clock on by `ms`, firing every timer due by then, those they set included. */
   const advance = async (ms: number) => {
@@ -92,6 +93,36 @@ describe("createPictureLane", () => {
     await port.answer(ok(view(30)));
     expect(port.asked).toEqual(["1/10", "1/20", "1/30"]);
     expect(lane.peek(item(30))).toEqual({ view: view(30) });
+  });
+
+  test("asks in order down the screen for pictures whose dwells end a little apart", async () => {
+    const { lane, port, advance } = setUp();
+    // Each cell hears from its own observer, a little apart and in no set order: the lowest's
+    // dwell ends first, a millisecond before the others'.
+    lane.ask(item(30), { order: 3 });
+    await advance(1);
+    lane.ask(item(10), { order: 1 });
+    await advance(1);
+    lane.ask(item(20), { order: 2 });
+    await advance(148);
+    expect(port.asked).toEqual(["1/10"]);
+    await port.answer(ok(view(10)));
+    expect(port.asked).toEqual(["1/10", "1/20"]);
+    await port.answer(ok(view(20)));
+    expect(port.asked).toEqual(["1/10", "1/20", "1/30"]);
+  });
+
+  test("sends no picture more than a frame before its own dwell ends", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(item(30), { order: 3 });
+    await advance(100);
+    lane.ask(item(10), { order: 1 });
+    await advance(50);
+    expect(port.asked).toEqual(["1/30"]);
+    await port.answer(ok(view(30)));
+    expect(port.asked).toEqual(["1/30"]);
+    await advance(100);
+    expect(port.asked).toEqual(["1/30", "1/10"]);
   });
 
   test("asks nothing for a picture that leaves the screen before the dwell", async () => {
