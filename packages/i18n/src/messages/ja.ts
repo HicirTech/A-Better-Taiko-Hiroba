@@ -27,6 +27,7 @@ export const ja: Messages = {
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "段位：読み取れませんでした",
   "profile.danCode": "報告用コード：{code}",
+  "profile.myDonAlt": "あなたのマイどん（ひろばの画像）",
   "profile.favorites": "お気に入り",
   "profile.favoriteSong": "大好きな曲：{title}",
   "profile.favoriteSongNone": "大好きな曲：なし",

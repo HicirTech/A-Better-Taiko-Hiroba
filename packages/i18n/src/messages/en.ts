@@ -25,6 +25,7 @@ export const en: Messages = {
   "profile.dan": "Dan: {dan}",
   "profile.danUnreadable": "Dan: couldn't read",
   "profile.danCode": "Code for a report: {code}",
+  "profile.myDonAlt": "Your マイどん, as Hiroba draws it",
   "profile.favorites": "Favourites",
   "profile.favoriteSong": "Favourite song: {title}",
   "profile.favoriteSongNone": "Favourite song: none",

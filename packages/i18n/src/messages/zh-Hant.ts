@@ -27,6 +27,7 @@ export const zhHant: Messages = {
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "段位：無法讀取",
   "profile.danCode": "回報代碼：{code}",
+  "profile.myDonAlt": "你的マイどん，由廣場繪製",
   "profile.favorites": "收藏",
   "profile.favoriteSong": "最愛歌曲：{title}",
   "profile.favoriteSongNone": "最愛歌曲：無",

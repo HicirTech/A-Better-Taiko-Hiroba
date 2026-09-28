@@ -59,6 +59,11 @@ export interface Messages {
   "profile.danUnreadable": string;
   /** Param: {code}, why the label did not read, such as dan=notPng; never page text or a URL. */
   "profile.danCode": string;
+  /**
+   * The player's マイどん on the identity card, Hiroba's own picture of it in the costume it wears:
+   * its alternative text.
+   */
+  "profile.myDonAlt": string;
   "profile.favorites": string;
   /** Param: {title}, the 大好きな曲 as the page writes it. */
   "profile.favoriteSong": string;
