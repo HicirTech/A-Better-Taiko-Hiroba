@@ -16,6 +16,7 @@ import {
   type PictureWant,
 } from "../session-port";
 import type { HirobaQueue } from "./hiroba-queue";
+import type { PictureSources } from "./picture-sources";
 import { checkPng, describeAnswer, type PngRefusal, type PngRules, pngDataUrl } from "./png-answer";
 import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "./picture-store";
 import type { HirobaEndpoints } from "./types";
@@ -77,6 +78,10 @@ export interface PictureReadState {
   readonly signedIn: boolean;
   /** The items the last costume editor read offered, as `offerKey` writes them. */
   readonly offered: ReadonlySet<string>;
+  /** Whose my page this run last read: the taiko number. Null before the first read. */
+  readonly owner: string | null;
+  /** Where the pictures that page showed are, checked. Null before the first read. */
+  readonly sources: PictureSources | null;
 }
 
 export interface PictureReaderOptions {

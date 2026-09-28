@@ -11,6 +11,7 @@ import {
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
   offeredOf,
+  type PictureSources,
   previewCostume,
   readOwnProfile,
 } from "../src/hiroba-session";
@@ -90,6 +91,11 @@ let sessionStore: SessionStore | null = null;
  */
 let owner: string | null = null;
 /**
+ * Where the pictures that page showed are, checked: the title plate's source among them. Kept
+ * beside `owner`, in this process, and forgotten with the session; null before the first read.
+ */
+let sources: PictureSources | null = null;
+/**
  * The items the last costume editor read offered: the only ones whose thumbnail may be asked for.
  * It stays in this process and is forgotten with the session.
  */
@@ -99,6 +105,7 @@ const setSession = (value: string | null) => {
   sessionStore?.save(value);
   if (value === null) {
     owner = null;
+    sources = null;
     offered = new Set();
     pictures.forget();
   }
@@ -138,7 +145,7 @@ const pictures = createPictureReader({
   store: createMemoryPictureStore(),
   queue,
   limits: DESKTOP_PICTURE_LIMITS,
-  state: () => ({ signedIn: sessionCookie !== null, offered }),
+  state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
 const BUSY: WriteOutcomeView = { kind: "busy" };
 
@@ -221,6 +228,7 @@ app.whenReady().then(async () => {
         return read;
       }
       owner = read.value.taikoNo;
+      sources = read.value.pictures;
       return ok(read.value.view);
     }),
     async signOut() {

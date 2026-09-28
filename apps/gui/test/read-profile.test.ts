@@ -18,6 +18,7 @@ const LABEL_URL = "https://hiroba.test/imgsrc_danlabel.php?taiko_no=000000000000
 
 const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 <div id="mydon_area">
+  <img src="imgsrc_titleplate.php" style="width: 100%;">
   <div>サンプルの称号</div>
   <div><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>
   <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div>
@@ -155,11 +156,12 @@ describe("readProfile", () => {
       );
       expect(view).not.toContain("000000000000");
       expect(view).not.toContain("imgsrc");
+      expect(view).not.toContain("taiko");
       expect(view).not.toContain("http");
     }
   });
 
-  test("hands the platform the taiko number beside the view, and never inside it", async () => {
+  test("hands the platform the taiko number and the pictures' sources beside the view", async () => {
     const own = await readOwnProfile(
       fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT)),
       ENDPOINTS,
@@ -174,8 +176,11 @@ describe("readProfile", () => {
       throw new Error("expected both reads to succeed");
     }
     expect(own.value.taikoNo).toBe("000000000000");
+    expect(own.value.pictures).toEqual({ titlePlate: { form: "bare", title: "サンプルの称号" } });
     expect(own.value.view).toEqual(view.value);
-    expect(JSON.stringify(own.value.view)).not.toContain("000000000000");
+    const shown = withoutPictureBytes(JSON.stringify(own.value.view));
+    expect(shown).not.toContain("000000000000");
+    expect(shown).not.toContain("titleplate");
   });
 
   test("reads a redirect to the login page as a lost session, without parsing or a label", async () => {

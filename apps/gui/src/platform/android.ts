@@ -1,4 +1,4 @@
-import { err } from "@abth/core";
+import { err, ok } from "@abth/core";
 import { CapacitorCookies } from "@capacitor/core";
 import {
   DefaultAndroidWebViewOptions,
@@ -18,8 +18,9 @@ import {
   loginPageUrl,
   offeredOf,
   openCostumeEditor,
+  type PictureSources,
   previewCostume,
-  readProfile,
+  readOwnProfile,
   signInStep,
 } from "../hiroba-session";
 import type { CostumeSet, HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
@@ -92,8 +93,10 @@ const localStorageFlag: SignedInFlag = {
  * queue the desktop uses: a picture never goes out beside a read, and two reads never overlap.
  *
  * Hiroba's pictures come through the same reader as on the desktop, kept in memory for the run,
- * signed in or out. The items the last editor read offered, the only ones whose thumbnail may be
- * asked for, stay in this closure, and go with the session.
+ * signed in or out. What that reader needs to know stays in this closure and goes with the session:
+ * the items the last editor read offered, the only ones whose thumbnail may be asked for, and, from
+ * the last read of my page, whose page it was and where its pictures are. None of it reaches the
+ * window: the view the window is given is the one the desktop gives.
  */
 export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
   const transport = createAndroidTransport();
@@ -102,19 +105,23 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const queue = createHirobaQueue();
   const { oneAtATime } = queue;
   let offered: ReadonlySet<string> = new Set();
+  let owner: string | null = null;
+  let sources: PictureSources | null = null;
   const pictures = createPictureReader({
     transport,
     endpoints,
     store: createMemoryPictureStore(),
     queue,
     limits: ANDROID_PICTURE_LIMITS,
-    state: () => ({ signedIn, offered }),
+    state: () => ({ signedIn, offered, owner, sources }),
   });
 
   const forget = async () => {
     signedIn = false;
     flag.set(false);
     offered = new Set();
+    owner = null;
+    sources = null;
     pictures.forget();
     await CapacitorCookies.clearAllCookies();
   };
@@ -186,14 +193,19 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
-      const read = await readProfile(transport, endpoints);
+      const read = await readOwnProfile(transport, endpoints);
       if (!read.ok && sessionEnded(read.error)) {
         await forget();
       } else {
         // A read can carry a session Hiroba renewed on the way; keep that one, not the old.
         await saveCookieStore();
       }
-      return read;
+      if (!read.ok) {
+        return read;
+      }
+      owner = read.value.taikoNo;
+      sources = read.value.pictures;
+      return ok(read.value.view);
     }),
 
     async signOut() {

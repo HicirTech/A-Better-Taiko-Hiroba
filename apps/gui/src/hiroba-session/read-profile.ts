@@ -12,6 +12,7 @@ import {
 
 import type { DanView, ProfileView, ReadFailure, ReadFailureKind } from "../session-port";
 import { myPageUrl } from "./endpoints";
+import { type PictureSources, pictureSourcesOf } from "./picture-sources";
 import { readDan } from "./read-dan";
 import { signInStep } from "./sign-in-step";
 import type { HirobaEndpoints, SignInStep } from "./types";
@@ -49,15 +50,25 @@ export async function readProfile(
   return isErr(read) ? read : ok(read.value.view);
 }
 
+/** What a platform layer learns from reading my page, beside what the interface shows. */
+export interface OwnProfileRead {
+  readonly view: ProfileView;
+  /** Whose page it was: tells whose undo record is whose, and whose pictures are whose. */
+  readonly taikoNo: string;
+  /** Where the pictures the page showed are, checked, for the platform to fetch them from. */
+  readonly pictures: PictureSources;
+}
+
 /**
- * `readProfile` for a platform layer, which also learns whose page it read: the taiko number stays
- * with the platform, to tell whose undo record is whose, and never reaches the view.
+ * `readProfile` for a platform layer, which also learns whose page it read and where the page's
+ * pictures are. Both stay with the platform and never reach the view: the taiko number, and every
+ * source, the title plate's included.
  */
 export async function readOwnProfile(
   transport: Transport,
   endpoints: HirobaEndpoints,
   now: () => Date = () => new Date(),
-): Promise<Result<{ readonly view: ProfileView; readonly taikoNo: string }, ReadFailure>> {
+): Promise<Result<OwnProfileRead, ReadFailure>> {
   const sent = await transport.send({ method: "GET", url: myPageUrl(endpoints) });
   if (isErr(sent)) {
     return err({ kind: sent.error.kind });
@@ -86,7 +97,11 @@ export async function readOwnProfile(
   }
   const label = parsed.value.danLabelImageUrl;
   const dan = label === null ? null : await readDan(transport, endpoints, label);
-  return ok({ view: profileView(parsed.value, dan), taikoNo: parsed.value.taikoNo });
+  return ok({
+    view: profileView(parsed.value, dan),
+    taikoNo: parsed.value.taikoNo,
+    pictures: pictureSourcesOf(parsed.value, endpoints),
+  });
 }
 
 /**

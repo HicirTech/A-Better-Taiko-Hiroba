@@ -13,6 +13,29 @@ const { createAndroidPort } = await import("../src/platform/android");
 
 const HIROBA = "https://donderhiroba.jp";
 const CLOSE_LABEL = "Close sign-in";
+/**
+ * A dan-less my page, so a read is one request: the title plate, bare as Hiroba writes it, over
+ * the title. Placeholders throughout, no real account's.
+ */
+const MY_PAGE = `<html><body><div id="mydon_area">
+  <img src="imgsrc_titleplate.php" style="width: 100%;">
+  <div>サンプルの称号</div>
+  <div style="height:24px;">サンプルどん</div>
+  <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div></div>
+  <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
+    ${[8, 7, 6, 5, 4, 3, 2].map((rank) => `<div class="best_rank_score_${rank}">1</div>`).join("")}
+    <div class="silver_crown_count">1</div><div class="gold_crown_count">1</div>
+    <div class="donderful_crown_count">1</div></div>
+</div>
+<div class="favoriteSong"><h2>大好きな曲</h2><ul><li><span class="songName">未設定</span></li></ul></div>
+<div class="favoriteSong"><h2>お気に入りの曲</h2><ul></ul></div></body></html>`;
+/** My page as Hiroba answers it, whatever was asked. */
+const myPageAnswer = async () => ({
+  status: 200,
+  url: `${HIROBA}/mypage_top.php`,
+  headers: { "Content-Type": "text/html; charset=UTF-8" },
+  data: nativeBase64(MY_PAGE),
+});
 
 /** A signed-in flag in memory, in place of the page's localStorage. */
 function memoryFlag(initial = false) {
@@ -50,6 +73,22 @@ describe("createAndroidPort", () => {
     });
     expect(await port.isSignedIn()).toBe(true);
     expect(native.cookieCalls).toEqual([]);
+  });
+
+  test("a read hands the window the view alone: no taiko number and no picture's source", async () => {
+    native.httpAnswer = myPageAnswer;
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    const read = await port.readProfile();
+    expect(read.ok && read.value.nickname).toBe("サンプルどん");
+    expect(read.ok && Object.keys(read.value)).not.toContain("taikoNo");
+    expect(read.ok && Object.keys(read.value)).not.toContain("pictures");
+    const shown = JSON.stringify(read);
+    expect(shown).not.toContain("000000000000");
+    expect(shown).not.toContain("titleplate");
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([`${HIROBA}/mypage_top.php`]);
   });
 
   test("opens signed out when no sign-in was remembered", async () => {

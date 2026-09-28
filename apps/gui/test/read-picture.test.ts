@@ -24,6 +24,8 @@ const THUMB_URL = `${ORIGIN}/imgsrc_kisekae.php?cos=36&type=1`;
 const WANT = { kind: "costumeItem", slot: 1, id: 36 } as const;
 const OFFERED = new Set([offerKey(1, 36), offerKey(1, 4), offerKey(2, 21)]);
 const LIMITS: PictureLimits = { jitterMs: 100, minGapMs: 0, timeoutMs: null, budget: 300 };
+/** Signed in, the editor read, and no my page read yet. */
+const STATE: PictureReadState = { signedIn: true, offered: OFFERED, owner: null, sources: null };
 /** A set wearing one piece, in からだ (slot 3), and nothing else. */
 const SET = {
   colorBody: 12,
@@ -67,7 +69,7 @@ function setUp(
       };
     },
   };
-  let state: PictureReadState = options.state ?? { signedIn: true, offered: OFFERED };
+  let state: PictureReadState = options.state ?? STATE;
   const store = options.store ?? createMemoryPictureStore();
   const reader = createPictureReader({
     transport,
@@ -145,7 +147,7 @@ describe("createPictureReader, an item's thumbnail", () => {
   });
 
   test("sends nothing while signed out, or for an item the editor did not offer", async () => {
-    const signedOut = setUp({ state: { signedIn: false, offered: OFFERED } });
+    const signedOut = setUp({ state: { ...STATE, signedIn: false } });
     expect(await signedOut.reader.read(WANT)).toEqual(err({ code: "costumeItem=notSignedIn" }));
     const { reader, sent } = setUp();
     expect(await reader.read({ ...WANT, id: 999 })).toEqual(
@@ -185,7 +187,7 @@ describe("createPictureReader, an item's thumbnail", () => {
   test("sends nothing when the session went while the fetch waited its turn", async () => {
     const { reader, sent, setState } = setUp();
     const reading = reader.read(WANT);
-    setState({ signedIn: false, offered: OFFERED });
+    setState({ ...STATE, signedIn: false });
     expect(await reading).toEqual(err({ code: "costumeItem=notSignedIn" }));
     expect(sent).toEqual([]);
   });

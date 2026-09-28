@@ -22,6 +22,12 @@ export {
   type PictureStore,
   type PictureStoreCaps,
 } from "./picture-store";
+export {
+  type NoPictureSource,
+  type PictureSources,
+  pictureSourcesOf,
+  type TitlePlateSource,
+} from "./picture-sources";
 export { previewCostume, previewUrl } from "./preview-costume";
 export {
   ANDROID_PICTURE_LIMITS,
@@ -34,7 +40,7 @@ export {
   type PictureReader,
   type PictureReadState,
 } from "./read-picture";
-export { readOwnProfile, readProfile } from "./read-profile";
+export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
 export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep } from "./types";
 export {
