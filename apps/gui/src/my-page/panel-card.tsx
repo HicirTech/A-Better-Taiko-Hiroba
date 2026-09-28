@@ -2,6 +2,7 @@ import { SCORE_RANK_NAMES, type ScoreRank } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Card, CardContent, Stack, Typography } from "@mui/material";
 
+import { HIROBA_LANG } from "../language/show-language";
 import type { ProfileView } from "../session-port";
 import { ShareBlock, type ShareItem } from "./share-block";
 
@@ -54,6 +55,7 @@ export function PanelCard({
   const rankItems: ShareItem[] = RANKS_BEST_FIRST.map((rank) => ({
     id: `rank-${rank}`,
     name: SCORE_RANK_NAMES[rank],
+    lang: HIROBA_LANG,
     count: ranks[rank],
     colour: RANK_COLOUR[rank],
   }));

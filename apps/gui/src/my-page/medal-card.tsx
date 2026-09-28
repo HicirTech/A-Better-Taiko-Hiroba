@@ -1,6 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 
+import { HIROBA_LANG } from "../language/show-language";
 import type { ProfileView } from "../session-port";
 
 /**
@@ -16,7 +17,12 @@ export function MedalCard({ medal, i18n }: { medal: ProfileView["medal"]; i18n: 
   return (
     <Card id="medal" variant="outlined">
       <CardContent>
-        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
+        <Typography
+          variant="subtitle1"
+          component="h2"
+          lang={HIROBA_LANG}
+          sx={{ fontWeight: 500, mb: 1 }}
+        >
           {t("medal.heading")}
         </Typography>
         {medal === null && (
@@ -25,7 +31,9 @@ export function MedalCard({ medal, i18n }: { medal: ProfileView["medal"]; i18n: 
           </Typography>
         )}
         {medal !== null && medal.name !== "" && (
-          <Typography id="medal-name">{medal.name}</Typography>
+          <Typography id="medal-name" lang={HIROBA_LANG}>
+            {medal.name}
+          </Typography>
         )}
         {progress?.kind === "collecting" && (
           <Typography id="medal-count" variant="h6" component="p">

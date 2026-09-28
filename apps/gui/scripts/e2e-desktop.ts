@@ -418,6 +418,23 @@ try {
     (await readHits()) === readsBeforeLanguage &&
     (await platesAsked()).length === platesBeforeLanguage &&
     (await textOf("#crowns-silver")) === "11 of 14";
+  // Hiroba's own words say they are Japanese on a page in English: the nickname, the medal's
+  // heading and name, and every rank's name; the crowns' English names keep the page's language.
+  const langOf = (selector: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.lang ?? null`,
+    );
+  results.hirobaWordsMarkedJapanese =
+    (await langOf("#profile h2")) === "ja" &&
+    (await langOf("#medal h2")) === "ja" &&
+    (await langOf("#medal-name")) === "ja" &&
+    same(
+      await page.evaluate<string[]>(
+        `[...document.querySelectorAll('#ranks [lang="ja"]')].map((node) => node.textContent)`,
+      ),
+      ["虹極", "紫雅", "桃雅", "金雅", "銀粋", "銅粋", "白粋"],
+    ) &&
+    (await page.evaluate<number>(`document.querySelectorAll("#crowns [lang]").length`)) === 0;
 
   // Read again: one more request, no more.
   await click("#read-again");
@@ -768,6 +785,13 @@ try {
         ownedIn(1).includes(thumb.cos) &&
         thumb.referer === `${HIROBA}/mypage_kisekae.php`,
     );
+  // The editor's heading, tabs, はずす and items are Hiroba's words, so they say they are Japanese.
+  results.editorWordsMarkedJapanese = same(
+    await page.evaluate<(string | null)[]>(
+      `["#costume-dialog h2", "#costume-tab-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => document.querySelector(selector)?.lang ?? null)`,
+    ),
+    ["ja", "ja", "ja", "ja", "ja"],
+  );
   const withThumbnails = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );

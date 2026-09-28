@@ -2,6 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, Chip, CircularProgress, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
+import { HIROBA_LANG } from "../language/show-language";
 import type { PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
@@ -181,6 +182,7 @@ function Title({ title, i18n }: { title: string; i18n: Translator }) {
           <Box
             component="span"
             aria-hidden
+            lang={HIROBA_LANG}
             sx={{ ...ONE_LINE, fontWeight: "bold", fontSize: hp(13), px: hp(8) }}
           >
             {title}
@@ -217,6 +219,7 @@ function NameRow({ profile, i18n }: { profile: ProfileView; i18n: Translator }) 
     >
       <Typography
         component="h2"
+        lang={HIROBA_LANG}
         sx={{
           ...ONE_LINE,
           width: dan === null ? 1 : hp(135),
@@ -247,6 +250,7 @@ function NameRow({ profile, i18n }: { profile: ProfileView; i18n: Translator }) 
               <Box
                 component="span"
                 aria-hidden
+                lang={HIROBA_LANG}
                 sx={{ color: "#fff", fontWeight: "bold", fontSize: hp(13), textShadow: OUTLINED }}
               >
                 {dan.name}

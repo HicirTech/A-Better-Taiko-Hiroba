@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
+import { HIROBA_LANG } from "../language/show-language";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type {
@@ -184,7 +185,7 @@ export function CostumeDialog({
       maxWidth="sm"
       onClose={busy ? undefined : onClose}
     >
-      <DialogTitle>{t("costume.title")}</DialogTitle>
+      <DialogTitle lang={HIROBA_LANG}>{t("costume.title")}</DialogTitle>
       <DialogContent dividers>
         {previewSet !== null && <CostumePreviewBox preview={preview} i18n={i18n} />}
 
@@ -212,8 +213,18 @@ export function CostumeDialog({
         {step.name === "editing" && (
           <Stack spacing={2}>
             <Tabs value={tab} onChange={(_event, value) => setTab(value)}>
-              <Tab id="costume-tab-colours" value="colours" label={t("costume.tab.colours")} />
-              <Tab id="costume-tab-items" value="items" label={t("costume.tab.items")} />
+              <Tab
+                id="costume-tab-colours"
+                value="colours"
+                lang={HIROBA_LANG}
+                label={t("costume.tab.colours")}
+              />
+              <Tab
+                id="costume-tab-items"
+                value="items"
+                lang={HIROBA_LANG}
+                label={t("costume.tab.items")}
+              />
             </Tabs>
             {tab === "colours" ? (
               <>
@@ -227,6 +238,7 @@ export function CostumeDialog({
                       key={part}
                       id={`costume-part-${part}`}
                       value={part}
+                      lang={HIROBA_LANG}
                       label={t(PART_LABEL[part])}
                     />
                   ))}
@@ -278,6 +290,7 @@ export function CostumeDialog({
                       key={part}
                       id={`costume-part-${part}`}
                       value={part}
+                      lang={HIROBA_LANG}
                       label={t(PART_LABEL[part])}
                     />
                   ))}
