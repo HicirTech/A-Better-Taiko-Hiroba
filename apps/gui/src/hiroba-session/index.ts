@@ -14,6 +14,14 @@ export {
 export { type CostumeWriteOptions, changeCostume } from "./change-costume";
 export { createHirobaQueue, type HirobaQueue } from "./hiroba-queue";
 export { openCostumeEditor } from "./open-costume-editor";
+export {
+  createMemoryPictureStore,
+  PICTURE_EPOCH,
+  PICTURE_STORE_CAPS,
+  type PictureKey,
+  type PictureStore,
+  type PictureStoreCaps,
+} from "./picture-store";
 export { previewCostume, previewUrl } from "./preview-costume";
 export { readOwnProfile, readProfile } from "./read-profile";
 export { signInStep } from "./sign-in-step";
