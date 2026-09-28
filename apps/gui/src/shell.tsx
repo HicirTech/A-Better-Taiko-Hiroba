@@ -1,17 +1,21 @@
 import { createTranslator, type Locale, type Translator } from "@abth/i18n";
-import { Alert, AppBar, Container, Toolbar, Typography } from "@mui/material";
-import { useLayoutEffect, useMemo, useState } from "react";
+import { Alert } from "@mui/material";
+import { useCallback, useLayoutEffect, useMemo, useState } from "react";
 
 import { App } from "./App";
-import { LanguagePicker } from "./language/language-picker";
+import { LanguageSetting } from "./language/language-setting";
 import { rememberLocale } from "./language/locale-choice";
 import { showLanguage } from "./language/show-language";
+import { AppFrame } from "./navigation/app-frame";
+import { keepPage, keptPage, type Page } from "./navigation/pages";
 import type { Platform } from "./platform";
+import { SettingsPage } from "./settings/settings-page";
 
 /**
- * The window: an app bar with the app's name and the language picker, over the app. A pick is kept
- * on this device and takes hold at once; the screen keeps where it was and asks Hiroba nothing.
- * `onShown` hears each language the window is shown in, the first included.
+ * The window: its navigation around the app, and the language, which Settings shows. A page or a
+ * language picked is kept on this device; a language takes hold at once, and the page keeps where it
+ * was and asks Hiroba nothing. `onShown` hears each language the window is shown in, the first
+ * included.
  */
 export function Shell({
   platform,
@@ -28,32 +32,32 @@ export function Shell({
     showLanguage(i18n);
     onShown(i18n);
   }, [i18n, onShown]);
+  const [page, setPage] = useState(keptPage);
+  const navigate = useCallback((next: Page) => {
+    keepPage(next);
+    setPage(next);
+    window.scrollTo(0, 0);
+  }, []);
   const pick = (next: Locale) => {
     rememberLocale(next);
     setLocale(next);
   };
+  const language = <LanguageSetting locale={locale} onPick={pick} i18n={i18n} />;
   return (
-    <>
-      <AppBar
-        position="static"
-        color="default"
-        elevation={0}
-        sx={{ borderBottom: 1, borderColor: "divider" }}
-      >
-        <Toolbar sx={{ gap: 1 }}>
-          <Typography variant="h6" component="h1" noWrap sx={{ flexGrow: 1 }}>
-            {i18n.t("app.title")}
-          </Typography>
-          <LanguagePicker locale={locale} onPick={pick} i18n={i18n} />
-        </Toolbar>
-      </AppBar>
-      {platform === null ? (
-        <Container maxWidth="sm" sx={{ py: 4 }}>
-          <Alert severity="info">{i18n.t("platform.unsupported")}</Alert>
-        </Container>
+    <AppFrame page={page} onNavigate={navigate} i18n={i18n}>
+      {platform !== null ? (
+        <App
+          port={platform.port}
+          i18n={i18n}
+          page={page}
+          onNavigate={navigate}
+          language={language}
+        />
+      ) : page === "settings" ? (
+        <SettingsPage i18n={i18n} language={language} />
       ) : (
-        <App port={platform.port} i18n={i18n} />
+        <Alert severity="info">{i18n.t("platform.unsupported")}</Alert>
       )}
-    </>
+    </AppFrame>
   );
 }

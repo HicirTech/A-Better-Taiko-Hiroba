@@ -1,0 +1,184 @@
+import type { MessageKey, Translator } from "@abth/i18n";
+import {
+  Box,
+  Container,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  SvgIcon,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import { type ReactNode, useId, useState } from "react";
+
+import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
+import { FavoritesIcon, OverviewIcon, SettingsIcon } from "./page-icons";
+import { PAGES, type Page } from "./pages";
+
+/** Each page's name and icon, as the navigation shows them. */
+const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly icon: ReactNode }>> =
+  {
+    overview: { label: "nav.overview", icon: <OverviewIcon /> },
+    favorites: { label: "nav.favorites", icon: <FavoritesIcon /> },
+    settings: { label: "nav.settings", icon: <SettingsIcon /> },
+  };
+
+/** The side panel's width, and the menu's, about Gmail's. */
+const PANEL_WIDTH_PX = 240;
+/** How far in from the window's top left corner the menu button floats. */
+const MENU_INSET_PX = 8;
+
+interface NavigationProps {
+  readonly page: Page;
+  readonly onNavigate: (page: Page) => void;
+  readonly i18n: Translator;
+}
+
+/**
+ * The window, with no header (the user's call, 2026-09-29): its pages in a side panel like Gmail's
+ * on a wide window (MUI's md and up), or behind a menu button floating at its top left on a narrow
+ * one, and the page shown beside or under it. Each page is named by a heading for screen readers
+ * alone: the navigation already shows sighted users which page they are on.
+ */
+export function AppFrame({
+  page,
+  onNavigate,
+  i18n,
+  children,
+}: NavigationProps & { children: ReactNode }) {
+  const wide = useMediaQuery(useTheme().breakpoints.up("md"), { noSsr: true });
+  return (
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      {wide ? (
+        <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
+      ) : (
+        <MenuDrawer page={page} onNavigate={onNavigate} i18n={i18n} />
+      )}
+      <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
+        {/* On a narrow window the page starts under the menu button, not behind it. */}
+        <Container maxWidth="md" sx={{ pt: wide ? 4 : 8, pb: 4 }}>
+          <Typography component="h1" sx={VISUALLY_HIDDEN}>
+            {i18n.t(PAGE_ENTRY[page].label)}
+          </Typography>
+          {children}
+        </Container>
+      </Box>
+    </Box>
+  );
+}
+
+/** The product's name, small, over the pages, each with its icon, the one shown highlighted. */
+function PageList({ page, onNavigate, i18n }: NavigationProps) {
+  return (
+    <>
+      <Typography
+        variant="subtitle2"
+        color="text.secondary"
+        noWrap
+        sx={{ px: 3, pt: 2.5, pb: 1.5 }}
+      >
+        {i18n.t("app.title")}
+      </Typography>
+      <List disablePadding>
+        {PAGES.map((each) => (
+          <ListItemButton
+            key={each}
+            id={`nav-${each}`}
+            selected={each === page}
+            aria-current={each === page ? "page" : undefined}
+            onClick={() => onNavigate(each)}
+            sx={{ mr: 1.5, borderRadius: "0 999px 999px 0" }}
+          >
+            <ListItemIcon>{PAGE_ENTRY[each].icon}</ListItemIcon>
+            <ListItemText
+              primary={i18n.t(PAGE_ENTRY[each].label)}
+              slotProps={{ primary: { sx: { fontWeight: each === page ? 600 : undefined } } }}
+            />
+          </ListItemButton>
+        ))}
+      </List>
+    </>
+  );
+}
+
+/** The pages down the window's left edge, always there. */
+function SidePanel(props: NavigationProps) {
+  return (
+    <Box component="nav" sx={{ width: PANEL_WIDTH_PX, flexShrink: 0 }}>
+      <Drawer
+        variant="permanent"
+        sx={{ "& .MuiDrawer-paper": { width: PANEL_WIDTH_PX, boxSizing: "border-box" } }}
+      >
+        <PageList {...props} />
+      </Drawer>
+    </Box>
+  );
+}
+
+/**
+ * Material's "menu" icon (Apache 2.0), drawn inline: the icons package is not a dependency. The
+ * button it is on carries the name.
+ */
+function MenuIcon() {
+  return (
+    <SvgIcon aria-hidden>
+      <path d="M3 18h18v-2H3zm0-5h18v-2H3zm0-7v2h18V6z" />
+    </SvgIcon>
+  );
+}
+
+/**
+ * The pages behind a menu button, for a narrow window with no room for the panel. The button
+ * floats at the top left, over the page as it scrolls, clear of the system's bars, and opens the
+ * pages in a drawer from the left. A pick, a tap outside the drawer or Escape closes it, and the
+ * focus goes back to the button.
+ */
+function MenuDrawer({ page, onNavigate, i18n }: NavigationProps) {
+  const [open, setOpen] = useState(false);
+  const drawerId = useId();
+  const label = i18n.t("nav.menu");
+  const pick = (next: Page) => {
+    setOpen(false);
+    onNavigate(next);
+  };
+  return (
+    <>
+      <Paper
+        elevation={2}
+        sx={{
+          position: "fixed",
+          top: `calc(${MENU_INSET_PX}px + env(safe-area-inset-top, 0px))`,
+          left: `calc(${MENU_INSET_PX}px + env(safe-area-inset-left, 0px))`,
+          zIndex: "appBar",
+          borderRadius: "50%",
+        }}
+      >
+        <IconButton
+          id="nav-menu"
+          aria-label={label}
+          title={label}
+          aria-controls={open ? drawerId : undefined}
+          aria-expanded={open}
+          onClick={() => setOpen(true)}
+        >
+          <MenuIcon />
+        </IconButton>
+      </Paper>
+      <Drawer
+        variant="temporary"
+        open={open}
+        onClose={() => setOpen(false)}
+        slotProps={{ paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX } } }}
+      >
+        <Box component="nav" aria-label={label}>
+          <PageList page={page} onNavigate={pick} i18n={i18n} />
+        </Box>
+      </Drawer>
+    </>
+  );
+}

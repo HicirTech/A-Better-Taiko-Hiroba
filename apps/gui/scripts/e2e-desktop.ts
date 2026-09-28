@@ -17,8 +17,11 @@
  * pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, and
  * a session that ends before and after a save), a lost session (none of its pictures shown at the
  * next sign-in), cancel, a sign-in sent off both
- * sites, the language (the system's at first, a pick that takes hold at once and is kept, and one
- * made on the profile, which asks Hiroba nothing), a reopen that keeps the session and the undo,
+ * sites, the pages (a side panel on a wide window, a menu on a narrow one, the sign-in card on the
+ * Overview and Favourites while signed out, the favourites on their own page, and the page kept for
+ * the next launch), the language (the system's at first, a pick in Settings that takes hold at once
+ * and is kept, and one made while signed in, which asks Hiroba nothing), a reopen that keeps the
+ * session and the undo,
  * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
  * signed in, shows the editor's button shut and why, against scripts/mock-hiroba.ts, over the
  * Chrome DevTools Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
@@ -252,14 +255,15 @@ const WRITE_REQUESTS = [
 ];
 
 // The language, in runs of their own, signed out. Opened on a system in Traditional Chinese, the
-// app is in it, and says so to the page; a pick from the app bar, of the language shown or another,
+// app is in it, and says so to the page; a pick in Settings, of the language shown or another,
 // takes hold at once and is kept for the next launch, which the system's language no longer decides.
+// So is the page shown last: the next launch opens on Settings.
 const ja = createTranslator("ja");
 const zhHant = createTranslator("zh-Hant");
-/** What says which language the window is in: `lang`, the title, a button and the picker. */
+/** What says which language the window is in: `lang`, the title, the navigation and the picker. */
 const languageShown = (page: Awaited<ReturnType<typeof launch>>["page"]) =>
   page.evaluate<Record<string, string | null>>(
-    `({ lang: document.documentElement.lang, title: document.title, signIn: document.querySelector("#sign-in")?.textContent ?? null, picker: document.querySelector("#language-picker")?.textContent ?? null })`,
+    `({ lang: document.documentElement.lang, title: document.title, overview: document.querySelector("#nav-overview")?.textContent ?? null, picker: document.querySelector("#language-picker")?.textContent ?? null })`,
   );
 rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
 await resetLog();
@@ -271,10 +275,11 @@ let inLanguage = await launch({
 });
 try {
   await inLanguage.until(zhHant.t("signIn.action"));
+  await inLanguage.goTo("settings");
   results.systemLanguageTaken = same(await languageShown(inLanguage.page), {
     lang: "zh-Hant",
     title: "A Better Taiko Hiroba",
-    signIn: zhHant.t("signIn.action"),
+    overview: zhHant.t("nav.overview"),
     picker: "繁體中文",
   });
   // Each language named in its own words and marked with it, in the catalog's order.
@@ -299,16 +304,19 @@ try {
     lang: "en-US",
     userData: LANGUAGE_USER_DATA,
   });
-  await waitFor(async () => (await inLanguage.textOf("#sign-in")) ?? undefined);
+  await waitFor(async () => (await inLanguage.textOf("#language-picker")) ?? undefined);
+  results.pageKeptAcrossLaunches =
+    (await inLanguage.currentPage()) === "settings" &&
+    (await inLanguage.textOf("#sign-in")) === null;
   results.shownLanguagePickKept = (await languageShown(inLanguage.page)).lang === "zh-Hant";
   await inLanguage.click("#language-picker");
   await waitFor(async () => (await inLanguage.textOf("#language-ja")) ?? undefined);
   await inLanguage.click("#language-ja");
-  await inLanguage.until(ja.t("signIn.action"));
+  await inLanguage.until(ja.t("settings.account"));
   results.pickTakesHold = same(await languageShown(inLanguage.page), {
     lang: "ja",
     title: "A Better Taiko Hiroba",
-    signIn: ja.t("signIn.action"),
+    overview: ja.t("nav.overview"),
     picker: "日本語",
   });
   await stop(inLanguage);
@@ -318,7 +326,7 @@ try {
     lang: "zh-TW",
     userData: LANGUAGE_USER_DATA,
   });
-  await inLanguage.until(ja.t("signIn.action"));
+  await inLanguage.until(ja.t("settings.account"));
   results.pickKeptAcrossLaunches =
     (await languageShown(inLanguage.page)).lang === "ja" && same(await requestLog(), []);
 } finally {
@@ -328,10 +336,108 @@ try {
 
 let running = await launch({ writes: true, now: NOON_JST });
 try {
-  const { page, text, textOf, click, clickButton, until } = running;
+  const { page, text, textOf, click, clickButton, until, currentPage, goTo } = running;
   const exists = (selector: string) =>
     page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  const attribute = (selector: string, name: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.getAttribute(${JSON.stringify(name)}) ?? null`,
+    );
   await until("Sign in to Hiroba");
+
+  // The pages, signed out, with no header at all (the user's call, 2026-09-29): on a window this
+  // wide, a side panel like Gmail's, the product's name small at its top, then each page, the one
+  // shown marked. The Overview and Favourites show the sign-in card; Settings works, with the
+  // language and the note on staying signed in, and no way to sign out.
+  const NAVIGATION = ["A Better Taiko Hiroba", "Overview", "Favourites", "Settings"].join("");
+  const shownSignedOut: boolean[] = [];
+  for (const each of ["favorites", "settings", "overview"] as const) {
+    await goTo(each);
+    shownSignedOut.push(
+      each === "settings"
+        ? (await exists("#language-setting")) &&
+            (await exists("#sign-out-note")) &&
+            !(await exists("#sign-out")) &&
+            !(await exists("#sign-in"))
+        : (await exists("#sign-in-card #sign-in")) && !(await exists("#language-setting")),
+    );
+  }
+  results.navigationShown =
+    (await textOf("nav")) === NAVIGATION &&
+    (await textOf("main h1")) === "Overview" &&
+    !(await exists("header")) &&
+    !(await exists("#nav-menu")) &&
+    shownSignedOut.every(Boolean);
+
+  // On a narrow window (below MUI's md), a menu button floats at the top left instead, clear of
+  // the page, named for screen readers. From the keyboard it opens the same pages in a drawer; a
+  // pick closes it on its page, and so do Escape and a tap outside it, the focus going back to it.
+  const KEYS = {
+    Enter: { code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
+    Escape: { code: "Escape", windowsVirtualKeyCode: 27 },
+  } as const;
+  const press = async (key: keyof typeof KEYS) => {
+    await page.send("Input.dispatchKeyEvent", { type: "keyDown", key, ...KEYS[key] });
+    await page.send("Input.dispatchKeyEvent", { type: "keyUp", key, code: KEYS[key].code });
+  };
+  const menuOpened = async () => {
+    await page.evaluate(`document.querySelector("#nav-menu").focus()`);
+    await press("Enter");
+    return waitFor(async () => (await exists("#nav-favorites")) || undefined);
+  };
+  const menuClosed = () =>
+    waitFor(async () => ((await exists("#nav-overview")) ? undefined : true));
+  const bottomOf = (selector: string) =>
+    page.evaluate<number>(
+      `document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().bottom`,
+    );
+  const topOf = (selector: string) =>
+    page.evaluate<number>(
+      `document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().top`,
+    );
+  await page.send("Emulation.setDeviceMetricsOverride", {
+    width: 480,
+    height: 800,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
+  await waitFor(async () => (await exists("#nav-menu")) || undefined);
+  const menuFloats =
+    !(await exists("nav")) &&
+    (await attribute("#nav-menu", "aria-label")) === "Menu" &&
+    (await attribute("#nav-menu", "aria-expanded")) === "false" &&
+    (await bottomOf("#nav-menu")) <= (await topOf("#sign-in-card"));
+  await menuOpened();
+  const drawerShown =
+    (await textOf("nav")) === NAVIGATION &&
+    (await attribute("#nav-menu", "aria-expanded")) === "true" &&
+    (await currentPage()) === "overview";
+  await click("#nav-favorites");
+  await menuClosed();
+  const pickTaken = (await textOf("main h1")) === "Favourites" && (await exists("#sign-in"));
+  await menuOpened();
+  const pickMarked = (await currentPage()) === "favorites";
+  await press("Escape");
+  await menuClosed();
+  const focusBack = await waitFor(
+    async () =>
+      (await page.evaluate<string | undefined>("document.activeElement?.id")) === "nav-menu" ||
+      undefined,
+  );
+  await menuOpened();
+  await click(".MuiBackdrop-root");
+  await menuClosed();
+  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  await waitFor(async () => (await exists("#nav-overview")) || undefined);
+  results.menuOnNarrowWindow =
+    menuFloats &&
+    drawerShown &&
+    pickTaken &&
+    pickMarked &&
+    focusBack &&
+    (await textOf("main h1")) === "Favourites" &&
+    !(await exists("#nav-menu"));
+  await goTo("overview");
 
   results.surface = await page.evaluate(
     `({ bridge: Object.keys(window.abth ?? {}), require: typeof require, process: typeof process, cookie: document.cookie })`,
@@ -409,10 +515,6 @@ try {
   // as my page asks for it: the mock draws it for a session only, and 600×100, not the 290:47 the
   // card reserves, so the box takes the size the PNG gives. The words stay text over it, and the
   // dan's label is the picture the read already carried.
-  const attribute = (selector: string, name: string) =>
-    page.evaluate<string | null>(
-      `document.querySelector(${JSON.stringify(selector)})?.getAttribute(${JSON.stringify(name)}) ?? null`,
-    );
   await waitForSeen(page, async () => (await attribute("#title-plate-image", "src")) ?? undefined);
   // The player's first My Don ever, asked for after the plate, is the GIF the picture host draws
   // nothing with: the tile stays empty, with no spinner, and the line under the card gives its
@@ -455,10 +557,12 @@ try {
     !tokens.some((token) => withPlate.includes(token));
   const platesAtSignIn = await platesSettled();
 
-  // Picked while the profile is shown, a language redraws the screen in place: counts, percents and
-  // times in its own forms, Hiroba's words as they were, and nothing asked of Hiroba, there or back.
+  // Picked in Settings while signed in, a language redraws the profile as it was read: counts,
+  // percents and times in its own forms, Hiroba's words as they were, and nothing asked of Hiroba,
+  // there or back, nor by going from page to page.
   const pickLanguage = async (locale: string) => {
     await waitFor(async () => (await exists('[role="menu"]')) === false || undefined);
+    await goTo("settings");
     await click("#language-picker");
     await waitFor(async () => (await exists(`#language-${locale}`)) || undefined);
     await click(`#language-${locale}`);
@@ -466,6 +570,8 @@ try {
       async () =>
         (await page.evaluate<string>("document.documentElement.lang")) === locale || undefined,
     );
+    await waitFor(async () => (await exists('[role="menu"]')) === false || undefined);
+    await goTo("overview");
   };
   const readsBeforeLanguage = await readHits();
   const platesBeforeLanguage = (await platesAsked()).length;
@@ -660,10 +766,17 @@ try {
     (await text()).includes("サンプルどん") &&
     (await textOf("#dan")) === null &&
     (await textOf("#dan-unreadable")) === null;
-  // Unset so far: no favourite song and an empty folder. Set, the song shows by title and the
-  // folder, closed at first, opens on request with every song in it, the two that share a title
-  // included.
+  // The favourites have a page of their own (the user's call, 2026-09-29), from the same read, and
+  // read again there too; the Overview shows none of them. Unset so far: no favourite song and an
+  // empty folder. Set, the song shows by title and the folder, closed at first, opens on request
+  // with every song in it, the two that share a title included.
+  const favoritesOffOverview = !(await exists("#favorites"));
+  const readsBeforeFavorites = await readHits();
+  await goTo("favorites");
   results.favoritesUnsetShown =
+    favoritesOffOverview &&
+    !(await exists("#profile")) &&
+    (await readHits()) === readsBeforeFavorites &&
     (await textOf("#favorite-song")) === "Favourite song: none" &&
     (await textOf("#favorite-folder-empty")) !== null;
   await fetch(`${HIROBA}/__variant?favorites=set`);
@@ -686,6 +799,7 @@ try {
     closedAtFirst &&
     JSON.stringify(folderRows) ===
       JSON.stringify(["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]);
+  await goTo("overview");
   // A label that does not read, here the 43-byte GIF Hiroba sends when it has nothing to draw,
   // costs the dan alone: a neutral line and a code, the rest of the page as it was, still no URL.
   await fetch(`${HIROBA}/__variant?dan=14&label=gif`);
@@ -1515,9 +1629,18 @@ try {
   await running.click("#costume-close");
   await waitFor(async () => ((await shownOnReopen("#costume-dialog")) ? undefined : true));
 
-  await running.click("#sign-out");
-  await running.until("Sign in to Hiroba");
-  results.signOutHandled = !existsSync(SESSION_FILE);
+  /**
+   * Signs out in Settings, which offers it while signed in, and whether the window then shows the
+   * Overview, with its sign-in card.
+   */
+  const signOut = async () => {
+    await running.goTo("settings");
+    const offered = (await running.textOf("#sign-out")) === "Sign out";
+    await running.click("#sign-out");
+    await running.until("Sign in to Hiroba");
+    return offered && (await running.currentPage()) === "overview";
+  };
+  results.signOutHandled = (await signOut()) && !existsSync(SESSION_FILE);
 
   // Reopened after signing out, it stays signed out and asks Hiroba nothing. Started without
   // ABTH_UNVERIFIED_WRITES, it may send no write, and one asked for anyway sends nothing.
@@ -1586,8 +1709,7 @@ try {
     );
   /** The plates asked for this run, once signed out and in again and the plate is shown. */
   const platesAfterSignOutAndIn = async () => {
-    await running.click("#sign-out");
-    await running.until("Sign in to Hiroba");
+    await signOut();
     await running.click("#sign-in");
     await running.until("サンプルどん");
     tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
@@ -1607,8 +1729,7 @@ try {
   await running.until("Read at");
   const platesBeforeSignOut = (await platesSettled()).length;
   results.playerPicturesKeptAtSignOut = (await platesAfterSignOutAndIn()) === platesBeforeSignOut;
-  await running.click("#sign-out");
-  await running.until("Sign in to Hiroba");
+  await signOut();
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
   // Every portrait this run asked for went to the picture host as my page's src names it, with
   // Hiroba's origin alone as the Referer, and with no cookie at all: the session is Hiroba's.
@@ -1688,7 +1809,17 @@ async function launch({
     );
   const until = (needle: string) =>
     waitFor(async () => (await text()).includes(needle) || undefined);
-  return { proc, page, text, textOf, click, clickButton, until };
+  /** The page the side panel marks as shown, or null when no panel is drawn. */
+  const currentPage = () =>
+    page.evaluate<string | null>(
+      `document.querySelector('[aria-current="page"]')?.id.replace("nav-", "") ?? null`,
+    );
+  /** Opens a page from the side panel, which a window this wide draws, and waits until it shows. */
+  const goTo = async (to: "overview" | "favorites" | "settings") => {
+    await click(`#nav-${to}`);
+    await waitFor(async () => (await currentPage()) === to || undefined);
+  };
+  return { proc, page, text, textOf, click, clickButton, until, currentPage, goTo };
 }
 
 /**
