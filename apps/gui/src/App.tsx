@@ -127,7 +127,8 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
    * A write ended: the undo on offer is asked for again, and a change that read back as planned
    * offers its undo at once. A change also clears what the card said of the last undo, which no
    * longer describes the costume. One that found the session gone goes back to signing in, as a
-   * read does.
+   * read does. The portrait is asked for again: the platform fetches it anew if the write applied,
+   * and otherwise answers with the one it keeps, asking nothing.
    */
   const writeEnded = (outcome: WriteOutcomeView, asUndo = false) => {
     setJustSaved(!asUndo && outcome.kind === "applied");
@@ -135,6 +136,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
       setUndoOutcome(null);
     }
     void refreshUndo();
+    lane.renew("myDon");
     if (outcome.kind === "sessionGone" || outcome.kind === "notSignedIn") {
       setJustSaved(false);
       setUndoable(null);

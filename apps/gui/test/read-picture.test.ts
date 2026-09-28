@@ -843,6 +843,28 @@ describe("createPictureReader, the My Don portrait", () => {
     expect(sent).toHaveLength(2);
   });
 
+  test("fetches it anew once after a costume write applies, whoever signs in next", async () => {
+    const store = createMemoryPictureStore();
+    let wearing = BEFORE;
+    const { reader, sent } = setUp({
+      store,
+      state: readState(),
+      answer: portraitOf(() => wearing),
+    });
+    reader.myPageAsked();
+    await reader.read(MY_DON);
+    wearing = AFTER;
+    reader.costumeChanged();
+    // The session goes before the portrait is shown again: the change still counts.
+    reader.forget();
+    reader.myPageAsked();
+    const renewed = await reader.read(MY_DON);
+    expect(renewed.ok && decode(renewed.value.src)).toEqual(myDonPng(AFTER));
+    expect(await reader.read(MY_DON)).toEqual(renewed);
+    expect(sent).toHaveLength(2);
+    expect(await store.get(keyOf())).toEqual(myDonPng(AFTER));
+  });
+
   test("a portrait fetched anew that does not come leaves the one kept, and is asked for once more", async () => {
     const store = createMemoryPictureStore();
     let answer: Answer = png(PORTRAIT_URL, myDonPng(BEFORE));

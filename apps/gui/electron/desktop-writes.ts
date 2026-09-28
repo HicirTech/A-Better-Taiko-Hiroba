@@ -43,6 +43,8 @@ export interface DesktopWritesOptions {
   readonly endSession: () => void;
   /** Whose my page this run last read, or null before any read: whose undo record is whose. */
   readonly owner: () => string | null;
+  /** A write, or an undo, applied: the costume is the one it wrote, whatever was kept of it. */
+  readonly costumeChanged: () => void;
 }
 
 /** The port's write verbs on the desktop. */
@@ -116,6 +118,9 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
     }
     if (outcome.kind === "sessionGone") {
       options.endSession();
+    }
+    if (outcome.kind === "applied" || outcome.kind === "appliedNotSynced") {
+      options.costumeChanged();
     }
     return outcome;
   }

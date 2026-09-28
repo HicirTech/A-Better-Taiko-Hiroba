@@ -239,8 +239,8 @@ export interface HirobaSessionPort {
    * and past the run's budget. How often and how many are asked for is the interface's to keep down.
    *
    * The My Don portrait is the one kept picture that can change under the same address: the store
-   * answers it too, and it is fetched anew only after a read of my page other than a session's
-   * first, which only the user's Read again makes.
+   * answers it too, and it is fetched anew only after a costume write applies, or after a read of
+   * my page other than a session's first, which only the user's Read again makes.
    */
   readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /**

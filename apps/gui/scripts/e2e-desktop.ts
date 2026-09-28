@@ -4,7 +4,8 @@
  * filled favourites folder, the identity card on Hiroba's title plate (its text over it, one plate
  * per title, one that does not come, the plate kept across sign-outs and launches), the My Don
  * portrait (from the picture host with no cookie, kept across launches and sign-ins, fetched anew
- * on Read again, the kept one still shown when a fresh one does not come), the どんメダル
+ * on Read again and after a write applies, the kept one still shown when a fresh one does not
+ * come), the どんメダル
  * plate (asked for only on screen, its words over it, one plate per season and state, one that
  * does not come, its id never in the window or on disk, the plate kept across sign-outs and
  * launches), the editor's
@@ -1092,6 +1093,8 @@ try {
 
   // A colour alone: exactly the planned requests, the ajax headers on both posts, one field moved.
   // The pick's picture goes about when Review and Save are pressed: before the write or after it.
+  const myDonsBeforeColour = await myDonsSettled();
+  const myDonBeforeColour = await attribute("#my-don-image", "src");
   await resetLog();
   await fetch(`${HIROBA}/__posts?reset=1`);
   const colourOutcome = await changeInTheWindow(() => click("#swatch-colorFace-3"));
@@ -1125,6 +1128,14 @@ try {
         same(post.fields, ["_tckt", ...COSTUME_FIELDS]) &&
         post.ticketMatched,
     );
+  // The costume changed: the My Don on the card, behind the editor, is fetched anew, once, and
+  // shows the new one.
+  await waitForSeen(
+    page,
+    async () => (await myDonsAsked()).length > myDonsBeforeColour || undefined,
+  );
+  const myDonsAfterColour = await myDonsSettled();
+  const myDonAfterColour = await attribute("#my-don-image", "src");
   // The change's undo is offered once the editor is closed, never over it.
   await Bun.sleep(500);
   const snackbarOverTheEditor = await exists("#snackbar-undo");
@@ -1145,6 +1156,17 @@ try {
     same(await savedCostume(), START) &&
     sameBesideLanePictures(await requestLog(), WRITE_REQUESTS);
   results.snackbarUndoOncePerPress = !snackbarOverTheEditor && secondPressShut;
+  // So does the undo: once more, and the My Don is back as it was.
+  await waitForSeen(
+    page,
+    async () => (await myDonsAsked()).length > myDonsAfterColour || undefined,
+  );
+  results.myDonAgainAfterWrite =
+    myDonsAfterColour === myDonsBeforeColour + 1 &&
+    myDonAfterColour?.startsWith("data:image/png;base64,") === true &&
+    myDonAfterColour !== myDonBeforeColour &&
+    (await myDonsSettled()) === myDonsAfterColour + 1 &&
+    (await attribute("#my-don-image", "src")) === myDonBeforeColour;
 
   // A きぐるみ: the window warns, the four pieces come off, and one undo puts all eight back.
   const kigurumiOutcome = await changeInTheWindow(async () => {
@@ -1172,6 +1194,8 @@ try {
     same(await savedCostume(), START) &&
     (await hitsOn("/ajax/change_mydon.php")) - savesBeforeUndo === 1 &&
     !(await exists("#costume-undo"));
+  // The My Don fetched anew after that change and its undo is in before the log is read below.
+  await myDonsSettled();
 
   // #22: a piece beside a きぐるみ, which Hiroba would answer 0 to and ignore, is refused unsent.
   // While costume is unverified the title is read first, before the editor, so the trap costs that

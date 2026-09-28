@@ -194,6 +194,8 @@ app.whenReady().then(async () => {
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
     owner: () => owner,
+    // The My Don kept shows the costume before: it is fetched anew when next shown.
+    costumeChanged: () => pictures.costumeChanged(),
   });
 
   const port: HirobaSessionPort = {

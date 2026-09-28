@@ -69,6 +69,8 @@ function setUp(
     /** The first GET after a save throws, as a transport with a fault in it would. */
     throwAfterSave: false,
     saved: false,
+    /** How many times the writes said the costume changed. */
+    costumeChanges: 0,
   };
   const answer = async (url: string, response: Response) =>
     ok({
@@ -127,6 +129,9 @@ function setUp(
       hiroba.endedByApp += 1;
     },
     owner: options.whose ?? (() => (options.owner === undefined ? OWNER : options.owner)),
+    costumeChanged: () => {
+      hiroba.costumeChanges += 1;
+    },
   });
   const saved = async () =>
     fromMock(
@@ -188,6 +193,25 @@ describe("createDesktopWrites", () => {
       "GET /mypage_kisekae.php",
       "GET /mypage_top.php",
     ]);
+  });
+
+  test("says the costume changed after a change or an undo that applied, and after nothing else", async () => {
+    const { editor, hiroba, writes, setElsewhere } = setUp();
+    const target = { ...START, colorFace: 3 };
+    expect((await writes.changeCostume({ expected: START, target })).kind).toBe("applied");
+    expect(hiroba.costumeChanges).toBe(1);
+    expect((await writes.undo("costume")).kind).toBe("applied");
+    expect(hiroba.costumeChanges).toBe(2);
+    expect((await writes.changeCostume({ expected: START, target: START })).kind).toBe(
+      "nothingToChange",
+    );
+    editor.hook("/__noop-save", new URLSearchParams());
+    expect((await writes.changeCostume({ expected: START, target })).kind).toBe("notApplied");
+    setElsewhere("color_body=40");
+    expect((await writes.changeCostume({ expected: START, target })).kind).toBe(
+      "changedSincePreview",
+    );
+    expect(hiroba.costumeChanges).toBe(2);
   });
 
   test("an undo after a change made elsewhere changes nothing, and is no longer offered", async () => {

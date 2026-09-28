@@ -146,6 +146,11 @@ export interface PictureReader {
    */
   myPageAsked(): void;
   /**
+   * A costume write applied: the My Don portrait kept shows the costume before it, and is fetched
+   * anew the next time it is asked for.
+   */
+  costumeChanged(): void;
+  /**
    * Forgets the run's pictures on their way, and the plates not yet confirmed: they are neither
    * shared with a later call nor kept. Called whenever the session goes.
    */
@@ -313,8 +318,8 @@ function myDonRequest(
     referer: `${endpoints.hirobaOrigin}/`,
     rules: { ...MY_DON_RULES, at: { origin, path: MY_DON_PATH } },
     // The player's own, under them alone, and one only: the last fetched, which a costume changed
-    // since leaves behind, so it is fetched anew then (`myPageAsked`). The name is hashed before it
-    // is filed, the player too.
+    // since leaves behind, so it is fetched anew then (`costumeChanged`, `myPageAsked`). The name
+    // is hashed before it is filed, the player too.
     key: { scope: "player", player: owner, name: `${PICTURE_EPOCH}/mydon` },
     // Keyed by the taiko number, public: the same with a session or without one (wiki: Page Map).
     keptAfterRead: false,
@@ -337,7 +342,8 @@ function myDonRequest(
  *
  * The My Don portrait, from the picture host off Hiroba and never with the session, is the one kept
  * picture that can change under its address: it is kept, one per player, and fetched anew when next
- * asked for after the user's Read again (`myPageAsked`). If that fetch fails, the one kept answers.
+ * asked for after a costume write applies (`costumeChanged`) or the user's Read again
+ * (`myPageAsked`). If that fetch fails, the one kept answers.
  */
 export function createPictureReader(options: PictureReaderOptions): PictureReader {
   const { transport, endpoints, store, queue, limits } = options;
@@ -544,6 +550,9 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       if (myPageReads > 1) {
         myDonChanges += 1;
       }
+    },
+    costumeChanged() {
+      myDonChanges += 1;
     },
     forget() {
       generation += 1;
