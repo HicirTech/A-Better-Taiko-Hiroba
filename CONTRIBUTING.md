@@ -21,11 +21,13 @@ The engineering standard for all code is `tim-style-code`. User-facing and ticke
 - **One author: the repository owner.** No co-author trailers, no `Co-Authored-By`.
 - **Atomic and precise to the line.** One concern per commit. Stage only the lines that belong to
   that concern; do not fold unrelated edits into a commit.
-- **Conventional Commits 1.0.0** (https://www.conventionalcommits.org/en/v1.0.0/). One-line
-  subject in the imperative mood, at most 72 characters. Examples:
-  - `feat(core): parse score list across all levels`
-  - `fix(cli): recover session after interrupted sync`
-  - `test(core): cover not-played score detail fixture`
+- **Conventional Commits 1.0.0** (https://www.conventionalcommits.org/en/v1.0.0/). One sentence
+  in the imperative mood, at most 50 characters, and no body except an optional issue number:
+
+  ```bash
+  git commit -m "feat(core): parse score list across all levels"
+  git commit -m "fix(cli): recover session after interrupted sync" -m "#78"
+  ```
 - **The types, and what each one is for:**
 
   | Type | Use it for |
