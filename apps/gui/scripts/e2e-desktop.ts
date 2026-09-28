@@ -557,6 +557,8 @@ try {
     await refusalOf(`{ kind: "costumeItem", slot: 1, id: 4, url: "${HIROBA}/imgsrc_kisekae.php" }`),
     await refusalOf(`{ kind: "costumeItem", slot: 6, id: 4 }`),
     await refusalOf(`{ kind: "costumeItem", slot: 1, id: 1.5 }`),
+    await refusalOf(`{ kind: "titlePlate", url: "${HIROBA}/imgsrc_titleplate.php" }`),
+    await refusalOf(`{ kind: "titlePlate", slot: 1 }`),
   ];
   results.pictureShapesRefused =
     refusals.every((message) =>

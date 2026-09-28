@@ -91,6 +91,21 @@ describe("checkPng", () => {
     expect(why(answer(empty))).toBe("badSize");
   });
 
+  test("bounds the height apart, for a picture wider than it is tall", () => {
+    const plate = { maxBytes: 256 * 1024, maxSide: 1280, maxHeight: 400 };
+    const sized = (width: number, height: number) => {
+      const body = png(40, 40);
+      new DataView(body.buffer).setUint32(16, width);
+      new DataView(body.buffer).setUint32(20, height);
+      return answer(body);
+    };
+    expect(why(sized(1280, 400), plate)).toBe("passed");
+    expect(why(sized(1281, 100), plate)).toBe("badSize");
+    expect(why(sized(600, 401), plate)).toBe("badSize");
+    // Never above the side it is read with.
+    expect(why(sized(40, 513), { ...RULES, maxHeight: 1000 })).toBe("badSize");
+  });
+
   test("refuses a picture that came from another origin or path than the one asked", () => {
     expect(why(answer(png(40, 40), "image/png", `https://elsewhere.test${PATH}`))).toBe("movedTo");
     expect(why(answer(png(40, 40), "image/png", `${ORIGIN}/imgsrc_mydon.php`))).toBe("movedTo");

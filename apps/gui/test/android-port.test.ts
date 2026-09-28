@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
-import { thumbnailPng } from "../scripts/mock-pictures";
+import { thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
 import { native, nativeBase64 } from "./capacitor-fakes";
 
 const { createAndroidPort } = await import("../src/platform/android");
@@ -321,6 +321,7 @@ describe("createAndroidPort's pictures", () => {
   beforeEach(() => native.reset());
 
   const THUMB = { kind: "costumeItem", slot: 1, id: 36 } as const;
+  const PLATE = { kind: "titlePlate" } as const;
 
   /** Answers the editor with the mock's page and a thumbnail with the mock's picture. */
   function answerAsHiroba() {
@@ -334,6 +335,17 @@ describe("createAndroidPort's pictures", () => {
           url: asked,
           headers: { "Content-Type": "text/html; charset=utf-8" },
           data: nativeBase64(`<html><body>${editor.page({ cardChosen: true })}</body></html>`),
+        };
+      }
+      if (pathname === "/mypage_top.php") {
+        return myPageAnswer();
+      }
+      if (pathname === "/imgsrc_titleplate.php") {
+        return {
+          status: 200,
+          url: asked,
+          headers: { "Content-Type": "image/png" },
+          data: nativeBase64(titlePlatePng("サンプルの称号")),
         };
       }
       return {
@@ -411,6 +423,57 @@ describe("createAndroidPort's pictures", () => {
       "/mypage_kisekae.php",
       "/mypage_kisekae.php",
       "/imgsrc_kisekae.php",
+    ]);
+  });
+
+  test("asks for the title plate only once my page is read, as my page does, and once", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    expect(await port.readPicture(PLATE)).toEqual({
+      ok: false,
+      error: { code: "titlePlate=notRead" },
+    });
+    expect(native.httpRequests).toEqual([]);
+    expect((await port.readProfile()).ok).toBe(true);
+    const plate = await port.readPicture(PLATE);
+    expect(plate.ok && [plate.value.width, plate.value.height]).toEqual([600, 100]);
+    expect(await port.readPicture(PLATE)).toEqual(plate);
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_top.php`,
+      `${HIROBA}/imgsrc_titleplate.php`,
+    ]);
+    expect(native.httpRequests[1]?.headers).toMatchObject({
+      Referer: `${HIROBA}/mypage_top.php`,
+    });
+  });
+
+  test("forgets whose page it read when the session goes, and keeps the plate", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.readProfile();
+    const plate = await port.readPicture(PLATE);
+    await port.signOut();
+    const outcome = port.signIn();
+    await until(() => native.openedWith.length === 1);
+    native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
+    expect(await outcome).toEqual({ kind: "signedIn" });
+    expect(await port.readPicture(PLATE)).toEqual({
+      ok: false,
+      error: { code: "titlePlate=notRead" },
+    });
+    // The same player read again: the plate kept from before, asked of no one.
+    await port.readProfile();
+    expect(await port.readPicture(PLATE)).toEqual(plate);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_top.php",
+      "/imgsrc_titleplate.php",
+      "/mypage_top.php",
     ]);
   });
 

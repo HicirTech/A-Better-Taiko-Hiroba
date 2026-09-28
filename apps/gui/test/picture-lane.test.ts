@@ -13,6 +13,7 @@ const item = (id: number, slot: 1 | 2 | 3 | 4 | 5 = 1): PictureWant => ({
   slot,
   id,
 });
+const PLATE: PictureWant = { kind: "titlePlate" };
 const view = (id: number): PictureView => ({
   src: `data:image/png;base64,${id}`,
   width: 40,
@@ -59,7 +60,7 @@ function heldPort() {
   const asked: string[] = [];
   const answers: ((result: Result<PictureView, PictureFailure>) => void)[] = [];
   const load = (want: PictureWant) => {
-    asked.push(`${want.slot}/${want.id}`);
+    asked.push(want.kind === "costumeItem" ? `${want.slot}/${want.id}` : want.kind);
     return new Promise<Result<PictureView, PictureFailure>>((resolve) => answers.push(resolve));
   };
   /** Lets the oldest request go with `result`, then lets the lane move on. */
@@ -123,6 +124,30 @@ describe("createPictureLane", () => {
     expect(port.asked).toEqual(["1/30"]);
     await advance(100);
     expect(port.asked).toEqual(["1/30", "1/10"]);
+  });
+
+  test("asks for the identity card's plate before thumbnails, whatever their order", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(item(10), { order: 0 });
+    lane.ask(item(20), { order: 1 });
+    lane.ask(PLATE, { order: 5 });
+    await advance(150);
+    expect(port.asked).toEqual(["titlePlate"]);
+    await port.answer(ok(view(1)));
+    expect(lane.peek({ kind: "titlePlate" })).toEqual({ view: view(1) });
+    expect(port.asked).toEqual(["titlePlate", "1/10"]);
+  });
+
+  test("forgets the failures of one kind only, a kind with no numbers among them", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(PLATE, { order: 0 });
+    lane.ask(item(4), { order: 1 });
+    await advance(150);
+    await port.answer(err({ code: "titlePlate=notPng" }));
+    await port.answer(err({ code: "costumeItem=notPng" }));
+    lane.forgetFailures("titlePlate");
+    expect(lane.peek(PLATE)).toBeUndefined();
+    expect(lane.peek(item(4))).toEqual({ failure: "costumeItem=notPng" });
   });
 
   test("asks nothing for a picture that leaves the screen before the dwell", async () => {

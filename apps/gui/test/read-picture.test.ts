@@ -4,9 +4,10 @@
  */
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport, type TransportRequest } from "@abth/core";
+import { encode } from "fast-png";
 
 import { NO_LABEL_GIF } from "../scripts/mock-dan-label";
-import { thumbnailPng } from "../scripts/mock-pictures";
+import { blankPlatePng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
 import {
   createMemoryPictureStore,
   createPictureReader,
@@ -165,7 +166,8 @@ describe("createPictureReader, an item's thumbnail", () => {
       { ...WANT, url: "https://elsewhere.test/" },
       { ...WANT, slot: 6 },
       { ...WANT, id: 1.5 },
-      { kind: "titlePlate" },
+      { kind: "titlePlate", url: `${ORIGIN}/imgsrc_titleplate.php` },
+      { kind: "scorePanel" },
       null,
     ]) {
       expect(await reader.read(want)).toEqual(err({ code: "picture=refused" }));
@@ -286,6 +288,173 @@ describe("createPictureReader, an item's thumbnail", () => {
     await reader.read(WANT);
     const kept = await store.get({ scope: "shared", player: null, name: "v1/item/1/36" });
     expect(kept).toEqual(thumbnailPng(1, 36));
+  });
+});
+
+describe("createPictureReader, the title plate", () => {
+  const PLATE = { kind: "titlePlate" } as const;
+  const PLATE_URL = `${ORIGIN}/imgsrc_titleplate.php`;
+  const OWNER = "000000000000";
+  const TITLE = "サンプルの称号";
+  /** My page read, showing the bare plate under `title`, for `owner`. */
+  const readState = (title = TITLE, owner = OWNER): PictureReadState => ({
+    ...STATE,
+    owner,
+    sources: { titlePlate: { form: "bare", title } },
+  });
+  /** Answers a plate for `title`, whatever the request, at the address asked. */
+  const plateOf = (title: string) => async (request: TransportRequest) =>
+    png(request.url, titlePlatePng(title));
+  const codeOf = async (read: Promise<unknown>) =>
+    ((await read) as { error: { code: string } }).error.code;
+
+  test("asks once, as my page does, for the bare plate, after a pause outside the queue", async () => {
+    const { reader, sent, events } = setUp({ state: readState(), answer: plateOf(TITLE) });
+    const read = await reader.read(PLATE);
+    expect(sent.map(({ request }) => request)).toEqual([
+      {
+        method: "GET",
+        url: PLATE_URL,
+        headers: {
+          Referer: `${ORIGIN}/mypage_top.php`,
+          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        },
+      },
+    ]);
+    expect(events).toEqual(["sleep 37", "queue", "send "]);
+    expect(read.ok && decode(read.value.src)).toEqual(titlePlatePng(TITLE));
+    expect(read.ok && [read.value.width, read.value.height]).toEqual([600, 100]);
+  });
+
+  test("asks for the public form, by the page's own number, when my page wrote that", async () => {
+    const { reader, sent } = setUp({
+      state: { ...readState(), sources: { titlePlate: { form: "byTaikoNo", title: TITLE } } },
+      answer: plateOf(TITLE),
+    });
+    expect((await reader.read(PLATE)).ok).toBe(true);
+    expect(sent.map(({ request }) => request.url)).toEqual([`${PLATE_URL}?taiko_no=${OWNER}`]);
+  });
+
+  test("sends nothing before my page is read, when it showed none, or one of another form", async () => {
+    const unread = setUp();
+    expect(await unread.reader.read(PLATE)).toEqual(err({ code: "titlePlate=notRead" }));
+    for (const titlePlate of ["notShown", "unexpectedSrc"] as const) {
+      const { reader, sent } = setUp({ state: { ...readState(), sources: { titlePlate } } });
+      expect(await reader.read(PLATE)).toEqual(err({ code: `titlePlate=${titlePlate}` }));
+      expect(sent).toEqual([]);
+    }
+    const signedOut = setUp({ state: { ...readState(), signedIn: false } });
+    expect(await signedOut.reader.read(PLATE)).toEqual(err({ code: "titlePlate=notSignedIn" }));
+    expect(unread.sent).toEqual([]);
+    expect(signedOut.sent).toEqual([]);
+  });
+
+  test("keeps a plate for good under its player and its title: a new title is a new plate", async () => {
+    const store = createMemoryPictureStore();
+    const { reader, sent, setState } = setUp({
+      store,
+      state: readState(),
+      answer: async (request) => png(request.url, titlePlatePng(TITLE)),
+    });
+    await reader.read(PLATE);
+    await reader.read(PLATE);
+    expect(sent).toHaveLength(1);
+    expect(
+      await store.get({
+        scope: "player",
+        player: OWNER,
+        name: `v1/titleplate/bare/${encodeURIComponent(TITLE)}`,
+      }),
+    ).toEqual(titlePlatePng(TITLE));
+    setState(readState("別のサンプル称号"));
+    await reader.read(PLATE);
+    expect(sent).toHaveLength(2);
+    // Another player is never given this one's plate, under the same title.
+    setState(readState(TITLE, "111111111111"));
+    await reader.read(PLATE);
+    expect(sent).toHaveLength(3);
+    setState(readState());
+    await reader.read(PLATE);
+    expect(sent).toHaveLength(3);
+  });
+
+  test("keeps a plate under the title my page shows when its turn comes, not when asked", async () => {
+    const store = createMemoryPictureStore();
+    const other = "別のサンプル称号";
+    const { reader, sent, setState } = setUp({ store, state: readState(), answer: plateOf(other) });
+    const keyOf = (title: string) => ({
+      scope: "player" as const,
+      player: OWNER,
+      name: `v1/titleplate/bare/${encodeURIComponent(title)}`,
+    });
+    // A read that finds another title lands while the plate waits its turn.
+    const reading = reader.read(PLATE);
+    setState(readState(other));
+    expect((await reading).ok).toBe(true);
+    expect(sent).toHaveLength(1);
+    expect(await store.get(keyOf(TITLE))).toBeNull();
+    expect(await store.get(keyOf(other))).toEqual(titlePlatePng(other));
+  });
+
+  test("a GIF, or a PNG too small or too tall, is a failure with codes that hold no number", async () => {
+    const gif = setUp({
+      state: readState(),
+      answer: async () =>
+        ok({
+          status: 200,
+          url: PLATE_URL,
+          headers: { "content-type": "image/gif" },
+          body: NO_LABEL_GIF,
+        }),
+    });
+    // A clear 8×8 PNG, under a kilobyte: a placeholder, not a plate.
+    const tinyPng = new Uint8Array(
+      encode({ width: 8, height: 8, data: new Uint8Array(8 * 8 * 4), channels: 4 }),
+    );
+    const tall = titlePlatePng(TITLE);
+    new DataView(tall.buffer).setUint32(20, 401);
+    const tallRead = setUp({ state: readState(), answer: async () => png(PLATE_URL, tall) });
+    const tiny = setUp({
+      state: readState(),
+      answer: async () => png(PLATE_URL, tinyPng),
+    });
+    const codes = [
+      await codeOf(gif.reader.read(PLATE)),
+      await codeOf(tallRead.reader.read(PLATE)),
+      await codeOf(tiny.reader.read(PLATE)),
+    ];
+    expect(codes).toEqual([
+      "titlePlate=notPng status=200 type=image/gif bytes=43",
+      `titlePlate=badSize status=200 type=image/png bytes=${tall.byteLength} size=600x401`,
+      `titlePlate=tooSmall status=200 type=image/png bytes=${tinyPng.byteLength}`,
+    ]);
+    for (const code of codes) {
+      expect(code).not.toMatch(/000000000000|hiroba\.test|http|\?/);
+    }
+  });
+
+  test("a plate that ended on the login page names its path, never the query", async () => {
+    const { reader } = setUp({
+      state: readState(),
+      answer: async () =>
+        ok({
+          status: 200,
+          url: `${ORIGIN}/login.php?taiko_no=${OWNER}`,
+          headers: { "content-type": "text/html" },
+          body: new TextEncoder().encode("<html></html>"),
+        }),
+    });
+    expect(await codeOf(reader.read(PLATE))).toBe(
+      "titlePlate=notPng path=/login.php status=200 type=text/html bytes=13",
+    );
+  });
+
+  test("the blank plate a lost session gets is a PNG like any other: nothing tells it apart", async () => {
+    const { reader } = setUp({
+      state: readState(),
+      answer: async () => png(PLATE_URL, blankPlatePng()),
+    });
+    expect((await reader.read(PLATE)).ok).toBe(true);
   });
 });
 

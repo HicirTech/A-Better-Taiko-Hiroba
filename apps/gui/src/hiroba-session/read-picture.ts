@@ -16,7 +16,7 @@ import {
   type PictureWant,
 } from "../session-port";
 import type { HirobaQueue } from "./hiroba-queue";
-import type { PictureSources } from "./picture-sources";
+import { type PictureSources, TITLE_PLATE_PATH } from "./picture-sources";
 import { checkPng, describeAnswer, type PngRefusal, type PngRules, pngDataUrl } from "./png-answer";
 import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "./picture-store";
 import type { HirobaEndpoints } from "./types";
@@ -31,6 +31,11 @@ const IMAGE_ACCEPT = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*
  * a thumbnail.
  */
 const ITEM_RULES = { minBytes: 128, maxBytes: 64 * 1024, maxSide: 512 } as const;
+/**
+ * The plate my page draws the title on: 15648 B for a session, 5547 B blank (wiki: Page Map). Under
+ * a kilobyte is not a plate; over 256 KiB, 1280 pixels wide or 400 high is not one either.
+ */
+const TITLE_PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280, maxHeight: 400 };
 /** The slot each costume value of a set is in, きぐるみ first. */
 const WORN = ["costume1", "costume2", "costume3", "costume4", "costume5"] as const;
 
@@ -145,26 +150,77 @@ interface PictureRequest {
   readonly key: PictureKey;
 }
 
-function requestOf(want: PictureWant, endpoints: HirobaEndpoints): PictureRequest {
+/**
+ * Why the platform's state allows no request for a picture, before anything is sent: an item the
+ * last editor read did not offer; a picture of my page before the run's first read of it, one the
+ * page did not show, or one whose source failed its pattern.
+ */
+type Refusal = "notOffered" | "notRead" | "notShown" | "unexpectedSrc";
+
+/**
+ * The request for `want`, built from a fixed path and what `state` holds, or why there is none.
+ * Nothing the window sent reaches an address but checked numbers.
+ */
+function requestOf(
+  want: PictureWant,
+  endpoints: HirobaEndpoints,
+  state: PictureReadState,
+): PictureRequest | Refusal {
   const origin = endpoints.hirobaOrigin;
+  if (want.kind === "costumeItem") {
+    if (!state.offered.has(offerKey(want.slot, want.id))) {
+      return "notOffered";
+    }
+    return {
+      kind: want.kind,
+      url: `${origin}${ITEM_PATH}?cos=${want.id}&type=${want.slot}`,
+      path: ITEM_PATH,
+      // As Hiroba's own editor loads them, and as the preview is asked for.
+      referer: `${origin}/mypage_kisekae.php`,
+      rules: { ...ITEM_RULES, at: { origin, path: ITEM_PATH } },
+      // Kept for every account, and for good: it names no player and shows only the item. The slot
+      // is part of the key, as one id sits in several slots.
+      key: {
+        scope: "shared",
+        player: null,
+        name: `${PICTURE_EPOCH}/item/${want.slot}/${want.id}`,
+      },
+    };
+  }
+  const { owner, sources } = state;
+  if (owner === null || sources === null) {
+    return "notRead";
+  }
+  const plate = sources.titlePlate;
+  if (typeof plate === "string") {
+    return plate;
+  }
+  // The form my page wrote: bare, the plate of whoever holds the session, or its own taiko number.
+  const query = plate.form === "bare" ? "" : `?taiko_no=${owner}`;
   return {
     kind: want.kind,
-    url: `${origin}${ITEM_PATH}?cos=${want.id}&type=${want.slot}`,
-    path: ITEM_PATH,
-    // As Hiroba's own editor loads them, and as the preview is asked for.
-    referer: `${origin}/mypage_kisekae.php`,
-    rules: { ...ITEM_RULES, at: { origin, path: ITEM_PATH } },
-    // Kept for every account, and for good: it names no player and shows only the item. The slot is
-    // part of the key, as one id sits in several slots.
-    key: { scope: "shared", player: null, name: `${PICTURE_EPOCH}/item/${want.slot}/${want.id}` },
+    url: `${origin}${TITLE_PLATE_PATH}${query}`,
+    path: TITLE_PLATE_PATH,
+    // As my page loads it.
+    referer: `${origin}/mypage_top.php`,
+    rules: { ...TITLE_PLATE_RULES, at: { origin, path: TITLE_PLATE_PATH } },
+    // The player's own, kept under them alone, and for good (the user's call, 2026-09-28). The title
+    // is in the name, so a title changed anywhere is a plate of its own; the form is too, as the
+    // two forms are not yet known to draw the same.
+    key: {
+      scope: "player",
+      player: owner,
+      name: `${PICTURE_EPOCH}/titleplate/${plate.form}/${encodeURIComponent(plate.title)}`,
+    },
   };
 }
 
 /**
  * The pictures of Hiroba the window may show, fetched by the platform with the session and handed
  * over as bytes, for both shells. The window names what it wants; the address is built here from a
- * fixed path and checked numbers, and only for what the platform's state allows: nothing while
- * signed out, nothing the last editor read did not offer, and nothing past the run's budget.
+ * fixed path and checked numbers, or what the platform read off my page, and only for what its
+ * state allows: nothing while signed out, nothing the last editor read did not offer, nothing of my
+ * page it has not read or that did not show, and nothing past the run's budget.
  *
  * A picture kept in the store is answered at once, without the queue. Otherwise one GET goes out,
  * after a short random pause waited outside the queue, then in the queue with every other request
@@ -221,16 +277,24 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   };
 
   const fetchPicture = async (
-    request: PictureRequest,
+    want: PictureWant,
     since: number,
   ): Promise<Result<PictureView, PictureFailure>> => {
     const gap = Math.max(0, lastFetchEnded + limits.minGapMs - clock.now());
     await clock.sleep(gap + random() * limits.jitterMs);
     return queue.oneAtATime(async (): Promise<Result<PictureView, PictureFailure>> => {
       // The session may have gone while this waited its turn: then nothing is sent.
-      if (!options.state().signedIn || since !== generation) {
+      const state = options.state();
+      if (!state.signedIn || since !== generation) {
         fetched -= 1;
-        return failed(request.kind, "notSignedIn");
+        return failed(want.kind, "notSignedIn");
+      }
+      // Built again from the state now: a read of my page that landed while this waited may have
+      // changed the title, and Hiroba draws the plate as it is now, which must be kept as such.
+      const request = requestOf(want, endpoints, state);
+      if (typeof request === "string") {
+        fetched -= 1;
+        return failed(want.kind, request);
       }
       const signal = limits.timeoutMs === null ? undefined : AbortSignal.timeout(limits.timeoutMs);
       const sent = await transport.send(
@@ -271,15 +335,15 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       if (!state.signedIn) {
         return failed(want.kind, "notSignedIn");
       }
-      if (!state.offered.has(offerKey(want.slot, want.id))) {
-        return failed(want.kind, "notOffered");
+      const request = requestOf(want, endpoints, state);
+      if (typeof request === "string") {
+        return failed(want.kind, request);
       }
-      const request = requestOf(want, endpoints);
       const view = await kept(request);
       if (view !== null) {
         return ok(view);
       }
-      const id = `${request.key.scope}|${request.key.name}`;
+      const id = `${request.key.scope}|${request.key.player ?? ""}|${request.key.name}`;
       const onItsWay = inFlight.get(id);
       if (onItsWay !== undefined) {
         return onItsWay;
@@ -288,7 +352,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return failed(want.kind, "budgetSpent");
       }
       fetched += 1;
-      const fetching = fetchPicture(request, generation).finally(() => {
+      const fetching = fetchPicture(want, generation).finally(() => {
         if (inFlight.get(id) === fetching) {
           inFlight.delete(id);
         }

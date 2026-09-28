@@ -155,7 +155,7 @@ function ItemCell({
   lane: PictureLane;
   i18n: Translator;
   part: SlotPart;
-  want: PictureWant;
+  want: Extract<PictureWant, { kind: "costumeItem" }>;
   order: number;
   chosen: boolean;
   root: RefObject<HTMLDivElement | null>;

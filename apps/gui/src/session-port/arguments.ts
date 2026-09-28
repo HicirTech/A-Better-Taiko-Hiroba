@@ -50,12 +50,18 @@ export function isCostumeSet(value: unknown): value is CostumeSet {
 const isWhole = (value: unknown, least: number, most: number): value is number =>
   Number.isInteger(value) && (value as number) >= least && (value as number) <= most;
 
+/** The kinds of picture that name nothing but their kind: the platform knows which one it means. */
+const KIND_ONLY_PICTURES: readonly string[] = ["titlePlate"];
+
 /**
  * A picture the interface may ask for, and nothing else: a kind, and for an item's thumbnail its
- * slot, 1 to 5, and its id, 1 to 9999. No URL, no source and no other key: the platform builds the
- * address. はずす (0) has no picture.
+ * slot, 1 to 5, and its id, 1 to 9999; for a picture of my page, the kind alone. No URL, no source
+ * and no other key: the platform builds the address. はずす (0) has no picture.
  */
 export function isPictureWant(value: unknown): value is PictureWant {
+  if (hasExactly(value, ["kind"])) {
+    return typeof value.kind === "string" && KIND_ONLY_PICTURES.includes(value.kind);
+  }
   return (
     hasExactly(value, ["kind", "slot", "id"]) &&
     value.kind === "costumeItem" &&

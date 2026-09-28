@@ -22,6 +22,11 @@ export interface PngRules {
    * a PNG with no IHDR first is not a PNG.
    */
   readonly maxSide?: number;
+  /**
+   * The largest height the IHDR may give, when it is less than `maxSide`: a picture wider than it
+   * is tall, such as a plate. Read only with `maxSide`.
+   */
+  readonly maxHeight?: number;
   /** Where the final URL must be: a picture that moved is not the one asked for. */
   readonly at?: AskedPlace;
 }
@@ -81,7 +86,8 @@ export function checkPng(
       return err({ why: "notPngBytes" });
     }
     const { width, height } = size;
-    if (width < 1 || height < 1 || width > rules.maxSide || height > rules.maxSide) {
+    const maxHeight = Math.min(rules.maxSide, rules.maxHeight ?? rules.maxSide);
+    if (width < 1 || height < 1 || width > rules.maxSide || height > maxHeight) {
       return err({ why: "badSize", width, height });
     }
   }

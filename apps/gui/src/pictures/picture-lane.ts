@@ -63,11 +63,17 @@ export interface PictureLane {
  * order on screen. Each kind is ranked here as it arrives.
  */
 const KIND_RANK: Readonly<Record<PictureWant["kind"], number>> = {
+  titlePlate: 0,
   costumeItem: 1,
 };
 
-/** One key per picture: its kind and its numbers. */
-export const wantKey = (want: PictureWant): string => `${want.kind}/${want.slot}/${want.id}`;
+/** One key per picture: its kind, then its numbers if it has any. */
+export const wantKey = (want: PictureWant): string =>
+  want.kind === "costumeItem" ? `${want.kind}/${want.slot}/${want.id}` : want.kind;
+
+/** Whether `key` is a picture of `kind`. */
+const isOfKind = (key: string, kind: PictureWant["kind"]) =>
+  key === kind || key.startsWith(`${kind}/`);
 
 const PAGE_TIMERS: LaneTimers = {
   set: (run, ms) => setTimeout(run, ms),
@@ -200,7 +206,7 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
     forgetFailures(kind) {
       let forgot = false;
       for (const [key, answer] of answers) {
-        if ("failure" in answer && (kind === undefined || key.startsWith(`${kind}/`))) {
+        if ("failure" in answer && (kind === undefined || isOfKind(key, kind))) {
           answers.delete(key);
           forgot = true;
         }

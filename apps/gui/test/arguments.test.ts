@@ -92,6 +92,10 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     expect(check([{ id: 1, slot: 3, kind: "costumeItem" }])).toBe(true);
   });
 
+  test("takes the title plate by its kind alone", () => {
+    expect(PORT_ARGUMENTS.readPicture([{ kind: "titlePlate" }])).toBe(true);
+  });
+
   test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
     const check = PORT_ARGUMENTS.readPicture;
     const item = { kind: "costumeItem", slot: 1, id: 36 };
@@ -109,7 +113,15 @@ describe("PORT_ARGUMENTS.readPicture", () => {
       [{ ...item, src: "imgsrc_kisekae.php?cos=36&type=1" }],
       [{ slot: 1, id: 36 }],
       [{ ...item, kind: "titlePlate" }],
-      [{ kind: "titlePlate" }],
+      [{ kind: "titlePlate", slot: 1 }],
+      [{ kind: "titlePlate", url: "https://example.test/imgsrc_titleplate.php" }],
+      [{ kind: "titlePlate", src: "imgsrc_titleplate.php?taiko_no=000000000000" }],
+      [{ kind: "titlePlate" }, { kind: "titlePlate" }],
+      [Object.assign(Object.create({ inherited: true }), { kind: "titlePlate" })],
+      [{ kind: "costumeItem" }],
+      [{ kind: "scorePanel" }],
+      [{ kind: "toString" }],
+      [{ kind: 0 }],
       [{ ...item, kind: undefined }],
       [[item]],
       [null],

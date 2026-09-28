@@ -109,17 +109,21 @@ export type CostumeSlot = 1 | 2 | 3 | 4 | 5;
 
 /**
  * One of Hiroba's pictures, as the interface asks for it: what it shows, never where it is. The
- * platform builds the address itself, from a fixed path and these checked numbers. Each kind comes
- * with the part of the app that shows it; one so far:
+ * platform builds the address itself, from a fixed path and these checked numbers, or from what it
+ * read off my page itself. Each kind comes with the part of the app that shows it:
  *
  * - `costumeItem`: an item's thumbnail, as the costume editor shows it, for an item the last
  *   editor read offered in that slot: one it owns, or the one it wears. はずす (0) has none.
+ * - `titlePlate`: the plate the identity card is drawn on, as the last read of my page showed it,
+ *   under the title it showed. It names nothing more: the platform knows whose page it read.
  */
-export type PictureWant = {
-  readonly kind: "costumeItem";
-  readonly slot: CostumeSlot;
-  readonly id: number;
-};
+export type PictureWant =
+  | {
+      readonly kind: "costumeItem";
+      readonly slot: CostumeSlot;
+      readonly id: number;
+    }
+  | { readonly kind: "titlePlate" };
 
 /**
  * A picture as it crosses to the interface: its bytes as a `data:image/png` URL, a picture and not
@@ -224,8 +228,8 @@ export interface HirobaSessionPort {
    * One of Hiroba's pictures, as `want` names it: from the platform's store when it holds it,
    * asking Hiroba nothing, or else one GET in the queue with every other request, never retried and
    * never between a write's requests. Answered as a `data:image/png` URL and its size, or as codes.
-   * Refused unsent while signed out, for an item the last editor read did not offer, and past the
-   * run's budget. How often and how many are asked for is the interface's to keep down.
+   * Refused unsent while signed out, for an item the last editor read did not offer, for a picture
+   * of my page before my page is read or when it showed none, and past the run's budget. How often and how many are asked for is the interface's to keep down.
    */
   readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /**
