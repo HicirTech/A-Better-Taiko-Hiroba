@@ -289,6 +289,18 @@ describe("createPictureReader, an item's thumbnail", () => {
     const kept = await store.get({ scope: "shared", player: null, name: "v1/item/1/36" });
     expect(kept).toEqual(thumbnailPng(1, 36));
   });
+
+  test("fetches a kept thumbnail again when it no longer passes, and keeps the new one", async () => {
+    const store = createMemoryPictureStore();
+    const key = { scope: "shared", player: null, name: "v1/item/1/36" } as const;
+    // A file cut short: fewer bytes than any thumbnail has.
+    await store.put(key, thumbnailPng(1, 36).subarray(0, 64));
+    const { reader, sent } = setUp({ store });
+    const read = await reader.read(WANT);
+    expect(sent).toHaveLength(1);
+    expect(read.ok && decode(read.value.src)).toEqual(thumbnailPng(1, 36));
+    expect(await store.get(key)).toEqual(thumbnailPng(1, 36));
+  });
 });
 
 describe("createPictureReader, the title plate", () => {
@@ -491,6 +503,18 @@ describe("createPictureReader, the title plate", () => {
     expect(sent).toHaveLength(1);
     expect(again.ok && decode(again.value.src)).toEqual(titlePlatePng(TITLE));
     expect(await store.get(keyOf(TITLE))).toBeNull();
+    await reader.confirm(OWNER);
+    expect(await store.get(keyOf(TITLE))).toEqual(titlePlatePng(TITLE));
+  });
+
+  test("fetches a kept plate again when it no longer passes, and keeps the new one once confirmed", async () => {
+    const store = createMemoryPictureStore();
+    // A file cut short: fewer bytes than any plate has.
+    await store.put(keyOf(TITLE), titlePlatePng(TITLE).subarray(0, 512));
+    const { reader, sent } = setUp({ store, state: readState(), answer: plateOf(TITLE) });
+    const read = await reader.read(PLATE);
+    expect(sent).toHaveLength(1);
+    expect(read.ok && decode(read.value.src)).toEqual(titlePlatePng(TITLE));
     await reader.confirm(OWNER);
     expect(await store.get(keyOf(TITLE))).toEqual(titlePlatePng(TITLE));
   });
