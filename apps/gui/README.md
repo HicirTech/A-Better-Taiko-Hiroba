@@ -38,7 +38,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once a run, one that does not come, one the editor did not offer, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
@@ -85,6 +85,35 @@ write gate stands in front of it, and Android allows it too. A picture that does
 `ABTH_DEBUG_SAVE_READS=1`, only the latest picture is kept, as `debug\imgsrc_mydon.php.png`, and
 none in `debug\history`.
 
+### Item thumbnails
+
+Under **きせかえ**, each slot shows its items by Hiroba's own thumbnails, in a box like Hiroba's:
+six to a row, four rows at a time, scrolled natively or a row at a time with ▲ and ▼, and はずす as
+a button under it. Each thumbnail is `imgsrc_kisekae.php?cos=<id>&type=<slot>`. The platform builds
+that address itself, only for an item the last editor read offered (one the account owns, or the
+one it wears), fetches it with the session, checks that it is a PNG of a thumbnail's size, and
+hands the window a `data:` URL. The window names an item by its slot and number, never by an
+address.
+
+What it costs Hiroba:
+
+- Opening the editor costs no thumbnail: it opens on いろ.
+- On the items tab, a thumbnail is asked for only once its cell has stayed in the box, or within a
+  row of it, for 150 ms, so a fling past a row asks nothing. The first view of a slot asks for 30
+  at most, and each row scrolled into view for six more.
+- One at a time, after a random pause of up to 100 ms, in the queue with every other request to
+  Hiroba, so never between a write's requests; none is asked for while a save or an undo runs.
+  Never retried. At most 300 in a run, and 8 s each on the desktop.
+- Each is kept in memory for the run: opening the editor again, or going back to a slot, asks for
+  nothing already shown.
+
+Hiroba's own editor, for comparison, asks for a whole tab of thumbnails (38 to 76) at once on every
+tab click. A thumbnail that does not come leaves the item's number in its cell, and one line under
+the box says how many did not, with a code for a report; the editor works as before. Android does
+the same. With `ABTH_DEBUG_SAVE_READS=1`, only the latest thumbnail is kept, as
+`debug\imgsrc_kisekae.php.png`, and none in `debug\history`; its `.json` counts how many came in
+the run.
+
 ## The first real costume write
 
 The first real write of each kind is made by you, on the desktop, with your own account. Start with
@@ -123,8 +152,8 @@ different swatch; the picture redraws in it. **Changes** must list exactly one l
 **4. Review and save.** Press **Review**. The dialog repeats the one change, and asks you to tick
 "This is the first write of this kind from the app…", noting that it also reads your title before
 and after. Tick it and press **Save to Hiroba**. The dialog shows "Saving… then reading it back"
-while the app sends, in this order and once each (a picture asked for as you picked may come
-before or after these, never between them):
+while the app sends, in this order and once each (a picture of the set or of an item, asked for
+as you picked, may come before or after these, never between them):
 
 1. `GET mypage_top.php`: your title, before — read first, since my page's forms issue a token too;
 2. `GET mypage_kisekae.php`: a fresh token and the whole set, checked against what the editor showed;
