@@ -1,3 +1,5 @@
+import { sha256Hex } from "./sha256";
+
 /**
  * Part of every picture's key: bumping it drops every picture kept under the old one, wherever it
  * is kept.
@@ -21,6 +23,18 @@ export interface PictureKey {
   readonly player: string | null;
   /** The picture's name within its scope, the epoch first: `v1/item/1/36`. */
   readonly name: string;
+}
+
+/**
+ * Where a store that outlasts the run files `key`: `shared/<name>`, or `player/<player>/<name>`
+ * for a player's own, each part the SHA-256 of what it stands for, so neither a taiko number nor a
+ * title is ever written out in clear.
+ */
+export function pictureKeyPath(key: PictureKey): string {
+  const name = sha256Hex(key.name);
+  return key.scope === "shared"
+    ? `shared/${name}`
+    : `player/${sha256Hex(key.player ?? "")}/${name}`;
 }
 
 /**

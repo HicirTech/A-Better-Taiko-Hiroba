@@ -21,6 +21,7 @@ export {
   type PictureKey,
   type PictureStore,
   type PictureStoreCaps,
+  pictureKeyPath,
 } from "./picture-store";
 export {
   type NoPictureSource,

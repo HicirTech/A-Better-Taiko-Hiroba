@@ -1,7 +1,10 @@
-/** The run's picture store: what it gives back, and what it drops past its caps. */
+/**
+ * The run's picture store: what it gives back, and what it drops past its caps; and the names a
+ * lasting store files pictures under.
+ */
 import { describe, expect, test } from "bun:test";
 
-import { createMemoryPictureStore, type PictureKey } from "../src/hiroba-session";
+import { createMemoryPictureStore, type PictureKey, pictureKeyPath } from "../src/hiroba-session";
 
 const item = (id: number): PictureKey => ({
   scope: "shared",
@@ -63,5 +66,27 @@ describe("createMemoryPictureStore", () => {
     expect(await store.get(plate("A"))).toBeNull();
     expect(await store.get({ ...plate("A"), name: "v1/other" })).not.toBeNull();
     expect(await store.get(plate("B"))).not.toBeNull();
+  });
+});
+
+describe("pictureKeyPath", () => {
+  const HASH = /^[0-9a-f]{64}$/;
+
+  test("files shared art under its hashed name, and a player's own under theirs as well", () => {
+    const [scope, name, ...rest] = pictureKeyPath(item(36)).split("/");
+    expect([scope, rest]).toEqual(["shared", []]);
+    expect(name).toMatch(HASH);
+    const [playerScope, player, plateName] = pictureKeyPath(plate("000000000000")).split("/");
+    expect(playerScope).toBe("player");
+    expect(player).toMatch(HASH);
+    expect(plateName).toMatch(HASH);
+  });
+
+  test("gives each picture, and each player, a path of its own", () => {
+    const paths = [item(36), item(4), plate("000000000000"), plate("000000000001")].map(
+      pictureKeyPath,
+    );
+    expect(new Set(paths).size).toBe(paths.length);
+    expect(pictureKeyPath(item(36))).toBe(pictureKeyPath({ ...item(36) }));
   });
 });
