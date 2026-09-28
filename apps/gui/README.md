@@ -133,10 +133,11 @@ nothing more.
 What it costs Hiroba:
 
 - One request per title. The plate is kept per player, under the title shown over it, so a read
-  that finds the same title asks Hiroba for nothing, and a title changed anywhere, on Hiroba's own
-  site too, costs one request after the next read.
+  that finds the same title asks Hiroba for nothing once its plate has come, and a title changed
+  anywhere, on Hiroba's own site too, costs one request after the next read.
 - Asked for once the card is on screen after a read, one at a time in the queue with every other
-  request, so never between a write's requests, and never retried.
+  request, so never between a write's requests. Never retried: a plate that did not come is asked
+  for once more after each read, and only then.
 - Kept in memory for the run, sign-outs included, and never given to another account. Nothing is
   kept on disk yet.
 
