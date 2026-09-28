@@ -89,6 +89,12 @@ export interface Profile {
 export interface Medal {
   readonly name: string;
   readonly progress: MedalProgress;
+  /**
+   * The plate's picture as the page writes its `src`, `imgsrc_tokenplate.php?id=<hex>`, or null
+   * when the page shows none. The id is opaque and names the player's season, so it is identity
+   * data: kept as written, never resolved, corrected or shown (wiki: Page Map, generated images).
+   */
+  readonly plateImageUrl: string | null;
 }
 
 /**

@@ -86,7 +86,11 @@ const profileWithoutDan: Profile = {
   region: "香港",
   titlePlateImageUrl: "imgsrc_titleplate.php",
   danLabelImageUrl: null,
-  medal: { name: "どんメダル2026", progress: { kind: "collecting", count: 37 } },
+  medal: {
+    name: "どんメダル2026",
+    progress: { kind: "collecting", count: 37 },
+    plateImageUrl: "imgsrc_tokenplate.php?id=0123456789abcdef0123456789abcdef0123456789abcdef",
+  },
   myDonImageUrl: "https://donderhiroba.jp/imgsrc_mydon.php?taiko_no=000000000000",
   favoriteSong: { songNo: "1346", title: "サンプル曲アルファ" },
   favoriteFolderTitles: ["サンプル曲ベータ", "サンプル曲ガンマ"],
