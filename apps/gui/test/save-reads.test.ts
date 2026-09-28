@@ -208,6 +208,42 @@ describe("saveReads", () => {
     ]);
   });
 
+  test("keeps only the latest item thumbnail, counting every one, and none in the history", async () => {
+    const folder = newFolder();
+    const thumbnail = (cos: number) => `https://hiroba.test/imgsrc_kisekae.php?cos=${cos}&type=1`;
+    const picture = (cos: number) => new Uint8Array([0x89, 0x50, 0x4e, 0x47, cos]);
+    const saving = saveReads(
+      answering({
+        [thumbnail(4)]: ["image/png", picture(4)],
+        [thumbnail(14)]: ["image/png", picture(14)],
+        [thumbnail(36)]: ["image/png", picture(36)],
+        [EDITOR]: ["text/html; charset=utf-8", PAGE_WITH_TOKENS],
+      }),
+      folder,
+      () => new Date("2026-09-28T01:02:03.000Z"),
+    );
+    await saving.send({ method: "GET", url: EDITOR });
+    for (const cos of [4, 14, 36]) {
+      await saving.send({ method: "GET", url: thumbnail(cos) });
+    }
+    expect(new Uint8Array(readFileSync(join(folder, "imgsrc_kisekae.php.png")))).toEqual(
+      picture(36),
+    );
+    expect(JSON.parse(readFileSync(join(folder, "imgsrc_kisekae.php.json"), "utf8"))).toEqual({
+      status: 200,
+      path: "/imgsrc_kisekae.php",
+      contentType: "image/png",
+      count: 3,
+    });
+    expect(readdirSync(join(folder, "history")).sort()).toEqual([
+      "20260928-010203-001-GET-mypage_kisekae.php.html",
+      "20260928-010203-001-GET-mypage_kisekae.php.json",
+    ]);
+    // Only the thumbnails are counted: the editor's status file carries no count.
+    const editorStatus = JSON.parse(readFileSync(join(folder, "mypage_kisekae.php.json"), "utf8"));
+    expect(editorStatus).not.toHaveProperty("count");
+  });
+
   test("hands the answer back as it came when its copy cannot be written", async () => {
     // A folder where the label's copy would go: the write fails, as a file held open would.
     const folder = newFolder();
