@@ -100,6 +100,11 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     });
   }
 
+  // The plate under the title and the name row, #mydon_area's first child on every capture. Found
+  // by its src and inside the area, as position is no contract for an img.
+  const titlePlateImageUrl =
+    findImageBySrc(area.value, "imgsrc_titleplate")?.getAttribute("src") ?? null;
+
   // The dan exists on this page only as a server-rendered image; absence is a normal state.
   const danImage = findImageBySrc(root, "imgsrc_danlabel");
   const danLabelImageUrl = danImage?.getAttribute("src") ?? null;
@@ -155,6 +160,7 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     nickname,
     title,
     region,
+    titlePlateImageUrl,
     danLabelImageUrl,
     medal,
     myDonImageUrl,

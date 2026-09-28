@@ -162,6 +162,7 @@ describe("parseProfilePage", () => {
       nickname: "Donder",
       title: "黒薔薇の使徒",
       region: "香港",
+      titlePlateImageUrl: "imgsrc_titleplate.php",
       danLabelImageUrl: "imgsrc_danlabel.php?taiko_no=000000000000",
       medal: { name: "どんメダル2026夏", progress: { kind: "collecting", count: 0 } },
       myDonImageUrl: "https://img.example/imgsrc.php?kind=mydon&fn=mydon_000000000000",
@@ -292,6 +293,36 @@ describe("parseProfilePage", () => {
     }
     expect(result.value.nickname).toBe("Donder");
     expect(result.value.danLabelImageUrl).toBeNull();
+  });
+
+  test("keeps the title plate's src as the page writes it, a query included", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      `<img src="imgsrc_titleplate.php">`,
+      `<img src="imgsrc_titleplate.php?taiko_no=000000000000" style="width: 100%;">`,
+    );
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.titlePlateImageUrl).toBe("imgsrc_titleplate.php?taiko_no=000000000000");
+  });
+
+  test("no title plate is read as null, and the rest of the page still reads", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      `<img src="imgsrc_titleplate.php">`,
+      "",
+    );
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.titlePlateImageUrl).toBeNull();
+    expect(result.value.title).toBe("黒薔薇の使徒");
+    expect(result.value.nickname).toBe("Donder");
   });
 
   test("an empty title line is no title, a normal state, read as an empty string", () => {

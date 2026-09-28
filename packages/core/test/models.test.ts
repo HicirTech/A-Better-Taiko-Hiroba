@@ -84,6 +84,7 @@ const profileWithoutDan: Profile = {
   nickname: "Donder",
   title: "電脳 神化 3.0",
   region: "香港",
+  titlePlateImageUrl: "imgsrc_titleplate.php",
   danLabelImageUrl: null,
   medal: { name: "どんメダル2026", progress: { kind: "collecting", count: 37 } },
   myDonImageUrl: "https://donderhiroba.jp/imgsrc_mydon.php?taiko_no=000000000000",
