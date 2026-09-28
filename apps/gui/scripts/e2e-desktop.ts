@@ -169,10 +169,18 @@ const sameBesideLanePictures = (log: string[], expected: string[]) => {
   );
 };
 /**
- * The window's HTML with every picture's bytes left out: a data: URL is base64 that could hold any
- * short string by chance, so the searches below look only at what is not a picture.
+ * The window's HTML with every picture's bytes left out: a PNG's base64 could spell any short
+ * string by chance, so the searches below look only at what is not a picture. Only the base64
+ * alphabet goes, so an address, a query or a token written after the bytes is still searched.
  */
-const withoutPictureBytes = (html: string) => html.replace(/data:[^"'\s)]*/g, "data:");
+const withoutPictureBytes = (html: string) =>
+  html.replace(/data:image\/png;base64,[A-Za-z0-9+/]*={0,2}/g, "data:image/png;base64,");
+// The searches prove something only while this holds: bytes that happen to spell a searched word
+// go, and what is planted after them stays.
+results.pictureBytesAloneLeftOut =
+  withoutPictureBytes(
+    `<img src="data:image/png;base64,AAimgsrc000000000000AA==#imgsrc_kisekae.php?cos=4&amp;_token_v2=x">`,
+  ) === `<img src="data:image/png;base64,#imgsrc_kisekae.php?cos=4&amp;_token_v2=x">`;
 /**
  * A colour change's requests: the title, then the editor — last before the posts, since my page's
  * forms issue a token too and would void the editor's — the pre-check, one save, the read-backs.
