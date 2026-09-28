@@ -4,33 +4,11 @@ import { Card, CardContent, Stack, Typography } from "@mui/material";
 
 import { HIROBA_LANG } from "../language/show-language";
 import type { ProfileView } from "../session-port";
+import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
 import { ShareBlock, type ShareItem } from "./share-block";
-
-/** 虹極's colours, and the donderful crown's: both are rainbows on Hiroba's icons. */
-const RAINBOW = "linear-gradient(90deg, #ff5f6d, #ffc371, #47e891, #4facfe, #a86cf5)";
-
-/**
- * Each rank's colour, from its icon: the name is the only other thing that tells two ranks of one
- * tier apart. White is drawn grey so it shows on a light background.
- */
-const RANK_COLOUR: Readonly<Record<ScoreRank, string>> = {
-  2: "#bdbdbd",
-  3: "#b87333",
-  4: "#8fa9bd",
-  5: "#d4a017",
-  6: "#f48fb1",
-  7: "#9c6ade",
-  8: RAINBOW,
-};
 
 /** The seven ranks from 白粋 to 虹極, left to right (the user's call, 2026-09-29). */
 const RANKS_WORST_FIRST: readonly ScoreRank[] = SCORE_RANK_TIERS.flatMap((tier) => tier.ranks);
-
-/**
- * Each crown's colour, the mean of its icon's coloured pixels (reference/crown-icons): silver
- * (171,205,205), gold (227,198,58), and donderful the rainbow it is drawn in.
- */
-const CROWN_COLOUR = { silver: "#abcdcd", gold: "#e3c63a", donderful: RAINBOW } as const;
 
 /**
  * The counts of Hiroba's overall panel, drawn as GitHub's "Languages" box (the user's call,
