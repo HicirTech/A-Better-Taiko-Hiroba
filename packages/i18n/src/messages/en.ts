@@ -3,6 +3,7 @@ import type { Messages } from "../types";
 export const en: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.picker": "Language: {name}",
+  "language.system": "System default ({name})",
   "nav.overview": "Overview",
   "nav.favorites": "Favourites",
   "nav.settings": "Settings",

@@ -4,6 +4,7 @@ import type { Messages } from "../types";
 export const ja: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.picker": "言語：{name}",
+  "language.system": "システムのデフォルト（{name}）",
   "nav.overview": "概要",
   "nav.favorites": "お気に入り",
   "nav.settings": "設定",

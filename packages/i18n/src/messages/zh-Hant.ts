@@ -7,6 +7,7 @@ import type { Messages } from "../types";
 export const zhHant: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.picker": "語言：{name}",
+  "language.system": "跟隨系統（{name}）",
   "nav.overview": "概覽",
   "nav.favorites": "收藏",
   "nav.settings": "設定",
