@@ -14,6 +14,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import { CostumeDialog } from "./my-page/costume-dialog";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
+import type { PortraitAction } from "./my-page/my-don-portrait";
 import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
 import { WriteOutcomeNotice } from "./my-page/write-outcome";
@@ -186,6 +187,14 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     setJustSaved(false);
     setCostumeOpen(true);
   };
+  /**
+   * The portrait opens the editor where this run may change the costume, not while an undo runs;
+   * shut on purpose, it says why, rather than leave a card with no way to change anything.
+   */
+  const portrait: PortraitAction =
+    costumeWrite === undefined
+      ? { kind: "shut" }
+      : { kind: "opensEditor", open: openEditor, busy: undoing };
 
   /**
    * Undoes the last costume change: a write like any other, its outcome shown on the card. One
@@ -291,27 +300,17 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
             <Stack spacing={2}>
               {page === "overview" ? (
                 <>
-                  <ProfileCard profile={screen.profile} lane={lane} i18n={i18n}>
-                    <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
+                  <ProfileCard profile={screen.profile} lane={lane} i18n={i18n} portrait={portrait}>
+                    {undoable !== null && (
                       <Button
-                        id="costume-open"
-                        variant="outlined"
-                        disabled={costumeWrite === undefined || undoing}
-                        onClick={openEditor}
+                        id="costume-undo"
+                        variant="text"
+                        disabled={undoing}
+                        onClick={undo}
+                        sx={{ alignSelf: "flex-start" }}
                       >
-                        {t("costume.open")}
+                        {t("costume.undoLast")}
                       </Button>
-                      {undoable !== null && (
-                        <Button id="costume-undo" variant="text" disabled={undoing} onClick={undo}>
-                          {t("costume.undoLast")}
-                        </Button>
-                      )}
-                    </Stack>
-                    {/* Shut on purpose, and saying so, rather than a card with no way to change anything. */}
-                    {costumeWrite === undefined && (
-                      <Typography id="costume-not-open" variant="body2" color="text.secondary">
-                        {t("costume.notOpen")}
-                      </Typography>
                     )}
                     {undoable !== null && (
                       <Typography id="undo-when" variant="body2" color="text.secondary">
@@ -417,26 +416,28 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
 }
 
 /**
- * The identity card, drawn as Hiroba's my page draws its header (OverviewHeader): the portrait, the
- * title plate and the score panel. `children` are the card's actions: the writes this run may
- * send, and, shut, those it may not.
+ * The identity card, drawn as Hiroba's my page draws its header (OverviewHeader): the portrait,
+ * which opens the costume editor where this run may change the costume, the title plate and the
+ * score panel. `children` are the undo on offer and how the last one ended.
  */
 function ProfileCard({
   profile,
   lane,
   i18n,
+  portrait,
   children,
 }: {
   profile: ProfileView;
   lane: PictureLane;
   i18n: Translator;
+  portrait: PortraitAction;
   children?: ReactNode;
 }) {
   return (
     <Card id="profile" variant="outlined">
       <CardContent>
         <Stack spacing={1.5}>
-          <OverviewHeader profile={profile} lane={lane} i18n={i18n} />
+          <OverviewHeader profile={profile} lane={lane} i18n={i18n} portrait={portrait} />
           {children}
         </Stack>
       </CardContent>

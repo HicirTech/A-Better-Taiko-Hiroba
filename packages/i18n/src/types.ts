@@ -149,11 +149,11 @@ export interface Messages {
   /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
   "failure.detail": string;
   "platform.unsupported": string;
-  /** The identity card's button that opens the costume editor. */
+  /** The name of the My Don portrait where a click on it opens the costume editor, and its tooltip. */
   "costume.open": string;
   /**
-   * Under that button, disabled, when this run may not change the costume: why. True on every shell
-   * while no kind is verified; say it again once one is, since Android enables none either way.
+   * The portrait's tooltip, and its description, when this run may not change the costume: why. True
+   * on every shell while no kind is verified; say it again once one is, since Android enables none.
    */
   "costume.notOpen": string;
   /** The editor's heading: the site's own word, きせかえ. */

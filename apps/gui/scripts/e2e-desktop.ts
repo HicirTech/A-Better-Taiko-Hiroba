@@ -24,7 +24,7 @@
  * which asks Hiroba nothing), a reopen that keeps the
  * session and the undo,
  * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
- * signed in, shows the editor's button shut and why, against scripts/mock-hiroba.ts, over the
+ * signed in, a portrait that opens nothing and says why, against scripts/mock-hiroba.ts, over the
  * Chrome DevTools Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
  * planned, then searches the app's user-data folder for every session token and form token the
  * mock issued and for what the mock ID host left behind. Run `bun run build` first.
@@ -1701,8 +1701,8 @@ try {
   results.gateShutWithoutTheFlag =
     same(shut, [[], [], { kind: "notEnabled" }, { kind: "notEnabled" }]) &&
     same(await requestLog(), []);
-  // Signed in, the card shows the editor's button shut, and says why, rather than no way to change
-  // anything at all. Signed out again after, so the session is not left for the scan below.
+  // Signed in, the portrait opens nothing, and is no button: it says why, rather than leave no way
+  // to change anything at all. Signed out again after, so the session is not left for the scan below.
   const platesSignedOut = (await platesAsked()).length;
   const myDonsSignedOut = (await myDonsAsked()).length;
   const medalPlatesSignedOut = await hitsOn(MEDAL_PLATE);
@@ -1712,7 +1712,7 @@ try {
   tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
   results.shutGateSaysWhy =
     (await running.page.evaluate<boolean>(
-      `document.querySelector("#costume-open")?.disabled === true`,
+      `(() => { const tile = document.querySelector("#my-don"); return document.querySelector("#costume-open") === null && tile !== null && tile.closest("button, [role=button], [tabindex]") === null; })()`,
     )) &&
     (await running.textOf("#costume-not-open")) ===
       "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
