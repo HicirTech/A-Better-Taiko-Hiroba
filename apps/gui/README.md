@@ -56,7 +56,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then checks the language (opened on a system in Traditional Chinese, the app is in it; a pick from the app bar, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile in place, asking Hiroba nothing; Hiroba's own words on the profile and in the editor are marked Japanese), and drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across a sign-out). With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once a run, one that does not come, one the editor did not offer, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then checks the language (opened on a system in Traditional Chinese, the app is in it; a pick from the app bar, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile in place, asking Hiroba nothing; Hiroba's own words on the profile and in the editor are marked Japanese), and drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches). With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
@@ -125,8 +125,9 @@ What it costs Hiroba:
 - Never retried within one opening of the editor. One that did not come is asked for once more the
   next time the editor is opened and its cell is seen, within the same 300: if Hiroba sends none,
   each opening asks again for those seen.
-- Each is kept in memory for the run, sign-outs included: opening the editor again, going back to
-  a slot, or signing in again asks Hiroba for nothing already shown.
+- Each is fetched once and kept on the device for good: opening the editor again, going back to a
+  slot, signing in again or a relaunch asks Hiroba for nothing already shown. See
+  [Where pictures are kept](#where-pictures-are-kept).
 
 Hiroba's own editor, for comparison, asks for a whole tab of thumbnails (38 to 76) at once on every
 tab click. A thumbnail that does not come leaves the item's number in its cell, and one line under
@@ -155,9 +156,9 @@ What it costs Hiroba:
 - Asked for once the card is on screen after a read, one at a time in the queue with every other
   request, so never between a write's requests. Never retried: a plate that did not come is asked
   for once more after each read, and only then.
-- Kept in memory for the run, sign-outs included, once a later read has found the session still
-  good, and never given to another account. Until then it is shown, not kept: a sign-out before
-  that read asks for it again. Nothing is kept on disk yet.
+- Kept on the device for good, sign-outs and relaunches included, once a later read has found the
+  session still good, and kept under your player, so never given to another account. Until then it
+  is shown, not kept: a sign-out before that read asks for it again.
 
 Until the plate comes, or if it does not, a plain band of the same shape stands in, and a line
 under the card gives a code for a report. Without a session, Hiroba answers a blank plate, a PNG
@@ -310,6 +311,25 @@ sign-in and the next sign-out, the app's private storage holds:
 This is an accepted exception to the rule that the session is never stored in plain text. The app
 turns off Android backup and device transfer for all of its data, so none of it leaves the device
 that way.
+
+## Where pictures are kept
+
+Each of Hiroba's pictures the app shows, an item's thumbnail or your title plate, is fetched once
+and kept on the device for good, since arcades often have poor networks (the user's call,
+2026-09-28). Signing out deletes none of them, and neither does the next sign-in. Thumbnails show
+no player and are kept for any account on the device; a plate is kept under its player, so no
+other account is given it. Only the checked PNG bytes are kept, under SHA-256 names: no URL, header,
+cookie, taiko number or title.
+
+- **Desktop:** one file per picture in `pictures` in the app's data folder:
+  `v1\shared\<hash>.png` for a thumbnail, `v1\player\<hash>\<hash>.png` for a plate.
+- **Android:** the app page's IndexedDB, `abth-pictures`, under the same names. The system may drop
+  it when storage runs short, which costs only fetches. Live reload loads the page from another
+  origin, so a run against the stand-in keeps its pictures apart from the installed build's.
+
+Nothing in the app deletes a picture but a new `PICTURE_EPOCH` in
+`src/hiroba-session/picture-store.ts`: the next launch clears whatever an older one kept. To clear
+them by hand, delete the `pictures` folder, or clear the Android app's data.
 
 ## Signing in for real
 
