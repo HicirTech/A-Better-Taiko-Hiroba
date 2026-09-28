@@ -150,6 +150,42 @@ describe("createPictureLane", () => {
     expect(lane.peek(item(4))).toEqual({ failure: "costumeItem=notPng" });
   });
 
+  test("renewed, asks for a picture again, and shows the one it had until the answer", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(PLATE, { order: 0 });
+    await advance(150);
+    await port.answer(ok(view(1)));
+    expect(lane.settled(PLATE)).toBe(true);
+    lane.ask(PLATE, { order: 0 });
+    await advance(1000);
+    expect(port.asked).toEqual(["titlePlate"]);
+    lane.renew("titlePlate");
+    expect(lane.settled(PLATE)).toBe(false);
+    expect(lane.peek(PLATE)).toEqual({ view: view(1) });
+    lane.ask(PLATE, { order: 0 });
+    await advance(150);
+    expect(port.asked).toEqual(["titlePlate", "titlePlate"]);
+    expect(lane.peek(PLATE)).toEqual({ view: view(1) });
+    await port.answer(ok(view(2)));
+    expect(lane.peek(PLATE)).toEqual({ view: view(2) });
+    expect(lane.settled(PLATE)).toBe(true);
+  });
+
+  test("renewed, forgets a picture of the kind that did not come, and leaves other kinds be", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(PLATE, { order: 0 });
+    lane.ask(item(4), { order: 1 });
+    await advance(150);
+    await port.answer(err({ code: "titlePlate=notPng" }));
+    await port.answer(ok(view(4)));
+    lane.renew("titlePlate");
+    expect(lane.peek(PLATE)).toBeUndefined();
+    expect(lane.settled(item(4))).toBe(true);
+    // Nothing more is asked for until the plate is on screen again.
+    await advance(1000);
+    expect(port.asked).toEqual(["titlePlate", "1/4"]);
+  });
+
   test("asks nothing for a picture that leaves the screen before the dwell", async () => {
     const { lane, port, advance } = setUp();
     const takeBack = lane.ask(item(4), { order: 0 });
@@ -276,8 +312,10 @@ describe("createPictureLane", () => {
     await port.answer(ok(view(4)));
     expect(calls).toBe(1);
     expect(lane.version()).not.toBe(before);
+    lane.renew("costumeItem");
+    expect(calls).toBe(2);
     unsubscribe();
     lane.forget();
-    expect(calls).toBe(1);
+    expect(calls).toBe(2);
   });
 });

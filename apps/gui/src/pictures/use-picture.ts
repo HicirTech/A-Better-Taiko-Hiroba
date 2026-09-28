@@ -16,7 +16,8 @@ export interface UsePictureOptions {
  * The picture `want` names, from `lane`, for the element `target` points at: asked for only while
  * that element is on screen (or within `rootMargin` of it), and taken back when it leaves before
  * its turn. Undefined until the lane has it, or when `want` is null. A picture that comes after the
- * element is gone is kept by the lane for the next time, and not shown.
+ * element is gone is kept by the lane for the next time, and not shown. One whose kind the lane
+ * renewed is asked for again, and the picture it had is given until the new one comes.
  */
 export function usePicture(
   lane: PictureLane,
@@ -30,11 +31,14 @@ export function usePicture(
   const key = want === null ? null : wantKey(want);
   const wanted = useRef(want);
   wanted.current = want;
+  // Whether the lane's answer stands: once it is renewed, the picture is asked for again, while the
+  // answer the lane had is still shown.
+  const settled = want !== null && lane.settled(want);
 
   useEffect(() => {
     const picture = wanted.current;
     const element = target.current;
-    if (key === null || picture === null || element === null || lane.peek(picture) !== undefined) {
+    if (key === null || picture === null || element === null || settled) {
       return;
     }
     let takeBack: (() => void) | null = null;
@@ -59,7 +63,7 @@ export function usePicture(
       observer.disconnect();
       takeBack?.();
     };
-  }, [lane, key, target, root, rootMargin, order]);
+  }, [lane, key, settled, target, root, rootMargin, order]);
 
   return want === null ? undefined : lane.peek(want);
 }

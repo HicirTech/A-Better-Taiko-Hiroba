@@ -40,6 +40,11 @@ export interface PictureLane {
   /** What the lane has of `want` this run, or undefined while it has nothing. */
   peek(want: PictureWant): PictureAnswer | undefined;
   /**
+   * Whether what the lane has of `want` stands: an answer not renewed since. One that does not is
+   * asked for once it is on screen, while `peek` still gives what the lane had.
+   */
+  settled(want: PictureWant): boolean;
+  /**
    * `want` is on screen: it is asked for once it has stayed there for the dwell, in its turn. The
    * function returned takes it back, as its picture leaves the screen; one already sent comes all
    * the same, and is kept.
@@ -50,6 +55,12 @@ export interface PictureLane {
   release(): void;
   /** Lets pictures that did not come, of `kind` or of every kind, be asked for again. */
   forgetFailures(kind?: PictureWant["kind"]): void;
+  /**
+   * The pictures of `kind` may have changed on Hiroba, as the title plate may with each read of my
+   * page: each is asked for again once it is on screen, and what the lane had is still shown until
+   * the answer comes, so nothing flickers. One that did not come is forgotten.
+   */
+  renew(kind: PictureWant["kind"]): void;
   /** Forgets everything, and sends nothing asked for before: at sign-out. */
   forget(): void;
   /** Calls `listener` whenever what `peek` answers may have changed. */
@@ -97,13 +108,16 @@ interface Waiter {
  * The window's side of Hiroba's pictures, one per port: it asks the platform for one picture at a
  * time, only for what has stayed on screen for the dwell, the identity card first and then in
  * order down the screen. It remembers every answer for the run, so a picture shown once is shown
- * again without asking; a picture that did not come is not asked for again until its failures are
- * forgotten. Nothing is sent while it is held, which is whenever a write runs.
+ * again without asking, until its kind is renewed; a picture that did not come is not asked for
+ * again until its failures are forgotten. Nothing is sent while it is held, which is whenever a
+ * write runs.
  */
 export function createPictureLane(options: PictureLaneOptions): PictureLane {
   const dwellMs = options.dwellMs ?? PICTURE_DWELL_MS;
   const timers = options.timers ?? PAGE_TIMERS;
   const answers = new Map<string, PictureAnswer>();
+  /** Answers renewed since they came: still shown, and asked for again. */
+  const stale = new Set<string>();
   const waiters = new Set<Waiter>();
   const listeners = new Set<() => void>();
   let held = 0;
@@ -154,6 +168,7 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
         sending = false;
         if (asked === generation) {
           answers.set(key, answer);
+          stale.delete(key);
           for (const waiter of [...waiters]) {
             if (waiter.key === key) {
               timers.clear(waiter.timer);
@@ -170,9 +185,13 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
     peek(want) {
       return answers.get(wantKey(want));
     },
+    settled(want) {
+      const key = wantKey(want);
+      return answers.has(key) && !stale.has(key);
+    },
     ask(want, { order }) {
       const key = wantKey(want);
-      if (answers.has(key)) {
+      if (answers.has(key) && !stale.has(key)) {
         return () => undefined;
       }
       const waiter: Waiter = {
@@ -215,6 +234,22 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
         changed();
       }
     },
+    renew(kind) {
+      let renewed = false;
+      for (const [key, answer] of answers) {
+        if (isOfKind(key, kind)) {
+          if ("failure" in answer) {
+            answers.delete(key);
+          } else {
+            stale.add(key);
+          }
+          renewed = true;
+        }
+      }
+      if (renewed) {
+        changed();
+      }
+    },
     forget() {
       generation += 1;
       for (const waiter of waiters) {
@@ -222,6 +257,7 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
       }
       waiters.clear();
       answers.clear();
+      stale.clear();
       changed();
     },
     subscribe(listener) {
