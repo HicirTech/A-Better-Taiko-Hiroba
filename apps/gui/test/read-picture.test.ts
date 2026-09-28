@@ -270,9 +270,7 @@ describe("createPictureReader, an item's thumbnail", () => {
     reader.forget();
     release();
     expect((await before).ok).toBe(true);
-    expect(
-      await store.get({ scope: "shared", player: null, name: "v1/item/1/36", maxAgeMs: 1 }),
-    ).toBeNull();
+    expect(await store.get({ scope: "shared", player: null, name: "v1/item/1/36" })).toBeNull();
     const after = reader.read(WANT);
     await Bun.sleep(1);
     release();
@@ -284,12 +282,7 @@ describe("createPictureReader, an item's thumbnail", () => {
     const store = createMemoryPictureStore();
     const { reader } = setUp({ store });
     await reader.read(WANT);
-    const kept = await store.get({
-      scope: "shared",
-      player: null,
-      name: "v1/item/1/36",
-      maxAgeMs: 30 * 24 * 60 * 60 * 1000,
-    });
+    const kept = await store.get({ scope: "shared", player: null, name: "v1/item/1/36" });
     expect(kept).toEqual(thumbnailPng(1, 36));
   });
 });

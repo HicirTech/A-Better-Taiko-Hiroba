@@ -24,18 +24,12 @@ import type { HirobaEndpoints } from "./types";
 const ITEM_PATH = "/imgsrc_kisekae.php";
 /** What a browser's `<img>` sends: Hiroba's own pages load these pictures that way. */
 const IMAGE_ACCEPT = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8";
-const DAY_MS = 24 * 60 * 60 * 1000;
 /**
  * A thumbnail is a small PNG, about a kilobyte (258 of them on one account); Hiroba's "nothing to
  * draw" is a 43-byte GIF. Under 128 bytes is a placeholder; over 64 KiB or 512 pixels a side is not
  * a thumbnail.
  */
 const ITEM_RULES = { minBytes: 128, maxBytes: 64 * 1024, maxSide: 512 } as const;
-/**
- * Nothing shows a thumbnail changes once drawn, or differs between accounts: 30 days bounds how long
- * a redrawn one could be shown stale.
- */
-const ITEM_MAX_AGE_MS = 30 * DAY_MS;
 /** The slot each costume value of a set is in, きぐるみ first. */
 const WORN = ["costume1", "costume2", "costume3", "costume4", "costume5"] as const;
 
@@ -155,13 +149,9 @@ function requestOf(want: PictureWant, endpoints: HirobaEndpoints): PictureReques
     // As Hiroba's own editor loads them, and as the preview is asked for.
     referer: `${origin}/mypage_kisekae.php`,
     rules: { ...ITEM_RULES, at: { origin, path: ITEM_PATH } },
-    // The slot is part of the key: one id sits in several slots.
-    key: {
-      scope: "shared",
-      player: null,
-      name: `${PICTURE_EPOCH}/item/${want.slot}/${want.id}`,
-      maxAgeMs: ITEM_MAX_AGE_MS,
-    },
+    // Kept for every account, and for good: it names no player and shows only the item. The slot is
+    // part of the key, as one id sits in several slots.
+    key: { scope: "shared", player: null, name: `${PICTURE_EPOCH}/item/${want.slot}/${want.id}` },
   };
 }
 

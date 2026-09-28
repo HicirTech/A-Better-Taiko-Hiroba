@@ -1,20 +1,17 @@
-/** The run's picture store: what it gives back, for how long, and what it drops past its caps. */
+/** The run's picture store: what it gives back, and what it drops past its caps. */
 import { describe, expect, test } from "bun:test";
 
 import { createMemoryPictureStore, type PictureKey } from "../src/hiroba-session";
 
-const DAY = 24 * 60 * 60 * 1000;
 const item = (id: number): PictureKey => ({
   scope: "shared",
   player: null,
   name: `v1/item/1/${id}`,
-  maxAgeMs: 30 * DAY,
 });
 const plate = (player: string): PictureKey => ({
   scope: "player",
   player,
   name: "v1/titleplate/bare/x",
-  maxAgeMs: 7 * DAY,
 });
 const bytes = (size: number, fill = 1) => new Uint8Array(size).fill(fill);
 
@@ -39,18 +36,6 @@ describe("createMemoryPictureStore", () => {
     expect(await store.get(plate("A"))).toEqual(bytes(2, 1));
     expect(await store.get(plate("B"))).toEqual(bytes(2, 2));
     expect(await store.get({ ...plate("A"), scope: "shared", player: null })).toEqual(bytes(2, 3));
-  });
-
-  test("serves an entry no longer than its key's maximum age", async () => {
-    let now = 0;
-    const store = createMemoryPictureStore({ now: () => now });
-    await store.put(item(36), bytes(4));
-    now = 30 * DAY;
-    expect(await store.get(item(36))).toEqual(bytes(4));
-    now = 30 * DAY + 1;
-    expect(await store.get(item(36))).toBeNull();
-    now = 0;
-    expect(await store.get(item(36))).toBeNull();
   });
 
   test("drops the least recently used past its caps, each player's apart", async () => {

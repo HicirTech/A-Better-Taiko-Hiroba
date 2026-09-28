@@ -5,7 +5,9 @@
 export const PICTURE_EPOCH = "v1";
 
 /**
- * Where a picture is kept, and for how long.
+ * Where a picture is kept. None expires: each is keyed by what it shows, so a store keeps it as long
+ * as it can, and only a PICTURE_EPOCH bump or the store's caps make it go. Arcades often have poor
+ * networks, so the app asks Hiroba for a picture as seldom as it can (the user's call, 2026-09-28).
  *
  * - `shared`: art that carries nothing about the player, such as an item's thumbnail, whose URL names
  *   no player. Kept for any account on this device, and kept at sign-out.
@@ -19,8 +21,6 @@ export interface PictureKey {
   readonly player: string | null;
   /** The picture's name within its scope, the epoch first: `v1/item/1/36`. */
   readonly name: string;
-  /** How long after it was kept an entry is still served. */
-  readonly maxAgeMs: number;
 }
 
 /**
@@ -29,7 +29,7 @@ export interface PictureKey {
  * is a miss, and one it cannot keep costs only a fetch the next time.
  */
 export interface PictureStore {
-  /** The bytes kept under `key`, or null when none are, or they are older than its maxAgeMs. */
+  /** The bytes kept under `key`, or null when none are. */
   get(key: PictureKey): Promise<Uint8Array | null>;
   /** Keeps `bytes` under `key`. Never throws: a picture that cannot be kept is simply not kept. */
   put(key: PictureKey, bytes: Uint8Array): Promise<void>;
@@ -55,7 +55,6 @@ export const PICTURE_STORE_CAPS: PictureStoreCaps = {
 };
 
 export interface MemoryPictureStoreOptions {
-  readonly now?: () => number;
   readonly caps?: PictureStoreCaps;
 }
 
@@ -63,7 +62,6 @@ interface Entry {
   readonly scope: PictureKey["scope"];
   readonly player: string | null;
   readonly bytes: Uint8Array;
-  readonly storedAt: number;
 }
 
 /**
@@ -71,7 +69,6 @@ interface Entry {
  * Every entry is a copy, so no caller can change what another is given.
  */
 export function createMemoryPictureStore(options: MemoryPictureStoreOptions = {}): PictureStore {
-  const now = options.now ?? Date.now;
   const caps = options.caps ?? PICTURE_STORE_CAPS;
   /** In order of use, the least recently used first. */
   const entries = new Map<string, Entry>();
@@ -105,10 +102,8 @@ export function createMemoryPictureStore(options: MemoryPictureStoreOptions = {}
       if (entry === undefined) {
         return null;
       }
+      // Used now: the last to go.
       entries.delete(id);
-      if (now() - entry.storedAt > key.maxAgeMs) {
-        return null;
-      }
       entries.set(id, entry);
       return entry.bytes.slice();
     },
@@ -116,7 +111,7 @@ export function createMemoryPictureStore(options: MemoryPictureStoreOptions = {}
       const id = idOf(key);
       const player = key.scope === "player" ? key.player : null;
       entries.delete(id);
-      entries.set(id, { scope: key.scope, player, bytes: bytes.slice(), storedAt: now() });
+      entries.set(id, { scope: key.scope, player, bytes: bytes.slice() });
       trim(key.scope, player);
     },
   };
