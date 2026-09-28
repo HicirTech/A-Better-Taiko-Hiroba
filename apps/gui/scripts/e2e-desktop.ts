@@ -251,7 +251,7 @@ try {
     page.evaluate<string | null>(
       `document.querySelector(${JSON.stringify(selector)})?.getAttribute(${JSON.stringify(name)}) ?? null`,
     );
-  await waitFor(async () => (await attribute("#title-plate-image", "src")) ?? undefined);
+  await waitForSeen(page, async () => (await attribute("#title-plate-image", "src")) ?? undefined);
   const plateBox = await page.evaluate<{ width: number; height: number }>(
     `(() => { const box = document.querySelector("#title-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
   );
@@ -393,7 +393,7 @@ try {
     await click("#read-again");
     await Bun.sleep(300);
     await until("Read at");
-    await waitFor(async () => (await ready()) || undefined);
+    await waitForSeen(page, async () => (await ready()) || undefined);
     return platesSettled();
   };
   const shownNow = (selector: string) =>
@@ -967,7 +967,8 @@ try {
   );
   // The read asks for the title plate too, which this run's memory does not hold yet: once it has
   // come, nothing more is on its way.
-  await waitFor(
+  await waitForSeen(
+    running.page,
     async () =>
       (await running.page.evaluate<boolean>(
         `document.querySelector("#title-plate-image") !== null`,
@@ -1013,7 +1014,8 @@ try {
   // Signed out and in again, in the same run: the player's plate is still kept, and the read asks
   // Hiroba for no plate (the user's call, 2026-09-28: no picture is deleted at sign-out).
   const plateShown = () =>
-    waitFor(
+    waitForSeen(
+      running.page,
       async () =>
         (await running.page.evaluate<boolean>(
           `document.querySelector("#title-plate-image") !== null`,
@@ -1040,9 +1042,13 @@ try {
  * Starts the app on the stand-in and attaches to its window over the DevTools protocol. `writes`
  * opens the gate for writes not yet verified; `now` fixes the clock a write checks Hiroba's daily
  * break against. Every run keeps what it reads in the debug folder, so the scan below covers it.
+ *
+ * A window other windows cover counts as hidden on Windows, and a hidden page sees nothing, so it
+ * asks for no picture: the switch keeps the window seen however it is covered.
  */
 async function launch({ writes, now }: { writes: boolean; now: string }) {
-  const proc = Bun.spawn([String(electronPath), root, `--remote-debugging-port=${CDP_PORT}`], {
+  const args = [`--remote-debugging-port=${CDP_PORT}`, "--disable-backgrounding-occluded-windows"];
+  const proc = Bun.spawn([String(electronPath), root, ...args], {
     env: {
       ...process.env,
       ABTH_DEV_HIROBA_ORIGIN: HIROBA,
@@ -1135,6 +1141,21 @@ function* walk(dir: string): Generator<string> {
       yield path;
     }
   }
+}
+
+/**
+ * Waits for what the page asks for only once it is seen, such as a picture. A hidden page sees
+ * nothing, so a hidden window fails at once, saying so, rather than at the wait's timeout.
+ */
+async function waitForSeen<T>(
+  page: { evaluate<V>(expression: string): Promise<V> },
+  probe: () => Promise<T | undefined>,
+): Promise<T> {
+  const visibility = await page.evaluate<string>("document.visibilityState");
+  if (visibility !== "visible") {
+    throw new Error(`The window is ${visibility}: it asks for no picture until it is seen`);
+  }
+  return waitFor(probe);
 }
 
 async function waitFor<T>(probe: () => Promise<T | undefined>, timeoutMs = 30_000): Promise<T> {
