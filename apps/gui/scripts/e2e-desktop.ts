@@ -9,15 +9,17 @@
  * writes (a colour and a きぐるみ, each undone, the #22 trap, a save that moves nothing,
  * pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, and
  * a session that ends before and after a save), a lost session, cancel, a sign-in sent off both
- * sites, a reopen that keeps the session and the undo, Hiroba's daily break, sign-out, and a
- * reopen that stays signed out with the write gate shut and, signed in, shows the editor's button
- * shut and why, against scripts/mock-hiroba.ts, over the Chrome DevTools
- * Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
+ * sites, the language (the system's at first, a pick that takes hold at once and is kept, and one
+ * made on the profile, which asks Hiroba nothing), a reopen that keeps the session and the undo,
+ * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
+ * signed in, shows the editor's button shut and why, against scripts/mock-hiroba.ts, over the
+ * Chrome DevTools Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
  * planned, then searches the app's user-data folder for every session token and form token the
  * mock issued and for what the mock ID host left behind. Run `bun run build` first.
  */
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { createTranslator } from "@abth/i18n";
 import electronPath from "electron";
 
 import { BRIDGE_CHANNELS } from "../src/session-port";
@@ -31,6 +33,8 @@ const IDP_MARKER = "abth-mock-idp-marker";
 const MY_PAGE = "/mypage_top.php";
 const DAN_LABEL = "/imgsrc_danlabel.php";
 const USER_DATA = join(root, "out", "e2e-user-data");
+/** The language runs' own folder, so a pick made there never reaches the runs that read English. */
+const LANGUAGE_USER_DATA = join(root, "out", "e2e-user-data-language");
 /** Noon JST, outside Hiroba's daily break, whatever the hour the run is made at. */
 const NOON_JST = "2026-09-27T03:00:00Z";
 /** 05:30 JST, inside the break. */
@@ -194,9 +198,73 @@ const WRITE_REQUESTS = [
   "GET /mypage_top.php",
 ];
 
+// The language, in runs of their own, signed out. Opened on a system in Traditional Chinese, the
+// app is in it, and says so to the page; a pick from the app bar takes hold at once and is kept for
+// the next launch, which the system's language no longer decides.
+const ja = createTranslator("ja");
+const zhHant = createTranslator("zh-Hant");
+/** What says which language the window is in: `lang`, the title, a button and the picker. */
+const languageShown = (page: Awaited<ReturnType<typeof launch>>["page"]) =>
+  page.evaluate<Record<string, string | null>>(
+    `({ lang: document.documentElement.lang, title: document.title, signIn: document.querySelector("#sign-in")?.textContent ?? null, picker: document.querySelector("#language-picker")?.textContent ?? null })`,
+  );
+rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
+await resetLog();
+let inLanguage = await launch({
+  writes: false,
+  now: NOON_JST,
+  lang: "zh-TW",
+  userData: LANGUAGE_USER_DATA,
+});
+try {
+  await inLanguage.until(zhHant.t("signIn.action"));
+  results.systemLanguageTaken = same(await languageShown(inLanguage.page), {
+    lang: "zh-Hant",
+    title: "A Better Taiko Hiroba",
+    signIn: zhHant.t("signIn.action"),
+    picker: "繁體中文",
+  });
+  // Each language named in its own words and marked with it, in the catalog's order.
+  await inLanguage.click("#language-picker");
+  const listed = await waitFor(() =>
+    inLanguage.page.evaluate<string[][] | undefined>(
+      `(() => { const items = [...document.querySelectorAll('[role="menuitem"]')]; return items.length === 0 ? undefined : items.map((item) => [item.lang, item.textContent]); })()`,
+    ),
+  );
+  results.pickerNamesEachLanguage = same(listed, [
+    ["en", "English"],
+    ["ja", "日本語"],
+    ["zh-Hans", "简体中文"],
+    ["zh-Hant", "繁體中文"],
+  ]);
+  await inLanguage.click("#language-ja");
+  await inLanguage.until(ja.t("signIn.action"));
+  results.pickTakesHold = same(await languageShown(inLanguage.page), {
+    lang: "ja",
+    title: "A Better Taiko Hiroba",
+    signIn: ja.t("signIn.action"),
+    picker: "日本語",
+  });
+  await stop(inLanguage);
+  inLanguage = await launch({
+    writes: false,
+    now: NOON_JST,
+    lang: "zh-TW",
+    userData: LANGUAGE_USER_DATA,
+  });
+  await inLanguage.until(ja.t("signIn.action"));
+  results.pickKeptAcrossLaunches =
+    (await languageShown(inLanguage.page)).lang === "ja" && same(await requestLog(), []);
+} finally {
+  await stop(inLanguage);
+  rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
+}
+
 let running = await launch({ writes: true, now: NOON_JST });
 try {
   const { page, text, textOf, click, clickButton, until } = running;
+  const exists = (selector: string) =>
+    page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
   await until("Sign in to Hiroba");
 
   results.surface = await page.evaluate(
@@ -306,6 +374,37 @@ try {
     !withPlate.includes("_token_v2") &&
     !tokens.some((token) => withPlate.includes(token));
   const platesAtSignIn = await platesSettled();
+
+  // Picked while the profile is shown, a language redraws the screen in place: counts, percents and
+  // times in its own forms, Hiroba's words as they were, and nothing asked of Hiroba, there or back.
+  const pickLanguage = async (locale: string) => {
+    await waitFor(async () => (await exists('[role="menu"]')) === false || undefined);
+    await click("#language-picker");
+    await waitFor(async () => (await exists(`#language-${locale}`)) || undefined);
+    await click(`#language-${locale}`);
+    await waitFor(
+      async () =>
+        (await page.evaluate<string>("document.documentElement.lang")) === locale || undefined,
+    );
+  };
+  const readsBeforeLanguage = await readHits();
+  const platesBeforeLanguage = (await platesAsked()).length;
+  await pickLanguage("ja");
+  const readAtInJapanese = await page.evaluate<string | null>(
+    `[...document.querySelectorAll("p")].map((line) => line.textContent).find((text) => text.includes(${JSON.stringify(ja.t("profile.fetchedAt").split("{time}")[1])})) ?? null`,
+  );
+  results.languageRedrawsInPlace =
+    (await textOf("#rank-8")) === ja.t("panel.countOf", { count: "3", total: "102" }) &&
+    (await textOf("#rank-5-percent")) === "30.4%" &&
+    (await textOf("#profile-title")) === ja.t("profile.title", { title: "サンプルの称号" }) &&
+    (await textOf("#profile h2")) === "サンプルどん" &&
+    /^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{2}:\d{2} /.test(readAtInJapanese ?? "");
+  await pickLanguage("en");
+  await Bun.sleep(1000);
+  results.languageAsksHirobaNothing =
+    (await readHits()) === readsBeforeLanguage &&
+    (await platesAsked()).length === platesBeforeLanguage &&
+    (await textOf("#crowns-silver")) === "11 of 14";
 
   // Read again: one more request, no more.
   await click("#read-again");
@@ -492,8 +591,6 @@ try {
 
   // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the card
   // offers the editor, and every write is unverified: a tick to confirm, and the title read twice.
-  const exists = (selector: string) =>
-    page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
   const dialogOutcome = () =>
     page.evaluate<string | null>(
       `document.querySelector("#costume-dialog #write-outcome")?.dataset.outcome ?? null`,
@@ -1114,20 +1211,31 @@ try {
  *
  * A window other windows cover counts as hidden on Windows, and a hidden page sees nothing, so it
  * asks for no picture: the switch keeps the window seen however it is covered. `--lang` gives the
- * app English as the system's language, since the checks read its English words.
+ * app its system language: English unless a check asks for another, since the checks read its
+ * English words. `userData` is where the app keeps what it keeps.
  */
-async function launch({ writes, now }: { writes: boolean; now: string }) {
+async function launch({
+  writes,
+  now,
+  lang = "en-US",
+  userData = USER_DATA,
+}: {
+  writes: boolean;
+  now: string;
+  lang?: string;
+  userData?: string;
+}) {
   const args = [
     `--remote-debugging-port=${CDP_PORT}`,
     "--disable-backgrounding-occluded-windows",
-    "--lang=en-US",
+    `--lang=${lang}`,
   ];
   const proc = Bun.spawn([String(electronPath), root, ...args], {
     env: {
       ...process.env,
       ABTH_DEV_HIROBA_ORIGIN: HIROBA,
       ABTH_DEV_IDP_HOST: IDP_HOST,
-      ABTH_DEV_USER_DATA: USER_DATA,
+      ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
       ABTH_DEBUG_SAVE_READS: "1",
       ...(writes ? { ABTH_UNVERIFIED_WRITES: "1" } : { ABTH_UNVERIFIED_WRITES: "" }),
