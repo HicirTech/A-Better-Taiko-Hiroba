@@ -20,14 +20,15 @@ import { TitlePlateCard } from "./my-page/title-plate-card";
 import { WriteOutcomeNotice } from "./my-page/write-outcome";
 import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
 import { FAILURE_MESSAGE } from "./read-failure-message";
-import type {
-  EnabledWrite,
-  HirobaSessionPort,
-  ProfileView,
-  ReadFailureKind,
-  SignInOutcome,
-  UndoSummary,
-  WriteOutcomeView,
+import {
+  changedTheCostume,
+  type EnabledWrite,
+  type HirobaSessionPort,
+  type ProfileView,
+  type ReadFailureKind,
+  type SignInOutcome,
+  type UndoSummary,
+  type WriteOutcomeView,
 } from "./session-port";
 
 type Screen =
@@ -127,8 +128,8 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
    * A write ended: the undo on offer is asked for again, and a change that read back as planned
    * offers its undo at once. A change also clears what the card said of the last undo, which no
    * longer describes the costume. One that found the session gone goes back to signing in, as a
-   * read does. The portrait is asked for again: the platform fetches it anew if the write applied,
-   * and otherwise answers with the one it keeps, asking nothing.
+   * read does. A write that changed the costume asks for the portrait again, which the platform
+   * then fetches anew; any other asks for nothing.
    */
   const writeEnded = (outcome: WriteOutcomeView, asUndo = false) => {
     setJustSaved(!asUndo && outcome.kind === "applied");
@@ -136,7 +137,9 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
       setUndoOutcome(null);
     }
     void refreshUndo();
-    lane.renew("myDon");
+    if (changedTheCostume(outcome)) {
+      lane.renew("myDon");
+    }
     if (outcome.kind === "sessionGone" || outcome.kind === "notSignedIn") {
       setJustSaved(false);
       setUndoable(null);

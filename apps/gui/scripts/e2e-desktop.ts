@@ -517,6 +517,41 @@ try {
     !(await exists("#my-don-image")) &&
     (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
 
+  const dialogOutcome = () =>
+    page.evaluate<string | null>(
+      `document.querySelector("#costume-dialog #write-outcome")?.dataset.outcome ?? null`,
+    );
+  /** Opens the editor, makes a pick, confirms with the tick, saves, and waits for the outcome. */
+  const changeInTheWindow = async (pick: () => Promise<unknown>) => {
+    await click("#costume-open");
+    await waitFor(async () => (await exists("#costume-review")) || undefined);
+    await pick();
+    await click("#costume-review");
+    await waitFor(async () => (await exists("#costume-first-write")) || undefined);
+    await click("#costume-first-write");
+    await waitFor(async () =>
+      (await page.evaluate<boolean>(`!document.querySelector("#costume-save").disabled`))
+        ? true
+        : undefined,
+    );
+    await click("#costume-save");
+    return waitFor(async () => (await dialogOutcome()) ?? undefined);
+  };
+  const closeEditor = async () => {
+    await click("#costume-close");
+    await waitFor(async () => ((await exists("#costume-dialog")) ? undefined : true));
+  };
+  // A write in the window that leaves the costume as it was asks the picture host for nothing, even
+  // with no portrait kept to show: only a change applied, or a read, does. The line stays.
+  await fetch(`${HIROBA}/__noop-save`);
+  const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
+  await closeEditor();
+  results.myDonNotAskedAfterNoChange =
+    noChange === "notApplied" &&
+    (await myDonsSettled()) === myDonsFailed &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE &&
+    same(await savedCostume(), START);
+
   // Once the picture host draws it, the next Read again shows the player's My Don under the plate,
   // the first time ever: once, square on its tile, named for screen readers, no line under the card,
   // and neither its address nor its host in the window.
@@ -865,34 +900,10 @@ try {
 
   // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the card
   // offers the editor, and every write is unverified: a tick to confirm, and the title read twice.
-  const dialogOutcome = () =>
-    page.evaluate<string | null>(
-      `document.querySelector("#costume-dialog #write-outcome")?.dataset.outcome ?? null`,
-    );
   const cardOutcome = () =>
     page.evaluate<string | null>(
       `document.querySelector("#profile #write-outcome")?.dataset.outcome ?? null`,
     );
-  /** Opens the editor, makes a pick, confirms with the tick, saves, and waits for the outcome. */
-  const changeInTheWindow = async (pick: () => Promise<unknown>) => {
-    await click("#costume-open");
-    await waitFor(async () => (await exists("#costume-review")) || undefined);
-    await pick();
-    await click("#costume-review");
-    await waitFor(async () => (await exists("#costume-first-write")) || undefined);
-    await click("#costume-first-write");
-    await waitFor(async () =>
-      (await page.evaluate<boolean>(`!document.querySelector("#costume-save").disabled`))
-        ? true
-        : undefined,
-    );
-    await click("#costume-save");
-    return waitFor(async () => (await dialogOutcome()) ?? undefined);
-  };
-  const closeEditor = async () => {
-    await click("#costume-close");
-    await waitFor(async () => ((await exists("#costume-dialog")) ? undefined : true));
-  };
   /** Waits for the card's undo to end, from the Snackbar or the card's own button. */
   const undoFrom = async (selector: string) => {
     await click(selector);

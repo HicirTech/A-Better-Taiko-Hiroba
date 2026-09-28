@@ -19,11 +19,12 @@ import {
   openCostumeEditor,
   type WriteGateInput,
 } from "../src/hiroba-session";
-import type {
-  EnabledWrite,
-  HirobaSessionPort,
-  ReadFailure,
-  WriteOutcomeView,
+import {
+  changedTheCostume,
+  type EnabledWrite,
+  type HirobaSessionPort,
+  type ReadFailure,
+  type WriteOutcomeView,
 } from "../src/session-port";
 import type { UndoStore } from "./undo-store";
 
@@ -119,7 +120,7 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
     if (outcome.kind === "sessionGone") {
       options.endSession();
     }
-    if (outcome.kind === "applied" || outcome.kind === "appliedNotSynced") {
+    if (changedTheCostume(outcome)) {
       options.costumeChanged();
     }
     return outcome;
