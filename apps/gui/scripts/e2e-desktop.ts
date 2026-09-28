@@ -48,6 +48,8 @@ const IDP_MARKER = "abth-mock-idp-marker";
 const MY_PAGE = "/mypage_top.php";
 const DAN_LABEL = "/imgsrc_danlabel.php";
 const MEDAL_PLATE = "/imgsrc_tokenplate.php";
+/** The art of the score panel the mock's my page shows. */
+const PANEL_ART = "/image/sp/640/total_score_image_5.png";
 const USER_DATA = join(root, "out", "e2e-user-data");
 /** The language runs' own folder, so a pick made there never reaches the runs that read English. */
 const LANGUAGE_USER_DATA = join(root, "out", "e2e-user-data-language");
@@ -109,9 +111,16 @@ const TOKEN_PLATE = `GET ${MEDAL_PLATE}`;
 const MY_DON = "GET /imgsrc.php";
 /**
  * The pictures the window's lane asks for by itself, as they come on screen: the items' thumbnails
- * and, after each read of my page, the title plate, the どんメダル plate and the My Don.
+ * and, after each read of my page, the title plate, the score panel's art, the どんメダル plate and
+ * the My Don.
  */
-const LANE_PICTURES: readonly string[] = [THUMBNAIL, TITLE_PLATE, TOKEN_PLATE, MY_DON];
+const LANE_PICTURES: readonly string[] = [
+  THUMBNAIL,
+  TITLE_PLATE,
+  `GET ${PANEL_ART}`,
+  TOKEN_PLATE,
+  MY_DON,
+];
 /** The どんメダル plates the app fetched this run, once none more has come for a second. */
 const medalPlatesSettled = async () => {
   let last = -1;

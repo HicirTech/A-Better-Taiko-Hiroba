@@ -1,13 +1,11 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Chip, CircularProgress, Stack, Typography } from "@mui/material";
-import { useRef } from "react";
+import { Box, CircularProgress, Typography } from "@mui/material";
+import type { Ref } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
-import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
-import { usePicture } from "../pictures/use-picture";
-import type { PictureView, PictureWant, ProfileView } from "../session-port";
+import type { PictureAnswer } from "../pictures/picture-lane";
+import type { PictureView, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, ONE_LINE, OUTLINED, VISUALLY_HIDDEN } from "./hiroba-px";
-import { MyDonPortrait } from "./my-don-portrait";
 
 /** Hiroba's header, #mydon_area: the plate is 290 pixels wide. */
 const PLATE_WIDTH = 290;
@@ -29,124 +27,71 @@ const ON_PLATE = "#000";
 const BAND = "#fff1c2";
 const NAME_BOX = "#f8f0e0";
 const DAN_BOX = "#5a8df2";
-const PLATE: PictureWant = { kind: "titlePlate" };
-const MY_DON: PictureWant = { kind: "myDon" };
 
-/** Why a picture did not come, as the lane has it, or null while it has none or it came. */
-const failureOf = (answer: PictureAnswer | undefined): string | null =>
-  answer !== undefined && "failure" in answer ? answer.failure : null;
-
-export interface TitlePlateCardProps {
+export interface TitlePlateProps {
   readonly profile: ProfileView;
-  readonly lane: PictureLane;
+  /** What the picture lane has of the plate: the picture, why it did not come, or nothing yet. */
+  readonly answer: PictureAnswer | undefined;
   readonly i18n: Translator;
+  /** The plate, whose picture is asked for only once it is on screen. */
+  readonly ref: Ref<HTMLDivElement>;
 }
 
 /**
- * The identity card as Hiroba's header draws it, #mydon_area: the title plate, the title over it,
- * and the name row, the nickname in its cream box and the dan's label in its blue one. The plate and
- * the label are Hiroba's own pictures, as data: URLs; every word stays text, laid over them where
+ * The title plate as Hiroba's header draws it, #mydon_area: the plate, the title over it, and the
+ * name row, the nickname in its cream box and the dan's label in its blue one. The plate and the
+ * label are Hiroba's own pictures, as data: URLs; every word stays text, laid over them where
  * Hiroba lays its HTML. Until the plate comes, or if it does not, a plain band of the same geometry
- * stands in its place, and the card reads the same.
+ * stands in its place, and the plate reads the same.
  *
  * The plate sits on the app's own surface, without the yellow Hiroba draws around it, and the region
- * is left off: the profile keeps it, the card does not (the user's calls, 2026-09-28). The player's
- * マイどん stands under the plate, as Hiroba's header shows it.
+ * is left off: the profile keeps it, the plate does not (the user's calls, 2026-09-28).
  *
- * The dan is read off its label, which is shown as it is, and named in text for screen readers. A
- * label that did not read says so under the plate, with its code, as before. A picture that did
- * not come says so under the card, with the first one's code.
+ * The dan is read off its label, which is shown as it is, and named in text for screen readers.
  */
-export function TitlePlateCard({ profile, lane, i18n }: TitlePlateCardProps) {
+export function TitlePlate({ profile, answer, i18n, ref }: TitlePlateProps) {
   const { t } = i18n;
-  const { dan } = profile;
-  const plateBox = useRef<HTMLDivElement>(null);
-  const portraitBox = useRef<HTMLDivElement>(null);
-  const answer = usePicture(lane, PLATE, plateBox, { root: null, rootMargin: "0px", order: 0 });
-  const portrait = usePicture(lane, MY_DON, portraitBox, {
-    root: null,
-    rootMargin: "0px",
-    order: 1,
-  });
   const plate = answer !== undefined && "view" in answer ? answer.view : null;
-  const failure = failureOf(answer) ?? failureOf(portrait);
-
   return (
-    <Stack spacing={1} sx={{ alignItems: "center" }}>
-      <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
-        <Box
-          ref={plateBox}
-          id="title-plate"
-          aria-busy={answer === undefined}
-          sx={{
-            position: "relative",
-            width: 1,
-            color: ON_PLATE,
-            aspectRatio:
-              plate !== null
-                ? `${plate.width} / ${plate.height}`
-                : `${PLATE_WIDTH} / ${RESERVED_HEIGHT}`,
-          }}
-        >
-          {plate === null ? (
-            <PlateStandIn />
-          ) : (
-            <Box
-              component="img"
-              id="title-plate-image"
-              src={plate.src}
-              alt=""
-              aria-hidden
-              sx={{ position: "absolute", inset: 0, width: 1, height: 1, display: "block" }}
-            />
-          )}
-          {answer === undefined && (
-            <CircularProgress
-              id="title-plate-loading"
-              size={14}
-              aria-label={t("pictures.loading")}
-              sx={{ position: "absolute", top: 2, right: 4, color: ON_PLATE }}
-            />
-          )}
-          <Title title={profile.title} i18n={i18n} />
-          <NameRow profile={profile} i18n={i18n} />
-        </Box>
-        <MyDonPortrait ref={portraitBox} answer={portrait} i18n={i18n} />
-      </Box>
-      {dan !== null && "unreadable" in dan && (
-        <Stack spacing={0.5} sx={{ alignItems: "center" }}>
-          <Chip
-            id="dan-unreadable"
-            label={t("profile.danUnreadable")}
-            size="small"
-            variant="outlined"
+    <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
+      <Box
+        ref={ref}
+        id="title-plate"
+        aria-busy={answer === undefined}
+        sx={{
+          position: "relative",
+          width: 1,
+          color: ON_PLATE,
+          aspectRatio:
+            plate !== null
+              ? `${plate.width} / ${plate.height}`
+              : `${PLATE_WIDTH} / ${RESERVED_HEIGHT}`,
+        }}
+      >
+        {plate === null ? (
+          <PlateStandIn />
+        ) : (
+          <Box
+            component="img"
+            id="title-plate-image"
+            src={plate.src}
+            alt=""
+            aria-hidden
+            sx={{ position: "absolute", inset: 0, width: 1, height: 1, display: "block" }}
           />
-          <Typography
-            id="dan-code"
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-          >
-            {t("profile.danCode", { code: dan.code })}
-          </Typography>
-        </Stack>
-      )}
-      {failure !== null && (
-        <Stack id="pictures-unavailable" sx={{ alignItems: "center", textAlign: "center" }}>
-          <Typography variant="body2" color="text.secondary">
-            {t("pictures.unavailable")}
-          </Typography>
-          <Typography
-            id="pictures-code"
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-          >
-            {t("pictures.code", { code: failure })}
-          </Typography>
-        </Stack>
-      )}
-    </Stack>
+        )}
+        {answer === undefined && (
+          <CircularProgress
+            id="title-plate-loading"
+            size={14}
+            aria-label={t("pictures.loading")}
+            sx={{ position: "absolute", top: 2, right: 4, color: ON_PLATE }}
+          />
+        )}
+        <Title title={profile.title} i18n={i18n} />
+        <NameRow profile={profile} i18n={i18n} />
+      </Box>
+    </Box>
   );
 }
 

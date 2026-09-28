@@ -14,8 +14,8 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import { CostumeDialog } from "./my-page/costume-dialog";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
+import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
-import { TitlePlateCard } from "./my-page/title-plate-card";
 import { WriteOutcomeNotice } from "./my-page/write-outcome";
 import type { Page } from "./navigation/pages";
 import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
@@ -105,10 +105,12 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     if (result.ok) {
       // The plates may have changed with the title, the season or its progress, and the portrait
       // with a costume changed anywhere: each is asked for again, and what was shown stays till it
-      // comes. The platform says whether the portrait is fetched anew or answered as kept.
+      // comes. The platform says whether the portrait is fetched anew or answered as kept. The score
+      // panel's art, kept for good once it came, is asked for again only if it did not.
       lane.renew("titlePlate");
       lane.renew("medalPlate");
       lane.renew("myDon");
+      lane.forgetFailures("scorePanel");
       setWrites(await port.enabledWrites());
       await refreshUndo();
       setUndoOutcome(null);
@@ -415,9 +417,9 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
 }
 
 /**
- * The identity card, drawn as Hiroba's header draws it, on its title plate (TitlePlateCard). The
- * dan is the name read off my page's label, shown by the label itself. `children` are the card's
- * actions: the writes this run may send, and, shut, those it may not.
+ * The identity card, drawn as Hiroba's my page draws its header (OverviewHeader): the portrait, the
+ * title plate and the score panel. `children` are the card's actions: the writes this run may
+ * send, and, shut, those it may not.
  */
 function ProfileCard({
   profile,
@@ -434,7 +436,7 @@ function ProfileCard({
     <Card id="profile" variant="outlined">
       <CardContent>
         <Stack spacing={1.5}>
-          <TitlePlateCard profile={profile} lane={lane} i18n={i18n} />
+          <OverviewHeader profile={profile} lane={lane} i18n={i18n} />
           {children}
         </Stack>
       </CardContent>
