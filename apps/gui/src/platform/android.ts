@@ -7,6 +7,7 @@ import {
 } from "@capacitor/inappbrowser";
 
 import {
+  createHirobaQueue,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
@@ -17,7 +18,7 @@ import {
   readProfile,
   signInStep,
 } from "../hiroba-session";
-import type { HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
+import type { CostumeSet, HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
 import { createAndroidTransport } from "./android-transport";
 
 // Development only (the Vite dev server behind live reload): a local stand-in for Hiroba and the ID
@@ -82,11 +83,15 @@ const localStorageFlag: SignedInFlag = {
  * the ID host's own cookies are cleared as far as the platform allows: clearCookies({url}) removes
  * host cookies, not Domain cookies, which is also why the session itself is only ever cleared with
  * clearAllCookies.
+ *
+ * Every verb that asks Hiroba something runs one at a time, in the order asked, through the same
+ * queue the desktop uses: a picture never goes out beside a read, and two reads never overlap.
  */
 export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
   const transport = createAndroidTransport();
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
+  const { oneAtATime } = createHirobaQueue();
 
   const forget = async () => {
     signedIn = false;
@@ -157,7 +162,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await InAppBrowser.close().catch(() => undefined);
     },
 
-    async readProfile() {
+    readProfile: oneAtATime(async () => {
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
@@ -169,7 +174,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         await saveCookieStore();
       }
       return read;
-    },
+    }),
 
     signOut: forget,
 
@@ -179,7 +184,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       return [];
     },
 
-    async openCostumeEditor() {
+    openCostumeEditor: oneAtATime(async () => {
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
@@ -190,16 +195,16 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         await saveCookieStore();
       }
       return read;
-    },
+    }),
 
     // A read that changes nothing, allowed here as on the desktop. Its failure forgets nothing: the
     // next read of a page says whether the session is over.
-    async previewCostume(set) {
+    previewCostume: oneAtATime(async (set: CostumeSet) => {
       if (!signedIn) {
         return err({ code: "preview=notSignedIn" });
       }
       return previewCostume(transport, endpoints, set);
-    },
+    }),
 
     async changeCostume() {
       return { kind: "notEnabled" };

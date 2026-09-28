@@ -225,6 +225,39 @@ describe("createAndroidPort's costume preview", () => {
     expect(native.cookieCalls).toEqual([]);
   });
 
+  test("asks Hiroba one thing at a time: a preview waits for a read already on its way", async () => {
+    const answers: (() => void)[] = [];
+    native.httpAnswer = () =>
+      new Promise((resolve) => {
+        answers.push(() =>
+          resolve({ status: 200, url: PREVIEW_URL, headers: {}, data: nativeBase64("") }),
+        );
+      });
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    const reading = port.readProfile();
+    const opening = port.openCostumeEditor();
+    const previewing = port.previewCostume(SET);
+    await until(() => native.httpRequests.length === 1);
+    await Bun.sleep(5);
+    expect(native.httpRequests).toHaveLength(1);
+    answers.shift()?.();
+    await until(() => native.httpRequests.length === 2);
+    await Bun.sleep(5);
+    expect(native.httpRequests).toHaveLength(2);
+    answers.shift()?.();
+    await until(() => native.httpRequests.length === 3);
+    answers.shift()?.();
+    await Promise.all([reading, opening, previewing]);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_top.php",
+      "/mypage_kisekae.php",
+      "/imgsrc_mydon.php",
+    ]);
+  });
+
   test("a no-session GIF is a failure with codes, and forgets nothing", async () => {
     const flag = memoryFlag(true);
     native.httpAnswer = async () => ({
