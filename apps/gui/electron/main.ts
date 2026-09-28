@@ -128,14 +128,14 @@ const queue = createHirobaQueue();
 const { oneAtATime, oneWriteAtATime } = queue;
 
 /**
- * Hiroba's pictures for the window, kept in memory for the run. Only a picture's fetch waits in
- * the queue, never the whole call: one already kept answers at once, even while a write runs.
+ * Hiroba's pictures for the window, kept in memory for the run, signed in or out. Only a picture's
+ * fetch waits in the queue, never the whole call: one already kept answers at once, even while a
+ * write runs.
  */
-const pictureStore = createMemoryPictureStore();
 const pictures = createPictureReader({
   transport: readTransport,
   endpoints,
-  store: pictureStore,
+  store: createMemoryPictureStore(),
   queue,
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered }),
@@ -194,7 +194,6 @@ app.whenReady().then(async () => {
     async signIn(): Promise<SignInOutcome> {
       signInAttempt?.cancel();
       setSession(null);
-      await pictureStore.forgetPlayers();
       const attempt = openSignInWindow(mainWindow, endpoints, userAgent);
       signInAttempt = attempt;
       const result = await attempt.result;
@@ -226,7 +225,6 @@ app.whenReady().then(async () => {
     }),
     async signOut() {
       setSession(null);
-      await pictureStore.forgetPlayers();
     },
     enabledWrites: writes.enabledWrites,
     // The items it offers are the only ones whose thumbnail the window may ask for next.

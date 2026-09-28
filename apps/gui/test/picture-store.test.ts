@@ -1,4 +1,4 @@
-/** The run's picture store: what it gives back, for how long, and what it forgets. */
+/** The run's picture store: what it gives back, for how long, and what it drops past its caps. */
 import { describe, expect, test } from "bun:test";
 
 import { createMemoryPictureStore, type PictureKey } from "../src/hiroba-session";
@@ -51,17 +51,6 @@ describe("createMemoryPictureStore", () => {
     expect(await store.get(item(36))).toBeNull();
     now = 0;
     expect(await store.get(item(36))).toBeNull();
-  });
-
-  test("forgets every player's pictures, and keeps shared art", async () => {
-    const store = createMemoryPictureStore();
-    await store.put(item(36), bytes(4));
-    await store.put(plate("A"), bytes(4));
-    await store.put(plate("B"), bytes(4));
-    await store.forgetPlayers();
-    expect(await store.get(plate("A"))).toBeNull();
-    expect(await store.get(plate("B"))).toBeNull();
-    expect(await store.get(item(36))).toEqual(bytes(4));
   });
 
   test("drops the least recently used past its caps, each player's apart", async () => {

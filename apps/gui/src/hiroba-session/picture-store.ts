@@ -9,8 +9,9 @@ export const PICTURE_EPOCH = "v1";
  *
  * - `shared`: art that carries nothing about the player, such as an item's thumbnail, whose URL names
  *   no player. Kept for any account on this device, and kept at sign-out.
- * - `player`: the signed-in player's own, such as their title plate. Kept under `player` and
- *   forgotten when a sign-in starts and at sign-out.
+ * - `player`: the signed-in player's own, such as their title plate. Kept under `player`, so no
+ *   other account is given it, and kept at sign-out and at the next sign-in: once a player has a
+ *   picture, it stays (the user's call, 2026-09-28).
  */
 export interface PictureKey {
   readonly scope: "shared" | "player";
@@ -32,8 +33,6 @@ export interface PictureStore {
   get(key: PictureKey): Promise<Uint8Array | null>;
   /** Keeps `bytes` under `key`. Never throws: a picture that cannot be kept is simply not kept. */
   put(key: PictureKey, bytes: Uint8Array): Promise<void>;
-  /** Forgets every `player` picture, whoever's. Shared art stays. */
-  forgetPlayers(): Promise<void>;
 }
 
 /** The most a store keeps before the least recently used entries go. */
@@ -119,13 +118,6 @@ export function createMemoryPictureStore(options: MemoryPictureStoreOptions = {}
       entries.delete(id);
       entries.set(id, { scope: key.scope, player, bytes: bytes.slice(), storedAt: now() });
       trim(key.scope, player);
-    },
-    async forgetPlayers() {
-      for (const [id, entry] of [...entries]) {
-        if (entry.scope === "player") {
-          entries.delete(id);
-        }
-      }
     },
   };
 }

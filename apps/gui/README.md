@@ -104,8 +104,8 @@ What it costs Hiroba:
 - One at a time, after a random pause of up to 100 ms, in the queue with every other request to
   Hiroba, so never between a write's requests; none is asked for while a save or an undo runs.
   Never retried. At most 300 in a run, and 8 s each on the desktop.
-- Each is kept in memory for the run: opening the editor again, or going back to a slot, asks for
-  nothing already shown.
+- Each is kept in memory for the run, sign-outs included: opening the editor again, going back to
+  a slot, or signing in again asks Hiroba for nothing already shown.
 
 Hiroba's own editor, for comparison, asks for a whole tab of thumbnails (38 to 76) at once on every
 tab click. A thumbnail that does not come leaves the item's number in its cell, and one line under

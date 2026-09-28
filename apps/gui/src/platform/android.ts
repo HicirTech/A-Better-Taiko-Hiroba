@@ -91,9 +91,9 @@ const localStorageFlag: SignedInFlag = {
  * Every verb that asks Hiroba something runs one at a time, in the order asked, through the same
  * queue the desktop uses: a picture never goes out beside a read, and two reads never overlap.
  *
- * Hiroba's pictures come through the same reader as on the desktop, kept in memory for the run. The
- * items the last editor read offered, the only ones whose thumbnail may be asked for, stay in this
- * closure, and go with the session.
+ * Hiroba's pictures come through the same reader as on the desktop, kept in memory for the run,
+ * signed in or out. The items the last editor read offered, the only ones whose thumbnail may be
+ * asked for, stay in this closure, and go with the session.
  */
 export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
   const transport = createAndroidTransport();
@@ -102,11 +102,10 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const queue = createHirobaQueue();
   const { oneAtATime } = queue;
   let offered: ReadonlySet<string> = new Set();
-  const pictureStore = createMemoryPictureStore();
   const pictures = createPictureReader({
     transport,
     endpoints,
-    store: pictureStore,
+    store: createMemoryPictureStore(),
     queue,
     limits: ANDROID_PICTURE_LIMITS,
     state: () => ({ signedIn, offered }),
@@ -127,7 +126,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     async signIn() {
       await forget();
-      await pictureStore.forgetPlayers();
       await InAppBrowser.removeAllListeners();
       let landed = false;
       let browserClosed: () => void = () => undefined;
@@ -200,7 +198,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     async signOut() {
       await forget();
-      await pictureStore.forgetPlayers();
     },
 
     // Writes are the desktop's alone for now (the user's call, 2026-09-27): Android enables none,
