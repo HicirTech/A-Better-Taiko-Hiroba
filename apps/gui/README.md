@@ -4,10 +4,11 @@ The desktop and Android app of A Better Taiko Hiroba. One React and Material UI 
 two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
 pages and reads your own page: one request per read, and one more for your dan label when the page
 shows one, since the page gives the dan only as that picture. It shows your nickname, title and
-dan on Hiroba's own title plate and dan label, your crowns with cleared and full-combo totals,
-the seven score ranks by tier, the season's どんメダル plate, and your favourite songs. On the
-desktop it can also change your costume (きせかえ), but only in a development run opened for it,
-until the first real write has been made and recorded (see
+dan on Hiroba's own title plate and dan label; the seven score ranks and the three crowns of your
+overall panel, each block as one bar of shares with a legend of percents, like GitHub's "Languages"
+box (the counts are in each item's tooltip); the season's どんメダル plate, and your favourite
+songs. On the desktop it can also change your costume (きせかえ), but only in a development run
+opened for it, until the first real write has been made and recorded (see
 [The first real costume write](#the-first-real-costume-write)).
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
