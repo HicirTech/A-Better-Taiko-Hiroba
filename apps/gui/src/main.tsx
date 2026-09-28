@@ -9,13 +9,15 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
 import { App } from "./App";
+import { startingLocale } from "./language/locale-choice";
+import { showLanguage } from "./language/show-language";
 import { connectPlatform } from "./platform";
 
-// Roboto is bundled, never fetched: the Android app must work without a CDN. Japanese text falls
-// back to the system's own Japanese font.
+// Roboto is bundled, never fetched: the Android app must work without a CDN. Japanese and Chinese
+// fall back to the system's own font for the language the page's `lang` names.
 const theme = createTheme({ colorSchemes: { dark: true } });
-const i18n = createTranslator("en");
-document.title = i18n.t("app.title");
+const i18n = createTranslator(startingLocale());
+showLanguage(i18n);
 
 const container = document.getElementById("root");
 if (container === null) {
