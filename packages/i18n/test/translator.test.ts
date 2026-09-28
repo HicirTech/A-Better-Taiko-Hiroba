@@ -29,6 +29,20 @@ describe("createTranslator", () => {
   });
 });
 
+describe("the translator's formats", () => {
+  test("writes a count as the locale groups it", () => {
+    const { number } = createTranslator("en");
+    expect([0, 12, 1234].map(number)).toEqual(["0", "12", "1,234"]);
+  });
+
+  test("writes a moment as Date's own toLocaleString does", () => {
+    const { dateTime } = createTranslator("en");
+    const at = "2026-09-28T03:04:05Z";
+    expect(dateTime(at)).toBe(new Date(at).toLocaleString("en"));
+    expect(dateTime(Date.parse(at))).toBe(dateTime(new Date(at)));
+  });
+});
+
 describe("the English catalog", () => {
   test("words every key with non-empty text", () => {
     for (const [key, text] of Object.entries(en)) {

@@ -8,6 +8,10 @@ export type TranslateParams = Readonly<Record<string, string | number>>;
 export interface Translator {
   readonly locale: Locale;
   t(key: MessageKey, params?: TranslateParams): string;
+  /** A count as the locale writes it: 1,234 in English. */
+  number(value: number): string;
+  /** A moment as the locale writes a date and a time of day, in the device's own time zone. */
+  dateTime(value: Date | number | string): string;
 }
 
 /** Replaces each `{name}` with its parameter; a placeholder without one stays as written. */
@@ -20,10 +24,24 @@ function interpolate(template: string, params: TranslateParams | undefined): str
   );
 }
 
+/** The fields Date's own toLocaleString shows: the whole date, and the time to the second. */
+const DATE_TIME: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
+};
+
 export function createTranslator(locale: Locale = DEFAULT_LOCALE): Translator {
   const table = CATALOG[locale];
+  const numbers = new Intl.NumberFormat(locale);
+  const dates = new Intl.DateTimeFormat(locale, DATE_TIME);
   return {
     locale,
     t: (key, params) => interpolate(table[key], params),
+    number: (value) => numbers.format(value),
+    dateTime: (value) => dates.format(new Date(value)),
   };
 }
