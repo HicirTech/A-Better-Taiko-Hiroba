@@ -307,6 +307,12 @@ describe("createPictureReader, the title plate", () => {
     png(request.url, titlePlatePng(title));
   const codeOf = async (read: Promise<unknown>) =>
     ((await read) as { error: { code: string } }).error.code;
+  /** Where the bare plate under `title` is kept, for `owner`. */
+  const keyOf = (title: string, owner = OWNER) => ({
+    scope: "player" as const,
+    player: owner,
+    name: `v1/titleplate/bare/${encodeURIComponent(title)}`,
+  });
 
   test("asks once, as my page does, for the bare plate, after a pause outside the queue", async () => {
     const { reader, sent, events } = setUp({ state: readState(), answer: plateOf(TITLE) });
@@ -335,6 +341,18 @@ describe("createPictureReader, the title plate", () => {
     expect(sent.map(({ request }) => request.url)).toEqual([`${PLATE_URL}?taiko_no=${OWNER}`]);
   });
 
+  test("keeps the public form at once: it is the same with a session or without one", async () => {
+    const store = createMemoryPictureStore();
+    const { reader } = setUp({
+      store,
+      state: { ...readState(), sources: { titlePlate: { form: "byTaikoNo", title: TITLE } } },
+      answer: plateOf(TITLE),
+    });
+    await reader.read(PLATE);
+    const name = `v1/titleplate/byTaikoNo/${encodeURIComponent(TITLE)}`;
+    expect(await store.get({ ...keyOf(TITLE), name })).toEqual(titlePlatePng(TITLE));
+  });
+
   test("sends nothing before my page is read, when it showed none, or one of another form", async () => {
     const unread = setUp();
     expect(await unread.reader.read(PLATE)).toEqual(err({ code: "titlePlate=notRead" }));
@@ -359,13 +377,12 @@ describe("createPictureReader, the title plate", () => {
     await reader.read(PLATE);
     await reader.read(PLATE);
     expect(sent).toHaveLength(1);
-    expect(
-      await store.get({
-        scope: "player",
-        player: OWNER,
-        name: `v1/titleplate/bare/${encodeURIComponent(TITLE)}`,
-      }),
-    ).toEqual(titlePlatePng(TITLE));
+    await reader.confirm(OWNER);
+    expect(await store.get(keyOf(TITLE))).toEqual(titlePlatePng(TITLE));
+    // Kept at sign-out too, and at the next sign-in.
+    reader.forget();
+    await reader.read(PLATE);
+    expect(sent).toHaveLength(1);
     setState(readState("別のサンプル称号"));
     await reader.read(PLATE);
     expect(sent).toHaveLength(2);
@@ -382,16 +399,12 @@ describe("createPictureReader, the title plate", () => {
     const store = createMemoryPictureStore();
     const other = "別のサンプル称号";
     const { reader, sent, setState } = setUp({ store, state: readState(), answer: plateOf(other) });
-    const keyOf = (title: string) => ({
-      scope: "player" as const,
-      player: OWNER,
-      name: `v1/titleplate/bare/${encodeURIComponent(title)}`,
-    });
     // A read that finds another title lands while the plate waits its turn.
     const reading = reader.read(PLATE);
     setState(readState(other));
     expect((await reading).ok).toBe(true);
     expect(sent).toHaveLength(1);
+    await reader.confirm(OWNER);
     expect(await store.get(keyOf(TITLE))).toBeNull();
     expect(await store.get(keyOf(other))).toEqual(titlePlatePng(other));
   });
@@ -399,10 +412,7 @@ describe("createPictureReader, the title plate", () => {
   test("answers from the store when the title my page shows at its turn is one kept", async () => {
     const store = createMemoryPictureStore();
     const other = "別のサンプル称号";
-    await store.put(
-      { scope: "player", player: OWNER, name: `v1/titleplate/bare/${encodeURIComponent(other)}` },
-      titlePlatePng(other),
-    );
+    await store.put(keyOf(other), titlePlatePng(other));
     const { reader, sent, setState } = setUp({ store, state: readState(), answer: plateOf(TITLE) });
     // Asked for under a title not kept; a read that finds the kept one lands before its turn.
     const reading = reader.read(PLATE);
@@ -471,6 +481,47 @@ describe("createPictureReader, the title plate", () => {
       answer: async () => png(PLATE_URL, blankPlatePng()),
     });
     expect((await reader.read(PLATE)).ok).toBe(true);
+  });
+
+  test("keeps a bare plate only once a later read confirms it, and answers repeats till then", async () => {
+    const store = createMemoryPictureStore();
+    const { reader, sent } = setUp({ store, state: readState(), answer: plateOf(TITLE) });
+    await reader.read(PLATE);
+    const again = await reader.read(PLATE);
+    expect(sent).toHaveLength(1);
+    expect(again.ok && decode(again.value.src)).toEqual(titlePlatePng(TITLE));
+    expect(await store.get(keyOf(TITLE))).toBeNull();
+    await reader.confirm(OWNER);
+    expect(await store.get(keyOf(TITLE))).toEqual(titlePlatePng(TITLE));
+  });
+
+  test("a plate fetched as the session ended unseen is not kept past it", async () => {
+    const store = createMemoryPictureStore();
+    let body = blankPlatePng();
+    const { reader, sent } = setUp({
+      store,
+      state: readState(),
+      answer: async (request) => png(request.url, body),
+    });
+    // Hiroba ended the session after the read and before the plate: a blank plate comes.
+    expect((await reader.read(PLATE)).ok).toBe(true);
+    // The next read finds the session gone; signed in again, the read finds the same title.
+    reader.forget();
+    await reader.confirm(OWNER);
+    body = titlePlatePng(TITLE);
+    const read = await reader.read(PLATE);
+    expect(sent).toHaveLength(2);
+    expect(read.ok && decode(read.value.src)).toEqual(titlePlatePng(TITLE));
+    expect(await store.get(keyOf(TITLE))).toBeNull();
+  });
+
+  test("a read of another player's page keeps none of the plates before it", async () => {
+    const store = createMemoryPictureStore();
+    const { reader } = setUp({ store, state: readState(), answer: plateOf(TITLE) });
+    await reader.read(PLATE);
+    await reader.confirm("111111111111");
+    await reader.confirm(OWNER);
+    expect(await store.get(keyOf(TITLE))).toBeNull();
   });
 });
 

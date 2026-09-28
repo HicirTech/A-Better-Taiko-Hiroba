@@ -112,8 +112,14 @@ export interface PictureReader {
    */
   read(want: unknown): Promise<Result<PictureView, PictureFailure>>;
   /**
-   * Forgets the run's pictures on their way: they are neither shared with a later call nor kept.
-   * Called whenever the session goes.
+   * A read of my page has just found the session good, on `owner`'s page: the bare plates fetched
+   * before it, while this session held, are that player's own, and are kept from now on. Called
+   * after every read of my page that succeeds, before it answers.
+   */
+  confirm(owner: string): Promise<void>;
+  /**
+   * Forgets the run's pictures on their way, and the plates not yet confirmed: they are neither
+   * shared with a later call nor kept. Called whenever the session goes.
    */
   forget(): void;
 }
@@ -148,6 +154,11 @@ interface PictureRequest {
   readonly referer: string;
   readonly rules: PngRules;
   readonly key: PictureKey;
+  /**
+   * Kept only once a later read of my page finds the session good, and shown till then: the bare
+   * plate, which Hiroba draws blank for a session it has ended, a PNG no check can tell apart.
+   */
+  readonly keptAfterRead: boolean;
 }
 
 /**
@@ -185,6 +196,8 @@ function requestOf(
         player: null,
         name: `${PICTURE_EPOCH}/item/${want.slot}/${want.id}`,
       },
+      // A session gone gets a 43-byte GIF, which no check lets through.
+      keptAfterRead: false,
     };
   }
   const { owner, sources } = state;
@@ -212,6 +225,8 @@ function requestOf(
       player: owner,
       name: `${PICTURE_EPOCH}/titleplate/${plate.form}/${encodeURIComponent(plate.title)}`,
     },
+    // The public form is the same with a session or without one.
+    keptAfterRead: plate.form === "bare",
   };
 }
 
@@ -225,7 +240,9 @@ function requestOf(
  * A picture kept in the store is answered at once, without the queue. Otherwise one GET goes out,
  * after a short random pause waited outside the queue, then in the queue with every other request
  * to Hiroba, so it never lands between a write's requests. It is never retried; an answer that is
- * not the picture is a failure with codes, which is neither kept nor the end of the session.
+ * not the picture is a failure with codes, which is neither kept nor the end of the session. A bare
+ * plate is kept only once a later read of my page confirms it, and until then answers repeats
+ * within its session.
  */
 export function createPictureReader(options: PictureReaderOptions): PictureReader {
   const { transport, endpoints, store, queue, limits } = options;
@@ -237,6 +254,13 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   /** Bumped by forget(): a fetch from before it keeps nothing. */
   let generation = 0;
   let lastFetchEnded = Number.NEGATIVE_INFINITY;
+  /**
+   * The bare plates fetched in this session, by key, that no later read of my page has confirmed
+   * yet: shown, and not kept. Hiroba draws a blank one for a session it ended unseen, and only such
+   * a read tells that it had not.
+   */
+  const unconfirmed = new Map<string, { readonly key: PictureKey; readonly bytes: Uint8Array }>();
+  const idOf = (key: PictureKey) => `${key.scope}|${key.player ?? ""}|${key.name}`;
 
   const failed = (
     kind: string,
@@ -267,7 +291,12 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     return { src: pngDataUrl(checked.value.bytes), ...checked.value.size };
   };
 
+  /** The picture `request` names as this run has it: kept, or fetched in this session. */
   const kept = async (request: PictureRequest): Promise<PictureView | null> => {
+    const shown = unconfirmed.get(idOf(request.key));
+    if (shown !== undefined) {
+      return viewOf(shown.bytes, request);
+    }
     try {
       const bytes = await store.get(request.key);
       return bytes === null ? null : viewOf(bytes, request);
@@ -321,7 +350,9 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         const refusal: PngRefusal = isErr(checked) ? checked.error : { why: "notPngBytes" };
         return failed(request.kind, refusal.why, sent.value, request, refusal);
       }
-      if (since === generation) {
+      if (since === generation && request.keptAfterRead) {
+        unconfirmed.set(idOf(request.key), { key: request.key, bytes: checked.value.bytes });
+      } else if (since === generation) {
         try {
           await store.put(request.key, checked.value.bytes);
         } catch {
@@ -349,7 +380,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       if (view !== null) {
         return ok(view);
       }
-      const id = `${request.key.scope}|${request.key.player ?? ""}|${request.key.name}`;
+      const id = idOf(request.key);
       const onItsWay = inFlight.get(id);
       if (onItsWay !== undefined) {
         return onItsWay;
@@ -366,9 +397,22 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       inFlight.set(id, fetching);
       return fetching;
     },
+    async confirm(owner) {
+      for (const [id, { key, bytes }] of unconfirmed) {
+        if (key.player === owner) {
+          try {
+            await store.put(key, bytes);
+          } catch {
+            // Only the store's copy is lost: the plate is fetched again the next time.
+          }
+        }
+        unconfirmed.delete(id);
+      }
+    },
     forget() {
       generation += 1;
       inFlight.clear();
+      unconfirmed.clear();
     },
   };
 }

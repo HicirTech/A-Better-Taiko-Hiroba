@@ -1011,8 +1011,10 @@ try {
     )) &&
     (await running.textOf("#costume-not-open")) ===
       "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
-  // Signed out and in again, in the same run: the player's plate is still kept, and the read asks
-  // Hiroba for no plate (the user's call, 2026-09-28: no picture is deleted at sign-out).
+  // Signed out and in again, in the same run. A plate no later read has confirmed is not kept:
+  // Hiroba draws a blank one for a session it ended unseen, so it is asked for again. Once a read
+  // has confirmed it, it is kept, and the read after the next sign-in asks Hiroba for no plate
+  // (the user's call, 2026-09-28: no picture is deleted at sign-out).
   const plateShown = () =>
     waitForSeen(
       running.page,
@@ -1021,15 +1023,24 @@ try {
           `document.querySelector("#title-plate-image") !== null`,
         )) || undefined,
     );
+  /** The plates asked for this run, once signed out and in again and the plate is shown. */
+  const platesAfterSignOutAndIn = async () => {
+    await running.click("#sign-out");
+    await running.until("Sign in to Hiroba");
+    await running.click("#sign-in");
+    await running.until("サンプルどん");
+    tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+    await plateShown();
+    return (await platesSettled()).length;
+  };
   await plateShown();
+  const platesUnconfirmed = (await platesSettled()).length;
+  results.unconfirmedPlateAskedAgain = (await platesAfterSignOutAndIn()) === platesUnconfirmed + 1;
+  await running.click("#read-again");
+  await Bun.sleep(300);
+  await running.until("Read at");
   const platesBeforeSignOut = (await platesSettled()).length;
-  await running.click("#sign-out");
-  await running.until("Sign in to Hiroba");
-  await running.click("#sign-in");
-  await running.until("サンプルどん");
-  tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
-  await plateShown();
-  results.playerPicturesKeptAtSignOut = (await platesSettled()).length === platesBeforeSignOut;
+  results.playerPicturesKeptAtSignOut = (await platesAfterSignOutAndIn()) === platesBeforeSignOut;
   await running.click("#sign-out");
   await running.until("Sign in to Hiroba");
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));

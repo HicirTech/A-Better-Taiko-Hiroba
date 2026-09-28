@@ -205,6 +205,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       }
       owner = read.value.taikoNo;
       sources = read.value.pictures;
+      // The session held: the plates fetched before this read are the player's own.
+      await pictures.confirm(read.value.taikoNo);
       return ok(read.value.view);
     }),
 

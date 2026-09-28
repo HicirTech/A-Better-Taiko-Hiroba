@@ -450,6 +450,15 @@ describe("createAndroidPort's pictures", () => {
     });
   });
 
+  /** Signs out, then in again through the stand-in's sign-in page. */
+  async function signOutAndIn(port: Awaited<ReturnType<typeof createAndroidPort>>) {
+    await port.signOut();
+    const outcome = port.signIn();
+    await until(() => native.openedWith.length === 1);
+    native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
+    expect(await outcome).toEqual({ kind: "signedIn" });
+  }
+
   test("forgets whose page it read when the session goes, and keeps the plate", async () => {
     answerAsHiroba();
     const port = await createAndroidPort({
@@ -458,11 +467,9 @@ describe("createAndroidPort's pictures", () => {
     });
     await port.readProfile();
     const plate = await port.readPicture(PLATE);
-    await port.signOut();
-    const outcome = port.signIn();
-    await until(() => native.openedWith.length === 1);
-    native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
-    expect(await outcome).toEqual({ kind: "signedIn" });
+    // A later read finds the session good: the plate is the player's own, and kept.
+    await port.readProfile();
+    await signOutAndIn(port);
     expect(await port.readPicture(PLATE)).toEqual({
       ok: false,
       error: { code: "titlePlate=notRead" },
@@ -474,6 +481,26 @@ describe("createAndroidPort's pictures", () => {
       "/mypage_top.php",
       "/imgsrc_titleplate.php",
       "/mypage_top.php",
+      "/mypage_top.php",
+    ]);
+  });
+
+  test("asks again after a sign-in for a plate no later read confirmed", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.readProfile();
+    await port.readPicture(PLATE);
+    await signOutAndIn(port);
+    await port.readProfile();
+    expect((await port.readPicture(PLATE)).ok).toBe(true);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_top.php",
+      "/imgsrc_titleplate.php",
+      "/mypage_top.php",
+      "/imgsrc_titleplate.php",
     ]);
   });
 
