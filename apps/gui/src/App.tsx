@@ -206,10 +206,6 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Stack spacing={3}>
-        <Typography variant="h5" component="h1">
-          {t("app.title")}
-        </Typography>
-
         {screen.name === "signedOut" && (
           <>
             {screen.notice !== null && (
