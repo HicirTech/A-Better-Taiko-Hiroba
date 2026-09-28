@@ -18,8 +18,10 @@ import type { PortraitAction } from "./my-page/my-don-portrait";
 import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
 import { WriteOutcomeNotice } from "./my-page/write-outcome";
+import { FrameCorner } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
+import { ReadAgainFab } from "./read-again/read-again-fab";
 import { FAILURE_MESSAGE } from "./read-failure-message";
 import {
   changedTheCostume,
@@ -247,8 +249,37 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   }, [port, read]);
 
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
+  /**
+   * Reads again, from the Fab, as the read on opening does. Never while a read runs, nor while the
+   * editor is open or an undo runs, so no read starts inside a write. The ref turns away a second
+   * ask that lands before the Fab is shut.
+   */
+  const canReadAgain = signedIn && !costumeOpen && !undoing;
+  const readAgainStarted = useRef(false);
+  const readAgain = async () => {
+    if (!canReadAgain || readAgainStarted.current || undoStarted.current) {
+      return;
+    }
+    readAgainStarted.current = true;
+    try {
+      await read();
+    } finally {
+      readAgainStarted.current = false;
+    }
+  };
   return (
     <>
+      {/* On the pages a read shows, from the first read on, spinning while one runs. */}
+      {page !== "settings" && (signedIn || screen.name === "reading") && (
+        <FrameCorner>
+          <ReadAgainFab
+            reading={screen.name === "reading"}
+            canRead={canReadAgain}
+            onRead={readAgain}
+            i18n={i18n}
+          />
+        </FrameCorner>
+      )}
       {page === "settings" ? (
         <SettingsPage
           i18n={i18n}
@@ -369,17 +400,6 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
                 </Typography>
               )}
             </Alert>
-          )}
-
-          {signedIn && (
-            <Button
-              id="read-again"
-              variant="contained"
-              onClick={read}
-              sx={{ alignSelf: "flex-start" }}
-            >
-              {t("profile.readAgain")}
-            </Button>
           )}
         </Stack>
       )}
