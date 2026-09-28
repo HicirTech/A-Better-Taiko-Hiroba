@@ -104,7 +104,10 @@ What it costs Hiroba:
   at most, and each row scrolled into view for six more.
 - One at a time, after a random pause of up to 100 ms, in the queue with every other request to
   Hiroba, so never between a write's requests; none is asked for while a save or an undo runs.
-  Never retried. At most 300 in a run, and 8 s each on the desktop.
+  At most 300 in a run, and 8 s each on the desktop.
+- Never retried within one opening of the editor. One that did not come is asked for once more the
+  next time the editor is opened and its cell is seen, within the same 300: if Hiroba sends none,
+  each opening asks again for those seen.
 - Each is kept in memory for the run, sign-outs included: opening the editor again, going back to
   a slot, or signing in again asks Hiroba for nothing already shown.
 
