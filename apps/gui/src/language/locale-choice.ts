@@ -1,6 +1,6 @@
 import { detectLocale, isLocale, type Locale } from "@abth/i18n";
 
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
+import { forgetSetting, keepSetting, keptSetting, pageStorage } from "../kept-settings";
 
 /** Where the language picked on this device is kept: the app page's localStorage. */
 const LOCALE_KEY = "abth.locale";
@@ -24,13 +24,23 @@ export function rememberLocale(locale: Locale, storage: Storage | undefined = pa
   keepSetting(LOCALE_KEY, locale, storage);
 }
 
+/** Forgets the pick: the app follows the system's language again, from the next launch on too. */
+export function forgetLocale(storage: Storage | undefined = pageStorage()): void {
+  forgetSetting(LOCALE_KEY, storage);
+}
+
+/** The language the system gives: the first of its own that the catalog carries, else English. */
+export function systemLocale(languages: readonly string[] = systemLanguages()): Locale {
+  return detectLocale(languages);
+}
+
 /**
- * The language to open in: the one picked on this device, else the first of the system's that the
- * catalog carries, else English. Until a language is picked, the app follows the system's.
+ * The language to open in: the one picked on this device, else the system's. Until a language is
+ * picked, or once the pick is forgotten, the app follows the system's.
  */
 export function startingLocale(
   storage: Storage | undefined = pageStorage(),
   languages: readonly string[] = systemLanguages(),
 ): Locale {
-  return pickedLocale(storage) ?? detectLocale(languages);
+  return pickedLocale(storage) ?? systemLocale(languages);
 }

@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   CardContent,
+  Divider,
   Menu,
   MenuItem,
   Stack,
@@ -24,23 +25,30 @@ function TranslateIcon() {
 }
 
 /**
- * The language's section of Settings: the language the app is in, and a menu of every language the
- * catalog carries, each named in its own language and marked with it for screen readers. Every
- * pick reaches `onPick`, the language already shown included: picking it is a choice to keep it.
+ * The language's section of Settings: the language picked, or the system's while none is, and a
+ * menu of the system's, then every language the catalog carries, each named in its own language
+ * and marked with it for screen readers. Every pick reaches `onPick`, null for the system's, and
+ * the language already shown included: picking it is a choice to keep it.
  */
 export function LanguageSetting({
-  locale,
+  picked,
+  system,
   onPick,
   i18n,
 }: {
-  locale: Locale;
-  onPick: (locale: Locale) => void;
+  /** The language picked on this device, or null while the app follows the system's. */
+  picked: Locale | null;
+  /** The language the system gives. */
+  system: Locale;
+  onPick: (next: Locale | null) => void;
   i18n: Translator;
 }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const menuId = useId();
-  const label = i18n.t("language.picker", { name: LOCALE_NAMES[locale] });
-  const pick = (next: Locale) => {
+  const systemChoice = i18n.t("language.system", { name: LOCALE_NAMES[system] });
+  const shown = picked === null ? systemChoice : LOCALE_NAMES[picked];
+  const label = i18n.t("language.picker", { name: shown });
+  const pick = (next: Locale | null) => {
     setAnchor(null);
     onPick(next);
   };
@@ -65,7 +73,7 @@ export function LanguageSetting({
             onClick={(event) => setAnchor(event.currentTarget)}
             sx={{ textTransform: "none" }}
           >
-            <span lang={locale}>{LOCALE_NAMES[locale]}</span>
+            <span lang={picked ?? system}>{shown}</span>
           </Button>
         </Stack>
         <Menu
@@ -75,12 +83,16 @@ export function LanguageSetting({
           onClose={() => setAnchor(null)}
           slotProps={{ list: { "aria-label": label } }}
         >
+          <MenuItem id="language-system" selected={picked === null} onClick={() => pick(null)}>
+            {systemChoice}
+          </MenuItem>
+          <Divider />
           {LOCALES.map((option) => (
             <MenuItem
               key={option}
               id={`language-${option}`}
               lang={option}
-              selected={option === locale}
+              selected={option === picked}
               onClick={() => pick(option)}
             >
               {LOCALE_NAMES[option]}

@@ -20,7 +20,8 @@
  * sites, the pages (a side panel on a wide window, a menu on a narrow one, the sign-in card on the
  * Overview and Favourites while signed out, the favourites on their own page, and the page kept for
  * the next launch), the language (the system's at first, a pick in Settings that takes hold at once
- * and is kept, and one made while signed in, which asks Hiroba nothing), a reopen that keeps the
+ * and is kept, System default, which follows the system again, and one made while signed in,
+ * which asks Hiroba nothing), a reopen that keeps the
  * session and the undo,
  * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
  * signed in, shows the editor's button shut and why, against scripts/mock-hiroba.ts, over the
@@ -257,9 +258,13 @@ const WRITE_REQUESTS = [
 // The language, in runs of their own, signed out. Opened on a system in Traditional Chinese, the
 // app is in it, and says so to the page; a pick in Settings, of the language shown or another,
 // takes hold at once and is kept for the next launch, which the system's language no longer decides.
-// So is the page shown last: the next launch opens on Settings.
+// So is the page shown last: the next launch opens on Settings. System default forgets the pick:
+// the system's language decides again, at once and at the next launch.
+const en = createTranslator("en");
 const ja = createTranslator("ja");
 const zhHant = createTranslator("zh-Hant");
+/** The language setting's button and first item while the app follows a system in 繁體中文. */
+const SYSTEM_ZH_HANT = zhHant.t("language.system", { name: "繁體中文" });
 /** What says which language the window is in: `lang`, the title, the navigation and the picker. */
 const languageShown = (page: Awaited<ReturnType<typeof launch>>["page"]) =>
   page.evaluate<Record<string, string | null>>(
@@ -280,9 +285,10 @@ try {
     lang: "zh-Hant",
     title: "A Better Taiko Hiroba",
     overview: zhHant.t("nav.overview"),
-    picker: "繁體中文",
+    picker: SYSTEM_ZH_HANT,
   });
-  // Each language named in its own words and marked with it, in the catalog's order.
+  // The system's language first, in the app's words, then each language named in its own words and
+  // marked with it, in the catalog's order.
   await inLanguage.click("#language-picker");
   const listed = await waitFor(() =>
     inLanguage.page.evaluate<string[][] | undefined>(
@@ -290,6 +296,7 @@ try {
     ),
   );
   results.pickerNamesEachLanguage = same(listed, [
+    ["", SYSTEM_ZH_HANT],
     ["en", "English"],
     ["ja", "日本語"],
     ["zh-Hans", "简体中文"],
@@ -308,7 +315,10 @@ try {
   results.pageKeptAcrossLaunches =
     (await inLanguage.currentPage()) === "settings" &&
     (await inLanguage.textOf("#sign-in")) === null;
-  results.shownLanguagePickKept = (await languageShown(inLanguage.page)).lang === "zh-Hant";
+  results.shownLanguagePickKept = same(
+    [(await languageShown(inLanguage.page)).lang, await inLanguage.textOf("#language-picker")],
+    ["zh-Hant", "繁體中文"],
+  );
   await inLanguage.click("#language-picker");
   await waitFor(async () => (await inLanguage.textOf("#language-ja")) ?? undefined);
   await inLanguage.click("#language-ja");
@@ -329,6 +339,31 @@ try {
   await inLanguage.until(ja.t("settings.account"));
   results.pickKeptAcrossLaunches =
     (await languageShown(inLanguage.page)).lang === "ja" && same(await requestLog(), []);
+  await inLanguage.click("#language-picker");
+  await waitFor(async () => (await inLanguage.textOf("#language-system")) ?? undefined);
+  await inLanguage.click("#language-system");
+  await inLanguage.until(zhHant.t("settings.account"));
+  results.systemDefaultTakesHold = same(await languageShown(inLanguage.page), {
+    lang: "zh-Hant",
+    title: "A Better Taiko Hiroba",
+    overview: zhHant.t("nav.overview"),
+    picker: SYSTEM_ZH_HANT,
+  });
+  await stop(inLanguage);
+  inLanguage = await launch({
+    writes: false,
+    now: NOON_JST,
+    lang: "en-US",
+    userData: LANGUAGE_USER_DATA,
+  });
+  await inLanguage.until(en.t("settings.account"));
+  results.systemDefaultKeptAcrossLaunches =
+    same(await languageShown(inLanguage.page), {
+      lang: "en",
+      title: "A Better Taiko Hiroba",
+      overview: en.t("nav.overview"),
+      picker: en.t("language.system", { name: "English" }),
+    }) && same(await requestLog(), []);
 } finally {
   await stop(inLanguage);
   rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });

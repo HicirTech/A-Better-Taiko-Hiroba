@@ -42,3 +42,15 @@ export function keepSetting(
     // A private or full store: the setting still holds until the app closes.
   }
 }
+
+/**
+ * Forgets a setting, so the next launch takes its default again. One that cannot be forgotten
+ * comes back at the next launch; the default holds for this run.
+ */
+export function forgetSetting(key: string, storage: Storage | undefined = pageStorage()): void {
+  try {
+    storage?.removeItem(key);
+  } catch {
+    // A store that refuses: nothing more can be done about it from here.
+  }
+}

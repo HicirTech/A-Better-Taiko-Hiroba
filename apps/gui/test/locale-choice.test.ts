@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { pickedLocale, rememberLocale, startingLocale } from "../src/language/locale-choice";
+import {
+  forgetLocale,
+  pickedLocale,
+  rememberLocale,
+  startingLocale,
+} from "../src/language/locale-choice";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("startingLocale", () => {
@@ -21,6 +26,14 @@ describe("startingLocale", () => {
     expect(startingLocale(storage, ["en-US"])).toBe("ja");
   });
 
+  test("follows the system again once the pick is forgotten", () => {
+    const storage = memoryStorage();
+    rememberLocale("ja", storage);
+    forgetLocale(storage);
+    expect(pickedLocale(storage)).toBeNull();
+    expect(startingLocale(storage, ["zh-TW"])).toBe("zh-Hant");
+  });
+
   test("ignores a kept value that names no locale", () => {
     const storage = memoryStorage();
     storage.setItem("abth.locale", "klingon");
@@ -31,6 +44,7 @@ describe("startingLocale", () => {
     expect(pickedLocale(undefined)).toBeNull();
     expect(pickedLocale(refusing)).toBeNull();
     expect(() => rememberLocale("en", refusing)).not.toThrow();
+    expect(() => forgetLocale(refusing)).not.toThrow();
     expect(startingLocale(refusing, ["en-US"])).toBe("en");
   });
 });

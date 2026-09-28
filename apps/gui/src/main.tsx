@@ -33,7 +33,7 @@ createRoot(container).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Shell platform={platform} initial={initial} onShown={onShown} />
+      <Shell platform={platform} onShown={onShown} />
     </ThemeProvider>
   </StrictMode>,
 );
