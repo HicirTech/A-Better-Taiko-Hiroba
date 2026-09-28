@@ -2,7 +2,9 @@
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, the identity card on Hiroba's title plate (its text over it, one plate
- * per title, one that does not come, the plate kept across sign-outs and launches), the editor's
+ * per title, one that does not come, the plate kept across sign-outs and launches), the どんメダル
+ * plate (its words over it, one plate per season and state, one that does not come, its id never
+ * in the window or on disk, the plate kept across sign-outs and launches), the editor's
  * picture of the set (on opening, after a pick, one request for a burst of picks, one that does not
  * come, none once shut, none inside a write), its items' thumbnails (only those seen, each once,
  * kept across sign-outs and launches, one that does not come, one not offered, shapes the bridge
@@ -34,6 +36,7 @@ const IDP_HOST = "id.127.0.0.1.sslip.io:8808";
 const IDP_MARKER = "abth-mock-idp-marker";
 const MY_PAGE = "/mypage_top.php";
 const DAN_LABEL = "/imgsrc_danlabel.php";
+const MEDAL_PLATE = "/imgsrc_tokenplate.php";
 const USER_DATA = join(root, "out", "e2e-user-data");
 /** The language runs' own folder, so a pick made there never reaches the runs that read English. */
 const LANGUAGE_USER_DATA = join(root, "out", "e2e-user-data-language");
@@ -90,16 +93,37 @@ const savedCostume = async () =>
 const PREVIEW = "GET /imgsrc_mydon.php";
 const THUMBNAIL = "GET /imgsrc_kisekae.php";
 const TITLE_PLATE = "GET /imgsrc_titleplate.php";
+const TOKEN_PLATE = `GET ${MEDAL_PLATE}`;
 /**
  * The pictures the window's lane asks for by itself, as they come on screen: the items' thumbnails
- * and, after each read of my page, the title plate.
+ * and, after each read of my page, the title plate and the どんメダル plate.
  */
-const LANE_PICTURES: readonly string[] = [THUMBNAIL, TITLE_PLATE];
+const LANE_PICTURES: readonly string[] = [THUMBNAIL, TITLE_PLATE, TOKEN_PLATE];
+/** The どんメダル plates the app fetched this run, once none more has come for a second. */
+const medalPlatesSettled = async () => {
+  let last = -1;
+  for (let tries = 0; tries < 30; tries++) {
+    const now = await hitsOn(MEDAL_PLATE);
+    if (now === last) {
+      break;
+    }
+    last = now;
+    await Bun.sleep(1000);
+  }
+  return last;
+};
+/** Every どんメダル plate id my page showed this run: the app must keep each in main alone. */
+const medalIds: string[] = [];
+/** The id of the どんメダル plate the last read of my page showed, off the page the debug copy kept. */
+const medalIdShown = () =>
+  /imgsrc_tokenplate\.php\?id=([0-9a-f]+)/.exec(
+    readFileSync(join(USER_DATA, "debug", "mypage_top.php.html"), "utf8"),
+  )?.[1] ?? "";
 /** Every request the mock saw since the last reset, as "METHOD /path", in the order they came. */
 const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
 /**
  * Whether `log` is the requests `before`, then a write's `run` with nothing inside it, and the
- * pictures (of the set, of its items, and the title plate) anywhere else. The pictures go as the
+ * pictures (of the set, of its items, and my page's plates) anywhere else. The pictures go as the
  * picks pause, as items come on screen and after a read, not in step with a write, but main queues
  * them with the writes: one goes before a write or after it, never between its requests.
  */
@@ -620,6 +644,91 @@ try {
     platesAfterRereads.length === 1 &&
     afterTitles.length === afterOther.length &&
     askedAsMyPage(afterTitles);
+
+  // The どんメダル plate, asked for once its card is on screen, so each read scrolls to it. Tried on
+  // a season no read has shown yet, so every plate below is new to the device: first one that does
+  // not come, the GIF, then the same one again, which shows under the card's words.
+  const readMedalShowing = async (ready: () => Promise<boolean>) => {
+    await click("#read-again");
+    await Bun.sleep(300);
+    await until("Read at");
+    await page.evaluate(`document.querySelector("#medal").scrollIntoView({ block: "center" })`);
+    await waitForSeen(page, async () => (await ready()) || undefined);
+    return medalPlatesSettled();
+  };
+  const medalPlateSrc = () => attribute("#medal-plate-image", "src");
+  medalIds.push(medalIdShown());
+  await fetch(`${HIROBA}/__tokenplate?answer=gif`);
+  await fetch(`${HIROBA}/__medal?state=collecting&season=2`);
+  const medalPlatesBefore = await medalPlatesSettled();
+  const medalPlatesPerRead = [await readMedalShowing(() => shownNow("#medal-plate-code"))];
+  medalIds.push(medalIdShown());
+  // Missing, the plate is a pale pill of its shape, and every word on it is still there as text.
+  results.medalPlateMissingReadsAsText =
+    (await textOf("#medal-plate-code")) ===
+      "Code for a report: medalPlate=notPng status=200 type=image/gif bytes=43" &&
+    (await shownNow("#medal-plate-stand-in")) &&
+    !(await shownNow("#medal-plate-image")) &&
+    (await textOf("#medal-name")) === "どんメダル2026冬" &&
+    (await textOf("#medal-count")) === "Collected: 12";
+  await fetch(`${HIROBA}/__tokenplate?answer=png`);
+  medalPlatesPerRead.push(await readMedalShowing(() => shownNow("#medal-plate-image")));
+  // The mock draws it 600×100, not the 290:50 the card reserves: the box takes the PNG's size. The
+  // name and the count stay text over it, the number drawn and the whole named for screen readers.
+  const medalBox = await page.evaluate<{ width: number; height: number }>(
+    `(() => { const box = document.querySelector("#medal-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+  );
+  results.medalPlateDrawnUnderText =
+    (await medalPlateSrc())?.startsWith("data:image/png;base64,") === true &&
+    Math.abs(medalBox.width / medalBox.height - 600 / 100) < 0.05 &&
+    (await textOf("#medal-name")) === "どんメダル2026冬" &&
+    (await textOf("#medal-count")) === "Collected: 12" &&
+    (await textOf("#medal-plate"))?.replace("Collected: 12", "").includes("12") === true &&
+    !(await shownNow("#medal-plate-stand-in")) &&
+    !(await shownNow("#medal-plate-unavailable"));
+  // No yellow behind it either (the user's call, 2026-09-28): nothing from it up to the card paints
+  // Hiroba's #FFCC00.
+  results.medalPlateOnAppSurface = await page.evaluate<boolean>(
+    `(() => { const colours = []; for (let box = document.querySelector("#medal-plate"); box !== null; box = box.parentElement) { colours.push(getComputedStyle(box).backgroundColor); if (box.id === "medal") return !colours.includes("rgb(255, 204, 0)"); } return false; })()`,
+  );
+  // The id names the player's season: it stays in main, and the window holds neither it nor the
+  // plate's address.
+  const withMedalPlate = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.medalIdKeptOutOfDom =
+    medalIds.every((id) => id.length === 48 && !withMedalPlate.includes(id)) &&
+    medalIds[0] !== medalIds[1] &&
+    !withMedalPlate.includes("tokenplate");
+  // Read again, the plate kept on disk answers. COMPLETE is a plate of its own, fetched once and
+  // then kept too: back to the count, and to COMPLETE again, Hiroba is asked for nothing more.
+  medalPlatesPerRead.push(await readMedalShowing(() => shownNow("#medal-plate-image")));
+  const collectingSrc = await medalPlateSrc();
+  await fetch(`${HIROBA}/__medal?state=complete`);
+  medalPlatesPerRead.push(
+    await readMedalShowing(async () => (await medalPlateSrc()) !== collectingSrc),
+  );
+  const completeShown =
+    (await textOf("#medal-complete")) === "COMPLETE" && (await textOf("#medal-count")) === null;
+  await fetch(`${HIROBA}/__medal?state=collecting`);
+  medalPlatesPerRead.push(
+    await readMedalShowing(async () => (await medalPlateSrc()) === collectingSrc),
+  );
+  await fetch(`${HIROBA}/__medal?state=complete`);
+  medalPlatesPerRead.push(
+    await readMedalShowing(async () => (await textOf("#medal-complete")) !== null),
+  );
+  results.medalPlateOncePerIdAndState =
+    completeShown &&
+    same(
+      medalPlatesPerRead.map((count) => count - medalPlatesBefore),
+      [1, 2, 2, 3, 3, 3],
+    );
+  // Back to the first season's count, whose plate this device keeps from here on at the latest, for
+  // the reopen below; the card scrolled away again, so the title plate is on screen for what follows.
+  await fetch(`${HIROBA}/__medal?state=collecting&season=1`);
+  await readMedalShowing(() => shownNow("#medal-plate-image"));
+  await page.evaluate("window.scrollTo(0, 0)");
 
   // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the card
   // offers the editor, and every write is unverified: a tick to confirm, and the title read twice.
@@ -1150,6 +1259,7 @@ try {
   // offered. Its clock is in Hiroba's daily break, and a write then sends nothing at all.
   const readsBeforeReopen = await myPageHits();
   const platesBeforeReopen = (await platesSettled()).length;
+  const medalPlatesBeforeReopen = await medalPlatesSettled();
   const thumbsBeforeReopen = (await thumbsSettled()).length;
   await stop(running);
   running = await launch({ writes: true, now: IN_THE_BREAK });
@@ -1171,6 +1281,24 @@ try {
       )) || undefined,
   );
   results.plateOncePerDevice = (await platesSettled()).length === platesBeforeReopen;
+  /** Scrolls to the どんメダル plate, waits for its picture, and scrolls back to the top. */
+  const medalPlateShown = async () => {
+    await running.page.evaluate(
+      `document.querySelector("#medal").scrollIntoView({ block: "center" })`,
+    );
+    await waitForSeen(
+      running.page,
+      async () =>
+        (await running.page.evaluate<boolean>(
+          `document.querySelector("#medal-plate-image") !== null`,
+        )) || undefined,
+    );
+    const fetched = await medalPlatesSettled();
+    await running.page.evaluate("window.scrollTo(0, 0)");
+    return fetched;
+  };
+  // So does the どんメダル plate, once its card is on screen.
+  results.medalPlateOncePerDevice = (await medalPlateShown()) === medalPlatesBeforeReopen;
   await resetLog();
   const inTheBreak = await running.page.evaluate(
     `window.abth.changeCostume(${JSON.stringify({ expected: { ...START, colorFace: 7 }, target: START })})`,
@@ -1219,6 +1347,7 @@ try {
   // Signed in, the card shows the editor's button shut, and says why, rather than no way to change
   // anything at all. Signed out again after, so the session is not left for the scan below.
   const platesSignedOut = (await platesAsked()).length;
+  const medalPlatesSignedOut = await hitsOn(MEDAL_PLATE);
   const thumbsSignedOut = (await thumbs()).length;
   await running.click("#sign-in");
   await running.until("サンプルどん");
@@ -1247,6 +1376,7 @@ try {
     keptThumbnail.ok &&
     (await platesSettled()).length === platesSignedOut &&
     (await thumbs()).length === thumbsSignedOut;
+  results.medalPlateSurvivesSignOut = (await medalPlateShown()) === medalPlatesSignedOut;
   // Signed out and in again, in the same run. A plate no later read has confirmed is not kept:
   // Hiroba draws a blank one for a session it ended unseen, so it is asked for again. Once a read
   // has confirmed it, it is kept, and the read after the next sign-in asks Hiroba for no plate
@@ -1411,6 +1541,17 @@ results.picturesFiledUnderHashes =
   pictureFiles.some((file) => filedAs(`shared/${HASH}`).test(file)) &&
   pictureFiles.some((file) => filedAs(`player/${HASH}/${HASH}`).test(file)) &&
   pictureFiles.every((file) => filedAs(`(shared|player/${HASH})/${HASH}`).test(file));
+// The どんメダル plate ids stay in main: none is in the name of any file the app keeps, and none is
+// in any file but the debug copies of the pages that showed them.
+const inDebugCopies = (file: string) => file.slice(USER_DATA.length).split(sep)[1] === "debug";
+results.medalIdsKeptOffDisk =
+  medalIds.length === 2 &&
+  [...walk(USER_DATA)].every((file) => {
+    const bytes = readFileSync(file).toString("latin1");
+    return medalIds.every(
+      (id) => !file.includes(id) && (inDebugCopies(file) || !bytes.includes(id)),
+    );
+  });
 console.log(JSON.stringify(results, null, 2));
 
 function* walk(dir: string): Generator<string> {
