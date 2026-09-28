@@ -288,6 +288,11 @@ try {
     (await textOf("#dan")) === "Dan: 九段" &&
     (await textOf("#title-plate-stand-in")) === null &&
     (await textOf("#pictures-unavailable")) === null;
+  // The plate sits on the app's own surface (the user's call, 2026-09-28): nothing from it up to
+  // the card paints the yellow Hiroba draws around it, #FFCC00.
+  results.plateOnAppSurface = await page.evaluate<boolean>(
+    `(() => { const colours = []; for (let box = document.querySelector("#title-plate"); box !== null; box = box.parentElement) { colours.push(getComputedStyle(box).backgroundColor); if (box.id === "profile") return !colours.includes("rgb(255, 204, 0)"); } return false; })()`,
+  );
   results.danLabelShownAsPicture =
     (await attribute("#dan-label", "src"))?.startsWith("data:image/png;base64,") === true;
   const withPlate = withoutPictureBytes(
