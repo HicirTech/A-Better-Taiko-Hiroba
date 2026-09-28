@@ -1,16 +1,17 @@
 /**
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
- * filled favourites folder, the editor's picture of the set (on opening, after a pick, one request
- * for a burst of picks, one that does not come, none once shut, none inside a write), its items'
- * thumbnails (only those seen, each once a run, one that does not come, one not offered, shapes
- * the bridge refuses, none inside a write), costume writes (a colour and a きぐるみ, each undone,
- * the #22 trap, a
- * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
- * change made elsewhere, and a session that ends before and after a save), a lost session, cancel,
- * a sign-in sent off both sites, a reopen that keeps the session and the undo, Hiroba's daily
- * break, sign-out, and a reopen that stays signed out with the write gate shut and, signed in,
- * shows the editor's button shut and why, against scripts/mock-hiroba.ts, over the Chrome DevTools
+ * filled favourites folder, the identity card on Hiroba's title plate (its text over it, one plate
+ * per title, one that does not come, the plate kept across a sign-out), the editor's picture of the
+ * set (on opening, after a pick, one request for a burst of picks, one that does not come, none
+ * once shut, none inside a write), its items' thumbnails (only those seen, each once a run, one
+ * that does not come, one not offered, shapes the bridge refuses, none inside a write), costume
+ * writes (a colour and a きぐるみ, each undone, the #22 trap, a save that moves nothing,
+ * pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, and
+ * a session that ends before and after a save), a lost session, cancel, a sign-in sent off both
+ * sites, a reopen that keeps the session and the undo, Hiroba's daily break, sign-out, and a
+ * reopen that stays signed out with the write gate shut and, signed in, shows the editor's button
+ * shut and why, against scripts/mock-hiroba.ts, over the Chrome DevTools
  * Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
  * planned, then searches the app's user-data folder for every session token and form token the
  * mock issued and for what the mock ID host left behind. Run `bun run build` first.
@@ -107,6 +108,32 @@ const sentAsPlanned = (log: string[], before: string[], run: string[]) => {
     ) && (planned[planned.length - 1] ?? 0) - (planned[before.length] ?? 0) === run.length - 1
   );
 };
+/** A title plate as the mock saw it asked for. */
+type PlateAsked = { query: string; referer: string | null; session: boolean };
+/** Every title plate the app asked for this run, in order. */
+const platesAsked = async () =>
+  (await (await fetch(`${HIROBA}/__titleplates`)).json()) as PlateAsked[];
+/**
+ * The title plates asked for, once none more has been for a second: after a read, the plate is
+ * asked for again, and answered from the run's memory, or fetched when its title is new.
+ */
+const platesSettled = async () => {
+  let last = -1;
+  for (let tries = 0; tries < 30; tries++) {
+    const now = (await platesAsked()).length;
+    if (now === last) {
+      break;
+    }
+    last = now;
+    await Bun.sleep(1000);
+  }
+  return platesAsked();
+};
+/** Each plate asked for as my page asks for it: bare, with my page as the Referer, signed in. */
+const askedAsMyPage = (plates: PlateAsked[]) =>
+  plates.every(
+    (plate) => plate.query === "" && plate.referer === `${HIROBA}/mypage_top.php` && plate.session,
+  );
 /** The query of every picture of the set the app asked for since the last reset, in order. */
 const previewQueries = async () => (await (await fetch(`${HIROBA}/__previews`)).json()) as string[];
 /** A set as the preview's query names it: the site's names, in the site's order. */
@@ -216,6 +243,40 @@ try {
     !rendered.includes("000000000000") && !rendered.includes("imgsrc");
   results.readsAfterSignIn = await myPageHits();
 
+  // Hiroba's title plate under the card, asked for once the read is in, bare and with the session,
+  // as my page asks for it: the mock draws it for a session only, and 600×100, not the 290:47 the
+  // card reserves, so the box takes the size the PNG gives. The words stay text over it, and the
+  // dan's label is the picture the read already carried.
+  const attribute = (selector: string, name: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.getAttribute(${JSON.stringify(name)}) ?? null`,
+    );
+  await waitFor(async () => (await attribute("#title-plate-image", "src")) ?? undefined);
+  const plateBox = await page.evaluate<{ width: number; height: number }>(
+    `(() => { const box = document.querySelector("#title-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+  );
+  results.plateDrawnUnderTitle =
+    (await attribute("#title-plate-image", "src"))?.startsWith("data:image/png;base64,") === true &&
+    Math.abs(plateBox.width / plateBox.height - 600 / 100) < 0.05 &&
+    (await textOf("#profile-title")) === "Title: サンプルの称号" &&
+    (await textOf("#profile h2")) === "サンプルどん" &&
+    (await textOf("#dan")) === "Dan: 九段" &&
+    (await textOf("#title-plate-stand-in")) === null &&
+    (await textOf("#pictures-unavailable")) === null;
+  results.danLabelShownAsPicture =
+    (await attribute("#dan-label", "src"))?.startsWith("data:image/png;base64,") === true;
+  const withPlate = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.headerAddressesKeptOutOfDom =
+    !withPlate.includes("imgsrc") &&
+    !withPlate.includes("titleplate") &&
+    !withPlate.includes("taiko_no") &&
+    !withPlate.includes("000000000000") &&
+    !withPlate.includes("_token_v2") &&
+    !tokens.some((token) => withPlate.includes(token));
+  const platesAtSignIn = await platesSettled();
+
   // Read again: one more request, no more.
   await click("#read-again");
   await until("Read at");
@@ -236,6 +297,9 @@ try {
     tokens[1] !== tokens[0] &&
     (await textOf("#crowns-silver")) === "11" &&
     !(await text()).includes("ended");
+  // Three reads more of the same title: the plate is asked for again after each, and answered
+  // from the run's memory, asking Hiroba nothing.
+  const platesAfterRereads = await platesSettled();
 
   // Every shape my page can take is a normal state: each renders in its place with the rest of
   // the page around it. Each read is two requests while my page shows a dan, my page and its
@@ -316,7 +380,57 @@ try {
   // one with a label that did not read.
   results.twoRequestsWithDanOneWithout =
     JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 1, 2]);
+  // The label's picture is the label the read fetched to read the dan: no request of its own.
+  results.danLabelPictureCostsNothing =
+    results.twoRequestsWithDanOneWithout === true && results.danLabelShownAsPicture === true;
   await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set&favorites=unset`);
+
+  // A plate that does not come, here the GIF Hiroba draws nothing with, for a title not yet
+  // fetched: the plain band stands in, one line under the card says so with its code, and every
+  // word of the card is as it was. The next read asks for it once more, and it shows.
+  const platesBeforeOther = (await platesSettled()).length;
+  const readAndWait = async (ready: () => Promise<boolean>) => {
+    await click("#read-again");
+    await Bun.sleep(300);
+    await until("Read at");
+    await waitFor(async () => (await ready()) || undefined);
+    return platesSettled();
+  };
+  const shownNow = (selector: string) =>
+    page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  await fetch(`${HIROBA}/__titleplate?answer=gif`);
+  await fetch(`${HIROBA}/__variant?title=other`);
+  await readAndWait(() => shownNow("#pictures-code"));
+  const blankShown =
+    (await textOf("#pictures-code")) ===
+      "Code for a report: titlePlate=notPng status=200 type=image/gif bytes=43" &&
+    (await shownNow("#title-plate-stand-in")) &&
+    !(await shownNow("#title-plate-image")) &&
+    (await textOf("#profile-title")) === "Title: 別のサンプル称号" &&
+    (await textOf("#profile h2")) === "サンプルどん" &&
+    (await textOf("#dan")) === "Dan: 九段" &&
+    (await textOf("#region")) === "Region: サンプル";
+  await fetch(`${HIROBA}/__titleplate?answer=png`);
+  const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
+  results.plateBlankFallsBack =
+    blankShown &&
+    !(await shownNow("#pictures-unavailable")) &&
+    afterOther.length - platesBeforeOther === 2;
+  // Each title is a plate of its own, fetched once: back to the first title, and to the second
+  // again, the run's memory answers, and Hiroba is asked for nothing more.
+  await fetch(`${HIROBA}/__variant?title=set`);
+  await readAndWait(async () => (await textOf("#profile-title")) === "Title: サンプルの称号");
+  await fetch(`${HIROBA}/__variant?title=other`);
+  await readAndWait(async () => (await textOf("#profile-title")) === "Title: 別のサンプル称号");
+  await fetch(`${HIROBA}/__variant?title=set`);
+  const afterTitles = await readAndWait(
+    async () => (await textOf("#profile-title")) === "Title: サンプルの称号",
+  );
+  results.plateOncePerTitle =
+    platesAtSignIn.length === 1 &&
+    platesAfterRereads.length === 1 &&
+    afterTitles.length === afterOther.length &&
+    askedAsMyPage(afterTitles);
 
   // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the card
   // offers the editor, and every write is unverified: a tick to confirm, and the title read twice.
@@ -896,6 +1010,24 @@ try {
     )) &&
     (await running.textOf("#costume-not-open")) ===
       "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
+  // Signed out and in again, in the same run: the player's plate is still kept, and the read asks
+  // Hiroba for no plate (the user's call, 2026-09-28: no picture is deleted at sign-out).
+  const plateShown = () =>
+    waitFor(
+      async () =>
+        (await running.page.evaluate<boolean>(
+          `document.querySelector("#title-plate-image") !== null`,
+        )) || undefined,
+    );
+  await plateShown();
+  const platesBeforeSignOut = (await platesSettled()).length;
+  await running.click("#sign-out");
+  await running.until("Sign in to Hiroba");
+  await running.click("#sign-in");
+  await running.until("サンプルどん");
+  tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  await plateShown();
+  results.playerPicturesKeptAtSignOut = (await platesSettled()).length === platesBeforeSignOut;
   await running.click("#sign-out");
   await running.until("Sign in to Hiroba");
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
