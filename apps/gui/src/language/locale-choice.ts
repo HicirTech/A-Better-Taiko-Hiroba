@@ -1,16 +1,9 @@
 import { detectLocale, isLocale, type Locale } from "@abth/i18n";
 
+import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
+
 /** Where the language picked on this device is kept: the app page's localStorage. */
 const LOCALE_KEY = "abth.locale";
-
-/** The page's storage, or nothing where the page may not use it. */
-function pageStorage(): Storage | undefined {
-  try {
-    return globalThis.localStorage;
-  } catch {
-    return undefined;
-  }
-}
 
 /** The system's languages, most preferred first: in Electron, its locale, then the system's list. */
 function systemLanguages(): readonly string[] {
@@ -23,21 +16,12 @@ function systemLanguages(): readonly string[] {
 
 /** The language picked on this device, or null when none was, or it cannot be read. */
 export function pickedLocale(storage: Storage | undefined = pageStorage()): Locale | null {
-  try {
-    const value = storage?.getItem(LOCALE_KEY);
-    return isLocale(value) ? value : null;
-  } catch {
-    return null;
-  }
+  return keptSetting(LOCALE_KEY, isLocale, storage);
 }
 
 /** Keeps a pick for the next launch. One that cannot be kept holds for this run alone. */
 export function rememberLocale(locale: Locale, storage: Storage | undefined = pageStorage()): void {
-  try {
-    storage?.setItem(LOCALE_KEY, locale);
-  } catch {
-    // A private or full store: the pick still holds until the app closes.
-  }
+  keepSetting(LOCALE_KEY, locale, storage);
 }
 
 /**
