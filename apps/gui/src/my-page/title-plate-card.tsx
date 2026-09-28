@@ -42,10 +42,12 @@ export interface TitlePlateCardProps {
 
 /**
  * The identity card as Hiroba's header draws it, #mydon_area: the title plate, the title over it,
- * and the name row, the nickname in its cream box and the dan's label in its blue one; the region
- * under it, on the same yellow. The plate and the label are Hiroba's own pictures, as data: URLs;
- * every word stays text, laid over them where Hiroba lays its HTML. Until the plate comes, or if it
- * does not, a plain band of the same geometry stands in its place, and the card reads the same.
+ * and the name row, the nickname in its cream box and the dan's label in its blue one, on the same
+ * yellow. The plate and the label are Hiroba's own pictures, as data: URLs; every word stays text,
+ * laid over them where Hiroba lays its HTML. Until the plate comes, or if it does not, a plain band
+ * of the same geometry stands in its place, and the card reads the same.
+ *
+ * The region is left off (the user's call, 2026-09-28): the profile keeps it, the card does not.
  *
  * The dan is read off its label, which is shown as it is, and named in text for screen readers. A
  * label that did not read says so under the plate, with its code, as before.
@@ -107,14 +109,6 @@ export function TitlePlateCard({ profile, lane, i18n }: TitlePlateCardProps) {
               <Title title={profile.title} i18n={i18n} />
               <NameRow profile={profile} i18n={i18n} />
             </Box>
-            {profile.region !== null && (
-              <Typography
-                id="region"
-                sx={{ fontSize: hp(11), lineHeight: 1.4, pt: hp(2), px: hp(4), color: "#000" }}
-              >
-                {t("profile.region", { region: profile.region })}
-              </Typography>
-            )}
           </Box>
         </Box>
       </Box>

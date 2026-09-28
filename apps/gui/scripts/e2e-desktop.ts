@@ -247,6 +247,9 @@ try {
   // the dan read off it may reach the window, never the URL or the number.
   results.danShownByName =
     (await textOf("#dan")) === "Dan: 九段" && (await textOf("#dan-unreadable")) === null;
+  // The mock's page names a region, and the card leaves it out (the user's call, 2026-09-28).
+  results.regionLeftOffCard =
+    (await textOf("#region")) === null && !(await text()).includes("Region");
   results.taikoNoAndUrlsKeptOutOfDom =
     !rendered.includes("000000000000") && !rendered.includes("imgsrc");
   results.readsAfterSignIn = await myPageHits();
@@ -342,7 +345,6 @@ try {
     (await text()).includes("サンプルどん") &&
     (await textOf("#dan")) === null &&
     (await textOf("#dan-unreadable")) === null;
-  results.unsetRegionLeftOut = (await textOf("#region")) === null;
   // Unset so far: no favourite song and an empty folder. Set, the song shows by title and the
   // folder, closed at first, opens on request with every song in it, the two that share a title
   // included.
@@ -416,8 +418,7 @@ try {
     !(await shownNow("#title-plate-image")) &&
     (await textOf("#profile-title")) === "Title: 別のサンプル称号" &&
     (await textOf("#profile h2")) === "サンプルどん" &&
-    (await textOf("#dan")) === "Dan: 九段" &&
-    (await textOf("#region")) === "Region: サンプル";
+    (await textOf("#dan")) === "Dan: 九段";
   await fetch(`${HIROBA}/__titleplate?answer=png`);
   const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
   results.plateBlankFallsBack =
