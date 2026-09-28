@@ -2,10 +2,11 @@
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, the identity card on Hiroba's title plate (its text over it, one plate
- * per title, one that does not come, the plate kept across a sign-out), the editor's picture of the
- * set (on opening, after a pick, one request for a burst of picks, one that does not come, none
- * once shut, none inside a write), its items' thumbnails (only those seen, each once a run, one
- * that does not come, one not offered, shapes the bridge refuses, none inside a write), costume
+ * per title, one that does not come, the plate kept across sign-outs and launches), the editor's
+ * picture of the set (on opening, after a pick, one request for a burst of picks, one that does not
+ * come, none once shut, none inside a write), its items' thumbnails (only those seen, each once,
+ * kept across sign-outs and launches, one that does not come, one not offered, shapes the bridge
+ * refuses, none inside a write), the pictures on disk named by hashes alone, costume
  * writes (a colour and a きぐるみ, each undone, the #22 trap, a save that moves nothing,
  * pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, and
  * a session that ends before and after a save), a lost session, cancel, a sign-in sent off both
@@ -18,10 +19,11 @@
  * mock issued and for what the mock ID host left behind. Run `bun run build` first.
  */
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { createTranslator } from "@abth/i18n";
 import electronPath from "electron";
 
+import { PICTURE_EPOCH } from "../src/hiroba-session";
 import { BRIDGE_CHANNELS } from "../src/session-port";
 import { COSTUME_FIELDS, type CostumeState, INITIAL_COSTUME } from "./mock-costume";
 
@@ -1147,6 +1149,8 @@ try {
   // Reopened, the app is still signed in and reads once, by itself. The undo kept on disk is still
   // offered. Its clock is in Hiroba's daily break, and a write then sends nothing at all.
   const readsBeforeReopen = await myPageHits();
+  const platesBeforeReopen = (await platesSettled()).length;
+  const thumbsBeforeReopen = (await thumbsSettled()).length;
   await stop(running);
   running = await launch({ writes: true, now: IN_THE_BREAK });
   await running.until("サンプルどん");
@@ -1157,8 +1161,8 @@ try {
       (await running.page.evaluate<boolean>(`document.querySelector("#costume-undo") !== null`)) ||
       undefined,
   );
-  // The read shows the title plate too, kept on disk since the first launch: once it is shown,
-  // nothing more is on its way.
+  // The read shows the title plate too, kept on disk since the first launch, and asks Hiroba for
+  // none: once it is shown, nothing more is on its way.
   await waitForSeen(
     running.page,
     async () =>
@@ -1166,12 +1170,32 @@ try {
         `document.querySelector("#title-plate-image") !== null`,
       )) || undefined,
   );
+  results.plateOncePerDevice = (await platesSettled()).length === platesBeforeReopen;
   await resetLog();
   const inTheBreak = await running.page.evaluate(
     `window.abth.changeCostume(${JSON.stringify({ expected: { ...START, colorFace: 7 }, target: START })})`,
   );
   results.breakSendsNothing =
     same(inTheBreak, { kind: "maintenance" }) && same(await requestLog(), []);
+  // The editor's items show the thumbnails kept on disk, and ask Hiroba for none: the きぐるみ
+  // slot's, seen on the first launch, and the second slot's, which came on reopening it there.
+  const shownOnReopen = (selector: string) =>
+    running.page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  await running.click("#costume-open");
+  await waitFor(async () => (await shownOnReopen("#costume-tab-items")) || undefined);
+  await running.click("#costume-tab-items");
+  await waitForSeen(
+    running.page,
+    async () => (await shownOnReopen("#item-costume1-4 img")) || undefined,
+  );
+  await running.click("#costume-part-costume2");
+  await waitForSeen(
+    running.page,
+    async () => (await shownOnReopen("#item-costume2-21 img")) || undefined,
+  );
+  results.thumbnailsOncePerDevice = (await thumbsSettled()).length === thumbsBeforeReopen;
+  await running.click("#costume-close");
+  await waitFor(async () => ((await shownOnReopen("#costume-dialog")) ? undefined : true));
 
   await running.click("#sign-out");
   await running.until("Sign in to Hiroba");
@@ -1194,6 +1218,8 @@ try {
     same(await requestLog(), []);
   // Signed in, the card shows the editor's button shut, and says why, rather than no way to change
   // anything at all. Signed out again after, so the session is not left for the scan below.
+  const platesSignedOut = (await platesAsked()).length;
+  const thumbsSignedOut = (await thumbs()).length;
   await running.click("#sign-in");
   await running.until("サンプルどん");
   tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
@@ -1203,6 +1229,24 @@ try {
     )) &&
     (await running.textOf("#costume-not-open")) ===
       "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
+  // Signed out on the last launch and in again on this one, the plate and the thumbnails kept on
+  // disk are still there, and Hiroba is asked for none of them (the user's call, 2026-09-28: no
+  // picture is deleted at sign-out). This build opens no editor, so a thumbnail is asked for through
+  // the bridge, after the editor's read that offers it.
+  await waitForSeen(
+    running.page,
+    async () =>
+      (await running.page.evaluate<boolean>(
+        `document.querySelector("#title-plate-image") !== null`,
+      )) || undefined,
+  );
+  const keptThumbnail = await running.page.evaluate<{ ok: boolean }>(
+    `window.abth.openCostumeEditor().then(() => window.abth.readPicture({ kind: "costumeItem", slot: 1, id: 4 }))`,
+  );
+  results.picturesSurviveSignOut =
+    keptThumbnail.ok &&
+    (await platesSettled()).length === platesSignedOut &&
+    (await thumbs()).length === thumbsSignedOut;
   // Signed out and in again, in the same run. A plate no later read has confirmed is not kept:
   // Hiroba draws a blank one for a session it ended unseen, so it is asked for again. Once a read
   // has confirmed it, it is kept, and the read after the next sign-in asks Hiroba for no plate
@@ -1355,6 +1399,18 @@ const savedEditor = join(USER_DATA, "debug", "mypage_kisekae.php.html");
 results.debugReadsRedacted =
   existsSync(savedEditor) && readFileSync(savedEditor, "utf8").includes(`value="<tckt>"`);
 results.undoKeptOnDisk = existsSync(join(USER_DATA, "undo.json"));
+// The pictures on disk are named by hashes alone, the thumbnails as shared art and the plates under
+// their player: no taiko number and no title in any name.
+const PICTURES = join(USER_DATA, "pictures");
+const pictureFiles = (existsSync(PICTURES) ? [...walk(PICTURES)] : []).map((file) =>
+  file.slice(PICTURES.length).split(sep).join("/"),
+);
+const HASH = "[0-9a-f]{64}";
+const filedAs = (pattern: string) => new RegExp(`^/${PICTURE_EPOCH}/${pattern}\\.png$`);
+results.picturesFiledUnderHashes =
+  pictureFiles.some((file) => filedAs(`shared/${HASH}`).test(file)) &&
+  pictureFiles.some((file) => filedAs(`player/${HASH}/${HASH}`).test(file)) &&
+  pictureFiles.every((file) => filedAs(`(shared|player/${HASH})/${HASH}`).test(file));
 console.log(JSON.stringify(results, null, 2));
 
 function* walk(dir: string): Generator<string> {
