@@ -86,8 +86,10 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setScreen({ name: "reading" });
     const result = await port.readProfile();
     if (result.ok) {
-      // The plate may have changed with the title: asked for again, and kept shown till it comes.
+      // The plates may have changed with the title, the season or its progress: each is asked for
+      // again, and what was shown stays till it comes.
       lane.renew("titlePlate");
+      lane.renew("medalPlate");
       setWrites(await port.enabledWrites());
       await refreshUndo();
       setUndoOutcome(null);
@@ -285,7 +287,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
               ranks={screen.profile.panel.ranks}
               i18n={i18n}
             />
-            <MedalCard medal={screen.profile.medal} i18n={i18n} />
+            <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
             <FavoritesCard
               favoriteSong={screen.profile.favoriteSong}
               folder={screen.profile.favoriteFolder}
