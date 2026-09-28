@@ -2,7 +2,12 @@
 import { describe, expect, test } from "bun:test";
 import { isOk } from "@abth/core";
 
-import { blankPlatePng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
+import {
+  blankPlatePng,
+  medalPlatePng,
+  thumbnailPng,
+  titlePlatePng,
+} from "../scripts/mock-pictures";
 import { checkPng, type PngRules } from "../src/hiroba-session/png-answer";
 
 /** The size `body` has when checked as a PNG under `rules`, or null when it does not pass. */
@@ -48,5 +53,26 @@ describe("titlePlatePng and blankPlatePng", () => {
     expect(titlePlatePng("サンプルの称号")).not.toEqual(titlePlatePng("別のサンプル称号"));
     expect(titlePlatePng("サンプルの称号")).not.toEqual(titlePlatePng(""));
     expect(titlePlatePng("")).not.toEqual(blankPlatePng());
+  });
+});
+
+describe("medalPlatePng", () => {
+  const ID = "0123456789abcdef0123456789abcdef0123456789abcdef";
+  const OTHER_ID = "fedcba9876543210fedcba9876543210fedcba9876543210";
+
+  test("draws a 600×100 PNG within a plate's bounds, not the 290:50 the app reserves", () => {
+    for (const plate of [medalPlatePng(ID, false), medalPlatePng(ID, true)]) {
+      expect(sizeUnder(plate, { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280 })).toEqual({
+        width: 600,
+        height: 100,
+      });
+    }
+  });
+
+  test("gives each id and state a plate of its own, the same on every run", () => {
+    expect(medalPlatePng(ID, false)).toEqual(medalPlatePng(ID, false));
+    expect(medalPlatePng(ID, false)).not.toEqual(medalPlatePng(ID, true));
+    expect(medalPlatePng(ID, false)).not.toEqual(medalPlatePng(OTHER_ID, false));
+    expect(medalPlatePng(ID, false)).not.toEqual(blankPlatePng());
   });
 });

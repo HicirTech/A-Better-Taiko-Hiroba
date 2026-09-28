@@ -15,8 +15,9 @@
  * (requests so far to that path), /__hits-reset, /__hold?on=1 or 0 (the ID form waits for a
  * tap instead of submitting itself, so a cancel or the back key can be tried there),
  * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), and two that shape
- * the next my page: /__medal?state=none|collecting|complete|odd (the どんメダル plate: absent, a
- * count, COMPLETE, or a name alone, a shape no page has shown) and
+ * the next my page: /__medal?state=none|collecting|complete|odd&season=1|2 (the どんメダル plate:
+ * absent, a count, COMPLETE, or a name alone, a shape no page has shown; each optional, and season
+ * 2 is a new season, with a name and a plate id of its own) and
  * /__variant?dan=0|1…15&label=png|gif&title=empty|set|other|third&region=unset|set
  * &favorites=unset|set&panel=counts|zeros (each optional; dan=0 writes the name row flat, as other
  * players' dan-less profiles do, and dan=N shows the label of dan N, 14 (九段) at first; label=gif
@@ -31,6 +32,12 @@
  * /__titleplate?answer=png|blank|gif (what the plate answers from now on: as described, the blank
  * plate even with a session, or the 43-byte GIF) and /__titleplates (every plate asked for, in
  * order, as {query, referer, session}; ?reset=1 clears).
+ *
+ * The どんメダル plate is imgsrc_tokenplate.php?id= and the season's id, 48 hex digits as on Hiroba
+ * (here the hex of a base64 string, no real id), public as Hiroba's is: drawn with or without a
+ * session, one plate for each id and for each state it is shown in, collecting or complete, and the
+ * 43-byte GIF for an id my page has not shown. /__tokenplate?answer=png|gif sets what it answers
+ * from now on: as described, or the GIF for every id.
  *
  * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
  * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
@@ -57,7 +64,7 @@
  */
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
-import { blankPlatePng, titlePlatePng } from "./mock-pictures";
+import { blankPlatePng, medalPlatePng, titlePlatePng } from "./mock-pictures";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
@@ -164,15 +171,34 @@ const PANEL_ZEROS: PanelCounts = {
   crowns: [0, 0, 0],
 };
 
-/** The plate in each state; the names and the count are placeholders, not a real account's. */
-const MEDAL_PLATE: Readonly<Record<MedalState, string>> = {
+/** A plate id as my page writes one, 48 hex digits: here the hex of a base64 string. */
+const plateIdOf = (seed: string) =>
+  Array.from(btoa(seed), (c) => c.charCodeAt(0).toString(16).padStart(2, "0")).join("");
+/** Each season's plate, its name and its id: placeholders, not a real account's. */
+const SEASONS = {
+  1: { name: "どんメダル2026秋", id: plateIdOf("abth-mock-season-1") },
+  2: { name: "どんメダル2026冬", id: plateIdOf("abth-mock-season-2") },
+} as const;
+let medalSeason: keyof typeof SEASONS = 1;
+/** What the plate's picture answers, as /__tokenplate last set it. */
+let tokenPlateAnswer: "png" | "gif" = "png";
+/** What follows the plate's name in each state; the count is a placeholder. */
+const MEDAL_PROGRESS: Readonly<Record<MedalState, string>> = {
   none: "",
-  collecting: `<div><img src="imgsrc_tokenplate.php?id=placeholder"><div class="token_name token_info_display">どんメダル2026秋</div>
-    <div class="token_count token_info_display">12</div></div>`,
-  complete: `<div><img src="imgsrc_tokenplate.php?id=placeholder"><div class="token_name token_info_display">どんメダル2026秋</div>
-    <div class="token_complete token_info_display">\n\t\t\t\t\tCOMPLETE\n\t\t\t\t</div></div>`,
-  odd: `<div><img src="imgsrc_tokenplate.php?id=placeholder"><div class="token_name token_info_display">どんメダル2026秋</div></div>`,
+  collecting: `<div class="token_count token_info_display">12</div>`,
+  complete: `<div class="token_complete token_info_display">\n\t\t\t\t\tCOMPLETE\n\t\t\t\t</div>`,
+  odd: "",
 };
+
+/** The plate as /__medal last shaped it, in the season it last set, or nothing for none. */
+function medalPlate(): string {
+  if (medalState === "none") {
+    return "";
+  }
+  const { name, id } = SEASONS[medalSeason];
+  return `<div><img src="imgsrc_tokenplate.php?id=${id}" style="width: 100%;"><div class="token_name token_info_display">${name}</div>
+    ${MEDAL_PROGRESS[medalState]}</div>`;
+}
 
 /** My page as /__medal and /__variant last shaped it. */
 function myPage(): string {
@@ -203,7 +229,7 @@ function myPage(): string {
     <div class="silver_crown_count total_panel_crown_display">${silver}</div>
     <div class="gold_crown_count total_panel_crown_display">${gold}</div>
     <div class="donderful_crown_count total_panel_crown_display">${donderful}</div></div>
-  ${MEDAL_PLATE[medalState]}
+  ${medalPlate()}
 </div>
 <div class="favoriteSong"><h2 class="subtitleMypage">大好きな曲</h2><div class="mypageInfoArea">
   <ul id="songList"><li><div class="name">${song}</div></li></ul>
@@ -329,6 +355,17 @@ Bun.serve({
             : blankPlatePng();
         return new Response(plate, { headers: { "content-type": "image/png" } });
       }
+      case "/imgsrc_tokenplate.php": {
+        // Public, as Hiroba's is: the id picks the plate, and no session is asked for.
+        const id = searchParams.get("id") ?? "";
+        const shown = Object.values(SEASONS).some((season) => season.id === id);
+        if (!shown || tokenPlateAnswer === "gif") {
+          return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
+        }
+        return new Response(medalPlatePng(id, medalState === "complete"), {
+          headers: { "content-type": "image/png" },
+        });
+      }
       case "/imgsrc_danlabel.php":
         // Public, as Hiroba's is: the query picks whose label, and no session is asked for.
         if (variant.dan === 0 || variant.label === "gif" || !searchParams.has("taiko_no")) {
@@ -360,7 +397,11 @@ Bun.serve({
         if (state === "none" || state === "collecting" || state === "complete" || state === "odd") {
           medalState = state;
         }
-        return new Response(medalState);
+        const season = searchParams.get("season");
+        if (season === "1" || season === "2") {
+          medalSeason = season === "1" ? 1 : 2;
+        }
+        return new Response(`${medalState} ${medalSeason}`);
       }
       case "/__variant": {
         const flag = (name: string, on: string) =>
@@ -391,6 +432,13 @@ Bun.serve({
           titlePlateAnswer = answer;
         }
         return new Response(titlePlateAnswer);
+      }
+      case "/__tokenplate": {
+        const answer = searchParams.get("answer");
+        if (answer === "png" || answer === "gif") {
+          tokenPlateAnswer = answer;
+        }
+        return new Response(tokenPlateAnswer);
       }
       case "/__titleplates":
         if (searchParams.get("reset") === "1") {

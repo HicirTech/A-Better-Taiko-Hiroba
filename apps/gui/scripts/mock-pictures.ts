@@ -82,6 +82,16 @@ export function blankPlatePng(): Uint8Array<ArrayBuffer> {
   return platePng(randomFrom(seedOf(2)), [0x9a, 0x9a, 0x9a], false);
 }
 
+/**
+ * The どんメダル plate imgsrc_tokenplate.php draws for `id`: a band in a colour the id and the state
+ * pick, so each season has a plate of its own, and one more once `complete`, as Hiroba's art may
+ * change then (unverified). No count and no COMPLETE on it: my page writes those as text over it.
+ */
+export function medalPlatePng(id: string, complete: boolean): Uint8Array<ArrayBuffer> {
+  const next = randomFrom(seedOf(3, complete ? 1 : 0, ...Array.from(id, (c) => c.charCodeAt(0))));
+  return platePng(next, [next() % 256, next() % 256, next() % 256], false);
+}
+
 /** A plate's pixels: rounded ends, `band` above, and the two boxes below when `boxes`. */
 function platePng(
   next: () => number,
