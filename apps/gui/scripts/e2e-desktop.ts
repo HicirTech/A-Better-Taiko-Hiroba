@@ -1157,8 +1157,8 @@ try {
       (await running.page.evaluate<boolean>(`document.querySelector("#costume-undo") !== null`)) ||
       undefined,
   );
-  // The read asks for the title plate too, which this run's memory does not hold yet: once it has
-  // come, nothing more is on its way.
+  // The read shows the title plate too, kept on disk since the first launch: once it is shown,
+  // nothing more is on its way.
   await waitForSeen(
     running.page,
     async () =>
@@ -1206,7 +1206,8 @@ try {
   // Signed out and in again, in the same run. A plate no later read has confirmed is not kept:
   // Hiroba draws a blank one for a session it ended unseen, so it is asked for again. Once a read
   // has confirmed it, it is kept, and the read after the next sign-in asks Hiroba for no plate
-  // (the user's call, 2026-09-28: no picture is deleted at sign-out).
+  // (the user's call, 2026-09-28: no picture is deleted at sign-out). Tried on a title no launch
+  // has worn yet: every plate a read confirmed is kept on disk.
   const plateShown = () =>
     waitForSeen(
       running.page,
@@ -1225,6 +1226,11 @@ try {
     await plateShown();
     return (await platesSettled()).length;
   };
+  const platesBeforeThird = (await platesSettled()).length;
+  await fetch(`${HIROBA}/__variant?title=third`);
+  await running.click("#read-again");
+  await running.until("三つ目のサンプル称号");
+  await waitFor(async () => (await platesAsked()).length > platesBeforeThird || undefined);
   await plateShown();
   const platesUnconfirmed = (await platesSettled()).length;
   results.unconfirmedPlateAskedAgain = (await platesAfterSignOutAndIn()) === platesUnconfirmed + 1;

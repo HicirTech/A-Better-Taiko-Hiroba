@@ -4,7 +4,6 @@ import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } f
 
 import {
   createHirobaQueue,
-  createMemoryPictureStore,
   createPictureReader,
   DESKTOP_PICTURE_LIMITS,
   endpointsFromOverrides,
@@ -27,6 +26,7 @@ import {
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createDesktopWrites } from "./desktop-writes";
 import { createHirobaTransport } from "./hiroba-transport";
+import { createDiskPictureStore } from "./picture-disk-store";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
@@ -135,14 +135,14 @@ const queue = createHirobaQueue();
 const { oneAtATime, oneWriteAtATime } = queue;
 
 /**
- * Hiroba's pictures for the window, kept in memory for the run, signed in or out. Only a picture's
- * fetch waits in the queue, never the whole call: one already kept answers at once, even while a
- * write runs.
+ * Hiroba's pictures for the window, kept on disk in the app's data folder across launches and
+ * sign-outs, each fetched once. Only a picture's fetch waits in the queue, never the whole call: one
+ * already kept answers at once, even while a write runs.
  */
 const pictures = createPictureReader({
   transport: readTransport,
   endpoints,
-  store: createMemoryPictureStore(),
+  store: createDiskPictureStore(join(app.getPath("userData"), "pictures")),
   queue,
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
