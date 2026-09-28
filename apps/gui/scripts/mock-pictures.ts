@@ -92,6 +92,34 @@ export function medalPlatePng(id: string, complete: boolean): Uint8Array<ArrayBu
   return platePng(next, [next() % 256, next() % 256, next() % 256], false);
 }
 
+/** A My Don portrait, as the picture host draws one: square, at Hiroba's own size. */
+const PORTRAIT_SIDE = 290;
+
+/**
+ * The portrait of a Don wearing `set`, a costume's eight values in any fixed order: a body disc and
+ * a face disc in colours the set picks, on a clear ground, with noise in the lowest bit, so every
+ * set has a portrait of its own, about the size of a real one (60 KB).
+ */
+export function myDonPng(set: readonly number[]): Uint8Array<ArrayBuffer> {
+  const next = randomFrom(seedOf(4, ...set));
+  const body = [next() % 256, next() % 256, next() % 256];
+  const face = [next() % 256, next() % 256, next() % 256];
+  const side = PORTRAIT_SIDE;
+  const middle = (side - 1) / 2;
+  const data = new Uint8Array(side * side * 4);
+  for (let y = 0; y < side; y++) {
+    for (let x = 0; x < side; x++) {
+      const noise = next();
+      const fromMiddle = (x - middle) ** 2 + (y - middle) ** 2;
+      const inBody = fromMiddle <= (side * 0.45) ** 2;
+      const inFace = fromMiddle <= (side * 0.25) ** 2;
+      const [r = 0, g = 0, b = 0] = inFace ? face : body;
+      data.set([r ^ (noise & 1), g, b, inBody ? 255 : 0], (y * side + x) * 4);
+    }
+  }
+  return new Uint8Array(encode({ width: side, height: side, data, channels: 4 }));
+}
+
 /** A plate's pixels: rounded ends, `band` above, and the two boxes below when `boxes`. */
 function platePng(
   next: () => number,

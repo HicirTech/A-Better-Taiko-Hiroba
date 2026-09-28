@@ -206,6 +206,11 @@ export function createCostumeEditor() {
      */
     issueTicket: issue,
 
+    /** The set saved now, in COSTUME_FIELDS' order: what the player's My Don portrait shows. */
+    saved(): readonly number[] {
+      return COSTUME_FIELDS.map((field) => state[field]);
+    },
+
     /** The editor page for `session`, handing it a fresh token. */
     page(session: MockSession): string {
       const ticket = issue(session);

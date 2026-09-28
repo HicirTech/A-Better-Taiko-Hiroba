@@ -5,6 +5,7 @@ import { isOk } from "@abth/core";
 import {
   blankPlatePng,
   medalPlatePng,
+  myDonPng,
   thumbnailPng,
   titlePlatePng,
 } from "../scripts/mock-pictures";
@@ -74,5 +75,20 @@ describe("medalPlatePng", () => {
     expect(medalPlatePng(ID, false)).not.toEqual(medalPlatePng(ID, true));
     expect(medalPlatePng(ID, false)).not.toEqual(medalPlatePng(OTHER_ID, false));
     expect(medalPlatePng(ID, false)).not.toEqual(blankPlatePng());
+  });
+});
+
+describe("myDonPng", () => {
+  /** The portrait's bounds: from 5 KiB to 512 KiB, and at most 640 a side. */
+  const PORTRAIT_RULES = { minBytes: 5 * 1024, maxBytes: 512 * 1024, maxSide: 640 };
+  const SET = [12, 12, 5, 0, 0, 68, 0, 0];
+
+  test("draws a 290×290 PNG within a portrait's bounds", () => {
+    expect(sizeUnder(myDonPng(SET), PORTRAIT_RULES)).toEqual({ width: 290, height: 290 });
+  });
+
+  test("gives each costume a portrait of its own, the same on every run", () => {
+    expect(myDonPng(SET)).toEqual(myDonPng(SET));
+    expect(myDonPng(SET)).not.toEqual(myDonPng([...SET.slice(0, 2), 3, ...SET.slice(3)]));
   });
 });

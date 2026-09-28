@@ -42,6 +42,15 @@
  * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
  * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
  *
+ * The My Don portrait comes from a picture host off Hiroba, as on the live page, which the same
+ * server stands in for when it is asked by that host's name, img.<ip>.sslip.io:8807: outside the
+ * session cookie's Domain, .hiroba.<ip>.sslip.io, so only the app itself keeps the cookie off it.
+ * My page shows imgsrc.php?v=&kind=mydon&fn=mydon_ and the page's taiko number there, public as the
+ * live one is: drawn with or without a session, from the set the costume editor saved last, so a
+ * write changes it. Its hooks, on Hiroba's host: /__mydon?answer=png|gif (what the portrait answers
+ * from now on) and /__mydons (every portrait asked for, in order, as {query, referer, cookies}, the
+ * names of the cookies it carried; ?reset=1 clears).
+ *
  * The costume editor, mypage_kisekae.php, its preview, imgsrc_mydon.php, its items' thumbnails,
  * imgsrc_kisekae.php (both pictures drawn for a session only, as Hiroba's are), and the two posts a
  * costume write sends, ajax/check_ip_kisekae.php and ajax/change_mydon.php, are
@@ -54,26 +63,34 @@
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
  *   ABTH_DEV_HIROBA_ORIGIN=http://hiroba.127.0.0.1.sslip.io:8807 \
- *   ABTH_DEV_IDP_HOST=id.127.0.0.1.sslip.io:8808 bun run dev
+ *   ABTH_DEV_IDP_HOST=id.127.0.0.1.sslip.io:8808 \
+ *   ABTH_DEV_IMG_ORIGIN=http://img.127.0.0.1.sslip.io:8807 bun run dev
  *
  * The tablet, on this PC's LAN address (sslip.io resolves <name>.<ip>.sslip.io to <ip>):
  *   ABTH_MOCK_IP=<LAN IP> bun scripts/mock-hiroba.ts
  *   VITE_ABTH_DEV_HIROBA_ORIGIN=http://hiroba.<LAN IP>.sslip.io:8807 \
  *   VITE_ABTH_DEV_IDP_HOST=id.<LAN IP>.sslip.io:8808 \
+ *   VITE_ABTH_DEV_IMG_ORIGIN=http://img.<LAN IP>.sslip.io:8807 \
  *   bun run android:live -- <adb serial> <LAN IP>
+ * The picture host's override is optional: without it, the app asks no picture host anything.
  */
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
-import { blankPlatePng, medalPlatePng, titlePlatePng } from "./mock-pictures";
+import { blankPlatePng, medalPlatePng, myDonPng, titlePlatePng } from "./mock-pictures";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
 const IDP_HOST = `id.${IP}.sslip.io`;
+/** The picture host's stand-in: on Hiroba's server and port, and outside its cookie's Domain. */
+const IMG_HOST = `img.${IP}.sslip.io`;
 const HIROBA_PORT = 8807;
 const IDP_PORT = 8808;
 const HIROBA = `http://${HIROBA_HOST}:${HIROBA_PORT}`;
 const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
 const IDP_AUTH = `http://auth.${IDP_HOST}:${IDP_PORT}`;
+const IMG = `http://${IMG_HOST}:${HIROBA_PORT}`;
+/** The mock player's taiko number: a placeholder, no real card's. */
+const TAIKO_NO = "000000000000";
 
 const sessions = new Map<string, MockSession>();
 let lastIssued = "";
@@ -99,10 +116,17 @@ function sessionOf(request: Request): MockSession | undefined {
   return token === undefined ? undefined : sessions.get(token);
 }
 
+/** The names of the cookies `request` carried, never their values. */
+function cookieNamesOf(request: Request): string[] {
+  const header = request.headers.get("cookie") ?? "";
+  return header === "" ? [] : header.split(/;\s*/).map((c) => c.split("=")[0] ?? "");
+}
+
 function log(host: string, request: Request, note = "") {
   const { pathname } = new URL(request.url);
-  const names = (request.headers.get("cookie") ?? "").split(/;\s*/).map((c) => c.split("=")[0]);
-  console.log(`${host} ${request.method} ${pathname} cookies=[${names.join(",")}] ${note}`);
+  console.log(
+    `${host} ${request.method} ${pathname} cookies=[${cookieNamesOf(request).join(",")}] ${note}`,
+  );
 }
 
 const page = (body: string) =>
@@ -143,6 +167,35 @@ const TITLES = {
 let titlePlateAnswer: "png" | "blank" | "gif" = "png";
 /** A title plate as it was asked for: its query, the page the request named, and a session. */
 const titlePlates: { query: string; referer: string | null; session: boolean }[] = [];
+/** What the My Don portrait answers, as /__mydon last set it. */
+let portraitAnswer: "png" | "gif" = "png";
+/** A portrait as it was asked for: its query, the page the request named, and its cookies' names. */
+const portraits: { query: string; referer: string | null; cookies: string[] }[] = [];
+/** Where my page shows the player's portrait: on the picture host, by the page's taiko number. */
+const PORTRAIT = `${IMG}/imgsrc.php?v=&kind=mydon&fn=mydon_${TAIKO_NO}`;
+
+/**
+ * The picture host: the mock player's My Don portrait, drawn from the set saved last, and nothing
+ * else. Public, as the live one is: a session changes nothing, and no cookie is looked at.
+ */
+function pictureHost(request: Request): Response {
+  const { pathname, search, searchParams } = new URL(request.url);
+  if (pathname !== "/imgsrc.php") {
+    return new Response("not found", { status: 404 });
+  }
+  portraits.push({
+    query: search,
+    referer: request.headers.get("referer"),
+    cookies: cookieNamesOf(request),
+  });
+  if (searchParams.get("kind") !== "mydon" || searchParams.get("fn") !== `mydon_${TAIKO_NO}`) {
+    return new Response("not found", { status: 404 });
+  }
+  if (portraitAnswer === "gif") {
+    return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
+  }
+  return new Response(myDonPng(costume.saved()), { headers: { "content-type": "image/png" } });
+}
 
 /** The panel's counts: each score rank's, 8 down to 2, and each crown's, silver, gold, donderful. */
 interface PanelCounts {
@@ -204,7 +257,7 @@ function medalPlate(): string {
 function myPage(): string {
   const nameRow =
     variant.dan > 0
-      ? `<div style="display:flex"><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>`
+      ? `<div style="display:flex"><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=${TAIKO_NO}"></div></div>`
       : `<div style="height:24px;">サンプルどん</div>`;
   const song = variant.favorites
     ? `<span class="songName songNameFontnamco">サンプル曲アルファ</span>`
@@ -222,8 +275,8 @@ function myPage(): string {
   <img src="imgsrc_titleplate.php" style="width: 100%;margin-bottom: -24px;position:relative;z-index:0;">
   <div>${variant.title === "empty" ? "\n\t\t" : TITLES[variant.title]}</div>
   ${nameRow}
-  <div><div class="detail"><p>国・地域 ：${variant.region ? "サンプル" : "未設定"}</p><p>太鼓番：000000000000</p></div>
-    <div class="mydon_image"><img class="customd_mydon" src="data:,"></div></div>
+  <div><div class="detail"><p>国・地域 ：${variant.region ? "サンプル" : "未設定"}</p><p>太鼓番：${TAIKO_NO}</p></div>
+    <div class="mydon_image"><img class="customd_mydon" src="${PORTRAIT}"></div></div>
   <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
     ${panel.ranks.map(([rank, count]) => `<div class="best_rank_score_${rank} total_panel_display">${count}</div>`).join("")}
     <div class="silver_crown_count total_panel_crown_display">${silver}</div>
@@ -242,9 +295,10 @@ Bun.serve({
   hostname: IP,
   port: HIROBA_PORT,
   async fetch(request) {
-    const { pathname, searchParams } = new URL(request.url);
+    const { host, pathname, searchParams } = new URL(request.url);
     const session = sessionOf(request);
-    log("hiroba", request);
+    const onPictureHost = host === `${IMG_HOST}:${HIROBA_PORT}`;
+    log(onPictureHost ? "img" : "hiroba", request);
     hits.set(pathname, (hits.get(pathname) ?? 0) + 1);
     if (!pathname.startsWith("/__")) {
       requestLog.push(`${request.method} ${pathname}`);
@@ -254,6 +308,9 @@ Bun.serve({
       !COMPLETE_BROWSER.test(request.headers.get("user-agent") ?? "")
     ) {
       return RECOMMENDED_BROWSERS;
+    }
+    if (onPictureHost) {
+      return pictureHost(request);
     }
     switch (pathname) {
       case "/login.php":
@@ -445,6 +502,18 @@ Bun.serve({
           titlePlates.length = 0;
         }
         return Response.json(titlePlates);
+      case "/__mydon": {
+        const answer = searchParams.get("answer");
+        if (answer === "png" || answer === "gif") {
+          portraitAnswer = answer;
+        }
+        return new Response(portraitAnswer);
+      }
+      case "/__mydons":
+        if (searchParams.get("reset") === "1") {
+          portraits.length = 0;
+        }
+        return Response.json(portraits);
       case "/__cross-origin":
         return redirect(`${IDP}/__echo-cookie`);
       case "/__same-origin":

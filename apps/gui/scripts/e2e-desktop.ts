@@ -34,6 +34,8 @@ const root = join(import.meta.dir, "..");
 const HIROBA = "http://hiroba.127.0.0.1.sslip.io:8807";
 const CDP_PORT = 9333;
 const IDP_HOST = "id.127.0.0.1.sslip.io:8808";
+/** The mock's picture host, where the My Don portrait comes from: outside Hiroba's cookie Domain. */
+const IMG = "http://img.127.0.0.1.sslip.io:8807";
 const IDP_MARKER = "abth-mock-idp-marker";
 const MY_PAGE = "/mypage_top.php";
 const DAN_LABEL = "/imgsrc_danlabel.php";
@@ -1482,6 +1484,7 @@ async function launch({
       ...process.env,
       ABTH_DEV_HIROBA_ORIGIN: HIROBA,
       ABTH_DEV_IDP_HOST: IDP_HOST,
+      ABTH_DEV_IMG_ORIGIN: IMG,
       ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
       ABTH_DEBUG_SAVE_READS: "1",
