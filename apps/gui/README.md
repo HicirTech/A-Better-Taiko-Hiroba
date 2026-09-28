@@ -4,7 +4,7 @@ The desktop and Android app of A Better Taiko Hiroba. One React and Material UI 
 two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
 pages and reads your own page: one request per read, and one more for your dan label when the page
 shows one, since the page gives the dan only as that picture. It shows your nickname, title and
-dan on Hiroba's own title plate and dan label; the seven score ranks and the three crowns of your
+dan on Hiroba's own title plate and dan label, with your マイどん as Hiroba draws it; the seven score ranks and the three crowns of your
 overall panel, each block as one bar of shares with a legend of percents, like GitHub's "Languages"
 box (the counts are in each item's tooltip); the season's どんメダル on Hiroba's own plate, and
 your favourite songs. On the desktop it can also change your costume (きせかえ), but only in a development run
@@ -56,14 +56,15 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then checks the language (opened on a system in Traditional Chinese, the app is in it; a pick from the app bar, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile in place, asking Hiroba nothing; Hiroba's own words on the profile and in the editor are marked Japanese), and drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches), and the どんメダル plate (asked for only once its card is on screen, its words still text over it, one request per season and per state, a plate that does not come, its id in neither the window nor any file but the debug copies, the plate kept across sign-outs and relaunches). With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then checks the language (opened on a system in Traditional Chinese, the app is in it; a pick from the app bar, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile in place, asking Hiroba nothing; Hiroba's own words on the profile and in the editor are marked Japanese), and drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches), the My Don portrait (from the picture host with no cookie, kept across relaunches and sign-ins, fetched anew after **Read again** and after a change or undo applies, the kept one still shown when a fresh one does not come), and the どんメダル plate (asked for only once its card is on screen, its words still text over it, one request per season and per state, a plate that does not come, its id in neither the window nor any file but the debug copies, the plate kept across sign-outs and relaunches). With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
 
 A packaged build talks only to the real sites. The stand-in is reachable only from an unpackaged
 build, and only when both `ABTH_DEV_HIROBA_ORIGIN` and `ABTH_DEV_IDP_HOST` are set; one without the
-other stops the app.
+other stops the app. `ABTH_DEV_IMG_ORIGIN` adds the stand-in's picture host, which `bun run dev` and
+the end-to-end run set; without it no picture host is asked anything, and set alone it stops the app.
 
 The installers are not code-signed, so Windows SmartScreen warns before the first run.
 
@@ -185,6 +186,29 @@ words, and a line under it gives a code for a report. A page with no どんメ�
 version cannot read, show the card as before, and ask for no picture. With
 `ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`, named by its path alone.
 
+### The My Don portrait
+
+Under the plate stands your マイどん, Hiroba's own picture of your Don in the costume it wears, on
+a pale blue tile of Hiroba's shape. It is the one picture from off Hiroba:
+`https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_` and your taiko number, as your page
+writes it. The platform holds that address to that exact origin, path and query, builds it again
+itself, and fetches it with no cookie at all and Hiroba's origin alone as the Referer, as a browser
+does. The taiko number stays with the platform: it reaches neither the window, a code nor a file
+name. The window asks for "the My Don", and nothing more.
+
+- Kept on the device, one per player: the last one fetched. A launch or a sign-in shows it and asks
+  nothing.
+- Fetched anew only after a costume change or undo applies, and after you press **Read again**, so
+  a change made on Hiroba's own site shows after the next **Read again**. Asked for once the tile is
+  on screen, one at a time in the queue, so never between a write's requests. If that fetch fails,
+  the one kept stays on the tile.
+
+Until the first one comes the tile is empty, with a small spinner; if it does not come, the tile
+stays empty and the line under the card gives a code for a report. With `ABTH_DEBUG_SAVE_READS=1`,
+each is kept in `debug\history`, named by its path alone. On Android, the WebView's cookie store
+decides what the native HTTP client sends: Hiroba's session is kept for Hiroba's domain alone, so
+the picture host never gets it, though a cookie the picture host set itself would go back to it.
+
 ## The first real costume write
 
 The first real write of each kind is made by you, on the desktop, with your own account. Start with
@@ -277,7 +301,7 @@ only then can a packaged build send them.
 |---|---|
 | `bun run android:apk` | Web build, `cap sync`, debug APK. |
 | `bun run android:run -- <adb serial>` | The same, then installs and starts it on that device. |
-| `bun run android:live -- <adb serial> <LAN IP>` | Vite's dev server on this computer, and the debug app loading it with live reload. It runs only against the stand-in, and refuses to start unless both `VITE_ABTH_DEV_HIROBA_ORIGIN` and `VITE_ABTH_DEV_IDP_HOST` are set. |
+| `bun run android:live -- <adb serial> <LAN IP>` | Vite's dev server on this computer, and the debug app loading it with live reload. It runs only against the stand-in, and refuses to start unless both `VITE_ABTH_DEV_HIROBA_ORIGIN` and `VITE_ABTH_DEV_IDP_HOST` are set; `VITE_ABTH_DEV_IMG_ORIGIN`, the stand-in's picture host, is optional. |
 | `bun run android:keystore` | Makes the local release key, once per machine. It refuses to run if a key exists. |
 | `bun run android:release` | Web build, `cap sync`, signed release APK. It refuses to run without the key. |
 | `bun run android:install-release -- <adb serial>` | Installs the signed release APK on that device and starts it. |
@@ -289,6 +313,7 @@ address first:
 ABTH_MOCK_IP=<LAN IP> bun scripts/mock-hiroba.ts
 VITE_ABTH_DEV_HIROBA_ORIGIN=http://hiroba.<LAN IP>.sslip.io:8807 \
 VITE_ABTH_DEV_IDP_HOST=id.<LAN IP>.sslip.io:8808 \
+VITE_ABTH_DEV_IMG_ORIGIN=http://img.<LAN IP>.sslip.io:8807 \
 bun run android:live -- <adb serial> <LAN IP>
 ```
 
@@ -334,13 +359,16 @@ that way.
 
 Each of Hiroba's pictures the app shows, an item's thumbnail, your title plate or your どんメダル
 plate, is fetched once and kept on the device for good, since arcades often have poor networks (the
-user's call, 2026-09-28). Signing out deletes none of them, and neither does the next sign-in.
+user's call, 2026-09-28). Your マイどん is kept too, the last one fetched, and fetched anew only as
+[The My Don portrait](#the-my-don-portrait) says. Signing out deletes none of them, and neither
+does the next sign-in.
 Thumbnails show no player and are kept for any account on the device; a plate is kept under its
 player, so no other account is given it. Only the checked PNG bytes are kept, under SHA-256 names:
 no URL, header, cookie, taiko number, title or medal id.
 
 - **Desktop:** one file per picture in `pictures` in the app's data folder:
-  `v1\shared\<hash>.png` for a thumbnail, `v1\player\<hash>\<hash>.png` for a plate.
+  `v1\shared\<hash>.png` for a thumbnail, `v1\player\<hash>\<hash>.png` for a plate or the
+  portrait.
 - **Android:** the app page's IndexedDB, `abth-pictures`, under the same names. The system may drop
   it when storage runs short, which costs only fetches. Live reload loads the page from another
   origin, so a run against the stand-in keeps its pictures apart from the installed build's.
