@@ -1,9 +1,16 @@
 import type { MedalProgress, Profile } from "@abth/core";
 
+import { isWhole } from "../session-port";
 import type { HirobaEndpoints } from "./types";
 
 /** Where my page's title plate lives: bare on every capture, `?taiko_no=` on other pages. */
 export const TITLE_PLATE_PATH = "/imgsrc_titleplate.php";
+/** Where the art of my page's score panel of `level` lives: static, 5 on every capture. */
+export const scorePanelPath = (level: number): string =>
+  `/image/sp/640/total_score_image_${level}.png`;
+/** The levels a score panel's art may name: whole numbers, 1 to 99. */
+const PANEL_LEVEL_LEAST = 1;
+const PANEL_LEVEL_MOST = 99;
 /** Where my page's どんメダル plate lives: `?id=` and the plate's id, the only query. */
 export const MEDAL_PLATE_PATH = "/imgsrc_tokenplate.php";
 /** The query of the plate my page asks for: lowercase hex, 48 digits on every capture. */
@@ -38,6 +45,15 @@ export interface TitlePlateSource {
 }
 
 /**
+ * The score panel my page shows, by the level its art is named for, which the parser reads off the
+ * art's src: all of the art's address that varies. The art shows no count, so it names no player.
+ */
+export interface ScorePanelSource {
+  /** The level in the art's name, `total_score_image_<level>.png`: 5 on every capture. */
+  readonly level: number;
+}
+
+/**
  * The どんメダル plate as my page asked for it, and where the season stood on it. Public, and the
  * same with a session or without one (wiki: Page Map), but its id names the player's season: it is
  * identity data, like the taiko number, and stays with the platform.
@@ -69,6 +85,8 @@ export interface MyDonSource {
  */
 export interface PictureSources {
   readonly titlePlate: TitlePlateSource | NoPictureSource;
+  /** Never `notShown`: a page with no score panel does not read at all. */
+  readonly scorePanel: ScorePanelSource | NoPictureSource;
   /** `notShown` too when the page shows no どんメダル plate at all. */
   readonly medalPlate: MedalPlateSource | NoPictureSource;
   /** `unexpectedSrc` too when there is no picture host to hold it to. */
@@ -83,9 +101,19 @@ export interface PictureSources {
 export function pictureSourcesOf(profile: Profile, endpoints: HirobaEndpoints): PictureSources {
   return {
     titlePlate: titlePlateOf(profile, endpoints),
+    scorePanel: scorePanelOf(profile),
     medalPlate: medalPlateOf(profile, endpoints),
     myDon: myDonOf(profile, endpoints),
   };
+}
+
+/**
+ * The score panel's art, by the level the parser read off its src, a whole number from 1 to 99:
+ * the address is built from that number alone.
+ */
+function scorePanelOf(profile: Profile): ScorePanelSource | NoPictureSource {
+  const level = profile.summary.countLevel;
+  return isWhole(level, PANEL_LEVEL_LEAST, PANEL_LEVEL_MOST) ? { level } : "unexpectedSrc";
 }
 
 /**

@@ -23,6 +23,8 @@ import {
   type MyDonSource,
   type NoPictureSource,
   type PictureSources,
+  type ScorePanelSource,
+  scorePanelPath,
   TITLE_PLATE_PATH,
 } from "./picture-sources";
 import {
@@ -52,6 +54,11 @@ const ITEM_RULES = { minBytes: 128, maxBytes: 64 * 1024, maxSide: 512 } as const
  * 1280 pixels wide or 400 high is not one either.
  */
 const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280, maxHeight: 400 };
+/**
+ * The score panel's art, 600×356 as my page's layout implies it, and a full picture, not a plate:
+ * under 10 KiB is not the art; over 512 KiB, 1280 pixels wide or 800 high is not it either.
+ */
+const PANEL_RULES = { minBytes: 10 * 1024, maxBytes: 512 * 1024, maxSide: 1280, maxHeight: 800 };
 /**
  * The My Don portrait, 62842 B the one time it was fetched (wiki: Page Map). Under 5 KiB is not a
  * portrait; over 512 KiB or 640 pixels a side is not one either.
@@ -236,6 +243,9 @@ function requestOf(
   if (owner === null || sources === null) {
     return "notRead";
   }
+  if (want.kind === "scorePanel") {
+    return scorePanelRequest(sources.scorePanel, origin);
+  }
   if (want.kind === "medalPlate") {
     return medalPlateRequest(sources.medalPlate, owner, origin);
   }
@@ -264,6 +274,28 @@ function requestOf(
     },
     // The public form is the same with a session or without one.
     keptAfterRead: plate.form === "bare",
+  };
+}
+
+/** The request for the art of the score panel `panel` names, or why there is none. */
+function scorePanelRequest(
+  panel: ScorePanelSource | NoPictureSource,
+  origin: string,
+): PictureRequest | Refusal {
+  if (typeof panel === "string") {
+    return panel;
+  }
+  const path = scorePanelPath(panel.level);
+  return {
+    kind: "scorePanel",
+    url: `${origin}${path}`,
+    // As my page loads it.
+    referer: `${origin}/mypage_top.php`,
+    rules: { ...PANEL_RULES, at: { origin, path } },
+    // Kept for every account, and for good, by its level: static art that shows no count and
+    // names no player, the same with a session or without one.
+    key: { scope: "shared", player: null, name: `${PICTURE_EPOCH}/panel/${panel.level}` },
+    keptAfterRead: false,
   };
 }
 

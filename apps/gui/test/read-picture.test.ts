@@ -11,6 +11,7 @@ import {
   blankPlatePng,
   medalPlatePng,
   myDonPng,
+  scorePanelPng,
   thumbnailPng,
   titlePlatePng,
 } from "../scripts/mock-pictures";
@@ -42,6 +43,8 @@ const OFFERED = new Set([offerKey(1, 36), offerKey(1, 4), offerKey(2, 21)]);
 const LIMITS: PictureLimits = { jitterMs: 100, minGapMs: 0, timeoutMs: null, budget: 300 };
 /** Signed in, the editor read, and no my page read yet. */
 const STATE: PictureReadState = { signedIn: true, offered: OFFERED, owner: null, sources: null };
+/** The score panel every capture of my page shows. */
+const PANEL = { level: 5 } as const;
 /** A set wearing one piece, in からだ (slot 3), and nothing else. */
 const SET = {
   colorBody: 12,
@@ -184,7 +187,7 @@ describe("createPictureReader, an item's thumbnail", () => {
       { ...WANT, id: 1.5 },
       { kind: "titlePlate", url: `${ORIGIN}/imgsrc_titleplate.php` },
       { kind: "myDon", fn: "mydon_111111111111" },
-      { kind: "scorePanel" },
+      { kind: "scorePanel", level: 5 },
       null,
     ]) {
       expect(await reader.read(want)).toEqual(err({ code: "picture=refused" }));
@@ -329,7 +332,12 @@ describe("createPictureReader, the title plate", () => {
   const readState = (title = TITLE, owner = OWNER): PictureReadState => ({
     ...STATE,
     owner,
-    sources: { titlePlate: { form: "bare", title }, medalPlate: "notShown", myDon: "notShown" },
+    sources: {
+      titlePlate: { form: "bare", title },
+      scorePanel: PANEL,
+      medalPlate: "notShown",
+      myDon: "notShown",
+    },
   });
   /** Answers a plate for `title`, whatever the request, at the address asked. */
   const plateOf = (title: string) => async (request: TransportRequest) =>
@@ -367,6 +375,7 @@ describe("createPictureReader, the title plate", () => {
         ...readState(),
         sources: {
           titlePlate: { form: "byTaikoNo", title: TITLE },
+          scorePanel: PANEL,
           medalPlate: "notShown",
           myDon: "notShown",
         },
@@ -385,6 +394,7 @@ describe("createPictureReader, the title plate", () => {
         ...readState(),
         sources: {
           titlePlate: { form: "byTaikoNo", title: TITLE },
+          scorePanel: PANEL,
           medalPlate: "notShown",
           myDon: "notShown",
         },
@@ -403,7 +413,7 @@ describe("createPictureReader, the title plate", () => {
       const { reader, sent } = setUp({
         state: {
           ...readState(),
-          sources: { titlePlate, medalPlate: "notShown", myDon: "notShown" },
+          sources: { titlePlate, scorePanel: PANEL, medalPlate: "notShown", myDon: "notShown" },
         },
       });
       expect(await reader.read(PLATE)).toEqual(err({ code: `titlePlate=${titlePlate}` }));
@@ -585,6 +595,120 @@ describe("createPictureReader, the title plate", () => {
   });
 });
 
+describe("createPictureReader, the score panel's art", () => {
+  const ART = { kind: "scorePanel" } as const;
+  const ART_URL = `${ORIGIN}/image/sp/640/total_score_image_5.png`;
+  /** My page read, showing the panel of `level`, for `owner`. */
+  const readState = (owner = "000000000000", level = 5): PictureReadState => ({
+    ...STATE,
+    owner,
+    sources: {
+      titlePlate: "notShown",
+      scorePanel: { level },
+      medalPlate: "notShown",
+      myDon: "notShown",
+    },
+  });
+  /** Where the art of the panel of `level` is kept: for every account. */
+  const keyOf = (level = 5) => ({
+    scope: "shared" as const,
+    player: null,
+    name: `v1/panel/${level}`,
+  });
+  const codeOf = async (read: Promise<unknown>) =>
+    ((await read) as { error: { code: string } }).error.code;
+
+  test("asks once, as my page does, for the art of the level my page showed", async () => {
+    const { reader, sent, events } = setUp({
+      state: readState(),
+      answer: async (request) => png(request.url, scorePanelPng(5)),
+    });
+    const read = await reader.read(ART);
+    expect(sent.map(({ request }) => request)).toEqual([
+      {
+        method: "GET",
+        url: ART_URL,
+        headers: {
+          Referer: `${ORIGIN}/mypage_top.php`,
+          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        },
+      },
+    ]);
+    expect(events).toEqual(["sleep 37", "queue", "send "]);
+    expect(read.ok && decode(read.value.src)).toEqual(scorePanelPng(5));
+    expect(read.ok && [read.value.width, read.value.height]).toEqual([600, 356]);
+  });
+
+  test("keeps the art for good and for every account, by its level", async () => {
+    const store = createMemoryPictureStore();
+    const { reader, sent, setState } = setUp({
+      store,
+      state: readState(),
+      answer: async (request) => png(request.url, scorePanelPng(5)),
+    });
+    await reader.read(ART);
+    await reader.read(ART);
+    expect(sent).toHaveLength(1);
+    expect(await store.get(keyOf())).toEqual(scorePanelPng(5));
+    // Kept at sign-out, at the next sign-in, and for another player, who is shown the same art.
+    reader.forget();
+    setState(readState("111111111111"));
+    expect((await reader.read(ART)).ok).toBe(true);
+    expect(sent).toHaveLength(1);
+    // A panel of another level is art of its own.
+    setState(readState("111111111111", 4));
+    await reader.read(ART);
+    expect(sent.map(({ request }) => request.url)).toEqual([
+      ART_URL,
+      `${ORIGIN}/image/sp/640/total_score_image_4.png`,
+    ]);
+  });
+
+  test("sends nothing before my page is read, or for a level that failed its check", async () => {
+    const unread = setUp();
+    expect(await unread.reader.read(ART)).toEqual(err({ code: "scorePanel=notRead" }));
+    const unexpected = setUp({
+      state: {
+        ...readState(),
+        sources: {
+          titlePlate: "notShown",
+          scorePanel: "unexpectedSrc",
+          medalPlate: "notShown",
+          myDon: "notShown",
+        },
+      },
+    });
+    expect(await unexpected.reader.read(ART)).toEqual(err({ code: "scorePanel=unexpectedSrc" }));
+    const signedOut = setUp({ state: { ...readState(), signedIn: false } });
+    expect(await signedOut.reader.read(ART)).toEqual(err({ code: "scorePanel=notSignedIn" }));
+    expect([...unread.sent, ...unexpected.sent, ...signedOut.sent]).toEqual([]);
+  });
+
+  test("a 404, or a picture too small to be the art, is a failure with codes, never kept", async () => {
+    const small = thumbnailPng(1, 36);
+    const missing = setUp({
+      state: readState(),
+      answer: async () =>
+        ok({
+          status: 404,
+          url: ART_URL,
+          headers: { "content-type": "text/plain;charset=utf-8" },
+          body: new TextEncoder().encode("not found"),
+        }),
+    });
+    const thumbnail = setUp({ state: readState(), answer: async () => png(ART_URL, small) });
+    expect([
+      await codeOf(missing.reader.read(ART)),
+      await codeOf(thumbnail.reader.read(ART)),
+    ]).toEqual([
+      "scorePanel=notPng status=404 type=text/plain;charset=utf-8 bytes=9",
+      `scorePanel=tooSmall status=200 type=image/png bytes=${small.byteLength}`,
+    ]);
+    expect(await missing.store.get(keyOf())).toBeNull();
+    expect(await thumbnail.store.get(keyOf())).toBeNull();
+  });
+});
+
 describe("createPictureReader, the どんメダル plate", () => {
   const MEDAL = { kind: "medalPlate" } as const;
   const ID = "0123456789abcdef0123456789abcdef0123456789abcdef";
@@ -598,6 +722,7 @@ describe("createPictureReader, the どんメダル plate", () => {
     owner,
     sources: {
       titlePlate: "notShown" as const,
+      scorePanel: PANEL,
       medalPlate: { id, progress },
       myDon: "notShown" as const,
     },
@@ -646,7 +771,7 @@ describe("createPictureReader, the どんメダル plate", () => {
       const { reader, sent } = setUp({
         state: {
           ...readState(),
-          sources: { titlePlate: "notShown", medalPlate, myDon: "notShown" },
+          sources: { titlePlate: "notShown", scorePanel: PANEL, medalPlate, myDon: "notShown" },
         },
       });
       expect(await reader.read(MEDAL)).toEqual(err({ code: `medalPlate=${medalPlate}` }));
@@ -737,7 +862,12 @@ describe("createPictureReader, the My Don portrait", () => {
   const readState = (owner = OWNER): PictureReadState => ({
     ...STATE,
     owner,
-    sources: { titlePlate: "notShown", medalPlate: "notShown", myDon: { v: "" } },
+    sources: {
+      titlePlate: "notShown",
+      scorePanel: PANEL,
+      medalPlate: "notShown",
+      myDon: { v: "" },
+    },
   });
   /** Where `owner`'s portrait is kept: one for each player, whatever it shows. */
   const keyOf = (owner = OWNER) => ({ scope: "player" as const, player: owner, name: "v1/mydon" });
@@ -783,7 +913,7 @@ describe("createPictureReader, the My Don portrait", () => {
       const { reader, sent } = setUp({
         state: {
           ...readState(),
-          sources: { titlePlate: "notShown", medalPlate: "notShown", myDon },
+          sources: { titlePlate: "notShown", scorePanel: PANEL, medalPlate: "notShown", myDon },
         },
       });
       expect(await reader.read(MY_DON)).toEqual(err({ code: `myDon=${myDon}` }));

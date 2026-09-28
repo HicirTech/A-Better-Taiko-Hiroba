@@ -14,6 +14,7 @@ const item = (id: number, slot: 1 | 2 | 3 | 4 | 5 = 1): PictureWant => ({
   id,
 });
 const PLATE: PictureWant = { kind: "titlePlate" };
+const PANEL: PictureWant = { kind: "scorePanel" };
 const MEDAL: PictureWant = { kind: "medalPlate" };
 const MY_DON: PictureWant = { kind: "myDon" };
 const view = (id: number): PictureView => ({
@@ -150,6 +151,20 @@ describe("createPictureLane", () => {
     await port.answer(ok(view(2)));
     expect(port.asked).toEqual(["titlePlate", "medalPlate", "1/10"]);
     expect(lane.peek(MEDAL)).toEqual({ view: view(2) });
+  });
+
+  test("asks for the score panel's art after the title plate, before the どんメダル", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(item(10), { order: 0 });
+    lane.ask(MEDAL, { order: 0 });
+    lane.ask(PANEL, { order: 3 });
+    lane.ask(PLATE, { order: 5 });
+    await advance(150);
+    await port.answer(ok(view(1)));
+    await port.answer(ok(view(2)));
+    await port.answer(ok(view(3)));
+    expect(port.asked).toEqual(["titlePlate", "scorePanel", "medalPlate", "1/10"]);
+    expect(lane.peek(PANEL)).toEqual({ view: view(2) });
   });
 
   test("asks for the My Don after my page's plates, before thumbnails", async () => {

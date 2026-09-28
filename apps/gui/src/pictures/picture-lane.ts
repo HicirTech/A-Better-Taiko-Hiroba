@@ -70,15 +70,16 @@ export interface PictureLane {
 }
 
 /**
- * Which pictures go first: my page's plates, in its order, then its My Don portrait, off Hiroba and
- * the largest, before the editor's thumbnails, whatever their order on screen. Each kind is ranked
- * here as it arrives.
+ * Which pictures go first: my page's plates and its score panel's art, in its order, then its My
+ * Don portrait, off Hiroba and the largest, before the editor's thumbnails, whatever their order on
+ * screen. Each kind is ranked here as it arrives.
  */
 const KIND_RANK: Readonly<Record<PictureWant["kind"], number>> = {
   titlePlate: 0,
-  medalPlate: 1,
-  myDon: 2,
-  costumeItem: 3,
+  scorePanel: 1,
+  medalPlate: 2,
+  myDon: 3,
+  costumeItem: 4,
 };
 
 /** One key per picture: its kind, then its numbers if it has any. */

@@ -94,6 +94,29 @@ describe("pictureSourcesOf, the title plate", () => {
   });
 });
 
+describe("pictureSourcesOf, the score panel's art", () => {
+  /** A page whose score panel's art the parser read as of `countLevel`. */
+  const withLevel = (countLevel: number): Profile => {
+    const page = profile("imgsrc_titleplate.php");
+    return { ...page, summary: { ...page.summary, countLevel } };
+  };
+
+  test("takes the level the art is named for, from 1 to 99", () => {
+    for (const level of [1, 5, 99]) {
+      expect(pictureSourcesOf(withLevel(level), ENDPOINTS).scorePanel).toEqual({ level });
+    }
+  });
+
+  test("refuses a level that is not a whole number from 1 to 99", () => {
+    for (const level of [0, 100, 1.5, -5, Number.NaN]) {
+      expect([level, pictureSourcesOf(withLevel(level), ENDPOINTS).scorePanel]).toEqual([
+        level,
+        "unexpectedSrc",
+      ]);
+    }
+  });
+});
+
 describe("pictureSourcesOf, the どんメダル plate", () => {
   const ID = "0123456789abcdef0123456789abcdef0123456789abcdef";
   const COLLECTING = { kind: "collecting", count: 12 } as const;

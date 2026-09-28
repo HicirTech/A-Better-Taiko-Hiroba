@@ -29,6 +29,7 @@ export {
   type NoPictureSource,
   type PictureSources,
   pictureSourcesOf,
+  type ScorePanelSource,
   type TitlePlateSource,
 } from "./picture-sources";
 export { previewCostume, previewUrl } from "./preview-costume";

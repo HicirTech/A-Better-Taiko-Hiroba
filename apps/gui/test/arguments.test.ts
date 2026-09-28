@@ -92,8 +92,9 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     expect(check([{ id: 1, slot: 3, kind: "costumeItem" }])).toBe(true);
   });
 
-  test("takes the title plate, the どんメダル plate and the My Don by their kind alone", () => {
+  test("takes my page's plates, its score panel's art and the My Don by their kind alone", () => {
     expect(PORT_ARGUMENTS.readPicture([{ kind: "titlePlate" }])).toBe(true);
+    expect(PORT_ARGUMENTS.readPicture([{ kind: "scorePanel" }])).toBe(true);
     expect(PORT_ARGUMENTS.readPicture([{ kind: "medalPlate" }])).toBe(true);
     expect(PORT_ARGUMENTS.readPicture([{ kind: "myDon" }])).toBe(true);
   });
@@ -127,7 +128,8 @@ describe("PORT_ARGUMENTS.readPicture", () => {
       [{ kind: "myDon", url: "https://example.test/imgsrc.php?v=&kind=mydon" }],
       [{ kind: "myDon", fresh: true }],
       [{ kind: "costumeItem" }],
-      [{ kind: "scorePanel" }],
+      [{ kind: "scorePanel", level: 5 }],
+      [{ kind: "scorePanel", src: "image/sp/640/total_score_image_5.png" }],
       [{ kind: "toString" }],
       [{ kind: 0 }],
       [{ ...item, kind: undefined }],

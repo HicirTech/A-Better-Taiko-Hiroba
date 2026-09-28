@@ -185,6 +185,7 @@ describe("readProfile", () => {
     expect(own.value.taikoNo).toBe("000000000000");
     expect(own.value.pictures).toEqual({
       titlePlate: { form: "bare", title: "サンプルの称号" },
+      scorePanel: { level: 5 },
       medalPlate: { id: MEDAL_PLATE_ID, progress: "complete" },
       myDon: { v: "" },
     });
@@ -192,6 +193,7 @@ describe("readProfile", () => {
     const shown = withoutPictureBytes(JSON.stringify(own.value.view));
     expect(shown).not.toContain("000000000000");
     expect(shown).not.toContain("titleplate");
+    expect(shown).not.toContain("total_score");
     expect(shown).not.toContain("tokenplate");
     expect(shown).not.toContain(MEDAL_PLATE_ID);
     expect(shown).not.toContain("mydon");
