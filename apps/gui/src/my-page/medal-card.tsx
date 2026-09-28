@@ -11,7 +11,7 @@ import type { ProfileView } from "../session-port";
  * The plate's name is the site's own text and is shown as written; nothing reads a season out of it.
  */
 export function MedalCard({ medal, i18n }: { medal: ProfileView["medal"]; i18n: Translator }) {
-  const { t, locale } = i18n;
+  const { t, number } = i18n;
   const progress = medal?.progress;
   return (
     <Card id="medal" variant="outlined">
@@ -29,7 +29,7 @@ export function MedalCard({ medal, i18n }: { medal: ProfileView["medal"]; i18n: 
         )}
         {progress?.kind === "collecting" && (
           <Typography id="medal-count" variant="h6" component="p">
-            {t("medal.count", { count: progress.count.toLocaleString(locale) })}
+            {t("medal.count", { count: number(progress.count) })}
           </Typography>
         )}
         {progress?.kind === "complete" && (

@@ -36,7 +36,7 @@ export function FavoritesCard({
   folder: ProfileView["favoriteFolder"];
   i18n: Translator;
 }) {
-  const { t } = i18n;
+  const { t, number } = i18n;
   return (
     <Card id="favorites" variant="outlined">
       <CardContent>
@@ -63,7 +63,7 @@ export function FavoritesCard({
           sx={{ borderTop: 1, borderColor: "divider", "&::before": { display: "none" } }}
         >
           <AccordionSummary expandIcon={<ExpandIcon />}>
-            <Typography>{t("profile.favoriteFolder", { count: folder.length })}</Typography>
+            <Typography>{t("profile.favoriteFolder", { count: number(folder.length) })}</Typography>
           </AccordionSummary>
           <AccordionDetails sx={{ pt: 0 }}>
             <List dense disablePadding>

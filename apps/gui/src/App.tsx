@@ -270,7 +270,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
               {undoable !== null && (
                 <Typography id="undo-when" variant="body2" color="text.secondary">
                   {t("costume.undoWhen", {
-                    time: new Date(undoable.at).toLocaleString(i18n.locale),
+                    time: i18n.dateTime(undoable.at),
                   })}
                 </Typography>
               )}
@@ -297,7 +297,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
             />
             <Typography variant="body2" color="text.secondary">
               {t("profile.fetchedAt", {
-                time: new Date(screen.profile.fetchedAt).toLocaleString(i18n.locale),
+                time: i18n.dateTime(screen.profile.fetchedAt),
               })}
             </Typography>
           </Stack>

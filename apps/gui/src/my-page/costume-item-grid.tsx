@@ -45,7 +45,7 @@ export interface CostumeItemGridProps {
  * The pictures are data: URLs: no address of Hiroba's reaches the window.
  */
 export function CostumeItemGrid({ lane, i18n, part, items, chosen, onPick }: CostumeItemGridProps) {
-  const { t } = i18n;
+  const { t, number } = i18n;
   const box = useRef<HTMLDivElement>(null);
   useSyncExternalStore(lane.subscribe, lane.version);
   const slot = (SLOT_PARTS.indexOf(part) + 1) as CostumeSlot;
@@ -126,7 +126,7 @@ export function CostumeItemGrid({ lane, i18n, part, items, chosen, onPick }: Cos
       {failures.length > 0 && (
         <Stack id="costume-thumbnails-unavailable" sx={{ alignItems: "center" }}>
           <Typography variant="body2" color="text.secondary">
-            {t("costume.thumbnails.unavailable", { count: failures.length })}
+            {t("costume.thumbnails.unavailable", { count: number(failures.length) })}
           </Typography>
           <Typography
             id="costume-thumbnails-code"

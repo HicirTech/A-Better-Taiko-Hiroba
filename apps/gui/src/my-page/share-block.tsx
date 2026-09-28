@@ -35,11 +35,11 @@ export function ShareBlock({
   items: readonly ShareItem[];
   i18n: Translator;
 }) {
-  const { t, locale } = i18n;
+  const { t, locale, number } = i18n;
   const { total, rows } = sharesOf(items, locale);
   const counted = (count: number) => ({
-    count: count.toLocaleString(locale),
-    total: total.toLocaleString(locale),
+    count: number(count),
+    total: number(total),
   });
   const titleOf = (item: ShareItem) =>
     t("panel.countTitle", { name: item.name, ...counted(item.count) });
