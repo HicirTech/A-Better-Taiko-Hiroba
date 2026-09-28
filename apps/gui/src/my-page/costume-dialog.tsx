@@ -41,6 +41,7 @@ import {
 } from "./costume-parts";
 import { CostumeItemGrid } from "./costume-item-grid";
 import { CostumePreviewBox, useCostumePreview } from "./costume-preview-box";
+import { pickRing } from "./pick-ring";
 import { WriteOutcomeNotice } from "./write-outcome";
 
 type Step =
@@ -257,10 +258,8 @@ export function CostumeDialog({
                           bgcolor: swatch.hex,
                           border: "1px solid",
                           borderColor: "common.black",
-                          // The choice is marked outside the swatch, never over its colour.
-                          outline: chosen ? "3px solid" : "none",
-                          outlineColor: "primary.main",
-                          outlineOffset: "2px",
+                          // Outside the swatch, never over its colour.
+                          ...pickRing(chosen, "text.primary"),
                         }}
                       />
                     );

@@ -6,6 +6,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { CostumeSlot, PictureWant } from "../session-port";
 import { PART_LABEL, SLOT_PARTS, type SlotPart } from "./costume-parts";
+import { pickRing } from "./pick-ring";
 
 /** Six to a row and four rows seen at once, as Hiroba's box has them. */
 const COLUMNS = 6;
@@ -21,7 +22,7 @@ const ROW = CELL + GAP;
  * edge counts too, so the margin stops short of the row after.
  */
 const AHEAD = `${CELL}px 0px`;
-/** Room inside the box for the outline of a chosen item at its edge. */
+/** Room inside the box for the ring of a chosen or focused item at its edge. */
 const PAD = 6;
 
 export interface CostumeItemGridProps {
@@ -181,10 +182,9 @@ function ItemCell({
         width: CELL,
         height: CELL,
         borderRadius: 0.5,
-        // The choice is marked outside the cell, never over the picture.
-        outline: chosen ? "3px solid" : "none",
-        outlineColor: "primary.main",
-        outlineOffset: "2px",
+        // Outside the cell, never over the picture; focus in black, as the box is white in either
+        // theme.
+        ...pickRing(chosen, "common.black"),
       }}
     >
       {answer === undefined ? (
