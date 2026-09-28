@@ -1,5 +1,7 @@
 /**
- * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
+ * Drives the unpackaged desktop app through sign-in, the read, reading again (a small Fab, shut and
+ * spinning while a read runs, and on a touch-first screen a pull from the top of the page, neither
+ * of them inside a write), a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, the Overview shaped like my page's header, the identity card on
  * Hiroba's title plate (its text over it, one plate per title, one that does not come, the plate
@@ -757,7 +759,7 @@ try {
     ) &&
     (await page.evaluate<number>(`document.querySelectorAll("#crowns [lang]").length`)) === 0;
 
-  // Read again: one more request, no more.
+  // Read again, from its Fab: one more request, no more.
   await click("#read-again");
   await until("Read at");
   await Bun.sleep(300);
@@ -902,6 +904,112 @@ try {
   // Three reads more of the same title: the plate is asked for again after each, and answered
   // from the plate kept on disk, asking Hiroba nothing.
   const platesAfterRereads = await platesSettled();
+
+  // Read again is a small Fab (the user's call, 2026-09-29), at the top right of the page in the
+  // band over it, named for screen readers and, under the pointer, in a tooltip. While a read
+  // runs, held here by the stand-in, it is shut and spins, and a second press sends nothing; once
+  // the read is in, it is open again.
+  const fabBox = await boxOf("#read-again");
+  const cardBox = await boxOf("#profile");
+  await hoverOver(page, "#read-again");
+  const fabTooltip = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  results.readAgainIsASmallFab =
+    (await attribute("#read-again", "aria-label")) === "Read again" &&
+    fabTooltip === "Read again" &&
+    (await page.evaluate<boolean>(
+      `document.querySelector("#read-again").classList.contains("MuiFab-sizeSmall")`,
+    )) &&
+    fabBox.bottom <= cardBox.top &&
+    Math.abs(fabBox.right - cardBox.right) < 1;
+  const fabState = () =>
+    page.evaluate<{ shut: boolean; spinning: boolean }>(
+      `(() => { const fab = document.querySelector("#read-again"); return { shut: fab.disabled, spinning: fab.querySelector(".MuiCircularProgress-root") !== null }; })()`,
+    );
+  const readsBeforeHeld = await myPageHits();
+  await fetch(`${HIROBA}/__hold-read?on=1`);
+  await click("#read-again");
+  await waitFor(async () => (await myPageHits()) > readsBeforeHeld || undefined);
+  const fabWhileReading = await fabState();
+  await click("#read-again");
+  await Bun.sleep(300);
+  const readsWhileHeld = await myPageHits();
+  await fetch(`${HIROBA}/__hold-read?on=0`);
+  await until("Read at");
+  results.readAgainShutWhileReading =
+    same(fabWhileReading, { shut: true, spinning: true }) &&
+    readsWhileHeld === readsBeforeHeld + 1 &&
+    same(await fabState(), { shut: false, spinning: false });
+
+  // On a touch-first screen ((pointer: coarse), touch emulated over CDP), a pull reads again. The
+  // Fab is drawn only under the keyboard's focus, and stays for screen readers. From the top of
+  // the page, a pull short of the point reads nothing, and one past it, its indicator's ring full,
+  // reads once; an upward swipe, a sideways one, or a pull begun lower down the page, nothing.
+  type Point = { x: number; y: number };
+  /** One finger's swipe, from one point to another in steps, as a touch screen sends one. */
+  const swipe = async (from: Point, to: Point, whileDown?: () => Promise<unknown>) => {
+    const STEPS = 12;
+    await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [from] });
+    for (let step = 1; step <= STEPS; step++) {
+      const at = (start: number, end: number) => start + ((end - start) * step) / STEPS;
+      await page.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: at(from.x, to.x), y: at(from.y, to.y) }],
+      });
+    }
+    const seen = await whileDown?.();
+    await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    return seen;
+  };
+  /** The reads of my page a swipe sent, once any it started is in, and back at the page's top. */
+  const readsBySwipe = async (from: Point, to: Point) => {
+    const before = await myPageHits();
+    await swipe(from, to);
+    await Bun.sleep(500);
+    await until("Read at");
+    await page.evaluate("window.scrollTo(0, 0)");
+    return (await myPageHits()) - before;
+  };
+  const pullIndicator = () =>
+    page.evaluate<{ shown: boolean; ring: string | null }>(
+      `(() => { const indicator = document.querySelector("#pull-indicator"); return { shown: indicator !== null && getComputedStyle(indicator).opacity === "1", ring: indicator?.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow") ?? null }; })()`,
+    );
+  const fabWidth = async () => (await boxOf("#read-again")).width;
+  const touchEmulated = async (enabled: boolean) => {
+    await page.send("Emulation.setTouchEmulationEnabled", { enabled, maxTouchPoints: 5 });
+    await waitFor(async () => (await fabWidth()) <= 1 === enabled || undefined);
+  };
+  await touchEmulated(true);
+  const fabKeptForScreenReaders = await page.evaluate<boolean>(
+    `(() => { const fab = document.querySelector("#read-again"); const style = getComputedStyle(fab); return fab.getAttribute("aria-label") === "Read again" && !fab.closest("[aria-hidden]") && style.display !== "none" && style.visibility !== "hidden"; })()`,
+  );
+  const SHIFT = { key: "Shift", code: "ShiftLeft", windowsVirtualKeyCode: 16 };
+  await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SHIFT });
+  await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SHIFT });
+  await page.evaluate(`document.querySelector("#read-again").focus()`);
+  const fabShownUnderFocus = await waitFor(async () => (await fabWidth()) > 1 || undefined);
+  await page.evaluate("document.activeElement.blur()");
+  results.fabOnlyUnderFocusOnTouch =
+    fabKeptForScreenReaders && fabShownUnderFocus && (await fabWidth()) <= 1;
+  const pullFrom = { x: cardBox.left + cardBox.width / 2, y: cardBox.top + 40 };
+  const pulledBy = (dx: number, dy: number) => ({ x: pullFrom.x + dx, y: pullFrom.y + dy });
+  const readsByShortPull = await readsBySwipe(pullFrom, pulledBy(0, 100));
+  const readsBeforePull = await myPageHits();
+  const ringAtFullPull = await swipe(pullFrom, pulledBy(0, 200), pullIndicator);
+  await Bun.sleep(500);
+  await until("Read at");
+  results.pullPastThePointReads =
+    readsByShortPull === 0 &&
+    same(ringAtFullPull, { shown: true, ring: "100" }) &&
+    (await myPageHits()) === readsBeforePull + 1 &&
+    !(await pullIndicator()).shown;
+  const readsByUpwardSwipe = await readsBySwipe(pulledBy(0, 200), pullFrom);
+  const readsBySidewaysSwipe = await readsBySwipe(pullFrom, pulledBy(200, 40));
+  await page.evaluate("window.scrollTo(0, 200)");
+  const readsByPullBelowTop = await readsBySwipe(pullFrom, pulledBy(0, 200));
+  results.pullOnlyDownFromTheTop =
+    readsByUpwardSwipe === 0 && readsBySidewaysSwipe === 0 && readsByPullBelowTop === 0;
+  await touchEmulated(false);
 
   // Every shape my page can take is a normal state: each renders in its place with the rest of
   // the page around it. Each read is two requests while my page shows a dan, my page and its
@@ -1598,6 +1706,34 @@ try {
     (await thumbnailDuringWrite) &&
     same(await requestLog(), [...WRITE_REQUESTS, THUMBNAIL]);
   await fetch(`${HIROBA}/__state?reset=1`);
+
+  // Nor does a read start inside a write: while an undo waits on its pre-check, the Fab is shut,
+  // and neither a press on it nor a pull from the top of the page asks Hiroba anything. The log is
+  // the undo's alone.
+  const toUndo = await bridgeChange({ ...START, colorLimb: 20 });
+  await click("#read-again");
+  await waitFor(async () => (await exists("#costume-undo")) || undefined);
+  await myDonsSettled();
+  await resetLog();
+  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  const prechecksBeforeUndo = await hitsOn("/ajax/check_ip_kisekae.php");
+  await click("#costume-undo");
+  await waitFor(
+    async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeUndo || undefined,
+  );
+  const fabShutInWrite = (await fabState()).shut;
+  await click("#read-again");
+  await touchEmulated(true);
+  await swipe(pullFrom, pulledBy(0, 200));
+  await touchEmulated(false);
+  await Bun.sleep(300);
+  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  results.noReadInsideAWrite =
+    toUndo.kind === "applied" &&
+    fabShutInWrite &&
+    (await waitFor(async () => (await cardOutcome()) ?? undefined)) === "applied" &&
+    sameBesideLanePictures(await requestLog(), WRITE_REQUESTS) &&
+    same(await savedCostume(), START);
 
   // A save that answers 0 and moves nothing reads as not applied, whatever it said.
   await fetch(`${HIROBA}/__noop-save`);
