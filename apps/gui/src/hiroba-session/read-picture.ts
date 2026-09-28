@@ -518,7 +518,8 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       if (typeof request === "string") {
         return failed(want.kind, request);
       }
-      const view = isStale(request) ? null : await kept(request);
+      const stale = isStale(request);
+      const view = stale ? null : await kept(request);
       if (view !== null) {
         return ok(view);
       }
@@ -528,7 +529,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return onItsWay;
       }
       if (fetched >= limits.budget) {
-        return failed(want.kind, "budgetSpent");
+        return orKept(stale, request, failed(want.kind, "budgetSpent"));
       }
       fetched += 1;
       const fetching = fetchPicture(want, generation).finally(() => {

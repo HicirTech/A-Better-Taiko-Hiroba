@@ -895,6 +895,19 @@ describe("createPictureReader, the My Don portrait", () => {
     expect(sent).toHaveLength(4);
   });
 
+  test("past the run's budget, a portrait to fetch anew answers the one kept, unsent", async () => {
+    const { reader, sent } = setUp({
+      state: readState(),
+      limits: { ...LIMITS, budget: 1 },
+      answer: portraitOf(() => BEFORE),
+    });
+    reader.myPageAsked();
+    const first = await reader.read(MY_DON);
+    reader.myPageAsked();
+    expect(await reader.read(MY_DON)).toEqual(first);
+    expect(sent).toHaveLength(1);
+  });
+
   test("one on its way as the portrait may change is fetched once more when next asked for", async () => {
     let release: () => void = () => undefined;
     let wearing = BEFORE;
