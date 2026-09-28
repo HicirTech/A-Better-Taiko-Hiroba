@@ -955,6 +955,17 @@ describe("createPictureReader, the My Don portrait", () => {
       expect(code).not.toMatch(/000000000000|img\.test|hiroba\.test|http|\?|mydon_|fn=/);
     }
     expect(await gif.store.get(keyOf())).toBeNull();
+    // A portrait that moved to an address naming its player, on the picture host or off it: the
+    // path is in the code, the taiko number is not.
+    const body = myDonPng(BEFORE);
+    const movedTo = (url: string) =>
+      codeOf(setUp({ state: readState(), answer: async () => png(url, body) }).reader.read(MY_DON));
+    expect(await movedTo(`${IMG_ORIGIN}/mydon/mydon_${OWNER}.png`)).toBe(
+      `myDon=movedTo path=/mydon/mydon_#.png status=200 type=image/png bytes=${body.byteLength}`,
+    );
+    expect(await movedTo(`https://elsewhere.test/c/${OWNER}/mydon.png`)).toBe(
+      `myDon=movedTo offHost path=/c/#/mydon.png status=200 type=image/png bytes=${body.byteLength}`,
+    );
   });
 });
 

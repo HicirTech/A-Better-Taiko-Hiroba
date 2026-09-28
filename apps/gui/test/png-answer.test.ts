@@ -150,6 +150,19 @@ describe("describeAnswer", () => {
       expect(text).not.toMatch(/elsewhere|hiroba\.test|http|\?|cos=/);
     }
   });
+
+  type PathCase = [path: string, shown: string];
+  test.each<PathCase>([
+    ["/mydon/mydon_000000000000.png", "/mydon/mydon_#.png"],
+    [`/tokenplate/${"0123456789abcdef".repeat(3)}.png`, "/tokenplate/#.png"],
+    ["/c/123456/x.png", "/c/#/x.png"],
+    ["/c/12345/x.png", "/c/12345/x.png"],
+  ])("names the path %p with each run that could name a player as #", (path, shown) => {
+    const moved = answer(NO_LABEL_GIF, "image/gif", `${ORIGIN}${path}`);
+    expect(describeAnswer(moved, { path: PATH })).toBe(
+      `path=${shown} status=200 type=image/gif bytes=43`,
+    );
+  });
 });
 
 describe("pngDataUrl and pngSize", () => {

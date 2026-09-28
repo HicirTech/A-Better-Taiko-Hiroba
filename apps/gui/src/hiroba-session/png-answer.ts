@@ -120,9 +120,16 @@ export function pngSize(bytes: Uint8Array): PngSize | null {
 }
 
 /**
+ * A run of characters long enough to name a player: a taiko number is 12 digits, a どんメダル plate's
+ * id 48 hex digits. A picture that moved may have moved to a path that names its player.
+ */
+const MAY_NAME_A_PLAYER = /[0-9a-f]{16,}|\d{6,}/gi;
+
+/**
  * What came back, as codes a user can copy into a report: `offHost` when it came from another
  * origin than `asked` names (only when it names one), the final path when it is not the one asked
- * for, then the status, content type and size. Never a host, a query or a cookie.
+ * for, with each run that may name a player as `#`, then the status, content type and size. Never
+ * a host, a query, a cookie or a taiko number.
  */
 export function describeAnswer(
   response: TransportResponse,
@@ -140,7 +147,7 @@ export function describeAnswer(
   const offHost = asked.origin !== undefined && origin !== originOf(asked.origin);
   return [
     ...(offHost ? ["offHost"] : []),
-    ...(path === asked.path ? [] : [`path=${path}`]),
+    ...(path === asked.path ? [] : [`path=${path.replace(MAY_NAME_A_PLAYER, "#")}`]),
     `status=${response.status}`,
     `type=${response.headers["content-type"] ?? "-"}`,
     `bytes=${response.body.byteLength}`,
