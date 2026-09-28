@@ -34,3 +34,10 @@ export const VISUALLY_HIDDEN = {
   whiteSpace: "nowrap",
   width: "1px",
 } as const;
+
+/** Text kept to one line, cut with an ellipsis rather than wrapped out of its box. */
+export const ONE_LINE = {
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+} as const;

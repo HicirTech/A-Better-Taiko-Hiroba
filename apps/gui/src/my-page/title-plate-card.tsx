@@ -6,7 +6,7 @@ import { HIROBA_LANG } from "../language/show-language";
 import type { PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
-import { HIROBA_BLOCK, hirobaPx, VISUALLY_HIDDEN } from "./hiroba-px";
+import { HIROBA_BLOCK, hirobaPx, ONE_LINE, VISUALLY_HIDDEN } from "./hiroba-px";
 
 /** Hiroba's header, #mydon_area: the plate is 290 pixels wide. */
 const PLATE_WIDTH = 290;
@@ -195,9 +195,6 @@ function Title({ title, i18n }: { title: string; i18n: Translator }) {
     </Box>
   );
 }
-
-/** Text kept to one line, cut with an ellipsis rather than wrapped out of its box. */
-const ONE_LINE = { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } as const;
 
 /**
  * The name row: 270 wide, 23 high, its foot a pixel above the plate's. The nickname in the left
