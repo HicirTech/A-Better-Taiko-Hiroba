@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { createCostumeEditor } from "../scripts/mock-costume";
 import { thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
 import { native, nativeBase64 } from "./capacitor-fakes";
+import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const { createAndroidPort } = await import("../src/platform/android");
 
@@ -513,6 +514,40 @@ describe("createAndroidPort's pictures", () => {
       "/imgsrc_titleplate.php",
       "/mypage_top.php",
       "/imgsrc_titleplate.php",
+    ]);
+  });
+
+  test("asks nothing after a relaunch for the plate and thumbnails already kept", async () => {
+    answerAsHiroba();
+    const indexedDb = createFakeIndexedDb();
+    const launch = () =>
+      createAndroidPort({
+        closeLabel: () => CLOSE_LABEL,
+        signedInFlag: memoryFlag(true),
+        indexedDb: indexedDb.factory,
+      });
+    const first = await launch();
+    await first.readProfile();
+    const plate = await first.readPicture(PLATE);
+    // A later read finds the session good: the plate is the player's own, and kept.
+    await first.readProfile();
+    await first.openCostumeEditor();
+    const thumbnail = await first.readPicture(THUMB);
+    await first.signOut();
+
+    const relaunched = await launch();
+    await relaunched.readProfile();
+    expect(await relaunched.readPicture(PLATE)).toEqual(plate);
+    await relaunched.openCostumeEditor();
+    expect(await relaunched.readPicture(THUMB)).toEqual(thumbnail);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_top.php",
+      "/imgsrc_titleplate.php",
+      "/mypage_top.php",
+      "/mypage_kisekae.php",
+      "/imgsrc_kisekae.php",
+      "/mypage_top.php",
+      "/mypage_kisekae.php",
     ]);
   });
 

@@ -24,6 +24,7 @@ import {
   signInStep,
 } from "../hiroba-session";
 import type { CostumeSet, HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
+import { createIndexedDbPictureStore, type PictureDatabaseFactory } from "./android-picture-store";
 import { createAndroidTransport } from "./android-transport";
 
 // Development only (the Vite dev server behind live reload): a local stand-in for Hiroba and the ID
@@ -44,6 +45,11 @@ export interface AndroidPortOptions {
   readonly closeLabel: () => string;
   /** Where "a sign-in finished here" is remembered across launches. The page's localStorage. */
   readonly signedInFlag?: SignedInFlag;
+  /**
+   * Where Hiroba's pictures are kept across launches: the page's IndexedDB. Without one, they are
+   * kept in memory for the run.
+   */
+  readonly indexedDb?: PictureDatabaseFactory;
 }
 
 /** One remembered yes or no. */
@@ -95,11 +101,12 @@ const localStorageFlag: SignedInFlag = {
  * Every verb that asks Hiroba something runs one at a time, in the order asked, through the same
  * queue the desktop uses: a picture never goes out beside a read, and two reads never overlap.
  *
- * Hiroba's pictures come through the same reader as on the desktop, kept in memory for the run,
- * signed in or out. What that reader needs to know stays in this closure and goes with the session:
- * the items the last editor read offered, the only ones whose thumbnail may be asked for, and, from
- * the last read of my page, whose page it was and where its pictures are. None of it reaches the
- * window: the view the window is given is the one the desktop gives.
+ * Hiroba's pictures come through the same reader as on the desktop, kept in the page's IndexedDB
+ * across launches and sign-outs, each fetched once. What that reader needs to know stays in this
+ * closure and goes with the session: the items the last editor read offered, the only ones whose
+ * thumbnail may be asked for, and, from the last read of my page, whose page it was and where its
+ * pictures are. None of it reaches the window: the view the window is given is the one the desktop
+ * gives.
  */
 export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
   const transport = createAndroidTransport();
@@ -113,7 +120,10 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const pictures = createPictureReader({
     transport,
     endpoints,
-    store: createMemoryPictureStore(),
+    store:
+      options.indexedDb === undefined
+        ? createMemoryPictureStore()
+        : createIndexedDbPictureStore(options.indexedDb),
     queue,
     limits: ANDROID_PICTURE_LIMITS,
     state: () => ({ signedIn, offered, owner, sources }),

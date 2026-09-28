@@ -34,7 +34,7 @@ export async function connectPlatform({
   }
   if (Capacitor.getPlatform() === "android") {
     const { createAndroidPort } = await import("./android");
-    const port = await createAndroidPort({ closeLabel });
+    const port = await createAndroidPort({ closeLabel, indexedDb: indexedDB });
     return { shell: "android", port };
   }
   return null;
