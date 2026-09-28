@@ -4,10 +4,11 @@ The desktop and Android app of A Better Taiko Hiroba. One React and Material UI 
 two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
 pages and reads your own page: one request per read, and one more for your dan label when the page
 shows one, since the page gives the dan only as that picture. It shows your nickname, title, region
-and dan, your crowns with cleared and full-combo totals, the seven score ranks by tier, the season's
-どんメダル plate, and your favourite songs. On the desktop it can also change your costume
-(きせかえ), but only in a development run opened for it, until the first real write has been made
-and recorded (see [The first real costume write](#the-first-real-costume-write)).
+and dan on Hiroba's own title plate and dan label, your crowns with cleared and full-combo totals,
+the seven score ranks by tier, the season's どんメダル plate, and your favourite songs. On the
+desktop it can also change your costume (きせかえ), but only in a development run opened for it,
+until the first real write has been made and recorded (see
+[The first real costume write](#the-first-real-costume-write)).
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -38,7 +39,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read. With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once a run, one that does not come, one the editor did not offer, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then drives sign-in, reading, reading again, a rotated session, a lost session, cancel and sign-out against the stand-in, with a dan read off its label and a label that does not read, and the identity card on its title plate (its words still text, one request per title, a plate that does not come, the plate kept across a sign-out). With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once a run, one that does not come, one the editor did not offer, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; and reopened without the flag, it checks no write can be sent and that the card shows **Change costume** disabled, saying why. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
@@ -113,6 +114,33 @@ the box says how many did not, with a code for a report; the editor works as bef
 the same. With `ABTH_DEBUG_SAVE_READS=1`, only the latest thumbnail is kept, as
 `debug\imgsrc_kisekae.php.png`, and none in `debug\history`; its `.json` counts how many came in
 the run.
+
+### The identity card
+
+The card at the top is drawn as my page draws its header: your title over Hiroba's own title plate,
+your nickname in its cream box and your dan's own label in the blue one, and your region under it,
+on Hiroba's yellow. The words stay text over the pictures, and the card keeps Hiroba's proportions
+at any width, up to half again its size. The label is the picture the read already fetches to read
+your dan, so it costs nothing more. The plate is `imgsrc_titleplate.php` as your page writes it,
+with no query: Hiroba draws it for whoever holds the session. The platform fetches it with the
+session, only after a read of my page that shows one, checks that it is a PNG of a plate's size
+from that address, and hands the window a `data:` URL. The window asks for "the title plate", and
+nothing more.
+
+What it costs Hiroba:
+
+- One request per title. The plate is kept per player, under the title shown over it, so a read
+  that finds the same title asks Hiroba for nothing, and a title changed anywhere, on Hiroba's own
+  site too, costs one request after the next read.
+- Asked for once the card is on screen after a read, one at a time in the queue with every other
+  request, so never between a write's requests, and never retried.
+- Kept in memory for the run, sign-outs included, and never given to another account. Nothing is
+  kept on disk yet.
+
+Until the plate comes, or if it does not, a plain band of the same shape stands in, and a line
+under the card gives a code for a report. Without a session, Hiroba answers a blank plate, a PNG
+that no check can tell from yours, which is why the plate is asked for only after a read that
+found the session good. With `ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`.
 
 ## The first real costume write
 
