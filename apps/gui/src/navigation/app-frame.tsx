@@ -32,6 +32,14 @@ const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly i
 const PANEL_WIDTH_PX = 240;
 /** How far in from the window's top left corner the menu button floats. */
 const MENU_INSET_PX = 8;
+/**
+ * The band at the top of every page that the floating buttons sit in: the menu button at its left
+ * on a narrow window, and a page's own action at its right (FrameCorner). The same on every page
+ * and at every width, so each page starts at the same height.
+ */
+const TOP_BAND_PX = 64;
+/** The safe area at the window's top, where a phone may draw its status bar over the page. */
+const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 
 interface NavigationProps {
   readonly page: Page;
@@ -60,14 +68,37 @@ export function AppFrame({
         <MenuDrawer page={page} onNavigate={onNavigate} i18n={i18n} />
       )}
       <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
-        {/* On a narrow window the page starts under the menu button, not behind it. */}
-        <Container maxWidth="md" sx={{ pt: wide ? 4 : 8, pb: 4 }}>
+        {/* The page starts under the top band's buttons, not behind them. */}
+        <Container maxWidth="md" sx={{ pt: `${TOP_BAND_PX}px`, pb: 4 }}>
           <Typography component="h1" sx={VISUALLY_HIDDEN}>
             {i18n.t(PAGE_ENTRY[page].label)}
           </Typography>
           {children}
         </Container>
       </Box>
+    </Box>
+  );
+}
+
+/**
+ * A page's own action, in the top band at the right of the page, level with the menu button, and
+ * kept there over the page as it scrolls. It takes no room: the page starts under the band either
+ * way. It goes first in the page, so it comes first in the focus order too.
+ */
+export function FrameCorner({ children }: { children: ReactNode }) {
+  return (
+    <Box
+      sx={{
+        // Stuck where it stands at the top, from the first pixel of scroll on: the band's bottom.
+        position: "sticky",
+        top: `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`,
+        zIndex: "appBar",
+        height: 0,
+        display: "flex",
+        justifyContent: "flex-end",
+      }}
+    >
+      <Box sx={{ transform: `translateY(${MENU_INSET_PX - TOP_BAND_PX}px)` }}>{children}</Box>
     </Box>
   );
 }
@@ -152,7 +183,7 @@ function MenuDrawer({ page, onNavigate, i18n }: NavigationProps) {
         elevation={2}
         sx={{
           position: "fixed",
-          top: `calc(${MENU_INSET_PX}px + env(safe-area-inset-top, 0px))`,
+          top: `calc(${MENU_INSET_PX}px + ${SAFE_TOP})`,
           left: `calc(${MENU_INSET_PX}px + env(safe-area-inset-left, 0px))`,
           zIndex: "appBar",
           borderRadius: "50%",
