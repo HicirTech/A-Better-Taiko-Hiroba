@@ -15,7 +15,8 @@ export const en: Messages = {
   "signIn.refused":
     "Sign-in stopped: it was sent to {host}, which this app does not open. Please report that host name.",
   "signOut.action": "Sign out",
-  "signOut.note": "You stay signed in on this device until you sign out.",
+  "signOut.note":
+    "You stay signed in on this device until you sign out. Hiroba's pictures stay here after that too.",
   "profile.reading": "Reading your profile from Hiroba…",
   "profile.readAgain": "Read again",
   "profile.title": "Title: {title}",

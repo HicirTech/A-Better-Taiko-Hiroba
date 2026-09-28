@@ -40,7 +40,10 @@ export interface Messages {
   /** Param: {host}, the host name the sign-in was sent to. */
   "signIn.refused": string;
   "signOut.action": string;
-  /** The session stays on the device, across launches, until the user signs out. */
+  /**
+   * The session stays on the device, across launches, until the user signs out; Hiroba's pictures
+   * stay after that too.
+   */
   "signOut.note": string;
   "profile.reading": string;
   "profile.readAgain": string;

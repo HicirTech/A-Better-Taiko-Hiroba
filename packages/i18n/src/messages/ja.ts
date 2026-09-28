@@ -17,7 +17,8 @@ export const ja: Messages = {
   "signIn.refused":
     "ログインを止めました：このアプリが開かない {host} に送られたためです。このホスト名を報告してください。",
   "signOut.action": "ログアウト",
-  "signOut.note": "ログアウトするまで、この端末ではログインしたままです。",
+  "signOut.note":
+    "ログアウトするまで、この端末ではログインしたままです。ひろばの画像はログアウト後もこの端末に残ります。",
   "profile.reading": "ひろばからプロフィールを読み込み中…",
   "profile.readAgain": "再読み込み",
   "profile.title": "称号：{title}",

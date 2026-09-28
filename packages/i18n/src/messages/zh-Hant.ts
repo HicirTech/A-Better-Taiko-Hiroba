@@ -18,7 +18,7 @@ export const zhHant: Messages = {
   "signIn.unavailable": "無法開啟登入視窗。請再試一次。",
   "signIn.refused": "登入被轉到了本應用程式不會開啟的 {host}，已中止。請回報這個主機名稱。",
   "signOut.action": "登出",
-  "signOut.note": "在你登出之前，這部裝置會一直保持登入。",
+  "signOut.note": "在你登出之前，這部裝置會一直保持登入。廣場的圖片在登出後仍會留在這部裝置上。",
   "profile.reading": "正在從廣場讀取個人資料…",
   "profile.readAgain": "重新讀取",
   "profile.title": "稱號：{title}",
