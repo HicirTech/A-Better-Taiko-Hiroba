@@ -2,8 +2,10 @@
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, the editor's picture of the set (on opening, after a pick, one request
- * for a burst of picks, one that does not come, none once shut, none inside a write), costume
- * writes (a colour and a きぐるみ, each undone, the #22 trap, a
+ * for a burst of picks, one that does not come, none once shut, none inside a write), its items'
+ * thumbnails (only those seen, each once a run, one that does not come, one not offered, shapes
+ * the bridge refuses, none inside a write), costume writes (a colour and a きぐるみ, each undone,
+ * the #22 trap, a
  * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
  * change made elsewhere, and a session that ends before and after a save), a lost session, cancel,
  * a sign-in sent off both sites, a reopen that keeps the session and the undo, Hiroba's daily
@@ -423,6 +425,124 @@ try {
   await Bun.sleep(800);
   results.previewNoneOnceShut = same(await previewQueries(), []);
 
+  // The items' thumbnails, which the mock draws for a session only: a picture shown means the
+  // session went with the request. With forty more items in the きぐるみ slot than its box shows,
+  // only the rows on screen and one ahead are asked for, each once, from the editor, and only for
+  // items the editor offered; opened again, the editor asks for none of them.
+  type Thumb = { cos: number; type: number; referer: string | null };
+  const thumbs = async () => (await (await fetch(`${HIROBA}/__thumbs`)).json()) as Thumb[];
+  /** The thumbnails asked for, once none more has been for a second. */
+  const thumbsSettled = async () => {
+    let last = -1;
+    for (let tries = 0; tries < 30; tries++) {
+      const now = (await thumbs()).length;
+      if (now === last) {
+        break;
+      }
+      last = now;
+      await Bun.sleep(1000);
+    }
+    return thumbs();
+  };
+  const openItems = async () => {
+    await click("#costume-open");
+    await waitFor(async () => (await exists("#costume-tab-items")) || undefined);
+    await click("#costume-tab-items");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+  };
+  await fetch(`${HIROBA}/__thumbs?reset=1`);
+  const owned = (await (await fetch(`${HIROBA}/__items?many=1`)).json()) as Record<
+    string,
+    number[]
+  >;
+  const ownedIn = (slot: number) => owned[String(slot)] ?? [];
+  await openItems();
+  await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
+  const seen = await thumbsSettled();
+  results.thumbnailsShownAsPictures =
+    (
+      await page.evaluate<string | null>(
+        `document.querySelector("#item-costume1-4 img")?.getAttribute("src") ?? null`,
+      )
+    )?.startsWith("data:image/png;base64,") === true &&
+    (await page.evaluate<number>(
+      `document.querySelectorAll("#costume-items-costume1 img").length`,
+    )) === seen.length;
+  results.thumbnailsOnlyWhenSeen =
+    seen.length > 0 &&
+    seen.length <= 5 * 6 &&
+    seen.length < ownedIn(1).length &&
+    new Set(seen.map((thumb) => thumb.cos)).size === seen.length &&
+    seen.every(
+      (thumb) =>
+        thumb.type === 1 &&
+        ownedIn(1).includes(thumb.cos) &&
+        thumb.referer === `${HIROBA}/mypage_kisekae.php`,
+    );
+  const withThumbnails = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.thumbnailAddressesKeptOutOfDom =
+    !withThumbnails.includes("imgsrc") &&
+    !withThumbnails.includes("cos=") &&
+    !withThumbnails.includes("_token_v2") &&
+    !tokens.some((token) => withThumbnails.includes(token));
+  await closeEditor();
+  await openItems();
+  await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
+  await Bun.sleep(1500);
+  results.thumbnailsAskedOncePerRun = (await thumbs()).length === seen.length;
+  // A thumbnail that does not come, here the GIF Hiroba draws nothing with: the item shows its
+  // number, one line under the box says so with the code, and nothing is asked for again in that
+  // opening, however the slots are switched.
+  await fetch(`${HIROBA}/__thumb?answer=gif`);
+  await click("#costume-part-costume2");
+  await waitFor(async () => (await exists("#costume-thumbnails-code")) || undefined);
+  const thumbsAfterGif = await thumbsSettled();
+  await click("#costume-part-costume1");
+  await Bun.sleep(300);
+  await click("#costume-part-costume2");
+  await Bun.sleep(1500);
+  const slotTwoAsked = thumbsAfterGif.slice(seen.length);
+  results.thumbnailGifLeavesTheId =
+    (await textOf("#costume-thumbnails-code")) ===
+      "Code for a report: costumeItem=notPng status=200 type=image/gif bytes=43" &&
+    (await page.evaluate<number>(
+      `document.querySelectorAll("#costume-thumbnails-code").length`,
+    )) === 1 &&
+    (await textOf("#item-costume2-21")) === "#21" &&
+    !(await exists("#item-costume2-21 img")) &&
+    slotTwoAsked.length === ownedIn(2).length &&
+    slotTwoAsked.every((thumb) => thumb.type === 2) &&
+    (await thumbs()).length === thumbsAfterGif.length;
+  await fetch(`${HIROBA}/__thumb?answer=png`);
+  await closeEditor();
+  await fetch(`${HIROBA}/__items?many=0`);
+  // Asked for straight through the bridge: an item the editor did not offer is refused unsent, and
+  // any other shape is refused before the verb runs, a URL among them.
+  const thumbsBeforeRefusals = (await thumbs()).length;
+  results.thumbnailNotOfferedRefusedUnsent =
+    same(
+      await page.evaluate(`window.abth.readPicture({ kind: "costumeItem", slot: 1, id: 999 })`),
+      {
+        ok: false,
+        error: { code: "costumeItem=notOffered" },
+      },
+    ) && (await thumbs()).length === thumbsBeforeRefusals;
+  const refusalOf = (want: string) =>
+    page.evaluate<string>(
+      `window.abth.readPicture(${want}).then(() => "answered", (error) => String(error.message))`,
+    );
+  const refusals = [
+    await refusalOf(`{ kind: "costumeItem", slot: 1, id: 4, url: "${HIROBA}/imgsrc_kisekae.php" }`),
+    await refusalOf(`{ kind: "costumeItem", slot: 6, id: 4 }`),
+    await refusalOf(`{ kind: "costumeItem", slot: 1, id: 1.5 }`),
+  ];
+  results.pictureShapesRefused =
+    refusals.every((message) =>
+      message.includes("Refused abth:read-picture: arguments it does not take"),
+    ) && (await thumbs()).length === thumbsBeforeRefusals;
+
   // A colour alone: exactly the planned requests, the ajax headers on both posts, one field moved.
   // The pick's picture goes about when Review and Save are pressed: before the write or after it.
   await resetLog();
@@ -533,6 +653,27 @@ try {
     (await heldWrite).kind === "applied" &&
     (await previewDuringWrite) &&
     sameBesideThumbnails(await requestLog(), [...WRITE_REQUESTS, PREVIEW]);
+  await fetch(`${HIROBA}/__state?reset=1`);
+
+  // So does an item's thumbnail: one the last editor offered and nothing has asked for yet, a
+  // ぷちキャラ, lands after the read-back.
+  await resetLog();
+  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  const prechecksBeforeThumbnail = await hitsOn("/ajax/check_ip_kisekae.php");
+  const writeBeforeThumbnail = bridgeChange({ ...START, colorLimb: 20 });
+  await waitFor(
+    async () =>
+      (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeThumbnail || undefined,
+  );
+  const thumbnailDuringWrite = page.evaluate<boolean>(
+    `window.abth.readPicture({ kind: "costumeItem", slot: 5, id: 143 }).then((result) => result.ok)`,
+  );
+  await Bun.sleep(300);
+  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  results.pictureWaitsOutAWrite =
+    (await writeBeforeThumbnail).kind === "applied" &&
+    (await thumbnailDuringWrite) &&
+    same(await requestLog(), [...WRITE_REQUESTS, THUMBNAIL]);
   await fetch(`${HIROBA}/__state?reset=1`);
 
   // A save that answers 0 and moves nothing reads as not applied, whatever it said.
