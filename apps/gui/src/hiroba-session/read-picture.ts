@@ -16,7 +16,13 @@ import {
   type PictureWant,
 } from "../session-port";
 import type { HirobaQueue } from "./hiroba-queue";
-import { type PictureSources, TITLE_PLATE_PATH } from "./picture-sources";
+import {
+  MEDAL_PLATE_PATH,
+  type MedalPlateSource,
+  type NoPictureSource,
+  type PictureSources,
+  TITLE_PLATE_PATH,
+} from "./picture-sources";
 import { checkPng, describeAnswer, type PngRefusal, type PngRules, pngDataUrl } from "./png-answer";
 import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "./picture-store";
 import type { HirobaEndpoints } from "./types";
@@ -32,10 +38,11 @@ const IMAGE_ACCEPT = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*
  */
 const ITEM_RULES = { minBytes: 128, maxBytes: 64 * 1024, maxSide: 512 } as const;
 /**
- * The plate my page draws the title on: 15648 B for a session, 5547 B blank (wiki: Page Map). Under
- * a kilobyte is not a plate; over 256 KiB, 1280 pixels wide or 400 high is not one either.
+ * A plate my page draws words over: the title plate, 15648 B for a session and 5547 B blank (wiki:
+ * Page Map), or the どんメダル plate, about 13 KB. Under a kilobyte is not a plate; over 256 KiB,
+ * 1280 pixels wide or 400 high is not one either.
  */
-const TITLE_PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280, maxHeight: 400 };
+const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280, maxHeight: 400 };
 /** The slot each costume value of a set is in, きぐるみ first. */
 const WORN = ["costume1", "costume2", "costume3", "costume4", "costume5"] as const;
 
@@ -204,6 +211,9 @@ function requestOf(
   if (owner === null || sources === null) {
     return "notRead";
   }
+  if (want.kind === "medalPlate") {
+    return medalPlateRequest(sources.medalPlate, owner, origin);
+  }
   const plate = sources.titlePlate;
   if (typeof plate === "string") {
     return plate;
@@ -216,7 +226,7 @@ function requestOf(
     path: TITLE_PLATE_PATH,
     // As my page loads it.
     referer: `${origin}/mypage_top.php`,
-    rules: { ...TITLE_PLATE_RULES, at: { origin, path: TITLE_PLATE_PATH } },
+    rules: { ...PLATE_RULES, at: { origin, path: TITLE_PLATE_PATH } },
     // The player's own, kept under them alone, and for good (the user's call, 2026-09-28). The title
     // is in the name, so a title changed anywhere is a plate of its own; the form is too, as the
     // two forms are not yet known to draw the same.
@@ -227,6 +237,35 @@ function requestOf(
     },
     // The public form is the same with a session or without one.
     keptAfterRead: plate.form === "bare",
+  };
+}
+
+/** The request for the どんメダル plate `plate` names, on `owner`'s page, or why there is none. */
+function medalPlateRequest(
+  plate: MedalPlateSource | NoPictureSource,
+  owner: string,
+  origin: string,
+): PictureRequest | Refusal {
+  if (typeof plate === "string") {
+    return plate;
+  }
+  return {
+    kind: "medalPlate",
+    url: `${origin}${MEDAL_PLATE_PATH}?id=${plate.id}`,
+    path: MEDAL_PLATE_PATH,
+    // As my page loads it.
+    referer: `${origin}/mypage_top.php`,
+    rules: { ...PLATE_RULES, at: { origin, path: MEDAL_PLATE_PATH } },
+    // Kept for good under its player alone, so accounts never share one, by what it shows: the
+    // season's id, so a new season is a plate of its own, and where the season stands, as the art
+    // may change once the set is complete (unverified). The name is hashed before it is filed.
+    key: {
+      scope: "player",
+      player: owner,
+      name: `${PICTURE_EPOCH}/tokenplate/${plate.id}/${plate.progress}`,
+    },
+    // Keyed by its id, so the same with a session or without one (wiki: Page Map).
+    keptAfterRead: false,
   };
 }
 

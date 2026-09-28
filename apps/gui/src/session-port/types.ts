@@ -116,6 +116,8 @@ export type CostumeSlot = 1 | 2 | 3 | 4 | 5;
  *   editor read offered in that slot: one it owns, or the one it wears. はずす (0) has none.
  * - `titlePlate`: the plate the identity card is drawn on, as the last read of my page showed it,
  *   under the title it showed. It names nothing more: the platform knows whose page it read.
+ * - `medalPlate`: the どんメダル plate the medal card is drawn on, as the last read of my page
+ *   showed it. Its id stays with the platform: it names the player's season.
  */
 export type PictureWant =
   | {
@@ -123,7 +125,8 @@ export type PictureWant =
       readonly slot: CostumeSlot;
       readonly id: number;
     }
-  | { readonly kind: "titlePlate" };
+  | { readonly kind: "titlePlate" }
+  | { readonly kind: "medalPlate" };
 
 /**
  * A picture as it crosses to the interface: its bytes as a `data:image/png` URL, a picture and not

@@ -70,12 +70,13 @@ export interface PictureLane {
 }
 
 /**
- * Which pictures go first: the identity card's before the editor's thumbnails, whatever their
+ * Which pictures go first: my page's, in its order, before the editor's thumbnails, whatever their
  * order on screen. Each kind is ranked here as it arrives.
  */
 const KIND_RANK: Readonly<Record<PictureWant["kind"], number>> = {
   titlePlate: 0,
-  costumeItem: 1,
+  medalPlate: 1,
+  costumeItem: 2,
 };
 
 /** One key per picture: its kind, then its numbers if it has any. */

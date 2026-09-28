@@ -7,7 +7,12 @@ import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 import { encode } from "fast-png";
 
 import { NO_LABEL_GIF } from "../scripts/mock-dan-label";
-import { blankPlatePng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
+import {
+  blankPlatePng,
+  medalPlatePng,
+  thumbnailPng,
+  titlePlatePng,
+} from "../scripts/mock-pictures";
 import {
   createMemoryPictureStore,
   createPictureReader,
@@ -17,6 +22,7 @@ import {
   type PictureLimits,
   type PictureReadState,
   type PictureStore,
+  pictureKeyPath,
 } from "../src/hiroba-session";
 
 const ORIGIN = "https://hiroba.test";
@@ -312,7 +318,7 @@ describe("createPictureReader, the title plate", () => {
   const readState = (title = TITLE, owner = OWNER): PictureReadState => ({
     ...STATE,
     owner,
-    sources: { titlePlate: { form: "bare", title } },
+    sources: { titlePlate: { form: "bare", title }, medalPlate: "notShown" },
   });
   /** Answers a plate for `title`, whatever the request, at the address asked. */
   const plateOf = (title: string) => async (request: TransportRequest) =>
@@ -346,7 +352,10 @@ describe("createPictureReader, the title plate", () => {
 
   test("asks for the public form, by the page's own number, when my page wrote that", async () => {
     const { reader, sent } = setUp({
-      state: { ...readState(), sources: { titlePlate: { form: "byTaikoNo", title: TITLE } } },
+      state: {
+        ...readState(),
+        sources: { titlePlate: { form: "byTaikoNo", title: TITLE }, medalPlate: "notShown" },
+      },
       answer: plateOf(TITLE),
     });
     expect((await reader.read(PLATE)).ok).toBe(true);
@@ -357,7 +366,10 @@ describe("createPictureReader, the title plate", () => {
     const store = createMemoryPictureStore();
     const { reader } = setUp({
       store,
-      state: { ...readState(), sources: { titlePlate: { form: "byTaikoNo", title: TITLE } } },
+      state: {
+        ...readState(),
+        sources: { titlePlate: { form: "byTaikoNo", title: TITLE }, medalPlate: "notShown" },
+      },
       answer: plateOf(TITLE),
     });
     await reader.read(PLATE);
@@ -369,7 +381,9 @@ describe("createPictureReader, the title plate", () => {
     const unread = setUp();
     expect(await unread.reader.read(PLATE)).toEqual(err({ code: "titlePlate=notRead" }));
     for (const titlePlate of ["notShown", "unexpectedSrc"] as const) {
-      const { reader, sent } = setUp({ state: { ...readState(), sources: { titlePlate } } });
+      const { reader, sent } = setUp({
+        state: { ...readState(), sources: { titlePlate, medalPlate: "notShown" } },
+      });
       expect(await reader.read(PLATE)).toEqual(err({ code: `titlePlate=${titlePlate}` }));
       expect(sent).toEqual([]);
     }
@@ -546,6 +560,142 @@ describe("createPictureReader, the title plate", () => {
     await reader.confirm("111111111111");
     await reader.confirm(OWNER);
     expect(await store.get(keyOf(TITLE))).toBeNull();
+  });
+});
+
+describe("createPictureReader, the どんメダル plate", () => {
+  const MEDAL = { kind: "medalPlate" } as const;
+  const ID = "0123456789abcdef0123456789abcdef0123456789abcdef";
+  const NEXT_SEASON = "fedcba9876543210fedcba9876543210fedcba9876543210";
+  const MEDAL_URL = `${ORIGIN}/imgsrc_tokenplate.php?id=${ID}`;
+  const OWNER = "000000000000";
+  type Progress = "collecting" | "complete";
+  /** My page read, showing the plate `id` while the season is at `progress`, for `owner`. */
+  const readState = (id = ID, progress: Progress = "collecting", owner = OWNER) => ({
+    ...STATE,
+    owner,
+    sources: {
+      titlePlate: "notShown" as const,
+      medalPlate: { id, progress },
+    },
+  });
+  /** Answers the plate the asked id names, drawn as the season stands in `state()`. */
+  const plates = (state: () => PictureReadState) => async (request: TransportRequest) => {
+    const shown = state().sources?.medalPlate;
+    const complete = typeof shown === "object" && shown.progress === "complete";
+    const id = new URL(request.url).searchParams.get("id") ?? "";
+    return png(request.url, medalPlatePng(id, complete));
+  };
+  /** Where the plate `id` at `progress` is kept, for `owner`. */
+  const keyOf = (id = ID, progress: Progress = "collecting", owner = OWNER) => ({
+    scope: "player" as const,
+    player: owner,
+    name: `v1/tokenplate/${id}/${progress}`,
+  });
+  const codeOf = async (read: Promise<unknown>) =>
+    ((await read) as { error: { code: string } }).error.code;
+
+  test("asks once, as my page does, for the plate by the id my page showed", async () => {
+    const { reader, sent, events } = setUp({
+      state: readState(),
+      answer: async (request) => png(request.url, medalPlatePng(ID, false)),
+    });
+    const read = await reader.read(MEDAL);
+    expect(sent.map(({ request }) => request)).toEqual([
+      {
+        method: "GET",
+        url: MEDAL_URL,
+        headers: {
+          Referer: `${ORIGIN}/mypage_top.php`,
+          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        },
+      },
+    ]);
+    expect(events).toEqual(["sleep 37", "queue", `send ?id=${ID}`]);
+    expect(read.ok && decode(read.value.src)).toEqual(medalPlatePng(ID, false));
+    expect(read.ok && [read.value.width, read.value.height]).toEqual([600, 100]);
+  });
+
+  test("sends nothing before my page is read, when it showed none, or one of another form", async () => {
+    const unread = setUp();
+    expect(await unread.reader.read(MEDAL)).toEqual(err({ code: "medalPlate=notRead" }));
+    for (const medalPlate of ["notShown", "unexpectedSrc"] as const) {
+      const { reader, sent } = setUp({
+        state: { ...readState(), sources: { titlePlate: "notShown", medalPlate } },
+      });
+      expect(await reader.read(MEDAL)).toEqual(err({ code: `medalPlate=${medalPlate}` }));
+      expect(sent).toEqual([]);
+    }
+    const signedOut = setUp({ state: { ...readState(), signedIn: false } });
+    expect(await signedOut.reader.read(MEDAL)).toEqual(err({ code: "medalPlate=notSignedIn" }));
+    expect(unread.sent).toEqual([]);
+    expect(signedOut.sent).toEqual([]);
+  });
+
+  test("keeps a plate for good at once, under its player, its id and where the season stands", async () => {
+    const store = createMemoryPictureStore();
+    let state: PictureReadState = readState();
+    const { reader, sent, setState } = setUp({ store, state, answer: plates(() => state) });
+    const move = (next: PictureReadState) => {
+      state = next;
+      setState(next);
+    };
+    await reader.read(MEDAL);
+    await reader.read(MEDAL);
+    expect(sent).toHaveLength(1);
+    // Keyed by its id, it is the same with a session or without one: kept with no read to confirm.
+    expect(await store.get(keyOf())).toEqual(medalPlatePng(ID, false));
+    expect(pictureKeyPath(keyOf())).not.toContain(ID);
+    // Kept at sign-out too, and at the next sign-in.
+    reader.forget();
+    await reader.read(MEDAL);
+    expect(sent).toHaveLength(1);
+    // The set complete, and a new season, are each a plate of their own.
+    move(readState(ID, "complete"));
+    await reader.read(MEDAL);
+    move(readState(NEXT_SEASON));
+    await reader.read(MEDAL);
+    expect(sent).toHaveLength(3);
+    expect(await store.get(keyOf(ID, "complete"))).toEqual(medalPlatePng(ID, true));
+    // Another player is never given this one's plate, under the same id.
+    move(readState(ID, "collecting", "111111111111"));
+    await reader.read(MEDAL);
+    expect(sent).toHaveLength(4);
+    move(readState());
+    await reader.read(MEDAL);
+    expect(sent).toHaveLength(4);
+  });
+
+  test("a failure is codes that hold neither the id nor the query", async () => {
+    const gif = setUp({
+      state: readState(),
+      answer: async () =>
+        ok({
+          status: 200,
+          url: MEDAL_URL,
+          headers: { "content-type": "image/gif" },
+          body: NO_LABEL_GIF,
+        }),
+    });
+    const login = setUp({
+      state: readState(),
+      answer: async () =>
+        ok({
+          status: 200,
+          url: `${ORIGIN}/login.php?back=${encodeURIComponent(MEDAL_URL)}`,
+          headers: { "content-type": "text/html" },
+          body: new TextEncoder().encode("<html></html>"),
+        }),
+    });
+    const codes = [await codeOf(gif.reader.read(MEDAL)), await codeOf(login.reader.read(MEDAL))];
+    expect(codes).toEqual([
+      "medalPlate=notPng status=200 type=image/gif bytes=43",
+      "medalPlate=notPng path=/login.php status=200 type=text/html bytes=13",
+    ]);
+    for (const code of codes) {
+      expect(code).not.toMatch(/0123456789abcdef|000000000000|hiroba\.test|http|\?|id=/);
+    }
+    expect(await gif.store.get(keyOf())).toBeNull();
   });
 });
 

@@ -6,7 +6,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
-import { thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
+import { medalPlatePng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
 import { native, nativeBase64 } from "./capacitor-fakes";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
@@ -332,6 +332,7 @@ describe("createAndroidPort's pictures", () => {
 
   const THUMB = { kind: "costumeItem", slot: 1, id: 36 } as const;
   const PLATE = { kind: "titlePlate" } as const;
+  const MEDAL = { kind: "medalPlate" } as const;
 
   /** Answers the editor with the mock's page and a thumbnail with the mock's picture. */
   function answerAsHiroba() {
@@ -549,6 +550,50 @@ describe("createAndroidPort's pictures", () => {
       "/mypage_top.php",
       "/mypage_kisekae.php",
     ]);
+  });
+
+  test("asks for the どんメダル plate by the id my page shows, once, and keeps it for good", async () => {
+    const id = "0123456789abcdef0123456789abcdef0123456789abcdef";
+    const withMedal = MY_PAGE.replace(
+      `<div class="favoriteSong">`,
+      `<div><img src="imgsrc_tokenplate.php?id=${id}" style="width: 100%;">
+  <div class="token_name">どんメダル2026秋</div><div class="token_count">12</div></div>
+<div class="favoriteSong">`,
+    );
+    native.httpAnswer = async () => {
+      const asked = native.httpRequests.at(-1)?.url ?? "";
+      const plate = new URL(asked).pathname === "/imgsrc_tokenplate.php";
+      return {
+        status: 200,
+        url: asked,
+        headers: { "Content-Type": plate ? "image/png" : "text/html; charset=UTF-8" },
+        data: nativeBase64(plate ? medalPlatePng(id, false) : withMedal),
+      };
+    };
+    const indexedDb = createFakeIndexedDb();
+    const launch = () =>
+      createAndroidPort({
+        closeLabel: () => CLOSE_LABEL,
+        signedInFlag: memoryFlag(true),
+        indexedDb: indexedDb.factory,
+      });
+    const first = await launch();
+    const read = await first.readProfile();
+    const plate = await first.readPicture(MEDAL);
+    expect(plate.ok && [plate.value.width, plate.value.height]).toEqual([600, 100]);
+    expect(await first.readPicture(MEDAL)).toEqual(plate);
+    // The id is the platform's alone: the view names neither it nor the plate's address.
+    expect(JSON.stringify(read)).not.toMatch(new RegExp(`${id}|tokenplate`));
+
+    const relaunched = await launch();
+    await relaunched.readProfile();
+    expect(await relaunched.readPicture(MEDAL)).toEqual(plate);
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_top.php`,
+      `${HIROBA}/imgsrc_tokenplate.php?id=${id}`,
+      `${HIROBA}/mypage_top.php`,
+    ]);
+    expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/mypage_top.php` });
   });
 
   test("forgets what the editor offered when the session goes", async () => {

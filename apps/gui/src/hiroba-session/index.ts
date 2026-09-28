@@ -24,6 +24,7 @@ export {
   pictureKeyPath,
 } from "./picture-store";
 export {
+  type MedalPlateSource,
   type NoPictureSource,
   type PictureSources,
   pictureSourcesOf,

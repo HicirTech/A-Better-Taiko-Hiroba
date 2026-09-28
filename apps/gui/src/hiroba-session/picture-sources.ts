@@ -1,9 +1,13 @@
-import type { Profile } from "@abth/core";
+import type { MedalProgress, Profile } from "@abth/core";
 
 import type { HirobaEndpoints } from "./types";
 
 /** Where my page's title plate lives: bare on every capture, `?taiko_no=` on other pages. */
 export const TITLE_PLATE_PATH = "/imgsrc_titleplate.php";
+/** Where my page's どんメダル plate lives: `?id=` and the plate's id, the only query. */
+export const MEDAL_PLATE_PATH = "/imgsrc_tokenplate.php";
+/** The query of the plate my page asks for: lowercase hex, 48 digits on every capture. */
+const MEDAL_PLATE_QUERY = /^\?id=([0-9a-f]{16,128})$/;
 
 /**
  * Why the platform holds no source for one of my page's pictures: the page showed none, or the one
@@ -27,6 +31,21 @@ export interface TitlePlateSource {
 }
 
 /**
+ * The どんメダル plate as my page asked for it, and where the season stood on it. Public, and the
+ * same with a session or without one (wiki: Page Map), but its id names the player's season: it is
+ * identity data, like the taiko number, and stays with the platform.
+ */
+export interface MedalPlateSource {
+  /** The id in the plate's query, as my page wrote it: a new season is a new id. */
+  readonly id: string;
+  /**
+   * Where the season stood, as my page wrote it over the plate: part of what the plate is kept
+   * under, as its art may change once the set is complete (unverified).
+   */
+  readonly progress: MedalProgress["kind"];
+}
+
+/**
  * What the platform keeps of the last my page it read, to fetch the pictures that page showed:
  * each one's source, checked here against a strict pattern, or why there is none. It stays with
  * the platform, beside whose page it was, goes with the session, and never reaches the window.
@@ -34,6 +53,8 @@ export interface TitlePlateSource {
  */
 export interface PictureSources {
   readonly titlePlate: TitlePlateSource | NoPictureSource;
+  /** `notShown` too when the page shows no どんメダル plate at all. */
+  readonly medalPlate: MedalPlateSource | NoPictureSource;
 }
 
 /**
@@ -42,7 +63,33 @@ export interface PictureSources {
  * above, or it is `unexpectedSrc`.
  */
 export function pictureSourcesOf(profile: Profile, endpoints: HirobaEndpoints): PictureSources {
-  return { titlePlate: titlePlateOf(profile, endpoints) };
+  return {
+    titlePlate: titlePlateOf(profile, endpoints),
+    medalPlate: medalPlateOf(profile, endpoints),
+  };
+}
+
+function medalPlateOf(
+  profile: Profile,
+  endpoints: HirobaEndpoints,
+): MedalPlateSource | NoPictureSource {
+  const { medal } = profile;
+  if (medal === null || medal.plateImageUrl === null) {
+    return "notShown";
+  }
+  let asked: URL;
+  let path: string;
+  try {
+    asked = new URL(medal.plateImageUrl, `${endpoints.hirobaOrigin}/`);
+    path = new URL(MEDAL_PLATE_PATH, endpoints.hirobaOrigin).href;
+  } catch {
+    return "unexpectedSrc";
+  }
+  const id = MEDAL_PLATE_QUERY.exec(asked.search)?.[1];
+  if (id === undefined || asked.href !== `${path}?id=${id}`) {
+    return "unexpectedSrc";
+  }
+  return { id, progress: medal.progress.kind };
 }
 
 function titlePlateOf(

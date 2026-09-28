@@ -15,6 +15,8 @@ const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idp
 const NOW = () => new Date("2026-09-27T00:00:00.000Z");
 const MY_PAGE_URL = "https://hiroba.test/mypage_top.php";
 const LABEL_URL = "https://hiroba.test/imgsrc_danlabel.php?taiko_no=000000000000";
+/** The どんメダル plate's id, a placeholder in the form my page writes: 48 hex digits. */
+const MEDAL_PLATE_ID = "0123456789abcdef0123456789abcdef0123456789abcdef";
 
 const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 <div id="mydon_area">
@@ -36,7 +38,7 @@ const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head
     <div class="gold_crown_count total_panel_crown_display">2</div>
     <div class="donderful_crown_count total_panel_crown_display">1</div>
   </div>
-  <div><img src="imgsrc_tokenplate.php?id=placeholder">
+  <div><img src="imgsrc_tokenplate.php?id=${MEDAL_PLATE_ID}" style="width: 100%;">
     <div class="token_name token_info_display">どんメダル2026秋</div>
     <div class="token_complete token_info_display">COMPLETE</div></div>
 </div>
@@ -176,11 +178,16 @@ describe("readProfile", () => {
       throw new Error("expected both reads to succeed");
     }
     expect(own.value.taikoNo).toBe("000000000000");
-    expect(own.value.pictures).toEqual({ titlePlate: { form: "bare", title: "サンプルの称号" } });
+    expect(own.value.pictures).toEqual({
+      titlePlate: { form: "bare", title: "サンプルの称号" },
+      medalPlate: { id: MEDAL_PLATE_ID, progress: "complete" },
+    });
     expect(own.value.view).toEqual(view.value);
     const shown = withoutPictureBytes(JSON.stringify(own.value.view));
     expect(shown).not.toContain("000000000000");
     expect(shown).not.toContain("titleplate");
+    expect(shown).not.toContain("tokenplate");
+    expect(shown).not.toContain(MEDAL_PLATE_ID);
   });
 
   test("reads a redirect to the login page as a lost session, without parsing or a label", async () => {

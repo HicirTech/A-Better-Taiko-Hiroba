@@ -92,8 +92,9 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     expect(check([{ id: 1, slot: 3, kind: "costumeItem" }])).toBe(true);
   });
 
-  test("takes the title plate by its kind alone", () => {
+  test("takes the title plate and the どんメダル plate by their kind alone", () => {
     expect(PORT_ARGUMENTS.readPicture([{ kind: "titlePlate" }])).toBe(true);
+    expect(PORT_ARGUMENTS.readPicture([{ kind: "medalPlate" }])).toBe(true);
   });
 
   test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
@@ -118,6 +119,9 @@ describe("PORT_ARGUMENTS.readPicture", () => {
       [{ kind: "titlePlate", src: "imgsrc_titleplate.php?taiko_no=000000000000" }],
       [{ kind: "titlePlate" }, { kind: "titlePlate" }],
       [Object.assign(Object.create({ inherited: true }), { kind: "titlePlate" })],
+      [{ kind: "medalPlate", id: "0123456789abcdef0123456789abcdef0123456789abcdef" }],
+      [{ kind: "medalPlate", src: "imgsrc_tokenplate.php?id=0123456789abcdef" }],
+      [{ kind: "medalPlate", progress: "complete" }],
       [{ kind: "costumeItem" }],
       [{ kind: "scorePanel" }],
       [{ kind: "toString" }],
