@@ -37,8 +37,11 @@ const endpoints: HirobaEndpoints = import.meta.env.DEV
   : HIROBA_ENDPOINTS;
 
 export interface AndroidPortOptions {
-  /** The in-app browser's close button, from the catalog. */
-  readonly closeLabel: string;
+  /**
+   * The in-app browser's close button, from the catalog: asked for each time the browser opens,
+   * so it is in the language picked since.
+   */
+  readonly closeLabel: () => string;
   /** Where "a sign-in finished here" is remembered across launches. The page's localStorage. */
   readonly signedInFlag?: SignedInFlag;
 }
@@ -153,7 +156,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
             ...DefaultWebViewOptions,
             showURL: true,
             showNavigationButtons: false,
-            closeButtonText: options.closeLabel,
+            closeButtonText: options.closeLabel(),
             android: {
               ...DefaultAndroidWebViewOptions,
               // Default true since 4.0.0: an isolated view keeps its own cookie store, which the

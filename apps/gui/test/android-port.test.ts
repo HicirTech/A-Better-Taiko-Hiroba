@@ -57,7 +57,7 @@ async function until(condition: () => boolean): Promise<void> {
 
 /** Starts a sign-in and waits until the in-app browser is open. */
 async function startSignIn(signedInFlag = memoryFlag()) {
-  const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag });
+  const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL, signedInFlag });
   const outcome = port.signIn();
   await until(() => native.openedWith.length === 1);
   return { port, outcome };
@@ -68,7 +68,7 @@ describe("createAndroidPort", () => {
 
   test("opens signed in after an earlier sign-in, and wipes nothing as it starts", async () => {
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     expect(await port.isSignedIn()).toBe(true);
@@ -78,7 +78,7 @@ describe("createAndroidPort", () => {
   test("a read hands the window the view alone: no taiko number and no picture's source", async () => {
     native.httpAnswer = myPageAnswer;
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     const read = await port.readProfile();
@@ -92,7 +92,10 @@ describe("createAndroidPort", () => {
   });
 
   test("opens signed out when no sign-in was remembered", async () => {
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(),
+    });
     expect(await port.isSignedIn()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
@@ -147,7 +150,7 @@ describe("createAndroidPort", () => {
 
   test("a browser that cannot open ends the attempt instead of hanging", async () => {
     native.openFails = true;
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL });
+    const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL });
     expect(await port.signIn()).toEqual({ kind: "unavailable" });
     expect(native.listeners.size).toBe(0);
   });
@@ -190,7 +193,7 @@ describe("createAndroidPort's writes", () => {
 
   test("enables no write, offers no undo, and a costume change sends nothing", async () => {
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     expect(await port.enabledWrites()).toEqual([]);
@@ -213,7 +216,10 @@ describe("createAndroidPort's writes", () => {
   });
 
   test("reads no costume editor while signed out", async () => {
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(),
+    });
     expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
     expect(native.httpRequests).toEqual([]);
   });
@@ -235,7 +241,10 @@ describe("createAndroidPort's costume preview", () => {
   const PREVIEW_URL = `${HIROBA}/imgsrc_mydon.php?face=5&body=12&limb=13&cos1=0&cos2=21&cos3=68&cos4=37&cos5=140`;
 
   test("asks nothing while signed out", async () => {
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(),
+    });
     expect(await port.previewCostume(SET)).toEqual({
       ok: false,
       error: { code: "preview=notSignedIn" },
@@ -253,7 +262,7 @@ describe("createAndroidPort's costume preview", () => {
       data: nativeBase64(picture),
     });
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     const preview = await port.previewCostume(SET);
@@ -275,7 +284,7 @@ describe("createAndroidPort's costume preview", () => {
         );
       });
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     const reading = port.readProfile();
@@ -307,7 +316,7 @@ describe("createAndroidPort's costume preview", () => {
       headers: { "Content-Type": "image/gif" },
       data: nativeBase64(new Uint8Array(43)),
     });
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: flag });
+    const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL, signedInFlag: flag });
     expect(await port.previewCostume(SET)).toEqual({
       ok: false,
       error: { code: "preview=notPng status=200 type=image/gif bytes=43" },
@@ -360,7 +369,10 @@ describe("createAndroidPort's pictures", () => {
   }
 
   test("asks nothing while signed out", async () => {
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(),
+    });
     expect(await port.readPicture(THUMB)).toEqual({
       ok: false,
       error: { code: "costumeItem=notSignedIn" },
@@ -371,7 +383,7 @@ describe("createAndroidPort's pictures", () => {
   test("asks only for items the last editor read offered, once each, as a browser's picture", async () => {
     answerAsHiroba();
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     expect(await port.readPicture(THUMB)).toEqual({
@@ -401,7 +413,7 @@ describe("createAndroidPort's pictures", () => {
   test("a picture's fetch waits for a read already on its way", async () => {
     answerAsHiroba();
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     await port.openCostumeEditor();
@@ -429,7 +441,7 @@ describe("createAndroidPort's pictures", () => {
   test("asks for the title plate only once my page is read, as my page does, and once", async () => {
     answerAsHiroba();
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     expect(await port.readPicture(PLATE)).toEqual({
@@ -462,7 +474,7 @@ describe("createAndroidPort's pictures", () => {
   test("forgets whose page it read when the session goes, and keeps the plate", async () => {
     answerAsHiroba();
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     await port.readProfile();
@@ -488,7 +500,7 @@ describe("createAndroidPort's pictures", () => {
   test("asks again after a sign-in for a plate no later read confirmed", async () => {
     answerAsHiroba();
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     await port.readProfile();
@@ -507,7 +519,7 @@ describe("createAndroidPort's pictures", () => {
   test("forgets what the editor offered when the session goes", async () => {
     answerAsHiroba();
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     await port.openCostumeEditor();

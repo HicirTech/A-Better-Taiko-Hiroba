@@ -1,4 +1,3 @@
-import type { Translator } from "@abth/i18n";
 import { Capacitor } from "@capacitor/core";
 
 import type { HirobaSessionPort } from "../session-port";
@@ -22,14 +21,20 @@ export interface Platform {
  * Picks the platform layer this bundle is running on. The same bundle ships in both shells: the
  * Electron preload exposes `window.abth`, and Capacitor reports its native platform. The Android
  * module is loaded only on Android, so the desktop never loads the in-app browser code.
+ *
+ * `closeLabel` words the in-app browser's close button, asked for each time the browser opens.
  */
-export async function connectPlatform(i18n: Translator): Promise<Platform | null> {
+export async function connectPlatform({
+  closeLabel,
+}: {
+  readonly closeLabel: () => string;
+}): Promise<Platform | null> {
   if (window.abth !== undefined) {
     return { shell: "desktop", port: window.abth };
   }
   if (Capacitor.getPlatform() === "android") {
     const { createAndroidPort } = await import("./android");
-    const port = await createAndroidPort({ closeLabel: i18n.t("signIn.closeBrowser") });
+    const port = await createAndroidPort({ closeLabel });
     return { shell: "android", port };
   }
   return null;
