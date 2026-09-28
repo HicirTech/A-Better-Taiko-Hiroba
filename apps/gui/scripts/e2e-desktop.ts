@@ -199,8 +199,8 @@ const WRITE_REQUESTS = [
 ];
 
 // The language, in runs of their own, signed out. Opened on a system in Traditional Chinese, the
-// app is in it, and says so to the page; a pick from the app bar takes hold at once and is kept for
-// the next launch, which the system's language no longer decides.
+// app is in it, and says so to the page; a pick from the app bar, of the language shown or another,
+// takes hold at once and is kept for the next launch, which the system's language no longer decides.
 const ja = createTranslator("ja");
 const zhHant = createTranslator("zh-Hant");
 /** What says which language the window is in: `lang`, the title, a button and the picker. */
@@ -237,6 +237,19 @@ try {
     ["zh-Hans", "简体中文"],
     ["zh-Hant", "繁體中文"],
   ]);
+  // A pick of the language already shown is a pick too: a system in another one no longer decides.
+  await inLanguage.click("#language-zh-Hant");
+  await stop(inLanguage);
+  inLanguage = await launch({
+    writes: false,
+    now: NOON_JST,
+    lang: "en-US",
+    userData: LANGUAGE_USER_DATA,
+  });
+  await waitFor(async () => (await inLanguage.textOf("#sign-in")) ?? undefined);
+  results.shownLanguagePickKept = (await languageShown(inLanguage.page)).lang === "zh-Hant";
+  await inLanguage.click("#language-picker");
+  await waitFor(async () => (await inLanguage.textOf("#language-ja")) ?? undefined);
   await inLanguage.click("#language-ja");
   await inLanguage.until(ja.t("signIn.action"));
   results.pickTakesHold = same(await languageShown(inLanguage.page), {

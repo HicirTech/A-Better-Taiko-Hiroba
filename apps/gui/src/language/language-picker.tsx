@@ -16,7 +16,8 @@ function TranslateIcon() {
 
 /**
  * The app bar's language picker: the language the app is in, and a menu of every language the
- * catalog carries, each named in its own language and marked with it for screen readers.
+ * catalog carries, each named in its own language and marked with it for screen readers. Every
+ * pick reaches `onPick`, the language already shown included: picking it is a choice to keep it.
  */
 export function LanguagePicker({
   locale,
@@ -32,9 +33,7 @@ export function LanguagePicker({
   const label = i18n.t("language.picker", { name: LOCALE_NAMES[locale] });
   const pick = (next: Locale) => {
     setAnchor(null);
-    if (next !== locale) {
-      onPick(next);
-    }
+    onPick(next);
   };
   return (
     <>
