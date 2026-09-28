@@ -29,6 +29,10 @@ export const en: Messages = {
   "profile.favoriteSongNone": "Favourite song: none",
   "profile.favoriteFolder": "Favourites folder ({count})",
   "profile.favoriteFolderEmpty": "The favourites folder is empty.",
+  "pictures.loading": "Loading Hiroba's picture…",
+  "pictures.unavailable":
+    "Some of Hiroba's pictures didn't load; plain stand-ins are shown instead.",
+  "pictures.code": "Code for a report: {code}",
   "crowns.heading": "Crowns",
   "crowns.silver": "Silver",
   "crowns.gold": "Gold",

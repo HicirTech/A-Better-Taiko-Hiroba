@@ -49,6 +49,18 @@ export interface Messages {
   /** Param: {count}, how many songs the お気に入り folder holds. */
   "profile.favoriteFolder": string;
   "profile.favoriteFolderEmpty": string;
+  /**
+   * Beside one of Hiroba's pictures on the profile, such as the title plate, while it is on its
+   * way: the name of a small spinner. The card stands, drawn plainly, until it comes.
+   */
+  "pictures.loading": string;
+  /**
+   * Under the identity card when one or more of Hiroba's pictures did not come. Neutral: the card
+   * is drawn plainly in their place, and reads as well without them.
+   */
+  "pictures.unavailable": string;
+  /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
+  "pictures.code": string;
   "crowns.heading": string;
   "crowns.silver": string;
   "crowns.gold": string;
