@@ -141,7 +141,7 @@ export const ja: Messages = {
   "write.changedSincePreview":
     "エディターを開いたあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
   "write.undoStale":
-    "その変更のあとにきせかえがほかの場所で変更されたため、元に戻しませんでした。この取り消しはもう使えません。",
+    "その変更のあとにきせかえがほかの場所で変更されたため、元に戻しませんでした。この変更はもう元に戻せません。",
   "write.invalidTarget": "送信する前に、アプリが変更を止めました：{field}。",
   "write.nothingToChange": "すでにそのきせかえです。何も送信していません。",
   "write.maintenance":
