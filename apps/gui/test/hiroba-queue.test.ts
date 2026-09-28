@@ -4,7 +4,7 @@
  */
 import { describe, expect, test } from "bun:test";
 
-import { createHirobaQueue } from "../electron/hiroba-queue";
+import { createHirobaQueue } from "../src/hiroba-session";
 
 /** A verb that logs when it starts and ends, and ends only when its test lets it. */
 function held(name: string, log: string[]) {

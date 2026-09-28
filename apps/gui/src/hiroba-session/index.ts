@@ -12,6 +12,7 @@ export {
   SESSION_COOKIE_NAME,
 } from "./endpoints";
 export { type CostumeWriteOptions, changeCostume } from "./change-costume";
+export { createHirobaQueue, type HirobaQueue } from "./hiroba-queue";
 export { openCostumeEditor } from "./open-costume-editor";
 export { previewCostume, previewUrl } from "./preview-costume";
 export { readOwnProfile, readProfile } from "./read-profile";

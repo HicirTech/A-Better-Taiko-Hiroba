@@ -3,6 +3,7 @@ import { err, ok } from "@abth/core";
 import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
 
 import {
+  createHirobaQueue,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
@@ -20,7 +21,6 @@ import {
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createDesktopWrites } from "./desktop-writes";
-import { createHirobaQueue } from "./hiroba-queue";
 import { createHirobaTransport } from "./hiroba-transport";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
