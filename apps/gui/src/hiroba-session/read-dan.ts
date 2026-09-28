@@ -1,6 +1,7 @@
 import { DAN_NAMES, isErr, readDanLabel, type Transport, type TransportResponse } from "@abth/core";
 
 import type { DanView } from "../session-port";
+import { checkPng, describeAnswer } from "./png-answer";
 import type { HirobaEndpoints } from "./types";
 
 /** Where every dan label my page has shown lives: `imgsrc_danlabel.php?taiko_no=…`. */
@@ -44,14 +45,12 @@ export async function readDan(
     return unreadable(`dan=${sent.error.kind}`);
   }
   const response = sent.value;
-  const type = (response.headers["content-type"] ?? "").split(";")[0]?.trim().toLowerCase();
-  if (type !== "image/png") {
-    return unreadable(`dan=notPng ${describe(response)}`);
+  // The type and the size only: the label's own reader says what else is wrong with its bytes.
+  const checked = checkPng(response, { maxBytes: MAX_LABEL_BYTES });
+  if (isErr(checked)) {
+    return unreadable(`dan=${checked.error.why} ${describe(response)}`);
   }
-  if (response.body.byteLength > MAX_LABEL_BYTES) {
-    return unreadable(`dan=tooLarge ${describe(response)}`);
-  }
-  const read = readDanLabel(response.body);
+  const read = readDanLabel(checked.value.bytes);
   if (isErr(read)) {
     const failure = read.error;
     const size =
@@ -70,16 +69,5 @@ function unreadable(code: string): DanView {
 
 /** What came back, as codes: the final path if it is not the label's, status, type and size. */
 function describe(response: TransportResponse): string {
-  let path = "?";
-  try {
-    path = new URL(response.url).pathname;
-  } catch {
-    // The final URL did not parse; "?" says so.
-  }
-  return [
-    ...(path === LABEL_PATH ? [] : [`path=${path}`]),
-    `status=${response.status}`,
-    `type=${response.headers["content-type"] ?? "-"}`,
-    `bytes=${response.body.byteLength}`,
-  ].join(" ");
+  return describeAnswer(response, { path: LABEL_PATH });
 }

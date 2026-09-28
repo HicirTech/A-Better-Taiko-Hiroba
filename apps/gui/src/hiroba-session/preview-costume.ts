@@ -1,6 +1,7 @@
 import { err, isErr, ok, type Result, type Transport, type TransportResponse } from "@abth/core";
 
 import type { CostumePreviewFailure, CostumeSet } from "../session-port";
+import { checkPng, describeAnswer, pngDataUrl } from "./png-answer";
 import type { HirobaEndpoints } from "./types";
 
 /** Hiroba's own My Don compositor: it draws whatever set its query names. */
@@ -26,7 +27,6 @@ const PREVIEW_PARAMETERS = [
 const MIN_PREVIEW_BYTES = 1024;
 /** Six times the one weighed: anything larger is not a preview, and does not cross to the window. */
 const MAX_PREVIEW_BYTES = 512 * 1024;
-const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] as const;
 
 /** Where Hiroba's editor points its preview for `set`: the site's names, in the site's order. */
 export function previewUrl(endpoints: HirobaEndpoints, set: CostumeSet): string {
@@ -62,48 +62,23 @@ export async function previewCostume(
     return failed(sent.error.kind);
   }
   const response = sent.value;
-  const type = (response.headers["content-type"] ?? "").split(";")[0]?.trim().toLowerCase();
-  const bytes = response.body;
-  if (type !== "image/png") {
-    return failed("notPng", response);
+  const checked = checkPng(response, {
+    minBytes: MIN_PREVIEW_BYTES,
+    maxBytes: MAX_PREVIEW_BYTES,
+    signature: true,
+  });
+  if (isErr(checked)) {
+    return failed(checked.error.why, response);
   }
-  if (bytes.byteLength < MIN_PREVIEW_BYTES) {
-    return failed("tooSmall", response);
-  }
-  if (bytes.byteLength > MAX_PREVIEW_BYTES) {
-    return failed("tooLarge", response);
-  }
-  if (!PNG_SIGNATURE.every((byte, at) => bytes[at] === byte)) {
-    return failed("notPngBytes", response);
-  }
-  return ok(`data:image/png;base64,${base64Of(bytes)}`);
+  return ok(pngDataUrl(checked.value.bytes));
 }
 
+/** Codes for a report: why, then what came back, the final path only when not the preview's. */
 function failed(why: string, response?: TransportResponse): Result<never, CostumePreviewFailure> {
-  return err({ code: [`preview=${why}`, ...(response ? [describe(response)] : [])].join(" ") });
-}
-
-/** What came back, as codes: the final path if it is not the preview's, status, type and size. */
-function describe(response: TransportResponse): string {
-  let path = "?";
-  try {
-    path = new URL(response.url).pathname;
-  } catch {
-    // The final URL did not parse; "?" says so.
-  }
-  return [
-    ...(path === PREVIEW_PATH ? [] : [`path=${path}`]),
-    `status=${response.status}`,
-    `type=${response.headers["content-type"] ?? "-"}`,
-    `bytes=${response.body.byteLength}`,
-  ].join(" ");
-}
-
-/** Base64 in the main process and in a WebView alike: both have `btoa`, neither needs a Buffer. */
-function base64Of(bytes: Uint8Array): string {
-  let binary = "";
-  for (let at = 0; at < bytes.length; at += 0x2000) {
-    binary += String.fromCharCode(...bytes.subarray(at, at + 0x2000));
-  }
-  return btoa(binary);
+  return err({
+    code: [
+      `preview=${why}`,
+      ...(response ? [describeAnswer(response, { path: PREVIEW_PATH })] : []),
+    ].join(" "),
+  });
 }
