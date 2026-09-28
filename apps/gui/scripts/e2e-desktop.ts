@@ -493,8 +493,8 @@ try {
   await Bun.sleep(1500);
   results.thumbnailsAskedOncePerRun = (await thumbs()).length === seen.length;
   // A thumbnail that does not come, here the GIF Hiroba draws nothing with: the item shows its
-  // number, one line under the box says so with the code, and nothing is asked for again in that
-  // opening, however the slots are switched.
+  // number, one line under the box says how many did not come and gives the code, and nothing is
+  // asked for again in that opening, however the slots are switched.
   await fetch(`${HIROBA}/__thumb?answer=gif`);
   await click("#costume-part-costume2");
   await waitFor(async () => (await exists("#costume-thumbnails-code")) || undefined);
@@ -505,6 +505,8 @@ try {
   await Bun.sleep(1500);
   const slotTwoAsked = thumbsAfterGif.slice(seen.length);
   results.thumbnailGifLeavesTheId =
+    (await textOf("#costume-thumbnails-unavailable > :first-child")) ===
+      `Some thumbnails didn't load (${ownedIn(2).length}); their numbers are shown instead.` &&
     (await textOf("#costume-thumbnails-code")) ===
       "Code for a report: costumeItem=notPng status=200 type=image/gif bytes=43" &&
     (await page.evaluate<number>(
@@ -515,7 +517,25 @@ try {
     slotTwoAsked.length === ownedIn(2).length &&
     slotTwoAsked.every((thumb) => thumb.type === 2) &&
     (await thumbs()).length === thumbsAfterGif.length;
+  // Opened again, the editor asks once more for the thumbnails that did not come, and for nothing
+  // else: they show, and the line under the box is gone.
   await fetch(`${HIROBA}/__thumb?answer=png`);
+  await closeEditor();
+  await openItems();
+  await click("#costume-part-costume2");
+  await waitFor(async () => (await exists("#costume-items-costume2")) || undefined);
+  const askedOnReopen = (await thumbsSettled()).slice(thumbsAfterGif.length);
+  results.failedThumbnailsAskedAgainOnReopen =
+    same(
+      askedOnReopen.map((thumb) => `${thumb.type}/${thumb.cos}`).sort(),
+      ownedIn(2)
+        .map((id) => `2/${id}`)
+        .sort(),
+    ) &&
+    (await page.evaluate<number>(
+      `document.querySelectorAll("#costume-items-costume2 img").length`,
+    )) === ownedIn(2).length &&
+    !(await exists("#costume-thumbnails-unavailable"));
   await closeEditor();
   await fetch(`${HIROBA}/__items?many=0`);
   // Asked for straight through the bridge: an item the editor did not offer is refused unsent, and
