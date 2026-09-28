@@ -29,11 +29,11 @@
  * The costume editor, mypage_kisekae.php, its preview, imgsrc_mydon.php, its items' thumbnails,
  * imgsrc_kisekae.php (both pictures drawn for a session only, as Hiroba's are), and the two posts a
  * costume write sends, ajax/check_ip_kisekae.php and ajax/change_mydon.php, are
- * scripts/mock-costume.ts: stateful, with hooks of their own listed there. Like Hiroba, an ajax post without X-Requested-With gets the site's error page at 200; one
- * without a session is sent to the login page. Two more hooks cover
- * every request: /__log (each non-hook request so far, as "METHOD /path"; /__log-reset clears it)
- * and /__post-to-login?on=1 or 0 (every ajax post answers with a redirect to the login page, the
- * session left as it was).
+ * scripts/mock-costume.ts: stateful, with hooks of their own listed there. Like Hiroba, an ajax
+ * post without X-Requested-With gets the site's error page at 200; one without a session is sent to
+ * the login page. Two more hooks cover every request: /__log (each non-hook request so far, as
+ * "METHOD /path"; /__log-reset clears it) and /__post-to-login?on=1 or 0 (every ajax post answers
+ * with a redirect to the login page, the session left as it was).
  *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
