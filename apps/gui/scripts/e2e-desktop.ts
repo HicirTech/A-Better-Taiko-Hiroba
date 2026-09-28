@@ -121,7 +121,7 @@ const platesAsked = async () =>
   (await (await fetch(`${HIROBA}/__titleplates`)).json()) as PlateAsked[];
 /**
  * The title plates asked for, once none more has been for a second: after a read, the plate is
- * asked for again, and answered from the run's memory, or fetched when its title is new.
+ * asked for again, and answered from the plates kept on disk, or fetched when its title is new.
  */
 const platesSettled = async () => {
   let last = -1;
@@ -459,7 +459,7 @@ try {
     (await textOf("#crowns-silver")) === "11 of 14" &&
     !(await text()).includes("ended");
   // Three reads more of the same title: the plate is asked for again after each, and answered
-  // from the run's memory, asking Hiroba nothing.
+  // from the plate kept on disk, asking Hiroba nothing.
   const platesAfterRereads = await platesSettled();
 
   // Every shape my page can take is a normal state: each renders in its place with the rest of
@@ -606,7 +606,7 @@ try {
     !(await shownNow("#pictures-unavailable")) &&
     afterOther.length - platesBeforeOther === 2;
   // Each title is a plate of its own, fetched once: back to the first title, and to the second
-  // again, the run's memory answers, and Hiroba is asked for nothing more.
+  // again, the plates kept on disk answer, and Hiroba is asked for nothing more.
   await fetch(`${HIROBA}/__variant?title=set`);
   await readAndWait(async () => (await textOf("#profile-title")) === "Title: サンプルの称号");
   await fetch(`${HIROBA}/__variant?title=other`);
