@@ -34,8 +34,6 @@ export interface Messages {
   "profile.fetchedAt": string;
   /** Shown in place of the title when the player wears none, a normal state. */
   "profile.noTitle": string;
-  /** Param: {region}, as the page writes it. */
-  "profile.region": string;
   /** Param: {dan}, the dan's name as Hiroba prints it, 五級 to 十段, read off my page's label. */
   "profile.dan": string;
   /** My page shows a dan label that did not read. Neutral: the rest of the page still read. */
@@ -61,29 +59,18 @@ export interface Messages {
   "pictures.unavailable": string;
   /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
   "pictures.code": string;
+  /** The heading of the panel's crown block, which follows the score ranks. */
   "crowns.heading": string;
   "crowns.silver": string;
   "crowns.gold": string;
   "crowns.donderful": string;
-  /** Silver, gold and donderful added up: each crown is exclusive, and each one is a clear. */
-  "crowns.clearedOrBetter": string;
-  /** Gold and donderful added up. */
-  "crowns.fullComboOrBetter": string;
   /**
-   * Neutral on purpose: what the panel covers is an inference, checked on one account only. It
-   * heads the crowns and the score ranks both, which the panel gives over the same charts.
+   * Under both of the panel's blocks: what the counts were checked against, and on how little.
+   * Site words kept as written.
    */
-  "panel.heading": string;
-  /** Param: {level}, the number on the panel's image, shown as data and never interpreted. */
-  "panel.level": string;
-  /** What the counts were checked against, and on how little. Site words kept as written. */
   "panel.footnote": string;
-  /** The score-rank ladder, under the panel heading beside the crowns. */
+  /** The heading of the panel's score-rank block, the first of its two. */
   "panel.ranks": string;
-  /** Param: {tier}, a tier's kanji as the rank icons show it: 粋, 雅 or 極. */
-  "panel.tierTotal": string;
-  /** Param: {tier}, the lowest tier the total counts (雅); its ranks and all above added up. */
-  "panel.tierOrBetter": string;
   /**
    * A count on the panel, secondary to its share: read out after the percent. Params: {count}, and
    * {total}, the sum of its block, both already formatted.
