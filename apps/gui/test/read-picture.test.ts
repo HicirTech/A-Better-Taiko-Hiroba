@@ -396,6 +396,22 @@ describe("createPictureReader, the title plate", () => {
     expect(await store.get(keyOf(other))).toEqual(titlePlatePng(other));
   });
 
+  test("answers from the store when the title my page shows at its turn is one kept", async () => {
+    const store = createMemoryPictureStore();
+    const other = "別のサンプル称号";
+    await store.put(
+      { scope: "player", player: OWNER, name: `v1/titleplate/bare/${encodeURIComponent(other)}` },
+      titlePlatePng(other),
+    );
+    const { reader, sent, setState } = setUp({ store, state: readState(), answer: plateOf(TITLE) });
+    // Asked for under a title not kept; a read that finds the kept one lands before its turn.
+    const reading = reader.read(PLATE);
+    setState(readState(other));
+    const read = await reading;
+    expect(sent).toEqual([]);
+    expect(read.ok && decode(read.value.src)).toEqual(titlePlatePng(other));
+  });
+
   test("a GIF, or a PNG too small or too tall, is a failure with codes that hold no number", async () => {
     const gif = setUp({
       state: readState(),

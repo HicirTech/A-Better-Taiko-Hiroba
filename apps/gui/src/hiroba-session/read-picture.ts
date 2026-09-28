@@ -296,6 +296,12 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         fetched -= 1;
         return failed(want.kind, request);
       }
+      // That title's plate may be kept already: then the store answers, and nothing is sent.
+      const view = await kept(request);
+      if (view !== null) {
+        fetched -= 1;
+        return ok(view);
+      }
       const signal = limits.timeoutMs === null ? undefined : AbortSignal.timeout(limits.timeoutMs);
       const sent = await transport.send(
         {
