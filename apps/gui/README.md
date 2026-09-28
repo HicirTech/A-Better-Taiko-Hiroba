@@ -3,8 +3,8 @@
 The desktop and Android app of A Better Taiko Hiroba. One React and Material UI web bundle runs in
 two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
 pages and reads your own page: one request per read, and one more for your dan label when the page
-shows one, since the page gives the dan only as that picture. It shows your nickname, title, region
-and dan on Hiroba's own title plate and dan label, your crowns with cleared and full-combo totals,
+shows one, since the page gives the dan only as that picture. It shows your nickname, title and
+dan on Hiroba's own title plate and dan label, your crowns with cleared and full-combo totals,
 the seven score ranks by tier, the season's どんメダル plate, and your favourite songs. On the
 desktop it can also change your costume (きせかえ), but only in a development run opened for it,
 until the first real write has been made and recorded (see
@@ -121,9 +121,9 @@ the run.
 ### The identity card
 
 The card at the top is drawn as my page draws its header: your title over Hiroba's own title plate,
-your nickname in its cream box and your dan's own label in the blue one, and your region under it,
-on Hiroba's yellow. The words stay text over the pictures, and the card keeps Hiroba's proportions
-at any width, up to half again its size. The label is the picture the read already fetches to read
+your nickname in its cream box and your dan's own label in the blue one, on the app's own surface
+rather than Hiroba's yellow. Your region is not shown. The words stay text over the pictures, and
+the card keeps Hiroba's proportions at any width, up to half again its size. The label is the picture the read already fetches to read
 your dan, so it costs nothing more. The plate is `imgsrc_titleplate.php` as your page writes it,
 with no query: Hiroba draws it for whoever holds the session. The platform fetches it with the
 session, only after a read of my page that shows one, checks that it is a PNG of a plate's size
