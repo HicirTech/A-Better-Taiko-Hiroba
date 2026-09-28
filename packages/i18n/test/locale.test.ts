@@ -54,6 +54,7 @@ describe("detectLocale", () => {
     expect(detectLocale(["en-US"])).toBe("en");
     expect(detectLocale(["ja-JP"])).toBe("ja");
     expect(detectLocale(["ko-KR", "ja"])).toBe("ja");
+    expect(detectLocale(["zh-CN"])).toBe("zh-Hans");
     expect(detectLocale(["xx"])).toBe("en");
   });
 });
