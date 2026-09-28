@@ -13,11 +13,14 @@
  *
  * It also draws the editor's preview, imgsrc_mydon.php, as Hiroba does for a session only: a small
  * PNG made from the query's eight values, so two sets never share a picture, and without a session
- * the 43-byte GIF Hiroba draws nothing with, at 200.
+ * the 43-byte GIF Hiroba draws nothing with, at 200. The items' thumbnails, imgsrc_kisekae.php, go
+ * the same way: a PNG of its own for each item and slot (scripts/mock-pictures.ts), for a session
+ * only.
  */
 import { encode } from "fast-png";
 
 import { NO_LABEL_GIF } from "./mock-dan-label";
+import { thumbnailPng } from "./mock-pictures";
 
 /** The eight values, in the order the page's form holds them after `_tckt`. */
 export const COSTUME_FIELDS = [
@@ -57,6 +60,19 @@ export const OWNED: Readonly<Record<1 | 2 | 3 | 4 | 5, readonly number[]>> = {
   4: [37, 21, 38],
   5: [126, 140, 143],
 };
+
+/**
+ * What /__items?many=1 adds to the きぐるみ slot: forty ids more, so the slot holds more rows than
+ * the app's grid shows at once, as real accounts' slots do (38 to 76 items).
+ */
+const MANY_MORE = Array.from({ length: 40 }, (_, at) => 200 + at);
+
+/** A thumbnail as it was asked for: the item, its slot, and the page the request named. */
+export interface ThumbnailRecord {
+  readonly cos: number;
+  readonly type: number;
+  readonly referer: string | null;
+}
 
 const SLOT_TABS = ["kigu", "head", "body", "make", "acce"] as const;
 const SLOT_LABELS = ["きぐるみ", "あたま", "からだ", "メイク", "ぷちキャラ"] as const;
@@ -164,6 +180,13 @@ export function createCostumeEditor() {
   /** The query of every preview asked for, in order, as it came. */
   const previews: string[] = [];
   let previewAnswer: "png" | "gif" = "png";
+  /** Every thumbnail asked for, in order, as it came. */
+  const thumbnails: ThumbnailRecord[] = [];
+  let thumbnailAnswer: "png" | "gif" | "html" = "png";
+  let many = false;
+  /** The items owned in `slot` now: the fixed lists, and forty more in the first after /__items. */
+  const ownedIn = (slot: 1 | 2 | 3 | 4 | 5): readonly number[] =>
+    slot === 1 && many ? [...OWNED[1], ...MANY_MORE] : OWNED[slot];
 
   const json = (value: unknown) => Response.json(value);
 
@@ -199,7 +222,7 @@ export function createCostumeEditor() {
       ).join("\n");
       const slotTabs = SLOT_TABS.map((tab, index) => {
         const slot = (index + 1) as 1 | 2 | 3 | 4 | 5;
-        const items = OWNED[slot]
+        const items = ownedIn(slot)
           .map(
             (id) =>
               `<li><a name="${id}"><img src="image/sp/640/ajax-loader_640.gif" srctmp="imgsrc_kisekae.php?cos=${id}&type=${slot}"></a></li>`,
@@ -245,6 +268,28 @@ ${slotTabs}
       return new Response(previewPng(new URLSearchParams(search)), {
         headers: { "content-type": "image/png" },
       });
+    },
+
+    /**
+     * imgsrc_kisekae.php: the thumbnail of item `cos` in slot `type`, for a session only. Without
+     * one, or after /__thumb?answer=gif, the 43-byte GIF; after /__thumb?answer=html, the site's
+     * error page, both at 200. The mock draws any item of any slot 1 to 5, owned or not: whether
+     * Hiroba draws one the account does not own has not been seen.
+     */
+    thumbnail(params: URLSearchParams, signedIn: boolean, referer: string | null): Response {
+      const cos = Number(params.get("cos") ?? "");
+      const type = Number(params.get("type") ?? "");
+      thumbnails.push({ cos, type, referer });
+      if (thumbnailAnswer === "html") {
+        return new Response(ERROR_SHELL_BODY, {
+          headers: { "content-type": "text/html; charset=utf-8" },
+        });
+      }
+      const drawable = Number.isInteger(cos) && cos > 0 && [1, 2, 3, 4, 5].includes(type);
+      if (!signedIn || thumbnailAnswer === "gif" || !drawable) {
+        return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
+      }
+      return new Response(thumbnailPng(type, cos), { headers: { "content-type": "image/png" } });
     },
 
     /** Keeps what a post to either endpoint carried, before anything answers it. */
@@ -354,8 +399,12 @@ ${slotTabs}
      * /__noop-save (the next valid save answers 0 and saves nothing),
      * /__expire-on-save (the next valid save saves, then every session ends), /__tickets (every
      * token the editor handed out), /__posts (every ajax post as it arrived; ?reset=1 clears),
-     * /__previews (the query of every preview asked for, in order; ?reset=1 clears) and
-     * /__preview?answer=png|gif (what every preview answers a session with from now on).
+     * /__previews (the query of every preview asked for, in order; ?reset=1 clears),
+     * /__preview?answer=png|gif (what every preview answers a session with from now on),
+     * /__thumbs (every thumbnail asked for, in order, as {cos, type, referer}; ?reset=1 clears),
+     * /__thumb?answer=png|gif|html (what every thumbnail answers a session with from now on) and
+     * /__items (the items each slot owns; ?many=1 adds forty to the きぐるみ slot, ?many=0 takes
+     * them away again).
      */
     hook(pathname: string, params: URLSearchParams): Response | null {
       switch (pathname) {
@@ -420,6 +469,27 @@ ${slotTabs}
             previewAnswer = answer;
           }
           return new Response(previewAnswer);
+        }
+        case "/__thumbs":
+          if (params.get("reset") === "1") {
+            thumbnails.length = 0;
+          }
+          return json(thumbnails);
+        case "/__thumb": {
+          const answer = params.get("answer");
+          if (answer === "png" || answer === "gif" || answer === "html") {
+            thumbnailAnswer = answer;
+          }
+          return new Response(thumbnailAnswer);
+        }
+        case "/__items": {
+          const wanted = params.get("many");
+          if (wanted === "1" || wanted === "0") {
+            many = wanted === "1";
+          }
+          return json(
+            Object.fromEntries(([1, 2, 3, 4, 5] as const).map((slot) => [slot, ownedIn(slot)])),
+          );
         }
         default:
           return null;
