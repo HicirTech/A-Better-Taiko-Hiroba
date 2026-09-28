@@ -11,13 +11,14 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CostumeDialog } from "./my-page/costume-dialog";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
 import { PanelCard } from "./my-page/panel-card";
 import { WriteOutcomeNotice } from "./my-page/write-outcome";
+import { createPictureLane } from "./pictures/picture-lane";
 import { FAILURE_MESSAGE } from "./read-failure-message";
 import type {
   EnabledWrite,
@@ -70,6 +71,11 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
   const [undoing, setUndoing] = useState(false);
   /** How the last undo ended, shown on the card until the next write or the next read. */
   const [undoOutcome, setUndoOutcome] = useState<WriteOutcomeView | null>(null);
+  /**
+   * The one lane every picture of Hiroba's comes through: one at a time, only what is on screen,
+   * each remembered for the run, and none while a write runs.
+   */
+  const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
 
   const refreshUndo = useCallback(async () => {
     const offered = await port.pendingUndo();
@@ -106,6 +112,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
   };
 
   const signOut = async () => {
+    lane.forget();
     await port.signOut();
     setScreen({ name: "signedOut", notice: null });
   };
@@ -160,12 +167,15 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setUndoing(true);
     setUndoOutcome(null);
     let outcome: WriteOutcomeView;
+    lane.hold();
     try {
       outcome = await port.undo("costume");
     } catch {
       // The call itself failed: how the undo ended is not known, and the card must not stay on
       // "Undoing…" with its buttons shut.
       outcome = { kind: "interrupted" };
+    } finally {
+      lane.release();
     }
     undoStarted.current = false;
     setUndoing(false);
@@ -320,6 +330,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
       {costumeOpen && screen.name === "profile" && costumeWrite !== undefined && (
         <CostumeDialog
           port={port}
+          lane={lane}
           i18n={i18n}
           verified={costumeWrite.verified}
           onClose={() => setCostumeOpen(false)}

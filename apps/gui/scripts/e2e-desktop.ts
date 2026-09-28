@@ -79,16 +79,19 @@ const SESSION_FILE = join(USER_DATA, "session.json");
 const savedCostume = async () =>
   asAppSet((await (await fetch(`${HIROBA}/__state`)).json()) as CostumeState);
 const PREVIEW = "GET /imgsrc_mydon.php";
+const THUMBNAIL = "GET /imgsrc_kisekae.php";
 /** Every request the mock saw since the last reset, as "METHOD /path", in the order they came. */
 const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
 /**
  * Whether `log` is the requests `before`, then a write's `run` with nothing inside it, and the
- * editor's pictures of the set anywhere else. The pictures go as the picks pause, not in step with
- * a write, but main queues them with the writes: one goes before a write or after it, never between
- * its requests.
+ * editor's pictures (of the set, and of its items) anywhere else. The pictures go as the picks
+ * pause and as items come on screen, not in step with a write, but main queues them with the
+ * writes: one goes before a write or after it, never between its requests.
  */
 const sentAsPlanned = (log: string[], before: string[], run: string[]) => {
-  const planned = log.flatMap((line, index) => (line === PREVIEW ? [] : [index]));
+  const planned = log.flatMap((line, index) =>
+    line === PREVIEW || line === THUMBNAIL ? [] : [index],
+  );
   return (
     same(
       planned.map((index) => log[index]),
@@ -114,6 +117,26 @@ const previewQuery = (set: Record<string, number>) =>
     .join("&");
 const resetLog = () => fetch(`${HIROBA}/__log-reset`);
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
+/**
+ * Whether `log` is `expected` once the items' thumbnails are left out, with none of them inside it:
+ * a thumbnail still on its way from an editor just closed may land before a write or after it.
+ */
+const sameBesideThumbnails = (log: string[], expected: string[]) => {
+  const kept = log.flatMap((line, index) => (line === THUMBNAIL ? [] : [index]));
+  const inside =
+    kept.length === 0 ? 0 : (kept[kept.length - 1] ?? 0) - (kept[0] ?? 0) + 1 - kept.length;
+  return (
+    same(
+      kept.map((index) => log[index]),
+      expected,
+    ) && inside <= 0
+  );
+};
+/**
+ * The window's HTML with every picture's bytes left out: a data: URL is base64 that could hold any
+ * short string by chance, so the searches below look only at what is not a picture.
+ */
+const withoutPictureBytes = (html: string) => html.replace(/data:[^"'\s)]*/g, "data:");
 /**
  * A colour change's requests: the title, then the editor — last before the posts, since my page's
  * forms issue a token too and would void the editor's — the pre-check, one save, the read-backs.
@@ -172,7 +195,9 @@ try {
     (await page.evaluate<boolean>(
       `["#crowns", "#ranks", "#panel-footnote"].every((part) => document.querySelector("#panel " + part) !== null)`,
     ));
-  const rendered = await page.evaluate<string>("document.documentElement.outerHTML");
+  const rendered = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
   results.tokenInRendererDom = rendered.includes(tokens[0] ?? "?");
   // The mock serves the 九段 label at first. Its URL carries a taiko number, as Hiroba's does: only
   // the dan read off it may reach the window, never the URL or the number.
@@ -267,7 +292,9 @@ try {
   // costs the dan alone: a neutral line and a code, the rest of the page as it was, still no URL.
   await fetch(`${HIROBA}/__variant?dan=14&label=gif`);
   requestsPerRead.push(await readShowing("#dan-unreadable"));
-  const afterGif = await page.evaluate<string>("document.documentElement.outerHTML");
+  const afterGif = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
   results.unreadableDanShownWithTheRest =
     (await textOf("#dan-unreadable")) === "Dan: couldn't read" &&
     (await textOf("#dan-code")) ===
@@ -370,7 +397,9 @@ try {
   results.previewBurstSendsOne =
     afterBurst.startsWith("data:image/png;base64,") &&
     same(await previewQueries(), [previewQuery({ ...START, colorFace: 15 })]);
-  const withPreview = await page.evaluate<string>("document.documentElement.outerHTML");
+  const withPreview = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
   results.previewAddressAndCookieKeptOutOfDom =
     !withPreview.includes("imgsrc") &&
     !withPreview.includes("cos1=") &&
@@ -447,7 +476,7 @@ try {
     (await waitFor(async () => (await cardOutcome()) ?? undefined)) === "applied" &&
     (await textOf("#profile #write-outcome")) === "Undone. Hiroba shows the costume as it was." &&
     same(await savedCostume(), START) &&
-    same(await requestLog(), WRITE_REQUESTS);
+    sameBesideThumbnails(await requestLog(), WRITE_REQUESTS);
   results.snackbarUndoOncePerPress = !snackbarOverTheEditor && secondPressShut;
 
   // A きぐるみ: the window warns, the four pieces come off, and one undo puts all eight back.
@@ -484,7 +513,7 @@ try {
   const trap = await bridgeChange({ ...START, costume1: 36 });
   results.trapRefusedUnsent =
     same(trap, { kind: "invalidTarget", field: "costume1" }) &&
-    same(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
+    sameBesideThumbnails(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
 
   // A picture asked for while a write waits on its pre-check waits for the whole write, read-back
   // and all: held there, it would otherwise go between the pre-check and the save.
@@ -503,7 +532,7 @@ try {
   results.previewWaitsOutAWrite =
     (await heldWrite).kind === "applied" &&
     (await previewDuringWrite) &&
-    same(await requestLog(), [...WRITE_REQUESTS, PREVIEW]);
+    sameBesideThumbnails(await requestLog(), [...WRITE_REQUESTS, PREVIEW]);
   await fetch(`${HIROBA}/__state?reset=1`);
 
   // A save that answers 0 and moves nothing reads as not applied, whatever it said.
@@ -555,7 +584,9 @@ try {
   await fetch(`${HIROBA}/__state?reset=1`);
   // No form token the mock handed out reaches the window.
   const handedOut = (await (await fetch(`${HIROBA}/__tickets`)).json()) as string[];
-  const windowNow = await page.evaluate<string>("document.documentElement.outerHTML");
+  const windowNow = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
   results.formTokensKeptOutOfDom =
     handedOut.length > 0 && !handedOut.some((ticket) => windowNow.includes(ticket));
 
