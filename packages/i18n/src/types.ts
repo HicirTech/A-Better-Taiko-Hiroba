@@ -1,5 +1,5 @@
 /** The locales the catalog carries, in the order a language picker lists them. */
-export const LOCALES = ["en", "ja", "zh-Hans"] as const;
+export const LOCALES = ["en", "ja", "zh-Hans", "zh-Hant"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
 
@@ -11,6 +11,7 @@ export const LOCALE_NAMES: Readonly<Record<Locale, string>> = {
   en: "English",
   ja: "日本語",
   "zh-Hans": "简体中文",
+  "zh-Hant": "繁體中文",
 };
 
 /**

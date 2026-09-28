@@ -1,9 +1,15 @@
 import { en } from "./messages/en";
 import { ja } from "./messages/ja";
 import { zhHans } from "./messages/zh-Hans";
+import { zhHant } from "./messages/zh-Hant";
 import { DEFAULT_LOCALE, type Locale, type MessageKey, type Messages } from "./types";
 
-const CATALOG: Readonly<Record<Locale, Messages>> = { en, ja, "zh-Hans": zhHans };
+const CATALOG: Readonly<Record<Locale, Messages>> = {
+  en,
+  ja,
+  "zh-Hans": zhHans,
+  "zh-Hant": zhHant,
+};
 
 export type TranslateParams = Readonly<Record<string, string | number>>;
 

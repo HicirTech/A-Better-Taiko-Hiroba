@@ -45,7 +45,7 @@ describe("the translator's formats", () => {
 
 describe("the catalog", () => {
   test("carries these locales, in the picker's order", () => {
-    expect([...LOCALES]).toEqual(["en", "ja", "zh-Hans"]);
+    expect([...LOCALES]).toEqual(["en", "ja", "zh-Hans", "zh-Hant"]);
   });
 
   test("names each locale in its own language", () => {
@@ -53,6 +53,7 @@ describe("the catalog", () => {
       "English",
       "日本語",
       "简体中文",
+      "繁體中文",
     ]);
   });
 });
