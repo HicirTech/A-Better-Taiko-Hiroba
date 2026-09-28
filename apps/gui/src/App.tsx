@@ -8,6 +8,7 @@ import {
   Snackbar,
   Stack,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -21,6 +22,7 @@ import { WriteOutcomeNotice } from "./my-page/write-outcome";
 import { FrameCorner } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
+import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFab } from "./read-again/read-again-fab";
 import { FAILURE_MESSAGE } from "./read-failure-message";
 import {
@@ -249,10 +251,12 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   }, [port, read]);
 
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
+  /** A touch-first screen reads again by a pull from the top of the page, not by the Fab. */
+  const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   /**
-   * Reads again, from the Fab, as the read on opening does. Never while a read runs, nor while the
-   * editor is open or an undo runs, so no read starts inside a write. The ref turns away a second
-   * ask that lands before the Fab is shut.
+   * Reads again, from the Fab or a pull, as the read on opening does. Never while a read runs, nor
+   * while the editor is open or an undo runs, so no read starts inside a write. The ref turns away
+   * a second ask that lands before the Fab is shut.
    */
   const canReadAgain = signedIn && !costumeOpen && !undoing;
   const readAgainStarted = useRef(false);
@@ -271,14 +275,18 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     <>
       {/* On the pages a read shows, from the first read on, spinning while one runs. */}
       {page !== "settings" && (signedIn || screen.name === "reading") && (
-        <FrameCorner>
-          <ReadAgainFab
-            reading={screen.name === "reading"}
-            canRead={canReadAgain}
-            onRead={readAgain}
-            i18n={i18n}
-          />
-        </FrameCorner>
+        <>
+          <FrameCorner>
+            <ReadAgainFab
+              reading={screen.name === "reading"}
+              canRead={canReadAgain}
+              touchFirst={touchFirst}
+              onRead={readAgain}
+              i18n={i18n}
+            />
+          </FrameCorner>
+          <PullToRead active={touchFirst} canRead={canReadAgain} onRead={readAgain} />
+        </>
       )}
       {page === "settings" ? (
         <SettingsPage

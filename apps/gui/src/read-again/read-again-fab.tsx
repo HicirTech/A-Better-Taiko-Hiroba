@@ -1,11 +1,18 @@
 import type { Translator } from "@abth/i18n";
 import { CircularProgress, Fab, SvgIcon, Tooltip } from "@mui/material";
 
+import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
+
 export interface ReadAgainFabProps {
   /** Whether a read runs: the Fab spins in place of its arrow. */
   readonly reading: boolean;
   /** Whether a read may start now: none running, and no write open or running. */
   readonly canRead: boolean;
+  /**
+   * Whether the screen is touch-first, where a pull reads again (PullToRead): the Fab is then drawn
+   * only while the keyboard is on it, and stays for screen readers, which cannot pull.
+   */
+  readonly touchFirst: boolean;
   readonly onRead: () => void;
   readonly i18n: Translator;
 }
@@ -14,7 +21,7 @@ export interface ReadAgainFabProps {
  * Read again, as a small Fab with a refresh arrow and its name in a tooltip, for the top right of a
  * page. It is shut while a read or a write runs, and spins while a read does.
  */
-export function ReadAgainFab({ reading, canRead, onRead, i18n }: ReadAgainFabProps) {
+export function ReadAgainFab({ reading, canRead, touchFirst, onRead, i18n }: ReadAgainFabProps) {
   const label = i18n.t("profile.readAgain");
   return (
     // None while it is shut: a disabled button sends no event to open or close it.
@@ -26,6 +33,7 @@ export function ReadAgainFab({ reading, canRead, onRead, i18n }: ReadAgainFabPro
         aria-label={label}
         disabled={!canRead}
         onClick={onRead}
+        sx={touchFirst ? { "&:not(.Mui-focusVisible)": VISUALLY_HIDDEN } : undefined}
       >
         {/* In the theme's colour, not the Fab's: shut, the Fab's own is too faint to see spin. */}
         {reading ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
