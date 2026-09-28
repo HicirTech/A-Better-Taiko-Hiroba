@@ -86,10 +86,12 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setScreen({ name: "reading" });
     const result = await port.readProfile();
     if (result.ok) {
-      // The plates may have changed with the title, the season or its progress: each is asked for
-      // again, and what was shown stays till it comes.
+      // The plates may have changed with the title, the season or its progress, and the portrait
+      // with a costume changed anywhere: each is asked for again, and what was shown stays till it
+      // comes. The platform says whether the portrait is fetched anew or answered as kept.
       lane.renew("titlePlate");
       lane.renew("medalPlate");
+      lane.renew("myDon");
       setWrites(await port.enabledWrites());
       await refreshUndo();
       setUndoOutcome(null);

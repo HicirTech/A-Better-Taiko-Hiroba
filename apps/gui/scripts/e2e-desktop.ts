@@ -97,11 +97,13 @@ const PREVIEW = "GET /imgsrc_mydon.php";
 const THUMBNAIL = "GET /imgsrc_kisekae.php";
 const TITLE_PLATE = "GET /imgsrc_titleplate.php";
 const TOKEN_PLATE = `GET ${MEDAL_PLATE}`;
+/** The My Don portrait, on the mock's picture host, which logs its requests with Hiroba's. */
+const MY_DON = "GET /imgsrc.php";
 /**
  * The pictures the window's lane asks for by itself, as they come on screen: the items' thumbnails
- * and, after each read of my page, the title plate and the どんメダル plate.
+ * and, after each read of my page, the title plate, the どんメダル plate and the My Don.
  */
-const LANE_PICTURES: readonly string[] = [THUMBNAIL, TITLE_PLATE, TOKEN_PLATE];
+const LANE_PICTURES: readonly string[] = [THUMBNAIL, TITLE_PLATE, TOKEN_PLATE, MY_DON];
 /** The どんメダル plates the app fetched this run, once none more has come for a second. */
 const medalPlatesSettled = async () => {
   let last = -1;

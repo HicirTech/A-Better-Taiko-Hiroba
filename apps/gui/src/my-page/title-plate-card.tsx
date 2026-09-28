@@ -3,10 +3,11 @@ import { Box, Chip, CircularProgress, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
-import type { PictureLane } from "../pictures/picture-lane";
+import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, ONE_LINE, VISUALLY_HIDDEN } from "./hiroba-px";
+import { MyDonPortrait } from "./my-don-portrait";
 
 /** Hiroba's header, #mydon_area: the plate is 290 pixels wide. */
 const PLATE_WIDTH = 290;
@@ -33,6 +34,11 @@ const OUTLINED = ["-1px -1px", "1px -1px", "-1px 1px", "1px 1px"]
   .map((offset) => `${offset} 0 #1a1a1a`)
   .join(", ");
 const PLATE: PictureWant = { kind: "titlePlate" };
+const MY_DON: PictureWant = { kind: "myDon" };
+
+/** Why a picture did not come, as the lane has it, or null while it has none or it came. */
+const failureOf = (answer: PictureAnswer | undefined): string | null =>
+  answer !== undefined && "failure" in answer ? answer.failure : null;
 
 export interface TitlePlateCardProps {
   readonly profile: ProfileView;
@@ -48,18 +54,26 @@ export interface TitlePlateCardProps {
  * stands in its place, and the card reads the same.
  *
  * The plate sits on the app's own surface, without the yellow Hiroba draws around it, and the region
- * is left off: the profile keeps it, the card does not (the user's calls, 2026-09-28).
+ * is left off: the profile keeps it, the card does not (the user's calls, 2026-09-28). The player's
+ * マイどん stands under the plate, as Hiroba's header shows it.
  *
  * The dan is read off its label, which is shown as it is, and named in text for screen readers. A
- * label that did not read says so under the plate, with its code, as before.
+ * label that did not read says so under the plate, with its code, as before. A picture that did
+ * not come says so under the card, with the first one's code.
  */
 export function TitlePlateCard({ profile, lane, i18n }: TitlePlateCardProps) {
   const { t } = i18n;
   const { dan } = profile;
   const plateBox = useRef<HTMLDivElement>(null);
+  const portraitBox = useRef<HTMLDivElement>(null);
   const answer = usePicture(lane, PLATE, plateBox, { root: null, rootMargin: "0px", order: 0 });
+  const portrait = usePicture(lane, MY_DON, portraitBox, {
+    root: null,
+    rootMargin: "0px",
+    order: 1,
+  });
   const plate = answer !== undefined && "view" in answer ? answer.view : null;
-  const failure = answer !== undefined && "failure" in answer ? answer.failure : null;
+  const failure = failureOf(answer) ?? failureOf(portrait);
 
   return (
     <Stack spacing={1} sx={{ alignItems: "center" }}>
@@ -101,6 +115,7 @@ export function TitlePlateCard({ profile, lane, i18n }: TitlePlateCardProps) {
           <Title title={profile.title} i18n={i18n} />
           <NameRow profile={profile} i18n={i18n} />
         </Box>
+        <MyDonPortrait ref={portraitBox} answer={portrait} i18n={i18n} />
       </Box>
       {dan !== null && "unreadable" in dan && (
         <Stack spacing={0.5} sx={{ alignItems: "center" }}>
