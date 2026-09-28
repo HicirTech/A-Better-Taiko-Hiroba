@@ -5,5 +5,6 @@
  * it into words. Failure kinds from the core map to keys one to one, so a new kind that nobody
  * worded is a type error in the app that maps it.
  */
+export { detectLocale, isLocale, localeOfTag, matchLocale } from "./locale";
 export { createTranslator, type TranslateParams, type Translator } from "./translator";
 export { DEFAULT_LOCALE, LOCALES, type Locale, type MessageKey, type Messages } from "./types";
