@@ -7,6 +7,12 @@ import type { Messages } from "../types";
 export const zhHans: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.picker": "语言：{name}",
+  "nav.overview": "概览",
+  "nav.favorites": "收藏",
+  "nav.settings": "设置",
+  "nav.menu": "菜单",
+  "settings.language": "语言",
+  "settings.account": "账号",
   "signIn.intro":
     "使用万代南梦宫 ID 登录，即可读取你在ドンだーひろば的个人资料。登录页面由广场官方提供，本应用不会接触你的密码。",
   "signIn.action": "登录广场",

@@ -4,6 +4,12 @@ import type { Messages } from "../types";
 export const ja: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.picker": "言語：{name}",
+  "nav.overview": "概要",
+  "nav.favorites": "お気に入り",
+  "nav.settings": "設定",
+  "nav.menu": "メニュー",
+  "settings.language": "言語",
+  "settings.account": "アカウント",
   "signIn.intro":
     "バンダイナムコIDでログインすると、ドンだーひろばのプロフィールを読み込めます。ログイン画面はひろば公式のもので、このアプリがパスワードを見ることはありません。",
   "signIn.action": "ドンだーひろばにログイン",

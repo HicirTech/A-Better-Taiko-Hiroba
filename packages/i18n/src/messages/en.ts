@@ -3,6 +3,12 @@ import type { Messages } from "../types";
 export const en: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.picker": "Language: {name}",
+  "nav.overview": "Overview",
+  "nav.favorites": "Favourites",
+  "nav.settings": "Settings",
+  "nav.menu": "Menu",
+  "settings.language": "Language",
+  "settings.account": "Account",
   "signIn.intro":
     "Sign in with your Bandai Namco ID to read your Donder Hiroba profile. The sign-in page is Hiroba's own; this app never sees your password.",
   "signIn.action": "Sign in to Hiroba",

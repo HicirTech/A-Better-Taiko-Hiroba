@@ -24,10 +24,24 @@ export const LOCALE_NAMES: Readonly<Record<Locale, string>> = {
 export interface Messages {
   "app.title": string;
   /**
-   * The app bar's language picker, for screen readers and as its tooltip. Param: {name}, the
-   * language the app is in, in its own words (LOCALE_NAMES).
+   * Settings' language button, for screen readers and as its tooltip. Param: {name}, the language
+   * the app is in, in its own words (LOCALE_NAMES).
    */
   "language.picker": string;
+  /**
+   * The window's pages, as its navigation names them: the side panel on a wide window, the menu on
+   * a narrow one. Each also names its page for screen readers, as its heading.
+   */
+  "nav.overview": string;
+  /** The page of the 大好きな曲 and the お気に入り folder. */
+  "nav.favorites": string;
+  "nav.settings": string;
+  /** The narrow window's menu button, which opens the pages: its name for screen readers. */
+  "nav.menu": string;
+  /** The heading of Settings' language section. */
+  "settings.language": string;
+  /** The heading of Settings' account section: signing out, and what staying signed in keeps. */
+  "settings.account": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;
