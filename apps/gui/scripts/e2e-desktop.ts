@@ -3,8 +3,9 @@
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
  * filled favourites folder, the identity card on Hiroba's title plate (its text over it, one plate
  * per title, one that does not come, the plate kept across sign-outs and launches), the どんメダル
- * plate (its words over it, one plate per season and state, one that does not come, its id never
- * in the window or on disk, the plate kept across sign-outs and launches), the editor's
+ * plate (asked for only on screen, its words over it, one plate per season and state, one that
+ * does not come, its id never in the window or on disk, the plate kept across sign-outs and
+ * launches), the editor's
  * picture of the set (on opening, after a pick, one request for a burst of picks, one that does not
  * come, none once shut, none inside a write), its items' thumbnails (only those seen, each once,
  * kept across sign-outs and launches, one that does not come, one not offered, shapes the bridge
@@ -645,23 +646,52 @@ try {
     afterTitles.length === afterOther.length &&
     askedAsMyPage(afterTitles);
 
-  // The どんメダル plate, asked for once its card is on screen, so each read scrolls to it. Tried on
-  // a season no read has shown yet, so every plate below is new to the device: first one that does
-  // not come, the GIF, then the same one again, which shows under the card's words.
-  const readMedalShowing = async (ready: () => Promise<boolean>) => {
+  // The どんメダル plate, asked for only once its card is on screen, so each read scrolls to it.
+  // Tried on a season no read has shown yet, so every plate below is new to the device: first one
+  // that does not come, the GIF, then the same one again, which shows under the card's words.
+  const readMedal = async () => {
     await click("#read-again");
     await Bun.sleep(300);
     await until("Read at");
+  };
+  /** Scrolls the どんメダル card on screen, waits for `ready`, and counts the plates fetched. */
+  const showMedal = async (ready: () => Promise<boolean>) => {
     await page.evaluate(`document.querySelector("#medal").scrollIntoView({ block: "center" })`);
     await waitForSeen(page, async () => (await ready()) || undefined);
     return medalPlatesSettled();
+  };
+  const readMedalShowing = async (ready: () => Promise<boolean>) => {
+    await readMedal();
+    return showMedal(ready);
   };
   const medalPlateSrc = () => attribute("#medal-plate-image", "src");
   medalIds.push(medalIdShown());
   await fetch(`${HIROBA}/__tokenplate?answer=gif`);
   await fetch(`${HIROBA}/__medal?state=collecting&season=2`);
   const medalPlatesBefore = await medalPlatesSettled();
-  const medalPlatesPerRead = [await readMedalShowing(() => shownNow("#medal-plate-code"))];
+  // A read lands at the top of the page, where the 960×720 window already shows the plate's top
+  // edge; in one this short, the card is below the fold: the new season shows, and no plate is
+  // asked for until the card is scrolled on screen, then one.
+  const SHORT_VIEWPORT_PX = 400;
+  await page.send("Emulation.setDeviceMetricsOverride", {
+    width: 0,
+    height: SHORT_VIEWPORT_PX,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
+  await readMedal();
+  const newSeasonBelowFold =
+    (await textOf("#medal-name")) === "どんメダル2026冬" &&
+    (await page.evaluate<boolean>(
+      `document.querySelector("#medal-plate").getBoundingClientRect().top >= innerHeight`,
+    ));
+  const medalPlatesOffScreen = await medalPlatesSettled();
+  const medalPlatesPerRead = [await showMedal(() => shownNow("#medal-plate-code"))];
+  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  results.medalPlateAskedOnlyOnScreen =
+    newSeasonBelowFold &&
+    medalPlatesOffScreen === medalPlatesBefore &&
+    medalPlatesPerRead[0] === medalPlatesBefore + 1;
   medalIds.push(medalIdShown());
   // Missing, the plate is a pale pill of its shape, and every word on it is still there as text.
   results.medalPlateMissingReadsAsText =
@@ -1611,17 +1641,16 @@ async function connect(url: string) {
       waiting.delete(message.id);
     }
   });
+  /** Sends one DevTools command; resolves with the value it evaluated to, if it evaluated one. */
+  const send = <T = unknown>(method: string, params: Record<string, unknown>): Promise<T> => {
+    const id = nextId++;
+    socket.send(JSON.stringify({ id, method, params }));
+    return new Promise((resolve) => waiting.set(id, resolve as (value: unknown) => void));
+  };
   return {
+    send,
     evaluate<T = unknown>(expression: string): Promise<T> {
-      const id = nextId++;
-      socket.send(
-        JSON.stringify({
-          id,
-          method: "Runtime.evaluate",
-          params: { expression, returnByValue: true, awaitPromise: true },
-        }),
-      );
-      return new Promise((resolve) => waiting.set(id, resolve as (value: unknown) => void));
+      return send<T>("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
     },
   };
 }
