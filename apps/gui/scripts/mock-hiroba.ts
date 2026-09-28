@@ -17,12 +17,13 @@
  * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), and two that shape
  * the next my page: /__medal?state=none|collecting|complete|odd (the どんメダル plate: absent, a
  * count, COMPLETE, or a name alone, a shape no page has shown) and
- * /__variant?dan=0|1…15&label=png|gif&title=empty|set|other&region=unset|set&favorites=unset|set
- * &panel=counts|zeros (each optional; dan=0 writes the name row flat, as other players' dan-less
- * profiles do, and dan=N shows the label of dan N, 14 (九段) at first; label=gif answers the label
- * with the 43-byte 1×1 GIF Hiroba sends when it has nothing to draw; title=other wears a second
- * title; favorites=set sets the 大好きな曲 and fills the お気に入り folder with three songs, two of
- * them sharing a title; panel=zeros puts 虹極 at 0 and every crown at 0).
+ * /__variant?dan=0|1…15&label=png|gif&title=empty|set|other|third&region=unset|set
+ * &favorites=unset|set&panel=counts|zeros (each optional; dan=0 writes the name row flat, as other
+ * players' dan-less profiles do, and dan=N shows the label of dan N, 14 (九段) at first; label=gif
+ * answers the label with the 43-byte 1×1 GIF Hiroba sends when it has nothing to draw; title=other
+ * and title=third wear a second and a third title; favorites=set sets the 大好きな曲 and fills the
+ * お気に入り folder with three songs, two of them sharing a title; panel=zeros puts 虹極 at 0 and
+ * every crown at 0).
  *
  * My page shows its title plate, imgsrc_titleplate.php with no query, as #mydon_area's first child,
  * as Hiroba's does. As on Hiroba, the plate is drawn for a session only: a PNG of its own for each
@@ -117,7 +118,7 @@ const variant = {
   /** 0 for no dan, or the dan, 1 to 15, whose label my page shows. */
   dan: 14,
   label: "png" as "png" | "gif",
-  title: "set" as "set" | "other" | "empty",
+  title: "set" as "set" | "other" | "third" | "empty",
   region: true,
   favorites: false,
   /** The panel's counts: PANEL_COUNTS, or PANEL_ZEROS. */
@@ -125,7 +126,12 @@ const variant = {
 };
 
 /** The title my page shows in each title variant; each is a plate of its own. */
-const TITLES = { set: "サンプルの称号", other: "別のサンプル称号", empty: "" } as const;
+const TITLES = {
+  set: "サンプルの称号",
+  other: "別のサンプル称号",
+  third: "三つ目のサンプル称号",
+  empty: "",
+} as const;
 /** What the title plate answers, as /__titleplate last set it. */
 let titlePlateAnswer: "png" | "blank" | "gif" = "png";
 /** A title plate as it was asked for: its query, the page the request named, and a session. */
@@ -368,7 +374,7 @@ Bun.serve({
           variant.label = label;
         }
         const title = searchParams.get("title");
-        if (title === "set" || title === "other" || title === "empty") {
+        if (title === "set" || title === "other" || title === "third" || title === "empty") {
           variant.title = title;
         }
         variant.region = flag("region", "set") ?? variant.region;
