@@ -92,7 +92,8 @@ export async function readOwnProfile(
 /**
  * What of my page crosses to the interface. Every field is copied by name, so nothing the parser
  * adds later crosses without a decision here: not the taiko number, and no URL, the dan label's
- * least of all, since it carries the taiko number in its query. Only the dan read off it crosses.
+ * least of all, since it carries the taiko number in its query. Only the dan read off it crosses,
+ * with the label's bytes as its picture: a data: URL, which names no address.
  */
 function profileView(profile: Profile, dan: DanView | null): ProfileView {
   const { crownCounts, rankCounts, countLevel } = profile.summary;

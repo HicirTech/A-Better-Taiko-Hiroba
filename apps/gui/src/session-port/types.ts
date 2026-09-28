@@ -28,15 +28,21 @@ export type SignInOutcome =
 /**
  * The dan my page's label names: its name as Hiroba prints it, 五級 to 十段. A label that did not
  * read is `unreadable`, with codes a user can copy into a report: why, and what came back.
+ *
+ * `picture` is the label itself, the very bytes the dan was read off, for the interface to show as
+ * Hiroba does: so it can never disagree with the name beside it, and costs no request of its own.
+ * Null when what came back was not a PNG of a label's size from the label's own address; a label
+ * that did not read can still carry one.
  */
 export type DanView =
-  | { readonly name: string }
-  | { readonly unreadable: true; readonly code: string };
+  | { readonly name: string; readonly picture: PictureView | null }
+  | { readonly unreadable: true; readonly code: string; readonly picture: PictureView | null };
 
 /**
  * What the interface shows of a profile: plain data that survives JSON. The taiko number is
  * deliberately not part of it, and neither is any URL — the dan label's carries the taiko number,
- * so only the dan read off it crosses.
+ * so only the dan read off it crosses, with the label's bytes. A `data:` URL here is a picture, not
+ * an address: it names nothing and fetches nothing.
  */
 export interface ProfileView {
   readonly nickname: string;
