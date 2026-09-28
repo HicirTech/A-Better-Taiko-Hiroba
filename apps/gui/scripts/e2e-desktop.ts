@@ -471,7 +471,7 @@ try {
   await fetch(`${HIROBA}/__medal?state=collecting`);
   await fetch(`${HIROBA}/__variant?dan=0&title=empty&region=unset`);
   requestsPerRead.push(await readShowing("#no-title"));
-  results.medalCountShown = (await textOf("#medal-count")) === "Medals: 12";
+  results.medalCountShown = (await textOf("#medal-count")) === "Collected: 12";
   results.danLessRowRead =
     (await text()).includes("サンプルどん") &&
     (await textOf("#dan")) === null &&

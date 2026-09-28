@@ -11,7 +11,7 @@ describe("createTranslator", () => {
 
   test("fills a number parameter, zero included", () => {
     const { t } = createTranslator("en");
-    expect(t("medal.count", { count: 0 })).toBe("Medals: 0");
+    expect(t("medal.count", { count: 0 })).toBe("Collected: 0");
   });
 
   test("keeps a site word it is given as written", () => {
@@ -73,6 +73,7 @@ const paramsOf = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((match) 
 /** Messages that are Hiroba's own words, or the app's name: every language shows them as written. */
 const AS_WRITTEN: readonly MessageKey[] = [
   "app.title",
+  "medal.heading",
   "medal.complete",
   "costume.title",
   "costume.tab.colours",
@@ -93,6 +94,9 @@ const AS_WRITTEN: readonly MessageKey[] = [
 /** Site words a message quotes, which every language quotes as the site writes them. */
 const QUOTED: Readonly<Partial<Record<MessageKey, readonly string[]>>> = {
   "panel.footnote": ["おに＋おに裏", "双打"],
+  "medal.none": ["どんメダル"],
+  "medal.unrecognised": ["どんメダル"],
+  "costume.preview.alt": ["マイどん"],
   "costume.kigurumiWarning": ["きぐるみ", "あたま", "からだ", "メイク", "ぷちキャラ"],
   "write.needsConfirmation": [
     "これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
