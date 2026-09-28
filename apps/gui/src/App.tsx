@@ -104,7 +104,12 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     }
   }, [port, lane, refreshUndo]);
 
+  /**
+   * A sign-in starts the pictures afresh: whoever signs in may be another player, and when Hiroba
+   * ended the last session itself, no sign-out forgot them.
+   */
   const signIn = async () => {
+    lane.forget();
     setScreen({ name: "signingIn" });
     const outcome = await port.signIn();
     if (outcome.kind === "signedIn") {

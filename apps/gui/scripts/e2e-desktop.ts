@@ -15,7 +15,8 @@
  * refuses, none inside a write), the pictures on disk named by hashes alone, costume
  * writes (a colour and a きぐるみ, each undone, the #22 trap, a save that moves nothing,
  * pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, and
- * a session that ends before and after a save), a lost session, cancel, a sign-in sent off both
+ * a session that ends before and after a save), a lost session (none of its pictures shown at the
+ * next sign-in), cancel, a sign-in sent off both
  * sites, the language (the system's at first, a pick that takes hold at once and is kept, and one
  * made on the profile, which asks Hiroba nothing), a reopen that keeps the session and the undo,
  * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
@@ -1414,8 +1415,18 @@ try {
   await fetch(`${HIROBA}/__offsite?on=0`);
   results.refusalNamed = true;
 
+  // Hiroba ended the session above, so no sign-out forgot the window's pictures: a sign-in does, as
+  // whoever signs in may be another player. The card's first frame shows none of the last session's,
+  // and the pictures come after it.
+  await page.evaluate(
+    `(() => { window.firstCard = null; const observer = new MutationObserver(() => { if (document.querySelector("#profile") === null) return; window.firstCard = ["#title-plate-image", "#my-don-image"].map((selector) => document.querySelector(selector) !== null); observer.disconnect(); }); observer.observe(document.body, { childList: true, subtree: true }); })()`,
+  );
   await click("#sign-in");
   await until("サンプルどん");
+  await waitForSeen(page, async () => (await exists("#my-don-image")) || undefined);
+  results.signInForgetsThePictures =
+    same(await page.evaluate("window.firstCard"), [false, false]) &&
+    (await exists("#title-plate-image"));
   const kept = (await (await fetch(`${HIROBA}/__last-token`)).text()).trim();
   tokens.push(kept);
   // Kept on disk for the next launch: the user chose staying signed in over a memory-only session.

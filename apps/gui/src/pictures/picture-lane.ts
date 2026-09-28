@@ -61,7 +61,7 @@ export interface PictureLane {
    * the answer comes, so nothing flickers. One that did not come is forgotten.
    */
   renew(kind: PictureWant["kind"]): void;
-  /** Forgets everything, and sends nothing asked for before: at sign-out. */
+  /** Forgets everything, and sends nothing asked for before: at sign-out, and at each sign-in. */
   forget(): void;
   /** Calls `listener` whenever what `peek` answers may have changed. */
   subscribe(listener: () => void): () => void;
