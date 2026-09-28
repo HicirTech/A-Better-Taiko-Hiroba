@@ -409,6 +409,36 @@ try {
     results.twoRequestsWithDanOneWithout === true && results.danLabelShownAsPicture === true;
   await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set&favorites=unset`);
 
+  // Counts of 0, common on real accounts: 虹極 at 0 in a block that is not, and a crown block that
+  // sums to 0. Every item is still listed, at 0.0%; only those above 0 take a part of a bar, and a
+  // block with none shows its empty track, which a block with parts does not.
+  await fetch(`${HIROBA}/__variant?panel=zeros`);
+  await click("#read-again");
+  await waitFor(async () => ((await textOf("#crowns-silver")) === "0 of 0" ? true : undefined));
+  const ZERO_RANK_SHARES: readonly Share[] = [
+    ["虹極", "0.0%", 0],
+    ["紫雅", "12.1%", 12],
+    ["桃雅", "25.3%", 25],
+    ["金雅", "31.3%", 31],
+    ["銀粋", "18.2%", 18],
+    ["銅粋", "9.1%", 9],
+    ["白粋", "4.0%", 4],
+  ];
+  const ZERO_CROWN_SHARES: readonly Share[] = CROWN_SHARES.map(([name]) => [name, "0.0%", 0]);
+  const trackOf = (bar: string) =>
+    page.evaluate<string>(
+      `getComputedStyle(document.querySelector(${JSON.stringify(bar)})).backgroundColor`,
+    );
+  const NO_TRACK = "rgba(0, 0, 0, 0)";
+  results.panelZerosShown =
+    same(await allOf("#ranks li", "textContent"), legendOf(ZERO_RANK_SHARES, 99)) &&
+    same(await allOf("#ranks-bar > *", "title"), barOf(ZERO_RANK_SHARES.slice(1), 99)) &&
+    same(await allOf("#crowns li", "textContent"), legendOf(ZERO_CROWN_SHARES, 0)) &&
+    (await allOf("#crowns-bar > *", "title")).length === 0 &&
+    (await trackOf("#crowns-bar")) !== NO_TRACK &&
+    (await trackOf("#ranks-bar")) === NO_TRACK;
+  await fetch(`${HIROBA}/__variant?panel=counts`);
+
   // A plate that does not come, here the GIF Hiroba draws nothing with, for a title not yet
   // fetched: the plain band stands in, one line under the card says so with its code, and every
   // word of the card is as it was. The next read asks for it once more, and it shows.

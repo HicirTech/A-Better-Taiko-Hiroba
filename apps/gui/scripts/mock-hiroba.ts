@@ -18,10 +18,11 @@
  * the next my page: /__medal?state=none|collecting|complete|odd (the どんメダル plate: absent, a
  * count, COMPLETE, or a name alone, a shape no page has shown) and
  * /__variant?dan=0|1…15&label=png|gif&title=empty|set|other&region=unset|set&favorites=unset|set
- * (each optional; dan=0 writes the name row flat, as other players' dan-less profiles do, and dan=N
- * shows the label of dan N, 14 (九段) at first; label=gif answers the label with the 43-byte 1×1
- * GIF Hiroba sends when it has nothing to draw; title=other wears a second title; favorites=set
- * sets the 大好きな曲 and fills the お気に入り folder with three songs, two of them sharing a title).
+ * &panel=counts|zeros (each optional; dan=0 writes the name row flat, as other players' dan-less
+ * profiles do, and dan=N shows the label of dan N, 14 (九段) at first; label=gif answers the label
+ * with the 43-byte 1×1 GIF Hiroba sends when it has nothing to draw; title=other wears a second
+ * title; favorites=set sets the 大好きな曲 and fills the お気に入り folder with three songs, two of
+ * them sharing a title; panel=zeros puts 虹極 at 0 and every crown at 0).
  *
  * My page shows its title plate, imgsrc_titleplate.php with no query, as #mydon_area's first child,
  * as Hiroba's does. As on Hiroba, the plate is drawn for a session only: a PNG of its own for each
@@ -119,6 +120,8 @@ const variant = {
   title: "set" as "set" | "other" | "empty",
   region: true,
   favorites: false,
+  /** The panel's counts: PANEL_COUNTS, or PANEL_ZEROS. */
+  panel: "counts" as "counts" | "zeros",
 };
 
 /** The title my page shows in each title variant; each is a plate of its own. */
@@ -128,16 +131,32 @@ let titlePlateAnswer: "png" | "blank" | "gif" = "png";
 /** A title plate as it was asked for: its query, the page the request named, and a session. */
 const titlePlates: { query: string; referer: string | null; session: boolean }[] = [];
 
-/** The count in each score rank, 8 down to 2: every bucket non-zero, so each bar has a length. */
-const RANK_COUNTS: readonly [number, number][] = [
-  [8, 3],
-  [7, 12],
-  [6, 25],
-  [5, 31],
-  [4, 18],
-  [3, 9],
-  [2, 4],
-];
+/** The panel's counts: each score rank's, 8 down to 2, and each crown's, silver, gold, donderful. */
+interface PanelCounts {
+  readonly ranks: readonly (readonly [rank: number, count: number])[];
+  readonly crowns: readonly [silver: number, gold: number, donderful: number];
+}
+/** Every count non-zero, so each part of each bar has a length. */
+const PANEL_COUNTS: PanelCounts = {
+  ranks: [
+    [8, 3],
+    [7, 12],
+    [6, 25],
+    [5, 31],
+    [4, 18],
+    [3, 9],
+    [2, 4],
+  ],
+  crowns: [11, 2, 1],
+};
+/**
+ * Counts of 0, common on real accounts: 虹極 at 0 in a block that is not, and a crown block that
+ * sums to 0.
+ */
+const PANEL_ZEROS: PanelCounts = {
+  ranks: PANEL_COUNTS.ranks.map(([rank, count]) => [rank, rank === 8 ? 0 : count] as const),
+  crowns: [0, 0, 0],
+};
 
 /** The plate in each state; the names and the count are placeholders, not a real account's. */
 const MEDAL_PLATE: Readonly<Record<MedalState, string>> = {
@@ -164,6 +183,8 @@ function myPage(): string {
         .map((title) => `<li><span class="songName songNameFontnamco">${title}</span></li>`)
         .join("")
     : "";
+  const panel = variant.panel === "zeros" ? PANEL_ZEROS : PANEL_COUNTS;
+  const [silver, gold, donderful] = panel.crowns;
   return `
 <div id="mydon_area">
   <img src="imgsrc_titleplate.php" style="width: 100%;margin-bottom: -24px;position:relative;z-index:0;">
@@ -172,10 +193,10 @@ function myPage(): string {
   <div><div class="detail"><p>国・地域 ：${variant.region ? "サンプル" : "未設定"}</p><p>太鼓番：000000000000</p></div>
     <div class="mydon_image"><img class="customd_mydon" src="data:,"></div></div>
   <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
-    ${RANK_COUNTS.map(([rank, count]) => `<div class="best_rank_score_${rank} total_panel_display">${count}</div>`).join("")}
-    <div class="silver_crown_count total_panel_crown_display">11</div>
-    <div class="gold_crown_count total_panel_crown_display">2</div>
-    <div class="donderful_crown_count total_panel_crown_display">1</div></div>
+    ${panel.ranks.map(([rank, count]) => `<div class="best_rank_score_${rank} total_panel_display">${count}</div>`).join("")}
+    <div class="silver_crown_count total_panel_crown_display">${silver}</div>
+    <div class="gold_crown_count total_panel_crown_display">${gold}</div>
+    <div class="donderful_crown_count total_panel_crown_display">${donderful}</div></div>
   ${MEDAL_PLATE[medalState]}
 </div>
 <div class="favoriteSong"><h2 class="subtitleMypage">大好きな曲</h2><div class="mypageInfoArea">
@@ -352,6 +373,10 @@ Bun.serve({
         }
         variant.region = flag("region", "set") ?? variant.region;
         variant.favorites = flag("favorites", "set") ?? variant.favorites;
+        const panel = searchParams.get("panel");
+        if (panel === "counts" || panel === "zeros") {
+          variant.panel = panel;
+        }
         return Response.json(variant);
       }
       case "/__titleplate": {
