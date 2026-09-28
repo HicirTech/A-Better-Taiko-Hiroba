@@ -211,33 +211,47 @@ try {
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
-  results.profileShown = (await textOf("#crowns-silver")) === "11";
-  // What the panel card adds up from the mock's fixed counts: crowns 11, 2 and 1, and ranks 8 down
-  // to 2 at 3, 12, 25, 31, 18, 9 and 4. Each total's id names the ranks it adds up.
-  const panelTotals: Record<string, string> = {
-    "#crowns-cleared": "14",
-    "#crowns-full-combo": "3",
-    "#ranks-total-2-3-4": "31",
-    "#ranks-total-5-6-7": "68",
-    "#ranks-total-8": "3",
-    "#ranks-total-5-6-7-8": "71",
-    "#panel-level": "panel 5",
-  };
-  const shownTotals: Record<string, string | null> = {};
-  for (const selector of Object.keys(panelTotals)) {
-    shownTotals[selector] = await textOf(selector);
-  }
-  results.panelTotalsShown =
-    JSON.stringify(shownTotals) === JSON.stringify(panelTotals) &&
-    (await page.evaluate<string | null>(
-      `document.querySelector("#ranks-total-5-6-7-8")?.previousElementSibling?.textContent ?? null`,
-    )) === "雅 tier or better";
-  // The crowns cover the panel's charts only, so they sit under its heading and footnote with the
-  // ranks, not in a card of their own that reads as every chart the account has cleared.
-  results.crownsUnderPanelNote =
-    (await textOf("#panel h2")) === "Hiroba's overall panel" &&
+  results.profileShown = (await textOf("#crowns-silver")) === "11 of 14";
+  // The panel drawn as GitHub's "Languages" box (the user's call, 2026-09-28), from the mock's fixed
+  // counts: ranks 8 down to 2 at 3, 12, 25, 31, 18, 9 and 4, and crowns 11, 2 and 1. Each legend
+  // item is a name, its share of its block and, for screen readers, its count; each part of a bar
+  // names its count in its title. The ranks best first, the crowns silver, gold and donderful.
+  type Share = readonly [name: string, percent: string, count: number];
+  const RANK_SHARES: readonly Share[] = [
+    ["虹極", "2.9%", 3],
+    ["紫雅", "11.8%", 12],
+    ["桃雅", "24.5%", 25],
+    ["金雅", "30.4%", 31],
+    ["銀粋", "17.6%", 18],
+    ["銅粋", "8.8%", 9],
+    ["白粋", "3.9%", 4],
+  ];
+  const CROWN_SHARES: readonly Share[] = [
+    ["Silver", "78.6%", 11],
+    ["Gold", "14.3%", 2],
+    ["Donderful", "7.1%", 1],
+  ];
+  const legendOf = (shares: readonly Share[], total: number) =>
+    shares.map(([name, percent, count]) => `${name} ${percent} ${count} of ${total}`);
+  const barOf = (shares: readonly Share[], total: number) =>
+    shares.map(([name, , count]) => `${name}: ${count} of ${total}`);
+  const allOf = (selector: string, property: "textContent" | "title") =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll(${JSON.stringify(selector)})].map((part) => part.${property})`,
+    );
+  results.panelSharesShown =
+    same(await allOf("#ranks li", "textContent"), legendOf(RANK_SHARES, 102)) &&
+    same(await allOf("#crowns li", "textContent"), legendOf(CROWN_SHARES, 14)) &&
+    same(await allOf("#ranks-bar > *", "title"), barOf(RANK_SHARES, 102)) &&
+    same(await allOf("#crowns-bar > *", "title"), barOf(CROWN_SHARES, 14)) &&
+    (await textOf("#rank-5-percent")) === "30.4%";
+  // Two blocks under their own headings, with the footnote under both: the crowns cover the
+  // panel's charts only, not every chart the account has cleared. The bars are hidden from screen
+  // readers, which the legends tell the same.
+  results.panelBlocksShown =
+    same(await allOf("#panel h2", "textContent"), ["Score ranks", "Crowns"]) &&
     (await page.evaluate<boolean>(
-      `["#crowns", "#ranks", "#panel-footnote"].every((part) => document.querySelector("#panel " + part) !== null)`,
+      `document.querySelector("#panel #panel-footnote") !== null && ["#ranks-bar", "#crowns-bar"].every((bar) => document.querySelector(bar)?.getAttribute("aria-hidden") === "true")`,
     ));
   const rendered = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
@@ -306,7 +320,7 @@ try {
   await until("Read at");
   results.rotationTakenUp =
     tokens[1] !== tokens[0] &&
-    (await textOf("#crowns-silver")) === "11" &&
+    (await textOf("#crowns-silver")) === "11 of 14" &&
     !(await text()).includes("ended");
   // Three reads more of the same title: the plate is asked for again after each, and answered
   // from the run's memory, asking Hiroba nothing.
@@ -331,8 +345,8 @@ try {
   requestsPerRead.push(await readShowing("#medal-code"));
   results.medalOddShownWithTheRest =
     (await textOf("#medal-code")) === "Code for a report: medal=noCountNoComplete" &&
-    (await textOf("#crowns-silver")) === "11" &&
-    (await textOf("#rank-8")) === "3" &&
+    (await textOf("#crowns-silver")) === "11 of 14" &&
+    (await textOf("#rank-8")) === "3 of 102" &&
     !(await text()).includes("did not expect");
   await fetch(`${HIROBA}/__medal?state=none`);
   requestsPerRead.push(await readShowing("#medal-none"));
@@ -383,7 +397,7 @@ try {
     (await textOf("#dan-code")) ===
       "Code for a report: dan=notPng status=200 type=image/gif bytes=43" &&
     (await textOf("#dan")) === null &&
-    (await textOf("#crowns-silver")) === "11" &&
+    (await textOf("#crowns-silver")) === "11 of 14" &&
     !afterGif.includes("000000000000") &&
     !afterGif.includes("imgsrc");
   // Three reads with a dan (complete, odd and no medal), two without (dan-less, favourites), and

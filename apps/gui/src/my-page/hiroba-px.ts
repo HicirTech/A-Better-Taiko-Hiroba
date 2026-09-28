@@ -1,6 +1,6 @@
 /**
  * Hiroba's own geometry, kept at any width. Each of Hiroba's blocks is laid out in pixels of a
- * phone page: the header's plate 290 wide, the panel 280. The app draws each block as a size
+ * phone page: the header's plate is 290 wide. The app draws each block as a size
  * container (`container-type: inline-size`) and gives every length in Hiroba's pixels of that
  * block, scaled to the container's width now, so the block keeps Hiroba's proportions, text over
  * pictures included, from a phone to a desktop window. Electron's Chromium and Android's WebView

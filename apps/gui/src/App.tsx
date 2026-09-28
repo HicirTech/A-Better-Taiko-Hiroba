@@ -284,7 +284,11 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
                 <WriteOutcomeNotice outcome={undoOutcome} i18n={i18n} asUndo />
               )}
             </ProfileCard>
-            <PanelCard crowns={screen.profile.crowns} panel={screen.profile.panel} i18n={i18n} />
+            <PanelCard
+              crowns={screen.profile.crowns}
+              ranks={screen.profile.panel.ranks}
+              i18n={i18n}
+            />
             <MedalCard medal={screen.profile.medal} i18n={i18n} />
             <FavoritesCard
               favoriteSong={screen.profile.favoriteSong}
