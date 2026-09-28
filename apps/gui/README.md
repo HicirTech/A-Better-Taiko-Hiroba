@@ -138,13 +138,16 @@ What it costs Hiroba:
 - Asked for once the card is on screen after a read, one at a time in the queue with every other
   request, so never between a write's requests. Never retried: a plate that did not come is asked
   for once more after each read, and only then.
-- Kept in memory for the run, sign-outs included, and never given to another account. Nothing is
-  kept on disk yet.
+- Kept in memory for the run, sign-outs included, once a later read has found the session still
+  good, and never given to another account. Until then it is shown, not kept: a sign-out before
+  that read asks for it again. Nothing is kept on disk yet.
 
 Until the plate comes, or if it does not, a plain band of the same shape stands in, and a line
 under the card gives a code for a report. Without a session, Hiroba answers a blank plate, a PNG
 that no check can tell from yours, which is why the plate is asked for only after a read that
-found the session good. With `ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`.
+found the session good, and kept only once the next read finds it good still: a blank plate that
+came as Hiroba ended the session unseen is shown until that read at most, and never kept. With
+`ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`.
 
 ## The first real costume write
 
