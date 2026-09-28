@@ -84,6 +84,13 @@ export interface Messages {
   "panel.tierTotal": string;
   /** Param: {tier}, the lowest tier the total counts (雅); its ranks and all above added up. */
   "panel.tierOrBetter": string;
+  /**
+   * A count on the panel, secondary to its share: read out after the percent. Params: {count}, and
+   * {total}, the sum of its block, both already formatted.
+   */
+  "panel.countOf": string;
+  /** The same count, named, as the title of its legend item and its part of the bar. Adds {name}. */
+  "panel.countTitle": string;
   "medal.heading": string;
   /** Param: {count}, the medals collected this season. */
   "medal.count": string;

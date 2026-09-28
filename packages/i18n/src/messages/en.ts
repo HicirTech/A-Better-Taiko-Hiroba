@@ -45,6 +45,8 @@ export const en: Messages = {
   "panel.ranks": "Score ranks",
   "panel.tierTotal": "{tier} total",
   "panel.tierOrBetter": "{tier} tier or better",
+  "panel.countOf": "{count} of {total}",
+  "panel.countTitle": "{name}: {count} of {total}",
   "medal.heading": "Seasonal medals",
   "medal.count": "Medals: {count}",
   "medal.complete": "COMPLETE",
