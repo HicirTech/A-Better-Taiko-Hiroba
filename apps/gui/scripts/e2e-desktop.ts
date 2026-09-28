@@ -1,8 +1,11 @@
 /**
  * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
- * filled favourites folder, the identity card on Hiroba's title plate (its text over it, one plate
- * per title, one that does not come, the plate kept across sign-outs and launches), the My Don
+ * filled favourites folder, the Overview shaped like my page's header, the identity card on
+ * Hiroba's title plate (its text over it, one plate per title, one that does not come, the plate
+ * kept across sign-outs and launches), Hiroba's score panel (a stand-in while its art does not
+ * come, asked for again after each read until it does, the counts written over the art where my
+ * page writes them, the art kept across launches and sign-outs), the My Don
  * portrait (from the picture host with no cookie, a first one that does not come coded and asked
  * for again after a read, kept across launches and sign-ins, fetched anew on Read again and after a
  * write applies, the kept one still shown when a fresh one does not come), the どんメダル
@@ -492,8 +495,10 @@ try {
     Object.keys(BRIDGE_CHANNELS),
   );
 
-  // The player's first My Don ever does not come: checked under the plate, below.
+  // The player's first My Don ever does not come: checked under the plate, below. Nor does the score
+  // panel's art, which the mock answers with a 404 for now.
   await fetch(`${HIROBA}/__mydon?answer=gif`);
+  await fetch(`${HIROBA}/__panel?answer=404`);
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
@@ -589,6 +594,103 @@ try {
   );
   results.danLabelShownAsPicture =
     (await attribute("#dan-label", "src"))?.startsWith("data:image/png;base64,") === true;
+
+  // The Overview's header is shaped like my page's (the user's call, 2026-09-29): the My Don on the
+  // left, the plate on the right and Hiroba's score panel under it, with no background art and none
+  // of Hiroba's yellow; on a narrow window, the portrait, the plate and the panel one under another.
+  const boxOf = (selector: string) =>
+    page.evaluate<{ left: number; top: number; right: number; bottom: number; width: number }>(
+      `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width }; })()`,
+    );
+  const headerBoxes = async () => ({
+    myDon: await boxOf("#my-don"),
+    plate: await boxOf("#title-plate"),
+    panel: await boxOf("#score-panel"),
+  });
+  const wide = await headerBoxes();
+  const plainSurface = await page.evaluate<boolean>(
+    `(() => { for (let box = document.querySelector("#overview-header"); box !== null && box.id !== "profile"; box = box.parentElement) { const style = getComputedStyle(box); if (style.backgroundColor === "rgb(255, 204, 0)" || style.backgroundImage !== "none") return false; } return true; })()`,
+  );
+  await page.send("Emulation.setDeviceMetricsOverride", {
+    width: 480,
+    height: 800,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
+  await waitFor(async () => (await exists("#nav-menu")) || undefined);
+  const narrow = await headerBoxes();
+  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  await waitFor(async () => (await exists("#nav-overview")) || undefined);
+  results.overviewShapedLikeMyPage =
+    wide.myDon.right <= wide.plate.left &&
+    Math.abs(wide.myDon.top - wide.plate.top) < 1 &&
+    wide.plate.bottom <= wide.panel.top &&
+    wide.panel.left > wide.myDon.right &&
+    narrow.myDon.bottom <= narrow.plate.top &&
+    narrow.plate.bottom <= narrow.panel.top &&
+    Math.abs(narrow.myDon.left + narrow.myDon.right - narrow.plate.left - narrow.plate.right) < 2 &&
+    plainSurface;
+  // The panel's art did not come: a plain panel of its geometry stands in. Every count is written
+  // where my page writes it, as text, after its name for screen readers, which the art shows everyone
+  // else, and the line under the header names the portrait, the first picture that did not come.
+  type PanelCount = readonly [id: string, name: string, count: string, left: number, top: number];
+  const PANEL_COUNTS: readonly PanelCount[] = [
+    ["rank-8", "虹極", "3", 230, 18],
+    ["rank-5", "金雅", "31", 57, 54],
+    ["rank-6", "桃雅", "25", 141, 54],
+    ["rank-7", "紫雅", "12", 230, 54],
+    ["rank-2", "白粋", "4", 57, 85],
+    ["rank-3", "銅粋", "9", 141, 85],
+    ["rank-4", "銀粋", "18", 230, 85],
+    ["crowns-silver", "Silver", "11", 57, 121],
+    ["crowns-gold", "Gold", "2", 141, 121],
+    ["crowns-donderful", "Donderful", "1", 230, 121],
+  ];
+  /** Whether each count is text after its name, where my page writes it on its 280-wide panel. */
+  const panelCountsInPlace = async (counts: readonly PanelCount[]) => {
+    const panel = await boxOf("#score-panel");
+    const unit = panel.width / 280;
+    const placed: boolean[] = [];
+    for (const [id, , , left, top] of counts) {
+      const count = await boxOf(`#score-panel-${id}`);
+      placed.push(
+        Math.abs((count.left - panel.left) / unit - left) < 1 &&
+          Math.abs((count.top - panel.top) / unit - top) < 1,
+      );
+    }
+    return (
+      placed.every(Boolean) &&
+      same(
+        await allOf("#score-panel dt", "textContent"),
+        counts.map(([, name]) => name),
+      ) &&
+      same(
+        await allOf("#score-panel dd", "textContent"),
+        counts.map(([, , count]) => count),
+      ) &&
+      same(
+        await page.evaluate<string[]>(
+          `[...document.querySelectorAll("#score-panel dd")].map((count) => count.id)`,
+        ),
+        counts.map(([id]) => `score-panel-${id}`),
+      )
+    );
+  };
+  results.scorePanelMissingStandsIn =
+    (await hitsOn(PANEL_ART)) === 1 &&
+    (await exists("#score-panel-stand-in")) &&
+    !(await exists("#score-panel-image")) &&
+    (await attribute("#score-panel", "aria-busy")) === "false" &&
+    (await attribute("#score-panel", "role")) === "group" &&
+    (await attribute("#score-panel", "aria-label")) === "Score panel" &&
+    same(
+      await page.evaluate<string[]>(
+        `[...document.querySelectorAll("#score-panel dt")].slice(0, 7).map((name) => name.lang)`,
+      ),
+      Array(7).fill("ja"),
+    ) &&
+    (await panelCountsInPlace(PANEL_COUNTS)) &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
   const withPlate = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );
@@ -596,6 +698,7 @@ try {
     !withPlate.includes("imgsrc") &&
     !withPlate.includes("titleplate") &&
     !withPlate.includes("taiko_no") &&
+    !withPlate.includes("total_score") &&
     !withPlate.includes("000000000000") &&
     !withPlate.includes("_token_v2") &&
     !tokens.some((token) => withPlate.includes(token));
@@ -704,9 +807,10 @@ try {
     (await textOf("#pictures-code")) === MY_DON_GIF_CODE &&
     same(await savedCostume(), START);
 
-  // Once the picture host draws it, the next Read again shows the player's My Don under the plate,
-  // the first time ever: once, square on its tile, named for screen readers, no line under the card,
-  // and neither its address nor its host in the window.
+  // Once the picture host draws it, the next Read again shows the player's My Don beside the plate,
+  // the first time ever: once, square on its tile, named for screen readers, and neither its address
+  // nor its host in the window. The line under the card now names the score panel's art, asked for
+  // once more after each read while it has not come, and still missing.
   await fetch(`${HIROBA}/__mydon?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
@@ -723,7 +827,8 @@ try {
     tile.width > 0 &&
     Math.abs(tile.width - tile.height) < 1 &&
     !(await exists("#my-don-loading")) &&
-    !(await exists("#pictures-unavailable"));
+    (await textOf("#pictures-code")) ===
+      "Code for a report: scorePanel=notPng status=404 type=text/plain;charset=utf-8 bytes=9";
   const withMyDon = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );
@@ -734,6 +839,8 @@ try {
     !withMyDon.includes("000000000000");
 
   // The user's Read again renews the My Don: fetched anew once it is on screen, once, and kept.
+  // The score panel's art comes this time: kept from now on, it is never asked for again.
+  await fetch(`${HIROBA}/__panel?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
   await until("Read at");
@@ -742,6 +849,24 @@ try {
   results.myDonAgainOnReadAgain =
     myDonsAfterReadAgain === myDonsAtFirst + 1 &&
     (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true;
+  // The art is the mock's, 600×356, and the counts are written over it where my page writes them,
+  // the same text as over the stand-in. It was asked for once per read until it came: at the
+  // sign-in and after each of the three reads since.
+  await waitForSeen(page, async () => (await exists("#score-panel-image")) || undefined);
+  const art = await boxOf("#score-panel-image");
+  const panelBox = await boxOf("#score-panel");
+  results.scorePanelArtShown =
+    (await hitsOn(PANEL_ART)) === 4 &&
+    (await attribute("#score-panel-image", "src"))?.startsWith("data:image/png;base64,") === true &&
+    (await attribute("#score-panel-image", "alt")) === "" &&
+    Math.abs(art.width / (art.bottom - art.top) - 600 / 356) < 0.02 &&
+    Math.abs(art.width - panelBox.width) < 1 &&
+    !(await exists("#score-panel-stand-in")) &&
+    !(await exists("#score-panel-loading")) &&
+    (await panelCountsInPlace(PANEL_COUNTS)) &&
+    !(await exists("#pictures-unavailable"));
+  /** How often the art was fetched: kept on disk for every account, it is fetched no more. */
+  const panelArtFetches = await hitsOn(PANEL_ART);
   // One that does not come leaves the one kept on its tile, and no line under the card says so.
   const keptMyDon = await attribute("#my-don-image", "src");
   await fetch(`${HIROBA}/__mydon?answer=gif`);
@@ -869,7 +994,7 @@ try {
   await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set&favorites=unset`);
 
   // Counts of 0, common on real accounts: 虹極 at 0 in a block that is not, and a crown block that
-  // sums to 0. Every item is still listed, at 0.0%; only those above 0 take a part of a bar, and a
+  // sums to 0. The header's panel writes each 0 as Hiroba does. Every item is still listed, at 0.0%; only those above 0 take a part of a bar, and a
   // block with none shows its empty track, which a block with parts does not.
   await fetch(`${HIROBA}/__variant?panel=zeros`);
   await click("#read-again");
@@ -895,7 +1020,10 @@ try {
     same(await allOf("#crowns li", "textContent"), legendOf(ZERO_CROWN_SHARES, 0)) &&
     (await allOf("#crowns-bar > *", "title")).length === 0 &&
     (await trackOf("#crowns-bar")) !== NO_TRACK &&
-    (await trackOf("#ranks-bar")) === NO_TRACK;
+    (await trackOf("#ranks-bar")) === NO_TRACK &&
+    (await textOf("#score-panel-rank-8")) === "0" &&
+    same(await allOf("#score-panel [id^='score-panel-crowns-']", "textContent"), ["0", "0", "0"]) &&
+    (await textOf("#score-panel-rank-5")) === "31";
   await fetch(`${HIROBA}/__variant?panel=counts`);
 
   // A plate that does not come, here the GIF Hiroba draws nothing with, for a title not yet
@@ -1619,6 +1747,17 @@ try {
       )) || undefined,
   );
   results.plateOncePerDevice = (await platesSettled()).length === platesBeforeReopen;
+  // So does the score panel's art, kept on disk for every account.
+  const panelArtShownOn = (app: typeof running) =>
+    waitForSeen(
+      app.page,
+      async () =>
+        (await app.page.evaluate<boolean>(
+          `document.querySelector("#score-panel-image") !== null`,
+        )) || undefined,
+    );
+  await panelArtShownOn(running);
+  results.scorePanelOncePerDevice = (await hitsOn(PANEL_ART)) === panelArtFetches;
   // So does the My Don: the launch's read is the session's first, which renews nothing.
   const myDonShownOn = (app: typeof running) =>
     waitForSeen(
@@ -1735,6 +1874,8 @@ try {
     (await platesSettled()).length === platesSignedOut &&
     (await thumbs()).length === thumbsSignedOut;
   results.medalPlateSurvivesSignOut = (await medalPlateShown()) === medalPlatesSignedOut;
+  await panelArtShownOn(running);
+  results.scorePanelSurvivesSignOut = (await hitsOn(PANEL_ART)) === panelArtFetches;
   // The My Don kept on disk too: a sign-in's read is its session's first, which renews nothing.
   await myDonShownOn(running);
   results.myDonKeptAtSignIn = (await myDonsSettled()) === myDonsSignedOut;
