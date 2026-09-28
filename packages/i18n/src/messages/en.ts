@@ -80,6 +80,12 @@ export const en: Messages = {
   "costume.part.costume5": "ぷちキャラ",
   "costume.id": "#{id}",
   "costume.remove": "はずす",
+  "costume.item.label": "{part} #{id}",
+  "costume.thumbnails.unavailable":
+    "Some thumbnails didn't load ({count}); their numbers are shown instead.",
+  "costume.thumbnails.code": "Code for a report: {code}",
+  "costume.scroll.up": "Scroll up a row",
+  "costume.scroll.down": "Scroll down a row",
   "costume.kigurumiWarning": "A きぐるみ takes off あたま, からだ, メイク and ぷちキャラ.",
   "costume.changesHeading": "Changes",
   "costume.change": "{part}: {from} → {to}",

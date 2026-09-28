@@ -131,6 +131,21 @@ export interface Messages {
   "costume.id": string;
   /** Empties a slot: the site's own button, はずす. */
   "costume.remove": string;
+  /**
+   * An item's tile in the thumbnail grid, for a screen reader: its slot and its number. Params:
+   * {part} (a costume.part text) and {id}.
+   */
+  "costume.item.label": string;
+  /**
+   * Under the thumbnail grid, when some of its pictures did not come. Neutral: each such tile shows
+   * its number instead, and the editor works as before. Param: {count}, how many did not come.
+   */
+  "costume.thumbnails.unavailable": string;
+  /** Param: {code}, why the first of them did not come, such as costumeItem=notPng; never a URL. */
+  "costume.thumbnails.code": string;
+  /** The arrows above and below the thumbnail grid, as Hiroba's ▲ and ▼, for a screen reader. */
+  "costume.scroll.up": string;
+  "costume.scroll.down": string;
   /** Shown while a きぐるみ is picked: the four pieces come off with it. */
   "costume.kigurumiWarning": string;
   "costume.changesHeading": string;
