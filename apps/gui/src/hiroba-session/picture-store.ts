@@ -8,8 +8,9 @@ export const PICTURE_EPOCH = "v1";
 
 /**
  * Where a picture is kept. None expires: each is keyed by what it shows, so a store keeps it as long
- * as it can, and only a PICTURE_EPOCH bump or the store's caps make it go. Arcades often have poor
- * networks, so the app asks Hiroba for a picture as seldom as it can (the user's call, 2026-09-28).
+ * as it can. From a store that outlasts the run, only a PICTURE_EPOCH bump makes it go; the run's
+ * memory store also drops what is past its caps. Arcades often have poor networks, so the app asks
+ * Hiroba for a picture as seldom as it can (the user's call, 2026-09-28).
  *
  * - `shared`: art that carries nothing about the player, such as an item's thumbnail, whose URL names
  *   no player. Kept for any account on this device, and kept at sign-out.
