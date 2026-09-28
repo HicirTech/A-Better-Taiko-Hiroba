@@ -82,17 +82,23 @@ const savedCostume = async () =>
   asAppSet((await (await fetch(`${HIROBA}/__state`)).json()) as CostumeState);
 const PREVIEW = "GET /imgsrc_mydon.php";
 const THUMBNAIL = "GET /imgsrc_kisekae.php";
+const TITLE_PLATE = "GET /imgsrc_titleplate.php";
+/**
+ * The pictures the window's lane asks for by itself, as they come on screen: the items' thumbnails
+ * and, after each read of my page, the title plate.
+ */
+const LANE_PICTURES: readonly string[] = [THUMBNAIL, TITLE_PLATE];
 /** Every request the mock saw since the last reset, as "METHOD /path", in the order they came. */
 const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
 /**
  * Whether `log` is the requests `before`, then a write's `run` with nothing inside it, and the
- * editor's pictures (of the set, and of its items) anywhere else. The pictures go as the picks
- * pause and as items come on screen, not in step with a write, but main queues them with the
- * writes: one goes before a write or after it, never between its requests.
+ * pictures (of the set, of its items, and the title plate) anywhere else. The pictures go as the
+ * picks pause, as items come on screen and after a read, not in step with a write, but main queues
+ * them with the writes: one goes before a write or after it, never between its requests.
  */
 const sentAsPlanned = (log: string[], before: string[], run: string[]) => {
   const planned = log.flatMap((line, index) =>
-    line === PREVIEW || line === THUMBNAIL ? [] : [index],
+    line === PREVIEW || LANE_PICTURES.includes(line) ? [] : [index],
   );
   return (
     same(
@@ -120,11 +126,12 @@ const previewQuery = (set: Record<string, number>) =>
 const resetLog = () => fetch(`${HIROBA}/__log-reset`);
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
 /**
- * Whether `log` is `expected` once the items' thumbnails are left out, with none of them inside it:
- * a thumbnail still on its way from an editor just closed may land before a write or after it.
+ * Whether `log` is `expected` once the lane's pictures are left out, with none of them inside it: a
+ * thumbnail still on its way from an editor just closed, or a plate asked for after a read, may
+ * land before a write or after it.
  */
-const sameBesideThumbnails = (log: string[], expected: string[]) => {
-  const kept = log.flatMap((line, index) => (line === THUMBNAIL ? [] : [index]));
+const sameBesideLanePictures = (log: string[], expected: string[]) => {
+  const kept = log.flatMap((line, index) => (LANE_PICTURES.includes(line) ? [] : [index]));
   const inside =
     kept.length === 0 ? 0 : (kept[kept.length - 1] ?? 0) - (kept[0] ?? 0) + 1 - kept.length;
   return (
@@ -618,7 +625,7 @@ try {
     (await waitFor(async () => (await cardOutcome()) ?? undefined)) === "applied" &&
     (await textOf("#profile #write-outcome")) === "Undone. Hiroba shows the costume as it was." &&
     same(await savedCostume(), START) &&
-    sameBesideThumbnails(await requestLog(), WRITE_REQUESTS);
+    sameBesideLanePictures(await requestLog(), WRITE_REQUESTS);
   results.snackbarUndoOncePerPress = !snackbarOverTheEditor && secondPressShut;
 
   // A きぐるみ: the window warns, the four pieces come off, and one undo puts all eight back.
@@ -655,7 +662,7 @@ try {
   const trap = await bridgeChange({ ...START, costume1: 36 });
   results.trapRefusedUnsent =
     same(trap, { kind: "invalidTarget", field: "costume1" }) &&
-    sameBesideThumbnails(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
+    sameBesideLanePictures(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
 
   // A picture asked for while a write waits on its pre-check waits for the whole write, read-back
   // and all: held there, it would otherwise go between the pre-check and the save.
@@ -674,7 +681,7 @@ try {
   results.previewWaitsOutAWrite =
     (await heldWrite).kind === "applied" &&
     (await previewDuringWrite) &&
-    sameBesideThumbnails(await requestLog(), [...WRITE_REQUESTS, PREVIEW]);
+    sameBesideLanePictures(await requestLog(), [...WRITE_REQUESTS, PREVIEW]);
   await fetch(`${HIROBA}/__state?reset=1`);
 
   // So does an item's thumbnail: one the last editor offered and nothing has asked for yet, a
@@ -843,6 +850,14 @@ try {
     async () =>
       (await running.page.evaluate<boolean>(`document.querySelector("#costume-undo") !== null`)) ||
       undefined,
+  );
+  // The read asks for the title plate too, which this run's memory does not hold yet: once it has
+  // come, nothing more is on its way.
+  await waitFor(
+    async () =>
+      (await running.page.evaluate<boolean>(
+        `document.querySelector("#title-plate-image") !== null`,
+      )) || undefined,
   );
   await resetLog();
   const inTheBreak = await running.page.evaluate(

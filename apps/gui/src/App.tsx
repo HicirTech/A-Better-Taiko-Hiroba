@@ -4,7 +4,6 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
   Container,
   Snackbar,
@@ -17,8 +16,9 @@ import { CostumeDialog } from "./my-page/costume-dialog";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
 import { PanelCard } from "./my-page/panel-card";
+import { TitlePlateCard } from "./my-page/title-plate-card";
 import { WriteOutcomeNotice } from "./my-page/write-outcome";
-import { createPictureLane } from "./pictures/picture-lane";
+import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
 import { FAILURE_MESSAGE } from "./read-failure-message";
 import type {
   EnabledWrite,
@@ -86,6 +86,8 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setScreen({ name: "reading" });
     const result = await port.readProfile();
     if (result.ok) {
+      // The plate may have changed with the title: asked for again, and kept shown till it comes.
+      lane.renew("titlePlate");
       setWrites(await port.enabledWrites());
       await refreshUndo();
       setUndoOutcome(null);
@@ -95,7 +97,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     } else {
       setScreen({ name: "readFailed", ...result.error });
     }
-  }, [port, refreshUndo]);
+  }, [port, lane, refreshUndo]);
 
   const signIn = async () => {
     setScreen({ name: "signingIn" });
@@ -243,7 +245,7 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
 
         {screen.name === "profile" && (
           <Stack spacing={2}>
-            <ProfileCard profile={screen.profile} i18n={i18n}>
+            <ProfileCard profile={screen.profile} lane={lane} i18n={i18n}>
               <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
                 <Button
                   id="costume-open"
@@ -360,78 +362,26 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
 }
 
 /**
- * The identity card. The dan is the name read off my page's label, as Hiroba prints it. A label
- * that did not read is a neutral chip with its code under the row, and the rest of the card stands.
- * `children` are the card's actions: the writes this run may send, and, shut, those it may not.
+ * The identity card, drawn as Hiroba's header draws it, on its title plate (TitlePlateCard). The
+ * dan is the name read off my page's label, shown by the label itself. `children` are the card's
+ * actions: the writes this run may send, and, shut, those it may not.
  */
 function ProfileCard({
   profile,
+  lane,
   i18n,
   children,
 }: {
   profile: ProfileView;
+  lane: PictureLane;
   i18n: Translator;
   children?: ReactNode;
 }) {
-  const { t } = i18n;
-  const { dan } = profile;
   return (
     <Card id="profile" variant="outlined">
       <CardContent>
-        <Stack spacing={1}>
-          <Typography variant="h6" component="h2">
-            {profile.nickname}
-          </Typography>
-          {profile.title === "" ? (
-            <Typography id="no-title" color="text.disabled" sx={{ fontStyle: "italic" }}>
-              {t("profile.noTitle")}
-            </Typography>
-          ) : (
-            <Typography color="text.secondary">
-              {t("profile.title", { title: profile.title })}
-            </Typography>
-          )}
-          {(profile.region !== null || dan !== null) && (
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              sx={{ alignItems: "center", flexWrap: "wrap" }}
-            >
-              {profile.region !== null && (
-                <Typography id="region" variant="body2">
-                  {t("profile.region", { region: profile.region })}
-                </Typography>
-              )}
-              {dan !== null && "name" in dan && (
-                <Chip
-                  id="dan"
-                  label={t("profile.dan", { dan: dan.name })}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              )}
-              {dan !== null && "unreadable" in dan && (
-                <Chip
-                  id="dan-unreadable"
-                  label={t("profile.danUnreadable")}
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-            </Stack>
-          )}
-          {dan !== null && "unreadable" in dan && (
-            <Typography
-              id="dan-code"
-              variant="body2"
-              color="text.secondary"
-              sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-            >
-              {t("profile.danCode", { code: dan.code })}
-            </Typography>
-          )}
+        <Stack spacing={1.5}>
+          <TitlePlateCard profile={profile} lane={lane} i18n={i18n} />
           {children}
         </Stack>
       </CardContent>
