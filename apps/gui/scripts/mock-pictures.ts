@@ -120,6 +120,70 @@ export function myDonPng(set: readonly number[]): Uint8Array<ArrayBuffer> {
   return new Uint8Array(encode({ width: side, height: side, data, channels: 4 }));
 }
 
+/** The score panel's art, as image/sp/640/total_score_image_<level>.png is: 600×356. */
+const PANEL_WIDTH = 600;
+const PANEL_HEIGHT = 356;
+/**
+ * Where my page writes the panel's counts over it, in the units of its 280-wide box and 166 rows
+ * (mypage_top.php's inline styles): the left of each column, and the top of each row.
+ */
+const PANEL_COLUMNS = [57, 141, 230] as const;
+const PANEL_ROWS = [18, 54, 85, 121] as const;
+/** Each spot my page writes a count on, as [column, row]: 虹極, the 雅s, the 粋s, the crowns. */
+const PANEL_SPOTS = [
+  [2, 0],
+  [0, 1],
+  [1, 1],
+  [2, 1],
+  [0, 2],
+  [1, 2],
+  [2, 2],
+  [0, 3],
+  [1, 3],
+  [2, 3],
+] as const;
+/** The panel's grounds: dark under the ranks, whose counts are white, pale under the crowns'. */
+const RANKS_GROUND = [0x2d, 0x3a, 0x78] as const;
+const CROWNS_GROUND = [0xf7, 0xef, 0xd9] as const;
+
+/**
+ * The score panel of `level`, the art my page writes its counts over: a dark ground under the
+ * three rows of ranks and a pale one under the crowns, and left of each spot a count goes on, a
+ * square in a colour of its own where Hiroba draws that rank's or crown's icon, the spot itself
+ * left plain. Noise in the lowest bit makes it tens of KB, as a real one is.
+ */
+export function scorePanelPng(level: number): Uint8Array<ArrayBuffer> {
+  const next = randomFrom(seedOf(5, level));
+  const width = PANEL_WIDTH;
+  const height = PANEL_HEIGHT;
+  const x = (units: number) => (units * width) / 280;
+  const y = (units: number) => (units * height) / 166;
+  const icons = PANEL_SPOTS.map(([column, row]) => {
+    const left = PANEL_COLUMNS[column] ?? 0;
+    const top = PANEL_ROWS[row] ?? 0;
+    return {
+      left: x(left - 44),
+      right: x(left - 6),
+      top: y(top - 3),
+      bottom: y(top + 24),
+      colour: [next() % 256, next() % 256, next() % 256],
+    };
+  });
+  const data = new Uint8Array(width * height * 4);
+  for (let row = 0; row < height; row++) {
+    for (let column = 0; column < width; column++) {
+      const noise = next();
+      const icon = icons.find(
+        (box) => column >= box.left && column < box.right && row >= box.top && row < box.bottom,
+      );
+      const ground = row < y(113) ? RANKS_GROUND : CROWNS_GROUND;
+      const [r = 0, g = 0, b = 0] = icon?.colour ?? ground;
+      data.set([r ^ (noise & 1), g, b, 255], (row * width + column) * 4);
+    }
+  }
+  return new Uint8Array(encode({ width, height, data, channels: 4 }));
+}
+
 /** A plate's pixels: rounded ends, `band` above, and the two boxes below when `boxes`. */
 function platePng(
   next: () => number,

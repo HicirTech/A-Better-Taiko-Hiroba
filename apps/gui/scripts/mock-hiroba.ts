@@ -39,6 +39,11 @@
  * 43-byte GIF for an id my page has not shown. /__tokenplate?answer=png|gif sets what it answers
  * from now on: as described, or the GIF for every id.
  *
+ * The score panel's art is image/sp/640/total_score_image_5.png, the panel my page shows, a static
+ * picture as on Hiroba: drawn with or without a session, 600×356 as the live one is, with the
+ * spots my page writes its counts on left plain (scripts/mock-pictures.ts). /__panel?answer=png|404
+ * sets what it answers from now on: the art, or Hiroba's 404 for a picture it does not have.
+ *
  * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
  * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
  *
@@ -76,7 +81,13 @@
  */
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
-import { blankPlatePng, medalPlatePng, myDonPng, titlePlatePng } from "./mock-pictures";
+import {
+  blankPlatePng,
+  medalPlatePng,
+  myDonPng,
+  scorePanelPng,
+  titlePlatePng,
+} from "./mock-pictures";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
@@ -235,6 +246,9 @@ const SEASONS = {
 let medalSeason: keyof typeof SEASONS = 1;
 /** What the plate's picture answers, as /__tokenplate last set it. */
 let tokenPlateAnswer: "png" | "gif" = "png";
+/** The level of the one score panel my page shows, and what its art answers, as /__panel set it. */
+const PANEL_LEVEL = 5;
+let panelAnswer: "png" | "404" = "png";
 /** What follows the plate's name in each state; the count is a placeholder. */
 const MEDAL_PROGRESS: Readonly<Record<MedalState, string>> = {
   none: "",
@@ -277,7 +291,7 @@ function myPage(): string {
   ${nameRow}
   <div><div class="detail"><p>国・地域 ：${variant.region ? "サンプル" : "未設定"}</p><p>太鼓番：${TAIKO_NO}</p></div>
     <div class="mydon_image"><img class="customd_mydon" src="${PORTRAIT}"></div></div>
-  <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
+  <div class="total_score"><img src="image/sp/640/total_score_image_${PANEL_LEVEL}.png">
     ${panel.ranks.map(([rank, count]) => `<div class="best_rank_score_${rank} total_panel_display">${count}</div>`).join("")}
     <div class="silver_crown_count total_panel_crown_display">${silver}</div>
     <div class="gold_crown_count total_panel_crown_display">${gold}</div>
@@ -423,6 +437,14 @@ Bun.serve({
           headers: { "content-type": "image/png" },
         });
       }
+      case `/image/sp/640/total_score_image_${PANEL_LEVEL}.png`:
+        // A static picture, as Hiroba's is: no session is asked for.
+        if (panelAnswer === "404") {
+          return new Response("not found", { status: 404 });
+        }
+        return new Response(scorePanelPng(PANEL_LEVEL), {
+          headers: { "content-type": "image/png" },
+        });
       case "/imgsrc_danlabel.php":
         // Public, as Hiroba's is: the query picks whose label, and no session is asked for.
         if (variant.dan === 0 || variant.label === "gif" || !searchParams.has("taiko_no")) {
@@ -496,6 +518,13 @@ Bun.serve({
           tokenPlateAnswer = answer;
         }
         return new Response(tokenPlateAnswer);
+      }
+      case "/__panel": {
+        const answer = searchParams.get("answer");
+        if (answer === "png" || answer === "404") {
+          panelAnswer = answer;
+        }
+        return new Response(panelAnswer);
       }
       case "/__titleplates":
         if (searchParams.get("reset") === "1") {

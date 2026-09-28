@@ -6,6 +6,7 @@ import {
   blankPlatePng,
   medalPlatePng,
   myDonPng,
+  scorePanelPng,
   thumbnailPng,
   titlePlatePng,
 } from "../scripts/mock-pictures";
@@ -75,6 +76,20 @@ describe("medalPlatePng", () => {
     expect(medalPlatePng(ID, false)).not.toEqual(medalPlatePng(ID, true));
     expect(medalPlatePng(ID, false)).not.toEqual(medalPlatePng(OTHER_ID, false));
     expect(medalPlatePng(ID, false)).not.toEqual(blankPlatePng());
+  });
+});
+
+describe("scorePanelPng", () => {
+  /** The panel's bounds: from 10 KiB to 512 KiB, and at most 1280×800. */
+  const PANEL_RULES = { minBytes: 10 * 1024, maxBytes: 512 * 1024, maxSide: 1280, maxHeight: 800 };
+
+  test("draws a 600×356 PNG within the panel's bounds", () => {
+    expect(sizeUnder(scorePanelPng(5), PANEL_RULES)).toEqual({ width: 600, height: 356 });
+  });
+
+  test("gives each level a panel of its own, the same on every run", () => {
+    expect(scorePanelPng(5)).toEqual(scorePanelPng(5));
+    expect(scorePanelPng(5)).not.toEqual(scorePanelPng(4));
   });
 });
 
