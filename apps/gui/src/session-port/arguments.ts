@@ -47,7 +47,7 @@ export function isCostumeSet(value: unknown): value is CostumeSet {
 }
 
 /** A whole number from `least` to `most`. */
-const isWhole = (value: unknown, least: number, most: number): value is number =>
+export const isWhole = (value: unknown, least: number, most: number): value is number =>
   Number.isInteger(value) && (value as number) >= least && (value as number) <= most;
 
 /** The kinds of picture that name nothing but their kind: the platform knows which one it means. */

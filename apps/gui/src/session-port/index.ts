@@ -7,6 +7,7 @@ export {
   type ArgumentCheck,
   isCostumeSet,
   isPictureWant,
+  isWhole,
   PORT_ARGUMENTS,
   WRITE_KINDS,
 } from "./arguments";
