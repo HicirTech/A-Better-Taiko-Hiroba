@@ -865,17 +865,30 @@ describe("createPictureReader, the My Don portrait", () => {
     expect(await store.get(keyOf())).toEqual(myDonPng(AFTER));
   });
 
-  test("a portrait fetched anew that does not come leaves the one kept, and is asked for once more", async () => {
+  test("a portrait fetched anew that does not come leaves the one kept, until the next change", async () => {
     const store = createMemoryPictureStore();
     let answer: Answer = png(PORTRAIT_URL, myDonPng(BEFORE));
     const { reader, sent } = setUp({ store, state: readState(), answer: async () => answer });
     reader.myPageAsked();
     const first = await reader.read(MY_DON);
+    // Read again, and the fetch does not come: the one kept answers, and nothing asks for it again,
+    // a sign-in's read included.
     reader.myPageAsked();
     answer = GIF;
     expect(await reader.read(MY_DON)).toEqual(first);
+    expect(await reader.read(MY_DON)).toEqual(first);
+    reader.forget();
+    reader.myPageAsked();
+    expect(await reader.read(MY_DON)).toEqual(first);
+    expect(sent).toHaveLength(2);
+    // A write applies, and the fetch fails on its way: the same.
+    reader.costumeChanged();
     answer = err({ kind: "unreachable", url: PORTRAIT_URL });
     expect(await reader.read(MY_DON)).toEqual(first);
+    expect(await reader.read(MY_DON)).toEqual(first);
+    expect(sent).toHaveLength(3);
+    // The next Read again fetches it anew.
+    reader.myPageAsked();
     answer = png(PORTRAIT_URL, myDonPng(AFTER));
     const renewed = await reader.read(MY_DON);
     expect(renewed.ok && decode(renewed.value.src)).toEqual(myDonPng(AFTER));

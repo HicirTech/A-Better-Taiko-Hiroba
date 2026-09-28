@@ -343,7 +343,7 @@ function myDonRequest(
  * The My Don portrait, from the picture host off Hiroba and never with the session, is the one kept
  * picture that can change under its address: it is kept, one per player, and fetched anew when next
  * asked for after a costume write applies (`costumeChanged`) or the user's Read again
- * (`myPageAsked`). If that fetch fails, the one kept answers.
+ * (`myPageAsked`). If that fetch fails, the one kept answers until the next of those.
  */
 export function createPictureReader(options: PictureReaderOptions): PictureReader {
   const { transport, endpoints, store, queue, limits } = options;
@@ -460,6 +460,16 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return ok(view);
       }
       const asOf = myDonChanges;
+      /**
+       * `failure`, as `orKept` answers it. A renewal that fails is spent all the same: the portrait
+       * is fetched anew only after the next change (the user's call, 2026-09-28).
+       */
+      const notCome = (failure: Result<never, PictureFailure>) => {
+        if (stale && since === generation) {
+          myDonKeptAsOf = Math.max(myDonKeptAsOf, asOf);
+        }
+        return orKept(stale, request, failure);
+      };
       const signal = limits.timeoutMs === null ? undefined : AbortSignal.timeout(limits.timeoutMs);
       const sent = await transport.send(
         {
@@ -472,16 +482,12 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       lastFetchEnded = clock.now();
       if (isErr(sent)) {
         const gaveUp = sent.error.kind === "cancelled" && signal?.aborted === true;
-        return orKept(stale, request, failed(request.kind, gaveUp ? "timedOut" : sent.error.kind));
+        return notCome(failed(request.kind, gaveUp ? "timedOut" : sent.error.kind));
       }
       const checked = checkPng(sent.value, request.rules);
       if (isErr(checked) || checked.value.size === null) {
         const refusal: PngRefusal = isErr(checked) ? checked.error : { why: "notPngBytes" };
-        return orKept(
-          stale,
-          request,
-          failed(request.kind, refusal.why, sent.value, request, refusal),
-        );
+        return notCome(failed(request.kind, refusal.why, sent.value, request, refusal));
       }
       if (since === generation && request.keptAfterRead) {
         unconfirmed.set(idOf(request.key), { key: request.key, bytes: checked.value.bytes });
