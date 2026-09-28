@@ -7,24 +7,23 @@ import { usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, VISUALLY_HIDDEN } from "./hiroba-px";
 
-/** Hiroba's header, #mydon_area: 290 pixels of content inside a padding of 5. */
+/** Hiroba's header, #mydon_area: the plate is 290 pixels wide. */
 const PLATE_WIDTH = 290;
-const PADDING = 5;
-/** Lengths in the header's pixels: the plate's, and the whole block's with its padding. */
+/** Lengths in the plate's pixels. */
 const hp = hirobaPx(PLATE_WIDTH);
-const hpBlock = hirobaPx(PLATE_WIDTH + 2 * PADDING);
 /**
  * The plate's height, as Hiroba's layout implies it: the title's 20 over the name row's 23, with
  * the few pixels around them. Reserved until the picture gives its own size, so text never moves.
  */
 const RESERVED_HEIGHT = 47;
 /** At most half again Hiroba's own size. */
-const MAX_WIDTH = (PLATE_WIDTH + 2 * PADDING) * 1.5;
+const MAX_WIDTH = PLATE_WIDTH * 1.5;
 /**
- * Hiroba's colours, the same in either theme, so the art sits on the ground it was drawn for: the
- * header's surround, and the name's and the dan's boxes, sampled from Hiroba's plate.
+ * Hiroba's colours, the same in either theme, so the stand-in looks like the plate: its band, and
+ * the name's and the dan's boxes, sampled from Hiroba's plate. The words over the plate are black
+ * in either theme too.
  */
-const SURROUND = "#FFCC00";
+const ON_PLATE = "#000";
 const BAND = "#fff1c2";
 const NAME_BOX = "#f8f0e0";
 const DAN_BOX = "#5a8df2";
@@ -42,12 +41,13 @@ export interface TitlePlateCardProps {
 
 /**
  * The identity card as Hiroba's header draws it, #mydon_area: the title plate, the title over it,
- * and the name row, the nickname in its cream box and the dan's label in its blue one, on the same
- * yellow. The plate and the label are Hiroba's own pictures, as data: URLs; every word stays text,
- * laid over them where Hiroba lays its HTML. Until the plate comes, or if it does not, a plain band
- * of the same geometry stands in its place, and the card reads the same.
+ * and the name row, the nickname in its cream box and the dan's label in its blue one. The plate and
+ * the label are Hiroba's own pictures, as data: URLs; every word stays text, laid over them where
+ * Hiroba lays its HTML. Until the plate comes, or if it does not, a plain band of the same geometry
+ * stands in its place, and the card reads the same.
  *
- * The region is left off (the user's call, 2026-09-28): the profile keeps it, the card does not.
+ * The plate sits on the app's own surface, without the yellow Hiroba draws around it, and the region
+ * is left off: the profile keeps it, the card does not (the user's calls, 2026-09-28).
  *
  * The dan is read off its label, which is shown as it is, and named in text for screen readers. A
  * label that did not read says so under the plate, with its code, as before.
@@ -64,52 +64,41 @@ export function TitlePlateCard({ profile, lane, i18n }: TitlePlateCardProps) {
     <Stack spacing={1} sx={{ alignItems: "center" }}>
       <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
         <Box
+          ref={plateBox}
+          id="title-plate"
+          aria-busy={answer === undefined}
           sx={{
-            bgcolor: SURROUND,
-            p: hpBlock(PADDING),
-            border: 1,
-            borderColor: "divider",
-            color: "#000",
+            position: "relative",
+            width: 1,
+            color: ON_PLATE,
+            aspectRatio:
+              plate !== null
+                ? `${plate.width} / ${plate.height}`
+                : `${PLATE_WIDTH} / ${RESERVED_HEIGHT}`,
           }}
         >
-          <Box sx={HIROBA_BLOCK}>
+          {plate === null ? (
+            <PlateStandIn />
+          ) : (
             <Box
-              ref={plateBox}
-              id="title-plate"
-              aria-busy={answer === undefined}
-              sx={{
-                position: "relative",
-                width: 1,
-                aspectRatio:
-                  plate !== null
-                    ? `${plate.width} / ${plate.height}`
-                    : `${PLATE_WIDTH} / ${RESERVED_HEIGHT}`,
-              }}
-            >
-              {plate === null ? (
-                <PlateStandIn />
-              ) : (
-                <Box
-                  component="img"
-                  id="title-plate-image"
-                  src={plate.src}
-                  alt=""
-                  aria-hidden
-                  sx={{ position: "absolute", inset: 0, width: 1, height: 1, display: "block" }}
-                />
-              )}
-              {answer === undefined && (
-                <CircularProgress
-                  id="title-plate-loading"
-                  size={14}
-                  aria-label={t("pictures.loading")}
-                  sx={{ position: "absolute", top: 2, right: 4, color: "#000" }}
-                />
-              )}
-              <Title title={profile.title} i18n={i18n} />
-              <NameRow profile={profile} i18n={i18n} />
-            </Box>
-          </Box>
+              component="img"
+              id="title-plate-image"
+              src={plate.src}
+              alt=""
+              aria-hidden
+              sx={{ position: "absolute", inset: 0, width: 1, height: 1, display: "block" }}
+            />
+          )}
+          {answer === undefined && (
+            <CircularProgress
+              id="title-plate-loading"
+              size={14}
+              aria-label={t("pictures.loading")}
+              sx={{ position: "absolute", top: 2, right: 4, color: ON_PLATE }}
+            />
+          )}
+          <Title title={profile.title} i18n={i18n} />
+          <NameRow profile={profile} i18n={i18n} />
         </Box>
       </Box>
       {dan !== null && "unreadable" in dan && (
@@ -237,7 +226,7 @@ function NameRow({ profile, i18n }: { profile: ProfileView; i18n: Translator }) 
           fontWeight: "bold",
           fontSize: hp(12),
           lineHeight: 1.2,
-          color: "#000",
+          color: ON_PLATE,
         }}
       >
         {profile.nickname}
