@@ -3,16 +3,26 @@
  * arguments, and the only shapes that come back. Values here are plain data and channel names;
  * nothing imports the parser, so the Electron preload can use this domain without bundling it.
  */
-export { type ArgumentCheck, isCostumeSet, PORT_ARGUMENTS, WRITE_KINDS } from "./arguments";
+export {
+  type ArgumentCheck,
+  isCostumeSet,
+  isPictureWant,
+  PORT_ARGUMENTS,
+  WRITE_KINDS,
+} from "./arguments";
 export { BRIDGE_CHANNELS } from "./bridge-channels";
 export type {
   CostumeChange,
   CostumeEditorView,
   CostumePreviewFailure,
   CostumeSet,
+  CostumeSlot,
   DanView,
   EnabledWrite,
   HirobaSessionPort,
+  PictureFailure,
+  PictureView,
+  PictureWant,
   ProfileView,
   ReadFailure,
   ReadFailureKind,

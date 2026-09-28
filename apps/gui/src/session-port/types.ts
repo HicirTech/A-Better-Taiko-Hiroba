@@ -98,6 +98,41 @@ export interface CostumePreviewFailure {
   readonly code: string;
 }
 
+/** A costume slot as Hiroba numbers it in a thumbnail's `type`: 1 is the きぐるみ, 5 the ぷちキャラ. */
+export type CostumeSlot = 1 | 2 | 3 | 4 | 5;
+
+/**
+ * One of Hiroba's pictures, as the interface asks for it: what it shows, never where it is. The
+ * platform builds the address itself, from a fixed path and these checked numbers. Each kind comes
+ * with the part of the app that shows it; one so far:
+ *
+ * - `costumeItem`: an item's thumbnail, as the costume editor shows it, for an item the last
+ *   editor read offered in that slot: one it owns, or the one it wears. はずす (0) has none.
+ */
+export type PictureWant = {
+  readonly kind: "costumeItem";
+  readonly slot: CostumeSlot;
+  readonly id: number;
+};
+
+/**
+ * A picture as it crosses to the interface: its bytes as a `data:image/png` URL, a picture and not
+ * an address, and its size as the PNG gives it, so its box can be sized before it is drawn.
+ */
+export interface PictureView {
+  readonly src: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * Why a picture did not come, as codes a user can copy into a report: `<kind>=<why>`, then what
+ * came back, if anything did. Never a host, a URL, a query or a cookie.
+ */
+export interface PictureFailure {
+  readonly code: string;
+}
+
 /** The kinds of write the app knows how to send. One so far: the costume, きせかえ. */
 export type WriteKind = "costume";
 
@@ -179,6 +214,14 @@ export interface HirobaSessionPort {
    * the platform; a failure is codes. How often it is asked for is the interface's to keep down.
    */
   previewCostume(set: CostumeSet): Promise<Result<string, CostumePreviewFailure>>;
+  /**
+   * One of Hiroba's pictures, as `want` names it: from the platform's store when it holds it,
+   * asking Hiroba nothing, or else one GET in the queue with every other request, never retried and
+   * never between a write's requests. Answered as a `data:image/png` URL and its size, or as codes.
+   * Refused unsent while signed out, for an item the last editor read did not offer, and past the
+   * run's budget. How often and how many are asked for is the interface's to keep down.
+   */
+  readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /**
    * One costume write, the way every write goes: the editor, the pre-check, one save and the
    * read-back, four requests; six while costume writes are not verified, with my page read before

@@ -23,6 +23,17 @@ export {
   type PictureStoreCaps,
 } from "./picture-store";
 export { previewCostume, previewUrl } from "./preview-costume";
+export {
+  ANDROID_PICTURE_LIMITS,
+  createPictureReader,
+  DESKTOP_PICTURE_LIMITS,
+  offeredOf,
+  offerKey,
+  type PictureClock,
+  type PictureLimits,
+  type PictureReader,
+  type PictureReadState,
+} from "./read-picture";
 export { readOwnProfile, readProfile } from "./read-profile";
 export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep } from "./types";

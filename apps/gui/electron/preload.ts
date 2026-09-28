@@ -12,6 +12,7 @@ const port: HirobaSessionPort = {
   enabledWrites: () => ipcRenderer.invoke(BRIDGE_CHANNELS.enabledWrites),
   openCostumeEditor: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openCostumeEditor),
   previewCostume: (set) => ipcRenderer.invoke(BRIDGE_CHANNELS.previewCostume, set),
+  readPicture: (want) => ipcRenderer.invoke(BRIDGE_CHANNELS.readPicture, want),
   changeCostume: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeCostume, change),
   pendingUndo: () => ipcRenderer.invoke(BRIDGE_CHANNELS.pendingUndo),
   undo: (kind) => ipcRenderer.invoke(BRIDGE_CHANNELS.undo, kind),

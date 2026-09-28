@@ -7,12 +7,16 @@ import {
 } from "@capacitor/inappbrowser";
 
 import {
+  ANDROID_PICTURE_LIMITS,
   createHirobaQueue,
+  createMemoryPictureStore,
+  createPictureReader,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
   idpOrigin,
   loginPageUrl,
+  offeredOf,
   openCostumeEditor,
   previewCostume,
   readProfile,
@@ -86,16 +90,33 @@ const localStorageFlag: SignedInFlag = {
  *
  * Every verb that asks Hiroba something runs one at a time, in the order asked, through the same
  * queue the desktop uses: a picture never goes out beside a read, and two reads never overlap.
+ *
+ * Hiroba's pictures come through the same reader as on the desktop, kept in memory for the run. The
+ * items the last editor read offered, the only ones whose thumbnail may be asked for, stay in this
+ * closure, and go with the session.
  */
 export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
   const transport = createAndroidTransport();
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
-  const { oneAtATime } = createHirobaQueue();
+  const queue = createHirobaQueue();
+  const { oneAtATime } = queue;
+  let offered: ReadonlySet<string> = new Set();
+  const pictureStore = createMemoryPictureStore();
+  const pictures = createPictureReader({
+    transport,
+    endpoints,
+    store: pictureStore,
+    queue,
+    limits: ANDROID_PICTURE_LIMITS,
+    state: () => ({ signedIn, offered }),
+  });
 
   const forget = async () => {
     signedIn = false;
     flag.set(false);
+    offered = new Set();
+    pictures.forget();
     await CapacitorCookies.clearAllCookies();
   };
 
@@ -106,6 +127,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     async signIn() {
       await forget();
+      await pictureStore.forgetPlayers();
       await InAppBrowser.removeAllListeners();
       let landed = false;
       let browserClosed: () => void = () => undefined;
@@ -176,7 +198,10 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       return read;
     }),
 
-    signOut: forget,
+    async signOut() {
+      await forget();
+      await pictureStore.forgetPlayers();
+    },
 
     // Writes are the desktop's alone for now (the user's call, 2026-09-27): Android enables none,
     // sends none, and its transport refuses a post outright.
@@ -194,6 +219,9 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       } else {
         await saveCookieStore();
       }
+      if (read.ok) {
+        offered = offeredOf(read.value);
+      }
       return read;
     }),
 
@@ -205,6 +233,9 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       }
       return previewCostume(transport, endpoints, set);
     }),
+
+    // A read like the preview, refused unsent while signed out; its fetch waits in the queue.
+    readPicture: (want) => pictures.read(want),
 
     async changeCostume() {
       return { kind: "notEnabled" };

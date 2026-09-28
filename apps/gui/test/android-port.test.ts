@@ -5,6 +5,8 @@
  */
 import { beforeEach, describe, expect, test } from "bun:test";
 
+import { createCostumeEditor } from "../scripts/mock-costume";
+import { thumbnailPng } from "../scripts/mock-pictures";
 import { native, nativeBase64 } from "./capacitor-fakes";
 
 const { createAndroidPort } = await import("../src/platform/android");
@@ -273,5 +275,124 @@ describe("createAndroidPort's costume preview", () => {
     });
     expect(native.cookieCalls).toEqual([]);
     expect(flag.get()).toBe(true);
+  });
+});
+
+describe("createAndroidPort's pictures", () => {
+  beforeEach(() => native.reset());
+
+  const THUMB = { kind: "costumeItem", slot: 1, id: 36 } as const;
+
+  /** Answers the editor with the mock's page and a thumbnail with the mock's picture. */
+  function answerAsHiroba() {
+    const editor = createCostumeEditor();
+    native.httpAnswer = async () => {
+      const asked = native.httpRequests.at(-1)?.url ?? "";
+      const { pathname, searchParams } = new URL(asked);
+      if (pathname === "/mypage_kisekae.php") {
+        return {
+          status: 200,
+          url: asked,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+          data: nativeBase64(`<html><body>${editor.page({ cardChosen: true })}</body></html>`),
+        };
+      }
+      return {
+        status: 200,
+        url: asked,
+        headers: { "Content-Type": "image/png" },
+        data: nativeBase64(
+          thumbnailPng(Number(searchParams.get("type")), Number(searchParams.get("cos"))),
+        ),
+      };
+    };
+  }
+
+  test("asks nothing while signed out", async () => {
+    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    expect(await port.readPicture(THUMB)).toEqual({
+      ok: false,
+      error: { code: "costumeItem=notSignedIn" },
+    });
+    expect(native.httpRequests).toEqual([]);
+  });
+
+  test("asks only for items the last editor read offered, once each, as a browser's picture", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    expect(await port.readPicture(THUMB)).toEqual({
+      ok: false,
+      error: { code: "costumeItem=notOffered" },
+    });
+    expect(native.httpRequests).toEqual([]);
+    expect((await port.openCostumeEditor()).ok).toBe(true);
+    const picture = await port.readPicture(THUMB);
+    expect(picture.ok && picture.value.src.startsWith("data:image/png;base64,")).toBe(true);
+    expect(await port.readPicture(THUMB)).toEqual(picture);
+    expect(await port.readPicture({ ...THUMB, id: 999 })).toEqual({
+      ok: false,
+      error: { code: "costumeItem=notOffered" },
+    });
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_kisekae.php`,
+      `${HIROBA}/imgsrc_kisekae.php?cos=36&type=1`,
+    ]);
+    expect(native.httpRequests[1]?.headers).toMatchObject({
+      Referer: `${HIROBA}/mypage_kisekae.php`,
+      Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    });
+    expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
+  });
+
+  test("a picture's fetch waits for a read already on its way", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.openCostumeEditor();
+    const answer = native.httpAnswer;
+    let release: () => void = () => undefined;
+    native.httpAnswer = () =>
+      new Promise((resolve) => {
+        release = () => resolve(answer());
+      });
+    const reading = port.openCostumeEditor();
+    const picture = port.readPicture(THUMB);
+    await Bun.sleep(150);
+    expect(native.httpRequests).toHaveLength(2);
+    native.httpAnswer = answer;
+    release();
+    await reading;
+    expect((await picture).ok).toBe(true);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_kisekae.php",
+      "/mypage_kisekae.php",
+      "/imgsrc_kisekae.php",
+    ]);
+  });
+
+  test("forgets what the editor offered when the session goes", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.openCostumeEditor();
+    await port.signOut();
+    const outcome = port.signIn();
+    await until(() => native.openedWith.length === 1);
+    native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
+    expect(await outcome).toEqual({ kind: "signedIn" });
+    expect(await port.readPicture(THUMB)).toEqual({
+      ok: false,
+      error: { code: "costumeItem=notOffered" },
+    });
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_kisekae.php",
+    ]);
   });
 });

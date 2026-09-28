@@ -19,6 +19,7 @@ describe("PORT_ARGUMENTS", () => {
     const {
       changeCostume: _change,
       previewCostume: _preview,
+      readPicture: _picture,
       undo: _undo,
       ...takingNothing
     } = PORT_ARGUMENTS;
@@ -76,6 +77,44 @@ describe("PORT_ARGUMENTS.previewCostume", () => {
       [[SET]],
       [null],
       [Object.assign(Object.create({ inherited: true }), SET)],
+    ];
+    for (const args of refused) {
+      expect(check(args)).toBe(false);
+    }
+  });
+});
+
+describe("PORT_ARGUMENTS.readPicture", () => {
+  test("takes one item's thumbnail: a slot from 1 to 5 and an id from 1 to 9999", () => {
+    const check = PORT_ARGUMENTS.readPicture;
+    expect(check([{ kind: "costumeItem", slot: 1, id: 36 }])).toBe(true);
+    expect(check([{ kind: "costumeItem", slot: 5, id: 9999 }])).toBe(true);
+    expect(check([{ id: 1, slot: 3, kind: "costumeItem" }])).toBe(true);
+  });
+
+  test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
+    const check = PORT_ARGUMENTS.readPicture;
+    const item = { kind: "costumeItem", slot: 1, id: 36 };
+    const refused: unknown[][] = [
+      [],
+      [item, item],
+      [{ ...item, slot: 0 }],
+      [{ ...item, slot: 6 }],
+      [{ ...item, id: 0 }],
+      [{ ...item, id: 10000 }],
+      [{ ...item, id: 1.5 }],
+      [{ ...item, id: "1" }],
+      [{ ...item, slot: "1" }],
+      [{ ...item, url: "https://example.test/imgsrc_kisekae.php" }],
+      [{ ...item, src: "imgsrc_kisekae.php?cos=36&type=1" }],
+      [{ slot: 1, id: 36 }],
+      [{ ...item, kind: "titlePlate" }],
+      [{ kind: "titlePlate" }],
+      [{ ...item, kind: undefined }],
+      [[item]],
+      [null],
+      ["costumeItem"],
+      [Object.assign(Object.create({ inherited: true }), item)],
     ];
     for (const args of refused) {
       expect(check(args)).toBe(false);

@@ -4,9 +4,13 @@ import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } f
 
 import {
   createHirobaQueue,
+  createMemoryPictureStore,
+  createPictureReader,
+  DESKTOP_PICTURE_LIMITS,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
+  offeredOf,
   previewCostume,
   readOwnProfile,
 } from "../src/hiroba-session";
@@ -85,11 +89,18 @@ let sessionStore: SessionStore | null = null;
  * stays in this process and is forgotten with the session.
  */
 let owner: string | null = null;
+/**
+ * The items the last costume editor read offered: the only ones whose thumbnail may be asked for.
+ * It stays in this process and is forgotten with the session.
+ */
+let offered: ReadonlySet<string> = new Set();
 const setSession = (value: string | null) => {
   sessionCookie = value;
   sessionStore?.save(value);
   if (value === null) {
     owner = null;
+    offered = new Set();
+    pictures.forget();
   }
 };
 let signInAttempt: SignInAttempt | null = null;
@@ -113,7 +124,22 @@ const readTransport =
  * posts and its read-back, and two writes never interleave. A write asked for while another is
  * queued or running answers `busy` and sends nothing.
  */
-const { oneAtATime, oneWriteAtATime } = createHirobaQueue();
+const queue = createHirobaQueue();
+const { oneAtATime, oneWriteAtATime } = queue;
+
+/**
+ * Hiroba's pictures for the window, kept in memory for the run. Only a picture's fetch waits in
+ * the queue, never the whole call: one already kept answers at once, even while a write runs.
+ */
+const pictureStore = createMemoryPictureStore();
+const pictures = createPictureReader({
+  transport: readTransport,
+  endpoints,
+  store: pictureStore,
+  queue,
+  limits: DESKTOP_PICTURE_LIMITS,
+  state: () => ({ signedIn: sessionCookie !== null, offered }),
+});
 const BUSY: WriteOutcomeView = { kind: "busy" };
 
 /** A read that found the login page, or a card still to choose: the session is over. */
@@ -168,6 +194,7 @@ app.whenReady().then(async () => {
     async signIn(): Promise<SignInOutcome> {
       signInAttempt?.cancel();
       setSession(null);
+      await pictureStore.forgetPlayers();
       const attempt = openSignInWindow(mainWindow, endpoints, userAgent);
       signInAttempt = attempt;
       const result = await attempt.result;
@@ -199,9 +226,17 @@ app.whenReady().then(async () => {
     }),
     async signOut() {
       setSession(null);
+      await pictureStore.forgetPlayers();
     },
     enabledWrites: writes.enabledWrites,
-    openCostumeEditor: oneAtATime(writes.openCostumeEditor),
+    // The items it offers are the only ones whose thumbnail the window may ask for next.
+    openCostumeEditor: oneAtATime(async () => {
+      const read = await writes.openCostumeEditor();
+      if (read.ok) {
+        offered = offeredOf(read.value);
+      }
+      return read;
+    }),
     // A read that changes nothing, so no write gate: in the queue like every request to Hiroba, so
     // it never lands between a write's posts and its read-back. Its failure leaves the session be:
     // the next read of a page says whether it is over. Kept as its latest copy alone when reads are
@@ -212,6 +247,7 @@ app.whenReady().then(async () => {
       }
       return previewCostume(readTransport, endpoints, set);
     }),
+    readPicture: (want) => pictures.read(want),
     changeCostume: oneWriteAtATime(writes.changeCostume, BUSY),
     pendingUndo: writes.pendingUndo,
     undo: oneWriteAtATime(writes.undo, BUSY),

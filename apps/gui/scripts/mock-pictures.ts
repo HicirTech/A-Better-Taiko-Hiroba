@@ -33,7 +33,7 @@ function seedOf(...values: readonly number[]): number {
  * a band whose height is the slot, and noise in the low bits, so every pair has its own picture and
  * each is well over the app's smallest thumbnail.
  */
-export function thumbnailPng(type: number, cos: number): Uint8Array {
+export function thumbnailPng(type: number, cos: number): Uint8Array<ArrayBuffer> {
   const next = randomFrom(seedOf(type, cos));
   const colour = [next() % 256, next() % 256, next() % 256];
   const side = THUMBNAIL_SIDE;
