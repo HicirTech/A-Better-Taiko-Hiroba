@@ -8,8 +8,9 @@
  * kept across sign-outs and launches), Hiroba's score panel (a stand-in while its art does not
  * come, asked for again after each read until it does, the counts written over the art where my
  * page writes them, the art kept across launches and sign-outs), the My Don
- * portrait (a button to the editor, with an edit badge and its name on hover, from the picture
- * host with no cookie, a first one that does not come coded and asked
+ * portrait (a button to the editor, with an edit badge and its name on hover, opened by Enter and
+ * Space, and on a touch-first screen by a long-press alone, not a tap or a moved finger, from the
+ * picture host with no cookie, a first one that does not come coded and asked
  * for again after a read, kept across launches and sign-ins, fetched anew on Read again and after a
  * write applies, the kept one still shown when a fresh one does not come), the どんメダル
  * plate (asked for only on screen, its words over it, one plate per season and state, one that
