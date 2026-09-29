@@ -9,8 +9,8 @@
  * come, asked for again after each read until it does, the counts written over the art where my
  * page writes them, the art kept across launches and sign-outs), the My Don
  * portrait (a button to the editor, with an edit badge and its name on hover, opened by Enter and
- * Space, and on a touch-first screen by a long-press alone, not a tap or a moved finger, from the
- * picture host with no cookie, a first one that does not come coded and asked
+ * Space, on a touch-first screen too, and there by a long-press alone, not a tap or a moved
+ * finger, from the picture host with no cookie, a first one that does not come coded and asked
  * for again after a read, kept across launches and sign-ins, fetched anew on Read again and after a
  * write applies, the kept one still shown when a fresh one does not come), the どんメダル
  * plate (asked for only on screen, its words over it, one plate per season and state, one that
@@ -1438,7 +1438,8 @@ try {
     (await page.evaluate<boolean>(`document.querySelector("#costume-open")?.disabled === false`)) &&
     !(await exists("#costume-not-open"));
 
-  // The keyboard opens the editor from the portrait, by Enter and by Space.
+  // The keyboard opens the editor from the portrait, by Enter and by Space, and so it does on the
+  // touch-first screen below, where a finger's tap does not.
   const openedBy = async (keys: () => Promise<unknown>) => {
     await page.evaluate(`document.querySelector("#costume-open").focus()`);
     await keys();
@@ -1447,12 +1448,13 @@ try {
     return opened;
   };
   const SPACE = { key: " ", code: "Space", windowsVirtualKeyCode: 32 };
-  const openedByEnter = await openedBy(() => press("Enter"));
-  const openedBySpace = await openedBy(async () => {
-    await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SPACE, text: " " });
-    await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SPACE });
-  });
-  results.portraitOpensEditorByKeyboard = openedByEnter && openedBySpace;
+  const openedByKeys = async () =>
+    (await openedBy(() => press("Enter"))) &&
+    (await openedBy(async () => {
+      await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SPACE, text: " " });
+      await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SPACE });
+    }));
+  const openedByKeysWithMouse = await openedByKeys();
 
   // On a touch-first screen (touch emulated), a finger opens the editor by a long-press on the
   // portrait: its edit badge is up at rest, and a description says to long-press. A tap, which the
@@ -1469,6 +1471,8 @@ try {
     ),
   );
   await waitFor(async () => (await badgeOpacity()) === "1" || undefined, 5_000);
+  results.portraitOpensEditorByKeyboard = openedByKeysWithMouse && (await openedByKeys());
+  await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
   await page.evaluate(
     `window.touchClicks = []; document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true)`,
   );
