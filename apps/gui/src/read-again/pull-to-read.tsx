@@ -5,6 +5,7 @@ import {
   NO_PULL,
   PULL_THRESHOLD_PX,
   type PullState,
+  pointOf,
   pullMoved,
   pullReleased,
   pullStarted,
@@ -135,11 +136,6 @@ function PullIndicator({ distance }: { distance: number }) {
       </Paper>
     </Box>
   );
-}
-
-/** Where a finger is, in the window's CSS pixels. */
-function pointOf(finger: Touch) {
-  return { x: finger.clientX, y: finger.clientY };
 }
 
 /** How far the page is scrolled down now. */

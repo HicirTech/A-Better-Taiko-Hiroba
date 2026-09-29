@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  movedPastSlop,
   NO_PULL,
   PULL_LIMIT_PX,
   PULL_RESISTANCE,
@@ -84,6 +85,18 @@ describe("pullMoved", () => {
   test("ends the pull once the page has scrolled under it", () => {
     const pulling = movedDown(landed(), PULL_SLOP_PX);
     expect(pullMoved(pulling, { x: START.x, y: START.y + 40 }, 1)).toBe(NO_PULL);
+  });
+});
+
+describe("movedPastSlop", () => {
+  type SlopCase = [label: string, dx: number, dy: number, moved: boolean];
+  test.each<SlopCase>([
+    ["within the slop both ways", PULL_SLOP_PX - 1, -(PULL_SLOP_PX - 1), false],
+    ["down to the slop", 0, PULL_SLOP_PX, true],
+    ["up to the slop", 0, -PULL_SLOP_PX, true],
+    ["sideways to the slop", -PULL_SLOP_PX, 0, true],
+  ])("says whether a finger that went %s moved past the slop: %p", (_label, dx, dy, moved) => {
+    expect(movedPastSlop(START, { x: START.x + dx, y: START.y + dy })).toBe(moved);
   });
 });
 

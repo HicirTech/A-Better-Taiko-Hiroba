@@ -1033,6 +1033,17 @@ try {
   const readsByPullBelowTop = await readsBySwipe(pullFrom, pulledBy(0, 200));
   results.pullOnlyDownFromTheTop =
     readsByUpwardSwipe === 0 && readsBySidewaysSwipe === 0 && readsByPullBelowTop === 0;
+  // A slow pull begun on the portrait opens no tooltip on the way: a finger that moves makes no
+  // long press. Held past a long press's time and let go short of the point, it reads nothing.
+  const onTile = await middleOf(page, "#my-don");
+  const readsBeforeSlowPull = await myPageHits();
+  const tooltipInSlowPull = await swipe(onTile, { x: onTile.x, y: onTile.y + 100 }, async () => {
+    await Bun.sleep(1000);
+    return exists('[role="tooltip"]');
+  });
+  await Bun.sleep(500);
+  results.portraitTooltipShutInPull =
+    tooltipInSlowPull === false && (await myPageHits()) === readsBeforeSlowPull;
   await touchEmulated(false);
 
   // Every shape my page can take is a normal state: each renders in its place with the rest of
@@ -2055,6 +2066,23 @@ try {
     )) &&
     (await running.textOf("#costume-not-open")) === NOT_OPEN &&
     whyOnHover === NOT_OPEN;
+  // On a touch screen, a finger held still on it says why just the same.
+  await waitFor(async () =>
+    (await running.textOf('[role="tooltip"]')) === null ? true : undefined,
+  );
+  await running.page.send("Emulation.setTouchEmulationEnabled", {
+    enabled: true,
+    maxTouchPoints: 5,
+  });
+  const held = await middleOf(running.page, "#my-don");
+  await running.page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [held] });
+  const whyOnLongPress = await waitFor(
+    async () => (await running.textOf('[role="tooltip"]')) ?? undefined,
+    5_000,
+  );
+  await running.page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await running.page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+  results.shutGateSaysWhyOnLongPress = whyOnLongPress === NOT_OPEN;
   // Signed out on the last launch and in again on this one, the plate and the thumbnails kept on
   // disk are still there, and Hiroba is asked for none of them (the user's call, 2026-09-28: no
   // picture is deleted at sign-out). This build opens no editor, so a thumbnail is asked for through
@@ -2292,10 +2320,18 @@ async function hoverOver(
   page: Awaited<ReturnType<typeof connect>>,
   selector: string,
 ): Promise<void> {
-  const middle = await page.evaluate<{ x: number; y: number }>(
+  const middle = await middleOf(page, selector);
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...middle });
+}
+
+/** The middle of `selector` in the window, where a pointer or a finger rests on it. */
+function middleOf(
+  page: Awaited<ReturnType<typeof connect>>,
+  selector: string,
+): Promise<{ x: number; y: number }> {
+  return page.evaluate<{ x: number; y: number }>(
     `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: box.left + box.width / 2, y: box.top + box.height / 2 }; })()`,
   );
-  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...middle });
 }
 
 /**

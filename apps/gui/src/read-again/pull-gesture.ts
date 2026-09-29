@@ -67,16 +67,31 @@ export function pullMoved(state: PullState, at: TouchPoint, scrollTopPx: number)
     return { ...state, distancePx: pulledDistance(down) };
   }
 
-  const sideways = Math.abs(at.x - state.start.x);
-  if (Math.max(Math.abs(down), sideways) < PULL_SLOP_PX) {
+  if (!movedPastSlop(state.start, at)) {
     return state;
   }
 
-  if (down <= sideways) {
+  if (down <= Math.abs(at.x - state.start.x)) {
     return NO_PULL;
   }
 
   return { phase: "pulling", start: state.start, distancePx: pulledDistance(down) };
+}
+
+/**
+ * Whether a finger has wandered past the slop from where it landed, any way: its direction then
+ * says what the touch is, and it is no press held still.
+ */
+export function movedPastSlop(start: TouchPoint, at: TouchPoint): boolean {
+  return Math.max(Math.abs(at.x - start.x), Math.abs(at.y - start.y)) >= PULL_SLOP_PX;
+}
+
+/** Where a finger is, in the window's CSS pixels: a touch as the DOM or React reports it. */
+export function pointOf(finger: {
+  readonly clientX: number;
+  readonly clientY: number;
+}): TouchPoint {
+  return { x: finger.clientX, y: finger.clientY };
 }
 
 /** The finger lifted: whether the pull drew the indicator far enough to read again. */

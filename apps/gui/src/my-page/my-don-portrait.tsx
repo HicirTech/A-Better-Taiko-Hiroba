@@ -1,8 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box, ButtonBase, CircularProgress, SvgIcon, Tooltip } from "@mui/material";
-import type { Ref } from "react";
+import { type Ref, type TouchEvent, useRef, useState } from "react";
 
 import type { PictureAnswer } from "../pictures/picture-lane";
+import { movedPastSlop, pointOf, type TouchPoint } from "../read-again/pull-gesture";
 import { HIROBA_BLOCK, hirobaPx, VISUALLY_HIDDEN } from "./hiroba-px";
 
 /** Hiroba's portrait tile: 136 square, its corners 5 round. */
@@ -62,18 +63,20 @@ export interface MyDonPortraitProps {
  */
 export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps) {
   const { t } = i18n;
+  const { tooltip, trigger } = useStillPressTooltip();
   if (action.kind === "shut") {
     const why = t("costume.notOpen");
     return (
       <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
         {/* A node, not a string, so the tooltip adds no title of its own to repeat the description. */}
-        <Tooltip title={<span>{why}</span>} describeChild>
+        <Tooltip title={<span>{why}</span>} describeChild {...tooltip}>
           <Box
             ref={ref}
             component="span"
             id="my-don"
             aria-busy={answer === undefined}
             sx={{ ...TILE, userSelect: "none", WebkitTouchCallout: "none" }}
+            {...trigger}
           >
             <TileContent answer={answer} i18n={i18n} />
             <Box component="span" id="costume-not-open" sx={VISUALLY_HIDDEN}>
@@ -88,12 +91,13 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
   return (
     <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
       {/* None while it is disabled: a disabled button sends no event to open or close it. */}
-      <Tooltip title={action.busy ? "" : label}>
+      <Tooltip title={action.busy ? "" : label} {...tooltip}>
         <ButtonBase
           id="costume-open"
           aria-label={label}
           disabled={action.busy}
           onClick={action.open}
+          {...trigger}
           focusRipple
           sx={{
             display: "block",
@@ -118,6 +122,48 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
       </Tooltip>
     </Box>
   );
+}
+
+/**
+ * The portrait's tooltip, which a long press opens on a touch screen only while the finger stays
+ * put. MUI's long press runs out its time however the finger moves, so a slow pull to read again
+ * begun on the portrait, the largest thing at the top of a phone's page, would open it on the way;
+ * a finger past the slop is a pull or a scroll (pull-gesture.ts), and shuts it instead.
+ */
+function useStillPressTooltip() {
+  const [open, setOpen] = useState(false);
+  /** The finger on the portrait now: where it landed, and whether it has moved past the slop. */
+  const press = useRef<{ readonly landed: TouchPoint; moved: boolean } | null>(null);
+  const tooltip = {
+    open,
+    onOpen: () => {
+      if (!press.current?.moved) {
+        setOpen(true);
+      }
+    },
+    onClose: () => setOpen(false),
+  };
+  const trigger = {
+    onTouchStart: (event: TouchEvent) => {
+      const finger = event.touches[0];
+      press.current = finger === undefined ? null : { landed: pointOf(finger), moved: false };
+    },
+    onTouchMove: (event: TouchEvent) => {
+      const finger = event.touches[0];
+      if (press.current === null || finger === undefined) {
+        return;
+      }
+
+      if (movedPastSlop(press.current.landed, pointOf(finger))) {
+        press.current.moved = true;
+        setOpen(false);
+      }
+    },
+    onTouchEnd: () => {
+      press.current = null;
+    },
+  };
+  return { tooltip, trigger };
 }
 
 /** The portrait on the tile, once it came, and a small spinner until it has. */
