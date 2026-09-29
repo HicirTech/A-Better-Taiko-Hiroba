@@ -26,8 +26,9 @@
  * sites, the pages (a side panel on a wide window, a menu on a narrow one, the sign-in card on the
  * Overview and Favourites while signed out, the favourites on their own page, and the page kept for
  * the next launch), the scheme (dark or light as the system asks, the page's color-scheme with it),
- * the language (the system's at first, a pick in Settings that takes hold at once
- * and is kept, System default, which follows the system again, and one made while signed in,
+ * Settings (sections with small headings over lists of rows, who is signed in, and Sign out), the
+ * language (radio buttons the arrows move, the system's at first, a pick in Settings that takes
+ * hold at once and is kept, System default, which follows the system again, and one made while signed in,
  * which asks Hiroba nothing), a reopen that keeps the
  * session and the undo,
  * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
