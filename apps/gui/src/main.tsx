@@ -40,7 +40,9 @@ const platform = await connectPlatform({ closeLabel: () => shown.t("signIn.close
 createRoot(container).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <CssBaseline />
+      {/* The page's color-scheme follows the scheme shown, so the scrollbars and the system's own
+          widgets are dark with the rest of a dark page. */}
+      <CssBaseline enableColorScheme />
       <Shell platform={platform} onShown={onShown} />
     </ThemeProvider>
   </StrictMode>,
