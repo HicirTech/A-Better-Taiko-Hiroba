@@ -279,12 +279,15 @@ const WRITE_REQUESTS = [
 const en = createTranslator("en");
 const ja = createTranslator("ja");
 const zhHant = createTranslator("zh-Hant");
-/** The language setting's button and first item while the app follows a system in 繁體中文. */
+/** The system's choice in Settings while the app follows a system in 繁體中文. */
 const SYSTEM_ZH_HANT = zhHant.t("language.system", { name: "繁體中文" });
-/** What says which language the window is in: `lang`, the title, the navigation and the picker. */
+/**
+ * What says which language the window is in: `lang`, the title, the navigation, and the choice
+ * checked in Settings.
+ */
 const languageShown = (page: Awaited<ReturnType<typeof launch>>["page"]) =>
   page.evaluate<Record<string, string | null>>(
-    `({ lang: document.documentElement.lang, title: document.title, overview: document.querySelector("#nav-overview")?.textContent ?? null, picker: document.querySelector("#language-picker")?.textContent ?? null })`,
+    `({ lang: document.documentElement.lang, title: document.title, overview: document.querySelector("#nav-overview")?.textContent ?? null, checked: document.querySelector("#language-setting input:checked")?.closest("label")?.textContent ?? null })`,
   );
 rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
 await resetLog();
@@ -301,23 +304,26 @@ try {
     lang: "zh-Hant",
     title: "A Better Taiko Hiroba",
     overview: zhHant.t("nav.overview"),
-    picker: SYSTEM_ZH_HANT,
+    checked: SYSTEM_ZH_HANT,
   });
-  // The system's language first, in the app's words, then each language named in its own words and
-  // marked with it, in the catalog's order.
-  await inLanguage.click("#language-picker");
-  const listed = await waitFor(() =>
-    inLanguage.page.evaluate<string[][] | undefined>(
-      `(() => { const items = [...document.querySelectorAll('[role="menuitem"]')]; return items.length === 0 ? undefined : items.map((item) => [item.lang, item.textContent]); })()`,
-    ),
+  // One radio button per choice, in one group named by the section's heading: the system's
+  // language first, in the app's words, then each language named in its own words and marked with
+  // it, in the catalog's order.
+  const listed = await inLanguage.page.evaluate<string[][]>(
+    `[...document.querySelectorAll('#language-setting [role="radiogroup"] li label')].filter((label) => label.querySelector('input[type="radio"]') !== null).map((label) => [label.lang, label.textContent])`,
   );
-  results.pickerNamesEachLanguage = same(listed, [
-    ["", SYSTEM_ZH_HANT],
-    ["en", "English"],
-    ["ja", "日本語"],
-    ["zh-Hans", "简体中文"],
-    ["zh-Hant", "繁體中文"],
-  ]);
+  const groupName = await inLanguage.page.evaluate<string | null>(
+    `(() => { const group = document.querySelector('#language-setting [role="radiogroup"]'); return document.getElementById(group?.getAttribute("aria-labelledby") ?? "")?.textContent ?? null; })()`,
+  );
+  results.choicesNameEachLanguage =
+    groupName === zhHant.t("settings.language") &&
+    same(listed, [
+      ["", SYSTEM_ZH_HANT],
+      ["en", "English"],
+      ["ja", "日本語"],
+      ["zh-Hans", "简体中文"],
+      ["zh-Hant", "繁體中文"],
+    ]);
   // A pick of the language already shown is a pick too: a system in another one no longer decides.
   await inLanguage.click("#language-zh-Hant");
   await stop(inLanguage);
@@ -327,23 +333,19 @@ try {
     lang: "en-US",
     userData: LANGUAGE_USER_DATA,
   });
-  await waitFor(async () => (await inLanguage.textOf("#language-picker")) ?? undefined);
+  await waitFor(async () => (await inLanguage.textOf("#language-setting")) ?? undefined);
   results.pageKeptAcrossLaunches =
     (await inLanguage.currentPage()) === "settings" &&
     (await inLanguage.textOf("#sign-in")) === null;
-  results.shownLanguagePickKept = same(
-    [(await languageShown(inLanguage.page)).lang, await inLanguage.textOf("#language-picker")],
-    ["zh-Hant", "繁體中文"],
-  );
-  await inLanguage.click("#language-picker");
-  await waitFor(async () => (await inLanguage.textOf("#language-ja")) ?? undefined);
+  const kept = await languageShown(inLanguage.page);
+  results.shownLanguagePickKept = same([kept.lang, kept.checked], ["zh-Hant", "繁體中文"]);
   await inLanguage.click("#language-ja");
   await inLanguage.until(ja.t("settings.account"));
   results.pickTakesHold = same(await languageShown(inLanguage.page), {
     lang: "ja",
     title: "A Better Taiko Hiroba",
     overview: ja.t("nav.overview"),
-    picker: "日本語",
+    checked: "日本語",
   });
   await stop(inLanguage);
   inLanguage = await launch({
@@ -355,15 +357,13 @@ try {
   await inLanguage.until(ja.t("settings.account"));
   results.pickKeptAcrossLaunches =
     (await languageShown(inLanguage.page)).lang === "ja" && same(await requestLog(), []);
-  await inLanguage.click("#language-picker");
-  await waitFor(async () => (await inLanguage.textOf("#language-system")) ?? undefined);
   await inLanguage.click("#language-system");
   await inLanguage.until(zhHant.t("settings.account"));
   results.systemDefaultTakesHold = same(await languageShown(inLanguage.page), {
     lang: "zh-Hant",
     title: "A Better Taiko Hiroba",
     overview: zhHant.t("nav.overview"),
-    picker: SYSTEM_ZH_HANT,
+    checked: SYSTEM_ZH_HANT,
   });
   await stop(inLanguage);
   inLanguage = await launch({
@@ -378,8 +378,27 @@ try {
       lang: "en",
       title: "A Better Taiko Hiroba",
       overview: en.t("nav.overview"),
-      picker: en.t("language.system", { name: "English" }),
+      checked: en.t("language.system", { name: "English" }),
     }) && same(await requestLog(), []);
+  // From the keyboard, the arrows move the check from choice to choice, as a radio group's do, and
+  // each takes hold as a click does.
+  const ARROW_DOWN = { key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40 };
+  const arrowDown = async () => {
+    await inLanguage.page.send("Input.dispatchKeyEvent", { type: "keyDown", ...ARROW_DOWN });
+    await inLanguage.page.send("Input.dispatchKeyEvent", { type: "keyUp", ...ARROW_DOWN });
+  };
+  await inLanguage.page.evaluate(
+    `document.querySelector("#language-setting input:checked").focus()`,
+  );
+  await arrowDown();
+  const checkedByArrow = await waitFor(async () => {
+    const shown = await languageShown(inLanguage.page);
+    return shown.checked === "English" ? shown.lang : undefined;
+  });
+  await arrowDown();
+  await inLanguage.until(ja.t("settings.account"));
+  results.choicesMoveByArrows =
+    checkedByArrow === "en" && same((await languageShown(inLanguage.page)).checked, "日本語");
 } finally {
   await stop(inLanguage);
   rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
@@ -399,7 +418,7 @@ try {
   // The pages, signed out, with no header at all (the user's call, 2026-09-29): on a window this
   // wide, a side panel like Gmail's, the product's name small at its top, then each page, the one
   // shown marked. The Overview and Favourites show the sign-in card; Settings works, with the
-  // language and the note on staying signed in, and no way to sign out.
+  // language and the note on staying signed in, no one signed in and no way to sign out.
   const NAVIGATION = ["A Better Taiko Hiroba", "Overview", "Favourites", "Settings"].join("");
   const shownSignedOut: boolean[] = [];
   for (const each of ["favorites", "settings", "overview"] as const) {
@@ -408,6 +427,7 @@ try {
       each === "settings"
         ? (await exists("#language-setting")) &&
             (await exists("#sign-out-note")) &&
+            (await textOf("#account-who")) === "Not signed in" &&
             !(await exists("#sign-out")) &&
             !(await exists("#sign-in"))
         : (await exists("#sign-in-card #sign-in")) && !(await exists("#language-setting")),
@@ -729,8 +749,8 @@ try {
   const platesAtSignIn = await platesSettled();
 
   // The page's column, and the Fab at its right, stand still from page to page: the Overview,
-  // which scrolls, and Settings, which does not, keep the scrollbar's room alike, and so does a
-  // menu, which stops the page scrolling while it is open.
+  // which scrolls, and Settings, which does not, keep the scrollbar's room alike, and so does the
+  // editor's dialog below, which stops the page scrolling while it is open.
   const column = () => boxOf("main .MuiContainer-root");
   type Column = Awaited<ReturnType<typeof column>>;
   const sameColumn = (one: Column, other: Column) =>
@@ -741,31 +761,37 @@ try {
   const columnOnOverview = await column();
   await goTo("settings");
   const columnOnSettings = await column();
-  await click("#language-picker");
-  await waitFor(async () => (await exists('[role="menu"]')) || undefined);
-  const columnUnderMenu = await column();
-  await press("Escape");
-  await waitFor(async () => (await exists('[role="menu"]')) === false || undefined);
+
+  // Settings, signed in, laid out as Gmail's settings are: each section a small heading with its
+  // icon, over one list of rows. The language's choices are radio buttons, one checked; the
+  // account's row says who is signed in, with the note, and Sign out beside them, in the casing
+  // of the app's other buttons, MUI's own.
+  const settingsLayout = await page.evaluate<Record<string, unknown>>(
+    `(() => { const sections = [...document.querySelectorAll("main section")]; const signOut = document.querySelector("#sign-out"); return { sections: sections.map((section) => [section.id, document.getElementById(section.getAttribute("aria-labelledby"))?.tagName ?? null, section.querySelector("h2 svg") !== null, section.querySelectorAll("ul").length]), radios: document.querySelectorAll('#language-setting li input[type="radio"]').length, checked: document.querySelectorAll("#language-setting input:checked").length, who: document.querySelector("#account-who")?.textContent ?? null, signOutBeside: signOut?.closest("li") === document.querySelector("#account-who")?.closest("li"), casing: signOut === null ? null : getComputedStyle(signOut).textTransform }; })()`,
+  );
+  results.settingsLaidOutLikeGmail = same(settingsLayout, {
+    sections: [
+      ["language-setting", "H2", true, 1],
+      ["account", "H2", true, 1],
+    ],
+    radios: 5,
+    checked: 1,
+    who: "Signed in as サンプルどん",
+    signOutBeside: true,
+    casing: "uppercase",
+  });
   await goTo("overview");
-  results.columnStillAcrossPages =
-    overviewScrolls &&
-    sameColumn(columnOnOverview, columnOnSettings) &&
-    sameColumn(columnOnSettings, columnUnderMenu);
 
   // Picked in Settings while signed in, a language redraws the profile as it was read: counts,
   // percents and times in its own forms, Hiroba's words as they were, and nothing asked of Hiroba,
   // there or back, nor by going from page to page.
   const pickLanguage = async (locale: string) => {
-    await waitFor(async () => (await exists('[role="menu"]')) === false || undefined);
     await goTo("settings");
-    await click("#language-picker");
-    await waitFor(async () => (await exists(`#language-${locale}`)) || undefined);
     await click(`#language-${locale}`);
     await waitFor(
       async () =>
         (await page.evaluate<string>("document.documentElement.lang")) === locale || undefined,
     );
-    await waitFor(async () => (await exists('[role="menu"]')) === false || undefined);
     await goTo("overview");
   };
   const readsBeforeLanguage = await readHits();
@@ -1414,6 +1440,10 @@ try {
   await fetch(`${HIROBA}/__previews?reset=1`);
   await click("#costume-open");
   const onOpen = await previewOtherThan(null);
+  results.columnStillAcrossPages =
+    overviewScrolls &&
+    sameColumn(columnOnOverview, columnOnSettings) &&
+    sameColumn(columnOnSettings, await column());
   await Bun.sleep(500);
   results.previewShownOnOpen =
     onOpen.startsWith("data:image/png;base64,") &&
