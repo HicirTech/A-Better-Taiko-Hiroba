@@ -419,6 +419,26 @@ try {
     !(await exists("#nav-menu")) &&
     shownSignedOut.every(Boolean);
 
+  // The page follows the system's scheme, and its color-scheme with it, so the scrollbars and the
+  // system's own widgets are dark on a dark page and light on a light one.
+  const shownIn = async (scheme: "dark" | "light") => {
+    await page.send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-color-scheme", value: scheme }],
+    });
+    await waitFor(
+      async () =>
+        (await page.evaluate<string>("getComputedStyle(document.documentElement).colorScheme")) ===
+          scheme || undefined,
+      5_000,
+    );
+    return page.evaluate<string>("getComputedStyle(document.body).backgroundColor");
+  };
+  const darkBackground = await shownIn("dark");
+  const lightBackground = await shownIn("light");
+  await page.send("Emulation.setEmulatedMedia", { features: [] });
+  results.schemeFollowsSystem =
+    darkBackground === "rgb(18, 18, 18)" && lightBackground === "rgb(255, 255, 255)";
+
   // On a narrow window (below MUI's md), a menu button floats at the top left instead, clear of
   // the page, named for screen readers. From the keyboard it opens the same pages in a drawer; a
   // pick closes it on its page, and so do Escape and a tap outside it, the focus going back to it.
