@@ -152,6 +152,11 @@ export interface Messages {
   /** The name of the My Don portrait where a click on it opens the costume editor, and its tooltip. */
   "costume.open": string;
   /**
+   * The same portrait's description on a touch-first screen, where a finger opens the editor by a
+   * long-press and a tap does nothing: say to long-press.
+   */
+  "costume.openByLongPress": string;
+  /**
    * The portrait's tooltip, and its description, when this run may not change the costume: why. True
    * on every shell while no kind is verified; say it again once one is, since Android enables none.
    */

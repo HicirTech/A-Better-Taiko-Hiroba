@@ -74,6 +74,7 @@ export const ja: Messages = {
   "failure.detail": "報告用の詳細：{detail}",
   "platform.unsupported": "このビルドは、デスクトップ版か Android 版のアプリの中でしか動きません。",
   "costume.open": "きせかえを変更",
+  "costume.openByLongPress": "マイどんを長押しすると、きせかえを変更できます。",
   "costume.notOpen":
     "このビルドではまだ使えません：アプリからの実際の変更が、まだ一度も確かめられていません。",
   "costume.title": "きせかえ",

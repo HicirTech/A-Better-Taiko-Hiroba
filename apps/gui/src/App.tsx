@@ -192,13 +192,18 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     setCostumeOpen(true);
   };
   /**
+   * A touch-first screen reads again by a pull from the top of the page, not by the Fab, and opens
+   * the editor by a long-press on the portrait, not a tap.
+   */
+  const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
+  /**
    * The portrait opens the editor where this run may change the costume, not while an undo runs;
    * shut on purpose, it says why, rather than leave a card with no way to change anything.
    */
   const portrait: PortraitAction =
     costumeWrite === undefined
       ? { kind: "shut" }
-      : { kind: "opensEditor", open: openEditor, busy: undoing };
+      : { kind: "opensEditor", open: openEditor, busy: undoing, byLongPress: touchFirst };
 
   /**
    * Undoes the last costume change: a write like any other, its outcome shown on the card. One
@@ -251,8 +256,6 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   }, [port, read]);
 
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
-  /** A touch-first screen reads again by a pull from the top of the page, not by the Fab. */
-  const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   /**
    * Reads again, from the Fab or a pull, as the read on opening does. Never while a read runs, nor
    * while the editor is open or an undo runs, so no read starts inside a write. The ref turns away

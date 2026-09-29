@@ -72,6 +72,7 @@ export const zhHans: Messages = {
   "failure.detail": "报告详情：{detail}",
   "platform.unsupported": "此版本只能在桌面版或 Android 版应用中运行。",
   "costume.open": "更换装扮",
+  "costume.openByLongPress": "长按你的マイどん即可更换装扮。",
   "costume.notOpen": "此版本尚未开放：还没有从本应用实际更换过一次装扮并加以确认。",
   "costume.title": "きせかえ",
   "costume.reading": "正在从广场读取装扮…",

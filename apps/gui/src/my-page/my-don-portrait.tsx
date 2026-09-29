@@ -1,10 +1,11 @@
 import type { Translator } from "@abth/i18n";
 import { Box, ButtonBase, CircularProgress, SvgIcon, Tooltip } from "@mui/material";
-import { type Ref, type TouchEvent, useRef, useState } from "react";
+import { type MouseEvent, type Ref, type TouchEvent, useRef, useState } from "react";
 
 import type { PictureAnswer } from "../pictures/picture-lane";
 import { movedPastSlop, pointOf, type TouchPoint } from "../read-again/pull-gesture";
 import { HIROBA_BLOCK, hirobaPx, VISUALLY_HIDDEN } from "./hiroba-px";
+import { useLongPress } from "./use-long-press";
 
 /** Hiroba's portrait tile: 136 square, its corners 5 round. */
 const TILE_SIDE = 136;
@@ -20,6 +21,8 @@ const TILE_BACKGROUND = "#cfe8f7";
 const ON_TILE = "#000";
 /** The edit badge's side: small, in the tile's corner, the same at any size of tile. */
 const BADGE_SIDE_PX = 32;
+/** The description that says to long-press the portrait, where a finger does. */
+const LONG_PRESS_HINT_ID = "costume-open-hint";
 /** The tile, drawn the same whether a click on it opens the editor or not. */
 const TILE = {
   display: "block",
@@ -34,10 +37,16 @@ const TILE = {
 /**
  * What a click on the portrait does: opens the costume editor, when this run may change the
  * costume, and nothing while `busy`, as while an undo runs; or nothing at all where the costume may
- * not be changed (Android, packaged builds), which the portrait then says.
+ * not be changed (Android, packaged builds), which the portrait then says. `byLongPress`, on a
+ * touch-first screen, a finger opens it by a long-press instead of a tap.
  */
 export type PortraitAction =
-  | { readonly kind: "opensEditor"; readonly open: () => void; readonly busy: boolean }
+  | {
+      readonly kind: "opensEditor";
+      readonly open: () => void;
+      readonly busy: boolean;
+      readonly byLongPress: boolean;
+    }
   | { readonly kind: "shut" };
 
 export interface MyDonPortraitProps {
@@ -58,12 +67,21 @@ export interface MyDonPortraitProps {
  *
  * There is no button to change the costume: the portrait itself opens the editor (the user's call,
  * 2026-09-29). Where a click can, it is a button named for that, with a small edit badge on hover
- * or keyboard focus. Where the costume may not be changed, it is no button: its tooltip, on hover
- * or a long press, says why, and so does a description screen readers read with it.
+ * or keyboard focus. On a touch-first screen a finger opens it by a long-press, and a tap does
+ * nothing, so a scroll or a pull begun on it never opens it; the badge is always up there, and a
+ * description says to long-press. A mouse still clicks, and the keyboard still presses it. Where
+ * the costume may not be changed, it is no button: its tooltip, on hover or a long press, says
+ * why, and so does a description screen readers read with it.
  */
 export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps) {
   const { t } = i18n;
   const { tooltip, trigger } = useStillPressTooltip();
+  const byLongPress = action.kind === "opensEditor" && action.byLongPress;
+  const longPress = useLongPress(byLongPress && !action.busy, () => {
+    if (action.kind === "opensEditor") {
+      action.open();
+    }
+  });
   if (action.kind === "shut") {
     const why = t("costume.notOpen");
     return (
@@ -88,16 +106,25 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
     );
   }
   const label = t("costume.open");
+  // A finger's tap does nothing where a finger long-presses: the mouse's click and the keyboard's
+  // press still open it.
+  const click = (event: MouseEvent) => {
+    if (!byLongPress || !isTouchTap(event)) {
+      action.open();
+    }
+  };
   return (
     <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
-      {/* None while it is disabled: a disabled button sends no event to open or close it. */}
-      <Tooltip title={action.busy ? "" : label} {...tooltip}>
+      {/* None while it is disabled: a disabled button sends no event to open or close it. None by a
+          finger where the long-press opens the editor itself. */}
+      <Tooltip title={action.busy ? "" : label} disableTouchListener={byLongPress} {...tooltip}>
         <ButtonBase
           id="costume-open"
           aria-label={label}
+          aria-describedby={byLongPress ? LONG_PRESS_HINT_ID : undefined}
           disabled={action.busy}
-          onClick={action.open}
-          {...trigger}
+          onClick={click}
+          {...(byLongPress ? longPress : trigger)}
           focusRipple
           sx={{
             display: "block",
@@ -117,11 +144,21 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
           <Box ref={ref} component="span" id="my-don" aria-busy={answer === undefined} sx={TILE}>
             <TileContent answer={answer} i18n={i18n} />
           </Box>
-          <EditBadge />
+          <EditBadge alwaysUp={byLongPress} />
         </ButtonBase>
       </Tooltip>
+      {byLongPress && (
+        <Box component="span" id={LONG_PRESS_HINT_ID} sx={VISUALLY_HIDDEN}>
+          {t("costume.openByLongPress")}
+        </Box>
+      )}
     </Box>
   );
+}
+
+/** Whether a click is a finger's tap, rather than a mouse's click or the keyboard's press. */
+function isTouchTap(event: MouseEvent): boolean {
+  return event.nativeEvent instanceof PointerEvent && event.nativeEvent.pointerType === "touch";
 }
 
 /**
@@ -204,8 +241,11 @@ function TileContent({ answer, i18n }: Pick<MyDonPortraitProps, "answer" | "i18n
   );
 }
 
-/** The small badge that shows a click on the portrait edits the costume, faded in on demand. */
-function EditBadge() {
+/**
+ * The small badge that shows a click on the portrait edits the costume: faded in on demand, or
+ * `alwaysUp` where a finger, which has no hover, long-presses the portrait.
+ */
+function EditBadge({ alwaysUp }: { alwaysUp: boolean }) {
   return (
     <Box
       id="costume-open-badge"
@@ -224,7 +264,7 @@ function EditBadge() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        opacity: 0,
+        opacity: alwaysUp ? 1 : 0,
         transition: (theme) =>
           theme.transitions.create("opacity", { duration: theme.transitions.duration.shortest }),
       }}

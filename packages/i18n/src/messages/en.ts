@@ -72,6 +72,7 @@ export const en: Messages = {
   "failure.detail": "Details for a report: {detail}",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
   "costume.open": "Change costume",
+  "costume.openByLongPress": "Long-press your マイどん to change costume.",
   "costume.notOpen":
     "Not open in this build yet: the first real costume change from the app has still to be made and checked.",
   "costume.title": "きせかえ",
