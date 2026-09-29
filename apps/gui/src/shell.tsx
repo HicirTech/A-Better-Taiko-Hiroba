@@ -50,7 +50,12 @@ export function Shell({
   };
   const language = <LanguageSetting picked={picked} system={system} onPick={pick} i18n={i18n} />;
   return (
-    <AppFrame page={page} onNavigate={navigate} i18n={i18n}>
+    <AppFrame
+      page={page}
+      onNavigate={navigate}
+      i18n={i18n}
+      {...(platform?.shell === "android" ? { back: platform.back } : {})}
+    >
       {platform !== null ? (
         <App
           port={platform.port}

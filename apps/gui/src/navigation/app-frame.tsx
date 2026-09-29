@@ -14,9 +14,11 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { type ReactNode, useId, useState } from "react";
+import { type ReactNode, useEffect, useEffectEvent, useId, useState } from "react";
 
 import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
+import type { SystemBack } from "../platform";
+import { backAction } from "./back-action";
 import { FavoritesIcon, OverviewIcon, SettingsIcon } from "./page-icons";
 import { PAGES, type Page } from "./pages";
 
@@ -52,20 +54,47 @@ interface NavigationProps {
  * on a wide window (MUI's md and up), or behind a menu button floating at its top left on a narrow
  * one, and the page shown beside or under it. Each page is named by a heading for screen readers
  * alone: the navigation already shows sighted users which page they are on.
+ *
+ * Where the system has a Back (`back`, Android's), the window hears it while it is open and does
+ * what backAction says: Back shuts the menu, goes back to the Overview, or leaves the app.
  */
 export function AppFrame({
   page,
   onNavigate,
   i18n,
+  back,
   children,
-}: NavigationProps & { children: ReactNode }) {
+}: NavigationProps & { back?: SystemBack; children: ReactNode }) {
   const wide = useMediaQuery(useTheme().breakpoints.up("md"), { noSsr: true });
+  const [menuOpen, setMenuOpen] = useState(false);
+  // The menu is drawn on a narrow window alone: one left open there is shut on a wide one, so it
+  // is not open again, unasked, when the window narrows.
+  if (wide && menuOpen) {
+    setMenuOpen(false);
+  }
+  const pressedBack = useEffectEvent((system: SystemBack) => {
+    const action = backAction(menuOpen, page);
+    if (action === "closeMenu") {
+      setMenuOpen(false);
+    } else if (action === "overview") {
+      onNavigate("overview");
+    } else {
+      system.leave();
+    }
+  });
+  useEffect(() => back?.listen(() => pressedBack(back)), [back]);
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
       {wide ? (
         <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
       ) : (
-        <MenuDrawer page={page} onNavigate={onNavigate} i18n={i18n} />
+        <MenuDrawer
+          page={page}
+          onNavigate={onNavigate}
+          i18n={i18n}
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
+        />
       )}
       <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
         {/* The page starts under the top band's buttons, not behind them. */}
@@ -166,11 +195,16 @@ function MenuIcon() {
 /**
  * The pages behind a menu button, for a narrow window with no room for the panel. The button
  * floats at the top left, over the page as it scrolls, clear of the system's bars, and opens the
- * pages in a drawer from the left. A pick, a tap outside the drawer or Escape closes it, and the
- * focus goes back to the button.
+ * pages in a drawer from the left. A pick, a tap outside the drawer, Escape or Android's Back
+ * closes it, and the focus goes back to the button. The window holds whether it is open, for Back.
  */
-function MenuDrawer({ page, onNavigate, i18n }: NavigationProps) {
-  const [open, setOpen] = useState(false);
+function MenuDrawer({
+  page,
+  onNavigate,
+  i18n,
+  open,
+  onOpenChange: setOpen,
+}: NavigationProps & { readonly open: boolean; readonly onOpenChange: (open: boolean) => void }) {
   const drawerId = useId();
   const label = i18n.t("nav.menu");
   const pick = (next: Page) => {
