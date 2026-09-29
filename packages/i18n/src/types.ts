@@ -24,14 +24,8 @@ export const LOCALE_NAMES: Readonly<Record<Locale, string>> = {
 export interface Messages {
   "app.title": string;
   /**
-   * Settings' language button, for screen readers and as its tooltip. Param: {name}, what the
-   * button shows: the language picked, in its own words (LOCALE_NAMES), or "language.system".
-   */
-  "language.picker": string;
-  /**
-   * Settings' choice to follow the system's language again, now and at each launch, and the
-   * language button while it holds. Param: {name}, the language the system gives, in its own words
-   * (LOCALE_NAMES).
+   * Settings' first language choice, to follow the system's language, now and at each launch.
+   * Param: {name}, the language the system gives, in its own words (LOCALE_NAMES).
    */
   "language.system": string;
   /**
@@ -48,6 +42,12 @@ export interface Messages {
   "settings.language": string;
   /** The heading of Settings' account section: signing out, and what staying signed in keeps. */
   "settings.account": string;
+  /** Who is signed in, in the account section. Param: {name}, the nickname, as Hiroba writes it. */
+  "settings.signedInAs": string;
+  /** The same while a session is open but no read has given the nickname yet. */
+  "settings.signedIn": string;
+  /** The same while no session is open. */
+  "settings.signedOut": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;

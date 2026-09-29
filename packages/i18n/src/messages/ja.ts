@@ -3,7 +3,6 @@ import type { Messages } from "../types";
 /** 日本語. The site is ドンだーひろば, or ひろば for short; its own words stay as it writes them. */
 export const ja: Messages = {
   "app.title": "A Better Taiko Hiroba",
-  "language.picker": "言語：{name}",
   "language.system": "システムのデフォルト（{name}）",
   "nav.overview": "概要",
   "nav.favorites": "お気に入り",
@@ -11,6 +10,9 @@ export const ja: Messages = {
   "nav.menu": "メニュー",
   "settings.language": "言語",
   "settings.account": "アカウント",
+  "settings.signedInAs": "{name}としてログイン中",
+  "settings.signedIn": "ログイン中",
+  "settings.signedOut": "ログインしていません",
   "signIn.intro":
     "バンダイナムコIDでログインすると、ドンだーひろばのプロフィールを読み込めます。ログイン画面はひろば公式のもので、このアプリがパスワードを見ることはありません。",
   "signIn.action": "ドンだーひろばにログイン",

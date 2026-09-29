@@ -6,7 +6,6 @@ import type { Messages } from "../types";
  */
 export const zhHant: Messages = {
   "app.title": "A Better Taiko Hiroba",
-  "language.picker": "語言：{name}",
   "language.system": "跟隨系統（{name}）",
   "nav.overview": "概覽",
   "nav.favorites": "收藏",
@@ -14,6 +13,9 @@ export const zhHant: Messages = {
   "nav.menu": "選單",
   "settings.language": "語言",
   "settings.account": "帳號",
+  "settings.signedInAs": "已登入：{name}",
+  "settings.signedIn": "已登入",
+  "settings.signedOut": "未登入",
   "signIn.intro":
     "使用萬代南夢宮 ID 登入，即可讀取你在ドンだーひろば的個人資料。登入頁面由廣場官方提供，本應用程式不會接觸你的密碼。",
   "signIn.action": "登入廣場",
