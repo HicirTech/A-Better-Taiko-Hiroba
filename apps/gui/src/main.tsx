@@ -15,7 +15,15 @@ import { Shell } from "./shell";
 
 // Roboto is bundled, never fetched: the Android app must work without a CDN. Japanese and Chinese
 // fall back to the system's own font for the language the page's `lang` names.
-const theme = createTheme({ colorSchemes: { dark: true } });
+const theme = createTheme({
+  colorSchemes: { dark: true },
+  components: {
+    // The scrollbar's room is kept on every page, so the page's column and its Fab stand still
+    // between a page that scrolls and one that does not. Not by scrollbar-gutter: MUI's modals,
+    // which stop the scrolling while open, make up for this way alone, and would move the page.
+    MuiCssBaseline: { styleOverrides: { html: { overflowY: "scroll" } } },
+  },
+});
 const initial = startingLocale();
 /** The language the window is in now: the in-app browser's close button reads it as it opens. */
 let shown: Translator = createTranslator(initial);

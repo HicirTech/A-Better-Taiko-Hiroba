@@ -707,6 +707,30 @@ try {
     !tokens.some((token) => withPlate.includes(token));
   const platesAtSignIn = await platesSettled();
 
+  // The page's column, and the Fab at its right, stand still from page to page: the Overview,
+  // which scrolls, and Settings, which does not, keep the scrollbar's room alike, and so does a
+  // menu, which stops the page scrolling while it is open.
+  const column = () => boxOf("main .MuiContainer-root");
+  type Column = Awaited<ReturnType<typeof column>>;
+  const sameColumn = (one: Column, other: Column) =>
+    Math.abs(one.left - other.left) < 1 && Math.abs(one.right - other.right) < 1;
+  const overviewScrolls = await page.evaluate<boolean>(
+    "document.documentElement.scrollHeight > window.innerHeight",
+  );
+  const columnOnOverview = await column();
+  await goTo("settings");
+  const columnOnSettings = await column();
+  await click("#language-picker");
+  await waitFor(async () => (await exists('[role="menu"]')) || undefined);
+  const columnUnderMenu = await column();
+  await press("Escape");
+  await waitFor(async () => (await exists('[role="menu"]')) === false || undefined);
+  await goTo("overview");
+  results.columnStillAcrossPages =
+    overviewScrolls &&
+    sameColumn(columnOnOverview, columnOnSettings) &&
+    sameColumn(columnOnSettings, columnUnderMenu);
+
   // Picked in Settings while signed in, a language redraws the profile as it was read: counts,
   // percents and times in its own forms, Hiroba's words as they were, and nothing asked of Hiroba,
   // there or back, nor by going from page to page.
