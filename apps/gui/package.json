@@ -57,6 +57,7 @@
     "@abth/core": "workspace:*",
     "@abth/i18n": "workspace:*",
     "@capacitor/android": "8.5.2",
+    "@capacitor/app": "8.1.1",
     "@capacitor/cli": "8.5.2",
     "@capacitor/core": "8.5.2",
     "@capacitor/inappbrowser": "4.0.3",
