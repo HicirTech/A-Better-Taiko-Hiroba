@@ -27,7 +27,8 @@
  * sites, the pages (a side panel on a wide window, a menu on a narrow one, the sign-in card on the
  * Overview and Favourites while signed out, the favourites on their own page, and the page kept for
  * the next launch), the scheme (dark or light as the system asks, the page's color-scheme with it),
- * Settings (sections with small headings over lists of rows, who is signed in, and Sign out), the
+ * Settings (sections with small headings over lists of rows, who is signed in, while a read runs
+ * too, and Sign out, shut while it does), the
  * language (radio buttons the arrows move, the system's at first, a pick in Settings that takes
  * hold at once and is kept, System default, which follows the system again, and one made while signed in,
  * which asks Hiroba nothing), a reopen that keeps the
@@ -1008,12 +1009,23 @@ try {
   await click("#read-again");
   await Bun.sleep(300);
   const readsWhileHeld = await myPageHits();
+  // Settings, opened while the read runs, says the session is open, not that no one is signed
+  // in, and shuts Sign out until the read ends, which would otherwise show the profile after it.
+  await goTo("settings");
+  const accountWhileReading = await page.evaluate<Record<string, unknown>>(
+    `({ who: document.querySelector("#account-who")?.textContent ?? null, signOutShut: document.querySelector("#sign-out")?.disabled ?? null })`,
+  );
+  await goTo("overview");
   await fetch(`${HIROBA}/__hold-read?on=0`);
   await until("Read at");
   results.readAgainShutWhileReading =
     same(fabWhileReading, { shut: true, spinning: true }) &&
     readsWhileHeld === readsBeforeHeld + 1 &&
     same(await fabState(), { shut: false, spinning: false });
+  results.settingsSignedInWhileReading = same(accountWhileReading, {
+    who: "Signed in",
+    signOutShut: true,
+  });
 
   // On a touch-first screen ((pointer: coarse), touch emulated over CDP), a pull reads again. The
   // Fab is drawn only under the keyboard's focus, and stays for screen readers. From the top of
