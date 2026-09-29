@@ -43,6 +43,7 @@ import { createTranslator } from "@abth/i18n";
 import electronPath from "electron";
 
 import { PICTURE_EPOCH } from "../src/hiroba-session";
+import { LONG_PRESS_MS } from "../src/my-page/use-long-press";
 import { BRIDGE_CHANNELS } from "../src/session-port";
 import { COSTUME_FIELDS, type CostumeState, INITIAL_COSTUME } from "./mock-costume";
 
@@ -1424,6 +1425,75 @@ try {
     (await page.evaluate<boolean>(`document.querySelector("#costume-open")?.disabled === false`)) &&
     !(await exists("#costume-not-open"));
 
+  // The keyboard opens the editor from the portrait, by Enter and by Space.
+  const openedBy = async (keys: () => Promise<unknown>) => {
+    await page.evaluate(`document.querySelector("#costume-open").focus()`);
+    await keys();
+    const opened = await waitFor(async () => (await exists("#costume-dialog")) || undefined, 5_000);
+    await closeEditor();
+    return opened;
+  };
+  const SPACE = { key: " ", code: "Space", windowsVirtualKeyCode: 32 };
+  const openedByEnter = await openedBy(() => press("Enter"));
+  const openedBySpace = await openedBy(async () => {
+    await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SPACE, text: " " });
+    await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SPACE });
+  });
+  results.portraitOpensEditorByKeyboard = openedByEnter && openedBySpace;
+
+  // On a touch-first screen (touch emulated), a finger opens the editor by a long-press on the
+  // portrait: its edit badge is up at rest, and a description says to long-press. A tap, which the
+  // browser still makes a click of, opens nothing; nor does a finger held as long but moved on the
+  // way, as a pull or a scroll begun on the portrait is, and that reads nothing either. The lift
+  // after a long-press makes no click on the editor it opened.
+  // Neither the keyboard's focus nor the pointer on the portrait, which put its badge up too.
+  await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+  const longPressHint = await waitFor(() =>
+    page.evaluate<string | undefined>(
+      `document.getElementById(document.querySelector("#costume-open").getAttribute("aria-describedby") ?? "")?.textContent`,
+    ),
+  );
+  await waitFor(async () => (await badgeOpacity()) === "1" || undefined, 5_000);
+  await page.evaluate(
+    `window.touchClicks = []; document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true)`,
+  );
+  const touchClicks = () => page.evaluate<string[]>("window.touchClicks");
+  const onPortrait = await middleOf(page, "#costume-open");
+  await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });
+  await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  const tapClicked = await waitFor(
+    async () => (await touchClicks()).includes("touch") || undefined,
+  );
+  await Bun.sleep(2 * LONG_PRESS_MS);
+  const openedByTap = await exists("#costume-dialog");
+  const readsBeforeMovedPress = await myPageHits();
+  await swipe(onPortrait, { x: onPortrait.x, y: onPortrait.y + 100 }, () =>
+    Bun.sleep(2 * LONG_PRESS_MS),
+  );
+  await Bun.sleep(500);
+  const openedByMovedPress =
+    (await exists("#costume-dialog")) || (await myPageHits()) !== readsBeforeMovedPress;
+  await fetch(`${HIROBA}/__previews?reset=1`);
+  const clicksBeforeLongPress = await touchClicks();
+  await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });
+  const openedByLongPress = await waitFor(
+    async () => (await exists("#costume-dialog")) || undefined,
+    5_000,
+  );
+  await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await Bun.sleep(500);
+  results.portraitOpensEditorByLongPress =
+    longPressHint === "Long-press your マイどん to change costume." &&
+    tapClicked &&
+    !openedByTap &&
+    !openedByMovedPress &&
+    openedByLongPress &&
+    same(await touchClicks(), clicksBeforeLongPress) &&
+    (await exists("#costume-dialog"));
+  await page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+
   // The editor's picture of the set, which the mock draws from the query and for a session only:
   // a picture shown means the session went with the request. One request on opening, by the
   // site's names in the site's order, then one per pause in the picks; in the window, a data: URL.
@@ -1438,8 +1508,7 @@ try {
       const loading = await exists("#costume-preview-loading");
       return src !== null && src !== before && !loading ? src : undefined;
     });
-  await fetch(`${HIROBA}/__previews?reset=1`);
-  await click("#costume-open");
+  // Opened by the long-press above.
   const onOpen = await previewOtherThan(null);
   results.columnStillAcrossPages =
     overviewScrolls &&
