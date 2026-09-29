@@ -295,14 +295,17 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
         <SettingsPage
           i18n={i18n}
           language={language}
-          {...(signedIn
-            ? {
-                account: {
-                  nickname: screen.name === "profile" ? screen.profile.nickname : null,
-                  onSignOut: signOut,
-                },
-              }
-            : {})}
+          account={
+            screen.name === "checking" || screen.name === "reading"
+              ? { kind: screen.name }
+              : signedIn
+                ? {
+                    kind: "signedIn",
+                    nickname: screen.name === "profile" ? screen.profile.nickname : null,
+                    onSignOut: signOut,
+                  }
+                : { kind: "signedOut" }
+          }
         />
       ) : (
         <Stack spacing={3}>

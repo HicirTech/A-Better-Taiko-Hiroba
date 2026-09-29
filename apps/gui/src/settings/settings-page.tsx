@@ -4,19 +4,28 @@ import { type ReactNode, useId } from "react";
 
 import { SettingsSection } from "./settings-section";
 
-/** The session open now, as the account's section shows it. */
-export interface SignedInAccount {
-  /** The nickname my page gave, or null while no read has given one this session. */
-  readonly nickname: string | null;
-  readonly onSignOut: () => void;
-}
+/** The session, as the account's section shows it. */
+export type AccountState =
+  /** Whether a session was kept is still being asked: the section names no one yet. */
+  | { readonly kind: "checking" }
+  | { readonly kind: "signedOut" }
+  /**
+   * A session is open and a read runs: Sign out waits for the read, which would otherwise end after
+   * the sign-out and show the profile.
+   */
+  | { readonly kind: "reading" }
+  | {
+      readonly kind: "signedIn";
+      /** The nickname my page gave, or null when the last read gave none. */
+      readonly nickname: string | null;
+      readonly onSignOut: () => void;
+    };
 
 export interface SettingsPageProps {
   readonly i18n: Translator;
   /** The language's section, which the window that holds the language draws. */
   readonly language: ReactNode;
-  /** Given while a session is open, and only then is there a way to sign out. */
-  readonly account?: SignedInAccount;
+  readonly account: AccountState;
 }
 
 /**
@@ -41,11 +50,20 @@ export function SettingsPage({ i18n, language, account }: SettingsPageProps) {
   const { t } = i18n;
   const headingId = useId();
   const who =
-    account === undefined
-      ? t("settings.signedOut")
-      : account.nickname === null
-        ? t("settings.signedIn")
-        : t("settings.signedInAs", { name: account.nickname });
+    account.kind === "checking"
+      ? null
+      : account.kind === "signedOut"
+        ? t("settings.signedOut")
+        : account.kind === "signedIn" && account.nickname !== null
+          ? t("settings.signedInAs", { name: account.nickname })
+          : t("settings.signedIn");
+  /** Sign out, offered while a session is open, and shut while a read runs. */
+  const signOut =
+    account.kind === "signedIn"
+      ? { onClick: account.onSignOut }
+      : account.kind === "reading"
+        ? { disabled: true }
+        : null;
   return (
     <Paper variant="outlined">
       {language}
@@ -66,13 +84,8 @@ export function SettingsPage({ i18n, language, account }: SettingsPageProps) {
                 secondary: { id: "sign-out-note" },
               }}
             />
-            {account !== undefined && (
-              <Button
-                id="sign-out"
-                variant="outlined"
-                onClick={account.onSignOut}
-                sx={{ flexShrink: 0 }}
-              >
+            {signOut !== null && (
+              <Button id="sign-out" variant="outlined" {...signOut} sx={{ flexShrink: 0 }}>
                 {t("signOut.action")}
               </Button>
             )}

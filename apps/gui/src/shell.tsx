@@ -65,7 +65,7 @@ export function Shell({
           language={language}
         />
       ) : page === "settings" ? (
-        <SettingsPage i18n={i18n} language={language} />
+        <SettingsPage i18n={i18n} language={language} account={{ kind: "signedOut" }} />
       ) : (
         <Alert severity="info">{i18n.t("platform.unsupported")}</Alert>
       )}
