@@ -1600,6 +1600,16 @@ try {
   await Bun.sleep(500);
   const snackbarOverTheEditor = await exists("#snackbar-undo");
   await closeEditor();
+  // Offered on the Overview alone, the one page that shows an undo running and how it ended: gone
+  // on Favourites, once its exit has run, and there again back on the Overview.
+  await waitFor(async () => (await exists("#snackbar-undo")) || undefined);
+  await goTo("favorites");
+  await Bun.sleep(1000);
+  const snackbarOnFavorites = await exists("#snackbar-undo");
+  await goTo("overview");
+  results.snackbarOnlyOnOverview =
+    !snackbarOnFavorites &&
+    (await waitFor(async () => (await exists("#snackbar-undo")) || undefined));
 
   // Undone from the Snackbar the change offered: the whole set back, by a write like any other.
   // Pressed twice, as a double-click would: the second press finds it shut and sends nothing.

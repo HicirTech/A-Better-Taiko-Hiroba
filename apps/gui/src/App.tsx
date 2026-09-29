@@ -422,8 +422,15 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
         />
       )}
       {/* Offered once the editor is closed: over an open dialog it would undo under it. */}
+      {/* On the Overview alone, too: the one page that shows an undo running and how it ended. */}
       <Snackbar
-        open={justSaved && undoable !== null && screen.name === "profile" && !costumeOpen}
+        open={
+          justSaved &&
+          undoable !== null &&
+          screen.name === "profile" &&
+          page === "overview" &&
+          !costumeOpen
+        }
         autoHideDuration={20_000}
         onClose={(_event, reason) => reason !== "clickaway" && setJustSaved(false)}
         message={t("write.applied")}
