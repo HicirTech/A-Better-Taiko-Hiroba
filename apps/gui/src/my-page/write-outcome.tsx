@@ -10,6 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 
+import { HIROBA_LANG } from "../language/show-language";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { CostumeSet, WriteOutcomeView } from "../session-port";
 import { changedParts, isCostumePart, PART_LABEL, partValue } from "./costume-parts";
@@ -216,7 +217,7 @@ export function WriteOutcomeNotice({
           <TableBody>
             {parts.map((part) => (
               <TableRow key={part}>
-                <TableCell>{t(PART_LABEL[part])}</TableCell>
+                <TableCell lang={HIROBA_LANG}>{t(PART_LABEL[part])}</TableCell>
                 <TableCell>{partValue(part, comparison.before[part], i18n)}</TableCell>
                 <TableCell>{partValue(part, comparison.planned[part], i18n)}</TableCell>
                 {comparison.now !== null && (

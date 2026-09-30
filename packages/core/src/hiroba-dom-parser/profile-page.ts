@@ -100,6 +100,11 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     });
   }
 
+  // The plate under the title and the name row, #mydon_area's first child on every capture. Found
+  // by its src and inside the area, as position is no contract for an img.
+  const titlePlateImageUrl =
+    findImageBySrc(area.value, "imgsrc_titleplate")?.getAttribute("src") ?? null;
+
   // The dan exists on this page only as a server-rendered image; absence is a normal state.
   const danImage = findImageBySrc(root, "imgsrc_danlabel");
   const danLabelImageUrl = danImage?.getAttribute("src") ?? null;
@@ -155,6 +160,7 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     nickname,
     title,
     region,
+    titlePlateImageUrl,
     danLabelImageUrl,
     medal,
     myDonImageUrl,
@@ -202,6 +208,9 @@ const MEDAL_COMPLETE_LABEL = "COMPLETE";
  * A plate of any other shape reads as `unrecognised`, with a code saying which, and never fails the
  * page: a new plate once took the whole read down with it, crowns and all, on the first real sign-in
  * (2026-09-27). The page's own text in that spot is not kept, only the code.
+ *
+ * The plate's picture is found by its src, as position is no contract for an img. A page with no
+ * name has no medal, whatever picture it shows.
  */
 function readMedal(root: HTMLElement): Medal | null {
   const nameEl = root.querySelector(".token_name");
@@ -216,6 +225,7 @@ function readMedal(root: HTMLElement): Medal | null {
       root.querySelector(".token_count"),
       root.querySelector(".token_complete"),
     ),
+    plateImageUrl: findImageBySrc(root, "imgsrc_tokenplate")?.getAttribute("src") ?? null,
   };
 }
 

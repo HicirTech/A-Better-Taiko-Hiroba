@@ -14,10 +14,19 @@ const TOKEN_STAND_IN = "<tckt>";
 /**
  * Pages kept as their latest copy alone, and never in the history. The costume editor asks for
  * Hiroba's picture of the set after every pick, so a while of picking would fill the history with
- * pictures of outfits nobody saved. The latest picture and its status file show what Hiroba last
- * answered, which is all a preview needs for debugging.
+ * pictures of outfits nobody saved; and it shows a thumbnail for every item seen, up to 258 of them
+ * on one account. The latest picture and its status file show what Hiroba last answered, which is
+ * all either needs for debugging.
  */
-const LATEST_ONLY_PATHS: ReadonlySet<string> = new Set(["/imgsrc_mydon.php"]);
+const LATEST_ONLY_PATHS: ReadonlySet<string> = new Set([
+  "/imgsrc_mydon.php",
+  "/imgsrc_kisekae.php",
+]);
+/**
+ * Pages whose latest status file also counts how many came this run, so a check against the live
+ * site can see how many thumbnails went without a file for each.
+ */
+const COUNTED_PATHS: ReadonlySet<string> = new Set(["/imgsrc_kisekae.php"]);
 
 /**
  * For debugging against the live site only, and off unless ABTH_DEBUG_SAVE_READS=1: every page a
@@ -31,8 +40,9 @@ const LATEST_ONLY_PATHS: ReadonlySet<string> = new Set(["/imgsrc_mydon.php"]);
  * under `folder/history`: `<time>-<n>-<METHOD>-<page>.<ext>` and its `.json` (time, method, status,
  * final path, content type), so a write can be followed request by request — the editor before, the
  * pre-check's and the save's answers, the read-back. Of a post, only the answer is kept, never the
- * form it sent. The editor's preview, imgsrc_mydon.php, is the one page kept as its latest copy
- * alone, never in the history (LATEST_ONLY_PATHS).
+ * form it sent. The editor's preview, imgsrc_mydon.php, and the items' thumbnails,
+ * imgsrc_kisekae.php, are kept as their latest copy alone, never in the history
+ * (LATEST_ONLY_PATHS); the thumbnails' status file also counts how many came this run.
  * Every form token (`_tckt`) a page carries is replaced with `<tckt>` before the page reaches the
  * disk, so no saved page holds one that could be posted.
  *
@@ -50,17 +60,23 @@ export function saveReads(
   now: () => Date = () => new Date(),
 ): Transport {
   let count = 0;
+  const counted = new Map<string, number>();
   return {
     async send(request, signal) {
       const sent = await transport.send(request, signal);
       if (sent.ok) {
-        const latestOnly = request.method === "GET" && LATEST_ONLY_PATHS.has(pathOf(request.url));
+        const path = pathOf(request.url);
+        const latestOnly = request.method === "GET" && LATEST_ONLY_PATHS.has(path);
         if (!latestOnly) {
           count += 1;
         }
+        const soFar = COUNTED_PATHS.has(path) ? (counted.get(path) ?? 0) + 1 : undefined;
+        if (soFar !== undefined) {
+          counted.set(path, soFar);
+        }
         try {
           if (request.method === "GET") {
-            keep(folder, request.url, sent.value);
+            keep(folder, request.url, sent.value, soFar);
           }
           if (!latestOnly) {
             const history = join(folder, "history");
@@ -75,8 +91,11 @@ export function saveReads(
   };
 }
 
-/** Writes one answer's copy and its status file. Throws when either cannot be written. */
-function keep(folder: string, asked: string, response: TransportResponse): void {
+/**
+ * Writes one answer's copy and its status file, with `count` when the page is one counted. Throws
+ * when either cannot be written.
+ */
+function keep(folder: string, asked: string, response: TransportResponse, count?: number): void {
   const { status, url, headers, body } = response;
   const contentType = headers["content-type"] ?? null;
   const mediaType = (contentType ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
@@ -85,7 +104,7 @@ function keep(folder: string, asked: string, response: TransportResponse): void 
   const extension = isImage ? (IMAGE_EXTENSIONS[mediaType] ?? "bin") : "html";
   mkdirSync(folder, { recursive: true });
   writeFileSync(join(folder, `${name}.${extension}`), isImage ? body : withoutTokens(body));
-  const meta = { status, path: pathOf(url), contentType };
+  const meta = { status, path: pathOf(url), contentType, ...(count !== undefined && { count }) };
   writeFileSync(join(folder, `${name}.json`), `${JSON.stringify(meta, null, 2)}\n`);
 }
 

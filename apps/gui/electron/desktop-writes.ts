@@ -19,11 +19,12 @@ import {
   openCostumeEditor,
   type WriteGateInput,
 } from "../src/hiroba-session";
-import type {
-  EnabledWrite,
-  HirobaSessionPort,
-  ReadFailure,
-  WriteOutcomeView,
+import {
+  changedTheCostume,
+  type EnabledWrite,
+  type HirobaSessionPort,
+  type ReadFailure,
+  type WriteOutcomeView,
 } from "../src/session-port";
 import type { UndoStore } from "./undo-store";
 
@@ -43,6 +44,8 @@ export interface DesktopWritesOptions {
   readonly endSession: () => void;
   /** Whose my page this run last read, or null before any read: whose undo record is whose. */
   readonly owner: () => string | null;
+  /** A write, or an undo, applied: the costume is the one it wrote, whatever was kept of it. */
+  readonly costumeChanged: () => void;
 }
 
 /** The port's write verbs on the desktop. */
@@ -116,6 +119,9 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
     }
     if (outcome.kind === "sessionGone") {
       options.endSession();
+    }
+    if (changedTheCostume(outcome)) {
+      options.costumeChanged();
     }
     return outcome;
   }

@@ -4,30 +4,38 @@ import {
   Button,
   Card,
   CardContent,
-  Chip,
   CircularProgress,
-  Container,
   Snackbar,
   Stack,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CostumeDialog } from "./my-page/costume-dialog";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
+import type { PortraitAction } from "./my-page/my-don-portrait";
+import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
 import { WriteOutcomeNotice } from "./my-page/write-outcome";
+import { FrameCorner } from "./navigation/app-frame";
+import type { Page } from "./navigation/pages";
+import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
+import { PullToRead } from "./read-again/pull-to-read";
+import { ReadAgainFab } from "./read-again/read-again-fab";
 import { FAILURE_MESSAGE } from "./read-failure-message";
-import type {
-  EnabledWrite,
-  HirobaSessionPort,
-  ProfileView,
-  ReadFailureKind,
-  SignInOutcome,
-  UndoSummary,
-  WriteOutcomeView,
+import {
+  changedTheCostume,
+  type EnabledWrite,
+  type HirobaSessionPort,
+  type ProfileView,
+  type ReadFailureKind,
+  type SignInOutcome,
+  type UndoSummary,
+  type WriteOutcomeView,
 } from "./session-port";
+import { SettingsPage } from "./settings/settings-page";
 
 type Screen =
   | { readonly name: "checking" }
@@ -56,7 +64,22 @@ const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
   "cardSelectUnfinished",
 ]);
 
-export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator }) {
+export interface AppProps {
+  readonly port: HirobaSessionPort;
+  readonly i18n: Translator;
+  /** The page the navigation shows. */
+  readonly page: Page;
+  readonly onNavigate: (page: Page) => void;
+  /** Settings' language section, which the window that holds the language draws. */
+  readonly language: ReactNode;
+}
+
+/**
+ * The app on each page: signed out, the Overview and Favourites show the sign-in card; signed in,
+ * the Overview shows the profile and Favourites the favourite songs, both from the same read.
+ * Settings works either way.
+ */
+export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
   /** The kinds of write this run may send, asked once a profile has been read. */
@@ -70,6 +93,11 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
   const [undoing, setUndoing] = useState(false);
   /** How the last undo ended, shown on the card until the next write or the next read. */
   const [undoOutcome, setUndoOutcome] = useState<WriteOutcomeView | null>(null);
+  /**
+   * The one lane every picture of Hiroba's comes through: one at a time, only what is on screen,
+   * each remembered for the run, and none while a write runs.
+   */
+  const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
 
   const refreshUndo = useCallback(async () => {
     const offered = await port.pendingUndo();
@@ -80,6 +108,14 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setScreen({ name: "reading" });
     const result = await port.readProfile();
     if (result.ok) {
+      // The plates may have changed with the title, the season or its progress, and the portrait
+      // with a costume changed anywhere: each is asked for again, and what was shown stays till it
+      // comes. The platform says whether the portrait is fetched anew or answered as kept. The score
+      // panel's art, kept for good once it came, is asked for again only if it did not.
+      lane.renew("titlePlate");
+      lane.renew("medalPlate");
+      lane.renew("myDon");
+      lane.forgetFailures("scorePanel");
       setWrites(await port.enabledWrites());
       await refreshUndo();
       setUndoOutcome(null);
@@ -89,9 +125,14 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     } else {
       setScreen({ name: "readFailed", ...result.error });
     }
-  }, [port, refreshUndo]);
+  }, [port, lane, refreshUndo]);
 
+  /**
+   * A sign-in starts the pictures afresh: whoever signs in may be another player, and when Hiroba
+   * ended the last session itself, no sign-out forgot them.
+   */
   const signIn = async () => {
+    lane.forget();
     setScreen({ name: "signingIn" });
     const outcome = await port.signIn();
     if (outcome.kind === "signedIn") {
@@ -105,16 +146,20 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     }
   };
 
+  /** Signs out, and shows the sign-in card on the Overview. */
   const signOut = async () => {
+    lane.forget();
     await port.signOut();
     setScreen({ name: "signedOut", notice: null });
+    onNavigate("overview");
   };
 
   /**
    * A write ended: the undo on offer is asked for again, and a change that read back as planned
    * offers its undo at once. A change also clears what the card said of the last undo, which no
    * longer describes the costume. One that found the session gone goes back to signing in, as a
-   * read does.
+   * read does. A write that changed the costume asks for the portrait again, which the platform
+   * then fetches anew; any other asks for nothing.
    */
   const writeEnded = (outcome: WriteOutcomeView, asUndo = false) => {
     setJustSaved(!asUndo && outcome.kind === "applied");
@@ -122,6 +167,9 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
       setUndoOutcome(null);
     }
     void refreshUndo();
+    if (changedTheCostume(outcome)) {
+      lane.renew("myDon");
+    }
     if (outcome.kind === "sessionGone" || outcome.kind === "notSignedIn") {
       setJustSaved(false);
       setUndoable(null);
@@ -143,6 +191,19 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setJustSaved(false);
     setCostumeOpen(true);
   };
+  /**
+   * A touch-first screen reads again by a pull from the top of the page, not by the Fab, and opens
+   * the editor by a long-press on the portrait, not a tap.
+   */
+  const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
+  /**
+   * The portrait opens the editor where this run may change the costume, not while an undo runs;
+   * shut on purpose, it says why, rather than leave a card with no way to change anything.
+   */
+  const portrait: PortraitAction =
+    costumeWrite === undefined
+      ? { kind: "shut" }
+      : { kind: "opensEditor", open: openEditor, busy: undoing, byLongPress: touchFirst };
 
   /**
    * Undoes the last costume change: a write like any other, its outcome shown on the card. One
@@ -160,12 +221,15 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     setUndoing(true);
     setUndoOutcome(null);
     let outcome: WriteOutcomeView;
+    lane.hold();
     try {
       outcome = await port.undo("costume");
     } catch {
       // The call itself failed: how the undo ended is not known, and the card must not stay on
       // "Undoing…" with its buttons shut.
       outcome = { kind: "interrupted" };
+    } finally {
+      lane.release();
     }
     undoStarted.current = false;
     setUndoing(false);
@@ -191,135 +255,179 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
     });
   }, [port, read]);
 
+  const signedIn = screen.name === "profile" || screen.name === "readFailed";
+  /**
+   * Reads again, from the Fab or a pull, as the read on opening does. Never while a read runs, nor
+   * while the editor is open or an undo runs, so no read starts inside a write. The ref turns away
+   * a second ask that lands before the Fab is shut.
+   */
+  const canReadAgain = signedIn && !costumeOpen && !undoing;
+  const readAgainStarted = useRef(false);
+  const readAgain = async () => {
+    if (!canReadAgain || readAgainStarted.current || undoStarted.current) {
+      return;
+    }
+    readAgainStarted.current = true;
+    try {
+      await read();
+    } finally {
+      readAgainStarted.current = false;
+    }
+  };
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Stack spacing={3}>
-        <Typography variant="h5" component="h1">
-          {t("app.title")}
-        </Typography>
-
-        {screen.name === "signedOut" && (
-          <>
-            {screen.notice !== null && (
-              <Alert severity="info">{t(screen.notice, screen.noticeParams)}</Alert>
-            )}
-            <Typography>{t("signIn.intro")}</Typography>
-            <Button id="sign-in" variant="contained" onClick={signIn}>
-              {t("signIn.action")}
-            </Button>
-          </>
-        )}
-
-        {screen.name === "signingIn" && (
-          <>
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <CircularProgress size={24} />
-              <Typography>{t("signIn.inProgress")}</Typography>
-            </Stack>
-            <Button variant="outlined" onClick={() => void port.cancelSignIn()}>
-              {t("signIn.cancel")}
-            </Button>
-          </>
-        )}
-
-        {screen.name === "checking" && <CircularProgress size={24} />}
-
-        {screen.name === "reading" && (
-          <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-            <CircularProgress size={24} />
-            <Typography>{t("profile.reading")}</Typography>
-          </Stack>
-        )}
-
-        {screen.name === "profile" && (
-          <Stack spacing={2}>
-            <ProfileCard profile={screen.profile} i18n={i18n}>
-              <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: "wrap" }}>
-                <Button
-                  id="costume-open"
-                  variant="outlined"
-                  disabled={costumeWrite === undefined || undoing}
-                  onClick={openEditor}
-                >
-                  {t("costume.open")}
-                </Button>
-                {undoable !== null && (
-                  <Button id="costume-undo" variant="text" disabled={undoing} onClick={undo}>
-                    {t("costume.undoLast")}
-                  </Button>
-                )}
-              </Stack>
-              {/* Shut on purpose, and saying so, rather than a card with no way to change anything. */}
-              {costumeWrite === undefined && (
-                <Typography id="costume-not-open" variant="body2" color="text.secondary">
-                  {t("costume.notOpen")}
-                </Typography>
-              )}
-              {undoable !== null && (
-                <Typography id="undo-when" variant="body2" color="text.secondary">
-                  {t("costume.undoWhen", {
-                    time: new Date(undoable.at).toLocaleString(i18n.locale),
-                  })}
-                </Typography>
-              )}
-              {undoing && (
-                <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                  <CircularProgress size={20} />
-                  <Typography variant="body2">{t("costume.undoing")}</Typography>
-                </Stack>
-              )}
-              {undoOutcome !== null && (
-                <WriteOutcomeNotice outcome={undoOutcome} i18n={i18n} asUndo />
-              )}
-            </ProfileCard>
-            <PanelCard crowns={screen.profile.crowns} panel={screen.profile.panel} i18n={i18n} />
-            <MedalCard medal={screen.profile.medal} i18n={i18n} />
-            <FavoritesCard
-              favoriteSong={screen.profile.favoriteSong}
-              folder={screen.profile.favoriteFolder}
+    <>
+      {/* On the pages a read shows, from the first read on, spinning while one runs. */}
+      {page !== "settings" && (signedIn || screen.name === "reading") && (
+        <>
+          <FrameCorner>
+            <ReadAgainFab
+              reading={screen.name === "reading"}
+              canRead={canReadAgain}
+              touchFirst={touchFirst}
+              onRead={readAgain}
               i18n={i18n}
             />
-            <Typography variant="body2" color="text.secondary">
-              {t("profile.fetchedAt", {
-                time: new Date(screen.profile.fetchedAt).toLocaleString(i18n.locale),
-              })}
-            </Typography>
-          </Stack>
-        )}
+          </FrameCorner>
+          <PullToRead active={touchFirst} canRead={canReadAgain} onRead={readAgain} />
+        </>
+      )}
+      {page === "settings" ? (
+        <SettingsPage
+          i18n={i18n}
+          language={language}
+          account={
+            screen.name === "checking" || screen.name === "reading"
+              ? { kind: screen.name }
+              : signedIn
+                ? {
+                    kind: "signedIn",
+                    nickname: screen.name === "profile" ? screen.profile.nickname : null,
+                    onSignOut: signOut,
+                  }
+                : { kind: "signedOut" }
+          }
+        />
+      ) : (
+        <Stack spacing={3}>
+          {(screen.name === "signedOut" || screen.name === "signingIn") && (
+            <Card id="sign-in-card" variant="outlined">
+              <CardContent>
+                <Stack spacing={2}>
+                  {screen.name === "signedOut" ? (
+                    <>
+                      {screen.notice !== null && (
+                        <Alert severity="info">{t(screen.notice, screen.noticeParams)}</Alert>
+                      )}
+                      <Typography>{t("signIn.intro")}</Typography>
+                      <Button id="sign-in" variant="contained" onClick={signIn}>
+                        {t("signIn.action")}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                        <CircularProgress size={24} />
+                        <Typography>{t("signIn.inProgress")}</Typography>
+                      </Stack>
+                      <Button variant="outlined" onClick={() => void port.cancelSignIn()}>
+                        {t("signIn.cancel")}
+                      </Button>
+                    </>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          )}
 
-        {screen.name === "readFailed" && (
-          <Alert severity="warning">
-            {t(FAILURE_MESSAGE[screen.kind])}
-            {screen.detail !== undefined && (
-              <Typography
-                id="failure-detail"
-                variant="body2"
-                sx={{ mt: 1, fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-              >
-                {t("failure.detail", { detail: screen.detail })}
+          {screen.name === "checking" && <CircularProgress size={24} />}
+
+          {screen.name === "reading" && (
+            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+              <CircularProgress size={24} />
+              <Typography>{t("profile.reading")}</Typography>
+            </Stack>
+          )}
+
+          {screen.name === "profile" && (
+            <Stack spacing={2}>
+              {page === "overview" ? (
+                <>
+                  <ProfileCard profile={screen.profile} lane={lane} i18n={i18n} portrait={portrait}>
+                    {undoable !== null && (
+                      <Button
+                        id="costume-undo"
+                        variant="text"
+                        disabled={undoing}
+                        onClick={undo}
+                        sx={{ alignSelf: "flex-start" }}
+                      >
+                        {t("costume.undoLast")}
+                      </Button>
+                    )}
+                    {undoable !== null && (
+                      <Typography id="undo-when" variant="body2" color="text.secondary">
+                        {t("costume.undoWhen", {
+                          time: i18n.dateTime(undoable.at),
+                        })}
+                      </Typography>
+                    )}
+                    {undoing && (
+                      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                        <CircularProgress size={20} />
+                        <Typography variant="body2">{t("costume.undoing")}</Typography>
+                      </Stack>
+                    )}
+                    {undoOutcome !== null && (
+                      <WriteOutcomeNotice outcome={undoOutcome} i18n={i18n} asUndo />
+                    )}
+                  </ProfileCard>
+                  <PanelCard
+                    crowns={screen.profile.crowns}
+                    ranks={screen.profile.panel.ranks}
+                    i18n={i18n}
+                  />
+                  <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
+                </>
+              ) : (
+                <FavoritesCard
+                  favoriteSong={screen.profile.favoriteSong}
+                  folder={screen.profile.favoriteFolder}
+                  i18n={i18n}
+                />
+              )}
+              <Typography variant="body2" color="text.secondary">
+                {t("profile.fetchedAt", {
+                  time: i18n.dateTime(screen.profile.fetchedAt),
+                })}
               </Typography>
-            )}
-          </Alert>
-        )}
+            </Stack>
+          )}
 
-        {(screen.name === "profile" || screen.name === "readFailed") && (
-          <Stack direction="row" spacing={2}>
-            <Button id="read-again" variant="contained" onClick={read}>
-              {t("profile.readAgain")}
-            </Button>
-            <Button id="sign-out" variant="text" onClick={signOut}>
-              {t("signOut.action")}
-            </Button>
-          </Stack>
-        )}
-
-        <Typography variant="body2" color="text.secondary">
-          {t("signOut.note")}
-        </Typography>
-      </Stack>
+          {screen.name === "readFailed" && (
+            <Alert severity="warning">
+              {t(FAILURE_MESSAGE[screen.kind])}
+              {screen.detail !== undefined && (
+                <Typography
+                  id="failure-detail"
+                  variant="body2"
+                  sx={{
+                    mt: 1,
+                    fontFamily: "monospace",
+                    userSelect: "text",
+                    wordBreak: "break-all",
+                  }}
+                >
+                  {t("failure.detail", { detail: screen.detail })}
+                </Typography>
+              )}
+            </Alert>
+          )}
+        </Stack>
+      )}
       {costumeOpen && screen.name === "profile" && costumeWrite !== undefined && (
         <CostumeDialog
           port={port}
+          lane={lane}
           i18n={i18n}
           verified={costumeWrite.verified}
           onClose={() => setCostumeOpen(false)}
@@ -327,8 +435,15 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
         />
       )}
       {/* Offered once the editor is closed: over an open dialog it would undo under it. */}
+      {/* On the Overview alone, too: the one page that shows an undo running and how it ended. */}
       <Snackbar
-        open={justSaved && undoable !== null && screen.name === "profile" && !costumeOpen}
+        open={
+          justSaved &&
+          undoable !== null &&
+          screen.name === "profile" &&
+          page === "overview" &&
+          !costumeOpen
+        }
         autoHideDuration={20_000}
         onClose={(_event, reason) => reason !== "clickaway" && setJustSaved(false)}
         message={t("write.applied")}
@@ -344,83 +459,33 @@ export function App({ port, i18n }: { port: HirobaSessionPort; i18n: Translator 
           </Button>
         }
       />
-    </Container>
+    </>
   );
 }
 
 /**
- * The identity card. The dan is the name read off my page's label, as Hiroba prints it. A label
- * that did not read is a neutral chip with its code under the row, and the rest of the card stands.
- * `children` are the card's actions: the writes this run may send, and, shut, those it may not.
+ * The identity card, drawn as Hiroba's my page draws its header (OverviewHeader): the portrait,
+ * which opens the costume editor where this run may change the costume, the title plate and the
+ * score panel. `children` are the undo on offer and how the last one ended.
  */
 function ProfileCard({
   profile,
+  lane,
   i18n,
+  portrait,
   children,
 }: {
   profile: ProfileView;
+  lane: PictureLane;
   i18n: Translator;
+  portrait: PortraitAction;
   children?: ReactNode;
 }) {
-  const { t } = i18n;
-  const { dan } = profile;
   return (
     <Card id="profile" variant="outlined">
       <CardContent>
-        <Stack spacing={1}>
-          <Typography variant="h6" component="h2">
-            {profile.nickname}
-          </Typography>
-          {profile.title === "" ? (
-            <Typography id="no-title" color="text.disabled" sx={{ fontStyle: "italic" }}>
-              {t("profile.noTitle")}
-            </Typography>
-          ) : (
-            <Typography color="text.secondary">
-              {t("profile.title", { title: profile.title })}
-            </Typography>
-          )}
-          {(profile.region !== null || dan !== null) && (
-            <Stack
-              direction="row"
-              spacing={1}
-              useFlexGap
-              sx={{ alignItems: "center", flexWrap: "wrap" }}
-            >
-              {profile.region !== null && (
-                <Typography id="region" variant="body2">
-                  {t("profile.region", { region: profile.region })}
-                </Typography>
-              )}
-              {dan !== null && "name" in dan && (
-                <Chip
-                  id="dan"
-                  label={t("profile.dan", { dan: dan.name })}
-                  size="small"
-                  color="primary"
-                  variant="outlined"
-                />
-              )}
-              {dan !== null && "unreadable" in dan && (
-                <Chip
-                  id="dan-unreadable"
-                  label={t("profile.danUnreadable")}
-                  size="small"
-                  variant="outlined"
-                />
-              )}
-            </Stack>
-          )}
-          {dan !== null && "unreadable" in dan && (
-            <Typography
-              id="dan-code"
-              variant="body2"
-              color="text.secondary"
-              sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-            >
-              {t("profile.danCode", { code: dan.code })}
-            </Typography>
-          )}
+        <Stack spacing={1.5}>
+          <OverviewHeader profile={profile} lane={lane} i18n={i18n} portrait={portrait} />
           {children}
         </Stack>
       </CardContent>

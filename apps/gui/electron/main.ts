@@ -3,9 +3,14 @@ import { err, ok } from "@abth/core";
 import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
 
 import {
+  createHirobaQueue,
+  createPictureReader,
+  DESKTOP_PICTURE_LIMITS,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
+  offeredOf,
+  type PictureSources,
   previewCostume,
   readOwnProfile,
 } from "../src/hiroba-session";
@@ -20,8 +25,8 @@ import {
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createDesktopWrites } from "./desktop-writes";
-import { createHirobaQueue } from "./hiroba-queue";
 import { createHirobaTransport } from "./hiroba-transport";
+import { createDiskPictureStore } from "./picture-disk-store";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
@@ -30,6 +35,7 @@ import { createUndoStore } from "./undo-store";
 // Development only, and never in a packaged build: the renderer from Vite's dev server, and a
 // local stand-in for Hiroba and the ID host so the whole sign-in can run without the real sites.
 // Setting only one of the two endpoint overrides stops the app rather than half-reaching Hiroba.
+// The picture host's is optional: without it, a stand-in run asks no picture host anything.
 const devServerUrl = app.isPackaged ? undefined : process.env.ABTH_DEV_SERVER_URL;
 const endpoints: HirobaEndpoints = app.isPackaged ? HIROBA_ENDPOINTS : developmentEndpoints();
 
@@ -38,6 +44,7 @@ function developmentEndpoints(): HirobaEndpoints {
     return endpointsFromOverrides(
       process.env.ABTH_DEV_HIROBA_ORIGIN,
       process.env.ABTH_DEV_IDP_HOST,
+      process.env.ABTH_DEV_IMG_ORIGIN,
     );
   } catch (error) {
     // Not thrown: an uncaught error in the main process opens a dialog and waits.
@@ -85,11 +92,24 @@ let sessionStore: SessionStore | null = null;
  * stays in this process and is forgotten with the session.
  */
 let owner: string | null = null;
+/**
+ * Where the pictures that page showed are, checked: the title plate's source among them. Kept
+ * beside `owner`, in this process, and forgotten with the session; null before the first read.
+ */
+let sources: PictureSources | null = null;
+/**
+ * The items the last costume editor read offered: the only ones whose thumbnail may be asked for.
+ * It stays in this process and is forgotten with the session.
+ */
+let offered: ReadonlySet<string> = new Set();
 const setSession = (value: string | null) => {
   sessionCookie = value;
   sessionStore?.save(value);
   if (value === null) {
     owner = null;
+    sources = null;
+    offered = new Set();
+    pictures.forget();
   }
 };
 let signInAttempt: SignInAttempt | null = null;
@@ -113,7 +133,22 @@ const readTransport =
  * posts and its read-back, and two writes never interleave. A write asked for while another is
  * queued or running answers `busy` and sends nothing.
  */
-const { oneAtATime, oneWriteAtATime } = createHirobaQueue();
+const queue = createHirobaQueue();
+const { oneAtATime, oneWriteAtATime } = queue;
+
+/**
+ * Hiroba's pictures for the window, kept on disk in the app's data folder across launches and
+ * sign-outs, each fetched once. Only a picture's fetch waits in the queue, never the whole call: one
+ * already kept answers at once, even while a write runs.
+ */
+const pictures = createPictureReader({
+  transport: readTransport,
+  endpoints,
+  store: createDiskPictureStore(join(app.getPath("userData"), "pictures")),
+  queue,
+  limits: DESKTOP_PICTURE_LIMITS,
+  state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
+});
 const BUSY: WriteOutcomeView = { kind: "busy" };
 
 /** A read that found the login page, or a card still to choose: the session is over. */
@@ -159,6 +194,8 @@ app.whenReady().then(async () => {
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
     owner: () => owner,
+    // The My Don kept shows the costume before: it is fetched anew when next shown.
+    costumeChanged: () => pictures.costumeChanged(),
   });
 
   const port: HirobaSessionPort = {
@@ -187,6 +224,8 @@ app.whenReady().then(async () => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
+      // Every read but the session's first is the user's Read again: the portrait is renewed.
+      pictures.myPageAsked();
       const read = await readOwnProfile(readTransport, endpoints);
       if (!read.ok) {
         if (sessionEnded(read.error)) {
@@ -195,13 +234,23 @@ app.whenReady().then(async () => {
         return read;
       }
       owner = read.value.taikoNo;
+      sources = read.value.pictures;
+      // The session held: the plates fetched before this read are the player's own.
+      await pictures.confirm(read.value.taikoNo);
       return ok(read.value.view);
     }),
     async signOut() {
       setSession(null);
     },
     enabledWrites: writes.enabledWrites,
-    openCostumeEditor: oneAtATime(writes.openCostumeEditor),
+    // The items it offers are the only ones whose thumbnail the window may ask for next.
+    openCostumeEditor: oneAtATime(async () => {
+      const read = await writes.openCostumeEditor();
+      if (read.ok) {
+        offered = offeredOf(read.value);
+      }
+      return read;
+    }),
     // A read that changes nothing, so no write gate: in the queue like every request to Hiroba, so
     // it never lands between a write's posts and its read-back. Its failure leaves the session be:
     // the next read of a page says whether it is over. Kept as its latest copy alone when reads are
@@ -212,6 +261,7 @@ app.whenReady().then(async () => {
       }
       return previewCostume(readTransport, endpoints, set);
     }),
+    readPicture: (want) => pictures.read(want),
     changeCostume: oneWriteAtATime(writes.changeCostume, BUSY),
     pendingUndo: writes.pendingUndo,
     undo: oneWriteAtATime(writes.undo, BUSY),

@@ -1,4 +1,4 @@
-import { err } from "@abth/core";
+import { err, ok } from "@abth/core";
 import { CapacitorCookies } from "@capacitor/core";
 import {
   DefaultAndroidWebViewOptions,
@@ -7,34 +7,51 @@ import {
 } from "@capacitor/inappbrowser";
 
 import {
+  ANDROID_PICTURE_LIMITS,
+  createHirobaQueue,
+  createMemoryPictureStore,
+  createPictureReader,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
   idpOrigin,
   loginPageUrl,
+  offeredOf,
   openCostumeEditor,
+  type PictureSources,
   previewCostume,
-  readProfile,
+  readOwnProfile,
   signInStep,
 } from "../hiroba-session";
-import type { HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
+import type { CostumeSet, HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
+import { createIndexedDbPictureStore, type PictureDatabaseFactory } from "./android-picture-store";
 import { createAndroidTransport } from "./android-transport";
 
 // Development only (the Vite dev server behind live reload): a local stand-in for Hiroba and the ID
 // host. A production build replaces import.meta.env.DEV with false and drops this branch; setting
-// only one of the two stops the app rather than half-reaching the real sites.
+// only one of the two stops the app rather than half-reaching the real sites. The picture host's
+// is optional: without it, a stand-in run asks no picture host anything.
 const endpoints: HirobaEndpoints = import.meta.env.DEV
   ? endpointsFromOverrides(
       import.meta.env.VITE_ABTH_DEV_HIROBA_ORIGIN,
       import.meta.env.VITE_ABTH_DEV_IDP_HOST,
+      import.meta.env.VITE_ABTH_DEV_IMG_ORIGIN,
     )
   : HIROBA_ENDPOINTS;
 
 export interface AndroidPortOptions {
-  /** The in-app browser's close button, from the catalog. */
-  readonly closeLabel: string;
+  /**
+   * The in-app browser's close button, from the catalog: asked for each time the browser opens,
+   * so it is in the language picked since.
+   */
+  readonly closeLabel: () => string;
   /** Where "a sign-in finished here" is remembered across launches. The page's localStorage. */
   readonly signedInFlag?: SignedInFlag;
+  /**
+   * Where Hiroba's pictures are kept across launches: the page's IndexedDB. Without one, they are
+   * kept in memory for the run.
+   */
+  readonly indexedDb?: PictureDatabaseFactory;
 }
 
 /** One remembered yes or no. */
@@ -82,15 +99,45 @@ const localStorageFlag: SignedInFlag = {
  * the ID host's own cookies are cleared as far as the platform allows: clearCookies({url}) removes
  * host cookies, not Domain cookies, which is also why the session itself is only ever cleared with
  * clearAllCookies.
+ *
+ * Every verb that asks Hiroba something runs one at a time, in the order asked, through the same
+ * queue the desktop uses: a picture never goes out beside a read, and two reads never overlap.
+ *
+ * Hiroba's pictures come through the same reader as on the desktop, kept in the page's IndexedDB
+ * across launches and sign-outs, each fetched once. What that reader needs to know stays in this
+ * closure and goes with the session: the items the last editor read offered, the only ones whose
+ * thumbnail may be asked for, and, from the last read of my page, whose page it was and where its
+ * pictures are. None of it reaches the window: the view the window is given is the one the desktop
+ * gives.
  */
 export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
   const transport = createAndroidTransport();
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
+  const queue = createHirobaQueue();
+  const { oneAtATime } = queue;
+  let offered: ReadonlySet<string> = new Set();
+  let owner: string | null = null;
+  let sources: PictureSources | null = null;
+  const pictures = createPictureReader({
+    transport,
+    endpoints,
+    store:
+      options.indexedDb === undefined
+        ? createMemoryPictureStore()
+        : createIndexedDbPictureStore(options.indexedDb),
+    queue,
+    limits: ANDROID_PICTURE_LIMITS,
+    state: () => ({ signedIn, offered, owner, sources }),
+  });
 
   const forget = async () => {
     signedIn = false;
     flag.set(false);
+    offered = new Set();
+    owner = null;
+    sources = null;
+    pictures.forget();
     await CapacitorCookies.clearAllCookies();
   };
 
@@ -121,7 +168,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
             ...DefaultWebViewOptions,
             showURL: true,
             showNavigationButtons: false,
-            closeButtonText: options.closeLabel,
+            closeButtonText: options.closeLabel(),
             android: {
               ...DefaultAndroidWebViewOptions,
               // Default true since 4.0.0: an isolated view keeps its own cookie store, which the
@@ -157,21 +204,32 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await InAppBrowser.close().catch(() => undefined);
     },
 
-    async readProfile() {
+    readProfile: oneAtATime(async () => {
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
-      const read = await readProfile(transport, endpoints);
+      // Every read but the session's first is the user's Read again: the portrait is renewed.
+      pictures.myPageAsked();
+      const read = await readOwnProfile(transport, endpoints);
       if (!read.ok && sessionEnded(read.error)) {
         await forget();
       } else {
         // A read can carry a session Hiroba renewed on the way; keep that one, not the old.
         await saveCookieStore();
       }
-      return read;
-    },
+      if (!read.ok) {
+        return read;
+      }
+      owner = read.value.taikoNo;
+      sources = read.value.pictures;
+      // The session held: the plates fetched before this read are the player's own.
+      await pictures.confirm(read.value.taikoNo);
+      return ok(read.value.view);
+    }),
 
-    signOut: forget,
+    async signOut() {
+      await forget();
+    },
 
     // Writes are the desktop's alone for now (the user's call, 2026-09-27): Android enables none,
     // sends none, and its transport refuses a post outright.
@@ -179,7 +237,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       return [];
     },
 
-    async openCostumeEditor() {
+    openCostumeEditor: oneAtATime(async () => {
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
@@ -189,17 +247,23 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       } else {
         await saveCookieStore();
       }
+      if (read.ok) {
+        offered = offeredOf(read.value);
+      }
       return read;
-    },
+    }),
 
     // A read that changes nothing, allowed here as on the desktop. Its failure forgets nothing: the
     // next read of a page says whether the session is over.
-    async previewCostume(set) {
+    previewCostume: oneAtATime(async (set: CostumeSet) => {
       if (!signedIn) {
         return err({ code: "preview=notSignedIn" });
       }
       return previewCostume(transport, endpoints, set);
-    },
+    }),
+
+    // A read like the preview, refused unsent while signed out; its fetch waits in the queue.
+    readPicture: (want) => pictures.read(want),
 
     async changeCostume() {
       return { kind: "notEnabled" };

@@ -105,6 +105,28 @@ describe("createHirobaTransport", () => {
     expect(sentBack.ok && sentBack.value.url).toBe("http://hiroba.test/plain");
   });
 
+  test("sends the picture host no cookie: not the session, not one it set itself", async () => {
+    const PORTRAIT = "https://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
+    const png = (headers: [string, string][] = []) =>
+      new Response(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), {
+        headers: [["content-type", "image/png"], ...headers],
+      });
+    const { sent, session, transport } = setUp([
+      png([["set-cookie", "_token_v2=from-the-picture-host; Path=/"]]),
+      redirect(PORTRAIT),
+      png(),
+    ]);
+    await transport.send({ method: "GET", url: PORTRAIT });
+    // Asked of Hiroba and sent on to the picture host, as a redirect might.
+    await transport.send({ method: "GET", url: `${ORIGIN}/imgsrc.php` });
+    expect(sent.map((s) => [s.url, s.headers.Cookie])).toEqual([
+      [PORTRAIT, undefined],
+      [`${ORIGIN}/imgsrc.php`, "_token_v2=sample-session"],
+      [PORTRAIT, undefined],
+    ]);
+    expect(session.value).toBe("sample-session");
+  });
+
   test("follows redirects to the final page and never hands set-cookie back", async () => {
     const { transport } = setUp([
       redirect("/login.php", [["set-cookie", "other=1; Path=/"]]),

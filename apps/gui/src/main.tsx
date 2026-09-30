@@ -3,34 +3,47 @@ import "@fontsource/roboto/latin-400.css";
 import "@fontsource/roboto/latin-500.css";
 import "@fontsource/roboto/latin-700.css";
 
-import { createTranslator } from "@abth/i18n";
-import { Alert, CssBaseline, createTheme, ThemeProvider } from "@mui/material";
+import { createTranslator, type Translator } from "@abth/i18n";
+import { CssBaseline, createTheme, ThemeProvider } from "@mui/material";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { App } from "./App";
+import { startingLocale } from "./language/locale-choice";
+import { showLanguage } from "./language/show-language";
 import { connectPlatform } from "./platform";
+import { Shell } from "./shell";
 
-// Roboto is bundled, never fetched: the Android app must work without a CDN. Japanese text falls
-// back to the system's own Japanese font.
-const theme = createTheme({ colorSchemes: { dark: true } });
-const i18n = createTranslator("en");
-document.title = i18n.t("app.title");
+// Roboto is bundled, never fetched: the Android app must work without a CDN. Japanese and Chinese
+// fall back to the system's own font for the language the page's `lang` names.
+const theme = createTheme({
+  colorSchemes: { dark: true },
+  components: {
+    // The scrollbar's room is kept on every page, so the page's column and its Fab stand still
+    // between a page that scrolls and one that does not. Not by scrollbar-gutter: MUI's modals,
+    // which stop the scrolling while open, make up for this way alone, and would move the page.
+    MuiCssBaseline: { styleOverrides: { html: { overflowY: "scroll" } } },
+  },
+});
+const initial = startingLocale();
+/** The language the window is in now: the in-app browser's close button reads it as it opens. */
+let shown: Translator = createTranslator(initial);
+showLanguage(shown);
+const onShown = (i18n: Translator) => {
+  shown = i18n;
+};
 
 const container = document.getElementById("root");
 if (container === null) {
   throw new Error("index.html has no #root");
 }
-const platform = await connectPlatform(i18n);
+const platform = await connectPlatform({ closeLabel: () => shown.t("signIn.closeBrowser") });
 createRoot(container).render(
   <StrictMode>
     <ThemeProvider theme={theme}>
-      <CssBaseline />
-      {platform === null ? (
-        <Alert severity="info">{i18n.t("platform.unsupported")}</Alert>
-      ) : (
-        <App port={platform.port} i18n={i18n} />
-      )}
+      {/* The page's color-scheme follows the scheme shown, so the scrollbars and the system's own
+          widgets are dark with the rest of a dark page. */}
+      <CssBaseline enableColorScheme />
+      <Shell platform={platform} onShown={onShown} />
     </ThemeProvider>
   </StrictMode>,
 );

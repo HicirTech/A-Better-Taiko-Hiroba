@@ -28,15 +28,21 @@ export type SignInOutcome =
 /**
  * The dan my page's label names: its name as Hiroba prints it, 五級 to 十段. A label that did not
  * read is `unreadable`, with codes a user can copy into a report: why, and what came back.
+ *
+ * `picture` is the label itself, the very bytes the dan was read off, for the interface to show as
+ * Hiroba does: so it can never disagree with the name beside it, and costs no request of its own.
+ * Null when what came back was not a PNG of a label's size from the label's own address; a label
+ * that did not read can still carry one.
  */
 export type DanView =
-  | { readonly name: string }
-  | { readonly unreadable: true; readonly code: string };
+  | { readonly name: string; readonly picture: PictureView | null }
+  | { readonly unreadable: true; readonly code: string; readonly picture: PictureView | null };
 
 /**
  * What the interface shows of a profile: plain data that survives JSON. The taiko number is
  * deliberately not part of it, and neither is any URL — the dan label's carries the taiko number,
- * so only the dan read off it crosses.
+ * so only the dan read off it crosses, with the label's bytes. A `data:` URL here is a picture, not
+ * an address: it names nothing and fetches nothing.
  */
 export interface ProfileView {
   readonly nickname: string;
@@ -95,6 +101,54 @@ export interface ReadFailure {
  * Never the picture's URL or its query, never a cookie.
  */
 export interface CostumePreviewFailure {
+  readonly code: string;
+}
+
+/** A costume slot as Hiroba numbers it in a thumbnail's `type`: 1 is the きぐるみ, 5 the ぷちキャラ. */
+export type CostumeSlot = 1 | 2 | 3 | 4 | 5;
+
+/**
+ * One of Hiroba's pictures, as the interface asks for it: what it shows, never where it is. The
+ * platform builds the address itself, from a fixed path and these checked numbers, or from what it
+ * read off my page itself. Each kind comes with the part of the app that shows it:
+ *
+ * - `costumeItem`: an item's thumbnail, as the costume editor shows it, for an item the last
+ *   editor read offered in that slot: one it owns, or the one it wears. はずす (0) has none.
+ * - `titlePlate`: the plate the identity card is drawn on, as the last read of my page showed it,
+ *   under the title it showed. It names nothing more: the platform knows whose page it read.
+ * - `scorePanel`: the art of the score panel my page writes its counts over, as the last read of
+ *   my page showed it. The same art for every player: it shows no count.
+ * - `medalPlate`: the どんメダル plate the medal card is drawn on, as the last read of my page
+ *   showed it. Its id stays with the platform: it names the player's season.
+ * - `myDon`: the player's My Don portrait, as the last read of my page showed it, from the one
+ *   picture host off Hiroba. Its address names the taiko number, which stays with the platform.
+ */
+export type PictureWant =
+  | {
+      readonly kind: "costumeItem";
+      readonly slot: CostumeSlot;
+      readonly id: number;
+    }
+  | { readonly kind: "titlePlate" }
+  | { readonly kind: "scorePanel" }
+  | { readonly kind: "medalPlate" }
+  | { readonly kind: "myDon" };
+
+/**
+ * A picture as it crosses to the interface: its bytes as a `data:image/png` URL, a picture and not
+ * an address, and its size as the PNG gives it, so its box can be sized before it is drawn.
+ */
+export interface PictureView {
+  readonly src: string;
+  readonly width: number;
+  readonly height: number;
+}
+
+/**
+ * Why a picture did not come, as codes a user can copy into a report: `<kind>=<why>`, then what
+ * came back, if anything did. Never a host, a URL, a query or a cookie.
+ */
+export interface PictureFailure {
   readonly code: string;
 }
 
@@ -179,6 +233,19 @@ export interface HirobaSessionPort {
    * the platform; a failure is codes. How often it is asked for is the interface's to keep down.
    */
   previewCostume(set: CostumeSet): Promise<Result<string, CostumePreviewFailure>>;
+  /**
+   * One of Hiroba's pictures, as `want` names it: from the platform's store when it holds it,
+   * asking Hiroba nothing, or else one GET in the queue with every other request, never retried and
+   * never between a write's requests. Answered as a `data:image/png` URL and its size, or as codes.
+   * Refused unsent while signed out, for an item the last editor read did not offer, for a picture
+   * of my page before my page is read or when it showed none, for the portrait with no picture host,
+   * and past the run's budget. How often and how many are asked for is the interface's to keep down.
+   *
+   * The My Don portrait is the one kept picture that can change under the same address: the store
+   * answers it too, and it is fetched anew only after a costume write applies, or after a read of
+   * my page other than a session's first, which only the user's Read again makes.
+   */
+  readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /**
    * One costume write, the way every write goes: the editor, the pre-check, one save and the
    * read-back, four requests; six while costume writes are not verified, with my page read before

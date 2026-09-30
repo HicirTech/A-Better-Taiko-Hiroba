@@ -5,12 +5,38 @@
  */
 import { beforeEach, describe, expect, test } from "bun:test";
 
+import { createCostumeEditor } from "../scripts/mock-costume";
+import { medalPlatePng, myDonPng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
 import { native, nativeBase64 } from "./capacitor-fakes";
+import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const { createAndroidPort } = await import("../src/platform/android");
 
 const HIROBA = "https://donderhiroba.jp";
 const CLOSE_LABEL = "Close sign-in";
+/**
+ * A dan-less my page, so a read is one request: the title plate, bare as Hiroba writes it, over
+ * the title. Placeholders throughout, no real account's.
+ */
+const MY_PAGE = `<html><body><div id="mydon_area">
+  <img src="imgsrc_titleplate.php" style="width: 100%;">
+  <div>サンプルの称号</div>
+  <div style="height:24px;">サンプルどん</div>
+  <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div></div>
+  <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
+    ${[8, 7, 6, 5, 4, 3, 2].map((rank) => `<div class="best_rank_score_${rank}">1</div>`).join("")}
+    <div class="silver_crown_count">1</div><div class="gold_crown_count">1</div>
+    <div class="donderful_crown_count">1</div></div>
+</div>
+<div class="favoriteSong"><h2>大好きな曲</h2><ul><li><span class="songName">未設定</span></li></ul></div>
+<div class="favoriteSong"><h2>お気に入りの曲</h2><ul></ul></div></body></html>`;
+/** My page as Hiroba answers it, whatever was asked. */
+const myPageAnswer = async () => ({
+  status: 200,
+  url: `${HIROBA}/mypage_top.php`,
+  headers: { "Content-Type": "text/html; charset=UTF-8" },
+  data: nativeBase64(MY_PAGE),
+});
 
 /** A signed-in flag in memory, in place of the page's localStorage. */
 function memoryFlag(initial = false) {
@@ -32,7 +58,7 @@ async function until(condition: () => boolean): Promise<void> {
 
 /** Starts a sign-in and waits until the in-app browser is open. */
 async function startSignIn(signedInFlag = memoryFlag()) {
-  const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag });
+  const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL, signedInFlag });
   const outcome = port.signIn();
   await until(() => native.openedWith.length === 1);
   return { port, outcome };
@@ -43,15 +69,34 @@ describe("createAndroidPort", () => {
 
   test("opens signed in after an earlier sign-in, and wipes nothing as it starts", async () => {
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     expect(await port.isSignedIn()).toBe(true);
     expect(native.cookieCalls).toEqual([]);
   });
 
+  test("a read hands the window the view alone: no taiko number and no picture's source", async () => {
+    native.httpAnswer = myPageAnswer;
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    const read = await port.readProfile();
+    expect(read.ok && read.value.nickname).toBe("サンプルどん");
+    expect(read.ok && Object.keys(read.value)).not.toContain("taikoNo");
+    expect(read.ok && Object.keys(read.value)).not.toContain("pictures");
+    const shown = JSON.stringify(read);
+    expect(shown).not.toContain("000000000000");
+    expect(shown).not.toContain("titleplate");
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([`${HIROBA}/mypage_top.php`]);
+  });
+
   test("opens signed out when no sign-in was remembered", async () => {
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(),
+    });
     expect(await port.isSignedIn()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
@@ -106,7 +151,7 @@ describe("createAndroidPort", () => {
 
   test("a browser that cannot open ends the attempt instead of hanging", async () => {
     native.openFails = true;
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL });
+    const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL });
     expect(await port.signIn()).toEqual({ kind: "unavailable" });
     expect(native.listeners.size).toBe(0);
   });
@@ -149,7 +194,7 @@ describe("createAndroidPort's writes", () => {
 
   test("enables no write, offers no undo, and a costume change sends nothing", async () => {
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     expect(await port.enabledWrites()).toEqual([]);
@@ -172,7 +217,10 @@ describe("createAndroidPort's writes", () => {
   });
 
   test("reads no costume editor while signed out", async () => {
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(),
+    });
     expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
     expect(native.httpRequests).toEqual([]);
   });
@@ -194,7 +242,10 @@ describe("createAndroidPort's costume preview", () => {
   const PREVIEW_URL = `${HIROBA}/imgsrc_mydon.php?face=5&body=12&limb=13&cos1=0&cos2=21&cos3=68&cos4=37&cos5=140`;
 
   test("asks nothing while signed out", async () => {
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: memoryFlag() });
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(),
+    });
     expect(await port.previewCostume(SET)).toEqual({
       ok: false,
       error: { code: "preview=notSignedIn" },
@@ -212,7 +263,7 @@ describe("createAndroidPort's costume preview", () => {
       data: nativeBase64(picture),
     });
     const port = await createAndroidPort({
-      closeLabel: CLOSE_LABEL,
+      closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
     const preview = await port.previewCostume(SET);
@@ -225,6 +276,39 @@ describe("createAndroidPort's costume preview", () => {
     expect(native.cookieCalls).toEqual([]);
   });
 
+  test("asks Hiroba one thing at a time: a preview waits for a read already on its way", async () => {
+    const answers: (() => void)[] = [];
+    native.httpAnswer = () =>
+      new Promise((resolve) => {
+        answers.push(() =>
+          resolve({ status: 200, url: PREVIEW_URL, headers: {}, data: nativeBase64("") }),
+        );
+      });
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    const reading = port.readProfile();
+    const opening = port.openCostumeEditor();
+    const previewing = port.previewCostume(SET);
+    await until(() => native.httpRequests.length === 1);
+    await Bun.sleep(5);
+    expect(native.httpRequests).toHaveLength(1);
+    answers.shift()?.();
+    await until(() => native.httpRequests.length === 2);
+    await Bun.sleep(5);
+    expect(native.httpRequests).toHaveLength(2);
+    answers.shift()?.();
+    await until(() => native.httpRequests.length === 3);
+    answers.shift()?.();
+    await Promise.all([reading, opening, previewing]);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_top.php",
+      "/mypage_kisekae.php",
+      "/imgsrc_mydon.php",
+    ]);
+  });
+
   test("a no-session GIF is a failure with codes, and forgets nothing", async () => {
     const flag = memoryFlag(true);
     native.httpAnswer = async () => ({
@@ -233,12 +317,357 @@ describe("createAndroidPort's costume preview", () => {
       headers: { "Content-Type": "image/gif" },
       data: nativeBase64(new Uint8Array(43)),
     });
-    const port = await createAndroidPort({ closeLabel: CLOSE_LABEL, signedInFlag: flag });
+    const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL, signedInFlag: flag });
     expect(await port.previewCostume(SET)).toEqual({
       ok: false,
       error: { code: "preview=notPng status=200 type=image/gif bytes=43" },
     });
     expect(native.cookieCalls).toEqual([]);
     expect(flag.get()).toBe(true);
+  });
+});
+
+describe("createAndroidPort's pictures", () => {
+  beforeEach(() => native.reset());
+
+  const THUMB = { kind: "costumeItem", slot: 1, id: 36 } as const;
+  const PLATE = { kind: "titlePlate" } as const;
+  const MEDAL = { kind: "medalPlate" } as const;
+  const MY_DON = { kind: "myDon" } as const;
+
+  /** Answers the editor with the mock's page and a thumbnail with the mock's picture. */
+  function answerAsHiroba() {
+    const editor = createCostumeEditor();
+    native.httpAnswer = async () => {
+      const asked = native.httpRequests.at(-1)?.url ?? "";
+      const { pathname, searchParams } = new URL(asked);
+      if (pathname === "/mypage_kisekae.php") {
+        return {
+          status: 200,
+          url: asked,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+          data: nativeBase64(`<html><body>${editor.page({ cardChosen: true })}</body></html>`),
+        };
+      }
+      if (pathname === "/mypage_top.php") {
+        return myPageAnswer();
+      }
+      if (pathname === "/imgsrc_titleplate.php") {
+        return {
+          status: 200,
+          url: asked,
+          headers: { "Content-Type": "image/png" },
+          data: nativeBase64(titlePlatePng("サンプルの称号")),
+        };
+      }
+      return {
+        status: 200,
+        url: asked,
+        headers: { "Content-Type": "image/png" },
+        data: nativeBase64(
+          thumbnailPng(Number(searchParams.get("type")), Number(searchParams.get("cos"))),
+        ),
+      };
+    };
+  }
+
+  test("asks nothing while signed out", async () => {
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(),
+    });
+    expect(await port.readPicture(THUMB)).toEqual({
+      ok: false,
+      error: { code: "costumeItem=notSignedIn" },
+    });
+    expect(native.httpRequests).toEqual([]);
+  });
+
+  test("asks only for items the last editor read offered, once each, as a browser's picture", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    expect(await port.readPicture(THUMB)).toEqual({
+      ok: false,
+      error: { code: "costumeItem=notOffered" },
+    });
+    expect(native.httpRequests).toEqual([]);
+    expect((await port.openCostumeEditor()).ok).toBe(true);
+    const picture = await port.readPicture(THUMB);
+    expect(picture.ok && picture.value.src.startsWith("data:image/png;base64,")).toBe(true);
+    expect(await port.readPicture(THUMB)).toEqual(picture);
+    expect(await port.readPicture({ ...THUMB, id: 999 })).toEqual({
+      ok: false,
+      error: { code: "costumeItem=notOffered" },
+    });
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_kisekae.php`,
+      `${HIROBA}/imgsrc_kisekae.php?cos=36&type=1`,
+    ]);
+    expect(native.httpRequests[1]?.headers).toMatchObject({
+      Referer: `${HIROBA}/mypage_kisekae.php`,
+      Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    });
+    expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
+  });
+
+  test("a picture's fetch waits for a read already on its way", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.openCostumeEditor();
+    const answer = native.httpAnswer;
+    let release: () => void = () => undefined;
+    native.httpAnswer = () =>
+      new Promise((resolve) => {
+        release = () => resolve(answer());
+      });
+    const reading = port.openCostumeEditor();
+    const picture = port.readPicture(THUMB);
+    await Bun.sleep(150);
+    expect(native.httpRequests).toHaveLength(2);
+    native.httpAnswer = answer;
+    release();
+    await reading;
+    expect((await picture).ok).toBe(true);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_kisekae.php",
+      "/mypage_kisekae.php",
+      "/imgsrc_kisekae.php",
+    ]);
+  });
+
+  test("asks for the title plate only once my page is read, as my page does, and once", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    expect(await port.readPicture(PLATE)).toEqual({
+      ok: false,
+      error: { code: "titlePlate=notRead" },
+    });
+    expect(native.httpRequests).toEqual([]);
+    expect((await port.readProfile()).ok).toBe(true);
+    const plate = await port.readPicture(PLATE);
+    expect(plate.ok && [plate.value.width, plate.value.height]).toEqual([600, 100]);
+    expect(await port.readPicture(PLATE)).toEqual(plate);
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_top.php`,
+      `${HIROBA}/imgsrc_titleplate.php`,
+    ]);
+    expect(native.httpRequests[1]?.headers).toMatchObject({
+      Referer: `${HIROBA}/mypage_top.php`,
+    });
+  });
+
+  /** Signs out, then in again through the stand-in's sign-in page. */
+  async function signOutAndIn(port: Awaited<ReturnType<typeof createAndroidPort>>) {
+    await port.signOut();
+    const outcome = port.signIn();
+    await until(() => native.openedWith.length === 1);
+    native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
+    expect(await outcome).toEqual({ kind: "signedIn" });
+  }
+
+  test("forgets whose page it read when the session goes, and keeps the plate", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.readProfile();
+    const plate = await port.readPicture(PLATE);
+    // A later read finds the session good: the plate is the player's own, and kept.
+    await port.readProfile();
+    await signOutAndIn(port);
+    expect(await port.readPicture(PLATE)).toEqual({
+      ok: false,
+      error: { code: "titlePlate=notRead" },
+    });
+    // The same player read again: the plate kept from before, asked of no one.
+    await port.readProfile();
+    expect(await port.readPicture(PLATE)).toEqual(plate);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_top.php",
+      "/imgsrc_titleplate.php",
+      "/mypage_top.php",
+      "/mypage_top.php",
+    ]);
+  });
+
+  test("asks again after a sign-in for a plate no later read confirmed", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.readProfile();
+    await port.readPicture(PLATE);
+    await signOutAndIn(port);
+    await port.readProfile();
+    expect((await port.readPicture(PLATE)).ok).toBe(true);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_top.php",
+      "/imgsrc_titleplate.php",
+      "/mypage_top.php",
+      "/imgsrc_titleplate.php",
+    ]);
+  });
+
+  test("asks nothing after a relaunch for the plate and thumbnails already kept", async () => {
+    answerAsHiroba();
+    const indexedDb = createFakeIndexedDb();
+    const launch = () =>
+      createAndroidPort({
+        closeLabel: () => CLOSE_LABEL,
+        signedInFlag: memoryFlag(true),
+        indexedDb: indexedDb.factory,
+      });
+    const first = await launch();
+    await first.readProfile();
+    const plate = await first.readPicture(PLATE);
+    // A later read finds the session good: the plate is the player's own, and kept.
+    await first.readProfile();
+    await first.openCostumeEditor();
+    const thumbnail = await first.readPicture(THUMB);
+    await first.signOut();
+
+    const relaunched = await launch();
+    await relaunched.readProfile();
+    expect(await relaunched.readPicture(PLATE)).toEqual(plate);
+    await relaunched.openCostumeEditor();
+    expect(await relaunched.readPicture(THUMB)).toEqual(thumbnail);
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_top.php",
+      "/imgsrc_titleplate.php",
+      "/mypage_top.php",
+      "/mypage_kisekae.php",
+      "/imgsrc_kisekae.php",
+      "/mypage_top.php",
+      "/mypage_kisekae.php",
+    ]);
+  });
+
+  test("asks for the どんメダル plate by the id my page shows, once, and keeps it for good", async () => {
+    const id = "0123456789abcdef0123456789abcdef0123456789abcdef";
+    const withMedal = MY_PAGE.replace(
+      `<div class="favoriteSong">`,
+      `<div><img src="imgsrc_tokenplate.php?id=${id}" style="width: 100%;">
+  <div class="token_name">どんメダル2026秋</div><div class="token_count">12</div></div>
+<div class="favoriteSong">`,
+    );
+    native.httpAnswer = async () => {
+      const asked = native.httpRequests.at(-1)?.url ?? "";
+      const plate = new URL(asked).pathname === "/imgsrc_tokenplate.php";
+      return {
+        status: 200,
+        url: asked,
+        headers: { "Content-Type": plate ? "image/png" : "text/html; charset=UTF-8" },
+        data: nativeBase64(plate ? medalPlatePng(id, false) : withMedal),
+      };
+    };
+    const indexedDb = createFakeIndexedDb();
+    const launch = () =>
+      createAndroidPort({
+        closeLabel: () => CLOSE_LABEL,
+        signedInFlag: memoryFlag(true),
+        indexedDb: indexedDb.factory,
+      });
+    const first = await launch();
+    const read = await first.readProfile();
+    const plate = await first.readPicture(MEDAL);
+    expect(plate.ok && [plate.value.width, plate.value.height]).toEqual([600, 100]);
+    expect(await first.readPicture(MEDAL)).toEqual(plate);
+    // The id is the platform's alone: the view names neither it nor the plate's address.
+    expect(JSON.stringify(read)).not.toMatch(new RegExp(`${id}|tokenplate`));
+
+    const relaunched = await launch();
+    await relaunched.readProfile();
+    expect(await relaunched.readPicture(MEDAL)).toEqual(plate);
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_top.php`,
+      `${HIROBA}/imgsrc_tokenplate.php?id=${id}`,
+      `${HIROBA}/mypage_top.php`,
+    ]);
+    expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/mypage_top.php` });
+  });
+
+  test("asks for the My Don off Hiroba once, keeps it across launches, and anew after Read again", async () => {
+    const portrait = "https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
+    const withPortrait = MY_PAGE.replace(
+      "<p>太鼓番：000000000000</p></div></div>",
+      `<p>太鼓番：000000000000</p></div>
+    <div class="mydon_image"><img class="customd_mydon" src="${portrait}"></div></div>`,
+    );
+    let wearing = [12, 12, 5, 0, 0, 68, 0, 0];
+    native.httpAnswer = async () => {
+      const asked = native.httpRequests.at(-1)?.url ?? "";
+      const drawn = asked === portrait;
+      return {
+        status: 200,
+        url: asked,
+        headers: { "Content-Type": drawn ? "image/png" : "text/html; charset=UTF-8" },
+        data: nativeBase64(drawn ? myDonPng(wearing) : withPortrait),
+      };
+    };
+    const indexedDb = createFakeIndexedDb();
+    const launch = () =>
+      createAndroidPort({
+        closeLabel: () => CLOSE_LABEL,
+        signedInFlag: memoryFlag(true),
+        indexedDb: indexedDb.factory,
+      });
+    const first = await launch();
+    const read = await first.readProfile();
+    const before = await first.readPicture(MY_DON);
+    expect(before.ok && [before.value.width, before.value.height]).toEqual([290, 290]);
+    expect(await first.readPicture(MY_DON)).toEqual(before);
+    // The address names the taiko number: the platform's alone.
+    expect(JSON.stringify(read)).not.toMatch(/mydon|taiko-p/);
+    // Changed elsewhere, then the user's Read again: fetched anew, once.
+    wearing = [12, 12, 3, 0, 0, 68, 0, 0];
+    await first.readProfile();
+    const after = await first.readPicture(MY_DON);
+    expect(after).not.toEqual(before);
+    expect(await first.readPicture(MY_DON)).toEqual(after);
+
+    const relaunched = await launch();
+    await relaunched.readProfile();
+    expect(await relaunched.readPicture(MY_DON)).toEqual(after);
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_top.php`,
+      portrait,
+      `${HIROBA}/mypage_top.php`,
+      portrait,
+      `${HIROBA}/mypage_top.php`,
+    ]);
+    expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/` });
+    expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
+  });
+
+  test("forgets what the editor offered when the session goes", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.openCostumeEditor();
+    await port.signOut();
+    const outcome = port.signIn();
+    await until(() => native.openedWith.length === 1);
+    native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
+    expect(await outcome).toEqual({ kind: "signedIn" });
+    expect(await port.readPicture(THUMB)).toEqual({
+      ok: false,
+      error: { code: "costumeItem=notOffered" },
+    });
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
+      "/mypage_kisekae.php",
+    ]);
   });
 });

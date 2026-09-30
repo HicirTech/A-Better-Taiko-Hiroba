@@ -1,10 +1,10 @@
 /**
- * The desktop's queue in front of Hiroba: verbs one at a time, and a write asked for while another
- * is queued or running answered busy rather than queued.
+ * The queue in front of Hiroba, which both shells use: verbs one at a time, and a write asked for
+ * while another is queued or running answered busy rather than queued.
  */
 import { describe, expect, test } from "bun:test";
 
-import { createHirobaQueue } from "../electron/hiroba-queue";
+import { createHirobaQueue } from "../src/hiroba-session";
 
 /** A verb that logs when it starts and ends, and ends only when its test lets it. */
 function held(name: string, log: string[]) {

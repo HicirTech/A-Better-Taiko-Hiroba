@@ -65,7 +65,7 @@ try {
     inline.textContent = "window.__inlineRan = true";
     document.head.append(inline);
     return {
-      signInShown: document.body.textContent.includes("Sign in to Hiroba"),
+      signInShown: document.querySelector("#sign-in") !== null,
       bridge: Object.keys(window.abth ?? {}),
       require: typeof require,
       inlineScriptBlocked: window.__inlineRan !== true,

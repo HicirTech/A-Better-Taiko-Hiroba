@@ -135,10 +135,12 @@ function profileExcerpt(options: ExcerptOptions): string {
 </body></html>`;
 }
 
+/** A plate's picture as my page writes it: an opaque hex id, 48 characters on every capture. */
+const PLATE_IMAGE = "imgsrc_tokenplate.php?id=0123456789abcdef0123456789abcdef0123456789abcdef";
 /** The どんメダル plate as every capture before 2026-09-27 wrote it: a name and a count. */
 const MEDAL_PLATE = `
   <div>
-    <img src="imgsrc_tokenplate.php?id=placeholder">
+    <img src="${PLATE_IMAGE}" style="width: 100%;">
     <div class="token_name token_info_display">どんメダル2026夏</div>
     <div class="token_count token_info_display">0</div>
   </div>`;
@@ -162,8 +164,13 @@ describe("parseProfilePage", () => {
       nickname: "Donder",
       title: "黒薔薇の使徒",
       region: "香港",
+      titlePlateImageUrl: "imgsrc_titleplate.php",
       danLabelImageUrl: "imgsrc_danlabel.php?taiko_no=000000000000",
-      medal: { name: "どんメダル2026夏", progress: { kind: "collecting", count: 0 } },
+      medal: {
+        name: "どんメダル2026夏",
+        progress: { kind: "collecting", count: 0 },
+        plateImageUrl: PLATE_IMAGE,
+      },
       myDonImageUrl: "https://img.example/imgsrc.php?kind=mydon&fn=mydon_000000000000",
       favoriteSong: { songNo: "1346", title: "サンプル曲アルファ" },
       favoriteFolderTitles: ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲デルタ"],
@@ -188,6 +195,7 @@ describe("parseProfilePage", () => {
       expect(result.value.medal).toEqual({
         name: "どんメダル2026夏",
         progress: { kind: "complete" },
+        plateImageUrl: PLATE_IMAGE,
       });
     });
   });
@@ -238,7 +246,11 @@ describe("parseProfilePage", () => {
         if (!isOk(result)) {
           throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
         }
-        expect(result.value.medal).toEqual({ name, progress: { kind: "unrecognised", reason } });
+        expect(result.value.medal).toEqual({
+          name,
+          progress: { kind: "unrecognised", reason },
+          plateImageUrl: PLATE_IMAGE,
+        });
         expect(result.value.nickname).toBe("Donder");
         expect(result.value.title).toBe("黒薔薇の使徒");
         expect(result.value.summary.crownCounts).toEqual({ silver: 464, gold: 316, donderful: 0 });
@@ -270,6 +282,23 @@ describe("parseProfilePage", () => {
     expect(result.value.summary.crownCounts).toEqual({ silver: 464, gold: 316, donderful: 0 });
   });
 
+  test("a plate whose picture is missing keeps its name and count, and no picture", () => {
+    const withPicture = profileExcerpt({ withDan: true });
+    const excerpt = withPicture.replace(`<img src="${PLATE_IMAGE}" style="width: 100%;">`, "");
+    expect(excerpt).not.toBe(withPicture);
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.medal).toEqual({
+      name: "どんメダル2026夏",
+      progress: { kind: "collecting", count: 0 },
+      plateImageUrl: null,
+    });
+  });
+
   test("no dan is a normal state, not a failure", () => {
     const result = parseProfilePage(profileExcerpt({ withDan: false }), FETCHED_AT);
 
@@ -292,6 +321,36 @@ describe("parseProfilePage", () => {
     }
     expect(result.value.nickname).toBe("Donder");
     expect(result.value.danLabelImageUrl).toBeNull();
+  });
+
+  test("keeps the title plate's src as the page writes it, a query included", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      `<img src="imgsrc_titleplate.php">`,
+      `<img src="imgsrc_titleplate.php?taiko_no=000000000000" style="width: 100%;">`,
+    );
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.titlePlateImageUrl).toBe("imgsrc_titleplate.php?taiko_no=000000000000");
+  });
+
+  test("no title plate is read as null, and the rest of the page still reads", () => {
+    const excerpt = profileExcerpt({ withDan: true }).replace(
+      `<img src="imgsrc_titleplate.php">`,
+      "",
+    );
+
+    const result = parseProfilePage(excerpt, FETCHED_AT);
+
+    if (!isOk(result)) {
+      throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+    }
+    expect(result.value.titlePlateImageUrl).toBeNull();
+    expect(result.value.title).toBe("黒薔薇の使徒");
+    expect(result.value.nickname).toBe("Donder");
   });
 
   test("an empty title line is no title, a normal state, read as an empty string", () => {

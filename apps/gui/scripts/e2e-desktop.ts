@@ -1,22 +1,51 @@
 /**
- * Drives the unpackaged desktop app through sign-in, the read, reading again, a rotated session,
+ * Drives the unpackaged desktop app through sign-in, the read, reading again (a small Fab, shut and
+ * spinning while a read runs, and on a touch-first screen a pull from the top of the page, neither
+ * of them inside a write), a rotated session,
  * every どんメダル state, a dan-less, title-less, region-less my page, a set favourite song and a
- * filled favourites folder, the editor's picture of the set (on opening, after a pick, one request
- * for a burst of picks, one that does not come, none once shut, none inside a write), costume
- * writes (a colour and a きぐるみ, each undone, the #22 trap, a
- * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
- * change made elsewhere, and a session that ends before and after a save), a lost session, cancel,
- * a sign-in sent off both sites, a reopen that keeps the session and the undo, Hiroba's daily
- * break, sign-out, and a reopen that stays signed out with the write gate shut and, signed in,
- * shows the editor's button shut and why, against scripts/mock-hiroba.ts, over the Chrome DevTools
- * Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
+ * filled favourites folder, the Overview shaped like my page's header, the identity card on
+ * Hiroba's title plate (its text over it, one plate per title, one that does not come, the plate
+ * kept across sign-outs and launches), Hiroba's score panel (a stand-in while its art does not
+ * come, asked for again after each read until it does, the counts written over the art where my
+ * page writes them, the art kept across launches and sign-outs), the My Don
+ * portrait (a button to the editor, with an edit badge and its name on hover, opened by Enter and
+ * Space, on a touch-first screen too, and there by a long-press alone, not a tap or a moved
+ * finger, from the picture host with no cookie, a first one that does not come coded and asked
+ * for again after a read, kept across launches and sign-ins, fetched anew on Read again and after a
+ * write applies, the kept one still shown when a fresh one does not come), the どんメダル
+ * plate (asked for only on screen, its words over it, one plate per season and state, one that
+ * does not come, its id never in the window or on disk, the plate kept across sign-outs and
+ * launches), the editor's
+ * picture of the set (on opening, after a pick, one request for a burst of picks, one that does not
+ * come, none once shut, none inside a write), its items' thumbnails (only those seen, each once,
+ * kept across sign-outs and launches, one that does not come, one not offered, shapes the bridge
+ * refuses, none inside a write), the pictures on disk named by hashes alone, costume
+ * writes (a colour and a きぐるみ, each undone, the #22 trap, a save that moves nothing,
+ * pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, and
+ * a session that ends before and after a save), a lost session (none of its pictures shown at the
+ * next sign-in), cancel, a sign-in sent off both
+ * sites, the pages (a side panel on a wide window, a menu on a narrow one, the sign-in card on the
+ * Overview and Favourites while signed out, the favourites on their own page, and the page kept for
+ * the next launch), the scheme (dark or light as the system asks, the page's color-scheme with it),
+ * Settings (sections with small headings over lists of rows, who is signed in, while a read runs
+ * too, and Sign out, shut while it does), the
+ * language (radio buttons the arrows move, the system's at first, a pick in Settings that takes
+ * hold at once and is kept, System default, which follows the system again, and one made while signed in,
+ * which asks Hiroba nothing), a reopen that keeps the
+ * session and the undo,
+ * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
+ * signed in, a portrait that opens nothing and says why, against scripts/mock-hiroba.ts, over the
+ * Chrome DevTools Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
  * planned, then searches the app's user-data folder for every session token and form token the
  * mock issued and for what the mock ID host left behind. Run `bun run build` first.
  */
 import { existsSync, readdirSync, readFileSync, rmSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
+import { createTranslator } from "@abth/i18n";
 import electronPath from "electron";
 
+import { PICTURE_EPOCH } from "../src/hiroba-session";
+import { LONG_PRESS_MS } from "../src/my-page/use-long-press";
 import { BRIDGE_CHANNELS } from "../src/session-port";
 import { COSTUME_FIELDS, type CostumeState, INITIAL_COSTUME } from "./mock-costume";
 
@@ -24,10 +53,17 @@ const root = join(import.meta.dir, "..");
 const HIROBA = "http://hiroba.127.0.0.1.sslip.io:8807";
 const CDP_PORT = 9333;
 const IDP_HOST = "id.127.0.0.1.sslip.io:8808";
+/** The mock's picture host, where the My Don portrait comes from: outside Hiroba's cookie Domain. */
+const IMG = "http://img.127.0.0.1.sslip.io:8807";
 const IDP_MARKER = "abth-mock-idp-marker";
 const MY_PAGE = "/mypage_top.php";
 const DAN_LABEL = "/imgsrc_danlabel.php";
+const MEDAL_PLATE = "/imgsrc_tokenplate.php";
+/** The art of the score panel the mock's my page shows. */
+const PANEL_ART = "/image/sp/640/total_score_image_5.png";
 const USER_DATA = join(root, "out", "e2e-user-data");
+/** The language runs' own folder, so a pick made there never reaches the runs that read English. */
+const LANGUAGE_USER_DATA = join(root, "out", "e2e-user-data-language");
 /** Noon JST, outside Hiroba's daily break, whatever the hour the run is made at. */
 const NOON_JST = "2026-09-27T03:00:00Z";
 /** 05:30 JST, inside the break. */
@@ -79,16 +115,55 @@ const SESSION_FILE = join(USER_DATA, "session.json");
 const savedCostume = async () =>
   asAppSet((await (await fetch(`${HIROBA}/__state`)).json()) as CostumeState);
 const PREVIEW = "GET /imgsrc_mydon.php";
+const THUMBNAIL = "GET /imgsrc_kisekae.php";
+const TITLE_PLATE = "GET /imgsrc_titleplate.php";
+const TOKEN_PLATE = `GET ${MEDAL_PLATE}`;
+/** The My Don portrait, on the mock's picture host, which logs its requests with Hiroba's. */
+const MY_DON = "GET /imgsrc.php";
+/**
+ * The pictures the window's lane asks for by itself, as they come on screen: the items' thumbnails
+ * and, after each read of my page, the title plate, the score panel's art, the どんメダル plate and
+ * the My Don.
+ */
+const LANE_PICTURES: readonly string[] = [
+  THUMBNAIL,
+  TITLE_PLATE,
+  `GET ${PANEL_ART}`,
+  TOKEN_PLATE,
+  MY_DON,
+];
+/** The どんメダル plates the app fetched this run, once none more has come for a second. */
+const medalPlatesSettled = async () => {
+  let last = -1;
+  for (let tries = 0; tries < 30; tries++) {
+    const now = await hitsOn(MEDAL_PLATE);
+    if (now === last) {
+      break;
+    }
+    last = now;
+    await Bun.sleep(1000);
+  }
+  return last;
+};
+/** Every どんメダル plate id my page showed this run: the app must keep each in main alone. */
+const medalIds: string[] = [];
+/** The id of the どんメダル plate the last read of my page showed, off the page the debug copy kept. */
+const medalIdShown = () =>
+  /imgsrc_tokenplate\.php\?id=([0-9a-f]+)/.exec(
+    readFileSync(join(USER_DATA, "debug", "mypage_top.php.html"), "utf8"),
+  )?.[1] ?? "";
 /** Every request the mock saw since the last reset, as "METHOD /path", in the order they came. */
 const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
 /**
  * Whether `log` is the requests `before`, then a write's `run` with nothing inside it, and the
- * editor's pictures of the set anywhere else. The pictures go as the picks pause, not in step with
- * a write, but main queues them with the writes: one goes before a write or after it, never between
- * its requests.
+ * pictures (of the set, of its items, and my page's plates) anywhere else. The pictures go as the
+ * picks pause, as items come on screen and after a read, not in step with a write, but main queues
+ * them with the writes: one goes before a write or after it, never between its requests.
  */
 const sentAsPlanned = (log: string[], before: string[], run: string[]) => {
-  const planned = log.flatMap((line, index) => (line === PREVIEW ? [] : [index]));
+  const planned = log.flatMap((line, index) =>
+    line === PREVIEW || LANE_PICTURES.includes(line) ? [] : [index],
+  );
   return (
     same(
       planned.map((index) => log[index]),
@@ -96,6 +171,50 @@ const sentAsPlanned = (log: string[], before: string[], run: string[]) => {
     ) && (planned[planned.length - 1] ?? 0) - (planned[before.length] ?? 0) === run.length - 1
   );
 };
+/** A title plate as the mock saw it asked for. */
+type PlateAsked = { query: string; referer: string | null; session: boolean };
+/** Every title plate the app asked for this run, in order. */
+const platesAsked = async () =>
+  (await (await fetch(`${HIROBA}/__titleplates`)).json()) as PlateAsked[];
+/**
+ * The title plates asked for, once none more has been for a second: after a read, the plate is
+ * asked for again, and answered from the plates kept on disk, or fetched when its title is new.
+ */
+const platesSettled = async () => {
+  let last = -1;
+  for (let tries = 0; tries < 30; tries++) {
+    const now = (await platesAsked()).length;
+    if (now === last) {
+      break;
+    }
+    last = now;
+    await Bun.sleep(1000);
+  }
+  return platesAsked();
+};
+/** A My Don portrait as the mock's picture host saw it asked for, with its cookies' names. */
+type PortraitAsked = { query: string; referer: string | null; cookies: string[] };
+/** Every portrait the app asked for this run, in order. */
+const myDonsAsked = async () =>
+  (await (await fetch(`${HIROBA}/__mydons`)).json()) as PortraitAsked[];
+/** The portraits asked for, once none more has been for a second. */
+const myDonsSettled = async () => {
+  let last = -1;
+  for (let tries = 0; tries < 30; tries++) {
+    const now = (await myDonsAsked()).length;
+    if (now === last) {
+      break;
+    }
+    last = now;
+    await Bun.sleep(1000);
+  }
+  return last;
+};
+/** Each plate asked for as my page asks for it: bare, with my page as the Referer, signed in. */
+const askedAsMyPage = (plates: PlateAsked[]) =>
+  plates.every(
+    (plate) => plate.query === "" && plate.referer === `${HIROBA}/mypage_top.php` && plate.session,
+  );
 /** The query of every picture of the set the app asked for since the last reset, in order. */
 const previewQueries = async () => (await (await fetch(`${HIROBA}/__previews`)).json()) as string[];
 /** A set as the preview's query names it: the site's names, in the site's order. */
@@ -115,6 +234,35 @@ const previewQuery = (set: Record<string, number>) =>
 const resetLog = () => fetch(`${HIROBA}/__log-reset`);
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
 /**
+ * Whether `log` is `expected` once the lane's pictures are left out, with none of them inside it: a
+ * thumbnail still on its way from an editor just closed, or a plate asked for after a read, may
+ * land before a write or after it.
+ */
+const sameBesideLanePictures = (log: string[], expected: string[]) => {
+  const kept = log.flatMap((line, index) => (LANE_PICTURES.includes(line) ? [] : [index]));
+  const inside =
+    kept.length === 0 ? 0 : (kept[kept.length - 1] ?? 0) - (kept[0] ?? 0) + 1 - kept.length;
+  return (
+    same(
+      kept.map((index) => log[index]),
+      expected,
+    ) && inside <= 0
+  );
+};
+/**
+ * The window's HTML with every picture's bytes left out: a PNG's base64 could spell any short
+ * string by chance, so the searches below look only at what is not a picture. Only the base64
+ * alphabet goes, so an address, a query or a token written after the bytes is still searched.
+ */
+const withoutPictureBytes = (html: string) =>
+  html.replace(/data:image\/png;base64,[A-Za-z0-9+/]*={0,2}/g, "data:image/png;base64,");
+// The searches prove something only while this holds: bytes that happen to spell a searched word
+// go, and what is planted after them stays.
+results.pictureBytesAloneLeftOut =
+  withoutPictureBytes(
+    `<img src="data:image/png;base64,AAimgsrc000000000000AA==#imgsrc_kisekae.php?cos=4&amp;_token_v2=x">`,
+  ) === `<img src="data:image/png;base64,#imgsrc_kisekae.php?cos=4&amp;_token_v2=x">`;
+/**
  * A colour change's requests: the title, then the editor — last before the posts, since my page's
  * forms issue a token too and would void the editor's — the pre-check, one save, the read-backs.
  */
@@ -127,10 +275,264 @@ const WRITE_REQUESTS = [
   "GET /mypage_top.php",
 ];
 
+// The language, in runs of their own, signed out. Opened on a system in Traditional Chinese, the
+// app is in it, and says so to the page; a pick in Settings, of the language shown or another,
+// takes hold at once and is kept for the next launch, which the system's language no longer decides.
+// So is the page shown last: the next launch opens on Settings. System default forgets the pick:
+// the system's language decides again, at once and at the next launch.
+const en = createTranslator("en");
+const ja = createTranslator("ja");
+const zhHant = createTranslator("zh-Hant");
+/** The system's choice in Settings while the app follows a system in 繁體中文. */
+const SYSTEM_ZH_HANT = zhHant.t("language.system", { name: "繁體中文" });
+/**
+ * What says which language the window is in: `lang`, the title, the navigation, and the choice
+ * checked in Settings.
+ */
+const languageShown = (page: Awaited<ReturnType<typeof launch>>["page"]) =>
+  page.evaluate<Record<string, string | null>>(
+    `({ lang: document.documentElement.lang, title: document.title, overview: document.querySelector("#nav-overview")?.textContent ?? null, checked: document.querySelector("#language-setting input:checked")?.closest("label")?.textContent ?? null })`,
+  );
+rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
+await resetLog();
+let inLanguage = await launch({
+  writes: false,
+  now: NOON_JST,
+  lang: "zh-TW",
+  userData: LANGUAGE_USER_DATA,
+});
+try {
+  await inLanguage.until(zhHant.t("signIn.action"));
+  await inLanguage.goTo("settings");
+  results.systemLanguageTaken = same(await languageShown(inLanguage.page), {
+    lang: "zh-Hant",
+    title: "A Better Taiko Hiroba",
+    overview: zhHant.t("nav.overview"),
+    checked: SYSTEM_ZH_HANT,
+  });
+  // One radio button per choice, in one group named by the section's heading: the system's
+  // language first, in the app's words, then each language named in its own words and marked with
+  // it, in the catalog's order.
+  const listed = await inLanguage.page.evaluate<string[][]>(
+    `[...document.querySelectorAll('#language-setting [role="radiogroup"] li label')].filter((label) => label.querySelector('input[type="radio"]') !== null).map((label) => [label.lang, label.textContent])`,
+  );
+  const groupName = await inLanguage.page.evaluate<string | null>(
+    `(() => { const group = document.querySelector('#language-setting [role="radiogroup"]'); return document.getElementById(group?.getAttribute("aria-labelledby") ?? "")?.textContent ?? null; })()`,
+  );
+  results.choicesNameEachLanguage =
+    groupName === zhHant.t("settings.language") &&
+    same(listed, [
+      ["", SYSTEM_ZH_HANT],
+      ["en", "English"],
+      ["ja", "日本語"],
+      ["zh-Hans", "简体中文"],
+      ["zh-Hant", "繁體中文"],
+    ]);
+  // A pick of the language already shown is a pick too: a system in another one no longer decides.
+  await inLanguage.click("#language-zh-Hant");
+  await stop(inLanguage);
+  inLanguage = await launch({
+    writes: false,
+    now: NOON_JST,
+    lang: "en-US",
+    userData: LANGUAGE_USER_DATA,
+  });
+  await waitFor(async () => (await inLanguage.textOf("#language-setting")) ?? undefined);
+  results.pageKeptAcrossLaunches =
+    (await inLanguage.currentPage()) === "settings" &&
+    (await inLanguage.textOf("#sign-in")) === null;
+  const kept = await languageShown(inLanguage.page);
+  results.shownLanguagePickKept = same([kept.lang, kept.checked], ["zh-Hant", "繁體中文"]);
+  await inLanguage.click("#language-ja");
+  await inLanguage.until(ja.t("settings.account"));
+  results.pickTakesHold = same(await languageShown(inLanguage.page), {
+    lang: "ja",
+    title: "A Better Taiko Hiroba",
+    overview: ja.t("nav.overview"),
+    checked: "日本語",
+  });
+  await stop(inLanguage);
+  inLanguage = await launch({
+    writes: false,
+    now: NOON_JST,
+    lang: "zh-TW",
+    userData: LANGUAGE_USER_DATA,
+  });
+  await inLanguage.until(ja.t("settings.account"));
+  results.pickKeptAcrossLaunches =
+    (await languageShown(inLanguage.page)).lang === "ja" && same(await requestLog(), []);
+  await inLanguage.click("#language-system");
+  await inLanguage.until(zhHant.t("settings.account"));
+  results.systemDefaultTakesHold = same(await languageShown(inLanguage.page), {
+    lang: "zh-Hant",
+    title: "A Better Taiko Hiroba",
+    overview: zhHant.t("nav.overview"),
+    checked: SYSTEM_ZH_HANT,
+  });
+  await stop(inLanguage);
+  inLanguage = await launch({
+    writes: false,
+    now: NOON_JST,
+    lang: "en-US",
+    userData: LANGUAGE_USER_DATA,
+  });
+  await inLanguage.until(en.t("settings.account"));
+  results.systemDefaultKeptAcrossLaunches =
+    same(await languageShown(inLanguage.page), {
+      lang: "en",
+      title: "A Better Taiko Hiroba",
+      overview: en.t("nav.overview"),
+      checked: en.t("language.system", { name: "English" }),
+    }) && same(await requestLog(), []);
+  // From the keyboard, the arrows move the check from choice to choice, as a radio group's do, and
+  // each takes hold as a click does.
+  const ARROW_DOWN = { key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40 };
+  const arrowDown = async () => {
+    await inLanguage.page.send("Input.dispatchKeyEvent", { type: "keyDown", ...ARROW_DOWN });
+    await inLanguage.page.send("Input.dispatchKeyEvent", { type: "keyUp", ...ARROW_DOWN });
+  };
+  await inLanguage.page.evaluate(
+    `document.querySelector("#language-setting input:checked").focus()`,
+  );
+  await arrowDown();
+  const checkedByArrow = await waitFor(async () => {
+    const shown = await languageShown(inLanguage.page);
+    return shown.checked === "English" ? shown.lang : undefined;
+  });
+  await arrowDown();
+  await inLanguage.until(ja.t("settings.account"));
+  results.choicesMoveByArrows =
+    checkedByArrow === "en" && same((await languageShown(inLanguage.page)).checked, "日本語");
+} finally {
+  await stop(inLanguage);
+  rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
+}
+
 let running = await launch({ writes: true, now: NOON_JST });
 try {
-  const { page, text, textOf, click, clickButton, until } = running;
+  const { page, text, textOf, click, clickButton, until, currentPage, goTo } = running;
+  const exists = (selector: string) =>
+    page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  const attribute = (selector: string, name: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.getAttribute(${JSON.stringify(name)}) ?? null`,
+    );
   await until("Sign in to Hiroba");
+
+  // The pages, signed out, with no header at all (the user's call, 2026-09-29): on a window this
+  // wide, a side panel like Gmail's, the product's name small at its top, then each page, the one
+  // shown marked. The Overview and Favourites show the sign-in card; Settings works, with the
+  // language and the note on staying signed in, no one signed in and no way to sign out.
+  const NAVIGATION = ["A Better Taiko Hiroba", "Overview", "Favourites", "Settings"].join("");
+  const shownSignedOut: boolean[] = [];
+  for (const each of ["favorites", "settings", "overview"] as const) {
+    await goTo(each);
+    shownSignedOut.push(
+      each === "settings"
+        ? (await exists("#language-setting")) &&
+            (await exists("#sign-out-note")) &&
+            (await textOf("#account-who")) === "Not signed in" &&
+            !(await exists("#sign-out")) &&
+            !(await exists("#sign-in"))
+        : (await exists("#sign-in-card #sign-in")) && !(await exists("#language-setting")),
+    );
+  }
+  results.navigationShown =
+    (await textOf("nav")) === NAVIGATION &&
+    (await textOf("main h1")) === "Overview" &&
+    !(await exists("header")) &&
+    !(await exists("#nav-menu")) &&
+    shownSignedOut.every(Boolean);
+
+  // The page follows the system's scheme, and its color-scheme with it, so the scrollbars and the
+  // system's own widgets are dark on a dark page and light on a light one.
+  const shownIn = async (scheme: "dark" | "light") => {
+    await page.send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-color-scheme", value: scheme }],
+    });
+    await waitFor(
+      async () =>
+        (await page.evaluate<string>("getComputedStyle(document.documentElement).colorScheme")) ===
+          scheme || undefined,
+      5_000,
+    );
+    return page.evaluate<string>("getComputedStyle(document.body).backgroundColor");
+  };
+  const darkBackground = await shownIn("dark");
+  const lightBackground = await shownIn("light");
+  await page.send("Emulation.setEmulatedMedia", { features: [] });
+  results.schemeFollowsSystem =
+    darkBackground === "rgb(18, 18, 18)" && lightBackground === "rgb(255, 255, 255)";
+
+  // On a narrow window (below MUI's md), a menu button floats at the top left instead, clear of
+  // the page, named for screen readers. From the keyboard it opens the same pages in a drawer; a
+  // pick closes it on its page, and so do Escape and a tap outside it, the focus going back to it.
+  const KEYS = {
+    Enter: { code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
+    Escape: { code: "Escape", windowsVirtualKeyCode: 27 },
+  } as const;
+  const press = async (key: keyof typeof KEYS) => {
+    await page.send("Input.dispatchKeyEvent", { type: "keyDown", key, ...KEYS[key] });
+    await page.send("Input.dispatchKeyEvent", { type: "keyUp", key, code: KEYS[key].code });
+  };
+  const menuOpened = async () => {
+    await page.evaluate(`document.querySelector("#nav-menu").focus()`);
+    await press("Enter");
+    return waitFor(async () => (await exists("#nav-favorites")) || undefined);
+  };
+  const menuClosed = () =>
+    waitFor(async () => ((await exists("#nav-overview")) ? undefined : true));
+  const bottomOf = (selector: string) =>
+    page.evaluate<number>(
+      `document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().bottom`,
+    );
+  const topOf = (selector: string) =>
+    page.evaluate<number>(
+      `document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().top`,
+    );
+  await page.send("Emulation.setDeviceMetricsOverride", {
+    width: 480,
+    height: 800,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
+  await waitFor(async () => (await exists("#nav-menu")) || undefined);
+  const menuFloats =
+    !(await exists("nav")) &&
+    (await attribute("#nav-menu", "aria-label")) === "Menu" &&
+    (await attribute("#nav-menu", "aria-expanded")) === "false" &&
+    (await bottomOf("#nav-menu")) <= (await topOf("#sign-in-card"));
+  await menuOpened();
+  const drawerShown =
+    (await textOf("nav")) === NAVIGATION &&
+    (await attribute("#nav-menu", "aria-expanded")) === "true" &&
+    (await currentPage()) === "overview";
+  await click("#nav-favorites");
+  await menuClosed();
+  const pickTaken = (await textOf("main h1")) === "Favourites" && (await exists("#sign-in"));
+  await menuOpened();
+  const pickMarked = (await currentPage()) === "favorites";
+  await press("Escape");
+  await menuClosed();
+  const focusBack = await waitFor(
+    async () =>
+      (await page.evaluate<string | undefined>("document.activeElement?.id")) === "nav-menu" ||
+      undefined,
+  );
+  await menuOpened();
+  await click(".MuiBackdrop-root");
+  await menuClosed();
+  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  await waitFor(async () => (await exists("#nav-overview")) || undefined);
+  results.menuOnNarrowWindow =
+    menuFloats &&
+    drawerShown &&
+    pickTaken &&
+    pickMarked &&
+    focusBack &&
+    (await textOf("main h1")) === "Favourites" &&
+    !(await exists("#nav-menu"));
+  await goTo("overview");
 
   results.surface = await page.evaluate(
     `({ bridge: Object.keys(window.abth ?? {}), require: typeof require, process: typeof process, cookie: document.cookie })`,
@@ -141,52 +543,424 @@ try {
     Object.keys(BRIDGE_CHANNELS),
   );
 
+  // The player's first My Don ever does not come: checked under the plate, below. Nor does the score
+  // panel's art, which the mock answers with a 404 for now.
+  await fetch(`${HIROBA}/__mydon?answer=gif`);
+  await fetch(`${HIROBA}/__panel?answer=404`);
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
-  results.profileShown = (await textOf("#crowns-silver")) === "11";
-  // What the panel card adds up from the mock's fixed counts: crowns 11, 2 and 1, and ranks 8 down
-  // to 2 at 3, 12, 25, 31, 18, 9 and 4. Each total's id names the ranks it adds up.
-  const panelTotals: Record<string, string> = {
-    "#crowns-cleared": "14",
-    "#crowns-full-combo": "3",
-    "#ranks-total-2-3-4": "31",
-    "#ranks-total-5-6-7": "68",
-    "#ranks-total-8": "3",
-    "#ranks-total-5-6-7-8": "71",
-    "#panel-level": "panel 5",
-  };
-  const shownTotals: Record<string, string | null> = {};
-  for (const selector of Object.keys(panelTotals)) {
-    shownTotals[selector] = await textOf(selector);
-  }
-  results.panelTotalsShown =
-    JSON.stringify(shownTotals) === JSON.stringify(panelTotals) &&
-    (await page.evaluate<string | null>(
-      `document.querySelector("#ranks-total-5-6-7-8")?.previousElementSibling?.textContent ?? null`,
-    )) === "雅 tier or better";
-  // The crowns cover the panel's charts only, so they sit under its heading and footnote with the
-  // ranks, not in a card of their own that reads as every chart the account has cleared.
-  results.crownsUnderPanelNote =
-    (await textOf("#panel h2")) === "Hiroba's overall panel" &&
+  results.profileShown = (await textOf("#crowns-silver")) === "11 of 14";
+  // The panel drawn as GitHub's "Languages" box (the user's call, 2026-09-28), from the mock's fixed
+  // counts: ranks 2 up to 8 at 4, 9, 18, 31, 25, 12 and 3, and crowns 11, 2 and 1. Each legend
+  // item is a name, its share of its block and, for screen readers, its count; each part of a bar
+  // names its count in its title. The ranks from 白粋 to 虹極, left to right (the user's call,
+  // 2026-09-29), the crowns silver, gold and donderful.
+  type Share = readonly [name: string, percent: string, count: number];
+  const RANK_SHARES: readonly Share[] = [
+    ["白粋", "3.9%", 4],
+    ["銅粋", "8.8%", 9],
+    ["銀粋", "17.6%", 18],
+    ["金雅", "30.4%", 31],
+    ["桃雅", "24.5%", 25],
+    ["紫雅", "11.8%", 12],
+    ["虹極", "2.9%", 3],
+  ];
+  const CROWN_SHARES: readonly Share[] = [
+    ["Silver", "78.6%", 11],
+    ["Gold", "14.3%", 2],
+    ["Donderful", "7.1%", 1],
+  ];
+  const legendOf = (shares: readonly Share[], total: number) =>
+    shares.map(([name, percent, count]) => `${name} ${percent} ${count} of ${total}`);
+  const barOf = (shares: readonly Share[], total: number) =>
+    shares.map(([name, , count]) => `${name}: ${count} of ${total}`);
+  const allOf = (selector: string, property: "textContent" | "title") =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll(${JSON.stringify(selector)})].map((part) => part.${property})`,
+    );
+  results.panelSharesShown =
+    same(await allOf("#ranks li", "textContent"), legendOf(RANK_SHARES, 102)) &&
+    same(await allOf("#crowns li", "textContent"), legendOf(CROWN_SHARES, 14)) &&
+    same(await allOf("#ranks-bar > *", "title"), barOf(RANK_SHARES, 102)) &&
+    same(await allOf("#crowns-bar > *", "title"), barOf(CROWN_SHARES, 14)) &&
+    (await textOf("#rank-5-percent")) === "30.4%";
+  // Two blocks under their own headings, with the footnote under both: the crowns cover the
+  // panel's charts only, not every chart the account has cleared. The bars are hidden from screen
+  // readers, which the legends tell the same.
+  results.panelBlocksShown =
+    same(await allOf("#panel h2", "textContent"), ["Score ranks", "Crowns"]) &&
     (await page.evaluate<boolean>(
-      `["#crowns", "#ranks", "#panel-footnote"].every((part) => document.querySelector("#panel " + part) !== null)`,
+      `document.querySelector("#panel #panel-footnote") !== null && ["#ranks-bar", "#crowns-bar"].every((bar) => document.querySelector(bar)?.getAttribute("aria-hidden") === "true")`,
     ));
-  const rendered = await page.evaluate<string>("document.documentElement.outerHTML");
+  const rendered = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
   results.tokenInRendererDom = rendered.includes(tokens[0] ?? "?");
   // The mock serves the 九段 label at first. Its URL carries a taiko number, as Hiroba's does: only
   // the dan read off it may reach the window, never the URL or the number.
   results.danShownByName =
     (await textOf("#dan")) === "Dan: 九段" && (await textOf("#dan-unreadable")) === null;
+  // The mock's page names a region, and the card leaves it out (the user's call, 2026-09-28).
+  results.regionLeftOffCard =
+    (await textOf("#region")) === null && !(await text()).includes("Region");
   results.taikoNoAndUrlsKeptOutOfDom =
     !rendered.includes("000000000000") && !rendered.includes("imgsrc");
   results.readsAfterSignIn = await myPageHits();
 
-  // Read again: one more request, no more.
+  // Hiroba's title plate under the card, asked for once the read is in, bare and with the session,
+  // as my page asks for it: the mock draws it for a session only, and 600×100, not the 290:47 the
+  // card reserves, so the box takes the size the PNG gives. The words stay text over it, and the
+  // dan's label is the picture the read already carried.
+  await waitForSeen(page, async () => (await attribute("#title-plate-image", "src")) ?? undefined);
+  // The player's first My Don ever, asked for after the plate, is the GIF the picture host draws
+  // nothing with: the tile stays empty, with no spinner, and the line under the card gives its
+  // code, which names the portrait alone, as the plate came.
+  await waitForSeen(page, async () => (await textOf("#pictures-code")) ?? undefined);
+  const MY_DON_GIF_CODE = "Code for a report: myDon=notPng status=200 type=image/gif bytes=43";
+  const myDonFailureAtSignIn =
+    (await myDonsSettled()) === 1 &&
+    !(await exists("#my-don-image")) &&
+    (await attribute("#my-don", "aria-busy")) === "false" &&
+    (await exists("#title-plate-image")) &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+  const plateBox = await page.evaluate<{ width: number; height: number }>(
+    `(() => { const box = document.querySelector("#title-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+  );
+  results.plateDrawnUnderTitle =
+    (await attribute("#title-plate-image", "src"))?.startsWith("data:image/png;base64,") === true &&
+    Math.abs(plateBox.width / plateBox.height - 600 / 100) < 0.05 &&
+    (await textOf("#profile-title")) === "Title: サンプルの称号" &&
+    (await textOf("#profile h2")) === "サンプルどん" &&
+    (await textOf("#dan")) === "Dan: 九段" &&
+    (await textOf("#title-plate-stand-in")) === null &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+  // The plate sits on the app's own surface (the user's call, 2026-09-28): nothing from it up to
+  // the card paints the yellow Hiroba draws around it, #FFCC00.
+  results.plateOnAppSurface = await page.evaluate<boolean>(
+    `(() => { const colours = []; for (let box = document.querySelector("#title-plate"); box !== null; box = box.parentElement) { colours.push(getComputedStyle(box).backgroundColor); if (box.id === "profile") return !colours.includes("rgb(255, 204, 0)"); } return false; })()`,
+  );
+  results.danLabelShownAsPicture =
+    (await attribute("#dan-label", "src"))?.startsWith("data:image/png;base64,") === true;
+
+  // The Overview's header is shaped like my page's (the user's call, 2026-09-29): the My Don on the
+  // left, the plate on the right and Hiroba's score panel under it, with no background art and none
+  // of Hiroba's yellow; on a narrow window, the portrait, the plate and the panel one under another.
+  const boxOf = (selector: string) =>
+    page.evaluate<{ left: number; top: number; right: number; bottom: number; width: number }>(
+      `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width }; })()`,
+    );
+  const headerBoxes = async () => ({
+    myDon: await boxOf("#my-don"),
+    plate: await boxOf("#title-plate"),
+    panel: await boxOf("#score-panel"),
+  });
+  const wide = await headerBoxes();
+  const plainSurface = await page.evaluate<boolean>(
+    `(() => { for (let box = document.querySelector("#overview-header"); box !== null && box.id !== "profile"; box = box.parentElement) { const style = getComputedStyle(box); if (style.backgroundColor === "rgb(255, 204, 0)" || style.backgroundImage !== "none") return false; } return true; })()`,
+  );
+  await page.send("Emulation.setDeviceMetricsOverride", {
+    width: 480,
+    height: 800,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
+  await waitFor(async () => (await exists("#nav-menu")) || undefined);
+  const narrow = await headerBoxes();
+  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  await waitFor(async () => (await exists("#nav-overview")) || undefined);
+  results.overviewShapedLikeMyPage =
+    wide.myDon.right <= wide.plate.left &&
+    Math.abs(wide.myDon.top - wide.plate.top) < 1 &&
+    wide.plate.bottom <= wide.panel.top &&
+    wide.panel.left > wide.myDon.right &&
+    narrow.myDon.bottom <= narrow.plate.top &&
+    narrow.plate.bottom <= narrow.panel.top &&
+    Math.abs(narrow.myDon.left + narrow.myDon.right - narrow.plate.left - narrow.plate.right) < 2 &&
+    plainSurface;
+  // The panel's art did not come: a plain panel of its geometry stands in. Every count is written
+  // where my page writes it, as text, after its name for screen readers, which the art shows everyone
+  // else, and the line under the header names the portrait, the first picture that did not come.
+  type PanelCount = readonly [id: string, name: string, count: string, left: number, top: number];
+  const PANEL_COUNTS: readonly PanelCount[] = [
+    ["rank-8", "虹極", "3", 230, 18],
+    ["rank-5", "金雅", "31", 57, 54],
+    ["rank-6", "桃雅", "25", 141, 54],
+    ["rank-7", "紫雅", "12", 230, 54],
+    ["rank-2", "白粋", "4", 57, 85],
+    ["rank-3", "銅粋", "9", 141, 85],
+    ["rank-4", "銀粋", "18", 230, 85],
+    ["crowns-silver", "Silver", "11", 57, 121],
+    ["crowns-gold", "Gold", "2", 141, 121],
+    ["crowns-donderful", "Donderful", "1", 230, 121],
+  ];
+  /** Whether each count is text after its name, where my page writes it on its 280-wide panel. */
+  const panelCountsInPlace = async (counts: readonly PanelCount[]) => {
+    const panel = await boxOf("#score-panel");
+    const unit = panel.width / 280;
+    const placed: boolean[] = [];
+    for (const [id, , , left, top] of counts) {
+      const count = await boxOf(`#score-panel-${id}`);
+      placed.push(
+        Math.abs((count.left - panel.left) / unit - left) < 1 &&
+          Math.abs((count.top - panel.top) / unit - top) < 1,
+      );
+    }
+    return (
+      placed.every(Boolean) &&
+      same(
+        await allOf("#score-panel dt", "textContent"),
+        counts.map(([, name]) => name),
+      ) &&
+      same(
+        await allOf("#score-panel dd", "textContent"),
+        counts.map(([, , count]) => count),
+      ) &&
+      same(
+        await page.evaluate<string[]>(
+          `[...document.querySelectorAll("#score-panel dd")].map((count) => count.id)`,
+        ),
+        counts.map(([id]) => `score-panel-${id}`),
+      )
+    );
+  };
+  results.scorePanelMissingStandsIn =
+    (await hitsOn(PANEL_ART)) === 1 &&
+    (await exists("#score-panel-stand-in")) &&
+    !(await exists("#score-panel-image")) &&
+    (await attribute("#score-panel", "aria-busy")) === "false" &&
+    (await attribute("#score-panel", "role")) === "group" &&
+    (await attribute("#score-panel", "aria-label")) === "Score panel" &&
+    same(
+      await page.evaluate<string[]>(
+        `[...document.querySelectorAll("#score-panel dt")].slice(0, 7).map((name) => name.lang)`,
+      ),
+      Array(7).fill("ja"),
+    ) &&
+    (await panelCountsInPlace(PANEL_COUNTS)) &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+  const withPlate = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.headerAddressesKeptOutOfDom =
+    !withPlate.includes("imgsrc") &&
+    !withPlate.includes("titleplate") &&
+    !withPlate.includes("taiko_no") &&
+    !withPlate.includes("total_score") &&
+    !withPlate.includes("000000000000") &&
+    !withPlate.includes("_token_v2") &&
+    !tokens.some((token) => withPlate.includes(token));
+  const platesAtSignIn = await platesSettled();
+
+  // The page's column, and the Fab at its right, stand still from page to page: the Overview,
+  // which scrolls, and Settings, which does not, keep the scrollbar's room alike, and so does the
+  // editor's dialog below, which stops the page scrolling while it is open.
+  const column = () => boxOf("main .MuiContainer-root");
+  type Column = Awaited<ReturnType<typeof column>>;
+  const sameColumn = (one: Column, other: Column) =>
+    Math.abs(one.left - other.left) < 1 && Math.abs(one.right - other.right) < 1;
+  const overviewScrolls = await page.evaluate<boolean>(
+    "document.documentElement.scrollHeight > window.innerHeight",
+  );
+  const columnOnOverview = await column();
+  await goTo("settings");
+  const columnOnSettings = await column();
+
+  // Settings, signed in, laid out as Gmail's settings are: each section a small heading with its
+  // icon, over one list of rows. The language's choices are radio buttons, one checked; the
+  // account's row says who is signed in, with the note, and Sign out beside them, in the casing
+  // of the app's other buttons, MUI's own.
+  const settingsLayout = await page.evaluate<Record<string, unknown>>(
+    `(() => { const sections = [...document.querySelectorAll("main section")]; const signOut = document.querySelector("#sign-out"); return { sections: sections.map((section) => [section.id, document.getElementById(section.getAttribute("aria-labelledby"))?.tagName ?? null, section.querySelector("h2 svg") !== null, section.querySelectorAll("ul").length]), radios: document.querySelectorAll('#language-setting li input[type="radio"]').length, checked: document.querySelectorAll("#language-setting input:checked").length, who: document.querySelector("#account-who")?.textContent ?? null, signOutBeside: signOut?.closest("li") === document.querySelector("#account-who")?.closest("li"), casing: signOut === null ? null : getComputedStyle(signOut).textTransform }; })()`,
+  );
+  results.settingsLaidOutLikeGmail = same(settingsLayout, {
+    sections: [
+      ["language-setting", "H2", true, 1],
+      ["account", "H2", true, 1],
+    ],
+    radios: 5,
+    checked: 1,
+    who: "Signed in as サンプルどん",
+    signOutBeside: true,
+    casing: "uppercase",
+  });
+  await goTo("overview");
+
+  // Picked in Settings while signed in, a language redraws the profile as it was read: counts,
+  // percents and times in its own forms, Hiroba's words as they were, and nothing asked of Hiroba,
+  // there or back, nor by going from page to page.
+  const pickLanguage = async (locale: string) => {
+    await goTo("settings");
+    await click(`#language-${locale}`);
+    await waitFor(
+      async () =>
+        (await page.evaluate<string>("document.documentElement.lang")) === locale || undefined,
+    );
+    await goTo("overview");
+  };
+  const readsBeforeLanguage = await readHits();
+  const platesBeforeLanguage = (await platesAsked()).length;
+  await pickLanguage("ja");
+  const readAtInJapanese = await page.evaluate<string | null>(
+    `[...document.querySelectorAll("p")].map((line) => line.textContent).find((text) => text.includes(${JSON.stringify(ja.t("profile.fetchedAt").split("{time}")[1])})) ?? null`,
+  );
+  results.languageRedrawsInPlace =
+    (await textOf("#rank-8")) === ja.t("panel.countOf", { count: "3", total: "102" }) &&
+    (await textOf("#rank-5-percent")) === "30.4%" &&
+    (await textOf("#profile-title")) === ja.t("profile.title", { title: "サンプルの称号" }) &&
+    (await textOf("#profile h2")) === "サンプルどん" &&
+    /^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{2}:\d{2} /.test(readAtInJapanese ?? "");
+  await pickLanguage("en");
+  await Bun.sleep(1000);
+  results.languageAsksHirobaNothing =
+    (await readHits()) === readsBeforeLanguage &&
+    (await platesAsked()).length === platesBeforeLanguage &&
+    (await textOf("#crowns-silver")) === "11 of 14";
+  // Hiroba's own words say they are Japanese on a page in English: the nickname, the medal's
+  // heading and name, and every rank's name; the crowns' English names keep the page's language.
+  const langOf = (selector: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.lang ?? null`,
+    );
+  results.hirobaWordsMarkedJapanese =
+    (await langOf("#profile h2")) === "ja" &&
+    (await langOf("#medal h2")) === "ja" &&
+    (await langOf("#medal-name")) === "ja" &&
+    same(
+      await page.evaluate<string[]>(
+        `[...document.querySelectorAll('#ranks [lang="ja"]')].map((node) => node.textContent)`,
+      ),
+      ["白粋", "銅粋", "銀粋", "金雅", "桃雅", "紫雅", "虹極"],
+    ) &&
+    (await page.evaluate<number>(`document.querySelectorAll("#crowns [lang]").length`)) === 0;
+
+  // Read again, from its Fab: one more request, no more.
   await click("#read-again");
   await until("Read at");
   await Bun.sleep(300);
   results.readsAfterReadAgain = await myPageHits();
+
+  // A first My Don that did not come is asked for once more after a read, as the plates are. It
+  // does not come this time either: the tile stays empty, and the line with it.
+  await waitForSeen(page, async () => (await myDonsAsked()).length > 1 || undefined);
+  const myDonsFailed = await myDonsSettled();
+  results.myDonFailureCoded =
+    myDonFailureAtSignIn &&
+    myDonsFailed === 2 &&
+    !(await exists("#my-don-image")) &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+
+  const dialogOutcome = () =>
+    page.evaluate<string | null>(
+      `document.querySelector("#costume-dialog #write-outcome")?.dataset.outcome ?? null`,
+    );
+  /** Opens the editor, makes a pick, confirms with the tick, saves, and waits for the outcome. */
+  const changeInTheWindow = async (pick: () => Promise<unknown>) => {
+    await click("#costume-open");
+    await waitFor(async () => (await exists("#costume-review")) || undefined);
+    await pick();
+    await click("#costume-review");
+    await waitFor(async () => (await exists("#costume-first-write")) || undefined);
+    await click("#costume-first-write");
+    await waitFor(async () =>
+      (await page.evaluate<boolean>(`!document.querySelector("#costume-save").disabled`))
+        ? true
+        : undefined,
+    );
+    await click("#costume-save");
+    return waitFor(async () => (await dialogOutcome()) ?? undefined);
+  };
+  const closeEditor = async () => {
+    await click("#costume-close");
+    await waitFor(async () => ((await exists("#costume-dialog")) ? undefined : true));
+  };
+  // A write in the window that leaves the costume as it was asks the picture host for nothing, even
+  // with no portrait kept to show: only a change applied, or a read, does. The line stays.
+  await fetch(`${HIROBA}/__noop-save`);
+  const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
+  await closeEditor();
+  results.myDonNotAskedAfterNoChange =
+    noChange === "notApplied" &&
+    (await myDonsSettled()) === myDonsFailed &&
+    (await textOf("#pictures-code")) === MY_DON_GIF_CODE &&
+    same(await savedCostume(), START);
+
+  // Once the picture host draws it, the next Read again shows the player's My Don beside the plate,
+  // the first time ever: once, square on its tile, named for screen readers, and neither its address
+  // nor its host in the window. The line under the card now names the score panel's art, asked for
+  // once more after each read while it has not come, and still missing.
+  await fetch(`${HIROBA}/__mydon?answer=png`);
+  await click("#read-again");
+  await Bun.sleep(300);
+  await until("Read at");
+  await waitForSeen(page, async () => (await attribute("#my-don-image", "src")) ?? undefined);
+  const myDonsAtFirst = await myDonsSettled();
+  const tile = await page.evaluate<{ width: number; height: number }>(
+    `(() => { const box = document.querySelector("#my-don").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+  );
+  results.myDonShown =
+    myDonsAtFirst === myDonsFailed + 1 &&
+    (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true &&
+    (await attribute("#my-don-image", "alt")) === "Your マイどん, as Hiroba draws it" &&
+    tile.width > 0 &&
+    Math.abs(tile.width - tile.height) < 1 &&
+    !(await exists("#my-don-loading")) &&
+    (await textOf("#pictures-code")) ===
+      "Code for a report: scorePanel=notPng status=404 type=text/plain;charset=utf-8 bytes=9";
+  const withMyDon = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.myDonAddressKeptOutOfDom =
+    !withMyDon.includes("mydon_") &&
+    !withMyDon.includes("imgsrc") &&
+    !withMyDon.includes("img.127.0.0.1") &&
+    !withMyDon.includes("000000000000");
+
+  // The user's Read again renews the My Don: fetched anew once it is on screen, once, and kept.
+  // The score panel's art comes this time: kept from now on, it is never asked for again.
+  await fetch(`${HIROBA}/__panel?answer=png`);
+  await click("#read-again");
+  await Bun.sleep(300);
+  await until("Read at");
+  await waitForSeen(page, async () => (await myDonsAsked()).length > myDonsAtFirst || undefined);
+  const myDonsAfterReadAgain = await myDonsSettled();
+  results.myDonAgainOnReadAgain =
+    myDonsAfterReadAgain === myDonsAtFirst + 1 &&
+    (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true;
+  // The art is the mock's, 600×356, and the counts are written over it where my page writes them,
+  // the same text as over the stand-in. It was asked for once per read until it came: at the
+  // sign-in and after each of the three reads since.
+  await waitForSeen(page, async () => (await exists("#score-panel-image")) || undefined);
+  const art = await boxOf("#score-panel-image");
+  const panelBox = await boxOf("#score-panel");
+  results.scorePanelArtShown =
+    (await hitsOn(PANEL_ART)) === 4 &&
+    (await attribute("#score-panel-image", "src"))?.startsWith("data:image/png;base64,") === true &&
+    (await attribute("#score-panel-image", "alt")) === "" &&
+    Math.abs(art.width / (art.bottom - art.top) - 600 / 356) < 0.02 &&
+    Math.abs(art.width - panelBox.width) < 1 &&
+    !(await exists("#score-panel-stand-in")) &&
+    !(await exists("#score-panel-loading")) &&
+    (await panelCountsInPlace(PANEL_COUNTS)) &&
+    !(await exists("#pictures-unavailable"));
+  /** How often the art was fetched: kept on disk for every account, it is fetched no more. */
+  const panelArtFetches = await hitsOn(PANEL_ART);
+  // One that does not come leaves the one kept on its tile, and no line under the card says so.
+  const keptMyDon = await attribute("#my-don-image", "src");
+  await fetch(`${HIROBA}/__mydon?answer=gif`);
+  await click("#read-again");
+  await Bun.sleep(300);
+  await until("Read at");
+  await waitForSeen(
+    page,
+    async () => (await myDonsAsked()).length > myDonsAfterReadAgain || undefined,
+  );
+  const myDonsAfterGif = await myDonsSettled();
+  results.myDonMissingKeepsTheLast =
+    myDonsAfterGif === myDonsAfterReadAgain + 1 &&
+    (await attribute("#my-don-image", "src")) === keptMyDon &&
+    !(await exists("#pictures-unavailable"));
+  await fetch(`${HIROBA}/__mydon?answer=png`);
 
   // Hiroba hands out a new token on a redirect hop and ends the old one: the next read must still
   // work, and so must the one after it, which only the new token can pass.
@@ -200,8 +974,139 @@ try {
   await until("Read at");
   results.rotationTakenUp =
     tokens[1] !== tokens[0] &&
-    (await textOf("#crowns-silver")) === "11" &&
+    (await textOf("#crowns-silver")) === "11 of 14" &&
     !(await text()).includes("ended");
+  // Three reads more of the same title: the plate is asked for again after each, and answered
+  // from the plate kept on disk, asking Hiroba nothing.
+  const platesAfterRereads = await platesSettled();
+
+  // Read again is a small Fab (the user's call, 2026-09-29), at the top right of the page in the
+  // band over it, named for screen readers and, under the pointer, in a tooltip. While a read
+  // runs, held here by the stand-in, it is shut and spins, and a second press sends nothing; once
+  // the read is in, it is open again.
+  const fabBox = await boxOf("#read-again");
+  const cardBox = await boxOf("#profile");
+  await hoverOver(page, "#read-again");
+  const fabTooltip = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  results.readAgainIsASmallFab =
+    (await attribute("#read-again", "aria-label")) === "Read again" &&
+    fabTooltip === "Read again" &&
+    (await page.evaluate<boolean>(
+      `document.querySelector("#read-again").classList.contains("MuiFab-sizeSmall")`,
+    )) &&
+    fabBox.bottom <= cardBox.top &&
+    Math.abs(fabBox.right - cardBox.right) < 1;
+  const fabState = () =>
+    page.evaluate<{ shut: boolean; spinning: boolean }>(
+      `(() => { const fab = document.querySelector("#read-again"); return { shut: fab.disabled, spinning: fab.querySelector(".MuiCircularProgress-root") !== null }; })()`,
+    );
+  const readsBeforeHeld = await myPageHits();
+  await fetch(`${HIROBA}/__hold-read?on=1`);
+  await click("#read-again");
+  await waitFor(async () => (await myPageHits()) > readsBeforeHeld || undefined);
+  const fabWhileReading = await fabState();
+  await click("#read-again");
+  await Bun.sleep(300);
+  const readsWhileHeld = await myPageHits();
+  // Settings, opened while the read runs, says the session is open, not that no one is signed
+  // in, and shuts Sign out until the read ends, which would otherwise show the profile after it.
+  await goTo("settings");
+  const accountWhileReading = await page.evaluate<Record<string, unknown>>(
+    `({ who: document.querySelector("#account-who")?.textContent ?? null, signOutShut: document.querySelector("#sign-out")?.disabled ?? null })`,
+  );
+  await goTo("overview");
+  await fetch(`${HIROBA}/__hold-read?on=0`);
+  await until("Read at");
+  results.readAgainShutWhileReading =
+    same(fabWhileReading, { shut: true, spinning: true }) &&
+    readsWhileHeld === readsBeforeHeld + 1 &&
+    same(await fabState(), { shut: false, spinning: false });
+  results.settingsSignedInWhileReading = same(accountWhileReading, {
+    who: "Signed in",
+    signOutShut: true,
+  });
+
+  // On a touch-first screen ((pointer: coarse), touch emulated over CDP), a pull reads again. The
+  // Fab is drawn only under the keyboard's focus, and stays for screen readers. From the top of
+  // the page, a pull short of the point reads nothing, and one past it, its indicator's ring full,
+  // reads once; an upward swipe, a sideways one, or a pull begun lower down the page, nothing.
+  type Point = { x: number; y: number };
+  /** One finger's swipe, from one point to another in steps, as a touch screen sends one. */
+  const swipe = async (from: Point, to: Point, whileDown?: () => Promise<unknown>) => {
+    const STEPS = 12;
+    await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [from] });
+    for (let step = 1; step <= STEPS; step++) {
+      const at = (start: number, end: number) => start + ((end - start) * step) / STEPS;
+      await page.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x: at(from.x, to.x), y: at(from.y, to.y) }],
+      });
+    }
+    const seen = await whileDown?.();
+    await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    return seen;
+  };
+  /** The reads of my page a swipe sent, once any it started is in, and back at the page's top. */
+  const readsBySwipe = async (from: Point, to: Point) => {
+    const before = await myPageHits();
+    await swipe(from, to);
+    await Bun.sleep(500);
+    await until("Read at");
+    await page.evaluate("window.scrollTo(0, 0)");
+    return (await myPageHits()) - before;
+  };
+  const pullIndicator = () =>
+    page.evaluate<{ shown: boolean; ring: string | null }>(
+      `(() => { const indicator = document.querySelector("#pull-indicator"); return { shown: indicator !== null && getComputedStyle(indicator).opacity === "1", ring: indicator?.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow") ?? null }; })()`,
+    );
+  const fabWidth = async () => (await boxOf("#read-again")).width;
+  const touchEmulated = async (enabled: boolean) => {
+    await page.send("Emulation.setTouchEmulationEnabled", { enabled, maxTouchPoints: 5 });
+    await waitFor(async () => (await fabWidth()) <= 1 === enabled || undefined);
+  };
+  await touchEmulated(true);
+  const fabKeptForScreenReaders = await page.evaluate<boolean>(
+    `(() => { const fab = document.querySelector("#read-again"); const style = getComputedStyle(fab); return fab.getAttribute("aria-label") === "Read again" && !fab.closest("[aria-hidden]") && style.display !== "none" && style.visibility !== "hidden"; })()`,
+  );
+  const SHIFT = { key: "Shift", code: "ShiftLeft", windowsVirtualKeyCode: 16 };
+  await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SHIFT });
+  await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SHIFT });
+  await page.evaluate(`document.querySelector("#read-again").focus()`);
+  const fabShownUnderFocus = await waitFor(async () => (await fabWidth()) > 1 || undefined);
+  await page.evaluate("document.activeElement.blur()");
+  results.fabOnlyUnderFocusOnTouch =
+    fabKeptForScreenReaders && fabShownUnderFocus && (await fabWidth()) <= 1;
+  const pullFrom = { x: cardBox.left + cardBox.width / 2, y: cardBox.top + 40 };
+  const pulledBy = (dx: number, dy: number) => ({ x: pullFrom.x + dx, y: pullFrom.y + dy });
+  const readsByShortPull = await readsBySwipe(pullFrom, pulledBy(0, 100));
+  const readsBeforePull = await myPageHits();
+  const ringAtFullPull = await swipe(pullFrom, pulledBy(0, 200), pullIndicator);
+  await Bun.sleep(500);
+  await until("Read at");
+  results.pullPastThePointReads =
+    readsByShortPull === 0 &&
+    same(ringAtFullPull, { shown: true, ring: "100" }) &&
+    (await myPageHits()) === readsBeforePull + 1 &&
+    !(await pullIndicator()).shown;
+  const readsByUpwardSwipe = await readsBySwipe(pulledBy(0, 200), pullFrom);
+  const readsBySidewaysSwipe = await readsBySwipe(pullFrom, pulledBy(200, 40));
+  await page.evaluate("window.scrollTo(0, 200)");
+  const readsByPullBelowTop = await readsBySwipe(pullFrom, pulledBy(0, 200));
+  results.pullOnlyDownFromTheTop =
+    readsByUpwardSwipe === 0 && readsBySidewaysSwipe === 0 && readsByPullBelowTop === 0;
+  // A slow pull begun on the portrait opens no tooltip on the way: a finger that moves makes no
+  // long press. Held past a long press's time and let go short of the point, it reads nothing.
+  const onTile = await middleOf(page, "#my-don");
+  const readsBeforeSlowPull = await myPageHits();
+  const tooltipInSlowPull = await swipe(onTile, { x: onTile.x, y: onTile.y + 100 }, async () => {
+    await Bun.sleep(1000);
+    return exists('[role="tooltip"]');
+  });
+  await Bun.sleep(500);
+  results.portraitTooltipShutInPull =
+    tooltipInSlowPull === false && (await myPageHits()) === readsBeforeSlowPull;
+  await touchEmulated(false);
 
   // Every shape my page can take is a normal state: each renders in its place with the rest of
   // the page around it. Each read is two requests while my page shows a dan, my page and its
@@ -222,8 +1127,8 @@ try {
   requestsPerRead.push(await readShowing("#medal-code"));
   results.medalOddShownWithTheRest =
     (await textOf("#medal-code")) === "Code for a report: medal=noCountNoComplete" &&
-    (await textOf("#crowns-silver")) === "11" &&
-    (await textOf("#rank-8")) === "3" &&
+    (await textOf("#crowns-silver")) === "11 of 14" &&
+    (await textOf("#rank-8")) === "3 of 102" &&
     !(await text()).includes("did not expect");
   await fetch(`${HIROBA}/__medal?state=none`);
   requestsPerRead.push(await readShowing("#medal-none"));
@@ -231,16 +1136,22 @@ try {
   await fetch(`${HIROBA}/__medal?state=collecting`);
   await fetch(`${HIROBA}/__variant?dan=0&title=empty&region=unset`);
   requestsPerRead.push(await readShowing("#no-title"));
-  results.medalCountShown = (await textOf("#medal-count")) === "Medals: 12";
+  results.medalCountShown = (await textOf("#medal-count")) === "Collected: 12";
   results.danLessRowRead =
     (await text()).includes("サンプルどん") &&
     (await textOf("#dan")) === null &&
     (await textOf("#dan-unreadable")) === null;
-  results.unsetRegionLeftOut = (await textOf("#region")) === null;
-  // Unset so far: no favourite song and an empty folder. Set, the song shows by title and the
-  // folder, closed at first, opens on request with every song in it, the two that share a title
-  // included.
+  // The favourites have a page of their own (the user's call, 2026-09-29), from the same read, and
+  // read again there too; the Overview shows none of them. Unset so far: no favourite song and an
+  // empty folder. Set, the song shows by title and the folder, closed at first, opens on request
+  // with every song in it, the two that share a title included.
+  const favoritesOffOverview = !(await exists("#favorites"));
+  const readsBeforeFavorites = await readHits();
+  await goTo("favorites");
   results.favoritesUnsetShown =
+    favoritesOffOverview &&
+    !(await exists("#profile")) &&
+    (await readHits()) === readsBeforeFavorites &&
     (await textOf("#favorite-song")) === "Favourite song: none" &&
     (await textOf("#favorite-folder-empty")) !== null;
   await fetch(`${HIROBA}/__variant?favorites=set`);
@@ -263,57 +1174,230 @@ try {
     closedAtFirst &&
     JSON.stringify(folderRows) ===
       JSON.stringify(["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]);
+  await goTo("overview");
   // A label that does not read, here the 43-byte GIF Hiroba sends when it has nothing to draw,
   // costs the dan alone: a neutral line and a code, the rest of the page as it was, still no URL.
   await fetch(`${HIROBA}/__variant?dan=14&label=gif`);
   requestsPerRead.push(await readShowing("#dan-unreadable"));
-  const afterGif = await page.evaluate<string>("document.documentElement.outerHTML");
+  const afterGif = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
   results.unreadableDanShownWithTheRest =
     (await textOf("#dan-unreadable")) === "Dan: couldn't read" &&
     (await textOf("#dan-code")) ===
       "Code for a report: dan=notPng status=200 type=image/gif bytes=43" &&
     (await textOf("#dan")) === null &&
-    (await textOf("#crowns-silver")) === "11" &&
+    (await textOf("#crowns-silver")) === "11 of 14" &&
     !afterGif.includes("000000000000") &&
     !afterGif.includes("imgsrc");
   // Three reads with a dan (complete, odd and no medal), two without (dan-less, favourites), and
   // one with a label that did not read.
   results.twoRequestsWithDanOneWithout =
     JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 1, 2]);
+  // The label's picture is the label the read fetched to read the dan: no request of its own.
+  results.danLabelPictureCostsNothing =
+    results.twoRequestsWithDanOneWithout === true && results.danLabelShownAsPicture === true;
   await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set&favorites=unset`);
+
+  // Counts of 0, common on real accounts: 虹極 at 0 in a block that is not, and a crown block that
+  // sums to 0. The header's panel writes each 0 as Hiroba does. Every item is still listed, at 0.0%; only those above 0 take a part of a bar, and a
+  // block with none shows its empty track, which a block with parts does not.
+  await fetch(`${HIROBA}/__variant?panel=zeros`);
+  await click("#read-again");
+  await waitFor(async () => ((await textOf("#crowns-silver")) === "0 of 0" ? true : undefined));
+  const ZERO_RANK_SHARES: readonly Share[] = [
+    ["白粋", "4.0%", 4],
+    ["銅粋", "9.1%", 9],
+    ["銀粋", "18.2%", 18],
+    ["金雅", "31.3%", 31],
+    ["桃雅", "25.3%", 25],
+    ["紫雅", "12.1%", 12],
+    ["虹極", "0.0%", 0],
+  ];
+  const ZERO_CROWN_SHARES: readonly Share[] = CROWN_SHARES.map(([name]) => [name, "0.0%", 0]);
+  const trackOf = (bar: string) =>
+    page.evaluate<string>(
+      `getComputedStyle(document.querySelector(${JSON.stringify(bar)})).backgroundColor`,
+    );
+  const NO_TRACK = "rgba(0, 0, 0, 0)";
+  results.panelZerosShown =
+    same(await allOf("#ranks li", "textContent"), legendOf(ZERO_RANK_SHARES, 99)) &&
+    same(await allOf("#ranks-bar > *", "title"), barOf(ZERO_RANK_SHARES.slice(0, -1), 99)) &&
+    same(await allOf("#crowns li", "textContent"), legendOf(ZERO_CROWN_SHARES, 0)) &&
+    (await allOf("#crowns-bar > *", "title")).length === 0 &&
+    (await trackOf("#crowns-bar")) !== NO_TRACK &&
+    (await trackOf("#ranks-bar")) === NO_TRACK &&
+    (await textOf("#score-panel-rank-8")) === "0" &&
+    same(await allOf("#score-panel [id^='score-panel-crowns-']", "textContent"), ["0", "0", "0"]) &&
+    (await textOf("#score-panel-rank-5")) === "31";
+  await fetch(`${HIROBA}/__variant?panel=counts`);
+
+  // A plate that does not come, here the GIF Hiroba draws nothing with, for a title not yet
+  // fetched: the plain band stands in, one line under the card says so with its code, and every
+  // word of the card is as it was. The next read asks for it once more, and it shows.
+  const platesBeforeOther = (await platesSettled()).length;
+  const readAndWait = async (ready: () => Promise<boolean>) => {
+    await click("#read-again");
+    await Bun.sleep(300);
+    await until("Read at");
+    await waitForSeen(page, async () => (await ready()) || undefined);
+    return platesSettled();
+  };
+  const shownNow = (selector: string) =>
+    page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  await fetch(`${HIROBA}/__titleplate?answer=gif`);
+  await fetch(`${HIROBA}/__variant?title=other`);
+  await readAndWait(() => shownNow("#pictures-code"));
+  const blankShown =
+    (await textOf("#pictures-code")) ===
+      "Code for a report: titlePlate=notPng status=200 type=image/gif bytes=43" &&
+    (await shownNow("#title-plate-stand-in")) &&
+    !(await shownNow("#title-plate-image")) &&
+    (await textOf("#profile-title")) === "Title: 別のサンプル称号" &&
+    (await textOf("#profile h2")) === "サンプルどん" &&
+    (await textOf("#dan")) === "Dan: 九段";
+  await fetch(`${HIROBA}/__titleplate?answer=png`);
+  const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
+  results.plateBlankFallsBack =
+    blankShown &&
+    !(await shownNow("#pictures-unavailable")) &&
+    afterOther.length - platesBeforeOther === 2;
+  // Each title is a plate of its own, fetched once: back to the first title, and to the second
+  // again, the plates kept on disk answer, and Hiroba is asked for nothing more.
+  await fetch(`${HIROBA}/__variant?title=set`);
+  await readAndWait(async () => (await textOf("#profile-title")) === "Title: サンプルの称号");
+  await fetch(`${HIROBA}/__variant?title=other`);
+  await readAndWait(async () => (await textOf("#profile-title")) === "Title: 別のサンプル称号");
+  await fetch(`${HIROBA}/__variant?title=set`);
+  const afterTitles = await readAndWait(
+    async () => (await textOf("#profile-title")) === "Title: サンプルの称号",
+  );
+  results.plateOncePerTitle =
+    platesAtSignIn.length === 1 &&
+    platesAfterRereads.length === 1 &&
+    afterTitles.length === afterOther.length &&
+    askedAsMyPage(afterTitles);
+
+  // The どんメダル plate, asked for only once its card is on screen, so each read scrolls to it.
+  // Tried on a season no read has shown yet, so every plate below is new to the device: first one
+  // that does not come, the GIF, then the same one again, which shows under the card's words.
+  const readMedal = async () => {
+    await click("#read-again");
+    await Bun.sleep(300);
+    await until("Read at");
+  };
+  /** Scrolls the どんメダル card on screen, waits for `ready`, and counts the plates fetched. */
+  const showMedal = async (ready: () => Promise<boolean>) => {
+    await page.evaluate(`document.querySelector("#medal").scrollIntoView({ block: "center" })`);
+    await waitForSeen(page, async () => (await ready()) || undefined);
+    return medalPlatesSettled();
+  };
+  const readMedalShowing = async (ready: () => Promise<boolean>) => {
+    await readMedal();
+    return showMedal(ready);
+  };
+  const medalPlateSrc = () => attribute("#medal-plate-image", "src");
+  medalIds.push(medalIdShown());
+  await fetch(`${HIROBA}/__tokenplate?answer=gif`);
+  await fetch(`${HIROBA}/__medal?state=collecting&season=2`);
+  const medalPlatesBefore = await medalPlatesSettled();
+  // A read lands at the top of the page, where the 960×720 window already shows the plate's top
+  // edge; in one this short, the card is below the fold: the new season shows, and no plate is
+  // asked for until the card is scrolled on screen, then one.
+  const SHORT_VIEWPORT_PX = 400;
+  await page.send("Emulation.setDeviceMetricsOverride", {
+    width: 0,
+    height: SHORT_VIEWPORT_PX,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
+  await readMedal();
+  const newSeasonBelowFold =
+    (await textOf("#medal-name")) === "どんメダル2026冬" &&
+    (await page.evaluate<boolean>(
+      `document.querySelector("#medal-plate").getBoundingClientRect().top >= innerHeight`,
+    ));
+  const medalPlatesOffScreen = await medalPlatesSettled();
+  const medalPlatesPerRead = [await showMedal(() => shownNow("#medal-plate-code"))];
+  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  results.medalPlateAskedOnlyOnScreen =
+    newSeasonBelowFold &&
+    medalPlatesOffScreen === medalPlatesBefore &&
+    medalPlatesPerRead[0] === medalPlatesBefore + 1;
+  medalIds.push(medalIdShown());
+  // Missing, the plate is a pale pill of its shape, and every word on it is still there as text.
+  results.medalPlateMissingReadsAsText =
+    (await textOf("#medal-plate-code")) ===
+      "Code for a report: medalPlate=notPng status=200 type=image/gif bytes=43" &&
+    (await shownNow("#medal-plate-stand-in")) &&
+    !(await shownNow("#medal-plate-image")) &&
+    (await textOf("#medal-name")) === "どんメダル2026冬" &&
+    (await textOf("#medal-count")) === "Collected: 12";
+  await fetch(`${HIROBA}/__tokenplate?answer=png`);
+  medalPlatesPerRead.push(await readMedalShowing(() => shownNow("#medal-plate-image")));
+  // The mock draws it 600×100, not the 290:50 the card reserves: the box takes the PNG's size. The
+  // name and the count stay text over it, the number drawn and the whole named for screen readers.
+  const medalBox = await page.evaluate<{ width: number; height: number }>(
+    `(() => { const box = document.querySelector("#medal-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+  );
+  results.medalPlateDrawnUnderText =
+    (await medalPlateSrc())?.startsWith("data:image/png;base64,") === true &&
+    Math.abs(medalBox.width / medalBox.height - 600 / 100) < 0.05 &&
+    (await textOf("#medal-name")) === "どんメダル2026冬" &&
+    (await textOf("#medal-count")) === "Collected: 12" &&
+    (await textOf("#medal-plate"))?.replace("Collected: 12", "").includes("12") === true &&
+    !(await shownNow("#medal-plate-stand-in")) &&
+    !(await shownNow("#medal-plate-unavailable"));
+  // No yellow behind it either (the user's call, 2026-09-28): nothing from it up to the card paints
+  // Hiroba's #FFCC00.
+  results.medalPlateOnAppSurface = await page.evaluate<boolean>(
+    `(() => { const colours = []; for (let box = document.querySelector("#medal-plate"); box !== null; box = box.parentElement) { colours.push(getComputedStyle(box).backgroundColor); if (box.id === "medal") return !colours.includes("rgb(255, 204, 0)"); } return false; })()`,
+  );
+  // The id names the player's season: it stays in main, and the window holds neither it nor the
+  // plate's address.
+  const withMedalPlate = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.medalIdKeptOutOfDom =
+    medalIds.every((id) => id.length === 48 && !withMedalPlate.includes(id)) &&
+    medalIds[0] !== medalIds[1] &&
+    !withMedalPlate.includes("tokenplate");
+  // Read again, the plate kept on disk answers. COMPLETE is a plate of its own, fetched once and
+  // then kept too: back to the count, and to COMPLETE again, Hiroba is asked for nothing more.
+  medalPlatesPerRead.push(await readMedalShowing(() => shownNow("#medal-plate-image")));
+  const collectingSrc = await medalPlateSrc();
+  await fetch(`${HIROBA}/__medal?state=complete`);
+  medalPlatesPerRead.push(
+    await readMedalShowing(async () => (await medalPlateSrc()) !== collectingSrc),
+  );
+  const completeShown =
+    (await textOf("#medal-complete")) === "COMPLETE" && (await textOf("#medal-count")) === null;
+  await fetch(`${HIROBA}/__medal?state=collecting`);
+  medalPlatesPerRead.push(
+    await readMedalShowing(async () => (await medalPlateSrc()) === collectingSrc),
+  );
+  await fetch(`${HIROBA}/__medal?state=complete`);
+  medalPlatesPerRead.push(
+    await readMedalShowing(async () => (await textOf("#medal-complete")) !== null),
+  );
+  results.medalPlateOncePerIdAndState =
+    completeShown &&
+    same(
+      medalPlatesPerRead.map((count) => count - medalPlatesBefore),
+      [1, 2, 2, 3, 3, 3],
+    );
+  // Back to the first season's count, whose plate this device keeps from here on at the latest, for
+  // the reopen below; the card scrolled away again, so the title plate is on screen for what follows.
+  await fetch(`${HIROBA}/__medal?state=collecting&season=1`);
+  await readMedalShowing(() => shownNow("#medal-plate-image"));
+  await page.evaluate("window.scrollTo(0, 0)");
 
   // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the card
   // offers the editor, and every write is unverified: a tick to confirm, and the title read twice.
-  const exists = (selector: string) =>
-    page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
-  const dialogOutcome = () =>
-    page.evaluate<string | null>(
-      `document.querySelector("#costume-dialog #write-outcome")?.dataset.outcome ?? null`,
-    );
   const cardOutcome = () =>
     page.evaluate<string | null>(
       `document.querySelector("#profile #write-outcome")?.dataset.outcome ?? null`,
     );
-  /** Opens the editor, makes a pick, confirms with the tick, saves, and waits for the outcome. */
-  const changeInTheWindow = async (pick: () => Promise<unknown>) => {
-    await click("#costume-open");
-    await waitFor(async () => (await exists("#costume-review")) || undefined);
-    await pick();
-    await click("#costume-review");
-    await waitFor(async () => (await exists("#costume-first-write")) || undefined);
-    await click("#costume-first-write");
-    await waitFor(async () =>
-      (await page.evaluate<boolean>(`!document.querySelector("#costume-save").disabled`))
-        ? true
-        : undefined,
-    );
-    await click("#costume-save");
-    return waitFor(async () => (await dialogOutcome()) ?? undefined);
-  };
-  const closeEditor = async () => {
-    await click("#costume-close");
-    await waitFor(async () => ((await exists("#costume-dialog")) ? undefined : true));
-  };
   /** Waits for the card's undo to end, from the Snackbar or the card's own button. */
   const undoFrom = async (selector: string) => {
     await click(selector);
@@ -326,12 +1410,106 @@ try {
       `window.abth.changeCostume(${JSON.stringify({ expected, target })})`,
     );
 
+  // No "Change costume" button: the portrait opens the editor (the user's call, 2026-09-29). It is
+  // a button named for that, and a pointer resting on it shows a small edit badge and the name.
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  const badgeOpacity = () =>
+    page.evaluate<string>(
+      `getComputedStyle(document.querySelector("#costume-open-badge")).opacity`,
+    );
+  const badgeAtRest = await badgeOpacity();
+  await hoverOver(page, "#costume-open");
+  const badgeOnHover = await waitFor(async () => (await badgeOpacity()) === "1" || undefined);
+  const nameOnHover = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  results.portraitOpensEditor =
+    (await page.evaluate<boolean>(
+      `(() => { const portrait = document.querySelector("#costume-open"); return portrait?.tagName === "BUTTON" && portrait.querySelector("#my-don") !== null && [...document.querySelectorAll("button")].every((button) => button.textContent.trim() !== "Change costume"); })()`,
+    )) &&
+    (await attribute("#costume-open", "aria-label")) === "Change costume" &&
+    badgeAtRest === "0" &&
+    badgeOnHover &&
+    nameOnHover === "Change costume";
+
   results.writeGateOpen =
     same(await page.evaluate("window.abth.enabledWrites()"), [
       { kind: "costume", verified: false },
     ]) &&
     (await page.evaluate<boolean>(`document.querySelector("#costume-open")?.disabled === false`)) &&
     !(await exists("#costume-not-open"));
+
+  // The keyboard opens the editor from the portrait, by Enter and by Space, and so it does on the
+  // touch-first screen below, where a finger's tap does not.
+  const openedBy = async (keys: () => Promise<unknown>) => {
+    await page.evaluate(`document.querySelector("#costume-open").focus()`);
+    await keys();
+    const opened = await waitFor(async () => (await exists("#costume-dialog")) || undefined, 5_000);
+    await closeEditor();
+    return opened;
+  };
+  const SPACE = { key: " ", code: "Space", windowsVirtualKeyCode: 32 };
+  const openedByKeys = async () =>
+    (await openedBy(() => press("Enter"))) &&
+    (await openedBy(async () => {
+      await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SPACE, text: " " });
+      await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SPACE });
+    }));
+  const openedByKeysWithMouse = await openedByKeys();
+
+  // On a touch-first screen (touch emulated), a finger opens the editor by a long-press on the
+  // portrait: its edit badge is up at rest, and a description says to long-press. A tap, which the
+  // browser still makes a click of, opens nothing; nor does a finger held as long but moved on the
+  // way, as a pull or a scroll begun on the portrait is, and that reads nothing either. The lift
+  // after a long-press makes no click on the editor it opened.
+  // Neither the keyboard's focus nor the pointer on the portrait, which put its badge up too.
+  await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+  const longPressHint = await waitFor(() =>
+    page.evaluate<string | undefined>(
+      `document.getElementById(document.querySelector("#costume-open").getAttribute("aria-describedby") ?? "")?.textContent`,
+    ),
+  );
+  await waitFor(async () => (await badgeOpacity()) === "1" || undefined, 5_000);
+  results.portraitOpensEditorByKeyboard = openedByKeysWithMouse && (await openedByKeys());
+  await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
+  await page.evaluate(
+    `window.touchClicks = []; document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true)`,
+  );
+  const touchClicks = () => page.evaluate<string[]>("window.touchClicks");
+  const onPortrait = await middleOf(page, "#costume-open");
+  await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });
+  await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  const tapClicked = await waitFor(
+    async () => (await touchClicks()).includes("touch") || undefined,
+  );
+  await Bun.sleep(2 * LONG_PRESS_MS);
+  const openedByTap = await exists("#costume-dialog");
+  const readsBeforeMovedPress = await myPageHits();
+  await swipe(onPortrait, { x: onPortrait.x, y: onPortrait.y + 100 }, () =>
+    Bun.sleep(2 * LONG_PRESS_MS),
+  );
+  await Bun.sleep(500);
+  const openedByMovedPress =
+    (await exists("#costume-dialog")) || (await myPageHits()) !== readsBeforeMovedPress;
+  await fetch(`${HIROBA}/__previews?reset=1`);
+  const clicksBeforeLongPress = await touchClicks();
+  await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });
+  const openedByLongPress = await waitFor(
+    async () => (await exists("#costume-dialog")) || undefined,
+    5_000,
+  );
+  await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await Bun.sleep(500);
+  results.portraitOpensEditorByLongPress =
+    longPressHint === "Long-press your マイどん to change costume." &&
+    tapClicked &&
+    !openedByTap &&
+    !openedByMovedPress &&
+    openedByLongPress &&
+    same(await touchClicks(), clicksBeforeLongPress) &&
+    (await exists("#costume-dialog"));
+  await page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
 
   // The editor's picture of the set, which the mock draws from the query and for a session only:
   // a picture shown means the session went with the request. One request on opening, by the
@@ -347,9 +1525,12 @@ try {
       const loading = await exists("#costume-preview-loading");
       return src !== null && src !== before && !loading ? src : undefined;
     });
-  await fetch(`${HIROBA}/__previews?reset=1`);
-  await click("#costume-open");
+  // Opened by the long-press above.
   const onOpen = await previewOtherThan(null);
+  results.columnStillAcrossPages =
+    overviewScrolls &&
+    sameColumn(columnOnOverview, columnOnSettings) &&
+    sameColumn(columnOnSettings, await column());
   await Bun.sleep(500);
   results.previewShownOnOpen =
     onOpen.startsWith("data:image/png;base64,") &&
@@ -370,7 +1551,9 @@ try {
   results.previewBurstSendsOne =
     afterBurst.startsWith("data:image/png;base64,") &&
     same(await previewQueries(), [previewQuery({ ...START, colorFace: 15 })]);
-  const withPreview = await page.evaluate<string>("document.documentElement.outerHTML");
+  const withPreview = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
   results.previewAddressAndCookieKeptOutOfDom =
     !withPreview.includes("imgsrc") &&
     !withPreview.includes("cos1=") &&
@@ -394,8 +1577,157 @@ try {
   await Bun.sleep(800);
   results.previewNoneOnceShut = same(await previewQueries(), []);
 
+  // The items' thumbnails, which the mock draws for a session only: a picture shown means the
+  // session went with the request. With forty more items in the きぐるみ slot than its box shows,
+  // only the rows on screen and one ahead are asked for, each once, from the editor, and only for
+  // items the editor offered; opened again, the editor asks for none of them.
+  type Thumb = { cos: number; type: number; referer: string | null };
+  const thumbs = async () => (await (await fetch(`${HIROBA}/__thumbs`)).json()) as Thumb[];
+  /** The thumbnails asked for, once none more has been for a second. */
+  const thumbsSettled = async () => {
+    let last = -1;
+    for (let tries = 0; tries < 30; tries++) {
+      const now = (await thumbs()).length;
+      if (now === last) {
+        break;
+      }
+      last = now;
+      await Bun.sleep(1000);
+    }
+    return thumbs();
+  };
+  const openItems = async () => {
+    await click("#costume-open");
+    await waitFor(async () => (await exists("#costume-tab-items")) || undefined);
+    await click("#costume-tab-items");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+  };
+  await fetch(`${HIROBA}/__thumbs?reset=1`);
+  const owned = (await (await fetch(`${HIROBA}/__items?many=1`)).json()) as Record<
+    string,
+    number[]
+  >;
+  const ownedIn = (slot: number) => owned[String(slot)] ?? [];
+  await openItems();
+  await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
+  const seen = await thumbsSettled();
+  results.thumbnailsShownAsPictures =
+    (
+      await page.evaluate<string | null>(
+        `document.querySelector("#item-costume1-4 img")?.getAttribute("src") ?? null`,
+      )
+    )?.startsWith("data:image/png;base64,") === true &&
+    (await page.evaluate<number>(
+      `document.querySelectorAll("#costume-items-costume1 img").length`,
+    )) === seen.length;
+  results.thumbnailsOnlyWhenSeen =
+    seen.length > 0 &&
+    seen.length <= 5 * 6 &&
+    seen.length < ownedIn(1).length &&
+    new Set(seen.map((thumb) => thumb.cos)).size === seen.length &&
+    seen.every(
+      (thumb) =>
+        thumb.type === 1 &&
+        ownedIn(1).includes(thumb.cos) &&
+        thumb.referer === `${HIROBA}/mypage_kisekae.php`,
+    );
+  // The editor's heading, tabs, はずす and items are Hiroba's words, so they say they are Japanese.
+  results.editorWordsMarkedJapanese = same(
+    await page.evaluate<(string | null)[]>(
+      `["#costume-dialog h2", "#costume-tab-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => document.querySelector(selector)?.lang ?? null)`,
+    ),
+    ["ja", "ja", "ja", "ja", "ja"],
+  );
+  const withThumbnails = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
+  results.thumbnailAddressesKeptOutOfDom =
+    !withThumbnails.includes("imgsrc") &&
+    !withThumbnails.includes("cos=") &&
+    !withThumbnails.includes("_token_v2") &&
+    !tokens.some((token) => withThumbnails.includes(token));
+  await closeEditor();
+  await openItems();
+  await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
+  await Bun.sleep(1500);
+  results.thumbnailsAskedOncePerRun = (await thumbs()).length === seen.length;
+  // A thumbnail that does not come, here the GIF Hiroba draws nothing with: the item shows its
+  // number, one line under the box says how many did not come and gives the code, and nothing is
+  // asked for again in that opening, however the slots are switched.
+  await fetch(`${HIROBA}/__thumb?answer=gif`);
+  await click("#costume-part-costume2");
+  await waitFor(async () => (await exists("#costume-thumbnails-code")) || undefined);
+  const thumbsAfterGif = await thumbsSettled();
+  await click("#costume-part-costume1");
+  await Bun.sleep(300);
+  await click("#costume-part-costume2");
+  await Bun.sleep(1500);
+  const slotTwoAsked = thumbsAfterGif.slice(seen.length);
+  results.thumbnailGifLeavesTheId =
+    (await textOf("#costume-thumbnails-unavailable > :first-child")) ===
+      `Some thumbnails didn't load (${ownedIn(2).length}); their numbers are shown instead.` &&
+    (await textOf("#costume-thumbnails-code")) ===
+      "Code for a report: costumeItem=notPng status=200 type=image/gif bytes=43" &&
+    (await page.evaluate<number>(
+      `document.querySelectorAll("#costume-thumbnails-code").length`,
+    )) === 1 &&
+    (await textOf("#item-costume2-21")) === "#21" &&
+    !(await exists("#item-costume2-21 img")) &&
+    slotTwoAsked.length === ownedIn(2).length &&
+    slotTwoAsked.every((thumb) => thumb.type === 2) &&
+    (await thumbs()).length === thumbsAfterGif.length;
+  // Opened again, the editor asks once more for the thumbnails that did not come, and for nothing
+  // else: they show, and the line under the box is gone.
+  await fetch(`${HIROBA}/__thumb?answer=png`);
+  await closeEditor();
+  await openItems();
+  await click("#costume-part-costume2");
+  await waitFor(async () => (await exists("#costume-items-costume2")) || undefined);
+  const askedOnReopen = (await thumbsSettled()).slice(thumbsAfterGif.length);
+  results.failedThumbnailsAskedAgainOnReopen =
+    same(
+      askedOnReopen.map((thumb) => `${thumb.type}/${thumb.cos}`).sort(),
+      ownedIn(2)
+        .map((id) => `2/${id}`)
+        .sort(),
+    ) &&
+    (await page.evaluate<number>(
+      `document.querySelectorAll("#costume-items-costume2 img").length`,
+    )) === ownedIn(2).length &&
+    !(await exists("#costume-thumbnails-unavailable"));
+  await closeEditor();
+  await fetch(`${HIROBA}/__items?many=0`);
+  // Asked for straight through the bridge: an item the editor did not offer is refused unsent, and
+  // any other shape is refused before the verb runs, a URL among them.
+  const thumbsBeforeRefusals = (await thumbs()).length;
+  results.thumbnailNotOfferedRefusedUnsent =
+    same(
+      await page.evaluate(`window.abth.readPicture({ kind: "costumeItem", slot: 1, id: 999 })`),
+      {
+        ok: false,
+        error: { code: "costumeItem=notOffered" },
+      },
+    ) && (await thumbs()).length === thumbsBeforeRefusals;
+  const refusalOf = (want: string) =>
+    page.evaluate<string>(
+      `window.abth.readPicture(${want}).then(() => "answered", (error) => String(error.message))`,
+    );
+  const refusals = [
+    await refusalOf(`{ kind: "costumeItem", slot: 1, id: 4, url: "${HIROBA}/imgsrc_kisekae.php" }`),
+    await refusalOf(`{ kind: "costumeItem", slot: 6, id: 4 }`),
+    await refusalOf(`{ kind: "costumeItem", slot: 1, id: 1.5 }`),
+    await refusalOf(`{ kind: "titlePlate", url: "${HIROBA}/imgsrc_titleplate.php" }`),
+    await refusalOf(`{ kind: "titlePlate", slot: 1 }`),
+  ];
+  results.pictureShapesRefused =
+    refusals.every((message) =>
+      message.includes("Refused abth:read-picture: arguments it does not take"),
+    ) && (await thumbs()).length === thumbsBeforeRefusals;
+
   // A colour alone: exactly the planned requests, the ajax headers on both posts, one field moved.
   // The pick's picture goes about when Review and Save are pressed: before the write or after it.
+  const myDonsBeforeColour = await myDonsSettled();
+  const myDonBeforeColour = await attribute("#my-don-image", "src");
   await resetLog();
   await fetch(`${HIROBA}/__posts?reset=1`);
   const colourOutcome = await changeInTheWindow(() => click("#swatch-colorFace-3"));
@@ -429,10 +1761,28 @@ try {
         same(post.fields, ["_tckt", ...COSTUME_FIELDS]) &&
         post.ticketMatched,
     );
+  // The costume changed: the My Don on the card, behind the editor, is fetched anew, once, and
+  // shows the new one.
+  await waitForSeen(
+    page,
+    async () => (await myDonsAsked()).length > myDonsBeforeColour || undefined,
+  );
+  const myDonsAfterColour = await myDonsSettled();
+  const myDonAfterColour = await attribute("#my-don-image", "src");
   // The change's undo is offered once the editor is closed, never over it.
   await Bun.sleep(500);
   const snackbarOverTheEditor = await exists("#snackbar-undo");
   await closeEditor();
+  // Offered on the Overview alone, the one page that shows an undo running and how it ended: gone
+  // on Favourites, once its exit has run, and there again back on the Overview.
+  await waitFor(async () => (await exists("#snackbar-undo")) || undefined);
+  await goTo("favorites");
+  await Bun.sleep(1000);
+  const snackbarOnFavorites = await exists("#snackbar-undo");
+  await goTo("overview");
+  results.snackbarOnlyOnOverview =
+    !snackbarOnFavorites &&
+    (await waitFor(async () => (await exists("#snackbar-undo")) || undefined));
 
   // Undone from the Snackbar the change offered: the whole set back, by a write like any other.
   // Pressed twice, as a double-click would: the second press finds it shut and sends nothing.
@@ -447,8 +1797,19 @@ try {
     (await waitFor(async () => (await cardOutcome()) ?? undefined)) === "applied" &&
     (await textOf("#profile #write-outcome")) === "Undone. Hiroba shows the costume as it was." &&
     same(await savedCostume(), START) &&
-    same(await requestLog(), WRITE_REQUESTS);
+    sameBesideLanePictures(await requestLog(), WRITE_REQUESTS);
   results.snackbarUndoOncePerPress = !snackbarOverTheEditor && secondPressShut;
+  // So does the undo: once more, and the My Don is back as it was.
+  await waitForSeen(
+    page,
+    async () => (await myDonsAsked()).length > myDonsAfterColour || undefined,
+  );
+  results.myDonAgainAfterWrite =
+    myDonsAfterColour === myDonsBeforeColour + 1 &&
+    myDonAfterColour?.startsWith("data:image/png;base64,") === true &&
+    myDonAfterColour !== myDonBeforeColour &&
+    (await myDonsSettled()) === myDonsAfterColour + 1 &&
+    (await attribute("#my-don-image", "src")) === myDonBeforeColour;
 
   // A きぐるみ: the window warns, the four pieces come off, and one undo puts all eight back.
   const kigurumiOutcome = await changeInTheWindow(async () => {
@@ -476,6 +1837,8 @@ try {
     same(await savedCostume(), START) &&
     (await hitsOn("/ajax/change_mydon.php")) - savesBeforeUndo === 1 &&
     !(await exists("#costume-undo"));
+  // The My Don fetched anew after that change and its undo is in before the log is read below.
+  await myDonsSettled();
 
   // #22: a piece beside a きぐるみ, which Hiroba would answer 0 to and ignore, is refused unsent.
   // While costume is unverified the title is read first, before the editor, so the trap costs that
@@ -484,7 +1847,7 @@ try {
   const trap = await bridgeChange({ ...START, costume1: 36 });
   results.trapRefusedUnsent =
     same(trap, { kind: "invalidTarget", field: "costume1" }) &&
-    same(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
+    sameBesideLanePictures(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
 
   // A picture asked for while a write waits on its pre-check waits for the whole write, read-back
   // and all: held there, it would otherwise go between the pre-check and the save.
@@ -503,8 +1866,57 @@ try {
   results.previewWaitsOutAWrite =
     (await heldWrite).kind === "applied" &&
     (await previewDuringWrite) &&
-    same(await requestLog(), [...WRITE_REQUESTS, PREVIEW]);
+    sameBesideLanePictures(await requestLog(), [...WRITE_REQUESTS, PREVIEW]);
   await fetch(`${HIROBA}/__state?reset=1`);
+
+  // So does an item's thumbnail: one the last editor offered and nothing has asked for yet, a
+  // ぷちキャラ, lands after the read-back.
+  await resetLog();
+  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  const prechecksBeforeThumbnail = await hitsOn("/ajax/check_ip_kisekae.php");
+  const writeBeforeThumbnail = bridgeChange({ ...START, colorLimb: 20 });
+  await waitFor(
+    async () =>
+      (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeThumbnail || undefined,
+  );
+  const thumbnailDuringWrite = page.evaluate<boolean>(
+    `window.abth.readPicture({ kind: "costumeItem", slot: 5, id: 143 }).then((result) => result.ok)`,
+  );
+  await Bun.sleep(300);
+  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  results.pictureWaitsOutAWrite =
+    (await writeBeforeThumbnail).kind === "applied" &&
+    (await thumbnailDuringWrite) &&
+    same(await requestLog(), [...WRITE_REQUESTS, THUMBNAIL]);
+  await fetch(`${HIROBA}/__state?reset=1`);
+
+  // Nor does a read start inside a write: while an undo waits on its pre-check, the Fab is shut,
+  // and neither a press on it nor a pull from the top of the page asks Hiroba anything. The log is
+  // the undo's alone.
+  const toUndo = await bridgeChange({ ...START, colorLimb: 20 });
+  await click("#read-again");
+  await waitFor(async () => (await exists("#costume-undo")) || undefined);
+  await myDonsSettled();
+  await resetLog();
+  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  const prechecksBeforeUndo = await hitsOn("/ajax/check_ip_kisekae.php");
+  await click("#costume-undo");
+  await waitFor(
+    async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeUndo || undefined,
+  );
+  const fabShutInWrite = (await fabState()).shut;
+  await click("#read-again");
+  await touchEmulated(true);
+  await swipe(pullFrom, pulledBy(0, 200));
+  await touchEmulated(false);
+  await Bun.sleep(300);
+  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  results.noReadInsideAWrite =
+    toUndo.kind === "applied" &&
+    fabShutInWrite &&
+    (await waitFor(async () => (await cardOutcome()) ?? undefined)) === "applied" &&
+    sameBesideLanePictures(await requestLog(), WRITE_REQUESTS) &&
+    same(await savedCostume(), START);
 
   // A save that answers 0 and moves nothing reads as not applied, whatever it said.
   await fetch(`${HIROBA}/__noop-save`);
@@ -555,7 +1967,9 @@ try {
   await fetch(`${HIROBA}/__state?reset=1`);
   // No form token the mock handed out reaches the window.
   const handedOut = (await (await fetch(`${HIROBA}/__tickets`)).json()) as string[];
-  const windowNow = await page.evaluate<string>("document.documentElement.outerHTML");
+  const windowNow = withoutPictureBytes(
+    await page.evaluate<string>("document.documentElement.outerHTML"),
+  );
   results.formTokensKeptOutOfDom =
     handedOut.length > 0 && !handedOut.some((ticket) => windowNow.includes(ticket));
 
@@ -629,8 +2043,18 @@ try {
   await fetch(`${HIROBA}/__offsite?on=0`);
   results.refusalNamed = true;
 
+  // Hiroba ended the session above, so no sign-out forgot the window's pictures: a sign-in does, as
+  // whoever signs in may be another player. The card's first frame shows none of the last session's,
+  // and the pictures come after it.
+  await page.evaluate(
+    `(() => { window.firstCard = null; const observer = new MutationObserver(() => { if (document.querySelector("#profile") === null) return; window.firstCard = ["#title-plate-image", "#my-don-image"].map((selector) => document.querySelector(selector) !== null); observer.disconnect(); }); observer.observe(document.body, { childList: true, subtree: true }); })()`,
+  );
   await click("#sign-in");
   await until("サンプルどん");
+  await waitForSeen(page, async () => (await exists("#my-don-image")) || undefined);
+  results.signInForgetsThePictures =
+    same(await page.evaluate("window.firstCard"), [false, false]) &&
+    (await exists("#title-plate-image"));
   const kept = (await (await fetch(`${HIROBA}/__last-token`)).text()).trim();
   tokens.push(kept);
   // Kept on disk for the next launch: the user chose staying signed in over a memory-only session.
@@ -640,6 +2064,10 @@ try {
   // Reopened, the app is still signed in and reads once, by itself. The undo kept on disk is still
   // offered. Its clock is in Hiroba's daily break, and a write then sends nothing at all.
   const readsBeforeReopen = await myPageHits();
+  const platesBeforeReopen = (await platesSettled()).length;
+  const myDonsBeforeReopen = await myDonsSettled();
+  const medalPlatesBeforeReopen = await medalPlatesSettled();
+  const thumbsBeforeReopen = (await thumbsSettled()).length;
   await stop(running);
   running = await launch({ writes: true, now: IN_THE_BREAK });
   await running.until("サンプルどん");
@@ -650,16 +2078,93 @@ try {
       (await running.page.evaluate<boolean>(`document.querySelector("#costume-undo") !== null`)) ||
       undefined,
   );
+  // The read shows the title plate too, kept on disk since the first launch, and asks Hiroba for
+  // none: once it is shown, nothing more is on its way.
+  await waitForSeen(
+    running.page,
+    async () =>
+      (await running.page.evaluate<boolean>(
+        `document.querySelector("#title-plate-image") !== null`,
+      )) || undefined,
+  );
+  results.plateOncePerDevice = (await platesSettled()).length === platesBeforeReopen;
+  // So does the score panel's art, kept on disk for every account.
+  const panelArtShownOn = (app: typeof running) =>
+    waitForSeen(
+      app.page,
+      async () =>
+        (await app.page.evaluate<boolean>(
+          `document.querySelector("#score-panel-image") !== null`,
+        )) || undefined,
+    );
+  await panelArtShownOn(running);
+  results.scorePanelOncePerDevice = (await hitsOn(PANEL_ART)) === panelArtFetches;
+  // So does the My Don: the launch's read is the session's first, which renews nothing.
+  const myDonShownOn = (app: typeof running) =>
+    waitForSeen(
+      app.page,
+      async () =>
+        (await app.page.evaluate<boolean>(`document.querySelector("#my-don-image") !== null`)) ||
+        undefined,
+    );
+  await myDonShownOn(running);
+  results.myDonOncePerLaunch = (await myDonsSettled()) === myDonsBeforeReopen;
+  /** Scrolls to the どんメダル plate, waits for its picture, and scrolls back to the top. */
+  const medalPlateShown = async () => {
+    await running.page.evaluate(
+      `document.querySelector("#medal").scrollIntoView({ block: "center" })`,
+    );
+    await waitForSeen(
+      running.page,
+      async () =>
+        (await running.page.evaluate<boolean>(
+          `document.querySelector("#medal-plate-image") !== null`,
+        )) || undefined,
+    );
+    const fetched = await medalPlatesSettled();
+    await running.page.evaluate("window.scrollTo(0, 0)");
+    return fetched;
+  };
+  // So does the どんメダル plate, once its card is on screen.
+  results.medalPlateOncePerDevice = (await medalPlateShown()) === medalPlatesBeforeReopen;
   await resetLog();
   const inTheBreak = await running.page.evaluate(
     `window.abth.changeCostume(${JSON.stringify({ expected: { ...START, colorFace: 7 }, target: START })})`,
   );
   results.breakSendsNothing =
     same(inTheBreak, { kind: "maintenance" }) && same(await requestLog(), []);
+  // The editor's items show the thumbnails kept on disk, and ask Hiroba for none: the きぐるみ
+  // slot's, seen on the first launch, and the second slot's, which came on reopening it there.
+  const shownOnReopen = (selector: string) =>
+    running.page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  await running.click("#costume-open");
+  await waitFor(async () => (await shownOnReopen("#costume-tab-items")) || undefined);
+  await running.click("#costume-tab-items");
+  await waitForSeen(
+    running.page,
+    async () => (await shownOnReopen("#item-costume1-4 img")) || undefined,
+  );
+  await running.click("#costume-part-costume2");
+  await waitForSeen(
+    running.page,
+    async () => (await shownOnReopen("#item-costume2-21 img")) || undefined,
+  );
+  results.thumbnailsOncePerDevice = (await thumbsSettled()).length === thumbsBeforeReopen;
+  await running.click("#costume-close");
+  await waitFor(async () => ((await shownOnReopen("#costume-dialog")) ? undefined : true));
 
-  await running.click("#sign-out");
-  await running.until("Sign in to Hiroba");
-  results.signOutHandled = !existsSync(SESSION_FILE);
+  /**
+   * Signs out in Settings, which offers it while signed in, and whether the window then shows the
+   * Overview, with its sign-in card.
+   */
+  const signOut = async () => {
+    await running.goTo("settings");
+    const offered = (await running.textOf("#sign-out")) === "Sign out";
+    await running.click("#sign-out");
+    await running.until("Sign in to Hiroba");
+    return offered && (await running.currentPage()) === "overview";
+  };
+  results.signOutHandled = (await signOut()) && !existsSync(SESSION_FILE);
 
   // Reopened after signing out, it stays signed out and asks Hiroba nothing. Started without
   // ABTH_UNVERIFIED_WRITES, it may send no write, and one asked for anyway sends nothing.
@@ -676,20 +2181,118 @@ try {
   results.gateShutWithoutTheFlag =
     same(shut, [[], [], { kind: "notEnabled" }, { kind: "notEnabled" }]) &&
     same(await requestLog(), []);
-  // Signed in, the card shows the editor's button shut, and says why, rather than no way to change
-  // anything at all. Signed out again after, so the session is not left for the scan below.
+  // Signed in, the portrait opens nothing, and is no button: it says why, to screen readers and in
+  // its tooltip, rather than leave no way to change anything at all. Signed out again after, so the
+  // session is not left for the scan below.
+  const platesSignedOut = (await platesAsked()).length;
+  const myDonsSignedOut = (await myDonsAsked()).length;
+  const medalPlatesSignedOut = await hitsOn(MEDAL_PLATE);
+  const thumbsSignedOut = (await thumbs()).length;
   await running.click("#sign-in");
   await running.until("サンプルどん");
   tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  const NOT_OPEN =
+    "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
+  await hoverOver(running.page, "#my-don");
+  const whyOnHover = await waitFor(
+    async () => (await running.textOf('[role="tooltip"]')) ?? undefined,
+  );
+  await running.page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   results.shutGateSaysWhy =
     (await running.page.evaluate<boolean>(
-      `document.querySelector("#costume-open")?.disabled === true`,
+      `(() => { const tile = document.querySelector("#my-don"); return document.querySelector("#costume-open") === null && tile !== null && tile.closest("button, [role=button], [tabindex]") === null; })()`,
     )) &&
-    (await running.textOf("#costume-not-open")) ===
-      "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
-  await running.click("#sign-out");
-  await running.until("Sign in to Hiroba");
+    (await running.textOf("#costume-not-open")) === NOT_OPEN &&
+    whyOnHover === NOT_OPEN;
+  // On a touch screen, a finger held still on it says why just the same.
+  await waitFor(async () =>
+    (await running.textOf('[role="tooltip"]')) === null ? true : undefined,
+  );
+  await running.page.send("Emulation.setTouchEmulationEnabled", {
+    enabled: true,
+    maxTouchPoints: 5,
+  });
+  const held = await middleOf(running.page, "#my-don");
+  await running.page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [held] });
+  const whyOnLongPress = await waitFor(
+    async () => (await running.textOf('[role="tooltip"]')) ?? undefined,
+    5_000,
+  );
+  await running.page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await running.page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+  results.shutGateSaysWhyOnLongPress = whyOnLongPress === NOT_OPEN;
+  // Signed out on the last launch and in again on this one, the plate and the thumbnails kept on
+  // disk are still there, and Hiroba is asked for none of them (the user's call, 2026-09-28: no
+  // picture is deleted at sign-out). This build opens no editor, so a thumbnail is asked for through
+  // the bridge, after the editor's read that offers it.
+  await waitForSeen(
+    running.page,
+    async () =>
+      (await running.page.evaluate<boolean>(
+        `document.querySelector("#title-plate-image") !== null`,
+      )) || undefined,
+  );
+  const keptThumbnail = await running.page.evaluate<{ ok: boolean }>(
+    `window.abth.openCostumeEditor().then(() => window.abth.readPicture({ kind: "costumeItem", slot: 1, id: 4 }))`,
+  );
+  results.picturesSurviveSignOut =
+    keptThumbnail.ok &&
+    (await platesSettled()).length === platesSignedOut &&
+    (await thumbs()).length === thumbsSignedOut;
+  results.medalPlateSurvivesSignOut = (await medalPlateShown()) === medalPlatesSignedOut;
+  await panelArtShownOn(running);
+  results.scorePanelSurvivesSignOut = (await hitsOn(PANEL_ART)) === panelArtFetches;
+  // The My Don kept on disk too: a sign-in's read is its session's first, which renews nothing.
+  await myDonShownOn(running);
+  results.myDonKeptAtSignIn = (await myDonsSettled()) === myDonsSignedOut;
+  // Signed out and in again, in the same run. A plate no later read has confirmed is not kept:
+  // Hiroba draws a blank one for a session it ended unseen, so it is asked for again. Once a read
+  // has confirmed it, it is kept, and the read after the next sign-in asks Hiroba for no plate
+  // (the user's call, 2026-09-28: no picture is deleted at sign-out). Tried on a title no launch
+  // has worn yet: every plate a read confirmed is kept on disk.
+  const plateShown = () =>
+    waitForSeen(
+      running.page,
+      async () =>
+        (await running.page.evaluate<boolean>(
+          `document.querySelector("#title-plate-image") !== null`,
+        )) || undefined,
+    );
+  /** The plates asked for this run, once signed out and in again and the plate is shown. */
+  const platesAfterSignOutAndIn = async () => {
+    await signOut();
+    await running.click("#sign-in");
+    await running.until("サンプルどん");
+    tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+    await plateShown();
+    return (await platesSettled()).length;
+  };
+  const platesBeforeThird = (await platesSettled()).length;
+  await fetch(`${HIROBA}/__variant?title=third`);
+  await running.click("#read-again");
+  await running.until("三つ目のサンプル称号");
+  await waitFor(async () => (await platesAsked()).length > platesBeforeThird || undefined);
+  await plateShown();
+  const platesUnconfirmed = (await platesSettled()).length;
+  results.unconfirmedPlateAskedAgain = (await platesAfterSignOutAndIn()) === platesUnconfirmed + 1;
+  await running.click("#read-again");
+  await Bun.sleep(300);
+  await running.until("Read at");
+  const platesBeforeSignOut = (await platesSettled()).length;
+  results.playerPicturesKeptAtSignOut = (await platesAfterSignOutAndIn()) === platesBeforeSignOut;
+  await signOut();
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
+  // Every portrait this run asked for went to the picture host as my page's src names it, with
+  // Hiroba's origin alone as the Referer, and with no cookie at all: the session is Hiroba's.
+  const portraits = await myDonsAsked();
+  results.myDonSentNoCookie =
+    portraits.length > 3 &&
+    portraits.every(
+      (portrait) =>
+        portrait.cookies.length === 0 &&
+        portrait.referer === `${HIROBA}/` &&
+        portrait.query === "?v=&kind=mydon&fn=mydon_000000000000",
+    );
 } finally {
   await stop(running);
   mock.kill();
@@ -699,14 +2302,35 @@ try {
  * Starts the app on the stand-in and attaches to its window over the DevTools protocol. `writes`
  * opens the gate for writes not yet verified; `now` fixes the clock a write checks Hiroba's daily
  * break against. Every run keeps what it reads in the debug folder, so the scan below covers it.
+ *
+ * A window other windows cover counts as hidden on Windows, and a hidden page sees nothing, so it
+ * asks for no picture: the switch keeps the window seen however it is covered. `--lang` gives the
+ * app its system language: English unless a check asks for another, since the checks read its
+ * English words. `userData` is where the app keeps what it keeps.
  */
-async function launch({ writes, now }: { writes: boolean; now: string }) {
-  const proc = Bun.spawn([String(electronPath), root, `--remote-debugging-port=${CDP_PORT}`], {
+async function launch({
+  writes,
+  now,
+  lang = "en-US",
+  userData = USER_DATA,
+}: {
+  writes: boolean;
+  now: string;
+  lang?: string;
+  userData?: string;
+}) {
+  const args = [
+    `--remote-debugging-port=${CDP_PORT}`,
+    "--disable-backgrounding-occluded-windows",
+    `--lang=${lang}`,
+  ];
+  const proc = Bun.spawn([String(electronPath), root, ...args], {
     env: {
       ...process.env,
       ABTH_DEV_HIROBA_ORIGIN: HIROBA,
       ABTH_DEV_IDP_HOST: IDP_HOST,
-      ABTH_DEV_USER_DATA: USER_DATA,
+      ABTH_DEV_IMG_ORIGIN: IMG,
+      ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
       ABTH_DEBUG_SAVE_READS: "1",
       ...(writes ? { ABTH_UNVERIFIED_WRITES: "1" } : { ABTH_UNVERIFIED_WRITES: "" }),
@@ -736,7 +2360,17 @@ async function launch({ writes, now }: { writes: boolean; now: string }) {
     );
   const until = (needle: string) =>
     waitFor(async () => (await text()).includes(needle) || undefined);
-  return { proc, page, text, textOf, click, clickButton, until };
+  /** The page the side panel marks as shown, or null when no panel is drawn. */
+  const currentPage = () =>
+    page.evaluate<string | null>(
+      `document.querySelector('[aria-current="page"]')?.id.replace("nav-", "") ?? null`,
+    );
+  /** Opens a page from the side panel, which a window this wide draws, and waits until it shows. */
+  const goTo = async (to: "overview" | "favorites" | "settings") => {
+    await click(`#nav-${to}`);
+    await waitFor(async () => (await currentPage()) === to || undefined);
+  };
+  return { proc, page, text, textOf, click, clickButton, until, currentPage, goTo };
 }
 
 /**
@@ -783,6 +2417,29 @@ const savedEditor = join(USER_DATA, "debug", "mypage_kisekae.php.html");
 results.debugReadsRedacted =
   existsSync(savedEditor) && readFileSync(savedEditor, "utf8").includes(`value="<tckt>"`);
 results.undoKeptOnDisk = existsSync(join(USER_DATA, "undo.json"));
+// The pictures on disk are named by hashes alone, the thumbnails as shared art and the plates under
+// their player: no taiko number and no title in any name.
+const PICTURES = join(USER_DATA, "pictures");
+const pictureFiles = (existsSync(PICTURES) ? [...walk(PICTURES)] : []).map((file) =>
+  file.slice(PICTURES.length).split(sep).join("/"),
+);
+const HASH = "[0-9a-f]{64}";
+const filedAs = (pattern: string) => new RegExp(`^/${PICTURE_EPOCH}/${pattern}\\.png$`);
+results.picturesFiledUnderHashes =
+  pictureFiles.some((file) => filedAs(`shared/${HASH}`).test(file)) &&
+  pictureFiles.some((file) => filedAs(`player/${HASH}/${HASH}`).test(file)) &&
+  pictureFiles.every((file) => filedAs(`(shared|player/${HASH})/${HASH}`).test(file));
+// The どんメダル plate ids stay in main: none is in the name of any file the app keeps, and none is
+// in any file but the debug copies of the pages that showed them.
+const inDebugCopies = (file: string) => file.slice(USER_DATA.length).split(sep)[1] === "debug";
+results.medalIdsKeptOffDisk =
+  medalIds.length === 2 &&
+  [...walk(USER_DATA)].every((file) => {
+    const bytes = readFileSync(file).toString("latin1");
+    return medalIds.every(
+      (id) => !file.includes(id) && (inDebugCopies(file) || !bytes.includes(id)),
+    );
+  });
 console.log(JSON.stringify(results, null, 2));
 
 function* walk(dir: string): Generator<string> {
@@ -794,6 +2451,40 @@ function* walk(dir: string): Generator<string> {
       yield path;
     }
   }
+}
+
+/** Rests the mouse on the middle of `selector`, as a pointer over it would. */
+async function hoverOver(
+  page: Awaited<ReturnType<typeof connect>>,
+  selector: string,
+): Promise<void> {
+  const middle = await middleOf(page, selector);
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...middle });
+}
+
+/** The middle of `selector` in the window, where a pointer or a finger rests on it. */
+function middleOf(
+  page: Awaited<ReturnType<typeof connect>>,
+  selector: string,
+): Promise<{ x: number; y: number }> {
+  return page.evaluate<{ x: number; y: number }>(
+    `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: box.left + box.width / 2, y: box.top + box.height / 2 }; })()`,
+  );
+}
+
+/**
+ * Waits for what the page asks for only once it is seen, such as a picture. A hidden page sees
+ * nothing, so a hidden window fails at once, saying so, rather than at the wait's timeout.
+ */
+async function waitForSeen<T>(
+  page: { evaluate<V>(expression: string): Promise<V> },
+  probe: () => Promise<T | undefined>,
+): Promise<T> {
+  const visibility = await page.evaluate<string>("document.visibilityState");
+  if (visibility !== "visible") {
+    throw new Error(`The window is ${visibility}: it asks for no picture until it is seen`);
+  }
+  return waitFor(probe);
 }
 
 async function waitFor<T>(probe: () => Promise<T | undefined>, timeoutMs = 30_000): Promise<T> {
@@ -827,17 +2518,16 @@ async function connect(url: string) {
       waiting.delete(message.id);
     }
   });
+  /** Sends one DevTools command; resolves with the value it evaluated to, if it evaluated one. */
+  const send = <T = unknown>(method: string, params: Record<string, unknown>): Promise<T> => {
+    const id = nextId++;
+    socket.send(JSON.stringify({ id, method, params }));
+    return new Promise((resolve) => waiting.set(id, resolve as (value: unknown) => void));
+  };
   return {
+    send,
     evaluate<T = unknown>(expression: string): Promise<T> {
-      const id = nextId++;
-      socket.send(
-        JSON.stringify({
-          id,
-          method: "Runtime.evaluate",
-          params: { expression, returnByValue: true, awaitPromise: true },
-        }),
-      );
-      return new Promise((resolve) => waiting.set(id, resolve as (value: unknown) => void));
+      return send<T>("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
     },
   };
 }

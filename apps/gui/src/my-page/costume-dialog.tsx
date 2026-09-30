@@ -6,7 +6,6 @@ import {
   Button,
   ButtonBase,
   Checkbox,
-  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
@@ -22,6 +21,8 @@ import {
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
+import { HIROBA_LANG } from "../language/show-language";
+import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type {
   CostumeEditorView,
@@ -39,7 +40,9 @@ import {
   SLOT_PARTS,
   type SlotPart,
 } from "./costume-parts";
+import { CostumeItemGrid } from "./costume-item-grid";
 import { CostumePreviewBox, useCostumePreview } from "./costume-preview-box";
+import { pickRing } from "./pick-ring";
 import { WriteOutcomeNotice } from "./write-outcome";
 
 type Step =
@@ -61,6 +64,8 @@ type Step =
 
 export interface CostumeDialogProps {
   readonly port: HirobaSessionPort;
+  /** The window's lane for Hiroba's pictures: the items' thumbnails come through it. */
+  readonly lane: PictureLane;
   readonly i18n: Translator;
   /**
    * Whether costume writes are verified. Until they are, saving needs an extra confirmation, and
@@ -73,12 +78,20 @@ export interface CostumeDialogProps {
 }
 
 /**
- * The costume editor: the three colours and the five slots, by number, with the palette's own
- * colours, under Hiroba's own picture of the set as picked. Mounted only while open. Opening reads
- * the editor once; a pick makes a draft by the site's own rule, so a きぐるみ empties the pieces and
- * a piece takes the きぐるみ off; saving lists every change first and sends exactly the draft.
+ * The costume editor: the three colours by the palette's own colours and the five slots by Hiroba's
+ * thumbnails of their items, under Hiroba's own picture of the set as picked. Mounted only while
+ * open. Opening reads the editor once; a pick makes a draft by the site's own rule, so a きぐるみ
+ * empties the pieces and a piece takes the きぐるみ off; saving lists every change first and sends
+ * exactly the draft, with no thumbnail asked for while it runs.
  */
-export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: CostumeDialogProps) {
+export function CostumeDialog({
+  port,
+  lane,
+  i18n,
+  verified,
+  onClose,
+  onOutcome,
+}: CostumeDialogProps) {
   const { t } = i18n;
   const fullScreen = useMediaQuery(useTheme().breakpoints.down("sm"));
   const [step, setStep] = useState<Step>({ name: "loading" });
@@ -94,6 +107,8 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
     mounted.current = true;
     if (!started.current) {
       started.current = true;
+      // A thumbnail that did not come last time is asked for again once, in this opening.
+      lane.forgetFailures("costumeItem");
       void port.openCostumeEditor().then((read) => {
         if (mounted.current) {
           setStep(
@@ -107,7 +122,7 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
     return () => {
       mounted.current = false;
     };
-  }, [port]);
+  }, [port, lane]);
 
   // One press sends one write: a second that lands before the step leaves "confirming" is turned
   // away here rather than sent as a second write of the same draft.
@@ -120,12 +135,16 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
     const { editor, draft } = step;
     setStep({ name: "saving", editor, draft });
     let outcome: WriteOutcomeView;
+    // No thumbnail even queues behind the write: the one on its way, if any, is all it waits for.
+    lane.hold();
     try {
       outcome = await port.changeCostume({ expected: editor.state, target: draft });
     } catch {
       // The call itself failed, as a bridge that refused it does: how the write ended is not
       // known, and the dialog must not stay on "Saving…" with Close shut.
       outcome = { kind: "interrupted" };
+    } finally {
+      lane.release();
     }
     saveStarted.current = false;
     if (mounted.current) {
@@ -166,7 +185,7 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
       maxWidth="sm"
       onClose={busy ? undefined : onClose}
     >
-      <DialogTitle>{t("costume.title")}</DialogTitle>
+      <DialogTitle lang={HIROBA_LANG}>{t("costume.title")}</DialogTitle>
       <DialogContent dividers>
         {previewSet !== null && <CostumePreviewBox preview={preview} i18n={i18n} />}
 
@@ -194,8 +213,18 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
         {step.name === "editing" && (
           <Stack spacing={2}>
             <Tabs value={tab} onChange={(_event, value) => setTab(value)}>
-              <Tab id="costume-tab-colours" value="colours" label={t("costume.tab.colours")} />
-              <Tab id="costume-tab-items" value="items" label={t("costume.tab.items")} />
+              <Tab
+                id="costume-tab-colours"
+                value="colours"
+                lang={HIROBA_LANG}
+                label={t("costume.tab.colours")}
+              />
+              <Tab
+                id="costume-tab-items"
+                value="items"
+                lang={HIROBA_LANG}
+                label={t("costume.tab.items")}
+              />
             </Tabs>
             {tab === "colours" ? (
               <>
@@ -209,6 +238,7 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
                       key={part}
                       id={`costume-part-${part}`}
                       value={part}
+                      lang={HIROBA_LANG}
                       label={t(PART_LABEL[part])}
                     />
                   ))}
@@ -240,10 +270,8 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
                           bgcolor: swatch.hex,
                           border: "1px solid",
                           borderColor: "common.black",
-                          // The choice is marked outside the swatch, never over its colour.
-                          outline: chosen ? "3px solid" : "none",
-                          outlineColor: "primary.main",
-                          outlineOffset: "2px",
+                          // Outside the swatch, never over its colour.
+                          ...pickRing(chosen, "text.primary"),
                         }}
                       />
                     );
@@ -262,25 +290,21 @@ export function CostumeDialog({ port, i18n, verified, onClose, onOutcome }: Cost
                       key={part}
                       id={`costume-part-${part}`}
                       value={part}
+                      lang={HIROBA_LANG}
                       label={t(PART_LABEL[part])}
                     />
                   ))}
                 </Tabs>
-                <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: "wrap" }}>
-                  {itemsOf(step.editor, slotPart).map((id) => {
-                    const chosen = step.draft[slotPart] === id;
-                    return (
-                      <Chip
-                        key={id}
-                        id={`item-${slotPart}-${id}`}
-                        label={partValue(slotPart, id, i18n)}
-                        color={chosen ? "primary" : "default"}
-                        variant={chosen ? "filled" : "outlined"}
-                        onClick={() => pickItem(slotPart, id)}
-                      />
-                    );
-                  })}
-                </Stack>
+                {/* A slot of its own for each tab: a switch drops the thumbnails not yet sent. */}
+                <CostumeItemGrid
+                  key={slotPart}
+                  lane={lane}
+                  i18n={i18n}
+                  part={slotPart}
+                  items={itemsOf(step.editor, slotPart)}
+                  chosen={step.draft[slotPart]}
+                  onPick={(id) => pickItem(slotPart, id)}
+                />
               </>
             )}
             {step.draft.costume1 !== 0 &&
@@ -405,11 +429,11 @@ function Changes({ from, to, i18n }: { from: CostumeSet; to: CostumeSet; i18n: T
   );
 }
 
-/** A slot's choices: はずす, then the owned items, and the item worn now if the list lacks it. */
+/** A slot's items: the owned ones in the page's order, and the one worn if the list lacks it. */
 function itemsOf(editor: CostumeEditorView, part: SlotPart): number[] {
   const owned = editor.slots[SLOT_PARTS.indexOf(part)] ?? [];
   const worn = editor.state[part];
-  return [0, ...owned, ...(worn !== 0 && !owned.includes(worn) ? [worn] : [])];
+  return [...owned, ...(worn !== 0 && !owned.includes(worn) ? [worn] : [])];
 }
 
 /** The editor after a write, with the set as the write last saw it. */

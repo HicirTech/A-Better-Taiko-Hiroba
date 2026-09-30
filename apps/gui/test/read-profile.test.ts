@@ -9,18 +9,27 @@ import { encode } from "fast-png";
 
 import { danLabelPng, NO_LABEL_GIF } from "../scripts/mock-dan-label";
 import { readOwnProfile, readProfile } from "../src/hiroba-session";
+import { pngDataUrl } from "../src/hiroba-session/png-answer";
 
-const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idpDomain: "id.test" };
+const ENDPOINTS = {
+  hirobaOrigin: "https://hiroba.test",
+  idpHost: "id.test",
+  idpDomain: "id.test",
+  imgOrigin: "https://img.test",
+};
 const NOW = () => new Date("2026-09-27T00:00:00.000Z");
 const MY_PAGE_URL = "https://hiroba.test/mypage_top.php";
 const LABEL_URL = "https://hiroba.test/imgsrc_danlabel.php?taiko_no=000000000000";
+/** The どんメダル plate's id, a placeholder in the form my page writes: 48 hex digits. */
+const MEDAL_PLATE_ID = "0123456789abcdef0123456789abcdef0123456789abcdef";
 
 const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 <div id="mydon_area">
+  <img src="imgsrc_titleplate.php" style="width: 100%;">
   <div>サンプルの称号</div>
   <div><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>
   <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div>
-    <div class="mydon_image"><img class="customd_mydon" src="https://img.test/mydon.png"></div></div>
+    <div class="mydon_image"><img class="customd_mydon" src="https://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000"></div></div>
   <div class="total_score">
     <img src="image/sp/640/total_score_image_5.png">
     <div class="best_rank_score_8 total_panel_display">7</div>
@@ -34,7 +43,7 @@ const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head
     <div class="gold_crown_count total_panel_crown_display">2</div>
     <div class="donderful_crown_count total_panel_crown_display">1</div>
   </div>
-  <div><img src="imgsrc_tokenplate.php?id=placeholder">
+  <div><img src="imgsrc_tokenplate.php?id=${MEDAL_PLATE_ID}" style="width: 100%;">
     <div class="token_name token_info_display">どんメダル2026秋</div>
     <div class="token_complete token_info_display">COMPLETE</div></div>
 </div>
@@ -65,6 +74,14 @@ const labelAnswer = (type: string, body: Uint8Array, status = 200, url = LABEL_U
 
 /** The mock's 九段 label, as Hiroba serves a label. */
 const NINTH_DAN = labelAnswer("image/png", danLabelPng(14));
+/** The picture a label crosses as: its own bytes, and its size. */
+const labelPicture = (bytes: Uint8Array, width = 96, height = 40) => ({
+  src: pngDataUrl(bytes),
+  width,
+  height,
+});
+/** A view as JSON with every picture's bytes left out: base64 could hold any short string. */
+const withoutPictureBytes = (json: string) => json.replace(/data:[^"]*/g, "data:");
 
 /**
  * Answers the dan label's path with `label` and every other request with `myPage`, and remembers
@@ -111,7 +128,7 @@ describe("readProfile", () => {
         nickname: "サンプルどん",
         title: "サンプルの称号",
         region: "サンプル",
-        dan: { name: "九段" },
+        dan: { name: "九段", picture: labelPicture(danLabelPng(14)) },
         crowns: { silver: 11, gold: 2, donderful: 1 },
         panel: { countLevel: 5, ranks: { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7 } },
         medal: { name: "どんメダル2026秋", progress: { kind: "complete" } },
@@ -141,14 +158,17 @@ describe("readProfile", () => {
     expect(MY_PAGE_EXCERPT).toContain("taiko_no=000000000000");
     for (const label of [NINTH_DAN, labelAnswer("image/gif", NO_LABEL_GIF)]) {
       const transport = fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT), label);
-      const view = JSON.stringify(await readProfile(transport, ENDPOINTS, NOW));
+      const view = withoutPictureBytes(
+        JSON.stringify(await readProfile(transport, ENDPOINTS, NOW)),
+      );
       expect(view).not.toContain("000000000000");
       expect(view).not.toContain("imgsrc");
+      expect(view).not.toContain("taiko");
       expect(view).not.toContain("http");
     }
   });
 
-  test("hands the platform the taiko number beside the view, and never inside it", async () => {
+  test("hands the platform the taiko number and the pictures' sources beside the view", async () => {
     const own = await readOwnProfile(
       fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT)),
       ENDPOINTS,
@@ -163,8 +183,21 @@ describe("readProfile", () => {
       throw new Error("expected both reads to succeed");
     }
     expect(own.value.taikoNo).toBe("000000000000");
+    expect(own.value.pictures).toEqual({
+      titlePlate: { form: "bare", title: "サンプルの称号" },
+      scorePanel: { level: 5 },
+      medalPlate: { id: MEDAL_PLATE_ID, progress: "complete" },
+      myDon: { v: "" },
+    });
     expect(own.value.view).toEqual(view.value);
-    expect(JSON.stringify(own.value.view)).not.toContain("000000000000");
+    const shown = withoutPictureBytes(JSON.stringify(own.value.view));
+    expect(shown).not.toContain("000000000000");
+    expect(shown).not.toContain("titleplate");
+    expect(shown).not.toContain("total_score");
+    expect(shown).not.toContain("tokenplate");
+    expect(shown).not.toContain(MEDAL_PLATE_ID);
+    expect(shown).not.toContain("mydon");
+    expect(shown).not.toContain("img.test");
   });
 
   test("reads a redirect to the login page as a lost session, without parsing or a label", async () => {
@@ -245,7 +278,7 @@ describe("readProfile's dan label", () => {
   test("a label that never arrives leaves the profile standing, with the failure's kind", async () => {
     const lost = err({ kind: "timedOut" as const, url: LABEL_URL });
     expect(await danAfter(lost)).toEqual({
-      dan: { unreadable: true, code: "dan=timedOut" },
+      dan: { unreadable: true, code: "dan=timedOut", picture: null },
       requests: 2,
     });
   });
@@ -254,12 +287,16 @@ describe("readProfile's dan label", () => {
     expect((await danAfter(labelAnswer("image/gif", NO_LABEL_GIF))).dan).toEqual({
       unreadable: true,
       code: "dan=notPng status=200 type=image/gif bytes=43",
+      picture: null,
     });
   });
 
   test("decides by the type and the bytes, whatever the status", async () => {
     const at404 = labelAnswer("image/png", danLabelPng(14), 404);
-    expect((await danAfter(at404)).dan).toEqual({ name: "九段" });
+    expect((await danAfter(at404)).dan).toEqual({
+      name: "九段",
+      picture: labelPicture(danLabelPng(14)),
+    });
   });
 
   test("a PNG of another size is not a label, and says what size it was", async () => {
@@ -267,6 +304,7 @@ describe("readProfile's dan label", () => {
     expect((await danAfter(labelAnswer("image/png", small))).dan).toEqual({
       unreadable: true,
       code: `dan=notAnImage size=10x10 status=200 type=image/png bytes=${small.byteLength}`,
+      picture: labelPicture(small, 10, 10),
     });
   });
 
@@ -275,6 +313,7 @@ describe("readProfile's dan label", () => {
     expect((await danAfter(labelAnswer("image/png; charset=binary", blank))).dan).toEqual({
       unreadable: true,
       code: `dan=unreadableGlyph status=200 type=image/png; charset=binary bytes=${blank.byteLength}`,
+      picture: labelPicture(blank),
     });
   });
 
@@ -283,6 +322,7 @@ describe("readProfile's dan label", () => {
     expect((await danAfter(labelAnswer("image/png", huge))).dan).toEqual({
       unreadable: true,
       code: "dan=tooLarge status=200 type=image/png bytes=65537",
+      picture: null,
     });
   });
 
@@ -297,7 +337,24 @@ describe("readProfile's dan label", () => {
     expect(dan).toEqual({
       unreadable: true,
       code: `dan=notPng path=/login.php status=200 type=text/html; charset=UTF-8 bytes=${LOGIN_PAGE_EXCERPT.length}`,
+      picture: null,
     });
+  });
+
+  test("the label's picture is the very bytes its dan was read off, at no request more", async () => {
+    const { dan, requests } = await danAfter(NINTH_DAN);
+    expect(requests).toBe(2);
+    expect(dan?.picture?.src).toBe(pngDataUrl(danLabelPng(14)));
+  });
+
+  test("a label that answered from another address is read, but not shown", async () => {
+    const moved = labelAnswer(
+      "image/png",
+      danLabelPng(14),
+      200,
+      "https://hiroba.test/elsewhere.php?taiko_no=000000000000",
+    );
+    expect((await danAfter(moved)).dan).toEqual({ name: "九段", picture: null });
   });
 
   test("a label source that leads off Hiroba is not asked for", async () => {
@@ -307,7 +364,7 @@ describe("readProfile's dan label", () => {
     );
     expect(offsite).toContain("elsewhere.test");
     expect(await danAfter(NINTH_DAN, offsite)).toEqual({
-      dan: { unreadable: true, code: "dan=unexpectedSrc" },
+      dan: { unreadable: true, code: "dan=unexpectedSrc", picture: null },
       requests: 1,
     });
   });

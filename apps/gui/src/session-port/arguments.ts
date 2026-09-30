@@ -1,4 +1,4 @@
-import type { CostumeSet, HirobaSessionPort, WriteKind } from "./types";
+import type { CostumeSet, HirobaSessionPort, PictureWant, WriteKind } from "./types";
 
 /** Every kind of write the app can send, whether or not a run may send it. */
 export const WRITE_KINDS: readonly WriteKind[] = ["costume"];
@@ -46,6 +46,33 @@ export function isCostumeSet(value: unknown): value is CostumeSet {
   );
 }
 
+/** A whole number from `least` to `most`. */
+export const isWhole = (value: unknown, least: number, most: number): value is number =>
+  Number.isInteger(value) && (value as number) >= least && (value as number) <= most;
+
+/** The kinds of picture that name nothing but their kind: the platform knows which one it means. */
+const KIND_ONLY_PICTURES: readonly string[] = ["titlePlate", "scorePanel", "medalPlate", "myDon"];
+
+/**
+ * A picture the interface may ask for, and nothing else: a kind, and for an item's thumbnail its
+ * slot, 1 to 5, and its id, 1 to 9999; for a picture of my page, the kind alone. No URL, no source
+ * and no other key: the platform builds the address. はずす (0) has no picture.
+ */
+export function isPictureWant(value: unknown): value is PictureWant {
+  if (hasExactly(value, ["kind"])) {
+    return typeof value.kind === "string" && KIND_ONLY_PICTURES.includes(value.kind);
+  }
+  return (
+    hasExactly(value, ["kind", "slot", "id"]) &&
+    value.kind === "costumeItem" &&
+    isWhole(value.slot, 1, 5) &&
+    isWhole(value.id, 1, MAX_COSTUME_VALUE)
+  );
+}
+
+/** readPicture: one argument, a picture the interface may ask for. */
+const pictureWant: ArgumentCheck = (args) => args.length === 1 && isPictureWant(args[0]);
+
 /** changeCostume: one argument, the set expected and the set wanted, eight whole numbers each. */
 const costumeChange: ArgumentCheck = (args) =>
   args.length === 1 &&
@@ -78,6 +105,7 @@ export const PORT_ARGUMENTS = {
   enabledWrites: none,
   openCostumeEditor: none,
   previewCostume: costumeSet,
+  readPicture: pictureWant,
   changeCostume: costumeChange,
   pendingUndo: none,
   undo: writeKind,

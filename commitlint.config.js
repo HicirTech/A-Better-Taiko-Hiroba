@@ -24,7 +24,9 @@ export default {
         "revert", // undo an earlier commit
       ],
     ],
-    // Short enough that `git log --oneline` stays readable in a terminal beside a diff.
-    "header-max-length": [2, "always", 72],
+    // One sentence, short enough that `git log --oneline` stays readable beside a diff.
+    "header-max-length": [2, "always", 50],
+    // The optional second -m holds an issue number, nothing else.
+    "body-max-length": [2, "always", 20],
   },
 };

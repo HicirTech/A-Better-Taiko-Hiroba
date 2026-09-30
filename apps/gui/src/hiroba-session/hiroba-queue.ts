@@ -1,7 +1,7 @@
 /**
- * The order the desktop asks Hiroba things in. Every verb that asks Hiroba something runs one at a
- * time, in the order asked: a read never lands between a write's posts and its read-back, and two
- * writes never interleave.
+ * The order a shell asks Hiroba things in, the desktop and Android alike. Every verb that asks
+ * Hiroba something runs one at a time, in the order asked: a read never lands between a write's
+ * posts and its read-back, and two writes never interleave.
  *
  * A write is not queued behind another write, though. One asked for while another is queued or
  * running answers `busy` at once and runs not at all: a button pressed twice, or two buttons for

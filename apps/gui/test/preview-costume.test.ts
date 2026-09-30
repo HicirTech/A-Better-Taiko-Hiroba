@@ -8,7 +8,12 @@ import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 import { NO_LABEL_GIF } from "../scripts/mock-dan-label";
 import { previewCostume, previewUrl } from "../src/hiroba-session";
 
-const ENDPOINTS = { hirobaOrigin: "https://hiroba.test", idpHost: "id.test", idpDomain: "id.test" };
+const ENDPOINTS = {
+  hirobaOrigin: "https://hiroba.test",
+  idpHost: "id.test",
+  idpDomain: "id.test",
+  imgOrigin: null,
+};
 const SET = {
   colorBody: 12,
   colorLimb: 13,

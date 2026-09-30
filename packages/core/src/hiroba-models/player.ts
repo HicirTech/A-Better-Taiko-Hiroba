@@ -42,6 +42,13 @@ export interface Profile {
   /** The value after the region line's colon; null when there is none or it reads 未設定. */
   readonly region: string | null;
   /**
+   * The title plate the page draws the title and the name row over, as the page writes its `src`,
+   * or null when it shows none. My page writes it bare, `imgsrc_titleplate.php` with no query:
+   * Hiroba draws the plate of whoever holds the session, and without one answers a blank default
+   * plate at 200 (wiki: Page Map, generated images). Kept as written, never resolved or corrected.
+   */
+  readonly titlePlateImageUrl: string | null;
+  /**
    * The dan label image the page shows (`imgsrc_danlabel.php?taiko_no=…`), or null when absent.
    * The dan appears on this page only as a server-rendered image — there is no text to read —
    * and having no dan is a normal state: plenty of accounts hold none.
@@ -82,6 +89,12 @@ export interface Profile {
 export interface Medal {
   readonly name: string;
   readonly progress: MedalProgress;
+  /**
+   * The plate's picture as the page writes its `src`, `imgsrc_tokenplate.php?id=<hex>`, or null
+   * when the page shows none. The id is opaque and names the player's season, so it is identity
+   * data: kept as written, never resolved, corrected or shown (wiki: Page Map, generated images).
+   */
+  readonly plateImageUrl: string | null;
 }
 
 /**

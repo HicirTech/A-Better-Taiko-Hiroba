@@ -1,7 +1,18 @@
-/** The locales the catalog carries. English only for now; ja and zh join here, not elsewhere. */
-export const LOCALES = ["en"] as const;
+/** The locales the catalog carries, in the order a language picker lists them. */
+export const LOCALES = ["en", "ja", "zh-Hans", "zh-Hant"] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = "en";
+
+/**
+ * Each locale's name in its own language, as a language picker lists it: someone who cannot read the
+ * language the app is in can still find their own.
+ */
+export const LOCALE_NAMES: Readonly<Record<Locale, string>> = {
+  en: "English",
+  ja: "日本語",
+  "zh-Hans": "简体中文",
+  "zh-Hant": "繁體中文",
+};
 
 /**
  * Every message key, and the one place that says which keys exist: a catalog missing a key, or
@@ -12,6 +23,31 @@ export const DEFAULT_LOCALE: Locale = "en";
  */
 export interface Messages {
   "app.title": string;
+  /**
+   * Settings' first language choice, to follow the system's language, now and at each launch.
+   * Param: {name}, the language the system gives, in its own words (LOCALE_NAMES).
+   */
+  "language.system": string;
+  /**
+   * The window's pages, as its navigation names them: the side panel on a wide window, the menu on
+   * a narrow one. Each also names its page for screen readers, as its heading.
+   */
+  "nav.overview": string;
+  /** The page of the 大好きな曲 and the お気に入り folder. */
+  "nav.favorites": string;
+  "nav.settings": string;
+  /** The narrow window's menu button, which opens the pages: its name for screen readers. */
+  "nav.menu": string;
+  /** The heading of Settings' language section. */
+  "settings.language": string;
+  /** The heading of Settings' account section: signing out, and what staying signed in keeps. */
+  "settings.account": string;
+  /** Who is signed in, in the account section. Param: {name}, the nickname, as Hiroba writes it. */
+  "settings.signedInAs": string;
+  /** The same while a session is open but no read has given the nickname yet. */
+  "settings.signedIn": string;
+  /** The same while no session is open. */
+  "settings.signedOut": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;
@@ -24,7 +60,10 @@ export interface Messages {
   /** Param: {host}, the host name the sign-in was sent to. */
   "signIn.refused": string;
   "signOut.action": string;
-  /** The session stays on the device, across launches, until the user signs out. */
+  /**
+   * The session stays on the device, across launches, until the user signs out; Hiroba's pictures
+   * stay after that too.
+   */
   "signOut.note": string;
   "profile.reading": string;
   "profile.readAgain": string;
@@ -34,14 +73,17 @@ export interface Messages {
   "profile.fetchedAt": string;
   /** Shown in place of the title when the player wears none, a normal state. */
   "profile.noTitle": string;
-  /** Param: {region}, as the page writes it. */
-  "profile.region": string;
   /** Param: {dan}, the dan's name as Hiroba prints it, 五級 to 十段, read off my page's label. */
   "profile.dan": string;
   /** My page shows a dan label that did not read. Neutral: the rest of the page still read. */
   "profile.danUnreadable": string;
   /** Param: {code}, why the label did not read, such as dan=notPng; never page text or a URL. */
   "profile.danCode": string;
+  /**
+   * The player's マイどん on the identity card, Hiroba's own picture of it in the costume it wears:
+   * its alternative text.
+   */
+  "profile.myDonAlt": string;
   "profile.favorites": string;
   /** Param: {title}, the 大好きな曲 as the page writes it. */
   "profile.favoriteSong": string;
@@ -49,29 +91,42 @@ export interface Messages {
   /** Param: {count}, how many songs the お気に入り folder holds. */
   "profile.favoriteFolder": string;
   "profile.favoriteFolderEmpty": string;
+  /**
+   * Beside one of Hiroba's pictures on the profile, such as the title plate, while it is on its
+   * way: the name of a small spinner. The card stands, drawn plainly, until it comes.
+   */
+  "pictures.loading": string;
+  /**
+   * Under the identity card when one or more of Hiroba's pictures did not come. Neutral: the card
+   * is drawn plainly in their place, and reads as well without them.
+   */
+  "pictures.unavailable": string;
+  /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
+  "pictures.code": string;
+  /** The heading of the panel's crown block, which follows the score ranks. */
   "crowns.heading": string;
   "crowns.silver": string;
   "crowns.gold": string;
   "crowns.donderful": string;
-  /** Silver, gold and donderful added up: each crown is exclusive, and each one is a clear. */
-  "crowns.clearedOrBetter": string;
-  /** Gold and donderful added up. */
-  "crowns.fullComboOrBetter": string;
   /**
-   * Neutral on purpose: what the panel covers is an inference, checked on one account only. It
-   * heads the crowns and the score ranks both, which the panel gives over the same charts.
+   * Under both of the panel's blocks: what the counts were checked against, and on how little.
+   * Site words kept as written.
    */
-  "panel.heading": string;
-  /** Param: {level}, the number on the panel's image, shown as data and never interpreted. */
-  "panel.level": string;
-  /** What the counts were checked against, and on how little. Site words kept as written. */
   "panel.footnote": string;
-  /** The score-rank ladder, under the panel heading beside the crowns. */
+  /** The heading of the panel's score-rank block, the first of its two. */
   "panel.ranks": string;
-  /** Param: {tier}, a tier's kanji as the rank icons show it: 粋, 雅 or 極. */
-  "panel.tierTotal": string;
-  /** Param: {tier}, the lowest tier the total counts (雅); its ranks and all above added up. */
-  "panel.tierOrBetter": string;
+  /**
+   * A count on the panel, secondary to its share: read out after the percent. Params: {count}, and
+   * {total}, the sum of its block, both already formatted.
+   */
+  "panel.countOf": string;
+  /** The same count, named, as the title of its legend item and its part of the bar. Adds {name}. */
+  "panel.countTitle": string;
+  /**
+   * Names, for screen readers, Hiroba's own score panel at the top of the Overview: its art with the
+   * counts written over it. It has no heading to see, as on Hiroba.
+   */
+  "panel.art": string;
   "medal.heading": string;
   /** Param: {count}, the medals collected this season. */
   "medal.count": string;
@@ -94,11 +149,16 @@ export interface Messages {
   /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
   "failure.detail": string;
   "platform.unsupported": string;
-  /** The identity card's button that opens the costume editor. */
+  /** The name of the My Don portrait where a click on it opens the costume editor, and its tooltip. */
   "costume.open": string;
   /**
-   * Under that button, disabled, when this run may not change the costume: why. True on every shell
-   * while no kind is verified; say it again once one is, since Android enables none either way.
+   * The same portrait's description on a touch-first screen, where a finger opens the editor by a
+   * long-press and a tap does nothing: say to long-press.
+   */
+  "costume.openByLongPress": string;
+  /**
+   * The portrait's tooltip, and its description, when this run may not change the costume: why. True
+   * on every shell while no kind is verified; say it again once one is, since Android enables none.
    */
   "costume.notOpen": string;
   /** The editor's heading: the site's own word, きせかえ. */
@@ -131,6 +191,21 @@ export interface Messages {
   "costume.id": string;
   /** Empties a slot: the site's own button, はずす. */
   "costume.remove": string;
+  /**
+   * An item's tile in the thumbnail grid, for a screen reader: its slot and its number. Params:
+   * {part} (a costume.part text) and {id}.
+   */
+  "costume.item.label": string;
+  /**
+   * Under the thumbnail grid, when some of its pictures did not come. Neutral: each such tile shows
+   * its number instead, and the editor works as before. Param: {count}, how many did not come.
+   */
+  "costume.thumbnails.unavailable": string;
+  /** Param: {code}, why the first of them did not come, such as costumeItem=notPng; never a URL. */
+  "costume.thumbnails.code": string;
+  /** The arrows above and below the thumbnail grid, as Hiroba's ▲ and ▼, for a screen reader. */
+  "costume.scroll.up": string;
+  "costume.scroll.down": string;
   /** Shown while a きぐるみ is picked: the four pieces come off with it. */
   "costume.kigurumiWarning": string;
   "costume.changesHeading": string;

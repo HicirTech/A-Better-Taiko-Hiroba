@@ -28,6 +28,7 @@ const mockEnv = real
   : {
       ABTH_DEV_HIROBA_ORIGIN: "http://hiroba.127.0.0.1.sslip.io:8807",
       ABTH_DEV_IDP_HOST: "id.127.0.0.1.sslip.io:8808",
+      ABTH_DEV_IMG_ORIGIN: "http://img.127.0.0.1.sslip.io:8807",
       ABTH_DEV_USER_DATA: join(root, "out", "dev-user-data"),
     };
 
