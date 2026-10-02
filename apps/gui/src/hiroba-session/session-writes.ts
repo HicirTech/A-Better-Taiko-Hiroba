@@ -119,8 +119,9 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
  * Every undo slot read or written is the signed-in player's own, by taiko number: another
  * player's record or pending write, left on this device, is theirs, and nothing here touches it.
  *
- * Nothing here queues: the shell runs each verb that asks Hiroba something in its queue, so one
- * write is never inside another and no read lands between a write's requests.
+ * Nothing here queues: the shell puts each verb that asks Hiroba something in its queue
+ * (`queuePort`), so one write is never inside another and no read lands between a write's
+ * requests.
  */
 export function createSessionWrites(options: SessionWritesOptions): SessionWrites {
   const { undoStore } = options;

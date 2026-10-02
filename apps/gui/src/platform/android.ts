@@ -8,7 +8,6 @@ import {
 
 import {
   ANDROID_PICTURE_LIMITS,
-  BUSY_OUTCOME,
   createHirobaQueue,
   createMemoryPictureStore,
   createPictureReader,
@@ -21,6 +20,7 @@ import {
   offeredOf,
   type PictureSources,
   previewCostume,
+  queuePort,
   readOwnProfile,
   sessionEnded,
   signInStep,
@@ -120,12 +120,12 @@ const localStorageFlag: SignedInFlag = {
  * clearAllCookies.
  *
  * Every verb that asks Hiroba something runs one at a time, in the order asked, through the same
- * queue the desktop uses: a picture never goes out beside a read, and two reads never overlap. A
- * write is one turn of it, all its requests: no read and no picture goes out between them. The
- * writes are the desktop's own verbs (`createSessionWrites`) over Android's transport and an undo
- * store in IndexedDB, with the cookie store written to disk after each. Nothing here is an IPC
- * boundary, so the port is wrapped to check every call's arguments, as the desktop's main process
- * does for the window.
+ * queue the desktop uses, which `queuePort` puts each verb in: a picture never goes out beside a
+ * read, and two reads never overlap. A write is one turn of it, all its requests: no read and no
+ * picture goes out between them. The writes are the desktop's own verbs (`createSessionWrites`)
+ * over Android's transport and an undo store in IndexedDB, with the cookie store written to disk
+ * after each. Nothing here is an IPC boundary, so the port is wrapped to check every call's
+ * arguments, as the desktop's main process does for the window.
  *
  * Hiroba's pictures come through the same reader as on the desktop, kept in the page's IndexedDB
  * across launches and sign-outs, each fetched once. What that reader needs to know stays in this
@@ -139,7 +139,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
   const queue = createHirobaQueue();
-  const { oneAtATime, oneWriteAtATime } = queue;
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
   let sources: PictureSources | null = null;
@@ -179,7 +178,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     costumeChanged: () => pictures.costumeChanged(),
   });
 
-  return checkedPort({
+  const port = queuePort(queue, {
     async isSignedIn() {
       return signedIn;
     },
@@ -242,7 +241,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await InAppBrowser.close().catch(() => undefined);
     },
 
-    readProfile: oneAtATime(async () => {
+    readProfile: async () => {
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
@@ -271,49 +270,49 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         nickname: view.nickname,
       });
       return ok(read.value.view);
-    }),
+    },
 
     async signOut() {
       await forget();
     },
 
     // The items it offers are the only ones whose thumbnail the window may ask for next.
-    openCostumeEditor: oneAtATime(
-      flushed(async () => {
-        const read = await writes.openCostumeEditor();
-        if (read.ok) {
-          offered = offeredOf(read.value);
-        }
-        return read;
-      }),
-    ),
+    openCostumeEditor: flushed(async () => {
+      const read = await writes.openCostumeEditor();
+      if (read.ok) {
+        offered = offeredOf(read.value);
+      }
+      return read;
+    }),
 
-    openTitleEditor: oneAtATime(flushed(writes.openTitleEditor)),
+    openTitleEditor: flushed(writes.openTitleEditor),
 
     // A read that changes nothing, allowed here as on the desktop. Its failure forgets nothing: the
     // next read of a page says whether the session is over.
-    previewCostume: oneAtATime(async (set: CostumeSet) => {
+    previewCostume: async (set: CostumeSet) => {
       if (!signedIn) {
         return err({ code: "preview=notSignedIn" });
       }
       return previewCostume(transport, endpoints, set);
-    }),
+    },
 
     // A read like the preview, refused unsent while signed out; its fetch waits in the queue.
     readPicture: (want) => pictures.read(want),
 
-    changeCostume: oneWriteAtATime(flushed(writes.changeCostume), BUSY_OUTCOME),
+    changeCostume: flushed(writes.changeCostume),
 
-    changeTitle: oneWriteAtATime(flushed(writes.changeTitle), BUSY_OUTCOME),
+    changeTitle: flushed(writes.changeTitle),
 
-    changeName: oneWriteAtATime(flushed(writes.changeName), BUSY_OUTCOME),
+    changeName: flushed(writes.changeName),
 
     // Reads the undo store alone and asks Hiroba nothing: not in the queue.
     pendingUndo: writes.pendingUndo,
 
-    // The queue wraps the verb for every kind at once; the port types its outcome by the kind asked.
-    undo: oneWriteAtATime(flushed(writes.undo), BUSY_OUTCOME) as HirobaSessionPort["undo"],
+    // The port types an undo's outcome by the kind asked; `flushed` hands the one it is given on.
+    undo: flushed(writes.undo) as HirobaSessionPort["undo"],
   });
+
+  return checkedPort(port);
 }
 
 /**

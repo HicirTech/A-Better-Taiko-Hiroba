@@ -42,6 +42,7 @@ export {
   type TitlePlateSource,
 } from "./picture-sources";
 export { previewCostume, previewUrl } from "./preview-costume";
+export { queuePort } from "./queue-port";
 export {
   ANDROID_PICTURE_LIMITS,
   createPictureReader,

@@ -3,7 +3,6 @@ import { err, ok } from "@abth/core";
 import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
 
 import {
-  BUSY_OUTCOME,
   createHirobaQueue,
   createPictureReader,
   createSessionWrites,
@@ -14,6 +13,7 @@ import {
   offeredOf,
   type PictureSources,
   previewCostume,
+  queuePort,
   readOwnProfile,
   sessionEnded,
 } from "../src/hiroba-session";
@@ -126,12 +126,11 @@ const readTransport =
     : transport;
 
 /**
- * Every verb that asks Hiroba something runs one at a time: a read never lands between a write's
- * posts and its read-back, and two writes never interleave. A write asked for while another is
- * queued or running answers `busy` and sends nothing.
+ * Every verb that asks Hiroba something runs one at a time, as `queuePort` below puts each in it: a
+ * read never lands between a write's posts and its read-back, and two writes never interleave. A
+ * write asked for while another is queued or running answers `busy` and sends nothing.
  */
 const queue = createHirobaQueue();
-const { oneAtATime, oneWriteAtATime } = queue;
 
 /**
  * Hiroba's pictures for the window, kept on disk in the app's data folder across launches and
@@ -189,7 +188,7 @@ app.whenReady().then(async () => {
     costumeChanged: () => pictures.costumeChanged(),
   });
 
-  const port: HirobaSessionPort = {
+  const port = queuePort(queue, {
     async isSignedIn() {
       return sessionCookie !== null;
     },
@@ -211,7 +210,7 @@ app.whenReady().then(async () => {
     async cancelSignIn() {
       signInAttempt?.cancel();
     },
-    readProfile: oneAtATime(async () => {
+    readProfile: async () => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
@@ -237,37 +236,35 @@ app.whenReady().then(async () => {
         nickname: view.nickname,
       });
       return ok(read.value.view);
-    }),
+    },
     async signOut() {
       setSession(null);
     },
     // The items it offers are the only ones whose thumbnail the window may ask for next.
-    openCostumeEditor: oneAtATime(async () => {
+    openCostumeEditor: async () => {
       const read = await writes.openCostumeEditor();
       if (read.ok) {
         offered = offeredOf(read.value);
       }
       return read;
-    }),
-    openTitleEditor: oneAtATime(writes.openTitleEditor),
-    // A read that changes nothing, so no write gate: in the queue like every request to Hiroba, so
-    // it never lands between a write's posts and its read-back. Its failure leaves the session be:
-    // the next read of a page says whether it is over. Kept as its latest copy alone when reads are
-    // saved for debugging (save-reads.ts).
-    previewCostume: oneAtATime(async (set: CostumeSet) => {
+    },
+    openTitleEditor: writes.openTitleEditor,
+    // A read that changes nothing, so any signed-in window may ask it. Its failure leaves the
+    // session be: the next read of a page says whether it is over. Kept as its latest copy alone
+    // when reads are saved for debugging (save-reads.ts).
+    previewCostume: async (set: CostumeSet) => {
       if (sessionCookie === null) {
         return err({ code: "preview=notSignedIn" });
       }
       return previewCostume(readTransport, endpoints, set);
-    }),
+    },
     readPicture: (want) => pictures.read(want),
-    changeCostume: oneWriteAtATime(writes.changeCostume, BUSY_OUTCOME),
-    changeTitle: oneWriteAtATime(writes.changeTitle, BUSY_OUTCOME),
-    changeName: oneWriteAtATime(writes.changeName, BUSY_OUTCOME),
+    changeCostume: writes.changeCostume,
+    changeTitle: writes.changeTitle,
+    changeName: writes.changeName,
     pendingUndo: writes.pendingUndo,
-    // The queue wraps the verb for every kind at once; the port types its outcome by the kind asked.
-    undo: oneWriteAtATime(writes.undo, BUSY_OUTCOME) as HirobaSessionPort["undo"],
-  };
+    undo: writes.undo,
+  });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.
   const originOf = (raw: string) => {
