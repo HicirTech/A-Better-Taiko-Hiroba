@@ -239,6 +239,44 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
   "name.closed": inEveryLanguage(["今はドンだーネームは変更できないドン！"]),
 };
 
+/**
+ * The messages that keep Japanese in every language: Hiroba's own warning, and the sentences of its
+ * own that a message quotes. Everything else is in the language of its catalog.
+ */
+const KEEPS_JAPANESE: readonly MessageKey[] = [
+  "name.siteWarning",
+  "name.faqRule",
+  "name.closed",
+  "write.needsConfirmation",
+  "write.title.needsConfirmation",
+];
+
+/** A hiragana or a katakana letter. */
+const KANA = /[\p{Script=Hiragana}\p{Script=Katakana}]/u;
+
+/** Forms that are Simplified Chinese or Japanese only: 繁體中文 has 雙打 and 粹, not 双打 and 粋. */
+const NOT_TRADITIONAL =
+  /[双粋称号换装级极达银铜连续读写显设网络应储变计页间头体妆脸颜让为这们个来时会说请编辑错误务启动关闭图帮载导览态据决备选择验证订阅广场过还进]/u;
+
+describe.each<Locale>(["en", "zh-Hans", "zh-Hant"])("the %s catalog's language", (locale) => {
+  const { t } = createTranslator(locale);
+
+  test("is Japanese only where Hiroba's own words are", () => {
+    const withKana = (Object.keys(en) as MessageKey[]).filter((key) => KANA.test(t(key)));
+    expect(withKana.sort()).toEqual([...KEEPS_JAPANESE].sort());
+  });
+});
+
+describe("the zh-Hant catalog", () => {
+  test("holds no Simplified or Japanese form of a character", () => {
+    const { t } = createTranslator("zh-Hant");
+    const offending = (Object.keys(en) as MessageKey[]).filter(
+      (key) => !KEEPS_JAPANESE.includes(key) && NOT_TRADITIONAL.test(t(key)),
+    );
+    expect(offending).toEqual([]);
+  });
+});
+
 describe.each([...LOCALES])("the %s catalog", (locale) => {
   const { t } = createTranslator(locale);
   const keys = Object.keys(en) as MessageKey[];
