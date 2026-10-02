@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { type CostumeSet, EMPTY_UNDO_SLOT, type UndoSlot } from "@abth/core";
 
 import { createUndoStore } from "../electron/undo-store";
+import { OTHER, PLAYER, pendingOf, recordOf, SLOT } from "./undo-fixtures";
 
 const folders: string[] = [];
 afterEach(() => {
@@ -19,34 +20,6 @@ function storePath(): string {
   folders.push(folder);
   return join(folder, "undo.json");
 }
-
-const PLAYER = "000000000000";
-const OTHER = "111111111111";
-const SET: CostumeSet = {
-  colorBody: 12,
-  colorLimb: 12,
-  colorFace: 5,
-  costume1: 0,
-  costume2: 21,
-  costume3: 68,
-  costume4: 37,
-  costume5: 140,
-};
-const recordOf = (taikoNo: string) => ({
-  taikoNo,
-  before: SET,
-  after: { ...SET, colorFace: 3 },
-  at: "2026-09-27T03:00:00.000Z",
-  status: "current" as const,
-});
-const pendingOf = (taikoNo: string) => ({
-  taikoNo,
-  before: SET,
-  expectedAfter: { ...SET, colorFace: 9 },
-  at: "2026-09-27T03:00:00.000Z",
-  purpose: "change" as const,
-});
-const SLOT: UndoSlot<CostumeSet> = { record: recordOf(PLAYER), pending: null };
 
 describe("createUndoStore", () => {
   test("reads an empty slot when nothing was kept", async () => {

@@ -25,7 +25,8 @@ import {
   signInStep,
 } from "../hiroba-session";
 import type { CostumeSet, HirobaSessionPort, SignInOutcome } from "../session-port";
-import { createIndexedDbPictureStore, type PictureDatabaseFactory } from "./android-picture-store";
+import type { DatabaseFactory } from "./android-indexeddb";
+import { createIndexedDbPictureStore } from "./android-picture-store";
 import { createAndroidTransport } from "./android-transport";
 
 // Development only (the Vite dev server behind live reload): a local stand-in for Hiroba and the ID
@@ -52,7 +53,7 @@ export interface AndroidPortOptions {
    * Where Hiroba's pictures are kept across launches: the page's IndexedDB. Without one, they are
    * kept in memory for the run.
    */
-  readonly indexedDb?: PictureDatabaseFactory;
+  readonly indexedDb?: DatabaseFactory;
 }
 
 /** One remembered yes or no. */

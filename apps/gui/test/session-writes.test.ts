@@ -1,7 +1,8 @@
 /**
  * The shells' shared write verbs against the mock's own costume editor (scripts/mock-costume.ts), in
- * process, with the undo slots on disk in a temporary folder: the gate, the undo record's life, and
- * the session dropped when Hiroba ends it.
+ * process, once over each place a shell keeps its undo slots (a file in a temporary folder, as the
+ * desktop does, and a stand-in for IndexedDB, as Android does): the gate, the undo record's life,
+ * and the session dropped when Hiroba ends it.
  */
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -12,7 +13,9 @@ import { type CostumeSet, ok, type Transport } from "@abth/core";
 import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, INITIAL_COSTUME, type MockSession } from "../scripts/mock-costume";
 import { createSessionWrites, type UndoStore, type WriteGateInput } from "../src/hiroba-session";
+import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
 import type { WriteKind } from "../src/session-port";
+import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const ORIGIN = "https://hiroba.test";
 const ENDPOINTS = {
@@ -86,15 +89,40 @@ afterEach(() => {
   }
 });
 
+/** An undo store, and a way to read everything it holds as text. */
+interface KeptSlots {
+  readonly store: UndoStore;
+  readonly text: () => string;
+}
+
+/** The two places a shell keeps undo slots: a file on the desktop, a database on Android. */
+const STORES = {
+  file(): KeptSlots {
+    const folder = mkdtempSync(join(tmpdir(), "abth-writes-"));
+    folders.push(folder);
+    const path = join(folder, "undo.json");
+    return { store: createUndoStore(path), text: () => readFileSync(path, "utf8") };
+  },
+  database(): KeptSlots {
+    const indexedDb = createFakeIndexedDb();
+    return {
+      store: createIndexedDbUndoStore(indexedDb.factory),
+      text: () => JSON.stringify([...(indexedDb.tables.get("slots") ?? [])]),
+    };
+  },
+};
+type StoreName = keyof typeof STORES;
+const STORE_NAMES: StoreName[] = ["file", "database"];
+
+interface SetUpOptions {
+  gate?: WriteGateInput;
+  verified?: readonly WriteKind[];
+  owner?: string | null;
+  whose?: () => string | null;
+}
+
 /** The mock's editor behind a transport, and the shared writes over both. */
-function setUp(
-  options: {
-    gate?: WriteGateInput;
-    verified?: readonly WriteKind[];
-    owner?: string | null;
-    whose?: () => string | null;
-  } = {},
-) {
+function setUpOver(storeName: StoreName, options: SetUpOptions) {
   const editor = createCostumeEditor();
   const session: MockSession = { cardChosen: true };
   const hiroba = {
@@ -148,9 +176,7 @@ function setUp(
       );
     },
   };
-  const folder = mkdtempSync(join(tmpdir(), "abth-writes-"));
-  folders.push(folder);
-  const undoPath = join(folder, "undo.json");
+  const kept = STORES[storeName]();
   const faults: StoreFaults = { load: false, savesAllowed: null };
   let signedIn = true;
   const writes = createSessionWrites({
@@ -159,7 +185,7 @@ function setUp(
     gate: options.gate ?? OPEN,
     ...(options.verified && { verified: options.verified }),
     now: NOON_JST,
-    undoStore: failing(createUndoStore(undoPath), faults),
+    undoStore: failing(kept.store, faults),
     signedIn: () => signedIn,
     endSession: () => {
       signedIn = false;
@@ -179,10 +205,12 @@ function setUp(
     hiroba.ended = false;
     signedIn = true;
   };
-  return { editor, hiroba, writes, saved, setElsewhere, signInAgain, undoPath, faults };
+  return { editor, hiroba, writes, saved, setElsewhere, signInAgain, keptText: kept.text, faults };
 }
 
-describe("createSessionWrites", () => {
+describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeName) => {
+  const setUp = (options: SetUpOptions = {}) => setUpOver(storeName, options);
+
   test("with the gate shut, enables nothing, offers no undo and sends nothing", async () => {
     const { hiroba, writes } = setUp({ gate: { ...OPEN, isPackaged: true } });
     expect(await writes.enabledWrites()).toEqual([]);
@@ -220,8 +248,8 @@ describe("createSessionWrites", () => {
     expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
   });
 
-  test("a change leaves an undo on disk, and the undo puts the whole set back", async () => {
-    const { editor, hiroba, writes, saved, undoPath } = setUp();
+  test("a change leaves an undo kept, and the undo puts the whole set back", async () => {
+    const { editor, hiroba, writes, saved, keptText } = setUp();
     const suited = { ...START, costume1: 36, costume2: 0, costume3: 0, costume4: 0, costume5: 0 };
     expect((await writes.changeCostume({ expected: START, target: suited })).kind).toBe("applied");
     expect(await saved()).toEqual(suited);
@@ -229,8 +257,8 @@ describe("createSessionWrites", () => {
       { kind: "costume", at: NOON_JST().toISOString(), before: START, after: suited },
     ]);
     const tickets = (await editor.hook("/__tickets", new URLSearchParams())?.json()) as string[];
-    const onDisk = readFileSync(undoPath, "utf8");
-    expect(tickets.some((ticket) => onDisk.includes(ticket))).toBe(false);
+    const kept = keptText();
+    expect(tickets.some((ticket) => kept.includes(ticket))).toBe(false);
 
     hiroba.log.length = 0;
     expect((await writes.undo("costume")).kind).toBe("applied");

@@ -1,17 +1,18 @@
 /**
- * A stand-in for the page's IndexedDB, as much of it as the Android picture store uses: open with
- * one upgrade, and get, put and clear in transactions that complete once their requests have,
- * each answered on a later turn as the real one does. Values are copied in and out, as structured
- * clone copies them. Its tables outlive a database opened on them, so opening it again is a
- * relaunch.
+ * A stand-in for the page's IndexedDB, as much of it as Android's stores use: open with one upgrade
+ * for each database, and get, put, delete and clear in transactions that complete once their
+ * requests have, each answered on a later turn as the real one does. Values are copied in and out,
+ * as structured clone copies them. Its tables outlive a database opened on them, so opening it
+ * again is a relaunch.
  */
 import type {
+  Database,
+  DatabaseFactory,
   DatabaseHandler,
   DatabaseTable,
   DatabaseTransaction,
-  PictureDatabase,
-  PictureDatabaseFactory,
-} from "../src/platform/android-picture-store";
+  TransactionOptions,
+} from "../src/platform/android-indexeddb";
 
 interface FakeRequest {
   result: unknown;
@@ -24,18 +25,28 @@ interface FakeTransaction extends DatabaseTransaction {
   error: unknown;
 }
 
+/** A transaction as it was asked for: which tables, in which mode, and how durable. */
+export interface AskedTransaction {
+  readonly names: readonly string[];
+  readonly mode: "readonly" | "readwrite";
+  readonly durability: TransactionOptions["durability"];
+}
+
 export interface FakeIndexedDb {
-  readonly factory: PictureDatabaseFactory;
+  readonly factory: DatabaseFactory;
   /** Each table's records, by key: what a store left for the next opening. */
   readonly tables: Map<string, Map<string, unknown>>;
   /** Set to make every opening fail from now on, or every write. */
   readonly faults: { open: boolean; writes: boolean };
+  /** Every transaction asked for, in order. */
+  readonly transactions: AskedTransaction[];
 }
 
 export function createFakeIndexedDb(): FakeIndexedDb {
   const tables = new Map<string, Map<string, unknown>>();
   const faults = { open: false, writes: false };
-  let created = false;
+  const transactions: AskedTransaction[] = [];
+  const created = new Set<string>();
 
   const newTransaction = (): DatabaseTransaction => {
     let pending = 0;
@@ -66,6 +77,13 @@ export function createFakeIndexedDb(): FakeIndexedDb {
       });
       return asked;
     };
+    const written = (change: () => void) =>
+      request(() => {
+        if (faults.writes) {
+          throw new Error("QuotaExceededError");
+        }
+        change();
+      });
     const tableOf = (name: string): DatabaseTable => {
       const table = tables.get(name);
       if (table === undefined) {
@@ -73,13 +91,8 @@ export function createFakeIndexedDb(): FakeIndexedDb {
       }
       return {
         get: (key) => request(() => structuredClone(table.get(key))),
-        put: (value, key) =>
-          request(() => {
-            if (faults.writes) {
-              throw new Error("QuotaExceededError");
-            }
-            table.set(key, structuredClone(value));
-          }),
+        put: (value, key) => written(() => table.set(key, structuredClone(value))),
+        delete: (key) => written(() => table.delete(key)),
         clear: () => request(() => table.clear()),
       };
     };
@@ -93,13 +106,20 @@ export function createFakeIndexedDb(): FakeIndexedDb {
     return transaction;
   };
 
-  const database: PictureDatabase = {
+  const database: Database = {
     createObjectStore: (name) => tables.set(name, new Map()),
-    transaction: () => newTransaction(),
+    transaction: (names, mode, options) => {
+      transactions.push({
+        names: typeof names === "string" ? [names] : names,
+        mode,
+        durability: options?.durability,
+      });
+      return newTransaction();
+    },
   };
 
-  const factory: PictureDatabaseFactory = {
-    open: () => {
+  const factory: DatabaseFactory = {
+    open: (name) => {
       const asked = {
         result: database,
         error: null as unknown,
@@ -114,8 +134,8 @@ export function createFakeIndexedDb(): FakeIndexedDb {
           asked.onerror?.();
           return;
         }
-        if (!created) {
-          created = true;
+        if (!created.has(name)) {
+          created.add(name);
           asked.onupgradeneeded?.();
         }
         asked.onsuccess?.();
@@ -124,5 +144,5 @@ export function createFakeIndexedDb(): FakeIndexedDb {
     },
   };
 
-  return { factory, tables, faults };
+  return { factory, tables, faults, transactions };
 }

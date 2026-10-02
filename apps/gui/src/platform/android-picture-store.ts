@@ -4,6 +4,13 @@ import {
   type PictureStore,
   pictureKeyPath,
 } from "../hiroba-session";
+import {
+  completed,
+  type Database,
+  type DatabaseFactory,
+  openDatabase,
+  succeeded,
+} from "./android-indexeddb";
 
 const DATABASE = "abth-pictures";
 const DATABASE_VERSION = 1;
@@ -12,46 +19,6 @@ const PICTURES = "pictures";
 /** One record, under EPOCH_KEY: the PICTURE_EPOCH the pictures were kept under. */
 const META = "meta";
 const EPOCH_KEY = "epoch";
-
-/** A handler IndexedDB calls with an event, which this store never reads. */
-export type DatabaseHandler = ((...event: never[]) => unknown) | null;
-
-/** What this store reads of a request IndexedDB answers later. */
-export interface DatabaseRequest<T> {
-  readonly result: T;
-  readonly error: unknown;
-  onsuccess: DatabaseHandler;
-  onerror: DatabaseHandler;
-}
-
-export interface DatabaseOpenRequest extends DatabaseRequest<PictureDatabase> {
-  onupgradeneeded: DatabaseHandler;
-  onblocked: DatabaseHandler;
-}
-
-export interface DatabaseTable {
-  get(key: string): DatabaseRequest<unknown>;
-  put(value: Uint8Array | string, key: string): unknown;
-  clear(): unknown;
-}
-
-export interface DatabaseTransaction {
-  readonly error: unknown;
-  oncomplete: DatabaseHandler;
-  onerror: DatabaseHandler;
-  onabort: DatabaseHandler;
-  objectStore(name: string): DatabaseTable;
-}
-
-export interface PictureDatabase {
-  createObjectStore(name: string): unknown;
-  transaction(names: string | string[], mode: "readonly" | "readwrite"): DatabaseTransaction;
-}
-
-/** What this store uses of IndexedDB: the page's `indexedDB` is one, and a test gives a stand-in. */
-export interface PictureDatabaseFactory {
-  open(name: string, version: number): DatabaseOpenRequest;
-}
 
 /**
  * Android's pictures in the app page's IndexedDB, kept across launches and sign-outs for good:
@@ -68,8 +35,8 @@ export interface PictureDatabaseFactory {
  * picture that cannot be written, past the quota say, is not kept: either way it is fetched again,
  * and nothing throws.
  */
-export function createIndexedDbPictureStore(factory: PictureDatabaseFactory): PictureStore {
-  const opened: Promise<PictureStore> = openDatabase(factory).then(databaseStore, () =>
+export function createIndexedDbPictureStore(factory: DatabaseFactory): PictureStore {
+  const opened: Promise<PictureStore> = openPictureDatabase(factory).then(databaseStore, () =>
     createMemoryPictureStore(),
   );
   return {
@@ -78,7 +45,7 @@ export function createIndexedDbPictureStore(factory: PictureDatabaseFactory): Pi
   };
 }
 
-function databaseStore(database: PictureDatabase): PictureStore {
+function databaseStore(database: Database): PictureStore {
   return {
     async get(key) {
       try {
@@ -102,24 +69,17 @@ function databaseStore(database: PictureDatabase): PictureStore {
   };
 }
 
-async function openDatabase(factory: PictureDatabaseFactory): Promise<PictureDatabase> {
-  const database = await new Promise<PictureDatabase>((resolve, reject) => {
-    const request = factory.open(DATABASE, DATABASE_VERSION);
-    request.onupgradeneeded = () => {
-      request.result.createObjectStore(PICTURES);
-      request.result.createObjectStore(META);
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-    // An older version still open elsewhere: not waited for, as it may never close.
-    request.onblocked = () => reject(new Error("blocked"));
+async function openPictureDatabase(factory: DatabaseFactory): Promise<Database> {
+  const database = await openDatabase(factory, DATABASE, DATABASE_VERSION, (created) => {
+    created.createObjectStore(PICTURES);
+    created.createObjectStore(META);
   });
   await dropOtherEpochs(database);
   return database;
 }
 
 /** Clears what an earlier PICTURE_EPOCH kept: none of it is asked for again. */
-function dropOtherEpochs(database: PictureDatabase): Promise<void> {
+function dropOtherEpochs(database: Database): Promise<void> {
   const transaction = database.transaction([PICTURES, META], "readwrite");
   const meta = transaction.objectStore(META);
   const epoch = meta.get(EPOCH_KEY);
@@ -130,19 +90,4 @@ function dropOtherEpochs(database: PictureDatabase): Promise<void> {
     }
   };
   return completed(transaction);
-}
-
-function succeeded<T>(request: DatabaseRequest<T>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  });
-}
-
-function completed(transaction: DatabaseTransaction): Promise<void> {
-  return new Promise((resolve, reject) => {
-    transaction.oncomplete = () => resolve();
-    transaction.onerror = () => reject(transaction.error);
-    transaction.onabort = () => reject(transaction.error);
-  });
 }
