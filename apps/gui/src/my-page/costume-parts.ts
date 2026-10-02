@@ -1,6 +1,6 @@
 import type { MessageKey, Translator } from "@abth/i18n";
 
-import type { CostumeSet } from "../session-port";
+import type { CostumeSet, CostumeSlot } from "../session-port";
 
 /** The three colours, in the order the site's tabs give them: かお, どう, てあし. */
 export const COLOUR_PARTS = ["colorFace", "colorBody", "colorLimb"] as const;
@@ -27,6 +27,11 @@ export const PART_LABEL = {
 
 export function isCostumePart(field: string): field is CostumePart {
   return Object.hasOwn(PART_LABEL, field);
+}
+
+/** The slot a piece is in, as Hiroba numbers it: 1 for the きぐるみ to 5 for the ぷちキャラ. */
+export function slotOf(part: SlotPart): CostumeSlot {
+  return (SLOT_PARTS.indexOf(part) + 1) as CostumeSlot;
 }
 
 /** A value as the editor names it: its number, or はずす for an empty slot. */
