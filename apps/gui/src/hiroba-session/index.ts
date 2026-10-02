@@ -12,6 +12,12 @@ export {
   SESSION_COOKIE_NAME,
 } from "./endpoints";
 export { type CostumeWriteOptions, changeCostume } from "./change-costume";
+export {
+  encodeForm,
+  FORM_CONTENT_TYPE,
+  POST_FOLLOWED_AS_GET,
+  resolveRedirect,
+} from "./form-post";
 export { createHirobaQueue, type HirobaQueue } from "./hiroba-queue";
 export { openCostumeEditor } from "./open-costume-editor";
 export {
