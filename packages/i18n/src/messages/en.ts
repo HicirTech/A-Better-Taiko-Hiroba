@@ -188,7 +188,7 @@ export const en: Messages = {
   "write.crossUnknown":
     "Saved, but your title could not be read again to check it. Look at it on your page.",
   "write.appliedNotSynced":
-    "Hiroba saved it but couldn't reach the game server. Set it again to pass it on.",
+    "Hiroba saved it but couldn't reach the game server. This app cannot send it again; set it again on Hiroba's own page to pass it on.",
   "write.notApplied.unchanged":
     "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the costume as it was.",
   "write.notApplied.refused": "Hiroba refused the change (code {code}). Nothing changed.",

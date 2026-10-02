@@ -223,8 +223,9 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
 const COSTUME = inEach(["costume"], ["きせかえ"], ["换装"], ["換裝"]);
 
 /**
- * Words a message holds, as each language writes them: the game's terms a sentence names, and the
- * sentences of Hiroba's own that it quotes, which every language quotes as the site writes them.
+ * Words a message holds, as each language writes them: the game's terms a sentence names, the
+ * sentences of Hiroba's own that it quotes, which every language quotes as the site writes them, and
+ * where a sentence sends the user for what the app cannot do.
  */
 const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>>>> = {
   "panel.footnote": inEach(
@@ -253,6 +254,15 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
   "write.nothingToChange": COSTUME,
   "write.title.crossChanged": COSTUME,
   "write.title.crossUnknown": COSTUME,
+  // Saved, but the game server was not told: the app cannot send the same set a second time (a set
+  // that is already the target is "nothing to change"), so it says so and sends the user to Hiroba's
+  // own page, which asks the same of them.
+  "write.appliedNotSynced": inEach(
+    ["This app cannot send it again", "on Hiroba's own page"],
+    ["このアプリからは再送信できません", "ひろばのページでもう一度設定"],
+    ["本应用无法重新发送", "广场自己的页面上再设置一次"],
+    ["本應用程式無法重新傳送", "廣場自己的頁面上再設定一次"],
+  ),
   "medal.none": inEach(["Don Medal"], ["どんメダル"], ["咚币"], ["咚幣"]),
   "medal.unrecognised": inEach(["Don Medal"], ["どんメダル"], ["咚币"], ["咚幣"]),
   "costume.kigurumiWarning": inEach(

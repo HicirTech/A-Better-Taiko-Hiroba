@@ -175,7 +175,8 @@ export const zhHant: Messages = {
   "write.undone": "已復原。廣場的換裝已恢復原樣。",
   "write.siteNote": "廣場回傳了代碼 {code}，但讀回結果顯示變更已生效。",
   "write.crossUnknown": "已儲存，但無法再次讀取稱號進行核對。請到你的個人頁面查看。",
-  "write.appliedNotSynced": "廣場已儲存，但未能同步到遊戲伺服器。請再設定一次以同步。",
+  "write.appliedNotSynced":
+    "廣場已儲存，但未能同步到遊戲伺服器。本應用程式無法重新傳送；請在廣場自己的頁面上再設定一次以同步。",
   "write.notApplied.unchanged": "廣場回覆已儲存，但讀回的換裝仍是原樣。沒有任何變化。",
   "write.notApplied.refused": "廣場拒絕了變更（代碼 {code}）。沒有任何變化。",
   "write.notApplied.stale": "編輯器的內容已過期。請先重新讀取，再試一次。沒有任何變化。",

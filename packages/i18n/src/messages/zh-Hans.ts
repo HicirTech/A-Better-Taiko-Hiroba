@@ -176,7 +176,8 @@ export const zhHans: Messages = {
   "write.undone": "已撤销。广场的换装已恢复原样。",
   "write.siteNote": "广场返回了代码 {code}，但读回结果显示更改已生效。",
   "write.crossUnknown": "已保存，但无法再次读取称号进行核对。请到你的个人页面查看。",
-  "write.appliedNotSynced": "广场已保存，但未能同步到游戏服务器。请再设置一次以同步。",
+  "write.appliedNotSynced":
+    "广场已保存，但未能同步到游戏服务器。本应用无法重新发送；请在广场自己的页面上再设置一次以同步。",
   "write.notApplied.unchanged": "广场回复已保存，但读回的换装仍是原样。没有任何变化。",
   "write.notApplied.refused": "广场拒绝了更改（代码 {code}）。没有任何变化。",
   "write.notApplied.stale": "编辑器的内容已过期。请先重新读取，再试一次。没有任何变化。",
