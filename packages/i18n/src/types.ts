@@ -131,7 +131,10 @@ export interface Messages {
    * Site words kept as written.
    */
   "panel.footnote": string;
-  /** The heading of the panel's score-rank block, the first of its two. */
+  /**
+   * The heading of the panel's score-rank block, the first of its two. Not 评级 / 評級 in Chinese:
+   * taiko.wiki uses them for the skill Rating, and Bandai Namco's site writes 成績排名.
+   */
   "panel.ranks": string;
   /**
    * A count on the panel, secondary to its share: read out after the percent. Params: {count}, and

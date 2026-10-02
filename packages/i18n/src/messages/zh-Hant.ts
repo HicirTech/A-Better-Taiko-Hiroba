@@ -59,7 +59,7 @@ export const zhHant: Messages = {
   "crowns.gold": "金",
   "crowns.donderful": "ドンダフル",
   "panel.footnote": "已用一個預設設定的帳號核對：おに＋おに裏，不含双打。",
-  "panel.ranks": "分數評級",
+  "panel.ranks": "成績排名",
   "panel.countOf": "{count}（共 {total}）",
   "panel.countTitle": "{name}：{count}（共 {total}）",
   "panel.art": "成績面板",

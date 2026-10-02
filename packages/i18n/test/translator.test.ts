@@ -133,6 +133,12 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
 
 /** Messages that are one game term, as each language writes it: the text is the term and no more. */
 const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
+  "panel.ranks": {
+    en: "Score ranks",
+    ja: "スコアランク",
+    "zh-Hans": "成绩排名",
+    "zh-Hant": "成績排名",
+  },
   "scoreRank.2": { en: "White Iki", ja: "白粋", "zh-Hans": "白粹", "zh-Hant": "白粹" },
   "scoreRank.3": { en: "Bronze Iki", ja: "銅粋", "zh-Hans": "铜粹", "zh-Hant": "銅粹" },
   "scoreRank.4": { en: "Silver Iki", ja: "銀粋", "zh-Hans": "银粹", "zh-Hant": "銀粹" },

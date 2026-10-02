@@ -60,7 +60,7 @@ export const zhHans: Messages = {
   "crowns.gold": "金",
   "crowns.donderful": "ドンダフル",
   "panel.footnote": "已用一个默认设置的账号核对：おに＋おに裏，不含双打。",
-  "panel.ranks": "分数评级",
+  "panel.ranks": "成绩排名",
   "panel.countOf": "{count}（共 {total}）",
   "panel.countTitle": "{name}：{count}（共 {total}）",
   "panel.art": "成绩面板",
