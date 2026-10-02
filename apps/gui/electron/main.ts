@@ -3,6 +3,7 @@ import { err, ok } from "@abth/core";
 import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
 
 import {
+  BUSY_OUTCOME,
   createHirobaQueue,
   createPictureReader,
   createSessionWrites,
@@ -14,15 +15,14 @@ import {
   type PictureSources,
   previewCostume,
   readOwnProfile,
+  sessionEnded,
 } from "../src/hiroba-session";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
-  type ReadFailure,
   type SignInOutcome,
-  type WriteOutcomeView,
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createHirobaTransport } from "./hiroba-transport";
@@ -149,12 +149,6 @@ const pictures = createPictureReader({
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
-const BUSY: WriteOutcomeView = { kind: "busy" };
-
-/** A read that found the login page, or a card still to choose: the session is over. */
-const sessionEnded = (failure: ReadFailure) =>
-  failure.kind === "loggedOut" || failure.kind === "cardSelectUnfinished";
-
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -262,9 +256,9 @@ app.whenReady().then(async () => {
       return previewCostume(readTransport, endpoints, set);
     }),
     readPicture: (want) => pictures.read(want),
-    changeCostume: oneWriteAtATime(writes.changeCostume, BUSY),
+    changeCostume: oneWriteAtATime(writes.changeCostume, BUSY_OUTCOME),
     pendingUndo: writes.pendingUndo,
-    undo: oneWriteAtATime(writes.undo, BUSY),
+    undo: oneWriteAtATime(writes.undo, BUSY_OUTCOME),
   };
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

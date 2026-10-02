@@ -21,9 +21,10 @@ import {
   type PictureSources,
   previewCostume,
   readOwnProfile,
+  sessionEnded,
   signInStep,
 } from "../hiroba-session";
-import type { CostumeSet, HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
+import type { CostumeSet, HirobaSessionPort, SignInOutcome } from "../session-port";
 import { createIndexedDbPictureStore, type PictureDatabaseFactory } from "./android-picture-store";
 import { createAndroidTransport } from "./android-transport";
 
@@ -277,11 +278,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       return { kind: "notEnabled" };
     },
   };
-}
-
-/** A read that found the login page, or a card still to choose: the session is over. */
-function sessionEnded(failure: ReadFailure): boolean {
-  return failure.kind === "loggedOut" || failure.kind === "cardSelectUnfinished";
 }
 
 /**

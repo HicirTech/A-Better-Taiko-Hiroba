@@ -11,7 +11,7 @@ import { type CostumeSet, ok, type Transport } from "@abth/core";
 
 import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, INITIAL_COSTUME, type MockSession } from "../scripts/mock-costume";
-import { createSessionWrites } from "../src/hiroba-session";
+import { createSessionWrites, type UndoStore } from "../src/hiroba-session";
 
 const ORIGIN = "https://hiroba.test";
 const ENDPOINTS = {
@@ -48,6 +48,31 @@ const fromMock = (state: Record<string, number>): CostumeSet => ({
   costume5: state.costume_5 ?? -1,
 });
 const START = fromMock(INITIAL_COSTUME);
+
+/** Which calls of the undo store fail from now on, as a database that will not open or write does. */
+interface StoreFaults {
+  /** Every load rejects. */
+  load: boolean;
+  /** How many saves go through before every later one rejects; null lets them all through. */
+  savesAllowed: number | null;
+}
+
+/** The store, with the calls its faults name rejected. */
+function failing(store: UndoStore, faults: StoreFaults): UndoStore {
+  const refuse = (call: string) => Promise.reject(new Error(`The store refuses ${call}`));
+  return {
+    load: (kind, taikoNo) => (faults.load ? refuse("load") : store.load(kind, taikoNo)),
+    save: (kind, taikoNo, slot) => {
+      if (faults.savesAllowed === 0) {
+        return refuse("save");
+      }
+      if (faults.savesAllowed !== null) {
+        faults.savesAllowed -= 1;
+      }
+      return store.save(kind, taikoNo, slot);
+    },
+  };
+}
 
 const folders: string[] = [];
 afterEach(() => {
@@ -116,13 +141,14 @@ function setUp(
   const folder = mkdtempSync(join(tmpdir(), "abth-writes-"));
   folders.push(folder);
   const undoPath = join(folder, "undo.json");
+  const faults: StoreFaults = { load: false, savesAllowed: null };
   let signedIn = true;
   const writes = createSessionWrites({
     transport,
     endpoints: ENDPOINTS,
     gate: options.gate ?? OPEN,
     now: NOON_JST,
-    undoStore: createUndoStore(undoPath),
+    undoStore: failing(createUndoStore(undoPath), faults),
     signedIn: () => signedIn,
     endSession: () => {
       signedIn = false;
@@ -142,7 +168,7 @@ function setUp(
     hiroba.ended = false;
     signedIn = true;
   };
-  return { editor, hiroba, writes, saved, setElsewhere, signInAgain, undoPath };
+  return { editor, hiroba, writes, saved, setElsewhere, signInAgain, undoPath, faults };
 }
 
 describe("createSessionWrites", () => {
@@ -290,6 +316,37 @@ describe("createSessionWrites", () => {
     expect(await writes.pendingUndo()).toEqual([]);
 
     // The next editor read finds the save landed, and settles the pending write into an undo.
+    await writes.openCostumeEditor();
+    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
+  });
+
+  test("sends nothing when the undo cannot be kept, and breaks no read or offer", async () => {
+    const { hiroba, writes, faults } = setUp();
+    const change = { expected: START, target: { ...START, colorFace: 3 } };
+    faults.load = true;
+    expect(await writes.changeCostume(change)).toEqual({ kind: "undoNotSaved" });
+    faults.load = false;
+    faults.savesAllowed = 0;
+    expect(await writes.changeCostume(change)).toEqual({ kind: "undoNotSaved" });
+    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
+
+    faults.load = true;
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(await writes.undo("costume")).toEqual({ kind: "nothingToUndo" });
+    expect((await writes.openCostumeEditor()).ok).toBe(true);
+  });
+
+  test("a store that fails after the pending write is kept does not change how the write ended", async () => {
+    const { writes, faults, saved } = setUp();
+    const target = { ...START, colorFace: 3 };
+    faults.savesAllowed = 1;
+    expect((await writes.changeCostume({ expected: START, target })).kind).toBe("applied");
+    expect(await saved()).toEqual(target);
+    // The write is done, though its record could not be settled: the pending write is still kept.
+    expect(await writes.pendingUndo()).toEqual([]);
+
+    // The next editor read finds the save landed, and settles the pending write into an undo.
+    faults.savesAllowed = null;
     await writes.openCostumeEditor();
     expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
   });

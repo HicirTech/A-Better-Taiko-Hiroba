@@ -51,7 +51,9 @@ export {
   type PictureReadState,
 } from "./read-picture";
 export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
+export { sessionEnded } from "./session-ended";
 export {
+  BUSY_OUTCOME,
   createSessionWrites,
   type SessionWrites,
   type SessionWritesOptions,
