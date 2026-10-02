@@ -140,11 +140,7 @@ and after, to see that nothing else moved: a costume write reads your title on m
 requests, not four), a title write reads your costume (six, not four), and a rename reads your title
 on my page (five, not three). `LIVE_CHECKED_WRITES` in `src/hiroba-session/live-checked-writes.ts`
 lists, for each platform, the kinds that have. That list decides those two reads and nothing else:
-it opens nothing and shuts nothing. The desktop's costume is on it (two writes of the user's,
-applied and read back on 2026-09-27); Android's list is empty until the first real Android write has
-been made and recorded (see [The first real Android write](#the-first-real-android-write)), and
-neither the title nor the nickname is on either list until the first real ones have been made (see
-[The first real title and nickname writes](#the-first-real-title-and-nickname-writes)).
+it opens nothing and shuts nothing.
 
 Two variables are read by the desktop app alone. `ABTH_DEV_NOW` (an ISO time) fixes the clock the
 maintenance check uses, for tests, and only an unpackaged run takes it. `ABTH_DEBUG_SAVE_READS=1`
@@ -230,9 +226,8 @@ visit to another page or a read of your page.
   field is shut and the section says why, in Hiroba's words; when it hands none the app can read,
   the field stays open with a note. The editor read at write time decides again.
 - **Nickname, review.** The confirmation says plainly that Hiroba may not let the nickname be
-  changed back right away: choose a nickname you are happy to keep. Whether it will is not known yet (see
-  [The first real title and nickname writes](#the-first-real-title-and-nickname-writes)). The undo is
-  offered, and says Hiroba may refuse it too, leaving the nickname as it is.
+  changed back right away: choose a nickname you are happy to keep. The undo is offered, and says
+  Hiroba may refuse it too, leaving the nickname as it is.
 - **Outcomes.** They are worded for the title and the nickname apart from the costume's (Hiroba's code
   for a title it will not take, or a nickname it could not update, comes with no message, so the page
   says what it means), and Hiroba's own words, when it has some, are shown as the plain text they
@@ -462,117 +457,6 @@ and whether its token held; `/__posts?reset=1` clears it). Each row is one try; 
 | Background the app for ten seconds while a save is held (`/__hold-precheck?on=1`). | The write finishes when the app returns, or, if Android killed it, opening the Costume page settles it. |
 | Long-press the portrait (do this one on a release build first: it needs no write). | The Costume page opens, with no context menu, no selection and no odd vibration. |
 
-### The first real Android write
-
-Made by you, with your own account, in the app, on the debug APK on your tablet and your PC (your
-call, 2026-10-02). No agent presses Sign in, Save or Undo against the real site. Start with a
-colour, then a Mascot (きぐるみ) and its undo. The desktop's costume writes have been made for real; the
-Android ones have not, so until yours is recorded an Android costume write also reads your title on
-my page before and after.
-
-**Before.**
-
-- [ ] The rehearsal above passed.
-- [ ] The time is outside 05:00–07:00 JST (the app refuses inside it too).
-- [ ] Nothing else changes this costume during the test: not the desktop app, not the site (an undo stops if the set moved).
-- [ ] Build and install the debug app: `bun run android:run -- <adb serial>`. Its home-screen entry reads "A Better Taiko Hiroba (debug)".
-- [ ] Clear that app's data (Settings > Apps > the debug app > Storage), so no stand-in state is left.
-- [ ] Turn wireless debugging off, and run no `run-as` and no DevTools until the test is over (see [Signing in for real](#signing-in-for-real)).
-- [ ] Sign in, in the app. Settings shows who is signed in.
-
-**Part 1: one colour.**
-
-1. [ ] The Overview reads your page (one request). The My Don portrait shows a small edit badge.
-2. [ ] Long-press the portrait for about half a second (a tap does nothing; the menu's Costume entry goes to the same page). The Costume page opens and reads the editor (`mypage_kisekae.php`) and Hiroba's picture of the set (`imgsrc_mydon.php`). Note any Android menu or vibration.
-3. [ ] Under Colours (いろ), each of Face (かお), Torso (どう) and Limbs (てあし) outlines the colour you wear; **Changes** says "Nothing changed yet."
-4. [ ] Pick a different colour for Face only. **Changes** lists exactly one line, such as `Face: #8 → #3`. Touch nothing under Costume.
-5. [ ] **Review**, then **Save to Hiroba** (the bar at the bottom). It reads "Saving… then reading it back". The app sends six requests, once each, in this order (the tablet does not show them; the rehearsal did): `GET mypage_top.php`, `GET mypage_kisekae.php`, `POST ajax/check_ip_kisekae.php`, `POST ajax/change_mydon.php`, `GET mypage_kisekae.php`, `GET mypage_top.php`.
-6. [ ] The result is "Saved. Hiroba now shows the new costume.", in green, with **Undo last costume change** and when it was made under it. Compare with Hiroba's own site or app.
-7. [ ] **Kill test.** Before pressing Undo, swipe the app away in Recents and reopen it. It must open signed in and read your page. Open the Costume page: it reads the editor, and must offer **Undo last costume change** with the time.
-8. [ ] Press **Undo last costume change**. It reads "Undoing… then reading it back", then "Undone. Hiroba shows the costume as it was." Check all eight values on Hiroba's side.
-
-**Part 2: a Mascot and its undo.**
-
-9. [ ] On the Costume page, under Costume (きせかえ), pick a Mascot (きぐるみ) you own. The warning says it takes off Head, Body, Makeup and Mini Character (あたま, からだ, メイク, ぷちキャラ); **Changes** lists those removals.
-10. [ ] Review and save as in step 5. Hiroba shows the Mascot with the four slots empty. The picture on the page and the portrait match.
-11. [ ] **Undo last costume change.** One save restores all eight values. Check on Hiroba's side.
-12. [ ] **Read again** (the round button, or pull the page down): **Changes** says "Nothing changed yet." and the values are as they were before step 4.
-
-**If something else shows.**
-
-- "Hiroba didn't accept the app's request. Nothing was changed.": the pre-check did not answer `false`. Stop and keep the code shown.
-- "Hiroba refused the change (code 705)", with Hiroba's own words 更新に失敗しました。再度画面の読み込みを行ってください。: stop, and do not retry. On the desktop this meant the token was not from the last page read before the posts, which is fixed there. Report the codes.
-- "Couldn't read the result back" or "The app stopped before it knew how this ended": use **Read again** on the Costume page and look at the values before anything else.
-- Asked to sign in again after the kill test: report it.
-
-**Report to the session.** The outcome text and the codes on screen; the Changes lines; whether Hiroba's own screen agrees; the long-press behaviour; whether the kill test kept the session and the undo. The session records it with the other executed writes and in the wiki.
-
-**After.** Undo anything left. Sign out. Uninstall the debug app (its data, with the undo records, goes with it, so only after the undo). Then, in a commit of its own, `LIVE_CHECKED_WRITES.android` lists `costume`, with the test that holds both lists.
-
-### The first real title and nickname writes
-
-Made by you, with your own account, in the app, on a plain `bun run dev -- --real` or on the debug
-APK, with no flag of any kind to set (`ABTH_DEBUG_SAVE_READS=1` only keeps each answer in the debug
-folder, `debug\history`, if you want to look at them afterwards). No agent presses Sign in, Save or
-Undo against the real site. Both kinds are open; until yours are recorded, a title write also reads
-your costume before and after, and a rename your title.
-
-**Before.**
-
-- [ ] The time is outside 05:00–07:00 JST (the app refuses inside it too).
-- [ ] Any other copy of the app is closed, and nothing else changes your title or nickname meanwhile
-  (an undo stops if it moved).
-- [ ] Sign in, in the app. Settings shows who is signed in.
-
-**Part 1: the list.**
-
-1. [ ] Open **Nickname & title**. The app reads the page's one list (`mypage_title_edit.php`) once and
-   posts nothing. The count under the picker is the number of titles you own. Exactly one title is
-   marked **Current** if your title's name is unique, and several if it is shared.
-2. [ ] If the app says "unexpected page" with codes, stop and send the codes: its parser refused
-   something real. The debug copy `mypage_title_edit.php.html` should hold `#title_parts_comp`,
-   reading like your title on my page.
-
-**Part 2: a title and its undo.**
-
-3. [ ] Pick another title whose name is unique (the app shows a number beside a name that repeats),
-   **Review**, **Save to Hiroba**. The app sends six requests, once each (the tablet does not show
-   them): `GET mypage_kisekae.php`, `GET mypage_title_edit.php`, `POST ajax/check_ip_title.php`,
-   `POST ajax/change_mydon_profile.php`, `GET mypage_top.php`, `GET mypage_kisekae.php`, then my page
-   once more for the plate. The result is "Saved. Hiroba now shows the new title.", the plate shows
-   it, and your costume is as it was. In the debug history, the pre-check answered `{"result":false}`
-   and the save a result of 0 with the new title's number in `detail.value`.
-4. [ ] **Undo last title change.** The title you had comes back, in one save; the undo is gone.
-5. [ ] Optional: pick a title whose name several share, save, then look at the undo: it is shut and
-   says the previous title's name is shared, and nothing is sent.
-
-**Part 3: the nickname.**
-
-6. [ ] On the Nickname section, pick a nickname you are happy to keep, within the help page's rule:
-   hiragana, at most five characters, nothing that resembles a real name (Hiroba warns against it).
-   The field starts as your current nickname. **Review**, read the warning, **Save to Hiroba**. Five requests,
-   once each: `GET mypage_top.php` twice, `POST ajax/change_mydon_profile.php` (the fields `_tckt`,
-   `mode`, `oldName`, `newName`, in that order), then `GET mypage_top.php` twice. The result is
-   "Saved. Hiroba now shows the new nickname.", the plate shows it, and your title is as it was.
-7. [ ] Optional, your call: **Change the nickname back** at once. Hiroba either takes it or refuses it
-   in its own words, which the page shows; a second rename within a minute or two may be refused.
-   If it is, the account stays on the new nickname, which is why step 6's nickname is one you would keep.
-
-**If something else shows.**
-
-- "Hiroba didn't accept the app's request. Nothing was changed." at the title's pre-check: the
-  pre-check did not answer `false`. Stop and keep the code shown.
-- A result of `diverged` or `notApplied`, or a refusal with Hiroba's own words: stop, keep the codes
-  and the words, and do not write again until they have been looked at.
-- A code 705 at either save: the token was not the one from the last read before the post. Stop and
-  report it with the order of the requests.
-
-**Report to the session.** The outcome text and the codes on screen; the Changes lines; whether
-Hiroba's own screen agrees; whether a second rename was taken or refused, and in what words. The
-session records them with the other executed writes and in the wiki. Then, in commits of their own,
-`LIVE_CHECKED_WRITES` lists `title` and `name` for the platform they were made on, with the test
-that holds both lists.
-
 ## Releases
 
 Two workflows run on GitHub Actions. `.github/workflows/ci.yml` runs on every push to a branch, and
@@ -746,11 +630,10 @@ and read its files with `run-as`. So:
 
 - Sign in with a real account on the signed release build (`android:release` and
   `android:install-release`, with the key in [the keys folder](#the-signing-keys)), or on the debug
-  APK for the first real Android write ([The first real Android write](#the-first-real-android-write)
-  says how). On Windows, use the installer's app or the portable zip's.
+  APK. On Windows, use the installer's app or the portable zip's.
 - Turn wireless debugging off before a real sign-in on a debug build, and never run `run-as` or
   DevTools against the app while a real session exists on the device.
-- Uninstall the debug build, or clear its data, once the test is over, after the undo.
+- Uninstall the debug build, or clear its data, once you are done with it, after any undo.
 
 Automated checks and agents never press "Sign in" against the real sites: not in a packaged build,
 not under `dev -- --real`, not on a release APK and not on the debug APK. The end-to-end run and
