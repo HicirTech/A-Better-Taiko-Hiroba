@@ -41,7 +41,11 @@
       "target": [
         "nsis",
         "zip"
-      ]
+      ],
+      "artifactName": "ABTH-${version}-portable.${ext}"
+    },
+    "nsis": {
+      "artifactName": "ABTH-${version}-setup.${ext}"
     },
     "electronFuses": {
       "runAsNode": false,
