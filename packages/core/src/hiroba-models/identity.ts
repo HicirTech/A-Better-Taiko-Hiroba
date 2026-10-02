@@ -27,11 +27,3 @@ export interface TitleOption {
 export interface NameState {
   readonly nickname: string;
 }
-
-/**
- * Whether Hiroba takes a rename, as its my page writes it into the script that opens the rename
- * dialog: `'0'` is `open`, and `'1'`, for which the site shows "not right now" and opens nothing,
- * is `closed`. A page whose script has no flag this version can read is `unknown`: it never fails
- * the page, and a rename is then left to Hiroba to take or refuse.
- */
-export type RenameState = "open" | "closed" | "unknown";

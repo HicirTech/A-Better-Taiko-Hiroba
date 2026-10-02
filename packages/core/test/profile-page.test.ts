@@ -24,6 +24,11 @@ interface ExcerptOptions {
   folderTitles?: readonly string[];
   /** Neither favourite block, as a page whose shape changed under the parser. */
   withoutFavoriteBlocks?: boolean;
+  /**
+   * The flag the page's script hands the rename dialog, "0" unless said; `null` for a page whose
+   * script does not wire it at all.
+   */
+  renameFlag?: string | null;
 }
 
 const DEFAULT_FAVORITE = { songNo: "1346", title: "サンプル曲アルファ" };
@@ -103,8 +108,18 @@ function profileExcerpt(options: ExcerptOptions): string {
     <div style="width:135px;">Donder</div>
     <div style="width:135px;text-align:center">${dan}</div>
   </div>`;
+  const renameFlag = options.renameFlag === undefined ? "0" : options.renameFlag;
+  const script =
+    renameFlag === null
+      ? ""
+      : `<script type="text/javascript">
+jQuery(function($){
+	$( '#rename_img' ).rename( '#dialog', 'Donder', $( '#_tckt' ).val(),  '${renameFlag}' );
+	$( '.rename_label' ).rename( '#dialog', 'Donder', $( '#_tckt' ).val(),  '${renameFlag}' );
+});
+</script>`;
   return `
-<html><body>
+<html><head>${script}</head><body>
 <div id="mydon_area" class="mydon_area">
   <img src="imgsrc_titleplate.php">
   <div style="height: 20px;text-align: center;">黒薔薇の使徒</div>
@@ -162,6 +177,7 @@ describe("parseProfilePage", () => {
     const expected: Profile = {
       taikoNo: "000000000000",
       nickname: "Donder",
+      rename: "open",
       title: "黒薔薇の使徒",
       region: "香港",
       titlePlateImageUrl: "imgsrc_titleplate.php",
@@ -366,6 +382,24 @@ describe("parseProfilePage", () => {
     }
     expect(result.value.title).toBe("");
     expect(result.value.nickname).toBe("Donder");
+  });
+
+  describe("whether Hiroba takes a rename", () => {
+    type FlagCase = [label: string, renameFlag: string | null, expected: Profile["rename"]];
+    test.each<FlagCase>([
+      ["flag 0", "0", "open"],
+      ["flag 1", "1", "closed"],
+      ["no flag", null, "unknown"],
+      ["a flag of another value", "x", "unknown"],
+    ])("reads %s as %s, and the rest of the page still reads", (_label, renameFlag, expected) => {
+      const result = parseProfilePage(profileExcerpt({ withDan: true, renameFlag }), FETCHED_AT);
+
+      if (!isOk(result)) {
+        throw new Error(`expected a profile, got ${JSON.stringify(result.error)}`);
+      }
+      expect(result.value.rename).toBe(expected);
+      expect(result.value.nickname).toBe("Donder");
+    });
   });
 
   test("a region that reads 未設定 is no region, read as null", () => {

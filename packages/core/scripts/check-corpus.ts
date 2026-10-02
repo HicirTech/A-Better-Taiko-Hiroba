@@ -31,6 +31,7 @@ import {
   parseRankDetailPage,
   parseRankListPage,
   parseRecentPlaysPage,
+  parseRenameEditorPage,
   parseScoreDetailPage,
   parseScoreListPage,
   parseTitleEditorPage,
@@ -174,6 +175,12 @@ const ROUTES: readonly Route[] = [
       const progress = (value as Profile).medal?.progress;
       return progress?.kind === "unrecognised" ? `medal=${progress.reason}` : null;
     },
+  },
+  {
+    // The same page again, as the editor a rename goes through: its form is a dialog in my page.
+    match: /^(profile|mypage-top)/,
+    parser: "parseRenameEditorPage",
+    run: (html) => attempt(parseRenameEditorPage(html)),
   },
   {
     // The subject is in the filename; passing the wrong one would trip the parser's own
@@ -464,6 +471,8 @@ const ENUMERABLE: Readonly<Record<string, readonly (string | number)[]>> = {
     "goldDonderful",
   ],
   visibility: ["open", "achievementsHidden", "closed"],
+  // My page's flag for a rename, which every capture has had as 0: the report says so.
+  rename: ["open", "closed", "unknown"],
   scope: ["japan", "prefecture", "world"],
   // Two unions share this key: a player row's dan state and a dan condition's shape.
   kind: ["dan", "none", "notShown", "course", "perSong"],

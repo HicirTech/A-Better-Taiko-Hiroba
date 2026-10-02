@@ -43,7 +43,7 @@ export type {
   DanSongCounts,
   DanSongResult,
 } from "./dan";
-export type { NameState, RenameState, TitleOption, TitleState } from "./identity";
+export type { NameState, TitleOption, TitleState } from "./identity";
 export type {
   CrownCounts,
   FavoriteSong,
@@ -62,4 +62,11 @@ export type { Chart, GenreReading, Song } from "./song";
 export { resolveSongTitle } from "./song-resolution";
 export type { AmbiguousTitle, ResolvedSong, SongResolution, UnknownTitle } from "./song-resolution";
 export { playedOrNone, SCORE_RANK_NAMES, SCORE_RANK_TIERS } from "./vocabulary";
-export type { CrownState, Genre, Level, ScoreRank, ScoreRankTier } from "./vocabulary";
+export type {
+  CrownState,
+  Genre,
+  Level,
+  RenameState,
+  ScoreRank,
+  ScoreRankTier,
+} from "./vocabulary";

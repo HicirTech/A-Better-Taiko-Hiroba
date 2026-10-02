@@ -12,6 +12,14 @@ export type Genre = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
  */
 export type Level = 1 | 2 | 3 | 4 | 5;
 
+/**
+ * Whether Hiroba takes a rename, as my page writes it into the script that opens the rename
+ * dialog: `'0'` is `open`, and `'1'`, for which the site shows "not right now" and opens nothing,
+ * is `closed`. A page whose script has no flag this version can read is `unknown`: it never fails
+ * the page, and a rename is then left to Hiroba to take or refuse.
+ */
+export type RenameState = "open" | "closed" | "unknown";
+
 /** The rank image numbers Hiroba uses, `best_score_rank_2` through `_8`. */
 export type ScoreRank = 2 | 3 | 4 | 5 | 6 | 7 | 8;
 

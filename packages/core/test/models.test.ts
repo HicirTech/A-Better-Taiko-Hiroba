@@ -82,6 +82,7 @@ const publicDetailScore: Score = {
 const profileWithoutDan: Profile = {
   taikoNo: "000000000000",
   nickname: "Donder",
+  rename: "open",
   title: "電脳 神化 3.0",
   region: "香港",
   titlePlateImageUrl: "imgsrc_titleplate.php",

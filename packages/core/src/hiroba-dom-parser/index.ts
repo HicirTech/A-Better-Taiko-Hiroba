@@ -11,6 +11,7 @@ export { parseCostumeEditorPage } from "./costume-editor-page";
 export { parseCostumePage } from "./costume-page";
 export { type ParseOptions, parsePage, requireMarker } from "./parser";
 export { parseProfilePage } from "./profile-page";
+export { parseRenameEditorPage } from "./rename-form";
 export { parseDanBoardPage, parseDanDetailPage } from "./dan-pages";
 export { parsePlayerRowsPage } from "./player-rows";
 export { parseRankDetailPage, parseRankListPage } from "./ranking-pages";
@@ -34,6 +35,7 @@ export type {
   PlayerRow,
   PlayerRowDan,
   RecentPlay,
+  RenameEditorReading,
   DanBoardPanel,
   DanBoardReading,
   ScoreListReading,

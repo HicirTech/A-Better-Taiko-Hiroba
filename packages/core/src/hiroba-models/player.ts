@@ -1,5 +1,5 @@
 /** The player and their profile: identity plus the account-wide summary from `mypage_top.php`. */
-import type { ScoreRank } from "./vocabulary";
+import type { RenameState, ScoreRank } from "./vocabulary";
 
 /** One player, keyed by taiko number. One Bandai Namco session can hold up to three. */
 export interface Player {
@@ -26,6 +26,11 @@ export interface Player {
 export interface Profile {
   readonly taikoNo: string;
   readonly nickname: string;
+  /**
+   * Whether Hiroba takes a rename right now, read off the flag in the script that opens the rename
+   * dialog on this very page. Never seen anything but `open` on a capture (four, one of them live).
+   */
+  readonly rename: RenameState;
   /**
    * The displayed title, as a string rather than an id, because an id cannot hold every state.
    * A title picked from the list has one; a title **composed from parts** does not — the write
