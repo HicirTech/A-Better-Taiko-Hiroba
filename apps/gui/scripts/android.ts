@@ -4,14 +4,16 @@
  *   bun run android:apk                             web build, cap sync, debug APK
  *   bun run android:run -- <adb serial>             the same, then install and start it there
  *   bun run android:live -- <adb serial> <LAN IP>   Vite's dev server, and the app loading it
- *   bun run android:keystore                        a local release key, once per machine
+ *   bun run android:keystore                        the release key, once, in the keys folder
  *   bun run android:release                         web build, cap sync, signed release APK
  *   bun run android:release-unsigned                the same with no key, for CI's dry runs
  *   bun run android:install-release -- <serial>     install the signed release APK there
  *
  * Debug builds let any adb-paired computer read the app's WebViews and files (DevTools, run-as),
- * so a real sign-in belongs on the release build. The release key and its passwords live in
- * android/keystore.properties and android/abth-local.jks, both git-ignored.
+ * so a real sign-in belongs on the release build. The signing keys live in one folder outside the
+ * clone, never in android/: the one ABTH_RELEASE_KEYS names, or W:/TaikoElaboation/release keys
+ * (release-keys.ts has the rule, and build.gradle the same one). It holds the release key, which
+ * android:keystore makes there once, and the debug key every machine shares.
  *
  * Live reload rewrites the copied Capacitor config to load http://<LAN IP>:5173 with cleartext
  * allowed; Capacitor puts it back when this is stopped with Ctrl+C, or at the next `cap sync`. It
@@ -20,14 +22,20 @@
  * Windows' NoDefaultCurrentDirectoryInExePath stops cmd.exe finding `gradlew` in the current
  * folder, which is how Capacitor starts Gradle, so it is removed from every child's environment.
  */
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
+
+import {
+  KEYS_FOLDER_VARIABLE,
+  KEYSTORE_PROPERTIES,
+  RELEASE_KEYSTORE,
+  resolveKeysFolder,
+} from "./release-keys";
 
 const DEV_PORT = "5173";
 const APPLICATION_ID = "com.hicirtech.taikohiroba";
 const root = join(import.meta.dir, "..");
 const android = join(root, "android");
-const keystoreProperties = join(android, "keystore.properties");
 const releaseApk = join(android, "app", "build", "outputs", "apk", "release", "app-release.apk");
 const { NoDefaultCurrentDirectoryInExePath: _dropped, ...env } = process.env;
 const [command, serial, lanIp] = process.argv.slice(2);
@@ -42,6 +50,38 @@ function run(argv: string[], cwd = root): void {
 function fail(message: string): never {
   process.stderr.write(`${message}\n`);
   process.exit(1);
+}
+
+/** The folder the signing keys live in. A variable that cannot name one ends the run. */
+function keysFolder(): string {
+  const keys = resolveKeysFolder(env);
+  return keys.ok ? keys.folder : fail(keys.reason);
+}
+
+/** Gradle signs the release build exactly when the keys folder holds the key's settings. */
+function hasReleaseKey(folder: string): boolean {
+  return existsSync(join(folder, KEYSTORE_PROPERTIES));
+}
+
+/** A signed release needs the key; with none in the folder Gradle would leave the APK unsigned. */
+function requireReleaseKey(folder: string): void {
+  if (!hasReleaseKey(folder)) {
+    fail(
+      `No release key: ${folder} has no ${KEYSTORE_PROPERTIES}. Run \`bun run android:keystore\` once to make one there, or set ${KEYS_FOLDER_VARIABLE} to the folder that holds yours.`,
+    );
+  }
+}
+
+/** The keys folder of a place with no key yet may not exist; the first key makes it. */
+function makeKeysFolder(folder: string): void {
+  try {
+    mkdirSync(folder, { recursive: true });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    fail(
+      `Cannot make ${folder}: ${reason}. Map its drive, or set ${KEYS_FOLDER_VARIABLE} to a folder you can write to.`,
+    );
+  }
 }
 
 function buildApk(task: "assembleDebug" | "assembleRelease"): void {
@@ -97,63 +137,69 @@ switch (command) {
     break;
   }
   case "keystore": {
-    if (existsSync(keystoreProperties)) {
-      fail("android/keystore.properties exists already; a second key would orphan installs.");
+    const keys = keysFolder();
+    // A store without its settings file is a key too, one whose settings were not copied: a second
+    // key would orphan installs just the same.
+    const present = [KEYSTORE_PROPERTIES, RELEASE_KEYSTORE].filter((name) =>
+      existsSync(join(keys, name)),
+    );
+    if (present.length > 0) {
+      fail(`${keys} holds ${present.join(" and ")} already; a second key would orphan installs.`);
     }
-    // One random password for store and key, kept only in the git-ignored properties file.
+    makeKeysFolder(keys);
+    // One random password for store and key, kept only in keystore.properties, in the keys folder.
     const password = Buffer.from(crypto.getRandomValues(new Uint8Array(24))).toString("base64url");
-    run(
-      [
-        "keytool",
-        "-genkeypair",
-        "-keystore",
-        "abth-local.jks",
-        "-storetype",
-        "PKCS12",
-        "-alias",
-        "abth",
-        "-keyalg",
-        "RSA",
-        "-keysize",
-        "4096",
-        "-validity",
-        "10000",
-        "-dname",
-        "CN=A Better Taiko Hiroba local release",
-        "-storepass",
-        password,
-        "-keypass",
-        password,
-      ],
-      android,
-    );
+    run([
+      "keytool",
+      "-genkeypair",
+      "-keystore",
+      join(keys, RELEASE_KEYSTORE),
+      "-storetype",
+      "PKCS12",
+      "-alias",
+      "abth",
+      "-keyalg",
+      "RSA",
+      "-keysize",
+      "4096",
+      "-validity",
+      "10000",
+      "-dname",
+      "CN=A Better Taiko Hiroba local release",
+      "-storepass",
+      password,
+      "-keypass",
+      password,
+    ]);
     await Bun.write(
-      keystoreProperties,
-      `storeFile=abth-local.jks\nstorePassword=${password}\nkeyAlias=abth\nkeyPassword=${password}\n`,
+      join(keys, KEYSTORE_PROPERTIES),
+      `storeFile=${RELEASE_KEYSTORE}\nstorePassword=${password}\nkeyAlias=abth\nkeyPassword=${password}\n`,
     );
-    process.stdout.write("Wrote android/abth-local.jks and android/keystore.properties.\n");
+    process.stdout.write(`Wrote ${RELEASE_KEYSTORE} and ${KEYSTORE_PROPERTIES} in ${keys}.\n`);
     break;
   }
   case "release":
-    if (!existsSync(keystoreProperties)) {
-      fail("No release key: run `bun run android:keystore` once first.");
-    }
+    requireReleaseKey(keysFolder());
     buildApk("assembleRelease");
     break;
-  case "release-unsigned":
-    // Gradle signs the release build whenever keystore.properties exists, so with the key here this
-    // build would not be unsigned. Only a machine with no key, a CI dry run, has a use for it.
-    if (existsSync(keystoreProperties)) {
+  case "release-unsigned": {
+    const keys = keysFolder();
+    // Gradle signs the release build whenever keystore.properties is in the keys folder, so with
+    // the key there this build would not be unsigned. Only a machine with no key, a CI dry run, has
+    // a use for it.
+    if (hasReleaseKey(keys)) {
       fail(
-        "android/keystore.properties exists, so Gradle would sign this: use `bun run android:release`.",
+        `${keys} holds a release key, so Gradle would sign this: use \`bun run android:release\`, or set ${KEYS_FOLDER_VARIABLE} to a folder with none.`,
       );
     }
     buildApk("assembleRelease");
     break;
+  }
   case "install-release":
     if (serial === undefined) {
       fail("Usage: bun run android:install-release -- <adb serial>");
     }
+    requireReleaseKey(keysFolder());
     if (!existsSync(releaseApk)) {
       fail("No signed release APK: run `bun run android:release` first.");
     }

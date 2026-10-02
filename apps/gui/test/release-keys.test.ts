@@ -3,8 +3,8 @@
  * the Gradle script, the release workflow and the script that makes a key keep them from drifting
  * from the rule here.
  */
-import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -18,6 +18,20 @@ import {
 } from "../scripts/release-keys";
 
 const GUI = join(import.meta.dir, "..");
+
+const folders: string[] = [];
+afterEach(() => {
+  for (const folder of folders.splice(0)) {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+/** A folder of its own, empty, which stands in for the keys folder. */
+function keysFolder(): string {
+  const folder = mkdtempSync(join(tmpdir(), "abth-keys-"));
+  folders.push(folder);
+  return folder;
+}
 
 describe("resolveKeysFolder", () => {
   test("is the folder ABTH_RELEASE_KEYS names, when it is set", () => {
@@ -89,4 +103,80 @@ describe("the Gradle script", () => {
     expect(gradle).toContain('keyPassword "android"');
     expect(gradle).toContain("signingConfig signingConfigs.debug");
   });
+});
+
+describe("scripts/android.ts", () => {
+  /**
+   * Runs the script with `folder` as the keys folder. Every run here ends in a refusal, before any
+   * build starts, so the timeout only guards against a refusal that is missing.
+   */
+  function android(folder: string, ...argv: string[]): { code: number | null; stderr: string } {
+    const done = Bun.spawnSync([process.execPath, "scripts/android.ts", ...argv], {
+      cwd: GUI,
+      env: { ...process.env, ABTH_RELEASE_KEYS: folder },
+      stdout: "pipe",
+      stderr: "pipe",
+      timeout: 15_000,
+    });
+    return { code: done.exitCode, stderr: done.stderr.toString() };
+  }
+
+  type RefusalCase = [command: string, argv: string[]];
+
+  test.each<RefusalCase>([
+    ["release", ["release"]],
+    ["install-release", ["install-release", "no-such-device"]],
+  ])(
+    "%p stops when the keys folder has no key, and says where to look and what to set",
+    (_command, argv) => {
+      const folder = keysFolder();
+      const { code, stderr } = android(folder, ...argv);
+      expect(code).toBe(1);
+      expect(stderr).toContain(folder);
+      expect(stderr).toContain(KEYSTORE_PROPERTIES);
+      expect(stderr).toContain("ABTH_RELEASE_KEYS");
+      expect(stderr).toContain("android:keystore");
+      expect(readdirSync(folder)).toEqual([]);
+    },
+  );
+
+  test("release-unsigned stops when the keys folder has a key, which Gradle would sign with", () => {
+    const folder = keysFolder();
+    writeFileSync(join(folder, KEYSTORE_PROPERTIES), "storeFile=a-key.jks\n");
+    const { code, stderr } = android(folder, "release-unsigned");
+    expect(code).toBe(1);
+    expect(stderr).toContain(folder);
+    expect(stderr).toContain("android:release");
+  });
+
+  test("keystore refuses to make a second key beside one, and leaves it as it was", () => {
+    const folder = keysFolder();
+    const settings = "storeFile=a-key.jks\n";
+    writeFileSync(join(folder, KEYSTORE_PROPERTIES), settings);
+    const { code, stderr } = android(folder, "keystore");
+    expect(code).toBe(1);
+    expect(stderr).toContain(folder);
+    expect(stderr).toContain(KEYSTORE_PROPERTIES);
+    expect(readdirSync(folder)).toEqual([KEYSTORE_PROPERTIES]);
+    expect(readFileSync(join(folder, KEYSTORE_PROPERTIES), "utf8")).toBe(settings);
+  });
+
+  test("keystore refuses to make a key where a store is already, and writes no settings", () => {
+    const folder = keysFolder();
+    writeFileSync(join(folder, RELEASE_KEYSTORE), "a store that is not to be replaced");
+    const { code, stderr } = android(folder, "keystore");
+    expect(code).toBe(1);
+    expect(stderr).toContain(folder);
+    expect(stderr).toContain(RELEASE_KEYSTORE);
+    expect(readdirSync(folder)).toEqual([RELEASE_KEYSTORE]);
+  });
+
+  test.each<[command: string]>([["keystore"], ["release"], ["release-unsigned"]])(
+    "%p stops on a keys folder that is not an absolute path, and says so",
+    (command) => {
+      const { code, stderr } = android("keys", command);
+      expect(code).toBe(1);
+      expect(stderr).toContain("ABTH_RELEASE_KEYS must be an absolute path");
+    },
+  );
 });
