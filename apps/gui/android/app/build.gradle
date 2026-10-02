@@ -1,3 +1,5 @@
+import groovy.json.JsonSlurper
+
 apply plugin: 'com.android.application'
 
 // A local release key, made once with `bun run android:keystore`. The key and its passwords stay
@@ -8,6 +10,21 @@ if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
 }
 
+// The version has one source, "version" in apps/gui/package.json, which electron-builder reads too.
+// versionName is that text. versionCode is major * 10000 + minor * 100 + patch, so 0.1.0 is 100 and
+// a later version always has a higher code, which Android needs to accept an update. That holds only
+// while minor and patch stay below 100, and the code stays within Android's limit of 2100000000.
+// scripts/release-version.ts has the same rules, and its tests read this file.
+def appVersion = "${new JsonSlurper().parse(rootProject.file("../package.json")).version}".toString()
+if (!(appVersion ==~ /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/)) {
+    throw new GradleException("apps/gui/package.json: version must be MAJOR.MINOR.PATCH, not ${appVersion}")
+}
+def (major, minor, patch) = appVersion.tokenize(".")*.toInteger()
+def appVersionCode = major * 10000 + minor * 100 + patch
+if (minor > 99 || patch > 99 || appVersionCode > 2100000000) {
+    throw new GradleException("apps/gui/package.json: version ${appVersion} has no versionCode: minor and patch go up to 99, and the code to 2100000000")
+}
+
 android {
     namespace = "com.hicirtech.taikohiroba"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -15,8 +32,8 @@ android {
         applicationId "com.hicirtech.taikohiroba"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode appVersionCode
+        versionName appVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         // The launcher label. Debug carries an applicationIdSuffix, so both builds install side by
         // side; the placeholder tells their home-screen entries apart.
