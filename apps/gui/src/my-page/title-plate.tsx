@@ -45,7 +45,7 @@ export interface TitlePlateProps {
  * stands in its place, and the plate reads the same.
  *
  * The plate sits on the app's own surface, without the yellow Hiroba draws around it, and the region
- * is left off: the profile keeps it, the plate does not (the user's calls, 2026-09-28).
+ * is left off: the profile keeps it, the plate does not.
  *
  * The dan is read off its label, which is shown as it is, and named in text for screen readers.
  */

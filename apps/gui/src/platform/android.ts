@@ -108,16 +108,15 @@ const localStorageFlag: SignedInFlag = {
  * browser shares it (isIsolated: false), and Capacitor's HTTP client sends it. This code never
  * sees the cookie, and cannot even ask whether it is there: CapacitorCookies.getCookies ignores the
  * URL it is given and answers with the app page's own document.cookie (seen in Capacitor 8.5's
- * source, and on the tablet on 2026-09-27, where every relaunch read as signed out).
+ * source, and on a device, where every relaunch read as signed out).
  *
  * So whether a sign-in finished here is remembered separately, in `signedInFlag`, and the first
  * read settles whether the session is still good: a gone session reads as loggedOut and clears the
  * flag. The store keeps its cookies across launches, so a user stays signed in until they sign out
- * or Hiroba ends the session (the user's call, 2026-09-27). It is wiped when a sign-in starts or
- * is abandoned, at sign-out and when the session is found gone. After a sign-in,
- * the ID host's own cookies are cleared as far as the platform allows: clearCookies({url}) removes
- * host cookies, not Domain cookies, which is also why the session itself is only ever cleared with
- * clearAllCookies.
+ * or Hiroba ends the session. It is wiped when a sign-in starts or is abandoned, at sign-out and
+ * when the session is found gone. After a sign-in, the ID host's own cookies are cleared as far as
+ * the platform allows: clearCookies({url}) removes host cookies, not Domain cookies, which is also
+ * why the session itself is only ever cleared with clearAllCookies.
  *
  * Every verb that asks Hiroba something runs one at a time, in the order asked, through the same
  * queue the desktop uses, which `queuePort` puts each verb in: a picture never goes out beside a

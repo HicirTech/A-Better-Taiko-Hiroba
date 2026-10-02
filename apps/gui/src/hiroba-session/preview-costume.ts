@@ -21,7 +21,7 @@ const PREVIEW_PARAMETERS = [
   ["cos5", "costume5"],
 ] as const satisfies readonly (readonly [string, keyof CostumeSet])[];
 /**
- * A real preview weighed 79228 B (2026-08-09), and Hiroba's "nothing to draw" is a 43-byte GIF.
+ * A real preview weighed 79228 B, and Hiroba's "nothing to draw" is a 43-byte GIF.
  * A PNG under a kilobyte is a placeholder, not a Don.
  */
 const MIN_PREVIEW_BYTES = 1024;

@@ -65,10 +65,10 @@ export interface MyDonPortraitProps {
  * header depends on it.
  *
  * There is no button to change the costume: the portrait itself is the button, and it jumps to the
- * Costume page (the user's call, 2026-09-29 and 2026-10-02). A click, or Enter or Space, goes, and
- * a small edit badge shows on hover or keyboard focus. On a touch-first screen a finger gets there
- * by a long-press, and a tap does nothing, so a scroll or a pull begun on it never takes the page
- * away; the badge is always up there, and a description says to long-press.
+ * Costume page. A click, or Enter or Space, goes, and a small edit badge shows on hover or keyboard
+ * focus. On a touch-first screen a finger gets there by a long-press, and a tap does nothing, so a
+ * scroll or a pull begun on it never takes the page away; the badge is always up there, and a
+ * description says to long-press.
  */
 export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps) {
   const { t } = i18n;

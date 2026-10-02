@@ -16,10 +16,10 @@ export interface ShareItem {
 }
 
 /**
- * One block drawn as GitHub's "Languages" box draws one (the user's call, 2026-09-28): a heading,
- * one thin bar split by share, in the items' order with a hairline gap between the parts, and a
- * legend that wraps, each item a dot, its name and its percent. Every item is listed, 0% included;
- * only those above 0 take a part of the bar. A block that sums to 0 shows an empty track.
+ * One block drawn as GitHub's "Languages" box draws one: a heading, one thin bar split by share, in
+ * the items' order with a hairline gap between the parts, and a legend that wraps, each item a dot,
+ * its name and its percent. Every item is listed, 0% included; only those above 0 take a part of
+ * the bar. A block that sums to 0 shows an empty track.
  *
  * The raw counts are secondary: the title of each item and each part of the bar, and text for
  * screen readers after the percent. The bar is hidden from them, since the legend says the same.

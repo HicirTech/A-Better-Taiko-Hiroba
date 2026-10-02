@@ -41,11 +41,11 @@ export interface OverviewHeaderProps {
 }
 
 /**
- * The top of the Overview, shaped like the header of Hiroba's my page (the user's call,
- * 2026-09-29): the player's マイどん on the left; on the right, the title plate with the title, the
- * name and the dan over it, and under the plate, Hiroba's score panel with its ten counts written
- * over its art. On a narrow window they stack, the portrait first. No background art and none of
- * Hiroba's yellow: they sit on the app's own surface. The portrait jumps to the Costume page.
+ * The top of the Overview, shaped like the header of Hiroba's my page: the player's マイどん on the
+ * left; on the right, the title plate with the title, the name and the dan over it, and under the
+ * plate, Hiroba's score panel with its ten counts written over its art. On a narrow window they
+ * stack, the portrait first. No background art and none of Hiroba's yellow: they sit on the app's
+ * own surface. The portrait jumps to the Costume page.
  *
  * Each picture is asked for once it is on screen, and each has a plain stand-in of its geometry
  * until it comes, or if it does not, so every word and number reads the same without it. A dan

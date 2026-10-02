@@ -3,8 +3,8 @@ import { dirname } from "node:path";
 
 /**
  * The session cookie on disk, so a signed-in user stays signed in across launches until they sign
- * out or Hiroba ends the session. That is the user's call (2026-09-27): this is a personal app, and
- * a Bandai Namco ID sign-in on every launch cost more than a local cookie does.
+ * out or Hiroba ends the session. This is a personal app, and a Bandai Namco ID sign-in on every
+ * launch costs more than a local cookie does.
  *
  * Stored as it is, in the app's own profile folder. Encrypting it with safeStorage was tried and
  * dropped: its key reaches the disk only when Chromium next saves Local State, so an app killed

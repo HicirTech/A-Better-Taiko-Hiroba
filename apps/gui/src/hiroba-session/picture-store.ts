@@ -10,13 +10,13 @@ export const PICTURE_EPOCH = "v1";
  * Where a picture is kept. None expires: each is keyed by what it shows, so a store keeps it as long
  * as it can. From a store that outlasts the run, only a PICTURE_EPOCH bump makes it go; the run's
  * memory store also drops what is past its caps. Arcades often have poor networks, so the app asks
- * Hiroba for a picture as seldom as it can (the user's call, 2026-09-28).
+ * Hiroba for a picture as seldom as it can.
  *
  * - `shared`: art that carries nothing about the player, such as an item's thumbnail, whose URL names
  *   no player. Kept for any account on this device, and kept at sign-out.
  * - `player`: the signed-in player's own, such as their title plate. Kept under `player`, so no
  *   other account is given it, and kept at sign-out and at the next sign-in: once a player has a
- *   picture, it stays (the user's call, 2026-09-28).
+ *   picture, it stays.
  */
 export interface PictureKey {
   readonly scope: "shared" | "player";
