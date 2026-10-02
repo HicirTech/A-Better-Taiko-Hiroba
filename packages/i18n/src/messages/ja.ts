@@ -1,6 +1,6 @@
 import type { Messages } from "../types";
 
-/** 日本語. The site is ドンだーひろば, or ひろば for short; its own words stay as it writes them. */
+/** 日本語. The site is ドンだーひろば, or ひろば for short, and the game's terms are its own words. */
 export const ja: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.system": "システムのデフォルト（{name}）",
