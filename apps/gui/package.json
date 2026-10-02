@@ -23,6 +23,7 @@
     "android:live": "bun scripts/android.ts live",
     "android:keystore": "bun scripts/android.ts keystore",
     "android:release": "bun scripts/android.ts release",
+    "android:release-unsigned": "bun scripts/android.ts release-unsigned",
     "android:install-release": "bun scripts/android.ts install-release"
   },
   "build": {

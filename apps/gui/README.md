@@ -386,6 +386,7 @@ the picture host never gets it, though a cookie the picture host set itself woul
 | `bun run android:live -- <adb serial> <LAN IP>` | Vite's dev server on this computer, and the debug app loading it with live reload. It runs only against the stand-in, and refuses to start unless both `VITE_ABTH_DEV_HIROBA_ORIGIN` and `VITE_ABTH_DEV_IDP_HOST` are set; `VITE_ABTH_DEV_IMG_ORIGIN`, the stand-in's picture host, is optional. |
 | `bun run android:keystore` | Makes the local release key, once per machine. It refuses to run if a key exists. |
 | `bun run android:release` | Web build, `cap sync`, signed release APK. It refuses to run without the key. |
+| `bun run android:release-unsigned` | The same with no key: an unsigned release APK, which no device installs. The release workflow's dry runs build it when the repository has no signing secrets. It refuses to run while a key exists. |
 | `bun run android:install-release -- <adb serial>` | Installs the signed release APK on that device and starts it. |
 
 To run the debug app against the stand-in on a device, start the stand-in on this computer's LAN

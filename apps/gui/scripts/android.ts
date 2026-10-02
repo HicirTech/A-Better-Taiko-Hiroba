@@ -6,6 +6,7 @@
  *   bun run android:live -- <adb serial> <LAN IP>   Vite's dev server, and the app loading it
  *   bun run android:keystore                        a local release key, once per machine
  *   bun run android:release                         web build, cap sync, signed release APK
+ *   bun run android:release-unsigned                the same with no key, for CI's dry runs
  *   bun run android:install-release -- <serial>     install the signed release APK there
  *
  * Debug builds let any adb-paired computer read the app's WebViews and files (DevTools, run-as),
@@ -139,6 +140,16 @@ switch (command) {
     }
     buildApk("assembleRelease");
     break;
+  case "release-unsigned":
+    // Gradle signs the release build whenever keystore.properties exists, so with the key here this
+    // build would not be unsigned. Only a machine with no key, a CI dry run, has a use for it.
+    if (existsSync(keystoreProperties)) {
+      fail(
+        "android/keystore.properties exists, so Gradle would sign this: use `bun run android:release`.",
+      );
+    }
+    buildApk("assembleRelease");
+    break;
   case "install-release":
     if (serial === undefined) {
       fail("Usage: bun run android:install-release -- <adb serial>");
@@ -160,6 +171,6 @@ switch (command) {
     break;
   default:
     fail(
-      "Usage: bun scripts/android.ts apk | run <serial> | live <serial> <LAN IP> | keystore | release | install-release <serial>",
+      "Usage: bun scripts/android.ts apk | run <serial> | live <serial> <LAN IP> | keystore | release | release-unsigned | install-release <serial>",
     );
 }
