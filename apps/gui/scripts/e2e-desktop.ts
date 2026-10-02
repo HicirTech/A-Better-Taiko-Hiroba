@@ -8,33 +8,38 @@
  * kept across sign-outs and launches), Hiroba's score panel (a stand-in while its art does not
  * come, asked for again after each read until it does, the counts written over the art where my
  * page writes them, the art kept across launches and sign-outs), the My Don
- * portrait (a button to the editor, with an edit badge and its name on hover, opened by Enter and
- * Space, on a touch-first screen too, and there by a long-press alone, not a tap or a moved
- * finger, from the picture host with no cookie, a first one that does not come coded and asked
- * for again after a read, kept across launches and sign-ins, fetched anew on Read again and after a
- * write applies, the kept one still shown when a fresh one does not come), the どんメダル
- * plate (asked for only on screen, its words over it, one plate per season and state, one that
- * does not come, its id never in the window or on disk, the plate kept across sign-outs and
- * launches), the editor's
- * picture of the set (on opening, after a pick, one request for a burst of picks, one that does not
- * come, none once shut, none inside a write), its items' thumbnails (only those seen, each once,
- * kept across sign-outs and launches, one that does not come, one not offered, shapes the bridge
- * refuses, none inside a write), the pictures on disk named by hashes alone, costume
- * writes (a colour and a きぐるみ, each undone, the #22 trap, a save that moves nothing,
- * pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, and
- * a session that ends before and after a save), a lost session (none of its pictures shown at the
- * next sign-in), cancel, a sign-in sent off both
+ * portrait (a button to the Costume page, with an edit badge and its name on hover, reached by a
+ * click, by Enter and Space, on a touch-first screen too, and there by a long-press alone, not a
+ * tap or a moved finger, from the picture host with no cookie, a first one that does not come coded
+ * and asked for again after a read, kept across launches and sign-ins, fetched anew on Read again
+ * and after a write applies, the kept one still shown when a fresh one does not come), the
+ * どんメダル plate (asked for only on screen, its words over it, one plate per season and state,
+ * one that does not come, its id never in the window or on disk, the plate kept across sign-outs and
+ * launches), the Costume page (in the side panel and the menu between the Overview and Favourites;
+ * the editor read once when the page is first shown in a run, never at start-up or on a reopen,
+ * and read again from the Fab or a pull there, not my page; a draft that survives a visit to
+ * another page, and Reset; the Save bar at the window's bottom edge; a column on a wide window),
+ * the editor's picture of the set (on the page's first showing, after a pick, one request for a
+ * burst of picks, one that does not come, none away from the page, none inside a write), its
+ * items' thumbnails (only those seen, each once, kept across sign-outs and launches, one that does
+ * not come, one not offered, shapes the bridge refuses, none inside a write, and a grid that has
+ * scrolled left to scroll back under a finger, with no pull), the pictures on disk named by
+ * hashes alone, costume writes (a colour and a きぐるみ, each undone from the page, the #22 trap, a
+ * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
+ * change made elsewhere, and a session that ends before and after a save), a lost session (none of
+ * its pictures shown at the next sign-in), cancel, a sign-in sent off both
  * sites, the pages (a side panel on a wide window, a menu on a narrow one, the sign-in card on the
- * Overview and Favourites while signed out, the favourites on their own page, and the page kept for
- * the next launch), the scheme (dark or light as the system asks, the page's color-scheme with it),
- * Settings (sections with small headings over lists of rows, who is signed in, while a read runs
- * too, and Sign out, shut while it does), the
+ * Overview, Costume and Favourites while signed out, the favourites on their own page, and the page
+ * kept for the next launch), the scheme (dark or light as the system asks, the page's
+ * color-scheme with it), Settings (sections with small headings over lists of rows, who is signed
+ * in, while a read runs too, and Sign out, shut while it does), the
  * language (radio buttons the arrows move, the system's at first, a pick in Settings that takes
  * hold at once and is kept, System default, which follows the system again, and one made while signed in,
  * which asks Hiroba nothing), a reopen that keeps the
  * session and the undo,
  * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
- * signed in, a portrait that opens nothing and says why, against scripts/mock-hiroba.ts, over the
+ * signed in, a Costume page that shows the portrait and says why, and reads nothing, against
+ * scripts/mock-hiroba.ts, over the
  * Chrome DevTools Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
  * planned, then searches the app's user-data folder for every session token and form token the
  * mock issued and for what the mock ID host left behind. Run `bun run build` first.
@@ -421,11 +426,17 @@ try {
 
   // The pages, signed out, with no header at all (the user's call, 2026-09-29): on a window this
   // wide, a side panel like Gmail's, the product's name small at its top, then each page, the one
-  // shown marked. The Overview and Favourites show the sign-in card; Settings works, with the
-  // language and the note on staying signed in, no one signed in and no way to sign out.
-  const NAVIGATION = ["A Better Taiko Hiroba", "Overview", "Favourites", "Settings"].join("");
+  // shown marked. The Overview, Costume and Favourites show the sign-in card; Settings works, with
+  // the language and the note on staying signed in, no one signed in and no way to sign out.
+  const NAVIGATION = [
+    "A Better Taiko Hiroba",
+    "Overview",
+    "Costume",
+    "Favourites",
+    "Settings",
+  ].join("");
   const shownSignedOut: boolean[] = [];
-  for (const each of ["favorites", "settings", "overview"] as const) {
+  for (const each of ["costume", "favorites", "settings", "overview"] as const) {
     await goTo(each);
     shownSignedOut.push(
       each === "settings"
@@ -443,6 +454,17 @@ try {
     !(await exists("header")) &&
     !(await exists("#nav-menu")) &&
     shownSignedOut.every(Boolean);
+  // The Costume page (the user's call, 2026-10-02) is the second of the pages, between the Overview
+  // and Favourites, each with its icon.
+  const entriesIn = (selector: string) =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll(${JSON.stringify(`${selector} [id^="nav-"]`)})].map((entry) => entry.id + (entry.querySelector("svg") === null ? ":no-icon" : ""))`,
+    );
+  const PAGE_ENTRIES = ["nav-overview", "nav-costume", "nav-favorites", "nav-settings"];
+  const sidePanelEntries = await entriesIn("nav");
+  await goTo("costume");
+  const costumeShownSignedOut = (await textOf("main h1")) === "Costume";
+  await goTo("overview");
 
   // The page follows the system's scheme, and its color-scheme with it, so the scrollbars and the
   // system's own widgets are dark on a dark page and light on a light one.
@@ -507,6 +529,12 @@ try {
     (await textOf("nav")) === NAVIGATION &&
     (await attribute("#nav-menu", "aria-expanded")) === "true" &&
     (await currentPage()) === "overview";
+  const drawerEntries = await entriesIn("nav");
+  await click("#nav-costume");
+  await menuClosed();
+  const costumePicked = (await textOf("main h1")) === "Costume" && (await exists("#sign-in"));
+  await menuOpened();
+  const costumeMarked = (await currentPage()) === "costume";
   await click("#nav-favorites");
   await menuClosed();
   const pickTaken = (await textOf("main h1")) === "Favourites" && (await exists("#sign-in"));
@@ -532,6 +560,12 @@ try {
     focusBack &&
     (await textOf("main h1")) === "Favourites" &&
     !(await exists("#nav-menu"));
+  results.costumePageInNavigation =
+    same(sidePanelEntries, PAGE_ENTRIES) &&
+    same(drawerEntries, PAGE_ENTRIES) &&
+    costumeShownSignedOut &&
+    costumePicked &&
+    costumeMarked;
   await goTo("overview");
 
   results.surface = await page.evaluate(
@@ -850,14 +884,194 @@ try {
     !(await exists("#my-don-image")) &&
     (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
 
-  const dialogOutcome = () =>
+  // The Costume page (the user's call, 2026-10-02). The portrait is the way there. The editor is
+  // read once, when the page is first shown in a run: not at start-up, nor on the Overview, where
+  // everything so far has been done without one request to it. Hiroba's picture of the set is
+  // asked for only while the page is shown.
+  const EDITOR = "/mypage_kisekae.php";
+  const editorHits = () => hitsOn(EDITOR);
+  /** Where the page's editor stands: unread, loading, editing, confirming, saving, undoing, done. */
+  const stepOf = () =>
+    page.evaluate<string | null>(`document.querySelector("#costume-page")?.dataset.step ?? null`);
+  const inStep = (name: string) =>
+    waitFor(async () => ((await stepOf()) === name ? true : undefined));
+  const pressedOf = (selector: string) => attribute(selector, "aria-pressed");
+  const previewSrc = () =>
     page.evaluate<string | null>(
-      `document.querySelector("#costume-dialog #write-outcome")?.dataset.outcome ?? null`,
+      `document.querySelector("#costume-preview-image")?.getAttribute("src") ?? null`,
     );
-  /** Opens the editor, makes a pick, confirms with the tick, saves, and waits for the outcome. */
+  /** The picture once it is settled and is not `before`: no spinner, and a picture shown. */
+  const previewOtherThan = (before: string | null) =>
+    waitFor(async () => {
+      const src = await previewSrc();
+      const loading = await exists("#costume-preview-loading");
+      return src !== null && src !== before && !loading ? src : undefined;
+    });
+  const editorReadsAtStart = await editorHits();
+  await fetch(`${HIROBA}/__previews?reset=1`);
+  await click("#costume-open");
+  await waitFor(async () => (await currentPage()) === "costume" || undefined);
+  const jumpedByClick = (await textOf("main h1")) === "Costume";
+  await inStep("editing");
+  const onOpening = await previewOtherThan(null);
+  await Bun.sleep(500);
+  const previewsOnOpening = await previewQueries();
+  const editorReadsOnOpening = await editorHits();
+  results.portraitJumpsToCostumeByClick = jumpedByClick;
+  results.editorNotReadAtStart = editorReadsAtStart === 0;
+  results.previewShownOnOpen =
+    onOpening.startsWith("data:image/png;base64,") &&
+    same(previewsOnOpening, [previewQuery(START)]);
+  results.writeGateOpen =
+    same(await page.evaluate("window.abth.enabledWrites()"), [
+      { kind: "costume", verified: false },
+    ]) &&
+    (await exists("#costume-review")) &&
+    !(await exists("#costume-not-open"));
+
+  // Away and back, the page finds the editor as it was: it is not read again, nor the picture of
+  // the set asked for again.
+  await goTo("overview");
+  await goTo("costume");
+  await inStep("editing");
+  await Bun.sleep(500);
+  results.editorReadOnceWhenOpened =
+    editorReadsOnOpening === 1 && (await editorHits()) === 1 && (await stepOf()) === "editing";
+  results.previewKeptBetweenVisits =
+    (await previewSrc()) === onOpening && same(await previewQueries(), [previewQuery(START)]);
+
+  // A draft survives a page switch, with the changes it lists; Reset puts back the set as read.
+  const FACE_CHANGE = "かお: #5 → #3";
+  await click("#swatch-colorFace-3");
+  await goTo("overview");
+  await goTo("costume");
+  await inStep("editing");
+  results.draftSurvivesAPageSwitch =
+    (await pressedOf("#swatch-colorFace-3")) === "true" &&
+    (await textOf("#costume-changes")) === FACE_CHANGE &&
+    (await editorHits()) === 1;
+  await click("#costume-reset");
+  results.resetRestoresTheSet =
+    (await pressedOf("#swatch-colorFace-5")) === "true" &&
+    (await pressedOf("#swatch-colorFace-3")) === "false" &&
+    (await exists("#costume-no-changes")) &&
+    (await page.evaluate<boolean>(
+      `document.querySelector("#costume-reset").disabled && document.querySelector("#costume-review").disabled`,
+    ));
+
+  // The Fab here reads the editor again, not my page. A draft made over the set it finds
+  // unchanged is kept, and one made over a set that has moved is dropped for the set as read.
+  const readEditorAgain = async () => {
+    const before = await editorHits();
+    await click("#read-again");
+    await waitFor(async () => ((await editorHits()) > before ? true : undefined));
+    await inStep("editing");
+  };
+  const myPageReadsBeforeAgain = await myPageHits();
+  await readEditorAgain();
+  results.readAgainReadsTheEditorHere =
+    (await editorHits()) === 2 && (await myPageHits()) === myPageReadsBeforeAgain;
+  await click("#swatch-colorFace-3");
+  await readEditorAgain();
+  results.readAgainKeepsADraftOverAnUnchangedSet =
+    (await pressedOf("#swatch-colorFace-3")) === "true" &&
+    (await textOf("#costume-changes")) === FACE_CHANGE;
+  await fetch(`${HIROBA}/__state?color_body=40`);
+  await readEditorAgain();
+  await click("#costume-part-colorBody");
+  const bodyAsRead = (await pressedOf("#swatch-colorBody-40")) === "true";
+  await click("#costume-part-colorFace");
+  results.readAgainDropsADraftOverAMovedSet =
+    bodyAsRead &&
+    (await pressedOf("#swatch-colorFace-5")) === "true" &&
+    (await pressedOf("#swatch-colorFace-3")) === "false" &&
+    (await exists("#costume-no-changes"));
+  await fetch(`${HIROBA}/__state?reset=1`);
+  await readEditorAgain();
+
+  // The Save bar is at the window's bottom edge, however much the step has to show, and stays
+  // there as the page scrolls.
+  const barFlush = () =>
+    page.evaluate<boolean>(
+      `Math.abs(document.querySelector("#costume-bar").getBoundingClientRect().bottom - window.innerHeight) < 1`,
+    );
+  const barWhileEditing = await barFlush();
+  await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)");
+  const barScrolledToTheEnd = await barFlush();
+  await page.evaluate("window.scrollTo(0, 0)");
+  await click("#swatch-colorFace-3");
+  await click("#costume-review");
+  await inStep("confirming");
+  const barWhileReviewing = await barFlush();
+  await click("#costume-back");
+  await inStep("editing");
+  await click("#costume-reset");
+  results.saveBarStaysAtTheBottom = barWhileEditing && barScrolledToTheEnd && barWhileReviewing;
+
+  // The content is a column on a wide window and the whole width on a phone's.
+  const pageBox = await boxOf("#costume-page");
+  const frameBox = await boxOf("main .MuiContainer-root");
+  await page.send("Emulation.setDeviceMetricsOverride", {
+    width: 480,
+    height: 800,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
+  await waitFor(async () => (await exists("#nav-menu")) || undefined);
+  const narrowPageBox = await boxOf("#costume-page");
+  const narrowFrameBox = await boxOf("main .MuiContainer-root");
+  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  await waitFor(async () => (await exists("#nav-overview")) || undefined);
+  results.costumePageIsAColumn =
+    pageBox.width <= 601 &&
+    Math.abs((pageBox.left + pageBox.right) / 2 - (frameBox.left + frameBox.right) / 2) < 2 &&
+    Math.abs(narrowPageBox.width - (narrowFrameBox.width - 2 * 16)) < 2;
+  await goTo("overview");
+
+  const pageOutcome = () =>
+    page.evaluate<string | null>(
+      `document.querySelector("#costume-page #write-outcome")?.dataset.outcome ?? null`,
+    );
+  /**
+   * Opens the Costume page on the editor as Hiroba has it now, the draft the set as read. The page
+   * reads the editor by itself the first time it is shown in a session, and keeps what it read
+   * after that: a change made elsewhere shows after a read again, which is the Fab's.
+   */
+  const openFreshEditor = async () => {
+    await goTo("costume");
+    const step = await waitFor(async () => (await stepOf()) ?? undefined);
+    if (step !== "unread" && step !== "loading") {
+      await readEditorAgain();
+    }
+    await inStep("editing");
+    if (
+      await page.evaluate<boolean>(`document.querySelector("#costume-reset")?.disabled === false`)
+    ) {
+      await click("#costume-reset");
+    }
+    await onTheColours();
+  };
+  /** Opens the page on the editor it holds, back from an outcome if one is shown. */
+  const openEditing = async () => {
+    await goTo("costume");
+    const step = await waitFor(async () => {
+      const now = await stepOf();
+      return now === "editing" || now === "done" ? now : undefined;
+    });
+    if (step === "done") {
+      await click("#costume-back");
+    }
+    await inStep("editing");
+    await onTheColours();
+  };
+  /** The editor's first tab, かお: where the page starts, and where a visit left on others is not. */
+  const onTheColours = async () => {
+    await click("#costume-tab-colours");
+    await click("#costume-part-colorFace");
+  };
+  /** Makes a pick on a fresh editor, confirms with the tick, saves, and waits for the outcome. */
   const changeInTheWindow = async (pick: () => Promise<unknown>) => {
-    await click("#costume-open");
-    await waitFor(async () => (await exists("#costume-review")) || undefined);
+    await openFreshEditor();
     await pick();
     await click("#costume-review");
     await waitFor(async () => (await exists("#costume-first-write")) || undefined);
@@ -868,17 +1082,14 @@ try {
         : undefined,
     );
     await click("#costume-save");
-    return waitFor(async () => (await dialogOutcome()) ?? undefined);
+    return waitFor(async () => (await pageOutcome()) ?? undefined);
   };
-  const closeEditor = async () => {
-    await click("#costume-close");
-    await waitFor(async () => ((await exists("#costume-dialog")) ? undefined : true));
-  };
+  const leaveTheCostumePage = () => goTo("overview");
   // A write in the window that leaves the costume as it was asks the picture host for nothing, even
   // with no portrait kept to show: only a change applied, or a read, does. The line stays.
   await fetch(`${HIROBA}/__noop-save`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
-  await closeEditor();
+  await leaveTheCostumePage();
   results.myDonNotAskedAfterNoChange =
     noChange === "notApplied" &&
     (await myDonsSettled()) === myDonsFailed &&
@@ -1096,7 +1307,8 @@ try {
   results.pullOnlyDownFromTheTop =
     readsByUpwardSwipe === 0 && readsBySidewaysSwipe === 0 && readsByPullBelowTop === 0;
   // A slow pull begun on the portrait opens no tooltip on the way: a finger that moves makes no
-  // long press. Held past a long press's time and let go short of the point, it reads nothing.
+  // long press, nor does it take the window to the Costume page. Held past a long press's time and
+  // let go short of the point, it reads nothing.
   const onTile = await middleOf(page, "#my-don");
   const readsBeforeSlowPull = await myPageHits();
   const tooltipInSlowPull = await swipe(onTile, { x: onTile.x, y: onTile.y + 100 }, async () => {
@@ -1105,7 +1317,9 @@ try {
   });
   await Bun.sleep(500);
   results.portraitTooltipShutInPull =
-    tooltipInSlowPull === false && (await myPageHits()) === readsBeforeSlowPull;
+    tooltipInSlowPull === false &&
+    (await myPageHits()) === readsBeforeSlowPull &&
+    (await currentPage()) === "overview";
   await touchEmulated(false);
 
   // Every shape my page can take is a normal state: each renders in its place with the rest of
@@ -1392,17 +1606,14 @@ try {
   await readMedalShowing(() => shownNow("#medal-plate-image"));
   await page.evaluate("window.scrollTo(0, 0)");
 
-  // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the card
-  // offers the editor, and every write is unverified: a tick to confirm, and the title read twice.
-  const cardOutcome = () =>
-    page.evaluate<string | null>(
-      `document.querySelector("#profile #write-outcome")?.dataset.outcome ?? null`,
-    );
-  /** Waits for the card's undo to end, from the Snackbar or the card's own button. */
+  // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the Costume
+  // page offers the editor, and every write is unverified: a tick to confirm, and the title read
+  // twice.
+  /** Waits for an undo started from the page to end, and gives its outcome. */
   const undoFrom = async (selector: string) => {
     await click(selector);
     await Bun.sleep(200);
-    return waitFor(async () => (await cardOutcome()) ?? undefined);
+    return waitFor(async () => (await pageOutcome()) ?? undefined);
   };
   /** A write straight through the bridge, as the renderer would ask for one. */
   const bridgeChange = (target: Record<string, number>, expected = START) =>
@@ -1410,8 +1621,10 @@ try {
       `window.abth.changeCostume(${JSON.stringify({ expected, target })})`,
     );
 
-  // No "Change costume" button: the portrait opens the editor (the user's call, 2026-09-29). It is
-  // a button named for that, and a pointer resting on it shows a small edit badge and the name.
+  // No "Change costume" button: the portrait is the button to the Costume page (the user's call,
+  // 2026-09-29 and 2026-10-02). It is named for that, and a pointer resting on it shows a small
+  // edit badge and the name.
+  const OPEN_COSTUME = "Open the Costume page";
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   const badgeOpacity = () =>
     page.evaluate<string>(
@@ -1422,29 +1635,25 @@ try {
   const badgeOnHover = await waitFor(async () => (await badgeOpacity()) === "1" || undefined);
   const nameOnHover = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
-  results.portraitOpensEditor =
+  results.portraitIsTheCostumeButton =
     (await page.evaluate<boolean>(
-      `(() => { const portrait = document.querySelector("#costume-open"); return portrait?.tagName === "BUTTON" && portrait.querySelector("#my-don") !== null && [...document.querySelectorAll("button")].every((button) => button.textContent.trim() !== "Change costume"); })()`,
+      `(() => { const portrait = document.querySelector("#costume-open"); return portrait?.tagName === "BUTTON" && portrait.querySelector("#my-don") !== null && [...document.querySelectorAll("button")].every((button) => button.textContent.trim() !== ${JSON.stringify(OPEN_COSTUME)}) && !portrait.disabled; })()`,
     )) &&
-    (await attribute("#costume-open", "aria-label")) === "Change costume" &&
+    (await attribute("#costume-open", "aria-label")) === OPEN_COSTUME &&
     badgeAtRest === "0" &&
     badgeOnHover &&
-    nameOnHover === "Change costume";
+    nameOnHover === OPEN_COSTUME;
 
-  results.writeGateOpen =
-    same(await page.evaluate("window.abth.enabledWrites()"), [
-      { kind: "costume", verified: false },
-    ]) &&
-    (await page.evaluate<boolean>(`document.querySelector("#costume-open")?.disabled === false`)) &&
-    !(await exists("#costume-not-open"));
-
-  // The keyboard opens the editor from the portrait, by Enter and by Space, and so it does on the
-  // touch-first screen below, where a finger's tap does not.
+  // The keyboard goes to the Costume page from the portrait, by Enter and by Space, and so it does
+  // on the touch-first screen below, where a finger's tap does not.
   const openedBy = async (keys: () => Promise<unknown>) => {
     await page.evaluate(`document.querySelector("#costume-open").focus()`);
     await keys();
-    const opened = await waitFor(async () => (await exists("#costume-dialog")) || undefined, 5_000);
-    await closeEditor();
+    const opened = await waitFor(
+      async () => (await currentPage()) === "costume" || undefined,
+      5_000,
+    );
+    await goTo("overview");
     return opened;
   };
   const SPACE = { key: " ", code: "Space", windowsVirtualKeyCode: 32 };
@@ -1456,11 +1665,11 @@ try {
     }));
   const openedByKeysWithMouse = await openedByKeys();
 
-  // On a touch-first screen (touch emulated), a finger opens the editor by a long-press on the
-  // portrait: its edit badge is up at rest, and a description says to long-press. A tap, which the
-  // browser still makes a click of, opens nothing; nor does a finger held as long but moved on the
-  // way, as a pull or a scroll begun on the portrait is, and that reads nothing either. The lift
-  // after a long-press makes no click on the editor it opened.
+  // On a touch-first screen (touch emulated), a finger goes to the Costume page by a long-press on
+  // the portrait: its edit badge is up at rest, and a description says to long-press. A tap, which
+  // the browser still makes a click of, goes nowhere; nor does a finger held as long but moved on
+  // the way, as a pull or a scroll begun on the portrait is, and that reads nothing either. The
+  // lift after a long-press makes no click on the page it went to.
   // Neither the keyboard's focus nor the pointer on the portrait, which put its badge up too.
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
@@ -1471,7 +1680,7 @@ try {
     ),
   );
   await waitFor(async () => (await badgeOpacity()) === "1" || undefined, 5_000);
-  results.portraitOpensEditorByKeyboard = openedByKeysWithMouse && (await openedByKeys());
+  results.portraitJumpsToCostumeByKeyboard = openedByKeysWithMouse && (await openedByKeys());
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
   await page.evaluate(
     `window.touchClicks = []; document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true)`,
@@ -1484,62 +1693,53 @@ try {
     async () => (await touchClicks()).includes("touch") || undefined,
   );
   await Bun.sleep(2 * LONG_PRESS_MS);
-  const openedByTap = await exists("#costume-dialog");
+  const wentByTap = (await currentPage()) === "costume";
   const readsBeforeMovedPress = await myPageHits();
   await swipe(onPortrait, { x: onPortrait.x, y: onPortrait.y + 100 }, () =>
     Bun.sleep(2 * LONG_PRESS_MS),
   );
   await Bun.sleep(500);
-  const openedByMovedPress =
-    (await exists("#costume-dialog")) || (await myPageHits()) !== readsBeforeMovedPress;
-  await fetch(`${HIROBA}/__previews?reset=1`);
+  const wentByMovedPress =
+    (await currentPage()) === "costume" || (await myPageHits()) !== readsBeforeMovedPress;
   const clicksBeforeLongPress = await touchClicks();
   await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });
-  const openedByLongPress = await waitFor(
-    async () => (await exists("#costume-dialog")) || undefined,
+  const wentByLongPress = await waitFor(
+    async () => (await currentPage()) === "costume" || undefined,
     5_000,
   );
   await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   await Bun.sleep(500);
-  results.portraitOpensEditorByLongPress =
-    longPressHint === "Long-press your マイどん to change costume." &&
+  results.portraitJumpsToCostumeByLongPress =
+    longPressHint === "Long-press your マイどん to open the Costume page." &&
     tapClicked &&
-    !openedByTap &&
-    !openedByMovedPress &&
-    openedByLongPress &&
+    !wentByTap &&
+    !wentByMovedPress &&
+    wentByLongPress &&
     same(await touchClicks(), clicksBeforeLongPress) &&
-    (await exists("#costume-dialog"));
+    (await currentPage()) === "costume" &&
+    (await stepOf()) === "done";
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
 
   // The editor's picture of the set, which the mock draws from the query and for a session only:
-  // a picture shown means the session went with the request. One request on opening, by the
-  // site's names in the site's order, then one per pause in the picks; in the window, a data: URL.
-  const previewSrc = () =>
-    page.evaluate<string | null>(
-      `document.querySelector("#costume-preview-image")?.getAttribute("src") ?? null`,
-    );
-  /** The picture once it is settled and is not `before`: no spinner, and a picture shown. */
-  const previewOtherThan = (before: string | null) =>
-    waitFor(async () => {
-      const src = await previewSrc();
-      const loading = await exists("#costume-preview-loading");
-      return src !== null && src !== before && !loading ? src : undefined;
-    });
-  // Opened by the long-press above.
+  // a picture shown means the session went with the request. One request when the page is first
+  // shown (above), by the site's names in the site's order, then one per pause in the picks; in
+  // the window, a data: URL. The page is open now, by the long-press, on the outcome of the write
+  // that moved nothing, which is where it was left.
+  await inStep("done");
+  await click("#costume-back");
+  await inStep("editing");
   const onOpen = await previewOtherThan(null);
   results.columnStillAcrossPages =
     overviewScrolls &&
     sameColumn(columnOnOverview, columnOnSettings) &&
     sameColumn(columnOnSettings, await column());
-  await Bun.sleep(500);
-  results.previewShownOnOpen =
-    onOpen.startsWith("data:image/png;base64,") &&
-    same(await previewQueries(), [previewQuery(START)]);
-  await click("#swatch-colorFace-3");
+  await fetch(`${HIROBA}/__previews?reset=1`);
+  await click("#swatch-colorFace-4");
   const afterColour = await previewOtherThan(onOpen);
+  await Bun.sleep(500);
   results.previewChangesAfterColour =
     afterColour.startsWith("data:image/png;base64,") &&
-    same(await previewQueries(), [previewQuery(START), previewQuery({ ...START, colorFace: 3 })]);
+    same(await previewQueries(), [previewQuery({ ...START, colorFace: 4 })]);
   // Five picks, each well inside the pause after the one before: one request, for the last.
   await fetch(`${HIROBA}/__previews?reset=1`);
   for (const id of [7, 9, 11, 13, 15]) {
@@ -1570,17 +1770,17 @@ try {
     (await previewSrc()) === afterBurst &&
     (await page.evaluate<boolean>(`document.querySelector("#costume-review").disabled === false`));
   await fetch(`${HIROBA}/__preview?answer=png`);
-  // Shut, the editor asks for nothing more.
+  // Away from the page, nothing more is asked.
   await fetch(`${HIROBA}/__previews?reset=1`);
   await click("#swatch-colorFace-21");
-  await closeEditor();
+  await leaveTheCostumePage();
   await Bun.sleep(800);
   results.previewNoneOnceShut = same(await previewQueries(), []);
 
   // The items' thumbnails, which the mock draws for a session only: a picture shown means the
   // session went with the request. With forty more items in the きぐるみ slot than its box shows,
   // only the rows on screen and one ahead are asked for, each once, from the editor, and only for
-  // items the editor offered; opened again, the editor asks for none of them.
+  // items the editor offered; shown again, the page asks for none of them.
   type Thumb = { cos: number; type: number; referer: string | null };
   const thumbs = async () => (await (await fetch(`${HIROBA}/__thumbs`)).json()) as Thumb[];
   /** The thumbnails asked for, once none more has been for a second. */
@@ -1596,9 +1796,9 @@ try {
     }
     return thumbs();
   };
-  const openItems = async () => {
-    await click("#costume-open");
-    await waitFor(async () => (await exists("#costume-tab-items")) || undefined);
+  /** Opens the page on its items tab, on an editor read afresh if `fresh`, else the one it holds. */
+  const openItems = async (fresh = false) => {
+    await (fresh ? openFreshEditor() : openEditing());
     await click("#costume-tab-items");
     await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
   };
@@ -1608,7 +1808,7 @@ try {
     number[]
   >;
   const ownedIn = (slot: number) => owned[String(slot)] ?? [];
-  await openItems();
+  await openItems(true);
   await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
   const seen = await thumbsSettled();
   results.thumbnailsShownAsPictures =
@@ -1631,12 +1831,41 @@ try {
         ownedIn(1).includes(thumb.cos) &&
         thumb.referer === `${HIROBA}/mypage_kisekae.php`,
     );
-  // The editor's heading, tabs, はずす and items are Hiroba's words, so they say they are Japanese.
+  // On a touch screen, a finger on the grid once it has scrolled is the grid's to scroll back, and
+  // pulls nothing; on it at its top, a pull from the top of the page reads the editor again, and
+  // not my page.
+  await touchEmulated(true);
+  await page.evaluate("window.scrollTo(0, 0)");
+  const gridBox = await boxOf("#costume-items-costume1");
+  const fromGrid = { x: (gridBox.left + gridBox.right) / 2, y: gridBox.top + 10 };
+  const pulledOnGrid = { x: fromGrid.x, y: fromGrid.y + 160 };
+  await page.evaluate(`document.querySelector("#costume-items-costume1").scrollTop = 100`);
+  const gridScrolled =
+    (await page.evaluate<number>(`document.querySelector("#costume-items-costume1").scrollTop`)) >
+    0;
+  const editorReadsBeforeGridPull = await editorHits();
+  await swipe(fromGrid, pulledOnGrid);
+  await Bun.sleep(500);
+  results.pullLeavesAScrolledGridAlone =
+    gridScrolled &&
+    (await editorHits()) === editorReadsBeforeGridPull &&
+    (await stepOf()) === "editing" &&
+    !(await pullIndicator()).shown;
+  await page.evaluate(`document.querySelector("#costume-items-costume1").scrollTop = 0`);
+  const myPageReadsBeforeGridPull = await myPageHits();
+  await swipe(fromGrid, pulledOnGrid);
+  await waitFor(async () => ((await editorHits()) > editorReadsBeforeGridPull ? true : undefined));
+  await inStep("editing");
+  results.pullReadsTheEditorOnTheCostumePage =
+    (await editorHits()) === editorReadsBeforeGridPull + 1 &&
+    (await myPageHits()) === myPageReadsBeforeGridPull;
+  await touchEmulated(false);
+  // The editor's tabs, はずす and items are Hiroba's words, so they say they are Japanese.
   results.editorWordsMarkedJapanese = same(
     await page.evaluate<(string | null)[]>(
-      `["#costume-dialog h2", "#costume-tab-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => document.querySelector(selector)?.lang ?? null)`,
+      `["#costume-tab-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => document.querySelector(selector)?.lang ?? null)`,
     ),
-    ["ja", "ja", "ja", "ja", "ja"],
+    ["ja", "ja", "ja", "ja"],
   );
   const withThumbnails = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
@@ -1646,7 +1875,7 @@ try {
     !withThumbnails.includes("cos=") &&
     !withThumbnails.includes("_token_v2") &&
     !tokens.some((token) => withThumbnails.includes(token));
-  await closeEditor();
+  await leaveTheCostumePage();
   await openItems();
   await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
   await Bun.sleep(1500);
@@ -1679,7 +1908,7 @@ try {
   // Opened again, the editor asks once more for the thumbnails that did not come, and for nothing
   // else: they show, and the line under the box is gone.
   await fetch(`${HIROBA}/__thumb?answer=png`);
-  await closeEditor();
+  await leaveTheCostumePage();
   await openItems();
   await click("#costume-part-costume2");
   await waitFor(async () => (await exists("#costume-items-costume2")) || undefined);
@@ -1695,7 +1924,7 @@ try {
       `document.querySelectorAll("#costume-items-costume2 img").length`,
     )) === ownedIn(2).length &&
     !(await exists("#costume-thumbnails-unavailable"));
-  await closeEditor();
+  await leaveTheCostumePage();
   await fetch(`${HIROBA}/__items?many=0`);
   // Asked for straight through the bridge: an item the editor did not offer is refused unsent, and
   // any other shape is refused before the verb runs, a URL among them.
@@ -1761,45 +1990,52 @@ try {
         same(post.fields, ["_tckt", ...COSTUME_FIELDS]) &&
         post.ticketMatched,
     );
-  // The costume changed: the My Don on the card, behind the editor, is fetched anew, once, and
-  // shows the new one.
+  // The costume changed: the My Don on the Overview is fetched anew, once, as the Overview is
+  // shown again, and shows the new one.
+  await goTo("overview");
   await waitForSeen(
     page,
     async () => (await myDonsAsked()).length > myDonsBeforeColour || undefined,
   );
   const myDonsAfterColour = await myDonsSettled();
   const myDonAfterColour = await attribute("#my-don-image", "src");
-  // The change's undo is offered once the editor is closed, never over it.
-  await Bun.sleep(500);
-  const snackbarOverTheEditor = await exists("#snackbar-undo");
-  await closeEditor();
-  // Offered on the Overview alone, the one page that shows an undo running and how it ended: gone
-  // on Favourites, once its exit has run, and there again back on the Overview.
-  await waitFor(async () => (await exists("#snackbar-undo")) || undefined);
+  // The change's undo is on the Costume page, where the outcome shows, and nowhere else: not on
+  // the Overview or Favourites, and no Snackbar over any page.
+  const undoElsewhere = async () =>
+    (await exists("#costume-undo")) ||
+    (await exists("#write-outcome")) ||
+    (await exists(".MuiSnackbar-root"));
+  const undoOnOverview = await undoElsewhere();
   await goTo("favorites");
   await Bun.sleep(1000);
-  const snackbarOnFavorites = await exists("#snackbar-undo");
-  await goTo("overview");
-  results.snackbarOnlyOnOverview =
-    !snackbarOnFavorites &&
-    (await waitFor(async () => (await exists("#snackbar-undo")) || undefined));
+  const undoOnFavorites = await undoElsewhere();
+  await goTo("costume");
+  await inStep("done");
+  results.undoOnTheCostumePageAlone =
+    (await exists("#costume-undo")) &&
+    (await textOf("#undo-when")) !== null &&
+    (await pageOutcome()) === "applied" &&
+    !undoOnOverview &&
+    !undoOnFavorites &&
+    !(await exists(".MuiSnackbar-root"));
 
-  // Undone from the Snackbar the change offered: the whole set back, by a write like any other.
-  // Pressed twice, as a double-click would: the second press finds it shut and sends nothing.
-  await waitFor(async () => (await exists("#snackbar-undo")) || undefined);
+  // Undone from the page: the whole set back, by a write like any other. Pressed twice, as a
+  // double-click would: the second press finds it gone and sends nothing.
   await resetLog();
-  await click("#snackbar-undo");
+  await click("#costume-undo");
   const secondPressShut = await page.evaluate<boolean>(
-    `(() => { const undo = document.querySelector("#snackbar-undo"); if (undo === null) return true; const shut = undo.disabled; undo.click(); return shut; })()`,
+    `(() => { const undo = document.querySelector("#costume-undo"); if (undo === null) return true; const shut = undo.disabled; undo.click(); return shut; })()`,
   );
   await Bun.sleep(200);
-  results.colourUndoneFromSnackbar =
-    (await waitFor(async () => (await cardOutcome()) ?? undefined)) === "applied" &&
-    (await textOf("#profile #write-outcome")) === "Undone. Hiroba shows the costume as it was." &&
+  results.colourUndoneFromThePage =
+    (await waitFor(async () => (await pageOutcome()) ?? undefined)) === "applied" &&
+    (await textOf("#costume-page #write-outcome")) ===
+      "Undone. Hiroba shows the costume as it was." &&
     same(await savedCostume(), START) &&
     sameBesideLanePictures(await requestLog(), WRITE_REQUESTS);
-  results.snackbarUndoOncePerPress = !snackbarOverTheEditor && secondPressShut;
+  results.undoOncePerPress = secondPressShut;
   // So does the undo: once more, and the My Don is back as it was.
+  await goTo("overview");
   await waitForSeen(
     page,
     async () => (await myDonsAsked()).length > myDonsAfterColour || undefined,
@@ -1811,15 +2047,17 @@ try {
     (await myDonsSettled()) === myDonsAfterColour + 1 &&
     (await attribute("#my-don-image", "src")) === myDonBeforeColour;
 
-  // A きぐるみ: the window warns, the four pieces come off, and one undo puts all eight back.
+  // A きぐるみ: the page warns, the four pieces come off, and one undo puts all eight back.
+  let noteGoneBeforeNextChange = false;
   const kigurumiOutcome = await changeInTheWindow(async () => {
+    // The page no longer says the costume is as it was before the colour: that undo is behind it.
+    noteGoneBeforeNextChange = !(await exists("#write-outcome"));
     await click("#costume-tab-items");
     await waitFor(async () => (await exists("#item-costume1-36")) || undefined);
     await click("#item-costume1-36");
     await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
   });
-  // The card no longer says the costume is as it was before the colour: that undo is behind it.
-  results.undoneNoteClearedByNextChange = (await cardOutcome()) === null;
+  results.undoneNoteClearedByNextChange = noteGoneBeforeNextChange;
   results.kigurumiEmptiesThePieces =
     kigurumiOutcome === "applied" &&
     same(await savedCostume(), {
@@ -1830,7 +2068,6 @@ try {
       costume4: 0,
       costume5: 0,
     });
-  await closeEditor();
   const savesBeforeUndo = await hitsOn("/ajax/change_mydon.php");
   results.kigurumiUndoneInOnePost =
     (await undoFrom("#costume-undo")) === "applied" &&
@@ -1838,6 +2075,7 @@ try {
     (await hitsOn("/ajax/change_mydon.php")) - savesBeforeUndo === 1 &&
     !(await exists("#costume-undo"));
   // The My Don fetched anew after that change and its undo is in before the log is read below.
+  await goTo("overview");
   await myDonsSettled();
 
   // #22: a piece beside a きぐるみ, which Hiroba would answer 0 to and ignore, is refused unsent.
@@ -1892,11 +2130,10 @@ try {
 
   // Nor does a read start inside a write: while an undo waits on its pre-check, the Fab is shut,
   // and neither a press on it nor a pull from the top of the page asks Hiroba anything. The log is
-  // the undo's alone.
+  // the undo's alone. The read that shows the undo on offer is the Costume page's, of the editor.
   const toUndo = await bridgeChange({ ...START, colorLimb: 20 });
-  await click("#read-again");
+  await openFreshEditor();
   await waitFor(async () => (await exists("#costume-undo")) || undefined);
-  await myDonsSettled();
   await resetLog();
   await fetch(`${HIROBA}/__hold-precheck?on=1`);
   const prechecksBeforeUndo = await hitsOn("/ajax/check_ip_kisekae.php");
@@ -1914,8 +2151,8 @@ try {
   results.noReadInsideAWrite =
     toUndo.kind === "applied" &&
     fabShutInWrite &&
-    (await waitFor(async () => (await cardOutcome()) ?? undefined)) === "applied" &&
-    sameBesideLanePictures(await requestLog(), WRITE_REQUESTS) &&
+    (await waitFor(async () => (await pageOutcome()) ?? undefined)) === "applied" &&
+    sentAsPlanned(await requestLog(), [], WRITE_REQUESTS) &&
     same(await savedCostume(), START);
 
   // A save that answers 0 and moves nothing reads as not applied, whatever it said.
@@ -1954,7 +2191,7 @@ try {
 
   // Changed elsewhere after a change: its undo stops unsent, says why, and is withdrawn.
   const changedElsewhere = await bridgeChange({ ...START, colorLimb: 20 });
-  await click("#read-again");
+  await readEditorAgain();
   await waitFor(async () => (await exists("#costume-undo")) || undefined);
   await fetch(`${HIROBA}/__state?color_body=40`);
   const savesBeforeStaleUndo = await hitsOn("/ajax/change_mydon.php");
@@ -1975,11 +2212,8 @@ try {
 
   // The session ends while the change is being reviewed: nothing is posted, and it is back to
   // signing in.
-  await click("#read-again");
-  await until("Read at");
+  await openFreshEditor();
   const postsBeforeExpiry = await hitsOn("/ajax/check_ip_kisekae.php");
-  await click("#costume-open");
-  await waitFor(async () => (await exists("#swatch-colorFace-9")) || undefined);
   await click("#swatch-colorFace-9");
   await click("#costume-review");
   await waitFor(async () => (await exists("#costume-first-write")) || undefined);
@@ -1994,7 +2228,9 @@ try {
     !(await page.evaluate<boolean>("window.abth.isSignedIn()"));
 
   // The session ends after the save: the session is dropped, whether it saved is unknown, and
-  // the next editor read settles the undo from what the costume is.
+  // the next editor read settles the undo from what the costume is. Signed in again on the
+  // Overview, which reads the editor not at all: the page that does is not the one shown.
+  await goTo("overview");
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
@@ -2061,9 +2297,11 @@ try {
   results.sessionKept =
     existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
 
-  // Reopened, the app is still signed in and reads once, by itself. The undo kept on disk is still
-  // offered. Its clock is in Hiroba's daily break, and a write then sends nothing at all.
+  // Reopened, the app is still signed in and reads once, by itself, and not the editor: that is
+  // read when the Costume page is shown. The undo kept on disk is offered there. Its clock is in
+  // Hiroba's daily break, and a write then sends nothing at all.
   const readsBeforeReopen = await myPageHits();
+  const editorReadsBeforeReopen = await editorHits();
   const platesBeforeReopen = (await platesSettled()).length;
   const myDonsBeforeReopen = await myDonsSettled();
   const medalPlatesBeforeReopen = await medalPlatesSettled();
@@ -2073,11 +2311,8 @@ try {
   await running.until("サンプルどん");
   results.signedInAfterReopen = true;
   results.readsOnReopen = (await myPageHits()) - readsBeforeReopen;
-  results.undoOfferedAfterReopen = await waitFor(
-    async () =>
-      (await running.page.evaluate<boolean>(`document.querySelector("#costume-undo") !== null`)) ||
-      undefined,
-  );
+  await Bun.sleep(1000);
+  results.editorNotReadOnReopen = (await editorHits()) === editorReadsBeforeReopen;
   // The read shows the title plate too, kept on disk since the first launch, and asks Hiroba for
   // none: once it is shown, nothing more is on its way.
   await waitForSeen(
@@ -2133,11 +2368,17 @@ try {
   );
   results.breakSendsNothing =
     same(inTheBreak, { kind: "maintenance" }) && same(await requestLog(), []);
-  // The editor's items show the thumbnails kept on disk, and ask Hiroba for none: the きぐるみ
-  // slot's, seen on the first launch, and the second slot's, which came on reopening it there.
+  // The Costume page, shown for the first time in this launch, reads the editor then, once, and
+  // offers the undo kept on disk. Its items show the thumbnails kept on disk, and ask Hiroba for
+  // none: the きぐるみ slot's, seen on the first launch, and the second slot's, which came on
+  // reopening it there.
   const shownOnReopen = (selector: string) =>
     running.page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
-  await running.click("#costume-open");
+  await running.goTo("costume");
+  results.undoOfferedAfterReopen = await waitFor(
+    async () => (await shownOnReopen("#costume-undo")) || undefined,
+  );
+  results.editorReadOnceOnReopen = (await editorHits()) === editorReadsBeforeReopen + 1;
   await waitFor(async () => (await shownOnReopen("#costume-tab-items")) || undefined);
   await running.click("#costume-tab-items");
   await waitForSeen(
@@ -2150,8 +2391,7 @@ try {
     async () => (await shownOnReopen("#item-costume2-21 img")) || undefined,
   );
   results.thumbnailsOncePerDevice = (await thumbsSettled()).length === thumbsBeforeReopen;
-  await running.click("#costume-close");
-  await waitFor(async () => ((await shownOnReopen("#costume-dialog")) ? undefined : true));
+  await running.goTo("overview");
 
   /**
    * Signs out in Settings, which offers it while signed in, and whether the window then shows the
@@ -2181,9 +2421,10 @@ try {
   results.gateShutWithoutTheFlag =
     same(shut, [[], [], { kind: "notEnabled" }, { kind: "notEnabled" }]) &&
     same(await requestLog(), []);
-  // Signed in, the portrait opens nothing, and is no button: it says why, to screen readers and in
-  // its tooltip, rather than leave no way to change anything at all. Signed out again after, so the
-  // session is not left for the scan below.
+  // Signed in, the portrait is still the button to the Costume page, which opens all the same: it
+  // shows the player's マイどん and why the costume cannot be changed, rather than leave no way to
+  // change anything and no word of why. It reads nothing from the editor and has no control.
+  // Signed out again after, so the session is not left for the scan below.
   const platesSignedOut = (await platesAsked()).length;
   const myDonsSignedOut = (await myDonsAsked()).length;
   const medalPlatesSignedOut = await hitsOn(MEDAL_PLATE);
@@ -2193,38 +2434,35 @@ try {
   tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
   const NOT_OPEN =
     "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
-  await hoverOver(running.page, "#my-don");
-  const whyOnHover = await waitFor(
-    async () => (await running.textOf('[role="tooltip"]')) ?? undefined,
+  const editorReadsBeforeShutPage = await editorHits();
+  const portraitStillTheButton = await running.page.evaluate<boolean>(
+    `document.querySelector("#costume-open")?.tagName === "BUTTON"`,
   );
-  await running.page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  await running.click("#costume-open");
+  await waitFor(async () => (await running.currentPage()) === "costume" || undefined);
+  await waitFor(async () => (await running.textOf("#costume-not-open")) ?? undefined);
+  await waitForSeen(
+    running.page,
+    async () =>
+      (await running.page.evaluate<boolean>(`document.querySelector("#my-don-image") !== null`)) ||
+      undefined,
+  );
+  // A read of the editor, were one made, would be on its way by now.
+  await Bun.sleep(1000);
   results.shutGateSaysWhy =
+    portraitStillTheButton &&
+    (await running.textOf("main h1")) === "Costume" &&
+    (await running.textOf("#costume-not-open")) === NOT_OPEN;
+  results.shutPageReadsNothing =
+    (await editorHits()) === editorReadsBeforeShutPage &&
     (await running.page.evaluate<boolean>(
-      `(() => { const tile = document.querySelector("#my-don"); return document.querySelector("#costume-open") === null && tile !== null && tile.closest("button, [role=button], [tabindex]") === null; })()`,
-    )) &&
-    (await running.textOf("#costume-not-open")) === NOT_OPEN &&
-    whyOnHover === NOT_OPEN;
-  // On a touch screen, a finger held still on it says why just the same.
-  await waitFor(async () =>
-    (await running.textOf('[role="tooltip"]')) === null ? true : undefined,
-  );
-  await running.page.send("Emulation.setTouchEmulationEnabled", {
-    enabled: true,
-    maxTouchPoints: 5,
-  });
-  const held = await middleOf(running.page, "#my-don");
-  await running.page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [held] });
-  const whyOnLongPress = await waitFor(
-    async () => (await running.textOf('[role="tooltip"]')) ?? undefined,
-    5_000,
-  );
-  await running.page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await running.page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
-  results.shutGateSaysWhyOnLongPress = whyOnLongPress === NOT_OPEN;
+      `["#read-again", "#costume-tab-items", "#costume-review", "#costume-reset", "#costume-bar", "#costume-undo"].every((selector) => document.querySelector(selector) === null) && document.querySelectorAll("#costume-page button").length === 0`,
+    ));
+  await running.goTo("overview");
   // Signed out on the last launch and in again on this one, the plate and the thumbnails kept on
   // disk are still there, and Hiroba is asked for none of them (the user's call, 2026-09-28: no
-  // picture is deleted at sign-out). This build opens no editor, so a thumbnail is asked for through
-  // the bridge, after the editor's read that offers it.
+  // picture is deleted at sign-out). This build shows no editor, so a thumbnail is asked for
+  // through the bridge, after the editor's read that offers it.
   await waitForSeen(
     running.page,
     async () =>
@@ -2366,7 +2604,7 @@ async function launch({
       `document.querySelector('[aria-current="page"]')?.id.replace("nav-", "") ?? null`,
     );
   /** Opens a page from the side panel, which a window this wide draws, and waits until it shows. */
-  const goTo = async (to: "overview" | "favorites" | "settings") => {
+  const goTo = async (to: "overview" | "costume" | "favorites" | "settings") => {
     await click(`#nav-${to}`);
     await waitFor(async () => (await currentPage()) === to || undefined);
   };
