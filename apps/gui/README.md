@@ -417,12 +417,10 @@ list that decides the two extra reads is the one [Writes](#writes) describes.
 
 ## Releases
 
-Two workflows run on GitHub Actions. `.github/workflows/ci.yml` runs on every push to a branch, and
-on a pull request from a fork. A pull request from this repository is not run twice: its branch's
-push has run it already, and the skipped copy is named "(run by the push)", so a required check
-called **Checks** can only be the push's own run. The workflow has two jobs side by side: **Checks**
-(format, lint, typecheck, the tests and the GUI bundle) and **Android debug APK**
-(`bun run android:apk`, on the runner's Android SDK, with JDK 21 and Node 22).
+Two workflows run on GitHub Actions. `.github/workflows/ci.yml` runs on a pull request to `main`, on
+a push to `main`, and when started by hand. It has two jobs side by side: **Checks** (format, lint,
+typecheck, the tests and the GUI bundle) and **Android debug APK** (`bun run android:apk`, on the
+runner's Android SDK, with JDK 21 and Node 22).
 `.github/workflows/release.yml` builds and publishes a release; [Making a
 release](#making-a-release) says what is done by hand.
 
@@ -462,8 +460,8 @@ the tagged commit, the workflow stops the run before anything is built.
 
 `.github/workflows/release.yml` runs when a tag `v*.*.*` is pushed: that is a release. It also runs
 as a **dry run**, which builds the same files, keeps them and creates no release: when started by
-hand (**Run workflow** in the Actions tab), and on a push to any branch that touches what a release
-is made of, which is the workflow itself, `apps/gui/package.json` (which also holds
+hand (**Run workflow** in the Actions tab), and on a pull request to `main` that touches what a
+release is made of, which is the workflow itself, `apps/gui/package.json` (which also holds
 electron-builder's configuration, under `build`) and `apps/gui/android/**`.
 
 A **Version** job reads the version first, and on a tag run stops the run unless the tag is `v` and

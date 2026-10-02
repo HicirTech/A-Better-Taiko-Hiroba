@@ -1,12 +1,11 @@
 name: CI
 
 on:
-  # Every branch, so a change is checked before it has a pull request. A filter on branches alone
-  # leaves tags out: those belong to the release workflow.
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 # A newer push to the same branch makes the older run pointless. Cancel it rather than pay for it,
 # except on main, where every commit's result is worth keeping.
@@ -19,14 +18,7 @@ permissions:
 
 jobs:
   checks:
-    # A pull request from this repository has its branch pushed here too, and that push has already
-    # run these jobs on the same commit; running them again for the pull request would do the work
-    # twice. A fork's pushes go to the fork, so its pull request is the only run it gets.
-    #
-    # The skipped job is named apart. A required check is matched by its name alone, and when one
-    # commit has two runs of "Checks", one skipped and one not, GitHub does not say which counts.
-    name: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && 'Checks (run by the push)' || 'Checks' }}
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    name: Checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -70,9 +62,7 @@ jobs:
 
   # Alongside Checks, not after it: the Android build shares nothing with it but the install.
   android:
-    # Skipped for the same pull requests as Checks, for the same reason, and named apart likewise.
-    name: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && 'Android debug APK (run by the push)' || 'Android debug APK' }}
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    name: Android debug APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

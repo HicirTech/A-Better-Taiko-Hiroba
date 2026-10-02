@@ -1,16 +1,16 @@
 name: Release
 
-# A real release is a push of a tag v<version>. Every other run is a dry run: a manual run, or a push
-# to a branch that touches what a release is made of. It builds the same files and keeps them as
+# A real release is a push of a tag v<version>. Every other run is a dry run: a manual run, or a pull
+# request that touches what a release is made of. It builds the same files and keeps them as
 # artifacts of the run, and it creates no release.
-run-name: ${{ github.event_name == 'push' && github.ref_type == 'tag' && format('Release {0}', github.ref_name) || format('Release dry run on {0}', github.ref_name) }}
+run-name: ${{ github.event_name == 'push' && github.ref_type == 'tag' && format('Release {0}', github.ref_name) || format('Release dry run on {0}', github.head_ref || github.ref_name) }}
 
 on:
   push:
     tags: ["v*.*.*"]
-    branches: ["**"]
-    # GitHub does not evaluate path filters for tags, so a tag always runs. For a branch, these are
-    # what a release is made of: this file; the app's package.json, which holds the version and,
+  pull_request:
+    branches: [main]
+    # What a release is made of: this file; the app's package.json, which holds the version and,
     # under "build", electron-builder's configuration; and the Android project.
     paths:
       - .github/workflows/release.yml
