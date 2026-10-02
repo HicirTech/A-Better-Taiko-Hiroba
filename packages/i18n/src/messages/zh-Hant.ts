@@ -145,7 +145,7 @@ export const zhHant: Messages = {
   "title.current": "目前",
   "title.shared": "你有 {count} 個稱號同名，本應用程式無法分辨你戴的是哪一個。",
   "title.notListed":
-    "你目前的稱號不在此清單中，可能是用稱號パーツ組合出來的，此版本無法讀取，也無法還原。",
+    "你目前的稱號不在此清單中，可能是由多個部件組合而成的，此版本無法讀取，也無法還原。",
   "title.reload": "重新讀取清單",
   "title.undoLast": "復原上次稱號變更",
   "title.undoBack": "將恢復為：{title}",

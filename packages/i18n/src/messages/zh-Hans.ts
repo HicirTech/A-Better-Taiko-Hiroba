@@ -146,7 +146,7 @@ export const zhHans: Messages = {
   "title.current": "当前",
   "title.shared": "你有 {count} 个称号同名，本应用无法分辨你戴的是哪一个。",
   "title.notListed":
-    "你当前的称号不在此列表中，可能是用称号パーツ组合出来的，此版本无法读取，也无法还原。",
+    "你当前的称号不在此列表中，可能是由多个部件组合而成的，此版本无法读取，也无法还原。",
   "title.reload": "重新读取列表",
   "title.undoLast": "撤销上次称号更改",
   "title.undoBack": "将恢复为：{title}",
