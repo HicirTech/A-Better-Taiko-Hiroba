@@ -2142,12 +2142,22 @@ try {
     async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeUndo || undefined,
   );
   const fabShutInWrite = (await fabState()).shut;
+  // The pages can be changed meanwhile, and the window is signed in still: Settings shuts Sign out
+  // until the write ends, and the page finds the undo still running on return.
+  await goTo("settings");
+  const signOutShutInWrite = await page.evaluate<boolean>(
+    `document.querySelector("#sign-out")?.disabled === true`,
+  );
+  const signedInInWrite = (await textOf("#account-who")) === "Signed in";
+  await goTo("costume");
+  const undoingOnReturn = (await stepOf()) === "undoing";
   await click("#read-again");
   await touchEmulated(true);
   await swipe(pullFrom, pulledBy(0, 200));
   await touchEmulated(false);
   await Bun.sleep(300);
   await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  results.signOutShutWhileAWriteRuns = signOutShutInWrite && signedInInWrite && undoingOnReturn;
   results.noReadInsideAWrite =
     toUndo.kind === "applied" &&
     fabShutInWrite &&
