@@ -51,7 +51,7 @@ import electronPath from "electron";
 
 import { PICTURE_EPOCH } from "../src/hiroba-session";
 import { LONG_PRESS_MS } from "../src/my-page/use-long-press";
-import { BRIDGE_CHANNELS } from "../src/session-port";
+import { BRIDGE_CHANNELS, type VerbsQueued } from "../src/session-port";
 import {
   COSTUME_FIELDS,
   type CostumeState,
@@ -3299,6 +3299,172 @@ try {
         portrait.referer === `${HIROBA}/` &&
         portrait.query === "?v=&kind=mydon&fn=mydon_000000000000",
     );
+
+  // Every read waits out every kind of write, and so does the first read of an editor. A write is
+  // held mid-way by the stand-in (a costume and a title at their pre-checks, a rename at its save),
+  // and the four reads that PORT_QUEUEING names are asked through the bridge meanwhile: none sends
+  // anything until the write has read back, and they go after it in the order asked.
+  await running.click("#sign-in");
+  await running.until("サンプルどん");
+  tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  await Bun.sleep(1500);
+  const READS_ASKED: Record<VerbsQueued<"read">, { call: string; requests: string[] }> = {
+    readProfile: {
+      call: "window.abth.readProfile().then((result) => result.ok)",
+      requests: ["GET /mypage_top.php", `GET ${DAN_LABEL}`],
+    },
+    openCostumeEditor: {
+      call: "window.abth.openCostumeEditor().then((result) => result.ok)",
+      requests: ["GET /mypage_kisekae.php"],
+    },
+    openTitleEditor: {
+      call: "window.abth.openTitleEditor().then((result) => result.ok)",
+      requests: [`GET ${TITLE_PAGE}`],
+    },
+    previewCostume: {
+      call: `window.abth.previewCostume(${JSON.stringify(START)}).then((result) => result.ok)`,
+      requests: [PREVIEW],
+    },
+  };
+  const readsAsked = Object.values(READS_ASKED);
+  const HELD_WRITES = [
+    {
+      hold: "/__hold-precheck",
+      reset: "/__state?reset=1",
+      heldAt: "/ajax/check_ip_kisekae.php",
+      run: WRITE_REQUESTS,
+      call: `window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorLimb: 20 } })})`,
+    },
+    {
+      hold: "/__title-hold-precheck",
+      reset: "/__profile?reset=1",
+      heldAt: "/ajax/check_ip_title.php",
+      run: TITLE_REQUESTS,
+      call: `window.abth.changeTitle(${JSON.stringify({ expected: { title: INITIAL_PROFILE.title }, target: { id: 102, title: titleOf(102).label } })})`,
+    },
+    {
+      hold: "/__profile-hold-save",
+      reset: "/__profile?reset=1",
+      heldAt: "/ajax/change_mydon_profile.php",
+      run: NAME_REQUESTS,
+      call: `window.abth.changeName(${JSON.stringify({ expected: { nickname: INITIAL_PROFILE.nickname }, target: { nickname: "あたらしい" } })})`,
+    },
+  ];
+  const waitedOut: boolean[] = [];
+  for (const held of HELD_WRITES) {
+    await fetch(`${HIROBA}${held.reset}`);
+    await resetLog();
+    await fetch(`${HIROBA}${held.hold}?on=1`);
+    const heldBefore = await hitsOn(held.heldAt);
+    const writing = running.page.evaluate<{ kind: string }>(held.call);
+    await waitFor(async () => (await hitsOn(held.heldAt)) > heldBefore || undefined);
+    const reading = readsAsked.map((read) => running.page.evaluate<boolean>(read.call));
+    await Bun.sleep(300);
+    const whileHeld = await requestLog();
+    await fetch(`${HIROBA}${held.hold}?on=0`);
+    const ended = await writing;
+    const answered = await Promise.all(reading);
+    const afterwards = await requestLog();
+    const upToTheHold = held.run.slice(0, held.run.indexOf(`POST ${held.heldAt}`) + 1);
+    waitedOut.push(
+      sameBesideLanePictures(whileHeld, upToTheHold) &&
+        ended.kind === "applied" &&
+        answered.every(Boolean) &&
+        sameBesideLanePictures(afterwards, [
+          ...held.run,
+          ...readsAsked.flatMap((read) => read.requests),
+        ]),
+    );
+  }
+  results.everyReadWaitsOutEveryWrite =
+    waitedOut.length === HELD_WRITES.length && waitedOut.every(Boolean);
+  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}/__profile?reset=1`);
+
+  // The first read of an editor waits too, as a picture does, whichever write is running: the Name
+  // & title page shown for the first time while a costume write is held reads nothing, and its
+  // section stays unread, until the write has ended; then it reads once.
+  const stepOn = (selector: string) =>
+    running.page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.dataset.step ?? null`,
+    );
+  const stepIs = (selector: string, step: string) =>
+    waitFor(async () => ((await stepOn(selector)) === step ? true : undefined));
+  const present = (selector: string) =>
+    running.page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  await running.goTo("costume");
+  await stepIs("#costume-page", "editing");
+  await running.click("#swatch-colorFace-3");
+  await running.click("#costume-review");
+  await waitFor(async () => ((await present("#costume-save")) ? true : undefined));
+  await Bun.sleep(600);
+  await resetLog();
+  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  const prechecksBeforeFirstRead = await hitsOn("/ajax/check_ip_kisekae.php");
+  const titleReadsBeforeFirstRead = await hitsOn(TITLE_PAGE);
+  await running.click("#costume-save");
+  await waitFor(
+    async () =>
+      (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeFirstRead || undefined,
+  );
+  await running.goTo("nameTitle");
+  await Bun.sleep(400);
+  const titleStepWhileHeld = await stepOn("#title-section");
+  const titleReadsWhileHeld = await hitsOn(TITLE_PAGE);
+  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  await stepIs("#title-section", "idle");
+  results.firstTitleReadWaitsOutACostumeWrite =
+    titleStepWhileHeld === "unread" &&
+    titleReadsWhileHeld === titleReadsBeforeFirstRead &&
+    runThen(await requestsSettled(WRITE_REQUESTS.length + 1), WRITE_REQUESTS, [
+      `GET ${TITLE_PAGE}`,
+    ]);
+  await fetch(`${HIROBA}/__state?reset=1`);
+
+  // And the Costume page shown for the first time while a rename is held, in a session whose editors
+  // are unread again after a sign-out.
+  await signOut();
+  await running.click("#sign-in");
+  await running.until("サンプルどん");
+  tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  await running.goTo("nameTitle");
+  await stepIs("#name-section", "idle");
+  await running.page.evaluate(
+    `(() => { const input = document.querySelector("#name-input"); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "あたらしい"); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
+  );
+  await waitFor(async () =>
+    (await running.page.evaluate<boolean>(
+      `document.querySelector("#name-review").disabled === false`,
+    ))
+      ? true
+      : undefined,
+  );
+  await running.click("#name-review");
+  await stepIs("#name-section", "confirming");
+  await resetLog();
+  await fetch(`${HIROBA}/__profile-hold-save?on=1`);
+  const savesBeforeFirstRead = await hitsOn("/ajax/change_mydon_profile.php");
+  const editorReadsBeforeFirstRead = await hitsOn("/mypage_kisekae.php");
+  await running.click("#name-save");
+  await waitFor(
+    async () =>
+      (await hitsOn("/ajax/change_mydon_profile.php")) > savesBeforeFirstRead || undefined,
+  );
+  await running.goTo("costume");
+  await Bun.sleep(400);
+  const editorStepWhileHeld = await stepOn("#costume-page");
+  const editorReadsWhileHeld = await hitsOn("/mypage_kisekae.php");
+  await fetch(`${HIROBA}/__profile-hold-save?on=0`);
+  await stepIs("#costume-page", "editing");
+  results.firstEditorReadWaitsOutARename =
+    editorStepWhileHeld === "unread" &&
+    editorReadsWhileHeld === editorReadsBeforeFirstRead &&
+    runThen(await requestsSettled(NAME_REQUESTS.length + 1), NAME_REQUESTS, [
+      "GET /mypage_kisekae.php",
+    ]);
+  await fetch(`${HIROBA}/__profile?reset=1`);
+  await signOut();
+  tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
 } finally {
   await stop(running);
   mock.kill();

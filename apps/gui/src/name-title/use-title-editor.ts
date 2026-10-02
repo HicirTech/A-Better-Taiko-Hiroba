@@ -1,6 +1,6 @@
 import type { TitleOption } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useReducer, useRef } from "react";
 
 import { useUndoOffer } from "../my-page/use-undo-offer";
 import { sendHeld, sessionNoticeOf } from "../my-page/write-ending";
@@ -25,10 +25,6 @@ export interface TitleEditorOptions {
   readonly port: HirobaSessionPort;
   /** The window's lane for Hiroba's pictures: it is held while a write runs. */
   readonly lane: PictureLane;
-  /**
-   * Whether the Name & title page is shown, signed in: the only time the list of titles is read.
-   */
-  readonly shown: boolean;
   /** The session ended under the section: back to signing in, with what happened. */
   readonly onSessionGone: (notice: MessageKey) => void;
 }
@@ -44,7 +40,7 @@ export interface TitleEditor {
   readonly writing: boolean;
   /** The list may be read again from here. */
   readonly canRead: boolean;
-  /** Reads the list, now: the first time by itself when the page is shown, then on request. */
+  /** Reads the list, now: the window asks for the first when the page is shown, then on request. */
   read(): Promise<void>;
   /** Asks the platform for the undo on offer, as after my page is read. */
   refreshUndo(): Promise<void>;
@@ -59,16 +55,12 @@ export interface TitleEditor {
 
 /**
  * The Title section, held above the page so that a pick, a review or an outcome outlives a visit to
- * another page and a read of my page. The list of titles is read when the page is first shown in a
- * session, never at start-up and never while the page is not shown; after that only when asked, and
- * a write's own read-back brings the title worn up to date.
+ * another page and a read of my page. The list of titles is read when the window asks for it: the
+ * first time when the page is first shown in a session and no write runs, never at start-up and
+ * never while the page is not shown; after that only when asked, and a write's own read-back
+ * brings the title worn up to date.
  */
-export function useTitleEditor({
-  port,
-  lane,
-  shown,
-  onSessionGone,
-}: TitleEditorOptions): TitleEditor {
+export function useTitleEditor({ port, lane, onSessionGone }: TitleEditorOptions): TitleEditor {
   const [step, dispatch] = useReducer(reduceTitle, UNREAD);
   /** Bumped when the session ends: what a request begun before it brings back is dropped. */
   const session = useRef(0);
@@ -116,12 +108,6 @@ export function useTitleEditor({
       await refreshUndo();
     }
   }, [mayRead, port, forget, onSessionGone, refreshUndo]);
-
-  useEffect(() => {
-    if (shown && step.name === "unread") {
-      void read();
-    }
-  }, [shown, step.name, read]);
 
   /**
    * A write ended, a save or an undo: the page shows it, and the undo on offer is asked for again.

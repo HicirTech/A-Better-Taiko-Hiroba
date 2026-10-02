@@ -91,7 +91,8 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   );
   /**
    * The costume editor and the undo, held here so that a draft, a review or an outcome is still
-   * there after a visit to another page. It is read when its page is first shown, never before.
+   * there after a visit to another page. It is read when its page is first shown, never before
+   * (see the first reads below).
    */
   const editor = useCostumeEditor({
     port,
@@ -105,12 +106,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
    * its page is first shown, never before. The name has nothing to read: a write's read-back is the
    * name the window's profile shows from then on, with no request.
    */
-  const titleEditor = useTitleEditor({
-    port,
-    lane,
-    shown: onNameTitlePage,
-    onSessionGone: sessionGone,
-  });
+  const titleEditor = useTitleEditor({ port, lane, onSessionGone: sessionGone });
   const { refreshUndo: refreshTitleUndo, forget: forgetTitleEditor } = titleEditor;
   const nameRead = useCallback(
     (nickname: string) =>
@@ -127,6 +123,29 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     onNickname: nameRead,
   });
   const { refreshUndo: refreshNameUndo, forget: forgetNameEditor } = nameEditor;
+
+  /** A save or an undo is on its way, of any kind: nothing else asks Hiroba anything meanwhile. */
+  const writing = editor.writing || titleEditor.writing || nameEditor.writing;
+  /**
+   * The first reads. An editor is read when its page is first shown in a session, and never while
+   * a save or an undo of any kind runs: it waits, as a picture does, and starts once the write has
+   * ended, so the page does not rely on the queue in front of Hiroba alone to keep a read out of
+   * a write that is not its own.
+   */
+  const { read: readEditor } = editor;
+  const { read: readTitles } = titleEditor;
+  const editorUnread = editor.step.name === "unread";
+  const titlesUnread = titleEditor.step.name === "unread";
+  useEffect(() => {
+    if (onEditorPage && editorUnread && !writing) {
+      void readEditor();
+    }
+  }, [onEditorPage, editorUnread, writing, readEditor]);
+  useEffect(() => {
+    if (onNameTitlePage && titlesUnread && !writing) {
+      void readTitles();
+    }
+  }, [onNameTitlePage, titlesUnread, writing, readTitles]);
 
   /** Reads my page, and shows it: whether it came. */
   const read = useCallback(async (): Promise<boolean> => {
@@ -242,7 +261,6 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
    * undo runs, so no read starts inside a write. The ref turns away a second ask that lands before
    * the Fab is shut.
    */
-  const writing = editor.writing || titleEditor.writing || nameEditor.writing;
   const canReadAgain =
     signedIn &&
     !writing &&
