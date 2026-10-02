@@ -191,7 +191,8 @@ visit to another page or a read of your page.
   worn is marked **Current**. Hiroba shows only a worn title's name, never its number, and a name can
   belong to several of your titles, so a name that several share marks all of them and says the app
   cannot tell which you wear, and a name none has says it may be built from parts, which this
-  version can neither read nor change back. There is no remove and no composer.
+  version can neither read nor change back. There is no remove and no composer. The picker's own
+  buttons, to show the list and to clear what was picked, are named in the app's language too.
 - **Title undo.** It writes the previous name back, by name, so it is offered only when that name
   is exactly one title of today's list: otherwise its button is shut, and the page says why in
   words (a shared name, a name not in the list, no title before). Asked for anyway, the core

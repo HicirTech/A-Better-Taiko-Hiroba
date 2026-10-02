@@ -43,6 +43,9 @@ export function TitlePicker({ options, picked, worn, busy, onPick, i18n }: Title
       isOptionEqualToValue={(option, value) => option.id === value.id}
       filterOptions={(all, { inputValue }) => [...filterTitles(all, inputValue)]}
       noOptionsText={t("title.noMatch")}
+      openText={t("title.open")}
+      closeText={t("title.close")}
+      clearText={t("title.clear")}
       renderInput={(params) => (
         <TextField
           {...params}

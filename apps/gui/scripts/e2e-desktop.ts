@@ -2551,6 +2551,24 @@ try {
       (found) => new Set(found.ids).size === found.ids.length,
     );
 
+  // Its buttons are named in the app's words: the one that opens the list, the same while it is
+  // open, and the one that clears a title picked (which MUI draws only once one is).
+  const pickerButton = (kind: "popupIndicator" | "clearIndicator") =>
+    page.evaluate<string | null>(
+      `document.querySelector(".MuiAutocomplete-${kind}")?.getAttribute("aria-label") ?? null`,
+    );
+  const labelWhenClosed = await pickerButton("popupIndicator");
+  await popupOpened();
+  const labelWhenOpen = await pickerButton("popupIndicator");
+  await pickTitle("最後", 108);
+  const labelOfClear = await pickerButton("clearIndicator");
+  await searchedFor("");
+  await popupClosed();
+  results.titlePickerButtonsNamedInTheCatalog = same(
+    [labelWhenClosed, labelWhenOpen, labelOfClear],
+    [en.t("title.open"), en.t("title.close"), en.t("title.clear")],
+  );
+
   // A name two titles share cannot tell which is worn: every option of it is marked and the note
   // says why. A name no title of the list has may be a title built from parts, and the note says so.
   await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(titleOf(104).label)}`);

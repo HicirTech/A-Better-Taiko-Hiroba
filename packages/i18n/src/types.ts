@@ -286,6 +286,12 @@ export interface Messages {
   "title.reading": string;
   /** The title picker's label. */
   "title.pick": string;
+  /** The picker's button that opens the list of titles: its name for screen readers. */
+  "title.open": string;
+  /** The same button while the list is open. */
+  "title.close": string;
+  /** The picker's button that clears what was typed or chosen there, not the title worn. */
+  "title.clear": string;
   /** Under the picker. Param: {count}, how many titles the account may choose from. */
   "title.count": string;
   /** The picker's list when what was typed matches no title. */
