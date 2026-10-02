@@ -26,8 +26,12 @@
  * scrolled left to scroll back under a finger, with no pull), the pictures on disk named by
  * hashes alone, costume writes (a colour and a きぐるみ, each undone from the page, the #22 trap, a
  * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
- * change made elsewhere, and a session that ends before and after a save), a lost session (none of
- * its pictures shown at the next sign-in), cancel, a sign-in sent off both
+ * change made elsewhere, and a session that ends before and after a save), the Name & title page
+ * (its list of titles read once, when the page is first shown, and the first read of either editor
+ * waiting out any write; a title and a name each picked or typed, reviewed, saved with exactly the
+ * requests planned and undone, and refused, stopped or settled later as Hiroba's answers say; none
+ * read or sent inside a write, and Sign out shut too), a lost session (none of its pictures shown
+ * at the next sign-in), cancel, a sign-in sent off both
  * sites, the pages (a side panel on a wide window, a menu on a narrow one, the sign-in card on the
  * Overview, Costume and Favourites while signed out, the favourites on their own page, and the page
  * kept for the next launch), the scheme (dark or light as the system asks, the page's
@@ -2985,6 +2989,12 @@ try {
   await resetLog();
   const fabShutInNameWrite = (await fabState()).shut;
   const titleShutInNameWrite = [await disabledOf("#title-pick"), await disabledOf("#title-review")];
+  // The pages can be changed meanwhile, and the window is signed in still: Settings shuts Sign out
+  // until the write ends, whichever kind it is.
+  await goTo("settings");
+  const signOutShutInNameWrite =
+    (await disabledOf("#sign-out")) === true && (await textOf("#account-who")) === "Signed in";
+  await goTo("nameTitle");
   const busyTitle = await bridgeTitle();
   const busyUndo = await page.evaluate<{ kind: string }>(`window.abth.undo("name")`);
   await click("#read-again");
@@ -3012,6 +3022,10 @@ try {
   await resetLog();
   const fabShutInTitleWrite = (await fabState()).shut;
   const nameShutInTitleWrite = [await disabledOf("#name-input"), await disabledOf("#name-review")];
+  await goTo("settings");
+  const signOutShutInTitleWrite =
+    (await disabledOf("#sign-out")) === true && (await textOf("#account-who")) === "Signed in";
+  await goTo("nameTitle");
   const busyName = await bridgeName("あたらしい");
   const busyTitleUndo = await page.evaluate<{ kind: string }>(`window.abth.undo("title")`);
   await click("#read-again");
@@ -3027,6 +3041,7 @@ try {
     same(busyTitleUndo, { kind: "busy" }) &&
     sameBesideLanePictures(requestsWhileTitleHeld, []) &&
     heldTitleOutcome === "applied";
+  results.signOutShutWhileATitleOrNameWriteRuns = signOutShutInNameWrite && signOutShutInTitleWrite;
   await undoSection("title");
   await backToIdle("title");
 
