@@ -123,12 +123,19 @@ export interface Messages {
   "scoreRank.8": string;
   /** The heading of the panel's crown block, which follows the score ranks. */
   "crowns.heading": string;
+  /**
+   * The three crowns, English and Chinese by what each records, as taiko.wiki words it: the silver
+   * one a clear, the gold one a full combo, the rainbow one a Donderful Combo (全良). 日本語 keeps
+   * Hiroba's own words, 銀, 金 and ドンダフル. The legend's dots keep the crowns' colours.
+   */
   "crowns.silver": string;
   "crowns.gold": string;
   "crowns.donderful": string;
   /**
-   * Under both of the panel's blocks: what the counts were checked against, and on how little.
-   * Site words kept as written.
+   * Under both of the panel's blocks: what the counts were checked against, and on how little. It
+   * names the charts as the game does in each language: おに, おに裏 and 双打 in 日本語; Extreme,
+   * Extreme (Inner) and Double Play in English; 魔王, 魔王(里) and 双打 in 简体中文; 魔鬼, 魔鬼(裏)
+   * and 雙打 in 繁體中文. 双打 is the game's own name for the Double Play charts.
    */
   "panel.footnote": string;
   /**

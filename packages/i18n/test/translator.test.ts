@@ -146,6 +146,14 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
   "scoreRank.6": { en: "Pink Miyabi", ja: "桃雅", "zh-Hans": "粉雅", "zh-Hant": "粉雅" },
   "scoreRank.7": { en: "Purple Miyabi", ja: "紫雅", "zh-Hans": "紫雅", "zh-Hant": "紫雅" },
   "scoreRank.8": { en: "Rainbow Kiwami", ja: "虹極", "zh-Hans": "虹极", "zh-Hant": "虹極" },
+  "crowns.silver": { en: "Clear", ja: "銀", "zh-Hans": "通关", "zh-Hant": "通過" },
+  "crowns.gold": { en: "Full Combo", ja: "金", "zh-Hans": "全连段", "zh-Hant": "全連段" },
+  "crowns.donderful": {
+    en: "Donderful Combo",
+    ja: "ドンダフル",
+    "zh-Hans": "全良",
+    "zh-Hant": "全良",
+  },
   "medal.heading": inEveryLanguage("どんメダル"),
   "costume.tab.colours": inEveryLanguage("いろ"),
   "costume.tab.items": inEveryLanguage("きせかえ"),
@@ -165,7 +173,12 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
  * sentences of Hiroba's own that it quotes, which every language quotes as the site writes them.
  */
 const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>>>> = {
-  "panel.footnote": inEveryLanguage(["おに＋おに裏", "双打"]),
+  "panel.footnote": {
+    en: ["Extreme and Extreme (Inner) charts", "Double Play charts"],
+    ja: ["おに＋おに裏", "双打"],
+    "zh-Hans": ["魔王＋魔王(里)", "双打"],
+    "zh-Hant": ["魔鬼＋魔鬼(裏)", "雙打"],
+  },
   "medal.none": inEveryLanguage(["どんメダル"]),
   "medal.unrecognised": inEveryLanguage(["どんメダル"]),
   "costume.preview.alt": inEveryLanguage(["マイどん"]),

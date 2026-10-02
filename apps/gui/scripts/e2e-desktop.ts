@@ -630,9 +630,9 @@ try {
     ["Rainbow Kiwami", "2.9%", 3],
   ];
   const CROWN_SHARES: readonly Share[] = [
-    ["Silver", "78.6%", 11],
-    ["Gold", "14.3%", 2],
-    ["Donderful", "7.1%", 1],
+    ["Clear", "78.6%", 11],
+    ["Full Combo", "14.3%", 2],
+    ["Donderful Combo", "7.1%", 1],
   ];
   const legendOf = (shares: readonly Share[], total: number) =>
     shares.map(([name, percent, count]) => `${name} ${percent} ${count} of ${total}`);
@@ -753,9 +753,9 @@ try {
     ["rank-2", "White Iki", "4", 57, 85],
     ["rank-3", "Bronze Iki", "9", 141, 85],
     ["rank-4", "Silver Iki", "18", 230, 85],
-    ["crowns-silver", "Silver", "11", 57, 121],
-    ["crowns-gold", "Gold", "2", 141, 121],
-    ["crowns-donderful", "Donderful", "1", 230, 121],
+    ["crowns-silver", "Clear", "11", 57, 121],
+    ["crowns-gold", "Full Combo", "2", 141, 121],
+    ["crowns-donderful", "Donderful Combo", "1", 230, 121],
   ];
   /** Whether each count is text after its name, where my page writes it on its 280-wide panel. */
   const panelCountsInPlace = async (counts: readonly PanelCount[]) => {
