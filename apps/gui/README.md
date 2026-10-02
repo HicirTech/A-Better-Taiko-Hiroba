@@ -433,30 +433,6 @@ write is not sent. The port also checks every call's arguments, as the desktop's
 for its window. Nothing is shut by the build: the release APK writes as the debug one does, and the
 list that decides the two extra reads is the one [Writes](#writes) describes.
 
-What the platform's own network stack does with a post has not been seen yet. The rehearsal below
-shows it against the stand-in, with nothing at stake; the first real write then checks it against
-Hiroba.
-
-### Rehearsal against the stand-in
-
-Run the debug app against the stand-in as in [Android](#android) above, with `bun run android:live`,
-and sign in to the stand-in. Read what it saw from this computer, at
-`http://hiroba.<LAN IP>.sslip.io:8807`: `/__log` (every request, as `METHOD /path`;
-`/__log-reset` clears it) and `/__posts` (each ajax post: its headers, its field names in order,
-and whether its token held; `/__posts?reset=1` clears it). Each row is one try; clear both first.
-
-| Do | Expect |
-|---|---|
-| Change one colour, save. | `/__log` has the six requests, once each: `GET /mypage_top.php`, `GET /mypage_kisekae.php`, `POST /ajax/check_ip_kisekae.php`, `POST /ajax/change_mydon.php`, `GET /mypage_kisekae.php`, `GET /mypage_top.php`. Each post in `/__posts` has `xRequestedWith` `XMLHttpRequest`, an `origin`, a `referer` ending `/mypage_kisekae.php`, `contentType` `application/x-www-form-urlencoded; charset=UTF-8`, `accept` `application/json, text/javascript, */*; q=0.01`, `fields` `_tckt` and then the eight values in the form's order, and `ticketMatched` true. The outcome is "Saved". `connection` is what the platform sent: the app asks for none, and whether to send `Connection: close` on a post is a later choice for this field to inform. |
-| `/__post-to-login?on=1`, then save. | The pre-check post is answered with a redirect to the login page. `/__log` shows one `GET /login.php` after it and then the probe GET of the editor, never a second post. The outcome is "Hiroba didn't accept the app's request. Nothing was changed.", and the session is still good. |
-| `/__post-redirect?status=303` (then 301 and 302), then save. | After `POST /ajax/check_ip_kisekae.php` the log shows `GET /mypage_top.php`, one request, and never a second post. The write stops before its save. |
-| `/__post-redirect?status=307` (then 308), then save. | Exactly one `POST /ajax/check_ip_kisekae.php` in the log and nothing after it: the answer was handed back unfollowed, and the write stops before its save. |
-| `/__post-redirect?status=302&rotate=1`, then save. | The redirect carries a new `_token_v2` and ends the old one. The request after the post, and every later one, carries the new token (the old one no longer works), a read after it succeeds, and after the app is killed and reopened it is still signed in. This is the row that shows whether Android stores a cookie set on an answer it did not follow. |
-| `/__noop-save`; `/__next-result?code=705`; `/__expire-on-save`; each then save. | `notApplied`, unchanged; `notApplied` refused with code 705, and no second post; `sessionGone` after the save, with the pending write kept. |
-| Swipe the app away right after "Saved", reopen it, open the Costume page. | Still signed in. The page reads the editor and offers **Undo last costume change** with its time, and Undo restores the set. |
-| Background the app for ten seconds while a save is held (`/__hold-precheck?on=1`). | The write finishes when the app returns, or, if Android killed it, opening the Costume page settles it. |
-| Long-press the portrait (do this one on a release build first: it needs no write). | The Costume page opens, with no context menu, no selection and no odd vibration. |
-
 ## Releases
 
 Two workflows run on GitHub Actions. `.github/workflows/ci.yml` runs on every push to a branch, and
