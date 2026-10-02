@@ -19,6 +19,7 @@ import {
   OWNED_TITLES,
   REFUSED_NAME,
 } from "../scripts/mock-profile";
+import type { HirobaSessionPort, VerbsQueued } from "../src/session-port";
 import {
   CLOSE_LABEL,
   HIROBA,
@@ -878,3 +879,104 @@ describe("createAndroidPort's name writes", () => {
     expect(world.sent()).toEqual([]);
   });
 });
+
+/** The ways a write is held mid-way, each by the stand-in's own hook, and the requests it comes to. */
+const HELD_WRITES = {
+  costume: {
+    start: (port: HirobaSessionPort) => port.changeCostume(CHANGE),
+    hold: (world: ReturnType<typeof setUp>, on: 0 | 1) =>
+      world.hook("/__hold-precheck", `on=${on}`),
+    heldAt: "POST /ajax/check_ip_kisekae.php",
+    requests: SIX_REQUESTS,
+  },
+  title: {
+    start: (port: HirobaSessionPort) => port.changeTitle(TITLE_CHANGE),
+    hold: (world: ReturnType<typeof setUp>, on: 0 | 1) =>
+      world.profileHook("/__title-hold-precheck", `on=${on}`),
+    heldAt: "POST /ajax/check_ip_title.php",
+    requests: TITLE_SIX_REQUESTS,
+  },
+  name: {
+    start: (port: HirobaSessionPort) => port.changeName(NAME_CHANGE),
+    hold: (world: ReturnType<typeof setUp>, on: 0 | 1) =>
+      world.profileHook("/__profile-hold-save", `on=${on}`),
+    heldAt: "POST /ajax/change_mydon_profile.php",
+    requests: NAME_FIVE_REQUESTS,
+  },
+} as const;
+
+/**
+ * Every verb the port queues as a read, asked as the window asks it, and the requests it comes to.
+ * Typed by the table that places the verbs, so a read verb added there has to be added here.
+ */
+const READS_ASKED: Record<
+  VerbsQueued<"read">,
+  { ask: (port: HirobaSessionPort) => Promise<unknown>; requests: string[] }
+> = {
+  readProfile: { ask: (port) => port.readProfile(), requests: ["GET /mypage_top.php"] },
+  openCostumeEditor: {
+    ask: (port) => port.openCostumeEditor(),
+    requests: ["GET /mypage_kisekae.php"],
+  },
+  openTitleEditor: {
+    ask: (port) => port.openTitleEditor(),
+    requests: ["GET /mypage_title_edit.php"],
+  },
+  previewCostume: {
+    ask: (port) => port.previewCostume(START_SET),
+    requests: ["GET /imgsrc_mydon.php"],
+  },
+};
+
+describe.each(Object.keys(HELD_WRITES) as (keyof typeof HELD_WRITES)[])(
+  "createAndroidPort while a %s write waits mid-way",
+  (kind) => {
+    beforeEach(() => native.reset());
+    const held = HELD_WRITES[kind];
+
+    /** The write, started and held where its hook holds it; `release` lets it go on. */
+    async function holdWrite(world: ReturnType<typeof setUp>, port: HirobaSessionPort) {
+      held.hold(world, 1);
+      const writing = held.start(port);
+      await until(() => world.sent().includes(held.heldAt));
+      return { writing, release: () => held.hold(world, 0) };
+    }
+
+    test.each(Object.keys(READS_ASKED) as (keyof typeof READS_ASKED)[])(
+      "a %s asked for meanwhile sends nothing until the write has read back, and then goes",
+      async (read) => {
+        const world = setUp();
+        const port = await signedInPort(world);
+        const { writing, release } = await holdWrite(world, port);
+        const requestsInTheWrite = world.sent().length;
+
+        const reading = READS_ASKED[read].ask(port);
+        await Bun.sleep(25);
+        expect(world.sent()).toHaveLength(requestsInTheWrite);
+
+        release();
+        expect((await writing).kind).toBe("applied");
+        await reading;
+        expect(world.sent()).toEqual([...held.requests, ...READS_ASKED[read].requests]);
+      },
+    );
+
+    test("a picture asked for meanwhile, which the device does not keep, is fetched after the read-back", async () => {
+      const world = setUp();
+      const port = await signedInPort(world);
+      await port.openCostumeEditor();
+      native.httpRequests.length = 0;
+      const { writing, release } = await holdWrite(world, port);
+      const requestsInTheWrite = world.sent().length;
+
+      const picture = port.readPicture({ kind: "costumeItem", slot: 1, id: 4 });
+      await Bun.sleep(300);
+      expect(world.sent()).toHaveLength(requestsInTheWrite);
+
+      release();
+      expect((await writing).kind).toBe("applied");
+      expect((await picture).ok).toBe(true);
+      expect(world.sent()).toEqual([...held.requests, "GET /imgsrc_kisekae.php"]);
+    });
+  },
+);

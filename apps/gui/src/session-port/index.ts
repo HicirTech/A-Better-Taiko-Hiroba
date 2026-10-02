@@ -18,7 +18,7 @@ export {
 export { BRIDGE_CHANNELS } from "./bridge-channels";
 export { checkedPort } from "./checked-port";
 export { changedTheCostume } from "./costume-changed";
-export { PORT_QUEUEING, type VerbQueueing } from "./queueing";
+export { PORT_QUEUEING, type VerbQueueing, type VerbsQueued } from "./queueing";
 export type {
   CostumeChange,
   CostumeEditorView,

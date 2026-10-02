@@ -32,3 +32,8 @@ export const PORT_QUEUEING = {
   pendingUndo: "unqueued",
   undo: "write",
 } as const satisfies Record<keyof HirobaSessionPort, VerbQueueing>;
+
+/** The verbs of the port the table puts in the way `How` says: what a test of that way must cover. */
+export type VerbsQueued<How extends VerbQueueing> = {
+  [V in keyof typeof PORT_QUEUEING]: (typeof PORT_QUEUEING)[V] extends How ? V : never;
+}[keyof typeof PORT_QUEUEING];
