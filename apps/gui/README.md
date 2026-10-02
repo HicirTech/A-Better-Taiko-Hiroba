@@ -8,23 +8,23 @@ header does: your マイどん as Hiroba draws it, beside your nickname, title a
 title plate and dan label, and under them Hiroba's score panel, its ten counts written over its art.
 Under that come the seven score ranks and the three crowns again, each block as one bar of shares
 with a legend of percents, like GitHub's "Languages" box (the counts are in each item's tooltip);
-the season's どんメダル on Hiroba's own plate, and your favourite songs. It can also change your costume (きせかえ), your title (称号) and your Donder
-name (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
+the season's どんメダル on Hiroba's own plate, and your favourite songs. It can also change your costume (きせかえ), your title (称号) and your nickname
+(ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On a wide window a side panel, like Gmail's, lists its five pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
-**Name & title** (the title and the Donder name, see [The Name & title page](#the-name--title-page)),
+**Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲 and the お気に入り folder) and **Settings** (the language, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On Android, Back closes the drawer, goes from
-Costume, Name & title, Favourites or Settings back to the Overview, and from the Overview leaves
+Costume, Nickname & title, Favourites or Settings back to the Overview, and from the Overview leaves
 the app as before.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
 The app is light or dark as the system is (Windows' app mode, Android's dark theme), and the
 page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
 The app opens on the page last shown on the device;
-signed out, the Overview, Costume, Name & title and Favourites show the sign-in card, and Settings
+signed out, the Overview, Costume, Nickname & title and Favourites show the sign-in card, and Settings
 still works.
 Settings is laid out as Gmail's settings are: sections with small headings, each with its icon, and
 each setting one row with its name, a line on it where one helps, and its control. **Language**
@@ -34,14 +34,14 @@ gives, with the note on staying signed in and **Sign out** beside it. While a re
 
 Signed in, the Overview and Favourites read your page again from a small round **Read again**
 button with a refresh arrow at the top right, which stays there as the page scrolls. It spins
-while a read runs, and it is shut then, and while a costume, title or name save or undo runs, so
+while a read runs, and it is shut then, and while a costume, title or nickname save or undo runs, so
 one read runs at a time and none inside a write. On a touch-first screen (`pointer: coarse`), pull
 the page down from its top instead: a round indicator follows the finger, and letting go once its ring is full
 reads again (a finger on a box that has scrolled, such as the costume's grid of items, is the
 box's to scroll back, and pulls nothing). There the button is drawn only when the keyboard's focus
 is on it, and it stays for screen readers. The line under the page still says when it was read.
 On the Costume page the same button, and the same pull, read the editor again instead of your
-page; on the Name & title page they read your page and then the list of titles.
+page; on the Nickname & title page they read your page and then the list of titles.
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -94,7 +94,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then checks the pages (a side panel on a wide window, and on a narrow one a menu button whose drawer a pick, Escape or a tap outside closes; the Costume page between the Overview and Favourites, in both; the sign-in card on the Overview, Costume and Favourites while signed out, the page shown kept for the next launch, and the page's column in one place on a page that scrolls, one that does not and the Costume page), the scheme (dark or light as the system asks, the page's `color-scheme` with it), Settings (sections with small headings, each with its icon, over one list of rows; who is signed in, or no one, with **Sign out** in the app's casing beside it; while a read the stand-in holds runs, **Signed in**, with **Sign out** shut), the language (opened on a system in Traditional Chinese, the app is in it; its choices are radio buttons in one group the section's heading names, and the arrows move the choice; a pick in Settings, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile as it was read, asking Hiroba nothing; System default follows the system again, at once and after a relaunch; the game's terms follow the language, while the nickname, the title and the medal's name stay marked Japanese), and drives sign-in, reading, reading again (from the small Fab, which is shut and spins while a read the stand-in holds runs, a second press sending nothing; on an emulated touch screen, by a pull from the top of the page past the point, not by a short, upward, sideways or lower one, the Fab then drawn only under the keyboard's focus, and a slow pull begun on the portrait opening no tooltip; and by neither while an undo waits on its pre-check), a rotated session, a lost session (the next sign-in shows none of its pictures), cancel and sign-out (in Settings) against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), the Overview shaped like my page's header (the portrait beside the plate and the score panel, one under another on a narrow window, with no background art), the score panel (a plain stand-in while its art does not come, its counts as text where my page writes them, the art fetched once per device), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches), the My Don portrait (from the picture host with no cookie, a first one that does not come, kept across relaunches and sign-ins, fetched anew after **Read again** and after a change or undo applies but not after a save that moves nothing, the kept one still shown when a fresh one does not come), and the どんメダル plate (asked for only once its card is on screen, its words still text over it, one request per season and per state, a plate that does not come, its id in neither the window nor any file but the debug copies, the plate kept across sign-outs and relaunches). It checks the Costume page, with no flag set at all (the editor read once when the page is first shown in a run, never at start-up or on a reopen; read again by the Fab, or by a pull on an emulated touch screen, instead of your page, a draft kept over a set that has not moved and dropped over one that has; a draft that survives a visit to another page, and Reset; the Save bar flush with the window's bottom edge; a column on a wide window and the whole width on a narrow one), the editor's picture of the set (shown when the page is first shown, redrawn after a pick, one request for a burst of picks, a picture that does not come, none away from the page, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, a grid that has scrolled left to its own finger, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each from the page, and checks each write sent exactly the requests planned, that the undo shows on the Costume page alone, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, a post answered with a redirect (followed with one GET, or for a 307 or 308 handed back, and never sent again), an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; it checks the portrait is the button to the Costume page, with no **Change costume** button beside it, shows its edit badge and name under the pointer, and goes there by a click, by Enter and by Space, on an emulated touch screen too, and there by a long-press alone (its badge up at rest and its description saying to long-press; not by a tap, nor by a finger held as long but moved, which reads nothing either; and the lift after it makes no click on the page it went to); and, on a launch with no flag set, that a write asked for while signed out sends nothing and that, signed in, the Costume page opens the editor and a write reaches Hiroba. It checks the Name & title page, third in the navigation with a pencil beside its name, in the panel and the menu and as the others signed out: the list of titles read once, when the page is first shown and never before, with the title worn marked **Current** (every title that shares its name, or none for a name no title has, each with its note); a title picked, reviewed and saved with exactly the planned requests (the costume page read on both sides, the title page, the pre-check carrying no token, the save in the page's field order, my page read back, and then my page once more for the plate), its undo as one save, a pre-check that stops, a save that moves nothing, a stale token, a code Hiroba gives no message for, the costume moving during the write, and an undo to a name several titles share or no title has, shut with its reason and refused unsent with the record kept; a rename (the field holding the name worn and counting it to ten; nothing sent for the same name, no name, one too long, one with a control character, or while my page says renames are closed, which it says why; the review saying Hiroba may not let it be changed back; five requests with no pre-check and no second read of my page; the post in the dialog's field order; its undo as one save, one Hiroba refuses keeping the record, a name the filter refuses and Hiroba's words shown as the text they are, with the field keeping what was typed); no read, no second write and no sign-out while either waits on its save or its pre-check; a session that ends after a title's save, settled by the next read of my page; titles and names marked Japanese; and neither written in Hiroba's daily break. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then checks the pages (a side panel on a wide window, and on a narrow one a menu button whose drawer a pick, Escape or a tap outside closes; the Costume page between the Overview and Favourites, in both; the sign-in card on the Overview, Costume and Favourites while signed out, the page shown kept for the next launch, and the page's column in one place on a page that scrolls, one that does not and the Costume page), the scheme (dark or light as the system asks, the page's `color-scheme` with it), Settings (sections with small headings, each with its icon, over one list of rows; who is signed in, or no one, with **Sign out** in the app's casing beside it; while a read the stand-in holds runs, **Signed in**, with **Sign out** shut), the language (opened on a system in Traditional Chinese, the app is in it; its choices are radio buttons in one group the section's heading names, and the arrows move the choice; a pick in Settings, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile as it was read, asking Hiroba nothing; System default follows the system again, at once and after a relaunch; the game's terms follow the language, while the nickname, the title and the medal's name stay marked Japanese), and drives sign-in, reading, reading again (from the small Fab, which is shut and spins while a read the stand-in holds runs, a second press sending nothing; on an emulated touch screen, by a pull from the top of the page past the point, not by a short, upward, sideways or lower one, the Fab then drawn only under the keyboard's focus, and a slow pull begun on the portrait opening no tooltip; and by neither while an undo waits on its pre-check), a rotated session, a lost session (the next sign-in shows none of its pictures), cancel and sign-out (in Settings) against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), the Overview shaped like my page's header (the portrait beside the plate and the score panel, one under another on a narrow window, with no background art), the score panel (a plain stand-in while its art does not come, its counts as text where my page writes them, the art fetched once per device), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches), the My Don portrait (from the picture host with no cookie, a first one that does not come, kept across relaunches and sign-ins, fetched anew after **Read again** and after a change or undo applies but not after a save that moves nothing, the kept one still shown when a fresh one does not come), and the どんメダル plate (asked for only once its card is on screen, its words still text over it, one request per season and per state, a plate that does not come, its id in neither the window nor any file but the debug copies, the plate kept across sign-outs and relaunches). It checks the Costume page, with no flag set at all (the editor read once when the page is first shown in a run, never at start-up or on a reopen; read again by the Fab, or by a pull on an emulated touch screen, instead of your page, a draft kept over a set that has not moved and dropped over one that has; a draft that survives a visit to another page, and Reset; the Save bar flush with the window's bottom edge; a column on a wide window and the whole width on a narrow one), the editor's picture of the set (shown when the page is first shown, redrawn after a pick, one request for a burst of picks, a picture that does not come, none away from the page, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, a grid that has scrolled left to its own finger, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each from the page, and checks each write sent exactly the requests planned, that the undo shows on the Costume page alone, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, a post answered with a redirect (followed with one GET, or for a 307 or 308 handed back, and never sent again), an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; it checks the portrait is the button to the Costume page, with no **Change costume** button beside it, shows its edit badge and name under the pointer, and goes there by a click, by Enter and by Space, on an emulated touch screen too, and there by a long-press alone (its badge up at rest and its description saying to long-press; not by a tap, nor by a finger held as long but moved, which reads nothing either; and the lift after it makes no click on the page it went to); and, on a launch with no flag set, that a write asked for while signed out sends nothing and that, signed in, the Costume page opens the editor and a write reaches Hiroba. It checks the Nickname & title page, third in the navigation with a pencil beside its name, in the panel and the menu and as the others signed out: the list of titles read once, when the page is first shown and never before, with the title worn marked **Current** (every title that shares its name, or none for a name no title has, each with its note); a title picked, reviewed and saved with exactly the planned requests (the costume page read on both sides, the title page, the pre-check carrying no token, the save in the page's field order, my page read back, and then my page once more for the plate), its undo as one save, a pre-check that stops, a save that moves nothing, a stale token, a code Hiroba gives no message for, the costume moving during the write, and an undo to a name several titles share or no title has, shut with its reason and refused unsent with the record kept; a rename (the field holding the nickname worn and counting it to ten; nothing sent for the same nickname, none, one too long, one with a control character, or while my page says renames are closed, which it says why; the review saying Hiroba may not let it be changed back; five requests with no pre-check and no second read of my page; the post in the dialog's field order; its undo as one save, one Hiroba refuses keeping the record, a nickname the filter refuses and Hiroba's words shown as the text they are, with the field keeping what was typed); no read, no second write and no sign-out while either waits on its save or its pre-check; a session that ends after a title's save, settled by the next read of my page; titles and nicknames marked Japanese; and neither written in Hiroba's daily break. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
@@ -108,11 +108,11 @@ The installers are not code-signed, so Windows SmartScreen warns before the firs
 
 ### Writes
 
-The app can change three things on Hiroba so far: the costume, the title and the Donder name. Every
+The app can change three things on Hiroba so far: the costume, the title and the nickname. Every
 write is open in every build, on both platforms: the desktop in development, the installer and the
 portable exe, and the Android debug and release APKs. There is no flag to set and nothing to
-unlock. The costume is changed on [the Costume page](#the-costume-page), the title and the name on
-[the Name & title page](#the-name--title-page).
+unlock. The costume is changed on [the Costume page](#the-costume-page), the title and the nickname on
+[the Nickname & title page](#the-nickname--title-page).
 
 Every write goes the same way: read the editor for a fresh form token and the whole set, keep an
 undo record, send the pre-check (a rename has none), send the save exactly once, and read the whole
@@ -131,8 +131,8 @@ lists, for each platform, the kinds that have. That list decides those two reads
 it opens nothing and shuts nothing. The desktop's costume is on it (two writes of the user's,
 applied and read back on 2026-09-27); Android's list is empty until the first real Android write has
 been made and recorded (see [The first real Android write](#the-first-real-android-write)), and
-neither the title nor the name is on either list until the first real ones have been made (see
-[The first real title and name writes](#the-first-real-title-and-name-writes)).
+neither the title nor the nickname is on either list until the first real ones have been made (see
+[The first real title and nickname writes](#the-first-real-title-and-nickname-writes)).
 
 Two variables apply to unpackaged desktop runs only: `ABTH_DEV_NOW` (an ISO time) fixes the clock the
 maintenance check uses, for tests, and `ABTH_DEBUG_SAVE_READS=1` keeps each page a read brings back
@@ -169,11 +169,11 @@ a bar at the bottom edge of the window, which stays there as the page scrolls.
   across restarts, is on this page and nowhere else. There is no Snackbar: the outcome and the
   undo are already in front of you.
 
-### The Name & title page
+### The Nickname & title page
 
-The page that changes your title (称号) and your Donder name (ドンだーネーム): third in the navigation,
+The page that changes your title (称号) and your nickname (ドンだーネーム): third in the navigation,
 between Costume and Favourites, with a pencil beside its name. It opens on Hiroba's title plate as
-the Overview draws it, so the result is seen at once, then two sections, **Title** and **Name**,
+the Overview draws it, so the result is seen at once, then two sections, **Title** and **Nickname**,
 each with its own **Review**, confirmation, **Save to Hiroba**, outcome and undo. Both are open in
 every build. One write runs at a time, from either section: while it does, nothing on the page is
 pressed, and a write asked for elsewhere answers busy and sends nothing. Like the costume's, both
@@ -183,7 +183,7 @@ visit to another page or a read of your page.
 - **Reading.** The list of titles you own (`mypage_title_edit.php`, one request) is read once, when
   the page is first shown in a run, and never at start-up or while another page is shown. After
   that it is read again only when you press **Read again** here (or pull the page down), which
-  reads your page and then the list. The name has no read of its own: it is the one your page last
+  reads your page and then the list. The nickname has no read of its own: it is the one your page last
   showed, and a write's read-back is put in that copy with no request.
 - **Title.** An owned title is picked by its name from a list you can search (full-width and
   half-width forms, capitals and the two kinds of space Hiroba writes are not told apart); each is
@@ -197,31 +197,31 @@ visit to another page or a read of your page.
   is exactly one title of today's list: otherwise its button is shut, and the page says why in
   words (a shared name, a name not in the list, no title before). Asked for anyway, the core
   refuses it unsent and the record stays.
-- **Name.** The field holds the name you wear, to the ten characters Hiroba's form takes, with a
-  counter, and the name is trimmed before it is sent. What the form itself would not take is
-  refused, in the page and again by the core: no name, white space at either end, more than ten, a
-  character that cannot be sent. What Hiroba's help page says (hiragana and ー ～ ！ ？, five
+- **Nickname.** The field holds the nickname you wear, to the ten characters Hiroba's form takes,
+  with a counter, and the nickname is trimmed before it is sent. What the form itself would not take
+  is refused, in the page and again by the core: no nickname, white space at either end, more than
+  ten, a character that cannot be sent. What Hiroba's help page says (hiragana and ー ～ ！ ？, five
   characters) and its warning against personal information are shown as Hiroba writes them, and
-  advice lines say when a name is outside the help page or wider than ten half-width characters;
-  none of it refuses anything, since names outside it exist on the site. A name is not sent if it is
-  the one worn. While an IME composition is open, the field judges nothing: the counter, the advice,
-  the note that it is the name worn and **Review** read the name as it stood, until the composition is
-  committed.
-- **Name, closed.** When my page hands its rename dialog the flag that says renames are closed, the
+  advice lines say when a nickname is outside the help page or wider than ten half-width
+  characters; none of it refuses anything, since nicknames outside it exist on the site. A nickname
+  is not sent if it is the one worn. While an IME composition is open, the field judges nothing: the
+  counter, the advice, the note that it is the nickname worn and **Review** read the nickname as it
+  stood, until the composition is committed.
+- **Nickname, closed.** When my page hands its rename dialog the flag that says renames are closed, the
   field is shut and the section says why, in Hiroba's words; when it hands none the app can read,
   the field stays open with a note. The editor read at write time decides again.
-- **Name, review.** The confirmation says plainly that Hiroba may not let the name be changed back
-  right away: choose a name you are happy to keep. Whether it will is not known yet (see
-  [The first real title and name writes](#the-first-real-title-and-name-writes)). The undo is
-  offered, and says Hiroba may refuse it too, leaving the name as it is.
-- **Outcomes.** They are worded for the title and the name apart from the costume's (Hiroba's code
-  for a title it will not take, or a name it could not update, comes with no message, so the page
+- **Nickname, review.** The confirmation says plainly that Hiroba may not let the nickname be
+  changed back right away: choose a nickname you are happy to keep. Whether it will is not known yet (see
+  [The first real title and nickname writes](#the-first-real-title-and-nickname-writes)). The undo is
+  offered, and says Hiroba may refuse it too, leaving the nickname as it is.
+- **Outcomes.** They are worded for the title and the nickname apart from the costume's (Hiroba's code
+  for a title it will not take, or a nickname it could not update, comes with no message, so the page
   says what it means), and Hiroba's own words, when it has some, are shown as the plain text they
   are. After a title write that moved the title, your page is read again once, for the plate, behind
   the page, which stays as it is until your page is in, so the outcome is announced once and the
   keyboard's focus is not lost; the My Don is not fetched anew for it, since only a costume change
   and your own **Read again** do that. The Fab spins and Sign out is shut meanwhile.
-  A rename puts the name it read back into the window's copy of your page, and reads nothing more.
+  A rename puts the nickname it read back into the window's copy of your page, and reads nothing more.
 
 ### The costume preview
 
@@ -478,7 +478,7 @@ my page before and after.
 
 **After.** Undo anything left. Sign out. Uninstall the debug app (its data, with the undo records, goes with it, so only after the undo). Then, in a commit of its own, `LIVE_CHECKED_WRITES.android` lists `costume`, with the test that holds both lists.
 
-### The first real title and name writes
+### The first real title and nickname writes
 
 Made by you, with your own account, in the app, on a plain `bun run dev -- --real` or on the debug
 APK, with no flag of any kind to set (`ABTH_DEBUG_SAVE_READS=1` only keeps each answer in the debug
@@ -489,13 +489,13 @@ your costume before and after, and a rename your title.
 **Before.**
 
 - [ ] The time is outside 05:00–07:00 JST (the app refuses inside it too).
-- [ ] Any other copy of the app is closed, and nothing else changes your title or name meanwhile
+- [ ] Any other copy of the app is closed, and nothing else changes your title or nickname meanwhile
   (an undo stops if it moved).
 - [ ] Sign in, in the app. Settings shows who is signed in.
 
 **Part 1: the list.**
 
-1. [ ] Open **Name & title**. The app reads the page's one list (`mypage_title_edit.php`) once and
+1. [ ] Open **Nickname & title**. The app reads the page's one list (`mypage_title_edit.php`) once and
    posts nothing. The count under the picker is the number of titles you own. Exactly one title is
    marked **Current** if your title's name is unique, and several if it is shared.
 2. [ ] If the app says "unexpected page" with codes, stop and send the codes: its parser refused
@@ -515,17 +515,17 @@ your costume before and after, and a rename your title.
 5. [ ] Optional: pick a title whose name several share, save, then look at the undo: it is shut and
    says the previous title's name is shared, and nothing is sent.
 
-**Part 3: the name.**
+**Part 3: the nickname.**
 
-6. [ ] On the Name section, pick a name you are happy to keep, within the help page's rule: hiragana,
-   at most five characters, nothing that resembles a real name (Hiroba warns against it). The field
-   starts as your current name. **Review**, read the warning, **Save to Hiroba**. Five requests,
+6. [ ] On the Nickname section, pick a nickname you are happy to keep, within the help page's rule:
+   hiragana, at most five characters, nothing that resembles a real name (Hiroba warns against it).
+   The field starts as your current nickname. **Review**, read the warning, **Save to Hiroba**. Five requests,
    once each: `GET mypage_top.php` twice, `POST ajax/change_mydon_profile.php` (the fields `_tckt`,
    `mode`, `oldName`, `newName`, in that order), then `GET mypage_top.php` twice. The result is
-   "Saved. Hiroba now shows the new name.", the plate shows it, and your title is as it was.
-7. [ ] Optional, your call: **Change the name back** at once. Hiroba either takes it or refuses it
+   "Saved. Hiroba now shows the new nickname.", the plate shows it, and your title is as it was.
+7. [ ] Optional, your call: **Change the nickname back** at once. Hiroba either takes it or refuses it
    in its own words, which the page shows; a second rename within a minute or two may be refused.
-   If it is, the account stays on the new name, which is why step 6's name is one you would keep.
+   If it is, the account stays on the new nickname, which is why step 6's nickname is one you would keep.
 
 **If something else shows.**
 
