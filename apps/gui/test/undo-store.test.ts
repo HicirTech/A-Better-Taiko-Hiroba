@@ -1,11 +1,19 @@
 /** The desktop's undo slots on disk, in a folder of the system's temporary directory. */
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import { type CostumeSet, EMPTY_UNDO_SLOT, type UndoSlot } from "@abth/core";
 
-import { createUndoStore } from "../electron/undo-store";
+import { createUndoStore, type UndoFiles } from "../electron/undo-store";
 import {
   NAME_SLOT,
   nameRecordOf,
@@ -41,6 +49,26 @@ describe("createUndoStore", () => {
     await createUndoStore(path).save("costume", PLAYER, SLOT);
     expect(await createUndoStore(path).load("costume", PLAYER)).toEqual(SLOT);
     expect(existsSync(`${path}.tmp`)).toBe(false);
+  });
+
+  test("writes a slot to a temporary file, flushed to the disk, and only then renames it over the last", async () => {
+    const path = storePath();
+    const calls: string[] = [];
+    const files: UndoFiles = {
+      mkdirSync,
+      readFileSync,
+      writeFileSync: ((file, data, options) => {
+        calls.push(`write ${basename(String(file))} ${JSON.stringify(options)}`);
+        writeFileSync(file, data, options);
+      }) as UndoFiles["writeFileSync"],
+      renameSync: (from, to) => {
+        calls.push(`rename ${basename(String(from))} ${basename(String(to))}`);
+        renameSync(from, to);
+      },
+    };
+    await createUndoStore(path, files).save("costume", PLAYER, SLOT);
+    expect(calls).toEqual(['write undo.json.tmp {"flush":true}', "rename undo.json.tmp undo.json"]);
+    expect(await createUndoStore(path).load("costume", PLAYER)).toEqual(SLOT);
   });
 
   test("keeps each player's slot apart, and drops one left empty", async () => {

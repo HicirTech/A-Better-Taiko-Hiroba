@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import * as nodeFs from "node:fs";
 import { dirname } from "node:path";
 import type { UndoSlot } from "@abth/core";
 
@@ -14,15 +14,21 @@ interface StoredUndo {
   readonly slots: Slots;
 }
 
+/** The file operations the store makes: node's own, unless a test hands in its own to watch them. */
+export type UndoFiles = Pick<
+  typeof nodeFs,
+  "mkdirSync" | "readFileSync" | "renameSync" | "writeFileSync"
+>;
+
 /**
  * The desktop's undo store (see `UndoStore`): one file, in the app's profile folder. A slot is
  * written to a temporary file, flushed to the disk, then renamed over the last, so a crash leaves
  * the old file or the new one, never half of one.
  */
-export function createUndoStore(path: string): UndoStore {
+export function createUndoStore(path: string, files: UndoFiles = nodeFs): UndoStore {
   const read = (): Slots => {
     try {
-      const stored = JSON.parse(readFileSync(path, "utf8")) as {
+      const stored = JSON.parse(files.readFileSync(path, "utf8")) as {
         version?: unknown;
         slots?: unknown;
       };
@@ -56,9 +62,9 @@ export function createUndoStore(path: string): UndoStore {
       }
       const stored: StoredUndo = { version: 2, slots: { ...slots, [kind]: players } };
       const temporary = `${path}.tmp`;
-      mkdirSync(dirname(path), { recursive: true });
-      writeFileSync(temporary, JSON.stringify(stored), { flush: true });
-      renameSync(temporary, path);
+      files.mkdirSync(dirname(path), { recursive: true });
+      files.writeFileSync(temporary, JSON.stringify(stored), { flush: true });
+      files.renameSync(temporary, path);
     },
   };
 }
