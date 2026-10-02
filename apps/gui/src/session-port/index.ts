@@ -9,6 +9,7 @@ export {
   isPictureWant,
   isWhole,
   PORT_ARGUMENTS,
+  UNDO_SET_GUARDS,
   WRITE_KINDS,
 } from "./arguments";
 export { BRIDGE_CHANNELS } from "./bridge-channels";
@@ -32,4 +33,5 @@ export type {
   UndoSummary,
   WriteKind,
   WriteOutcomeView,
+  WriteSets,
 } from "./types";

@@ -152,8 +152,16 @@ export interface PictureFailure {
   readonly code: string;
 }
 
+/**
+ * The set each kind of write changes: all of the state it is made against, kept in its undo slot
+ * and read back after it. A kind joins here once, and the undo store and the write verbs follow.
+ */
+export interface WriteSets {
+  readonly costume: CostumeSet;
+}
+
 /** The kinds of write the app knows how to send. One so far: the costume, きせかえ. */
-export type WriteKind = "costume";
+export type WriteKind = keyof WriteSets;
 
 /**
  * A kind of write this run may send. `verified` is whether its first real write from the app has

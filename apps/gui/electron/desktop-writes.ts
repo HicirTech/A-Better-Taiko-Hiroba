@@ -1,6 +1,7 @@
 import {
   beginPending,
   type CostumeSet,
+  EMPTY_UNDO_SLOT,
   err,
   offeredUndo,
   reconcile,
@@ -17,6 +18,7 @@ import {
   enabledWrites,
   type HirobaEndpoints,
   openCostumeEditor,
+  type UndoStore,
   type WriteGateInput,
 } from "../src/hiroba-session";
 import {
@@ -26,7 +28,6 @@ import {
   type ReadFailure,
   type WriteOutcomeView,
 } from "../src/session-port";
-import type { UndoStore } from "./undo-store";
 
 /** The only kind of write so far. */
 const KIND = "costume";
@@ -67,15 +68,27 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
   const costumeGate = () =>
     enabledWrites(options.gate).find((write: EnabledWrite) => write.kind === KIND);
 
-  /**
-   * A player's slot written after the fact: if it cannot be, the pending write settles from a
-   * later read.
-   */
-  const keep = (taikoNo: string, slot: UndoSlot<CostumeSet>) => {
+  /** A player's slot, or an empty one when the store cannot be read: that never fails a read. */
+  const slotOf = async (taikoNo: string): Promise<UndoSlot<CostumeSet>> => {
     try {
-      undoStore.save(KIND, taikoNo, slot);
+      return await undoStore.load(KIND, taikoNo);
     } catch {
-      // Nothing more to do here: the slot on disk still holds the pending write.
+      return EMPTY_UNDO_SLOT;
+    }
+  };
+
+  /**
+   * A player's slot read, changed and written after the fact: if that cannot be, the pending
+   * write settles from a later read.
+   */
+  const amend = async (
+    taikoNo: string,
+    change: (slot: UndoSlot<CostumeSet>) => UndoSlot<CostumeSet>,
+  ) => {
+    try {
+      await undoStore.save(KIND, taikoNo, change(await undoStore.load(KIND, taikoNo)));
+    } catch {
+      // Nothing more to do here: the slot kept still holds the pending write.
     }
   };
 
@@ -96,10 +109,10 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
           if (taikoNo === null) {
             throw new Error("Whose set this is is not known before my page is read");
           }
-          const slot = reconcile(undoStore.load(KIND, taikoNo), before, sameCostume);
+          const slot = reconcile(await undoStore.load(KIND, taikoNo), before, sameCostume);
           const at = options.now().toISOString();
-          // Throws when it cannot be written, and the write then stops with nothing sent.
-          undoStore.save(
+          // Rejects when it cannot be written, and the write then stops with nothing sent.
+          await undoStore.save(
             KIND,
             taikoNo,
             beginPending(slot, { taikoNo, before, expectedAfter, at, purpose }),
@@ -113,9 +126,9 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
       return { kind: "interrupted" };
     }
     if (taikoNo !== null && began) {
-      keep(taikoNo, settle(undoStore.load(KIND, taikoNo), outcome, sameCostume));
+      await amend(taikoNo, (slot) => settle(slot, outcome, sameCostume));
     } else if (taikoNo !== null && outcome.kind === "changedSincePreview") {
-      keep(taikoNo, reconcile(undoStore.load(KIND, taikoNo), outcome.current, sameCostume));
+      await amend(taikoNo, (slot) => reconcile(slot, outcome.current, sameCostume));
     }
     if (outcome.kind === "sessionGone") {
       options.endSession();
@@ -139,7 +152,7 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
       const read = await openCostumeEditor(options.transport, options.endpoints);
       if (read.ok && taikoNo !== null) {
         // The set as it is now settles a write whose end was not known, and dates a stale record.
-        keep(taikoNo, reconcile(undoStore.load(KIND, taikoNo), read.value.state, sameCostume));
+        await amend(taikoNo, (slot) => reconcile(slot, read.value.state, sameCostume));
       } else if (!read.ok && sessionEnded(read.error)) {
         options.endSession();
       }
@@ -162,7 +175,7 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
       if (costumeGate() === undefined || taikoNo === null) {
         return [];
       }
-      const record = offeredUndo(undoStore.load(KIND, taikoNo), taikoNo);
+      const record = offeredUndo(await slotOf(taikoNo), taikoNo);
       return record === null
         ? []
         : [{ kind: KIND, at: record.at, before: record.before, after: record.after }];
@@ -177,7 +190,7 @@ export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrite
         return { kind: "notSignedIn" };
       }
       const taikoNo = options.owner();
-      const record = taikoNo === null ? null : offeredUndo(undoStore.load(KIND, taikoNo), taikoNo);
+      const record = taikoNo === null ? null : offeredUndo(await slotOf(taikoNo), taikoNo);
       if (record === null) {
         return { kind: "nothingToUndo" };
       }

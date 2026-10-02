@@ -53,6 +53,8 @@ export {
 export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
 export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep } from "./types";
+export { isUndoSlot, readSlot } from "./undo-slot";
+export type { UndoStore } from "./undo-store";
 export {
   enabledWrites,
   unverifiedWritesOpen,

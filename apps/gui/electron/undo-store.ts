@@ -1,33 +1,12 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
-import { type CostumeSet, EMPTY_UNDO_SLOT, type UndoSlot } from "@abth/core";
+import type { UndoSlot } from "@abth/core";
 
-import { isCostumeSet, WRITE_KINDS, type WriteKind } from "../src/session-port";
+import { isUndoSlot, readSlot, type UndoStore } from "../src/hiroba-session";
+import { WRITE_KINDS, type WriteKind, type WriteSets } from "../src/session-port";
 
-/**
- * Each player's undo slot for each kind of write, on disk, in the app's profile folder: the last
- * write's record, and a write started and not yet settled. It is what undoes a write after the app
- * is closed, so it is written before a write's first post, and a write whose slot cannot be written
- * is not sent.
- *
- * Slots are kept per player, by taiko number, since one device can be signed in to more than one
- * card: one player's writes never replace, spend or date another's record or pending write.
- *
- * It holds the sets and whose they are (the taiko number), never a token or a cookie, and it
- * never crosses to the window: the interface sees only what `pendingUndo` offers.
- */
-export interface UndoStore {
-  /** The player's slot for the kind; an empty one when there is none, or the file does not read. */
-  load(kind: WriteKind, taikoNo: string): UndoSlot<CostumeSet>;
-  /**
-   * Replaces the player's slot for the kind, and leaves every other slot as it is; an empty slot
-   * is dropped. Written to a temporary file, flushed to the disk, then renamed over the last, so a
-   * crash leaves the old file or the new one, never half of one. Throws when it cannot be written.
-   */
-  save(kind: WriteKind, taikoNo: string, slot: UndoSlot<CostumeSet>): void;
-}
-
-type Slots = Partial<Record<WriteKind, Record<string, UndoSlot<CostumeSet>>>>;
+/** What a file holds under each kind and player before a slot read from it is checked. */
+type Slots = Partial<Record<WriteKind, Record<string, unknown>>>;
 
 interface StoredUndo {
   readonly version: 2;
@@ -35,6 +14,11 @@ interface StoredUndo {
   readonly slots: Slots;
 }
 
+/**
+ * The desktop's undo store (see `UndoStore`): one file, in the app's profile folder. A slot is
+ * written to a temporary file, flushed to the disk, then renamed over the last, so a crash leaves
+ * the old file or the new one, never half of one.
+ */
 export function createUndoStore(path: string): UndoStore {
   const read = (): Slots => {
     try {
@@ -54,14 +38,17 @@ export function createUndoStore(path: string): UndoStore {
     }
   };
   return {
-    load(kind, taikoNo) {
-      const players = read()[kind] ?? {};
-      const slot = Object.hasOwn(players, taikoNo) ? players[taikoNo] : undefined;
-      return isSlot(slot) && ownedBy(slot, taikoNo) ? slot : EMPTY_UNDO_SLOT;
+    async load(kind, taikoNo) {
+      const players: Record<string, unknown> = read()[kind] ?? {};
+      return readSlot(
+        kind,
+        Object.hasOwn(players, taikoNo) ? players[taikoNo] : undefined,
+        taikoNo,
+      );
     },
-    save(kind, taikoNo, slot) {
+    async save(kind, taikoNo, slot) {
       const slots = read();
-      const players = { ...slots[kind] };
+      const players: Record<string, unknown> = { ...slots[kind] };
       if (slot.record === null && slot.pending === null) {
         delete players[taikoNo];
       } else {
@@ -82,7 +69,7 @@ function kindsOf(slots: Record<string, unknown>): Slots {
   for (const kind of WRITE_KINDS) {
     const players = slots[kind];
     if (isObject(players)) {
-      kept[kind] = players as Record<string, UndoSlot<CostumeSet>>;
+      kept[kind] = players;
     }
   }
   return kept;
@@ -96,10 +83,10 @@ function byPlayer(slots: Record<string, unknown>): Slots {
   const kept: Slots = {};
   for (const kind of WRITE_KINDS) {
     const slot = slots[kind];
-    if (!isSlot(slot)) {
+    if (!isUndoSlot(kind, slot)) {
       continue;
     }
-    const players: Record<string, UndoSlot<CostumeSet>> = {};
+    const players: Record<string, UndoSlot<WriteSets[WriteKind]>> = {};
     if (slot.record !== null) {
       players[slot.record.taikoNo] = { record: slot.record, pending: null };
     }
@@ -114,49 +101,4 @@ function byPlayer(slots: Record<string, unknown>): Slots {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-/** Whether everything in the slot is the player's own, as this store files it. */
-function ownedBy(slot: UndoSlot<CostumeSet>, taikoNo: string): boolean {
-  return (
-    (slot.record === null || slot.record.taikoNo === taikoNo) &&
-    (slot.pending === null || slot.pending.taikoNo === taikoNo)
-  );
-}
-
-/** A slot as this store writes one; anything else on disk reads as none. */
-function isSlot(value: unknown): value is UndoSlot<CostumeSet> {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const { record, pending } = value as Record<string, unknown>;
-  return (record === null || isRecord(record)) && (pending === null || isPending(pending));
-}
-
-function isRecord(value: unknown): boolean {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const record = value as Record<string, unknown>;
-  return (
-    typeof record.taikoNo === "string" &&
-    typeof record.at === "string" &&
-    (record.status === "current" || record.status === "stale") &&
-    isCostumeSet(record.before) &&
-    isCostumeSet(record.after)
-  );
-}
-
-function isPending(value: unknown): boolean {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const pending = value as Record<string, unknown>;
-  return (
-    typeof pending.taikoNo === "string" &&
-    typeof pending.at === "string" &&
-    (pending.purpose === "change" || pending.purpose === "undo") &&
-    isCostumeSet(pending.before) &&
-    isCostumeSet(pending.expectedAfter)
-  );
 }

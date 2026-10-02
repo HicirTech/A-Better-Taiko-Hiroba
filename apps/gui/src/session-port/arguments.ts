@@ -1,4 +1,4 @@
-import type { CostumeSet, HirobaSessionPort, PictureWant, WriteKind } from "./types";
+import type { CostumeSet, HirobaSessionPort, PictureWant, WriteKind, WriteSets } from "./types";
 
 /** Every kind of write the app can send, whether or not a run may send it. */
 export const WRITE_KINDS: readonly WriteKind[] = ["costume"];
@@ -45,6 +45,14 @@ export function isCostumeSet(value: unknown): value is CostumeSet {
     })
   );
 }
+
+/**
+ * How each kind's set is recognised when an undo slot is read back from storage: the check the
+ * interface's arguments go through, so a slot kept is held to the shape a write is.
+ */
+export const UNDO_SET_GUARDS: {
+  readonly [K in WriteKind]: (value: unknown) => value is WriteSets[K];
+} = { costume: isCostumeSet };
 
 /** A whole number from `least` to `most`. */
 export const isWhole = (value: unknown, least: number, most: number): value is number =>
