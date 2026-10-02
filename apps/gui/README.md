@@ -12,17 +12,19 @@ the season's どんメダル on Hiroba's own plate, and your favourite songs. On
 opened for it, until the first real write has been made and recorded (see
 [The first real costume write](#the-first-real-costume-write)).
 
-The window has no header. On a wide window a side panel, like Gmail's, lists its three pages:
+The window has no header. On a wide window a side panel, like Gmail's, lists its four pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル),
+**Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Favourites** (the 大好きな曲 and the お気に入り folder) and **Settings** (the language, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On Android, Back closes the drawer, goes from
-Favourites or Settings back to the Overview, and from the Overview leaves the app as before.
+Costume, Favourites or Settings back to the Overview, and from the Overview leaves the app as
+before.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
 The app is light or dark as the system is (Windows' app mode, Android's dark theme), and the
 page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
 The app opens on the page last shown on the device;
-signed out, the Overview and Favourites show the sign-in card, and Settings still works.
+signed out, the Overview, Costume and Favourites show the sign-in card, and Settings still works.
 Settings is laid out as Gmail's settings are: sections with small headings, each with its icon, and
 each setting one row with its name, a line on it where one helps, and its control. **Language**
 lists its choices with radio buttons; **Account** says who is signed in, by the nickname your page
@@ -31,11 +33,14 @@ gives, with the note on staying signed in and **Sign out** beside it. While a re
 
 Signed in, the Overview and Favourites read your page again from a small round **Read again**
 button with a refresh arrow at the top right, which stays there as the page scrolls. It spins
-while a read runs, and it is shut then, and while the costume editor is open or an undo runs, so
-one read runs at a time and none inside a write. On a touch-first screen (`pointer: coarse`), pull
-the page down from its top instead: a round indicator follows the finger, and letting go once its
-ring is full reads again. There the button is drawn only when the keyboard's focus is on it, and it
-stays for screen readers. The line under the page still says when it was read.
+while a read runs, and it is shut then, and while a costume save or undo runs, so one read runs at
+a time and none inside a write. On a touch-first screen (`pointer: coarse`), pull the page down
+from its top instead: a round indicator follows the finger, and letting go once its ring is full
+reads again (a finger on a box that has scrolled, such as the costume's grid of items, is the
+box's to scroll back, and pulls nothing). There the button is drawn only when the keyboard's focus
+is on it, and it stays for screen readers. The line under the page still says when it was read.
+On the Costume page the same button, and the same pull, read the editor again instead of your
+page.
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -84,7 +89,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then checks the pages (a side panel on a wide window, and on a narrow one a menu button whose drawer a pick, Escape or a tap outside closes; the sign-in card on the Overview and Favourites while signed out, the page shown kept for the next launch, and the page's column in one place on a page that scrolls, one that does not and under a dialog), the scheme (dark or light as the system asks, the page's `color-scheme` with it), Settings (sections with small headings, each with its icon, over one list of rows; who is signed in, or no one, with **Sign out** in the app's casing beside it; while a read the stand-in holds runs, **Signed in**, with **Sign out** shut), the language (opened on a system in Traditional Chinese, the app is in it; its choices are radio buttons in one group the section's heading names, and the arrows move the choice; a pick in Settings, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile as it was read, asking Hiroba nothing; System default follows the system again, at once and after a relaunch; Hiroba's own words on the profile and in the editor are marked Japanese), and drives sign-in, reading, reading again (from the small Fab, which is shut and spins while a read the stand-in holds runs, a second press sending nothing; on an emulated touch screen, by a pull from the top of the page past the point, not by a short, upward, sideways or lower one, the Fab then drawn only under the keyboard's focus, and a slow pull begun on the portrait opening no tooltip; and by neither while an undo waits on its pre-check), a rotated session, a lost session (the next sign-in shows none of its pictures), cancel and sign-out (in Settings) against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), the Overview shaped like my page's header (the portrait beside the plate and the score panel, one under another on a narrow window, with no background art), the score panel (a plain stand-in while its art does not come, its counts as text where my page writes them, the art fetched once per device), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches), the My Don portrait (from the picture host with no cookie, a first one that does not come, kept across relaunches and sign-ins, fetched anew after **Read again** and after a change or undo applies but not after a save that moves nothing, the kept one still shown when a fresh one does not come), and the どんメダル plate (asked for only once its card is on screen, its words still text over it, one request per season and per state, a plate that does not come, its id in neither the window nor any file but the debug copies, the plate kept across sign-outs and relaunches). With the write gate open, it checks the editor's picture of the set (shown on opening, redrawn after a pick, one request for a burst of picks, a picture that does not come, none once closed, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each, and checks each write sent exactly the requests planned, that the Snackbar offers the undo only once the editor is closed and only on the Overview, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; it checks the portrait is the editor's button, with no **Change costume** button beside it, shows its edit badge and name under the pointer, and opens the editor by Enter and by Space, on an emulated touch screen too, and there by a long-press alone (its badge up at rest and its description saying to long-press; not by a tap, nor by a finger held as long but moved, which reads nothing either; and the lift after it makes no click); and reopened without the flag, it checks no write can be sent and that the portrait is no button and says why, in its tooltip too, under the pointer or a finger held on it. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then checks the pages (a side panel on a wide window, and on a narrow one a menu button whose drawer a pick, Escape or a tap outside closes; the Costume page between the Overview and Favourites, in both; the sign-in card on the Overview, Costume and Favourites while signed out, the page shown kept for the next launch, and the page's column in one place on a page that scrolls, one that does not and the Costume page), the scheme (dark or light as the system asks, the page's `color-scheme` with it), Settings (sections with small headings, each with its icon, over one list of rows; who is signed in, or no one, with **Sign out** in the app's casing beside it; while a read the stand-in holds runs, **Signed in**, with **Sign out** shut), the language (opened on a system in Traditional Chinese, the app is in it; its choices are radio buttons in one group the section's heading names, and the arrows move the choice; a pick in Settings, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile as it was read, asking Hiroba nothing; System default follows the system again, at once and after a relaunch; Hiroba's own words on the profile and in the editor are marked Japanese), and drives sign-in, reading, reading again (from the small Fab, which is shut and spins while a read the stand-in holds runs, a second press sending nothing; on an emulated touch screen, by a pull from the top of the page past the point, not by a short, upward, sideways or lower one, the Fab then drawn only under the keyboard's focus, and a slow pull begun on the portrait opening no tooltip; and by neither while an undo waits on its pre-check), a rotated session, a lost session (the next sign-in shows none of its pictures), cancel and sign-out (in Settings) against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), the Overview shaped like my page's header (the portrait beside the plate and the score panel, one under another on a narrow window, with no background art), the score panel (a plain stand-in while its art does not come, its counts as text where my page writes them, the art fetched once per device), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches), the My Don portrait (from the picture host with no cookie, a first one that does not come, kept across relaunches and sign-ins, fetched anew after **Read again** and after a change or undo applies but not after a save that moves nothing, the kept one still shown when a fresh one does not come), and the どんメダル plate (asked for only once its card is on screen, its words still text over it, one request per season and per state, a plate that does not come, its id in neither the window nor any file but the debug copies, the plate kept across sign-outs and relaunches). With the write gate open, it checks the Costume page (the editor read once when the page is first shown in a run, never at start-up or on a reopen; read again by the Fab, or by a pull on an emulated touch screen, instead of your page, a draft kept over a set that has not moved and dropped over one that has; a draft that survives a visit to another page, and Reset; the Save bar flush with the window's bottom edge; a column on a wide window and the whole width on a narrow one), the editor's picture of the set (shown when the page is first shown, redrawn after a pick, one request for a burst of picks, a picture that does not come, none away from the page, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, a grid that has scrolled left to its own finger, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each from the page, and checks each write sent exactly the requests planned, that the undo shows on the Costume page alone, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; it checks the portrait is the button to the Costume page, with no **Change costume** button beside it, shows its edit badge and name under the pointer, and goes there by a click, by Enter and by Space, on an emulated touch screen too, and there by a long-press alone (its badge up at rest and its description saying to long-press; not by a tap, nor by a finger held as long but moved, which reads nothing either; and the lift after it makes no click on the page it went to); and reopened without the flag, it checks no write can be sent and that the Costume page still opens, shows the portrait and says why, reads nothing from the editor and has no control. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
@@ -101,14 +106,10 @@ The installers are not code-signed, so Windows SmartScreen warns before the firs
 The desktop app can change one thing on Hiroba so far: the costume. No kind of write has been
 verified against the real site yet, so **no packaged build can send one**. A kind that is not
 verified opens only in an unpackaged run started with `ABTH_UNVERIFIED_WRITES=1`; a packaged build
-ignores that variable. Android sends no write at all for now. In a run that may not change the
-costume, the My Don portrait opens nothing, and its tooltip (a long press on a touch screen, the
-finger held still: a pull begun on it opens none) says it is not open in this build yet. Where the
-costume may be changed, a click on the portrait, or Enter or Space, opens the editor; a pointer on
-it, or the keyboard's focus, shows a small edit badge. On a touch-first screen (`pointer: coarse`)
-a finger opens it by a long-press instead, held still for about half a second, and a tap does
-nothing, so a scroll or a pull begun on it never opens it; there the badge is always up, and
-screen readers are told to long-press.
+ignores that variable. Android sends no write at all for now. The costume is changed on
+[the Costume page](#the-costume-page), and that page opens in every run: where the run may not
+change the costume, it shows the My Don portrait and says it is not open in this build yet, reads
+nothing from the editor and has no control.
 
 Every write goes the same way: read the editor for a fresh form token and the whole set, keep an
 undo record in `undo.json` in the app's data folder, send the pre-check, send the save exactly
@@ -124,16 +125,46 @@ in the data folder's `debug` folder, named after the page, with every form token
 time, so a write can be followed step by step; of a post, only Hiroba's answer is kept, never the
 form the app sent.
 
+### The Costume page
+
+The page of the きせかえ editor, second in the navigation, between the Overview and Favourites. The
+My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
+on a touch-first screen (`pointer: coarse`) a long-press of about half a second, held still, so a
+tap, a scroll or a pull begun on it goes nowhere; a pointer on it, or the keyboard's focus, shows
+a small edit badge (always up on a touch screen, where screen readers are told to long-press).
+
+The page holds Hiroba's picture of the set as picked, the **いろ** and **きせかえ** tabs with the
+palette and the items' thumbnails, what the draft changes, **Review**, the confirmation and **Save
+to Hiroba**, how the write ended, and the undo of the last change, with **Reset** to put the draft
+back to the set as read. It is a column, as wide as the window on a phone, and its buttons sit in
+a bar at the bottom edge of the window, which stays there as the page scrolls.
+
+- **Reading.** The editor (`mypage_kisekae.php`) is read once, when the page is first shown in a
+  run, and never while another page is shown: an app that opens on the Overview does not read it
+  at all until you go there. After that it is read again only when you press **Read again** on
+  this page, or pull it down on a touch screen, which read the editor here, not your page; a
+  write's own read-back brings the set up to date without another read. A draft made over the set
+  a read finds unchanged is kept by it; one made over a set that has moved is dropped for the set
+  as read.
+- **The draft** outlives a visit to another page and back, for as long as the app runs, with a
+  review or an outcome you left. Hiroba's picture of it is kept too, and not asked for again.
+- **The write.** Saving and undoing go the way [Writes](#writes) says, and the page shows the
+  progress and the outcome in place of the editor until **Back**; the undo on offer, which stays
+  across restarts, is on this page and nowhere else. There is no Snackbar: the outcome and the
+  undo are already in front of you.
+- **Where the costume may not be changed** (Android for now, and packaged builds), the page shows
+  the portrait and why, and nothing else: it reads nothing from the editor.
+
 ### The costume preview
 
-The costume editor shows at its top Hiroba's own picture of the set as picked, as Hiroba's editor
+The Costume page shows at its top Hiroba's own picture of the set as picked, as Hiroba's editor
 does in its 今のきせかえセット box: `imgsrc_mydon.php` with the three colours and five slots in its
 query. The platform fetches it with the session and hands the window a `data:` URL, so neither the
-address nor the cookie reaches the window. It asks once when the editor opens, then once per pause
-in the picks (300 ms), one request at a time and never retried, and nothing once the editor is
-closed; a set already drawn in that opening is shown again without asking. It is a read, so no
-write gate stands in front of it, and Android allows it too. A picture that does not come leaves
-"Preview unavailable" and a code for a report; the editor works without it. With
+address nor the cookie reaches the window. It asks once when the page is first shown, then once per
+pause in the picks (300 ms), one request at a time and never retried, and nothing while the page is
+not shown; a set already drawn is shown again without asking, after a visit to another page too. It
+is a read, so no write gate stands in front of it, and Android allows it too. A picture that does
+not come leaves "Preview unavailable" and a code for a report; the editor works without it. With
 `ABTH_DEBUG_SAVE_READS=1`, only the latest picture is kept, as `debug\imgsrc_mydon.php.png`, and
 none in `debug\history`.
 
@@ -149,17 +180,17 @@ address.
 
 What it costs Hiroba:
 
-- Opening the editor costs no thumbnail: it opens on いろ.
+- Showing the page costs no thumbnail: it opens on いろ.
 - On the items tab, a thumbnail is asked for only once its cell has stayed in the box, or within a
   row of it, for 150 ms, so a fling past a row asks nothing. The first view of a slot asks for 30
   at most, and each row scrolled into view for six more.
 - One at a time, after a random pause of up to 100 ms, in the queue with every other request to
   Hiroba, so never between a write's requests; none is asked for while a save or an undo runs.
   At most 300 in a run, and 8 s each on the desktop.
-- Never retried within one opening of the editor. One that did not come is asked for once more the
-  next time the editor is opened and its cell is seen, within the same 300: if Hiroba sends none,
-  each opening asks again for those seen.
-- Each is fetched once and kept on the device for good: opening the editor again, going back to a
+- Never retried while the page stays shown. One that did not come is asked for once more the next
+  time the page is shown or the editor is read again, and its cell is seen, within the same 300: if
+  Hiroba sends none, each showing asks again for those seen.
+- Each is fetched once and kept on the device for good: showing the page again, going back to a
   slot, signing in again or a relaunch asks Hiroba for nothing already shown. See
   [Where pictures are kept](#where-pictures-are-kept).
 
@@ -237,8 +268,8 @@ version cannot read, show the card as before, and ask for no picture. With
 ### The My Don portrait
 
 Beside the plate stands your マイどん, Hiroba's own picture of your Don in the costume it wears, on
-a pale blue tile of Hiroba's shape. Where the costume may be changed, it opens the editor. It is the
-one picture from off Hiroba:
+a pale blue tile of Hiroba's shape. It is the button to [the Costume page](#the-costume-page). It is
+the one picture from off Hiroba:
 `https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_` and your taiko number, as your page
 writes it. The platform holds that address to that exact origin, path and query, builds it again
 itself, and fetches it with no cookie at all and Hiroba's origin alone as the Referer, as a browser
@@ -282,22 +313,22 @@ or in PowerShell:
 $env:ABTH_UNVERIFIED_WRITES = "1"; $env:ABTH_DEBUG_SAVE_READS = "1"; bun run dev -- --real
 ```
 
-The app reads your page as usual (sign in first if it asks). The My Don portrait on the identity
-card now opens the costume editor, and shows an edit badge under the pointer; only a run started
-this way lets it.
+The app reads your page as usual (sign in first if it asks). The Costume page now offers the
+editor; only a run started this way lets it.
 
-**2. Open the editor and check it.** Click the portrait: one read of `mypage_kisekae.php`,
-then one of `imgsrc_mydon.php` for the picture at the top, which shows your Don as it is dressed
-now. Under **いろ**, each of かお, どう and てあし outlines the colour you wear; under **きせかえ**,
-each slot highlights the item you wear, or はずす. **Changes** says "Nothing changed yet."
+**2. Open the editor and check it.** Click the portrait, which goes to the Costume page: one read
+of `mypage_kisekae.php`, then one of `imgsrc_mydon.php` for the picture at the top, which shows
+your Don as it is dressed now. Under **いろ**, each of かお, どう and てあし outlines the colour you
+wear; under **きせかえ**, each slot highlights the item you wear, or はずす. **Changes** says
+"Nothing changed yet."
 
 **3. Change one colour, and nothing else.** Under いろ, pick かお (or どう, or てあし) and press a
 different swatch; the picture redraws in it. **Changes** must list exactly one line, such as
 `かお: #8 → #3`. Do not touch きせかえ.
 
-**4. Review and save.** Press **Review**. The dialog repeats the one change, and asks you to tick
+**4. Review and save.** Press **Review**. The page repeats the one change, and asks you to tick
 "This is the first write of this kind from the app…", noting that it also reads your title before
-and after. Tick it and press **Save to Hiroba**. The dialog shows "Saving… then reading it back"
+and after. Tick it and press **Save to Hiroba**. The page shows "Saving… then reading it back"
 while the app sends, in this order and once each (a picture of the set or of an item, asked for
 as you picked, may come before or after these, never between them):
 
@@ -312,24 +343,23 @@ as you picked, may come before or after these, never between them):
 
 **5. Read what it says.**
 
-- "Saved. Hiroba now shows the new costume.", in green, and a Snackbar offering **Undo**, on the
-  Overview only, which shows the undo running and how it ended: it worked. The read-back shows
-  exactly the one colour changed and the title unchanged.
+- "Saved. Hiroba now shows the new costume.", in green, and **Undo last costume change** under
+  it: it worked. The read-back shows exactly the one colour changed and the title unchanged.
 - "Hiroba didn't accept the app's request. Nothing was changed.", with a code for a report: the
   pre-check did not answer `false`. Hiroba may refuse posts from a client that is not a browser.
   Nothing was saved. Stop here and keep the code.
 - "Hiroba asked for a confirmation this app does not give yet…": nothing was saved. Stop here.
 - Anything else says whether something may have changed. "Couldn't read the result back" means
-  open the editor again and look; do not save again first.
+  use **Read again** and look; do not save again first.
 
-**6. Undo.** Press **Undo** in the Snackbar, or **Undo last costume change** on the identity card,
-which stays after the Snackbar goes and across restarts. It is a write like the first, the same
-six requests, from the colour you set back to the one you had. Expect "Undone. Hiroba shows the
+**6. Undo.** Press **Undo last costume change** on the Costume page, where it stays across
+restarts. It is a write like the first, the same six requests, from the colour you set back to the
+one you had. Expect "Undone. Hiroba shows the
 costume as it was." If the costume was changed anywhere else in between, the undo stops without
 sending the save and says so.
 
-**7. Check.** Press **Read again**, open the editor, and see all eight values as they were before
-step 3. Close the app.
+**7. Check.** Press **Read again** on the Costume page, and see all eight values as they were
+before step 3. Close the app.
 
 **What is left on disk.** `%APPDATA%\A Better Taiko Hiroba\debug` holds the pages the run read
 (`mypage_kisekae.php.html`, `mypage_top.php.html`, `imgsrc_danlabel.php.png`,
