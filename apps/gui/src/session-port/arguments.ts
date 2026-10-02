@@ -110,7 +110,6 @@ export const PORT_ARGUMENTS = {
   cancelSignIn: none,
   readProfile: none,
   signOut: none,
-  enabledWrites: none,
   openCostumeEditor: none,
   previewCostume: costumeSet,
   readPicture: pictureWant,

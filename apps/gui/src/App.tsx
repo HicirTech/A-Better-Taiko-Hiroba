@@ -12,7 +12,6 @@ import {
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { CostumePage } from "./my-page/costume-page";
-import { ShutCostumePage } from "./my-page/costume-shut";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
 import type { PortraitAction } from "./my-page/my-don-portrait";
@@ -26,7 +25,6 @@ import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFab } from "./read-again/read-again-fab";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
 import type {
-  EnabledWrite,
   HirobaSessionPort,
   ProfileView,
   ReadFailureKind,
@@ -66,26 +64,19 @@ export interface AppProps {
 
 /**
  * The app on each page: signed out, the Overview, Costume and Favourites show the sign-in card;
- * signed in, the Overview shows the profile, Costume the editor (or why a run may not change the
- * costume) and Favourites the favourite songs, the profile and the favourites from the same read.
- * Settings works either way.
+ * signed in, the Overview shows the profile, Costume the editor and Favourites the favourite songs,
+ * the profile and the favourites from the same read. Settings works either way.
  */
 export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
-  /** The kinds of write this run may send, asked once a profile has been read. */
-  const [writes, setWrites] = useState<readonly EnabledWrite[]>([]);
-  const costumeWrite = writes.find((write) => write.kind === "costume");
   /**
    * The one lane every picture of Hiroba's comes through: one at a time, only what is on screen,
    * each remembered for the run, and none while a write runs.
    */
   const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
-  /** The Costume page of a run that may change the costume: the one place the editor is read. */
-  const onEditorPage =
-    page === "costume" && screen.name === "profile" && costumeWrite !== undefined;
-  /** The same page of a run that may not: it shows why, and reads nothing. */
-  const onShutPage = page === "costume" && screen.name === "profile" && costumeWrite === undefined;
+  /** The Costume page, signed in: the one place the editor is read. */
+  const onEditorPage = page === "costume" && screen.name === "profile";
   /** The session ended under the editor: back to signing in, with what happened. */
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
@@ -115,7 +106,6 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
       lane.renew("medalPlate");
       lane.renew("myDon");
       lane.forgetFailures("scorePanel");
-      setWrites(await port.enabledWrites());
       await refreshUndo();
       setScreen({ name: "profile", profile: result.value });
     } else if (SESSION_GONE.has(result.error.kind)) {
@@ -166,7 +156,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
    * the Costume page by a long-press on the portrait, not a tap.
    */
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
-  /** The portrait jumps to the Costume page, which has the editor, or says why it has none. */
+  /** The portrait jumps to the Costume page, which has the editor. */
   const portrait: PortraitAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
 
   // A session kept from an earlier launch is read once on opening: that is what opening the app
@@ -209,7 +199,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   return (
     <>
       {/* On the pages a read shows, from the first read on, spinning while one runs. */}
-      {page !== "settings" && !onShutPage && (signedIn || screen.name === "reading") && (
+      {page !== "settings" && (signedIn || screen.name === "reading") && (
         <>
           <FrameCorner>
             <ReadAgainFab
@@ -282,19 +272,9 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
             </Stack>
           )}
 
-          {screen.name === "profile" &&
-            page === "costume" &&
-            // Where the costume may not be changed the page still opens, and says so.
-            (costumeWrite === undefined ? (
-              <ShutCostumePage lane={lane} i18n={i18n} />
-            ) : (
-              <CostumePage
-                editor={editor}
-                lane={lane}
-                i18n={i18n}
-                verified={costumeWrite.verified}
-              />
-            ))}
+          {screen.name === "profile" && page === "costume" && (
+            <CostumePage editor={editor} lane={lane} i18n={i18n} />
+          )}
 
           {screen.name === "profile" && page !== "costume" && (
             <Stack spacing={2}>

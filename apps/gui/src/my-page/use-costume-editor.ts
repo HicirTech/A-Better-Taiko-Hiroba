@@ -58,7 +58,6 @@ export interface CostumeEditor {
   /** Puts the draft back to the set as read. */
   reset(): void;
   review(): void;
-  acknowledge(checked: boolean): void;
   back(): void;
   save(): Promise<void>;
   undo(): Promise<void>;
@@ -226,7 +225,6 @@ export function useCostumeEditor({
     pickItem: (part, id) => dispatch({ type: "pickedItem", part, id }),
     reset: () => dispatch({ type: "reset" }),
     review: () => dispatch({ type: "review" }),
-    acknowledge: (checked) => dispatch({ type: "acknowledged", checked }),
     back: () => dispatch({ type: "back" }),
     save,
     undo,

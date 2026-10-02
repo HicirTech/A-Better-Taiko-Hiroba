@@ -1,15 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import {
-  Alert,
-  Box,
-  Button,
-  Checkbox,
-  CircularProgress,
-  FormControlLabel,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 
 import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
@@ -37,11 +27,6 @@ export interface CostumePageProps {
   /** The window's lane for Hiroba's pictures: the items' thumbnails come through it. */
   readonly lane: PictureLane;
   readonly i18n: Translator;
-  /**
-   * Whether costume writes are verified. Until they are, saving needs an extra confirmation, and
-   * the write reads the title before and after.
-   */
-  readonly verified: boolean;
 }
 
 /**
@@ -55,7 +40,7 @@ export interface CostumePageProps {
  * state is the window's, not the page's (use-costume-editor.ts): going to another page and back
  * finds the draft, a review or an outcome as it was.
  */
-export function CostumePage({ editor, lane, i18n, verified }: CostumePageProps) {
+export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   const { step } = editor;
   const [tabs, setTabs] = useState(FIRST_TABS);
   const page = useRef<HTMLDivElement>(null);
@@ -65,7 +50,7 @@ export function CostumePage({ editor, lane, i18n, verified }: CostumePageProps) 
     lane.forgetFailures("costumeItem");
   }, [lane]);
 
-  const actions = actionsOf(editor, i18n, verified);
+  const actions = actionsOf(editor, i18n);
   return (
     <Box
       ref={page}
@@ -85,14 +70,7 @@ export function CostumePage({ editor, lane, i18n, verified }: CostumePageProps) 
     >
       <Stack spacing={2} sx={{ flexGrow: 1, pb: 2 }}>
         {previewSetOf(step) !== null && <CostumePreviewBox preview={editor.preview} i18n={i18n} />}
-        <StepView
-          editor={editor}
-          lane={lane}
-          i18n={i18n}
-          verified={verified}
-          tabs={tabs}
-          onTabs={setTabs}
-        />
+        <StepView editor={editor} lane={lane} i18n={i18n} tabs={tabs} onTabs={setTabs} />
       </Stack>
       {actions !== null && <ActionBar>{actions}</ActionBar>}
     </Box>
@@ -124,7 +102,6 @@ function StepView({
   editor,
   lane,
   i18n,
-  verified,
   tabs,
   onTabs,
 }: CostumePageProps & { tabs: EditingTabs; onTabs: (tabs: EditingTabs) => void }) {
@@ -160,25 +137,6 @@ function StepView({
         <Stack spacing={2}>
           <Typography>{t("costume.confirmIntro")}</Typography>
           <Changes from={step.editor.state} to={step.draft} i18n={i18n} />
-          {!verified && (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  id="costume-first-write"
-                  checked={step.acknowledged}
-                  onChange={(event) => editor.acknowledge(event.target.checked)}
-                />
-              }
-              label={
-                <Stack>
-                  <Typography variant="body2">{t("costume.firstWrite")}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {t("costume.crossCheck")}
-                  </Typography>
-                </Stack>
-              }
-            />
-          )}
         </Stack>
       );
     case "saving":
@@ -196,7 +154,7 @@ function StepView({
 }
 
 /** The buttons of the step, or null where it has none: a read, a save and an undo end by themselves. */
-function actionsOf(editor: CostumeEditor, i18n: Translator, verified: boolean): ReactNode {
+function actionsOf(editor: CostumeEditor, i18n: Translator): ReactNode {
   const { t } = i18n;
   const { step } = editor;
   switch (step.name) {
@@ -224,12 +182,7 @@ function actionsOf(editor: CostumeEditor, i18n: Translator, verified: boolean): 
           <Button id="costume-back" onClick={editor.back}>
             {t("costume.back")}
           </Button>
-          <Button
-            id="costume-save"
-            variant="contained"
-            disabled={!verified && !step.acknowledged}
-            onClick={() => void editor.save()}
-          >
+          <Button id="costume-save" variant="contained" onClick={() => void editor.save()}>
             {t("costume.save")}
           </Button>
         </>

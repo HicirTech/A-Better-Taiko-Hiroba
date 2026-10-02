@@ -22,7 +22,6 @@ export type {
   CostumeSet,
   CostumeSlot,
   DanView,
-  EnabledWrite,
   HirobaSessionPort,
   PictureFailure,
   PictureView,

@@ -37,8 +37,8 @@
  * hold at once and is kept, System default, which follows the system again, and one made while signed in,
  * which asks Hiroba nothing), a reopen that keeps the
  * session and the undo,
- * Hiroba's daily break, sign-out, and a reopen that stays signed out with the write gate shut and,
- * signed in, a Costume page that shows the portrait and says why, and reads nothing, against
+ * Hiroba's daily break, sign-out, and a reopen that stays signed out, sends no write while it is,
+ * and, signed in, opens the Costume page's editor with no flag set at all, against
  * scripts/mock-hiroba.ts, over the
  * Chrome DevTools Protocol. It counts the reads the mock saw and checks each write sent exactly the requests
  * planned, then searches the app's user-data folder for every session token and form token the
@@ -268,16 +268,14 @@ results.pictureBytesAloneLeftOut =
     `<img src="data:image/png;base64,AAimgsrc000000000000AA==#imgsrc_kisekae.php?cos=4&amp;_token_v2=x">`,
   ) === `<img src="data:image/png;base64,#imgsrc_kisekae.php?cos=4&amp;_token_v2=x">`;
 /**
- * A colour change's requests: the title, then the editor — last before the posts, since my page's
- * forms issue a token too and would void the editor's — the pre-check, one save, the read-backs.
+ * A colour change's requests: the editor, the pre-check, one save, the read-back. The desktop's
+ * costume writes have been made for real, so they read no other page (LIVE_CHECKED_WRITES).
  */
 const WRITE_REQUESTS = [
-  "GET /mypage_top.php",
   "GET /mypage_kisekae.php",
   "POST /ajax/check_ip_kisekae.php",
   "POST /ajax/change_mydon.php",
   "GET /mypage_kisekae.php",
-  "GET /mypage_top.php",
 ];
 
 // The language, in runs of their own, signed out. Opened on a system in Traditional Chinese, the
@@ -301,7 +299,6 @@ const languageShown = (page: Awaited<ReturnType<typeof launch>>["page"]) =>
 rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
 await resetLog();
 let inLanguage = await launch({
-  writes: false,
   now: NOON_JST,
   lang: "zh-TW",
   userData: LANGUAGE_USER_DATA,
@@ -337,7 +334,6 @@ try {
   await inLanguage.click("#language-zh-Hant");
   await stop(inLanguage);
   inLanguage = await launch({
-    writes: false,
     now: NOON_JST,
     lang: "en-US",
     userData: LANGUAGE_USER_DATA,
@@ -358,7 +354,6 @@ try {
   });
   await stop(inLanguage);
   inLanguage = await launch({
-    writes: false,
     now: NOON_JST,
     lang: "zh-TW",
     userData: LANGUAGE_USER_DATA,
@@ -376,7 +371,6 @@ try {
   });
   await stop(inLanguage);
   inLanguage = await launch({
-    writes: false,
     now: NOON_JST,
     lang: "en-US",
     userData: LANGUAGE_USER_DATA,
@@ -413,7 +407,7 @@ try {
   rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
 }
 
-let running = await launch({ writes: true, now: NOON_JST });
+let running = await launch({ now: NOON_JST });
 try {
   const { page, text, textOf, click, clickButton, until, currentPage, goTo } = running;
   const exists = (selector: string) =>
@@ -922,12 +916,9 @@ try {
   results.previewShownOnOpen =
     onOpening.startsWith("data:image/png;base64,") &&
     same(previewsOnOpening, [previewQuery(START)]);
-  results.writeGateOpen =
-    same(await page.evaluate("window.abth.enabledWrites()"), [
-      { kind: "costume", verified: false },
-    ]) &&
+  results.writesOpenWithNoFlag =
     (await exists("#costume-review")) &&
-    !(await exists("#costume-not-open"));
+    (await page.evaluate<string>("typeof window.abth.enabledWrites")) === "undefined";
 
   // Away and back, the page finds the editor as it was: it is not read again, nor the picture of
   // the set asked for again.
@@ -1069,18 +1060,12 @@ try {
     await click("#costume-tab-colours");
     await click("#costume-part-colorFace");
   };
-  /** Makes a pick on a fresh editor, confirms with the tick, saves, and waits for the outcome. */
+  /** Makes a pick on a fresh editor, reviews it, saves, and waits for the outcome. */
   const changeInTheWindow = async (pick: () => Promise<unknown>) => {
     await openFreshEditor();
     await pick();
     await click("#costume-review");
-    await waitFor(async () => (await exists("#costume-first-write")) || undefined);
-    await click("#costume-first-write");
-    await waitFor(async () =>
-      (await page.evaluate<boolean>(`!document.querySelector("#costume-save").disabled`))
-        ? true
-        : undefined,
-    );
+    await waitFor(async () => (await exists("#costume-save")) || undefined);
     await click("#costume-save");
     return waitFor(async () => (await pageOutcome()) ?? undefined);
   };
@@ -1606,9 +1591,8 @@ try {
   await readMedalShowing(() => shownNow("#medal-plate-image"));
   await page.evaluate("window.scrollTo(0, 0)");
 
-  // Costume writes. This run opened the gate (unpackaged, ABTH_UNVERIFIED_WRITES=1), so the Costume
-  // page offers the editor, and every write is unverified: a tick to confirm, and the title read
-  // twice.
+  // Costume writes. Open in every build, this run's too, with no flag: the Costume page offers the
+  // editor, and a write is Review, then Save to Hiroba.
   /** Waits for an undo started from the page to end, and gives its outcome. */
   const undoFrom = async (selector: string) => {
     await click(selector);
@@ -2078,14 +2062,13 @@ try {
   await goTo("overview");
   await myDonsSettled();
 
-  // #22: a piece beside a きぐるみ, which Hiroba would answer 0 to and ignore, is refused unsent.
-  // While costume is unverified the title is read first, before the editor, so the trap costs that
-  // read too — but no post.
+  // #22: a piece beside a きぐるみ, which Hiroba would answer 0 to and ignore, is refused unsent: the
+  // trap costs the editor's read, and no post.
   await resetLog();
   const trap = await bridgeChange({ ...START, costume1: 36 });
   results.trapRefusedUnsent =
     same(trap, { kind: "invalidTarget", field: "costume1" }) &&
-    sameBesideLanePictures(await requestLog(), ["GET /mypage_top.php", "GET /mypage_kisekae.php"]);
+    sameBesideLanePictures(await requestLog(), ["GET /mypage_kisekae.php"]);
 
   // A picture asked for while a write waits on its pre-check waits for the whole write, read-back
   // and all: held there, it would otherwise go between the pre-check and the save.
@@ -2226,8 +2209,7 @@ try {
   const postsBeforeExpiry = await hitsOn("/ajax/check_ip_kisekae.php");
   await click("#swatch-colorFace-9");
   await click("#costume-review");
-  await waitFor(async () => (await exists("#costume-first-write")) || undefined);
-  await click("#costume-first-write");
+  await waitFor(async () => (await exists("#costume-save")) || undefined);
   await fetch(`${HIROBA}/__expire`);
   await Bun.sleep(100);
   await click("#costume-save");
@@ -2317,7 +2299,7 @@ try {
   const medalPlatesBeforeReopen = await medalPlatesSettled();
   const thumbsBeforeReopen = (await thumbsSettled()).length;
   await stop(running);
-  running = await launch({ writes: true, now: IN_THE_BREAK });
+  running = await launch({ now: IN_THE_BREAK });
   await running.until("サンプルどん");
   results.signedInAfterReopen = true;
   results.readsOnReopen = (await myPageHits()) - readsBeforeReopen;
@@ -2416,25 +2398,25 @@ try {
   };
   results.signOutHandled = (await signOut()) && !existsSync(SESSION_FILE);
 
-  // Reopened after signing out, it stays signed out and asks Hiroba nothing. Started without
-  // ABTH_UNVERIFIED_WRITES, it may send no write, and one asked for anyway sends nothing.
+  // Reopened after signing out, it stays signed out and asks Hiroba nothing. A write asked for
+  // anyway while it is signed out sends nothing.
   const readsBeforeSecondReopen = await myPageHits();
   await stop(running);
-  running = await launch({ writes: false, now: NOON_JST });
+  running = await launch({ now: NOON_JST });
   await running.until("Sign in to Hiroba");
   await Bun.sleep(500);
   results.signedOutAfterReopen = (await myPageHits()) === readsBeforeSecondReopen;
   await resetLog();
-  const shut = await running.page.evaluate(
-    `Promise.all([window.abth.enabledWrites(), window.abth.pendingUndo(), window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorFace: 3 } })}), window.abth.undo("costume")])`,
+  const signedOutWrites = await running.page.evaluate(
+    `Promise.all([window.abth.pendingUndo(), window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorFace: 3 } })}), window.abth.undo("costume")])`,
   );
-  results.gateShutWithoutTheFlag =
-    same(shut, [[], [], { kind: "notEnabled" }, { kind: "notEnabled" }]) &&
+  results.signedOutWritesSendNothing =
+    same(signedOutWrites, [[], { kind: "notSignedIn" }, { kind: "notSignedIn" }]) &&
     same(await requestLog(), []);
-  // Signed in, the portrait is still the button to the Costume page, which opens all the same: it
-  // shows the player's マイどん and why the costume cannot be changed, rather than leave no way to
-  // change anything and no word of why. It reads nothing from the editor and has no control.
-  // Signed out again after, so the session is not left for the scan below.
+  // Signed in on this launch, which no flag opened, the portrait goes to the Costume page, which
+  // reads the editor and offers Review: writes are open in every build. A write asked for through
+  // the bridge reaches Hiroba's editor, finds the costume as it is, and posts nothing. Signed out
+  // again after, so the session is not left for the scan below.
   const platesSignedOut = (await platesAsked()).length;
   const myDonsSignedOut = (await myDonsAsked()).length;
   const medalPlatesSignedOut = await hitsOn(MEDAL_PLATE);
@@ -2442,37 +2424,34 @@ try {
   await running.click("#sign-in");
   await running.until("サンプルどん");
   tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
-  const NOT_OPEN =
-    "Not open in this build yet: the first real costume change from the app has still to be made and checked.";
-  const editorReadsBeforeShutPage = await editorHits();
-  const portraitStillTheButton = await running.page.evaluate<boolean>(
-    `document.querySelector("#costume-open")?.tagName === "BUTTON"`,
-  );
+  const editorReadsBeforeOpening = await editorHits();
   await running.click("#costume-open");
   await waitFor(async () => (await running.currentPage()) === "costume" || undefined);
-  await waitFor(async () => (await running.textOf("#costume-not-open")) ?? undefined);
-  await waitForSeen(
-    running.page,
+  await waitFor(
     async () =>
-      (await running.page.evaluate<boolean>(`document.querySelector("#my-don-image") !== null`)) ||
-      undefined,
+      (await running.page.evaluate<string | null>(
+        `document.querySelector("#costume-page")?.getAttribute("data-step") ?? null`,
+      )) === "editing" || undefined,
   );
-  // A read of the editor, were one made, would be on its way by now.
-  await Bun.sleep(1000);
-  results.shutGateSaysWhy =
-    portraitStillTheButton &&
+  results.writesOpenOnAFlaglessLaunch =
     (await running.textOf("main h1")) === "Costume" &&
-    (await running.textOf("#costume-not-open")) === NOT_OPEN;
-  results.shutPageReadsNothing =
-    (await editorHits()) === editorReadsBeforeShutPage &&
+    (await editorHits()) === editorReadsBeforeOpening + 1 &&
     (await running.page.evaluate<boolean>(
-      `["#read-again", "#costume-tab-items", "#costume-review", "#costume-reset", "#costume-bar", "#costume-undo"].every((selector) => document.querySelector(selector) === null) && document.querySelectorAll("#costume-page button").length === 0`,
+      `["#costume-tab-colours", "#costume-review", "#costume-bar"].every((selector) => document.querySelector(selector) !== null)`,
     ));
+  await resetLog();
+  const leftAsIs = { ...START, colorFace: 7 };
+  const nothingToChange = await running.page.evaluate(
+    `window.abth.changeCostume(${JSON.stringify({ expected: leftAsIs, target: leftAsIs })})`,
+  );
+  results.writeSentWithNoFlag =
+    same(nothingToChange, { kind: "nothingToChange" }) &&
+    sentAsPlanned(await requestLog(), [], ["GET /mypage_kisekae.php"]);
   await running.goTo("overview");
   // Signed out on the last launch and in again on this one, the plate and the thumbnails kept on
   // disk are still there, and Hiroba is asked for none of them (the user's call, 2026-09-28: no
-  // picture is deleted at sign-out). This build shows no editor, so a thumbnail is asked for
-  // through the bridge, after the editor's read that offers it.
+  // picture is deleted at sign-out). A thumbnail is asked for through the bridge, after the
+  // editor's read that offers it.
   await waitForSeen(
     running.page,
     async () =>
@@ -2547,9 +2526,10 @@ try {
 }
 
 /**
- * Starts the app on the stand-in and attaches to its window over the DevTools protocol. `writes`
- * opens the gate for writes not yet verified; `now` fixes the clock a write checks Hiroba's daily
- * break against. Every run keeps what it reads in the debug folder, so the scan below covers it.
+ * Starts the app on the stand-in and attaches to its window over the DevTools protocol. Nothing
+ * opens writes: there is no flag, and the one that once did is taken out of the environment, so
+ * every check below runs with none. `now` fixes the clock a write checks Hiroba's daily break
+ * against. Every run keeps what it reads in the debug folder, so the scan below covers it.
  *
  * A window other windows cover counts as hidden on Windows, and a hidden page sees nothing, so it
  * asks for no picture: the switch keeps the window seen however it is covered. `--lang` gives the
@@ -2557,12 +2537,10 @@ try {
  * English words. `userData` is where the app keeps what it keeps.
  */
 async function launch({
-  writes,
   now,
   lang = "en-US",
   userData = USER_DATA,
 }: {
-  writes: boolean;
   now: string;
   lang?: string;
   userData?: string;
@@ -2572,16 +2550,16 @@ async function launch({
     "--disable-backgrounding-occluded-windows",
     `--lang=${lang}`,
   ];
+  const { ABTH_UNVERIFIED_WRITES: _gone, ...inherited } = process.env;
   const proc = Bun.spawn([String(electronPath), root, ...args], {
     env: {
-      ...process.env,
+      ...inherited,
       ABTH_DEV_HIROBA_ORIGIN: HIROBA,
       ABTH_DEV_IDP_HOST: IDP_HOST,
       ABTH_DEV_IMG_ORIGIN: IMG,
       ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
       ABTH_DEBUG_SAVE_READS: "1",
-      ...(writes ? { ABTH_UNVERIFIED_WRITES: "1" } : { ABTH_UNVERIFIED_WRITES: "" }),
     },
     stdout: "ignore",
     stderr: "ignore",

@@ -192,12 +192,11 @@ describe("createAndroidPort", () => {
 describe("createAndroidPort's writes", () => {
   beforeEach(() => native.reset());
 
-  test("enables no write, offers no undo, and a costume change sends nothing", async () => {
+  test("offers no undo, and a costume change sends nothing", async () => {
     const port = await createAndroidPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
-    expect(await port.enabledWrites()).toEqual([]);
     const set = {
       colorBody: 1,
       colorLimb: 1,

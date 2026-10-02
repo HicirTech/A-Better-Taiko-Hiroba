@@ -12,7 +12,7 @@ import { type CostumeSet, ok, type Transport } from "@abth/core";
 
 import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, INITIAL_COSTUME, type MockSession } from "../scripts/mock-costume";
-import { createSessionWrites, type UndoStore, type WriteGateInput } from "../src/hiroba-session";
+import { createSessionWrites, type UndoStore, type WritePlatform } from "../src/hiroba-session";
 import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
 import type { WriteKind } from "../src/session-port";
 import { createFakeIndexedDb } from "./indexeddb-fake";
@@ -23,11 +23,6 @@ const ENDPOINTS = {
   idpHost: "id.test",
   idpDomain: "id.test",
   imgOrigin: null,
-};
-const OPEN: WriteGateInput = {
-  platform: "desktop",
-  isPackaged: false,
-  env: { ABTH_UNVERIFIED_WRITES: "1" },
 };
 const NOON_JST = () => new Date("2026-09-27T03:00:00Z");
 const OWNER = "000000000000";
@@ -115,8 +110,10 @@ type StoreName = keyof typeof STORES;
 const STORE_NAMES: StoreName[] = ["file", "database"];
 
 interface SetUpOptions {
-  gate?: WriteGateInput;
-  verified?: readonly WriteKind[];
+  /** Whose list of live-checked kinds applies. Android's is empty: it cross-checks. */
+  platform?: WritePlatform;
+  liveChecked?: readonly WriteKind[];
+  signedIn?: boolean;
   owner?: string | null;
   whose?: () => string | null;
 }
@@ -178,12 +175,12 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
   };
   const kept = STORES[storeName]();
   const faults: StoreFaults = { load: false, savesAllowed: null };
-  let signedIn = true;
+  let signedIn = options.signedIn ?? true;
   const writes = createSessionWrites({
     transport,
     endpoints: ENDPOINTS,
-    gate: options.gate ?? OPEN,
-    ...(options.verified && { verified: options.verified }),
+    platform: options.platform ?? "android",
+    ...(options.liveChecked && { liveChecked: options.liveChecked }),
     now: NOON_JST,
     undoStore: failing(kept.store, faults),
     signedIn: () => signedIn,
@@ -211,31 +208,45 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
 describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeName) => {
   const setUp = (options: SetUpOptions = {}) => setUpOver(storeName, options);
 
-  test("with the gate shut, enables nothing, offers no undo and sends nothing", async () => {
-    const { hiroba, writes } = setUp({ gate: { ...OPEN, isPackaged: true } });
-    expect(await writes.enabledWrites()).toEqual([]);
-    expect(
-      await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } }),
-    ).toEqual({ kind: "notEnabled" });
-    expect(await writes.undo("costume")).toEqual({ kind: "notEnabled" });
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(hiroba.log).toEqual([]);
+  const FOUR = [
+    "GET /mypage_kisekae.php",
+    "POST /ajax/check_ip_kisekae.php",
+    "POST /ajax/change_mydon.php",
+    "GET /mypage_kisekae.php",
+  ];
+  const SIX = ["GET /mypage_top.php", ...FOUR, "GET /mypage_top.php"];
+  const target = { ...START, colorFace: 3 };
+
+  test("sends a write with nothing to open it, the desktop's costume in four requests", async () => {
+    const { hiroba, writes } = setUp({ platform: "desktop" });
+    expect((await writes.changeCostume({ expected: START, target })).kind).toBe("applied");
+    expect(hiroba.log).toEqual(FOUR);
   });
 
-  test("a verified kind is sent from a packaged build, in four requests with no cross-check", async () => {
-    const { hiroba, writes } = setUp({
-      gate: { ...OPEN, isPackaged: true },
-      verified: ["costume"],
-    });
-    expect(await writes.enabledWrites()).toEqual([{ kind: "costume", verified: true }]);
-    const target = { ...START, colorFace: 3 };
+  test("reads my page before and after a write that has not been made for real from the platform", async () => {
+    const { hiroba, writes } = setUp({ platform: "android" });
     expect((await writes.changeCostume({ expected: START, target })).kind).toBe("applied");
-    expect(hiroba.log).toEqual([
-      "GET /mypage_kisekae.php",
-      "POST /ajax/check_ip_kisekae.php",
-      "POST /ajax/change_mydon.php",
-      "GET /mypage_kisekae.php",
-    ]);
+    expect(hiroba.log).toEqual(SIX);
+  });
+
+  test("goes by the list it is given, in place of the platform's own", async () => {
+    const live = setUp({ platform: "android", liveChecked: ["costume"] });
+    await live.writes.changeCostume({ expected: START, target });
+    expect(live.hiroba.log).toEqual(FOUR);
+
+    const unchecked = setUp({ platform: "desktop", liveChecked: [] });
+    await unchecked.writes.changeCostume({ expected: START, target });
+    expect(unchecked.hiroba.log).toEqual(SIX);
+  });
+
+  test("asks Hiroba nothing while signed out, and offers no undo", async () => {
+    const { hiroba, writes } = setUp({ signedIn: false });
+    expect(await writes.changeCostume({ expected: START, target })).toEqual({
+      kind: "notSignedIn",
+    });
+    expect(await writes.undo("costume")).toEqual({ kind: "notSignedIn" });
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(hiroba.log).toEqual([]);
   });
 
   test("posts nothing before my page has said whose set this is", async () => {

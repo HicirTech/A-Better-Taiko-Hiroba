@@ -16,7 +16,6 @@ import {
   previewCostume,
   readOwnProfile,
   sessionEnded,
-  type WriteGateInput,
 } from "../src/hiroba-session";
 import {
   BRIDGE_CHANNELS,
@@ -67,13 +66,6 @@ if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
   app.setPath("userData", process.env.ABTH_DEV_USER_DATA);
 }
 
-// Which writes this run may send: the verified ones, and every other only in an unpackaged run
-// started with ABTH_UNVERIFIED_WRITES=1. A packaged build ignores that variable.
-const writeGate: WriteGateInput = {
-  platform: "desktop",
-  isPackaged: app.isPackaged,
-  env: process.env,
-};
 // The clock a write checks Hiroba's daily break against. Development only: ABTH_DEV_NOW (an ISO
 // time) fixes it, so a test runs at any hour and can try the break itself.
 const writeClock = developmentClock();
@@ -183,11 +175,11 @@ app.whenReady().then(async () => {
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
-  // The writes: the gate, the undo record on disk, and the session dropped when Hiroba ends it.
+  // The writes: the undo record on disk, and the session dropped when Hiroba ends it.
   const writes = createSessionWrites({
     transport: readTransport,
     endpoints,
-    gate: writeGate,
+    platform: "desktop",
     now: writeClock,
     undoStore: createUndoStore(join(app.getPath("userData"), "undo.json")),
     signedIn: () => sessionCookie !== null,
@@ -241,7 +233,6 @@ app.whenReady().then(async () => {
     async signOut() {
       setSession(null);
     },
-    enabledWrites: writes.enabledWrites,
     // The items it offers are the only ones whose thumbnail the window may ask for next.
     openCostumeEditor: oneAtATime(async () => {
       const read = await writes.openCostumeEditor();

@@ -1,7 +1,6 @@
 /**
  * The Hiroba session as the app sees it, shared by both shells: where a sign-in stands, the read,
- * and the writes, with the gate that says which a run may send. Nothing here holds or sees the
- * session cookie.
+ * and the writes, which every build may send. Nothing here holds or sees the session cookie.
  */
 export {
   endpointsFromOverrides,
@@ -19,6 +18,7 @@ export {
   resolveRedirect,
 } from "./form-post";
 export { createHirobaQueue, type HirobaQueue } from "./hiroba-queue";
+export { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 export { openCostumeEditor } from "./open-costume-editor";
 export {
   createMemoryPictureStore,
@@ -62,10 +62,3 @@ export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep } from "./types";
 export { isUndoSlot, readSlot } from "./undo-slot";
 export type { UndoStore } from "./undo-store";
-export {
-  enabledWrites,
-  unverifiedWritesOpen,
-  VERIFIED_WRITES,
-  type WriteGateInput,
-  type WritePlatform,
-} from "./verified-writes";

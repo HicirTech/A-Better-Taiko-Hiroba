@@ -11,7 +11,7 @@ import type { HirobaEndpoints } from "./types";
 /** What a platform decides for one write: the clock, the cross-check, and where undo is kept. */
 export interface CostumeWriteOptions {
   readonly now: () => Date;
-  /** On while costume writes are not verified on this platform. */
+  /** On while costume writes have not been made for real from this platform. */
   readonly crossCheck: boolean;
   /** Keeps the pending undo record before the first post; a throw stops the write unsent. */
   readonly beginUndo: (before: CostumeSet, expectedAfter: CostumeSet) => Promise<void>;

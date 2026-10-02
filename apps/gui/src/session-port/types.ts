@@ -163,16 +163,6 @@ export interface WriteSets {
 /** The kinds of write the app knows how to send. One so far: the costume, きせかえ. */
 export type WriteKind = keyof WriteSets;
 
-/**
- * A kind of write this run may send. `verified` is whether its first real write from the app has
- * been made and recorded; until then the interface asks for an extra confirmation, and each write
- * also reads another page before and after.
- */
-export interface EnabledWrite {
-  readonly kind: WriteKind;
-  readonly verified: boolean;
-}
-
 /** A costume write as the interface asks for it: the set it was made against, and the set wanted. */
 export interface CostumeChange {
   readonly expected: CostumeSet;
@@ -181,7 +171,7 @@ export interface CostumeChange {
 
 /**
  * How a write ended, as the core's `runWrite` judged it, or refused by the platform before it
- * began: `notEnabled` when this run may not send that kind, `notSignedIn` with no session, and
+ * began: `notEnabled` when the platform sends no write of that kind, `notSignedIn` with no session, and
  * `nothingToUndo` when an undo was asked for and this device holds none it can offer.
  *
  * `interrupted` is a write this app stopped with no judgement: a fault in the app, not an answer
@@ -230,15 +220,13 @@ export interface HirobaSessionPort {
   readProfile(): Promise<Result<ProfileView, ReadFailure>>;
   /** Forgets the session on this device. Hiroba is not told. */
   signOut(): Promise<void>;
-  /** The kinds of write this run may send. Asks Hiroba nothing. */
-  enabledWrites(): Promise<readonly EnabledWrite[]>;
   /** The costume editor: one GET. Its form token stays with the platform. */
   openCostumeEditor(): Promise<Result<CostumeEditorView, ReadFailure>>;
   /**
    * Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried,
-   * answered as a `data:image/png` URL. A read that changes nothing, so every shell allows it while
-   * signed in, and no write gate stands in front of it. The session and the picture's URL stay with
-   * the platform; a failure is codes. How often it is asked for is the interface's to keep down.
+   * answered as a `data:image/png` URL. A read that changes nothing, so it is allowed whenever the
+   * window is signed in. The session and the picture's URL stay with the platform; a failure is
+   * codes. How often it is asked for is the interface's to keep down.
    */
   previewCostume(set: CostumeSet): Promise<Result<string, CostumePreviewFailure>>;
   /**
@@ -256,9 +244,10 @@ export interface HirobaSessionPort {
   readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /**
    * One costume write, the way every write goes: the editor, the pre-check, one save and the
-   * read-back, four requests; six while costume writes are not verified, with my page read before
-   * and after. Never retried. `notEnabled`, sending nothing, when this run may not write costumes;
-   * `busy`, sending nothing, while another write is queued or running.
+   * read-back, four requests; six where costume writes have not been made for real from this
+   * platform yet, with my page read before and after (`LIVE_CHECKED_WRITES`). Never retried.
+   * `notEnabled`, sending nothing, where the platform sends no write of that kind; `busy`, sending
+   * nothing, while another write is queued or running.
    */
   changeCostume(change: CostumeChange): Promise<WriteOutcomeView>;
   /** The undo this device can offer, one per kind at most. Asks Hiroba nothing. */

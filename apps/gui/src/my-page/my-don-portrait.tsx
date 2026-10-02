@@ -39,9 +39,9 @@ const TILE = {
 } as const;
 
 /**
- * What a press on the portrait does: `open` jumps to the Costume page, whether or not this run may
- * change the costume there (Android and packaged builds may not, and the page says so).
- * `byLongPress`, on a touch-first screen, a finger gets there by a long-press instead of a tap.
+ * What a press on the portrait does: `open` jumps to the Costume page, where the costume is
+ * changed. `byLongPress`, on a touch-first screen, a finger gets there by a long-press instead of
+ * a tap.
  */
 export interface PortraitAction {
   readonly open: () => void;

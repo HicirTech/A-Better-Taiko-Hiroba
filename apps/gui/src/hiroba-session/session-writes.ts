@@ -17,26 +17,25 @@ import {
 import {
   changedTheCostume,
   type CostumeChange,
-  type EnabledWrite,
   type HirobaSessionPort,
   type WriteKind,
   type WriteOutcomeView,
   type WriteSets,
 } from "../session-port";
 import { changeCostume } from "./change-costume";
+import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
 import { sessionEnded } from "./session-ended";
 import type { HirobaEndpoints } from "./types";
 import type { UndoStore } from "./undo-store";
-import { enabledWrites, type WriteGateInput } from "./verified-writes";
 
 export interface SessionWritesOptions {
   readonly transport: Transport;
   readonly endpoints: HirobaEndpoints;
-  /** Whether the build is packaged, and its environment: which writes the run may send. */
-  readonly gate: WriteGateInput;
-  /** The kinds verified on this platform, in place of its own list: only a test passes one. */
-  readonly verified?: readonly WriteKind[];
+  /** The shell: whose list of live-checked kinds decides which writes also cross-check. */
+  readonly platform: WritePlatform;
+  /** The kinds live-checked here, in place of the platform's own list: only a test passes one. */
+  readonly liveChecked?: readonly WriteKind[];
   readonly now: () => Date;
   readonly undoStore: UndoStore;
   /** Whether this device holds a session. */
@@ -52,7 +51,7 @@ export interface SessionWritesOptions {
 /** The port's write verbs, the same on every shell. */
 export type SessionWrites = Pick<
   HirobaSessionPort,
-  "enabledWrites" | "openCostumeEditor" | "changeCostume" | "pendingUndo" | "undo"
+  "openCostumeEditor" | "changeCostume" | "pendingUndo" | "undo"
 >;
 
 /** How a write that was asked for while another was queued or running answers: sent nothing. */
@@ -66,8 +65,8 @@ type WriteRunOptions<K extends WriteKind> = Omit<
 
 /**
  * What tells one kind of write from another, for the code every kind shares (`write`, and the undo
- * slots it keeps): the gate, the undo record, the session and the order of it all. A kind joins by
- * one of these and by the port verbs that ask for it, which are the last thing in this module.
+ * slots it keeps): the undo record, the session and the order of it all. A kind joins by one of
+ * these and by the port verbs that ask for it, which are the last thing in this module.
  */
 interface WriteKindDefinition<K extends WriteKind, Input> {
   readonly kind: K;
@@ -87,9 +86,10 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
 }
 
 /**
- * A shell's writes: the gate, checked where each write is sent; the undo record, kept before a
- * write's first post and settled by its outcome; and the session, dropped when Hiroba ends it. An
- * undo is an ordinary write, from the record's read-back set to its set before.
+ * A shell's writes: open in every build; the undo record, kept before a write's first post and
+ * settled by its outcome; and the session, dropped when Hiroba ends it. An undo is an ordinary
+ * write, from the record's read-back set to its set before. A kind not yet live-checked from this
+ * platform also reads another page before and after (`LIVE_CHECKED_WRITES`).
  *
  * Every undo slot read or written is the signed-in player's own, by taiko number: another
  * player's record or pending write, left on this device, is theirs, and nothing here touches it.
@@ -99,10 +99,7 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
  */
 export function createSessionWrites(options: SessionWritesOptions): SessionWrites {
   const { undoStore } = options;
-  const gateOf = (kind: WriteKind) =>
-    enabledWrites(options.gate, options.verified).find(
-      (write: EnabledWrite) => write.kind === kind,
-    );
+  const liveChecked = options.liveChecked ?? LIVE_CHECKED_WRITES[options.platform];
 
   const costume: WriteKindDefinition<"costume", CostumeChange> = {
     kind: "costume",
@@ -145,7 +142,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     definition: WriteKindDefinition<K, Input>,
     input: Input,
     purpose: "change" | "undo",
-    gate: EnabledWrite,
   ): Promise<WriteOutcomeView> {
     const { kind, same } = definition;
     // Whose set this is, for the whole write: the read that settles it is this player's too.
@@ -155,7 +151,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     try {
       outcome = await definition.run(options.transport, options.endpoints, input, {
         now: options.now,
-        crossCheck: !gate.verified,
+        crossCheck: !liveChecked.includes(kind),
         beginUndo: async (before, expectedAfter) => {
           if (taikoNo === null) {
             throw new Error("Whose set this is is not known before my page is read");
@@ -194,10 +190,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   }
 
   return {
-    async enabledWrites() {
-      return enabledWrites(options.gate, options.verified);
-    },
-
     async openCostumeEditor() {
       if (!options.signedIn()) {
         return err({ kind: "notSignedIn" });
@@ -216,19 +208,15 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     },
 
     async changeCostume(change) {
-      const gate = gateOf(costume.kind);
-      if (gate === undefined) {
-        return { kind: "notEnabled" };
-      }
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
-      return write(costume, change, "change", gate);
+      return write(costume, change, "change");
     },
 
     async pendingUndo() {
       const taikoNo = options.owner();
-      if (gateOf(costume.kind) === undefined || taikoNo === null) {
+      if (taikoNo === null) {
         return [];
       }
       const record = await offeredFor(costume.kind, taikoNo);
@@ -238,10 +226,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     },
 
     async undo() {
-      const gate = gateOf(costume.kind);
-      if (gate === undefined) {
-        return { kind: "notEnabled" };
-      }
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
@@ -250,7 +234,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       if (record === null) {
         return { kind: "nothingToUndo" };
       }
-      return write(costume, costume.undoInput(record), "undo", gate);
+      return write(costume, costume.undoInput(record), "undo");
     },
   };
 }

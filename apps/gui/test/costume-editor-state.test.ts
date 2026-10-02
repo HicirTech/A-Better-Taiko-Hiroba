@@ -57,7 +57,6 @@ const confirming = (state = set(), draft = state): EditorStep => ({
   name: "confirming",
   editor: editorOf(state),
   draft,
-  acknowledged: false,
 });
 const saving = (state = set(), draft = state): EditorStep => ({
   name: "saving",
@@ -249,18 +248,6 @@ describe("Reset", () => {
 describe("the review and the save", () => {
   const drafted = set({ colorFace: 9 });
 
-  test("asks for the first-write tick again at every review", () => {
-    const ticked = run(
-      editing(set(), drafted),
-      { type: "review" },
-      { type: "acknowledged", checked: true },
-    );
-    const again = run(ticked, { type: "back" }, { type: "review" });
-
-    expect(ticked).toMatchObject({ name: "confirming", acknowledged: true });
-    expect(again).toMatchObject({ name: "confirming", acknowledged: false });
-  });
-
   test("lists nothing to review when nothing has changed", () => {
     const step = editing();
 
@@ -280,12 +267,6 @@ describe("the review and the save", () => {
     expect(reduceEditor(editing(set(), drafted), { type: "saveStarted" })).toEqual(
       editing(set(), drafted),
     );
-  });
-
-  test("takes a tick only in the review", () => {
-    const step = editing(set(), drafted);
-
-    expect(reduceEditor(step, { type: "acknowledged", checked: true })).toBe(step);
   });
 
   test("ends over the set the save read back", () => {

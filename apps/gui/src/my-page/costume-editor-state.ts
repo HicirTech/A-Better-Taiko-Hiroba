@@ -30,12 +30,7 @@ export type EditorStep =
       readonly held: HeldEditor | null;
     }
   | { readonly name: "editing"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
-  | {
-      readonly name: "confirming";
-      readonly editor: CostumeEditorView;
-      readonly draft: CostumeSet;
-      readonly acknowledged: boolean;
-    }
+  | { readonly name: "confirming"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
   | { readonly name: "saving"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
   | { readonly name: "undoing"; readonly editor: CostumeEditorView }
   | {
@@ -54,7 +49,6 @@ export type EditorAction =
   | { readonly type: "pickedItem"; readonly part: SlotPart; readonly id: number }
   | { readonly type: "reset" }
   | { readonly type: "review" }
-  | { readonly type: "acknowledged"; readonly checked: boolean }
   | { readonly type: "back" }
   | { readonly type: "saveStarted" }
   | { readonly type: "undoStarted" }
@@ -86,10 +80,8 @@ export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep
       return step.name === "editing" ? withDraft(step, step.editor.state) : step;
     case "review":
       return step.name === "editing" && !sameCostume(step.editor.state, step.draft)
-        ? { ...step, name: "confirming", acknowledged: false }
+        ? { ...step, name: "confirming" }
         : step;
-    case "acknowledged":
-      return step.name === "confirming" ? { ...step, acknowledged: action.checked } : step;
     case "back":
       return back(step);
     case "saveStarted":

@@ -26,7 +26,6 @@ const CASES: VerbCase[] = [
   ["cancelSignIn", [], [null]],
   ["readProfile", [], [{ force: true }]],
   ["signOut", [], [1]],
-  ["enabledWrites", [], ["costume"]],
   ["openCostumeEditor", [], [{ url: "https://example.test/" }]],
   ["previewCostume", [SET], [{ ...SET, url: "https://example.test/" }]],
   ["readPicture", [{ kind: "myDon" }], [{ kind: "myDon", fn: "mydon_111111111111" }]],
