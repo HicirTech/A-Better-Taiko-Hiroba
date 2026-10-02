@@ -115,7 +115,7 @@ unpacks itself at every launch. Like the installer's app, it keeps its data in
 
 ### Writes
 
-The app can change three things on Hiroba so far: the costume, the title and the nickname. Every
+The app can change three things on Hiroba: the costume, the title and the nickname. Every
 write is open in every build, on both platforms: the desktop in development, the installer and the
 portable zip, and the Android debug and release APKs. There is no flag to set and nothing to
 unlock. The costume is changed on [the Costume page](#the-costume-page), the title and the nickname on
@@ -493,10 +493,6 @@ Raise the version through a pull request instead:
    The version now equals `package.json`'s, so the script only tags, and pushes the tag, which a
    branch protection rule does not cover.
 
-The first release, 0.1.0, is this second step alone: `package.json` says 0.1.0 already, so once the
-pull request that adds the workflow is merged, `bun run release 0.1.0 --push` on `main` tags and
-pushes `v0.1.0`.
-
 ### What the workflow builds
 
 `.github/workflows/release.yml` runs when a tag `v*.*.*` is pushed: that is a release. It also runs
@@ -557,8 +553,8 @@ Hiroba's session is one cookie, `_token_v2`. No code in the interface ever holds
 **Desktop.** The sign-in window runs on an in-memory browser session, new for every attempt and
 cleared when the window closes. The cookie is held in the main process, and kept on disk, in plain
 text, in `session.json` in the app's data folder (`%APPDATA%\A Better Taiko Hiroba`), so you stay
-signed in across launches until you sign out or Hiroba ends the session: the user's call,
-2026-09-27. Signing out, or a read or write that finds the session gone, deletes the file.
+signed in across launches until you sign out or Hiroba ends the session. Signing out, or a read or
+write that finds the session gone, deletes the file.
 
 **Android.** The sign-in runs in the in-app browser, which shares the app's WebView cookie store,
 and Capacitor's native HTTP client reads Hiroba through that same store. The store is kept across
@@ -579,7 +575,7 @@ that way.
 
 Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, your title
 plate or your どんメダル plate, is fetched once and kept on the device for good, since arcades often
-have poor networks (the user's call, 2026-09-28). Your マイどん is kept too, the last one fetched, and fetched anew only as
+have poor networks. Your マイどん is kept too, the last one fetched, and fetched anew only as
 [The My Don portrait](#the-my-don-portrait) says. Signing out deletes none of them, and neither
 does the next sign-in, though the card lets go of those it showed and takes them from the device
 again, so it never shows the last player's while the next one's come.
@@ -611,6 +607,6 @@ and read its files with `run-as`. So:
   DevTools against the app while a real session exists on the device.
 - Uninstall the debug build, or clear its data, once you are done with it, after any undo.
 
-Automated checks and agents never press "Sign in" against the real sites: not in a packaged build,
-not under `dev -- --real`, not on a release APK and not on the debug APK. The end-to-end run and
-the smoke test use the stand-in or stop at the first screen.
+Automated checks never press "Sign in" against the real sites: not in a packaged build, not under
+`dev -- --real`, not on a release APK and not on the debug APK. The end-to-end run and the smoke
+test use the stand-in or stop at the first screen.
