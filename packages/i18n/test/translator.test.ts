@@ -166,6 +166,9 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
   "costume.remove": inEach("Remove", "はずす", "移除", "移除"),
 };
 
+/** The costume, as each language words it in a sentence: きせかえ, 换装 and 換裝 as the site does. */
+const COSTUME = inEach(["costume"], ["きせかえ"], ["换装"], ["換裝"]);
+
 /**
  * Words a message holds, as each language writes them: the game's terms a sentence names, and the
  * sentences of Hiroba's own that it quotes, which every language quotes as the site writes them.
@@ -180,7 +183,23 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
   "signIn.intro": inEach(["Donder Hiroba"], ["ドンだーひろば"], ["鼓众广场"], ["鼓眾廣場"]),
   "profile.myDonAlt": inEach(["My Don"], ["マイどん"], ["小咚"], ["小咚"]),
   "costume.openByLongPress": inEach(["My Don"], ["マイどん"], ["小咚"], ["小咚"]),
-  "costume.preview.alt": inEach(["My Don"], ["マイどん"], ["小咚"], ["小咚"]),
+  "costume.preview.alt": inEach(
+    ["My Don", "costume"],
+    ["マイどん", "きせかえ"],
+    ["小咚", "换装"],
+    ["小咚", "換裝"],
+  ),
+  "costume.reading": COSTUME,
+  "costume.undoLast": COSTUME,
+  "write.applied": COSTUME,
+  "write.undone": COSTUME,
+  "write.notApplied.unchanged": COSTUME,
+  "write.diverged": COSTUME,
+  "write.changedSincePreview": COSTUME,
+  "write.undoStale": COSTUME,
+  "write.nothingToChange": COSTUME,
+  "write.title.crossChanged": COSTUME,
+  "write.title.crossUnknown": COSTUME,
   "medal.none": inEach(["Don Medal"], ["どんメダル"], ["咚币"], ["咚幣"]),
   "medal.unrecognised": inEach(["Don Medal"], ["どんメダル"], ["咚币"], ["咚幣"]),
   "costume.kigurumiWarning": inEach(
