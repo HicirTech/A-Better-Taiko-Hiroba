@@ -72,11 +72,10 @@ export const en: Messages = {
   "failure.unexpectedPage": "Hiroba answered with a page this app did not expect.",
   "failure.detail": "Details for a report: {detail}",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
-  "costume.open": "Change costume",
-  "costume.openByLongPress": "Long-press your マイどん to change costume.",
+  "costume.open": "Open the Costume page",
+  "costume.openByLongPress": "Long-press your マイどん to open the Costume page.",
   "costume.notOpen":
     "Not open in this build yet: the first real costume change from the app has still to be made and checked.",
-  "costume.title": "きせかえ",
   "costume.reading": "Reading your costume from Hiroba…",
   "costume.preview.alt": "マイどん in this costume, as Hiroba draws it",
   "costume.preview.loading": "Updating the preview…",
@@ -108,7 +107,6 @@ export const en: Messages = {
   "costume.review": "Review",
   "costume.back": "Back",
   "costume.save": "Save to Hiroba",
-  "costume.close": "Close",
   "costume.confirmIntro": "Hiroba will be asked to make these changes:",
   "costume.firstWrite":
     "This is the first write of this kind from the app. The app keeps an undo record and reads the result back.",
@@ -119,7 +117,6 @@ export const en: Messages = {
   "costume.undoing": "Undoing… then reading it back",
   "write.applied": "Saved. Hiroba now shows the new costume.",
   "write.undone": "Undone. Hiroba shows the costume as it was.",
-  "write.undo": "Undo",
   "write.siteNote": "Hiroba answered code {code}, but the read-back shows the change.",
   "write.crossUnknown":
     "Saved, but your title could not be read again to check it. Look at it on your page.",
@@ -128,7 +125,8 @@ export const en: Messages = {
   "write.notApplied.unchanged":
     "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the costume as it was.",
   "write.notApplied.refused": "Hiroba refused the change (code {code}). Nothing changed.",
-  "write.notApplied.stale": "The editor had gone stale. Open it again and retry. Nothing changed.",
+  "write.notApplied.stale":
+    "The editor had gone stale. Use Read again, then retry. Nothing changed.",
   "write.notApplied.siteMaintenance": "Hiroba is in maintenance. Nothing changed.",
   "write.notApplied.failed": "Hiroba could not save it. Nothing changed.",
   "write.notApplied.noAnswer": "Hiroba did not answer the save, and nothing changed.",
@@ -141,13 +139,12 @@ export const en: Messages = {
   "write.siteMessage": "Hiroba said: {message}",
   "write.diverged": "The costume did not end up as planned. Compare below.",
   "write.crossChanged": "Your title changed too.",
-  "write.outcomeUnknown":
-    "Couldn't read the result back. Open the editor again before trying again.",
+  "write.outcomeUnknown": "Couldn't read the result back. Use Read again before trying again.",
   "write.sessionGone": "Hiroba ended the session before anything was saved. Please sign in again.",
   "write.sessionGoneAfterSave":
     "Hiroba ended the session. Whether the change was saved is unknown; check it after signing in.",
   "write.changedSincePreview":
-    "Your costume was changed elsewhere since the editor was opened. Nothing was sent; the editor now shows it as it is.",
+    "Your costume was changed elsewhere since the editor last read it. Nothing was sent; the editor now shows it as it is.",
   "write.undoStale":
     "Your costume was changed elsewhere after that change, so it was not undone. The undo is no longer offered.",
   "write.invalidTarget": "This app refused the change before sending it: {field}.",
@@ -162,7 +159,7 @@ export const en: Messages = {
   "write.nothingToUndo": "There is no change to undo.",
   "write.busy": "Another change is still being sent, so this one was not sent.",
   "write.interrupted":
-    "The app stopped before it knew how this ended, so it may or may not have been saved. Open the editor again and look before trying again.",
+    "The app stopped before it knew how this ended, so it may or may not have been saved. Use Read again and look before trying again.",
   "write.code": "Code for a report: {code}",
   "write.before": "Before",
   "write.planned": "Planned",

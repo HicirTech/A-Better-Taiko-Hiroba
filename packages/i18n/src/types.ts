@@ -151,20 +151,20 @@ export interface Messages {
   /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
   "failure.detail": string;
   "platform.unsupported": string;
-  /** The name of the My Don portrait where a click on it opens the costume editor, and its tooltip. */
+  /** The name of the My Don portrait, a button that opens the Costume page, and its tooltip. */
   "costume.open": string;
   /**
-   * The same portrait's description on a touch-first screen, where a finger opens the editor by a
-   * long-press and a tap does nothing: say to long-press.
+   * The same portrait's description on a touch-first screen, where a finger opens the Costume page
+   * by a long-press and a tap does nothing: say to long-press.
    */
   "costume.openByLongPress": string;
   /**
-   * The portrait's tooltip, and its description, when this run may not change the costume: why. True
-   * on every shell while no kind is verified; say it again once one is, since Android enables none.
+   * The Costume page's reason, shown in place of the editor when this run may not change the
+   * costume: why. True on every shell while no kind is verified; say it again once one is, since
+   * Android enables none.
    */
   "costume.notOpen": string;
-  /** The editor's heading: the site's own word, きせかえ. */
-  "costume.title": string;
+  /** The Costume page while the editor is read from Hiroba, the first time or again. */
   "costume.reading": string;
   /**
    * The picture at the top of the editor, Hiroba's own drawing of the set as picked, as its
@@ -219,7 +219,6 @@ export interface Messages {
   "costume.review": string;
   "costume.back": string;
   "costume.save": string;
-  "costume.close": string;
   "costume.confirmIntro": string;
   /**
    * The extra confirmation a kind of write needs until its first real write from the app has been
@@ -229,7 +228,7 @@ export interface Messages {
   /** Said with the extra confirmation: while unverified, a write also reads the title twice. */
   "costume.crossCheck": string;
   "costume.saving": string;
-  /** The card's way back from the last costume write, while it is still offered. */
+  /** The Costume page's way back from the last costume write, while it is still offered. */
   "costume.undoLast": string;
   /** Param: {time}, already formatted: when the write the undo would reverse was made. */
   "costume.undoWhen": string;
@@ -238,7 +237,6 @@ export interface Messages {
   "write.applied": string;
   /** An undo that read back as planned. */
   "write.undone": string;
-  "write.undo": string;
   /** Param: {code}. The set moved as planned, and Hiroba's answer said otherwise. */
   "write.siteNote": string;
   /** Saved as planned, and the page read to check nothing else moved did not come back. */
@@ -247,6 +245,7 @@ export interface Messages {
   "write.notApplied.unchanged": string;
   /** Param: {code}, Hiroba's code; its own message follows under write.siteMessage. */
   "write.notApplied.refused": string;
+  /** Says to use the Costume page's Read again, and retry. */
   "write.notApplied.stale": string;
   "write.notApplied.siteMaintenance": string;
   "write.notApplied.failed": string;
@@ -260,9 +259,11 @@ export interface Messages {
   "write.diverged": string;
   /** The page read before and after a write moved during it. */
   "write.crossChanged": string;
+  /** Says to use the Costume page's Read again before trying again. */
   "write.outcomeUnknown": string;
   "write.sessionGone": string;
   "write.sessionGoneAfterSave": string;
+  /** The costume moved since the editor last read it; the page now shows it as it is. */
   "write.changedSincePreview": string;
   /** An undo stopped because the set moved since the change it would reverse. */
   "write.undoStale": string;
@@ -276,7 +277,10 @@ export interface Messages {
   "write.stoppedBeforeWrite": string;
   "write.notEnabled": string;
   "write.nothingToUndo": string;
-  /** The app stopped a write before judging it: whether it saved is not known. */
+  /**
+   * The app stopped a write before judging it: whether it saved is not known. Says to use the
+   * Costume page's Read again, and look.
+   */
   "write.interrupted": string;
   /** A write asked for while another was still being sent: this one sent nothing. */
   "write.busy": string;

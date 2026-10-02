@@ -74,11 +74,10 @@ export const ja: Messages = {
   "failure.unexpectedPage": "ひろばから想定外のページが返ってきました。",
   "failure.detail": "報告用の詳細：{detail}",
   "platform.unsupported": "このビルドは、デスクトップ版か Android 版のアプリの中でしか動きません。",
-  "costume.open": "きせかえを変更",
-  "costume.openByLongPress": "マイどんを長押しすると、きせかえを変更できます。",
+  "costume.open": "きせかえページを開く",
+  "costume.openByLongPress": "マイどんを長押しすると、きせかえページを開けます。",
   "costume.notOpen":
     "このビルドではまだ使えません：アプリからの実際の変更が、まだ一度も確かめられていません。",
-  "costume.title": "きせかえ",
   "costume.reading": "ひろばからきせかえを読み込み中…",
   "costume.preview.alt": "このきせかえのマイどん（ひろばの画像）",
   "costume.preview.loading": "プレビューを更新中…",
@@ -110,7 +109,6 @@ export const ja: Messages = {
   "costume.review": "内容を確認",
   "costume.back": "戻る",
   "costume.save": "ひろばに保存",
-  "costume.close": "閉じる",
   "costume.confirmIntro": "ひろばに次の変更を依頼します：",
   "costume.firstWrite":
     "この種類の書き込みは、アプリからは初めてです。元に戻すための記録を残し、結果を読み直して確かめます。",
@@ -121,7 +119,6 @@ export const ja: Messages = {
   "costume.undoing": "元に戻しています…そのあと読み直します",
   "write.applied": "保存しました。ひろばに新しいきせかえが反映されています。",
   "write.undone": "元に戻しました。ひろばのきせかえは元どおりです。",
-  "write.undo": "元に戻す",
   "write.siteNote": "ひろばはコード {code} を返しましたが、読み直すと変更は反映されています。",
   "write.crossUnknown":
     "保存しましたが、確認のための称号の再読み込みができませんでした。マイページで確かめてください。",
@@ -132,7 +129,7 @@ export const ja: Messages = {
   "write.notApplied.refused":
     "ひろばが変更を受け付けませんでした（コード {code}）。何も変わっていません。",
   "write.notApplied.stale":
-    "エディターの情報が古くなっていました。開き直してやり直してください。何も変わっていません。",
+    "エディターの情報が古くなっていました。再読み込みしてから、やり直してください。何も変わっていません。",
   "write.notApplied.siteMaintenance": "ひろばはメンテナンス中です。何も変わっていません。",
   "write.notApplied.failed": "ひろばで保存できませんでした。何も変わっていません。",
   "write.notApplied.noAnswer": "ひろばから保存の応答がなく、何も変わっていません。",
@@ -147,14 +144,13 @@ export const ja: Messages = {
   "write.siteMessage": "ひろばからのメッセージ：{message}",
   "write.diverged": "きせかえが予定どおりになりませんでした。下で比べてください。",
   "write.crossChanged": "称号も変わっています。",
-  "write.outcomeUnknown":
-    "結果を読み直せませんでした。やり直す前に、エディターを開き直してください。",
+  "write.outcomeUnknown": "結果を読み直せませんでした。やり直す前に、再読み込みしてください。",
   "write.sessionGone":
     "何も保存される前に、ひろばのセッションが切れました。もう一度ログインしてください。",
   "write.sessionGoneAfterSave":
     "ひろばのセッションが切れました。変更が保存されたかはわかりません。ログインしてから確かめてください。",
   "write.changedSincePreview":
-    "エディターを開いたあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
+    "エディターが前回読み込んだあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
   "write.undoStale":
     "その変更のあとにきせかえがほかの場所で変更されたため、元に戻しませんでした。この変更はもう元に戻せません。",
   "write.invalidTarget": "送信する前に、アプリが変更を止めました：{field}。",
@@ -170,7 +166,7 @@ export const ja: Messages = {
   "write.nothingToUndo": "元に戻せる変更はありません。",
   "write.busy": "別の変更を送信中のため、この変更は送信していません。",
   "write.interrupted":
-    "結果がわかる前にアプリが止まったため、保存されたかどうかわかりません。やり直す前に、エディターを開き直して確かめてください。",
+    "結果がわかる前にアプリが止まったため、保存されたかどうかわかりません。やり直す前に、再読み込みして確かめてください。",
   "write.code": "報告用コード：{code}",
   "write.before": "変更前",
   "write.planned": "予定",

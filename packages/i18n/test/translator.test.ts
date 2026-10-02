@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { createTranslator, LOCALE_NAMES, LOCALES, type MessageKey } from "../src/index";
+import {
+  createTranslator,
+  LOCALE_NAMES,
+  LOCALES,
+  type Locale,
+  type MessageKey,
+} from "../src/index";
 import { en } from "../src/messages/en";
 
 describe("createTranslator", () => {
@@ -67,6 +73,18 @@ describe("the catalog", () => {
   });
 });
 
+describe("the Costume page's name", () => {
+  type NameCase = [locale: Locale, name: string];
+  test.each<NameCase>([
+    ["en", "Costume"],
+    ["ja", "きせかえ"],
+    ["zh-Hans", "换装"],
+    ["zh-Hant", "換裝"],
+  ])("is written as the user fixed it in %s: %p", (locale, name) => {
+    expect(createTranslator(locale).t("nav.costume")).toBe(name);
+  });
+});
+
 /** The parameters a message names, in order of name. */
 const paramsOf = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
@@ -75,7 +93,6 @@ const AS_WRITTEN: readonly MessageKey[] = [
   "app.title",
   "medal.heading",
   "medal.complete",
-  "costume.title",
   "costume.tab.colours",
   "costume.tab.items",
   "costume.part.colorFace",
