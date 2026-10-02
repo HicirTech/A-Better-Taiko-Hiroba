@@ -565,10 +565,12 @@ that holds both lists.
 ## Releases
 
 Two workflows run on GitHub Actions. `.github/workflows/ci.yml` runs on every push to a branch, and
-on a pull request from a fork (a pull request from this repository is not run twice: its branch's
-push has run it already). It has two jobs side by side: **Checks** (format, lint, typecheck, the
-tests and the GUI bundle) and **Android debug APK** (`bun run android:apk`, on the runner's Android
-SDK, with JDK 21 and Node 22). `.github/workflows/release.yml` builds and publishes a release.
+on a pull request from a fork. A pull request from this repository is not run twice: its branch's
+push has run it already, and the skipped copy is named "(run by the push)", so a required check
+called **Checks** can only be the push's own run. The workflow has two jobs side by side: **Checks**
+(format, lint, typecheck, the tests and the GUI bundle) and **Android debug APK**
+(`bun run android:apk`, on the runner's Android SDK, with JDK 21 and Node 22).
+`.github/workflows/release.yml` builds and publishes a release.
 
 ### The version
 
