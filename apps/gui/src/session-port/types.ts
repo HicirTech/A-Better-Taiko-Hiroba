@@ -39,8 +39,34 @@ export type SignInOutcome =
   | { readonly kind: "refused"; readonly host: string };
 
 /**
- * The dan my page's label names: its name as Hiroba prints it, 五級 to 十段. A label that did not
- * read is `unreadable`, with codes a user can copy into a report: why, and what came back.
+ * A dan's board number, as core numbers the dans: 1 (五級) to 15 (十段), and 16 to 19 for the four
+ * named ranks, which my page's label has never shown. Each has a `dan.N` text in @abth/i18n.
+ */
+export type DanNumber =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
+  | 11
+  | 12
+  | 13
+  | 14
+  | 15
+  | 16
+  | 17
+  | 18
+  | 19;
+
+/**
+ * The dan my page's label names, by its board number, which the interface words in its own language
+ * (`dan.N`). A label that did not read is `unreadable`, with codes a user can copy into a report:
+ * why, and what came back.
  *
  * `picture` is the label itself, the very bytes the dan was read off, for the interface to show as
  * Hiroba does: so it can never disagree with the name beside it, and costs no request of its own.
@@ -48,7 +74,7 @@ export type SignInOutcome =
  * that did not read can still carry one.
  */
 export type DanView =
-  | { readonly name: string; readonly picture: PictureView | null }
+  | { readonly board: DanNumber; readonly picture: PictureView | null }
   | { readonly unreadable: true; readonly code: string; readonly picture: PictureView | null };
 
 /**

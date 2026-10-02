@@ -77,7 +77,7 @@ export interface Messages {
   "profile.fetchedAt": string;
   /** Shown in place of the title when the player wears none, a normal state. */
   "profile.noTitle": string;
-  /** Param: {dan}, the dan's name as Hiroba prints it, 五級 to 十段, read off my page's label. */
+  /** Param: {dan}, the dan's name: a `dan.N` text, N being the board number read off my page's label. */
   "profile.dan": string;
   /** My page shows a dan label that did not read. Neutral: the rest of the page still read. */
   "profile.danUnreadable": string;

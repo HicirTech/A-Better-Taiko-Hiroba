@@ -22,7 +22,7 @@ describe("createTranslator", () => {
 
   test("keeps a site word it is given as written", () => {
     const { t } = createTranslator("en");
-    expect(t("profile.dan", { dan: "九段" })).toBe("Dan: 九段");
+    expect(t("profile.dan", { dan: "九段" })).toBe("Dan-i: 九段");
   });
 
   test("leaves a placeholder without a parameter as written", () => {

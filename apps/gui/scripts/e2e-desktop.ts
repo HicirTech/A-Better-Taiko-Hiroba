@@ -663,7 +663,7 @@ try {
   // The mock serves the 九段 label at first. Its URL carries a taiko number, as Hiroba's does: only
   // the dan read off it may reach the window, never the URL or the number.
   results.danShownByName =
-    (await textOf("#dan")) === "Dan: 九段" && (await textOf("#dan-unreadable")) === null;
+    (await textOf("#dan")) === "Dan-i: 9th Dan" && (await textOf("#dan-unreadable")) === null;
   // The mock's page names a region, and the card leaves it out (the user's call, 2026-09-28).
   results.regionLeftOffCard =
     (await textOf("#region")) === null && !(await text()).includes("Region");
@@ -695,7 +695,7 @@ try {
     Math.abs(plateBox.width / plateBox.height - 600 / 100) < 0.05 &&
     (await textOf("#profile-title")) === "Title: サンプルの称号" &&
     (await textOf("#profile h2")) === "サンプルどん" &&
-    (await textOf("#dan")) === "Dan: 九段" &&
+    (await textOf("#dan")) === "Dan-i: 9th Dan" &&
     (await textOf("#title-plate-stand-in")) === null &&
     (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
   // The plate sits on the app's own surface (the user's call, 2026-09-28): nothing from it up to
@@ -872,6 +872,7 @@ try {
     (await textOf("#rank-8")) === ja.t("panel.countOf", { count: "3", total: "102" }) &&
     (await textOf("#rank-5-percent")) === "30.4%" &&
     (await textOf("#profile-title")) === ja.t("profile.title", { title: "サンプルの称号" }) &&
+    (await textOf("#dan")) === ja.t("profile.dan", { dan: "九段" }) &&
     (await textOf("#profile h2")) === "サンプルどん" &&
     /^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{2}:\d{2} /.test(readAtInJapanese ?? "");
   await pickLanguage("en");
@@ -1418,7 +1419,7 @@ try {
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );
   results.unreadableDanShownWithTheRest =
-    (await textOf("#dan-unreadable")) === "Dan: couldn't read" &&
+    (await textOf("#dan-unreadable")) === "Dan-i: couldn't read" &&
     (await textOf("#dan-code")) ===
       "Code for a report: dan=notPng status=200 type=image/gif bytes=43" &&
     (await textOf("#dan")) === null &&
@@ -1490,7 +1491,7 @@ try {
     !(await shownNow("#title-plate-image")) &&
     (await textOf("#profile-title")) === "Title: 別のサンプル称号" &&
     (await textOf("#profile h2")) === "サンプルどん" &&
-    (await textOf("#dan")) === "Dan: 九段";
+    (await textOf("#dan")) === "Dan-i: 9th Dan";
   await fetch(`${HIROBA}/__titleplate?answer=png`);
   const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
   results.plateBlankFallsBack =

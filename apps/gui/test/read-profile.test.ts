@@ -129,7 +129,7 @@ describe("readProfile", () => {
         title: "サンプルの称号",
         rename: "unknown",
         region: "サンプル",
-        dan: { name: "九段", picture: labelPicture(danLabelPng(14)) },
+        dan: { board: 14, picture: labelPicture(danLabelPng(14)) },
         crowns: { silver: 11, gold: 2, donderful: 1 },
         panel: { countLevel: 5, ranks: { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7 } },
         medal: { name: "どんメダル2026秋", progress: { kind: "complete" } },
@@ -307,7 +307,7 @@ describe("readProfile's dan label", () => {
   test("decides by the type and the bytes, whatever the status", async () => {
     const at404 = labelAnswer("image/png", danLabelPng(14), 404);
     expect((await danAfter(at404)).dan).toEqual({
-      name: "九段",
+      board: 14,
       picture: labelPicture(danLabelPng(14)),
     });
   });
@@ -367,7 +367,7 @@ describe("readProfile's dan label", () => {
       200,
       "https://hiroba.test/elsewhere.php?taiko_no=000000000000",
     );
-    expect((await danAfter(moved)).dan).toEqual({ name: "九段", picture: null });
+    expect((await danAfter(moved)).dan).toEqual({ board: 14, picture: null });
   });
 
   test("a label source that leads off Hiroba is not asked for", async () => {
