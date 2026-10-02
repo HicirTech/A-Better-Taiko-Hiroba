@@ -3,8 +3,31 @@
 How we branch, commit, open pull requests, and write tickets on A Better Taiko Hiroba. These
 rules are enforced by review; a pull request that breaks one is sent back.
 
-The engineering standard for all code is `tim-style-code`. User-facing and ticket prose follows
-`plainspoken-docs`.
+---
+
+## Code
+
+- **Fit what is there.** The formatter and linter settle layout. Beyond that, write as the
+  neighbouring files of the same kind are written.
+- **Keep each change narrow.** No reformatting, renaming or tidying beyond what the change needs.
+- **Reuse before adding.** Look for an existing helper, check or type that does the job before
+  writing another.
+- **Make behaviour explicit.** Name things for what they do. Give each case a type of its own rather
+  than a flag or a null.
+- **Comments say why the code is as it is.** History, dates and who decided what belong in the
+  commit, the pull request or the ticket, not in a comment.
+- **Verify in proportion to risk.** A behaviour change comes with a test that fails without it. A
+  change to wording or a constant needs none.
+
+## Writing
+
+READMEs, comments, pull requests and tickets are read by people who were not there when they were
+written.
+
+- **Say the true thing plainly.** Exact over vague, and no hype.
+- **Describe the project as it is now.** Leave out session notes, dates, decisions and anyone's local
+  setup, such as machine paths, drive letters or the values of environment variables. Name a
+  variable and say what it does instead.
 
 ---
 
@@ -54,9 +77,6 @@ The engineering standard for all code is `tim-style-code`. User-facing and ticke
   only moment a typo is cheap to fix. It is a convenience rather than a gate: `--no-verify` skips
   it, and a clone that never runs the command above never sees it.
 
-- All code is written to `tim-style-code`: fit the existing conventions, keep changes narrow,
-  make behavior explicit, verify in proportion to risk.
-
 ## Pull requests
 
 - **A ticket is only closed when its change is on `main`.** Work sitting on a branch is not done.
@@ -79,8 +99,7 @@ Closes #27
 
 ## Tickets
 
-Tickets live as GitHub issues under an epic. Write them to `plainspoken-docs`: say the true thing
-plainly, exact over vague, no hype.
+Tickets live as GitHub issues under an epic, written as [Writing](#writing) says.
 
 ### Feature ticket
 
