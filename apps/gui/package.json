@@ -42,7 +42,8 @@
         "nsis",
         "zip"
       ],
-      "artifactName": "ABTH-${version}-portable.${ext}"
+      "artifactName": "ABTH-${version}-portable.${ext}",
+      "signExecutable": false
     },
     "nsis": {
       "artifactName": "ABTH-${version}-setup.${ext}"
