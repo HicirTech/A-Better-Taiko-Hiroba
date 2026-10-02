@@ -2,26 +2,17 @@ import groovy.json.JsonSlurper
 
 apply plugin: 'com.android.application'
 
-// The signing keys are kept outside the clone, in the folder ABTH_RELEASE_KEYS names, as in
-// scripts/release-keys.ts. Without it the release build is unsigned and the debug build uses this
-// machine's own debug key.
-def keysFolderGiven = System.getenv("ABTH_RELEASE_KEYS")
-def keysFolder = keysFolderGiven?.trim() ? new File(keysFolderGiven) : null
-if (keysFolder != null && !keysFolder.isAbsolute()) {
-    throw new GradleException("ABTH_RELEASE_KEYS must be an absolute path, and is \"${keysFolderGiven}\".")
-}
-def keystorePropertiesFile = keysFolder == null ? null : new File(keysFolder, "keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile?.exists()) {
-    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
-}
-def debugKeystoreFile = keysFolder == null ? null : new File(keysFolder, "debug.keystore")
+// The release key comes from the environment, so it never has to be in the clone: the release
+// workflow sets RELEASE_KEYSTORE_FILE (the keystore's path), RELEASE_KEYSTORE_PASSWORD,
+// RELEASE_KEY_ALIAS and RELEASE_KEY_PASSWORD. The release build is signed when
+// RELEASE_KEYSTORE_FILE is set and left unsigned when it is not. A blank value counts as not set,
+// which is what a step passes for a secret that does not exist.
+def releaseKeystoreFile = System.getenv("RELEASE_KEYSTORE_FILE")?.trim()
 
 // The version has one source, "version" in apps/gui/package.json, which electron-builder reads too.
 // versionName is that text. versionCode is major * 10000 + minor * 100 + patch, so 0.1.0 is 100 and
 // a later version always has a higher code, which Android needs to accept an update. That holds only
 // while minor and patch stay below 100, and the code stays within Android's limit of 2100000000.
-// scripts/release-version.ts has the same rules, and its tests read this file.
 def appVersion = "${new JsonSlurper().parse(rootProject.file("../package.json")).version}".toString()
 if (!(appVersion ==~ /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/)) {
     throw new GradleException("apps/gui/package.json: version must be MAJOR.MINOR.PATCH, not ${appVersion}")
@@ -52,32 +43,22 @@ android {
         }
     }
     signingConfigs {
-        debug {
-            // The shared debug key, with Android's standard debug credentials.
-            if (debugKeystoreFile?.exists()) {
-                storeFile debugKeystoreFile
-                storePassword "android"
-                keyAlias "androiddebugkey"
-                keyPassword "android"
-            }
-        }
         release {
-            if (keystorePropertiesFile?.exists()) {
-                storeFile new File(keysFolder, keystoreProperties["storeFile"])
-                storePassword keystoreProperties["storePassword"]
-                keyAlias keystoreProperties["keyAlias"]
-                keyPassword keystoreProperties["keyPassword"]
+            if (releaseKeystoreFile) {
+                storeFile file(releaseKeystoreFile)
+                storePassword System.getenv("RELEASE_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword System.getenv("RELEASE_KEY_PASSWORD")
             }
         }
     }
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
             applicationIdSuffix ".debug"
             manifestPlaceholders = [appLabel: "A Better Taiko Hiroba (debug)"]
         }
         release {
-            if (keystorePropertiesFile?.exists()) {
+            if (releaseKeystoreFile) {
                 signingConfig signingConfigs.release
             }
             minifyEnabled false
