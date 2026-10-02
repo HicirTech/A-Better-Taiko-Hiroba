@@ -3,8 +3,8 @@
  * core's: the score ranks, which the icons print as kanji, and the dan names.
  */
 import { describe, expect, test } from "bun:test";
-import { SCORE_RANK_NAMES, type ScoreRank } from "@abth/core";
-import { createTranslator } from "@abth/i18n";
+import { DAN_NAMES, SCORE_RANK_NAMES, type ScoreRank } from "@abth/core";
+import { createTranslator, type MessageKey } from "@abth/i18n";
 
 const { t } = createTranslator("ja");
 
@@ -14,5 +14,10 @@ describe("the Japanese catalog", () => {
     expect(Object.fromEntries(ranks.map((rank) => [rank, t(`scoreRank.${rank}`)]))).toEqual(
       SCORE_RANK_NAMES,
     );
+  });
+
+  test("names each dan as core does, by its board number", () => {
+    const named = DAN_NAMES.map((_, index) => t(`dan.${index + 1}` as MessageKey));
+    expect(named).toEqual([...DAN_NAMES]);
   });
 });

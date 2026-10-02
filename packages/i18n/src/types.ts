@@ -84,6 +84,32 @@ export interface Messages {
   /** Param: {code}, why the label did not read, such as dan=notPng; never page text or a URL. */
   "profile.danCode": string;
   /**
+   * The dan ranks by board number, as core numbers them: 1 (五級, the 5th Kyu) to 15 (十段, the
+   * 10th Dan) as my page's label shows them, and 16 to 19 for the four named ranks, 玄人, 名人,
+   * 超人 and 達人, which no label has shown yet. The label is Hiroba's own picture; these name it
+   * for screen readers, and stand in for it when it does not come. 日本語 writes them as Hiroba
+   * does, as core's DAN_NAMES, which a test holds it to; the others are taiko.wiki's.
+   */
+  "dan.1": string;
+  "dan.2": string;
+  "dan.3": string;
+  "dan.4": string;
+  "dan.5": string;
+  "dan.6": string;
+  "dan.7": string;
+  "dan.8": string;
+  "dan.9": string;
+  "dan.10": string;
+  "dan.11": string;
+  "dan.12": string;
+  "dan.13": string;
+  "dan.14": string;
+  "dan.15": string;
+  "dan.16": string;
+  "dan.17": string;
+  "dan.18": string;
+  "dan.19": string;
+  /**
    * The player's マイどん on the identity card, Hiroba's own picture of it in the costume it wears:
    * its alternative text.
    */
