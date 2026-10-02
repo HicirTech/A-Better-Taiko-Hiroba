@@ -1859,11 +1859,15 @@ try {
     !withThumbnails.includes("cos=") &&
     !withThumbnails.includes("_token_v2") &&
     !tokens.some((token) => withThumbnails.includes(token));
+  // The touch scrolling above shows rows beyond the first view for as long as its finger takes,
+  // and a slow finger leaves a cell in view long enough to be asked for, once, like any other. What
+  // this counts from is therefore the thumbnails asked for by the time the page is left.
+  const askedBeforeReopen = (await thumbsSettled()).length;
   await leaveTheCostumePage();
   await openItems();
   await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
   await Bun.sleep(1500);
-  results.thumbnailsAskedOncePerRun = (await thumbs()).length === seen.length;
+  results.thumbnailsAskedOncePerRun = (await thumbs()).length === askedBeforeReopen;
   // A thumbnail that does not come, here the GIF Hiroba draws nothing with: the item shows its
   // number, one line under the box says how many did not come and gives the code, and nothing is
   // asked for again in that opening, however the slots are switched.
@@ -1875,7 +1879,7 @@ try {
   await Bun.sleep(300);
   await click("#costume-part-costume2");
   await Bun.sleep(1500);
-  const slotTwoAsked = thumbsAfterGif.slice(seen.length);
+  const slotTwoAsked = thumbsAfterGif.slice(askedBeforeReopen);
   results.thumbnailGifLeavesTheId =
     (await textOf("#costume-thumbnails-unavailable > :first-child")) ===
       `Some thumbnails didn't load (${ownedIn(2).length}); their numbers are shown instead.` &&
