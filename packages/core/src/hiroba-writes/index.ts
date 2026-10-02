@@ -9,6 +9,7 @@
  * once, read the whole set back, and judge by the state rather than by the site's answer.
  */
 export { postAjax, readPrecheck, readSaveCode, readSaveMessage } from "./ajax";
+export { spaced } from "./cross-checks";
 export {
   COSTUME_SLOT_KEYS,
   type CostumeSlot,

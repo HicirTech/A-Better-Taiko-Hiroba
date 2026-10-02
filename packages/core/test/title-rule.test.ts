@@ -1,7 +1,7 @@
 /** A title target against the list the title page gives, and what makes two titles one. */
 import { describe, expect, test } from "bun:test";
 
-import { checkTitleTarget, sameTitle, TITLE_FIELDS, type TitleOption } from "../src/index";
+import { checkTitleTarget, sameTitle, spaced, TITLE_FIELDS, type TitleOption } from "../src/index";
 
 const OPTIONS: readonly TitleOption[] = [
   { id: 106, label: "サンプル称号A" },
@@ -10,6 +10,14 @@ const OPTIONS: readonly TitleOption[] = [
   { id: 41, label: "サンプル 称号" },
 ];
 const EDITOR = { options: OPTIONS };
+
+describe("spaced", () => {
+  test("makes every run of white space one space and trims the ends, non-breaking spaces included", () => {
+    expect(spaced(" サンプル\u{a0}\u{a0}称号\u{3000}\t")).toBe("サンプル 称号");
+    expect(spaced(" \u{a0} ")).toBe("");
+    expect(spaced("称号")).toBe("称号");
+  });
+});
 
 describe("sameTitle", () => {
   test("reads two titles as one when only their white space differs", () => {
