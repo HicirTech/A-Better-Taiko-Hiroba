@@ -9,11 +9,8 @@
  *   bun run android:release-unsigned                the same with no key, for CI's dry runs
  *   bun run android:install-release -- <serial>     install the signed release APK there
  *
- * Debug builds let any adb-paired computer read the app's WebViews and files (DevTools, run-as),
- * so a real sign-in belongs on the release build. The signing keys live in one folder outside the
- * clone, never in android/: the one ABTH_RELEASE_KEYS names, or W:/TaikoElaboation/release keys
- * (release-keys.ts has the rule, and build.gradle the same one). It holds the release key, which
- * android:keystore makes there once, and the debug key every machine shares.
+ * Debug builds let any adb-paired computer read the app's WebViews and files (DevTools, run-as).
+ * Signing keys come from the folder ABTH_RELEASE_KEYS names (release-keys.ts).
  *
  * Live reload rewrites the copied Capacitor config to load http://<LAN IP>:5173 with cleartext
  * allowed; Capacitor puts it back when this is stopped with Ctrl+C, or at the next `cap sync`. It
@@ -52,10 +49,13 @@ function fail(message: string): never {
   process.exit(1);
 }
 
-/** The folder the signing keys live in. A variable that cannot name one ends the run. */
-function keysFolder(): string {
+/** The keys folder, or null when ABTH_RELEASE_KEYS is not set. An invalid value ends the run. */
+function keysFolder(): string | null {
   const keys = resolveKeysFolder(env);
-  return keys.ok ? keys.folder : fail(keys.reason);
+  if (keys.kind === "invalid") {
+    fail(keys.reason);
+  }
+  return keys.kind === "set" ? keys.folder : null;
 }
 
 /** Gradle signs the release build exactly when the keys folder holds the key's settings. */
@@ -63,8 +63,12 @@ function hasReleaseKey(folder: string): boolean {
   return existsSync(join(folder, KEYSTORE_PROPERTIES));
 }
 
-/** A signed release needs the key; with none in the folder Gradle would leave the APK unsigned. */
-function requireReleaseKey(folder: string): void {
+function requireReleaseKey(folder: string | null): void {
+  if (folder === null) {
+    fail(
+      `No release key: ${KEYS_FOLDER_VARIABLE} is not set. Set it to the absolute path of the folder that holds your release key, or of one to make it in with \`bun run android:keystore\`.`,
+    );
+  }
   if (!hasReleaseKey(folder)) {
     fail(
       `No release key: ${folder} has no ${KEYSTORE_PROPERTIES}. Run \`bun run android:keystore\` once to make one there, or set ${KEYS_FOLDER_VARIABLE} to the folder that holds yours.`,
@@ -72,14 +76,13 @@ function requireReleaseKey(folder: string): void {
   }
 }
 
-/** The keys folder of a place with no key yet may not exist; the first key makes it. */
 function makeKeysFolder(folder: string): void {
   try {
     mkdirSync(folder, { recursive: true });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
     fail(
-      `Cannot make ${folder}: ${reason}. Map its drive, or set ${KEYS_FOLDER_VARIABLE} to a folder you can write to.`,
+      `Cannot make ${folder}: ${reason}. Set ${KEYS_FOLDER_VARIABLE} to a folder you can write to.`,
     );
   }
 }
@@ -138,8 +141,12 @@ switch (command) {
   }
   case "keystore": {
     const keys = keysFolder();
-    // A store without its settings file is a key too, one whose settings were not copied: a second
-    // key would orphan installs just the same.
+    if (keys === null) {
+      fail(
+        `${KEYS_FOLDER_VARIABLE} is not set. Set it to the absolute path of the folder to make the release key in.`,
+      );
+    }
+    // A store alone is a key too: a second key would orphan the installs signed with the first.
     const present = [KEYSTORE_PROPERTIES, RELEASE_KEYSTORE].filter((name) =>
       existsSync(join(keys, name)),
     );
@@ -147,7 +154,7 @@ switch (command) {
       fail(`${keys} holds ${present.join(" and ")} already; a second key would orphan installs.`);
     }
     makeKeysFolder(keys);
-    // One random password for store and key, kept only in keystore.properties, in the keys folder.
+    // One random password for store and key, kept only in keystore.properties.
     const password = Buffer.from(crypto.getRandomValues(new Uint8Array(24))).toString("base64url");
     run([
       "keytool",
@@ -184,10 +191,8 @@ switch (command) {
     break;
   case "release-unsigned": {
     const keys = keysFolder();
-    // Gradle signs the release build whenever keystore.properties is in the keys folder, so with
-    // the key there this build would not be unsigned. Only a machine with no key, a CI dry run, has
-    // a use for it.
-    if (hasReleaseKey(keys)) {
+    // With a key present Gradle would sign this; only a run with none, such as CI's dry run, needs it.
+    if (keys !== null && hasReleaseKey(keys)) {
       fail(
         `${keys} holds a release key, so Gradle would sign this: use \`bun run android:release\`, or set ${KEYS_FOLDER_VARIABLE} to a folder with none.`,
       );
