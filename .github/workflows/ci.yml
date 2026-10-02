@@ -64,3 +64,52 @@ jobs:
       # (Bun.build). No Electron binary, no packaging, no Android.
       - name: Build GUI
         run: bun run --cwd apps/gui build
+
+  # Alongside Checks, not after it: the Android build shares nothing with it but the install.
+  android:
+    name: Android debug APK
+    # Skipped for the same pull requests as Checks, for the same reason.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # The same pin as the Checks job: keep the two in step.
+          bun-version: 1.4.2
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      # Capacitor's CLI runs on Node, and needs 22 (README, "What you need").
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          # JDK 21, the one the Android build is written for; Temurin, as the maintainers' machines
+          # have it. The Gradle cache is keyed on the Android project's Gradle files and on bun.lock,
+          # which pins the Capacitor plugins whose own Gradle files sit in node_modules.
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            apps/gui/android/**/*.gradle
+            apps/gui/android/gradle/wrapper/gradle-wrapper.properties
+            bun.lock
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # The runner's own Android SDK (ANDROID_HOME) carries the platform and build tools the project
+      # builds against, so nothing is installed for it. The script builds the web bundle, syncs it
+      # into the Android project and runs Gradle's assembleDebug.
+      - name: Build debug APK
+        run: bun run --cwd apps/gui android:apk
