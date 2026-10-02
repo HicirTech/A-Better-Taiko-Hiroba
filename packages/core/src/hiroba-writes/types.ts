@@ -123,7 +123,10 @@ export interface SaveReading {
   readonly answer: AjaxAnswer["kind"];
   /** The result code, read strictly (`readSaveCode`); null when there is none. */
   readonly code: number | null;
-  /** The site's own message (`errmsg`), as plain text, for showing and never for logging. */
+  /**
+   * The site's own message (`errmsg` or `err_message`), as plain text, for showing and never for
+   * logging.
+   */
   readonly message: string | null;
   /** Codes for a report: where the answer ended, its status, type and size. */
   readonly report: string;

@@ -204,4 +204,25 @@ describe("readSaveMessage", () => {
     expect(readSaveMessage({ errmsg: 3 })).toBeNull();
     expect(readSaveMessage({})).toBeNull();
   });
+
+  test("keeps err_message, which the profile endpoint writes, as text", () => {
+    expect(readSaveMessage({ err_message: "不適切用語は使用できません" })).toBe(
+      "不適切用語は使用できません",
+    );
+    expect(readSaveMessage({ err_message: "" })).toBeNull();
+    expect(readSaveMessage({ err_message: ["x"] })).toBeNull();
+  });
+
+  test("reads errmsg first, and err_message when errmsg holds nothing", () => {
+    expect(readSaveMessage({ errmsg: "one", err_message: "two" })).toBe("one");
+    expect(readSaveMessage({ errmsg: "", err_message: "two" })).toBe("two");
+    expect(readSaveMessage({ errmsg: 3, err_message: "two" })).toBe("two");
+    expect(readSaveMessage({ errmsg: "", err_message: "" })).toBeNull();
+  });
+
+  test("reads nothing from an answer that is no object", () => {
+    for (const value of [null, undefined, "err_message", 3, ["err_message"]]) {
+      expect(readSaveMessage(value)).toBeNull();
+    }
+  });
 });
