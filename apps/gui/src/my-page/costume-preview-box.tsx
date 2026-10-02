@@ -1,6 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Box, CircularProgress, Stack, Typography } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CostumeSet, HirobaSessionPort } from "../session-port";
 import {
@@ -15,13 +15,14 @@ import {
  * paces it. Null asks for nothing, and so does a pause in `active`: the scheduler outlives it, so a
  * set drawn before is shown again at the start without a request, and only a set not yet asked for
  * is. It outlives StrictMode's second run of an effect in development too, so the first picture is
- * one request there as well.
+ * one request there as well. `reset` is for a session that ends: it forgets the pictures, and the
+ * next one opens on none.
  */
 export function useCostumePreview(
   port: HirobaSessionPort,
   set: CostumeSet | null,
   active: boolean,
-): PreviewState {
+): { readonly preview: PreviewState; readonly reset: () => void } {
   const [preview, setPreview] = useState<PreviewState>(NO_PREVIEW);
   const made = useRef<PreviewScheduler | null>(null);
   if (made.current === null) {
@@ -31,6 +32,7 @@ export function useCostumePreview(
     });
   }
   const scheduler = made.current;
+  const reset = useCallback(() => scheduler.reset(), [scheduler]);
   useEffect(() => {
     if (!active) {
       return;
@@ -44,7 +46,7 @@ export function useCostumePreview(
       scheduler.want(set);
     }
   }, [scheduler, set]);
-  return preview;
+  return { preview, reset };
 }
 
 /**

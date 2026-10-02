@@ -225,8 +225,9 @@ does in its 今のきせかえセット box: `imgsrc_mydon.php` with the three c
 query. The platform fetches it with the session and hands the window a `data:` URL, so neither the
 address nor the cookie reaches the window. It asks once when the page is first shown, then once per
 pause in the picks (300 ms), one request at a time and never retried, and nothing while the page is
-not shown; a set already drawn is shown again without asking, after a visit to another page too. It
-is a read, so both platforms allow it. A picture that does
+not shown; a set already drawn is shown again without asking, after a visit to another page too, but
+not after a sign-out or a lost session: those forget every picture of the set, so the next player's
+page never opens on the last one's. It is a read, so both platforms allow it. A picture that does
 not come leaves "Preview unavailable" and a code for a report; the editor works without it. With
 `ABTH_DEBUG_SAVE_READS=1`, only the latest picture is kept, as `debug\imgsrc_mydon.php.png`, and
 none in `debug\history`.

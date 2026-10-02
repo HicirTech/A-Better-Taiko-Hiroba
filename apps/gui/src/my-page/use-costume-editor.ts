@@ -53,7 +53,7 @@ export interface CostumeEditor {
   read(): Promise<void>;
   /** Asks the platform for the undo on offer, as after my page is read. */
   refreshUndo(): Promise<void>;
-  /** The session is over, or another one begins: nothing of the editor is kept. */
+  /** The session is over, or another one begins: nothing of the editor is kept, its picture included. */
   forget(): void;
   pickColour(part: ColourPart, id: number): void;
   pickItem(part: SlotPart, id: number): void;
@@ -80,7 +80,7 @@ export function useCostumeEditor({
   onSessionGone,
 }: CostumeEditorOptions): CostumeEditor {
   const [step, dispatch] = useReducer(reduceEditor, UNREAD);
-  const preview = useCostumePreview(port, previewSetOf(step), shown);
+  const { preview, reset: resetPreview } = useCostumePreview(port, previewSetOf(step), shown);
   /** Bumped when the session ends: what a request begun before it brings back is dropped. */
   const session = useRef(0);
   const { undoable, refreshUndo, clearUndo } = useUndoOffer(port, "costume", session);
@@ -96,7 +96,8 @@ export function useCostumeEditor({
     session.current += 1;
     dispatch({ type: "forget" });
     clearUndo();
-  }, [clearUndo]);
+    resetPreview();
+  }, [clearUndo, resetPreview]);
 
   const mayRead = step.name === "unread" || canReadEditorAgain(step);
   const read = useCallback(async () => {

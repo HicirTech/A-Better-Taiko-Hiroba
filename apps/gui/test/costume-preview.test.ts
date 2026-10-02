@@ -258,4 +258,89 @@ describe("createPreviewScheduler", () => {
     await asked[2]?.answer(ok(picture(face(2))));
     expect(last()).toEqual({ image: picture(face(2)), loading: false, failure: null });
   });
+
+  describe("reset", () => {
+    test("shows nothing at once, started or not, and keeps no picture", async () => {
+      const { scheduler, asked, pauseEnds, states, last } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+      scheduler.reset();
+      expect(last()).toEqual({ image: null, loading: false, failure: null });
+
+      // Stopped, the window is told all the same: it must not keep the last picture meanwhile.
+      scheduler.want(face(1));
+      expect(asked).toHaveLength(2);
+      await asked[1]?.answer(ok(picture(face(1))));
+      pauseEnds();
+      scheduler.stop();
+      const shown = states.length;
+      scheduler.reset();
+      expect(states).toHaveLength(shown + 1);
+      expect(last()).toEqual({ image: null, loading: false, failure: null });
+    });
+
+    test("asks the next session's first set at once, though the same set was drawn before", async () => {
+      const { scheduler, asked, pauseEnds, pausing, last } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+      scheduler.want(face(1));
+      pauseEnds();
+      await asked[1]?.answer(ok(picture(face(1))));
+      scheduler.reset();
+
+      // No pause, and no picture kept for it: another player's first set is asked for, as it is.
+      scheduler.want(face(1));
+      expect(pausing()).toBe(0);
+      expect(asked).toHaveLength(3);
+      expect(last()).toEqual({ image: null, loading: true, failure: null });
+      await asked[2]?.answer(ok(picture(face(1))));
+      expect(last()).toEqual({ image: picture(face(1)), loading: false, failure: null });
+      pauseEnds();
+      expect(asked).toHaveLength(3);
+    });
+
+    test("drops a picture still on its way from before, and what it was for", async () => {
+      const { scheduler, asked, last } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      scheduler.reset();
+      scheduler.want(face(1));
+      expect(asked.map(({ set }) => set.colorFace)).toEqual([5, 1]);
+
+      // The old session's answer lands now: nothing of it is shown or kept, and the new ask goes on.
+      await asked[0]?.answer(ok(picture(START)));
+      expect(last()).toEqual({ image: null, loading: true, failure: null });
+      await asked[1]?.answer(ok(picture(face(1))));
+      expect(last()).toEqual({ image: picture(face(1)), loading: false, failure: null });
+      scheduler.want(START);
+      expect(asked).toHaveLength(2);
+    });
+
+    test("ends the pause after a pick, which asks nothing", async () => {
+      const { scheduler, asked, pauseEnds, pausing } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+      scheduler.want(face(3));
+      expect(pausing()).toBe(1);
+      scheduler.reset();
+      expect(pausing()).toBe(0);
+      pauseEnds();
+      expect(asked).toHaveLength(1);
+    });
+
+    test("leaves it ready to be started again with nothing asked for before", async () => {
+      const { scheduler, asked } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      scheduler.reset();
+      scheduler.stop();
+      scheduler.start();
+      expect(asked).toHaveLength(1);
+      scheduler.want(face(2));
+      expect(asked.map(({ set }) => set.colorFace)).toEqual([5, 2]);
+    });
+  });
 });

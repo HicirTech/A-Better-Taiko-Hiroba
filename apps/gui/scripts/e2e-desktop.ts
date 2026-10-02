@@ -3103,6 +3103,17 @@ try {
   results.signInForgetsThePictures =
     same(await page.evaluate("window.firstCard"), [false, false]) &&
     (await exists("#title-plate-image"));
+  // The Costume page's picture of the set goes with them: the page's first frame, once the next
+  // session's editor is read, draws none of the last session's picture.
+  await page.evaluate(
+    `(() => { window.costumeFirstFrame = null; const observer = new MutationObserver(() => { if (document.querySelector("#costume-preview") === null) return; window.costumeFirstFrame = document.querySelector("#costume-preview-image") !== null; observer.disconnect(); }); observer.observe(document.body, { childList: true, subtree: true }); })()`,
+  );
+  await goTo("costume");
+  await inStep("editing");
+  await previewOtherThan(null);
+  results.signInForgetsTheCostumePreview =
+    (await page.evaluate("window.costumeFirstFrame")) === false;
+  await goTo("overview");
   const kept = (await (await fetch(`${HIROBA}/__last-token`)).text()).trim();
   tokens.push(kept);
   // Kept on disk for the next launch: the user chose staying signed in over a memory-only session.

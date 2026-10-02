@@ -29,7 +29,7 @@ export interface PreviewTimers {
 export interface PreviewSchedulerOptions {
   /** One request for one set's picture: the port's previewCostume. */
   readonly load: (set: CostumeSet) => Promise<Result<string, CostumePreviewFailure>>;
-  /** Called with every change to what the preview shows, while started. */
+  /** Called with every change to what the preview shows, while started, and when it is reset. */
   readonly onState: (state: PreviewState) => void;
   readonly delayMs?: number;
   readonly timers?: PreviewTimers;
@@ -48,6 +48,13 @@ export interface PreviewScheduler {
   stop(): void;
   /** The set the editor shows now. The first is asked for at once; each after it after a pause. */
   want(set: CostumeSet): void;
+  /**
+   * Forgets everything: the pictures kept, the one shown, the set asked for last and the pause after
+   * a pick, and tells the window it shows nothing, started or not. A picture still on its way
+   * is dropped when it lands. For a session that ends: the next player's page must not open on
+   * this one's last picture, nor wait out a pause for its first.
+   */
+  reset(): void;
 }
 
 const PAGE_TIMERS: PreviewTimers = {
@@ -79,6 +86,8 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
   let shownKey: string | null = null;
   let inFlight: string | null = null;
   let timer: unknown = null;
+  /** Bumped by reset(): an answer asked for before it is dropped. */
+  let generation = 0;
 
   const show = (next: PreviewState) => {
     state = next;
@@ -114,6 +123,7 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
     }
     inFlight = key;
     askedKey = key;
+    const asked = generation;
     show({ ...state, loading: true, failure: null });
     options
       .load(set)
@@ -123,6 +133,9 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
         () => ({ failure: "preview=callFailed" }),
       )
       .then((answer) => {
+        if (asked !== generation) {
+          return;
+        }
         inFlight = null;
         if (wanted?.key !== key) {
           // Superseded: this picture is dropped, and the newest set is asked for unless a pick's
@@ -197,6 +210,17 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
       }
       wanted = { key, set };
       plan();
+    },
+    reset() {
+      generation += 1;
+      clearTimer();
+      kept.clear();
+      wanted = null;
+      askedKey = null;
+      shownKey = null;
+      inFlight = null;
+      state = NO_PREVIEW;
+      options.onState(NO_PREVIEW);
     },
   };
 }
