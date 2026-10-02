@@ -204,7 +204,9 @@ visit to another page or a read of your page.
   characters) and its warning against personal information are shown as Hiroba writes them, and
   advice lines say when a name is outside the help page or wider than ten half-width characters;
   none of it refuses anything, since names outside it exist on the site. A name is not sent if it is
-  the one worn.
+  the one worn. While an IME composition is open, the field judges nothing: the counter, the advice,
+  the note that it is the name worn and **Review** read the name as it stood, until the composition is
+  committed.
 - **Name, closed.** When my page hands its rename dialog the flag that says renames are closed, the
   field is shut and the section says why, in Hiroba's words; when it hands none the app can read,
   the field stays open with a note. The editor read at write time decides again.

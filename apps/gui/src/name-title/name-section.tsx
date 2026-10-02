@@ -122,7 +122,8 @@ function Undo({ name, i18n, busy }: { name: NameEditor; i18n: Translator; busy: 
 
 /**
  * The field and what surrounds it. A composition, as an IME makes one, is not judged until it is
- * committed: the counter, the advice and Review read the text as it stood before it.
+ * committed: the counter, the advice, the note that it is the name worn already and Review read the
+ * text as it stood before it.
  */
 function Fields({ name, profile, i18n, busy }: NameSectionProps) {
   const { t } = i18n;
@@ -163,7 +164,7 @@ function Fields({ name, profile, i18n, busy }: NameSectionProps) {
           helperText={
             refused
               ? t("write.invalidTarget", { field: invalidFieldText(verdict.field, i18n) })
-              : typed !== null && verdict.kind === "same"
+              : !composing && typed !== null && verdict.kind === "same"
                 ? t("name.same")
                 : undefined
           }

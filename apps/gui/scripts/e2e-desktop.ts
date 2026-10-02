@@ -2942,6 +2942,37 @@ try {
     same(await profileNow(), profileAsStarted);
   await typeName(INITIAL_PROFILE.nickname);
 
+  // A composition, as an IME makes one, is not judged until it is committed: while one is open over
+  // the name worn, the field says nothing of it, and the counter and Review read the name as it stood;
+  // once committed, the name is judged as any other is.
+  const nameField = () =>
+    page.evaluate<{
+      value: string;
+      counter: string | null;
+      reviewDisabled: boolean | null;
+      helper: string | null;
+    }>(
+      `({ value: document.querySelector("#name-input").value, counter: document.querySelector("#name-counter")?.textContent ?? null, reviewDisabled: document.querySelector("#name-review")?.disabled ?? null, helper: document.querySelector("#name-input-helper-text")?.textContent ?? null })`,
+    );
+  await page.evaluate(
+    `(() => { const input = document.querySelector("#name-input"); input.focus(); input.select(); })()`,
+  );
+  await page.send("Input.imeSetComposition", { text: "あ", selectionStart: 1, selectionEnd: 1 });
+  await Bun.sleep(200);
+  const composing = await nameField();
+  await page.send("Input.insertText", { text: "あたらしい" });
+  await Bun.sleep(300);
+  const committed = await nameField();
+  results.nameCompositionNotJudgedUntilCommitted =
+    composing.value === "あ" &&
+    composing.helper === null &&
+    composing.counter === `${[...INITIAL_PROFILE.nickname].length} / 10` &&
+    composing.reviewDisabled === true &&
+    committed.value === "あたらしい" &&
+    committed.helper === null &&
+    committed.counter === "5 / 10" &&
+    committed.reviewDisabled === false;
+
   // Nor does a read start inside a title or a name write, nor a second write: while a rename waits
   // on its save, the Fab is shut, the other section is, a title write asked for through the bridge
   // answers busy, and so does the undo, with nothing sent for any of them.
