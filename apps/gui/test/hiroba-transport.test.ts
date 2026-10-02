@@ -244,6 +244,18 @@ describe("createHirobaTransport posting a form", () => {
     }
   });
 
+  test("fails a post whose redirect leads anywhere but http or https, after the post alone", async () => {
+    for (const location of ["javascript:alert(1)", "file:///C:/x", "http://[::1"]) {
+      const { sent, transport } = setUp([redirect(location), page()]);
+      const url = `${ORIGIN}/ajax/change_mydon.php`;
+      expect(await transport.send(post(url))).toEqual({
+        ok: false,
+        error: { kind: "unreachable", url },
+      });
+      expect(sent).toHaveLength(1);
+    }
+  });
+
   test("follows a 307 after a GET as before", async () => {
     const { sent, transport } = setUp([redirect("/mypage_top.php?again", [], 307), page()]);
     await transport.send({ method: "GET", url: `${ORIGIN}/mypage_top.php` });
