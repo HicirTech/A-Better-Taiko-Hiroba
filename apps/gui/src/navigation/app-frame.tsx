@@ -19,7 +19,13 @@ import { type ReactNode, useEffect, useEffectEvent, useId, useState } from "reac
 import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { SystemBack } from "../platform";
 import { backAction } from "./back-action";
-import { CostumeIcon, FavoritesIcon, OverviewIcon, SettingsIcon } from "./page-icons";
+import {
+  CostumeIcon,
+  FavoritesIcon,
+  NameTitleIcon,
+  OverviewIcon,
+  SettingsIcon,
+} from "./page-icons";
 import { PAGES, type Page } from "./pages";
 
 /** Each page's name and icon, as the navigation shows them. */
@@ -27,6 +33,7 @@ const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly i
   {
     overview: { label: "nav.overview", icon: <OverviewIcon /> },
     costume: { label: "nav.costume", icon: <CostumeIcon /> },
+    nameTitle: { label: "nav.nameTitle", icon: <NameTitleIcon /> },
     favorites: { label: "nav.favorites", icon: <FavoritesIcon /> },
     settings: { label: "nav.settings", icon: <SettingsIcon /> },
   };

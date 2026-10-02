@@ -34,6 +34,7 @@ export type {
   ProfileView,
   ReadFailure,
   ReadFailureKind,
+  RenameState,
   SignInOutcome,
   TitleChange,
   TitleEditorView,

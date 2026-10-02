@@ -47,7 +47,7 @@ export const INITIAL_PROFILE = { title: "サンプルの称号", nickname: "サ�
 export const REFUSED_NAME = "えぬじー";
 export const FILTER_MESSAGE = "不適切用語は使用できません";
 /** What a rename answers while /__rename-cooldown?on=1 is set: invented, as no limit has been seen. */
-const COOLDOWN_MESSAGE = "（モック）短い間に何度もドンだーネームは変更できません";
+export const COOLDOWN_MESSAGE = "（モック）短い間に何度もドンだーネームは変更できません";
 /** The longest name the mock's form takes, as the real form's `maxlength`. */
 const NAME_MAX_LENGTH = 10;
 

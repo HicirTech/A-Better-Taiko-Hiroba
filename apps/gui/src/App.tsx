@@ -18,6 +18,10 @@ import type { PortraitAction } from "./my-page/my-don-portrait";
 import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
 import { useCostumeEditor } from "./my-page/use-costume-editor";
+import { NameTitlePage } from "./name-title/name-title-page";
+import { movedTheTitle, type TitleStep } from "./name-title/title-editor-state";
+import { useNameEditor } from "./name-title/use-name-editor";
+import { useTitleEditor } from "./name-title/use-title-editor";
 import { FrameCorner } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
@@ -63,9 +67,10 @@ export interface AppProps {
 }
 
 /**
- * The app on each page: signed out, the Overview, Costume and Favourites show the sign-in card;
- * signed in, the Overview shows the profile, Costume the editor and Favourites the favourite songs,
- * the profile and the favourites from the same read. Settings works either way.
+ * The app on each page: signed out, the Overview, Costume, Name & title and Favourites show the
+ * sign-in card; signed in, the Overview shows the profile, Costume the editor, Name & title the
+ * editors of the title and the name, and Favourites the favourite songs, the profile and the
+ * favourites from the same read. Settings works either way.
  */
 export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const { t } = i18n;
@@ -77,6 +82,8 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
   /** The Costume page, signed in: the one place the editor is read. */
   const onEditorPage = page === "costume" && screen.name === "profile";
+  /** The Name & title page, signed in: the one place the list of titles is read. */
+  const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
   /** The session ended under the editor: back to signing in, with what happened. */
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
@@ -93,8 +100,36 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     onSessionGone: sessionGone,
   });
   const { refreshUndo, forget: forgetEditor } = editor;
+  /**
+   * The title's editor and the name's, held here for the same reason. The title list is read when
+   * its page is first shown, never before. The name has nothing to read: a write's read-back is the
+   * name the window's profile shows from then on, with no request.
+   */
+  const titleEditor = useTitleEditor({
+    port,
+    lane,
+    shown: onNameTitlePage,
+    onSessionGone: sessionGone,
+  });
+  const { refreshUndo: refreshTitleUndo, forget: forgetTitleEditor } = titleEditor;
+  const nameRead = useCallback(
+    (nickname: string) =>
+      setScreen((now) =>
+        now.name === "profile" ? { name: "profile", profile: { ...now.profile, nickname } } : now,
+      ),
+    [],
+  );
+  const nameEditor = useNameEditor({
+    port,
+    lane,
+    profile: screen.name === "profile" ? screen.profile : null,
+    onSessionGone: sessionGone,
+    onNickname: nameRead,
+  });
+  const { refreshUndo: refreshNameUndo, forget: forgetNameEditor } = nameEditor;
 
-  const read = useCallback(async () => {
+  /** Reads my page, and shows it: whether it came. */
+  const read = useCallback(async (): Promise<boolean> => {
     setScreen({ name: "reading" });
     const result = await port.readProfile();
     if (result.ok) {
@@ -106,14 +141,34 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
       lane.renew("medalPlate");
       lane.renew("myDon");
       lane.forgetFailures("scorePanel");
-      await refreshUndo();
+      await Promise.all([refreshUndo(), refreshTitleUndo(), refreshNameUndo()]);
       setScreen({ name: "profile", profile: result.value });
-    } else if (SESSION_GONE.has(result.error.kind)) {
+      return true;
+    }
+    if (SESSION_GONE.has(result.error.kind)) {
       setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
     } else {
       setScreen({ name: "readFailed", ...result.error });
     }
-  }, [port, lane, refreshUndo]);
+    return false;
+  }, [port, lane, refreshUndo, refreshTitleUndo, refreshNameUndo]);
+
+  /**
+   * A title write that moved the title, or may have, leaves the window's copy of my page out of
+   * date: the plate shows the old title. It is read again once, as the user's Read again would.
+   */
+  const stale = useRef<TitleStep | null>(null);
+  const titleStep = titleEditor.step;
+  useEffect(() => {
+    if (
+      titleStep.name === "done" &&
+      movedTheTitle(titleStep.outcome) &&
+      stale.current !== titleStep
+    ) {
+      stale.current = titleStep;
+      void read();
+    }
+  }, [titleStep, read]);
 
   /**
    * A sign-in starts the pictures afresh: whoever signs in may be another player, and when Hiroba
@@ -148,8 +203,10 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   useEffect(() => {
     if (noSession) {
       forgetEditor();
+      forgetTitleEditor();
+      forgetNameEditor();
     }
-  }, [noSession, forgetEditor]);
+  }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor]);
 
   /**
    * A touch-first screen reads again by a pull from the top of the page, not by the Fab, and opens
@@ -180,10 +237,17 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
   /**
    * Reads again, from the Fab or a pull, as the read on opening does: the editor on the Costume
-   * page, my page on any other. Never while a read runs, nor while a save or an undo runs, so no
-   * read starts inside a write. The ref turns away a second ask that lands before the Fab is shut.
+   * page, my page and then the list of titles on the Name & title page (the name lives on my page,
+   * the titles on their own), my page on any other. Never while a read runs, nor while a save or an
+   * undo runs, so no read starts inside a write. The ref turns away a second ask that lands before
+   * the Fab is shut.
    */
-  const canReadAgain = signedIn && !editor.writing && (!onEditorPage || editor.canRead);
+  const writing = editor.writing || titleEditor.writing || nameEditor.writing;
+  const canReadAgain =
+    signedIn &&
+    !writing &&
+    (!onEditorPage || editor.canRead) &&
+    (!onNameTitlePage || titleEditor.canRead);
   const readAgainStarted = useRef(false);
   const readAgain = async () => {
     if (!canReadAgain || readAgainStarted.current) {
@@ -191,7 +255,11 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     }
     readAgainStarted.current = true;
     try {
-      await (onEditorPage ? editor.read() : read());
+      if (onEditorPage) {
+        await editor.read();
+      } else if ((await read()) && onNameTitlePage) {
+        await titleEditor.read();
+      }
     } finally {
       readAgainStarted.current = false;
     }
@@ -203,7 +271,11 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
         <>
           <FrameCorner>
             <ReadAgainFab
-              reading={screen.name === "reading" || (onEditorPage && editor.reading)}
+              reading={
+                screen.name === "reading" ||
+                (onEditorPage && editor.reading) ||
+                (onNameTitlePage && titleEditor.reading)
+              }
               canRead={canReadAgain}
               touchFirst={touchFirst}
               onRead={readAgain}
@@ -220,7 +292,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           account={
             screen.name === "checking"
               ? { kind: "checking" }
-              : screen.name === "reading" || editor.writing
+              : screen.name === "reading" || writing
                 ? { kind: "reading" }
                 : signedIn
                   ? {
@@ -276,7 +348,17 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
             <CostumePage editor={editor} lane={lane} i18n={i18n} />
           )}
 
-          {screen.name === "profile" && page !== "costume" && (
+          {screen.name === "profile" && page === "nameTitle" && (
+            <NameTitlePage
+              profile={screen.profile}
+              lane={lane}
+              i18n={i18n}
+              title={titleEditor}
+              name={nameEditor}
+            />
+          )}
+
+          {screen.name === "profile" && page !== "costume" && page !== "nameTitle" && (
             <Stack spacing={2}>
               {page === "overview" ? (
                 <>

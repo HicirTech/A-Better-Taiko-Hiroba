@@ -142,7 +142,7 @@ const INVALID_FIELD_MESSAGE = {
 } as const satisfies Record<InvalidField, MessageKey>;
 
 /** The words of a refused target's `field`: a costume part's label, a title's or a name's phrase, or the code. */
-function fieldText(field: string, { t }: Translator): string {
+export function invalidFieldText(field: string, { t }: Translator): string {
   if (isCostumePart(field)) {
     return t(PART_LABEL[field]);
   }
@@ -313,7 +313,7 @@ export function describeOutcome<K extends WriteKind>(
     case "invalidTarget":
       return {
         ...plain("error"),
-        message: t("write.invalidTarget", { field: fieldText(outcome.field, i18n) }),
+        message: t("write.invalidTarget", { field: invalidFieldText(outcome.field, i18n) }),
       };
     case "stoppedBeforeWrite":
       return { ...plain("warning"), codes: [`${outcome.reason} ${outcome.code}`] };
