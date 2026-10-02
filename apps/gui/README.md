@@ -411,7 +411,8 @@ command it starts, so use the scripts rather than a bare `bunx cap run`.
 `android:keystore` writes `android/abth-local.jks` and `android/keystore.properties`, which holds the
 key's random password. Git ignores both, and the password is printed nowhere. **Back up both files
 outside git.** A release build signed with another key cannot update an installed one; you would
-have to uninstall it first.
+have to uninstall it first. The release workflow signs with the same key, from repository secrets:
+see [Setting up the signing secrets](#setting-up-the-signing-secrets).
 
 ### Costume writes on Android
 
@@ -560,6 +561,124 @@ Hiroba's own screen agrees; whether a second rename was taken or refused, and in
 session records them with the other executed writes and in the wiki. Then, in commits of their own,
 `LIVE_CHECKED_WRITES` lists `title` and `name` for the platform they were made on, with the test
 that holds both lists.
+
+## Releases
+
+Two workflows run on GitHub Actions. `.github/workflows/ci.yml` runs on every push to a branch, and
+on a pull request from a fork (a pull request from this repository is not run twice: its branch's
+push has run it already). It has two jobs side by side: **Checks** (format, lint, typecheck, the
+tests and the GUI bundle) and **Android debug APK** (`bun run android:apk`, on the runner's Android
+SDK, with JDK 21 and Node 22). `.github/workflows/release.yml` builds and publishes a release.
+
+### The version
+
+`version` in `apps/gui/package.json` is the one place a version is written. It is
+`MAJOR.MINOR.PATCH`, the first release is 0.1.0, and the tag is `v` and the version: `v0.1.0`.
+electron-builder names the Windows files from it, and `android/app/build.gradle` reads it too:
+`versionName` is the same text, and `versionCode` is `major * 10000 + minor * 100 + patch`, so 0.1.0
+is 100 and 1.2.3 is 10203. Android updates an app only to a higher code, so minor and patch stop at
+99 (one more would spill into the next place, and a later version could get a lower or an equal
+code), and the code stops at Android's own limit, 2100000000. A version has no `v`, no pre-release
+part and no build part. The Gradle script, `scripts/release.ts` and the tests in
+`test/release-version.test.ts` all hold to this, and the tests read the Gradle script, so the two
+cannot drift unseen.
+
+### Making a release
+
+On `main`, with a clean tree, from the repository root:
+
+```bash
+bun run release <x.y.z | patch | minor | major> [--push]
+```
+
+`patch`, `minor` and `major` raise that number of the current version and set the ones after it
+to 0; `x.y.z` names the version outright. Before anything changes the script checks that the
+working tree is clean (untracked files count), that the branch is `main`, that `main` is the commit
+`origin/main` has (after a fetch), that the version is valid and not lower than the current one, and
+that the tag `v<version>` is on neither this clone nor `origin`. Then:
+
+- A version **higher** than the current one is written into `apps/gui/package.json` (that line, and
+  no other byte) and into `bun.lock` (`bun install --lockfile-only`, since the lockfile states each
+  workspace's version too), and committed as `chore(release): <version>`. The script stops before
+  committing if that would change anything beyond those two lines.
+- A version **equal** to the current one only tags. That is how a version already in `package.json`
+  is released, the first 0.1.0 included.
+- Either way it makes an annotated tag, `v<version>`.
+- With `--push` it pushes `main` if there was a commit, then the tag. Without it nothing leaves the
+  clone: the script prints the `git push` commands, and the ones that undo the commit and the tag.
+
+The tag is what starts the release: the workflow below builds and publishes on a push of it.
+
+**`main` is protected on GitHub**: a change reaches it through a pull request that passes
+**Checks**, so a direct push of the release commit is refused. When the script's push of `main` is
+refused, it stops before the tag, says so, and prints the commands that undo its commit and its tag.
+Raise the version through a pull request instead:
+
+1. In a branch, set `version` in `apps/gui/package.json`, run `bun install` so that `bun.lock`
+   follows, commit both as `chore(release): <version>`, and open a pull request. Merge it.
+2. On an up-to-date `main` (`git switch main && git pull`), run `bun run release <version> --push`.
+   The version now equals `package.json`'s, so the script only tags, and pushes the tag, which a
+   branch protection rule does not cover.
+
+The first release, 0.1.0, is this second step alone: `package.json` says 0.1.0 already, so once the
+pull request that adds the workflow is merged, `bun run release 0.1.0 --push` on `main` tags and
+pushes `v0.1.0`.
+
+### What the workflow builds
+
+`.github/workflows/release.yml` runs when a tag `v*.*.*` is pushed: that is a release. It also runs
+as a **dry run**, which builds the same files, keeps them and creates no release: when started by
+hand (**Run workflow** in the Actions tab), and on a push to any branch that touches what a release
+is made of, which is the workflow itself, `scripts/release.ts` and `scripts/release-version.ts`,
+`apps/gui/package.json` (which also holds electron-builder's configuration, under `build`) and
+`apps/gui/android/**`.
+
+A **Version** job reads the version first, and on a tag run stops the run unless the tag is `v` and
+that version. Then two jobs run side by side, neither waiting on the other:
+
+| Job | Runs on | Makes |
+|---|---|---|
+| **Android release APK** | ubuntu-latest, JDK 21 | `ABTH-<version>.apk`, signed with the release key. |
+| **Windows installer and zip** | windows-latest | `ABTH-<version>-setup.exe`, the NSIS installer, and `ABTH-<version>-portable.zip`, the build that needs no install ([Desktop](#desktop) says how to run it). Both are x64 and not code-signed. |
+
+Each uploads its files as an artifact of the run (**android** and **windows**, kept for 14 days).
+On a tag, a **Release** job then runs after both. It downloads the artifacts and runs
+`gh release create v<version> --title "A Better Taiko Hiroba <version>" --generate-notes` with the
+three files, as `GITHUB_TOKEN` with `contents: write`; the notes list the pull requests merged since
+the last release. **The release is published, not a draft**: its files are public as soon as that
+job ends. A dry run never reaches that job.
+
+If a job fails, nothing is published and the tag stays. Fix the cause and **Re-run failed jobs** on
+the run (that is also how to carry on once a missing secret is added), or, to release again from
+another commit, delete the tag first: `git push origin :refs/tags/v<version>` and
+`git tag -d v<version>`.
+
+Without the signing secrets a dry run builds `ABTH-<version>-unsigned.apk` instead of failing: an
+APK that no device installs, which shows the release build compiles. A tag run without them fails
+at once, and names the missing ones.
+
+### Setting up the signing secrets
+
+The workflow signs the APK with [the release key](#the-release-key), which it gets from four
+repository secrets: `ANDROID_KEYSTORE_BASE64` (the `.jks`, in base64), `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. At run time it writes them into
+`android/abth-release.jks` and `android/keystore.properties`, the two files `build.gradle` reads,
+and prints none of them. Set them once, from the repository root, in Git Bash (or any shell with
+`base64` and `sed`) with the GitHub CLI signed in as someone who can write the repository's secrets.
+Each command feeds a value to `gh` through a pipe, so nothing is printed, kept in the shell's
+history or written to another file:
+
+```bash
+base64 -w0 apps/gui/android/abth-local.jks | gh secret set ANDROID_KEYSTORE_BASE64
+sed -n 's/^storePassword=//p' apps/gui/android/keystore.properties | gh secret set ANDROID_KEYSTORE_PASSWORD
+sed -n 's/^keyAlias=//p' apps/gui/android/keystore.properties | gh secret set ANDROID_KEY_ALIAS
+sed -n 's/^keyPassword=//p' apps/gui/android/keystore.properties | gh secret set ANDROID_KEY_PASSWORD
+gh secret list
+```
+
+`gh secret list` shows the four names, never the values. The password `android:keystore` makes is
+letters, digits, `-` and `_`, so nothing in it needs escaping. Back the key up as [The release
+key](#the-release-key) says: a release signed with another key cannot update an installed one.
 
 ## Where the session lives
 
