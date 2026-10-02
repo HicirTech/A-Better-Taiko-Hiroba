@@ -17,6 +17,7 @@ const SET = {
 describe("PORT_ARGUMENTS", () => {
   test("a verb that takes nothing accepts no arguments, and refuses any", () => {
     const {
+      readProfile: _read,
       changeCostume: _change,
       changeTitle: _changeTitle,
       changeName: _changeName,
@@ -55,6 +56,35 @@ describe("PORT_ARGUMENTS", () => {
       [{ expected: null, target: SET }],
       [[SET, SET]],
       [Object.assign(Object.create({ inherited: true }), { expected: SET, target: SET })],
+    ];
+    for (const args of refused) {
+      expect(check(args)).toBe(false);
+    }
+  });
+});
+
+describe("PORT_ARGUMENTS.readProfile", () => {
+  test("takes nothing, or one `{ renewsPortrait }` and a boolean", () => {
+    const check = PORT_ARGUMENTS.readProfile;
+    expect(check([])).toBe(true);
+    expect(check([{ renewsPortrait: false }])).toBe(true);
+    expect(check([{ renewsPortrait: true }])).toBe(true);
+  });
+
+  test("refuses anything else", () => {
+    const check = PORT_ARGUMENTS.readProfile;
+    const refused: unknown[][] = [
+      [undefined],
+      [null],
+      [{}],
+      [false],
+      [{ renewsPortrait: "no" }],
+      [{ renewsPortrait: 0 }],
+      [{ renewsPortrait: null }],
+      [{ renewsPortrait: false, extra: 1 }],
+      [{ renewsPortrait: false }, "extra"],
+      [[false]],
+      [Object.assign(Object.create({ inherited: true }), { renewsPortrait: false })],
     ];
     for (const args of refused) {
       expect(check(args)).toBe(false);

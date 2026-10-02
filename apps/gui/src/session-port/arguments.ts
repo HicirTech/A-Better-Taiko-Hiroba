@@ -135,6 +135,16 @@ export function isPictureWant(value: unknown): value is PictureWant {
 /** readPicture: one argument, a picture the interface may ask for. */
 const pictureWant: ArgumentCheck = (args) => args.length === 1 && isPictureWant(args[0]);
 
+/**
+ * readProfile: nothing, a plain read; or one argument, `{ renewsPortrait }` with a boolean, and no
+ * other key.
+ */
+const profileRead: ArgumentCheck = (args) =>
+  args.length === 0 ||
+  (args.length === 1 &&
+    hasExactly(args[0], ["renewsPortrait"]) &&
+    typeof args[0].renewsPortrait === "boolean");
+
 /** changeCostume: one argument, the set expected and the set wanted, eight whole numbers each. */
 const costumeChange: ArgumentCheck = (args) =>
   args.length === 1 &&
@@ -176,7 +186,7 @@ export const PORT_ARGUMENTS = {
   isSignedIn: none,
   signIn: none,
   cancelSignIn: none,
-  readProfile: none,
+  readProfile: profileRead,
   signOut: none,
   openCostumeEditor: none,
   openTitleEditor: none,

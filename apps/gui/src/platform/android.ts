@@ -241,12 +241,15 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await InAppBrowser.close().catch(() => undefined);
     },
 
-    readProfile: async () => {
+    readProfile: async (options) => {
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
-      // Every read but the session's first is the user's Read again: the portrait is renewed.
-      pictures.myPageAsked();
+      // Every read but the session's first is the user's Read again: the portrait is renewed. One
+      // the window makes on its own says it is not.
+      if (options?.renewsPortrait !== false) {
+        pictures.myPageAsked();
+      }
       const read = await readOwnProfile(transport, endpoints);
       if (!read.ok && sessionEnded(read.error)) {
         await forget();

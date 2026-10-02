@@ -35,6 +35,7 @@ export type {
   PictureWant,
   ProfileView,
   ReadFailure,
+  ReadProfileOptions,
   ReadFailureKind,
   RenameState,
   SignInOutcome,

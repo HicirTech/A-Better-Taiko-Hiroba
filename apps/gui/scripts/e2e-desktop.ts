@@ -2592,6 +2592,14 @@ try {
   await fetch(`${HIROBA}/__profile?reset=1`);
   await readTitlesAgain();
 
+  // The My Don is shown now, after every Read again so far has had its say, so what is fetched from
+  // here on is what a title write and its undo ask for.
+  await goTo("overview");
+  await waitForSeen(page, async () => (await exists("#my-don-image")) || undefined);
+  const myDonsBeforeTitle = await myDonsSettled();
+  await goTo("nameTitle");
+  await inSection("title", "idle");
+
   // A title: Review lists the change, Save sends exactly the planned requests, then my page is read
   // again for the plate. The posts are the page's own, with the pre-check bare of a token.
   await resetLog();
@@ -2651,6 +2659,17 @@ try {
     (await profileSaves()).length === 1 &&
     !(await exists("#title-undo"));
   await backToIdle("title");
+  // The read of my page that follows a title write, and its undo, renews nothing: the My Don is not
+  // fetched anew when the Overview shows it, nor when the platform is asked for it later (only a
+  // costume change and the user's Read again flag it to be).
+  await goTo("overview");
+  await waitForSeen(page, async () => (await exists("#my-don-image")) || undefined);
+  const myDonAsked = await page.evaluate<boolean>(
+    `window.abth.readPicture({ kind: "myDon" }).then((result) => result.ok)`,
+  );
+  results.titleWriteLeavesTheMyDon = myDonAsked && (await myDonsSettled()) === myDonsBeforeTitle;
+  await goTo("nameTitle");
+  await inSection("title", "idle");
 
   // Hiroba's code for a title it will not take comes with no message: the page says what it means.
   await fetch(`${HIROBA}/__profile-next-result?code=5&message=`);

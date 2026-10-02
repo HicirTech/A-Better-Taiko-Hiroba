@@ -524,17 +524,19 @@ describe("createAndroidPort's pictures", () => {
     expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/mypage_top.php` });
   });
 
-  test("asks for the My Don off Hiroba once, keeps it across launches, and anew after Read again", async () => {
-    const portrait = "https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
+  const PORTRAIT = "https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
+
+  /** My page showing the portrait, and a Hiroba that draws it wearing what `wear` was last given. */
+  function myDonOnMyPage() {
     const withPortrait = MY_PAGE.replace(
       "<p>太鼓番：000000000000</p></div></div>",
       `<p>太鼓番：000000000000</p></div>
-    <div class="mydon_image"><img class="customd_mydon" src="${portrait}"></div></div>`,
+    <div class="mydon_image"><img class="customd_mydon" src="${PORTRAIT}"></div></div>`,
     );
     let wearing = [12, 12, 5, 0, 0, 68, 0, 0];
     native.httpAnswer = async () => {
       const asked = native.httpRequests.at(-1)?.url ?? "";
-      const drawn = asked === portrait;
+      const drawn = asked === PORTRAIT;
       return {
         status: 200,
         url: asked,
@@ -543,12 +545,21 @@ describe("createAndroidPort's pictures", () => {
       };
     };
     const indexedDb = createFakeIndexedDb();
-    const launch = () =>
-      createAndroidPort({
-        closeLabel: () => CLOSE_LABEL,
-        signedInFlag: memoryFlag(true),
-        indexedDb: indexedDb.factory,
-      });
+    return {
+      wear: (next: number[]) => {
+        wearing = next;
+      },
+      launch: () =>
+        createAndroidPort({
+          closeLabel: () => CLOSE_LABEL,
+          signedInFlag: memoryFlag(true),
+          indexedDb: indexedDb.factory,
+        }),
+    };
+  }
+
+  test("asks for the My Don off Hiroba once, keeps it across launches, and anew after Read again", async () => {
+    const { wear, launch } = myDonOnMyPage();
     const first = await launch();
     const read = await first.readProfile();
     const before = await first.readPicture(MY_DON);
@@ -557,7 +568,7 @@ describe("createAndroidPort's pictures", () => {
     // The address names the taiko number: the platform's alone.
     expect(JSON.stringify(read)).not.toMatch(/mydon|taiko-p/);
     // Changed elsewhere, then the user's Read again: fetched anew, once.
-    wearing = [12, 12, 3, 0, 0, 68, 0, 0];
+    wear([12, 12, 3, 0, 0, 68, 0, 0]);
     await first.readProfile();
     const after = await first.readPicture(MY_DON);
     expect(after).not.toEqual(before);
@@ -568,13 +579,40 @@ describe("createAndroidPort's pictures", () => {
     expect(await relaunched.readPicture(MY_DON)).toEqual(after);
     expect(native.httpRequests.map(({ url }) => url)).toEqual([
       `${HIROBA}/mypage_top.php`,
-      portrait,
+      PORTRAIT,
       `${HIROBA}/mypage_top.php`,
-      portrait,
+      PORTRAIT,
       `${HIROBA}/mypage_top.php`,
     ]);
     expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/` });
     expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
+  });
+
+  test("a read of my page that renews no portrait leaves the My Don kept, whatever was changed elsewhere", async () => {
+    const { wear, launch } = myDonOnMyPage();
+    const port = await launch();
+    await port.readProfile();
+    const before = await port.readPicture(MY_DON);
+    expect(before.ok).toBe(true);
+
+    // The window's own read, after a title write: nothing of the costume is asked for again.
+    wear([12, 12, 3, 0, 0, 68, 0, 0]);
+    await port.readProfile({ renewsPortrait: false });
+    await port.readProfile({ renewsPortrait: false });
+    expect(await port.readPicture(MY_DON)).toEqual(before);
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_top.php`,
+      PORTRAIT,
+      `${HIROBA}/mypage_top.php`,
+      `${HIROBA}/mypage_top.php`,
+    ]);
+
+    // The user's Read again is the next of its reads: the portrait is fetched anew, once.
+    await port.readProfile();
+    const after = await port.readPicture(MY_DON);
+    expect(after).not.toEqual(before);
+    expect(await port.readPicture(MY_DON)).toEqual(after);
+    expect(native.httpRequests.filter(({ url }) => url === PORTRAIT)).toHaveLength(2);
   });
 
   test("forgets what the editor offered when the session goes", async () => {

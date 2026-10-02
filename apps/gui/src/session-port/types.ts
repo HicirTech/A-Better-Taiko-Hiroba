@@ -269,6 +269,17 @@ export interface UndoSummaryOf<K extends WriteKind> {
 /** The last write of any kind, one of them: its `kind` says whose sets `before` and `after` are. */
 export type UndoSummary = { readonly [K in WriteKind]: UndoSummaryOf<K> }[WriteKind];
 
+/** What a read of my page may be asked besides the read: whether it is the user's own Read again. */
+export interface ReadProfileOptions {
+  /**
+   * Whether the read renews the My Don portrait, which is fetched anew the next time it is asked for.
+   * Every read but the session's first does, unless this says it does not: a read the window
+   * makes on its own, as after a title write, says nothing of the costume. Only a costume change,
+   * and the user's own Read again, renew it.
+   */
+  readonly renewsPortrait: boolean;
+}
+
 /**
  * Everything the interface can ask of the platform, and everything that crosses from the platform
  * layer into the interface. No cookie, no URL, no form token and no page text is part of it, but
@@ -284,7 +295,7 @@ export interface HirobaSessionPort {
    * My page, then the dan label it shows, if it shows one: one request to Hiroba per call, or two
    * with a dan. Never retries by itself.
    */
-  readProfile(): Promise<Result<ProfileView, ReadFailure>>;
+  readProfile(options?: ReadProfileOptions): Promise<Result<ProfileView, ReadFailure>>;
   /** Forgets the session on this device. Hiroba is not told. */
   signOut(): Promise<void>;
   /** The costume editor: one GET. Its form token stays with the platform. */
