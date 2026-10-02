@@ -41,8 +41,8 @@ const RECORD_MARKERS = {
  * `dondaful_combo_cnt`. None of them repeats in the section blocks.
  *
  * My page prints all four on every capture. Another player's page printed **none of the four** on
- * the one capture there is (2026-08-09) — the full-combo and donderful-combo blocks go too, not
- * only the play and clear counts.
+ * the one capture there is — the full-combo and donderful-combo blocks go too, not only the play
+ * and clear counts.
  */
 const PLAY_COUNT_MARKERS = {
   stageCount: ".stage_cnt",
@@ -66,7 +66,7 @@ const OPTION_MARKER = ".optionImage img";
 /**
  * The link around the My Don, `user_profile.php?taiko_no=<T>`, which names whose chart this is.
  * Present on all six captures that render a detail page at all — five of mine, one of another
- * player's (2026-08-09). Nothing on the page names the viewer.
+ * player's. Nothing on the page names the viewer.
  */
 const SUBJECT_MARKER = ".scoreDetailMydonImage a";
 
@@ -143,9 +143,9 @@ export function parseScoreDetailPage(
  * Parses another player's `score_detail.php?taiko_no=T&song_no=S&level=L` — the page a ranking
  * row's `.rankingDetailMore` link opens.
  *
- * **One capture, of one player, on one date (2026-08-09)**, and that player is the one open profile
- * in the corpus that hides its score panel. So everything this reader treats as optional is optional
- * because that one page lacked it, not because the site is known to withhold it:
+ * **One capture, of one player**, and that player is the one open profile in the corpus that hides
+ * its score panel. So everything this reader treats as optional is optional because that one page
+ * lacked it, not because the site is known to withhold it:
  *
  * - **The four play counts.** That page printed none of them. Where the page prints them they are
  *   read, and required as a set; where it prints none they are null, never 0.

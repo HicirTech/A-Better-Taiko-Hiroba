@@ -14,8 +14,7 @@ export interface Player {
  * site keeps out of this panel by design. Measured against the same day's genre lists,
  * de-duplicated by chart: on that scope all ten figures match exactly — three crown counts and
  * seven rank buckets, no residual. Level-4-only and all-levels are both wrong by hundreds.
- * Dropping the 双打 clause leaves a three-chart excess, which is what an earlier version of this
- * comment recorded as unexplained. Settled 2026-08-09.
+ * Dropping the 双打 clause leaves a three-chart excess.
  *
  * So the summary is stored as the snapshot it is — never derived from cached scores, and never
  * used to correct them. It is also not a total you can recompute: the rank buckets count charts
@@ -36,12 +35,11 @@ export interface Profile {
    * A title picked from the list has one; a title **composed from parts** does not — the write
    * that sets one answers with an empty `value`, the composer page clears its slots on load, and
    * my page shows only the rendered text. So nothing on the site can turn a composed title back
-   * into the three part ids, and a client that writes one has to keep them itself. Executed
-   * 2026-08-09.
+   * into the three part ids, and a client that writes one has to keep them itself.
    *
    * `""` is no title, a normal state: the page keeps the title line and leaves it empty. Seen on my
-   * page after a write that set all three title parts to 0 (executed 2026-08-09), and on 2 of the
-   * 19 other players' profiles on disk.
+   * page after a write that set all three title parts to 0, and on 2 of the 19 other players'
+   * profiles on disk.
    */
   readonly title: string;
   /** The value after the region line's colon; null when there is none or it reads 未設定. */
@@ -82,10 +80,10 @@ export interface Profile {
  *   Bandai Namco Passport; medals are traded in the game's どんメダルショップ for the newest reward
  *   songs; the songs change each season, and the medals held are reset when they do. My page shows
  *   the number currently held.
- * - The user, who plays the game (2026-09-27): it is the number of medals collected for the season,
- *   a non-negative integer, and the plate shows COMPLETE once the season's set is done.
+ * - A player of the game: it is the number of medals collected for the season, a non-negative
+ *   integer, and the plate shows COMPLETE once the season's set is done.
  *
- * The model follows the user's account: the count is progress through the season, `collecting`,
+ * The model follows the player's account: the count is progress through the season, `collecting`,
  * and COMPLETE ends it, `complete`.
  *
  * `name` is the plate's own text (`どんメダル2026秋`), kept opaque: nothing reads a year or a season
@@ -104,8 +102,8 @@ export interface Medal {
 
 /**
  * While the season's set is being collected the plate prints a count. Once it is complete the plate
- * prints COMPLETE in that place and no number at all, so a complete medal has no count — absent, not
- * a guessed total. Seen on a live my page on 2026-09-27; every earlier capture was collecting.
+ * prints COMPLETE in that place and no number at all, so a complete medal has no count — absent,
+ * not a guessed total.
  *
  * `unrecognised` is a plate of any other shape. It carries a code, never the page's text, and it
  * costs only this field: the rest of the page reads as usual. The corpus check counts it as
@@ -166,7 +164,7 @@ export interface CrownCounts {
  * `open` shows everything below; `achievementsHidden` still names the player, their prefecture and
  * their 大好きな曲 but serves **no score panel at all**; `closed` renders `※プロフィール非公開`
  * where the details go, keeping only the title, the nickname and the My Don. Measured over seven
- * captured profiles on 2026-08-09 — three open, one achievements-hidden, three closed.
+ * captured profiles — three open, one achievements-hidden, three closed.
  */
 export type ProfileVisibility = "open" | "achievementsHidden" | "closed";
 
@@ -207,8 +205,7 @@ export interface PublicProfile {
    * `score_detail` link, unlike my page's. Turning the title back into a number is the catalogue's
    * job. Null covers both ways the page can say "none": a closed profile drops the block entirely,
    * and an open profile with no favourite **keeps it and writes `未設定` in it** — the same word my
-   * page uses, observed on three profiles 2026-08-09. An earlier version of this comment called the
-   * second case unobserved, and the reader duly handed back `未設定` as if it were a song title.
+   * page uses, observed on three profiles.
    */
   readonly favoriteSong: FavoriteSong | null;
   /** Null unless `visibility` is `open`: the other two shapes serve no panel to read. */

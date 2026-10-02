@@ -13,9 +13,9 @@ const RANKS: readonly ScoreRank[] = [2, 3, 4, 5, 6, 7, 8];
 /**
  * The site spells the silver count **`silver_crown_coun`** on this page — no final `t` — while
  * `gold_crown_count` and `donderful_crown_count` sit beside it spelled in full, and my page spells
- * all three in full. Verified on the **three** captured profiles that serve a panel at all
- * (2026-08-09); the correct spelling occurs on none of them. The other four of seven carry no crown
- * counts to spell — three are closed and one hides its achievements.
+ * all three in full. Verified on the **three** captured profiles that serve a panel at all; the
+ * correct spelling occurs on none of them. The other four of seven carry no crown counts to spell —
+ * three are closed and one hides its achievements.
  *
  * This is invisible from a single account, because your own page is spelled correctly. It is the
  * same class of trap as the score list's two-l `crown_button_donderfull`, and it is why
@@ -43,9 +43,9 @@ const CLOSED_TEXT = "プロフィール非公開";
  * The page's word for "no song here", written into the block rather than omitting it.
  *
  * An open profile with no 大好きな曲 **keeps the section** and fills its one row with this, exactly
- * as my page does. Observed on three profiles, 2026-08-09. The set rows carry a genre suffix on
- * their classes (`songLisrAreanamco`, `songNameFontnamco`) and the unset row does not, but the text
- * is the reliable signal and the one my page's reader already uses.
+ * as my page does. Observed on three profiles. The set rows carry a genre suffix on their classes
+ * (`songLisrAreanamco`, `songNameFontnamco`) and the unset row does not, but the text is the
+ * reliable signal and the one my page's reader already uses.
  */
 const UNSET_LABEL = "未設定";
 

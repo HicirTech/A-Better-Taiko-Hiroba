@@ -5,9 +5,9 @@ import { landingOf, pathOf } from "./landing";
 import type { AjaxAnswer, AjaxPost, PrecheckVerdict } from "./types";
 
 /**
- * What the site's jQuery sends with an ajax post, `dataType: "json"`. The executed writes of
- * 2026-08-09 were sent from inside the signed-in page, so they also carried its Origin and a
- * Referer of the page that posts; those two are sent here to match that shape.
+ * What the site's jQuery sends with an ajax post, `dataType: "json"`. The executed writes were sent
+ * from inside the signed-in page, so they also carried its Origin and a Referer of the page that
+ * posts; those two are sent here to match that shape.
  */
 const ACCEPT_JSON = "application/json, text/javascript, */*; q=0.01";
 
@@ -16,11 +16,11 @@ const ACCEPT_JSON = "application/json, text/javascript, */*; q=0.01";
  * and so the only place a form token is revealed.
  *
  * `X-Requested-With` goes on every post: without it Hiroba answers its error page at 200 and the
- * write does not happen (executed on update_score.php, 2026-08-09). The order of the sorting is
- * the order of trust: no answer; an answer that ended on the login or card-select page; one that
- * ended off Hiroba's origin, which is unexpected whatever it says; JSON with a 2xx status, which
- * is how every handler seen answers; the site's error page; a 404; anything else, JSON with an
- * error status included. Nothing here retries.
+ * write does not happen (executed on update_score.php). The order of the sorting is the order of
+ * trust: no answer; an answer that ended on the login or card-select page; one that ended off
+ * Hiroba's origin, which is unexpected whatever it says; JSON with a 2xx status, which is how every
+ * handler seen answers; the site's error page; a 404; anything else, JSON with an error status
+ * included. Nothing here retries.
  */
 export async function postAjax(
   transport: Transport,
@@ -110,8 +110,7 @@ export function readSaveCode(value: unknown): number | null {
 
 /**
  * Where a save keeps its message: the costume endpoint writes `errmsg`, and the profile endpoint,
- * which renames the player and sets their title, writes `err_message` (executed 2026-08-09, a
- * refused name).
+ * which renames the player and sets their title, writes `err_message` (seen on a refused name).
  */
 const MESSAGE_MEMBERS = ["errmsg", "err_message"] as const;
 

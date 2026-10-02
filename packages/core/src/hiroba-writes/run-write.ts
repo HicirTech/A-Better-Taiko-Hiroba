@@ -38,8 +38,8 @@ const STOP_REASON = {
  *
  * With `crossCheck`, another page is read first — before the editor — and again after the
  * read-back, to see it did not move. First, and not between the editor and the posts: the editor's
- * token has to be the last one the site issued before the posts. On 2026-09-28 a real costume save
- * whose token came from the editor, with my page read in between, answered 705 (更新に失敗しました。
+ * token has to be the last one the site issued before the posts. A real costume save whose token
+ * came from the editor, with my page read in between, answered 705 (更新に失敗しました。
  * 再度画面の読み込みを行ってください。) and changed nothing, although its pre-check had answered false.
  * The likely reading is that rendering a page with a form re-issues the session's token and voids
  * the one before; that is not settled, and this order holds either way.

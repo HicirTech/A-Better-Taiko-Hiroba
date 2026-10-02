@@ -19,8 +19,8 @@ export interface Judged<S> {
 
 /**
  * The verdict on a sent save, by the state first and the site's code second. Hiroba answers 0,
- * success, to saves that moved nothing (executed 2026-08-09: the costume set rule, the settings
- * pairs, the unstaged favourite folder), so the code never decides alone:
+ * success, to saves that moved nothing (the costume set rule, the settings pairs, the unstaged
+ * favourite folder), so the code never decides alone:
  *
  * 1. no read-back: the session ended, or the outcome is unknown;
  * 2. the set is where the write meant it to be: applied, unless the cross-checked page moved, or
