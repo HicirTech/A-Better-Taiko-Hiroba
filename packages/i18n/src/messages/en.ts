@@ -46,6 +46,13 @@ export const en: Messages = {
   "pictures.unavailable":
     "Some of Hiroba's pictures didn't load; plain stand-ins are shown instead.",
   "pictures.code": "Code for a report: {code}",
+  "scoreRank.2": "White Iki",
+  "scoreRank.3": "Bronze Iki",
+  "scoreRank.4": "Silver Iki",
+  "scoreRank.5": "Gold Miyabi",
+  "scoreRank.6": "Pink Miyabi",
+  "scoreRank.7": "Purple Miyabi",
+  "scoreRank.8": "Rainbow Kiwami",
   "crowns.heading": "Crowns",
   "crowns.silver": "Silver",
   "crowns.gold": "Gold",

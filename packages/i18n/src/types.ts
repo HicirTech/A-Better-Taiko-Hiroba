@@ -107,6 +107,20 @@ export interface Messages {
   "pictures.unavailable": string;
   /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
   "pictures.code": string;
+  /**
+   * The seven score ranks the panel counts, by the number of Hiroba's rank image
+   * (best_score_rank_N, 2 to 8). No page prints a rank's name: each image shows its kanji. 日本語
+   * writes them as core's SCORE_RANK_NAMES does, which a test holds it to. English gives each its
+   * colour and its tier, romanised (Iki, Miyabi, Kiwami); the Chinese ones are the same kanji in
+   * the language's own spelling, with pink as 粉.
+   */
+  "scoreRank.2": string;
+  "scoreRank.3": string;
+  "scoreRank.4": string;
+  "scoreRank.5": string;
+  "scoreRank.6": string;
+  "scoreRank.7": string;
+  "scoreRank.8": string;
   /** The heading of the panel's crown block, which follows the score ranks. */
   "crowns.heading": string;
   "crowns.silver": string;

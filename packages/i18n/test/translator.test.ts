@@ -133,6 +133,13 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
 
 /** Messages that are one game term, as each language writes it: the text is the term and no more. */
 const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
+  "scoreRank.2": { en: "White Iki", ja: "白粋", "zh-Hans": "白粹", "zh-Hant": "白粹" },
+  "scoreRank.3": { en: "Bronze Iki", ja: "銅粋", "zh-Hans": "铜粹", "zh-Hant": "銅粹" },
+  "scoreRank.4": { en: "Silver Iki", ja: "銀粋", "zh-Hans": "银粹", "zh-Hant": "銀粹" },
+  "scoreRank.5": { en: "Gold Miyabi", ja: "金雅", "zh-Hans": "金雅", "zh-Hant": "金雅" },
+  "scoreRank.6": { en: "Pink Miyabi", ja: "桃雅", "zh-Hans": "粉雅", "zh-Hant": "粉雅" },
+  "scoreRank.7": { en: "Purple Miyabi", ja: "紫雅", "zh-Hans": "紫雅", "zh-Hant": "紫雅" },
+  "scoreRank.8": { en: "Rainbow Kiwami", ja: "虹極", "zh-Hans": "虹极", "zh-Hant": "虹極" },
   "medal.heading": inEveryLanguage("どんメダル"),
   "costume.tab.colours": inEveryLanguage("いろ"),
   "costume.tab.items": inEveryLanguage("きせかえ"),
