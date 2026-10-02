@@ -270,6 +270,22 @@ describe("runWrite", () => {
     expect(outcome.kind === "diverged" && outcome.cross).toBe("changed");
   });
 
+  test("calls it diverged when the cross-checked page moved and the set did not", async () => {
+    const { hiroba, next } = fakeHiroba();
+    next("GET cross.php", () => page("cross.php", `<p id="c">a</p>`));
+    next("GET cross.php", () => page("cross.php", `<p id="c">b</p>`));
+    // The save answers 0 and moves nothing: it is the page beside it that changed, not a refusal.
+    next("POST ajax/save.php", () => json("ajax/save.php", { result: 0 }));
+    const { outcome } = await write(hiroba.transport, 2, { crossCheck: true });
+    expect(outcome).toMatchObject({
+      kind: "diverged",
+      before: { n: 1 },
+      expectedAfter: { n: 2 },
+      after: { n: 1 },
+      cross: "changed",
+    });
+  });
+
   test("marks the cross-check unknown when the page after the write does not arrive", async () => {
     const { hiroba, next } = fakeHiroba();
     next("GET cross.php", () => page("cross.php", `<p id="c">a</p>`));

@@ -80,6 +80,34 @@ describe("settle", () => {
     expect(settle(withPending(change(1, 2)), diverged, same).record).toEqual(record(1, 3));
   });
 
+  test("a write that diverged back to where it began, as the page beside it moved, makes no record", () => {
+    const diverged: WriteOutcome<Value> = {
+      kind: "diverged",
+      before: v(1),
+      expectedAfter: v(2),
+      after: v(1),
+      save: SAVE,
+      cross: "changed",
+    };
+    // The set is as the record left it: the record stays, and the pending write goes.
+    expect(settle(withPending(change(1, 2)), diverged, same)).toEqual({
+      record: record(0, 1),
+      pending: null,
+    });
+    // An undo that did not move the set is no different.
+    const undo: PendingUndo<Value> = { ...change(1, 0), purpose: "undo" };
+    expect(settle(withPending(undo), diverged, same)).toEqual({
+      record: record(0, 1),
+      pending: null,
+    });
+    // A record the set has moved away from is marked stale, as any outcome that shows the set does.
+    const older = beginPending({ record: record(0, 5), pending: null }, change(1, 2));
+    expect(settle(older, diverged, same)).toEqual({
+      record: { ...record(0, 5), status: "stale" },
+      pending: null,
+    });
+  });
+
   test("an undo that landed spends the record", () => {
     const undo: PendingUndo<Value> = { ...change(1, 0), purpose: "undo" };
     expect(settle(withPending(undo), applied(1, 0), same)).toEqual({ record: null, pending: null });
