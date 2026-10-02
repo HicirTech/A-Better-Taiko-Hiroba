@@ -2522,6 +2522,35 @@ try {
     `(() => { const lang = (selector) => document.querySelector(selector)?.lang; return ["#title-current", "#title-pick", "#name-input", "#name-site-warning"].every((selector) => lang(selector) === "ja"); })()`,
   );
 
+  // Titles that share a name are listed once each, however the list is searched, and no option's id
+  // repeats on the page: a search for the shared name lists both titles, a search for another lists
+  // that one alone, and clearing the search lists them all again.
+  const searchedFor = async (text: string) => {
+    await page.evaluate(
+      `(() => { const input = document.querySelector("#title-pick"); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
+    );
+    await Bun.sleep(300);
+    return page.evaluate<{ titles: (string | undefined)[]; ids: string[] }>(
+      `(() => { const options = [...document.querySelectorAll('[role="listbox"] [role="option"]')]; return { titles: options.map((option) => option.dataset.titleId), ids: options.map((option) => option.id) }; })()`,
+    );
+  };
+  await popupOpened();
+  const searchedShared = await searchedFor("同じ名前");
+  const searchedCleared = await searchedFor("");
+  const searchedOther = await searchedFor("最後");
+  await searchedFor("");
+  await popupClosed();
+  results.titlePickerListsEachTitleOnce =
+    same(searchedShared.titles, ["104", "105"]) &&
+    same(
+      searchedCleared.titles,
+      OWNED_TITLES.map((one) => String(one.id)),
+    ) &&
+    same(searchedOther.titles, ["108"]) &&
+    [searchedShared, searchedCleared, searchedOther].every(
+      (found) => new Set(found.ids).size === found.ids.length,
+    );
+
   // A name two titles share cannot tell which is worn: every option of it is marked and the note
   // says why. A name no title of the list has may be a title built from parts, and the note says so.
   await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(titleOf(104).label)}`);

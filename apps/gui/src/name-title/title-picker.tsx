@@ -23,7 +23,9 @@ export interface TitlePickerProps {
  * The titles the account owns, to pick one from: a box that searches them as it is typed in (the
  * list is long), each option written as Hiroba writes it. The option or options that read as the
  * title worn are marked Current; a name that two or more titles have is told apart by its number,
- * and no other is shown one, as Hiroba shows none.
+ * and no other is shown one, as Hiroba shows none. An option is keyed by its id: MUI keys it by its
+ * label otherwise, and two titles of one name would get one key, which leaves stray rows in the list
+ * once it is searched.
  */
 export function TitlePicker({ options, picked, worn, busy, onPick, i18n }: TitlePickerProps) {
   const { t } = i18n;
@@ -37,6 +39,7 @@ export function TitlePicker({ options, picked, worn, busy, onPick, i18n }: Title
       disabled={busy}
       onChange={(_event, option) => onPick(option)}
       getOptionLabel={(option) => option.label}
+      getOptionKey={(option) => option.id}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       filterOptions={(all, { inputValue }) => [...filterTitles(all, inputValue)]}
       noOptionsText={t("title.noMatch")}
