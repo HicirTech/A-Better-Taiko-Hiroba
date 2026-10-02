@@ -15,11 +15,11 @@
  * Titles, ids and names are placeholders. Two titles share a name and one holds a space, so the
  * undo of a shared name is refused and the list's `&nbsp;` is exercised.
  *
- * The saves follow what was executed on 2026-08-09: a title answers `detail.value` as a number and
- * an empty token; a rename answers the name and a fresh 32-character token, which is also the
- * session's token from then on; a refused name answers result 1 and the refusal in `err_message`,
- * with the rejected name echoed in `detail.value`. The shape of a 705 at this endpoint has not been
- * seen: the mock's is invented, with the costume's words.
+ * The saves follow what was executed: a title answers `detail.value` as a number and an empty
+ * token; a rename answers the name and a fresh 32-character token, which is also the session's
+ * token from then on; a refused name answers result 1 and the refusal in `err_message`, with the
+ * rejected name echoed in `detail.value`. The shape of a 705 at this endpoint has not been seen:
+ * the mock's is invented, with the costume's words.
  */
 import { ERROR_SHELL_BODY, type MockSession, type PostRecord, postRecordOf } from "./mock-costume";
 
@@ -43,7 +43,7 @@ export const OWNED_TITLES: readonly OwnedTitle[] = [
 /** Where the mock's title and name start, and return to on /__profile?reset=1. */
 export const INITIAL_PROFILE = { title: "サンプルの称号", nickname: "サンプルどん" } as const;
 
-/** A name the mock's filter refuses, with the words Hiroba refused a name with on 2026-08-09. */
+/** A name the mock's filter refuses, with the words Hiroba refused a name with. */
 export const REFUSED_NAME = "えぬじー";
 export const FILTER_MESSAGE = "不適切用語は使用できません";
 /** What a rename answers while /__rename-cooldown?on=1 is set: invented, as no limit has been seen. */

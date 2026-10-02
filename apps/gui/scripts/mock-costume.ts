@@ -7,9 +7,9 @@
  * each of かお, どう and てあし, and five tabs of owned items, each an `a[name]` whose thumbnail's
  * `srctmp` names its slot. The ids, the colours and the token are placeholders, not a real account's.
  *
- * The save follows the server model the executed writes of 2026-08-09 fit: store the body, then, if
- * the posted きぐるみ (costume_1) is not 0, set the four pieces to 0 whatever the body said. So a
- * body naming a piece beside a きぐるみ moves nothing and still answers 0 (write #22).
+ * The save follows the server model the executed writes fit: store the body, then, if the posted
+ * きぐるみ (costume_1) is not 0, set the four pieces to 0 whatever the body said. So a body naming a
+ * piece beside a きぐるみ moves nothing and still answers 0 (write #22).
  *
  * It also draws the editor's preview, imgsrc_mydon.php, as Hiroba does for a session only: a small
  * PNG made from the query's eight values, so two sets never share a picture, and without a session
@@ -140,7 +140,7 @@ export function postRecordOf(
   };
 }
 
-/** The site's error page, as Hiroba answered a post without X-Requested-With (2026-08-09). */
+/** The site's error page, as Hiroba answered a post without X-Requested-With. */
 export const ERROR_SHELL_BODY =
   "<h1>エラー</h1><table><tr><td>リクエストされたページは存在しません</td></tr></table>";
 
@@ -235,7 +235,7 @@ export function createCostumeEditor() {
     /**
      * Any other page with a form, my page included, issues the session a token too, and so voids the
      * editor's: taken to be how the real site behaves after a save whose token came from the editor,
-     * with my page read in between, answered 705 (2026-09-28).
+     * with my page read in between, answered 705.
      */
     issueTicket: issue,
 
@@ -369,8 +369,8 @@ ${slotTabs}
 
     /**
      * ajax/change_mydon.php. A token that is not the session's latest answers 705 with the message
-     * the real site gave on 2026-09-28, and a new token, as the site's script expects; a right one
-     * saves by the server model and is spent.
+     * the real site gave, and a new token, as the site's script expects; a right one saves by the
+     * server model and is spent.
      */
     save(session: MockSession, form: URLSearchParams, endAllSessions: () => void): Response {
       if (session.ticket === undefined || form.get("_tckt") !== session.ticket) {
