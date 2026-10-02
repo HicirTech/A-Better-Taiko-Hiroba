@@ -155,6 +155,7 @@ export interface Messages {
    * counts written over it. It has no heading to see, as on Hiroba.
    */
   "panel.art": string;
+  /** The Don Medal card's heading: どんメダル in 日本語. The plate's own name is Hiroba's, as written. */
   "medal.heading": string;
   /** Param: {count}, the medals collected this season. */
   "medal.count": string;
@@ -197,10 +198,17 @@ export interface Messages {
   "costume.preview.unavailable": string;
   /** Param: {code}, why it did not come, such as preview=notPng; never a URL or a query. */
   "costume.preview.code": string;
-  /** The top tabs, in the site's words: いろ (colours) and きせかえ (items). */
+  /**
+   * The top tabs, named as Hiroba's own guide names them: いろ (colours) and きせかえ (items) in
+   * 日本語, which writes the site's labels.
+   */
   "costume.tab.colours": string;
   "costume.tab.items": string;
-  /** Each value of the set, by the site's own tab label: かお, どう, てあし, then the five slots. */
+  /**
+   * Each value of the set, by its tab as Hiroba's guide names it: かお, どう and てあし (the face,
+   * the torso and the limbs), then the five slots, きぐるみ (the mascot), あたま, からだ, メイク
+   * and ぷちキャラ. 日本語 writes the site's labels.
+   */
   "costume.part.colorFace": string;
   "costume.part.colorBody": string;
   "costume.part.colorLimb": string;
@@ -211,7 +219,7 @@ export interface Messages {
   "costume.part.costume5": string;
   /** Param: {id}. An item or a colour by its number: the page gives no names. */
   "costume.id": string;
-  /** Empties a slot: the site's own button, はずす. */
+  /** Empties a slot: Hiroba's own button, はずす in 日本語. */
   "costume.remove": string;
   /**
    * An item's tile in the thumbnail grid, for a screen reader: its slot and its number. Params:

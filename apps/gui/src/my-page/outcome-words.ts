@@ -177,7 +177,7 @@ const costumeRows: Rows<WriteSets["costume"]> = (before, planned, now, i18n) => 
     text: partValue(part, set[part], i18n),
   });
   return parts.map((part) => ({
-    label: { text: t(PART_LABEL[part]), hirobas: true },
+    label: { text: t(PART_LABEL[part]) },
     before: cell(part, before),
     planned: cell(part, planned),
     now: now === null ? null : cell(part, now),

@@ -2,7 +2,6 @@ import type { Translator } from "@abth/i18n";
 import { Box, Button, ButtonBase, Skeleton, Stack, Typography } from "@mui/material";
 import { type RefObject, useRef, useSyncExternalStore } from "react";
 
-import { HIROBA_LANG } from "../language/show-language";
 import type { PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant } from "../session-port";
@@ -120,7 +119,6 @@ export function CostumeItemGrid({ lane, i18n, part, items, chosen, onPick }: Cos
         variant={chosen === 0 ? "contained" : "outlined"}
         color="secondary"
         aria-pressed={chosen === 0}
-        lang={HIROBA_LANG}
         onClick={() => onPick(0)}
       >
         {t("costume.remove")}
@@ -178,7 +176,6 @@ function ItemCell({
       id={`item-${part}-${want.id}`}
       aria-label={t("costume.item.label", { part: t(PART_LABEL[part]), id: want.id })}
       aria-pressed={chosen}
-      lang={HIROBA_LANG}
       title={number}
       onClick={() => onPick(want.id)}
       sx={{

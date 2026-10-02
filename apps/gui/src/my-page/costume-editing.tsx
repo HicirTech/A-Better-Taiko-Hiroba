@@ -1,7 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Alert, Box, ButtonBase, Stack, Tab, Tabs } from "@mui/material";
 
-import { HIROBA_LANG } from "../language/show-language";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CostumeEditorView, CostumeSet } from "../session-port";
 import { Changes } from "./costume-changes";
@@ -58,18 +57,8 @@ export function EditingView({
   return (
     <Stack spacing={2}>
       <Tabs value={tabs.tab} onChange={(_event, tab) => onTabs({ ...tabs, tab })}>
-        <Tab
-          id="costume-tab-colours"
-          value="colours"
-          lang={HIROBA_LANG}
-          label={t("costume.tab.colours")}
-        />
-        <Tab
-          id="costume-tab-items"
-          value="items"
-          lang={HIROBA_LANG}
-          label={t("costume.tab.items")}
-        />
+        <Tab id="costume-tab-colours" value="colours" label={t("costume.tab.colours")} />
+        <Tab id="costume-tab-items" value="items" label={t("costume.tab.items")} />
       </Tabs>
       {tabs.tab === "colours" ? (
         <>
@@ -83,7 +72,6 @@ export function EditingView({
                 key={part}
                 id={`costume-part-${part}`}
                 value={part}
-                lang={HIROBA_LANG}
                 label={t(PART_LABEL[part])}
               />
             ))}
@@ -108,7 +96,6 @@ export function EditingView({
                 key={part}
                 id={`costume-part-${part}`}
                 value={part}
-                lang={HIROBA_LANG}
                 label={t(PART_LABEL[part])}
               />
             ))}

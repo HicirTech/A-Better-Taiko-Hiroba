@@ -121,6 +121,14 @@ const inEveryLanguage = <T>(value: T): PerLanguage<T> => ({
   "zh-Hant": value,
 });
 
+/** A value for each language, in the picker's order: English, 日本語, 简体中文, 繁體中文. */
+const inEach = <T>(en: T, ja: T, zhHans: T, zhHant: T): PerLanguage<T> => ({
+  en,
+  ja,
+  "zh-Hans": zhHans,
+  "zh-Hant": zhHant,
+});
+
 /** Messages with one text in every language: the app's name, the plate's own print, a number's form. */
 const SAME_EVERYWHERE: readonly MessageKey[] = [
   "app.title",
@@ -133,39 +141,29 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
 
 /** Messages that are one game term, as each language writes it: the text is the term and no more. */
 const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
-  "panel.ranks": {
-    en: "Score ranks",
-    ja: "スコアランク",
-    "zh-Hans": "成绩排名",
-    "zh-Hant": "成績排名",
-  },
-  "scoreRank.2": { en: "White Iki", ja: "白粋", "zh-Hans": "白粹", "zh-Hant": "白粹" },
-  "scoreRank.3": { en: "Bronze Iki", ja: "銅粋", "zh-Hans": "铜粹", "zh-Hant": "銅粹" },
-  "scoreRank.4": { en: "Silver Iki", ja: "銀粋", "zh-Hans": "银粹", "zh-Hant": "銀粹" },
-  "scoreRank.5": { en: "Gold Miyabi", ja: "金雅", "zh-Hans": "金雅", "zh-Hant": "金雅" },
-  "scoreRank.6": { en: "Pink Miyabi", ja: "桃雅", "zh-Hans": "粉雅", "zh-Hant": "粉雅" },
-  "scoreRank.7": { en: "Purple Miyabi", ja: "紫雅", "zh-Hans": "紫雅", "zh-Hant": "紫雅" },
-  "scoreRank.8": { en: "Rainbow Kiwami", ja: "虹極", "zh-Hans": "虹极", "zh-Hant": "虹極" },
-  "crowns.silver": { en: "Clear", ja: "銀", "zh-Hans": "通关", "zh-Hant": "通過" },
-  "crowns.gold": { en: "Full Combo", ja: "金", "zh-Hans": "全连段", "zh-Hant": "全連段" },
-  "crowns.donderful": {
-    en: "Donderful Combo",
-    ja: "ドンダフル",
-    "zh-Hans": "全良",
-    "zh-Hant": "全良",
-  },
-  "medal.heading": inEveryLanguage("どんメダル"),
-  "costume.tab.colours": inEveryLanguage("いろ"),
-  "costume.tab.items": inEveryLanguage("きせかえ"),
-  "costume.part.colorFace": inEveryLanguage("かお"),
-  "costume.part.colorBody": inEveryLanguage("どう"),
-  "costume.part.colorLimb": inEveryLanguage("てあし"),
-  "costume.part.costume1": inEveryLanguage("きぐるみ"),
-  "costume.part.costume2": inEveryLanguage("あたま"),
-  "costume.part.costume3": inEveryLanguage("からだ"),
-  "costume.part.costume4": inEveryLanguage("メイク"),
-  "costume.part.costume5": inEveryLanguage("ぷちキャラ"),
-  "costume.remove": inEveryLanguage("はずす"),
+  "panel.ranks": inEach("Score ranks", "スコアランク", "成绩排名", "成績排名"),
+  "scoreRank.2": inEach("White Iki", "白粋", "白粹", "白粹"),
+  "scoreRank.3": inEach("Bronze Iki", "銅粋", "铜粹", "銅粹"),
+  "scoreRank.4": inEach("Silver Iki", "銀粋", "银粹", "銀粹"),
+  "scoreRank.5": inEach("Gold Miyabi", "金雅", "金雅", "金雅"),
+  "scoreRank.6": inEach("Pink Miyabi", "桃雅", "粉雅", "粉雅"),
+  "scoreRank.7": inEach("Purple Miyabi", "紫雅", "紫雅", "紫雅"),
+  "scoreRank.8": inEach("Rainbow Kiwami", "虹極", "虹极", "虹極"),
+  "crowns.silver": inEach("Clear", "銀", "通关", "通過"),
+  "crowns.gold": inEach("Full Combo", "金", "全连段", "全連段"),
+  "crowns.donderful": inEach("Donderful Combo", "ドンダフル", "全良", "全良"),
+  "medal.heading": inEach("Don Medals", "どんメダル", "どんメダル", "どんメダル"),
+  "costume.tab.colours": inEach("Colours", "いろ", "いろ", "いろ"),
+  "costume.tab.items": inEach("Costume", "きせかえ", "きせかえ", "きせかえ"),
+  "costume.part.colorFace": inEach("Face", "かお", "かお", "かお"),
+  "costume.part.colorBody": inEach("Torso", "どう", "どう", "どう"),
+  "costume.part.colorLimb": inEach("Limbs", "てあし", "てあし", "てあし"),
+  "costume.part.costume1": inEach("Mascot", "きぐるみ", "きぐるみ", "きぐるみ"),
+  "costume.part.costume2": inEach("Head", "あたま", "あたま", "あたま"),
+  "costume.part.costume3": inEach("Body", "からだ", "からだ", "からだ"),
+  "costume.part.costume4": inEach("Makeup", "メイク", "メイク", "メイク"),
+  "costume.part.costume5": inEach("Mini Character", "ぷちキャラ", "ぷちキャラ", "ぷちキャラ"),
+  "costume.remove": inEach("Remove", "はずす", "はずす", "はずす"),
 };
 
 /**
@@ -173,22 +171,23 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
  * sentences of Hiroba's own that it quotes, which every language quotes as the site writes them.
  */
 const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>>>> = {
-  "panel.footnote": {
-    en: ["Extreme and Extreme (Inner) charts", "Double Play charts"],
-    ja: ["おに＋おに裏", "双打"],
-    "zh-Hans": ["魔王＋魔王(里)", "双打"],
-    "zh-Hant": ["魔鬼＋魔鬼(裏)", "雙打"],
-  },
-  "medal.none": inEveryLanguage(["どんメダル"]),
-  "medal.unrecognised": inEveryLanguage(["どんメダル"]),
-  "costume.preview.alt": inEveryLanguage(["マイどん"]),
-  "costume.kigurumiWarning": inEveryLanguage([
-    "きぐるみ",
-    "あたま",
-    "からだ",
-    "メイク",
-    "ぷちキャラ",
-  ]),
+  "panel.footnote": inEach(
+    ["Extreme and Extreme (Inner) charts", "Double Play charts"],
+    ["おに＋おに裏", "双打"],
+    ["魔王＋魔王(里)", "双打"],
+    ["魔鬼＋魔鬼(裏)", "雙打"],
+  ),
+  "profile.myDonAlt": inEach(["My Don"], ["マイどん"], ["マイどん"], ["マイどん"]),
+  "costume.openByLongPress": inEach(["My Don"], ["マイどん"], ["マイどん"], ["マイどん"]),
+  "costume.preview.alt": inEach(["My Don"], ["マイどん"], ["マイどん"], ["マイどん"]),
+  "medal.none": inEach(["Don Medal"], ["どんメダル"], ["どんメダル"], ["どんメダル"]),
+  "medal.unrecognised": inEach(["Don Medal"], ["どんメダル"], ["どんメダル"], ["どんメダル"]),
+  "costume.kigurumiWarning": inEach(
+    ["Mascot", "Head", "Body", "Makeup", "Mini Character"],
+    ["きぐるみ", "あたま", "からだ", "メイク", "ぷちキャラ"],
+    ["きぐるみ", "あたま", "からだ", "メイク", "ぷちキャラ"],
+    ["きぐるみ", "あたま", "からだ", "メイク", "ぷちキャラ"],
+  ),
   "write.needsConfirmation": inEveryLanguage([
     "これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   ]),

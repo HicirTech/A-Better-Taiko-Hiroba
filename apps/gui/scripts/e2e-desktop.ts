@@ -880,16 +880,20 @@ try {
     (await readHits()) === readsBeforeLanguage &&
     (await platesAsked()).length === platesBeforeLanguage &&
     (await textOf("#crowns-silver")) === "11 of 14";
-  // Hiroba's own words say they are Japanese on a page in English: the nickname and the medal's
-  // heading and name; the names of the ranks and the crowns are the page's language.
+  // Hiroba's own data says it is Japanese on a page in English: the nickname, the title and the
+  // medal's name. The game's terms, the medal card's heading and the names of the ranks and the
+  // crowns, are the page's language and carry no mark.
   const langOf = (selector: string) =>
     page.evaluate<string | null>(
       `document.querySelector(${JSON.stringify(selector)})?.lang ?? null`,
     );
   results.hirobaWordsMarkedJapanese =
     (await langOf("#profile h2")) === "ja" &&
-    (await langOf("#medal h2")) === "ja" &&
-    (await langOf("#medal-name")) === "ja" &&
+    (await textOf('#title-plate span[lang="ja"]')) === "サンプルの称号" &&
+    (await langOf("#medal-name")) === "ja";
+  results.gameTermsLeftUnmarked =
+    (await textOf("#medal h2")) === "Don Medals" &&
+    (await langOf("#medal h2")) === "" &&
     (await page.evaluate<number>(
       `document.querySelectorAll("#ranks [lang], #crowns [lang]").length`,
     )) === 0;
@@ -964,7 +968,7 @@ try {
     (await previewSrc()) === onOpening && same(await previewQueries(), [previewQuery(START)]);
 
   // A draft survives a page switch, with the changes it lists; Reset puts back the set as read.
-  const FACE_CHANGE = "かお: #5 → #3";
+  const FACE_CHANGE = "Face: #5 → #3";
   await click("#swatch-colorFace-3");
   await goTo("overview");
   await goTo("costume");
@@ -1087,7 +1091,7 @@ try {
     await inStep("editing");
     await onTheColours();
   };
-  /** The editor's first tab, かお: where the page starts, and where a visit left on others is not. */
+  /** The editor's first tab, Face: where the page starts, and where a visit left on others is not. */
   const onTheColours = async () => {
     await click("#costume-tab-colours");
     await click("#costume-part-colorFace");
@@ -1129,7 +1133,7 @@ try {
   results.myDonShown =
     myDonsAtFirst === myDonsFailed + 1 &&
     (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true &&
-    (await attribute("#my-don-image", "alt")) === "Your マイどん, as Hiroba draws it" &&
+    (await attribute("#my-don-image", "alt")) === "Your My Don, as Hiroba draws it" &&
     tile.width > 0 &&
     Math.abs(tile.width - tile.height) < 1 &&
     !(await exists("#my-don-loading")) &&
@@ -1726,7 +1730,7 @@ try {
   await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   await Bun.sleep(500);
   results.portraitJumpsToCostumeByLongPress =
-    longPressHint === "Long-press your マイどん to open the Costume page." &&
+    longPressHint === "Long-press your My Don to open the Costume page." &&
     tapClicked &&
     !wentByTap &&
     !wentByMovedPress &&
@@ -1876,12 +1880,18 @@ try {
     (await editorHits()) === editorReadsBeforeGridPull + 1 &&
     (await myPageHits()) === myPageReadsBeforeGridPull;
   await touchEmulated(false);
-  // The editor's tabs, はずす and items are Hiroba's words, so they say they are Japanese.
-  results.editorWordsMarkedJapanese = same(
-    await page.evaluate<(string | null)[]>(
-      `["#costume-tab-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => document.querySelector(selector)?.lang ?? null)`,
-    ),
-    ["ja", "ja", "ja", "ja"],
+  // The editor's tabs, Remove and an item's label are the game's terms in the page's language, so
+  // they carry no mark of their own.
+  const editorTerms = await page.evaluate<(string | null)[][]>(
+    `["#costume-tab-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => { const node = document.querySelector(selector); return [node?.lang ?? null, node?.getAttribute("aria-label") ?? node?.textContent ?? null]; })`,
+  );
+  results.editorTermsLeftUnmarked = same(
+    editorTerms.map(([lang]) => lang),
+    ["", "", "", ""],
+  );
+  results.editorTermsInEnglish = same(
+    editorTerms.map(([, label]) => label),
+    ["Costume", "Mascot", "Remove", "Mascot #4"],
   );
   const withThumbnails = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),

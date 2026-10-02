@@ -130,10 +130,10 @@ describe("describeOutcome, the costume", () => {
         row.now?.text,
       ]),
     ).toEqual([
-      ["かお", "#5", "#3", "#5"],
-      ["どう", "#12", "#12", "#4"],
+      ["Face", "#5", "#3", "#5"],
+      ["Torso", "#12", "#12", "#4"],
     ]);
-    expect(comparison?.rows.every((row) => row.label.hirobas === true)).toBe(true);
+    expect(comparison?.rows.some((row) => row.label.hirobas === true)).toBe(false);
   });
 
   test("words a refused target by the part of the set at fault, and a code it does not know as it is", () => {
@@ -142,7 +142,7 @@ describe("describeOutcome, the costume", () => {
       field,
     });
     expect(describeOutcome(refused("colorFace"), i18n, { kind: "costume" }).message).toBe(
-      t("write.invalidTarget", { field: "かお" }),
+      t("write.invalidTarget", { field: "Face" }),
     );
     expect(describeOutcome(refused("elsewhere"), i18n, { kind: "costume" }).message).toBe(
       t("write.invalidTarget", { field: "elsewhere" }),

@@ -58,12 +58,7 @@ export function MedalCard({ medal, lane, i18n }: MedalCardProps) {
   return (
     <Card id="medal" variant="outlined">
       <CardContent>
-        <Typography
-          variant="subtitle1"
-          component="h2"
-          lang={HIROBA_LANG}
-          sx={{ fontWeight: 500, mb: 1 }}
-        >
+        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
           {t("medal.heading")}
         </Typography>
         {medal === null && (

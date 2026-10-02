@@ -13,7 +13,7 @@ export type ColourPart = (typeof COLOUR_PARTS)[number];
 export type SlotPart = (typeof SLOT_PARTS)[number];
 export type CostumePart = keyof CostumeSet;
 
-/** Each value's name, the site's own tab label. */
+/** Each value's name: its tab's label on the site, worded in each language by the catalog. */
 export const PART_LABEL = {
   colorFace: "costume.part.colorFace",
   colorBody: "costume.part.colorBody",
