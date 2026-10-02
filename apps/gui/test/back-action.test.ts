@@ -7,7 +7,9 @@ type BackCase = [menuOpen: boolean, page: Page, action: BackAction];
 
 test.each<BackCase>([
   [true, "overview", "closeMenu"],
+  [true, "costume", "closeMenu"],
   [true, "settings", "closeMenu"],
+  [false, "costume", "overview"],
   [false, "favorites", "overview"],
   [false, "settings", "overview"],
   [false, "overview", "leave"],

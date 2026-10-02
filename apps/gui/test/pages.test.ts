@@ -1,7 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { isPage, keepPage, keptPage } from "../src/navigation/pages";
+import { isPage, keepPage, keptPage, PAGES } from "../src/navigation/pages";
 import { memoryStorage, refusing } from "./storage-fakes";
+
+describe("PAGES", () => {
+  test("lists the Costume page between the Overview and Favourites", () => {
+    expect([...PAGES]).toEqual(["overview", "costume", "favorites", "settings"]);
+  });
+});
 
 describe("keptPage", () => {
   test("opens on the Overview until a page is shown", () => {
@@ -12,6 +18,8 @@ describe("keptPage", () => {
     const storage = memoryStorage();
     keepPage("favorites", storage);
     expect(keptPage(storage)).toBe("favorites");
+    keepPage("costume", storage);
+    expect(keptPage(storage)).toBe("costume");
     keepPage("settings", storage);
     expect(keptPage(storage)).toBe("settings");
   });
@@ -30,8 +38,8 @@ describe("keptPage", () => {
 });
 
 describe("isPage", () => {
-  test("accepts the three pages and nothing else", () => {
-    expect(["overview", "favorites", "settings"].every(isPage)).toBe(true);
-    expect([null, "", "Overview", "favourites"].some(isPage)).toBe(false);
+  test("accepts the four pages and nothing else", () => {
+    expect(["overview", "costume", "favorites", "settings"].every(isPage)).toBe(true);
+    expect([null, "", "Overview", "Costume", "favourites"].some(isPage)).toBe(false);
   });
 });
