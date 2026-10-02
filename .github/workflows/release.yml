@@ -101,11 +101,9 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # The release key is four secrets, written here as the two files of a keys folder (README,
-      # "The signing keys") in the runner's temporary directory, which the signed build is pointed
-      # at with ABTH_RELEASE_KEYS. Nothing goes into the checkout. They go in through the
-      # environment and into files, and are never printed. A release without them fails; a dry run,
-      # which anyone with write access can start, builds an unsigned APK instead.
+      # The release key comes from four secrets, written into a keys folder under the runner's
+      # temporary directory and given to the build as ABTH_RELEASE_KEYS; none is ever printed. A
+      # release fails without them; a dry run builds an unsigned APK instead.
       - name: Write the signing key
         id: key
         env:
