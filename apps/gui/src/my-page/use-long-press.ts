@@ -1,6 +1,7 @@
 import { type TouchEvent, useCallback, useEffect, useRef } from "react";
 
 import { movedPastSlop, pointOf, type TouchPoint } from "../read-again/pull-gesture";
+import { swallowTouchClick } from "./swallow-touch-click";
 
 /** How long a finger must stay still for a long-press: about Android's own. */
 export const LONG_PRESS_MS = 500;
@@ -27,7 +28,9 @@ type Press =
  * runs `onHeld`. A finger that wanders past the slop is a pull or a scroll (pull-gesture.ts), and a
  * second finger a zoom: either cancels it, as a lift before then does, and so does `enabled`
  * turning false while the finger is down. A tap stays a tap. The lift after a long-press sends no
- * click: the browser may make one of it, and it would land on whatever `onHeld` opened there.
+ * click: the browser may make one of it, and it would land on whatever `onHeld` opened there. The
+ * element's own touchend stops it while the element is there; `onHeld` may take it away (it goes
+ * to another page), so the window stops it too (swallowTouchClick).
  */
 export function useLongPress(enabled: boolean, onHeld: () => void): LongPressHandlers {
   const press = useRef<Press | null>(null);
@@ -54,6 +57,7 @@ export function useLongPress(enabled: boolean, onHeld: () => void): LongPressHan
 
       const timer = setTimeout(() => {
         press.current = { phase: "held" };
+        swallowTouchClick();
         onHeld();
       }, LONG_PRESS_MS);
       press.current = { phase: "waiting", landed: pointOf(finger), timer };
