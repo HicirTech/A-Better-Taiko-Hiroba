@@ -134,12 +134,16 @@ been made and recorded (see [The first real Android write](#the-first-real-andro
 neither the title nor the nickname is on either list until the first real ones have been made (see
 [The first real title and nickname writes](#the-first-real-title-and-nickname-writes)).
 
-Two variables apply to unpackaged desktop runs only: `ABTH_DEV_NOW` (an ISO time) fixes the clock the
-maintenance check uses, for tests, and `ABTH_DEBUG_SAVE_READS=1` keeps each page a read brings back
-in the data folder's `debug` folder, named after the page, with every form token replaced by
-`<tckt>`. Every answer is also kept in `debug\history`, in the order it came and with its
-time, so a write can be followed step by step; of a post, only Hiroba's answer is kept, never the
-form the app sent.
+Two variables are read by the desktop app alone. `ABTH_DEV_NOW` (an ISO time) fixes the clock the
+maintenance check uses, for tests, and only an unpackaged run takes it. `ABTH_DEBUG_SAVE_READS=1`
+is taken by a packaged build too, so the installer's or the portable exe's app keeps each page a
+read brings back in the data folder's `debug` folder, named after the page, with every form token
+replaced by `<tckt>`, once it is started with the variable set. Every answer is also kept in
+`debug\history`, in the order it came and with its time, so a write can be followed step by step; of
+a post, only Hiroba's answer is kept, never the form the app sent. A rename's answer holds the
+nickname that was asked for, taken or refused, so the folder holds those too, beside pages that
+carry your nickname, taiko number and title already: keep the folder to yourself, and delete it
+when you are done.
 
 ### The Costume page
 
