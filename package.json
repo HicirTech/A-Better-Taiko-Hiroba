@@ -15,7 +15,8 @@
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome lint .",
-    "check:corpus": "bun run packages/core/scripts/check-corpus.ts"
+    "check:corpus": "bun run packages/core/scripts/check-corpus.ts",
+    "release": "bun scripts/release.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.5",
