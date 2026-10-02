@@ -217,8 +217,10 @@ visit to another page or a read of your page.
 - **Outcomes.** They are worded for the title and the name apart from the costume's (Hiroba's code
   for a title it will not take, or a name it could not update, comes with no message, so the page
   says what it means), and Hiroba's own words, when it has some, are shown as the plain text they
-  are. After a title write that moved the title, your page is read again once, for the plate; the My
-  Don is not fetched anew for it, since only a costume change and your own **Read again** do that.
+  are. After a title write that moved the title, your page is read again once, for the plate, behind
+  the page, which stays as it is until your page is in, so the outcome is announced once and the
+  keyboard's focus is not lost; the My Don is not fetched anew for it, since only a costume change
+  and your own **Read again** do that. The Fab spins and Sign out is shut meanwhile.
   A rename puts the name it read back into the window's copy of your page, and reads nothing more.
 
 ### The costume preview

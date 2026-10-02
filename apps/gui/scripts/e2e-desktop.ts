@@ -2417,8 +2417,8 @@ try {
     await click("#title-save");
   };
   /**
-   * Waits out the read of my page that follows a title write the title moved by: it unmounts the page
-   * and shows it again, with the outcome, once the profile is in.
+   * Waits out the read of my page that follows a title write the title moved by: it runs behind the
+   * page, which shows the outcome all the while, and the profile is in once it ends.
    */
   const rereadDone = async (readsBefore: number) => {
     await waitFor(async () => ((await myPageHits()) >= readsBefore + 2 ? true : undefined));
@@ -2613,9 +2613,19 @@ try {
   await click("#title-review");
   await inSection("title", "confirming");
   const titleReview = await textOf("#title-changes");
+  // The keyboard is on Save when it is pressed, and the outcome is announced once: the read of my
+  // page that follows does not take the page away, so the focus stays on the section and the notice
+  // is not mounted a second time.
+  await page.evaluate(
+    `(() => { window.noticesMounted = 0; new MutationObserver((records) => { for (const record of records) for (const node of record.addedNodes) { if (node.nodeType === 1 && (node.id === "title-outcome" || node.querySelector("#title-outcome") !== null)) window.noticesMounted += 1; } }).observe(document.body, { childList: true, subtree: true }); document.querySelector("#title-save").focus(); })()`,
+  );
   await click("#title-save");
   const titleOutcome = await outcomeShown("title");
   await rereadDone(readsBeforeTitle);
+  results.titleWriteKeepsTheFocusAndAnnouncesOnce =
+    (await page.evaluate<boolean>(
+      `document.querySelector("#title-section")?.contains(document.activeElement) ?? false`,
+    )) && (await page.evaluate<number>("window.noticesMounted")) === 1;
   const titleLog = await requestsSettled(TITLE_REQUESTS.length + REREAD.length);
   const titleAfter = await profileNow();
   await waitFor(async () =>

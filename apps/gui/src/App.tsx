@@ -32,7 +32,6 @@ import type {
   HirobaSessionPort,
   ProfileView,
   ReadFailureKind,
-  ReadProfileOptions,
   SignInOutcome,
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
@@ -76,6 +75,8 @@ export interface AppProps {
 export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
+  /** My page is read behind the page that shows it: nothing else reads or signs out meanwhile. */
+  const [refreshing, setRefreshing] = useState(false);
   /**
    * The one lane every picture of Hiroba's comes through: one at a time, only what is on screen,
    * each remembered for the run, and none while a write runs.
@@ -149,42 +150,54 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   }, [onNameTitlePage, titlesUnread, writing, readTitles]);
 
   /**
-   * Reads my page, and shows it: whether it came. `renewsPortrait: false` is for a read the window
-   * makes on its own, which says nothing of the costume: the portrait is left as it was.
+   * Reads my page, and shows it: whether it came. A read made `behindThePage` is the window's own,
+   * after a title write: the page stays as it is until the profile is in, where a spinner in its
+   * place would unmount it, outcome notice and keyboard focus with it, and the portrait is left as
+   * it was, since a title says nothing of the costume.
    */
   const read = useCallback(
-    async (options?: ReadProfileOptions): Promise<boolean> => {
-      setScreen({ name: "reading" });
-      const result = await (options === undefined ? port.readProfile() : port.readProfile(options));
-      if (result.ok) {
-        // The plates may have changed with the title, the season or its progress, and the portrait
-        // with a costume changed anywhere: each is asked for again, and what was shown stays till it
-        // comes. The platform says whether the portrait is fetched anew or answered as kept. The
-        // score panel's art, kept for good once it came, is asked for again only if it did not.
-        lane.renew("titlePlate");
-        lane.renew("medalPlate");
-        if (options?.renewsPortrait !== false) {
-          lane.renew("myDon");
-        }
-        lane.forgetFailures("scorePanel");
-        await Promise.all([refreshUndo(), refreshTitleUndo(), refreshNameUndo()]);
-        setScreen({ name: "profile", profile: result.value });
-        return true;
-      }
-      if (SESSION_GONE.has(result.error.kind)) {
-        setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
+    async (behindThePage = false): Promise<boolean> => {
+      if (behindThePage) {
+        setRefreshing(true);
       } else {
-        setScreen({ name: "readFailed", ...result.error });
+        setScreen({ name: "reading" });
       }
-      return false;
+      try {
+        const result = await (behindThePage
+          ? port.readProfile({ renewsPortrait: false })
+          : port.readProfile());
+        if (result.ok) {
+          // The plates may have changed with the title, the season or its progress, and the
+          // portrait with a costume changed anywhere: each is asked for again, and what was shown
+          // stays till it comes. The platform says whether the portrait is fetched anew or answered
+          // as kept. The score panel's art, kept for good once it came, is asked for again only if
+          // it did not.
+          lane.renew("titlePlate");
+          lane.renew("medalPlate");
+          if (!behindThePage) {
+            lane.renew("myDon");
+          }
+          lane.forgetFailures("scorePanel");
+          await Promise.all([refreshUndo(), refreshTitleUndo(), refreshNameUndo()]);
+          setScreen({ name: "profile", profile: result.value });
+          return true;
+        }
+        if (SESSION_GONE.has(result.error.kind)) {
+          setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
+        } else {
+          setScreen({ name: "readFailed", ...result.error });
+        }
+        return false;
+      } finally {
+        setRefreshing(false);
+      }
     },
     [port, lane, refreshUndo, refreshTitleUndo, refreshNameUndo],
   );
 
   /**
    * A title write that moved the title, or may have, leaves the window's copy of my page out of
-   * date: the plate shows the old title. It is read again once, as the user's Read again would be,
-   * but the portrait is not fetched anew for it: a title says nothing of the costume.
+   * date: the plate shows the old title. It is read again once, behind the page it is on.
    */
   const stale = useRef<TitleStep | null>(null);
   const titleStep = titleEditor.step;
@@ -195,7 +208,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
       stale.current !== titleStep
     ) {
       stale.current = titleStep;
-      void read({ renewsPortrait: false });
+      void read(true);
     }
   }, [titleStep, read]);
 
@@ -274,6 +287,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const canReadAgain =
     signedIn &&
     !writing &&
+    !refreshing &&
     (!onEditorPage || editor.canRead) &&
     (!onNameTitlePage || titleEditor.canRead);
   const readAgainStarted = useRef(false);
@@ -301,6 +315,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
             <ReadAgainFab
               reading={
                 screen.name === "reading" ||
+                refreshing ||
                 (onEditorPage && editor.reading) ||
                 (onNameTitlePage && titleEditor.reading)
               }
@@ -320,7 +335,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           account={
             screen.name === "checking"
               ? { kind: "checking" }
-              : screen.name === "reading" || writing
+              : screen.name === "reading" || refreshing || writing
                 ? { kind: "reading" }
                 : signedIn
                   ? {
