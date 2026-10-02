@@ -3,10 +3,10 @@ import { Box, Chip, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
-import { usePicture } from "../pictures/use-picture";
+import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx } from "./hiroba-px";
-import { MyDonPortrait, type PortraitAction } from "./my-don-portrait";
+import { MY_DON, MyDonPortrait, type PortraitAction } from "./my-don-portrait";
 import { ScorePanel, scorePanelWant } from "./score-panel";
 import { TitlePlate } from "./title-plate";
 
@@ -27,9 +27,6 @@ const MAX_SCALE = 1.5;
 /** The space between the portrait and the plate. */
 const GAP_PX = 16;
 const PLATE: PictureWant = { kind: "titlePlate" };
-const MY_DON: PictureWant = { kind: "myDon" };
-/** Each picture is asked for once it is in the window, in the header's order. */
-const IN_THE_WINDOW = { root: null, rootMargin: "0px" } as const;
 
 /** Why a picture did not come, as the lane has it, or null while it has none or it came. */
 const failureOf = (answer: PictureAnswer | undefined): string | null =>
@@ -39,7 +36,7 @@ export interface OverviewHeaderProps {
   readonly profile: ProfileView;
   readonly lane: PictureLane;
   readonly i18n: Translator;
-  /** What a click on the portrait does: open the costume editor, or nothing. */
+  /** What a press on the portrait does: jump to the Costume page. */
   readonly portrait: PortraitAction;
 }
 
@@ -48,8 +45,7 @@ export interface OverviewHeaderProps {
  * 2026-09-29): the player's マイどん on the left; on the right, the title plate with the title, the
  * name and the dan over it, and under the plate, Hiroba's score panel with its ten counts written
  * over its art. On a narrow window they stack, the portrait first. No background art and none of
- * Hiroba's yellow: they sit on the app's own surface. The portrait opens the costume editor, where
- * this run may change the costume.
+ * Hiroba's yellow: they sit on the app's own surface. The portrait jumps to the Costume page.
  *
  * Each picture is asked for once it is on screen, and each has a plain stand-in of its geometry
  * until it comes, or if it does not, so every word and number reads the same without it. A dan

@@ -11,7 +11,7 @@ A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-dat
 - [ ] Show your profile, My Don, titles and dan ranks
 - [ ] Show your recent plays
 - [ ] Change your title, part by part
-- [ ] Change your player name
+- [ ] Change your nickname
 - [ ] Change My Don's costumes and colours
 - [ ] Change your game settings
 - [ ] Change your favourite songs

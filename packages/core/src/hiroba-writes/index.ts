@@ -9,6 +9,7 @@
  * once, read the whole set back, and judge by the state rather than by the site's answer.
  */
 export { postAjax, readPrecheck, readSaveCode, readSaveMessage } from "./ajax";
+export { spaced } from "./cross-checks";
 export {
   COSTUME_SLOT_KEYS,
   type CostumeSlot,
@@ -24,8 +25,31 @@ export {
   openCostumeEditor,
 } from "./costume-write";
 export { inMaintenance } from "./maintenance";
+export {
+  checkNameTarget,
+  describeName,
+  NAME_FIELDS,
+  NAME_FORM_MAX_LENGTH,
+  type NameAdvice,
+  type NameBody,
+  sameName,
+} from "./name-rule";
+export { changeName, RENAME_WRITE } from "./name-write";
 export { readHirobaPage, sessionEnded } from "./read-page";
 export { runWrite } from "./run-write";
+export {
+  checkTitleTarget,
+  sameTitle,
+  TITLE_FIELDS,
+  type TitleBody,
+  type TitleTarget,
+} from "./title-rule";
+export {
+  changeTitle,
+  openTitleEditor,
+  TITLE_WRITE,
+  type TitleEditorView,
+} from "./title-write";
 export {
   beginPending,
   EMPTY_UNDO_SLOT,

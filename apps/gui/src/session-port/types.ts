@@ -2,13 +2,26 @@ import type {
   CostumeEditorView,
   CostumeSet,
   MedalProgress,
+  NameState,
+  RenameState,
   Result,
   ScoreRank,
+  TitleEditorView,
+  TitleState,
+  TitleTarget,
   WriteOutcome,
 } from "@abth/core";
 
-/** The core's own shapes for the costume, which cross the port unchanged. */
-export type { CostumeEditorView, CostumeSet };
+/** The core's own shapes for the costume, the title and the name, which cross the port unchanged. */
+export type {
+  CostumeEditorView,
+  CostumeSet,
+  NameState,
+  RenameState,
+  TitleEditorView,
+  TitleState,
+  TitleTarget,
+};
 
 export type SignInOutcome =
   | { readonly kind: "signedIn" }
@@ -26,8 +39,34 @@ export type SignInOutcome =
   | { readonly kind: "refused"; readonly host: string };
 
 /**
- * The dan my page's label names: its name as Hiroba prints it, 五級 to 十段. A label that did not
- * read is `unreadable`, with codes a user can copy into a report: why, and what came back.
+ * A dan's board number, as core numbers the dans: 1 (五級) to 15 (十段), and 16 to 19 for the four
+ * named ranks, which my page's label has never shown. Each has a `dan.N` text in @abth/i18n.
+ */
+export type DanNumber =
+  | 1
+  | 2
+  | 3
+  | 4
+  | 5
+  | 6
+  | 7
+  | 8
+  | 9
+  | 10
+  | 11
+  | 12
+  | 13
+  | 14
+  | 15
+  | 16
+  | 17
+  | 18
+  | 19;
+
+/**
+ * The dan my page's label names, by its board number, which the interface words in its own language
+ * (`dan.N`). A label that did not read is `unreadable`, with codes a user can copy into a report:
+ * why, and what came back.
  *
  * `picture` is the label itself, the very bytes the dan was read off, for the interface to show as
  * Hiroba does: so it can never disagree with the name beside it, and costs no request of its own.
@@ -35,7 +74,7 @@ export type SignInOutcome =
  * that did not read can still carry one.
  */
 export type DanView =
-  | { readonly name: string; readonly picture: PictureView | null }
+  | { readonly board: DanNumber; readonly picture: PictureView | null }
   | { readonly unreadable: true; readonly code: string; readonly picture: PictureView | null };
 
 /**
@@ -48,6 +87,11 @@ export interface ProfileView {
   readonly nickname: string;
   /** "" when the player wears no title, a normal state. */
   readonly title: string;
+  /**
+   * Whether my page hands its rename dialog the flag that opens it, closes it, or none it can read.
+   * It only says what to show; the rename itself reads the page again before it sends anything.
+   */
+  readonly rename: RenameState;
   /** Null when the page gives none, or 未設定. */
   readonly region: string | null;
   /**
@@ -152,18 +196,21 @@ export interface PictureFailure {
   readonly code: string;
 }
 
-/** The kinds of write the app knows how to send. One so far: the costume, きせかえ. */
-export type WriteKind = "costume";
+/**
+ * The set each kind of write changes: all of the state it is made against, kept in its undo slot
+ * and read back after it. A kind joins here once, and the undo store and the write verbs follow.
+ */
+export interface WriteSets {
+  readonly costume: CostumeSet;
+  readonly title: TitleState;
+  readonly name: NameState;
+}
 
 /**
- * A kind of write this run may send. `verified` is whether its first real write from the app has
- * been made and recorded; until then the interface asks for an extra confirmation, and each write
- * also reads another page before and after.
+ * The kinds of write the app knows how to send: the costume, きせかえ, the title, 称号, and the
+ * Donder name, ドンだーネーム.
  */
-export interface EnabledWrite {
-  readonly kind: WriteKind;
-  readonly verified: boolean;
-}
+export type WriteKind = keyof WriteSets;
 
 /** A costume write as the interface asks for it: the set it was made against, and the set wanted. */
 export interface CostumeChange {
@@ -172,9 +219,25 @@ export interface CostumeChange {
 }
 
 /**
+ * A title write as the interface asks for it: the title worn as the title page showed it, and the
+ * title wanted, by the id and the name the page's list gave it. The platform's undo asks for a
+ * title by its name alone.
+ */
+export interface TitleChange {
+  readonly expected: TitleState;
+  readonly target: TitleTarget;
+}
+
+/** A rename as the interface asks for it: the name as my page showed it, and the name wanted. */
+export interface NameChange {
+  readonly expected: NameState;
+  readonly target: NameState;
+}
+
+/**
  * How a write ended, as the core's `runWrite` judged it, or refused by the platform before it
- * began: `notEnabled` when this run may not send that kind, `notSignedIn` with no session, and
- * `nothingToUndo` when an undo was asked for and this device holds none it can offer.
+ * began: `notSignedIn` with no session, and `nothingToUndo` when an undo was asked for and this
+ * device holds none it can offer.
  *
  * `interrupted` is a write this app stopped with no judgement: a fault in the app, not an answer
  * from Hiroba. A post may have gone out, so whether anything was saved is not known; the pending
@@ -183,25 +246,38 @@ export interface CostumeChange {
  * `busy` is a write asked for while another was queued or running: it sent nothing, and is never
  * queued to run after the other has ended.
  */
-export type WriteOutcomeView =
-  | WriteOutcome<CostumeSet>
-  | { readonly kind: "notEnabled" }
+export type WriteOutcomeView<S = CostumeSet> =
+  | WriteOutcome<S>
   | { readonly kind: "notSignedIn" }
   | { readonly kind: "nothingToUndo" }
   | { readonly kind: "interrupted" }
   | { readonly kind: "busy" };
 
 /**
- * The last write of one kind, as an undo can be offered for it: the set before it, which the undo
+ * The last write of kind `K`, as an undo can be offered for it: the set before it, which the undo
  * writes back, and the set it was read back as. Offered only while that set is still what this
  * device last saw, and only for the player signed in now.
  */
-export interface UndoSummary {
-  readonly kind: WriteKind;
+export interface UndoSummaryOf<K extends WriteKind> {
+  readonly kind: K;
   /** ISO 8601, when the write was started. */
   readonly at: string;
-  readonly before: CostumeSet;
-  readonly after: CostumeSet;
+  readonly before: WriteSets[K];
+  readonly after: WriteSets[K];
+}
+
+/** The last write of any kind, one of them: its `kind` says whose sets `before` and `after` are. */
+export type UndoSummary = { readonly [K in WriteKind]: UndoSummaryOf<K> }[WriteKind];
+
+/** What a read of my page may be asked besides the read: whether it is the user's own Read again. */
+export interface ReadProfileOptions {
+  /**
+   * Whether the read renews the My Don portrait, which is fetched anew the next time it is asked for.
+   * Every read but the session's first does, unless this says it does not: a read the window
+   * makes on its own, as after a title write, says nothing of the costume. Only a costume change,
+   * and the user's own Read again, renew it.
+   */
+  readonly renewsPortrait: boolean;
 }
 
 /**
@@ -219,18 +295,21 @@ export interface HirobaSessionPort {
    * My page, then the dan label it shows, if it shows one: one request to Hiroba per call, or two
    * with a dan. Never retries by itself.
    */
-  readProfile(): Promise<Result<ProfileView, ReadFailure>>;
+  readProfile(options?: ReadProfileOptions): Promise<Result<ProfileView, ReadFailure>>;
   /** Forgets the session on this device. Hiroba is not told. */
   signOut(): Promise<void>;
-  /** The kinds of write this run may send. Asks Hiroba nothing. */
-  enabledWrites(): Promise<readonly EnabledWrite[]>;
   /** The costume editor: one GET. Its form token stays with the platform. */
   openCostumeEditor(): Promise<Result<CostumeEditorView, ReadFailure>>;
   /**
+   * The title page: one GET, for the title worn and the titles the account owns. Its form token
+   * stays with the platform.
+   */
+  openTitleEditor(): Promise<Result<TitleEditorView, ReadFailure>>;
+  /**
    * Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried,
-   * answered as a `data:image/png` URL. A read that changes nothing, so every shell allows it while
-   * signed in, and no write gate stands in front of it. The session and the picture's URL stay with
-   * the platform; a failure is codes. How often it is asked for is the interface's to keep down.
+   * answered as a `data:image/png` URL. A read that changes nothing, so it is allowed whenever the
+   * window is signed in. The session and the picture's URL stay with the platform; a failure is
+   * codes. How often it is asked for is the interface's to keep down.
    */
   previewCostume(set: CostumeSet): Promise<Result<string, CostumePreviewFailure>>;
   /**
@@ -248,17 +327,32 @@ export interface HirobaSessionPort {
   readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /**
    * One costume write, the way every write goes: the editor, the pre-check, one save and the
-   * read-back, four requests; six while costume writes are not verified, with my page read before
-   * and after. Never retried. `notEnabled`, sending nothing, when this run may not write costumes;
+   * read-back, four requests; six where costume writes have not been made for real from this
+   * platform yet, with my page read before and after (`LIVE_CHECKED_WRITES`). Never retried.
    * `busy`, sending nothing, while another write is queued or running.
    */
   changeCostume(change: CostumeChange): Promise<WriteOutcomeView>;
+  /**
+   * One title write, the way every write goes: the title page, the pre-check, one save and my page
+   * read back for the title, four requests; six where title writes have not been made for real
+   * from this platform yet, with the costume page read before and after (`LIVE_CHECKED_WRITES`).
+   * Never retried. `busy`, sending nothing, while another write is queued or running.
+   */
+  changeTitle(change: TitleChange): Promise<WriteOutcomeView<TitleState>>;
+  /**
+   * One rename, the way every write goes, with no pre-check: my page for the editor, one save and
+   * my page read back for the name, three requests; five where renames have not been made for real
+   * from this platform yet, with my page read before and after for the title (`LIVE_CHECKED_WRITES`).
+   * Never retried. `busy`, sending nothing, while another write is queued or running.
+   */
+  changeName(change: NameChange): Promise<WriteOutcomeView<NameState>>;
   /** The undo this device can offer, one per kind at most. Asks Hiroba nothing. */
   pendingUndo(): Promise<readonly UndoSummary[]>;
   /**
    * Undoes the last write of `kind`: a write like any other, from the set it was read back as to
    * the set before it, with a fresh token, the pre-check and a read-back. A set changed anywhere
-   * since stops it (`changedSincePreview`), and the undo is then no longer offered.
+   * since stops it (`changedSincePreview`), and the undo is then no longer offered. A title is put
+   * back by the name it had, and only when that name is exactly one title of today's list.
    */
-  undo(kind: WriteKind): Promise<WriteOutcomeView>;
+  undo<K extends WriteKind>(kind: K): Promise<WriteOutcomeView<WriteSets[K]>>;
 }

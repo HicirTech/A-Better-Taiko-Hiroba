@@ -1,10 +1,12 @@
 import type { Messages } from "../types";
 
-/** 日本語. The site is ドンだーひろば, or ひろば for short; its own words stay as it writes them. */
+/** 日本語. The site is ドンだーひろば, or ひろば for short, and the game's terms are its own words. */
 export const ja: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.system": "システムのデフォルト（{name}）",
   "nav.overview": "概要",
+  "nav.costume": "きせかえ",
+  "nav.nameTitle": "ドンだーネームと称号",
   "nav.favorites": "お気に入り",
   "nav.settings": "設定",
   "nav.menu": "メニュー",
@@ -36,6 +38,25 @@ export const ja: Messages = {
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "段位：読み取れませんでした",
   "profile.danCode": "報告用コード：{code}",
+  "dan.1": "五級",
+  "dan.2": "四級",
+  "dan.3": "三級",
+  "dan.4": "二級",
+  "dan.5": "一級",
+  "dan.6": "初段",
+  "dan.7": "二段",
+  "dan.8": "三段",
+  "dan.9": "四段",
+  "dan.10": "五段",
+  "dan.11": "六段",
+  "dan.12": "七段",
+  "dan.13": "八段",
+  "dan.14": "九段",
+  "dan.15": "十段",
+  "dan.16": "玄人",
+  "dan.17": "名人",
+  "dan.18": "超人",
+  "dan.19": "達人",
   "profile.myDonAlt": "あなたのマイどん（ひろばの画像）",
   "profile.favorites": "お気に入り",
   "profile.favoriteSong": "大好きな曲：{title}",
@@ -45,6 +66,13 @@ export const ja: Messages = {
   "pictures.loading": "ひろばの画像を読み込み中…",
   "pictures.unavailable": "ひろばの画像の一部を読み込めなかったため、簡易表示にしています。",
   "pictures.code": "報告用コード：{code}",
+  "scoreRank.2": "白粋",
+  "scoreRank.3": "銅粋",
+  "scoreRank.4": "銀粋",
+  "scoreRank.5": "金雅",
+  "scoreRank.6": "桃雅",
+  "scoreRank.7": "紫雅",
+  "scoreRank.8": "虹極",
   "crowns.heading": "王冠",
   "crowns.silver": "銀",
   "crowns.gold": "金",
@@ -73,11 +101,8 @@ export const ja: Messages = {
   "failure.unexpectedPage": "ひろばから想定外のページが返ってきました。",
   "failure.detail": "報告用の詳細：{detail}",
   "platform.unsupported": "このビルドは、デスクトップ版か Android 版のアプリの中でしか動きません。",
-  "costume.open": "きせかえを変更",
-  "costume.openByLongPress": "マイどんを長押しすると、きせかえを変更できます。",
-  "costume.notOpen":
-    "このビルドではまだ使えません：アプリからの実際の変更が、まだ一度も確かめられていません。",
-  "costume.title": "きせかえ",
+  "costume.open": "きせかえページを開く",
+  "costume.openByLongPress": "マイどんを長押しすると、きせかえページを開けます。",
   "costume.reading": "ひろばからきせかえを読み込み中…",
   "costume.preview.alt": "このきせかえのマイどん（ひろばの画像）",
   "costume.preview.loading": "プレビューを更新中…",
@@ -105,32 +130,72 @@ export const ja: Messages = {
   "costume.changesHeading": "変更点",
   "costume.change": "{part}：{from} → {to}",
   "costume.noChanges": "まだ何も変えていません。",
+  "costume.reset": "リセット",
   "costume.review": "内容を確認",
   "costume.back": "戻る",
   "costume.save": "ひろばに保存",
-  "costume.close": "閉じる",
   "costume.confirmIntro": "ひろばに次の変更を依頼します：",
-  "costume.firstWrite":
-    "この種類の書き込みは、アプリからは初めてです。元に戻すための記録を残し、結果を読み直して確かめます。",
-  "costume.crossCheck": "ほかに何も変わっていないか、前後で称号も読み取ります。",
   "costume.saving": "保存中…そのあと読み直します",
   "costume.undoLast": "直前のきせかえの変更を元に戻す",
   "costume.undoWhen": "{time} に変更",
   "costume.undoing": "元に戻しています…そのあと読み直します",
+  "title.heading": "称号",
+  "title.reading": "ひろばから称号の一覧を読み込み中…",
+  "title.pick": "称号を選ぶ",
+  "title.open": "称号の一覧を開く",
+  "title.close": "称号の一覧を閉じる",
+  "title.clear": "選択を取り消す",
+  "title.count": "選べる称号：{count}個",
+  "title.noMatch": "一致する称号がありません。",
+  "title.none": "ひろばには選べる称号が表示されていません。",
+  "title.current": "現在",
+  "title.shared":
+    "この名前の称号が{count}個あるため、どれを設定しているかアプリには判別できません。",
+  "title.notListed":
+    "今の称号は一覧にありません。称号パーツで作ったものかもしれません。このバージョンでは読み取れず、元にも戻せません。",
+  "title.reload": "一覧を読み直す",
+  "title.undoLast": "直前の称号の変更を元に戻す",
+  "title.undoBack": "戻す先：{title}",
+  "title.undoUnresolved":
+    "この取り消しは使えません：前の称号が今の一覧にないため、アプリから設定し直せません。",
+  "title.undoAmbiguous":
+    "この取り消しは使えません：前の称号は同じ名前の称号が複数あります。一覧から自分で選んでください。",
+  "title.undoNoTitle":
+    "この取り消しは使えません：前は称号がなく、このバージョンでは称号を外せません。",
+  "name.heading": "ドンだーネーム",
+  "name.field": "新しいドンだーネーム",
+  "name.counter": "{count} / {max}",
+  "name.siteWarning":
+    "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
+  "name.faqRule":
+    "ひろばのヘルプには『ドンだーネームは、ひらがなと記号「ー、～、！、？」が入力可能です。５文字までです。』とあります。これ以外のドンだーネームも見られますが、受け付けられるかはアプリからは保証できません。",
+  "name.outsideFaq": "ひろばのヘルプの範囲外です。受け付けられないか、元に戻せないことがあります。",
+  "name.wide":
+    "半角10文字分（全角は2文字分）より長いドンだーネームです。受け付けられないことがあります。",
+  "name.same": "すでにそのドンだーネームです。",
+  "name.closed":
+    "ひろばが今はドンだーネームを変更できないと言っています：今はドンだーネームは変更できないドン！",
+  "name.unknownState":
+    "今ひろばがドンだーネームの変更を受け付けているか、このバージョンでは読み取れませんでした。試すことはできます。",
+  "name.mayNotRevert":
+    "ひろばは、すぐには元のドンだーネームに戻させてくれないことがあります。そのまま使い続けてよいドンだーネームを選んでください。",
+  "name.undoLast": "ドンだーネームを元に戻す",
+  "name.undoBack": "戻す先：{name}",
+  "name.undoMayFail":
+    "これもひろばに断られることがあります。断られた場合、ドンだーネームはそのままです。",
   "write.applied": "保存しました。ひろばに新しいきせかえが反映されています。",
   "write.undone": "元に戻しました。ひろばのきせかえは元どおりです。",
-  "write.undo": "元に戻す",
   "write.siteNote": "ひろばはコード {code} を返しましたが、読み直すと変更は反映されています。",
   "write.crossUnknown":
     "保存しましたが、確認のための称号の再読み込みができませんでした。マイページで確かめてください。",
   "write.appliedNotSynced":
-    "ひろばには保存されましたが、ゲームサーバーに届きませんでした。届けるには、もう一度設定してください。",
+    "ひろばには保存されましたが、ゲームサーバーに届きませんでした。このアプリからは再送信できません。届けるには、ひろばのページでもう一度設定してください。",
   "write.notApplied.unchanged":
     "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すときせかえは元のままでした。",
   "write.notApplied.refused":
     "ひろばが変更を受け付けませんでした（コード {code}）。何も変わっていません。",
   "write.notApplied.stale":
-    "エディターの情報が古くなっていました。開き直してやり直してください。何も変わっていません。",
+    "エディターの情報が古くなっていました。再読み込みしてから、やり直してください。何も変わっていません。",
   "write.notApplied.siteMaintenance": "ひろばはメンテナンス中です。何も変わっていません。",
   "write.notApplied.failed": "ひろばで保存できませんでした。何も変わっていません。",
   "write.notApplied.noAnswer": "ひろばから保存の応答がなく、何も変わっていません。",
@@ -145,14 +210,13 @@ export const ja: Messages = {
   "write.siteMessage": "ひろばからのメッセージ：{message}",
   "write.diverged": "きせかえが予定どおりになりませんでした。下で比べてください。",
   "write.crossChanged": "称号も変わっています。",
-  "write.outcomeUnknown":
-    "結果を読み直せませんでした。やり直す前に、エディターを開き直してください。",
+  "write.outcomeUnknown": "結果を読み直せませんでした。やり直す前に、再読み込みしてください。",
   "write.sessionGone":
     "何も保存される前に、ひろばのセッションが切れました。もう一度ログインしてください。",
   "write.sessionGoneAfterSave":
     "ひろばのセッションが切れました。変更が保存されたかはわかりません。ログインしてから確かめてください。",
   "write.changedSincePreview":
-    "エディターを開いたあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
+    "エディターが前回読み込んだあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
   "write.undoStale":
     "その変更のあとにきせかえがほかの場所で変更されたため、元に戻しませんでした。この変更はもう元に戻せません。",
   "write.invalidTarget": "送信する前に、アプリが変更を止めました：{field}。",
@@ -164,13 +228,50 @@ export const ja: Messages = {
     "ひろばが、このアプリではまだ答えられない確認を求めたため、何も変更していません。ひろばのメッセージ：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite":
     "ひろばがアプリのリクエストを受け付けませんでした。何も変更していません。",
-  "write.notEnabled": "このビルドでは、この種類の変更は送信しません。",
   "write.nothingToUndo": "元に戻せる変更はありません。",
   "write.busy": "別の変更を送信中のため、この変更は送信していません。",
   "write.interrupted":
-    "結果がわかる前にアプリが止まったため、保存されたかどうかわかりません。やり直す前に、エディターを開き直して確かめてください。",
+    "結果がわかる前にアプリが止まったため、保存されたかどうかわかりません。やり直す前に、再読み込みして確かめてください。",
   "write.code": "報告用コード：{code}",
   "write.before": "変更前",
   "write.planned": "予定",
   "write.now": "現在",
+  "write.title.applied": "保存しました。ひろばに新しい称号が反映されています。",
+  "write.title.undone": "元に戻しました。ひろばの称号は元どおりです。",
+  "write.title.unchanged":
+    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すと称号は元のままでした。",
+  "write.title.diverged": "称号が予定どおりになりませんでした。下で比べてください。",
+  "write.title.crossChanged": "きせかえも変わっています。",
+  "write.title.crossUnknown":
+    "保存しましたが、確認のためのきせかえの再読み込みができませんでした。マイページで確かめてください。",
+  "write.title.changedSincePreview":
+    "一覧を開いたあとに、称号がほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
+  "write.title.undoStale":
+    "その変更のあとに称号がほかの場所で変更されたため、元に戻しませんでした。この変更はもう元に戻せません。",
+  "write.title.nothingToChange":
+    "すでにその称号です（ひろばは名前だけを表示します）。何も送信していません。",
+  "write.title.needsConfirmation":
+    "ひろばが、このアプリではまだ答えられない確認を求めたため、何も変更していません。ひろばのメッセージ：この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
+  "write.title.refused1": "ひろばは、称号が選ばれていないと言っています。",
+  "write.title.refused5": "ひろばは、その称号を獲得していないと言っています。",
+  "write.title.refused6": "ひろばがエラーを返し、もう一度選ぶよう求めています。",
+  "write.name.applied": "保存しました。ひろばに新しいドンだーネームが反映されています。",
+  "write.name.undone": "元に戻しました。ひろばのドンだーネームは元どおりです。",
+  "write.name.unchanged":
+    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すとドンだーネームは元のままでした。",
+  "write.name.diverged": "ドンだーネームが予定どおりになりませんでした。下で比べてください。",
+  "write.name.changedSincePreview":
+    "このページを読み込んだあとに、ドンだーネームがほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
+  "write.name.undoStale":
+    "その変更のあとにドンだーネームがほかの場所で変更されたため、元に戻しませんでした。この変更はもう元に戻せません。",
+  "write.name.nothingToChange": "すでにそのドンだーネームです。何も送信していません。",
+  "write.name.refused2": "ひろばがドンだーネームを更新できませんでした。",
+  "write.invalid.titleNotOwned": "その称号は一覧にありません",
+  "write.invalid.titleUnresolved": "戻す先の称号が一覧にありません",
+  "write.invalid.titleAmbiguous": "戻す先の名前の称号が複数あります",
+  "write.invalid.nameEmpty": "ドンだーネームが空です",
+  "write.invalid.nameEdge": "ドンだーネームの先頭か末尾に空白があります",
+  "write.invalid.nameTooLong": "ドンだーネームがひろばの入力欄の上限より長いです",
+  "write.invalid.nameControl": "送信できない文字がドンだーネームに含まれています",
+  "write.invalid.nameClosed": "今ひろばはドンだーネームの変更を受け付けていません",
 };

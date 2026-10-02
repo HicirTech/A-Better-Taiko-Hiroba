@@ -108,10 +108,25 @@ export function readSaveCode(value: unknown): number | null {
   return typeof result === "string" && /^\d+$/.test(result) ? Number(result) : null;
 }
 
-/** The message a save came back with (`errmsg`), as plain text; null when there is none. */
+/**
+ * Where a save keeps its message: the costume endpoint writes `errmsg`, and the profile endpoint,
+ * which renames the player and sets their title, writes `err_message` (executed 2026-08-09, a
+ * refused name).
+ */
+const MESSAGE_MEMBERS = ["errmsg", "err_message"] as const;
+
+/**
+ * The message a save came back with, as plain text: the first of its two members that holds a
+ * string that is not empty; null when there is none.
+ */
 export function readSaveMessage(value: unknown): string | null {
-  const message = memberOf(value, "errmsg");
-  return typeof message === "string" && message !== "" ? message : null;
+  for (const name of MESSAGE_MEMBERS) {
+    const message = memberOf(value, name);
+    if (typeof message === "string" && message !== "") {
+      return message;
+    }
+  }
+  return null;
 }
 
 function memberOf(value: unknown, name: string): unknown {

@@ -1,3 +1,12 @@
+import type { WriteDeps } from "@abth/core";
+
+/**
+ * What a platform decides for one write besides the transport and Hiroba's origin, which the
+ * write is given: the clock, whether it also reads another page before and after, and where the
+ * undo record is kept. A throw from `beginUndo` stops the write unsent.
+ */
+export type WriteOptions<S> = Omit<WriteDeps<S>, "transport" | "hirobaOrigin">;
+
 /**
  * The sites the app asks things of: the two a sign-in walks through, and the one host off Hiroba a
  * picture may come from. Production values live in `endpoints.ts`.

@@ -1,6 +1,6 @@
-import { DAN_NAMES, isErr, readDanLabel, type Transport, type TransportResponse } from "@abth/core";
+import { isErr, readDanLabel, type Transport, type TransportResponse } from "@abth/core";
 
-import type { DanView, PictureView } from "../session-port";
+import { type DanNumber, type DanView, isWhole, type PictureView } from "../session-port";
 import { checkPng, describeAnswer, pngDataUrl } from "./png-answer";
 import type { HirobaEndpoints } from "./types";
 
@@ -13,6 +13,9 @@ const LABEL_PATH = "/imgsrc_danlabel.php";
 const MAX_LABEL_BYTES = 64 * 1024;
 /** Far above a label's 96×40, and still a bound on what the window is handed to draw. */
 const MAX_LABEL_SIDE = 512;
+/** The first and the last board number the catalog names: 五級, and 達人, the fourth named rank. */
+const FIRST_DAN = 1;
+const LAST_DAN = 19;
 
 /**
  * Reads the dan off the label my page shows, with one GET, and never fails the profile: whatever
@@ -66,11 +69,14 @@ export async function readDan(
         : "";
     return unreadable(`dan=${failure.kind}${size} ${describe(response)}`, picture);
   }
-  const name = DAN_NAMES[read.value.dan - 1];
-  return name === undefined
-    ? unreadable(`dan=unnamed ${describe(response)}`, picture)
-    : { name, picture };
+  const board = read.value.dan;
+  return isDanNumber(board)
+    ? { board, picture }
+    : unreadable(`dan=unnamed ${describe(response)}`, picture);
 }
+
+/** Whether the catalog names `board`, which core's reader gives as a plain number. */
+const isDanNumber = (board: number): board is DanNumber => isWhole(board, FIRST_DAN, LAST_DAN);
 
 /**
  * The label as a picture the window may show: the answer checked as every picture that crosses is,

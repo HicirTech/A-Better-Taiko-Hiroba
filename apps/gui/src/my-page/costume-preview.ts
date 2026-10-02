@@ -17,7 +17,7 @@ export const NO_PREVIEW: PreviewState = { image: null, loading: false, failure: 
 
 /** How long a pick waits before its picture is asked for; a pick inside it starts it over. */
 export const PREVIEW_DELAY_MS = 300;
-/** Pictures kept for sets already drawn this opening, so a pick back to one asks nothing. */
+/** Pictures kept for sets already drawn, so a pick back to one asks nothing. */
 const KEPT_PICTURES = 8;
 
 /** A timer that can be cleared: the page's own, or a test's. */
@@ -29,19 +29,32 @@ export interface PreviewTimers {
 export interface PreviewSchedulerOptions {
   /** One request for one set's picture: the port's previewCostume. */
   readonly load: (set: CostumeSet) => Promise<Result<string, CostumePreviewFailure>>;
-  /** Called with every change to what the preview shows, while started. */
+  /** Called with every change to what the preview shows, while started, and when it is reset. */
   readonly onState: (state: PreviewState) => void;
   readonly delayMs?: number;
   readonly timers?: PreviewTimers;
 }
 
 export interface PreviewScheduler {
-  /** Lets it ask again, and asks for the set wanted if that is still to be drawn. */
+  /**
+   * Lets it ask again, shows what it has, and asks for the set wanted if that is still to be drawn.
+   * A picture that landed while it was stopped is shown now.
+   */
   start(): void;
-  /** Asks nothing more: the pause after a pick is dropped, and a picture landing is not shown. */
+  /**
+   * Asks nothing more: the pause after a pick is dropped, and a picture landing is kept but not
+   * shown until it starts again.
+   */
   stop(): void;
   /** The set the editor shows now. The first is asked for at once; each after it after a pause. */
   want(set: CostumeSet): void;
+  /**
+   * Forgets everything: the pictures kept, the one shown, the set asked for last and the pause after
+   * a pick, and tells the window it shows nothing, started or not. A picture still on its way
+   * is dropped when it lands. For a session that ends: the next player's page must not open on
+   * this one's last picture, nor wait out a pause for its first.
+   */
+  reset(): void;
 }
 
 const PAGE_TIMERS: PreviewTimers = {
@@ -54,11 +67,12 @@ const keyOf = (set: CostumeSet) => COSTUME_PARTS.map((part) => set[part]).join("
 
 /**
  * How often the editor asks Hiroba for a picture of the set, kept down as Hiroba's own editor does
- * not: one picture when the editor opens, then one per change once the picks pause, so a burst of
- * clicks is one request. At most one request is in flight. A set picked while one is on its way
- * supersedes it: that picture is dropped when it lands, and the newest set is asked for then. Never
- * a retry and never a guess at what will be picked next; a picture already drawn this opening is
- * shown again without asking. Nothing is asked while stopped, which is whenever the editor is shut.
+ * not: one picture when the editor first shows, then one per change once the picks pause, so a
+ * burst of clicks is one request. At most one request is in flight. A set picked while one is on
+ * its way supersedes it: that picture is dropped when it lands, and the newest set is asked for
+ * then. Never a retry and never a guess at what will be picked next; a picture already drawn is
+ * shown again without asking, also after a stop and a start. Nothing is asked while stopped, which
+ * is whenever the page that shows the editor is not shown.
  */
 export function createPreviewScheduler(options: PreviewSchedulerOptions): PreviewScheduler {
   const delayMs = options.delayMs ?? PREVIEW_DELAY_MS;
@@ -72,6 +86,8 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
   let shownKey: string | null = null;
   let inFlight: string | null = null;
   let timer: unknown = null;
+  /** Bumped by reset(): an answer asked for before it is dropped. */
+  let generation = 0;
 
   const show = (next: PreviewState) => {
     state = next;
@@ -107,6 +123,7 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
     }
     inFlight = key;
     askedKey = key;
+    const asked = generation;
     show({ ...state, loading: true, failure: null });
     options
       .load(set)
@@ -116,18 +133,20 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
         () => ({ failure: "preview=callFailed" }),
       )
       .then((answer) => {
-        inFlight = null;
-        if (!started) {
+        if (asked !== generation) {
           return;
         }
+        inFlight = null;
         if (wanted?.key !== key) {
           // Superseded: this picture is dropped, and the newest set is asked for unless a pick's
-          // pause is still running, which asks when it ends.
+          // pause is still running, which asks when it ends. Stopped, nothing is asked: the
+          // newest set is not the one asked for last, so starting again asks for it.
           if (timer === null) {
             send();
           }
           return;
         }
+        // Stopped, the answer is still kept and noted, and shown when it starts again.
         if ("image" in answer) {
           keep(key, answer.image);
           shownKey = key;
@@ -174,6 +193,7 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
   return {
     start() {
       started = true;
+      options.onState(state);
       // Only a set not asked for yet: stopping and starting again is not a retry.
       if (wanted !== null && wanted.key !== askedKey) {
         plan();
@@ -190,6 +210,17 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
       }
       wanted = { key, set };
       plan();
+    },
+    reset() {
+      generation += 1;
+      clearTimer();
+      kept.clear();
+      wanted = null;
+      askedKey = null;
+      shownKey = null;
+      inFlight = null;
+      state = NO_PREVIEW;
+      options.onState(NO_PREVIEW);
     },
   };
 }

@@ -7,54 +7,18 @@ import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
 import { medalPlatePng, myDonPng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
+import {
+  CLOSE_LABEL,
+  HIROBA,
+  memoryFlag,
+  MY_PAGE,
+  myPageAnswer,
+  until,
+} from "./android-port-fixtures";
 import { native, nativeBase64 } from "./capacitor-fakes";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const { createAndroidPort } = await import("../src/platform/android");
-
-const HIROBA = "https://donderhiroba.jp";
-const CLOSE_LABEL = "Close sign-in";
-/**
- * A dan-less my page, so a read is one request: the title plate, bare as Hiroba writes it, over
- * the title. Placeholders throughout, no real account's.
- */
-const MY_PAGE = `<html><body><div id="mydon_area">
-  <img src="imgsrc_titleplate.php" style="width: 100%;">
-  <div>サンプルの称号</div>
-  <div style="height:24px;">サンプルどん</div>
-  <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div></div>
-  <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
-    ${[8, 7, 6, 5, 4, 3, 2].map((rank) => `<div class="best_rank_score_${rank}">1</div>`).join("")}
-    <div class="silver_crown_count">1</div><div class="gold_crown_count">1</div>
-    <div class="donderful_crown_count">1</div></div>
-</div>
-<div class="favoriteSong"><h2>大好きな曲</h2><ul><li><span class="songName">未設定</span></li></ul></div>
-<div class="favoriteSong"><h2>お気に入りの曲</h2><ul></ul></div></body></html>`;
-/** My page as Hiroba answers it, whatever was asked. */
-const myPageAnswer = async () => ({
-  status: 200,
-  url: `${HIROBA}/mypage_top.php`,
-  headers: { "Content-Type": "text/html; charset=UTF-8" },
-  data: nativeBase64(MY_PAGE),
-});
-
-/** A signed-in flag in memory, in place of the page's localStorage. */
-function memoryFlag(initial = false) {
-  let value = initial;
-  return {
-    get: () => value,
-    set: (next: boolean) => {
-      value = next;
-    },
-  };
-}
-
-async function until(condition: () => boolean): Promise<void> {
-  for (let tries = 0; tries < 100 && !condition(); tries++) {
-    await Bun.sleep(1);
-  }
-  expect(condition()).toBe(true);
-}
 
 /** Starts a sign-in and waits until the in-app browser is open. */
 async function startSignIn(signedInFlag = memoryFlag()) {
@@ -186,43 +150,6 @@ describe("createAndroidPort", () => {
     expect(native.cookieCalls).toEqual(["clearAllCookies"]);
     expect(flag.get()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
-  });
-});
-
-describe("createAndroidPort's writes", () => {
-  beforeEach(() => native.reset());
-
-  test("enables no write, offers no undo, and a costume change sends nothing", async () => {
-    const port = await createAndroidPort({
-      closeLabel: () => CLOSE_LABEL,
-      signedInFlag: memoryFlag(true),
-    });
-    expect(await port.enabledWrites()).toEqual([]);
-    const set = {
-      colorBody: 1,
-      colorLimb: 1,
-      colorFace: 1,
-      costume1: 0,
-      costume2: 0,
-      costume3: 0,
-      costume4: 0,
-      costume5: 0,
-    };
-    expect(await port.changeCostume({ expected: set, target: { ...set, colorFace: 2 } })).toEqual({
-      kind: "notEnabled",
-    });
-    expect(await port.pendingUndo()).toEqual([]);
-    expect(await port.undo("costume")).toEqual({ kind: "notEnabled" });
-    expect(native.httpRequests).toEqual([]);
-  });
-
-  test("reads no costume editor while signed out", async () => {
-    const port = await createAndroidPort({
-      closeLabel: () => CLOSE_LABEL,
-      signedInFlag: memoryFlag(),
-    });
-    expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
-    expect(native.httpRequests).toEqual([]);
   });
 });
 
@@ -597,17 +524,19 @@ describe("createAndroidPort's pictures", () => {
     expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/mypage_top.php` });
   });
 
-  test("asks for the My Don off Hiroba once, keeps it across launches, and anew after Read again", async () => {
-    const portrait = "https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
+  const PORTRAIT = "https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
+
+  /** My page showing the portrait, and a Hiroba that draws it wearing what `wear` was last given. */
+  function myDonOnMyPage() {
     const withPortrait = MY_PAGE.replace(
       "<p>太鼓番：000000000000</p></div></div>",
       `<p>太鼓番：000000000000</p></div>
-    <div class="mydon_image"><img class="customd_mydon" src="${portrait}"></div></div>`,
+    <div class="mydon_image"><img class="customd_mydon" src="${PORTRAIT}"></div></div>`,
     );
     let wearing = [12, 12, 5, 0, 0, 68, 0, 0];
     native.httpAnswer = async () => {
       const asked = native.httpRequests.at(-1)?.url ?? "";
-      const drawn = asked === portrait;
+      const drawn = asked === PORTRAIT;
       return {
         status: 200,
         url: asked,
@@ -616,12 +545,21 @@ describe("createAndroidPort's pictures", () => {
       };
     };
     const indexedDb = createFakeIndexedDb();
-    const launch = () =>
-      createAndroidPort({
-        closeLabel: () => CLOSE_LABEL,
-        signedInFlag: memoryFlag(true),
-        indexedDb: indexedDb.factory,
-      });
+    return {
+      wear: (next: number[]) => {
+        wearing = next;
+      },
+      launch: () =>
+        createAndroidPort({
+          closeLabel: () => CLOSE_LABEL,
+          signedInFlag: memoryFlag(true),
+          indexedDb: indexedDb.factory,
+        }),
+    };
+  }
+
+  test("asks for the My Don off Hiroba once, keeps it across launches, and anew after Read again", async () => {
+    const { wear, launch } = myDonOnMyPage();
     const first = await launch();
     const read = await first.readProfile();
     const before = await first.readPicture(MY_DON);
@@ -630,7 +568,7 @@ describe("createAndroidPort's pictures", () => {
     // The address names the taiko number: the platform's alone.
     expect(JSON.stringify(read)).not.toMatch(/mydon|taiko-p/);
     // Changed elsewhere, then the user's Read again: fetched anew, once.
-    wearing = [12, 12, 3, 0, 0, 68, 0, 0];
+    wear([12, 12, 3, 0, 0, 68, 0, 0]);
     await first.readProfile();
     const after = await first.readPicture(MY_DON);
     expect(after).not.toEqual(before);
@@ -641,13 +579,40 @@ describe("createAndroidPort's pictures", () => {
     expect(await relaunched.readPicture(MY_DON)).toEqual(after);
     expect(native.httpRequests.map(({ url }) => url)).toEqual([
       `${HIROBA}/mypage_top.php`,
-      portrait,
+      PORTRAIT,
       `${HIROBA}/mypage_top.php`,
-      portrait,
+      PORTRAIT,
       `${HIROBA}/mypage_top.php`,
     ]);
     expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/` });
     expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
+  });
+
+  test("a read of my page that renews no portrait leaves the My Don kept, whatever was changed elsewhere", async () => {
+    const { wear, launch } = myDonOnMyPage();
+    const port = await launch();
+    await port.readProfile();
+    const before = await port.readPicture(MY_DON);
+    expect(before.ok).toBe(true);
+
+    // The window's own read, after a title write: nothing of the costume is asked for again.
+    wear([12, 12, 3, 0, 0, 68, 0, 0]);
+    await port.readProfile({ renewsPortrait: false });
+    await port.readProfile({ renewsPortrait: false });
+    expect(await port.readPicture(MY_DON)).toEqual(before);
+    expect(native.httpRequests.map(({ url }) => url)).toEqual([
+      `${HIROBA}/mypage_top.php`,
+      PORTRAIT,
+      `${HIROBA}/mypage_top.php`,
+      `${HIROBA}/mypage_top.php`,
+    ]);
+
+    // The user's Read again is the next of its reads: the portrait is fetched anew, once.
+    await port.readProfile();
+    const after = await port.readPicture(MY_DON);
+    expect(after).not.toEqual(before);
+    expect(await port.readPicture(MY_DON)).toEqual(after);
+    expect(native.httpRequests.filter(({ url }) => url === PORTRAIT)).toHaveLength(2);
   });
 
   test("forgets what the editor offered when the session goes", async () => {

@@ -33,6 +33,10 @@ export interface Messages {
    * a narrow one. Each also names its page for screen readers, as its heading.
    */
   "nav.overview": string;
+  /** The page of the costume editor. 日本語 names it with the site's own word, きせかえ. */
+  "nav.costume": string;
+  /** The page of the title and the nickname. 日本語 names the nickname with the site's own word, ドンだーネーム. */
+  "nav.nameTitle": string;
   /** The page of the 大好きな曲 and the お気に入り folder. */
   "nav.favorites": string;
   "nav.settings": string;
@@ -73,12 +77,38 @@ export interface Messages {
   "profile.fetchedAt": string;
   /** Shown in place of the title when the player wears none, a normal state. */
   "profile.noTitle": string;
-  /** Param: {dan}, the dan's name as Hiroba prints it, 五級 to 十段, read off my page's label. */
+  /** Param: {dan}, the dan's name: a `dan.N` text, N being the board number read off my page's label. */
   "profile.dan": string;
   /** My page shows a dan label that did not read. Neutral: the rest of the page still read. */
   "profile.danUnreadable": string;
   /** Param: {code}, why the label did not read, such as dan=notPng; never page text or a URL. */
   "profile.danCode": string;
+  /**
+   * The dan ranks by board number, as core numbers them: 1 (五級, the 5th Kyu) to 15 (十段, the
+   * 10th Dan) as my page's label shows them, and 16 to 19 for the four named ranks, 玄人, 名人,
+   * 超人 and 達人, which no label has shown yet. The label is Hiroba's own picture; these name it
+   * for screen readers, and stand in for it when it does not come. 日本語 writes them as Hiroba
+   * does, as core's DAN_NAMES, which a test holds it to; the others are taiko.wiki's.
+   */
+  "dan.1": string;
+  "dan.2": string;
+  "dan.3": string;
+  "dan.4": string;
+  "dan.5": string;
+  "dan.6": string;
+  "dan.7": string;
+  "dan.8": string;
+  "dan.9": string;
+  "dan.10": string;
+  "dan.11": string;
+  "dan.12": string;
+  "dan.13": string;
+  "dan.14": string;
+  "dan.15": string;
+  "dan.16": string;
+  "dan.17": string;
+  "dan.18": string;
+  "dan.19": string;
   /**
    * The player's マイどん on the identity card, Hiroba's own picture of it in the costume it wears:
    * its alternative text.
@@ -103,17 +133,41 @@ export interface Messages {
   "pictures.unavailable": string;
   /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
   "pictures.code": string;
+  /**
+   * The seven score ranks the panel counts, by the number of Hiroba's rank image
+   * (best_score_rank_N, 2 to 8). No page prints a rank's name: each image shows its kanji. 日本語
+   * writes them as core's SCORE_RANK_NAMES does, which a test holds it to. English gives each its
+   * colour and its tier, romanised (Iki, Miyabi, Kiwami); the Chinese ones are the same kanji in
+   * the language's own spelling, with pink as 粉.
+   */
+  "scoreRank.2": string;
+  "scoreRank.3": string;
+  "scoreRank.4": string;
+  "scoreRank.5": string;
+  "scoreRank.6": string;
+  "scoreRank.7": string;
+  "scoreRank.8": string;
   /** The heading of the panel's crown block, which follows the score ranks. */
   "crowns.heading": string;
+  /**
+   * The three crowns, English and Chinese by what each records, as taiko.wiki words it: the silver
+   * one a clear, the gold one a full combo, the rainbow one a Donderful Combo (全良). 日本語 keeps
+   * Hiroba's own words, 銀, 金 and ドンダフル. The legend's dots keep the crowns' colours.
+   */
   "crowns.silver": string;
   "crowns.gold": string;
   "crowns.donderful": string;
   /**
-   * Under both of the panel's blocks: what the counts were checked against, and on how little.
-   * Site words kept as written.
+   * Under both of the panel's blocks: what the counts were checked against, and on how little. It
+   * names the charts as the game does in each language: おに, おに裏 and 双打 in 日本語; Extreme,
+   * Extreme (Inner) and Double Play in English; 魔王, 魔王(里) and 双打 in 简体中文; 魔鬼, 魔鬼(裏)
+   * and 雙打 in 繁體中文. 双打 is the game's own name for the Double Play charts.
    */
   "panel.footnote": string;
-  /** The heading of the panel's score-rank block, the first of its two. */
+  /**
+   * The heading of the panel's score-rank block, the first of its two. Not 评级 / 評級 in Chinese:
+   * taiko.wiki uses them for the skill Rating, and Bandai Namco's site writes 成績排名.
+   */
   "panel.ranks": string;
   /**
    * A count on the panel, secondary to its share: read out after the percent. Params: {count}, and
@@ -127,6 +181,7 @@ export interface Messages {
    * counts written over it. It has no heading to see, as on Hiroba.
    */
   "panel.art": string;
+  /** The Don Medal card's heading: どんメダル in 日本語. The plate's own name is Hiroba's, as written. */
   "medal.heading": string;
   /** Param: {count}, the medals collected this season. */
   "medal.count": string;
@@ -149,20 +204,14 @@ export interface Messages {
   /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
   "failure.detail": string;
   "platform.unsupported": string;
-  /** The name of the My Don portrait where a click on it opens the costume editor, and its tooltip. */
+  /** The name of the My Don portrait, a button that opens the Costume page, and its tooltip. */
   "costume.open": string;
   /**
-   * The same portrait's description on a touch-first screen, where a finger opens the editor by a
-   * long-press and a tap does nothing: say to long-press.
+   * The same portrait's description on a touch-first screen, where a finger opens the Costume page
+   * by a long-press and a tap does nothing: say to long-press.
    */
   "costume.openByLongPress": string;
-  /**
-   * The portrait's tooltip, and its description, when this run may not change the costume: why. True
-   * on every shell while no kind is verified; say it again once one is, since Android enables none.
-   */
-  "costume.notOpen": string;
-  /** The editor's heading: the site's own word, きせかえ. */
-  "costume.title": string;
+  /** The Costume page while the editor is read from Hiroba, the first time or again. */
   "costume.reading": string;
   /**
    * The picture at the top of the editor, Hiroba's own drawing of the set as picked, as its
@@ -175,10 +224,17 @@ export interface Messages {
   "costume.preview.unavailable": string;
   /** Param: {code}, why it did not come, such as preview=notPng; never a URL or a query. */
   "costume.preview.code": string;
-  /** The top tabs, in the site's words: いろ (colours) and きせかえ (items). */
+  /**
+   * The top tabs, named as Hiroba's own guide names them: いろ (colours) and きせかえ (items) in
+   * 日本語, which writes the site's labels.
+   */
   "costume.tab.colours": string;
   "costume.tab.items": string;
-  /** Each value of the set, by the site's own tab label: かお, どう, てあし, then the five slots. */
+  /**
+   * Each value of the set, by its tab as Hiroba's guide names it: かお, どう and てあし (the face,
+   * the torso and the limbs), then the five slots, きぐるみ (the mascot), あたま, からだ, メイク
+   * and ぷちキャラ. 日本語 writes the site's labels.
+   */
   "costume.part.colorFace": string;
   "costume.part.colorBody": string;
   "costume.part.colorLimb": string;
@@ -189,7 +245,7 @@ export interface Messages {
   "costume.part.costume5": string;
   /** Param: {id}. An item or a colour by its number: the page gives no names. */
   "costume.id": string;
-  /** Empties a slot: the site's own button, はずす. */
+  /** Empties a slot: Hiroba's own button, はずす in 日本語. */
   "costume.remove": string;
   /**
    * An item's tile in the thumbnail grid, for a screen reader: its slot and its number. Params:
@@ -212,29 +268,92 @@ export interface Messages {
   /** Params: {part} (a costume.part text), {from} and {to} (a costume.id text, or costume.remove). */
   "costume.change": string;
   "costume.noChanges": string;
+  /** Puts the draft back to the set as the editor last read it, as the site's own リセット does. */
+  "costume.reset": string;
   "costume.review": string;
   "costume.back": string;
   "costume.save": string;
-  "costume.close": string;
   "costume.confirmIntro": string;
-  /**
-   * The extra confirmation a kind of write needs until its first real write from the app has been
-   * made and recorded.
-   */
-  "costume.firstWrite": string;
-  /** Said with the extra confirmation: while unverified, a write also reads the title twice. */
-  "costume.crossCheck": string;
   "costume.saving": string;
-  /** The card's way back from the last costume write, while it is still offered. */
+  /** The Costume page's way back from the last costume write, while it is still offered. */
   "costume.undoLast": string;
   /** Param: {time}, already formatted: when the write the undo would reverse was made. */
   "costume.undoWhen": string;
   "costume.undoing": string;
+  /** The Title section's heading, and the title's name in a list of changes (costume.change's {part}). */
+  "title.heading": string;
+  /** The Title section while the list of owned titles is read from Hiroba, the first time or again. */
+  "title.reading": string;
+  /** The title picker's label. */
+  "title.pick": string;
+  /** The picker's button that opens the list of titles: its name for screen readers. */
+  "title.open": string;
+  /** The same button while the list is open. */
+  "title.close": string;
+  /** The picker's button that clears what was typed or chosen there, not the title worn. */
+  "title.clear": string;
+  /** Under the picker. Param: {count}, how many titles the account may choose from. */
+  "title.count": string;
+  /** The picker's list when what was typed matches no title. */
+  "title.noMatch": string;
+  /** Hiroba's list holds no title to choose from. */
+  "title.none": string;
+  /** The chip on the option that is the title worn now. */
+  "title.current": string;
+  /**
+   * The worn title's name is several titles' of the list, so the app cannot tell which is worn.
+   * Param: {count}, how many titles of the list have the name.
+   */
+  "title.shared": string;
+  /** The worn title's name is in no title of the list: it may be one built from parts. */
+  "title.notListed": string;
+  /** Reads the list of titles again, after a read of it failed. */
+  "title.reload": string;
+  /** The Title section's way back from the last title change, while it is still offered. */
+  "title.undoLast": string;
+  /** Under the undo button. Param: {title}, the previous title's name, as Hiroba writes it. */
+  "title.undoBack": string;
+  /** Why the undo is shut: the previous title's name is in no title of today's list. */
+  "title.undoUnresolved": string;
+  /** Why the undo is shut: the previous title's name is several titles' of today's list. */
+  "title.undoAmbiguous": string;
+  /** Why the undo is shut: there was no title before, and a title cannot be taken off here. */
+  "title.undoNoTitle": string;
+  /** The Nickname section's heading. 日本語 names it with the site's own word, ドンだーネーム. */
+  "name.heading": string;
+  /** The nickname field's label. */
+  "name.field": string;
+  /** Under the nickname field. Params: {count}, how many characters it holds, and {max}. */
+  "name.counter": string;
+  /** Hiroba's warning above its own nickname field, as the site writes it, in every language. */
+  "name.siteWarning": string;
+  /**
+   * What Hiroba's help page says a nickname may be, quoting its sentence as the site writes it,
+   * and that other nicknames have been seen.
+   */
+  "name.faqRule": string;
+  /** Advice: the nickname has a character outside the help page's set, or is past its five. */
+  "name.outsideFaq": string;
+  /** Advice: the nickname is wider than the ten half-width characters the form seems to take. */
+  "name.wide": string;
+  /** The nickname typed is the nickname worn. */
+  "name.same": string;
+  /** Hiroba says nicknames cannot be changed now, quoting its sentence as the site writes it. */
+  "name.closed": string;
+  /** My page did not say whether Hiroba takes a nickname change now: the field stays open. */
+  "name.unknownState": string;
+  /** In the review: Hiroba may not let the nickname be changed back right away. */
+  "name.mayNotRevert": string;
+  /** The Nickname section's way back from the last change, while it is still offered. */
+  "name.undoLast": string;
+  /** Under the undo button. Param: {name}, the previous nickname, as Hiroba writes it. */
+  "name.undoBack": string;
+  /** Under the undo button: Hiroba may refuse a change back as it may refuse any change. */
+  "name.undoMayFail": string;
   /** A write that read back as planned. */
   "write.applied": string;
   /** An undo that read back as planned. */
   "write.undone": string;
-  "write.undo": string;
   /** Param: {code}. The set moved as planned, and Hiroba's answer said otherwise. */
   "write.siteNote": string;
   /** Saved as planned, and the page read to check nothing else moved did not come back. */
@@ -243,6 +362,7 @@ export interface Messages {
   "write.notApplied.unchanged": string;
   /** Param: {code}, Hiroba's code; its own message follows under write.siteMessage. */
   "write.notApplied.refused": string;
+  /** Says to use the Costume page's Read again, and retry. */
   "write.notApplied.stale": string;
   "write.notApplied.siteMaintenance": string;
   "write.notApplied.failed": string;
@@ -256,9 +376,11 @@ export interface Messages {
   "write.diverged": string;
   /** The page read before and after a write moved during it. */
   "write.crossChanged": string;
+  /** Says to use the Costume page's Read again before trying again. */
   "write.outcomeUnknown": string;
   "write.sessionGone": string;
   "write.sessionGoneAfterSave": string;
+  /** The costume moved since the editor last read it; the page now shows it as it is. */
   "write.changedSincePreview": string;
   /** An undo stopped because the set moved since the change it would reverse. */
   "write.undoStale": string;
@@ -270,9 +392,11 @@ export interface Messages {
   /** Carries the site's own confirmation text (mydon.js), which this version does not answer. */
   "write.needsConfirmation": string;
   "write.stoppedBeforeWrite": string;
-  "write.notEnabled": string;
   "write.nothingToUndo": string;
-  /** The app stopped a write before judging it: whether it saved is not known. */
+  /**
+   * The app stopped a write before judging it: whether it saved is not known. Says to use the
+   * Costume page's Read again, and look.
+   */
   "write.interrupted": string;
   /** A write asked for while another was still being sent: this one sent nothing. */
   "write.busy": string;
@@ -282,6 +406,50 @@ export interface Messages {
   "write.before": string;
   "write.planned": string;
   "write.now": string;
+  /**
+   * A title's write, in the words of "write.*" for the costume's: the title is what is saved,
+   * undone, compared and judged here. Each has the costume's key, the one without "title." as
+   * its base.
+   */
+  "write.title.applied": string;
+  "write.title.undone": string;
+  "write.title.unchanged": string;
+  "write.title.diverged": string;
+  /** The costume, which is read before and after a title write, moved during it. */
+  "write.title.crossChanged": string;
+  /** Saved as planned, and the costume read to check nothing else moved did not come back. */
+  "write.title.crossUnknown": string;
+  "write.title.changedSincePreview": string;
+  "write.title.undoStale": string;
+  "write.title.nothingToChange": string;
+  /** Carries the site's own confirmation text (check_ip_title), which this version does not answer. */
+  "write.title.needsConfirmation": string;
+  /** Hiroba's codes for a refused title, which come with no message of their own. */
+  "write.title.refused1": string;
+  "write.title.refused5": string;
+  "write.title.refused6": string;
+  /** A rename's write, as the costume's "write.*" are. The title, read before and after, is the costume's "write.cross*". */
+  "write.name.applied": string;
+  "write.name.undone": string;
+  "write.name.unchanged": string;
+  "write.name.diverged": string;
+  "write.name.changedSincePreview": string;
+  "write.name.undoStale": string;
+  "write.name.nothingToChange": string;
+  /** Hiroba's code for a rename it could not carry out, which comes with no message of its own. */
+  "write.name.refused2": string;
+  /**
+   * The words of {field} in "write.invalidTarget", for a title or a nickname this app refused before
+   * sending it. A phrase, with no capital and no full stop of its own.
+   */
+  "write.invalid.titleNotOwned": string;
+  "write.invalid.titleUnresolved": string;
+  "write.invalid.titleAmbiguous": string;
+  "write.invalid.nameEmpty": string;
+  "write.invalid.nameEdge": string;
+  "write.invalid.nameTooLong": string;
+  "write.invalid.nameControl": string;
+  "write.invalid.nameClosed": string;
 }
 
 export type MessageKey = keyof Messages;

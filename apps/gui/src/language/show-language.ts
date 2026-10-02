@@ -1,10 +1,11 @@
 import type { Translator } from "@abth/i18n";
 
 /**
- * The `lang` of an element that holds only Hiroba's own words (rank and costume-part names, a
- * title, a nickname), which every language shows as Hiroba writes them. Under the page's `lang`
- * they would take Chinese glyphs, or a Chinese or English voice; a sentence that only quotes them
- * keeps the page's.
+ * The `lang` of an element that holds only Hiroba's own data (a title, a nickname, a medal's name,
+ * the site's own warning), which every language shows as Hiroba writes it. Under the page's `lang`
+ * it would take Chinese glyphs, or a Chinese or English voice. The game's terms are not such data:
+ * each language words them in its catalog, with no mark. A sentence that only quotes Hiroba's words
+ * keeps the page's `lang`.
  */
 export const HIROBA_LANG = "ja";
 

@@ -61,11 +61,19 @@
  * The costume editor, mypage_kisekae.php, its preview, imgsrc_mydon.php, its items' thumbnails,
  * imgsrc_kisekae.php (both pictures drawn for a session only, as Hiroba's are), and the two posts a
  * costume write sends, ajax/check_ip_kisekae.php and ajax/change_mydon.php, are
- * scripts/mock-costume.ts: stateful, with hooks of their own listed there. Like Hiroba, an ajax
+ * scripts/mock-costume.ts: stateful, with hooks of their own listed there. The title page,
+ * mypage_title_edit.php, the rename dialog at the foot of my page, and the two posts of the profile
+ * endpoint, ajax/check_ip_title.php and ajax/change_mydon_profile.php, are scripts/mock-profile.ts,
+ * likewise: the title and the name my page shows are the profile's, and a save changes them. One
+ * token for the session serves the costume editor, my page and the title page, each page read
+ * voiding the last. Like Hiroba, an ajax
  * post without X-Requested-With gets the site's error page at 200; one without a session is sent to
  * the login page. Two more hooks cover every request: /__log (each non-hook request so far, as
  * "METHOD /path"; /__log-reset clears it) and /__post-to-login?on=1 or 0 (every ajax post answers
- * with a redirect to the login page, the session left as it was).
+ * with a redirect to the login page, the session left as it was) and /__post-redirect?status=301|302|
+ * 303|307|308 with rotate=0|1 (the next ajax post is answered with that status and a Location of
+ * my page, `/mypage_top.php?again`; with rotate=1 it also sets a new session token on that answer
+ * and ends the old one, as /__rotate does for a read; no status clears it).
  *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
@@ -90,6 +98,7 @@ import {
   scorePanelPng,
   titlePlatePng,
 } from "./mock-pictures";
+import { createProfileEditor, escapeHtml } from "./mock-profile";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
@@ -111,6 +120,9 @@ let rotateNext = false;
 let holdIdForm = false;
 let sendOffsite = false;
 let postToLogin = false;
+/** What /__post-redirect asked the next ajax post to be answered with, or null. */
+let redirectNextPost: { status: number; rotate: boolean } | null = null;
+const POST_REDIRECT_STATUSES: readonly number[] = [301, 302, 303, 307, 308];
 /** Set while /__hold-read?on=1 holds every read of my page unanswered; lets them all go. */
 let releaseReads: (() => void) | null = null;
 let readsHeld: Promise<void> = Promise.resolve();
@@ -118,6 +130,8 @@ const hits = new Map<string, number>();
 /** Every request that is not a hook, in order, as "METHOD /path". */
 const requestLog: string[] = [];
 const costume = createCostumeEditor();
+/** The title and the name, and the pages and posts that change them: one token with the costume's. */
+const profile = createProfileEditor({ issue: costume.issueTicket });
 /** Also searched for by scripts/e2e-desktop.ts. */
 const IDP_MARKER = "abth-mock-idp-marker";
 /** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
@@ -165,14 +179,16 @@ const variant = {
   /** 0 for no dan, or the dan, 1 to 15, whose label my page shows. */
   dan: 14,
   label: "png" as "png" | "gif",
-  title: "set" as "set" | "other" | "third" | "empty",
   region: true,
   favorites: false,
   /** The panel's counts: PANEL_COUNTS, or PANEL_ZEROS. */
   panel: "counts" as "counts" | "zeros",
 };
 
-/** The title my page shows in each title variant; each is a plate of its own. */
+/**
+ * The title /__variant?title= sets, which my page then shows over a plate of its own. The title is
+ * the profile's (scripts/mock-profile.ts), which a title save changes too.
+ */
 const TITLES = {
   set: "サンプルの称号",
   other: "別のサンプル称号",
@@ -272,12 +288,18 @@ function medalPlate(): string {
     ${MEDAL_PROGRESS[medalState]}</div>`;
 }
 
-/** My page as /__medal and /__variant last shaped it. */
-function myPage(): string {
+/**
+ * My page as /__medal and /__variant last shaped it, with the title and the name the profile holds
+ * and `ticket`, the session's token, in the three places the page carries one: outside any form,
+ * in the 大好きな曲 form, and in the rename dialog's.
+ */
+function myPage(ticket: string): string {
+  const nickname = escapeHtml(profile.nickname());
+  const worn = profile.title();
   const nameRow =
     variant.dan > 0
-      ? `<div style="display:flex"><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=${TAIKO_NO}"></div></div>`
-      : `<div style="height:24px;">サンプルどん</div>`;
+      ? `<div style="display:flex"><div>${nickname}</div><div><img src="imgsrc_danlabel.php?taiko_no=${TAIKO_NO}"></div></div>`
+      : `<div style="height:24px;">${nickname}</div>`;
   const song = variant.favorites
     ? `<span class="songName songNameFontnamco">サンプル曲アルファ</span>`
     : `<span class="songName songNameFont">未設定</span>`;
@@ -289,10 +311,11 @@ function myPage(): string {
     : "";
   const panel = variant.panel === "zeros" ? PANEL_ZEROS : PANEL_COUNTS;
   const [silver, gold, donderful] = panel.crowns;
-  return `
+  return `${profile.renameScript()}
+<div class="mypage_menu"><input type="hidden" id="_tckt" name="_tckt" value="${ticket}" /></div>
 <div id="mydon_area">
   <img src="imgsrc_titleplate.php" style="width: 100%;margin-bottom: -24px;position:relative;z-index:0;">
-  <div>${variant.title === "empty" ? "\n\t\t" : TITLES[variant.title]}</div>
+  <div>${worn === "" ? "\n\t\t" : escapeHtml(worn)}</div>
   ${nameRow}
   <div><div class="detail"><p>国・地域 ：${variant.region ? "サンプル" : "未設定"}</p><p>太鼓番：${TAIKO_NO}</p></div>
     <div class="mydon_image"><img class="customd_mydon" src="${PORTRAIT}"></div></div>
@@ -305,9 +328,58 @@ function myPage(): string {
 </div>
 <div class="favoriteSong"><h2 class="subtitleMypage">大好きな曲</h2><div class="mypageInfoArea">
   <ul id="songList"><li><div class="name">${song}</div></li></ul>
-  <input type="hidden" name="song_no" id="song_no" value="${variant.favorites ? "1346" : ""}"></div></div>
+  <input type="hidden" name="song_no" id="song_no" value="${variant.favorites ? "1346" : ""}">
+  <input type="hidden" id="_tckt" name="_tckt" value="${ticket}" /></div></div>
 <div class="favoriteSong"><h2 class="subtitleMypage">お気に入りの曲</h2><div class="mypageInfoArea">
-  <ul id="songList">${folder}</ul></div></div>`;
+  <ul id="songList">${folder}</ul></div></div>
+${profile.renameDialog(ticket)}`;
+}
+
+/**
+ * What every ajax post meets before its handler, whichever endpoint it is for: only a POST is
+ * answered; it is recorded; one without X-Requested-With gets the site's error page at 200, as
+ * Hiroba answered on 2026-08-09; one without a session, or while /__post-to-login is on, is sent to
+ * the login page; and /__post-redirect answers the next with a redirect. What passes is its form
+ * and its session; anything else is the answer to send.
+ */
+async function ajaxEntry(
+  request: Request,
+  session: MockSession | undefined,
+  record: (form: URLSearchParams) => void,
+): Promise<{ form: URLSearchParams; session: MockSession } | Response> {
+  if (request.method !== "POST") {
+    return new Response("not found", { status: 404 });
+  }
+  const form = new URLSearchParams(await request.text());
+  record(form);
+  if (request.headers.get("x-requested-with") !== "XMLHttpRequest") {
+    return page(ERROR_SHELL_BODY);
+  }
+  if (postToLogin || !session?.cardChosen) {
+    return redirect("/login.php");
+  }
+  if (redirectNextPost !== null) {
+    const { status, rotate } = redirectNextPost;
+    redirectNextPost = null;
+    return redirectedPost(status, rotate);
+  }
+  return { form, session };
+}
+
+/**
+ * An ajax post answered with a redirect to my page. With `rotate`, the answer also carries a new
+ * session token and the old one ends, as a rotated token on a redirect hop does for a read.
+ */
+function redirectedPost(status: number, rotate: boolean): Response {
+  const headers: Record<string, string> = { location: "/mypage_top.php?again" };
+  if (rotate) {
+    sessions.clear();
+    lastIssued = newToken();
+    sessions.set(lastIssued, { cardChosen: true });
+    headers["set-cookie"] =
+      `_token_v2=${lastIssued}; Domain=.${HIROBA_HOST}; Path=/; Max-Age=2592000`;
+  }
+  return new Response(null, { status, headers });
 }
 
 Bun.serve({
@@ -380,8 +452,7 @@ Bun.serve({
         }
         await readsHeld;
         // My page carries forms (rename, 大好きな曲) with a token, so reading it issues a new one.
-        costume.issueTicket(session);
-        return page(myPage());
+        return page(myPage(costume.issueTicket(session)));
       }
       case "/mypage_kisekae.php":
         if (!session?.cardChosen) {
@@ -390,22 +461,37 @@ Bun.serve({
         return page(costume.page(session));
       case "/ajax/check_ip_kisekae.php":
       case "/ajax/change_mydon.php": {
-        if (request.method !== "POST") {
-          return new Response("not found", { status: 404 });
-        }
-        const form = new URLSearchParams(await request.text());
-        costume.record(pathname, request, form, session);
-        if (request.headers.get("x-requested-with") !== "XMLHttpRequest") {
-          return page(ERROR_SHELL_BODY);
-        }
-        if (postToLogin || !session?.cardChosen) {
-          return redirect("/login.php");
+        const entered = await ajaxEntry(request, session, (form) =>
+          costume.record(pathname, request, form, session),
+        );
+        if (entered instanceof Response) {
+          return entered;
         }
         if (pathname === "/ajax/check_ip_kisekae.php") {
           await costume.precheckLetThrough();
           return costume.precheck();
         }
-        return costume.save(session, form, () => sessions.clear());
+        return costume.save(entered.session, entered.form, () => sessions.clear());
+      }
+      case "/mypage_title_edit.php":
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        return page(profile.titlePage(session));
+      case "/ajax/check_ip_title.php":
+      case "/ajax/change_mydon_profile.php": {
+        const entered = await ajaxEntry(request, session, (form) =>
+          profile.record(pathname, request, form, session),
+        );
+        if (entered instanceof Response) {
+          return entered;
+        }
+        if (pathname === "/ajax/check_ip_title.php") {
+          await profile.precheckLetThrough();
+          return profile.precheck();
+        }
+        await profile.saveLetThrough();
+        return profile.save(entered.session, entered.form, () => sessions.clear());
       }
       case "/imgsrc_mydon.php":
         return costume.preview(new URL(request.url).search, session?.cardChosen === true);
@@ -427,9 +513,7 @@ Bun.serve({
           return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
         }
         const plate =
-          signedIn && titlePlateAnswer === "png"
-            ? titlePlatePng(TITLES[variant.title])
-            : blankPlatePng();
+          signedIn && titlePlateAnswer === "png" ? titlePlatePng(profile.title()) : blankPlatePng();
         return new Response(plate, { headers: { "content-type": "image/png" } });
       }
       case "/imgsrc_tokenplate.php": {
@@ -514,7 +598,7 @@ Bun.serve({
         }
         const title = searchParams.get("title");
         if (title === "set" || title === "other" || title === "third" || title === "empty") {
-          variant.title = title;
+          profile.setTitle(TITLES[title]);
         }
         variant.region = flag("region", "set") ?? variant.region;
         variant.favorites = flag("favorites", "set") ?? variant.favorites;
@@ -522,7 +606,7 @@ Bun.serve({
         if (panel === "counts" || panel === "zeros") {
           variant.panel = panel;
         }
-        return Response.json(variant);
+        return Response.json({ ...variant, title: profile.title() });
       }
       case "/__titleplate": {
         const answer = searchParams.get("answer");
@@ -576,8 +660,23 @@ Bun.serve({
       case "/__post-to-login":
         postToLogin = searchParams.get("on") === "1";
         return new Response(postToLogin ? "to login" : "answering");
+      case "/__post-redirect": {
+        const status = Number(searchParams.get("status"));
+        redirectNextPost = POST_REDIRECT_STATUSES.includes(status)
+          ? { status, rotate: searchParams.get("rotate") === "1" }
+          : null;
+        return new Response(
+          redirectNextPost === null
+            ? "answering"
+            : `${redirectNextPost.status}${redirectNextPost.rotate ? " rotating" : ""}`,
+        );
+      }
       default:
-        return costume.hook(pathname, searchParams) ?? new Response("not found", { status: 404 });
+        return (
+          costume.hook(pathname, searchParams) ??
+          profile.hook(pathname, searchParams) ??
+          new Response("not found", { status: 404 })
+        );
     }
   },
 });

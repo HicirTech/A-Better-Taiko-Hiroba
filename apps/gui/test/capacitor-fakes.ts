@@ -5,11 +5,25 @@
  */
 import { mock } from "bun:test";
 
+/** What the app asked CapacitorHttp.request for: every option it sets, as it set it. */
 export interface NativeHttpRequest {
   readonly url: string;
   readonly method: string;
   readonly headers: Record<string, string>;
   readonly responseType: string;
+  readonly data?: unknown;
+  readonly disableRedirects?: boolean;
+  readonly connectTimeout?: number;
+  readonly readTimeout?: number;
+  readonly dataType?: string;
+}
+
+/** The shape CapacitorHttp.request answers with. */
+export interface NativeHttpAnswer {
+  readonly status: number;
+  readonly url: string;
+  readonly headers: Record<string, string>;
+  readonly data: unknown;
 }
 
 type Listener = (event: { url?: string }) => void;
@@ -24,9 +38,41 @@ export function nativeBase64(body: Uint8Array | string): string {
   return base64.replace(/.{1,76}/g, (line) => `${line}\n`);
 }
 
+/** A header name as a server writes it: `content-type` as `Content-Type`. */
+const writtenAs = (name: string) =>
+  name.replace(
+    /(^|-)([a-z])/g,
+    (_, dash: string, letter: string) => `${dash}${letter.toUpperCase()}`,
+  );
+
+/**
+ * A fetch Response as Capacitor answers an `arraybuffer` request with it (HttpRequestHandler.
+ * readData): a JSON content type is parsed whatever was asked, any other answer of 400 or more is
+ * text, and the rest is base64 of the exact bytes. Header names come as a server writes them.
+ */
+export async function nativeAnswerOf(response: Response, url: string): Promise<NativeHttpAnswer> {
+  const headers: Record<string, string> = {};
+  for (const [name, value] of response.headers) {
+    headers[writtenAs(name)] = value;
+  }
+  const json = (response.headers.get("content-type") ?? "").includes("application/json");
+  let data: unknown;
+  if (json) {
+    const text = await response.text();
+    data = text.trim() === "" ? "" : JSON.parse(text);
+  } else if (response.status >= 400) {
+    data = await response.text();
+  } else {
+    data = nativeBase64(new Uint8Array(await response.arrayBuffer()));
+  }
+  return { status: response.status, url, headers, data };
+}
+
 export const native = {
   httpRequests: [] as NativeHttpRequest[],
   httpAnswer: (async () => ({})) as () => Promise<unknown>,
+  /** Answers for the calls to come, one each in turn; once they are used up, `httpAnswer` answers. */
+  httpAnswers: [] as (() => Promise<unknown>)[],
   /** Every cookie-store call, in order: "clearAllCookies", "clearCookies <url>" or "deleteCookie <key>". */
   cookieCalls: [] as string[],
   openedWith: [] as { url: string; options: Record<string, unknown> }[],
@@ -39,6 +85,7 @@ export const native = {
   reset(): void {
     this.httpRequests.length = 0;
     this.httpAnswer = async () => ({});
+    this.httpAnswers.length = 0;
     this.cookieCalls.length = 0;
     this.closeIgnored = false;
     this.openedWith.length = 0;
@@ -58,7 +105,7 @@ mock.module("@capacitor/core", () => ({
   CapacitorHttp: {
     request: (options: NativeHttpRequest) => {
       native.httpRequests.push(options);
-      return native.httpAnswer();
+      return (native.httpAnswers.shift() ?? native.httpAnswer)();
     },
   },
   CapacitorCookies: {

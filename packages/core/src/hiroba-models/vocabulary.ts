@@ -12,16 +12,25 @@ export type Genre = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
  */
 export type Level = 1 | 2 | 3 | 4 | 5;
 
+/**
+ * Whether Hiroba takes a rename, as my page writes it into the script that opens the rename
+ * dialog: `'0'` is `open`, and `'1'`, for which the site shows "not right now" and opens nothing,
+ * is `closed`. A page whose script has no flag this version can read is `unknown`: it never fails
+ * the page, and a rename is then left to Hiroba to take or refuse.
+ */
+export type RenameState = "open" | "closed" | "unknown";
+
 /** The rank image numbers Hiroba uses, `best_score_rank_2` through `_8`. */
 export type ScoreRank = 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 /**
- * The name of each score rank, keyed by its image number.
+ * The Japanese name of each score rank, keyed by its image number.
  *
  * **Read off the icons, printed nowhere on the site.** The seven `best_score_rank_<N>_640.png`
  * images each show the rank's kanji in its colour; no page names a rank in text, not in an `alt`, a
- * class or a label. So a client that shows a name carries this table itself. Copied from the wiki's
- * Reading-Score-List, which records how it was read (2026-08-09).
+ * class or a label. So a client that shows a name supplies it: this is the Japanese table, which the
+ * app's Japanese catalog is held equal to, the other languages being worded there. Copied from the
+ * wiki's Reading-Score-List, which records how it was read (2026-08-09).
  */
 export const SCORE_RANK_NAMES: Readonly<Record<ScoreRank, string>> = {
   2: "白粋",

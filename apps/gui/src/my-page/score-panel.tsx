@@ -1,12 +1,11 @@
-import { SCORE_RANK_NAMES, type ScoreRank } from "@abth/core";
+import type { ScoreRank } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, CircularProgress } from "@mui/material";
 import type { Ref } from "react";
 
-import { HIROBA_LANG } from "../language/show-language";
 import type { PictureAnswer } from "../pictures/picture-lane";
 import type { PictureWant, ProfileView } from "../session-port";
-import { HIROBA_BLOCK, hirobaPx, ONE_LINE, OUTLINED, VISUALLY_HIDDEN } from "./hiroba-px";
+import { HIROBA_BLOCK, hirobaPx, OUTLINED, VISUALLY_HIDDEN } from "./hiroba-px";
 import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
 
 /** Hiroba's score panel, .total_score: 280 pixels wide, #mydon_area's 290 less its margins. */
@@ -80,7 +79,6 @@ interface PanelCount {
   /** The part of its id after `score-panel-`: rank-8, crowns-silver. */
   readonly id: string;
   readonly name: string;
-  readonly lang?: string;
   readonly count: number;
   readonly spot: Spot;
   readonly tone: keyof typeof TONE;
@@ -145,7 +143,7 @@ export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps
           />
         )}
         <Box component="dl" sx={{ m: 0 }}>
-          {counts.map(({ id, name, lang, count, spot: [column, row], tone }) => (
+          {counts.map(({ id, name, count, spot: [column, row], tone }) => (
             <Box
               key={id}
               sx={{
@@ -160,7 +158,7 @@ export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps
                 ...TONE[tone],
               }}
             >
-              <Box component="dt" lang={lang} sx={VISUALLY_HIDDEN}>
+              <Box component="dt" sx={VISUALLY_HIDDEN}>
                 {name}
               </Box>
               <Box component="dd" id={`score-panel-${id}`} sx={{ m: 0 }}>
@@ -185,8 +183,7 @@ function countsOf(
       const { rank } = counted;
       return {
         id: `rank-${rank}`,
-        name: SCORE_RANK_NAMES[rank],
-        lang: HIROBA_LANG,
+        name: t(`scoreRank.${rank}`),
         count: ranks[rank],
         spot,
         tone: "rank",
@@ -224,18 +221,21 @@ function PanelStandIn({ counts }: { counts: readonly PanelCount[] }) {
       }}
     >
       <Box sx={{ height: hp(CROWNS_FROM), bgcolor: STAND_IN_RANKS }} />
-      {counts.map(({ id, name, lang, spot: [column, row], colour }) => (
+      {counts.map(({ id, name, spot: [column, row], colour }) => (
         <Box
           key={id}
-          lang={lang}
           sx={{
-            ...ONE_LINE,
             position: "absolute",
             left: hp(COLUMN_LEFT[column] - 46),
             top: hp(ROW_TOP[row] - 1),
             width: hp(42),
             height: hp(ROW_HEIGHT + 2),
-            lineHeight: hp(ROW_HEIGHT + 2),
+            // A name of two words, as English writes the ranks, takes the chip's two lines.
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            overflow: "hidden",
+            lineHeight: 1.1,
             borderRadius: hp(4),
             background: colour,
             color: "#000",

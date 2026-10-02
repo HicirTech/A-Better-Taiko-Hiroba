@@ -5,10 +5,14 @@ import type {
   FormToken,
   Genre,
   Level,
+  NameState,
+  RenameState,
   Score,
   ScoreRank,
   ScoreRecord,
   Song,
+  TitleOption,
+  TitleState,
 } from "../hiroba-models";
 
 /**
@@ -31,6 +35,34 @@ export interface CostumeEditorReading {
 export interface CostumeSwatch {
   readonly id: number;
   readonly hex: string;
+}
+
+/**
+ * The title page as a write reads it: the title it shows as worn, the token that writes one, and
+ * the titles the account owns, in the page's order. The page is one list of everything owned, with
+ * no paging.
+ */
+export interface TitleEditorReading {
+  readonly state: TitleState;
+  readonly token: FormToken;
+  /**
+   * Each owned title with the id the list gives it. The list's two leading entries, "choose" and
+   * 称号をはずす, are not titles and are left out. A name may repeat, with another id.
+   */
+  readonly options: readonly TitleOption[];
+}
+
+/**
+ * The rename form on my page as a write reads it: the name it shows, the token that writes one, how
+ * long a name the form takes, and whether Hiroba is taking renames. My page is the whole editor: it
+ * is also where the name is read back.
+ */
+export interface RenameEditorReading {
+  readonly state: NameState;
+  readonly token: FormToken;
+  /** The form's `maxlength`, which a browser counts in UTF-16 code units: 10 on every capture. */
+  readonly maxLength: number;
+  readonly rename: RenameState;
 }
 
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */

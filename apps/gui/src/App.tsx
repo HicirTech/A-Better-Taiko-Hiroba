@@ -5,35 +5,34 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Snackbar,
   Stack,
   Typography,
   useMediaQuery,
 } from "@mui/material";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { CostumeDialog } from "./my-page/costume-dialog";
+import { CostumePage } from "./my-page/costume-page";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
 import type { PortraitAction } from "./my-page/my-don-portrait";
 import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
-import { WriteOutcomeNotice } from "./my-page/write-outcome";
+import { useCostumeEditor } from "./my-page/use-costume-editor";
+import { NameTitlePage } from "./name-title/name-title-page";
+import { movedTheTitle, type TitleStep } from "./name-title/title-editor-state";
+import { useNameEditor } from "./name-title/use-name-editor";
+import { useTitleEditor } from "./name-title/use-title-editor";
 import { FrameCorner } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFab } from "./read-again/read-again-fab";
-import { FAILURE_MESSAGE } from "./read-failure-message";
-import {
-  changedTheCostume,
-  type EnabledWrite,
-  type HirobaSessionPort,
-  type ProfileView,
-  type ReadFailureKind,
-  type SignInOutcome,
-  type UndoSummary,
-  type WriteOutcomeView,
+import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
+import type {
+  HirobaSessionPort,
+  ProfileView,
+  ReadFailureKind,
+  SignInOutcome,
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
 
@@ -57,13 +56,6 @@ const SIGN_IN_NOTICE = {
   refused: "signIn.refused",
 } as const satisfies Record<Exclude<SignInOutcome["kind"], "signedIn">, MessageKey>;
 
-/** Failures after which the platform has already dropped the session: back to signing in. */
-const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
-  "notSignedIn",
-  "loggedOut",
-  "cardSelectUnfinished",
-]);
-
 export interface AppProps {
   readonly port: HirobaSessionPort;
   readonly i18n: Translator;
@@ -75,57 +67,150 @@ export interface AppProps {
 }
 
 /**
- * The app on each page: signed out, the Overview and Favourites show the sign-in card; signed in,
- * the Overview shows the profile and Favourites the favourite songs, both from the same read.
- * Settings works either way.
+ * The app on each page: signed out, the Overview, Costume, Nickname & title and Favourites show the
+ * sign-in card; signed in, the Overview shows the profile, Costume the editor, Nickname & title the
+ * editors of the title and the name, and Favourites the favourite songs, the profile and the
+ * favourites from the same read. Settings works either way.
  */
 export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
-  /** The kinds of write this run may send, asked once a profile has been read. */
-  const [writes, setWrites] = useState<readonly EnabledWrite[]>([]);
-  const [costumeOpen, setCostumeOpen] = useState(false);
-  const costumeWrite = writes.find((write) => write.kind === "costume");
-  /** The costume undo this device offers now, if any: asks the platform, never Hiroba. */
-  const [undoable, setUndoable] = useState<UndoSummary | null>(null);
-  /** A costume write just read back as planned: the Snackbar offering to undo it. */
-  const [justSaved, setJustSaved] = useState(false);
-  const [undoing, setUndoing] = useState(false);
-  /** How the last undo ended, shown on the card until the next write or the next read. */
-  const [undoOutcome, setUndoOutcome] = useState<WriteOutcomeView | null>(null);
+  /** My page is read behind the page that shows it: nothing else reads or signs out meanwhile. */
+  const [refreshing, setRefreshing] = useState(false);
   /**
    * The one lane every picture of Hiroba's comes through: one at a time, only what is on screen,
    * each remembered for the run, and none while a write runs.
    */
   const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
+  /** The Costume page, signed in: the one place the editor is read. */
+  const onEditorPage = page === "costume" && screen.name === "profile";
+  /** The Nickname & title page, signed in: the one place the list of titles is read. */
+  const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
+  /** The session ended under the editor: back to signing in, with what happened. */
+  const sessionGone = useCallback(
+    (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
+    [],
+  );
+  /**
+   * The costume editor and the undo, held here so that a draft, a review or an outcome is still
+   * there after a visit to another page. It is read when its page is first shown, never before
+   * (see the first reads below).
+   */
+  const editor = useCostumeEditor({
+    port,
+    lane,
+    shown: onEditorPage,
+    onSessionGone: sessionGone,
+  });
+  const { refreshUndo, forget: forgetEditor } = editor;
+  /**
+   * The title's editor and the name's, held here for the same reason. The title list is read when
+   * its page is first shown, never before. The name has nothing to read: a write's read-back is the
+   * name the window's profile shows from then on, with no request.
+   */
+  const titleEditor = useTitleEditor({ port, lane, onSessionGone: sessionGone });
+  const { refreshUndo: refreshTitleUndo, forget: forgetTitleEditor } = titleEditor;
+  const nameRead = useCallback(
+    (nickname: string) =>
+      setScreen((now) =>
+        now.name === "profile" ? { name: "profile", profile: { ...now.profile, nickname } } : now,
+      ),
+    [],
+  );
+  const nameEditor = useNameEditor({
+    port,
+    lane,
+    profile: screen.name === "profile" ? screen.profile : null,
+    onSessionGone: sessionGone,
+    onNickname: nameRead,
+  });
+  const { refreshUndo: refreshNameUndo, forget: forgetNameEditor } = nameEditor;
 
-  const refreshUndo = useCallback(async () => {
-    const offered = await port.pendingUndo();
-    setUndoable(offered.find((one) => one.kind === "costume") ?? null);
-  }, [port]);
-
-  const read = useCallback(async () => {
-    setScreen({ name: "reading" });
-    const result = await port.readProfile();
-    if (result.ok) {
-      // The plates may have changed with the title, the season or its progress, and the portrait
-      // with a costume changed anywhere: each is asked for again, and what was shown stays till it
-      // comes. The platform says whether the portrait is fetched anew or answered as kept. The score
-      // panel's art, kept for good once it came, is asked for again only if it did not.
-      lane.renew("titlePlate");
-      lane.renew("medalPlate");
-      lane.renew("myDon");
-      lane.forgetFailures("scorePanel");
-      setWrites(await port.enabledWrites());
-      await refreshUndo();
-      setUndoOutcome(null);
-      setScreen({ name: "profile", profile: result.value });
-    } else if (SESSION_GONE.has(result.error.kind)) {
-      setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
-    } else {
-      setScreen({ name: "readFailed", ...result.error });
+  /** A save or an undo is on its way, of any kind: nothing else asks Hiroba anything meanwhile. */
+  const writing = editor.writing || titleEditor.writing || nameEditor.writing;
+  /**
+   * The first reads. An editor is read when its page is first shown in a session, and never while
+   * a save or an undo of any kind runs: it waits, as a picture does, and starts once the write has
+   * ended, so the page does not rely on the queue in front of Hiroba alone to keep a read out of
+   * a write that is not its own.
+   */
+  const { read: readEditor } = editor;
+  const { read: readTitles } = titleEditor;
+  const editorUnread = editor.step.name === "unread";
+  const titlesUnread = titleEditor.step.name === "unread";
+  useEffect(() => {
+    if (onEditorPage && editorUnread && !writing) {
+      void readEditor();
     }
-  }, [port, lane, refreshUndo]);
+  }, [onEditorPage, editorUnread, writing, readEditor]);
+  useEffect(() => {
+    if (onNameTitlePage && titlesUnread && !writing) {
+      void readTitles();
+    }
+  }, [onNameTitlePage, titlesUnread, writing, readTitles]);
+
+  /**
+   * Reads my page, and shows it: whether it came. A read made `behindThePage` is the window's own,
+   * after a title write: the page stays as it is until the profile is in, where a spinner in its
+   * place would unmount it, outcome notice and keyboard focus with it, and the portrait is left as
+   * it was, since a title says nothing of the costume.
+   */
+  const read = useCallback(
+    async (behindThePage = false): Promise<boolean> => {
+      if (behindThePage) {
+        setRefreshing(true);
+      } else {
+        setScreen({ name: "reading" });
+      }
+      try {
+        const result = await (behindThePage
+          ? port.readProfile({ renewsPortrait: false })
+          : port.readProfile());
+        if (result.ok) {
+          // The plates may have changed with the title, the season or its progress, and the
+          // portrait with a costume changed anywhere: each is asked for again, and what was shown
+          // stays till it comes. The platform says whether the portrait is fetched anew or answered
+          // as kept. The score panel's art, kept for good once it came, is asked for again only if
+          // it did not.
+          lane.renew("titlePlate");
+          lane.renew("medalPlate");
+          if (!behindThePage) {
+            lane.renew("myDon");
+          }
+          lane.forgetFailures("scorePanel");
+          await Promise.all([refreshUndo(), refreshTitleUndo(), refreshNameUndo()]);
+          setScreen({ name: "profile", profile: result.value });
+          return true;
+        }
+        if (SESSION_GONE.has(result.error.kind)) {
+          setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
+        } else {
+          setScreen({ name: "readFailed", ...result.error });
+        }
+        return false;
+      } finally {
+        setRefreshing(false);
+      }
+    },
+    [port, lane, refreshUndo, refreshTitleUndo, refreshNameUndo],
+  );
+
+  /**
+   * A title write that moved the title, or may have, leaves the window's copy of my page out of
+   * date: the plate shows the old title. It is read again once, behind the page it is on.
+   */
+  const stale = useRef<TitleStep | null>(null);
+  const titleStep = titleEditor.step;
+  useEffect(() => {
+    if (
+      titleStep.name === "done" &&
+      movedTheTitle(titleStep.outcome) &&
+      stale.current !== titleStep
+    ) {
+      stale.current = titleStep;
+      void read(true);
+    }
+  }, [titleStep, read]);
 
   /**
    * A sign-in starts the pictures afresh: whoever signs in may be another player, and when Hiroba
@@ -154,88 +239,24 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     onNavigate("overview");
   };
 
-  /**
-   * A write ended: the undo on offer is asked for again, and a change that read back as planned
-   * offers its undo at once. A change also clears what the card said of the last undo, which no
-   * longer describes the costume. One that found the session gone goes back to signing in, as a
-   * read does. A write that changed the costume asks for the portrait again, which the platform
-   * then fetches anew; any other asks for nothing.
-   */
-  const writeEnded = (outcome: WriteOutcomeView, asUndo = false) => {
-    setJustSaved(!asUndo && outcome.kind === "applied");
-    if (!asUndo) {
-      setUndoOutcome(null);
+  // Whoever signs in next may be another player: nothing of the last session's editor is kept,
+  // however the session ended.
+  const noSession = screen.name === "signedOut" || screen.name === "signingIn";
+  useEffect(() => {
+    if (noSession) {
+      forgetEditor();
+      forgetTitleEditor();
+      forgetNameEditor();
     }
-    void refreshUndo();
-    if (changedTheCostume(outcome)) {
-      lane.renew("myDon");
-    }
-    if (outcome.kind === "sessionGone" || outcome.kind === "notSignedIn") {
-      setJustSaved(false);
-      setUndoable(null);
-      setCostumeOpen(false);
-      setScreen({
-        name: "signedOut",
-        notice:
-          outcome.kind === "notSignedIn"
-            ? "failure.notSignedIn"
-            : outcome.writeMayHaveHappened
-              ? "write.sessionGoneAfterSave"
-              : "write.sessionGone",
-      });
-    }
-  };
+  }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor]);
 
-  /** Opens the editor. The Snackbar's undo goes: a new change is being made, not the last one. */
-  const openEditor = () => {
-    setJustSaved(false);
-    setCostumeOpen(true);
-  };
   /**
    * A touch-first screen reads again by a pull from the top of the page, not by the Fab, and opens
-   * the editor by a long-press on the portrait, not a tap.
+   * the Costume page by a long-press on the portrait, not a tap.
    */
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
-  /**
-   * The portrait opens the editor where this run may change the costume, not while an undo runs;
-   * shut on purpose, it says why, rather than leave a card with no way to change anything.
-   */
-  const portrait: PortraitAction =
-    costumeWrite === undefined
-      ? { kind: "shut" }
-      : { kind: "opensEditor", open: openEditor, busy: undoing, byLongPress: touchFirst };
-
-  /**
-   * Undoes the last costume change: a write like any other, its outcome shown on the card. One
-   * press starts one undo: the ref turns away a second press that lands before the buttons are
-   * disabled, as a double-click on the Snackbar's, still there while it slides out, would.
-   */
-  const undoStarted = useRef(false);
-  const undo = async () => {
-    if (undoStarted.current) {
-      return;
-    }
-    undoStarted.current = true;
-    setJustSaved(false);
-    setCostumeOpen(false);
-    setUndoing(true);
-    setUndoOutcome(null);
-    let outcome: WriteOutcomeView;
-    lane.hold();
-    try {
-      outcome = await port.undo("costume");
-    } catch {
-      // The call itself failed: how the undo ended is not known, and the card must not stay on
-      // "Undoing…" with its buttons shut.
-      outcome = { kind: "interrupted" };
-    } finally {
-      lane.release();
-    }
-    undoStarted.current = false;
-    setUndoing(false);
-    setUndoOutcome(outcome);
-    writeEnded(outcome, true);
-  };
+  /** The portrait jumps to the Costume page, which has the editor. */
+  const portrait: PortraitAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
 
   // A session kept from an earlier launch is read once on opening: that is what opening the app
   // asks for. Once, not per render — StrictMode runs effects twice in development, and a second
@@ -257,19 +278,30 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
 
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
   /**
-   * Reads again, from the Fab or a pull, as the read on opening does. Never while a read runs, nor
-   * while the editor is open or an undo runs, so no read starts inside a write. The ref turns away
-   * a second ask that lands before the Fab is shut.
+   * Reads again, from the Fab or a pull, as the read on opening does: the editor on the Costume
+   * page, my page and then the list of titles on the Nickname & title page (the name lives on my page,
+   * the titles on their own), my page on any other. Never while a read runs, nor while a save or an
+   * undo runs, so no read starts inside a write. The ref turns away a second ask that lands before
+   * the Fab is shut.
    */
-  const canReadAgain = signedIn && !costumeOpen && !undoing;
+  const canReadAgain =
+    signedIn &&
+    !writing &&
+    !refreshing &&
+    (!onEditorPage || editor.canRead) &&
+    (!onNameTitlePage || titleEditor.canRead);
   const readAgainStarted = useRef(false);
   const readAgain = async () => {
-    if (!canReadAgain || readAgainStarted.current || undoStarted.current) {
+    if (!canReadAgain || readAgainStarted.current) {
       return;
     }
     readAgainStarted.current = true;
     try {
-      await read();
+      if (onEditorPage) {
+        await editor.read();
+      } else if ((await read()) && onNameTitlePage) {
+        await titleEditor.read();
+      }
     } finally {
       readAgainStarted.current = false;
     }
@@ -281,7 +313,12 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
         <>
           <FrameCorner>
             <ReadAgainFab
-              reading={screen.name === "reading"}
+              reading={
+                screen.name === "reading" ||
+                refreshing ||
+                (onEditorPage && editor.reading) ||
+                (onNameTitlePage && titleEditor.reading)
+              }
               canRead={canReadAgain}
               touchFirst={touchFirst}
               onRead={readAgain}
@@ -296,15 +333,17 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           i18n={i18n}
           language={language}
           account={
-            screen.name === "checking" || screen.name === "reading"
-              ? { kind: screen.name }
-              : signedIn
-                ? {
-                    kind: "signedIn",
-                    nickname: screen.name === "profile" ? screen.profile.nickname : null,
-                    onSignOut: signOut,
-                  }
-                : { kind: "signedOut" }
+            screen.name === "checking"
+              ? { kind: "checking" }
+              : screen.name === "reading" || refreshing || writing
+                ? { kind: "reading" }
+                : signedIn
+                  ? {
+                      kind: "signedIn",
+                      nickname: screen.name === "profile" ? screen.profile.nickname : null,
+                      onSignOut: signOut,
+                    }
+                  : { kind: "signedOut" }
           }
         />
       ) : (
@@ -348,39 +387,30 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
             </Stack>
           )}
 
-          {screen.name === "profile" && (
+          {screen.name === "profile" && page === "costume" && (
+            <CostumePage editor={editor} lane={lane} i18n={i18n} />
+          )}
+
+          {screen.name === "profile" && page === "nameTitle" && (
+            <NameTitlePage
+              profile={screen.profile}
+              lane={lane}
+              i18n={i18n}
+              title={titleEditor}
+              name={nameEditor}
+            />
+          )}
+
+          {screen.name === "profile" && page !== "costume" && page !== "nameTitle" && (
             <Stack spacing={2}>
               {page === "overview" ? (
                 <>
-                  <ProfileCard profile={screen.profile} lane={lane} i18n={i18n} portrait={portrait}>
-                    {undoable !== null && (
-                      <Button
-                        id="costume-undo"
-                        variant="text"
-                        disabled={undoing}
-                        onClick={undo}
-                        sx={{ alignSelf: "flex-start" }}
-                      >
-                        {t("costume.undoLast")}
-                      </Button>
-                    )}
-                    {undoable !== null && (
-                      <Typography id="undo-when" variant="body2" color="text.secondary">
-                        {t("costume.undoWhen", {
-                          time: i18n.dateTime(undoable.at),
-                        })}
-                      </Typography>
-                    )}
-                    {undoing && (
-                      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                        <CircularProgress size={20} />
-                        <Typography variant="body2">{t("costume.undoing")}</Typography>
-                      </Stack>
-                    )}
-                    {undoOutcome !== null && (
-                      <WriteOutcomeNotice outcome={undoOutcome} i18n={i18n} asUndo />
-                    )}
-                  </ProfileCard>
+                  <ProfileCard
+                    profile={screen.profile}
+                    lane={lane}
+                    i18n={i18n}
+                    portrait={portrait}
+                  />
                   <PanelCard
                     crowns={screen.profile.crowns}
                     ranks={screen.profile.panel.ranks}
@@ -424,70 +454,29 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           )}
         </Stack>
       )}
-      {costumeOpen && screen.name === "profile" && costumeWrite !== undefined && (
-        <CostumeDialog
-          port={port}
-          lane={lane}
-          i18n={i18n}
-          verified={costumeWrite.verified}
-          onClose={() => setCostumeOpen(false)}
-          onOutcome={(outcome) => writeEnded(outcome)}
-        />
-      )}
-      {/* Offered once the editor is closed: over an open dialog it would undo under it. */}
-      {/* On the Overview alone, too: the one page that shows an undo running and how it ended. */}
-      <Snackbar
-        open={
-          justSaved &&
-          undoable !== null &&
-          screen.name === "profile" &&
-          page === "overview" &&
-          !costumeOpen
-        }
-        autoHideDuration={20_000}
-        onClose={(_event, reason) => reason !== "clickaway" && setJustSaved(false)}
-        message={t("write.applied")}
-        action={
-          <Button
-            id="snackbar-undo"
-            color="secondary"
-            size="small"
-            disabled={undoing}
-            onClick={undo}
-          >
-            {t("write.undo")}
-          </Button>
-        }
-      />
     </>
   );
 }
 
 /**
  * The identity card, drawn as Hiroba's my page draws its header (OverviewHeader): the portrait,
- * which opens the costume editor where this run may change the costume, the title plate and the
- * score panel. `children` are the undo on offer and how the last one ended.
+ * which jumps to the Costume page, the title plate and the score panel.
  */
 function ProfileCard({
   profile,
   lane,
   i18n,
   portrait,
-  children,
 }: {
   profile: ProfileView;
   lane: PictureLane;
   i18n: Translator;
   portrait: PortraitAction;
-  children?: ReactNode;
 }) {
   return (
     <Card id="profile" variant="outlined">
       <CardContent>
-        <Stack spacing={1.5}>
-          <OverviewHeader profile={profile} lane={lane} i18n={i18n} portrait={portrait} />
-          {children}
-        </Stack>
+        <OverviewHeader profile={profile} lane={lane} i18n={i18n} portrait={portrait} />
       </CardContent>
     </Card>
   );

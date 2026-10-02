@@ -115,6 +115,7 @@ function profileView(profile: Profile, dan: DanView | null): ProfileView {
   return {
     nickname: profile.nickname,
     title: profile.title,
+    rename: profile.rename,
     region: profile.region,
     dan,
     crowns: {

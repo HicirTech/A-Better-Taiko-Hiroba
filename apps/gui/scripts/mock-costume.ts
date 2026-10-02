@@ -98,13 +98,46 @@ export interface MockSession {
 export interface PostRecord {
   readonly path: string;
   readonly xRequestedWith: string | null;
+  readonly accept: string | null;
   readonly origin: string | null;
   readonly referer: string | null;
   readonly contentType: string | null;
+  /** `close` when the client asked for the connection to be closed after the post. */
+  readonly connection: string | null;
   readonly fields: readonly string[];
   /** Every field but `_tckt`, whose value is never kept. */
   readonly values: Readonly<Record<string, string>>;
   readonly ticketMatched: boolean;
+}
+
+/**
+ * One ajax post as it arrived, for a mock that keeps a list of them: its headers, its field names in
+ * order, its values but the token's, and whether the token it carried was the session's latest.
+ */
+export function postRecordOf(
+  path: string,
+  request: Request,
+  form: URLSearchParams,
+  session: MockSession | undefined,
+): PostRecord {
+  const values: Record<string, string> = {};
+  for (const [name, value] of form) {
+    if (name !== "_tckt") {
+      values[name] = value;
+    }
+  }
+  return {
+    path,
+    xRequestedWith: request.headers.get("x-requested-with"),
+    accept: request.headers.get("accept"),
+    origin: request.headers.get("origin"),
+    referer: request.headers.get("referer"),
+    contentType: request.headers.get("content-type"),
+    connection: request.headers.get("connection"),
+    fields: [...form.keys()],
+    values,
+    ticketMatched: session?.ticket !== undefined && form.get("_tckt") === session.ticket,
+  };
 }
 
 /** The site's error page, as Hiroba answered a post without X-Requested-With (2026-08-09). */
@@ -304,22 +337,7 @@ ${slotTabs}
       form: URLSearchParams,
       session: MockSession | undefined,
     ) {
-      const values: Record<string, string> = {};
-      for (const [name, value] of form) {
-        if (name !== "_tckt") {
-          values[name] = value;
-        }
-      }
-      posts.push({
-        path,
-        xRequestedWith: request.headers.get("x-requested-with"),
-        origin: request.headers.get("origin"),
-        referer: request.headers.get("referer"),
-        contentType: request.headers.get("content-type"),
-        fields: [...form.keys()],
-        values,
-        ticketMatched: session?.ticket !== undefined && form.get("_tckt") === session.ticket,
-      });
+      posts.push(postRecordOf(path, request, form, session));
     },
 
     /** Settles once pre-checks may be answered: at once, unless /__hold-precheck holds them. */

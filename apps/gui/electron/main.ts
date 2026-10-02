@@ -5,26 +5,24 @@ import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } f
 import {
   createHirobaQueue,
   createPictureReader,
+  createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
-  endpointsFromOverrides,
-  HIROBA_ENDPOINTS,
-  type HirobaEndpoints,
   offeredOf,
   type PictureSources,
   previewCostume,
+  queuePort,
   readOwnProfile,
+  sessionEnded,
 } from "../src/hiroba-session";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
-  type ReadFailure,
   type SignInOutcome,
-  type WriteOutcomeView,
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
-import { createDesktopWrites } from "./desktop-writes";
+import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { saveReads } from "./save-reads";
@@ -32,20 +30,18 @@ import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
 import { createUndoStore } from "./undo-store";
 
-// Development only, and never in a packaged build: the renderer from Vite's dev server, and a
-// local stand-in for Hiroba and the ID host so the whole sign-in can run without the real sites.
-// Setting only one of the two endpoint overrides stops the app rather than half-reaching Hiroba.
-// The picture host's is optional: without it, a stand-in run asks no picture host anything.
-const devServerUrl = app.isPackaged ? undefined : process.env.ABTH_DEV_SERVER_URL;
-const endpoints: HirobaEndpoints = app.isPackaged ? HIROBA_ENDPOINTS : developmentEndpoints();
+// What the way the app was started decides, in a development run alone and never in a packaged
+// build (desktop-environment.ts): the renderer from Vite's dev server, a local stand-in for Hiroba
+// and the ID host so the whole sign-in can run without the real sites, a data folder of its own and
+// a fixed clock for the writes. Setting only one of the two endpoint overrides stops the app rather
+// than half-reaching Hiroba. The picture host's is optional: without it, a stand-in run asks no
+// picture host anything.
+const environment = startedWith();
+const { devServerUrl, endpoints } = environment;
 
-function developmentEndpoints(): HirobaEndpoints {
+function startedWith(): DesktopEnvironment {
   try {
-    return endpointsFromOverrides(
-      process.env.ABTH_DEV_HIROBA_ORIGIN,
-      process.env.ABTH_DEV_IDP_HOST,
-      process.env.ABTH_DEV_IMG_ORIGIN,
-    );
+    return desktopEnvironment(app.isPackaged, process.env);
   } catch (error) {
     // Not thrown: an uncaught error in the main process opens a dialog and waits.
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
@@ -62,20 +58,8 @@ app.userAgentFallback = userAgent;
 
 // Development only: lets the end-to-end run and the dev run against the mock keep their profiles
 // out of the real %APPDATA%, where the installed app keeps its session and undo record.
-if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
-  app.setPath("userData", process.env.ABTH_DEV_USER_DATA);
-}
-
-// Which writes this run may send: the verified ones, and every other only in an unpackaged run
-// started with ABTH_UNVERIFIED_WRITES=1. A packaged build ignores that variable.
-const writeGate = { isPackaged: app.isPackaged, env: process.env };
-// The clock a write checks Hiroba's daily break against. Development only: ABTH_DEV_NOW (an ISO
-// time) fixes it, so a test runs at any hour and can try the break itself.
-const writeClock = developmentClock();
-
-function developmentClock(): () => Date {
-  const fixed = app.isPackaged ? Number.NaN : Date.parse(process.env.ABTH_DEV_NOW ?? "");
-  return Number.isNaN(fixed) ? () => new Date() : () => new Date(fixed);
+if (environment.userData !== undefined) {
+  app.setPath("userData", environment.userData);
 }
 
 app.enableSandbox();
@@ -129,12 +113,11 @@ const readTransport =
     : transport;
 
 /**
- * Every verb that asks Hiroba something runs one at a time: a read never lands between a write's
- * posts and its read-back, and two writes never interleave. A write asked for while another is
- * queued or running answers `busy` and sends nothing.
+ * Every verb that asks Hiroba something runs one at a time, as `queuePort` below puts each in it: a
+ * read never lands between a write's posts and its read-back, and two writes never interleave. A
+ * write asked for while another is queued or running answers `busy` and sends nothing.
  */
 const queue = createHirobaQueue();
-const { oneAtATime, oneWriteAtATime } = queue;
 
 /**
  * Hiroba's pictures for the window, kept on disk in the app's data folder across launches and
@@ -149,12 +132,6 @@ const pictures = createPictureReader({
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
-const BUSY: WriteOutcomeView = { kind: "busy" };
-
-/** A read that found the login page, or a card still to choose: the session is over. */
-const sessionEnded = (failure: ReadFailure) =>
-  failure.kind === "loggedOut" || failure.kind === "cardSelectUnfinished";
-
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -184,12 +161,12 @@ app.whenReady().then(async () => {
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
-  // The writes: the gate, the undo record on disk, and the session dropped when Hiroba ends it.
-  const writes = createDesktopWrites({
+  // The writes: the undo record on disk, and the session dropped when Hiroba ends it.
+  const writes = createSessionWrites({
     transport: readTransport,
     endpoints,
-    gate: writeGate,
-    now: writeClock,
+    platform: "desktop",
+    now: environment.now,
     undoStore: createUndoStore(join(app.getPath("userData"), "undo.json")),
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
@@ -198,7 +175,7 @@ app.whenReady().then(async () => {
     costumeChanged: () => pictures.costumeChanged(),
   });
 
-  const port: HirobaSessionPort = {
+  const port = queuePort(queue, {
     async isSignedIn() {
       return sessionCookie !== null;
     },
@@ -220,12 +197,15 @@ app.whenReady().then(async () => {
     async cancelSignIn() {
       signInAttempt?.cancel();
     },
-    readProfile: oneAtATime(async () => {
+    readProfile: async (options) => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
-      // Every read but the session's first is the user's Read again: the portrait is renewed.
-      pictures.myPageAsked();
+      // Every read but the session's first is the user's Read again: the portrait is renewed. One
+      // the window makes on its own says it is not.
+      if (options?.renewsPortrait !== false) {
+        pictures.myPageAsked();
+      }
       const read = await readOwnProfile(readTransport, endpoints);
       if (!read.ok) {
         if (sessionEnded(read.error)) {
@@ -237,35 +217,44 @@ app.whenReady().then(async () => {
       sources = read.value.pictures;
       // The session held: the plates fetched before this read are the player's own.
       await pictures.confirm(read.value.taikoNo);
+      // The title and the name it shows settle a write whose end was not known, and date a stale
+      // record.
+      const { view } = read.value;
+      await writes.profileRead({
+        taikoNo: read.value.taikoNo,
+        title: view.title,
+        nickname: view.nickname,
+      });
       return ok(read.value.view);
-    }),
+    },
     async signOut() {
       setSession(null);
     },
-    enabledWrites: writes.enabledWrites,
     // The items it offers are the only ones whose thumbnail the window may ask for next.
-    openCostumeEditor: oneAtATime(async () => {
+    openCostumeEditor: async () => {
       const read = await writes.openCostumeEditor();
       if (read.ok) {
         offered = offeredOf(read.value);
       }
       return read;
-    }),
-    // A read that changes nothing, so no write gate: in the queue like every request to Hiroba, so
-    // it never lands between a write's posts and its read-back. Its failure leaves the session be:
-    // the next read of a page says whether it is over. Kept as its latest copy alone when reads are
-    // saved for debugging (save-reads.ts).
-    previewCostume: oneAtATime(async (set: CostumeSet) => {
+    },
+    openTitleEditor: writes.openTitleEditor,
+    // A read that changes nothing, so any signed-in window may ask it. Its failure leaves the
+    // session be: the next read of a page says whether it is over. Kept as its latest copy alone
+    // when reads are saved for debugging (save-reads.ts).
+    previewCostume: async (set: CostumeSet) => {
       if (sessionCookie === null) {
         return err({ code: "preview=notSignedIn" });
       }
       return previewCostume(readTransport, endpoints, set);
-    }),
+    },
     readPicture: (want) => pictures.read(want),
-    changeCostume: oneWriteAtATime(writes.changeCostume, BUSY),
+    changeCostume: writes.changeCostume,
+    changeTitle: writes.changeTitle,
+    changeName: writes.changeName,
     pendingUndo: writes.pendingUndo,
-    undo: oneWriteAtATime(writes.undo, BUSY),
-  };
+    undo: writes.undo,
+  });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.
   const originOf = (raw: string) => {

@@ -1,7 +1,6 @@
 /**
  * The Hiroba session as the app sees it, shared by both shells: where a sign-in stands, the read,
- * and the writes, with the gate that says which a run may send. Nothing here holds or sees the
- * session cookie.
+ * and the writes, which every build may send. Nothing here holds or sees the session cookie.
  */
 export {
   endpointsFromOverrides,
@@ -11,9 +10,19 @@ export {
   myPageUrl,
   SESSION_COOKIE_NAME,
 } from "./endpoints";
-export { type CostumeWriteOptions, changeCostume } from "./change-costume";
+export { changeCostume } from "./change-costume";
+export { changeName } from "./change-name";
+export { changeTitle } from "./change-title";
+export {
+  encodeForm,
+  FORM_CONTENT_TYPE,
+  POST_FOLLOWED_AS_GET,
+  resolveRedirect,
+} from "./form-post";
 export { createHirobaQueue, type HirobaQueue } from "./hiroba-queue";
+export { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 export { openCostumeEditor } from "./open-costume-editor";
+export { openTitleEditor } from "./open-title-editor";
 export {
   createMemoryPictureStore,
   PICTURE_EPOCH,
@@ -33,6 +42,7 @@ export {
   type TitlePlateSource,
 } from "./picture-sources";
 export { previewCostume, previewUrl } from "./preview-costume";
+export { queuePort } from "./queue-port";
 export {
   ANDROID_PICTURE_LIMITS,
   createPictureReader,
@@ -45,11 +55,15 @@ export {
   type PictureReadState,
 } from "./read-picture";
 export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
-export { signInStep } from "./sign-in-step";
-export type { HirobaEndpoints, SignInStep } from "./types";
+export { sessionEnded } from "./session-ended";
 export {
-  enabledWrites,
-  unverifiedWritesOpen,
-  VERIFIED_WRITES,
-  type WriteGateInput,
-} from "./verified-writes";
+  BUSY_OUTCOME,
+  createSessionWrites,
+  type ProfileSeen,
+  type SessionWrites,
+  type SessionWritesOptions,
+} from "./session-writes";
+export { signInStep } from "./sign-in-step";
+export type { HirobaEndpoints, SignInStep, WriteOptions } from "./types";
+export { isUndoSlot, readSlot } from "./undo-slot";
+export type { UndoStore } from "./undo-store";

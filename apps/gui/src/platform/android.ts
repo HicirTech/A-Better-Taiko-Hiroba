@@ -11,21 +11,31 @@ import {
   createHirobaQueue,
   createMemoryPictureStore,
   createPictureReader,
+  createSessionWrites,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
   idpOrigin,
   loginPageUrl,
   offeredOf,
-  openCostumeEditor,
   type PictureSources,
   previewCostume,
+  queuePort,
   readOwnProfile,
+  sessionEnded,
   signInStep,
+  type UndoStore,
 } from "../hiroba-session";
-import type { CostumeSet, HirobaSessionPort, ReadFailure, SignInOutcome } from "../session-port";
-import { createIndexedDbPictureStore, type PictureDatabaseFactory } from "./android-picture-store";
+import {
+  checkedPort,
+  type CostumeSet,
+  type HirobaSessionPort,
+  type SignInOutcome,
+} from "../session-port";
+import type { DatabaseFactory } from "./android-indexeddb";
+import { createIndexedDbPictureStore } from "./android-picture-store";
 import { createAndroidTransport } from "./android-transport";
+import { createIndexedDbUndoStore } from "./android-undo-store";
 
 // Development only (the Vite dev server behind live reload): a local stand-in for Hiroba and the ID
 // host. A production build replaces import.meta.env.DEV with false and drops this branch; setting
@@ -48,11 +58,20 @@ export interface AndroidPortOptions {
   /** Where "a sign-in finished here" is remembered across launches. The page's localStorage. */
   readonly signedInFlag?: SignedInFlag;
   /**
-   * Where Hiroba's pictures are kept across launches: the page's IndexedDB. Without one, they are
-   * kept in memory for the run.
+   * Where Hiroba's pictures and the undo records are kept across launches: the page's IndexedDB.
+   * Without one, the pictures are kept in memory for the run, and a write is not sent: an undo
+   * record held in memory would not survive an app killed in the middle of the write.
    */
-  readonly indexedDb?: PictureDatabaseFactory;
+  readonly indexedDb?: DatabaseFactory;
+  /** The clock a write checks Hiroba's daily break against. */
+  readonly now?: () => Date;
 }
+
+/** Where an undo record is kept when there is nowhere: every call is refused, so no write is sent. */
+const NO_UNDO_STORE: UndoStore = {
+  load: () => Promise.reject(new Error("There is nowhere to keep an undo record")),
+  save: () => Promise.reject(new Error("There is nowhere to keep an undo record")),
+};
 
 /** One remembered yes or no. */
 export interface SignedInFlag {
@@ -101,7 +120,12 @@ const localStorageFlag: SignedInFlag = {
  * clearAllCookies.
  *
  * Every verb that asks Hiroba something runs one at a time, in the order asked, through the same
- * queue the desktop uses: a picture never goes out beside a read, and two reads never overlap.
+ * queue the desktop uses, which `queuePort` puts each verb in: a picture never goes out beside a
+ * read, and two reads never overlap. A write is one turn of it, all its requests: no read and no
+ * picture goes out between them. The writes are the desktop's own verbs (`createSessionWrites`)
+ * over Android's transport and an undo store in IndexedDB, with the cookie store written to disk
+ * after each. Nothing here is an IPC boundary, so the port is wrapped to check every call's
+ * arguments, as the desktop's main process does for the window.
  *
  * Hiroba's pictures come through the same reader as on the desktop, kept in the page's IndexedDB
  * across launches and sign-outs, each fetched once. What that reader needs to know stays in this
@@ -115,7 +139,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
   const queue = createHirobaQueue();
-  const { oneAtATime } = queue;
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
   let sources: PictureSources | null = null;
@@ -141,7 +164,21 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     await CapacitorCookies.clearAllCookies();
   };
 
-  return {
+  const { indexedDb } = options;
+  const writes = createSessionWrites({
+    transport,
+    endpoints,
+    platform: "android",
+    now: options.now ?? (() => new Date()),
+    undoStore: indexedDb === undefined ? NO_UNDO_STORE : createIndexedDbUndoStore(indexedDb),
+    signedIn: () => signedIn,
+    endSession: forget,
+    owner: () => owner,
+    // The My Don kept shows the costume before: it is fetched anew when next shown.
+    costumeChanged: () => pictures.costumeChanged(),
+  });
+
+  const port = queuePort(queue, {
     async isSignedIn() {
       return signedIn;
     },
@@ -204,12 +241,15 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await InAppBrowser.close().catch(() => undefined);
     },
 
-    readProfile: oneAtATime(async () => {
+    readProfile: async (options) => {
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
-      // Every read but the session's first is the user's Read again: the portrait is renewed.
-      pictures.myPageAsked();
+      // Every read but the session's first is the user's Read again: the portrait is renewed. One
+      // the window makes on its own says it is not.
+      if (options?.renewsPortrait !== false) {
+        pictures.myPageAsked();
+      }
       const read = await readOwnProfile(transport, endpoints);
       if (!read.ok && sessionEnded(read.error)) {
         await forget();
@@ -224,64 +264,75 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       sources = read.value.pictures;
       // The session held: the plates fetched before this read are the player's own.
       await pictures.confirm(read.value.taikoNo);
+      // The title and the name it shows settle a write whose end was not known, and date a stale
+      // record.
+      const { view } = read.value;
+      await writes.profileRead({
+        taikoNo: read.value.taikoNo,
+        title: view.title,
+        nickname: view.nickname,
+      });
       return ok(read.value.view);
-    }),
+    },
 
     async signOut() {
       await forget();
     },
 
-    // Writes are the desktop's alone for now (the user's call, 2026-09-27): Android enables none,
-    // sends none, and its transport refuses a post outright.
-    async enabledWrites() {
-      return [];
-    },
-
-    openCostumeEditor: oneAtATime(async () => {
-      if (!signedIn) {
-        return err({ kind: "notSignedIn" });
-      }
-      const read = await openCostumeEditor(transport, endpoints);
-      if (!read.ok && sessionEnded(read.error)) {
-        await forget();
-      } else {
-        await saveCookieStore();
-      }
+    // The items it offers are the only ones whose thumbnail the window may ask for next.
+    openCostumeEditor: flushed(async () => {
+      const read = await writes.openCostumeEditor();
       if (read.ok) {
         offered = offeredOf(read.value);
       }
       return read;
     }),
 
+    openTitleEditor: flushed(writes.openTitleEditor),
+
     // A read that changes nothing, allowed here as on the desktop. Its failure forgets nothing: the
     // next read of a page says whether the session is over.
-    previewCostume: oneAtATime(async (set: CostumeSet) => {
+    previewCostume: async (set: CostumeSet) => {
       if (!signedIn) {
         return err({ code: "preview=notSignedIn" });
       }
       return previewCostume(transport, endpoints, set);
-    }),
+    },
 
     // A read like the preview, refused unsent while signed out; its fetch waits in the queue.
     readPicture: (want) => pictures.read(want),
 
-    async changeCostume() {
-      return { kind: "notEnabled" };
-    },
+    changeCostume: flushed(writes.changeCostume),
 
-    async pendingUndo() {
-      return [];
-    },
+    changeTitle: flushed(writes.changeTitle),
 
-    async undo() {
-      return { kind: "notEnabled" };
-    },
-  };
+    changeName: flushed(writes.changeName),
+
+    // Reads the undo store alone and asks Hiroba nothing: not in the queue.
+    pendingUndo: writes.pendingUndo,
+
+    // The port types an undo's outcome by the kind asked; `flushed` hands the one it is given on.
+    undo: flushed(writes.undo) as HirobaSessionPort["undo"],
+  });
+
+  return checkedPort(port);
 }
 
-/** A read that found the login page, or a card still to choose: the session is over. */
-function sessionEnded(failure: ReadFailure): boolean {
-  return failure.kind === "loggedOut" || failure.kind === "cardSelectUnfinished";
+/**
+ * `run`, then the WebView's cookie store written to disk, however `run` ended: Hiroba may have
+ * renewed the session on the way, a failed write included, and it must be on disk before the app
+ * can be swiped away.
+ */
+function flushed<A extends unknown[], R>(
+  run: (...args: A) => Promise<R>,
+): (...args: A) => Promise<R> {
+  return async (...args) => {
+    try {
+      return await run(...args);
+    } finally {
+      await saveCookieStore();
+    }
+  };
 }
 
 /**

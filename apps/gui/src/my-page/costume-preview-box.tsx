@@ -1,6 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Box, CircularProgress, Stack, Typography } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CostumeSet, HirobaSessionPort } from "../session-port";
 import {
@@ -11,11 +11,18 @@ import {
 } from "./costume-preview";
 
 /**
- * Hiroba's picture of `set`, kept up with `set` for as long as the calling component is mounted, as
- * the scheduler paces it. Null asks for nothing. The scheduler outlives StrictMode's second run of
- * an effect in development, so the first picture is one request there too.
+ * Hiroba's picture of `set`, kept up with `set` for as long as `active` holds, as the scheduler
+ * paces it. Null asks for nothing, and so does a pause in `active`: the scheduler outlives it, so a
+ * set drawn before is shown again at the start without a request, and only a set not yet asked for
+ * is. It outlives StrictMode's second run of an effect in development too, so the first picture is
+ * one request there as well. `reset` is for a session that ends: it forgets the pictures, and the
+ * next one opens on none.
  */
-export function useCostumePreview(port: HirobaSessionPort, set: CostumeSet | null): PreviewState {
+export function useCostumePreview(
+  port: HirobaSessionPort,
+  set: CostumeSet | null,
+  active: boolean,
+): { readonly preview: PreviewState; readonly reset: () => void } {
   const [preview, setPreview] = useState<PreviewState>(NO_PREVIEW);
   const made = useRef<PreviewScheduler | null>(null);
   if (made.current === null) {
@@ -25,16 +32,21 @@ export function useCostumePreview(port: HirobaSessionPort, set: CostumeSet | nul
     });
   }
   const scheduler = made.current;
+  const reset = useCallback(() => scheduler.reset(), [scheduler]);
   useEffect(() => {
+    if (!active) {
+      return;
+    }
+
     scheduler.start();
     return () => scheduler.stop();
-  }, [scheduler]);
+  }, [scheduler, active]);
   useEffect(() => {
     if (set !== null) {
       scheduler.want(set);
     }
   }, [scheduler, set]);
-  return preview;
+  return { preview, reset };
 }
 
 /**
@@ -46,7 +58,7 @@ export function useCostumePreview(port: HirobaSessionPort, set: CostumeSet | nul
 export function CostumePreviewBox({ preview, i18n }: { preview: PreviewState; i18n: Translator }) {
   const { t } = i18n;
   return (
-    <Stack id="costume-preview" spacing={0.5} sx={{ alignItems: "center", mb: 2 }}>
+    <Stack id="costume-preview" spacing={0.5} sx={{ alignItems: "center" }}>
       <Box
         aria-busy={preview.loading}
         sx={{

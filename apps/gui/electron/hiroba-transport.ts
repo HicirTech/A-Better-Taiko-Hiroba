@@ -1,20 +1,22 @@
 import { err, ok, type Transport, type TransportFailure } from "@abth/core";
 
-import { SESSION_COOKIE_NAME } from "../src/hiroba-session";
+import {
+  encodeForm,
+  FORM_CONTENT_TYPE,
+  POST_FOLLOWED_AS_GET,
+  resolveRedirect,
+  SESSION_COOKIE_NAME,
+} from "../src/hiroba-session";
 
 const TIMEOUT_MS = 20_000;
 /** Chrome's own limit. */
 const MAX_REDIRECTS = 20;
 const REDIRECT_STATUSES: ReadonlySet<number> = new Set([301, 302, 303, 307, 308]);
-/** The redirects a browser follows after a post, with a GET that has no body. */
-const POST_FOLLOWED_AS_GET: ReadonlySet<number> = new Set([301, 302, 303]);
 /**
  * Names a caller may not set: the session and the browser identity belong to this transport, and
  * so does the type of the body it encodes.
  */
 const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent", "content-type"]);
-/** What a browser sends with a form, and what jQuery sends with the ajax posts Hiroba makes. */
-const FORM_CONTENT_TYPE = "application/x-www-form-urlencoded; charset=UTF-8";
 
 /** Where the desktop keeps the session: main-process memory, behind these two calls. */
 export interface SessionCookieHolder {
@@ -133,15 +135,6 @@ export function createHirobaTransport(options: HirobaTransportOptions): Transpor
   };
 }
 
-/** The form as a browser encodes it: each pair in the order given, spaces as `+`. */
-function encodeForm(form: readonly (readonly [string, string])[]): string {
-  const encoded = new URLSearchParams();
-  for (const [name, value] of form) {
-    encoded.append(name, value);
-  }
-  return encoded.toString();
-}
-
 /**
  * A browser's rules, cut down to the one cookie: an empty value, a Max-Age of zero or less, or an
  * Expires in the past ends the session; any other value replaces it. Max-Age wins over Expires
@@ -179,15 +172,6 @@ function takeUpSessionCookie(
         ? Number(maxAge) <= 0
         : !Number.isNaN(expires) && expires <= now());
     session.set(ended ? null : value);
-  }
-}
-
-function resolveRedirect(location: string, from: string): string | null {
-  try {
-    const next = new URL(location, from);
-    return next.protocol === "https:" || next.protocol === "http:" ? next.href : null;
-  } catch {
-    return null;
   }
 }
 

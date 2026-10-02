@@ -26,8 +26,10 @@ export interface PullToReadProps {
  * Pull-to-read, for a touch-first screen: pulled down from the top of the page (pull-gesture.ts),
  * a round indicator follows the finger, its ring filling on the way to the point where letting go
  * reads again; the page then says it is reading, as after the Fab. A pull starts anywhere on the
- * page's main region, but never on the navigation or over a dialog, whose touches never reach it.
- * The indicator is for the eye alone: a screen reader reads again with the Fab, kept for it.
+ * page's main region, but never on the navigation, whose touches never reach it, and never on a
+ * box that scrolls and is not at its top, such as the costume's grid of items: a finger on it is
+ * the box's to scroll back up. The indicator is for the eye alone: a screen reader reads again with
+ * the Fab, kept for it.
  */
 export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -52,7 +54,7 @@ export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
           ? NO_PULL
           : pullStarted(pointOf(finger), {
               fingers: event.touches.length,
-              scrollTopPx: scrollTop(),
+              scrollTopPx: scrollTop() + scrolledWithin(event.target, region),
               enabled: mayRead(),
             }),
       );
@@ -141,4 +143,20 @@ function PullIndicator({ distance }: { distance: number }) {
 /** How far the page is scrolled down now. */
 function scrollTop(): number {
   return document.scrollingElement?.scrollTop ?? 0;
+}
+
+/**
+ * How far the boxes between where a finger landed and the page's main region are scrolled down:
+ * more than nothing when it landed in one that has scrolled, which the finger then scrolls back.
+ */
+function scrolledWithin(target: EventTarget | null, region: Element): number {
+  let scrolled = 0;
+  for (
+    let box = target instanceof Element ? target : null;
+    box !== null && box !== region;
+    box = box.parentElement
+  ) {
+    scrolled += box.scrollTop;
+  }
+  return scrolled;
 }

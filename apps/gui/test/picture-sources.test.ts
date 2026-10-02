@@ -25,6 +25,7 @@ const profile = (
 ): Profile => ({
   taikoNo: "000000000000",
   nickname: "サンプルどん",
+  rename: "open",
   title,
   region: null,
   titlePlateImageUrl,

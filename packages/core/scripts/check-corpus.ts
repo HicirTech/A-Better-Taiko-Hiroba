@@ -31,8 +31,10 @@ import {
   parseRankDetailPage,
   parseRankListPage,
   parseRecentPlaysPage,
+  parseRenameEditorPage,
   parseScoreDetailPage,
   parseScoreListPage,
+  parseTitleEditorPage,
   type Profile,
 } from "../src/index";
 
@@ -175,6 +177,12 @@ const ROUTES: readonly Route[] = [
     },
   },
   {
+    // The same page again, as the editor a rename goes through: its form is a dialog in my page.
+    match: /^(profile|mypage-top)/,
+    parser: "parseRenameEditorPage",
+    run: (html) => attempt(parseRenameEditorPage(html)),
+  },
+  {
     // The subject is in the filename; passing the wrong one would trip the parser's own
     // fetched-one-player-got-another check, which is the harness lying rather than a finding.
     match: /^user-profile-/,
@@ -196,6 +204,13 @@ const ROUTES: readonly Route[] = [
     match: /^(costume|mypage-kisekae-\d|mypage-kisekae\.)/,
     parser: "parseCostumeEditorPage",
     run: (html) => attempt(parseCostumeEditorPage(html)),
+  },
+  {
+    // The title page, as the editor a title write goes through. A default parse drops its form (it
+    // has an unclosed div inside), so this route is what shows the page is read at all.
+    match: /^title-edit/,
+    parser: "parseTitleEditorPage",
+    run: (html) => attempt(parseTitleEditorPage(html)),
   },
   {
     match: /^(friend-|block-list|user-search-)/,
@@ -243,7 +258,11 @@ const UNROUTED: readonly { readonly match: RegExp; readonly reason: string }[] =
     reason: "out of scope",
   },
   { match: /^(compe|challenge)/, reason: "competitions and challenges are out of scope" },
-  { match: /^(settings|mypage-other|title-|mypage-titleparts)/, reason: "write pages — E12's job" },
+  { match: /^(settings|mypage-other|mypage-titleparts)/, reason: "write pages — E12's job" },
+  {
+    match: /^title-parts/,
+    reason: "the parts composer is a separate feature, not in the first title and name writes",
+  },
   { match: /^(select-song|form-data|portal-|favorite-)/, reason: "favourite write flow — E12" },
   { match: /^(rank-list-noparam)/, reason: "routed above" },
 ];
@@ -452,6 +471,8 @@ const ENUMERABLE: Readonly<Record<string, readonly (string | number)[]>> = {
     "goldDonderful",
   ],
   visibility: ["open", "achievementsHidden", "closed"],
+  // My page's flag for a rename, which every capture has had as 0: the report says so.
+  rename: ["open", "closed", "unknown"],
   scope: ["japan", "prefecture", "world"],
   // Two unions share this key: a player row's dan state and a dan condition's shape.
   kind: ["dan", "none", "notShown", "course", "perSong"],

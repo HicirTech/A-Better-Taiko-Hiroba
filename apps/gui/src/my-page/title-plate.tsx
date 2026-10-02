@@ -159,6 +159,7 @@ function Title({ title, i18n }: { title: string; i18n: Translator }) {
 function NameRow({ profile, i18n }: { profile: ProfileView; i18n: Translator }) {
   const { t } = i18n;
   const { dan } = profile;
+  const danName = dan !== null && "board" in dan ? t(`dan.${dan.board}`) : null;
   return (
     <Box
       sx={{
@@ -199,20 +200,19 @@ function NameRow({ profile, i18n }: { profile: ProfileView; i18n: Translator }) 
           {dan.picture !== null ? (
             <DanLabel picture={dan.picture} />
           ) : (
-            "name" in dan && (
+            danName !== null && (
               <Box
                 component="span"
                 aria-hidden
-                lang={HIROBA_LANG}
                 sx={{ color: "#fff", fontWeight: "bold", fontSize: hp(13), textShadow: OUTLINED }}
               >
-                {dan.name}
+                {danName}
               </Box>
             )
           )}
-          {"name" in dan && (
+          {danName !== null && (
             <Box component="span" id="dan" sx={VISUALLY_HIDDEN}>
-              {t("profile.dan", { dan: dan.name })}
+              {t("profile.dan", { dan: danName })}
             </Box>
           )}
         </Box>
