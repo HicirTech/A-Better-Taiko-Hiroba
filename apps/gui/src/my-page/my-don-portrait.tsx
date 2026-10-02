@@ -171,11 +171,7 @@ function useStillPressTooltip() {
 /**
  * The tile alone, Hiroba's picture of the Don on its pale blue: the face of the Overview's button.
  */
-export function MyDonTile({
-  answer,
-  i18n,
-  ref,
-}: Pick<MyDonPortraitProps, "answer" | "i18n" | "ref">) {
+function MyDonTile({ answer, i18n, ref }: Pick<MyDonPortraitProps, "answer" | "i18n" | "ref">) {
   return (
     <Box ref={ref} component="span" id="my-don" aria-busy={answer === undefined} sx={TILE}>
       <TileContent answer={answer} i18n={i18n} />
