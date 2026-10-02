@@ -11,7 +11,8 @@ import { type CostumeSet, ok, type Transport } from "@abth/core";
 
 import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, INITIAL_COSTUME, type MockSession } from "../scripts/mock-costume";
-import { createSessionWrites, type UndoStore } from "../src/hiroba-session";
+import { createSessionWrites, type UndoStore, type WriteGateInput } from "../src/hiroba-session";
+import type { WriteKind } from "../src/session-port";
 
 const ORIGIN = "https://hiroba.test";
 const ENDPOINTS = {
@@ -20,7 +21,11 @@ const ENDPOINTS = {
   idpDomain: "id.test",
   imgOrigin: null,
 };
-const OPEN = { isPackaged: false, env: { ABTH_UNVERIFIED_WRITES: "1" } };
+const OPEN: WriteGateInput = {
+  platform: "desktop",
+  isPackaged: false,
+  env: { ABTH_UNVERIFIED_WRITES: "1" },
+};
 const NOON_JST = () => new Date("2026-09-27T03:00:00Z");
 const OWNER = "000000000000";
 /** Another card, as one Bandai Namco ID can hold. */
@@ -83,7 +88,12 @@ afterEach(() => {
 
 /** The mock's editor behind a transport, and the shared writes over both. */
 function setUp(
-  options: { gate?: typeof OPEN; owner?: string | null; whose?: () => string | null } = {},
+  options: {
+    gate?: WriteGateInput;
+    verified?: readonly WriteKind[];
+    owner?: string | null;
+    whose?: () => string | null;
+  } = {},
 ) {
   const editor = createCostumeEditor();
   const session: MockSession = { cardChosen: true };
@@ -147,6 +157,7 @@ function setUp(
     transport,
     endpoints: ENDPOINTS,
     gate: options.gate ?? OPEN,
+    ...(options.verified && { verified: options.verified }),
     now: NOON_JST,
     undoStore: failing(createUndoStore(undoPath), faults),
     signedIn: () => signedIn,
@@ -173,7 +184,7 @@ function setUp(
 
 describe("createSessionWrites", () => {
   test("with the gate shut, enables nothing, offers no undo and sends nothing", async () => {
-    const { hiroba, writes } = setUp({ gate: { isPackaged: true, env: OPEN.env } });
+    const { hiroba, writes } = setUp({ gate: { ...OPEN, isPackaged: true } });
     expect(await writes.enabledWrites()).toEqual([]);
     expect(
       await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } }),
@@ -181,6 +192,22 @@ describe("createSessionWrites", () => {
     expect(await writes.undo("costume")).toEqual({ kind: "notEnabled" });
     expect(await writes.pendingUndo()).toEqual([]);
     expect(hiroba.log).toEqual([]);
+  });
+
+  test("a verified kind is sent from a packaged build, in four requests with no cross-check", async () => {
+    const { hiroba, writes } = setUp({
+      gate: { ...OPEN, isPackaged: true },
+      verified: ["costume"],
+    });
+    expect(await writes.enabledWrites()).toEqual([{ kind: "costume", verified: true }]);
+    const target = { ...START, colorFace: 3 };
+    expect((await writes.changeCostume({ expected: START, target })).kind).toBe("applied");
+    expect(hiroba.log).toEqual([
+      "GET /mypage_kisekae.php",
+      "POST /ajax/check_ip_kisekae.php",
+      "POST /ajax/change_mydon.php",
+      "GET /mypage_kisekae.php",
+    ]);
   });
 
   test("posts nothing before my page has said whose set this is", async () => {

@@ -67,4 +67,5 @@ export {
   unverifiedWritesOpen,
   VERIFIED_WRITES,
   type WriteGateInput,
+  type WritePlatform,
 } from "./verified-writes";

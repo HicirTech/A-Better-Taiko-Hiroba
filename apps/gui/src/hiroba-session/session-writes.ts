@@ -35,6 +35,8 @@ export interface SessionWritesOptions {
   readonly endpoints: HirobaEndpoints;
   /** Whether the build is packaged, and its environment: which writes the run may send. */
   readonly gate: WriteGateInput;
+  /** The kinds verified on this platform, in place of its own list: only a test passes one. */
+  readonly verified?: readonly WriteKind[];
   readonly now: () => Date;
   readonly undoStore: UndoStore;
   /** Whether this device holds a session. */
@@ -98,7 +100,9 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
 export function createSessionWrites(options: SessionWritesOptions): SessionWrites {
   const { undoStore } = options;
   const gateOf = (kind: WriteKind) =>
-    enabledWrites(options.gate).find((write: EnabledWrite) => write.kind === kind);
+    enabledWrites(options.gate, options.verified).find(
+      (write: EnabledWrite) => write.kind === kind,
+    );
 
   const costume: WriteKindDefinition<"costume", CostumeChange> = {
     kind: "costume",
@@ -191,7 +195,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
 
   return {
     async enabledWrites() {
-      return enabledWrites(options.gate);
+      return enabledWrites(options.gate, options.verified);
     },
 
     async openCostumeEditor() {

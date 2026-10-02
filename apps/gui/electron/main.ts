@@ -16,6 +16,7 @@ import {
   previewCostume,
   readOwnProfile,
   sessionEnded,
+  type WriteGateInput,
 } from "../src/hiroba-session";
 import {
   BRIDGE_CHANNELS,
@@ -68,7 +69,11 @@ if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
 
 // Which writes this run may send: the verified ones, and every other only in an unpackaged run
 // started with ABTH_UNVERIFIED_WRITES=1. A packaged build ignores that variable.
-const writeGate = { isPackaged: app.isPackaged, env: process.env };
+const writeGate: WriteGateInput = {
+  platform: "desktop",
+  isPackaged: app.isPackaged,
+  env: process.env,
+};
 // The clock a write checks Hiroba's daily break against. Development only: ABTH_DEV_NOW (an ISO
 // time) fixes it, so a test runs at any hour and can try the break itself.
 const writeClock = developmentClock();
