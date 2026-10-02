@@ -10,9 +10,9 @@ export type AccountState =
   | { readonly kind: "checking" }
   | { readonly kind: "signedOut" }
   /**
-   * A session is open and a read or a costume write runs: Sign out waits for it. A read would
-   * otherwise end after the sign-out and show the profile, and a write would end under a session
-   * that is gone, with no one left to say how it ended.
+   * A session is open and a read or a write of any kind runs, a save or an undo: Sign out waits for
+   * it. A read would otherwise end after the sign-out and show the profile, and a write would end
+   * under a session that is gone, with no one left to say how it ended.
    */
   | { readonly kind: "reading" }
   | {
