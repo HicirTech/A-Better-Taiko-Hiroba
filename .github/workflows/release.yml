@@ -101,10 +101,11 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # The release key is four secrets, written here into the two files build.gradle's signing
-      # config reads (both git-ignored). They go in through the environment and into files, and are
-      # never printed. A release without them fails; a dry run, which anyone with write access can
-      # start, builds an unsigned APK instead.
+      # The release key is four secrets, written here as the two files of a keys folder (README,
+      # "The signing keys") in the runner's temporary directory, which the signed build is pointed
+      # at with ABTH_RELEASE_KEYS. Nothing goes into the checkout. They go in through the
+      # environment and into files, and are never printed. A release without them fails; a dry run,
+      # which anyone with write access can start, builds an unsigned APK instead.
       - name: Write the signing key
         id: key
         env:
@@ -128,8 +129,9 @@ jobs:
             echo "signed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          android=apps/gui/android
-          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$android/abth-release.jks"
+          keys="$RUNNER_TEMP/abth-release-keys"
+          mkdir -p "$keys"
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$keys/abth-release.jks"
           # A .properties file reads a backslash as an escape, so a password's own are doubled.
           escape() { printf '%s' "$1" | sed 's/\\/\\\\/g'; }
           {
@@ -137,11 +139,14 @@ jobs:
             printf 'storePassword=%s\n' "$(escape "$STORE_PASSWORD")"
             printf 'keyAlias=%s\n' "$(escape "$KEY_ALIAS")"
             printf 'keyPassword=%s\n' "$(escape "$KEY_PASSWORD")"
-          } > "$android/keystore.properties"
+          } > "$keys/keystore.properties"
           echo "signed=true" >> "$GITHUB_OUTPUT"
+          echo "folder=$keys" >> "$GITHUB_OUTPUT"
 
       - name: Build the signed release APK
         if: steps.key.outputs.signed == 'true'
+        env:
+          ABTH_RELEASE_KEYS: ${{ steps.key.outputs.folder }}
         run: bun run --cwd apps/gui android:release
 
       - name: Build an unsigned release APK

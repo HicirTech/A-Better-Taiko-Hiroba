@@ -18,6 +18,7 @@ import {
 } from "../scripts/release-keys";
 
 const GUI = join(import.meta.dir, "..");
+const ROOT = join(GUI, "..", "..");
 
 const folders: string[] = [];
 afterEach(() => {
@@ -102,6 +103,19 @@ describe("the Gradle script", () => {
     expect(gradle).toContain('keyAlias "androiddebugkey"');
     expect(gradle).toContain('keyPassword "android"');
     expect(gradle).toContain("signingConfig signingConfigs.debug");
+  });
+});
+
+describe("the release workflow", () => {
+  const workflow = readFileSync(join(ROOT, ".github/workflows/release.yml"), "utf8");
+
+  test("writes the key into the runner's temporary folder, as the file Gradle reads", () => {
+    expect(workflow).toContain('keys="$RUNNER_TEMP/');
+    expect(workflow).toContain(`> "$keys/${KEYSTORE_PROPERTIES}"`);
+  });
+
+  test("points the signed build at that folder with the variable the scripts read", () => {
+    expect(workflow).toContain(`${KEYS_FOLDER_VARIABLE}: \${{ steps.key.outputs.folder }}`);
   });
 });
 
