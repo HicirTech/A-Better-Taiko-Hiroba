@@ -184,7 +184,7 @@ export const zhHant: Messages = {
   "write.notApplied.endpointMissing": "廣場上已沒有儲存這項內容的頁面。沒有任何變化。",
   "write.notApplied.unexpected": "廣場對這次儲存的回應出乎本應用程式的預料。沒有任何變化。",
   "write.siteMessage": "廣場的訊息：{message}",
-  "write.diverged": "換裝沒有按計畫變更。請對比下方內容。",
+  "write.diverged": "換裝沒有按計畫變更。請比較下方內容。",
   "write.crossChanged": "你的稱號也變了。",
   "write.outcomeUnknown": "無法讀回結果。重試前請先重新讀取。",
   "write.sessionGone": "在儲存任何內容之前，廣場的工作階段已結束。請重新登入。",
@@ -210,7 +210,7 @@ export const zhHant: Messages = {
   "write.title.applied": "已儲存。廣場現在顯示新的稱號。",
   "write.title.undone": "已復原。廣場的稱號已恢復原樣。",
   "write.title.unchanged": "廣場回覆已儲存，但讀回的稱號仍是原樣。沒有任何變化。",
-  "write.title.diverged": "稱號沒有按計畫變更。請對比下方內容。",
+  "write.title.diverged": "稱號沒有按計畫變更。請比較下方內容。",
   "write.title.crossChanged": "你的換裝也變了。",
   "write.title.crossUnknown": "已儲存，但無法再次讀取換裝進行核對。請到你的個人頁面查看。",
   "write.title.changedSincePreview":
@@ -225,7 +225,7 @@ export const zhHant: Messages = {
   "write.name.applied": "已儲存。廣場現在顯示新的名字。",
   "write.name.undone": "已復原。廣場的名字已恢復原樣。",
   "write.name.unchanged": "廣場回覆已儲存，但讀回的名字仍是原樣。沒有任何變化。",
-  "write.name.diverged": "名字沒有按計畫變更。請對比下方內容。",
+  "write.name.diverged": "名字沒有按計畫變更。請比較下方內容。",
   "write.name.changedSincePreview":
     "讀取此頁面後，你的名字在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
   "write.name.undoStale": "那次變更之後，你的名字又在別處被變更，因此沒有改回，也無法再改回。",
