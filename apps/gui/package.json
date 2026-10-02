@@ -16,7 +16,7 @@
     "start": "electron .",
     "e2e:desktop": "bun run build && bun scripts/e2e-desktop.ts",
     "dist:dir": "bun run build && electron-builder --win --dir",
-    "dist:win": "bun run build && electron-builder --win nsis portable",
+    "dist:win": "bun run build && electron-builder --win nsis zip --x64",
     "smoke:packaged": "bun scripts/smoke-packaged.ts",
     "android:apk": "bun scripts/android.ts apk",
     "android:run": "bun scripts/android.ts run",
@@ -40,7 +40,7 @@
     "win": {
       "target": [
         "nsis",
-        "portable"
+        "zip"
       ]
     },
     "electronFuses": {
