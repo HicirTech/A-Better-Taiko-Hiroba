@@ -33,6 +33,8 @@ export interface Messages {
    * a narrow one. Each also names its page for screen readers, as its heading.
    */
   "nav.overview": string;
+  /** The page of the costume editor. 日本語 names it with the site's own word, きせかえ. */
+  "nav.costume": string;
   /** The page of the 大好きな曲 and the お気に入り folder. */
   "nav.favorites": string;
   "nav.settings": string;
@@ -212,6 +214,8 @@ export interface Messages {
   /** Params: {part} (a costume.part text), {from} and {to} (a costume.id text, or costume.remove). */
   "costume.change": string;
   "costume.noChanges": string;
+  /** Puts the draft back to the set as the editor last read it, as the site's own リセット does. */
+  "costume.reset": string;
   "costume.review": string;
   "costume.back": string;
   "costume.save": string;
