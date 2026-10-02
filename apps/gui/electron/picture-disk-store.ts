@@ -10,9 +10,9 @@ import {
 
 /**
  * The desktop's pictures on disk, in `folder` (the app's profile folder's `pictures`), kept across
- * launches and sign-outs for good: each is fetched from Hiroba once (the user's call, 2026-09-28).
- * Each is one PNG file, `<epoch>/shared/<hash>.png` or `<epoch>/player/<hash>/<hash>.png`, named
- * by pictureKeyPath: the checked bytes and nothing else, no URL, header, cookie or taiko number.
+ * launches and sign-outs for good: each is fetched from Hiroba once. Each is one PNG file,
+ * `<epoch>/shared/<hash>.png` or `<epoch>/player/<hash>/<hash>.png`, named by pictureKeyPath: the
+ * checked bytes and nothing else, no URL, header, cookie or taiko number.
  *
  * Nothing here deletes a picture but a PICTURE_EPOCH bump: opening the store removes every other
  * epoch's folder. What it holds is bounded by what Hiroba has to show, a thumbnail per item and a

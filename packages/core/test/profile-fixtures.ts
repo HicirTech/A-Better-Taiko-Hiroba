@@ -3,9 +3,9 @@
  * with its list and its unclosed div, the costume page the title write cross-checks, and the three
  * ajax endpoints. Pages are excerpts; ids, names and tokens are placeholders.
  *
- * Its token follows what was seen on 2026-09-28: every page with a form issues the session a new
- * one, and a save carrying any but the latest answers 705 and changes nothing. So a write that read
- * a page between its editor and its posts fails here, as it did on the real site.
+ * Its token follows what was seen: every page with a form issues the session a new one, and a save
+ * carrying any but the latest answers 705 and changes nothing. So a write that read a page between
+ * its editor and its posts fails here, as it did on the real site.
  */
 import {
   type CostumeSet,

@@ -16,10 +16,10 @@ const LANDING_PATHS: ReadonlySet<string> = new Set(["/index.php"]);
  * Schemes and ports are compared exactly, so either site on another scheme is elsewhere: the
  * desktop sign-in window has no address bar, and a plain-http page there would look like the real
  * form. Hiroba is one origin. The ID side is a domain, not a host: the real walk goes through
- * `www.bandainamcoid.com/v2/oauth2/auth` on its way to the form on `account.bandainamcoid.com`
- * (seen 2026-09-27), and a host-only rule stopped the sign-in dead at that hop. The domain is
- * matched on a label boundary, so `evilbandainamcoid.com` is elsewhere.
- * Endpoints that do not parse make every URL elsewhere, so a bad override fails closed.
+ * `www.bandainamcoid.com/v2/oauth2/auth` on its way to the form on `account.bandainamcoid.com`, and
+ * a host-only rule stopped the sign-in dead at that hop. The domain is matched on a label boundary,
+ * so `evilbandainamcoid.com` is elsewhere. Endpoints that do not parse make every URL elsewhere, so
+ * a bad override fails closed.
  */
 export function signInStep(rawUrl: string | undefined, endpoints: HirobaEndpoints): SignInStep {
   let url: URL;

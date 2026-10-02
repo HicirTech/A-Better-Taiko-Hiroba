@@ -8,7 +8,7 @@
  * host-only, one Domain) and a localStorage entry behind, all marked with IDP_MARKER so a test can
  * look for them on disk. Like the real walk, it reaches the ID form through an OAuth hop on a
  * second ID host (auth.<ID host>, standing in for www.bandainamcoid.com), so a sign-in window that
- * allows only the form's host stops there, as the real one did on 2026-09-27.
+ * allows only the form's host stops there, as the real one did.
  *
  * Test hooks: /__last-token (the token issued last), /__expire (every session ends), /__rotate
  * (the next my-page read hands out a new token and ends the old one), /__hits?path=/mypage_top.php
@@ -338,9 +338,9 @@ ${profile.renameDialog(ticket)}`;
 /**
  * What every ajax post meets before its handler, whichever endpoint it is for: only a POST is
  * answered; it is recorded; one without X-Requested-With gets the site's error page at 200, as
- * Hiroba answered on 2026-08-09; one without a session, or while /__post-to-login is on, is sent to
- * the login page; and /__post-redirect answers the next with a redirect. What passes is its form
- * and its session; anything else is the answer to send.
+ * Hiroba answered; one without a session, or while /__post-to-login is on, is sent to the login
+ * page; and /__post-redirect answers the next with a redirect. What passes is its form and its
+ * session; anything else is the answer to send.
  */
 async function ajaxEntry(
   request: Request,

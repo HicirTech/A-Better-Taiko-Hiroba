@@ -61,9 +61,9 @@ describe("signInStep", () => {
   });
 
   test("walks every Bandai Namco ID host the real sign-in crosses", () => {
-    // Seen 2026-09-27: login_process.php redirects to www.bandainamcoid.com first, then to the
-    // form on account.bandainamcoid.com. A rule that knew only the form's host stopped the walk at
-    // the first hop, and the sign-in button did nothing.
+    // login_process.php redirects to www.bandainamcoid.com first, then to the form on
+    // account.bandainamcoid.com. A rule that knew only the form's host stopped the walk at the
+    // first hop, and the sign-in button did nothing.
     const auth = "https://www.bandainamcoid.com/v2/oauth2/auth?client_id=nbgi_taiko";
     expect(signInStep(auth, HIROBA_ENDPOINTS)).toBe("idp");
     expect(signInStep("https://account.bandainamcoid.com/login.html", HIROBA_ENDPOINTS)).toBe(

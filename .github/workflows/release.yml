@@ -1,0 +1,240 @@
+name: Release
+
+# A real release is a push of a tag v<version>. Every other run is a dry run: a manual run, or a pull
+# request that touches what a release is made of. It builds the same files and keeps them as
+# artifacts of the run, and it creates no release.
+run-name: ${{ github.event_name == 'push' && github.ref_type == 'tag' && format('Release {0}', github.ref_name) || format('Release dry run on {0}', github.head_ref || github.ref_name) }}
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  pull_request:
+    branches: [main]
+    # What a release is made of: this file; the app's package.json, which holds the version and,
+    # under "build", electron-builder's configuration; and the Android project.
+    paths:
+      - .github/workflows/release.yml
+      - apps/gui/package.json
+      - apps/gui/android/**
+  workflow_dispatch:
+
+# A newer push to a branch makes its older dry run pointless. A release is never cancelled half-way.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # Reads the version once for every job, and stops a tag that does not match it before anything is
+  # built. Android and Windows both wait for it, and for nothing else.
+  version:
+    name: Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+      publish: ${{ steps.read.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Read the version
+        id: read
+        run: |
+          version=$(jq -r .version apps/gui/package.json)
+          if ! [[ $version =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error file=apps/gui/package.json::The version is \"$version\", and must be MAJOR.MINOR.PATCH."
+            exit 1
+          fi
+          publish=false
+          if [ "$GITHUB_EVENT_NAME" = push ] && [ "$GITHUB_REF_TYPE" = tag ]; then
+            publish=true
+            if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+              echo "::error::The tag is $GITHUB_REF_NAME, but apps/gui/package.json says $version, so the tag must be v$version. Nothing was built."
+              exit 1
+            fi
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "publish=$publish" >> "$GITHUB_OUTPUT"
+
+  android:
+    name: Android release APK
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # The same pin as in ci.yml: keep them in step.
+          bun-version: 1.4.2
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      # Capacitor's CLI runs on Node, and needs 22 (README, "What you need").
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          # As in ci.yml: JDK 21, Temurin, and a Gradle cache keyed on the Android project and bun.lock.
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            apps/gui/android/**/*.gradle
+            apps/gui/android/gradle/wrapper/gradle-wrapper.properties
+            bun.lock
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # The release key comes from four repository secrets, and none is ever printed. The keystore
+      # is decoded into the runner's temporary directory, and the build is given its path, its
+      # password and the key's alias and password as the RELEASE_* variables build.gradle reads. A
+      # release is signed, so it fails without them; a dry run builds the same APK unsigned.
+      - name: Decode the signing key
+        id: key
+        env:
+          PUBLISH: ${{ needs.version.outputs.publish }}
+          RELEASE_KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          missing=""
+          [ -n "$RELEASE_KEYSTORE_B64" ] || missing="$missing RELEASE_KEYSTORE_B64"
+          [ -n "$RELEASE_KEYSTORE_PASSWORD" ] || missing="$missing RELEASE_KEYSTORE_PASSWORD"
+          [ -n "$RELEASE_KEY_ALIAS" ] || missing="$missing RELEASE_KEY_ALIAS"
+          [ -n "$RELEASE_KEY_PASSWORD" ] || missing="$missing RELEASE_KEY_PASSWORD"
+          if [ -n "$missing" ]; then
+            if [ "$PUBLISH" = true ]; then
+              echo "::error::A release is signed, and these secrets are not set:$missing. Add them as apps/gui/README.md (Releases) says, then re-run this run."
+              exit 1
+            fi
+            echo "::warning::These secrets are not set:$missing. This dry run builds an unsigned release APK."
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          printf '%s' "$RELEASE_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+          echo "file=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
+
+      # With no secrets, a dry run has no keystore path, and build.gradle leaves the APK unsigned.
+      - name: Build the release APK
+        env:
+          RELEASE_KEYSTORE_FILE: ${{ steps.key.outputs.file }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: bun run --cwd apps/gui android:release
+
+      - name: Name the APK
+        env:
+          SIGNED: ${{ steps.key.outputs.signed }}
+        run: |
+          mkdir dist
+          out=apps/gui/android/app/build/outputs/apk/release
+          if [ "$SIGNED" = true ]; then
+            cp "$out/app-release.apk" "dist/ABTH-$VERSION.apk"
+          else
+            # Gradle names an APK it did not sign "unsigned", and so does this: it must not pass for a release.
+            cp "$out/app-release-unsigned.apk" "dist/ABTH-$VERSION-unsigned.apk"
+          fi
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: dist/ABTH-*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Windows installer and zip
+    needs: version
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # The same pin as in ci.yml: keep them in step.
+          bun-version: 1.4.2
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Build GUI
+        run: bun run --cwd apps/gui build
+
+      # Both targets, x64, and no publishing: the release job publishes. Code signing is switched off
+      # in the configuration ("signExecutable"), so none is tried and none is needed.
+      - name: Package
+        working-directory: apps/gui
+        run: bunx electron-builder --win nsis zip --x64 --publish never
+
+      # electron-builder names the files from the configuration; a name that came out otherwise
+      # would be missing from the release, so look for the two by name before uploading.
+      - name: Check the names
+        shell: bash
+        run: |
+          ls -l apps/gui/release
+          test -f "apps/gui/release/ABTH-$VERSION-setup.exe"
+          test -f "apps/gui/release/ABTH-$VERSION-portable.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: |
+            apps/gui/release/ABTH-${{ needs.version.outputs.version }}-setup.exe
+            apps/gui/release/ABTH-${{ needs.version.outputs.version }}-portable.zip
+          if-no-files-found: error
+          retention-days: 14
+          # The files are compressed already.
+          compression-level: 0
+
+  # Only a tag run publishes; a dry run stops at its artifacts. The release is published, not a draft.
+  release:
+    name: Release
+    if: needs.version.outputs.publish == 'true'
+    needs: [version, android, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          ls -l dist
+          gh release create "v$VERSION" --verify-tag --title "A Better Taiko Hiroba $VERSION" --generate-notes \
+            "dist/ABTH-$VERSION.apk" \
+            "dist/ABTH-$VERSION-setup.exe" \
+            "dist/ABTH-$VERSION-portable.zip"

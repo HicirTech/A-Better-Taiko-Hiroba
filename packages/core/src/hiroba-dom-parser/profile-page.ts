@@ -170,7 +170,7 @@ function readCrown(
   return readCount(el.value, marker, PAGE);
 }
 
-/** What `.token_complete` holds, copied from a live page (2026-09-27), whitespace aside. */
+/** What `.token_complete` holds, whitespace aside. */
 const MEDAL_COMPLETE_LABEL = "COMPLETE";
 
 /**
@@ -179,8 +179,8 @@ const MEDAL_COMPLETE_LABEL = "COMPLETE";
  * done, with no count anywhere.
  *
  * A plate of any other shape reads as `unrecognised`, with a code saying which, and never fails the
- * page: a new plate once took the whole read down with it, crowns and all, on the first real sign-in
- * (2026-09-27). The page's own text in that spot is not kept, only the code.
+ * page: a new plate once took the whole read down with it, crowns and all. The page's own text in
+ * that spot is not kept, only the code.
  *
  * The plate's picture is found by its src, as position is no contract for an img. A page with no
  * name has no medal, whatever picture it shows.

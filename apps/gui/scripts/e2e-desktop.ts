@@ -434,11 +434,10 @@ try {
     );
   await until("Sign in to Hiroba");
 
-  // The pages, signed out, with no header at all (the user's call, 2026-09-29): on a window this
-  // wide, a side panel like Gmail's, the product's name small at its top, then each page, the one
-  // shown marked. The Overview, Costume, Nickname & title and Favourites show the sign-in card;
-  // Settings works, with the language and the note on staying signed in, no one signed in and no
-  // way to sign out.
+  // The pages, signed out, with no header at all: on a window this wide, a side panel like Gmail's,
+  // the product's name small at its top, then each page, the one shown marked. The Overview,
+  // Costume, Nickname & title and Favourites show the sign-in card; Settings works, with the
+  // language and the note on staying signed in, no one signed in and no way to sign out.
   const NAVIGATION = [
     "A Better Taiko Hiroba",
     "Overview",
@@ -466,8 +465,8 @@ try {
     !(await exists("header")) &&
     !(await exists("#nav-menu")) &&
     shownSignedOut.every(Boolean);
-  // The Costume page (the user's call, 2026-10-02) is the second of the pages, and Nickname & title the
-  // third, a pencil beside its name, between the Overview and Favourites, each with its icon.
+  // The Costume page is the second of the pages, and Nickname & title the third, a pencil beside
+  // its name, between the Overview and Favourites, each with its icon.
   const entriesIn = (selector: string) =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll(${JSON.stringify(`${selector} [id^="nav-"]`)})].map((entry) => entry.id + (entry.querySelector("svg") === null ? ":no-icon" : ""))`,
@@ -618,11 +617,10 @@ try {
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
   results.profileShown = (await textOf("#crowns-silver")) === "11 of 14";
-  // The panel drawn as GitHub's "Languages" box (the user's call, 2026-09-28), from the mock's fixed
-  // counts: ranks 2 up to 8 at 4, 9, 18, 31, 25, 12 and 3, and crowns 11, 2 and 1. Each legend
-  // item is a name, its share of its block and, for screen readers, its count; each part of a bar
-  // names its count in its title. The ranks from 白粋 to 虹極, left to right (the user's call,
-  // 2026-09-29), the crowns silver, gold and donderful.
+  // The panel drawn as GitHub's "Languages" box, from the mock's fixed counts: ranks 2 up to 8 at
+  // 4, 9, 18, 31, 25, 12 and 3, and crowns 11, 2 and 1. Each legend item is a name, its share of
+  // its block and, for screen readers, its count; each part of a bar names its count in its title.
+  // The ranks from 白粋 to 虹極, left to right, the crowns silver, gold and donderful.
   type Share = readonly [name: string, percent: string, count: number];
   const RANK_SHARES: readonly Share[] = [
     ["White Iki", "3.9%", 4],
@@ -668,7 +666,7 @@ try {
   // the dan read off it may reach the window, never the URL or the number.
   results.danShownByName =
     (await textOf("#dan")) === "Dan-i: 9th Dan" && (await textOf("#dan-unreadable")) === null;
-  // The mock's page names a region, and the card leaves it out (the user's call, 2026-09-28).
+  // The mock's page names a region, and the card leaves it out.
   results.regionLeftOffCard =
     (await textOf("#region")) === null && !(await text()).includes("Region");
   results.taikoNoAndUrlsKeptOutOfDom =
@@ -702,17 +700,17 @@ try {
     (await textOf("#dan")) === "Dan-i: 9th Dan" &&
     (await textOf("#title-plate-stand-in")) === null &&
     (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
-  // The plate sits on the app's own surface (the user's call, 2026-09-28): nothing from it up to
-  // the card paints the yellow Hiroba draws around it, #FFCC00.
+  // The plate sits on the app's own surface: nothing from it up to the card paints the yellow
+  // Hiroba draws around it, #FFCC00.
   results.plateOnAppSurface = await page.evaluate<boolean>(
     `(() => { const colours = []; for (let box = document.querySelector("#title-plate"); box !== null; box = box.parentElement) { colours.push(getComputedStyle(box).backgroundColor); if (box.id === "profile") return !colours.includes("rgb(255, 204, 0)"); } return false; })()`,
   );
   results.danLabelShownAsPicture =
     (await attribute("#dan-label", "src"))?.startsWith("data:image/png;base64,") === true;
 
-  // The Overview's header is shaped like my page's (the user's call, 2026-09-29): the My Don on the
-  // left, the plate on the right and Hiroba's score panel under it, with no background art and none
-  // of Hiroba's yellow; on a narrow window, the portrait, the plate and the panel one under another.
+  // The Overview's header is shaped like my page's: the My Don on the left, the plate on the right
+  // and Hiroba's score panel under it, with no background art and none of Hiroba's yellow; on a
+  // narrow window, the portrait, the plate and the panel one under another.
   const boxOf = (selector: string) =>
     page.evaluate<{ left: number; top: number; right: number; bottom: number; width: number }>(
       `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width }; })()`,
@@ -919,10 +917,10 @@ try {
     !(await exists("#my-don-image")) &&
     (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
 
-  // The Costume page (the user's call, 2026-10-02). The portrait is the way there. The editor is
-  // read once, when the page is first shown in a run: not at start-up, nor on the Overview, where
-  // everything so far has been done without one request to it. Hiroba's picture of the set is
-  // asked for only while the page is shown.
+  // The Costume page. The portrait is the way there. The editor is read once, when the page is
+  // first shown in a run: not at start-up, nor on the Overview, where everything so far has been
+  // done without one request to it. Hiroba's picture of the set is asked for only while the page is
+  // shown.
   const EDITOR = "/mypage_kisekae.php";
   const editorHits = () => hitsOn(EDITOR);
   /** Where the page's editor stands: unread, loading, editing, confirming, saving, undoing, done. */
@@ -1221,10 +1219,9 @@ try {
   // from the plate kept on disk, asking Hiroba nothing.
   const platesAfterRereads = await platesSettled();
 
-  // Read again is a small Fab (the user's call, 2026-09-29), at the top right of the page in the
-  // band over it, named for screen readers and, under the pointer, in a tooltip. While a read
-  // runs, held here by the stand-in, it is shut and spins, and a second press sends nothing; once
-  // the read is in, it is open again.
+  // Read again is a small Fab, at the top right of the page in the band over it, named for screen
+  // readers and, under the pointer, in a tooltip. While a read runs, held here by the stand-in, it
+  // is shut and spins, and a second press sends nothing; once the read is in, it is open again.
   const fabBox = await boxOf("#read-again");
   const cardBox = await boxOf("#profile");
   await hoverOver(page, "#read-again");
@@ -1385,10 +1382,10 @@ try {
     (await text()).includes("サンプルどん") &&
     (await textOf("#dan")) === null &&
     (await textOf("#dan-unreadable")) === null;
-  // The favourites have a page of their own (the user's call, 2026-09-29), from the same read, and
-  // read again there too; the Overview shows none of them. Unset so far: no favourite song and an
-  // empty folder. Set, the song shows by title and the folder, closed at first, opens on request
-  // with every song in it, the two that share a title included.
+  // The favourites have a page of their own, from the same read, and read again there too; the
+  // Overview shows none of them. Unset so far: no favourite song and an empty folder. Set, the song
+  // shows by title and the folder, closed at first, opens on request with every song in it, the two
+  // that share a title included.
   const favoritesOffOverview = !(await exists("#favorites"));
   const readsBeforeFavorites = await readHits();
   await goTo("favorites");
@@ -1592,8 +1589,7 @@ try {
     (await textOf("#medal-plate"))?.replace("Collected: 12", "").includes("12") === true &&
     !(await shownNow("#medal-plate-stand-in")) &&
     !(await shownNow("#medal-plate-unavailable"));
-  // No yellow behind it either (the user's call, 2026-09-28): nothing from it up to the card paints
-  // Hiroba's #FFCC00.
+  // No yellow behind it either: nothing from it up to the card paints Hiroba's #FFCC00.
   results.medalPlateOnAppSurface = await page.evaluate<boolean>(
     `(() => { const colours = []; for (let box = document.querySelector("#medal-plate"); box !== null; box = box.parentElement) { colours.push(getComputedStyle(box).backgroundColor); if (box.id === "medal") return !colours.includes("rgb(255, 204, 0)"); } return false; })()`,
   );
@@ -1650,9 +1646,8 @@ try {
       `window.abth.changeCostume(${JSON.stringify({ expected, target })})`,
     );
 
-  // No "Change costume" button: the portrait is the button to the Costume page (the user's call,
-  // 2026-09-29 and 2026-10-02). It is named for that, and a pointer resting on it shows a small
-  // edit badge and the name.
+  // No "Change costume" button: the portrait is the button to the Costume page. It is named for
+  // that, and a pointer resting on it shows a small edit badge and the name.
   const OPEN_COSTUME = "Open the Costume page";
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   const badgeOpacity = () =>
@@ -2281,13 +2276,13 @@ try {
     !(await exists("#costume-undo")) &&
     (await savedCostume()).colorBody === 40;
   await fetch(`${HIROBA}/__state?reset=1`);
-  // Nickname & title (the user's call, 2026-10-02): one page, after the Costume page, for the title and
-  // the Donder name. Both are open in every build, this run's too, with no flag: the list of titles
-  // is read when the page is first shown, never before, and a write is Review, then Save to Hiroba.
+  // Nickname & title: one page, after the Costume page, for the title and the Donder name. Both are
+  // open in every build, this run's too, with no flag: the list of titles is read when the page is
+  // first shown, never before, and a write is Review, then Save to Hiroba.
   const TITLE_PAGE = "/mypage_title_edit.php";
   /**
-   * A title write's requests: the costume read on both sides (the desktop has made no title write
-   * for real yet), the title page, the pre-check, the save, and my page read back for the title.
+   * A title write's requests: the costume read on both sides, the title page, the pre-check, the
+   * save, and my page read back for the title.
    */
   const TITLE_REQUESTS = [
     "GET /mypage_kisekae.php",
@@ -3191,7 +3186,7 @@ try {
   await goTo("overview");
   const kept = (await (await fetch(`${HIROBA}/__last-token`)).text()).trim();
   tokens.push(kept);
-  // Kept on disk for the next launch: the user chose staying signed in over a memory-only session.
+  // Kept on disk for the next launch.
   results.sessionKept =
     existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
 
@@ -3365,9 +3360,8 @@ try {
     sentAsPlanned(await requestLog(), [], ["GET /mypage_kisekae.php"]);
   await running.goTo("overview");
   // Signed out on the last launch and in again on this one, the plate and the thumbnails kept on
-  // disk are still there, and Hiroba is asked for none of them (the user's call, 2026-09-28: no
-  // picture is deleted at sign-out). A thumbnail is asked for through the bridge, after the
-  // editor's read that offers it.
+  // disk are still there, and Hiroba is asked for none of them (no picture is deleted at sign-out).
+  // A thumbnail is asked for through the bridge, after the editor's read that offers it.
   await waitForSeen(
     running.page,
     async () =>
@@ -3390,9 +3384,9 @@ try {
   results.myDonKeptAtSignIn = (await myDonsSettled()) === myDonsSignedOut;
   // Signed out and in again, in the same run. A plate no later read has confirmed is not kept:
   // Hiroba draws a blank one for a session it ended unseen, so it is asked for again. Once a read
-  // has confirmed it, it is kept, and the read after the next sign-in asks Hiroba for no plate
-  // (the user's call, 2026-09-28: no picture is deleted at sign-out). Tried on a title no launch
-  // has worn yet: every plate a read confirmed is kept on disk.
+  // has confirmed it, it is kept, and the read after the next sign-in asks Hiroba for no plate (no
+  // picture is deleted at sign-out). Tried on a title no launch has worn yet: every plate a read
+  // confirmed is kept on disk.
   const plateShown = () =>
     waitForSeen(
       running.page,

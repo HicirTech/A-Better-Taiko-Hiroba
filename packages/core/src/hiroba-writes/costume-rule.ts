@@ -46,8 +46,8 @@ export function draftCostumeChange(set: CostumeSet, slot: CostumeSlot, id: numbe
  * Refused, naming the field:
  *
  * - a きぐるみ with any piece beside it. The server keeps the きぐるみ and empties the pieces, so the
- *   body moves nothing and still answers 0, success (write #22, 2026-08-09): the site's client never
- *   sends one, and neither does this;
+ *   body moves nothing and still answers 0, success (write #22): the site's client never sends one,
+ *   and neither does this;
  * - a colour the palette does not offer;
  * - an item not owned in its slot — the ids the editor lists for that slot, or 0.
  *
@@ -78,8 +78,8 @@ export function checkCostumeTarget(
 
 /**
  * The set the server leaves after storing `body`: the body, except that a きぐるみ empties the four
- * pieces whatever the body said. The one model the four executed costume writes all fit (2026-08-09:
- * a colour alone, a きぐるみ, #22 and the restore, #23); colours are never touched by it.
+ * pieces whatever the body said. The one model the four executed costume writes all fit (a colour
+ * alone, a きぐるみ, #22 and the restore, #23); colours are never touched by it.
  */
 export function costumeAfter(body: CostumeSet): CostumeSet {
   return body.costume1 !== 0

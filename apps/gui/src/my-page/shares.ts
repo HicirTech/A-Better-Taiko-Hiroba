@@ -8,8 +8,8 @@ export interface Share {
 
 /**
  * Each item's share of the sum of its block, for a block drawn as GitHub's "Languages" box draws
- * one (the user's call, 2026-09-28). Every item keeps its place, an item at 0 included, and a block
- * that sums to 0 gives 0 to each rather than dividing by it.
+ * one. Every item keeps its place, an item at 0 included, and a block that sums to 0 gives 0 to
+ * each rather than dividing by it.
  */
 export function sharesOf<T extends { readonly count: number }>(
   items: readonly T[],

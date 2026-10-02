@@ -7,8 +7,8 @@ import type { HirobaEndpoints } from "./types";
 /** Where every dan label my page has shown lives: `imgsrc_danlabel.php?taiko_no=…`. */
 const LABEL_PATH = "/imgsrc_danlabel.php";
 /**
- * A label is a 96×40 PNG of a few kilobytes: the one weighed came to 4967 B (2026-08-09). Anything
- * sixteen times that is not a label, and is refused before it is decoded.
+ * A label is a 96×40 PNG of a few kilobytes: the one weighed came to 4967 B. Anything sixteen times
+ * that is not a label, and is refused before it is decoded.
  */
 const MAX_LABEL_BYTES = 64 * 1024;
 /** Far above a label's 96×40, and still a bound on what the window is handed to draw. */

@@ -264,9 +264,9 @@ function requestOf(
     // As my page loads it.
     referer: `${origin}/mypage_top.php`,
     rules: { ...PLATE_RULES, at: { origin, path: TITLE_PLATE_PATH } },
-    // The player's own, kept under them alone, and for good (the user's call, 2026-09-28). The title
-    // is in the name, so a title changed anywhere is a plate of its own; the form is too, as the
-    // two forms are not yet known to draw the same.
+    // The player's own, kept under them alone, and for good. The title is in the name, so a title
+    // changed anywhere is a plate of its own; the form is too, as the two forms are not yet known
+    // to draw the same.
     key: {
       scope: "player",
       player: owner,
@@ -494,7 +494,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       const asOf = myDonChanges;
       /**
        * `failure`, as `orKept` answers it. A renewal that fails is spent all the same: the portrait
-       * is fetched anew only after the next change (the user's call, 2026-09-28).
+       * is fetched anew only after the next change.
        */
       const notCome = (failure: Result<never, PictureFailure>) => {
         if (stale && since === generation) {

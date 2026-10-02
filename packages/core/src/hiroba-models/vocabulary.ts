@@ -30,7 +30,7 @@ export type ScoreRank = 2 | 3 | 4 | 5 | 6 | 7 | 8;
  * images each show the rank's kanji in its colour; no page names a rank in text, not in an `alt`, a
  * class or a label. So a client that shows a name supplies it: this is the Japanese table, which the
  * app's Japanese catalog is held equal to, the other languages being worded there. Copied from the
- * wiki's Reading-Score-List, which records how it was read (2026-08-09).
+ * wiki's Reading-Score-List, which records how it was read.
  */
 export const SCORE_RANK_NAMES: Readonly<Record<ScoreRank, string>> = {
   2: "白粋",
@@ -63,8 +63,8 @@ export const SCORE_RANK_TIERS: readonly ScoreRankTier[] = [
  * has `played` as its own marker; the detail page does not. Where the detail page prints a play
  * count — mine on every capture, another player's wherever it does — `played` is `crown_large_0`
  * with a positive `stageCount`. Where it prints none, as another player's did on the one capture
- * there is (2026-08-09), `played` is `crown_large_0` alone, and that is an inference — see
- * `playedOrNone`. The enum keeps the distinction both pages can only express together.
+ * there is, `played` is `crown_large_0` alone, and that is an inference — see `playedOrNone`. The
+ * enum keeps the distinction both pages can only express together.
  */
 export type CrownState = "none" | "played" | "silver" | "gold" | "donderful";
 
@@ -76,8 +76,7 @@ export type CrownState = "none" | "played" | "silver" | "gold" | "donderful";
  * The detail page is not quite "the same image either way": a never-played chart's page carries no
  * crown image at all (one capture), and `crown_large_0` has only been served for played charts.
  * That is what another player's reader falls back on where the page prints no play count to ask,
- * as on the one capture of it (2026-08-09). Where that page does print one, this rule decides, as
- * on mine.
+ * as on the one capture of it. Where that page does print one, this rule decides, as on mine.
  */
 export function playedOrNone(stageCount: number): CrownState {
   return stageCount > 0 ? "played" : "none";

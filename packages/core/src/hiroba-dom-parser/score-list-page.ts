@@ -33,9 +33,9 @@ const CROWN_PATTERN = /crown_button_([a-z]+)(?:_(\d+))?_640\./;
  * missing suffix on a state that always carries one, is new knowledge and is refused rather than
  * guessed; `undefined` is that refusal.
  *
- * `gold_0` is still accepted and still unseen: an earlier version of this comment cited it as
- * occurring live, and it does not appear once in the captured genre pages of two accounts. Keep
- * accepting it — refusing a legal-looking suffix would fail a whole genre over one row.
+ * `gold_0` is accepted and unseen: it does not appear once in the captured genre pages of two
+ * accounts. Keep accepting it — refusing a legal-looking suffix would fail a whole genre over one
+ * row.
  */
 function readRank(crown: CrownState, raw: string | undefined): ScoreRank | null | undefined {
   if (raw === undefined) {

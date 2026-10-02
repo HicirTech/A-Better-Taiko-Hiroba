@@ -60,10 +60,10 @@ interface NavigationProps {
 }
 
 /**
- * The window, with no header (the user's call, 2026-09-29): its pages in a side panel like Gmail's
- * on a wide window (MUI's md and up), or behind a menu button floating at its top left on a narrow
- * one, and the page shown beside or under it. Each page is named by a heading for screen readers
- * alone: the navigation already shows sighted users which page they are on.
+ * The window, with no header: its pages in a side panel like Gmail's on a wide window (MUI's md and
+ * up), or behind a menu button floating at its top left on a narrow one, and the page shown beside
+ * or under it. Each page is named by a heading for screen readers alone: the navigation already
+ * shows sighted users which page they are on.
  *
  * Where the system has a Back (`back`, Android's), the window hears it while it is open and does
  * what backAction says: Back shuts the menu, goes back to the Overview, or leaves the app.

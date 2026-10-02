@@ -22,8 +22,8 @@ const EPOCH_KEY = "epoch";
 
 /**
  * Android's pictures in the app page's IndexedDB, kept across launches and sign-outs for good:
- * each is fetched from Hiroba once (the user's call, 2026-09-28). Each record is the checked PNG
- * bytes and nothing else, no URL, header, cookie or taiko number, under pictureKeyPath's hashes.
+ * each is fetched from Hiroba once. Each record is the checked PNG bytes and nothing else, no URL,
+ * header, cookie or taiko number, under pictureKeyPath's hashes.
  *
  * Nothing here deletes a picture but a PICTURE_EPOCH bump: opening the database under a new epoch
  * clears it. What it holds is bounded by what Hiroba has to show, a thumbnail per item and a plate

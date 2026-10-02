@@ -6,13 +6,13 @@ import type { ProfileView } from "../session-port";
 import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
 import { ShareBlock, type ShareItem } from "./share-block";
 
-/** The seven ranks from 白粋 to 虹極, left to right (the user's call, 2026-09-29). */
+/** The seven ranks from 白粋 to 虹極, left to right. */
 const RANKS_WORST_FIRST: readonly ScoreRank[] = SCORE_RANK_TIERS.flatMap((tier) => tier.ranks);
 
 /**
- * The counts of Hiroba's overall panel, drawn as GitHub's "Languages" box (the user's call,
- * 2026-09-28): one block for the score ranks and one for the crowns, each count as its share of its
- * block. Hiroba's panel art is not fetched.
+ * The counts of Hiroba's overall panel, drawn as GitHub's "Languages" box: one block for the score
+ * ranks and one for the crowns, each count as its share of its block. Hiroba's panel art is not
+ * fetched.
  *
  * The panel gives both over the same charts, which is why they share a card and a footnote: the
  * crowns are not the account's clears at every level. The wiki's Reading-Profile-and-MyDon

@@ -1,7 +1,7 @@
 {
   "name": "@abth/gui",
   "productName": "A Better Taiko Hiroba",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "The desktop and Android app of A Better Taiko Hiroba",
   "author": "HicirTech",
@@ -16,14 +16,12 @@
     "start": "electron .",
     "e2e:desktop": "bun run build && bun scripts/e2e-desktop.ts",
     "dist:dir": "bun run build && electron-builder --win --dir",
-    "dist:win": "bun run build && electron-builder --win nsis portable",
+    "dist:win": "bun run build && electron-builder --win nsis zip --x64",
     "smoke:packaged": "bun scripts/smoke-packaged.ts",
     "android:apk": "bun scripts/android.ts apk",
     "android:run": "bun scripts/android.ts run",
     "android:live": "bun scripts/android.ts live",
-    "android:keystore": "bun scripts/android.ts keystore",
-    "android:release": "bun scripts/android.ts release",
-    "android:install-release": "bun scripts/android.ts install-release"
+    "android:release": "bun scripts/android.ts release"
   },
   "build": {
     "appId": "com.hicirtech.taikohiroba",
@@ -40,8 +38,13 @@
     "win": {
       "target": [
         "nsis",
-        "portable"
-      ]
+        "zip"
+      ],
+      "artifactName": "ABTH-${version}-portable.${ext}",
+      "signExecutable": false
+    },
+    "nsis": {
+      "artifactName": "ABTH-${version}-setup.${ext}"
     },
     "electronFuses": {
       "runAsNode": false,

@@ -54,7 +54,7 @@ const response = (
     body: new TextEncoder().encode(body),
   } satisfies TransportResponse);
 
-/** The site's error page, as the missing-header rejection answers (2026-08-09). */
+/** The site's error page, as the missing-header rejection answers. */
 const ERROR_SHELL =
   "<html><body><h1>エラー</h1><table><tr><td>リクエストされたページは存在しません</td></tr></table></body></html>";
 
