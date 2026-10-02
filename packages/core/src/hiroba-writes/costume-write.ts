@@ -11,6 +11,7 @@ import { readHirobaPage } from "./read-page";
 import { runWrite } from "./run-write";
 import type {
   AjaxPost,
+  CrossCheck,
   HirobaReadFailure,
   NotAppliedReason,
   ReadDeps,
@@ -73,6 +74,19 @@ const COSTUME_CODES: SaveCodes = {
 
 const readEditor = (deps: ReadDeps) => readHirobaPage(deps, EDITOR_PATH, parseCostumeEditorPage);
 
+/** The set the editor shows now, which is what a costume write reads back and what a title write checks stayed. */
+const readSet = async (deps: ReadDeps): Promise<Result<CostumeSet, HirobaReadFailure>> => {
+  const read = await readEditor(deps);
+  return isErr(read) ? read : ok(read.value.state);
+};
+
+/**
+ * The costume, read before and after a title write while title writes are not yet live-checked from
+ * the platform: a title whose pre-check warns that a costume item cannot be combined with it
+ * takes that item off, and if the pre-check ever misjudged, the costume is what would move.
+ */
+export const COSTUME_STAYS: CrossCheck<CostumeSet> = { read: readSet, same: sameCostume };
+
 /** The costume write: pre-check `check_ip_kisekae`, save `change_mydon`, read the editor back. */
 export const COSTUME_WRITE: WriteSpec<
   CostumeSet,
@@ -96,10 +110,7 @@ export const COSTUME_WRITE: WriteSpec<
     form: costumeForm(editor, body),
   }),
   codes: COSTUME_CODES,
-  readBack: async (deps) => {
-    const read = await readEditor(deps);
-    return isErr(read) ? read : ok(read.value.state);
-  },
+  readBack: readSet,
   cross: TITLE_STAYS,
 };
 

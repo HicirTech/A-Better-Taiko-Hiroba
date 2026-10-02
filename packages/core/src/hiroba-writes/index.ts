@@ -43,6 +43,12 @@ export {
   type TitleTarget,
 } from "./title-rule";
 export {
+  changeTitle,
+  openTitleEditor,
+  TITLE_WRITE,
+  type TitleEditorView,
+} from "./title-write";
+export {
   beginPending,
   EMPTY_UNDO_SLOT,
   offeredUndo,

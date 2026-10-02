@@ -1,9 +1,6 @@
-import { parseProfilePage } from "../hiroba-dom-parser";
 import { isErr, ok } from "../operation-results";
-import { readHirobaPage } from "./read-page";
+import { readMyPage } from "./my-page";
 import type { CrossCheck } from "./types";
-
-const MY_PAGE_PATH = "mypage_top.php";
 
 /** Whitespace as one space and none at the ends, non-breaking spaces included. */
 export function spaced(text: string): string {
@@ -17,10 +14,9 @@ export function spaced(text: string): string {
  * and checks the same thing: that the title stayed.
  */
 export const TITLE_STAYS: CrossCheck<string> = {
-  read: (deps) =>
-    readHirobaPage(deps, MY_PAGE_PATH, (html) => {
-      const page = parseProfilePage(html, "");
-      return isErr(page) ? page : ok(page.value.title);
-    }),
+  read: async (deps) => {
+    const page = await readMyPage(deps);
+    return isErr(page) ? page : ok(page.value.title);
+  },
   same: (left, right) => spaced(left) === spaced(right),
 };
