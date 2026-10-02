@@ -4,7 +4,7 @@ The desktop and Android app of A Better Taiko Hiroba. One React and Material UI 
 two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
 pages and reads your own page: one request per read, and one more for your dan label when the page
 shows one, since the page gives the dan only as that picture. The Overview opens as your page's
-header does: your マイどん as Hiroba draws it, beside your nickname, title and dan on Hiroba's own
+header does: your My Don as Hiroba draws it, beside your nickname, title and dan on Hiroba's own
 title plate and dan label, and under them Hiroba's score panel, its ten counts written over its art.
 Under that come the seven score ranks and the three crowns again, each block as one bar of shares
 with a legend of percents, like GitHub's "Languages" box (the counts are in each item's tooltip);
@@ -286,7 +286,7 @@ the run.
 
 ### The identity card
 
-The card at the top is drawn as my page draws its header: your マイどん on the left; on the right
+The card at the top is drawn as my page draws its header: your My Don on the left; on the right
 your title over Hiroba's own title plate, your nickname in its cream box and your dan's own label in
 the blue one, and under the plate [the score panel](#the-score-panel). On a narrow window they
 stack, the portrait first. All sit on the app's own surface rather than Hiroba's yellow, with no
@@ -350,7 +350,7 @@ version cannot read, show the card as before, and ask for no picture. With
 
 ### The My Don portrait
 
-Beside the plate stands your マイどん, Hiroba's own picture of your Don in the costume it wears, on
+Beside the plate stands your My Don, Hiroba's own picture of your Don in the costume it wears, on
 a pale blue tile of Hiroba's shape. It is the button to [the Costume page](#the-costume-page). It is
 the one picture from off Hiroba:
 `https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_` and your taiko number, as your page
@@ -575,7 +575,7 @@ that way.
 
 Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, your title
 plate or your どんメダル plate, is fetched once and kept on the device for good, since arcades often
-have poor networks. Your マイどん is kept too, the last one fetched, and fetched anew only as
+have poor networks. Your My Don is kept too, the last one fetched, and fetched anew only as
 [The My Don portrait](#the-my-don-portrait) says. Signing out deletes none of them, and neither
 does the next sign-in, though the card lets go of those it showed and takes them from the device
 again, so it never shows the last player's while the next one's come.
