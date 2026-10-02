@@ -41,8 +41,8 @@ const MENU_INSET_PX = 8;
  * and at every width, so each page starts at the same height.
  */
 const TOP_BAND_PX = 64;
-/** The room under every page's content, in the theme's spacing units. */
-const PAGE_BOTTOM_SPACING = 4;
+/** The room under every page's content. */
+const PAGE_BOTTOM_PX = 32;
 /** The safe area at the window's top, where a phone may draw its status bar over the page. */
 const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 
@@ -101,7 +101,7 @@ export function AppFrame({
       )}
       <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
         {/* The page starts under the top band's buttons, not behind them. */}
-        <Container maxWidth="md" sx={{ pt: `${TOP_BAND_PX}px`, pb: PAGE_BOTTOM_SPACING }}>
+        <Container maxWidth="md" sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}>
           <Typography component="h1" sx={VISUALLY_HIDDEN}>
             {i18n.t(PAGE_ENTRY[page].label)}
           </Typography>
@@ -136,14 +136,16 @@ export function FrameCorner({ children }: { children: ReactNode }) {
 }
 
 /**
- * For a page that keeps a bar at the bottom edge of the window: tall enough to fill the window,
- * taking back the room the frame leaves over the page and under it, so that the bar sits flush
- * with the edge however little the page has to show, and stays there as the page scrolls.
+ * For a page that keeps a bar at the bottom edge of the window, which sits flush with the edge
+ * however little the page has to show, and stays there as the page scrolls. The page is tall enough
+ * to fill the window down to where the frame's room under it begins, which is not more than the
+ * window, so it does not scroll for nothing; and the bar, the page's last child, is let over that
+ * room by a negative margin, which a child of a plain box may have (a child of a Stack may not).
  */
-export const FILLS_WINDOW = {
-  minHeight: `calc(100vh - ${TOP_BAND_PX}px)`,
-  mb: -PAGE_BOTTOM_SPACING,
+export const BOTTOM_BAR_PAGE = {
+  minHeight: `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`,
 } as const;
+export const BOTTOM_BAR = { mb: `-${PAGE_BOTTOM_PX}px` } as const;
 
 /** The product's name, small, over the pages, each with its icon, the one shown highlighted. */
 function PageList({ page, onNavigate, i18n }: NavigationProps) {

@@ -25,7 +25,7 @@ export function ShutCostumePage({ lane, i18n }: { lane: PictureLane; i18n: Trans
     <Stack
       id="costume-page"
       spacing={2}
-      sx={{ alignItems: "center", width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" }}
+      sx={{ alignItems: "center", alignSelf: "center", width: 1, maxWidth: COLUMN_MAX_WIDTH_PX }}
     >
       <Box sx={{ ...HIROBA_BLOCK, width: PORTRAIT_SIDE_PX }}>
         <MyDonTile ref={tile} answer={portrait} i18n={i18n} />

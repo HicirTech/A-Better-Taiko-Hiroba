@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
 
-import { FILLS_WINDOW } from "../navigation/app-frame";
+import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { ReadFailure, UndoSummary } from "../session-port";
@@ -73,12 +73,13 @@ export function CostumePage({ editor, lane, i18n, verified }: CostumePageProps) 
       data-step={step.name}
       tabIndex={-1}
       sx={{
-        ...FILLS_WINDOW,
+        ...BOTTOM_BAR_PAGE,
         display: "flex",
         flexDirection: "column",
         width: 1,
         maxWidth: COLUMN_MAX_WIDTH_PX,
-        mx: "auto",
+        // Centred by its alignment: the Stack that holds the page keeps its children's margins at 0.
+        alignSelf: "center",
         outline: "none",
       }}
     >
@@ -255,6 +256,7 @@ function ActionBar({ children }: { children: ReactNode }) {
       id="costume-bar"
       elevation={3}
       sx={{
+        ...BOTTOM_BAR,
         position: "sticky",
         bottom: 0,
         zIndex: 1,
@@ -282,8 +284,9 @@ function UndoOffer({
 }) {
   const { t } = i18n;
   return (
-    <Stack>
-      {/* The button's label lines up with the line under it, not its padding. */}
+    // Not a Stack, which keeps its children's margins at 0: the button's label lines up with the
+    // line under it, not with its own padding.
+    <Box sx={{ display: "flex", flexDirection: "column" }}>
       <Button
         id="costume-undo"
         variant="text"
@@ -295,7 +298,7 @@ function UndoOffer({
       <Typography id="undo-when" variant="body2" color="text.secondary">
         {t("costume.undoWhen", { time: i18n.dateTime(undoable.at) })}
       </Typography>
-    </Stack>
+    </Box>
   );
 }
 
