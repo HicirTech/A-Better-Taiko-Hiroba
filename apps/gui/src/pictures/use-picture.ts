@@ -12,6 +12,9 @@ export interface UsePictureOptions {
   readonly order: number;
 }
 
+/** A picture seen when it is in the window itself, with no margin: the pages' usual case. */
+export const IN_THE_WINDOW = { root: null, rootMargin: "0px" } as const;
+
 /**
  * The picture `want` names, from `lane`, for the element `target` points at: asked for only while
  * that element is on screen (or within `rootMargin` of it), and taken back when it leaves before

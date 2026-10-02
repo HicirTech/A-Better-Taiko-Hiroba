@@ -17,7 +17,7 @@ export const NO_PREVIEW: PreviewState = { image: null, loading: false, failure: 
 
 /** How long a pick waits before its picture is asked for; a pick inside it starts it over. */
 export const PREVIEW_DELAY_MS = 300;
-/** Pictures kept for sets already drawn this opening, so a pick back to one asks nothing. */
+/** Pictures kept for sets already drawn, so a pick back to one asks nothing. */
 const KEPT_PICTURES = 8;
 
 /** A timer that can be cleared: the page's own, or a test's. */

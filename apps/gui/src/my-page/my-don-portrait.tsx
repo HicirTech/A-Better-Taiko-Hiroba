@@ -4,8 +4,12 @@ import { type MouseEvent, type Ref, type TouchEvent, useRef, useState } from "re
 
 import type { PictureAnswer } from "../pictures/picture-lane";
 import { movedPastSlop, pointOf, type TouchPoint } from "../read-again/pull-gesture";
+import type { PictureWant } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, VISUALLY_HIDDEN } from "./hiroba-px";
 import { useLongPress } from "./use-long-press";
+
+/** The player's portrait, as the picture lane names it. */
+export const MY_DON: PictureWant = { kind: "myDon" };
 
 /** Hiroba's portrait tile: 136 square, its corners 5 round. */
 const TILE_SIDE = 136;
@@ -141,9 +145,7 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
             "&.Mui-disabled": { opacity: 0.6 },
           }}
         >
-          <Box ref={ref} component="span" id="my-don" aria-busy={answer === undefined} sx={TILE}>
-            <TileContent answer={answer} i18n={i18n} />
-          </Box>
+          <MyDonTile ref={ref} answer={answer} i18n={i18n} />
           <EditBadge alwaysUp={byLongPress} />
         </ButtonBase>
       </Tooltip>
@@ -201,6 +203,22 @@ function useStillPressTooltip() {
     },
   };
   return { tooltip, trigger };
+}
+
+/**
+ * The tile alone, Hiroba's picture of the Don on its pale blue: a button's face on the Overview,
+ * and a picture and no more on the Costume page of a run that may not change the costume.
+ */
+export function MyDonTile({
+  answer,
+  i18n,
+  ref,
+}: Pick<MyDonPortraitProps, "answer" | "i18n" | "ref">) {
+  return (
+    <Box ref={ref} component="span" id="my-don" aria-busy={answer === undefined} sx={TILE}>
+      <TileContent answer={answer} i18n={i18n} />
+    </Box>
+  );
 }
 
 /** The portrait on the tile, once it came, and a small spinner until it has. */

@@ -3,10 +3,10 @@ import { Box, Chip, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
-import { usePicture } from "../pictures/use-picture";
+import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx } from "./hiroba-px";
-import { MyDonPortrait, type PortraitAction } from "./my-don-portrait";
+import { MY_DON, MyDonPortrait, type PortraitAction } from "./my-don-portrait";
 import { ScorePanel, scorePanelWant } from "./score-panel";
 import { TitlePlate } from "./title-plate";
 
@@ -27,9 +27,6 @@ const MAX_SCALE = 1.5;
 /** The space between the portrait and the plate. */
 const GAP_PX = 16;
 const PLATE: PictureWant = { kind: "titlePlate" };
-const MY_DON: PictureWant = { kind: "myDon" };
-/** Each picture is asked for once it is in the window, in the header's order. */
-const IN_THE_WINDOW = { root: null, rootMargin: "0px" } as const;
 
 /** Why a picture did not come, as the lane has it, or null while it has none or it came. */
 const failureOf = (answer: PictureAnswer | undefined): string | null =>

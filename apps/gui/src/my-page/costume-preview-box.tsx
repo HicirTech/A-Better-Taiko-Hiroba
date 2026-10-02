@@ -56,7 +56,7 @@ export function useCostumePreview(
 export function CostumePreviewBox({ preview, i18n }: { preview: PreviewState; i18n: Translator }) {
   const { t } = i18n;
   return (
-    <Stack id="costume-preview" spacing={0.5} sx={{ alignItems: "center", mb: 2 }}>
+    <Stack id="costume-preview" spacing={0.5} sx={{ alignItems: "center" }}>
       <Box
         aria-busy={preview.loading}
         sx={{

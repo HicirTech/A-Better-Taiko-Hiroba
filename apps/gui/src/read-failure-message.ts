@@ -13,3 +13,10 @@ export const FAILURE_MESSAGE = {
   siteError: "failure.siteError",
   unexpectedPage: "failure.unexpectedPage",
 } as const satisfies Record<ReadFailureKind, MessageKey>;
+
+/** Failures after which the platform has already dropped the session: back to signing in. */
+export const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
+  "notSignedIn",
+  "loggedOut",
+  "cardSelectUnfinished",
+]);
