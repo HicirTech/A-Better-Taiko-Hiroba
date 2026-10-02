@@ -1,18 +1,23 @@
 /**
- * Where the Android signing keys live. The tests that read the files which have to agree on it,
- * the Gradle script, the release workflow and the script that makes a key, sit with the change that
- * makes each of them follow the rule.
+ * Where the Android signing keys live, and the files that have to agree on it. The tests that read
+ * the Gradle script, the release workflow and the script that makes a key keep them from drifting
+ * from the rule here.
  */
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
   DEBUG_KEYSTORE,
+  DEFAULT_KEYS_FOLDER,
+  KEYS_FOLDER_VARIABLE,
   KEYSTORE_PROPERTIES,
   RELEASE_KEYSTORE,
   resolveKeysFolder,
 } from "../scripts/release-keys";
+
+const GUI = join(import.meta.dir, "..");
 
 describe("resolveKeysFolder", () => {
   test("is the folder ABTH_RELEASE_KEYS names, when it is set", () => {
@@ -53,5 +58,35 @@ describe("the files of the keys folder", () => {
       "abth-local.jks",
       "debug.keystore",
     ]);
+  });
+});
+
+describe("the Gradle script", () => {
+  const gradle = readFileSync(join(GUI, "android/app/build.gradle"), "utf8");
+
+  test("finds the keys folder by the same variable and the same default", () => {
+    expect(gradle).toContain(`System.getenv("${KEYS_FOLDER_VARIABLE}")`);
+    expect(gradle).toContain(`"${DEFAULT_KEYS_FOLDER}"`);
+  });
+
+  test("refuses a variable that is not an absolute path, as the scripts do", () => {
+    expect(gradle).toContain(`${KEYS_FOLDER_VARIABLE} must be an absolute path`);
+  });
+
+  test("takes the release key and the debug key from that folder, by the same names", () => {
+    expect(gradle).toContain(`new File(keysFolder, "${KEYSTORE_PROPERTIES}")`);
+    expect(gradle).toContain(`new File(keysFolder, "${DEBUG_KEYSTORE}")`);
+  });
+
+  test("reads no key from the Android project", () => {
+    expect(gradle).not.toContain('rootProject.file("keystore.properties")');
+    expect(gradle).not.toContain("rootProject.file(keystoreProperties");
+  });
+
+  test("signs the debug build with Android's standard debug credentials", () => {
+    expect(gradle).toContain('storePassword "android"');
+    expect(gradle).toContain('keyAlias "androiddebugkey"');
+    expect(gradle).toContain('keyPassword "android"');
+    expect(gradle).toContain("signingConfig signingConfigs.debug");
   });
 });

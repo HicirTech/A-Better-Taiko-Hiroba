@@ -2,13 +2,30 @@ import groovy.json.JsonSlurper
 
 apply plugin: 'com.android.application'
 
-// A local release key, made once with `bun run android:keystore`. The key and its passwords stay
-// out of git (*.jks, keystore.properties); without them a release build is left unsigned.
-def keystorePropertiesFile = rootProject.file("keystore.properties")
+// Every signing key lives in one folder, outside the clone, so that losing the machine does not
+// lose them: the folder the environment variable ABTH_RELEASE_KEYS names, or
+// W:/TaikoElaboation/release keys when it is not set (a variable set to nothing counts as not
+// set). scripts/release-keys.ts has the same rule for the scripts, and its tests read this file,
+// so the two cannot drift unseen.
+def keysFolderGiven = System.getenv("ABTH_RELEASE_KEYS")
+def keysFolder = new File(
+    keysFolderGiven?.trim() ? keysFolderGiven : "W:/TaikoElaboation/release keys"
+)
+if (keysFolderGiven?.trim() && !keysFolder.isAbsolute()) {
+    throw new GradleException("ABTH_RELEASE_KEYS must be an absolute path, and is \"${keysFolderGiven}\".")
+}
+
+// The release key, made once with `bun run android:keystore`. keystore.properties holds its
+// passwords and storeFile, the store's name, which is read relative to the keys folder. Without
+// the file a release build is left unsigned.
+def keystorePropertiesFile = new File(keysFolder, "keystore.properties")
 def keystoreProperties = new Properties()
 if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
 }
+
+// The shared debug key, so that a debug APK built on any machine updates one built on another.
+def debugKeystoreFile = new File(keysFolder, "debug.keystore")
 
 // The version has one source, "version" in apps/gui/package.json, which electron-builder reads too.
 // versionName is that text. versionCode is major * 10000 + minor * 100 + patch, so 0.1.0 is 100 and
@@ -45,9 +62,19 @@ android {
         }
     }
     signingConfigs {
+        debug {
+            // The folder's debug.keystore, with Android's standard debug credentials. Without it the
+            // plugin's own debug key signs the build, which is one key for each machine.
+            if (debugKeystoreFile.exists()) {
+                storeFile debugKeystoreFile
+                storePassword "android"
+                keyAlias "androiddebugkey"
+                keyPassword "android"
+            }
+        }
         release {
             if (keystorePropertiesFile.exists()) {
-                storeFile rootProject.file(keystoreProperties["storeFile"])
+                storeFile new File(keysFolder, keystoreProperties["storeFile"])
                 storePassword keystoreProperties["storePassword"]
                 keyAlias keystoreProperties["keyAlias"]
                 keyPassword keystoreProperties["keyPassword"]
@@ -56,6 +83,7 @@ android {
     }
     buildTypes {
         debug {
+            signingConfig signingConfigs.debug
             applicationIdSuffix ".debug"
             manifestPlaceholders = [appLabel: "A Better Taiko Hiroba (debug)"]
         }
