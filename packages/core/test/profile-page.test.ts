@@ -152,7 +152,7 @@ jQuery(function($){
 
 /** A plate's picture as my page writes it: an opaque hex id, 48 characters on every capture. */
 const PLATE_IMAGE = "imgsrc_tokenplate.php?id=0123456789abcdef0123456789abcdef0123456789abcdef";
-/** The どんメダル plate as every capture before 2026-09-27 wrote it: a name and a count. */
+/** The どんメダル plate of a set being collected: a name and a count. */
 const MEDAL_PLATE = `
   <div>
     <img src="${PLATE_IMAGE}" style="width: 100%;">
@@ -161,7 +161,7 @@ const MEDAL_PLATE = `
   </div>`;
 const NAME_LINE = `<div class="token_name token_info_display">どんメダル2026夏</div>`;
 const COUNT_LINE = `<div class="token_count token_info_display">0</div>`;
-/** How a live my page wrote it on 2026-09-27: COMPLETE where the count was, and no count at all. */
+/** The plate of a complete set: COMPLETE where the count was, and no count at all. */
 const completeLine = (label: string) =>
   `<div class="token_complete token_info_display">\n\t\t\t\t\t${label}\n\t\t\t\t</div>`;
 
@@ -216,8 +216,8 @@ describe("parseProfilePage", () => {
     });
   });
 
-  // A plate of a shape nobody has seen costs the medal field alone, never the page: the first real
-  // sign-in lost crowns and all to a plate the parser did not know.
+  // A plate of a shape nobody has seen costs the medal field alone, never the page: one the parser
+  // did not know once lost crowns and all.
   describe("a どんメダル plate of a new shape", () => {
     const cases: readonly [string, string, string, MedalUnrecognisedReason, string][] = [
       [

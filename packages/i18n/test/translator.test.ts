@@ -80,7 +80,7 @@ describe("the Costume page's name", () => {
     ["ja", "きせかえ"],
     ["zh-Hans", "换装"],
     ["zh-Hant", "換裝"],
-  ])("is written as the user fixed it in %s: %p", (locale, name) => {
+  ])("is worded exactly so in %s: %p", (locale, name) => {
     expect(createTranslator(locale).t("nav.costume")).toBe(name);
   });
 });

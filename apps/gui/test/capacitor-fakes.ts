@@ -78,7 +78,7 @@ export const native = {
   openedWith: [] as { url: string; options: Record<string, unknown> }[],
   closeCalls: 0,
   openFails: false,
-  /** close() resolves but the browser stays open, as seen on a slow real sign-in (2026-09-27). */
+  /** close() resolves but the browser stays open, as seen on a slow real sign-in. */
   closeIgnored: false,
   listeners: new Map<string, Listener>(),
 
