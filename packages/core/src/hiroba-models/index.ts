@@ -43,6 +43,7 @@ export type {
   DanSongCounts,
   DanSongResult,
 } from "./dan";
+export type { NameState, RenameState, TitleOption, TitleState } from "./identity";
 export type {
   CrownCounts,
   FavoriteSong,

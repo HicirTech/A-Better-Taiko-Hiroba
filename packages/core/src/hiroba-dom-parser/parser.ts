@@ -22,6 +22,18 @@ const LOGIN_FORM_MARKER = "form#login_form";
 const ERROR_SHELL_MARKER = "h1";
 const ERROR_SHELL_HEADING = "エラー";
 
+/** What a page parser may ask of the parse itself. */
+export interface ParseOptions {
+  /**
+   * Keeps an element the page opens and never closes where it was opened. By default the parser
+   * drops a `<form>` that holds one: the title page's form has an unclosed `<div>` inside it
+   * (15 opened, 14 closed), and with that page parsed as everything else is, the document has no
+   * form at all, while its `select`, its token and its inputs are still found by id. Only a page
+   * known to need it asks; every other page parses as it always has.
+   */
+  readonly keepUnclosedTags?: boolean;
+}
+
 /**
  * Parses a fetched Hiroba page and refuses the login page.
  *
@@ -30,8 +42,12 @@ const ERROR_SHELL_HEADING = "エラー";
  * never throws — an unrecognisable body simply yields a document in which the markers a parser
  * then asks for are missing.
  */
-export function parsePage(html: string, page: string): Result<HTMLElement, ParseFailure> {
-  const root = parse(html);
+export function parsePage(
+  html: string,
+  page: string,
+  options: ParseOptions = {},
+): Result<HTMLElement, ParseFailure> {
+  const root = parse(html, options.keepUnclosedTags === true ? { parseNoneClosedTags: true } : {});
   if (root.querySelector(LOGIN_FORM_MARKER) !== null) {
     return err({ kind: "loggedOut", page });
   }

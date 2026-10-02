@@ -33,6 +33,7 @@ import {
   parseRecentPlaysPage,
   parseScoreDetailPage,
   parseScoreListPage,
+  parseTitleEditorPage,
   type Profile,
 } from "../src/index";
 
@@ -198,6 +199,13 @@ const ROUTES: readonly Route[] = [
     run: (html) => attempt(parseCostumeEditorPage(html)),
   },
   {
+    // The title page, as the editor a title write goes through. A default parse drops its form (it
+    // has an unclosed div inside), so this route is what shows the page is read at all.
+    match: /^title-edit/,
+    parser: "parseTitleEditorPage",
+    run: (html) => attempt(parseTitleEditorPage(html)),
+  },
+  {
     match: /^(friend-|block-list|user-search-)/,
     parser: "parsePlayerRowsPage",
     run: (html) => attempt(parsePlayerRowsPage(html, "user_search.php")),
@@ -243,7 +251,11 @@ const UNROUTED: readonly { readonly match: RegExp; readonly reason: string }[] =
     reason: "out of scope",
   },
   { match: /^(compe|challenge)/, reason: "competitions and challenges are out of scope" },
-  { match: /^(settings|mypage-other|title-|mypage-titleparts)/, reason: "write pages — E12's job" },
+  { match: /^(settings|mypage-other|mypage-titleparts)/, reason: "write pages — E12's job" },
+  {
+    match: /^title-parts/,
+    reason: "the parts composer is a separate feature, not in the first title and name writes",
+  },
   { match: /^(select-song|form-data|portal-|favorite-)/, reason: "favourite write flow — E12" },
   { match: /^(rank-list-noparam)/, reason: "routed above" },
 ];

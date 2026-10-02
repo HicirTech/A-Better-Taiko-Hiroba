@@ -9,6 +9,8 @@ import type {
   ScoreRank,
   ScoreRecord,
   Song,
+  TitleOption,
+  TitleState,
 } from "../hiroba-models";
 
 /**
@@ -31,6 +33,21 @@ export interface CostumeEditorReading {
 export interface CostumeSwatch {
   readonly id: number;
   readonly hex: string;
+}
+
+/**
+ * The title page as a write reads it: the title it shows as worn, the token that writes one, and
+ * the titles the account owns, in the page's order. The page is one list of everything owned, with
+ * no paging.
+ */
+export interface TitleEditorReading {
+  readonly state: TitleState;
+  readonly token: FormToken;
+  /**
+   * Each owned title with the id the list gives it. The list's two leading entries, "choose" and
+   * 称号をはずす, are not titles and are left out. A name may repeat, with another id.
+   */
+  readonly options: readonly TitleOption[];
 }
 
 /** Failure kinds are codes, not sentences: the interface translates them (see epic #13). */
