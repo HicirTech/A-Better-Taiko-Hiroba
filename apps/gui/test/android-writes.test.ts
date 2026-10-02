@@ -117,11 +117,6 @@ async function signedInPort(world: ReturnType<typeof setUp>) {
 describe("createAndroidPort's costume writes", () => {
   beforeEach(() => native.reset());
 
-  test("has no verb that says whether writes are open: they are open", async () => {
-    const port = await setUp().launch();
-    expect("enabledWrites" in port).toBe(false);
-  });
-
   test("sends a change as the six requests a platform not yet checked sends, the posts as the site's script does", async () => {
     const world = setUp();
     const port = await signedInPort(world);

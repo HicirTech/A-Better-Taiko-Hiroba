@@ -953,6 +953,10 @@ try {
   results.previewShownOnOpen =
     onOpening.startsWith("data:image/png;base64,") &&
     same(previewsOnOpening, [previewQuery(START)]);
+  // In this unpackaged run, with the old flag taken out of the environment, the Costume page is open
+  // to change and no verb says whether writes are open. That a packaged exe or a release APK is open
+  // too is not for a run to see: test/no-build-gate.test.ts lists every place the app looks at how
+  // it was built.
   results.writesOpenWithNoFlag =
     (await exists("#costume-review")) &&
     (await page.evaluate<string>("typeof window.abth.enabledWrites")) === "undefined";
