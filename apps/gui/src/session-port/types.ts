@@ -3,6 +3,7 @@ import type {
   CostumeSet,
   MedalProgress,
   NameState,
+  RenameState,
   Result,
   ScoreRank,
   TitleEditorView,
@@ -12,7 +13,15 @@ import type {
 } from "@abth/core";
 
 /** The core's own shapes for the costume, the title and the name, which cross the port unchanged. */
-export type { CostumeEditorView, CostumeSet, NameState, TitleEditorView, TitleState, TitleTarget };
+export type {
+  CostumeEditorView,
+  CostumeSet,
+  NameState,
+  RenameState,
+  TitleEditorView,
+  TitleState,
+  TitleTarget,
+};
 
 export type SignInOutcome =
   | { readonly kind: "signedIn" }
@@ -52,6 +61,11 @@ export interface ProfileView {
   readonly nickname: string;
   /** "" when the player wears no title, a normal state. */
   readonly title: string;
+  /**
+   * Whether my page hands its rename dialog the flag that opens it, closes it, or none it can read.
+   * It only says what to show; the rename itself reads the page again before it sends anything.
+   */
+  readonly rename: RenameState;
   /** Null when the page gives none, or 未設定. */
   readonly region: string | null;
   /**

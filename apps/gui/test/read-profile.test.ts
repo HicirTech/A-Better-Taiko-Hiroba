@@ -127,6 +127,7 @@ describe("readProfile", () => {
       ok({
         nickname: "サンプルどん",
         title: "サンプルの称号",
+        rename: "unknown",
         region: "サンプル",
         dan: { name: "九段", picture: labelPicture(danLabelPng(14)) },
         crowns: { silver: 11, gold: 2, donderful: 1 },
@@ -137,6 +138,18 @@ describe("readProfile", () => {
         fetchedAt: "2026-09-27T00:00:00.000Z",
       }),
     );
+  });
+
+  test.each([
+    ["0", "open"],
+    ["1", "closed"],
+  ] as const)("carries the rename flag '%s' to the view as %s", async (flag, rename) => {
+    const wired = MY_PAGE_EXCERPT.replace(
+      "</body>",
+      `<script>jQuery(function($){ $( '#rename_img' ).rename( '#dialog', 'サンプルどん', $( '#_tckt' ).val(),  '${flag}' ); });</script></body>`,
+    );
+    const read = await readProfile(fakeTransport(page(MY_PAGE_URL, wired)), ENDPOINTS, NOW);
+    expect(read.ok && read.value.rename).toBe(rename);
   });
 
   test("carries a set 大好きな曲 to the view as its title alone", async () => {
