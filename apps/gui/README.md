@@ -76,9 +76,7 @@ Chinese to Hiroba's own words.
 - **JDK 21**, with `JAVA_HOME` set, and the **Android SDK** with platform 36 and build-tools 36,
   with `ANDROID_HOME` set. Only the Android scripts need them.
 - **adb** on the `PATH`, for a device.
-- **The keys folder**, for a signed release APK, and for debug APKs that update one another across
-  machines. [The signing keys](#the-signing-keys) says where it is and how to set a machine up; a
-  plain debug build needs none.
+- **`ABTH_RELEASE_KEYS`**, only for a signed release APK: see [The signing keys](#the-signing-keys).
 
 Run `bun install` at the repository root. Bun does not run Electron's install script, so fetch the
 Electron binary once:
@@ -384,13 +382,13 @@ the picture host never gets it, though a cookie the picture host set itself woul
 
 | Script | What it does |
 |---|---|
-| `bun run android:apk` | Web build, `cap sync`, debug APK, signed with the shared debug key when [the keys folder](#the-signing-keys) has it. |
+| `bun run android:apk` | Web build, `cap sync`, debug APK. |
 | `bun run android:run -- <adb serial>` | The same, then installs and starts it on that device. |
 | `bun run android:live -- <adb serial> <LAN IP>` | Vite's dev server on this computer, and the debug app loading it with live reload. It runs only against the stand-in, and refuses to start unless both `VITE_ABTH_DEV_HIROBA_ORIGIN` and `VITE_ABTH_DEV_IDP_HOST` are set; `VITE_ABTH_DEV_IMG_ORIGIN`, the stand-in's picture host, is optional. |
-| `bun run android:keystore` | Makes the release key in [the keys folder](#the-signing-keys), once. It refuses to run if a key is there. |
-| `bun run android:release` | Web build, `cap sync`, signed release APK. It refuses to run when the keys folder has no key, and names the folder it looked in. |
-| `bun run android:release-unsigned` | The same with no key: an unsigned release APK, which no device installs. The release workflow's dry runs build it when the repository has no signing secrets. It refuses to run while the keys folder has a key. |
-| `bun run android:install-release -- <adb serial>` | Installs the signed release APK on that device and starts it. Like `android:release`, it refuses to run when the keys folder has no key. |
+| `bun run android:keystore` | Makes a release key in [the keys folder](#the-signing-keys). It refuses if one is there. |
+| `bun run android:release` | Web build, `cap sync`, signed release APK. It refuses without a release key. |
+| `bun run android:release-unsigned` | The same with no key: an unsigned release APK, which no device installs, for the release workflow's dry runs. It refuses while a release key is present. |
+| `bun run android:install-release -- <adb serial>` | Installs the signed release APK on that device and starts it. |
 
 To run the debug app against the stand-in on a device, start the stand-in on this computer's LAN
 address first:
@@ -411,39 +409,21 @@ command it starts, so use the scripts rather than a bare `bunx cap run`.
 
 ### The signing keys
 
-Every signing key lives in one folder outside the clone, so that losing the machine does not lose
-them: `W:\TaikoElaboation\release keys`, or the folder the environment variable `ABTH_RELEASE_KEYS`
-names, when it is set. Set it to an absolute path: the scripts and Gradle run in different folders,
-so a relative one is refused, and one set to nothing counts as not set. One rule finds the folder
-for the scripts (`scripts/release-keys.ts`) and for Gradle (`android/app/build.gradle`), and the
-tests read the Gradle script to keep the two the same, so a bare `./gradlew` finds the keys that
-`bun run android:release` does. The folder holds:
+The signing keys are kept outside the clone, in the folder the environment variable
+`ABTH_RELEASE_KEYS` names (an absolute path). The folder holds:
 
 | File | What it is |
 |---|---|
-| `abth-local.jks` | The release key's store, made by `android:keystore`. |
-| `keystore.properties` | The release key's settings: `storeFile`, the store's name, read relative to the folder; `storePassword`; `keyAlias`; `keyPassword`. `android:keystore` writes it with one random password, and prints it nowhere. |
-| `debug.keystore` | The debug key every machine shares: Android's standard debug store, with its standard credentials (password `android`, alias `androiddebugkey`). |
+| `keystore.properties` | The release key's `storeFile` (relative to the folder), `storePassword`, `keyAlias` and `keyPassword`. |
+| `abth-local.jks` | The release key's store, as `android:keystore` makes it. |
+| `debug.keystore` | Optional: a debug key shared between machines, with Android's standard debug credentials. |
 
-- **Release.** Gradle signs the release build with the key `keystore.properties` describes, and
-  leaves it unsigned when the folder has none. `android:release` stops instead, and names the
-  folder it looked in and `ABTH_RELEASE_KEYS`. `android:keystore` makes the key, once, and makes the
-  folder too if it is not there; it refuses to run when the folder holds a key already. **Back the
-  folder up**, since Git never sees it: a release build signed with another key cannot update an
-  installed one, and you would have to uninstall it first. The release workflow signs with the same
-  key, from repository secrets: see [Setting up the signing secrets](#setting-up-the-signing-secrets).
-- **Debug.** When the folder has `debug.keystore`, the debug build is signed with it, so a debug APK
-  built on any machine that has the folder updates one built on another. Without it Gradle signs
-  with that machine's own debug key, which no other machine shares.
-
-**A new machine** needs the folder: map `W:` to where it is kept, or set `ABTH_RELEASE_KEYS` to its
-absolute path (`setx ABTH_RELEASE_KEYS D:\keys` does it for the terminals opened afterwards). Without
-the folder a machine still builds the debug APK, signed with its own key, but it cannot make a signed
-release.
-
-Earlier versions kept the release key in `android/abth-local.jks` and `android/keystore.properties`.
-Those copies were removed when the key moved to the keys folder, and nothing reads those two paths
-any more: a key put back there is ignored.
+Release builds are signed with the key `keystore.properties` describes; without it Gradle leaves
+them unsigned and `android:release` stops. Debug builds are signed with `debug.keystore` when the
+folder has one, so debug APKs built on different machines update one another; otherwise with the
+machine's own debug key. Back the folder up: a release signed with another key cannot update an
+installed one. The release workflow signs with the same key, from repository secrets: see [Setting
+up the signing secrets](#setting-up-the-signing-secrets).
 
 ### Costume writes on Android
 
@@ -694,27 +674,21 @@ at once, and names the missing ones.
 
 The workflow signs the APK with [the release key](#the-signing-keys), which it gets from four
 repository secrets: `ANDROID_KEYSTORE_BASE64` (the `.jks`, in base64), `ANDROID_KEYSTORE_PASSWORD`,
-`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. At run time it writes them as `abth-release.jks` and
-`keystore.properties` into a keys folder of its own, in the runner's temporary directory, and points
-the build at it with `ABTH_RELEASE_KEYS`. Nothing is written into the checkout, and none of the
-secrets is printed. Set them once, from inside the clone (`gh` finds the repository there), in Git
-Bash (or any shell with `base64` and `sed`), with the GitHub CLI signed in as someone who can write
-the repository's secrets. Git Bash writes `W:` as `/w`, so the keys folder is
-`/w/TaikoElaboation/release keys`; if `ABTH_RELEASE_KEYS` points elsewhere, read from there. Each
-command feeds a value to `gh` through a pipe, so nothing is printed, kept in the shell's history or
-written to another file:
+`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. At run time it writes them into a keys folder in the
+runner's temporary directory, points the build at it with `ABTH_RELEASE_KEYS`, and prints none of
+them. Set them once from inside the clone, in a shell with `base64` and `sed` and the GitHub CLI
+signed in. Each value goes to `gh` through a pipe, so nothing is printed or kept in the shell's
+history:
 
 ```bash
-base64 -w0 "/w/TaikoElaboation/release keys/abth-local.jks" | gh secret set ANDROID_KEYSTORE_BASE64
-sed -n 's/^storePassword=//p' "/w/TaikoElaboation/release keys/keystore.properties" | gh secret set ANDROID_KEYSTORE_PASSWORD
-sed -n 's/^keyAlias=//p' "/w/TaikoElaboation/release keys/keystore.properties" | gh secret set ANDROID_KEY_ALIAS
-sed -n 's/^keyPassword=//p' "/w/TaikoElaboation/release keys/keystore.properties" | gh secret set ANDROID_KEY_PASSWORD
+base64 -w0 "$ABTH_RELEASE_KEYS/abth-local.jks" | gh secret set ANDROID_KEYSTORE_BASE64
+sed -n 's/^storePassword=//p' "$ABTH_RELEASE_KEYS/keystore.properties" | gh secret set ANDROID_KEYSTORE_PASSWORD
+sed -n 's/^keyAlias=//p' "$ABTH_RELEASE_KEYS/keystore.properties" | gh secret set ANDROID_KEY_ALIAS
+sed -n 's/^keyPassword=//p' "$ABTH_RELEASE_KEYS/keystore.properties" | gh secret set ANDROID_KEY_PASSWORD
 gh secret list
 ```
 
-`gh secret list` shows the four names, never the values. The password `android:keystore` makes is
-letters, digits, `-` and `_`, so nothing in it needs escaping. Back the key up as [The signing
-keys](#the-signing-keys) says: a release signed with another key cannot update an installed one.
+`gh secret list` shows the four names, never the values.
 
 ## Where the session lives
 
@@ -768,8 +742,7 @@ them by hand, delete the `pictures` folder, or clear the Android app's data.
 ## Signing in for real
 
 Debug builds let any computer paired with the device over adb open the app's WebViews in DevTools
-and read its files with `run-as`. The first real Android write is made on the debug APK, on your
-own tablet and PC (your call, 2026-10-02). So:
+and read its files with `run-as`. So:
 
 - Sign in with a real account on the signed release build (`android:release` and
   `android:install-release`, with the key in [the keys folder](#the-signing-keys)), or on the debug
