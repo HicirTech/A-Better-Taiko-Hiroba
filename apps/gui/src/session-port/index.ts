@@ -13,6 +13,7 @@ export {
   WRITE_KINDS,
 } from "./arguments";
 export { BRIDGE_CHANNELS } from "./bridge-channels";
+export { checkedPort } from "./checked-port";
 export { changedTheCostume } from "./costume-changed";
 export type {
   CostumeChange,
