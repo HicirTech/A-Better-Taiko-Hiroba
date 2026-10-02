@@ -10,13 +10,10 @@ on:
     tags: ["v*.*.*"]
     branches: ["**"]
     # GitHub does not evaluate path filters for tags, so a tag always runs. For a branch, these are
-    # what a release is made of: this file; the release script and its version rules; the app's
-    # package.json, which holds the version and, under "build", electron-builder's configuration;
-    # and the Android project.
+    # what a release is made of: this file; the app's package.json, which holds the version and,
+    # under "build", electron-builder's configuration; and the Android project.
     paths:
       - .github/workflows/release.yml
-      - scripts/release.ts
-      - scripts/release-version.ts
       - apps/gui/package.json
       - apps/gui/android/**
   workflow_dispatch:
@@ -101,23 +98,24 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # The release key comes from four secrets, written into a keys folder under the runner's
-      # temporary directory and given to the build as ABTH_RELEASE_KEYS; none is ever printed. A
-      # release fails without them; a dry run builds an unsigned APK instead.
-      - name: Write the signing key
+      # The release key comes from four repository secrets, and none is ever printed. The keystore
+      # is decoded into the runner's temporary directory, and the build is given its path, its
+      # password and the key's alias and password as the RELEASE_* variables build.gradle reads. A
+      # release is signed, so it fails without them; a dry run builds the same APK unsigned.
+      - name: Decode the signing key
         id: key
         env:
           PUBLISH: ${{ needs.version.outputs.publish }}
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          RELEASE_KEYSTORE_B64: ${{ secrets.RELEASE_KEYSTORE_B64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
           missing=""
-          [ -n "$KEYSTORE_BASE64" ] || missing="$missing ANDROID_KEYSTORE_BASE64"
-          [ -n "$STORE_PASSWORD" ] || missing="$missing ANDROID_KEYSTORE_PASSWORD"
-          [ -n "$KEY_ALIAS" ] || missing="$missing ANDROID_KEY_ALIAS"
-          [ -n "$KEY_PASSWORD" ] || missing="$missing ANDROID_KEY_PASSWORD"
+          [ -n "$RELEASE_KEYSTORE_B64" ] || missing="$missing RELEASE_KEYSTORE_B64"
+          [ -n "$RELEASE_KEYSTORE_PASSWORD" ] || missing="$missing RELEASE_KEYSTORE_PASSWORD"
+          [ -n "$RELEASE_KEY_ALIAS" ] || missing="$missing RELEASE_KEY_ALIAS"
+          [ -n "$RELEASE_KEY_PASSWORD" ] || missing="$missing RELEASE_KEY_PASSWORD"
           if [ -n "$missing" ]; then
             if [ "$PUBLISH" = true ]; then
               echo "::error::A release is signed, and these secrets are not set:$missing. Add them as apps/gui/README.md (Releases) says, then re-run this run."
@@ -127,29 +125,18 @@ jobs:
             echo "signed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          keys="$RUNNER_TEMP/abth-release-keys"
-          mkdir -p "$keys"
-          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$keys/abth-release.jks"
-          # A .properties file reads a backslash as an escape, so a password's own are doubled.
-          escape() { printf '%s' "$1" | sed 's/\\/\\\\/g'; }
-          {
-            printf 'storeFile=%s\n' abth-release.jks
-            printf 'storePassword=%s\n' "$(escape "$STORE_PASSWORD")"
-            printf 'keyAlias=%s\n' "$(escape "$KEY_ALIAS")"
-            printf 'keyPassword=%s\n' "$(escape "$KEY_PASSWORD")"
-          } > "$keys/keystore.properties"
+          printf '%s' "$RELEASE_KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
           echo "signed=true" >> "$GITHUB_OUTPUT"
-          echo "folder=$keys" >> "$GITHUB_OUTPUT"
+          echo "file=$RUNNER_TEMP/release.jks" >> "$GITHUB_OUTPUT"
 
-      - name: Build the signed release APK
-        if: steps.key.outputs.signed == 'true'
+      # With no secrets, a dry run has no keystore path, and build.gradle leaves the APK unsigned.
+      - name: Build the release APK
         env:
-          ABTH_RELEASE_KEYS: ${{ steps.key.outputs.folder }}
+          RELEASE_KEYSTORE_FILE: ${{ steps.key.outputs.file }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: bun run --cwd apps/gui android:release
-
-      - name: Build an unsigned release APK
-        if: steps.key.outputs.signed == 'false'
-        run: bun run --cwd apps/gui android:release-unsigned
 
       - name: Name the APK
         env:
