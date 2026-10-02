@@ -14,25 +14,22 @@ import {
 } from "@abth/core";
 
 import {
-  changeCostume,
-  enabledWrites,
-  type HirobaEndpoints,
-  openCostumeEditor,
-  type UndoStore,
-  type WriteGateInput,
-} from "../src/hiroba-session";
-import {
   changedTheCostume,
   type EnabledWrite,
   type HirobaSessionPort,
   type ReadFailure,
   type WriteOutcomeView,
-} from "../src/session-port";
+} from "../session-port";
+import { changeCostume } from "./change-costume";
+import { openCostumeEditor } from "./open-costume-editor";
+import type { HirobaEndpoints } from "./types";
+import type { UndoStore } from "./undo-store";
+import { enabledWrites, type WriteGateInput } from "./verified-writes";
 
 /** The only kind of write so far. */
 const KIND = "costume";
 
-export interface DesktopWritesOptions {
+export interface SessionWritesOptions {
   readonly transport: Transport;
   readonly endpoints: HirobaEndpoints;
   /** Whether the build is packaged, and its environment: which writes the run may send. */
@@ -49,21 +46,20 @@ export interface DesktopWritesOptions {
   readonly costumeChanged: () => void;
 }
 
-/** The port's write verbs on the desktop. */
-export type DesktopWrites = Pick<
+/** The port's write verbs, the same on every shell. */
+export type SessionWrites = Pick<
   HirobaSessionPort,
   "enabledWrites" | "openCostumeEditor" | "changeCostume" | "pendingUndo" | "undo"
 >;
 
 /**
- * The desktop's writes: the gate, checked where each write is sent; the undo record, kept on disk
- * before a write's first post and settled by its outcome; and the session, dropped when Hiroba
- * ends it. An undo is an ordinary write, from the record's read-back set to its set before.
+ * A shell's writes: the gate, checked where each write is sent; the undo record, kept before a
+ * write's first post and settled by its outcome; and the session, dropped when Hiroba ends it. An undo is an ordinary write, from the record's read-back set to its set before.
  *
  * Every undo slot read or written is the signed-in player's own, by taiko number: another
  * player's record or pending write, left on this device, is theirs, and nothing here touches it.
  */
-export function createDesktopWrites(options: DesktopWritesOptions): DesktopWrites {
+export function createSessionWrites(options: SessionWritesOptions): SessionWrites {
   const { undoStore } = options;
   const costumeGate = () =>
     enabledWrites(options.gate).find((write: EnabledWrite) => write.kind === KIND);

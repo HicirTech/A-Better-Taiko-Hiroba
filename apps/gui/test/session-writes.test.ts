@@ -1,5 +1,5 @@
 /**
- * The desktop's write verbs against the mock's own costume editor (scripts/mock-costume.ts), in
+ * The shells' shared write verbs against the mock's own costume editor (scripts/mock-costume.ts), in
  * process, with the undo slots on disk in a temporary folder: the gate, the undo record's life, and
  * the session dropped when Hiroba ends it.
  */
@@ -9,9 +9,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { type CostumeSet, ok, type Transport } from "@abth/core";
 
-import { createDesktopWrites } from "../electron/desktop-writes";
 import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, INITIAL_COSTUME, type MockSession } from "../scripts/mock-costume";
+import { createSessionWrites } from "../src/hiroba-session";
 
 const ORIGIN = "https://hiroba.test";
 const ENDPOINTS = {
@@ -56,7 +56,7 @@ afterEach(() => {
   }
 });
 
-/** The mock's editor behind a transport, and the desktop's writes over both. */
+/** The mock's editor behind a transport, and the shared writes over both. */
 function setUp(
   options: { gate?: typeof OPEN; owner?: string | null; whose?: () => string | null } = {},
 ) {
@@ -117,7 +117,7 @@ function setUp(
   folders.push(folder);
   const undoPath = join(folder, "undo.json");
   let signedIn = true;
-  const writes = createDesktopWrites({
+  const writes = createSessionWrites({
     transport,
     endpoints: ENDPOINTS,
     gate: options.gate ?? OPEN,
@@ -145,7 +145,7 @@ function setUp(
   return { editor, hiroba, writes, saved, setElsewhere, signInAgain, undoPath };
 }
 
-describe("createDesktopWrites", () => {
+describe("createSessionWrites", () => {
   test("with the gate shut, enables nothing, offers no undo and sends nothing", async () => {
     const { hiroba, writes } = setUp({ gate: { isPackaged: true, env: OPEN.env } });
     expect(await writes.enabledWrites()).toEqual([]);

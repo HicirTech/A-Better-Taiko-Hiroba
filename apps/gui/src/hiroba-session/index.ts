@@ -51,6 +51,11 @@ export {
   type PictureReadState,
 } from "./read-picture";
 export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
+export {
+  createSessionWrites,
+  type SessionWrites,
+  type SessionWritesOptions,
+} from "./session-writes";
 export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep } from "./types";
 export { isUndoSlot, readSlot } from "./undo-slot";

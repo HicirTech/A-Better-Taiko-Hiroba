@@ -5,6 +5,7 @@ import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } f
 import {
   createHirobaQueue,
   createPictureReader,
+  createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
@@ -24,7 +25,6 @@ import {
   type WriteOutcomeView,
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
-import { createDesktopWrites } from "./desktop-writes";
 import { createHirobaTransport } from "./hiroba-transport";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { saveReads } from "./save-reads";
@@ -185,7 +185,7 @@ app.whenReady().then(async () => {
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
   // The writes: the gate, the undo record on disk, and the session dropped when Hiroba ends it.
-  const writes = createDesktopWrites({
+  const writes = createSessionWrites({
     transport: readTransport,
     endpoints,
     gate: writeGate,
