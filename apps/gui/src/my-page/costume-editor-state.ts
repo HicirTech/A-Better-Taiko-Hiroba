@@ -2,6 +2,7 @@ import { draftCostumeChange, type Result, sameCostume } from "@abth/core";
 
 import type { CostumeEditorView, CostumeSet, ReadFailure, WriteOutcomeView } from "../session-port";
 import { type ColourPart, type SlotPart, slotOf } from "./costume-parts";
+import { refreshed } from "./write-ending";
 
 /** An editor the page read, and the draft made over it: what a read again may keep. */
 export interface HeldEditor {
@@ -158,21 +159,6 @@ function writeEnded(step: EditorStep, outcome: WriteOutcomeView): EditorStep {
       return { name: "done", editor: refreshed(step.editor, outcome), outcome, asUndo: true };
     default:
       return step;
-  }
-}
-
-/** The editor after a write, with the set as the write last saw it. */
-export function refreshed(editor: CostumeEditorView, outcome: WriteOutcomeView): CostumeEditorView {
-  switch (outcome.kind) {
-    case "applied":
-    case "appliedNotSynced":
-    case "notApplied":
-    case "diverged":
-      return { ...editor, state: outcome.after };
-    case "changedSincePreview":
-      return { ...editor, state: outcome.current };
-    default:
-      return editor;
   }
 }
 

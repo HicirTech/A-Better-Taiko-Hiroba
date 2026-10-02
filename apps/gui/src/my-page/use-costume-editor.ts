@@ -1,12 +1,12 @@
 import type { MessageKey } from "@abth/i18n";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
 import {
   changedTheCostume,
   type HirobaSessionPort,
-  type UndoSummary,
+  type UndoSummaryOf,
   type WriteOutcomeView,
 } from "../session-port";
 import {
@@ -21,6 +21,8 @@ import {
 import type { ColourPart, SlotPart } from "./costume-parts";
 import type { PreviewState } from "./costume-preview";
 import { useCostumePreview } from "./costume-preview-box";
+import { useUndoOffer } from "./use-undo-offer";
+import { sendHeld, sessionNoticeOf } from "./write-ending";
 
 export interface CostumeEditorOptions {
   readonly port: HirobaSessionPort;
@@ -40,7 +42,7 @@ export interface CostumeEditor {
   readonly step: EditorStep;
   readonly preview: PreviewState;
   /** The costume undo this device offers now, if any: asks the platform, never Hiroba. */
-  readonly undoable: UndoSummary | null;
+  readonly undoable: UndoSummaryOf<"costume"> | null;
   /** The editor is being read (again). */
   readonly reading: boolean;
   /** A save or an undo is on its way: nothing else asks Hiroba anything meanwhile. */
@@ -77,10 +79,10 @@ export function useCostumeEditor({
   onSessionGone,
 }: CostumeEditorOptions): CostumeEditor {
   const [step, dispatch] = useReducer(reduceEditor, UNREAD);
-  const [undoable, setUndoable] = useState<UndoSummary | null>(null);
   const preview = useCostumePreview(port, previewSetOf(step), shown);
   /** Bumped when the session ends: what a request begun before it brings back is dropped. */
   const session = useRef(0);
+  const { undoable, refreshUndo, clearUndo } = useUndoOffer(port, "costume", session);
   /**
    * The session a read is on its way for: one read at a time, and one under StrictMode, which
    * runs an effect twice in development, where a second would be a second request to Hiroba.
@@ -89,19 +91,11 @@ export function useCostumeEditor({
   /** A save or an undo is on its way: one press sends one write. */
   const writing = useRef(false);
 
-  const refreshUndo = useCallback(async () => {
-    const mine = session.current;
-    const offered = await port.pendingUndo();
-    if (mine === session.current) {
-      setUndoable(offered.find((one) => one.kind === "costume") ?? null);
-    }
-  }, [port]);
-
   const forget = useCallback(() => {
     session.current += 1;
     dispatch({ type: "forget" });
-    setUndoable(null);
-  }, []);
+    clearUndo();
+  }, [clearUndo]);
 
   const mayRead = step.name === "unread" || canReadEditorAgain(step);
   const read = useCallback(async () => {
@@ -149,15 +143,10 @@ export function useCostumeEditor({
    */
   const writeEnded = (outcome: WriteOutcomeView) => {
     dispatch({ type: "writeEnded", outcome });
-    if (outcome.kind === "sessionGone" || outcome.kind === "notSignedIn") {
+    const gone = sessionNoticeOf(outcome);
+    if (gone !== null) {
       forget();
-      onSessionGone(
-        outcome.kind === "notSignedIn"
-          ? "failure.notSignedIn"
-          : outcome.writeMayHaveHappened
-            ? "write.sessionGoneAfterSave"
-            : "write.sessionGone",
-      );
+      onSessionGone(gone);
       return;
     }
 
@@ -175,17 +164,7 @@ export function useCostumeEditor({
     writing.current = true;
     const mine = session.current;
     dispatch(begin);
-    let outcome: WriteOutcomeView;
-    lane.hold();
-    try {
-      outcome = await send();
-    } catch {
-      // The call itself failed, as a bridge that refused it does: how the write ended is not
-      // known, and the page must not stay on "Saving…" with nothing to press.
-      outcome = { kind: "interrupted" };
-    } finally {
-      lane.release();
-    }
+    const outcome = await sendHeld(lane, send);
     writing.current = false;
     if (mine === session.current) {
       writeEnded(outcome);
