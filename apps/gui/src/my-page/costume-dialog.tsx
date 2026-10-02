@@ -173,7 +173,7 @@ export function CostumeDialog({
       : step.name === "done"
         ? step.editor.state
         : null;
-  const preview = useCostumePreview(port, previewSet);
+  const preview = useCostumePreview(port, previewSet, true);
 
   const busy = step.name === "saving";
   return (

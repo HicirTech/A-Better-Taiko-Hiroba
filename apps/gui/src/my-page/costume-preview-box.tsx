@@ -11,11 +11,17 @@ import {
 } from "./costume-preview";
 
 /**
- * Hiroba's picture of `set`, kept up with `set` for as long as the calling component is mounted, as
- * the scheduler paces it. Null asks for nothing. The scheduler outlives StrictMode's second run of
- * an effect in development, so the first picture is one request there too.
+ * Hiroba's picture of `set`, kept up with `set` for as long as `active` holds, as the scheduler
+ * paces it. Null asks for nothing, and so does a pause in `active`: the scheduler outlives it, so a
+ * set drawn before is shown again at the start without a request, and only a set not yet asked for
+ * is. It outlives StrictMode's second run of an effect in development too, so the first picture is
+ * one request there as well.
  */
-export function useCostumePreview(port: HirobaSessionPort, set: CostumeSet | null): PreviewState {
+export function useCostumePreview(
+  port: HirobaSessionPort,
+  set: CostumeSet | null,
+  active: boolean,
+): PreviewState {
   const [preview, setPreview] = useState<PreviewState>(NO_PREVIEW);
   const made = useRef<PreviewScheduler | null>(null);
   if (made.current === null) {
@@ -26,9 +32,13 @@ export function useCostumePreview(port: HirobaSessionPort, set: CostumeSet | nul
   }
   const scheduler = made.current;
   useEffect(() => {
+    if (!active) {
+      return;
+    }
+
     scheduler.start();
     return () => scheduler.stop();
-  }, [scheduler]);
+  }, [scheduler, active]);
   useEffect(() => {
     if (set !== null) {
       scheduler.want(set);

@@ -36,9 +36,15 @@ export interface PreviewSchedulerOptions {
 }
 
 export interface PreviewScheduler {
-  /** Lets it ask again, and asks for the set wanted if that is still to be drawn. */
+  /**
+   * Lets it ask again, shows what it has, and asks for the set wanted if that is still to be drawn.
+   * A picture that landed while it was stopped is shown now.
+   */
   start(): void;
-  /** Asks nothing more: the pause after a pick is dropped, and a picture landing is not shown. */
+  /**
+   * Asks nothing more: the pause after a pick is dropped, and a picture landing is kept but not
+   * shown until it starts again.
+   */
   stop(): void;
   /** The set the editor shows now. The first is asked for at once; each after it after a pause. */
   want(set: CostumeSet): void;
@@ -54,11 +60,12 @@ const keyOf = (set: CostumeSet) => COSTUME_PARTS.map((part) => set[part]).join("
 
 /**
  * How often the editor asks Hiroba for a picture of the set, kept down as Hiroba's own editor does
- * not: one picture when the editor opens, then one per change once the picks pause, so a burst of
- * clicks is one request. At most one request is in flight. A set picked while one is on its way
- * supersedes it: that picture is dropped when it lands, and the newest set is asked for then. Never
- * a retry and never a guess at what will be picked next; a picture already drawn this opening is
- * shown again without asking. Nothing is asked while stopped, which is whenever the editor is shut.
+ * not: one picture when the editor first shows, then one per change once the picks pause, so a
+ * burst of clicks is one request. At most one request is in flight. A set picked while one is on
+ * its way supersedes it: that picture is dropped when it lands, and the newest set is asked for
+ * then. Never a retry and never a guess at what will be picked next; a picture already drawn is
+ * shown again without asking, also after a stop and a start. Nothing is asked while stopped, which
+ * is whenever the page that shows the editor is not shown.
  */
 export function createPreviewScheduler(options: PreviewSchedulerOptions): PreviewScheduler {
   const delayMs = options.delayMs ?? PREVIEW_DELAY_MS;
@@ -117,17 +124,16 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
       )
       .then((answer) => {
         inFlight = null;
-        if (!started) {
-          return;
-        }
         if (wanted?.key !== key) {
           // Superseded: this picture is dropped, and the newest set is asked for unless a pick's
-          // pause is still running, which asks when it ends.
+          // pause is still running, which asks when it ends. Stopped, nothing is asked: the
+          // newest set is not the one asked for last, so starting again asks for it.
           if (timer === null) {
             send();
           }
           return;
         }
+        // Stopped, the answer is still kept and noted, and shown when it starts again.
         if ("image" in answer) {
           keep(key, answer.image);
           shownKey = key;
@@ -174,6 +180,7 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
   return {
     start() {
       started = true;
+      options.onState(state);
       // Only a set not asked for yet: stopping and starting again is not a retry.
       if (wanted !== null && wanted.key !== askedKey) {
         plan();

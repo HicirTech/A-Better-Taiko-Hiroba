@@ -188,7 +188,7 @@ describe("createPreviewScheduler", () => {
     expect(last()).toEqual({ image: picture(START), loading: false, failure: null });
   });
 
-  test("a picture that lands after the editor is shut is not shown", async () => {
+  test("a picture that lands while it is stopped is not shown then", async () => {
     const { scheduler, asked, states } = harness();
     scheduler.start();
     scheduler.want(START);
@@ -196,5 +196,66 @@ describe("createPreviewScheduler", () => {
     const shown = states.length;
     await asked[0]?.answer(ok(picture(START)));
     expect(states).toHaveLength(shown);
+  });
+
+  test("a picture that landed while it was stopped is shown at the start, and asked for no more", async () => {
+    const { scheduler, asked, last } = harness();
+    scheduler.start();
+    scheduler.want(START);
+    scheduler.stop();
+    await asked[0]?.answer(ok(picture(START)));
+    scheduler.start();
+    expect(last()).toEqual({ image: picture(START), loading: false, failure: null });
+    expect(asked).toHaveLength(1);
+  });
+
+  test("a failure that landed while it was stopped is shown at the start, and not retried", async () => {
+    const { scheduler, asked, pauseEnds, last } = harness();
+    scheduler.start();
+    scheduler.want(START);
+    scheduler.stop();
+    await asked[0]?.answer(err({ code: "preview=notPng status=200 type=image/gif bytes=43" }));
+    scheduler.start();
+    pauseEnds();
+    expect(last()).toEqual({
+      image: null,
+      loading: false,
+      failure: "preview=notPng status=200 type=image/gif bytes=43",
+    });
+    expect(asked).toHaveLength(1);
+  });
+
+  test("a set picked while it is stopped is asked for after the pause once it starts", async () => {
+    const { scheduler, asked, pauseEnds, pausing, last } = harness();
+    scheduler.start();
+    scheduler.want(START);
+    await asked[0]?.answer(ok(picture(START)));
+    scheduler.stop();
+    scheduler.want(face(3));
+    expect(pausing()).toBe(0);
+    scheduler.start();
+    expect(asked).toHaveLength(1);
+    expect(pausing()).toBe(1);
+    pauseEnds();
+    await asked[1]?.answer(ok(picture(face(3))));
+    expect(last()).toEqual({ image: picture(face(3)), loading: false, failure: null });
+  });
+
+  test("a superseded picture that lands while it is stopped asks for nothing, and the newest set at the start", async () => {
+    const { scheduler, asked, pauseEnds, last } = harness();
+    scheduler.start();
+    scheduler.want(START);
+    await asked[0]?.answer(ok(picture(START)));
+    scheduler.want(face(1));
+    pauseEnds();
+    scheduler.want(face(2));
+    scheduler.stop();
+    await asked[1]?.answer(ok(picture(face(1))));
+    expect(asked).toHaveLength(2);
+    scheduler.start();
+    pauseEnds();
+    expect(asked.map(({ set }) => set.colorFace)).toEqual([5, 1, 2]);
+    await asked[2]?.answer(ok(picture(face(2))));
+    expect(last()).toEqual({ image: picture(face(2)), loading: false, failure: null });
   });
 });
