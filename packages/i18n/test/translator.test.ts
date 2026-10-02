@@ -110,45 +110,69 @@ describe("the Name & title page's name", () => {
 /** The parameters a message names, in order of name. */
 const paramsOf = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
-/** Messages that are Hiroba's own words, or the app's name: every language shows them as written. */
-const AS_WRITTEN: readonly MessageKey[] = [
+/** A value for each language. */
+type PerLanguage<T> = Readonly<Record<Locale, T>>;
+
+/** A value that every language writes alike. */
+const inEveryLanguage = <T>(value: T): PerLanguage<T> => ({
+  en: value,
+  ja: value,
+  "zh-Hans": value,
+  "zh-Hant": value,
+});
+
+/** Messages with one text in every language: the app's name, the plate's own print, a number's form. */
+const SAME_EVERYWHERE: readonly MessageKey[] = [
   "app.title",
-  "medal.heading",
   "medal.complete",
-  "costume.tab.colours",
-  "costume.tab.items",
-  "costume.part.colorFace",
-  "costume.part.colorBody",
-  "costume.part.colorLimb",
-  "costume.part.costume1",
-  "costume.part.costume2",
-  "costume.part.costume3",
-  "costume.part.costume4",
-  "costume.part.costume5",
   "costume.id",
-  "costume.remove",
   "costume.item.label",
   "name.counter",
   "name.siteWarning",
 ];
 
-/** Site words a message quotes, which every language quotes as the site writes them. */
-const QUOTED: Readonly<Partial<Record<MessageKey, readonly string[]>>> = {
-  "panel.footnote": ["おに＋おに裏", "双打"],
-  "medal.none": ["どんメダル"],
-  "medal.unrecognised": ["どんメダル"],
-  "costume.preview.alt": ["マイどん"],
-  "costume.kigurumiWarning": ["きぐるみ", "あたま", "からだ", "メイク", "ぷちキャラ"],
-  "write.needsConfirmation": [
+/** Messages that are one game term, as each language writes it: the text is the term and no more. */
+const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
+  "medal.heading": inEveryLanguage("どんメダル"),
+  "costume.tab.colours": inEveryLanguage("いろ"),
+  "costume.tab.items": inEveryLanguage("きせかえ"),
+  "costume.part.colorFace": inEveryLanguage("かお"),
+  "costume.part.colorBody": inEveryLanguage("どう"),
+  "costume.part.colorLimb": inEveryLanguage("てあし"),
+  "costume.part.costume1": inEveryLanguage("きぐるみ"),
+  "costume.part.costume2": inEveryLanguage("あたま"),
+  "costume.part.costume3": inEveryLanguage("からだ"),
+  "costume.part.costume4": inEveryLanguage("メイク"),
+  "costume.part.costume5": inEveryLanguage("ぷちキャラ"),
+  "costume.remove": inEveryLanguage("はずす"),
+};
+
+/**
+ * Words a message holds, as each language writes them: the game's terms a sentence names, and the
+ * sentences of Hiroba's own that it quotes, which every language quotes as the site writes them.
+ */
+const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>>>> = {
+  "panel.footnote": inEveryLanguage(["おに＋おに裏", "双打"]),
+  "medal.none": inEveryLanguage(["どんメダル"]),
+  "medal.unrecognised": inEveryLanguage(["どんメダル"]),
+  "costume.preview.alt": inEveryLanguage(["マイどん"]),
+  "costume.kigurumiWarning": inEveryLanguage([
+    "きぐるみ",
+    "あたま",
+    "からだ",
+    "メイク",
+    "ぷちキャラ",
+  ]),
+  "write.needsConfirmation": inEveryLanguage([
     "これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  ],
-  "write.title.needsConfirmation": [
+  ]),
+  "write.title.needsConfirmation": inEveryLanguage([
     "この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  ],
-  "name.faqRule": [
+  ]),
+  "name.faqRule": inEveryLanguage([
     "ドンだーネームは、ひらがなと記号「ー、～、！、？」が入力可能です。５文字までです。",
-  ],
-  "name.closed": ["今はドンだーネームは変更できないドン！"],
+  ]),
+  "name.closed": inEveryLanguage(["今はドンだーネームは変更できないドン！"]),
 };
 
 describe.each([...LOCALES])("the %s catalog", (locale) => {
@@ -166,13 +190,25 @@ describe.each([...LOCALES])("the %s catalog", (locale) => {
     }
   });
 
-  test("keeps Hiroba's own words as the site writes them", () => {
-    for (const key of AS_WRITTEN) {
+  test("writes what is one text in every language alike", () => {
+    for (const key of SAME_EVERYWHERE) {
       expect({ key, text: t(key) }).toEqual({ key, text: en[key] });
     }
-    for (const [key, words = []] of Object.entries(QUOTED) as [MessageKey, string[]][]) {
-      for (const word of words) {
-        expect({ key, quotes: t(key).includes(word) }).toEqual({ key, quotes: true });
+  });
+
+  test("writes each game term as this language writes it", () => {
+    for (const [key, terms] of Object.entries(AS_WRITTEN) as [MessageKey, PerLanguage<string>][]) {
+      expect({ key, text: t(key) }).toEqual({ key, text: terms[locale] });
+    }
+  });
+
+  test("holds the words of the game and of Hiroba that its messages name", () => {
+    for (const [key, words] of Object.entries(QUOTED) as [
+      MessageKey,
+      PerLanguage<readonly string[]>,
+    ][]) {
+      for (const word of words[locale]) {
+        expect({ key, word, holds: t(key).includes(word) }).toEqual({ key, word, holds: true });
       }
     }
   });
