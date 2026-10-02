@@ -24,8 +24,24 @@ export {
   openCostumeEditor,
 } from "./costume-write";
 export { inMaintenance } from "./maintenance";
+export {
+  checkNameTarget,
+  describeName,
+  NAME_FIELDS,
+  NAME_FORM_MAX_LENGTH,
+  type NameAdvice,
+  type NameBody,
+  sameName,
+} from "./name-rule";
 export { readHirobaPage, sessionEnded } from "./read-page";
 export { runWrite } from "./run-write";
+export {
+  checkTitleTarget,
+  sameTitle,
+  TITLE_FIELDS,
+  type TitleBody,
+  type TitleTarget,
+} from "./title-rule";
 export {
   beginPending,
   EMPTY_UNDO_SLOT,
