@@ -277,6 +277,9 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
   "write.title.needsConfirmation": inEveryLanguage([
     "この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   ]),
+  "name.siteWarning": inEveryLanguage([
+    "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
+  ]),
   "name.faqRule": inEveryLanguage([
     "ドンだーネームは、ひらがなと記号「ー、～、！、？」が入力可能です。５文字までです。",
   ]),
@@ -298,26 +301,123 @@ const KEEPS_JAPANESE: readonly MessageKey[] = [
 /** A hiragana or a katakana letter. */
 const KANA = /[\p{Script=Hiragana}\p{Script=Katakana}]/u;
 
-/** Forms that are Simplified Chinese or Japanese only: 繁體中文 has 雙打 and 粹, not 双打 and 粋. */
+/** A kanji or a hanzi, whichever script's form it is, or a kana: what English may not hold. */
+const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+
+/** A kanji or a hanzi, whichever script's form it is. For `match` and `matchAll`, never `test`. */
+const HAN = /\p{Script=Han}/gu;
+
+/**
+ * Forms that are Simplified Chinese or Japanese only, not Traditional: 繁體中文 has 雙打 and 粹, not
+ * 双打 and 粋. The reviewed set below is what keeps them out of the zh-Hant catalog; this list
+ * checks that review, in case one of them was put there by mistake.
+ */
 const NOT_TRADITIONAL =
-  /[双粋称号换装级极达银铜连续读写显设网络应储变计页间头体妆脸颜让为这们个来时会说请编辑错误务启动关闭图帮载导览态据决备选择验证订阅广场过还进]/u;
+  /[双粋称号换装级极达银铜连续读写显设网络应储变计页间头体妆脸颜让为这们个来时会说请编辑错误务启动关闭图帮载导览态据决备选择验证订阅广场过还进広実気読変続関対経戦楽歴圧売鉄点蔵]/u;
+
+/**
+ * Every Han character the zh-Hant catalog may use outside Hiroba's own sentences, in code point
+ * order: a closed set, not a list of what to keep out. A person has looked at each one, and it is a
+ * Traditional form (one that Simplified writes differently, or alike), not a form that only
+ * Simplified or only Japanese has. A character the catalog gains is not here, and the test below
+ * fails until a person has looked at it and added it.
+ */
+const TRADITIONAL: ReadonlySet<string> = new Set(
+  [
+    "一七三上下不並中主之乎九也了二五交人仍他代以件任伺但位何作你使供保個做停偶傳儲允",
+    "元先入內全兩八六共其再冠出分列初判別到前動包化十半南卡即卸原去又取受另只可合同名",
+    "向否含和咚哪啟單嘗器四回因圍圖在執報場外多夢天夾套妝字存完官定宮容密寫寬將對小尚",
+    "就尾展工己已帳幣度廣建式張形後得從復恢息情意愛態應成或戲戴打把拒括持按捲排接提換",
+    "援摘擇支收改效料新斷方於日明易是時晚暫暱曲更最會有服期未本束板枚果查核格框桌極概",
+    "樣機檢次歌止正此步段每比求沒法消清為無然片版狀獲玄王現生用由留畫登白的目直相看眾",
+    "知確碼示移程稱空穿窗立符算範簡粉粹系紀級紫組結絕統經維網線編縮績繪置而肢能臉自至",
+    "與良色若萬著藏處號虹行表被裏裝製要覆見視覽角觸言計訊設許試話該詳認語誤說請證護讀",
+    "變讓資超跟路身軀較載輯輸轉辨返送這通連進逾遊過達選還那部重金銀銅錄錯長閉開間關限",
+    "除階隨雅雙面頁項預頭顏願顯馬體鬼魔鼓",
+  ].join(""),
+);
+
+/** The Han characters of `text`, each once. */
+const hanOf = (text: string): string[] => [...new Set(text.match(HAN) ?? [])];
+
+/** The Han characters of `text` that no one has reviewed as Traditional. */
+const outsideTraditional = (text: string): string[] =>
+  hanOf(text).filter((char) => !TRADITIONAL.has(char));
+
+/**
+ * A message in its catalog's own language: without the sentences of Hiroba's own that it quotes,
+ * which are in the site's Japanese in every language. The words around them are the catalog's.
+ */
+function withoutHirobasSentences(key: MessageKey, locale: Locale, text: string): string {
+  return KEEPS_JAPANESE.includes(key)
+    ? (QUOTED[key]?.[locale] ?? []).reduce((rest, sentence) => rest.replace(sentence, ""), text)
+    : text;
+}
 
 describe.each<Locale>(["en", "zh-Hans", "zh-Hant"])("the %s catalog's language", (locale) => {
   const { t } = createTranslator(locale);
+  const keys = Object.keys(en) as MessageKey[];
 
   test("is Japanese only where Hiroba's own words are", () => {
-    const withKana = (Object.keys(en) as MessageKey[]).filter((key) => KANA.test(t(key)));
+    const withKana = keys.filter((key) => KANA.test(t(key)));
     expect(withKana.sort()).toEqual([...KEEPS_JAPANESE].sort());
+  });
+
+  test("holds no Japanese beyond Hiroba's own sentences, and English no Chinese either", () => {
+    const foreign = locale === "en" ? CJK : KANA;
+    const stray = keys.filter((key) => foreign.test(withoutHirobasSentences(key, locale, t(key))));
+    expect(stray).toEqual([]);
   });
 });
 
 describe("the zh-Hant catalog", () => {
-  test("holds no Simplified or Japanese form of a character", () => {
-    const { t } = createTranslator("zh-Hant");
-    const offending = (Object.keys(en) as MessageKey[]).filter(
-      (key) => !KEEPS_JAPANESE.includes(key) && NOT_TRADITIONAL.test(t(key)),
+  const { t } = createTranslator("zh-Hant");
+  const keys = Object.keys(en) as MessageKey[];
+  const ownWords = (key: MessageKey) => withoutHirobasSentences(key, "zh-Hant", t(key));
+
+  test("uses the Han characters a person has reviewed as Traditional, all of them and no other", () => {
+    const used = new Set(keys.flatMap((key) => hanOf(ownWords(key))));
+    expect({
+      unreviewed: keys.flatMap((key) =>
+        outsideTraditional(ownWords(key)).map((char) => `${char} in ${key}`),
+      ),
+      unused: [...TRADITIONAL].filter((char) => !used.has(char)),
+    }).toEqual({ unreviewed: [], unused: [] });
+  });
+
+  test("has reviewed Han characters only, none of them known to be Simplified or Japanese only", () => {
+    expect(hanOf([...TRADITIONAL].join("")).length).toBe(TRADITIONAL.size);
+    expect([...TRADITIONAL].filter((char) => NOT_TRADITIONAL.test(char))).toEqual([]);
+  });
+});
+
+describe("the language guards' own checks", () => {
+  test.each<[text: string, outside: string[]]>([
+    ["設定", []],
+    ["设定", ["设"]],
+    ["门設定", ["门"]],
+    ["开設定", ["开"]],
+    ["帐號", ["帐"]],
+    ["広場", ["広"]],
+    ["Settings 設定", []],
+    ["Settings 设定 and 广場", ["设", "广"]],
+  ])("see in %p these Han characters no one reviewed as Traditional: %p", (text, outside) => {
+    expect(outsideTraditional(text)).toEqual(outside);
+  });
+
+  test("take Hiroba's quoted sentences out of a message that quotes them, and nothing else", () => {
+    const sentence = "今はドンだーネームは変更できないドン！";
+    expect(withoutHirobasSentences("name.closed", "en", `Hiroba says: ${sentence}`)).toBe(
+      "Hiroba says: ",
     );
-    expect(offending).toEqual([]);
+    expect(withoutHirobasSentences("nav.settings", "en", sentence)).toBe(sentence);
+  });
+
+  test("still see the Chinese around a quoted sentence", () => {
+    const text = "廣場說：「今はドンだーネームは変更できないドン！」，开";
+    expect(outsideTraditional(withoutHirobasSentences("name.closed", "zh-Hant", text))).toEqual([
+      "开",
+    ]);
   });
 });
 
