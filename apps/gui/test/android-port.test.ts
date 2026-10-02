@@ -7,54 +7,18 @@ import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
 import { medalPlatePng, myDonPng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
+import {
+  CLOSE_LABEL,
+  HIROBA,
+  memoryFlag,
+  MY_PAGE,
+  myPageAnswer,
+  until,
+} from "./android-port-fixtures";
 import { native, nativeBase64 } from "./capacitor-fakes";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const { createAndroidPort } = await import("../src/platform/android");
-
-const HIROBA = "https://donderhiroba.jp";
-const CLOSE_LABEL = "Close sign-in";
-/**
- * A dan-less my page, so a read is one request: the title plate, bare as Hiroba writes it, over
- * the title. Placeholders throughout, no real account's.
- */
-const MY_PAGE = `<html><body><div id="mydon_area">
-  <img src="imgsrc_titleplate.php" style="width: 100%;">
-  <div>サンプルの称号</div>
-  <div style="height:24px;">サンプルどん</div>
-  <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div></div>
-  <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
-    ${[8, 7, 6, 5, 4, 3, 2].map((rank) => `<div class="best_rank_score_${rank}">1</div>`).join("")}
-    <div class="silver_crown_count">1</div><div class="gold_crown_count">1</div>
-    <div class="donderful_crown_count">1</div></div>
-</div>
-<div class="favoriteSong"><h2>大好きな曲</h2><ul><li><span class="songName">未設定</span></li></ul></div>
-<div class="favoriteSong"><h2>お気に入りの曲</h2><ul></ul></div></body></html>`;
-/** My page as Hiroba answers it, whatever was asked. */
-const myPageAnswer = async () => ({
-  status: 200,
-  url: `${HIROBA}/mypage_top.php`,
-  headers: { "Content-Type": "text/html; charset=UTF-8" },
-  data: nativeBase64(MY_PAGE),
-});
-
-/** A signed-in flag in memory, in place of the page's localStorage. */
-function memoryFlag(initial = false) {
-  let value = initial;
-  return {
-    get: () => value,
-    set: (next: boolean) => {
-      value = next;
-    },
-  };
-}
-
-async function until(condition: () => boolean): Promise<void> {
-  for (let tries = 0; tries < 100 && !condition(); tries++) {
-    await Bun.sleep(1);
-  }
-  expect(condition()).toBe(true);
-}
 
 /** Starts a sign-in and waits until the in-app browser is open. */
 async function startSignIn(signedInFlag = memoryFlag()) {
@@ -186,42 +150,6 @@ describe("createAndroidPort", () => {
     expect(native.cookieCalls).toEqual(["clearAllCookies"]);
     expect(flag.get()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
-  });
-});
-
-describe("createAndroidPort's writes", () => {
-  beforeEach(() => native.reset());
-
-  test("offers no undo, and a costume change sends nothing", async () => {
-    const port = await createAndroidPort({
-      closeLabel: () => CLOSE_LABEL,
-      signedInFlag: memoryFlag(true),
-    });
-    const set = {
-      colorBody: 1,
-      colorLimb: 1,
-      colorFace: 1,
-      costume1: 0,
-      costume2: 0,
-      costume3: 0,
-      costume4: 0,
-      costume5: 0,
-    };
-    expect(await port.changeCostume({ expected: set, target: { ...set, colorFace: 2 } })).toEqual({
-      kind: "notEnabled",
-    });
-    expect(await port.pendingUndo()).toEqual([]);
-    expect(await port.undo("costume")).toEqual({ kind: "notEnabled" });
-    expect(native.httpRequests).toEqual([]);
-  });
-
-  test("reads no costume editor while signed out", async () => {
-    const port = await createAndroidPort({
-      closeLabel: () => CLOSE_LABEL,
-      signedInFlag: memoryFlag(),
-    });
-    expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
-    expect(native.httpRequests).toEqual([]);
   });
 });
 

@@ -9,12 +9,11 @@ import { changeCostume, postAjax } from "@abth/core";
 import {
   createCostumeEditor,
   ERROR_SHELL_BODY,
-  INITIAL_COSTUME,
   type MockSession,
   type PostRecord,
 } from "../scripts/mock-costume";
 import { type NativeHttpAnswer, native, nativeBase64 } from "./capacitor-fakes";
-import { standIn } from "./hiroba-stand-in";
+import { START_SET, standIn } from "./hiroba-stand-in";
 
 const { createAndroidTransport } = await import("../src/platform/android-transport");
 
@@ -121,20 +120,9 @@ describe("a costume write over Android's transport", () => {
     const editor = createCostumeEditor();
     const session: MockSession = { cardChosen: true };
     standIn({ editor, session, myPage: "<p>my page</p>" });
-    const before = { ...INITIAL_COSTUME };
-    const set = (state: Record<string, number>) => ({
-      colorBody: state.color_body ?? -1,
-      colorLimb: state.color_limb ?? -1,
-      colorFace: state.color_face ?? -1,
-      costume1: state.costume_1 ?? -1,
-      costume2: state.costume_2 ?? -1,
-      costume3: state.costume_3 ?? -1,
-      costume4: state.costume_4 ?? -1,
-      costume5: state.costume_5 ?? -1,
-    });
 
     const outcome = await changeCostume(
-      { expected: set(before), target: { ...set(before), colorFace: 3 } },
+      { expected: START_SET, target: { ...START_SET, colorFace: 3 } },
       {
         transport: createAndroidTransport(UA),
         hirobaOrigin: ORIGIN,

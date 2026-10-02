@@ -335,7 +335,6 @@ describe("the set a write leaves in the editor", () => {
     ["invalidTarget", { kind: "invalidTarget", field: "costume1" }],
     ["interrupted", { kind: "interrupted" }],
     ["busy", { kind: "busy" }],
-    ["notEnabled", { kind: "notEnabled" }],
   ])("is the set as it was read for %s, which read nothing back", (_label, outcome) => {
     const step = run(saving(before, planned), { type: "writeEnded", outcome });
 

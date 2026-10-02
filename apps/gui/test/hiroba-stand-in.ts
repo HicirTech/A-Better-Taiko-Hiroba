@@ -5,9 +5,12 @@
  * that does not disable it follows up to five redirects with a GET and reports the last URL, as
  * HttpURLConnection does.
  */
+import type { CostumeSet } from "@abth/core";
+
 import {
   type createCostumeEditor,
   ERROR_SHELL_BODY,
+  INITIAL_COSTUME,
   type MockSession,
 } from "../scripts/mock-costume";
 import { type NativeHttpRequest, native, nativeAnswerOf } from "./capacitor-fakes";
@@ -15,6 +18,21 @@ import { type NativeHttpRequest, native, nativeAnswerOf } from "./capacitor-fake
 /** HttpURLConnection's own limit. */
 const NATIVE_REDIRECTS = 5;
 const REDIRECT_STATUSES: ReadonlySet<number> = new Set([301, 302, 303, 307, 308]);
+
+/** The mock's costume fields, which it names as the site does, as the app's set names them. */
+export const costumeSetOf = (state: Record<string, number>): CostumeSet => ({
+  colorBody: state.color_body ?? -1,
+  colorLimb: state.color_limb ?? -1,
+  colorFace: state.color_face ?? -1,
+  costume1: state.costume_1 ?? -1,
+  costume2: state.costume_2 ?? -1,
+  costume3: state.costume_3 ?? -1,
+  costume4: state.costume_4 ?? -1,
+  costume5: state.costume_5 ?? -1,
+});
+
+/** The costume the mock starts with. */
+export const START_SET = costumeSetOf(INITIAL_COSTUME);
 
 export interface StandInOptions {
   readonly editor: ReturnType<typeof createCostumeEditor>;

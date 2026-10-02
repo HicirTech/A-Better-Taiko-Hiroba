@@ -8,13 +8,14 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { type CostumeSet, ok, type Transport } from "@abth/core";
+import { ok, type Transport } from "@abth/core";
 
 import { createUndoStore } from "../electron/undo-store";
-import { createCostumeEditor, INITIAL_COSTUME, type MockSession } from "../scripts/mock-costume";
+import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import { createSessionWrites, type UndoStore, type WritePlatform } from "../src/hiroba-session";
 import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
 import type { WriteKind } from "../src/session-port";
+import { costumeSetOf, START_SET } from "./hiroba-stand-in";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const ORIGIN = "https://hiroba.test";
@@ -39,18 +40,7 @@ ${[8, 7, 6, 5, 4, 3, 2].map((rank) => `<div class="best_rank_score_${rank}">1</d
 <ul id="songList"><li><div class="name"><span class="songName songNameFont">未設定</span></div></li></ul></div></div>
 <div class="favoriteSong"><h2 class="subtitleMypage">お気に入りの曲</h2><div class="mypageInfoArea"><ul id="songList"></ul></div></div>`;
 
-/** The mock's field names, as the app's set names them. */
-const fromMock = (state: Record<string, number>): CostumeSet => ({
-  colorBody: state.color_body ?? -1,
-  colorLimb: state.color_limb ?? -1,
-  colorFace: state.color_face ?? -1,
-  costume1: state.costume_1 ?? -1,
-  costume2: state.costume_2 ?? -1,
-  costume3: state.costume_3 ?? -1,
-  costume4: state.costume_4 ?? -1,
-  costume5: state.costume_5 ?? -1,
-});
-const START = fromMock(INITIAL_COSTUME);
+const START = START_SET;
 
 /** Which calls of the undo store fail from now on, as a database that will not open or write does. */
 interface StoreFaults {
@@ -194,7 +184,7 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     },
   });
   const saved = async () =>
-    fromMock(
+    costumeSetOf(
       (await editor.hook("/__state", new URLSearchParams())?.json()) as Record<string, number>,
     );
   const setElsewhere = (params: string) => editor.hook("/__state", new URLSearchParams(params));

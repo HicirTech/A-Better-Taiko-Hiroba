@@ -171,8 +171,8 @@ export interface CostumeChange {
 
 /**
  * How a write ended, as the core's `runWrite` judged it, or refused by the platform before it
- * began: `notEnabled` when the platform sends no write of that kind, `notSignedIn` with no session, and
- * `nothingToUndo` when an undo was asked for and this device holds none it can offer.
+ * began: `notSignedIn` with no session, and `nothingToUndo` when an undo was asked for and this
+ * device holds none it can offer.
  *
  * `interrupted` is a write this app stopped with no judgement: a fault in the app, not an answer
  * from Hiroba. A post may have gone out, so whether anything was saved is not known; the pending
@@ -183,7 +183,6 @@ export interface CostumeChange {
  */
 export type WriteOutcomeView =
   | WriteOutcome<CostumeSet>
-  | { readonly kind: "notEnabled" }
   | { readonly kind: "notSignedIn" }
   | { readonly kind: "nothingToUndo" }
   | { readonly kind: "interrupted" }
@@ -246,8 +245,7 @@ export interface HirobaSessionPort {
    * One costume write, the way every write goes: the editor, the pre-check, one save and the
    * read-back, four requests; six where costume writes have not been made for real from this
    * platform yet, with my page read before and after (`LIVE_CHECKED_WRITES`). Never retried.
-   * `notEnabled`, sending nothing, where the platform sends no write of that kind; `busy`, sending
-   * nothing, while another write is queued or running.
+   * `busy`, sending nothing, while another write is queued or running.
    */
   changeCostume(change: CostumeChange): Promise<WriteOutcomeView>;
   /** The undo this device can offer, one per kind at most. Asks Hiroba nothing. */

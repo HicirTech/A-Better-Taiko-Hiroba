@@ -33,7 +33,6 @@ const OUTCOME_MESSAGE = {
   notApplied: "write.notApplied.unchanged",
   diverged: "write.diverged",
   outcomeUnknown: "write.outcomeUnknown",
-  notEnabled: "write.notEnabled",
   notSignedIn: "failure.notSignedIn",
   nothingToUndo: "write.nothingToUndo",
   interrupted: "write.interrupted",
@@ -151,7 +150,6 @@ export function describeOutcome(
     case "interrupted":
       return plain("warning");
     case "undoNotSaved":
-    case "notEnabled":
       return plain("error");
     case "maintenance":
     case "nothingToChange":
