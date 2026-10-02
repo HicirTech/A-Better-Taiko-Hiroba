@@ -1,16 +1,16 @@
 import type { Translator } from "@abth/i18n";
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from "@mui/material";
-import { type ReactNode, type RefObject, useEffect, useRef, useState } from "react";
+import { Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { FAILURE_MESSAGE } from "../read-failure-message";
-import type { ReadFailure, UndoSummary } from "../session-port";
+import type { UndoSummary } from "../session-port";
 import { Changes } from "./costume-changes";
-import { type EditorStep, previewSetOf } from "./costume-editor-state";
+import { previewSetOf } from "./costume-editor-state";
 import { type EditingTabs, EditingView, FIRST_TABS } from "./costume-editing";
 import { changedParts } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
+import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
 import type { CostumeEditor } from "./use-costume-editor";
 import { WriteOutcomeNotice } from "./write-outcome";
 
@@ -77,26 +77,6 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   );
 }
 
-/**
- * Keeps the keyboard on the page when the control it was on goes with a step: a pressed Review is
- * not there once the review is shown, and the focus would fall to the top of the window. Focus
- * that is anywhere else, such as the navigation, is left alone.
- */
-function useFocusKept(page: RefObject<HTMLElement | null>, step: EditorStep["name"]) {
-  const last = useRef(step);
-  useEffect(() => {
-    if (last.current === step) {
-      return;
-    }
-
-    last.current = step;
-    const focused = document.activeElement;
-    if (focused === null || focused === document.body) {
-      page.current?.focus({ preventScroll: true });
-    }
-  }, [page, step]);
-}
-
 /** What the page shows in place of the editor's tabs, or beside them. */
 function StepView({
   editor,
@@ -115,7 +95,7 @@ function StepView({
     case "loading":
       return <Waiting>{t("costume.reading")}</Waiting>;
     case "loadFailed":
-      return <LoadFailed failure={step.failure} i18n={i18n} />;
+      return <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />;
     case "editing":
       return (
         <>
@@ -257,31 +237,5 @@ function UndoOffer({
         {t("costume.undoWhen", { time: i18n.dateTime(undoable.at) })}
       </Typography>
     </Box>
-  );
-}
-
-function Waiting({ id, children }: { id?: string; children: string }) {
-  return (
-    <Stack id={id} direction="row" spacing={2} sx={{ alignItems: "center" }}>
-      <CircularProgress size={24} />
-      <Typography>{children}</Typography>
-    </Stack>
-  );
-}
-
-function LoadFailed({ failure, i18n }: { failure: ReadFailure; i18n: Translator }) {
-  const { t } = i18n;
-  return (
-    <Alert id="costume-load-failed" severity="warning">
-      {t(FAILURE_MESSAGE[failure.kind])}
-      {failure.detail !== undefined && (
-        <Typography
-          variant="body2"
-          sx={{ mt: 1, fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-        >
-          {t("failure.detail", { detail: failure.detail })}
-        </Typography>
-      )}
-    </Alert>
   );
 }
