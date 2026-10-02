@@ -27,7 +27,7 @@ const ON_TILE = "#000";
 const BADGE_SIDE_PX = 32;
 /** The description that says to long-press the portrait, where a finger does. */
 const LONG_PRESS_HINT_ID = "costume-open-hint";
-/** The tile, drawn the same whether a click on it opens the editor or not. */
+/** The tile, drawn the same as a button's face and as a picture alone. */
 const TILE = {
   display: "block",
   position: "relative",
@@ -39,19 +39,14 @@ const TILE = {
 } as const;
 
 /**
- * What a click on the portrait does: opens the costume editor, when this run may change the
- * costume, and nothing while `busy`, as while an undo runs; or nothing at all where the costume may
- * not be changed (Android, packaged builds), which the portrait then says. `byLongPress`, on a
- * touch-first screen, a finger opens it by a long-press instead of a tap.
+ * What a press on the portrait does: `open` jumps to the Costume page, whether or not this run may
+ * change the costume there (Android and packaged builds may not, and the page says so).
+ * `byLongPress`, on a touch-first screen, a finger gets there by a long-press instead of a tap.
  */
-export type PortraitAction =
-  | {
-      readonly kind: "opensEditor";
-      readonly open: () => void;
-      readonly busy: boolean;
-      readonly byLongPress: boolean;
-    }
-  | { readonly kind: "shut" };
+export interface PortraitAction {
+  readonly open: () => void;
+  readonly byLongPress: boolean;
+}
 
 export interface MyDonPortraitProps {
   /** What the picture lane has of the portrait: the picture, why it did not come, or nothing yet. */
@@ -69,64 +64,34 @@ export interface MyDonPortraitProps {
  * not come leaves the tile empty, and the line under the header gives the code. Nothing else in the
  * header depends on it.
  *
- * There is no button to change the costume: the portrait itself opens the editor (the user's call,
- * 2026-09-29). Where a click can, it is a button named for that, with a small edit badge on hover
- * or keyboard focus. On a touch-first screen a finger opens it by a long-press, and a tap does
- * nothing, so a scroll or a pull begun on it never opens it; the badge is always up there, and a
- * description says to long-press. A mouse still clicks, and the keyboard still presses it. Where
- * the costume may not be changed, it is no button: its tooltip, on hover or a long press, says
- * why, and so does a description screen readers read with it.
+ * There is no button to change the costume: the portrait itself is the button, and it jumps to the
+ * Costume page (the user's call, 2026-09-29 and 2026-10-02), always: where this run may not change
+ * the costume, the page says why. A click, or Enter or Space, goes, and a small edit badge shows
+ * on hover or keyboard focus. On a touch-first screen a finger gets there by a long-press, and a
+ * tap does nothing, so a scroll or a pull begun on it never takes the page away; the badge is
+ * always up there, and a description says to long-press.
  */
 export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps) {
   const { t } = i18n;
   const { tooltip, trigger } = useStillPressTooltip();
-  const byLongPress = action.kind === "opensEditor" && action.byLongPress;
-  const longPress = useLongPress(byLongPress && !action.busy, () => {
-    if (action.kind === "opensEditor") {
-      action.open();
-    }
-  });
-  if (action.kind === "shut") {
-    const why = t("costume.notOpen");
-    return (
-      <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
-        {/* A node, not a string, so the tooltip adds no title of its own to repeat the description. */}
-        <Tooltip title={<span>{why}</span>} describeChild {...tooltip}>
-          <Box
-            ref={ref}
-            component="span"
-            id="my-don"
-            aria-busy={answer === undefined}
-            sx={{ ...TILE, userSelect: "none", WebkitTouchCallout: "none" }}
-            {...trigger}
-          >
-            <TileContent answer={answer} i18n={i18n} />
-            <Box component="span" id="costume-not-open" sx={VISUALLY_HIDDEN}>
-              {why}
-            </Box>
-          </Box>
-        </Tooltip>
-      </Box>
-    );
-  }
+  const { open, byLongPress } = action;
+  const longPress = useLongPress(byLongPress, open);
   const label = t("costume.open");
   // A finger's tap does nothing where a finger long-presses: the mouse's click and the keyboard's
-  // press still open it.
+  // press still go.
   const click = (event: MouseEvent) => {
     if (!byLongPress || !isTouchTap(event)) {
-      action.open();
+      open();
     }
   };
   return (
     <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
-      {/* None while it is disabled: a disabled button sends no event to open or close it. None by a
-          finger where the long-press opens the editor itself. */}
-      <Tooltip title={action.busy ? "" : label} disableTouchListener={byLongPress} {...tooltip}>
+      {/* None by a finger where the long-press goes to the page itself. */}
+      <Tooltip title={label} disableTouchListener={byLongPress} {...tooltip}>
         <ButtonBase
           id="costume-open"
           aria-label={label}
           aria-describedby={byLongPress ? LONG_PRESS_HINT_ID : undefined}
-          disabled={action.busy}
           onClick={click}
           {...(byLongPress ? longPress : trigger)}
           focusRipple
@@ -142,7 +107,6 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
             "&.Mui-focusVisible #costume-open-badge": { opacity: 1 },
             // Hover alone: on a touch screen, a tap would leave the badge up.
             "@media (hover: hover)": { "&:hover #costume-open-badge": { opacity: 1 } },
-            "&.Mui-disabled": { opacity: 0.6 },
           }}
         >
           <MyDonTile ref={ref} answer={answer} i18n={i18n} />
@@ -206,7 +170,7 @@ function useStillPressTooltip() {
 }
 
 /**
- * The tile alone, Hiroba's picture of the Don on its pale blue: a button's face on the Overview,
+ * The tile alone, Hiroba's picture of the Don on its pale blue: the face of the Overview's button,
  * and a picture and no more on the Costume page of a run that may not change the costume.
  */
 export function MyDonTile({
@@ -260,7 +224,7 @@ function TileContent({ answer, i18n }: Pick<MyDonPortraitProps, "answer" | "i18n
 }
 
 /**
- * The small badge that shows a click on the portrait edits the costume: faded in on demand, or
+ * The small badge that shows the portrait leads to the costume's editing: faded in on demand, or
  * `alwaysUp` where a finger, which has no hover, long-presses the portrait.
  */
 function EditBadge({ alwaysUp }: { alwaysUp: boolean }) {

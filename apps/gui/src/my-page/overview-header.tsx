@@ -36,7 +36,7 @@ export interface OverviewHeaderProps {
   readonly profile: ProfileView;
   readonly lane: PictureLane;
   readonly i18n: Translator;
-  /** What a click on the portrait does: open the costume editor, or nothing. */
+  /** What a press on the portrait does: jump to the Costume page. */
   readonly portrait: PortraitAction;
 }
 
@@ -45,8 +45,7 @@ export interface OverviewHeaderProps {
  * 2026-09-29): the player's マイどん on the left; on the right, the title plate with the title, the
  * name and the dan over it, and under the plate, Hiroba's score panel with its ten counts written
  * over its art. On a narrow window they stack, the portrait first. No background art and none of
- * Hiroba's yellow: they sit on the app's own surface. The portrait opens the costume editor, where
- * this run may change the costume.
+ * Hiroba's yellow: they sit on the app's own surface. The portrait jumps to the Costume page.
  *
  * Each picture is asked for once it is on screen, and each has a plain stand-in of its geometry
  * until it comes, or if it does not, so every word and number reads the same without it. A dan

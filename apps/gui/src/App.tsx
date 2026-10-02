@@ -167,12 +167,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
    */
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   /** The portrait jumps to the Costume page, which has the editor, or says why it has none. */
-  const portrait: PortraitAction = {
-    kind: "opensEditor",
-    open: () => onNavigate("costume"),
-    busy: false,
-    byLongPress: touchFirst,
-  };
+  const portrait: PortraitAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
 
   // A session kept from an earlier launch is read once on opening: that is what opening the app
   // asks for. Once, not per render — StrictMode runs effects twice in development, and a second
