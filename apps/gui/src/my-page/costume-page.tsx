@@ -146,7 +146,12 @@ function StepView({
     case "done":
       return (
         <>
-          <WriteOutcomeNotice outcome={step.outcome} i18n={i18n} asUndo={step.asUndo} />
+          <WriteOutcomeNotice
+            outcome={step.outcome}
+            kind="costume"
+            i18n={i18n}
+            asUndo={step.asUndo}
+          />
           {undoOffer}
         </>
       );
