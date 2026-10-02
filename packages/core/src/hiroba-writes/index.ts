@@ -33,6 +33,7 @@ export {
   type NameBody,
   sameName,
 } from "./name-rule";
+export { changeName, RENAME_WRITE } from "./name-write";
 export { readHirobaPage, sessionEnded } from "./read-page";
 export { runWrite } from "./run-write";
 export {
