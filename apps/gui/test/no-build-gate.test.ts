@@ -1,7 +1,7 @@
 /**
  * Every kind of write is open in every build: the desktop in development, the installer and the
- * portable zip, and Android's debug and release APKs, with no flag and nothing to unlock (the user's
- * call, 2026-10-02). The end-to-end run is an unpackaged build and the unit tests are neither, so
+ * portable zip, and Android's debug and release APKs, with no flag and nothing to unlock. The
+ * end-to-end run is an unpackaged build and the unit tests are neither, so
  * nothing run could see a gate that shuts a write in a packaged exe or a release APK. This reads the
  * sources instead: every place the app looks at how it was built, or at its environment, is listed
  * below with what it is for, and a new one fails here until a person has decided it is not a gate.
