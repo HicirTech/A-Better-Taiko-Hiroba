@@ -6,7 +6,16 @@ import { describe, expect, test } from "bun:test";
 import { EMPTY_UNDO_SLOT } from "@abth/core";
 
 import { isUndoSlot, readSlot } from "../src/hiroba-session";
-import { OTHER, PLAYER, pendingOf, recordOf, SET } from "./undo-fixtures";
+import {
+  OTHER,
+  PLAYER,
+  pendingOf,
+  recordOf,
+  SET,
+  TITLE_SLOT,
+  titlePendingOf,
+  titleRecordOf,
+} from "./undo-fixtures";
 
 describe("readSlot", () => {
   type OwnCase = [label: string, slot: unknown];
@@ -70,6 +79,49 @@ describe("readSlot", () => {
     ],
   ])("reads %s as no slot", (_label, slot) => {
     expect(readSlot("costume", slot, PLAYER)).toEqual(EMPTY_UNDO_SLOT);
+  });
+});
+
+describe("readSlot, the title", () => {
+  type OwnCase = [label: string, slot: unknown];
+  test.each<OwnCase>([
+    ["a record", TITLE_SLOT],
+    ["a pending write", { record: null, pending: titlePendingOf(PLAYER) }],
+    [
+      "a record of no title before, a normal state",
+      { record: { ...titleRecordOf(PLAYER), before: { title: "" } }, pending: null },
+    ],
+  ])("reads %s of the player's own as it is", (_label, slot) => {
+    expect(readSlot("title", slot, PLAYER)).toEqual(slot as never);
+  });
+
+  type NoneCase = [label: string, slot: unknown];
+  test.each<NoneCase>([
+    ["a record of another player's", { record: titleRecordOf(OTHER), pending: null }],
+    ["a pending write of another player's", { record: null, pending: titlePendingOf(OTHER) }],
+    ["a costume's slot, which is no title's", { record: recordOf(PLAYER), pending: null }],
+    [
+      "a record whose title is no string",
+      { record: { ...titleRecordOf(PLAYER), after: { title: 3 } }, pending: null },
+    ],
+    [
+      "a record whose title is longer than the port takes",
+      { record: { ...titleRecordOf(PLAYER), after: { title: "あ".repeat(201) } }, pending: null },
+    ],
+    [
+      "a record whose set holds another key",
+      { record: { ...titleRecordOf(PLAYER), after: { title: "あ", id: 1 } }, pending: null },
+    ],
+    [
+      "a pending write whose expected set is a costume",
+      { record: null, pending: { ...titlePendingOf(PLAYER), expectedAfter: SET } },
+    ],
+  ])("reads %s as no slot", (_label, slot) => {
+    expect(readSlot("title", slot, PLAYER)).toEqual(EMPTY_UNDO_SLOT);
+  });
+
+  test("reads a title's slot as no slot under the costume kind", () => {
+    expect(readSlot("costume", TITLE_SLOT, PLAYER)).toEqual(EMPTY_UNDO_SLOT);
   });
 });
 

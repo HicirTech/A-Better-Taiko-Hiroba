@@ -20,6 +20,8 @@ const SET = {
 type Verb = keyof HirobaSessionPort;
 /** What each verb takes, and one thing it refuses. */
 type VerbCase = [verb: Verb, taken: unknown[], refused: unknown[]];
+const TITLE = { title: "サンプルの称号" };
+const TARGET = { id: 106, title: "サンプルの称号" };
 const CASES: VerbCase[] = [
   ["isSignedIn", [], [undefined]],
   ["signIn", [], ["https://example.test/"]],
@@ -27,6 +29,7 @@ const CASES: VerbCase[] = [
   ["readProfile", [], [{ force: true }]],
   ["signOut", [], [1]],
   ["openCostumeEditor", [], [{ url: "https://example.test/" }]],
+  ["openTitleEditor", [], [{ url: "https://example.test/" }]],
   ["previewCostume", [SET], [{ ...SET, url: "https://example.test/" }]],
   ["readPicture", [{ kind: "myDon" }], [{ kind: "myDon", fn: "mydon_111111111111" }]],
   [
@@ -34,8 +37,13 @@ const CASES: VerbCase[] = [
     [{ expected: SET, target: SET }],
     [{ expected: SET, target: { ...SET, costume1: -1 } }],
   ],
+  [
+    "changeTitle",
+    [{ expected: TITLE, target: TARGET }],
+    [{ expected: TITLE, target: { ...TARGET, id: null } }],
+  ],
   ["pendingUndo", [], [{}]],
-  ["undo", ["costume"], ["title"]],
+  ["undo", ["title"], ["settings"]],
 ];
 
 /** A port whose every verb notes what it was asked and answers with its own name. */

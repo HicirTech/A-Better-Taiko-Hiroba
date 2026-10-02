@@ -228,6 +228,8 @@ app.whenReady().then(async () => {
       sources = read.value.pictures;
       // The session held: the plates fetched before this read are the player's own.
       await pictures.confirm(read.value.taikoNo);
+      // The title it shows settles a title write whose end was not known, and dates a stale record.
+      await writes.profileRead({ taikoNo: read.value.taikoNo, title: read.value.view.title });
       return ok(read.value.view);
     }),
     async signOut() {
@@ -241,6 +243,7 @@ app.whenReady().then(async () => {
       }
       return read;
     }),
+    openTitleEditor: oneAtATime(writes.openTitleEditor),
     // A read that changes nothing, so no write gate: in the queue like every request to Hiroba, so
     // it never lands between a write's posts and its read-back. Its failure leaves the session be:
     // the next read of a page says whether it is over. Kept as its latest copy alone when reads are
@@ -253,8 +256,10 @@ app.whenReady().then(async () => {
     }),
     readPicture: (want) => pictures.read(want),
     changeCostume: oneWriteAtATime(writes.changeCostume, BUSY_OUTCOME),
+    changeTitle: oneWriteAtATime(writes.changeTitle, BUSY_OUTCOME),
     pendingUndo: writes.pendingUndo,
-    undo: oneWriteAtATime(writes.undo, BUSY_OUTCOME),
+    // The queue wraps the verb for every kind at once; the port types its outcome by the kind asked.
+    undo: oneWriteAtATime(writes.undo, BUSY_OUTCOME) as HirobaSessionPort["undo"],
   };
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

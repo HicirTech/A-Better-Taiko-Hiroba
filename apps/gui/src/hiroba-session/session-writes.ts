@@ -3,14 +3,15 @@ import {
   EMPTY_UNDO_SLOT,
   err,
   offeredUndo,
+  type Result,
   reconcile,
   sameCostume,
+  sameTitle,
   settle,
   type Transport,
   type UndoRecord,
   type UndoSlot,
   undoInput,
-  type WriteDeps,
   type WriteOutcome,
 } from "@abth/core";
 
@@ -18,15 +19,21 @@ import {
   changedTheCostume,
   type CostumeChange,
   type HirobaSessionPort,
+  type ReadFailure,
+  type TitleChange,
+  type UndoSummary,
+  type UndoSummaryOf,
   type WriteKind,
   type WriteOutcomeView,
   type WriteSets,
 } from "../session-port";
 import { changeCostume } from "./change-costume";
+import { changeTitle } from "./change-title";
 import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
+import { openTitleEditor } from "./open-title-editor";
 import { sessionEnded } from "./session-ended";
-import type { HirobaEndpoints } from "./types";
+import type { HirobaEndpoints, WriteOptions } from "./types";
 import type { UndoStore } from "./undo-store";
 
 export interface SessionWritesOptions {
@@ -48,20 +55,27 @@ export interface SessionWritesOptions {
   readonly costumeChanged: () => void;
 }
 
-/** The port's write verbs, the same on every shell. */
+/** What a good read of my page showed of the sets other pages write, and whose page it was. */
+export interface ProfileSeen {
+  readonly taikoNo: string;
+  readonly title: string;
+}
+
+/** The port's write verbs, the same on every shell, and the one thing a read of my page tells them. */
 export type SessionWrites = Pick<
   HirobaSessionPort,
-  "openCostumeEditor" | "changeCostume" | "pendingUndo" | "undo"
->;
+  "openCostumeEditor" | "openTitleEditor" | "changeCostume" | "changeTitle" | "pendingUndo" | "undo"
+> & {
+  /**
+   * A good read of my page, which shows the title as well as the page that writes it does:
+   * settles a write of that kind whose end was not known, and dates a record the title has moved
+   * away from, with no request to Hiroba. A read of my page need not wait for it.
+   */
+  profileRead(seen: ProfileSeen): Promise<void>;
+};
 
 /** How a write that was asked for while another was queued or running answers: sent nothing. */
-export const BUSY_OUTCOME: WriteOutcomeView = { kind: "busy" };
-
-/** What a write is run with besides the transport: the clock, the cross-check, and the undo. */
-type WriteRunOptions<K extends WriteKind> = Omit<
-  WriteDeps<WriteSets[K]>,
-  "transport" | "hirobaOrigin"
->;
+export const BUSY_OUTCOME: { readonly kind: "busy" } = { kind: "busy" };
 
 /**
  * What tells one kind of write from another, for the code every kind shares (`write`, and the undo
@@ -77,12 +91,12 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
     transport: Transport,
     endpoints: HirobaEndpoints,
     input: Input,
-    options: WriteRunOptions<K>,
+    options: WriteOptions<WriteSets[K]>,
   ) => Promise<WriteOutcome<WriteSets[K]>>;
   /** The write that undoes a record: from the set it was read back as, to the set before it. */
   readonly undoInput: (record: UndoRecord<WriteSets[K]>) => Input;
   /** Told how a write or an undo of this kind ended, for what the platform keeps of its result. */
-  readonly ended: (outcome: WriteOutcomeView) => void;
+  readonly ended: (outcome: WriteOutcomeView<WriteSets[K]>) => void;
 }
 
 /**
@@ -111,6 +125,19 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
         options.costumeChanged();
       }
     },
+  };
+
+  const title: WriteKindDefinition<"title", TitleChange> = {
+    kind: "title",
+    same: sameTitle,
+    run: changeTitle,
+    // The id of a title worn is never readable, so one is put back by its name; the core resolves
+    // it against today's list, and refuses a name that no title or more than one title has.
+    undoInput: ({ before, after }) => ({
+      expected: after,
+      target: { id: null, title: before.title },
+    }),
+    ended: () => undefined,
   };
 
   /** A player's slot, or an empty one when the store cannot be read: that never fails a read. */
@@ -142,7 +169,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     definition: WriteKindDefinition<K, Input>,
     input: Input,
     purpose: "change" | "undo",
-  ): Promise<WriteOutcomeView> {
+  ): Promise<WriteOutcomeView<WriteSets[K]>> {
     const { kind, same } = definition;
     // Whose set this is, for the whole write: the read that settles it is this player's too.
     const taikoNo = options.owner();
@@ -184,28 +211,74 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     return outcome;
   }
 
+  /**
+   * One read of a kind's editor, for the interface: refused unsent while signed out; what it
+   * shows settles a write of the kind whose end was not known, and dates a stale record; and a
+   * session it found over is dropped.
+   */
+  async function opened<K extends WriteKind, Editor extends { readonly state: WriteSets[K] }>(
+    definition: Pick<WriteKindDefinition<K, unknown>, "kind" | "same">,
+    read: (
+      transport: Transport,
+      endpoints: HirobaEndpoints,
+    ) => Promise<Result<Editor, ReadFailure>>,
+  ): Promise<Result<Editor, ReadFailure>> {
+    if (!options.signedIn()) {
+      return err({ kind: "notSignedIn" });
+    }
+    const taikoNo = options.owner();
+    const result = await read(options.transport, options.endpoints);
+    if (result.ok && taikoNo !== null) {
+      await amend(definition.kind, taikoNo, (slot) =>
+        reconcile(slot, result.value.state, definition.same),
+      );
+    } else if (!result.ok && sessionEnded(result.error)) {
+      await options.endSession();
+    }
+    return result;
+  }
+
   /** The undo this player can be offered for the kind, if any: asks Hiroba nothing. */
   async function offeredFor<K extends WriteKind>(kind: K, taikoNo: string) {
     return offeredUndo(await slotOf(kind, taikoNo), taikoNo);
   }
 
+  async function summaryOf<K extends WriteKind>(
+    kind: K,
+    taikoNo: string,
+  ): Promise<UndoSummaryOf<K> | null> {
+    const record = await offeredFor(kind, taikoNo);
+    return record === null
+      ? null
+      : { kind, at: record.at, before: record.before, after: record.after };
+  }
+
+  /** Each kind's undo: the record the player is offered, written back as a write like any other. */
+  const undoers = {
+    costume: (record) => write(costume, costume.undoInput(record), "undo"),
+    title: (record) => write(title, title.undoInput(record), "undo"),
+  } satisfies {
+    readonly [K in WriteKind]: (
+      record: UndoRecord<WriteSets[K]>,
+    ) => Promise<WriteOutcomeView<WriteSets[K]>>;
+  };
+
+  /** A kind's slot, settled from the set a read of another page shows, when it holds anything. */
+  async function settledBy<K extends WriteKind>(
+    definition: Pick<WriteKindDefinition<K, unknown>, "kind" | "same">,
+    taikoNo: string,
+    shown: WriteSets[K],
+  ) {
+    const slot = await slotOf(definition.kind, taikoNo);
+    if (slot.record !== null || slot.pending !== null) {
+      await amend(definition.kind, taikoNo, (held) => reconcile(held, shown, definition.same));
+    }
+  }
+
   return {
-    async openCostumeEditor() {
-      if (!options.signedIn()) {
-        return err({ kind: "notSignedIn" });
-      }
-      const taikoNo = options.owner();
-      const read = await openCostumeEditor(options.transport, options.endpoints);
-      if (read.ok && taikoNo !== null) {
-        // The set as it is now settles a write whose end was not known, and dates a stale record.
-        await amend(costume.kind, taikoNo, (slot) =>
-          reconcile(slot, read.value.state, costume.same),
-        );
-      } else if (!read.ok && sessionEnded(read.error)) {
-        await options.endSession();
-      }
-      return read;
-    },
+    openCostumeEditor: () => opened(costume, openCostumeEditor),
+
+    openTitleEditor: () => opened(title, openTitleEditor),
 
     async changeCostume(change) {
       if (!options.signedIn()) {
@@ -214,27 +287,43 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       return write(costume, change, "change");
     },
 
+    async changeTitle(change) {
+      if (!options.signedIn()) {
+        return { kind: "notSignedIn" };
+      }
+      return write(title, change, "change");
+    },
+
     async pendingUndo() {
       const taikoNo = options.owner();
       if (taikoNo === null) {
         return [];
       }
-      const record = await offeredFor(costume.kind, taikoNo);
-      return record === null
-        ? []
-        : [{ kind: costume.kind, at: record.at, before: record.before, after: record.after }];
+      const offers = await Promise.all([
+        summaryOf("costume", taikoNo),
+        summaryOf("title", taikoNo),
+      ]);
+      return offers.filter((offer): offer is UndoSummary => offer !== null);
     },
 
-    async undo() {
+    async undo<K extends WriteKind>(kind: K): Promise<WriteOutcomeView<WriteSets[K]>> {
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
       const taikoNo = options.owner();
-      const record = taikoNo === null ? null : await offeredFor(costume.kind, taikoNo);
+      const record = taikoNo === null ? null : await offeredFor(kind, taikoNo);
       if (record === null) {
         return { kind: "nothingToUndo" };
       }
-      return write(costume, costume.undoInput(record), "undo");
+      // The table is keyed by kind, so the entry is the one for K; TypeScript cannot see that.
+      const undoer = undoers[kind] as (
+        record: UndoRecord<WriteSets[K]>,
+      ) => Promise<WriteOutcomeView<WriteSets[K]>>;
+      return undoer(record);
+    },
+
+    async profileRead({ taikoNo, title: shown }) {
+      await settledBy(title, taikoNo, { title: shown });
     },
   };
 }

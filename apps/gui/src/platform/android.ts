@@ -262,6 +262,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       sources = read.value.pictures;
       // The session held: the plates fetched before this read are the player's own.
       await pictures.confirm(read.value.taikoNo);
+      // The title it shows settles a title write whose end was not known, and dates a stale record.
+      await writes.profileRead({ taikoNo: read.value.taikoNo, title: read.value.view.title });
       return ok(read.value.view);
     }),
 
@@ -280,6 +282,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       }),
     ),
 
+    openTitleEditor: oneAtATime(flushed(writes.openTitleEditor)),
+
     // A read that changes nothing, allowed here as on the desktop. Its failure forgets nothing: the
     // next read of a page says whether the session is over.
     previewCostume: oneAtATime(async (set: CostumeSet) => {
@@ -294,10 +298,13 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     changeCostume: oneWriteAtATime(flushed(writes.changeCostume), BUSY_OUTCOME),
 
+    changeTitle: oneWriteAtATime(flushed(writes.changeTitle), BUSY_OUTCOME),
+
     // Reads the undo store alone and asks Hiroba nothing: not in the queue.
     pendingUndo: writes.pendingUndo,
 
-    undo: oneWriteAtATime(flushed(writes.undo), BUSY_OUTCOME),
+    // The queue wraps the verb for every kind at once; the port types its outcome by the kind asked.
+    undo: oneWriteAtATime(flushed(writes.undo), BUSY_OUTCOME) as HirobaSessionPort["undo"],
   });
 }
 

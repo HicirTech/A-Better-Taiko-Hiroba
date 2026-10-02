@@ -1,7 +1,8 @@
 /**
  * Hiroba's stand-in behind the fake CapacitorHttp: the mock's own costume editor
- * (scripts/mock-costume.ts) answers what the Android transport asks of the platform, so the real
- * transport is driven by the real mock. The platform's redirect following is modelled too: a call
+ * (scripts/mock-costume.ts) and profile (scripts/mock-profile.ts: the title page and the two posts
+ * that change the title and the name) answer what the Android transport asks of the platform, so the
+ * real transport is driven by the real mock. The platform's redirect following is modelled too: a call
  * that does not disable it follows up to five redirects with a GET and reports the last URL, as
  * HttpURLConnection does.
  */
@@ -13,6 +14,7 @@ import {
   INITIAL_COSTUME,
   type MockSession,
 } from "../scripts/mock-costume";
+import type { ProfileEditor } from "../scripts/mock-profile";
 import { type NativeHttpRequest, native, nativeAnswerOf } from "./capacitor-fakes";
 
 /** HttpURLConnection's own limit. */
@@ -36,9 +38,14 @@ export const START_SET = costumeSetOf(INITIAL_COSTUME);
 
 export interface StandInOptions {
   readonly editor: ReturnType<typeof createCostumeEditor>;
+  /** The title and the name; without one, those pages and posts are not there. */
+  readonly profile?: ProfileEditor;
   readonly session: MockSession;
-  /** My page as the stand-in answers it. */
-  readonly myPage: string;
+  /**
+   * My page as the stand-in answers it: a page as it is, or a page made of the token the read just
+   * issued, for one that carries the rename dialog.
+   */
+  readonly myPage: string | ((ticket: string) => string);
 }
 
 export interface StandIn {
@@ -55,7 +62,7 @@ const html = (body: string) =>
 const redirectTo = (location: string) => new Response(null, { status: 302, headers: { location } });
 
 /** Makes `native.httpAnswer` answer as the mock Hiroba would, for the calls the app makes next. */
-export function standIn({ editor, session, myPage }: StandInOptions): StandIn {
+export function standIn({ editor, profile, session, myPage }: StandInOptions): StandIn {
   let ended = false;
 
   const route = async (asked: NativeHttpRequest, url: URL): Promise<Response> => {
@@ -73,8 +80,7 @@ export function standIn({ editor, session, myPage }: StandInOptions): StandIn {
           return redirectTo("/login.php");
         }
         // My page carries forms with a token, so reading it issues a new one and voids the editor's.
-        editor.issueTicket(session);
-        return html(myPage);
+        return html(myPage instanceof Function ? myPage(editor.issueTicket(session)) : myPage);
       case "/mypage_kisekae.php":
         return signedIn ? html(editor.page(session)) : redirectTo("/login.php");
       case "/ajax/check_ip_kisekae.php":
@@ -95,6 +101,33 @@ export function standIn({ editor, session, myPage }: StandInOptions): StandIn {
           return editor.precheck();
         }
         return editor.save(session, form, () => {
+          ended = true;
+        });
+      }
+      case "/mypage_title_edit.php":
+        if (profile === undefined) {
+          return new Response("not found", { status: 404 });
+        }
+        return signedIn ? html(profile.titlePage(session)) : redirectTo("/login.php");
+      case "/ajax/check_ip_title.php":
+      case "/ajax/change_mydon_profile.php": {
+        if (asked.method !== "POST" || profile === undefined) {
+          return new Response("not found", { status: 404 });
+        }
+        const form = new URLSearchParams(String(asked.data));
+        profile.record(url.pathname, request, form, session);
+        if (request.headers.get("x-requested-with") !== "XMLHttpRequest") {
+          return html(ERROR_SHELL_BODY);
+        }
+        if (!signedIn) {
+          return redirectTo("/login.php");
+        }
+        if (url.pathname === "/ajax/check_ip_title.php") {
+          await profile.precheckLetThrough();
+          return profile.precheck();
+        }
+        await profile.saveLetThrough();
+        return profile.save(session, form, () => {
           ended = true;
         });
       }

@@ -1,8 +1,9 @@
 /**
- * The shells' shared write verbs against the mock's own costume editor (scripts/mock-costume.ts), in
- * process, once over each place a shell keeps its undo slots (a file in a temporary folder, as the
- * desktop does, and a stand-in for IndexedDB, as Android does): the gate, the undo record's life,
- * and the session dropped when Hiroba ends it.
+ * The shells' shared write verbs against the mock's own costume editor (scripts/mock-costume.ts) and
+ * profile (scripts/mock-profile.ts: the title page and its posts), in process, once over each place
+ * a shell keeps its undo slots (a file in a temporary folder, as the desktop does, and a stand-in
+ * for IndexedDB, as Android does): the cross-check, the undo record's life, and the session dropped
+ * when Hiroba ends it.
  */
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -12,6 +13,12 @@ import { ok, type Transport } from "@abth/core";
 
 import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
+import {
+  createProfileEditor,
+  escapeHtml,
+  INITIAL_PROFILE,
+  OWNED_TITLES,
+} from "../scripts/mock-profile";
 import { createSessionWrites, type UndoStore, type WritePlatform } from "../src/hiroba-session";
 import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
 import type { WriteKind } from "../src/session-port";
@@ -30,15 +37,19 @@ const OWNER = "000000000000";
 /** Another card, as one Bandai Namco ID can hold. */
 const OTHER = "111111111111";
 
-/** My page, cut down to what the parser needs. */
-const MY_PAGE = `<div id="mydon_area"><div>サンプルの称号</div><div><div>サンプルどん</div></div>
+/** My page, cut down to what the parser needs, wearing `title` and carrying the rename dialog. */
+const myPage = (
+  title: string,
+  dialog: string,
+) => `<div id="mydon_area"><div>${escapeHtml(title)}</div><div><div>サンプルどん</div></div>
 <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：${OWNER}</p></div></div>
 <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
 ${[8, 7, 6, 5, 4, 3, 2].map((rank) => `<div class="best_rank_score_${rank}">1</div>`).join("")}
 <div class="silver_crown_count">1</div><div class="gold_crown_count">1</div><div class="donderful_crown_count">1</div></div></div>
 <div class="favoriteSong"><h2 class="subtitleMypage">大好きな曲</h2><div class="mypageInfoArea">
 <ul id="songList"><li><div class="name"><span class="songName songNameFont">未設定</span></div></li></ul></div></div>
-<div class="favoriteSong"><h2 class="subtitleMypage">お気に入りの曲</h2><div class="mypageInfoArea"><ul id="songList"></ul></div></div>`;
+<div class="favoriteSong"><h2 class="subtitleMypage">お気に入りの曲</h2><div class="mypageInfoArea"><ul id="songList"></ul></div></div>
+${dialog}`;
 
 const START = START_SET;
 
@@ -111,6 +122,7 @@ interface SetUpOptions {
 /** The mock's editor behind a transport, and the shared writes over both. */
 function setUpOver(storeName: StoreName, options: SetUpOptions) {
   const editor = createCostumeEditor();
+  const profile = createProfileEditor({ issue: editor.issueTicket });
   const session: MockSession = { cardChosen: true };
   const hiroba = {
     ended: false,
@@ -143,23 +155,36 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
           hiroba.throwAfterSave = false;
           throw new Error("EBUSY: resource busy or locked");
         }
+        // My page and the title page carry forms, so each read of either issues the session a token.
         return answer(
           request.url,
-          html(path === "/mypage_kisekae.php" ? editor.page(session) : MY_PAGE),
+          html(
+            path === "/mypage_kisekae.php"
+              ? editor.page(session)
+              : path === "/mypage_title_edit.php"
+                ? profile.titlePage(session)
+                : myPage(profile.title(), profile.renameDialog(editor.issueTicket(session))),
+          ),
         );
       }
-      hiroba.saved ||= path === "/ajax/change_mydon.php";
+      hiroba.saved ||=
+        path === "/ajax/change_mydon.php" || path === "/ajax/change_mydon_profile.php";
       const form = new URLSearchParams();
       for (const [name, value] of request.form) {
         form.append(name, value);
       }
+      const endAllSessions = () => {
+        hiroba.ended = true;
+      };
       return answer(
         request.url,
         path === "/ajax/check_ip_kisekae.php"
           ? editor.precheck()
-          : editor.save(session, form, () => {
-              hiroba.ended = true;
-            }),
+          : path === "/ajax/check_ip_title.php"
+            ? profile.precheck()
+            : path === "/ajax/change_mydon_profile.php"
+              ? profile.save(session, form, endAllSessions)
+              : editor.save(session, form, endAllSessions),
       );
     },
   };
@@ -192,7 +217,17 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     hiroba.ended = false;
     signedIn = true;
   };
-  return { editor, hiroba, writes, saved, setElsewhere, signInAgain, keptText: kept.text, faults };
+  return {
+    editor,
+    profile,
+    hiroba,
+    writes,
+    saved,
+    setElsewhere,
+    signInAgain,
+    keptText: kept.text,
+    faults,
+  };
 }
 
 describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeName) => {
@@ -413,5 +448,259 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
     expect((await writes.openCostumeEditor()).ok).toBe(false);
     expect(hiroba.endedByApp).toBe(1);
     expect(await writes.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+  });
+});
+
+const START_TITLE = INITIAL_PROFILE.title;
+const owned = (id: number) => {
+  const found = OWNED_TITLES.find((one) => one.id === id);
+  if (found === undefined) {
+    throw new Error(`The mock owns no title ${id}`);
+  }
+  return found;
+};
+/** A title write from `from`, the title worn, to the owned title `id`, picked from the list. */
+const titleChange = (from: string, id: number) => ({
+  expected: { title: from },
+  target: { id, title: owned(id).label },
+});
+
+describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the title", (storeName) => {
+  const setUp = (options: SetUpOptions = {}) => setUpOver(storeName, options);
+
+  const FOUR = [
+    "GET /mypage_title_edit.php",
+    "POST /ajax/check_ip_title.php",
+    "POST /ajax/change_mydon_profile.php",
+    "GET /mypage_top.php",
+  ];
+  const SIX = ["GET /mypage_kisekae.php", ...FOUR, "GET /mypage_kisekae.php"];
+
+  test("reads the costume before and after a title write on either platform: title is on neither's list", async () => {
+    for (const platform of ["android", "desktop"] as const) {
+      const { hiroba, writes } = setUp({ platform });
+      expect((await writes.changeTitle(titleChange(START_TITLE, 102))).kind).toBe("applied");
+      expect(hiroba.log).toEqual(SIX);
+    }
+  });
+
+  test("sends the four requests alone once the kind is on the platform's list", async () => {
+    const { hiroba, writes } = setUp({ liveChecked: ["costume", "title"] });
+    expect((await writes.changeTitle(titleChange(START_TITLE, 102))).kind).toBe("applied");
+    expect(hiroba.log).toEqual(FOUR);
+  });
+
+  test("a change leaves an undo kept, and the undo puts the title back by its name in one save", async () => {
+    const { editor, profile, hiroba, writes, keptText } = setUp();
+    expect((await writes.changeTitle(titleChange(START_TITLE, 102))).kind).toBe("applied");
+    expect(profile.title()).toBe(owned(102).label);
+    expect(await writes.pendingUndo()).toEqual([
+      {
+        kind: "title",
+        at: NOON_JST().toISOString(),
+        before: { title: START_TITLE },
+        after: { title: owned(102).label },
+      },
+    ]);
+    const tickets = (await editor.hook("/__tickets", new URLSearchParams())?.json()) as string[];
+    const kept = keptText();
+    expect(tickets.some((ticket) => kept.includes(ticket))).toBe(false);
+
+    hiroba.log.length = 0;
+    expect((await writes.undo("title")).kind).toBe("applied");
+    expect(profile.title()).toBe(START_TITLE);
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(hiroba.log).toEqual(SIX);
+    const saves = hiroba.log.filter((request) => request === "POST /ajax/change_mydon_profile.php");
+    expect(saves).toHaveLength(1);
+  });
+
+  test("keeps the costume's undo and the title's apart, one of each at most", async () => {
+    const { writes } = setUp();
+    await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } });
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual(["costume", "title"]);
+
+    expect((await writes.undo("title")).kind).toBe("applied");
+    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual(["costume"]);
+    expect((await writes.undo("costume")).kind).toBe("applied");
+    expect(await writes.pendingUndo()).toEqual([]);
+  });
+
+  test("says the costume changed after a costume write alone: a title write, or its undo, never does", async () => {
+    const { hiroba, writes } = setUp();
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+    await writes.undo("title");
+    expect(hiroba.costumeChanges).toBe(0);
+    await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } });
+    expect(hiroba.costumeChanges).toBe(1);
+  });
+
+  type UnresolvedCase = [label: string, previous: string, field: string];
+  test.each<UnresolvedCase>([
+    ["a name two titles share", owned(105).label, "title.ambiguous"],
+    ["a title in no list, as one composed of parts is", "組み合わせの称号", "title.unresolved"],
+    ["no title", "", "title.unresolved"],
+  ])("an undo to %s is refused unsent, and stays offered", async (_label, previous, field) => {
+    const { profile, hiroba, writes } = setUp();
+    profile.setTitle(previous);
+    expect((await writes.changeTitle(titleChange(previous, 101))).kind).toBe("applied");
+
+    hiroba.log.length = 0;
+    expect(await writes.undo("title")).toEqual({ kind: "invalidTarget", field });
+    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
+    expect(profile.title()).toBe(owned(101).label);
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "title", before: { title: previous }, after: { title: owned(101).label } },
+    ]);
+  });
+
+  test("an undo after a title changed elsewhere sends nothing, and is no longer offered", async () => {
+    const { profile, writes } = setUp();
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+    profile.setTitle(owned(103).label);
+    expect((await writes.undo("title")).kind).toBe("changedSincePreview");
+    expect(profile.title()).toBe(owned(103).label);
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(await writes.undo("title")).toEqual({ kind: "nothingToUndo" });
+  });
+
+  test("a read of my page settles a title write whose end was not known, from the title it shows", async () => {
+    const { profile, writes, signInAgain } = setUp();
+    profile.hook("/__profile-expire-on-save", new URLSearchParams());
+    const outcome = await writes.changeTitle(titleChange(START_TITLE, 102));
+    expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
+    signInAgain();
+    expect(await writes.pendingUndo()).toEqual([]);
+
+    await writes.profileRead({ taikoNo: OWNER, title: owned(102).label });
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "title", before: { title: START_TITLE }, after: { title: owned(102).label } },
+    ]);
+  });
+
+  test("the title page settles it too, as the costume editor settles the costume's", async () => {
+    const { profile, writes, signInAgain } = setUp();
+    profile.hook("/__profile-expire-on-save", new URLSearchParams());
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+    signInAgain();
+    const opened = await writes.openTitleEditor();
+    expect(opened.ok && opened.value.state).toEqual({ title: owned(102).label });
+    expect(opened.ok && opened.value.options).toEqual(OWNED_TITLES);
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "title", after: { title: owned(102).label } },
+    ]);
+  });
+
+  test("a read of my page dates a title record the title has moved away from", async () => {
+    const { writes } = setUp();
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+    await writes.profileRead({ taikoNo: OWNER, title: "別の場所で変えた称号" });
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(await writes.undo("title")).toEqual({ kind: "nothingToUndo" });
+  });
+
+  test("a read of my page that finds nothing kept writes nothing, and leaves a current record as it is", async () => {
+    const { writes, keptText } = setUp();
+    const touched = () => {
+      try {
+        return keptText() !== "[]";
+      } catch {
+        return false;
+      }
+    };
+    await writes.profileRead({ taikoNo: OWNER, title: START_TITLE });
+    expect(touched()).toBe(false);
+
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+    await writes.profileRead({ taikoNo: OWNER, title: owned(102).label });
+    expect(await writes.pendingUndo()).toMatchObject([{ kind: "title" }]);
+  });
+
+  test("a read of my page that cannot look in the store reads on", async () => {
+    const { writes, faults } = setUp();
+    faults.load = true;
+    await expect(
+      writes.profileRead({ taikoNo: OWNER, title: START_TITLE }),
+    ).resolves.toBeUndefined();
+  });
+
+  test("keeps each player's title undo apart, whatever another card does in between", async () => {
+    let whose = OWNER;
+    const { writes } = setUp({ whose: () => whose });
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+
+    whose = OTHER;
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(await writes.undo("title")).toEqual({ kind: "nothingToUndo" });
+    await writes.profileRead({ taikoNo: OTHER, title: "別のカードの称号" });
+
+    whose = OWNER;
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "title", before: { title: START_TITLE } },
+    ]);
+  });
+
+  test("a title write that throws after its save ends interrupted, and the next read of the page settles it", async () => {
+    const { profile, hiroba, writes } = setUp();
+    hiroba.throwAfterSave = true;
+    expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
+      kind: "interrupted",
+    });
+    expect(profile.title()).toBe(owned(102).label);
+    expect(await writes.pendingUndo()).toEqual([]);
+
+    await writes.openTitleEditor();
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "title", before: { title: START_TITLE }, after: { title: owned(102).label } },
+    ]);
+  });
+
+  test("sends nothing when the undo cannot be kept, or nobody is known to keep it for", async () => {
+    const { hiroba, writes, faults } = setUp();
+    faults.load = true;
+    expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
+      kind: "undoNotSaved",
+    });
+    faults.load = false;
+    faults.savesAllowed = 0;
+    expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
+      kind: "undoNotSaved",
+    });
+    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
+
+    const nobody = setUp({ owner: null });
+    expect(await nobody.writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
+      kind: "undoNotSaved",
+    });
+    expect(nobody.hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
+  });
+
+  test("reads and writes nothing while signed out", async () => {
+    const { hiroba, writes } = setUp({ signedIn: false });
+    expect(await writes.openTitleEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+    expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
+      kind: "notSignedIn",
+    });
+    expect(await writes.undo("title")).toEqual({ kind: "notSignedIn" });
+    expect(hiroba.log).toEqual([]);
+  });
+
+  test("a title page that finds the session over drops the session", async () => {
+    const { hiroba, writes } = setUp();
+    hiroba.ended = true;
+    expect((await writes.openTitleEditor()).ok).toBe(false);
+    expect(hiroba.endedByApp).toBe(1);
+  });
+
+  test("a session Hiroba ends before the title is saved is dropped, with nothing left pending", async () => {
+    const { hiroba, writes } = setUp();
+    hiroba.ended = true;
+    expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toMatchObject({
+      kind: "sessionGone",
+      writeMayHaveHappened: false,
+    });
+    expect(hiroba.endedByApp).toBe(1);
+    expect(await writes.pendingUndo()).toEqual([]);
   });
 });

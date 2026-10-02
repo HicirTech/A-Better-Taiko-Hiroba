@@ -8,7 +8,7 @@ import { type CostumeSet, EMPTY_UNDO_SLOT, type UndoSlot } from "@abth/core";
 
 import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
-import { OTHER, PLAYER, pendingOf, SLOT } from "./undo-fixtures";
+import { OTHER, PLAYER, pendingOf, SLOT, TITLE_SLOT } from "./undo-fixtures";
 
 const KEY = `costume/${PLAYER}`;
 
@@ -40,6 +40,30 @@ describe("createIndexedDbUndoStore", () => {
 
     await store.save("costume", OTHER, EMPTY_UNDO_SLOT);
     expect(indexedDb.tables.get("slots")?.size).toBe(0);
+  });
+
+  test("keeps the costume's slot and the title's apart, each under its kind and player", async () => {
+    const indexedDb = createFakeIndexedDb();
+    const store = createIndexedDbUndoStore(indexedDb.factory);
+    await store.save("costume", PLAYER, SLOT);
+    await store.save("title", PLAYER, TITLE_SLOT);
+    expect(await store.load("costume", PLAYER)).toEqual(SLOT);
+    expect(await store.load("title", PLAYER)).toEqual(TITLE_SLOT);
+    expect([...(indexedDb.tables.get("slots") ?? []).keys()].sort()).toEqual([
+      `costume/${PLAYER}`,
+      `title/${PLAYER}`,
+    ]);
+
+    await store.save("title", PLAYER, EMPTY_UNDO_SLOT);
+    expect(await store.load("costume", PLAYER)).toEqual(SLOT);
+    expect(await store.load("title", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
+  });
+
+  test("reads a slot kept under one kind as none under another whose sets it does not hold", async () => {
+    const indexedDb = createFakeIndexedDb();
+    indexedDb.tables.set("slots", new Map([[`title/${PLAYER}`, { v: 1, slot: SLOT }]]));
+    const store = createIndexedDbUndoStore(indexedDb.factory);
+    expect(await store.load("title", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
   });
 
   test("writes each slot in a transaction on the slots alone, asked to be durable", async () => {

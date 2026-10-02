@@ -1,7 +1,15 @@
-import type { CostumeSet, HirobaSessionPort, PictureWant, WriteKind, WriteSets } from "./types";
+import type {
+  CostumeSet,
+  HirobaSessionPort,
+  PictureWant,
+  TitleState,
+  TitleTarget,
+  WriteKind,
+  WriteSets,
+} from "./types";
 
-/** Every kind of write the app can send, whether or not a run may send it. */
-export const WRITE_KINDS: readonly WriteKind[] = ["costume"];
+/** Every kind of write the app can send. */
+export const WRITE_KINDS: readonly WriteKind[] = ["costume", "title"];
 
 /** Whether one verb's arguments, as they arrived from the interface, are ones it takes. */
 export type ArgumentCheck = (args: readonly unknown[]) => boolean;
@@ -46,13 +54,42 @@ export function isCostumeSet(value: unknown): value is CostumeSet {
   );
 }
 
+/** The longest title the interface may send or a slot keep: far above the longest seen. */
+const MAX_TITLE_LENGTH = 200;
+/** Far above any id the title page's list has given (3 to 1672), and still a bound. */
+const MAX_TITLE_ID = 9999;
+
+/** Exactly `{ title }`, a string of at most 200 characters: no title is the empty string. */
+export function isTitleState(value: unknown): value is TitleState {
+  return (
+    hasExactly(value, ["title"]) &&
+    typeof value.title === "string" &&
+    value.title.length <= MAX_TITLE_LENGTH
+  );
+}
+
+/**
+ * Exactly `{ id, title }`: the id the title page's list gave, a whole number from 1 to 9999, and
+ * the name it gave that id, 1 to 200 characters. The interface picks a title by its id; a title by
+ * its name alone (`id` null) is how the platform puts one back, and never crosses the port.
+ */
+export function isTitleTarget(value: unknown): value is TitleTarget {
+  return (
+    hasExactly(value, ["id", "title"]) &&
+    isWhole(value.id, 1, MAX_TITLE_ID) &&
+    typeof value.title === "string" &&
+    value.title.length >= 1 &&
+    value.title.length <= MAX_TITLE_LENGTH
+  );
+}
+
 /**
  * How each kind's set is recognised when an undo slot is read back from storage: the check the
  * interface's arguments go through, so a slot kept is held to the shape a write is.
  */
 export const UNDO_SET_GUARDS: {
   readonly [K in WriteKind]: (value: unknown) => value is WriteSets[K];
-} = { costume: isCostumeSet };
+} = { costume: isCostumeSet, title: isTitleState };
 
 /** A whole number from `least` to `most`. */
 export const isWhole = (value: unknown, least: number, most: number): value is number =>
@@ -94,6 +131,13 @@ const costumeChange: ArgumentCheck = (args) =>
  */
 const costumeSet: ArgumentCheck = (args) => args.length === 1 && isCostumeSet(args[0]);
 
+/** changeTitle: one argument, the title worn as read and the title wanted, by its id and name. */
+const titleChange: ArgumentCheck = (args) =>
+  args.length === 1 &&
+  hasExactly(args[0], ["expected", "target"]) &&
+  isTitleState(args[0].expected) &&
+  isTitleTarget(args[0].target);
+
 /** undo: one argument, a kind of write the app knows. */
 const writeKind: ArgumentCheck = (args) =>
   args.length === 1 && WRITE_KINDS.includes(args[0] as WriteKind);
@@ -111,9 +155,11 @@ export const PORT_ARGUMENTS = {
   readProfile: none,
   signOut: none,
   openCostumeEditor: none,
+  openTitleEditor: none,
   previewCostume: costumeSet,
   readPicture: pictureWant,
   changeCostume: costumeChange,
+  changeTitle: titleChange,
   pendingUndo: none,
   undo: writeKind,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

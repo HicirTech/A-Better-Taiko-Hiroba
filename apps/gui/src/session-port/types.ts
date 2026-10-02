@@ -4,11 +4,14 @@ import type {
   MedalProgress,
   Result,
   ScoreRank,
+  TitleEditorView,
+  TitleState,
+  TitleTarget,
   WriteOutcome,
 } from "@abth/core";
 
-/** The core's own shapes for the costume, which cross the port unchanged. */
-export type { CostumeEditorView, CostumeSet };
+/** The core's own shapes for the costume and the title, which cross the port unchanged. */
+export type { CostumeEditorView, CostumeSet, TitleEditorView, TitleState, TitleTarget };
 
 export type SignInOutcome =
   | { readonly kind: "signedIn" }
@@ -158,15 +161,26 @@ export interface PictureFailure {
  */
 export interface WriteSets {
   readonly costume: CostumeSet;
+  readonly title: TitleState;
 }
 
-/** The kinds of write the app knows how to send. One so far: the costume, きせかえ. */
+/** The kinds of write the app knows how to send: the costume, きせかえ, and the title, 称号. */
 export type WriteKind = keyof WriteSets;
 
 /** A costume write as the interface asks for it: the set it was made against, and the set wanted. */
 export interface CostumeChange {
   readonly expected: CostumeSet;
   readonly target: CostumeSet;
+}
+
+/**
+ * A title write as the interface asks for it: the title worn as the title page showed it, and the
+ * title wanted, by the id and the name the page's list gave it. The platform's undo asks for a
+ * title by its name alone.
+ */
+export interface TitleChange {
+  readonly expected: TitleState;
+  readonly target: TitleTarget;
 }
 
 /**
@@ -181,25 +195,28 @@ export interface CostumeChange {
  * `busy` is a write asked for while another was queued or running: it sent nothing, and is never
  * queued to run after the other has ended.
  */
-export type WriteOutcomeView =
-  | WriteOutcome<CostumeSet>
+export type WriteOutcomeView<S = CostumeSet> =
+  | WriteOutcome<S>
   | { readonly kind: "notSignedIn" }
   | { readonly kind: "nothingToUndo" }
   | { readonly kind: "interrupted" }
   | { readonly kind: "busy" };
 
 /**
- * The last write of one kind, as an undo can be offered for it: the set before it, which the undo
+ * The last write of kind `K`, as an undo can be offered for it: the set before it, which the undo
  * writes back, and the set it was read back as. Offered only while that set is still what this
  * device last saw, and only for the player signed in now.
  */
-export interface UndoSummary {
-  readonly kind: WriteKind;
+export interface UndoSummaryOf<K extends WriteKind> {
+  readonly kind: K;
   /** ISO 8601, when the write was started. */
   readonly at: string;
-  readonly before: CostumeSet;
-  readonly after: CostumeSet;
+  readonly before: WriteSets[K];
+  readonly after: WriteSets[K];
 }
+
+/** The last write of any kind, one of them: its `kind` says whose sets `before` and `after` are. */
+export type UndoSummary = { readonly [K in WriteKind]: UndoSummaryOf<K> }[WriteKind];
 
 /**
  * Everything the interface can ask of the platform, and everything that crosses from the platform
@@ -221,6 +238,11 @@ export interface HirobaSessionPort {
   signOut(): Promise<void>;
   /** The costume editor: one GET. Its form token stays with the platform. */
   openCostumeEditor(): Promise<Result<CostumeEditorView, ReadFailure>>;
+  /**
+   * The title page: one GET, for the title worn and the titles the account owns. Its form token
+   * stays with the platform.
+   */
+  openTitleEditor(): Promise<Result<TitleEditorView, ReadFailure>>;
   /**
    * Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried,
    * answered as a `data:image/png` URL. A read that changes nothing, so it is allowed whenever the
@@ -248,12 +270,20 @@ export interface HirobaSessionPort {
    * `busy`, sending nothing, while another write is queued or running.
    */
   changeCostume(change: CostumeChange): Promise<WriteOutcomeView>;
+  /**
+   * One title write, the way every write goes: the title page, the pre-check, one save and my page
+   * read back for the title, four requests; six where title writes have not been made for real
+   * from this platform yet, with the costume page read before and after (`LIVE_CHECKED_WRITES`).
+   * Never retried. `busy`, sending nothing, while another write is queued or running.
+   */
+  changeTitle(change: TitleChange): Promise<WriteOutcomeView<TitleState>>;
   /** The undo this device can offer, one per kind at most. Asks Hiroba nothing. */
   pendingUndo(): Promise<readonly UndoSummary[]>;
   /**
    * Undoes the last write of `kind`: a write like any other, from the set it was read back as to
    * the set before it, with a fresh token, the pre-check and a read-back. A set changed anywhere
-   * since stops it (`changedSincePreview`), and the undo is then no longer offered.
+   * since stops it (`changedSincePreview`), and the undo is then no longer offered. A title is put
+   * back by the name it had, and only when that name is exactly one title of today's list.
    */
-  undo(kind: WriteKind): Promise<WriteOutcomeView>;
+  undo<K extends WriteKind>(kind: K): Promise<WriteOutcomeView<WriteSets[K]>>;
 }

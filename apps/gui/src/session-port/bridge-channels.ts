@@ -6,9 +6,11 @@ export const BRIDGE_CHANNELS = {
   readProfile: "abth:read-profile",
   signOut: "abth:sign-out",
   openCostumeEditor: "abth:open-costume-editor",
+  openTitleEditor: "abth:open-title-editor",
   previewCostume: "abth:preview-costume",
   readPicture: "abth:read-picture",
   changeCostume: "abth:change-costume",
+  changeTitle: "abth:change-title",
   pendingUndo: "abth:pending-undo",
   undo: "abth:undo",
 } as const;
