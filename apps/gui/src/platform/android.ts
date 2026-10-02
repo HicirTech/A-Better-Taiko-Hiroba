@@ -231,8 +231,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await forget();
     },
 
-    // Writes are the desktop's alone for now (the user's call, 2026-09-27): Android enables none,
-    // sends none, and its transport refuses a post outright.
+    // Writes are the desktop's alone for now (the user's call, 2026-09-27): Android enables none
+    // and sends none.
     async enabledWrites() {
       return [];
     },

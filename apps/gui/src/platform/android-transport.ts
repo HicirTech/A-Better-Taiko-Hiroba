@@ -1,5 +1,12 @@
-import { err, ok, type Transport, type TransportFailure } from "@abth/core";
-import { CapacitorHttp } from "@capacitor/core";
+import { err, ok, type Transport, type TransportFailure, type TransportResponse } from "@abth/core";
+import { CapacitorHttp, type HttpOptions, type HttpResponse } from "@capacitor/core";
+
+import {
+  encodeForm,
+  FORM_CONTENT_TYPE,
+  POST_FOLLOWED_AS_GET,
+  resolveRedirect,
+} from "../hiroba-session";
 
 const TIMEOUT_MS = 20_000;
 /**
@@ -17,18 +24,21 @@ const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent", "conte
  * The body is asked for as `arraybuffer`, so an image arrives byte for byte and a page arrives as
  * the bytes Hiroba sent, for decoding as UTF-8. See `bodyBytes` for what Capacitor hands back.
  *
- * It reads and never posts. Writes are the desktop's alone for now (the user's call, 2026-09-27),
- * and a post here would need what this does not do: Capacitor drops a form body sent without a
- * Content-Type, and follows a post's redirects natively, repeating a 307 or 308. The Android port
- * enables no write, so a post that reaches this is a programming error, and throws.
+ * A post is one native call, sent once, with its form as one string already encoded in the order
+ * given and a Content-Type of this transport's own: Capacitor writes no body at all to a request
+ * without one, and would encode an object's keys itself, in its own order. Redirects after a post
+ * are not the platform's to follow: it is asked to hand back the first answer, and a 301, 302 or
+ * 303 is then followed here with one GET that has no body, as a browser follows one. That GET is
+ * an ordinary read, so the platform follows its redirects itself and the final URL is the one
+ * reported. A 307 or 308, which asks for the post again, comes back as it is, with the post's own
+ * URL, as the desktop's does.
  */
 export function createAndroidTransport(userAgent: string = navigator.userAgent): Transport {
   return {
     async send(request, signal) {
-      if (request.method !== "GET") {
-        throw new Error("Android's transport does not post forms");
-      }
       const failure = (kind: TransportFailure["kind"]) => err({ kind, url: request.url });
+      const answered = (answer: HttpResponse | "cancelled") =>
+        answer === "cancelled" ? failure("cancelled") : ok(respond(answer));
       if (signal?.aborted) {
         return failure("cancelled");
       }
@@ -38,39 +48,71 @@ export function createAndroidTransport(userAgent: string = navigator.userAgent):
           headers[name] = value;
         }
       }
+      const get = (url: string) => nativeCall({ url, method: "GET", headers }, signal);
       try {
-        // The native call cannot be aborted; a cancelled one is left to finish and ignored.
-        const answer = await Promise.race([
-          CapacitorHttp.request({
+        if (request.method === "GET") {
+          return answered(await get(request.url));
+        }
+        const posted = await nativeCall(
+          {
             url: request.url,
-            method: request.method,
-            headers,
-            responseType: "arraybuffer",
-            connectTimeout: TIMEOUT_MS,
-            readTimeout: TIMEOUT_MS,
-          }),
-          abortion(signal),
-        ]);
-        if (answer === "cancelled") {
+            method: "POST",
+            headers: { ...headers, "Content-Type": FORM_CONTENT_TYPE },
+            data: encodeForm(request.form),
+            disableRedirects: true,
+          },
+          signal,
+        );
+        if (posted === "cancelled") {
           return failure("cancelled");
         }
-        const responseHeaders: Record<string, string> = {};
-        for (const [name, value] of Object.entries(answer.headers)) {
-          const lower = name.toLowerCase();
-          if (lower !== "set-cookie") {
-            responseHeaders[lower] = value;
-          }
+        const first = respond(posted);
+        const location = first.headers.location;
+        if (!POST_FOLLOWED_AS_GET.has(first.status) || location === undefined) {
+          return ok(first);
         }
-        return ok({
-          status: answer.status,
-          url: answer.url,
-          headers: responseHeaders,
-          body: bodyBytes(answer.data, answer.status, responseHeaders["content-type"]),
-        });
+        const next = resolveRedirect(location, request.url);
+        return next === null ? failure("unreachable") : answered(await get(next));
       } catch (error) {
         return failure(isTimeout(error) ? "timedOut" : "unreachable");
       }
     },
+  };
+}
+
+/**
+ * One native call: Capacitor opens one connection for it and adds no retry of its own. It cannot be
+ * aborted, though: a cancelled call is left to finish and ignored.
+ */
+function nativeCall(
+  options: HttpOptions,
+  signal: AbortSignal | undefined,
+): Promise<HttpResponse | "cancelled"> {
+  return Promise.race([
+    CapacitorHttp.request({
+      responseType: "arraybuffer",
+      connectTimeout: TIMEOUT_MS,
+      readTimeout: TIMEOUT_MS,
+      ...options,
+    }),
+    abortion(signal),
+  ]);
+}
+
+/** What the core reads of an answer: header names lower-cased, and no `set-cookie` at all. */
+function respond(answer: HttpResponse): TransportResponse {
+  const headers: Record<string, string> = {};
+  for (const [name, value] of Object.entries(answer.headers)) {
+    const lower = name.toLowerCase();
+    if (lower !== "set-cookie") {
+      headers[lower] = value;
+    }
+  }
+  return {
+    status: answer.status,
+    url: answer.url,
+    headers,
+    body: bodyBytes(answer.data, answer.status, headers["content-type"]),
   };
 }
 
