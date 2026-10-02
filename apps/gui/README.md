@@ -76,7 +76,6 @@ Chinese to Hiroba's own words.
 - **JDK 21**, with `JAVA_HOME` set, and the **Android SDK** with platform 36 and build-tools 36,
   with `ANDROID_HOME` set. Only the Android scripts need them.
 - **adb** on the `PATH`, for a device.
-- **`ABTH_RELEASE_KEYS`**, only for a signed release APK: see [The signing keys](#the-signing-keys).
 
 Run `bun install` at the repository root. Bun does not run Electron's install script, so fetch the
 Electron binary once:
@@ -380,10 +379,11 @@ the picture host never gets it, though a cookie the picture host set itself woul
 | `bun run android:apk` | Web build, `cap sync`, debug APK. |
 | `bun run android:run -- <adb serial>` | The same, then installs and starts it on that device. |
 | `bun run android:live -- <adb serial> <LAN IP>` | Vite's dev server on this computer, and the debug app loading it with live reload. It runs only against the stand-in, and refuses to start unless both `VITE_ABTH_DEV_HIROBA_ORIGIN` and `VITE_ABTH_DEV_IDP_HOST` are set; `VITE_ABTH_DEV_IMG_ORIGIN`, the stand-in's picture host, is optional. |
-| `bun run android:keystore` | Makes a release key in [the keys folder](#the-signing-keys). It refuses if one is there. |
-| `bun run android:release` | Web build, `cap sync`, signed release APK. It refuses without a release key. |
-| `bun run android:release-unsigned` | The same with no key: an unsigned release APK, which no device installs, for the release workflow's dry runs. It refuses while a release key is present. |
-| `bun run android:install-release -- <adb serial>` | Installs the signed release APK on that device and starts it. |
+| `bun run android:release` | Web build, `cap sync`, release APK. It is signed when the four `RELEASE_*` variables of [the signing secrets](#setting-up-the-signing-secrets) are set, and unsigned otherwise, which no device installs. |
+
+The debug APK is signed with Gradle's own debug key, which each computer makes for itself. Android
+updates an installed app only from an APK with the same key, so uninstall it before installing a
+debug APK built on another computer.
 
 To run the debug app against the stand-in on a device, start the stand-in on this computer's LAN
 address first:
@@ -401,24 +401,6 @@ After a live session, run `bunx cap sync android` so the app loads its own bundl
 On Windows, the `NoDefaultCurrentDirectoryInExePath` setting stops `cmd.exe` finding `gradlew` in
 the current folder, which is how Capacitor starts Gradle. `scripts/android.ts` removes it from every
 command it starts, so use the scripts rather than a bare `bunx cap run`.
-
-### The signing keys
-
-The signing keys are kept outside the clone, in the folder the environment variable
-`ABTH_RELEASE_KEYS` names (an absolute path). The folder holds:
-
-| File | What it is |
-|---|---|
-| `keystore.properties` | The release key's `storeFile` (relative to the folder), `storePassword`, `keyAlias` and `keyPassword`. |
-| `abth-local.jks` | The release key's store, as `android:keystore` makes it. |
-| `debug.keystore` | Optional: a debug key shared between machines, with Android's standard debug credentials. |
-
-Release builds are signed with the key `keystore.properties` describes; without it Gradle leaves
-them unsigned and `android:release` stops. Debug builds are signed with `debug.keystore` when the
-folder has one, so debug APKs built on different machines update one another; otherwise with the
-machine's own debug key. Back the folder up: a release signed with another key cannot update an
-installed one. The release workflow signs with the same key, from repository secrets: see [Setting
-up the signing secrets](#setting-up-the-signing-secrets).
 
 ### Costume writes on Android
 
@@ -441,73 +423,55 @@ push has run it already, and the skipped copy is named "(run by the push)", so a
 called **Checks** can only be the push's own run. The workflow has two jobs side by side: **Checks**
 (format, lint, typecheck, the tests and the GUI bundle) and **Android debug APK**
 (`bun run android:apk`, on the runner's Android SDK, with JDK 21 and Node 22).
-`.github/workflows/release.yml` builds and publishes a release.
+`.github/workflows/release.yml` builds and publishes a release; [Making a
+release](#making-a-release) says what is done by hand.
 
 ### The version
 
 `version` in `apps/gui/package.json` is the one place a version is written. It is
-`MAJOR.MINOR.PATCH`, the first release is 0.1.0, and the tag is `v` and the version: `v0.1.0`.
-electron-builder names the Windows files from it, and `android/app/build.gradle` reads it too:
-`versionName` is the same text, and `versionCode` is `major * 10000 + minor * 100 + patch`, so 0.1.0
-is 100 and 1.2.3 is 10203. Android updates an app only to a higher code, so minor and patch stop at
-99 (one more would spill into the next place, and a later version could get a lower or an equal
-code), and the code stops at Android's own limit, 2100000000. A version has no `v`, no pre-release
-part and no build part. The Gradle script, `scripts/release.ts` and the tests in
-`test/release-version.test.ts` all hold to this, and the tests read the Gradle script, so the two
-cannot drift unseen.
+`MAJOR.MINOR.PATCH`, and the tag is `v` and the version: `v0.1.0`. electron-builder names the
+Windows files from it, and `android/app/build.gradle` reads it too: `versionName` is the same text,
+and `versionCode` is `major * 10000 + minor * 100 + patch`, so 0.1.0 is 100 and 1.2.3 is 10203.
+Android updates an app only to a higher code, so minor and patch stop at 99 (one more would spill
+into the next place, and a later version could get a lower or an equal code), and the code stops at
+Android's own limit, 2100000000. A version has no `v`, no pre-release part and no build part. The
+Gradle script refuses a version that breaks these rules, so the Android build fails on one.
 
 ### Making a release
 
-On `main`, with a clean tree, from the repository root:
+A release takes two steps by hand, and the workflow below does the rest.
 
-```bash
-bun run release <x.y.z | patch | minor | major> [--push]
-```
+1. Raise the version in a pull request. In a branch, set `version` in `apps/gui/package.json` and
+   run `bun install`, so that `bun.lock`, which states each workspace's version too, follows. Commit
+   both as `chore(release): bump to <version>`, open a pull request, and merge it.
+2. Tag the merge commit and push the tag. On an up-to-date `main`:
 
-`patch`, `minor` and `major` raise that number of the current version and set the ones after it
-to 0; `x.y.z` names the version outright. Before anything changes the script checks that the
-working tree is clean (untracked files count), that the branch is `main`, that `main` is the commit
-`origin/main` has (after a fetch), that the version is valid and not lower than the current one, and
-that the tag `v<version>` is on neither this clone nor `origin`. Then:
+   ```bash
+   git switch main && git pull
+   git tag -a v<version> -m "A Better Taiko Hiroba <version>"
+   git push origin v<version>
+   ```
 
-- A version **higher** than the current one is written into `apps/gui/package.json` (that line, and
-  no other byte) and into `bun.lock` (`bun install --lockfile-only`, since the lockfile states each
-  workspace's version too), and committed as `chore(release): <version>`. The script stops before
-  committing if that would change anything beyond those two lines.
-- A version **equal** to the current one only tags. That is how a version already in `package.json`
-  is released, the first 0.1.0 included.
-- Either way it makes an annotated tag, `v<version>`.
-- With `--push` it pushes `main` if there was a commit, then the tag. Without it nothing leaves the
-  clone: the script prints the `git push` commands, and the ones that undo the commit and the tag.
+   `git tag` tags the commit that is checked out, which is the merge commit while nothing has landed
+   after it; give a commit's hash after the message to tag another.
 
-The tag is what starts the release: the workflow below builds and publishes on a push of it.
-
-**`main` is protected on GitHub**: a change reaches it through a pull request that passes
-**Checks**, so a direct push of the release commit is refused. When the script's push of `main` is
-refused, it stops before the tag, says so, and prints the commands that undo its commit and its tag.
-Raise the version through a pull request instead:
-
-1. In a branch, set `version` in `apps/gui/package.json`, run `bun install` so that `bun.lock`
-   follows, commit both as `chore(release): <version>`, and open a pull request. Merge it.
-2. On an up-to-date `main` (`git switch main && git pull`), run `bun run release <version> --push`.
-   The version now equals `package.json`'s, so the script only tags, and pushes the tag, which a
-   branch protection rule does not cover.
+The tag starts the release. If it is not `v` plus the version that `apps/gui/package.json` states at
+the tagged commit, the workflow stops the run before anything is built.
 
 ### What the workflow builds
 
 `.github/workflows/release.yml` runs when a tag `v*.*.*` is pushed: that is a release. It also runs
 as a **dry run**, which builds the same files, keeps them and creates no release: when started by
 hand (**Run workflow** in the Actions tab), and on a push to any branch that touches what a release
-is made of, which is the workflow itself, `scripts/release.ts` and `scripts/release-version.ts`,
-`apps/gui/package.json` (which also holds electron-builder's configuration, under `build`) and
-`apps/gui/android/**`.
+is made of, which is the workflow itself, `apps/gui/package.json` (which also holds
+electron-builder's configuration, under `build`) and `apps/gui/android/**`.
 
 A **Version** job reads the version first, and on a tag run stops the run unless the tag is `v` and
 that version. Then two jobs run side by side, neither waiting on the other:
 
 | Job | Runs on | Makes |
 |---|---|---|
-| **Android release APK** | ubuntu-latest, JDK 21 | `ABTH-<version>.apk`, signed with the release key. |
+| **Android release APK** | ubuntu-latest, JDK 21 | `ABTH-<version>.apk`, signed with the release key from [the signing secrets](#setting-up-the-signing-secrets). |
 | **Windows installer and zip** | windows-latest | `ABTH-<version>-setup.exe`, the NSIS installer, and `ABTH-<version>-portable.zip`, the build that needs no install ([Desktop](#desktop) says how to run it). Both are x64 and not code-signed. |
 
 Each uploads its files as an artifact of the run (**android** and **windows**, kept for 14 days).
@@ -528,23 +492,35 @@ at once, and names the missing ones.
 
 ### Setting up the signing secrets
 
-The workflow signs the APK with [the release key](#the-signing-keys), which it gets from four
-repository secrets: `ANDROID_KEYSTORE_BASE64` (the `.jks`, in base64), `ANDROID_KEYSTORE_PASSWORD`,
-`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. At run time it writes them into a keys folder in the
-runner's temporary directory, points the build at it with `ABTH_RELEASE_KEYS`, and prints none of
-them. Set them once from inside the clone, in a shell with `base64` and `sed` and the GitHub CLI
-signed in. Each value goes to `gh` through a pipe, so nothing is printed or kept in the shell's
-history:
+The workflow signs the APK with a release key kept in four repository secrets:
+
+| Secret | Holds |
+|---|---|
+| `RELEASE_KEYSTORE_B64` | The keystore file (`.jks`), in base64. |
+| `RELEASE_KEYSTORE_PASSWORD` | The keystore's password. |
+| `RELEASE_KEY_ALIAS` | The alias of the key in the keystore. |
+| `RELEASE_KEY_PASSWORD` | The key's password. |
+
+At run time the workflow decodes the keystore into the runner's temporary directory and gives the
+build the keystore's path and password and the key's alias and password, as
+`RELEASE_KEYSTORE_FILE`, `RELEASE_KEYSTORE_PASSWORD`, `RELEASE_KEY_ALIAS` and
+`RELEASE_KEY_PASSWORD`. It prints none of them. `android/app/build.gradle` reads them, and signs the
+release build exactly when `RELEASE_KEYSTORE_FILE` is set.
+
+Set the secrets once from inside the clone, in a shell with `base64` and the GitHub CLI signed in.
+`gh secret set` takes a value from a pipe or asks for it, so nothing is printed or kept in the
+shell's history:
 
 ```bash
-base64 -w0 "$ABTH_RELEASE_KEYS/abth-local.jks" | gh secret set ANDROID_KEYSTORE_BASE64
-sed -n 's/^storePassword=//p' "$ABTH_RELEASE_KEYS/keystore.properties" | gh secret set ANDROID_KEYSTORE_PASSWORD
-sed -n 's/^keyAlias=//p' "$ABTH_RELEASE_KEYS/keystore.properties" | gh secret set ANDROID_KEY_ALIAS
-sed -n 's/^keyPassword=//p' "$ABTH_RELEASE_KEYS/keystore.properties" | gh secret set ANDROID_KEY_PASSWORD
+base64 -w0 <your keystore> | gh secret set RELEASE_KEYSTORE_B64
+gh secret set RELEASE_KEYSTORE_PASSWORD
+gh secret set RELEASE_KEY_ALIAS
+gh secret set RELEASE_KEY_PASSWORD
 gh secret list
 ```
 
-`gh secret list` shows the four names, never the values.
+`gh secret list` shows the four names, never the values, and no secret can be read back, so keep the
+keystore backed up elsewhere: an app signed with another key cannot update the installed one.
 
 ## Where the session lives
 
@@ -600,9 +576,8 @@ them by hand, delete the `pictures` folder, or clear the Android app's data.
 Debug builds let any computer paired with the device over adb open the app's WebViews in DevTools
 and read its files with `run-as`. So:
 
-- Sign in with a real account on the signed release build (`android:release` and
-  `android:install-release`, with the key in [the keys folder](#the-signing-keys)), or on the debug
-  APK. On Windows, use the installer's app or the portable zip's.
+- Sign in with a real account on the signed release APK that a published release carries, or on the
+  debug APK. On Windows, use the installer's app or the portable zip's.
 - Turn wireless debugging off before a real sign-in on a debug build, and never run `run-as` or
   DevTools against the app while a real session exists on the device.
 - Uninstall the debug build, or clear its data, once you are done with it, after any undo.
