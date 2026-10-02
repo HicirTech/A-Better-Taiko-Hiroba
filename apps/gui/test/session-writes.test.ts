@@ -16,8 +16,10 @@ import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import {
   createProfileEditor,
   escapeHtml,
+  FILTER_MESSAGE,
   INITIAL_PROFILE,
   OWNED_TITLES,
+  REFUSED_NAME,
 } from "../scripts/mock-profile";
 import { createSessionWrites, type UndoStore, type WritePlatform } from "../src/hiroba-session";
 import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
@@ -40,8 +42,9 @@ const OTHER = "111111111111";
 /** My page, cut down to what the parser needs, wearing `title` and carrying the rename dialog. */
 const myPage = (
   title: string,
+  nickname: string,
   dialog: string,
-) => `<div id="mydon_area"><div>${escapeHtml(title)}</div><div><div>サンプルどん</div></div>
+) => `<div id="mydon_area"><div>${escapeHtml(title)}</div><div><div>${escapeHtml(nickname)}</div></div>
 <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：${OWNER}</p></div></div>
 <div class="total_score"><img src="image/sp/640/total_score_image_5.png">
 ${[8, 7, 6, 5, 4, 3, 2].map((rank) => `<div class="best_rank_score_${rank}">1</div>`).join("")}
@@ -163,7 +166,11 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
               ? editor.page(session)
               : path === "/mypage_title_edit.php"
                 ? profile.titlePage(session)
-                : myPage(profile.title(), profile.renameDialog(editor.issueTicket(session))),
+                : myPage(
+                    profile.title(),
+                    profile.nickname(),
+                    profile.renameScript() + profile.renameDialog(editor.issueTicket(session)),
+                  ),
           ),
         );
       }
@@ -452,6 +459,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
 });
 
 const START_TITLE = INITIAL_PROFILE.title;
+const START_NAME = INITIAL_PROFILE.nickname;
 const owned = (id: number) => {
   const found = OWNED_TITLES.find((one) => one.id === id);
   if (found === undefined) {
@@ -573,7 +581,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
     signInAgain();
     expect(await writes.pendingUndo()).toEqual([]);
 
-    await writes.profileRead({ taikoNo: OWNER, title: owned(102).label });
+    await writes.profileRead({ taikoNo: OWNER, nickname: START_NAME, title: owned(102).label });
     expect(await writes.pendingUndo()).toMatchObject([
       { kind: "title", before: { title: START_TITLE }, after: { title: owned(102).label } },
     ]);
@@ -595,7 +603,11 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
   test("a read of my page dates a title record the title has moved away from", async () => {
     const { writes } = setUp();
     await writes.changeTitle(titleChange(START_TITLE, 102));
-    await writes.profileRead({ taikoNo: OWNER, title: "別の場所で変えた称号" });
+    await writes.profileRead({
+      taikoNo: OWNER,
+      nickname: START_NAME,
+      title: "別の場所で変えた称号",
+    });
     expect(await writes.pendingUndo()).toEqual([]);
     expect(await writes.undo("title")).toEqual({ kind: "nothingToUndo" });
   });
@@ -609,11 +621,11 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
         return false;
       }
     };
-    await writes.profileRead({ taikoNo: OWNER, title: START_TITLE });
+    await writes.profileRead({ taikoNo: OWNER, nickname: START_NAME, title: START_TITLE });
     expect(touched()).toBe(false);
 
     await writes.changeTitle(titleChange(START_TITLE, 102));
-    await writes.profileRead({ taikoNo: OWNER, title: owned(102).label });
+    await writes.profileRead({ taikoNo: OWNER, nickname: START_NAME, title: owned(102).label });
     expect(await writes.pendingUndo()).toMatchObject([{ kind: "title" }]);
   });
 
@@ -621,7 +633,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
     const { writes, faults } = setUp();
     faults.load = true;
     await expect(
-      writes.profileRead({ taikoNo: OWNER, title: START_TITLE }),
+      writes.profileRead({ taikoNo: OWNER, nickname: START_NAME, title: START_TITLE }),
     ).resolves.toBeUndefined();
   });
 
@@ -633,7 +645,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
     whose = OTHER;
     expect(await writes.pendingUndo()).toEqual([]);
     expect(await writes.undo("title")).toEqual({ kind: "nothingToUndo" });
-    await writes.profileRead({ taikoNo: OTHER, title: "別のカードの称号" });
+    await writes.profileRead({ taikoNo: OTHER, nickname: START_NAME, title: "別のカードの称号" });
 
     whose = OWNER;
     expect(await writes.pendingUndo()).toMatchObject([
@@ -697,6 +709,238 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
     const { hiroba, writes } = setUp();
     hiroba.ended = true;
     expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toMatchObject({
+      kind: "sessionGone",
+      writeMayHaveHappened: false,
+    });
+    expect(hiroba.endedByApp).toBe(1);
+    expect(await writes.pendingUndo()).toEqual([]);
+  });
+});
+
+const NEW_NAME = "あたらしい";
+/** A rename from `from`, the name my page showed, to `name`. */
+const renameTo = (name: string, from = START_NAME) => ({
+  expected: { nickname: from },
+  target: { nickname: name },
+});
+
+describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name", (storeName) => {
+  const setUp = (options: SetUpOptions = {}) => setUpOver(storeName, options);
+
+  /** A rename has no pre-check: my page for the editor, one save, my page to read back. */
+  const THREE = [
+    "GET /mypage_top.php",
+    "POST /ajax/change_mydon_profile.php",
+    "GET /mypage_top.php",
+  ];
+  const FIVE = ["GET /mypage_top.php", ...THREE, "GET /mypage_top.php"];
+
+  test("reads my page for the title before and after a rename on either platform: name is on neither's list", async () => {
+    for (const platform of ["android", "desktop"] as const) {
+      const { hiroba, writes } = setUp({ platform });
+      expect((await writes.changeName(renameTo(NEW_NAME))).kind).toBe("applied");
+      expect(hiroba.log).toEqual(FIVE);
+    }
+  });
+
+  test("sends the three requests alone once the kind is on the platform's list, and never a pre-check", async () => {
+    const { hiroba, writes } = setUp({ liveChecked: ["costume", "name"] });
+    expect((await writes.changeName(renameTo(NEW_NAME))).kind).toBe("applied");
+    expect(hiroba.log).toEqual(THREE);
+  });
+
+  test("a change leaves an undo kept, and the undo puts the name back in one save", async () => {
+    const { editor, profile, hiroba, writes, keptText } = setUp();
+    expect((await writes.changeName(renameTo(NEW_NAME))).kind).toBe("applied");
+    expect(profile.nickname()).toBe(NEW_NAME);
+    expect(await writes.pendingUndo()).toEqual([
+      {
+        kind: "name",
+        at: NOON_JST().toISOString(),
+        before: { nickname: START_NAME },
+        after: { nickname: NEW_NAME },
+      },
+    ]);
+    const tickets = (await editor.hook("/__tickets", new URLSearchParams())?.json()) as string[];
+    const kept = keptText();
+    expect(tickets.some((ticket) => kept.includes(ticket))).toBe(false);
+
+    hiroba.log.length = 0;
+    expect((await writes.undo("name")).kind).toBe("applied");
+    expect(profile.nickname()).toBe(START_NAME);
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(hiroba.log).toEqual(FIVE);
+    const saves = hiroba.log.filter((request) => request === "POST /ajax/change_mydon_profile.php");
+    expect(saves).toHaveLength(1);
+  });
+
+  test("keeps the costume's, the title's and the name's undo apart, in that order", async () => {
+    const { writes } = setUp();
+    await writes.changeName(renameTo(NEW_NAME));
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+    await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } });
+    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual([
+      "costume",
+      "title",
+      "name",
+    ]);
+
+    expect((await writes.undo("name")).kind).toBe("applied");
+    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual(["costume", "title"]);
+    expect((await writes.undo("title")).kind).toBe("applied");
+    expect((await writes.undo("costume")).kind).toBe("applied");
+    expect(await writes.pendingUndo()).toEqual([]);
+  });
+
+  test("says the costume changed after a costume write alone: a rename, or its undo, never does", async () => {
+    const { hiroba, writes } = setUp();
+    await writes.changeName(renameTo(NEW_NAME));
+    await writes.undo("name");
+    expect(hiroba.costumeChanges).toBe(0);
+  });
+
+  test("shows a name the filter refuses with Hiroba's words, and keeps no undo for it", async () => {
+    const { profile, writes } = setUp();
+    const outcome = await writes.changeName(renameTo(REFUSED_NAME));
+    expect(outcome).toMatchObject({
+      kind: "notApplied",
+      reason: { kind: "refused", code: 1, message: FILTER_MESSAGE },
+    });
+    expect(profile.nickname()).toBe(START_NAME);
+    expect(await writes.pendingUndo()).toEqual([]);
+  });
+
+  test("an undo Hiroba refuses keeps the record, which is offered still", async () => {
+    const { profile, writes } = setUp();
+    await writes.changeName(renameTo(NEW_NAME));
+    profile.hook("/__rename-cooldown", new URLSearchParams("on=1"));
+
+    const outcome = await writes.undo("name");
+    expect(outcome).toMatchObject({
+      kind: "notApplied",
+      reason: { kind: "refused", code: 1 },
+    });
+    expect(profile.nickname()).toBe(NEW_NAME);
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
+    ]);
+
+    profile.hook("/__rename-cooldown", new URLSearchParams("on=0"));
+    expect((await writes.undo("name")).kind).toBe("applied");
+  });
+
+  type RefusedCase = [label: string, name: string, field: string];
+  test.each<RefusedCase>([
+    ["no name", "", "name.empty"],
+    ["a name that starts with a space", " あたらしい", "name.edge"],
+    ["a name past the form's ten", "あ".repeat(11), "name.tooLong"],
+    ["a name with a control character", "あたら\u{0}しい", "name.control"],
+  ])("refuses %s unsent", async (_label, name, field) => {
+    const { hiroba, writes } = setUp({ liveChecked: ["costume", "name"] });
+    expect(await writes.changeName(renameTo(name))).toEqual({ kind: "invalidTarget", field });
+    expect(hiroba.log).toEqual(["GET /mypage_top.php"]);
+    expect(await writes.pendingUndo()).toEqual([]);
+  });
+
+  test("refuses every name unsent while the page says renames are closed, though it reads the page", async () => {
+    const { profile, hiroba, writes } = setUp();
+    profile.hook("/__rename", new URLSearchParams("state=closed"));
+    expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({
+      kind: "invalidTarget",
+      field: "name.closed",
+    });
+    expect(hiroba.log).toEqual(["GET /mypage_top.php", "GET /mypage_top.php"]);
+  });
+
+  test("sends nothing for the name that is there already", async () => {
+    const { hiroba, writes } = setUp({ liveChecked: ["costume", "name"] });
+    expect(await writes.changeName(renameTo(START_NAME))).toEqual({ kind: "nothingToChange" });
+    expect(hiroba.log).toEqual(["GET /mypage_top.php"]);
+  });
+
+  test("a rename after the name changed elsewhere sends nothing, and an undo of it is no longer offered", async () => {
+    const { profile, writes } = setUp();
+    await writes.changeName(renameTo(NEW_NAME));
+    profile.hook("/__profile", new URLSearchParams("nickname=べつのなまえ"));
+    expect((await writes.undo("name")).kind).toBe("changedSincePreview");
+    expect(profile.nickname()).toBe("べつのなまえ");
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(await writes.undo("name")).toEqual({ kind: "nothingToUndo" });
+  });
+
+  test("a read of my page settles a rename whose end was not known, from the name it shows", async () => {
+    const { profile, writes, signInAgain } = setUp();
+    profile.hook("/__profile-expire-on-save", new URLSearchParams());
+    const outcome = await writes.changeName(renameTo(NEW_NAME));
+    expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
+    signInAgain();
+    expect(await writes.pendingUndo()).toEqual([]);
+
+    await writes.profileRead({ taikoNo: OWNER, title: START_TITLE, nickname: NEW_NAME });
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
+    ]);
+  });
+
+  test("a read of my page dates a name record the name has moved away from, and leaves the title's alone", async () => {
+    const { writes } = setUp();
+    await writes.changeName(renameTo(NEW_NAME));
+    await writes.changeTitle(titleChange(START_TITLE, 102));
+    await writes.profileRead({
+      taikoNo: OWNER,
+      title: owned(102).label,
+      nickname: "べつのなまえ",
+    });
+    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual(["title"]);
+    expect(await writes.undo("name")).toEqual({ kind: "nothingToUndo" });
+  });
+
+  test("keeps each player's name undo apart", async () => {
+    let whose = OWNER;
+    const { writes } = setUp({ whose: () => whose });
+    await writes.changeName(renameTo(NEW_NAME));
+
+    whose = OTHER;
+    expect(await writes.pendingUndo()).toEqual([]);
+    expect(await writes.undo("name")).toEqual({ kind: "nothingToUndo" });
+
+    whose = OWNER;
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "name", before: { nickname: START_NAME } },
+    ]);
+  });
+
+  test("a rename that throws after its save ends interrupted, and the next read of my page settles it", async () => {
+    const { profile, hiroba, writes } = setUp();
+    hiroba.throwAfterSave = true;
+    expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({ kind: "interrupted" });
+    expect(profile.nickname()).toBe(NEW_NAME);
+    expect(await writes.pendingUndo()).toEqual([]);
+
+    await writes.profileRead({ taikoNo: OWNER, title: START_TITLE, nickname: NEW_NAME });
+    expect(await writes.pendingUndo()).toMatchObject([
+      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
+    ]);
+  });
+
+  test("sends nothing when the undo cannot be kept", async () => {
+    const { hiroba, writes, faults } = setUp();
+    faults.savesAllowed = 0;
+    expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({ kind: "undoNotSaved" });
+    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
+  });
+
+  test("reads and writes nothing while signed out", async () => {
+    const { hiroba, writes } = setUp({ signedIn: false });
+    expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({ kind: "notSignedIn" });
+    expect(await writes.undo("name")).toEqual({ kind: "notSignedIn" });
+    expect(hiroba.log).toEqual([]);
+  });
+
+  test("a session Hiroba ends before the rename is saved is dropped, with nothing left pending", async () => {
+    const { hiroba, writes } = setUp();
+    hiroba.ended = true;
+    expect(await writes.changeName(renameTo(NEW_NAME))).toMatchObject({
       kind: "sessionGone",
       writeMayHaveHappened: false,
     });

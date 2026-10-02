@@ -7,6 +7,8 @@ import { type CostumeSet, EMPTY_UNDO_SLOT, type UndoSlot } from "@abth/core";
 
 import { createUndoStore } from "../electron/undo-store";
 import {
+  NAME_SLOT,
+  nameRecordOf,
   OTHER,
   PLAYER,
   pendingOf,
@@ -84,13 +86,45 @@ describe("createUndoStore", () => {
     expect(await store.load("title", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
   });
 
+  test("keeps the name's slot apart from the other two, for one player and for two", async () => {
+    const path = storePath();
+    const store = createUndoStore(path);
+    const theirs = { record: nameRecordOf(OTHER), pending: null };
+    await store.save("costume", PLAYER, SLOT);
+    await store.save("title", PLAYER, TITLE_SLOT);
+    await store.save("name", PLAYER, NAME_SLOT);
+    await store.save("name", OTHER, theirs);
+    expect(await store.load("name", PLAYER)).toEqual(NAME_SLOT);
+    expect(await store.load("name", OTHER)).toEqual(theirs);
+    expect(await store.load("title", OTHER)).toEqual(EMPTY_UNDO_SLOT);
+
+    await store.save("name", PLAYER, EMPTY_UNDO_SLOT);
+    expect(await store.load("costume", PLAYER)).toEqual(SLOT);
+    expect(await store.load("title", PLAYER)).toEqual(TITLE_SLOT);
+    expect(Object.keys(JSON.parse(readFileSync(path, "utf8")).slots.name)).toEqual([OTHER]);
+  });
+
+  test("reads a file that holds no name as it did, and a name in it as none", async () => {
+    const path = storePath();
+    const kept = { costume: { [PLAYER]: SLOT }, title: { [PLAYER]: TITLE_SLOT } };
+    writeFileSync(path, JSON.stringify({ version: 2, slots: kept }));
+    const store = createUndoStore(path);
+    expect(await store.load("title", PLAYER)).toEqual(TITLE_SLOT);
+    expect(await store.load("name", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
+  });
+
   test("reads a slot filed under a kind that is not its set's as none", async () => {
     const path = storePath();
-    const misfiled = { title: { [PLAYER]: SLOT }, costume: { [PLAYER]: TITLE_SLOT } };
+    const misfiled = {
+      title: { [PLAYER]: SLOT },
+      costume: { [PLAYER]: TITLE_SLOT },
+      name: { [PLAYER]: TITLE_SLOT },
+    };
     writeFileSync(path, JSON.stringify({ version: 2, slots: misfiled }));
     const store = createUndoStore(path);
     expect(await store.load("title", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
     expect(await store.load("costume", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
+    expect(await store.load("name", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
   });
 
   test("files a first-version slot under each player it names", async () => {

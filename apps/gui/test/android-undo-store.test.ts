@@ -8,7 +8,7 @@ import { type CostumeSet, EMPTY_UNDO_SLOT, type UndoSlot } from "@abth/core";
 
 import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
-import { OTHER, PLAYER, pendingOf, SLOT, TITLE_SLOT } from "./undo-fixtures";
+import { NAME_SLOT, OTHER, PLAYER, pendingOf, SLOT, TITLE_SLOT } from "./undo-fixtures";
 
 const KEY = `costume/${PLAYER}`;
 
@@ -59,11 +59,38 @@ describe("createIndexedDbUndoStore", () => {
     expect(await store.load("title", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
   });
 
+  test("keeps the name's slot apart from the other two, each under its kind and player", async () => {
+    const indexedDb = createFakeIndexedDb();
+    const store = createIndexedDbUndoStore(indexedDb.factory);
+    await store.save("costume", PLAYER, SLOT);
+    await store.save("title", PLAYER, TITLE_SLOT);
+    await store.save("name", PLAYER, NAME_SLOT);
+    expect(await store.load("name", PLAYER)).toEqual(NAME_SLOT);
+    expect(await store.load("name", OTHER)).toEqual(EMPTY_UNDO_SLOT);
+    expect([...(indexedDb.tables.get("slots") ?? []).keys()].sort()).toEqual([
+      `costume/${PLAYER}`,
+      `name/${PLAYER}`,
+      `title/${PLAYER}`,
+    ]);
+
+    await store.save("name", PLAYER, EMPTY_UNDO_SLOT);
+    expect(await store.load("costume", PLAYER)).toEqual(SLOT);
+    expect(await store.load("title", PLAYER)).toEqual(TITLE_SLOT);
+    expect(await store.load("name", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
+  });
+
   test("reads a slot kept under one kind as none under another whose sets it does not hold", async () => {
     const indexedDb = createFakeIndexedDb();
-    indexedDb.tables.set("slots", new Map([[`title/${PLAYER}`, { v: 1, slot: SLOT }]]));
+    indexedDb.tables.set(
+      "slots",
+      new Map([
+        [`title/${PLAYER}`, { v: 1, slot: SLOT }],
+        [`name/${PLAYER}`, { v: 1, slot: TITLE_SLOT }],
+      ]),
+    );
     const store = createIndexedDbUndoStore(indexedDb.factory);
     expect(await store.load("title", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
+    expect(await store.load("name", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
   });
 
   test("writes each slot in a transaction on the slots alone, asked to be durable", async () => {

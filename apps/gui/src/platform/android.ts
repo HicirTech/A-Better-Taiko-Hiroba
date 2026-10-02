@@ -262,8 +262,14 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       sources = read.value.pictures;
       // The session held: the plates fetched before this read are the player's own.
       await pictures.confirm(read.value.taikoNo);
-      // The title it shows settles a title write whose end was not known, and dates a stale record.
-      await writes.profileRead({ taikoNo: read.value.taikoNo, title: read.value.view.title });
+      // The title and the name it shows settle a write whose end was not known, and date a stale
+      // record.
+      const { view } = read.value;
+      await writes.profileRead({
+        taikoNo: read.value.taikoNo,
+        title: view.title,
+        nickname: view.nickname,
+      });
       return ok(read.value.view);
     }),
 
@@ -299,6 +305,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     changeCostume: oneWriteAtATime(flushed(writes.changeCostume), BUSY_OUTCOME),
 
     changeTitle: oneWriteAtATime(flushed(writes.changeTitle), BUSY_OUTCOME),
+
+    changeName: oneWriteAtATime(flushed(writes.changeName), BUSY_OUTCOME),
 
     // Reads the undo store alone and asks Hiroba nothing: not in the queue.
     pendingUndo: writes.pendingUndo,

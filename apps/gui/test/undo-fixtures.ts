@@ -1,5 +1,12 @@
 /** Undo slots as the stores keep them, for the tests of both stores and of what they accept. */
-import type { CostumeSet, PendingUndo, TitleState, UndoRecord, UndoSlot } from "@abth/core";
+import type {
+  CostumeSet,
+  NameState,
+  PendingUndo,
+  TitleState,
+  UndoRecord,
+  UndoSlot,
+} from "@abth/core";
 
 export const PLAYER = "000000000000";
 /** Another card, as one Bandai Namco ID can hold. */
@@ -55,3 +62,24 @@ export const titlePendingOf = (taikoNo: string): PendingUndo<TitleState> => ({
 
 /** The player's last title change, kept as a record with nothing pending. */
 export const TITLE_SLOT: UndoSlot<TitleState> = { record: titleRecordOf(PLAYER), pending: null };
+
+export const NAME: NameState = { nickname: "サンプルどん" };
+
+export const nameRecordOf = (taikoNo: string): UndoRecord<NameState> => ({
+  taikoNo,
+  before: NAME,
+  after: { nickname: "あたらしい" },
+  at: "2026-09-27T03:00:00.000Z",
+  status: "current",
+});
+
+export const namePendingOf = (taikoNo: string): PendingUndo<NameState> => ({
+  taikoNo,
+  before: NAME,
+  expectedAfter: { nickname: "みっつめ" },
+  at: "2026-09-27T03:00:00.000Z",
+  purpose: "change",
+});
+
+/** The player's last name change, kept as a record with nothing pending. */
+export const NAME_SLOT: UndoSlot<NameState> = { record: nameRecordOf(PLAYER), pending: null };

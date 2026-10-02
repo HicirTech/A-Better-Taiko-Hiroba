@@ -11,6 +11,7 @@ export const BRIDGE_CHANNELS = {
   readPicture: "abth:read-picture",
   changeCostume: "abth:change-costume",
   changeTitle: "abth:change-title",
+  changeName: "abth:change-name",
   pendingUndo: "abth:pending-undo",
   undo: "abth:undo",
 } as const;

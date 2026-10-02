@@ -12,7 +12,13 @@ import {
   type MockSession,
   type PostRecord,
 } from "../scripts/mock-costume";
-import { createProfileEditor, INITIAL_PROFILE, OWNED_TITLES } from "../scripts/mock-profile";
+import {
+  createProfileEditor,
+  FILTER_MESSAGE,
+  INITIAL_PROFILE,
+  OWNED_TITLES,
+  REFUSED_NAME,
+} from "../scripts/mock-profile";
 import {
   CLOSE_LABEL,
   HIROBA,
@@ -603,6 +609,272 @@ describe("createAndroidPort's title writes", () => {
     expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "notSignedIn" });
     expect(await port.undo("title")).toEqual({ kind: "notSignedIn" });
     expect(await port.openTitleEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+    expect(world.sent()).toEqual([]);
+  });
+});
+
+const START_NAME = INITIAL_PROFILE.nickname;
+const NEW_NAME = "あたらしい";
+const NAME_CHANGE = {
+  expected: { nickname: START_NAME },
+  target: { nickname: NEW_NAME },
+};
+/**
+ * What a rename is on a platform that has not made one for real: my page read for the title, the
+ * page again for the rename form, the one save, the page read back, and the title read once more.
+ */
+const NAME_FIVE_REQUESTS = [
+  "GET /mypage_top.php",
+  "GET /mypage_top.php",
+  "POST /ajax/change_mydon_profile.php",
+  "GET /mypage_top.php",
+  "GET /mypage_top.php",
+];
+
+describe("createAndroidPort's name writes", () => {
+  beforeEach(() => native.reset());
+
+  test("sends a change as the five requests a platform not yet checked sends, with no pre-check, the post as the dialog's script does", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    const outcome = await port.changeName(NAME_CHANGE);
+
+    expect(outcome.kind).toBe("applied");
+    expect(world.sent()).toEqual(NAME_FIVE_REQUESTS);
+    expect(world.profile.nickname()).toBe(NEW_NAME);
+    expect(await world.profilePosts()).toEqual([
+      expect.objectContaining({
+        path: "/ajax/change_mydon_profile.php",
+        xRequestedWith: "XMLHttpRequest",
+        origin: HIROBA,
+        referer: `${HIROBA}/mypage_top.php`,
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        accept: "application/json, text/javascript, */*; q=0.01",
+        fields: ["_tckt", "mode", "oldName", "newName"],
+        values: { mode: "name", oldName: START_NAME, newName: NEW_NAME },
+        ticketMatched: true,
+      }),
+    ]);
+    // The cookie store is written to disk once the write has ended.
+    expect(native.cookieCalls).toEqual([FLUSH]);
+  });
+
+  test("keeps the undo in IndexedDB, offers it, and an undo puts the previous name back and empties it", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    await port.changeName(NAME_CHANGE);
+
+    expect([...world.slots().keys()]).toEqual([`name/${OWNER}`]);
+    expect(await port.pendingUndo()).toEqual([
+      {
+        kind: "name",
+        at: NOON_JST().toISOString(),
+        before: { nickname: START_NAME },
+        after: { nickname: NEW_NAME },
+      },
+    ]);
+
+    native.httpRequests.length = 0;
+    expect((await port.undo("name")).kind).toBe("applied");
+    expect(world.sent()).toEqual(NAME_FIVE_REQUESTS);
+    expect(world.profile.nickname()).toBe(START_NAME);
+    expect(await port.pendingUndo()).toEqual([]);
+    expect(world.slots().size).toBe(0);
+  });
+
+  test("shows a name the filter refuses with Hiroba's words, and keeps no undo for it", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    const outcome = await port.changeName({ ...NAME_CHANGE, target: { nickname: REFUSED_NAME } });
+
+    expect(outcome).toMatchObject({
+      kind: "notApplied",
+      reason: { kind: "refused", code: 1, message: FILTER_MESSAGE },
+    });
+    expect(world.profile.nickname()).toBe(START_NAME);
+    expect(await port.pendingUndo()).toEqual([]);
+    expect(world.slots().size).toBe(0);
+  });
+
+  test("keeps the record offered when Hiroba will not take the name back", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    await port.changeName(NAME_CHANGE);
+    world.profileHook("/__rename-cooldown", "on=1");
+
+    expect(await port.undo("name")).toMatchObject({
+      kind: "notApplied",
+      reason: { kind: "refused", code: 1 },
+    });
+    expect(world.profile.nickname()).toBe(NEW_NAME);
+    expect(await port.pendingUndo()).toMatchObject([
+      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
+    ]);
+  });
+
+  test("refuses every name unsent while my page says renames are closed", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    world.profileHook("/__rename", "state=closed");
+
+    expect(await port.changeName(NAME_CHANGE)).toEqual({
+      kind: "invalidTarget",
+      field: "name.closed",
+    });
+    expect(world.sent()).toEqual(["GET /mypage_top.php", "GET /mypage_top.php"]);
+    expect(await world.profilePosts()).toEqual([]);
+  });
+
+  test("keeps the pending write before the post, and a read of my page settles it after a kill", async () => {
+    const world = setUp();
+    const first = await signedInPort(world);
+    // The save is held unanswered for good: the app is killed with the write on its way.
+    world.profileHook("/__profile-hold-save", "on=1");
+    void first.changeName(NAME_CHANGE);
+    await until(() => world.sent().includes("POST /ajax/change_mydon_profile.php"));
+    expect(world.slots().get(`name/${OWNER}`)).toMatchObject({
+      v: 1,
+      slot: {
+        record: null,
+        pending: {
+          before: { nickname: START_NAME },
+          expectedAfter: { nickname: NEW_NAME },
+        },
+      },
+    });
+    // The save, which had gone out before the kill, landed all the same.
+    world.profileHook("/__profile", `nickname=${encodeURIComponent(NEW_NAME)}`);
+
+    const relaunched = await world.launch();
+    expect(await relaunched.pendingUndo()).toEqual([]);
+    // Showing my page reads the name the save left, and that settles the write: its undo is offered.
+    await relaunched.readProfile();
+    expect(await relaunched.pendingUndo()).toMatchObject([
+      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
+    ]);
+  });
+
+  test("a session Hiroba ends after the save is dropped, the pending write kept, and settled at the next read", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    world.profileHook("/__profile-expire-on-save");
+    const outcome = await port.changeName(NAME_CHANGE);
+
+    expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
+    expect(native.cookieCalls).toEqual(["clearAllCookies", FLUSH]);
+    expect(await port.isSignedIn()).toBe(false);
+    expect(world.slots().get(`name/${OWNER}`)).toMatchObject({ slot: { pending: {} } });
+
+    world.hiroba.restore();
+    const relaunched = await world.launch();
+    await relaunched.readProfile();
+    expect(await relaunched.pendingUndo()).toMatchObject([
+      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
+    ]);
+  });
+
+  test("answers any other write busy while a rename waits on its save, and sends nothing for it", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    world.profileHook("/__profile-hold-save", "on=1");
+
+    const writing = port.changeName(NAME_CHANGE);
+    await until(() => world.sent().includes("POST /ajax/change_mydon_profile.php"));
+    const requestsInTheWrite = world.sent().length;
+    expect(await port.changeCostume(CHANGE)).toEqual({ kind: "busy" });
+    expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "busy" });
+    expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "busy" });
+    expect(await port.undo("name")).toEqual({ kind: "busy" });
+    expect(await port.undo("title")).toEqual({ kind: "busy" });
+    expect(world.sent()).toHaveLength(requestsInTheWrite);
+
+    world.profileHook("/__profile-hold-save", "on=0");
+    expect((await writing).kind).toBe("applied");
+    expect(world.sent()).toEqual(NAME_FIVE_REQUESTS);
+  });
+
+  test("keeps another card's name undo apart, and offers this card none of it", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    await port.changeName(NAME_CHANGE);
+
+    standIn({
+      editor: world.editor,
+      profile: world.profile,
+      session: world.session,
+      myPage: profilePage(world.profile, OTHER),
+    });
+    const theirs = await world.launch();
+    await theirs.readProfile();
+    expect(await theirs.pendingUndo()).toEqual([]);
+    expect(await theirs.undo("name")).toEqual({ kind: "nothingToUndo" });
+    expect([...world.slots().keys()]).toEqual([`name/${OWNER}`]);
+  });
+
+  test("writes the cookie store to disk after every rename that ends, whatever it came to", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    const flushes = () => native.cookieCalls.filter((call) => call === FLUSH).length;
+
+    world.profileHook("/__profile-noop-save");
+    expect((await port.changeName(NAME_CHANGE)).kind).toBe("notApplied");
+    expect(flushes()).toBe(1);
+
+    expect((await port.changeName(NAME_CHANGE)).kind).toBe("applied");
+    expect(flushes()).toBe(2);
+
+    expect((await port.undo("name")).kind).toBe("applied");
+    expect(flushes()).toBe(3);
+  });
+
+  test("sends nothing in Hiroba's daily break", async () => {
+    const world = setUp({ now: IN_THE_BREAK });
+    const port = await signedInPort(world);
+    expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "maintenance" });
+    expect(world.sent()).toEqual([]);
+  });
+
+  test("refuses a target with a key the site has no field for, or no name, before anything is sent", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    const withExtra = port.changeName({
+      expected: NAME_CHANGE.expected,
+      target: { nickname: NEW_NAME, extra: 1 },
+    } as never);
+    await expect(withExtra).rejects.toThrow("Refused changeName: arguments it does not take");
+    const empty = port.changeName({ expected: NAME_CHANGE.expected, target: { nickname: "" } });
+    await expect(empty).rejects.toThrow("Refused changeName: arguments it does not take");
+    expect(world.sent()).toEqual([]);
+  });
+
+  test("does not send a rename it cannot keep the undo of: the storage that will not write, or open, or is not there", async () => {
+    const refusing = createFakeIndexedDb();
+    const written = setUp({ indexedDb: refusing });
+    const withWrites = await signedInPort(written);
+    refusing.faults.writes = true;
+    expect(await withWrites.changeName(NAME_CHANGE)).toEqual({ kind: "undoNotSaved" });
+    expect(await written.profilePosts()).toEqual([]);
+
+    const unopenable = createFakeIndexedDb();
+    unopenable.faults.open = true;
+    const opened = setUp({ indexedDb: unopenable });
+    expect(await (await signedInPort(opened)).changeName(NAME_CHANGE)).toEqual({
+      kind: "undoNotSaved",
+    });
+    expect(await opened.profilePosts()).toEqual([]);
+
+    const none = setUp({ indexedDb: null });
+    expect(await (await signedInPort(none)).changeName(NAME_CHANGE)).toEqual({
+      kind: "undoNotSaved",
+    });
+    expect(await none.profilePosts()).toEqual([]);
+  });
+
+  test("sends nothing while signed out", async () => {
+    const world = setUp({ signedIn: false });
+    const port = await world.launch();
+    expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "notSignedIn" });
+    expect(await port.undo("name")).toEqual({ kind: "notSignedIn" });
     expect(world.sent()).toEqual([]);
   });
 });

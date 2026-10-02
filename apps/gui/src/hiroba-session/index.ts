@@ -11,6 +11,7 @@ export {
   SESSION_COOKIE_NAME,
 } from "./endpoints";
 export { changeCostume } from "./change-costume";
+export { changeName } from "./change-name";
 export { changeTitle } from "./change-title";
 export {
   encodeForm,

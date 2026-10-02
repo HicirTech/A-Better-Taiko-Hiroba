@@ -22,6 +22,7 @@ type Verb = keyof HirobaSessionPort;
 type VerbCase = [verb: Verb, taken: unknown[], refused: unknown[]];
 const TITLE = { title: "サンプルの称号" };
 const TARGET = { id: 106, title: "サンプルの称号" };
+const NAME = { nickname: "サンプルどん" };
 const CASES: VerbCase[] = [
   ["isSignedIn", [], [undefined]],
   ["signIn", [], ["https://example.test/"]],
@@ -42,8 +43,13 @@ const CASES: VerbCase[] = [
     [{ expected: TITLE, target: TARGET }],
     [{ expected: TITLE, target: { ...TARGET, id: null } }],
   ],
+  [
+    "changeName",
+    [{ expected: NAME, target: { nickname: "あたらしい" } }],
+    [{ expected: NAME, target: { nickname: "" } }],
+  ],
   ["pendingUndo", [], [{}]],
-  ["undo", ["title"], ["settings"]],
+  ["undo", ["name"], ["settings"]],
 ];
 
 /** A port whose every verb notes what it was asked and answers with its own name. */

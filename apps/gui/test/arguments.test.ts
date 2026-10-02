@@ -19,6 +19,7 @@ describe("PORT_ARGUMENTS", () => {
     const {
       changeCostume: _change,
       changeTitle: _changeTitle,
+      changeName: _changeName,
       previewCostume: _preview,
       readPicture: _picture,
       undo: _undo,
@@ -105,6 +106,54 @@ describe("PORT_ARGUMENTS.changeTitle", () => {
         Object.assign(Object.create({ inherited: true }), {
           expected: TITLE_STATE,
           target: TITLE_TARGET,
+        }),
+      ],
+    ];
+    for (const args of refused) {
+      expect(check(args)).toBe(false);
+    }
+  });
+});
+
+const NAME_STATE = { nickname: "サンプルどん" };
+const NAME_TARGET = { nickname: "あたらしい" };
+
+describe("PORT_ARGUMENTS.changeName", () => {
+  test("takes one change: the name shown, and the name wanted, of one to sixty-four characters", () => {
+    const check = PORT_ARGUMENTS.changeName;
+    expect(check([{ expected: NAME_STATE, target: NAME_TARGET }])).toBe(true);
+    expect(check([{ expected: { nickname: "あ" }, target: { nickname: "い" } }])).toBe(true);
+    // The core refuses what the form would not take; the port only bounds what it is sent.
+    expect(check([{ expected: NAME_STATE, target: { nickname: "あ".repeat(64) } }])).toBe(true);
+  });
+
+  test("refuses anything else, an empty or a long name included", () => {
+    const check = PORT_ARGUMENTS.changeName;
+    const refused: unknown[][] = [
+      [],
+      [{ expected: NAME_STATE, target: NAME_TARGET }, "extra"],
+      [{ expected: NAME_STATE }],
+      [{ target: NAME_TARGET }],
+      [{ expected: NAME_STATE, target: NAME_TARGET, token: "x" }],
+      [{ expected: { nickname: "" }, target: NAME_TARGET }],
+      [{ expected: { nickname: 1 }, target: NAME_TARGET }],
+      [{ expected: { nickname: "あ".repeat(65) }, target: NAME_TARGET }],
+      [{ expected: { ...NAME_STATE, title: "x" }, target: NAME_TARGET }],
+      [{ expected: {}, target: NAME_TARGET }],
+      [{ expected: NAME_STATE, target: { nickname: "" } }],
+      [{ expected: NAME_STATE, target: { nickname: "あ".repeat(65) } }],
+      [{ expected: NAME_STATE, target: { nickname: 7 } }],
+      [{ expected: NAME_STATE, target: { nickname: null } }],
+      [{ expected: NAME_STATE, target: { ...NAME_TARGET, oldName: "x" } }],
+      [{ expected: NAME_STATE, target: "あたらしい" }],
+      [{ expected: [], target: NAME_TARGET }],
+      [{ expected: null, target: NAME_TARGET }],
+      [{ expected: NAME_STATE, target: null }],
+      [[NAME_STATE, NAME_TARGET]],
+      [
+        Object.assign(Object.create({ inherited: true }), {
+          expected: NAME_STATE,
+          target: NAME_TARGET,
         }),
       ],
     ];
@@ -203,6 +252,7 @@ describe("PORT_ARGUMENTS.undo", () => {
     const check = PORT_ARGUMENTS.undo;
     expect(check(["costume"])).toBe(true);
     expect(check(["title"])).toBe(true);
+    expect(check(["name"])).toBe(true);
     for (const args of [
       [],
       ["settings"],

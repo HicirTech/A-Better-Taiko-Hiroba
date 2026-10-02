@@ -2,6 +2,7 @@ import type {
   CostumeEditorView,
   CostumeSet,
   MedalProgress,
+  NameState,
   Result,
   ScoreRank,
   TitleEditorView,
@@ -10,8 +11,8 @@ import type {
   WriteOutcome,
 } from "@abth/core";
 
-/** The core's own shapes for the costume and the title, which cross the port unchanged. */
-export type { CostumeEditorView, CostumeSet, TitleEditorView, TitleState, TitleTarget };
+/** The core's own shapes for the costume, the title and the name, which cross the port unchanged. */
+export type { CostumeEditorView, CostumeSet, NameState, TitleEditorView, TitleState, TitleTarget };
 
 export type SignInOutcome =
   | { readonly kind: "signedIn" }
@@ -162,9 +163,13 @@ export interface PictureFailure {
 export interface WriteSets {
   readonly costume: CostumeSet;
   readonly title: TitleState;
+  readonly name: NameState;
 }
 
-/** The kinds of write the app knows how to send: the costume, きせかえ, and the title, 称号. */
+/**
+ * The kinds of write the app knows how to send: the costume, きせかえ, the title, 称号, and the
+ * Donder name, ドンだーネーム.
+ */
 export type WriteKind = keyof WriteSets;
 
 /** A costume write as the interface asks for it: the set it was made against, and the set wanted. */
@@ -181,6 +186,12 @@ export interface CostumeChange {
 export interface TitleChange {
   readonly expected: TitleState;
   readonly target: TitleTarget;
+}
+
+/** A rename as the interface asks for it: the name as my page showed it, and the name wanted. */
+export interface NameChange {
+  readonly expected: NameState;
+  readonly target: NameState;
 }
 
 /**
@@ -277,6 +288,13 @@ export interface HirobaSessionPort {
    * Never retried. `busy`, sending nothing, while another write is queued or running.
    */
   changeTitle(change: TitleChange): Promise<WriteOutcomeView<TitleState>>;
+  /**
+   * One rename, the way every write goes, with no pre-check: my page for the editor, one save and
+   * my page read back for the name, three requests; five where renames have not been made for real
+   * from this platform yet, with my page read before and after for the title (`LIVE_CHECKED_WRITES`).
+   * Never retried. `busy`, sending nothing, while another write is queued or running.
+   */
+  changeName(change: NameChange): Promise<WriteOutcomeView<NameState>>;
   /** The undo this device can offer, one per kind at most. Asks Hiroba nothing. */
   pendingUndo(): Promise<readonly UndoSummary[]>;
   /**

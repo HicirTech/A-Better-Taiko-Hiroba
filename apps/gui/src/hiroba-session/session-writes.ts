@@ -6,6 +6,7 @@ import {
   type Result,
   reconcile,
   sameCostume,
+  sameName,
   sameTitle,
   settle,
   type Transport,
@@ -19,6 +20,7 @@ import {
   changedTheCostume,
   type CostumeChange,
   type HirobaSessionPort,
+  type NameChange,
   type ReadFailure,
   type TitleChange,
   type UndoSummary,
@@ -28,6 +30,7 @@ import {
   type WriteSets,
 } from "../session-port";
 import { changeCostume } from "./change-costume";
+import { changeName } from "./change-name";
 import { changeTitle } from "./change-title";
 import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
@@ -59,17 +62,25 @@ export interface SessionWritesOptions {
 export interface ProfileSeen {
   readonly taikoNo: string;
   readonly title: string;
+  readonly nickname: string;
 }
 
 /** The port's write verbs, the same on every shell, and the one thing a read of my page tells them. */
 export type SessionWrites = Pick<
   HirobaSessionPort,
-  "openCostumeEditor" | "openTitleEditor" | "changeCostume" | "changeTitle" | "pendingUndo" | "undo"
+  | "openCostumeEditor"
+  | "openTitleEditor"
+  | "changeCostume"
+  | "changeTitle"
+  | "changeName"
+  | "pendingUndo"
+  | "undo"
 > & {
   /**
-   * A good read of my page, which shows the title as well as the page that writes it does:
-   * settles a write of that kind whose end was not known, and dates a record the title has moved
-   * away from, with no request to Hiroba. A read of my page need not wait for it.
+   * A good read of my page, which shows the title and the name as well as the pages that write
+   * them do: settles a write of either kind whose end was not known, and dates a record the title
+   * or the name has moved away from, with no request to Hiroba. The read waits for it, so that no
+   * write starts between the two.
    */
   profileRead(seen: ProfileSeen): Promise<void>;
 };
@@ -137,6 +148,16 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       expected: after,
       target: { id: null, title: before.title },
     }),
+    ended: () => undefined,
+  };
+
+  const name: WriteKindDefinition<"name", NameChange> = {
+    kind: "name",
+    same: sameName,
+    run: changeName,
+    // A name is read back whole, so it is put back by the ordinary write from the name it became to
+    // the one before. Hiroba may refuse that, and the record then stays.
+    undoInput,
     ended: () => undefined,
   };
 
@@ -257,6 +278,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   const undoers = {
     costume: (record) => write(costume, costume.undoInput(record), "undo"),
     title: (record) => write(title, title.undoInput(record), "undo"),
+    name: (record) => write(name, name.undoInput(record), "undo"),
   } satisfies {
     readonly [K in WriteKind]: (
       record: UndoRecord<WriteSets[K]>,
@@ -294,6 +316,13 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       return write(title, change, "change");
     },
 
+    async changeName(change) {
+      if (!options.signedIn()) {
+        return { kind: "notSignedIn" };
+      }
+      return write(name, change, "change");
+    },
+
     async pendingUndo() {
       const taikoNo = options.owner();
       if (taikoNo === null) {
@@ -302,6 +331,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       const offers = await Promise.all([
         summaryOf("costume", taikoNo),
         summaryOf("title", taikoNo),
+        summaryOf("name", taikoNo),
       ]);
       return offers.filter((offer): offer is UndoSummary => offer !== null);
     },
@@ -322,8 +352,9 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       return undoer(record);
     },
 
-    async profileRead({ taikoNo, title: shown }) {
-      await settledBy(title, taikoNo, { title: shown });
+    async profileRead({ taikoNo, title: shownTitle, nickname }) {
+      await settledBy(title, taikoNo, { title: shownTitle });
+      await settledBy(name, taikoNo, { nickname });
     },
   };
 }

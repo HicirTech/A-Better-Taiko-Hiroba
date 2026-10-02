@@ -228,8 +228,14 @@ app.whenReady().then(async () => {
       sources = read.value.pictures;
       // The session held: the plates fetched before this read are the player's own.
       await pictures.confirm(read.value.taikoNo);
-      // The title it shows settles a title write whose end was not known, and dates a stale record.
-      await writes.profileRead({ taikoNo: read.value.taikoNo, title: read.value.view.title });
+      // The title and the name it shows settle a write whose end was not known, and date a stale
+      // record.
+      const { view } = read.value;
+      await writes.profileRead({
+        taikoNo: read.value.taikoNo,
+        title: view.title,
+        nickname: view.nickname,
+      });
       return ok(read.value.view);
     }),
     async signOut() {
@@ -257,6 +263,7 @@ app.whenReady().then(async () => {
     readPicture: (want) => pictures.read(want),
     changeCostume: oneWriteAtATime(writes.changeCostume, BUSY_OUTCOME),
     changeTitle: oneWriteAtATime(writes.changeTitle, BUSY_OUTCOME),
+    changeName: oneWriteAtATime(writes.changeName, BUSY_OUTCOME),
     pendingUndo: writes.pendingUndo,
     // The queue wraps the verb for every kind at once; the port types its outcome by the kind asked.
     undo: oneWriteAtATime(writes.undo, BUSY_OUTCOME) as HirobaSessionPort["undo"],

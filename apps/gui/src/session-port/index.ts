@@ -6,6 +6,7 @@
 export {
   type ArgumentCheck,
   isCostumeSet,
+  isNameState,
   isPictureWant,
   isTitleState,
   isTitleTarget,
@@ -25,6 +26,8 @@ export type {
   CostumeSlot,
   DanView,
   HirobaSessionPort,
+  NameChange,
+  NameState,
   PictureFailure,
   PictureView,
   PictureWant,

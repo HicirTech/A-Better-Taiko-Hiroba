@@ -1,6 +1,7 @@
 import type {
   CostumeSet,
   HirobaSessionPort,
+  NameState,
   PictureWant,
   TitleState,
   TitleTarget,
@@ -9,7 +10,7 @@ import type {
 } from "./types";
 
 /** Every kind of write the app can send. */
-export const WRITE_KINDS: readonly WriteKind[] = ["costume", "title"];
+export const WRITE_KINDS: readonly WriteKind[] = ["costume", "title", "name"];
 
 /** Whether one verb's arguments, as they arrived from the interface, are ones it takes. */
 export type ArgumentCheck = (args: readonly unknown[]) => boolean;
@@ -83,13 +84,29 @@ export function isTitleTarget(value: unknown): value is TitleTarget {
   );
 }
 
+/** The longest name the interface may send or a slot keep: far above the form's ten. */
+const MAX_NAME_LENGTH = 64;
+
+/**
+ * Exactly `{ nickname }`, a string of 1 to 64 characters: Hiroba's form takes ten, and the core
+ * refuses what the form it reads would not. A name is never empty: my page does not read as one.
+ */
+export function isNameState(value: unknown): value is NameState {
+  return (
+    hasExactly(value, ["nickname"]) &&
+    typeof value.nickname === "string" &&
+    value.nickname.length >= 1 &&
+    value.nickname.length <= MAX_NAME_LENGTH
+  );
+}
+
 /**
  * How each kind's set is recognised when an undo slot is read back from storage: the check the
  * interface's arguments go through, so a slot kept is held to the shape a write is.
  */
 export const UNDO_SET_GUARDS: {
   readonly [K in WriteKind]: (value: unknown) => value is WriteSets[K];
-} = { costume: isCostumeSet, title: isTitleState };
+} = { costume: isCostumeSet, title: isTitleState, name: isNameState };
 
 /** A whole number from `least` to `most`. */
 export const isWhole = (value: unknown, least: number, most: number): value is number =>
@@ -138,6 +155,13 @@ const titleChange: ArgumentCheck = (args) =>
   isTitleState(args[0].expected) &&
   isTitleTarget(args[0].target);
 
+/** changeName: one argument, the name as read and the name wanted. */
+const nameChange: ArgumentCheck = (args) =>
+  args.length === 1 &&
+  hasExactly(args[0], ["expected", "target"]) &&
+  isNameState(args[0].expected) &&
+  isNameState(args[0].target);
+
 /** undo: one argument, a kind of write the app knows. */
 const writeKind: ArgumentCheck = (args) =>
   args.length === 1 && WRITE_KINDS.includes(args[0] as WriteKind);
@@ -160,6 +184,7 @@ export const PORT_ARGUMENTS = {
   readPicture: pictureWant,
   changeCostume: costumeChange,
   changeTitle: titleChange,
+  changeName: nameChange,
   pendingUndo: none,
   undo: writeKind,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;
