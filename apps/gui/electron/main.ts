@@ -7,9 +7,6 @@ import {
   createPictureReader,
   createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
-  endpointsFromOverrides,
-  HIROBA_ENDPOINTS,
-  type HirobaEndpoints,
   offeredOf,
   type PictureSources,
   previewCostume,
@@ -25,6 +22,7 @@ import {
   type SignInOutcome,
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
+import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { saveReads } from "./save-reads";
@@ -32,20 +30,18 @@ import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
 import { createUndoStore } from "./undo-store";
 
-// Development only, and never in a packaged build: the renderer from Vite's dev server, and a
-// local stand-in for Hiroba and the ID host so the whole sign-in can run without the real sites.
-// Setting only one of the two endpoint overrides stops the app rather than half-reaching Hiroba.
-// The picture host's is optional: without it, a stand-in run asks no picture host anything.
-const devServerUrl = app.isPackaged ? undefined : process.env.ABTH_DEV_SERVER_URL;
-const endpoints: HirobaEndpoints = app.isPackaged ? HIROBA_ENDPOINTS : developmentEndpoints();
+// What the way the app was started decides, in a development run alone and never in a packaged
+// build (desktop-environment.ts): the renderer from Vite's dev server, a local stand-in for Hiroba
+// and the ID host so the whole sign-in can run without the real sites, a data folder of its own and
+// a fixed clock for the writes. Setting only one of the two endpoint overrides stops the app rather
+// than half-reaching Hiroba. The picture host's is optional: without it, a stand-in run asks no
+// picture host anything.
+const environment = startedWith();
+const { devServerUrl, endpoints } = environment;
 
-function developmentEndpoints(): HirobaEndpoints {
+function startedWith(): DesktopEnvironment {
   try {
-    return endpointsFromOverrides(
-      process.env.ABTH_DEV_HIROBA_ORIGIN,
-      process.env.ABTH_DEV_IDP_HOST,
-      process.env.ABTH_DEV_IMG_ORIGIN,
-    );
+    return desktopEnvironment(app.isPackaged, process.env);
   } catch (error) {
     // Not thrown: an uncaught error in the main process opens a dialog and waits.
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
@@ -62,17 +58,8 @@ app.userAgentFallback = userAgent;
 
 // Development only: lets the end-to-end run and the dev run against the mock keep their profiles
 // out of the real %APPDATA%, where the installed app keeps its session and undo record.
-if (!app.isPackaged && process.env.ABTH_DEV_USER_DATA) {
-  app.setPath("userData", process.env.ABTH_DEV_USER_DATA);
-}
-
-// The clock a write checks Hiroba's daily break against. Development only: ABTH_DEV_NOW (an ISO
-// time) fixes it, so a test runs at any hour and can try the break itself.
-const writeClock = developmentClock();
-
-function developmentClock(): () => Date {
-  const fixed = app.isPackaged ? Number.NaN : Date.parse(process.env.ABTH_DEV_NOW ?? "");
-  return Number.isNaN(fixed) ? () => new Date() : () => new Date(fixed);
+if (environment.userData !== undefined) {
+  app.setPath("userData", environment.userData);
 }
 
 app.enableSandbox();
@@ -179,7 +166,7 @@ app.whenReady().then(async () => {
     transport: readTransport,
     endpoints,
     platform: "desktop",
-    now: writeClock,
+    now: environment.now,
     undoStore: createUndoStore(join(app.getPath("userData"), "undo.json")),
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
