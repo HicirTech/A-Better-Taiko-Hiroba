@@ -74,7 +74,6 @@ export const zhHans: Messages = {
   "platform.unsupported": "此版本只能在桌面版或 Android 版应用中运行。",
   "costume.open": "打开换装页面",
   "costume.openByLongPress": "长按你的マイどん即可打开换装页面。",
-  "costume.notOpen": "此版本尚未开放：还没有从本应用实际更换过一次装扮并加以确认。",
   "costume.reading": "正在从广场读取装扮…",
   "costume.preview.alt": "穿上这套装扮的マイどん，由广场绘制",
   "costume.preview.loading": "正在更新预览…",
@@ -106,8 +105,6 @@ export const zhHans: Messages = {
   "costume.back": "返回",
   "costume.save": "保存到广场",
   "costume.confirmIntro": "将向广场提交以下更改：",
-  "costume.firstWrite": "这是本应用第一次进行这类写入。应用会保留撤销记录，并读回结果进行核对。",
-  "costume.crossCheck": "保存前后还会读取你的称号，确认其他内容没有变动。",
   "costume.saving": "正在保存…随后读回核对",
   "costume.undoLast": "撤销上次装扮更改",
   "costume.undoWhen": "更改于 {time}",
@@ -143,7 +140,6 @@ export const zhHans: Messages = {
   "write.needsConfirmation":
     "广场要求进行本应用尚不支持的确认，因此没有做任何更改。广场的原话：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "广场没有接受本应用的请求。没有做任何更改。",
-  "write.notEnabled": "此版本不会发送这类更改。",
   "write.nothingToUndo": "没有可撤销的更改。",
   "write.busy": "另一项更改仍在发送中，因此这项没有发送。",
   "write.interrupted":

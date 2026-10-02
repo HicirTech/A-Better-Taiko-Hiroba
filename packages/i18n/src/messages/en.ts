@@ -74,8 +74,6 @@ export const en: Messages = {
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
   "costume.open": "Open the Costume page",
   "costume.openByLongPress": "Long-press your マイどん to open the Costume page.",
-  "costume.notOpen":
-    "Not open in this build yet: the first real costume change from the app has still to be made and checked.",
   "costume.reading": "Reading your costume from Hiroba…",
   "costume.preview.alt": "マイどん in this costume, as Hiroba draws it",
   "costume.preview.loading": "Updating the preview…",
@@ -108,9 +106,6 @@ export const en: Messages = {
   "costume.back": "Back",
   "costume.save": "Save to Hiroba",
   "costume.confirmIntro": "Hiroba will be asked to make these changes:",
-  "costume.firstWrite":
-    "This is the first write of this kind from the app. The app keeps an undo record and reads the result back.",
-  "costume.crossCheck": "It also reads your title before and after, to check nothing else moved.",
   "costume.saving": "Saving… then reading it back",
   "costume.undoLast": "Undo last costume change",
   "costume.undoWhen": "Changed {time}",
@@ -155,7 +150,6 @@ export const en: Messages = {
   "write.needsConfirmation":
     "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "Hiroba didn't accept the app's request. Nothing was changed.",
-  "write.notEnabled": "This build does not send this kind of change.",
   "write.nothingToUndo": "There is no change to undo.",
   "write.busy": "Another change is still being sent, so this one was not sent.",
   "write.interrupted":

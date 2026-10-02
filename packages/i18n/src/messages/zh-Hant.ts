@@ -73,7 +73,6 @@ export const zhHant: Messages = {
   "platform.unsupported": "此版本只能在桌面版或 Android 版應用程式中執行。",
   "costume.open": "開啟換裝頁面",
   "costume.openByLongPress": "長按你的マイどん即可開啟換裝頁面。",
-  "costume.notOpen": "此版本尚未開放：還沒有從本應用程式實際更換過一次裝扮並加以確認。",
   "costume.reading": "正在從廣場讀取裝扮…",
   "costume.preview.alt": "穿上這套裝扮的マイどん，由廣場繪製",
   "costume.preview.loading": "正在更新預覽…",
@@ -105,9 +104,6 @@ export const zhHant: Messages = {
   "costume.back": "返回",
   "costume.save": "儲存到廣場",
   "costume.confirmIntro": "將向廣場提交以下變更：",
-  "costume.firstWrite":
-    "這是本應用程式第一次進行這類寫入。應用程式會保留復原紀錄，並讀回結果進行核對。",
-  "costume.crossCheck": "儲存前後還會讀取你的稱號，確認其他內容沒有變動。",
   "costume.saving": "正在儲存…隨後讀回核對",
   "costume.undoLast": "復原上次裝扮變更",
   "costume.undoWhen": "變更於 {time}",
@@ -143,7 +139,6 @@ export const zhHant: Messages = {
   "write.needsConfirmation":
     "廣場要求進行本應用程式尚不支援的確認，因此沒有做任何變更。廣場的原話：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "廣場沒有接受本應用程式的要求。沒有做任何變更。",
-  "write.notEnabled": "此版本不會傳送這類變更。",
   "write.nothingToUndo": "沒有可復原的變更。",
   "write.busy": "另一項變更仍在傳送中，因此這項沒有傳送。",
   "write.interrupted":

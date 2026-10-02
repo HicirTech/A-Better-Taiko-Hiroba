@@ -76,8 +76,6 @@ export const ja: Messages = {
   "platform.unsupported": "このビルドは、デスクトップ版か Android 版のアプリの中でしか動きません。",
   "costume.open": "きせかえページを開く",
   "costume.openByLongPress": "マイどんを長押しすると、きせかえページを開けます。",
-  "costume.notOpen":
-    "このビルドではまだ使えません：アプリからの実際の変更が、まだ一度も確かめられていません。",
   "costume.reading": "ひろばからきせかえを読み込み中…",
   "costume.preview.alt": "このきせかえのマイどん（ひろばの画像）",
   "costume.preview.loading": "プレビューを更新中…",
@@ -110,9 +108,6 @@ export const ja: Messages = {
   "costume.back": "戻る",
   "costume.save": "ひろばに保存",
   "costume.confirmIntro": "ひろばに次の変更を依頼します：",
-  "costume.firstWrite":
-    "この種類の書き込みは、アプリからは初めてです。元に戻すための記録を残し、結果を読み直して確かめます。",
-  "costume.crossCheck": "ほかに何も変わっていないか、前後で称号も読み取ります。",
   "costume.saving": "保存中…そのあと読み直します",
   "costume.undoLast": "直前のきせかえの変更を元に戻す",
   "costume.undoWhen": "{time} に変更",
@@ -162,7 +157,6 @@ export const ja: Messages = {
     "ひろばが、このアプリではまだ答えられない確認を求めたため、何も変更していません。ひろばのメッセージ：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite":
     "ひろばがアプリのリクエストを受け付けませんでした。何も変更していません。",
-  "write.notEnabled": "このビルドでは、この種類の変更は送信しません。",
   "write.nothingToUndo": "元に戻せる変更はありません。",
   "write.busy": "別の変更を送信中のため、この変更は送信していません。",
   "write.interrupted":

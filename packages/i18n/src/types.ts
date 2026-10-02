@@ -158,12 +158,6 @@ export interface Messages {
    * by a long-press and a tap does nothing: say to long-press.
    */
   "costume.openByLongPress": string;
-  /**
-   * The Costume page's reason, shown in place of the editor when this run may not change the
-   * costume: why. True on every shell while no kind is verified; say it again once one is, since
-   * Android enables none.
-   */
-  "costume.notOpen": string;
   /** The Costume page while the editor is read from Hiroba, the first time or again. */
   "costume.reading": string;
   /**
@@ -220,13 +214,6 @@ export interface Messages {
   "costume.back": string;
   "costume.save": string;
   "costume.confirmIntro": string;
-  /**
-   * The extra confirmation a kind of write needs until its first real write from the app has been
-   * made and recorded.
-   */
-  "costume.firstWrite": string;
-  /** Said with the extra confirmation: while unverified, a write also reads the title twice. */
-  "costume.crossCheck": string;
   "costume.saving": string;
   /** The Costume page's way back from the last costume write, while it is still offered. */
   "costume.undoLast": string;
@@ -275,7 +262,6 @@ export interface Messages {
   /** Carries the site's own confirmation text (mydon.js), which this version does not answer. */
   "write.needsConfirmation": string;
   "write.stoppedBeforeWrite": string;
-  "write.notEnabled": string;
   "write.nothingToUndo": string;
   /**
    * The app stopped a write before judging it: whether it saved is not known. Says to use the
