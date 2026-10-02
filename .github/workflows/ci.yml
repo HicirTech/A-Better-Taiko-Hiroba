@@ -1,9 +1,12 @@
 name: CI
 
 on:
+  # Every branch, so a change is checked before it has a pull request. A filter on branches alone
+  # leaves tags out: those belong to the release workflow.
   push:
-    branches: [main]
+    branches: ["**"]
   pull_request:
+    branches: [main]
 
 # A newer push to the same branch makes the older run pointless. Cancel it rather than pay for it,
 # except on main, where every commit's result is worth keeping.
@@ -17,6 +20,10 @@ permissions:
 jobs:
   checks:
     name: Checks
+    # A pull request from this repository has its branch pushed here too, and that push has already
+    # run these jobs on the same commit; running them again for the pull request would do the work
+    # twice. A fork's pushes go to the fork, so its pull request is the only run it gets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
