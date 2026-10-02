@@ -142,6 +142,23 @@ describe("postAjax", () => {
     );
   });
 
+  test("reads JSON from a 2xx alone: not from a redirect handed back, not from below it", async () => {
+    // 3xx answers reach here unfollowed (a 307 or 308 after a post, any 3xx with no Location).
+    for (const status of [199, 300, 302, 307, 308, 399]) {
+      const answer = await sortedAs(response(`{"result":false}`, "application/json", status));
+      expect(answer).toEqual({
+        kind: "unexpected",
+        code: `path=/ajax/change_mydon.php status=${status} type=application/json bytes=16`,
+      });
+      expect(readPrecheck(answer)).toBe("unexpected");
+    }
+    for (const status of [200, 201, 299]) {
+      const answer = await sortedAs(response(`{"result":false}`, "application/json", status));
+      expect(answer.kind).toBe("json");
+      expect(readPrecheck(answer)).toBe("clear");
+    }
+  });
+
   test("an answer that never came is noAnswer, by kind only", async () => {
     expect(
       await sortedAs(err({ kind: "timedOut", url: `${ORIGIN}/ajax/change_mydon.php` })),
