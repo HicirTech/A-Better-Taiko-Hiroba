@@ -8,9 +8,8 @@ header does: your マイどん as Hiroba draws it, beside your nickname, title a
 title plate and dan label, and under them Hiroba's score panel, its ten counts written over its art.
 Under that come the seven score ranks and the three crowns again, each block as one bar of shares
 with a legend of percents, like GitHub's "Languages" box (the counts are in each item's tooltip);
-the season's どんメダル on Hiroba's own plate, and your favourite songs. On the desktop it can also change your costume (きせかえ), but only in a development run
-opened for it, until the first real write has been made and recorded (see
-[The first real costume write](#the-first-real-costume-write)).
+the season's どんメダル on Hiroba's own plate, and your favourite songs. It can also change your costume (きせかえ), on the desktop and on Android alike, in
+every build (see [Writes](#writes)).
 
 The window has no header. On a wide window a side panel, like Gmail's, lists its four pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル),
@@ -89,7 +88,7 @@ Run every script below from this folder, or from the root with `bun run --cwd ap
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds, then checks the pages (a side panel on a wide window, and on a narrow one a menu button whose drawer a pick, Escape or a tap outside closes; the Costume page between the Overview and Favourites, in both; the sign-in card on the Overview, Costume and Favourites while signed out, the page shown kept for the next launch, and the page's column in one place on a page that scrolls, one that does not and the Costume page), the scheme (dark or light as the system asks, the page's `color-scheme` with it), Settings (sections with small headings, each with its icon, over one list of rows; who is signed in, or no one, with **Sign out** in the app's casing beside it; while a read the stand-in holds runs, **Signed in**, with **Sign out** shut), the language (opened on a system in Traditional Chinese, the app is in it; its choices are radio buttons in one group the section's heading names, and the arrows move the choice; a pick in Settings, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile as it was read, asking Hiroba nothing; System default follows the system again, at once and after a relaunch; Hiroba's own words on the profile and in the editor are marked Japanese), and drives sign-in, reading, reading again (from the small Fab, which is shut and spins while a read the stand-in holds runs, a second press sending nothing; on an emulated touch screen, by a pull from the top of the page past the point, not by a short, upward, sideways or lower one, the Fab then drawn only under the keyboard's focus, and a slow pull begun on the portrait opening no tooltip; and by neither while an undo waits on its pre-check), a rotated session, a lost session (the next sign-in shows none of its pictures), cancel and sign-out (in Settings) against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), the Overview shaped like my page's header (the portrait beside the plate and the score panel, one under another on a narrow window, with no background art), the score panel (a plain stand-in while its art does not come, its counts as text where my page writes them, the art fetched once per device), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches), the My Don portrait (from the picture host with no cookie, a first one that does not come, kept across relaunches and sign-ins, fetched anew after **Read again** and after a change or undo applies but not after a save that moves nothing, the kept one still shown when a fresh one does not come), and the どんメダル plate (asked for only once its card is on screen, its words still text over it, one request per season and per state, a plate that does not come, its id in neither the window nor any file but the debug copies, the plate kept across sign-outs and relaunches). With the write gate open, it checks the Costume page (the editor read once when the page is first shown in a run, never at start-up or on a reopen; read again by the Fab, or by a pull on an emulated touch screen, instead of your page, a draft kept over a set that has not moved and dropped over one that has; a draft that survives a visit to another page, and Reset; the Save bar flush with the window's bottom edge; a column on a wide window and the whole width on a narrow one), the editor's picture of the set (shown when the page is first shown, redrawn after a pick, one request for a burst of picks, a picture that does not come, none away from the page, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, a grid that has scrolled left to its own finger, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each from the page, and checks each write sent exactly the requests planned, that the undo shows on the Costume page alone, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; it checks the portrait is the button to the Costume page, with no **Change costume** button beside it, shows its edit badge and name under the pointer, and goes there by a click, by Enter and by Space, on an emulated touch screen too, and there by a long-press alone (its badge up at rest and its description saying to long-press; not by a tap, nor by a finger held as long but moved, which reads nothing either; and the lift after it makes no click on the page it went to); and reopened without the flag, it checks no write can be sent and that the Costume page still opens, shows the portrait and says why, reads nothing from the editor and has no control. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
+| `bun run e2e:desktop` | Builds, then checks the pages (a side panel on a wide window, and on a narrow one a menu button whose drawer a pick, Escape or a tap outside closes; the Costume page between the Overview and Favourites, in both; the sign-in card on the Overview, Costume and Favourites while signed out, the page shown kept for the next launch, and the page's column in one place on a page that scrolls, one that does not and the Costume page), the scheme (dark or light as the system asks, the page's `color-scheme` with it), Settings (sections with small headings, each with its icon, over one list of rows; who is signed in, or no one, with **Sign out** in the app's casing beside it; while a read the stand-in holds runs, **Signed in**, with **Sign out** shut), the language (opened on a system in Traditional Chinese, the app is in it; its choices are radio buttons in one group the section's heading names, and the arrows move the choice; a pick in Settings, of the language shown or another, takes hold at once, is kept for the next launch, and redraws the profile as it was read, asking Hiroba nothing; System default follows the system again, at once and after a relaunch; Hiroba's own words on the profile and in the editor are marked Japanese), and drives sign-in, reading, reading again (from the small Fab, which is shut and spins while a read the stand-in holds runs, a second press sending nothing; on an emulated touch screen, by a pull from the top of the page past the point, not by a short, upward, sideways or lower one, the Fab then drawn only under the keyboard's focus, and a slow pull begun on the portrait opening no tooltip; and by neither while an undo waits on its pre-check), a rotated session, a lost session (the next sign-in shows none of its pictures), cancel and sign-out (in Settings) against the stand-in, with a dan read off its label and a label that does not read, the panel's counts of 0 (still listed, with no part of a bar), the Overview shaped like my page's header (the portrait beside the plate and the score panel, one under another on a narrow window, with no background art), the score panel (a plain stand-in while its art does not come, its counts as text where my page writes them, the art fetched once per device), and the identity card on its title plate (on the app's own surface, its words still text, one request per title, a plate that does not come, the plate kept across sign-outs and relaunches), the My Don portrait (from the picture host with no cookie, a first one that does not come, kept across relaunches and sign-ins, fetched anew after **Read again** and after a change or undo applies but not after a save that moves nothing, the kept one still shown when a fresh one does not come), and the どんメダル plate (asked for only once its card is on screen, its words still text over it, one request per season and per state, a plate that does not come, its id in neither the window nor any file but the debug copies, the plate kept across sign-outs and relaunches). It checks the Costume page, with no flag set at all (the editor read once when the page is first shown in a run, never at start-up or on a reopen; read again by the Fab, or by a pull on an emulated touch screen, instead of your page, a draft kept over a set that has not moved and dropped over one that has; a draft that survives a visit to another page, and Reset; the Save bar flush with the window's bottom edge; a column on a wide window and the whole width on a narrow one), the editor's picture of the set (shown when the page is first shown, redrawn after a pick, one request for a burst of picks, a picture that does not come, none away from the page, and one asked for during a write waiting until the write is done) and its items' thumbnails (only the rows on screen and one ahead, each once, kept across sign-outs and relaunches, one that does not come, one the editor did not offer, a grid that has scrolled left to its own finger, shapes the bridge refuses, and one asked for during a write waiting until the write is done), then changes a colour and a きぐるみ and undoes each from the page, and checks each write sent exactly the requests planned, that the undo shows on the Costume page alone, and that pressing it twice sends one undo; it tries the #22 trap, a save that moves nothing, pre-checks that stop, a post sent to the login page, a post answered with a redirect (followed with one GET, or for a 307 or 308 handed back, and never sent again), an undo after a change made elsewhere, a session that ends before and after a save, and Hiroba's daily break; it checks the portrait is the button to the Costume page, with no **Change costume** button beside it, shows its edit badge and name under the pointer, and goes there by a click, by Enter and by Space, on an emulated touch screen too, and there by a long-press alone (its badge up at rest and its description saying to long-press; not by a tap, nor by a finger held as long but moved, which reads nothing either; and the lift after it makes no click on the page it went to); and, on a launch with no flag set, that a write asked for while signed out sends nothing and that, signed in, the Costume page opens the editor and a write reaches Hiroba. It then searches the app's data folder for anything the session left behind, and for every form token the stand-in handed out, and checks the pictures kept there are named by hashes alone. In the report it prints, every check is `true` except `tokenInRendererDom` and `partitionsFolder`, which are `false`; the my-page read counts are `1`, `2` and `1`; and `userDataHits` is empty. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable exe in `release/`. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
@@ -103,22 +102,29 @@ The installers are not code-signed, so Windows SmartScreen warns before the firs
 
 ### Writes
 
-The desktop app can change one thing on Hiroba so far: the costume. No kind of write has been
-verified against the real site yet, so **no packaged build can send one**. A kind that is not
-verified opens only in an unpackaged run started with `ABTH_UNVERIFIED_WRITES=1`; a packaged build
-ignores that variable. Android sends no write at all for now. The costume is changed on
-[the Costume page](#the-costume-page), and that page opens in every run: where the run may not
-change the costume, it shows the My Don portrait and says it is not open in this build yet, reads
-nothing from the editor and has no control.
+The app can change one thing on Hiroba so far: the costume. Every write is open in every build, on
+both platforms: the desktop in development, the installer and the portable exe, and the Android
+debug and release APKs. There is no flag to set and nothing to unlock. The costume is changed on
+[the Costume page](#the-costume-page).
 
 Every write goes the same way: read the editor for a fresh form token and the whole set, keep an
-undo record in `undo.json` in the app's data folder, send the pre-check, send the save exactly
-once, and read the whole set back. The set read back decides the outcome, not Hiroba's answer.
-While a kind is not verified, each write also reads your title on my page before and after. No
-request is retried, and no post goes out between 05:00 and 07:00 JST, Hiroba's daily maintenance:
-the clock is looked at before a write starts and again just before each post.
+undo record, send the pre-check, send the save exactly once, and read the whole set back. The set
+read back decides the outcome, not Hiroba's answer. The undo record is `undo.json` in the app's
+data folder on the desktop, and the `abth-undo` database in the app page's IndexedDB on Android; a
+write whose record cannot be kept is not sent. The record holds the sets and whose they are, under
+your taiko number, never a token or a cookie, and an undo spends it. No request is retried, and no
+post goes out between 05:00 and 07:00 JST, Hiroba's daily maintenance: the clock is looked at
+before a write starts and again just before each post.
 
-Two more variables apply to unpackaged runs only: `ABTH_DEV_NOW` (an ISO time) fixes the clock the
+A kind of write that has not been made for real from a platform also reads your title on my page
+before and after, to see that nothing else moved: six requests, not four. `LIVE_CHECKED_WRITES` in
+`src/hiroba-session/live-checked-writes.ts` lists, for each platform, the kinds that have. That
+list decides those two reads and nothing else: it opens nothing and shuts nothing. The desktop's
+costume is on it (two writes of the user's, applied and read back on 2026-09-27); Android's list is
+empty until the first real Android write has been made and recorded (see
+[The first real Android write](#the-first-real-android-write)).
+
+Two variables apply to unpackaged desktop runs only: `ABTH_DEV_NOW` (an ISO time) fixes the clock the
 maintenance check uses, for tests, and `ABTH_DEBUG_SAVE_READS=1` keeps each page a read brings back
 in the data folder's `debug` folder, named after the page, with every form token replaced by
 `<tckt>`. Every answer is also kept in `debug\history`, in the order it came and with its
@@ -152,8 +158,6 @@ a bar at the bottom edge of the window, which stays there as the page scrolls.
   progress and the outcome in place of the editor until **Back**; the undo on offer, which stays
   across restarts, is on this page and nowhere else. There is no Snackbar: the outcome and the
   undo are already in front of you.
-- **Where the costume may not be changed** (Android for now, and packaged builds), the page shows
-  the portrait and why, and nothing else: it reads nothing from the editor.
 
 ### The costume preview
 
@@ -163,7 +167,7 @@ query. The platform fetches it with the session and hands the window a `data:` U
 address nor the cookie reaches the window. It asks once when the page is first shown, then once per
 pause in the picks (300 ms), one request at a time and never retried, and nothing while the page is
 not shown; a set already drawn is shown again without asking, after a visit to another page too. It
-is a read, so no write gate stands in front of it, and Android allows it too. A picture that does
+is a read, so both platforms allow it. A picture that does
 not come leaves "Preview unavailable" and a code for a report; the editor works without it. With
 `ABTH_DEBUG_SAVE_READS=1`, only the latest picture is kept, as `debug\imgsrc_mydon.php.png`, and
 none in `debug\history`.
@@ -290,93 +294,6 @@ each is kept in `debug\history`, named by its path alone. On Android, the WebVie
 decides what the native HTTP client sends: Hiroba's session is kept for Hiroba's domain alone, so
 the picture host never gets it, though a cookie the picture host set itself would go back to it.
 
-## The first real costume write
-
-The first real write of each kind is made by you, on the desktop, with your own account. Start with
-a single colour. The app has only ever written to the stand-in; this checks that Hiroba accepts a
-post from the app at all.
-
-**Before you start.** Pick a time outside 05:00–07:00 JST. Close any other copy of the app. The run
-below uses the same data folder as the installed app, `%APPDATA%\A Better Taiko Hiroba`, so it
-opens signed in if you are signed in there. A plain `bun run dev`, against the stand-in, keeps its
-own folder and never touches this one.
-
-**1. Start the development run with the gate open.** From this folder, in Git Bash:
-
-```bash
-ABTH_UNVERIFIED_WRITES=1 ABTH_DEBUG_SAVE_READS=1 bun run dev -- --real
-```
-
-or in PowerShell:
-
-```powershell
-$env:ABTH_UNVERIFIED_WRITES = "1"; $env:ABTH_DEBUG_SAVE_READS = "1"; bun run dev -- --real
-```
-
-The app reads your page as usual (sign in first if it asks). The Costume page now offers the
-editor; only a run started this way lets it.
-
-**2. Open the editor and check it.** Click the portrait, which goes to the Costume page: one read
-of `mypage_kisekae.php`, then one of `imgsrc_mydon.php` for the picture at the top, which shows
-your Don as it is dressed now. Under **いろ**, each of かお, どう and てあし outlines the colour you
-wear; under **きせかえ**, each slot highlights the item you wear, or はずす. **Changes** says
-"Nothing changed yet."
-
-**3. Change one colour, and nothing else.** Under いろ, pick かお (or どう, or てあし) and press a
-different swatch; the picture redraws in it. **Changes** must list exactly one line, such as
-`かお: #8 → #3`. Do not touch きせかえ.
-
-**4. Review and save.** Press **Review**. The page repeats the one change, and asks you to tick
-"This is the first write of this kind from the app…", noting that it also reads your title before
-and after. Tick it and press **Save to Hiroba**. The page shows "Saving… then reading it back"
-while the app sends, in this order and once each (a picture of the set or of an item, asked for
-as you picked, may come before or after these, never between them):
-
-1. `GET mypage_top.php`: your title, before — read first, since my page's forms issue a token too;
-2. `GET mypage_kisekae.php`: a fresh token and the whole set, checked against what the editor showed;
-   the last page read before the posts, so its token is the one Hiroba accepts;
-3. `POST ajax/check_ip_kisekae.php`: the pre-check, which changes nothing; only the answer
-   `{"result":false}` lets the app go on;
-4. `POST ajax/change_mydon.php`: the save, sent once;
-5. `GET mypage_kisekae.php`: the whole set read back;
-6. `GET mypage_top.php`: your title, after.
-
-**5. Read what it says.**
-
-- "Saved. Hiroba now shows the new costume.", in green, and **Undo last costume change** under
-  it: it worked. The read-back shows exactly the one colour changed and the title unchanged.
-- "Hiroba didn't accept the app's request. Nothing was changed.", with a code for a report: the
-  pre-check did not answer `false`. Hiroba may refuse posts from a client that is not a browser.
-  Nothing was saved. Stop here and keep the code.
-- "Hiroba asked for a confirmation this app does not give yet…": nothing was saved. Stop here.
-- Anything else says whether something may have changed. "Couldn't read the result back" means
-  use **Read again** and look; do not save again first.
-
-**6. Undo.** Press **Undo last costume change** on the Costume page, where it stays across
-restarts. It is a write like the first, the same six requests, from the colour you set back to the
-one you had. Expect "Undone. Hiroba shows the
-costume as it was." If the costume was changed anywhere else in between, the undo stops without
-sending the save and says so.
-
-**7. Check.** Press **Read again** on the Costume page, and see all eight values as they were
-before step 3. Close the app.
-
-**What is left on disk.** `%APPDATA%\A Better Taiko Hiroba\debug` holds the pages the run read
-(`mypage_kisekae.php.html`, `mypage_top.php.html`, `imgsrc_danlabel.php.png`,
-`imgsrc_mydon.php.png` and a `.json` for each), with each form token replaced; they carry your
-nickname and taiko number, so delete them once they are not needed. If an earlier version of the
-app left `last-read.html` and `last-read.json` there, delete those too: they carry the same.
-
-`undo.json` there keeps, under your taiko number, the undo record of your last change not yet
-undone, and a write whose end is not known yet; never a token. The undo in step 6 spends the
-record, so after it your entry is gone and the file holds no taiko number. If you stop after step
-5, the record, with your taiko number, stays there until it is undone.
-
-**Then.** Tell the session the outcome, the codes shown if any, so the write is recorded with the
-other executed writes and in the wiki. The next check is a きぐるみ and its undo, the same way;
-after both, costume writes can be marked verified for the desktop in a commit of their own, and
-only then can a packaged build send them.
-
 ## Android
 
 | Script | What it does |
@@ -411,6 +328,90 @@ command it starts, so use the scripts rather than a bare `bunx cap run`.
 key's random password. Git ignores both, and the password is printed nowhere. **Back up both files
 outside git.** A release build signed with another key cannot update an installed one; you would
 have to uninstall it first.
+
+### Costume writes on Android
+
+A write on Android is the desktop's own, over Capacitor's HTTP client. A post is one native call,
+with its form already encoded in the order the page's form holds it and a `Content-Type` of the
+app's own, since Capacitor writes no body without one. Capacitor is told not to follow a post's
+redirects: a 301, 302 or 303 is followed in the app with one GET that has no body, as the desktop
+does, and a 307 or 308 is handed back unfollowed. A write is one turn of the queue, all its
+requests: no read and no picture goes out between them. The WebView's cookie store is written to
+disk after each write, and the undo record is in IndexedDB, written before the first post, or the
+write is not sent. The port also checks every call's arguments, as the desktop's main process does
+for its window. Nothing is shut by the build: the release APK writes as the debug one does, and the
+list that decides the two extra reads is the one [Writes](#writes) describes.
+
+What the platform's own network stack does with a post has not been seen yet. The rehearsal below
+shows it against the stand-in, with nothing at stake; the first real write then checks it against
+Hiroba.
+
+### Rehearsal against the stand-in
+
+Run the debug app against the stand-in as in [Android](#android) above, with `bun run android:live`,
+and sign in to the stand-in. Read what it saw from this computer, at
+`http://hiroba.<LAN IP>.sslip.io:8807`: `/__log` (every request, as `METHOD /path`;
+`/__log-reset` clears it) and `/__posts` (each ajax post: its headers, its field names in order,
+and whether its token held; `/__posts?reset=1` clears it). Each row is one try; clear both first.
+
+| Do | Expect |
+|---|---|
+| Change one colour, save. | `/__log` has the six requests, once each: `GET /mypage_top.php`, `GET /mypage_kisekae.php`, `POST /ajax/check_ip_kisekae.php`, `POST /ajax/change_mydon.php`, `GET /mypage_kisekae.php`, `GET /mypage_top.php`. Each post in `/__posts` has `xRequestedWith` `XMLHttpRequest`, an `origin`, a `referer` ending `/mypage_kisekae.php`, `contentType` `application/x-www-form-urlencoded; charset=UTF-8`, `accept` `application/json, text/javascript, */*; q=0.01`, `fields` `_tckt` and then the eight values in the form's order, and `ticketMatched` true. The outcome is "Saved". `connection` is what the platform sent: the app asks for none, and whether to send `Connection: close` on a post is a later choice for this field to inform. |
+| `/__post-to-login?on=1`, then save. | The pre-check post is answered with a redirect to the login page. `/__log` shows one `GET /login.php` after it and then the probe GET of the editor, never a second post. The outcome is "Hiroba didn't accept the app's request. Nothing was changed.", and the session is still good. |
+| `/__post-redirect?status=303` (then 301 and 302), then save. | After `POST /ajax/check_ip_kisekae.php` the log shows `GET /mypage_top.php`, one request, and never a second post. The write stops before its save. |
+| `/__post-redirect?status=307` (then 308), then save. | Exactly one `POST /ajax/check_ip_kisekae.php` in the log and nothing after it: the answer was handed back unfollowed, and the write stops before its save. |
+| `/__post-redirect?status=302&rotate=1`, then save. | The redirect carries a new `_token_v2` and ends the old one. The request after the post, and every later one, carries the new token (the old one no longer works), a read after it succeeds, and after the app is killed and reopened it is still signed in. This is the row that shows whether Android stores a cookie set on an answer it did not follow. |
+| `/__noop-save`; `/__next-result?code=705`; `/__expire-on-save`; each then save. | `notApplied`, unchanged; `notApplied` refused with code 705, and no second post; `sessionGone` after the save, with the pending write kept. |
+| Swipe the app away right after "Saved", reopen it, open the Costume page. | Still signed in. The page reads the editor and offers **Undo last costume change** with its time, and Undo restores the set. |
+| Background the app for ten seconds while a save is held (`/__hold-precheck?on=1`). | The write finishes when the app returns, or, if Android killed it, opening the Costume page settles it. |
+| Long-press the portrait (do this one on a release build first: it needs no write). | The Costume page opens, with no context menu, no selection and no odd vibration. |
+
+### The first real Android write
+
+Made by you, with your own account, in the app, on the debug APK on your tablet and your PC (your
+call, 2026-10-02). No agent presses Sign in, Save or Undo against the real site. Start with a
+colour, then a きぐるみ and its undo. The desktop's costume writes have been made for real; the
+Android ones have not, so until yours is recorded an Android costume write also reads your title on
+my page before and after.
+
+**Before.**
+
+- [ ] The rehearsal above passed.
+- [ ] The time is outside 05:00–07:00 JST (the app refuses inside it too).
+- [ ] Nothing else changes this costume during the test: not the desktop app, not the site (an undo stops if the set moved).
+- [ ] Build and install the debug app: `bun run android:run -- <adb serial>`. Its home-screen entry reads "A Better Taiko Hiroba (debug)".
+- [ ] Clear that app's data (Settings > Apps > the debug app > Storage), so no stand-in state is left.
+- [ ] Turn wireless debugging off, and run no `run-as` and no DevTools until the test is over (see [Signing in for real](#signing-in-for-real)).
+- [ ] Sign in, in the app. Settings shows who is signed in.
+
+**Part 1: one colour.**
+
+1. [ ] The Overview reads your page (one request). The My Don portrait shows a small edit badge.
+2. [ ] Long-press the portrait for about half a second (a tap does nothing; the menu's Costume entry goes to the same page). The Costume page opens and reads the editor (`mypage_kisekae.php`) and Hiroba's picture of the set (`imgsrc_mydon.php`). Note any Android menu or vibration.
+3. [ ] Under いろ, each of かお, どう and てあし outlines the colour you wear; **Changes** says "Nothing changed yet."
+4. [ ] Pick a different colour for かお only. **Changes** lists exactly one line, such as `かお: #8 → #3`. Touch nothing under きせかえ.
+5. [ ] **Review**, then **Save to Hiroba** (the bar at the bottom). It reads "Saving… then reading it back". The app sends six requests, once each, in this order (the tablet does not show them; the rehearsal did): `GET mypage_top.php`, `GET mypage_kisekae.php`, `POST ajax/check_ip_kisekae.php`, `POST ajax/change_mydon.php`, `GET mypage_kisekae.php`, `GET mypage_top.php`.
+6. [ ] The result is "Saved. Hiroba now shows the new costume.", in green, with **Undo last costume change** and when it was made under it. Compare with Hiroba's own site or app.
+7. [ ] **Kill test.** Before pressing Undo, swipe the app away in Recents and reopen it. It must open signed in and read your page. Open the Costume page: it reads the editor, and must offer **Undo last costume change** with the time.
+8. [ ] Press **Undo last costume change**. It reads "Undoing… then reading it back", then "Undone. Hiroba shows the costume as it was." Check all eight values on Hiroba's side.
+
+**Part 2: a きぐるみ and its undo.**
+
+9. [ ] On the Costume page, under きせかえ, pick a きぐるみ you own. The warning says it takes off あたま, からだ, メイク and ぷちキャラ; **Changes** lists those removals.
+10. [ ] Review and save as in step 5. Hiroba shows the きぐるみ with the four slots empty. The picture on the page and the portrait match.
+11. [ ] **Undo last costume change.** One save restores all eight values. Check on Hiroba's side.
+12. [ ] **Read again** (the round button, or pull the page down): **Changes** says "Nothing changed yet." and the values are as they were before step 4.
+
+**If something else shows.**
+
+- "Hiroba didn't accept the app's request. Nothing was changed.": the pre-check did not answer `false`. Stop and keep the code shown.
+- "Hiroba refused the change (code 705)", with Hiroba's own words 更新に失敗しました。再度画面の読み込みを行ってください。: stop, and do not retry. On the desktop this meant the token was not from the last page read before the posts, which is fixed there. Report the codes.
+- "Couldn't read the result back" or "The app stopped before it knew how this ended": use **Read again** on the Costume page and look at the values before anything else.
+- Asked to sign in again after the kill test: report it.
+
+**Report to the session.** The outcome text and the codes on screen; the Changes lines; whether Hiroba's own screen agrees; the long-press behaviour; whether the kill test kept the session and the undo. The session records it with the other executed writes and in the wiki.
+
+**After.** Undo anything left. Sign out. Uninstall the debug app (its data, with the undo records, goes with it, so only after the undo). Then, in a commit of its own, `LIVE_CHECKED_WRITES.android` lists `costume`, with the test that holds both lists.
 
 ## Where the session lives
 
@@ -454,7 +455,8 @@ no URL, header, cookie, taiko number, title or medal id.
   plate or the portrait.
 - **Android:** the app page's IndexedDB, `abth-pictures`, under the same names. The system may drop
   it when storage runs short, which costs only fetches. Live reload loads the page from another
-  origin, so a run against the stand-in keeps its pictures apart from the installed build's.
+  origin, so a run against the stand-in keeps its pictures, and its undo records (`abth-undo`, a
+  database of its own that no `PICTURE_EPOCH` clears), apart from the installed build's.
 
 Nothing in the app deletes a picture but a new `PICTURE_EPOCH` in
 `src/hiroba-session/picture-store.ts`: the next launch clears whatever an older one kept. To clear
@@ -463,13 +465,17 @@ them by hand, delete the `pictures` folder, or clear the Android app's data.
 ## Signing in for real
 
 Debug builds let any computer paired with the device over adb open the app's WebViews in DevTools
-and read its files with `run-as`. So:
+and read its files with `run-as`. The first real Android write is made on the debug APK, on your
+own tablet and PC (your call, 2026-10-02). So:
 
-- Sign in with a real account only on the signed release build (`android:keystore` once, then
-  `android:release` and `android:install-release`). On Windows, use the packaged or portable exe.
-- Uninstall the debug build, or clear its data, before a real sign-in on that device.
-- Never run `run-as` or DevTools against the app while a real session exists on the device.
+- Sign in with a real account on the signed release build (`android:keystore` once, then
+  `android:release` and `android:install-release`), or on the debug APK for the first real
+  Android write ([The first real Android write](#the-first-real-android-write) says how). On
+  Windows, use the packaged or portable exe.
+- Turn wireless debugging off before a real sign-in on a debug build, and never run `run-as` or
+  DevTools against the app while a real session exists on the device.
+- Uninstall the debug build, or clear its data, once the test is over, after the undo.
 
 Automated checks and agents never press "Sign in" against the real sites: not in a packaged build,
-not under `dev -- --real`, and not on a release APK. The end-to-end run and the smoke test use the
-stand-in or stop at the first screen.
+not under `dev -- --real`, not on a release APK and not on the debug APK. The end-to-end run and
+the smoke test use the stand-in or stop at the first screen.
