@@ -5,6 +5,7 @@ export const en: Messages = {
   "language.system": "System default ({name})",
   "nav.overview": "Overview",
   "nav.costume": "Costume",
+  "nav.nameTitle": "Name & title",
   "nav.favorites": "Favourites",
   "nav.settings": "Settings",
   "nav.menu": "Menu",
@@ -110,6 +111,47 @@ export const en: Messages = {
   "costume.undoLast": "Undo last costume change",
   "costume.undoWhen": "Changed {time}",
   "costume.undoing": "Undoing… then reading it back",
+  "title.heading": "Title",
+  "title.reading": "Reading your titles from Hiroba…",
+  "title.pick": "Choose a title",
+  "title.count": "Titles to choose from: {count}",
+  "title.noMatch": "No title matches.",
+  "title.none": "Hiroba lists no titles for you to choose from.",
+  "title.current": "Current",
+  "title.shared":
+    "{count} of your titles have this name, so the app cannot tell which one you wear.",
+  "title.notListed":
+    "Your current title is not in this list. It may be built from parts, which this version cannot read or change back.",
+  "title.reload": "Read the list again",
+  "title.undoLast": "Undo last title change",
+  "title.undoBack": "Goes back to: {title}",
+  "title.undoUnresolved":
+    "This undo is not available: your previous title is not in today's list, so the app cannot set it again.",
+  "title.undoAmbiguous":
+    "This undo is not available: your previous title shares its name with other titles. Pick it from the list yourself.",
+  "title.undoNoTitle":
+    "This undo is not available: you had no title before, and this version cannot remove one.",
+  "name.heading": "Name",
+  "name.field": "New name",
+  "name.counter": "{count} / {max}",
+  "name.siteWarning":
+    "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
+  "name.faqRule":
+    "Hiroba's help page says: 「ドンだーネームは、ひらがなと記号「ー、～、！、？」が入力可能です。５文字までです。」 Other names have been seen, but the app cannot promise Hiroba takes them.",
+  "name.outsideFaq":
+    "Outside what Hiroba's help page allows. Hiroba may refuse it, or may not let you change back.",
+  "name.wide":
+    "Wider than ten half-width characters (a full-width character counts as two). Hiroba may refuse it.",
+  "name.same": "That is your name already.",
+  "name.closed":
+    "Hiroba says names can't be changed right now: 今はドンだーネームは変更できないドン！",
+  "name.unknownState":
+    "This version couldn't tell whether Hiroba is taking name changes right now. You can still try.",
+  "name.mayNotRevert":
+    "Hiroba may not let you change it back right away. Choose a name you are happy to keep.",
+  "name.undoLast": "Change the name back",
+  "name.undoBack": "Goes back to: {name}",
+  "name.undoMayFail": "Hiroba may refuse this too. If it does, the name stays as it is.",
   "write.applied": "Saved. Hiroba now shows the new costume.",
   "write.undone": "Undone. Hiroba shows the costume as it was.",
   "write.siteNote": "Hiroba answered code {code}, but the read-back shows the change.",
@@ -158,4 +200,42 @@ export const en: Messages = {
   "write.before": "Before",
   "write.planned": "Planned",
   "write.now": "Now",
+  "write.title.applied": "Saved. Hiroba now shows the new title.",
+  "write.title.undone": "Undone. Hiroba shows the title as it was.",
+  "write.title.unchanged":
+    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the title as it was.",
+  "write.title.diverged": "The title did not end up as planned. Compare below.",
+  "write.title.crossChanged": "Your costume changed too.",
+  "write.title.crossUnknown":
+    "Saved, but your costume could not be read again to check it. Look at it on your page.",
+  "write.title.changedSincePreview":
+    "Your title was changed elsewhere since the list was opened. Nothing was sent; the page now shows it as it is.",
+  "write.title.undoStale":
+    "Your title was changed elsewhere after that change, so it was not undone. The undo is no longer offered.",
+  "write.title.nothingToChange":
+    "That is your title already; Hiroba shows only its name. Nothing was sent.",
+  "write.title.needsConfirmation":
+    "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
+  "write.title.refused1": "Hiroba says no title was chosen.",
+  "write.title.refused5": "Hiroba says you do not own that title.",
+  "write.title.refused6": "Hiroba reported an error and asks you to choose again.",
+  "write.name.applied": "Saved. Hiroba now shows the new name.",
+  "write.name.undone": "Undone. Hiroba shows the name as it was.",
+  "write.name.unchanged":
+    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the name as it was.",
+  "write.name.diverged": "The name did not end up as planned. Compare below.",
+  "write.name.changedSincePreview":
+    "Your name was changed elsewhere since this page was read. Nothing was sent; the page now shows it as it is.",
+  "write.name.undoStale":
+    "Your name was changed elsewhere after that change, so it was not changed back. The undo is no longer offered.",
+  "write.name.nothingToChange": "That is your name already. Nothing was sent.",
+  "write.name.refused2": "Hiroba could not update the name.",
+  "write.invalid.titleNotOwned": "that title is not in your list",
+  "write.invalid.titleUnresolved": "the title to go back to is not in your list",
+  "write.invalid.titleAmbiguous": "more than one of your titles has the name to go back to",
+  "write.invalid.nameEmpty": "the name is empty",
+  "write.invalid.nameEdge": "the name starts or ends with a space",
+  "write.invalid.nameTooLong": "the name is longer than Hiroba's form takes",
+  "write.invalid.nameControl": "the name has a character that cannot be sent",
+  "write.invalid.nameClosed": "Hiroba is not taking name changes right now",
 };

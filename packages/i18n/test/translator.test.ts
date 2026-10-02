@@ -85,6 +85,28 @@ describe("the Costume page's name", () => {
   });
 });
 
+describe("the Name & title page's name", () => {
+  type NameCase = [locale: Locale, name: string];
+  test.each<NameCase>([
+    ["en", "Name & title"],
+    ["ja", "名前と称号"],
+    ["zh-Hans", "名字与称号"],
+    ["zh-Hant", "名字與稱號"],
+  ])("is written as the spec fixed it in %s: %p", (locale, name) => {
+    expect(createTranslator(locale).t("nav.nameTitle")).toBe(name);
+  });
+
+  type TitleCase = [locale: Locale, name: string];
+  test.each<TitleCase>([
+    ["en", "Title"],
+    ["ja", "称号"],
+    ["zh-Hans", "称号"],
+    ["zh-Hant", "稱號"],
+  ])("calls a title what the game terms call it in %s: %p", (locale, name) => {
+    expect(createTranslator(locale).t("title.heading")).toBe(name);
+  });
+});
+
 /** The parameters a message names, in order of name. */
 const paramsOf = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
@@ -106,6 +128,8 @@ const AS_WRITTEN: readonly MessageKey[] = [
   "costume.id",
   "costume.remove",
   "costume.item.label",
+  "name.counter",
+  "name.siteWarning",
 ];
 
 /** Site words a message quotes, which every language quotes as the site writes them. */
@@ -118,6 +142,13 @@ const QUOTED: Readonly<Partial<Record<MessageKey, readonly string[]>>> = {
   "write.needsConfirmation": [
     "これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   ],
+  "write.title.needsConfirmation": [
+    "この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
+  ],
+  "name.faqRule": [
+    "ドンだーネームは、ひらがなと記号「ー、～、！、？」が入力可能です。５文字までです。",
+  ],
+  "name.closed": ["今はドンだーネームは変更できないドン！"],
 };
 
 describe.each([...LOCALES])("the %s catalog", (locale) => {

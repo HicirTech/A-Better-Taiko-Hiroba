@@ -35,6 +35,8 @@ export interface Messages {
   "nav.overview": string;
   /** The page of the costume editor. 日本語 names it with the site's own word, きせかえ. */
   "nav.costume": string;
+  /** The page of the title and the Donder name. */
+  "nav.nameTitle": string;
   /** The page of the 大好きな曲 and the お気に入り folder. */
   "nav.favorites": string;
   "nav.settings": string;
@@ -220,6 +222,70 @@ export interface Messages {
   /** Param: {time}, already formatted: when the write the undo would reverse was made. */
   "costume.undoWhen": string;
   "costume.undoing": string;
+  /** The Title section's heading, and the title's name in a list of changes (costume.change's {part}). */
+  "title.heading": string;
+  /** The Title section while the list of owned titles is read from Hiroba, the first time or again. */
+  "title.reading": string;
+  /** The title picker's label. */
+  "title.pick": string;
+  /** Under the picker. Param: {count}, how many titles the account may choose from. */
+  "title.count": string;
+  /** The picker's list when what was typed matches no title. */
+  "title.noMatch": string;
+  /** Hiroba's list holds no title to choose from. */
+  "title.none": string;
+  /** The chip on the option that is the title worn now. */
+  "title.current": string;
+  /**
+   * The worn title's name is several titles' of the list, so the app cannot tell which is worn.
+   * Param: {count}, how many titles of the list have the name.
+   */
+  "title.shared": string;
+  /** The worn title's name is in no title of the list: it may be one built from parts. */
+  "title.notListed": string;
+  /** Reads the list of titles again, after a read of it failed. */
+  "title.reload": string;
+  /** The Title section's way back from the last title change, while it is still offered. */
+  "title.undoLast": string;
+  /** Under the undo button. Param: {title}, the previous title's name, as Hiroba writes it. */
+  "title.undoBack": string;
+  /** Why the undo is shut: the previous title's name is in no title of today's list. */
+  "title.undoUnresolved": string;
+  /** Why the undo is shut: the previous title's name is several titles' of today's list. */
+  "title.undoAmbiguous": string;
+  /** Why the undo is shut: there was no title before, and a title cannot be taken off here. */
+  "title.undoNoTitle": string;
+  /** The Name section's heading. 日本語 names it with the site's own word, ドンだーネーム. */
+  "name.heading": string;
+  /** The name field's label. */
+  "name.field": string;
+  /** Under the name field. Params: {count}, how many characters it holds, and {max}. */
+  "name.counter": string;
+  /** Hiroba's warning above its own name field, as the site writes it, in every language. */
+  "name.siteWarning": string;
+  /**
+   * What Hiroba's help page says a name may be, quoting its sentence as the site writes it, and
+   * that other names have been seen.
+   */
+  "name.faqRule": string;
+  /** Advice: the name has a character outside the help page's set, or is past its five. */
+  "name.outsideFaq": string;
+  /** Advice: the name is wider than the ten half-width characters the form seems to take. */
+  "name.wide": string;
+  /** The name typed is the name worn. */
+  "name.same": string;
+  /** Hiroba says names cannot be changed now, quoting its sentence as the site writes it. */
+  "name.closed": string;
+  /** My page did not say whether Hiroba takes a name change now: the field stays open. */
+  "name.unknownState": string;
+  /** In the review: Hiroba may not let the name be changed back right away. */
+  "name.mayNotRevert": string;
+  /** The Name section's way back from the last name change, while it is still offered. */
+  "name.undoLast": string;
+  /** Under the undo button. Param: {name}, the previous name, as Hiroba writes it. */
+  "name.undoBack": string;
+  /** Under the undo button: Hiroba may refuse a change back as it may refuse any change. */
+  "name.undoMayFail": string;
   /** A write that read back as planned. */
   "write.applied": string;
   /** An undo that read back as planned. */
@@ -276,6 +342,50 @@ export interface Messages {
   "write.before": string;
   "write.planned": string;
   "write.now": string;
+  /**
+   * A title's write, in the words of "write.*" for the costume's: the title is what is saved,
+   * undone, compared and judged here. Each has the costume's key, the one without "title." as
+   * its base.
+   */
+  "write.title.applied": string;
+  "write.title.undone": string;
+  "write.title.unchanged": string;
+  "write.title.diverged": string;
+  /** The costume, which is read before and after a title write, moved during it. */
+  "write.title.crossChanged": string;
+  /** Saved as planned, and the costume read to check nothing else moved did not come back. */
+  "write.title.crossUnknown": string;
+  "write.title.changedSincePreview": string;
+  "write.title.undoStale": string;
+  "write.title.nothingToChange": string;
+  /** Carries the site's own confirmation text (check_ip_title), which this version does not answer. */
+  "write.title.needsConfirmation": string;
+  /** Hiroba's codes for a refused title, which come with no message of their own. */
+  "write.title.refused1": string;
+  "write.title.refused5": string;
+  "write.title.refused6": string;
+  /** A rename's write, as the costume's "write.*" are. The title, read before and after, is the costume's "write.cross*". */
+  "write.name.applied": string;
+  "write.name.undone": string;
+  "write.name.unchanged": string;
+  "write.name.diverged": string;
+  "write.name.changedSincePreview": string;
+  "write.name.undoStale": string;
+  "write.name.nothingToChange": string;
+  /** Hiroba's code for a rename it could not carry out, which comes with no message of its own. */
+  "write.name.refused2": string;
+  /**
+   * The words of {field} in "write.invalidTarget", for a title or a name this app refused before
+   * sending it. A phrase, with no capital and no full stop of its own.
+   */
+  "write.invalid.titleNotOwned": string;
+  "write.invalid.titleUnresolved": string;
+  "write.invalid.titleAmbiguous": string;
+  "write.invalid.nameEmpty": string;
+  "write.invalid.nameEdge": string;
+  "write.invalid.nameTooLong": string;
+  "write.invalid.nameControl": string;
+  "write.invalid.nameClosed": string;
 }
 
 export type MessageKey = keyof Messages;
