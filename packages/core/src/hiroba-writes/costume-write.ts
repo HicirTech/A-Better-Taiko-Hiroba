@@ -2,16 +2,15 @@ import {
   type CostumeEditorReading,
   type CostumeSwatch,
   parseCostumeEditorPage,
-  parseProfilePage,
 } from "../hiroba-dom-parser";
 import type { CostumeSet } from "../hiroba-models";
 import { isErr, ok, type Result } from "../operation-results";
 import { checkCostumeTarget, costumeAfter, sameCostume } from "./costume-rule";
+import { TITLE_STAYS } from "./cross-checks";
 import { readHirobaPage } from "./read-page";
 import { runWrite } from "./run-write";
 import type {
   AjaxPost,
-  CrossCheck,
   HirobaReadFailure,
   NotAppliedReason,
   ReadDeps,
@@ -26,7 +25,6 @@ import type {
 const EDITOR_PATH = "mypage_kisekae.php";
 const PRECHECK_PATH = "ajax/check_ip_kisekae.php";
 const SAVE_PATH = "ajax/change_mydon.php";
-const MY_PAGE_PATH = "mypage_top.php";
 
 /** The costume editor as the interface shows it: the set and the page's own lists, no token. */
 export interface CostumeEditorView {
@@ -71,20 +69,6 @@ const COSTUME_CODES: SaveCodes = {
       ? { kind: "refused", code: save.code, message: save.message }
       : { kind: "failed", code: save.code };
   },
-};
-
-/**
- * The title on my page, read before and after a costume write while costume writes are not yet
- * verified: the pre-check exists to warn that a title or item that cannot be combined will come
- * off, and if it ever misjudged, the title is what would move.
- */
-const TITLE_STAYS: CrossCheck<string> = {
-  read: (deps) =>
-    readHirobaPage(deps, MY_PAGE_PATH, (html) => {
-      const page = parseProfilePage(html, "");
-      return isErr(page) ? page : ok(page.value.title);
-    }),
-  same: (left, right) => spaced(left) === spaced(right),
 };
 
 const readEditor = (deps: ReadDeps) => readHirobaPage(deps, EDITOR_PATH, parseCostumeEditorPage);
@@ -141,9 +125,4 @@ export function changeCostume(
   deps: WriteDeps<CostumeSet>,
 ): Promise<WriteOutcome<CostumeSet>> {
   return runWrite(COSTUME_WRITE, input, deps);
-}
-
-/** Whitespace as one space and none at the ends, non-breaking spaces included. */
-function spaced(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
 }
