@@ -65,7 +65,10 @@
  * post without X-Requested-With gets the site's error page at 200; one without a session is sent to
  * the login page. Two more hooks cover every request: /__log (each non-hook request so far, as
  * "METHOD /path"; /__log-reset clears it) and /__post-to-login?on=1 or 0 (every ajax post answers
- * with a redirect to the login page, the session left as it was).
+ * with a redirect to the login page, the session left as it was) and /__post-redirect?status=301|302|
+ * 303|307|308 with rotate=0|1 (the next ajax post is answered with that status and a Location of
+ * my page, `/mypage_top.php?again`; with rotate=1 it also sets a new session token on that answer
+ * and ends the old one, as /__rotate does for a read; no status clears it).
  *
  * Desktop, on loopback:
  *   bun scripts/mock-hiroba.ts
@@ -111,6 +114,9 @@ let rotateNext = false;
 let holdIdForm = false;
 let sendOffsite = false;
 let postToLogin = false;
+/** What /__post-redirect asked the next ajax post to be answered with, or null. */
+let redirectNextPost: { status: number; rotate: boolean } | null = null;
+const POST_REDIRECT_STATUSES: readonly number[] = [301, 302, 303, 307, 308];
 /** Set while /__hold-read?on=1 holds every read of my page unanswered; lets them all go. */
 let releaseReads: (() => void) | null = null;
 let readsHeld: Promise<void> = Promise.resolve();
@@ -310,6 +316,22 @@ function myPage(): string {
   <ul id="songList">${folder}</ul></div></div>`;
 }
 
+/**
+ * An ajax post answered with a redirect to my page. With `rotate`, the answer also carries a new
+ * session token and the old one ends, as a rotated token on a redirect hop does for a read.
+ */
+function redirectedPost(status: number, rotate: boolean): Response {
+  const headers: Record<string, string> = { location: "/mypage_top.php?again" };
+  if (rotate) {
+    sessions.clear();
+    lastIssued = newToken();
+    sessions.set(lastIssued, { cardChosen: true });
+    headers["set-cookie"] =
+      `_token_v2=${lastIssued}; Domain=.${HIROBA_HOST}; Path=/; Max-Age=2592000`;
+  }
+  return new Response(null, { status, headers });
+}
+
 Bun.serve({
   hostname: IP,
   port: HIROBA_PORT,
@@ -400,6 +422,11 @@ Bun.serve({
         }
         if (postToLogin || !session?.cardChosen) {
           return redirect("/login.php");
+        }
+        if (redirectNextPost !== null) {
+          const { status, rotate } = redirectNextPost;
+          redirectNextPost = null;
+          return redirectedPost(status, rotate);
         }
         if (pathname === "/ajax/check_ip_kisekae.php") {
           await costume.precheckLetThrough();
@@ -576,6 +603,17 @@ Bun.serve({
       case "/__post-to-login":
         postToLogin = searchParams.get("on") === "1";
         return new Response(postToLogin ? "to login" : "answering");
+      case "/__post-redirect": {
+        const status = Number(searchParams.get("status"));
+        redirectNextPost = POST_REDIRECT_STATUSES.includes(status)
+          ? { status, rotate: searchParams.get("rotate") === "1" }
+          : null;
+        return new Response(
+          redirectNextPost === null
+            ? "answering"
+            : `${redirectNextPost.status}${redirectNextPost.rotate ? " rotating" : ""}`,
+        );
+      }
       default:
         return costume.hook(pathname, searchParams) ?? new Response("not found", { status: 404 });
     }

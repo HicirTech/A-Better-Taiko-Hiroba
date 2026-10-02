@@ -2182,6 +2182,37 @@ try {
     atLogin.reason === "precheckAtLogin" &&
     (await page.evaluate<boolean>("window.abth.isSignedIn()"));
 
+  // A post answered with a redirect is followed with one GET that has no body, as a browser does,
+  // and never sent again: a 302 or 303 ends at my page, which is no answer to a pre-check, and a
+  // 307 or 308, which would repeat the post, comes back as it is. The write stops before its save.
+  const savesBeforeRedirects = await hitsOn("/ajax/change_mydon.php");
+  const redirectRuns: {
+    status: number;
+    stopped: { kind: string; reason?: unknown };
+    log: string[];
+  }[] = [];
+  for (const status of [302, 303, 307, 308]) {
+    await fetch(`${HIROBA}/__post-redirect?status=${status}`);
+    await resetLog();
+    const stopped = await bridgeChange({ ...START, colorLimb: 20 });
+    redirectRuns.push({ status, stopped, log: await requestLog() });
+  }
+  await fetch(`${HIROBA}/__post-redirect`);
+  const THEN_MY_PAGE = [
+    "GET /mypage_kisekae.php",
+    "POST /ajax/check_ip_kisekae.php",
+    "GET /mypage_top.php",
+  ];
+  results.postRedirectFollowedAsABrowserDoes =
+    redirectRuns.every(
+      ({ stopped }) =>
+        stopped.kind === "stoppedBeforeWrite" && stopped.reason === "precheckUnexpected",
+    ) &&
+    redirectRuns.every(({ status, log }) =>
+      sameBesideLanePictures(log, status < 307 ? THEN_MY_PAGE : THEN_MY_PAGE.slice(0, 2)),
+    ) &&
+    (await hitsOn("/ajax/change_mydon.php")) === savesBeforeRedirects;
+
   // Changed elsewhere after a change: its undo stops unsent, says why, and is withdrawn.
   const changedElsewhere = await bridgeChange({ ...START, colorLimb: 20 });
   await readEditorAgain();

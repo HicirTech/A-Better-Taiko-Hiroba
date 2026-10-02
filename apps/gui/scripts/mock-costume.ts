@@ -98,9 +98,12 @@ export interface MockSession {
 export interface PostRecord {
   readonly path: string;
   readonly xRequestedWith: string | null;
+  readonly accept: string | null;
   readonly origin: string | null;
   readonly referer: string | null;
   readonly contentType: string | null;
+  /** `close` when the client asked for the connection to be closed after the post. */
+  readonly connection: string | null;
   readonly fields: readonly string[];
   /** Every field but `_tckt`, whose value is never kept. */
   readonly values: Readonly<Record<string, string>>;
@@ -313,9 +316,11 @@ ${slotTabs}
       posts.push({
         path,
         xRequestedWith: request.headers.get("x-requested-with"),
+        accept: request.headers.get("accept"),
         origin: request.headers.get("origin"),
         referer: request.headers.get("referer"),
         contentType: request.headers.get("content-type"),
+        connection: request.headers.get("connection"),
         fields: [...form.keys()],
         values,
         ticketMatched: session?.ticket !== undefined && form.get("_tckt") === session.ticket,
