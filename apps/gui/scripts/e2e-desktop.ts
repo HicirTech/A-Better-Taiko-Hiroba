@@ -621,13 +621,13 @@ try {
   // 2026-09-29), the crowns silver, gold and donderful.
   type Share = readonly [name: string, percent: string, count: number];
   const RANK_SHARES: readonly Share[] = [
-    ["白粋", "3.9%", 4],
-    ["銅粋", "8.8%", 9],
-    ["銀粋", "17.6%", 18],
-    ["金雅", "30.4%", 31],
-    ["桃雅", "24.5%", 25],
-    ["紫雅", "11.8%", 12],
-    ["虹極", "2.9%", 3],
+    ["White Iki", "3.9%", 4],
+    ["Bronze Iki", "8.8%", 9],
+    ["Silver Iki", "17.6%", 18],
+    ["Gold Miyabi", "30.4%", 31],
+    ["Pink Miyabi", "24.5%", 25],
+    ["Purple Miyabi", "11.8%", 12],
+    ["Rainbow Kiwami", "2.9%", 3],
   ];
   const CROWN_SHARES: readonly Share[] = [
     ["Silver", "78.6%", 11],
@@ -746,13 +746,13 @@ try {
   // else, and the line under the header names the portrait, the first picture that did not come.
   type PanelCount = readonly [id: string, name: string, count: string, left: number, top: number];
   const PANEL_COUNTS: readonly PanelCount[] = [
-    ["rank-8", "虹極", "3", 230, 18],
-    ["rank-5", "金雅", "31", 57, 54],
-    ["rank-6", "桃雅", "25", 141, 54],
-    ["rank-7", "紫雅", "12", 230, 54],
-    ["rank-2", "白粋", "4", 57, 85],
-    ["rank-3", "銅粋", "9", 141, 85],
-    ["rank-4", "銀粋", "18", 230, 85],
+    ["rank-8", "Rainbow Kiwami", "3", 230, 18],
+    ["rank-5", "Gold Miyabi", "31", 57, 54],
+    ["rank-6", "Pink Miyabi", "25", 141, 54],
+    ["rank-7", "Purple Miyabi", "12", 230, 54],
+    ["rank-2", "White Iki", "4", 57, 85],
+    ["rank-3", "Bronze Iki", "9", 141, 85],
+    ["rank-4", "Silver Iki", "18", 230, 85],
     ["crowns-silver", "Silver", "11", 57, 121],
     ["crowns-gold", "Gold", "2", 141, 121],
     ["crowns-donderful", "Donderful", "1", 230, 121],
@@ -794,11 +794,12 @@ try {
     (await attribute("#score-panel", "aria-busy")) === "false" &&
     (await attribute("#score-panel", "role")) === "group" &&
     (await attribute("#score-panel", "aria-label")) === "Score panel" &&
+    // The ranks' names are the page's language, so they carry no mark of their own.
     same(
       await page.evaluate<string[]>(
         `[...document.querySelectorAll("#score-panel dt")].slice(0, 7).map((name) => name.lang)`,
       ),
-      Array(7).fill("ja"),
+      Array(7).fill(""),
     ) &&
     (await panelCountsInPlace(PANEL_COUNTS)) &&
     (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
@@ -879,8 +880,8 @@ try {
     (await readHits()) === readsBeforeLanguage &&
     (await platesAsked()).length === platesBeforeLanguage &&
     (await textOf("#crowns-silver")) === "11 of 14";
-  // Hiroba's own words say they are Japanese on a page in English: the nickname, the medal's
-  // heading and name, and every rank's name; the crowns' English names keep the page's language.
+  // Hiroba's own words say they are Japanese on a page in English: the nickname and the medal's
+  // heading and name; the names of the ranks and the crowns are the page's language.
   const langOf = (selector: string) =>
     page.evaluate<string | null>(
       `document.querySelector(${JSON.stringify(selector)})?.lang ?? null`,
@@ -889,13 +890,9 @@ try {
     (await langOf("#profile h2")) === "ja" &&
     (await langOf("#medal h2")) === "ja" &&
     (await langOf("#medal-name")) === "ja" &&
-    same(
-      await page.evaluate<string[]>(
-        `[...document.querySelectorAll('#ranks [lang="ja"]')].map((node) => node.textContent)`,
-      ),
-      ["白粋", "銅粋", "銀粋", "金雅", "桃雅", "紫雅", "虹極"],
-    ) &&
-    (await page.evaluate<number>(`document.querySelectorAll("#crowns [lang]").length`)) === 0;
+    (await page.evaluate<number>(
+      `document.querySelectorAll("#ranks [lang], #crowns [lang]").length`,
+    )) === 0;
 
   // Read again, from its Fab: one more request, no more.
   await click("#read-again");
@@ -1440,13 +1437,13 @@ try {
   await click("#read-again");
   await waitFor(async () => ((await textOf("#crowns-silver")) === "0 of 0" ? true : undefined));
   const ZERO_RANK_SHARES: readonly Share[] = [
-    ["白粋", "4.0%", 4],
-    ["銅粋", "9.1%", 9],
-    ["銀粋", "18.2%", 18],
-    ["金雅", "31.3%", 31],
-    ["桃雅", "25.3%", 25],
-    ["紫雅", "12.1%", 12],
-    ["虹極", "0.0%", 0],
+    ["White Iki", "4.0%", 4],
+    ["Bronze Iki", "9.1%", 9],
+    ["Silver Iki", "18.2%", 18],
+    ["Gold Miyabi", "31.3%", 31],
+    ["Pink Miyabi", "25.3%", 25],
+    ["Purple Miyabi", "12.1%", 12],
+    ["Rainbow Kiwami", "0.0%", 0],
   ];
   const ZERO_CROWN_SHARES: readonly Share[] = CROWN_SHARES.map(([name]) => [name, "0.0%", 0]);
   const trackOf = (bar: string) =>

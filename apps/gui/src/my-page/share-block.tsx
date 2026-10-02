@@ -10,8 +10,6 @@ export interface ShareItem {
   readonly id: string;
   /** Its name as the legend writes it. */
   readonly name: string;
-  /** The `lang` of its name when it is not the page's, as for Hiroba's rank names. */
-  readonly lang?: string;
   readonly count: number;
   /** A CSS background for its dot and its part of the bar: a colour, or a gradient. */
   readonly colour: string;
@@ -97,7 +95,7 @@ export function ShareBlock({
               aria-hidden
               sx={{ width: 8, height: 8, borderRadius: "50%", background: row.colour, mr: 1 }}
             />
-            <Typography component="span" variant="body2" lang={row.lang}>
+            <Typography component="span" variant="body2">
               {row.name}
             </Typography>{" "}
             <Typography
