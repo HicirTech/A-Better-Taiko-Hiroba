@@ -110,6 +110,36 @@ export interface PostRecord {
   readonly ticketMatched: boolean;
 }
 
+/**
+ * One ajax post as it arrived, for a mock that keeps a list of them: its headers, its field names in
+ * order, its values but the token's, and whether the token it carried was the session's latest.
+ */
+export function postRecordOf(
+  path: string,
+  request: Request,
+  form: URLSearchParams,
+  session: MockSession | undefined,
+): PostRecord {
+  const values: Record<string, string> = {};
+  for (const [name, value] of form) {
+    if (name !== "_tckt") {
+      values[name] = value;
+    }
+  }
+  return {
+    path,
+    xRequestedWith: request.headers.get("x-requested-with"),
+    accept: request.headers.get("accept"),
+    origin: request.headers.get("origin"),
+    referer: request.headers.get("referer"),
+    contentType: request.headers.get("content-type"),
+    connection: request.headers.get("connection"),
+    fields: [...form.keys()],
+    values,
+    ticketMatched: session?.ticket !== undefined && form.get("_tckt") === session.ticket,
+  };
+}
+
 /** The site's error page, as Hiroba answered a post without X-Requested-With (2026-08-09). */
 export const ERROR_SHELL_BODY =
   "<h1>エラー</h1><table><tr><td>リクエストされたページは存在しません</td></tr></table>";
@@ -307,24 +337,7 @@ ${slotTabs}
       form: URLSearchParams,
       session: MockSession | undefined,
     ) {
-      const values: Record<string, string> = {};
-      for (const [name, value] of form) {
-        if (name !== "_tckt") {
-          values[name] = value;
-        }
-      }
-      posts.push({
-        path,
-        xRequestedWith: request.headers.get("x-requested-with"),
-        accept: request.headers.get("accept"),
-        origin: request.headers.get("origin"),
-        referer: request.headers.get("referer"),
-        contentType: request.headers.get("content-type"),
-        connection: request.headers.get("connection"),
-        fields: [...form.keys()],
-        values,
-        ticketMatched: session?.ticket !== undefined && form.get("_tckt") === session.ticket,
-      });
+      posts.push(postRecordOf(path, request, form, session));
     },
 
     /** Settles once pre-checks may be answered: at once, unless /__hold-precheck holds them. */
