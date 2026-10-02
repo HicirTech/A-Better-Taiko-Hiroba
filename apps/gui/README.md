@@ -123,6 +123,11 @@ your taiko number, never a token or a cookie, and an undo spends it. No request 
 post goes out between 05:00 and 07:00 JST, Hiroba's daily maintenance: the clock is looked at
 before a write starts and again just before each post.
 
+Every read of Hiroba goes in the same queue as the writes, on both platforms: your page, the costume
+editor, the list of titles and Hiroba's picture of the set, and a picture's fetch too. A write holds
+the queue for all its requests, so no read and no picture lands between them. A page first shown
+while a write of any kind runs reads when the write has ended, not before.
+
 A kind of write that has not been made for real from a platform also reads one other page before
 and after, to see that nothing else moved: a costume write reads your title on my page (six
 requests, not four), a title write reads your costume (six, not four), and a rename reads your title
@@ -162,7 +167,8 @@ as the page scrolls.
 
 - **Reading.** The editor (`mypage_kisekae.php`) is read once, when the page is first shown in a
   run, and never while another page is shown: an app that opens on the Overview does not read it
-  at all until you go there. After that it is read again only when you press **Read again** on
+  at all until you go there. Shown while a write of any kind runs, it reads when the write has
+  ended. After that it is read again only when you press **Read again** on
   this page, or pull it down on a touch screen, which read the editor here, not your page; a
   write's own read-back brings the set up to date without another read. A draft made over the set
   a read finds unchanged is kept by it; one made over a set that has moved is dropped for the set
@@ -186,8 +192,9 @@ sections' state is the window's, so a pick, a field, a review or an outcome is s
 visit to another page or a read of your page.
 
 - **Reading.** The list of titles you own (`mypage_title_edit.php`, one request) is read once, when
-  the page is first shown in a run, and never at start-up or while another page is shown. After
-  that it is read again only when you press **Read again** here (or pull the page down), which
+  the page is first shown in a run, and never at start-up or while another page is shown; shown
+  while a write of any kind runs, it reads when the write has ended. After that it is read again
+  only when you press **Read again** here (or pull the page down), which
   reads your page and then the list. The nickname has no read of its own: it is the one your page last
   showed, and a write's read-back is put in that copy with no request.
 - **Title.** An owned title is picked by its name from a list you can search (full-width and
