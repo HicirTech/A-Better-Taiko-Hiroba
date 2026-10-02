@@ -67,8 +67,8 @@ export interface AppProps {
 }
 
 /**
- * The app on each page: signed out, the Overview, Costume, Name & title and Favourites show the
- * sign-in card; signed in, the Overview shows the profile, Costume the editor, Name & title the
+ * The app on each page: signed out, the Overview, Costume, Nickname & title and Favourites show the
+ * sign-in card; signed in, the Overview shows the profile, Costume the editor, Nickname & title the
  * editors of the title and the name, and Favourites the favourite songs, the profile and the
  * favourites from the same read. Settings works either way.
  */
@@ -84,7 +84,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
   /** The Costume page, signed in: the one place the editor is read. */
   const onEditorPage = page === "costume" && screen.name === "profile";
-  /** The Name & title page, signed in: the one place the list of titles is read. */
+  /** The Nickname & title page, signed in: the one place the list of titles is read. */
   const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
   /** The session ended under the editor: back to signing in, with what happened. */
   const sessionGone = useCallback(
@@ -279,7 +279,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
   /**
    * Reads again, from the Fab or a pull, as the read on opening does: the editor on the Costume
-   * page, my page and then the list of titles on the Name & title page (the name lives on my page,
+   * page, my page and then the list of titles on the Nickname & title page (the name lives on my page,
    * the titles on their own), my page on any other. Never while a read runs, nor while a save or an
    * undo runs, so no read starts inside a write. The ref turns away a second ask that lands before
    * the Fab is shut.

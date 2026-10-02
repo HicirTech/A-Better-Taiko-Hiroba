@@ -363,7 +363,7 @@ describe("describeOutcome, the name", () => {
     const { comparison } = describeOutcome(outcome, i18n, { kind: "name" });
     expect(comparison?.rows).toEqual([
       {
-        label: { text: "Name" },
+        label: { text: "Nickname" },
         before: { text: "サンプルどん", hirobas: true },
         planned: { text: "あたらしい", hirobas: true },
         now: null,

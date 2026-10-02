@@ -4,7 +4,7 @@ import { isPage, keepPage, keptPage, PAGES } from "../src/navigation/pages";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("PAGES", () => {
-  test("lists the Costume page, then Name & title, between the Overview and Favourites", () => {
+  test("lists the Costume page, then Nickname & title, between the Overview and Favourites", () => {
     expect([...PAGES]).toEqual(["overview", "costume", "nameTitle", "favorites", "settings"]);
   });
 });

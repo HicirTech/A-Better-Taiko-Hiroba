@@ -29,7 +29,7 @@ export interface TitleEditorOptions {
   readonly onSessionGone: (notice: MessageKey) => void;
 }
 
-/** The Title section as the Name & title page draws and drives it. */
+/** The Title section as the Nickname & title page draws and drives it. */
 export interface TitleEditor {
   readonly step: TitleStep;
   /** The title undo this device offers now, if any: asks the platform, never Hiroba. */

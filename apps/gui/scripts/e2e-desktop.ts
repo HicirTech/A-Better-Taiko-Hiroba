@@ -26,7 +26,7 @@
  * scrolled left to scroll back under a finger, with no pull), the pictures on disk named by
  * hashes alone, costume writes (a colour and a きぐるみ, each undone from the page, the #22 trap, a
  * save that moves nothing, pre-checks that stop, a post sent to the login page, an undo after a
- * change made elsewhere, and a session that ends before and after a save), the Name & title page
+ * change made elsewhere, and a session that ends before and after a save), the Nickname & title page
  * (its list of titles read once, when the page is first shown, and the first read of either editor
  * waiting out any write; a title and a name each picked or typed, reviewed, saved with exactly the
  * requests planned and undone, and refused, stopped or settled later as Hiroba's answers say; none
@@ -436,14 +436,14 @@ try {
 
   // The pages, signed out, with no header at all (the user's call, 2026-09-29): on a window this
   // wide, a side panel like Gmail's, the product's name small at its top, then each page, the one
-  // shown marked. The Overview, Costume, Name & title and Favourites show the sign-in card;
+  // shown marked. The Overview, Costume, Nickname & title and Favourites show the sign-in card;
   // Settings works, with the language and the note on staying signed in, no one signed in and no
   // way to sign out.
   const NAVIGATION = [
     "A Better Taiko Hiroba",
     "Overview",
     "Costume",
-    "Name & title",
+    "Nickname & title",
     "Favourites",
     "Settings",
   ].join("");
@@ -466,7 +466,7 @@ try {
     !(await exists("header")) &&
     !(await exists("#nav-menu")) &&
     shownSignedOut.every(Boolean);
-  // The Costume page (the user's call, 2026-10-02) is the second of the pages, and Name & title the
+  // The Costume page (the user's call, 2026-10-02) is the second of the pages, and Nickname & title the
   // third, a pencil beside its name, between the Overview and Favourites, each with its icon.
   const entriesIn = (selector: string) =>
     page.evaluate<string[]>(
@@ -484,7 +484,7 @@ try {
   const costumeShownSignedOut = (await textOf("main h1")) === "Costume";
   await goTo("nameTitle");
   const nameTitleShownSignedOut =
-    (await textOf("main h1")) === "Name & title" && (await exists("#sign-in-card #sign-in"));
+    (await textOf("main h1")) === "Nickname & title" && (await exists("#sign-in-card #sign-in"));
   await goTo("overview");
 
   // The page follows the system's scheme, and its color-scheme with it, so the scrollbars and the
@@ -559,7 +559,7 @@ try {
   await click("#nav-nameTitle");
   await menuClosed();
   const nameTitlePicked =
-    (await textOf("main h1")) === "Name & title" && (await exists("#sign-in"));
+    (await textOf("main h1")) === "Nickname & title" && (await exists("#sign-in"));
   await menuOpened();
   const nameTitleMarked = (await currentPage()) === "nameTitle";
   await click("#nav-favorites");
@@ -2281,7 +2281,7 @@ try {
     !(await exists("#costume-undo")) &&
     (await savedCostume()).colorBody === 40;
   await fetch(`${HIROBA}/__state?reset=1`);
-  // Name & title (the user's call, 2026-10-02): one page, after the Costume page, for the title and
+  // Nickname & title (the user's call, 2026-10-02): one page, after the Costume page, for the title and
   // the Donder name. Both are open in every build, this run's too, with no flag: the list of titles
   // is read when the page is first shown, never before, and a write is Review, then Save to Hiroba.
   const TITLE_PAGE = "/mypage_title_edit.php";
@@ -2809,11 +2809,11 @@ try {
     ["", null],
     [
       "あ".repeat(11),
-      "This app refused the change before sending it: the name is longer than Hiroba's form takes.",
+      "This app refused the change before sending it: the nickname is longer than Hiroba's form takes.",
     ],
     [
       unsendable,
-      "This app refused the change before sending it: the name has a character that cannot be sent.",
+      "This app refused the change before sending it: the nickname has a character that cannot be sent.",
     ],
   ];
   const invalidShown: [boolean | null, string | null][] = [];
@@ -2824,7 +2824,7 @@ try {
   const sentBeforeTheBridge = await requestLog();
   const edgeRefused = await bridgeName(" あ");
   results.nameUnchangedSendsNothing =
-    sameNameHelp === "That is your name already." &&
+    sameNameHelp === "That is your nickname already." &&
     sameNameShut === true &&
     sameBesideLanePictures(sentBeforeTheBridge, []);
   results.nameInvalidRefusedUnsent =
@@ -2851,10 +2851,10 @@ try {
   await readTitlesAgain();
   results.nameClosedShowsWhy =
     closedNote ===
-      "Hiroba says names can't be changed right now: 今はドンだーネームは変更できないドン！" &&
+      "Hiroba says nicknames can't be changed right now: 今はドンだーネームは変更できないドン！" &&
     same(closedShut, [true, true]) &&
     unknownNote ===
-      "This version couldn't tell whether Hiroba is taking name changes right now. You can still try." &&
+      "This version couldn't tell whether Hiroba is taking nickname changes right now. You can still try." &&
     unknownOpen === false &&
     !(await exists("#name-closed")) &&
     !(await exists("#name-unknown")) &&
@@ -2876,10 +2876,10 @@ try {
   const nameAfter = await profileNow();
   results.nameApplied =
     nameOutcome === "applied" &&
-    nameReview === `Name: ${INITIAL_PROFILE.nickname} → あたらしい` &&
+    nameReview === `Nickname: ${INITIAL_PROFILE.nickname} → あたらしい` &&
     mayNotRevert ===
-      "Hiroba may not let you change it back right away. Choose a name you are happy to keep." &&
-    (await textOf("#name-outcome")) === "Saved. Hiroba now shows the new name." &&
+      "Hiroba may not let you change it back right away. Choose a nickname you are happy to keep." &&
+    (await textOf("#name-outcome")) === "Saved. Hiroba now shows the new nickname." &&
     same(nameAfter, { title: INITIAL_PROFILE.title, nickname: "あたらしい" }) &&
     (await textOf("#title-plate h2")) === "あたらしい";
   results.nameSentOnlyThePlannedRequests = sentAsPlanned(nameLog, [], NAME_REQUESTS);
@@ -2908,8 +2908,8 @@ try {
   results.nameUndone =
     nameUndoOutcome === "applied" &&
     nameUndoNote === `Goes back to: ${INITIAL_PROFILE.nickname}` &&
-    nameUndoWarning === "Hiroba may refuse this too. If it does, the name stays as it is." &&
-    (await textOf("#name-outcome")) === "Undone. Hiroba shows the name as it was." &&
+    nameUndoWarning === "Hiroba may refuse this too. If it does, the nickname stays as it is." &&
+    (await textOf("#name-outcome")) === "Undone. Hiroba shows the nickname as it was." &&
     same(await profileNow(), profileAsStarted) &&
     sentAsPlanned(nameUndoLog, [], NAME_REQUESTS) &&
     !(await exists("#name-undo"));

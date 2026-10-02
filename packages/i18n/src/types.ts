@@ -35,7 +35,7 @@ export interface Messages {
   "nav.overview": string;
   /** The page of the costume editor. 日本語 names it with the site's own word, きせかえ. */
   "nav.costume": string;
-  /** The page of the title and the Donder name. */
+  /** The page of the title and the nickname. 日本語 names the nickname with the site's own word, ドンだーネーム. */
   "nav.nameTitle": string;
   /** The page of the 大好きな曲 and the お気に入り folder. */
   "nav.favorites": string;
@@ -319,34 +319,34 @@ export interface Messages {
   "title.undoAmbiguous": string;
   /** Why the undo is shut: there was no title before, and a title cannot be taken off here. */
   "title.undoNoTitle": string;
-  /** The Name section's heading. 日本語 names it with the site's own word, ドンだーネーム. */
+  /** The Nickname section's heading. 日本語 names it with the site's own word, ドンだーネーム. */
   "name.heading": string;
-  /** The name field's label. */
+  /** The nickname field's label. */
   "name.field": string;
-  /** Under the name field. Params: {count}, how many characters it holds, and {max}. */
+  /** Under the nickname field. Params: {count}, how many characters it holds, and {max}. */
   "name.counter": string;
-  /** Hiroba's warning above its own name field, as the site writes it, in every language. */
+  /** Hiroba's warning above its own nickname field, as the site writes it, in every language. */
   "name.siteWarning": string;
   /**
-   * What Hiroba's help page says a name may be, quoting its sentence as the site writes it, and
-   * that other names have been seen.
+   * What Hiroba's help page says a nickname may be, quoting its sentence as the site writes it,
+   * and that other nicknames have been seen.
    */
   "name.faqRule": string;
-  /** Advice: the name has a character outside the help page's set, or is past its five. */
+  /** Advice: the nickname has a character outside the help page's set, or is past its five. */
   "name.outsideFaq": string;
-  /** Advice: the name is wider than the ten half-width characters the form seems to take. */
+  /** Advice: the nickname is wider than the ten half-width characters the form seems to take. */
   "name.wide": string;
-  /** The name typed is the name worn. */
+  /** The nickname typed is the nickname worn. */
   "name.same": string;
-  /** Hiroba says names cannot be changed now, quoting its sentence as the site writes it. */
+  /** Hiroba says nicknames cannot be changed now, quoting its sentence as the site writes it. */
   "name.closed": string;
-  /** My page did not say whether Hiroba takes a name change now: the field stays open. */
+  /** My page did not say whether Hiroba takes a nickname change now: the field stays open. */
   "name.unknownState": string;
-  /** In the review: Hiroba may not let the name be changed back right away. */
+  /** In the review: Hiroba may not let the nickname be changed back right away. */
   "name.mayNotRevert": string;
-  /** The Name section's way back from the last name change, while it is still offered. */
+  /** The Nickname section's way back from the last change, while it is still offered. */
   "name.undoLast": string;
-  /** Under the undo button. Param: {name}, the previous name, as Hiroba writes it. */
+  /** Under the undo button. Param: {name}, the previous nickname, as Hiroba writes it. */
   "name.undoBack": string;
   /** Under the undo button: Hiroba may refuse a change back as it may refuse any change. */
   "name.undoMayFail": string;
@@ -439,7 +439,7 @@ export interface Messages {
   /** Hiroba's code for a rename it could not carry out, which comes with no message of its own. */
   "write.name.refused2": string;
   /**
-   * The words of {field} in "write.invalidTarget", for a title or a name this app refused before
+   * The words of {field} in "write.invalidTarget", for a title or a nickname this app refused before
    * sending it. A phrase, with no capital and no full stop of its own.
    */
   "write.invalid.titleNotOwned": string;

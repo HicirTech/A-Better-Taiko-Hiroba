@@ -85,16 +85,50 @@ describe("the Costume page's name", () => {
   });
 });
 
-describe("the Name & title page's name", () => {
+describe("the Nickname & title page's name", () => {
   type NameCase = [locale: Locale, name: string];
   test.each<NameCase>([
-    ["en", "Name & title"],
-    ["ja", "名前と称号"],
-    ["zh-Hans", "名字与称号"],
-    ["zh-Hant", "名字與稱號"],
-  ])("is written as the spec fixed it in %s: %p", (locale, name) => {
+    ["en", "Nickname & title"],
+    ["ja", "ドンだーネームと称号"],
+    ["zh-Hans", "昵称与称号"],
+    ["zh-Hant", "暱稱與稱號"],
+  ])("is written as taiko.wiki words it, and as Hiroba does in ja, in %s: %p", (locale, name) => {
     expect(createTranslator(locale).t("nav.nameTitle")).toBe(name);
   });
+
+  type NicknameCase = [locale: Locale, name: string];
+  test.each<NicknameCase>([
+    ["en", "Nickname"],
+    ["ja", "ドンだーネーム"],
+    ["zh-Hans", "昵称"],
+    ["zh-Hant", "暱稱"],
+  ])("calls the player's own name what taiko.wiki calls it in %s: %p", (locale, name) => {
+    expect(createTranslator(locale).t("name.heading")).toBe(name);
+  });
+
+  /** The plain word for a name in each language, which the keys about the player's may not use. */
+  const PLAIN_NAME: Readonly<Record<Locale, RegExp>> = {
+    en: /\bnames?\b/i,
+    ja: /名前/,
+    "zh-Hans": /名字/,
+    "zh-Hant": /名字/,
+  };
+  const keysAboutTheNickname = (Object.keys(en) as MessageKey[]).filter(
+    (key) =>
+      key.startsWith("name.") ||
+      key.startsWith("write.name.") ||
+      key.startsWith("write.invalid.name"),
+  );
+  test.each([...LOCALES])(
+    "words the player's name as its one term in every key about it in %s",
+    (locale) => {
+      const { t } = createTranslator(locale);
+      const plain = keysAboutTheNickname.filter((key) =>
+        PLAIN_NAME[locale].test(t(key).replace(/\{\w+\}/g, "")),
+      );
+      expect(plain).toEqual([]);
+    },
+  );
 
   type TitleCase = [locale: Locale, name: string];
   test.each<TitleCase>([

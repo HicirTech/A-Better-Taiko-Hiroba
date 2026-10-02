@@ -38,7 +38,7 @@ export interface NameEditorOptions {
   readonly onNickname: (nickname: string) => void;
 }
 
-/** The Name section as the Name & title page draws and drives it. */
+/** The Name section as the Nickname & title page draws and drives it. */
 export interface NameEditor {
   readonly step: NameStep;
   /** The name undo this device offers now, if any: asks the platform, never Hiroba. */
