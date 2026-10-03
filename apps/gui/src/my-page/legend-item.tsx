@@ -112,5 +112,10 @@ export function LegendItem({
       </Box>
     </Box>
   );
-  return held === null ? <Tooltip title={name}>{item}</Tooltip> : item;
+  // With a Toast, a long-press names the item; the tooltip still serves hover and keyboard focus.
+  return (
+    <Tooltip title={name} disableTouchListener={held !== null}>
+      {item}
+    </Tooltip>
+  );
 }
