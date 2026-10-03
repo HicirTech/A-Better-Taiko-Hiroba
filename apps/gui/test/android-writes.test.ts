@@ -318,7 +318,10 @@ describe("createAndroidPort's costume history", () => {
 
     const history = await port.costumeHistory();
     expect(history.map(({ set }) => set)).toEqual([TARGET, START_SET]);
-    expect(history.map(({ picture }) => picture?.match(PICTURE) !== null)).toEqual([true, true]);
+    expect(history.map(({ picture }) => picture !== null && PICTURE.test(picture))).toEqual([
+      true,
+      true,
+    ]);
     expect([...(world.indexedDb?.tables.get("histories")?.keys() ?? [])]).toEqual([OWNER]);
 
     const relaunched = await world.launch();
