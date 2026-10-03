@@ -5,6 +5,7 @@ import { createTranslator } from "@abth/i18n";
 import electronPath from "electron";
 
 import { PICTURE_EPOCH } from "../src/hiroba-session";
+import { RING_ROOM_PX } from "../src/my-page/pick-ring";
 import { LONG_PRESS_MS } from "../src/my-page/use-long-press";
 import { BRIDGE_CHANNELS, type VerbsQueued } from "../src/session-port";
 import {
@@ -2853,6 +2854,38 @@ try {
         async () => (await boxOf("#costume-bar")).top,
       ),
   );
+
+  const tabbedAcrossTheSlot = (width: number, height: number) =>
+    atSize(width, height, async () => {
+      await showPart("costume1");
+      await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+      await page.evaluate("window.scrollTo(0, 0)");
+      await page.evaluate(
+        `document.querySelector("#item-costume1-0").focus({ preventScroll: true })`,
+      );
+      const cells = await page.evaluate<string[]>(
+        `[...document.querySelectorAll("#costume-items-costume1 > button")].map((cell) => cell.id)`,
+      );
+      const focusedCellIsClear = () =>
+        page.evaluate<boolean>(
+          `(() => { const cell = document.activeElement.getBoundingClientRect(); const block = document.querySelector("#costume-aside").getBoundingClientRect(); const bar = document.querySelector("#costume-bar").getBoundingClientRect(); return cell.top - ${RING_ROOM_PX} >= block.bottom - 1 && cell.bottom + ${RING_ROOM_PX} <= bar.top + 1; })()`,
+        );
+      const walk = async (ids: string[], modifiers: number) => {
+        let clear = true;
+        for (const id of ids) {
+          await press("Tab", modifiers);
+          clear = (await focusedId()) === id && (await focusedCellIsClear()) && clear;
+        }
+        return clear;
+      };
+      const forward = await walk(cells.slice(1), 0);
+      const backward = await walk(cells.slice(0, -1).reverse(), SHIFT_MODIFIER);
+      await page.evaluate("window.scrollTo(0, 0)");
+      return { cells: cells.length, forward, backward };
+    });
+  const tabbed = await tabbedAcrossTheSlot(390, 700);
+  results.costumePhoneFocusStaysClearOfTheBlockAndTheBar =
+    tabbed.cells > 60 && tabbed.forward && tabbed.backward;
 
   await fetch(`${HIROBA}/__state?reset=1`);
   await fetch(`${HIROBA}/__items?many=1`);

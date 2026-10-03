@@ -7,6 +7,7 @@ import { usePicture } from "../pictures/use-picture";
 import type { PictureWant } from "../session-port";
 import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";
 import { pickRing } from "./pick-ring";
+import { CLEAR_OF_STUCK } from "./stuck-clearance";
 
 interface CellSize {
   readonly cell: number;
@@ -161,6 +162,7 @@ function NoneCell({
         bgcolor: "action.hover",
         color: "text.secondary",
         ...pickRing(chosen, "text.primary"),
+        ...CLEAR_OF_STUCK,
       }}
     >
       <SvgIcon aria-hidden sx={{ fontSize: cells.picture / 2 }}>
@@ -210,6 +212,7 @@ function ItemCell({
         // Hiroba's art on the white ground it was drawn for, in either theme.
         bgcolor: "#fff",
         ...pickRing(chosen, "text.primary"),
+        ...CLEAR_OF_STUCK,
       }}
     >
       <ItemPicture

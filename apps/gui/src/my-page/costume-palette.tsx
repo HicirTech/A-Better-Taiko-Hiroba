@@ -4,6 +4,7 @@ import { Box, ButtonBase } from "@mui/material";
 import type { CostumeEditorView } from "../session-port";
 import type { ColourPart } from "./costume-parts";
 import { pickRing } from "./pick-ring";
+import { CLEAR_OF_STUCK } from "./stuck-clearance";
 
 const SWATCH_PX = 32;
 const WIDE_SWATCH_PX = 44;
@@ -49,6 +50,7 @@ export function Palette({ editor, part, chosen, wide, i18n, onPick }: PalettePro
               border: "1px solid",
               borderColor: "common.black",
               ...pickRing(picked, "text.primary"),
+              ...CLEAR_OF_STUCK,
             }}
           />
         );
