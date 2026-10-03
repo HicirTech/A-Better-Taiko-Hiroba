@@ -1,7 +1,4 @@
-/**
- * The Hiroba session as the app sees it, shared by both shells: where a sign-in stands, the read,
- * and the writes, which every build may send. Nothing here holds or sees the session cookie.
- */
+// The Hiroba session as both shells see it. Nothing here holds or sees the session cookie.
 export {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,

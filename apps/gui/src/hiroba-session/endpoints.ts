@@ -14,7 +14,6 @@ export const SESSION_COOKIE_NAME = "_token_v2";
 export const loginPageUrl = (endpoints: HirobaEndpoints): string =>
   `${endpoints.hirobaOrigin}/login.php`;
 
-/** The first read: the signed-in player's own page. */
 export const myPageUrl = (endpoints: HirobaEndpoints): string =>
   `${endpoints.hirobaOrigin}/mypage_top.php`;
 
@@ -22,15 +21,8 @@ export const myPageUrl = (endpoints: HirobaEndpoints): string =>
 export const idpOrigin = (endpoints: HirobaEndpoints): string =>
   `${new URL(endpoints.hirobaOrigin).protocol}//${endpoints.idpHost}`;
 
-/**
- * Development only: the endpoints a local stand-in asks for. Both overrides or neither; one alone
- * would quietly leave the other on the real site, so it stops the app instead. The stand-in's ID
- * domain is its ID host's name, so its hops live on that host and on names under it.
- *
- * The picture host's override is a third, and optional: without it, a stand-in run has no picture
- * host at all, so it can never reach the real one. Set without the other two, it stops the app as
- * one of them alone does.
- */
+/** Development only: a local stand-in's endpoints. Both overrides or neither, as one alone would
+ * leave the other on the real site; the picture host's is optional and needs both of them. */
 export function endpointsFromOverrides(
   hirobaOrigin: string | undefined,
   idpHost: string | undefined,
@@ -50,7 +42,9 @@ export function endpointsFromOverrides(
   return {
     hirobaOrigin: origin,
     idpHost: host,
+    // The stand-in's ID domain is its ID host's name: its hops live on that host and under it.
     idpDomain: host.replace(/:\d+$/, ""),
+    // No override, no picture host: a stand-in run can never reach the real one.
     imgOrigin: pictures === "" ? null : pictures,
   };
 }

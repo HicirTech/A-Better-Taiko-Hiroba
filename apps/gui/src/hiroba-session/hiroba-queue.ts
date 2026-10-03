@@ -1,19 +1,8 @@
-/**
- * The order a shell asks Hiroba things in, the desktop and Android alike. Every verb that asks
- * Hiroba something runs one at a time, in the order asked: a read never lands between a write's
- * posts and its read-back, and two writes never interleave.
- *
- * A write is not queued behind another write, though. One asked for while another is queued or
- * running answers `busy` at once and runs not at all: a button pressed twice, or two buttons for
- * one write, must not become a second save sent after the first has ended, whatever it found.
- */
+/** Verbs that ask Hiroba something run one at a time, as asked: no read lands inside a write.
+ * A write asked for while another runs answers `busy`, not a second save after the first ended. */
 export interface HirobaQueue {
-  /** `run`, made to wait for every verb asked for before it. */
   oneAtATime<A extends unknown[], R>(run: (...args: A) => Promise<R>): (...args: A) => Promise<R>;
-  /**
-   * `run` queued as `oneAtATime` makes it, and answering `busy` instead while another write made
-   * by this function is queued or running.
-   */
+  /** `oneAtATime`, answering `busy` while another write of this queue is queued or running. */
   oneWriteAtATime<A extends unknown[], R>(
     run: (...args: A) => Promise<R>,
     busy: R,

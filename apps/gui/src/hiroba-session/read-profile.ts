@@ -17,11 +17,8 @@ import { readDan } from "./read-dan";
 import { signInStep } from "./sign-in-step";
 import type { HirobaEndpoints, SignInStep } from "./types";
 
-/**
- * Only the kind leaves this module, plus the codes `describe` builds. A ParseFailure can carry page
- * text (the taiko-number line, the site's error message) in `raw`, so that is never shown, logged
- * or sent anywhere.
- */
+// Only the kind leaves this module, plus the codes `describe` builds. A ParseFailure's `raw` can
+// carry page text (the taiko-number line, the site's error message): never shown, logged or sent.
 const READ_FAILURE_OF_PARSE_FAILURE = {
   loggedOut: "loggedOut",
   siteError: "siteError",
@@ -30,17 +27,7 @@ const READ_FAILURE_OF_PARSE_FAILURE = {
   wrongPage: "unexpectedPage",
 } as const satisfies Record<ParseFailure["kind"], ReadFailureKind>;
 
-/**
- * Reads the signed-in player's own page once and keeps what the interface shows.
- *
- * The starting point's only read, in the one file a later HirobaClient replaces. One request for
- * the page, no retry. The final URL is read before the body: Hiroba answers a lost session with its login page
- * at 200, and an unfinished card select would otherwise parse as a misleading unreadable value.
- *
- * My page shows the dan only as a picture, so a page that parsed and shows a dan label costs one
- * more request, for the label (`readDan`). Nothing that happens to that request fails the read: a
- * label that does not arrive or does not read is shown as such beside the rest of the page.
- */
+/** Reads the signed-in player's own page once, with no retry, keeping what the interface shows. */
 export async function readProfile(
   transport: Transport,
   endpoints: HirobaEndpoints,
@@ -59,11 +46,8 @@ export interface OwnProfileRead {
   readonly pictures: PictureSources;
 }
 
-/**
- * `readProfile` for a platform layer, which also learns whose page it read and where the page's
- * pictures are. Both stay with the platform and never reach the view: the taiko number, and every
- * source, the title plate's included.
- */
+/** `readProfile` for a platform layer, which also learns whose page it read and where its pictures
+ * are. Both stay with the platform and never reach the view. */
 export async function readOwnProfile(
   transport: Transport,
   endpoints: HirobaEndpoints,
@@ -74,6 +58,7 @@ export async function readOwnProfile(
     return err({ kind: sent.error.kind });
   }
   const response = sent.value;
+  // The final URL is read before the body: a lost session answers with the login page at 200.
   const step = signInStep(response.url, endpoints);
   switch (step) {
     case "hirobaLogin":
@@ -95,6 +80,7 @@ export async function readOwnProfile(
         : { kind },
     );
   }
+  // A dan label that does not arrive or does not read is shown as such; it never fails the read.
   const label = parsed.value.danLabelImageUrl;
   const dan = label === null ? null : await readDan(transport, endpoints, label);
   return ok({
@@ -104,12 +90,8 @@ export async function readOwnProfile(
   });
 }
 
-/**
- * What of my page crosses to the interface. Every field is copied by name, so nothing the parser
- * adds later crosses without a decision here: not the taiko number, and no URL, the dan label's
- * least of all, since it carries the taiko number in its query. Only the dan read off it crosses,
- * with the label's bytes as its picture: a data: URL, which names no address.
- */
+/** What of my page crosses to the interface. Every field is copied by name, so nothing the parser
+ * adds later crosses undecided: no taiko number, no URL (the dan label's carries the number). */
 function profileView(profile: Profile, dan: DanView | null): ProfileView {
   const { crownCounts, rankCounts, countLevel } = profile.summary;
   return {
@@ -145,11 +127,8 @@ function profileView(profile: Profile, dan: DanView | null): ProfileView {
   };
 }
 
-/**
- * Codes for a report of a page this app did not expect: where the read ended, what came back, and
- * what the parser said. The path is kept and the query dropped; the parser's `marker` is a
- * selector this code wrote, and its `raw` (page text) is left out.
- */
+// Codes for a report of an unexpected page. The path is kept and the query dropped; the parser's
+// `marker` is a selector this code wrote, and its `raw` (page text) is left out.
 function describe(response: TransportResponse, step: SignInStep, parse?: ParseFailure): string {
   let path = "?";
   try {

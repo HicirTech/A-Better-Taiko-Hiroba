@@ -1,8 +1,4 @@
-/**
- * The contract between the interface and a platform layer: what the interface may ask, with which
- * arguments, and the only shapes that come back. Values here are plain data and channel names;
- * nothing imports the parser, so the Electron preload can use this domain without bundling it.
- */
+// The interface/platform contract. It imports no parser, so the Electron preload can use it.
 export {
   type ArgumentCheck,
   isCostumeSet,

@@ -15,28 +15,15 @@ const SLOTS = "slots";
 /** The shape a record is kept in, which a later shape would change. */
 const RECORD_VERSION = 1;
 
-/**
- * Android's undo store (see `UndoStore`): a database of its own in the app page's IndexedDB,
- * `abth-undo`, apart from the pictures, which a new `PICTURE_EPOCH` clears. An undo record is
- * never a cache, and the user's own say when it goes: an undo, or the app's data.
- *
- * A save resolves only when its transaction has completed, and asks the browser to confirm the
- * bytes reached storage (`durability: "strict"`), since the write it guards is not sent until then
- * and the record has to outlive an app that is swiped away or killed mid-write.
- *
- * It fails closed. A database that will not open, or a slot that cannot be written, rejects the
- * call, and there is no copy in memory to fall back on: a record that would not survive a kill is
- * no record, and the write it guards is then not sent. A failed opening is not remembered, so the
- * next call tries again.
- *
- * What it keeps is the sets and whose they are, never a token or a cookie.
- */
+/** Android's undo store, in its own database apart from the pictures, which an epoch bump clears.
+ * It fails closed: no copy in memory, since a record that would not survive a kill is no record. */
 export function createIndexedDbUndoStore(factory: DatabaseFactory): UndoStore {
   let opened: Promise<Database> | null = null;
   const database = () => {
     opened ??= openDatabase(factory, DATABASE, DATABASE_VERSION, (created) => {
       created.createObjectStore(SLOTS);
     }).catch((error: unknown) => {
+      // A failed opening is not remembered, so the next call tries again.
       opened = null;
       throw error;
     });
@@ -50,6 +37,7 @@ export function createIndexedDbUndoStore(factory: DatabaseFactory): UndoStore {
       return readSlot(kind, isStored(stored) ? stored.slot : undefined, taikoNo);
     },
     async save(kind, taikoNo, slot) {
+      // Strict durability: the write this record guards is not sent until its bytes are stored.
       const transaction = (await database()).transaction([SLOTS], "readwrite", {
         durability: "strict",
       });

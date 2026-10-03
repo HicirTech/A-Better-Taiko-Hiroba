@@ -8,20 +8,8 @@ import {
   pictureKeyPath,
 } from "../src/hiroba-session";
 
-/**
- * The desktop's pictures on disk, in `folder` (the app's profile folder's `pictures`), kept across
- * launches and sign-outs for good: each is fetched from Hiroba once. Each is one PNG file,
- * `<epoch>/shared/<hash>.png` or `<epoch>/player/<hash>/<hash>.png`, named by pictureKeyPath: the
- * checked bytes and nothing else, no URL, header, cookie or taiko number.
- *
- * Nothing here deletes a picture but a PICTURE_EPOCH bump: opening the store removes every other
- * epoch's folder. What it holds is bounded by what Hiroba has to show, a thumbnail per item and a
- * plate per title, each within its kind's byte limit.
- *
- * A file is written beside its place and renamed into it, so a crash leaves no half picture to
- * be shown for good. A file that cannot be read is a miss, and a picture that cannot be written is
- * not kept: either way it is fetched again, and nothing throws.
- */
+/** The desktop's pictures on disk under `folder`, one PNG per pictureKeyPath, kept across launches
+ * and sign-outs; opening the store removes every other PICTURE_EPOCH's folder. Nothing throws. */
 export function createDiskPictureStore(folder: string): PictureStore {
   const epochFolder = join(folder, PICTURE_EPOCH);
   dropOtherEpochs(folder);
@@ -37,6 +25,7 @@ export function createDiskPictureStore(folder: string): PictureStore {
     },
     async put(key, bytes) {
       const file = fileOf(key);
+      // Written beside its place and renamed into it, so a crash leaves no half picture.
       const temporary = `${file}.tmp`;
       try {
         mkdirSync(dirname(file), { recursive: true });
@@ -49,7 +38,6 @@ export function createDiskPictureStore(folder: string): PictureStore {
   };
 }
 
-/** Removes what an earlier PICTURE_EPOCH kept in `folder`: none of it is asked for again. */
 function dropOtherEpochs(folder: string): void {
   try {
     for (const name of readdirSync(folder)) {

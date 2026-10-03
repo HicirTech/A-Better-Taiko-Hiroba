@@ -3,10 +3,7 @@ import { openCostumeEditor as openEditor, type Result, type Transport } from "@a
 import type { CostumeEditorView, ReadFailure } from "../session-port";
 import type { HirobaEndpoints } from "./types";
 
-/**
- * Reads the costume editor once, for the interface: the set, the palette and each slot's owned
- * items. The page's form token is left in the core; a read failure carries codes only.
- */
+/** Reads the costume editor once, for the interface; the form token stays in the core. */
 export function openCostumeEditor(
   transport: Transport,
   endpoints: HirobaEndpoints,

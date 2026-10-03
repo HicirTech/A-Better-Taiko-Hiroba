@@ -4,10 +4,8 @@ import { app, net, protocol } from "electron";
 
 export const APP_ORIGIN = "app://gui";
 
-/**
- * MUI's styling library injects <style> elements, hence 'unsafe-inline' for styles only. The page
- * itself fetches nothing: every request to Hiroba goes through the main process.
- */
+// MUI injects <style> elements, hence 'unsafe-inline' for styles only. The page fetches nothing:
+// every request to Hiroba goes through the main process.
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self'",
@@ -28,7 +26,6 @@ export function registerAppScheme(): void {
   ]);
 }
 
-/** Serves the built web bundle under app://gui/, with the policy above on every response. */
 export function serveWebBundle(): void {
   const root = join(app.getAppPath(), "out", "web");
   protocol.handle("app", async (request) => {

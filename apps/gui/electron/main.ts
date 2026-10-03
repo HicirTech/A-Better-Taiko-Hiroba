@@ -30,12 +30,6 @@ import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
 import { createUndoStore } from "./undo-store";
 
-// What the way the app was started decides, in a development run alone and never in a packaged
-// build (desktop-environment.ts): the renderer from Vite's dev server, a local stand-in for Hiroba
-// and the ID host so the whole sign-in can run without the real sites, a data folder of its own and
-// a fixed clock for the writes. Setting only one of the two endpoint overrides stops the app rather
-// than half-reaching Hiroba. The picture host's is optional: without it, a stand-in run asks no
-// picture host anything.
 const environment = startedWith();
 const { devServerUrl, endpoints } = environment;
 
@@ -49,15 +43,13 @@ function startedWith(): DesktopEnvironment {
   }
 }
 
-// Hiroba answers anything that does not look like a complete browser with a data-less page. The
-// default string also names Electron and the app, so it is replaced with plain Chrome's, in the
-// reduced form Chrome itself sends.
+// Hiroba answers a client that does not look like a full browser with a data-less page, so the
+// default string, which names Electron and the app, is replaced with Chrome's reduced form.
 const chromeMajor = process.versions.chrome.split(".")[0];
 const userAgent = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeMajor}.0.0.0 Safari/537.36`;
 app.userAgentFallback = userAgent;
 
-// Development only: lets the end-to-end run and the dev run against the mock keep their profiles
-// out of the real %APPDATA%, where the installed app keeps its session and undo record.
+// Dev profiles stay out of the real %APPDATA%, where the installed app keeps its session.
 if (environment.userData !== undefined) {
   app.setPath("userData", environment.userData);
 }
@@ -65,26 +57,13 @@ if (environment.userData !== undefined) {
 app.enableSandbox();
 registerAppScheme();
 
-/**
- * The session cookie: held in this process, and kept on disk by `sessionStore` so the user stays
- * signed in across launches. Never logged, never sent to a renderer.
- */
+// The session cookie is held in this process: never logged, never sent to a renderer.
 let sessionCookie: string | null = null;
 let sessionStore: SessionStore | null = null;
-/**
- * Whose my page this run last read: the taiko number, which tells whose undo record is whose. It
- * stays in this process and is forgotten with the session.
- */
+// Held in this process and forgotten with the session: whose my page was last read (the taiko
+// number), where its pictures are, and which costume items the editor offered.
 let owner: string | null = null;
-/**
- * Where the pictures that page showed are, checked: the title plate's source among them. Kept
- * beside `owner`, in this process, and forgotten with the session; null before the first read.
- */
 let sources: PictureSources | null = null;
-/**
- * The items the last costume editor read offered: the only ones whose thumbnail may be asked for.
- * It stays in this process and is forgotten with the session.
- */
 let offered: ReadonlySet<string> = new Set();
 const setSession = (value: string | null) => {
   sessionCookie = value;
@@ -106,24 +85,15 @@ const transport = createHirobaTransport({
   userAgent,
   hirobaOrigin: endpoints.hirobaOrigin,
 });
-// Debugging against the live site: keep each page a read brings back, in a local folder.
 const readTransport =
   process.env.ABTH_DEBUG_SAVE_READS === "1"
     ? saveReads(transport, join(app.getPath("userData"), "debug"))
     : transport;
 
-/**
- * Every verb that asks Hiroba something runs one at a time, as `queuePort` below puts each in it: a
- * read never lands between a write's posts and its read-back, and two writes never interleave. A
- * write asked for while another is queued or running answers `busy` and sends nothing.
- */
+// Verbs that ask Hiroba something run through it one at a time, so no read lands inside a write.
 const queue = createHirobaQueue();
 
-/**
- * Hiroba's pictures for the window, kept on disk in the app's data folder across launches and
- * sign-outs, each fetched once. Only a picture's fetch waits in the queue, never the whole call: one
- * already kept answers at once, even while a write runs.
- */
+// A kept picture answers at once, even while a write runs; only a fetch waits in the queue.
 const pictures = createPictureReader({
   transport: readTransport,
   endpoints,
@@ -141,7 +111,6 @@ app.whenReady().then(async () => {
     Menu.setApplicationMenu(null);
   }
   serveWebBundle();
-  // The session kept from the last launch, if any; the renderer asks for it through isSignedIn.
   sessionStore = createSessionStore(join(app.getPath("userData"), "session.json"));
   sessionCookie = sessionStore.load();
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) =>
@@ -161,7 +130,6 @@ app.whenReady().then(async () => {
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
-  // The writes: the undo record on disk, and the session dropped when Hiroba ends it.
   const writes = createSessionWrites({
     transport: readTransport,
     endpoints,
@@ -171,7 +139,6 @@ app.whenReady().then(async () => {
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
     owner: () => owner,
-    // The My Don kept shows the costume before: it is fetched anew when next shown.
     costumeChanged: () => pictures.costumeChanged(),
   });
 
@@ -201,8 +168,6 @@ app.whenReady().then(async () => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
-      // Every read but the session's first is the user's Read again: the portrait is renewed. One
-      // the window makes on its own says it is not.
       if (options?.renewsPortrait !== false) {
         pictures.myPageAsked();
       }
@@ -215,10 +180,8 @@ app.whenReady().then(async () => {
       }
       owner = read.value.taikoNo;
       sources = read.value.pictures;
-      // The session held: the plates fetched before this read are the player's own.
       await pictures.confirm(read.value.taikoNo);
-      // The title and the name it shows settle a write whose end was not known, and date a stale
-      // record.
+      // Settles a write whose end was unknown, and dates a stale undo record.
       const { view } = read.value;
       await writes.profileRead({
         taikoNo: read.value.taikoNo,
@@ -230,7 +193,6 @@ app.whenReady().then(async () => {
     async signOut() {
       setSession(null);
     },
-    // The items it offers are the only ones whose thumbnail the window may ask for next.
     openCostumeEditor: async () => {
       const read = await writes.openCostumeEditor();
       if (read.ok) {
@@ -239,9 +201,7 @@ app.whenReady().then(async () => {
       return read;
     },
     openTitleEditor: writes.openTitleEditor,
-    // A read that changes nothing, so any signed-in window may ask it. Its failure leaves the
-    // session be: the next read of a page says whether it is over. Kept as its latest copy alone
-    // when reads are saved for debugging (save-reads.ts).
+    // Its failure leaves the session be: the next page read says whether it is over.
     previewCostume: async (set: CostumeSet) => {
       if (sessionCookie === null) {
         return err({ code: "preview=notSignedIn" });

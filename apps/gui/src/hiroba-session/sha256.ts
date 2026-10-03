@@ -1,8 +1,4 @@
-/**
- * SHA-256 (FIPS 180-4), written out here because neither shell can count on the platform's: a page
- * that is not a secure context, such as Android's live reload over the LAN, has no crypto.subtle,
- * and the window's code has no node:crypto.
- */
+// Own SHA-256: the window has no node:crypto, and Android's live reload page has no crypto.subtle.
 
 /** The first 32 bits of the fractional parts of the cube roots of the first 64 primes (4.2.2). */
 const ROUND_CONSTANTS = [

@@ -1,9 +1,6 @@
 import type { WriteOutcomeView } from "./types";
 
-/**
- * Whether a write, or an undo, that ended as `outcome` left Hiroba's costume the one it wrote: the
- * only outcomes after which the My Don portrait is fetched anew, by the platform and the window.
- */
+/** Whether an outcome left Hiroba's costume as written, so the My Don portrait is fetched anew. */
 export function changedTheCostume(outcome: { readonly kind: WriteOutcomeView["kind"] }): boolean {
   return outcome.kind === "applied" || outcome.kind === "appliedNotSynced";
 }

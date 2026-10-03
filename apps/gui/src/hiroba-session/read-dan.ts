@@ -4,12 +4,8 @@ import { type DanNumber, type DanView, isWhole, type PictureView } from "../sess
 import { checkPng, describeAnswer, pngDataUrl } from "./png-answer";
 import type { HirobaEndpoints } from "./types";
 
-/** Where every dan label my page has shown lives: `imgsrc_danlabel.php?taiko_no=…`. */
 const LABEL_PATH = "/imgsrc_danlabel.php";
-/**
- * A label is a 96×40 PNG of a few kilobytes: the one weighed came to 4967 B. Anything sixteen times
- * that is not a label, and is refused before it is decoded.
- */
+// A label is a 96×40 PNG of a few kilobytes: anything far larger is refused before it is decoded.
 const MAX_LABEL_BYTES = 64 * 1024;
 /** Far above a label's 96×40, and still a bound on what the window is handed to draw. */
 const MAX_LABEL_SIDE = 512;
@@ -17,23 +13,8 @@ const MAX_LABEL_SIDE = 512;
 const FIRST_DAN = 1;
 const LAST_DAN = 19;
 
-/**
- * Reads the dan off the label my page shows, with one GET, and never fails the profile: whatever
- * goes wrong, from the request to the image, comes back as `unreadable` with codes for a report.
- *
- * `labelSrc` is the label's `src` as the page writes it, relative, and is resolved against Hiroba's
- * origin. A source that leads anywhere but Hiroba's label is not asked for.
- *
- * The label is public: Hiroba serves the same bytes with or without a cookie. What decides is the
- * content type and the size, never the status: Hiroba answers "nothing to draw" with a 43-byte 1×1
- * GIF at 200, and its login and error pages at 200 as well (wiki: Page Map, generated images). The
- * source carries the taiko number in its query, so no code holds the source, a query or a host;
- * the final path is named only when it is not the label's own.
- *
- * The bytes the dan is read off also come back as the label's picture, for the window to show as
- * Hiroba does, at no cost of a request: only when they are a PNG of a label's size, from the
- * label's own address, and whether or not the dan read off them.
- */
+/** Reads the dan off the label my page shows with one GET; whatever goes wrong comes back as
+ * `unreadable` with codes. The source holds the taiko number, so it is never named in them. */
 export async function readDan(
   transport: Transport,
   endpoints: HirobaEndpoints,
@@ -75,14 +56,9 @@ export async function readDan(
     : unreadable(`dan=unnamed ${describe(response)}`, picture);
 }
 
-/** Whether the catalog names `board`, which core's reader gives as a plain number. */
 const isDanNumber = (board: number): board is DanNumber => isWhole(board, FIRST_DAN, LAST_DAN);
 
-/**
- * The label as a picture the window may show: the answer checked as every picture that crosses is,
- * a PNG by its type and bytes, within a label's bounds, from the label's own address. Null when it
- * is not one.
- */
+/** The label as a picture the window may show, checked like any picture; null when it fails. */
 function labelPicture(response: TransportResponse, endpoints: HirobaEndpoints): PictureView | null {
   const checked = checkPng(response, {
     maxBytes: MAX_LABEL_BYTES,
@@ -99,7 +75,6 @@ function unreadable(code: string, picture: PictureView | null): DanView {
   return { unreadable: true, code, picture };
 }
 
-/** What came back, as codes: the final path if it is not the label's, status, type and size. */
 function describe(response: TransportResponse): string {
   return describeAnswer(response, { path: LABEL_PATH });
 }

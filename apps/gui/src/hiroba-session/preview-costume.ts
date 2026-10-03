@@ -6,10 +6,7 @@ import type { HirobaEndpoints } from "./types";
 
 /** Hiroba's own My Don compositor: it draws whatever set its query names. */
 const PREVIEW_PATH = "/imgsrc_mydon.php";
-/**
- * The site's parameter names, in the order mydon.js's attrMydonImageSrc writes them, each with the
- * value of the set it carries.
- */
+// The site's parameter names, in the order its own script writes them.
 const PREVIEW_PARAMETERS = [
   ["face", "colorFace"],
   ["body", "colorBody"],
@@ -20,34 +17,18 @@ const PREVIEW_PARAMETERS = [
   ["cos4", "costume4"],
   ["cos5", "costume5"],
 ] as const satisfies readonly (readonly [string, keyof CostumeSet])[];
-/**
- * A real preview weighed 79228 B, and Hiroba's "nothing to draw" is a 43-byte GIF.
- * A PNG under a kilobyte is a placeholder, not a Don.
- */
+// Hiroba's "nothing to draw" is a 43-byte GIF: a PNG under a kilobyte is a placeholder, not a Don.
 const MIN_PREVIEW_BYTES = 1024;
-/** Six times the one weighed: anything larger is not a preview, and does not cross to the window. */
+// Anything larger is not a preview, and does not cross to the window.
 const MAX_PREVIEW_BYTES = 512 * 1024;
 
-/** Where Hiroba's editor points its preview for `set`: the site's names, in the site's order. */
 export function previewUrl(endpoints: HirobaEndpoints, set: CostumeSet): string {
   const query = PREVIEW_PARAMETERS.map(([name, part]) => `${name}=${set[part]}`).join("&");
   return `${endpoints.hirobaOrigin}${PREVIEW_PATH}?${query}`;
 }
 
-/**
- * Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried, and
- * answered as a `data:image/png` URL, so the window shows it without loading anything from Hiroba
- * and without the session. It changes nothing on Hiroba.
- *
- * The picture is drawn for the session: without one Hiroba answers a 43-byte 1×1 GIF, at 200, as it
- * answers its login and error pages (wiki: Page Map, generated images). So the content type, the
- * size and the PNG signature decide, never the status. A failure is codes only: why, status, type,
- * size, and the final path when it is not the preview's own. Never the URL or its query.
- *
- * The request names the editor as its Referer, as a picture Hiroba's own editor loads does: with a
- * session, Hiroba has only been seen answering requests made from its pages. The editor's form
- * token is not spent by it: Hiroba's own editor asks for these between its read and its save.
- */
+/** Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried,
+ * as a `data:image/png` URL so the window loads nothing from Hiroba. It changes nothing there. */
 export async function previewCostume(
   transport: Transport,
   endpoints: HirobaEndpoints,
@@ -56,6 +37,8 @@ export async function previewCostume(
   const sent = await transport.send({
     method: "GET",
     url: previewUrl(endpoints, set),
+    // The editor as Referer, like its own pictures. It spends no form token: Hiroba's editor asks
+    // for these between its read and its save.
     headers: { Referer: `${endpoints.hirobaOrigin}/mypage_kisekae.php` },
   });
   if (isErr(sent)) {
@@ -73,7 +56,6 @@ export async function previewCostume(
   return ok(pngDataUrl(checked.value.bytes));
 }
 
-/** Codes for a report: why, then what came back, the final path only when not the preview's. */
 function failed(why: string, response?: TransportResponse): Result<never, CostumePreviewFailure> {
   return err({
     code: [

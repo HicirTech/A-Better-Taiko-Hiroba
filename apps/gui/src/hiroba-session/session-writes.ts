@@ -48,7 +48,6 @@ export interface SessionWritesOptions {
   readonly liveChecked?: readonly WriteKind[];
   readonly now: () => Date;
   readonly undoStore: UndoStore;
-  /** Whether this device holds a session. */
   readonly signedIn: () => boolean;
   /** Drops the session: Hiroba ended it. The write that found it waits for this to be done. */
   readonly endSession: () => void | Promise<void>;
@@ -65,7 +64,7 @@ export interface ProfileSeen {
   readonly nickname: string;
 }
 
-/** The port's write verbs, the same on every shell, and the one thing a read of my page tells them. */
+/** The port's write verbs, the same on every shell, plus what a read of my page tells them. */
 export type SessionWrites = Pick<
   HirobaSessionPort,
   | "openCostumeEditor"
@@ -76,28 +75,17 @@ export type SessionWrites = Pick<
   | "pendingUndo"
   | "undo"
 > & {
-  /**
-   * A good read of my page, which shows the title and the name as well as the pages that write
-   * them do: settles a write of either kind whose end was not known, and dates a record the title
-   * or the name has moved away from, with no request to Hiroba. The read waits for it, so that no
-   * write starts between the two.
-   */
+  /** A good read of my page shows the title and name too: it settles a write whose end was unknown
+   * and dates a stale record, no request needed. The read waits for it: no write starts between. */
   profileRead(seen: ProfileSeen): Promise<void>;
 };
 
-/** How a write that was asked for while another was queued or running answers: sent nothing. */
 export const BUSY_OUTCOME: { readonly kind: "busy" } = { kind: "busy" };
 
-/**
- * What tells one kind of write from another, for the code every kind shares (`write`, and the undo
- * slots it keeps): the undo record, the session and the order of it all. A kind joins by one of
- * these and by the port verbs that ask for it, which are the last thing in this module.
- */
+/** What tells one kind of write from another, for the code every kind shares. */
 interface WriteKindDefinition<K extends WriteKind, Input> {
   readonly kind: K;
-  /** Whether two sets are the same one. */
   readonly same: (left: WriteSets[K], right: WriteSets[K]) => boolean;
-  /** The write, the way every write goes (`runWrite`). */
   readonly run: (
     transport: Transport,
     endpoints: HirobaEndpoints,
@@ -110,19 +98,8 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
   readonly ended: (outcome: WriteOutcomeView<WriteSets[K]>) => void;
 }
 
-/**
- * A shell's writes: open in every build; the undo record, kept before a write's first post and
- * settled by its outcome; and the session, dropped when Hiroba ends it. An undo is an ordinary
- * write, from the record's read-back set to its set before. A kind not yet live-checked from this
- * platform also reads another page before and after (`LIVE_CHECKED_WRITES`).
- *
- * Every undo slot read or written is the signed-in player's own, by taiko number: another
- * player's record or pending write, left on this device, is theirs, and nothing here touches it.
- *
- * Nothing here queues: the shell puts each verb that asks Hiroba something in its queue
- * (`queuePort`), so one write is never inside another and no read lands between a write's
- * requests.
- */
+/** A shell's writes. A kind not yet live-checked from this platform also reads another page before
+ * and after. Nothing here queues (the shell does); each undo slot is the signed-in player's. */
 export function createSessionWrites(options: SessionWritesOptions): SessionWrites {
   const { undoStore } = options;
   const liveChecked = options.liveChecked ?? LIVE_CHECKED_WRITES[options.platform];
@@ -156,8 +133,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     kind: "name",
     same: sameName,
     run: changeName,
-    // A name is read back whole, so it is put back by the ordinary write from the name it became to
-    // the one before. Hiroba may refuse that, and the record then stays.
+    // Put back by the ordinary write, name to name; if Hiroba refuses, the record stays.
     undoInput,
     ended: () => undefined,
   };
@@ -171,10 +147,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     }
   };
 
-  /**
-   * A player's slot read, changed and written after the fact: if that cannot be, the pending
-   * write settles from a later read.
-   */
   const amend = async <K extends WriteKind>(
     kind: K,
     taikoNo: string,
@@ -183,7 +155,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     try {
       await undoStore.save(kind, taikoNo, change(await undoStore.load(kind, taikoNo)));
     } catch {
-      // Nothing more to do here: the slot kept still holds the pending write.
+      // Nothing more to do: the slot still holds the pending write, which a later read settles.
     }
   };
 
@@ -233,11 +205,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     return outcome;
   }
 
-  /**
-   * One read of a kind's editor, for the interface: refused unsent while signed out; what it
-   * shows settles a write of the kind whose end was not known, and dates a stale record; and a
-   * session it found over is dropped.
-   */
   async function opened<K extends WriteKind, Editor extends { readonly state: WriteSets[K] }>(
     definition: Pick<WriteKindDefinition<K, unknown>, "kind" | "same">,
     read: (
@@ -260,7 +227,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     return result;
   }
 
-  /** The undo this player can be offered for the kind, if any: asks Hiroba nothing. */
   async function offeredFor<K extends WriteKind>(kind: K, taikoNo: string) {
     return offeredUndo(await slotOf(kind, taikoNo), taikoNo);
   }
@@ -275,7 +241,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       : { kind, at: record.at, before: record.before, after: record.after };
   }
 
-  /** Each kind's undo: the record the player is offered, written back as a write like any other. */
   const undoers = {
     costume: (record) => write(costume, costume.undoInput(record), "undo"),
     title: (record) => write(title, title.undoInput(record), "undo"),
@@ -286,7 +251,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     ) => Promise<WriteOutcomeView<WriteSets[K]>>;
   };
 
-  /** A kind's slot, settled from the set a read of another page shows, when it holds anything. */
   async function settledBy<K extends WriteKind>(
     definition: Pick<WriteKindDefinition<K, unknown>, "kind" | "same">,
     taikoNo: string,
