@@ -1,8 +1,8 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, ButtonBase, Skeleton, Stack, Typography } from "@mui/material";
-import { type RefObject, useRef, useSyncExternalStore } from "react";
+import { type ReactNode, type RefObject, useRef, useSyncExternalStore } from "react";
 
-import type { PictureLane } from "../pictures/picture-lane";
+import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant } from "../session-port";
 import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";
@@ -158,6 +158,42 @@ export function CostumeItemGrid({
   );
 }
 
+/** An item's picture: a skeleton while it is on its way, and `fallback` where it did not come. */
+export function ItemPicture({
+  answer,
+  size,
+  fallback,
+}: {
+  answer: PictureAnswer | undefined;
+  size: number;
+  fallback?: ReactNode;
+}) {
+  if (answer !== undefined && "view" in answer) {
+    return (
+      <Box
+        component="img"
+        src={answer.view.src}
+        alt=""
+        sx={{ width: size, height: size, objectFit: "contain" }}
+      />
+    );
+  }
+
+  return (
+    <>
+      {answer === undefined && (
+        <Skeleton
+          variant="rectangular"
+          width={size}
+          height={size}
+          sx={{ position: "absolute", bgcolor: "rgba(0, 0, 0, 0.11)" }}
+        />
+      )}
+      {fallback}
+    </>
+  );
+}
+
 function ItemCell({
   lane,
   i18n,
@@ -185,11 +221,6 @@ function ItemCell({
   // of the row after.
   const answer = usePicture(lane, want, cell, { root, rootMargin: `${cells.cell}px 0px`, order });
   const number = t("costume.id", { id: want.id });
-  const numberText = (
-    <Typography variant="caption" sx={{ position: "relative", color: "#333", lineHeight: 1 }}>
-      {number}
-    </Typography>
-  );
   return (
     <ButtonBase
       ref={cell}
@@ -206,26 +237,15 @@ function ItemCell({
         ...pickRing(chosen, "common.black"),
       }}
     >
-      {answer === undefined ? (
-        <>
-          <Skeleton
-            variant="rectangular"
-            width={cells.picture}
-            height={cells.picture}
-            sx={{ position: "absolute", bgcolor: "rgba(0, 0, 0, 0.11)" }}
-          />
-          {numberText}
-        </>
-      ) : "view" in answer ? (
-        <Box
-          component="img"
-          src={answer.view.src}
-          alt=""
-          sx={{ width: cells.picture, height: cells.picture, objectFit: "contain" }}
-        />
-      ) : (
-        numberText
-      )}
+      <ItemPicture
+        answer={answer}
+        size={cells.picture}
+        fallback={
+          <Typography variant="caption" sx={{ position: "relative", color: "#333", lineHeight: 1 }}>
+            {number}
+          </Typography>
+        }
+      />
     </ButtonBase>
   );
 }

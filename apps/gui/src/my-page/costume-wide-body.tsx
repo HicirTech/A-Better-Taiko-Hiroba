@@ -16,7 +16,7 @@ import {
   itemsOf,
   type SlotPart,
 } from "./costume-parts";
-import { PartsList } from "./costume-parts-list";
+import { PARTS_PANEL_ID, PartsList, partTabId } from "./costume-parts-list";
 import { CostumePreviewBox } from "./costume-preview-box";
 import { type EditingTabs, selectedPart, tabsWithPart } from "./costume-tabs";
 import type { CostumeEditor } from "./use-costume-editor";
@@ -82,13 +82,18 @@ export function WideBody({ editor, lane, i18n, tabs, onTabs, actions, progress }
             sx={{ flex: `0 1 ${PARTS_COLUMN_PX}px`, minWidth: MIN_PARTS_COLUMN_PX }}
           >
             <PartsList
+              view={step.editor}
+              draft={step.draft}
+              lane={lane}
               i18n={i18n}
               tabs={tabs}
               onPick={(part) => onTabs(tabsWithPart(tabs, part))}
             />
           </Box>
           <Box
-            id="costume-grid"
+            id={PARTS_PANEL_ID}
+            role="tabpanel"
+            aria-labelledby={partTabId(selectedPart(tabs))}
             sx={{
               flex: `1 1 ${GRID_COLUMN_PX}px`,
               minWidth: 0,
