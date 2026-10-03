@@ -13,6 +13,7 @@ import {
   useTheme,
 } from "@mui/material";
 
+import { useBackCloses } from "../navigation/back-closers";
 import type { CostumeHistoryEntry, CostumeSet } from "../session-port";
 import { keyOf } from "./costume-preview";
 import { pickRing } from "./pick-ring";
@@ -41,6 +42,7 @@ export function CostumeHistoryDialog({
 }: CostumeHistoryDialogProps) {
   const { t } = i18n;
   const narrow = useMediaQuery(useTheme().breakpoints.down("sm"), { noSsr: true });
+  useBackCloses(open, onClose);
   return (
     <Dialog
       id="costume-history-dialog"

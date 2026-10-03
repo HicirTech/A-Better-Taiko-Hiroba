@@ -18,7 +18,7 @@ The window has no header. On a wide window a side panel, like Gmail's, lists its
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲 and the お気に入り folder) and **Settings** (the language, and
 signing out). On a narrow one, a menu button
-at the top left opens the same list in a drawer. On Android, Back closes the drawer, goes from
+at the top left opens the same list in a drawer. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
 Costume, Nickname & title, Favourites or Settings back to the Overview, and from the Overview leaves
 the app as before.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
