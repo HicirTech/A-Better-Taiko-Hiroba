@@ -882,7 +882,7 @@ try {
     onOpening.startsWith("data:image/png;base64,") &&
     same(previewsOnOpening, [previewQuery(START)]);
   results.writesOpenWithNoFlag =
-    (await exists("#costume-review")) &&
+    (await exists("#costume-save")) &&
     (await page.evaluate<string>("typeof window.abth.enabledWrites")) === "undefined";
 
   await goTo("overview");
@@ -894,22 +894,27 @@ try {
   results.previewKeptBetweenVisits =
     (await previewSrc()) === onOpening && same(await previewQueries(), [previewQuery(START)]);
 
-  const FACE_CHANGE = "Face: #5 → #3";
+  const savable = () =>
+    page.evaluate<boolean>(`document.querySelector("#costume-save").disabled === false`);
   await click("#swatch-colorFace-3");
+  results.noChangeSummaryShown =
+    !(await exists("#costume-changes")) &&
+    !(await exists("#costume-no-changes")) &&
+    !(await text()).includes("Changes") &&
+    !(await text()).includes("Nothing changed yet");
   await goTo("overview");
   await goTo("costume");
   await inStep("editing");
   results.draftSurvivesAPageSwitch =
     (await pressedOf("#swatch-colorFace-3")) === "true" &&
-    (await textOf("#costume-changes")) === FACE_CHANGE &&
+    (await savable()) &&
     (await editorHits()) === 1;
   await click("#costume-reset");
   results.resetRestoresTheSet =
     (await pressedOf("#swatch-colorFace-5")) === "true" &&
     (await pressedOf("#swatch-colorFace-3")) === "false" &&
-    (await exists("#costume-no-changes")) &&
     (await page.evaluate<boolean>(
-      `document.querySelector("#costume-reset").disabled && document.querySelector("#costume-review").disabled`,
+      `document.querySelector("#costume-reset").disabled && document.querySelector("#costume-save").disabled`,
     ));
 
   const readEditorAgain = async () => {
@@ -925,8 +930,7 @@ try {
   await click("#swatch-colorFace-3");
   await readEditorAgain();
   results.readAgainKeepsADraftOverAnUnchangedSet =
-    (await pressedOf("#swatch-colorFace-3")) === "true" &&
-    (await textOf("#costume-changes")) === FACE_CHANGE;
+    (await pressedOf("#swatch-colorFace-3")) === "true" && (await savable());
   await fetch(`${HIROBA}/__state?color_body=40`);
   await readEditorAgain();
   await click("#costume-part-colorBody");
@@ -936,7 +940,7 @@ try {
     bodyAsRead &&
     (await pressedOf("#swatch-colorFace-5")) === "true" &&
     (await pressedOf("#swatch-colorFace-3")) === "false" &&
-    (await exists("#costume-no-changes"));
+    !(await savable());
   await fetch(`${HIROBA}/__state?reset=1`);
   await readEditorAgain();
 
@@ -949,13 +953,9 @@ try {
   const barScrolledToTheEnd = await barFlush();
   await page.evaluate("window.scrollTo(0, 0)");
   await click("#swatch-colorFace-3");
-  await click("#costume-review");
-  await inStep("confirming");
-  const barWhileReviewing = await barFlush();
-  await click("#costume-back");
-  await inStep("editing");
+  const barWithADraft = await barFlush();
   await click("#costume-reset");
-  results.saveBarStaysAtTheBottom = barWhileEditing && barScrolledToTheEnd && barWhileReviewing;
+  results.saveBarStaysAtTheBottom = barWhileEditing && barScrolledToTheEnd && barWithADraft;
 
   const pageBox = await boxOf("#costume-page");
   const frameBox = await boxOf("main .MuiContainer-root");
@@ -988,40 +988,92 @@ try {
       await readEditorAgain();
     }
     await inStep("editing");
+    await clearDraft();
+    await onTheColours();
+  };
+  const openEditing = async () => {
+    await goTo("costume");
+    await inStep("editing");
+    await clearDraft();
+    await onTheColours();
+  };
+  const clearDraft = async () => {
     if (
       await page.evaluate<boolean>(`document.querySelector("#costume-reset")?.disabled === false`)
     ) {
       await click("#costume-reset");
     }
-    await onTheColours();
-  };
-  const openEditing = async () => {
-    await goTo("costume");
-    const step = await waitFor(async () => {
-      const now = await stepOf();
-      return now === "editing" || now === "done" ? now : undefined;
-    });
-    if (step === "done") {
-      await click("#costume-back");
-    }
-    await inStep("editing");
-    await onTheColours();
   };
   const onTheColours = async () => {
     await click("#costume-tab-colours");
     await click("#costume-part-colorFace");
   };
-  const changeInTheWindow = async (pick: () => Promise<unknown>) => {
-    await openFreshEditor();
-    await pick();
-    await click("#costume-review");
-    await waitFor(async () => (await exists("#costume-save")) || undefined);
+  /** One press of Save: a notice names the outcome, and an applied one has none, so it is told
+   * by the set Hiroba holds having moved once the page is editing again. */
+  const savedFrom = async (before: Record<string, number>) => {
     await click("#costume-save");
-    return waitFor(async () => (await pageOutcome()) ?? undefined);
+    return waitFor(
+      async () =>
+        (await pageOutcome()) ??
+        ((await stepOf()) === "editing" && !same(await savedCostume(), before)
+          ? "applied"
+          : undefined),
+    );
   };
+  /** `drawn` waits for the picture of the picked set, as a person who looks before saving does. */
+  const changeInTheWindow = async (pick: () => Promise<unknown>, drawn = false) => {
+    await openFreshEditor();
+    const before = await savedCostume();
+    const shown = await previewSrc();
+    await pick();
+    if (drawn) {
+      await previewOtherThan(shown);
+    }
+    return savedFrom(before);
+  };
+  const PNG_URL = "data:image/png;base64,";
+  type HistoryEntry = { set: Record<string, number>; picture: string | null };
+  const historyNow = () => page.evaluate<HistoryEntry[]>("window.abth.costumeHistory()");
+  type Tile = { tag: string; label: string | null; src: string | null; worn: boolean };
+  const historyTiles = () =>
+    page.evaluate<Tile[]>(
+      `[...document.querySelectorAll('[id^="costume-history-entry-"]')].map((tile) => ({ tag: tile.tagName, label: tile.getAttribute("aria-label"), src: tile.querySelector("img")?.getAttribute("src") ?? null, worn: tile.querySelector("#costume-history-worn") !== null }))`,
+    );
+  /** From the keyboard, as a person without a pointer does: the button is focused, then Enter. */
+  const openHistory = async () => {
+    await waitFor(async () =>
+      (await page.evaluate<boolean>(
+        `document.querySelector("#costume-history")?.disabled === false`,
+      ))
+        ? true
+        : undefined,
+    );
+    await page.evaluate(`document.querySelector("#costume-history").focus()`);
+    await press("Enter");
+    await waitFor(async () => (await exists("#costume-history-entry-0")) || undefined);
+  };
+  const historyClosed = () =>
+    waitFor(async () => ((await exists("#costume-history-dialog")) ? undefined : true));
+  const pickFromHistory = async (index: number) => {
+    await openHistory();
+    await click(`#costume-history-entry-${index}`);
+    await historyClosed();
+  };
+  const notPictures = (log: string[]) =>
+    log.filter((line) => line !== PREVIEW && !LANE_PICTURES.includes(line));
   const leaveTheCostumePage = () => goTo("overview");
   await fetch(`${HIROBA}/__noop-save`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
+  const noticeAboveTheEditor = await page.evaluate<boolean>(
+    `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const tabs = document.querySelector("#costume-tab-colours"); return notice !== null && tabs !== null && notice.getBoundingClientRect().bottom <= tabs.getBoundingClientRect().top; })()`,
+  );
+  results.failedSaveKeepsTheNoticeAndDraft =
+    noChange === "notApplied" &&
+    noticeAboveTheEditor &&
+    (await stepOf()) === "editing" &&
+    (await pressedOf("#swatch-colorFace-3")) === "true" &&
+    (await savable()) &&
+    same(await savedCostume(), START);
   await leaveTheCostumePage();
   results.myDonNotAskedAfterNoChange =
     noChange === "notApplied" &&
@@ -1595,11 +1647,6 @@ try {
   await readMedalShowing(() => shownNow("#medal-plate-image"));
   await page.evaluate("window.scrollTo(0, 0)");
 
-  const undoFrom = async (selector: string) => {
-    await click(selector);
-    await Bun.sleep(200);
-    return waitFor(async () => (await pageOutcome()) ?? undefined);
-  };
   const bridgeChange = (target: Record<string, number>, expected = START) =>
     page.evaluate<{ kind: string; [key: string]: unknown }>(
       `window.abth.changeCostume(${JSON.stringify({ expected, target })})`,
@@ -1680,13 +1727,15 @@ try {
     wentByLongPress &&
     same(await touchClicks(), clicksBeforeLongPress) &&
     (await currentPage()) === "costume" &&
-    (await stepOf()) === "done";
+    (await stepOf()) === "editing" &&
+    (await pageOutcome()) === "notApplied";
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
 
-  // Opened by the long-press, the page still shows the outcome of the write that moved nothing.
-  await inStep("done");
-  await click("#costume-back");
+  // Opened by the long-press, the page still shows the notice of the save that moved nothing,
+  // until Reset.
   await inStep("editing");
+  await click("#costume-reset");
+  results.noticeGoesWithReset = !(await exists("#write-outcome")) && !(await savable());
   const onOpen = await previewOtherThan(null);
   results.columnStillAcrossPages =
     overviewScrolls &&
@@ -1724,7 +1773,7 @@ try {
     (await textOf("#costume-preview-code")) ===
       "Code for a report: preview=notPng status=200 type=image/gif bytes=43" &&
     (await previewSrc()) === afterBurst &&
-    (await page.evaluate<boolean>(`document.querySelector("#costume-review").disabled === false`));
+    (await savable());
   await fetch(`${HIROBA}/__preview?answer=png`);
   await fetch(`${HIROBA}/__previews?reset=1`);
   await click("#swatch-colorFace-21");
@@ -1902,8 +1951,10 @@ try {
   const myDonBeforeColour = await attribute("#my-don-image", "src");
   await resetLog();
   await fetch(`${HIROBA}/__posts?reset=1`);
-  const colourOutcome = await changeInTheWindow(() => click("#swatch-colorFace-3"));
+  const colourOutcome = await changeInTheWindow(() => click("#swatch-colorFace-3"), true);
   results.colourApplied = colourOutcome === "applied";
+  results.appliedShowsNoNotice =
+    !(await exists("#write-outcome")) && (await stepOf()) === "editing";
   results.colourSentOnlyThePlannedRequests = sentAsPlanned(
     await requestLog(),
     ["GET /mypage_kisekae.php"],
@@ -1933,6 +1984,22 @@ try {
         same(post.fields, ["_tckt", ...COSTUME_FIELDS]) &&
         post.ticketMatched,
     );
+  const barButtons = await page.evaluate<{ id: string; left: number; right: number }[]>(
+    `[...document.querySelectorAll("#costume-bar button")].map((button) => { const box = button.getBoundingClientRect(); return { id: button.id, left: box.left, right: box.right }; })`,
+  );
+  const barBox = await boxOf("#costume-bar");
+  results.saveIsOneClick =
+    !(await exists("#costume-review")) &&
+    !(await exists("#costume-back")) &&
+    same(
+      barButtons.map(({ id }) => id),
+      ["costume-history", "costume-reset", "costume-save"],
+    ) &&
+    posts.filter((post) => post.path === "/ajax/change_mydon.php").length === 1;
+  results.barHoldsHistoryLeftAndResetAndSaveRight =
+    Math.abs((barButtons[0]?.left ?? 0) - (barBox.left + 12)) < 2 &&
+    Math.abs(barBox.right - 12 - (barButtons[2]?.right ?? 0)) < 2 &&
+    (barButtons[1]?.right ?? 0) <= (barButtons[2]?.left ?? 0);
   await goTo("overview");
   await waitForSeen(
     page,
@@ -1940,41 +2007,117 @@ try {
   );
   const myDonsAfterColour = await myDonsSettled();
   const myDonAfterColour = await attribute("#my-don-image", "src");
-  const undoElsewhere = async () =>
-    (await exists("#costume-undo")) ||
-    (await exists("#write-outcome")) ||
-    (await exists(".MuiSnackbar-root"));
-  const undoOnOverview = await undoElsewhere();
+  const noticeElsewhere = async () =>
+    (await exists("#write-outcome")) || (await exists(".MuiSnackbar-root"));
+  const noticeOnOverview = await noticeElsewhere();
   await goTo("favorites");
   await Bun.sleep(1000);
-  const undoOnFavorites = await undoElsewhere();
+  const noticeOnFavorites = await noticeElsewhere();
   await goTo("costume");
-  await inStep("done");
-  results.undoOnTheCostumePageAlone =
-    (await exists("#costume-undo")) &&
-    (await textOf("#undo-when")) !== null &&
-    (await pageOutcome()) === "applied" &&
-    !undoOnOverview &&
-    !undoOnFavorites &&
-    !(await exists(".MuiSnackbar-root"));
+  await inStep("editing");
+  results.savedCostumeLeavesNoMessageAnywhere =
+    !noticeOnOverview && !noticeOnFavorites && !(await noticeElsewhere());
 
-  await resetLog();
-  await click("#costume-undo");
-  const secondPressShut = await page.evaluate<boolean>(
-    `(() => { const undo = document.querySelector("#costume-undo"); if (undo === null) return true; const shut = undo.disabled; undo.click(); return shut; })()`,
+  const firstHistory = await historyNow();
+  results.historyListsTheNewSetFirstAndTheOldSecond =
+    same(
+      firstHistory.map(({ set }) => set),
+      [{ ...START, colorFace: 3 }, START],
+    ) && firstHistory.every(({ picture }) => picture?.startsWith(PNG_URL) === true);
+  const requestsBeforeHistory = notPictures(await requestLog());
+  await openHistory();
+  const tiles = await historyTiles();
+  const dialogFacts = await page.evaluate<Record<string, unknown>>(
+    `(() => { const dialog = document.querySelector('[role="dialog"]'); const title = document.getElementById(dialog?.getAttribute("aria-labelledby") ?? ""); return { modal: dialog?.getAttribute("aria-modal"), title: title?.textContent ?? null }; })()`,
   );
-  await Bun.sleep(200);
-  results.colourUndoneFromThePage =
-    (await waitFor(async () => (await pageOutcome()) ?? undefined)) === "applied" &&
-    (await textOf("#costume-page #write-outcome")) ===
-      "Undone. Hiroba shows the costume as it was." &&
-    same(await savedCostume(), START) &&
-    sameBesideLanePictures(await requestLog(), COLOUR_REQUESTS);
-  results.undoOncePerPress = secondPressShut;
+  results.historyDialogListsEntriesAsNamedButtons =
+    same(dialogFacts, { modal: "true", title: "Costume history" }) &&
+    same(
+      tiles.map(({ tag, label }) => [tag, label]),
+      [
+        ["BUTTON", "Costume 1, worn now"],
+        ["BUTTON", "Costume 2"],
+      ],
+    ) &&
+    same(
+      tiles.map(({ src }) => src),
+      firstHistory.map(({ picture }) => picture),
+    );
+  results.historyMarksTheSetWornNow =
+    same(
+      tiles.map(({ worn }) => worn),
+      [true, false],
+    ) && (await textOf("#costume-history-worn")) === "Worn now";
+  const wideDialog = await boxOf('[role="dialog"]');
+  await page.send("Emulation.setDeviceMetricsOverride", {
+    width: 480,
+    height: 800,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
+  await waitFor(async () => (await exists("#nav-menu")) || undefined);
+  const narrowDialog = await waitFor(async () => {
+    const box = await boxOf('[role="dialog"]');
+    return box.width >= 479 ? box : undefined;
+  });
+  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  await waitFor(async () => (await exists("#nav-overview")) || undefined);
+  results.historyDialogFullScreenOnANarrowWindow =
+    wideDialog.width <= 600 &&
+    narrowDialog.left < 1 &&
+    narrowDialog.right > 479 &&
+    narrowDialog.bottom - narrowDialog.top >= 799;
+  await Bun.sleep(300);
+  results.historyAsksHirobaNothing = same(notPictures(await requestLog()), requestsBeforeHistory);
+  await press("Escape");
+  await historyClosed();
+  const focusAfterEscape = await waitFor(
+    async () =>
+      (await page.evaluate<string>("document.activeElement?.id ?? ''")) === "costume-history" ||
+      undefined,
+  );
+  await openHistory();
+  await click("#costume-history-close");
+  await historyClosed();
+  const focusAfterClose = await waitFor(
+    async () =>
+      (await page.evaluate<string>("document.activeElement?.id ?? ''")) === "costume-history" ||
+      undefined,
+  );
+  results.historyDialogClosesByEscapeAndButtonAndGivesFocusBack =
+    focusAfterEscape && focusAfterClose && (await stepOf()) === "editing" && !(await savable());
+
+  // Going back: the original from the history, shown at once from the picture kept, saved as is.
+  const myDonsBeforeGoingBack = await myDonsSettled();
+  const previewHitsBeforePick = await hitsOn("/imgsrc_mydon.php");
+  await fetch(`${HIROBA}/__previews?reset=1`);
+  await pickFromHistory(1);
+  const pickedPicture = await waitFor(async () => {
+    const src = await previewSrc();
+    return src === firstHistory[1]?.picture ? src : undefined;
+  });
+  await Bun.sleep(800);
+  results.historyPickShowsThePictureAtOnceAsksNothing =
+    pickedPicture === firstHistory[1]?.picture &&
+    !(await exists("#costume-preview-loading")) &&
+    same(await previewQueries(), []) &&
+    (await hitsOn("/imgsrc_mydon.php")) === previewHitsBeforePick &&
+    (await pressedOf("#swatch-colorFace-5")) === "true" &&
+    (await pressedOf("#swatch-colorFace-3")) === "false" &&
+    (await savable());
+  const backOutcome = await savedFrom(await savedCostume());
+  results.historyPickSavesLikeAnyChange =
+    backOutcome === "applied" && same(await savedCostume(), START);
+  const afterGoingBack = await historyNow();
+  results.historyHoldsEachSetOnceAfterGoingBack =
+    same(
+      afterGoingBack.map(({ set }) => set),
+      [START, { ...START, colorFace: 3 }],
+    ) && afterGoingBack.every(({ picture }) => picture?.startsWith(PNG_URL) === true);
   await goTo("overview");
   await waitForSeen(
     page,
-    async () => (await myDonsAsked()).length > myDonsAfterColour || undefined,
+    async () => (await myDonsAsked()).length > myDonsBeforeGoingBack || undefined,
   );
   results.myDonAgainAfterWrite =
     myDonsAfterColour === myDonsBeforeColour + 1 &&
@@ -1983,15 +2126,12 @@ try {
     (await myDonsSettled()) === myDonsAfterColour + 1 &&
     (await attribute("#my-don-image", "src")) === myDonBeforeColour;
 
-  let noteGoneBeforeNextChange = false;
   const kigurumiOutcome = await changeInTheWindow(async () => {
-    noteGoneBeforeNextChange = !(await exists("#write-outcome"));
     await click("#costume-tab-items");
     await waitFor(async () => (await exists("#item-costume1-36")) || undefined);
     await click("#item-costume1-36");
     await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
   });
-  results.undoneNoteClearedByNextChange = noteGoneBeforeNextChange;
   results.kigurumiEmptiesThePieces =
     kigurumiOutcome === "applied" &&
     same(await savedCostume(), {
@@ -2002,13 +2142,13 @@ try {
       costume4: 0,
       costume5: 0,
     });
-  const savesBeforeUndo = await hitsOn("/ajax/change_mydon.php");
-  results.kigurumiUndoneInOnePost =
-    (await undoFrom("#costume-undo")) === "applied" &&
+  const savesBeforeGoingBack = await hitsOn("/ajax/change_mydon.php");
+  await pickFromHistory(1);
+  results.kigurumiGoneBackInOnePost =
+    (await savedFrom(await savedCostume())) === "applied" &&
     same(await savedCostume(), START) &&
-    (await hitsOn("/ajax/change_mydon.php")) - savesBeforeUndo === 1 &&
-    !(await exists("#costume-undo"));
-  // Wait for the My Don fetched after that change and its undo, before the log is read.
+    (await hitsOn("/ajax/change_mydon.php")) - savesBeforeGoingBack === 1;
+  // Wait for the My Don fetched after those changes, before the log is read.
   await goTo("overview");
   await myDonsSettled();
 
@@ -2055,15 +2195,15 @@ try {
     same(await requestLog(), [...COLOUR_REQUESTS, THUMBNAIL]);
   await fetch(`${HIROBA}/__state?reset=1`);
 
-  const toUndo = await bridgeChange({ ...START, colorLimb: 20 });
   await openFreshEditor();
-  await waitFor(async () => (await exists("#costume-undo")) || undefined);
+  await click("#costume-part-colorLimb");
+  await click("#swatch-colorLimb-20");
   await resetLog();
   await fetch(`${HIROBA}/__hold-precheck?on=1`);
-  const prechecksBeforeUndo = await hitsOn("/ajax/check_ip_kisekae.php");
-  await click("#costume-undo");
+  const prechecksBeforeHeldSave = await hitsOn("/ajax/check_ip_kisekae.php");
+  await click("#costume-save");
   await waitFor(
-    async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeUndo || undefined,
+    async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeHeldSave || undefined,
   );
   const fabShutInWrite = (await fabState()).shut;
   await goTo("settings");
@@ -2072,20 +2212,21 @@ try {
   );
   const signedInInWrite = (await textOf("#account-who")) === "Signed in";
   await goTo("costume");
-  const undoingOnReturn = (await stepOf()) === "undoing";
+  const savingOnReturn = (await stepOf()) === "saving";
   await click("#read-again");
   await touchEmulated(true);
   await swipe(pullFrom, pulledBy(0, 200));
   await touchEmulated(false);
   await Bun.sleep(300);
   await fetch(`${HIROBA}/__hold-precheck?on=0`);
-  results.signOutShutWhileAWriteRuns = signOutShutInWrite && signedInInWrite && undoingOnReturn;
+  results.signOutShutWhileAWriteRuns = signOutShutInWrite && signedInInWrite && savingOnReturn;
+  await inStep("editing");
   results.noReadInsideAWrite =
-    toUndo.kind === "applied" &&
     fabShutInWrite &&
-    (await waitFor(async () => (await pageOutcome()) ?? undefined)) === "applied" &&
+    !(await exists("#write-outcome")) &&
     sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&
-    same(await savedCostume(), START);
+    same(await savedCostume(), { ...START, colorLimb: 20 });
+  await fetch(`${HIROBA}/__state?reset=1`);
 
   await fetch(`${HIROBA}/__noop-save`);
   const noop = await bridgeChange({ ...START, colorLimb: 20 });
@@ -2147,18 +2288,29 @@ try {
     ) &&
     (await hitsOn("/ajax/change_mydon.php")) === savesBeforeRedirects;
 
-  const changedElsewhere = await bridgeChange({ ...START, colorLimb: 20 });
-  await readEditorAgain();
-  await waitFor(async () => (await exists("#costume-undo")) || undefined);
+  await openFreshEditor();
+  await click("#swatch-colorFace-3");
   await fetch(`${HIROBA}/__state?color_body=40`);
-  const savesBeforeStaleUndo = await hitsOn("/ajax/change_mydon.php");
-  results.staleUndoWithdrawn =
-    changedElsewhere.kind === "applied" &&
-    (await undoFrom("#costume-undo")) === "changedSincePreview" &&
-    (await hitsOn("/ajax/change_mydon.php")) === savesBeforeStaleUndo &&
-    !(await exists("#costume-undo")) &&
-    (await savedCostume()).colorBody === 40;
+  const savesBeforeStaleSave = await hitsOn("/ajax/change_mydon.php");
+  const staleOutcome = await savedFrom(await savedCostume());
+  results.saveAfterAChangeElsewhereStopsAndKeepsTheDraft =
+    staleOutcome === "changedSincePreview" &&
+    (await hitsOn("/ajax/change_mydon.php")) === savesBeforeStaleSave &&
+    (await savedCostume()).colorBody === 40 &&
+    (await pressedOf("#swatch-colorFace-3")) === "true" &&
+    (await savable());
+  await click("#costume-part-colorBody");
+  await click("#costume-part-colorFace");
+  const noticeStaysThroughTabs = await exists("#write-outcome");
+  await click("#swatch-colorFace-3");
+  results.noticeGoesWithTheNextPick = noticeStaysThroughTabs && !(await exists("#write-outcome"));
+  // Pressed again, the draft goes over the set Hiroba shows now, which the stop brought in.
+  results.saveStoppedForAMovedSetGoesOnceTheEditorHasIt =
+    (await savedFrom(await savedCostume())) === "applied" &&
+    same(await savedCostume(), { ...START, colorFace: 3 });
+  // Hiroba's set goes back to the start, and a read of the editor dates the undo that is left.
   await fetch(`${HIROBA}/__state?reset=1`);
+  await readEditorAgain();
   const TITLE_PAGE = "/mypage_title_edit.php";
   const TITLE_REQUESTS = [
     "GET /mypage_kisekae.php",
@@ -2997,8 +3149,6 @@ try {
   await openFreshEditor();
   const postsBeforeExpiry = await hitsOn("/ajax/check_ip_kisekae.php");
   await click("#swatch-colorFace-9");
-  await click("#costume-review");
-  await waitFor(async () => (await exists("#costume-save")) || undefined);
   await fetch(`${HIROBA}/__expire`);
   await Bun.sleep(100);
   await click("#costume-save");
@@ -3080,6 +3230,7 @@ try {
   results.sessionKept =
     existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
 
+  const historyBeforeReopen = await historyNow();
   const readsBeforeReopen = await myPageHits();
   const editorReadsBeforeReopen = await editorHits();
   const platesBeforeReopen = (await platesSettled()).length;
@@ -3158,9 +3309,19 @@ try {
   const shownOnReopen = (selector: string) =>
     running.page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
   await running.goTo("costume");
-  results.undoOfferedAfterReopen = await waitFor(
-    async () => (await shownOnReopen("#costume-undo")) || undefined,
+  await waitFor(async () =>
+    (await running.page.evaluate<boolean>(
+      `document.querySelector("#costume-history")?.disabled === false`,
+    ))
+      ? true
+      : undefined,
   );
+  results.historyKeptAcrossRelaunch =
+    historyBeforeReopen.length > 0 &&
+    same(
+      await running.page.evaluate<HistoryEntry[]>("window.abth.costumeHistory()"),
+      historyBeforeReopen,
+    );
   results.editorReadOnceOnReopen = (await editorHits()) === editorReadsBeforeReopen + 1;
   await waitFor(async () => (await shownOnReopen("#costume-tab-items")) || undefined);
   await running.click("#costume-tab-items");
@@ -3193,10 +3354,10 @@ try {
   results.signedOutAfterReopen = (await myPageHits()) === readsBeforeSecondReopen;
   await resetLog();
   const signedOutWrites = await running.page.evaluate(
-    `Promise.all([window.abth.pendingUndo(), window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorFace: 3 } })}), window.abth.undo("costume")])`,
+    `Promise.all([window.abth.pendingUndo(), window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorFace: 3 } })}), window.abth.undo("costume"), window.abth.costumeHistory()])`,
   );
   results.signedOutWritesSendNothing =
-    same(signedOutWrites, [[], { kind: "notSignedIn" }, { kind: "notSignedIn" }]) &&
+    same(signedOutWrites, [[], { kind: "notSignedIn" }, { kind: "notSignedIn" }, []]) &&
     same(await requestLog(), []);
   const platesSignedOut = (await platesAsked()).length;
   const myDonsSignedOut = (await myDonsAsked()).length;
@@ -3218,7 +3379,7 @@ try {
     (await running.textOf("main h1")) === "Costume" &&
     (await editorHits()) === editorReadsBeforeOpening + 1 &&
     (await running.page.evaluate<boolean>(
-      `["#costume-tab-colours", "#costume-review", "#costume-bar"].every((selector) => document.querySelector(selector) !== null)`,
+      `["#costume-tab-colours", "#costume-save", "#costume-history", "#costume-bar"].every((selector) => document.querySelector(selector) !== null)`,
     ));
   await resetLog();
   const leftAsIs = { ...START, colorFace: 7 };
@@ -3280,6 +3441,10 @@ try {
   await running.until("Last updated");
   const platesBeforeSignOut = (await platesSettled()).length;
   results.playerPicturesKeptAtSignOut = (await platesAfterSignOutAndIn()) === platesBeforeSignOut;
+  results.historyKeptAcrossSignOutAndIn = same(
+    await running.page.evaluate<HistoryEntry[]>("window.abth.costumeHistory()"),
+    historyBeforeReopen,
+  );
   await signOut();
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
   const portraits = await myDonsAsked();
@@ -3375,13 +3540,9 @@ try {
     );
   const stepIs = (selector: string, step: string) =>
     waitFor(async () => ((await stepOn(selector)) === step ? true : undefined));
-  const present = (selector: string) =>
-    running.page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
   await running.goTo("costume");
   await stepIs("#costume-page", "editing");
   await running.click("#swatch-colorFace-3");
-  await running.click("#costume-review");
-  await waitFor(async () => ((await present("#costume-save")) ? true : undefined));
   await Bun.sleep(600);
   await resetLog();
   await fetch(`${HIROBA}/__hold-precheck?on=1`);
