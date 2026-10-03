@@ -3,12 +3,15 @@ import { Box, Button, Paper, Stack } from "@mui/material";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
+import { useWideWindow } from "../navigation/use-wide-window";
 import type { PictureLane } from "../pictures/picture-lane";
-import { type EditingTabs, EditingView, FIRST_TABS } from "./costume-editing";
-import { previewSetOf } from "./costume-editor-state";
+import { EditingView } from "./costume-editing";
+import { type EditorStep, previewSetOf } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { changedParts } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
+import { type EditingTabs, FIRST_TABS } from "./costume-tabs";
+import { WideBody } from "./costume-wide-body";
 import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
 import type { CostumeEditor } from "./use-costume-editor";
 import { WriteOutcomeNotice } from "./write-outcome";
@@ -25,6 +28,7 @@ export interface CostumePageProps {
 
 export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   const { step } = editor;
+  const wide = useWideWindow();
   const [tabs, setTabs] = useState(FIRST_TABS);
   const [historyOpen, setHistoryOpen] = useState(false);
   const page = useRef<HTMLDivElement>(null);
@@ -53,17 +57,35 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
         display: "flex",
         flexDirection: "column",
         width: 1,
-        maxWidth: COLUMN_MAX_WIDTH_PX,
-        // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
-        alignSelf: "center",
+        ...(!wide && {
+          maxWidth: COLUMN_MAX_WIDTH_PX,
+          // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
+          alignSelf: "center",
+        }),
         outline: "none",
       }}
     >
-      <Stack spacing={2} sx={{ flexGrow: 1, pb: 2 }}>
-        {previewSetOf(step) !== null && <CostumePreviewBox preview={editor.preview} i18n={i18n} />}
-        <StepView editor={editor} lane={lane} i18n={i18n} tabs={tabs} onTabs={setTabs} />
-      </Stack>
-      {actions !== null && <ActionBar>{actions}</ActionBar>}
+      {wide ? (
+        <WideBody
+          editor={editor}
+          lane={lane}
+          i18n={i18n}
+          tabs={tabs}
+          onTabs={setTabs}
+          actions={actions}
+          progress={progressOf(step, i18n)}
+        />
+      ) : (
+        <>
+          <Stack spacing={2} sx={{ flexGrow: 1, pb: 2 }}>
+            {previewSetOf(step) !== null && (
+              <CostumePreviewBox preview={editor.preview} i18n={i18n} />
+            )}
+            <StepView editor={editor} lane={lane} i18n={i18n} tabs={tabs} onTabs={setTabs} />
+          </Stack>
+          {actions !== null && <ActionBar>{actions}</ActionBar>}
+        </>
+      )}
       {step.name === "editing" && (
         <CostumeHistoryDialog
           open={historyOpen}
@@ -88,34 +110,42 @@ function StepView({
   tabs,
   onTabs,
 }: CostumePageProps & { tabs: EditingTabs; onTabs: (tabs: EditingTabs) => void }) {
-  const { t } = i18n;
   const { step } = editor;
+  if (step.name !== "editing") {
+    return progressOf(step, i18n);
+  }
+
+  return (
+    <>
+      {step.notice !== null && (
+        <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
+      )}
+      <EditingView
+        editor={step.editor}
+        draft={step.draft}
+        lane={lane}
+        i18n={i18n}
+        tabs={tabs}
+        onTabs={onTabs}
+        onPickColour={editor.pickColour}
+        onPickItem={editor.pickItem}
+      />
+    </>
+  );
+}
+
+function progressOf(step: EditorStep, i18n: Translator): ReactNode {
+  const { t } = i18n;
   switch (step.name) {
     case "unread":
     case "loading":
       return <Waiting>{t("costume.reading")}</Waiting>;
     case "loadFailed":
       return <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />;
-    case "editing":
-      return (
-        <>
-          {step.notice !== null && (
-            <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
-          )}
-          <EditingView
-            editor={step.editor}
-            draft={step.draft}
-            lane={lane}
-            i18n={i18n}
-            tabs={tabs}
-            onTabs={onTabs}
-            onPickColour={editor.pickColour}
-            onPickItem={editor.pickItem}
-          />
-        </>
-      );
     case "saving":
       return <Waiting id="costume-saving">{t("costume.saving")}</Waiting>;
+    case "editing":
+      return null;
   }
 }
 

@@ -1,29 +1,19 @@
 import type { Translator } from "@abth/i18n";
-import { Alert, Box, ButtonBase, Stack, Tab, Tabs } from "@mui/material";
+import { Alert, Stack, Tab, Tabs } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CostumeEditorView, CostumeSet } from "../session-port";
 import { CostumeItemGrid } from "./costume-item-grid";
+import { Palette } from "./costume-palette";
 import {
   COLOUR_PARTS,
   type ColourPart,
+  itemsOf,
   PART_LABEL,
   SLOT_PARTS,
   type SlotPart,
 } from "./costume-parts";
-import { pickRing } from "./pick-ring";
-
-export interface EditingTabs {
-  readonly tab: "colours" | "items";
-  readonly colourPart: ColourPart;
-  readonly slotPart: SlotPart;
-}
-
-export const FIRST_TABS: EditingTabs = {
-  tab: "colours",
-  colourPart: "colorFace",
-  slotPart: "costume1",
-};
+import type { EditingTabs } from "./costume-tabs";
 
 export interface EditingViewProps {
   readonly editor: CostumeEditorView;
@@ -73,6 +63,7 @@ export function EditingView({
             editor={editor}
             part={tabs.colourPart}
             chosen={draft[tabs.colourPart]}
+            wide={false}
             i18n={i18n}
             onPick={(id) => onPickColour(tabs.colourPart, id)}
           />
@@ -101,71 +92,32 @@ export function EditingView({
             part={tabs.slotPart}
             items={itemsOf(editor, tabs.slotPart)}
             chosen={draft[tabs.slotPart]}
+            wide={false}
             onPick={(id) => onPickItem(tabs.slotPart, id)}
           />
         </>
       )}
-      {draft.costume1 !== 0 && SLOT_PARTS.slice(1).some((part) => editor.state[part] !== 0) && (
-        <Alert id="kigurumi-warning" severity="info">
-          {t("costume.kigurumiWarning")}
-        </Alert>
-      )}
+      <KigurumiInfo editor={editor} draft={draft} i18n={i18n} />
     </Stack>
   );
 }
 
-// Hiroba's own grid (#palette .color): nine to a row, each swatch framed in one black pixel.
-function Palette({
+export function KigurumiInfo({
   editor,
-  part,
-  chosen,
+  draft,
   i18n,
-  onPick,
 }: {
   editor: CostumeEditorView;
-  part: ColourPart;
-  chosen: number;
+  draft: CostumeSet;
   i18n: Translator;
-  onPick: (id: number) => void;
 }) {
-  const { t } = i18n;
-  return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: "repeat(9, 32px)",
-        gap: 0.75,
-        p: 0.5,
-      }}
-    >
-      {editor.palette.map((swatch) => {
-        const picked = chosen === swatch.id;
-        return (
-          <ButtonBase
-            key={swatch.id}
-            id={`swatch-${part}-${swatch.id}`}
-            aria-label={t("costume.id", { id: swatch.id })}
-            aria-pressed={picked}
-            title={t("costume.id", { id: swatch.id })}
-            onClick={() => onPick(swatch.id)}
-            sx={{
-              width: 32,
-              height: 32,
-              bgcolor: swatch.hex,
-              border: "1px solid",
-              borderColor: "common.black",
-              ...pickRing(picked, "text.primary"),
-            }}
-          />
-        );
-      })}
-    </Box>
-  );
-}
+  if (draft.costume1 === 0 || !SLOT_PARTS.slice(1).some((part) => editor.state[part] !== 0)) {
+    return null;
+  }
 
-/** A slot's items: the owned ones in the page's order, and the one worn if the list lacks it. */
-function itemsOf(editor: CostumeEditorView, part: SlotPart): number[] {
-  const owned = editor.slots[SLOT_PARTS.indexOf(part)] ?? [];
-  const worn = editor.state[part];
-  return [...owned, ...(worn !== 0 && !owned.includes(worn) ? [worn] : [])];
+  return (
+    <Alert id="kigurumi-warning" severity="info">
+      {i18n.t("costume.kigurumiWarning")}
+    </Alert>
+  );
 }

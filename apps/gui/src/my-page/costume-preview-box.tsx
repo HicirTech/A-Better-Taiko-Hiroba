@@ -51,7 +51,17 @@ export function useCostumePreview(
   return { preview, reset, keep };
 }
 
-export function CostumePreviewBox({ preview, i18n }: { preview: PreviewState; i18n: Translator }) {
+const PREVIEW_HEIGHT_PX = 180;
+
+export function CostumePreviewBox({
+  preview,
+  i18n,
+  height = PREVIEW_HEIGHT_PX,
+}: {
+  preview: PreviewState;
+  i18n: Translator;
+  height?: number;
+}) {
   const { t } = i18n;
   return (
     <Stack id="costume-preview" spacing={0.5} sx={{ alignItems: "center" }}>
@@ -60,7 +70,7 @@ export function CostumePreviewBox({ preview, i18n }: { preview: PreviewState; i1
         sx={{
           position: "relative",
           width: 1,
-          height: 180,
+          height,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

@@ -8,18 +8,20 @@ import type { PictureWant } from "../session-port";
 import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";
 import { pickRing } from "./pick-ring";
 
+interface CellSize {
+  readonly cell: number;
+  readonly gap: number;
+  readonly picture: number;
+}
+
 // Hiroba's box shows six to a row and four rows at once.
 const COLUMNS = 6;
 const ROWS = 4;
 /** Hiroba's 35 px is too small to touch; the picture stays near its size inside a larger cell. */
-const CELL = 44;
-const GAP = 6;
-const PICTURE = 40;
-const ROW_STEP = CELL + GAP;
-// One row ahead counts as seen. A cell touching that edge counts too, so the margin stops short
-// of the row after.
-const AHEAD = `${CELL}px 0px`;
+const NARROW_CELLS: CellSize = { cell: 44, gap: 6, picture: 40 };
+const WIDE_CELLS: CellSize = { cell: 64, gap: 8, picture: 56 };
 const RING_ROOM = 6;
+const FILLS_COLUMN = { flex: "1 1 0", minHeight: 0, width: 1 } as const;
 
 export interface CostumeItemGridProps {
   readonly lane: PictureLane;
@@ -29,80 +31,105 @@ export interface CostumeItemGridProps {
   readonly items: readonly number[];
   /** The item the draft holds in this slot, 0 for none. */
   readonly chosen: number;
+  /** A wide window: larger cells, as many to a row as fit, and a box as tall as its column. */
+  readonly wide: boolean;
   readonly onPick: (id: number) => void;
 }
 
 /** One slot's items as Hiroba's .costumeThumbArea shows them; the pictures are data: URLs. */
-export function CostumeItemGrid({ lane, i18n, part, items, chosen, onPick }: CostumeItemGridProps) {
+export function CostumeItemGrid({
+  lane,
+  i18n,
+  part,
+  items,
+  chosen,
+  wide,
+  onPick,
+}: CostumeItemGridProps) {
   const { t, number } = i18n;
   const box = useRef<HTMLDivElement>(null);
   useSyncExternalStore(lane.subscribe, lane.version);
+  const cells = wide ? WIDE_CELLS : NARROW_CELLS;
   const slot = slotOf(part);
   const failures = items.flatMap((id) => {
     const answer = lane.peek({ kind: "costumeItem", slot, id });
     return answer !== undefined && "failure" in answer ? [answer.failure] : [];
   });
   const scroll = (rows: number) =>
-    box.current?.scrollBy({ top: rows * ROW_STEP, behavior: "smooth" });
+    box.current?.scrollBy({ top: rows * (cells.cell + cells.gap), behavior: "smooth" });
 
+  const cellBox = (
+    <Box
+      ref={box}
+      id={`costume-items-${part}`}
+      sx={{
+        display: "grid",
+        gridTemplateColumns: wide
+          ? `repeat(auto-fill, ${cells.cell}px)`
+          : `repeat(${COLUMNS}, ${cells.cell}px)`,
+        gridAutoRows: `${cells.cell}px`,
+        gap: `${cells.gap}px`,
+        p: `${RING_ROOM}px`,
+        ...(wide
+          ? { ...FILLS_COLUMN, justifyContent: "space-between", alignContent: "start" }
+          : {
+              boxSizing: "content-box",
+              height: ROWS * cells.cell + (ROWS - 1) * cells.gap,
+            }),
+        overflowY: "auto",
+        // The same width whether or not a slot holds more rows than the box shows.
+        scrollbarGutter: "stable",
+        // Hiroba's own box in either theme: the art sits on the white ground it was drawn for.
+        bgcolor: "#fff",
+        border: "1px solid #999",
+        boxShadow: "inset 0 1px 4px rgba(0, 0, 0, 0.35)",
+      }}
+    >
+      {items.map((id, order) => (
+        <ItemCell
+          key={id}
+          lane={lane}
+          i18n={i18n}
+          part={part}
+          want={{ kind: "costumeItem", slot, id }}
+          order={order}
+          cells={cells}
+          chosen={chosen === id}
+          root={box}
+          onPick={onPick}
+        />
+      ))}
+    </Box>
+  );
   return (
-    <Stack spacing={1} sx={{ alignItems: "center" }}>
-      <Stack spacing={1} sx={{ width: "fit-content" }}>
-        <Button
-          size="small"
-          variant="outlined"
-          fullWidth
-          aria-label={t("costume.scroll.up")}
-          onClick={() => scroll(-1)}
-          sx={{ py: 0 }}
-        >
-          ▲
-        </Button>
-        <Box
-          ref={box}
-          id={`costume-items-${part}`}
-          sx={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${COLUMNS}, ${CELL}px)`,
-            gridAutoRows: `${CELL}px`,
-            gap: `${GAP}px`,
-            p: `${RING_ROOM}px`,
-            boxSizing: "content-box",
-            height: ROWS * CELL + (ROWS - 1) * GAP,
-            overflowY: "auto",
-            // The same width whether or not a slot holds more rows than the box shows.
-            scrollbarGutter: "stable",
-            // Hiroba's own box in either theme: the art sits on the white ground it was drawn for.
-            bgcolor: "#fff",
-            border: "1px solid #999",
-            boxShadow: "inset 0 1px 4px rgba(0, 0, 0, 0.35)",
-          }}
-        >
-          {items.map((id, order) => (
-            <ItemCell
-              key={id}
-              lane={lane}
-              i18n={i18n}
-              part={part}
-              want={{ kind: "costumeItem", slot, id }}
-              order={order}
-              chosen={chosen === id}
-              root={box}
-              onPick={onPick}
-            />
-          ))}
-        </Box>
-        <Button
-          size="small"
-          variant="outlined"
-          fullWidth
-          aria-label={t("costume.scroll.down")}
-          onClick={() => scroll(1)}
-          sx={{ py: 0 }}
-        >
-          ▼
-        </Button>
-      </Stack>
+    <Stack spacing={1} sx={{ alignItems: "center", ...(wide && FILLS_COLUMN) }}>
+      {wide ? (
+        cellBox
+      ) : (
+        <Stack spacing={1} sx={{ width: "fit-content" }}>
+          <Button
+            size="small"
+            variant="outlined"
+            fullWidth
+            aria-label={t("costume.scroll.up")}
+            onClick={() => scroll(-1)}
+            sx={{ py: 0 }}
+          >
+            ▲
+          </Button>
+          {cellBox}
+          <Button
+            size="small"
+            variant="outlined"
+            fullWidth
+            aria-label={t("costume.scroll.down")}
+            onClick={() => scroll(1)}
+            sx={{ py: 0 }}
+          >
+            ▼
+          </Button>
+        </Stack>
+      )}
       <Button
         id={`item-${part}-0`}
         variant={chosen === 0 ? "contained" : "outlined"}
@@ -137,6 +164,7 @@ function ItemCell({
   part,
   want,
   order,
+  cells,
   chosen,
   root,
   onPick,
@@ -146,13 +174,16 @@ function ItemCell({
   part: SlotPart;
   want: Extract<PictureWant, { kind: "costumeItem" }>;
   order: number;
+  cells: CellSize;
   chosen: boolean;
   root: RefObject<HTMLDivElement | null>;
   onPick: (id: number) => void;
 }) {
   const { t } = i18n;
   const cell = useRef<HTMLButtonElement>(null);
-  const answer = usePicture(lane, want, cell, { root, rootMargin: AHEAD, order });
+  // One row ahead counts as seen. A cell touching that edge counts too, so the margin stops short
+  // of the row after.
+  const answer = usePicture(lane, want, cell, { root, rootMargin: `${cells.cell}px 0px`, order });
   const number = t("costume.id", { id: want.id });
   const numberText = (
     <Typography variant="caption" sx={{ position: "relative", color: "#333", lineHeight: 1 }}>
@@ -168,8 +199,8 @@ function ItemCell({
       title={number}
       onClick={() => onPick(want.id)}
       sx={{
-        width: CELL,
-        height: CELL,
+        width: cells.cell,
+        height: cells.cell,
         borderRadius: 0.5,
         // Focus ring in black, as the box is white in either theme.
         ...pickRing(chosen, "common.black"),
@@ -179,8 +210,8 @@ function ItemCell({
         <>
           <Skeleton
             variant="rectangular"
-            width={PICTURE}
-            height={PICTURE}
+            width={cells.picture}
+            height={cells.picture}
             sx={{ position: "absolute", bgcolor: "rgba(0, 0, 0, 0.11)" }}
           />
           {numberText}
@@ -190,7 +221,7 @@ function ItemCell({
           component="img"
           src={answer.view.src}
           alt=""
-          sx={{ width: PICTURE, height: PICTURE, objectFit: "contain" }}
+          sx={{ width: cells.picture, height: cells.picture, objectFit: "contain" }}
         />
       ) : (
         numberText
