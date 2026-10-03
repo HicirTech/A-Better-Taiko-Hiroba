@@ -4,24 +4,10 @@ import { isErr } from "../operation-results";
 import { landingOf, pathOf } from "./landing";
 import type { AjaxAnswer, AjaxPost, PrecheckVerdict } from "./types";
 
-/**
- * What the site's jQuery sends with an ajax post, `dataType: "json"`. The executed writes were sent
- * from inside the signed-in page, so they also carried its Origin and a Referer of the page that
- * posts; those two are sent here to match that shape.
- */
+/** What the site's jQuery sends for `dataType: "json"`. */
 const ACCEPT_JSON = "application/json, text/javascript, */*; q=0.01";
 
-/**
- * Sends one ajax post, once, and sorts what came back. The only place a write's post is built,
- * and so the only place a form token is revealed.
- *
- * `X-Requested-With` goes on every post: without it Hiroba answers its error page at 200 and the
- * write does not happen (executed on update_score.php). The order of the sorting is the order of
- * trust: no answer; an answer that ended on the login or card-select page; one that ended off
- * Hiroba's origin, which is unexpected whatever it says; JSON with a 2xx status, which is how every
- * handler seen answers; the site's error page; a 404; anything else, JSON with an error status
- * included. Nothing here retries.
- */
+/** Sends one ajax post, once, and sorts the answer; the only place a form token is revealed. */
 export async function postAjax(
   transport: Transport,
   hirobaOrigin: string,
@@ -31,8 +17,10 @@ export async function postAjax(
     method: "POST",
     url: `${hirobaOrigin}/${post.path}`,
     headers: {
+      // Without it Hiroba answers its error page at 200 and the write does not happen.
       "X-Requested-With": "XMLHttpRequest",
       Accept: ACCEPT_JSON,
+      // Origin and Referer match a post made from inside the signed-in page.
       Origin: hirobaOrigin,
       Referer: `${hirobaOrigin}/${post.referer}`,
     },
@@ -80,10 +68,7 @@ export async function postAjax(
   return { kind: "unexpected", code };
 }
 
-/**
- * The pre-check's verdict. Only the boolean false is clear; `true`, `1` and `"1"`, which the
- * site's `== true` reads as true, ask for a confirmation; any other value stops the write.
- */
+/** Only boolean false clears; true, 1 and "1" (true to the site's `==`) ask for confirmation. */
 export function readPrecheck(answer: AjaxAnswer): PrecheckVerdict {
   if (answer.kind !== "json") {
     return answer.kind;
@@ -95,11 +80,7 @@ export function readPrecheck(answer: AjaxAnswer): PrecheckVerdict {
   return result === true || result === 1 || result === "1" ? "needsConfirmation" : "unexpected";
 }
 
-/**
- * A save's result code, strictly: a whole number, or a string of digits, which is how one handler
- * writes it. Anything else — `""`, null, false, a fraction, a missing result — is null, never read
- * as 0 the way `Number()` would read it.
- */
+/** A save's result code: a whole number or a digit string; anything else is null, never 0. */
 export function readSaveCode(value: unknown): number | null {
   const result = memberOf(value, "result");
   if (typeof result === "number") {
@@ -108,16 +89,9 @@ export function readSaveCode(value: unknown): number | null {
   return typeof result === "string" && /^\d+$/.test(result) ? Number(result) : null;
 }
 
-/**
- * Where a save keeps its message: the costume endpoint writes `errmsg`, and the profile endpoint,
- * which renames the player and sets their title, writes `err_message` (seen on a refused name).
- */
+/** The costume endpoint writes `errmsg`, the profile endpoint (name and title) `err_message`. */
 const MESSAGE_MEMBERS = ["errmsg", "err_message"] as const;
 
-/**
- * The message a save came back with, as plain text: the first of its two members that holds a
- * string that is not empty; null when there is none.
- */
 export function readSaveMessage(value: unknown): string | null {
   for (const name of MESSAGE_MEMBERS) {
     const message = memberOf(value, name);

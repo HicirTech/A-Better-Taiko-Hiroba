@@ -1,12 +1,5 @@
-/**
- * A made-up Hiroba for the title and name writes: my page with its rename dialog, the title page
- * with its list and its unclosed div, the costume page the title write cross-checks, and the three
- * ajax endpoints. Pages are excerpts; ids, names and tokens are placeholders.
- *
- * Its token follows what was seen: every page with a form issues the session a new one, and a save
- * carrying any but the latest answers 705 and changes nothing. So a write that read a page between
- * its editor and its posts fails here, as it did on the real site.
- */
+// The fake issues the session a new token with every page that has a form, and a save carrying
+// any but the latest answers 705 and changes nothing, as on the real site.
 import {
   type CostumeSet,
   ok,
@@ -48,7 +41,6 @@ export const COSTUME: CostumeSet = {
 /** A page's text with its ordinary spaces as the title page writes them: `&nbsp;`. */
 const asHeading = (text: string) => text.replaceAll(" ", "&nbsp;");
 
-/** My page, cut down to what the profile parser reads, and the rename dialog at its foot. */
 export function myPage(options: {
   readonly title: string;
   readonly nickname: string;
@@ -144,7 +136,6 @@ const TWIN_OF: Record<keyof CostumeSet, string> = {
 };
 const SLOTS = [[4, 36], [59, 21], [68, 21], [37], [126, 140]];
 
-/** The costume editor, cut down to what its parser reads. */
 export function costumeEditorPage(set: CostumeSet, token: string): string {
   const keys = Object.keys(FIELD_OF) as (keyof CostumeSet)[];
   const palette = Array.from(
@@ -181,7 +172,6 @@ const answer = (path: string, body: string, type: string): Answer =>
     body: new TextEncoder().encode(body),
   });
 
-/** What the next save answers, and whether it stores what it was sent. */
 export interface SaveBehaviour {
   readonly code: number;
   readonly stores: boolean;
@@ -191,7 +181,6 @@ export interface SaveBehaviour {
 
 export const MESSAGE_FOR_NAME_FILTER = "不適切用語は使用できません";
 
-/** A made-up Hiroba that keeps a title, a name and a costume, and records every request. */
 export function fakeHiroba() {
   const hiroba = {
     title: WORN,
@@ -204,7 +193,6 @@ export function fakeHiroba() {
     token: "",
     tokens: 0,
     requests: [] as TransportRequest[],
-    /** The body of the title pre-check's answer. */
     precheck: { result: false } as unknown,
     save: { code: 0, stores: true, message: "" } as SaveBehaviour,
     /** Names the filter refuses, with result 1 and its message. */
@@ -219,7 +207,6 @@ export function fakeHiroba() {
   const json = (path: string, value: unknown) =>
     answer(path, JSON.stringify(value), "application/json");
 
-  /** The save at the profile endpoint, as the executed answers shaped it. */
   const save = (request: TransportPost): Answer => {
     const path = "ajax/change_mydon_profile.php";
     const form = new Map(request.form);
@@ -304,7 +291,6 @@ export function fakeHiroba() {
   /** Every request so far, as "METHOD path". */
   const routes = () =>
     hiroba.requests.map((request) => `${request.method} ${new URL(request.url).pathname.slice(1)}`);
-  /** The posts to one path, as sent. */
   const postsTo = (path: string) =>
     hiroba.requests.filter(
       (request): request is TransportPost =>

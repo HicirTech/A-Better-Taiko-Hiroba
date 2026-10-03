@@ -1,7 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md for why. The excerpt mirrors the real page's
- * structure: the title and nickname carry no class or id, only their position under #mydon_area.
- */
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -14,31 +10,21 @@ import {
 
 interface ExcerptOptions {
   withDan: boolean;
-  /**
-   * The name row as one flat div holding the nickname, the way user_profile.php writes a dan-less
-   * player. Implies no dan: only the flex row has a second div for the label.
-   */
+  /** The name row as one flat div with the nickname, as user_profile.php writes a dan-less one. */
   flatNameRow?: boolean;
   /** null renders the block the way the page renders an unset 大好きな曲. */
   favoriteSong?: { songNo: string; title: string } | null;
   folderTitles?: readonly string[];
   /** Neither favourite block, as a page whose shape changed under the parser. */
   withoutFavoriteBlocks?: boolean;
-  /**
-   * The flag the page's script hands the rename dialog, "0" unless said; `null` for a page whose
-   * script does not wire it at all.
-   */
+  /** The flag the script hands the rename dialog, "0" unless said; `null` leaves the call out. */
   renameFlag?: string | null;
 }
 
 const DEFAULT_FAVORITE = { songNo: "1346", title: "サンプル曲アルファ" };
 const DEFAULT_FOLDER = ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲デルタ"];
 
-/**
- * The 大好きな曲 block, in both the forms the real page renders. A set song is written like any
- * other title, genre and all; 未設定 is the only text that arrives with a suffix-less
- * `songNameFont`, and it comes with an empty `song_no`.
- */
+/** 未設定 is the only text with a suffix-less `songNameFont`, and it comes with an empty `song_no`. */
 function favoriteSongBlock(song: { songNo: string; title: string } | null): string {
   return `
   <div class="favoriteSong">
@@ -150,9 +136,8 @@ jQuery(function($){
 </body></html>`;
 }
 
-/** A plate's picture as my page writes it: an opaque hex id, 48 characters on every capture. */
+/** A plate's picture as my page writes it: an opaque 48-character hex id. */
 const PLATE_IMAGE = "imgsrc_tokenplate.php?id=0123456789abcdef0123456789abcdef0123456789abcdef";
-/** The どんメダル plate of a set being collected: a name and a count. */
 const MEDAL_PLATE = `
   <div>
     <img src="${PLATE_IMAGE}" style="width: 100%;">
@@ -216,8 +201,6 @@ describe("parseProfilePage", () => {
     });
   });
 
-  // A plate of a shape nobody has seen costs the medal field alone, never the page: one the parser
-  // did not know once lost crowns and all.
   describe("a どんメダル plate of a new shape", () => {
     const cases: readonly [string, string, string, MedalUnrecognisedReason, string][] = [
       [
@@ -281,8 +264,7 @@ describe("parseProfilePage", () => {
     });
   });
 
-  // Never seen on my page: every capture and the live page carry a plate. Nothing on the site says
-  // one is always there, and another player's profile, in the same markup, never has one.
+  // Never seen on my page, but nothing says a plate is always there; another player's has none.
   test("no どんメダル plate is a normal state, read as no medal", () => {
     const withPlate = profileExcerpt({ withDan: true });
     const excerpt = withPlate.replace(MEDAL_PLATE, "");
@@ -324,8 +306,8 @@ describe("parseProfilePage", () => {
     expect(result.value.danLabelImageUrl).toBeNull();
   });
 
-  // No dan-less my page has been captured. user_profile.php, whose name row is the same markup,
-  // writes every dan-less player this way, so a dan-less my page is expected to as well.
+  // No dan-less my page has been captured; user_profile.php, in the same markup, writes every
+  // dan-less player this way.
   test("a dan-less name row that is one flat div still gives the nickname", () => {
     const result = parseProfilePage(
       profileExcerpt({ withDan: false, flatNameRow: true }),
@@ -470,9 +452,7 @@ describe("parseProfilePage", () => {
     expect(result.value.favoriteFolderTitles).toEqual(titles);
   });
 
-  // my-page always fills the input for a set song, so this shape is not something the page is
-  // known to produce. It is pinned as tolerance: a title is worth keeping even where the number
-  // that goes with it is not there to read.
+  // My page always fills the input for a set song: this is pinned as tolerance, not a known shape.
   test("a title arriving without its number is kept rather than dropped", () => {
     const excerpt = profileExcerpt({ withDan: true }).replace(
       `<input type="hidden" name="song_no" id="song_no" value="1346">`,

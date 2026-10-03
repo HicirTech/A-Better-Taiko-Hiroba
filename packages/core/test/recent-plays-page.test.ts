@@ -1,8 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md for why. The row mirrors the real shape: the title
- * in `li.songNameTitleScore`, five option cells with サポート譜面 first, the level/crown/rank icons
- * beside `.scoreScore`, and one count cell per `score_name_*` label. No real account data.
- */
 import { describe, expect, test } from "bun:test";
 
 import type { Genre } from "../src/index";
@@ -151,8 +146,6 @@ describe("parseRecentPlaysPage", () => {
   });
 
   test("the title's font class carries the row's genre, as Hiroba numbers genres", () => {
-    // All eight, because the real corpus decodes all eight — genre 3 from exactly one row, which
-    // is precisely the kind of value an excerpt test has to hold once the corpus goes away.
     const genres: [string, Genre][] = [
       ["jpop", 1],
       ["anime", 2],

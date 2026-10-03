@@ -1,8 +1,3 @@
-/**
- * The rename against a made-up Hiroba (profile-fixtures.ts): my page is its editor and its
- * read-back, there is no pre-check, and its token is the one the page just read. What is sent and
- * in which order, how each code reads against the name read back, and what is refused unsent.
- */
 import { describe, expect, test } from "bun:test";
 
 import {

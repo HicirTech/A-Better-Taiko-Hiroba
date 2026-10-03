@@ -1,8 +1,4 @@
-/**
- * The model's one testable promise is that every entity survives JSON whole — the use-case
- * boundary serializes everything it returns (epic #13). The literals here use non-default values
- * on purpose: a round trip that "passes" on zeros and empty strings proves nothing.
- */
+// Non-default values on purpose: a round trip passing on zeros and empty strings proves nothing.
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -112,7 +108,6 @@ const danRecord: DanRecord = {
   totalCounts: { good: 1710, ok: 400, bad: 25, drumroll: 146, maxCombo: 1219, hits: 2256 },
   conditions: [
     { kind: "course", name: "魂ゲージ", requirement: "98%以上", achieved: "100%" },
-    // The same condition, tightened song by song — one pair per 課題曲, not one for the run.
     {
       kind: "perSong",
       name: "可",
@@ -208,8 +203,7 @@ describe("the score ranks carry the names their icons show", () => {
 
 describe("the shaping decisions hold", () => {
   test("played is representable on a score fed by the detail page", () => {
-    // crown_large_0 with stageCount > 0 is what the detail page's "played" looks like; the type
-    // must allow the parser to say so.
+    // crown_large_0 with stageCount > 0 is the detail page's "played"; the type must allow it.
     const playedFromDetail: Score = { ...detailScore, crown: "played" };
     expect(playedFromDetail.crown).toBe("played");
   });

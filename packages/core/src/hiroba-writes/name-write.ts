@@ -11,22 +11,12 @@ import type { ReadDeps, WriteDeps, WriteOutcome, WriteSpec } from "./types";
 
 const SAVE_PATH = "ajax/change_mydon_profile.php";
 
-/**
- * The save's codes, from `profileUpdate` in dialog.js: 1 is the site's refusal of the name, with
- * its own words in `err_message`, and 2 a failed update. The words are Hiroba's and shown as text:
- * the site writes them as HTML, and this app never does.
- */
+/** From `profileUpdate` (dialog.js): 1 refuses the name, in its own words; 2 is a failed update. */
 const NAME_CODES = profileCodes([1, 2]);
 
 const readEditor = (deps: ReadDeps) => readHirobaPage(deps, MY_PAGE_PATH, parseRenameEditorPage);
 
-/**
- * The rename: no pre-check, as the site's script has none, and one save whose body is the dialog's
- * form serialised (`_tckt`, `mode`, `oldName`, `newName`). My page is the editor, the page that
- * shows the name saved, and the page the title's cross-check reads: a rename reads it for the
- * editor and for the read-back, and twice more with the cross-check on, the first of them before
- * the editor so that the editor's token is the last one issued before the post.
- */
+/** The rename: no pre-check (the site's script has none), one save; my page is the editor. */
 export const RENAME_WRITE: WriteSpec<NameState, NameState, NameBody, RenameEditorReading, string> =
   {
     readEditor,
@@ -51,11 +41,6 @@ export const RENAME_WRITE: WriteSpec<NameState, NameState, NameBody, RenameEdito
     cross: TITLE_STAYS,
   };
 
-/**
- * Changes the Donder name from `expected` to `target`, the one way every write goes (`runWrite`):
- * at most one GET of my page for the editor, one save, and one GET to read the name back — two more
- * GETs of my page, for the title, with the cross-check on.
- */
 export function changeName(
   input: { readonly expected: NameState; readonly target: NameState },
   deps: WriteDeps<NameState>,

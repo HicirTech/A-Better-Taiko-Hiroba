@@ -1,14 +1,4 @@
-/**
- * Excerpts, not captured pages — see README.md for why. The list excerpt mirrors the real block
- * shape (`li.contentBox` → `.songName` + one detail anchor per chart), the detail excerpt the real
- * named count blocks, both taken from the captured pages' structure with no real account data.
- * The public detail excerpt mirrors another player's `score_detail.php?taiko_no=`: the same blocks
- * minus the four play counts and the sections, with the subject's number on the My Don link.
- *
- * Image names are the **site's**, not the model's, spelling included: `crown_button_donderfull`
- * with two l's is the file the site actually serves. The list excerpt names every state-and-suffix
- * combination a real genre page has been seen to serve.
- */
+// Image names are the site's own spelling: `crown_button_donderfull` has two l's.
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -227,8 +217,7 @@ function detailExcerpt(options: {
     .map((code) => `<img src="image/sp/640/status_10_${code}_640.png" />`)
     .concat(['<img src="image/sp/640/blank_640.gif" />'])
     .join("");
-  // 区間毎詳細成績, as the real page shapes it: each section repeats the main record's
-  // markers — its own crown_large image and the same count classes with other numbers.
+  // 区間毎詳細成績: each section repeats the main record's markers with its own crown_large image.
   const sections = !options.withSections
     ? ""
     : [1, 2, 3]
@@ -509,24 +498,15 @@ const TAIKO_NO = "000000000000";
 const BLANK_OPTION_SLOT = '<img src="image/sp/640/blank_640.gif" />';
 
 interface PublicDetailOptions {
-  /**
-   * `crown_large_<N>`, or null for no crown image at all — what my never-played page serves. The
-   * one capture of this page carries 3.
-   */
+  /** `crown_large_<N>`, or null for no crown image at all — what my never-played page serves. */
   crown: number | null;
   /** `best_score_rank_<N>`, or null for no rank image at all. */
   rank: number | null;
   /** Whose chart the My Don link names. */
   subject?: string;
-  /**
-   * `status_10_<code>` images, padded with blanks to four slots. The one capture of this page
-   * carries four blanks, which is also what the reader makes of no codes at all.
-   */
+  /** `status_10_<code>` images, padded with blanks to four slots. */
   optionCodes?: readonly string[];
-  /**
-   * The four play-count blocks, which the one capture of this page does not carry. Given here
-   * only to show what the reader does if another player's page ever prints them.
-   */
+  /** The four play-count blocks the one capture lacks, given to show what the reader does. */
   playCounts?: {
     readonly stage: number;
     readonly clear: number;

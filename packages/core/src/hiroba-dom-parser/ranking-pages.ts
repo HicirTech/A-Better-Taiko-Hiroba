@@ -27,19 +27,7 @@ const SCOPES: Readonly<Record<string, RankScope>> = {
 /** `前日までのランキングです。…` — the site's own warning that none of this is current. */
 const STALENESS_PATTERN = /前日までのランキング[^<>]*/;
 
-/**
- * Parses `rank_detail.php` — one chart's ranking table, one page of it.
- *
- * Three answers are ordinary and only one of them is a failure:
- *
- * - rows, up to ten a page;
- * - **no rows at all**, which the page says with `ランキングデータがありません` in its in-page
- *   notice while keeping the banner, the song box and the pager — a chart nobody has ranked;
- * - the site's error page, for a chart that does not exist or an `area` outside 1–47, which
- *   `parsePage` refuses as `siteError` before this function sees it.
- *
- * The scope is required in the result because the three tables are byte-for-byte the same shape.
- */
+/** Parses one page of `rank_detail.php`. No rows is an ordinary answer, not a failure. */
 export function parseRankDetailPage(html: string): Result<RankingReading, ParseFailure> {
   const page = parsePage(html, DETAIL_PAGE);
   if (isErr(page)) {
@@ -78,14 +66,7 @@ export function parseRankDetailPage(html: string): Result<RankingReading, ParseF
   });
 }
 
-/**
- * Parses `rank_list.php` — a genre's songs and the ranking link for each chart.
- *
- * Read this rather than building the URLs yourself only when you need to know **which songs are
- * ranked**: it leaves out 【双打】 songs that the score list carries. Everything else about the page
- * is already in the score list, and `rank_detail.php` serves 双打 charts anyway, so a client that
- * only wants tables can skip this page entirely.
- */
+/** Parses `rank_list.php`, needed only to learn which songs are ranked (it omits 【双打】 songs). */
 export function parseRankListPage(html: string): Result<RankListReading, ParseFailure> {
   const page = parsePage(html, LIST_PAGE);
   if (isErr(page)) {
@@ -118,18 +99,7 @@ export function parseRankListPage(html: string): Result<RankListReading, ParseFa
   return ok({ scope: scope.value.scope, songs });
 }
 
-/**
- * The scope, and — on the list page only — the prefecture packed in beside it.
- *
- * **The two pages spell this differently and a straight lookup breaks on one of them.**
- * `rank_detail.php` writes `1`, `2` or `3`. `rank_list.php` writes `1` for Japan but **`226`** for
- * a prefecture reading: the scope digit with the area id run onto the end of it. So the first
- * character is the scope and whatever follows is the area.
- *
- * *One prefecture list capture supports the split*, so "the first character is the scope" is a
- * reading of one sample rather than a demonstrated rule; a one-digit area would produce `25`, which
- * this parses the same way but nobody has seen.
- */
+/** The scope digit, and on the list page the area packed after it: `226` is scope 2, area 26. */
 function readScope(
   root: HTMLElement,
   page: string,
@@ -147,12 +117,7 @@ function readScope(
   return ok({ scope, area: packed === "" ? null : Number(packed) });
 }
 
-/**
- * The prefecture the table is for, from the pager's own links.
- *
- * Read back rather than taken from the request because **the server rewrites `area=0` to the
- * caller's own prefecture** and answers with that, so what was asked for is not what was served.
- */
+/** The prefecture from the pager's links: the server rewrites `area=0` to the caller's own. */
 function readArea(root: HTMLElement): number | null {
   for (const anchor of root.querySelectorAll("a")) {
     const area = (anchor.getAttribute("href") ?? "").match(/[?&]area=(\d+)/)?.[1];
@@ -163,17 +128,7 @@ function readArea(root: HTMLElement): number | null {
   return null;
 }
 
-/**
- * The page numbers the pager offers, taken from the arrows' own direction classes.
- *
- * **Both arrows are emitted on every page**; the `<a>` is dropped from whichever would lead
- * nowhere, so a missing anchor is the end signal in that direction. `li.arrow.left` is previous and
- * `li.arrow.right` is next — read them rather than inferring the current page from the numbers,
- * which cannot tell a lone previous-arrow from a lone next-arrow.
- *
- * Do not look for the end by overshooting either: an over-range `page` is silently clamped to page
- * 1 and comes back looking like an ordinary first page.
- */
+/** Both arrows always render, minus the `<a>` where nothing follows; overshooting clamps to 1. */
 function readPager(root: HTMLElement): { nextPage: number | null; previousPage: number | null } {
   const pageIn = (marker: string) => {
     const href = root.querySelector(`${marker} a`)?.getAttribute("href") ?? "";
@@ -183,14 +138,9 @@ function readPager(root: HTMLElement): { nextPage: number | null; previousPage: 
   return { nextPage: pageIn("li.arrow.right"), previousPage: pageIn("li.arrow.left") };
 }
 
-/**
- * One row, or null when it holds none of the three fields a row is made of.
- *
- * The name and the score share `.rankingDetailScore`: the name is its `<span>` and the score is the
- * text after it. Reading the block whole would give `ひびの 1015360点`.
- */
 function readEntry(row: HTMLElement): RankingEntry | null {
   const position = readCountText(row.querySelector(".rankingDetailRank span")?.text ?? null);
+  // The block holds the name in a `<span>` and the score as the text after it.
   const scoreBlock = row.querySelector(".rankingDetailScore");
   const playerName = scoreBlock?.querySelector("span")?.text.trim() ?? "";
   const nameless = scoreBlock?.text.replace(playerName, "") ?? "";

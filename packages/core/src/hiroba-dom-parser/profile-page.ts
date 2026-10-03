@@ -12,29 +12,15 @@ const PAGE = "mypage_top.php";
 
 const RANKS: readonly ScoreRank[] = [2, 3, 4, 5, 6, 7, 8];
 
-/**
- * Both favourite sections are `div.favoriteSong`, and both wrap their songs in a list carrying the
- * same `songList` id, so neither the class nor the id can tell them apart. The heading is the only
- * thing that does — hence a lookup by heading text rather than by selector or position.
- */
+/** Both favourite blocks share class and `songList` id; only the heading tells them apart. */
 const FAVORITE_BLOCK_MARKER = "div.favoriteSong";
 const FAVORITE_SONG_HEADING = "大好きな曲";
 const FAVORITE_FOLDER_HEADING = "お気に入りの曲";
 
-/**
- * How the site writes a value nobody set: a slot that holds no song, in both favourite blocks and in
- * the folder editor, and a region the player never chose. The region form is copied from another
- * player's profile (`都道府県 ：未設定`); my page shares that details markup.
- */
+/** How the site writes a value nobody set: an empty song slot, or a region never chosen. */
 const UNSET_LABEL = "未設定";
 
-/**
- * Parses `mypage_top.php` into a Profile.
- *
- * `fetchedAt` comes from the caller: parsing is pure, and the fetch time belongs to whoever did
- * the fetch. The taiko number, by contrast, is read off the page itself — the page is the
- * evidence of whose profile this is.
- */
+/** Parses `mypage_top.php`; `fetchedAt` comes from the caller, the taiko number from the page. */
 export function parseProfilePage(html: string, fetchedAt: string): Result<Profile, ParseFailure> {
   const page = parsePage(html, PAGE);
   if (isErr(page)) {
@@ -72,12 +58,10 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
     });
   }
 
-  // The plate under the title and the name row, #mydon_area's first child on every capture. Found
-  // by its src and inside the area, as position is no contract for an img.
+  // Found by its src inside the area, as position is no contract for an img.
   const titlePlateImageUrl =
     findImageBySrc(area.value, "imgsrc_titleplate")?.getAttribute("src") ?? null;
 
-  // The dan exists on this page only as a server-rendered image; absence is a normal state.
   const danImage = findImageBySrc(root, "imgsrc_danlabel");
   const danLabelImageUrl = danImage?.getAttribute("src") ?? null;
 
@@ -152,7 +136,6 @@ export function parseProfilePage(html: string, fetchedAt: string): Result<Profil
   });
 }
 
-/** The value part of a "label：value" line; empty string when the colon is missing. */
 function afterColon(line: string): string {
   const index = line.indexOf("：");
   return index === -1 ? "" : line.slice(index + 1).trim();
@@ -170,21 +153,9 @@ function readCrown(
   return readCount(el.value, marker, PAGE);
 }
 
-/** What `.token_complete` holds, whitespace aside. */
 const MEDAL_COMPLETE_LABEL = "COMPLETE";
 
-/**
- * The medal block is optional. When the name is present, exactly one of two things follows it:
- * `.token_count` while the set is being collected, or `.token_complete` reading COMPLETE once it is
- * done, with no count anywhere.
- *
- * A plate of any other shape reads as `unrecognised`, with a code saying which, and never fails the
- * page: a new plate once took the whole read down with it, crowns and all. The page's own text in
- * that spot is not kept, only the code.
- *
- * The plate's picture is found by its src, as position is no contract for an img. A page with no
- * name has no medal, whatever picture it shows.
- */
+/** Optional block. A plate shape not recognised yields a code, never a page failure or its text. */
 function readMedal(root: HTMLElement): Medal | null {
   const nameEl = root.querySelector(".token_name");
   if (nameEl === null) {
@@ -227,7 +198,6 @@ function readMedalProgress(
     : { kind: "collecting", count };
 }
 
-/** The favourite block under the given heading, or a failure naming which of the two is absent. */
 function findFavoriteBlock(root: HTMLElement, heading: string): Result<HTMLElement, ParseFailure> {
   const block = root
     .querySelectorAll(FAVORITE_BLOCK_MARKER)
@@ -242,10 +212,7 @@ function findFavoriteBlock(root: HTMLElement, heading: string): Result<HTMLEleme
   return ok(block);
 }
 
-/**
- * The song titles a favourite block lists, in page order. Empty slots are dropped rather than
- * carried: `未設定` is the page's word for "no song here", not a title anyone can look up.
- */
+/** Song titles in page order; `未設定` is the page's word for an empty slot, so it is dropped. */
 function songTitlesIn(block: HTMLElement): string[] {
   return block
     .querySelectorAll("li .songName")
@@ -253,12 +220,7 @@ function songTitlesIn(block: HTMLElement): string[] {
     .filter((title) => title !== "" && title !== UNSET_LABEL);
 }
 
-/**
- * Reads the 大好きな曲 block, which holds at most one song.
- *
- * The block always renders its one list entry, and writes 未設定 in it when the profile has no
- * favourite — so an unset favourite is an entry to skip, never a missing block.
- */
+/** At most one song: the block always renders its entry, writing 未設定 in it when none is set. */
 function readFavoriteSong(root: HTMLElement): Result<FavoriteSong | null, ParseFailure> {
   const block = findFavoriteBlock(root, FAVORITE_SONG_HEADING);
   if (isErr(block)) {
@@ -272,13 +234,6 @@ function readFavoriteSong(root: HTMLElement): Result<FavoriteSong | null, ParseF
   return ok({ songNo: songNo === undefined || songNo === "" ? null : songNo, title });
 }
 
-/**
- * Reads the お気に入りの曲 folder, up to 30 songs in page order.
- *
- * Titles only: the block gives each song a name and nothing else — no number, link or data
- * attribute — so this cannot be turned back into song numbers without the catalogue. An empty
- * folder is a normal state and reads as an empty list.
- */
 function readFavoriteFolderTitles(root: HTMLElement): Result<readonly string[], ParseFailure> {
   const block = findFavoriteBlock(root, FAVORITE_FOLDER_HEADING);
   if (isErr(block)) {

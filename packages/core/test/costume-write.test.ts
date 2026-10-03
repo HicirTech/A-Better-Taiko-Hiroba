@@ -1,7 +1,3 @@
-/**
- * The costume write against a made-up Hiroba that keeps a costume and saves it by the server model
- * the executed writes fit. Pages are excerpts; ids, colours and tokens are placeholders.
- */
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -76,7 +72,6 @@ ${keys.map((key) => `<input type="hidden" id="${TWIN_OF[key]}" value="${set[key]
 ${tabs}`;
 }
 
-/** My page, cut down to what the parser needs, wearing `title`. */
 const myPage = (title: string) => `<div id="mydon_area"><div>${title}</div>
 <div><div>サンプルどん</div></div>
 <div><div class="detail"><p>国・地域 ：サンプル</p><p>太鼓番：000000000000</p></div></div>
@@ -98,7 +93,6 @@ const answer = (path: string, body: string, type: string): Answer =>
     body: new TextEncoder().encode(body),
   });
 
-/** A made-up Hiroba holding one costume and one title, saving by the server model. */
 function fakeHiroba() {
   const hiroba = {
     set: { ...WORN },
@@ -216,7 +210,7 @@ describe("changeCostume", () => {
     const { hiroba, transport } = fakeHiroba();
     const suited = { ...WORN, costume1: 36, costume2: 0, costume3: 0, costume4: 0, costume5: 0 };
     const outcome = await change(transport, suited, true);
-    // My page first: its forms issue a token too, so the editor has to be read last before the posts.
+    // My page first: its forms issue a token too, so the editor must be read last before the posts.
     expect(hiroba.requests.map(routeOf)).toEqual([
       "GET mypage_top.php",
       "GET mypage_kisekae.php",

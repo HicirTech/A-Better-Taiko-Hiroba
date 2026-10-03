@@ -1,4 +1,3 @@
-/** A title target against the list the title page gives, and what makes two titles one. */
 import { describe, expect, test } from "bun:test";
 
 import { checkTitleTarget, sameTitle, spaced, TITLE_FIELDS, type TitleOption } from "../src/index";

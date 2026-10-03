@@ -22,11 +22,7 @@ const PAGE = "history_recent_score.php";
 const LIST_MARKER = "#recentScoreList";
 const ROW_MARKER = ".scoreUser";
 
-/**
- * This page's crown numbering, which is **not** the detail page's: here `crown_02` is gold and
- * `crown_03` is silver, while `crown_large_1` is silver and `crown_large_2` is gold. Reusing the
- * detail numbering here would report every clear as a full combo and back.
- */
+/** Not the detail page's numbering: here `crown_02` is gold and `crown_03` is silver. */
 const ROW_CROWNS: Readonly<Record<string, CrownState>> = {
   "1": "none",
   "2": "gold",
@@ -34,14 +30,7 @@ const ROW_CROWNS: Readonly<Record<string, CrownState>> = {
   "4": "donderful",
 };
 
-/**
- * The genre arrives as a name, not a number: the suffix of the title's font class,
- * `songNameFont<name>`, which these names map onto the genre numbers `score_list.php?genre=N` uses.
- * The row carries the same suffix a second time, on its `songLisrArea<name>` wrapper, and the two
- * agree on every captured row — so either will do, and neither is a number. A name outside this
- * table reads as no genre rather than failing: the site may add a genre, and a row whose genre is
- * merely unknown is still a complete play.
- */
+/** Genre by the `songNameFont<name>` suffix; an unknown name is no genre, not a failure. */
 const ROW_GENRES: Readonly<Record<string, Genre>> = {
   jpop: 1,
   anime: 2,
@@ -69,20 +58,7 @@ const COUNT_KEYS: Readonly<Record<string, keyof ScoreRecord>> = {
 /** サポート譜面 / ランダム / あべこべ / ドロン / 速度 — a row that has more or fewer has changed. */
 const OPTION_CELL_COUNT = 5;
 
-/**
- * Parses `history_recent_score.php` — five recently played charts, one page's worth.
- *
- * The page paginates (`?page=2` holds a different five), and this function is never told which page
- * it was handed, so a reading carries no ordinal. Two captures taken hours apart also disagree with
- * the news feed about ordering, so treat the row order as "these changed", not as a clock.
- *
- * Each row carries what that chart's detail page carries, field for field, plus the サポート譜面
- * slot no other page exposes. What it does not carry is a song number: nothing on the page names
- * one, so a row stays a `RecentPlay` until a caller resolves its title and can call
- * `scoreFromRecentPlay`. The row's genre travels with it for that resolver's sake: it is the only
- * signal on the page that can separate two songs sharing a title. Recency is the array's order and
- * nothing more — the rows have no timestamps, and none are invented.
- */
+/** Parses one page (five charts) of `history_recent_score.php`; its row order is no clock. */
 export function parseRecentPlaysPage(html: string): Result<readonly RecentPlay[], ParseFailure> {
   const page = parsePage(html, PAGE);
   if (isErr(page)) {
@@ -104,11 +80,7 @@ export function parseRecentPlaysPage(html: string): Result<readonly RecentPlay[]
   return ok(plays);
 }
 
-/**
- * Completes a recent row into a Score, once its song number is known from somewhere that has one
- * — the catalogue or a score list. The row itself is one chart's full record; only the key is
- * missing.
- */
+/** Completes a row into a Score once a catalogue or score list has supplied its song number. */
 export function scoreFromRecentPlay(
   play: RecentPlay,
   taikoNo: string,
@@ -198,13 +170,9 @@ function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
   });
 }
 
-/**
- * Every row prints all nine counts, so none is ever null here — the record's four nullable play
- * counts are only ever null on another player's detail page.
- */
+/** Every row prints all nine counts, so none is null here, unlike another player's detail page. */
 type Counts = Readonly<Record<Exclude<keyof ScoreRecord, "highScore" | "options">, number>>;
 
-/** Reads the nine count cells by their label images; a cell the page does not name is skipped. */
 function readCounts(row: HTMLElement): Result<Counts, ParseFailure> {
   const found = new Map<keyof ScoreRecord, number>();
   for (const label of row.querySelectorAll("img.score_name")) {
@@ -243,12 +211,7 @@ function readCounts(row: HTMLElement): Result<Counts, ParseFailure> {
   return ok(counts as Counts);
 }
 
-/**
- * Reads the five option cells. The first is サポート譜面 — the one place on the site that shows it
- * — and it always ships an image, blank when the option was off. The other four hold the shared
- * `status_10_<code>` vocabulary. The support cell stays out of that decoder on purpose: its image
- * when the option is on is not a code we know, and it must not be refused as if it were one.
- */
+/** The five option cells: サポート譜面 first (an image, blank when off), then four status codes. */
 function readOptions(row: HTMLElement): Result<PlayOptions, ParseFailure> {
   const cells = row.querySelectorAll(".playDataArea.option");
   if (cells.length !== OPTION_CELL_COUNT) {
@@ -260,6 +223,7 @@ function readOptions(row: HTMLElement): Result<PlayOptions, ParseFailure> {
     });
   }
 
+  // The support cell stays out of the decoder: its "on" image is not a code we know.
   const supportSrc = cells[0]?.querySelector("img")?.getAttribute("src") ?? "";
   const supportChart = supportSrc !== "" && !supportSrc.includes("blank_");
   const sources = cells

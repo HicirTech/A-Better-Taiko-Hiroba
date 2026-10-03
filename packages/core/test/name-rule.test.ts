@@ -1,4 +1,3 @@
-/** A name target against the form's own rules, and the advice the help page's rules give. */
 import { describe, expect, test } from "bun:test";
 
 import {

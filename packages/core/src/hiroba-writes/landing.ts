@@ -6,7 +6,6 @@ const CARD_SELECT_PATH = "/login_select.php";
 /** Where an answer ended, judged by parsed origin and path, never by searching the URL. */
 export type Landing = "login" | "cardSelect" | "hiroba" | "elsewhere";
 
-/** Where the final URL of an answer is, against Hiroba's origin. A URL that does not parse is elsewhere. */
 export function landingOf(url: string, hirobaOrigin: string): Landing {
   let parsed: URL;
   let origin: string;

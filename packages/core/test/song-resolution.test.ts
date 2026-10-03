@@ -1,8 +1,4 @@
-/**
- * Synthetic songs throughout: what matters is the shape of a title collision, not which real songs
- * happen to collide today. The real duplicates are catalogue data and change with the site; a test
- * pinned to them would be testing Namco's release schedule.
- */
+// Synthetic songs: the shape of a title collision matters, not which real songs collide today.
 import { describe, expect, test } from "bun:test";
 
 import { type Genre, resolveSongTitle, type Song } from "../src/index";

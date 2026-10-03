@@ -1,8 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md for why. The board's panels carry no classes at all,
- * only inline styles, and the detail page's two condition blocks are separated by nothing but a
- * sentence; both excerpts reproduce that faithfully because both are what the parsers rely on.
- */
 import { describe, expect, test } from "bun:test";
 
 import { isErr, parseDanBoardPage, parseDanDetailPage } from "../src/index";
@@ -229,7 +224,6 @@ describe("parseDanBoardPage", () => {
   test("does not look for a pass state anywhere in the markup", () => {
     const reading = boardOrThrow(board());
 
-    // Every panel offers its plate and nothing that claims to be a verdict.
     for (const panel of reading.panels) {
       expect(panel.plateImageUrl).not.toBe("");
       expect(Object.keys(panel)).toEqual([
@@ -266,7 +260,6 @@ describe("parseDanDetailPage", () => {
 
     expect(record.conditions).toHaveLength(2);
     expect(record.conditionBests).toHaveLength(2);
-    // The two blocks hold the same conditions with different achieved values.
     expect(record.conditions[0]?.name).toBe("魂ゲージ");
     expect(record.conditionBests[0]?.name).toBe("魂ゲージ");
   });
@@ -323,7 +316,6 @@ describe("parseDanDetailPage", () => {
     expect(record.totalScore).toBe(0);
     expect(record.totalCounts).toBeNull();
     expect(record.updatedAt).toBeNull();
-    // The conditions are still printed, with nothing achieved against them.
     expect(record.conditions).toHaveLength(2);
     expect(record.songs.every((entry) => entry.record === null)).toBe(true);
   });

@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { err, isErr, isOk, ok, type Result } from "../src/index";
 
-/** Stands in for the tagged failures the client and parsers will return later. */
 interface SampleFailure {
   readonly code: "loggedOut" | "unexpectedPage";
   readonly page: string;

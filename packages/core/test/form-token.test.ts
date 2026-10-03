@@ -1,4 +1,3 @@
-/** The form token: its value comes back only when asked for by name. */
 import { describe, expect, test } from "bun:test";
 
 import { FormToken } from "../src/index";

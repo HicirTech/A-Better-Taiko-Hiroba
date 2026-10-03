@@ -1,8 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md for why. Two shapes matter here and both are
- * reproduced faithfully: a row keeps the player's name and their score in the *same* block, and the
- * list page packs the prefecture into the same hidden value that carries the scope.
- */
 import { describe, expect, test } from "bun:test";
 
 import { isErr, parseRankDetailPage, parseRankListPage } from "../src/index";
@@ -171,7 +166,6 @@ describe("parseRankDetailPage", () => {
 
     expect(reading.entries).toHaveLength(0);
     expect(reading.notice).toBe("ランキングデータがありません");
-    // Still a ranking page: the scope and the warning survive.
     expect(reading.scope).toBe("japan");
     expect(reading.stalenessNotice).toBe(STALENESS);
   });
@@ -187,8 +181,7 @@ describe("parseRankDetailPage", () => {
   });
 
   test("reads the prefecture back from the page rather than trusting the request", () => {
-    // `area=0` is rewritten by the server to the caller's own prefecture, so what was asked for is
-    // not what was served.
+    // `area=0` is rewritten by the server to the caller's own prefecture.
     expect(detailOrThrow(detail({ rank: "2" })).area).toBe(26);
   });
 });
@@ -206,8 +199,7 @@ describe("parseRankListPage", () => {
   });
 
   test("the list packs the prefecture into the same value that carries the scope", () => {
-    // `rank_detail.php` writes `2`; `rank_list.php` writes `226` — scope 2, area 26. A straight
-    // lookup of the whole string finds nothing and refuses a page that is perfectly readable.
+    // `rank_detail.php` writes `2`, `rank_list.php` writes `226`: scope 2, area 26.
     const reading = listOrThrow(list("226"));
 
     expect(reading.scope).toBe("prefecture");

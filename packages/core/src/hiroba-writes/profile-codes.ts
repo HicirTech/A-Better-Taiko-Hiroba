@@ -1,19 +1,9 @@
 import type { NotAppliedReason, SaveCodes, SaveReading } from "./types";
 
-/**
- * The result codes of `ajax/change_mydon_profile.php`, the one endpoint that sets the title and
- * renames the player, copied from the site's two scripts for it (`titleComp` in title.js and
- * `profileUpdate` in dialog.js), which read them alike but for what a refusal is:
- *
- * - 0 is success; 3 is success with the game server not told, which counts only when the read-back
- *   shows the change; the answer never proves a write;
- * - 705 is a token no longer good, and 900 and 901 are maintenance;
- * - the codes in `refused` are the ones that script words as the site's refusal of this very
- *   change, with the answer's `err_message` where it has one;
- * - anything else is a failure, 3 with nothing moved included.
- */
+/** Codes of `change_mydon_profile.php`, from title.js and dialog.js; `refused` varies by script. */
 export function profileCodes(refused: readonly number[]): SaveCodes {
   return {
+    // 3: saved but the game server not told; counts only when the read-back shows it.
     notSynced: 3,
     reason(save: SaveReading): NotAppliedReason {
       if (save.answer !== "json") {

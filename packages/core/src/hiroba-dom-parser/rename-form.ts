@@ -7,27 +7,17 @@ import { parsePage, requireMarker } from "./parser";
 import type { ParseFailure, RenameEditorReading } from "./types";
 
 const PAGE = "mypage_top.php";
-/** The form that writes a name, in the dialog my page carries, and where it posts. */
 const FORM = "form#renameForm";
 const FORM_ACTION = "ajax/change_mydon_profile.php";
 const MODE = `[name="mode"]`;
 const TOKEN = `[name="_tckt"]`;
 const NAME_FIELD = "#newName";
 
-/**
- * The flag the page hands the site's script that opens the dialog, in the call that wires its two
- * buttons: `$( '#rename_img' ).rename( '#dialog', '<name>', $( '#_tckt' ).val(),  '0' )`. Found by
- * the token argument before it, never by skipping over the name, which is a literal of the
- * player's own and may hold a quote.
- */
+// The last argument of the rename call, matched from the token argument before it: the name
+// literal ahead of that may hold a quote.
 const RENAME_FLAG = /\$\(\s*'#_tckt'\s*\)\s*\.val\(\)\s*,\s*'([^']*)'/g;
 
-/**
- * Whether Hiroba takes a rename, from the flag both buttons are given: `'0'` is open, `'1'` is
- * closed, and the site then shows 今はドンだーネームは変更できないドン！ and opens nothing. A page
- * with no flag, one that disagrees with itself and one with another value are `unknown`, and never
- * fail the page. `'0'` is the only value any capture has had.
- */
+/** `'0'` is open and `'1'` closed; anything else is `unknown`, and never fails the page. */
 export function readRenameState(html: string): RenameState {
   const flags = [...html.matchAll(RENAME_FLAG)].map((match) => match[1]);
   if (flags.length > 0 && flags.every((flag) => flag === "0")) {
@@ -36,19 +26,7 @@ export function readRenameState(html: string): RenameState {
   return flags.length > 0 && flags.every((flag) => flag === "1") ? "closed" : "unknown";
 }
 
-/**
- * Parses `mypage_top.php` as the editor a rename goes through. There is no rename page: the form is
- * a dialog in my page, so the page that shows the name is the page that writes it.
- *
- * - The form is `form#renameForm`, and there is exactly one. It must post to
- *   `ajax/change_mydon_profile.php`, with `mode` `name`.
- * - The token is the `_tckt` inside that form, held as a FormToken. The page has three of them, in
- *   no form, in the 大好きな曲 form and in this one; they have been equal on every capture, and this
- *   is the one the form posts.
- * - `oldName` and `newName` are in the form, and `newName` carries a `maxlength`. The site's
- *   script fills both with the current name when the dialog opens; here the name is read from the
- *   header it takes it from, as the profile reads it.
- */
+/** Parses `mypage_top.php` as the rename editor: there is no rename page, the form is a dialog. */
 export function parseRenameEditorPage(html: string): Result<RenameEditorReading, ParseFailure> {
   const page = parsePage(html, PAGE);
   if (isErr(page)) {
@@ -67,6 +45,7 @@ export function parseRenameEditorPage(html: string): Result<RenameEditorReading,
   if (isErr(area)) {
     return area;
   }
+  // The dialog's script fills the form's names from the header, so the name is read there.
   const identity = readIdentity(area.value);
   if (isErr(identity)) {
     return identity;
@@ -79,7 +58,6 @@ export function parseRenameEditorPage(html: string): Result<RenameEditorReading,
   });
 }
 
-/** The one rename form on the page, which must post where a name is written. */
 function formOf(root: HTMLElement): Result<HTMLElement, ParseFailure> {
   const forms = root.querySelectorAll(FORM);
   const [form] = forms;
@@ -95,7 +73,6 @@ function formOf(root: HTMLElement): Result<HTMLElement, ParseFailure> {
     : err({ kind: "unreadableValue", page: PAGE, marker: `${FORM}[action]`, raw: action });
 }
 
-/** What the form posts: its mode, its token, and how long a name its field takes. */
 function readInputs(
   form: HTMLElement,
 ): Result<{ readonly token: FormToken; readonly maxLength: number }, ParseFailure> {
@@ -107,6 +84,7 @@ function readInputs(
   if (modeValue !== "name") {
     return err({ kind: "unreadableValue", page: PAGE, marker: `${FORM} ${MODE}`, raw: modeValue });
   }
+  // The page has three `_tckt`; take this form's own, the one it posts.
   const tokenInput = requireMarker(form, TOKEN, PAGE);
   if (isErr(tokenInput)) {
     return tokenInput;

@@ -1,8 +1,3 @@
-/**
- * The title write against a made-up Hiroba (profile-fixtures.ts) that keeps a title, a costume and
- * one token that only the latest page read holds: what is sent and in which order, how each result
- * code reads against the title read back, and what is refused before anything is sent.
- */
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -93,8 +88,7 @@ describe("changeTitle's requests", () => {
   test("with the cross-check, reads the costume before the title page and after my page", async () => {
     const { transport, routes } = fakeHiroba();
     const { outcome } = await change(transport, B, { crossCheck: true });
-    // The costume page first: it issues a token too, so the title page has to be the last read
-    // before the posts, or the fake answers 705 and nothing is saved.
+    // The costume page is read first: it issues a token too, so the title page must be read last.
     expect(routes()).toEqual([
       "GET mypage_kisekae.php",
       "GET mypage_title_edit.php",
@@ -126,8 +120,7 @@ describe("changeTitle's requests", () => {
     const { hiroba, transport, postsTo } = fakeHiroba();
     await change(transport, B);
     const [save] = postsTo("ajax/change_mydon_profile.php");
-    // The title page was the last page read before the post: its token is the live one, and the
-    // token the save carries was spent by it.
+    // The title page was read last, so its token is the live one.
     expect(save?.form).toEqual([
       ["newTitle", "39"],
       ["_tckt", "1".padStart(32, "0")],
@@ -332,8 +325,8 @@ describe("changeTitle's judgement of where the title ended", () => {
   test("a read-back that is the other id's name with other white space is the planned title", async () => {
     const { hiroba, transport } = fakeHiroba();
     hiroba.title = "サンプル称号A";
-    // Picked by id from a list that writes an ASCII space; the title page writes it as &nbsp; and
-    // my page, which the read-back reads, as it likes: the titles read the same.
+    // The list writes an ASCII space, the title page &nbsp;, and my page (the read-back) as it
+    // likes: the titles read the same.
     const { outcome } = await change(transport, { id: 40, title: SHARED });
     expect(outcome).toMatchObject({ kind: "applied", after: { title: SHARED } });
   });
