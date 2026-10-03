@@ -17,8 +17,8 @@ import type { HirobaSessionPort, VerbsQueued } from "../src/session-port";
 import {
   CLOSE_LABEL,
   HIROBA,
-  memoryFlag,
   MY_PAGE,
+  memoryFlag,
   profilePage,
   until,
 } from "./android-port-fixtures";

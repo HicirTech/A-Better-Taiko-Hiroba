@@ -5,8 +5,8 @@ import { medalPlatePng, myDonPng, thumbnailPng, titlePlatePng } from "../scripts
 import {
   CLOSE_LABEL,
   HIROBA,
-  memoryFlag,
   MY_PAGE,
+  memoryFlag,
   myPageAnswer,
   until,
 } from "./android-port-fixtures";

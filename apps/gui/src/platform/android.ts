@@ -27,8 +27,8 @@ import {
   type UndoStore,
 } from "../hiroba-session";
 import {
-  checkedPort,
   type CostumeSet,
+  checkedPort,
   type HirobaSessionPort,
   type SignInOutcome,
 } from "../session-port";

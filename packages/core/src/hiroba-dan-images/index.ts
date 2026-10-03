@@ -1,5 +1,5 @@
-export { decodeTemplate, matchGlyph, measureGlyph } from "./glyph-matcher";
 export type { GlyphMatch, InkMask } from "./glyph-matcher";
+export { decodeTemplate, matchGlyph, measureGlyph } from "./glyph-matcher";
 export {
   GLYPH_GRID_HEIGHT,
   GLYPH_GRID_WIDTH,

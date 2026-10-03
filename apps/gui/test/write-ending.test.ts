@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
-
-import type { WriteOutcomeView } from "../src/session-port";
 import { refreshed, sendHeld, sessionNoticeOf } from "../src/my-page/write-ending";
+import type { WriteOutcomeView } from "../src/session-port";
 
 interface Shown {
   readonly state: { readonly title: string };

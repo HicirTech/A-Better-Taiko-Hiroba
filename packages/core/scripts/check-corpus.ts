@@ -5,6 +5,7 @@ import type { Genre, Level } from "../src/index";
 import {
   isErr,
   type ParseFailure,
+  type Profile,
   parseCostumeEditorPage,
   parseCostumePage,
   parseDanBoardPage,
@@ -20,7 +21,6 @@ import {
   parseScoreDetailPage,
   parseScoreListPage,
   parseTitleEditorPage,
-  type Profile,
 } from "../src/index";
 
 /** `ai-context/` sits beside the repository, so this holds on any machine with that layout. */

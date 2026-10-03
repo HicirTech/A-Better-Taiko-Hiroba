@@ -2,9 +2,9 @@ import type { HTMLElement } from "node-html-parser";
 
 import type { FavoriteSong, Medal, MedalProgress, Profile, ScoreRank } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
-import { parsePage, requireMarker } from "./parser";
 import { findImageBySrc, readCount, readCountText } from "./element-readers";
 import { readIdentity } from "./identity-reader";
+import { parsePage, requireMarker } from "./parser";
 import { readRenameState } from "./rename-form";
 import type { ParseFailure } from "./types";
 

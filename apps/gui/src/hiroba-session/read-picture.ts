@@ -18,8 +18,8 @@ import {
 import type { HirobaQueue } from "./hiroba-queue";
 import {
   MEDAL_PLATE_PATH,
-  MY_DON_PATH,
   type MedalPlateSource,
+  MY_DON_PATH,
   type MyDonSource,
   type NoPictureSource,
   type PictureSources,
@@ -27,6 +27,7 @@ import {
   scorePanelPath,
   TITLE_PLATE_PATH,
 } from "./picture-sources";
+import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "./picture-store";
 import {
   type AskedPlace,
   checkPng,
@@ -35,7 +36,6 @@ import {
   type PngRules,
   pngDataUrl,
 } from "./png-answer";
-import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "./picture-store";
 import type { HirobaEndpoints } from "./types";
 
 const ITEM_PATH = "/imgsrc_kisekae.php";

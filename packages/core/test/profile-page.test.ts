@@ -4,8 +4,8 @@ import {
   isErr,
   isOk,
   type MedalUnrecognisedReason,
-  parseProfilePage,
   type Profile,
+  parseProfilePage,
 } from "../src/index";
 
 interface ExcerptOptions {

@@ -1,12 +1,4 @@
 export type { Costume, CostumeSet } from "./costume";
-export { FormToken } from "./form-token";
-export {
-  DAN_CLEAR_STATE_ORDER,
-  DAN_NAMES,
-  danClearStateFromRowTier,
-  danNumberFromName,
-  isBetterDanClearState,
-} from "./dan";
 export type {
   DanClearState,
   DanCondition,
@@ -15,6 +7,14 @@ export type {
   DanSongCounts,
   DanSongResult,
 } from "./dan";
+export {
+  DAN_CLEAR_STATE_ORDER,
+  DAN_NAMES,
+  danClearStateFromRowTier,
+  danNumberFromName,
+  isBetterDanClearState,
+} from "./dan";
+export { FormToken } from "./form-token";
 export type { NameState, TitleOption, TitleState } from "./identity";
 export type {
   CrownCounts,
@@ -29,11 +29,10 @@ export type {
   PublicProfile,
 } from "./player";
 export type { PlayOptions, RandomMode, Score, ScoreFidelity, ScoreRecord } from "./score";
-export { mergeGenreIntoCatalogue, updateCatalogue } from "./song";
 export type { Chart, GenreReading, Song } from "./song";
-export { resolveSongTitle } from "./song-resolution";
+export { mergeGenreIntoCatalogue, updateCatalogue } from "./song";
 export type { AmbiguousTitle, ResolvedSong, SongResolution, UnknownTitle } from "./song-resolution";
-export { playedOrNone, SCORE_RANK_NAMES, SCORE_RANK_TIERS } from "./vocabulary";
+export { resolveSongTitle } from "./song-resolution";
 export type {
   CrownState,
   Genre,
@@ -42,3 +41,4 @@ export type {
   ScoreRank,
   ScoreRankTier,
 } from "./vocabulary";
+export { playedOrNone, SCORE_RANK_NAMES, SCORE_RANK_TIERS } from "./vocabulary";

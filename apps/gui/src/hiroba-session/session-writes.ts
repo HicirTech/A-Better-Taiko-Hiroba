@@ -17,8 +17,8 @@ import {
 } from "@abth/core";
 
 import {
-  changedTheCostume,
   type CostumeChange,
+  changedTheCostume,
   type HirobaSessionPort,
   type NameChange,
   type ReadFailure,

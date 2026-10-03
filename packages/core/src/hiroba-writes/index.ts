@@ -1,5 +1,4 @@
 export { postAjax, readPrecheck, readSaveCode, readSaveMessage } from "./ajax";
-export { spaced } from "./cross-checks";
 export {
   COSTUME_SLOT_KEYS,
   type CostumeSlot,
@@ -14,6 +13,7 @@ export {
   changeCostume,
   openCostumeEditor,
 } from "./costume-write";
+export { spaced } from "./cross-checks";
 export { inMaintenance } from "./maintenance";
 export {
   checkNameTarget,
@@ -40,15 +40,6 @@ export {
   TITLE_WRITE,
   type TitleEditorView,
 } from "./title-write";
-export {
-  beginPending,
-  EMPTY_UNDO_SLOT,
-  offeredUndo,
-  reconcile,
-  settle,
-  undoInput,
-} from "./undo-record";
-export type { PendingUndo, UndoRecord, UndoSlot } from "./undo-record";
 export type {
   AjaxAnswer,
   AjaxPost,
@@ -67,3 +58,12 @@ export type {
   WriteOutcome,
   WriteSpec,
 } from "./types";
+export type { PendingUndo, UndoRecord, UndoSlot } from "./undo-record";
+export {
+  beginPending,
+  EMPTY_UNDO_SLOT,
+  offeredUndo,
+  reconcile,
+  settle,
+  undoInput,
+} from "./undo-record";
