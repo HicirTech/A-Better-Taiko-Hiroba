@@ -13,6 +13,7 @@ import {
   OUTLINED,
   VISUALLY_HIDDEN,
 } from "./hiroba-px";
+import { FOCUS_RING, type OpenAction, OpenButton } from "./open-button";
 
 // Hiroba's #mydon_area: the plate is 290 pixels wide.
 const PLATE_WIDTH = 290;
@@ -32,13 +33,15 @@ export interface TitlePlateProps {
   readonly i18n: Translator;
   /** The plate; its picture is asked for once it is on screen. */
   readonly ref: Ref<HTMLDivElement>;
+  /** Makes the plate a button that opens a page; none leaves it a picture. */
+  readonly action?: OpenAction;
 }
 
 /** The plate's height over its width: the picture's own, or the proportions reserved for it. */
 export const plateHeightRatio = (plate: PictureView | null): number =>
   plate === null ? RESERVED_RATIO : plate.height / plate.width;
 
-export function TitlePlate({ profile, answer, i18n, ref }: TitlePlateProps) {
+export function TitlePlate({ profile, answer, i18n, ref, action }: TitlePlateProps) {
   const { t } = i18n;
   const plate = viewOf(answer);
   return (
@@ -76,6 +79,15 @@ export function TitlePlate({ profile, answer, i18n, ref }: TitlePlateProps) {
         )}
         <Title title={profile.title} i18n={i18n} />
         <NameRow profile={profile} i18n={i18n} />
+        {action !== undefined && (
+          <OpenButton
+            id="name-title-open"
+            label={t("plate.open")}
+            hint={t("plate.openByLongPress")}
+            action={action}
+            sx={{ ...FOCUS_RING, position: "absolute", inset: 0, borderRadius: hp(10) }}
+          />
+        )}
       </Box>
     </Box>
   );

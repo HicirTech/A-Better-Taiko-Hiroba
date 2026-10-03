@@ -128,6 +128,9 @@ export interface Messages {
   /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
   "failure.detail": string;
   "platform.unsupported": string;
+  /** The name plate on the Overview: its accessible name, and what a long-press on it opens. */
+  "plate.open": string;
+  "plate.openByLongPress": string;
   "costume.open": string;
   "costume.openByLongPress": string;
   "costume.reading": string;

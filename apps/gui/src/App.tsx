@@ -214,6 +214,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
 
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const portrait: OpenAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
+  const namePlate: OpenAction = { open: () => onNavigate("nameTitle"), byLongPress: touchFirst };
 
   // Once only: StrictMode runs effects twice in development, and a second run asks Hiroba again.
   const opened = useRef(false);
@@ -358,6 +359,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
                     lane={lane}
                     i18n={i18n}
                     portrait={portrait}
+                    namePlate={namePlate}
                   />
                   <PanelCard
                     crowns={screen.profile.crowns}

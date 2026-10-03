@@ -100,6 +100,8 @@ export const ja: Messages = {
   "failure.unexpectedPage": "ひろばから想定外のページが返ってきました。",
   "failure.detail": "報告用の詳細：{detail}",
   "platform.unsupported": "このビルドは、デスクトップ版か Android 版のアプリの中でしか動きません。",
+  "plate.open": "ドンだーネームと称号のページを開く",
+  "plate.openByLongPress": "ネームプレートを長押しすると、ドンだーネームと称号のページを開けます。",
   "costume.open": "きせかえページを開く",
   "costume.openByLongPress": "マイどんを長押しすると、きせかえページを開けます。",
   "costume.reading": "ひろばからきせかえを読み込み中…",

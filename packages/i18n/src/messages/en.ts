@@ -100,6 +100,8 @@ export const en: Messages = {
   "failure.unexpectedPage": "Hiroba answered with a page this app did not expect.",
   "failure.detail": "Details for a report: {detail}",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
+  "plate.open": "Open the Nickname & title page",
+  "plate.openByLongPress": "Long-press your name plate to open the Nickname & title page.",
   "costume.open": "Open the Costume page",
   "costume.openByLongPress": "Long-press your My Don to open the Costume page.",
   "costume.reading": "Reading your costume from Hiroba…",

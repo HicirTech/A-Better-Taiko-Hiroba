@@ -94,6 +94,8 @@ export const zhHant: Messages = {
   "failure.unexpectedPage": "廣場回傳了本應用程式預料之外的頁面。",
   "failure.detail": "回報詳情：{detail}",
   "platform.unsupported": "此版本只能在桌面版或 Android 版應用程式中執行。",
+  "plate.open": "開啟暱稱與稱號頁面",
+  "plate.openByLongPress": "長按你的名牌即可開啟暱稱與稱號頁面。",
   "costume.open": "開啟換裝頁面",
   "costume.openByLongPress": "長按你的小咚即可開啟換裝頁面。",
   "costume.reading": "正在從廣場讀取換裝…",

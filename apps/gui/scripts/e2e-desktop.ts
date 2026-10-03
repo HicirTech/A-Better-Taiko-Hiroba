@@ -2910,6 +2910,99 @@ try {
   results.formTokensKeptOutOfDom =
     handedOut.length > 0 && !handedOut.some((ticket) => windowNow.includes(ticket));
 
+  // The name plate is the button to the Nickname & title page, as the portrait is to Costume.
+  const OPEN_NAME_TITLE = "Open the Nickname & title page";
+  await goTo("overview");
+  const plateBounds = await boxOf("#title-plate");
+  const plateButtonBounds = await boxOf("#name-title-open");
+  await tooltipClosed();
+  await hoverOver(page, "#name-title-open");
+  const plateTooltip = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  await tooltipClosed();
+  results.namePlateIsTheNicknameAndTitleButton =
+    (await page.evaluate<boolean>(
+      `(() => { const button = document.querySelector("#name-title-open"); return button?.tagName === "BUTTON" && button.closest("#title-plate") !== null && button.querySelector("h2") === null && document.querySelector("#title-plate h2") !== null && !button.disabled; })()`,
+    )) &&
+    (await attribute("#name-title-open", "aria-label")) === OPEN_NAME_TITLE &&
+    plateTooltip === OPEN_NAME_TITLE &&
+    (["left", "top", "right", "bottom"] as const).every(
+      (side) => Math.abs(plateButtonBounds[side] - plateBounds[side]) < 1,
+    ) &&
+    ((await textOf("#title-plate h2")) ?? "") !== "";
+  const nameTitleOpenedBy = async (keys: () => Promise<unknown>) => {
+    await page.evaluate(`document.querySelector("#name-title-open").focus()`);
+    await keys();
+    const opened = await waitFor(
+      async () => (await currentPage()) === "nameTitle" || undefined,
+      5_000,
+    );
+    await goTo("overview");
+    return opened;
+  };
+  const plateAt = await middleOf(page, "#name-title-open");
+  for (const type of ["mousePressed", "mouseReleased"]) {
+    await page.send("Input.dispatchMouseEvent", {
+      type,
+      ...plateAt,
+      button: "left",
+      clickCount: 1,
+    });
+  }
+  const openedByMouse = await waitFor(
+    async () => (await currentPage()) === "nameTitle" || undefined,
+    5_000,
+  );
+  const nameTitleShown = (await textOf("main h1")) === "Nickname & title";
+  await goTo("overview");
+  const openedByEnter = await nameTitleOpenedBy(() => press("Enter"));
+  const openedBySpace = await nameTitleOpenedBy(async () => {
+    await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SPACE, text: " " });
+    await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SPACE });
+  });
+  results.namePlateOpensNicknameAndTitleByClickAndKeys =
+    openedByMouse && nameTitleShown && openedByEnter && openedBySpace;
+
+  await page.evaluate("document.activeElement?.blur(); window.touchClicks.length = 0");
+  await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+  const plateHint = await waitFor(() =>
+    page.evaluate<string | undefined>(
+      `document.getElementById(document.querySelector("#name-title-open").getAttribute("aria-describedby") ?? "")?.textContent`,
+    ),
+  );
+  const onPlate = await middleOf(page, "#name-title-open");
+  await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPlate] });
+  await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  const plateTapClicked = await waitFor(
+    async () => (await touchClicks()).includes("touch") || undefined,
+  );
+  await Bun.sleep(2 * LONG_PRESS_MS);
+  const plateWentByTap = (await currentPage()) === "nameTitle";
+  const readsBeforePlatePress = await myPageHits();
+  await swipe(onPlate, { x: onPlate.x, y: onPlate.y + 100 }, () => Bun.sleep(2 * LONG_PRESS_MS));
+  await Bun.sleep(500);
+  const plateWentByMovedPress =
+    (await currentPage()) === "nameTitle" || (await myPageHits()) !== readsBeforePlatePress;
+  const clicksBeforePlateHold = await touchClicks();
+  await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPlate] });
+  const plateWentByLongPress = await waitFor(
+    async () => (await currentPage()) === "nameTitle" || undefined,
+    5_000,
+  );
+  await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await Bun.sleep(500);
+  results.namePlateOpensNicknameAndTitleByLongPress =
+    plateHint === "Long-press your name plate to open the Nickname & title page." &&
+    plateTapClicked &&
+    !plateWentByTap &&
+    !plateWentByMovedPress &&
+    plateWentByLongPress &&
+    same(await touchClicks(), clicksBeforePlateHold) &&
+    (await currentPage()) === "nameTitle" &&
+    (await textOf("main h1")) === "Nickname & title";
+  await page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+  await goTo("overview");
+
   await openFreshEditor();
   const postsBeforeExpiry = await hitsOn("/ajax/check_ip_kisekae.php");
   await click("#swatch-colorFace-9");

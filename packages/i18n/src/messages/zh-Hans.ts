@@ -95,6 +95,8 @@ export const zhHans: Messages = {
   "failure.unexpectedPage": "广场返回了本应用预料之外的页面。",
   "failure.detail": "报告详情：{detail}",
   "platform.unsupported": "此版本只能在桌面版或 Android 版应用中运行。",
+  "plate.open": "打开昵称与称号页面",
+  "plate.openByLongPress": "长按你的名牌即可打开昵称与称号页面。",
   "costume.open": "打开换装页面",
   "costume.openByLongPress": "长按你的小咚即可打开换装页面。",
   "costume.reading": "正在从广场读取换装…",

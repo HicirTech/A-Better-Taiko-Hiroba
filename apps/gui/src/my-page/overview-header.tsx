@@ -33,9 +33,10 @@ export interface OverviewHeaderProps {
   readonly lane: PictureLane;
   readonly i18n: Translator;
   readonly portrait: OpenAction;
+  readonly namePlate: OpenAction;
 }
 
-export function OverviewHeader({ profile, lane, i18n, portrait }: OverviewHeaderProps) {
+export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: OverviewHeaderProps) {
   const { t } = i18n;
   const { dan } = profile;
   const plateBox = useRef<HTMLDivElement>(null);
@@ -74,7 +75,13 @@ export function OverviewHeader({ profile, lane, i18n, portrait }: OverviewHeader
           <MyDonPortrait ref={portraitBox} answer={myDon} action={portrait} i18n={i18n} />
         </Box>
         <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
-          <TitlePlate ref={plateBox} profile={profile} answer={plate} i18n={i18n} />
+          <TitlePlate
+            ref={plateBox}
+            profile={profile}
+            answer={plate}
+            i18n={i18n}
+            action={namePlate}
+          />
           <Box sx={{ m: hp(PANEL_MARGIN) }}>
             <ScorePanel
               ref={panelBox}
