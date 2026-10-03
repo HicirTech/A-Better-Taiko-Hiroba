@@ -12,26 +12,24 @@ export interface PaletteProps {
   readonly editor: CostumeEditorView;
   readonly part: ColourPart;
   readonly chosen: number;
-  /** A wide window: larger swatches, as many to a row as fit. */
+  /** A wide window: larger swatches. */
   readonly wide: boolean;
   readonly i18n: Translator;
   readonly onPick: (id: number) => void;
 }
 
-// Hiroba's own grid (#palette .color): nine to a row, each swatch framed in one black pixel.
+// Each swatch is framed in one black pixel, as on Hiroba's own grid (#palette .color).
 export function Palette({ editor, part, chosen, wide, i18n, onPick }: PaletteProps) {
   const { t } = i18n;
+  const side = wide ? WIDE_SWATCH_PX : SWATCH_PX;
   return (
     <Box
+      id="costume-palette"
       sx={{
         display: "grid",
-        gridTemplateColumns: wide
-          ? `repeat(auto-fill, minmax(${WIDE_SWATCH_PX}px, 1fr))`
-          : `repeat(9, ${SWATCH_PX}px)`,
-        alignContent: "start",
+        gridTemplateColumns: `repeat(auto-fill, ${side}px)`,
+        justifyContent: "start",
         gap: wide ? 1 : 0.75,
-        p: wide ? 0.75 : 0.5,
-        ...(wide && { flex: "1 1 0", minHeight: 0, overflowY: "auto" }),
       }}
     >
       {editor.palette.map((swatch) => {
@@ -45,8 +43,8 @@ export function Palette({ editor, part, chosen, wide, i18n, onPick }: PalettePro
             title={t("costume.id", { id: swatch.id })}
             onClick={() => onPick(swatch.id)}
             sx={{
-              width: 1,
-              aspectRatio: "1",
+              width: side,
+              height: side,
               bgcolor: swatch.hex,
               border: "1px solid",
               borderColor: "common.black",

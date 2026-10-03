@@ -68,13 +68,7 @@ export function WideBody({ editor, lane, i18n, tabs, onTabs, actions, progress }
           i18n={i18n}
           part={selectedPart(tabs)}
           wide
-          sx={{
-            flex: 1,
-            minWidth: 0,
-            alignSelf: "stretch",
-            display: "flex",
-            flexDirection: "column",
-          }}
+          sx={{ flex: 1, minWidth: 0 }}
           onPickColour={editor.pickColour}
           onPickItem={editor.pickItem}
         />
