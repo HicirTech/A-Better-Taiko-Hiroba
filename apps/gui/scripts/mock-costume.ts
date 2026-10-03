@@ -41,6 +41,8 @@ export const OWNED: Readonly<Record<1 | 2 | 3 | 4 | 5, readonly number[]>> = {
 
 /** More rows than the app's grid shows at once, as real slots hold (38 to 76 items). */
 const MANY_MORE = Array.from({ length: 40 }, (_, at) => 200 + at);
+/** Another long slot, for a view whose thumbnails nothing has asked for yet. */
+const MANY_FRESH = MANY_MORE.map((id) => id + 100);
 
 export interface ThumbnailRecord {
   readonly cos: number;
@@ -176,9 +178,14 @@ export function createCostumeEditor() {
   let previewAnswer: "png" | "gif" = "png";
   const thumbnails: ThumbnailRecord[] = [];
   let thumbnailAnswer: "png" | "gif" | "html" = "png";
-  let many = false;
-  const ownedIn = (slot: 1 | 2 | 3 | 4 | 5): readonly number[] =>
-    slot === 1 && many ? [...OWNED[1], ...MANY_MORE] : OWNED[slot];
+  let many: "0" | "1" | "2" = "0";
+  const ownedIn = (slot: 1 | 2 | 3 | 4 | 5): readonly number[] => {
+    if (slot !== 1 || many === "0") {
+      return OWNED[slot];
+    }
+
+    return many === "1" ? [...OWNED[1], ...MANY_MORE] : MANY_FRESH;
+  };
 
   const json = (value: unknown) => Response.json(value);
 
@@ -428,8 +435,8 @@ ${slotTabs}
         }
         case "/__items": {
           const wanted = params.get("many");
-          if (wanted === "1" || wanted === "0") {
-            many = wanted === "1";
+          if (wanted === "0" || wanted === "1" || wanted === "2") {
+            many = wanted;
           }
           return json(
             Object.fromEntries(([1, 2, 3, 4, 5] as const).map((slot) => [slot, ownedIn(slot)])),

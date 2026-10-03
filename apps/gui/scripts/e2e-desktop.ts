@@ -1876,6 +1876,26 @@ try {
   /** The parts list fetched the item the set wears when the page was first shown. */
   const unfetchedIn = (slot: number) =>
     ownedIn(slot).filter((id) => id !== START[`costume${slot}`]);
+  /** Whether `asked` covers the cells wholly on show and nothing past the row after them. */
+  const askedOnlyWhatIsOnShow = async (asked: Thumb[], items: readonly number[]) => {
+    const cells = await page.evaluate<{ whole: number[]; upToTheRowAhead: number[] }>(
+      `(() => { const box = document.querySelector("#costume-items-costume1"); const view = box.getBoundingClientRect(); const cells = [...box.querySelectorAll('button[id^="item-costume1-"]')].map((cell) => ({ id: Number(cell.id.replace("item-costume1-", "")), rect: cell.getBoundingClientRect() })); const rowAhead = Math.min(...cells.filter(({ rect }) => rect.top >= view.bottom).map(({ rect }) => rect.top)); return { whole: cells.filter(({ rect }) => rect.top >= view.top && rect.bottom <= view.bottom).map(({ id }) => id), upToTheRowAhead: cells.filter(({ rect }) => rect.top <= rowAhead + 1).map(({ id }) => id) }; })()`,
+    );
+    const ids = asked.map((thumb) => thumb.cos);
+    return (
+      asked.length > 0 &&
+      asked.length < items.length &&
+      cells.whole.every((id) => ids.includes(id)) &&
+      ids.every((id) => cells.upToTheRowAhead.includes(id)) &&
+      new Set(ids).size === asked.length &&
+      asked.every(
+        (thumb) =>
+          thumb.type === 1 &&
+          items.includes(thumb.cos) &&
+          thumb.referer === `${HIROBA}/mypage_kisekae.php`,
+      )
+    );
+  };
   await openItems(true);
   await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
   const seen = await thumbsSettled();
@@ -1888,22 +1908,7 @@ try {
     (await page.evaluate<number>(
       `document.querySelectorAll("#costume-items-costume1 img").length`,
     )) === seen.length;
-  const cellsOfTheGrid = await page.evaluate<{ whole: number[]; upToTheRowAhead: number[] }>(
-    `(() => { const box = document.querySelector("#costume-items-costume1"); const view = box.getBoundingClientRect(); const cells = [...box.querySelectorAll('button[id^="item-costume1-"]')].map((cell) => ({ id: Number(cell.id.replace("item-costume1-", "")), rect: cell.getBoundingClientRect() })); const rowAhead = Math.min(...cells.filter(({ rect }) => rect.top >= view.bottom).map(({ rect }) => rect.top)); return { whole: cells.filter(({ rect }) => rect.top >= view.top && rect.bottom <= view.bottom).map(({ id }) => id), upToTheRowAhead: cells.filter(({ rect }) => rect.top <= rowAhead + 1).map(({ id }) => id) }; })()`,
-  );
-  const askedItems = seen.map((thumb) => thumb.cos);
-  results.thumbnailsOnlyWhenSeen =
-    seen.length > 0 &&
-    seen.length < ownedIn(1).length &&
-    cellsOfTheGrid.whole.every((id) => askedItems.includes(id)) &&
-    askedItems.every((id) => cellsOfTheGrid.upToTheRowAhead.includes(id)) &&
-    new Set(askedItems).size === seen.length &&
-    seen.every(
-      (thumb) =>
-        thumb.type === 1 &&
-        ownedIn(1).includes(thumb.cos) &&
-        thumb.referer === `${HIROBA}/mypage_kisekae.php`,
-    );
+  results.thumbnailsOnlyWhenSeen = await askedOnlyWhatIsOnShow(seen, ownedIn(1));
   await touchEmulated(true);
   await page.evaluate("window.scrollTo(0, 0)");
   const gridBox = await boxOf("#costume-items-costume1");
@@ -2476,6 +2481,36 @@ try {
     sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&
     (await savedCostume()).costume1 === farItem;
   await fetch(`${HIROBA}/__state?reset=1`);
+  const fresh = (await (await fetch(`${HIROBA}/__items?many=2`)).json()) as Record<
+    string,
+    number[]
+  >;
+  const freshItems = fresh["1"] ?? [];
+  await openFreshEditor();
+  await fetch(`${HIROBA}/__thumbs?reset=1`);
+  const slotOnAPhone = async () => {
+    await showPart("costume1");
+    await waitFor(async () => (await exists(`#item-costume1-${freshItems[0]} img`)) || undefined);
+  };
+  const goOnAPhone = async (to: "overview" | "costume") => {
+    await menuOpened();
+    await click(`#nav-${to}`);
+    await menuClosed();
+  };
+  const thumbnailsOnAPhone = await atSize(PHONE.width, PHONE.height, async () => {
+    await slotOnAPhone();
+    const firstView = await thumbsSettled();
+    const onlyWhatIsOnShow = await askedOnlyWhatIsOnShow(firstView, freshItems);
+    await goOnAPhone("overview");
+    await goOnAPhone("costume");
+    await slotOnAPhone();
+    await Bun.sleep(1500);
+    return { asked: firstView.length, onlyWhatIsOnShow, askedAfterReopen: (await thumbs()).length };
+  });
+  results.narrowThumbnailsOnlyWhenSeen =
+    thumbnailsOnAPhone.onlyWhatIsOnShow && thumbnailsOnAPhone.asked <= 5 * 6;
+  results.narrowThumbnailsAskedOncePerRun =
+    thumbnailsOnAPhone.askedAfterReopen === thumbnailsOnAPhone.asked;
   await fetch(`${HIROBA}/__items?many=0`);
   await readEditorAgain();
 
