@@ -18,10 +18,7 @@ export interface Translator {
   t(key: MessageKey, params?: TranslateParams): string;
   /** A count as the locale writes it: 1,234 in English. */
   number(value: number): string;
-  /**
-   * A moment as the locale writes a date and a time of day, in the device's own time zone; a dash
-   * for one that reads as no date.
-   */
+  /** A date and time of day as the locale writes them, in the device's zone; a dash for none. */
   dateTime(value: Date | number | string): string;
 }
 
@@ -45,10 +42,7 @@ const DATE_TIME: Intl.DateTimeFormatOptions = {
   second: "numeric",
 };
 
-/**
- * A moment that reads as no date, such as one from a damaged record on disk. Intl throws on it,
- * which would take the whole window down while it renders; a mark reads the same in every language.
- */
+/** Shown for a moment that reads as no date: Intl throws on it, taking the window down. */
 const UNKNOWN_TIME = "—";
 
 export function createTranslator(locale: Locale = DEFAULT_LOCALE): Translator {
