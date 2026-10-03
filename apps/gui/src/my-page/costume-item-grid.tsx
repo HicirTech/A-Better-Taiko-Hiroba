@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, ButtonBase, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, ButtonBase, Skeleton, Stack, SvgIcon, Typography } from "@mui/material";
 import { type ReactNode, useRef, useSyncExternalStore } from "react";
 
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
@@ -22,7 +22,7 @@ export interface CostumeItemGridProps {
   readonly lane: PictureLane;
   readonly i18n: Translator;
   readonly part: SlotPart;
-  /** The slot's items in the page's order; はずす is not one of them. */
+  /** The slot's items in the page's order; はずす is the grid's first cell, not one of them. */
   readonly items: readonly number[];
   /** The item the draft holds in this slot, 0 for none. */
   readonly chosen: number;
@@ -77,6 +77,7 @@ export function CostumeItemGrid({
           justifyContent: "start",
         }}
       >
+        <NoneCell part={part} i18n={i18n} cells={cells} chosen={chosen === 0} onPick={onPick} />
         {items.map((id, order) => (
           <ItemCell
             key={id}
@@ -91,16 +92,6 @@ export function CostumeItemGrid({
           />
         ))}
       </Box>
-      <Button
-        id={`item-${part}-0`}
-        variant={chosen === 0 ? "contained" : "outlined"}
-        color="secondary"
-        aria-pressed={chosen === 0}
-        onClick={() => onPick(0)}
-        sx={{ alignSelf: "flex-start" }}
-      >
-        {t("costume.remove")}
-      </Button>
     </Stack>
   );
 }
@@ -138,6 +129,44 @@ export function ItemPicture({
       )}
       {fallback}
     </>
+  );
+}
+
+// Material's "block" icon (Apache 2.0), inline because the icons package is not a dependency.
+function NoneCell({
+  part,
+  i18n,
+  cells,
+  chosen,
+  onPick,
+}: {
+  part: SlotPart;
+  i18n: Translator;
+  cells: CellSize;
+  chosen: boolean;
+  onPick: (id: number) => void;
+}) {
+  const label = i18n.t("costume.remove");
+  return (
+    <ButtonBase
+      id={`item-${part}-0`}
+      aria-label={label}
+      aria-pressed={chosen}
+      title={label}
+      onClick={() => onPick(0)}
+      sx={{
+        width: cells.cell,
+        height: cells.cell,
+        borderRadius: 0.5,
+        bgcolor: "action.hover",
+        color: "text.secondary",
+        ...pickRing(chosen, "text.primary"),
+      }}
+    >
+      <SvgIcon aria-hidden sx={{ fontSize: cells.picture / 2 }}>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z" />
+      </SvgIcon>
+    </ButtonBase>
   );
 }
 
