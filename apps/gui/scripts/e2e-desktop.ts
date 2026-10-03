@@ -1607,22 +1607,14 @@ try {
 
   const OPEN_COSTUME = "Open the Costume page";
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
-  const badgeOpacity = () =>
-    page.evaluate<string>(
-      `getComputedStyle(document.querySelector("#costume-open-badge")).opacity`,
-    );
-  const badgeAtRest = await badgeOpacity();
   await hoverOver(page, "#costume-open");
-  const badgeOnHover = await waitFor(async () => (await badgeOpacity()) === "1" || undefined);
   const nameOnHover = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   results.portraitIsTheCostumeButton =
     (await page.evaluate<boolean>(
-      `(() => { const portrait = document.querySelector("#costume-open"); return portrait?.tagName === "BUTTON" && portrait.querySelector("#my-don") !== null && [...document.querySelectorAll("button")].every((button) => button.textContent.trim() !== ${JSON.stringify(OPEN_COSTUME)}) && !portrait.disabled; })()`,
+      `(() => { const portrait = document.querySelector("#costume-open"); return portrait?.tagName === "BUTTON" && portrait.querySelector("#my-don") !== null && portrait.querySelector("#costume-open-badge") === null && [...document.querySelectorAll("button")].every((button) => button.textContent.trim() !== ${JSON.stringify(OPEN_COSTUME)}) && !portrait.disabled; })()`,
     )) &&
     (await attribute("#costume-open", "aria-label")) === OPEN_COSTUME &&
-    badgeAtRest === "0" &&
-    badgeOnHover &&
     nameOnHover === OPEN_COSTUME;
 
   const openedBy = async (keys: () => Promise<unknown>) => {
@@ -1644,16 +1636,13 @@ try {
     }));
   const openedByKeysWithMouse = await openedByKeys();
 
-  // Clear focus and pointer: both also put the badge up.
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
-  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
   const longPressHint = await waitFor(() =>
     page.evaluate<string | undefined>(
       `document.getElementById(document.querySelector("#costume-open").getAttribute("aria-describedby") ?? "")?.textContent`,
     ),
   );
-  await waitFor(async () => (await badgeOpacity()) === "1" || undefined, 5_000);
   results.portraitJumpsToCostumeByKeyboard = openedByKeysWithMouse && (await openedByKeys());
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
   await page.evaluate(

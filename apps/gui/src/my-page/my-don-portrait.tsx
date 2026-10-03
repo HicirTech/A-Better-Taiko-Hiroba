@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, SvgIcon } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import type { Ref } from "react";
 
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
@@ -15,7 +15,6 @@ const hp = hirobaPx(HIROBA_TILE_SIDE_PX);
 // Hiroba's cos_icon02_bg blue stays pale in either theme, so the spinner on it is always dark.
 const TILE_BACKGROUND = "#cfe8f7";
 const ON_TILE = "#000";
-const BADGE_SIDE_PX = 32;
 const TILE = {
   display: "block",
   position: "relative",
@@ -48,13 +47,9 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
           display: "block",
           width: 1,
           borderRadius: hp(HIROBA_TILE_RADIUS_PX),
-          "&.Mui-focusVisible #costume-open-badge": { opacity: 1 },
-          // Hover alone: on a touch screen, a tap would leave the badge up.
-          "@media (hover: hover)": { "&:hover #costume-open-badge": { opacity: 1 } },
         }}
       >
         <MyDonTile ref={ref} answer={answer} i18n={i18n} />
-        <EditBadge alwaysUp={action.byLongPress} />
       </OpenButton>
     </Box>
   );
@@ -102,43 +97,5 @@ function TileContent({ answer, i18n }: Pick<MyDonPortraitProps, "answer" | "i18n
         />
       )}
     </>
-  );
-}
-
-function EditBadge({ alwaysUp }: { alwaysUp: boolean }) {
-  return (
-    <Box
-      id="costume-open-badge"
-      component="span"
-      aria-hidden
-      sx={{
-        position: "absolute",
-        right: hp(6),
-        bottom: hp(6),
-        width: BADGE_SIDE_PX,
-        height: BADGE_SIDE_PX,
-        borderRadius: "50%",
-        bgcolor: "primary.main",
-        color: "primary.contrastText",
-        boxShadow: 2,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        opacity: alwaysUp ? 1 : 0,
-        transition: (theme) =>
-          theme.transitions.create("opacity", { duration: theme.transitions.duration.shortest }),
-      }}
-    >
-      <EditIcon />
-    </Box>
-  );
-}
-
-// Material's "edit" icon (Apache 2.0), inline because the icons package is not a dependency.
-function EditIcon() {
-  return (
-    <SvgIcon aria-hidden fontSize="small">
-      <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75z" />
-    </SvgIcon>
   );
 }
