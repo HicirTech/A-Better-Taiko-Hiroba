@@ -25,6 +25,7 @@ import { useTitleEditor } from "./name-title/use-title-editor";
 import { FrameCorner } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { createPictureLane } from "./pictures/picture-lane";
+import type { SystemToast } from "./platform";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFab } from "./read-again/read-again-fab";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
@@ -65,9 +66,11 @@ export interface AppProps {
   readonly onNavigate: (page: Page) => void;
   /** Settings' language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
+  /** The shell's Toast, where it has one: a long-press names a legend's item by it. */
+  readonly toast?: SystemToast;
 }
 
-export function App({ port, i18n, page, onNavigate, language }: AppProps) {
+export function App({ port, i18n, page, onNavigate, language, toast }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
   const [refreshing, setRefreshing] = useState(false);
@@ -360,6 +363,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
                     crowns={screen.profile.crowns}
                     ranks={screen.profile.panel.ranks}
                     lane={lane}
+                    toast={touchFirst ? toast : undefined}
                     i18n={i18n}
                   />
                   <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />

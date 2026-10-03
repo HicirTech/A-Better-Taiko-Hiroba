@@ -3,6 +3,7 @@ import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
+import type { SystemToast } from "../platform";
 import type { ProfileView } from "../session-port";
 import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
 import { ShareBlock, type ShareItem } from "./share-block";
@@ -14,11 +15,13 @@ export function PanelCard({
   crowns,
   ranks,
   lane,
+  toast,
   i18n,
 }: {
   crowns: ProfileView["crowns"];
   ranks: ProfileView["panel"]["ranks"];
   lane: PictureLane;
+  toast: SystemToast | undefined;
   i18n: Translator;
 }) {
   const { t } = i18n;
@@ -38,12 +41,20 @@ export function PanelCard({
   }));
   return (
     <Stack id="panel" spacing={3}>
-      <ShareBlock id="ranks" heading={t("panel.ranks")} items={rankItems} lane={lane} i18n={i18n} />
+      <ShareBlock
+        id="ranks"
+        heading={t("panel.ranks")}
+        items={rankItems}
+        lane={lane}
+        toast={toast}
+        i18n={i18n}
+      />
       <ShareBlock
         id="crowns"
         heading={t("crowns.heading")}
         items={crownItems}
         lane={lane}
+        toast={toast}
         i18n={i18n}
       />
       <Typography id="panel-footnote" variant="caption" color="text.secondary" component="p">

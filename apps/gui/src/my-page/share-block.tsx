@@ -2,6 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
+import type { SystemToast } from "../platform";
 import type { IconWant } from "../session-port";
 import { LegendItem } from "./legend-item";
 import { sharesOf } from "./shares";
@@ -22,12 +23,14 @@ export function ShareBlock({
   heading,
   items,
   lane,
+  toast,
   i18n,
 }: {
   id: string;
   heading: string;
   items: readonly ShareItem[];
   lane: PictureLane;
+  toast: SystemToast | undefined;
   i18n: Translator;
 }) {
   const { t, locale, number } = i18n;
@@ -89,6 +92,7 @@ export function ShareBlock({
             count={t("panel.countOf", counted(row.count))}
             order={order}
             lane={lane}
+            toast={toast}
           />
         ))}
       </Box>
