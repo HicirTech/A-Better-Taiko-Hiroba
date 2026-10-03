@@ -13,6 +13,7 @@ import {
   INITIAL_COSTUME,
   type PostRecord,
 } from "./mock-costume";
+import { crownIconPng, rankIconPng } from "./mock-pictures";
 import {
   COOLDOWN_MESSAGE,
   FILTER_MESSAGE,
@@ -84,6 +85,25 @@ const THUMBNAIL = "GET /imgsrc_kisekae.php";
 const TITLE_PLATE = "GET /imgsrc_titleplate.php";
 const TOKEN_PLATE = `GET ${MEDAL_PLATE}`;
 const MY_DON = "GET /imgsrc.php";
+/** Each legend item's icon: the image number its path carries, then the stand-in's own picture. */
+const LEGEND_ICONS: Readonly<Record<string, readonly [path: string, picture: Uint8Array]>> = {
+  "rank-2": ["/image/sp/640/best_score_rank_2_640.png", rankIconPng(2)],
+  "rank-3": ["/image/sp/640/best_score_rank_3_640.png", rankIconPng(3)],
+  "rank-4": ["/image/sp/640/best_score_rank_4_640.png", rankIconPng(4)],
+  "rank-5": ["/image/sp/640/best_score_rank_5_640.png", rankIconPng(5)],
+  "rank-6": ["/image/sp/640/best_score_rank_6_640.png", rankIconPng(6)],
+  "rank-7": ["/image/sp/640/best_score_rank_7_640.png", rankIconPng(7)],
+  "rank-8": ["/image/sp/640/best_score_rank_8_640.png", rankIconPng(8)],
+  // Gold is crown_02 and silver crown_03: the recent-plays numbering.
+  "crowns-silver": ["/image/sp/640/crown_03_640.png", crownIconPng(3)],
+  "crowns-gold": ["/image/sp/640/crown_02_640.png", crownIconPng(2)],
+  "crowns-donderful": ["/image/sp/640/crown_04_640.png", crownIconPng(4)],
+};
+const ICON_PATHS = Object.values(LEGEND_ICONS).map(([path]) => path);
+const iconHits = async () => {
+  const hits = await Promise.all(ICON_PATHS.map((path) => hitsOn(path)));
+  return hits.reduce((sum, count) => sum + count, 0);
+};
 /** Pictures the window asks for by itself as they come on screen, outside any write. */
 const LANE_PICTURES: readonly string[] = [
   THUMBNAIL,
@@ -91,7 +111,20 @@ const LANE_PICTURES: readonly string[] = [
   `GET ${PANEL_ART}`,
   TOKEN_PLATE,
   MY_DON,
+  ...ICON_PATHS.map((path) => `GET ${path}`),
 ];
+const iconsSettled = async () => {
+  let last = -1;
+  for (let tries = 0; tries < 30; tries++) {
+    const now = await iconHits();
+    if (now === last) {
+      break;
+    }
+    last = now;
+    await Bun.sleep(1000);
+  }
+  return last;
+};
 const medalPlatesSettled = async () => {
   let last = -1;
   for (let tries = 0; tries < 30; tries++) {
@@ -487,6 +520,7 @@ try {
 
   await fetch(`${HIROBA}/__mydon?answer=gif`);
   await fetch(`${HIROBA}/__panel?answer=404`);
+  await fetch(`${HIROBA}/__icons?answer=404`);
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
@@ -507,16 +541,20 @@ try {
     ["Donderful Combo", "7.1%", 1],
   ];
   const legendOf = (shares: readonly Share[], total: number) =>
-    shares.map(([name, percent, count]) => `${name} ${percent} ${count} of ${total}`);
+    shares.map(([, percent, count]) => `${percent} ${count} of ${total}`);
+  const namesOf = (shares: readonly Share[]) =>
+    shares.map(([name, percent]) => `${name} ${percent}`);
   const barOf = (shares: readonly Share[], total: number) =>
     shares.map(([name, , count]) => `${name}: ${count} of ${total}`);
-  const allOf = (selector: string, property: "textContent" | "title") =>
+  const allOf = (selector: string, property: "textContent" | "title" | "ariaLabel") =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll(${JSON.stringify(selector)})].map((part) => part.${property})`,
     );
   results.panelSharesShown =
     same(await allOf("#ranks li", "textContent"), legendOf(RANK_SHARES, 102)) &&
     same(await allOf("#crowns li", "textContent"), legendOf(CROWN_SHARES, 14)) &&
+    same(await allOf("#ranks li", "ariaLabel"), namesOf(RANK_SHARES)) &&
+    same(await allOf("#crowns li", "ariaLabel"), namesOf(CROWN_SHARES)) &&
     same(await allOf("#ranks-bar > *", "title"), barOf(RANK_SHARES, 102)) &&
     same(await allOf("#crowns-bar > *", "title"), barOf(CROWN_SHARES, 14)) &&
     (await textOf("#rank-5-percent")) === "30.4%";
@@ -543,6 +581,22 @@ try {
   results.taikoNoAndUrlsKeptOutOfDom =
     !rendered.includes("000000000000") && !rendered.includes("imgsrc");
   results.readsAfterSignIn = await myPageHits();
+  const legendPictures = (app: typeof running) =>
+    app.page.evaluate<{ images: number; dots: number }>(
+      `(() => { const items = [...document.querySelectorAll("#ranks li, #crowns li")]; return { images: items.filter((item) => item.querySelector("img") !== null).length, dots: items.filter((item) => item.querySelector('[aria-hidden="true"] > span') !== null).length }; })()`,
+    );
+  const legendIconsShownOn = (app: typeof running) =>
+    waitForSeen(app.page, async () =>
+      (await legendPictures(app)).images === ICON_PATHS.length ? true : undefined,
+    );
+  await waitForSeen(page, async () =>
+    (await iconHits()) === ICON_PATHS.length ? true : undefined,
+  );
+  results.legendFallsBackToDots =
+    same(await legendPictures(running), { images: 0, dots: ICON_PATHS.length }) &&
+    same(await allOf("#ranks li", "ariaLabel"), namesOf(RANK_SHARES)) &&
+    same(await allOf("#crowns li", "ariaLabel"), namesOf(CROWN_SHARES)) &&
+    (await textOf("#rank-5-percent")) === "30.4%";
 
   await waitForSeen(page, async () => (await attribute("#title-plate-image", "src")) ?? undefined);
   await waitForSeen(page, async () => (await textOf("#pictures-code")) ?? undefined);
@@ -1000,7 +1054,9 @@ try {
     !withMyDon.includes("img.127.0.0.1") &&
     !withMyDon.includes("000000000000");
 
+  const iconsBeforeRecovery = await iconsSettled();
   await fetch(`${HIROBA}/__panel?answer=png`);
+  await fetch(`${HIROBA}/__icons?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
   await until("Last updated");
@@ -1023,6 +1079,64 @@ try {
     (await panelCountsInPlace(PANEL_COUNTS)) &&
     !(await exists("#pictures-unavailable"));
   const panelArtFetches = await hitsOn(PANEL_ART);
+  await legendIconsShownOn(running);
+  const iconFetches = await iconsSettled();
+  const iconSources = await page.evaluate<Record<string, string>>(
+    `Object.fromEntries([...document.querySelectorAll("#ranks li, #crowns li")].map((item) => [item.querySelector('[id]:not([id$="-percent"])').id, item.querySelector("img").getAttribute("src")]))`,
+  );
+  const pictureOf = (bytes: Uint8Array) =>
+    `data:image/png;base64,${Buffer.from(bytes).toString("base64")}`;
+  const iconBoxes = await page.evaluate<{ height: number; ratio: number }[]>(
+    `[...document.querySelectorAll("#ranks li, #crowns li")].map((item) => { const box = item.querySelector('[aria-hidden="true"]').getBoundingClientRect(); return { height: box.height, ratio: box.width / box.height }; })`,
+  );
+  results.legendIconsShown =
+    Object.entries(LEGEND_ICONS).every(([id, [, bytes]]) => iconSources[id] === pictureOf(bytes)) &&
+    same(await legendPictures(running), { images: ICON_PATHS.length, dots: 0 }) &&
+    iconBoxes.every(({ height }) => Math.abs(height - 24) < 0.5) &&
+    iconBoxes.slice(0, 7).every(({ ratio }) => Math.abs(ratio - 128 / 96) < 0.05) &&
+    iconBoxes.slice(7).every(({ ratio }) => Math.abs(ratio - 52 / 59) < 0.05) &&
+    same(await allOf("#ranks li", "ariaLabel"), namesOf(RANK_SHARES)) &&
+    same(await allOf("#crowns li", "ariaLabel"), namesOf(CROWN_SHARES));
+  results.legendIconsAskedOnceEach = iconFetches - iconsBeforeRecovery === ICON_PATHS.length;
+  const tooltipClosed = () =>
+    waitFor(async () => ((await exists('[role="tooltip"]')) ? undefined : true));
+  const legendNameOnHover = async (selector: string) => {
+    await page.evaluate(
+      `document.querySelector(${JSON.stringify(selector)}).scrollIntoView({ block: "center" })`,
+    );
+    await hoverOver(page, selector);
+    const shown = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+    await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+    await tooltipClosed();
+    return shown;
+  };
+  const namesOnHover: string[] = [];
+  for (const [block, shares] of [
+    ["#ranks", RANK_SHARES],
+    ["#crowns", CROWN_SHARES],
+  ] as const) {
+    for (let item = 1; item <= shares.length; item++) {
+      namesOnHover.push(await legendNameOnHover(`${block} li:nth-child(${item})`));
+    }
+  }
+  const SHIFT_KEY = { key: "Shift", code: "ShiftLeft", windowsVirtualKeyCode: 16 };
+  await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SHIFT_KEY });
+  await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Shift", code: "ShiftLeft" });
+  await page.evaluate(`document.querySelector("#crowns li").focus()`);
+  const nameOnFocus = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  await page.evaluate("document.activeElement.blur()");
+  await tooltipClosed();
+  const keyboardReachable = await page.evaluate<boolean>(
+    `[...document.querySelectorAll("#ranks li, #crowns li")].every((item) => item.tabIndex === 0)`,
+  );
+  results.legendNamesShownAsTooltips =
+    same(
+      namesOnHover,
+      [...RANK_SHARES, ...CROWN_SHARES].map(([name]) => name),
+    ) &&
+    nameOnFocus === CROWN_SHARES[0]?.[0] &&
+    keyboardReachable;
+  await page.evaluate("window.scrollTo(0, 0)");
   const keptMyDon = await attribute("#my-don-image", "src");
   await fetch(`${HIROBA}/__mydon?answer=gif`);
   await click("#read-again");
@@ -2858,6 +2972,8 @@ try {
     );
   await panelArtShownOn(running);
   results.scorePanelOncePerDevice = (await hitsOn(PANEL_ART)) === panelArtFetches;
+  await legendIconsShownOn(running);
+  results.legendIconsOncePerDevice = (await iconsSettled()) === iconFetches;
   // The launch's read is the session's first, which renews nothing.
   const myDonShownOn = (app: typeof running) =>
     waitForSeen(
@@ -2991,6 +3107,8 @@ try {
   results.medalPlateSurvivesSignOut = (await medalPlateShown()) === medalPlatesSignedOut;
   await panelArtShownOn(running);
   results.scorePanelSurvivesSignOut = (await hitsOn(PANEL_ART)) === panelArtFetches;
+  await legendIconsShownOn(running);
+  results.legendIconsSurviveSignOut = (await iconsSettled()) === iconFetches;
   await myDonShownOn(running);
   results.myDonKeptAtSignIn = (await myDonsSettled()) === myDonsSignedOut;
   // An unconfirmed plate is asked again: Hiroba draws a blank one for a session it ended unseen.

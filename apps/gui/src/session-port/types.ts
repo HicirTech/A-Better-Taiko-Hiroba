@@ -136,6 +136,9 @@ export type PictureWant =
   | { readonly kind: "rankIcon"; readonly rank: ScoreRank }
   | { readonly kind: "crownIcon"; readonly crown: CrownKind };
 
+/** The pictures that are icons of the legends: shared art, the same for every account. */
+export type IconWant = Extract<PictureWant, { readonly kind: "rankIcon" | "crownIcon" }>;
+
 /** A picture for the interface: a `data:image/png` URL, which is no address, and the PNG's own
  * size, so its box can be sized before it is drawn. */
 export interface PictureView {

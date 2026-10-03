@@ -359,6 +359,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
                   <PanelCard
                     crowns={screen.profile.crowns}
                     ranks={screen.profile.panel.ranks}
+                    lane={lane}
                     i18n={i18n}
                   />
                   <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />

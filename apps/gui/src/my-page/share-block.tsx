@@ -1,7 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 
-import { VISUALLY_HIDDEN } from "./hiroba-px";
+import type { PictureLane } from "../pictures/picture-lane";
+import type { IconWant } from "../session-port";
+import { LegendItem } from "./legend-item";
 import { sharesOf } from "./shares";
 
 export interface ShareItem {
@@ -11,17 +13,21 @@ export interface ShareItem {
   readonly count: number;
   /** A CSS background for its dot and its part of the bar: a colour, or a gradient. */
   readonly colour: string;
+  /** Its icon in the legend; the dot stands in until it comes. */
+  readonly icon: IconWant;
 }
 
 export function ShareBlock({
   id,
   heading,
   items,
+  lane,
   i18n,
 }: {
   id: string;
   heading: string;
   items: readonly ShareItem[];
+  lane: PictureLane;
   i18n: Translator;
 }) {
   const { t, locale, number } = i18n;
@@ -72,34 +78,18 @@ export function ShareBlock({
           p: 0,
         }}
       >
-        {/* The spaces between the parts are for screen readers; a flex row draws none. */}
-        {rows.map((row) => (
-          <Box
-            component="li"
+        {rows.map((row, order) => (
+          <LegendItem
             key={row.id}
-            title={titleOf(row)}
-            sx={{ display: "flex", alignItems: "center", position: "relative" }}
-          >
-            <Box
-              aria-hidden
-              sx={{ width: 8, height: 8, borderRadius: "50%", background: row.colour, mr: 1 }}
-            />
-            <Typography component="span" variant="body2">
-              {row.name}
-            </Typography>{" "}
-            <Typography
-              id={`${row.id}-percent`}
-              component="span"
-              variant="body2"
-              color="text.secondary"
-              sx={{ ml: 0.5 }}
-            >
-              {row.percent}
-            </Typography>{" "}
-            <Box component="span" id={row.id} sx={VISUALLY_HIDDEN}>
-              {t("panel.countOf", counted(row.count))}
-            </Box>
-          </Box>
+            id={row.id}
+            name={row.name}
+            percent={row.percent}
+            colour={row.colour}
+            icon={row.icon}
+            count={t("panel.countOf", counted(row.count))}
+            order={order}
+            lane={lane}
+          />
         ))}
       </Box>
     </Box>

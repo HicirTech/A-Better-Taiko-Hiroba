@@ -10,6 +10,7 @@ import {
 
 import {
   type CostumeSlot,
+  type IconWant,
   isPictureWant,
   type PictureFailure,
   type PictureView,
@@ -221,10 +222,7 @@ function requestOf(
   };
 }
 
-function iconRequest(
-  want: Extract<PictureWant, { kind: "rankIcon" | "crownIcon" }>,
-  origin: string,
-): PictureRequest {
+function iconRequest(want: IconWant, origin: string): PictureRequest {
   const { path, name } =
     want.kind === "rankIcon"
       ? { path: rankIconPath(want.rank), name: `rank/${want.rank}` }

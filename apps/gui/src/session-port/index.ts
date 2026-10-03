@@ -25,6 +25,7 @@ export type {
   DanNumber,
   DanView,
   HirobaSessionPort,
+  IconWant,
   NameChange,
   NameState,
   PictureFailure,
