@@ -76,7 +76,6 @@ export const ja: Messages = {
   "crowns.silver": "銀",
   "crowns.gold": "金",
   "crowns.donderful": "ドンダフル",
-  "panel.footnote": "初期設定の1アカウントで確認：おに＋おに裏、双打は除く。",
   "panel.ranks": "スコアランク",
   "panel.countOf": "{count}（全{total}）",
   "panel.countTitle": "{name}：{count}（全{total}）",

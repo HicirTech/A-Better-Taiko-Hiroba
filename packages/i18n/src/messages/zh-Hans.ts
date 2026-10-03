@@ -74,7 +74,6 @@ export const zhHans: Messages = {
   "crowns.silver": "通关",
   "crowns.gold": "全连段",
   "crowns.donderful": "全良",
-  "panel.footnote": "已用一个默认设置的账号核对：魔王＋魔王(里)，不含双打。",
   "panel.ranks": "成绩排名",
   "panel.countOf": "{count}（共 {total}）",
   "panel.countTitle": "{name}：{count}（共 {total}）",

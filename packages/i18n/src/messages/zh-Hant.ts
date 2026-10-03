@@ -73,7 +73,6 @@ export const zhHant: Messages = {
   "crowns.silver": "通過",
   "crowns.gold": "全連段",
   "crowns.donderful": "全良",
-  "panel.footnote": "已用一個預設設定的帳號核對：魔鬼＋魔鬼(裏)，不含雙打。",
   "panel.ranks": "成績排名",
   "panel.countOf": "{count}（共 {total}）",
   "panel.countTitle": "{name}：{count}（共 {total}）",

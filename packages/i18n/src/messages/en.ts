@@ -76,8 +76,6 @@ export const en: Messages = {
   "crowns.silver": "Clear",
   "crowns.gold": "Full Combo",
   "crowns.donderful": "Donderful Combo",
-  "panel.footnote":
-    "Checked on one account with default settings: Extreme and Extreme (Inner) charts, Double Play charts excluded.",
   "panel.ranks": "Score ranks",
   "panel.countOf": "{count} of {total}",
   "panel.countTitle": "{name}: {count} of {total}",

@@ -561,7 +561,7 @@ try {
   results.panelBlocksShown =
     same(await allOf("#panel h2", "textContent"), ["Score ranks", "Crowns"]) &&
     (await page.evaluate<boolean>(
-      `document.querySelector("#panel #panel-footnote") !== null && ["#ranks-bar", "#crowns-bar"].every((bar) => document.querySelector(bar)?.getAttribute("aria-hidden") === "true")`,
+      `document.querySelector("#panel-footnote") === null && ["#ranks-bar", "#crowns-bar"].every((bar) => document.querySelector(bar)?.getAttribute("aria-hidden") === "true")`,
     ));
   const lastUpdated = async () => ({
     text: (await textOf("#last-updated")) ?? "",
@@ -659,9 +659,7 @@ try {
   const framed = await page.evaluate<boolean>(
     `(() => { const sides = ["Top", "Right", "Bottom", "Left"]; return ["#profile", "#panel", "#medal"].some((selector) => { const block = document.querySelector(selector); const style = getComputedStyle(block); return block.closest(".MuiPaper-root") !== null || style.boxShadow !== "none" || sides.some((side) => style["border" + side + "Style"] !== "none" && parseFloat(style["border" + side + "Width"]) > 0); }); })()`,
   );
-  const blocks = await Promise.all(
-    ["#profile", "#ranks", "#crowns", "#panel-footnote", "#medal"].map(boxOf),
-  );
+  const blocks = await Promise.all(["#profile", "#ranks", "#crowns", "#medal"].map(boxOf));
   const gaps = blocks.slice(1).map((block, index) => block.top - (blocks[index]?.bottom ?? 0));
   results.overviewBlocksHaveNoBorders =
     !framed && gaps.every((gap) => gap >= 16 && Math.abs(gap - (gaps[0] ?? 0)) < 1);

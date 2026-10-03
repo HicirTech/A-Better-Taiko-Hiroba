@@ -100,7 +100,6 @@ export interface Messages {
   "crowns.silver": string;
   "crowns.gold": string;
   "crowns.donderful": string;
-  "panel.footnote": string;
   /** The score-rank block heading. Not 评级/評級: taiko.wiki uses those for the skill Rating. */
   "panel.ranks": string;
   /** Params: {count} and {total} (the sum of its block), both already formatted. */

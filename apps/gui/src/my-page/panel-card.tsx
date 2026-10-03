@@ -1,6 +1,6 @@
 import { SCORE_RANK_TIERS, type ScoreRank } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
@@ -10,7 +10,6 @@ import { ShareBlock, type ShareItem } from "./share-block";
 
 const RANKS_WORST_FIRST: readonly ScoreRank[] = SCORE_RANK_TIERS.flatMap((tier) => tier.ranks);
 
-// One footnote for both: the panel's crowns are not the account's clears at every level.
 export function PanelCard({
   crowns,
   ranks,
@@ -57,9 +56,6 @@ export function PanelCard({
         toast={toast}
         i18n={i18n}
       />
-      <Typography id="panel-footnote" variant="caption" color="text.secondary" component="p">
-        {t("panel.footnote")}
-      </Typography>
     </Stack>
   );
 }
