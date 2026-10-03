@@ -685,6 +685,8 @@ try {
     });
     const { myDon, plate, panel } = await settledHeader();
     await page.send("Emulation.clearDeviceMetricsOverride", {});
+    // The checks after this one measure the panel, so it settles back at the window's own size.
+    await settledHeader();
     return (
       myDon.right <= plate.left &&
       Math.abs(myDon.top - plate.top) <= 1 &&
