@@ -1455,6 +1455,56 @@ try {
     return showMedal(ready);
   };
   const medalPlateSrc = () => attribute("#medal-plate-image", "src");
+  type Rect = { left: number; top: number; width: number; height: number };
+  type MedalLayout = Record<
+    string,
+    (Rect & { size: number; weight: string; colour: string }) | null
+  >;
+  const MEDAL_WORDS = [
+    "#medal-plate",
+    "#medal-plate-image",
+    "#medal-name",
+    "#medal-count-shown",
+    "#medal-complete",
+  ];
+  const medalLayout = () =>
+    page.evaluate<MedalLayout>(
+      `Object.fromEntries(${JSON.stringify(MEDAL_WORDS)}.map((selector) => { const element = document.querySelector(selector); if (element === null) return [selector, null]; const { left, top, width, height } = element.getBoundingClientRect(); const style = getComputedStyle(element); return [selector, { left, top, width, height, size: parseFloat(style.fontSize), weight: style.fontWeight, colour: style.color }]; }))`,
+    );
+  /** Hiroba's offsets in its pixels of the 290-wide block: the name at 50, the count or COMPLETE at
+   * `left`, bold black 12; the picture 290 wide; the block 52 high, more under a taller picture. */
+  const medalLaidOutAsOnHiroba = (layout: MedalLayout, ending: string, left: number) => {
+    const [block, image, name, end] = [
+      "#medal-plate",
+      "#medal-plate-image",
+      "#medal-name",
+      ending,
+    ].map((selector) => layout[selector]);
+    if (!block || !image || !name || !end) {
+      return false;
+    }
+    const unit = block.width / 290;
+    const at = (box: Rect, side: "left" | "top") => (box[side] - block[side]) / unit;
+    const nameMiddle = (name.top + name.height / 2 - block.top) / unit;
+    return (
+      block.height / unit >= 51.5 &&
+      block.height / unit <= Math.max(52, image.height / unit + 8) &&
+      Math.abs(image.width / unit - 290) < 0.5 &&
+      Math.abs(at(image, "left")) < 0.5 &&
+      Math.abs(at(image, "top")) < 0.5 &&
+      Math.abs(at(name, "left") - 50) < 0.5 &&
+      Math.abs(name.width / unit - 165) < 0.5 &&
+      Math.abs(at(end, "left") - left) < 0.5 &&
+      Math.abs(at(end, "top") - at(name, "top")) < 0.5 &&
+      Math.abs(nameMiddle - image.height / unit / 2) < 2 &&
+      [name, end].every(
+        (words) =>
+          Math.abs(words.size / unit - 12) < 0.1 &&
+          Number(words.weight) >= 700 &&
+          words.colour === "rgb(0, 0, 0)",
+      )
+    );
+  };
   medalIds.push(medalIdShown());
   await fetch(`${HIROBA}/__tokenplate?answer=gif`);
   await fetch(`${HIROBA}/__medal?state=collecting&season=2`);
@@ -1491,8 +1541,9 @@ try {
   await fetch(`${HIROBA}/__tokenplate?answer=png`);
   medalPlatesPerRead.push(await readMedalShowing(() => shownNow("#medal-plate-image")));
   const medalBox = await page.evaluate<{ width: number; height: number }>(
-    `(() => { const box = document.querySelector("#medal-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+    `(() => { const box = document.querySelector("#medal-plate-image").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
   );
+  const collectingLayout = await medalLayout();
   results.medalPlateDrawnUnderText =
     (await medalPlateSrc())?.startsWith("data:image/png;base64,") === true &&
     Math.abs(medalBox.width / medalBox.height - 600 / 100) < 0.05 &&
@@ -1519,6 +1570,10 @@ try {
   );
   const completeShown =
     (await textOf("#medal-complete")) === "COMPLETE" && (await textOf("#medal-count")) === null;
+  const completeLayout = await medalLayout();
+  results.medalPlateLaidOutAsOnHiroba =
+    medalLaidOutAsOnHiroba(collectingLayout, "#medal-count-shown", 215) &&
+    medalLaidOutAsOnHiroba(completeLayout, "#medal-complete", 190);
   await fetch(`${HIROBA}/__medal?state=collecting`);
   medalPlatesPerRead.push(
     await readMedalShowing(async () => (await medalPlateSrc()) === collectingSrc),
