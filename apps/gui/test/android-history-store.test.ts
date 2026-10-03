@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { MAX_COSTUME_HISTORY } from "../src/hiroba-session/costume-history";
 import { createIndexedDbHistoryStore } from "../src/platform/android-history-store";
+import type { DatabaseFactory } from "../src/platform/android-indexeddb";
 import { entryOf, pictureOf, SET } from "./history-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const PLAYER = "000000000000";
 const OTHER = "111111111111";
+const HISTORY_CAP = 30;
 const KEPT = [entryOf(1, pictureOf("one")), entryOf(2)];
 
 describe("createIndexedDbHistoryStore", () => {
@@ -42,9 +43,17 @@ describe("createIndexedDbHistoryStore", () => {
 
   test("keeps the sets and their pictures, in a database of its own", async () => {
     const indexedDb = createFakeIndexedDb();
+    const opened: (readonly [string, number])[] = [];
+    const factory: DatabaseFactory = {
+      open: (name, version) => {
+        opened.push([name, version]);
+        return indexedDb.factory.open(name, version);
+      },
+    };
 
-    await createIndexedDbHistoryStore(indexedDb.factory).save(PLAYER, KEPT);
+    await createIndexedDbHistoryStore(factory).save(PLAYER, KEPT);
 
+    expect(opened).toEqual([["abth-costume-history", 1]]);
     expect([...indexedDb.tables.keys()]).toEqual(["histories"]);
     expect(indexedDb.tables.get("histories")?.get(PLAYER)).toEqual({ v: 1, entries: KEPT });
   });
@@ -114,10 +123,10 @@ describe("createIndexedDbHistoryStore", () => {
     const indexedDb = createFakeIndexedDb();
     const store = createIndexedDbHistoryStore(indexedDb.factory);
     await store.load(PLAYER);
-    const crowd = Array.from({ length: MAX_COSTUME_HISTORY + 5 }, (_, at) => entryOf(at + 1));
+    const crowd = Array.from({ length: HISTORY_CAP + 5 }, (_, at) => entryOf(at + 1));
     const stored = [{ set: SET, picture: 7 }, entryOf(1), entryOf(1), ...crowd];
     indexedDb.tables.get("histories")?.set(PLAYER, { v: 1, entries: stored });
 
-    expect(await store.load(PLAYER)).toEqual(crowd.slice(0, MAX_COSTUME_HISTORY));
+    expect(await store.load(PLAYER)).toEqual(crowd.slice(0, HISTORY_CAP));
   });
 });

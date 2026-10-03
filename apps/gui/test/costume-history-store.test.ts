@@ -5,11 +5,11 @@ import { basename, join } from "node:path";
 
 import { createCostumeHistoryStore } from "../electron/costume-history-store";
 import type { UndoFiles } from "../electron/undo-store";
-import { MAX_COSTUME_HISTORY } from "../src/hiroba-session/costume-history";
 import { entryOf, pictureOf, SET } from "./history-fixtures";
 
 const PLAYER = "000000000000";
 const OTHER = "111111111111";
+const HISTORY_CAP = 30;
 const PATH = join("data", "costume-history.json");
 
 /** Files in memory, which record what the store did to them and can refuse a rename. */
@@ -128,7 +128,7 @@ describe("createCostumeHistoryStore", () => {
   });
 
   test("gives back the well-formed entries only, each set once and at most the cap", async () => {
-    const crowd = Array.from({ length: MAX_COSTUME_HISTORY + 5 }, (_, at) => entryOf(at + 1));
+    const crowd = Array.from({ length: HISTORY_CAP + 5 }, (_, at) => entryOf(at + 1));
     const kept = [{ set: SET, picture: "javascript:alert(1)" }, entryOf(1), entryOf(1), ...crowd];
     const { files } = fakeFiles({
       [PATH]: JSON.stringify({ version: 1, players: { [PLAYER]: kept } }),
@@ -136,7 +136,7 @@ describe("createCostumeHistoryStore", () => {
 
     const read = await createCostumeHistoryStore(PATH, files).load(PLAYER);
 
-    expect(read).toEqual(crowd.slice(0, MAX_COSTUME_HISTORY));
+    expect(read).toEqual(crowd.slice(0, HISTORY_CAP));
   });
 
   test("rejects a rename that fails, and leaves the last file as it was", async () => {

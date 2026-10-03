@@ -1,13 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  MAX_COSTUME_HISTORY,
-  mergeCostumeHistory,
-  readCostumeHistory,
-} from "../src/hiroba-session/costume-history";
+import { mergeCostumeHistory, readCostumeHistory } from "../src/hiroba-session/costume-history";
 import { MAX_PREVIEW_BYTES } from "../src/hiroba-session/preview-costume";
 import { entryOf, pictureOf, SET } from "./history-fixtures";
 
+const HISTORY_CAP = 30;
 const faces = (entries: readonly { set: { colorFace: number } }[]) =>
   entries.map(({ set }) => set.colorFace);
 
@@ -80,14 +77,14 @@ describe("mergeCostumeHistory", () => {
   });
 
   test("keeps at most the cap, and the oldest set drops off", () => {
-    const full = Array.from({ length: MAX_COSTUME_HISTORY }, (_, at) => entryOf(100 + at));
+    const full = Array.from({ length: HISTORY_CAP }, (_, at) => entryOf(100 + at));
 
     const atTheCap = mergeCostumeHistory(full.slice(2), [entryOf(1), entryOf(2)]);
     const overTheCap = mergeCostumeHistory(full, [entryOf(1), entryOf(2)]);
 
-    expect(atTheCap).toHaveLength(MAX_COSTUME_HISTORY);
+    expect(atTheCap).toHaveLength(HISTORY_CAP);
     expect(atTheCap.at(-1)).toEqual(full.at(-1));
-    expect(overTheCap).toHaveLength(MAX_COSTUME_HISTORY);
+    expect(overTheCap).toHaveLength(HISTORY_CAP);
     expect(faces(overTheCap).slice(0, 3)).toEqual([1, 2, 100]);
     expect(faces(overTheCap)).not.toContain(full.at(-1)?.set.colorFace);
     expect(faces(overTheCap)).not.toContain(full.at(-2)?.set.colorFace);
@@ -170,11 +167,11 @@ describe("readCostumeHistory", () => {
   });
 
   test("keeps the newest entries up to the cap, and the rest drop", () => {
-    const entries = Array.from({ length: MAX_COSTUME_HISTORY + 1 }, (_, at) => entryOf(at + 1));
+    const entries = Array.from({ length: HISTORY_CAP + 1 }, (_, at) => entryOf(at + 1));
 
     const read = readCostumeHistory(entries);
 
-    expect(read).toEqual(entries.slice(0, MAX_COSTUME_HISTORY));
+    expect(read).toEqual(entries.slice(0, HISTORY_CAP));
   });
 
   test("drops what an entry carries beyond its set and its picture", () => {
