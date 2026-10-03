@@ -146,6 +146,48 @@ export function scorePanelPng(level: number): Uint8Array<ArrayBuffer> {
   return new Uint8Array(encode({ width, height, data, channels: 4 }));
 }
 
+/** The legends' icons: image/sp/640/best_score_rank_<2..8>_640.png and crown_0<1..4>_640.png. */
+const RANK_ICON = { width: 128, height: 96 } as const;
+const CROWN_ICON = { width: 52, height: 59 } as const;
+
+/** The pixels `inside` in one colour of the seed's own: only the size is Hiroba's. */
+function iconPng(
+  seed: number,
+  { width, height }: typeof RANK_ICON | typeof CROWN_ICON,
+  inside: (x: number, y: number) => boolean,
+): Uint8Array<ArrayBuffer> {
+  const next = randomFrom(seed);
+  const [r = 0, g = 0, b = 0] = [next() % 256, next() % 256, next() % 256];
+  const data = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      data.set([r ^ (next() & 1), g, b, inside(x, y) ? 255 : 0], (y * width + x) * 4);
+    }
+  }
+  return new Uint8Array(encode({ width, height, data, channels: 4 }));
+}
+
+/** A diamond for a rank's image number, 2 to 8. */
+export function rankIconPng(rank: number): Uint8Array<ArrayBuffer> {
+  const { width, height } = RANK_ICON;
+  return iconPng(
+    seedOf(6, rank),
+    RANK_ICON,
+    (x, y) => Math.abs(x - width / 2) / (width / 2) + Math.abs(y - height / 2) / (height / 2) <= 1,
+  );
+}
+
+/** A base with three studs for a crown's image number, 1 to 4. */
+export function crownIconPng(number: number): Uint8Array<ArrayBuffer> {
+  const { width, height } = CROWN_ICON;
+  const studs = [0.2, 0.5, 0.8].map((at) => ({ x: width * at, y: height * 0.3 }));
+  return iconPng(seedOf(7, number), CROWN_ICON, (x, y) => {
+    const onBase = y >= height * 0.55 && y < height * 0.9;
+    const onStud = studs.some((s) => (x - s.x) ** 2 + (y - s.y) ** 2 <= (width * 0.12) ** 2);
+    return onBase || onStud;
+  });
+}
+
 function platePng(
   next: () => number,
   band: readonly number[],

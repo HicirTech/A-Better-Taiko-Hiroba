@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { SCORE_RANK_NAMES } from "@abth/core";
 
 import { PORT_ARGUMENTS } from "../src/session-port";
 
@@ -231,10 +232,37 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     expect(PORT_ARGUMENTS.readPicture([{ kind: "myDon" }])).toBe(true);
   });
 
+  test("takes a rank's icon by each rank core names, and a crown's icon by its name", () => {
+    const check = PORT_ARGUMENTS.readPicture;
+    for (const rank of Object.keys(SCORE_RANK_NAMES).map(Number)) {
+      expect(check([{ kind: "rankIcon", rank }])).toBe(true);
+    }
+    for (const crown of ["silver", "gold", "donderful"]) {
+      expect(check([{ kind: "crownIcon", crown }])).toBe(true);
+    }
+  });
+
   test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
     const check = PORT_ARGUMENTS.readPicture;
     const item = { kind: "costumeItem", slot: 1, id: 36 };
     const refused: unknown[][] = [
+      [{ kind: "rankIcon" }],
+      [{ kind: "rankIcon", rank: 1 }],
+      [{ kind: "rankIcon", rank: 9 }],
+      [{ kind: "rankIcon", rank: 5.5 }],
+      [{ kind: "rankIcon", rank: "5" }],
+      [{ kind: "rankIcon", rank: 5, url: "https://example.test/best_score_rank_5_640.png" }],
+      [{ kind: "rankIcon", crown: "gold" }],
+      [{ kind: "crownIcon" }],
+      [{ kind: "crownIcon", crown: "bronze" }],
+      [{ kind: "crownIcon", crown: "toString" }],
+      [{ kind: "crownIcon", crown: 2 }],
+      [{ kind: "crownIcon", rank: 5 }],
+      [{ kind: "crownIcon", crown: "gold", src: "image/sp/640/crown_02_640.png" }],
+      [
+        { kind: "rankIcon", rank: 5 },
+        { kind: "rankIcon", rank: 5 },
+      ],
       [],
       [item, item],
       [{ ...item, slot: 0 }],

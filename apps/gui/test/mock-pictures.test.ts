@@ -3,8 +3,10 @@ import { isOk } from "@abth/core";
 
 import {
   blankPlatePng,
+  crownIconPng,
   medalPlatePng,
   myDonPng,
+  rankIconPng,
   scorePanelPng,
   thumbnailPng,
   titlePlatePng,
@@ -86,6 +88,26 @@ describe("scorePanelPng", () => {
   test("gives each level a panel of its own, the same on every run", () => {
     expect(scorePanelPng(5)).toEqual(scorePanelPng(5));
     expect(scorePanelPng(5)).not.toEqual(scorePanelPng(4));
+  });
+});
+
+describe("rankIconPng and crownIconPng", () => {
+  const ICON_RULES = { minBytes: 128, maxBytes: 64 * 1024, maxSide: 256 };
+
+  test("draw a 128×96 icon for each rank and a 52×59 one for each crown, within an icon's bounds", () => {
+    for (const rank of [2, 3, 4, 5, 6, 7, 8]) {
+      expect(sizeUnder(rankIconPng(rank), ICON_RULES)).toEqual({ width: 128, height: 96 });
+    }
+    for (const number of [1, 2, 3, 4]) {
+      expect(sizeUnder(crownIconPng(number), ICON_RULES)).toEqual({ width: 52, height: 59 });
+    }
+  });
+
+  test("give each rank and each crown an icon of its own, the same on every run", () => {
+    expect(rankIconPng(5)).toEqual(rankIconPng(5));
+    expect(rankIconPng(5)).not.toEqual(rankIconPng(6));
+    expect(crownIconPng(2)).toEqual(crownIconPng(2));
+    expect(crownIconPng(2)).not.toEqual(crownIconPng(3));
   });
 });
 

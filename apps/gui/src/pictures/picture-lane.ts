@@ -50,17 +50,29 @@ export interface PictureLane {
   version(): number;
 }
 
-// Small plates and art first, then the portrait (the largest), then the editor's thumbnails.
+// Small plates and art first, then the portrait (the largest), the legends' icons, the thumbnails.
 const KIND_RANK: Readonly<Record<PictureWant["kind"], number>> = {
   titlePlate: 0,
   scorePanel: 1,
   medalPlate: 2,
   myDon: 3,
-  costumeItem: 4,
+  rankIcon: 4,
+  crownIcon: 5,
+  costumeItem: 6,
 };
 
-export const wantKey = (want: PictureWant): string =>
-  want.kind === "costumeItem" ? `${want.kind}/${want.slot}/${want.id}` : want.kind;
+export const wantKey = (want: PictureWant): string => {
+  switch (want.kind) {
+    case "costumeItem":
+      return `${want.kind}/${want.slot}/${want.id}`;
+    case "rankIcon":
+      return `${want.kind}/${want.rank}`;
+    case "crownIcon":
+      return `${want.kind}/${want.crown}`;
+    default:
+      return want.kind;
+  }
+};
 
 const isOfKind = (key: string, kind: PictureWant["kind"]) =>
   key === kind || key.startsWith(`${kind}/`);

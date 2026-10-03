@@ -49,6 +49,7 @@ type Screen =
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
 const OVERVIEW_SPACING = 3;
+const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 
 const SIGN_IN_NOTICE = {
   cancelled: "signIn.cancelled",
@@ -135,13 +136,15 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           : port.readProfile());
         if (result.ok) {
           // Plates change with the title or season, the portrait with any costume change.
-          // Score-panel art is kept for good once it came, so only its failures are forgotten.
+          // Fixed art is kept for good once it came, so only its failures are forgotten.
           lane.renew("titlePlate");
           lane.renew("medalPlate");
           if (!behindThePage) {
             lane.renew("myDon");
           }
-          lane.forgetFailures("scorePanel");
+          for (const kind of FIXED_ART) {
+            lane.forgetFailures(kind);
+          }
           await Promise.all([refreshUndo(), refreshTitleUndo(), refreshNameUndo()]);
           setScreen({ name: "profile", profile: result.value });
           return true;

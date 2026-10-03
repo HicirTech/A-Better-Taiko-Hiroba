@@ -13,6 +13,11 @@ const PLATE: PictureWant = { kind: "titlePlate" };
 const PANEL: PictureWant = { kind: "scorePanel" };
 const MEDAL: PictureWant = { kind: "medalPlate" };
 const MY_DON: PictureWant = { kind: "myDon" };
+const rank = (image: 2 | 3 | 4 | 5 | 6 | 7 | 8): PictureWant => ({ kind: "rankIcon", rank: image });
+const crown = (name: "silver" | "gold" | "donderful"): PictureWant => ({
+  kind: "crownIcon",
+  crown: name,
+});
 const view = (id: number): PictureView => ({
   src: `data:image/png;base64,${id}`,
   width: 40,
@@ -55,8 +60,20 @@ function manualTimers() {
 function heldPort() {
   const asked: string[] = [];
   const answers: ((result: Result<PictureView, PictureFailure>) => void)[] = [];
+  const nameOf = (want: PictureWant) => {
+    switch (want.kind) {
+      case "costumeItem":
+        return `${want.slot}/${want.id}`;
+      case "rankIcon":
+        return `rank/${want.rank}`;
+      case "crownIcon":
+        return `crown/${want.crown}`;
+      default:
+        return want.kind;
+    }
+  };
   const load = (want: PictureWant) => {
-    asked.push(want.kind === "costumeItem" ? `${want.slot}/${want.id}` : want.kind);
+    asked.push(nameOf(want));
     return new Promise<Result<PictureView, PictureFailure>>((resolve) => answers.push(resolve));
   };
   const answer = async (result: Result<PictureView, PictureFailure>) => {
@@ -170,6 +187,49 @@ describe("createPictureLane", () => {
     await port.answer(ok(view(3)));
     expect(port.asked).toEqual(["titlePlate", "medalPlate", "myDon", "1/10"]);
     expect(lane.peek(MY_DON)).toEqual({ view: view(3) });
+  });
+
+  test("asks for the legends' icons after the My Don, ranks before crowns, before thumbnails", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(item(10), { order: 0 });
+    lane.ask(crown("gold"), { order: 7 });
+    lane.ask(rank(6), { order: 1 });
+    lane.ask(rank(5), { order: 0 });
+    lane.ask(MY_DON, { order: 9 });
+    await advance(150);
+    for (let answered = 1; answered <= 5; answered++) {
+      await port.answer(ok(view(answered)));
+    }
+    expect(port.asked).toEqual(["myDon", "rank/5", "rank/6", "crown/gold", "1/10"]);
+  });
+
+  test("gives each rank and crown an answer of its own", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(rank(5), { order: 0 });
+    lane.ask(rank(6), { order: 1 });
+    lane.ask(crown("gold"), { order: 2 });
+    lane.ask(crown("silver"), { order: 3 });
+    await advance(150);
+    for (let answered = 1; answered <= 4; answered++) {
+      await port.answer(ok(view(answered)));
+    }
+    expect(
+      [rank(5), rank(6), crown("gold"), crown("silver")].map((want) => lane.peek(want)),
+    ).toEqual([1, 2, 3, 4].map((id) => ({ view: view(id) })));
+    expect(lane.peek(rank(7))).toBeUndefined();
+    expect(lane.peek(crown("donderful"))).toBeUndefined();
+  });
+
+  test("forgets the failures of the ranks' icons and leaves the crowns' be", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(rank(5), { order: 0 });
+    lane.ask(crown("gold"), { order: 1 });
+    await advance(150);
+    await port.answer(err({ code: "rankIcon=notPng" }));
+    await port.answer(err({ code: "crownIcon=notPng" }));
+    lane.forgetFailures("rankIcon");
+    expect(lane.peek(rank(5))).toBeUndefined();
+    expect(lane.peek(crown("gold"))).toEqual({ failure: "crownIcon=notPng" });
   });
 
   test("forgets the failures of one kind only, a kind with no numbers among them", async () => {

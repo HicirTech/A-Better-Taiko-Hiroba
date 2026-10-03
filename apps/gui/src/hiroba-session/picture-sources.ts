@@ -1,11 +1,17 @@
-import type { MedalProgress, Profile } from "@abth/core";
+import type { MedalProgress, Profile, ScoreRank } from "@abth/core";
 
-import { isWhole } from "../session-port";
+import { type CrownKind, isWhole } from "../session-port";
 import type { HirobaEndpoints } from "./types";
 
 export const TITLE_PLATE_PATH = "/imgsrc_titleplate.php";
 export const scorePanelPath = (level: number): string =>
   `/image/sp/640/total_score_image_${level}.png`;
+export const rankIconPath = (rank: ScoreRank): string =>
+  `/image/sp/640/best_score_rank_${rank}_640.png`;
+// The recent-plays page's numbering, not the detail page's: there gold is 02 and silver is 03.
+const CROWN_ICON_NUMBER: Readonly<Record<CrownKind, number>> = { gold: 2, silver: 3, donderful: 4 };
+export const crownIconPath = (crown: CrownKind): string =>
+  `/image/sp/640/crown_0${CROWN_ICON_NUMBER[crown]}_640.png`;
 const PANEL_LEVEL_LEAST = 1;
 const PANEL_LEVEL_MOST = 99;
 export const MEDAL_PLATE_PATH = "/imgsrc_tokenplate.php";

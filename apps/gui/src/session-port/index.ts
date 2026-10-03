@@ -21,6 +21,7 @@ export type {
   CostumePreviewFailure,
   CostumeSet,
   CostumeSlot,
+  CrownKind,
   DanNumber,
   DanView,
   HirobaSessionPort,

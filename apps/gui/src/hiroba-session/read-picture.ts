@@ -17,12 +17,14 @@ import {
 } from "../session-port";
 import type { HirobaQueue } from "./hiroba-queue";
 import {
+  crownIconPath,
   MEDAL_PLATE_PATH,
   type MedalPlateSource,
   MY_DON_PATH,
   type MyDonSource,
   type NoPictureSource,
   type PictureSources,
+  rankIconPath,
   type ScorePanelSource,
   scorePanelPath,
   TITLE_PLATE_PATH,
@@ -44,6 +46,7 @@ const IMAGE_ACCEPT = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*
 // Size bounds that tell the picture from a placeholder (a 43-byte GIF is Hiroba's "nothing to
 // draw") and from anything else.
 const ITEM_RULES = { minBytes: 128, maxBytes: 64 * 1024, maxSide: 512 } as const;
+const ICON_RULES = { ...ITEM_RULES, maxSide: 256 } as const;
 const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280, maxHeight: 400 };
 const PANEL_RULES = { minBytes: 10 * 1024, maxBytes: 512 * 1024, maxSide: 1280, maxHeight: 800 };
 const MY_DON_RULES = { minBytes: 5 * 1024, maxBytes: 512 * 1024, maxSide: 640 } as const;
@@ -179,6 +182,9 @@ function requestOf(
       keptAfterRead: false,
     };
   }
+  if (want.kind === "rankIcon" || want.kind === "crownIcon") {
+    return iconRequest(want, origin);
+  }
   const { owner, sources } = state;
   if (owner === null || sources === null) {
     return "notRead";
@@ -212,6 +218,25 @@ function requestOf(
     },
     // Only the bare form depends on the session; the public one is the same without it.
     keptAfterRead: plate.form === "bare",
+  };
+}
+
+function iconRequest(
+  want: Extract<PictureWant, { kind: "rankIcon" | "crownIcon" }>,
+  origin: string,
+): PictureRequest {
+  const { path, name } =
+    want.kind === "rankIcon"
+      ? { path: rankIconPath(want.rank), name: `rank/${want.rank}` }
+      : { path: crownIconPath(want.crown), name: `crown/${want.crown}` };
+  return {
+    kind: want.kind,
+    url: `${origin}${path}`,
+    referer: `${origin}/mypage_top.php`,
+    rules: { ...ICON_RULES, at: { origin, path } },
+    // Shared and kept for good: static art that names no player, the same without a session.
+    key: { scope: "shared", player: null, name: `${PICTURE_EPOCH}/${name}` },
+    keptAfterRead: false,
   };
 }
 

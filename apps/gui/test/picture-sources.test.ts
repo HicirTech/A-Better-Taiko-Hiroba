@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import type { Medal, Profile } from "@abth/core";
+import type { Medal, Profile, ScoreRank } from "@abth/core";
 
 import { pictureSourcesOf } from "../src/hiroba-session";
+import { crownIconPath, rankIconPath } from "../src/hiroba-session/picture-sources";
 
 const ENDPOINTS = {
   hirobaOrigin: "https://hiroba.test",
@@ -211,5 +212,27 @@ describe("pictureSourcesOf, the My Don portrait", () => {
         "unexpectedSrc",
       ]);
     }
+  });
+});
+
+describe("rankIconPath and crownIconPath", () => {
+  test("name a rank's icon by its image number", () => {
+    expect([2, 3, 4, 5, 6, 7, 8].map((rank) => rankIconPath(rank as ScoreRank))).toEqual([
+      "/image/sp/640/best_score_rank_2_640.png",
+      "/image/sp/640/best_score_rank_3_640.png",
+      "/image/sp/640/best_score_rank_4_640.png",
+      "/image/sp/640/best_score_rank_5_640.png",
+      "/image/sp/640/best_score_rank_6_640.png",
+      "/image/sp/640/best_score_rank_7_640.png",
+      "/image/sp/640/best_score_rank_8_640.png",
+    ]);
+  });
+
+  test("name a crown's icon by the recent-plays numbering, where gold is 02 and silver 03", () => {
+    expect([crownIconPath("silver"), crownIconPath("gold"), crownIconPath("donderful")]).toEqual([
+      "/image/sp/640/crown_03_640.png",
+      "/image/sp/640/crown_02_640.png",
+      "/image/sp/640/crown_04_640.png",
+    ]);
   });
 });
