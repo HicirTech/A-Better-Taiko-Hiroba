@@ -124,8 +124,6 @@ export const ja: Messages = {
   "costume.thumbnails.unavailable":
     "サムネイルを {count} 件読み込めなかったため、番号で表示しています。",
   "costume.thumbnails.code": "報告用コード：{code}",
-  "costume.scroll.up": "1行上へ",
-  "costume.scroll.down": "1行下へ",
   "costume.kigurumiWarning": "きぐるみにすると、あたま・からだ・メイク・ぷちキャラははずれます。",
   "costume.changesHeading": "変更点",
   "costume.change": "{part}：{from} → {to}",

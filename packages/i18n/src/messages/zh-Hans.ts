@@ -118,8 +118,6 @@ export const zhHans: Messages = {
   "costume.item.label": "{part} #{id}",
   "costume.thumbnails.unavailable": "有 {count} 张缩略图未能加载，已改为显示编号。",
   "costume.thumbnails.code": "报告代码：{code}",
-  "costume.scroll.up": "向上滚动一行",
-  "costume.scroll.down": "向下滚动一行",
   "costume.kigurumiWarning": "换上人偶装后，头、身体、妆容和小角色会被卸下。",
   "costume.changesHeading": "更改",
   "costume.change": "{part}：{from} → {to}",

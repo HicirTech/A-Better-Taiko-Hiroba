@@ -117,8 +117,6 @@ export const zhHant: Messages = {
   "costume.item.label": "{part} #{id}",
   "costume.thumbnails.unavailable": "有 {count} 張縮圖未能載入，已改為顯示編號。",
   "costume.thumbnails.code": "回報代碼：{code}",
-  "costume.scroll.up": "向上捲動一列",
-  "costume.scroll.down": "向下捲動一列",
   "costume.kigurumiWarning": "換上人偶裝後，頭、身體、妝容和小角色會被卸下。",
   "costume.changesHeading": "變更",
   "costume.change": "{part}：{from} → {to}",

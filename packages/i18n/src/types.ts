@@ -158,9 +158,6 @@ export interface Messages {
   "costume.thumbnails.unavailable": string;
   /** Param: {code}, why the first of them did not come, such as costumeItem=notPng; never a URL. */
   "costume.thumbnails.code": string;
-  /** Screen-reader names of the thumbnail grid's ▲ and ▼ arrows. */
-  "costume.scroll.up": string;
-  "costume.scroll.down": string;
   "costume.kigurumiWarning": string;
   "costume.changesHeading": string;
   /** Params: {part} (a costume.part text), {from}, {to} (a costume.id text or costume.remove). */

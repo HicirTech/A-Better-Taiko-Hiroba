@@ -123,8 +123,6 @@ export const en: Messages = {
   "costume.thumbnails.unavailable":
     "Some thumbnails didn't load ({count}); their numbers are shown instead.",
   "costume.thumbnails.code": "Code for a report: {code}",
-  "costume.scroll.up": "Scroll up a row",
-  "costume.scroll.down": "Scroll down a row",
   "costume.kigurumiWarning": "A Mascot takes off Head, Body, Makeup and Mini Character.",
   "costume.changesHeading": "Changes",
   "costume.change": "{part}: {from} → {to}",
