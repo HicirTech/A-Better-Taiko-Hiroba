@@ -32,10 +32,10 @@ function interpolate(template: string, params: TranslateParams | undefined): str
   );
 }
 
-/** The fields Date's own toLocaleString shows: the whole date, and the time to the second. */
+/** The whole date with the month as a short name, and the time to the second. */
 const DATE_TIME: Intl.DateTimeFormatOptions = {
   year: "numeric",
-  month: "numeric",
+  month: "short",
   day: "numeric",
   hour: "numeric",
   minute: "numeric",

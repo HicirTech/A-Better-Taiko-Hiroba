@@ -41,11 +41,24 @@ describe("the translator's formats", () => {
     expect([0, 12, 1234].map(number)).toEqual(["0", "12", "1,234"]);
   });
 
-  test("writes a moment as Date's own toLocaleString does", () => {
+  test("writes a moment in the local zone, with the short month and the seconds", () => {
+    const { dateTime } = createTranslator("en");
+    const text = dateTime(new Date(2026, 9, 3, 16, 17, 54));
+    expect(text).toStartWith("Oct 3, 2026, 4:17:54");
+    expect(text).toEndWith("PM");
+  });
+
+  test.each([...LOCALES])("spells the month as %s writes its short name", (locale) => {
+    const at = new Date(2026, 9, 3, 16, 17, 54);
+    const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(at);
+    expect(createTranslator(locale).dateTime(at)).toContain(month);
+  });
+
+  test("reads a Date, a number and an ISO string of one moment alike", () => {
     const { dateTime } = createTranslator("en");
     const at = "2026-09-28T03:04:05Z";
-    expect(dateTime(at)).toBe(new Date(at).toLocaleString("en"));
-    expect(dateTime(Date.parse(at))).toBe(dateTime(new Date(at)));
+    expect(dateTime(Date.parse(at))).toBe(dateTime(at));
+    expect(dateTime(new Date(at))).toBe(dateTime(at));
   });
 
   test.each([...LOCALES])("writes a moment it cannot read as a dash in %s", (locale) => {

@@ -812,7 +812,9 @@ try {
     (await textOf("#dan")) === ja.t("profile.dan", { dan: "九段" }) &&
     (await textOf("#profile h2")) === "サンプルどん" &&
     japaneseUpdate.startsWith(japaneseLead) &&
-    /^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{2}:\d{2}$/.test(japaneseUpdate.slice(japaneseLead.length));
+    /^\d{4}年\d{1,2}月\d{1,2}日 \d{1,2}:\d{2}:\d{2}$/.test(
+      japaneseUpdate.slice(japaneseLead.length),
+    );
   await pickLanguage("en");
   await Bun.sleep(1000);
   results.languageAsksHirobaNothing =
@@ -1317,7 +1319,7 @@ try {
   const readsBeforeFavorites = await readHits();
   await goTo("favorites");
   const updatedOnFavourites = await lastUpdated();
-  const LAST_UPDATED = /^Last updated \d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} [AP]M$/;
+  const LAST_UPDATED = /^Last updated [A-Z][a-z]{2} \d{1,2}, \d{4}, \d{1,2}:\d{2}:\d{2} [AP]M$/;
   results.lastUpdatedLineShown = [updatedOnOverview, updatedOnFavourites].every(
     ({ text, fontSize }) => LAST_UPDATED.test(text) && fontSize === "12px",
   );

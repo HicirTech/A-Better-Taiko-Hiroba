@@ -40,7 +40,8 @@ one read runs at a time and none inside a write. On a touch-first screen (`point
 the page down from its top instead: a round indicator follows the finger, and letting go once its ring is full
 reads again (a finger on a box that has scrolled, such as the costume's grid of items, is the
 box's to scroll back, and pulls nothing). There the button is drawn only when the keyboard's focus
-is on it, and it stays for screen readers. The line under the page still says when it was read.
+is on it, and it stays for screen readers. The line under the page still says when it was read, in
+the device's time zone, with the month as a short name and the time to the second.
 On the Costume page the same button, and the same pull, read the editor again instead of your
 page; on the Nickname & title page they read your page and then the list of titles.
 
