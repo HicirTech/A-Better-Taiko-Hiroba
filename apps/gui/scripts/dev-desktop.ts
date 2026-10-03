@@ -1,14 +1,4 @@
-/**
- * The desktop dev loop: Vite's dev server for the renderer (hot reload) runs inside this Bun
- * process; the main process and preload are rebuilt and Electron restarted when they change.
- *
- *   bun run dev             against scripts/mock-hiroba.ts, started here: nothing reaches Hiroba
- *   bun run dev -- --real   against the real Hiroba and Bandai Namco ID, for a person signing in
- *
- * Against the mock, the app keeps its data in out/dev-user-data, never in the installed app's
- * %APPDATA% folder: that one holds the real session and undo record, which a mock run would
- * otherwise send to the mock, drop as ended, and overwrite. Only --real uses the installed app's.
- */
+/** The desktop dev loop: Vite for the renderer, Electron restarted when main or preload change. */
 import { watch } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
@@ -29,6 +19,7 @@ const mockEnv = real
       ABTH_DEV_HIROBA_ORIGIN: "http://hiroba.127.0.0.1.sslip.io:8807",
       ABTH_DEV_IDP_HOST: "id.127.0.0.1.sslip.io:8808",
       ABTH_DEV_IMG_ORIGIN: "http://img.127.0.0.1.sslip.io:8807",
+      // Not the installed app's %APPDATA%: its real session and undo record would meet the mock.
       ABTH_DEV_USER_DATA: join(root, "out", "dev-user-data"),
     };
 

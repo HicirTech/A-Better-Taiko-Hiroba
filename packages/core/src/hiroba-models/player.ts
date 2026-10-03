@@ -1,4 +1,3 @@
-/** The player and their profile: identity plus the account-wide summary from `mypage_top.php`. */
 import type { RenameState, ScoreRank } from "./vocabulary";
 
 /** One player, keyed by taiko number. One Bandai Namco session can hold up to three. */
@@ -6,145 +5,61 @@ export interface Player {
   readonly taikoNo: string;
 }
 
-/**
- * Identity and the account-wide summary.
- *
- * The summary counts are Hiroba's own, and they cover **おに and 裏おに only, with 双打 charts
- * excluded** — levels 4 and 5 together, not the whole account, and minus the double-play charts the
- * site keeps out of this panel by design. Measured against the same day's genre lists,
- * de-duplicated by chart: on that scope all ten figures match exactly — three crown counts and
- * seven rank buckets, no residual. Level-4-only and all-levels are both wrong by hundreds.
- * Dropping the 双打 clause leaves a three-chart excess.
- *
- * So the summary is stored as the snapshot it is — never derived from cached scores, and never
- * used to correct them. It is also not a total you can recompute: the rank buckets count charts
- * that carry a rank and the crown counts count charts that carry a crown. Do not subtract one from
- * the other: the difference is negative on 7 of the 10 other players' panels on disk (−9 to −309),
- * because a crowned chart can be unranked, so it counts nothing.
- */
 export interface Profile {
   readonly taikoNo: string;
   readonly nickname: string;
-  /**
-   * Whether Hiroba takes a rename right now, read off the flag in the script that opens the rename
-   * dialog on this very page. Never seen anything but `open` on a capture (four, one of them live).
-   */
+  /** Whether Hiroba takes a rename now, read off the flag in the page's rename-dialog script. */
   readonly rename: RenameState;
-  /**
-   * The displayed title, as a string rather than an id, because an id cannot hold every state.
-   * A title picked from the list has one; a title **composed from parts** does not — the write
-   * that sets one answers with an empty `value`, the composer page clears its slots on load, and
-   * my page shows only the rendered text. So nothing on the site can turn a composed title back
-   * into the three part ids, and a client that writes one has to keep them itself.
-   *
-   * `""` is no title, a normal state: the page keeps the title line and leaves it empty. Seen on my
-   * page after a write that set all three title parts to 0, and on 2 of the 19 other players'
-   * profiles on disk.
-   */
+  /** The title as text, not an id: a composed title has none to read back. `""` is no title. */
   readonly title: string;
   /** The value after the region line's colon; null when there is none or it reads 未設定. */
   readonly region: string | null;
-  /**
-   * The title plate the page draws the title and the name row over, as the page writes its `src`,
-   * or null when it shows none. My page writes it bare, `imgsrc_titleplate.php` with no query:
-   * Hiroba draws the plate of whoever holds the session, and without one answers a blank default
-   * plate at 200 (wiki: Page Map, generated images). Kept as written, never resolved or corrected.
-   */
+  /** The title plate's `src` as the page writes it (bare, no query), never resolved. */
   readonly titlePlateImageUrl: string | null;
-  /**
-   * The dan label image the page shows (`imgsrc_danlabel.php?taiko_no=…`), or null when absent.
-   * The dan appears on this page only as a server-rendered image — there is no text to read —
-   * and having no dan is a normal state: plenty of accounts hold none.
-   */
+  /** The dan appears only as this server-rendered image; null (no dan) is a normal state. */
   readonly danLabelImageUrl: string | null;
   readonly medal: Medal | null;
   readonly myDonImageUrl: string | null;
   /** The single 大好きな曲 the profile shows, or null when it is 未設定 — a normal state. */
   readonly favoriteSong: FavoriteSong | null;
-  /**
-   * The お気に入り folder (up to 30 songs) in page order, empty being a normal state. The page
-   * names these songs by title only — no song number, link or data attribute anywhere in the
-   * block — so titles are all this can carry; resolving a title back to a song number is the
-   * song catalogue's job, not this page's.
-   */
+  /** The お気に入り folder (up to 30) in page order; titles only, as the page gives no song number. */
   readonly favoriteFolderTitles: readonly string[];
+  /** Hiroba's own snapshot (おに and 裏おに, no 双打): never derived from or used to correct scores. */
   readonly summary: ProfileSummary;
   readonly fetchedAt: string;
 }
 
-/**
- * The seasonal どんメダル, and where the account stands in collecting it.
- *
- * What the count means, in the two accounts there are:
- * - Hiroba's FAQ (`other-faq.html`, `li#answer_148`): a medal comes with each play made with a
- *   Bandai Namco Passport; medals are traded in the game's どんメダルショップ for the newest reward
- *   songs; the songs change each season, and the medals held are reset when they do. My page shows
- *   the number currently held.
- * - A player of the game: it is the number of medals collected for the season, a non-negative
- *   integer, and the plate shows COMPLETE once the season's set is done.
- *
- * The model follows the player's account: the count is progress through the season, `collecting`,
- * and COMPLETE ends it, `complete`.
- *
- * `name` is the plate's own text (`どんメダル2026秋`), kept opaque: nothing reads a year or a season
- * out of it. It is `""` only for a plate whose progress is `unrecognised` for that reason.
- */
+/** The seasonal どんメダル: progress through the season's set, with the plate's own text as `name`. */
 export interface Medal {
+  /** The plate's own text (`どんメダル2026秋`), opaque; `""` only for the `emptyName` reason. */
   readonly name: string;
   readonly progress: MedalProgress;
-  /**
-   * The plate's picture as the page writes its `src`, `imgsrc_tokenplate.php?id=<hex>`, or null
-   * when the page shows none. The id is opaque and names the player's season, so it is identity
-   * data: kept as written, never resolved, corrected or shown (wiki: Page Map, generated images).
-   */
+  /** The plate `src` as written: its opaque id is identity data, so never resolve or show it. */
   readonly plateImageUrl: string | null;
 }
 
-/**
- * While the season's set is being collected the plate prints a count. Once it is complete the plate
- * prints COMPLETE in that place and no number at all, so a complete medal has no count — absent,
- * not a guessed total.
- *
- * `unrecognised` is a plate of any other shape. It carries a code, never the page's text, and it
- * costs only this field: the rest of the page reads as usual. The corpus check counts it as
- * unexplained, so a new shape cannot pass unnoticed.
- */
+/** COMPLETE prints no count, so a complete medal has none; any other shape is `unrecognised`. */
 export type MedalProgress =
   | { readonly kind: "collecting"; readonly count: number }
   | { readonly kind: "complete" }
   | { readonly kind: "unrecognised"; readonly reason: MedalUnrecognisedReason };
 
-/** Which part of a plate did not read, as a code for a report. */
 export type MedalUnrecognisedReason =
-  /** The name line is there, and empty. */
   | "emptyName"
-  /** A name, with neither a count nor COMPLETE after it. */
   | "noCountNoComplete"
-  /** The count holds something other than a whole number. */
   | "countNotNumber"
-  /** The complete line holds something other than COMPLETE. */
   | "completeLabelOther"
   /** Both a count and a complete line, where a page has only ever printed one. */
   | "countAndComplete";
 
-/** The one song a profile shows as its 大好きな曲. */
 export interface FavoriteSong {
-  /**
-   * Read from the block's hidden `song_no` input — the only place the block exposes a number.
-   * My page fills it whenever a favourite is set, so a title normally arrives with its number.
-   * Nullable because the title is the field the page is built around and a reader that has one
-   * without the other should still hand back what it read.
-   */
+  /** From the block's hidden `song_no` input; null if a reader found the title without it. */
   readonly songNo: string | null;
   readonly title: string;
 }
 
 export interface ProfileSummary {
-  /**
-   * Which panel the counts belong to, read from `total_score_image_<N>.png`. The page shows one
-   * panel; the counts are whatever Hiroba put on it, recorded with its own level number rather
-   * than presumed to cover the whole account.
-   */
+  /** The panel's own level number, from `total_score_image_<N>.png`; the page shows one panel. */
   readonly countLevel: number;
   readonly crownCounts: CrownCounts;
   /** `best_rank_score_2` .. `_8`, keyed by the rank image number. */
@@ -157,56 +72,20 @@ export interface CrownCounts {
   readonly donderful: number;
 }
 
-/**
- * How much of themselves another player has chosen to show, read off the page rather than guessed.
- *
- * Three shapes have been captured, and a reader that expects two will break on the middle one:
- * `open` shows everything below; `achievementsHidden` still names the player, their prefecture and
- * their 大好きな曲 but serves **no score panel at all**; `closed` renders `※プロフィール非公開`
- * where the details go, keeping only the title, the nickname and the My Don. Measured over seven
- * captured profiles — three open, one achievements-hidden, three closed.
- */
+/** What another player shows: `achievementsHidden` serves no score panel, `closed` no details. */
 export type ProfileVisibility = "open" | "achievementsHidden" | "closed";
 
-/**
- * Another player's profile, as `user_profile.php?taiko_no=T` serves it.
- *
- * Deliberately **not** a `Profile`. That type is my page's, and my page always carries things this
- * page never does: the お気に入り folder, the medal block, and a song number beside the favourite.
- * Widening `Profile` to fit both would hand every my-page caller a null it can never receive. This
- * follows `RecentPlay`, which is its own type for the same reason.
- *
- * The fields that *are* the same are the same types — `ProfileSummary`, `FavoriteSong` — so a
- * reading of either page can be compared field for field without a translation layer.
- */
+/** Another player's `user_profile.php`; not a `Profile`, which has fields this page never does. */
 export interface PublicProfile {
-  /**
-   * Whose profile this is. Supplied by the caller, because a **closed profile does not print a
-   * taiko number** — `※プロフィール非公開` replaces the whole details block, so on that shape the
-   * page is not evidence of whose it is. Where the page does print one, the parser checks it
-   * against this and refuses a mismatch: fetching one player and being served another is a fault
-   * worth failing on, not a value to record.
-   */
+  /** Supplied by the caller: a closed profile prints no taiko number; a printed one must match. */
   readonly taikoNo: string;
   readonly nickname: string;
   readonly title: string;
-  /**
-   * Where the player says they are, whichever of the two things the page decided to print. The
-   * **label itself varies with the player**: 都道府県 above a Japanese prefecture, 国・地域 above a
-   * country — three of four open captures gave a prefecture, the fourth オーストラリア. So this is
-   * the value after the colon and nothing is inferred from which label carried it. Null on a closed
-   * profile, which prints neither.
-   */
+  /** The value after the colon, whatever its label (都道府県 or 国・地域); null on a closed profile. */
   readonly region: string | null;
   readonly danLabelImageUrl: string | null;
   readonly myDonImageUrl: string | null;
-  /**
-   * The one 大好きな曲, **title only**: this page's block carries no `song_no` input and no
-   * `score_detail` link, unlike my page's. Turning the title back into a number is the catalogue's
-   * job. Null covers both ways the page can say "none": a closed profile drops the block entirely,
-   * and an open profile with no favourite **keeps it and writes `未設定` in it** — the same word my
-   * page uses, observed on three profiles.
-   */
+  /** Title only (this page has no `song_no`); null if closed, or open with 未設定 written. */
   readonly favoriteSong: FavoriteSong | null;
   /** Null unless `visibility` is `open`: the other two shapes serve no panel to read. */
   readonly summary: ProfileSummary | null;

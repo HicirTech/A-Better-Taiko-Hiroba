@@ -1,7 +1,3 @@
-/**
- * The platform's reader of Hiroba's pictures, against a fake transport, a spy queue and a fake
- * clock: what it sends, when it sends nothing, and what crosses back.
- */
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 import { encode } from "fast-png";
@@ -29,7 +25,6 @@ import {
 } from "../src/hiroba-session";
 
 const ORIGIN = "https://hiroba.test";
-/** The picture host off Hiroba, where the My Don portrait is. */
 const IMG_ORIGIN = "https://img.test";
 const ENDPOINTS: HirobaEndpoints = {
   hirobaOrigin: ORIGIN,
@@ -43,9 +38,7 @@ const OFFERED = new Set([offerKey(1, 36), offerKey(1, 4), offerKey(2, 21)]);
 const LIMITS: PictureLimits = { jitterMs: 100, minGapMs: 0, timeoutMs: null, budget: 300 };
 /** Signed in, the editor read, and no my page read yet. */
 const STATE: PictureReadState = { signedIn: true, offered: OFFERED, owner: null, sources: null };
-/** The score panel every capture of my page shows. */
 const PANEL = { level: 5 } as const;
-/** A set wearing one piece, in からだ (slot 3), and nothing else. */
 const SET = {
   colorBody: 12,
   colorLimb: 12,
@@ -62,7 +55,6 @@ type Answer = Awaited<ReturnType<Transport["send"]>>;
 const png = (url = THUMB_URL, body: Uint8Array = thumbnailPng(1, 36)): Answer =>
   ok({ status: 200, url, headers: { "content-type": "image/png" }, body });
 
-/** Everything a reader under test reaches, and what it did with it. */
 function setUp(
   options: {
     answer?: (request: TransportRequest, signal?: AbortSignal) => Promise<Answer>;
@@ -328,7 +320,6 @@ describe("createPictureReader, the title plate", () => {
   const PLATE_URL = `${ORIGIN}/imgsrc_titleplate.php`;
   const OWNER = "000000000000";
   const TITLE = "サンプルの称号";
-  /** My page read, showing the bare plate under `title`, for `owner`. */
   const readState = (title = TITLE, owner = OWNER): PictureReadState => ({
     ...STATE,
     owner,
@@ -339,12 +330,10 @@ describe("createPictureReader, the title plate", () => {
       myDon: "notShown",
     },
   });
-  /** Answers a plate for `title`, whatever the request, at the address asked. */
   const plateOf = (title: string) => async (request: TransportRequest) =>
     png(request.url, titlePlatePng(title));
   const codeOf = async (read: Promise<unknown>) =>
     ((await read) as { error: { code: string } }).error.code;
-  /** Where the bare plate under `title` is kept, for `owner`. */
   const keyOf = (title: string, owner = OWNER) => ({
     scope: "player" as const,
     player: owner,
@@ -437,14 +426,12 @@ describe("createPictureReader, the title plate", () => {
     expect(sent).toHaveLength(1);
     await reader.confirm(OWNER);
     expect(await store.get(keyOf(TITLE))).toEqual(titlePlatePng(TITLE));
-    // Kept at sign-out too, and at the next sign-in.
     reader.forget();
     await reader.read(PLATE);
     expect(sent).toHaveLength(1);
     setState(readState("別のサンプル称号"));
     await reader.read(PLATE);
     expect(sent).toHaveLength(2);
-    // Another player is never given this one's plate, under the same title.
     setState(readState(TITLE, "111111111111"));
     await reader.read(PLATE);
     expect(sent).toHaveLength(3);
@@ -457,7 +444,6 @@ describe("createPictureReader, the title plate", () => {
     const store = createMemoryPictureStore();
     const other = "別のサンプル称号";
     const { reader, sent, setState } = setUp({ store, state: readState(), answer: plateOf(other) });
-    // A read that finds another title lands while the plate waits its turn.
     const reading = reader.read(PLATE);
     setState(readState(other));
     expect((await reading).ok).toBe(true);
@@ -472,7 +458,6 @@ describe("createPictureReader, the title plate", () => {
     const other = "別のサンプル称号";
     await store.put(keyOf(other), titlePlatePng(other));
     const { reader, sent, setState } = setUp({ store, state: readState(), answer: plateOf(TITLE) });
-    // Asked for under a title not kept; a read that finds the kept one lands before its turn.
     const reading = reader.read(PLATE);
     setState(readState(other));
     const read = await reading;
@@ -491,7 +476,6 @@ describe("createPictureReader, the title plate", () => {
           body: NO_LABEL_GIF,
         }),
     });
-    // A clear 8×8 PNG, under a kilobyte: a placeholder, not a plate.
     const tinyPng = new Uint8Array(
       encode({ width: 8, height: 8, data: new Uint8Array(8 * 8 * 4), channels: 4 }),
     );
@@ -575,7 +559,6 @@ describe("createPictureReader, the title plate", () => {
     });
     // Hiroba ended the session after the read and before the plate: a blank plate comes.
     expect((await reader.read(PLATE)).ok).toBe(true);
-    // The next read finds the session gone; signed in again, the read finds the same title.
     reader.forget();
     await reader.confirm(OWNER);
     body = titlePlatePng(TITLE);
@@ -598,7 +581,6 @@ describe("createPictureReader, the title plate", () => {
 describe("createPictureReader, the score panel's art", () => {
   const ART = { kind: "scorePanel" } as const;
   const ART_URL = `${ORIGIN}/image/sp/640/total_score_image_5.png`;
-  /** My page read, showing the panel of `level`, for `owner`. */
   const readState = (owner = "000000000000", level = 5): PictureReadState => ({
     ...STATE,
     owner,
@@ -609,7 +591,6 @@ describe("createPictureReader, the score panel's art", () => {
       myDon: "notShown",
     },
   });
-  /** Where the art of the panel of `level` is kept: for every account. */
   const keyOf = (level = 5) => ({
     scope: "shared" as const,
     player: null,
@@ -650,12 +631,10 @@ describe("createPictureReader, the score panel's art", () => {
     await reader.read(ART);
     expect(sent).toHaveLength(1);
     expect(await store.get(keyOf())).toEqual(scorePanelPng(5));
-    // Kept at sign-out, at the next sign-in, and for another player, who is shown the same art.
     reader.forget();
     setState(readState("111111111111"));
     expect((await reader.read(ART)).ok).toBe(true);
     expect(sent).toHaveLength(1);
-    // A panel of another level is art of its own.
     setState(readState("111111111111", 4));
     await reader.read(ART);
     expect(sent.map(({ request }) => request.url)).toEqual([
@@ -716,7 +695,6 @@ describe("createPictureReader, the どんメダル plate", () => {
   const MEDAL_URL = `${ORIGIN}/imgsrc_tokenplate.php?id=${ID}`;
   const OWNER = "000000000000";
   type Progress = "collecting" | "complete";
-  /** My page read, showing the plate `id` while the season is at `progress`, for `owner`. */
   const readState = (id = ID, progress: Progress = "collecting", owner = OWNER) => ({
     ...STATE,
     owner,
@@ -727,14 +705,12 @@ describe("createPictureReader, the どんメダル plate", () => {
       myDon: "notShown" as const,
     },
   });
-  /** Answers the plate the asked id names, drawn as the season stands in `state()`. */
   const plates = (state: () => PictureReadState) => async (request: TransportRequest) => {
     const shown = state().sources?.medalPlate;
     const complete = typeof shown === "object" && shown.progress === "complete";
     const id = new URL(request.url).searchParams.get("id") ?? "";
     return png(request.url, medalPlatePng(id, complete));
   };
-  /** Where the plate `id` at `progress` is kept, for `owner`. */
   const keyOf = (id = ID, progress: Progress = "collecting", owner = OWNER) => ({
     scope: "player" as const,
     player: owner,
@@ -797,18 +773,15 @@ describe("createPictureReader, the どんメダル plate", () => {
     // Keyed by its id, it is the same with a session or without one: kept with no read to confirm.
     expect(await store.get(keyOf())).toEqual(medalPlatePng(ID, false));
     expect(pictureKeyPath(keyOf())).not.toContain(ID);
-    // Kept at sign-out too, and at the next sign-in.
     reader.forget();
     await reader.read(MEDAL);
     expect(sent).toHaveLength(1);
-    // The set complete, and a new season, are each a plate of their own.
     move(readState(ID, "complete"));
     await reader.read(MEDAL);
     move(readState(NEXT_SEASON));
     await reader.read(MEDAL);
     expect(sent).toHaveLength(3);
     expect(await store.get(keyOf(ID, "complete"))).toEqual(medalPlatePng(ID, true));
-    // Another player is never given this one's plate, under the same id.
     move(readState(ID, "collecting", "111111111111"));
     await reader.read(MEDAL);
     expect(sent).toHaveLength(4);
@@ -855,10 +828,8 @@ describe("createPictureReader, the My Don portrait", () => {
   const OWNER = "000000000000";
   const OTHER = "111111111111";
   const PORTRAIT_URL = `${IMG_ORIGIN}/imgsrc.php?v=&kind=mydon&fn=mydon_${OWNER}`;
-  /** Two costumes, as the eight values the portrait is drawn from. */
   const BEFORE = [12, 12, 5, 0, 0, 68, 0, 0];
   const AFTER = [12, 12, 3, 0, 0, 68, 0, 0];
-  /** My page read, showing the portrait, for `owner`. */
   const readState = (owner = OWNER): PictureReadState => ({
     ...STATE,
     owner,
@@ -869,9 +840,7 @@ describe("createPictureReader, the My Don portrait", () => {
       myDon: { v: "" },
     },
   });
-  /** Where `owner`'s portrait is kept: one for each player, whatever it shows. */
   const keyOf = (owner = OWNER) => ({ scope: "player" as const, player: owner, name: "v1/mydon" });
-  /** Answers the portrait of whoever wears `set()` now, at the address asked. */
   const portraitOf = (set: () => readonly number[]) => async (request: TransportRequest) =>
     png(request.url, myDonPng(set()));
   const GIF: Answer = ok({
@@ -937,12 +906,10 @@ describe("createPictureReader, the My Don portrait", () => {
     expect(sent).toHaveLength(1);
     expect(await store.get(keyOf())).toEqual(myDonPng(BEFORE));
     expect(pictureKeyPath(keyOf())).not.toContain(OWNER);
-    // Kept at sign-out, and answered at the next sign-in's read, the session's first.
     reader.forget();
     reader.myPageAsked();
     await reader.read(MY_DON);
     expect(sent).toHaveLength(1);
-    // Another player is never given this one's portrait.
     setState(readState(OTHER));
     await reader.read(MY_DON);
     expect(sent).toHaveLength(2);
@@ -958,7 +925,6 @@ describe("createPictureReader, the My Don portrait", () => {
     });
     reader.myPageAsked();
     await reader.read(MY_DON);
-    // Changed elsewhere, then the user's Read again.
     wearing = AFTER;
     reader.myPageAsked();
     const renewed = await reader.read(MY_DON);
@@ -966,7 +932,6 @@ describe("createPictureReader, the My Don portrait", () => {
     expect(await reader.read(MY_DON)).toEqual(renewed);
     expect(sent).toHaveLength(2);
     expect(await store.get(keyOf())).toEqual(myDonPng(AFTER));
-    // Signed in again: the session's first read renews nothing.
     reader.forget();
     reader.myPageAsked();
     expect(await reader.read(MY_DON)).toEqual(renewed);
@@ -985,7 +950,6 @@ describe("createPictureReader, the My Don portrait", () => {
     await reader.read(MY_DON);
     wearing = AFTER;
     reader.costumeChanged();
-    // The session goes before the portrait is shown again: the change still counts.
     reader.forget();
     reader.myPageAsked();
     const renewed = await reader.read(MY_DON);
@@ -1001,8 +965,6 @@ describe("createPictureReader, the My Don portrait", () => {
     const { reader, sent } = setUp({ store, state: readState(), answer: async () => answer });
     reader.myPageAsked();
     const first = await reader.read(MY_DON);
-    // Read again, and the fetch does not come: the one kept answers, and nothing asks for it again,
-    // a sign-in's read included.
     reader.myPageAsked();
     answer = GIF;
     expect(await reader.read(MY_DON)).toEqual(first);
@@ -1011,13 +973,11 @@ describe("createPictureReader, the My Don portrait", () => {
     reader.myPageAsked();
     expect(await reader.read(MY_DON)).toEqual(first);
     expect(sent).toHaveLength(2);
-    // A write applies, and the fetch fails on its way: the same.
     reader.costumeChanged();
     answer = err({ kind: "unreachable", url: PORTRAIT_URL });
     expect(await reader.read(MY_DON)).toEqual(first);
     expect(await reader.read(MY_DON)).toEqual(first);
     expect(sent).toHaveLength(3);
-    // The next Read again fetches it anew.
     reader.myPageAsked();
     answer = png(PORTRAIT_URL, myDonPng(AFTER));
     const renewed = await reader.read(MY_DON);
@@ -1085,8 +1045,7 @@ describe("createPictureReader, the My Don portrait", () => {
       expect(code).not.toMatch(/000000000000|img\.test|hiroba\.test|http|\?|mydon_|fn=/);
     }
     expect(await gif.store.get(keyOf())).toBeNull();
-    // A portrait that moved to an address naming its player, on the picture host or off it: the
-    // path is in the code, the taiko number is not.
+    // A portrait moved to an address naming its player: the path is in the code, the number is not.
     const body = myDonPng(BEFORE);
     const movedTo = (url: string) =>
       codeOf(setUp({ state: readState(), answer: async () => png(url, body) }).reader.read(MY_DON));

@@ -1,10 +1,5 @@
 import type { Messages } from "../types";
 
-/**
- * 繁體中文, in Taiwan's usage. The site is 鼓眾廣場, or 廣場 for short. The game's terms are
- * taiko.wiki's, then Bandai Namco's own wording; only Hiroba's data (a title, a nickname, a
- * medal's name) and the sentences it speaks in its own voice stay in Japanese.
- */
 export const zhHant: Messages = {
   "app.title": "A Better Taiko Hiroba",
   "language.system": "跟隨系統（{name}）",

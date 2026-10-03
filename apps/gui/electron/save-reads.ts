@@ -2,58 +2,21 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Transport, TransportResponse } from "@abth/core";
 
-/** Image types kept under their own extension, so the file opens as what it is. */
 const IMAGE_EXTENSIONS: Readonly<Record<string, string>> = {
   "image/png": "png",
   "image/gif": "gif",
 };
 
-/** What stands in for a form token's value in a saved page. */
 const TOKEN_STAND_IN = "<tckt>";
 
-/**
- * Pages kept as their latest copy alone, and never in the history. The costume editor asks for
- * Hiroba's picture of the set after every pick, so a while of picking would fill the history with
- * pictures of outfits nobody saved; and it shows a thumbnail for every item seen, up to 258 of them
- * on one account. The latest picture and its status file show what Hiroba last answered, which is
- * all either needs for debugging.
- */
+// Latest copy only: the costume editor fetches a picture per pick and a thumbnail per item.
 const LATEST_ONLY_PATHS: ReadonlySet<string> = new Set([
   "/imgsrc_mydon.php",
   "/imgsrc_kisekae.php",
 ]);
-/**
- * Pages whose latest status file also counts how many came this run, so a check against the live
- * site can see how many thumbnails went without a file for each.
- */
 const COUNTED_PATHS: ReadonlySet<string> = new Set(["/imgsrc_kisekae.php"]);
 
-/**
- * For debugging against the live site only, and off unless ABTH_DEBUG_SAVE_READS=1: every page a
- * read brings back is written to `folder`, named after the page asked for — my page as
- * mypage_top.php.html, and its status, final path and content type as mypage_top.php.json — so a
- * page the parsers refuse can be looked at as it came, and the pages one write reads (the costume
- * editor, my page) do not overwrite each other. An image, such as the dan label a read asks for
- * after my page, keeps its own extension: imgsrc_danlabel.php.png (.gif, or .bin for another type).
- *
- * The latest copy of each page sits in `folder`. Every answer is also kept, in the order it came,
- * under `folder/history`: `<time>-<n>-<METHOD>-<page>.<ext>` and its `.json` (time, method, status,
- * final path, content type), so a write can be followed request by request — the editor before, the
- * pre-check's and the save's answers, the read-back. Of a post, only the answer is kept, never the
- * form it sent. The editor's preview, imgsrc_mydon.php, and the items' thumbnails,
- * imgsrc_kisekae.php, are kept as their latest copy alone, never in the history
- * (LATEST_ONLY_PATHS); the thumbnails' status file also counts how many came this run.
- * Every form token (`_tckt`) a page carries is replaced with `<tckt>` before the page reaches the
- * disk, so no saved page holds one that could be posted.
- *
- * The page is the signed-in player's own and carries their identity, so it stays in this local
- * folder. Nothing written here holds the session cookie: no request headers, and of the response
- * headers only the content type.
- *
- * Keeping a copy never changes what the read gets: a copy that cannot be written — a full disk, a
- * file another program holds open, a folder where the file should be — is dropped, and the answer
- * goes back as it came.
- */
+/** Debug copy of each answer under `folder`: form tokens redacted, no request headers kept. */
 export function saveReads(
   transport: Transport,
   folder: string,
@@ -91,10 +54,6 @@ export function saveReads(
   };
 }
 
-/**
- * Writes one answer's copy and its status file, with `count` when the page is one counted. Throws
- * when either cannot be written.
- */
 function keep(folder: string, asked: string, response: TransportResponse, count?: number): void {
   const { status, url, headers, body } = response;
   const contentType = headers["content-type"] ?? null;
@@ -108,7 +67,6 @@ function keep(folder: string, asked: string, response: TransportResponse, count?
   writeFileSync(join(folder, `${name}.json`), `${JSON.stringify(meta, null, 2)}\n`);
 }
 
-/** One answer in the history: its copy and a status file, named to sort in the order they came. */
 function keepInHistory(
   folder: string,
   at: Date,
@@ -135,10 +93,6 @@ function keepInHistory(
   );
 }
 
-/**
- * The page's text with every form token's value replaced: the `value` of any `<input>` naming
- * `_tckt`, wherever its attributes sit, and a `"_tckt"` member of JSON.
- */
 function withoutTokens(body: Uint8Array): Uint8Array {
   const text = new TextDecoder("utf-8").decode(body);
   const redacted = text
@@ -151,7 +105,6 @@ function withoutTokens(body: Uint8Array): Uint8Array {
   return new TextEncoder().encode(redacted);
 }
 
-/** The page asked for, as a file name: the path's last part, and nothing a folder cannot hold. */
 function fileNameOf(url: string): string {
   const last = pathOf(url).split("/").pop() ?? "";
   return last === "" ? "index" : last.replace(/[^A-Za-z0-9._-]/g, "_");

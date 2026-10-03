@@ -16,23 +16,13 @@ import type { DanBoardPanel, DanBoardReading, ParseFailure } from "./types";
 const BOARD_PAGE = "dan_top.php";
 const DETAIL_PAGE = "dan_detail.php";
 
-/** The account's own plate, and the shared art the board falls back to. */
 const RENDERED_PLATE = /imgsrc_dani\.php\?[^"']*\bdan=(\d+)/;
 const STATIC_PLATE = /dani_plate_(\d+)_no_640/;
 
 /** The panels print their names in romaji, in capitals, and nothing else on the board is. */
 const PANEL_NAME = /^[A-Z][A-Z ]+$/;
 
-/**
- * Parses `dan_top.php` — the board of nineteen dan.
- *
- * **Nothing here says whether a dan is passed.** The board has no class, text or flag for it: the
- * fifteen numbered panels are server-rendered images keyed to the account and the pass state is
- * baked into the pixels, which is `readDanPlate`'s job. This parser reports which dan exist, what
- * the board calls them, where each plate is, and which have a detail page — and stops there.
- *
- * The panels carry no classes at all, only inline styles, so they are found by their plate image.
- */
+/** Parses `dan_top.php`. Panels have no classes, so they are found by their plate image. */
 export function parseDanBoardPage(html: string): Result<DanBoardReading, ParseFailure> {
   const page = parsePage(html, BOARD_PAGE);
   if (isErr(page)) {
@@ -49,10 +39,8 @@ export function parseDanBoardPage(html: string): Result<DanBoardReading, ParseFa
       continue;
     }
 
-    // A linked panel nests the image in an anchor and an unlinked one does not, so the panel box is
-    // one level up in the first case and the image's own parent in the second. Walking a fixed
-    // number of levels finds the whole board for the named ranks and names every one of them after
-    // the first panel on it.
+    // A linked panel nests its image in an anchor, an unlinked one does not; a fixed number of
+    // levels up would take the whole board for the named ranks and name each after the first.
     const anchor = image.parentNode?.rawTagName?.toLowerCase() === "a" ? image.parentNode : null;
     const box = anchor?.parentNode ?? image.parentNode ?? null;
     const name =
@@ -77,10 +65,8 @@ export function parseDanBoardPage(html: string): Result<DanBoardReading, ParseFa
   return ok({ panels: panels.sort((left, right) => left.dan - right.dan) });
 }
 
-/** The sentence that separates the best attempt from the per-condition bests. */
 const CONDITION_BESTS_MARKER = "条件毎の成績";
 
-/** `txt_score_00N` on the whole-run counts, `score_name_<key>` on a song's. */
 const TOTAL_COUNT_KEYS: Readonly<Record<string, keyof DanSongCounts>> = {
   "001": "good",
   "002": "ok",
@@ -102,18 +88,7 @@ const SONG_COUNT_KEYS: Readonly<Record<string, keyof DanSongCounts>> = {
 /** How the page writes a figure it has no value for, in every field on the page. */
 const NO_VALUE = "-";
 
-/**
- * Parses `dan_detail.php?dan=N` into a `DanRecord`.
- *
- * `dan`, `taikoNo` and `fetchedAt` come from the caller: the page names none of the three, and its
- * `clearState` is not here either — it lives in the plate image, so the caller pairs this with
- * `readDanPlate`. What the page does carry is the best attempt, its conditions, the three 課題曲,
- * and a second block giving the best result for **each condition separately**, which need not come
- * from one attempt.
- *
- * An unattempted dan is an ordinary reading, not a failure: it prints `-` everywhere, `0` for the
- * total and `----/--/--` for the timestamp, and renders no per-song tables at all.
- */
+/** Parses `dan_detail.php`; the page names no dan, player or `clearState` (that is the plate's). */
 export function parseDanDetailPage(
   html: string,
   dan: number,
@@ -127,8 +102,7 @@ export function parseDanDetailPage(
   }
   const root = page.value;
 
-  // The two condition blocks share a parent and are told apart only by a sentence between them,
-  // so position in the document is the only thing that separates them.
+  // The two condition blocks share a parent, told apart only by the sentence between them.
   const order = preOrder(root);
   const markerIndex = order.findIndex(
     (element) =>
@@ -149,9 +123,7 @@ export function parseDanDetailPage(
 
   const totalScore = readCountText(root.querySelector(".total_score_score")?.text ?? null);
 
-  // The page states this itself rather than leaving it to be inferred from a zero total or an
-  // all-dashes timestamp: `p.head_error` is emitted either way and carries text only when there is
-  // no record. Note what it actually says — no score registered, not "not passed".
+  // The page states it: `p.head_error` has text only when there is no record.
   const hasRecord = (root.querySelector(".head_error")?.text.trim() ?? "") === "";
 
   return ok({
@@ -169,7 +141,6 @@ export function parseDanDetailPage(
   });
 }
 
-/** Every element in document order, so two siblings deep in the tree can be compared. */
 function preOrder(root: HTMLElement): HTMLElement[] {
   const out: HTMLElement[] = [];
   const visit = (element: HTMLElement) => {
@@ -182,16 +153,11 @@ function preOrder(root: HTMLElement): HTMLElement[] {
   return out;
 }
 
-/**
- * One condition, in whichever of the two shapes the page used, or null for anything else.
- *
- * The whole-run shape's border row holds **three** spans, not two: name, a spacer, requirement.
- * Reading the second as the requirement yields a blank on every condition on the site.
- */
 function readCondition(element: HTMLElement): DanCondition | null {
   const classes = element.getAttribute("class") ?? "";
 
   if (classes.split(/\s+/).includes("odai_total_song")) {
+    // The border row holds three spans: name, a spacer, requirement.
     const spans = element.querySelectorAll(".odai_total_song_border span");
     const name = spans[0]?.text.trim() ?? "";
     const requirement = spans[2]?.text.trim() ?? "";
@@ -216,7 +182,6 @@ function readCondition(element: HTMLElement): DanCondition | null {
   return null;
 }
 
-/** The six whole-run counts, or null when the page shows `-` for all of them. */
 function readTotalCounts(root: HTMLElement): DanSongCounts | null {
   const counts: Partial<Record<keyof DanSongCounts, number>> = {};
   for (const cell of root.querySelectorAll(".total_status")) {
@@ -235,13 +200,6 @@ function readTotalCounts(root: HTMLElement): DanSongCounts | null {
   return completeCounts(counts);
 }
 
-/**
- * The three 課題曲.
- *
- * A song is found by its list block rather than by position, and every part of it is optional: the
- * title is `？？？` when the dan masks it, the level icon is absent on a masked song, and the
- * counts table is absent whenever there is no per-song record.
- */
 function readSongs(root: HTMLElement): readonly DanSongResult[] {
   const songs: DanSongResult[] = [];
   for (const block of root.querySelectorAll('[class*="songLisrArea"]')) {

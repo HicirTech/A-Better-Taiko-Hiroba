@@ -1,8 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md for why. The excerpt is cut from the real page's
- * shape without being repaired: the `<div id="titleFormArea">` inside its form is never closed,
- * which is what the real page does, and what makes a default parse lose the form.
- */
 import { describe, expect, test } from "bun:test";
 import { parse } from "node-html-parser";
 
@@ -19,7 +14,6 @@ const TOKEN = "0123456789abcdef0123456789abcdef";
 
 const option = (id: number | string, label: string) => `<option value="${id}">${label}</option>`;
 
-/** Three owned titles, two of them with a name of their own and two others sharing one. */
 const OWNED = [
   option(106, "サンプル称号A"),
   option(39, "サンプル称号B"),
@@ -107,8 +101,8 @@ function failureOf(result: Result<unknown, ParseFailure>): ParseFailure {
 
 describe("the title page's unclosed div", () => {
   test("costs a default parse its form, and a parse that keeps unclosed tags has it", () => {
-    // The precondition of this file: were the excerpt balanced, every test below would pass with or
-    // without the option, and prove nothing. The day this stops being true the test says so.
+    // Precondition of this file: were the excerpt balanced, every test below would pass with or
+    // without the option and prove nothing.
     expect(parse(titlePage()).querySelectorAll("form")).toHaveLength(0);
     expect(parse(titlePage()).querySelectorAll("select#newTitle")).toHaveLength(1);
 

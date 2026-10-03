@@ -1,4 +1,3 @@
-/** The undo record's pure rules: how each way a write ends settles it, and how a later read does. */
 import { describe, expect, test } from "bun:test";
 
 import {

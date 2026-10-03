@@ -1,7 +1,4 @@
-/**
- * The mock's dan labels, read back by core's own reader: a label the reader refused would make the
- * desktop run check the "couldn't read" path while it meant to check a dan.
- */
+// A label core's reader refused would make the desktop run exercise the "couldn't read" path.
 import { describe, expect, test } from "bun:test";
 import { DAN_NAMES, readDanLabel } from "@abth/core";
 

@@ -1,7 +1,3 @@
-/**
- * The rules both transports post a form by: the body as a browser encodes it, which redirects
- * follow a post, and where a redirect leads.
- */
 import { describe, expect, test } from "bun:test";
 
 import { encodeForm, POST_FOLLOWED_AS_GET, resolveRedirect } from "../src/hiroba-session";

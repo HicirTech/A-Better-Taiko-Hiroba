@@ -1,11 +1,4 @@
-/**
- * Hiroba's stand-in behind the fake CapacitorHttp: the mock's own costume editor
- * (scripts/mock-costume.ts) and profile (scripts/mock-profile.ts: the title page and the two posts
- * that change the title and the name) answer what the Android transport asks of the platform, so the
- * real transport is driven by the real mock. The platform's redirect following is modelled too: a call
- * that does not disable it follows up to five redirects with a GET and reports the last URL, as
- * HttpURLConnection does.
- */
+/** The mock Hiroba behind the fake CapacitorHttp; the platform's redirect following is modelled. */
 import type { CostumeSet } from "@abth/core";
 
 import {
@@ -21,7 +14,6 @@ import { type NativeHttpRequest, native, nativeAnswerOf } from "./capacitor-fake
 const NATIVE_REDIRECTS = 5;
 const REDIRECT_STATUSES: ReadonlySet<number> = new Set([301, 302, 303, 307, 308]);
 
-/** The mock's costume fields, which it names as the site does, as the app's set names them. */
 export const costumeSetOf = (state: Record<string, number>): CostumeSet => ({
   colorBody: state.color_body ?? -1,
   colorLimb: state.color_limb ?? -1,
@@ -33,7 +25,6 @@ export const costumeSetOf = (state: Record<string, number>): CostumeSet => ({
   costume5: state.costume_5 ?? -1,
 });
 
-/** The costume the mock starts with. */
 export const START_SET = costumeSetOf(INITIAL_COSTUME);
 
 export interface StandInOptions {
@@ -41,17 +32,13 @@ export interface StandInOptions {
   /** The title and the name; without one, those pages and posts are not there. */
   readonly profile?: ProfileEditor;
   readonly session: MockSession;
-  /**
-   * My page as the stand-in answers it: a page as it is, or a page made of the token the read just
-   * issued, for one that carries the rename dialog.
-   */
+  /** My page: as it is, or built from the token the read just issued (for the rename dialog). */
   readonly myPage: string | ((ticket: string) => string);
 }
 
 export interface StandIn {
   /** Hiroba ends every session: whatever is asked next finds the login page. */
   end(): void;
-  /** A session again, as after a new sign-in. */
   restore(): void;
 }
 
@@ -79,7 +66,7 @@ export function standIn({ editor, profile, session, myPage }: StandInOptions): S
         if (!signedIn) {
           return redirectTo("/login.php");
         }
-        // My page carries forms with a token, so reading it issues a new one and voids the editor's.
+        // My page carries forms with a token: reading it issues a new one and voids the editor's.
         return html(myPage instanceof Function ? myPage(editor.issueTicket(session)) : myPage);
       case "/mypage_kisekae.php":
         return signedIn ? html(editor.page(session)) : redirectTo("/login.php");
@@ -148,6 +135,7 @@ export function standIn({ editor, profile, session, myPage }: StandInOptions): S
     }
     let current = asked;
     let url = new URL(asked.url);
+    // Unless disabled, up to five redirects are followed with a GET, as HttpURLConnection does.
     for (let hop = 0; ; hop++) {
       const response = await route(current, url);
       const location = response.headers.get("location");

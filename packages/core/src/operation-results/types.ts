@@ -1,4 +1,3 @@
-/** The contract: a success carrying a value, or a failure carrying a typed error. */
 export type Result<T, E> = Ok<T> | Err<E>;
 
 export interface Ok<T> {

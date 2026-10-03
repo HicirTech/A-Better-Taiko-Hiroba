@@ -22,32 +22,21 @@ import {
 
 export interface NameEditorOptions {
   readonly port: HirobaSessionPort;
-  /** The window's lane for Hiroba's pictures: it is held while a write runs. */
   readonly lane: PictureLane;
-  /**
-   * The profile as the window last read it, which holds the name worn and whether Hiroba takes a
-   * change of it: what the field shows and what a review is made against. Null while there is none.
-   */
+  /** The profile as the window last read it: what the field shows and a review is made against. */
   readonly profile: Pick<ProfileView, "nickname" | "rename"> | null;
-  /** The session ended under the section: back to signing in, with what happened. */
   readonly onSessionGone: (notice: MessageKey) => void;
-  /**
-   * A write read the name back as this, which asks Hiroba nothing more: the window puts it in its
-   * copy of the profile.
-   */
+  /** A write read the name back as this: the window puts it in its copy of the profile. */
   readonly onNickname: (nickname: string) => void;
 }
 
-/** The Name section as the Nickname & title page draws and drives it. */
 export interface NameEditor {
   readonly step: NameStep;
-  /** The name undo this device offers now, if any: asks the platform, never Hiroba. */
+  /** The undo this device offers now, if any; from the platform, never Hiroba. */
   readonly undoable: UndoSummaryOf<"name"> | null;
-  /** A save or an undo is on its way: nothing else asks Hiroba anything meanwhile. */
   readonly writing: boolean;
-  /** Asks the platform for the undo on offer, as after my page is read. */
   refreshUndo(): Promise<void>;
-  /** The session is over, or another one begins: nothing of the section is kept. */
+  /** Drops everything of the section when a session ends or begins. */
   forget(): void;
   type(value: string): void;
   review(): void;
@@ -56,11 +45,6 @@ export interface NameEditor {
   undo(): Promise<void>;
 }
 
-/**
- * The Name section, held above the page so that a field, a review or an outcome outlives a visit to
- * another page and a read of my page. There is nothing to read for it: the name is the one my page
- * showed, which the window holds, and a write's own read-back is put in that copy.
- */
 export function useNameEditor({
   port,
   lane,
@@ -69,22 +53,16 @@ export function useNameEditor({
   onNickname,
 }: NameEditorOptions): NameEditor {
   const [step, dispatch] = useReducer(reduceName, IDLE);
-  /** Bumped when the session ends: what a request begun before it brings back is dropped. */
-  const session = useRef(0);
-  /** A save or an undo is on its way: one press sends one write. */
+  const sessionGeneration = useRef(0);
   const writing = useRef(false);
-  const { undoable, refreshUndo, clearUndo } = useUndoOffer(port, "name", session);
+  const { undoable, refreshUndo, clearUndo } = useUndoOffer(port, "name", sessionGeneration);
 
   const forget = useCallback(() => {
-    session.current += 1;
+    sessionGeneration.current += 1;
     dispatch({ type: "forget" });
     clearUndo();
   }, [clearUndo]);
 
-  /**
-   * A write ended, a save or an undo: the page shows it, the name it read back is the window's, and
-   * the undo on offer is asked for again. One that found the session gone goes back to signing in.
-   */
   const writeEnded = (outcome: WriteOutcomeView<NameState>) => {
     dispatch({ type: "writeEnded", outcome });
     const gone = sessionNoticeOf(outcome);
@@ -101,17 +79,13 @@ export function useNameEditor({
     void refreshUndo();
   };
 
-  /**
-   * Sends one write, a save or an undo: no picture even queues behind it, and a second press while
-   * it runs is turned away.
-   */
   const sendWrite = async (begin: NameAction, send: () => Promise<WriteOutcomeView<NameState>>) => {
     writing.current = true;
-    const mine = session.current;
+    const mine = sessionGeneration.current;
     dispatch(begin);
     const outcome = await sendHeld(lane, send);
     writing.current = false;
-    if (mine === session.current) {
+    if (mine === sessionGeneration.current) {
       writeEnded(outcome);
     }
   };

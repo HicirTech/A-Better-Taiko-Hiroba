@@ -1,7 +1,3 @@
-/**
- * How the editor paces its requests for Hiroba's picture of the set: against a stand-in for the
- * port's previewCostume whose answers the test hands out, and timers the test runs by hand.
- */
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Result } from "@abth/core";
 
@@ -27,7 +23,6 @@ const picture = (set: CostumeSet) => `data:image/png;base64,face${set.colorFace}
 
 type Answer = Result<string, CostumePreviewFailure>;
 
-/** A scheduler with hand-run timers and hand-answered requests, and what it showed. */
 function harness() {
   const asked: { set: CostumeSet; answer: (value: Answer | "throw") => Promise<void> }[] = [];
   const pending = new Map<number, () => void>();
@@ -62,7 +57,6 @@ function harness() {
     onState: (state) => states.push(state),
     timers,
   });
-  /** Ends the pause after the last pick, as the page's clock would. */
   const pauseEnds = () => {
     const runs = [...pending.values()];
     pending.clear();
@@ -109,7 +103,6 @@ describe("createPreviewScheduler", () => {
       scheduler.want(face(id));
     }
     expect(asked).toHaveLength(1);
-    // The last picture stays while the next is waited for.
     expect(last()).toEqual({ image: picture(START), loading: true, failure: null });
     pauseEnds();
     expect(asked.map(({ set }) => set.colorFace)).toEqual([5, 7]);
@@ -127,7 +120,6 @@ describe("createPreviewScheduler", () => {
     expect(asked).toHaveLength(2);
     scheduler.want(face(2));
     pauseEnds();
-    // Face 1 is still on its way, so face 2 waits for it.
     expect(asked).toHaveLength(2);
     await asked[1]?.answer(ok(picture(face(1))));
     expect(states.some((state) => state.image === picture(face(1)))).toBe(false);
@@ -169,7 +161,6 @@ describe("createPreviewScheduler", () => {
     scheduler.stop();
     scheduler.start();
     expect(asked).toHaveLength(2);
-    // A call the bridge refuses is a failure too.
     scheduler.want(face(2));
     pauseEnds();
     await asked[2]?.answer("throw");
@@ -268,7 +259,6 @@ describe("createPreviewScheduler", () => {
       scheduler.reset();
       expect(last()).toEqual({ image: null, loading: false, failure: null });
 
-      // Stopped, the window is told all the same: it must not keep the last picture meanwhile.
       scheduler.want(face(1));
       expect(asked).toHaveLength(2);
       await asked[1]?.answer(ok(picture(face(1))));
@@ -290,7 +280,6 @@ describe("createPreviewScheduler", () => {
       await asked[1]?.answer(ok(picture(face(1))));
       scheduler.reset();
 
-      // No pause, and no picture kept for it: another player's first set is asked for, as it is.
       scheduler.want(face(1));
       expect(pausing()).toBe(0);
       expect(asked).toHaveLength(3);
@@ -309,7 +298,6 @@ describe("createPreviewScheduler", () => {
       scheduler.want(face(1));
       expect(asked.map(({ set }) => set.colorFace)).toEqual([5, 1]);
 
-      // The old session's answer lands now: nothing of it is shown or kept, and the new ask goes on.
       await asked[0]?.answer(ok(picture(START)));
       expect(last()).toEqual({ image: null, loading: true, failure: null });
       await asked[1]?.answer(ok(picture(face(1))));

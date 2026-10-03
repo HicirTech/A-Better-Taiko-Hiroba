@@ -1,9 +1,3 @@
-/**
- * Where a page read for a write ends, looked at before its body is: the login page is a lost
- * session, a card still to be chosen is a sign-in not finished, and a page that ended anywhere but
- * Hiroba is not read at all. Judged by parsed origin and path, so no host that only looks like
- * Hiroba's passes for it.
- */
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -19,7 +13,6 @@ import {
 
 const ORIGIN = "https://hiroba.test";
 
-/** Reads `path` from a Hiroba whose answer ends at `landedAt`, and tells what the parser was given. */
 async function readEndingAt(landedAt: string) {
   const sent: TransportRequest[] = [];
   const parsed: string[] = [];

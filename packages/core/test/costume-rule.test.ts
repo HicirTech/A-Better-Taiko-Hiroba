@@ -1,8 +1,3 @@
-/**
- * The costume set rule, against the four executed costume writes: a colour alone (only that field
- * moved), a きぐるみ (#21: the pieces emptied though the body carried them), a piece beside a きぐるみ
- * (#22: nothing moved, and the answer was 0), and the restore (#23: all eight back in one post).
- */
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -13,7 +8,6 @@ import {
   sameCostume,
 } from "../src/index";
 
-/** The set before the executed writes, with placeholder colours. */
 const WORN: CostumeSet = {
   colorBody: 8,
   colorLimb: 8,

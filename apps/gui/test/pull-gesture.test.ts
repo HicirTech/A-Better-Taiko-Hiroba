@@ -16,14 +16,11 @@ import {
 
 const START = { x: 200, y: 300 };
 
-/** A touch that landed on a page at its top, one finger, while reading may start. */
 const landed = (overrides: Partial<PullContext> = {}): PullState =>
   pullStarted(START, { fingers: 1, scrollTopPx: 0, enabled: true, ...overrides });
 
-/** The finger's travel, in window pixels, that draws the indicator `distancePx` down. */
 const travelFor = (distancePx: number) => distancePx / PULL_RESISTANCE;
 
-/** Moves the finger straight down from where it landed, through each point, the page at its top. */
 const movedDown = (state: PullState, ...downs: number[]) =>
   downs.reduce((now, down) => pullMoved(now, { x: START.x, y: START.y + down }, 0), state);
 

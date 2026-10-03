@@ -1,8 +1,3 @@
-/**
- * The one way every write goes, against a small made-up endpoint: an edit page holding one number,
- * a pre-check, a save, and a second page to cross-check. What it asserts is the order and the
- * number of requests, and that the verdict follows the state read back rather than the answer.
- */
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -50,10 +45,7 @@ const json = (path: string, value: unknown) =>
 const LOGIN = page("login.php", `<form id="login_form"></form>`);
 const ERROR_SHELL = `<h1>エラー</h1><table><tr><td>リクエストされたページは存在しません</td></tr></table>`;
 
-/**
- * A made-up Hiroba: the edit page shows `state`, the cross page shows `crossValue`, and each post
- * answers from `answers`, falling back to a clear pre-check and a save that stores the number.
- */
+/** A made-up Hiroba: pages show `state` and `crossValue`; posts answer from `answers`. */
 function fakeHiroba(initial = 1) {
   const hiroba = {
     state: initial,

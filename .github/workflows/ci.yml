@@ -7,8 +7,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# A newer push to the same branch makes the older run pointless. Cancel it rather than pay for it,
-# except on main, where every commit's result is worth keeping.
+# Cancel a superseded run, except on main, where every commit's result is kept.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
@@ -25,8 +24,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          # Pinned, not "latest": a toolchain that changes without a commit makes a green run
-          # unrepeatable. Keep this in step with engines.bun in package.json.
+          # Pinned: keep in step with engines.bun in package.json.
           bun-version: 1.4.2
 
       - name: Cache dependencies
@@ -37,12 +35,9 @@ jobs:
           restore-keys: bun-${{ runner.os }}-
 
       - name: Install
-        # Frozen: CI resolves exactly what the lockfile says, or it fails. A run that silently
-        # installs something else is not testing this commit.
         run: bun install --frozen-lockfile
 
-      # Four separate steps rather than one combined command, so a red run names what broke
-      # without anyone opening the log.
+      # Separate steps, so a red run names what broke.
       - name: Format
         run: bun run format:check
 
@@ -55,8 +50,7 @@ jobs:
       - name: Test
         run: bun test
 
-      # Both shells' bundles: the web app (Vite, run on this Bun) and Electron's main and preload
-      # (Bun.build). No Electron binary, no packaging, no Android.
+      # The web bundle and Electron's main and preload; no Electron binary, packaging or Android.
       - name: Build GUI
         run: bun run --cwd apps/gui build
 
@@ -70,7 +64,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          # The same pin as the Checks job: keep the two in step.
+          # Same pin as the Checks job.
           bun-version: 1.4.2
 
       - name: Cache dependencies
@@ -80,19 +74,17 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
 
-      # Capacitor's CLI runs on Node, and needs 22 (README, "What you need").
+      # Capacitor's CLI runs on Node 22.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - uses: actions/setup-java@v4
         with:
-          # JDK 21, the one the Android build is written for; Temurin, as the maintainers' machines
-          # have it. The Gradle cache is keyed on the Android project's Gradle files and on bun.lock,
-          # which pins the Capacitor plugins whose own Gradle files sit in node_modules.
           distribution: temurin
           java-version: 21
           cache: gradle
+          # bun.lock pins the Capacitor plugins whose Gradle files sit in node_modules.
           cache-dependency-path: |
             apps/gui/android/**/*.gradle
             apps/gui/android/gradle/wrapper/gradle-wrapper.properties
@@ -101,8 +93,6 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # The runner's own Android SDK (ANDROID_HOME) carries the platform and build tools the project
-      # builds against, so nothing is installed for it. The script builds the web bundle, syncs it
-      # into the Android project and runs Gradle's assembleDebug.
+      # The runner's own Android SDK (ANDROID_HOME) has what the project builds against.
       - name: Build debug APK
         run: bun run --cwd apps/gui android:apk

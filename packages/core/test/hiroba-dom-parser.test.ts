@@ -1,7 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md in this directory for why. The logged-out excerpt
- * mirrors the one marker unique to Hiroba's login page: the form submitting to login_process.php.
- */
 import { describe, expect, test } from "bun:test";
 
 import { isErr, isOk, parsePage, requireMarker } from "../src/index";

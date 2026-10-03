@@ -10,57 +10,22 @@ const PAGE = "user_profile.php";
 
 const RANKS: readonly ScoreRank[] = [2, 3, 4, 5, 6, 7, 8];
 
-/**
- * The site spells the silver count **`silver_crown_coun`** on this page — no final `t` — while
- * `gold_crown_count` and `donderful_crown_count` sit beside it spelled in full, and my page spells
- * all three in full. Verified on the **three** captured profiles that serve a panel at all; the
- * correct spelling occurs on none of them. The other four of seven carry no crown counts to spell —
- * three are closed and one hides its achievements.
- *
- * This is invisible from a single account, because your own page is spelled correctly. It is the
- * same class of trap as the score list's two-l `crown_button_donderfull`, and it is why
- * `parseProfilePage`'s `.${kind}_crown_count` refuses a block that is plainly there.
- */
+/** The site misspells the silver class here, `silver_crown_coun`; my page spells it in full. */
 const CROWN_COUNT_CLASSES = {
   silver: "silver_crown_coun",
   gold: "gold_crown_count",
   donderful: "donderful_crown_count",
 } as const;
 
-/**
- * My page's favourite blocks, and the marker that tells the two pages apart.
- *
- * `user_profile.php` with your **own** taiko number redirects to my page, and my page would
- * otherwise read here as a stranger with an unusually rich profile. My page wraps each favourite
- * section in `div.favoriteSong`; this page has none — it renders one bare `ul#songList`.
- */
+/** Only my page has these; your own taiko number on `user_profile.php` would serve it here. */
 const MY_PAGE_MARKER = "div.favoriteSong";
 
-/** How the details block reads when the owner has closed their profile. */
 const CLOSED_TEXT = "プロフィール非公開";
 
-/**
- * The page's word for "no song here", written into the block rather than omitting it.
- *
- * An open profile with no 大好きな曲 **keeps the section** and fills its one row with this, exactly
- * as my page does. Observed on three profiles. The set rows carry a genre suffix on their classes
- * (`songLisrAreanamco`, `songNameFontnamco`) and the unset row does not, but the text is the
- * reliable signal and the one my page's reader already uses.
- */
+/** The page's word for "no song here", written into the section rather than omitting it. */
 const UNSET_LABEL = "未設定";
 
-/**
- * Parses `user_profile.php?taiko_no=T` — another player's public profile.
- *
- * `taikoNo` is what was requested, not what was read: a closed profile prints no taiko number at
- * all, so the page cannot always say whose it is. Where the page does print one this checks it and
- * refuses a mismatch.
- *
- * Three shapes are handled, and the middle one is the reason this cannot be a two-way branch on
- * "is it private": a profile can be open, name its owner and show their favourite song while
- * serving **no score panel** (`disp_achievement` off). A reader that treats "not private" as
- * "has a panel" fails on it.
- */
+/** Parses `user_profile.php`; `taikoNo` is what was requested, as a closed profile prints none. */
 export function parsePublicProfilePage(
   html: string,
   taikoNo: string,
@@ -86,8 +51,7 @@ export function parsePublicProfilePage(
     return area;
   }
 
-  // Title, then the nickname, then the details block, then the panel when there is one. Position
-  // is the only contract: none of the four carries a class or id of its own.
+  // Position is the only contract: title, nickname, details and panel carry no class or id.
   const blocks = elementChildren(area.value).filter((el) => el.rawTagName.toLowerCase() === "div");
   const titleBlock = blocks[0];
   const nicknameBlock = blocks[1];
@@ -99,11 +63,8 @@ export function parsePublicProfilePage(
     });
   }
   const title = titleBlock.text.trim();
-  // The nickname block's own contents are decided by whether the player has a dan: with a dan
-  // label it is a two-child flex row, without one the text sits directly in the block. 19 of 19
-  // captured profiles agree. My page's reader takes both forms as well: the one account captured
-  // there happens to have a dan, and a dan-less my page is expected to write this same flat row.
-  // Taking the text whole, rather than descending to a child at a fixed position, reads either.
+  // With a dan label the block is a two-child flex row, without one the text sits directly in it;
+  // taking the text whole reads either.
   const nickname = nicknameBlock.text.trim();
   if (nickname === "") {
     return err({
@@ -123,8 +84,7 @@ export function parsePublicProfilePage(
   let region: string | null = null;
   if (!closed) {
     const lines = details.value.querySelectorAll("p").map((p) => p.text.trim());
-    // Both lines are "label：value", and the first line's label is the player's, not the page's:
-    // 都道府県 above a prefecture, 国・地域 above a country. Read the value, not the label.
+    // The first label varies (都道府県 or 国・地域): read the value, not the label.
     region = afterColon(lines[0] ?? "") || null;
     const shown = afterColon(lines[1] ?? "");
     if (!/^\d{12}$/.test(shown)) {
@@ -161,7 +121,6 @@ export function parsePublicProfilePage(
     region,
     danLabelImageUrl: findImageBySrc(root, "imgsrc_danlabel")?.getAttribute("src") ?? null,
     myDonImageUrl: root.querySelector("img.customd_mydon")?.getAttribute("src") ?? null,
-    // Title only: this page's block carries no song_no input and no score_detail link.
     favoriteSong: favoriteIsSet ? { songNo: null, title: favoriteTitle } : null,
     summary: summary.value,
     visibility,
@@ -169,19 +128,12 @@ export function parsePublicProfilePage(
   });
 }
 
-/** The value part of a "label：value" line; empty string when the colon is missing. */
 function afterColon(line: string): string {
   const index = line.indexOf("：");
   return index === -1 ? "" : line.slice(index + 1).trim();
 }
 
-/**
- * The score panel, or null when the profile does not serve one.
- *
- * Absence is the signal, and it is whole: a profile with `disp_achievement` off carries no panel
- * image, no crown counts and no rank buckets. So the panel image decides, and once it is there the
- * counts beside it are required — a panel missing half its numbers is a page that changed.
- */
+/** Null when the profile serves no score panel; with one, every count beside it is required. */
 function readSummary(root: HTMLElement): Result<ProfileSummary | null, ParseFailure> {
   const panelImage = findImageBySrc(root, "total_score_image_");
   const panelMatch = (panelImage?.getAttribute("src") ?? "").match(/total_score_image_(\d+)/);
@@ -214,8 +166,7 @@ function readSummary(root: HTMLElement): Result<ProfileSummary | null, ParseFail
     if (isErr(count)) {
       return count;
     }
-    // A rank of 0 is data, not absence: sampled profiles read 0 at several ranks while holding
-    // thousands at another.
+    // A rank count of 0 is data, not absence.
     rankEntries[rank] = count.value;
   }
 

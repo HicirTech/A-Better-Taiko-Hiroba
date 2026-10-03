@@ -1,7 +1,3 @@
-/**
- * The ajax post every write sends, against a stand-in transport: what it sends, and how what comes
- * back is sorted before any result code is read.
- */
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -29,7 +25,6 @@ const POST = {
   ],
 } as const;
 
-/** Answers every request with `answer` and keeps what it was asked. */
 function answering(answer: Awaited<ReturnType<Transport["send"]>>) {
   const sent: TransportRequest[] = [];
   const transport: Transport = {

@@ -1,7 +1,3 @@
-/**
- * Hiroba's picture of a costume set, against a fake Transport: the one request it makes, and what
- * of the answer it lets through to the window.
- */
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 
@@ -39,7 +35,6 @@ function png(size: number): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-/** Answers every request with `answer`, and keeps what was asked. */
 function answering(answer: Answer) {
   const asked: TransportRequest[] = [];
   const transport: Transport = {

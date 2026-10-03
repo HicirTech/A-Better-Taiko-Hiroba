@@ -1,11 +1,6 @@
-/**
- * Stand-ins for the two Capacitor modules the Android layer calls, registered once for every test
- * file that imports this one. They record what the app asked of the platform; `native` is where a
- * test sets the platform's answers and reads the record.
- */
+/** Fakes of the Capacitor modules the Android layer calls; `native` sets and records. */
 import { mock } from "bun:test";
 
-/** What the app asked CapacitorHttp.request for: every option it sets, as it set it. */
 export interface NativeHttpRequest {
   readonly url: string;
   readonly method: string;
@@ -18,7 +13,6 @@ export interface NativeHttpRequest {
   readonly dataType?: string;
 }
 
-/** The shape CapacitorHttp.request answers with. */
 export interface NativeHttpAnswer {
   readonly status: number;
   readonly url: string;
@@ -28,28 +22,20 @@ export interface NativeHttpAnswer {
 
 type Listener = (event: { url?: string }) => void;
 
-/**
- * A body as Capacitor hands back an `arraybuffer` answer: base64 as android.util.Base64.DEFAULT
- * writes it, in lines of 76 characters, each ending in a line break. Text is taken as UTF-8.
- */
+/** Base64 as Android's Base64.DEFAULT writes it: 76-character lines, each ending in a break. */
 export function nativeBase64(body: Uint8Array | string): string {
   const bytes = typeof body === "string" ? new TextEncoder().encode(body) : body;
   const base64 = btoa(Array.from(bytes, (byte) => String.fromCharCode(byte)).join(""));
   return base64.replace(/.{1,76}/g, (line) => `${line}\n`);
 }
 
-/** A header name as a server writes it: `content-type` as `Content-Type`. */
 const writtenAs = (name: string) =>
   name.replace(
     /(^|-)([a-z])/g,
     (_, dash: string, letter: string) => `${dash}${letter.toUpperCase()}`,
   );
 
-/**
- * A fetch Response as Capacitor answers an `arraybuffer` request with it (HttpRequestHandler.
- * readData): a JSON content type is parsed whatever was asked, any other answer of 400 or more is
- * text, and the rest is base64 of the exact bytes. Header names come as a server writes them.
- */
+/** Capacitor's readData for arraybuffer: JSON parsed, 400 and up as text, else base64. */
 export async function nativeAnswerOf(response: Response, url: string): Promise<NativeHttpAnswer> {
   const headers: Record<string, string> = {};
   for (const [name, value] of response.headers) {
@@ -71,9 +57,9 @@ export async function nativeAnswerOf(response: Response, url: string): Promise<N
 export const native = {
   httpRequests: [] as NativeHttpRequest[],
   httpAnswer: (async () => ({})) as () => Promise<unknown>,
-  /** Answers for the calls to come, one each in turn; once they are used up, `httpAnswer` answers. */
+  /** Answers for the calls to come, one each in turn; once used up, `httpAnswer` answers. */
   httpAnswers: [] as (() => Promise<unknown>)[],
-  /** Every cookie-store call, in order: "clearAllCookies", "clearCookies <url>" or "deleteCookie <key>". */
+  /** Cookie-store calls in order: "clearAllCookies", "clearCookies <url>", "deleteCookie <key>". */
   cookieCalls: [] as string[],
   openedWith: [] as { url: string; options: Record<string, unknown> }[],
   closeCalls: 0,
@@ -94,7 +80,6 @@ export const native = {
     this.listeners.clear();
   },
 
-  /** What the in-app browser reports as the user moves through pages. */
   emit(event: string, data: { url?: string } = {}): void {
     this.listeners.get(event)?.(data);
   },

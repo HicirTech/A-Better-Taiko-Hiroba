@@ -1,31 +1,20 @@
 import { err, ok, type Result, type TransportResponse } from "@abth/core";
 
-/** The eight bytes every PNG opens with. */
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a] as const;
-/** "IHDR", the chunk a PNG must give first: its width and height. */
+// "IHDR": the chunk a PNG gives first, with its width and height.
 const IHDR = [0x49, 0x48, 0x44, 0x52] as const;
 
-/**
- * What an answer must be to count as one kind of Hiroba's pictures. Each check runs only when its
- * rule is given, in this order: the content type, the byte count, the PNG signature, the size the
- * IHDR gives, and where the answer came from.
- */
+/** What an answer must be to count as a Hiroba picture; a check runs only if its rule is given. */
 export interface PngRules {
   /** Fewer bytes than this is a placeholder, not the picture. */
   readonly minBytes?: number;
   /** More bytes than this is not the picture, and never crosses to the window. */
   readonly maxBytes: number;
-  /** Whether the bytes must open with PNG's signature. */
   readonly signature?: boolean;
-  /**
-   * The largest width and height the IHDR may give. Checked after the signature, which it implies:
-   * a PNG with no IHDR first is not a PNG.
-   */
+  /** The largest width and height the IHDR may give; it implies the signature check. */
   readonly maxSide?: number;
-  /**
-   * The largest height the IHDR may give, when it is less than `maxSide`: a picture wider than it
-   * is tall, such as a plate. Read only with `maxSide`.
-   */
+  /** The largest height, when lower than `maxSide`: for a picture wider than tall, such as a plate.
+   * Read only with `maxSide`. */
   readonly maxHeight?: number;
   /** Where the final URL must be: a picture that moved is not the one asked for. */
   readonly at?: AskedPlace;
@@ -37,10 +26,6 @@ export interface AskedPlace {
   readonly path: string;
 }
 
-/**
- * Why an answer is not the picture: not a PNG by its type, too small or too large, not a PNG by its
- * bytes, a width or height out of bounds, or an answer from elsewhere.
- */
 export type PngRefusal =
   | { readonly why: "notPng" | "tooSmall" | "tooLarge" | "notPngBytes" | "movedTo" }
   | { readonly why: "badSize"; readonly width: number; readonly height: number };
@@ -56,11 +41,8 @@ export interface PngSize {
   readonly height: number;
 }
 
-/**
- * Checks an answer as one kind of picture, by `rules`. The status is never looked at: Hiroba sends
- * its "nothing to draw" GIF, its login page and its error pages all at 200 (wiki: Page Map,
- * generated images). The content type goes first, so any of those is `notPng`.
- */
+/** Checks an answer by `rules`. The status is never looked at: Hiroba sends its "nothing to draw"
+ * GIF, login page and error pages all at 200, so the content type goes first. */
 export function checkPng(
   response: TransportResponse,
   rules: PngRules,
@@ -102,7 +84,6 @@ export function mediaTypeOf(response: TransportResponse): string {
   return (response.headers["content-type"] ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
 }
 
-/** Whether `bytes` open with PNG's signature. */
 export function hasPngSignature(bytes: Uint8Array): boolean {
   return PNG_SIGNATURE.every((byte, at) => bytes[at] === byte);
 }
@@ -119,18 +100,12 @@ export function pngSize(bytes: Uint8Array): PngSize | null {
   return { width: view.getUint32(16), height: view.getUint32(20) };
 }
 
-/**
- * A run of characters long enough to name a player: a taiko number is 12 digits, a どんメダル plate's
- * id 48 hex digits. A picture that moved may have moved to a path that names its player.
- */
+// Long enough to name a player: a taiko number is 12 digits, a どんメダル plate's id 48 hex digits.
+// A picture that moved may have moved to a path that names its player.
 const MAY_NAME_A_PLAYER = /[0-9a-f]{16,}|\d{6,}/gi;
 
-/**
- * What came back, as codes a user can copy into a report: `offHost` when it came from another
- * origin than `asked` names (only when it names one), the final path when it is not the one asked
- * for, with each run that may name a player as `#`, then the status, content type and size. Never
- * a host, a query, a cookie or a taiko number.
- */
+/** What came back, as codes a user can copy into a report: `offHost`, the final path if it differs
+ * (runs that may name a player as `#`), then status, type and size. Never a host or a cookie. */
 export function describeAnswer(
   response: TransportResponse,
   asked: { readonly path: string; readonly origin?: string },
@@ -154,10 +129,7 @@ export function describeAnswer(
   ].join(" ");
 }
 
-/**
- * A PNG as a `data:` URL, the only form a picture crosses to the window in. Base64 in the main
- * process and in a WebView alike: both have `btoa`, neither needs a Buffer.
- */
+/** A PNG as a `data:` URL, the only form a picture crosses in. `btoa` exists in both shells. */
 export function pngDataUrl(bytes: Uint8Array): string {
   let binary = "";
   for (let at = 0; at < bytes.length; at += 0x2000) {

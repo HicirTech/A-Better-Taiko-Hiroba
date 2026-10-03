@@ -14,17 +14,14 @@ interface StoredUndo {
   readonly slots: Slots;
 }
 
-/** The file operations the store makes: node's own, unless a test hands in its own to watch them. */
+/** The file operations the store makes: node's own, unless a test hands in its own. */
 export type UndoFiles = Pick<
   typeof nodeFs,
   "mkdirSync" | "readFileSync" | "renameSync" | "writeFileSync"
 >;
 
-/**
- * The desktop's undo store (see `UndoStore`): one file, in the app's profile folder. A slot is
- * written to a temporary file, flushed to the disk, then renamed over the last, so a crash leaves
- * the old file or the new one, never half of one.
- */
+/** The desktop's undo store: one file, saved via a flushed temporary one renamed over the last, so
+ * a crash leaves the old file or the new one, never half of one. */
 export function createUndoStore(path: string, files: UndoFiles = nodeFs): UndoStore {
   const read = (): Slots => {
     try {
@@ -81,10 +78,8 @@ function kindsOf(slots: Record<string, unknown>): Slots {
   return kept;
 }
 
-/**
- * A file of the first version, which kept one slot per kind whoever it was for, as a slot per
- * player: the record goes to its player, and the pending write to its own.
- */
+// Version 1 kept one slot per kind, whoever it was for: the record goes to its player, and the
+// pending write to its own.
 function byPlayer(slots: Record<string, unknown>): Slots {
   const kept: Slots = {};
   for (const kind of WRITE_KINDS) {

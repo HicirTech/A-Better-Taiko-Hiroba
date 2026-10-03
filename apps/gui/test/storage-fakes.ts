@@ -1,6 +1,3 @@
-/** Stand-ins for the app page's localStorage, where the window keeps its settings. */
-
-/** A page store kept in memory, as the app page's localStorage keeps one. */
 export function memoryStorage(): Storage {
   const values = new Map<string, string>();
   return {

@@ -1,12 +1,8 @@
-/**
- * What Android's stores use of IndexedDB: the page's `indexedDB` is one `DatabaseFactory`, and a
- * test gives a stand-in. Only the calls the stores make are named, so the stand-in stays small.
- */
+// The slice of IndexedDB Android's stores use, kept small so a test's stand-in stays small.
 
 /** A handler IndexedDB calls with an event, which the stores never read. */
 export type DatabaseHandler = ((...event: never[]) => unknown) | null;
 
-/** What a store reads of a request IndexedDB answers later. */
 export interface DatabaseRequest<T> {
   readonly result: T;
   readonly error: unknown;
@@ -52,11 +48,8 @@ export interface DatabaseFactory {
   open(name: string, version: number): DatabaseOpenRequest;
 }
 
-/**
- * Opens the database, creating it with `upgrade` the first time. Rejects when it cannot be
- * opened, and when an older version is still open elsewhere: that is not waited for, as it may
- * never close.
- */
+/** Opens the database, creating it with `upgrade` the first time. Rejects when it cannot be opened
+ * or an older version is still open elsewhere: that is not waited for, as it may never close. */
 export function openDatabase(
   factory: DatabaseFactory,
   name: string,
@@ -72,7 +65,6 @@ export function openDatabase(
   });
 }
 
-/** The request's result once it has succeeded; rejects with its error when it fails. */
 export function succeeded<T>(request: DatabaseRequest<T>): Promise<T> {
   return new Promise((resolve, reject) => {
     request.onsuccess = () => resolve(request.result);

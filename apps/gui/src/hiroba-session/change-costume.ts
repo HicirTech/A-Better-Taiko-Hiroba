@@ -8,10 +8,7 @@ import {
 import type { CostumeChange } from "../session-port";
 import type { HirobaEndpoints, WriteOptions } from "./types";
 
-/**
- * One costume write, as the core runs every write. The outcome crosses to the interface as it is:
- * sets, codes and Hiroba's own message, and never the token.
- */
+/** One costume write as the core runs it; the outcome crosses as it is, never with the token. */
 export function changeCostume(
   transport: Transport,
   endpoints: HirobaEndpoints,

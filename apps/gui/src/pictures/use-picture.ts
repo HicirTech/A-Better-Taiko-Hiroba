@@ -6,22 +6,13 @@ import { type PictureAnswer, type PictureLane, wantKey } from "./picture-lane";
 export interface UsePictureOptions {
   /** The box that scrolls the picture into and out of view; null for the window itself. */
   readonly root: RefObject<Element | null> | null;
-  /** How far outside the box a picture counts as seen already: a CSS margin, such as a row. */
   readonly rootMargin: string;
-  /** Where the picture sits, top to bottom: the lane asks for the lower first. */
   readonly order: number;
 }
 
-/** A picture seen when it is in the window itself, with no margin: the pages' usual case. */
 export const IN_THE_WINDOW = { root: null, rootMargin: "0px" } as const;
 
-/**
- * The picture `want` names, from `lane`, for the element `target` points at: asked for only while
- * that element is on screen (or within `rootMargin` of it), and taken back when it leaves before
- * its turn. Undefined until the lane has it, or when `want` is null. A picture that comes after the
- * element is gone is kept by the lane for the next time, and not shown. One whose kind the lane
- * renewed is asked for again, and the picture it had is given until the new one comes.
- */
+/** `want` from `lane`, asked for only while `target` is on screen; undefined until it comes. */
 export function usePicture(
   lane: PictureLane,
   want: PictureWant | null,
@@ -34,8 +25,6 @@ export function usePicture(
   const key = want === null ? null : wantKey(want);
   const wanted = useRef(want);
   wanted.current = want;
-  // Whether the lane's answer stands: once it is renewed, the picture is asked for again, while the
-  // answer the lane had is still shown.
   const settled = want !== null && lane.settled(want);
 
   useEffect(() => {

@@ -6,40 +6,24 @@ import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { UndoSummary } from "../session-port";
 import { Changes } from "./costume-changes";
-import { previewSetOf } from "./costume-editor-state";
 import { type EditingTabs, EditingView, FIRST_TABS } from "./costume-editing";
+import { previewSetOf } from "./costume-editor-state";
 import { changedParts } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
 import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
 import type { CostumeEditor } from "./use-costume-editor";
 import { WriteOutcomeNotice } from "./write-outcome";
 
-/**
- * The editor's column on a wide window, as wide as MUI's sm: its tiles are narrow, and a row of
- * them need not stretch across the window.
- */
+// MUI's sm width: the item tiles are narrow, so their row need not stretch across the window.
 export const COLUMN_MAX_WIDTH_PX = 600;
-/** The room the bar keeps round its buttons, and under them where a phone draws its own bar. */
 const BAR_PADDING_PX = 12;
 
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
-  /** The window's lane for Hiroba's pictures: the items' thumbnails come through it. */
   readonly lane: PictureLane;
   readonly i18n: Translator;
 }
 
-/**
- * The costume editor as a page of its own: Hiroba's picture of the set as picked, the tabs of
- * colours and of items under it, then what the draft changes. Review, the confirmation and Save
- * to Hiroba, with Reset to put the draft back, sit in a bar kept at the bottom of the window. A
- * write's outcome and its undo show on this page, in place of the editor, until Back.
- *
- * The page is a column: as wide as the window on a phone, and one column's width on a wide one,
- * and tall enough to put the bar at the window's bottom edge however little a step shows. The
- * state is the window's, not the page's (use-costume-editor.ts): going to another page and back
- * finds the draft, a review or an outcome as it was.
- */
 export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   const { step } = editor;
   const [tabs, setTabs] = useState(FIRST_TABS);
@@ -63,7 +47,7 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
         flexDirection: "column",
         width: 1,
         maxWidth: COLUMN_MAX_WIDTH_PX,
-        // Centred by its alignment: the Stack that holds the page keeps its children's margins at 0.
+        // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
         alignSelf: "center",
         outline: "none",
       }}
@@ -77,7 +61,6 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   );
 }
 
-/** What the page shows in place of the editor's tabs, or beside them. */
 function StepView({
   editor,
   lane,
@@ -138,7 +121,6 @@ function StepView({
   }
 }
 
-/** The buttons of the step, or null where it has none: a read, a save and an undo end by themselves. */
 function actionsOf(editor: CostumeEditor, i18n: Translator): ReactNode {
   const { t } = i18n;
   const { step } = editor;
@@ -183,11 +165,6 @@ function actionsOf(editor: CostumeEditor, i18n: Translator): ReactNode {
   }
 }
 
-/**
- * The step's buttons, kept at the bottom of the window as the page scrolls, and at the bottom of
- * the column once it has: sticky, not fixed, so it takes the column's width and clears the
- * navigation without a measure.
- */
 function ActionBar({ children }: { children: ReactNode }) {
   return (
     <Paper
@@ -195,6 +172,7 @@ function ActionBar({ children }: { children: ReactNode }) {
       elevation={3}
       sx={{
         ...BOTTOM_BAR,
+        // Sticky, not fixed: it takes the column's width and clears the navigation unmeasured.
         position: "sticky",
         bottom: 0,
         zIndex: 1,
@@ -210,7 +188,6 @@ function ActionBar({ children }: { children: ReactNode }) {
   );
 }
 
-/** The last costume change, and the way back from it while this device still offers one. */
 function UndoOffer({
   undoable,
   onUndo,

@@ -15,19 +15,12 @@ import type { NameEditor } from "./use-name-editor";
 
 export interface NameSectionProps {
   readonly name: NameEditor;
-  /** The profile as the window last read it: the name worn, and whether Hiroba takes a change. */
   readonly profile: Pick<ProfileView, "nickname" | "rename">;
   readonly i18n: Translator;
   /** A write, this section's or the title's, is on its way: nothing is pressed meanwhile. */
   readonly busy: boolean;
 }
 
-/**
- * The Name section: the field, with the name worn in it, Hiroba's own warning and what its help
- * page says of a name, a review of the change that says Hiroba may not let it be changed back, the
- * outcome of the last write and the way back from it. Its state is the window's
- * (use-name-editor.ts), so a refused name is still in the field after a visit to another page.
- */
 export function NameSection({ name, profile, i18n, busy }: NameSectionProps) {
   const { t } = i18n;
   const { step } = name;
@@ -97,7 +90,6 @@ function StepView({ name, profile, i18n, busy }: NameSectionProps) {
   }
 }
 
-/** The undo of the last rename, while this device offers one: Hiroba may refuse it as it may refuse any. */
 function Undo({ name, i18n, busy }: { name: NameEditor; i18n: Translator; busy: boolean }) {
   const { t } = i18n;
   const { undoable } = name;
@@ -120,11 +112,8 @@ function Undo({ name, i18n, busy }: { name: NameEditor; i18n: Translator; busy: 
   );
 }
 
-/**
- * The field and what surrounds it. A composition, as an IME makes one, is not judged until it is
- * committed: the counter, the advice, the note that it is the name worn already and Review read the
- * text as it stood before it.
- */
+// A composition, as an IME makes one, is not judged until committed: the counter, the advice, the
+// "already the name worn" note and Review read the text as it stood before it.
 function Fields({ name, profile, i18n, busy }: NameSectionProps) {
   const { t } = i18n;
   const { step } = name;
@@ -219,7 +208,7 @@ function Fields({ name, profile, i18n, busy }: NameSectionProps) {
   );
 }
 
-/** The step's buttons, at the section's foot, or nothing where a step has none; idle's is by its field. */
+/** The step's buttons at the foot; idle's Review sits by its field instead. */
 function Actions({ name, i18n, busy }: Omit<NameSectionProps, "profile">) {
   const { t } = i18n;
   const { step } = name;

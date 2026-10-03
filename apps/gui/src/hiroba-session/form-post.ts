@@ -1,8 +1,4 @@
-/**
- * How a form goes to Hiroba, the same on both shells: the redirects a post may follow, the type of
- * its body and the body itself, so the desktop and Android send identical bytes. Each shell's
- * transport does the sending.
- */
+// How a form goes to Hiroba, the same on both shells, so both send identical bytes.
 import type { TransportPost } from "@abth/core";
 
 /** The redirects a browser follows after a post, with a GET that has no body. */

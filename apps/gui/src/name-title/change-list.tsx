@@ -1,10 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Stack, Typography } from "@mui/material";
 
-/**
- * The one change a review lists, under the same heading as the costume's: "Title: A → B". The
- * values are Hiroba's own words, shown as they are; an empty title is said as no title.
- */
 export function ChangeList({
   id,
   part,
@@ -12,9 +8,7 @@ export function ChangeList({
   to,
   i18n,
 }: {
-  /** The list's id. */
   id: string;
-  /** What changes, as a word: the title or the name. */
   part: string;
   from: string;
   to: string;

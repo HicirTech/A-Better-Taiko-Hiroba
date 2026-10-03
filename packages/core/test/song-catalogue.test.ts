@@ -1,8 +1,3 @@
-/**
- * The catalogue is fed by `score_list.php?genre=N` — the site has no separate song-picker page to
- * read — so these tests start from what the list parser emits: one Song per song number, ura
- * folded into its song already.
- */
 import { describe, expect, test } from "bun:test";
 
 import { type Genre, mergeGenreIntoCatalogue, type Song, updateCatalogue } from "../src/index";

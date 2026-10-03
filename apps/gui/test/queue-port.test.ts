@@ -1,10 +1,3 @@
-/**
- * The queue in front of Hiroba as both shells apply it to the port (`queuePort`): every verb has a
- * place in `PORT_QUEUEING`, a read waits for a write however it is asked, a write asked for while
- * another is queued or running answers busy and never begins, and a verb left unqueued is not held
- * up. The verbs here are stand-ins that begin and end when the test says; the shells' own verbs are
- * held the same way in android-writes.test.ts and in the end-to-end run.
- */
 import { describe, expect, test } from "bun:test";
 
 import { BUSY_OUTCOME, createHirobaQueue, queuePort } from "../src/hiroba-session";
@@ -26,7 +19,6 @@ const UNQUEUED = queuedAs("unqueued");
 /** Gives the next turn of the event loop to whatever the queue has ready to run. */
 const settle = () => Bun.sleep(1);
 
-/** A port whose every verb notes that it began, and ends only once the test lets it. */
 function watchedPort() {
   const events: string[] = [];
   const gates = new Map<Verb, () => void>();
@@ -44,7 +36,6 @@ function watchedPort() {
   const port = queuePort(createHirobaQueue(), verbs);
   const ask = (verb: Verb, ...args: unknown[]) =>
     (port[verb] as (...values: unknown[]) => Promise<unknown>)(...args);
-  /** Lets one verb that has begun end, and the queue go on to the next. */
   const letGo = async (verb: Verb) => {
     gates.get(verb)?.();
     await settle();

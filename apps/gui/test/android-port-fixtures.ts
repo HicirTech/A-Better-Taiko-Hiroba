@@ -1,7 +1,3 @@
-/**
- * What the tests of Android's port share: Hiroba's origin as the port holds it, a my page it can
- * read, and the page's signed-in flag kept in memory.
- */
 import { expect } from "bun:test";
 
 import { escapeHtml, type ProfileEditor } from "../scripts/mock-profile";
@@ -9,15 +5,12 @@ import { nativeBase64 } from "./capacitor-fakes";
 
 export const HIROBA = "https://donderhiroba.jp";
 export const CLOSE_LABEL = "Close sign-in";
-/** What varies between the my pages the tests read: the title, the name, whose it is, the dialog. */
 interface MyPageParts {
-  /** The title, as the page's text holds it. */
   readonly title: string;
   readonly nickname: string;
   readonly taikoNo: string;
   /** The page's script, which carries the flag for renaming. */
   readonly head: string;
-  /** The rename dialog at the page's foot. */
   readonly dialog: string;
 }
 
@@ -40,10 +33,7 @@ const myPageWith = ({
 <div class="favoriteSong"><h2>大好きな曲</h2><ul><li><span class="songName">未設定</span></li></ul></div>
 <div class="favoriteSong"><h2>お気に入りの曲</h2><ul></ul></div>${dialog}</body></html>`;
 
-/**
- * A dan-less my page, so a read is one request: the title plate, bare as Hiroba writes it, over
- * the title. Placeholders throughout, no real account's.
- */
+/** A dan-less my page, so a read is one request. */
 export const MY_PAGE = myPageWith({
   title: "サンプルの称号",
   nickname: "サンプルどん",
@@ -52,10 +42,6 @@ export const MY_PAGE = myPageWith({
   dialog: "",
 });
 
-/**
- * My page as the profile the stand-in keeps shows it: wearing its title and its name, with the
- * rename dialog carrying the token the read has just been given, and whose it is.
- */
 export const profilePage =
   (profile: ProfileEditor, taikoNo = "000000000000") =>
   (ticket: string) =>
@@ -66,7 +52,6 @@ export const profilePage =
       head: profile.renameScript(),
       dialog: profile.renameDialog(ticket),
     });
-/** My page as Hiroba answers it, whatever was asked. */
 export const myPageAnswer = async () => ({
   status: 200,
   url: `${HIROBA}/mypage_top.php`,
@@ -74,7 +59,6 @@ export const myPageAnswer = async () => ({
   data: nativeBase64(MY_PAGE),
 });
 
-/** A signed-in flag in memory, in place of the page's localStorage. */
 export function memoryFlag(initial = false) {
   let value = initial;
   return {

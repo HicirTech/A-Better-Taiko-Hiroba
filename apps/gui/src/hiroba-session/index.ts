@@ -1,7 +1,8 @@
-/**
- * The Hiroba session as the app sees it, shared by both shells: where a sign-in stands, the read,
- * and the writes, which every build may send. Nothing here holds or sees the session cookie.
- */
+// The Hiroba session as both shells see it. Nothing here holds or sees the session cookie.
+
+export { changeCostume } from "./change-costume";
+export { changeName } from "./change-name";
+export { changeTitle } from "./change-title";
 export {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
@@ -10,9 +11,6 @@ export {
   myPageUrl,
   SESSION_COOKIE_NAME,
 } from "./endpoints";
-export { changeCostume } from "./change-costume";
-export { changeName } from "./change-name";
-export { changeTitle } from "./change-title";
 export {
   encodeForm,
   FORM_CONTENT_TYPE,
@@ -24,15 +22,6 @@ export { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 export { openCostumeEditor } from "./open-costume-editor";
 export { openTitleEditor } from "./open-title-editor";
 export {
-  createMemoryPictureStore,
-  PICTURE_EPOCH,
-  PICTURE_STORE_CAPS,
-  type PictureKey,
-  type PictureStore,
-  type PictureStoreCaps,
-  pictureKeyPath,
-} from "./picture-store";
-export {
   type MedalPlateSource,
   type MyDonSource,
   type NoPictureSource,
@@ -41,6 +30,15 @@ export {
   type ScorePanelSource,
   type TitlePlateSource,
 } from "./picture-sources";
+export {
+  createMemoryPictureStore,
+  PICTURE_EPOCH,
+  PICTURE_STORE_CAPS,
+  type PictureKey,
+  type PictureStore,
+  type PictureStoreCaps,
+  pictureKeyPath,
+} from "./picture-store";
 export { previewCostume, previewUrl } from "./preview-costume";
 export { queuePort } from "./queue-port";
 export {

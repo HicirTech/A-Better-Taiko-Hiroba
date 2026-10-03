@@ -1,9 +1,7 @@
-/** Hiroba's daily break, 05:00 to 07:00 JST, at its edges. */
 import { describe, expect, test } from "bun:test";
 
 import { inMaintenance } from "../src/index";
 
-/** A moment given in JST, as UTC. */
 const jst = (time: string) => new Date(`2026-09-27T${time}+09:00`);
 
 describe("inMaintenance", () => {

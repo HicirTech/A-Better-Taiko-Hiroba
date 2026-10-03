@@ -48,7 +48,6 @@ type Screen =
   | { readonly name: "profile"; readonly profile: ProfileView }
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
-/** What each way a sign-in can end without a session says on the start screen. */
 const SIGN_IN_NOTICE = {
   cancelled: "signIn.cancelled",
   noSession: "signIn.noSession",
@@ -59,43 +58,24 @@ const SIGN_IN_NOTICE = {
 export interface AppProps {
   readonly port: HirobaSessionPort;
   readonly i18n: Translator;
-  /** The page the navigation shows. */
   readonly page: Page;
   readonly onNavigate: (page: Page) => void;
-  /** Settings' language section, which the window that holds the language draws. */
+  /** Settings' language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
 }
 
-/**
- * The app on each page: signed out, the Overview, Costume, Nickname & title and Favourites show the
- * sign-in card; signed in, the Overview shows the profile, Costume the editor, Nickname & title the
- * editors of the title and the name, and Favourites the favourite songs, the profile and the
- * favourites from the same read. Settings works either way.
- */
 export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
-  /** My page is read behind the page that shows it: nothing else reads or signs out meanwhile. */
   const [refreshing, setRefreshing] = useState(false);
-  /**
-   * The one lane every picture of Hiroba's comes through: one at a time, only what is on screen,
-   * each remembered for the run, and none while a write runs.
-   */
   const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
-  /** The Costume page, signed in: the one place the editor is read. */
   const onEditorPage = page === "costume" && screen.name === "profile";
-  /** The Nickname & title page, signed in: the one place the list of titles is read. */
   const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
-  /** The session ended under the editor: back to signing in, with what happened. */
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
   );
-  /**
-   * The costume editor and the undo, held here so that a draft, a review or an outcome is still
-   * there after a visit to another page. It is read when its page is first shown, never before
-   * (see the first reads below).
-   */
+  // The editors live here so a draft, review or outcome survives a visit to another page.
   const editor = useCostumeEditor({
     port,
     lane,
@@ -103,11 +83,6 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     onSessionGone: sessionGone,
   });
   const { refreshUndo, forget: forgetEditor } = editor;
-  /**
-   * The title's editor and the name's, held here for the same reason. The title list is read when
-   * its page is first shown, never before. The name has nothing to read: a write's read-back is the
-   * name the window's profile shows from then on, with no request.
-   */
   const titleEditor = useTitleEditor({ port, lane, onSessionGone: sessionGone });
   const { refreshUndo: refreshTitleUndo, forget: forgetTitleEditor } = titleEditor;
   const nameRead = useCallback(
@@ -126,18 +101,12 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   });
   const { refreshUndo: refreshNameUndo, forget: forgetNameEditor } = nameEditor;
 
-  /** A save or an undo is on its way, of any kind: nothing else asks Hiroba anything meanwhile. */
   const writing = editor.writing || titleEditor.writing || nameEditor.writing;
-  /**
-   * The first reads. An editor is read when its page is first shown in a session, and never while
-   * a save or an undo of any kind runs: it waits, as a picture does, and starts once the write has
-   * ended, so the page does not rely on the queue in front of Hiroba alone to keep a read out of
-   * a write that is not its own.
-   */
   const { read: readEditor } = editor;
   const { read: readTitles } = titleEditor;
   const editorUnread = editor.step.name === "unread";
   const titlesUnread = titleEditor.step.name === "unread";
+  // A first read waits for any write to end rather than rely on the request queue alone.
   useEffect(() => {
     if (onEditorPage && editorUnread && !writing) {
       void readEditor();
@@ -149,12 +118,8 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     }
   }, [onNameTitlePage, titlesUnread, writing, readTitles]);
 
-  /**
-   * Reads my page, and shows it: whether it came. A read made `behindThePage` is the window's own,
-   * after a title write: the page stays as it is until the profile is in, where a spinner in its
-   * place would unmount it, outcome notice and keyboard focus with it, and the portrait is left as
-   * it was, since a title says nothing of the costume.
-   */
+  // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
+  // portrait alone: a title write does not change the costume.
   const read = useCallback(
     async (behindThePage = false): Promise<boolean> => {
       if (behindThePage) {
@@ -167,11 +132,8 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           ? port.readProfile({ renewsPortrait: false })
           : port.readProfile());
         if (result.ok) {
-          // The plates may have changed with the title, the season or its progress, and the
-          // portrait with a costume changed anywhere: each is asked for again, and what was shown
-          // stays till it comes. The platform says whether the portrait is fetched anew or answered
-          // as kept. The score panel's art, kept for good once it came, is asked for again only if
-          // it did not.
+          // Plates change with the title or season, the portrait with any costume change.
+          // Score-panel art is kept for good once it came, so only its failures are forgotten.
           lane.renew("titlePlate");
           lane.renew("medalPlate");
           if (!behindThePage) {
@@ -195,10 +157,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     [port, lane, refreshUndo, refreshTitleUndo, refreshNameUndo],
   );
 
-  /**
-   * A title write that moved the title, or may have, leaves the window's copy of my page out of
-   * date: the plate shows the old title. It is read again once, behind the page it is on.
-   */
+  // A title write that may have moved the title leaves the plate stale: read my page again.
   const stale = useRef<TitleStep | null>(null);
   const titleStep = titleEditor.step;
   useEffect(() => {
@@ -212,11 +171,8 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     }
   }, [titleStep, read]);
 
-  /**
-   * A sign-in starts the pictures afresh: whoever signs in may be another player, and when Hiroba
-   * ended the last session itself, no sign-out forgot them.
-   */
   const signIn = async () => {
+    // Hiroba may have ended the last session itself, so no sign-out forgot its pictures.
     lane.forget();
     setScreen({ name: "signingIn" });
     const outcome = await port.signIn();
@@ -231,7 +187,6 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     }
   };
 
-  /** Signs out, and shows the sign-in card on the Overview. */
   const signOut = async () => {
     lane.forget();
     await port.signOut();
@@ -239,8 +194,7 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     onNavigate("overview");
   };
 
-  // Whoever signs in next may be another player: nothing of the last session's editor is kept,
-  // however the session ended.
+  // Another player may sign in next: keep nothing of the last session's editors.
   const noSession = screen.name === "signedOut" || screen.name === "signingIn";
   useEffect(() => {
     if (noSession) {
@@ -250,17 +204,10 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
     }
   }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor]);
 
-  /**
-   * A touch-first screen reads again by a pull from the top of the page, not by the Fab, and opens
-   * the Costume page by a long-press on the portrait, not a tap.
-   */
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
-  /** The portrait jumps to the Costume page, which has the editor. */
   const portrait: PortraitAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
 
-  // A session kept from an earlier launch is read once on opening: that is what opening the app
-  // asks for. Once, not per render — StrictMode runs effects twice in development, and a second
-  // run would be a second request to Hiroba.
+  // Once only: StrictMode runs effects twice in development, and a second run asks Hiroba again.
   const opened = useRef(false);
   useEffect(() => {
     if (opened.current) {
@@ -277,19 +224,13 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   }, [port, read]);
 
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
-  /**
-   * Reads again, from the Fab or a pull, as the read on opening does: the editor on the Costume
-   * page, my page and then the list of titles on the Nickname & title page (the name lives on my page,
-   * the titles on their own), my page on any other. Never while a read runs, nor while a save or an
-   * undo runs, so no read starts inside a write. The ref turns away a second ask that lands before
-   * the Fab is shut.
-   */
   const canReadAgain =
     signedIn &&
     !writing &&
     !refreshing &&
     (!onEditorPage || editor.canRead) &&
     (!onNameTitlePage || titleEditor.canRead);
+  // Turns away a second ask that lands before the Fab is shut.
   const readAgainStarted = useRef(false);
   const readAgain = async () => {
     if (!canReadAgain || readAgainStarted.current) {
@@ -308,7 +249,6 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   };
   return (
     <>
-      {/* On the pages a read shows, from the first read on, spinning while one runs. */}
       {page !== "settings" && (signedIn || screen.name === "reading") && (
         <>
           <FrameCorner>
@@ -458,10 +398,6 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   );
 }
 
-/**
- * The identity card, drawn as Hiroba's my page draws its header (OverviewHeader): the portrait,
- * which jumps to the Costume page, the title plate and the score panel.
- */
 function ProfileCard({
   profile,
   lane,

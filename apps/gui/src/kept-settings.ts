@@ -1,10 +1,3 @@
-/**
- * The settings the window keeps on this device, in the app page's localStorage: the language picked
- * and the page last shown. Each is a convenience, so a store that cannot be used costs only the
- * memory of it: the setting still holds for the run.
- */
-
-/** The page's storage, or nothing where the page may not use it. */
 export function pageStorage(): Storage | undefined {
   try {
     return globalThis.localStorage;
@@ -13,10 +6,6 @@ export function pageStorage(): Storage | undefined {
   }
 }
 
-/**
- * The setting kept under `key`, or null when none is, when it is not one `isValue` takes, or when
- * it cannot be read.
- */
 export function keptSetting<T>(
   key: string,
   isValue: (value: unknown) => value is T,
@@ -30,7 +19,6 @@ export function keptSetting<T>(
   }
 }
 
-/** Keeps a setting for the next launch. One that cannot be kept holds for this run alone. */
 export function keepSetting(
   key: string,
   value: string,
@@ -43,14 +31,10 @@ export function keepSetting(
   }
 }
 
-/**
- * Forgets a setting, so the next launch takes its default again. One that cannot be forgotten
- * comes back at the next launch; the default holds for this run.
- */
 export function forgetSetting(key: string, storage: Storage | undefined = pageStorage()): void {
   try {
     storage?.removeItem(key);
   } catch {
-    // A store that refuses: nothing more can be done about it from here.
+    // A store that refuses: the setting comes back at the next launch.
   }
 }

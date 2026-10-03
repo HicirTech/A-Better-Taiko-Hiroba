@@ -4,26 +4,15 @@ import { Box, Typography } from "@mui/material";
 import { VISUALLY_HIDDEN } from "./hiroba-px";
 import { sharesOf } from "./shares";
 
-/** One count of a block. */
 export interface ShareItem {
   /** The id of its count, the text for screen readers: rank-8, crowns-silver. */
   readonly id: string;
-  /** Its name as the legend writes it. */
   readonly name: string;
   readonly count: number;
   /** A CSS background for its dot and its part of the bar: a colour, or a gradient. */
   readonly colour: string;
 }
 
-/**
- * One block drawn as GitHub's "Languages" box draws one: a heading, one thin bar split by share, in
- * the items' order with a hairline gap between the parts, and a legend that wraps, each item a dot,
- * its name and its percent. Every item is listed, 0% included; only those above 0 take a part of
- * the bar. A block that sums to 0 shows an empty track.
- *
- * The raw counts are secondary: the title of each item and each part of the bar, and text for
- * screen readers after the percent. The bar is hidden from them, since the legend says the same.
- */
 export function ShareBlock({
   id,
   heading,

@@ -1,16 +1,7 @@
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-/**
- * The session cookie on disk, so a signed-in user stays signed in across launches until they sign
- * out or Hiroba ends the session. This is a personal app, and a Bandai Namco ID sign-in on every
- * launch costs more than a local cookie does.
- *
- * Stored as it is, in the app's own profile folder. Encrypting it with safeStorage was tried and
- * dropped: its key reaches the disk only when Chromium next saves Local State, so an app killed
- * soon after a sign-in left a session no later launch could decrypt. A file that cannot be read
- * reads as no session, and the user signs in again.
- */
+/** The session cookie on disk, so a user stays signed in across launches. */
 export interface SessionStore {
   load(): string | null;
   /** Writes the session, or removes the file for null. */
@@ -41,6 +32,8 @@ export function createSessionStore(path: string): SessionStore {
       }
       const stored: StoredSession = { version: 1, value };
       mkdirSync(dirname(path), { recursive: true });
+      // Not encrypted with safeStorage: its key reaches disk only when Chromium next saves Local
+      // State, so an app killed soon after a sign-in left a session no later launch could decrypt.
       writeFileSync(path, JSON.stringify(stored));
     },
   };

@@ -1,7 +1,3 @@
-/**
- * The queue in front of Hiroba, which both shells use: verbs one at a time, and a write asked for
- * while another is queued or running answered busy rather than queued.
- */
 import { describe, expect, test } from "bun:test";
 
 import { createHirobaQueue } from "../src/hiroba-session";
@@ -56,18 +52,15 @@ describe("createHirobaQueue", () => {
     const undoCostume = queue.oneWriteAtATime(undo.run, "busy");
 
     const reading = queue.oneAtATime(read.run)();
-    // Queued behind the read, not yet running: a second press, and the other write, are busy.
     const first = changeCostume();
     expect(await changeCostume()).toBe("busy");
     expect(await undoCostume()).toBe("busy");
     await read.release();
-    // Running now: still busy.
     await Bun.sleep(0);
     expect(await undoCostume()).toBe("busy");
     await change.release();
     expect(await Promise.all([reading, first])).toEqual(["read", "change"]);
 
-    // Once it has ended, a write runs again.
     const next = undoCostume();
     await undo.release();
     expect(await next).toBe("undo");

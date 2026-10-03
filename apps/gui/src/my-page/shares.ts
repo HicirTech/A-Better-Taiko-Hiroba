@@ -1,4 +1,3 @@
-/** A count's share of its block, as a number and as the locale writes a percent. */
 export interface Share {
   /** 0 to 1. Every item of a block that sums to 0 has a share of 0. */
   readonly share: number;
@@ -6,11 +5,6 @@ export interface Share {
   readonly percent: string;
 }
 
-/**
- * Each item's share of the sum of its block, for a block drawn as GitHub's "Languages" box draws
- * one. Every item keeps its place, an item at 0 included, and a block that sums to 0 gives 0 to
- * each rather than dividing by it.
- */
 export function sharesOf<T extends { readonly count: number }>(
   items: readonly T[],
   locale: string,

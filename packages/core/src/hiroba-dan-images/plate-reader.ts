@@ -10,11 +10,7 @@ import type { DanImageFailure, LabelReading, PlateReading } from "./types";
 /** The dan name sits between the tomoe logo and the stamp; the stamp never reaches into it. */
 const PLATE_NAME_REGION = { x0: 185, x1: 395, y0: 30, y1: 170 } as const;
 
-/**
- * Match thresholds, set from the spread measured across every collected image: on plates a true
- * match never exceeded 0.30 while the nearest wrong one never came under 3.9, and on labels the
- * same figures are 0.18 and 0.74. The limits sit in those gaps with room on both sides.
- */
+/** Thresholds sit in the measured gap between a true match and the nearest wrong template. */
 const PLATE_MAX_DISTANCE = 1.5;
 const PLATE_MIN_SEPARATION = 1.0;
 const LABEL_MAX_DISTANCE = 0.4;
@@ -24,13 +20,7 @@ const LABEL_MIN_SEPARATION = 0.2;
 const LABEL_WIDTH = 96;
 const LABEL_HEIGHT = 40;
 
-/**
- * Reads one dan plate (`imgsrc_dani.php?dan=N`): which dan it names, and how it is stamped.
- *
- * `requestedDan` is what the caller asked the site for. The plate states its own dan in glyphs, so
- * the two are compared: a mismatch means the fetch and the file have come apart, which is worth a
- * failure rather than a plausible-looking answer.
- */
+/** Reads a dan plate: the dan it names and its stamp; a different dan than asked for fails. */
 export function readDanPlate(
   bytes: Uint8Array,
   requestedDan: number,
@@ -68,12 +58,7 @@ export function readDanPlate(
   return ok({ dan: match.key, state: state.value });
 }
 
-/**
- * Reads a my-page label (`imgsrc_danlabel.php`) into the dan it names.
- *
- * One request answers "which dan is this account on", where reading the board takes nineteen. The
- * clear tier is deliberately not read here — see `LabelReading`.
- */
+/** Reads a my-page label into its dan: one request where the board takes nineteen. */
 export function readDanLabel(bytes: Uint8Array): Result<LabelReading, DanImageFailure> {
   let image: ReturnType<typeof decode>;
   try {
@@ -104,14 +89,7 @@ export function readDanLabel(bytes: Uint8Array): Result<LabelReading, DanImageFa
   return ok({ dan: match.key });
 }
 
-/**
- * The current dan, derived: the highest plate carrying a stamp. Null when nothing is passed —
- * a normal state, not a failure.
- *
- * The my-page label shows the same thing and would be a one-request cross-check. The app reads
- * that label for my page with `readDanLabel`, but nothing compares the two answers yet, so where
- * the board is read, this is its only answer, not the corroborated one.
- */
+/** The highest plate carrying a stamp; null when nothing is passed, which is normal. */
 export function highestPassedDan(states: ReadonlyMap<number, DanClearState>): number | null {
   let highest: number | null = null;
   for (const [dan, state] of states) {

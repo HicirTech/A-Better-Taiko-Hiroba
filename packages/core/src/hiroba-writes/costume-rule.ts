@@ -6,7 +6,6 @@ import type { InvalidTarget } from "./types";
 /** A costume slot: 1 is the きぐるみ, 2 to 5 the pieces (あたま, からだ, メイク, ぷちキャラ). */
 export type CostumeSlot = 1 | 2 | 3 | 4 | 5;
 
-/** Each slot's value in the set, slot 1 first. */
 export const COSTUME_SLOT_KEYS = [
   "costume1",
   "costume2",
@@ -26,11 +25,7 @@ const SLOT_KEY: Readonly<Record<CostumeSlot, (typeof COSTUME_SLOT_KEYS)[number]>
 const PIECE_KEYS = ["costume2", "costume3", "costume4", "costume5"] as const;
 const COLOUR_KEYS = ["colorBody", "colorLimb", "colorFace"] as const;
 
-/**
- * One pick in the editor, by the site's own rule for it (`$.checkCostumes`, mydon.js): a きぐるみ
- * empties the four pieces, and a piece takes the きぐるみ off. 0 empties the slot and nothing else.
- * This is how a draft is made; what the server does with a body is `costumeAfter`.
- */
+/** One pick by the site's `$.checkCostumes` rule: a きぐるみ empties the pieces, a piece the きぐるみ. */
 export function draftCostumeChange(set: CostumeSet, slot: CostumeSlot, id: number): CostumeSet {
   const next: CostumeSet = { ...set, [SLOT_KEY[slot]]: id };
   if (id === 0) {
@@ -41,22 +36,12 @@ export function draftCostumeChange(set: CostumeSet, slot: CostumeSlot, id: numbe
     : { ...next, costume1: 0 };
 }
 
-/**
- * A target checked before anything is sent, against the server's rule and the page's own lists.
- * Refused, naming the field:
- *
- * - a きぐるみ with any piece beside it. The server keeps the きぐるみ and empties the pieces, so the
- *   body moves nothing and still answers 0, success (write #22): the site's client never sends one,
- *   and neither does this;
- * - a colour the palette does not offer;
- * - an item not owned in its slot — the ids the editor lists for that slot, or 0.
- *
- * A value that is already in its place passes as it is: the server holds it already.
- */
+/** Checks a target against the server's rule and the page's lists, naming the field it refuses. */
 export function checkCostumeTarget(
   editor: Pick<CostumeEditorReading, "state" | "palette" | "slots">,
   target: CostumeSet,
 ): Result<CostumeSet, InvalidTarget> {
+  // The server would keep the きぐるみ, empty the pieces and still answer success: never send it.
   if (target.costume1 !== 0 && PIECE_KEYS.some((key) => target[key] !== 0)) {
     return err({ field: "costume1" });
   }
@@ -76,18 +61,13 @@ export function checkCostumeTarget(
   return ok({ ...target });
 }
 
-/**
- * The set the server leaves after storing `body`: the body, except that a きぐるみ empties the four
- * pieces whatever the body said. The one model the four executed costume writes all fit (a colour
- * alone, a きぐるみ, #22 and the restore, #23); colours are never touched by it.
- */
+/** What the server leaves after storing `body`: a きぐるみ empties the four pieces regardless. */
 export function costumeAfter(body: CostumeSet): CostumeSet {
   return body.costume1 !== 0
     ? { ...body, costume2: 0, costume3: 0, costume4: 0, costume5: 0 }
     : { ...body };
 }
 
-/** Whether two sets hold the same eight values. */
 export function sameCostume(left: CostumeSet, right: CostumeSet): boolean {
   return (
     left.colorBody === right.colorBody &&

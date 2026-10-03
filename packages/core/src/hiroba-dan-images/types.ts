@@ -1,19 +1,11 @@
 import type { DanClearState } from "../hiroba-models";
 
-/** What one plate says: which dan it is, and whether it is stamped. */
 export interface PlateReading {
   readonly dan: number;
   readonly state: DanClearState;
 }
 
-/**
- * What a my-page label says: the highest passed dan.
- *
- * Only the dan. The label's styling does encode the clear tier, but the colour bands of 赤フルコン
- * and 金クリア run close together and only one 赤フルコン label has ever been seen, so guessing
- * from them would be a coin toss dressed as an answer. The plate for that dan states the tier
- * exactly; ask it.
- */
+/** Only the dan: the label's styling hints at the clear tier, but that dan's plate states it. */
 export interface LabelReading {
   readonly dan: number;
 }
@@ -31,18 +23,13 @@ export interface NotAnImageFailure {
   readonly height: number | null;
 }
 
-/**
- * No template matched the glyph closely enough. Carries what the nearest one was, so a named rank
- * arriving on a label — the one gap in the label templates — is recognisable in a log rather than
- * silently mistaken for its nearest neighbour.
- */
+/** No template was close enough; the nearest is kept so an uncovered named rank shows in a log. */
 export interface UnreadableGlyphFailure {
   readonly kind: "unreadableGlyph";
   readonly nearestDan: number | null;
   readonly nearestDistance: number | null;
 }
 
-/** The plate's own name says a different dan than the caller asked for. */
 export interface PlateDanMismatchFailure {
   readonly kind: "plateDanMismatch";
   readonly requestedDan: number;

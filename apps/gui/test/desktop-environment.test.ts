@@ -1,14 +1,8 @@
-/**
- * What the way the desktop app was started decides: in a development run alone. A packaged build
- * takes none of the development variables, whatever its environment says, and nothing here shuts a
- * write, in either.
- */
 import { describe, expect, test } from "bun:test";
 
 import { desktopEnvironment } from "../electron/desktop-environment";
 import { endpointsFromOverrides, HIROBA_ENDPOINTS } from "../src/hiroba-session";
 
-/** Every variable a development run takes, set to a stand-in's value. */
 const DEVELOPMENT = {
   ABTH_DEV_SERVER_URL: "http://localhost:5173",
   ABTH_DEV_HIROBA_ORIGIN: "http://hiroba.test:8807",

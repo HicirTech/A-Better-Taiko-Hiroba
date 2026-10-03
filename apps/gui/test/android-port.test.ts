@@ -1,8 +1,3 @@
-/**
- * Android's platform layer against stand-ins for the in-app browser and the cookie store: how the
- * browser is opened, when a sign-in counts, when the cookie store is wiped, and that a finished
- * sign-in is remembered across launches.
- */
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
@@ -10,8 +5,8 @@ import { medalPlatePng, myDonPng, thumbnailPng, titlePlatePng } from "../scripts
 import {
   CLOSE_LABEL,
   HIROBA,
-  memoryFlag,
   MY_PAGE,
+  memoryFlag,
   myPageAnswer,
   until,
 } from "./android-port-fixtures";
@@ -20,7 +15,6 @@ import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const { createAndroidPort } = await import("../src/platform/android");
 
-/** Starts a sign-in and waits until the in-app browser is open. */
 async function startSignIn(signedInFlag = memoryFlag()) {
   const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL, signedInFlag });
   const outcome = port.signIn();
@@ -262,7 +256,6 @@ describe("createAndroidPort's pictures", () => {
   const MEDAL = { kind: "medalPlate" } as const;
   const MY_DON = { kind: "myDon" } as const;
 
-  /** Answers the editor with the mock's page and a thumbnail with the mock's picture. */
   function answerAsHiroba() {
     const editor = createCostumeEditor();
     native.httpAnswer = async () => {
@@ -392,7 +385,6 @@ describe("createAndroidPort's pictures", () => {
     });
   });
 
-  /** Signs out, then in again through the stand-in's sign-in page. */
   async function signOutAndIn(port: Awaited<ReturnType<typeof createAndroidPort>>) {
     await port.signOut();
     const outcome = port.signIn();
@@ -409,14 +401,12 @@ describe("createAndroidPort's pictures", () => {
     });
     await port.readProfile();
     const plate = await port.readPicture(PLATE);
-    // A later read finds the session good: the plate is the player's own, and kept.
     await port.readProfile();
     await signOutAndIn(port);
     expect(await port.readPicture(PLATE)).toEqual({
       ok: false,
       error: { code: "titlePlate=notRead" },
     });
-    // The same player read again: the plate kept from before, asked of no one.
     await port.readProfile();
     expect(await port.readPicture(PLATE)).toEqual(plate);
     expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
@@ -458,7 +448,6 @@ describe("createAndroidPort's pictures", () => {
     const first = await launch();
     await first.readProfile();
     const plate = await first.readPicture(PLATE);
-    // A later read finds the session good: the plate is the player's own, and kept.
     await first.readProfile();
     await first.openCostumeEditor();
     const thumbnail = await first.readPicture(THUMB);
@@ -526,7 +515,6 @@ describe("createAndroidPort's pictures", () => {
 
   const PORTRAIT = "https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
 
-  /** My page showing the portrait, and a Hiroba that draws it wearing what `wear` was last given. */
   function myDonOnMyPage() {
     const withPortrait = MY_PAGE.replace(
       "<p>太鼓番：000000000000</p></div></div>",
@@ -567,7 +555,6 @@ describe("createAndroidPort's pictures", () => {
     expect(await first.readPicture(MY_DON)).toEqual(before);
     // The address names the taiko number: the platform's alone.
     expect(JSON.stringify(read)).not.toMatch(/mydon|taiko-p/);
-    // Changed elsewhere, then the user's Read again: fetched anew, once.
     wear([12, 12, 3, 0, 0, 68, 0, 0]);
     await first.readProfile();
     const after = await first.readPicture(MY_DON);
@@ -595,7 +582,6 @@ describe("createAndroidPort's pictures", () => {
     const before = await port.readPicture(MY_DON);
     expect(before.ok).toBe(true);
 
-    // The window's own read, after a title write: nothing of the costume is asked for again.
     wear([12, 12, 3, 0, 0, 68, 0, 0]);
     await port.readProfile({ renewsPortrait: false });
     await port.readProfile({ renewsPortrait: false });
@@ -607,7 +593,6 @@ describe("createAndroidPort's pictures", () => {
       `${HIROBA}/mypage_top.php`,
     ]);
 
-    // The user's Read again is the next of its reads: the portrait is fetched anew, once.
     await port.readProfile();
     const after = await port.readPicture(MY_DON);
     expect(after).not.toEqual(before);

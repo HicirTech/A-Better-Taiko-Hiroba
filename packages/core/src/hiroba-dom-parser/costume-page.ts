@@ -5,7 +5,7 @@ import type { ParseFailure } from "./types";
 
 const PAGE = "mypage_kisekae.php";
 
-/** The hidden fields the costume lives in. `0` is a legitimate value — an empty slot. */
+/** The hidden fields the costume lives in; `0` is a valid value (an empty slot). */
 const FIELDS = [
   "color_body",
   "color_limb",
@@ -19,13 +19,7 @@ const FIELDS = [
 
 type FieldName = (typeof FIELDS)[number];
 
-/**
- * Parses `mypage_kisekae.php` into a Costume.
- *
- * `taikoNo` comes from the caller: unlike the profile page, this page never prints the taiko
- * number, so the caller who fetched it is the only one who knows whose costume this is.
- * No default is ever substituted — a value is read from its hidden field or the parse fails.
- */
+/** Parses `mypage_kisekae.php`; `taikoNo` comes from the caller, as the page never prints it. */
 export function parseCostumePage(
   html: string,
   taikoNo: string,

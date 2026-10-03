@@ -3,23 +3,11 @@ import type { NameState } from "../hiroba-models";
 import { err, ok, type Result } from "../operation-results";
 import type { InvalidTarget } from "./types";
 
-/** What both posts carry for a rename: the name as it is now, and the name it is to become. */
 export interface NameBody {
   readonly oldName: string;
   readonly newName: string;
 }
 
-/**
- * The `field` of a refused name, a code the interface words:
- *
- * - `empty`: no name;
- * - `edge`: it starts or ends with white space, of any kind;
- * - `tooLong`: longer than the `maxlength` the form carries;
- * - `control`: it holds a control character, a line or paragraph separator, or half of a
- *   surrogate pair, none of which can be typed into the form;
- * - `closed`: the page says Hiroba is not taking a rename (its flag), and the site then posts
- *   nothing.
- */
 export const NAME_FIELDS = {
   empty: "name.empty",
   edge: "name.edge",
@@ -28,11 +16,7 @@ export const NAME_FIELDS = {
   closed: "name.closed",
 } as const;
 
-/**
- * The length of name the form took on every page captured, a browser's count of UTF-16 code units.
- * The window sizes its field by it; what refuses a name is the form's own, read when a write is
- * made.
- */
+/** The form's `maxlength` on captured pages, for sizing a field; a write checks the form's own. */
 export const NAME_FORM_MAX_LENGTH = 10;
 
 /** Whether two names are one: exactly, as both come from the same page, trimmed. */
@@ -44,17 +28,7 @@ const EDGE_WHITE_SPACE = /^\s|\s$/u;
 /** Control characters (U+0000 to U+001F, U+007F to U+009F), U+2028, U+2029 and a lone surrogate. */
 const UNSENDABLE = /[\p{Cc}\p{Cs}\u{2028}\u{2029}]/u;
 
-/**
- * A name checked before anything is sent. Only what the form itself would not take, or a name
- * that cannot be typed, is refused here; what Hiroba's help page says of a name (hiragana and
- * ー ～ ！ ？, five characters) and what its filter makes of one are its to judge, and
- * `describeName` only advises of the first. Refused, naming the field, in this order: a closed
- * rename, an empty name, white space at either end, a name longer than the form takes, and a
- * character that cannot be sent.
- *
- * The app does not trim for the player: a name with white space at its ends is refused, and the
- * interface trims the field before it builds the target.
- */
+/** Refuses what the form would not take or cannot be typed; help-page rules are Hiroba's call. */
 export function checkNameTarget(
   editor: Pick<RenameEditorReading, "state" | "maxLength" | "rename">,
   target: NameState,
@@ -74,6 +48,7 @@ function refusedField(
   if (name === "") {
     return NAME_FIELDS.empty;
   }
+  // Not trimmed for the player: the interface trims before it builds the target.
   if (EDGE_WHITE_SPACE.test(name)) {
     return NAME_FIELDS.edge;
   }
@@ -83,11 +58,7 @@ function refusedField(
   return UNSENDABLE.test(name) ? NAME_FIELDS.control : null;
 }
 
-/**
- * What the help page says a name may be, and how wide a name is, for the interface to advise with.
- * None of it refuses anything: the page's words are Hiroba's, and names outside them are on the
- * site (Latin and kanji names among those captured), so nothing here claims Hiroba will refuse one.
- */
+/** For advice only: the help page's words are Hiroba's; names outside them exist on the site. */
 export interface NameAdvice {
   /** The display width: a full-width character counts 2, any other 1. */
   readonly width: number;
@@ -95,7 +66,6 @@ export interface NameAdvice {
   readonly outsideHelpCharset: boolean;
   /** More than five characters, one of them not ASCII: past the help page's five. */
   readonly overFiveCharacters: boolean;
-  /** Wider than ten: no name on the captured pages is, and many are exactly ten. */
   readonly overTenWide: boolean;
 }
 
@@ -108,10 +78,7 @@ const isHelpCharacter = (codePoint: number): boolean =>
   codePoint === 0x309e ||
   HELP_MARKS.includes(codePoint);
 
-/**
- * East Asian wide and full-width characters, as the blocks that hold them: an approximation, enough
- * to advise by. The half-width katakana (U+FF61 to U+FF9F) are not among them.
- */
+/** East Asian wide and full-width blocks, approximately; half-width katakana are not among them. */
 const WIDE_BLOCKS: readonly (readonly [first: number, last: number])[] = [
   [0x1100, 0x115f],
   [0x2e80, 0x303e],
@@ -132,7 +99,6 @@ const WIDE_BLOCKS: readonly (readonly [first: number, last: number])[] = [
 const widthOf = (codePoint: number): number =>
   WIDE_BLOCKS.some(([first, last]) => codePoint >= first && codePoint <= last) ? 2 : 1;
 
-/** The help page's rules and the display width, read off a name, for advice and nothing else. */
 export function describeName(name: string): NameAdvice {
   const codePoints = Array.from(name, (character) => character.codePointAt(0) ?? 0);
   const width = codePoints.reduce((sum, codePoint) => sum + widthOf(codePoint), 0);

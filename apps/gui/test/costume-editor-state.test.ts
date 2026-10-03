@@ -47,7 +47,6 @@ const applied = (before: CostumeSet, after: CostumeSet): WriteOutcomeView => ({
   cross: "unchanged",
 });
 
-/** The steps that hold an editor, built over `state` and, where it has one, a draft over it. */
 const editing = (state = set(), draft = state): EditorStep => ({
   name: "editing",
   editor: editorOf(state),
@@ -71,10 +70,8 @@ const done = (state = set(), outcome = applied(set(), state), asUndo = false): E
   asUndo,
 });
 
-/** Runs `actions` one after the other from `step`. */
 const run = (step: EditorStep, ...actions: EditorAction[]) => actions.reduce(reduceEditor, step);
 
-/** A step known to hold an editor and a draft. */
 function draftOf(step: EditorStep): CostumeSet {
   if (step.name !== "editing" && step.name !== "confirming" && step.name !== "saving") {
     throw new Error(`The ${step.name} step holds no draft`);

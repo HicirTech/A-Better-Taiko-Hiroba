@@ -1,9 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md for why. The excerpt keeps what matters about the
- * real page: the rename form is a dialog at the foot of my page, its token is one of three of the
- * same name, and the flag that says whether a rename is taken sits in a script call that also
- * carries the player's name as a literal.
- */
 import { describe, expect, test } from "bun:test";
 
 import { isErr, isOk, type ParseFailure, parseRenameEditorPage } from "../src/index";
@@ -30,7 +24,6 @@ interface Page {
   readonly noOldName?: boolean;
 }
 
-/** My page, cut down to its header, its details, the script call and the rename dialog. */
 function myPage({
   nameRow = `<div style="height:24px;">サンプルどん</div>`,
   flag = "0",

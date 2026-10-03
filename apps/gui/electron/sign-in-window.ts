@@ -20,17 +20,8 @@ export interface SignInAttempt {
   cancel(): void;
 }
 
-/**
- * Opens Hiroba's own sign-in in a window of its own, on a session that lives only in memory.
- *
- * The partition name has no `persist:` prefix and is new for every attempt, so nothing the sign-in
- * sets reaches the disk and no attempt inherits another's cookies. The window has no preload and
- * may only navigate between Hiroba's origin and the Bandai Namco ID domain on the same scheme; it
- * has no address bar, so a plain-http page on either site is refused rather than shown, and the
- * refusal ends the attempt with the host it was sent to. When the main
- * frame finishes loading index.php, the session cookie is read from that partition, handed back,
- * and the window closes; closing clears the partition either way.
- */
+/** Opens Hiroba's sign-in in a window on an in-memory partition, new for every attempt, so nothing
+ * it sets reaches the disk or the next attempt. It may only navigate between the two sites. */
 export function openSignInWindow(
   parent: BrowserWindow,
   endpoints: HirobaEndpoints,
@@ -62,8 +53,8 @@ export function openSignInWindow(
     };
   });
 
-  // A refused navigation ends the attempt and names the host. Refusing it quietly left the window
-  // sitting on the page it came from, which looked exactly like a button that does nothing.
+  // A refused navigation ends the attempt and names the host: refusing it quietly left the window
+  // on its page, which looked like a button that does nothing.
   const refuse = (event: { preventDefault(): void }, url: string) => {
     event.preventDefault();
     settle({ kind: "refused", host: hostOf(url) });
@@ -119,10 +110,7 @@ function hostOf(url: string): string {
   }
 }
 
-/**
- * Electron cannot destroy a Session, so its contents are cleared instead; the next attempt gets a
- * fresh partition anyway.
- */
+// Electron cannot destroy a Session, so its contents are cleared instead.
 async function forget(signInSession: Session): Promise<void> {
   await Promise.all([
     signInSession.clearStorageData(),

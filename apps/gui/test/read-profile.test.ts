@@ -1,8 +1,3 @@
-/**
- * The one read, against a fake Transport. The page is a hand-written excerpt holding only what
- * parseProfilePage needs; no real account data (see packages/core/test/README.md). The dan label is
- * the mock's, drawn from core's templates.
- */
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 import { encode } from "fast-png";
@@ -23,6 +18,7 @@ const LABEL_URL = "https://hiroba.test/imgsrc_danlabel.php?taiko_no=000000000000
 /** The どんメダル plate's id, a placeholder in the form my page writes: 48 hex digits. */
 const MEDAL_PLATE_ID = "0123456789abcdef0123456789abcdef0123456789abcdef";
 
+/** A hand-written excerpt with only what parseProfilePage needs; no real account data. */
 const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head><body>
 <div id="mydon_area">
   <img src="imgsrc_titleplate.php" style="width: 100%;">
@@ -54,7 +50,6 @@ const MY_PAGE_EXCERPT = `<!doctype html><html><head><meta charset="utf-8"></head
   <ul id="songList"><li><span class="songName">サンプル曲</span></li></ul></div></div>
 </body></html>`;
 
-/** The name row as a dan-less my page writes it: one flat div, no label. */
 const DAN_LESS_EXCERPT = MY_PAGE_EXCERPT.replace(
   '<div><div>サンプルどん</div><div><img src="imgsrc_danlabel.php?taiko_no=000000000000"></div></div>',
   '<div style="height:24px;">サンプルどん</div>',
@@ -64,17 +59,13 @@ const LOGIN_PAGE_EXCERPT = `<html><body><form id="login_form" action="./login_pr
 
 type Answer = Awaited<ReturnType<Transport["send"]>>;
 
-/** A page answered at 200, ending at `url`. */
 const page = (url: string, html: string): Answer =>
   ok({ status: 200, url, headers: {}, body: new TextEncoder().encode(html) });
 
-/** The label request's answer: bytes of a content type, at a status. */
 const labelAnswer = (type: string, body: Uint8Array, status = 200, url = LABEL_URL): Answer =>
   ok({ status, url, headers: { "content-type": type }, body });
 
-/** The mock's 九段 label, as Hiroba serves a label. */
 const NINTH_DAN = labelAnswer("image/png", danLabelPng(14));
-/** The picture a label crosses as: its own bytes, and its size. */
 const labelPicture = (bytes: Uint8Array, width = 96, height = 40) => ({
   src: pngDataUrl(bytes),
   width,
@@ -83,10 +74,6 @@ const labelPicture = (bytes: Uint8Array, width = 96, height = 40) => ({
 /** A view as JSON with every picture's bytes left out: base64 could hold any short string. */
 const withoutPictureBytes = (json: string) => json.replace(/data:[^"]*/g, "data:");
 
-/**
- * Answers the dan label's path with `label` and every other request with `myPage`, and remembers
- * what it was asked.
- */
 function fakeTransport(
   myPage: Answer,
   label: Answer = NINTH_DAN,
@@ -100,7 +87,6 @@ function fakeTransport(
   };
 }
 
-/** A PNG of any size, all transparent. */
 function blankPng(width: number, height: number): Uint8Array {
   return new Uint8Array(
     encode({ width, height, data: new Uint8Array(width * height * 4), channels: 4 }),
@@ -270,7 +256,6 @@ describe("readProfile", () => {
 });
 
 describe("readProfile's dan label", () => {
-  /** The dan a read of my page carries, whatever `label` the label request is answered with. */
   async function danAfter(label: Answer, html = MY_PAGE_EXCERPT) {
     const requests: TransportRequest[] = [];
     const read = await readProfile(

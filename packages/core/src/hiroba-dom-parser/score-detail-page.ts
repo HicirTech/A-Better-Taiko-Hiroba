@@ -16,17 +16,7 @@ import type { ParseFailure } from "./types";
 
 const PAGE = "score_detail.php";
 
-/**
- * The record's count blocks, exactly as the page classes them. Each holds a `<span>` like
- * `933050点` or `3回`.
- *
- * All but `.combo_cnt` repeat further down: the 区間毎詳細成績 blocks repeat `.high_score`,
- * `.good_cnt`, `.ng_cnt`, `.ok_cnt`, `.pound_cnt` and the `crown_large_*` images, one set per
- * section. The main record always precedes them, so every read here takes the first match —
- * collecting all matches, or taking the last, would mix the sections into the record.
- * `.combo_cnt` appears exactly once on each of the six captures that render a detail page,
- * sections or not, so its first match is its only one.
- */
+/** 区間毎詳細成績 blocks repeat most of these after the main record: take the first match. */
 const RECORD_MARKERS = {
   highScore: ".high_score",
   good: ".good_cnt",
@@ -36,14 +26,6 @@ const RECORD_MARKERS = {
   maxCombo: ".combo_cnt",
 } as const;
 
-/**
- * The four play counts, in the same block shape — including the site's own spelling of
- * `dondaful_combo_cnt`. None of them repeats in the section blocks.
- *
- * My page prints all four on every capture. Another player's page printed **none of the four** on
- * the one capture there is — the full-combo and donderful-combo blocks go too, not only the play
- * and clear counts.
- */
 const PLAY_COUNT_MARKERS = {
   stageCount: ".stage_cnt",
   clearCount: ".clear_cnt",
@@ -62,12 +44,9 @@ const PLAY_COUNTS_NOT_PRINTED = {
 } as const;
 
 const OPTION_MARKER = ".optionImage img";
+const SUPPORT_CHART_NOT_SHOWN = null;
 
-/**
- * The link around the My Don, `user_profile.php?taiko_no=<T>`, which names whose chart this is.
- * Present on all six captures that render a detail page at all — five of mine, one of another
- * player's. Nothing on the page names the viewer.
- */
+/** The My Don's profile link, which names whose chart this is. */
 const SUBJECT_MARKER = ".scoreDetailMydonImage a";
 
 /** `crown_large_<N>` above 0. What 0 means is each reader's own question. */
@@ -77,17 +56,7 @@ const CLEARED_CROWNS: Readonly<Record<number, CrownState>> = {
   3: "donderful",
 };
 
-/**
- * Parses one chart's `score_detail.php` into a detail-fidelity Score.
- *
- * A chart the player never touched answers with 未プレイまたは同期中 — known emptiness, so the
- * Score says `record: null` rather than failing. On a played chart, `crown_large_0` with a
- * positive stage count is what `played` looks like: the detail page has no marker of its own for
- * played-but-not-cleared, which is exactly the asymmetry the model's CrownState preserves.
- *
- * This is my page's reader, and it requires everything my page always prints. Another player's
- * page prints less and is `parsePublicScoreDetailPage`'s.
- */
+/** Parses my own `score_detail.php`; an untouched chart (未プレイまたは同期中) has `record: null`. */
 export function parseScoreDetailPage(
   html: string,
   taikoNo: string,
@@ -139,37 +108,7 @@ export function parseScoreDetailPage(
   });
 }
 
-/**
- * Parses another player's `score_detail.php?taiko_no=T&song_no=S&level=L` — the page a ranking
- * row's `.rankingDetailMore` link opens.
- *
- * **One capture, of one player**, and that player is the one open profile in the corpus that hides
- * its score panel. So everything this reader treats as optional is optional because that one page
- * lacked it, not because the site is known to withhold it:
- *
- * - **The four play counts.** That page printed none of them. Where the page prints them they are
- *   read, and required as a set; where it prints none they are null, never 0.
- * - **The 区間毎詳細成績 sections.** That page had none, and neither do three of my five captures.
- *   Neither reader asks for them.
- *
- * Everything else is required exactly as `parseScoreDetailPage` requires it, so the two readers do
- * not collapse into one that is lenient for both.
- *
- * With no play count to consult, `crown_large_0` reads as `played`: on this template a never-played
- * chart serves no crown image at all (measured on my page, one capture), and `crown_large_0` has
- * only ever been served for a played chart (two of mine). **That is an inference for another
- * player's page**, where `crown_large_0` has never been seen. Their never-played chart has never
- * been captured either, so such a page is refused on the missing crown rather than guessed at.
- *
- * **Play options may not be what the player used.** That capture's four option slots are all blank,
- * which decodes as 1× with nothing on — and is also what a page hiding another player's options
- * would look like. No played chart of mine has ever shown four blanks, so one capture cannot tell
- * the two apart.
- *
- * `taikoNo`, `songNo` and `level` are what was requested; a ranking row's link carries all three.
- * The page names its subject, and a different one is refused. A closed profile answers the site's
- * error page, which `parsePage` refuses as `siteError` before anything here is read.
- */
+/** Parses another player's `score_detail.php`, where the four play counts may be absent. */
 export function parsePublicScoreDetailPage(
   html: string,
   taikoNo: string,
@@ -215,6 +154,7 @@ export function parsePublicScoreDetailPage(
     return options;
   }
 
+  // No play counts: read crown_large_0 as played, as a never-played chart has no crown image.
   const zeroCrown: CrownState =
     playCounts.value === null ? "played" : playedOrNone(playCounts.value.stageCount);
   return ok({
@@ -233,12 +173,7 @@ export function parsePublicScoreDetailPage(
   });
 }
 
-/**
- * The four play counts where the page prints them, or null where it prints none of them.
- *
- * Whole or not at all. A page printing some of the four and not the others is a shape nobody has
- * seen, so it fails naming the first one missing — exactly what my page's reader says about it.
- */
+/** Null when the page prints none of the four play counts; a partial set fails. */
 function readPlayCountsIfPrinted(root: HTMLElement): Result<PlayCounts | null, ParseFailure> {
   const printed = Object.values(PLAY_COUNT_MARKERS).some(
     (marker) => root.querySelector(marker) !== null,
@@ -246,10 +181,7 @@ function readPlayCountsIfPrinted(root: HTMLElement): Result<PlayCounts | null, P
   return printed ? readCounts(root, PLAY_COUNT_MARKERS) : ok(null);
 }
 
-/**
- * The main crown's `crown_large_<N>` number and the rank image's. Both are the first match in the
- * page: the section crowns share the image family and come later.
- */
+/** Both are the first match: the section crowns share the image family and come later. */
 function readCrownAndRank(
   root: HTMLElement,
 ): Result<{ readonly crownStatus: number; readonly scoreRank: ScoreRank | null }, ParseFailure> {
@@ -283,7 +215,6 @@ function readCrownAndRank(
   return ok({ crownStatus, scoreRank: scoreRank as ScoreRank | null });
 }
 
-/** Reads each named block's first match, or fails naming the block that is missing or unreadable. */
 function readCounts<Field extends string>(
   root: HTMLElement,
   markers: Readonly<Record<Field, string>>,
@@ -305,14 +236,10 @@ function readCounts<Field extends string>(
   return ok(counts as Record<Field, number>);
 }
 
-/**
- * Blanks pad the unused slots, and this page never shows サポート譜面 — only the recent-plays page
- * can know it.
- */
 function readOptions(root: HTMLElement): Result<PlayOptions, ParseFailure> {
   return decodePlayOptions(
     root.querySelectorAll(OPTION_MARKER).map((img) => img.getAttribute("src") ?? ""),
-    null,
+    SUPPORT_CHART_NOT_SHOWN,
     PAGE,
     OPTION_MARKER,
   );

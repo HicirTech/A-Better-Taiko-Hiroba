@@ -12,10 +12,7 @@ const TIMEOUT_MS = 20_000;
 /** Chrome's own limit. */
 const MAX_REDIRECTS = 20;
 const REDIRECT_STATUSES: ReadonlySet<number> = new Set([301, 302, 303, 307, 308]);
-/**
- * Names a caller may not set: the session and the browser identity belong to this transport, and
- * so does the type of the body it encodes.
- */
+/** The session, browser identity and body type belong to this transport; a caller's are dropped. */
 const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent", "content-type"]);
 
 /** Where the desktop keeps the session: main-process memory, behind these two calls. */
@@ -35,23 +32,11 @@ export interface HirobaTransportOptions {
   readonly now?: () => number;
 }
 
-/**
- * The desktop's Transport, and the only code on the desktop that puts the session on a request.
- *
- * Node's own fetch (undici) in Electron's main process, which has no cookie jar and writes nothing
- * to disk. Redirects are followed here, one hop at a time (`redirect: "manual"`), so that each hop
- * decides for itself whether it goes to Hiroba's origin and gets the cookie, and so that a new
- * `_token_v2` Hiroba sets on any hop is taken up the way a browser would. `set-cookie` never
- * leaves this function.
- *
- * A post is sent once. Its form goes on the first hop only, encoded in the order given; a 301, 302
- * or 303 after it is followed with a bodyless GET, as a browser does, and a 307 or 308, which asks
- * for the post again, is handed back rather than followed.
- *
- * Electron's net.fetch is not used: it reports an empty `url` after a redirect, and its session
- * cookie jar overrides an explicit Cookie header.
- */
+/** The desktop's Transport, and the only desktop code that puts the session on a request. Redirects
+ * are followed hop by hop, so each hop decides whether it goes to Hiroba and gets the cookie. */
 export function createHirobaTransport(options: HirobaTransportOptions): Transport {
+  // Node's fetch, not Electron's net.fetch: that one reports an empty `url` after a redirect, and
+  // its session cookie jar overrides an explicit Cookie header.
   const fetchHop = options.fetch ?? ((url: string, init: RequestInit) => fetch(url, init));
   const now = options.now ?? Date.now;
   return {
@@ -135,11 +120,8 @@ export function createHirobaTransport(options: HirobaTransportOptions): Transpor
   };
 }
 
-/**
- * A browser's rules, cut down to the one cookie: an empty value, a Max-Age of zero or less, or an
- * Expires in the past ends the session; any other value replaces it. Max-Age wins over Expires
- * (RFC 6265 §5.3), and a Domain the host does not match is ignored, as a browser ignores it.
- */
+// The browser's rules for one cookie: an empty value, Max-Age <= 0 or a past Expires ends the
+// session. Max-Age wins over Expires (RFC 6265 §5.3); a Domain the host does not match is ignored.
 function takeUpSessionCookie(
   lines: readonly string[],
   host: string,

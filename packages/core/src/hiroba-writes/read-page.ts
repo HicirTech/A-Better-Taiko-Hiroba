@@ -4,12 +4,7 @@ import { describeAnswer } from "./ajax";
 import { landingOf } from "./landing";
 import type { HirobaReadFailure, ReadDeps } from "./types";
 
-/**
- * Reads one of Hiroba's pages for a write, once: `path` relative to Hiroba's origin, the page
- * parsed by `parse`. Where the read ended is looked at before the body: a lost session is answered
- * with the login page at 200, and an unfinished card select would otherwise read as a page that
- * changed shape. A failure carries codes only, never the page's text.
- */
+/** Reads one page for a write, once; a failure carries codes only, never the page's text. */
 export async function readHirobaPage<T>(
   deps: ReadDeps,
   path: string,
@@ -20,6 +15,7 @@ export async function readHirobaPage<T>(
     return err({ kind: sent.error.kind });
   }
   const response = sent.value;
+  // Check where the read ended first: a lost session is answered with the login page at 200.
   switch (landingOf(response.url, deps.hirobaOrigin)) {
     case "login":
       return err({ kind: "loggedOut" });
@@ -49,7 +45,6 @@ export async function readHirobaPage<T>(
   });
 }
 
-/** A failure that means the session is over: the login page, or a card still to be chosen. */
 export function sessionEnded(failure: HirobaReadFailure): boolean {
   return failure.kind === "loggedOut" || failure.kind === "cardSelectUnfinished";
 }

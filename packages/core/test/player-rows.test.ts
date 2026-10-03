@@ -1,8 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md for why. The two row shapes below mirror the real
- * ones: a list row carries a hidden `taiko_no` and a write form, a search row carries neither and
- * wraps its title in whitespace.
- */
 import { describe, expect, test } from "bun:test";
 
 import { isErr, parsePlayerRowsPage } from "../src/index";

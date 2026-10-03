@@ -16,7 +16,6 @@ import type {
   WriteSpec,
 } from "./types";
 
-/** Each way a pre-check can fail to clear a write, as the reason the write stopped. */
 const STOP_REASON = {
   unexpected: "precheckUnexpected",
   rejected: "precheckRejected",
@@ -25,32 +24,7 @@ const STOP_REASON = {
   noAnswer: "precheckNoAnswer",
 } as const satisfies Record<Exclude<PrecheckVerdict, "clear" | "needsConfirmation">, StopReason>;
 
-/**
- * Runs one write the one way every write goes:
- *
- * 1. GET the editor, for a fresh token and the whole set as it is now;
- * 2. check the set is still the one the change was made against, and turn the target into a body
- *    the server will not silently ignore, or refuse it;
- * 3. keep a pending undo record;
- * 4. the pre-check post, where the endpoint has one, which goes on only on the boolean false;
- * 5. the save post, sent exactly once, whatever happens to it;
- * 6. read the whole set back, and judge by what it shows rather than by what the site said.
- *
- * With `crossCheck`, another page is read first — before the editor — and again after the
- * read-back, to see it did not move. First, and not between the editor and the posts: the editor's
- * token has to be the last one the site issued before the posts. A real costume save whose token
- * came from the editor, with my page read in between, answered 705 (更新に失敗しました。
- * 再度画面の読み込みを行ってください。) and changed nothing, although its pre-check had answered false.
- * The likely reading is that rendering a page with a form re-issues the session's token and voids
- * the one before; that is not settled, and this order holds either way.
- * Nothing is retried and nothing loops: every request above is sent at most once,
- * except the read-back, which is also the one GET that settles whether a pre-check that ended on
- * the login page ended the session.
- *
- * No post goes out between 05:00 and 07:00 JST. The clock is looked at before the first request
- * and again just before each post, since the reads before a post can take their full timeout: a
- * write started at 04:59 stops at 05:00 rather than posting into the break.
- */
+/** Runs one write; the outcome comes from the read-back, not from what the site answered. */
 export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   spec: WriteSpec<S, T, B, E, C>,
   input: { readonly expected: S; readonly target: T },
@@ -59,6 +33,8 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   if (inMaintenance(deps.now())) {
     return { kind: "maintenance" };
   }
+  // The cross-check page is read before the editor: the editor's token must be the last one
+  // issued before the posts, or Hiroba answers 705.
   const cross = deps.crossCheck ? spec.cross : undefined;
   const crossBefore = cross === undefined ? null : await cross.read(deps);
   if (crossBefore !== null && isErr(crossBefore)) {
@@ -87,6 +63,7 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   }
 
   if (spec.precheck !== undefined) {
+    // Checked again before each post: the reads before it can take their full timeout.
     if (inMaintenance(deps.now())) {
       return { kind: "maintenance" };
     }
@@ -118,7 +95,7 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   const save = readSave(
     await postAjax(deps.transport, deps.hirobaOrigin, spec.save(editor.value, body.value)),
   );
-  // Always read back, a save that timed out included: it may have been saved all the same.
+  // Sent once, never retried. Always read back: even a timed-out save may have been saved.
   const after = await spec.readBack(deps);
   let crossVerdict: CrossVerdict = "off";
   if (cross !== undefined && crossBefore !== null && isOk(after)) {
@@ -132,7 +109,6 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   return judge(spec, { before, expectedAfter, after, save, cross: crossVerdict });
 }
 
-/** A read before any post failed: a session that is over, or a read that did not arrive. */
 function beforeAnyPost<S>(failure: HirobaReadFailure): WriteOutcome<S> {
   return sessionEnded(failure)
     ? { kind: "sessionGone", writeMayHaveHappened: false }

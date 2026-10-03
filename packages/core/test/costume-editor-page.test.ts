@@ -1,11 +1,9 @@
-/** Excerpts, not captured pages — see README.md for why. */
 import { describe, expect, test } from "bun:test";
 
 import { isErr, isOk, parseCostumeEditorPage } from "../src/index";
 
 const TOKEN = "0123456789abcdef0123456789abcdef";
 
-/** Two swatches, as each colour tab lists them. */
 const PALETTE = `<ul><li class="row clearfix"><ul>
 <li><span class="color" title="0" style="background-color: #F84828;"></span></li>
 <li><span class="color" title="1" style="background-color: #68c0c0;"></span></li>
@@ -14,11 +12,7 @@ const PALETTE = `<ul><li class="row clearfix"><ul>
 const item = (id: number, type: number) =>
   `<li><a name="${id}"><img src="image/sp/640/ajax-loader_640.gif" srctmp="imgsrc_kisekae.php?cos=${id}&type=${type}"></a></li>`;
 
-/**
- * The page's shape, cut down: the form and its token, the def_* twins outside it — sharing the live
- * fields' names, as on the page — three colour tabs and five slot tabs. Item 21 sits in slots 2
- * and 3, as ids repeat across slots on the real page.
- */
+/** Cut-down page; item 21 sits in slots 2 and 3, as ids repeat across slots on the real page. */
 const EDITOR_EXCERPT = `<html><body>
 <form id="kisekae" name="kisekae" action="ajax/change_mydon.php" method="post">
   <span class="button purple changeButton">決定</span>
@@ -84,8 +78,7 @@ describe("parseCostumeEditorPage", () => {
   });
 
   test("reads every value by its id, never by a name other inputs share", () => {
-    // The twins share the live fields' names, and here a stray input with one comes first, so a
-    // lookup by name would find the wrong one.
+    // The twins share the live fields' names, and a stray input with one comes first.
     const twinsFirst = EDITOR_EXCERPT.replace(
       `<form id="kisekae"`,
       `<input type="hidden" id="stray" name="costume_2" value="99"><form id="kisekae"`,

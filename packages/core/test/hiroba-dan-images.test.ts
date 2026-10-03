@@ -1,10 +1,4 @@
-/**
- * The real plates are Bandai Namco art and stay out of the repository, so these tests build
- * synthetic images: the same geometry (a 640×198 plate whose stamp is an ink ring around a swirl,
- * a 96×40 RGBA label whose glyph is its opaque region), none of the art. What they prove is the
- * reader's behaviour — that shapes are matched, that colours are judged only inside the stamp, and
- * that anything unrecognised is refused instead of rounded to its nearest neighbour.
- */
+// Real plates are Bandai Namco art and stay out of the repository: these images are synthetic.
 import { describe, expect, test } from "bun:test";
 import { decode, encode } from "fast-png";
 
@@ -36,7 +30,6 @@ const KYU_PLATE: Rgb = [250, 225, 160];
 const RED_GLYPH: Rgb = [200, 35, 25];
 const GOLD_GLYPH: Rgb = [230, 175, 40];
 
-/** The template grid for a dan, expanded back into ink fractions. */
 function templateGrid(dan: number, templates: Readonly<Record<number, string>>): Float64Array {
   const template = templates[dan];
   if (template === undefined) {
@@ -45,12 +38,7 @@ function templateGrid(dan: number, templates: Readonly<Record<number, string>>):
   return decodeTemplate(template);
 }
 
-/**
- * Paints a glyph whose measured shape is the template again: each cell gets ink over the fraction
- * of its area the template records, and any cell the template says is non-empty gets at least one
- * pixel — otherwise the ink's bounding box would shrink and the measurement would normalise to a
- * different frame.
- */
+// Every non-empty template cell gets at least one pixel, or the ink's bounding box would shrink.
 function paintTemplate(
   grid: Float64Array,
   x0: number,
@@ -81,10 +69,6 @@ function paintTemplate(
   }
 }
 
-/**
- * Paints a plate carrying the real name shape of `dan`, so the reader has something it can
- * genuinely recognise, plus an optional stamp at the real position.
- */
 function makePlate(
   dan: number,
   background: Rgb,
@@ -144,7 +128,6 @@ function makePlate(
   return new Uint8Array(encode({ width: PLATE_WIDTH, height: PLATE_HEIGHT, data, channels: 3 }));
 }
 
-/** Paints a label whose opaque silhouette is the real shape of `dan`'s name, in any text colour. */
 function makeLabel(dan: number, text: Rgb = [20, 20, 20]): Uint8Array {
   const width = 96;
   const height = 40;
@@ -186,8 +169,7 @@ describe("the templates are well formed", () => {
   });
 
   test("every template is separated from every other by a wide margin", () => {
-    // The reader accepts a match under 1.5 on plates; the nearest pair must sit well beyond that,
-    // or two ranks could be confused by a small rendering difference.
+    // The reader accepts a match under 1.5 on plates, so the nearest pair must sit well past it.
     const dans = Object.keys(PLATE_NAME_TEMPLATES).map(Number);
     let closest = Number.POSITIVE_INFINITY;
     for (const a of dans) {
@@ -327,14 +309,8 @@ describe("readDanPlate", () => {
 });
 
 describe("readDanLabel", () => {
-  /**
-   * A label is 96×40, so a grid cell covers about twelve pixels and a painted glyph can only
-   * express coverage in twelfths. Real labels are drawn glyphs and reproduce their template far
-   * more finely than that, so a synthetic label cannot stand in for one at the reader's threshold.
-   * The contracts are therefore tested where they actually live: colour-independence in the
-   * measurement, identification in the matcher, and here only what the whole path owes regardless
-   * of precision — that it never answers with the wrong dan.
-   */
+  // A 96×40 label gives about twelve pixels a cell, so a painted glyph cannot match a template at
+  // the reader's threshold; only "never the wrong dan" is asserted here.
   test("never mistakes one dan for another, however imprecise the glyph", () => {
     for (let dan = 1; dan <= 15; dan++) {
       const result = readDanLabel(makeLabel(dan));
@@ -378,8 +354,7 @@ describe("readDanLabel", () => {
   });
 
   test("a named rank, which no label template covers, is refused rather than rounded", () => {
-    // Stand-in for a shape the set does not hold: a plate template is a different rendering of a
-    // dan name, so it is exactly the kind of near-miss that must not be forced onto a neighbour.
+    // Stand-in for a shape the label set does not hold (a plate template is another rendering).
     const foreign = templateGrid(17, PLATE_NAME_TEMPLATES);
 
     expect(matchGlyph(foreign, LABEL_TEMPLATES, 0.4, 0.2)).toBeNull();
@@ -425,8 +400,7 @@ describe("highestPassedDan", () => {
 
 describe("classifyStamp", () => {
   test("reports the dan it was asked about when a stamp makes no sense", () => {
-    // A stamp-shaped ink ring with a colourless middle: structure says stamped, colour says
-    // nothing, so the reader must refuse rather than pick a tier.
+    // A stamp-shaped ring with a colourless middle: stamped by structure, no tier by colour.
     const result = classifyStamp(makePlate(9, TEAL_PLATE, [128, 128, 128]), 9);
 
     if (!isErr(result)) {

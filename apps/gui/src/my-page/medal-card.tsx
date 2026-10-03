@@ -7,23 +7,17 @@ import { HIROBA_LANG } from "../language/show-language";
 import type { PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant, ProfileView } from "../session-port";
-import { HIROBA_BLOCK, hirobaPx, ONE_LINE, VISUALLY_HIDDEN } from "./hiroba-px";
+import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, ONE_LINE, VISUALLY_HIDDEN } from "./hiroba-px";
 
-/** Hiroba's どんメダル block: the plate is 290 pixels wide. */
+// Hiroba's どんメダル block: the plate is 290 pixels wide.
 const PLATE_WIDTH = 290;
-/** Lengths in the plate's pixels. */
 const hp = hirobaPx(PLATE_WIDTH);
-/** The plate's height as Hiroba's block reserves it, kept until the picture gives its own size. */
+// The height Hiroba's block reserves, kept until the picture gives its own size.
 const RESERVED_HEIGHT = 50;
-/** At most half again Hiroba's own size. */
-const MAX_WIDTH = PLATE_WIDTH * 1.5;
-/**
- * The words over the plate are black in either theme, as on Hiroba, and so is the stand-in's pale
- * gold under them, so they read the same with the picture or without it.
- */
+const MAX_WIDTH = PLATE_WIDTH * MAX_BLOCK_SCALE;
+// As on Hiroba, black words over a pale gold that stays pale in either theme.
 const ON_PLATE = "#000";
 const STAND_IN = "#f6e7b4";
-/** The one row of words over the plate, as Hiroba lays it: 12 high, its top 11 below the plate's. */
 const ON_ROW = {
   position: "absolute",
   top: hp(11),
@@ -41,17 +35,7 @@ export interface MedalCardProps {
   readonly i18n: Translator;
 }
 
-/**
- * The どんメダル plate in each of its four states, none of them an error: no plate, a count, a set
- * that is done, and a plate this version cannot read. The card stays in its place in all four, and
- * an unreadable plate costs this card alone, never the rest of the page.
- *
- * A count and a set that is done are drawn as my page draws them, the season's name and the count
- * or COMPLETE over Hiroba's own plate. No plate, and a plate this version cannot read, are words
- * alone, as before, and ask for no picture.
- *
- * The plate's name is the site's own text and is shown as written; nothing reads a season out of it.
- */
+/** The plate's name is the site's own text, shown as written: nothing reads a season out of it. */
 export function MedalCard({ medal, lane, i18n }: MedalCardProps) {
   const { t } = i18n;
   const progress = medal?.progress;
@@ -101,14 +85,6 @@ interface MedalPlateProps {
   readonly i18n: Translator;
 }
 
-/**
- * The plate as my page draws it: Hiroba's picture, as a data: URL, with the name and the count or
- * COMPLETE laid over it as text, where Hiroba lays its HTML. Until the picture comes, or if it does
- * not, a plain pale gold pill of the same geometry stands in, and the words read as they do over
- * the picture; one that does not come says so under it, with its code.
- *
- * The count is drawn as the number alone, as on Hiroba, and named in full for screen readers.
- */
 function MedalPlate({ name, progress, lane, i18n }: MedalPlateProps) {
   const { t, number } = i18n;
   const plateBox = useRef<HTMLDivElement>(null);

@@ -8,11 +8,7 @@ export function err<E>(error: E): Err<E> {
   return { ok: false, error };
 }
 
-/**
- * The two guards exist so a caller can narrow a result without reading `.ok` directly. Keeping the
- * discriminant behind a function leaves room to change how a result is represented later without
- * touching every call site.
- */
+/** The guards keep the discriminant behind a function, so the representation can change later. */
 export function isOk<T, E>(result: Result<T, E>): result is Ok<T> {
   return result.ok;
 }

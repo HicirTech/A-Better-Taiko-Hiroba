@@ -1,8 +1,3 @@
-/**
- * The core's ajax post over the real Android transport and the fake native client: each kind of
- * answer a write meets is read as the same kind it is on the desktop, and a whole costume write
- * reaches the mock's editor as the site's own script would send it.
- */
 import { beforeEach, describe, expect, test } from "bun:test";
 import { changeCostume, postAjax } from "@abth/core";
 
@@ -30,7 +25,6 @@ const POST = {
   ],
 } as const;
 
-/** An answer as Capacitor gives one, for a test to queue. */
 const answer =
   (status: number, headers: Record<string, string>, data: unknown = "", url = SAVE_URL) =>
   async (): Promise<NativeHttpAnswer> => ({ status, url, headers, data });

@@ -9,24 +9,13 @@ import { currentOptions, filterTitles, repeatedOptions } from "./title-options";
 
 export interface TitlePickerProps {
   readonly options: readonly TitleOption[];
-  /** The title picked, or null while none is. */
   readonly picked: TitleOption | null;
-  /** The title worn, whose option or options carry a "Current" chip. */
   readonly worn: TitleState;
-  /** A write is on its way: nothing is picked meanwhile. */
   readonly busy: boolean;
   readonly onPick: (option: TitleOption | null) => void;
   readonly i18n: Translator;
 }
 
-/**
- * The titles the account owns, to pick one from: a box that searches them as it is typed in (the
- * list is long), each option written as Hiroba writes it. The option or options that read as the
- * title worn are marked Current; a name that two or more titles have is told apart by its number,
- * and no other is shown one, as Hiroba shows none. An option is keyed by its id: MUI keys it by its
- * label otherwise, and two titles of one name would get one key, which leaves stray rows in the list
- * once it is searched.
- */
 export function TitlePicker({ options, picked, worn, busy, onPick, i18n }: TitlePickerProps) {
   const { t } = i18n;
   const current = useMemo(() => currentOptions(options, worn), [options, worn]);
@@ -39,6 +28,8 @@ export function TitlePicker({ options, picked, worn, busy, onPick, i18n }: Title
       disabled={busy}
       onChange={(_event, option) => onPick(option)}
       getOptionLabel={(option) => option.label}
+      // Keyed by id: MUI keys by label otherwise, so two titles of one name would share a key and
+      // leave stray rows once the list is searched.
       getOptionKey={(option) => option.id}
       isOptionEqualToValue={(option, value) => option.id === value.id}
       filterOptions={(all, { inputValue }) => [...filterTitles(all, inputValue)]}

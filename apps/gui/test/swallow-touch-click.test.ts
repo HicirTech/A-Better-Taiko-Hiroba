@@ -1,7 +1,3 @@
-/**
- * The click a lift may make after a long-press that took the window to another page: stopped in
- * the window, against a bare EventTarget for it and timers the test runs by hand.
- */
 import { describe, expect, test } from "bun:test";
 
 import {
@@ -11,11 +7,9 @@ import {
   swallowTouchClick,
 } from "../src/my-page/swallow-touch-click";
 
-/** A pointer event as the browser makes one: of a kind, from a kind of pointer. */
 const pointerEvent = (type: string, pointerType: string) =>
   Object.assign(new Event(type, { cancelable: true }), { pointerType });
 
-/** A window with timers the test runs by hand. */
 function harness() {
   const target = new EventTarget();
   const pending = new Map<number, { readonly run: () => void; readonly at: number }>();
@@ -31,7 +25,6 @@ function harness() {
       pending.delete(timer as number);
     },
   };
-  /** Lets `ms` pass, running each timer that comes due. */
   const pass = (ms: number) => {
     now += ms;
     for (const [id, timer] of [...pending]) {
@@ -41,7 +34,6 @@ function harness() {
       }
     }
   };
-  /** Sends a click from a kind of pointer to the window, and says whether it was stopped there. */
   const clickBy = (pointerType: string) => {
     let propagationStops = 0;
     const click = Object.assign(pointerEvent("click", pointerType), {

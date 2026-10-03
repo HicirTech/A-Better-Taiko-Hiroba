@@ -1,24 +1,8 @@
-/**
- * Glyph templates: the shape of each dan's name, as the site renders it.
- *
- * Each template is a `GLYPH_GRID_WIDTH × GLYPH_GRID_HEIGHT` grid of ink coverage, quantised to
- * one hex digit a cell and read row by row. They are numbers describing a shape, not artwork —
- * the images they were measured from stay out of the repository.
- *
- * Two separate sets, because the site renders the two sizes differently enough that neither can
- * read the other: a 640×198 plate and a 96×40 label never appear in the same place, so they never
- * need to.
- */
-
+/** Templates are ink-coverage grids, one hex digit a cell, row by row: numbers, not artwork. */
 export const GLYPH_GRID_WIDTH = 24;
 export const GLYPH_GRID_HEIGHT = 12;
 
-/**
- * The dan name on a plate, measured from the black glyphs between the tomoe logo and the stamp.
- * The name region is untouched by the 合格 stamp, so one template per dan covers every state.
- * All nineteen ranks are here, the named ranks included — an unstamped plate is fetchable for any
- * dan on any account.
- */
+/** Plate names, from glyphs the 合格 stamp never touches, so one per dan fits all states; all 19. */
 export const PLATE_NAME_TEMPLATES: Readonly<Record<number, string>> = {
   1: "000027bba40003be8004cfb1136bffffff801dd5f69ff9f86ffffc733aa00aacfffe40ec047cf94400000eef85af26f50009ffffc3007ffdb04f4ce12bcffe78fc003fd8f46f22d90afff409fd003f6ef9afc2db003ff10df8007ccfa3eb7ef7006fe36ff5005ffaf4f80ef323bfffffff900dbbdef85ff8dfffeb869ff60d9faffdfeef1775100003720c5b3885d67c",
   2: "740005bdc50003be8004cfb19f78effecf701dd5f69ff9f84ffffef84fd00aacfffe40ec6f6af2db4ff00eef85af26f57f38f2db4ff07ffdb04f4ce18f28f0eeaff03fd8f46f22d98f2ce08ffff03f6ef9afc2db8f8fa08fbff07ccfa3eb7ef77f3738f74ff05ffaf4f80ef35f51bfa9bff00dbbdef85ff81feffffffff00d9faffdfeef06bba8754ba00c5b3885d67c",
@@ -41,14 +25,7 @@ export const PLATE_NAME_TEMPLATES: Readonly<Record<number, string>> = {
   19: "493000cd672000001ee500005ee3beef8860000007fb000009f525bfbdb300000bf800009997dd9dab6200002ff20000eff54db8bf6000008fd1000028e38dfebbb30001effb20000da068cfcda00009fe5fe4000af7a8afa950003ff709fe406fb3ddffa8c100bfe101efe1c36ba74d32301aff70005ffacefdeffffff67ffc00000cfe288117bdddc41bc3000003da",
 };
 
-/**
- * The dan name on a my-page label, measured as the opaque silhouette of the RGBA image. The
- * silhouette is identical whether the text is drawn black, gold or rainbow, so one template per
- * dan replaces one per styling.
- *
- * Only the fifteen numbered ranks are here. A label exists for the named ranks too, but no
- * account holding one has ever been reachable — the player search cannot filter above 十段.
- */
+/** Label names as the RGBA silhouette, the same in any styling; the fifteen numbered ranks only. */
 export const LABEL_TEMPLATES: Readonly<Record<number, string>> = {
   1: "00000244688abdfffffd940000349dfffffffffffffffe8006fffffffffffffffffffff80affffffffffffffffffffff0affffffffd9ffffffffffff6fffffffff50fffffffffff8dfffffffff60ffffffffff90ffffffffffe1efffffffff30dffffffffffadfffffffff703bffffffffffffffffffff50016b98ebfffffeebbbedd90000003aafaa75000000000000",
   2: "01410158688abdfffffd940008fd9cfffffffffffffffe804ffffffffffffffffffffff80affffffffffffffffffffff0bfffffffffbffffffffffff6ffffffffff5fffffffffff8dffffffffff5ffffffffff90fffffffffff5efffffffff30dffffffffff8dfffffffff703affffffffffffffffffff50006bbbfffffffeebbbedd90000003aafaa75000000000000",

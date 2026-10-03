@@ -2,11 +2,8 @@ import { EMPTY_UNDO_SLOT, type UndoSlot } from "@abth/core";
 
 import { UNDO_SET_GUARDS, type WriteKind, type WriteSets } from "../session-port";
 
-/**
- * What a store read back for a player and a kind: the slot, when it is one as the stores write
- * them and everything in it is the player's own; an empty slot for anything else. Both stores read
- * through here, so a file, a database and a test agree on what counts as a slot.
- */
+/** The slot read back for a player and a kind when it is well formed and all the player's own, else
+ * an empty one. Both stores read through here, so they agree on what counts as a slot. */
 export function readSlot<K extends WriteKind>(
   kind: K,
   value: unknown,
@@ -30,7 +27,6 @@ export function isUndoSlot<K extends WriteKind>(
   );
 }
 
-/** Whether everything in the slot is the player's own, as the stores file it. */
 function ownedBy(slot: UndoSlot<unknown>, taikoNo: string): boolean {
   return (
     (slot.record === null || slot.record.taikoNo === taikoNo) &&

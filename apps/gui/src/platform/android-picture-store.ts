@@ -20,21 +20,8 @@ const PICTURES = "pictures";
 const META = "meta";
 const EPOCH_KEY = "epoch";
 
-/**
- * Android's pictures in the app page's IndexedDB, kept across launches and sign-outs for good:
- * each is fetched from Hiroba once. Each record is the checked PNG bytes and nothing else, no URL,
- * header, cookie or taiko number, under pictureKeyPath's hashes.
- *
- * Nothing here deletes a picture but a PICTURE_EPOCH bump: opening the database under a new epoch
- * clears it. What it holds is bounded by what Hiroba has to show, a thumbnail per item and a plate
- * per title, each within its kind's byte limit. The system may still drop the whole database when
- * storage runs short, which costs only fetches.
- *
- * The database is opened in the background, and a store that cannot open it, blocked or refused,
- * keeps this run's pictures in memory instead. A record that cannot be read is a miss, and a
- * picture that cannot be written, past the quota say, is not kept: either way it is fetched again,
- * and nothing throws.
- */
+/** Android's pictures, in the page's IndexedDB across launches and sign-outs; a PICTURE_EPOCH bump
+ * clears them. If it cannot open, this run's pictures stay in memory; nothing throws. */
 export function createIndexedDbPictureStore(factory: DatabaseFactory): PictureStore {
   const opened: Promise<PictureStore> = openPictureDatabase(factory).then(databaseStore, () =>
     createMemoryPictureStore(),
@@ -78,7 +65,6 @@ async function openPictureDatabase(factory: DatabaseFactory): Promise<Database> 
   return database;
 }
 
-/** Clears what an earlier PICTURE_EPOCH kept: none of it is asked for again. */
 function dropOtherEpochs(database: Database): Promise<void> {
   const transaction = database.transaction([PICTURES, META], "readwrite");
   const meta = transaction.objectStore(META);

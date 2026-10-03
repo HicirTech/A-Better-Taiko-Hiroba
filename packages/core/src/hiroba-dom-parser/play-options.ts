@@ -1,13 +1,7 @@
-/**
- * The `status_10_<code>` option vocabulary. Two pages show play options and both encode them the
- * same way, so the codes live here rather than in either parser. Internal to this domain — not in
- * the index.
- */
 import type { PlayOptions, RandomMode } from "../hiroba-models";
 import { err, ok, type Result } from "../operation-results";
 import type { ParseFailure } from "./types";
 
-/** The speed codes, in the site's own order: 1× through 1.9×, then the four fast ones. */
 const SPEED_CODES: Readonly<Record<string, number>> = {
   a10: 1,
   a11: 1.1,
@@ -26,14 +20,7 @@ const SPEED_CODES: Readonly<Record<string, number>> = {
   a5: 4,
 };
 
-/**
- * Decodes one chart's option images. Sources that carry no `status_10` code are the blanks the
- * pages pad their slots with, and are skipped; a code outside the vocabulary is new knowledge, so
- * it fails carrying the src that produced it.
- *
- * `supportChart` is the caller's to supply: only the recent-plays page has a cell for サポート譜面,
- * and null is the model's way of saying this source could not know.
- */
+/** Decodes one chart's option images; `supportChart` is null where the page cannot know it. */
 export function decodePlayOptions(
   sources: readonly string[],
   supportChart: boolean | null,
@@ -47,6 +34,7 @@ export function decodePlayOptions(
 
   for (const src of sources) {
     const code = src.match(/status_10_([a-z0-9]+)_/)?.[1];
+    // Unused slots are padded with blank images that carry no code.
     if (code === undefined) {
       continue;
     }

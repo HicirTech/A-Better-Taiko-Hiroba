@@ -1,8 +1,3 @@
-/**
- * Excerpts, not captured pages — see README.md for why. The shapes below mirror what
- * `user_profile.php` really serves, including the site's `silver_crown_coun` misspelling and the
- * nickname block whose inner structure differs between profiles.
- */
 import { describe, expect, test } from "bun:test";
 
 import { isErr, isOk, parsePublicProfilePage } from "../src/index";
@@ -24,7 +19,7 @@ interface ExcerptOptions {
   withMyPageFavoriteBlock?: boolean;
 }
 
-/** `total_score_image_5.png` plus the ten counts beside it, spelled the way the site spells them. */
+/** `total_score_image_5.png` plus the ten counts beside it, spelled as the site spells them. */
 function panelBlock(): string {
   const ranks = [2, 3, 4, 5, 6, 7, 8]
     .map((rank, index) => `<div class="best_rank_score_${rank} total_panel_display">${index}</div>`)
@@ -130,15 +125,13 @@ describe("parsePublicProfilePage", () => {
 
     expect(profile.visibility).toBe("achievementsHidden");
     expect(profile.summary).toBeNull();
-    // The player is still named and still shows a favourite: this is not a private profile.
     expect(profile.nickname).toBe("サンプルどんだー");
     expect(profile.region).toBe("サンプル県");
     expect(profile.favoriteSong?.title).toBe("サンプル曲アルファ");
   });
 
   test("an open profile with no favourite keeps the block and writes 未設定 in it", () => {
-    // The block does not disappear — it renders one row holding the site's word for "none",
-    // exactly as my page does. Reading that back as a song title is the bug this pins.
+    // The block stays and holds the site's word for "none"; reading that as a title is the bug.
     const profile = parseOrThrow(excerpt({ favoriteTitle: "未設定" }));
 
     expect(profile.visibility).toBe("open");
@@ -152,7 +145,6 @@ describe("parsePublicProfilePage", () => {
     expect(profile.region).toBeNull();
     expect(profile.summary).toBeNull();
     expect(profile.favoriteSong).toBeNull();
-    // What survives: the title, the nickname and the My Don.
     expect(profile.title).toBe("サンプル称号");
     expect(profile.nickname).toBe("サンプルどんだー");
     expect(profile.taikoNo).toBe(TAIKO_NO);

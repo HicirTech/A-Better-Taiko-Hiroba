@@ -8,7 +8,6 @@ import type {
   WriteOutcome,
 } from "./types";
 
-/** Everything a write knows once its save is sent and the set read back. */
 export interface Judged<S> {
   readonly before: S;
   readonly expectedAfter: S;
@@ -17,18 +16,7 @@ export interface Judged<S> {
   readonly cross: CrossVerdict;
 }
 
-/**
- * The verdict on a sent save, by the state first and the site's code second. Hiroba answers 0,
- * success, to saves that moved nothing (the costume set rule, the settings pairs, the unstaged
- * favourite folder), so the code never decides alone:
- *
- * 1. no read-back: the session ended, or the outcome is unknown;
- * 2. the set is where the write meant it to be: applied, unless the cross-checked page moved, or
- *    the endpoint's "saved but not synced" code came with it;
- * 3. the set is where it was: not applied, and the code, read by the endpoint's own table, says
- *    why; unless the cross-checked page moved;
- * 4. anywhere else: diverged.
- */
+/** Judges by the state, not the code: Hiroba answers 0 (success) to saves that moved nothing. */
 export function judge<S>(
   spec: { readonly same: (left: S, right: S) => boolean; readonly codes: SaveCodes },
   { before, expectedAfter, after, save, cross }: Judged<S>,

@@ -6,14 +6,10 @@ import { parsePage, requireMarker } from "./parser";
 import type { CostumeEditorReading, CostumeSwatch, ParseFailure } from "./types";
 
 const PAGE = "mypage_kisekae.php";
-/** The form that writes, and where it posts: the page's identity. */
 const FORM = "form#kisekae";
 const FORM_ACTION = "ajax/change_mydon.php";
 
-/**
- * Each value's field in the form, and its twin outside it. The twins share the live fields' `name`
- * (`costume_1` twice), so both are found by id only.
- */
+/** A field and its saved twin share a `name` (`costume_1` twice), so both are found by id. */
 const FIELDS: readonly (readonly [keyof CostumeSet, string, string])[] = [
   ["colorBody", "color_body", "def_body"],
   ["colorLimb", "color_limb", "def_limb"],
@@ -30,22 +26,6 @@ const SLOT_TABS = ["kigu", "head", "body", "make", "acce"] as const;
 /** The three colour tabs: かお, どう, てあし. Their palettes are the same one, three times. */
 const COLOUR_TABS = ["face", "body", "limb"] as const;
 
-/**
- * Parses `mypage_kisekae.php` as the editor a costume write goes through: the whole set, the token
- * that writes it, the palette, and the items owned in each slot.
- *
- * - The set is read from `form#kisekae`, which must post to `ajax/change_mydon.php`, and must equal
- *   the `def_*` twins outside the form. The page resets the form from those twins, so a form that
- *   differs from them is a choice staged and not saved, and is refused.
- * - The token is the form's own `_tckt`, held as a FormToken. Its shape is the site's business.
- * - Each slot's items are its tab's `a[name]`, each checked against the slot its thumbnail's
- *   `srctmp` names (`type=1..5`): one id can sit in several slots, so an id means something only
- *   with its slot. 0, はずす, is not listed; it is always allowed.
- * - The palette is each colour tab's `span.color`: its id in `title`, its colour in `style`. The
- *   three tabs must agree.
- *
- * Names and thumbnails of the items are not on this page.
- */
 export function parseCostumeEditorPage(html: string): Result<CostumeEditorReading, ParseFailure> {
   const page = parsePage(html, PAGE);
   if (isErr(page)) {
@@ -81,6 +61,7 @@ export function parseCostumeEditorPage(html: string): Result<CostumeEditorReadin
     if (isErr(saved)) {
       return saved;
     }
+    // The page resets the form from the saved twins, so a differing form is an unsaved choice.
     if (live.value !== saved.value) {
       return err({
         kind: "unreadableValue",
@@ -137,7 +118,7 @@ function readNumber(scope: HTMLElement, marker: string): Result<number, ParseFai
     : err({ kind: "unreadableValue", page: PAGE, marker, raw });
 }
 
-/** One slot's owned ids, in page order, each checked against the slot its thumbnail names. */
+/** One slot's owned ids in page order, each checked against its slot: an id can sit in several. */
 function readSlot(root: HTMLElement, tab: string, slot: number): Result<number[], ParseFailure> {
   const marker = `#tab-cos-${tab}`;
   const container = requireMarker(root, marker, PAGE);
@@ -166,7 +147,6 @@ function readSlot(root: HTMLElement, tab: string, slot: number): Result<number[]
   return ok(ids);
 }
 
-/** One colour tab's swatches, in page order. */
 function readPalette(root: HTMLElement, tab: string): Result<CostumeSwatch[], ParseFailure> {
   const marker = `#tab-${tab}`;
   const container = requireMarker(root, marker, PAGE);

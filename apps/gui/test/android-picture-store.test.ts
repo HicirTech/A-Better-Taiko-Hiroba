@@ -1,4 +1,3 @@
-/** Android's pictures in IndexedDB, against a stand-in for the page's IndexedDB. */
 import { describe, expect, test } from "bun:test";
 
 import { PICTURE_EPOCH, type PictureKey } from "../src/hiroba-session";

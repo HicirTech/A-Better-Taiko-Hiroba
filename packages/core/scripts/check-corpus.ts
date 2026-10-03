@@ -1,25 +1,11 @@
-/**
- * Runs every parser over every real captured page, and accounts for every refusal.
- *
- * **This is not part of CI and must not become part of it.** The pages it reads are a real player's
- * account — their taiko number, their nickname, their scores — and they never enter git. CI runs the
- * excerpt tests, which prove a parser matches *what we believed a page looks like*; this proves it
- * matches the page. Three times the first was green while the second was not: the score list's
- * two-l `donderfull`, the detail parser reading the 区間 blocks instead of the main record, and
- * `user_profile.php`'s `silver_crown_coun`.
- *
- *   bun run check:corpus                 # the default corpus location
- *   CORPUS=/some/where bun run check:corpus
- *
- * Exit code is 0 only when every refusal is explained. An unexplained refusal, a reading that kept a
- * field as unrecognised, or a capture no parser claims, fails the run — that is the gate on closing
- * E6.
- */
+// Not for CI: the captures are a real player's account and never enter git. The excerpt tests prove
+// a parser matches what we believed a page looks like; this proves it matches the page.
 import { join } from "node:path";
 import type { Genre, Level } from "../src/index";
 import {
   isErr,
   type ParseFailure,
+  type Profile,
   parseCostumeEditorPage,
   parseCostumePage,
   parseDanBoardPage,
@@ -35,7 +21,6 @@ import {
   parseScoreDetailPage,
   parseScoreListPage,
   parseTitleEditorPage,
-  type Profile,
 } from "../src/index";
 
 /** `ai-context/` sits beside the repository, so this holds on any machine with that layout. */
@@ -43,75 +28,46 @@ const DEFAULT_CORPUS = join(import.meta.dir, "../../../../ai-context/reference/h
 const TAIKO_NO = "000000000000";
 const FETCHED_AT = "2026-01-01T00:00:00.000Z";
 
-/** What a parser did with one capture. */
 interface Outcome {
   readonly file: string;
   readonly parser: string;
   readonly failure: ParseFailure | null;
-  /** Set when a failure is a known property of the page rather than a defect. */
   readonly expected: string | null;
   /** Set when the page parsed but a field of it read as unrecognised: a code naming which. */
   readonly unrecognised: string | null;
-  /** Whatever the reading produced, for the coverage pass. */
   readonly value: unknown;
 }
 
-/**
- * Which parser owns which capture, and which refusals that page is *supposed* to produce.
- *
- * Routing is by filename because the corpus is named after what was fetched. A capture matching no
- * rule is a finding in its own right — either a page nobody parses yet or a naming slip — so the
- * run fails on it rather than skipping it quietly.
- *
- * Every route whose pattern matches runs, not only the first: one page can feed more than one
- * parser — the costume page is both a costume to read and an editor to write through — and each
- * outcome is kept by file and parser. So two patterns that match the same capture are two claims
- * on it, and one that is not meant to must exclude the other's files itself.
- */
+// Routing is by filename, as the corpus is named after what was fetched; every matching route
+// runs, since one page can feed several parsers. A capture no route claims fails the run.
 interface Route {
   readonly match: RegExp;
   readonly parser: string;
   readonly run: (html: string, file: string) => { failure: ParseFailure | null; value: unknown };
-  /**
-   * A refusal this capture is expected to produce, with the reason. Anything else from this route
-   * is unexplained and fails the run. Most routes decide on the filename alone; a route that also
-   * checks the failure's kind says so.
-   */
+  /** The reason a refusal is expected from this capture; any other refusal fails the run. */
   readonly expect?: (file: string, failure: ParseFailure) => string | null;
-  /**
-   * A field this route's reading keeps as unrecognised instead of failing the page on, as a code.
-   * The page parsed, but part of it has a shape nobody has seen, so the run counts it as
-   * unexplained rather than let the degraded field pass quietly.
-   */
+  /** A code for a field kept as unrecognised: the page parsed, but one part has an unseen form. */
   readonly unrecognised?: (value: unknown) => string | null;
 }
 
-/** The genre a score-list capture was fetched for, from its name. */
 function genreOf(file: string): Genre {
   const digit = Number(file.match(/genre(\d)/)?.[1] ?? 1);
   return (digit >= 1 && digit <= 8 ? digit : 1) as Genre;
 }
 
-/** The chart one of my score-detail captures was fetched for, from its name. */
 function chartOf(file: string): [string, Level] {
   const songNo = file.match(/score-detail-(\d+)/)?.[1] ?? "0";
   const level = Number(file.match(/lvl(\d)/)?.[1] ?? 4);
   return [songNo, (level >= 1 && level <= 5 ? level : 4) as Level];
 }
 
-/**
- * The chart another player's detail capture shows, from the page's own ranking link — those files
- * are named after the player, so `chartOf` would read the taiko number as a song number. Falls back
- * like `chartOf` where the page has no link: only the closed-profile shell, which never parses, so
- * the guess never reaches the coverage ledger.
- */
+/** Another player's capture is named after the player, so its chart comes from the page. */
 function chartOnPage(html: string): [string, Level] {
   const link = html.match(/rank_detail\.php\?rank=\d&song_no=(\d+)&level=(\d)/);
   const level = Number(link?.[2] ?? 4);
   return [link?.[1] ?? "0", (level >= 1 && level <= 5 ? level : 4) as Level];
 }
 
-/** A capture's subject: from the filename when it says, otherwise from the page itself. */
 function subjectOf(html: string, file: string): string {
   return file.match(/(\d{12})/)?.[1] ?? html.match(/太鼓番：(\d{12})/)?.[1] ?? TAIKO_NO;
 }
@@ -130,17 +86,14 @@ const CLOSED_PROFILE = "the site's error page — this player has closed their p
 
 const ROUTES: readonly Route[] = [
   {
-    // The corpus is named after what was fetched, so the genre comes from the filename — and a
-    // reading that disagrees with it would be a finding rather than a detail.
+    // The genre comes from the filename; a reading that disagrees would be a finding.
     match: /^score-list-(p\d+-)?genre\d/,
     parser: "parseScoreListPage",
     run: (html, file) => attempt(parseScoreListPage(html, TAIKO_NO, genreOf(file), FETCHED_AT)),
   },
   {
-    // Another player's detail page. The files are named after the player, so the subject comes
-    // from the filename and the chart from the page. My page's route below leaves these files out.
-    // The closed profile is expected as `siteError` and nothing else: any other refusal from it
-    // would be a finding.
+    // Another player's detail page: the subject comes from the filename, the chart from the page.
+    // The closed profile is expected as `siteError` and nothing else.
     match: /^score-detail-\d{12}-/,
     parser: "parsePublicScoreDetailPage",
     run: (html, file) => {
@@ -153,7 +106,6 @@ const ROUTES: readonly Route[] = [
       file.includes("-private") && failure.kind === "siteError" ? CLOSED_PROFILE : null,
   },
   {
-    // My own detail pages: every score-detail capture not named after another player.
     match: /^score-detail-(?!\d{12}-)/,
     parser: "parseScoreDetailPage",
     run: (html, file) => {
@@ -177,20 +129,17 @@ const ROUTES: readonly Route[] = [
     },
   },
   {
-    // The same page again, as the editor a rename goes through: its form is a dialog in my page.
     match: /^(profile|mypage-top)/,
     parser: "parseRenameEditorPage",
     run: (html) => attempt(parseRenameEditorPage(html)),
   },
   {
-    // The subject is in the filename; passing the wrong one would trip the parser's own
-    // fetched-one-player-got-another check, which is the harness lying rather than a finding.
+    // The subject must match the filename: a wrong one trips the parser's own mismatch check.
     match: /^user-profile-/,
     parser: "parsePublicProfilePage",
     run: (html, file) =>
       attempt(
-        // Most captures name their subject; the one that does not (`-p308`) falls back to what the
-        // page prints, which makes the parser's cross-check vacuous for that file alone.
+        // `-p308` names no subject and falls back to the page, so its cross-check is vacuous.
         parsePublicProfilePage(html, subjectOf(html, file), FETCHED_AT),
       ),
   },
@@ -200,14 +149,11 @@ const ROUTES: readonly Route[] = [
     run: (html) => attempt(parseCostumePage(html, TAIKO_NO, FETCHED_AT)),
   },
   {
-    // The same page again, as the editor a costume write goes through.
     match: /^(costume|mypage-kisekae-\d|mypage-kisekae\.)/,
     parser: "parseCostumeEditorPage",
     run: (html) => attempt(parseCostumeEditorPage(html)),
   },
   {
-    // The title page, as the editor a title write goes through. A default parse drops its form (it
-    // has an unclosed div inside), so this route is what shows the page is read at all.
     match: /^title-edit/,
     parser: "parseTitleEditorPage",
     run: (html) => attempt(parseTitleEditorPage(html)),
@@ -242,12 +188,7 @@ const ROUTES: readonly Route[] = [
   },
 ];
 
-/**
- * Captures no parser is meant to claim, and why.
- *
- * Being on this list is a decision, not an oversight — that is the difference between "we have not
- * written that parser" and "nobody noticed this page".
- */
+/** Captures no parser is meant to claim, and why: being listed is a decision, not an oversight. */
 const UNROUTED: readonly { readonly match: RegExp; readonly reason: string }[] = [
   { match: /^logged-out/, reason: "the logged-out page itself — the shape every parser refuses" },
   { match: /^index/, reason: "index.php is the portal, not my page — nothing parses it" },
@@ -363,11 +304,7 @@ function report(
   reportCoverage(parsed);
 }
 
-/**
- * Capture names carry other players' taiko numbers, and this report goes to a terminal and from
- * there into notes and issues. The numbers are public, but they are not ours to repeat, and the
- * lint rule this script is exempted from exists precisely so identifiers do not reach log lines.
- */
+/** Capture names carry other players' taiko numbers; they are public but not ours to repeat. */
 function redact(text: string): string {
   return text.replace(/(?<![0-9])[0-9]{12}(?![0-9])/g, "<taiko-no>");
 }
@@ -391,12 +328,7 @@ function describe(failure: ParseFailure | null): string {
   }
 }
 
-/**
- * Which values of each enumerable field the corpus actually exercised.
- *
- * This is the generated input epic #60 asks for: a parser is not verified by its tests passing but
- * by the range it has been shown, and until now that range was a hand count.
- */
+/** Which values of each enumerable field the corpus exercised: that range verifies a parser. */
 function reportCoverage(parsed: readonly Outcome[]): void {
   const seen = new Map<string, Map<string, number>>();
   const note = (field: string, value: unknown) => {
@@ -448,14 +380,7 @@ function reportCoverage(parsed: readonly Outcome[]): void {
   }
 }
 
-/**
- * The enumerable fields worth counting, and the domain each is declared to have.
- *
- * Declaring the domain is the point: counting what was *seen* only says the corpus is non-empty,
- * while comparing it against what *exists* says which values nobody has ever shown a parser. An
- * empty array means the domain is open — `countLevel` is whatever number the site put on the panel
- * — so those are counted but never reported as short.
- */
+/** The enumerable fields worth counting, each with its declared domain; an empty domain is open. */
 const ENUMERABLE: Readonly<Record<string, readonly (string | number)[]>> = {
   crown: ["none", "played", "silver", "gold", "donderful"],
   scoreRank: [2, 3, 4, 5, 6, 7, 8],
@@ -471,7 +396,6 @@ const ENUMERABLE: Readonly<Record<string, readonly (string | number)[]>> = {
     "goldDonderful",
   ],
   visibility: ["open", "achievementsHidden", "closed"],
-  // My page's flag for a rename, which every capture has had as 0: the report says so.
   rename: ["open", "closed", "unknown"],
   scope: ["japan", "prefecture", "world"],
   // Two unions share this key: a player row's dan state and a dan condition's shape.

@@ -1,4 +1,3 @@
-/** Excerpts, not captured pages — see README.md for why. */
 import { describe, expect, test } from "bun:test";
 
 import { type Costume, isErr, isOk, parseCostumePage } from "../src/index";

@@ -2,7 +2,6 @@ import type { MessageKey } from "@abth/i18n";
 
 import type { ReadFailureKind } from "./session-port";
 
-/** What each way a read can fail says: one `failure.*` key per kind, and a new kind unworded fails. */
 export const FAILURE_MESSAGE = {
   notSignedIn: "failure.notSignedIn",
   loggedOut: "failure.loggedOut",

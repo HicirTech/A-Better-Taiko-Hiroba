@@ -14,8 +14,10 @@ rules are enforced by review; a pull request that breaks one is sent back.
   writing another.
 - **Make behaviour explicit.** Name things for what they do. Give each case a type of its own rather
   than a flag or a null.
-- **Comments say why the code is as it is.** History, dates and who decided what belong in the
-  commit, the pull request or the ticket, not in a comment.
+- **Let the code explain itself.** Names, types and small functions carry the meaning.
+  - A comment is a line or two, kept for what the code cannot say: a constraint from Hiroba or a
+    platform, a workaround, a surprising choice.
+  - History, dates and who decided what belong in the commit, the pull request or the ticket.
 - **Verify in proportion to risk.** A behaviour change comes with a test that fails without it. A
   change to wording or a constant needs none.
 

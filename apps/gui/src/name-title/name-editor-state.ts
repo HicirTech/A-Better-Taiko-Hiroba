@@ -4,18 +4,8 @@ import type { NameState, RenameState, WriteOutcomeView } from "../session-port";
 
 type NameOutcome = WriteOutcomeView<NameState>;
 
-/**
- * The Name section's step. There is nothing to read first: the name is the one my page showed, which
- * the window holds, and the field is the only draft.
- *
- * `typed` is what the player typed, or null while the field is untouched and shows the name worn
- * now, so a name changed elsewhere, or by a write, is the one it shows. Every step keeps it, so a
- * refused name is still in the field after Back.
- *
- * - `idle`: the field; `confirming` and `saving`: the change listed for a last look, and sent.
- * - `undoing`: the undo of the last change is being sent.
- * - `done`: how the last save or undo ended.
- */
+// `typed` is null while the field is untouched and shows the name worn now; every step keeps it,
+// so a refused name is still in the field after Back.
 export type NameStep =
   | { readonly name: "idle"; readonly typed: string | null }
   | {
@@ -38,14 +28,12 @@ export type NameStep =
       readonly asUndo: boolean;
     };
 
-/** The name worn, and whether Hiroba takes a change, as my page last said: what a review is made from. */
 export interface WornName {
   readonly nickname: string;
   readonly rename: RenameState;
 }
 
 export type NameAction =
-  /** The session is over, or another one begins: nothing of the section is kept. */
   | { readonly type: "forget" }
   | { readonly type: "typed"; readonly value: string }
   | { readonly type: "review"; readonly worn: WornName }
@@ -56,12 +44,7 @@ export type NameAction =
 
 export const IDLE: NameStep = { name: "idle", typed: null };
 
-/**
- * What the draft comes to against the name worn. The hard rules are the core's own
- * (`checkNameTarget`): the form's length, a character that cannot be sent, a closed rename; the
- * name is trimmed first, so white space at its ends is never what refuses it. Hiroba's help page is
- * advice (`describeName`), never a rule here.
- */
+// Only the core's checkNameTarget refuses a name; Hiroba's help page is advice, never a rule here.
 export type NameVerdict =
   | { readonly kind: "ok"; readonly target: NameState }
   | { readonly kind: "same" }
@@ -87,7 +70,7 @@ export function judgeName(typed: string | null, worn: WornName): NameVerdict {
   return name === worn.nickname ? { kind: "same" } : { kind: "ok", target: { nickname: name } };
 }
 
-/** The step an action leads to; an action the step cannot take leaves the very same step. */
+/** An action the step cannot take returns the very same step, so the page does not draw again. */
 export function reduceName(step: NameStep, action: NameAction): NameStep {
   switch (action.type) {
     case "forget":
@@ -122,7 +105,6 @@ export function reduceName(step: NameStep, action: NameAction): NameStep {
   }
 }
 
-/** Back from a review keeps the field; back from an outcome keeps it too, unless the name was written. */
 function back(step: NameStep): NameStep {
   switch (step.name) {
     case "confirming":
@@ -134,7 +116,6 @@ function back(step: NameStep): NameStep {
   }
 }
 
-/** A name the write left written, or an undo that put one back, leaves the field showing the name worn. */
 const leavesTheName = (outcome: NameOutcome): boolean =>
   outcome.kind === "applied" || outcome.kind === "appliedNotSynced";
 
@@ -150,15 +131,11 @@ function writeEnded(step: NameStep, outcome: NameOutcome): NameStep {
   };
 }
 
-/** Whether a save or an undo is on its way: nothing else asks Hiroba anything meanwhile. */
 export function isWritingName(step: NameStep): boolean {
   return step.name === "saving" || step.name === "undoing";
 }
 
-/**
- * The name my page would now show, as a write read it back: what to put in the window's copy of
- * the profile, which asks Hiroba nothing. Null for an ending that says nothing of the name.
- */
+/** The name my page would now show, as a write read it back; null when the ending says nothing. */
 export function nameAfter(outcome: NameOutcome): string | null {
   switch (outcome.kind) {
     case "applied":

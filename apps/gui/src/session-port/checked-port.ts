@@ -1,12 +1,8 @@
 import { PORT_ARGUMENTS } from "./arguments";
 import type { HirobaSessionPort } from "./types";
 
-/**
- * The port with every verb's arguments checked before the verb runs, as the desktop's main process
- * checks them for the window. A shell whose window shares the process with the platform layer has no
- * boundary of its own to do it at, so the port is wrapped; a call that fails the check is rejected,
- * as an IPC call is, and the verb never sees it.
- */
+/** The port with every verb's arguments checked before it runs, as the desktop's main process does
+ * for the window. A window in the same process has no boundary: a bad call is rejected like IPC. */
 export function checkedPort(port: HirobaSessionPort): HirobaSessionPort {
   const checked: Partial<
     Record<keyof HirobaSessionPort, (...args: unknown[]) => Promise<unknown>>
