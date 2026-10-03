@@ -39,6 +39,8 @@ const LANGUAGE_USER_DATA = join(root, "out", "e2e-user-data-language");
 /** MUI's md: from this width the app frame shows its side panel. */
 const MD_WIDTH_PX = 900;
 const PHONE = { width: 480, height: 800 } as const;
+const PHONE_TALL = { width: 390, height: 844 } as const;
+const PHONE_SHORT = { width: 390, height: 600 } as const;
 const NOON_JST = "2026-09-27T03:00:00Z";
 const IN_THE_BREAK = "2026-09-26T20:30:00Z";
 rmSync(USER_DATA, { recursive: true, force: true });
@@ -425,12 +427,21 @@ try {
   const KEYS = {
     Enter: { code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
     Escape: { code: "Escape", windowsVirtualKeyCode: 27 },
+    Tab: { code: "Tab", windowsVirtualKeyCode: 9 },
+    ArrowLeft: { code: "ArrowLeft", windowsVirtualKeyCode: 37 },
+    ArrowRight: { code: "ArrowRight", windowsVirtualKeyCode: 39 },
     ArrowDown: { code: "ArrowDown", windowsVirtualKeyCode: 40 },
     " ": { code: "Space", windowsVirtualKeyCode: 32, text: " " },
   } as const;
-  const press = async (key: keyof typeof KEYS) => {
-    await page.send("Input.dispatchKeyEvent", { type: "keyDown", key, ...KEYS[key] });
-    await page.send("Input.dispatchKeyEvent", { type: "keyUp", key, code: KEYS[key].code });
+  const SHIFT_MODIFIER = 8;
+  const press = async (key: keyof typeof KEYS, modifiers = 0) => {
+    await page.send("Input.dispatchKeyEvent", { type: "keyDown", key, modifiers, ...KEYS[key] });
+    await page.send("Input.dispatchKeyEvent", {
+      type: "keyUp",
+      key,
+      code: KEYS[key].code,
+      modifiers,
+    });
   };
   const menuOpened = async () => {
     await page.evaluate(`document.querySelector("#nav-menu").focus()`);
@@ -951,10 +962,10 @@ try {
     const item = START[`costume${slot}`];
     return item === undefined || item === 0 ? [] : [`${slot}/${item}`];
   });
-  const listedThumbs = await thumbsSettled();
-  results.partsListThumbnailsAskedOnceEach =
-    same(listedThumbs.map(({ type, cos }) => `${type}/${cos}`).sort(), wornItems.sort()) &&
-    listedThumbs.every(({ referer }) => referer === `${HIROBA}/mypage_kisekae.php`);
+  const tiledThumbs = await thumbsSettled();
+  results.tileThumbnailsAskedOnceEach =
+    same(tiledThumbs.map(({ type, cos }) => `${type}/${cos}`).sort(), wornItems.sort()) &&
+    tiledThumbs.every(({ referer }) => referer === `${HIROBA}/mypage_kisekae.php`);
 
   const savable = () =>
     page.evaluate<boolean>(`document.querySelector("#costume-save").disabled === false`);
@@ -1077,17 +1088,10 @@ try {
       await click("#costume-reset");
     }
   };
-  /** A part's grid on show, through its group's tab where the window has tabs, else the list. */
-  const showPartOn = async (app: Pick<typeof running, "page" | "click">, part: string) => {
-    const hasTabs = await app.page.evaluate<boolean>(
-      `document.querySelector("#costume-tab-colours") !== null`,
-    );
-    if (hasTabs) {
-      await app.click(`#costume-tab-${part.startsWith("costume") ? "items" : "colours"}`);
-    }
-    await app.click(`#costume-part-${part}`);
-  };
-  const showPart = (part: string) => showPartOn({ page, click }, part);
+  /** A part's grid on show, by a click on its tile. */
+  const showPartOn = (app: Pick<typeof running, "click">, part: string) =>
+    app.click(`#costume-part-${part}`);
+  const showPart = (part: string) => showPartOn({ click }, part);
   const onTheColours = () => showPart("colorFace");
   /** One press of Save: a notice names the outcome, and an applied one has none, so it is told
    * by the set Hiroba holds having moved once the page is editing again. */
@@ -1146,7 +1150,7 @@ try {
   await fetch(`${HIROBA}/__noop-save`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
   const noticeUnderTheButtons = await page.evaluate<boolean>(
-    `(() => { const notice = document.querySelector("#costume-picture-column #write-outcome"); const actions = document.querySelector("#costume-actions"); return notice !== null && actions !== null && notice.getBoundingClientRect().top >= actions.getBoundingClientRect().bottom; })()`,
+    `(() => { const notice = document.querySelector("#costume-aside #write-outcome"); const actions = document.querySelector("#costume-actions"); return notice !== null && actions !== null && notice.getBoundingClientRect().top >= actions.getBoundingClientRect().bottom; })()`,
   );
   results.failedSaveKeepsTheNoticeAndDraft =
     noChange === "notApplied" &&
@@ -1873,18 +1877,21 @@ try {
     number[]
   >;
   const ownedIn = (slot: number) => owned[String(slot)] ?? [];
-  /** The parts list fetched the item the set wears when the page was first shown. */
+  /** The tiles fetched the item the set wears when the page was first shown. */
   const unfetchedIn = (slot: number) =>
     ownedIn(slot).filter((id) => id !== START[`costume${slot}`]);
-  /** Whether `asked` covers the cells wholly on show and nothing past the row after them. */
-  const askedOnlyWhatIsOnShow = async (asked: Thumb[], items: readonly number[]) => {
+  /**
+   * Whether `asked` covers the cells wholly in the window and nothing past the row after them;
+   * `lazy` also wants some of the slot left unasked, as a window too short for it leaves.
+   */
+  const askedOnlyWhatIsOnShow = async (asked: Thumb[], items: readonly number[], lazy: boolean) => {
     const cells = await page.evaluate<{ whole: number[]; upToTheRowAhead: number[] }>(
-      `(() => { const box = document.querySelector("#costume-items-costume1"); const view = box.getBoundingClientRect(); const cells = [...box.querySelectorAll('button[id^="item-costume1-"]')].map((cell) => ({ id: Number(cell.id.replace("item-costume1-", "")), rect: cell.getBoundingClientRect() })); const rowAhead = Math.min(...cells.filter(({ rect }) => rect.top >= view.bottom).map(({ rect }) => rect.top)); return { whole: cells.filter(({ rect }) => rect.top >= view.top && rect.bottom <= view.bottom).map(({ id }) => id), upToTheRowAhead: cells.filter(({ rect }) => rect.top <= rowAhead + 1).map(({ id }) => id) }; })()`,
+      `(() => { const cells = [...document.querySelectorAll('#costume-items-costume1 [id^="item-costume1-"]')].map((cell) => ({ id: Number(cell.id.replace("item-costume1-", "")), rect: cell.getBoundingClientRect() })).filter(({ id }) => id !== 0); const rowAhead = Math.min(...cells.filter(({ rect }) => rect.top >= innerHeight).map(({ rect }) => rect.top)); return { whole: cells.filter(({ rect }) => rect.top >= 0 && rect.bottom <= innerHeight).map(({ id }) => id), upToTheRowAhead: cells.filter(({ rect }) => rect.top <= rowAhead + 1).map(({ id }) => id) }; })()`,
     );
     const ids = asked.map((thumb) => thumb.cos);
     return (
       asked.length > 0 &&
-      asked.length < items.length &&
+      (!lazy || asked.length < items.length) &&
       cells.whole.every((id) => ids.includes(id)) &&
       ids.every((id) => cells.upToTheRowAhead.includes(id)) &&
       new Set(ids).size === asked.length &&
@@ -1908,25 +1915,23 @@ try {
     (await page.evaluate<number>(
       `document.querySelectorAll("#costume-items-costume1 img").length`,
     )) === seen.length;
-  results.thumbnailsOnlyWhenSeen = await askedOnlyWhatIsOnShow(seen, ownedIn(1));
+  results.thumbnailsOnlyWhenSeen = await askedOnlyWhatIsOnShow(seen, ownedIn(1), false);
   await touchEmulated(true);
   await page.evaluate("window.scrollTo(0, 0)");
   const gridBox = await boxOf("#costume-items-costume1");
   const fromGrid = { x: (gridBox.left + gridBox.right) / 2, y: gridBox.top + 10 };
   const pulledOnGrid = { x: fromGrid.x, y: fromGrid.y + 160 };
-  await page.evaluate(`document.querySelector("#costume-items-costume1").scrollTop = 100`);
-  const gridScrolled =
-    (await page.evaluate<number>(`document.querySelector("#costume-items-costume1").scrollTop`)) >
-    0;
+  await page.evaluate("window.scrollTo(0, 100)");
+  const pageScrolled = (await page.evaluate<number>("scrollY")) > 0;
   const editorReadsBeforeGridPull = await editorHits();
   await swipe(fromGrid, pulledOnGrid);
   await Bun.sleep(500);
-  results.pullLeavesAScrolledGridAlone =
-    gridScrolled &&
+  results.pullFromTheGridLeavesAScrolledPageAlone =
+    pageScrolled &&
     (await editorHits()) === editorReadsBeforeGridPull &&
     (await stepOf()) === "editing" &&
     !(await pullIndicator()).shown;
-  await page.evaluate(`document.querySelector("#costume-items-costume1").scrollTop = 0`);
+  await page.evaluate("window.scrollTo(0, 0)");
   const myPageReadsBeforeGridPull = await myPageHits();
   await swipe(fromGrid, pulledOnGrid);
   await waitFor(async () => ((await editorHits()) > editorReadsBeforeGridPull ? true : undefined));
@@ -2074,7 +2079,7 @@ try {
     !(await exists("#costume-back")) &&
     same(
       (await buttonsIn("#costume-actions")).map(({ id }) => id),
-      ["costume-history", "costume-reset", "costume-save"],
+      ["costume-save", "costume-history", "costume-reset"],
     ) &&
     posts.filter((post) => post.path === "/ajax/change_mydon.php").length === 1;
   await goTo("overview");
@@ -2196,21 +2201,21 @@ try {
     (await attribute("#my-don-image", "src")) === myDonBeforeColour;
 
   let kigurumiInfoUnderTheButtons = false;
-  let kigurumiBlanksTheOtherRows = false;
+  let kigurumiBlanksTheOtherTiles = false;
   const kigurumiOutcome = await changeInTheWindow(async () => {
     await showPart("costume1");
     await waitFor(async () => (await exists("#item-costume1-36")) || undefined);
     await click("#item-costume1-36");
     await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
     kigurumiInfoUnderTheButtons = await page.evaluate<boolean>(
-      `(() => { const info = document.querySelector("#costume-picture-column #kigurumi-warning"); const actions = document.querySelector("#costume-actions"); return info !== null && actions !== null && info.getBoundingClientRect().top >= actions.getBoundingClientRect().bottom; })()`,
+      `(() => { const info = document.querySelector("#costume-aside #kigurumi-warning"); const actions = document.querySelector("#costume-actions"); return info !== null && actions !== null && info.getBoundingClientRect().top >= actions.getBoundingClientRect().bottom; })()`,
     );
-    kigurumiBlanksTheOtherRows = await page.evaluate<boolean>(
-      `["costume2", "costume3", "costume4", "costume5"].every((part) => document.querySelector("#costume-pick-" + part + " img") === null && document.querySelector("#costume-pick-" + part).getAttribute("aria-hidden") === "true")`,
+    kigurumiBlanksTheOtherTiles = await page.evaluate<boolean>(
+      `[["costume2", "Head"], ["costume3", "Body"], ["costume4", "Makeup"], ["costume5", "Mini Character"]].every(([part, name]) => document.querySelector("#costume-part-" + part + " img") === null && document.querySelector("#costume-part-" + part).getAttribute("aria-label") === name)`,
     );
   });
   results.kigurumiInfoUnderTheButtons = kigurumiInfoUnderTheButtons;
-  results.kigurumiBlanksTheOtherRowsInTheList = kigurumiBlanksTheOtherRows;
+  results.kigurumiBlanksTheOtherTiles = kigurumiBlanksTheOtherTiles;
   results.kigurumiEmptiesThePieces =
     kigurumiOutcome === "applied" &&
     same(await savedCostume(), {
@@ -2233,157 +2238,291 @@ try {
     page.evaluate<number>(
       `getComputedStyle(document.querySelector(${JSON.stringify(selector)})).gridTemplateColumns.split(" ").length`,
     );
-  const scrolls = () =>
+  const PARTS = [
+    "colorFace",
+    "colorBody",
+    "colorLimb",
+    "costume1",
+    "costume2",
+    "costume3",
+    "costume4",
+    "costume5",
+  ];
+  const NO_BOX: Box = { left: NaN, top: NaN, right: NaN, bottom: NaN, width: NaN, height: NaN };
+  const at = (boxes: Box[], index: number): Box => boxes[index] ?? NO_BOX;
+  const tileBoxes = () => Promise.all(PARTS.map((part) => boxOf(`#costume-part-${part}`)));
+  /** The boxes of the cells on the first row of a grid, left to right. */
+  const firstRowOf = (selector: string) =>
+    page.evaluate<Box[]>(
+      `(() => { const boxes = [...document.querySelectorAll(${JSON.stringify(selector)})].map((cell) => cell.getBoundingClientRect()); return boxes.filter((box) => Math.abs(box.top - boxes[0].top) < 1).map((box) => ({ left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height })); })()`,
+    );
+  const gapsOf = (row: Box[]) => row.slice(1).map((box, index) => box.left - at(row, index).right);
+  /** Boxes in the page that scroll on their own: none, only the page itself scrolls. */
+  const scrollingBoxes = () =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll("#costume-page *")].filter((node) => { const overflow = getComputedStyle(node).overflowY; return (overflow === "auto" || overflow === "scroll") && node.scrollHeight > node.clientHeight + 1; }).map((node) => node.id || node.tagName)`,
+    );
+  const documentScrolls = () =>
     page.evaluate<boolean>("document.documentElement.scrollHeight > innerHeight");
-  await openFreshEditor();
-  const wideFacts = await atSize(1920, 1080, async () => {
-    await waitFor(async () => (await exists("#costume-parts")) || undefined);
-    const columns = {
-      page: await boxOf("#costume-page"),
-      picture: await boxOf("#costume-picture-column"),
-      preview: await boxOf("#costume-preview"),
-      actions: await boxOf("#costume-actions"),
-      parts: await boxOf("#costume-parts"),
-      grid: await boxOf("#costume-grid"),
+  const scrollToTheEnd = async () => {
+    await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)");
+    return page.evaluate<number>("scrollY");
+  };
+  const positionOf = (selector: string) =>
+    page.evaluate<string>(
+      `getComputedStyle(document.querySelector(${JSON.stringify(selector)})).position`,
+    );
+  const backgroundOf = (selector: string) =>
+    page.evaluate<string>(
+      `getComputedStyle(document.querySelector(${JSON.stringify(selector)})).backgroundColor`,
+    );
+  const pictureAt = (selector: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.getAttribute("src") ?? null`,
+    );
+  /** Whether the pick ring is drawn round it: a solid line, about the 3px that pickRing sets. */
+  const ringedOf = (selector: string) =>
+    page.evaluate<boolean>(
+      `(() => { const style = getComputedStyle(document.querySelector(${JSON.stringify(selector)})); return style.outlineStyle === "solid" && parseFloat(style.outlineWidth) >= 2.5; })()`,
+    );
+  const firstCellOf = (grid: string) =>
+    page.evaluate<string>(`document.querySelector(${JSON.stringify(grid)}).firstElementChild.id`);
+  /** The None cell of the Head slot picked, then an item, then Reset: what each leaves on show. */
+  const noneCellInUse = async () => {
+    await showPart("costume2");
+    await waitFor(async () => (await exists("#item-costume2-59 img")) || undefined);
+    const first = await firstCellOf("#costume-items-costume2");
+    const before = await ringedOf("#item-costume2-0");
+    await click("#item-costume2-0");
+    const emptied = {
+      pressed: await pressedOf("#item-costume2-0"),
+      ringed: await ringedOf("#item-costume2-0"),
+      wornRinged: await ringedOf("#item-costume2-21"),
+      tileBlank:
+        !(await exists("#costume-part-costume2 img")) &&
+        (await attribute("#costume-part-costume2", "aria-label")) === "Head",
+      savable: await savable(),
     };
-    const colours = {
-      scrolls: await scrolls(),
-      swatch: (await boxOf("#swatch-colorFace-0")).width,
-      tracks: await tracksOf("#costume-grid > *"),
-      box: await boxOf("#costume-grid > *"),
+    await click("#item-costume2-59");
+    const refilled = {
+      pressed: await pressedOf("#item-costume2-0"),
+      ringed: await ringedOf("#item-costume2-0"),
+      tileShowsIt:
+        (await pictureAt("#costume-part-costume2 img")) ===
+        (await pictureAt("#item-costume2-59 img")),
     };
-    await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
-    const items = {
-      scrolls: await scrolls(),
-      cell: (await boxOf("#item-costume1-4")).width,
-      tracks: await tracksOf("#costume-items-costume1"),
-      scrollButtons: await page.evaluate<number>(
-        `document.querySelectorAll('[aria-label="Scroll up a row"], [aria-label="Scroll down a row"]').length`,
-      ),
-      box: await boxOf("#costume-items-costume1"),
-      remove: await boxOf("#item-costume1-0"),
-    };
-    return {
-      columns,
-      colours,
-      items,
-      buttons: await buttonsIn("#costume-actions"),
-      bar: await exists("#costume-bar"),
-      windowHeight: await page.evaluate<number>("innerHeight"),
-    };
-  });
-  const { columns, buttons: underThePicture } = wideFacts;
-  results.costumeInThreeColumns =
-    near(columns.picture.width, 320) &&
-    near(columns.parts.width, 200) &&
-    columns.picture.right <= columns.parts.left &&
-    columns.parts.right <= columns.grid.left &&
-    columns.grid.right <= columns.page.right + 1 &&
-    [columns.parts, columns.grid].every((box) => near(box.top, columns.picture.top)) &&
-    columns.grid.width > columns.parts.width;
-  results.costumeButtonsUnderThePictureAndNoBottomBar =
-    !wideFacts.bar &&
-    columns.actions.top >= columns.preview.bottom &&
-    same(
-      underThePicture.map(({ id }) => id),
-      ["costume-history", "costume-reset", "costume-save"],
-    ) &&
-    underThePicture.every(
-      ({ left, right }) => left >= columns.picture.left - 1 && right <= columns.picture.right + 1,
-    ) &&
-    (underThePicture[0]?.right ?? 0) <= (underThePicture[1]?.left ?? 0) &&
-    (underThePicture[1]?.right ?? 0) <= (underThePicture[2]?.left ?? 0);
-  results.costumeWideGridFillsTheWindow =
-    !wideFacts.colours.scrolls &&
-    !wideFacts.items.scrolls &&
-    near(columns.grid.bottom, wideFacts.windowHeight - 32) &&
-    near(wideFacts.colours.box.bottom, columns.grid.bottom) &&
-    near(wideFacts.items.remove.bottom, columns.grid.bottom) &&
-    wideFacts.items.remove.top - wideFacts.items.box.bottom < 16 &&
-    wideFacts.colours.swatch > 32 &&
-    wideFacts.colours.tracks > 9 &&
-    wideFacts.items.cell > 44 &&
-    wideFacts.items.tracks > 6 &&
-    wideFacts.items.scrollButtons === 0;
+    await click("#costume-reset");
+    return same(
+      { first, before, emptied, refilled },
+      {
+        first: "item-costume2-0",
+        before: false,
+        emptied: {
+          pressed: "true",
+          ringed: true,
+          wornRinged: false,
+          tileBlank: true,
+          savable: true,
+        },
+        refilled: { pressed: "false", ringed: false, tileShowsIt: true },
+      },
+    );
+  };
+  /** A colour and an item picked in the grid show on their tiles, and Reset takes them back. */
+  const gridPickChangesItsTile = async () => {
+    await showPart("colorFace");
+    const torsoTile = await backgroundOf("#costume-part-colorBody");
+    await click("#swatch-colorFace-9");
+    const faceTileChanged =
+      (await backgroundOf("#costume-part-colorFace")) ===
+        (await backgroundOf("#swatch-colorFace-9")) &&
+      (await backgroundOf("#costume-part-colorBody")) === torsoTile;
+    await showPart("costume3");
+    await waitFor(async () => (await exists("#item-costume3-70 img")) || undefined);
+    await click("#item-costume3-70");
+    const bodyTileShowsTheItem =
+      (await pictureAt("#costume-part-costume3 img")) ===
+      (await pictureAt("#item-costume3-70 img"));
+    await click("#costume-reset");
+    return (
+      faceTileChanged &&
+      bodyTileShowsTheItem &&
+      (await backgroundOf("#costume-part-colorFace")) !==
+        (await backgroundOf("#swatch-colorFace-9")) &&
+      (await pictureAt("#costume-part-costume3 img")) === (await pictureAt("#item-costume3-68 img"))
+    );
+  };
+
   await fetch(`${HIROBA}/__items?many=1`);
   await openFreshEditor();
-  const holdingMoreThanFits = await atSize(1000, 800, async () => {
-    const scrollsInside = (selector: string) =>
-      page.evaluate<boolean>(
-        `(() => { const box = document.querySelector(${JSON.stringify(selector)}); return box.scrollHeight > box.clientHeight + 1; })()`,
-      );
-    await waitFor(async () => (await exists("#swatch-colorFace-0")) || undefined);
-    const colours = {
-      inside: await scrollsInside("#costume-grid > *"),
-      pageScrolls: await scrolls(),
-    };
+  results.costumeTilesNamedPartFirst = same(
+    await page.evaluate<(string | null)[]>(
+      `[...document.querySelectorAll('#costume-aside [role="tab"]')].map((tab) => tab.getAttribute("aria-label"))`,
+    ),
+    [
+      "Face #5",
+      "Torso #12",
+      "Limbs #12",
+      "Mascot",
+      "Head #21",
+      "Body #68",
+      "Makeup #37",
+      "Mini Character #140",
+    ],
+  );
+  const wideAt = (width: number, height: number) =>
+    atSize(width, height, async () => {
+      await waitFor(async () => (await exists("#costume-actions")) || undefined);
+      await waitFor(async () => (await exists("#costume-preview-image")) || undefined);
+      await showPart("colorFace");
+      await waitFor(async () => (await exists("#costume-palette")) || undefined);
+      const palette = {
+        box: await boxOf("#costume-palette"),
+        tracks: await tracksOf("#costume-palette"),
+        row: await firstRowOf('#costume-palette [id^="swatch-colorFace-"]'),
+      };
+      await showPart("costume1");
+      await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+      const items = {
+        box: await boxOf("#costume-items-costume1"),
+        tracks: await tracksOf("#costume-items-costume1"),
+        row: await firstRowOf('#costume-items-costume1 [id^="item-costume1-"]'),
+      };
+      return {
+        aside: await boxOf("#costume-aside"),
+        panel: await boxOf("#costume-grid"),
+        preview: await boxOf("#costume-preview-image"),
+        captions: [await boxOf("#costume-group-colours"), await boxOf("#costume-group-items")],
+        tiles: await tileBoxes(),
+        save: await boxOf("#costume-save"),
+        history: await boxOf("#costume-history"),
+        reset: await boxOf("#costume-reset"),
+        bar: await exists("#costume-bar"),
+        palette,
+        items,
+        scrolling: await scrollingBoxes(),
+      };
+    });
+  type WideFacts = Awaited<ReturnType<typeof wideAt>>;
+  const onDefault = await wideAt(960, 720);
+  const onBig = await wideAt(1920, 1080);
+  const twoColumns = ({ aside, panel, bar }: WideFacts, asideWidth: number) =>
+    near(aside.width, asideWidth) &&
+    near(panel.left - aside.right, 24) &&
+    near(panel.top, aside.top) &&
+    !bar;
+  results.costumeInTwoColumns =
+    twoColumns(onDefault, 232) && twoColumns(onBig, 280) && onDefault.panel.width > 390;
+  const squarePreview = ({ preview, aside }: WideFacts) =>
+    Math.abs(preview.width - preview.height) < 1 && near(preview.width, aside.width);
+  results.costumePreviewIsSquare = squarePreview(onDefault) && squarePreview(onBig);
+  const tilesUnderTheirCaptions = ({ aside, captions, tiles }: WideFacts) => {
+    const colours = tiles.slice(0, 3);
+    const costume = tiles.slice(3);
+    const inARow = (row: Box[]) =>
+      row.every(
+        (box) => near(box.top, at(row, 0).top) && near(box.width, box.height) && box.width > 30,
+      ) && gapsOf(row).every((gap) => near(gap, 6));
+    return (
+      inARow(colours) &&
+      inARow(costume) &&
+      at(captions, 0).bottom <= at(colours, 0).top &&
+      at(colours, 0).bottom <= at(captions, 1).top &&
+      at(captions, 1).bottom <= at(costume, 0).top &&
+      colours.every((box, index) => near(box.left, at(costume, index).left)) &&
+      tiles.every((box) => box.left >= aside.left - 1 && box.right <= aside.right + 1)
+    );
+  };
+  results.costumeTilesInTwoRowsUnderTheirCaptions =
+    tilesUnderTheirCaptions(onDefault) && tilesUnderTheirCaptions(onBig);
+  const buttonsStacked = ({ aside, save, history, reset }: WideFacts) =>
+    near(save.width, aside.width) &&
+    near(save.left, aside.left) &&
+    save.bottom <= history.top &&
+    near(history.top, reset.top) &&
+    history.right <= reset.left &&
+    [save, history, reset].every(
+      (box) => box.left >= aside.left - 1 && box.right <= aside.right + 1 && box.height < 45,
+    );
+  results.costumeButtonsStackedInTheLeftColumn = buttonsStacked(onDefault) && buttonsStacked(onBig);
+  const packedFromTheLeft = ({ box, row }: { box: Box; row: Box[] }) =>
+    row.length > 1 && near(at(row, 0).left, box.left) && gapsOf(row).every((gap) => near(gap, 8));
+  results.costumeGridPackedFromTheLeft = [onDefault, onBig].every(
+    ({ items, palette }) => packedFromTheLeft(items) && packedFromTheLeft(palette),
+  );
+  results.costumeOnlyThePageScrolls = [onDefault, onBig].every(
+    ({ scrolling }) => scrolling.length === 0,
+  );
+  results.costumeGridHoldsMoreColumnsOnABigWindow =
+    onBig.items.tracks > onDefault.items.tracks && onBig.palette.tracks > onDefault.palette.tracks;
+  const stuck = await atSize(960, 720, async () => {
+    await waitFor(async () => (await exists("#costume-actions")) || undefined);
     await showPart("costume1");
     await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
-    const items = {
-      inside: await scrollsInside("#costume-items-costume1"),
-      pageScrolls: await scrolls(),
-    };
-    return { colours, items };
-  });
-  await fetch(`${HIROBA}/__items?many=0`);
-  results.costumeWideGridScrollsInsideItsColumn =
-    holdingMoreThanFits.colours.inside &&
-    holdingMoreThanFits.items.inside &&
-    !holdingMoreThanFits.colours.pageScrolls &&
-    !holdingMoreThanFits.items.pageScrolls;
-
-  const stuck = await atSize(1100, 480, async () => {
-    await showPart("colorFace");
-    await waitFor(async () => (await exists("#swatch-colorFace-0")) || undefined);
     await page.evaluate("window.scrollTo(0, 0)");
-    const before = await boxOf("#costume-picture-column");
-    const gridBefore = await boxOf("#costume-grid");
-    await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)");
-    const scrolledBy = await page.evaluate<number>("scrollY");
-    const afterPage = await boxOf("#costume-picture-column");
-    const gridAfter = await boxOf("#costume-grid");
-    const gridScrolled = await page.evaluate<number>(
-      `(() => { const palette = document.querySelector("#costume-grid > *"); palette.scrollTop = 150; return palette.scrollTop; })()`,
+    const before = await boxOf("#costume-aside");
+    const gridBefore = await boxOf("#costume-items-costume1");
+    const scrolledBy = await scrollToTheEnd();
+    const after = await boxOf("#costume-aside");
+    const gridAfter = await boxOf("#costume-items-costume1");
+    const windowHeight = await page.evaluate<number>("innerHeight");
+    await page.evaluate("window.scrollTo(0, 0)");
+    return { before, after, gridBefore, gridAfter, scrolledBy, windowHeight };
+  });
+  results.costumePageScrollsForMoreItemsThanFit =
+    stuck.gridBefore.bottom > stuck.windowHeight && stuck.scrolledBy > 50;
+  results.costumeLeftColumnStaysInView =
+    stuck.scrolledBy > 50 &&
+    near(stuck.after.top, stuck.before.top) &&
+    stuck.after.bottom <= stuck.windowHeight &&
+    stuck.gridAfter.top < stuck.gridBefore.top - 50;
+  const onAShortWindow = await atSize(1100, 480, async () => {
+    await waitFor(async () => (await exists("#costume-actions")) || undefined);
+    await showPart("costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await page.evaluate("window.scrollTo(0, 0)");
+    const before = await boxOf("#costume-aside");
+    const scrolledBy = await scrollToTheEnd();
+    const after = await boxOf("#costume-aside");
+    const own = await page.evaluate<boolean>(
+      `(() => { const node = document.querySelector("#costume-aside"); return node.scrollHeight > node.clientHeight + 1 || getComputedStyle(node).overflowY !== "visible"; })()`,
     );
-    const afterGrid = await boxOf("#costume-picture-column");
+    const scrolling = await scrollingBoxes();
     await page.evaluate("window.scrollTo(0, 0)");
     return {
       before,
-      gridBefore,
+      after,
       scrolledBy,
-      afterPage,
-      gridAfter,
-      gridScrolled,
-      afterGrid,
-      windowHeight: await page.evaluate<number>("innerHeight"),
+      own,
+      scrolling,
+      position: await positionOf("#costume-aside"),
     };
   });
-  results.costumePictureColumnStaysInView =
-    stuck.scrolledBy > 50 &&
-    near(stuck.afterPage.top, stuck.before.top) &&
-    stuck.afterPage.bottom <= stuck.windowHeight &&
-    stuck.gridAfter.top < stuck.gridBefore.top - 50 &&
-    stuck.gridScrolled > 0 &&
-    near(stuck.afterGrid.top, stuck.afterPage.top);
+  results.costumeLeftColumnScrollsAwayOnAShortWindow =
+    onAShortWindow.position === "static" &&
+    onAShortWindow.scrolledBy > 50 &&
+    onAShortWindow.after.top < onAShortWindow.before.top - 50 &&
+    !onAShortWindow.own &&
+    onAShortWindow.scrolling.length === 0;
+  await fetch(`${HIROBA}/__items?many=0`);
 
   const tabsSelected = () =>
     page.evaluate<string[]>(
-      `[...document.querySelectorAll('#costume-parts [role="tab"][aria-selected="true"]')].map((tab) => tab.id)`,
+      `[...document.querySelectorAll('#costume-aside [role="tab"][aria-selected="true"]')].map((tab) => tab.id)`,
     );
   const gridShown = () =>
     page.evaluate<string>(
       `(() => { const grid = document.querySelector("#costume-grid"); return grid.querySelector('[id^="costume-items-"]')?.id ?? (grid.querySelector('[id^="swatch-"]') !== null ? "palette" : "none"); })()`,
     );
   await openFreshEditor();
-  const listSemantics = await page.evaluate<Record<string, unknown>>(
-    `(() => { const lists = [...document.querySelectorAll('#costume-parts [role="tablist"]')]; return { orientations: lists.map((list) => list.getAttribute("aria-orientation")), names: lists.map((list) => document.getElementById(list.getAttribute("aria-labelledby") ?? "")?.textContent ?? null), tabs: lists.map((list) => [...list.querySelectorAll('[role="tab"]')].map((tab) => tab.id)), headings: [...document.querySelectorAll("#costume-parts h2")].map((heading) => heading.tagName) }; })()`,
+  const tileSemantics = await page.evaluate<Record<string, unknown>>(
+    `(() => { const lists = [...document.querySelectorAll('#costume-aside [role="tablist"]')]; return { orientations: lists.map((list) => list.getAttribute("aria-orientation")), names: lists.map((list) => document.getElementById(list.getAttribute("aria-labelledby") ?? "")?.textContent ?? null), tabs: lists.map((list) => [...list.querySelectorAll('[role="tab"]')].map((tab) => tab.id)), headings: [...document.querySelectorAll("#costume-aside h2")].map((heading) => heading.tagName) }; })()`,
   );
   await click("#costume-part-costume3");
   await waitFor(async () => (await exists("#costume-items-costume3")) || undefined);
   const panelFacts = () =>
     page.evaluate<Record<string, unknown>>(
-      `(() => { const panel = document.querySelector("#costume-grid"); return { role: panel.getAttribute("role"), labelledby: panel.getAttribute("aria-labelledby"), controlling: [...document.querySelectorAll("#costume-parts [aria-controls]")].map((tab) => tab.id + ">" + tab.getAttribute("aria-controls")) }; })()`,
+      `(() => { const panel = document.querySelector("#costume-grid"); return { role: panel.getAttribute("role"), labelledby: panel.getAttribute("aria-labelledby"), controlling: [...document.querySelectorAll("#costume-aside [aria-controls]")].map((tab) => tab.id + ">" + tab.getAttribute("aria-controls")) }; })()`,
     );
   const itemPart = {
     selected: await tabsSelected(),
@@ -2398,9 +2537,9 @@ try {
     wornPressed: await pressedOf("#swatch-colorLimb-12"),
     panel: await panelFacts(),
   };
-  results.costumePartPickedInTheListShowsItsGrid =
-    same(listSemantics, {
-      orientations: ["vertical", "vertical"],
+  results.costumePartPickedInTheTileShowsItsGrid =
+    same(tileSemantics, {
+      orientations: [null, null],
       names: ["Colours", "Costume"],
       tabs: [
         ["costume-part-colorFace", "costume-part-colorBody", "costume-part-colorLimb"],
@@ -2433,154 +2572,179 @@ try {
         controlling: ["costume-part-colorLimb>costume-grid"],
       },
     });
-  await page.evaluate(`document.querySelector("#costume-part-colorFace").focus()`);
-  await press("ArrowDown");
-  const focusedByArrow = await page.evaluate<string>("document.activeElement.id");
-  const stillSelected = await tabsSelected();
-  await press("Enter");
-  await waitFor(async () => (await exists("#swatch-colorBody-12")) || undefined);
-  const pickedByEnter = await tabsSelected();
-  await press("ArrowDown");
-  await press(" ");
-  await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
-  const pickedBySpace = await tabsSelected();
-  results.costumePartsListMovesByArrowsAndPicksByEnterAndSpace =
-    focusedByArrow === "costume-part-colorBody" &&
-    same(stillSelected, ["costume-part-colorLimb"]) &&
-    same(pickedByEnter, ["costume-part-colorBody"]) &&
-    same(pickedBySpace, ["costume-part-colorLimb"]);
-
-  const backgroundOf = (selector: string) =>
-    page.evaluate<string>(
-      `getComputedStyle(document.querySelector(${JSON.stringify(selector)})).backgroundColor`,
+  const focusedId = () => page.evaluate<string>("document.activeElement.id");
+  /** The tiles by keyboard: arrows along a row, Tab to the other row, Enter and Space to pick. */
+  const tilesByKeyboard = async () => {
+    await showPart("colorLimb");
+    await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
+    await page.evaluate(`document.querySelector("#costume-part-colorFace").focus()`);
+    await press("ArrowRight");
+    const focusedByArrow = await focusedId();
+    const stillSelected = await tabsSelected();
+    await press("Enter");
+    await waitFor(async () => (await exists("#swatch-colorBody-12")) || undefined);
+    const pickedByEnter = await tabsSelected();
+    await press("ArrowRight");
+    await press(" ");
+    await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
+    const pickedBySpace = await tabsSelected();
+    await press("ArrowRight");
+    const wrappedWithinTheGroup = await focusedId();
+    await press("ArrowLeft");
+    await press("Tab");
+    const tabbedToTheNextGroup = await focusedId();
+    await press("Tab", SHIFT_MODIFIER);
+    const tabbedBack = await focusedId();
+    return (
+      focusedByArrow === "costume-part-colorBody" &&
+      same(stillSelected, ["costume-part-colorLimb"]) &&
+      same(pickedByEnter, ["costume-part-colorBody"]) &&
+      same(pickedBySpace, ["costume-part-colorLimb"]) &&
+      wrappedWithinTheGroup === "costume-part-colorFace" &&
+      tabbedToTheNextGroup === "costume-part-costume1" &&
+      tabbedBack === "costume-part-colorLimb"
     );
-  const pictureAt = (selector: string) =>
-    page.evaluate<string | null>(
-      `document.querySelector(${JSON.stringify(selector)})?.getAttribute("src") ?? null`,
-    );
-  await click("#costume-part-colorFace");
-  const torsoRow = await backgroundOf("#costume-pick-colorBody");
-  await click("#swatch-colorFace-9");
-  const faceRowChanged =
-    (await backgroundOf("#costume-pick-colorFace")) ===
-      (await backgroundOf("#swatch-colorFace-9")) &&
-    (await backgroundOf("#costume-pick-colorBody")) === torsoRow;
-  await click("#costume-part-costume3");
-  await waitFor(async () => (await exists("#item-costume3-70 img")) || undefined);
-  await click("#item-costume3-70");
-  const bodyRowShowsTheItem =
-    (await pictureAt("#costume-pick-costume3 img")) === (await pictureAt("#item-costume3-70 img"));
-  await click("#item-costume3-0");
-  const bodyRowBlank =
-    !(await exists("#costume-pick-costume3 img")) &&
-    (await attribute("#costume-pick-costume3", "aria-hidden")) === "true";
-  await click("#costume-reset");
-  results.costumeGridPickChangesItsRowInTheList =
-    faceRowChanged &&
-    bodyRowShowsTheItem &&
-    bodyRowBlank &&
-    (await backgroundOf("#costume-pick-colorFace")) !==
-      (await backgroundOf("#swatch-colorFace-9")) &&
-    (await pictureAt("#costume-pick-costume3 img")) === (await pictureAt("#item-costume3-68 img"));
+  };
+  results.costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpace = await tilesByKeyboard();
+  const tooltipGone = () =>
+    waitFor(async () => ((await exists('[role="tooltip"]')) ? undefined : true));
+  await page.evaluate("document.activeElement.blur()");
+  await tooltipGone();
+  await hoverOver(page, "#costume-part-costume3");
+  const tileNameOnHover = await waitFor(
+    async () => (await textOf('[role="tooltip"]')) ?? undefined,
+  );
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  await tooltipGone();
+  await page.evaluate(`document.querySelector("#costume-part-costume3").focus()`);
+  await press("ArrowRight");
+  const tileNameOnFocus = await waitFor(async () => {
+    const name = await textOf('[role="tooltip"]');
+    return name === "Makeup" ? name : undefined;
+  });
+  results.costumeTilesNamedByTooltipOnHoverAndFocus =
+    tileNameOnHover === "Body" && tileNameOnFocus === "Makeup";
+  results.costumeNoneCellEmptiesASlotAndCarriesTheRing = await noneCellInUse();
+  results.costumeGridPickChangesItsTile = await gridPickChangesItsTile();
 
+  /** The slot's last item picked and saved at once: nothing is asked for until the write ends. */
+  const farItemSavedAtOnce = async (items: readonly number[]) => {
+    await showPart("costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    const farItem = items[items.length - 1];
+    const thumbsBeforePick = (await thumbsSettled()).length;
+    await resetLog();
+    await fetch(`${HIROBA}/__hold-precheck?on=1`);
+    const prechecksBeforeFarSave = await hitsOn("/ajax/check_ip_kisekae.php");
+    await page.evaluate(
+      `(async () => { document.querySelector("#item-costume1-${farItem}").click(); await new Promise((resolve) => requestAnimationFrame(resolve)); document.querySelector("#costume-save").click(); })()`,
+    );
+    await waitFor(
+      async () =>
+        (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeFarSave || undefined,
+    );
+    await Bun.sleep(700);
+    const thumbsDuringTheWrite = (await thumbs()).length - thumbsBeforePick;
+    await fetch(`${HIROBA}/__hold-precheck?on=0`);
+    await inStep("editing");
+    const tiledAfterTheWrite = (await thumbsSettled()).slice(thumbsBeforePick);
+    await waitFor(async () => (await exists("#costume-part-costume1 img")) || undefined);
+    const waitedItOut =
+      thumbsDuringTheWrite === 0 &&
+      same(
+        tiledAfterTheWrite.map(({ type, cos }) => `${type}/${cos}`),
+        [`1/${farItem}`],
+      ) &&
+      sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&
+      (await savedCostume()).costume1 === farItem;
+    await fetch(`${HIROBA}/__state?reset=1`);
+    return waitedItOut;
+  };
   await fetch(`${HIROBA}/__items?many=1`);
   await openFreshEditor();
-  await showPart("costume1");
-  await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
-  const farItem = ownedIn(1)[ownedIn(1).length - 1];
-  const thumbsBeforePick = (await thumbsSettled()).length;
-  await resetLog();
-  await fetch(`${HIROBA}/__hold-precheck?on=1`);
-  const prechecksBeforeFarSave = await hitsOn("/ajax/check_ip_kisekae.php");
-  await page.evaluate(
-    `(async () => { document.querySelector("#item-costume1-${farItem}").click(); await new Promise((resolve) => requestAnimationFrame(resolve)); document.querySelector("#costume-save").click(); })()`,
-  );
-  await waitFor(
-    async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeFarSave || undefined,
-  );
-  await Bun.sleep(700);
-  const thumbsDuringTheWrite = (await thumbs()).length - thumbsBeforePick;
-  await fetch(`${HIROBA}/__hold-precheck?on=0`);
-  await inStep("editing");
-  const listedAfterTheWrite = (await thumbsSettled()).slice(thumbsBeforePick);
-  await waitFor(async () => (await exists("#costume-pick-costume1 img")) || undefined);
-  results.partsListThumbnailWaitsOutAWriteThenIsAskedOnce =
-    thumbsDuringTheWrite === 0 &&
-    same(
-      listedAfterTheWrite.map(({ type, cos }) => `${type}/${cos}`),
-      [`1/${farItem}`],
-    ) &&
-    sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&
-    (await savedCostume()).costume1 === farItem;
-  await fetch(`${HIROBA}/__state?reset=1`);
-  const fresh = (await (await fetch(`${HIROBA}/__items?many=2`)).json()) as Record<
-    string,
-    number[]
-  >;
-  const freshItems = fresh["1"] ?? [];
-  await openFreshEditor();
-  await fetch(`${HIROBA}/__thumbs?reset=1`);
-  const slotOnAPhone = async () => {
+  results.tileThumbnailWaitsOutAWriteThenIsAskedOnce = await farItemSavedAtOnce(ownedIn(1));
+  const slotInTheWindow = async (firstItem: number | undefined) => {
     await showPart("costume1");
-    await waitFor(async () => (await exists(`#item-costume1-${freshItems[0]} img`)) || undefined);
+    await waitFor(async () => (await exists(`#item-costume1-${firstItem} img`)) || undefined);
+  };
+  const freshList = async (which: "2" | "3") => {
+    const fresh = (await (await fetch(`${HIROBA}/__items?many=${which}`)).json()) as Record<
+      string,
+      number[]
+    >;
+    await openFreshEditor();
+    await fetch(`${HIROBA}/__thumbs?reset=1`);
+    return fresh["1"] ?? [];
   };
   const goOnAPhone = async (to: "overview" | "costume") => {
     await menuOpened();
     await click(`#nav-${to}`);
     await menuClosed();
   };
-  const thumbnailsOnAPhone = await atSize(PHONE.width, PHONE.height, async () => {
-    await slotOnAPhone();
+  const shortWideItems = await freshList("2");
+  results.thumbnailsOnlyWhenSeenOnAShortWindow = await atSize(1000, 500, async () => {
+    await slotInTheWindow(shortWideItems[0]);
+    return askedOnlyWhatIsOnShow(await thumbsSettled(), shortWideItems, true);
+  });
+  const phoneItems = await freshList("3");
+  const thumbnailsOnAPhone = await atSize(PHONE_SHORT.width, PHONE_SHORT.height, async () => {
+    await slotInTheWindow(phoneItems[0]);
     const firstView = await thumbsSettled();
-    const onlyWhatIsOnShow = await askedOnlyWhatIsOnShow(firstView, freshItems);
+    const onlyWhatIsOnShow = await askedOnlyWhatIsOnShow(firstView, phoneItems, true);
     await goOnAPhone("overview");
     await goOnAPhone("costume");
-    await slotOnAPhone();
+    await slotInTheWindow(phoneItems[0]);
     await Bun.sleep(1500);
-    return { asked: firstView.length, onlyWhatIsOnShow, askedAfterReopen: (await thumbs()).length };
+    const askedAfterReopen = (await thumbs()).length;
+    const waitsOutAWrite = await farItemSavedAtOnce(phoneItems);
+    return { asked: firstView.length, onlyWhatIsOnShow, askedAfterReopen, waitsOutAWrite };
   });
-  results.narrowThumbnailsOnlyWhenSeen =
-    thumbnailsOnAPhone.onlyWhatIsOnShow && thumbnailsOnAPhone.asked <= 5 * 6;
+  results.tileThumbnailWaitsOutAWriteOnAPhone = thumbnailsOnAPhone.waitsOutAWrite;
+  results.narrowThumbnailsOnlyWhenSeen = thumbnailsOnAPhone.onlyWhatIsOnShow;
   results.narrowThumbnailsAskedOncePerRun =
     thumbnailsOnAPhone.askedAfterReopen === thumbnailsOnAPhone.asked;
-  await fetch(`${HIROBA}/__items?many=0`);
+  await fetch(`${HIROBA}/__items?many=1`);
   await readEditorAgain();
 
   await openFreshEditor();
   await click("#costume-part-costume4");
-  const phone = await atSize(PHONE.width, PHONE.height, async () => {
+  const phone = await atSize(PHONE_TALL.width, PHONE_TALL.height, async () => {
     await waitFor(async () => (await exists("#costume-bar")) || undefined);
-    const tabIds = () =>
-      page.evaluate<string[]>(
-        `[...document.querySelectorAll('#costume-page [role="tab"]')].map((tab) => tab.id)`,
-      );
     const kept = {
-      itemsTab: await attribute("#costume-tab-items", "aria-selected"),
       part: await attribute("#costume-part-costume4", "aria-selected"),
       grid: await exists("#costume-items-costume4"),
     };
-    const slotTabs = await tabIds();
-    await click("#costume-part-costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
-    const itemGrid = await page.evaluate<{ columns: number; height: number; arrows: number }>(
-      `(() => { const box = document.querySelector("#costume-items-costume1"); return { columns: getComputedStyle(box).gridTemplateColumns.split(" ").length, height: box.getBoundingClientRect().height, arrows: document.querySelectorAll('[aria-label="Scroll up a row"], [aria-label="Scroll down a row"]').length }; })()`,
-    );
-    await click("#costume-tab-colours");
-    await click("#costume-part-colorBody");
-    await waitFor(async () => (await exists("#swatch-colorBody-12")) || undefined);
-    const colourTabs = await tabIds();
+    await showPart("colorBody");
+    await waitFor(async () => (await exists("#costume-palette")) || undefined);
+    const layout = {
+      page: await boxOf("#costume-page"),
+      aside: await boxOf("#costume-aside"),
+      preview: await boxOf("#costume-preview-image"),
+      tiles: await tileBoxes(),
+      panel: await boxOf("#costume-grid"),
+      swatches: await tracksOf("#costume-palette"),
+      swatchRow: await firstRowOf('#costume-palette [id^="swatch-colorBody-"]'),
+      scrolling: await scrollingBoxes(),
+      noColumns: !(await exists("#costume-actions")),
+      tabRows: await exists("#costume-tab-colours"),
+    };
     const barButtons = await buttonsIn("#costume-bar");
     const barBox = await boxOf("#costume-bar");
-    const wideOnly = [
-      "#costume-picture-column",
-      "#costume-parts",
-      "#costume-grid",
-      "#costume-actions",
-    ];
-    const noColumns = (await Promise.all(wideOnly.map(exists))).every((there) => !there);
+    const barFlushNow = await barFlush();
+    await showPart("costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    const items = {
+      tracks: await tracksOf("#costume-items-costume1"),
+      row: await firstRowOf('#costume-items-costume1 [id^="item-costume1-"]'),
+      box: await boxOf("#costume-items-costume1"),
+    };
+    const noneCell = await noneCellInUse();
+    const gridPick = await gridPickChangesItsTile();
+    const keyboard = await tilesByKeyboard();
 
     const before = await savedCostume();
     const savesBefore = await hitsOn("/ajax/change_mydon.php");
+    await showPart("colorBody");
     await click("#swatch-colorBody-40");
     const outcome = await savedFrom(before);
     const savedFromTheBar = {
@@ -2591,48 +2755,59 @@ try {
     await fetch(`${HIROBA}/__noop-save`);
     await click("#swatch-colorBody-41");
     const unmoved = await savedFrom(await savedCostume());
-    const noticeAboveTheTabs = await page.evaluate<boolean>(
-      `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const tabs = document.querySelector("#costume-tab-colours"); return notice !== null && tabs !== null && notice.getBoundingClientRect().bottom <= tabs.getBoundingClientRect().top; })()`,
+    const noticeAboveTheGrid = await page.evaluate<boolean>(
+      `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const aside = document.querySelector("#costume-aside"); const panel = document.querySelector("#costume-grid"); return notice !== null && notice.getBoundingClientRect().top >= aside.getBoundingClientRect().bottom && notice.getBoundingClientRect().bottom <= panel.getBoundingClientRect().top; })()`,
     );
     return {
       kept,
-      slotTabs,
-      colourTabs,
-      itemGrid,
+      layout,
       barButtons,
       barBox,
-      noColumns,
+      barFlushNow,
+      items,
+      noneCell,
+      gridPick,
+      keyboard,
       savedFromTheBar,
       unmoved,
-      noticeAboveTheTabs,
+      noticeAboveTheGrid,
     };
   });
-  await waitFor(async () => (await exists("#costume-parts")) || undefined);
+  await waitFor(async () => (await exists("#costume-actions")) || undefined);
+  const { layout } = phone;
   results.costumeKeepsThePartPickedAcrossWidths =
-    same(phone.kept, { itemsTab: "true", part: "true", grid: true }) &&
+    same(phone.kept, { part: "true", grid: true }) &&
     same(await tabsSelected(), ["costume-part-colorBody"]) &&
     (await gridShown()) === "palette";
-  results.costumeNarrowKeepsTheTabsAndTheBar =
-    phone.noColumns &&
-    same(phone.slotTabs, [
-      "costume-tab-colours",
-      "costume-tab-items",
-      "costume-part-costume1",
-      "costume-part-costume2",
-      "costume-part-costume3",
-      "costume-part-costume4",
-      "costume-part-costume5",
-    ]) &&
-    same(phone.colourTabs, [
-      "costume-tab-colours",
-      "costume-tab-items",
-      "costume-part-colorFace",
-      "costume-part-colorBody",
-      "costume-part-colorLimb",
-    ]) &&
-    phone.itemGrid.columns === 6 &&
-    Math.abs(phone.itemGrid.height - (4 * 44 + 3 * 6 + 2 * 6 + 2)) < 2 &&
-    phone.itemGrid.arrows === 2;
+  const phoneTiles = layout.tiles;
+  results.costumePhoneTilesInOneRowUnderTheSquarePreview =
+    Math.abs(layout.preview.width - layout.preview.height) < 1 &&
+    near(layout.preview.width, 160) &&
+    near(
+      (layout.preview.left + layout.preview.right) / 2,
+      (layout.page.left + layout.page.right) / 2,
+    ) &&
+    phoneTiles.every(
+      (box) =>
+        near(box.top, at(phoneTiles, 0).top) &&
+        near(box.width, at(phoneTiles, 0).width) &&
+        near(box.width, box.height) &&
+        box.width > 30 &&
+        box.left >= layout.page.left - 1 &&
+        box.right <= layout.page.right + 1,
+    ) &&
+    layout.preview.bottom <= at(phoneTiles, 0).top &&
+    gapsOf(phoneTiles).every((gap, index) => (index === 2 ? gap > 9 : near(gap, 6))) &&
+    layout.tabRows === false;
+  results.costumePhoneGridBelowTheTiles =
+    layout.panel.top >= Math.max(...phoneTiles.map((box) => box.bottom)) &&
+    layout.panel.top >= layout.aside.bottom &&
+    layout.noColumns &&
+    layout.swatches >= 8 &&
+    phone.items.tracks >= 6 &&
+    phone.items.box.top >= layout.panel.top &&
+    gapsOf(phone.items.row).every((gap) => near(gap, 6)) &&
+    near(at(phone.items.row, 0).left, phone.items.box.left);
   results.barHoldsHistoryLeftAndResetAndSaveRight =
     same(
       phone.barButtons.map(({ id }) => id),
@@ -2641,12 +2816,87 @@ try {
     Math.abs((phone.barButtons[0]?.left ?? 0) - (phone.barBox.left + 12)) < 2 &&
     Math.abs(phone.barBox.right - 12 - (phone.barButtons[2]?.right ?? 0)) < 2 &&
     (phone.barButtons[1]?.right ?? 0) <= (phone.barButtons[2]?.left ?? 0);
+  results.costumeNoneCellEmptiesASlotOnAPhone = phone.noneCell;
+  results.costumeGridPickChangesItsTileOnAPhone = phone.gridPick;
+  results.costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpaceOnAPhone = phone.keyboard;
   results.narrowSaveFromTheBarIsOneClick = same(phone.savedFromTheBar, {
     outcome: "applied",
     saves: 1,
     moved: true,
   });
-  results.narrowNoticeAboveTheEditor = phone.unmoved === "notApplied" && phone.noticeAboveTheTabs;
+  results.narrowNoticeAboveTheEditor = phone.unmoved === "notApplied" && phone.noticeAboveTheGrid;
+  const phoneScrolling = (size: { width: number; height: number }) =>
+    atSize(size.width, size.height, async () => {
+      await waitFor(async () => (await exists("#costume-bar")) || undefined);
+      await showPart("costume1");
+      await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+      await page.evaluate("window.scrollTo(0, 0)");
+      const before = await boxOf("#costume-aside");
+      const scrolls = await documentScrolls();
+      const scrolledBy = await scrollToTheEnd();
+      const after = await boxOf("#costume-aside");
+      const flush = await barFlush();
+      const scrolling = await scrollingBoxes();
+      await page.evaluate("window.scrollTo(0, 0)");
+      return {
+        before,
+        after,
+        scrolls,
+        scrolledBy,
+        flush,
+        scrolling,
+        position: await positionOf("#costume-aside"),
+        windowHeight: await page.evaluate<number>("innerHeight"),
+      };
+    });
+  const onATallPhone = await phoneScrolling({ width: 390, height: 700 });
+  const onAShortPhone = await phoneScrolling(PHONE_SHORT);
+  results.costumePhoneTopBlockStaysInViewOnATallWindowAndScrollsAwayOnAShortOne =
+    onATallPhone.scrolls &&
+    onATallPhone.position === "sticky" &&
+    onATallPhone.scrolledBy > 30 &&
+    near(onATallPhone.after.top, onATallPhone.before.top) &&
+    onATallPhone.after.bottom < onATallPhone.windowHeight &&
+    onAShortPhone.scrolls &&
+    onAShortPhone.position === "static" &&
+    onAShortPhone.scrolledBy > 30 &&
+    onAShortPhone.after.top < onAShortPhone.before.top - 30;
+  results.costumePhoneBarFlushWithTheBottom =
+    phone.barFlushNow && onATallPhone.flush && onAShortPhone.flush;
+  results.costumePhoneOnlyThePageScrolls =
+    onATallPhone.scrolls &&
+    onAShortPhone.scrolls &&
+    [layout, onATallPhone, onAShortPhone].every(({ scrolling }) => scrolling.length === 0);
+  const pullOnAPhone = await atSize(PHONE_SHORT.width, PHONE_SHORT.height, async () => {
+    await waitFor(async () => (await exists("#costume-bar")) || undefined);
+    await showPart("costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await touchEmulated(true);
+    await page.evaluate("window.scrollTo(0, 0)");
+    const grid = await boxOf("#costume-items-costume1");
+    const from = { x: (grid.left + grid.right) / 2, y: grid.top + 10 };
+    const to = { x: from.x, y: from.y + 160 };
+    await page.evaluate("window.scrollTo(0, 60)");
+    const scrolled = (await page.evaluate<number>("scrollY")) > 0;
+    const readsBefore = await editorHits();
+    await swipe(from, to);
+    await Bun.sleep(500);
+    const leftAlone =
+      scrolled &&
+      (await editorHits()) === readsBefore &&
+      (await stepOf()) === "editing" &&
+      !(await pullIndicator()).shown;
+    await page.evaluate("window.scrollTo(0, 0)");
+    await swipe(from, to);
+    await waitFor(async () => ((await editorHits()) > readsBefore ? true : undefined));
+    await inStep("editing");
+    const reads = (await editorHits()) === readsBefore + 1;
+    await touchEmulated(false);
+    return { leftAlone, reads };
+  });
+  results.pullFromTheGridLeavesAScrolledPageAloneOnAPhone = pullOnAPhone.leftAlone;
+  results.pullReadsTheEditorOnAPhone = pullOnAPhone.reads;
+  await fetch(`${HIROBA}/__items?many=0`);
   await fetch(`${HIROBA}/__state?reset=1`);
   await readEditorAgain();
 
