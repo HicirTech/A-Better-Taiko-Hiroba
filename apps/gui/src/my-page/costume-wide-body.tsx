@@ -22,7 +22,6 @@ import { type EditingTabs, selectedPart, tabsWithPart } from "./costume-tabs";
 import type { CostumeEditor } from "./use-costume-editor";
 import { WriteOutcomeNotice } from "./write-outcome";
 
-// The side panel leaves a window just past md about 600 px: the picture and the parts shrink first.
 const PICTURE_COLUMN_PX = 320;
 const MIN_PICTURE_COLUMN_PX = 180;
 const PICTURE_HEIGHT_PX = 300;
