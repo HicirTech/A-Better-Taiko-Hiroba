@@ -3603,6 +3603,16 @@ try {
     (await hitsOn("/ajax/check_ip_kisekae.php")) === postsBeforeExpiry &&
     (await exists("#sign-in")) &&
     !(await page.evaluate<boolean>("window.abth.isSignedIn()"));
+  const signInCardWidth = async (to: "overview" | "costume") => {
+    await goTo(to);
+    return (await boxOf("#sign-in-card")).width;
+  };
+  const cardWidths = await atSize(1920, 1080, async () => ({
+    overview: await signInCardWidth("overview"),
+    costume: await signInCardWidth("costume"),
+  }));
+  results.costumeSignInCardAsWideAsTheOverviews =
+    cardWidths.overview <= 900 && near(cardWidths.costume, cardWidths.overview);
 
   // The Overview does not read the editor, so only the explicit read below settles the undo.
   await goTo("overview");
