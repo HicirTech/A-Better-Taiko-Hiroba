@@ -68,7 +68,7 @@ export function CostumePreviewBox({
       spacing={0.5}
       sx={{
         alignItems: "center",
-        ...(size !== undefined && { width: size, maxWidth: 1, mx: "auto" }),
+        ...(size !== undefined && { width: size, maxWidth: 1, alignSelf: "center" }),
       }}
     >
       <Box

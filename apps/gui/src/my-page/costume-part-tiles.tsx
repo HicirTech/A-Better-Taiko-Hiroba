@@ -16,15 +16,19 @@ import {
   slotOf,
   tileName,
 } from "./costume-parts";
-import { pickRing } from "./pick-ring";
+import { VISUALLY_HIDDEN } from "./hiroba-px";
+import { pickRing, RING_ROOM_PX } from "./pick-ring";
 
 export const PARTS_PANEL_ID = "costume-grid";
 export const partTabId = (part: CostumePart) => `costume-part-${part}`;
 
+const TILE_PX = 40;
 const TILE_GAP_PX = 6;
 const GROUP_GAP_PX = 12;
-// pickRing draws a 3px line 2px off the tile, and the tab list clips whatever lies outside it.
-const RING_ROOM_PX = 5;
+const groupWidth = (tiles: number) => tiles * TILE_PX + (tiles - 1) * TILE_GAP_PX;
+const COLOURS_WIDTH_PX = groupWidth(COLOUR_PARTS.length);
+const ITEMS_WIDTH_PX = groupWidth(SLOT_PARTS.length);
+const ROW_MAX_PX = COLOURS_WIDTH_PX + GROUP_GAP_PX + ITEMS_WIDTH_PX;
 const TILE = {
   width: 1,
   minWidth: 0,
@@ -34,12 +38,13 @@ const TILE = {
   p: 0,
   borderRadius: 0.5,
 } as const;
-const TAB_LIST = {
-  display: "grid",
-  gridTemplateColumns: `repeat(${SLOT_PARTS.length}, minmax(0, 1fr))`,
-  gap: `${TILE_GAP_PX}px`,
-  p: `${RING_ROOM_PX}px`,
-} as const;
+const tabList = (columns: number) =>
+  ({
+    display: "grid",
+    gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+    gap: `${TILE_GAP_PX}px`,
+    p: `${RING_ROOM_PX}px`,
+  }) as const;
 
 export interface PartTilesProps {
   readonly view: CostumeEditorView;
@@ -48,6 +53,8 @@ export interface PartTilesProps {
   readonly i18n: Translator;
   /** The part whose grid is on show. */
   readonly shown: CostumePart;
+  /** A wide window: the groups one over the other, each under its caption. Else one row. */
+  readonly wide: boolean;
   readonly onPick: (part: CostumePart) => void;
 }
 
@@ -55,7 +62,21 @@ export interface PartTilesProps {
 export function PartTiles(props: PartTilesProps) {
   const { t } = props.i18n;
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: `${GROUP_GAP_PX}px` }}>
+    <Box
+      sx={
+        props.wide
+          ? { display: "flex", flexDirection: "column", gap: `${GROUP_GAP_PX}px` }
+          : {
+              display: "grid",
+              // The groups shrink alike, so the tiles of both stay one size.
+              gridTemplateColumns: `${COLOURS_WIDTH_PX}fr ${ITEMS_WIDTH_PX}fr`,
+              columnGap: `${GROUP_GAP_PX}px`,
+              width: 1,
+              maxWidth: ROW_MAX_PX,
+              alignSelf: "center",
+            }
+      }
+    >
       <TileGroup id="colours" caption={t("costume.tab.colours")} parts={COLOUR_PARTS} {...props} />
       <TileGroup id="items" caption={t("costume.tab.items")} parts={SLOT_PARTS} {...props} />
     </Box>
@@ -72,6 +93,7 @@ function TileGroup({
   lane,
   i18n,
   shown,
+  wide,
   onPick,
 }: PartTilesProps & { id: string; caption: string; parts: readonly CostumePart[] }) {
   const captionId = `costume-group-${id}`;
@@ -82,7 +104,7 @@ function TileGroup({
         component="h2"
         variant="caption"
         color="text.secondary"
-        sx={{ display: "block", mb: 0.5 }}
+        sx={wide ? { display: "block", mb: 0.5 } : VISUALLY_HIDDEN}
       >
         {caption}
       </Typography>
@@ -90,7 +112,10 @@ function TileGroup({
         aria-labelledby={captionId}
         value={parts.includes(shown) ? shown : false}
         onChange={(_event, part: CostumePart) => onPick(part)}
-        slotProps={{ indicator: { sx: { display: "none" } }, list: { sx: TAB_LIST } }}
+        slotProps={{
+          indicator: { sx: { display: "none" } },
+          list: { sx: tabList(wide ? SLOT_PARTS.length : parts.length) },
+        }}
         sx={{ minHeight: 0, m: `-${RING_ROOM_PX}px` }}
       >
         {parts.map((part) => (

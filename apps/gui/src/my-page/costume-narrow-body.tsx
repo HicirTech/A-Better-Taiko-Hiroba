@@ -10,36 +10,45 @@ import { PartTiles } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
 import { KigurumiInfo } from "./kigurumi-info";
+import { RING_ROOM_PX } from "./pick-ring";
 import type { CostumeEditor } from "./use-costume-editor";
 import { WriteOutcomeNotice } from "./write-outcome";
 
-// From the width of a row of five tiles up to a roomier picture.
-const SIDE_COLUMN_WIDTH = "clamp(232px, 25%, 280px)";
+const PREVIEW_PX = 160;
+// The ring's room and a pixel for its soft edge.
+const RING_BLEED_PX = RING_ROOM_PX + 1;
 
-export interface WideBodyProps {
+export interface NarrowBodyProps {
   readonly editor: CostumeEditor;
   readonly lane: PictureLane;
   readonly i18n: Translator;
   /** The part on show. */
   readonly part: CostumePart;
   readonly onPart: (part: CostumePart) => void;
-  /** The buttons under the tiles; null while there is no editor to act on. */
-  readonly actions: ReactNode;
   /** What stands in place of the part on show while the editor is not at hand. */
   readonly progress: ReactNode;
 }
 
-export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }: WideBodyProps) {
+export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: NarrowBodyProps) {
   const { step } = editor;
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3, flexGrow: 1 }}>
+    // Not a Stack: it would take the margins from the block below.
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, pb: 2 }}>
       {previewSetOf(step) !== null && (
         <Stack
           id="costume-aside"
-          spacing={2}
-          sx={{ flex: `0 0 ${SIDE_COLUMN_WIDTH}`, ...STAYS_IN_VIEW }}
+          spacing={1.5}
+          // It covers the cells that scroll beneath it, and the rings drawn outside them.
+          sx={{
+            ...STAYS_IN_VIEW,
+            zIndex: 1,
+            bgcolor: "background.default",
+            mx: `-${RING_BLEED_PX}px`,
+            px: `${RING_BLEED_PX}px`,
+            pb: 1,
+          }}
         >
-          <CostumePreviewBox preview={editor.preview} i18n={i18n} />
+          <CostumePreviewBox preview={editor.preview} i18n={i18n} size={PREVIEW_PX} />
           {step.name === "editing" && (
             <PartTiles
               view={step.editor}
@@ -47,35 +56,31 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
               lane={lane}
               i18n={i18n}
               shown={part}
-              wide
+              wide={false}
               onPick={onPart}
             />
-          )}
-          {actions}
-          {step.name === "editing" && (
-            <>
-              {step.notice !== null && (
-                <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
-              )}
-              <KigurumiInfo editor={step.editor} draft={step.draft} i18n={i18n} />
-            </>
           )}
         </Stack>
       )}
       {step.name === "editing" ? (
-        <PartPanel
-          view={step.editor}
-          draft={step.draft}
-          lane={lane}
-          i18n={i18n}
-          part={part}
-          wide
-          sx={{ flex: 1, minWidth: 0 }}
-          onPickColour={editor.pickColour}
-          onPickItem={editor.pickItem}
-        />
+        <>
+          {step.notice !== null && (
+            <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
+          )}
+          <KigurumiInfo editor={step.editor} draft={step.draft} i18n={i18n} />
+          <PartPanel
+            view={step.editor}
+            draft={step.draft}
+            lane={lane}
+            i18n={i18n}
+            part={part}
+            wide={false}
+            onPickColour={editor.pickColour}
+            onPickItem={editor.pickItem}
+          />
+        </>
       ) : (
-        <Box sx={{ flex: 1, minWidth: 0 }}>{progress}</Box>
+        progress
       )}
     </Box>
   );

@@ -6,21 +6,17 @@ import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import { useWideWindow } from "../navigation/use-wide-window";
 import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { EditingView } from "./costume-editing";
-import { type EditorStep, previewSetOf } from "./costume-editor-state";
+import type { EditorStep } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
-import { changedParts } from "./costume-parts";
-import { CostumePreviewBox } from "./costume-preview-box";
-import { type EditingTabs, FIRST_TABS } from "./costume-tabs";
+import { NarrowBody } from "./costume-narrow-body";
+import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
 import { WideBody } from "./costume-wide-body";
 import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
 import type { CostumeEditor } from "./use-costume-editor";
-import { WriteOutcomeNotice } from "./write-outcome";
 
-// MUI's sm width: the item tiles are narrow, so their row need not stretch across the window.
+// MUI's sm width: a narrow window's column need not stretch across it.
 export const COLUMN_MAX_WIDTH_PX = 600;
 const BAR_PADDING_PX = 12;
-const NARROW_PREVIEW_PX = 160;
 
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
@@ -32,7 +28,7 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   const { step } = editor;
   const wide = useWideWindow();
   useWiderFrame();
-  const [tabs, setTabs] = useState(FIRST_TABS);
+  const [part, setPart] = useState<CostumePart>(COLOUR_PARTS[0]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
@@ -49,6 +45,7 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   }, [step.name]);
 
   const actions = actionsOf(editor, i18n, () => setHistoryOpen(true), wide);
+  const body = { editor, lane, i18n, part, onPart: setPart, progress: progressOf(step, i18n) };
   return (
     <Box
       ref={page}
@@ -69,23 +66,10 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
       }}
     >
       {wide ? (
-        <WideBody
-          editor={editor}
-          lane={lane}
-          i18n={i18n}
-          tabs={tabs}
-          onTabs={setTabs}
-          actions={actions}
-          progress={progressOf(step, i18n)}
-        />
+        <WideBody {...body} actions={actions} />
       ) : (
         <>
-          <Stack spacing={2} sx={{ flexGrow: 1, pb: 2 }}>
-            {previewSetOf(step) !== null && (
-              <CostumePreviewBox preview={editor.preview} i18n={i18n} size={NARROW_PREVIEW_PX} />
-            )}
-            <StepView editor={editor} lane={lane} i18n={i18n} tabs={tabs} onTabs={setTabs} />
-          </Stack>
+          <NarrowBody {...body} />
           {actions !== null && <ActionBar>{actions}</ActionBar>}
         </>
       )}
@@ -103,37 +87,6 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
         />
       )}
     </Box>
-  );
-}
-
-function StepView({
-  editor,
-  lane,
-  i18n,
-  tabs,
-  onTabs,
-}: CostumePageProps & { tabs: EditingTabs; onTabs: (tabs: EditingTabs) => void }) {
-  const { step } = editor;
-  if (step.name !== "editing") {
-    return progressOf(step, i18n);
-  }
-
-  return (
-    <>
-      {step.notice !== null && (
-        <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
-      )}
-      <EditingView
-        editor={step.editor}
-        draft={step.draft}
-        lane={lane}
-        i18n={i18n}
-        tabs={tabs}
-        onTabs={onTabs}
-        onPickColour={editor.pickColour}
-        onPickItem={editor.pickItem}
-      />
-    </>
   );
 }
 
