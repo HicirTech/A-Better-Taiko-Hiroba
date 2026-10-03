@@ -2163,7 +2163,6 @@ try {
     historyOnAPhone.dialog.bottom - historyOnAPhone.dialog.top >= 799 &&
     historyOnAPhone.focusBack;
 
-  // Going back: the original from the history, shown at once from the picture kept, saved as is.
   const myDonsBeforeGoingBack = await myDonsSettled();
   const previewHitsBeforePick = await hitsOn("/imgsrc_mydon.php");
   await fetch(`${HIROBA}/__previews?reset=1`);
@@ -2235,7 +2234,6 @@ try {
     same(await savedCostume(), START) &&
     (await hitsOn("/ajax/change_mydon.php")) - savesBeforeGoingBack === 1;
 
-  // The page on a wide window: the picture, the parts and the grid side by side.
   const near = (value: number, expected: number) => Math.abs(value - expected) < 1.5;
   const tracksOf = (selector: string) =>
     page.evaluate<number>(
@@ -2492,7 +2490,6 @@ try {
   await fetch(`${HIROBA}/__items?many=0`);
   await readEditorAgain();
 
-  // One selection for both layouts, and the phone's tabs and bar as they were.
   await openFreshEditor();
   await click("#costume-part-costume4");
   const phone = await atSize(PHONE.width, PHONE.height, async () => {
