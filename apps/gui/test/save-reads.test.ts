@@ -1,7 +1,3 @@
-/**
- * The debugging wrapper that keeps what a read brings back, against a stand-in transport and a
- * folder of its own under the system's temporary directory.
- */
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -23,7 +19,6 @@ function newFolder(): string {
   return folder;
 }
 
-/** Answers each URL with its page from `pages`, as the given content type. */
 function answering(pages: Record<string, [type: string, body: string | Uint8Array]>): Transport {
   return {
     async send(request) {
@@ -239,7 +234,6 @@ describe("saveReads", () => {
       "20260928-010203-001-GET-mypage_kisekae.php.html",
       "20260928-010203-001-GET-mypage_kisekae.php.json",
     ]);
-    // Only the thumbnails are counted: the editor's status file carries no count.
     const editorStatus = JSON.parse(readFileSync(join(folder, "mypage_kisekae.php.json"), "utf8"));
     expect(editorStatus).not.toHaveProperty("count");
   });

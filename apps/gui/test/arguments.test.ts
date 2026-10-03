@@ -1,4 +1,3 @@
-/** What each verb of the port accepts from the interface, as it arrives over IPC. */
 import { describe, expect, test } from "bun:test";
 
 import { PORT_ARGUMENTS } from "../src/session-port";

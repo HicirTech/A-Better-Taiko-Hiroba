@@ -1,4 +1,3 @@
-/** The desktop's pictures on disk, in a folder of the system's temporary directory. */
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -27,14 +26,12 @@ afterEach(() => {
   }
 });
 
-/** A `pictures` folder of its own, in a temporary folder removed after the test. */
 function picturesFolder(): string {
   const folder = mkdtempSync(join(tmpdir(), "abth-pictures-"));
   folders.push(folder);
   return join(folder, "pictures");
 }
 
-/** Every file under `folder`, relative to it, with forward slashes. */
 function filesIn(folder: string): string[] {
   return readdirSync(folder, { recursive: true, withFileTypes: true })
     .filter((entry) => entry.isFile())

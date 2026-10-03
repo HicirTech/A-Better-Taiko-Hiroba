@@ -1,4 +1,3 @@
-/** Where the Title section stands after each event: read, pick, review, save, undo, back. */
 import { describe, expect, test } from "bun:test";
 import { err, ok, type SaveReading, type TitleOption } from "@abth/core";
 

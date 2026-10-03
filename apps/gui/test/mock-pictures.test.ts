@@ -1,4 +1,3 @@
-/** The mock's synthetic pictures: real PNGs the app's checks pass, and each its own. */
 import { describe, expect, test } from "bun:test";
 import { isOk } from "@abth/core";
 
@@ -12,7 +11,6 @@ import {
 } from "../scripts/mock-pictures";
 import { checkPng, type PngRules } from "../src/hiroba-session/png-answer";
 
-/** The size `body` has when checked as a PNG under `rules`, or null when it does not pass. */
 const sizeUnder = (body: Uint8Array, rules: PngRules) => {
   const checked = checkPng(
     {
@@ -41,7 +39,6 @@ describe("thumbnailPng", () => {
 });
 
 describe("titlePlatePng and blankPlatePng", () => {
-  /** A title plate's bounds: from a kilobyte to 256 KiB, and at most 1280×400. */
   const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280 };
 
   test("draw a 600×100 PNG within a plate's bounds, not the 290:47 the app reserves", () => {
@@ -80,7 +77,6 @@ describe("medalPlatePng", () => {
 });
 
 describe("scorePanelPng", () => {
-  /** The panel's bounds: from 10 KiB to 512 KiB, and at most 1280×800. */
   const PANEL_RULES = { minBytes: 10 * 1024, maxBytes: 512 * 1024, maxSide: 1280, maxHeight: 800 };
 
   test("draws a 600×356 PNG within the panel's bounds", () => {
@@ -94,7 +90,6 @@ describe("scorePanelPng", () => {
 });
 
 describe("myDonPng", () => {
-  /** The portrait's bounds: from 5 KiB to 512 KiB, and at most 640 a side. */
   const PORTRAIT_RULES = { minBytes: 5 * 1024, maxBytes: 512 * 1024, maxSide: 640 };
   const SET = [12, 12, 5, 0, 0, 68, 0, 0];
 

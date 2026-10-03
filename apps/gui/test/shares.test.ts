@@ -8,7 +8,6 @@ const percents = (values: number[], locale = "en") =>
 
 describe("sharesOf", () => {
   test("gives each count's share of the block with one decimal", () => {
-    // The mock's score ranks, best first.
     const block = sharesOf(counts(3, 12, 25, 31, 18, 9, 4), "en");
     expect(block.total).toBe(102);
     expect(block.rows.map((row) => row.percent)).toEqual([

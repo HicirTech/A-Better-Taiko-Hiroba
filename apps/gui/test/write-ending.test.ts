@@ -1,4 +1,3 @@
-/** What every editor does when a write ends: the set it shows next, the lane held, the session. */
 import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
 

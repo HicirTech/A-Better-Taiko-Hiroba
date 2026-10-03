@@ -1,4 +1,3 @@
-/** The desktop's undo slots on disk, in a folder of the system's temporary directory. */
 import { afterEach, describe, expect, test } from "bun:test";
 import {
   existsSync,
@@ -181,7 +180,6 @@ describe("createUndoStore", () => {
       }),
     );
     expect(await createUndoStore(path).load("costume", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
-    // A slot filed under one player that holds another's is no one's.
     writeFileSync(path, JSON.stringify({ version: 2, slots: { costume: { [OTHER]: SLOT } } }));
     expect(await createUndoStore(path).load("costume", OTHER)).toEqual(EMPTY_UNDO_SLOT);
     writeFileSync(path, JSON.stringify({ version: 3, slots: { costume: { [PLAYER]: SLOT } } }));

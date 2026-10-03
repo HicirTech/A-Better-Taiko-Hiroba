@@ -1,10 +1,3 @@
-/**
- * The shells' shared write verbs against the mock's own costume editor (scripts/mock-costume.ts) and
- * profile (scripts/mock-profile.ts: the title page and its posts), in process, once over each place
- * a shell keeps its undo slots (a file in a temporary folder, as the desktop does, and a stand-in
- * for IndexedDB, as Android does): the cross-check, the undo record's life, and the session dropped
- * when Hiroba ends it.
- */
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -36,7 +29,6 @@ const ENDPOINTS = {
 };
 const NOON_JST = () => new Date("2026-09-27T03:00:00Z");
 const OWNER = "000000000000";
-/** Another card, as one Bandai Namco ID can hold. */
 const OTHER = "111111111111";
 
 /** My page, cut down to what the parser needs, wearing `title` and carrying the rename dialog. */
@@ -56,15 +48,12 @@ ${dialog}`;
 
 const START = START_SET;
 
-/** Which calls of the undo store fail from now on, as a database that will not open or write does. */
 interface StoreFaults {
-  /** Every load rejects. */
   load: boolean;
   /** How many saves go through before every later one rejects; null lets them all through. */
   savesAllowed: number | null;
 }
 
-/** The store, with the calls its faults name rejected. */
 function failing(store: UndoStore, faults: StoreFaults): UndoStore {
   const refuse = (call: string) => Promise.reject(new Error(`The store refuses ${call}`));
   return {
@@ -88,13 +77,11 @@ afterEach(() => {
   }
 });
 
-/** An undo store, and a way to read everything it holds as text. */
 interface KeptSlots {
   readonly store: UndoStore;
   readonly text: () => string;
 }
 
-/** The two places a shell keeps undo slots: a file on the desktop, a database on Android. */
 const STORES = {
   file(): KeptSlots {
     const folder = mkdtempSync(join(tmpdir(), "abth-writes-"));
@@ -122,7 +109,6 @@ interface SetUpOptions {
   whose?: () => string | null;
 }
 
-/** The mock's editor behind a transport, and the shared writes over both. */
 function setUpOver(storeName: StoreName, options: SetUpOptions) {
   const editor = createCostumeEditor();
   const profile = createProfileEditor({ issue: editor.issueTicket });
@@ -131,10 +117,8 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     ended: false,
     log: [] as string[],
     endedByApp: 0,
-    /** The first GET after a save throws, as a transport with a fault in it would. */
     throwAfterSave: false,
     saved: false,
-    /** How many times the writes said the costume changed. */
     costumeChanges: 0,
   };
   const answer = async (url: string, response: Response) =>
@@ -158,7 +142,7 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
           hiroba.throwAfterSave = false;
           throw new Error("EBUSY: resource busy or locked");
         }
-        // My page and the title page carry forms, so each read of either issues the session a token.
+        // My page and the title page carry forms, so each read of either issues a token.
         return answer(
           request.url,
           html(
@@ -307,8 +291,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
     expect((await writes.undo("costume")).kind).toBe("applied");
     expect(await saved()).toEqual(START);
     expect(await writes.pendingUndo()).toEqual([]);
-    // An undo is a write like any other: the cross-check, a fresh editor last before the posts, the
-    // pre-check, one save.
     expect(hiroba.log).toEqual([
       "GET /mypage_top.php",
       "GET /mypage_kisekae.php",
@@ -367,14 +349,12 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
   test("keeps each player's undo apart, whatever another card writes in between", async () => {
     let whose = OWNER;
     const { editor, writes, setElsewhere, signInAgain } = setUp({ whose: () => whose });
-    // A change of this player's that ends unknown after its save: a pending write, kept.
     editor.hook("/__expire-on-save", new URLSearchParams());
     const mine = { ...START, colorFace: 3 };
     const unknown = await writes.changeCostume({ expected: START, target: mine });
     expect(unknown).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
     signInAgain();
 
-    // Another card on the same ID, wearing its own set: a save that moves nothing, then a change.
     whose = OTHER;
     setElsewhere("reset=1&color_body=40");
     const theirs = { ...START, colorBody: 40 };
@@ -389,13 +369,11 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
     );
     expect(await writes.pendingUndo()).toMatchObject([{ before: theirs, after: changed }]);
 
-    // Back on the first card, as its save left it: its pending write settles into its own undo.
     whose = OWNER;
     setElsewhere("reset=1&color_face=3");
     expect(await writes.pendingUndo()).toEqual([]);
     await writes.openCostumeEditor();
     expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: mine }]);
-    // And the other card's undo is still there for it, current.
     whose = OTHER;
     expect(await writes.pendingUndo()).toMatchObject([{ before: theirs, after: changed }]);
   });
@@ -413,7 +391,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
     expect(await saved()).toEqual(target);
     expect(await writes.pendingUndo()).toEqual([]);
 
-    // The next editor read finds the save landed, and settles the pending write into an undo.
     await writes.openCostumeEditor();
     expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
   });
@@ -440,10 +417,8 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
     faults.savesAllowed = 1;
     expect((await writes.changeCostume({ expected: START, target })).kind).toBe("applied");
     expect(await saved()).toEqual(target);
-    // The write is done, though its record could not be settled: the pending write is still kept.
     expect(await writes.pendingUndo()).toEqual([]);
 
-    // The next editor read finds the save landed, and settles the pending write into an undo.
     faults.savesAllowed = null;
     await writes.openCostumeEditor();
     expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
@@ -467,7 +442,6 @@ const owned = (id: number) => {
   }
   return found;
 };
-/** A title write from `from`, the title worn, to the owned title `id`, picked from the list. */
 const titleChange = (from: string, id: number) => ({
   expected: { title: from },
   target: { id, title: owned(id).label },
@@ -718,7 +692,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
 });
 
 const NEW_NAME = "あたらしい";
-/** A rename from `from`, the name my page showed, to `name`. */
 const renameTo = (name: string, from = START_NAME) => ({
   expected: { nickname: from },
   target: { nickname: name },
@@ -727,26 +700,30 @@ const renameTo = (name: string, from = START_NAME) => ({
 describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name", (storeName) => {
   const setUp = (options: SetUpOptions = {}) => setUpOver(storeName, options);
 
-  /** A rename has no pre-check: my page for the editor, one save, my page to read back. */
-  const THREE = [
+  // No pre-check: my page for the editor, one save, my page to read back.
+  const RENAME_REQUESTS = [
     "GET /mypage_top.php",
     "POST /ajax/change_mydon_profile.php",
     "GET /mypage_top.php",
   ];
-  const FIVE = ["GET /mypage_top.php", ...THREE, "GET /mypage_top.php"];
+  const RENAME_WITH_TITLE_READS = [
+    "GET /mypage_top.php",
+    ...RENAME_REQUESTS,
+    "GET /mypage_top.php",
+  ];
 
   test("reads my page for the title before and after a rename on either platform: name is on neither's list", async () => {
     for (const platform of ["android", "desktop"] as const) {
       const { hiroba, writes } = setUp({ platform });
       expect((await writes.changeName(renameTo(NEW_NAME))).kind).toBe("applied");
-      expect(hiroba.log).toEqual(FIVE);
+      expect(hiroba.log).toEqual(RENAME_WITH_TITLE_READS);
     }
   });
 
   test("sends the three requests alone once the kind is on the platform's list, and never a pre-check", async () => {
     const { hiroba, writes } = setUp({ liveChecked: ["costume", "name"] });
     expect((await writes.changeName(renameTo(NEW_NAME))).kind).toBe("applied");
-    expect(hiroba.log).toEqual(THREE);
+    expect(hiroba.log).toEqual(RENAME_REQUESTS);
   });
 
   test("a change leaves an undo kept, and the undo puts the name back in one save", async () => {
@@ -769,7 +746,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name
     expect((await writes.undo("name")).kind).toBe("applied");
     expect(profile.nickname()).toBe(START_NAME);
     expect(await writes.pendingUndo()).toEqual([]);
-    expect(hiroba.log).toEqual(FIVE);
+    expect(hiroba.log).toEqual(RENAME_WITH_TITLE_READS);
     const saves = hiroba.log.filter((request) => request === "POST /ajax/change_mydon_profile.php");
     expect(saves).toHaveLength(1);
   });

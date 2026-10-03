@@ -1,7 +1,3 @@
-/**
- * Where the Name section stands after each event, and what a draft comes to against the name worn:
- * the core's hard rules on a trimmed name, and the field showing the name worn until it is typed in.
- */
 import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
 

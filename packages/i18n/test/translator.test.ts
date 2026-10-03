@@ -106,8 +106,7 @@ describe("the Nickname & title page's name", () => {
     expect(createTranslator(locale).t("name.heading")).toBe(name);
   });
 
-  /** The plain word for a name in each language, which the keys about the player's may not use. */
-  const PLAIN_NAME: Readonly<Record<Locale, RegExp>> = {
+  const BANNED_NAME_WORD: Readonly<Record<Locale, RegExp>> = {
     en: /\bnames?\b/i,
     ja: /名前/,
     "zh-Hans": /名字/,
@@ -124,7 +123,7 @@ describe("the Nickname & title page's name", () => {
     (locale) => {
       const { t } = createTranslator(locale);
       const plain = keysAboutTheNickname.filter((key) =>
-        PLAIN_NAME[locale].test(t(key).replace(/\{\w+\}/g, "")),
+        BANNED_NAME_WORD[locale].test(t(key).replace(/\{\w+\}/g, "")),
       );
       expect(plain).toEqual([]);
     },
@@ -141,13 +140,10 @@ describe("the Nickname & title page's name", () => {
   });
 });
 
-/** The parameters a message names, in order of name. */
 const paramsOf = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
-/** A value for each language. */
 type PerLanguage<T> = Readonly<Record<Locale, T>>;
 
-/** A value that every language writes alike. */
 const inEveryLanguage = <T>(value: T): PerLanguage<T> => ({
   en: value,
   ja: value,
@@ -155,7 +151,6 @@ const inEveryLanguage = <T>(value: T): PerLanguage<T> => ({
   "zh-Hant": value,
 });
 
-/** A value for each language, in the picker's order: English, 日本語, 简体中文, 繁體中文. */
 const inEach = <T>(en: T, ja: T, zhHans: T, zhHant: T): PerLanguage<T> => ({
   en,
   ja,
@@ -163,7 +158,6 @@ const inEach = <T>(en: T, ja: T, zhHans: T, zhHant: T): PerLanguage<T> => ({
   "zh-Hant": zhHant,
 });
 
-/** Messages with one text in every language: the app's name, the plate's own print, a number's form. */
 const SAME_EVERYWHERE: readonly MessageKey[] = [
   "app.title",
   "medal.complete",
@@ -173,7 +167,7 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
   "name.siteWarning",
 ];
 
-/** Messages that are one game term, as each language writes it: the text is the term and no more. */
+/** Messages that are just one game term, as each language writes it. */
 const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
   "panel.ranks": inEach("Score ranks", "スコアランク", "成绩排名", "成績排名"),
   "scoreRank.2": inEach("White Iki", "白粋", "白粹", "白粹"),
@@ -219,14 +213,9 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
   "costume.remove": inEach("Remove", "はずす", "移除", "移除"),
 };
 
-/** The costume, as each language words it in a sentence: きせかえ, 换装 and 換裝 as the site does. */
 const COSTUME = inEach(["costume"], ["きせかえ"], ["换装"], ["換裝"]);
 
-/**
- * Words a message holds, as each language writes them: the game's terms a sentence names, the
- * sentences of Hiroba's own that it quotes, which every language quotes as the site writes them, and
- * where a sentence sends the user for what the app cannot do.
- */
+/** Words each message must hold: game terms, Hiroba's quoted sentences, where it sends the user. */
 const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>>>> = {
   "panel.footnote": inEach(
     ["Extreme and Extreme (Inner) charts", "Double Play charts"],
@@ -254,9 +243,8 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
   "write.nothingToChange": COSTUME,
   "write.title.crossChanged": COSTUME,
   "write.title.crossUnknown": COSTUME,
-  // Saved, but the game server was not told: the app cannot send the same set a second time (a set
-  // that is already the target is "nothing to change"), so it says so and sends the user to Hiroba's
-  // own page, which asks the same of them.
+  // Saved but the server was not told, and the same set cannot be sent twice ("nothing to change"):
+  // the message sends the user to Hiroba's own page.
   "write.appliedNotSynced": inEach(
     ["This app cannot send it again", "on Hiroba's own page"],
     ["このアプリからは再送信できません", "ひろばのページでもう一度設定"],
@@ -286,10 +274,7 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
   "name.closed": inEveryLanguage(["今はドンだーネームは変更できないドン！"]),
 };
 
-/**
- * The messages that keep Japanese in every language: Hiroba's own warning, and the sentences of its
- * own that a message quotes. Everything else is in the language of its catalog.
- */
+/** Messages that keep Japanese in every language: Hiroba's own warning and the sentences quoted. */
 const KEEPS_JAPANESE: readonly MessageKey[] = [
   "name.siteWarning",
   "name.faqRule",
@@ -298,30 +283,20 @@ const KEEPS_JAPANESE: readonly MessageKey[] = [
   "write.title.needsConfirmation",
 ];
 
-/** A hiragana or a katakana letter. */
 const KANA = /[\p{Script=Hiragana}\p{Script=Katakana}]/u;
 
-/** A kanji or a hanzi, whichever script's form it is, or a kana: what English may not hold. */
+/** What English may not hold: a Han character or a kana. */
 const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u;
 
-/** A kanji or a hanzi, whichever script's form it is. For `match` and `matchAll`, never `test`. */
+/** Global: use with `match` and `matchAll`, never `test`, whose lastIndex is stateful. */
 const HAN = /\p{Script=Han}/gu;
 
-/**
- * Forms that are Simplified Chinese or Japanese only, not Traditional: 繁體中文 has 雙打 and 粹, not
- * 双打 and 粋. The reviewed set below is what keeps them out of the zh-Hant catalog; this list
- * checks that review, in case one of them was put there by mistake.
- */
+/** Forms that are Simplified or Japanese only (zh-Hant has 雙打 and 粹, not 双打 and 粋). */
 const NOT_TRADITIONAL =
   /[双粋称号换装级极达银铜连续读写显设网络应储变计页间头体妆脸颜让为这们个来时会说请编辑错误务启动关闭图帮载导览态据决备选择验证订阅广场过还进広実気読変続関対経戦楽歴圧売鉄点蔵]/u;
 
-/**
- * Every Han character the zh-Hant catalog may use outside Hiroba's own sentences, in code point
- * order: a closed set, not a list of what to keep out. A person has looked at each one, and it is a
- * Traditional form (one that Simplified writes differently, or alike), not a form that only
- * Simplified or only Japanese has. A character the catalog gains is not here, and the test below
- * fails until a person has looked at it and added it.
- */
+// Every Han character zh-Hant may use outside Hiroba's own sentences: a closed set a person has
+// reviewed as Traditional. A new character fails the test below until it is reviewed and added.
 const TRADITIONAL: ReadonlySet<string> = new Set(
   [
     "一七三上下不並中主之乎九也了二五交人仍他代以件任伺但位何作你使供保個做停偶傳儲允",
@@ -337,17 +312,12 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
   ].join(""),
 );
 
-/** The Han characters of `text`, each once. */
 const hanOf = (text: string): string[] => [...new Set(text.match(HAN) ?? [])];
 
-/** The Han characters of `text` that no one has reviewed as Traditional. */
 const outsideTraditional = (text: string): string[] =>
   hanOf(text).filter((char) => !TRADITIONAL.has(char));
 
-/**
- * A message in its catalog's own language: without the sentences of Hiroba's own that it quotes,
- * which are in the site's Japanese in every language. The words around them are the catalog's.
- */
+/** A message in its catalog's own language, with Hiroba's quoted Japanese sentences taken out. */
 function withoutHirobasSentences(key: MessageKey, locale: Locale, text: string): string {
   return KEEPS_JAPANESE.includes(key)
     ? (QUOTED[key]?.[locale] ?? []).reduce((rest, sentence) => rest.replace(sentence, ""), text)

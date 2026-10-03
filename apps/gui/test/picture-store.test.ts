@@ -1,7 +1,3 @@
-/**
- * The run's picture store: what it gives back, and what it drops past its caps; and the names a
- * lasting store files pictures under.
- */
 import { describe, expect, test } from "bun:test";
 
 import { createMemoryPictureStore, type PictureKey, pictureKeyPath } from "../src/hiroba-session";
@@ -48,7 +44,6 @@ describe("createMemoryPictureStore", () => {
     await store.put(item(1), bytes(2));
     await store.put(item(2), bytes(2));
     await store.put(item(3), bytes(2));
-    // Used, so 2 is now the least recently used.
     await store.get(item(1));
     await store.put(item(4), bytes(2));
     expect(await store.get(item(2))).toBeNull();

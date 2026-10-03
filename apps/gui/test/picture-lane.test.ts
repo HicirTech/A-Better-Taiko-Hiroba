@@ -1,7 +1,3 @@
-/**
- * The window's lane for Hiroba's pictures, against a stand-in port and timers the test moves on by
- * hand: one picture at a time, only after the dwell, in order, and never while held.
- */
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Result } from "@abth/core";
 
@@ -23,7 +19,6 @@ const view = (id: number): PictureView => ({
   height: 40,
 });
 
-/** Timers that fire only when the test moves the clock on. */
 function manualTimers() {
   let now = 0;
   const pending = new Map<number, { at: number; run: () => void }>();
@@ -39,7 +34,6 @@ function manualTimers() {
     },
     now: () => now,
   };
-  /** Moves the clock on by `ms`, firing every timer due by then, those they set included. */
   const advance = async (ms: number) => {
     now += ms;
     for (;;) {
@@ -58,7 +52,6 @@ function manualTimers() {
   return { timers, advance };
 }
 
-/** A stand-in port whose every answer waits until the test lets it go. */
 function heldPort() {
   const asked: string[] = [];
   const answers: ((result: Result<PictureView, PictureFailure>) => void)[] = [];
@@ -66,7 +59,6 @@ function heldPort() {
     asked.push(want.kind === "costumeItem" ? `${want.slot}/${want.id}` : want.kind);
     return new Promise<Result<PictureView, PictureFailure>>((resolve) => answers.push(resolve));
   };
-  /** Lets the oldest request go with `result`, then lets the lane move on. */
   const answer = async (result: Result<PictureView, PictureFailure>) => {
     answers.shift()?.(result);
     await Bun.sleep(0);
@@ -101,8 +93,7 @@ describe("createPictureLane", () => {
 
   test("asks in order down the screen for pictures whose dwells end a little apart", async () => {
     const { lane, port, advance } = setUp();
-    // Each cell hears from its own observer, a little apart and in no set order: the lowest's
-    // dwell ends first, a millisecond before the others'.
+    // Each cell's observer fires a little apart, in no set order: the lowest's dwell ends first.
     lane.ask(item(30), { order: 3 });
     await advance(1);
     lane.ask(item(10), { order: 1 });
@@ -224,7 +215,6 @@ describe("createPictureLane", () => {
     lane.renew("titlePlate");
     expect(lane.peek(PLATE)).toBeUndefined();
     expect(lane.settled(item(4))).toBe(true);
-    // Nothing more is asked for until the plate is on screen again.
     await advance(1000);
     expect(port.asked).toEqual(["titlePlate", "1/4"]);
   });
@@ -281,7 +271,6 @@ describe("createPictureLane", () => {
     expect(port.asked).toEqual([]);
     lane.release();
     expect(port.asked).toEqual(["1/4"]);
-    // A hold that comes with a picture on its way lets it land, then sends nothing more.
     lane.hold();
     await port.answer(ok(view(4)));
     expect(port.asked).toEqual(["1/4"]);
@@ -337,7 +326,6 @@ describe("createPictureLane", () => {
     await advance(1000);
     expect(port.asked).toEqual(["1/4"]);
     expect(lane.peek(item(4))).toBeUndefined();
-    // Still one at a time: a picture asked for after it goes once the one on its way has landed.
     lane.ask(item(36), { order: 0 });
     await advance(150);
     expect(port.asked).toEqual(["1/4", "1/36"]);

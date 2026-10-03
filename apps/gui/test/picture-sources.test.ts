@@ -1,7 +1,3 @@
-/**
- * What the platform keeps of my page's pictures: each source checked again against its pattern,
- * never corrected, and none of it the view's.
- */
 import { describe, expect, test } from "bun:test";
 import type { Medal, Profile } from "@abth/core";
 
@@ -14,10 +10,6 @@ const ENDPOINTS = {
   imgOrigin: null,
 };
 
-/**
- * A my page as the parser reads one, placeholders throughout; only the plates, the title and the
- * medal vary.
- */
 const profile = (
   titlePlateImageUrl: string | null,
   title = "サンプルの称号",
@@ -96,7 +88,6 @@ describe("pictureSourcesOf, the title plate", () => {
 });
 
 describe("pictureSourcesOf, the score panel's art", () => {
-  /** A page whose score panel's art the parser read as of `countLevel`. */
   const withLevel = (countLevel: number): Profile => {
     const page = profile("imgsrc_titleplate.php");
     return { ...page, summary: { ...page.summary, countLevel } };
@@ -121,7 +112,6 @@ describe("pictureSourcesOf, the score panel's art", () => {
 describe("pictureSourcesOf, the どんメダル plate", () => {
   const ID = "0123456789abcdef0123456789abcdef0123456789abcdef";
   const COLLECTING = { kind: "collecting", count: 12 } as const;
-  /** A page showing a plate whose picture is `src`, collecting unless `progress` says otherwise. */
   const withPlate = (src: string | null, progress: Medal["progress"] = COLLECTING) =>
     profile("imgsrc_titleplate.php", "サンプルの称号", {
       name: "どんメダル2026秋",
@@ -177,7 +167,6 @@ describe("pictureSourcesOf, the どんメダル plate", () => {
 describe("pictureSourcesOf, the My Don portrait", () => {
   const WITH_HOST = { ...ENDPOINTS, imgOrigin: "https://img.test" };
   const PORTRAIT = "https://img.test/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
-  /** A page showing the portrait `src`. */
   const withPortrait = (src: string | null): Profile => ({
     ...profile("imgsrc_titleplate.php"),
     myDonImageUrl: src,

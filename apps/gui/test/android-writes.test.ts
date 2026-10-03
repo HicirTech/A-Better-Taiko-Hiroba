@@ -1,9 +1,3 @@
-/**
- * Android's port as a user's write meets it: the real transport and the real write verbs over the
- * mock's own costume editor (scripts/mock-costume.ts) and a stand-in for the page's IndexedDB. What
- * is sent and in which order, what is kept and when, and what a killed app, a lost session, a busy
- * queue and a storage that fails each leave.
- */
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import {
@@ -40,7 +34,7 @@ const NOON_JST = () => new Date("2026-09-27T03:00:00Z");
 const IN_THE_BREAK = () => new Date("2026-09-26T20:30:00Z");
 const TARGET = { ...START_SET, colorFace: 3 };
 const CHANGE = { expected: START_SET, target: TARGET };
-/** What a costume write is on a platform that has not made one for real: both of my page's reads. */
+/** A costume write where none has been made for real: both of my page's reads. */
 const SIX_REQUESTS = [
   "GET /mypage_top.php",
   "GET /mypage_kisekae.php",
@@ -58,10 +52,6 @@ interface SetUpOptions {
   signedIn?: boolean;
 }
 
-/**
- * The mock's editor and profile behind the fake native client, and a port over a database that
- * outlives it.
- */
 function setUp(options: SetUpOptions = {}) {
   const editor = createCostumeEditor();
   const profile = createProfileEditor({ issue: editor.issueTicket });
@@ -75,7 +65,6 @@ function setUp(options: SetUpOptions = {}) {
       ...(indexedDb !== null && { indexedDb: indexedDb.factory }),
       now: options.now ?? NOON_JST,
     });
-  /** The requests so far as "METHOD /path", in order. */
   const sent = () =>
     native.httpRequests.map(({ method, url }) => `${method} ${new URL(url).pathname}`);
   const posts = async () =>
@@ -83,10 +72,8 @@ function setUp(options: SetUpOptions = {}) {
   const saved = async () =>
     (await editor.hook("/__state", new URLSearchParams())?.json()) as Record<string, number>;
   const hook = (path: string, query = "") => editor.hook(path, new URLSearchParams(query));
-  /** The profile's own hooks: the title and the name, and the posts that change them. */
   const profileHook = (path: string, query = "") => profile.hook(path, new URLSearchParams(query));
   const profilePosts = async () => (await profileHook("/__profile-posts")?.json()) as PostRecord[];
-  /** The slots kept, by key. */
   const slots = () => new Map(indexedDb?.tables.get("slots") ?? []);
   return {
     editor,
@@ -105,7 +92,6 @@ function setUp(options: SetUpOptions = {}) {
   };
 }
 
-/** A port that has read my page, so it knows whose set this is, with the record cleared. */
 async function signedInPort(world: ReturnType<typeof setUp>) {
   const port = await world.launch();
   await port.readProfile();
@@ -145,7 +131,6 @@ describe("createAndroidPort's costume writes", () => {
       }),
     ]);
     expect((await world.saved()).color_face).toBe(3);
-    // The cookie store is written to disk once the write has ended.
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 
@@ -170,7 +155,6 @@ describe("createAndroidPort's costume writes", () => {
   test("keeps the pending write before the first post, so an app killed in the middle still finds it", async () => {
     const world = setUp();
     const first = await signedInPort(world);
-    // The pre-check is held unanswered for good: the app is killed with the write on its way.
     world.hook("/__hold-precheck", "on=1");
     void first.changeCostume(CHANGE);
     await until(() => world.sent().includes("POST /ajax/check_ip_kisekae.php"));
@@ -184,7 +168,6 @@ describe("createAndroidPort's costume writes", () => {
     const relaunched = await world.launch();
     await relaunched.readProfile();
     expect(await relaunched.pendingUndo()).toEqual([]);
-    // Showing the Costume page reads the editor, and that settles the write: its undo is offered.
     await relaunched.openCostumeEditor();
     expect(await relaunched.pendingUndo()).toMatchObject([{ before: START_SET, after: TARGET }]);
   });
@@ -256,7 +239,6 @@ describe("createAndroidPort's costume writes", () => {
     const writing = port.changeCostume(CHANGE);
     await until(() => world.sent().includes("POST /ajax/check_ip_kisekae.php"));
     const requestsInTheWrite = world.sent().length;
-    // Asked for while the write waits on its pre-check: the second is refused, the picture waits.
     expect(await port.changeCostume(CHANGE)).toEqual({ kind: "busy" });
     expect(await port.undo("costume")).toEqual({ kind: "busy" });
     const picture = port.readPicture({ kind: "costumeItem", slot: 1, id: 4 });
@@ -295,8 +277,6 @@ describe("createAndroidPort's costume writes", () => {
     expect(await withWrites.changeCostume(CHANGE)).toEqual({ kind: "undoNotSaved" });
     expect(await written.posts()).toEqual([]);
 
-    // A read of my page looks in the store too, and it never fails the read: a store that will not
-    // open is found out by the first of the two, and the write still sends nothing.
     const unopenable = createFakeIndexedDb();
     unopenable.faults.open = true;
     const opened = setUp({ indexedDb: unopenable });
@@ -335,7 +315,7 @@ const TITLE_CHANGE = {
   expected: { title: START_TITLE },
   target: { id: 102, title: ownedTitle(102).label },
 };
-/** What a title write is on a platform that has not made one for real: the costume read both ways. */
+/** A title write where none has been made for real: the costume read both ways. */
 const TITLE_SIX_REQUESTS = [
   "GET /mypage_kisekae.php",
   "GET /mypage_title_edit.php",
@@ -394,7 +374,6 @@ describe("createAndroidPort's title writes", () => {
         ticketMatched: true,
       }),
     ]);
-    // The cookie store is written to disk once the write has ended.
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 
@@ -440,7 +419,6 @@ describe("createAndroidPort's title writes", () => {
   test("keeps the pending write before the first post, and a read of my page settles it after a kill", async () => {
     const world = setUp();
     const first = await signedInPort(world);
-    // The pre-check is held unanswered for good: the app is killed with the write on its way.
     world.profileHook("/__title-hold-precheck", "on=1");
     void first.changeTitle(TITLE_CHANGE);
     await until(() => world.sent().includes("POST /ajax/check_ip_title.php"));
@@ -459,7 +437,6 @@ describe("createAndroidPort's title writes", () => {
 
     const relaunched = await world.launch();
     expect(await relaunched.pendingUndo()).toEqual([]);
-    // Showing my page reads the title the save left, and that settles the write: its undo is offered.
     await relaunched.readProfile();
     expect(await relaunched.pendingUndo()).toMatchObject([
       { kind: "title", before: { title: START_TITLE }, after: { title: ownedTitle(102).label } },
@@ -615,10 +592,7 @@ const NAME_CHANGE = {
   expected: { nickname: START_NAME },
   target: { nickname: NEW_NAME },
 };
-/**
- * What a rename is on a platform that has not made one for real: my page read for the title, the
- * page again for the rename form, the one save, the page read back, and the title read once more.
- */
+/** A rename where none has been made for real: my page read around the one save, no pre-check. */
 const NAME_FIVE_REQUESTS = [
   "GET /mypage_top.php",
   "GET /mypage_top.php",
@@ -651,7 +625,6 @@ describe("createAndroidPort's name writes", () => {
         ticketMatched: true,
       }),
     ]);
-    // The cookie store is written to disk once the write has ended.
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 
@@ -724,7 +697,6 @@ describe("createAndroidPort's name writes", () => {
   test("keeps the pending write before the post, and a read of my page settles it after a kill", async () => {
     const world = setUp();
     const first = await signedInPort(world);
-    // The save is held unanswered for good: the app is killed with the write on its way.
     world.profileHook("/__profile-hold-save", "on=1");
     void first.changeName(NAME_CHANGE);
     await until(() => world.sent().includes("POST /ajax/change_mydon_profile.php"));
@@ -743,7 +715,6 @@ describe("createAndroidPort's name writes", () => {
 
     const relaunched = await world.launch();
     expect(await relaunched.pendingUndo()).toEqual([]);
-    // Showing my page reads the name the save left, and that settles the write: its undo is offered.
     await relaunched.readProfile();
     expect(await relaunched.pendingUndo()).toMatchObject([
       { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
@@ -875,7 +846,6 @@ describe("createAndroidPort's name writes", () => {
   });
 });
 
-/** The ways a write is held mid-way, each by the stand-in's own hook, and the requests it comes to. */
 const HELD_WRITES = {
   costume: {
     start: (port: HirobaSessionPort) => port.changeCostume(CHANGE),
@@ -900,10 +870,6 @@ const HELD_WRITES = {
   },
 } as const;
 
-/**
- * Every verb the port queues as a read, asked as the window asks it, and the requests it comes to.
- * Typed by the table that places the verbs, so a read verb added there has to be added here.
- */
 const READS_ASKED: Record<
   VerbsQueued<"read">,
   { ask: (port: HirobaSessionPort) => Promise<unknown>; requests: string[] }
@@ -929,7 +895,6 @@ describe.each(Object.keys(HELD_WRITES) as (keyof typeof HELD_WRITES)[])(
     beforeEach(() => native.reset());
     const held = HELD_WRITES[kind];
 
-    /** The write, started and held where its hook holds it; `release` lets it go on. */
     async function holdWrite(world: ReturnType<typeof setUp>, port: HirobaSessionPort) {
       held.hold(world, 1);
       const writing = held.start(port);

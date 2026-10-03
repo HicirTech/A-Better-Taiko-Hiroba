@@ -1,7 +1,3 @@
-/**
- * The checks every picture from Hiroba passes before its bytes cross to the window, and the codes an
- * answer that fails them is reported with.
- */
 import { describe, expect, test } from "bun:test";
 import { isErr, ok, type TransportResponse } from "@abth/core";
 import { encode } from "fast-png";
@@ -43,7 +39,6 @@ function answer(
   return { status, url, headers: { "content-type": type }, body };
 }
 
-/** Why `response` was refused under `rules`, or "passed". */
 function why(response: TransportResponse, rules: PngRules = RULES): string {
   const checked = checkPng(response, rules);
   return isErr(checked) ? checked.error.why : "passed";
@@ -102,7 +97,6 @@ describe("checkPng", () => {
     expect(why(sized(1280, 400), plate)).toBe("passed");
     expect(why(sized(1281, 100), plate)).toBe("badSize");
     expect(why(sized(600, 401), plate)).toBe("badSize");
-    // Never above the side it is read with.
     expect(why(sized(40, 513), { ...RULES, maxHeight: 1000 })).toBe("badSize");
   });
 

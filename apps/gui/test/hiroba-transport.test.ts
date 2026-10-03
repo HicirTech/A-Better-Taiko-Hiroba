@@ -1,7 +1,3 @@
-/**
- * The desktop transport against a stand-in for fetch: which hop gets the cookie, how redirects and
- * a new session cookie are taken up, how a form is posted, and what the caller gets back.
- */
 import { describe, expect, test } from "bun:test";
 
 import { createHirobaTransport, type SessionCookieHolder } from "../electron/hiroba-transport";
@@ -56,7 +52,6 @@ const page = (body = "<p>page</p>", headers: [string, string][] = []) =>
 const redirect = (location: string, headers: [string, string][] = [], status = 302) =>
   new Response(null, { status, headers: [["location", location], ...headers] });
 const FORM_TYPE = "application/x-www-form-urlencoded; charset=UTF-8";
-/** A post as a write sends one: a token first, then the fields, in the page's order. */
 const post = (url: string, headers: Record<string, string> = {}) =>
   ({
     method: "POST",
@@ -117,7 +112,6 @@ describe("createHirobaTransport", () => {
       png(),
     ]);
     await transport.send({ method: "GET", url: PORTRAIT });
-    // Asked of Hiroba and sent on to the picture host, as a redirect might.
     await transport.send({ method: "GET", url: `${ORIGIN}/imgsrc.php` });
     expect(sent.map((s) => [s.url, s.headers.Cookie])).toEqual([
       [PORTRAIT, undefined],

@@ -1,7 +1,3 @@
-/**
- * What both undo stores accept as a slot: well formed through and through, and the player's own.
- * Anything else reads as no slot at all.
- */
 import { describe, expect, test } from "bun:test";
 import { EMPTY_UNDO_SLOT } from "@abth/core";
 

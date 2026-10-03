@@ -1,7 +1,3 @@
-/**
- * The port with its arguments checked: every verb passes on what PORT_ARGUMENTS takes and rejects
- * what it refuses, without the verb ever seeing it.
- */
 import { describe, expect, test } from "bun:test";
 
 import { checkedPort, type HirobaSessionPort, PORT_ARGUMENTS } from "../src/session-port";
@@ -18,7 +14,6 @@ const SET = {
 };
 
 type Verb = keyof HirobaSessionPort;
-/** What each verb takes, and one thing it refuses. */
 type VerbCase = [verb: Verb, taken: unknown[], refused: unknown[]];
 const TITLE = { title: "サンプルの称号" };
 const TARGET = { id: 106, title: "サンプルの称号" };
@@ -52,7 +47,6 @@ const CASES: VerbCase[] = [
   ["undo", ["name"], ["settings"]],
 ];
 
-/** A port whose every verb notes what it was asked and answers with its own name. */
 function recordingPort() {
   const calls: { verb: string; args: unknown[] }[] = [];
   const verbs = Object.fromEntries(

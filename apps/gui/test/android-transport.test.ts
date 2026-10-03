@@ -1,7 +1,3 @@
-/**
- * Android's transport against a stand-in for Capacitor's native HTTP client: what it asks the
- * platform to send, and what it hands back.
- */
 import { beforeEach, describe, expect, test } from "bun:test";
 import { err, type TransportPost } from "@abth/core";
 
@@ -19,7 +15,6 @@ const TIMEOUT_MS = 20_000;
 /** How Capacitor rejects: a CapacitorException carrying the Java class name as `code`. */
 const nativeError = (code: string, message: string) => Object.assign(new Error(message), { code });
 
-/** An answer as Capacitor gives one, for a test to queue. */
 const answer = (
   status: number,
   headers: Record<string, string>,
@@ -29,7 +24,6 @@ const answer = (
   return async () => ({ status, url, headers, data });
 };
 
-/** A post as a write sends one: a token first, then the fields, in the page's order. */
 const post = (headers: Record<string, string> = {}): TransportPost => ({
   method: "POST",
   url: POST_URL,

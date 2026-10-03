@@ -1,8 +1,4 @@
-/**
- * The Title section's pure side: what a title is searched by, which options read as the one worn,
- * which names repeat, and whether the undo can name the title it goes back to. Over the stand-in's
- * titles: two share a name, one holds a space, one is written in half-width katakana.
- */
+// The stand-in's titles: two share a name, one holds a space, one is in half-width katakana.
 import { describe, expect, test } from "bun:test";
 import type { TitleOption } from "@abth/core";
 

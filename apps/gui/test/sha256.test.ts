@@ -1,4 +1,3 @@
-/** SHA-256 as the stores name kept pictures by it: FIPS 180-4's examples, and node:crypto's answers. */
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 

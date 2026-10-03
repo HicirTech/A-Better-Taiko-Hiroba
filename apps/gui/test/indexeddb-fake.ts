@@ -1,10 +1,4 @@
-/**
- * A stand-in for the page's IndexedDB, as much of it as Android's stores use: open with one upgrade
- * for each database, and get, put, delete and clear in transactions that complete once their
- * requests have, each answered on a later turn as the real one does. Values are copied in and out,
- * as structured clone copies them. Its tables outlive a database opened on them, so opening it
- * again is a relaunch.
- */
+/** A fake of the page's IndexedDB as Android's stores use it; reopening one is a relaunch. */
 import type {
   Database,
   DatabaseFactory,
@@ -25,7 +19,6 @@ interface FakeTransaction extends DatabaseTransaction {
   error: unknown;
 }
 
-/** A transaction as it was asked for: which tables, in which mode, and how durable. */
 export interface AskedTransaction {
   readonly names: readonly string[];
   readonly mode: "readonly" | "readwrite";
@@ -34,11 +27,9 @@ export interface AskedTransaction {
 
 export interface FakeIndexedDb {
   readonly factory: DatabaseFactory;
-  /** Each table's records, by key: what a store left for the next opening. */
   readonly tables: Map<string, Map<string, unknown>>;
   /** Set to make every opening fail from now on, or every write. */
   readonly faults: { open: boolean; writes: boolean };
-  /** Every transaction asked for, in order. */
   readonly transactions: AskedTransaction[];
 }
 

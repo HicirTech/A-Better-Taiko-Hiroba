@@ -1,8 +1,3 @@
-/**
- * Android's undo slots in IndexedDB, against a stand-in for the page's IndexedDB: that a slot is
- * durable before a save returns, kept for the player alone, read back after a relaunch, and that
- * a store which cannot open or write fails instead of keeping a copy in memory.
- */
 import { describe, expect, test } from "bun:test";
 import { type CostumeSet, EMPTY_UNDO_SLOT, type UndoSlot } from "@abth/core";
 
@@ -133,7 +128,6 @@ describe("createIndexedDbUndoStore", () => {
     await expect(store.save("costume", PLAYER, SLOT)).rejects.toThrow();
     await expect(store.load("costume", PLAYER)).rejects.toThrow();
 
-    // The failed save left no copy behind, and the failed opening was not remembered.
     indexedDb.faults.open = false;
     expect(await store.load("costume", PLAYER)).toEqual(EMPTY_UNDO_SLOT);
     await store.save("costume", PLAYER, SLOT);
@@ -157,7 +151,6 @@ describe("createIndexedDbUndoStore", () => {
     expect(
       await readAfterKeeping({ v: 1, slot: { record: { taikoNo: 1 }, pending: null } }),
     ).toEqual(EMPTY_UNDO_SLOT);
-    // A slot filed under one player that holds another's is no one's.
     expect(await readAfterKeeping({ v: 1, slot: SLOT }, OTHER)).toEqual(EMPTY_UNDO_SLOT);
     expect(await readAfterKeeping({ v: 1, slot: SLOT })).toEqual(SLOT);
   });

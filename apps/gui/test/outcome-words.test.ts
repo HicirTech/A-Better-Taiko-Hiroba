@@ -1,8 +1,3 @@
-/**
- * How a write's ending is worded, for each kind of write: the costume's words as they were, the
- * title's and the name's own, Hiroba's codes glossed, a refused target by its field, and the values
- * a write that did not end as planned is compared by.
- */
 import { describe, expect, test } from "bun:test";
 import { createTranslator, type MessageKey } from "@abth/i18n";
 
@@ -76,7 +71,7 @@ const outcomesOf = <S>(before: S, after: S): Case<S>[] => [
   ["a confirmation asked for", { kind: "needsConfirmation" }, false, "write.needsConfirmation"],
 ];
 
-/** The key of a kind's own sentence for a base one: `write.<kind>.<name>` for those it words itself. */
+/** A kind's own key for a base one is `write.<kind>.<name>`, where the kind words it itself. */
 const BASE_NAME: Partial<Record<MessageKey, string>> = {
   "write.applied": "applied",
   "write.undone": "undone",

@@ -1,7 +1,3 @@
-/**
- * The Japanese catalog is Hiroba's own language, so what it names that core names from Hiroba is
- * core's: the score ranks, which the icons print as kanji, and the dan names.
- */
 import { describe, expect, test } from "bun:test";
 import { DAN_NAMES, SCORE_RANK_NAMES, type ScoreRank } from "@abth/core";
 import { createTranslator, type MessageKey } from "@abth/i18n";
