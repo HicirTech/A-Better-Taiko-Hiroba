@@ -36,6 +36,9 @@ const PANEL_ART = "/image/sp/640/total_score_image_5.png";
 const USER_DATA = join(root, "out", "e2e-user-data");
 /** Its own folder: a language picked there must not reach the runs that read English. */
 const LANGUAGE_USER_DATA = join(root, "out", "e2e-user-data-language");
+/** MUI's md: from this width the app frame shows its side panel. */
+const MD_WIDTH_PX = 900;
+const PHONE = { width: 480, height: 800 } as const;
 const NOON_JST = "2026-09-27T03:00:00Z";
 const IN_THE_BREAK = "2026-09-26T20:30:00Z";
 rmSync(USER_DATA, { recursive: true, force: true });
@@ -422,6 +425,8 @@ try {
   const KEYS = {
     Enter: { code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
     Escape: { code: "Escape", windowsVirtualKeyCode: 27 },
+    ArrowDown: { code: "ArrowDown", windowsVirtualKeyCode: 40 },
+    " ": { code: "Space", windowsVirtualKeyCode: 32, text: " " },
   } as const;
   const press = async (key: keyof typeof KEYS) => {
     await page.send("Input.dispatchKeyEvent", { type: "keyDown", key, ...KEYS[key] });
@@ -624,10 +629,45 @@ try {
   results.danLabelShownAsPicture =
     (await attribute("#dan-label", "src"))?.startsWith("data:image/png;base64,") === true;
 
+  type Box = {
+    left: number;
+    top: number;
+    right: number;
+    bottom: number;
+    width: number;
+    height: number;
+  };
   const boxOf = (selector: string) =>
-    page.evaluate<{ left: number; top: number; right: number; bottom: number; width: number }>(
-      `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width }; })()`,
+    page.evaluate<Box>(
+      `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height }; })()`,
     );
+  /** Runs `run` in a window of this size, and gives the window its own size back. */
+  const atSize = async <T>(width: number, height: number, run: () => Promise<T>): Promise<T> => {
+    const ownWidth = await page.evaluate<number>("innerWidth");
+    await page.send("Emulation.setDeviceMetricsOverride", {
+      width,
+      height,
+      deviceScaleFactor: 0,
+      mobile: false,
+    });
+    const sideBySide = width >= MD_WIDTH_PX;
+    try {
+      await waitFor(async () =>
+        (await page.evaluate<number>("innerWidth")) === width &&
+        (await exists(sideBySide ? "#nav-overview" : "#nav-menu"))
+          ? true
+          : undefined,
+      );
+      return await run();
+    } finally {
+      await page.send("Emulation.clearDeviceMetricsOverride", {});
+      await waitFor(async () =>
+        (await page.evaluate<number>("innerWidth")) === ownWidth && (await exists("#nav-overview"))
+          ? true
+          : undefined,
+      );
+    }
+  };
   const headerBoxes = async () => ({
     myDon: await boxOf("#my-don"),
     plate: await boxOf("#title-plate"),
@@ -866,6 +906,20 @@ try {
       const loading = await exists("#costume-preview-loading");
       return src !== null && src !== before && !loading ? src : undefined;
     });
+  type Thumb = { cos: number; type: number; referer: string | null };
+  const thumbs = async () => (await (await fetch(`${HIROBA}/__thumbs`)).json()) as Thumb[];
+  const thumbsSettled = async () => {
+    let last = -1;
+    for (let tries = 0; tries < 30; tries++) {
+      const now = (await thumbs()).length;
+      if (now === last) {
+        break;
+      }
+      last = now;
+      await Bun.sleep(1000);
+    }
+    return thumbs();
+  };
   const editorReadsAtStart = await editorHits();
   await fetch(`${HIROBA}/__previews?reset=1`);
   await click("#costume-open");
@@ -893,6 +947,14 @@ try {
     editorReadsOnOpening === 1 && (await editorHits()) === 1 && (await stepOf()) === "editing";
   results.previewKeptBetweenVisits =
     (await previewSrc()) === onOpening && same(await previewQueries(), [previewQuery(START)]);
+  const wornItems = [1, 2, 3, 4, 5].flatMap((slot) => {
+    const item = START[`costume${slot}`];
+    return item === undefined || item === 0 ? [] : [`${slot}/${item}`];
+  });
+  const listedThumbs = await thumbsSettled();
+  results.partsListThumbnailsAskedOnceEach =
+    same(listedThumbs.map(({ type, cos }) => `${type}/${cos}`).sort(), wornItems.sort()) &&
+    listedThumbs.every(({ referer }) => referer === `${HIROBA}/mypage_kisekae.php`);
 
   const savable = () =>
     page.evaluate<boolean>(`document.querySelector("#costume-save").disabled === false`);
@@ -948,32 +1010,43 @@ try {
     page.evaluate<boolean>(
       `Math.abs(document.querySelector("#costume-bar").getBoundingClientRect().bottom - window.innerHeight) < 1`,
     );
-  const barWhileEditing = await barFlush();
-  await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)");
-  const barScrolledToTheEnd = await barFlush();
-  await page.evaluate("window.scrollTo(0, 0)");
-  await click("#swatch-colorFace-3");
-  const barWithADraft = await barFlush();
-  await click("#costume-reset");
-  results.saveBarStaysAtTheBottom = barWhileEditing && barScrolledToTheEnd && barWithADraft;
-
-  const pageBox = await boxOf("#costume-page");
-  const frameBox = await boxOf("main .MuiContainer-root");
-  await page.send("Emulation.setDeviceMetricsOverride", {
-    width: 480,
-    height: 800,
-    deviceScaleFactor: 0,
-    mobile: false,
+  results.saveBarStaysAtTheBottom = await atSize(PHONE.width, PHONE.height, async () => {
+    const whileEditing = await barFlush();
+    await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)");
+    const scrolledToTheEnd = await barFlush();
+    await page.evaluate("window.scrollTo(0, 0)");
+    await click("#swatch-colorFace-3");
+    const withADraft = await barFlush();
+    await click("#costume-reset");
+    return whileEditing && scrolledToTheEnd && withADraft;
   });
-  await waitFor(async () => (await exists("#nav-menu")) || undefined);
-  const narrowPageBox = await boxOf("#costume-page");
-  const narrowFrameBox = await boxOf("main .MuiContainer-root");
-  await page.send("Emulation.clearDeviceMetricsOverride", {});
-  await waitFor(async () => (await exists("#nav-overview")) || undefined);
-  results.costumePageIsAColumn =
-    pageBox.width <= 601 &&
-    Math.abs((pageBox.left + pageBox.right) / 2 - (frameBox.left + frameBox.right) / 2) < 2 &&
-    Math.abs(narrowPageBox.width - (narrowFrameBox.width - 2 * 16)) < 2;
+
+  const framedPage = async () => ({
+    page: await boxOf("#costume-page"),
+    frame: await boxOf("main .MuiContainer-root"),
+  });
+  const onAWideWindow = await atSize(1920, 1080, async () => {
+    const costume = await framedPage();
+    await goTo("settings");
+    const settings = await boxOf("main .MuiContainer-root");
+    await goTo("costume");
+    await inStep("editing");
+    return { costume, settings };
+  });
+  const justNarrow = await atSize(700, 800, framedPage);
+  const onAPhone = await atSize(PHONE.width, PHONE.height, framedPage);
+  results.costumePageIsAColumnOnANarrowWindow =
+    justNarrow.page.width <= 601 &&
+    Math.abs(
+      (justNarrow.page.left + justNarrow.page.right) / 2 -
+        (justNarrow.frame.left + justNarrow.frame.right) / 2,
+    ) < 2 &&
+    Math.abs(onAPhone.page.width - (onAPhone.frame.width - 2 * 16)) < 2;
+  results.costumePageUsesTheWidthOfAWideWindow =
+    Math.abs(onAWideWindow.costume.frame.width - 1200) < 1 &&
+    Math.abs(onAWideWindow.costume.page.width - (onAWideWindow.costume.frame.width - 2 * 24)) < 2 &&
+    Math.abs(onAWideWindow.costume.page.left - (onAWideWindow.costume.frame.left + 24)) < 2 &&
+    Math.abs(onAWideWindow.settings.width - 900) < 1;
   await goTo("overview");
 
   const pageOutcome = () =>
@@ -1004,10 +1077,18 @@ try {
       await click("#costume-reset");
     }
   };
-  const onTheColours = async () => {
-    await click("#costume-tab-colours");
-    await click("#costume-part-colorFace");
+  /** A part's grid on show, through its group's tab where the window has tabs, else the list. */
+  const showPartOn = async (app: Pick<typeof running, "page" | "click">, part: string) => {
+    const hasTabs = await app.page.evaluate<boolean>(
+      `document.querySelector("#costume-tab-colours") !== null`,
+    );
+    if (hasTabs) {
+      await app.click(`#costume-tab-${part.startsWith("costume") ? "items" : "colours"}`);
+    }
+    await app.click(`#costume-part-${part}`);
   };
+  const showPart = (part: string) => showPartOn({ page, click }, part);
+  const onTheColours = () => showPart("colorFace");
   /** One press of Save: a notice names the outcome, and an applied one has none, so it is told
    * by the set Hiroba holds having moved once the page is editing again. */
   const savedFrom = async (before: Record<string, number>) => {
@@ -1064,12 +1145,12 @@ try {
   const leaveTheCostumePage = () => goTo("overview");
   await fetch(`${HIROBA}/__noop-save`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
-  const noticeAboveTheEditor = await page.evaluate<boolean>(
-    `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const tabs = document.querySelector("#costume-tab-colours"); return notice !== null && tabs !== null && notice.getBoundingClientRect().bottom <= tabs.getBoundingClientRect().top; })()`,
+  const noticeUnderTheButtons = await page.evaluate<boolean>(
+    `(() => { const notice = document.querySelector("#costume-picture-column #write-outcome"); const actions = document.querySelector("#costume-actions"); return notice !== null && actions !== null && notice.getBoundingClientRect().top >= actions.getBoundingClientRect().bottom; })()`,
   );
   results.failedSaveKeepsTheNoticeAndDraft =
     noChange === "notApplied" &&
-    noticeAboveTheEditor &&
+    noticeUnderTheButtons &&
     (await stepOf()) === "editing" &&
     (await pressedOf("#swatch-colorFace-3")) === "true" &&
     (await savable()) &&
@@ -1781,23 +1862,9 @@ try {
   await Bun.sleep(800);
   results.previewNoneOnceShut = same(await previewQueries(), []);
 
-  type Thumb = { cos: number; type: number; referer: string | null };
-  const thumbs = async () => (await (await fetch(`${HIROBA}/__thumbs`)).json()) as Thumb[];
-  const thumbsSettled = async () => {
-    let last = -1;
-    for (let tries = 0; tries < 30; tries++) {
-      const now = (await thumbs()).length;
-      if (now === last) {
-        break;
-      }
-      last = now;
-      await Bun.sleep(1000);
-    }
-    return thumbs();
-  };
   const openItems = async (fresh = false) => {
     await (fresh ? openFreshEditor() : openEditing());
-    await click("#costume-tab-items");
+    await showPart("costume1");
     await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
   };
   await fetch(`${HIROBA}/__thumbs?reset=1`);
@@ -1806,6 +1873,9 @@ try {
     number[]
   >;
   const ownedIn = (slot: number) => owned[String(slot)] ?? [];
+  /** The parts list fetched the item the set wears when the page was first shown. */
+  const unfetchedIn = (slot: number) =>
+    ownedIn(slot).filter((id) => id !== START[`costume${slot}`]);
   await openItems(true);
   await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
   const seen = await thumbsSettled();
@@ -1818,11 +1888,16 @@ try {
     (await page.evaluate<number>(
       `document.querySelectorAll("#costume-items-costume1 img").length`,
     )) === seen.length;
+  const cellsOfTheGrid = await page.evaluate<{ whole: number[]; upToTheRowAhead: number[] }>(
+    `(() => { const box = document.querySelector("#costume-items-costume1"); const view = box.getBoundingClientRect(); const cells = [...box.querySelectorAll('button[id^="item-costume1-"]')].map((cell) => ({ id: Number(cell.id.replace("item-costume1-", "")), rect: cell.getBoundingClientRect() })); const rowAhead = Math.min(...cells.filter(({ rect }) => rect.top >= view.bottom).map(({ rect }) => rect.top)); return { whole: cells.filter(({ rect }) => rect.top >= view.top && rect.bottom <= view.bottom).map(({ id }) => id), upToTheRowAhead: cells.filter(({ rect }) => rect.top <= rowAhead + 1).map(({ id }) => id) }; })()`,
+  );
+  const askedItems = seen.map((thumb) => thumb.cos);
   results.thumbnailsOnlyWhenSeen =
     seen.length > 0 &&
-    seen.length <= 5 * 6 &&
     seen.length < ownedIn(1).length &&
-    new Set(seen.map((thumb) => thumb.cos)).size === seen.length &&
+    cellsOfTheGrid.whole.every((id) => askedItems.includes(id)) &&
+    askedItems.every((id) => cellsOfTheGrid.upToTheRowAhead.includes(id)) &&
+    new Set(askedItems).size === seen.length &&
     seen.every(
       (thumb) =>
         thumb.type === 1 &&
@@ -1856,7 +1931,7 @@ try {
     (await myPageHits()) === myPageReadsBeforeGridPull;
   await touchEmulated(false);
   const editorTerms = await page.evaluate<(string | null)[][]>(
-    `["#costume-tab-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => { const node = document.querySelector(selector); return [node?.lang ?? null, node?.getAttribute("aria-label") ?? node?.textContent ?? null]; })`,
+    `["#costume-group-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => { const node = document.querySelector(selector); return [node?.lang ?? null, node?.getAttribute("aria-label") ?? node?.textContent ?? null]; })`,
   );
   results.editorTermsLeftUnmarked = same(
     editorTerms.map(([lang]) => lang),
@@ -1892,15 +1967,16 @@ try {
   const slotTwoAsked = thumbsAfterGif.slice(askedBeforeReopen);
   results.thumbnailGifLeavesTheId =
     (await textOf("#costume-thumbnails-unavailable > :first-child")) ===
-      `Some thumbnails didn't load (${ownedIn(2).length}); their numbers are shown instead.` &&
+      `Some thumbnails didn't load (${unfetchedIn(2).length}); their numbers are shown instead.` &&
     (await textOf("#costume-thumbnails-code")) ===
       "Code for a report: costumeItem=notPng status=200 type=image/gif bytes=43" &&
     (await page.evaluate<number>(
       `document.querySelectorAll("#costume-thumbnails-code").length`,
     )) === 1 &&
-    (await textOf("#item-costume2-21")) === "#21" &&
-    !(await exists("#item-costume2-21 img")) &&
-    slotTwoAsked.length === ownedIn(2).length &&
+    (await textOf("#item-costume2-59")) === "#59" &&
+    !(await exists("#item-costume2-59 img")) &&
+    (await exists("#item-costume2-21 img")) &&
+    slotTwoAsked.length === unfetchedIn(2).length &&
     slotTwoAsked.every((thumb) => thumb.type === 2) &&
     (await thumbs()).length === thumbsAfterGif.length;
   await fetch(`${HIROBA}/__thumb?answer=png`);
@@ -1912,7 +1988,7 @@ try {
   results.failedThumbnailsAskedAgainOnReopen =
     same(
       askedOnReopen.map((thumb) => `${thumb.type}/${thumb.cos}`).sort(),
-      ownedIn(2)
+      unfetchedIn(2)
         .map((id) => `2/${id}`)
         .sort(),
     ) &&
@@ -1984,22 +2060,18 @@ try {
         same(post.fields, ["_tckt", ...COSTUME_FIELDS]) &&
         post.ticketMatched,
     );
-  const barButtons = await page.evaluate<{ id: string; left: number; right: number }[]>(
-    `[...document.querySelectorAll("#costume-bar button")].map((button) => { const box = button.getBoundingClientRect(); return { id: button.id, left: box.left, right: box.right }; })`,
-  );
-  const barBox = await boxOf("#costume-bar");
+  const buttonsIn = (container: string) =>
+    page.evaluate<{ id: string; left: number; right: number }[]>(
+      `[...document.querySelectorAll(${JSON.stringify(`${container} button`)})].map((button) => { const box = button.getBoundingClientRect(); return { id: button.id, left: box.left, right: box.right }; })`,
+    );
   results.saveIsOneClick =
     !(await exists("#costume-review")) &&
     !(await exists("#costume-back")) &&
     same(
-      barButtons.map(({ id }) => id),
+      (await buttonsIn("#costume-actions")).map(({ id }) => id),
       ["costume-history", "costume-reset", "costume-save"],
     ) &&
     posts.filter((post) => post.path === "/ajax/change_mydon.php").length === 1;
-  results.barHoldsHistoryLeftAndResetAndSaveRight =
-    Math.abs((barButtons[0]?.left ?? 0) - (barBox.left + 12)) < 2 &&
-    Math.abs(barBox.right - 12 - (barButtons[2]?.right ?? 0)) < 2 &&
-    (barButtons[1]?.right ?? 0) <= (barButtons[2]?.left ?? 0);
   await goTo("overview");
   await waitForSeen(
     page,
@@ -2049,24 +2121,6 @@ try {
       [true, false],
     ) && (await textOf("#costume-history-worn")) === "Worn now";
   const wideDialog = await boxOf('[role="dialog"]');
-  await page.send("Emulation.setDeviceMetricsOverride", {
-    width: 480,
-    height: 800,
-    deviceScaleFactor: 0,
-    mobile: false,
-  });
-  await waitFor(async () => (await exists("#nav-menu")) || undefined);
-  const narrowDialog = await waitFor(async () => {
-    const box = await boxOf('[role="dialog"]');
-    return box.width >= 479 ? box : undefined;
-  });
-  await page.send("Emulation.clearDeviceMetricsOverride", {});
-  await waitFor(async () => (await exists("#nav-overview")) || undefined);
-  results.historyDialogFullScreenOnANarrowWindow =
-    wideDialog.width <= 600 &&
-    narrowDialog.left < 1 &&
-    narrowDialog.right > 479 &&
-    narrowDialog.bottom - narrowDialog.top >= 799;
   await Bun.sleep(300);
   results.historyAsksHirobaNothing = same(notPictures(await requestLog()), requestsBeforeHistory);
   await press("Escape");
@@ -2086,6 +2140,28 @@ try {
   );
   results.historyDialogClosesByEscapeAndButtonAndGivesFocusBack =
     focusAfterEscape && focusAfterClose && (await stepOf()) === "editing" && !(await savable());
+  // On a phone the button is the bar's, another element: the dialog from it gives focus back.
+  const historyOnAPhone = await atSize(PHONE.width, PHONE.height, async () => {
+    await openHistory();
+    const dialog = await waitFor(async () => {
+      const box = await boxOf('[role="dialog"]');
+      return box.width >= 479 ? box : undefined;
+    });
+    await press("Escape");
+    await historyClosed();
+    const focusBack = await waitFor(
+      async () =>
+        (await page.evaluate<string>("document.activeElement?.id ?? ''")) === "costume-history" ||
+        undefined,
+    );
+    return { dialog, focusBack };
+  });
+  results.historyDialogFullScreenOnANarrowWindow =
+    wideDialog.width <= 600 &&
+    historyOnAPhone.dialog.left < 1 &&
+    historyOnAPhone.dialog.right > 479 &&
+    historyOnAPhone.dialog.bottom - historyOnAPhone.dialog.top >= 799 &&
+    historyOnAPhone.focusBack;
 
   // Going back: the original from the history, shown at once from the picture kept, saved as is.
   const myDonsBeforeGoingBack = await myDonsSettled();
@@ -2126,12 +2202,22 @@ try {
     (await myDonsSettled()) === myDonsAfterColour + 1 &&
     (await attribute("#my-don-image", "src")) === myDonBeforeColour;
 
+  let kigurumiInfoUnderTheButtons = false;
+  let kigurumiBlanksTheOtherRows = false;
   const kigurumiOutcome = await changeInTheWindow(async () => {
-    await click("#costume-tab-items");
+    await showPart("costume1");
     await waitFor(async () => (await exists("#item-costume1-36")) || undefined);
     await click("#item-costume1-36");
     await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
+    kigurumiInfoUnderTheButtons = await page.evaluate<boolean>(
+      `(() => { const info = document.querySelector("#costume-picture-column #kigurumi-warning"); const actions = document.querySelector("#costume-actions"); return info !== null && actions !== null && info.getBoundingClientRect().top >= actions.getBoundingClientRect().bottom; })()`,
+    );
+    kigurumiBlanksTheOtherRows = await page.evaluate<boolean>(
+      `["costume2", "costume3", "costume4", "costume5"].every((part) => document.querySelector("#costume-pick-" + part + " img") === null && document.querySelector("#costume-pick-" + part).getAttribute("aria-hidden") === "true")`,
+    );
   });
+  results.kigurumiInfoUnderTheButtons = kigurumiInfoUnderTheButtons;
+  results.kigurumiBlanksTheOtherRowsInTheList = kigurumiBlanksTheOtherRows;
   results.kigurumiEmptiesThePieces =
     kigurumiOutcome === "applied" &&
     same(await savedCostume(), {
@@ -2148,6 +2234,369 @@ try {
     (await savedFrom(await savedCostume())) === "applied" &&
     same(await savedCostume(), START) &&
     (await hitsOn("/ajax/change_mydon.php")) - savesBeforeGoingBack === 1;
+
+  // The page on a wide window: the picture, the parts and the grid side by side.
+  const near = (value: number, expected: number) => Math.abs(value - expected) < 1.5;
+  const tracksOf = (selector: string) =>
+    page.evaluate<number>(
+      `getComputedStyle(document.querySelector(${JSON.stringify(selector)})).gridTemplateColumns.split(" ").length`,
+    );
+  const scrolls = () =>
+    page.evaluate<boolean>("document.documentElement.scrollHeight > innerHeight");
+  await openFreshEditor();
+  const wideFacts = await atSize(1920, 1080, async () => {
+    await waitFor(async () => (await exists("#costume-parts")) || undefined);
+    const columns = {
+      page: await boxOf("#costume-page"),
+      picture: await boxOf("#costume-picture-column"),
+      preview: await boxOf("#costume-preview"),
+      actions: await boxOf("#costume-actions"),
+      parts: await boxOf("#costume-parts"),
+      grid: await boxOf("#costume-grid"),
+    };
+    const colours = {
+      scrolls: await scrolls(),
+      swatch: (await boxOf("#swatch-colorFace-0")).width,
+      tracks: await tracksOf("#costume-grid > *"),
+    };
+    await showPart("costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    const items = {
+      scrolls: await scrolls(),
+      cell: (await boxOf("#item-costume1-4")).width,
+      tracks: await tracksOf("#costume-items-costume1"),
+      scrollButtons: await page.evaluate<number>(
+        `document.querySelectorAll('[aria-label="Scroll up a row"], [aria-label="Scroll down a row"]').length`,
+      ),
+    };
+    return {
+      columns,
+      colours,
+      items,
+      buttons: await buttonsIn("#costume-actions"),
+      bar: await exists("#costume-bar"),
+      windowHeight: await page.evaluate<number>("innerHeight"),
+    };
+  });
+  const { columns, buttons: underThePicture } = wideFacts;
+  results.costumeInThreeColumns =
+    near(columns.picture.width, 320) &&
+    near(columns.parts.width, 200) &&
+    columns.picture.right <= columns.parts.left &&
+    columns.parts.right <= columns.grid.left &&
+    columns.grid.right <= columns.page.right + 1 &&
+    [columns.parts, columns.grid].every((box) => near(box.top, columns.picture.top)) &&
+    columns.grid.width > columns.parts.width;
+  results.costumeButtonsUnderThePictureAndNoBottomBar =
+    !wideFacts.bar &&
+    columns.actions.top >= columns.preview.bottom &&
+    same(
+      underThePicture.map(({ id }) => id),
+      ["costume-history", "costume-reset", "costume-save"],
+    ) &&
+    underThePicture.every(
+      ({ left, right }) => left >= columns.picture.left - 1 && right <= columns.picture.right + 1,
+    ) &&
+    (underThePicture[0]?.right ?? 0) <= (underThePicture[1]?.left ?? 0) &&
+    (underThePicture[1]?.right ?? 0) <= (underThePicture[2]?.left ?? 0);
+  results.costumeWideGridFillsTheWindow =
+    !wideFacts.colours.scrolls &&
+    !wideFacts.items.scrolls &&
+    near(columns.grid.bottom, wideFacts.windowHeight - 32) &&
+    wideFacts.colours.swatch > 32 &&
+    wideFacts.colours.tracks > 9 &&
+    wideFacts.items.cell > 44 &&
+    wideFacts.items.tracks > 6 &&
+    wideFacts.items.scrollButtons === 0;
+
+  const stuck = await atSize(1100, 480, async () => {
+    await showPart("colorFace");
+    await waitFor(async () => (await exists("#swatch-colorFace-0")) || undefined);
+    await page.evaluate("window.scrollTo(0, 0)");
+    const before = await boxOf("#costume-picture-column");
+    const gridBefore = await boxOf("#costume-grid");
+    await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)");
+    const scrolledBy = await page.evaluate<number>("scrollY");
+    const afterPage = await boxOf("#costume-picture-column");
+    const gridAfter = await boxOf("#costume-grid");
+    const gridScrolled = await page.evaluate<number>(
+      `(() => { const palette = document.querySelector("#costume-grid > *"); palette.scrollTop = 150; return palette.scrollTop; })()`,
+    );
+    const afterGrid = await boxOf("#costume-picture-column");
+    await page.evaluate("window.scrollTo(0, 0)");
+    return {
+      before,
+      gridBefore,
+      scrolledBy,
+      afterPage,
+      gridAfter,
+      gridScrolled,
+      afterGrid,
+      windowHeight: await page.evaluate<number>("innerHeight"),
+    };
+  });
+  results.costumePictureColumnStaysInView =
+    stuck.scrolledBy > 50 &&
+    near(stuck.afterPage.top, stuck.before.top) &&
+    stuck.afterPage.bottom <= stuck.windowHeight &&
+    stuck.gridAfter.top < stuck.gridBefore.top - 50 &&
+    stuck.gridScrolled > 0 &&
+    near(stuck.afterGrid.top, stuck.afterPage.top);
+
+  const tabsSelected = () =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll('#costume-parts [role="tab"][aria-selected="true"]')].map((tab) => tab.id)`,
+    );
+  const gridShown = () =>
+    page.evaluate<string>(
+      `(() => { const grid = document.querySelector("#costume-grid"); return grid.querySelector('[id^="costume-items-"]')?.id ?? (grid.querySelector('[id^="swatch-"]') !== null ? "palette" : "none"); })()`,
+    );
+  await openFreshEditor();
+  const listSemantics = await page.evaluate<Record<string, unknown>>(
+    `(() => { const lists = [...document.querySelectorAll('#costume-parts [role="tablist"]')]; return { orientations: lists.map((list) => list.getAttribute("aria-orientation")), names: lists.map((list) => document.getElementById(list.getAttribute("aria-labelledby") ?? "")?.textContent ?? null), tabs: lists.map((list) => [...list.querySelectorAll('[role="tab"]')].map((tab) => tab.id)), headings: [...document.querySelectorAll("#costume-parts h2")].map((heading) => heading.tagName) }; })()`,
+  );
+  await click("#costume-part-costume3");
+  await waitFor(async () => (await exists("#costume-items-costume3")) || undefined);
+  const panelFacts = () =>
+    page.evaluate<Record<string, unknown>>(
+      `(() => { const panel = document.querySelector("#costume-grid"); return { role: panel.getAttribute("role"), labelledby: panel.getAttribute("aria-labelledby"), controlling: [...document.querySelectorAll("#costume-parts [aria-controls]")].map((tab) => tab.id + ">" + tab.getAttribute("aria-controls")) }; })()`,
+    );
+  const itemPart = {
+    selected: await tabsSelected(),
+    shown: await gridShown(),
+    panel: await panelFacts(),
+  };
+  await click("#costume-part-colorLimb");
+  await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
+  const colourPart = {
+    selected: await tabsSelected(),
+    shown: await gridShown(),
+    wornPressed: await pressedOf("#swatch-colorLimb-12"),
+    panel: await panelFacts(),
+  };
+  results.costumePartPickedInTheListShowsItsGrid =
+    same(listSemantics, {
+      orientations: ["vertical", "vertical"],
+      names: ["Colours", "Costume"],
+      tabs: [
+        ["costume-part-colorFace", "costume-part-colorBody", "costume-part-colorLimb"],
+        [
+          "costume-part-costume1",
+          "costume-part-costume2",
+          "costume-part-costume3",
+          "costume-part-costume4",
+          "costume-part-costume5",
+        ],
+      ],
+      headings: ["H2", "H2"],
+    }) &&
+    same(itemPart, {
+      selected: ["costume-part-costume3"],
+      shown: "costume-items-costume3",
+      panel: {
+        role: "tabpanel",
+        labelledby: "costume-part-costume3",
+        controlling: ["costume-part-costume3>costume-grid"],
+      },
+    }) &&
+    same(colourPart, {
+      selected: ["costume-part-colorLimb"],
+      shown: "palette",
+      wornPressed: "true",
+      panel: {
+        role: "tabpanel",
+        labelledby: "costume-part-colorLimb",
+        controlling: ["costume-part-colorLimb>costume-grid"],
+      },
+    });
+  await page.evaluate(`document.querySelector("#costume-part-colorFace").focus()`);
+  await press("ArrowDown");
+  const focusedByArrow = await page.evaluate<string>("document.activeElement.id");
+  const stillSelected = await tabsSelected();
+  await press("Enter");
+  await waitFor(async () => (await exists("#swatch-colorBody-12")) || undefined);
+  const pickedByEnter = await tabsSelected();
+  await press("ArrowDown");
+  await press(" ");
+  await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
+  const pickedBySpace = await tabsSelected();
+  results.costumePartsListMovesByArrowsAndPicksByEnterAndSpace =
+    focusedByArrow === "costume-part-colorBody" &&
+    same(stillSelected, ["costume-part-colorLimb"]) &&
+    same(pickedByEnter, ["costume-part-colorBody"]) &&
+    same(pickedBySpace, ["costume-part-colorLimb"]);
+
+  const backgroundOf = (selector: string) =>
+    page.evaluate<string>(
+      `getComputedStyle(document.querySelector(${JSON.stringify(selector)})).backgroundColor`,
+    );
+  const pictureAt = (selector: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(selector)})?.getAttribute("src") ?? null`,
+    );
+  await click("#costume-part-colorFace");
+  const torsoRow = await backgroundOf("#costume-pick-colorBody");
+  await click("#swatch-colorFace-9");
+  const faceRowChanged =
+    (await backgroundOf("#costume-pick-colorFace")) ===
+      (await backgroundOf("#swatch-colorFace-9")) &&
+    (await backgroundOf("#costume-pick-colorBody")) === torsoRow;
+  await click("#costume-part-costume3");
+  await waitFor(async () => (await exists("#item-costume3-70 img")) || undefined);
+  await click("#item-costume3-70");
+  const bodyRowShowsTheItem =
+    (await pictureAt("#costume-pick-costume3 img")) === (await pictureAt("#item-costume3-70 img"));
+  await click("#item-costume3-0");
+  const bodyRowBlank =
+    !(await exists("#costume-pick-costume3 img")) &&
+    (await attribute("#costume-pick-costume3", "aria-hidden")) === "true";
+  await click("#costume-reset");
+  results.costumeGridPickChangesItsRowInTheList =
+    faceRowChanged &&
+    bodyRowShowsTheItem &&
+    bodyRowBlank &&
+    (await backgroundOf("#costume-pick-colorFace")) !==
+      (await backgroundOf("#swatch-colorFace-9")) &&
+    (await pictureAt("#costume-pick-costume3 img")) === (await pictureAt("#item-costume3-68 img"));
+
+  await fetch(`${HIROBA}/__items?many=1`);
+  await openFreshEditor();
+  await showPart("costume1");
+  await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+  const farItem = ownedIn(1)[ownedIn(1).length - 1];
+  const thumbsBeforePick = (await thumbsSettled()).length;
+  await resetLog();
+  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  const prechecksBeforeFarSave = await hitsOn("/ajax/check_ip_kisekae.php");
+  await page.evaluate(
+    `(async () => { document.querySelector("#item-costume1-${farItem}").click(); await new Promise((resolve) => requestAnimationFrame(resolve)); document.querySelector("#costume-save").click(); })()`,
+  );
+  await waitFor(
+    async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeFarSave || undefined,
+  );
+  await Bun.sleep(700);
+  const thumbsDuringTheWrite = (await thumbs()).length - thumbsBeforePick;
+  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  await inStep("editing");
+  const listedAfterTheWrite = (await thumbsSettled()).slice(thumbsBeforePick);
+  await waitFor(async () => (await exists("#costume-pick-costume1 img")) || undefined);
+  results.partsListThumbnailWaitsOutAWriteThenIsAskedOnce =
+    thumbsDuringTheWrite === 0 &&
+    same(
+      listedAfterTheWrite.map(({ type, cos }) => `${type}/${cos}`),
+      [`1/${farItem}`],
+    ) &&
+    sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&
+    (await savedCostume()).costume1 === farItem;
+  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}/__items?many=0`);
+  await readEditorAgain();
+
+  // One selection for both layouts, and the phone's tabs and bar as they were.
+  await openFreshEditor();
+  await click("#costume-part-costume4");
+  const phone = await atSize(PHONE.width, PHONE.height, async () => {
+    await waitFor(async () => (await exists("#costume-bar")) || undefined);
+    const tabIds = () =>
+      page.evaluate<string[]>(
+        `[...document.querySelectorAll('#costume-page [role="tab"]')].map((tab) => tab.id)`,
+      );
+    const kept = {
+      itemsTab: await attribute("#costume-tab-items", "aria-selected"),
+      part: await attribute("#costume-part-costume4", "aria-selected"),
+      grid: await exists("#costume-items-costume4"),
+    };
+    const slotTabs = await tabIds();
+    await click("#costume-part-costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    const itemGrid = await page.evaluate<{ columns: number; height: number; arrows: number }>(
+      `(() => { const box = document.querySelector("#costume-items-costume1"); return { columns: getComputedStyle(box).gridTemplateColumns.split(" ").length, height: box.getBoundingClientRect().height, arrows: document.querySelectorAll('[aria-label="Scroll up a row"], [aria-label="Scroll down a row"]').length }; })()`,
+    );
+    await click("#costume-tab-colours");
+    await click("#costume-part-colorBody");
+    await waitFor(async () => (await exists("#swatch-colorBody-12")) || undefined);
+    const colourTabs = await tabIds();
+    const barButtons = await buttonsIn("#costume-bar");
+    const barBox = await boxOf("#costume-bar");
+    const wideOnly = [
+      "#costume-picture-column",
+      "#costume-parts",
+      "#costume-grid",
+      "#costume-actions",
+    ];
+    const noColumns = (await Promise.all(wideOnly.map(exists))).every((there) => !there);
+
+    const before = await savedCostume();
+    const savesBefore = await hitsOn("/ajax/change_mydon.php");
+    await click("#swatch-colorBody-40");
+    const outcome = await savedFrom(before);
+    const savedFromTheBar = {
+      outcome,
+      saves: (await hitsOn("/ajax/change_mydon.php")) - savesBefore,
+      moved: same(await savedCostume(), { ...START, colorBody: 40 }),
+    };
+    await fetch(`${HIROBA}/__noop-save`);
+    await click("#swatch-colorBody-41");
+    const unmoved = await savedFrom(await savedCostume());
+    const noticeAboveTheTabs = await page.evaluate<boolean>(
+      `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const tabs = document.querySelector("#costume-tab-colours"); return notice !== null && tabs !== null && notice.getBoundingClientRect().bottom <= tabs.getBoundingClientRect().top; })()`,
+    );
+    return {
+      kept,
+      slotTabs,
+      colourTabs,
+      itemGrid,
+      barButtons,
+      barBox,
+      noColumns,
+      savedFromTheBar,
+      unmoved,
+      noticeAboveTheTabs,
+    };
+  });
+  await waitFor(async () => (await exists("#costume-parts")) || undefined);
+  results.costumeKeepsThePartPickedAcrossWidths =
+    same(phone.kept, { itemsTab: "true", part: "true", grid: true }) &&
+    same(await tabsSelected(), ["costume-part-colorBody"]) &&
+    (await gridShown()) === "palette";
+  results.costumeNarrowKeepsTheTabsAndTheBar =
+    phone.noColumns &&
+    same(phone.slotTabs, [
+      "costume-tab-colours",
+      "costume-tab-items",
+      "costume-part-costume1",
+      "costume-part-costume2",
+      "costume-part-costume3",
+      "costume-part-costume4",
+      "costume-part-costume5",
+    ]) &&
+    same(phone.colourTabs, [
+      "costume-tab-colours",
+      "costume-tab-items",
+      "costume-part-colorFace",
+      "costume-part-colorBody",
+      "costume-part-colorLimb",
+    ]) &&
+    phone.itemGrid.columns === 6 &&
+    Math.abs(phone.itemGrid.height - (4 * 44 + 3 * 6 + 2 * 6 + 2)) < 2 &&
+    phone.itemGrid.arrows === 2;
+  results.barHoldsHistoryLeftAndResetAndSaveRight =
+    same(
+      phone.barButtons.map(({ id }) => id),
+      ["costume-history", "costume-reset", "costume-save"],
+    ) &&
+    Math.abs((phone.barButtons[0]?.left ?? 0) - (phone.barBox.left + 12)) < 2 &&
+    Math.abs(phone.barBox.right - 12 - (phone.barButtons[2]?.right ?? 0)) < 2 &&
+    (phone.barButtons[1]?.right ?? 0) <= (phone.barButtons[2]?.left ?? 0);
+  results.narrowSaveFromTheBarIsOneClick = same(phone.savedFromTheBar, {
+    outcome: "applied",
+    saves: 1,
+    moved: true,
+  });
+  results.narrowNoticeAboveTheEditor = phone.unmoved === "notApplied" && phone.noticeAboveTheTabs;
+  await fetch(`${HIROBA}/__state?reset=1`);
+  await readEditorAgain();
+
   // Wait for the My Don fetched after those changes, before the log is read.
   await goTo("overview");
   await myDonsSettled();
@@ -3323,8 +3772,8 @@ try {
       historyBeforeReopen,
     );
   results.editorReadOnceOnReopen = (await editorHits()) === editorReadsBeforeReopen + 1;
-  await waitFor(async () => (await shownOnReopen("#costume-tab-items")) || undefined);
-  await running.click("#costume-tab-items");
+  await waitFor(async () => (await shownOnReopen("#costume-part-costume1")) || undefined);
+  await showPartOn(running, "costume1");
   await waitForSeen(
     running.page,
     async () => (await shownOnReopen("#item-costume1-4 img")) || undefined,
@@ -3379,7 +3828,7 @@ try {
     (await running.textOf("main h1")) === "Costume" &&
     (await editorHits()) === editorReadsBeforeOpening + 1 &&
     (await running.page.evaluate<boolean>(
-      `["#costume-tab-colours", "#costume-save", "#costume-history", "#costume-bar"].every((selector) => document.querySelector(selector) !== null)`,
+      `["#costume-part-colorFace", "#costume-save", "#costume-history", "#costume-actions"].every((selector) => document.querySelector(selector) !== null)`,
     ));
   await resetLog();
   const leftAsIs = { ...START, colorFace: 7 };
