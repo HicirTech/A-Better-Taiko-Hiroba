@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Box, type SxProps, type Theme, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CostumeEditorView, CostumeSet } from "../session-port";
@@ -14,6 +14,7 @@ import {
   PART_LABEL,
   type SlotPart,
 } from "./costume-parts";
+import { HELD_STILL } from "./editor-parts";
 
 export interface PartPanelProps {
   readonly view: CostumeEditorView;
@@ -23,7 +24,8 @@ export interface PartPanelProps {
   readonly part: CostumePart;
   /** A wide window: larger cells. */
   readonly wide: boolean;
-  readonly sx?: SxProps<Theme>;
+  /** A save is running: nothing here can be picked. */
+  readonly held: boolean;
   readonly onPickColour: (part: ColourPart, id: number) => void;
   readonly onPickItem: (part: SlotPart, id: number) => void;
 }
@@ -36,12 +38,18 @@ export function PartPanel({
   i18n,
   part,
   wide,
-  sx,
+  held,
   onPickColour,
   onPickItem,
 }: PartPanelProps) {
   return (
-    <Box id={PARTS_PANEL_ID} role="tabpanel" aria-labelledby={partTabId(part)} sx={sx}>
+    <Box
+      id={PARTS_PANEL_ID}
+      role="tabpanel"
+      aria-labelledby={partTabId(part)}
+      inert={held}
+      sx={held ? HELD_STILL : undefined}
+    >
       <Typography component="h2" variant="subtitle1" sx={{ mb: 1.5 }}>
         {i18n.t(PART_LABEL[part])}
       </Typography>

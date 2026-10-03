@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { previewSetOf } from "./costume-editor-state";
+import { previewSetOf, showsEditor } from "./costume-editor-state";
 import { PartPanel } from "./costume-part-panel";
 import { PartTiles } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
@@ -23,7 +23,7 @@ export interface WideBodyProps {
   /** The part on show. */
   readonly part: CostumePart;
   readonly onPart: (part: CostumePart) => void;
-  /** The buttons under the tiles; null while there is no editor to act on. */
+  /** The buttons under the tiles, or a save's progress; null while there is no editor to act on. */
   readonly actions: ReactNode;
   /** What stands in place of the part on show while the editor is not at hand. */
   readonly progress: ReactNode;
@@ -31,6 +31,7 @@ export interface WideBodyProps {
 
 export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }: WideBodyProps) {
   const { step } = editor;
+  const saving = step.name === "saving";
   return (
     <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3, flexGrow: 1 }}>
       {previewSetOf(step) !== null && (
@@ -40,7 +41,7 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
           sx={{ flex: `0 0 ${SIDE_COLUMN_WIDTH}`, ...STAYS_IN_VIEW }}
         >
           <CostumePreviewBox preview={editor.preview} i18n={i18n} />
-          {step.name === "editing" && (
+          {showsEditor(step) && (
             <PartTiles
               view={step.editor}
               draft={step.draft}
@@ -48,13 +49,14 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
               i18n={i18n}
               shown={part}
               wide
+              held={saving}
               onPick={onPart}
             />
           )}
           {actions}
-          {step.name === "editing" && (
+          {showsEditor(step) && (
             <>
-              {step.notice !== null && (
+              {step.name === "editing" && step.notice !== null && (
                 <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
               )}
               <KigurumiInfo editor={step.editor} draft={step.draft} i18n={i18n} />
@@ -62,21 +64,23 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
           )}
         </Stack>
       )}
-      {step.name === "editing" ? (
-        <PartPanel
-          view={step.editor}
-          draft={step.draft}
-          lane={lane}
-          i18n={i18n}
-          part={part}
-          wide
-          sx={{ flex: 1, minWidth: 0 }}
-          onPickColour={editor.pickColour}
-          onPickItem={editor.pickItem}
-        />
-      ) : (
-        <Box sx={{ flex: 1, minWidth: 0 }}>{progress}</Box>
-      )}
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        {showsEditor(step) ? (
+          <PartPanel
+            view={step.editor}
+            draft={step.draft}
+            lane={lane}
+            i18n={i18n}
+            part={part}
+            wide
+            held={saving}
+            onPickColour={editor.pickColour}
+            onPickItem={editor.pickItem}
+          />
+        ) : (
+          progress
+        )}
+      </Box>
     </Box>
   );
 }

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { previewSetOf } from "./costume-editor-state";
+import { previewSetOf, showsEditor } from "./costume-editor-state";
 import { PartPanel } from "./costume-part-panel";
 import { PartTiles } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
@@ -31,6 +31,7 @@ export interface NarrowBodyProps {
 
 export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: NarrowBodyProps) {
   const { step } = editor;
+  const saving = step.name === "saving";
   return (
     // Not a Stack: it would take the margins from the block below.
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, pb: 2 }}>
@@ -49,7 +50,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
           }}
         >
           <CostumePreviewBox preview={editor.preview} i18n={i18n} size={PREVIEW_PX} />
-          {step.name === "editing" && (
+          {showsEditor(step) && (
             <PartTiles
               view={step.editor}
               draft={step.draft}
@@ -57,14 +58,15 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
               i18n={i18n}
               shown={part}
               wide={false}
+              held={saving}
               onPick={onPart}
             />
           )}
         </Stack>
       )}
-      {step.name === "editing" ? (
+      {showsEditor(step) ? (
         <>
-          {step.notice !== null && (
+          {step.name === "editing" && step.notice !== null && (
             <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
           )}
           <KigurumiInfo editor={step.editor} draft={step.draft} i18n={i18n} />
@@ -75,6 +77,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
             i18n={i18n}
             part={part}
             wide={false}
+            held={saving}
             onPickColour={editor.pickColour}
             onPickItem={editor.pickItem}
           />

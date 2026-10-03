@@ -16,6 +16,7 @@ import {
   slotOf,
   tileName,
 } from "./costume-parts";
+import { HELD_STILL } from "./editor-parts";
 import { VISUALLY_HIDDEN } from "./hiroba-px";
 import { pickRing, RING_ROOM_PX } from "./pick-ring";
 
@@ -55,6 +56,8 @@ export interface PartTilesProps {
   readonly shown: CostumePart;
   /** A wide window: the groups one over the other, each under its caption. Else one row. */
   readonly wide: boolean;
+  /** A save is running: no tile can be picked. */
+  readonly held: boolean;
   readonly onPick: (part: CostumePart) => void;
 }
 
@@ -63,7 +66,8 @@ export function PartTiles(props: PartTilesProps) {
   const { t } = props.i18n;
   return (
     <Box
-      sx={
+      inert={props.held}
+      sx={[
         props.wide
           ? { display: "flex", flexDirection: "column", gap: `${GROUP_GAP_PX}px` }
           : {
@@ -74,8 +78,9 @@ export function PartTiles(props: PartTilesProps) {
               width: 1,
               maxWidth: ROW_MAX_PX,
               alignSelf: "center",
-            }
-      }
+            },
+        props.held && HELD_STILL,
+      ]}
     >
       <TileGroup id="colours" caption={t("costume.tab.colours")} parts={COLOUR_PARTS} {...props} />
       <TileGroup id="items" caption={t("costume.tab.items")} parts={SLOT_PARTS} {...props} />

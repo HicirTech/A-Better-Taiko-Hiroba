@@ -6,7 +6,7 @@ import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import { useWideWindow } from "../navigation/use-wide-window";
 import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { EditorStep } from "./costume-editor-state";
+import { type EditorStep, showsEditor } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { NarrowBody } from "./costume-narrow-body";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
@@ -44,7 +44,12 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
     }
   }, [step.name]);
 
-  const actions = actionsOf(editor, i18n, () => setHistoryOpen(true), wide);
+  // Focus leaves the button the save hides, so it is not dropped to the window's top.
+  const save = () => {
+    page.current?.focus({ preventScroll: true });
+    void editor.save();
+  };
+  const actions = actionsOf(editor, i18n, () => setHistoryOpen(true), save, wide);
   const body = { editor, lane, i18n, part, onPart: setPart, progress: progressOf(step, i18n) };
   return (
     <Box
@@ -99,7 +104,6 @@ function progressOf(step: EditorStep, i18n: Translator): ReactNode {
     case "loadFailed":
       return <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />;
     case "saving":
-      return <Waiting id="costume-saving">{t("costume.saving")}</Waiting>;
     case "editing":
       return null;
   }
@@ -109,11 +113,12 @@ function actionsOf(
   editor: CostumeEditor,
   i18n: Translator,
   onHistory: () => void,
+  onSave: () => void,
   wide: boolean,
 ): ReactNode {
   const { t } = i18n;
   const { step } = editor;
-  if (step.name !== "editing") {
+  if (!showsEditor(step)) {
     return null;
   }
 
@@ -144,25 +149,53 @@ function actionsOf(
       variant="contained"
       fullWidth={wide}
       disabled={unchanged}
-      onClick={() => void editor.save()}
+      onClick={onSave}
     >
       {t("costume.save")}
     </Button>
   );
-  return wide ? (
-    <Stack id="costume-actions" spacing={1}>
-      {save}
-      <Box sx={{ display: "flex", gap: 1 }}>
-        {history}
-        {reset}
-      </Box>
-    </Stack>
-  ) : (
-    <>
-      {history}
-      {reset}
-      {save}
-    </>
+  return (
+    <ActionArea
+      id={wide ? "costume-actions" : undefined}
+      saving={step.name === "saving"}
+      progress={<Waiting id="costume-saving">{t("costume.saving")}</Waiting>}
+    >
+      {wide ? (
+        <Stack spacing={1}>
+          {save}
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {history}
+            {reset}
+          </Box>
+        </Stack>
+      ) : (
+        <Box sx={{ display: "flex", gap: 1 }}>
+          {history}
+          {reset}
+          {save}
+        </Box>
+      )}
+    </ActionArea>
+  );
+}
+
+/** The buttons, hidden by a save while its progress takes their place, so nothing moves. */
+function ActionArea({
+  id,
+  saving,
+  progress,
+  children,
+}: {
+  id?: string | undefined;
+  saving: boolean;
+  progress: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Box id={id} sx={{ display: "grid", width: 1 }}>
+      <Box sx={{ gridArea: "1 / 1", visibility: saving ? "hidden" : "visible" }}>{children}</Box>
+      {saving && <Box sx={{ gridArea: "1 / 1", alignSelf: "center" }}>{progress}</Box>}
+    </Box>
   );
 }
 

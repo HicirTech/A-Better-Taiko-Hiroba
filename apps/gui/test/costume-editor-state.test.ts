@@ -8,6 +8,7 @@ import {
   isWriting,
   previewSetOf,
   reduceEditor,
+  showsEditor,
   UNREAD,
 } from "../src/my-page/costume-editor-state";
 import type {
@@ -481,5 +482,16 @@ describe("what the page asks of a step", () => {
     const steps = [UNREAD, editing(), saving()];
 
     expect(steps.filter(isWriting).map((step) => step.name)).toEqual(["saving"]);
+  });
+
+  type ShownCase = [label: string, step: EditorStep, shown: boolean];
+  test.each<ShownCase>([
+    ["nothing read", UNREAD, false],
+    ["a read on its way", { name: "loading", held }, false],
+    ["a read that failed", { name: "loadFailed", failure: FAILURE, held }, false],
+    ["a draft", editing(), true],
+    ["a save", saving(), true],
+  ])("shows the editor for %s: %p", (_label, step, shown) => {
+    expect(showsEditor(step)).toBe(shown);
   });
 });

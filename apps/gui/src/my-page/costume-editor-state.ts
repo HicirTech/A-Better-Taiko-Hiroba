@@ -33,6 +33,7 @@ export type EditorStep =
   | { readonly name: "saving"; readonly editor: CostumeEditorView; readonly draft: CostumeSet };
 
 type EditingStep = Extract<EditorStep, { readonly name: "editing" }>;
+export type ShownStep = Extract<EditorStep, { readonly name: "editing" | "saving" }>;
 
 export type EditorAction =
   | { readonly type: "forget" }
@@ -134,6 +135,11 @@ export function previewSetOf(step: EditorStep): CostumeSet | null {
     case "unread":
       return null;
   }
+}
+
+/** Whether the editor is on screen: while editing, and while a save runs over it. */
+export function showsEditor(step: EditorStep): step is ShownStep {
+  return step.name === "editing" || step.name === "saving";
 }
 
 export function canReadEditorAgain(step: EditorStep): boolean {

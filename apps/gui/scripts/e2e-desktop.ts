@@ -2657,6 +2657,7 @@ try {
   await fetch(`${HIROBA}/__items?many=1`);
   await openFreshEditor();
   results.tileThumbnailWaitsOutAWriteThenIsAskedOnce = await farItemSavedAtOnce(ownedIn(1));
+
   const slotInTheWindow = async (firstItem: number | undefined) => {
     await showPart("costume1");
     await waitFor(async () => (await exists(`#item-costume1-${firstItem} img`)) || undefined);
@@ -2697,6 +2698,83 @@ try {
   results.narrowThumbnailsOnlyWhenSeen = thumbnailsOnAPhone.onlyWhatIsOnShow;
   results.narrowThumbnailsAskedOncePerRun =
     thumbnailsOnAPhone.askedAfterReopen === thumbnailsOnAPhone.asked;
+
+  // The other slots empty, so a saved Mascot leaves no note behind to change the page's height.
+  const withOnlyTheMascotSlot = async () => {
+    await fetch(`${HIROBA}/__state?reset=1&costume_2=0&costume_3=0&costume_4=0&costume_5=0`);
+    await readEditorAgain();
+  };
+  const heldFacts = () =>
+    page.evaluate<{
+      scrolled: number;
+      sameGrid: boolean;
+      inert: boolean;
+      progressIn: string | null;
+    }>(
+      `({ scrolled: scrollY, sameGrid: document.querySelector("#costume-items-costume1") === window.gridKept, inert: document.querySelector("#costume-grid")?.inert === true && document.querySelector("#costume-part-colorFace")?.closest("[inert]") != null, progressIn: document.querySelector("#costume-saving")?.closest("#costume-aside, #costume-bar")?.id ?? null })`,
+    );
+  const saveFromTheEndOfTheSlot = async (width: number, height: number) => {
+    await withOnlyTheMascotSlot();
+    return atSize(width, height, async () => {
+      await showPart("costume1");
+      await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+      const farItem = phoneItems[phoneItems.length - 1];
+      await page.evaluate(`document.querySelector("#item-costume1-${farItem}").click()`);
+      const end = await scrollToTheEnd();
+      await page.evaluate(`window.gridKept = document.querySelector("#costume-items-costume1")`);
+      await fetch(`${HIROBA}/__hold-precheck?on=1`);
+      await click("#costume-save");
+      await inStep("saving");
+      const held = await heldFacts();
+      await fetch(`${HIROBA}/__hold-precheck?on=0`);
+      await inStep("editing");
+      const settled = await heldFacts();
+      const saved = (await savedCostume()).costume1 === farItem;
+      await page.evaluate("window.scrollTo(0, 0)");
+      return { end, held, settled, saved };
+    });
+  };
+  const keptInPlace = (
+    { end, held, settled, saved }: Awaited<ReturnType<typeof saveFromTheEndOfTheSlot>>,
+    progressIn: string,
+  ) =>
+    end > 50 &&
+    near(held.scrolled, end) &&
+    near(settled.scrolled, end) &&
+    held.sameGrid &&
+    settled.sameGrid &&
+    held.inert &&
+    !settled.inert &&
+    held.progressIn === progressIn &&
+    saved;
+  await withOnlyTheMascotSlot();
+  results.costumeThumbnailsInViewDuringASaveWaitForIt = await atSize(960, 720, async () => {
+    await showPart("costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await page.evaluate("window.scrollTo(0, 0)");
+    await click(`#item-costume1-${phoneItems[0]}`);
+    const askedBefore = (await thumbsSettled()).length;
+    await fetch(`${HIROBA}/__hold-precheck?on=1`);
+    await click("#costume-save");
+    await inStep("saving");
+    await page.evaluate("window.scrollBy(0, 160)");
+    await Bun.sleep(700);
+    const askedDuringTheWrite = (await thumbs()).length - askedBefore;
+    await fetch(`${HIROBA}/__hold-precheck?on=0`);
+    await inStep("editing");
+    const askedAfterTheWrite = (await thumbsSettled()).length - askedBefore;
+    await page.evaluate("window.scrollTo(0, 0)");
+    return askedDuringTheWrite === 0 && askedAfterTheWrite > 0;
+  });
+  results.costumeSaveKeepsTheEditorAndThePageInPlace = keptInPlace(
+    await saveFromTheEndOfTheSlot(960, 720),
+    "costume-aside",
+  );
+  results.costumePhoneSaveKeepsTheEditorAndThePageInPlace = keptInPlace(
+    await saveFromTheEndOfTheSlot(390, 700),
+    "costume-bar",
+  );
+  await fetch(`${HIROBA}/__state?reset=1`);
   await fetch(`${HIROBA}/__items?many=1`);
   await readEditorAgain();
 
