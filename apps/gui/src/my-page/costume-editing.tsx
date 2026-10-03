@@ -3,7 +3,6 @@ import { Alert, Box, ButtonBase, Stack, Tab, Tabs } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CostumeEditorView, CostumeSet } from "../session-port";
-import { Changes } from "./costume-changes";
 import { CostumeItemGrid } from "./costume-item-grid";
 import {
   COLOUR_PARTS,
@@ -111,7 +110,6 @@ export function EditingView({
           {t("costume.kigurumiWarning")}
         </Alert>
       )}
-      <Changes from={editor.state} to={draft} i18n={i18n} />
     </Stack>
   );
 }

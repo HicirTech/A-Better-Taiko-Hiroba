@@ -1,11 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { Box, Button, Paper, Stack } from "@mui/material";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { UndoSummary } from "../session-port";
-import { Changes } from "./costume-changes";
 import { type EditingTabs, EditingView, FIRST_TABS } from "./costume-editing";
 import { previewSetOf } from "./costume-editor-state";
 import { changedParts } from "./costume-parts";
@@ -69,10 +67,7 @@ function StepView({
   onTabs,
 }: CostumePageProps & { tabs: EditingTabs; onTabs: (tabs: EditingTabs) => void }) {
   const { t } = i18n;
-  const { step, undoable } = editor;
-  const undoOffer = undoable !== null && (
-    <UndoOffer undoable={undoable} onUndo={() => void editor.undo()} i18n={i18n} />
-  );
+  const { step } = editor;
   switch (step.name) {
     case "unread":
     case "loading":
@@ -82,7 +77,9 @@ function StepView({
     case "editing":
       return (
         <>
-          {undoOffer}
+          {step.notice !== null && (
+            <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
+          )}
           <EditingView
             editor={step.editor}
             draft={step.draft}
@@ -95,74 +92,34 @@ function StepView({
           />
         </>
       );
-    case "confirming":
-      return (
-        <Stack spacing={2}>
-          <Typography>{t("costume.confirmIntro")}</Typography>
-          <Changes from={step.editor.state} to={step.draft} i18n={i18n} />
-        </Stack>
-      );
     case "saving":
       return <Waiting id="costume-saving">{t("costume.saving")}</Waiting>;
-    case "undoing":
-      return <Waiting id="costume-undoing">{t("costume.undoing")}</Waiting>;
-    case "done":
-      return (
-        <>
-          <WriteOutcomeNotice
-            outcome={step.outcome}
-            kind="costume"
-            i18n={i18n}
-            asUndo={step.asUndo}
-          />
-          {undoOffer}
-        </>
-      );
   }
 }
 
 function actionsOf(editor: CostumeEditor, i18n: Translator): ReactNode {
   const { t } = i18n;
   const { step } = editor;
-  switch (step.name) {
-    case "editing": {
-      const unchanged = changedParts(step.editor.state, step.draft).length === 0;
-      return (
-        <>
-          <Button id="costume-reset" disabled={unchanged} onClick={editor.reset}>
-            {t("costume.reset")}
-          </Button>
-          <Button
-            id="costume-review"
-            variant="contained"
-            disabled={unchanged}
-            onClick={editor.review}
-          >
-            {t("costume.review")}
-          </Button>
-        </>
-      );
-    }
-    case "confirming":
-      return (
-        <>
-          <Button id="costume-back" onClick={editor.back}>
-            {t("costume.back")}
-          </Button>
-          <Button id="costume-save" variant="contained" onClick={() => void editor.save()}>
-            {t("costume.save")}
-          </Button>
-        </>
-      );
-    case "done":
-      return (
-        <Button id="costume-back" onClick={editor.back}>
-          {t("costume.back")}
-        </Button>
-      );
-    default:
-      return null;
+  if (step.name !== "editing") {
+    return null;
   }
+
+  const unchanged = changedParts(step.editor.state, step.draft).length === 0;
+  return (
+    <>
+      <Button id="costume-reset" disabled={unchanged} onClick={editor.reset}>
+        {t("costume.reset")}
+      </Button>
+      <Button
+        id="costume-save"
+        variant="contained"
+        disabled={unchanged}
+        onClick={() => void editor.save()}
+      >
+        {t("costume.save")}
+      </Button>
+    </>
+  );
 }
 
 function ActionBar({ children }: { children: ReactNode }) {
@@ -185,34 +142,5 @@ function ActionBar({ children }: { children: ReactNode }) {
     >
       {children}
     </Paper>
-  );
-}
-
-function UndoOffer({
-  undoable,
-  onUndo,
-  i18n,
-}: {
-  undoable: UndoSummary;
-  onUndo: () => void;
-  i18n: Translator;
-}) {
-  const { t } = i18n;
-  return (
-    // Not a Stack, which keeps its children's margins at 0: the button's label lines up with the
-    // line under it, not with its own padding.
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      <Button
-        id="costume-undo"
-        variant="text"
-        onClick={onUndo}
-        sx={{ alignSelf: "flex-start", ml: -1 }}
-      >
-        {t("costume.undoLast")}
-      </Button>
-      <Typography id="undo-when" variant="body2" color="text.secondary">
-        {t("costume.undoWhen", { time: i18n.dateTime(undoable.at) })}
-      </Typography>
-    </Box>
   );
 }

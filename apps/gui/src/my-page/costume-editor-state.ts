@@ -1,6 +1,12 @@
 import { draftCostumeChange, type Result, sameCostume } from "@abth/core";
 
-import type { CostumeEditorView, CostumeSet, ReadFailure, WriteOutcomeView } from "../session-port";
+import {
+  type CostumeEditorView,
+  type CostumeSet,
+  changedTheCostume,
+  type ReadFailure,
+  type WriteOutcomeView,
+} from "../session-port";
 import { type ColourPart, type SlotPart, slotOf } from "./costume-parts";
 import { refreshed } from "./write-ending";
 
@@ -17,17 +23,16 @@ export type EditorStep =
       readonly failure: ReadFailure;
       readonly held: HeldEditor | null;
     }
-  | { readonly name: "editing"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
-  | { readonly name: "confirming"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
-  | { readonly name: "saving"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
-  // No draft: the undo puts back a set of its own, so an older draft would be over the wrong set.
-  | { readonly name: "undoing"; readonly editor: CostumeEditorView }
   | {
-      readonly name: "done";
+      readonly name: "editing";
       readonly editor: CostumeEditorView;
-      readonly outcome: WriteOutcomeView;
-      readonly asUndo: boolean;
-    };
+      readonly draft: CostumeSet;
+      /** How the last write ended, until the next pick, reset, save or read; none if it applied. */
+      readonly notice: WriteOutcomeView | null;
+    }
+  | { readonly name: "saving"; readonly editor: CostumeEditorView; readonly draft: CostumeSet };
+
+type EditingStep = Extract<EditorStep, { readonly name: "editing" }>;
 
 export type EditorAction =
   | { readonly type: "forget" }
@@ -36,10 +41,7 @@ export type EditorAction =
   | { readonly type: "pickedColour"; readonly part: ColourPart; readonly id: number }
   | { readonly type: "pickedItem"; readonly part: SlotPart; readonly id: number }
   | { readonly type: "reset" }
-  | { readonly type: "review" }
-  | { readonly type: "back" }
   | { readonly type: "saveStarted" }
-  | { readonly type: "undoStarted" }
   | { readonly type: "writeEnded"; readonly outcome: WriteOutcomeView };
 
 export const UNREAD: EditorStep = { name: "unread" };
@@ -63,27 +65,19 @@ export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep
         : step;
     case "reset":
       return step.name === "editing" ? withDraft(step, step.editor.state) : step;
-    case "review":
-      return step.name === "editing" && !sameCostume(step.editor.state, step.draft)
-        ? { ...step, name: "confirming" }
-        : step;
-    case "back":
-      return back(step);
     case "saveStarted":
-      return step.name === "confirming"
+      return step.name === "editing" && !sameCostume(step.editor.state, step.draft)
         ? { name: "saving", editor: step.editor, draft: step.draft }
-        : step;
-    case "undoStarted":
-      return step.name === "editing" || step.name === "done"
-        ? { name: "undoing", editor: step.editor }
         : step;
     case "writeEnded":
       return writeEnded(step, action.outcome);
   }
 }
 
-function withDraft<S extends { readonly draft: CostumeSet }>(step: S, draft: CostumeSet): S {
-  return sameCostume(step.draft, draft) ? step : { ...step, draft };
+function withDraft(step: EditingStep, draft: CostumeSet): EditingStep {
+  return sameCostume(step.draft, draft) && step.notice === null
+    ? step
+    : { ...step, draft, notice: null };
 }
 
 function readStarted(step: EditorStep): EditorStep {
@@ -92,8 +86,6 @@ function readStarted(step: EditorStep): EditorStep {
       return { name: "loading", held: null };
     case "editing":
       return { name: "loading", held: { editor: step.editor, draft: step.draft } };
-    case "done":
-      return { name: "loading", held: { editor: step.editor, draft: step.editor.state } };
     case "loadFailed":
       return { name: "loading", held: step.held };
     default:
@@ -111,40 +103,28 @@ function readEnded(
 
   const editor = result.value;
   const keepsDraft = held !== null && sameCostume(held.editor.state, editor.state);
-  return { name: "editing", editor, draft: keepsDraft ? held.draft : editor.state };
-}
-
-function back(step: EditorStep): EditorStep {
-  switch (step.name) {
-    case "confirming":
-      return { name: "editing", editor: step.editor, draft: step.draft };
-    case "done":
-      return { name: "editing", editor: step.editor, draft: step.editor.state };
-    default:
-      return step;
-  }
+  return { name: "editing", editor, draft: keepsDraft ? held.draft : editor.state, notice: null };
 }
 
 function writeEnded(step: EditorStep, outcome: WriteOutcomeView): EditorStep {
-  switch (step.name) {
-    case "saving":
-      return { name: "done", editor: refreshed(step.editor, outcome), outcome, asUndo: false };
-    case "undoing":
-      return { name: "done", editor: refreshed(step.editor, outcome), outcome, asUndo: true };
-    default:
-      return step;
+  if (step.name !== "saving") {
+    return step;
   }
+
+  const editor = refreshed(step.editor, outcome);
+  return {
+    name: "editing",
+    editor,
+    draft: changedTheCostume(outcome) ? editor.state : step.draft,
+    notice: outcome.kind === "applied" ? null : outcome,
+  };
 }
 
 export function previewSetOf(step: EditorStep): CostumeSet | null {
   switch (step.name) {
     case "editing":
-    case "confirming":
     case "saving":
       return step.draft;
-    case "undoing":
-    case "done":
-      return step.editor.state;
     case "loading":
     case "loadFailed":
       return step.held?.draft ?? null;
@@ -154,9 +134,9 @@ export function previewSetOf(step: EditorStep): CostumeSet | null {
 }
 
 export function canReadEditorAgain(step: EditorStep): boolean {
-  return step.name === "editing" || step.name === "done" || step.name === "loadFailed";
+  return step.name === "editing" || step.name === "loadFailed";
 }
 
 export function isWriting(step: EditorStep): boolean {
-  return step.name === "saving" || step.name === "undoing";
+  return step.name === "saving";
 }

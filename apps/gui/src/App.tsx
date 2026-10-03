@@ -88,7 +88,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
     shown: onEditorPage,
     onSessionGone: sessionGone,
   });
-  const { refreshUndo, forget: forgetEditor } = editor;
+  const { forget: forgetEditor } = editor;
   const titleEditor = useTitleEditor({ port, lane, onSessionGone: sessionGone });
   const { refreshUndo: refreshTitleUndo, forget: forgetTitleEditor } = titleEditor;
   const nameRead = useCallback(
@@ -148,7 +148,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
           for (const kind of FIXED_ART) {
             lane.forgetFailures(kind);
           }
-          await Promise.all([refreshUndo(), refreshTitleUndo(), refreshNameUndo()]);
+          await Promise.all([refreshTitleUndo(), refreshNameUndo()]);
           setScreen({ name: "profile", profile: result.value });
           return true;
         }
@@ -162,7 +162,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
         setRefreshing(false);
       }
     },
-    [port, lane, refreshUndo, refreshTitleUndo, refreshNameUndo],
+    [port, lane, refreshTitleUndo, refreshNameUndo],
   );
 
   // A title write that may have moved the title leaves the plate stale: read my page again.

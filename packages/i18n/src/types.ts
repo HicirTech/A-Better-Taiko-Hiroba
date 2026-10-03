@@ -165,14 +165,12 @@ export interface Messages {
   "costume.changesHeading": string;
   /** Params: {part} (a costume.part text), {from}, {to} (a costume.id text or costume.remove). */
   "costume.change": string;
-  "costume.noChanges": string;
   "costume.reset": string;
   "costume.review": string;
   "costume.back": string;
   "costume.save": string;
   "costume.confirmIntro": string;
   "costume.saving": string;
-  "costume.undoLast": string;
   /** Param: {time}, already formatted. */
   "costume.undoWhen": string;
   "costume.undoing": string;

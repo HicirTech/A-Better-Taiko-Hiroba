@@ -252,7 +252,6 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
     ["小咚", "換裝"],
   ),
   "costume.reading": COSTUME,
-  "costume.undoLast": COSTUME,
   "write.applied": COSTUME,
   "write.undone": COSTUME,
   "write.notApplied.unchanged": COSTUME,
