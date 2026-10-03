@@ -27,6 +27,7 @@ import {
 } from "./page-icons";
 import { PAGES, type Page } from "./pages";
 import { useWideWindow } from "./use-wide-window";
+import { WiderFrameContext } from "./wider-frame";
 
 const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly icon: ReactNode }>> =
   {
@@ -45,7 +46,6 @@ const PAGE_BOTTOM_PX = 32;
 const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 const BELOW_TOP_BAND = `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`;
 const PAGE_HEIGHT = `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`;
-const WIDER_FRAME: ReadonlySet<Page> = new Set(["costume"]);
 
 interface NavigationProps {
   readonly page: Page;
@@ -61,6 +61,7 @@ export function AppFrame({
   children,
 }: NavigationProps & { back?: SystemBack; children: ReactNode }) {
   const wide = useWideWindow();
+  const [wider, setWider] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   // Shut a menu left open on a wide window, so it does not reopen unasked when the window narrows.
   if (wide && menuOpen) {
@@ -96,13 +97,13 @@ export function AppFrame({
         )}
         <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
           <Container
-            maxWidth={WIDER_FRAME.has(page) ? "lg" : "md"}
+            maxWidth={wider ? "lg" : "md"}
             sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
           >
             <Typography component="h1" sx={VISUALLY_HIDDEN}>
               {i18n.t(PAGE_ENTRY[page].label)}
             </Typography>
-            {children}
+            <WiderFrameContext value={setWider}>{children}</WiderFrameContext>
           </Container>
         </Box>
       </Box>

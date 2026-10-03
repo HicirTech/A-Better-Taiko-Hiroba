@@ -4,6 +4,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import { useWideWindow } from "../navigation/use-wide-window";
+import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { EditingView } from "./costume-editing";
 import { type EditorStep, previewSetOf } from "./costume-editor-state";
@@ -29,6 +30,7 @@ export interface CostumePageProps {
 export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   const { step } = editor;
   const wide = useWideWindow();
+  useWiderFrame();
   const [tabs, setTabs] = useState(FIRST_TABS);
   const [historyOpen, setHistoryOpen] = useState(false);
   const page = useRef<HTMLDivElement>(null);
