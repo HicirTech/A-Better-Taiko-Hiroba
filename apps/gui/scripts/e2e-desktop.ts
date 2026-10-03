@@ -2229,7 +2229,8 @@ try {
     same(await savedCostume(), START) &&
     (await hitsOn("/ajax/change_mydon.php")) - savesBeforeGoingBack === 1;
 
-  const near = (value: number, expected: number) => Math.abs(value - expected) < 1.5;
+  const near = (value: number, expected: number, within = 1.5) =>
+    Math.abs(value - expected) < within;
   const tracksOf = (selector: string) =>
     page.evaluate<number>(
       `getComputedStyle(document.querySelector(${JSON.stringify(selector)})).gridTemplateColumns.split(" ").length`,
@@ -2374,6 +2375,7 @@ try {
         box: await boxOf("#costume-palette"),
         tracks: await tracksOf("#costume-palette"),
         row: await firstRowOf('#costume-palette [id^="swatch-colorFace-"]'),
+        scrolling: await scrollingBoxes(),
       };
       await showPart("costume1");
       await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
@@ -2381,6 +2383,7 @@ try {
         box: await boxOf("#costume-items-costume1"),
         tracks: await tracksOf("#costume-items-costume1"),
         row: await firstRowOf('#costume-items-costume1 [id^="item-costume1-"]'),
+        scrolling: await scrollingBoxes(),
       };
       return {
         aside: await boxOf("#costume-aside"),
@@ -2394,7 +2397,6 @@ try {
         bar: await exists("#costume-bar"),
         palette,
         items,
-        scrolling: await scrollingBoxes(),
       };
     });
   type WideFacts = Awaited<ReturnType<typeof wideAt>>;
@@ -2445,7 +2447,7 @@ try {
     ({ items, palette }) => packedFromTheLeft(items) && packedFromTheLeft(palette),
   );
   results.costumeOnlyThePageScrolls = [onDefault, onBig].every(
-    ({ scrolling }) => scrolling.length === 0,
+    ({ items, palette }) => items.scrolling.length === 0 && palette.scrolling.length === 0,
   );
   results.costumeGridHoldsMoreColumnsOnABigWindow =
     onBig.items.tracks > onDefault.items.tracks && onBig.palette.tracks > onDefault.palette.tracks;
@@ -2714,6 +2716,7 @@ try {
       preview: await boxOf("#costume-preview-image"),
       tiles: await tileBoxes(),
       panel: await boxOf("#costume-grid"),
+      palette: await boxOf("#costume-palette"),
       swatches: await tracksOf("#costume-palette"),
       swatchRow: await firstRowOf('#costume-palette [id^="swatch-colorBody-"]'),
       scrolling: await scrollingBoxes(),
@@ -2796,6 +2799,9 @@ try {
     layout.panel.top >= layout.aside.bottom &&
     layout.noColumns &&
     layout.swatches >= 8 &&
+    layout.swatchRow.length === layout.swatches &&
+    near(at(layout.swatchRow, 0).left, layout.palette.left) &&
+    gapsOf(layout.swatchRow).every((gap) => near(gap, 6, 0.5)) &&
     phone.items.tracks >= 6 &&
     phone.items.box.top >= layout.panel.top &&
     gapsOf(phone.items.row).every((gap) => near(gap, 6)) &&
