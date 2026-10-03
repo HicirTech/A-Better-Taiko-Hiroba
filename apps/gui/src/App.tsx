@@ -24,7 +24,7 @@ import { useNameEditor } from "./name-title/use-name-editor";
 import { useTitleEditor } from "./name-title/use-title-editor";
 import { FrameCorner } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
-import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
+import { createPictureLane } from "./pictures/picture-lane";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFab } from "./read-again/read-again-fab";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
@@ -47,6 +47,8 @@ type Screen =
   | { readonly name: "reading" }
   | { readonly name: "profile"; readonly profile: ProfileView }
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
+
+const OVERVIEW_SPACING = 3;
 
 const SIGN_IN_NOTICE = {
   cancelled: "signIn.cancelled",
@@ -342,10 +344,10 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           )}
 
           {screen.name === "profile" && page !== "costume" && page !== "nameTitle" && (
-            <Stack spacing={2}>
+            <Stack spacing={page === "overview" ? OVERVIEW_SPACING : 2}>
               {page === "overview" ? (
                 <>
-                  <ProfileCard
+                  <OverviewHeader
                     profile={screen.profile}
                     lane={lane}
                     i18n={i18n}
@@ -393,25 +395,5 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
         </Stack>
       )}
     </>
-  );
-}
-
-function ProfileCard({
-  profile,
-  lane,
-  i18n,
-  portrait,
-}: {
-  profile: ProfileView;
-  lane: PictureLane;
-  i18n: Translator;
-  portrait: PortraitAction;
-}) {
-  return (
-    <Card id="profile" variant="outlined">
-      <CardContent>
-        <OverviewHeader profile={profile} lane={lane} i18n={i18n} portrait={portrait} />
-      </CardContent>
-    </Card>
   );
 }

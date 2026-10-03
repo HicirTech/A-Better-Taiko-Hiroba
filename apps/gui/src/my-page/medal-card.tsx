@@ -1,6 +1,6 @@
 import type { MedalProgress } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, Card, CardContent, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
@@ -40,41 +40,39 @@ export function MedalCard({ medal, lane, i18n }: MedalCardProps) {
   const { t } = i18n;
   const progress = medal?.progress;
   return (
-    <Card id="medal" variant="outlined">
-      <CardContent>
-        <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
-          {t("medal.heading")}
+    <Box id="medal" component="section">
+      <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
+        {t("medal.heading")}
+      </Typography>
+      {medal === null && (
+        <Typography id="medal-none" color="text.secondary">
+          {t("medal.none")}
         </Typography>
-        {medal === null && (
-          <Typography id="medal-none" color="text.secondary">
-            {t("medal.none")}
+      )}
+      {medal !== null && medal.progress.kind !== "unrecognised" && (
+        <MedalPlate name={medal.name} progress={medal.progress} lane={lane} i18n={i18n} />
+      )}
+      {medal !== null && progress?.kind === "unrecognised" && (
+        <>
+          {medal.name !== "" && (
+            <Typography id="medal-name" lang={HIROBA_LANG}>
+              {medal.name}
+            </Typography>
+          )}
+          <Typography id="medal-unrecognised" color="text.secondary" sx={{ mt: 0.5 }}>
+            {t("medal.unrecognised")}
           </Typography>
-        )}
-        {medal !== null && medal.progress.kind !== "unrecognised" && (
-          <MedalPlate name={medal.name} progress={medal.progress} lane={lane} i18n={i18n} />
-        )}
-        {medal !== null && progress?.kind === "unrecognised" && (
-          <>
-            {medal.name !== "" && (
-              <Typography id="medal-name" lang={HIROBA_LANG}>
-                {medal.name}
-              </Typography>
-            )}
-            <Typography id="medal-unrecognised" color="text.secondary" sx={{ mt: 0.5 }}>
-              {t("medal.unrecognised")}
-            </Typography>
-            <Typography
-              id="medal-code"
-              variant="body2"
-              color="text.secondary"
-              sx={{ mt: 0.5, fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-            >
-              {t("medal.code", { code: `medal=${progress.reason}` })}
-            </Typography>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          <Typography
+            id="medal-code"
+            variant="body2"
+            color="text.secondary"
+            sx={{ mt: 0.5, fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
+          >
+            {t("medal.code", { code: `medal=${progress.reason}` })}
+          </Typography>
+        </>
+      )}
+    </Box>
   );
 }
 

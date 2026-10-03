@@ -1,6 +1,6 @@
 import { SCORE_RANK_TIERS, type ScoreRank } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Card, CardContent, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
 import type { ProfileView } from "../session-port";
 import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
@@ -8,7 +8,7 @@ import { ShareBlock, type ShareItem } from "./share-block";
 
 const RANKS_WORST_FIRST: readonly ScoreRank[] = SCORE_RANK_TIERS.flatMap((tier) => tier.ranks);
 
-// One card and footnote for both: the panel's crowns are not the account's clears at every level.
+// One footnote for both: the panel's crowns are not the account's clears at every level.
 export function PanelCard({
   crowns,
   ranks,
@@ -32,16 +32,12 @@ export function PanelCard({
     colour: CROWN_COLOUR[crown],
   }));
   return (
-    <Card id="panel" variant="outlined">
-      <CardContent>
-        <Stack spacing={2.5}>
-          <ShareBlock id="ranks" heading={t("panel.ranks")} items={rankItems} i18n={i18n} />
-          <ShareBlock id="crowns" heading={t("crowns.heading")} items={crownItems} i18n={i18n} />
-          <Typography id="panel-footnote" variant="caption" color="text.secondary" component="p">
-            {t("panel.footnote")}
-          </Typography>
-        </Stack>
-      </CardContent>
-    </Card>
+    <Stack id="panel" spacing={3}>
+      <ShareBlock id="ranks" heading={t("panel.ranks")} items={rankItems} i18n={i18n} />
+      <ShareBlock id="crowns" heading={t("crowns.heading")} items={crownItems} i18n={i18n} />
+      <Typography id="panel-footnote" variant="caption" color="text.secondary" component="p">
+        {t("panel.footnote")}
+      </Typography>
+    </Stack>
   );
 }

@@ -45,7 +45,7 @@ export function OverviewHeader({ profile, lane, i18n, portrait }: OverviewHeader
   const failure = failureOf(plate) ?? failureOf(myDon) ?? failureOf(panel);
 
   return (
-    <Stack spacing={1} sx={{ alignItems: "center" }}>
+    <Stack id="profile" spacing={1} sx={{ alignItems: "center" }}>
       <Box
         id="overview-header"
         sx={{

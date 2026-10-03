@@ -602,6 +602,15 @@ try {
     narrow.plate.bottom <= narrow.panel.top &&
     Math.abs(narrow.myDon.left + narrow.myDon.right - narrow.plate.left - narrow.plate.right) < 2 &&
     plainSurface;
+  const framed = await page.evaluate<boolean>(
+    `(() => { const sides = ["Top", "Right", "Bottom", "Left"]; return ["#profile", "#panel", "#medal"].some((selector) => { const block = document.querySelector(selector); const style = getComputedStyle(block); return block.closest(".MuiPaper-root") !== null || style.boxShadow !== "none" || sides.some((side) => style["border" + side + "Style"] !== "none" && parseFloat(style["border" + side + "Width"]) > 0); }); })()`,
+  );
+  const blocks = await Promise.all(
+    ["#profile", "#ranks", "#crowns", "#panel-footnote", "#medal"].map(boxOf),
+  );
+  const gaps = blocks.slice(1).map((block, index) => block.top - (blocks[index]?.bottom ?? 0));
+  results.overviewBlocksHaveNoBorders =
+    !framed && gaps.every((gap) => gap >= 16 && Math.abs(gap - (gaps[0] ?? 0)) < 1);
   const PANEL_WIDTH_UNITS = 280;
   type PanelCount = readonly [id: string, name: string, count: string, left: number, top: number];
   const PANEL_COUNTS: readonly PanelCount[] = [
@@ -1017,7 +1026,7 @@ try {
   const platesAfterRereads = await platesSettled();
 
   const fabBox = await boxOf("#read-again");
-  const cardBox = await boxOf("#profile");
+  const profileBox = await boxOf("#profile");
   await hoverOver(page, "#read-again");
   const fabTooltip = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
@@ -1027,8 +1036,8 @@ try {
     (await page.evaluate<boolean>(
       `document.querySelector("#read-again").classList.contains("MuiFab-sizeSmall")`,
     )) &&
-    fabBox.bottom <= cardBox.top &&
-    Math.abs(fabBox.right - cardBox.right) < 1;
+    fabBox.bottom <= profileBox.top &&
+    Math.abs(fabBox.right - profileBox.right) < 1;
   const fabState = () =>
     page.evaluate<{ shut: boolean; spinning: boolean }>(
       `(() => { const fab = document.querySelector("#read-again"); return { shut: fab.disabled, spinning: fab.querySelector(".MuiCircularProgress-root") !== null }; })()`,
@@ -1101,7 +1110,7 @@ try {
   await page.evaluate("document.activeElement.blur()");
   results.fabOnlyUnderFocusOnTouch =
     fabKeptForScreenReaders && fabShownUnderFocus && (await fabWidth()) <= 1;
-  const pullFrom = { x: cardBox.left + cardBox.width / 2, y: cardBox.top + 40 };
+  const pullFrom = { x: profileBox.left + profileBox.width / 2, y: profileBox.top + 40 };
   const pulledBy = (dx: number, dy: number) => ({ x: pullFrom.x + dx, y: pullFrom.y + dy });
   const readsByShortPull = await readsBySwipe(pullFrom, pulledBy(0, 100));
   const readsBeforePull = await myPageHits();
