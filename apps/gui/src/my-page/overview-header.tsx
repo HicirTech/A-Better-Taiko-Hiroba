@@ -6,7 +6,8 @@ import { type PictureAnswer, type PictureLane, viewOf } from "../pictures/pictur
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
-import { MY_DON, MyDonPortrait, type PortraitAction } from "./my-don-portrait";
+import { MY_DON, MyDonPortrait } from "./my-don-portrait";
+import type { OpenAction } from "./open-button";
 import { panelHeightRatio, ScorePanel, scorePanelWant } from "./score-panel";
 import { plateHeightRatio, TitlePlate } from "./title-plate";
 
@@ -31,7 +32,7 @@ export interface OverviewHeaderProps {
   readonly profile: ProfileView;
   readonly lane: PictureLane;
   readonly i18n: Translator;
-  readonly portrait: PortraitAction;
+  readonly portrait: OpenAction;
 }
 
 export function OverviewHeader({ profile, lane, i18n, portrait }: OverviewHeaderProps) {

@@ -14,7 +14,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import { CostumePage } from "./my-page/costume-page";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
-import type { PortraitAction } from "./my-page/my-don-portrait";
+import type { OpenAction } from "./my-page/open-button";
 import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
 import { useCostumeEditor } from "./my-page/use-costume-editor";
@@ -213,7 +213,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
   }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor]);
 
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
-  const portrait: PortraitAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
+  const portrait: OpenAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
 
   // Once only: StrictMode runs effects twice in development, and a second run asks Hiroba again.
   const opened = useRef(false);
