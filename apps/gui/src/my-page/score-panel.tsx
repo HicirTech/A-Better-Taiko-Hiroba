@@ -4,7 +4,7 @@ import { Box, CircularProgress } from "@mui/material";
 import type { Ref } from "react";
 
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
-import type { PictureView, PictureWant, ProfileView } from "../session-port";
+import type { CrownKind, PictureView, PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, OUTLINED, VISUALLY_HIDDEN } from "./hiroba-px";
 import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
 
@@ -20,8 +20,7 @@ const ROW_TOP = [18, 54, 85, 121] as const;
 const ROW_HEIGHT = 21;
 const COUNT_SIZE = 14;
 type Spot = readonly [column: 0 | 1 | 2, row: 0 | 1 | 2 | 3];
-type Crown = keyof ProfileView["crowns"];
-type Counted = { readonly rank: ScoreRank } | { readonly crown: Crown };
+type Counted = { readonly rank: ScoreRank } | { readonly crown: CrownKind };
 const PANEL_SPOTS: readonly (readonly [Counted, Spot])[] = [
   [{ rank: 8 }, [2, 0]],
   [{ rank: 5 }, [0, 1]],

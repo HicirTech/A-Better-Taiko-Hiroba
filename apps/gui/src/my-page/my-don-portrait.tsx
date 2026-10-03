@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, CircularProgress, SvgIcon } from "@mui/material";
 import type { Ref } from "react";
 
-import type { PictureAnswer } from "../pictures/picture-lane";
+import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
 import type { PictureWant } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx } from "./hiroba-px";
 import { FOCUS_RING, type OpenAction, OpenButton } from "./open-button";
@@ -70,7 +70,7 @@ function MyDonTile({ answer, i18n, ref }: Pick<MyDonPortraitProps, "answer" | "i
 
 function TileContent({ answer, i18n }: Pick<MyDonPortraitProps, "answer" | "i18n">) {
   const { t } = i18n;
-  const picture = answer !== undefined && "view" in answer ? answer.view : null;
+  const picture = viewOf(answer);
   return (
     <>
       {picture !== null && (
