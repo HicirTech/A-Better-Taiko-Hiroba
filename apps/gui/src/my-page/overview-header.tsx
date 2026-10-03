@@ -2,26 +2,30 @@ import type { Translator } from "@abth/i18n";
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
-import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
+import { type PictureAnswer, type PictureLane, viewOf } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
-import type { PictureWant, ProfileView } from "../session-port";
+import type { PictureView, PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
 import { MY_DON, MyDonPortrait, type PortraitAction } from "./my-don-portrait";
-import { ScorePanel, scorePanelWant } from "./score-panel";
-import { TitlePlate } from "./title-plate";
+import { panelHeightRatio, ScorePanel, scorePanelWant } from "./score-panel";
+import { plateHeightRatio, TitlePlate } from "./title-plate";
 
 // Hiroba's header, #mydon_area: 290 pixels wide.
 const AREA_WIDTH = 290;
 const hp = hirobaPx(AREA_WIDTH);
 const PANEL_MARGIN = 5;
-// Beside the plate and panel: about their height together, so the two columns end level.
-const PORTRAIT_SIDE_BESIDE = 224;
 const PORTRAIT_SIDE_ABOVE = 136;
 const COLUMN_GAP_PX = 16;
 const PLATE: PictureWant = { kind: "titlePlate" };
 
 const failureOf = (answer: PictureAnswer | undefined): string | null =>
   answer !== undefined && "failure" in answer ? answer.failure : null;
+
+/** The tile's side over the column's width: the plate, the panel's margin and the panel. */
+function tileSideRatio(plate: PictureView | null, art: PictureView | null): number {
+  const panelWidth = (AREA_WIDTH - 2 * PANEL_MARGIN) / AREA_WIDTH;
+  return plateHeightRatio(plate) + PANEL_MARGIN / AREA_WIDTH + panelWidth * panelHeightRatio(art);
+}
 
 export interface OverviewHeaderProps {
   readonly profile: ProfileView;
@@ -43,6 +47,7 @@ export function OverviewHeader({ profile, lane, i18n, portrait }: OverviewHeader
     order: 2,
   });
   const failure = failureOf(plate) ?? failureOf(myDon) ?? failureOf(panel);
+  const tileSide = tileSideRatio(viewOf(plate), viewOf(panel));
 
   return (
     <Stack id="profile" spacing={1} sx={{ alignItems: "center" }}>
@@ -56,11 +61,11 @@ export function OverviewHeader({ profile, lane, i18n, portrait }: OverviewHeader
           justifyItems: "center",
           gridTemplateColumns: {
             xs: "minmax(0, 1fr)",
-            sm: `minmax(0, ${PORTRAIT_SIDE_BESIDE}fr) minmax(0, ${AREA_WIDTH}fr)`,
+            sm: `minmax(0, ${tileSide}fr) minmax(0, 1fr)`,
           },
           maxWidth: {
             xs: AREA_WIDTH * MAX_BLOCK_SCALE,
-            sm: (PORTRAIT_SIDE_BESIDE + AREA_WIDTH) * MAX_BLOCK_SCALE + COLUMN_GAP_PX,
+            sm: (tileSide + 1) * AREA_WIDTH * MAX_BLOCK_SCALE + COLUMN_GAP_PX,
           },
         }}
       >

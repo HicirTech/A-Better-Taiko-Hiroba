@@ -611,6 +611,34 @@ try {
   const gaps = blocks.slice(1).map((block, index) => block.top - (blocks[index]?.bottom ?? 0));
   results.overviewBlocksHaveNoBorders =
     !framed && gaps.every((gap) => gap >= 16 && Math.abs(gap - (gaps[0] ?? 0)) < 1);
+  const settledHeader = async () => {
+    let before = "";
+    return waitFor(async () => {
+      const now = await headerBoxes();
+      const shown = JSON.stringify(now);
+      const steady = shown === before;
+      before = shown;
+      return steady ? now : undefined;
+    });
+  };
+  /** Whether, at `width`, the tile is a square from the plate's top to the panel's bottom. */
+  const tileAlignedAt = async (width: number) => {
+    await page.send("Emulation.setDeviceMetricsOverride", {
+      width,
+      height: 900,
+      deviceScaleFactor: 0,
+      mobile: false,
+    });
+    const { myDon, plate, panel } = await settledHeader();
+    await page.send("Emulation.clearDeviceMetricsOverride", {});
+    return (
+      myDon.right <= plate.left &&
+      Math.abs(myDon.top - plate.top) <= 1 &&
+      Math.abs(myDon.bottom - panel.bottom) <= 1 &&
+      Math.abs(myDon.width - (myDon.bottom - myDon.top)) <= 1
+    );
+  };
+  results.myDonAlignedWithTheColumn = (await tileAlignedAt(1400)) && (await tileAlignedAt(700));
   const PANEL_WIDTH_UNITS = 280;
   type PanelCount = readonly [id: string, name: string, count: string, left: number, top: number];
   const PANEL_COUNTS: readonly PanelCount[] = [
@@ -1277,6 +1305,7 @@ try {
     (await textOf("#profile-title")) === "Title: 別のサンプル称号" &&
     (await textOf("#profile h2")) === "サンプルどん" &&
     (await textOf("#dan")) === "Dan-i: 9th Dan";
+  results.myDonAlignedWithoutThePlate = await tileAlignedAt(1100);
   await fetch(`${HIROBA}/__titleplate?answer=png`);
   const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
   results.plateBlankFallsBack =

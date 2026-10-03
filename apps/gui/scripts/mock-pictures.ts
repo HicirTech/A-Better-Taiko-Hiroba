@@ -44,7 +44,7 @@ export function thumbnailPng(type: number, cos: number): Uint8Array<ArrayBuffer>
   return new Uint8Array(encode({ width: side, height: side, data, channels: 4 }));
 }
 
-/** Not the 290:47 the app reserves, on purpose: a test sees the card take the PNG's size. */
+/** Not the proportions the app reserves, on purpose: a test sees the plate take the PNG's size. */
 const PLATE_WIDTH = 600;
 const PLATE_HEIGHT = 100;
 const NAME_BOX = [0xf8, 0xf0, 0xe0] as const;

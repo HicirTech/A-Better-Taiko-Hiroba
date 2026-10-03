@@ -41,7 +41,7 @@ describe("thumbnailPng", () => {
 describe("titlePlatePng and blankPlatePng", () => {
   const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280 };
 
-  test("draw a 600×100 PNG within a plate's bounds, not the 290:47 the app reserves", () => {
+  test("draw a 600×100 PNG within a plate's bounds, not the proportions the app reserves", () => {
     for (const plate of [titlePlatePng("サンプルの称号"), titlePlatePng(""), blankPlatePng()]) {
       expect(sizeUnder(plate, PLATE_RULES)).toEqual({ width: 600, height: 100 });
     }

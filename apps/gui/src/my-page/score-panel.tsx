@@ -3,8 +3,8 @@ import type { Translator } from "@abth/i18n";
 import { Box, CircularProgress } from "@mui/material";
 import type { Ref } from "react";
 
-import type { PictureAnswer } from "../pictures/picture-lane";
-import type { PictureWant, ProfileView } from "../session-port";
+import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
+import type { PictureView, PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, OUTLINED, VISUALLY_HIDDEN } from "./hiroba-px";
 import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
 
@@ -51,6 +51,10 @@ const CROWNS_FROM = 113;
 export const scorePanelWant = (level: number): PictureWant | null =>
   LAID_OUT_LEVELS.has(level) ? ART : null;
 
+/** The art's height over its width: the picture's own, or the proportions reserved for it. */
+export const panelHeightRatio = (art: PictureView | null): number =>
+  art === null ? RESERVED_ART_HEIGHT / RESERVED_ART_WIDTH : art.height / art.width;
+
 interface PanelCount {
   readonly id: string;
   readonly name: string;
@@ -71,7 +75,7 @@ export interface ScorePanelProps {
 
 export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps) {
   const { t, number } = i18n;
-  const art = answer !== undefined && "view" in answer ? answer.view : null;
+  const art = viewOf(answer);
   const asking = scorePanelWant(panel.countLevel) !== null && answer === undefined;
   const counts = countsOf(panel.ranks, crowns, i18n);
   return (
@@ -85,10 +89,7 @@ export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps
         sx={{
           position: "relative",
           width: 1,
-          aspectRatio:
-            art !== null
-              ? `${art.width} / ${art.height}`
-              : `${RESERVED_ART_WIDTH} / ${RESERVED_ART_HEIGHT}`,
+          aspectRatio: 1 / panelHeightRatio(art),
         }}
       >
         {art === null ? (

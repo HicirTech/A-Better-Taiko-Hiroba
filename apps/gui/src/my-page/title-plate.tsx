@@ -3,7 +3,7 @@ import { Box, CircularProgress, Typography } from "@mui/material";
 import type { Ref } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
-import type { PictureAnswer } from "../pictures/picture-lane";
+import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
 import type { PictureView, ProfileView } from "../session-port";
 import {
   HIROBA_BLOCK,
@@ -17,8 +17,8 @@ import {
 // Hiroba's #mydon_area: the plate is 290 pixels wide.
 const PLATE_WIDTH = 290;
 const hp = hirobaPx(PLATE_WIDTH);
-// Title 20 over name row 23, plus margins; reserved so text never moves as the picture comes.
-const RESERVED_HEIGHT = 47;
+// A plate's own proportions, kept until its picture gives its size.
+const RESERVED_RATIO = 150 / 556;
 const MAX_WIDTH = PLATE_WIDTH * MAX_BLOCK_SCALE;
 // Hiroba's colours, sampled from its plate; the same in either theme.
 const ON_PLATE = "#000";
@@ -34,9 +34,13 @@ export interface TitlePlateProps {
   readonly ref: Ref<HTMLDivElement>;
 }
 
+/** The plate's height over its width: the picture's own, or the proportions reserved for it. */
+export const plateHeightRatio = (plate: PictureView | null): number =>
+  plate === null ? RESERVED_RATIO : plate.height / plate.width;
+
 export function TitlePlate({ profile, answer, i18n, ref }: TitlePlateProps) {
   const { t } = i18n;
-  const plate = answer !== undefined && "view" in answer ? answer.view : null;
+  const plate = viewOf(answer);
   return (
     <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
       <Box
@@ -47,10 +51,7 @@ export function TitlePlate({ profile, answer, i18n, ref }: TitlePlateProps) {
           position: "relative",
           width: 1,
           color: ON_PLATE,
-          aspectRatio:
-            plate !== null
-              ? `${plate.width} / ${plate.height}`
-              : `${PLATE_WIDTH} / ${RESERVED_HEIGHT}`,
+          aspectRatio: 1 / plateHeightRatio(plate),
         }}
       >
         {plate === null ? (

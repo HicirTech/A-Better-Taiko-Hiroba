@@ -4,6 +4,10 @@ import type { PictureFailure, PictureView, PictureWant } from "../session-port";
 
 export type PictureAnswer = { readonly view: PictureView } | { readonly failure: string };
 
+/** The picture an answer holds, or null while it is unanswered or failed. */
+export const viewOf = (answer: PictureAnswer | undefined): PictureView | null =>
+  answer !== undefined && "view" in answer ? answer.view : null;
+
 export interface LaneTimers {
   set(run: () => void, ms: number): unknown;
   clear(timer: unknown): void;
