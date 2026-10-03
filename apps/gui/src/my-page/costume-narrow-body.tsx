@@ -5,14 +5,13 @@ import type { ReactNode } from "react";
 import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { previewSetOf, showsEditor } from "./costume-editor-state";
+import { CostumeNotes } from "./costume-notes";
 import { PartPanel } from "./costume-part-panel";
 import { PartTiles } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
-import { KigurumiInfo } from "./kigurumi-info";
 import { RING_ROOM_PX } from "./pick-ring";
 import type { CostumeEditor } from "./use-costume-editor";
-import { WriteOutcomeNotice } from "./write-outcome";
 
 const PREVIEW_PX = 160;
 // The ring's room and a pixel for its soft edge.
@@ -66,10 +65,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
       )}
       {showsEditor(step) ? (
         <>
-          {step.name === "editing" && step.notice !== null && (
-            <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
-          )}
-          <KigurumiInfo editor={step.editor} draft={step.draft} i18n={i18n} />
+          <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />
           <PartPanel
             view={step.editor}
             draft={step.draft}

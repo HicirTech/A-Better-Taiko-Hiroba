@@ -5,13 +5,12 @@ import type { ReactNode } from "react";
 import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { previewSetOf, showsEditor } from "./costume-editor-state";
+import { CostumeNotes } from "./costume-notes";
 import { PartPanel } from "./costume-part-panel";
 import { PartTiles } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
-import { KigurumiInfo } from "./kigurumi-info";
 import type { CostumeEditor } from "./use-costume-editor";
-import { WriteOutcomeNotice } from "./write-outcome";
 
 // From the width of a row of five tiles up to a roomier picture.
 const SIDE_COLUMN_WIDTH = "clamp(232px, 25%, 280px)";
@@ -54,33 +53,28 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
             />
           )}
           {actions}
-          {showsEditor(step) && (
-            <>
-              {step.name === "editing" && step.notice !== null && (
-                <WriteOutcomeNotice outcome={step.notice} kind="costume" i18n={i18n} />
-              )}
-              <KigurumiInfo editor={step.editor} draft={step.draft} i18n={i18n} />
-            </>
-          )}
         </Stack>
       )}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
         {showsEditor(step) ? (
-          <PartPanel
-            view={step.editor}
-            draft={step.draft}
-            lane={lane}
-            i18n={i18n}
-            part={part}
-            wide
-            held={saving}
-            onPickColour={editor.pickColour}
-            onPickItem={editor.pickItem}
-          />
+          <>
+            <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />
+            <PartPanel
+              view={step.editor}
+              draft={step.draft}
+              lane={lane}
+              i18n={i18n}
+              part={part}
+              wide
+              held={saving}
+              onPickColour={editor.pickColour}
+              onPickItem={editor.pickItem}
+            />
+          </>
         ) : (
           progress
         )}
-      </Box>
+      </Stack>
     </Box>
   );
 }

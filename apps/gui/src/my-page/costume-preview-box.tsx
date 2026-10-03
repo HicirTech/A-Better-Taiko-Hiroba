@@ -63,66 +63,68 @@ export function CostumePreviewBox({
 }) {
   const { t } = i18n;
   return (
-    <Stack
+    <Box
       id="costume-preview"
-      spacing={0.5}
+      aria-busy={preview.loading}
       sx={{
+        position: "relative",
+        width: 1,
+        aspectRatio: "1",
+        display: "flex",
         alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 1,
+        bgcolor: "action.hover",
         ...(size !== undefined && { width: size, maxWidth: 1, alignSelf: "center" }),
       }}
     >
-      <Box
-        aria-busy={preview.loading}
-        sx={{
-          position: "relative",
-          width: 1,
-          aspectRatio: "1",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 1,
-          bgcolor: "action.hover",
-        }}
-      >
-        {preview.image !== null && (
-          <Box
-            component="img"
-            id="costume-preview-image"
-            src={preview.image}
-            alt={t("costume.preview.alt")}
-            sx={{
-              width: 1,
-              height: 1,
-              objectFit: "contain",
-              // Dimmed when the picture for the latest pick did not come: it is an older set's.
-              opacity: preview.failure === null ? 1 : 0.35,
-            }}
-          />
-        )}
-        {preview.loading && (
-          <CircularProgress
-            id="costume-preview-loading"
-            size={20}
-            aria-label={t("costume.preview.loading")}
-            sx={{ position: "absolute", top: 8, right: 8 }}
-          />
-        )}
-      </Box>
-      {preview.failure !== null && (
-        <Stack id="costume-preview-unavailable" sx={{ alignItems: "center" }}>
-          <Typography variant="body2" color="text.secondary">
-            {t("costume.preview.unavailable")}
-          </Typography>
-          <Typography
-            id="costume-preview-code"
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-          >
-            {t("costume.preview.code", { code: preview.failure })}
-          </Typography>
-        </Stack>
+      {preview.image !== null && (
+        <Box
+          component="img"
+          id="costume-preview-image"
+          src={preview.image}
+          alt={t("costume.preview.alt")}
+          sx={{
+            width: 1,
+            height: 1,
+            objectFit: "contain",
+            // Dimmed when the picture for the latest pick did not come: it is an older set's.
+            opacity: preview.failure === null ? 1 : 0.35,
+          }}
+        />
       )}
+      {preview.loading && (
+        <CircularProgress
+          id="costume-preview-loading"
+          size={20}
+          aria-label={t("costume.preview.loading")}
+          sx={{ position: "absolute", top: 8, right: 8 }}
+        />
+      )}
+    </Box>
+  );
+}
+
+/** The words for a picture that did not come, with the code to report. */
+export function PreviewFailure({ preview, i18n }: { preview: PreviewState; i18n: Translator }) {
+  const { t } = i18n;
+  if (preview.failure === null) {
+    return null;
+  }
+
+  return (
+    <Stack id="costume-preview-unavailable">
+      <Typography variant="body2" color="text.secondary">
+        {t("costume.preview.unavailable")}
+      </Typography>
+      <Typography
+        id="costume-preview-code"
+        variant="body2"
+        color="text.secondary"
+        sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
+      >
+        {t("costume.preview.code", { code: preview.failure })}
+      </Typography>
     </Stack>
   );
 }

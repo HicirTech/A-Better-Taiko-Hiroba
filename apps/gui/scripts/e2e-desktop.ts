@@ -1148,12 +1148,13 @@ try {
   const leaveTheCostumePage = () => goTo("overview");
   await fetch(`${HIROBA}/__noop-save`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
-  const noticeUnderTheButtons = await page.evaluate<boolean>(
-    `(() => { const notice = document.querySelector("#costume-aside #write-outcome"); const actions = document.querySelector("#costume-actions"); return notice !== null && actions !== null && notice.getBoundingClientRect().top >= actions.getBoundingClientRect().bottom; })()`,
-  );
+  const aboveThePart = (selector: string) =>
+    page.evaluate<boolean>(
+      `(() => { const note = document.querySelector(${JSON.stringify(selector)}); const aside = document.querySelector("#costume-aside"); const panel = document.querySelector("#costume-grid"); if (note === null || aside === null || panel === null) return false; const box = note.getBoundingClientRect(); return !aside.contains(note) && box.left >= aside.getBoundingClientRect().right && box.bottom <= panel.getBoundingClientRect().top; })()`,
+    );
   results.failedSaveKeepsTheNoticeAndDraft =
     noChange === "notApplied" &&
-    noticeUnderTheButtons &&
+    (await aboveThePart("#write-outcome")) &&
     (await stepOf()) === "editing" &&
     (await pressedOf("#swatch-colorFace-3")) === "true" &&
     (await savable()) &&
@@ -2196,21 +2197,19 @@ try {
     (await myDonsSettled()) === myDonsAfterColour + 1 &&
     (await attribute("#my-don-image", "src")) === myDonBeforeColour;
 
-  let kigurumiInfoUnderTheButtons = false;
+  let kigurumiInfoAboveThePart = false;
   let kigurumiBlanksTheOtherTiles = false;
   const kigurumiOutcome = await changeInTheWindow(async () => {
     await showPart("costume1");
     await waitFor(async () => (await exists("#item-costume1-36")) || undefined);
     await click("#item-costume1-36");
     await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
-    kigurumiInfoUnderTheButtons = await page.evaluate<boolean>(
-      `(() => { const info = document.querySelector("#costume-aside #kigurumi-warning"); const actions = document.querySelector("#costume-actions"); return info !== null && actions !== null && info.getBoundingClientRect().top >= actions.getBoundingClientRect().bottom; })()`,
-    );
+    kigurumiInfoAboveThePart = await aboveThePart("#kigurumi-warning");
     kigurumiBlanksTheOtherTiles = await page.evaluate<boolean>(
       `[["costume2", "Head"], ["costume3", "Body"], ["costume4", "Makeup"], ["costume5", "Mini Character"]].every(([part, name]) => document.querySelector("#costume-part-" + part + " img") === null && document.querySelector("#costume-part-" + part).getAttribute("aria-label") === name)`,
     );
   });
-  results.kigurumiInfoUnderTheButtons = kigurumiInfoUnderTheButtons;
+  results.kigurumiInfoAboveThePart = kigurumiInfoAboveThePart;
   results.kigurumiBlanksTheOtherTiles = kigurumiBlanksTheOtherTiles;
   results.kigurumiEmptiesThePieces =
     kigurumiOutcome === "applied" &&
@@ -2774,6 +2773,55 @@ try {
     await saveFromTheEndOfTheSlot(390, 700),
     "costume-bar",
   );
+
+  await fetch(`${HIROBA}/__state?reset=1`);
+  await readEditorAgain();
+  const withTheNotesUp = async <T>(width: number, height: number, run: () => Promise<T>) => {
+    await fetch(`${HIROBA}/__preview?answer=gif`);
+    try {
+      return await atSize(width, height, async () => {
+        await showPart("colorFace");
+        await click("#swatch-colorFace-55");
+        await showPart("costume1");
+        await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+        await click(`#item-costume1-${phoneItems[0]}`);
+        await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
+        await waitFor(async () => (await exists("#costume-preview-unavailable")) || undefined);
+        await scrollToTheEnd();
+        await fetch(`${HIROBA}/__noop-save`);
+        await click("#costume-save");
+        await waitFor(async () => (await exists("#write-outcome")) || undefined);
+        return await run();
+      });
+    } finally {
+      await fetch(`${HIROBA}/__preview?answer=png`);
+      await click("#costume-reset");
+    }
+  };
+  const columnWithTheNotesUp = (width: number, height: number) =>
+    withTheNotesUp(width, height, async () => {
+      const apart = await page.evaluate<boolean>(
+        `["#write-outcome", "#kigurumi-warning", "#costume-preview-unavailable"].every((selector) => document.querySelector(selector) !== null && !document.querySelector("#costume-aside").contains(document.querySelector(selector)))`,
+      );
+      const end = await page.evaluate<number>(
+        "document.documentElement.scrollHeight - innerHeight",
+      );
+      const overhangs: number[] = [];
+      for (const part of [0, 0.25, 0.5, 0.75, 1]) {
+        await page.evaluate(`window.scrollTo(0, ${Math.round(end * part)})`);
+        overhangs.push(
+          (await boxOf("#costume-aside")).bottom - (await page.evaluate<number>("innerHeight")),
+        );
+      }
+      return { apart, end, overhangs };
+    });
+  results.costumeLeftColumnStaysInViewWithANoticeAndTheMascotNote = [
+    await columnWithTheNotesUp(946, 657),
+    await columnWithTheNotesUp(960, 720),
+  ].every(
+    ({ apart, end, overhangs }) => apart && end > 100 && overhangs.every((one) => one <= 0.5),
+  );
+
   await fetch(`${HIROBA}/__state?reset=1`);
   await fetch(`${HIROBA}/__items?many=1`);
   await readEditorAgain();
