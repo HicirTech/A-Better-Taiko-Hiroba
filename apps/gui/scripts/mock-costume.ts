@@ -39,7 +39,7 @@ export const OWNED: Readonly<Record<1 | 2 | 3 | 4 | 5, readonly number[]>> = {
   5: [126, 140, 143],
 };
 
-/** More rows than the app's grid shows at once, as real slots hold (38 to 76 items). */
+/** Enough more items for a slot as long as real ones (38 to 76): a default window scrolls. */
 const MANY_MORE = Array.from({ length: 40 }, (_, at) => 200 + at);
 /** Long slots with no thumbnail asked for yet: one for each view that needs a fresh one. */
 const MANY_FRESH = {

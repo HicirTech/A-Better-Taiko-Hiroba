@@ -1088,7 +1088,6 @@ try {
       await click("#costume-reset");
     }
   };
-  /** A part's grid on show, by a click on its tile. */
   const showPartOn = (app: Pick<typeof running, "click">, part: string) =>
     app.click(`#costume-part-${part}`);
   const showPart = (part: string) => showPartOn({ click }, part);
@@ -1880,10 +1879,7 @@ try {
   /** The tiles fetched the item the set wears when the page was first shown. */
   const unfetchedIn = (slot: number) =>
     ownedIn(slot).filter((id) => id !== START[`costume${slot}`]);
-  /**
-   * Whether `asked` covers the cells wholly in the window and nothing past the row after them;
-   * `lazy` also wants some of the slot left unasked, as a window too short for it leaves.
-   */
+  /** Whether `asked` is the cells in the window and the row after; `lazy` wants some unasked. */
   const askedOnlyWhatIsOnShow = async (asked: Thumb[], items: readonly number[], lazy: boolean) => {
     const cells = await page.evaluate<{ whole: number[]; upToTheRowAhead: number[] }>(
       `(() => { const cells = [...document.querySelectorAll('#costume-items-costume1 [id^="item-costume1-"]')].map((cell) => ({ id: Number(cell.id.replace("item-costume1-", "")), rect: cell.getBoundingClientRect() })).filter(({ id }) => id !== 0); const rowAhead = Math.min(...cells.filter(({ rect }) => rect.top >= innerHeight).map(({ rect }) => rect.top)); return { whole: cells.filter(({ rect }) => rect.top >= 0 && rect.bottom <= innerHeight).map(({ id }) => id), upToTheRowAhead: cells.filter(({ rect }) => rect.top <= rowAhead + 1).map(({ id }) => id) }; })()`,
@@ -2287,7 +2283,6 @@ try {
     );
   const firstCellOf = (grid: string) =>
     page.evaluate<string>(`document.querySelector(${JSON.stringify(grid)}).firstElementChild.id`);
-  /** The None cell of the Head slot picked, then an item, then Reset: what each leaves on show. */
   const noneCellInUse = async () => {
     await showPart("costume2");
     await waitFor(async () => (await exists("#item-costume2-59 img")) || undefined);
@@ -2328,7 +2323,6 @@ try {
       },
     );
   };
-  /** A colour and an item picked in the grid show on their tiles, and Reset takes them back. */
   const gridPickChangesItsTile = async () => {
     await showPart("colorFace");
     const torsoTile = await backgroundOf("#costume-part-colorBody");
@@ -2573,7 +2567,6 @@ try {
       },
     });
   const focusedId = () => page.evaluate<string>("document.activeElement.id");
-  /** The tiles by keyboard: arrows along a row, Tab to the other row, Enter and Space to pick. */
   const tilesByKeyboard = async () => {
     await showPart("colorLimb");
     await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
@@ -2627,7 +2620,6 @@ try {
   results.costumeNoneCellEmptiesASlotAndCarriesTheRing = await noneCellInUse();
   results.costumeGridPickChangesItsTile = await gridPickChangesItsTile();
 
-  /** The slot's last item picked and saved at once: nothing is asked for until the write ends. */
   const farItemSavedAtOnce = async (items: readonly number[]) => {
     await showPart("costume1");
     await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
