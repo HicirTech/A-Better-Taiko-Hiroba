@@ -9,6 +9,7 @@ import { KigurumiInfo } from "./costume-editing";
 import { previewSetOf } from "./costume-editor-state";
 import { CostumeItemGrid } from "./costume-item-grid";
 import { Palette } from "./costume-palette";
+import { PARTS_PANEL_ID, PartTiles, partTabId } from "./costume-part-tiles";
 import {
   type ColourPart,
   type CostumePart,
@@ -16,7 +17,6 @@ import {
   itemsOf,
   type SlotPart,
 } from "./costume-parts";
-import { PARTS_PANEL_ID, PartsList, partTabId } from "./costume-parts-list";
 import { CostumePreviewBox } from "./costume-preview-box";
 import { type EditingTabs, selectedPart, tabsWithPart } from "./costume-tabs";
 import type { CostumeEditor } from "./use-costume-editor";
@@ -80,12 +80,12 @@ export function WideBody({ editor, lane, i18n, tabs, onTabs, actions, progress }
             id="costume-parts"
             sx={{ flex: `0 1 ${PARTS_COLUMN_PX}px`, minWidth: MIN_PARTS_COLUMN_PX }}
           >
-            <PartsList
+            <PartTiles
               view={step.editor}
               draft={step.draft}
               lane={lane}
               i18n={i18n}
-              tabs={tabs}
+              shown={selectedPart(tabs)}
               onPick={(part) => onTabs(tabsWithPart(tabs, part))}
             />
           </Box>

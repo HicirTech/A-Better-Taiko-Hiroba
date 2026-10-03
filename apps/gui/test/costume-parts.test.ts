@@ -1,11 +1,14 @@
 import { describe, expect, test } from "bun:test";
+import { createTranslator } from "@abth/i18n";
 
 import {
   COLOUR_PARTS,
   type CostumePart,
   isSlotPart,
   itemsOf,
+  PART_LABEL,
   SLOT_PARTS,
+  tileName,
 } from "../src/my-page/costume-parts";
 import type { CostumeEditorView, CostumeSet } from "../src/session-port";
 
@@ -55,5 +58,32 @@ describe("the items a slot lists", () => {
 
   test("are the one worn alone when the page listed none", () => {
     expect(itemsOf(editorOf([]), "costume4")).toEqual([37]);
+  });
+});
+
+describe("a tile's name", () => {
+  const en = createTranslator("en");
+  const ja = createTranslator("ja");
+
+  type NameCase = [part: CostumePart, pick: number, name: string];
+  test.each<NameCase>([
+    ["colorFace", 5, "Face #5"],
+    ["colorLimb", 0, "Limbs #0"],
+    ["costume1", 36, "Mascot #36"],
+    ["costume5", 140, "Mini Character #140"],
+  ])("puts the part first, then the pick: %s %p", (part, pick, name) => {
+    expect(tileName(part, pick, en)).toBe(name);
+  });
+
+  test.each<[part: CostumePart]>(SLOT_PARTS.map((part) => [part]))(
+    "is the part alone for an empty %s",
+    (part) => {
+      expect(tileName(part, 0, en)).toBe(en.t(PART_LABEL[part]));
+    },
+  );
+
+  test("follows the language", () => {
+    expect(tileName("costume2", 21, ja)).toBe("あたま #21");
+    expect(tileName("costume2", 0, ja)).toBe("あたま");
   });
 });

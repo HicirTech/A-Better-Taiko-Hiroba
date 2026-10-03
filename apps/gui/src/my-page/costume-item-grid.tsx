@@ -165,7 +165,7 @@ export function ItemPicture({
   fallback,
 }: {
   answer: PictureAnswer | undefined;
-  size: number;
+  size: number | string;
   fallback?: ReactNode;
 }) {
   if (answer !== undefined && "view" in answer) {

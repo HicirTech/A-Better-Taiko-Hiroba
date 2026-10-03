@@ -47,6 +47,12 @@ export function partValue(part: CostumePart, value: number, { t }: Translator): 
   return isSlotPart(part) && value === 0 ? t("costume.remove") : t("costume.id", { id: value });
 }
 
+/** A tile's accessible name: the part, then its pick; an empty slot is the part alone. */
+export function tileName(part: CostumePart, pick: number, { t }: Translator): string {
+  const name = t(PART_LABEL[part]);
+  return isSlotPart(part) && pick === 0 ? name : t("costume.item.label", { part: name, id: pick });
+}
+
 export function changedParts(from: CostumeSet, to: CostumeSet): CostumePart[] {
   return COSTUME_PARTS.filter((part) => from[part] !== to[part]);
 }
