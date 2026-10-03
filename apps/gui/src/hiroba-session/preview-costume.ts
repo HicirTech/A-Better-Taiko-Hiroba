@@ -20,7 +20,7 @@ const PREVIEW_PARAMETERS = [
 // Hiroba's "nothing to draw" is a 43-byte GIF: a PNG under a kilobyte is a placeholder, not a Don.
 const MIN_PREVIEW_BYTES = 1024;
 // Anything larger is not a preview, and does not cross to the window.
-const MAX_PREVIEW_BYTES = 512 * 1024;
+export const MAX_PREVIEW_BYTES = 512 * 1024;
 
 export function previewUrl(endpoints: HirobaEndpoints, set: CostumeSet): string {
   const query = PREVIEW_PARAMETERS.map(([name, part]) => `${name}=${set[part]}`).join("&");

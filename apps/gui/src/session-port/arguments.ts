@@ -193,4 +193,5 @@ export const PORT_ARGUMENTS = {
   changeName: nameChange,
   pendingUndo: none,
   undo: writeKind,
+  costumeHistory: none,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

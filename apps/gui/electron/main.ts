@@ -5,6 +5,7 @@ import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } f
 import {
   createHirobaQueue,
   createPictureReader,
+  createRecentPreviews,
   createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
   offeredOf,
@@ -22,6 +23,7 @@ import {
   type SignInOutcome,
 } from "../src/session-port";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
+import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
 import { createDiskPictureStore } from "./picture-disk-store";
@@ -73,6 +75,7 @@ const setSession = (value: string | null) => {
     sources = null;
     offered = new Set();
     pictures.forget();
+    previews.clear();
   }
 };
 let signInAttempt: SignInAttempt | null = null;
@@ -102,6 +105,7 @@ const pictures = createPictureReader({
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
+const previews = createRecentPreviews();
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -136,6 +140,8 @@ app.whenReady().then(async () => {
     platform: "desktop",
     now: environment.now,
     undoStore: createUndoStore(join(app.getPath("userData"), "undo.json")),
+    historyStore: createCostumeHistoryStore(join(app.getPath("userData"), "costume-history.json")),
+    recentPreview: previews.pictureOf,
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
     owner: () => owner,
@@ -202,18 +208,19 @@ app.whenReady().then(async () => {
     },
     openTitleEditor: writes.openTitleEditor,
     // Its failure leaves the session be: the next page read says whether it is over.
-    previewCostume: async (set: CostumeSet) => {
+    previewCostume: previews.keeping(async (set: CostumeSet) => {
       if (sessionCookie === null) {
         return err({ code: "preview=notSignedIn" });
       }
       return previewCostume(readTransport, endpoints, set);
-    },
+    }),
     readPicture: (want) => pictures.read(want),
     changeCostume: writes.changeCostume,
     changeTitle: writes.changeTitle,
     changeName: writes.changeName,
     pendingUndo: writes.pendingUndo,
     undo: writes.undo,
+    costumeHistory: writes.costumeHistory,
   });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

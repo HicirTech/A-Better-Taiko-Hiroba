@@ -192,6 +192,13 @@ export type WriteOutcomeView<S = CostumeSet> =
   /** Asked while another write was queued or running: nothing sent, and never queued after it. */
   | { readonly kind: "busy" };
 
+/** A costume set the player wore, with Hiroba's picture of it as a `data:image/png` URL when this
+ * device kept one. */
+export interface CostumeHistoryEntry {
+  readonly set: CostumeSet;
+  readonly picture: string | null;
+}
+
 /** The last write of kind `K` as an undo can be offered: the set before it, and the set it was read
  * back as. Offered only while that set is still current, and only to the player signed in now. */
 export interface UndoSummaryOf<K extends WriteKind> {
@@ -244,4 +251,6 @@ export interface HirobaSessionPort {
   /** Undoes the last write of `kind`, a write like any other. A set changed anywhere since stops it
    * (`changedSincePreview`). A title goes back by its name, only if exactly one title has it. */
   undo<K extends WriteKind>(kind: K): Promise<WriteOutcomeView<WriteSets[K]>>;
+  /** The signed-in player's costume history, newest first. Asks Hiroba nothing. */
+  costumeHistory(): Promise<readonly CostumeHistoryEntry[]>;
 }

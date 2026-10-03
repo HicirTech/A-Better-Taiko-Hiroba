@@ -18,6 +18,7 @@ export { PORT_QUEUEING, type VerbQueueing, type VerbsQueued } from "./queueing";
 export type {
   CostumeChange,
   CostumeEditorView,
+  CostumeHistoryEntry,
   CostumePreviewFailure,
   CostumeSet,
   CostumeSlot,

@@ -45,6 +45,7 @@ const CASES: VerbCase[] = [
   ],
   ["pendingUndo", [], [{}]],
   ["undo", ["name"], ["settings"]],
+  ["costumeHistory", [], [{}]],
 ];
 
 function recordingPort() {
