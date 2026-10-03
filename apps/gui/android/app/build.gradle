@@ -2,17 +2,12 @@ import groovy.json.JsonSlurper
 
 apply plugin: 'com.android.application'
 
-// The release key comes from the environment, so it never has to be in the clone: the release
-// workflow sets RELEASE_KEYSTORE_FILE (the keystore's path), RELEASE_KEYSTORE_PASSWORD,
-// RELEASE_KEY_ALIAS and RELEASE_KEY_PASSWORD. The release build is signed when
-// RELEASE_KEYSTORE_FILE is set and left unsigned when it is not. A blank value counts as not set,
-// which is what a step passes for a secret that does not exist.
+// The release key comes from the environment, never from the clone; the build is signed only when
+// RELEASE_KEYSTORE_FILE is set. A blank value counts as unset: a missing secret passes one.
 def releaseKeystoreFile = System.getenv("RELEASE_KEYSTORE_FILE")?.trim()
 
-// The version has one source, "version" in apps/gui/package.json, which electron-builder reads too.
-// versionName is that text. versionCode is major * 10000 + minor * 100 + patch, so 0.1.0 is 100 and
-// a later version always has a higher code, which Android needs to accept an update. That holds only
-// while minor and patch stay below 100, and the code stays within Android's limit of 2100000000.
+// versionCode is major * 10000 + minor * 100 + patch: a later version always has a higher code,
+// which Android needs to accept an update.
 def appVersion = "${new JsonSlurper().parse(rootProject.file("../package.json")).version}".toString()
 if (!(appVersion ==~ /(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)/)) {
     throw new GradleException("apps/gui/package.json: version must be MAJOR.MINOR.PATCH, not ${appVersion}")
@@ -33,12 +28,10 @@ android {
         versionCode appVersionCode
         versionName appVersion
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        // The launcher label. Debug carries an applicationIdSuffix, so both builds install side by
-        // side; the placeholder tells their home-screen entries apart.
+        // Debug has an applicationIdSuffix, so both builds install; the label tells them apart.
         manifestPlaceholders = [appLabel: "@string/app_name"]
         aaptOptions {
-             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
-             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            // aapt's default ignore list, modified to accommodate modern web apps.
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
