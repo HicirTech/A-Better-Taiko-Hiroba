@@ -3,8 +3,10 @@ import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
 import {
   blankPlatePng,
+  crownIconPng,
   medalPlatePng,
   myDonPng,
+  rankIconPng,
   scorePanelPng,
   titlePlatePng,
 } from "./mock-pictures";
@@ -157,6 +159,8 @@ let medalSeason: keyof typeof SEASONS = 1;
 let tokenPlateAnswer: "png" | "gif" = "png";
 const PANEL_LEVEL = 5;
 let panelAnswer: "png" | "404" = "png";
+const ICON_PATH = /^\/image\/sp\/640\/(?:best_score_rank_([2-8])|crown_0([1-4]))_640\.png$/;
+let iconAnswer: "png" | "404" = "png";
 const MEDAL_PROGRESS: Readonly<Record<MedalState, string>> = {
   none: "",
   collecting: `<div class="token_count token_info_display">12</div>`,
@@ -271,6 +275,16 @@ Bun.serve({
     }
     if (onPictureHost) {
       return pictureHost(request);
+    }
+    const icon = ICON_PATH.exec(pathname);
+    if (icon !== null) {
+      // Static art, as Hiroba's is: no session is asked for.
+      const [, rank, crown] = icon;
+      if (iconAnswer === "404") {
+        return new Response("not found", { status: 404 });
+      }
+      const body = rank !== undefined ? rankIconPng(Number(rank)) : crownIconPng(Number(crown));
+      return new Response(body, { headers: { "content-type": "image/png" } });
     }
     switch (pathname) {
       case "/login.php":
@@ -496,6 +510,13 @@ Bun.serve({
           panelAnswer = answer;
         }
         return new Response(panelAnswer);
+      }
+      case "/__icons": {
+        const answer = searchParams.get("answer");
+        if (answer === "png" || answer === "404") {
+          iconAnswer = answer;
+        }
+        return new Response(iconAnswer);
       }
       case "/__titleplates":
         if (searchParams.get("reset") === "1") {

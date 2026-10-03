@@ -12,7 +12,7 @@ import { en } from "../src/messages/en";
 describe("createTranslator", () => {
   test("fills a parameter the message names", () => {
     const { t } = createTranslator("en");
-    expect(t("profile.fetchedAt", { time: "12:00" })).toStartWith("Read at 12:00.");
+    expect(t("profile.fetchedAt", { time: "12:00" })).toBe("Last updated 12:00");
   });
 
   test("fills a number parameter, zero included", () => {
@@ -41,11 +41,24 @@ describe("the translator's formats", () => {
     expect([0, 12, 1234].map(number)).toEqual(["0", "12", "1,234"]);
   });
 
-  test("writes a moment as Date's own toLocaleString does", () => {
+  test("writes a moment in the local zone, with the short month and the seconds", () => {
+    const { dateTime } = createTranslator("en");
+    const text = dateTime(new Date(2026, 9, 3, 16, 17, 54));
+    expect(text).toStartWith("Oct 3, 2026, 4:17:54");
+    expect(text).toEndWith("PM");
+  });
+
+  test.each([...LOCALES])("spells the month as %s writes its short name", (locale) => {
+    const at = new Date(2026, 9, 3, 16, 17, 54);
+    const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(at);
+    expect(createTranslator(locale).dateTime(at)).toContain(month);
+  });
+
+  test("reads a Date, a number and an ISO string of one moment alike", () => {
     const { dateTime } = createTranslator("en");
     const at = "2026-09-28T03:04:05Z";
-    expect(dateTime(at)).toBe(new Date(at).toLocaleString("en"));
-    expect(dateTime(Date.parse(at))).toBe(dateTime(new Date(at)));
+    expect(dateTime(Date.parse(at))).toBe(dateTime(at));
+    expect(dateTime(new Date(at))).toBe(dateTime(at));
   });
 
   test.each([...LOCALES])("writes a moment it cannot read as a dash in %s", (locale) => {
@@ -70,6 +83,18 @@ describe("the catalog", () => {
       "简体中文",
       "繁體中文",
     ]);
+  });
+});
+
+describe("the last-updated line", () => {
+  type LineCase = [locale: Locale, line: string];
+  test.each<LineCase>([
+    ["en", "Last updated 12:00"],
+    ["ja", "最終更新：12:00"],
+    ["zh-Hans", "最后更新于 12:00"],
+    ["zh-Hant", "最後更新於 12:00"],
+  ])("is the time alone, with no note on Hiroba's own delay, in %s: %p", (locale, line) => {
+    expect(createTranslator(locale).t("profile.fetchedAt", { time: "12:00" })).toBe(line);
   });
 });
 
@@ -217,12 +242,6 @@ const COSTUME = inEach(["costume"], ["きせかえ"], ["换装"], ["換裝"]);
 
 /** Words each message must hold: game terms, Hiroba's quoted sentences, where it sends the user. */
 const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>>>> = {
-  "panel.footnote": inEach(
-    ["Extreme and Extreme (Inner) charts", "Double Play charts"],
-    ["おに＋おに裏", "双打"],
-    ["魔王＋魔王(里)", "双打"],
-    ["魔鬼＋魔鬼(裏)", "雙打"],
-  ),
   "signIn.intro": inEach(["Donder Hiroba"], ["ドンだーひろば"], ["鼓众广场"], ["鼓眾廣場"]),
   "profile.myDonAlt": inEach(["My Don"], ["マイどん"], ["小咚"], ["小咚"]),
   "costume.openByLongPress": inEach(["My Don"], ["マイどん"], ["小咚"], ["小咚"]),
@@ -302,13 +321,13 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "一七三上下不並中主之乎九也了二五交人仍他代以件任伺但位何作你使供保個做停偶傳儲允",
     "元先入內全兩八六共其再冠出分列初判別到前動包化十半南卡即卸原去又取受另只可合同名",
     "向否含和咚哪啟單嘗器四回因圍圖在執報場外多夢天夾套妝字存完官定宮容密寫寬將對小尚",
-    "就尾展工己已帳幣度廣建式張形後得從復恢息情意愛態應成或戲戴打把拒括持按捲排接提換",
-    "援摘擇支收改效料新斷方於日明易是時晚暫暱曲更最會有服期未本束板枚果查核格框桌極概",
+    "就尾展工己已帳幣度廣建式張形後得從復恢息情意愛態應成或戲戴把拒括持按捲排接提換",
+    "援摘擇支收改效料新斷方於日明易是時暫暱曲更最會有服期未本束板枚果查核格框桌極概",
     "樣機檢次歌止正此步段每比求沒法消清為無然片版狀獲玄王現生用由留畫登白的目直相看眾",
     "知確碼示移程稱空穿窗立符算範簡粉粹系紀級紫組結絕統經維網線編縮績繪置而肢能臉自至",
-    "與良色若萬著藏處號虹行表被裏裝製要覆見視覽角觸言計訊設許試話該詳認語誤說請證護讀",
+    "與良色若萬著藏處號虹行表被裝製要覆見視覽角觸言計訊設許試話該詳認語誤說請證護讀",
     "變讓資超跟路身軀較載輯輸轉辨返送這通連進逾遊過達選還那部重金銀銅錄錯長閉開間關限",
-    "除階隨雅雙面頁項預頭顏願顯馬體鬼魔鼓",
+    "除階隨雅面頁項預頭顏願顯馬體鼓牌",
   ].join(""),
 );
 

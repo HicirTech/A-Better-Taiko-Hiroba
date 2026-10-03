@@ -14,7 +14,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 import { CostumePage } from "./my-page/costume-page";
 import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
-import type { PortraitAction } from "./my-page/my-don-portrait";
+import type { OpenAction } from "./my-page/open-button";
 import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
 import { useCostumeEditor } from "./my-page/use-costume-editor";
@@ -24,7 +24,8 @@ import { useNameEditor } from "./name-title/use-name-editor";
 import { useTitleEditor } from "./name-title/use-title-editor";
 import { FrameCorner } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
-import { createPictureLane, type PictureLane } from "./pictures/picture-lane";
+import { createPictureLane } from "./pictures/picture-lane";
+import type { SystemToast } from "./platform";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFab } from "./read-again/read-again-fab";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
@@ -48,6 +49,9 @@ type Screen =
   | { readonly name: "profile"; readonly profile: ProfileView }
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
+const OVERVIEW_SPACING = 3;
+const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
+
 const SIGN_IN_NOTICE = {
   cancelled: "signIn.cancelled",
   noSession: "signIn.noSession",
@@ -62,9 +66,11 @@ export interface AppProps {
   readonly onNavigate: (page: Page) => void;
   /** Settings' language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
+  /** The shell's Toast, where it has one: a long-press names a legend's item by it. */
+  readonly toast?: SystemToast;
 }
 
-export function App({ port, i18n, page, onNavigate, language }: AppProps) {
+export function App({ port, i18n, page, onNavigate, language, toast }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
   const [refreshing, setRefreshing] = useState(false);
@@ -133,13 +139,15 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           : port.readProfile());
         if (result.ok) {
           // Plates change with the title or season, the portrait with any costume change.
-          // Score-panel art is kept for good once it came, so only its failures are forgotten.
+          // Fixed art is kept for good once it came, so only its failures are forgotten.
           lane.renew("titlePlate");
           lane.renew("medalPlate");
           if (!behindThePage) {
             lane.renew("myDon");
           }
-          lane.forgetFailures("scorePanel");
+          for (const kind of FIXED_ART) {
+            lane.forgetFailures(kind);
+          }
           await Promise.all([refreshUndo(), refreshTitleUndo(), refreshNameUndo()]);
           setScreen({ name: "profile", profile: result.value });
           return true;
@@ -205,7 +213,8 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
   }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor]);
 
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
-  const portrait: PortraitAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
+  const portrait: OpenAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
+  const namePlate: OpenAction = { open: () => onNavigate("nameTitle"), byLongPress: touchFirst };
 
   // Once only: StrictMode runs effects twice in development, and a second run asks Hiroba again.
   const opened = useRef(false);
@@ -342,18 +351,21 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
           )}
 
           {screen.name === "profile" && page !== "costume" && page !== "nameTitle" && (
-            <Stack spacing={2}>
+            <Stack spacing={page === "overview" ? OVERVIEW_SPACING : 2}>
               {page === "overview" ? (
                 <>
-                  <ProfileCard
+                  <OverviewHeader
                     profile={screen.profile}
                     lane={lane}
                     i18n={i18n}
                     portrait={portrait}
+                    namePlate={namePlate}
                   />
                   <PanelCard
                     crowns={screen.profile.crowns}
                     ranks={screen.profile.panel.ranks}
+                    lane={lane}
+                    toast={touchFirst ? toast : undefined}
                     i18n={i18n}
                   />
                   <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
@@ -365,10 +377,8 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
                   i18n={i18n}
                 />
               )}
-              <Typography variant="body2" color="text.secondary">
-                {t("profile.fetchedAt", {
-                  time: i18n.dateTime(screen.profile.fetchedAt),
-                })}
+              <Typography id="last-updated" variant="caption" color="text.secondary" component="p">
+                {t("profile.fetchedAt", { time: i18n.dateTime(screen.profile.fetchedAt) })}
               </Typography>
             </Stack>
           )}
@@ -395,25 +405,5 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
         </Stack>
       )}
     </>
-  );
-}
-
-function ProfileCard({
-  profile,
-  lane,
-  i18n,
-  portrait,
-}: {
-  profile: ProfileView;
-  lane: PictureLane;
-  i18n: Translator;
-  portrait: PortraitAction;
-}) {
-  return (
-    <Card id="profile" variant="outlined">
-      <CardContent>
-        <OverviewHeader profile={profile} lane={lane} i18n={i18n} portrait={portrait} />
-      </CardContent>
-    </Card>
   );
 }

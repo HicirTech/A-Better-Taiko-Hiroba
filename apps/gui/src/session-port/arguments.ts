@@ -1,5 +1,8 @@
+import type { ScoreRank } from "@abth/core";
+
 import type {
   CostumeSet,
+  CrownKind,
   HirobaSessionPort,
   NameState,
   PictureWant,
@@ -97,12 +100,41 @@ export const isWhole = (value: unknown, least: number, most: number): value is n
   Number.isInteger(value) && (value as number) >= least && (value as number) <= most;
 
 const KIND_ONLY_PICTURES: readonly string[] = ["titlePlate", "scorePanel", "medalPlate", "myDon"];
+// Records, so a rank or crown the app gains is a type error here until its icon may be asked for.
+const RANK_ICONS: Readonly<Record<ScoreRank, true>> = {
+  2: true,
+  3: true,
+  4: true,
+  5: true,
+  6: true,
+  7: true,
+  8: true,
+};
+const CROWN_ICONS: Readonly<Record<CrownKind, true>> = {
+  silver: true,
+  gold: true,
+  donderful: true,
+};
 
 /** A picture the interface may ask for, and nothing else: no URL, no source, no other key. はずす (0)
  * has no picture, so an item's id starts at 1. */
 export function isPictureWant(value: unknown): value is PictureWant {
   if (hasExactly(value, ["kind"])) {
     return typeof value.kind === "string" && KIND_ONLY_PICTURES.includes(value.kind);
+  }
+  if (hasExactly(value, ["kind", "rank"])) {
+    return (
+      value.kind === "rankIcon" &&
+      typeof value.rank === "number" &&
+      Object.hasOwn(RANK_ICONS, value.rank)
+    );
+  }
+  if (hasExactly(value, ["kind", "crown"])) {
+    return (
+      value.kind === "crownIcon" &&
+      typeof value.crown === "string" &&
+      Object.hasOwn(CROWN_ICONS, value.crown)
+    );
   }
   return (
     hasExactly(value, ["kind", "slot", "id"]) &&

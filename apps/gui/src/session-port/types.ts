@@ -118,6 +118,9 @@ export interface CostumePreviewFailure {
 /** A costume slot as Hiroba numbers it in a thumbnail's `type`: 1 is the きぐるみ, 5 the ぷちキャラ. */
 export type CostumeSlot = 1 | 2 | 3 | 4 | 5;
 
+/** One of the panel's three crowns, as `ProfileView.crowns` names them. */
+export type CrownKind = keyof ProfileView["crowns"];
+
 /** One of Hiroba's pictures as the interface asks for it: what it shows, never where it is. The
  * platform builds the address itself, from a fixed path and checked numbers. */
 export type PictureWant =
@@ -129,7 +132,12 @@ export type PictureWant =
   | { readonly kind: "titlePlate" }
   | { readonly kind: "scorePanel" }
   | { readonly kind: "medalPlate" }
-  | { readonly kind: "myDon" };
+  | { readonly kind: "myDon" }
+  | { readonly kind: "rankIcon"; readonly rank: ScoreRank }
+  | { readonly kind: "crownIcon"; readonly crown: CrownKind };
+
+/** The pictures that are icons of the legends: shared art, the same for every account. */
+export type IconWant = Extract<PictureWant, { readonly kind: "rankIcon" | "crownIcon" }>;
 
 /** A picture for the interface: a `data:image/png` URL, which is no address, and the PNG's own
  * size, so its box can be sized before it is drawn. */

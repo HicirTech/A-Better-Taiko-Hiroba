@@ -67,6 +67,8 @@ export const native = {
   /** close() resolves but the browser stays open, as seen on a slow real sign-in. */
   closeIgnored: false,
   listeners: new Map<string, Listener>(),
+  /** Each Toast the app asked for, as the plugin was asked. */
+  toasts: [] as { text: string; duration?: string; position?: string }[],
 
   reset(): void {
     this.httpRequests.length = 0;
@@ -78,6 +80,7 @@ export const native = {
     this.closeCalls = 0;
     this.openFails = false;
     this.listeners.clear();
+    this.toasts.length = 0;
   },
 
   emit(event: string, data: { url?: string } = {}): void {
@@ -139,6 +142,14 @@ mock.module("@capacitor/inappbrowser", () => ({
       if (!native.closeIgnored) {
         queueMicrotask(() => native.emit("browserClosed"));
       }
+    },
+  },
+}));
+
+mock.module("@capacitor/toast", () => ({
+  Toast: {
+    show: async (options: { text: string; duration?: string; position?: string }) => {
+      native.toasts.push(options);
     },
   },
 }));

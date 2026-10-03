@@ -100,7 +100,6 @@ export interface Messages {
   "crowns.silver": string;
   "crowns.gold": string;
   "crowns.donderful": string;
-  "panel.footnote": string;
   /** The score-rank block heading. Not 评级/評級: taiko.wiki uses those for the skill Rating. */
   "panel.ranks": string;
   /** Params: {count} and {total} (the sum of its block), both already formatted. */
@@ -128,6 +127,9 @@ export interface Messages {
   /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
   "failure.detail": string;
   "platform.unsupported": string;
+  /** The name plate on the Overview: its accessible name, and what a long-press on it opens. */
+  "plate.open": string;
+  "plate.openByLongPress": string;
   "costume.open": string;
   "costume.openByLongPress": string;
   "costume.reading": string;

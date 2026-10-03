@@ -13,6 +13,7 @@ import {
   INITIAL_COSTUME,
   type PostRecord,
 } from "./mock-costume";
+import { crownIconPng, rankIconPng } from "./mock-pictures";
 import {
   COOLDOWN_MESSAGE,
   FILTER_MESSAGE,
@@ -84,6 +85,25 @@ const THUMBNAIL = "GET /imgsrc_kisekae.php";
 const TITLE_PLATE = "GET /imgsrc_titleplate.php";
 const TOKEN_PLATE = `GET ${MEDAL_PLATE}`;
 const MY_DON = "GET /imgsrc.php";
+/** Each legend item's icon: the image number its path carries, then the stand-in's own picture. */
+const LEGEND_ICONS: Readonly<Record<string, readonly [path: string, picture: Uint8Array]>> = {
+  "rank-2": ["/image/sp/640/best_score_rank_2_640.png", rankIconPng(2)],
+  "rank-3": ["/image/sp/640/best_score_rank_3_640.png", rankIconPng(3)],
+  "rank-4": ["/image/sp/640/best_score_rank_4_640.png", rankIconPng(4)],
+  "rank-5": ["/image/sp/640/best_score_rank_5_640.png", rankIconPng(5)],
+  "rank-6": ["/image/sp/640/best_score_rank_6_640.png", rankIconPng(6)],
+  "rank-7": ["/image/sp/640/best_score_rank_7_640.png", rankIconPng(7)],
+  "rank-8": ["/image/sp/640/best_score_rank_8_640.png", rankIconPng(8)],
+  // Gold is crown_02 and silver crown_03: the recent-plays numbering.
+  "crowns-silver": ["/image/sp/640/crown_03_640.png", crownIconPng(3)],
+  "crowns-gold": ["/image/sp/640/crown_02_640.png", crownIconPng(2)],
+  "crowns-donderful": ["/image/sp/640/crown_04_640.png", crownIconPng(4)],
+};
+const ICON_PATHS = Object.values(LEGEND_ICONS).map(([path]) => path);
+const iconHits = async () => {
+  const hits = await Promise.all(ICON_PATHS.map((path) => hitsOn(path)));
+  return hits.reduce((sum, count) => sum + count, 0);
+};
 /** Pictures the window asks for by itself as they come on screen, outside any write. */
 const LANE_PICTURES: readonly string[] = [
   THUMBNAIL,
@@ -91,7 +111,20 @@ const LANE_PICTURES: readonly string[] = [
   `GET ${PANEL_ART}`,
   TOKEN_PLATE,
   MY_DON,
+  ...ICON_PATHS.map((path) => `GET ${path}`),
 ];
+const iconsSettled = async () => {
+  let last = -1;
+  for (let tries = 0; tries < 30; tries++) {
+    const now = await iconHits();
+    if (now === last) {
+      break;
+    }
+    last = now;
+    await Bun.sleep(1000);
+  }
+  return last;
+};
 const medalPlatesSettled = async () => {
   let last = -1;
   for (let tries = 0; tries < 30; tries++) {
@@ -487,6 +520,7 @@ try {
 
   await fetch(`${HIROBA}/__mydon?answer=gif`);
   await fetch(`${HIROBA}/__panel?answer=404`);
+  await fetch(`${HIROBA}/__icons?answer=404`);
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
@@ -507,24 +541,35 @@ try {
     ["Donderful Combo", "7.1%", 1],
   ];
   const legendOf = (shares: readonly Share[], total: number) =>
-    shares.map(([name, percent, count]) => `${name} ${percent} ${count} of ${total}`);
+    shares.map(([, percent, count]) => `${percent} ${count} of ${total}`);
+  const namesOf = (shares: readonly Share[]) =>
+    shares.map(([name, percent]) => `${name} ${percent}`);
   const barOf = (shares: readonly Share[], total: number) =>
     shares.map(([name, , count]) => `${name}: ${count} of ${total}`);
-  const allOf = (selector: string, property: "textContent" | "title") =>
+  const allOf = (selector: string, property: "textContent" | "title" | "ariaLabel") =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll(${JSON.stringify(selector)})].map((part) => part.${property})`,
     );
   results.panelSharesShown =
     same(await allOf("#ranks li", "textContent"), legendOf(RANK_SHARES, 102)) &&
     same(await allOf("#crowns li", "textContent"), legendOf(CROWN_SHARES, 14)) &&
+    same(await allOf("#ranks li", "ariaLabel"), namesOf(RANK_SHARES)) &&
+    same(await allOf("#crowns li", "ariaLabel"), namesOf(CROWN_SHARES)) &&
     same(await allOf("#ranks-bar > *", "title"), barOf(RANK_SHARES, 102)) &&
     same(await allOf("#crowns-bar > *", "title"), barOf(CROWN_SHARES, 14)) &&
     (await textOf("#rank-5-percent")) === "30.4%";
   results.panelBlocksShown =
     same(await allOf("#panel h2", "textContent"), ["Score ranks", "Crowns"]) &&
     (await page.evaluate<boolean>(
-      `document.querySelector("#panel #panel-footnote") !== null && ["#ranks-bar", "#crowns-bar"].every((bar) => document.querySelector(bar)?.getAttribute("aria-hidden") === "true")`,
+      `document.querySelector("#panel-footnote") === null && ["#ranks-bar", "#crowns-bar"].every((bar) => document.querySelector(bar)?.getAttribute("aria-hidden") === "true")`,
     ));
+  const lastUpdated = async () => ({
+    text: (await textOf("#last-updated")) ?? "",
+    fontSize: await page.evaluate<string>(
+      `getComputedStyle(document.querySelector("#last-updated")).fontSize`,
+    ),
+  });
+  const updatedOnOverview = await lastUpdated();
   const rendered = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );
@@ -536,6 +581,22 @@ try {
   results.taikoNoAndUrlsKeptOutOfDom =
     !rendered.includes("000000000000") && !rendered.includes("imgsrc");
   results.readsAfterSignIn = await myPageHits();
+  const legendPictures = (app: typeof running) =>
+    app.page.evaluate<{ images: number; dots: number }>(
+      `(() => { const items = [...document.querySelectorAll("#ranks li, #crowns li")]; return { images: items.filter((item) => item.querySelector("img") !== null).length, dots: items.filter((item) => item.querySelector('[aria-hidden="true"] > span') !== null).length }; })()`,
+    );
+  const legendIconsShownOn = (app: typeof running) =>
+    waitForSeen(app.page, async () =>
+      (await legendPictures(app)).images === ICON_PATHS.length ? true : undefined,
+    );
+  await waitForSeen(page, async () =>
+    (await iconHits()) === ICON_PATHS.length ? true : undefined,
+  );
+  results.legendFallsBackToDots =
+    same(await legendPictures(running), { images: 0, dots: ICON_PATHS.length }) &&
+    same(await allOf("#ranks li", "ariaLabel"), namesOf(RANK_SHARES)) &&
+    same(await allOf("#crowns li", "ariaLabel"), namesOf(CROWN_SHARES)) &&
+    (await textOf("#rank-5-percent")) === "30.4%";
 
   await waitForSeen(page, async () => (await attribute("#title-plate-image", "src")) ?? undefined);
   await waitForSeen(page, async () => (await textOf("#pictures-code")) ?? undefined);
@@ -595,6 +656,43 @@ try {
     narrow.plate.bottom <= narrow.panel.top &&
     Math.abs(narrow.myDon.left + narrow.myDon.right - narrow.plate.left - narrow.plate.right) < 2 &&
     plainSurface;
+  const framed = await page.evaluate<boolean>(
+    `(() => { const sides = ["Top", "Right", "Bottom", "Left"]; return ["#profile", "#panel", "#medal"].some((selector) => { const block = document.querySelector(selector); const style = getComputedStyle(block); return block.closest(".MuiPaper-root") !== null || style.boxShadow !== "none" || sides.some((side) => style["border" + side + "Style"] !== "none" && parseFloat(style["border" + side + "Width"]) > 0); }); })()`,
+  );
+  const blocks = await Promise.all(["#profile", "#ranks", "#crowns", "#medal"].map(boxOf));
+  const gaps = blocks.slice(1).map((block, index) => block.top - (blocks[index]?.bottom ?? 0));
+  results.overviewBlocksHaveNoBorders =
+    !framed && gaps.every((gap) => gap >= 16 && Math.abs(gap - (gaps[0] ?? 0)) < 1);
+  const settledHeader = async () => {
+    let before = "";
+    return waitFor(async () => {
+      const now = await headerBoxes();
+      const shown = JSON.stringify(now);
+      const steady = shown === before;
+      before = shown;
+      return steady ? now : undefined;
+    });
+  };
+  /** Whether, at `width`, the tile is a square from the plate's top to the panel's bottom. */
+  const tileAlignedAt = async (width: number) => {
+    await page.send("Emulation.setDeviceMetricsOverride", {
+      width,
+      height: 900,
+      deviceScaleFactor: 0,
+      mobile: false,
+    });
+    const { myDon, plate, panel } = await settledHeader();
+    await page.send("Emulation.clearDeviceMetricsOverride", {});
+    // The checks after this one measure the panel, so it settles back at the window's own size.
+    await settledHeader();
+    return (
+      myDon.right <= plate.left &&
+      Math.abs(myDon.top - plate.top) <= 1 &&
+      Math.abs(myDon.bottom - panel.bottom) <= 1 &&
+      Math.abs(myDon.width - (myDon.bottom - myDon.top)) <= 1
+    );
+  };
+  results.myDonAlignedWithTheColumn = (await tileAlignedAt(1400)) && (await tileAlignedAt(700));
   const PANEL_WIDTH_UNITS = 280;
   type PanelCount = readonly [id: string, name: string, count: string, left: number, top: number];
   const PANEL_COUNTS: readonly PanelCount[] = [
@@ -705,16 +803,18 @@ try {
   const readsBeforeLanguage = await readHits();
   const platesBeforeLanguage = (await platesAsked()).length;
   await pickLanguage("ja");
-  const readAtInJapanese = await page.evaluate<string | null>(
-    `[...document.querySelectorAll("p")].map((line) => line.textContent).find((text) => text.includes(${JSON.stringify(ja.t("profile.fetchedAt").split("{time}")[1])})) ?? null`,
-  );
+  const japaneseUpdate = (await textOf("#last-updated")) ?? "";
+  const japaneseLead = ja.t("profile.fetchedAt", { time: "" });
   results.languageRedrawsInPlace =
     (await textOf("#rank-8")) === ja.t("panel.countOf", { count: "3", total: "102" }) &&
     (await textOf("#rank-5-percent")) === "30.4%" &&
     (await textOf("#profile-title")) === ja.t("profile.title", { title: "サンプルの称号" }) &&
     (await textOf("#dan")) === ja.t("profile.dan", { dan: "九段" }) &&
     (await textOf("#profile h2")) === "サンプルどん" &&
-    /^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{2}:\d{2} /.test(readAtInJapanese ?? "");
+    japaneseUpdate.startsWith(japaneseLead) &&
+    /^\d{4}年\d{1,2}月\d{1,2}日 \d{1,2}:\d{2}:\d{2}$/.test(
+      japaneseUpdate.slice(japaneseLead.length),
+    );
   await pickLanguage("en");
   await Bun.sleep(1000);
   results.languageAsksHirobaNothing =
@@ -737,7 +837,7 @@ try {
     )) === 0;
 
   await click("#read-again");
-  await until("Read at");
+  await until("Last updated");
   await Bun.sleep(300);
   results.readsAfterReadAgain = await myPageHits();
 
@@ -932,7 +1032,7 @@ try {
   await fetch(`${HIROBA}/__mydon?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
-  await until("Read at");
+  await until("Last updated");
   await waitForSeen(page, async () => (await attribute("#my-don-image", "src")) ?? undefined);
   const myDonsAtFirst = await myDonsSettled();
   const tile = await page.evaluate<{ width: number; height: number }>(
@@ -956,10 +1056,12 @@ try {
     !withMyDon.includes("img.127.0.0.1") &&
     !withMyDon.includes("000000000000");
 
+  const iconsBeforeRecovery = await iconsSettled();
   await fetch(`${HIROBA}/__panel?answer=png`);
+  await fetch(`${HIROBA}/__icons?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
-  await until("Read at");
+  await until("Last updated");
   await waitForSeen(page, async () => (await myDonsAsked()).length > myDonsAtFirst || undefined);
   const myDonsAfterReadAgain = await myDonsSettled();
   results.myDonAgainOnReadAgain =
@@ -979,11 +1081,69 @@ try {
     (await panelCountsInPlace(PANEL_COUNTS)) &&
     !(await exists("#pictures-unavailable"));
   const panelArtFetches = await hitsOn(PANEL_ART);
+  await legendIconsShownOn(running);
+  const iconFetches = await iconsSettled();
+  const iconSources = await page.evaluate<Record<string, string>>(
+    `Object.fromEntries([...document.querySelectorAll("#ranks li, #crowns li")].map((item) => [item.querySelector('[id]:not([id$="-percent"])').id, item.querySelector("img").getAttribute("src")]))`,
+  );
+  const pictureOf = (bytes: Uint8Array) =>
+    `data:image/png;base64,${Buffer.from(bytes).toString("base64")}`;
+  const iconBoxes = await page.evaluate<{ height: number; ratio: number }[]>(
+    `[...document.querySelectorAll("#ranks li, #crowns li")].map((item) => { const box = item.querySelector('[aria-hidden="true"]').getBoundingClientRect(); return { height: box.height, ratio: box.width / box.height }; })`,
+  );
+  results.legendIconsShown =
+    Object.entries(LEGEND_ICONS).every(([id, [, bytes]]) => iconSources[id] === pictureOf(bytes)) &&
+    same(await legendPictures(running), { images: ICON_PATHS.length, dots: 0 }) &&
+    iconBoxes.every(({ height }) => Math.abs(height - 24) < 0.5) &&
+    iconBoxes.slice(0, 7).every(({ ratio }) => Math.abs(ratio - 128 / 96) < 0.05) &&
+    iconBoxes.slice(7).every(({ ratio }) => Math.abs(ratio - 52 / 59) < 0.05) &&
+    same(await allOf("#ranks li", "ariaLabel"), namesOf(RANK_SHARES)) &&
+    same(await allOf("#crowns li", "ariaLabel"), namesOf(CROWN_SHARES));
+  results.legendIconsAskedOnceEach = iconFetches - iconsBeforeRecovery === ICON_PATHS.length;
+  const tooltipClosed = () =>
+    waitFor(async () => ((await exists('[role="tooltip"]')) ? undefined : true));
+  const legendNameOnHover = async (selector: string) => {
+    await page.evaluate(
+      `document.querySelector(${JSON.stringify(selector)}).scrollIntoView({ block: "center" })`,
+    );
+    await hoverOver(page, selector);
+    const shown = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+    await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+    await tooltipClosed();
+    return shown;
+  };
+  const namesOnHover: string[] = [];
+  for (const [block, shares] of [
+    ["#ranks", RANK_SHARES],
+    ["#crowns", CROWN_SHARES],
+  ] as const) {
+    for (let item = 1; item <= shares.length; item++) {
+      namesOnHover.push(await legendNameOnHover(`${block} li:nth-child(${item})`));
+    }
+  }
+  const SHIFT_KEY = { key: "Shift", code: "ShiftLeft", windowsVirtualKeyCode: 16 };
+  await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SHIFT_KEY });
+  await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Shift", code: "ShiftLeft" });
+  await page.evaluate(`document.querySelector("#crowns li").focus()`);
+  const nameOnFocus = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  await page.evaluate("document.activeElement.blur()");
+  await tooltipClosed();
+  const keyboardReachable = await page.evaluate<boolean>(
+    `[...document.querySelectorAll("#ranks li, #crowns li")].every((item) => item.tabIndex === 0)`,
+  );
+  results.legendNamesShownAsTooltips =
+    same(
+      namesOnHover,
+      [...RANK_SHARES, ...CROWN_SHARES].map(([name]) => name),
+    ) &&
+    nameOnFocus === CROWN_SHARES[0]?.[0] &&
+    keyboardReachable;
+  await page.evaluate("window.scrollTo(0, 0)");
   const keptMyDon = await attribute("#my-don-image", "src");
   await fetch(`${HIROBA}/__mydon?answer=gif`);
   await click("#read-again");
   await Bun.sleep(300);
-  await until("Read at");
+  await until("Last updated");
   await waitForSeen(
     page,
     async () => (await myDonsAsked()).length > myDonsAfterReadAgain || undefined,
@@ -998,11 +1158,11 @@ try {
   await fetch(`${HIROBA}/__rotate`);
   await click("#read-again");
   await Bun.sleep(500);
-  await until("Read at");
+  await until("Last updated");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
   await click("#read-again");
   await Bun.sleep(500);
-  await until("Read at");
+  await until("Last updated");
   results.rotationTakenUp =
     tokens[1] !== tokens[0] &&
     (await textOf("#crowns-silver")) === "11 of 14" &&
@@ -1010,7 +1170,7 @@ try {
   const platesAfterRereads = await platesSettled();
 
   const fabBox = await boxOf("#read-again");
-  const cardBox = await boxOf("#profile");
+  const profileBox = await boxOf("#profile");
   await hoverOver(page, "#read-again");
   const fabTooltip = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
@@ -1020,8 +1180,8 @@ try {
     (await page.evaluate<boolean>(
       `document.querySelector("#read-again").classList.contains("MuiFab-sizeSmall")`,
     )) &&
-    fabBox.bottom <= cardBox.top &&
-    Math.abs(fabBox.right - cardBox.right) < 1;
+    fabBox.bottom <= profileBox.top &&
+    Math.abs(fabBox.right - profileBox.right) < 1;
   const fabState = () =>
     page.evaluate<{ shut: boolean; spinning: boolean }>(
       `(() => { const fab = document.querySelector("#read-again"); return { shut: fab.disabled, spinning: fab.querySelector(".MuiCircularProgress-root") !== null }; })()`,
@@ -1040,7 +1200,7 @@ try {
   );
   await goTo("overview");
   await fetch(`${HIROBA}/__hold-read?on=0`);
-  await until("Read at");
+  await until("Last updated");
   results.readAgainShutWhileReading =
     same(fabWhileReading, { shut: true, spinning: true }) &&
     readsWhileHeld === readsBeforeHeld + 1 &&
@@ -1069,7 +1229,7 @@ try {
     const before = await myPageHits();
     await swipe(from, to);
     await Bun.sleep(500);
-    await until("Read at");
+    await until("Last updated");
     await page.evaluate("window.scrollTo(0, 0)");
     return (await myPageHits()) - before;
   };
@@ -1094,13 +1254,13 @@ try {
   await page.evaluate("document.activeElement.blur()");
   results.fabOnlyUnderFocusOnTouch =
     fabKeptForScreenReaders && fabShownUnderFocus && (await fabWidth()) <= 1;
-  const pullFrom = { x: cardBox.left + cardBox.width / 2, y: cardBox.top + 40 };
+  const pullFrom = { x: profileBox.left + profileBox.width / 2, y: profileBox.top + 40 };
   const pulledBy = (dx: number, dy: number) => ({ x: pullFrom.x + dx, y: pullFrom.y + dy });
   const readsByShortPull = await readsBySwipe(pullFrom, pulledBy(0, 100));
   const readsBeforePull = await myPageHits();
   const ringAtFullPull = await swipe(pullFrom, pulledBy(0, 200), pullIndicator);
   await Bun.sleep(500);
-  await until("Read at");
+  await until("Last updated");
   results.pullPastThePointReads =
     readsByShortPull === 0 &&
     same(ringAtFullPull, { shown: true, ring: "100" }) &&
@@ -1158,6 +1318,11 @@ try {
   const favoritesOffOverview = !(await exists("#favorites"));
   const readsBeforeFavorites = await readHits();
   await goTo("favorites");
+  const updatedOnFavourites = await lastUpdated();
+  const LAST_UPDATED = /^Last updated [A-Z][a-z]{2} \d{1,2}, \d{4}, \d{1,2}:\d{2}:\d{2} [AP]M$/;
+  results.lastUpdatedLineShown = [updatedOnOverview, updatedOnFavourites].every(
+    ({ text, fontSize }) => LAST_UPDATED.test(text) && fontSize === "12px",
+  );
   results.favoritesUnsetShown =
     favoritesOffOverview &&
     !(await exists("#profile")) &&
@@ -1239,7 +1404,7 @@ try {
   const readAndWait = async (ready: () => Promise<boolean>) => {
     await click("#read-again");
     await Bun.sleep(300);
-    await until("Read at");
+    await until("Last updated");
     await waitForSeen(page, async () => (await ready()) || undefined);
     return platesSettled();
   };
@@ -1256,6 +1421,7 @@ try {
     (await textOf("#profile-title")) === "Title: 別のサンプル称号" &&
     (await textOf("#profile h2")) === "サンプルどん" &&
     (await textOf("#dan")) === "Dan-i: 9th Dan";
+  results.myDonAlignedWithoutThePlate = await tileAlignedAt(1100);
   await fetch(`${HIROBA}/__titleplate?answer=png`);
   const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
   results.plateBlankFallsBack =
@@ -1279,7 +1445,7 @@ try {
   const readMedal = async () => {
     await click("#read-again");
     await Bun.sleep(300);
-    await until("Read at");
+    await until("Last updated");
   };
   const showMedal = async (ready: () => Promise<boolean>) => {
     await page.evaluate(`document.querySelector("#medal").scrollIntoView({ block: "center" })`);
@@ -1291,6 +1457,56 @@ try {
     return showMedal(ready);
   };
   const medalPlateSrc = () => attribute("#medal-plate-image", "src");
+  type Rect = { left: number; top: number; width: number; height: number };
+  type MedalLayout = Record<
+    string,
+    (Rect & { size: number; weight: string; colour: string }) | null
+  >;
+  const MEDAL_WORDS = [
+    "#medal-plate",
+    "#medal-plate-image",
+    "#medal-name",
+    "#medal-count-shown",
+    "#medal-complete",
+  ];
+  const medalLayout = () =>
+    page.evaluate<MedalLayout>(
+      `Object.fromEntries(${JSON.stringify(MEDAL_WORDS)}.map((selector) => { const element = document.querySelector(selector); if (element === null) return [selector, null]; const { left, top, width, height } = element.getBoundingClientRect(); const style = getComputedStyle(element); return [selector, { left, top, width, height, size: parseFloat(style.fontSize), weight: style.fontWeight, colour: style.color }]; }))`,
+    );
+  /** Hiroba's offsets in its pixels of the 290-wide block: the name at 50, the count or COMPLETE at
+   * `left`, bold black 12; the picture 290 wide; the block 52 high, more under a taller picture. */
+  const medalLaidOutAsOnHiroba = (layout: MedalLayout, ending: string, left: number) => {
+    const [block, image, name, end] = [
+      "#medal-plate",
+      "#medal-plate-image",
+      "#medal-name",
+      ending,
+    ].map((selector) => layout[selector]);
+    if (!block || !image || !name || !end) {
+      return false;
+    }
+    const unit = block.width / 290;
+    const at = (box: Rect, side: "left" | "top") => (box[side] - block[side]) / unit;
+    const nameMiddle = (name.top + name.height / 2 - block.top) / unit;
+    return (
+      block.height / unit >= 51.5 &&
+      block.height / unit <= Math.max(52, image.height / unit + 8) &&
+      Math.abs(image.width / unit - 290) < 0.5 &&
+      Math.abs(at(image, "left")) < 0.5 &&
+      Math.abs(at(image, "top")) < 0.5 &&
+      Math.abs(at(name, "left") - 50) < 0.5 &&
+      Math.abs(name.width / unit - 165) < 0.5 &&
+      Math.abs(at(end, "left") - left) < 0.5 &&
+      Math.abs(at(end, "top") - at(name, "top")) < 0.5 &&
+      Math.abs(nameMiddle - image.height / unit / 2) < 2 &&
+      [name, end].every(
+        (words) =>
+          Math.abs(words.size / unit - 12) < 0.1 &&
+          Number(words.weight) >= 700 &&
+          words.colour === "rgb(0, 0, 0)",
+      )
+    );
+  };
   medalIds.push(medalIdShown());
   await fetch(`${HIROBA}/__tokenplate?answer=gif`);
   await fetch(`${HIROBA}/__medal?state=collecting&season=2`);
@@ -1327,8 +1543,9 @@ try {
   await fetch(`${HIROBA}/__tokenplate?answer=png`);
   medalPlatesPerRead.push(await readMedalShowing(() => shownNow("#medal-plate-image")));
   const medalBox = await page.evaluate<{ width: number; height: number }>(
-    `(() => { const box = document.querySelector("#medal-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
+    `(() => { const box = document.querySelector("#medal-plate-image").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
   );
+  const collectingLayout = await medalLayout();
   results.medalPlateDrawnUnderText =
     (await medalPlateSrc())?.startsWith("data:image/png;base64,") === true &&
     Math.abs(medalBox.width / medalBox.height - 600 / 100) < 0.05 &&
@@ -1355,6 +1572,10 @@ try {
   );
   const completeShown =
     (await textOf("#medal-complete")) === "COMPLETE" && (await textOf("#medal-count")) === null;
+  const completeLayout = await medalLayout();
+  results.medalPlateLaidOutAsOnHiroba =
+    medalLaidOutAsOnHiroba(collectingLayout, "#medal-count-shown", 215) &&
+    medalLaidOutAsOnHiroba(completeLayout, "#medal-complete", 190);
   await fetch(`${HIROBA}/__medal?state=collecting`);
   medalPlatesPerRead.push(
     await readMedalShowing(async () => (await medalPlateSrc()) === collectingSrc),
@@ -1386,22 +1607,14 @@ try {
 
   const OPEN_COSTUME = "Open the Costume page";
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
-  const badgeOpacity = () =>
-    page.evaluate<string>(
-      `getComputedStyle(document.querySelector("#costume-open-badge")).opacity`,
-    );
-  const badgeAtRest = await badgeOpacity();
   await hoverOver(page, "#costume-open");
-  const badgeOnHover = await waitFor(async () => (await badgeOpacity()) === "1" || undefined);
   const nameOnHover = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   results.portraitIsTheCostumeButton =
     (await page.evaluate<boolean>(
-      `(() => { const portrait = document.querySelector("#costume-open"); return portrait?.tagName === "BUTTON" && portrait.querySelector("#my-don") !== null && [...document.querySelectorAll("button")].every((button) => button.textContent.trim() !== ${JSON.stringify(OPEN_COSTUME)}) && !portrait.disabled; })()`,
+      `(() => { const portrait = document.querySelector("#costume-open"); return portrait?.tagName === "BUTTON" && portrait.querySelector("#my-don") !== null && portrait.querySelector("#costume-open-badge") === null && [...document.querySelectorAll("button")].every((button) => button.textContent.trim() !== ${JSON.stringify(OPEN_COSTUME)}) && !portrait.disabled; })()`,
     )) &&
     (await attribute("#costume-open", "aria-label")) === OPEN_COSTUME &&
-    badgeAtRest === "0" &&
-    badgeOnHover &&
     nameOnHover === OPEN_COSTUME;
 
   const openedBy = async (keys: () => Promise<unknown>) => {
@@ -1423,16 +1636,13 @@ try {
     }));
   const openedByKeysWithMouse = await openedByKeys();
 
-  // Clear focus and pointer: both also put the badge up.
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
-  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
   const longPressHint = await waitFor(() =>
     page.evaluate<string | undefined>(
       `document.getElementById(document.querySelector("#costume-open").getAttribute("aria-describedby") ?? "")?.textContent`,
     ),
   );
-  await waitFor(async () => (await badgeOpacity()) === "1" || undefined, 5_000);
   results.portraitJumpsToCostumeByKeyboard = openedByKeysWithMouse && (await openedByKeys());
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
   await page.evaluate(
@@ -2677,7 +2887,7 @@ try {
   await fetch(`${HIROBA}/__profile?reset=1`);
   await click("#read-again");
   await Bun.sleep(300);
-  await until("Read at");
+  await until("Last updated");
   results.titleAndNameLeaveNoUndoOffered = same(
     await page.evaluate("window.abth.pendingUndo()"),
     [],
@@ -2690,6 +2900,99 @@ try {
   );
   results.formTokensKeptOutOfDom =
     handedOut.length > 0 && !handedOut.some((ticket) => windowNow.includes(ticket));
+
+  // The name plate is the button to the Nickname & title page, as the portrait is to Costume.
+  const OPEN_NAME_TITLE = "Open the Nickname & title page";
+  await goTo("overview");
+  const plateBounds = await boxOf("#title-plate");
+  const plateButtonBounds = await boxOf("#name-title-open");
+  await tooltipClosed();
+  await hoverOver(page, "#name-title-open");
+  const plateTooltip = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
+  await tooltipClosed();
+  results.namePlateIsTheNicknameAndTitleButton =
+    (await page.evaluate<boolean>(
+      `(() => { const button = document.querySelector("#name-title-open"); return button?.tagName === "BUTTON" && button.closest("#title-plate") !== null && button.querySelector("h2") === null && document.querySelector("#title-plate h2") !== null && !button.disabled; })()`,
+    )) &&
+    (await attribute("#name-title-open", "aria-label")) === OPEN_NAME_TITLE &&
+    plateTooltip === OPEN_NAME_TITLE &&
+    (["left", "top", "right", "bottom"] as const).every(
+      (side) => Math.abs(plateButtonBounds[side] - plateBounds[side]) < 1,
+    ) &&
+    ((await textOf("#title-plate h2")) ?? "") !== "";
+  const nameTitleOpenedBy = async (keys: () => Promise<unknown>) => {
+    await page.evaluate(`document.querySelector("#name-title-open").focus()`);
+    await keys();
+    const opened = await waitFor(
+      async () => (await currentPage()) === "nameTitle" || undefined,
+      5_000,
+    );
+    await goTo("overview");
+    return opened;
+  };
+  const plateAt = await middleOf(page, "#name-title-open");
+  for (const type of ["mousePressed", "mouseReleased"]) {
+    await page.send("Input.dispatchMouseEvent", {
+      type,
+      ...plateAt,
+      button: "left",
+      clickCount: 1,
+    });
+  }
+  const openedByMouse = await waitFor(
+    async () => (await currentPage()) === "nameTitle" || undefined,
+    5_000,
+  );
+  const nameTitleShown = (await textOf("main h1")) === "Nickname & title";
+  await goTo("overview");
+  const openedByEnter = await nameTitleOpenedBy(() => press("Enter"));
+  const openedBySpace = await nameTitleOpenedBy(async () => {
+    await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SPACE, text: " " });
+    await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SPACE });
+  });
+  results.namePlateOpensNicknameAndTitleByClickAndKeys =
+    openedByMouse && nameTitleShown && openedByEnter && openedBySpace;
+
+  await page.evaluate("document.activeElement?.blur(); window.touchClicks.length = 0");
+  await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+  const plateHint = await waitFor(() =>
+    page.evaluate<string | undefined>(
+      `document.getElementById(document.querySelector("#name-title-open").getAttribute("aria-describedby") ?? "")?.textContent`,
+    ),
+  );
+  const onPlate = await middleOf(page, "#name-title-open");
+  await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPlate] });
+  await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  const plateTapClicked = await waitFor(
+    async () => (await touchClicks()).includes("touch") || undefined,
+  );
+  await Bun.sleep(2 * LONG_PRESS_MS);
+  const plateWentByTap = (await currentPage()) === "nameTitle";
+  const readsBeforePlatePress = await myPageHits();
+  await swipe(onPlate, { x: onPlate.x, y: onPlate.y + 100 }, () => Bun.sleep(2 * LONG_PRESS_MS));
+  await Bun.sleep(500);
+  const plateWentByMovedPress =
+    (await currentPage()) === "nameTitle" || (await myPageHits()) !== readsBeforePlatePress;
+  const clicksBeforePlateHold = await touchClicks();
+  await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPlate] });
+  const plateWentByLongPress = await waitFor(
+    async () => (await currentPage()) === "nameTitle" || undefined,
+    5_000,
+  );
+  await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await Bun.sleep(500);
+  results.namePlateOpensNicknameAndTitleByLongPress =
+    plateHint === "Long-press your name plate to open the Nickname & title page." &&
+    plateTapClicked &&
+    !plateWentByTap &&
+    !plateWentByMovedPress &&
+    plateWentByLongPress &&
+    same(await touchClicks(), clicksBeforePlateHold) &&
+    (await currentPage()) === "nameTitle" &&
+    (await textOf("main h1")) === "Nickname & title";
+  await page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
+  await goTo("overview");
 
   await openFreshEditor();
   const postsBeforeExpiry = await hitsOn("/ajax/check_ip_kisekae.php");
@@ -2808,6 +3111,8 @@ try {
     );
   await panelArtShownOn(running);
   results.scorePanelOncePerDevice = (await hitsOn(PANEL_ART)) === panelArtFetches;
+  await legendIconsShownOn(running);
+  results.legendIconsOncePerDevice = (await iconsSettled()) === iconFetches;
   // The launch's read is the session's first, which renews nothing.
   const myDonShownOn = (app: typeof running) =>
     waitForSeen(
@@ -2941,6 +3246,8 @@ try {
   results.medalPlateSurvivesSignOut = (await medalPlateShown()) === medalPlatesSignedOut;
   await panelArtShownOn(running);
   results.scorePanelSurvivesSignOut = (await hitsOn(PANEL_ART)) === panelArtFetches;
+  await legendIconsShownOn(running);
+  results.legendIconsSurviveSignOut = (await iconsSettled()) === iconFetches;
   await myDonShownOn(running);
   results.myDonKeptAtSignIn = (await myDonsSettled()) === myDonsSignedOut;
   // An unconfirmed plate is asked again: Hiroba draws a blank one for a session it ended unseen.
@@ -2970,7 +3277,7 @@ try {
   results.unconfirmedPlateAskedAgain = (await platesAfterSignOutAndIn()) === platesUnconfirmed + 1;
   await running.click("#read-again");
   await Bun.sleep(300);
-  await running.until("Read at");
+  await running.until("Last updated");
   const platesBeforeSignOut = (await platesSettled()).length;
   results.playerPicturesKeptAtSignOut = (await platesAfterSignOutAndIn()) === platesBeforeSignOut;
   await signOut();

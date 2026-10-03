@@ -5,8 +5,10 @@ import { encode } from "fast-png";
 import { NO_LABEL_GIF } from "../scripts/mock-dan-label";
 import {
   blankPlatePng,
+  crownIconPng,
   medalPlatePng,
   myDonPng,
+  rankIconPng,
   scorePanelPng,
   thumbnailPng,
   titlePlatePng,
@@ -685,6 +687,150 @@ describe("createPictureReader, the score panel's art", () => {
     ]);
     expect(await missing.store.get(keyOf())).toBeNull();
     expect(await thumbnail.store.get(keyOf())).toBeNull();
+  });
+});
+
+describe("createPictureReader, the rank and crown icons", () => {
+  const RANK = { kind: "rankIcon", rank: 5 } as const;
+  const rankUrl = (rank: number) => `${ORIGIN}/image/sp/640/best_score_rank_${rank}_640.png`;
+  const crownUrl = (number: number) => `${ORIGIN}/image/sp/640/crown_0${number}_640.png`;
+  const keyOf = (name: string) => ({ scope: "shared" as const, player: null, name: `v1/${name}` });
+  const codeOf = async (read: Promise<unknown>) =>
+    ((await read) as { error: { code: string } }).error.code;
+
+  test("asks once, as my page does, for a rank's icon by its image number", async () => {
+    const { reader, sent, events } = setUp({
+      answer: async (request) => png(request.url, rankIconPng(5)),
+    });
+    const read = await reader.read(RANK);
+    expect(sent.map(({ request }) => request)).toEqual([
+      {
+        method: "GET",
+        url: rankUrl(5),
+        headers: {
+          Referer: `${ORIGIN}/mypage_top.php`,
+          Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+        },
+      },
+    ]);
+    expect(events).toEqual(["sleep 37", "queue", "send "]);
+    expect(read.ok && decode(read.value.src)).toEqual(rankIconPng(5));
+    expect(read.ok && [read.value.width, read.value.height]).toEqual([128, 96]);
+  });
+
+  type CrownCase = [crown: "silver" | "gold" | "donderful", number: number];
+  test.each<CrownCase>([
+    ["gold", 2],
+    ["silver", 3],
+    ["donderful", 4],
+  ])(
+    "asks for the %s crown's icon as crown_0%p, where gold comes before silver",
+    async (crown, number) => {
+      const { reader, sent } = setUp({
+        answer: async (request) => png(request.url, crownIconPng(number)),
+      });
+      const read = await reader.read({ kind: "crownIcon", crown });
+      expect(sent.map(({ request }) => request.url)).toEqual([crownUrl(number)]);
+      expect(read.ok && decode(read.value.src)).toEqual(crownIconPng(number));
+      expect(read.ok && [read.value.width, read.value.height]).toEqual([52, 59]);
+    },
+  );
+
+  test("keeps an icon for good and for every account, asking for each one once", async () => {
+    const store = createMemoryPictureStore();
+    const { reader, sent, setState } = setUp({
+      store,
+      answer: async (request) => png(request.url, rankIconPng(5)),
+    });
+    await reader.read(RANK);
+    await reader.read({ ...RANK });
+    expect(sent).toHaveLength(1);
+    expect(await store.get(keyOf("rank/5"))).toEqual(rankIconPng(5));
+    reader.forget();
+    setState({ ...STATE, owner: "111111111111" });
+    expect((await reader.read(RANK)).ok).toBe(true);
+    expect(sent).toHaveLength(1);
+    await reader.read({ kind: "rankIcon", rank: 6 });
+    expect(sent.map(({ request }) => request.url)).toEqual([rankUrl(5), rankUrl(6)]);
+  });
+
+  test("keeps a crown under its own name, apart from every rank", async () => {
+    const store = createMemoryPictureStore();
+    const { reader } = setUp({
+      store,
+      answer: async (request) => png(request.url, crownIconPng(2)),
+    });
+    await reader.read({ kind: "crownIcon", crown: "gold" });
+    expect(await store.get(keyOf("crown/gold"))).toEqual(crownIconPng(2));
+    expect(await store.get(keyOf("rank/2"))).toBeNull();
+  });
+
+  test("needs a session but no read of my page: its address does not depend on the page", async () => {
+    const { reader, sent } = setUp({
+      answer: async (request) => png(request.url, rankIconPng(5)),
+    });
+    expect((await reader.read(RANK)).ok).toBe(true);
+    const signedOut = setUp({ state: { ...STATE, signedIn: false } });
+    expect(await signedOut.reader.read(RANK)).toEqual(err({ code: "rankIcon=notSignedIn" }));
+    expect(sent).toHaveLength(1);
+    expect(signedOut.sent).toEqual([]);
+  });
+
+  test("refuses unsent a rank or a crown Hiroba has no icon for, and any address", async () => {
+    const { reader, sent } = setUp();
+    for (const want of [
+      { kind: "rankIcon", rank: 1 },
+      { kind: "rankIcon", rank: 9 },
+      { kind: "rankIcon", rank: 5, url: rankUrl(5) },
+      { kind: "crownIcon", crown: "bronze" },
+      { kind: "crownIcon", crown: "gold", src: "image/sp/640/crown_02_640.png" },
+    ]) {
+      expect(await reader.read(want)).toEqual(err({ code: "picture=refused" }));
+    }
+    expect(sent).toEqual([]);
+  });
+
+  test("a 404, a placeholder or an icon of another size is a failure with codes, never kept", async () => {
+    const missing = setUp({
+      answer: async () =>
+        ok({
+          status: 404,
+          url: rankUrl(5),
+          headers: { "content-type": "text/plain;charset=utf-8" },
+          body: new TextEncoder().encode("not found"),
+        }),
+    });
+    const placeholder = setUp({
+      answer: async () =>
+        ok({
+          status: 200,
+          url: rankUrl(5),
+          headers: { "content-type": "image/gif" },
+          body: NO_LABEL_GIF,
+        }),
+    });
+    const wide = rankIconPng(5);
+    new DataView(wide.buffer).setUint32(16, 600);
+    const huge = setUp({ answer: async () => png(rankUrl(5), wide) });
+    expect([
+      await codeOf(missing.reader.read(RANK)),
+      await codeOf(placeholder.reader.read(RANK)),
+      await codeOf(huge.reader.read(RANK)),
+    ]).toEqual([
+      "rankIcon=notPng status=404 type=text/plain;charset=utf-8 bytes=9",
+      "rankIcon=notPng status=200 type=image/gif bytes=43",
+      `rankIcon=badSize status=200 type=image/png bytes=${wide.byteLength} size=600x96`,
+    ]);
+    for (const { store } of [missing, placeholder, huge]) {
+      expect(await store.get(keyOf("rank/5"))).toBeNull();
+    }
+  });
+
+  test("a failure is asked for again, never retried by itself", async () => {
+    const { reader, sent } = setUp({ answer: async () => err({ kind: "unreachable", url: "" }) });
+    expect(await reader.read(RANK)).toEqual(err({ code: "rankIcon=unreachable" }));
+    expect(await reader.read(RANK)).toEqual(err({ code: "rankIcon=unreachable" }));
+    expect(sent).toHaveLength(2);
   });
 });
 

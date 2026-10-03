@@ -56,6 +56,7 @@ export function Shell({
           page={page}
           onNavigate={navigate}
           language={language}
+          {...(platform.shell === "android" ? { toast: platform.toast } : {})}
         />
       ) : page === "settings" ? (
         <SettingsPage i18n={i18n} language={language} account={{ kind: "signedOut" }} />
