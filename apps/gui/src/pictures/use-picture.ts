@@ -4,20 +4,18 @@ import type { PictureWant } from "../session-port";
 import { type PictureAnswer, type PictureLane, wantKey } from "./picture-lane";
 
 export interface UsePictureOptions {
-  /** The box that scrolls the picture into and out of view; null for the window itself. */
-  readonly root: RefObject<Element | null> | null;
   readonly rootMargin: string;
   readonly order: number;
 }
 
-export const IN_THE_WINDOW = { root: null, rootMargin: "0px" } as const;
+export const IN_THE_WINDOW = { rootMargin: "0px" } as const;
 
 /** `want` from `lane`, asked for only while `target` is on screen; undefined until it comes. */
 export function usePicture(
   lane: PictureLane,
   want: PictureWant | null,
   target: RefObject<Element | null>,
-  { root, rootMargin, order }: UsePictureOptions,
+  { rootMargin, order }: UsePictureOptions,
 ): PictureAnswer | undefined {
   useSyncExternalStore(lane.subscribe, lane.version);
   // The effect below follows the picture by its key: a new object for the same picture on every
@@ -48,14 +46,14 @@ export function usePicture(
           takeBack = null;
         }
       },
-      { root: root?.current ?? null, rootMargin },
+      { rootMargin },
     );
     observer.observe(element);
     return () => {
       observer.disconnect();
       takeBack?.();
     };
-  }, [lane, key, settled, target, root, rootMargin, order]);
+  }, [lane, key, settled, target, rootMargin, order]);
 
   return want === null ? undefined : lane.peek(want);
 }

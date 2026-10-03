@@ -85,7 +85,7 @@ interface MedalPlateProps {
 function MedalPlate({ name, progress, lane, i18n }: MedalPlateProps) {
   const { t, number } = i18n;
   const plateBox = useRef<HTMLDivElement>(null);
-  const answer = usePicture(lane, PLATE, plateBox, { root: null, rootMargin: "0px", order: 0 });
+  const answer = usePicture(lane, PLATE, plateBox, { rootMargin: "0px", order: 0 });
   const plate = viewOf(answer);
   const failure = answer !== undefined && "failure" in answer ? answer.failure : null;
 

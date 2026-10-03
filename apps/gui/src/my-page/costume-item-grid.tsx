@@ -193,11 +193,7 @@ function ItemCell({
   const cell = useRef<HTMLButtonElement>(null);
   // One row ahead of the window counts as seen. A cell touching that edge counts too, so the
   // margin stops short of the row after.
-  const answer = usePicture(lane, want, cell, {
-    root: null,
-    rootMargin: `${cells.cell}px 0px`,
-    order,
-  });
+  const answer = usePicture(lane, want, cell, { rootMargin: `${cells.cell}px 0px`, order });
   const number = t("costume.id", { id: want.id });
   return (
     <ButtonBase
