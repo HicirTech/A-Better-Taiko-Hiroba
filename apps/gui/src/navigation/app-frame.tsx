@@ -44,7 +44,7 @@ const MENU_INSET_PX = 8;
 const TOP_BAND_PX = 64;
 const PAGE_BOTTOM_PX = 32;
 const SAFE_TOP = "env(safe-area-inset-top, 0px)";
-const BELOW_TOP_BAND = `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`;
+export const BELOW_TOP_BAND = `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`;
 const PAGE_HEIGHT = `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`;
 
 interface NavigationProps {
@@ -136,8 +136,9 @@ export const BOTTOM_BAR = { mb: `-${PAGE_BOTTOM_PX}px` } as const;
 
 /** Below this height a block that stays in view would crowd the page, so it scrolls with it. */
 const TALL_WINDOW_PX = 640;
+export const WHEN_TALL = `@media (min-height: ${TALL_WINDOW_PX}px)`;
 export const STAYS_IN_VIEW = {
-  [`@media (min-height: ${TALL_WINDOW_PX}px)`]: { position: "sticky", top: BELOW_TOP_BAND },
+  [WHEN_TALL]: { position: "sticky", top: BELOW_TOP_BAND },
 } as const;
 
 function PageList({ page, onNavigate, i18n }: NavigationProps) {

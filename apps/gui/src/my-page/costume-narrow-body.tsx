@@ -11,6 +11,7 @@ import { PartTiles } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
 import { RING_ROOM_PX } from "./pick-ring";
+import { BLOCK_REF } from "./stuck-clearance";
 import type { CostumeEditor } from "./use-costume-editor";
 
 const PREVIEW_PX = 160;
@@ -36,6 +37,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, pb: 2 }}>
       {previewSetOf(step) !== null && (
         <Stack
+          ref={BLOCK_REF}
           id="costume-aside"
           spacing={1.5}
           // It covers the cells that scroll beneath it, and the rings drawn outside them.

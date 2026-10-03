@@ -2798,8 +2798,27 @@ try {
       await click("#costume-reset");
     }
   };
+  const noticeIsInView = async (
+    clearTop: () => Promise<number>,
+    clearBottom: () => Promise<number>,
+  ) => {
+    try {
+      return await waitFor(async () => {
+        const notice = await boxOf("#write-outcome");
+        const fits =
+          notice.top >= (await clearTop()) - 0.5 && notice.bottom <= (await clearBottom()) + 0.5;
+        return fits ? true : undefined;
+      }, 3_000);
+    } catch {
+      return false;
+    }
+  };
   const columnWithTheNotesUp = (width: number, height: number) =>
     withTheNotesUp(width, height, async () => {
+      const noticeSeen = await noticeIsInView(
+        async () => 64,
+        () => page.evaluate<number>("innerHeight"),
+      );
       const apart = await page.evaluate<boolean>(
         `["#write-outcome", "#kigurumi-warning", "#costume-preview-unavailable"].every((selector) => document.querySelector(selector) !== null && !document.querySelector("#costume-aside").contains(document.querySelector(selector)))`,
       );
@@ -2813,13 +2832,26 @@ try {
           (await boxOf("#costume-aside")).bottom - (await page.evaluate<number>("innerHeight")),
         );
       }
-      return { apart, end, overhangs };
+      return { noticeSeen, apart, end, overhangs };
     });
-  results.costumeLeftColumnStaysInViewWithANoticeAndTheMascotNote = [
+  const wideWithTheNotesUp = [
     await columnWithTheNotesUp(946, 657),
     await columnWithTheNotesUp(960, 720),
-  ].every(
+  ];
+  results.costumeLeftColumnStaysInViewWithANoticeAndTheMascotNote = wideWithTheNotesUp.every(
     ({ apart, end, overhangs }) => apart && end > 100 && overhangs.every((one) => one <= 0.5),
+  );
+  results.costumeNoticeIsScrolledIntoViewAfterAFailedSave = wideWithTheNotesUp.every(
+    ({ noticeSeen }) => noticeSeen,
+  );
+  results.costumePhoneNoticeIsScrolledIntoViewBetweenTheBlockAndTheBar = await withTheNotesUp(
+    390,
+    700,
+    () =>
+      noticeIsInView(
+        async () => (await boxOf("#costume-aside")).bottom,
+        async () => (await boxOf("#costume-bar")).top,
+      ),
   );
 
   await fetch(`${HIROBA}/__state?reset=1`);

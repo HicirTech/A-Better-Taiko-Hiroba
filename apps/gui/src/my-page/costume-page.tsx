@@ -12,6 +12,7 @@ import { NarrowBody } from "./costume-narrow-body";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
 import { WideBody } from "./costume-wide-body";
 import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
+import { BAR_REF } from "./stuck-clearance";
 import type { CostumeEditor } from "./use-costume-editor";
 
 // MUI's sm width: a narrow window's column need not stretch across it.
@@ -202,6 +203,7 @@ function ActionArea({
 function ActionBar({ children }: { children: ReactNode }) {
   return (
     <Paper
+      ref={BAR_REF}
       id="costume-bar"
       elevation={3}
       sx={{
