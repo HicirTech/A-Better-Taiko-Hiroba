@@ -20,6 +20,7 @@ import { WriteOutcomeNotice } from "./write-outcome";
 // MUI's sm width: the item tiles are narrow, so their row need not stretch across the window.
 export const COLUMN_MAX_WIDTH_PX = 600;
 const BAR_PADDING_PX = 12;
+const NARROW_PREVIEW_PX = 160;
 
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
@@ -47,7 +48,7 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
     }
   }, [step.name]);
 
-  const actions = actionsOf(editor, i18n, () => setHistoryOpen(true));
+  const actions = actionsOf(editor, i18n, () => setHistoryOpen(true), wide);
   return (
     <Box
       ref={page}
@@ -55,11 +56,11 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
       data-step={step.name}
       tabIndex={-1}
       sx={{
-        ...BOTTOM_BAR_PAGE,
         display: "flex",
         flexDirection: "column",
         width: 1,
         ...(!wide && {
+          ...BOTTOM_BAR_PAGE,
           maxWidth: COLUMN_MAX_WIDTH_PX,
           // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
           alignSelf: "center",
@@ -81,7 +82,7 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
         <>
           <Stack spacing={2} sx={{ flexGrow: 1, pb: 2 }}>
             {previewSetOf(step) !== null && (
-              <CostumePreviewBox preview={editor.preview} i18n={i18n} />
+              <CostumePreviewBox preview={editor.preview} i18n={i18n} size={NARROW_PREVIEW_PX} />
             )}
             <StepView editor={editor} lane={lane} i18n={i18n} tabs={tabs} onTabs={setTabs} />
           </Stack>
@@ -151,7 +152,12 @@ function progressOf(step: EditorStep, i18n: Translator): ReactNode {
   }
 }
 
-function actionsOf(editor: CostumeEditor, i18n: Translator, onHistory: () => void): ReactNode {
+function actionsOf(
+  editor: CostumeEditor,
+  i18n: Translator,
+  onHistory: () => void,
+  wide: boolean,
+): ReactNode {
   const { t } = i18n;
   const { step } = editor;
   if (step.name !== "editing") {
@@ -159,27 +165,50 @@ function actionsOf(editor: CostumeEditor, i18n: Translator, onHistory: () => voi
   }
 
   const unchanged = changedParts(step.editor.state, step.draft).length === 0;
-  return (
+  const history = (
+    <Button
+      id="costume-history"
+      disabled={editor.history.length === 0}
+      onClick={onHistory}
+      sx={wide ? { flex: 1 } : { mr: "auto" }}
+    >
+      {t("costume.history")}
+    </Button>
+  );
+  const reset = (
+    <Button
+      id="costume-reset"
+      disabled={unchanged}
+      onClick={editor.reset}
+      sx={wide ? { flex: 1 } : undefined}
+    >
+      {t("costume.reset")}
+    </Button>
+  );
+  const save = (
+    <Button
+      id="costume-save"
+      variant="contained"
+      fullWidth={wide}
+      disabled={unchanged}
+      onClick={() => void editor.save()}
+    >
+      {t("costume.save")}
+    </Button>
+  );
+  return wide ? (
+    <Stack id="costume-actions" spacing={1}>
+      {save}
+      <Box sx={{ display: "flex", gap: 1 }}>
+        {history}
+        {reset}
+      </Box>
+    </Stack>
+  ) : (
     <>
-      <Button
-        id="costume-history"
-        disabled={editor.history.length === 0}
-        onClick={onHistory}
-        sx={{ mr: "auto" }}
-      >
-        {t("costume.history")}
-      </Button>
-      <Button id="costume-reset" disabled={unchanged} onClick={editor.reset}>
-        {t("costume.reset")}
-      </Button>
-      <Button
-        id="costume-save"
-        variant="contained"
-        disabled={unchanged}
-        onClick={() => void editor.save()}
-      >
-        {t("costume.save")}
-      </Button>
+      {history}
+      {reset}
+      {save}
     </>
   );
 }

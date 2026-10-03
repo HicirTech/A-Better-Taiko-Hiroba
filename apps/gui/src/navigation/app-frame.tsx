@@ -134,11 +134,10 @@ export function FrameCorner({ children }: { children: ReactNode }) {
 export const BOTTOM_BAR_PAGE = { minHeight: PAGE_HEIGHT } as const;
 export const BOTTOM_BAR = { mb: `-${PAGE_BOTTOM_PX}px` } as const;
 
+/** Below this height a block that stays in view would crowd the page, so it scrolls with it. */
+const TALL_WINDOW_PX = 640;
 export const STAYS_IN_VIEW = {
-  position: "sticky",
-  top: BELOW_TOP_BAND,
-  maxHeight: PAGE_HEIGHT,
-  overflowY: "auto",
+  [`@media (min-height: ${TALL_WINDOW_PX}px)`]: { position: "sticky", top: BELOW_TOP_BAND },
 } as const;
 
 function PageList({ page, onNavigate, i18n }: NavigationProps) {

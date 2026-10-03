@@ -51,26 +51,32 @@ export function useCostumePreview(
   return { preview, reset, keep };
 }
 
-const PREVIEW_HEIGHT_PX = 180;
-
 export function CostumePreviewBox({
   preview,
   i18n,
-  height = PREVIEW_HEIGHT_PX,
+  size,
 }: {
   preview: PreviewState;
   i18n: Translator;
-  height?: number;
+  /** The box's side in pixels, centred; without it the box is as wide as its container. */
+  size?: number;
 }) {
   const { t } = i18n;
   return (
-    <Stack id="costume-preview" spacing={0.5} sx={{ alignItems: "center" }}>
+    <Stack
+      id="costume-preview"
+      spacing={0.5}
+      sx={{
+        alignItems: "center",
+        ...(size !== undefined && { width: size, maxWidth: 1, mx: "auto" }),
+      }}
+    >
       <Box
         aria-busy={preview.loading}
         sx={{
           position: "relative",
           width: 1,
-          height,
+          aspectRatio: "1",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -85,8 +91,8 @@ export function CostumePreviewBox({
             src={preview.image}
             alt={t("costume.preview.alt")}
             sx={{
-              maxWidth: "100%",
-              maxHeight: "100%",
+              width: 1,
+              height: 1,
               objectFit: "contain",
               // Dimmed when the picture for the latest pick did not come: it is an older set's.
               opacity: preview.failure === null ? 1 : 0.35,
