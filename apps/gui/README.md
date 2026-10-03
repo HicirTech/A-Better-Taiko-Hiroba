@@ -400,7 +400,7 @@ name. The window asks for "the My Don", and nothing more.
 
 - Kept on the device, one per player: the last one fetched. A launch or a sign-in shows it and asks
   nothing.
-- Fetched anew only after a costume change or undo applies, and after you press **Read again**, so
+- Fetched anew only after a costume change applies, and after you press **Read again**, so
   a change made on Hiroba's own site shows after the next **Read again**. Asked for once the tile is
   on screen, one at a time in the queue, so never between a write's requests. If that fetch fails,
   the one kept stays on the tile until the next of those.
