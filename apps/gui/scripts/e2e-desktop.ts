@@ -2164,19 +2164,8 @@ try {
     historyOnAPhone.focusBack;
 
   const myDonsBeforeGoingBack = await myDonsSettled();
-  const previewHitsBeforePick = await hitsOn("/imgsrc_mydon.php");
-  await fetch(`${HIROBA}/__previews?reset=1`);
   await pickFromHistory(1);
-  const pickedPicture = await waitFor(async () => {
-    const src = await previewSrc();
-    return src === firstHistory[1]?.picture ? src : undefined;
-  });
-  await Bun.sleep(800);
-  results.historyPickShowsThePictureAtOnceAsksNothing =
-    pickedPicture === firstHistory[1]?.picture &&
-    !(await exists("#costume-preview-loading")) &&
-    same(await previewQueries(), []) &&
-    (await hitsOn("/imgsrc_mydon.php")) === previewHitsBeforePick &&
+  results.historyPickPutsTheSetInTheDraft =
     (await pressedOf("#swatch-colorFace-5")) === "true" &&
     (await pressedOf("#swatch-colorFace-3")) === "false" &&
     (await savable());
@@ -3901,6 +3890,49 @@ try {
     await running.page.evaluate<HistoryEntry[]>("window.abth.costumeHistory()"),
     historyBeforeReopen,
   );
+  const historyPickAfterSignIn = async () => {
+    await running.goTo("costume");
+    const previewHere = () =>
+      running.page.evaluate<{ src: string | null; loading: boolean }>(
+        `({ src: document.querySelector("#costume-preview-image")?.getAttribute("src") ?? null, loading: document.querySelector("#costume-preview-loading") !== null })`,
+      );
+    await waitFor(async () => {
+      const { src, loading } = await previewHere();
+      const historyReady = await running.page.evaluate<boolean>(
+        `document.querySelector("#costume-history")?.disabled === false`,
+      );
+      return historyReady && src !== null && !loading ? true : undefined;
+    });
+    const worn = await savedCostume();
+    const at = historyBeforeReopen.findIndex(
+      ({ set, picture }) => picture !== null && !same(set, worn),
+    );
+    const picture = historyBeforeReopen[at]?.picture;
+    if (picture === undefined || picture === null) {
+      return false;
+    }
+
+    const hitsBefore = await hitsOn("/imgsrc_mydon.php");
+    await fetch(`${HIROBA}/__previews?reset=1`);
+    await running.click("#costume-history");
+    await waitFor(async () => (await shownOnReopen(`#costume-history-entry-${at}`)) || undefined);
+    await running.click(`#costume-history-entry-${at}`);
+    await waitFor(async () =>
+      (await shownOnReopen("#costume-history-dialog")) ? undefined : true,
+    );
+    await waitFor(async () => ((await previewHere()).src === picture ? true : undefined));
+    await Bun.sleep(800);
+    const asksNothing =
+      !(await shownOnReopen("#costume-preview-loading")) &&
+      same(await previewQueries(), []) &&
+      (await hitsOn("/imgsrc_mydon.php")) === hitsBefore;
+    const draftChanged = await running.page.evaluate<boolean>(
+      `document.querySelector("#costume-save").disabled === false`,
+    );
+    await running.click("#costume-reset");
+    return asksNothing && draftChanged;
+  };
+  results.historyPickShowsThePictureAtOnceAsksNothing = await historyPickAfterSignIn();
   await signOut();
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
   const portraits = await myDonsAsked();
