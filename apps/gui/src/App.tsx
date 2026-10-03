@@ -365,10 +365,8 @@ export function App({ port, i18n, page, onNavigate, language }: AppProps) {
                   i18n={i18n}
                 />
               )}
-              <Typography variant="body2" color="text.secondary">
-                {t("profile.fetchedAt", {
-                  time: i18n.dateTime(screen.profile.fetchedAt),
-                })}
+              <Typography id="last-updated" variant="caption" color="text.secondary" component="p">
+                {t("profile.fetchedAt", { time: i18n.dateTime(screen.profile.fetchedAt) })}
               </Typography>
             </Stack>
           )}

@@ -31,7 +31,7 @@ export const en: Messages = {
   "profile.reading": "Reading your profile from Hiroba…",
   "profile.readAgain": "Read again",
   "profile.title": "Title: {title}",
-  "profile.fetchedAt": "Read at {time}. Hiroba itself can be up to a day behind.",
+  "profile.fetchedAt": "Last updated {time}",
   "profile.noTitle": "No title",
   "profile.dan": "Dan-i: {dan}",
   "profile.danUnreadable": "Dan-i: couldn't read",

@@ -29,7 +29,7 @@ export const zhHant: Messages = {
   "profile.reading": "正在從廣場讀取個人資料…",
   "profile.readAgain": "重新讀取",
   "profile.title": "稱號：{title}",
-  "profile.fetchedAt": "讀取於 {time}。廣場本身的資料最多可能晚一天。",
+  "profile.fetchedAt": "最後更新於 {time}",
   "profile.noTitle": "無稱號",
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "段位：無法讀取",

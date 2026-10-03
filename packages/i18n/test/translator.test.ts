@@ -12,7 +12,7 @@ import { en } from "../src/messages/en";
 describe("createTranslator", () => {
   test("fills a parameter the message names", () => {
     const { t } = createTranslator("en");
-    expect(t("profile.fetchedAt", { time: "12:00" })).toStartWith("Read at 12:00.");
+    expect(t("profile.fetchedAt", { time: "12:00" })).toBe("Last updated 12:00");
   });
 
   test("fills a number parameter, zero included", () => {
@@ -70,6 +70,18 @@ describe("the catalog", () => {
       "简体中文",
       "繁體中文",
     ]);
+  });
+});
+
+describe("the last-updated line", () => {
+  type LineCase = [locale: Locale, line: string];
+  test.each<LineCase>([
+    ["en", "Last updated 12:00"],
+    ["ja", "最終更新：12:00"],
+    ["zh-Hans", "最后更新于 12:00"],
+    ["zh-Hant", "最後更新於 12:00"],
+  ])("is the time alone, with no note on Hiroba's own delay, in %s: %p", (locale, line) => {
+    expect(createTranslator(locale).t("profile.fetchedAt", { time: "12:00" })).toBe(line);
   });
 });
 
@@ -303,7 +315,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "元先入內全兩八六共其再冠出分列初判別到前動包化十半南卡即卸原去又取受另只可合同名",
     "向否含和咚哪啟單嘗器四回因圍圖在執報場外多夢天夾套妝字存完官定宮容密寫寬將對小尚",
     "就尾展工己已帳幣度廣建式張形後得從復恢息情意愛態應成或戲戴打把拒括持按捲排接提換",
-    "援摘擇支收改效料新斷方於日明易是時晚暫暱曲更最會有服期未本束板枚果查核格框桌極概",
+    "援摘擇支收改效料新斷方於日明易是時暫暱曲更最會有服期未本束板枚果查核格框桌極概",
     "樣機檢次歌止正此步段每比求沒法消清為無然片版狀獲玄王現生用由留畫登白的目直相看眾",
     "知確碼示移程稱空穿窗立符算範簡粉粹系紀級紫組結絕統經維網線編縮績繪置而肢能臉自至",
     "與良色若萬著藏處號虹行表被裏裝製要覆見視覽角觸言計訊設許試話該詳認語誤說請證護讀",

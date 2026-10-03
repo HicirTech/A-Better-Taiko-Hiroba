@@ -32,7 +32,7 @@ export const ja: Messages = {
   "profile.reading": "ひろばからプロフィールを読み込み中…",
   "profile.readAgain": "再読み込み",
   "profile.title": "称号：{title}",
-  "profile.fetchedAt": "{time} に読み込み。ひろば側の反映は最大1日遅れることがあります。",
+  "profile.fetchedAt": "最終更新：{time}",
   "profile.noTitle": "称号なし",
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "段位：読み取れませんでした",

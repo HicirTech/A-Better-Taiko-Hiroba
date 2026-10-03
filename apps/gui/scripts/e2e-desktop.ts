@@ -525,6 +525,13 @@ try {
     (await page.evaluate<boolean>(
       `document.querySelector("#panel #panel-footnote") !== null && ["#ranks-bar", "#crowns-bar"].every((bar) => document.querySelector(bar)?.getAttribute("aria-hidden") === "true")`,
     ));
+  const lastUpdated = async () => ({
+    text: (await textOf("#last-updated")) ?? "",
+    fontSize: await page.evaluate<string>(
+      `getComputedStyle(document.querySelector("#last-updated")).fontSize`,
+    ),
+  });
+  const updatedOnOverview = await lastUpdated();
   const rendered = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );
@@ -705,16 +712,16 @@ try {
   const readsBeforeLanguage = await readHits();
   const platesBeforeLanguage = (await platesAsked()).length;
   await pickLanguage("ja");
-  const readAtInJapanese = await page.evaluate<string | null>(
-    `[...document.querySelectorAll("p")].map((line) => line.textContent).find((text) => text.includes(${JSON.stringify(ja.t("profile.fetchedAt").split("{time}")[1])})) ?? null`,
-  );
+  const japaneseUpdate = (await textOf("#last-updated")) ?? "";
+  const japaneseLead = ja.t("profile.fetchedAt", { time: "" });
   results.languageRedrawsInPlace =
     (await textOf("#rank-8")) === ja.t("panel.countOf", { count: "3", total: "102" }) &&
     (await textOf("#rank-5-percent")) === "30.4%" &&
     (await textOf("#profile-title")) === ja.t("profile.title", { title: "サンプルの称号" }) &&
     (await textOf("#dan")) === ja.t("profile.dan", { dan: "九段" }) &&
     (await textOf("#profile h2")) === "サンプルどん" &&
-    /^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{2}:\d{2} /.test(readAtInJapanese ?? "");
+    japaneseUpdate.startsWith(japaneseLead) &&
+    /^\d{4}\/\d{1,2}\/\d{1,2} \d{1,2}:\d{2}:\d{2}$/.test(japaneseUpdate.slice(japaneseLead.length));
   await pickLanguage("en");
   await Bun.sleep(1000);
   results.languageAsksHirobaNothing =
@@ -737,7 +744,7 @@ try {
     )) === 0;
 
   await click("#read-again");
-  await until("Read at");
+  await until("Last updated");
   await Bun.sleep(300);
   results.readsAfterReadAgain = await myPageHits();
 
@@ -932,7 +939,7 @@ try {
   await fetch(`${HIROBA}/__mydon?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
-  await until("Read at");
+  await until("Last updated");
   await waitForSeen(page, async () => (await attribute("#my-don-image", "src")) ?? undefined);
   const myDonsAtFirst = await myDonsSettled();
   const tile = await page.evaluate<{ width: number; height: number }>(
@@ -959,7 +966,7 @@ try {
   await fetch(`${HIROBA}/__panel?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
-  await until("Read at");
+  await until("Last updated");
   await waitForSeen(page, async () => (await myDonsAsked()).length > myDonsAtFirst || undefined);
   const myDonsAfterReadAgain = await myDonsSettled();
   results.myDonAgainOnReadAgain =
@@ -983,7 +990,7 @@ try {
   await fetch(`${HIROBA}/__mydon?answer=gif`);
   await click("#read-again");
   await Bun.sleep(300);
-  await until("Read at");
+  await until("Last updated");
   await waitForSeen(
     page,
     async () => (await myDonsAsked()).length > myDonsAfterReadAgain || undefined,
@@ -998,11 +1005,11 @@ try {
   await fetch(`${HIROBA}/__rotate`);
   await click("#read-again");
   await Bun.sleep(500);
-  await until("Read at");
+  await until("Last updated");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
   await click("#read-again");
   await Bun.sleep(500);
-  await until("Read at");
+  await until("Last updated");
   results.rotationTakenUp =
     tokens[1] !== tokens[0] &&
     (await textOf("#crowns-silver")) === "11 of 14" &&
@@ -1040,7 +1047,7 @@ try {
   );
   await goTo("overview");
   await fetch(`${HIROBA}/__hold-read?on=0`);
-  await until("Read at");
+  await until("Last updated");
   results.readAgainShutWhileReading =
     same(fabWhileReading, { shut: true, spinning: true }) &&
     readsWhileHeld === readsBeforeHeld + 1 &&
@@ -1069,7 +1076,7 @@ try {
     const before = await myPageHits();
     await swipe(from, to);
     await Bun.sleep(500);
-    await until("Read at");
+    await until("Last updated");
     await page.evaluate("window.scrollTo(0, 0)");
     return (await myPageHits()) - before;
   };
@@ -1100,7 +1107,7 @@ try {
   const readsBeforePull = await myPageHits();
   const ringAtFullPull = await swipe(pullFrom, pulledBy(0, 200), pullIndicator);
   await Bun.sleep(500);
-  await until("Read at");
+  await until("Last updated");
   results.pullPastThePointReads =
     readsByShortPull === 0 &&
     same(ringAtFullPull, { shown: true, ring: "100" }) &&
@@ -1158,6 +1165,11 @@ try {
   const favoritesOffOverview = !(await exists("#favorites"));
   const readsBeforeFavorites = await readHits();
   await goTo("favorites");
+  const updatedOnFavourites = await lastUpdated();
+  const LAST_UPDATED = /^Last updated \d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}:\d{2} [AP]M$/;
+  results.lastUpdatedLineShown = [updatedOnOverview, updatedOnFavourites].every(
+    ({ text, fontSize }) => LAST_UPDATED.test(text) && fontSize === "12px",
+  );
   results.favoritesUnsetShown =
     favoritesOffOverview &&
     !(await exists("#profile")) &&
@@ -1239,7 +1251,7 @@ try {
   const readAndWait = async (ready: () => Promise<boolean>) => {
     await click("#read-again");
     await Bun.sleep(300);
-    await until("Read at");
+    await until("Last updated");
     await waitForSeen(page, async () => (await ready()) || undefined);
     return platesSettled();
   };
@@ -1279,7 +1291,7 @@ try {
   const readMedal = async () => {
     await click("#read-again");
     await Bun.sleep(300);
-    await until("Read at");
+    await until("Last updated");
   };
   const showMedal = async (ready: () => Promise<boolean>) => {
     await page.evaluate(`document.querySelector("#medal").scrollIntoView({ block: "center" })`);
@@ -2677,7 +2689,7 @@ try {
   await fetch(`${HIROBA}/__profile?reset=1`);
   await click("#read-again");
   await Bun.sleep(300);
-  await until("Read at");
+  await until("Last updated");
   results.titleAndNameLeaveNoUndoOffered = same(
     await page.evaluate("window.abth.pendingUndo()"),
     [],
@@ -2970,7 +2982,7 @@ try {
   results.unconfirmedPlateAskedAgain = (await platesAfterSignOutAndIn()) === platesUnconfirmed + 1;
   await running.click("#read-again");
   await Bun.sleep(300);
-  await running.until("Read at");
+  await running.until("Last updated");
   const platesBeforeSignOut = (await platesSettled()).length;
   results.playerPicturesKeptAtSignOut = (await platesAfterSignOutAndIn()) === platesBeforeSignOut;
   await signOut();

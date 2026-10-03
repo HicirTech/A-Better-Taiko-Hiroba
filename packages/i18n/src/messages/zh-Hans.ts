@@ -30,7 +30,7 @@ export const zhHans: Messages = {
   "profile.reading": "正在从广场读取个人资料…",
   "profile.readAgain": "重新读取",
   "profile.title": "称号：{title}",
-  "profile.fetchedAt": "读取于 {time}。广场本身的数据最多可能晚一天。",
+  "profile.fetchedAt": "最后更新于 {time}",
   "profile.noTitle": "无称号",
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "段位：无法读取",
