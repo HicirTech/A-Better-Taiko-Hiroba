@@ -225,6 +225,60 @@ describe("picking into the draft", () => {
   });
 });
 
+describe("picking from the history", () => {
+  const entrySet = set({ colorFace: 9, costume2: 0 });
+
+  test("puts the set of an entry in the draft, whole, and leaves the set as read alone", () => {
+    const step = run(editing(), { type: "pickedHistory", set: entrySet });
+
+    expect(step).toEqual(editing(set(), entrySet));
+  });
+
+  test("replaces a draft that was made already", () => {
+    const step = run(editing(set(), set({ colorBody: 40 })), {
+      type: "pickedHistory",
+      set: entrySet,
+    });
+
+    expect(draftOf(step)).toEqual(entrySet);
+  });
+
+  test("clears the notice of the last write", () => {
+    const step = run(editing(set(), set(), { kind: "interrupted" }), {
+      type: "pickedHistory",
+      set: entrySet,
+    });
+
+    expect(step).toEqual(editing(set(), entrySet));
+  });
+
+  test("is the same step when the entry is the draft already", () => {
+    const step = editing(set(), entrySet);
+
+    expect(reduceEditor(step, { type: "pickedHistory", set: entrySet })).toBe(step);
+  });
+
+  test("can be saved at once, as any other change", () => {
+    const step = run(editing(), { type: "pickedHistory", set: entrySet }, { type: "saveStarted" });
+
+    expect(step).toEqual(saving(set(), entrySet));
+  });
+
+  test("leaves the set worn, picked back, with nothing to save", () => {
+    const step = run(editing(set(), entrySet), { type: "pickedHistory", set: set() });
+
+    expect(reduceEditor(step, { type: "saveStarted" })).toBe(step);
+  });
+
+  test.each<[label: string, step: EditorStep]>([
+    ["a save", saving()],
+    ["nothing read", UNREAD],
+    ["a read", { name: "loading", held: null }],
+  ])("picks nothing in %s", (_label, step) => {
+    expect(reduceEditor(step, { type: "pickedHistory", set: entrySet })).toBe(step);
+  });
+});
+
 describe("Reset", () => {
   test("puts back the set as read", () => {
     const changed = editing(set(), set({ colorFace: 9, costume2: 0 }));

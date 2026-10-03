@@ -40,6 +40,7 @@ export type EditorAction =
   | { readonly type: "readEnded"; readonly result: Result<CostumeEditorView, ReadFailure> }
   | { readonly type: "pickedColour"; readonly part: ColourPart; readonly id: number }
   | { readonly type: "pickedItem"; readonly part: SlotPart; readonly id: number }
+  | { readonly type: "pickedHistory"; readonly set: CostumeSet }
   | { readonly type: "reset" }
   | { readonly type: "saveStarted" }
   | { readonly type: "writeEnded"; readonly outcome: WriteOutcomeView };
@@ -63,6 +64,8 @@ export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep
       return step.name === "editing"
         ? withDraft(step, draftCostumeChange(step.draft, slotOf(action.part), action.id))
         : step;
+    case "pickedHistory":
+      return step.name === "editing" ? withDraft(step, action.set) : step;
     case "reset":
       return step.name === "editing" ? withDraft(step, step.editor.state) : step;
     case "saveStarted":

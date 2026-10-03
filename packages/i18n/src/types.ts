@@ -174,6 +174,15 @@ export interface Messages {
   /** Param: {time}, already formatted. */
   "costume.undoWhen": string;
   "costume.undoing": string;
+  "costume.history": string;
+  "costume.history.title": string;
+  "costume.history.close": string;
+  /** Marks the entry that is the set Hiroba shows now. */
+  "costume.history.wornNow": string;
+  /** Param: {position}, 1 for the newest. An entry's name as a button. */
+  "costume.history.entry": string;
+  /** Param: {position}. As costume.history.entry, for the entry worn now. */
+  "costume.history.entryWorn": string;
   /** Also the title's name in a list of changes (costume.change's {part}). */
   "title.heading": string;
   "title.reading": string;

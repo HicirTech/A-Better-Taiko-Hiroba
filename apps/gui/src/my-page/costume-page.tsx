@@ -6,6 +6,7 @@ import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { type EditingTabs, EditingView, FIRST_TABS } from "./costume-editing";
 import { previewSetOf } from "./costume-editor-state";
+import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { changedParts } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
 import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
@@ -25,6 +26,7 @@ export interface CostumePageProps {
 export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   const { step } = editor;
   const [tabs, setTabs] = useState(FIRST_TABS);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
   // Shown again, the page asks once more for the thumbnails that did not come.
@@ -32,7 +34,14 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
     lane.forgetFailures("costumeItem");
   }, [lane]);
 
-  const actions = actionsOf(editor, i18n);
+  // The dialog is over the editor and goes with it: a read or a save closes it.
+  useEffect(() => {
+    if (step.name !== "editing") {
+      setHistoryOpen(false);
+    }
+  }, [step.name]);
+
+  const actions = actionsOf(editor, i18n, () => setHistoryOpen(true));
   return (
     <Box
       ref={page}
@@ -55,6 +64,19 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
         <StepView editor={editor} lane={lane} i18n={i18n} tabs={tabs} onTabs={setTabs} />
       </Stack>
       {actions !== null && <ActionBar>{actions}</ActionBar>}
+      {step.name === "editing" && (
+        <CostumeHistoryDialog
+          open={historyOpen}
+          entries={editor.history}
+          worn={step.editor.state}
+          i18n={i18n}
+          onPick={(entry) => {
+            editor.pickHistory(entry);
+            setHistoryOpen(false);
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
     </Box>
   );
 }
@@ -97,7 +119,7 @@ function StepView({
   }
 }
 
-function actionsOf(editor: CostumeEditor, i18n: Translator): ReactNode {
+function actionsOf(editor: CostumeEditor, i18n: Translator, onHistory: () => void): ReactNode {
   const { t } = i18n;
   const { step } = editor;
   if (step.name !== "editing") {
@@ -107,6 +129,14 @@ function actionsOf(editor: CostumeEditor, i18n: Translator): ReactNode {
   const unchanged = changedParts(step.editor.state, step.draft).length === 0;
   return (
     <>
+      <Button
+        id="costume-history"
+        disabled={editor.history.length === 0}
+        onClick={onHistory}
+        sx={{ mr: "auto" }}
+      >
+        {t("costume.history")}
+      </Button>
       <Button id="costume-reset" disabled={unchanged} onClick={editor.reset}>
         {t("costume.reset")}
       </Button>

@@ -14,7 +14,11 @@ export function useCostumePreview(
   port: HirobaSessionPort,
   set: CostumeSet | null,
   active: boolean,
-): { readonly preview: PreviewState; readonly reset: () => void } {
+): {
+  readonly preview: PreviewState;
+  readonly reset: () => void;
+  readonly keep: (set: CostumeSet, image: string) => void;
+} {
   const [preview, setPreview] = useState<PreviewState>(NO_PREVIEW);
   // The scheduler outlives a pause in `active` and StrictMode's second effect run, so a set drawn
   // before is shown again, and the first picture is one request.
@@ -27,6 +31,10 @@ export function useCostumePreview(
   }
   const scheduler = made.current;
   const reset = useCallback(() => scheduler.reset(), [scheduler]);
+  const keep = useCallback(
+    (kept: CostumeSet, image: string) => scheduler.keep(kept, image),
+    [scheduler],
+  );
   useEffect(() => {
     if (!active) {
       return;
@@ -40,7 +48,7 @@ export function useCostumePreview(
       scheduler.want(set);
     }
   }, [scheduler, set]);
-  return { preview, reset };
+  return { preview, reset, keep };
 }
 
 export function CostumePreviewBox({ preview, i18n }: { preview: PreviewState; i18n: Translator }) {

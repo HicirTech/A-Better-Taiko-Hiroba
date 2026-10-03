@@ -4,7 +4,12 @@ import { useCallback, useReducer, useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import { changedTheCostume, type HirobaSessionPort, type WriteOutcomeView } from "../session-port";
+import {
+  type CostumeHistoryEntry,
+  changedTheCostume,
+  type HirobaSessionPort,
+  type WriteOutcomeView,
+} from "../session-port";
 import {
   canReadEditorAgain,
   type EditorStep,
@@ -16,6 +21,7 @@ import {
 import type { ColourPart, SlotPart } from "./costume-parts";
 import type { PreviewState } from "./costume-preview";
 import { useCostumePreview } from "./costume-preview-box";
+import { useCostumeHistory } from "./use-costume-history";
 import { sendHeld, sessionNoticeOf } from "./write-ending";
 
 export interface CostumeEditorOptions {
@@ -29,6 +35,8 @@ export interface CostumeEditorOptions {
 export interface CostumeEditor {
   readonly step: EditorStep;
   readonly preview: PreviewState;
+  /** The player's earlier costumes, newest first; from the platform, never Hiroba. */
+  readonly history: readonly CostumeHistoryEntry[];
   readonly reading: boolean;
   readonly writing: boolean;
   readonly canRead: boolean;
@@ -37,6 +45,8 @@ export interface CostumeEditor {
   forget(): void;
   pickColour(part: ColourPart, id: number): void;
   pickItem(part: SlotPart, id: number): void;
+  /** Puts a set from the history in the draft, with its picture shown at once if it has one. */
+  pickHistory(entry: CostumeHistoryEntry): void;
   /** Puts the draft back to the set as read. */
   reset(): void;
   save(): Promise<void>;
@@ -49,8 +59,13 @@ export function useCostumeEditor({
   onSessionGone,
 }: CostumeEditorOptions): CostumeEditor {
   const [step, dispatch] = useReducer(reduceEditor, UNREAD);
-  const { preview, reset: resetPreview } = useCostumePreview(port, previewSetOf(step), shown);
+  const {
+    preview,
+    reset: resetPreview,
+    keep: keepPreview,
+  } = useCostumePreview(port, previewSetOf(step), shown);
   const sessionGeneration = useRef(0);
+  const { history, refreshHistory, clearHistory } = useCostumeHistory(port, sessionGeneration);
   // One read at a time, also under StrictMode's double effects, which would ask Hiroba twice.
   const reading = useRef<number | null>(null);
   const writing = useRef(false);
@@ -58,8 +73,9 @@ export function useCostumeEditor({
   const forget = useCallback(() => {
     sessionGeneration.current += 1;
     dispatch({ type: "forget" });
+    clearHistory();
     resetPreview();
-  }, [resetPreview]);
+  }, [clearHistory, resetPreview]);
 
   const mayRead = step.name === "unread" || canReadEditorAgain(step);
   const read = useCallback(async () => {
@@ -87,7 +103,10 @@ export function useCostumeEditor({
     }
 
     dispatch({ type: "readEnded", result });
-  }, [mayRead, port, lane, forget, onSessionGone]);
+    if (result.ok) {
+      await refreshHistory();
+    }
+  }, [mayRead, port, lane, forget, onSessionGone, refreshHistory]);
 
   const writeEnded = (outcome: WriteOutcomeView) => {
     dispatch({ type: "writeEnded", outcome });
@@ -101,6 +120,7 @@ export function useCostumeEditor({
     if (changedTheCostume(outcome)) {
       lane.renew("myDon");
     }
+    void refreshHistory();
   };
 
   const save = async () => {
@@ -124,6 +144,7 @@ export function useCostumeEditor({
   return {
     step,
     preview,
+    history,
     reading: step.name === "loading",
     writing: isWriting(step),
     canRead: canReadEditorAgain(step),
@@ -131,6 +152,12 @@ export function useCostumeEditor({
     forget,
     pickColour: (part, id) => dispatch({ type: "pickedColour", part, id }),
     pickItem: (part, id) => dispatch({ type: "pickedItem", part, id }),
+    pickHistory: (entry) => {
+      if (entry.picture !== null) {
+        keepPreview(entry.set, entry.picture);
+      }
+      dispatch({ type: "pickedHistory", set: entry.set });
+    },
     reset: () => dispatch({ type: "reset" }),
     save,
   };
