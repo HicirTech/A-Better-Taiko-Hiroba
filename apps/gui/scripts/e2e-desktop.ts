@@ -2250,6 +2250,7 @@ try {
       scrolls: await scrolls(),
       swatch: (await boxOf("#swatch-colorFace-0")).width,
       tracks: await tracksOf("#costume-grid > *"),
+      box: await boxOf("#costume-grid > *"),
     };
     await showPart("costume1");
     await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
@@ -2260,6 +2261,8 @@ try {
       scrollButtons: await page.evaluate<number>(
         `document.querySelectorAll('[aria-label="Scroll up a row"], [aria-label="Scroll down a row"]').length`,
       ),
+      box: await boxOf("#costume-items-costume1"),
+      remove: await boxOf("#item-costume1-0"),
     };
     return {
       columns,
@@ -2295,11 +2298,40 @@ try {
     !wideFacts.colours.scrolls &&
     !wideFacts.items.scrolls &&
     near(columns.grid.bottom, wideFacts.windowHeight - 32) &&
+    near(wideFacts.colours.box.bottom, columns.grid.bottom) &&
+    near(wideFacts.items.remove.bottom, columns.grid.bottom) &&
+    wideFacts.items.remove.top - wideFacts.items.box.bottom < 16 &&
     wideFacts.colours.swatch > 32 &&
     wideFacts.colours.tracks > 9 &&
     wideFacts.items.cell > 44 &&
     wideFacts.items.tracks > 6 &&
     wideFacts.items.scrollButtons === 0;
+  await fetch(`${HIROBA}/__items?many=1`);
+  await openFreshEditor();
+  const holdingMoreThanFits = await atSize(1000, 800, async () => {
+    const scrollsInside = (selector: string) =>
+      page.evaluate<boolean>(
+        `(() => { const box = document.querySelector(${JSON.stringify(selector)}); return box.scrollHeight > box.clientHeight + 1; })()`,
+      );
+    await waitFor(async () => (await exists("#swatch-colorFace-0")) || undefined);
+    const colours = {
+      inside: await scrollsInside("#costume-grid > *"),
+      pageScrolls: await scrolls(),
+    };
+    await showPart("costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    const items = {
+      inside: await scrollsInside("#costume-items-costume1"),
+      pageScrolls: await scrolls(),
+    };
+    return { colours, items };
+  });
+  await fetch(`${HIROBA}/__items?many=0`);
+  results.costumeWideGridScrollsInsideItsColumn =
+    holdingMoreThanFits.colours.inside &&
+    holdingMoreThanFits.items.inside &&
+    !holdingMoreThanFits.colours.pageScrolls &&
+    !holdingMoreThanFits.items.pageScrolls;
 
   const stuck = await atSize(1100, 480, async () => {
     await showPart("colorFace");
