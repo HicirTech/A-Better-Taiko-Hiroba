@@ -1,11 +1,4 @@
-/**
- * Starts the packaged desktop app and checks its first screen, then quits. It never presses
- * "Sign in": a packaged build talks only to the real Hiroba, which a test must not touch. It will
- * not start at all while the packaged app keeps a session (`refusalToStart`): opened, the app would
- * read the real my page by itself.
- *
- *   bun run dist:dir && bun scripts/smoke-packaged.ts
- */
+/** Checks the packaged app's first screen, then quits; it must never sign in to the real Hiroba. */
 import { join } from "node:path";
 
 import { refusalToStart } from "./packaged-session";

@@ -1,94 +1,4 @@
-/**
- * A local stand-in for Hiroba and the Bandai Namco ID host, for running the whole sign-in without
- * the real sites. Its pages submit themselves, so nothing has to click. It issues a fake 26-char
- * `_token_v2` as a Domain cookie (not HttpOnly, 30 days), like Hiroba, and logs cookie names only.
- *
- * Like Hiroba, it answers a User-Agent that is not a complete browser string with a data-less
- * "recommended browsers" page. Like an ID provider, its ID host leaves cookies of its own (one
- * host-only, one Domain) and a localStorage entry behind, all marked with IDP_MARKER so a test can
- * look for them on disk. Like the real walk, it reaches the ID form through an OAuth hop on a
- * second ID host (auth.<ID host>, standing in for www.bandainamcoid.com), so a sign-in window that
- * allows only the form's host stops there, as the real one did.
- *
- * Test hooks: /__last-token (the token issued last), /__expire (every session ends), /__rotate
- * (the next my-page read hands out a new token and ends the old one), /__hits?path=/mypage_top.php
- * (requests so far to that path), /__hits-reset, /__hold?on=1 or 0 (the ID form waits for a
- * tap instead of submitting itself, so a cancel or the back key can be tried there),
- * /__offsite?on=1 or 0 (login_process.php redirects to a host on neither site), /__hold-read?on=1
- * or 0 (each read of my page is held unanswered, so a test can look at the app while it reads; 0
- * lets every held one go), and two that shape
- * the next my page: /__medal?state=none|collecting|complete|odd&season=1|2 (the どんメダル plate:
- * absent, a count, COMPLETE, or a name alone, a shape no page has shown; each optional, and season
- * 2 is a new season, with a name and a plate id of its own) and
- * /__variant?dan=0|1…15&label=png|gif&title=empty|set|other|third&region=unset|set
- * &favorites=unset|set&panel=counts|zeros (each optional; dan=0 writes the name row flat, as other
- * players' dan-less profiles do, and dan=N shows the label of dan N, 14 (九段) at first; label=gif
- * answers the label with the 43-byte 1×1 GIF Hiroba sends when it has nothing to draw; title=other
- * and title=third wear a second and a third title; favorites=set sets the 大好きな曲 and fills the
- * お気に入り folder with three songs, two of them sharing a title; panel=zeros puts 虹極 at 0 and
- * every crown at 0).
- *
- * My page shows its title plate, imgsrc_titleplate.php with no query, as #mydon_area's first child,
- * as Hiroba's does. As on Hiroba, the plate is drawn for a session only: a PNG of its own for each
- * title (scripts/mock-pictures.ts), and without one a blank plate, a PNG as well, at 200. Its hooks:
- * /__titleplate?answer=png|blank|gif (what the plate answers from now on: as described, the blank
- * plate even with a session, or the 43-byte GIF) and /__titleplates (every plate asked for, in
- * order, as {query, referer, session}; ?reset=1 clears).
- *
- * The どんメダル plate is imgsrc_tokenplate.php?id= and the season's id, 48 hex digits as on Hiroba
- * (here the hex of a base64 string, no real id), public as Hiroba's is: drawn with or without a
- * session, one plate for each id and for each state it is shown in, collecting or complete, and the
- * 43-byte GIF for an id my page has not shown. /__tokenplate?answer=png|gif sets what it answers
- * from now on: as described, or the GIF for every id.
- *
- * The score panel's art is image/sp/640/total_score_image_5.png, the panel my page shows, a static
- * picture as on Hiroba: drawn with or without a session, 600×356 as the live one is, with the
- * spots my page writes its counts on left plain (scripts/mock-pictures.ts). /__panel?answer=png|404
- * sets what it answers from now on: the art, or Hiroba's 404 for a picture it does not have.
- *
- * The label, imgsrc_danlabel.php, is public as on Hiroba: it answers without a session. It is
- * drawn from core's label templates by scripts/mock-dan-label.ts, so the app's reader reads it.
- *
- * The My Don portrait comes from a picture host off Hiroba, as on the live page, which the same
- * server stands in for when it is asked by that host's name, img.<ip>.sslip.io:8807: outside the
- * session cookie's Domain, .hiroba.<ip>.sslip.io, so only the app itself keeps the cookie off it.
- * My page shows imgsrc.php?v=&kind=mydon&fn=mydon_ and the page's taiko number there, public as the
- * live one is: drawn with or without a session, from the set the costume editor saved last, so a
- * write changes it. Its hooks, on Hiroba's host: /__mydon?answer=png|gif (what the portrait answers
- * from now on) and /__mydons (every portrait asked for, in order, as {query, referer, cookies}, the
- * names of the cookies it carried; ?reset=1 clears).
- *
- * The costume editor, mypage_kisekae.php, its preview, imgsrc_mydon.php, its items' thumbnails,
- * imgsrc_kisekae.php (both pictures drawn for a session only, as Hiroba's are), and the two posts a
- * costume write sends, ajax/check_ip_kisekae.php and ajax/change_mydon.php, are
- * scripts/mock-costume.ts: stateful, with hooks of their own listed there. The title page,
- * mypage_title_edit.php, the rename dialog at the foot of my page, and the two posts of the profile
- * endpoint, ajax/check_ip_title.php and ajax/change_mydon_profile.php, are scripts/mock-profile.ts,
- * likewise: the title and the name my page shows are the profile's, and a save changes them. One
- * token for the session serves the costume editor, my page and the title page, each page read
- * voiding the last. Like Hiroba, an ajax
- * post without X-Requested-With gets the site's error page at 200; one without a session is sent to
- * the login page. Two more hooks cover every request: /__log (each non-hook request so far, as
- * "METHOD /path"; /__log-reset clears it) and /__post-to-login?on=1 or 0 (every ajax post answers
- * with a redirect to the login page, the session left as it was) and /__post-redirect?status=301|302|
- * 303|307|308 with rotate=0|1 (the next ajax post is answered with that status and a Location of
- * my page, `/mypage_top.php?again`; with rotate=1 it also sets a new session token on that answer
- * and ends the old one, as /__rotate does for a read; no status clears it).
- *
- * Desktop, on loopback:
- *   bun scripts/mock-hiroba.ts
- *   ABTH_DEV_HIROBA_ORIGIN=http://hiroba.127.0.0.1.sslip.io:8807 \
- *   ABTH_DEV_IDP_HOST=id.127.0.0.1.sslip.io:8808 \
- *   ABTH_DEV_IMG_ORIGIN=http://img.127.0.0.1.sslip.io:8807 bun run dev
- *
- * The tablet, on this PC's LAN address (sslip.io resolves <name>.<ip>.sslip.io to <ip>):
- *   ABTH_MOCK_IP=<LAN IP> bun scripts/mock-hiroba.ts
- *   VITE_ABTH_DEV_HIROBA_ORIGIN=http://hiroba.<LAN IP>.sslip.io:8807 \
- *   VITE_ABTH_DEV_IDP_HOST=id.<LAN IP>.sslip.io:8808 \
- *   VITE_ABTH_DEV_IMG_ORIGIN=http://img.<LAN IP>.sslip.io:8807 \
- *   bun run android:live -- <adb serial> <LAN IP>
- * The picture host's override is optional: without it, the app asks no picture host anything.
- */
+/** Stand-in for Hiroba and the Bandai Namco ID host, so sign-in runs without the real sites. */
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
 import {
@@ -109,9 +19,9 @@ const HIROBA_PORT = 8807;
 const IDP_PORT = 8808;
 const HIROBA = `http://${HIROBA_HOST}:${HIROBA_PORT}`;
 const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
+// The OAuth hop is on a second ID host, as the real one: allowing only the form's host stops there.
 const IDP_AUTH = `http://auth.${IDP_HOST}:${IDP_PORT}`;
 const IMG = `http://${IMG_HOST}:${HIROBA_PORT}`;
-/** The mock player's taiko number: a placeholder, no real card's. */
 const TAIKO_NO = "000000000000";
 
 const sessions = new Map<string, MockSession>();
@@ -120,19 +30,17 @@ let rotateNext = false;
 let holdIdForm = false;
 let sendOffsite = false;
 let postToLogin = false;
-/** What /__post-redirect asked the next ajax post to be answered with, or null. */
 let redirectNextPost: { status: number; rotate: boolean } | null = null;
 const POST_REDIRECT_STATUSES: readonly number[] = [301, 302, 303, 307, 308];
 /** Set while /__hold-read?on=1 holds every read of my page unanswered; lets them all go. */
 let releaseReads: (() => void) | null = null;
 let readsHeld: Promise<void> = Promise.resolve();
 const hits = new Map<string, number>();
-/** Every request that is not a hook, in order, as "METHOD /path". */
 const requestLog: string[] = [];
 const costume = createCostumeEditor();
-/** The title and the name, and the pages and posts that change them: one token with the costume's. */
+/** Shares the costume editor's token: one per session, each page read voiding the last. */
 const profile = createProfileEditor({ issue: costume.issueTicket });
-/** Also searched for by scripts/e2e-desktop.ts. */
+/** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
 const IDP_MARKER = "abth-mock-idp-marker";
 /** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
 const COMPLETE_BROWSER = /AppleWebKit\/[\d.]+.*Chrome\/[\d.]+.*Safari\/[\d.]+/;
@@ -172,44 +80,31 @@ const RECOMMENDED_BROWSERS = page("<p>Please use one of the recommended browsers
 const submitSoon = (id: string) =>
   `<script>setTimeout(() => document.getElementById("${id}").submit(), 500)</script>`;
 
+// odd: a name with neither a count nor COMPLETE, a shape no page has shown.
 type MedalState = "none" | "collecting" | "complete" | "odd";
-/** What /__medal and /__variant set; every read of my page is rendered from them. */
 let medalState: MedalState = "collecting";
 const variant = {
-  /** 0 for no dan, or the dan, 1 to 15, whose label my page shows. */
+  /** 0 for none, else the dan (1 to 15) whose label my page shows. */
   dan: 14,
   label: "png" as "png" | "gif",
   region: true,
   favorites: false,
-  /** The panel's counts: PANEL_COUNTS, or PANEL_ZEROS. */
   panel: "counts" as "counts" | "zeros",
 };
 
-/**
- * The title /__variant?title= sets, which my page then shows over a plate of its own. The title is
- * the profile's (scripts/mock-profile.ts), which a title save changes too.
- */
 const TITLES = {
   set: "サンプルの称号",
   other: "別のサンプル称号",
   third: "三つ目のサンプル称号",
   empty: "",
 } as const;
-/** What the title plate answers, as /__titleplate last set it. */
 let titlePlateAnswer: "png" | "blank" | "gif" = "png";
-/** A title plate as it was asked for: its query, the page the request named, and a session. */
 const titlePlates: { query: string; referer: string | null; session: boolean }[] = [];
-/** What the My Don portrait answers, as /__mydon last set it. */
 let portraitAnswer: "png" | "gif" = "png";
-/** A portrait as it was asked for: its query, the page the request named, and its cookies' names. */
 const portraits: { query: string; referer: string | null; cookies: string[] }[] = [];
-/** Where my page shows the player's portrait: on the picture host, by the page's taiko number. */
 const PORTRAIT = `${IMG}/imgsrc.php?v=&kind=mydon&fn=mydon_${TAIKO_NO}`;
 
-/**
- * The picture host: the mock player's My Don portrait, drawn from the set saved last, and nothing
- * else. Public, as the live one is: a session changes nothing, and no cookie is looked at.
- */
+/** The picture host: public, as the live one is, so no cookie is looked at. */
 function pictureHost(request: Request): Response {
   const { pathname, search, searchParams } = new URL(request.url);
   if (pathname !== "/imgsrc.php") {
@@ -229,12 +124,10 @@ function pictureHost(request: Request): Response {
   return new Response(myDonPng(costume.saved()), { headers: { "content-type": "image/png" } });
 }
 
-/** The panel's counts: each score rank's, 8 down to 2, and each crown's, silver, gold, donderful. */
 interface PanelCounts {
   readonly ranks: readonly (readonly [rank: number, count: number])[];
   readonly crowns: readonly [silver: number, gold: number, donderful: number];
 }
-/** Every count non-zero, so each part of each bar has a length. */
 const PANEL_COUNTS: PanelCounts = {
   ranks: [
     [8, 3],
@@ -247,10 +140,7 @@ const PANEL_COUNTS: PanelCounts = {
   ],
   crowns: [11, 2, 1],
 };
-/**
- * Counts of 0, common on real accounts: 虹極 at 0 in a block that is not, and a crown block that
- * sums to 0.
- */
+/** Common on real accounts: 虹極 at 0 in a block that is not, and a crown block that sums to 0. */
 const PANEL_ZEROS: PanelCounts = {
   ranks: PANEL_COUNTS.ranks.map(([rank, count]) => [rank, rank === 8 ? 0 : count] as const),
   crowns: [0, 0, 0],
@@ -259,18 +149,14 @@ const PANEL_ZEROS: PanelCounts = {
 /** A plate id as my page writes one, 48 hex digits: here the hex of a base64 string. */
 const plateIdOf = (seed: string) =>
   Array.from(btoa(seed), (c) => c.charCodeAt(0).toString(16).padStart(2, "0")).join("");
-/** Each season's plate, its name and its id: placeholders, not a real account's. */
 const SEASONS = {
   1: { name: "どんメダル2026秋", id: plateIdOf("abth-mock-season-1") },
   2: { name: "どんメダル2026冬", id: plateIdOf("abth-mock-season-2") },
 } as const;
 let medalSeason: keyof typeof SEASONS = 1;
-/** What the plate's picture answers, as /__tokenplate last set it. */
 let tokenPlateAnswer: "png" | "gif" = "png";
-/** The level of the one score panel my page shows, and what its art answers, as /__panel set it. */
 const PANEL_LEVEL = 5;
 let panelAnswer: "png" | "404" = "png";
-/** What follows the plate's name in each state; the count is a placeholder. */
 const MEDAL_PROGRESS: Readonly<Record<MedalState, string>> = {
   none: "",
   collecting: `<div class="token_count token_info_display">12</div>`,
@@ -278,7 +164,6 @@ const MEDAL_PROGRESS: Readonly<Record<MedalState, string>> = {
   odd: "",
 };
 
-/** The plate as /__medal last shaped it, in the season it last set, or nothing for none. */
 function medalPlate(): string {
   if (medalState === "none") {
     return "";
@@ -288,11 +173,6 @@ function medalPlate(): string {
     ${MEDAL_PROGRESS[medalState]}</div>`;
 }
 
-/**
- * My page as /__medal and /__variant last shaped it, with the title and the name the profile holds
- * and `ticket`, the session's token, in the three places the page carries one: outside any form,
- * in the 大好きな曲 form, and in the rename dialog's.
- */
 function myPage(ticket: string): string {
   const nickname = escapeHtml(profile.nickname());
   const worn = profile.title();
@@ -303,7 +183,7 @@ function myPage(ticket: string): string {
   const song = variant.favorites
     ? `<span class="songName songNameFontnamco">サンプル曲アルファ</span>`
     : `<span class="songName songNameFont">未設定</span>`;
-  // Two of the three share a title, as ten catalogue titles are carried by more than one song.
+  // Two share a title, as ten catalogue titles are carried by more than one song.
   const folder = variant.favorites
     ? ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]
         .map((title) => `<li><span class="songName songNameFontnamco">${title}</span></li>`)
@@ -335,13 +215,6 @@ function myPage(ticket: string): string {
 ${profile.renameDialog(ticket)}`;
 }
 
-/**
- * What every ajax post meets before its handler, whichever endpoint it is for: only a POST is
- * answered; it is recorded; one without X-Requested-With gets the site's error page at 200, as
- * Hiroba answered; one without a session, or while /__post-to-login is on, is sent to the login
- * page; and /__post-redirect answers the next with a redirect. What passes is its form and its
- * session; anything else is the answer to send.
- */
 async function ajaxEntry(
   request: Request,
   session: MockSession | undefined,
@@ -366,10 +239,6 @@ async function ajaxEntry(
   return { form, session };
 }
 
-/**
- * An ajax post answered with a redirect to my page. With `rotate`, the answer also carries a new
- * session token and the old one ends, as a rotated token on a redirect hop does for a read.
- */
 function redirectedPost(status: number, rotate: boolean): Response {
   const headers: Record<string, string> = { location: "/mypage_top.php?again" };
   if (rotate) {
@@ -440,8 +309,8 @@ Bun.serve({
           return redirect("/login.php");
         }
         if (rotateNext && !searchParams.has("rotated")) {
-          // Hiroba has not been seen doing this; the stand-in does it so the transports are
-          // tested against it: a new token on a redirect hop, and the old one no longer valid.
+          // Hiroba has not been seen doing this; the stand-in rotates the token on a redirect hop
+          // (the old one ends) so the transports are tested against it.
           rotateNext = false;
           sessions.clear();
           lastIssued = newToken();
@@ -541,7 +410,6 @@ Bun.serve({
           return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
         }
         return new Response(danLabelPng(variant.dan), { headers: { "content-type": "image/png" } });
-      // Test hooks, loopback only.
       case "/__last-token":
         return new Response(lastIssued);
       case "/__expire":

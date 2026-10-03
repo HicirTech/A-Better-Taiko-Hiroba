@@ -1,14 +1,9 @@
-/**
- * The mock's pictures of things Hiroba draws for the app to show: synthetic PNGs made with
- * fast-png, each seeded by what it stands for, so no two share their bytes. None is Bandai Namco
- * art, and none is copied from a real answer.
- */
+/** Synthetic PNGs standing in for Hiroba's pictures. No Bandai Namco art, nothing copied. */
 import { encode } from "fast-png";
 
-/** A costume item's thumbnail, as imgsrc_kisekae.php draws one: square, about Hiroba's size. */
 const THUMBNAIL_SIDE = 40;
 
-/** The same numbers on every run, from a seed: xorshift32. */
+/** xorshift32: the same numbers on every run for a seed, used as noise to reach a real size. */
 function randomFrom(seed: number): () => number {
   let state = seed >>> 0 || 1;
   return () => {
@@ -28,11 +23,6 @@ function seedOf(...values: readonly number[]): number {
   return seed;
 }
 
-/**
- * The thumbnail of item `cos` in slot `type`: a disc in a colour of its own on a clear ground, with
- * a band whose height is the slot, and noise in the low bits, so every pair has its own picture and
- * each is well over the app's smallest thumbnail.
- */
 export function thumbnailPng(type: number, cos: number): Uint8Array<ArrayBuffer> {
   const next = randomFrom(seedOf(type, cos));
   const colour = [next() % 256, next() % 256, next() % 256];
@@ -54,52 +44,33 @@ export function thumbnailPng(type: number, cos: number): Uint8Array<ArrayBuffer>
   return new Uint8Array(encode({ width: side, height: side, data, channels: 4 }));
 }
 
-/**
- * A title plate, as imgsrc_titleplate.php draws one: wide and low. Not the 290:47 the app reserves
- * before a plate comes, on purpose, so a test sees the card take the size the PNG gives.
- */
+/** Not the 290:47 the app reserves, on purpose: a test sees the card take the PNG's size. */
 const PLATE_WIDTH = 600;
 const PLATE_HEIGHT = 100;
-/** The name row's two boxes, sampled from Hiroba's plate: the name's cream and the dan's blue. */
 const NAME_BOX = [0xf8, 0xf0, 0xe0] as const;
 const DAN_BOX = [0x5a, 0x8d, 0xf2] as const;
 
-/**
- * The plate of a player wearing `title` ("" for none): a band in a colour the title picks, and in
- * its lower half the name row's cream box and blue box where Hiroba's plate has them, with noise in
- * the lowest bit, so each title has a plate of its own, about the size of a real one (16 KB).
- */
+/** The plate of a player wearing `title` ("" for none). */
 export function titlePlatePng(title: string): Uint8Array<ArrayBuffer> {
   const next = randomFrom(seedOf(1, ...Array.from(title, (c) => c.codePointAt(0) ?? 0)));
   return platePng(next, [next() % 256, next() % 256, next() % 256], true);
 }
 
-/**
- * The plate imgsrc_titleplate.php draws for no one, without a session: a PNG like any plate, a grey
- * band with no boxes, which no check on its bytes can tell from a player's.
- */
+/** The plate without a session: a PNG no check on its bytes can tell from a player's. */
 export function blankPlatePng(): Uint8Array<ArrayBuffer> {
   return platePng(randomFrom(seedOf(2)), [0x9a, 0x9a, 0x9a], false);
 }
 
-/**
- * The どんメダル plate imgsrc_tokenplate.php draws for `id`: a band in a colour the id and the state
- * pick, so each season has a plate of its own, and one more once `complete`, as Hiroba's art may
- * change then (unverified). No count and no COMPLETE on it: my page writes those as text over it.
- */
+/** One plate per id and state; no count or COMPLETE on it, my page writes those as text. */
 export function medalPlatePng(id: string, complete: boolean): Uint8Array<ArrayBuffer> {
+  // A complete plate gets its own picture too: Hiroba's art may change then (unverified).
   const next = randomFrom(seedOf(3, complete ? 1 : 0, ...Array.from(id, (c) => c.charCodeAt(0))));
   return platePng(next, [next() % 256, next() % 256, next() % 256], false);
 }
 
-/** A My Don portrait, as the picture host draws one: square, at Hiroba's own size. */
 const PORTRAIT_SIDE = 290;
 
-/**
- * The portrait of a Don wearing `set`, a costume's eight values in any fixed order: a body disc and
- * a face disc in colours the set picks, on a clear ground, with noise in the lowest bit, so every
- * set has a portrait of its own, about the size of a real one (60 KB).
- */
+/** The portrait of a Don wearing `set`, a costume's eight values in any fixed order. */
 export function myDonPng(set: readonly number[]): Uint8Array<ArrayBuffer> {
   const next = randomFrom(seedOf(4, ...set));
   const body = [next() % 256, next() % 256, next() % 256];
@@ -120,13 +91,10 @@ export function myDonPng(set: readonly number[]): Uint8Array<ArrayBuffer> {
   return new Uint8Array(encode({ width: side, height: side, data, channels: 4 }));
 }
 
-/** The score panel's art, as image/sp/640/total_score_image_<level>.png is: 600×356. */
+/** The score panel's art, image/sp/640/total_score_image_<level>.png, is 600×356. */
 const PANEL_WIDTH = 600;
 const PANEL_HEIGHT = 356;
-/**
- * Where my page writes the panel's counts over it, in the units of its 280-wide box and 166 rows
- * (mypage_top.php's inline styles): the left of each column, and the top of each row.
- */
+/** Where my page writes the counts, in units of its 280×166 box: column lefts, row tops. */
 const PANEL_COLUMNS = [57, 141, 230] as const;
 const PANEL_ROWS = [18, 54, 85, 121] as const;
 /** Each spot my page writes a count on, as [column, row]: 虹極, the 雅s, the 粋s, the crowns. */
@@ -142,16 +110,10 @@ const PANEL_SPOTS = [
   [1, 3],
   [2, 3],
 ] as const;
-/** The panel's grounds: dark under the ranks, whose counts are white, pale under the crowns'. */
 const RANKS_GROUND = [0x2d, 0x3a, 0x78] as const;
 const CROWNS_GROUND = [0xf7, 0xef, 0xd9] as const;
 
-/**
- * The score panel of `level`, the art my page writes its counts over: a dark ground under the
- * three rows of ranks and a pale one under the crowns, and left of each spot a count goes on, a
- * square in a colour of its own where Hiroba draws that rank's or crown's icon, the spot itself
- * left plain. Noise in the lowest bit makes it tens of KB, as a real one is.
- */
+/** Icon squares where Hiroba draws each rank's and crown's icon, the count spots left plain. */
 export function scorePanelPng(level: number): Uint8Array<ArrayBuffer> {
   const next = randomFrom(seedOf(5, level));
   const width = PANEL_WIDTH;
@@ -184,7 +146,6 @@ export function scorePanelPng(level: number): Uint8Array<ArrayBuffer> {
   return new Uint8Array(encode({ width, height, data, channels: 4 }));
 }
 
-/** A plate's pixels: rounded ends, `band` above, and the two boxes below when `boxes`. */
 function platePng(
   next: () => number,
   band: readonly number[],

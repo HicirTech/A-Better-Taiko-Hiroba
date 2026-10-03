@@ -1,22 +1,4 @@
-/**
- * The mock's costume editor: mypage_kisekae.php, the two ajax posts a costume write sends, and the
- * hooks a test shapes them with. Stateful: a save changes what the page shows next.
- *
- * The page copies the real one's shape (reference/hiroba-pages/costume.html): the eight values in
- * `form#kisekae` with its `_tckt`, their `def_*` twins outside the form, a 63-swatch palette under
- * each of かお, どう and てあし, and five tabs of owned items, each an `a[name]` whose thumbnail's
- * `srctmp` names its slot. The ids, the colours and the token are placeholders, not a real account's.
- *
- * The save follows the server model the executed writes fit: store the body, then, if the posted
- * きぐるみ (costume_1) is not 0, set the four pieces to 0 whatever the body said. So a body naming a
- * piece beside a きぐるみ moves nothing and still answers 0 (write #22).
- *
- * It also draws the editor's preview, imgsrc_mydon.php, as Hiroba does for a session only: a small
- * PNG made from the query's eight values, so two sets never share a picture, and without a session
- * the 43-byte GIF Hiroba draws nothing with, at 200. The items' thumbnails, imgsrc_kisekae.php, go
- * the same way: a PNG of its own for each item and slot (scripts/mock-pictures.ts), for a session
- * only.
- */
+/** Stateful stand-in for the costume editor: mypage_kisekae.php and its two ajax posts. */
 import { encode } from "fast-png";
 
 import { NO_LABEL_GIF } from "./mock-dan-label";
@@ -37,7 +19,6 @@ export const COSTUME_FIELDS = [
 export type CostumeField = (typeof COSTUME_FIELDS)[number];
 export type CostumeState = Record<CostumeField, number>;
 
-/** Where the mock's costume starts, and returns to on /__state?reset=1. */
 export const INITIAL_COSTUME: Readonly<CostumeState> = {
   color_body: 12,
   color_limb: 12,
@@ -49,10 +30,7 @@ export const INITIAL_COSTUME: Readonly<CostumeState> = {
   costume_5: 140,
 };
 
-/**
- * The items owned in each slot, 1 to 5. As on the real page, one id can sit in several slots (21
- * here), so an id means something only with its slot.
- */
+/** The items owned in each slot. As on the real page, one id (21) sits in several slots. */
 export const OWNED: Readonly<Record<1 | 2 | 3 | 4 | 5, readonly number[]>> = {
   1: [4, 14, 7, 36, 56],
   2: [59, 21, 60, 61],
@@ -61,13 +39,9 @@ export const OWNED: Readonly<Record<1 | 2 | 3 | 4 | 5, readonly number[]>> = {
   5: [126, 140, 143],
 };
 
-/**
- * What /__items?many=1 adds to the きぐるみ slot: forty ids more, so the slot holds more rows than
- * the app's grid shows at once, as real accounts' slots do (38 to 76 items).
- */
+/** More rows than the app's grid shows at once, as real slots hold (38 to 76 items). */
 const MANY_MORE = Array.from({ length: 40 }, (_, at) => 200 + at);
 
-/** A thumbnail as it was asked for: the item, its slot, and the page the request named. */
 export interface ThumbnailRecord {
   readonly cos: number;
   readonly type: number;
@@ -81,20 +55,18 @@ const COLOUR_TABS = [
   ["body", "どう"],
   ["limb", "てあし"],
 ] as const;
-/** The real palette's size: ids 0 to 62. The colours are the mock's own. */
+/** The real palette's size (ids 0 to 62). */
 const PALETTE_SIZE = 63;
 
 /** What the pre-check answers: the boolean false by default, as every recorded answer was. */
 const PRECHECK_ANSWERS = ["false", "true", "1", "string1", "0", "null", "html"] as const;
 type PrecheckAnswer = (typeof PRECHECK_ANSWERS)[number];
 
-/** A session, as the mock keeps one: whether a card was chosen, and the editor's live token. */
 export interface MockSession {
   cardChosen: boolean;
   ticket?: string | undefined;
 }
 
-/** One ajax post as it arrived: its headers, its field names in order, and whether its token held. */
 export interface PostRecord {
   readonly path: string;
   readonly xRequestedWith: string | null;
@@ -102,7 +74,6 @@ export interface PostRecord {
   readonly origin: string | null;
   readonly referer: string | null;
   readonly contentType: string | null;
-  /** `close` when the client asked for the connection to be closed after the post. */
   readonly connection: string | null;
   readonly fields: readonly string[];
   /** Every field but `_tckt`, whose value is never kept. */
@@ -110,10 +81,6 @@ export interface PostRecord {
   readonly ticketMatched: boolean;
 }
 
-/**
- * One ajax post as it arrived, for a mock that keeps a list of them: its headers, its field names in
- * order, its values but the token's, and whether the token it carried was the session's latest.
- */
 export function postRecordOf(
   path: string,
   request: Request,
@@ -148,7 +115,6 @@ const HEX = "0123456789abcdef";
 const newTicket = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => HEX[b % 16]).join("");
 
-/** A colour for each palette id, as red, green and blue: spread out, and the same on every run. */
 const swatchRgb = (id: number) => [37, 91, 151].map((step) => (id * step) % 256);
 const swatch = (id: number) =>
   `#${swatchRgb(id)
@@ -168,11 +134,7 @@ export const PREVIEW_PARAMETERS = [
 ] as const;
 const PREVIEW_SIDE = 48;
 
-/**
- * The preview for a query: かお over どう over てあし, a band of each one's swatch, with noise seeded
- * from all eight values in the low bits, so every set has its own picture and each is well over
- * the kilobyte the app asks of one. No Bandai Namco art.
- */
+/** Seeded noise gives every set its own picture, well over the app's 1 KB minimum. */
 function previewPng(params: URLSearchParams): Uint8Array {
   let seed = 0x811c9dc5;
   for (const name of PREVIEW_PARAMETERS) {
@@ -210,20 +172,16 @@ export function createCostumeEditor() {
   let nextResult: number | null = null;
   let noopNext = false;
   let expireNext = false;
-  /** The query of every preview asked for, in order, as it came. */
   const previews: string[] = [];
   let previewAnswer: "png" | "gif" = "png";
-  /** Every thumbnail asked for, in order, as it came. */
   const thumbnails: ThumbnailRecord[] = [];
   let thumbnailAnswer: "png" | "gif" | "html" = "png";
   let many = false;
-  /** The items owned in `slot` now: the fixed lists, and forty more in the first after /__items. */
   const ownedIn = (slot: 1 | 2 | 3 | 4 | 5): readonly number[] =>
     slot === 1 && many ? [...OWNED[1], ...MANY_MORE] : OWNED[slot];
 
   const json = (value: unknown) => Response.json(value);
 
-  /** A fresh token for `session`, voiding the one it had: the one token the save accepts. */
   const issue = (session: MockSession): string => {
     const ticket = newTicket();
     session.ticket = ticket;
@@ -232,19 +190,14 @@ export function createCostumeEditor() {
   };
 
   return {
-    /**
-     * Any other page with a form, my page included, issues the session a token too, and so voids the
-     * editor's: taken to be how the real site behaves after a save whose token came from the editor,
-     * with my page read in between, answered 705.
-     */
+    // Any page with a form, my page included, issues a token and so voids the editor's: taken to be
+    // how the real site answered 705 to a save made after my page was read in between.
     issueTicket: issue,
 
-    /** The set saved now, in COSTUME_FIELDS' order: what the player's My Don portrait shows. */
     saved(): readonly number[] {
       return COSTUME_FIELDS.map((field) => state[field]);
     },
 
-    /** The editor page for `session`, handing it a fresh token. */
     page(session: MockSession): string {
       const ticket = issue(session);
       const hidden = (id: string, name: string, value: number) =>
@@ -294,10 +247,6 @@ ${slotTabs}
 </div>`;
     },
 
-    /**
-     * imgsrc_mydon.php: the picture of whatever set `search` names, for a session only. Without
-     * one, or after /__preview?answer=gif, the 43-byte GIF Hiroba draws nothing with, at 200.
-     */
     preview(search: string, signedIn: boolean): Response {
       previews.push(search.replace(/^\?/, ""));
       if (!signedIn || previewAnswer === "gif") {
@@ -308,12 +257,6 @@ ${slotTabs}
       });
     },
 
-    /**
-     * imgsrc_kisekae.php: the thumbnail of item `cos` in slot `type`, for a session only. Without
-     * one, or after /__thumb?answer=gif, the 43-byte GIF; after /__thumb?answer=html, the site's
-     * error page, both at 200. The mock draws any item of any slot 1 to 5, owned or not: whether
-     * Hiroba draws one the account does not own has not been seen.
-     */
     thumbnail(params: URLSearchParams, signedIn: boolean, referer: string | null): Response {
       const cos = Number(params.get("cos") ?? "");
       const type = Number(params.get("type") ?? "");
@@ -323,6 +266,7 @@ ${slotTabs}
           headers: { "content-type": "text/html; charset=utf-8" },
         });
       }
+      // Draws any item of any slot, owned or not: what Hiroba does for an unowned one is unseen.
       const drawable = Number.isInteger(cos) && cos > 0 && [1, 2, 3, 4, 5].includes(type);
       if (!signedIn || thumbnailAnswer === "gif" || !drawable) {
         return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
@@ -330,7 +274,6 @@ ${slotTabs}
       return new Response(thumbnailPng(type, cos), { headers: { "content-type": "image/png" } });
     },
 
-    /** Keeps what a post to either endpoint carried, before anything answers it. */
     record(
       path: string,
       request: Request,
@@ -340,12 +283,10 @@ ${slotTabs}
       posts.push(postRecordOf(path, request, form, session));
     },
 
-    /** Settles once pre-checks may be answered: at once, unless /__hold-precheck holds them. */
     precheckLetThrough(): Promise<void> {
       return prechecksHeld;
     },
 
-    /** ajax/check_ip_kisekae.php: the boolean false, unless a test asked for another answer. */
     precheck(): Response {
       switch (precheckAnswer) {
         case "false":
@@ -367,11 +308,6 @@ ${slotTabs}
       }
     },
 
-    /**
-     * ajax/change_mydon.php. A token that is not the session's latest answers 705 with the message
-     * the real site gave, and a new token, as the site's script expects; a right one saves by the
-     * server model and is spent.
-     */
     save(session: MockSession, form: URLSearchParams, endAllSessions: () => void): Response {
       if (session.ticket === undefined || form.get("_tckt") !== session.ticket) {
         const ticket = issue(session);
@@ -398,6 +334,7 @@ ${slotTabs}
           next[field] = Number(value);
         }
       }
+      // The server zeroes the four pieces beside a posted きぐるみ, whatever the body said (write #22).
       if (next.costume_1 !== 0) {
         next.costume_2 = 0;
         next.costume_3 = 0;
@@ -412,23 +349,7 @@ ${slotTabs}
       return json({ result: 0, errmsg: "更新しました。", _tckt: "" });
     },
 
-    /**
-     * The costume's test hooks, or null for a path that is not one:
-     * /__state (the saved costume; with field=value pairs, set those, as a change made elsewhere;
-     * with reset=1, back to the start), /__precheck?answer=false|true|1|string1|0|null|html (what
-     * every pre-check answers from now on), /__hold-precheck?on=1 or 0 (pre-checks are held
-     * unanswered, so a test can ask for more while a write waits in its middle; 0 lets every held
-     * one go), /__next-result?code=N (the next valid save answers N and saves nothing),
-     * /__noop-save (the next valid save answers 0 and saves nothing),
-     * /__expire-on-save (the next valid save saves, then every session ends), /__tickets (every
-     * token the editor handed out), /__posts (every ajax post as it arrived; ?reset=1 clears),
-     * /__previews (the query of every preview asked for, in order; ?reset=1 clears),
-     * /__preview?answer=png|gif (what every preview answers a session with from now on),
-     * /__thumbs (every thumbnail asked for, in order, as {cos, type, referer}; ?reset=1 clears),
-     * /__thumb?answer=png|gif|html (what every thumbnail answers a session with from now on) and
-     * /__items (the items each slot owns; ?many=1 adds forty to the きぐるみ slot, ?many=0 takes
-     * them away again).
-     */
+    /** A test hook's answer, or null when the path is none of the costume's hooks. */
     hook(pathname: string, params: URLSearchParams): Response | null {
       switch (pathname) {
         case "/__state": {

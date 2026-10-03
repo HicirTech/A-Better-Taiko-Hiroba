@@ -1,15 +1,4 @@
-/**
- * The mock's dan labels: a 96×40 RGBA PNG whose opaque silhouette is a dan's name, built from
- * core's label templates as core's own dan-image tests build theirs, so no Bandai Namco art is
- * involved. Also the 43-byte 1×1 GIF Hiroba answers when it has no label to draw.
- *
- * Core's tests paint each template cell over a rectangle of its own, which reads back only roughly:
- * a cell of a 96×40 label is twelve to sixteen pixels, and the reader's cells overlap where 40 rows
- * do not divide into twelve. The reader refuses those labels, as the tests allow. The mock needs
- * one the reader accepts, so this painter lays ink out in the reader's own cells: each four-pixel
- * column is solved on its own for the row counts that come closest to the template, counting the
- * rows two cells share once.
- */
+/** Dan labels laid out in the reader's own cells from core's templates, so it accepts them. */
 import { decodeTemplate, GLYPH_GRID_HEIGHT, GLYPH_GRID_WIDTH, LABEL_TEMPLATES } from "@abth/core";
 import { encode } from "fast-png";
 
@@ -34,10 +23,7 @@ interface CellRows {
   readonly sharesPrevious: boolean;
 }
 
-/**
- * The rows the reader counts for each cell of a column, walked as `measureGlyph` walks them when
- * the ink spans the whole label: from the rounded start to before the unrounded end.
- */
+/** The rows the reader counts per cell, walked as `measureGlyph` does for full-label ink. */
 const CELLS: readonly CellRows[] = (() => {
   const spans: number[][] = [];
   for (let gy = 0; gy < GLYPH_GRID_HEIGHT; gy++) {
@@ -60,24 +46,18 @@ const CELLS: readonly CellRows[] = (() => {
   });
 })();
 
-/**
- * How many pixels of each row one four-pixel column inks, so every cell's coverage lands as close
- * to its template value as whole pixels allow. A dynamic programme down the cells whose state is
- * the ink in the row a cell shares with the next. The top and bottom cells keep a pixel in a row of
- * their own when their template has any ink, so the ink's bounding box is the whole label, which
- * is what the cell layout above assumes.
- */
+/** Dynamic programme down the cells; its state is the ink in the row shared with the next. */
 function solveColumn(targets: readonly number[]): number[] {
   interface Step {
     readonly cost: number;
     readonly own: number;
-    /** The shared-row ink of the cell above that this step continues. */
-    readonly from: number;
+    readonly above: number;
   }
   const trail: Map<number, Step>[] = [];
   let reached = new Map<number, number>([[0, 0]]);
   CELLS.forEach((cell, gy) => {
     const target = targets[gy] ?? 0;
+    // Top and bottom cells keep a pixel in a row of their own, so the ink spans the whole label.
     const atEdge = gy === 0 || gy === GLYPH_GRID_HEIGHT - 1;
     const steps = new Map<number, Step>();
     for (const [above, costSoFar] of reached) {
@@ -87,7 +67,7 @@ function solveColumn(targets: readonly number[]): number[] {
           const error = ink / (cell.size * CELL_WIDTH) - target;
           const cost = costSoFar + error * error;
           if (cost < (steps.get(shared)?.cost ?? Number.POSITIVE_INFINITY)) {
-            steps.set(shared, { cost, own, from: above });
+            steps.set(shared, { cost, own, above });
           }
         }
       }
@@ -115,7 +95,7 @@ function solveColumn(targets: readonly number[]): number[] {
       left -= CELL_WIDTH;
       if (left <= 0) break;
     }
-    shared = step.from;
+    shared = step.above;
   }
   return perRow;
 }
@@ -131,8 +111,7 @@ export function danLabelPng(dan: number): Uint8Array {
   for (let gx = 0; gx < GLYPH_GRID_WIDTH; gx++) {
     const targets = CELLS.map((_, gy) => grid[gy * GLYPH_GRID_WIDTH + gx] ?? 0);
     const perRow = solveColumn(targets);
-    // The left half inks from the left edge and the right half from the right, so both edges of
-    // the label carry ink.
+    // The left half inks from the left edge, the right half from the right: both edges carry ink.
     const fromRight = gx >= GLYPH_GRID_WIDTH / 2;
     perRow.forEach((count, y) => {
       for (let i = 0; i < count; i++) {
