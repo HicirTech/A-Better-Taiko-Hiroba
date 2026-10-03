@@ -11,29 +11,17 @@ import {
   pullStarted,
 } from "./pull-gesture";
 
-/** The indicator's side: a small round sheet with the progress ring on it, as Android draws one. */
 const INDICATOR_SIDE_PX = 40;
 
 export interface PullToReadProps {
   /** Whether the screen is touch-first: only there does a pull read again. */
   readonly active: boolean;
-  /** Whether a read may start now: none running, and no write open or running. */
   readonly canRead: boolean;
   readonly onRead: () => void;
 }
 
-/**
- * Pull-to-read, for a touch-first screen: pulled down from the top of the page (pull-gesture.ts),
- * a round indicator follows the finger, its ring filling on the way to the point where letting go
- * reads again; the page then says it is reading, as after the Fab. A pull starts anywhere on the
- * page's main region, but never on the navigation, whose touches never reach it, and never on a
- * box that scrolls and is not at its top, such as the costume's grid of items: a finger on it is
- * the box's to scroll back up. The indicator is for the eye alone: a screen reader reads again with
- * the Fab, kept for it.
- */
 export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
   const ref = useRef<HTMLDivElement>(null);
-  /** How far the indicator is drawn down now: 0 with no pull. */
   const [distance, setDistance] = useState(0);
   const mayRead = useEffectEvent(() => canRead);
   const read = useEffectEvent(onRead);
@@ -97,10 +85,6 @@ export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
   );
 }
 
-/**
- * The round indicator over the top of the page, `distance` below it, its ring full at the point
- * where letting go reads again. It follows the finger at once, and eases away once it lets go.
- */
 function PullIndicator({ distance }: { distance: number }) {
   const pulling = distance > 0;
   return (
@@ -140,15 +124,11 @@ function PullIndicator({ distance }: { distance: number }) {
   );
 }
 
-/** How far the page is scrolled down now. */
 function scrollTop(): number {
   return document.scrollingElement?.scrollTop ?? 0;
 }
 
-/**
- * How far the boxes between where a finger landed and the page's main region are scrolled down:
- * more than nothing when it landed in one that has scrolled, which the finger then scrolls back.
- */
+// A finger on a box that has scrolled, such as the costume grid, is that box's to scroll back up.
 function scrolledWithin(target: EventTarget | null, region: Element): number {
   let scrolled = 0;
   for (

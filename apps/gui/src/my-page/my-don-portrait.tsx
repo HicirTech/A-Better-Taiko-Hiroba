@@ -8,76 +8,47 @@ import type { PictureWant } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, VISUALLY_HIDDEN } from "./hiroba-px";
 import { useLongPress } from "./use-long-press";
 
-/** The player's portrait, as the picture lane names it. */
 export const MY_DON: PictureWant = { kind: "myDon" };
 
-/** Hiroba's portrait tile: 136 square, its corners 5 round. */
-const TILE_SIDE = 136;
-const TILE_RADIUS = 5;
-/** Lengths in the tile's pixels, however large the header draws it. */
-const hp = hirobaPx(TILE_SIDE);
-/**
- * The pale blue Hiroba draws behind the Don (cos_icon02_bg), in CSS and the same in either theme,
- * so the tile looks like Hiroba's with the portrait on it or without.
- */
+const HIROBA_TILE_SIDE_PX = 136;
+const HIROBA_TILE_RADIUS_PX = 5;
+const hp = hirobaPx(HIROBA_TILE_SIDE_PX);
+// Hiroba's cos_icon02_bg blue stays pale in either theme, so the spinner on it is always dark.
 const TILE_BACKGROUND = "#cfe8f7";
-/** The spinner over the pale blue, dark in either theme. */
 const ON_TILE = "#000";
-/** The edit badge's side: small, in the tile's corner, the same at any size of tile. */
 const BADGE_SIDE_PX = 32;
-/** The description that says to long-press the portrait, where a finger does. */
 const LONG_PRESS_HINT_ID = "costume-open-hint";
-/** The tile, drawn the same as a button's face and as a picture alone. */
 const TILE = {
   display: "block",
   position: "relative",
   width: 1,
   aspectRatio: "1 / 1",
-  borderRadius: hp(TILE_RADIUS),
+  borderRadius: hp(HIROBA_TILE_RADIUS_PX),
   bgcolor: TILE_BACKGROUND,
   overflow: "hidden",
 } as const;
 
-/**
- * What a press on the portrait does: `open` jumps to the Costume page, where the costume is
- * changed. `byLongPress`, on a touch-first screen, a finger gets there by a long-press instead of
- * a tap.
- */
 export interface PortraitAction {
   readonly open: () => void;
   readonly byLongPress: boolean;
 }
 
 export interface MyDonPortraitProps {
-  /** What the picture lane has of the portrait: the picture, why it did not come, or nothing yet. */
   readonly answer: PictureAnswer | undefined;
   readonly action: PortraitAction;
   readonly i18n: Translator;
-  /** The tile, which the portrait is asked for only once it is on screen. */
+  /** The tile; the portrait is asked for once it is on screen. */
   readonly ref: Ref<HTMLSpanElement>;
 }
 
-/**
- * The player's マイどん as Hiroba's header shows it: Hiroba's own picture of the Don in the costume
- * it wears, as a data: URL, on a pale blue tile of Hiroba's shape, as wide as the header makes
- * room for. The tile is there at once, with a small spinner until the picture comes; one that does
- * not come leaves the tile empty, and the line under the header gives the code. Nothing else in the
- * header depends on it.
- *
- * There is no button to change the costume: the portrait itself is the button, and it jumps to the
- * Costume page. A click, or Enter or Space, goes, and a small edit badge shows on hover or keyboard
- * focus. On a touch-first screen a finger gets there by a long-press, and a tap does nothing, so a
- * scroll or a pull begun on it never takes the page away; the badge is always up there, and a
- * description says to long-press.
- */
 export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps) {
   const { t } = i18n;
   const { tooltip, trigger } = useStillPressTooltip();
   const { open, byLongPress } = action;
   const longPress = useLongPress(byLongPress, open);
   const label = t("costume.open");
-  // A finger's tap does nothing where a finger long-presses: the mouse's click and the keyboard's
-  // press still go.
+  // A finger's tap does nothing where it long-presses, so a scroll or pull begun on the portrait
+  // never leaves the page; the mouse's click and the keyboard's press still go.
   const click = (event: MouseEvent) => {
     if (!byLongPress || !isTouchTap(event)) {
       open();
@@ -85,7 +56,6 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
   };
   return (
     <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
-      {/* None by a finger where the long-press goes to the page itself. */}
       <Tooltip title={label} disableTouchListener={byLongPress} {...tooltip}>
         <ButtonBase
           id="costume-open"
@@ -97,7 +67,7 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
           sx={{
             display: "block",
             width: 1,
-            borderRadius: hp(TILE_RADIUS),
+            borderRadius: hp(HIROBA_TILE_RADIUS_PX),
             "&.Mui-focusVisible": {
               outline: "3px solid",
               outlineColor: "primary.main",
@@ -121,20 +91,14 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
   );
 }
 
-/** Whether a click is a finger's tap, rather than a mouse's click or the keyboard's press. */
 function isTouchTap(event: MouseEvent): boolean {
   return event.nativeEvent instanceof PointerEvent && event.nativeEvent.pointerType === "touch";
 }
 
-/**
- * The portrait's tooltip, which a long press opens on a touch screen only while the finger stays
- * put. MUI's long press runs out its time however the finger moves, so a slow pull to read again
- * begun on the portrait, the largest thing at the top of a phone's page, would open it on the way;
- * a finger past the slop is a pull or a scroll (pull-gesture.ts), and shuts it instead.
- */
+// MUI's long press fires however the finger moves: a slow pull begun on the portrait would open
+// the tooltip, so a finger past the slop shuts it instead.
 function useStillPressTooltip() {
   const [open, setOpen] = useState(false);
-  /** The finger on the portrait now: where it landed, and whether it has moved past the slop. */
   const press = useRef<{ readonly landed: TouchPoint; moved: boolean } | null>(null);
   const tooltip = {
     open,
@@ -168,9 +132,6 @@ function useStillPressTooltip() {
   return { tooltip, trigger };
 }
 
-/**
- * The tile alone, Hiroba's picture of the Don on its pale blue: the face of the Overview's button.
- */
 function MyDonTile({ answer, i18n, ref }: Pick<MyDonPortraitProps, "answer" | "i18n" | "ref">) {
   return (
     <Box ref={ref} component="span" id="my-don" aria-busy={answer === undefined} sx={TILE}>
@@ -179,7 +140,6 @@ function MyDonTile({ answer, i18n, ref }: Pick<MyDonPortraitProps, "answer" | "i
   );
 }
 
-/** The portrait on the tile, once it came, and a small spinner until it has. */
 function TileContent({ answer, i18n }: Pick<MyDonPortraitProps, "answer" | "i18n">) {
   const { t } = i18n;
   const picture = answer !== undefined && "view" in answer ? answer.view : null;
@@ -217,10 +177,6 @@ function TileContent({ answer, i18n }: Pick<MyDonPortraitProps, "answer" | "i18n
   );
 }
 
-/**
- * The small badge that shows the portrait leads to the costume's editing: faded in on demand, or
- * `alwaysUp` where a finger, which has no hover, long-presses the portrait.
- */
 function EditBadge({ alwaysUp }: { alwaysUp: boolean }) {
   return (
     <Box
@@ -250,10 +206,7 @@ function EditBadge({ alwaysUp }: { alwaysUp: boolean }) {
   );
 }
 
-/**
- * Material's "edit" icon (Apache 2.0), drawn inline: the icons package is not a dependency. The
- * button it is on carries the name.
- */
+// Material's "edit" icon (Apache 2.0), inline because the icons package is not a dependency.
 function EditIcon() {
   return (
     <SvgIcon aria-hidden fontSize="small">

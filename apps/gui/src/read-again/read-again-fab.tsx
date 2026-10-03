@@ -4,23 +4,14 @@ import { CircularProgress, Fab, SvgIcon, Tooltip } from "@mui/material";
 import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 
 export interface ReadAgainFabProps {
-  /** Whether a read runs: the Fab spins in place of its arrow. */
   readonly reading: boolean;
-  /** Whether a read may start now: none running, and no write open or running. */
   readonly canRead: boolean;
-  /**
-   * Whether the screen is touch-first, where a pull reads again (PullToRead): the Fab is then drawn
-   * only while the keyboard is on it, and stays for screen readers, which cannot pull.
-   */
+  /** Where a pull reads again, the Fab shows on keyboard focus only; screen readers keep it. */
   readonly touchFirst: boolean;
   readonly onRead: () => void;
   readonly i18n: Translator;
 }
 
-/**
- * Read again, as a small Fab with a refresh arrow and its name in a tooltip, for the top right of a
- * page. It is shut while a read or a write runs, and spins while a read does.
- */
 export function ReadAgainFab({ reading, canRead, touchFirst, onRead, i18n }: ReadAgainFabProps) {
   const label = i18n.t("profile.readAgain");
   return (
@@ -42,10 +33,7 @@ export function ReadAgainFab({ reading, canRead, touchFirst, onRead, i18n }: Rea
   );
 }
 
-/**
- * Material's "refresh" icon (Apache 2.0), drawn inline: the icons package is not a dependency, and
- * Hiroba's own button art is never fetched. The button it is on carries the name.
- */
+// Material's "refresh" icon (Apache 2.0), inline because the icons package is not a dependency.
 function RefreshIcon() {
   return (
     <SvgIcon aria-hidden>

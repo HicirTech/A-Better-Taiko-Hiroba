@@ -8,24 +8,17 @@ export interface UndoRowProps {
   readonly label: string;
   /** ISO 8601, when the write the undo would reverse was made. */
   readonly at: string;
-  /** What the undo goes back to, as a sentence. */
   readonly goesBack: ReactNode;
   /** Why the undo is shut, when it is: said in words, not found out by pressing. */
   readonly reason: string | null;
-  /** A line under it, such as that Hiroba may refuse. */
   readonly warning?: string;
-  /** Another write is on its way: nothing is pressed meanwhile. */
   readonly busy: boolean;
   readonly onUndo: () => void;
   readonly i18n: Translator;
 }
 
-/**
- * The last change of the title or the name, and the way back from it while this device still offers
- * one: the button, when the change was made, what it goes back to, and, when it cannot be pressed,
- * why. Not a Stack, which keeps its children's margins at 0: the button's label lines up with the
- * lines under it, not with its own padding.
- */
+// Not a Stack, which keeps its children's margins at 0: the button's label lines up with the lines
+// under it, not with its own padding.
 export function UndoRow({
   id,
   label,

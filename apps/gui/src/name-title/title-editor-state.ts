@@ -3,7 +3,6 @@ import { type Result, sameTitle, type TitleOption } from "@abth/core";
 import { refreshed } from "../my-page/write-ending";
 import type { ReadFailure, TitleEditorView, TitleState, WriteOutcomeView } from "../session-port";
 
-/** What a title page read, and the title picked over it: what a read again may keep. */
 export interface HeldTitles {
   readonly editor: TitleEditorView;
   readonly picked: TitleOption | null;
@@ -11,18 +10,6 @@ export interface HeldTitles {
 
 type TitleOutcome = WriteOutcomeView<TitleState>;
 
-/**
- * Where the Title section stands. The window holds it above the page, so a pick, a review or an
- * outcome is still there after a visit to another page or a read of my page.
- *
- * - `unread`: the list has not been read since the session began.
- * - `loading`: a read is on its way; `held` is what the section had, for a read again to keep.
- * - `idle`: the list read, and the title picked from it, if one is; `confirming` and `saving`: the
- *   pick listed for a last look, and sent.
- * - `undoing`: the undo of the last change is being sent. It holds no pick: it puts back a title of
- *   its own.
- * - `done`: how the last save or undo ended, over the title as it read back.
- */
 export type TitleStep =
   | { readonly name: "unread" }
   | { readonly name: "loading"; readonly held: HeldTitles | null }
@@ -43,7 +30,6 @@ export type TitleStep =
     };
 
 export type TitleAction =
-  /** The session is over, or another one begins: nothing of the section is kept. */
   | { readonly type: "forget" }
   | { readonly type: "readStarted" }
   | { readonly type: "readEnded"; readonly result: Result<TitleEditorView, ReadFailure> }
@@ -56,7 +42,7 @@ export type TitleAction =
 
 export const UNREAD: TitleStep = { name: "unread" };
 
-/** The step an action leads to; an action the step cannot take leaves the very same step. */
+/** An action the step cannot take returns the very same step, so the page does not draw again. */
 export function reduceTitle(step: TitleStep, action: TitleAction): TitleStep {
   switch (action.type) {
     case "forget":
@@ -88,12 +74,11 @@ export function reduceTitle(step: TitleStep, action: TitleAction): TitleStep {
   }
 }
 
-/** Whether writing `picked` would change the title: not when it is a name the title worn has. */
+/** Whether writing `picked` would change the title: not when the title worn has that name. */
 export function changesTitle(editor: TitleEditorView, picked: TitleOption): boolean {
   return !sameTitle(editor.state, { title: picked.label });
 }
 
-/** A read begins from where a read may: not inside a review, a save or an undo. */
 function readStarted(step: TitleStep): TitleStep {
   switch (step.name) {
     case "unread":
@@ -109,10 +94,6 @@ function readStarted(step: TitleStep): TitleStep {
   }
 }
 
-/**
- * A read that came opens the list. A pick held from before is kept only if that title is still
- * in the list, under the name the pick had.
- */
 function readEnded(
   held: HeldTitles | null,
   result: Result<TitleEditorView, ReadFailure>,
@@ -128,7 +109,6 @@ function readEnded(
   return { name: "idle", editor, picked: kept ? picked : null };
 }
 
-/** Back from a review keeps the pick; back from an outcome takes the title the write left, picking nothing. */
 function back(step: TitleStep): TitleStep {
   switch (step.name) {
     case "confirming":
@@ -151,21 +131,15 @@ function writeEnded(step: TitleStep, outcome: TitleOutcome): TitleStep {
   }
 }
 
-/** Whether the list may be read again from here: not inside a review, a save or an undo. */
 export function canReadTitlesAgain(step: TitleStep): boolean {
   return step.name === "idle" || step.name === "done" || step.name === "loadFailed";
 }
 
-/** Whether a save or an undo is on its way: nothing else asks Hiroba anything meanwhile. */
 export function isWritingTitle(step: TitleStep): boolean {
   return step.name === "saving" || step.name === "undoing";
 }
 
-/**
- * Whether the window's copy of my page is out of date after this ending: the title moved, or may
- * have, so the plate is read again. A write that changed nothing, or stopped before sending, leaves
- * it as it is.
- */
+/** Whether the title moved, or may have, so the window's copy of my page is out of date. */
 export function movedTheTitle(outcome: { readonly kind: TitleOutcome["kind"] }): boolean {
   return (
     outcome.kind === "applied" ||

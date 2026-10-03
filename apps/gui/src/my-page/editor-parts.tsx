@@ -5,13 +5,6 @@ import { type ReactNode, type RefObject, useEffect, useRef } from "react";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { ReadFailure } from "../session-port";
 
-/*
- * What the pages that edit something share: a line with a spinner while something is read or sent,
- * the warning for a read that failed, and the keyboard staying on the page when a step takes the
- * control it was on.
- */
-
-/** A spinner and a line, while something is read from Hiroba or sent to it. */
 export function Waiting({ id, children }: { id?: string; children: string }) {
   return (
     <Stack id={id} direction="row" spacing={2} sx={{ alignItems: "center" }}>
@@ -21,10 +14,6 @@ export function Waiting({ id, children }: { id?: string; children: string }) {
   );
 }
 
-/**
- * A read that failed: its sentence, and the codes a user can copy into a report. `children` is what
- * the page offers to do about it, such as a button that reads again.
- */
 export function LoadFailed({
   id,
   failure,
@@ -53,11 +42,8 @@ export function LoadFailed({
   );
 }
 
-/**
- * Keeps the keyboard on the page when the control it was on goes with a step: a pressed Review is
- * not there once the review is shown, and the focus would fall to the top of the window. Focus
- * that is anywhere else, such as the navigation, is left alone.
- */
+// A pressed Review is gone once the review shows, and focus would fall to the window's top; focus
+// anywhere else, such as the navigation, is left alone.
 export function useFocusKept(page: RefObject<HTMLElement | null>, step: string) {
   const last = useRef(step);
   useEffect(() => {

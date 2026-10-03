@@ -4,35 +4,26 @@ import { type ReactNode, useId } from "react";
 
 import { SettingsSection } from "./settings-section";
 
-/** The session, as the account's section shows it. */
 export type AccountState =
-  /** Whether a session was kept is still being asked: the section names no one yet. */
   | { readonly kind: "checking" }
   | { readonly kind: "signedOut" }
-  /**
-   * A session is open and a read or a write of any kind runs, a save or an undo: Sign out waits for
-   * it. A read would otherwise end after the sign-out and show the profile, and a write would end
-   * under a session that is gone, with no one left to say how it ended.
-   */
+  // A read or a write is running: Sign out waits, or the read would show the profile after it and
+  // the write would end under a session that is gone.
   | { readonly kind: "reading" }
   | {
       readonly kind: "signedIn";
-      /** The nickname my page gave, or null when the last read gave none. */
       readonly nickname: string | null;
       readonly onSignOut: () => void;
     };
 
 export interface SettingsPageProps {
   readonly i18n: Translator;
-  /** The language's section, which the window that holds the language draws. */
+  /** The language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
   readonly account: AccountState;
 }
 
-/**
- * Material's "account_circle" icon (Apache 2.0), drawn inline: the icons package is not a
- * dependency. It marks the account's section as the translate icon marks the language's.
- */
+// Material's "account_circle" icon (Apache 2.0), inline: the icons package is not a dependency.
 function AccountIcon() {
   return (
     <SvgIcon aria-hidden fontSize="small">
@@ -41,12 +32,6 @@ function AccountIcon() {
   );
 }
 
-/**
- * The Settings page, laid out as Gmail's settings are: sections with small headings, each setting
- * one row with its name, a line on it where one helps, and its control. The language first, then
- * the account: who is signed in, and signing out, with what staying signed in keeps on this
- * device. It works signed out too, with no way to sign out.
- */
 export function SettingsPage({ i18n, language, account }: SettingsPageProps) {
   const { t } = i18n;
   const headingId = useId();
@@ -58,7 +43,6 @@ export function SettingsPage({ i18n, language, account }: SettingsPageProps) {
         : account.kind === "signedIn" && account.nickname !== null
           ? t("settings.signedInAs", { name: account.nickname })
           : t("settings.signedIn");
-  /** Sign out, offered while a session is open, and shut while a read runs. */
   const signOut =
     account.kind === "signedIn"
       ? { onClick: account.onSignOut }

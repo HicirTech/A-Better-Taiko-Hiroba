@@ -8,12 +8,6 @@ import { type Cell, describeOutcome } from "./outcome-words";
 /** A cell's `lang`: Hiroba's own words are Japanese whatever language the page is in. */
 const langOf = ({ hirobas }: Cell) => (hirobas === true ? HIROBA_LANG : undefined);
 
-/**
- * A write's ending, as an Alert: the sentence, then Hiroba's own words as plain text, report codes
- * to copy, and, when the set did not end as planned, the values before, planned and now. `kind` is
- * the kind of write that ended, which words the sentences that say what was written; `id` names the
- * Alert for the page that shows it, the Costume page's being the default.
- */
 export function WriteOutcomeNotice<K extends WriteKind>({
   outcome,
   kind,

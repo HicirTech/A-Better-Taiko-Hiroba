@@ -13,7 +13,6 @@ import { TitlePicker } from "./title-picker";
 import { UndoRow } from "./undo-row";
 import type { TitleEditor } from "./use-title-editor";
 
-/** Why the undo of a title change cannot be pressed, by what the previous title is against the list. */
 const UNDO_REASON = {
   ready: null,
   noTitle: "title.undoNoTitle",
@@ -28,11 +27,6 @@ export interface TitleSectionProps {
   readonly busy: boolean;
 }
 
-/**
- * The Title section: the title worn, the owned titles to pick another from, a review of the change,
- * the outcome of the last write and the way back from it. Its state is the window's
- * (use-title-editor.ts), so a pick or an outcome is still here after a visit to another page.
- */
 export function TitleSection({ title, i18n, busy }: TitleSectionProps) {
   const { t } = i18n;
   const { step } = title;
@@ -60,8 +54,8 @@ export function TitleSection({ title, i18n, busy }: TitleSectionProps) {
   );
 }
 
-/** The title as Hiroba writes it, or the words for no title. */
-const shown = (title: string, { t }: Translator) => (title === "" ? t("profile.noTitle") : title);
+const titleOrNoTitle = (title: string, { t }: Translator) =>
+  title === "" ? t("profile.noTitle") : title;
 
 function StepView({ title, i18n, busy }: TitleSectionProps) {
   const { t } = i18n;
@@ -95,7 +89,7 @@ function StepView({ title, i18n, busy }: TitleSectionProps) {
           <ChangeList
             id="title-changes"
             part={t("title.heading")}
-            from={shown(step.editor.state.title, i18n)}
+            from={titleOrNoTitle(step.editor.state.title, i18n)}
             to={step.picked.label}
             i18n={i18n}
           />
@@ -121,7 +115,6 @@ function StepView({ title, i18n, busy }: TitleSectionProps) {
   }
 }
 
-/** The title worn now, in Hiroba's words: what the plate above shows too. */
 function WornTitle({ title, i18n }: { title: string; i18n: Translator }) {
   return title === "" ? (
     <Typography id="title-current" color="text.secondary">
@@ -134,7 +127,6 @@ function WornTitle({ title, i18n }: { title: string; i18n: Translator }) {
   );
 }
 
-/** What the list says of the title worn: titles that share its name, or no title of the list with it. */
 function Notes({
   options,
   worn,
@@ -165,7 +157,6 @@ function Notes({
   );
 }
 
-/** The undo of the last title change, while this device offers one, shut with a reason when it cannot be sent. */
 function Undo({
   title,
   options,
@@ -189,7 +180,7 @@ function Undo({
       id="title-undo"
       label={t("title.undoLast")}
       at={undoable.at}
-      goesBack={t("title.undoBack", { title: shown(undoable.before.title, i18n) })}
+      goesBack={t("title.undoBack", { title: titleOrNoTitle(undoable.before.title, i18n) })}
       reason={reason === null ? null : t(reason)}
       busy={busy}
       onUndo={() => void title.undo()}
@@ -198,7 +189,6 @@ function Undo({
   );
 }
 
-/** The step's buttons, at the section's foot, or nothing where a step has none. */
 function Actions({ title, i18n, busy }: TitleSectionProps) {
   const buttons = actionsOf(title.step, title, i18n, busy);
   return buttons === null ? null : (

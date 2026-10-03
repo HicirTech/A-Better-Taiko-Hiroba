@@ -4,13 +4,9 @@ import { useId } from "react";
 
 import { SettingsSection } from "../settings/settings-section";
 
-/** The value of the system's choice: no locale is spelled so. */
 const SYSTEM_CHOICE = "system";
 
-/**
- * Material's "translate" icon (Apache 2.0), drawn inline: the icons package is not a dependency. It
- * marks the setting for someone who cannot read the language the app is in.
- */
+// Material's "translate" icon (Apache 2.0), inline because the icons package is not a dependency.
 function TranslateIcon() {
   return (
     <SvgIcon aria-hidden fontSize="small">
@@ -19,22 +15,15 @@ function TranslateIcon() {
   );
 }
 
-/**
- * The language's section of Settings, as Gmail's quick settings offer a choice: a radio button per
- * choice, one row each, the one in use checked. The system's comes first, then every language the
- * catalog carries, each named in its own language and marked with it for screen readers. A pick
- * reaches `onPick`, null for the system's; the language the system gives is a choice of its own,
- * so picking it keeps it when the system's changes.
- */
+// `onPick(null)` follows the system; picking the language the system gives is a choice of its own,
+// so it is kept when the system's changes.
 export function LanguageSetting({
   picked,
   system,
   onPick,
   i18n,
 }: {
-  /** The language picked on this device, or null while the app follows the system's. */
   picked: Locale | null;
-  /** The language the system gives. */
   system: Locale;
   onPick: (next: Locale | null) => void;
   i18n: Translator;
@@ -80,7 +69,6 @@ export function LanguageSetting({
   );
 }
 
-/** One choice's row: its radio button and its name, the whole row a label for the radio. */
 function LanguageChoice({
   id,
   value,
@@ -90,7 +78,6 @@ function LanguageChoice({
   id: string;
   value: string;
   label: string;
-  /** The language the name is in, where it is not the app's. */
   lang?: Locale;
 }) {
   return (

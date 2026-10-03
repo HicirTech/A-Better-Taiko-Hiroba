@@ -11,22 +11,15 @@ import { keepPage, keptPage, type Page } from "./navigation/pages";
 import type { Platform } from "./platform";
 import { SettingsPage } from "./settings/settings-page";
 
-/**
- * The window: its navigation around the app, and the language, which Settings shows. A page or a
- * language picked is kept on this device, and System default forgets the pick; a language takes
- * hold at once, and the page keeps where it was and asks Hiroba nothing. `onShown` hears each
- * language the window is shown in, the first included.
- */
 export function Shell({
   platform,
   onShown,
 }: {
   platform: Platform | null;
+  /** Called with each language the window is shown in, the first included. */
   onShown: (i18n: Translator) => void;
 }) {
-  /** The language picked on this device, or null while the app follows the system's. */
   const [picked, setPicked] = useState(pickedLocale);
-  /** The system's language, read once: it holds for the run. */
   const [system] = useState(systemLocale);
   const locale = picked ?? system;
   const i18n = useMemo(() => createTranslator(locale), [locale]);

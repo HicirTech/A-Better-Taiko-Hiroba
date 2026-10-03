@@ -1,10 +1,7 @@
 import { SvgIcon } from "@mui/material";
 
-/*
- * Material's "home", "checkroom" (a hanger), "edit" (a pencil), "favorite" and "settings" icons
- * (Apache 2.0), drawn inline: the icons package is not a dependency. Each marks its page beside its
- * name, so it is hidden from screen readers.
- */
+// Material's "home", "checkroom", "edit", "favorite" and "settings" icons (Apache 2.0), inline
+// because the icons package is not a dependency.
 
 export function OverviewIcon() {
   return (

@@ -15,22 +15,13 @@ import type { TitleEditor } from "./use-title-editor";
 const PLATE: PictureWant = { kind: "titlePlate" };
 
 export interface NameTitlePageProps {
-  /** The profile as the window last read it: the plate shows its title and name. */
   readonly profile: ProfileView;
-  /** The window's lane for Hiroba's pictures: the plate comes through it. */
   readonly lane: PictureLane;
   readonly i18n: Translator;
   readonly title: TitleEditor;
   readonly name: NameEditor;
 }
 
-/**
- * The page that changes the title and the Donder name: the plate they are printed on, as the
- * Overview draws it, so the result is seen, then the Title section and the Name section. One write
- * runs at a time, from either: while it does, nothing on the page is pressed. The sections' state
- * is the window's (use-title-editor.ts, use-name-editor.ts), so going to another page and back, or
- * reading my page again, finds a pick, a field, a review or an outcome as it was.
- */
 export function NameTitlePage({ profile, lane, i18n, title, name }: NameTitlePageProps) {
   const busy = title.writing || name.writing;
   return (
@@ -46,7 +37,6 @@ export function NameTitlePage({ profile, lane, i18n, title, name }: NameTitlePag
   );
 }
 
-/** The title plate, asked for once it is on screen, with the plain stand-in until it comes. */
 function Plate({
   profile,
   lane,

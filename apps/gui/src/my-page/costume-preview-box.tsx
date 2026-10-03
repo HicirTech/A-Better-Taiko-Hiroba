@@ -10,20 +10,14 @@ import {
   type PreviewState,
 } from "./costume-preview";
 
-/**
- * Hiroba's picture of `set`, kept up with `set` for as long as `active` holds, as the scheduler
- * paces it. Null asks for nothing, and so does a pause in `active`: the scheduler outlives it, so a
- * set drawn before is shown again at the start without a request, and only a set not yet asked for
- * is. It outlives StrictMode's second run of an effect in development too, so the first picture is
- * one request there as well. `reset` is for a session that ends: it forgets the pictures, and the
- * next one opens on none.
- */
 export function useCostumePreview(
   port: HirobaSessionPort,
   set: CostumeSet | null,
   active: boolean,
 ): { readonly preview: PreviewState; readonly reset: () => void } {
   const [preview, setPreview] = useState<PreviewState>(NO_PREVIEW);
+  // The scheduler outlives a pause in `active` and StrictMode's second effect run, so a set drawn
+  // before is shown again, and the first picture is one request.
   const made = useRef<PreviewScheduler | null>(null);
   if (made.current === null) {
     made.current = createPreviewScheduler({
@@ -49,12 +43,6 @@ export function useCostumePreview(
   return { preview, reset };
 }
 
-/**
- * The top of the editor, as Hiroba's 今のきせかえセット box: the picture of the set as picked. The
- * last picture stays while the next one comes, with a small spinner; one that does not come leaves
- * a neutral note and a code, and the editor works as well without it. The picture is a data: URL:
- * no address of Hiroba's reaches the window.
- */
 export function CostumePreviewBox({ preview, i18n }: { preview: PreviewState; i18n: Translator }) {
   const { t } = i18n;
   return (

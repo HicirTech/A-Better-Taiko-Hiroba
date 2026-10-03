@@ -8,10 +8,7 @@ import { changedParts, isCostumePart, PART_LABEL, partValue } from "./costume-pa
 
 type NotAppliedReasonKind = Extract<WriteOutcomeView, { kind: "notApplied" }>["reason"]["kind"];
 
-/**
- * The sentences a write can end with, by what they say: the ones a kind words in its own terms
- * have a key of their own (KIND_WORDING), and every kind without one says it with the base key.
- */
+// A sentence a write can end with: KIND_WORDING words it for a kind, else BASE_WORDING says it.
 type Base =
   | "applied"
   | "undone"
@@ -24,7 +21,6 @@ type Base =
   | "nothingToChange"
   | "needsConfirmation";
 
-/** The costume's wording, which is the base. */
 const BASE_WORDING = {
   applied: "write.applied",
   undone: "write.undone",
@@ -38,11 +34,7 @@ const BASE_WORDING = {
   needsConfirmation: "write.needsConfirmation",
 } as const satisfies Record<Base, MessageKey>;
 
-/**
- * The sentences each kind words in its own terms, a sentence it has no entry for being the base's:
- * the costume's is empty, the title's says costume where the base says title, and a rename has no
- * pre-check, so it is never asked to confirm anything.
- */
+// Costume is the base, so its entry is empty; a rename has no pre-check, so nothing to confirm.
 const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, MessageKey>>>>> = {
   costume: {},
   title: {
@@ -71,7 +63,6 @@ const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, Mes
 const wording = (kind: WriteKind, base: Base): MessageKey =>
   KIND_WORDING[kind][base] ?? BASE_WORDING[base];
 
-/** The sentence an outcome says first, where which write it was changes the words. */
 const OUTCOME_BASE = {
   applied: "applied",
   notApplied: "unchanged",
@@ -86,7 +77,6 @@ type KindDependent = keyof typeof OUTCOME_BASE;
 const isKindDependent = (outcome: WriteOutcomeView["kind"]): outcome is KindDependent =>
   Object.hasOwn(OUTCOME_BASE, outcome);
 
-/** Each other way a write can end, worded: a new kind nobody worded is a type error. */
 const OUTCOME_MESSAGE = {
   maintenance: "write.maintenance",
   readFailed: "failure.unexpectedPage",
@@ -102,7 +92,6 @@ const OUTCOME_MESSAGE = {
   busy: "write.busy",
 } as const satisfies Record<Exclude<WriteOutcomeView["kind"], KindDependent>, MessageKey>;
 
-/** Each reason a save left the set as it was, worded; an unchanged one is the kind's own words. */
 const REASON_MESSAGE = {
   refused: "write.notApplied.refused",
   stale: "write.notApplied.stale",
@@ -115,10 +104,7 @@ const REASON_MESSAGE = {
   unexpected: "write.notApplied.unexpected",
 } as const satisfies Record<Exclude<NotAppliedReasonKind, "unchanged">, MessageKey>;
 
-/**
- * What the app says of a code Hiroba refuses with and gives no message for, by kind of write: a
- * title's 1, 5 and 6 and a rename's 2. Hiroba's own words, when it gives some, follow them.
- */
+// The app's gloss on refusal codes Hiroba gives no message for; its own words, when any, follow.
 const REFUSED_GLOSS: Readonly<Record<WriteKind, Readonly<Partial<Record<number, MessageKey>>>>> = {
   costume: {},
   title: { 1: "write.title.refused1", 5: "write.title.refused5", 6: "write.title.refused6" },
@@ -129,7 +115,6 @@ type InvalidField =
   | (typeof TITLE_FIELDS)[keyof typeof TITLE_FIELDS]
   | (typeof NAME_FIELDS)[keyof typeof NAME_FIELDS];
 
-/** Each field the core refuses a title or a name by, worded: a costume part has its own label. */
 const INVALID_FIELD_MESSAGE = {
   [TITLE_FIELDS.notOwned]: "write.invalid.titleNotOwned",
   [TITLE_FIELDS.unresolved]: "write.invalid.titleUnresolved",
@@ -141,7 +126,6 @@ const INVALID_FIELD_MESSAGE = {
   [NAME_FIELDS.closed]: "write.invalid.nameClosed",
 } as const satisfies Record<InvalidField, MessageKey>;
 
-/** The words of a refused target's `field`: a costume part's label, a title's or a name's phrase, or the code. */
 export function invalidFieldText(field: string, { t }: Translator): string {
   if (isCostumePart(field)) {
     return t(PART_LABEL[field]);
@@ -151,13 +135,12 @@ export function invalidFieldText(field: string, { t }: Translator): string {
     : field;
 }
 
-/** One cell of the comparison: its text, and whether it is Hiroba's own words, which are never translated. */
+/** A comparison cell; `hirobas` marks Hiroba's own words, which are never translated. */
 export interface Cell {
   readonly text: string;
   readonly hirobas?: true;
 }
 
-/** One value of the set, as it was, as it was planned, and as it is now when that is known. */
 export interface ComparisonRow {
   readonly label: Cell;
   readonly before: Cell;
@@ -167,7 +150,7 @@ export interface ComparisonRow {
 
 type Rows<S> = (before: S, planned: S, now: S | null, i18n: Translator) => readonly ComparisonRow[];
 
-/** The costume's rows: each part the plan changed, and each the write changed that it did not mean to. */
+// Each part the plan changed, and each the write changed that the plan did not mean to.
 const costumeRows: Rows<WriteSets["costume"]> = (before, planned, now, i18n) => {
   const { t } = i18n;
   const parts = changedParts(before, planned).concat(
@@ -184,7 +167,6 @@ const costumeRows: Rows<WriteSets["costume"]> = (before, planned, now, i18n) => 
   }));
 };
 
-/** The one row of a title or a name: Hiroba's own words, which are shown as it writes them. */
 const singleRow =
   <S>(label: MessageKey, textOf: (set: S, i18n: Translator) => Cell): Rows<S> =>
   (before, planned, now, i18n) => [
@@ -204,31 +186,25 @@ const ROWS: { readonly [K in WriteKind]: Rows<WriteSets[K]> } = {
   name: singleRow("name.heading", ({ nickname }) => ({ text: nickname, hirobas: true })),
 };
 
-/** What a notice shows of a write that did not end as planned, over the values it moved. */
 export interface Comparison {
   readonly rows: readonly ComparisonRow[];
-  /** Whether the set could be read as it is now: a column for it. */
   readonly withNow: boolean;
 }
 
 export interface Described {
   readonly severity: AlertColor;
   readonly message: string;
-  /** More sentences: Hiroba's own words, a code it answered with, the cross-check. */
   readonly notes: readonly string[];
-  /** Report codes, shown to copy. Never page text. */
+  /** Report codes, shown to copy; never page text. */
   readonly codes: readonly string[];
   readonly comparison: Comparison | null;
 }
 
 export interface DescribeOptions<K extends WriteKind> {
-  /** Which kind of write ended: it words the sentences that name what was written. */
   readonly kind: K;
-  /** The outcome is an undo's. */
   readonly asUndo?: boolean;
 }
 
-/** How a write ended, in words: what happened first, then Hiroba's own words and the codes. */
 export function describeOutcome<K extends WriteKind>(
   outcome: WriteOutcomeView<WriteSets[K]>,
   i18n: Translator,

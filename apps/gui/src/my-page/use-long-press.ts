@@ -3,10 +3,9 @@ import { type TouchEvent, useCallback, useEffect, useRef } from "react";
 import { movedPastSlop, pointOf, type TouchPoint } from "../read-again/pull-gesture";
 import { swallowTouchClick } from "./swallow-touch-click";
 
-/** How long a finger must stay still for a long-press: about Android's own. */
+/** About Android's own long-press time. */
 export const LONG_PRESS_MS = 500;
 
-/** The touch handlers of an element a long-press acts on. */
 export interface LongPressHandlers {
   readonly onTouchStart: (event: TouchEvent) => void;
   readonly onTouchMove: (event: TouchEvent) => void;
@@ -14,7 +13,6 @@ export interface LongPressHandlers {
   readonly onTouchCancel: () => void;
 }
 
-/** A finger on the element: still waiting out the press, or held long enough, until it lifts. */
 type Press =
   | {
       readonly phase: "waiting";
@@ -23,15 +21,8 @@ type Press =
     }
   | { readonly phase: "held" };
 
-/**
- * A long-press on the element the handlers go on: one finger held still there for LONG_PRESS_MS
- * runs `onHeld`. A finger that wanders past the slop is a pull or a scroll (pull-gesture.ts), and a
- * second finger a zoom: either cancels it, as a lift before then does, and so does `enabled`
- * turning false while the finger is down. A tap stays a tap. The lift after a long-press sends no
- * click: the browser may make one of it, and it would land on whatever `onHeld` opened there. The
- * element's own touchend stops it while the element is there; `onHeld` may take it away (it goes
- * to another page), so the window stops it too (swallowTouchClick).
- */
+// The lift after a long-press must make no click, which would land on whatever onHeld opened: the
+// element's touchend stops it, and swallowTouchClick covers an element onHeld has taken away.
 export function useLongPress(enabled: boolean, onHeld: () => void): LongPressHandlers {
   const press = useRef<Press | null>(null);
   const cancel = useCallback(() => {
@@ -45,7 +36,7 @@ export function useLongPress(enabled: boolean, onHeld: () => void): LongPressHan
       cancel();
     }
   }, [enabled, cancel]);
-  // And when the element goes, the finger still down.
+  // Also cancel when the element goes while the finger is still down.
   useEffect(() => cancel, [cancel]);
   return {
     onTouchStart: (event) => {

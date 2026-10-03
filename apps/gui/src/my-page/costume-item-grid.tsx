@@ -8,22 +8,18 @@ import type { PictureWant } from "../session-port";
 import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";
 import { pickRing } from "./pick-ring";
 
-/** Six to a row and four rows seen at once, as Hiroba's box has them. */
+// Hiroba's box shows six to a row and four rows at once.
 const COLUMNS = 6;
 const ROWS = 4;
 /** Hiroba's 35 px is too small to touch; the picture stays near its size inside a larger cell. */
 const CELL = 44;
 const GAP = 6;
 const PICTURE = 40;
-/** A row and the gap under it: what an arrow scrolls. */
-const ROW = CELL + GAP;
-/**
- * How far below or above the box a cell counts as seen: one row ahead. A cell only touching that
- * edge counts too, so the margin stops short of the row after.
- */
+const ROW_STEP = CELL + GAP;
+// One row ahead counts as seen. A cell touching that edge counts too, so the margin stops short
+// of the row after.
 const AHEAD = `${CELL}px 0px`;
-/** Room inside the box for the ring of a chosen or focused item at its edge. */
-const PAD = 6;
+const RING_ROOM = 6;
 
 export interface CostumeItemGridProps {
   readonly lane: PictureLane;
@@ -36,14 +32,7 @@ export interface CostumeItemGridProps {
   readonly onPick: (id: number) => void;
 }
 
-/**
- * One slot's items as Hiroba's editor shows them, .costumeThumbArea: each item's own thumbnail,
- * six to a row, four rows at a time, scrolled natively or a row at a time with ▲ and ▼, and はずす
- * as a button under the box. A thumbnail is asked for only once its cell has stayed on screen, or
- * within a row of it, and only one at a time; until it comes the cell shows its number over a
- * placeholder, and a thumbnail that does not come leaves the number, as the editor showed before.
- * The pictures are data: URLs: no address of Hiroba's reaches the window.
- */
+/** One slot's items as Hiroba's .costumeThumbArea shows them; the pictures are data: URLs. */
 export function CostumeItemGrid({ lane, i18n, part, items, chosen, onPick }: CostumeItemGridProps) {
   const { t, number } = i18n;
   const box = useRef<HTMLDivElement>(null);
@@ -53,7 +42,8 @@ export function CostumeItemGrid({ lane, i18n, part, items, chosen, onPick }: Cos
     const answer = lane.peek({ kind: "costumeItem", slot, id });
     return answer !== undefined && "failure" in answer ? [answer.failure] : [];
   });
-  const scroll = (rows: number) => box.current?.scrollBy({ top: rows * ROW, behavior: "smooth" });
+  const scroll = (rows: number) =>
+    box.current?.scrollBy({ top: rows * ROW_STEP, behavior: "smooth" });
 
   return (
     <Stack spacing={1} sx={{ alignItems: "center" }}>
@@ -76,14 +66,13 @@ export function CostumeItemGrid({ lane, i18n, part, items, chosen, onPick }: Cos
             gridTemplateColumns: `repeat(${COLUMNS}, ${CELL}px)`,
             gridAutoRows: `${CELL}px`,
             gap: `${GAP}px`,
-            p: `${PAD}px`,
+            p: `${RING_ROOM}px`,
             boxSizing: "content-box",
             height: ROWS * CELL + (ROWS - 1) * GAP,
             overflowY: "auto",
             // The same width whether or not a slot holds more rows than the box shows.
             scrollbarGutter: "stable",
-            // Hiroba's own box: white, a grey rule and a shadow set in, in either theme, so the art
-            // sits on the ground it was drawn for.
+            // Hiroba's own box in either theme: the art sits on the white ground it was drawn for.
             bgcolor: "#fff",
             border: "1px solid #999",
             boxShadow: "inset 0 1px 4px rgba(0, 0, 0, 0.35)",
@@ -182,8 +171,7 @@ function ItemCell({
         width: CELL,
         height: CELL,
         borderRadius: 0.5,
-        // Outside the cell, never over the picture; focus in black, as the box is white in either
-        // theme.
+        // Focus ring in black, as the box is white in either theme.
         ...pickRing(chosen, "common.black"),
       }}
     >

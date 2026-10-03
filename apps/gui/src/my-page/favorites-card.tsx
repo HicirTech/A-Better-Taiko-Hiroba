@@ -23,10 +23,6 @@ function ExpandIcon() {
   );
 }
 
-/**
- * The 大好きな曲 and the お気に入り folder, titles as the page writes them. The folder holds up to
- * 30 songs, so it opens on request; an empty folder, like an unset favourite, is a normal state.
- */
 export function FavoritesCard({
   favoriteSong,
   folder,
@@ -68,7 +64,7 @@ export function FavoritesCard({
           <AccordionDetails sx={{ pt: 0 }}>
             <List dense disablePadding>
               {folder.map((title, index) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: ten titles belong to more than one song, and each read replaces the list whole.
+                // biome-ignore lint/suspicious/noArrayIndexKey: titles repeat; list replaced whole
                 <ListItem key={index} disableGutters>
                   <ListItemText primary={title} />
                 </ListItem>

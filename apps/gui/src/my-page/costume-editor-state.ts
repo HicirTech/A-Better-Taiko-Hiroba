@@ -4,24 +4,11 @@ import type { CostumeEditorView, CostumeSet, ReadFailure, WriteOutcomeView } fro
 import { type ColourPart, type SlotPart, slotOf } from "./costume-parts";
 import { refreshed } from "./write-ending";
 
-/** An editor the page read, and the draft made over it: what a read again may keep. */
 export interface HeldEditor {
   readonly editor: CostumeEditorView;
   readonly draft: CostumeSet;
 }
 
-/**
- * Where the Costume page's editor stands. The page holds it above itself, so a draft, a review or
- * an outcome is still there after a visit to another page.
- *
- * - `unread`: the editor has not been read since the session began.
- * - `loading`: a read is on its way; `held` is what the page had, for a read again to keep.
- * - `editing`, `confirming`, `saving`: a draft made over the set as read, being picked, listed
- *   for a last look, and sent.
- * - `undoing`: the undo of the last change is being sent. It holds no draft: the undo puts back a
- *   set of its own, and a draft made over the one before it would no longer be over what is saved.
- * - `done`: how the last save or undo ended, over the set it read back.
- */
 export type EditorStep =
   | { readonly name: "unread" }
   | { readonly name: "loading"; readonly held: HeldEditor | null }
@@ -33,6 +20,7 @@ export type EditorStep =
   | { readonly name: "editing"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
   | { readonly name: "confirming"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
   | { readonly name: "saving"; readonly editor: CostumeEditorView; readonly draft: CostumeSet }
+  // No draft: the undo puts back a set of its own, so an older draft would be over the wrong set.
   | { readonly name: "undoing"; readonly editor: CostumeEditorView }
   | {
       readonly name: "done";
@@ -42,7 +30,6 @@ export type EditorStep =
     };
 
 export type EditorAction =
-  /** The session is over, or another one begins: nothing of the editor is kept. */
   | { readonly type: "forget" }
   | { readonly type: "readStarted" }
   | { readonly type: "readEnded"; readonly result: Result<CostumeEditorView, ReadFailure> }
@@ -57,10 +44,7 @@ export type EditorAction =
 
 export const UNREAD: EditorStep = { name: "unread" };
 
-/**
- * The step an action leads to. An action the step cannot take leaves the very same step, so the
- * page does not draw again for it.
- */
+/** An action the step cannot take returns the very same step, so the page does not draw again. */
 export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep {
   switch (action.type) {
     case "forget":
@@ -98,15 +82,10 @@ export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep
   }
 }
 
-/** The draft changed to `draft`, or the step itself when it is the draft it holds already. */
 function withDraft<S extends { readonly draft: CostumeSet }>(step: S, draft: CostumeSet): S {
   return sameCostume(step.draft, draft) ? step : { ...step, draft };
 }
 
-/**
- * A read begins from where a read may: not inside a review, a save or an undo, and not while one
- * is already on its way.
- */
 function readStarted(step: EditorStep): EditorStep {
   switch (step.name) {
     case "unread":
@@ -122,10 +101,6 @@ function readStarted(step: EditorStep): EditorStep {
   }
 }
 
-/**
- * A read that came opens the editor on the set as read. A draft held from before is kept only if
- * the set it was made over is the set read now; one made over a set that has moved is dropped.
- */
 function readEnded(
   held: HeldEditor | null,
   result: Result<CostumeEditorView, ReadFailure>,
@@ -139,7 +114,6 @@ function readEnded(
   return { name: "editing", editor, draft: keepsDraft ? held.draft : editor.state };
 }
 
-/** Back from a review keeps the draft; back from an outcome takes the set the write left. */
 function back(step: EditorStep): EditorStep {
   switch (step.name) {
     case "confirming":
@@ -162,11 +136,6 @@ function writeEnded(step: EditorStep, outcome: WriteOutcomeView): EditorStep {
   }
 }
 
-/**
- * The set whose picture the page draws now: the draft while there is one, and after a write the
- * set as it read back, which is the draft's own picture when the write applied. A read again keeps
- * the picture of what it held. Null while there is nothing to draw.
- */
 export function previewSetOf(step: EditorStep): CostumeSet | null {
   switch (step.name) {
     case "editing":
@@ -184,12 +153,10 @@ export function previewSetOf(step: EditorStep): CostumeSet | null {
   }
 }
 
-/** Whether the editor may be read again from here: not inside a review, a save or an undo. */
 export function canReadEditorAgain(step: EditorStep): boolean {
   return step.name === "editing" || step.name === "done" || step.name === "loadFailed";
 }
 
-/** Whether a save or an undo is on its way: nothing else asks Hiroba anything meanwhile. */
 export function isWriting(step: EditorStep): boolean {
   return step.name === "saving" || step.name === "undoing";
 }

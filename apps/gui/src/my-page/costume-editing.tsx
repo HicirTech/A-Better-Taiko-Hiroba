@@ -14,7 +14,6 @@ import {
 } from "./costume-parts";
 import { pickRing } from "./pick-ring";
 
-/** Which of the editor's tabs is open: the top two, and the part each of them has open. */
 export interface EditingTabs {
   readonly tab: "colours" | "items";
   readonly colourPart: ColourPart;
@@ -38,11 +37,6 @@ export interface EditingViewProps {
   readonly onPickItem: (part: SlotPart, id: number) => void;
 }
 
-/**
- * The editor proper: the three colours by the palette's own colours and the five slots by Hiroba's
- * thumbnails of their items, a warning while a きぐるみ is picked, and every change the draft
- * makes over the set as read. A pick makes the draft by the site's own rule.
- */
 export function EditingView({
   editor,
   draft,
@@ -122,10 +116,7 @@ export function EditingView({
   );
 }
 
-/**
- * Hiroba's own grid: nine to a row, seven rows, in id order, each swatch framed in one black pixel
- * (mydon.css #palette .color), so a colour sits where the site has it and looks as it does there.
- */
+// Hiroba's own grid (#palette .color): nine to a row, each swatch framed in one black pixel.
 function Palette({
   editor,
   part,
@@ -165,7 +156,6 @@ function Palette({
               bgcolor: swatch.hex,
               border: "1px solid",
               borderColor: "common.black",
-              // Outside the swatch, never over its colour.
               ...pickRing(picked, "text.primary"),
             }}
           />

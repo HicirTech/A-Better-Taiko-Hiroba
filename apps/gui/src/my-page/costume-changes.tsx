@@ -4,7 +4,6 @@ import { Box, Stack, Typography } from "@mui/material";
 import type { CostumeSet } from "../session-port";
 import { changedParts, PART_LABEL, partValue } from "./costume-parts";
 
-/** Every change a draft makes, part by part, or a line saying there is none. */
 export function Changes({
   from,
   to,

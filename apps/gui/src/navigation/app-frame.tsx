@@ -28,7 +28,6 @@ import {
 } from "./page-icons";
 import { PAGES, type Page } from "./pages";
 
-/** Each page's name and icon, as the navigation shows them. */
 const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly icon: ReactNode }>> =
   {
     overview: { label: "nav.overview", icon: <OverviewIcon /> },
@@ -38,19 +37,11 @@ const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly i
     settings: { label: "nav.settings", icon: <SettingsIcon /> },
   };
 
-/** The side panel's width, and the menu's, about Gmail's. */
 const PANEL_WIDTH_PX = 240;
-/** How far in from the window's top left corner the menu button floats. */
 const MENU_INSET_PX = 8;
-/**
- * The band at the top of every page that the floating buttons sit in: the menu button at its left
- * on a narrow window, and a page's own action at its right (FrameCorner). The same on every page
- * and at every width, so each page starts at the same height.
- */
+// The band the floating buttons sit in; fixed so every page starts at the same height.
 const TOP_BAND_PX = 64;
-/** The room under every page's content. */
 const PAGE_BOTTOM_PX = 32;
-/** The safe area at the window's top, where a phone may draw its status bar over the page. */
 const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 
 interface NavigationProps {
@@ -59,15 +50,6 @@ interface NavigationProps {
   readonly i18n: Translator;
 }
 
-/**
- * The window, with no header: its pages in a side panel like Gmail's on a wide window (MUI's md and
- * up), or behind a menu button floating at its top left on a narrow one, and the page shown beside
- * or under it. Each page is named by a heading for screen readers alone: the navigation already
- * shows sighted users which page they are on.
- *
- * Where the system has a Back (`back`, Android's), the window hears it while it is open and does
- * what backAction says: Back shuts the menu, goes back to the Overview, or leaves the app.
- */
 export function AppFrame({
   page,
   onNavigate,
@@ -77,8 +59,7 @@ export function AppFrame({
 }: NavigationProps & { back?: SystemBack; children: ReactNode }) {
   const wide = useMediaQuery(useTheme().breakpoints.up("md"), { noSsr: true });
   const [menuOpen, setMenuOpen] = useState(false);
-  // The menu is drawn on a narrow window alone: one left open there is shut on a wide one, so it
-  // is not open again, unasked, when the window narrows.
+  // Shut a menu left open on a wide window, so it does not reopen unasked when the window narrows.
   if (wide && menuOpen) {
     setMenuOpen(false);
   }
@@ -107,7 +88,6 @@ export function AppFrame({
         />
       )}
       <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
-        {/* The page starts under the top band's buttons, not behind them. */}
         <Container maxWidth="md" sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}>
           <Typography component="h1" sx={VISUALLY_HIDDEN}>
             {i18n.t(PAGE_ENTRY[page].label)}
@@ -119,16 +99,11 @@ export function AppFrame({
   );
 }
 
-/**
- * A page's own action, in the top band at the right of the page, level with the menu button, and
- * kept there over the page as it scrolls. It takes no room: the page starts under the band either
- * way. It goes first in the page, so it comes first in the focus order too.
- */
+/** A page's own action, stuck in the top band at the right; render it first for focus order. */
 export function FrameCorner({ children }: { children: ReactNode }) {
   return (
     <Box
       sx={{
-        // Stuck where it stands at the top, from the first pixel of scroll on: the band's bottom.
         position: "sticky",
         top: `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`,
         zIndex: "appBar",
@@ -142,19 +117,13 @@ export function FrameCorner({ children }: { children: ReactNode }) {
   );
 }
 
-/**
- * For a page that keeps a bar at the bottom edge of the window, which sits flush with the edge
- * however little the page has to show, and stays there as the page scrolls. The page is tall enough
- * to fill the window down to where the frame's room under it begins, which is not more than the
- * window, so it does not scroll for nothing; and the bar, the page's last child, is let over that
- * room by a negative margin, which a child of a plain box may have (a child of a Stack may not).
- */
+// A bottom bar sits flush with the window's edge: the page fills the window and the bar, its last
+// child, overlaps the frame's bottom room by a negative margin (a Stack's child may not have one).
 export const BOTTOM_BAR_PAGE = {
   minHeight: `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`,
 } as const;
 export const BOTTOM_BAR = { mb: `-${PAGE_BOTTOM_PX}px` } as const;
 
-/** The product's name, small, over the pages, each with its icon, the one shown highlighted. */
 function PageList({ page, onNavigate, i18n }: NavigationProps) {
   return (
     <>
@@ -188,7 +157,6 @@ function PageList({ page, onNavigate, i18n }: NavigationProps) {
   );
 }
 
-/** The pages down the window's left edge, always there. */
 function SidePanel(props: NavigationProps) {
   return (
     <Box component="nav" sx={{ width: PANEL_WIDTH_PX, flexShrink: 0 }}>
@@ -202,10 +170,7 @@ function SidePanel(props: NavigationProps) {
   );
 }
 
-/**
- * Material's "menu" icon (Apache 2.0), drawn inline: the icons package is not a dependency. The
- * button it is on carries the name.
- */
+// Material's "menu" icon (Apache 2.0), inline because the icons package is not a dependency.
 function MenuIcon() {
   return (
     <SvgIcon aria-hidden>
@@ -214,12 +179,6 @@ function MenuIcon() {
   );
 }
 
-/**
- * The pages behind a menu button, for a narrow window with no room for the panel. The button
- * floats at the top left, over the page as it scrolls, clear of the system's bars, and opens the
- * pages in a drawer from the left. A pick, a tap outside the drawer, Escape or Android's Back
- * closes it, and the focus goes back to the button. The window holds whether it is open, for Back.
- */
 function MenuDrawer({
   page,
   onNavigate,
