@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent } from "react";
 
 import { pointOf } from "../read-again/pull-gesture";
+import { gesturesHeld } from "./gesture-hold";
 import { type Swipe, swipeReached } from "./swipe-gesture";
 
 const TEXT_FIELDS = "input, textarea";
@@ -30,6 +31,10 @@ export function useSwipe({ active, begin, onReached }: SwipeListening): void {
       swipe = began(event);
     };
     const move = (event: TouchEvent) => {
+      if (gesturesHeld()) {
+        swipe = null;
+        return;
+      }
       const finger = event.touches[0];
       if (swipe === null || finger === undefined || !swipeReached(swipe, pointOf(finger))) {
         return;

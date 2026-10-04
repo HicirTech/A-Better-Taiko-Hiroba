@@ -1,6 +1,7 @@
 import { Box, CircularProgress, Paper } from "@mui/material";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
+import { gesturesHeld } from "../navigation/gesture-hold";
 import {
   NO_PULL,
   PULL_THRESHOLD_PX,
@@ -50,6 +51,10 @@ export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
     const move = (event: TouchEvent) => {
       const finger = event.touches[0];
       if (finger === undefined || pull.phase === "idle") {
+        return;
+      }
+      if (gesturesHeld()) {
+        show(NO_PULL);
         return;
       }
       show(pullMoved(pull, pointOf(finger), scrollTop()));
