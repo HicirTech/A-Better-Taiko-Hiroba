@@ -52,6 +52,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     dispatch({ type: "forget" });
   }, []);
   const dropEdits = useCallback(() => dispatch({ type: "draftDropped" }), []);
+  const pickSong = useCallback((songNo: string) => dispatch({ type: "songPicked", songNo }), []);
 
   const mayRead = step.name === "unread" || canReadFavoritesAgain(step);
   const read = useCallback(async () => {
@@ -134,7 +135,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     canRead: canReadFavoritesAgain(step),
     read,
     forget,
-    pickSong: (songNo) => dispatch({ type: "songPicked", songNo }),
+    pickSong,
     saveSong,
     resetSong: dropEdits,
     applySet,

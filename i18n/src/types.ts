@@ -87,13 +87,6 @@ export interface Messages {
   "dan.18": string;
   "dan.19": string;
   "profile.myDonAlt": string;
-  "profile.favorites": string;
-  /** Param: {title}, the 大好きな曲 as the page writes it. */
-  "profile.favoriteSong": string;
-  "profile.favoriteSongNone": string;
-  /** Param: {count}, how many songs the お気に入り folder holds. */
-  "profile.favoriteFolder": string;
-  "profile.favoriteFolderEmpty": string;
   "pictures.loading": string;
   "pictures.unavailable": string;
   /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
@@ -298,8 +291,13 @@ export interface Messages {
   /** Param: {number}, a slot's place in the folder, from 1. */
   "favorites.slot": string;
   "favorites.slot.empty": string;
+  "favorites.reading": string;
+  /** The お気に入り folder on Hiroba, as the Favourites page names it. */
+  "favorites.folder": string;
+  "favorites.folderEmpty": string;
   "favorites.song.heading": string;
   "favorites.song.none": string;
+  "favorites.song.change": string;
   "picker.title.single": string;
   "picker.title.multi": string;
   "picker.search": string;

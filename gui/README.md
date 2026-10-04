@@ -16,7 +16,7 @@ The window has no header. On a wide window a side panel, like Gmail's, lists its
 **Overview** (the identity card with the score panel, the shares and the どんメダル),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
-**Favourites** (the 大好きな曲 and the お気に入り folder) and **Settings** (the language, and
+**Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
 Costume, Nickname & title, Favourites or Settings back to the Overview, and from the Overview leaves
@@ -38,7 +38,7 @@ release's notes, **Download** (that release's page, in the system's browser) and
 unpackaged build reads no feed, and so never asks GitHub, unless `ABTH_DEV_UPDATE_FEED`
 (`VITE_ABTH_DEV_UPDATE_FEED` on Android) names one.
 
-Signed in, the Overview and Favourites read your page again from a small round **Read again**
+Signed in, the Overview reads your page again from a small round **Read again**
 button with a refresh arrow at the top right, which stays there as the page scrolls. It spins
 while a read runs, and it is shut then, and while a costume, title or nickname save runs, so
 one read runs at a time and none inside a write. On a touch-first screen (`pointer: coarse`), pull
@@ -46,8 +46,8 @@ the page down from its top instead: a round indicator follows the finger, and le
 reads again (a page that has scrolled is the finger's to scroll back, and pulls nothing). There the
 button is drawn only when the keyboard's focus is on it, and it stays for screen readers. The line under the page still says when it was read, in
 the device's time zone, with the month as a short name and the time to the second.
-On the Costume page the same button, and the same pull, read the editor again instead of your
-page; on the Nickname & title page they read your page and then the list of titles.
+On the Costume and Favourites pages the same button, and the same pull, read the page's editors again
+instead of your page; on the Nickname & title page they read your page and then the list of titles.
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -269,6 +269,10 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
   only a costume change and your own **Read again** do that. The Fab spins and Sign out is shut
   meanwhile. A rename puts the nickname it read back into the window's copy of your page, and reads
   nothing more. The page has no undo and no history.
+
+### The Favourites page
+
+The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked by genre or by part of a name from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba.
 
 ### The costume preview
 

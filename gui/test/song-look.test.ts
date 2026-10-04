@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
-import { lookOfCatalogue, lookOfShown, resolveSong } from "../src/favorites/song-look";
-import type { ShownSong } from "../src/session-port";
+import {
+  lookOfCatalogue,
+  lookOfShown,
+  rememberedSongs,
+  resolveSong,
+} from "../src/favorites/song-look";
+import type { FavoritesView, ShownSong } from "../src/session-port";
 import { song } from "./song-fixtures";
 
 const ALPHA = song({
@@ -64,5 +69,26 @@ describe("resolveSong", () => {
       genre: null,
       levels: null,
     });
+  });
+});
+
+describe("rememberedSongs", () => {
+  const folderSong: ShownSong = { songNo: "1002", title: "サンプル曲ベータ", genre: 5 };
+  const favourite: ShownSong = { songNo: "1003", title: "サンプル曲ガンマ", genre: 2 };
+  const view = (song: ShownSong | null): FavoritesView => ({
+    folder: { state: { slots: ["1002"] }, songs: [folderSong] },
+    song: { state: { songNo: song?.songNo ?? null }, song },
+  });
+
+  test("names the songs of the folder and the song set, by number", () => {
+    expect([...rememberedSongs(view(favourite))]).toEqual([
+      ["1002", folderSong],
+      ["1003", favourite],
+    ]);
+  });
+
+  test("names the folder's songs alone where no song is set, and none where nothing was read", () => {
+    expect([...rememberedSongs(view(null)).keys()]).toEqual(["1002"]);
+    expect(rememberedSongs(null).size).toBe(0);
   });
 });

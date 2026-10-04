@@ -2,7 +2,7 @@ import type { Genre } from "@abth/core";
 import type { Locale } from "@abth/i18n";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import type { ShownSong } from "../session-port";
+import type { FavoritesView, ShownSong } from "../session-port";
 import type { CatalogueSong, Difficulty } from "../song-catalogue/types";
 import { nameLanguage, numberedSong, shownName } from "./song-names";
 
@@ -31,6 +31,13 @@ export function lookOfCatalogue(song: CatalogueSong, locale: Locale): SongLook {
 
 export function lookOfShown({ songNo, title, genre }: ShownSong): SongLook {
   return { songNo, name: title, lang: HIROBA_LANG, artists: [], genre, levels: null };
+}
+
+/** The songs a view names, by number: what a song shows as when the catalogue lacks it. */
+export function rememberedSongs(view: FavoritesView | null): ReadonlyMap<string, ShownSong> {
+  const named =
+    view === null ? [] : [...view.folder.songs, ...(view.song.song ? [view.song.song] : [])];
+  return new Map(named.map((song) => [song.songNo, song]));
 }
 
 /** The catalogue's song, else the title Hiroba gave before, else the song's number. */

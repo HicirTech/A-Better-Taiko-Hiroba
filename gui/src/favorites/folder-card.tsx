@@ -1,0 +1,65 @@
+import type { Translator } from "@abth/i18n";
+import { Box, Card, CardContent, Stack, Typography } from "@mui/material";
+
+import { Waiting } from "../my-page/editor-parts";
+import { WriteOutcomeNotice } from "../my-page/write-outcome";
+import type { ShownFavorites } from "./favorites-state";
+import type { SongLook } from "./song-look";
+import { SongRow } from "./song-row";
+
+const LIST = {
+  listStyle: "none",
+  m: 0,
+  p: 0,
+  display: "flex",
+  flexDirection: "column",
+  gap: 1,
+} as const;
+
+export interface FolderCardProps {
+  readonly shown: ShownFavorites;
+  readonly look: (songNo: string) => SongLook;
+  readonly i18n: Translator;
+}
+
+/** The songs in the お気に入り folder, in slot order. */
+export function FolderCard({ shown, look, i18n }: FolderCardProps) {
+  const { t } = i18n;
+  const { view, notice, saving } = shown;
+  const songs = view.folder.state.slots.flatMap((songNo, index) =>
+    songNo === null ? [] : [{ slot: index + 1, songNo }],
+  );
+  return (
+    <Card id="favorite-folder-card" variant="outlined">
+      <CardContent>
+        <Stack spacing={1.5}>
+          {songs.length === 0 ? (
+            <Typography id="favorite-folder-empty" color="text.secondary">
+              {t("favorites.folderEmpty")}
+            </Typography>
+          ) : (
+            <Box component="ul" id="favorite-folder-list" sx={LIST}>
+              {songs.map(({ slot, songNo }) => (
+                <li key={slot}>
+                  <SongRow id={`favorite-folder-slot-${slot}`} look={look(songNo)} i18n={i18n} />
+                </li>
+              ))}
+            </Box>
+          )}
+          {saving === "folder" && (
+            <Waiting id="favorite-folder-saving">{t("costume.saving")}</Waiting>
+          )}
+          {notice?.write === "folder" && (
+            <WriteOutcomeNotice
+              id="favorite-folder-outcome"
+              kind="folder"
+              outcome={notice.outcome}
+              i18n={i18n}
+              songName={(songNo) => look(songNo).name}
+            />
+          )}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
