@@ -1,21 +1,19 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "notes": {
     "en": [
-      "Sign in with your Bandai Namco ID and stay signed in",
-      "See your profile, My Don, title, dan rank, score counts and favourite songs",
-      "Change My Don's costume and colours, with a preview and a history of what you wore",
-      "Change your nickname and title",
-      "English, Japanese, Simplified Chinese and Traditional Chinese",
-      "A reminder when a newer version is out"
+      "On a phone, swipe right to open the menu, and left to close it",
+      "The page stays on screen while it is read again",
+      "Leaving the Costume or Nickname and title page drops its unsaved edits",
+      "The costume grids sit centred",
+      "Every costume in History keeps its picture"
     ],
     "zh-Hans": [
-      "用万代南梦宫 ID 登录，并保持登录状态",
-      "查看资料、小咚、称号、段位、成绩统计和收藏曲目",
-      "更换小咚的服装与配色，保存前可以预览，也能从历史换回",
-      "修改昵称与称号",
-      "界面支持英文、日文、简体中文和繁体中文",
-      "有新版本时提醒你"
+      "手机上往右划打开菜单，往左划关上",
+      "下拉重新读取时，页面留在原地",
+      "离开换装页或昵称与称号页时，未保存的修改会清掉",
+      "换装网格居中排列",
+      "历史记录里的每套装束都有图片"
     ]
   }
 }
