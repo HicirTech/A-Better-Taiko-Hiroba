@@ -146,6 +146,8 @@ app.whenReady().then(async () => {
   const mainWindow = new BrowserWindow({
     width: 960,
     height: 720,
+    // A packaged app has no menu; a development one keeps its shortcuts, its bar shown by Alt.
+    autoHideMenuBar: true,
     webPreferences: {
       preload: join(app.getAppPath(), "out", "electron", "preload.cjs"),
       sandbox: true,
