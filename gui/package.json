@@ -14,7 +14,7 @@
     "build:electron": "bun scripts/build-electron.ts",
     "build": "bun run build:web && bun run build:electron",
     "start": "electron .",
-    "e2e:desktop": "bun run build && bun scripts/e2e-desktop.ts",
+    "e2e:desktop": "bun run build && bun scripts/e2e/run.ts",
     "dist:dir": "bun run build && electron-builder --win --dir",
     "dist:win": "bun run build && electron-builder --win nsis zip --x64",
     "smoke:packaged": "bun scripts/smoke-packaged.ts",
