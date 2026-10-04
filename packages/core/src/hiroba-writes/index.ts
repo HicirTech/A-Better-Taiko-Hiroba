@@ -58,12 +58,3 @@ export type {
   WriteOutcome,
   WriteSpec,
 } from "./types";
-export type { PendingUndo, UndoRecord, UndoSlot } from "./undo-record";
-export {
-  beginPending,
-  EMPTY_UNDO_SLOT,
-  offeredUndo,
-  reconcile,
-  settle,
-  undoInput,
-} from "./undo-record";
