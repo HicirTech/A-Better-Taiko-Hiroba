@@ -3388,11 +3388,17 @@ try {
     page.evaluate<string | null>(
       `document.querySelector(${JSON.stringify(selector)})?.value ?? null`,
     );
+  const titleListIn = () =>
+    page.evaluate<string | null>(`document.querySelector("#title-section")?.dataset.list ?? null`);
+  // Read again forgets the list; opening the picker reads it where the old page read did.
   const readTitlesAgain = async () => {
-    const before = await hitsOn(TITLE_PAGE);
+    const before = await myPageHits();
     await click("#read-again");
-    await waitFor(async () => ((await hitsOn(TITLE_PAGE)) > before ? true : undefined));
+    await waitFor(async () => ((await myPageHits()) > before ? true : undefined));
+    await waitFor(async () => ((await titleListIn()) === "unread" ? true : undefined));
     await inSection("title", "idle");
+    await popupOpened();
+    await popupClosed();
   };
   const ARROW_DOWN = { key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40 };
   const popupOpened = async () => {
@@ -3400,10 +3406,18 @@ try {
     await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...ARROW_DOWN });
     await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...ARROW_DOWN });
     await waitFor(async () => (await exists('[role="listbox"]')) || undefined);
+    await waitFor(async () => ((await titleListIn()) === "read" ? true : undefined));
   };
   const popupClosed = async () => {
     await press("Escape");
     await waitFor(async () => ((await exists('[role="listbox"]')) ? undefined : true));
+  };
+  /** Reads the list if a write or Read again forgot it, so typing never starts a read. */
+  const titlesRead = async () => {
+    if ((await titleListIn()) !== "read") {
+      await popupOpened();
+      await popupClosed();
+    }
   };
   type Listed = {
     id: string | undefined;
@@ -3424,9 +3438,13 @@ try {
   const idsShown: boolean[] = [];
   const SAVE = "/ajax/change_mydon_profile.php";
   const pickTitle = async (typed: string, id: number) => {
+    await titlesRead();
     // A pick still held, as a refused save leaves it, would take the typing at its end.
     await page.evaluate(`document.querySelector(".MuiAutocomplete-clearIndicator")?.click()`);
-    await page.evaluate(`document.querySelector("#title-pick").focus()`);
+    // The field holds the title worn, so the typing replaces it.
+    await page.evaluate(
+      `(() => { const input = document.querySelector("#title-pick"); input.focus(); input.select(); })()`,
+    );
     await page.send("Input.insertText", { text: typed });
     await waitFor(async () => (await exists(`[data-title-id="${id}"]`)) || undefined);
     await page.evaluate(`document.querySelector('[data-title-id="${id}"]').click()`);
@@ -3483,11 +3501,16 @@ try {
   await goTo("nameTitle");
   await inSection("title", "idle");
   await inSection("name", "idle");
+  const wornShownUnread =
+    (await hitsOn(TITLE_PAGE)) === titleReadsBeforeThePage &&
+    (await titleListIn()) === "unread" &&
+    (await inputValueOf("#title-pick")) === INITIAL_PROFILE.title;
   await popupOpened();
   const options = await listed();
   idsShown.push(await idShownIn('#title-section, [role="listbox"]'));
   results.titleListShown =
     titleReadsBeforeThePage === 0 &&
+    wornShownUnread &&
     (await hitsOn(TITLE_PAGE)) === 1 &&
     same(
       options.map((one) => [one.id, one.name]),
@@ -3495,17 +3518,15 @@ try {
     ) &&
     options.every((one) => one.lang === "ja") &&
     options.every((one) => !one.numbered) &&
-    (await textOf("#title-count")) === "Titles to choose from: 8";
+    !(await page.evaluate<boolean>(`document.body.textContent.includes("Titles to choose from")`));
   results.titleWornMarked =
     same(
       options.filter((one) => one.current).map((one) => one.id),
       ["101"],
-    ) &&
-    !(await exists("#title-shared")) &&
-    !(await exists("#title-not-listed"));
+    ) && !(await exists("#title-pick-helper-text"));
   await popupClosed();
   results.titleAndNameWordsMarkedJapanese = await page.evaluate<boolean>(
-    `(() => { const lang = (selector) => document.querySelector(selector)?.lang; return ["#title-current", "#title-pick", "#name-input", "#name-site-warning"].every((selector) => lang(selector) === "ja"); })()`,
+    `(() => { const lang = (selector) => document.querySelector(selector)?.lang; return ["#title-pick", "#name-input", "#name-hint"].every((selector) => lang(selector) === "ja"); })()`,
   );
 
   const searchedFor = async (text: string) => {
@@ -3556,7 +3577,7 @@ try {
   const sharedMarks = (await listed()).filter((one) => one.current).map((one) => one.id);
   idsShown.push(await idShownIn('#title-section, [role="listbox"]'));
   await popupClosed();
-  const sharedNote = await textOf("#title-shared");
+  const sharedNote = await textOf("#title-pick-helper-text");
   await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(UNLISTED_TITLE)}`);
   await readTitlesAgain();
   await popupOpened();
@@ -3565,10 +3586,9 @@ try {
   results.titleSharedNameNamed =
     same(sharedMarks, ["104", "105"]) &&
     sharedNote === "2 of your titles have this name, so the app cannot tell which one you wear." &&
-    (await textOf("#title-not-listed")) ===
+    (await textOf("#title-pick-helper-text")) ===
       "Your current title is not in this list. It may be built from parts, which this version cannot read or change back." &&
-    unlistedMarks === 0 &&
-    !(await exists("#title-shared"));
+    unlistedMarks === 0;
   await fetch(`${HIROBA}/__profile?reset=1`);
   await readTitlesAgain();
 
@@ -3579,6 +3599,7 @@ try {
   await goTo("nameTitle");
   await inSection("title", "idle");
 
+  await titlesRead();
   await resetLog();
   await fetch(`${HIROBA}/__profile-posts?reset=1`);
   const readsBeforeTitle = await myPageHits();
@@ -3612,7 +3633,7 @@ try {
   await popupClosed();
   results.titleApplied =
     same(wornAfterTitleWrite, ["108"]) &&
-    (await inputValueOf("#title-pick")) === "" &&
+    (await inputValueOf("#title-pick")) === titleOf(108).label &&
     (await textOf("#profile-title")) === `Title: ${titleOf(108).label}`;
   results.titleIdsNotShown = idsShown.length === 3 && idsShown.every((shown) => !shown);
   results.titleSentOnlyThePlannedRequests = runThen(titleLog, TITLE_REQUESTS, TITLE_REREAD);
@@ -3715,11 +3736,11 @@ try {
     (await textOf("#name-counter")) === "5 / 10" &&
     (await disabledOf("#name-save")) === false;
   await typeName(` ${INITIAL_PROFILE.nickname} `);
-  const sameNameHelp = await textOf("#name-input-helper-text");
+  const sameNameHelp = await textOf("#name-hint");
   const sameNameShut = await disabledOf("#name-save");
   const unsendable = `あ${String.fromCharCode(1)}い`;
   const invalidNames: [string, string | null][] = [
-    ["", null],
+    ["", en.t("name.siteWarning")],
     [
       "あ".repeat(11),
       "This app refused the change before sending it: the nickname is longer than Hiroba's form takes.",
@@ -3732,7 +3753,7 @@ try {
   const invalidShown: [boolean | null, string | null][] = [];
   for (const [name] of invalidNames) {
     await typeName(name);
-    invalidShown.push([await disabledOf("#name-save"), await textOf("#name-input-helper-text")]);
+    invalidShown.push([await disabledOf("#name-save"), await textOf("#name-hint")]);
   }
   const sentBeforeTheBridge = await requestLog();
   const edgeRefused = await bridgeName(" あ");
@@ -3844,7 +3865,7 @@ try {
       saveDisabled: boolean | null;
       helper: string | null;
     }>(
-      `({ value: document.querySelector("#name-input").value, counter: document.querySelector("#name-counter")?.textContent ?? null, saveDisabled: document.querySelector("#name-save")?.disabled ?? null, helper: document.querySelector("#name-input-helper-text")?.textContent ?? null })`,
+      `({ value: document.querySelector("#name-input").value, counter: document.querySelector("#name-counter")?.textContent ?? null, saveDisabled: document.querySelector("#name-save")?.disabled ?? null, helper: document.querySelector("#name-hint")?.textContent ?? null })`,
     );
   await page.evaluate(
     `(() => { const input = document.querySelector("#name-input"); input.focus(); input.select(); })()`,
@@ -3857,11 +3878,11 @@ try {
   const committed = await nameField();
   results.nameCompositionNotJudgedUntilCommitted =
     composing.value === "あ" &&
-    composing.helper === null &&
+    composing.helper === en.t("name.siteWarning") &&
     composing.counter === `${[...INITIAL_PROFILE.nickname].length} / 10` &&
     composing.saveDisabled === true &&
     committed.value === "あたらしい" &&
-    committed.helper === null &&
+    committed.helper === en.t("name.siteWarning") &&
     committed.counter === "5 / 10" &&
     committed.saveDisabled === false;
   // An open composition beside a savable nickname: Enter is the IME's, and sends nothing.
@@ -4518,13 +4539,37 @@ try {
   );
   await running.goTo("nameTitle");
   await Bun.sleep(400);
-  const titleStepWhileHeld = await stepOn("#title-section");
+  const pickerShut = () =>
+    running.page.evaluate<boolean | null>(
+      `document.querySelector("#title-pick")?.disabled ?? null`,
+    );
+  const pickerShutWhileHeld = await pickerShut();
   const titleReadsWhileHeld = await hitsOn(TITLE_PAGE);
   await fetch(`${HIROBA}/__hold-precheck?on=0`);
   await stepIs("#title-section", "idle");
+  await waitFor(async () => ((await pickerShut()) === false ? true : undefined));
+  const titleReadsAfterTheWrite = await hitsOn(TITLE_PAGE);
+  // The arrow opens the picker once the field has the focus; pressed again until a read starts.
+  await waitFor(async () => {
+    if ((await hitsOn(TITLE_PAGE)) > titleReadsAfterTheWrite) {
+      return true;
+    }
+    await running.page.evaluate(`document.querySelector("#title-pick").focus()`);
+    for (const type of ["keyDown", "keyUp"]) {
+      await running.page.send("Input.dispatchKeyEvent", {
+        type,
+        key: "ArrowDown",
+        code: "ArrowDown",
+        windowsVirtualKeyCode: 40,
+      });
+    }
+    await Bun.sleep(500);
+    return undefined;
+  });
   results.firstTitleReadWaitsOutACostumeWrite =
-    titleStepWhileHeld === "unread" &&
+    pickerShutWhileHeld === true &&
     titleReadsWhileHeld === titleReadsBeforeFirstRead &&
+    titleReadsAfterTheWrite === titleReadsBeforeFirstRead &&
     runThen(await requestsSettled(COLOUR_REQUESTS.length + 1), COLOUR_REQUESTS, [
       `GET ${TITLE_PAGE}`,
     ]);
