@@ -16,6 +16,7 @@ import {
   type SaveReading,
   type StopReason,
   type Transport,
+  type TransportPost,
   type TransportRequest,
   type WriteDeps,
   type WriteOutcome,
@@ -24,6 +25,7 @@ import {
 
 const ORIGIN = "https://hiroba.test";
 const TOKEN = "0123456789abcdef0123456789abcdef";
+const STAGED_TOKEN = "fedcba9876543210fedcba9876543210";
 /** 12:00 JST, outside the daily break. */
 const NOON_JST = new Date("2026-09-27T03:00:00Z");
 
@@ -74,6 +76,8 @@ function fakeHiroba(initial = 1) {
       switch (key) {
         case "GET edit.php":
           return editPage();
+        case "GET stage.php":
+          return editPageOf(Number(new URL(request.url).searchParams.get("n")), STAGED_TOKEN);
         case "GET cross.php":
           return page("cross.php", `<p id="c">${hiroba.crossValue}</p>`);
         case "POST ajax/check.php":
@@ -165,6 +169,12 @@ const SPEC: WriteSpec<Value, Value, Value, EditorReading<Value>, string> = {
   },
 };
 
+/** Stages by reading `stage.php`, which answers with a page of its own token. */
+const STAGED_SPEC: WriteSpec<Value, Value, Value, EditorReading<Value>, string> = {
+  ...SPEC,
+  stage: (deps, _editor, body) => readHirobaPage(deps, `stage.php?n=${body.n}`, parseEdit),
+};
+
 function write(
   transport: Transport,
   target: number,
@@ -190,6 +200,12 @@ const APPLIED_SAVE: SaveReading = {
   code: 0,
   message: "更新しました。",
   report: "path=/ajax/save.php status=200 type=application/json bytes=56",
+};
+
+/** 04:59:59 JST for the first `calm` looks at the clock, and 05:00:30 JST after them. */
+const crossingAfter = (calm: number) => {
+  let looks = 0;
+  return () => new Date(looks++ < calm ? "2026-09-26T19:59:59Z" : "2026-09-26T20:00:30Z");
 };
 
 describe("runWrite", () => {
@@ -277,12 +293,6 @@ describe("runWrite", () => {
   });
 
   test("looks at the clock again before each post, so a write crossing 05:00 saves nothing", async () => {
-    /** 04:59:59 JST for the first `calm` looks at the clock, and 05:00:30 JST after them. */
-    const crossingAfter = (calm: number) => {
-      let looks = 0;
-      return () => new Date(looks++ < calm ? "2026-09-26T19:59:59Z" : "2026-09-26T20:00:30Z");
-    };
-
     const beforeThePrecheck = fakeHiroba();
     const stopped = await write(beforeThePrecheck.hiroba.transport, 2, {
       clock: crossingAfter(1),
@@ -497,9 +507,94 @@ describe("runWrite", () => {
   });
 });
 
-function editPageOf(n: number): Answer {
+describe("runWrite with a staging step", () => {
+  test("stages between the pre-check and the save, and saves with the staged page's token", async () => {
+    const { hiroba } = fakeHiroba();
+    const outcome = await write(hiroba.transport, 2, {}, STAGED_SPEC);
+    expect(hiroba.requests).toEqual([
+      "GET edit.php",
+      "POST ajax/check.php",
+      "GET stage.php",
+      "POST ajax/save.php",
+      "GET edit.php",
+    ]);
+    expect(hiroba.sent[2]?.url).toBe(`${ORIGIN}/stage.php?n=2`);
+    const posts = hiroba.sent.filter(
+      (request): request is TransportPost => request.method === "POST",
+    );
+    expect(posts.map((post) => post.form[0])).toEqual([
+      ["_tckt", TOKEN],
+      ["_tckt", STAGED_TOKEN],
+    ]);
+    expect(outcome).toMatchObject({ kind: "applied", before: { n: 1 }, after: { n: 2 } });
+  });
+
+  type FailedCase = [label: string, answer: () => Answer, expected: Record<string, unknown>];
+  test.each<FailedCase>([
+    ["the login page", () => LOGIN, { kind: "sessionGone", writeMayHaveHappened: false }],
+    [
+      "a timeout",
+      () => err({ kind: "timedOut", url: `${ORIGIN}/stage.php` }),
+      { kind: "readFailed", failure: { kind: "timedOut" } },
+    ],
+    [
+      "a page that is not the editor",
+      () => page("stage.php", "<p>new shape</p>"),
+      { kind: "readFailed", failure: { kind: "unexpectedPage" } },
+    ],
+  ])("a staging read that ends on %s sends no save", async (_label, answer, expected) => {
+    const { hiroba, next } = fakeHiroba();
+    next("GET stage.php", answer);
+    const outcome = await write(hiroba.transport, 2, {}, STAGED_SPEC);
+    expect(outcome).toMatchObject(expected);
+    expect(hiroba.requests).toEqual(["GET edit.php", "POST ajax/check.php", "GET stage.php"]);
+    expect(hiroba.state).toBe(1);
+  });
+
+  test("stops with notStaged and sends no save when the staged set is not the planned one", async () => {
+    const { hiroba, next } = fakeHiroba();
+    next("GET stage.php", () => editPageOf(5, STAGED_TOKEN));
+    const outcome = await write(hiroba.transport, 2, {}, STAGED_SPEC);
+    expect(outcome).toEqual({
+      kind: "notStaged",
+      before: { n: 1 },
+      staged: { n: 5 },
+      expectedAfter: { n: 2 },
+    });
+    expect(hiroba.requests).toEqual(["GET edit.php", "POST ajax/check.php", "GET stage.php"]);
+    expect(hiroba.state).toBe(1);
+  });
+
+  test("looks at the clock before staging and again before the save", async () => {
+    const beforeStaging = fakeHiroba();
+    const first = await write(
+      beforeStaging.hiroba.transport,
+      2,
+      { clock: crossingAfter(2) },
+      STAGED_SPEC,
+    );
+    expect(first).toEqual({ kind: "maintenance" });
+    expect(beforeStaging.hiroba.requests).toEqual(["GET edit.php", "POST ajax/check.php"]);
+
+    const beforeTheSave = fakeHiroba();
+    const second = await write(
+      beforeTheSave.hiroba.transport,
+      2,
+      { clock: crossingAfter(3) },
+      STAGED_SPEC,
+    );
+    expect(second).toEqual({ kind: "maintenance" });
+    expect(beforeTheSave.hiroba.requests).toEqual([
+      "GET edit.php",
+      "POST ajax/check.php",
+      "GET stage.php",
+    ]);
+  });
+});
+
+function editPageOf(n: number, token = TOKEN): Answer {
   return page(
     "edit.php",
-    `<form><input name="_tckt" value="${TOKEN}"><input id="n" value="${n}"></form>`,
+    `<form><input name="_tckt" value="${token}"><input id="n" value="${n}"></form>`,
   );
 }
