@@ -15,7 +15,7 @@ A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-dat
 - [ ] Change My Don's costumes and colours
 - [ ] Change your game settings
 - [ ] Change your favourite songs
-- [ ] Preview every change, and undo it afterwards
+- [ ] Preview a costume before saving it, and go back to one you wore before
 - [ ] Browse offline, from a local database
 - [ ] Hold several accounts at once
 - [ ] Sync incrementally, and resume where it stopped
@@ -34,7 +34,7 @@ A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-dat
 
 **Polite by default.** Hiroba is someone else's service. Fetching is deliberately slow and incremental, and it backs off when the site pushes back. Fetching more is always something you ask for, never something that happens on its own.
 
-**Your account, your call.** The toolkit signs in as you and can change your real Taiko profile. Every change shows you what it will do first and how to put it back — but the account it touches is yours, and so is the responsibility.
+**Your account, your call.** The toolkit signs in as you and can change your real Taiko profile. The account it touches is yours, and so is the responsibility.
 
 ## More
 
