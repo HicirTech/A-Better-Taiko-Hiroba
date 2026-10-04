@@ -340,7 +340,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "相刪將影響",
     "發稍布",
     "者類星其他來太基依",
-    "替順序鍵拿起向",
+    "替順序鍵拿起向命",
   ].join(""),
 );
 

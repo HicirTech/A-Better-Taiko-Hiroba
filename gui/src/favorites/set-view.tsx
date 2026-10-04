@@ -7,72 +7,94 @@ import type { SongLook } from "./song-look";
 import { SongRow } from "./song-row";
 import { SortableList } from "./sortable-list";
 
+const LIST = {
+  listStyle: "none",
+  m: 0,
+  p: 0,
+  display: "flex",
+  flexDirection: "column",
+  gap: 1,
+} as const;
+
 export interface SetViewProps {
-  /** The songs as edited, which are the set's own until something changes them. */
+  /** The songs as shown: the set's own, or, while it is edited, the edits. */
   readonly songs: readonly string[];
   readonly look: (songNo: string) => SongLook;
   readonly i18n: Translator;
-  /** The songs differ from the set's saved ones: they are saved before the set can be applied. */
+  /** Edit was pressed: the songs can be added, taken out and moved until Save. */
+  readonly editing: boolean;
+  /** The edits differ from the set's songs, so Reset can drop them. */
   readonly edited: boolean;
-  /** The folder is read and no write runs, and applying the saved set would change it. */
+  /** The folder is read and no write runs, and applying the set would change it. */
   readonly canApply: boolean;
   /** The folder is being written. */
   readonly applying: boolean;
-  /** A long press moves a song, as on a phone; otherwise its handle does. */
+  /** While editing, a long press moves a song, as on a phone; otherwise its handle does. */
   readonly byLongPress: boolean;
+  readonly onEdit: () => void;
   readonly onAddSongs: () => void;
   readonly onRemoveSong: (songNo: string) => void;
   readonly onMoveSong: (from: number, to: number) => void;
+  readonly onReset: () => void;
   readonly onSave: () => void;
-  readonly onDiscard: () => void;
   readonly onApply: () => void;
 }
 
-/** A set's actions above its songs, which move and come out; one button saves, then applies. */
+/** A set: shown with Edit and Apply, and while edited with Add songs, Reset and Save. */
 export function SetView({
   songs: songNos,
   look,
   i18n,
+  editing,
   edited,
   canApply,
   applying,
   byLongPress,
+  onEdit,
   onAddSongs,
   onRemoveSong,
   onMoveSong,
+  onReset,
   onSave,
-  onDiscard,
   onApply,
 }: SetViewProps) {
   const { t } = i18n;
   const songs = songNos.map((songNo) => ({ key: songNo, name: look(songNo).name }));
   return (
-    <Card id="favorite-set-view" variant="outlined">
+    <Card id="favorite-set-view" variant="outlined" data-editing={editing}>
       <CardContent>
         <Stack spacing={1.5}>
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
-            <Button id="favorite-set-add" variant="outlined" onClick={onAddSongs}>
-              {t("favorites.addSongs")}
-            </Button>
-            <Box sx={{ flexGrow: 1 }} />
-            {edited ? (
+            {editing ? (
               <>
-                <Button id="favorite-set-discard" onClick={onDiscard}>
-                  {t("costume.reset")}
+                <Button id="favorite-set-add" variant="outlined" onClick={onAddSongs}>
+                  {t("favorites.addSongs")}
                 </Button>
+                <Box sx={{ flexGrow: 1 }} />
+                {edited && (
+                  <Button id="favorite-set-reset" onClick={onReset}>
+                    {t("costume.reset")}
+                  </Button>
+                )}
                 <Button id="favorite-set-save" variant="contained" onClick={onSave}>
                   {t("favorites.saveSet")}
                 </Button>
               </>
             ) : (
-              <Button
-                id="favorite-set-apply"
-                variant="contained"
-                disabled={!canApply}
-                onClick={onApply}
-              >
-                {t("favorites.apply")}
-              </Button>
+              <>
+                <Button id="favorite-set-edit" variant="outlined" onClick={onEdit}>
+                  {t("favorites.edit")}
+                </Button>
+                <Box sx={{ flexGrow: 1 }} />
+                <Button
+                  id="favorite-set-apply"
+                  variant="contained"
+                  disabled={!canApply}
+                  onClick={onApply}
+                >
+                  {t("favorites.apply")}
+                </Button>
+              </>
             )}
           </Box>
           {applying && <Waiting id="favorite-set-applying">{t("costume.saving")}</Waiting>}
@@ -80,7 +102,7 @@ export function SetView({
             <Typography id="favorite-set-empty" color="text.secondary">
               {t("favorites.setEmpty")}
             </Typography>
-          ) : (
+          ) : editing ? (
             <SortableList
               id="favorite-set-songs"
               items={songs}
@@ -112,6 +134,19 @@ export function SetView({
                 );
               }}
             />
+          ) : (
+            <Box component="ul" id="favorite-set-songs" sx={LIST}>
+              {songNos.map((songNo) => (
+                <li key={songNo} data-key={songNo}>
+                  <SongRow
+                    id={`favorite-set-song-${songNo}`}
+                    look={look(songNo)}
+                    i18n={i18n}
+                    scrolling
+                  />
+                </li>
+              ))}
+            </Box>
           )}
         </Stack>
       </CardContent>

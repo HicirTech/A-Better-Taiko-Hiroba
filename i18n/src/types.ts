@@ -293,10 +293,8 @@ export interface Messages {
   "favorites.slot.empty": string;
   "favorites.reading": string;
   /** The お気に入り folder on Hiroba, as the Favourites page names it. */
-  "favorites.folder": string;
   "favorites.folder.heading": string;
   /** The same folder in the sets drawer, among the sets kept on the device. */
-  "favorites.folderOnHiroba": string;
   "favorites.folderEmpty": string;
   "favorites.sets": string;
   "favorites.newSet": string;
@@ -309,11 +307,14 @@ export interface Messages {
   "favorites.saveAsSet": string;
   "favorites.saveToSet": string;
   "favorites.saveSet": string;
+  "favorites.current": string;
+  "favorites.edit": string;
+  "favorites.rename": string;
+  "favorites.rename.title": string;
   "favorites.inUse": string;
   "favorites.replace.title": string;
   "favorites.replace.body": string;
   "favorites.replace.confirm": string;
-  "favorites.deleteSet": string;
   "sort.handle": string;
   "sort.instructions": string;
   "sort.picked": string;

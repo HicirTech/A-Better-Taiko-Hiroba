@@ -29,6 +29,8 @@ const VERTICAL: Modifier = ({ transform }) => ({ ...transform, x: 0 });
 // A finger held still this long picks a row up; one that moves sooner scrolls the page.
 const TOUCH_HOLD = { delay: 300, tolerance: 8 } as const;
 const MOUSE_DRAG = { distance: 4 } as const;
+// A finger let go within this of where the row was picked up meant the press, not a move.
+const HELD_IN_PLACE_PX = 8;
 
 const LIST = {
   listStyle: "none",
@@ -68,6 +70,8 @@ export interface SortableListProps {
   readonly byLongPress: boolean;
   readonly i18n: Translator;
   readonly onMove: (from: number, to: number) => void;
+  /** A finger held a row and let go where it was: the touch screen's right-click. */
+  readonly onHold?: (key: string) => void;
   /** The row's content, given the handle to put at its start; null when a long press moves it. */
   readonly renderItem: (key: string, handle: ReactNode) => ReactNode;
   readonly sx?: SxProps<Theme>;
@@ -80,6 +84,7 @@ export function SortableList({
   byLongPress,
   i18n,
   onMove,
+  onHold,
   renderItem,
   sx,
 }: SortableListProps) {
@@ -110,12 +115,18 @@ export function SortableList({
     release.current?.();
     release.current = null;
   };
-  const end = ({ active, over }: DragEndEvent) => {
+  const end = ({ active, over, delta, activatorEvent }: DragEndEvent) => {
     letGo();
     const from = indexOf(active.id);
     const to = over === null ? -1 : indexOf(over.id);
     if (from !== -1 && to !== -1 && from !== to) {
       onMove(from, to);
+    } else if (
+      onHold !== undefined &&
+      activatorEvent.type.startsWith("touch") &&
+      Math.hypot(delta.x, delta.y) <= HELD_IN_PLACE_PX
+    ) {
+      onHold(String(active.id));
     }
   };
   return (

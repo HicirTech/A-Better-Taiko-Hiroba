@@ -6,6 +6,7 @@ import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { HELD_STILL, LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import {
+  type FavoriteSet,
   filledSlots,
   moved,
   newSetName,
@@ -16,7 +17,7 @@ import {
 import { SetsIcon } from "./favorites-icons";
 import { type FavoritesStep, shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
-import { SetNameField } from "./set-name-field";
+import { SetNameDialog } from "./set-name-dialog";
 import { SetView } from "./set-view";
 import { SetsDrawer } from "./sets-drawer";
 import { SongCard } from "./song-card";
@@ -28,6 +29,11 @@ import { useSetsSwipe } from "./use-sets-swipe";
 import type { SongCatalogue } from "./use-song-catalogue";
 
 const NO_SONGS: readonly string[] = [];
+
+/** What the name dialog asks for: a new set, opened for editing or not, or a set's new name. */
+type Naming =
+  | { readonly kind: "new"; readonly songs: readonly string[]; readonly editing: boolean }
+  | { readonly kind: "rename"; readonly set: FavoriteSet };
 
 export interface FavoritesPageProps {
   readonly favorites: FavoritesEditor;
@@ -43,8 +49,10 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
   const { sets } = keptSets;
   // The folder on Hiroba is shown until a set is picked from the drawer.
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  // A set's songs as edited, kept apart until the set is saved; showing another set drops them.
+  // A set is shown, then edited after Edit; the edits wait apart until Save.
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<readonly string[] | null>(null);
+  const [naming, setNaming] = useState<Naming | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [picking, setPicking] = useState<"song" | "set" | null>(null);
   const page = useRef<HTMLDivElement>(null);
@@ -88,9 +96,18 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
       }) as const,
     [editedSongs, toggleInSet],
   );
-  const showSet = (id: string | null) => {
+  const showSet = (id: string | null, editingIt = false) => {
     setSelectedId(id);
     setDraft(null);
+    setEditing(editingIt);
+  };
+  const named = (name: string) => {
+    if (naming?.kind === "new") {
+      showSet(keptSets.add(name, naming.songs), naming.editing);
+    } else if (naming?.kind === "rename") {
+      keptSets.rename(naming.set.id, name);
+    }
+    setNaming(null);
   };
 
   // Focus leaves the button a write shuts, so it is not dropped to the window's top.
@@ -98,13 +115,6 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
     page.current?.focus({ preventScroll: true });
     void favorites.saveSong();
   };
-  const addSet = (songs: readonly string[]) =>
-    showSet(
-      keptSets.add(
-        newSetName(sets, (number) => t("favorites.setName", { number })),
-        songs,
-      ),
-    );
   const apply = async (songs: readonly string[]) => {
     page.current?.focus({ preventScroll: true });
     await favorites.applySet(songs);
@@ -122,18 +132,9 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
         <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          {set === null ? (
-            <Typography id="favorites-name" variant="h6" component="h2" noWrap>
-              {t("favorites.folder")}
-            </Typography>
-          ) : (
-            <SetNameField
-              key={set.id}
-              set={set}
-              i18n={i18n}
-              onRename={(name) => keptSets.rename(set.id, name)}
-            />
-          )}
+          <Typography id="favorites-name" variant="h6" component="h2" noWrap>
+            {set === null ? t("favorites.current") : set.name}
+          </Typography>
         </Box>
         <IconButton
           id="favorites-sets"
@@ -152,6 +153,7 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
           songs={editedSongs}
           look={look}
           i18n={i18n}
+          editing={editing}
           edited={edited}
           canApply={
             shown !== null &&
@@ -161,14 +163,18 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
           }
           applying={shown?.saving === "folder"}
           byLongPress={touchFirst}
+          onEdit={() => setEditing(true)}
           onAddSongs={() => setPicking("set")}
           onRemoveSong={(songNo) => edit((songs) => songs.filter((song) => song !== songNo))}
           onMoveSong={(from, to) => edit((songs) => moved(songs, from, to))}
+          onReset={() => setDraft(null)}
           onSave={() => {
-            keptSets.replaceSongs(set.id, editedSongs);
+            if (draft !== null) {
+              keptSets.replaceSongs(set.id, draft);
+            }
             setDraft(null);
+            setEditing(false);
           }}
-          onDiscard={() => setDraft(null)}
           onApply={() => void apply(set.songs)}
         />
       ) : shown === null ? (
@@ -189,7 +195,13 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
             i18n={i18n}
             sets={sets}
             inUse={inUse}
-            onSaveAsSet={() => addSet(filledSlots(shown.view.folder.state))}
+            onSaveAsSet={() =>
+              setNaming({
+                kind: "new",
+                songs: filledSlots(shown.view.folder.state),
+                editing: false,
+              })
+            }
             onSaveToSet={(id) => keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))}
           />
         </Stack>
@@ -206,10 +218,16 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
           setDrawerOpen(false);
         }}
         onAdd={() => {
-          addSet([]);
           setDrawerOpen(false);
+          setNaming({ kind: "new", songs: [], editing: true });
         }}
         onMove={keptSets.moveSet}
+        onRename={(id) => {
+          const chosen = sets.find((one) => one.id === id);
+          if (chosen !== undefined) {
+            setNaming({ kind: "rename", set: chosen });
+          }
+        }}
         onDelete={(id) => {
           keptSets.remove(id);
           if (id === selectedId) {
@@ -225,6 +243,20 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
         i18n={i18n}
         onClose={() => setPicking(null)}
       />
+      {naming !== null && (
+        <SetNameDialog
+          key={naming.kind === "rename" ? naming.set.id : "new"}
+          title={t(naming.kind === "rename" ? "favorites.rename.title" : "favorites.newSet")}
+          initial={
+            naming.kind === "rename"
+              ? naming.set.name
+              : newSetName(sets, (number) => t("favorites.setName", { number }))
+          }
+          i18n={i18n}
+          onCancel={() => setNaming(null)}
+          onSave={named}
+        />
+      )}
       {set !== null && (
         <SongPicker
           open={picking === "set"}
