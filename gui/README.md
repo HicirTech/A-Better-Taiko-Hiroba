@@ -31,7 +31,12 @@ Settings is laid out as Gmail's settings are: sections with small headings, each
 each setting one row with its name, a line on it where one helps, and its control. **Language**
 lists its choices with radio buttons; **Account** says who is signed in, by the nickname your page
 gives, with the note on staying signed in and **Sign out** beside it. While a read runs it says
-**Signed in**, and **Sign out** is shut until the read ends.
+**Signed in**, and **Sign out** is shut until the read ends. **Updates** gives the version of the
+build and a **Check for updates** button; once a day, when the app opens, it also reads `update.json`
+from the latest GitHub release, and a newer version it has not told of yet opens a dialog with the
+release's notes, **Download** (that release's page, in the system's browser) and **Later**. An
+unpackaged build reads no feed, and so never asks GitHub, unless `ABTH_DEV_UPDATE_FEED`
+(`VITE_ABTH_DEV_UPDATE_FEED` on Android) names one.
 
 Signed in, the Overview and Favourites read your page again from a small round **Read again**
 button with a refresh arrow at the top right, which stays there as the page scrolls. It spins
@@ -461,14 +466,15 @@ and the list that decides the two extra reads is the one [Writes](#writes) descr
 
 Two workflows run on GitHub Actions. `.github/workflows/ci.yml` runs on a pull request to `main`, on
 a push to `main`, and when started by hand. It has two jobs side by side: **Checks** (format, lint,
-typecheck, the tests and the GUI bundle) and **Android debug APK** (`bun run android:apk`, on the
-runner's Android SDK, with JDK 21 and Node 22).
+typecheck, the tests, the update feed and the GUI bundle) and **Android debug APK**
+(`bun run android:apk`, on the runner's Android SDK, with JDK 21 and Node 22).
 `.github/workflows/release.yml` builds and publishes a release; [Making a
 release](#making-a-release) says what is done by hand.
 
 ### The version
 
-`version` in `gui/package.json` is the one place a version is written. It is
+`version` in `gui/package.json` is the one place a version is set; `gui/update.json` repeats it for
+the update reminder, and CI fails when the two differ. A version is
 `MAJOR.MINOR.PATCH`, and the tag is `v` and the version: `v0.1.0`. electron-builder names the
 Windows files from it, and `android/app/build.gradle` reads it too: `versionName` is the same text,
 and `versionCode` is `major * 10000 + minor * 100 + patch`, so 0.1.0 is 100 and 1.2.3 is 10203.
@@ -482,8 +488,10 @@ Gradle script refuses a version that breaks these rules, so the Android build fa
 A release takes two steps by hand, and the workflow below does the rest.
 
 1. Raise the version in a pull request. In a branch, set `version` in `gui/package.json` and
-   run `bun install`, so that `bun.lock`, which states each workspace's version too, follows. Commit
-   both as `chore(release): bump to <version>`, open a pull request, and merge it.
+   run `bun install`, so that `bun.lock`, which states each workspace's version too, follows. Set
+   `version` and `notes` in `gui/update.json` as well: the notes are a list of lines for each of
+   `en`, `ja`, `zh-Hans` and `zh-Hant` (any of them), and are what the app's update dialog shows.
+   Commit them as `chore(release): bump to <version>`, open a pull request, and merge it.
 2. Tag the merge commit and push the tag. On an up-to-date `main`:
 
    ```bash
@@ -496,7 +504,8 @@ A release takes two steps by hand, and the workflow below does the rest.
    after it; give a commit's hash after the message to tag another.
 
 The tag starts the release. If it is not `v` plus the version that `gui/package.json` states at
-the tagged commit, the workflow stops the run before anything is built.
+the tagged commit, or `gui/update.json` is not valid or states another version, the workflow stops
+the run before anything is built. `bun run check:update-feed` makes the same check.
 
 ### What the workflow builds
 
@@ -504,10 +513,11 @@ the tagged commit, the workflow stops the run before anything is built.
 as a **dry run**, which builds the same files, keeps them and creates no release: when started by
 hand (**Run workflow** in the Actions tab), and on a pull request to `main` that touches what a
 release is made of, which is the workflow itself, `gui/package.json` (which also holds
-electron-builder's configuration, under `build`) and `gui/android/**`.
+electron-builder's configuration, under `build`), `gui/update.json` and `gui/android/**`.
 
-A **Version** job reads the version first, and on a tag run stops the run unless the tag is `v` and
-that version. Then two jobs run side by side, neither waiting on the other:
+A **Version** job reads the version first, checks `gui/update.json` against it, and on a tag run
+stops the run unless the tag is `v` and that version. Then two jobs run side by side, neither
+waiting on the other:
 
 | Job | Runs on | Makes |
 |---|---|---|
@@ -517,8 +527,9 @@ that version. Then two jobs run side by side, neither waiting on the other:
 Each uploads its files as an artifact of the run (**android** and **windows**, kept for 14 days).
 On a tag, a **Release** job then runs after both. It downloads the artifacts and runs
 `gh release create v<version> --title "A Better Taiko Hiroba <version>" --generate-notes` with the
-three files, as `GITHUB_TOKEN` with `contents: write`; the notes list the pull requests merged since
-the last release. **The release is published, not a draft**: its files are public as soon as that
+three files and `gui/update.json` (the release's asset `update.json`, which the app reads), as
+`GITHUB_TOKEN` with `contents: write`; the notes list the pull requests merged since the last
+release. **The release is published, not a draft**: its files are public as soon as that
 job ends. A dry run never reaches that job.
 
 If a job fails, nothing is published and the tag stays. Fix the cause and **Re-run failed jobs** on
