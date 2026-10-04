@@ -147,7 +147,6 @@ export const ja: Messages = {
   "title.notListed":
     "今の称号は一覧にありません。称号パーツで作ったものかもしれません。このバージョンでは読み取れず、元にも戻せません。",
   "name.heading": "ドンだーネーム",
-  "name.field": "新しいドンだーネーム",
   "name.counter": "{count} / {max}",
   "name.siteWarning":
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",

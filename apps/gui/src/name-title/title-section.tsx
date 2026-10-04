@@ -14,7 +14,7 @@ export interface TitleSectionProps {
   /** The title worn, as my page shows it: "" when none. */
   readonly worn: string;
   readonly i18n: Translator;
-  /** A write is on its way: nothing is pressed meanwhile. */
+  /** Any write, the costume's too, is on its way: nothing is pressed meanwhile. */
   readonly busy: boolean;
 }
 

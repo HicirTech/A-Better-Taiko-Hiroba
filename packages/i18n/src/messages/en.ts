@@ -146,7 +146,6 @@ export const en: Messages = {
   "title.notListed":
     "Your current title is not in this list. It may be built from parts, which this version cannot read or change back.",
   "name.heading": "Nickname",
-  "name.field": "New nickname",
   "name.counter": "{count} / {max}",
   "name.siteWarning":
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",

@@ -185,7 +185,6 @@ export interface Messages {
   "title.shared": string;
   "title.notListed": string;
   "name.heading": string;
-  "name.field": string;
   /** Params: {count}, how many characters it holds, and {max}. */
   "name.counter": string;
   /** Hiroba's own warning above the field, as the site writes it, in every language. */

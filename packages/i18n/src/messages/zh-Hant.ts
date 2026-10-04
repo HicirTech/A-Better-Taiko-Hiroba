@@ -139,7 +139,6 @@ export const zhHant: Messages = {
   "title.notListed":
     "你目前的稱號不在此清單中，可能是由多個部件組合而成的，此版本無法讀取，也無法還原。",
   "name.heading": "暱稱",
-  "name.field": "新暱稱",
   "name.counter": "{count} / {max}",
   "name.siteWarning":
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",

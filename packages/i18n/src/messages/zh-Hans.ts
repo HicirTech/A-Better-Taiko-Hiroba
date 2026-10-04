@@ -140,7 +140,6 @@ export const zhHans: Messages = {
   "title.notListed":
     "你当前的称号不在此列表中，可能是由多个部件组合而成的，此版本无法读取，也无法还原。",
   "name.heading": "昵称",
-  "name.field": "新昵称",
   "name.counter": "{count} / {max}",
   "name.siteWarning":
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
