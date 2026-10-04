@@ -16,6 +16,8 @@ export const PANEL_ART = "/image/sp/640/total_score_image_5.png";
 export const USER_DATA = join(root, "out", "e2e-user-data");
 /** Its own folder: a language picked there must not reach the runs that read English. */
 export const LANGUAGE_USER_DATA = join(root, "out", "e2e-user-data-language");
+export const UPDATES_USER_DATA = join(root, "out", "e2e-user-data-updates");
+export const UPDATE_FEED = "/__update-feed/update.json";
 /** MUI's md: from this width the app frame shows its side panel. */
 export const MD_WIDTH_PX = 900;
 export const PHONE = { width: 480, height: 800 } as const;
