@@ -33,7 +33,7 @@ export function SongCard({ shown, look, i18n, onChange, onSave, onReset }: SongC
               {t("favorites.song.none")}
             </Typography>
           ) : (
-            <SongRow id="favorite-song-row" look={look(songNo)} i18n={i18n} />
+            <SongRow id="favorite-song-row" look={look(songNo)} i18n={i18n} scrolling />
           )}
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
             <Button id="favorite-song-change" variant="outlined" disabled={shut} onClick={onChange}>

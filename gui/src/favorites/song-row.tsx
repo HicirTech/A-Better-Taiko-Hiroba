@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { GENRE_COLOUR } from "./genre-look";
 import { LevelBadges } from "./level-badges";
+import { ScrollingText } from "./scrolling-text";
 import type { SongLook } from "./song-look";
 
 const ONE_LINE = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
@@ -33,13 +34,18 @@ export interface SongRowProps {
   readonly name?: ReactNode;
   /** After the badges: such as a button that takes the song out. */
   readonly end?: ReactNode;
+  /** Before the bar: such as the handle that moves the row. */
+  readonly start?: ReactNode;
+  /** A name too long for the row scrolls rather than ends in an ellipsis. */
+  readonly scrolling?: boolean;
   readonly id?: string;
 }
 
-export function SongRow({ look, i18n, name, end, id }: SongRowProps) {
+export function SongRow({ look, i18n, name, end, start, scrolling, id }: SongRowProps) {
   const { genre } = look;
   return (
     <Box component="span" id={id} className="song-row" data-song-no={look.songNo} sx={ROW}>
+      {start}
       <span
         className="song-bar"
         aria-hidden
@@ -50,9 +56,15 @@ export function SongRow({ look, i18n, name, end, id }: SongRowProps) {
         }
       />
       <span className="song-text">
-        <span className="song-name" lang={look.lang}>
-          {name ?? look.name}
-        </span>
+        {scrolling ? (
+          <ScrollingText className="song-name" lang={look.lang}>
+            {name ?? look.name}
+          </ScrollingText>
+        ) : (
+          <span className="song-name" lang={look.lang}>
+            {name ?? look.name}
+          </span>
+        )}
         {look.artists.length > 0 && (
           <span className="song-artists" lang={HIROBA_LANG}>
             {look.artists.join(", ")}
