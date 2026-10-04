@@ -125,6 +125,25 @@ describe("reduceName, the field", () => {
   });
 });
 
+describe("reduceName, dropping the edits on leaving the page", () => {
+  test.each<[label: string, step: NameStep]>([
+    ["a name typed", idle("あたらしい")],
+    ["a notice", idle(null, notSyncedOutcome)],
+    ["a name typed and a notice", idle("あたらしい", refusedOutcome)],
+  ])("puts the field back to the name worn, and clears the notice, over %s", (_label, step) => {
+    expect(reduce(step, { type: "editsDropped" })).toBe(IDLE);
+  });
+
+  test("leaves the very same step for a field never typed in, with nothing said", () => {
+    expect(reduce(IDLE, { type: "editsDropped" })).toBe(IDLE);
+  });
+
+  test("drops nothing in a save", () => {
+    const step = saving();
+    expect(reduce(step, { type: "editsDropped" })).toBe(step);
+  });
+});
+
 describe("reduceName, saving", () => {
   test("starts a save from the field, holding what was typed", () => {
     expect(reduce(idle("あたらしい"), { type: "saveStarted" })).toEqual(saving("あたらしい"));
