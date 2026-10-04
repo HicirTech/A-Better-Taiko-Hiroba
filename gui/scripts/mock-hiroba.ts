@@ -1,4 +1,5 @@
 /** Stand-in for Hiroba and the Bandai Namco ID host, so sign-in runs without the real sites. */
+import { chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
 import { createFavoritesEditor } from "./mock-favorites";
@@ -461,6 +462,8 @@ Bun.serve({
         });
       case "/__song-catalogue":
         return Response.json(wikiSongsSince(searchParams.get("after")));
+      case "/__chinese-names":
+        return Response.json(chineseNamesBatch(searchParams.get("gcmcontinue")));
       case "/__last-token":
         return new Response(lastIssued);
       case "/__expire":

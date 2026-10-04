@@ -3,7 +3,7 @@ import { watch } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
 import { createServer } from "vite";
-import { SONG_CATALOGUE_URL } from "../src/song-catalogue";
+import { CHINESE_NAMES_URL, SONG_CATALOGUE_URL } from "../src/song-catalogue";
 
 const root = join(import.meta.dir, "..");
 const real = process.argv.includes("--real");
@@ -24,9 +24,10 @@ const mockEnv = real
       // Not the installed app's %APPDATA%: its real session and history would meet the mock.
       ABTH_DEV_USER_DATA: join(root, "out", "dev-user-data"),
     };
-// An unpackaged build reads the song list only from an address it is given.
+// An unpackaged build reads the song lists only from the addresses it is given.
 const songCatalogueEnv = {
   ABTH_DEV_SONG_CATALOGUE: real ? SONG_CATALOGUE_URL : `${HIROBA_ORIGIN}/__song-catalogue`,
+  ABTH_DEV_CHINESE_NAMES: real ? CHINESE_NAMES_URL : `${HIROBA_ORIGIN}/__chinese-names`,
 };
 
 const vite = await createServer({ configFile: join(root, "vite.config.ts"), root });
