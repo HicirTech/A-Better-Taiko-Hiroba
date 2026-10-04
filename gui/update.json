@@ -1,19 +1,33 @@
 {
-  "version": "0.1.1",
+  "version": "0.2.0",
   "notes": {
     "en": [
-      "On a phone, swipe right to open the menu, and left to close it",
-      "The page stays on screen while it is read again",
-      "Leaving the Costume or Nickname and title page drops its unsaved edits",
-      "The costume grids sit centred",
-      "Every costume in History keeps its picture"
+      "A new Favourites page: change your favourite song and your favourites folder",
+      "Keep sets of favourite songs on your device, and swap the whole folder for one in a single save",
+      "Find songs by genre, or by part of a name in Japanese, English or Chinese",
+      "Every song shows its genre colour, its artists and each chart's star level",
+      "Song data comes from taiko.wiki and the Chinese Taiko no Tatsujin wiki"
+    ],
+    "ja": [
+      "お気に入りページを追加：大好きな曲とお気に入りフォルダを変更できます",
+      "お気に入りのセットを端末に保存し、フォルダ全体を一度の保存で入れ替えられます",
+      "ジャンル、または日本語・英語・中国語の曲名の一部で曲を探せます",
+      "各曲にジャンルの色、アーティスト、各難易度の星を表示します",
+      "曲のデータは taiko.wiki と中国語の太鼓の達人 Wiki によるものです"
     ],
     "zh-Hans": [
-      "手机上往右划打开菜单，往左划关上",
-      "下拉重新读取时，页面留在原地",
-      "离开换装页或昵称与称号页时，未保存的修改会清掉",
-      "换装网格居中排列",
-      "历史记录里的每套装束都有图片"
+      "新增收藏页：可以修改最爱歌曲和收藏夹",
+      "在本机保存多套收藏，一次保存就能整个换掉收藏夹",
+      "按分类，或用日文、英文、中文歌名的一部分找歌",
+      "每首歌都显示分类颜色、作者和各难度的星级",
+      "歌曲资料来自 taiko.wiki 和中文太鼓之达人维基"
+    ],
+    "zh-Hant": [
+      "新增收藏頁：可以修改最愛歌曲和收藏資料夾",
+      "在本機儲存多套收藏，一次儲存就能整個換掉收藏資料夾",
+      "按分類，或用日文、英文、中文歌名的一部分找歌",
+      "每首歌都顯示分類顏色、作者和各難度的星級",
+      "歌曲資料來自 taiko.wiki 和中文太鼓之達人維基"
     ]
   }
 }
