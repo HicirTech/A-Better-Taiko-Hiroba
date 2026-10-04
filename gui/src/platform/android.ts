@@ -36,13 +36,15 @@ import {
 import {
   CHINESE_NAMES_URL,
   catalogueUrlFor,
+  chartOriginFor,
+  createChartPictureReader,
   readChineseNames,
   readSongCatalogue,
 } from "../song-catalogue";
 import { feedUrlFor, readUpdateFeed } from "../updates";
 import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
-import { createIndexedDbPictureStore } from "./android-picture-store";
+import { CHART_PICTURE_DATABASE, createIndexedDbPictureStore } from "./android-picture-store";
 import { createAndroidTransport } from "./android-transport";
 
 const endpoints: HirobaEndpoints = import.meta.env.DEV
@@ -67,6 +69,11 @@ const chineseNamesUrl = catalogueUrlFor(
   Boolean(import.meta.env.DEV),
   import.meta.env.VITE_ABTH_DEV_CHINESE_NAMES,
   CHINESE_NAMES_URL,
+);
+
+const chartOrigin = chartOriginFor(
+  Boolean(import.meta.env.DEV),
+  import.meta.env.VITE_ABTH_DEV_CHART_ORIGIN,
 );
 
 export interface AndroidPortOptions {
@@ -141,6 +148,14 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     queue,
     limits: ANDROID_PICTURE_LIMITS,
     state: () => ({ signedIn, offered, owner, sources }),
+  });
+  const chartPictures = createChartPictureReader({
+    transport,
+    store:
+      options.indexedDb === undefined
+        ? createMemoryPictureStore()
+        : createIndexedDbPictureStore(options.indexedDb, CHART_PICTURE_DATABASE),
+    chartOrigin,
   });
 
   const forget = async () => {
@@ -296,8 +311,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     readChineseNames: () => readChineseNames(transport, chineseNamesUrl),
 
-    // TODO: read and keep the picture; this stands until the chart reader is built.
-    readChartPicture: async () => err({ code: "chart=notBuilt" }),
+    readChartPicture: chartPictures,
   });
 
   return checkedPort(port);

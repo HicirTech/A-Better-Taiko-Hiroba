@@ -65,13 +65,15 @@ const LOOKS_AT_THE_BUILD: Readonly<Record<string, readonly string[]>> = {
     "env.ABTH_DEV_USER_DATA",
   ],
   // A development build behind Vite's dev server may point at the stand-in, at a feed for the
-  // update check and at the song lists; a production build, the release APK included, always reaches
-  // the real sites.
+  // update check, at the song lists and at the chart pictures; a production build, the release APK
+  // included, always reaches the real sites.
   "src/platform/android.ts": [
     "import.meta.env.DEV",
     "import.meta.env.DEV",
     "import.meta.env.DEV",
     "import.meta.env.DEV",
+    "import.meta.env.DEV",
+    "import.meta.env.VITE_ABTH_DEV_CHART_ORIGIN",
     "import.meta.env.VITE_ABTH_DEV_CHINESE_NAMES",
     "import.meta.env.VITE_ABTH_DEV_HIROBA_ORIGIN",
     "import.meta.env.VITE_ABTH_DEV_IDP_HOST",
