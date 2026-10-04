@@ -1,32 +1,19 @@
 import { checkNameTarget, isErr, NAME_FORM_MAX_LENGTH } from "@abth/core";
 
+import { type Noticed, noticeOf } from "../my-page/write-ending";
 import type { NameState, RenameState, WriteOutcomeView } from "../session-port";
 
 type NameOutcome = WriteOutcomeView<NameState>;
 
-// `typed` is null while the field is untouched and shows the name worn now; every step keeps it,
-// so a refused name is still in the field after Back.
+// `typed` is null while the field is untouched and shows the name worn now.
 export type NameStep =
-  | { readonly name: "idle"; readonly typed: string | null }
   | {
-      readonly name: "confirming";
+      readonly name: "idle";
       readonly typed: string | null;
-      readonly expected: NameState;
-      readonly target: NameState;
+      /** How the last write ended, until the next typing or save; none if it applied. */
+      readonly notice: Noticed<NameState> | null;
     }
-  | {
-      readonly name: "saving";
-      readonly typed: string | null;
-      readonly expected: NameState;
-      readonly target: NameState;
-    }
-  | { readonly name: "undoing"; readonly typed: string | null }
-  | {
-      readonly name: "done";
-      readonly typed: string | null;
-      readonly outcome: NameOutcome;
-      readonly asUndo: boolean;
-    };
+  | { readonly name: "saving"; readonly typed: string | null };
 
 export interface WornName {
   readonly nickname: string;
@@ -36,15 +23,12 @@ export interface WornName {
 export type NameAction =
   | { readonly type: "forget" }
   | { readonly type: "typed"; readonly value: string }
-  | { readonly type: "review"; readonly worn: WornName }
-  | { readonly type: "back" }
   | { readonly type: "saveStarted" }
-  | { readonly type: "undoStarted" }
   | { readonly type: "writeEnded"; readonly outcome: NameOutcome };
 
-export const IDLE: NameStep = { name: "idle", typed: null };
+export const IDLE: NameStep = { name: "idle", typed: null, notice: null };
 
-// Only the core's checkNameTarget refuses a name; Hiroba's help page is advice, never a rule here.
+// Only the core's checkNameTarget refuses a name; Hiroba's help page is no rule here.
 export type NameVerdict =
   | { readonly kind: "ok"; readonly target: NameState }
   | { readonly kind: "same" }
@@ -76,43 +60,13 @@ export function reduceName(step: NameStep, action: NameAction): NameStep {
     case "forget":
       return IDLE;
     case "typed":
-      return step.name === "idle" && step.typed !== action.value
-        ? { name: "idle", typed: action.value }
+      return step.name === "idle" && (step.typed !== action.value || step.notice !== null)
+        ? { name: "idle", typed: action.value, notice: null }
         : step;
-    case "review": {
-      const verdict = judgeName(step.typed, action.worn);
-      return step.name === "idle" && verdict.kind === "ok"
-        ? {
-            name: "confirming",
-            typed: step.typed,
-            expected: { nickname: action.worn.nickname },
-            target: verdict.target,
-          }
-        : step;
-    }
-    case "back":
-      return back(step);
     case "saveStarted":
-      return step.name === "confirming"
-        ? { name: "saving", typed: step.typed, expected: step.expected, target: step.target }
-        : step;
-    case "undoStarted":
-      return step.name === "idle" || step.name === "done"
-        ? { name: "undoing", typed: step.typed }
-        : step;
+      return step.name === "idle" ? { name: "saving", typed: step.typed } : step;
     case "writeEnded":
       return writeEnded(step, action.outcome);
-  }
-}
-
-function back(step: NameStep): NameStep {
-  switch (step.name) {
-    case "confirming":
-      return { name: "idle", typed: step.typed };
-    case "done":
-      return { name: "idle", typed: step.typed };
-    default:
-      return step;
   }
 }
 
@@ -120,19 +74,18 @@ const leavesTheName = (outcome: NameOutcome): boolean =>
   outcome.kind === "applied" || outcome.kind === "appliedNotSynced";
 
 function writeEnded(step: NameStep, outcome: NameOutcome): NameStep {
-  if (step.name !== "saving" && step.name !== "undoing") {
+  if (step.name !== "saving") {
     return step;
   }
   return {
-    name: "done",
+    name: "idle",
     typed: leavesTheName(outcome) ? null : step.typed,
-    outcome,
-    asUndo: step.name === "undoing",
+    notice: noticeOf(outcome),
   };
 }
 
 export function isWritingName(step: NameStep): boolean {
-  return step.name === "saving" || step.name === "undoing";
+  return step.name === "saving";
 }
 
 /** The name my page would now show, as a write read it back; null when the ending says nothing. */

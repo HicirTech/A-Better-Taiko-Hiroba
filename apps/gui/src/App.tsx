@@ -105,7 +105,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
     onSessionGone: sessionGone,
     onNickname: nameRead,
   });
-  const { refreshUndo: refreshNameUndo, forget: forgetNameEditor } = nameEditor;
+  const { forget: forgetNameEditor } = nameEditor;
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing;
   const { read: readEditor } = editor;
@@ -148,7 +148,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
           for (const kind of FIXED_ART) {
             lane.forgetFailures(kind);
           }
-          await Promise.all([refreshTitleUndo(), refreshNameUndo()]);
+          await refreshTitleUndo();
           setScreen({ name: "profile", profile: result.value });
           return true;
         }
@@ -162,7 +162,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
         setRefreshing(false);
       }
     },
-    [port, lane, refreshTitleUndo, refreshNameUndo],
+    [port, lane, refreshTitleUndo],
   );
 
   // A title write that may have moved the title leaves the plate stale: read my page again.

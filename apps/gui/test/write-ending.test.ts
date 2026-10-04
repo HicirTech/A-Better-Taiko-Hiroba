@@ -1,6 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
-import { refreshed, sendHeld, sessionNoticeOf } from "../src/my-page/write-ending";
+import {
+  type Noticed,
+  noticeOf,
+  refreshed,
+  sendHeld,
+  sessionNoticeOf,
+} from "../src/my-page/write-ending";
 import type { WriteOutcomeView } from "../src/session-port";
 
 interface Shown {
@@ -80,6 +86,37 @@ describe("refreshed", () => {
     },
   ])("leaves the editor as it was after %p", (outcome) => {
     expect(refreshed(SHOWN, outcome)).toBe(SHOWN);
+  });
+});
+
+describe("noticeOf", () => {
+  test("says nothing of a write that applied", () => {
+    const applied: WriteOutcomeView<{ title: string }> = {
+      kind: "applied",
+      before: OLD,
+      after: PLANNED,
+      save: SAVE,
+      cross: "unchanged",
+    };
+    expect(noticeOf(applied)).toBeNull();
+  });
+
+  test.each<Noticed<{ title: string }>>([
+    { kind: "appliedNotSynced", before: OLD, after: PLANNED, save: SAVE, cross: "unchanged" },
+    {
+      kind: "notApplied",
+      before: OLD,
+      after: OLD,
+      reason: { kind: "unchanged" },
+      save: SAVE,
+      cross: "unchanged",
+    },
+    { kind: "changedSincePreview", current: FOUND },
+    { kind: "maintenance" },
+    { kind: "interrupted" },
+    { kind: "busy" },
+  ])("gives every other ending as it is: %p", (outcome) => {
+    expect(noticeOf(outcome)).toBe(outcome);
   });
 });
 

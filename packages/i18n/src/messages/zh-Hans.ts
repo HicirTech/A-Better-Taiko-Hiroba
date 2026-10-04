@@ -159,17 +159,8 @@ export const zhHans: Messages = {
   "name.counter": "{count} / {max}",
   "name.siteWarning":
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
-  "name.faqRule":
-    "广场的帮助页写着：「ドンだーネームは、ひらがなと記号「ー、～、！、？」が入力可能です。５文字までです。」也见过这之外的昵称，但本应用无法保证广场会接受。",
-  "name.outsideFaq": "超出广场帮助页允许的范围。广场可能会拒绝，也可能不让你改回去。",
-  "name.wide": "比 10 个半角字符还宽（一个全角字符算两个）。广场可能会拒绝。",
   "name.same": "当前已经是这个昵称。",
   "name.closed": "广场表示现在不能更改昵称：今はドンだーネームは変更できないドン！",
-  "name.unknownState": "此版本无法判断广场现在是否接受更改昵称。你仍然可以尝试。",
-  "name.mayNotRevert": "广场可能不会让你马上改回去。请选一个你愿意一直用的昵称。",
-  "name.undoLast": "把昵称改回去",
-  "name.undoBack": "将改回：{name}",
-  "name.undoMayFail": "广场也可能拒绝这次改回。若被拒绝，昵称保持不变。",
   "write.applied": "已保存。广场现在显示新的换装。",
   "write.undone": "已撤销。广场的换装已恢复原样。",
   "write.siteNote": "广场返回了代码 {code}，但读回结果显示更改已生效。",

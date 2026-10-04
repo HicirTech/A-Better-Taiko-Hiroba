@@ -211,19 +211,9 @@ export interface Messages {
   "name.counter": string;
   /** Hiroba's own warning above the field, as the site writes it, in every language. */
   "name.siteWarning": string;
-  /** Quotes what Hiroba's help page says a nickname may be, as the site writes it. */
-  "name.faqRule": string;
-  "name.outsideFaq": string;
-  "name.wide": string;
   "name.same": string;
   /** Quotes Hiroba's sentence that nicknames cannot be changed now, as the site writes it. */
   "name.closed": string;
-  "name.unknownState": string;
-  "name.mayNotRevert": string;
-  "name.undoLast": string;
-  /** Param: {name}, the previous nickname, as Hiroba writes it. */
-  "name.undoBack": string;
-  "name.undoMayFail": string;
   "write.applied": string;
   "write.undone": string;
   /** Param: {code}. */

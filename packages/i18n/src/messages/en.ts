@@ -168,22 +168,9 @@ export const en: Messages = {
   "name.counter": "{count} / {max}",
   "name.siteWarning":
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
-  "name.faqRule":
-    "Hiroba's help page says: 「ドンだーネームは、ひらがなと記号「ー、～、！、？」が入力可能です。５文字までです。」 Other nicknames have been seen, but the app cannot promise Hiroba takes them.",
-  "name.outsideFaq":
-    "Outside what Hiroba's help page allows. Hiroba may refuse it, or may not let you change back.",
-  "name.wide":
-    "Wider than ten half-width characters (a full-width character counts as two). Hiroba may refuse it.",
   "name.same": "That is your nickname already.",
   "name.closed":
     "Hiroba says nicknames can't be changed right now: 今はドンだーネームは変更できないドン！",
-  "name.unknownState":
-    "This version couldn't tell whether Hiroba is taking nickname changes right now. You can still try.",
-  "name.mayNotRevert":
-    "Hiroba may not let you change it back right away. Choose a nickname you are happy to keep.",
-  "name.undoLast": "Change the nickname back",
-  "name.undoBack": "Goes back to: {name}",
-  "name.undoMayFail": "Hiroba may refuse this too. If it does, the nickname stays as it is.",
   "write.applied": "Saved. Hiroba now shows the new costume.",
   "write.undone": "Undone. Hiroba shows the costume as it was.",
   "write.siteNote": "Hiroba answered code {code}, but the read-back shows the change.",

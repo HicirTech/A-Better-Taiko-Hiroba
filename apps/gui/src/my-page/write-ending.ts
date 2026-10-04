@@ -21,6 +21,13 @@ export function refreshed<S, E extends { readonly state: S }>(
   }
 }
 
+/** A write's ending a page says something about: every ending but a plain `applied`. */
+export type Noticed<S> = Exclude<WriteOutcomeView<S>, { readonly kind: "applied" }>;
+
+export function noticeOf<S>(outcome: WriteOutcomeView<S>): Noticed<S> | null {
+  return outcome.kind === "applied" ? null : outcome;
+}
+
 export async function sendHeld<S>(
   lane: Pick<PictureLane, "hold" | "release">,
   send: () => Promise<WriteOutcomeView<S>>,

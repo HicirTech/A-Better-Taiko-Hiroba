@@ -158,17 +158,8 @@ export const zhHant: Messages = {
   "name.counter": "{count} / {max}",
   "name.siteWarning":
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
-  "name.faqRule":
-    "廣場的說明頁寫著：「ドンだーネームは、ひらがなと記号「ー、～、！、？」が入力可能です。５文字までです。」也見過這之外的暱稱，但本應用程式無法保證廣場會接受。",
-  "name.outsideFaq": "超出廣場說明頁允許的範圍。廣場可能會拒絕，也可能不讓你改回去。",
-  "name.wide": "比 10 個半形字元還寬（一個全形字元算兩個）。廣場可能會拒絕。",
   "name.same": "目前已經是這個暱稱。",
   "name.closed": "廣場表示現在不能變更暱稱：今はドンだーネームは変更できないドン！",
-  "name.unknownState": "此版本無法判斷廣場現在是否接受變更暱稱。你仍然可以嘗試。",
-  "name.mayNotRevert": "廣場可能不會讓你馬上改回去。請選一個你願意一直用的暱稱。",
-  "name.undoLast": "把暱稱改回去",
-  "name.undoBack": "將改回：{name}",
-  "name.undoMayFail": "廣場也可能拒絕這次改回。若被拒絕，暱稱維持不變。",
   "write.applied": "已儲存。廣場現在顯示新的換裝。",
   "write.undone": "已復原。廣場的換裝已恢復原樣。",
   "write.siteNote": "廣場回傳了代碼 {code}，但讀回結果顯示變更已生效。",

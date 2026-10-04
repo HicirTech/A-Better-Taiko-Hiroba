@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
 
+import type { Noticed } from "../src/my-page/write-ending";
 import {
   IDLE,
   isWritingName,
@@ -26,7 +27,7 @@ const applied = (before: NameState, after: NameState): WriteOutcomeView<NameStat
   save: SAVE,
   cross: "unchanged",
 });
-const refusedOutcome: WriteOutcomeView<NameState> = {
+const refusedOutcome: Noticed<NameState> = {
   kind: "notApplied",
   before: OLD,
   after: OLD,
@@ -34,26 +35,20 @@ const refusedOutcome: WriteOutcomeView<NameState> = {
   save: SAVE,
   cross: "unchanged",
 };
+const notSyncedOutcome: Noticed<NameState> = {
+  kind: "appliedNotSynced",
+  before: OLD,
+  after: NEW,
+  save: SAVE,
+  cross: "off",
+};
 
-const idle = (typed: string | null): NameStep => ({ name: "idle", typed });
-const confirming = (typed: string | null = NEW.nickname): NameStep => ({
-  name: "confirming",
+const idle = (typed: string | null, notice: Noticed<NameState> | null = null): NameStep => ({
+  name: "idle",
   typed,
-  expected: OLD,
-  target: NEW,
+  notice,
 });
-const saving = (typed: string | null = NEW.nickname): NameStep => ({
-  name: "saving",
-  typed,
-  expected: OLD,
-  target: NEW,
-});
-const undoing = (typed: string | null = null): NameStep => ({ name: "undoing", typed });
-const done = (
-  outcome: WriteOutcomeView<NameState>,
-  typed: string | null = NEW.nickname,
-  asUndo = false,
-): NameStep => ({ name: "done", typed, outcome, asUndo });
+const saving = (typed: string | null = NEW.nickname): NameStep => ({ name: "saving", typed });
 
 const reduce = (step: NameStep, ...actions: NameAction[]) => actions.reduce(reduceName, step);
 
@@ -112,88 +107,66 @@ describe("reduceName, the field", () => {
     expect(reduce(step, { type: "typed", value: "あ" })).toBe(step);
   });
 
-  test.each([
-    ["confirming", confirming()],
-    ["saving", saving()],
-    ["undoing", undoing()],
-    ["done", done(applied(OLD, NEW))],
-  ])("takes no typing in %s", (_name, step) => {
+  test("drops the notice of the last write at the next typing, the same text included", () => {
+    const step = idle("あたらしい", refusedOutcome);
+    expect(reduce(step, { type: "typed", value: "あたらしい" })).toEqual(idle("あたらしい"));
+    expect(reduce(step, { type: "typed", value: "あたらし" })).toEqual(idle("あたらし"));
+  });
+
+  test("takes no typing while a save runs", () => {
+    const step = saving();
     expect(reduce(step, { type: "typed", value: "x" })).toBe(step);
   });
 
-  test("forgets what was typed with the session", () => {
-    for (const step of [idle("あ"), confirming(), saving(), undoing(), done(applied(OLD, NEW))]) {
+  test("forgets what was typed, and the notice, with the session", () => {
+    for (const step of [idle("あ"), idle("あ", refusedOutcome), saving()]) {
       expect(reduce(step, { type: "forget" })).toBe(IDLE);
     }
   });
 });
 
-describe("reduceName, reviewing and sending", () => {
-  test("lists a name that would change the one worn, for a last look", () => {
-    expect(reduce(idle("あたらしい"), { type: "review", worn: WORN })).toEqual(confirming());
+describe("reduceName, saving", () => {
+  test("starts a save from the field, holding what was typed", () => {
+    expect(reduce(idle("あたらしい"), { type: "saveStarted" })).toEqual(saving("あたらしい"));
+    expect(reduce(IDLE, { type: "saveStarted" })).toEqual(saving(null));
   });
 
-  test("lists the trimmed name, and keeps what was typed", () => {
-    expect(reduce(idle(" あたらしい "), { type: "review", worn: WORN })).toEqual({
-      name: "confirming",
-      typed: " あたらしい ",
-      expected: OLD,
-      target: NEW,
-    });
+  test("drops the notice of the last write when the next save starts", () => {
+    expect(reduce(idle("あたらしい", refusedOutcome), { type: "saveStarted" })).toEqual(
+      saving("あたらしい"),
+    );
   });
 
-  test.each([
-    ["the name worn", idle(null)],
-    ["nothing", idle("")],
-    ["a name too long", idle("あ".repeat(11))],
-  ])("lists nothing for %s", (_name, step) => {
-    expect(reduce(step, { type: "review", worn: WORN })).toBe(step);
-  });
-
-  test("lists nothing while the page says renames are closed", () => {
-    const step = idle("あたらしい");
-    expect(reduce(step, { type: "review", worn: { ...WORN, rename: "closed" } })).toBe(step);
-  });
-
-  test("goes back from a review to the field, as it was typed", () => {
-    expect(reduce(confirming(), { type: "back" })).toEqual(idle(NEW.nickname));
-  });
-
-  test("goes back from an outcome to the field: a refused name is still in it", () => {
-    expect(reduce(done(refusedOutcome), { type: "back" })).toEqual(idle(NEW.nickname));
-  });
-
-  test("sends only what was listed", () => {
-    expect(reduce(confirming(), { type: "saveStarted" })).toEqual(saving());
-    const step = idle("あたらしい");
+  test("starts none inside a save", () => {
+    const step = saving();
     expect(reduce(step, { type: "saveStarted" })).toBe(step);
   });
 
-  test("begins an undo from idle or from an outcome, and from nowhere else", () => {
-    expect(reduce(idle(null), { type: "undoStarted" })).toEqual(undoing());
-    expect(reduce(done(applied(OLD, NEW)), { type: "undoStarted" })).toEqual(undoing(NEW.nickname));
-    for (const step of [confirming(), saving(), undoing()]) {
-      expect(reduce(step, { type: "undoStarted" })).toBe(step);
-    }
+  test("is writing in a save alone", () => {
+    expect([IDLE, idle("あ", refusedOutcome), saving()].map(isWritingName)).toEqual([
+      false,
+      false,
+      true,
+    ]);
   });
 });
 
 describe("reduceName, a write's ending", () => {
-  test("shows the name worn in the field after a save that read back as planned", () => {
+  test("shows the name worn in the field after a save that read back as planned, and says nothing", () => {
     expect(reduce(saving(), { type: "writeEnded", outcome: applied(OLD, NEW) })).toEqual(
-      done(applied(OLD, NEW), null),
+      idle(null),
     );
   });
 
-  test("keeps what was typed after a name Hiroba refused", () => {
+  test("keeps what was typed, and says why, after a name Hiroba refused", () => {
     expect(reduce(saving(), { type: "writeEnded", outcome: refusedOutcome })).toEqual(
-      done(refusedOutcome, NEW.nickname),
+      idle(NEW.nickname, refusedOutcome),
     );
   });
 
-  test("ends an undo as an outcome that says it was one", () => {
-    expect(reduce(undoing(), { type: "writeEnded", outcome: applied(NEW, OLD) })).toEqual(
-      done(applied(NEW, OLD), null, true),
+  test("shows the name worn, and says so, after a save the game server was not told of", () => {
+    expect(reduce(saving(), { type: "writeEnded", outcome: notSyncedOutcome })).toEqual(
+      idle(null, notSyncedOutcome),
     );
   });
 
@@ -201,20 +174,12 @@ describe("reduceName, a write's ending", () => {
     const step = idle("あ");
     expect(reduce(step, { type: "writeEnded", outcome: { kind: "busy" } })).toBe(step);
   });
-
-  test("is writing in a save and an undo alone", () => {
-    expect(
-      [IDLE, confirming(), saving(), undoing(), done(refusedOutcome)].map(isWritingName),
-    ).toEqual([false, false, true, true, false]);
-  });
 });
 
 describe("nameAfter", () => {
   test("gives the name a write read back, whether or not it went as planned", () => {
     expect(nameAfter(applied(OLD, NEW))).toBe(NEW.nickname);
-    expect(
-      nameAfter({ kind: "appliedNotSynced", before: OLD, after: NEW, save: SAVE, cross: "off" }),
-    ).toBe(NEW.nickname);
+    expect(nameAfter(notSyncedOutcome)).toBe(NEW.nickname);
     expect(nameAfter(refusedOutcome)).toBe(OLD.nickname);
     expect(
       nameAfter({
