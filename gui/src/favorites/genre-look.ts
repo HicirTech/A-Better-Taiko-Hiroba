@@ -31,7 +31,8 @@ export const GENRE_LABEL = {
 export const DIFFICULTY_COLOUR: Readonly<Record<Difficulty, string>> = {
   easy: "#FF2703",
   normal: "#647E2F",
-  hard: "#364938",
+  // The official green is lost on a dark page, so the dark scheme takes a lighter one.
+  hard: "light-dark(#364938, #55755A)",
   oni: "#DB1885",
   ura: "#7135DB",
 };
