@@ -2,12 +2,15 @@
 import type { FavoritesState } from "../mock-favorites";
 import { HIROBA, PHONE_TALL } from "./config";
 import type { Ctx } from "./context";
-import { pageHelpers, same, waitFor } from "./harness";
+import { middleOf, type Point, pageHelpers, same, waitFor } from "./harness";
 import { requestLog, resetLog } from "./stand-in";
 
 const START_FOLDER = ["1001", "1008", "1014", "1020", "1031", "1026"];
 const FOLDER_PAGE = "GET /favorite_song_select.php";
 const SONG_PAGE = "GET /portal_favorite_song_select.php";
+const FOLDER_SAVE = "POST /ajax/myfavorite_song.php";
+/** The stand-in's song with a title too long for any row. */
+const LONG_TITLED = "1038";
 
 const favoritesNow = async (query = "") =>
   (await (await fetch(`${HIROBA}/__favorites${query}`)).json()) as FavoritesState;
@@ -19,11 +22,19 @@ export const favoritesKeys = [
   "pickerShowsAllEightGenresOnAPhone",
   "searchMarksTheNameShown",
   "searchMatchesAcrossScripts",
+  "longNameScrolls",
+  "songsMovedByTheirHandle",
+  "setEditsWaitForSave",
   "setBuiltAndApplied",
   "setAppliedWithNoMessage",
+  "folderShowsTheSetInUse",
   "notStagedSaysSoAndSavesNothing",
+  "folderSavedIntoASet",
+  "setsMovedByTheirHandle",
+  "setDeletedFromTheDrawer",
   "favoriteSongPickedThenSaved",
   "favoriteSongDraftDroppedOnLeaving",
+  "songsMovedByALongPress",
   "setsDrawerOpensBySwipe",
 ] as const;
 
@@ -56,6 +67,50 @@ export async function favorites(ctx: Ctx) {
     page.evaluate<boolean>(
       `[1, 2, 3, 4, 5, 6, 7, 8].every((genre) => { const box = document.querySelector("#song-picker-genre-" + genre)?.getBoundingClientRect(); return box !== undefined && box.width > 0 && box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight; })`,
     );
+  const keysIn = (list: string) =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll("#${list} > li")].map((row) => row.dataset.key)`,
+    );
+  const keptSongs = () =>
+    page.evaluate<string[] | null>(
+      `JSON.parse(localStorage.getItem("abth.favoriteSets") ?? "null")?.sets?.[0]?.songs ?? null`,
+    );
+  const setNames = () =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll("#favorites-set-list > li")].map((row) => row.querySelector(".MuiListItemText-primary")?.textContent ?? null)`,
+    );
+  // dnd-kit follows the mouse once it has gone a few pixels with the button down.
+  const dragByMouse = async (from: Point, to: Point) => {
+    await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...from });
+    await page.send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      ...from,
+      button: "left",
+      clickCount: 1,
+    });
+    for (let step = 1; step <= 10; step++) {
+      await page.send("Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        x: from.x + ((to.x - from.x) * step) / 10,
+        y: from.y + ((to.y - from.y) * step) / 10,
+        button: "left",
+        buttons: 1,
+      });
+      await Bun.sleep(30);
+    }
+    await page.send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      ...to,
+      button: "left",
+      clickCount: 1,
+    });
+    await Bun.sleep(500);
+  };
+  const openDrawer = async () => {
+    await click("#favorites-sets");
+    await shown("#favorites-drawer");
+    await Bun.sleep(300);
+  };
 
   // Earlier sections opened this page and wrote the folder underneath it: read it again.
   await favoritesNow("?reset=1");
@@ -87,8 +142,7 @@ export async function favorites(ctx: Ctx) {
     (await textOf("#favorite-song-row"))?.includes("Wings of Light") === true &&
     same(badges, ["Easy ★2", "Normal ★3", "Hard ★5", "Extreme ★7"]);
 
-  await click("#favorites-sets");
-  await shown("#favorites-drawer");
+  await openDrawer();
   await click("#favorites-item-new");
   await shown("#favorite-set-view");
   await click("#favorite-set-add");
@@ -113,52 +167,89 @@ export async function favorites(ctx: Ctx) {
     same(await boldIn("1011"), ["会入睡"]);
 
   await search("");
-  await shown("#song-picker-row-1003");
-  for (const songNo of ["1001", "1003"]) {
+  await shown(`#song-picker-row-${LONG_TITLED}`);
+  for (const songNo of ["1001", "1003", LONG_TITLED]) {
     await page.evaluate(`document.querySelector("#song-picker-row-${songNo} input").click()`);
   }
   await click("#song-picker-done");
   await gone("#song-picker");
-  const setSongs = await page.evaluate<string[]>(
-    `[...document.querySelectorAll("#favorite-set-songs button[data-song-no]")].map((button) => button.dataset.songNo)`,
+  await shown(`#favorite-set-song-${LONG_TITLED}`);
+  await Bun.sleep(500);
+  results.longNameScrolls = await exists(`#favorite-set-song-${LONG_TITLED} .scrolling`);
+
+  const pickedOrder = await keysIn("favorite-set-songs");
+  await dragByMouse(
+    await middleOf(page, '#favorite-set-songs > li[data-key="1001"] .drag-handle'),
+    await middleOf(page, '#favorite-set-songs > li[data-key="1003"] .drag-handle'),
   );
+  const movedOrder = await keysIn("favorite-set-songs");
+  results.songsMovedByTheirHandle =
+    same(pickedOrder, ["1001", "1003", LONG_TITLED]) &&
+    same(movedOrder, ["1003", "1001", LONG_TITLED]);
+
+  const keptBeforeSave = await keptSongs();
+  await click("#favorite-set-save");
+  await shown("#favorite-set-apply");
+  results.setEditsWaitForSave =
+    same(keptBeforeSave, []) && same(await keptSongs(), ["1003", "1001", LONG_TITLED]);
   await resetLog();
   await click("#favorite-set-apply");
   await stepIs("ready");
   await shown("#favorite-folder-list");
   await Bun.sleep(500);
   results.setBuiltAndApplied =
-    same(setSongs, ["1001", "1003"]) &&
-    same((await favoritesNow()).folder.slice(0, 7), [
-      "1001",
-      "1003",
-      null,
-      null,
-      null,
-      null,
-      null,
-    ]) &&
-    (await requestLog()).includes("POST /ajax/myfavorite_song.php");
+    same((await favoritesNow()).folder.slice(0, 4), ["1003", "1001", LONG_TITLED, null]) &&
+    (await requestLog()).includes(FOLDER_SAVE);
   results.setAppliedWithNoMessage = !(await exists("#favorite-folder-outcome"));
+  results.folderShowsTheSetInUse =
+    (await textOf("#favorite-folder-set")) === "In use: Set 1" &&
+    !(await exists("#favorite-folder-save-as-set"));
 
   await favoritesNow("?emptyClears=0");
-  await click("#favorites-sets");
-  await shown("#favorites-item-folder");
-  await click("#favorites-item-folder");
-  await gone("#favorites-drawer");
-  await click("#favorite-folder-save-as-set");
+  await openDrawer();
+  await click("#favorites-item-set-0");
   await shown("#favorite-set-view");
   await page.evaluate(
-    `document.querySelector('#favorite-set-songs button[data-song-no="1003"]').click()`,
+    `document.querySelector('#favorite-set-songs button[data-song-no="${LONG_TITLED}"]').click()`,
   );
+  await click("#favorite-set-save");
+  await shown("#favorite-set-apply");
   await resetLog();
   await click("#favorite-set-apply");
   await shown("#favorite-folder-outcome");
   results.notStagedSaysSoAndSavesNothing =
     (await textOf("#favorite-folder-outcome"))?.includes("didn't take every song") === true &&
-    !(await requestLog()).includes("POST /ajax/myfavorite_song.php") &&
-    same((await favoritesNow()).folder.slice(0, 3), ["1001", "1003", null]);
+    !(await requestLog()).includes(FOLDER_SAVE) &&
+    same((await favoritesNow()).folder.slice(0, 3), ["1003", "1001", LONG_TITLED]);
   await favoritesNow("?emptyClears=1");
+
+  await click("#favorite-folder-save-to-set");
+  await shown("#favorite-folder-save-to-set-0");
+  await click("#favorite-folder-save-to-set-0");
+  await shown("#favorite-folder-replace-confirm");
+  await click("#favorite-folder-replace-confirm");
+  await shown("#favorite-folder-set");
+  results.folderSavedIntoASet = (await textOf("#favorite-folder-set")) === "In use: Set 1";
+
+  await openDrawer();
+  await click("#favorites-item-new");
+  await shown("#favorite-set-empty");
+  await openDrawer();
+  const setsBefore = await setNames();
+  await dragByMouse(
+    await middleOf(page, "#favorites-set-list > li:nth-child(2) .drag-handle"),
+    await middleOf(page, "#favorites-set-list > li:nth-child(1) .drag-handle"),
+  );
+  const setsAfter = await setNames();
+  results.setsMovedByTheirHandle =
+    same(setsBefore, ["Set 1", "Set 2"]) && same(setsAfter, ["Set 2", "Set 1"]);
+  await click("#favorites-set-delete-0");
+  await shown("#favorite-set-delete-confirm");
+  await click("#favorite-set-delete-confirm");
+  await gone("#favorite-set-delete-dialog");
+  results.setDeletedFromTheDrawer = same(await setNames(), ["Set 1"]);
+  await click("#favorites-item-folder");
+  await gone("#favorites-drawer");
 
   await click("#favorite-song-change");
   await shown("#song-picker-row-1002 button");
@@ -181,12 +272,34 @@ export async function favorites(ctx: Ctx) {
   results.favoriteSongDraftDroppedOnLeaving =
     !(await exists("#favorite-song-save")) && (await favoritesNow()).favoriteSong === "1002";
 
+  await openDrawer();
+  await click("#favorites-item-set-0");
+  await gone("#favorites-drawer");
+  await shown("#favorite-set-songs");
   await atSize(PHONE_TALL.width, PHONE_TALL.height, async () => {
     await touchEmulated(true);
     try {
       await Bun.sleep(500);
-      const page = await boxOf("main");
-      const y = page.top + 300;
+      const before = await keysIn("favorite-set-songs");
+      const first = await middleOf(page, "#favorite-set-songs > li:nth-child(1)");
+      const second = await middleOf(page, "#favorite-set-songs > li:nth-child(2)");
+      await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [first] });
+      await Bun.sleep(500);
+      for (let step = 1; step <= 10; step++) {
+        await page.send("Input.dispatchTouchEvent", {
+          type: "touchMove",
+          touchPoints: [{ x: first.x, y: first.y + ((second.y - first.y) * step) / 10 }],
+        });
+        await Bun.sleep(30);
+      }
+      await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+      await Bun.sleep(500);
+      results.songsMovedByALongPress =
+        before.length === 3 &&
+        same(await keysIn("favorite-set-songs"), [before[1], before[0], before[2]]);
+
+      const main = await boxOf("main");
+      const y = main.top + 300;
       await swipe({ x: PHONE_TALL.width - 60, y }, { x: PHONE_TALL.width - 200, y: y + 10 });
       const opened = await waitFor(
         "sets drawer open",
