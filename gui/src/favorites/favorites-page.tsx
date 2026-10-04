@@ -142,16 +142,19 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
             {set === null ? t("favorites.current") : set.name}
           </Typography>
         </Box>
-        <IconButton
-          id="favorites-sets"
-          aria-label={setsLabel}
-          title={setsLabel}
-          aria-expanded={drawerOpen}
-          aria-controls={drawerOpen ? "favorites-drawer" : undefined}
-          onClick={() => setDrawerOpen(true)}
-        >
-          <SetsIcon />
-        </IconButton>
+        {/* A touch screen opens the drawer by a swipe from the right edge instead. */}
+        {!touchFirst && (
+          <IconButton
+            id="favorites-sets"
+            aria-label={setsLabel}
+            title={setsLabel}
+            aria-expanded={drawerOpen}
+            aria-controls={drawerOpen ? "favorites-drawer" : undefined}
+            onClick={() => setDrawerOpen(true)}
+          >
+            <SetsIcon />
+          </IconButton>
+        )}
       </Box>
       {set !== null ? (
         <SetView
