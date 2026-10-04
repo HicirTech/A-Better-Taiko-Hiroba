@@ -295,6 +295,9 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readSongCatalogue: (since) => readSongCatalogue(transport, songCatalogueUrl, since),
 
     readChineseNames: () => readChineseNames(transport, chineseNamesUrl),
+
+    // TODO: read and keep the picture; this stands until the chart reader is built.
+    readChartPicture: async () => err({ code: "chart=notBuilt" }),
   });
 
   return checkedPort(port);

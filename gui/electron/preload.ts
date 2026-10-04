@@ -27,6 +27,7 @@ const port: HirobaSessionPort = {
   changeFavoriteSong: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFavoriteSong, change),
   readSongCatalogue: (since) => ipcRenderer.invoke(BRIDGE_CHANNELS.readSongCatalogue, since),
   readChineseNames: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readChineseNames),
+  readChartPicture: (url) => ipcRenderer.invoke(BRIDGE_CHANNELS.readChartPicture, url),
 };
 
 contextBridge.exposeInMainWorld("abth", port);

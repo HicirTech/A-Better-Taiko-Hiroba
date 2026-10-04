@@ -59,6 +59,7 @@ const CASES: VerbCase[] = [
   ],
   ["readSongCatalogue", [null], ["0&genre=1"]],
   ["readChineseNames", [], [{ gcmlimit: "max" }]],
+  ["readChartPicture", ["https://file.taiko.wiki/fumen/670/oni"], ["file:///etc/passwd"]],
 ];
 
 function recordingPort() {

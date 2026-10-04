@@ -296,4 +296,6 @@ export interface HirobaSessionPort {
   /** The Chinese wiki's official song names: one GET for each batch of 50 pages, carrying no
    * session. Asks Hiroba nothing, so it is never queued. */
   readChineseNames(): Promise<Result<ChineseNamesRead, SongCatalogueFailure>>;
+  /** A picture of a chart's notes, from a chart host the song list links, kept on the device. */
+  readChartPicture(url: string): Promise<Result<PictureView, PictureFailure>>;
 }

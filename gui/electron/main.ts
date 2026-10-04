@@ -251,6 +251,8 @@ app.whenReady().then(async () => {
     readSongCatalogue: (since) =>
       readSongCatalogue(feedTransport, environment.songCatalogueUrl, since),
     readChineseNames: () => readChineseNames(feedTransport, environment.chineseNamesUrl),
+    // TODO: read and keep the picture; this stands until the chart reader is built.
+    readChartPicture: async () => err({ code: "chart=notBuilt" }),
   });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.
