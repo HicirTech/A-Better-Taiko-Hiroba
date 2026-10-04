@@ -81,13 +81,13 @@ describe("the favourites stand-in at the start", () => {
 
 describe("the folder editor's GET", () => {
   test.each<[initStages: boolean]>([[true], [false]])(
-    "with init=1 loads the saved folder into the staging when initStages is %p",
+    "with init=1 shows the saved folder, and stages it only when initStages is %p",
     async (on) => {
       const stand = standIn();
       await stand.change(`initStages=${on ? 1 : 0}`);
       const page = stand.folderPage("init=1");
       expect((await stand.state()).staging).toEqual(on ? slots(...START_FOLDER) : slots());
-      expect(unsetIn(page)).toBe(on ? FOLDER_SLOT_COUNT - START_FOLDER.length : FOLDER_SLOT_COUNT);
+      expect(unsetIn(page)).toBe(FOLDER_SLOT_COUNT - START_FOLDER.length);
     },
   );
 

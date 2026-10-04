@@ -141,7 +141,9 @@ export function createFavoritesEditor({ issue }: FavoritesEditorOptions) {
 
     folderPage(session: MockSession, params: URLSearchParams): string {
       stage(params);
-      const slots = state.staging.map((songNo, index) => slotMarkup(index + 1, songOf(songNo)));
+      // `init=1` shows the saved folder whether or not it staged it: that page is what is captured.
+      const shown = params.get("init") === "1" ? state.folder : state.staging;
+      const slots = shown.map((songNo, index) => slotMarkup(index + 1, songOf(songNo)));
       return `<h2 class="subtitleMypage">「お気に入り」フォルダの設定</h2>
 ${slots.join("\n")}
 <input type="hidden" id="_tckt" name="_tckt" value="${issue(session)}">`;
