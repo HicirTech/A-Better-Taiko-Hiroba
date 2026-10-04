@@ -179,6 +179,7 @@ export const zhHant: Messages = {
   "write.needsConfirmation":
     "廣場要求進行本應用程式尚不支援的確認，因此沒有做任何變更。廣場的原話：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "廣場沒有接受本應用程式的要求。沒有做任何變更。",
+  "write.notStaged": "廣場沒有接受全部歌曲，因此沒有儲存任何變更。",
   "write.busy": "另一項變更仍在傳送中，因此這項沒有傳送。",
   "write.interrupted":
     "應用程式在得知結果前就停止了，因此可能已儲存，也可能沒有。重試前請先重新讀取並查看。",

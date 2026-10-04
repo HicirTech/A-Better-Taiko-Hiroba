@@ -193,6 +193,7 @@ export const en: Messages = {
   "write.needsConfirmation":
     "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "Hiroba didn't accept the app's request. Nothing was changed.",
+  "write.notStaged": "Hiroba didn't take every song, so nothing was saved.",
   "write.busy": "Another change is still being sent, so this one was not sent.",
   "write.interrupted":
     "The app stopped before it knew how this ended, so it may or may not have been saved. Use Read again and look before trying again.",

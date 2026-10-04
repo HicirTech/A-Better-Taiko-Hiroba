@@ -180,6 +180,7 @@ export const zhHans: Messages = {
   "write.needsConfirmation":
     "广场要求进行本应用尚不支持的确认，因此没有做任何更改。广场的原话：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "广场没有接受本应用的请求。没有做任何更改。",
+  "write.notStaged": "广场没有接受全部歌曲，因此没有保存任何更改。",
   "write.busy": "另一项更改仍在发送中，因此这项没有发送。",
   "write.interrupted":
     "应用在得知结果前就停止了，因此可能已保存，也可能没有。重试前请先重新读取并查看。",

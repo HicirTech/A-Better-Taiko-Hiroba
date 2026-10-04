@@ -70,6 +70,7 @@ const OUTCOME_MESSAGE = {
   sessionGone: "write.sessionGone",
   invalidTarget: "write.invalidTarget",
   stoppedBeforeWrite: "write.stoppedBeforeWrite",
+  notStaged: "write.notStaged",
   appliedNotSynced: "write.appliedNotSynced",
   outcomeUnknown: "write.outcomeUnknown",
   notSignedIn: "failure.notSignedIn",
@@ -270,6 +271,11 @@ export function describeOutcome<K extends WriteKind>(
       };
     case "stoppedBeforeWrite":
       return { ...plain("warning"), codes: [`${outcome.reason} ${outcome.code}`] };
+    case "notStaged":
+      return {
+        ...plain("warning"),
+        comparison: compared(outcome.before, outcome.expectedAfter, outcome.staged),
+      };
     case "changedSincePreview":
       return plain("warning", wording(kind, "changedSincePreview"));
     case "needsConfirmation":

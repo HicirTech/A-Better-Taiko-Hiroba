@@ -229,6 +229,7 @@ export interface Messages {
   /** Carries the site's own confirmation text (mydon.js); this version does not answer it. */
   "write.needsConfirmation": string;
   "write.stoppedBeforeWrite": string;
+  "write.notStaged": string;
   "write.interrupted": string;
   "write.busy": string;
   /** Param: {code}, report codes: where an answer ended, status, type and size; never page text. */
