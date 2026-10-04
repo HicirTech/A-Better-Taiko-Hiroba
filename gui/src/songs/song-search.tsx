@@ -156,7 +156,11 @@ export function SongSearch({ catalogue, port, i18n, onOpen, children }: SongSear
           active={active}
           i18n={i18n}
           inputRef={input}
-          onQuery={setQuery}
+          onQuery={(next) => {
+            // Typing opens the search too: a window without the focus sends no focus event.
+            activate();
+            setQuery(next);
+          }}
           onActivate={activate}
           onLeave={leave}
           onSubmit={() => {
