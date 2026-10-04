@@ -28,6 +28,9 @@ export interface Messages {
   "settings.signedInAs": string;
   "settings.signedIn": string;
   "settings.signedOut": string;
+  "settings.updates": string;
+  /** Param: {version}, this build's version, such as 0.1.0. */
+  "settings.version": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;
@@ -41,6 +44,11 @@ export interface Messages {
   "signIn.refused": string;
   "signOut.action": string;
   "signOut.note": string;
+  "update.check": string;
+  "update.checking": string;
+  "update.upToDate": string;
+  "update.failed": string;
+  "update.openReleases": string;
   "update.download": string;
   "update.later": string;
   "profile.reading": string;

@@ -7,6 +7,7 @@ import {
   CHECK_INTERVAL_MS,
   checkIsDue,
   isWorthShowing,
+  manualUpdateCheck,
 } from "../src/updates/update-checks";
 import {
   keepShownVersion,
@@ -157,4 +158,34 @@ describe("automaticUpdateOffer", () => {
     const { read } = reading(feedOf("0.2.0"));
     expect(await automaticUpdateOffer(read, "0.1.0", NOW, refusing)).toEqual(feedOf("0.2.0"));
   });
+});
+
+describe("manualUpdateCheck", () => {
+  test("finds a feed later than the build, as often as it is asked", async () => {
+    const { read } = reading(feedOf("0.2.0"));
+    expect(await manualUpdateCheck(read, "0.1.0")).toEqual({
+      kind: "newer",
+      feed: feedOf("0.2.0"),
+    });
+    expect(await manualUpdateCheck(read, "0.1.0")).toEqual({
+      kind: "newer",
+      feed: feedOf("0.2.0"),
+    });
+  });
+
+  test.each(["0.2.0", "0.3.0"])(
+    "finds a build of %s up to date with a feed of 0.2.0",
+    async (build) => {
+      const { read } = reading(feedOf("0.2.0"));
+      expect(await manualUpdateCheck(read, build)).toEqual({ kind: "upToDate" });
+    },
+  );
+
+  test.each<UpdateFeedFailure["code"]>(["notConfigured", "unreachable", "timedOut", "badAnswer"])(
+    "finds the check failed when the feed fails as %s",
+    async (code) => {
+      const { read } = reading(code);
+      expect(await manualUpdateCheck(read, "0.1.0")).toEqual({ kind: "failed" });
+    },
+  );
 });

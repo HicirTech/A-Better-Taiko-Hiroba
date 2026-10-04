@@ -14,6 +14,8 @@ export const zhHans: Messages = {
   "settings.signedInAs": "已登录：{name}",
   "settings.signedIn": "已登录",
   "settings.signedOut": "未登录",
+  "settings.updates": "更新",
+  "settings.version": "版本 {version}",
   "signIn.intro":
     "使用万代南梦宫 ID 登录，即可读取你在鼓众广场的个人资料。登录页面由广场官方提供，本应用不会接触你的密码。",
   "signIn.action": "登录广场",
@@ -27,6 +29,11 @@ export const zhHans: Messages = {
   "signOut.action": "退出登录",
   "signOut.note":
     "在你退出登录之前，本设备会一直保持登录。广场的图片在退出登录后仍会留在本设备上。",
+  "update.check": "检查更新",
+  "update.checking": "正在检查更新…",
+  "update.upToDate": "已是最新版本。",
+  "update.failed": "无法检查更新。",
+  "update.openReleases": "打开发布页面",
   "update.download": "下载",
   "update.later": "稍后",
   "profile.reading": "正在从广场读取个人资料…",

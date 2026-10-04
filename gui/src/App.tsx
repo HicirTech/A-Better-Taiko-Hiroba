@@ -35,7 +35,7 @@ import type {
   SignInOutcome,
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
-import { releaseUrl } from "./updates";
+import { RELEASES_URL, releaseUrl } from "./updates";
 import { APP_VERSION } from "./updates/app-version";
 import { UpdateDialog } from "./updates/update-dialog";
 import { useUpdateReminder } from "./updates/use-update-reminder";
@@ -281,6 +281,12 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
                     }
                   : { kind: "signedOut" }
           }
+          updates={{
+            version: APP_VERSION,
+            check: updates.manual,
+            onCheck: updates.checkNow,
+            onOpenReleases: () => link.open(RELEASES_URL),
+          }}
         />
       ) : (
         <Stack spacing={3}>

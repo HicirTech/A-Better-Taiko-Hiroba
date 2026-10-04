@@ -52,3 +52,23 @@ export async function automaticUpdateOffer(
   keepShownVersion(feed.value.version, storage);
   return feed.value;
 }
+
+/** What a check the player asked for found. */
+export type ManualCheckResult =
+  | { readonly kind: "newer"; readonly feed: UpdateFeed }
+  | { readonly kind: "upToDate" }
+  | { readonly kind: "failed" };
+
+/** The check the player asked for: it tells of a newer version however often it was told of. */
+export async function manualUpdateCheck(
+  read: ReadFeed,
+  current: string,
+): Promise<ManualCheckResult> {
+  const feed = await read();
+  if (!feed.ok) {
+    return { kind: "failed" };
+  }
+  return isNewer(feed.value.version, current)
+    ? { kind: "newer", feed: feed.value }
+    : { kind: "upToDate" };
+}
