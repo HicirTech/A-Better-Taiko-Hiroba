@@ -3,9 +3,11 @@ import { watch } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
 import { createServer } from "vite";
+import { SONG_CATALOGUE_URL } from "../src/song-catalogue";
 
 const root = join(import.meta.dir, "..");
 const real = process.argv.includes("--real");
+const HIROBA_ORIGIN = "http://hiroba.127.0.0.1.sslip.io:8807";
 
 const mock = real
   ? null
@@ -16,12 +18,16 @@ const mock = real
 const mockEnv = real
   ? {}
   : {
-      ABTH_DEV_HIROBA_ORIGIN: "http://hiroba.127.0.0.1.sslip.io:8807",
+      ABTH_DEV_HIROBA_ORIGIN: HIROBA_ORIGIN,
       ABTH_DEV_IDP_HOST: "id.127.0.0.1.sslip.io:8808",
       ABTH_DEV_IMG_ORIGIN: "http://img.127.0.0.1.sslip.io:8807",
       // Not the installed app's %APPDATA%: its real session and history would meet the mock.
       ABTH_DEV_USER_DATA: join(root, "out", "dev-user-data"),
     };
+// An unpackaged build reads the song list only from an address it is given.
+const songCatalogueEnv = {
+  ABTH_DEV_SONG_CATALOGUE: real ? SONG_CATALOGUE_URL : `${HIROBA_ORIGIN}/__song-catalogue`,
+};
 
 const vite = await createServer({ configFile: join(root, "vite.config.ts"), root });
 await vite.listen();
@@ -35,7 +41,7 @@ function startElectron() {
   electron?.kill();
   electron = Bun.spawn([String(electronPath), root], {
     cwd: root,
-    env: { ...process.env, ...mockEnv, ABTH_DEV_SERVER_URL: devServerUrl },
+    env: { ...process.env, ...mockEnv, ...songCatalogueEnv, ABTH_DEV_SERVER_URL: devServerUrl },
     stdout: "inherit",
     stderr: "inherit",
   });
@@ -56,6 +62,7 @@ for (const dir of [
   "electron",
   join("src", "hiroba-session"),
   join("src", "session-port"),
+  join("src", "song-catalogue"),
   join("src", "updates"),
 ]) {
   watch(join(root, dir), { recursive: true }, () => {

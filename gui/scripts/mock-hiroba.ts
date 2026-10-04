@@ -11,6 +11,7 @@ import {
   titlePlatePng,
 } from "./mock-pictures";
 import { createProfileEditor, escapeHtml } from "./mock-profile";
+import { wikiSongsSince } from "./mock-song-catalogue";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
@@ -448,6 +449,8 @@ Bun.serve({
           status: updateFeed.status,
           headers: { "content-type": "application/json" },
         });
+      case "/__song-catalogue":
+        return Response.json(wikiSongsSince(searchParams.get("after")));
       case "/__last-token":
         return new Response(lastIssued);
       case "/__expire":
