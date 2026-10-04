@@ -96,6 +96,33 @@ describe("reduceTitle, forgetting", () => {
   });
 });
 
+describe("reduceTitle, dropping the edits on leaving the page", () => {
+  test("clears the pick and the notice of the last write", () => {
+    expect(reduce(idle(listed(), B, refused), { type: "editsDropped" })).toEqual(idle(listed()));
+    expect(reduce(idle(listed(), B), { type: "editsDropped" })).toEqual(idle(listed()));
+    expect(reduce(idle(unread, null, refused), { type: "editsDropped" })).toEqual(idle(unread));
+  });
+
+  test.each([
+    ["read", listed()],
+    ["failed", failed],
+    ["being read", loading],
+  ])("keeps a list that is %s", (_name, list) => {
+    expect(reduce(idle(list, B, refused), { type: "editsDropped" })).toEqual(idle(list));
+  });
+
+  test("leaves a list that is read as one the picker need not read again", () => {
+    expect(mayReadTitles(reduce(idle(listed(), B), { type: "editsDropped" }))).toBe(false);
+  });
+
+  test.each([
+    ["nothing picked or said", idle(listed())],
+    ["a save on its way", saving()],
+  ])("leaves %s as it is", (_name, step) => {
+    expect(reduce(step, { type: "editsDropped" })).toBe(step);
+  });
+});
+
 describe("reduceTitle, reading", () => {
   test("begins the first read from an unread list", () => {
     expect(reduce(idle(), { type: "readStarted" })).toEqual(idle(loading));

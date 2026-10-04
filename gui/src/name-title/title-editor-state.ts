@@ -26,6 +26,7 @@ type Idle = Extract<TitleStep, { readonly name: "idle" }>;
 
 export type TitleAction =
   | { readonly type: "forget" }
+  | { readonly type: "editsDropped" }
   | { readonly type: "listForgotten" }
   | { readonly type: "readStarted" }
   | { readonly type: "readEnded"; readonly result: Result<TitleEditorView, ReadFailure> }
@@ -42,6 +43,10 @@ export function reduceTitle(step: TitleStep, action: TitleAction): TitleStep {
   switch (action.type) {
     case "forget":
       return IDLE;
+    case "editsDropped":
+      return step.name === "idle" && (step.picked !== null || step.notice !== null)
+        ? { ...step, picked: null, notice: null }
+        : step;
     case "listForgotten":
       return step.name === "idle" && (step.list.name !== "unread" || step.notice !== null)
         ? { ...step, list: UNREAD, notice: null }
