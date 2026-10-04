@@ -1,6 +1,10 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { err, ok, type Transport, type TransportFailure, type TransportRequest } from "@abth/core";
 
+import { createDiskPictureStore } from "../electron/picture-disk-store";
 import {
   createMemoryPictureStore,
   PICTURE_EPOCH,
@@ -174,6 +178,30 @@ describe("createChartPictureReader, a picture it keeps", () => {
     expect(first).toEqual(view("png", PNG, 300, 20));
     expect(second).toEqual(first);
     expect(sent).toHaveLength(1);
+  });
+});
+
+describe("createChartPictureReader, on the desktop's disk store", () => {
+  const folders: string[] = [];
+  afterEach(() => {
+    for (const folder of folders.splice(0)) {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  });
+
+  test("answers a launch later with no request, whatever format the picture is", async () => {
+    const folder = mkdtempSync(join(tmpdir(), "abth-charts-"));
+    folders.push(folder);
+    const first = setUp({
+      store: createDiskPictureStore(folder),
+      respond: (asked) => answer(FFMPEG_JPEG, asked.url),
+    });
+    const read = await first.reader(FILE);
+    expect(read).toEqual(view("jpeg", FFMPEG_JPEG, 300, 20));
+
+    const relaunched = setUp({ store: createDiskPictureStore(folder) });
+    expect(await relaunched.reader(FILE)).toEqual(read);
+    expect(relaunched.sent).toHaveLength(0);
   });
 });
 

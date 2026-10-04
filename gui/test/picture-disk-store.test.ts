@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, relative, sep } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 
 import { createDiskPictureStore } from "../electron/picture-disk-store";
 import { PICTURE_EPOCH, type PictureKey } from "../src/hiroba-session";
@@ -92,6 +92,20 @@ describe("createDiskPictureStore", () => {
     const relaunched = createDiskPictureStore(folder);
     expect(existsSync(join(folder, "v0"))).toBe(false);
     expect(await relaunched.get(item(36))).toEqual(bytes(4));
+  });
+
+  test("keeps apart a store in a folder beside it: opening one drops nothing of the other", async () => {
+    const pictures = picturesFolder();
+    const charts = join(dirname(pictures), "charts");
+    await createDiskPictureStore(pictures).put(item(36), bytes(4, 1));
+    await createDiskPictureStore(charts).put(item(36), bytes(4, 2));
+    mkdirSync(join(charts, "v0"), { recursive: true });
+
+    const relaunchedPictures = createDiskPictureStore(pictures);
+    const relaunchedCharts = createDiskPictureStore(charts);
+    expect(existsSync(join(charts, "v0"))).toBe(false);
+    expect(await relaunchedPictures.get(item(36))).toEqual(bytes(4, 1));
+    expect(await relaunchedCharts.get(item(36))).toEqual(bytes(4, 2));
   });
 
   test("a picture it cannot write is not kept, and nothing throws", async () => {
