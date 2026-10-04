@@ -3,19 +3,20 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "core",
+    "i18n",
+    "gui"
   ],
   "engines": {
     "bun": ">=1.4.2"
   },
   "scripts": {
     "test": "bun test",
-    "typecheck": "tsc --noEmit -p packages/core && tsc --noEmit -p packages/i18n && tsc --noEmit -p apps/gui && tsc --noEmit -p apps/gui/electron && tsc --noEmit -p apps/gui/tsconfig.node.json",
+    "typecheck": "tsc --noEmit -p core && tsc --noEmit -p i18n && tsc --noEmit -p gui && tsc --noEmit -p gui/electron && tsc --noEmit -p gui/tsconfig.node.json",
     "format": "biome format --write .",
     "format:check": "biome format .",
     "lint": "biome check --formatter-enabled=false .",
-    "check:corpus": "bun run packages/core/scripts/check-corpus.ts"
+    "check:corpus": "bun run core/scripts/check-corpus.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.5",

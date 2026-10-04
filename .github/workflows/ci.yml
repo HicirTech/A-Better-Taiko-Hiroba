@@ -52,7 +52,7 @@ jobs:
 
       # The web bundle and Electron's main and preload; no Electron binary, packaging or Android.
       - name: Build GUI
-        run: bun run --cwd apps/gui build
+        run: bun run --cwd gui build
 
   # Alongside Checks, not after it: the Android build shares nothing with it but the install.
   android:
@@ -86,8 +86,8 @@ jobs:
           cache: gradle
           # bun.lock pins the Capacitor plugins whose Gradle files sit in node_modules.
           cache-dependency-path: |
-            apps/gui/android/**/*.gradle
-            apps/gui/android/gradle/wrapper/gradle-wrapper.properties
+            gui/android/**/*.gradle
+            gui/android/gradle/wrapper/gradle-wrapper.properties
             bun.lock
 
       - name: Install
@@ -95,4 +95,4 @@ jobs:
 
       # The runner's own Android SDK (ANDROID_HOME) has what the project builds against.
       - name: Build debug APK
-        run: bun run --cwd apps/gui android:apk
+        run: bun run --cwd gui android:apk

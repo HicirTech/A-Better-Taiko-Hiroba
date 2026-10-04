@@ -66,7 +66,7 @@ words, and a dan is named by its board number, so its name follows the language 
 stays Hiroba's. What Hiroba writes as data is never translated: the nickname, a title, a medal's
 name and the sentences it speaks in its own voice. An element that holds only such words is marked
 `lang="ja"`, so it keeps Japanese glyphs and a screen reader's Japanese voice; a sentence that
-only quotes them keeps the app's language. The catalogs are in `packages/i18n`; the type checker
+only quotes them keeps the app's language. The catalogs are in `i18n`; the type checker
 and the tests hold each to every English key and its parameters, and keep Japanese in English and
 Chinese to Hiroba's own words.
 
@@ -85,7 +85,7 @@ Electron binary once:
 bun node_modules/electron/install.js
 ```
 
-Run every script below from this folder, or from the root with `bun run --cwd apps/gui <script>`.
+Run every script below from this folder, or from the root with `bun run --cwd gui <script>`.
 
 ## Desktop
 
@@ -468,7 +468,7 @@ release](#making-a-release) says what is done by hand.
 
 ### The version
 
-`version` in `apps/gui/package.json` is the one place a version is written. It is
+`version` in `gui/package.json` is the one place a version is written. It is
 `MAJOR.MINOR.PATCH`, and the tag is `v` and the version: `v0.1.0`. electron-builder names the
 Windows files from it, and `android/app/build.gradle` reads it too: `versionName` is the same text,
 and `versionCode` is `major * 10000 + minor * 100 + patch`, so 0.1.0 is 100 and 1.2.3 is 10203.
@@ -481,7 +481,7 @@ Gradle script refuses a version that breaks these rules, so the Android build fa
 
 A release takes two steps by hand, and the workflow below does the rest.
 
-1. Raise the version in a pull request. In a branch, set `version` in `apps/gui/package.json` and
+1. Raise the version in a pull request. In a branch, set `version` in `gui/package.json` and
    run `bun install`, so that `bun.lock`, which states each workspace's version too, follows. Commit
    both as `chore(release): bump to <version>`, open a pull request, and merge it.
 2. Tag the merge commit and push the tag. On an up-to-date `main`:
@@ -495,7 +495,7 @@ A release takes two steps by hand, and the workflow below does the rest.
    `git tag` tags the commit that is checked out, which is the merge commit while nothing has landed
    after it; give a commit's hash after the message to tag another.
 
-The tag starts the release. If it is not `v` plus the version that `apps/gui/package.json` states at
+The tag starts the release. If it is not `v` plus the version that `gui/package.json` states at
 the tagged commit, the workflow stops the run before anything is built.
 
 ### What the workflow builds
@@ -503,8 +503,8 @@ the tagged commit, the workflow stops the run before anything is built.
 `.github/workflows/release.yml` runs when a tag `v*.*.*` is pushed: that is a release. It also runs
 as a **dry run**, which builds the same files, keeps them and creates no release: when started by
 hand (**Run workflow** in the Actions tab), and on a pull request to `main` that touches what a
-release is made of, which is the workflow itself, `apps/gui/package.json` (which also holds
-electron-builder's configuration, under `build`) and `apps/gui/android/**`.
+release is made of, which is the workflow itself, `gui/package.json` (which also holds
+electron-builder's configuration, under `build`) and `gui/android/**`.
 
 A **Version** job reads the version first, and on a tag run stops the run unless the tag is `v` and
 that version. Then two jobs run side by side, neither waiting on the other:
