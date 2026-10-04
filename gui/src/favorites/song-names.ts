@@ -2,21 +2,35 @@ import type { Locale } from "@abth/i18n";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import type { CatalogueSong } from "../song-catalogue/types";
+import { foldHan } from "./han-fold";
 
-export type NamedSong = Pick<CatalogueSong, "title" | "titleEn" | "titleZh" | "romaji">;
+export type NamedSong = Pick<CatalogueSong, "title" | "titleEn" | "titleZh" | "romaji"> & {
+  /** The Chinese wiki's official names, once the window has matched them to the song. */
+  readonly chineseNames?: readonly string[];
+};
 
 const HAN = /\p{Script=Han}/u;
 
-/** The name in the player's language; Hiroba's own title where taiko.wiki has no better one. */
+const chineseName = (name: string | null | undefined): name is string =>
+  name !== null && name !== undefined && HAN.test(name);
+
+const simplified = (name: string): string => name.replace(/[\s\S]/g, foldHan);
+
+/** The name in the player's language; Hiroba's own title where neither wiki has one. */
 export function shownName(song: NamedSong, locale: Locale): string {
+  const official = song.chineseNames?.find(chineseName);
   switch (locale) {
     case "ja":
-    case "zh-Hant":
       return song.title;
     case "en":
       return song.titleEn ?? song.title;
     case "zh-Hans":
-      return song.titleZh !== null && HAN.test(song.titleZh) ? song.titleZh : song.title;
+      if (chineseName(song.titleZh)) {
+        return song.titleZh;
+      }
+      return official === undefined ? song.title : simplified(official);
+    case "zh-Hant":
+      return official ?? song.title;
   }
 }
 
@@ -30,7 +44,16 @@ export function nameLanguage(song: NamedSong, name: string): string {
     return "zh-Hans";
   }
 
-  return name === song.romaji ? "ja-Latn" : HIROBA_LANG;
+  if (song.chineseNames?.includes(name)) {
+    return "zh-Hant";
+  }
+
+  if (name === song.romaji) {
+    return "ja-Latn";
+  }
+
+  // A Chinese wiki's name shown in Simplified characters.
+  return name !== song.title && chineseName(name) ? "zh-Hans" : HIROBA_LANG;
 }
 
 /** A song known by its number alone. */

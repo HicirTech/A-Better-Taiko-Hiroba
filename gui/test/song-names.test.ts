@@ -31,6 +31,20 @@ describe("shownName", () => {
     expect(shownName(song({ titleZh: null }), "zh-Hans")).toBe("サンプル曲アルファ");
   });
 
+  test("in Traditional Chinese is the Chinese wiki's first name in Chinese characters", () => {
+    const named = { ...NAMED, chineseNames: ["Sample A", "樣本曲阿爾法"] };
+    expect(shownName(named, "zh-Hant")).toBe("樣本曲阿爾法");
+    expect(shownName({ ...NAMED, chineseNames: ["Sample A"] }, "zh-Hant")).toBe(
+      "サンプル曲アルファ",
+    );
+  });
+
+  test("in Simplified Chinese is the Chinese wiki's name in Simplified forms where taiko.wiki has none", () => {
+    const named = { ...song({ titleZh: null }), chineseNames: ["魔法少女不會入睡"] };
+    expect(shownName(named, "zh-Hans")).toBe("魔法少女不会入睡");
+    expect(shownName({ ...NAMED, chineseNames: ["樣本曲阿爾法"] }, "zh-Hans")).toBe("样本曲阿尔法");
+  });
+
   test.each([...LOCALES])("is the title for a song with no other name in %s", (locale) => {
     expect(shownName(song(), locale)).toBe("サンプル曲アルファ");
   });
@@ -44,6 +58,12 @@ describe("nameLanguage", () => {
     ["sanpuru kyoku arufa", "ja-Latn"],
   ])("tags %p as %p", (name, language) => {
     expect(nameLanguage(NAMED, name)).toBe(language);
+  });
+
+  test("tags the Chinese wiki's names as Traditional, and one shown in Simplified forms as such", () => {
+    const named = { ...song({ titleZh: null }), chineseNames: ["魔法少女不會入睡"] };
+    expect(nameLanguage(named, "魔法少女不會入睡")).toBe("zh-Hant");
+    expect(nameLanguage(named, "魔法少女不会入睡")).toBe("zh-Hans");
   });
 });
 

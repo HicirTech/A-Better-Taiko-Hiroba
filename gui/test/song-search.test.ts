@@ -19,7 +19,8 @@ describe("fold", () => {
     ["アルファ・ベータ", "あるふぁ・べーた"],
     ["ヽヾヶ", "ゝゞゖ"],
     ["a\u{3000}b", "a b"],
-    ["漢字とｱ", "漢字とｱ"],
+    ["漢字とｱ", "汉字とｱ"],
+    ["時空庁 天體觀測", "时空厅 天体观测"],
   ])("folds %p to %p", (text, folded) => {
     expect(fold(text)).toBe(folded);
   });
@@ -37,7 +38,9 @@ describe("foldChar", () => {
     ["Ａ", "a"],
     ["ア", "あ"],
     ["\u{3000}", " "],
-    ["漢", "漢"],
+    ["漢", "汉"],
+    ["観", "观"],
+    ["观", "观"],
     ["İ", "İ"],
   ])("folds %p to %p", (char, folded) => {
     expect(foldChar(char)).toBe(folded);
@@ -53,6 +56,12 @@ describe("searchedNames", () => {
       "r",
     ]);
     expect(searchedNames(song({ title: "t", titleEn: "e" }))).toEqual(["t", "e"]);
+  });
+
+  test("ends with the Chinese wiki's names", () => {
+    expect(
+      searchedNames({ ...song({ title: "t", titleEn: "e" }), chineseNames: ["c1", "c2"] }),
+    ).toEqual(["t", "e", "c1", "c2"]);
   });
 });
 
@@ -81,6 +90,24 @@ describe("searchSongs", () => {
     ["the romaji", "no bou"],
   ])("finds a song by part of %s", (_label, query) => {
     expect(searchSongs(SONGS, query, "ja").map((found) => found.song.songNo)).toEqual(["1001"]);
+  });
+
+  test("matches Traditional, Simplified and Japanese forms alike, marked on the name as written", () => {
+    const office = song({ songNo: "1003", title: "時空庁時空1課" });
+    for (const query of ["時空庁", "時空廳", "时空厅"]) {
+      const [found] = searchSongs([office], query, "ja");
+      expect(found?.shown).toEqual({ text: "時空庁時空1課", bold: [[0, 3]] });
+    }
+  });
+
+  test("finds a song by the Chinese wiki's name, which then follows in brackets", () => {
+    const named = {
+      ...song({ songNo: "1004", title: "ゲラゲラポーのうた" }),
+      chineseNames: ["喀啦喀啦碰之歌"],
+    };
+    const [found] = searchSongs([named], "碰之歌", "en");
+    expect(found?.shown).toEqual({ text: "ゲラゲラポーのうた", bold: [] });
+    expect(found?.other).toEqual({ text: "喀啦喀啦碰之歌", bold: [[4, 7]] });
   });
 
   test("trims the query before it looks", () => {

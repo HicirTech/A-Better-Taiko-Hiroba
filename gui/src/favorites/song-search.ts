@@ -1,7 +1,8 @@
 import type { Locale } from "@abth/i18n";
 
 import type { CatalogueSong } from "../song-catalogue/types";
-import { shownName } from "./song-names";
+import { foldHan } from "./han-fold";
+import { type NamedSong, shownName } from "./song-names";
 import { newestFirst } from "./song-order";
 
 export const SEARCH_LIMIT = 200;
@@ -37,7 +38,8 @@ export interface Segment {
   readonly bold: boolean;
 }
 
-/** One character folded to the one it is searched as: lower case, half-width, hiragana. */
+/** One character folded to the one it is searched as: lower case, half-width, hiragana, and
+ * Simplified for a Traditional Chinese or Japanese kanji. */
 export function foldChar(char: string): string {
   const code = char.charCodeAt(0);
   if (code === IDEOGRAPHIC_SPACE) {
@@ -53,15 +55,15 @@ export function foldChar(char: string): string {
   }
 
   const lower = char.toLowerCase();
-  return lower.length === 1 ? lower : char;
+  return foldHan(lower.length === 1 ? lower : char);
 }
 
 /** One character for each one, so an index in the folded text fits the text as written. */
 export const fold = (text: string): string => text.replace(/[\s\S]/g, foldChar);
 
 /** The names a song is searched by, in the order the first other match is taken. */
-export function searchedNames(song: CatalogueSong): readonly string[] {
-  return [song.title, song.titleZh, song.titleEn, song.romaji].filter(
+export function searchedNames(song: NamedSong): readonly string[] {
+  return [song.title, song.titleZh, song.titleEn, song.romaji, ...(song.chineseNames ?? [])].filter(
     (name): name is string => name !== null,
   );
 }
@@ -79,7 +81,7 @@ function boldRanges(text: string, wanted: string): BoldRange[] {
   return ranges;
 }
 
-function otherMatch(song: CatalogueSong, shown: string, wanted: string): Marked | null {
+function otherMatch(song: NamedSong, shown: string, wanted: string): Marked | null {
   for (const text of searchedNames(song)) {
     if (text === shown) {
       continue;
@@ -95,7 +97,7 @@ function otherMatch(song: CatalogueSong, shown: string, wanted: string): Marked 
 
 /** The songs with the query in a name, those in the name shown first, the newest first. */
 export function searchSongs(
-  songs: readonly CatalogueSong[],
+  songs: readonly (CatalogueSong & NamedSong)[],
   query: string,
   locale: Locale,
 ): SearchResult[] {
