@@ -12,4 +12,4 @@ export {
   type SongCatalogueFailure,
   type SongCatalogueRead,
 } from "./types";
-export { parseWikiSongs } from "./wiki-songs";
+export { MAX_CATALOGUE_LENGTH, parseWikiSongs } from "./wiki-songs";
