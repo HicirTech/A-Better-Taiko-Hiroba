@@ -33,6 +33,9 @@ export interface Messages {
   "settings.version": string;
   "settings.songData": string;
   "settings.songDataSources": string;
+  "settings.songLevels": string;
+  "settings.shownDifficulty": string;
+  "settings.shownDifficultyHint": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;

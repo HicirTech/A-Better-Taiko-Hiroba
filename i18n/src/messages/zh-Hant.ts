@@ -19,6 +19,10 @@ export const zhHant: Messages = {
   "settings.songData": "歌曲資料",
   "settings.songDataSources":
     "作者、分類、星級和其他語言的歌名來自 taiko.wiki 與 太鼓之達人維基（taiko.fandom.com/zh）。太鼓之達人維基的歌名依 CC BY-SA 使用。",
+  "settings.songLevels": "歌曲難度",
+  "settings.shownDifficulty": "預設顯示的難度",
+  "settings.shownDifficultyHint":
+    "這個難度的星級顯示在最前面，魔鬼會同時顯示裏譜面；其他星級疊在後面，點一下就橫向展開。",
   "signIn.intro":
     "使用萬代南夢宮 ID 登入，即可讀取你在鼓眾廣場的個人資料。登入頁面由廣場官方提供，本應用程式不會接觸你的密碼。",
   "signIn.action": "登入廣場",

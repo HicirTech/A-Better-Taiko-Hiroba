@@ -19,6 +19,10 @@ export const zhHans: Messages = {
   "settings.songData": "歌曲资料",
   "settings.songDataSources":
     "作者、分类、星级和其他语言的歌名来自 taiko.wiki 与 太鼓之達人維基（taiko.fandom.com/zh）。太鼓之達人維基的歌名按 CC BY-SA 使用。",
+  "settings.songLevels": "歌曲难度",
+  "settings.shownDifficulty": "默认显示的难度",
+  "settings.shownDifficultyHint":
+    "这个难度的星级显示在最前面，魔王会同时显示里谱面；其他星级叠在后面，点一下就横向展开。",
   "signIn.intro":
     "使用万代南梦宫 ID 登录，即可读取你在鼓众广场的个人资料。登录页面由广场官方提供，本应用不会接触你的密码。",
   "signIn.action": "登录广场",

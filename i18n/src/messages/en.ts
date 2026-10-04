@@ -19,6 +19,10 @@ export const en: Messages = {
   "settings.songData": "Song data",
   "settings.songDataSources":
     "Artists, genres, star levels and song names in other languages come from taiko.wiki and the Chinese Taiko no Tatsujin Wiki (taiko.fandom.com/zh). Names from the Chinese wiki are used under CC BY-SA.",
+  "settings.songLevels": "Song levels",
+  "settings.shownDifficulty": "Difficulty shown first",
+  "settings.shownDifficultyHint":
+    "Its star level shows in front, with the inner chart beside Extreme; the other levels stack behind it and spread out on a click.",
   "signIn.intro":
     "Sign in with your Bandai Namco ID to read your Donder Hiroba profile. The sign-in page is Hiroba's own; this app never sees your password.",
   "signIn.action": "Sign in to Hiroba",

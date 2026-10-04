@@ -21,6 +21,7 @@ import { FolderCard } from "./folder-card";
 import { SetNameDialog } from "./set-name-dialog";
 import { SetView } from "./set-view";
 import { SetsDrawer } from "./sets-drawer";
+import { keptShownDifficulty, ShownDifficultyContext } from "./shown-difficulty";
 import { SongCard } from "./song-card";
 import { rememberedSongs, resolveSong } from "./song-look";
 import { SongPicker } from "./song-picker";
@@ -42,7 +43,17 @@ export interface FavoritesPageProps {
   readonly i18n: Translator;
 }
 
-export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps) {
+/** The page, with the difficulty whose levels the songs show first, as kept when it opened. */
+export function FavoritesPage(props: FavoritesPageProps) {
+  const [shownDifficulty] = useState(keptShownDifficulty);
+  return (
+    <ShownDifficultyContext value={shownDifficulty}>
+      <FavoritesBody {...props} />
+    </ShownDifficultyContext>
+  );
+}
+
+function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
   const { t, locale } = i18n;
   const { step, pickSong } = favorites;
   const shown = shownFavoritesOf(step);

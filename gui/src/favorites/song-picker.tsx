@@ -11,12 +11,21 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { type ReactNode, useCallback, useDeferredValue, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useContext,
+  useDeferredValue,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Waiting } from "../my-page/editor-parts";
 import { useBackCloses } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { type PickerEntry, PickerList } from "./picker-list";
+import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
 import { matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
 import { SongFilters } from "./song-filters";
 import { lookOfCatalogue } from "./song-look";
@@ -71,6 +80,8 @@ function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, 
   const touchFirst = useTouchFirst();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SongFilter>(NO_FILTER);
+  const kept = useContext(ShownDifficultyContext);
+  const shown = filter.difficulty === null ? kept : shownFor(filter.difficulty);
   const deferred = useDeferredValue(query);
   const scroller = useRef<HTMLDivElement>(null);
   const rewind = () => scroller.current?.scrollTo({ top: 0 });
@@ -182,7 +193,7 @@ function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, 
         )}
       </Box>
       <DialogContent ref={scroller} dividers sx={{ p: 0 }}>
-        {content}
+        <ShownDifficultyContext value={shown}>{content}</ShownDifficultyContext>
       </DialogContent>
       <DialogActions>
         <Button id="song-picker-done" onClick={onClose}>

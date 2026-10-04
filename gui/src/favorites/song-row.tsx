@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { GENRE_COLOUR } from "./genre-look";
-import { LevelBadges } from "./level-badges";
+import { LEVEL_BADGES_LOOK, LevelBadges } from "./level-badges";
 import { ScrollingText } from "./scrolling-text";
 import type { SongLook } from "./song-look";
 
@@ -27,6 +27,7 @@ const ROW = {
     lineHeight: 1.4,
   },
   "& .song-end": { alignSelf: "center", display: "flex", alignItems: "center", gap: 0.5 },
+  ...LEVEL_BADGES_LOOK,
 } as const;
 
 export interface SongRowProps {
@@ -40,11 +41,23 @@ export interface SongRowProps {
   readonly start?: ReactNode;
   /** A name too long for the row scrolls rather than ends in an ellipsis. */
   readonly scrolling?: boolean;
+  /** False where the caller draws the level badges itself, outside the row. */
+  readonly withLevels?: boolean;
   readonly id?: string;
 }
 
-export function SongRow({ look, i18n, name, end, start, scrolling, id }: SongRowProps) {
+export function SongRow({
+  look,
+  i18n,
+  name,
+  end,
+  start,
+  scrolling,
+  withLevels = true,
+  id,
+}: SongRowProps) {
   const { genres } = look;
+  const levels = withLevels ? look.levels : null;
   return (
     <Box component="span" id={id} className="song-row" data-song-no={look.songNo} sx={ROW}>
       {start}
@@ -77,9 +90,9 @@ export function SongRow({ look, i18n, name, end, start, scrolling, id }: SongRow
           </span>
         )}
       </span>
-      {(look.levels !== null || end !== undefined) && (
+      {(levels !== null || end !== undefined) && (
         <span className="song-end">
-          {look.levels !== null && <LevelBadges levels={look.levels} i18n={i18n} />}
+          {levels !== null && <LevelBadges levels={levels} i18n={i18n} />}
           {end}
         </span>
       )}
