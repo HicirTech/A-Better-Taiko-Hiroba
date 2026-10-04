@@ -1,7 +1,8 @@
-import { err, type Result, type Transport, type WriteOutcome } from "@abth/core";
+import { err, type Result, sameCostume, type Transport, type WriteOutcome } from "@abth/core";
 
 import {
   type CostumeChange,
+  type CostumeHistoryEntry,
   type CostumeSet,
   changedTheCostume,
   type HirobaSessionPort,
@@ -32,15 +33,15 @@ export interface SessionWritesOptions {
   readonly liveChecked?: readonly WriteKind[];
   readonly now: () => Date;
   readonly historyStore: CostumeHistoryStore;
-  /** The picture of exactly this set that this session fetched lately, or null. */
+  /** The picture of exactly this set that this session holds, or null. */
   readonly recentPreview: (set: CostumeSet) => string | null;
   readonly signedIn: () => boolean;
   /** Drops the session: Hiroba ended it. The write that found it waits for this to be done. */
   readonly endSession: () => void | Promise<void>;
   /** Whose my page this run last read, or null before any read: whose history is whose. */
   readonly owner: () => string | null;
-  /** A write applied: the costume is the one it wrote, whatever was kept of it. */
-  readonly costumeChanged: () => void;
+  /** A write applied: the costume worn is the one it read back, whatever was kept of the last. */
+  readonly costumeChanged: (worn: CostumeSet) => void;
 }
 
 /** The port's write verbs, the same on every shell. */
@@ -52,7 +53,10 @@ export type SessionWrites = Pick<
   | "changeTitle"
   | "changeName"
   | "costumeHistory"
->;
+> & {
+  /** A preview came: a history entry of that set with no picture takes it. */
+  previewKept(set: CostumeSet, picture: string): Promise<void>;
+};
 
 export const BUSY_OUTCOME: { readonly kind: "busy" } = { kind: "busy" };
 
@@ -98,7 +102,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       if (!changedTheCostume(outcome)) {
         return;
       }
-      options.costumeChanged();
+      options.costumeChanged(outcome.after);
       if (taikoNo !== null) {
         await rememberWorn(taikoNo, outcome);
       }
@@ -180,6 +184,26 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
         return { kind: "notSignedIn" };
       }
       return write(name, change);
+    },
+
+    async previewKept(set, picture) {
+      const taikoNo = options.owner();
+      if (taikoNo === null) {
+        return;
+      }
+      try {
+        const kept = await historyStore.load(taikoNo);
+        const blank = (entry: CostumeHistoryEntry) =>
+          entry.picture === null && sameCostume(entry.set, set);
+        if (kept.some(blank)) {
+          await historyStore.save(
+            taikoNo,
+            kept.map((entry) => (blank(entry) ? { ...entry, picture } : entry)),
+          );
+        }
+      } catch {
+        // The history is a convenience: it stays as it was.
+      }
     },
 
     async costumeHistory() {

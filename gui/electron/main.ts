@@ -119,7 +119,15 @@ const pictures = createPictureReader({
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
-const previews = createRecentPreviews();
+// The writes come up with the window: until then a kept picture fills no history.
+let previewKept: (set: CostumeSet, picture: string) => void = () => undefined;
+const previews = createRecentPreviews((set, picture) => previewKept(set, picture));
+const servedPreview = previews.keeping(async (set: CostumeSet) => {
+  if (sessionCookie === null) {
+    return err({ code: "preview=notSignedIn" });
+  }
+  return previewCostume(readTransport, endpoints, set);
+});
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -166,8 +174,12 @@ app.whenReady().then(async () => {
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
     owner: () => owner,
-    costumeChanged: () => pictures.costumeChanged(),
+    costumeChanged: (worn) => {
+      pictures.costumeChanged();
+      previews.wear(worn);
+    },
   });
+  previewKept = (set, picture) => void writes.previewKept(set, picture);
 
   const port = queuePort(queue, {
     async isSignedIn() {
@@ -216,18 +228,14 @@ app.whenReady().then(async () => {
     openCostumeEditor: async () => {
       const read = await writes.openCostumeEditor();
       if (read.ok) {
+        previews.wear(read.value.state);
         offered = offeredOf(read.value);
       }
       return read;
     },
     openTitleEditor: writes.openTitleEditor,
     // Its failure leaves the session be: the next page read says whether it is over.
-    previewCostume: previews.keeping(async (set: CostumeSet) => {
-      if (sessionCookie === null) {
-        return err({ code: "preview=notSignedIn" });
-      }
-      return previewCostume(readTransport, endpoints, set);
-    }),
+    previewCostume: servedPreview,
     readPicture: (want) => pictures.read(want),
     changeCostume: writes.changeCostume,
     changeTitle: writes.changeTitle,

@@ -49,10 +49,10 @@ describe("createRecentPreviews", () => {
     expect(previews.pictureOf(withFace(3))).toBeNull();
   });
 
-  test("keeps the last eight sets, and the oldest goes", async () => {
+  test("keeps the last sixteen sets, and the oldest goes", async () => {
     const previews = createRecentPreviews();
     const serve = previews.keeping(answering().preview);
-    const faces = Array.from({ length: 9 }, (_, at) => at + 1);
+    const faces = Array.from({ length: 17 }, (_, at) => at + 1);
 
     for (const face of faces) {
       await serve(withFace(face));
@@ -60,31 +60,54 @@ describe("createRecentPreviews", () => {
 
     expect(faces.map((face) => previews.pictureOf(withFace(face)) !== null)).toEqual([
       false,
-      ...Array(8).fill(true),
+      ...Array(16).fill(true),
     ]);
   });
 
-  test("counts a set served again as the newest, with its newest picture", async () => {
+  test("serves a set it holds from memory, asking nothing", async () => {
     const previews = createRecentPreviews();
-    let latest = "first";
-    const serve = previews.keeping(async (set) => ok(pictureOf(`${latest} ${set.colorFace}`)));
+    const { asked, preview } = answering();
+    const serve = previews.keeping(preview);
 
     await serve(withFace(1));
-    for (const face of [2, 3, 4, 5, 6, 7, 8]) {
+    const again = await serve(withFace(1));
+
+    expect(again).toEqual(ok(pictureOf("face 1")));
+    expect(asked).toEqual([withFace(1)]);
+  });
+
+  test("keeps the worn set's picture however many sets are tried after it", async () => {
+    const previews = createRecentPreviews();
+    const serve = previews.keeping(answering().preview);
+    previews.wear(withFace(1));
+
+    for (const face of Array.from({ length: 20 }, (_, at) => at + 1)) {
       await serve(withFace(face));
     }
-    latest = "second";
-    await serve(withFace(1));
-    await serve(withFace(9));
 
-    expect(previews.pictureOf(withFace(1))).toBe(pictureOf("second 1"));
+    expect(previews.pictureOf(withFace(1))).toBe(pictureOf("face 1"));
     expect(previews.pictureOf(withFace(2))).toBeNull();
-    expect(previews.pictureOf(withFace(3))).toBe(pictureOf("first 3"));
+  });
+
+  test("tells of each picture it newly keeps, and of none it serves from memory", async () => {
+    const told: [number, string][] = [];
+    const previews = createRecentPreviews((set, picture) => told.push([set.colorFace, picture]));
+    const serve = previews.keeping(answering().preview);
+
+    await serve(withFace(1));
+    await serve(withFace(1));
+    await serve(withFace(2));
+
+    expect(told).toEqual([
+      [1, pictureOf("face 1")],
+      [2, pictureOf("face 2")],
+    ]);
   });
 
   test("forgets every picture when it is cleared", async () => {
     const previews = createRecentPreviews();
     const serve = previews.keeping(answering().preview);
+    previews.wear(withFace(1));
     await serve(withFace(1));
     await serve(withFace(2));
 

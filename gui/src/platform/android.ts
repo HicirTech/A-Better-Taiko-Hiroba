@@ -107,7 +107,13 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
   let sources: PictureSources | null = null;
-  const previews = createRecentPreviews();
+  const previews = createRecentPreviews((set, picture) => void writes.previewKept(set, picture));
+  const servedPreview = previews.keeping(async (set: CostumeSet) => {
+    if (!signedIn) {
+      return err({ code: "preview=notSignedIn" });
+    }
+    return previewCostume(transport, endpoints, set);
+  });
   const pictures = createPictureReader({
     transport,
     endpoints,
@@ -143,7 +149,10 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     signedIn: () => signedIn,
     endSession: forget,
     owner: () => owner,
-    costumeChanged: () => pictures.costumeChanged(),
+    costumeChanged: (worn) => {
+      pictures.costumeChanged();
+      previews.wear(worn);
+    },
   });
 
   const port = queuePort(queue, {
@@ -236,6 +245,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     openCostumeEditor: flushed(async () => {
       const read = await writes.openCostumeEditor();
       if (read.ok) {
+        previews.wear(read.value.state);
         offered = offeredOf(read.value);
       }
       return read;
@@ -244,12 +254,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     openTitleEditor: flushed(writes.openTitleEditor),
 
     // Its failure forgets nothing: the next page read says whether the session is over.
-    previewCostume: previews.keeping(async (set: CostumeSet) => {
-      if (!signedIn) {
-        return err({ code: "preview=notSignedIn" });
-      }
-      return previewCostume(transport, endpoints, set);
-    }),
+    previewCostume: servedPreview,
 
     readPicture: (want) => pictures.read(want),
 
