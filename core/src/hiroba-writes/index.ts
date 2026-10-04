@@ -16,6 +16,7 @@ export {
 export { spaced } from "./cross-checks";
 export {
   changeFavoriteSong,
+  FAVORITE_SONG_WRITE,
   type FavoriteSongEditorView,
   openFavoriteSongEditor,
 } from "./favorite-song-write";

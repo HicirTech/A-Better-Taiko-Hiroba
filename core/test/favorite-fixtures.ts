@@ -142,6 +142,9 @@ export function fakeFavorites() {
     initStages: true,
     /** Whether a staging request with an empty value leaves its slot as it was. */
     ignoresEmpty: false,
+    /** The 大好きな曲 Hiroba has saved, and the `bsf` its page holds. */
+    song: "1001" as string | null,
+    bsf: "0",
     token: "",
     tokens: 0,
     requests: [] as TransportRequest[],
@@ -194,6 +197,22 @@ export function fakeFavorites() {
     return json(path, { result: code, errmsg: message });
   };
 
+  const saveSong = (request: TransportPost): Answer => {
+    const path = "ajax/mypage_song.php";
+    const form = new Map(request.form);
+    if (form.get("_tckt") !== hiroba.token) {
+      issue();
+      return json(path, { result: 705 });
+    }
+    hiroba.token = "";
+    const { code, stores, message } = hiroba.save;
+    if (stores) {
+      hiroba.song = form.get("song_no") || null;
+    }
+    hiroba.afterSave();
+    return json(path, { result: code, errmsg: message });
+  };
+
   const transport: Transport = {
     async send(request) {
       hiroba.requests.push(request);
@@ -202,8 +221,15 @@ export function fakeFavorites() {
       if (request.method === "GET" && path === "favorite_song_select.php") {
         return answer(path, folderPageFor(url.searchParams), "text/html");
       }
+      if (request.method === "GET" && path === "portal_favorite_song_select.php") {
+        const page = songPage({ songNo: hiroba.song, bsf: hiroba.bsf, token: issue() });
+        return answer(path, page, "text/html");
+      }
       if (request.method === "POST" && path === "ajax/myfavorite_song.php") {
         return saveFolder(request);
+      }
+      if (request.method === "POST" && path === "ajax/mypage_song.php") {
+        return saveSong(request);
       }
       return answer(path, "not found", "text/plain");
     },
