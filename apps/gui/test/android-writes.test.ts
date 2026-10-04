@@ -466,7 +466,7 @@ describe("createAndroidPort's title writes", () => {
     const byName = port.changeTitle({
       expected: TITLE_CHANGE.expected,
       target: { id: null, title: ownedTitle(102).label },
-    });
+    } as never);
     await expect(byName).rejects.toThrow("Refused changeTitle: arguments it does not take");
     expect(world.sent()).toEqual([]);
   });

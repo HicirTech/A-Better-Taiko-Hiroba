@@ -210,14 +210,10 @@ describe("describeOutcome, the title", () => {
     expect(describeOutcome(refused(2, null), i18n, { kind: "title" }).notes).toEqual([]);
   });
 
-  test.each([
-    ["title.notOwned", "write.invalid.titleNotOwned"],
-    ["title.unresolved", "write.invalid.titleUnresolved"],
-    ["title.ambiguous", "write.invalid.titleAmbiguous"],
-  ] as const)("words the refused field %s", (field, phrase) => {
-    const outcome: Noticed<TitleState> = { kind: "invalidTarget", field };
+  test("words a title the account does not own by its field", () => {
+    const outcome: Noticed<TitleState> = { kind: "invalidTarget", field: "title.notOwned" };
     expect(describeOutcome(outcome, i18n, { kind: "title" }).message).toBe(
-      t("write.invalidTarget", { field: t(phrase) }),
+      t("write.invalidTarget", { field: t("write.invalid.titleNotOwned") }),
     );
   });
 

@@ -310,9 +310,6 @@ describe("changeTitle's refusals before anything is posted", () => {
   test.each<RefusedCase>([
     ["an id the account does not own", { id: 999, title: "サンプル称号B" }, "title.notOwned"],
     ["an id under another title's name", { id: 106, title: "サンプル称号B" }, "title.notOwned"],
-    ["a name that no title has", { id: null, title: "リストにない称号" }, "title.unresolved"],
-    ["no name at all", { id: null, title: "" }, "title.unresolved"],
-    ["a name that more than one title has", { id: null, title: SHARED }, "title.ambiguous"],
   ])("refuses %s", async (_label, target, field) => {
     const { transport, routes } = fakeHiroba();
     const outcome = await change(transport, target);

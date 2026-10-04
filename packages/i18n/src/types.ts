@@ -251,8 +251,6 @@ export interface Messages {
   "write.name.refused2": string;
   /** The words of {field} in "write.invalidTarget": a phrase, with no capital and no full stop. */
   "write.invalid.titleNotOwned": string;
-  "write.invalid.titleUnresolved": string;
-  "write.invalid.titleAmbiguous": string;
   "write.invalid.nameEmpty": string;
   "write.invalid.nameEdge": string;
   "write.invalid.nameTooLong": string;

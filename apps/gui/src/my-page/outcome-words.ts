@@ -100,8 +100,6 @@ type InvalidField =
 
 const INVALID_FIELD_MESSAGE = {
   [TITLE_FIELDS.notOwned]: "write.invalid.titleNotOwned",
-  [TITLE_FIELDS.unresolved]: "write.invalid.titleUnresolved",
-  [TITLE_FIELDS.ambiguous]: "write.invalid.titleAmbiguous",
   [NAME_FIELDS.empty]: "write.invalid.nameEmpty",
   [NAME_FIELDS.edge]: "write.invalid.nameEdge",
   [NAME_FIELDS.tooLong]: "write.invalid.nameTooLong",

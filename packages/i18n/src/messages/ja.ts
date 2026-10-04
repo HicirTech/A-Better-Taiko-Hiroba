@@ -222,8 +222,6 @@ export const ja: Messages = {
   "write.name.nothingToChange": "すでにそのドンだーネームです。何も送信していません。",
   "write.name.refused2": "ひろばがドンだーネームを更新できませんでした。",
   "write.invalid.titleNotOwned": "その称号は一覧にありません",
-  "write.invalid.titleUnresolved": "戻す先の称号が一覧にありません",
-  "write.invalid.titleAmbiguous": "戻す先の名前の称号が複数あります",
   "write.invalid.nameEmpty": "ドンだーネームが空です",
   "write.invalid.nameEdge": "ドンだーネームの先頭か末尾に空白があります",
   "write.invalid.nameTooLong": "ドンだーネームがひろばの入力欄の上限より長いです",

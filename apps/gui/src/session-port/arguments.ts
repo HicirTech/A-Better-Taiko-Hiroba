@@ -62,8 +62,7 @@ export function isTitleState(value: unknown): value is TitleState {
   );
 }
 
-/** The interface picks a title by id and name; a title by name alone (`id` null) is how the
- * platform puts one back, and never crosses the port. */
+/** The interface picks a title by id and name. */
 export function isTitleTarget(value: unknown): value is TitleTarget {
   return (
     hasExactly(value, ["id", "title"]) &&

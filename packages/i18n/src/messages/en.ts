@@ -216,8 +216,6 @@ export const en: Messages = {
   "write.name.nothingToChange": "That is your nickname already. Nothing was sent.",
   "write.name.refused2": "Hiroba could not update the nickname.",
   "write.invalid.titleNotOwned": "that title is not in your list",
-  "write.invalid.titleUnresolved": "the title to go back to is not in your list",
-  "write.invalid.titleAmbiguous": "more than one of your titles has the name to go back to",
   "write.invalid.nameEmpty": "the nickname is empty",
   "write.invalid.nameEdge": "the nickname starts or ends with a space",
   "write.invalid.nameTooLong": "the nickname is longer than Hiroba's form takes",

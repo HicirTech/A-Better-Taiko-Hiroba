@@ -200,8 +200,6 @@ export const zhHans: Messages = {
   "write.name.nothingToChange": "当前已经是这个昵称。没有发送任何内容。",
   "write.name.refused2": "广场未能更新昵称。",
   "write.invalid.titleNotOwned": "该称号不在你的列表中",
-  "write.invalid.titleUnresolved": "要恢复的称号不在你的列表中",
-  "write.invalid.titleAmbiguous": "你有多个称号与要恢复的名称相同",
   "write.invalid.nameEmpty": "昵称为空",
   "write.invalid.nameEdge": "昵称以空格开头或结尾",
   "write.invalid.nameTooLong": "昵称超过了广场输入框的长度上限",

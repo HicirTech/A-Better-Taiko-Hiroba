@@ -199,8 +199,6 @@ export const zhHant: Messages = {
   "write.name.nothingToChange": "目前已經是這個暱稱。沒有傳送任何內容。",
   "write.name.refused2": "廣場未能更新暱稱。",
   "write.invalid.titleNotOwned": "該稱號不在你的清單中",
-  "write.invalid.titleUnresolved": "要恢復的稱號不在你的清單中",
-  "write.invalid.titleAmbiguous": "你有多個稱號與要恢復的名稱相同",
   "write.invalid.nameEmpty": "暱稱為空",
   "write.invalid.nameEdge": "暱稱以空格開頭或結尾",
   "write.invalid.nameTooLong": "暱稱超過了廣場輸入框的長度上限",
