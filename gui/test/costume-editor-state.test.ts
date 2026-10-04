@@ -302,6 +302,46 @@ describe("Reset", () => {
   });
 });
 
+describe("dropping the edits on leaving the page", () => {
+  const drafted = set({ colorFace: 9, costume2: 0 });
+
+  test("puts the draft back to the set as read and clears the notice of the last write", () => {
+    const step = editing(set(), drafted, { kind: "interrupted" });
+
+    expect(run(step, { type: "editsDropped" })).toEqual(editing());
+  });
+
+  test("clears a notice alone, over a draft that is the set as read already", () => {
+    const step = editing(set(), set(), { kind: "busy" });
+
+    expect(run(step, { type: "editsDropped" })).toEqual(editing());
+  });
+
+  test("keeps the editor as read, so the page has nothing to read when it is shown again", () => {
+    const read = editorOf(set({ colorBody: 40 }));
+    const step = run(
+      { name: "editing", editor: read, draft: drafted, notice: { kind: "interrupted" } },
+      { type: "editsDropped" },
+    );
+
+    expect(step).toEqual({ name: "editing", editor: read, draft: read.state, notice: null });
+  });
+
+  test("is the same step when there is nothing to drop", () => {
+    const step = editing();
+
+    expect(reduceEditor(step, { type: "editsDropped" })).toBe(step);
+  });
+
+  test.each<[label: string, step: EditorStep]>([
+    ["a save", saving(set(), drafted)],
+    ["nothing read", UNREAD],
+    ["a read", { name: "loading", held: { editor: editorOf(), draft: drafted } }],
+  ])("drops nothing in %s", (_label, step) => {
+    expect(reduceEditor(step, { type: "editsDropped" })).toBe(step);
+  });
+});
+
 describe("the save", () => {
   const drafted = set({ colorFace: 9 });
 
