@@ -16,6 +16,9 @@ export const ja: Messages = {
   "settings.signedOut": "ログインしていません",
   "settings.updates": "アップデート",
   "settings.version": "バージョン {version}",
+  "settings.songData": "曲のデータ",
+  "settings.songDataSources":
+    "アーティスト、ジャンル、難易度の星、ほかの言語の曲名は taiko.wiki と 太鼓之達人維基（taiko.fandom.com/zh）によるものです。太鼓之達人維基の曲名は CC BY-SA に従って使っています。",
   "signIn.intro":
     "バンダイナムコIDでログインすると、ドンだーひろばのプロフィールを読み込めます。ログイン画面はひろば公式のもので、このアプリがパスワードを見ることはありません。",
   "signIn.action": "ドンだーひろばにログイン",

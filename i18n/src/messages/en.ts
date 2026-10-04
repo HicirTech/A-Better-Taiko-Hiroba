@@ -16,6 +16,9 @@ export const en: Messages = {
   "settings.signedOut": "Not signed in",
   "settings.updates": "Updates",
   "settings.version": "Version {version}",
+  "settings.songData": "Song data",
+  "settings.songDataSources":
+    "Artists, genres, star levels and song names in other languages come from taiko.wiki and the Chinese Taiko no Tatsujin Wiki (taiko.fandom.com/zh). Names from the Chinese wiki are used under CC BY-SA.",
   "signIn.intro":
     "Sign in with your Bandai Namco ID to read your Donder Hiroba profile. The sign-in page is Hiroba's own; this app never sees your password.",
   "signIn.action": "Sign in to Hiroba",

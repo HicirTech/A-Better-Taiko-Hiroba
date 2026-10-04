@@ -3,6 +3,7 @@ import { Button, Divider, List, ListItem, ListItemText, Paper, SvgIcon } from "@
 import { type ReactNode, useId } from "react";
 
 import { SettingsSection } from "./settings-section";
+import { SongDataSection } from "./song-data-section";
 import { UpdatesSection, type UpdatesSectionProps } from "./updates-section";
 
 export type AccountState =
@@ -86,6 +87,8 @@ export function SettingsPage({ i18n, language, account, updates }: SettingsPageP
           <UpdatesSection i18n={i18n} {...updates} />
         </>
       )}
+      <Divider />
+      <SongDataSection i18n={i18n} />
     </Paper>
   );
 }

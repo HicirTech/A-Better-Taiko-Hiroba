@@ -16,6 +16,9 @@ export const zhHans: Messages = {
   "settings.signedOut": "未登录",
   "settings.updates": "更新",
   "settings.version": "版本 {version}",
+  "settings.songData": "歌曲资料",
+  "settings.songDataSources":
+    "作者、分类、星级和其他语言的歌名来自 taiko.wiki 与 太鼓之達人維基（taiko.fandom.com/zh）。太鼓之達人維基的歌名按 CC BY-SA 使用。",
   "signIn.intro":
     "使用万代南梦宫 ID 登录，即可读取你在鼓众广场的个人资料。登录页面由广场官方提供，本应用不会接触你的密码。",
   "signIn.action": "登录广场",

@@ -16,6 +16,9 @@ export const zhHant: Messages = {
   "settings.signedOut": "未登入",
   "settings.updates": "更新",
   "settings.version": "版本 {version}",
+  "settings.songData": "歌曲資料",
+  "settings.songDataSources":
+    "作者、分類、星級和其他語言的歌名來自 taiko.wiki 與 太鼓之達人維基（taiko.fandom.com/zh）。太鼓之達人維基的歌名依 CC BY-SA 使用。",
   "signIn.intro":
     "使用萬代南夢宮 ID 登入，即可讀取你在鼓眾廣場的個人資料。登入頁面由廣場官方提供，本應用程式不會接觸你的密碼。",
   "signIn.action": "登入廣場",

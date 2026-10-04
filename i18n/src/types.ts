@@ -31,6 +31,8 @@ export interface Messages {
   "settings.updates": string;
   /** Param: {version}, this build's version, such as 0.1.0. */
   "settings.version": string;
+  "settings.songData": string;
+  "settings.songDataSources": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;
