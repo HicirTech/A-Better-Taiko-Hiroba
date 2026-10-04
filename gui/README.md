@@ -272,7 +272,7 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
 
 ### The Favourites page
 
-The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked by genre or by part of a name from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right, and applying a set replaces the whole folder in one write.
+The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked by genre or by part of a name from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right, and applying a set replaces the whole folder in one write. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one.
 
 ### The costume preview
 
