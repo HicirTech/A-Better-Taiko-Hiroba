@@ -5,7 +5,14 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { HELD_STILL, LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
 import { useTouchFirst } from "../navigation/use-touch-first";
-import { filledSlots, newSetName, SET_SONG_LIMIT, sameSongs } from "./favorite-sets";
+import {
+  filledSlots,
+  moved,
+  newSetName,
+  SET_SONG_LIMIT,
+  sameSongs,
+  toggledSongs,
+} from "./favorite-sets";
 import { SetsIcon } from "./favorites-icons";
 import { type FavoritesStep, shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
@@ -33,9 +40,11 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
   const { step, pickSong } = favorites;
   const shown = shownFavoritesOf(step);
   const keptSets = useFavoriteSets();
-  const { sets, toggleSong } = keptSets;
+  const { sets } = keptSets;
   // The folder on Hiroba is shown until a set is picked from the drawer.
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // A set's songs as edited, kept apart until the set is saved; showing another set drops them.
+  const [draft, setDraft] = useState<readonly string[] | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [picking, setPicking] = useState<"song" | "set" | null>(null);
   const page = useRef<HTMLDivElement>(null);
@@ -46,6 +55,10 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
   const set = sets.find((one) => one.id === selectedId) ?? null;
   const setId = set?.id ?? null;
   const folderSongs = shown === null ? null : filledSlots(shown.view.folder.state);
+  const inUse =
+    folderSongs === null || folderSongs.length === 0
+      ? null
+      : (sets.find((one) => sameSongs(one.songs, folderSongs)) ?? null);
   const view = shown?.view ?? null;
   const remembered = useMemo(() => rememberedSongs(view), [view]);
   const look = useCallback(
@@ -53,25 +66,32 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
     [catalogue.songs, remembered, locale],
   );
   const songChoice = useMemo(() => ({ kind: "one", onPick: pickSong }) as const, [pickSong]);
-  const toggleInSet = useCallback(
-    (songNo: string) => {
-      if (setId !== null) {
-        toggleSong(setId, songNo);
-      }
-    },
-    [setId, toggleSong],
+  const savedSongs = set?.songs ?? NO_SONGS;
+  const editedSongs = draft ?? savedSongs;
+  const edited = draft !== null && !sameSongs(draft, savedSongs);
+  const edit = useCallback(
+    (change: (songs: readonly string[]) => readonly string[]) =>
+      setDraft((now) => change(now ?? savedSongs)),
+    [savedSongs],
   );
-  const setSongs = set?.songs ?? NO_SONGS;
+  const toggleInSet = useCallback(
+    (songNo: string) => edit((songs) => toggledSongs(songs, songNo)),
+    [edit],
+  );
   const setChoice = useMemo(
     () =>
       ({
         kind: "many",
-        picked: setSongs,
+        picked: editedSongs,
         limit: SET_SONG_LIMIT,
         onToggle: toggleInSet,
       }) as const,
-    [setSongs, toggleInSet],
+    [editedSongs, toggleInSet],
   );
+  const showSet = (id: string | null) => {
+    setSelectedId(id);
+    setDraft(null);
+  };
 
   // Focus leaves the button a write shuts, so it is not dropped to the window's top.
   const saveSong = () => {
@@ -79,7 +99,7 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
     void favorites.saveSong();
   };
   const addSet = (songs: readonly string[]) =>
-    setSelectedId(
+    showSet(
       keptSets.add(
         newSetName(sets, (number) => t("favorites.setName", { number })),
         songs,
@@ -88,7 +108,7 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
   const apply = async (songs: readonly string[]) => {
     page.current?.focus({ preventScroll: true });
     await favorites.applySet(songs);
-    setSelectedId(null);
+    showSet(null);
   };
   const setsLabel = t("favorites.sets");
   return (
@@ -129,9 +149,10 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
       {set !== null ? (
         <SetView
           key={set.id}
-          set={set}
+          songs={editedSongs}
           look={look}
           i18n={i18n}
+          edited={edited}
           canApply={
             shown !== null &&
             !shown.shut &&
@@ -139,13 +160,16 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
             !sameSongs(set.songs, folderSongs ?? NO_SONGS)
           }
           applying={shown?.saving === "folder"}
+          byLongPress={touchFirst}
           onAddSongs={() => setPicking("set")}
-          onRemoveSong={(songNo) => keptSets.toggleSong(set.id, songNo)}
-          onApply={() => void apply(set.songs)}
-          onDelete={() => {
-            keptSets.remove(set.id);
-            setSelectedId(null);
+          onRemoveSong={(songNo) => edit((songs) => songs.filter((song) => song !== songNo))}
+          onMoveSong={(from, to) => edit((songs) => moved(songs, from, to))}
+          onSave={() => {
+            keptSets.replaceSongs(set.id, editedSongs);
+            setDraft(null);
           }}
+          onDiscard={() => setDraft(null)}
+          onApply={() => void apply(set.songs)}
         />
       ) : shown === null ? (
         progressOf(step, i18n)
@@ -163,7 +187,10 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
             shown={shown}
             look={look}
             i18n={i18n}
+            sets={sets}
+            inUse={inUse}
             onSaveAsSet={() => addSet(filledSlots(shown.view.folder.state))}
+            onSaveToSet={(id) => keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))}
           />
         </Stack>
       )}
@@ -172,14 +199,22 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
         sets={sets}
         folderSongs={folderSongs}
         selectedId={setId}
+        byLongPress={touchFirst}
         i18n={i18n}
         onPick={(id) => {
-          setSelectedId(id);
+          showSet(id);
           setDrawerOpen(false);
         }}
         onAdd={() => {
           addSet([]);
           setDrawerOpen(false);
+        }}
+        onMove={keptSets.moveSet}
+        onDelete={(id) => {
+          keptSets.remove(id);
+          if (id === selectedId) {
+            showSet(null);
+          }
         }}
         onClose={() => setDrawerOpen(false)}
       />

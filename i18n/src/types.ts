@@ -307,6 +307,19 @@ export interface Messages {
   "favorites.set.sameAsFolder": string;
   "favorites.setEmpty": string;
   "favorites.saveAsSet": string;
+  "favorites.saveToSet": string;
+  "favorites.saveSet": string;
+  "favorites.inUse": string;
+  "favorites.replace.title": string;
+  "favorites.replace.body": string;
+  "favorites.replace.confirm": string;
+  "favorites.deleteSet": string;
+  "sort.handle": string;
+  "sort.instructions": string;
+  "sort.picked": string;
+  "sort.over": string;
+  "sort.dropped": string;
+  "sort.cancelled": string;
   "favorites.addSongs": string;
   /** Param: {name}, the song as the page shows it. */
   "favorites.removeSong": string;

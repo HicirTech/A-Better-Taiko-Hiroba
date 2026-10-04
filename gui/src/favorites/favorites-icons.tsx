@@ -1,7 +1,7 @@
 import { SvgIcon, type SvgIconProps } from "@mui/material";
 
-// Material's "list", "close", "check" and "add" icons (Apache 2.0), inline because the icons
-// package is not a dependency.
+// Material's "list", "close", "check", "add", "drag_indicator", "delete" and "arrow_drop_down"
+// icons (Apache 2.0), inline because the icons package is not a dependency.
 
 export function SetsIcon() {
   return (
@@ -32,6 +32,30 @@ export function AddIcon() {
   return (
     <SvgIcon aria-hidden>
       <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z" />
+    </SvgIcon>
+  );
+}
+
+export function DragHandleIcon() {
+  return (
+    <SvgIcon aria-hidden fontSize="small">
+      <path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2m-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2m0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2m0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2" />
+    </SvgIcon>
+  );
+}
+
+export function DeleteIcon() {
+  return (
+    <SvgIcon aria-hidden fontSize="small">
+      <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z" />
+    </SvgIcon>
+  );
+}
+
+export function ArrowDropDownIcon() {
+  return (
+    <SvgIcon aria-hidden fontSize="small">
+      <path d="m7 10 5 5 5-5z" />
     </SvgIcon>
   );
 }

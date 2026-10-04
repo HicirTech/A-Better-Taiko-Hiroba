@@ -6,6 +6,7 @@ import {
   filledSlots,
   keepSets,
   loadSets,
+  moved,
   newSetName,
   removeSet,
   renameSet,
@@ -198,5 +199,27 @@ describe("newSetName", () => {
   test("goes past a name already taken", () => {
     expect(newSetName([set("a", [], "Set 2"), set("b", [], "Set 3")], named)).toBe("Set 4");
     expect(newSetName([set("a", [], "Set 3"), set("b", [], "Other")], named)).toBe("Set 4");
+  });
+});
+
+describe("moved", () => {
+  test.each([
+    [0, 2, ["b", "c", "a", "d"]],
+    [3, 1, ["a", "d", "b", "c"]],
+    [1, 2, ["a", "c", "b", "d"]],
+  ])("moves the item at %d to %d", (from, to, list) => {
+    expect(moved(["a", "b", "c", "d"], from, to)).toEqual(list);
+  });
+
+  test("gives the same list for a move that goes nowhere or out of range", () => {
+    const list = ["a", "b"];
+    for (const [from, to] of [
+      [1, 1],
+      [2, 0],
+      [0, 2],
+      [-1, 0],
+    ] as const) {
+      expect(moved(list, from, to)).toBe(list);
+    }
   });
 });

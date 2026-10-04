@@ -5,10 +5,10 @@ import {
   type FavoriteSet,
   keepSets,
   loadSets,
+  moved,
   removeSet,
   renameSet,
   setSongs,
-  toggledSongs,
 } from "./favorite-sets";
 
 export interface FavoriteSets {
@@ -16,8 +16,10 @@ export interface FavoriteSets {
   /** Adds a set at the end and gives its id. */
   add(name: string, songs: readonly string[]): string;
   rename(id: string, name: string): void;
-  /** Takes a song out of the set if it is in, else adds it at the end. */
-  toggleSong(id: string, songNo: string): void;
+  /** Gives the set these songs in place of its own. */
+  replaceSongs(id: string, songs: readonly string[]): void;
+  /** Puts the set at `from` in place `to` among the sets. */
+  moveSet(from: number, to: number): void;
   remove(id: string): void;
 }
 
@@ -44,15 +46,14 @@ export function useFavoriteSets(): FavoriteSets {
     (id: string, name: string) => commit(renameSet(latest.current, id, name)),
     [commit],
   );
-  const toggleSong = useCallback(
-    (id: string, songNo: string) => {
-      const set = latest.current.find((one) => one.id === id);
-      if (set !== undefined) {
-        commit(setSongs(latest.current, id, toggledSongs(set.songs, songNo)));
-      }
-    },
+  const replaceSongs = useCallback(
+    (id: string, songs: readonly string[]) => commit(setSongs(latest.current, id, songs)),
+    [commit],
+  );
+  const moveSet = useCallback(
+    (from: number, to: number) => commit(moved(latest.current, from, to)),
     [commit],
   );
   const remove = useCallback((id: string) => commit(removeSet(latest.current, id)), [commit]);
-  return { sets, add, rename, toggleSong, remove };
+  return { sets, add, rename, replaceSongs, moveSet, remove };
 }

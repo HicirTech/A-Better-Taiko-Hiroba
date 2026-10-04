@@ -117,6 +117,17 @@ export function removeSet(sets: readonly FavoriteSet[], id: string): readonly Fa
   return sets.filter((set) => set.id !== id);
 }
 
+/** The list with the item at `from` moved to `to`; the same list for an index out of range. */
+export function moved<T>(list: readonly T[], from: number, to: number): readonly T[] {
+  const item = list[from];
+  if (item === undefined || to < 0 || to >= list.length || from === to) {
+    return list;
+  }
+
+  const rest = list.filter((_, index) => index !== from);
+  return [...rest.slice(0, to), item, ...rest.slice(to)];
+}
+
 /** The song taken out if it is in, else put last; the same songs if a full set cannot take it. */
 export function toggledSongs(songs: readonly string[], songNo: string): readonly string[] {
   if (songs.includes(songNo)) {
