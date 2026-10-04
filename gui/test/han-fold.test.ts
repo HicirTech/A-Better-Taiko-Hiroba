@@ -29,8 +29,10 @@ describe("foldHan", () => {
     }
   });
 
-  test("pairs every character with exactly one", () => {
-    expect(Array.from(HAN_FOLDED_FROM)).toHaveLength(Array.from(HAN_FOLDED_TO).length);
-    expect(new Set(Array.from(HAN_FOLDED_FROM)).size).toBe(Array.from(HAN_FOLDED_FROM).length);
+  test("pairs every UTF-16 unit with exactly one, so a fold keeps every position", () => {
+    expect(HAN_FOLDED_FROM).toHaveLength(Array.from(HAN_FOLDED_FROM).length);
+    expect(HAN_FOLDED_TO).toHaveLength(Array.from(HAN_FOLDED_TO).length);
+    expect(HAN_FOLDED_FROM).toHaveLength(HAN_FOLDED_TO.length);
+    expect(new Set(HAN_FOLDED_FROM).size).toBe(HAN_FOLDED_FROM.length);
   });
 });

@@ -14,13 +14,8 @@ async function table(name: string): Promise<Map<string, string>> {
   for (const line of (await response.text()).split("\n")) {
     const [key, values] = line.split("\t");
     const first = values?.trim().split(" ")[0];
-    // Only one character for one character: a search marks its matches by position.
-    if (
-      key !== undefined &&
-      first !== undefined &&
-      [...key].length === 1 &&
-      [...first].length === 1
-    ) {
+    // One UTF-16 unit for one: a search folds unit by unit and marks matches by position.
+    if (key?.length === 1 && first?.length === 1) {
       pairs.set(key, first);
     }
   }
