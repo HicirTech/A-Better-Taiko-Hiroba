@@ -338,7 +338,12 @@ export interface Messages {
   "picker.search": string;
   /** The search field's helper: what it looks in. */
   "picker.searchHint": string;
-  "picker.genres": string;
+  "picker.genre": string;
+  "picker.difficulty": string;
+  "picker.stars": string;
+  /** A filter menu's first choice, which takes every song. */
+  "picker.all": string;
+  "picker.level": string;
   "picker.none": string;
   "picker.loading": string;
   "picker.failed": string;

@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
 
 import { DIFFICULTIES } from "../song-catalogue/types";
-import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL } from "./genre-look";
+import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL, DIFFICULTY_TEXT } from "./genre-look";
 import type { SongLook } from "./song-look";
 
 const BADGES = { display: "inline-flex", alignItems: "center", gap: 2, flexShrink: 0 } as const;
@@ -11,7 +11,7 @@ const BADGE = {
   height: 20,
   padding: "0 3px",
   borderRadius: 4,
-  color: "#fff",
+  color: DIFFICULTY_TEXT,
   fontSize: "0.6875rem",
   fontWeight: 700,
   lineHeight: "20px",

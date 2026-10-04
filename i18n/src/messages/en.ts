@@ -298,7 +298,11 @@ export const en: Messages = {
   "picker.title.multi": "Add songs",
   "picker.search": "Search songs",
   "picker.searchHint": "By name, in Japanese, English, Chinese or romaji",
-  "picker.genres": "Genres",
+  "picker.genre": "Genre",
+  "picker.difficulty": "Difficulty",
+  "picker.stars": "Stars",
+  "picker.all": "All",
+  "picker.level": "★{level}",
   "picker.none": "No songs found.",
   "picker.loading": "Loading the song list…",
   "picker.failed":

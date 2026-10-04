@@ -4,6 +4,9 @@ import type { Genre } from "@abth/core";
 export const DIFFICULTIES = ["easy", "normal", "hard", "oni", "ura"] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
+export const MIN_LEVEL = 1;
+export const MAX_LEVEL = 10;
+
 /** One song as taiko.wiki describes it, cut to what the app shows and searches. */
 export interface CatalogueSong {
   readonly songNo: string;

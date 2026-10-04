@@ -37,6 +37,9 @@ export const DIFFICULTY_COLOUR: Readonly<Record<Difficulty, string>> = {
   ura: "#7135DB",
 };
 
+/** White reads on every chart's colour. */
+export const DIFFICULTY_TEXT = "#fff";
+
 export const DIFFICULTY_LABEL = {
   easy: "difficulty.easy",
   normal: "difficulty.normal",

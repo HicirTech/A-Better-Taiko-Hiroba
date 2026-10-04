@@ -191,6 +191,7 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
   "name.counter",
   "name.siteWarning",
   "song.level",
+  "picker.level",
 ];
 
 /** Messages that are just one game term, as each language writes it. */
@@ -336,7 +337,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "除階隨雅面頁項預頭顏顯體鼓牌",
     "流音樂動兒童科創綜藝古典普困難魔鬼裏",
     "首解鎖第",
-    "增搜尋依文英羅馬類型找放",
+    "增搜尋依文英羅馬類找放",
     "相刪將影響",
     "發稍布",
     "者類星其他來太基依",
