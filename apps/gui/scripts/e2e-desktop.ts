@@ -2901,6 +2901,28 @@ try {
   results.costumePhoneFocusStaysClearOfTheBlockAndTheBar =
     tabbed.cells > 60 && tabbed.forward && tabbed.backward;
 
+  /** The cells over the block's bottom edge, and how many of them are seen there. */
+  const cellsOverTheBlock = () =>
+    page.evaluate<{ over: number; seen: number }>(
+      `(() => { const block = document.querySelector("#costume-aside").getBoundingClientRect(); const over = [...document.querySelectorAll("#costume-items-costume1 > button")].map((cell) => ({ cell, box: cell.getBoundingClientRect() })).filter(({ box }) => box.bottom > 0 && box.top < block.bottom); const seen = over.filter(({ cell, box }) => { const hit = document.elementFromPoint((box.left + box.right) / 2, (Math.max(box.top, 0) + Math.min(box.bottom, block.bottom)) / 2); return hit !== null && cell.contains(hit); }); return { over: over.length, seen: seen.length }; })()`,
+    );
+  const scrolledUnderTheBlock = await atSize(390, 700, async () => {
+    await showPart("costume1");
+    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    const end = await scrollToTheEnd();
+    const counts: { over: number; seen: number }[] = [];
+    for (const part of [0.25, 0.5, 0.75, 1]) {
+      await page.evaluate(`window.scrollTo(0, ${Math.round(end * part)})`);
+      counts.push(await cellsOverTheBlock());
+    }
+    await page.evaluate("window.scrollTo(0, 0)");
+    return { end, counts };
+  });
+  results.costumePhoneGridScrollsOutOfSightUnderTheTopBlock =
+    scrolledUnderTheBlock.end > 100 &&
+    scrolledUnderTheBlock.counts.some(({ over }) => over > 0) &&
+    scrolledUnderTheBlock.counts.every(({ seen }) => seen === 0);
+
   await fetch(`${HIROBA}/__state?reset=1`);
   await fetch(`${HIROBA}/__items?many=1`);
   await readEditorAgain();

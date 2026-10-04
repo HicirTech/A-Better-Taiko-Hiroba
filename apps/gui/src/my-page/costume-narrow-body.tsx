@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, Stack } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { STAYS_IN_VIEW } from "../navigation/app-frame";
+import { BELOW_TOP_BAND, STAYS_IN_VIEW, WHEN_TALL } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { previewSetOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
@@ -17,6 +17,20 @@ import type { CostumeEditor } from "./use-costume-editor";
 const PREVIEW_PX = 160;
 // The ring's room and a pixel for its soft edge.
 const RING_BLEED_PX = RING_ROOM_PX + 1;
+// Page-coloured, so cells scroll out of sight at the window's top edge, not below the band.
+const COVERS_THE_TOP_BAND = {
+  [WHEN_TALL]: {
+    "&::before": {
+      content: '""',
+      position: "absolute",
+      bottom: "100%",
+      left: 0,
+      right: 0,
+      height: BELOW_TOP_BAND,
+      bgcolor: "background.default",
+    },
+  },
+} as const;
 
 export interface NarrowBodyProps {
   readonly editor: CostumeEditor;
@@ -34,21 +48,25 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
   const saving = step.name === "saving";
   return (
     // Not a Stack: it would take the margins from the block below.
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, pb: 2 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, pb: 2 }}>
       {previewSetOf(step) !== null && (
         <Stack
           ref={BLOCK_REF}
           id="costume-aside"
           spacing={1.5}
-          // It covers the cells that scroll beneath it, and the rings drawn outside them.
-          sx={{
-            ...STAYS_IN_VIEW,
-            zIndex: 1,
-            bgcolor: "background.default",
-            mx: `-${RING_BLEED_PX}px`,
-            px: `${RING_BLEED_PX}px`,
-            pb: 1,
-          }}
+          // It covers the cells that scroll beneath it and the rings drawn outside them. Its
+          // bottom padding is the gap to the part, so the cells go that far below the tiles.
+          sx={[
+            STAYS_IN_VIEW,
+            COVERS_THE_TOP_BAND,
+            {
+              zIndex: 1,
+              bgcolor: "background.default",
+              mx: `-${RING_BLEED_PX}px`,
+              px: `${RING_BLEED_PX}px`,
+              pb: 3,
+            },
+          ]}
         >
           <CostumePreviewBox preview={editor.preview} i18n={i18n} size={PREVIEW_PX} />
           {showsEditor(step) && (
@@ -66,7 +84,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
         </Stack>
       )}
       {showsEditor(step) ? (
-        <>
+        <Stack spacing={2}>
           <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />
           <Box>
             <PartHead view={step.editor} lane={lane} i18n={i18n} part={part} />
@@ -82,7 +100,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
               onPickItem={editor.pickItem}
             />
           </Box>
-        </>
+        </Stack>
       ) : (
         progress
       )}
