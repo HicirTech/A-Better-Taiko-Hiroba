@@ -16,6 +16,7 @@ export const readAgainKeys = [
   "rotationTakenUp",
   "readAgainIsASmallFab",
   "readAgainShutWhileReading",
+  "readAgainKeepsThePageInPlace",
   "settingsSignedInWhileReading",
   "fabOnlyUnderFocusOnTouch",
   "pullPastThePointReads",
@@ -66,6 +67,9 @@ export async function readAgain(ctx: Ctx) {
   await click("#read-again");
   await waitFor("held read", async () => (await myPageHits()) > readsBeforeHeld || undefined);
   const fabWhileReading = await fabState();
+  const pageWhileReading = await page.evaluate<{ kept: boolean; shut: boolean }>(
+    `({ kept: document.querySelector("#last-updated") !== null, shut: document.querySelector("#page-shut")?.hasAttribute("inert") ?? false })`,
+  );
   await click("#read-again");
   await Bun.sleep(300);
   const readsWhileHeld = await myPageHits();
@@ -75,7 +79,16 @@ export async function readAgain(ctx: Ctx) {
   );
   await goTo("overview");
   await fetch(`${HIROBA}/__hold-read?on=0`);
-  await until("Last updated");
+  // The page stays through a read, so its words say nothing of when the read ends.
+  await waitFor("the read ended", async () =>
+    same(await fabState(), { shut: false, spinning: false }) ? true : undefined,
+  );
+  results.readAgainKeepsThePageInPlace =
+    pageWhileReading.kept &&
+    pageWhileReading.shut &&
+    !(await page.evaluate<boolean>(
+      `document.querySelector("#page-shut")?.hasAttribute("inert") ?? true`,
+    ));
   results.readAgainShutWhileReading =
     same(fabWhileReading, { shut: true, spinning: true }) &&
     readsWhileHeld === readsBeforeHeld + 1 &&

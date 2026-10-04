@@ -30,6 +30,9 @@ export const NO_BOX: Box = {
   height: NaN,
 };
 export const at = (boxes: Box[], index: number): Box => boxes[index] ?? NO_BOX;
+/** Whether a row leaves its box the same room on both sides. */
+export const evenSides = (row: Box[], box: Box) =>
+  near(at(row, 0).left - box.left, box.right - at(row, row.length - 1).right);
 
 export const gapsOf = (row: Box[]) =>
   row.slice(1).map((box, index) => box.left - at(row, index).right);
