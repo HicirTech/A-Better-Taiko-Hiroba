@@ -18,7 +18,7 @@ The window has no header. On a wide window a side panel, like Gmail's, lists its
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲 and the お気に入り folder) and **Settings** (the language, and
 signing out). On a narrow one, a menu button
-at the top left opens the same list in a drawer. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
+at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
 Costume, Nickname & title, Favourites or Settings back to the Overview, and from the Overview leaves
 the app as before.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
@@ -194,8 +194,9 @@ Shift+Tab is scrolled clear of the tiles above it and the bar below.
   write's own read-back brings the set up to date without another read. A draft made over the set
   a read finds unchanged is kept by it; one made over a set that has moved is dropped for the set
   as read.
-- **The draft** outlives a visit to another page and back, for as long as the app runs, with the
-  notice of a write you left. Hiroba's picture of it is kept too, and not asked for again.
+- **The draft** is dropped when you leave the page for another: it goes back to the set as read, and
+  the notice of a write is cleared. What was read is kept, so coming back reads nothing again, and a
+  set already drawn is shown without asking.
 - **The write.** **Save to Hiroba** is one press, with no review, and shut while the draft is the
   set as read. The write goes the way [Writes](#writes) says, and the page shows its progress where
   the buttons were, with the tiles and the grid held still, dimmed and out of reach, and the page
@@ -226,8 +227,9 @@ long-press. It opens on Hiroba's title plate as the Overview draws it, so the re
 once, then two sections, **Title** and **Nickname**, each saved with one press of **Save to Hiroba**
 and no review. Both are open in every build. One write runs at a time, from either section: while
 it does, nothing on the page is pressed, and a write asked for elsewhere answers busy and sends
-nothing. Like the costume's, both sections' state is the window's, so a pick, a field or a notice
-is still there after a visit to another page or a read of your page.
+nothing. Leaving the page for another drops both sections' edits: the field goes back to the
+nickname worn, the pick is cleared and so are both notices, while the titles already read are kept,
+so coming back reads nothing again. A pick or a typed nickname survives a read of your page.
 
 - **Reading.** The list of titles you own (`mypage_title_edit.php`, one request) is read once, when
   the page is first shown in a run, and never at start-up or while another page is shown; shown

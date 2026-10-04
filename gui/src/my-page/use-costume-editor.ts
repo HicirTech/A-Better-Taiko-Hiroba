@@ -49,6 +49,8 @@ export interface CostumeEditor {
   pickHistory(entry: CostumeHistoryEntry): void;
   /** Puts the draft back to the set as read. */
   reset(): void;
+  /** Drops the draft and the last write's notice when the page is left; what was read stays. */
+  dropEdits(): void;
   save(): Promise<void>;
 }
 
@@ -76,6 +78,8 @@ export function useCostumeEditor({
     clearHistory();
     resetPreview();
   }, [clearHistory, resetPreview]);
+
+  const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
 
   const mayRead = step.name === "unread" || canReadEditorAgain(step);
   const read = useCallback(async () => {
@@ -159,6 +163,7 @@ export function useCostumeEditor({
       dispatch({ type: "pickedHistory", set: entry.set });
     },
     reset: () => dispatch({ type: "reset" }),
+    dropEdits,
     save,
   };
 }

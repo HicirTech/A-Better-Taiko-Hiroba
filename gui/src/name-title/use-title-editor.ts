@@ -37,6 +37,8 @@ export interface TitleEditor {
   forgetList(): void;
   /** Drops everything of the section when a session ends or begins. */
   forget(): void;
+  /** Drops the pick and the last write's notice when the page is left; the list stays. */
+  dropEdits(): void;
   pick(option: TitleOption | null): void;
   save(): Promise<void>;
 }
@@ -60,6 +62,8 @@ export function useTitleEditor({
     generation.current += 1;
     dispatch({ type: "forget" });
   }, []);
+
+  const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
 
   const forgetList = useCallback(() => {
     generation.current += 1;
@@ -142,6 +146,7 @@ export function useTitleEditor({
     readList,
     forgetList,
     forget,
+    dropEdits,
     pick: (option) => dispatch({ type: "picked", option }),
     save,
   };

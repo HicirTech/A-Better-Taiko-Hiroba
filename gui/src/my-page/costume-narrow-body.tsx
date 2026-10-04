@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { BELOW_TOP_BAND, STAYS_IN_VIEW, WHEN_TALL } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { previewSetOf, showsEditor } from "./costume-editor-state";
+import { previewSetOf, shownEditorOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
 import { PartHead, PartPanel } from "./costume-part-panel";
 import { PartTiles } from "./costume-part-tiles";
@@ -45,7 +45,7 @@ export interface NarrowBodyProps {
 
 export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: NarrowBodyProps) {
   const { step } = editor;
-  const saving = step.name === "saving";
+  const shown = shownEditorOf(step);
   return (
     // Not a Stack: it would take the margins from the block below.
     <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, pb: 2 }}>
@@ -69,33 +69,33 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
           ]}
         >
           <CostumePreviewBox preview={editor.preview} i18n={i18n} size={PREVIEW_PX} />
-          {showsEditor(step) && (
+          {shown !== null && (
             <PartTiles
-              view={step.editor}
-              draft={step.draft}
+              view={shown.editor}
+              draft={shown.draft}
               lane={lane}
               i18n={i18n}
               shown={part}
               wide={false}
-              held={saving}
+              held={shown.shut}
               onPick={onPart}
             />
           )}
         </Stack>
       )}
-      {showsEditor(step) ? (
+      {shown !== null ? (
         <Stack spacing={2}>
-          <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />
+          {showsEditor(step) && <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />}
           <Box>
-            <PartHead view={step.editor} lane={lane} i18n={i18n} part={part} />
+            <PartHead view={shown.editor} lane={lane} i18n={i18n} part={part} />
             <PartPanel
-              view={step.editor}
-              draft={step.draft}
+              view={shown.editor}
+              draft={shown.draft}
               lane={lane}
               i18n={i18n}
               part={part}
               wide={false}
-              held={saving}
+              held={shown.shut}
               onPickColour={editor.pickColour}
               onPickItem={editor.pickItem}
             />

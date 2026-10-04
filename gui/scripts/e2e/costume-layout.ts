@@ -1,7 +1,7 @@
 import { RING_ROOM_PX } from "../../src/my-page/pick-ring";
 import { HIROBA, PHONE_SHORT, PHONE_TALL, TOP_BAND_PX } from "./config";
 import type { Ctx } from "./context";
-import { at, costumeHelpers, gapsOf, near } from "./costume-helpers";
+import { at, costumeHelpers, evenSides, gapsOf, near } from "./costume-helpers";
 import { type Box, hoverOver, pageHelpers, SHIFT_MODIFIER, same, waitFor } from "./harness";
 import { editorHits, hitsOn, START, savedCostume } from "./stand-in";
 
@@ -12,7 +12,7 @@ export const costumeLayoutKeys = [
   "costumePreviewLevelWithTheGridsFirstRow",
   "costumeTilesInTwoRowsUnderTheirCaptions",
   "costumeButtonsStackedInTheLeftColumn",
-  "costumeGridPackedFromTheLeft",
+  "costumeGridCentred",
   "costumeOnlyThePageScrolls",
   "costumeGridHoldsMoreColumnsOnABigWindow",
   "costumePageScrollsForMoreItemsThanFit",
@@ -138,10 +138,10 @@ export async function costumeLayout(ctx: Ctx) {
       (box) => box.left >= aside.left - 1 && box.right <= aside.right + 1 && box.height < 45,
     );
   results.costumeButtonsStackedInTheLeftColumn = buttonsStacked(onDefault) && buttonsStacked(onBig);
-  const packedFromTheLeft = ({ box, row }: { box: Box; row: Box[] }) =>
-    row.length > 1 && near(at(row, 0).left, box.left) && gapsOf(row).every((gap) => near(gap, 8));
-  results.costumeGridPackedFromTheLeft = [onDefault, onBig].every(
-    ({ items, palette }) => packedFromTheLeft(items) && packedFromTheLeft(palette),
+  const centred = ({ box, row }: { box: Box; row: Box[] }) =>
+    row.length > 1 && evenSides(row, box) && gapsOf(row).every((gap) => near(gap, 8));
+  results.costumeGridCentred = [onDefault, onBig].every(
+    ({ items, palette }) => centred(items) && centred(palette),
   );
   results.costumeOnlyThePageScrolls = [onDefault, onBig].every(
     ({ items, palette }) => items.scrolling.length === 0 && palette.scrolling.length === 0,
@@ -526,12 +526,12 @@ export async function costumePhone(ctx: Ctx) {
     layout.noColumns &&
     layout.swatches >= 8 &&
     layout.swatchRow.length === layout.swatches &&
-    near(at(layout.swatchRow, 0).left, layout.palette.left) &&
+    evenSides(layout.swatchRow, layout.palette) &&
     gapsOf(layout.swatchRow).every((gap) => near(gap, 6, 0.5)) &&
     phone.items.tracks >= 6 &&
     phone.items.box.top >= layout.panel.top &&
     gapsOf(phone.items.row).every((gap) => near(gap, 6)) &&
-    near(at(phone.items.row, 0).left, phone.items.box.left);
+    evenSides(phone.items.row, phone.items.box);
   results.barHoldsHistoryLeftAndResetAndSaveRight =
     same(
       phone.barButtons.map(({ id }) => id),

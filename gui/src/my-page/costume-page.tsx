@@ -6,7 +6,7 @@ import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import { useWideWindow } from "../navigation/use-wide-window";
 import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { type EditorStep, showsEditor } from "./costume-editor-state";
+import { type EditorStep, shownEditorOf } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { NarrowBody } from "./costume-narrow-body";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
@@ -106,8 +106,10 @@ function progressOf(step: EditorStep, i18n: Translator): ReactNode {
   const { t } = i18n;
   switch (step.name) {
     case "unread":
-    case "loading":
       return <Waiting>{t("costume.reading")}</Waiting>;
+    case "loading":
+      // A read again leaves the held editor on screen, shut; only a first read waits here.
+      return step.held === null ? <Waiting>{t("costume.reading")}</Waiting> : null;
     case "loadFailed":
       return <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />;
     case "saving":
@@ -125,15 +127,17 @@ function actionsOf(
 ): ReactNode {
   const { t } = i18n;
   const { step } = editor;
-  if (!showsEditor(step)) {
+  const shown = shownEditorOf(step);
+  if (shown === null) {
     return null;
   }
 
-  const unchanged = changedParts(step.editor.state, step.draft).length === 0;
+  const unchanged = changedParts(shown.editor.state, shown.draft).length === 0;
+  const reading = step.name === "loading";
   const history = (
     <Button
       id="costume-history"
-      disabled={editor.history.length === 0}
+      disabled={reading || editor.history.length === 0}
       onClick={onHistory}
       sx={{ ...ONE_LINE_LABEL, ...SNUG_TEXT_BUTTON, ...(wide ? { flex: 1 } : { mr: "auto" }) }}
     >
@@ -143,7 +147,7 @@ function actionsOf(
   const reset = (
     <Button
       id="costume-reset"
-      disabled={unchanged}
+      disabled={reading || unchanged}
       onClick={editor.reset}
       sx={{ ...ONE_LINE_LABEL, ...SNUG_TEXT_BUTTON, ...(wide && { flex: 1 }) }}
     >
@@ -155,7 +159,7 @@ function actionsOf(
       id="costume-save"
       variant="contained"
       fullWidth={wide}
-      disabled={unchanged}
+      disabled={reading || unchanged}
       onClick={onSave}
       sx={{ ...ONE_LINE_LABEL, ...SNUG_CONTAINED_BUTTON }}
     >

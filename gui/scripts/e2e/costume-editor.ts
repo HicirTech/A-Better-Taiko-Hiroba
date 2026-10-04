@@ -39,7 +39,7 @@ export const costumeEditorKeys = [
   "previewKeptBetweenVisits",
   "tileThumbnailsAskedOnceEach",
   "noChangeSummaryShown",
-  "draftSurvivesAPageSwitch",
+  "draftDroppedOnLeavingThePage",
   "resetRestoresTheSet",
   "readAgainReadsTheEditorHere",
   "readAgainKeepsADraftOverAnUnchangedSet",
@@ -115,10 +115,13 @@ export async function costumeEditor(ctx: Ctx) {
   await goTo("overview");
   await goTo("costume");
   await inStep("editing");
-  results.draftSurvivesAPageSwitch =
-    (await pressedOf("#swatch-colorFace-3")) === "true" &&
-    (await savable()) &&
+  results.draftDroppedOnLeavingThePage =
+    (await pressedOf("#swatch-colorFace-5")) === "true" &&
+    (await pressedOf("#swatch-colorFace-3")) === "false" &&
+    !(await savable()) &&
     (await editorHits()) === 1;
+  await click("#swatch-colorFace-3");
+  await waitFor("a draft to reset", async () => (await savable()) || undefined);
   await click("#costume-reset");
   results.resetRestoresTheSet =
     (await pressedOf("#swatch-colorFace-5")) === "true" &&
@@ -209,7 +212,6 @@ export const portraitPreviewKeys = [
   "portraitIsTheCostumeButton",
   "portraitJumpsToCostumeByKeyboard",
   "portraitJumpsToCostumeByLongPress",
-  "noticeGoesWithReset",
   "columnStillAcrossPages",
   "previewChangesAfterColour",
   "previewBurstSendsOne",
@@ -315,14 +317,10 @@ export async function portraitPreview(ctx: Ctx) {
     same(await touchClicks(), clicksBeforeLongPress) &&
     (await currentPage()) === "costume" &&
     (await stepOf()) === "editing" &&
-    (await pageOutcome()) === "notApplied";
+    (await pageOutcome()) === null;
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
 
-  // Opened by the long-press, the page still shows the notice of the save that moved nothing,
-  // until Reset.
   await inStep("editing");
-  await click("#costume-reset");
-  results.noticeGoesWithReset = !(await exists("#write-outcome")) && !(await savable());
   const onOpen = await previewOtherThan(null);
   results.columnStillAcrossPages =
     overviewScrolls &&

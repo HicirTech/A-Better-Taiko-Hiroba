@@ -28,6 +28,8 @@ export interface NameEditor {
   readonly writing: boolean;
   /** Drops everything of the section when a session ends or begins. */
   forget(): void;
+  /** Drops the typed nickname and the last write's notice when the page is left. */
+  dropEdits(): void;
   type(value: string): void;
   save(): Promise<void>;
 }
@@ -47,6 +49,8 @@ export function useNameEditor({
     sessionGeneration.current += 1;
     dispatch({ type: "forget" });
   }, []);
+
+  const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
 
   const writeEnded = (outcome: WriteOutcomeView<NameState>) => {
     dispatch({ type: "writeEnded", outcome });
@@ -90,6 +94,7 @@ export function useNameEditor({
     step,
     writing: isWritingName(step),
     forget,
+    dropEdits,
     type: (value) => dispatch({ type: "typed", value }),
     save,
   };

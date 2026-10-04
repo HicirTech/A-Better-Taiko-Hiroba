@@ -22,6 +22,7 @@ export interface WornName {
 
 export type NameAction =
   | { readonly type: "forget" }
+  | { readonly type: "editsDropped" }
   | { readonly type: "typed"; readonly value: string }
   | { readonly type: "saveStarted" }
   | { readonly type: "writeEnded"; readonly outcome: NameOutcome };
@@ -59,6 +60,8 @@ export function reduceName(step: NameStep, action: NameAction): NameStep {
   switch (action.type) {
     case "forget":
       return IDLE;
+    case "editsDropped":
+      return step.name === "idle" && (step.typed !== null || step.notice !== null) ? IDLE : step;
     case "typed":
       return step.name === "idle" && (step.typed !== action.value || step.notice !== null)
         ? { name: "idle", typed: action.value, notice: null }

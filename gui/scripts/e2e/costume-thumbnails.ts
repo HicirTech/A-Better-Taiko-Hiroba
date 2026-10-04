@@ -276,6 +276,11 @@ export async function tileThumbnails(ctx: Ctx) {
       string,
       number[]
     >;
+    // The editor stays on screen through the read: with a slot shown, the new list's first
+    // thumbnails would be fetched before the count starts.
+    await ctx.app.goTo("costume");
+    await inStep("editing");
+    await showPart("colorFace");
     await openFreshEditor();
     await fetch(`${HIROBA}/__thumbs?reset=1`);
     return fresh["1"] ?? [];

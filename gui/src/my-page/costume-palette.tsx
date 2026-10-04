@@ -29,7 +29,7 @@ export function Palette({ editor, part, chosen, wide, i18n, onPick }: PalettePro
       sx={{
         display: "grid",
         gridTemplateColumns: `repeat(auto-fill, ${side}px)`,
-        justifyContent: "start",
+        justifyContent: "center",
         gap: wide ? 1 : 0.75,
       }}
     >

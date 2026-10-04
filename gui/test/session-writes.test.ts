@@ -550,6 +550,16 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (sto
     ]);
   });
 
+  test("fills an entry that has no picture once a preview of its set comes, and no other", async () => {
+    const { writes } = setUp({ recentPreview: () => null });
+    await writes.changeCostume(CHANGE);
+
+    await writes.previewKept(START, pictureOfSet(START));
+    await writes.previewKept(face(9), pictureOfSet(face(9)));
+
+    expect(await writes.costumeHistory()).toEqual([entry(face(3), null), entry(START)]);
+  });
+
   test("moves a set worn again to the top, and lists it once", async () => {
     const { writes } = setUp();
 

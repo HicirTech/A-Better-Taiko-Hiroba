@@ -24,6 +24,7 @@ import {
   tileThumbnailsKeys,
 } from "./costume-thumbnails";
 import { dataFolder, dataFolderKeys } from "./data-folder";
+import { menuSwipe, menuSwipeKeys } from "./menu-swipe";
 import {
   namePlate,
   namePlateKeys,
@@ -73,6 +74,7 @@ export const SECTIONS: readonly Section[] = [
   { name: "signed-out", phase: "signedOut", keys: signedOutKeys, run: signedOut },
   { name: "overview", phase: "signedIn", keys: overviewKeys, run: overview },
   { name: "settings", phase: "signedIn", keys: settingsKeys, run: settings },
+  { name: "menu-swipe", phase: "signedIn", keys: menuSwipeKeys, run: menuSwipe },
   { name: "my-don-failure", phase: "signedIn", keys: myDonFailureKeys, run: myDonFailure },
   { name: "costume-editor", phase: "signedIn", keys: costumeEditorKeys, run: costumeEditor },
   { name: "pictures", phase: "signedIn", keys: picturesKeys, run: pictures },

@@ -43,6 +43,7 @@ export type EditorAction =
   | { readonly type: "pickedItem"; readonly part: SlotPart; readonly id: number }
   | { readonly type: "pickedHistory"; readonly set: CostumeSet }
   | { readonly type: "reset" }
+  | { readonly type: "editsDropped" }
   | { readonly type: "saveStarted" }
   | { readonly type: "writeEnded"; readonly outcome: WriteOutcomeView };
 
@@ -68,6 +69,7 @@ export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep
     case "pickedHistory":
       return step.name === "editing" ? withDraft(step, action.set) : step;
     case "reset":
+    case "editsDropped":
       return step.name === "editing" ? withDraft(step, step.editor.state) : step;
     case "saveStarted":
       return step.name === "editing" && !sameCostume(step.editor.state, step.draft)
@@ -140,6 +142,26 @@ export function previewSetOf(step: EditorStep): CostumeSet | null {
 /** Whether the editor is on screen: while editing, and while a save runs over it. */
 export function showsEditor(step: EditorStep): step is ShownStep {
   return step.name === "editing" || step.name === "saving";
+}
+
+/** The editor to draw, and whether it is shut to picks while a save or a read again runs. */
+export interface ShownEditor extends HeldEditor {
+  readonly shut: boolean;
+}
+
+/** A read again keeps the editor it holds on screen, shut, until the read ends. */
+export function shownEditorOf(step: EditorStep): ShownEditor | null {
+  switch (step.name) {
+    case "editing":
+      return { editor: step.editor, draft: step.draft, shut: false };
+    case "saving":
+      return { editor: step.editor, draft: step.draft, shut: true };
+    case "loading":
+      return step.held === null ? null : { ...step.held, shut: true };
+    case "loadFailed":
+    case "unread":
+      return null;
+  }
 }
 
 export function canReadEditorAgain(step: EditorStep): boolean {
