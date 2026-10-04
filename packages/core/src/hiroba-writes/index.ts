@@ -17,10 +17,8 @@ export { spaced } from "./cross-checks";
 export { inMaintenance } from "./maintenance";
 export {
   checkNameTarget,
-  describeName,
   NAME_FIELDS,
   NAME_FORM_MAX_LENGTH,
-  type NameAdvice,
   type NameBody,
   sameName,
 } from "./name-rule";
