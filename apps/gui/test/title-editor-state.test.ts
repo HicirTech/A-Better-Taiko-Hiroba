@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { err, ok, type SaveReading, type TitleOption } from "@abth/core";
 
+import type { Noticed } from "../src/my-page/write-ending";
 import {
   canReadTitlesAgain,
   changesTitle,
@@ -32,18 +33,17 @@ const viewOf = (
 const SAVE: SaveReading = { answer: "json", code: 0, message: null, report: "report" };
 const FAILURE: ReadFailure = { kind: "unreachable" };
 
-const idle = (title = A.label, picked: TitleOption | null = null): TitleStep => ({
+const idle = (
+  title = A.label,
+  picked: TitleOption | null = null,
+  notice: Noticed<TitleState> | null = null,
+): TitleStep => ({
   name: "idle",
   editor: viewOf(title),
   picked,
-});
-const confirming = (picked: TitleOption = B): TitleStep => ({
-  name: "confirming",
-  editor: viewOf(),
-  picked,
+  notice,
 });
 const saving: TitleStep = { name: "saving", editor: viewOf(), picked: B };
-const undoing: TitleStep = { name: "undoing", editor: viewOf() };
 const loading: TitleStep = { name: "loading", held: null };
 const failed: TitleStep = { name: "loadFailed", failure: FAILURE, held: null };
 const applied = (before: TitleState, after: TitleState): WriteOutcomeView<TitleState> => ({
@@ -53,24 +53,21 @@ const applied = (before: TitleState, after: TitleState): WriteOutcomeView<TitleS
   save: SAVE,
   cross: "unchanged",
 });
-const done = (
-  outcome: WriteOutcomeView<TitleState> = applied({ title: A.label }, { title: B.label }),
-): TitleStep => ({
-  name: "done",
-  editor: viewOf(B.label),
-  outcome,
-  asUndo: false,
-});
+const refused: Noticed<TitleState> = {
+  kind: "notApplied",
+  before: { title: A.label },
+  after: { title: A.label },
+  reason: { kind: "refused", code: 5, message: null },
+  save: SAVE,
+  cross: "unchanged",
+};
 
 const ALL_STEPS: [string, TitleStep][] = [
   ["unread", UNREAD],
   ["loading", loading],
   ["loadFailed", failed],
   ["idle", idle()],
-  ["confirming", confirming()],
   ["saving", saving],
-  ["undoing", undoing],
-  ["done", done()],
 ];
 
 const reduce = (step: TitleStep, ...actions: TitleAction[]) => actions.reduce(reduceTitle, step);
@@ -78,6 +75,10 @@ const reduce = (step: TitleStep, ...actions: TitleAction[]) => actions.reduce(re
 describe("reduceTitle, forgetting", () => {
   test.each(ALL_STEPS)("goes back to unread from %s", (_name, step) => {
     expect(reduce(step, { type: "forget" })).toBe(UNREAD);
+  });
+
+  test("forgets the notice of the last write too", () => {
+    expect(reduce(idle(A.label, null, refused), { type: "forget" })).toBe(UNREAD);
   });
 });
 
@@ -93,13 +94,6 @@ describe("reduceTitle, reading", () => {
     });
   });
 
-  test("begins a read again from an outcome, holding the list as the write left it and no pick", () => {
-    expect(reduce(done(), { type: "readStarted" })).toEqual({
-      name: "loading",
-      held: { editor: viewOf(B.label), picked: null },
-    });
-  });
-
   test("begins a read again from a failed read, holding what it held", () => {
     const held = { editor: viewOf(), picked: C };
     expect(reduce({ name: "loadFailed", failure: FAILURE, held }, { type: "readStarted" })).toEqual(
@@ -112,14 +106,12 @@ describe("reduceTitle, reading", () => {
 
   test.each([
     ["loading", loading],
-    ["confirming", confirming()],
     ["saving", saving],
-    ["undoing", undoing],
   ])("does not begin a read inside %s", (_name, step) => {
     expect(reduce(step, { type: "readStarted" })).toBe(step);
   });
 
-  test("opens the list on a read that came", () => {
+  test("opens the list on a read that came, with no notice", () => {
     expect(reduce(loading, { type: "readEnded", result: ok(viewOf()) })).toEqual(idle());
   });
 
@@ -130,6 +122,7 @@ describe("reduceTitle, reading", () => {
       name: "idle",
       editor: next,
       picked: B,
+      notice: null,
     });
   });
 
@@ -162,7 +155,7 @@ describe("reduceTitle, reading", () => {
   });
 });
 
-describe("reduceTitle, picking and reviewing", () => {
+describe("reduceTitle, picking", () => {
   test("picks a title in idle, and clears the pick", () => {
     expect(reduce(idle(), { type: "picked", option: B })).toEqual(idle(A.label, B));
     expect(reduce(idle(A.label, B), { type: "picked", option: null })).toEqual(idle());
@@ -173,19 +166,17 @@ describe("reduceTitle, picking and reviewing", () => {
     expect(reduce(step, { type: "picked", option: B })).toBe(step);
   });
 
+  test("drops the notice of the last write at the next pick, the same one included", () => {
+    expect(reduce(idle(A.label, B, refused), { type: "picked", option: C })).toEqual(
+      idle(A.label, C),
+    );
+    expect(reduce(idle(A.label, B, refused), { type: "picked", option: B })).toEqual(
+      idle(A.label, B),
+    );
+  });
+
   test.each(ALL_STEPS.filter(([name]) => name !== "idle"))("takes no pick in %s", (_name, step) => {
     expect(reduce(step, { type: "picked", option: C })).toBe(step);
-  });
-
-  test("lists a pick that would change the title, for a last look", () => {
-    expect(reduce(idle(A.label, B), { type: "review" })).toEqual(confirming(B));
-  });
-
-  test("lists nothing without a pick, or for a pick that is the title worn", () => {
-    const none = idle();
-    const same = idle(A.label, A);
-    expect(reduce(none, { type: "review" })).toBe(none);
-    expect(reduce(same, { type: "review" })).toBe(same);
   });
 
   test("reads the pages' different white space as the same title: a pick of it is no change", () => {
@@ -194,82 +185,68 @@ describe("reduceTitle, picking and reviewing", () => {
       name: "idle",
       editor: viewOf("称号\u{a0}A", [worn]),
       picked: worn,
+      notice: null,
     };
-    expect(reduce(step, { type: "review" })).toBe(step);
+    expect(reduce(step, { type: "saveStarted" })).toBe(step);
     expect(changesTitle(viewOf("称号\u{a0}A", [worn]), worn)).toBe(false);
-  });
-
-  test("goes back from a review to the pick, and from an outcome to the title it left, picking none", () => {
-    expect(reduce(confirming(C), { type: "back" })).toEqual(idle(A.label, C));
-    expect(reduce(done(), { type: "back" })).toEqual({
-      name: "idle",
-      editor: viewOf(B.label),
-      picked: null,
-    });
   });
 });
 
-describe("reduceTitle, saving and undoing", () => {
-  test("sends only what was listed", () => {
-    expect(reduce(confirming(), { type: "saveStarted" })).toEqual(saving);
-    const step = idle(A.label, B);
+describe("reduceTitle, saving", () => {
+  test("starts a save from a pick that would change the title, holding the list and the pick", () => {
+    expect(reduce(idle(A.label, B), { type: "saveStarted" })).toEqual(saving);
+  });
+
+  test("drops the notice of the last write when the next save starts", () => {
+    expect(reduce(idle(A.label, B, refused), { type: "saveStarted" })).toEqual(saving);
+  });
+
+  test("starts none without a pick, or for a pick that is the title worn", () => {
+    const none = idle();
+    const same = idle(A.label, A);
+    expect(reduce(none, { type: "saveStarted" })).toBe(none);
+    expect(reduce(same, { type: "saveStarted" })).toBe(same);
+  });
+
+  test.each(ALL_STEPS.filter(([name]) => name !== "idle"))("starts none in %s", (_name, step) => {
     expect(reduce(step, { type: "saveStarted" })).toBe(step);
   });
+});
 
-  test("begins an undo from idle or from an outcome, holding no pick", () => {
-    expect(reduce(idle(A.label, B), { type: "undoStarted" })).toEqual(undoing);
-    expect(reduce(done(), { type: "undoStarted" })).toEqual({
-      name: "undoing",
-      editor: viewOf(B.label),
-    });
-  });
-
-  test.each([
-    ["unread", UNREAD],
-    ["loading", loading],
-    ["confirming", confirming()],
-    ["saving", saving],
-    ["undoing", undoing],
-  ])("begins no undo from %s", (_name, step) => {
-    expect(reduce(step, { type: "undoStarted" })).toBe(step);
-  });
-
-  test("ends a save as an outcome over the title as it read back", () => {
+describe("reduceTitle, a write's ending", () => {
+  test("shows the title as it read back, picks none and says nothing after a save that applied", () => {
     const outcome = applied({ title: A.label }, { title: B.label });
-    expect(reduce(saving, { type: "writeEnded", outcome })).toEqual({
-      name: "done",
-      editor: viewOf(B.label),
-      outcome,
-      asUndo: false,
-    });
+    expect(reduce(saving, { type: "writeEnded", outcome })).toEqual(idle(B.label));
   });
 
-  test("ends an undo as an outcome that says it was one", () => {
-    const outcome = applied({ title: B.label }, { title: A.label });
-    expect(reduce(undoing, { type: "writeEnded", outcome })).toMatchObject({
-      name: "done",
-      editor: viewOf(A.label),
-      asUndo: true,
-    });
+  test("keeps the pick and says why after a save the site refused, over the title as it was", () => {
+    expect(reduce(saving, { type: "writeEnded", outcome: refused })).toEqual(
+      idle(A.label, B, refused),
+    );
   });
 
-  test("shows the title a write found when it stopped because the title had moved", () => {
-    const outcome: WriteOutcomeView<TitleState> = {
+  test("picks none and says so after a save the game server was not told of", () => {
+    const outcome: Noticed<TitleState> = {
+      kind: "appliedNotSynced",
+      before: { title: A.label },
+      after: { title: B.label },
+      save: SAVE,
+      cross: "unchanged",
+    };
+    expect(reduce(saving, { type: "writeEnded", outcome })).toEqual(idle(B.label, null, outcome));
+  });
+
+  test("shows the title a write found when it stopped because the title had moved, keeping the pick", () => {
+    const outcome: Noticed<TitleState> = {
       kind: "changedSincePreview",
       current: { title: C.label },
     };
-    expect(reduce(saving, { type: "writeEnded", outcome })).toMatchObject({
-      name: "done",
-      editor: viewOf(C.label),
-    });
+    expect(reduce(saving, { type: "writeEnded", outcome })).toEqual(idle(C.label, B, outcome));
   });
 
   test("leaves the list as it was for an ending that says nothing of the title", () => {
-    const outcome: WriteOutcomeView<TitleState> = { kind: "busy" };
-    expect(reduce(saving, { type: "writeEnded", outcome })).toMatchObject({
-      name: "done",
-      editor: viewOf(),
-    });
+    const outcome: Noticed<TitleState> = { kind: "busy" };
+    expect(reduce(saving, { type: "writeEnded", outcome })).toEqual(idle(A.label, B, outcome));
   });
 
   test("ignores a write that ends when none was on its way", () => {
@@ -279,18 +256,16 @@ describe("reduceTitle, saving and undoing", () => {
 });
 
 describe("what a step allows", () => {
-  test("may read the list again from idle, an outcome and a failed read alone", () => {
+  test("may read the list again from idle and a failed read alone", () => {
     expect(ALL_STEPS.filter(([, step]) => canReadTitlesAgain(step)).map(([name]) => name)).toEqual([
       "loadFailed",
       "idle",
-      "done",
     ]);
   });
 
-  test("is writing in a save and an undo alone", () => {
+  test("is writing in a save alone", () => {
     expect(ALL_STEPS.filter(([, step]) => isWritingTitle(step)).map(([name]) => name)).toEqual([
       "saving",
-      "undoing",
     ]);
   });
 

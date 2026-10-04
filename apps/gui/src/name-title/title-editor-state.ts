@@ -1,6 +1,6 @@
 import { type Result, sameTitle, type TitleOption } from "@abth/core";
 
-import { refreshed } from "../my-page/write-ending";
+import { type Noticed, noticeOf, refreshed } from "../my-page/write-ending";
 import type { ReadFailure, TitleEditorView, TitleState, WriteOutcomeView } from "../session-port";
 
 export interface HeldTitles {
@@ -18,26 +18,21 @@ export type TitleStep =
       readonly failure: ReadFailure;
       readonly held: HeldTitles | null;
     }
-  | { readonly name: "idle"; readonly editor: TitleEditorView; readonly picked: TitleOption | null }
-  | { readonly name: "confirming"; readonly editor: TitleEditorView; readonly picked: TitleOption }
-  | { readonly name: "saving"; readonly editor: TitleEditorView; readonly picked: TitleOption }
-  | { readonly name: "undoing"; readonly editor: TitleEditorView }
   | {
-      readonly name: "done";
+      readonly name: "idle";
       readonly editor: TitleEditorView;
-      readonly outcome: TitleOutcome;
-      readonly asUndo: boolean;
-    };
+      readonly picked: TitleOption | null;
+      /** How the last write ended, until the next pick, save or read; none if it applied. */
+      readonly notice: Noticed<TitleState> | null;
+    }
+  | { readonly name: "saving"; readonly editor: TitleEditorView; readonly picked: TitleOption };
 
 export type TitleAction =
   | { readonly type: "forget" }
   | { readonly type: "readStarted" }
   | { readonly type: "readEnded"; readonly result: Result<TitleEditorView, ReadFailure> }
   | { readonly type: "picked"; readonly option: TitleOption | null }
-  | { readonly type: "review" }
-  | { readonly type: "back" }
   | { readonly type: "saveStarted" }
-  | { readonly type: "undoStarted" }
   | { readonly type: "writeEnded"; readonly outcome: TitleOutcome };
 
 export const UNREAD: TitleStep = { name: "unread" };
@@ -52,22 +47,12 @@ export function reduceTitle(step: TitleStep, action: TitleAction): TitleStep {
     case "readEnded":
       return step.name === "loading" ? readEnded(step.held, action.result) : step;
     case "picked":
-      return step.name === "idle" && step.picked !== action.option
-        ? { ...step, picked: action.option }
+      return step.name === "idle" && (step.picked !== action.option || step.notice !== null)
+        ? { ...step, picked: action.option, notice: null }
         : step;
-    case "review":
-      return step.name === "idle" && step.picked !== null && changesTitle(step.editor, step.picked)
-        ? { name: "confirming", editor: step.editor, picked: step.picked }
-        : step;
-    case "back":
-      return back(step);
     case "saveStarted":
-      return step.name === "confirming"
+      return step.name === "idle" && step.picked !== null && changesTitle(step.editor, step.picked)
         ? { name: "saving", editor: step.editor, picked: step.picked }
-        : step;
-    case "undoStarted":
-      return step.name === "idle" || step.name === "done"
-        ? { name: "undoing", editor: step.editor }
         : step;
     case "writeEnded":
       return writeEnded(step, action.outcome);
@@ -85,8 +70,6 @@ function readStarted(step: TitleStep): TitleStep {
       return { name: "loading", held: null };
     case "idle":
       return { name: "loading", held: { editor: step.editor, picked: step.picked } };
-    case "done":
-      return { name: "loading", held: { editor: step.editor, picked: null } };
     case "loadFailed":
       return { name: "loading", held: step.held };
     default:
@@ -106,37 +89,30 @@ function readEnded(
   const kept =
     picked !== null &&
     editor.options.some((one) => one.id === picked.id && one.label === picked.label);
-  return { name: "idle", editor, picked: kept ? picked : null };
+  return { name: "idle", editor, picked: kept ? picked : null, notice: null };
 }
 
-function back(step: TitleStep): TitleStep {
-  switch (step.name) {
-    case "confirming":
-      return { name: "idle", editor: step.editor, picked: step.picked };
-    case "done":
-      return { name: "idle", editor: step.editor, picked: null };
-    default:
-      return step;
-  }
-}
+const leavesTheTitle = (outcome: TitleOutcome): boolean =>
+  outcome.kind === "applied" || outcome.kind === "appliedNotSynced";
 
 function writeEnded(step: TitleStep, outcome: TitleOutcome): TitleStep {
-  switch (step.name) {
-    case "saving":
-      return { name: "done", editor: refreshed(step.editor, outcome), outcome, asUndo: false };
-    case "undoing":
-      return { name: "done", editor: refreshed(step.editor, outcome), outcome, asUndo: true };
-    default:
-      return step;
+  if (step.name !== "saving") {
+    return step;
   }
+  return {
+    name: "idle",
+    editor: refreshed(step.editor, outcome),
+    picked: leavesTheTitle(outcome) ? null : step.picked,
+    notice: noticeOf(outcome),
+  };
 }
 
 export function canReadTitlesAgain(step: TitleStep): boolean {
-  return step.name === "idle" || step.name === "done" || step.name === "loadFailed";
+  return step.name === "idle" || step.name === "loadFailed";
 }
 
 export function isWritingTitle(step: TitleStep): boolean {
-  return step.name === "saving" || step.name === "undoing";
+  return step.name === "saving";
 }
 
 /** Whether the title moved, or may have, so the window's copy of my page is out of date. */

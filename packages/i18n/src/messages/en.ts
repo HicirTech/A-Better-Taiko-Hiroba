@@ -124,16 +124,10 @@ export const en: Messages = {
     "Some thumbnails didn't load ({count}); their numbers are shown instead.",
   "costume.thumbnails.code": "Code for a report: {code}",
   "costume.kigurumiWarning": "A Mascot takes off Head, Body, Makeup and Mini Character.",
-  "costume.changesHeading": "Changes",
-  "costume.change": "{part}: {from} → {to}",
   "costume.reset": "Reset",
-  "costume.review": "Review",
-  "costume.back": "Back",
   "costume.save": "Save to Hiroba",
-  "costume.confirmIntro": "Hiroba will be asked to make these changes:",
   "costume.saving": "Saving… then reading it back",
   "costume.undoWhen": "Changed {time}",
-  "costume.undoing": "Undoing… then reading it back",
   "costume.history": "History",
   "costume.history.title": "Costume history",
   "costume.history.close": "Close",
@@ -155,14 +149,6 @@ export const en: Messages = {
   "title.notListed":
     "Your current title is not in this list. It may be built from parts, which this version cannot read or change back.",
   "title.reload": "Read the list again",
-  "title.undoLast": "Undo last title change",
-  "title.undoBack": "Goes back to: {title}",
-  "title.undoUnresolved":
-    "This undo is not available: your previous title is not in today's list, so the app cannot set it again.",
-  "title.undoAmbiguous":
-    "This undo is not available: your previous title shares its name with other titles. Pick it from the list yourself.",
-  "title.undoNoTitle":
-    "This undo is not available: you had no title before, and this version cannot remove one.",
   "name.heading": "Nickname",
   "name.field": "New nickname",
   "name.counter": "{count} / {max}",

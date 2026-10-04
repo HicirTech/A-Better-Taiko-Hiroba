@@ -1,24 +1,15 @@
 import type { TitleOption } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { Translator } from "@abth/i18n";
 import { Alert, Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
 import { LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
 import { WriteOutcomeNotice } from "../my-page/write-outcome";
-import { ChangeList } from "./change-list";
 import { changesTitle, type TitleStep } from "./title-editor-state";
-import { currentOptions, type UndoReadiness, undoReadiness } from "./title-options";
+import { currentOptions } from "./title-options";
 import { TitlePicker } from "./title-picker";
-import { UndoRow } from "./undo-row";
 import type { TitleEditor } from "./use-title-editor";
-
-const UNDO_REASON = {
-  ready: null,
-  noTitle: "title.undoNoTitle",
-  unresolved: "title.undoUnresolved",
-  ambiguous: "title.undoAmbiguous",
-} as const satisfies Record<UndoReadiness, MessageKey | null>;
 
 export interface TitleSectionProps {
   readonly title: TitleEditor;
@@ -32,6 +23,11 @@ export function TitleSection({ title, i18n, busy }: TitleSectionProps) {
   const { step } = title;
   const card = useRef<HTMLDivElement>(null);
   useFocusKept(card, step.name);
+  // Both shut while the write runs, and focus would fall to the window's top.
+  const save = () => {
+    card.current?.focus({ preventScroll: true });
+    void title.save();
+  };
   return (
     <Card
       id="title-section"
@@ -47,15 +43,12 @@ export function TitleSection({ title, i18n, busy }: TitleSectionProps) {
             {t("title.heading")}
           </Typography>
           <StepView title={title} i18n={i18n} busy={busy} />
-          <Actions title={title} i18n={i18n} busy={busy} />
+          <Actions title={title} i18n={i18n} busy={busy} onSave={save} />
         </Stack>
       </CardContent>
     </Card>
   );
 }
-
-const titleOrNoTitle = (title: string, { t }: Translator) =>
-  title === "" ? t("profile.noTitle") : title;
 
 function StepView({ title, i18n, busy }: TitleSectionProps) {
   const { t } = i18n;
@@ -67,10 +60,10 @@ function StepView({ title, i18n, busy }: TitleSectionProps) {
     case "loadFailed":
       return <LoadFailed id="title-load-failed" failure={step.failure} i18n={i18n} />;
     case "idle":
+    case "saving":
       return (
         <Stack spacing={2}>
           <WornTitle title={step.editor.state.title} i18n={i18n} />
-          <Undo title={title} options={step.editor.options} i18n={i18n} busy={busy} />
           <TitlePicker
             options={step.editor.options}
             picked={step.picked}
@@ -80,36 +73,9 @@ function StepView({ title, i18n, busy }: TitleSectionProps) {
             i18n={i18n}
           />
           <Notes options={step.editor.options} worn={step.editor.state.title} i18n={i18n} />
-        </Stack>
-      );
-    case "confirming":
-      return (
-        <Stack spacing={2}>
-          <Typography>{t("costume.confirmIntro")}</Typography>
-          <ChangeList
-            id="title-changes"
-            part={t("title.heading")}
-            from={titleOrNoTitle(step.editor.state.title, i18n)}
-            to={step.picked.label}
-            i18n={i18n}
-          />
-        </Stack>
-      );
-    case "saving":
-      return <Waiting id="title-saving">{t("costume.saving")}</Waiting>;
-    case "undoing":
-      return <Waiting id="title-undoing">{t("costume.undoing")}</Waiting>;
-    case "done":
-      return (
-        <Stack spacing={2}>
-          <WriteOutcomeNotice
-            id="title-outcome"
-            kind="title"
-            outcome={step.outcome}
-            asUndo={step.asUndo}
-            i18n={i18n}
-          />
-          <Undo title={title} options={step.editor.options} i18n={i18n} busy={busy} />
+          {step.name === "idle" && step.notice !== null && (
+            <WriteOutcomeNotice id="title-outcome" kind="title" outcome={step.notice} i18n={i18n} />
+          )}
         </Stack>
       );
   }
@@ -157,46 +123,27 @@ function Notes({
   );
 }
 
-function Undo({
+function Actions({
   title,
-  options,
   i18n,
   busy,
-}: {
-  title: TitleEditor;
-  options: readonly TitleOption[];
-  i18n: Translator;
-  busy: boolean;
-}) {
-  const { t } = i18n;
-  const { undoable } = title;
-  if (undoable === null) {
-    return null;
-  }
-
-  const reason = UNDO_REASON[undoReadiness(options, undoable.before)];
-  return (
-    <UndoRow
-      id="title-undo"
-      label={t("title.undoLast")}
-      at={undoable.at}
-      goesBack={t("title.undoBack", { title: titleOrNoTitle(undoable.before.title, i18n) })}
-      reason={reason === null ? null : t(reason)}
-      busy={busy}
-      onUndo={() => void title.undo()}
-      i18n={i18n}
-    />
-  );
-}
-
-function Actions({ title, i18n, busy }: TitleSectionProps) {
-  const buttons = actionsOf(title.step, title, i18n, busy);
+  onSave,
+}: TitleSectionProps & { readonly onSave: () => void }) {
+  const buttons = actionsOf(title.step, title, i18n, busy, onSave);
   return buttons === null ? null : (
-    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>{buttons}</Box>
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 2 }}>
+      {buttons}
+    </Box>
   );
 }
 
-function actionsOf(step: TitleStep, title: TitleEditor, { t }: Translator, busy: boolean) {
+function actionsOf(
+  step: TitleStep,
+  title: TitleEditor,
+  { t }: Translator,
+  busy: boolean,
+  onSave: () => void,
+) {
   switch (step.name) {
     case "loadFailed":
       return (
@@ -205,37 +152,19 @@ function actionsOf(step: TitleStep, title: TitleEditor, { t }: Translator, busy:
         </Button>
       );
     case "idle":
-      return (
-        <Button
-          id="title-review"
-          variant="contained"
-          disabled={busy || step.picked === null || !changesTitle(step.editor, step.picked)}
-          onClick={title.review}
-        >
-          {t("costume.review")}
-        </Button>
-      );
-    case "confirming":
+    case "saving":
       return (
         <>
-          <Button id="title-back" disabled={busy} onClick={title.back}>
-            {t("costume.back")}
-          </Button>
+          {step.name === "saving" && <Waiting id="title-saving">{t("costume.saving")}</Waiting>}
           <Button
             id="title-save"
             variant="contained"
-            disabled={busy}
-            onClick={() => void title.save()}
+            disabled={busy || step.picked === null || !changesTitle(step.editor, step.picked)}
+            onClick={onSave}
           >
             {t("costume.save")}
           </Button>
         </>
-      );
-    case "done":
-      return (
-        <Button id="title-back" disabled={busy} onClick={title.back}>
-          {t("costume.back")}
-        </Button>
       );
     default:
       return null;

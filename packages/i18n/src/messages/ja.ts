@@ -125,16 +125,10 @@ export const ja: Messages = {
     "サムネイルを {count} 件読み込めなかったため、番号で表示しています。",
   "costume.thumbnails.code": "報告用コード：{code}",
   "costume.kigurumiWarning": "きぐるみにすると、あたま・からだ・メイク・ぷちキャラははずれます。",
-  "costume.changesHeading": "変更点",
-  "costume.change": "{part}：{from} → {to}",
   "costume.reset": "リセット",
-  "costume.review": "内容を確認",
-  "costume.back": "戻る",
   "costume.save": "ひろばに保存",
-  "costume.confirmIntro": "ひろばに次の変更を依頼します：",
   "costume.saving": "保存中…そのあと読み直します",
   "costume.undoWhen": "{time} に変更",
-  "costume.undoing": "元に戻しています…そのあと読み直します",
   "costume.history": "履歴",
   "costume.history.title": "きせかえの履歴",
   "costume.history.close": "閉じる",
@@ -156,14 +150,6 @@ export const ja: Messages = {
   "title.notListed":
     "今の称号は一覧にありません。称号パーツで作ったものかもしれません。このバージョンでは読み取れず、元にも戻せません。",
   "title.reload": "一覧を読み直す",
-  "title.undoLast": "直前の称号の変更を元に戻す",
-  "title.undoBack": "戻す先：{title}",
-  "title.undoUnresolved":
-    "この取り消しは使えません：前の称号が今の一覧にないため、アプリから設定し直せません。",
-  "title.undoAmbiguous":
-    "この取り消しは使えません：前の称号は同じ名前の称号が複数あります。一覧から自分で選んでください。",
-  "title.undoNoTitle":
-    "この取り消しは使えません：前は称号がなく、このバージョンでは称号を外せません。",
   "name.heading": "ドンだーネーム",
   "name.field": "新しいドンだーネーム",
   "name.counter": "{count} / {max}",

@@ -159,18 +159,11 @@ export interface Messages {
   /** Param: {code}, why the first of them did not come, such as costumeItem=notPng; never a URL. */
   "costume.thumbnails.code": string;
   "costume.kigurumiWarning": string;
-  "costume.changesHeading": string;
-  /** Params: {part} (a costume.part text), {from}, {to} (a costume.id text or costume.remove). */
-  "costume.change": string;
   "costume.reset": string;
-  "costume.review": string;
-  "costume.back": string;
   "costume.save": string;
-  "costume.confirmIntro": string;
   "costume.saving": string;
   /** Param: {time}, already formatted. */
   "costume.undoWhen": string;
-  "costume.undoing": string;
   "costume.history": string;
   "costume.history.title": string;
   "costume.history.close": string;
@@ -180,7 +173,7 @@ export interface Messages {
   "costume.history.entry": string;
   /** Param: {position}. As costume.history.entry, for the entry worn now. */
   "costume.history.entryWorn": string;
-  /** Also the title's name in a list of changes (costume.change's {part}). */
+  /** Also the title row's label in a write's comparison. */
   "title.heading": string;
   "title.reading": string;
   "title.pick": string;
@@ -196,15 +189,6 @@ export interface Messages {
   "title.shared": string;
   "title.notListed": string;
   "title.reload": string;
-  "title.undoLast": string;
-  /** Param: {title}, the previous title's name, as Hiroba writes it. */
-  "title.undoBack": string;
-  /** Why the undo is shut: the previous title's name is in no title of today's list. */
-  "title.undoUnresolved": string;
-  /** Why the undo is shut: the previous title's name is several titles' of today's list. */
-  "title.undoAmbiguous": string;
-  /** Why the undo is shut: there was no title before, and a title cannot be taken off here. */
-  "title.undoNoTitle": string;
   "name.heading": string;
   "name.field": string;
   /** Params: {count}, how many characters it holds, and {max}. */

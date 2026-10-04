@@ -19,7 +19,6 @@ import { OverviewHeader } from "./my-page/overview-header";
 import { PanelCard } from "./my-page/panel-card";
 import { useCostumeEditor } from "./my-page/use-costume-editor";
 import { NameTitlePage } from "./name-title/name-title-page";
-import { movedTheTitle, type TitleStep } from "./name-title/title-editor-state";
 import { useNameEditor } from "./name-title/use-name-editor";
 import { useTitleEditor } from "./name-title/use-title-editor";
 import { FrameCorner } from "./navigation/app-frame";
@@ -81,7 +80,49 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
   );
-  // The editors live here so a draft, review or outcome survives a visit to another page.
+  // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
+  // portrait alone: a title write does not change the costume.
+  const read = useCallback(
+    async (behindThePage = false): Promise<boolean> => {
+      if (behindThePage) {
+        setRefreshing(true);
+      } else {
+        setScreen({ name: "reading" });
+      }
+      try {
+        const result = await (behindThePage
+          ? port.readProfile({ renewsPortrait: false })
+          : port.readProfile());
+        if (result.ok) {
+          // Plates change with the title or season, the portrait with any costume change.
+          // Fixed art is kept for good once it came, so only its failures are forgotten.
+          lane.renew("titlePlate");
+          lane.renew("medalPlate");
+          if (!behindThePage) {
+            lane.renew("myDon");
+          }
+          for (const kind of FIXED_ART) {
+            lane.forgetFailures(kind);
+          }
+          setScreen({ name: "profile", profile: result.value });
+          return true;
+        }
+        if (SESSION_GONE.has(result.error.kind)) {
+          setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
+        } else {
+          setScreen({ name: "readFailed", ...result.error });
+        }
+        return false;
+      } finally {
+        setRefreshing(false);
+      }
+    },
+    [port, lane],
+  );
+
+  // A title write that may have moved the title leaves the plate stale: read my page again.
+  const plateStale = useCallback(() => void read(true), [read]);
+  // The editors live here so a draft, notice or pick survives a visit to another page.
   const editor = useCostumeEditor({
     port,
     lane,
@@ -89,8 +130,13 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
     onSessionGone: sessionGone,
   });
   const { forget: forgetEditor } = editor;
-  const titleEditor = useTitleEditor({ port, lane, onSessionGone: sessionGone });
-  const { refreshUndo: refreshTitleUndo, forget: forgetTitleEditor } = titleEditor;
+  const titleEditor = useTitleEditor({
+    port,
+    lane,
+    onSessionGone: sessionGone,
+    onMoved: plateStale,
+  });
+  const { forget: forgetTitleEditor } = titleEditor;
   const nameRead = useCallback(
     (nickname: string) =>
       setScreen((now) =>
@@ -123,61 +169,6 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
       void readTitles();
     }
   }, [onNameTitlePage, titlesUnread, writing, readTitles]);
-
-  // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
-  // portrait alone: a title write does not change the costume.
-  const read = useCallback(
-    async (behindThePage = false): Promise<boolean> => {
-      if (behindThePage) {
-        setRefreshing(true);
-      } else {
-        setScreen({ name: "reading" });
-      }
-      try {
-        const result = await (behindThePage
-          ? port.readProfile({ renewsPortrait: false })
-          : port.readProfile());
-        if (result.ok) {
-          // Plates change with the title or season, the portrait with any costume change.
-          // Fixed art is kept for good once it came, so only its failures are forgotten.
-          lane.renew("titlePlate");
-          lane.renew("medalPlate");
-          if (!behindThePage) {
-            lane.renew("myDon");
-          }
-          for (const kind of FIXED_ART) {
-            lane.forgetFailures(kind);
-          }
-          await refreshTitleUndo();
-          setScreen({ name: "profile", profile: result.value });
-          return true;
-        }
-        if (SESSION_GONE.has(result.error.kind)) {
-          setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
-        } else {
-          setScreen({ name: "readFailed", ...result.error });
-        }
-        return false;
-      } finally {
-        setRefreshing(false);
-      }
-    },
-    [port, lane, refreshTitleUndo],
-  );
-
-  // A title write that may have moved the title leaves the plate stale: read my page again.
-  const stale = useRef<TitleStep | null>(null);
-  const titleStep = titleEditor.step;
-  useEffect(() => {
-    if (
-      titleStep.name === "done" &&
-      movedTheTitle(titleStep.outcome) &&
-      stale.current !== titleStep
-    ) {
-      stale.current = titleStep;
-      void read(true);
-    }
-  }, [titleStep, read]);
 
   const signIn = async () => {
     // Hiroba may have ended the last session itself, so no sign-out forgot its pictures.
