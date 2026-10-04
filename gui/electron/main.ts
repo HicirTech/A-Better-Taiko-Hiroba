@@ -30,7 +30,7 @@ import {
   PORT_ARGUMENTS,
   type SignInOutcome,
 } from "../src/session-port";
-import { readSongCatalogue } from "../src/song-catalogue";
+import { readChineseNames, readSongCatalogue } from "../src/song-catalogue";
 import { readUpdateFeed, releasesUrlOf } from "../src/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createCostumeHistoryStore } from "./costume-history-store";
@@ -250,6 +250,7 @@ app.whenReady().then(async () => {
     changeFavoriteSong: writes.changeFavoriteSong,
     readSongCatalogue: (since) =>
       readSongCatalogue(feedTransport, environment.songCatalogueUrl, since),
+    readChineseNames: () => readChineseNames(feedTransport, environment.chineseNamesUrl),
   });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

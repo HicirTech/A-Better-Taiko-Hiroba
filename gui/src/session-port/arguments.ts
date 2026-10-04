@@ -233,4 +233,5 @@ export const PORT_ARGUMENTS = {
   changeFolder: folderChange,
   changeFavoriteSong: favoriteSongChange,
   readSongCatalogue: catalogueSince,
+  readChineseNames: none,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

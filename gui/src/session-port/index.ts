@@ -16,6 +16,7 @@ export { checkedPort } from "./checked-port";
 export { changedTheCostume } from "./costume-changed";
 export { PORT_QUEUEING, type VerbQueueing, type VerbsQueued } from "./queueing";
 export type {
+  ChineseNamesRead,
   CostumeChange,
   CostumeEditorView,
   CostumeHistoryEntry,

@@ -30,6 +30,19 @@ export interface SongCatalogueRead {
   readonly sentAt: number;
 }
 
+/** A song page of the Chinese wiki: its title, the song's Japanese one, and its official names. */
+export interface ChineseNamesPage {
+  readonly title: string;
+  readonly names: readonly string[];
+}
+
+/** The Chinese wiki's official song names, page by page. */
+export interface ChineseNamesRead {
+  readonly pages: readonly ChineseNamesPage[];
+  /** When the first request went out, in ms since 1970. */
+  readonly sentAt: number;
+}
+
 /** Codes, not sentences. */
 export interface SongCatalogueFailure {
   readonly code: "notConfigured" | "unreachable" | "timedOut" | "badAnswer";

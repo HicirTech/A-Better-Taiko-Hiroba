@@ -58,6 +58,7 @@ const CASES: VerbCase[] = [
     [{ expected: { songNo: "1178" }, target: { songNo: "1178&bsf=1" } }],
   ],
   ["readSongCatalogue", [null], ["0&genre=1"]],
+  ["readChineseNames", [], [{ gcmlimit: "max" }]],
 ];
 
 function recordingPort() {

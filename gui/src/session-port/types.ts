@@ -17,10 +17,15 @@ import type {
   WriteOutcome,
 } from "@abth/core";
 
-import type { SongCatalogueFailure, SongCatalogueRead } from "../song-catalogue/types";
+import type {
+  ChineseNamesRead,
+  SongCatalogueFailure,
+  SongCatalogueRead,
+} from "../song-catalogue/types";
 import type { UpdateFeed, UpdateFeedFailure } from "../updates/update-feed";
 
 export type {
+  ChineseNamesRead,
   CostumeEditorView,
   CostumeSet,
   FavoriteSongEditorView,
@@ -288,4 +293,7 @@ export interface HirobaSessionPort {
   /** taiko.wiki's songs, all or those changed since `since` (ms since 1970): one GET that carries
    * no session. Asks Hiroba nothing, so it is never queued. */
   readSongCatalogue(since: number | null): Promise<Result<SongCatalogueRead, SongCatalogueFailure>>;
+  /** The Chinese wiki's official song names: one GET for each batch of 50 pages, carrying no
+   * session. Asks Hiroba nothing, so it is never queued. */
+  readChineseNames(): Promise<Result<ChineseNamesRead, SongCatalogueFailure>>;
 }

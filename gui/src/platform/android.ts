@@ -33,7 +33,12 @@ import {
   type HirobaSessionPort,
   type SignInOutcome,
 } from "../session-port";
-import { catalogueUrlFor, readSongCatalogue } from "../song-catalogue";
+import {
+  CHINESE_NAMES_URL,
+  catalogueUrlFor,
+  readChineseNames,
+  readSongCatalogue,
+} from "../song-catalogue";
 import { feedUrlFor, readUpdateFeed } from "../updates";
 import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
@@ -56,6 +61,12 @@ const updateFeedUrl = feedUrlFor(
 const songCatalogueUrl = catalogueUrlFor(
   Boolean(import.meta.env.DEV),
   import.meta.env.VITE_ABTH_DEV_SONG_CATALOGUE,
+);
+
+const chineseNamesUrl = catalogueUrlFor(
+  Boolean(import.meta.env.DEV),
+  import.meta.env.VITE_ABTH_DEV_CHINESE_NAMES,
+  CHINESE_NAMES_URL,
 );
 
 export interface AndroidPortOptions {
@@ -282,6 +293,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     changeFavoriteSong: flushed(writes.changeFavoriteSong),
 
     readSongCatalogue: (since) => readSongCatalogue(transport, songCatalogueUrl, since),
+
+    readChineseNames: () => readChineseNames(transport, chineseNamesUrl),
   });
 
   return checkedPort(port);

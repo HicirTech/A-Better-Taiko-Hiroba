@@ -18,4 +18,5 @@ export const BRIDGE_CHANNELS = {
   changeFolder: "abth:change-folder",
   changeFavoriteSong: "abth:change-favorite-song",
   readSongCatalogue: "abth:read-song-catalogue",
+  readChineseNames: "abth:read-chinese-names",
 } as const;
