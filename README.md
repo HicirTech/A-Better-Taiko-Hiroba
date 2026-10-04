@@ -2,30 +2,36 @@
 
 [中文](README.zh-CN.md)
 
-A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses and changes your own play data — scores, profile, My Don, settings — from a desktop app, an Android app, or the command line, with an interface that stays out of your way. It runs on your own device and talks to Hiroba directly; none of your data passes through a server of ours.
+A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses and changes your own play data — scores, profile, My Don, settings — from a desktop app, an Android app and, later, the command line, with an interface that stays out of your way. It runs on your own device and talks to Hiroba directly; none of your data passes through a server of ours.
 
-## What it will do
+## Download
 
-- [ ] Sign in with your Bandai Namco ID and stay signed in
+Get the latest version from the [Releases page](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest): an installer or a portable zip for Windows, and an APK for Android. The app tells you when a newer version is out.
+
+## What it does
+
+- [x] Sign in with your Bandai Namco ID and stay signed in
 - [ ] Show every song at every difficulty: crowns, ranks, scores, hit counts, play options
-- [ ] Show your profile, My Don, titles and dan ranks
+- [x] Show your profile, My Don, title, dan rank, score counts and favourite songs
 - [ ] Show your recent plays
-- [ ] Change your title, part by part
-- [ ] Change your nickname
-- [ ] Change My Don's costumes and colours
+- [x] Change your title
+- [ ] Build your title part by part
+- [x] Change your nickname
+- [x] Change My Don's costumes and colours
+- [x] Preview a costume before saving it, and go back to one you wore before
 - [ ] Change your game settings
 - [ ] Change your favourite songs
-- [ ] Preview a costume before saving it, and go back to one you wore before
 - [ ] Browse offline, from a local database
 - [ ] Hold several accounts at once
 - [ ] Sync incrementally, and resume where it stopped
 - [ ] Run on the command line
-- [ ] Run as a desktop app
-- [ ] Run as an Android app
+- [x] Run as a desktop app, on Windows
+- [x] Run as an Android app
 - [ ] Run as an iOS app — later
 - [ ] Run as a web app — later
 - [ ] Drive the same core from a script, through a programmatic API
-- [ ] Provide an i18n framework for translating the interface
+- [x] Speak English, Japanese, Simplified Chinese and Traditional Chinese
+- [x] Tell you when a newer version is out
 - [ ] Upload your scores to Kinoko
 
 ## Honest notes
