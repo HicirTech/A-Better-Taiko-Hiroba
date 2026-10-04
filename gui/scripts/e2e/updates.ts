@@ -1,6 +1,7 @@
-import { rmSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
+import { join } from "node:path";
 import { type App, launch, stop } from "./app";
-import { en, HIROBA, NOON_JST, UPDATE_FEED, UPDATES_USER_DATA } from "./config";
+import { en, HIROBA, NOON_JST, root, UPDATE_FEED, UPDATES_USER_DATA } from "./config";
 import type { Ctx } from "./context";
 import { same, waitFor } from "./harness";
 import { hitsOn } from "./stand-in";
@@ -17,6 +18,9 @@ export const updatesKeys = [
 
 const FEED_ENV = { ABTH_DEV_UPDATE_FEED: `${HIROBA}${UPDATE_FEED}` };
 const RELEASE = "https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/tag/v0.2.0";
+const APP_VERSION = (
+  JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { version: string }
+).version;
 
 const setFeed = (query: string) => fetch(`${HIROBA}/__update-feed?${query}`);
 const feedHits = () => hitsOn(UPDATE_FEED);
@@ -124,7 +128,7 @@ export async function updates(ctx: Ctx) {
     const releasesOffered = await app.page.evaluate<boolean>(
       `document.querySelector("#update-releases") !== null`,
     );
-    await setFeed("version=0.1.0");
+    await setFeed(`version=${APP_VERSION}`);
     await app.click("#update-check");
     await statusIs(en.t("update.upToDate"));
     await setFeed("version=0.2.0");
@@ -133,7 +137,7 @@ export async function updates(ctx: Ctx) {
       "the dialog on a manual check",
       async () => (await dialogShown(app)) || undefined,
     );
-    results.updateManualCheckStates = versionLine === "Version 0.1.0" && releasesOffered;
+    results.updateManualCheckStates = versionLine === `Version ${APP_VERSION}` && releasesOffered;
   } finally {
     await stop(app);
     await setFeed("status=404");
