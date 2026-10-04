@@ -198,6 +198,11 @@ function MenuIcon() {
   );
 }
 
+// Kept fixed: focusing a hidden absolute box would scroll the page to the top.
+const HIDDEN_UNTIL_FOCUSED = {
+  "&:not(:has(.Mui-focusVisible))": { ...VISUALLY_HIDDEN, position: "fixed" },
+} as const;
+
 function MenuDrawer({
   page,
   onNavigate,
@@ -223,6 +228,7 @@ function MenuDrawer({
           left: `calc(${MENU_INSET_PX}px + env(safe-area-inset-left, 0px))`,
           zIndex: "appBar",
           borderRadius: "50%",
+          ...(touchFirst ? HIDDEN_UNTIL_FOCUSED : {}),
         }}
       >
         <IconButton
