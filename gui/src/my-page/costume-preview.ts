@@ -165,6 +165,10 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
   return {
     start() {
       started = true;
+      // A pause that stop() cut short, for a set since put back, leaves nothing on its way.
+      if (state.loading && inFlight === null && wanted?.key === askedKey) {
+        state = { ...state, loading: false };
+      }
       options.onState(state);
       // Only a set not asked for yet: stopping and starting again is not a retry.
       if (wanted !== null && wanted.key !== askedKey) {

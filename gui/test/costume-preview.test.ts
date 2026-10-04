@@ -232,6 +232,21 @@ describe("createPreviewScheduler", () => {
     expect(last()).toEqual({ image: picture(face(3)), loading: false, failure: null });
   });
 
+  test("a pick put back while it is stopped leaves no pause shown at the start, and asks nothing", async () => {
+    const { scheduler, asked, pauseEnds, pausing, last } = harness();
+    scheduler.start();
+    scheduler.want(START);
+    await asked[0]?.answer(ok(picture(START)));
+    scheduler.want(face(3));
+    scheduler.stop();
+    scheduler.want(START);
+    scheduler.start();
+    pauseEnds();
+    expect(last()).toEqual({ image: picture(START), loading: false, failure: null });
+    expect(pausing()).toBe(0);
+    expect(asked).toHaveLength(1);
+  });
+
   test("a superseded picture that lands while it is stopped asks for nothing, and the newest set at the start", async () => {
     const { scheduler, asked, pauseEnds, last } = harness();
     scheduler.start();
