@@ -39,7 +39,7 @@ export interface SongRowProps {
 export function SongRow({ look, i18n, name, end, id }: SongRowProps) {
   const { genre } = look;
   return (
-    <Box id={id} data-song-no={look.songNo} sx={ROW}>
+    <Box component="span" id={id} className="song-row" data-song-no={look.songNo} sx={ROW}>
       <span
         className="song-bar"
         aria-hidden

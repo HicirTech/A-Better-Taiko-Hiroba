@@ -300,6 +300,22 @@ export interface Messages {
   "favorites.slot.empty": string;
   "favorites.song.heading": string;
   "favorites.song.none": string;
+  "picker.title.single": string;
+  "picker.title.multi": string;
+  "picker.search": string;
+  /** The search field's helper: what it looks in. */
+  "picker.searchHint": string;
+  "picker.genres": string;
+  "picker.none": string;
+  "picker.loading": string;
+  "picker.failed": string;
+  /** Param: {code}, why the song list did not come, such as unreachable; never a URL. */
+  "picker.code": string;
+  "picker.retry": string;
+  /** Param: {max}, how many songs a set holds. */
+  "picker.limit": string;
+  "picker.done": string;
+  "picker.close": string;
 }
 
 export type MessageKey = keyof Messages;

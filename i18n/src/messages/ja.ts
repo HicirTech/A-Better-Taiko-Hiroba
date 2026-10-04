@@ -268,4 +268,18 @@ export const ja: Messages = {
   "favorites.slot.empty": "（空）",
   "favorites.song.heading": "大好きな曲",
   "favorites.song.none": "未設定",
+  "picker.title.single": "大好きな曲を選ぶ",
+  "picker.title.multi": "曲を追加",
+  "picker.search": "曲を検索",
+  "picker.searchHint": "曲名で検索（日本語・英語・中国語・ローマ字）",
+  "picker.genres": "ジャンル",
+  "picker.none": "曲が見つかりません。",
+  "picker.loading": "曲リストを読み込み中…",
+  "picker.failed":
+    "taiko.wiki から曲リストを読み込めませんでした。通信環境を確認して、もう一度お試しください。",
+  "picker.code": "報告用コード：{code}",
+  "picker.retry": "再試行",
+  "picker.limit": "セットに入れられる曲は最大{max}曲です。追加するには、どれか外してください。",
+  "picker.done": "完了",
+  "picker.close": "閉じる",
 };

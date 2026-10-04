@@ -262,4 +262,18 @@ export const en: Messages = {
   "favorites.slot.empty": "(empty)",
   "favorites.song.heading": "Favourite song",
   "favorites.song.none": "Not set",
+  "picker.title.single": "Choose your favourite song",
+  "picker.title.multi": "Add songs",
+  "picker.search": "Search songs",
+  "picker.searchHint": "By name, in Japanese, English, Chinese or romaji",
+  "picker.genres": "Genres",
+  "picker.none": "No songs found.",
+  "picker.loading": "Loading the song list…",
+  "picker.failed":
+    "The song list could not be loaded from taiko.wiki. Check your connection and try again.",
+  "picker.code": "Code for a report: {code}",
+  "picker.retry": "Retry",
+  "picker.limit": "A set holds {max} songs at most. Remove one to add another.",
+  "picker.done": "Done",
+  "picker.close": "Close",
 };
