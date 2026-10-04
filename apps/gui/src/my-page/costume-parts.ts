@@ -12,6 +12,9 @@ export type ColourPart = (typeof COLOUR_PARTS)[number];
 export type SlotPart = (typeof SLOT_PARTS)[number];
 export type CostumePart = keyof CostumeSet;
 
+/** The slots as the tiles show them: the きぐるみ, often empty, comes last. */
+export const SLOT_TILE_ORDER: readonly SlotPart[] = [...SLOT_PARTS.slice(1), SLOT_PARTS[0]];
+
 export const PART_LABEL = {
   colorFace: "costume.part.colorFace",
   colorBody: "costume.part.colorBody",

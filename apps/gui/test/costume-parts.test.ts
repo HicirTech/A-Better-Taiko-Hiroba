@@ -8,9 +8,12 @@ import {
   itemsOf,
   PART_LABEL,
   SLOT_PARTS,
+  SLOT_TILE_ORDER,
+  type SlotPart,
+  slotOf,
   tileName,
 } from "../src/my-page/costume-parts";
-import type { CostumeEditorView, CostumeSet } from "../src/session-port";
+import type { CostumeEditorView, CostumeSet, CostumeSlot } from "../src/session-port";
 
 const WEARING: CostumeSet = {
   colorBody: 12,
@@ -34,6 +37,30 @@ describe("which parts are slots", () => {
     ...SLOT_PARTS.map((part): [CostumePart, boolean] => [part, true]),
   ])("%s is a slot: %p", (part, isSlot) => {
     expect(isSlotPart(part)).toBe(isSlot);
+  });
+});
+
+describe("the order the slot tiles show", () => {
+  test("is Head, Body, Makeup and Mini Character, then the Mascot", () => {
+    const en = createTranslator("en");
+
+    expect(SLOT_TILE_ORDER.map((part) => en.t(PART_LABEL[part]))).toEqual([
+      "Head",
+      "Body",
+      "Makeup",
+      "Mini Character",
+      "Mascot",
+    ]);
+  });
+
+  test.each<[part: SlotPart, slot: CostumeSlot]>([
+    ["costume1", 1],
+    ["costume2", 2],
+    ["costume3", 3],
+    ["costume4", 4],
+    ["costume5", 5],
+  ])("leaves %s in Hiroba's slot %p", (part, slot) => {
+    expect(slotOf(part)).toBe(slot);
   });
 });
 

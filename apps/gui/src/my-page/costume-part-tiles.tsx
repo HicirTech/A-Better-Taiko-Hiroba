@@ -12,6 +12,7 @@ import {
   isSlotPart,
   PART_LABEL,
   SLOT_PARTS,
+  SLOT_TILE_ORDER,
   type SlotPart,
   slotOf,
   tileName,
@@ -83,7 +84,7 @@ export function PartTiles(props: PartTilesProps) {
       ]}
     >
       <TileGroup id="colours" caption={t("costume.tab.colours")} parts={COLOUR_PARTS} {...props} />
-      <TileGroup id="items" caption={t("costume.tab.items")} parts={SLOT_PARTS} {...props} />
+      <TileGroup id="items" caption={t("costume.tab.items")} parts={SLOT_TILE_ORDER} {...props} />
     </Box>
   );
 }

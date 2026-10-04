@@ -2239,11 +2239,11 @@ try {
     "colorFace",
     "colorBody",
     "colorLimb",
-    "costume1",
     "costume2",
     "costume3",
     "costume4",
     "costume5",
+    "costume1",
   ];
   const NO_BOX: Box = { left: NaN, top: NaN, right: NaN, bottom: NaN, width: NaN, height: NaN };
   const at = (boxes: Box[], index: number): Box => boxes[index] ?? NO_BOX;
@@ -2358,11 +2358,11 @@ try {
       "Face #5",
       "Torso #12",
       "Limbs #12",
-      "Mascot",
       "Head #21",
       "Body #68",
       "Makeup #37",
       "Mini Character #140",
+      "Mascot",
     ],
   );
   const wideAt = (width: number, height: number) =>
@@ -2540,11 +2540,11 @@ try {
       tabs: [
         ["costume-part-colorFace", "costume-part-colorBody", "costume-part-colorLimb"],
         [
-          "costume-part-costume1",
           "costume-part-costume2",
           "costume-part-costume3",
           "costume-part-costume4",
           "costume-part-costume5",
+          "costume-part-costume1",
         ],
       ],
       headings: ["H2", "H2"],
@@ -2596,7 +2596,7 @@ try {
       same(pickedByEnter, ["costume-part-colorBody"]) &&
       same(pickedBySpace, ["costume-part-colorLimb"]) &&
       wrappedWithinTheGroup === "costume-part-colorFace" &&
-      tabbedToTheNextGroup === "costume-part-costume1" &&
+      tabbedToTheNextGroup === "costume-part-costume2" &&
       tabbedBack === "costume-part-colorLimb"
     );
   };
