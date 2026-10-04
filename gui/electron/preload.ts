@@ -21,6 +21,7 @@ const port: HirobaSessionPort = {
   changeTitle: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeTitle, change),
   changeName: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeName, change),
   costumeHistory: () => ipcRenderer.invoke(BRIDGE_CHANNELS.costumeHistory),
+  readUpdateFeed: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readUpdateFeed),
 };
 
 contextBridge.exposeInMainWorld("abth", port);

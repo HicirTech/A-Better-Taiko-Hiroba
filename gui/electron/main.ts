@@ -22,6 +22,7 @@ import {
   PORT_ARGUMENTS,
   type SignInOutcome,
 } from "../src/session-port";
+import { readUpdateFeed } from "../src/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
@@ -30,6 +31,7 @@ import { createDiskPictureStore } from "./picture-disk-store";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
+import { createUpdateFeedTransport } from "./update-feed-transport";
 
 const environment = startedWith();
 const { devServerUrl, endpoints } = environment;
@@ -91,6 +93,11 @@ const readTransport =
   process.env.ABTH_DEBUG_SAVE_READS === "1"
     ? saveReads(transport, join(app.getPath("userData"), "debug"))
     : transport;
+
+const feedTransport = createUpdateFeedTransport({
+  userAgent,
+  hirobaOrigin: endpoints.hirobaOrigin,
+});
 
 // Verbs that ask Hiroba something run through it one at a time, so no read lands inside a write.
 const queue = createHirobaQueue();
@@ -210,6 +217,7 @@ app.whenReady().then(async () => {
     changeTitle: writes.changeTitle,
     changeName: writes.changeName,
     costumeHistory: writes.costumeHistory,
+    readUpdateFeed: () => readUpdateFeed(feedTransport, environment.updateFeedUrl),
   });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

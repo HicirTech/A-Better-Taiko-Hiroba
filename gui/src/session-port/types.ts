@@ -12,6 +12,8 @@ import type {
   WriteOutcome,
 } from "@abth/core";
 
+import type { UpdateFeed, UpdateFeedFailure } from "../updates/update-feed";
+
 export type {
   CostumeEditorView,
   CostumeSet,
@@ -20,6 +22,8 @@ export type {
   TitleEditorView,
   TitleState,
   TitleTarget,
+  UpdateFeed,
+  UpdateFeedFailure,
 };
 
 export type SignInOutcome =
@@ -235,4 +239,6 @@ export interface HirobaSessionPort {
   changeName(change: NameChange): Promise<WriteOutcomeView<NameState>>;
   /** The signed-in player's costume history, newest first. Asks Hiroba nothing. */
   costumeHistory(): Promise<readonly CostumeHistoryEntry[]>;
+  /** The update feed: one GET that carries no session. Asks Hiroba nothing, so it is never queued. */
+  readUpdateFeed(): Promise<Result<UpdateFeed, UpdateFeedFailure>>;
 }

@@ -179,4 +179,5 @@ export const PORT_ARGUMENTS = {
   changeTitle: titleChange,
   changeName: nameChange,
   costumeHistory: none,
+  readUpdateFeed: none,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

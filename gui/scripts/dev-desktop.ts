@@ -52,7 +52,12 @@ if (!buildElectron()) {
 startElectron();
 
 let pending: ReturnType<typeof setTimeout> | undefined;
-for (const dir of ["electron", join("src", "hiroba-session"), join("src", "session-port")]) {
+for (const dir of [
+  "electron",
+  join("src", "hiroba-session"),
+  join("src", "session-port"),
+  join("src", "updates"),
+]) {
   watch(join(root, dir), { recursive: true }, () => {
     clearTimeout(pending);
     pending = setTimeout(() => buildElectron() && startElectron(), 150);
