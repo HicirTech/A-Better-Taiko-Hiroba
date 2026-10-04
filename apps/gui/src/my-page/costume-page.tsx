@@ -18,6 +18,12 @@ import type { CostumeEditor } from "./use-costume-editor";
 // MUI's sm width: a narrow window's column need not stretch across it.
 export const COLUMN_MAX_WIDTH_PX = 600;
 const BAR_PADDING_PX = 12;
+// Below this width the bar gives up padding and gaps before a label would wrap.
+const WHEN_SNUG = "@media (max-width: 389px)";
+const TOUCH_TARGET_PX = 48;
+const ONE_LINE_LABEL = { whiteSpace: "nowrap" } as const;
+const SNUG_TEXT_BUTTON = { [WHEN_SNUG]: { minWidth: TOUCH_TARGET_PX, px: 0.25 } } as const;
+const SNUG_CONTAINED_BUTTON = { [WHEN_SNUG]: { px: 1 } } as const;
 
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
@@ -129,7 +135,7 @@ function actionsOf(
       id="costume-history"
       disabled={editor.history.length === 0}
       onClick={onHistory}
-      sx={wide ? { flex: 1 } : { mr: "auto" }}
+      sx={{ ...ONE_LINE_LABEL, ...SNUG_TEXT_BUTTON, ...(wide ? { flex: 1 } : { mr: "auto" }) }}
     >
       {t("costume.history")}
     </Button>
@@ -139,7 +145,7 @@ function actionsOf(
       id="costume-reset"
       disabled={unchanged}
       onClick={editor.reset}
-      sx={wide ? { flex: 1 } : undefined}
+      sx={{ ...ONE_LINE_LABEL, ...SNUG_TEXT_BUTTON, ...(wide && { flex: 1 }) }}
     >
       {t("costume.reset")}
     </Button>
@@ -151,6 +157,7 @@ function actionsOf(
       fullWidth={wide}
       disabled={unchanged}
       onClick={onSave}
+      sx={{ ...ONE_LINE_LABEL, ...SNUG_CONTAINED_BUTTON }}
     >
       {t("costume.save")}
     </Button>
@@ -170,7 +177,7 @@ function actionsOf(
           </Box>
         </Stack>
       ) : (
-        <Box sx={{ display: "flex", gap: 1 }}>
+        <Box sx={{ display: "flex", gap: 1, [WHEN_SNUG]: { gap: 0.5 } }}>
           {history}
           {reset}
           {save}
@@ -217,6 +224,7 @@ function ActionBar({ children }: { children: ReactNode }) {
         gap: 1,
         p: `${BAR_PADDING_PX}px`,
         pb: `calc(${BAR_PADDING_PX}px + env(safe-area-inset-bottom, 0px))`,
+        [WHEN_SNUG]: { px: 1 },
       }}
     >
       {children}

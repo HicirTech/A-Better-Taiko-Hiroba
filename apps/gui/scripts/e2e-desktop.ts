@@ -3041,6 +3041,28 @@ try {
     Math.abs((phone.barButtons[0]?.left ?? 0) - (phone.barBox.left + 12)) < 2 &&
     Math.abs(phone.barBox.right - 12 - (phone.barButtons[2]?.right ?? 0)) < 2 &&
     (phone.barButtons[1]?.right ?? 0) <= (phone.barButtons[2]?.left ?? 0);
+  /** The lines each button's label takes. */
+  const labelLines = (container: string) =>
+    page.evaluate<number[]>(
+      `[...document.querySelectorAll(${JSON.stringify(`${container} button`)})].map((button) => { const range = document.createRange(); range.selectNodeContents([...button.childNodes].find((node) => node.nodeType === Node.TEXT_NODE)); return new Set([...range.getClientRects()].map((box) => Math.round(box.top))).size; })`,
+    );
+  const barLabelsAt = (width: number) =>
+    atSize(width, 700, async () => {
+      await waitFor(async () => (await exists("#costume-bar")) || undefined);
+      const bar = await boxOf("#costume-bar");
+      const buttons = await buttonsIn("#costume-bar");
+      return {
+        lines: await labelLines("#costume-bar"),
+        inside: buttons.every(({ left, right }) => left >= bar.left && right <= bar.right),
+        apart: buttons.every(
+          ({ left }, index) => index === 0 || left >= (buttons[index - 1]?.right ?? 0),
+        ),
+      };
+    });
+  const labelsOnOneLine = ({ lines, inside, apart }: Awaited<ReturnType<typeof barLabelsAt>>) =>
+    lines.length === 3 && lines.every((count) => count === 1) && inside && apart;
+  results.costumePhoneBarLabelsStayOnOneLine =
+    labelsOnOneLine(await barLabelsAt(320)) && labelsOnOneLine(await barLabelsAt(390));
   results.costumeNoneCellEmptiesASlotOnAPhone = phone.noneCell;
   results.costumeGridPickChangesItsTileOnAPhone = phone.gridPick;
   results.costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpaceOnAPhone = phone.keyboard;
