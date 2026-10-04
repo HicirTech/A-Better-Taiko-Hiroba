@@ -23,10 +23,15 @@ const favoritesNow = async (query = "") =>
 export const favoritesKeys = [
   "readAgainReadsBothEditors",
   "songsShownWithGenreAndLevels",
+  "levelsStackBehindTheShownDifficulty",
+  "levelsSpreadOnAClickAndFoldBack",
+  "shownDifficultyFromSettings",
   "newSetAsksForItsName",
   "pickerShowsItsFilters",
   "pickerShowsItsFiltersOnAPhone",
   "pickerOpensOnEverySong",
+  "songShowsABarPerGenre",
+  "pickerShowsTheFilteredDifficultyFirst",
   "pickerFiltersByChartAndStars",
   "pickerStarsAloneTakeAnyChart",
   "pickerFiltersAddUp",
@@ -76,6 +81,26 @@ export async function favorites(ctx: Ctx) {
     );
   const search = (query: string) => typeInto("#song-picker-search", query);
   const rowText = (songNo: string) => textOf(`#song-picker-row-${songNo}`);
+  const placesIn = (selector: string) =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll(${JSON.stringify(`${selector} [data-difficulty]`)})].map((badge) => badge.dataset.place)`,
+    );
+  const stackOpen = (selector: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(`${selector} .level-stack`)})?.getAttribute("aria-expanded") ?? null`,
+    );
+  const barsOf = (songNos: readonly string[]) =>
+    page.evaluate<number[]>(
+      `${JSON.stringify(songNos)}.map((songNo) => document.querySelectorAll("#song-picker-row-" + songNo + " .song-bar").length)`,
+    );
+  const showDifficulty = async (difficulty: string) => {
+    await goTo("settings");
+    await shown(`#shown-difficulty-${difficulty}`);
+    await click(`#shown-difficulty-${difficulty}`);
+    await goTo("favorites");
+    await stepIs("ready");
+    await shown("#favorite-folder-slot-1 [data-difficulty]");
+  };
   const boldIn = (songNo: string) =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll("#song-picker-row-${songNo} b")].map((b) => b.textContent)`,
@@ -220,6 +245,23 @@ export async function favorites(ctx: Ctx) {
     (await textOf("#favorite-song-row"))?.includes("Wings of Light") === true &&
     same(badges, ["Easy ★2", "Normal ★3", "Hard ★5", "Extreme ★7"]);
 
+  const SLOT_1 = "#favorite-folder-slot-1";
+  results.levelsStackBehindTheShownDifficulty =
+    same(await placesIn(SLOT_1), ["before", "before", "before", "front"]) &&
+    (await stackOpen(SLOT_1)) === "false";
+  await click(`${SLOT_1} .level-stack`);
+  const spread = await stackOpen(SLOT_1);
+  await click(`${SLOT_1} .level-stack`);
+  results.levelsSpreadOnAClickAndFoldBack =
+    spread === "true" && (await stackOpen(SLOT_1)) === "false";
+
+  await showDifficulty("hard");
+  const hardInFront = await placesIn(SLOT_1);
+  await showDifficulty("oni");
+  results.shownDifficultyFromSettings =
+    same(hardInFront, ["before", "before", "front", "after"]) &&
+    same(await placesIn(SLOT_1), ["before", "before", "before", "front"]);
+
   await openDrawer();
   await click("#favorites-item-new");
   await shown("#favorite-set-name");
@@ -241,6 +283,15 @@ export async function favorites(ctx: Ctx) {
     filtersInView,
   );
   results.pickerOpensOnEverySong = (await chosenFilters()) === 0 && (await listed(EVERY_SONG));
+  results.songShowsABarPerGenre = same(await barsOf(["1012", "1001"]), [2, 1]);
+
+  await choose("difficulty", "hard");
+  results.pickerShowsTheFilteredDifficultyFirst = same(await placesIn("#song-picker-row-1019"), [
+    "before",
+    "before",
+    "front",
+    "after",
+  ]);
 
   await choose("difficulty", "oni");
   await choose("level", "10");
