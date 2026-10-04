@@ -4,6 +4,7 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { HELD_STILL, LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
+import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import {
   type FavoriteSet,
@@ -101,6 +102,11 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
     setDraft(null);
     setEditing(editingIt);
   };
+  const leaveEditing = () => {
+    setDraft(null);
+    setEditing(false);
+  };
+  useBackLeaves(editing, leaveEditing);
   const named = (name: string) => {
     if (naming?.kind === "new") {
       showSet(keptSets.add(name, naming.songs), naming.editing);
@@ -172,8 +178,7 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
             if (draft !== null) {
               keptSets.replaceSongs(set.id, draft);
             }
-            setDraft(null);
-            setEditing(false);
+            leaveEditing();
           }}
           onApply={() => void apply(set.songs)}
         />

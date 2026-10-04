@@ -17,7 +17,7 @@ import { type ReactNode, useEffect, useEffectEvent, useId, useState } from "reac
 import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { SystemBack } from "../platform";
 import { backAction } from "./back-action";
-import { BackClosersContext, createBackClosers } from "./back-closers";
+import { BackClosersContext, BackModesContext, createBackClosers } from "./back-closers";
 import { MenuOpenContext } from "./menu-open";
 import {
   CostumeIcon,
@@ -71,12 +71,20 @@ export function AppFrame({
     setMenuOpen(false);
   }
   const [closers] = useState(createBackClosers);
+  const [modes] = useState(createBackClosers);
   const pressedBack = useEffectEvent((system: SystemBack) => {
-    const action = backAction({ overlayOpen: closers.isOpen(), menuOpen, page });
+    const action = backAction({
+      overlayOpen: closers.isOpen(),
+      menuOpen,
+      modeOn: modes.isOpen(),
+      page,
+    });
     if (action === "closeOverlay") {
       closers.closeLatest();
     } else if (action === "closeMenu") {
       setMenuOpen(false);
+    } else if (action === "leaveMode") {
+      modes.closeLatest();
     } else if (action === "overview") {
       onNavigate("overview");
     } else {
@@ -107,7 +115,9 @@ export function AppFrame({
               <Typography component="h1" sx={VISUALLY_HIDDEN}>
                 {i18n.t(PAGE_ENTRY[page].label)}
               </Typography>
-              <WiderFrameContext value={setWider}>{children}</WiderFrameContext>
+              <WiderFrameContext value={setWider}>
+                <BackModesContext value={modes}>{children}</BackModesContext>
+              </WiderFrameContext>
             </Container>
           </Box>
         </Box>

@@ -28,10 +28,20 @@ export function createBackClosers(): BackClosers {
 }
 
 export const BackClosersContext = createContext<BackClosers>(createBackClosers());
+/** A page's modes that Back leaves, such as editing; unlike overlays, they hold back no gesture. */
+export const BackModesContext = createContext<BackClosers>(createBackClosers());
+
+function useStackedClose(stack: BackClosers, open: boolean, onClose: () => void): void {
+  const close = useEffectEvent(onClose);
+  useEffect(() => (open ? stack.add(() => close()) : undefined), [open, stack]);
+}
 
 /** While `open`, Android's Back calls `onClose` instead of leaving the page. */
 export function useBackCloses(open: boolean, onClose: () => void): void {
-  const closers = useContext(BackClosersContext);
-  const close = useEffectEvent(onClose);
-  useEffect(() => (open ? closers.add(() => close()) : undefined), [open, closers]);
+  useStackedClose(useContext(BackClosersContext), open, onClose);
+}
+
+/** While `active`, Android's Back calls `onLeave` once no overlay or menu is open. */
+export function useBackLeaves(active: boolean, onLeave: () => void): void {
+  useStackedClose(useContext(BackModesContext), active, onLeave);
 }
