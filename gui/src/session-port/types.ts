@@ -1,24 +1,37 @@
 import type {
   CostumeEditorView,
   CostumeSet,
+  FavoriteSongEditorView,
+  FavoriteSongState,
+  FolderEditorView,
+  FolderState,
   MedalProgress,
   NameState,
   RenameState,
   Result,
   ScoreRank,
+  ShownSong,
   TitleEditorView,
   TitleState,
   TitleTarget,
   WriteOutcome,
 } from "@abth/core";
 
+import type { SongCatalogueFailure, SongCatalogueRead } from "../song-catalogue/types";
 import type { UpdateFeed, UpdateFeedFailure } from "../updates/update-feed";
 
 export type {
   CostumeEditorView,
   CostumeSet,
+  FavoriteSongEditorView,
+  FavoriteSongState,
+  FolderEditorView,
+  FolderState,
   NameState,
   RenameState,
+  ShownSong,
+  SongCatalogueFailure,
+  SongCatalogueRead,
   TitleEditorView,
   TitleState,
   TitleTarget,
@@ -162,9 +175,12 @@ export interface WriteSets {
   readonly costume: CostumeSet;
   readonly title: TitleState;
   readonly name: NameState;
+  readonly folder: FolderState;
+  readonly favoriteSong: FavoriteSongState;
 }
 
-/** The kinds of write: the costume (きせかえ), the title (称号) and the Donder name (ドンだーネーム). */
+/** The kinds of write: the costume (きせかえ), the title (称号), the Donder name (ドンだーネーム), the
+ * お気に入り folder and the 大好きな曲. */
 export type WriteKind = keyof WriteSets;
 
 /** A costume write as asked by the interface: the set it was made against, and the set wanted. */
@@ -184,6 +200,26 @@ export interface TitleChange {
 export interface NameChange {
   readonly expected: NameState;
   readonly target: NameState;
+}
+
+/** The favourites as their two editors show them. */
+export interface FavoritesView {
+  readonly folder: FolderEditorView;
+  readonly song: FavoriteSongEditorView;
+}
+
+/** A folder write as the interface asks for it: the folder as its editor showed it, and the songs
+ * wanted, which fill the first slots in order and leave the rest empty. */
+export interface FolderChange {
+  readonly expected: FolderState;
+  /** At most 30 song numbers, none twice. */
+  readonly target: readonly string[];
+}
+
+/** A 大好きな曲 write: the song as its editor showed it, and the song wanted, or none. */
+export interface FavoriteSongChange {
+  readonly expected: FavoriteSongState;
+  readonly target: FavoriteSongState;
 }
 
 /** How a write ended per the core's `runWrite`, or was refused by the platform before it began. */
@@ -241,4 +277,15 @@ export interface HirobaSessionPort {
   costumeHistory(): Promise<readonly CostumeHistoryEntry[]>;
   /** The update feed: one GET that carries no session. Asks Hiroba nothing, so it is never queued. */
   readUpdateFeed(): Promise<Result<UpdateFeed, UpdateFeedFailure>>;
+  /** The お気に入り folder's editor, then the 大好きな曲's: two GETs. Their form tokens stay with
+   * the platform. */
+  openFavorites(): Promise<Result<FavoritesView, ReadFailure>>;
+  /** One folder write: its editor, a GET for each slot that changes, one save, then the folder read
+   * back. Never retried. */
+  changeFolder(change: FolderChange): Promise<WriteOutcomeView<FolderState>>;
+  /** One 大好きな曲 write: its editor, one save, then the song read back. Never retried. */
+  changeFavoriteSong(change: FavoriteSongChange): Promise<WriteOutcomeView<FavoriteSongState>>;
+  /** taiko.wiki's songs, all or those changed since `since` (ms since 1970): one GET that carries
+   * no session. Asks Hiroba nothing, so it is never queued. */
+  readSongCatalogue(since: number | null): Promise<Result<SongCatalogueRead, SongCatalogueFailure>>;
 }

@@ -696,6 +696,10 @@ const READS_ASKED: Record<
     ask: (port) => port.previewCostume(START_SET),
     requests: ["GET /imgsrc_mydon.php"],
   },
+  openFavorites: {
+    ask: (port) => port.openFavorites(),
+    requests: ["GET /favorite_song_select.php", "GET /portal_favorite_song_select.php"],
+  },
 };
 
 describe.each(Object.keys(HELD_WRITES) as (keyof typeof HELD_WRITES)[])(

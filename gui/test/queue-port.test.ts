@@ -56,8 +56,15 @@ describe("PORT_QUEUEING", () => {
       "openCostumeEditor",
       "openTitleEditor",
       "previewCostume",
+      "openFavorites",
     ]);
-    expect(WRITES).toEqual(["changeCostume", "changeTitle", "changeName"]);
+    expect(WRITES).toEqual([
+      "changeCostume",
+      "changeTitle",
+      "changeName",
+      "changeFolder",
+      "changeFavoriteSong",
+    ]);
   });
 });
 

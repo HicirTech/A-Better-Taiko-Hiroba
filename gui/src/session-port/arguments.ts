@@ -3,6 +3,8 @@ import type { ScoreRank } from "@abth/core";
 import type {
   CostumeSet,
   CrownKind,
+  FavoriteSongState,
+  FolderState,
   HirobaSessionPort,
   NameState,
   PictureWant,
@@ -89,6 +91,37 @@ export function isNameState(value: unknown): value is NameState {
 export const isWhole = (value: unknown, least: number, most: number): value is number =>
   Number.isInteger(value) && (value as number) >= least && (value as number) <= most;
 
+// Core's FOLDER_SLOT_COUNT, repeated: this file imports no core value, so the preload stays small.
+const FOLDER_SLOTS = 30;
+const SONG_NO = /^\d{1,5}$/;
+
+const isSongNo = (value: unknown): value is string =>
+  typeof value === "string" && SONG_NO.test(value);
+
+/** Exactly the folder's 30 slots, each a song number or null. */
+export function isFolderState(value: unknown): value is FolderState {
+  return (
+    hasExactly(value, ["slots"]) &&
+    Array.isArray(value.slots) &&
+    value.slots.length === FOLDER_SLOTS &&
+    value.slots.every((slot) => slot === null || isSongNo(slot))
+  );
+}
+
+export function isFavoriteSongState(value: unknown): value is FavoriteSongState {
+  return hasExactly(value, ["songNo"]) && (value.songNo === null || isSongNo(value.songNo));
+}
+
+/** The songs a folder write puts in order: at most 30, none twice. */
+function isFolderTarget(value: unknown): value is readonly string[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= FOLDER_SLOTS &&
+    value.every(isSongNo) &&
+    new Set(value).size === value.length
+  );
+}
+
 const KIND_ONLY_PICTURES: readonly string[] = ["titlePlate", "scorePanel", "medalPlate", "myDon"];
 // Records, so a rank or crown the app gains is a type error here until its icon may be asked for.
 const RANK_ICONS: Readonly<Record<ScoreRank, true>> = {
@@ -163,6 +196,22 @@ const nameChange: ArgumentCheck = (args) =>
   isNameState(args[0].expected) &&
   isNameState(args[0].target);
 
+const folderChange: ArgumentCheck = (args) =>
+  args.length === 1 &&
+  hasExactly(args[0], ["expected", "target"]) &&
+  isFolderState(args[0].expected) &&
+  isFolderTarget(args[0].target);
+
+const favoriteSongChange: ArgumentCheck = (args) =>
+  args.length === 1 &&
+  hasExactly(args[0], ["expected", "target"]) &&
+  isFavoriteSongState(args[0].expected) &&
+  isFavoriteSongState(args[0].target);
+
+// `since` becomes the catalogue address's query, so only a whole number of milliseconds may.
+const catalogueSince: ArgumentCheck = (args) =>
+  args.length === 1 && (args[0] === null || isWhole(args[0], 0, Number.MAX_SAFE_INTEGER));
+
 /** What each verb accepts from the interface; anything the renderer sends is untrusted until it
  * passes here. A verb with no entry is a type error, so none reaches the port unchecked. */
 export const PORT_ARGUMENTS = {
@@ -180,4 +229,8 @@ export const PORT_ARGUMENTS = {
   changeName: nameChange,
   costumeHistory: none,
   readUpdateFeed: none,
+  openFavorites: none,
+  changeFolder: folderChange,
+  changeFavoriteSong: favoriteSongChange,
+  readSongCatalogue: catalogueSince,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

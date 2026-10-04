@@ -44,6 +44,8 @@ const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, Mes
     changedSincePreview: "write.name.changedSincePreview",
     nothingToChange: "write.name.nothingToChange",
   },
+  folder: {},
+  favoriteSong: {},
 };
 
 const wording = (kind: WriteKind, base: Base): MessageKey =>
@@ -92,6 +94,8 @@ const REFUSED_GLOSS: Readonly<Record<WriteKind, Readonly<Partial<Record<number, 
   costume: {},
   title: { 1: "write.title.refused1", 5: "write.title.refused5", 6: "write.title.refused6" },
   name: { 2: "write.name.refused2" },
+  folder: {},
+  favoriteSong: {},
 };
 
 type InvalidField =
@@ -165,6 +169,8 @@ const ROWS: { readonly [K in WriteKind]: Rows<WriteSets[K]> } = {
     title === "" ? { text: t("profile.noTitle") } : { text: title, hirobas: true },
   ),
   name: singleRow("name.heading", ({ nickname }) => ({ text: nickname, hirobas: true })),
+  folder: () => [],
+  favoriteSong: () => [],
 };
 
 export interface Comparison {

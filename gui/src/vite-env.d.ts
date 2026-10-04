@@ -12,4 +12,6 @@ interface ImportMetaEnv {
   readonly VITE_ABTH_DEV_IMG_ORIGIN?: string;
   /** The address of a stand-in update feed; without it a development run checks for no update. */
   readonly VITE_ABTH_DEV_UPDATE_FEED?: string;
+  /** The address of a stand-in song list; without it a development run reads none. */
+  readonly VITE_ABTH_DEV_SONG_CATALOGUE?: string;
 }
