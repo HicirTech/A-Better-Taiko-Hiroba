@@ -8,6 +8,7 @@ import {
   isWriting,
   previewSetOf,
   reduceEditor,
+  showsEditor,
   UNREAD,
 } from "../src/my-page/costume-editor-state";
 import type {
@@ -47,33 +48,21 @@ const applied = (before: CostumeSet, after: CostumeSet): WriteOutcomeView => ({
   cross: "unchanged",
 });
 
-const editing = (state = set(), draft = state): EditorStep => ({
-  name: "editing",
-  editor: editorOf(state),
-  draft,
-});
-const confirming = (state = set(), draft = state): EditorStep => ({
-  name: "confirming",
-  editor: editorOf(state),
-  draft,
-});
+const editing = (
+  state = set(),
+  draft = state,
+  notice: WriteOutcomeView | null = null,
+): EditorStep => ({ name: "editing", editor: editorOf(state), draft, notice });
 const saving = (state = set(), draft = state): EditorStep => ({
   name: "saving",
   editor: editorOf(state),
   draft,
 });
-const undoing = (state = set()): EditorStep => ({ name: "undoing", editor: editorOf(state) });
-const done = (state = set(), outcome = applied(set(), state), asUndo = false): EditorStep => ({
-  name: "done",
-  editor: editorOf(state),
-  outcome,
-  asUndo,
-});
 
 const run = (step: EditorStep, ...actions: EditorAction[]) => actions.reduce(reduceEditor, step);
 
 function draftOf(step: EditorStep): CostumeSet {
-  if (step.name !== "editing" && step.name !== "confirming" && step.name !== "saving") {
+  if (step.name !== "editing" && step.name !== "saving") {
     throw new Error(`The ${step.name} step holds no draft`);
   }
   return step.draft;
@@ -84,11 +73,11 @@ describe("a read of the editor", () => {
     expect(run(UNREAD, { type: "readStarted" })).toEqual({ name: "loading", held: null });
   });
 
-  test("opens the editor on the set as read, with nothing yet changed", () => {
+  test("opens the editor on the set as read, with nothing yet changed and no notice", () => {
     const editor = editorOf(set({ colorFace: 9 }));
     const step = run(UNREAD, { type: "readStarted" }, { type: "readEnded", result: ok(editor) });
 
-    expect(step).toEqual({ name: "editing", editor, draft: editor.state });
+    expect(step).toEqual({ name: "editing", editor, draft: editor.state, notice: null });
   });
 
   test("says why it failed, holding nothing the first time", () => {
@@ -106,7 +95,7 @@ describe("a read of the editor", () => {
       { type: "readEnded", result: ok(fresh) },
     );
 
-    expect(step).toEqual({ name: "editing", editor: fresh, draft });
+    expect(step).toEqual({ name: "editing", editor: fresh, draft, notice: null });
   });
 
   test("drops a draft when the set has moved since it was made over it", () => {
@@ -117,7 +106,7 @@ describe("a read of the editor", () => {
       { type: "readEnded", result: ok(moved) },
     );
 
-    expect(step).toEqual({ name: "editing", editor: moved, draft: moved.state });
+    expect(step).toEqual({ name: "editing", editor: moved, draft: moved.state, notice: null });
   });
 
   test("holds the draft through a read that fails, for the read after it", () => {
@@ -137,18 +126,34 @@ describe("a read of the editor", () => {
     expect(draftOf(again)).toEqual(draft);
   });
 
-  test("takes the set an outcome left as what a read again holds", () => {
+  test("takes the draft a write left as what a read again holds", () => {
     const left = set({ colorFace: 9 });
-    const step = run(done(left, applied(set(), left)), { type: "readStarted" });
+    const written = run(saving(set(), left), { type: "writeEnded", outcome: applied(set(), left) });
 
-    expect(step).toMatchObject({ name: "loading", held: { draft: left } });
+    expect(run(written, { type: "readStarted" })).toMatchObject({
+      name: "loading",
+      held: { draft: left },
+    });
+  });
+
+  test("drops the notice of the last write, in the read and after it", () => {
+    const outcome: WriteOutcomeView = { kind: "interrupted" };
+    const fresh = editorOf(set());
+    const loading = run(editing(set(), set({ colorFace: 9 }), outcome), { type: "readStarted" });
+
+    expect(loading).toEqual({
+      name: "loading",
+      held: { editor: editorOf(set()), draft: set({ colorFace: 9 }) },
+    });
+    expect(run(loading, { type: "readEnded", result: ok(fresh) })).toMatchObject({
+      name: "editing",
+      notice: null,
+    });
   });
 
   type BusyCase = [label: string, step: EditorStep];
   test.each<BusyCase>([
-    ["a review", confirming(set(), set({ colorFace: 9 }))],
     ["a save", saving()],
-    ["an undo", undoing()],
     ["another read", { name: "loading", held: null }],
   ])("does not begin inside %s", (_label, step) => {
     expect(reduceEditor(step, { type: "readStarted" })).toBe(step);
@@ -212,13 +217,66 @@ describe("picking into the draft", () => {
 
   type NotEditing = [label: string, step: EditorStep];
   test.each<NotEditing>([
-    ["a review", confirming(set(), set({ colorFace: 9 }))],
     ["a save", saving()],
-    ["an outcome", done()],
     ["nothing read", UNREAD],
+    ["a read", { name: "loading", held: null }],
   ])("picks nothing in %s", (_label, step) => {
     expect(reduceEditor(step, { type: "pickedColour", part: "colorFace", id: 9 })).toBe(step);
     expect(reduceEditor(step, { type: "pickedItem", part: "costume1", id: 36 })).toBe(step);
+  });
+});
+
+describe("picking from the history", () => {
+  const entrySet = set({ colorFace: 9, costume2: 0 });
+
+  test("puts the set of an entry in the draft, whole, and leaves the set as read alone", () => {
+    const step = run(editing(), { type: "pickedHistory", set: entrySet });
+
+    expect(step).toEqual(editing(set(), entrySet));
+  });
+
+  test("replaces a draft that was made already", () => {
+    const step = run(editing(set(), set({ colorBody: 40 })), {
+      type: "pickedHistory",
+      set: entrySet,
+    });
+
+    expect(draftOf(step)).toEqual(entrySet);
+  });
+
+  test("clears the notice of the last write", () => {
+    const step = run(editing(set(), set(), { kind: "interrupted" }), {
+      type: "pickedHistory",
+      set: entrySet,
+    });
+
+    expect(step).toEqual(editing(set(), entrySet));
+  });
+
+  test("is the same step when the entry is the draft already", () => {
+    const step = editing(set(), entrySet);
+
+    expect(reduceEditor(step, { type: "pickedHistory", set: entrySet })).toBe(step);
+  });
+
+  test("can be saved at once, as any other change", () => {
+    const step = run(editing(), { type: "pickedHistory", set: entrySet }, { type: "saveStarted" });
+
+    expect(step).toEqual(saving(set(), entrySet));
+  });
+
+  test("leaves the set worn, picked back, with nothing to save", () => {
+    const step = run(editing(set(), entrySet), { type: "pickedHistory", set: set() });
+
+    expect(reduceEditor(step, { type: "saveStarted" })).toBe(step);
+  });
+
+  test.each<[label: string, step: EditorStep]>([
+    ["a save", saving()],
+    ["nothing read", UNREAD],
+    ["a read", { name: "loading", held: null }],
+  ])("picks nothing in %s", (_label, step) => {
+    expect(reduceEditor(step, { type: "pickedHistory", set: entrySet })).toBe(step);
   });
 });
 
@@ -235,107 +293,110 @@ describe("Reset", () => {
     expect(reduceEditor(step, { type: "reset" })).toBe(step);
   });
 
-  test("resets nothing in a review", () => {
-    const step = confirming(set(), set({ colorFace: 9 }));
+  test("resets nothing in a save", () => {
+    const step = saving(set(), set({ colorFace: 9 }));
 
     expect(reduceEditor(step, { type: "reset" })).toBe(step);
   });
 });
 
-describe("the review and the save", () => {
+describe("the save", () => {
   const drafted = set({ colorFace: 9 });
 
-  test("lists nothing to review when nothing has changed", () => {
+  test("sends the draft from editing, over the set as read", () => {
+    expect(run(editing(set(), drafted), { type: "saveStarted" })).toEqual(saving(set(), drafted));
+  });
+
+  test("sends nothing when the draft is the set as read", () => {
     const step = editing();
 
-    expect(reduceEditor(step, { type: "review" })).toBe(step);
+    expect(reduceEditor(step, { type: "saveStarted" })).toBe(step);
   });
 
-  test("goes back from the review with the draft kept", () => {
-    const step = run(editing(set(), drafted), { type: "review" }, { type: "back" });
-
-    expect(step).toEqual(editing(set(), drafted));
+  test.each<[label: string, step: EditorStep]>([
+    ["a save", saving(set(), drafted)],
+    ["nothing read", UNREAD],
+    ["a read", { name: "loading", held: { editor: editorOf(), draft: drafted } }],
+    ["a read that failed", { name: "loadFailed", failure: FAILURE, held: null }],
+  ])("starts from no step but editing: not from %s", (_label, step) => {
+    expect(reduceEditor(step, { type: "saveStarted" })).toBe(step);
   });
 
-  test("sends the draft that was reviewed, from the review alone", () => {
-    const reviewed = run(editing(set(), drafted), { type: "review" });
+  test("clears the notice of the last write", () => {
+    const step = editing(set(), drafted, { kind: "interrupted" });
 
-    expect(run(reviewed, { type: "saveStarted" })).toEqual(saving(set(), drafted));
-    expect(reduceEditor(editing(set(), drafted), { type: "saveStarted" })).toEqual(
-      editing(set(), drafted),
-    );
-  });
-
-  test("ends over the set the save read back", () => {
-    const after = set({ colorFace: 9 });
-    const outcome = applied(set(), after);
-    const step = run(saving(set(), after), { type: "writeEnded", outcome });
-
-    expect(step).toEqual({ name: "done", editor: editorOf(after), outcome, asUndo: false });
-  });
-
-  test("goes back from an outcome to editing on the set the write left, with no draft", () => {
-    const left = set({ colorFace: 9 });
-    const step = run(done(left), { type: "back" });
-
-    expect(step).toEqual(editing(left));
+    expect(run(step, { type: "saveStarted" })).toEqual(saving(set(), drafted));
   });
 });
 
-describe("the set a write leaves in the editor", () => {
+describe("the set and the draft a write leaves", () => {
   const before = set();
   const planned = set({ colorFace: 9 });
   const elsewhere = set({ colorBody: 40 });
+  const drafted = set({ colorFace: 9, costume5: 0 });
 
-  type LeftCase = [label: string, outcome: WriteOutcomeView, left: CostumeSet];
-  test.each<LeftCase>([
-    ["applied", applied(before, planned), planned],
-    [
-      "appliedNotSynced",
-      { kind: "appliedNotSynced", before, after: planned, save: SAVE, cross: "unchanged" },
-      planned,
-    ],
-    [
-      "notApplied",
-      {
-        kind: "notApplied",
-        before,
-        after: before,
-        reason: { kind: "unchanged" },
-        save: SAVE,
-        cross: "unchanged",
-      },
-      before,
-    ],
-    [
-      "diverged",
-      {
-        kind: "diverged",
-        before,
-        expectedAfter: planned,
-        after: elsewhere,
-        save: SAVE,
-        cross: "unchanged",
-      },
-      elsewhere,
-    ],
-    ["changedSincePreview", { kind: "changedSincePreview", current: elsewhere }, elsewhere],
-  ])("is the set the write read back for %s", (_label, outcome, left) => {
-    const step = run(saving(before, planned), { type: "writeEnded", outcome });
+  const notApplied: WriteOutcomeView = {
+    kind: "notApplied",
+    before,
+    after: before,
+    reason: { kind: "unchanged" },
+    save: SAVE,
+    cross: "unchanged",
+  };
+  const diverged: WriteOutcomeView = {
+    kind: "diverged",
+    before,
+    expectedAfter: planned,
+    after: elsewhere,
+    save: SAVE,
+    cross: "unchanged",
+  };
+  const appliedNotSynced: WriteOutcomeView = {
+    kind: "appliedNotSynced",
+    before,
+    after: planned,
+    save: SAVE,
+    cross: "unchanged",
+  };
+  const changedSincePreview: WriteOutcomeView = { kind: "changedSincePreview", current: elsewhere };
 
-    expect(step).toMatchObject({ name: "done", editor: { state: left } });
-  });
+  type OutcomeCase = [
+    label: string,
+    outcome: WriteOutcomeView,
+    state: CostumeSet,
+    draft: CostumeSet,
+    noticed: boolean,
+  ];
+  test.each<OutcomeCase>([
+    ["applied", applied(before, planned), planned, planned, false],
+    ["appliedNotSynced", appliedNotSynced, planned, planned, true],
+    ["notApplied", notApplied, before, drafted, true],
+    ["diverged", diverged, elsewhere, drafted, true],
+    ["changedSincePreview", changedSincePreview, elsewhere, drafted, true],
+    ["maintenance", { kind: "maintenance" }, before, drafted, true],
+    ["invalidTarget", { kind: "invalidTarget", field: "costume1" }, before, drafted, true],
+    ["nothingToChange", { kind: "nothingToChange" }, before, drafted, true],
+    ["undoNotSaved", { kind: "undoNotSaved" }, before, drafted, true],
+    ["interrupted", { kind: "interrupted" }, before, drafted, true],
+    ["busy", { kind: "busy" }, before, drafted, true],
+  ])(
+    "after %s the editor holds the set the write read back, and the draft is as it should be",
+    (_label, outcome, state, draft, noticed) => {
+      const step = run(saving(before, drafted), { type: "writeEnded", outcome });
 
-  type KeptCase = [label: string, outcome: WriteOutcomeView];
-  test.each<KeptCase>([
-    ["maintenance", { kind: "maintenance" }],
-    ["invalidTarget", { kind: "invalidTarget", field: "costume1" }],
-    ["interrupted", { kind: "interrupted" }],
-    ["busy", { kind: "busy" }],
-  ])("is the set as it was read for %s, which read nothing back", (_label, outcome) => {
-    const step = run(saving(before, planned), { type: "writeEnded", outcome });
+      expect(step).toEqual({
+        name: "editing",
+        editor: editorOf(state),
+        draft,
+        notice: noticed ? outcome : null,
+      });
+    },
+  );
 
-    expect(step).toMatchObject({ name: "done", editor: { state: before } });
+  test("leaves a draft that a failed save can be pressed again with", () => {
+    const failed = run(saving(before, drafted), { type: "writeEnded", outcome: notApplied });
+
+    expect(run(failed, { type: "saveStarted" })).toEqual(saving(before, drafted));
   });
 
   test("ends nothing when no write is on its way", () => {
@@ -347,41 +408,43 @@ describe("the set a write leaves in the editor", () => {
   });
 });
 
-describe("the undo", () => {
-  const reverted = set({ colorFace: 9 });
+describe("the notice of a write", () => {
+  const notice: WriteOutcomeView = { kind: "interrupted" };
+  const drafted = set({ colorFace: 9 });
+  const noticed = () => editing(set(), drafted, notice);
 
-  type NoUndo = [label: string, step: EditorStep];
-  test.each<NoUndo>([
-    ["editing", editing(set(), set({ colorBody: 40 }))],
-    ["an outcome", done()],
-  ])("begins from %s and drops the draft, which the undo's set replaces", (_label, step) => {
-    expect(reduceEditor(step, { type: "undoStarted" })).toEqual(undoing(set()));
+  test("stays through nothing but the next pick, Reset, Save or read", () => {
+    const step = noticed();
+
+    expect(step).toMatchObject({ notice });
+    expect(reduceEditor(step, { type: "pickedColour", part: "colorFace", id: 3 })).toMatchObject({
+      draft: set({ colorFace: 3 }),
+      notice: null,
+    });
+    expect(reduceEditor(step, { type: "pickedItem", part: "costume3", id: 70 })).toMatchObject({
+      notice: null,
+    });
+    expect(reduceEditor(step, { type: "reset" })).toEqual(editing());
   });
 
-  test.each<NoUndo>([
-    ["a review", confirming(set(), reverted)],
-    ["a save", saving()],
-    ["another undo", undoing()],
-    ["a read", { name: "loading", held: null }],
-    ["a read that failed", { name: "loadFailed", failure: FAILURE, held: null }],
-    ["nothing read", UNREAD],
-  ])("does not begin from %s", (_label, step) => {
-    expect(reduceEditor(step, { type: "undoStarted" })).toBe(step);
+  test("goes with a pick of what the draft holds already, which is still a pick", () => {
+    const step = reduceEditor(noticed(), { type: "pickedColour", part: "colorFace", id: 9 });
+
+    expect(step).toEqual(editing(set(), drafted));
   });
 
-  test("ends as an undo's outcome over the set it read back", () => {
-    const outcome = applied(reverted, set());
-    const step = run(undoing(reverted), { type: "writeEnded", outcome });
+  test("is not on the step again when a pick changes nothing and there is none", () => {
+    const step = editing(set(), drafted);
 
-    expect(step).toEqual({ name: "done", editor: editorOf(set()), outcome, asUndo: true });
+    expect(reduceEditor(step, { type: "pickedColour", part: "colorFace", id: 9 })).toBe(step);
   });
 });
 
 describe("forgetting the editor", () => {
   test.each<[label: string, step: EditorStep]>([
     ["a draft", editing(set(), set({ colorFace: 9 }))],
-    ["a review", confirming(set(), set({ colorFace: 9 }))],
-    ["an outcome", done()],
+    ["a notice", editing(set(), set(), { kind: "interrupted" })],
+    ["a save", saving()],
     ["a read on its way", { name: "loading", held: { editor: editorOf(), draft: set() } }],
   ])("drops %s", (_label, step) => {
     expect(reduceEditor(step, { type: "forget" })).toBe(UNREAD);
@@ -399,10 +462,8 @@ describe("what the page asks of a step", () => {
     ["a read again", { name: "loading", held }, drafted],
     ["a read that failed", { name: "loadFailed", failure: FAILURE, held }, drafted],
     ["a draft", editing(set(), drafted), drafted],
-    ["a review", confirming(set(), drafted), drafted],
+    ["a draft with a notice", editing(set(), drafted, { kind: "busy" }), drafted],
     ["a save", saving(set(), drafted), drafted],
-    ["an undo", undoing(set({ colorBody: 40 })), set({ colorBody: 40 })],
-    ["an outcome", done(set({ colorBody: 40 })), set({ colorBody: 40 })],
   ])("draws the picture of the right set for %s", (_label, step, previewed) => {
     expect(previewSetOf(step)).toEqual(previewed);
   });
@@ -410,19 +471,27 @@ describe("what the page asks of a step", () => {
   type ReadCase = [label: string, step: EditorStep, mayRead: boolean];
   test.each<ReadCase>([
     ["a draft", editing(), true],
-    ["an outcome", done(), true],
     ["a read that failed", { name: "loadFailed", failure: FAILURE, held: null }, true],
-    ["a review", confirming(set(), drafted), false],
     ["a save", saving(), false],
-    ["an undo", undoing(), false],
     ["a read on its way", { name: "loading", held: null }, false],
   ])("lets the editor be read again from %s: %p", (_label, step, mayRead) => {
     expect(canReadEditorAgain(step)).toBe(mayRead);
   });
 
-  test("calls a save and an undo writing, and nothing else", () => {
-    const steps = [UNREAD, editing(), confirming(), saving(), undoing(), done()];
+  test("calls a save writing, and nothing else", () => {
+    const steps = [UNREAD, editing(), saving()];
 
-    expect(steps.filter(isWriting).map((step) => step.name)).toEqual(["saving", "undoing"]);
+    expect(steps.filter(isWriting).map((step) => step.name)).toEqual(["saving"]);
+  });
+
+  type ShownCase = [label: string, step: EditorStep, shown: boolean];
+  test.each<ShownCase>([
+    ["nothing read", UNREAD, false],
+    ["a read on its way", { name: "loading", held }, false],
+    ["a read that failed", { name: "loadFailed", failure: FAILURE, held }, false],
+    ["a draft", editing(), true],
+    ["a save", saving(), true],
+  ])("shows the editor for %s: %p", (_label, step, shown) => {
+    expect(showsEditor(step)).toBe(shown);
   });
 });

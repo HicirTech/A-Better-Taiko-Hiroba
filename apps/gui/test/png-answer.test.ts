@@ -6,6 +6,7 @@ import { NO_LABEL_GIF } from "../scripts/mock-dan-label";
 import {
   checkPng,
   describeAnswer,
+  isPngDataUrl,
   type PngRules,
   pngDataUrl,
   pngSize,
@@ -170,5 +171,36 @@ describe("pngDataUrl and pngSize", () => {
     expect(decoded).toEqual(body);
     expect(pngSize(body)).toEqual({ width: 300, height: 200 });
     expect(pngSize(NO_LABEL_GIF)).toBeNull();
+  });
+});
+
+describe("isPngDataUrl", () => {
+  const LIMIT = 1000;
+  const urlOfBytes = (size: number) => `data:image/png;base64,${btoa("a".repeat(size))}`;
+
+  test("takes what pngDataUrl makes", () => {
+    expect(isPngDataUrl(pngDataUrl(png(300, 200)), 64 * 1024)).toBe(true);
+  });
+
+  test("takes a picture of the limit in bytes, whatever its padding, and refuses one byte more", () => {
+    for (const limit of [LIMIT - 1, LIMIT, LIMIT + 1]) {
+      expect(isPngDataUrl(urlOfBytes(limit), limit)).toBe(true);
+      expect(isPngDataUrl(urlOfBytes(limit + 1), limit)).toBe(false);
+    }
+  });
+
+  type RefusedCase = [label: string, value: unknown];
+  test.each<RefusedCase>([
+    ["no string", 7],
+    ["null", null],
+    ["a URL", "https://hiroba.test/imgsrc_mydon.php"],
+    ["another type", "data:image/gif;base64,R0lGODlh"],
+    ["another encoding", "data:image/png,%89PNG"],
+    ["a character base64 lacks", "data:image/png;base64,AA!A"],
+    ["padding in the middle", "data:image/png;base64,AA==AAAA"],
+    ["three padding signs", "data:image/png;base64,A==="],
+    ["a cut group", "data:image/png;base64,AAA"],
+  ])("refuses %s", (_label, value) => {
+    expect(isPngDataUrl(value, LIMIT)).toBe(false);
   });
 });

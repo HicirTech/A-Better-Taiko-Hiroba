@@ -37,6 +37,8 @@ export interface PreviewScheduler {
   stop(): void;
   /** The set the editor shows now: the first is asked for at once, each later one after a pause. */
   want(set: CostumeSet): void;
+  /** Takes a picture already in hand for `set`: a `want` of it shows it and asks nothing. */
+  keep(set: CostumeSet, image: string): void;
   /** Forgets everything when a session ends, so the next player never sees this one's picture. */
   reset(): void;
 }
@@ -46,7 +48,7 @@ const PAGE_TIMERS: PreviewTimers = {
   clear: (timer) => clearTimeout(timer as ReturnType<typeof setTimeout>),
 };
 
-const keyOf = (set: CostumeSet) => COSTUME_PARTS.map((part) => set[part]).join(",");
+export const keyOf = (set: CostumeSet) => COSTUME_PARTS.map((part) => set[part]).join(",");
 
 /** Asks Hiroba for the set's picture sparingly: one in flight, after a pause, never a retry. */
 export function createPreviewScheduler(options: PreviewSchedulerOptions): PreviewScheduler {
@@ -119,7 +121,7 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
         }
         // Stopped, the answer is still kept and noted, and shown when it starts again.
         if ("image" in answer) {
-          keep(key, answer.image);
+          remember(key, answer.image);
           shownKey = key;
           show({ image: answer.image, loading: false, failure: null });
         } else {
@@ -128,7 +130,7 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
       });
   };
 
-  const keep = (key: string, image: string) => {
+  const remember = (key: string, image: string) => {
     kept.delete(key);
     kept.set(key, image);
     for (const oldest of kept.keys()) {
@@ -180,6 +182,13 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
       }
       wanted = { key, set };
       plan();
+    },
+    keep(set, image) {
+      const key = keyOf(set);
+      remember(key, image);
+      if (wanted?.key === key) {
+        plan();
+      }
     },
     reset() {
       generation += 1;

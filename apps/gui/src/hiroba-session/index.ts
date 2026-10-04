@@ -3,6 +3,8 @@
 export { changeCostume } from "./change-costume";
 export { changeName } from "./change-name";
 export { changeTitle } from "./change-title";
+export { readCostumeHistory } from "./costume-history";
+export type { CostumeHistoryStore } from "./costume-history-store";
 export {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
@@ -53,6 +55,7 @@ export {
   type PictureReadState,
 } from "./read-picture";
 export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
+export { createRecentPreviews } from "./recent-previews";
 export { sessionEnded } from "./session-ended";
 export {
   BUSY_OUTCOME,

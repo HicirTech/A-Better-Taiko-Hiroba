@@ -331,4 +331,97 @@ describe("createPreviewScheduler", () => {
       expect(asked.map(({ set }) => set.colorFace)).toEqual([5, 2]);
     });
   });
+
+  describe("keep", () => {
+    test("shows a picture in hand at the next want of its set, and asks nothing", async () => {
+      const { scheduler, asked, pauseEnds, pausing, last } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+
+      scheduler.keep(face(3), picture(face(3)));
+      scheduler.want(face(3));
+
+      expect(last()).toEqual({ image: picture(face(3)), loading: false, failure: null });
+      expect(pausing()).toBe(0);
+      pauseEnds();
+      expect(asked).toHaveLength(1);
+    });
+
+    test("shows it at once when the set is the one wanted, and ends the pause for it", async () => {
+      const { scheduler, asked, pauseEnds, pausing, last } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+      scheduler.want(face(3));
+      expect(pausing()).toBe(1);
+
+      scheduler.keep(face(3), picture(face(3)));
+
+      expect(last()).toEqual({ image: picture(face(3)), loading: false, failure: null });
+      expect(pausing()).toBe(0);
+      pauseEnds();
+      expect(asked).toHaveLength(1);
+    });
+
+    test("replaces the failure of the set wanted with the picture, which is no retry", async () => {
+      const { scheduler, asked, pauseEnds, last } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+      scheduler.want(face(1));
+      pauseEnds();
+      await asked[1]?.answer(err({ code: "preview=notPng status=200 type=image/gif bytes=43" }));
+      expect(last()?.failure).not.toBeNull();
+
+      scheduler.keep(face(1), picture(face(1)));
+
+      expect(last()).toEqual({ image: picture(face(1)), loading: false, failure: null });
+      pauseEnds();
+      expect(asked).toHaveLength(2);
+    });
+
+    test("changes nothing shown for a set that is not the one wanted", async () => {
+      const { scheduler, asked, states } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+      const shown = states.length;
+
+      scheduler.keep(face(3), picture(face(3)));
+
+      expect(states).toHaveLength(shown);
+    });
+
+    test("counts among the last eight pictures kept, the oldest going", async () => {
+      const { scheduler, asked, pauseEnds, last } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+      for (const id of [1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+        scheduler.keep(face(id), picture(face(id)));
+      }
+
+      scheduler.want(face(9));
+      expect(last()).toEqual({ image: picture(face(9)), loading: false, failure: null });
+      expect(asked).toHaveLength(1);
+
+      scheduler.want(face(1));
+      pauseEnds();
+      expect(asked.map(({ set }) => set.colorFace)).toEqual([5, 1]);
+    });
+
+    test("is forgotten with the rest when the session ends", async () => {
+      const { scheduler, asked } = harness();
+      scheduler.start();
+      scheduler.want(START);
+      await asked[0]?.answer(ok(picture(START)));
+      scheduler.keep(face(3), picture(face(3)));
+
+      scheduler.reset();
+      scheduler.want(face(3));
+
+      expect(asked.map(({ set }) => set.colorFace)).toEqual([5, 3]);
+    });
+  });
 });

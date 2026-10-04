@@ -158,24 +158,28 @@ export interface Messages {
   "costume.thumbnails.unavailable": string;
   /** Param: {code}, why the first of them did not come, such as costumeItem=notPng; never a URL. */
   "costume.thumbnails.code": string;
-  /** Screen-reader names of the thumbnail grid's ▲ and ▼ arrows. */
-  "costume.scroll.up": string;
-  "costume.scroll.down": string;
   "costume.kigurumiWarning": string;
   "costume.changesHeading": string;
   /** Params: {part} (a costume.part text), {from}, {to} (a costume.id text or costume.remove). */
   "costume.change": string;
-  "costume.noChanges": string;
   "costume.reset": string;
   "costume.review": string;
   "costume.back": string;
   "costume.save": string;
   "costume.confirmIntro": string;
   "costume.saving": string;
-  "costume.undoLast": string;
   /** Param: {time}, already formatted. */
   "costume.undoWhen": string;
   "costume.undoing": string;
+  "costume.history": string;
+  "costume.history.title": string;
+  "costume.history.close": string;
+  /** Marks the entry that is the set Hiroba shows now. */
+  "costume.history.wornNow": string;
+  /** Param: {position}, 1 for the newest. An entry's name as a button. */
+  "costume.history.entry": string;
+  /** Param: {position}. As costume.history.entry, for the entry worn now. */
+  "costume.history.entryWorn": string;
   /** Also the title's name in a list of changes (costume.change's {part}). */
   "title.heading": string;
   "title.reading": string;

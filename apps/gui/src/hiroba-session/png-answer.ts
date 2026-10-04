@@ -129,13 +129,31 @@ export function describeAnswer(
   ].join(" ");
 }
 
+const PNG_DATA_URL_PREFIX = "data:image/png;base64,";
+const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/;
+
 /** A PNG as a `data:` URL, the only form a picture crosses in. `btoa` exists in both shells. */
 export function pngDataUrl(bytes: Uint8Array): string {
   let binary = "";
   for (let at = 0; at < bytes.length; at += 0x2000) {
     binary += String.fromCharCode(...bytes.subarray(at, at + 0x2000));
   }
-  return `data:image/png;base64,${btoa(binary)}`;
+  return `${PNG_DATA_URL_PREFIX}${btoa(binary)}`;
+}
+
+/** Whether `value` is a `pngDataUrl` of at most `maxBytes` bytes, as read back from storage. */
+export function isPngDataUrl(value: unknown, maxBytes: number): value is string {
+  if (typeof value !== "string" || !value.startsWith(PNG_DATA_URL_PREFIX)) {
+    return false;
+  }
+
+  const encoded = value.slice(PNG_DATA_URL_PREFIX.length);
+  if (encoded.length % 4 !== 0 || !BASE64.test(encoded)) {
+    return false;
+  }
+
+  const padding = encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0;
+  return (encoded.length / 4) * 3 - padding <= maxBytes;
 }
 
 function cameFrom(finalUrl: string, asked: AskedPlace): boolean {

@@ -1,22 +1,29 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Paper, Stack, Typography } from "@mui/material";
+import { Box, Button, Paper, Stack } from "@mui/material";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
+import { useWideWindow } from "../navigation/use-wide-window";
+import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { UndoSummary } from "../session-port";
-import { Changes } from "./costume-changes";
-import { type EditingTabs, EditingView, FIRST_TABS } from "./costume-editing";
-import { previewSetOf } from "./costume-editor-state";
-import { changedParts } from "./costume-parts";
-import { CostumePreviewBox } from "./costume-preview-box";
+import { type EditorStep, showsEditor } from "./costume-editor-state";
+import { CostumeHistoryDialog } from "./costume-history-dialog";
+import { NarrowBody } from "./costume-narrow-body";
+import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
+import { WideBody } from "./costume-wide-body";
 import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
+import { BAR_REF } from "./stuck-clearance";
 import type { CostumeEditor } from "./use-costume-editor";
-import { WriteOutcomeNotice } from "./write-outcome";
 
-// MUI's sm width: the item tiles are narrow, so their row need not stretch across the window.
+// MUI's sm width: a narrow window's column need not stretch across it.
 export const COLUMN_MAX_WIDTH_PX = 600;
 const BAR_PADDING_PX = 12;
+// Below this width the bar gives up padding and gaps before a label would wrap.
+const WHEN_SNUG = "@media (max-width: 389px)";
+const TOUCH_TARGET_PX = 48;
+const ONE_LINE_LABEL = { whiteSpace: "nowrap" } as const;
+const SNUG_TEXT_BUTTON = { [WHEN_SNUG]: { minWidth: TOUCH_TARGET_PX, px: 0.25 } } as const;
+const SNUG_CONTAINED_BUTTON = { [WHEN_SNUG]: { px: 1 } } as const;
 
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
@@ -26,7 +33,10 @@ export interface CostumePageProps {
 
 export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   const { step } = editor;
-  const [tabs, setTabs] = useState(FIRST_TABS);
+  const wide = useWideWindow();
+  useWiderFrame();
+  const [part, setPart] = useState<CostumePart>(COLOUR_PARTS[0]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
   // Shown again, the page asks once more for the thumbnails that did not come.
@@ -34,7 +44,20 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
     lane.forgetFailures("costumeItem");
   }, [lane]);
 
-  const actions = actionsOf(editor, i18n);
+  // The dialog is over the editor and goes with it: a read or a save closes it.
+  useEffect(() => {
+    if (step.name !== "editing") {
+      setHistoryOpen(false);
+    }
+  }, [step.name]);
+
+  // Focus leaves the button the save hides, so it is not dropped to the window's top.
+  const save = () => {
+    page.current?.focus({ preventScroll: true });
+    void editor.save();
+  };
+  const actions = actionsOf(editor, i18n, () => setHistoryOpen(true), save, wide);
+  const body = { editor, lane, i18n, part, onPart: setPart, progress: progressOf(step, i18n) };
   return (
     <Box
       ref={page}
@@ -42,132 +65,152 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
       data-step={step.name}
       tabIndex={-1}
       sx={{
-        ...BOTTOM_BAR_PAGE,
         display: "flex",
         flexDirection: "column",
         width: 1,
-        maxWidth: COLUMN_MAX_WIDTH_PX,
-        // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
-        alignSelf: "center",
+        ...(!wide && {
+          ...BOTTOM_BAR_PAGE,
+          maxWidth: COLUMN_MAX_WIDTH_PX,
+          // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
+          alignSelf: "center",
+        }),
         outline: "none",
       }}
     >
-      <Stack spacing={2} sx={{ flexGrow: 1, pb: 2 }}>
-        {previewSetOf(step) !== null && <CostumePreviewBox preview={editor.preview} i18n={i18n} />}
-        <StepView editor={editor} lane={lane} i18n={i18n} tabs={tabs} onTabs={setTabs} />
-      </Stack>
-      {actions !== null && <ActionBar>{actions}</ActionBar>}
+      {wide ? (
+        <WideBody {...body} actions={actions} />
+      ) : (
+        <>
+          <NarrowBody {...body} />
+          {actions !== null && <ActionBar>{actions}</ActionBar>}
+        </>
+      )}
+      {step.name === "editing" && (
+        <CostumeHistoryDialog
+          open={historyOpen}
+          entries={editor.history}
+          worn={step.editor.state}
+          i18n={i18n}
+          onPick={(entry) => {
+            editor.pickHistory(entry);
+            setHistoryOpen(false);
+          }}
+          onClose={() => setHistoryOpen(false)}
+        />
+      )}
     </Box>
   );
 }
 
-function StepView({
-  editor,
-  lane,
-  i18n,
-  tabs,
-  onTabs,
-}: CostumePageProps & { tabs: EditingTabs; onTabs: (tabs: EditingTabs) => void }) {
+function progressOf(step: EditorStep, i18n: Translator): ReactNode {
   const { t } = i18n;
-  const { step, undoable } = editor;
-  const undoOffer = undoable !== null && (
-    <UndoOffer undoable={undoable} onUndo={() => void editor.undo()} i18n={i18n} />
-  );
   switch (step.name) {
     case "unread":
     case "loading":
       return <Waiting>{t("costume.reading")}</Waiting>;
     case "loadFailed":
       return <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />;
-    case "editing":
-      return (
-        <>
-          {undoOffer}
-          <EditingView
-            editor={step.editor}
-            draft={step.draft}
-            lane={lane}
-            i18n={i18n}
-            tabs={tabs}
-            onTabs={onTabs}
-            onPickColour={editor.pickColour}
-            onPickItem={editor.pickItem}
-          />
-        </>
-      );
-    case "confirming":
-      return (
-        <Stack spacing={2}>
-          <Typography>{t("costume.confirmIntro")}</Typography>
-          <Changes from={step.editor.state} to={step.draft} i18n={i18n} />
-        </Stack>
-      );
     case "saving":
-      return <Waiting id="costume-saving">{t("costume.saving")}</Waiting>;
-    case "undoing":
-      return <Waiting id="costume-undoing">{t("costume.undoing")}</Waiting>;
-    case "done":
-      return (
-        <>
-          <WriteOutcomeNotice
-            outcome={step.outcome}
-            kind="costume"
-            i18n={i18n}
-            asUndo={step.asUndo}
-          />
-          {undoOffer}
-        </>
-      );
+    case "editing":
+      return null;
   }
 }
 
-function actionsOf(editor: CostumeEditor, i18n: Translator): ReactNode {
+function actionsOf(
+  editor: CostumeEditor,
+  i18n: Translator,
+  onHistory: () => void,
+  onSave: () => void,
+  wide: boolean,
+): ReactNode {
   const { t } = i18n;
   const { step } = editor;
-  switch (step.name) {
-    case "editing": {
-      const unchanged = changedParts(step.editor.state, step.draft).length === 0;
-      return (
-        <>
-          <Button id="costume-reset" disabled={unchanged} onClick={editor.reset}>
-            {t("costume.reset")}
-          </Button>
-          <Button
-            id="costume-review"
-            variant="contained"
-            disabled={unchanged}
-            onClick={editor.review}
-          >
-            {t("costume.review")}
-          </Button>
-        </>
-      );
-    }
-    case "confirming":
-      return (
-        <>
-          <Button id="costume-back" onClick={editor.back}>
-            {t("costume.back")}
-          </Button>
-          <Button id="costume-save" variant="contained" onClick={() => void editor.save()}>
-            {t("costume.save")}
-          </Button>
-        </>
-      );
-    case "done":
-      return (
-        <Button id="costume-back" onClick={editor.back}>
-          {t("costume.back")}
-        </Button>
-      );
-    default:
-      return null;
+  if (!showsEditor(step)) {
+    return null;
   }
+
+  const unchanged = changedParts(step.editor.state, step.draft).length === 0;
+  const history = (
+    <Button
+      id="costume-history"
+      disabled={editor.history.length === 0}
+      onClick={onHistory}
+      sx={{ ...ONE_LINE_LABEL, ...SNUG_TEXT_BUTTON, ...(wide ? { flex: 1 } : { mr: "auto" }) }}
+    >
+      {t("costume.history")}
+    </Button>
+  );
+  const reset = (
+    <Button
+      id="costume-reset"
+      disabled={unchanged}
+      onClick={editor.reset}
+      sx={{ ...ONE_LINE_LABEL, ...SNUG_TEXT_BUTTON, ...(wide && { flex: 1 }) }}
+    >
+      {t("costume.reset")}
+    </Button>
+  );
+  const save = (
+    <Button
+      id="costume-save"
+      variant="contained"
+      fullWidth={wide}
+      disabled={unchanged}
+      onClick={onSave}
+      sx={{ ...ONE_LINE_LABEL, ...SNUG_CONTAINED_BUTTON }}
+    >
+      {t("costume.save")}
+    </Button>
+  );
+  return (
+    <ActionArea
+      id={wide ? "costume-actions" : undefined}
+      saving={step.name === "saving"}
+      progress={<Waiting id="costume-saving">{t("costume.saving")}</Waiting>}
+    >
+      {wide ? (
+        <Stack spacing={1}>
+          {save}
+          <Box sx={{ display: "flex", gap: 1 }}>
+            {history}
+            {reset}
+          </Box>
+        </Stack>
+      ) : (
+        <Box sx={{ display: "flex", gap: 1, [WHEN_SNUG]: { gap: 0.5 } }}>
+          {history}
+          {reset}
+          {save}
+        </Box>
+      )}
+    </ActionArea>
+  );
+}
+
+/** The buttons, hidden by a save while its progress takes their place, so nothing moves. */
+function ActionArea({
+  id,
+  saving,
+  progress,
+  children,
+}: {
+  id?: string | undefined;
+  saving: boolean;
+  progress: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Box id={id} sx={{ display: "grid", width: 1 }}>
+      <Box sx={{ gridArea: "1 / 1", visibility: saving ? "hidden" : "visible" }}>{children}</Box>
+      {saving && <Box sx={{ gridArea: "1 / 1", alignSelf: "center" }}>{progress}</Box>}
+    </Box>
+  );
 }
 
 function ActionBar({ children }: { children: ReactNode }) {
   return (
     <Paper
+      ref={BAR_REF}
       id="costume-bar"
       elevation={3}
       sx={{
@@ -181,38 +224,10 @@ function ActionBar({ children }: { children: ReactNode }) {
         gap: 1,
         p: `${BAR_PADDING_PX}px`,
         pb: `calc(${BAR_PADDING_PX}px + env(safe-area-inset-bottom, 0px))`,
+        [WHEN_SNUG]: { px: 1 },
       }}
     >
       {children}
     </Paper>
-  );
-}
-
-function UndoOffer({
-  undoable,
-  onUndo,
-  i18n,
-}: {
-  undoable: UndoSummary;
-  onUndo: () => void;
-  i18n: Translator;
-}) {
-  const { t } = i18n;
-  return (
-    // Not a Stack, which keeps its children's margins at 0: the button's label lines up with the
-    // line under it, not with its own padding.
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
-      <Button
-        id="costume-undo"
-        variant="text"
-        onClick={onUndo}
-        sx={{ alignSelf: "flex-start", ml: -1 }}
-      >
-        {t("costume.undoLast")}
-      </Button>
-      <Typography id="undo-when" variant="body2" color="text.secondary">
-        {t("costume.undoWhen", { time: i18n.dateTime(undoable.at) })}
-      </Typography>
-    </Box>
   );
 }

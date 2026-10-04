@@ -20,6 +20,7 @@ import {
   MY_PAGE,
   memoryFlag,
   profilePage,
+  signOutAndIn,
   until,
 } from "./android-port-fixtures";
 import { native } from "./capacitor-fakes";
@@ -300,6 +301,96 @@ describe("createAndroidPort's costume writes", () => {
     expect(await port.undo("costume")).toEqual({ kind: "notSignedIn" });
     expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
     expect(world.sent()).toEqual([]);
+  });
+});
+
+describe("createAndroidPort's costume history", () => {
+  beforeEach(() => native.reset());
+
+  const PICTURE = /^data:image\/png;base64,/;
+
+  test("keeps the history in IndexedDB with the pictures of the previews it served, across launches", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    await port.previewCostume(START_SET);
+    await port.previewCostume(TARGET);
+    await port.changeCostume(CHANGE);
+
+    const history = await port.costumeHistory();
+    expect(history.map(({ set }) => set)).toEqual([TARGET, START_SET]);
+    expect(history.map(({ picture }) => picture !== null && PICTURE.test(picture))).toEqual([
+      true,
+      true,
+    ]);
+    expect([...(world.indexedDb?.tables.get("histories")?.keys() ?? [])]).toEqual([OWNER]);
+
+    const relaunched = await world.launch();
+    await relaunched.readProfile();
+    expect(await relaunched.costumeHistory()).toEqual(history);
+  });
+
+  test("keeps another card's history apart, and offers this card none of it", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    await port.changeCostume(CHANGE);
+
+    standIn({
+      editor: world.editor,
+      session: world.session,
+      myPage: MY_PAGE.replace(OWNER, OTHER),
+    });
+    const theirs = await world.launch();
+    await theirs.readProfile();
+
+    expect(await theirs.costumeHistory()).toEqual([]);
+    expect([...(world.indexedDb?.tables.get("histories")?.keys() ?? [])]).toEqual([OWNER]);
+  });
+
+  test("answers at once while a write waits on its pre-check, and sends nothing", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    await port.changeCostume(CHANGE);
+    native.httpRequests.length = 0;
+    world.hook("/__hold-precheck", "on=1");
+    const writing = port.changeCostume({ expected: TARGET, target: START_SET });
+    await until(() => world.sent().includes("POST /ajax/check_ip_kisekae.php"));
+    const sentInTheWrite = world.sent().length;
+
+    const history = await port.costumeHistory();
+
+    expect(history.map(({ set }) => set)).toEqual([TARGET, START_SET]);
+    expect(world.sent()).toHaveLength(sentInTheWrite);
+    world.hook("/__hold-precheck", "on=0");
+    expect((await writing).kind).toBe("applied");
+  });
+
+  test("keeps no picture for a preview fetched before the session ended", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    await port.previewCostume(TARGET);
+
+    await signOutAndIn(port);
+    await port.readProfile();
+    await port.changeCostume(CHANGE);
+
+    expect(await port.costumeHistory()).toEqual([
+      { set: TARGET, picture: null },
+      { set: START_SET, picture: null },
+    ]);
+  });
+
+  test("is empty when the page has no IndexedDB, and breaks nothing", async () => {
+    const world = setUp({ indexedDb: null });
+    const port = await signedInPort(world);
+
+    expect(await port.costumeHistory()).toEqual([]);
+  });
+
+  test("is empty while signed out", async () => {
+    const world = setUp({ signedIn: false });
+    const port = await world.launch();
+
+    expect(await port.costumeHistory()).toEqual([]);
   });
 });
 

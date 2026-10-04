@@ -11,14 +11,13 @@ import {
   Paper,
   SvgIcon,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import { type ReactNode, useEffect, useEffectEvent, useId, useState } from "react";
 
 import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { SystemBack } from "../platform";
 import { backAction } from "./back-action";
+import { BackClosersContext, createBackClosers } from "./back-closers";
 import {
   CostumeIcon,
   FavoritesIcon,
@@ -27,6 +26,8 @@ import {
   SettingsIcon,
 } from "./page-icons";
 import { PAGES, type Page } from "./pages";
+import { useWideWindow } from "./use-wide-window";
+import { WiderFrameContext } from "./wider-frame";
 
 const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly icon: ReactNode }>> =
   {
@@ -43,6 +44,8 @@ const MENU_INSET_PX = 8;
 const TOP_BAND_PX = 64;
 const PAGE_BOTTOM_PX = 32;
 const SAFE_TOP = "env(safe-area-inset-top, 0px)";
+export const BELOW_TOP_BAND = `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`;
+const PAGE_HEIGHT = `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`;
 
 interface NavigationProps {
   readonly page: Page;
@@ -57,15 +60,19 @@ export function AppFrame({
   back,
   children,
 }: NavigationProps & { back?: SystemBack; children: ReactNode }) {
-  const wide = useMediaQuery(useTheme().breakpoints.up("md"), { noSsr: true });
+  const wide = useWideWindow();
+  const [wider, setWider] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   // Shut a menu left open on a wide window, so it does not reopen unasked when the window narrows.
   if (wide && menuOpen) {
     setMenuOpen(false);
   }
+  const [closers] = useState(createBackClosers);
   const pressedBack = useEffectEvent((system: SystemBack) => {
-    const action = backAction(menuOpen, page);
-    if (action === "closeMenu") {
+    const action = backAction({ overlayOpen: closers.isOpen(), menuOpen, page });
+    if (action === "closeOverlay") {
+      closers.closeLatest();
+    } else if (action === "closeMenu") {
       setMenuOpen(false);
     } else if (action === "overview") {
       onNavigate("overview");
@@ -75,27 +82,32 @@ export function AppFrame({
   });
   useEffect(() => back?.listen(() => pressedBack(back)), [back]);
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      {wide ? (
-        <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
-      ) : (
-        <MenuDrawer
-          page={page}
-          onNavigate={onNavigate}
-          i18n={i18n}
-          open={menuOpen}
-          onOpenChange={setMenuOpen}
-        />
-      )}
-      <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
-        <Container maxWidth="md" sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}>
-          <Typography component="h1" sx={VISUALLY_HIDDEN}>
-            {i18n.t(PAGE_ENTRY[page].label)}
-          </Typography>
-          {children}
-        </Container>
+    <BackClosersContext value={closers}>
+      <Box sx={{ display: "flex", minHeight: "100vh" }}>
+        {wide ? (
+          <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
+        ) : (
+          <MenuDrawer
+            page={page}
+            onNavigate={onNavigate}
+            i18n={i18n}
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+          />
+        )}
+        <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Container
+            maxWidth={wider ? "lg" : "md"}
+            sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
+          >
+            <Typography component="h1" sx={VISUALLY_HIDDEN}>
+              {i18n.t(PAGE_ENTRY[page].label)}
+            </Typography>
+            <WiderFrameContext value={setWider}>{children}</WiderFrameContext>
+          </Container>
+        </Box>
       </Box>
-    </Box>
+    </BackClosersContext>
   );
 }
 
@@ -105,7 +117,7 @@ export function FrameCorner({ children }: { children: ReactNode }) {
     <Box
       sx={{
         position: "sticky",
-        top: `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`,
+        top: BELOW_TOP_BAND,
         zIndex: "appBar",
         height: 0,
         display: "flex",
@@ -119,10 +131,15 @@ export function FrameCorner({ children }: { children: ReactNode }) {
 
 // A bottom bar sits flush with the window's edge: the page fills the window and the bar, its last
 // child, overlaps the frame's bottom room by a negative margin (a Stack's child may not have one).
-export const BOTTOM_BAR_PAGE = {
-  minHeight: `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`,
-} as const;
+export const BOTTOM_BAR_PAGE = { minHeight: PAGE_HEIGHT } as const;
 export const BOTTOM_BAR = { mb: `-${PAGE_BOTTOM_PX}px` } as const;
+
+/** Below this height a block that stays in view would crowd the page, so it scrolls with it. */
+const TALL_WINDOW_PX = 640;
+export const WHEN_TALL = `@media (min-height: ${TALL_WINDOW_PX}px)`;
+export const STAYS_IN_VIEW = {
+  [WHEN_TALL]: { position: "sticky", top: BELOW_TOP_BAND },
+} as const;
 
 function PageList({ page, onNavigate, i18n }: NavigationProps) {
   return (

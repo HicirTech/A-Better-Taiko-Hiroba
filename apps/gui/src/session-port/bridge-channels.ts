@@ -14,4 +14,5 @@ export const BRIDGE_CHANNELS = {
   changeName: "abth:change-name",
   pendingUndo: "abth:pending-undo",
   undo: "abth:undo",
+  costumeHistory: "abth:costume-history",
 } as const;

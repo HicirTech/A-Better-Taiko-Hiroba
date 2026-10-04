@@ -8,6 +8,7 @@ import {
   MY_PAGE,
   memoryFlag,
   myPageAnswer,
+  signOutAndIn,
   until,
 } from "./android-port-fixtures";
 import { native, nativeBase64 } from "./capacitor-fakes";
@@ -384,14 +385,6 @@ describe("createAndroidPort's pictures", () => {
       Referer: `${HIROBA}/mypage_top.php`,
     });
   });
-
-  async function signOutAndIn(port: Awaited<ReturnType<typeof createAndroidPort>>) {
-    await port.signOut();
-    const outcome = port.signIn();
-    await until(() => native.openedWith.length === 1);
-    native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
-    expect(await outcome).toEqual({ kind: "signedIn" });
-  }
 
   test("forgets whose page it read when the session goes, and keeps the plate", async () => {
     answerAsHiroba();

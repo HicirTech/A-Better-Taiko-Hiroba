@@ -42,7 +42,7 @@ export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
           ? NO_PULL
           : pullStarted(pointOf(finger), {
               fingers: event.touches.length,
-              scrollTopPx: scrollTop() + scrolledWithin(event.target, region),
+              scrollTopPx: scrollTop(),
               enabled: mayRead(),
             }),
       );
@@ -126,17 +126,4 @@ function PullIndicator({ distance }: { distance: number }) {
 
 function scrollTop(): number {
   return document.scrollingElement?.scrollTop ?? 0;
-}
-
-// A finger on a box that has scrolled, such as the costume grid, is that box's to scroll back up.
-function scrolledWithin(target: EventTarget | null, region: Element): number {
-  let scrolled = 0;
-  for (
-    let box = target instanceof Element ? target : null;
-    box !== null && box !== region;
-    box = box.parentElement
-  ) {
-    scrolled += box.scrollTop;
-  }
-  return scrolled;
 }

@@ -1,8 +1,19 @@
 import type { Page } from "./pages";
 
-export type BackAction = "closeMenu" | "overview" | "leave";
+export type BackAction = "closeOverlay" | "closeMenu" | "overview" | "leave";
 
-export function backAction(menuOpen: boolean, page: Page): BackAction {
+export interface BackState {
+  /** A dialog or other overlay that asked for Back is open. */
+  readonly overlayOpen: boolean;
+  readonly menuOpen: boolean;
+  readonly page: Page;
+}
+
+export function backAction({ overlayOpen, menuOpen, page }: BackState): BackAction {
+  if (overlayOpen) {
+    return "closeOverlay";
+  }
+
   if (menuOpen) {
     return "closeMenu";
   }

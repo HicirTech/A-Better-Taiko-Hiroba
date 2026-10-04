@@ -18,6 +18,7 @@ import {
 
 import {
   type CostumeChange,
+  type CostumeSet,
   changedTheCostume,
   type HirobaSessionPort,
   type NameChange,
@@ -32,6 +33,8 @@ import {
 import { changeCostume } from "./change-costume";
 import { changeName } from "./change-name";
 import { changeTitle } from "./change-title";
+import { mergeCostumeHistory } from "./costume-history";
+import type { CostumeHistoryStore } from "./costume-history-store";
 import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
 import { openTitleEditor } from "./open-title-editor";
@@ -48,6 +51,9 @@ export interface SessionWritesOptions {
   readonly liveChecked?: readonly WriteKind[];
   readonly now: () => Date;
   readonly undoStore: UndoStore;
+  readonly historyStore: CostumeHistoryStore;
+  /** The picture of exactly this set that this session fetched lately, or null. */
+  readonly recentPreview: (set: CostumeSet) => string | null;
   readonly signedIn: () => boolean;
   /** Drops the session: Hiroba ended it. The write that found it waits for this to be done. */
   readonly endSession: () => void | Promise<void>;
@@ -74,6 +80,7 @@ export type SessionWrites = Pick<
   | "changeName"
   | "pendingUndo"
   | "undo"
+  | "costumeHistory"
 > & {
   /** A good read of my page shows the title and name too: it settles a write whose end was unknown
    * and dates a stale record, no request needed. The read waits for it: no write starts between. */
@@ -95,23 +102,43 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
   /** The write that undoes a record: from the set it was read back as, to the set before it. */
   readonly undoInput: (record: UndoRecord<WriteSets[K]>) => Input;
   /** Told how a write or an undo of this kind ended, for what the platform keeps of its result. */
-  readonly ended: (outcome: WriteOutcomeView<WriteSets[K]>) => void;
+  readonly ended: (
+    outcome: WriteOutcomeView<WriteSets[K]>,
+    write: { readonly taikoNo: string | null; readonly purpose: "change" | "undo" },
+  ) => void | Promise<void>;
 }
 
 /** A shell's writes. A kind not yet live-checked from this platform also reads another page before
  * and after. Nothing here queues (the shell does); each undo slot is the signed-in player's. */
 export function createSessionWrites(options: SessionWritesOptions): SessionWrites {
-  const { undoStore } = options;
+  const { undoStore, historyStore } = options;
   const liveChecked = options.liveChecked ?? LIVE_CHECKED_WRITES[options.platform];
+
+  /** Puts the set a change moved to, then the one it moved from, first in the player's history. */
+  const rememberWorn = async (
+    taikoNo: string,
+    { before, after }: { readonly before: CostumeSet; readonly after: CostumeSet },
+  ) => {
+    try {
+      const worn = [after, before].map((set) => ({ set, picture: options.recentPreview(set) }));
+      await historyStore.save(taikoNo, mergeCostumeHistory(await historyStore.load(taikoNo), worn));
+    } catch {
+      // The history is a convenience: it stays as it was, and the write's outcome with it.
+    }
+  };
 
   const costume: WriteKindDefinition<"costume", CostumeChange> = {
     kind: "costume",
     same: sameCostume,
     run: changeCostume,
     undoInput,
-    ended: (outcome) => {
-      if (changedTheCostume(outcome)) {
-        options.costumeChanged();
+    ended: async (outcome, { taikoNo, purpose }) => {
+      if (!changedTheCostume(outcome)) {
+        return;
+      }
+      options.costumeChanged();
+      if (purpose === "change" && taikoNo !== null) {
+        await rememberWorn(taikoNo, outcome);
       }
     },
   };
@@ -201,7 +228,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     if (outcome.kind === "sessionGone") {
       await options.endSession();
     }
-    definition.ended(outcome);
+    await definition.ended(outcome, { taikoNo, purpose });
     return outcome;
   }
 
@@ -315,6 +342,18 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
         record: UndoRecord<WriteSets[K]>,
       ) => Promise<WriteOutcomeView<WriteSets[K]>>;
       return undoer(record);
+    },
+
+    async costumeHistory() {
+      const taikoNo = options.owner();
+      if (!options.signedIn() || taikoNo === null) {
+        return [];
+      }
+      try {
+        return await historyStore.load(taikoNo);
+      } catch {
+        return [];
+      }
     },
 
     async profileRead({ taikoNo, title: shownTitle, nickname }) {

@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ok, type Transport } from "@abth/core";
 
+import { createCostumeHistoryStore } from "../electron/costume-history-store";
 import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import {
@@ -14,10 +15,18 @@ import {
   OWNED_TITLES,
   REFUSED_NAME,
 } from "../scripts/mock-profile";
-import { createSessionWrites, type UndoStore, type WritePlatform } from "../src/hiroba-session";
+import {
+  type CostumeHistoryStore,
+  createSessionWrites,
+  type UndoStore,
+  type WritePlatform,
+} from "../src/hiroba-session";
+import { MAX_COSTUME_HISTORY } from "../src/hiroba-session/costume-history";
+import { createIndexedDbHistoryStore } from "../src/platform/android-history-store";
 import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
-import type { WriteKind } from "../src/session-port";
+import type { CostumeSet, WriteKind } from "../src/session-port";
 import { costumeSetOf, START_SET } from "./hiroba-stand-in";
+import { pictureOfSet } from "./history-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const ORIGIN = "https://hiroba.test";
@@ -70,6 +79,19 @@ function failing(store: UndoStore, faults: StoreFaults): UndoStore {
   };
 }
 
+interface HistoryFaults {
+  load: boolean;
+  save: boolean;
+}
+
+function failingHistory(store: CostumeHistoryStore, faults: HistoryFaults): CostumeHistoryStore {
+  const refuse = (call: string) => Promise.reject(new Error(`The history refuses ${call}`));
+  return {
+    load: (taikoNo) => (faults.load ? refuse("load") : store.load(taikoNo)),
+    save: (taikoNo, entries) => (faults.save ? refuse("save") : store.save(taikoNo, entries)),
+  };
+}
+
 const folders: string[] = [];
 afterEach(() => {
   for (const folder of folders.splice(0)) {
@@ -79,6 +101,7 @@ afterEach(() => {
 
 interface KeptSlots {
   readonly store: UndoStore;
+  readonly history: CostumeHistoryStore;
   readonly text: () => string;
 }
 
@@ -87,12 +110,17 @@ const STORES = {
     const folder = mkdtempSync(join(tmpdir(), "abth-writes-"));
     folders.push(folder);
     const path = join(folder, "undo.json");
-    return { store: createUndoStore(path), text: () => readFileSync(path, "utf8") };
+    return {
+      store: createUndoStore(path),
+      history: createCostumeHistoryStore(join(folder, "costume-history.json")),
+      text: () => readFileSync(path, "utf8"),
+    };
   },
   database(): KeptSlots {
     const indexedDb = createFakeIndexedDb();
     return {
       store: createIndexedDbUndoStore(indexedDb.factory),
+      history: createIndexedDbHistoryStore(indexedDb.factory),
       text: () => JSON.stringify([...(indexedDb.tables.get("slots") ?? [])]),
     };
   },
@@ -107,6 +135,8 @@ interface SetUpOptions {
   signedIn?: boolean;
   owner?: string | null;
   whose?: () => string | null;
+  /** The picture this session fetched lately of a set; none by default. */
+  recentPreview?: (set: CostumeSet) => string | null;
 }
 
 function setUpOver(storeName: StoreName, options: SetUpOptions) {
@@ -181,6 +211,7 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
   };
   const kept = STORES[storeName]();
   const faults: StoreFaults = { load: false, savesAllowed: null };
+  const historyFaults: HistoryFaults = { load: false, save: false };
   let signedIn = options.signedIn ?? true;
   const writes = createSessionWrites({
     transport,
@@ -189,6 +220,8 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     ...(options.liveChecked && { liveChecked: options.liveChecked }),
     now: NOON_JST,
     undoStore: failing(kept.store, faults),
+    historyStore: failingHistory(kept.history, historyFaults),
+    recentPreview: options.recentPreview ?? (() => null),
     signedIn: () => signedIn,
     endSession: () => {
       signedIn = false;
@@ -218,6 +251,7 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     signInAgain,
     keptText: kept.text,
     faults,
+    historyFaults,
   };
 }
 
@@ -923,5 +957,238 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name
     });
     expect(hiroba.endedByApp).toBe(1);
     expect(await writes.pendingUndo()).toEqual([]);
+  });
+});
+
+describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (storeName) => {
+  const setUp = (options: SetUpOptions = {}) =>
+    setUpOver(storeName, { recentPreview: pictureOfSet, ...options });
+  type World = ReturnType<typeof setUp>;
+  const face = (id: number): CostumeSet => ({ ...START, colorFace: id });
+  const entry = (set: CostumeSet, picture: string | null = pictureOfSet(set)) => ({ set, picture });
+  const CHANGE = { expected: START, target: face(3) };
+
+  test("lists the set a change moved to first and the set it left second, each with its picture", async () => {
+    const { writes } = setUp();
+
+    expect((await writes.changeCostume(CHANGE)).kind).toBe("applied");
+
+    expect(await writes.costumeHistory()).toEqual([entry(face(3)), entry(START)]);
+  });
+
+  test("keeps no picture for a set this session fetched none of, and keeps one an entry had", async () => {
+    let known: Record<number, string> = { 3: pictureOfSet(face(3)) };
+    const { writes } = setUp({ recentPreview: ({ colorFace }) => known[colorFace] ?? null });
+
+    await writes.changeCostume({ expected: START, target: face(3) });
+    expect(await writes.costumeHistory()).toEqual([entry(face(3)), entry(START, null)]);
+
+    known = {};
+    await writes.changeCostume({ expected: face(3), target: face(4) });
+    expect(await writes.costumeHistory()).toEqual([
+      entry(face(4), null),
+      entry(face(3)),
+      entry(START, null),
+    ]);
+
+    known = { 5: pictureOfSet(START) };
+    await writes.changeCostume({ expected: face(4), target: START });
+    expect(await writes.costumeHistory()).toEqual([
+      entry(START),
+      entry(face(4), null),
+      entry(face(3)),
+    ]);
+  });
+
+  test("moves a set worn again to the top, and lists it once", async () => {
+    const { writes } = setUp();
+
+    await writes.changeCostume(CHANGE);
+    await writes.changeCostume({ expected: face(3), target: START });
+
+    expect(await writes.costumeHistory()).toEqual([entry(START), entry(face(3))]);
+  });
+
+  test("keeps at most thirty sets, and the oldest goes", async () => {
+    const { writes } = setUp();
+    const newest = 5 + MAX_COSTUME_HISTORY + 1;
+    let worn = START;
+
+    for (let id = 6; id <= newest; id++) {
+      const target = face(id);
+      expect((await writes.changeCostume({ expected: worn, target })).kind).toBe("applied");
+      worn = target;
+    }
+
+    const history = await writes.costumeHistory();
+    expect(history).toHaveLength(MAX_COSTUME_HISTORY);
+    expect(history[0]?.set).toEqual(face(newest));
+    expect(history.at(-1)?.set).toEqual(face(newest - MAX_COSTUME_HISTORY + 1));
+  });
+
+  type UnchangedCase = [
+    label: string,
+    kind: string,
+    run: (world: World) => Promise<{ kind: string }>,
+  ];
+  test.each<UnchangedCase>([
+    [
+      "a save that moved nothing",
+      "notApplied",
+      ({ editor, writes }) => {
+        editor.hook("/__noop-save", new URLSearchParams());
+        return writes.changeCostume(CHANGE);
+      },
+    ],
+    [
+      "a set that moved elsewhere",
+      "changedSincePreview",
+      ({ setElsewhere, writes }) => {
+        setElsewhere("color_body=40");
+        return writes.changeCostume(CHANGE);
+      },
+    ],
+    [
+      "the set worn already",
+      "nothingToChange",
+      ({ writes }) => writes.changeCostume({ expected: START, target: START }),
+    ],
+    [
+      "a Mascot with pieces beside it",
+      "invalidTarget",
+      ({ writes }) => writes.changeCostume({ expected: START, target: { ...START, costume1: 36 } }),
+    ],
+    [
+      "a pre-check that stops the write",
+      "stoppedBeforeWrite",
+      ({ editor, writes }) => {
+        editor.hook("/__precheck", new URLSearchParams("answer=0"));
+        return writes.changeCostume(CHANGE);
+      },
+    ],
+    [
+      "a pre-check that asks for a confirmation",
+      "needsConfirmation",
+      ({ editor, writes }) => {
+        editor.hook("/__precheck", new URLSearchParams("answer=true"));
+        return writes.changeCostume(CHANGE);
+      },
+    ],
+    [
+      "a session that ends after the save",
+      "sessionGone",
+      ({ editor, writes }) => {
+        editor.hook("/__expire-on-save", new URLSearchParams());
+        return writes.changeCostume(CHANGE);
+      },
+    ],
+    [
+      "a fault after the save",
+      "interrupted",
+      ({ hiroba, writes }) => {
+        hiroba.throwAfterSave = true;
+        return writes.changeCostume(CHANGE);
+      },
+    ],
+    [
+      "an undo that cannot be kept",
+      "undoNotSaved",
+      ({ faults, writes }) => {
+        faults.savesAllowed = 0;
+        return writes.changeCostume(CHANGE);
+      },
+    ],
+  ])("records nothing for %s", async (_label, kind, run) => {
+    const world = setUp();
+
+    expect((await run(world)).kind).toBe(kind);
+
+    world.signInAgain();
+    expect(await world.writes.costumeHistory()).toEqual([]);
+  });
+
+  test("records nothing for an undo, which puts the set back without moving the history", async () => {
+    const { writes } = setUp();
+    await writes.changeCostume(CHANGE);
+    const before = await writes.costumeHistory();
+
+    expect((await writes.undo("costume")).kind).toBe("applied");
+
+    expect(await writes.costumeHistory()).toEqual(before);
+  });
+
+  test("keeps each player's history apart, whatever another card writes in between", async () => {
+    let whose: string | null = OWNER;
+    const { writes, setElsewhere } = setUp({ whose: () => whose });
+    await writes.changeCostume(CHANGE);
+
+    whose = OTHER;
+    expect(await writes.costumeHistory()).toEqual([]);
+    setElsewhere("reset=1&color_body=40");
+    const theirs = { ...START, colorBody: 40 };
+    const changed = { ...theirs, colorLimb: 20 };
+    await writes.changeCostume({ expected: theirs, target: changed });
+    expect(await writes.costumeHistory()).toEqual([entry(changed), entry(theirs)]);
+
+    whose = OWNER;
+    expect(await writes.costumeHistory()).toEqual([entry(face(3)), entry(START)]);
+  });
+
+  test("gives nothing while signed out, before my page has said whose it is, or when it cannot be read", async () => {
+    let whose: string | null = OWNER;
+    const { hiroba, writes, historyFaults, signInAgain } = setUp({ whose: () => whose });
+    await writes.changeCostume(CHANGE);
+
+    hiroba.ended = true;
+    expect((await writes.changeCostume({ expected: face(3), target: START })).kind).toBe(
+      "sessionGone",
+    );
+    expect(await writes.costumeHistory()).toEqual([]);
+
+    signInAgain();
+    whose = null;
+    expect(await writes.costumeHistory()).toEqual([]);
+
+    whose = OWNER;
+    historyFaults.load = true;
+    expect(await writes.costumeHistory()).toEqual([]);
+
+    historyFaults.load = false;
+    expect(await writes.costumeHistory()).toHaveLength(2);
+  });
+
+  test("asks Hiroba nothing", async () => {
+    const { hiroba, writes } = setUp();
+    await writes.changeCostume(CHANGE);
+    hiroba.log.length = 0;
+
+    await writes.costumeHistory();
+
+    expect(hiroba.log).toEqual([]);
+  });
+
+  test("a history that cannot be read or saved changes nothing of the write, and stays as it was", async () => {
+    const { hiroba, writes, historyFaults, saved } = setUp();
+
+    historyFaults.load = true;
+    expect((await writes.changeCostume(CHANGE)).kind).toBe("applied");
+    expect(await saved()).toEqual(face(3));
+    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: face(3) }]);
+    historyFaults.load = false;
+    expect(await writes.costumeHistory()).toEqual([]);
+
+    historyFaults.save = true;
+    expect((await writes.changeCostume({ expected: face(3), target: face(4) })).kind).toBe(
+      "applied",
+    );
+    expect(await saved()).toEqual(face(4));
+    historyFaults.save = false;
+    expect(await writes.costumeHistory()).toEqual([]);
+
+    await writes.changeCostume({ expected: face(4), target: face(6) });
+    expect(await writes.costumeHistory()).toEqual([entry(face(6)), entry(face(4))]);
+    expect(hiroba.log.filter((request) => request === "POST /ajax/change_mydon.php")).toHaveLength(
+      3,
+    );
   });
 });

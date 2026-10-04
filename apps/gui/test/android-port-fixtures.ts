@@ -1,7 +1,8 @@
 import { expect } from "bun:test";
 
 import { escapeHtml, type ProfileEditor } from "../scripts/mock-profile";
-import { nativeBase64 } from "./capacitor-fakes";
+import type { HirobaSessionPort } from "../src/session-port";
+import { native, nativeBase64 } from "./capacitor-fakes";
 
 export const HIROBA = "https://donderhiroba.jp";
 export const CLOSE_LABEL = "Close sign-in";
@@ -74,4 +75,13 @@ export async function until(condition: () => boolean): Promise<void> {
     await Bun.sleep(1);
   }
   expect(condition()).toBe(true);
+}
+
+/** Signs out, then walks the sign-in through the fake browser to the page it lands on. */
+export async function signOutAndIn(port: HirobaSessionPort): Promise<void> {
+  await port.signOut();
+  const outcome = port.signIn();
+  await until(() => native.openedWith.length === 1);
+  native.emit("browserPageNavigationCompleted", { url: `${HIROBA}/index.php` });
+  expect(await outcome).toEqual({ kind: "signedIn" });
 }

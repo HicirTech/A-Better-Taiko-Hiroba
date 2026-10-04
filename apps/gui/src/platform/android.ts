@@ -8,9 +8,11 @@ import {
 
 import {
   ANDROID_PICTURE_LIMITS,
+  type CostumeHistoryStore,
   createHirobaQueue,
   createMemoryPictureStore,
   createPictureReader,
+  createRecentPreviews,
   createSessionWrites,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
@@ -32,6 +34,7 @@ import {
   type HirobaSessionPort,
   type SignInOutcome,
 } from "../session-port";
+import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
 import { createIndexedDbPictureStore } from "./android-picture-store";
 import { createAndroidTransport } from "./android-transport";
@@ -50,7 +53,8 @@ export interface AndroidPortOptions {
   readonly closeLabel: () => string;
   /** Remembers a finished sign-in: CapacitorCookies.getCookies cannot see the session cookie. */
   readonly signedInFlag?: SignedInFlag;
-  /** Keeps pictures and undo records across launches. Without it, no write is sent. */
+  /** Keeps pictures, undo records and costume histories across launches. Without it, no write is
+   * sent and the history is empty. */
   readonly indexedDb?: DatabaseFactory;
   /** The clock a write checks Hiroba's daily break against. */
   readonly now?: () => Date;
@@ -60,6 +64,12 @@ export interface AndroidPortOptions {
 const NO_UNDO_STORE: UndoStore = {
   load: () => Promise.reject(new Error("There is nowhere to keep an undo record")),
   save: () => Promise.reject(new Error("There is nowhere to keep an undo record")),
+};
+
+/** Refuses every call, so the history is simply empty. */
+const NO_HISTORY_STORE: CostumeHistoryStore = {
+  load: () => Promise.reject(new Error("There is nowhere to keep a costume history")),
+  save: () => Promise.reject(new Error("There is nowhere to keep a costume history")),
 };
 
 export interface SignedInFlag {
@@ -99,6 +109,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
   let sources: PictureSources | null = null;
+  const previews = createRecentPreviews();
   const pictures = createPictureReader({
     transport,
     endpoints,
@@ -118,6 +129,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     owner = null;
     sources = null;
     pictures.forget();
+    previews.clear();
     await CapacitorCookies.clearAllCookies();
   };
 
@@ -128,6 +140,9 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     platform: "android",
     now: options.now ?? (() => new Date()),
     undoStore: indexedDb === undefined ? NO_UNDO_STORE : createIndexedDbUndoStore(indexedDb),
+    historyStore:
+      indexedDb === undefined ? NO_HISTORY_STORE : createIndexedDbHistoryStore(indexedDb),
+    recentPreview: previews.pictureOf,
     signedIn: () => signedIn,
     endSession: forget,
     owner: () => owner,
@@ -239,12 +254,12 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     openTitleEditor: flushed(writes.openTitleEditor),
 
     // Its failure forgets nothing: the next page read says whether the session is over.
-    previewCostume: async (set: CostumeSet) => {
+    previewCostume: previews.keeping(async (set: CostumeSet) => {
       if (!signedIn) {
         return err({ code: "preview=notSignedIn" });
       }
       return previewCostume(transport, endpoints, set);
-    },
+    }),
 
     readPicture: (want) => pictures.read(want),
 
@@ -259,6 +274,9 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     // The port types the outcome by the kind asked; flushed passes on whatever it is given.
     undo: flushed(writes.undo) as HirobaSessionPort["undo"],
+
+    // Asks Hiroba nothing, so it skips the queue.
+    costumeHistory: writes.costumeHistory,
   });
 
   return checkedPort(port);

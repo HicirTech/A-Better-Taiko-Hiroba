@@ -3,18 +3,24 @@ import { expect, test } from "bun:test";
 import { type BackAction, backAction } from "../src/navigation/back-action";
 import type { Page } from "../src/navigation/pages";
 
-type BackCase = [menuOpen: boolean, page: Page, action: BackAction];
+type BackCase = [overlayOpen: boolean, menuOpen: boolean, page: Page, action: BackAction];
 
 test.each<BackCase>([
-  [true, "overview", "closeMenu"],
-  [true, "costume", "closeMenu"],
-  [true, "nameTitle", "closeMenu"],
-  [true, "settings", "closeMenu"],
-  [false, "costume", "overview"],
-  [false, "nameTitle", "overview"],
-  [false, "favorites", "overview"],
-  [false, "settings", "overview"],
-  [false, "overview", "leave"],
-])("Back with the menu open %p on %s does %s", (menuOpen, page, action) => {
-  expect(backAction(menuOpen, page)).toBe(action);
-});
+  [true, false, "overview", "closeOverlay"],
+  [true, false, "costume", "closeOverlay"],
+  [true, true, "costume", "closeOverlay"],
+  [false, true, "overview", "closeMenu"],
+  [false, true, "costume", "closeMenu"],
+  [false, true, "nameTitle", "closeMenu"],
+  [false, true, "settings", "closeMenu"],
+  [false, false, "costume", "overview"],
+  [false, false, "nameTitle", "overview"],
+  [false, false, "favorites", "overview"],
+  [false, false, "settings", "overview"],
+  [false, false, "overview", "leave"],
+])(
+  "Back with an overlay open %p and the menu open %p on %s does %s",
+  (overlayOpen, menuOpen, page, action) => {
+    expect(backAction({ overlayOpen, menuOpen, page })).toBe(action);
+  },
+);
