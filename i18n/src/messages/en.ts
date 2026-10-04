@@ -28,6 +28,8 @@ export const en: Messages = {
   "signOut.action": "Sign out",
   "signOut.note":
     "You stay signed in on this device until you sign out. Hiroba's pictures stay here after that too.",
+  "update.download": "Download",
+  "update.later": "Later",
   "profile.reading": "Reading your profile from Hiroba…",
   "profile.readAgain": "Read again",
   "profile.title": "Title: {title}",

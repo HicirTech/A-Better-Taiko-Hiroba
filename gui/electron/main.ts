@@ -1,6 +1,14 @@
 import { join } from "node:path";
 import { err, ok } from "@abth/core";
-import { app, BrowserWindow, type IpcMainInvokeEvent, ipcMain, Menu, session } from "electron";
+import {
+  app,
+  BrowserWindow,
+  type IpcMainInvokeEvent,
+  ipcMain,
+  Menu,
+  session,
+  shell,
+} from "electron";
 
 import {
   createHirobaQueue,
@@ -22,7 +30,7 @@ import {
   PORT_ARGUMENTS,
   type SignInOutcome,
 } from "../src/session-port";
-import { readUpdateFeed } from "../src/updates";
+import { readUpdateFeed, releasesUrlOf } from "../src/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
@@ -137,7 +145,15 @@ app.whenReady().then(async () => {
       nodeIntegration: false,
     },
   });
-  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  // No window opens; a link to the releases page opens in the system's browser, and no other does.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    const releases = releasesUrlOf(url);
+    if (releases !== null) {
+      // A browser that will not open must not become an unhandled rejection in this process.
+      shell.openExternal(releases).catch(() => undefined);
+    }
+    return { action: "deny" };
+  });
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
   const writes = createSessionWrites({

@@ -41,6 +41,8 @@ export interface Messages {
   "signIn.refused": string;
   "signOut.action": string;
   "signOut.note": string;
+  "update.download": string;
+  "update.later": string;
   "profile.reading": string;
   "profile.readAgain": string;
   /** Param: {title}. */

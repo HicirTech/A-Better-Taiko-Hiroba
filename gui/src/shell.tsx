@@ -52,6 +52,7 @@ export function Shell({
       {platform !== null ? (
         <App
           port={platform.port}
+          link={platform.link}
           i18n={i18n}
           page={page}
           onNavigate={navigate}

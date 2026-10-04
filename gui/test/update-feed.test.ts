@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { isVersion, MAX_FEED_LENGTH, parseUpdateFeed } from "../src/updates";
+import {
+  isNewer,
+  isVersion,
+  MAX_FEED_LENGTH,
+  notesFor,
+  parseUpdateFeed,
+  type UpdateNotes,
+} from "../src/updates";
 
 const feedWith = (fields: Record<string, unknown>) =>
   JSON.stringify({ version: "1.2.3", notes: { en: ["Fixed a thing"] }, ...fields });
@@ -85,5 +92,64 @@ describe("parseUpdateFeed", () => {
     };
     expect(parseUpdateFeed(padded(MAX_FEED_LENGTH)).ok).toBe(true);
     expect(parseUpdateFeed(padded(MAX_FEED_LENGTH + 1)).ok).toBe(false);
+  });
+});
+
+describe("isNewer", () => {
+  test.each([
+    ["1.0.1", "1.0.0"],
+    ["1.1.0", "1.0.9"],
+    ["2.0.0", "1.9.9"],
+    ["0.10.0", "0.9.0"],
+    ["1.0.10", "1.0.9"],
+  ])("%s is later than %s", (version, than) => {
+    expect(isNewer(version, than)).toBe(true);
+  });
+
+  test.each([
+    ["1.0.0", "1.0.0"],
+    ["1.0.0", "1.0.1"],
+    ["0.9.0", "0.10.0"],
+    ["1.9.9", "2.0.0"],
+  ])("%s is not later than %s", (version, than) => {
+    expect(isNewer(version, than)).toBe(false);
+  });
+
+  test("is false when either is not a version", () => {
+    expect(isNewer("2.0.0", "latest")).toBe(false);
+    expect(isNewer("v2.0.0", "1.0.0")).toBe(false);
+    expect(isNewer("2.0", "1.0.0")).toBe(false);
+  });
+});
+
+describe("notesFor", () => {
+  const feed = (notes: UpdateNotes) => ({ version: "1.0.0", notes });
+  const ALL = { en: ["en"], ja: ["ja"], "zh-Hans": ["hans"], "zh-Hant": ["hant"] };
+
+  test.each([
+    ["en", "en"],
+    ["ja", "ja"],
+    ["zh-Hans", "hans"],
+    ["zh-Hant", "hant"],
+  ] as const)("gives %s its own list", (locale, line) => {
+    expect(notesFor(feed(ALL), locale)).toEqual([line]);
+  });
+
+  test("gives a Chinese language the other Chinese's list before English's", () => {
+    const notes = { en: ["en"], "zh-Hant": ["hant"] };
+    expect(notesFor(feed(notes), "zh-Hans")).toEqual(["hant"]);
+    expect(notesFor(feed({ en: ["en"], "zh-Hans": ["hans"] }), "zh-Hant")).toEqual(["hans"]);
+  });
+
+  test("gives English's list to a language with none of its own, Chinese notes aside", () => {
+    expect(notesFor(feed({ en: ["en"], "zh-Hans": ["hans"] }), "ja")).toEqual(["en"]);
+  });
+
+  test("gives the first list there is when English has none", () => {
+    expect(notesFor(feed({ ja: ["ja"], "zh-Hant": ["hant"] }), "en")).toEqual(["ja"]);
+  });
+
+  test("gives nothing for a feed with no list", () => {
+    expect(notesFor(feed({}), "en")).toEqual([]);
   });
 });

@@ -27,6 +27,8 @@ export const zhHans: Messages = {
   "signOut.action": "退出登录",
   "signOut.note":
     "在你退出登录之前，本设备会一直保持登录。广场的图片在退出登录后仍会留在本设备上。",
+  "update.download": "下载",
+  "update.later": "稍后",
   "profile.reading": "正在从广场读取个人资料…",
   "profile.readAgain": "重新读取",
   "profile.title": "称号：{title}",

@@ -25,6 +25,39 @@ export function isVersion(value: unknown): value is string {
   return typeof value === "string" && VERSION.test(value);
 }
 
+/** Whether `version` comes after `than`; false when either is not a version. */
+export function isNewer(version: string, than: string): boolean {
+  const ours = VERSION.exec(version);
+  const theirs = VERSION.exec(than);
+  if (ours === null || theirs === null) {
+    return false;
+  }
+  for (const place of [1, 2, 3]) {
+    const difference = Number(ours[place]) - Number(theirs[place]);
+    if (difference !== 0) {
+      return difference > 0;
+    }
+  }
+  return false;
+}
+
+const OTHER_CHINESE: Readonly<Partial<Record<Locale, Locale>>> = {
+  "zh-Hans": "zh-Hant",
+  "zh-Hant": "zh-Hans",
+};
+
+/** The notes in `locale`'s words; else the other Chinese's, English's, or the first list there is. */
+export function notesFor(feed: UpdateFeed, locale: Locale): readonly string[] {
+  const other = OTHER_CHINESE[locale];
+  return (
+    feed.notes[locale] ??
+    (other === undefined ? undefined : feed.notes[other]) ??
+    feed.notes.en ??
+    Object.values(feed.notes)[0] ??
+    []
+  );
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
