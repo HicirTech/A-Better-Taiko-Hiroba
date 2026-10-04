@@ -18,6 +18,7 @@ type VerbCase = [verb: Verb, taken: unknown[], refused: unknown[]];
 const TITLE = { title: "サンプルの称号" };
 const TARGET = { id: 106, title: "サンプルの称号" };
 const NAME = { nickname: "サンプルどん" };
+const FOLDER = { slots: ["1178", "365", ...Array<null>(28).fill(null)] };
 const CASES: VerbCase[] = [
   ["isSignedIn", [], [undefined]],
   ["signIn", [], ["https://example.test/"]],
@@ -45,6 +46,19 @@ const CASES: VerbCase[] = [
   ],
   ["costumeHistory", [], [{}]],
   ["readUpdateFeed", [], [{ url: "https://example.test/update.json" }]],
+  ["openFavorites", [], [{ init: 1 }]],
+  [
+    "changeFolder",
+    [{ expected: FOLDER, target: ["365", "1178"] }],
+    [{ expected: FOLDER, target: ["365", "365"] }],
+  ],
+  [
+    "changeFavoriteSong",
+    [{ expected: { songNo: "1178" }, target: { songNo: null } }],
+    [{ expected: { songNo: "1178" }, target: { songNo: "1178&bsf=1" } }],
+  ],
+  ["readSongCatalogue", [null], ["0&genre=1"]],
+  ["readChineseNames", [], [{ gcmlimit: "max" }]],
 ];
 
 function recordingPort() {

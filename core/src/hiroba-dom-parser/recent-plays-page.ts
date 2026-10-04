@@ -2,7 +2,6 @@ import type { HTMLElement } from "node-html-parser";
 
 import {
   type CrownState,
-  type Genre,
   type Level,
   type PlayOptions,
   playedOrNone,
@@ -11,7 +10,7 @@ import {
   type ScoreRecord,
 } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
-import { findImageBySrc, readCountText } from "./element-readers";
+import { findImageBySrc, readCountText, readSongNameGenre } from "./element-readers";
 import { parsePage, requireMarker } from "./parser";
 import { decodePlayOptions } from "./play-options";
 import type { ParseFailure, RecentPlay } from "./types";
@@ -28,18 +27,6 @@ const ROW_CROWNS: Readonly<Record<string, CrownState>> = {
   "2": "gold",
   "3": "silver",
   "4": "donderful",
-};
-
-/** Genre by the `songNameFont<name>` suffix; an unknown name is no genre, not a failure. */
-const ROW_GENRES: Readonly<Record<string, Genre>> = {
-  jpop: 1,
-  anime: 2,
-  kids: 3,
-  vocaloid: 4,
-  game: 5,
-  namco: 6,
-  variety: 7,
-  classic: 8,
 };
 
 /** Each count cell is named by its label image, `score_name_<key>_640.png`. */
@@ -105,8 +92,7 @@ function readRow(row: HTMLElement): Result<RecentPlay, ParseFailure> {
   if (songTitle === "") {
     return err({ kind: "missingMarker", page: PAGE, marker: "li.songNameTitleScore h2" });
   }
-  const genreName = titleNode?.getAttribute("class")?.match(/songNameFont(\w+)/)?.[1] ?? "";
-  const genre = ROW_GENRES[genreName] ?? null;
+  const genre = readSongNameGenre(titleNode);
 
   // The level icon already says 5 for an ura chart; the ura badge beside the title is decoration.
   const levelSrc = row.querySelector("img.levelIcon")?.getAttribute("src") ?? "";

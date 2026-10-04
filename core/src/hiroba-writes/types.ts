@@ -118,6 +118,9 @@ export interface WriteSpec<S, T, B, E extends EditorReading<S>, C> {
   /** The set the server leaves after storing `body`: its own rules, not the body's word. */
   readonly expectedAfter: (before: S, body: B) => S;
   readonly precheck?: (editor: E, body: B) => AjaxPost;
+  /** GETs that put the body in Hiroba's session before the save, where the save posts only what
+   * is held there; the editor they end on is the one the save is made from. */
+  readonly stage?: (deps: ReadDeps, editor: E, body: B) => Promise<Result<E, HirobaReadFailure>>;
   readonly save: (editor: E, body: B) => AjaxPost;
   readonly codes: SaveCodes;
   /** The whole set, read fresh from the page that shows what is saved. */
@@ -159,6 +162,13 @@ export type WriteOutcome<S> =
   | { readonly kind: "needsConfirmation" }
   /** The pre-check did not clear the write; nothing was saved. `code` is for a report. */
   | { readonly kind: "stoppedBeforeWrite"; readonly reason: StopReason; readonly code: string }
+  /** Staging left Hiroba holding another set than the one wanted, so no save was sent. */
+  | {
+      readonly kind: "notStaged";
+      readonly before: S;
+      readonly staged: S;
+      readonly expectedAfter: S;
+    }
   | {
       readonly kind: "applied";
       readonly before: S;

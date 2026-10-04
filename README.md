@@ -2,7 +2,7 @@
 
 [中文](README.zh-CN.md)
 
-A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses and changes your own play data — scores, profile, My Don, settings — from a desktop app, an Android app and, later, the command line, with an interface that stays out of your way. It runs on your own device and talks to Hiroba directly; none of your data passes through a server of ours.
+A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses and changes your own play data — scores, profile, My Don, favourite songs, settings — from a desktop app, an Android app and, later, the command line, with an interface that stays out of your way. It runs on your own device and talks to Hiroba directly; none of your data passes through a server of ours.
 
 ## Download
 
@@ -20,7 +20,9 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [x] Change My Don's costumes and colours
 - [x] Preview a costume before saving it, and go back to one you wore before
 - [ ] Change your game settings
-- [ ] Change your favourite songs
+- [x] Change your favourite song and your favourites folder
+- [x] Keep sets of favourite songs on your device, and swap the whole folder for one in a single save
+- [x] Find songs by genre, or by part of a name in Japanese, English or Chinese, with the artists and each chart's star level
 - [ ] Browse offline, from a local database
 - [ ] Hold several accounts at once
 - [ ] Sync incrementally, and resume where it stopped
@@ -39,6 +41,8 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 **Unofficial.** This project is not affiliated with, endorsed by, or connected to Bandai Namco Entertainment. Taiko no Tatsujin and Donder Hiroba are theirs.
 
 **Polite by default.** Hiroba is someone else's service. Fetching is deliberately slow and incremental, and it backs off when the site pushes back. Fetching more is always something you ask for, never something that happens on its own.
+
+**Song data from the community.** Artists, star levels and the songs' names in other languages come from [taiko.wiki](https://taiko.wiki/) and the Chinese [太鼓之達人維基](https://taiko.fandom.com/zh/) (its names are used under CC BY-SA). The app reads their public lists and sends them nothing of yours.
 
 **Your account, your call.** The toolkit signs in as you and can change your real Taiko profile. The account it touches is yours, and so is the responsibility.
 

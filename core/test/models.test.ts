@@ -4,6 +4,7 @@ import { describe, expect, test } from "bun:test";
 import {
   type DanRecord,
   isBetterDanClearState,
+  isSongNo,
   type Profile,
   SCORE_RANK_NAMES,
   SCORE_RANK_TIERS,
@@ -222,5 +223,21 @@ describe("the shaping decisions hold", () => {
     // The genre list names crown and rank in one image, and its Score has no record at all.
     expect(listOnlyScore.record).toBeNull();
     expect(listOnlyScore.scoreRank).toBe(3);
+  });
+});
+
+describe("isSongNo", () => {
+  type SongNoCase = [value: string, isSong: boolean];
+  test.each<SongNoCase>([
+    ["1001", true],
+    ["99999", true],
+    ["100000", false],
+    ["", false],
+    ["12a", false],
+    [" 1001", false],
+    ["-5", false],
+    ["1.5", false],
+  ])("takes %p as a song number: %p", (value, isSong) => {
+    expect(isSongNo(value)).toBe(isSong);
   });
 });

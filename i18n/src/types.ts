@@ -31,6 +31,8 @@ export interface Messages {
   "settings.updates": string;
   /** Param: {version}, this build's version, such as 0.1.0. */
   "settings.version": string;
+  "settings.songData": string;
+  "settings.songDataSources": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;
@@ -85,13 +87,6 @@ export interface Messages {
   "dan.18": string;
   "dan.19": string;
   "profile.myDonAlt": string;
-  "profile.favorites": string;
-  /** Param: {title}, the 大好きな曲 as the page writes it. */
-  "profile.favoriteSong": string;
-  "profile.favoriteSongNone": string;
-  /** Param: {count}, how many songs the お気に入り folder holds. */
-  "profile.favoriteFolder": string;
-  "profile.favoriteFolderEmpty": string;
   "pictures.loading": string;
   "pictures.unavailable": string;
   /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
@@ -229,6 +224,7 @@ export interface Messages {
   /** Carries the site's own confirmation text (mydon.js); this version does not answer it. */
   "write.needsConfirmation": string;
   "write.stoppedBeforeWrite": string;
+  "write.notStaged": string;
   "write.interrupted": string;
   "write.busy": string;
   /** Param: {code}, report codes: where an answer ended, status, type and size; never page text. */
@@ -262,6 +258,97 @@ export interface Messages {
   "write.invalid.nameTooLong": string;
   "write.invalid.nameControl": string;
   "write.invalid.nameClosed": string;
+  /** The genres as taiko.wiki's own locale files name them. */
+  "genre.pops": string;
+  "genre.anime": string;
+  "genre.kids": string;
+  "genre.vocaloid": string;
+  "genre.game": string;
+  "genre.namco": string;
+  "genre.variety": string;
+  "genre.classic": string;
+  /** The charts as the game's terms name them. */
+  "difficulty.easy": string;
+  "difficulty.normal": string;
+  "difficulty.hard": string;
+  "difficulty.oni": string;
+  "difficulty.ura": string;
+  /** Params: {difficulty} (a difficulty.* text) and {level}, its stars. A level badge's name. */
+  "song.level": string;
+  /** A folder write: each key has the costume's key, without "folder.", as its base. */
+  "write.folder.unchanged": string;
+  "write.folder.diverged": string;
+  "write.folder.changedSincePreview": string;
+  "write.folder.nothingToChange": string;
+  /** A 大好きな曲 write, worded like the folder's. */
+  "write.favoriteSong.unchanged": string;
+  "write.favoriteSong.diverged": string;
+  "write.favoriteSong.changedSincePreview": string;
+  "write.favoriteSong.nothingToChange": string;
+  /** Hiroba's codes for a refused 大好きな曲, which come with no message of their own. */
+  "write.favoriteSong.refused1": string;
+  "write.favoriteSong.refused2": string;
+  /** Param: {number}, a slot's place in the folder, from 1. */
+  "favorites.slot": string;
+  "favorites.slot.empty": string;
+  "favorites.reading": string;
+  /** The お気に入り folder on Hiroba, as the Favourites page names it. */
+  "favorites.folder.heading": string;
+  /** The same folder in the sets drawer, among the sets kept on the device. */
+  "favorites.folderEmpty": string;
+  "favorites.sets": string;
+  "favorites.newSet": string;
+  /** Param: {number}, from 1. A new set's name until the player renames it. */
+  "favorites.setName": string;
+  "favorites.set.nameLabel": string;
+  /** Marks a set whose songs are the folder's, in the order of its slots. */
+  "favorites.set.sameAsFolder": string;
+  "favorites.setEmpty": string;
+  "favorites.saveAsSet": string;
+  "favorites.saveToSet": string;
+  "favorites.saveSet": string;
+  "favorites.current": string;
+  "favorites.edit": string;
+  "favorites.rename": string;
+  "favorites.rename.title": string;
+  "favorites.inUse": string;
+  "favorites.replace.title": string;
+  "favorites.replace.body": string;
+  "favorites.replace.confirm": string;
+  "sort.handle": string;
+  "sort.instructions": string;
+  "sort.picked": string;
+  "sort.over": string;
+  "sort.dropped": string;
+  "sort.cancelled": string;
+  "favorites.addSongs": string;
+  /** Param: {name}, the song as the page shows it. */
+  "favorites.removeSong": string;
+  "favorites.apply": string;
+  "favorites.delete": string;
+  "favorites.delete.title": string;
+  /** Param: {name}, the set's name. */
+  "favorites.delete.body": string;
+  "favorites.delete.cancel": string;
+  "favorites.song.heading": string;
+  "favorites.song.none": string;
+  "favorites.song.change": string;
+  "picker.title.single": string;
+  "picker.title.multi": string;
+  "picker.search": string;
+  /** The search field's helper: what it looks in. */
+  "picker.searchHint": string;
+  "picker.genres": string;
+  "picker.none": string;
+  "picker.loading": string;
+  "picker.failed": string;
+  /** Param: {code}, why the song list did not come, such as unreachable; never a URL. */
+  "picker.code": string;
+  "picker.retry": string;
+  /** Param: {max}, how many songs a set holds. */
+  "picker.limit": string;
+  "picker.done": string;
+  "picker.close": string;
 }
 
 export type MessageKey = keyof Messages;

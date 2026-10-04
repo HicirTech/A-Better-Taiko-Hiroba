@@ -9,7 +9,7 @@ import {
   waitFor,
   withoutPictureBytes,
 } from "./harness";
-import { barOf, CROWN_SHARES, legendOf, overviewHelpers, type Share } from "./overview";
+import { barOf, CROWN_SHARES, legendOf, type Share } from "./overview";
 import { myPageHits, platesSettled, readHits } from "./stand-in";
 
 export const readAgainKeys = [
@@ -153,6 +153,9 @@ export async function readAgain(ctx: Ctx) {
     (await myPageHits()) === readsBeforeSlowPull &&
     (await currentPage()) === "overview";
   await touchEmulated(false);
+  // The pull began on the portrait, whose tooltip now ignores the mouse: a new page has a new one.
+  await goTo("settings");
+  await goTo("overview");
 }
 
 export const profileVariantsKeys = [
@@ -162,8 +165,6 @@ export const profileVariantsKeys = [
   "medalCountShown",
   "danLessRowRead",
   "lastUpdatedLineShown",
-  "favoritesUnsetShown",
-  "favoritesSetShown",
   "unreadableDanShownWithTheRest",
   "twoRequestsWithDanOneWithout",
   "danLabelPictureCostsNothing",
@@ -172,9 +173,8 @@ export const profileVariantsKeys = [
 
 export async function profileVariants(ctx: Ctx) {
   const { results, state } = ctx;
-  const { click, goTo, page, text, textOf } = ctx.app;
-  const { allOf, exists } = pageHelpers(page);
-  const { lastUpdated } = overviewHelpers(ctx.app);
+  const { click, page, text, textOf } = ctx.app;
+  const { allOf } = pageHelpers(page);
   const { updatedOnOverview } = state;
 
   const readShowing = async (selector: string) => {
@@ -209,43 +209,9 @@ export async function profileVariants(ctx: Ctx) {
     (await text()).includes("サンプルどん") &&
     (await textOf("#dan")) === null &&
     (await textOf("#dan-unreadable")) === null;
-  const favoritesOffOverview = !(await exists("#favorites"));
-  const readsBeforeFavorites = await readHits();
-  await goTo("favorites");
-  const updatedOnFavourites = await lastUpdated();
   const LAST_UPDATED = /^Last updated [A-Z][a-z]{2} \d{1,2}, \d{4}, \d{1,2}:\d{2}:\d{2} [AP]M$/;
-  results.lastUpdatedLineShown = [updatedOnOverview, updatedOnFavourites].every(
-    ({ text, fontSize }) => LAST_UPDATED.test(text) && fontSize === "12px",
-  );
-  results.favoritesUnsetShown =
-    favoritesOffOverview &&
-    !(await exists("#profile")) &&
-    (await readHits()) === readsBeforeFavorites &&
-    (await textOf("#favorite-song")) === "Favourite song: none" &&
-    (await textOf("#favorite-folder-empty")) !== null;
-  await fetch(`${HIROBA}/__variant?favorites=set`);
-  requestsPerRead.push(await readShowing("#favorite-folder"));
-  const folderSummary = "#favorite-folder .MuiAccordionSummary-root";
-  const folderOpen = () =>
-    page.evaluate<string | null>(
-      `document.querySelector(${JSON.stringify(folderSummary)})?.getAttribute("aria-expanded") ?? null`,
-    );
-  const closedAtFirst = (await folderOpen()) === "false";
-  await click(folderSummary);
-  await waitFor("favourites folder open", async () =>
-    (await folderOpen()) === "true" ? true : undefined,
-  );
-  const folderRows = await page.evaluate<string[]>(
-    `[...document.querySelectorAll("#favorite-folder li")].map((row) => row.textContent)`,
-  );
-  results.favoritesSetShown =
-    (await textOf("#favorite-song")) === "Favourite song: サンプル曲アルファ" &&
-    (await textOf(folderSummary)) === "Favourites folder (3)" &&
-    (await textOf("#favorite-folder-empty")) === null &&
-    closedAtFirst &&
-    JSON.stringify(folderRows) ===
-      JSON.stringify(["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]);
-  await goTo("overview");
+  results.lastUpdatedLineShown =
+    LAST_UPDATED.test(updatedOnOverview.text) && updatedOnOverview.fontSize === "12px";
   await fetch(`${HIROBA}/__variant?dan=14&label=gif`);
   requestsPerRead.push(await readShowing("#dan-unreadable"));
   const afterGif = withoutPictureBytes(
@@ -261,10 +227,10 @@ export async function profileVariants(ctx: Ctx) {
     !afterGif.includes("imgsrc");
   // A read is two requests while my page shows a dan (the page and its label), one without.
   results.twoRequestsWithDanOneWithout =
-    JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 1, 2]);
+    JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 2]);
   results.danLabelPictureCostsNothing =
     results.twoRequestsWithDanOneWithout === true && results.danLabelShownAsPicture === true;
-  await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set&favorites=unset`);
+  await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set`);
 
   await fetch(`${HIROBA}/__variant?panel=zeros`);
   await click("#read-again");

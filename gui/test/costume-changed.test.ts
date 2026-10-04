@@ -55,6 +55,7 @@ describe("changedTheCostume", () => {
     nothingToChange: { kind: "nothingToChange" },
     needsConfirmation: { kind: "needsConfirmation" },
     stoppedBeforeWrite: { kind: "stoppedBeforeWrite", reason: "precheckRejected", code: "code" },
+    notStaged: { kind: "notStaged", before: SET, staged: SET, expectedAfter: SET },
     notSignedIn: { kind: "notSignedIn" },
     interrupted: { kind: "interrupted" },
     busy: { kind: "busy" },

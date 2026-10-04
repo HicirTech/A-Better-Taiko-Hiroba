@@ -1,7 +1,8 @@
-import { NAME_FIELDS, TITLE_FIELDS } from "@abth/core";
+import { FOLDER_SLOT_COUNT, NAME_FIELDS, TITLE_FIELDS } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import type { AlertColor } from "@mui/material";
 
+import { numberedSong } from "../favorites/song-names";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { WriteKind, WriteOutcomeView, WriteSets } from "../session-port";
 import { changedParts, isCostumePart, PART_LABEL, partValue } from "./costume-parts";
@@ -27,7 +28,7 @@ const BASE_WORDING = {
   needsConfirmation: "write.needsConfirmation",
 } as const satisfies Record<Base, MessageKey>;
 
-// Costume is the base, so its entry is empty; a rename has no pre-check, so nothing to confirm.
+// Costume is the base, so its entry is empty; a rename and the favourites have no pre-check.
 const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, MessageKey>>>>> = {
   costume: {},
   title: {
@@ -43,6 +44,18 @@ const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, Mes
     diverged: "write.name.diverged",
     changedSincePreview: "write.name.changedSincePreview",
     nothingToChange: "write.name.nothingToChange",
+  },
+  folder: {
+    unchanged: "write.folder.unchanged",
+    diverged: "write.folder.diverged",
+    changedSincePreview: "write.folder.changedSincePreview",
+    nothingToChange: "write.folder.nothingToChange",
+  },
+  favoriteSong: {
+    unchanged: "write.favoriteSong.unchanged",
+    diverged: "write.favoriteSong.diverged",
+    changedSincePreview: "write.favoriteSong.changedSincePreview",
+    nothingToChange: "write.favoriteSong.nothingToChange",
   },
 };
 
@@ -68,6 +81,7 @@ const OUTCOME_MESSAGE = {
   sessionGone: "write.sessionGone",
   invalidTarget: "write.invalidTarget",
   stoppedBeforeWrite: "write.stoppedBeforeWrite",
+  notStaged: "write.notStaged",
   appliedNotSynced: "write.appliedNotSynced",
   outcomeUnknown: "write.outcomeUnknown",
   notSignedIn: "failure.notSignedIn",
@@ -92,6 +106,8 @@ const REFUSED_GLOSS: Readonly<Record<WriteKind, Readonly<Partial<Record<number, 
   costume: {},
   title: { 1: "write.title.refused1", 5: "write.title.refused5", 6: "write.title.refused6" },
   name: { 2: "write.name.refused2" },
+  folder: {},
+  favoriteSong: { 1: "write.favoriteSong.refused1", 2: "write.favoriteSong.refused2" },
 };
 
 type InvalidField =
@@ -129,7 +145,15 @@ export interface ComparisonRow {
   readonly now: Cell | null;
 }
 
-type Rows<S> = (before: S, planned: S, now: S | null, i18n: Translator) => readonly ComparisonRow[];
+type SongNamer = (songNo: string) => string;
+
+type Rows<S> = (
+  before: S,
+  planned: S,
+  now: S | null,
+  i18n: Translator,
+  songName: SongNamer,
+) => readonly ComparisonRow[];
 
 // Each part the plan changed, and each the write changed that the plan did not mean to.
 const costumeRows: Rows<WriteSets["costume"]> = (before, planned, now, i18n) => {
@@ -149,15 +173,40 @@ const costumeRows: Rows<WriteSets["costume"]> = (before, planned, now, i18n) => 
 };
 
 const singleRow =
-  <S>(label: MessageKey, textOf: (set: S, i18n: Translator) => Cell): Rows<S> =>
-  (before, planned, now, i18n) => [
+  <S>(
+    label: MessageKey,
+    textOf: (set: S, i18n: Translator, songName: SongNamer) => Cell,
+  ): Rows<S> =>
+  (before, planned, now, i18n, songName) => [
     {
       label: { text: i18n.t(label) },
-      before: textOf(before, i18n),
-      planned: textOf(planned, i18n),
-      now: now === null ? null : textOf(now, i18n),
+      before: textOf(before, i18n, songName),
+      planned: textOf(planned, i18n, songName),
+      now: now === null ? null : textOf(now, i18n, songName),
     },
   ];
+
+const songCell = (songNo: string | null, { t }: Translator, songName: SongNamer): Cell => ({
+  text: songNo === null ? t("favorites.slot.empty") : songName(songNo),
+});
+
+// Each slot the plan changed, and each the write changed that the plan did not mean to.
+const folderRows: Rows<WriteSets["folder"]> = (before, planned, now, i18n, songName) => {
+  const songAt = (state: WriteSets["folder"], slot: number) => state.slots[slot] ?? null;
+  const slots = Array.from({ length: FOLDER_SLOT_COUNT }, (_, slot) => slot).filter(
+    (slot) =>
+      songAt(before, slot) !== songAt(planned, slot) ||
+      (now !== null && songAt(now, slot) !== songAt(planned, slot)),
+  );
+  const cell = (state: WriteSets["folder"], slot: number) =>
+    songCell(songAt(state, slot), i18n, songName);
+  return slots.map((slot) => ({
+    label: { text: i18n.t("favorites.slot", { number: slot + 1 }) },
+    before: cell(before, slot),
+    planned: cell(planned, slot),
+    now: now === null ? null : cell(now, slot),
+  }));
+};
 
 const ROWS: { readonly [K in WriteKind]: Rows<WriteSets[K]> } = {
   costume: costumeRows,
@@ -165,6 +214,10 @@ const ROWS: { readonly [K in WriteKind]: Rows<WriteSets[K]> } = {
     title === "" ? { text: t("profile.noTitle") } : { text: title, hirobas: true },
   ),
   name: singleRow("name.heading", ({ nickname }) => ({ text: nickname, hirobas: true })),
+  folder: folderRows,
+  favoriteSong: singleRow("favorites.song.heading", ({ songNo }, i18n, songName) =>
+    songCell(songNo, i18n, songName),
+  ),
 };
 
 export interface Comparison {
@@ -183,12 +236,14 @@ export interface Described {
 
 export interface DescribeOptions<K extends WriteKind> {
   readonly kind: K;
+  /** How a comparison names a song; its number alone where the page knows no title. */
+  readonly songName?: SongNamer | undefined;
 }
 
 export function describeOutcome<K extends WriteKind>(
   outcome: Noticed<WriteSets[K]>,
   i18n: Translator,
-  { kind }: DescribeOptions<K>,
+  { kind, songName = numberedSong }: DescribeOptions<K>,
 ): Described {
   const { t } = i18n;
   const plain = (
@@ -204,7 +259,7 @@ export function describeOutcome<K extends WriteKind>(
     comparison: null,
   });
   const compared = (before: WriteSets[K], planned: WriteSets[K], now: WriteSets[K] | null) => ({
-    rows: ROWS[kind](before, planned, now, i18n),
+    rows: ROWS[kind](before, planned, now, i18n, songName),
     withNow: now !== null,
   });
   switch (outcome.kind) {
@@ -264,6 +319,11 @@ export function describeOutcome<K extends WriteKind>(
       };
     case "stoppedBeforeWrite":
       return { ...plain("warning"), codes: [`${outcome.reason} ${outcome.code}`] };
+    case "notStaged":
+      return {
+        ...plain("warning"),
+        comparison: compared(outcome.before, outcome.expectedAfter, outcome.staged),
+      };
     case "changedSincePreview":
       return plain("warning", wording(kind, "changedSincePreview"));
     case "needsConfirmation":

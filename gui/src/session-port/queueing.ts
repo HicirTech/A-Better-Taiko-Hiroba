@@ -19,6 +19,11 @@ export const PORT_QUEUEING = {
   changeName: "write",
   costumeHistory: "unqueued",
   readUpdateFeed: "unqueued",
+  openFavorites: "read",
+  changeFolder: "write",
+  changeFavoriteSong: "write",
+  readSongCatalogue: "unqueued",
+  readChineseNames: "unqueued",
 } as const satisfies Record<keyof HirobaSessionPort, VerbQueueing>;
 
 /** The verbs the table puts in the way `How` says: what a test of that way must cover. */

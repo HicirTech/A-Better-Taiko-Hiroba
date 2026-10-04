@@ -18,6 +18,7 @@ import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { SystemBack } from "../platform";
 import { backAction } from "./back-action";
 import { BackClosersContext, createBackClosers } from "./back-closers";
+import { MenuOpenContext } from "./menu-open";
 import {
   CostumeIcon,
   FavoritesIcon,
@@ -85,30 +86,32 @@ export function AppFrame({
   useEffect(() => back?.listen(() => pressedBack(back)), [back]);
   return (
     <BackClosersContext value={closers}>
-      <Box sx={{ display: "flex", minHeight: "100vh" }}>
-        {wide ? (
-          <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
-        ) : (
-          <MenuDrawer
-            page={page}
-            onNavigate={onNavigate}
-            i18n={i18n}
-            open={menuOpen}
-            onOpenChange={setMenuOpen}
-          />
-        )}
-        <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Container
-            maxWidth={wider ? "lg" : "md"}
-            sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
-          >
-            <Typography component="h1" sx={VISUALLY_HIDDEN}>
-              {i18n.t(PAGE_ENTRY[page].label)}
-            </Typography>
-            <WiderFrameContext value={setWider}>{children}</WiderFrameContext>
-          </Container>
+      <MenuOpenContext value={menuOpen}>
+        <Box sx={{ display: "flex", minHeight: "100vh" }}>
+          {wide ? (
+            <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
+          ) : (
+            <MenuDrawer
+              page={page}
+              onNavigate={onNavigate}
+              i18n={i18n}
+              open={menuOpen}
+              onOpenChange={setMenuOpen}
+            />
+          )}
+          <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Container
+              maxWidth={wider ? "lg" : "md"}
+              sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
+            >
+              <Typography component="h1" sx={VISUALLY_HIDDEN}>
+                {i18n.t(PAGE_ENTRY[page].label)}
+              </Typography>
+              <WiderFrameContext value={setWider}>{children}</WiderFrameContext>
+            </Container>
+          </Box>
         </Box>
-      </Box>
+      </MenuOpenContext>
     </BackClosersContext>
   );
 }

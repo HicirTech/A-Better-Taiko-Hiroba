@@ -252,6 +252,10 @@ export async function heldWrites(ctx: Ctx) {
       call: `window.abth.previewCostume({ ...${JSON.stringify(START)}, colorBody: (window.unseenBody = (window.unseenBody ?? 40) + 1) }).then((result) => result.ok)`,
       requests: [PREVIEW],
     },
+    openFavorites: {
+      call: "window.abth.openFavorites().then((result) => result.ok)",
+      requests: ["GET /favorite_song_select.php", "GET /portal_favorite_song_select.php"],
+    },
   };
   const readsAsked = Object.values(READS_ASKED);
   const HELD_WRITES = [

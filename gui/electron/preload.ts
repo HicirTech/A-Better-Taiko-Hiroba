@@ -22,6 +22,11 @@ const port: HirobaSessionPort = {
   changeName: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeName, change),
   costumeHistory: () => ipcRenderer.invoke(BRIDGE_CHANNELS.costumeHistory),
   readUpdateFeed: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readUpdateFeed),
+  openFavorites: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openFavorites),
+  changeFolder: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFolder, change),
+  changeFavoriteSong: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFavoriteSong, change),
+  readSongCatalogue: (since) => ipcRenderer.invoke(BRIDGE_CHANNELS.readSongCatalogue, since),
+  readChineseNames: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readChineseNames),
 };
 
 contextBridge.exposeInMainWorld("abth", port);

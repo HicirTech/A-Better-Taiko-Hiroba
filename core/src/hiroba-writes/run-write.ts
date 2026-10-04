@@ -83,12 +83,28 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
     }
   }
 
-  // A pre-check changes nothing, so a break that began after it still leaves nothing saved.
+  let saveFrom = editor.value;
+  if (spec.stage !== undefined) {
+    if (inMaintenance(deps.now())) {
+      return { kind: "maintenance" };
+    }
+    const staged = await spec.stage(deps, editor.value, body.value);
+    if (isErr(staged)) {
+      return beforeAnyPost(staged.error);
+    }
+    if (!spec.same(staged.value.state, expectedAfter)) {
+      return { kind: "notStaged", before, staged: staged.value.state, expectedAfter };
+    }
+    // The save carries the token of the page staging ended on, the last one issued.
+    saveFrom = staged.value;
+  }
+
+  // The pre-check and staging save nothing, so a break that began after them stops the write.
   if (inMaintenance(deps.now())) {
     return { kind: "maintenance" };
   }
   const save = readSave(
-    await postAjax(deps.transport, deps.hirobaOrigin, spec.save(editor.value, body.value)),
+    await postAjax(deps.transport, deps.hirobaOrigin, spec.save(saveFrom, body.value)),
   );
   // Sent once, never retried. Always read back: even a timed-out save may have been saved.
   const after = await spec.readBack(deps);

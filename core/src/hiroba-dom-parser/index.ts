@@ -1,6 +1,8 @@
 export { parseCostumeEditorPage } from "./costume-editor-page";
 export { parseCostumePage } from "./costume-page";
 export { parseDanBoardPage, parseDanDetailPage } from "./dan-pages";
+export { parseFolderEditorPage } from "./favorite-folder-page";
+export { parseFavoriteSongEditorPage } from "./favorite-song-page";
 export { type ParseOptions, parsePage, requireMarker } from "./parser";
 export { parsePlayerRowsPage } from "./player-rows";
 export { parseProfilePage } from "./profile-page";
@@ -16,6 +18,8 @@ export type {
   CostumeSwatch,
   DanBoardPanel,
   DanBoardReading,
+  FavoriteSongEditorReading,
+  FolderEditorReading,
   LoggedOutFailure,
   MissingMarkerFailure,
   ParseFailure,

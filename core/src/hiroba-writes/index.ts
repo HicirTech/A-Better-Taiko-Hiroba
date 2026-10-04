@@ -14,6 +14,18 @@ export {
   openCostumeEditor,
 } from "./costume-write";
 export { spaced } from "./cross-checks";
+export {
+  changeFavoriteSong,
+  FAVORITE_SONG_WRITE,
+  type FavoriteSongEditorView,
+  openFavoriteSongEditor,
+} from "./favorite-song-write";
+export {
+  changeFolder,
+  FOLDER_WRITE,
+  type FolderEditorView,
+  openFolderEditor,
+} from "./folder-write";
 export { inMaintenance } from "./maintenance";
 export {
   checkNameTarget,

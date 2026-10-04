@@ -24,6 +24,8 @@ import {
   tileThumbnailsKeys,
 } from "./costume-thumbnails";
 import { dataFolder, dataFolderKeys } from "./data-folder";
+import { favoriteWrites, favoriteWritesKeys } from "./favorite-writes";
+import { favorites, favoritesKeys } from "./favorites";
 import { menuSwipe, menuSwipeKeys } from "./menu-swipe";
 import {
   namePlate,
@@ -95,6 +97,8 @@ export const SECTIONS: readonly Section[] = [
   { name: "nickname", phase: "signedIn", keys: nicknameKeys, run: nickname },
   { name: "name-title-writes", phase: "signedIn", keys: nameTitleWritesKeys, run: nameTitleWrites },
   { name: "name-plate", phase: "signedIn", keys: namePlateKeys, run: namePlate },
+  { name: "favorite-writes", phase: "signedIn", keys: favoriteWritesKeys, run: favoriteWrites },
+  { name: "favorites", phase: "signedIn", keys: favoritesKeys, run: favorites },
   { name: "session-expiry", phase: "signedIn", keys: sessionExpiryKeys, run: sessionExpiry },
   { name: "reopen", phase: "signedIn", keys: reopenKeys, run: reopen },
   { name: "signed-out-reopen", phase: "signedIn", keys: signedOutReopenKeys, run: signedOutReopen },

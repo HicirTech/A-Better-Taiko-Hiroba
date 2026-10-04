@@ -2,6 +2,8 @@
 export {
   type ArgumentCheck,
   isCostumeSet,
+  isFavoriteSongState,
+  isFolderState,
   isNameState,
   isPictureWant,
   isTitleState,
@@ -14,6 +16,7 @@ export { checkedPort } from "./checked-port";
 export { changedTheCostume } from "./costume-changed";
 export { PORT_QUEUEING, type VerbQueueing, type VerbsQueued } from "./queueing";
 export type {
+  ChineseNamesRead,
   CostumeChange,
   CostumeEditorView,
   CostumeHistoryEntry,
@@ -23,6 +26,13 @@ export type {
   CrownKind,
   DanNumber,
   DanView,
+  FavoriteSongChange,
+  FavoriteSongEditorView,
+  FavoriteSongState,
+  FavoritesView,
+  FolderChange,
+  FolderEditorView,
+  FolderState,
   HirobaSessionPort,
   IconWant,
   NameChange,
@@ -35,7 +45,10 @@ export type {
   ReadFailureKind,
   ReadProfileOptions,
   RenameState,
+  ShownSong,
   SignInOutcome,
+  SongCatalogueFailure,
+  SongCatalogueRead,
   TitleChange,
   TitleEditorView,
   TitleState,

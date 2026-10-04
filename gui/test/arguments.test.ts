@@ -23,6 +23,9 @@ describe("PORT_ARGUMENTS", () => {
       changeName: _changeName,
       previewCostume: _preview,
       readPicture: _picture,
+      changeFolder: _changeFolder,
+      changeFavoriteSong: _changeFavoriteSong,
+      readSongCatalogue: _catalogue,
       ...takingNothing
     } = PORT_ARGUMENTS;
     for (const check of Object.values(takingNothing)) {

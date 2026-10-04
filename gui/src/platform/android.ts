@@ -33,6 +33,12 @@ import {
   type HirobaSessionPort,
   type SignInOutcome,
 } from "../session-port";
+import {
+  CHINESE_NAMES_URL,
+  catalogueUrlFor,
+  readChineseNames,
+  readSongCatalogue,
+} from "../song-catalogue";
 import { feedUrlFor, readUpdateFeed } from "../updates";
 import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
@@ -50,6 +56,17 @@ const endpoints: HirobaEndpoints = import.meta.env.DEV
 const updateFeedUrl = feedUrlFor(
   Boolean(import.meta.env.DEV),
   import.meta.env.VITE_ABTH_DEV_UPDATE_FEED,
+);
+
+const songCatalogueUrl = catalogueUrlFor(
+  Boolean(import.meta.env.DEV),
+  import.meta.env.VITE_ABTH_DEV_SONG_CATALOGUE,
+);
+
+const chineseNamesUrl = catalogueUrlFor(
+  Boolean(import.meta.env.DEV),
+  import.meta.env.VITE_ABTH_DEV_CHINESE_NAMES,
+  CHINESE_NAMES_URL,
 );
 
 export interface AndroidPortOptions {
@@ -268,6 +285,16 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     costumeHistory: writes.costumeHistory,
 
     readUpdateFeed: () => readUpdateFeed(transport, updateFeedUrl),
+
+    openFavorites: flushed(writes.openFavorites),
+
+    changeFolder: flushed(writes.changeFolder),
+
+    changeFavoriteSong: flushed(writes.changeFavoriteSong),
+
+    readSongCatalogue: (since) => readSongCatalogue(transport, songCatalogueUrl, since),
+
+    readChineseNames: () => readChineseNames(transport, chineseNamesUrl),
   });
 
   return checkedPort(port);

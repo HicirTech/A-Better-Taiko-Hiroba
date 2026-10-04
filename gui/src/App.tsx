@@ -12,8 +12,10 @@ import {
 } from "@mui/material";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { FavoritesPage } from "./favorites/favorites-page";
+import { useFavorites } from "./favorites/use-favorites";
+import { useSongCatalogue } from "./favorites/use-song-catalogue";
 import { CostumePage } from "./my-page/costume-page";
-import { FavoritesCard } from "./my-page/favorites-card";
 import { MedalCard } from "./my-page/medal-card";
 import type { OpenAction } from "./my-page/open-button";
 import { OverviewHeader } from "./my-page/overview-header";
@@ -86,6 +88,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
   const onEditorPage = page === "costume" && screen.name === "profile";
   const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
+  const onFavoritesPage = page === "favorites" && screen.name === "profile";
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
@@ -173,16 +176,25 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     onNickname: nameRead,
   });
   const { forget: forgetNameEditor, dropEdits: dropNameEdits } = nameEditor;
+  const favorites = useFavorites({ port, lane, onSessionGone: sessionGone });
+  const { forget: forgetFavorites, dropEdits: dropFavoritesEdits, read: readFavorites } = favorites;
+  const catalogue = useSongCatalogue(port, onFavoritesPage);
 
-  const writing = editor.writing || titleEditor.writing || nameEditor.writing;
+  const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
   const { read: readEditor } = editor;
   const editorUnread = editor.step.name === "unread";
+  const favoritesUnread = favorites.step.name === "unread";
   // A first read waits for any write to end rather than rely on the request queue alone.
   useEffect(() => {
     if (onEditorPage && editorUnread && !writing) {
       void readEditor();
     }
   }, [onEditorPage, editorUnread, writing, readEditor]);
+  useEffect(() => {
+    if (onFavoritesPage && favoritesUnread && !writing) {
+      void readFavorites();
+    }
+  }, [onFavoritesPage, favoritesUnread, writing, readFavorites]);
 
   const signIn = async () => {
     // Hiroba may have ended the last session itself, so no sign-out forgot its pictures.
@@ -214,8 +226,9 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       forgetEditor();
       forgetTitleEditor();
       forgetNameEditor();
+      forgetFavorites();
     }
-  }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor]);
+  }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor, forgetFavorites]);
 
   // Leaving a page drops the edits made on it; the editors keep what they read from Hiroba.
   useEffect(() => {
@@ -226,7 +239,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       dropTitleEdits();
       dropNameEdits();
     }
-  }, [page, dropEditorEdits, dropTitleEdits, dropNameEdits]);
+    if (page !== "favorites") {
+      dropFavoritesEdits();
+    }
+  }, [page, dropEditorEdits, dropTitleEdits, dropNameEdits, dropFavoritesEdits]);
 
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const portrait: OpenAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
@@ -249,7 +265,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   }, [port, read]);
 
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
-  const canReadAgain = signedIn && !writing && !refreshing && (!onEditorPage || editor.canRead);
+  // The page that reads an editor of its own reads that again, not my page.
+  const pageEditor = onEditorPage ? editor : onFavoritesPage ? favorites : null;
+  const canReadAgain =
+    signedIn && !writing && !refreshing && (pageEditor === null || pageEditor.canRead);
   // Turns away a second ask that lands before the Fab is shut.
   const readAgainStarted = useRef(false);
   const readAgain = async () => {
@@ -258,8 +277,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     }
     readAgainStarted.current = true;
     try {
-      if (onEditorPage) {
-        await editor.read();
+      if (pageEditor !== null) {
+        await pageEditor.read();
       } else if ((await read()) && onNameTitlePage) {
         // The titles are read again when the picker next opens.
         forgetTitleList();
@@ -274,7 +293,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
         <>
           <FrameCorner>
             <ReadAgainFab
-              reading={screen.name === "reading" || refreshing || (onEditorPage && editor.reading)}
+              reading={screen.name === "reading" || refreshing || (pageEditor?.reading ?? false)}
               canRead={canReadAgain}
               touchFirst={touchFirst}
               onRead={readAgain}
@@ -366,33 +385,27 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && page !== "costume" && page !== "nameTitle" && (
-              <Stack spacing={page === "overview" ? OVERVIEW_SPACING : 2}>
-                {page === "overview" ? (
-                  <>
-                    <OverviewHeader
-                      profile={screen.profile}
-                      lane={lane}
-                      i18n={i18n}
-                      portrait={portrait}
-                      namePlate={namePlate}
-                    />
-                    <PanelCard
-                      crowns={screen.profile.crowns}
-                      ranks={screen.profile.panel.ranks}
-                      lane={lane}
-                      toast={touchFirst ? toast : undefined}
-                      i18n={i18n}
-                    />
-                    <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
-                  </>
-                ) : (
-                  <FavoritesCard
-                    favoriteSong={screen.profile.favoriteSong}
-                    folder={screen.profile.favoriteFolder}
-                    i18n={i18n}
-                  />
-                )}
+            {screen.name === "profile" && page === "favorites" && (
+              <FavoritesPage favorites={favorites} catalogue={catalogue} i18n={i18n} />
+            )}
+
+            {screen.name === "profile" && page === "overview" && (
+              <Stack spacing={OVERVIEW_SPACING}>
+                <OverviewHeader
+                  profile={screen.profile}
+                  lane={lane}
+                  i18n={i18n}
+                  portrait={portrait}
+                  namePlate={namePlate}
+                />
+                <PanelCard
+                  crowns={screen.profile.crowns}
+                  ranks={screen.profile.panel.ranks}
+                  lane={lane}
+                  toast={touchFirst ? toast : undefined}
+                  i18n={i18n}
+                />
+                <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
                 <Typography
                   id="last-updated"
                   variant="caption"

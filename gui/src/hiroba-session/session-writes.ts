@@ -5,6 +5,8 @@ import {
   type CostumeHistoryEntry,
   type CostumeSet,
   changedTheCostume,
+  type FavoriteSongChange,
+  type FolderChange,
   type HirobaSessionPort,
   type NameChange,
   type ReadFailure,
@@ -14,12 +16,15 @@ import {
   type WriteSets,
 } from "../session-port";
 import { changeCostume } from "./change-costume";
+import { changeFavoriteSong } from "./change-favorite-song";
+import { changeFolder } from "./change-folder";
 import { changeName } from "./change-name";
 import { changeTitle } from "./change-title";
 import { mergeCostumeHistory } from "./costume-history";
 import type { CostumeHistoryStore } from "./costume-history-store";
 import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
+import { openFavorites } from "./open-favorites";
 import { openTitleEditor } from "./open-title-editor";
 import { sessionEnded } from "./session-ended";
 import type { HirobaEndpoints, WriteOptions } from "./types";
@@ -49,9 +54,12 @@ export type SessionWrites = Pick<
   HirobaSessionPort,
   | "openCostumeEditor"
   | "openTitleEditor"
+  | "openFavorites"
   | "changeCostume"
   | "changeTitle"
   | "changeName"
+  | "changeFolder"
+  | "changeFavoriteSong"
   | "costumeHistory"
 > & {
   /** A preview came: a history entry of that set with no picture takes it. */
@@ -121,6 +129,18 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     ended: () => undefined,
   };
 
+  const folder: WriteKindDefinition<"folder", FolderChange> = {
+    kind: "folder",
+    run: changeFolder,
+    ended: () => undefined,
+  };
+
+  const favoriteSong: WriteKindDefinition<"favoriteSong", FavoriteSongChange> = {
+    kind: "favoriteSong",
+    run: changeFavoriteSong,
+    ended: () => undefined,
+  };
+
   async function write<K extends WriteKind, Input>(
     definition: WriteKindDefinition<K, Input>,
     input: Input,
@@ -165,6 +185,8 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
 
     openTitleEditor: () => opened(openTitleEditor),
 
+    openFavorites: () => opened(openFavorites),
+
     async changeCostume(change) {
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
@@ -184,6 +206,20 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
         return { kind: "notSignedIn" };
       }
       return write(name, change);
+    },
+
+    async changeFolder(change) {
+      if (!options.signedIn()) {
+        return { kind: "notSignedIn" };
+      }
+      return write(folder, change);
+    },
+
+    async changeFavoriteSong(change) {
+      if (!options.signedIn()) {
+        return { kind: "notSignedIn" };
+      }
+      return write(favoriteSong, change);
     },
 
     async previewKept(set, picture) {
