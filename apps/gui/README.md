@@ -163,21 +163,25 @@ long-press opens it, screen readers are told to long-press.
 
 On a wide window (the side panel showing) the page is two columns, and only the page scrolls. The
 left holds Hiroba's picture of the set as picked, a square, and under it the eight parts as tiles in
-two rows, **Colours** and **Costume** (Hiroba's いろ and きせかえ), each tile holding what the draft
-has there: a swatch, the item's thumbnail, or a blank tile for none. A click, or Enter or Space,
-picks a part, the arrow keys move along a row and Tab goes to the other, and a tile's name shows on
-hover and on keyboard focus. Under the tiles come **Save to Hiroba**, then **History** and **Reset**
-to put the draft back to the set as read. The column stays in view as the page scrolls, on a window
-at least 640 px tall, and holds only these, so it is never taller than the window. The right is the
-part picked: over its name stand a write's notice, the words for a picture that did not come and the
-Mascot note, when there are any, then its name over its palette or items' thumbnails, as many to a row
-as fit from the left; the items begin with **None** (Hiroba's はずす), which empties the slot. On a
-narrow window the page is a column, as wide as the window on a phone: a square picture of 160 px with
-the same tiles in one row under it, which stay in view as the page scrolls on a window at least 640 px
-tall, then the same notes and the part's grid, and the buttons in a bar at the bottom edge of the
-window, which stays there as the page scrolls: **History** at the left, then **Reset** and **Save to
-Hiroba**. The part picked is the same in both. On a narrow window a cell reached by Tab or Shift+Tab
-is scrolled clear of the tiles above it and the bar below.
+two rows, **Colours** and **Costume** (Hiroba's いろ and きせかえ; Head, Body, Makeup and Mini
+Character, then the Mascot, which is often empty), each tile holding what the draft has there: a
+swatch, the item's thumbnail, or a blank tile for none. A click, or Enter or Space, picks a part, the
+arrow keys move along a row and Tab goes to the other, and a tile's name shows on hover and on
+keyboard focus. Under the tiles come **Save to Hiroba**, then **History** and **Reset** to put the
+draft back to the set as read. The column starts level with the first row of the part's cells, so a
+notice over them moves it down; it stays in view as the page scrolls, on a window at least 640 px
+tall, and holds only these, so it is never taller than the window. The right is the part picked:
+over its name stand a write's notice, the words for a picture that did not come and the Mascot note,
+when there are any, then its name, the words for thumbnails that did not come, and its palette or
+items' thumbnails, as many to a row as fit from the left; the items begin with **None** (Hiroba's
+はずす), which empties the slot. On a narrow window the page is a column, as wide as the window on a
+phone: a square picture of 160 px with the same tiles in one row under it, which stay in view as the
+page scrolls on a window at least 640 px tall, hiding the cells from the window's top edge to a gap
+under the tiles, then the same notes and the part's grid, and the buttons in a bar at the bottom edge
+of the window, which stays there as the page scrolls: **History** at the left, then **Reset** and
+**Save to Hiroba**, each label on one line, the bar's padding and gaps shrinking on a window under
+390 px wide. The part picked is the same in both. On a narrow window a cell reached by Tab or
+Shift+Tab is scrolled clear of the tiles above it and the bar below.
 
 - **Reading.** The editor (`mypage_kisekae.php`) is read once, when the page is first shown in a
   run, and never while another page is shown: an app that opens on the Overview does not read it
