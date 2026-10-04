@@ -6,7 +6,7 @@ import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { previewSetOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
-import { PartPanel } from "./costume-part-panel";
+import { PartHead, PartPanel } from "./costume-part-panel";
 import { PartTiles } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
@@ -68,17 +68,20 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
       {showsEditor(step) ? (
         <>
           <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />
-          <PartPanel
-            view={step.editor}
-            draft={step.draft}
-            lane={lane}
-            i18n={i18n}
-            part={part}
-            wide={false}
-            held={saving}
-            onPickColour={editor.pickColour}
-            onPickItem={editor.pickItem}
-          />
+          <Box>
+            <PartHead view={step.editor} lane={lane} i18n={i18n} part={part} />
+            <PartPanel
+              view={step.editor}
+              draft={step.draft}
+              lane={lane}
+              i18n={i18n}
+              part={part}
+              wide={false}
+              held={saving}
+              onPickColour={editor.pickColour}
+              onPickItem={editor.pickItem}
+            />
+          </Box>
         </>
       ) : (
         progress

@@ -42,6 +42,8 @@ const MD_WIDTH_PX = 900;
 const PHONE = { width: 480, height: 800 } as const;
 const PHONE_TALL = { width: 390, height: 844 } as const;
 const PHONE_SHORT = { width: 390, height: 600 } as const;
+/** The app frame's top band: what stays in view sticks just below it. */
+const TOP_BAND_PX = 64;
 const NOON_JST = "2026-09-27T03:00:00Z";
 const IN_THE_BREAK = "2026-09-26T20:30:00Z";
 rmSync(USER_DATA, { recursive: true, force: true });
@@ -2412,6 +2414,10 @@ try {
   const squarePreview = ({ preview, aside }: WideFacts) =>
     Math.abs(preview.width - preview.height) < 1 && near(preview.width, aside.width);
   results.costumePreviewIsSquare = squarePreview(onDefault) && squarePreview(onBig);
+  const levelWithTheFirstRow = ({ preview, palette, items }: WideFacts) =>
+    [palette, items].every(({ row }) => near(preview.top, at(row, 0).top, 1));
+  results.costumePreviewLevelWithTheGridsFirstRow =
+    levelWithTheFirstRow(onDefault) && levelWithTheFirstRow(onBig);
   const tilesUnderTheirCaptions = ({ aside, captions, tiles }: WideFacts) => {
     const colours = tiles.slice(0, 3);
     const costume = tiles.slice(3);
@@ -2456,20 +2462,19 @@ try {
     await showPart("costume1");
     await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
     await page.evaluate("window.scrollTo(0, 0)");
-    const before = await boxOf("#costume-aside");
     const gridBefore = await boxOf("#costume-items-costume1");
     const scrolledBy = await scrollToTheEnd();
     const after = await boxOf("#costume-aside");
     const gridAfter = await boxOf("#costume-items-costume1");
     const windowHeight = await page.evaluate<number>("innerHeight");
     await page.evaluate("window.scrollTo(0, 0)");
-    return { before, after, gridBefore, gridAfter, scrolledBy, windowHeight };
+    return { after, gridBefore, gridAfter, scrolledBy, windowHeight };
   });
   results.costumePageScrollsForMoreItemsThanFit =
     stuck.gridBefore.bottom > stuck.windowHeight && stuck.scrolledBy > 50;
   results.costumeLeftColumnStaysInView =
     stuck.scrolledBy > 50 &&
-    near(stuck.after.top, stuck.before.top) &&
+    near(stuck.after.top, TOP_BAND_PX) &&
     stuck.after.bottom <= stuck.windowHeight &&
     stuck.gridAfter.top < stuck.gridBefore.top - 50;
   const onAShortWindow = await atSize(1100, 480, async () => {
@@ -2817,30 +2822,39 @@ try {
   const columnWithTheNotesUp = (width: number, height: number) =>
     withTheNotesUp(width, height, async () => {
       const noticeSeen = await noticeIsInView(
-        async () => 64,
+        async () => TOP_BAND_PX,
         () => page.evaluate<number>("innerHeight"),
       );
       const apart = await page.evaluate<boolean>(
         `["#write-outcome", "#kigurumi-warning", "#costume-preview-unavailable"].every((selector) => document.querySelector(selector) !== null && !document.querySelector("#costume-aside").contains(document.querySelector(selector)))`,
       );
+      await page.evaluate("window.scrollTo(0, 0)");
+      const preview = await boxOf("#costume-preview");
+      const firstRow = await firstRowOf('#costume-items-costume1 [id^="item-costume1-"]');
+      const level = near(preview.top, at(firstRow, 0).top, 1);
       const end = await page.evaluate<number>(
         "document.documentElement.scrollHeight - innerHeight",
       );
-      const overhangs: number[] = [];
+      const stuckOverhangs: number[] = [];
       for (const part of [0, 0.25, 0.5, 0.75, 1]) {
         await page.evaluate(`window.scrollTo(0, ${Math.round(end * part)})`);
-        overhangs.push(
-          (await boxOf("#costume-aside")).bottom - (await page.evaluate<number>("innerHeight")),
-        );
+        const aside = await boxOf("#costume-aside");
+        if (near(aside.top, TOP_BAND_PX, 0.5)) {
+          stuckOverhangs.push(aside.bottom - (await page.evaluate<number>("innerHeight")));
+        }
       }
-      return { noticeSeen, apart, end, overhangs };
+      return { noticeSeen, apart, level, end, stuckOverhangs };
     });
   const wideWithTheNotesUp = [
     await columnWithTheNotesUp(946, 657),
     await columnWithTheNotesUp(960, 720),
   ];
+  results.costumePreviewLevelWithTheGridsFirstRowBelowTheNotices = wideWithTheNotesUp.every(
+    ({ level }) => level,
+  );
   results.costumeLeftColumnStaysInViewWithANoticeAndTheMascotNote = wideWithTheNotesUp.every(
-    ({ apart, end, overhangs }) => apart && end > 100 && overhangs.every((one) => one <= 0.5),
+    ({ apart, end, stuckOverhangs }) =>
+      apart && end > 100 && stuckOverhangs.length > 0 && stuckOverhangs.every((one) => one <= 0.5),
   );
   results.costumeNoticeIsScrolledIntoViewAfterAFailedSave = wideWithTheNotesUp.every(
     ({ noticeSeen }) => noticeSeen,

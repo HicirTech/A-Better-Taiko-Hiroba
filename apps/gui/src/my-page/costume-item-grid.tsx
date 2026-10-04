@@ -42,57 +42,70 @@ export function CostumeItemGrid({
   wide,
   onPick,
 }: CostumeItemGridProps) {
+  const cells = wide ? WIDE_CELLS : NARROW_CELLS;
+  const slot = slotOf(part);
+  return (
+    <Box
+      id={`costume-items-${part}`}
+      sx={{
+        display: "grid",
+        gridTemplateColumns: `repeat(auto-fill, ${cells.cell}px)`,
+        gridAutoRows: `${cells.cell}px`,
+        gap: `${cells.gap}px`,
+        justifyContent: "start",
+      }}
+    >
+      <NoneCell part={part} i18n={i18n} cells={cells} chosen={chosen === 0} onPick={onPick} />
+      {items.map((id, order) => (
+        <ItemCell
+          key={id}
+          lane={lane}
+          i18n={i18n}
+          part={part}
+          want={{ kind: "costumeItem", slot, id }}
+          order={order}
+          cells={cells}
+          chosen={chosen === id}
+          onPick={onPick}
+        />
+      ))}
+    </Box>
+  );
+}
+
+export interface ThumbnailsUnavailableProps {
+  readonly lane: PictureLane;
+  readonly i18n: Translator;
+  readonly part: SlotPart;
+  readonly items: readonly number[];
+}
+
+/** The words for thumbnails that did not come, with the code to report; nothing if all did. */
+export function ThumbnailsUnavailable({ lane, i18n, part, items }: ThumbnailsUnavailableProps) {
   const { t, number } = i18n;
   useSyncExternalStore(lane.subscribe, lane.version);
-  const cells = wide ? WIDE_CELLS : NARROW_CELLS;
   const slot = slotOf(part);
   const failures = items.flatMap((id) => {
     const answer = lane.peek({ kind: "costumeItem", slot, id });
     return answer !== undefined && "failure" in answer ? [answer.failure] : [];
   });
+  if (failures.length === 0) {
+    return null;
+  }
 
   return (
-    <Stack spacing={1.5}>
-      {failures.length > 0 && (
-        <Stack id="costume-thumbnails-unavailable">
-          <Typography variant="body2" color="text.secondary">
-            {t("costume.thumbnails.unavailable", { count: number(failures.length) })}
-          </Typography>
-          <Typography
-            id="costume-thumbnails-code"
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-          >
-            {t("costume.thumbnails.code", { code: failures[0] ?? "" })}
-          </Typography>
-        </Stack>
-      )}
-      <Box
-        id={`costume-items-${part}`}
-        sx={{
-          display: "grid",
-          gridTemplateColumns: `repeat(auto-fill, ${cells.cell}px)`,
-          gridAutoRows: `${cells.cell}px`,
-          gap: `${cells.gap}px`,
-          justifyContent: "start",
-        }}
+    <Stack id="costume-thumbnails-unavailable">
+      <Typography variant="body2" color="text.secondary">
+        {t("costume.thumbnails.unavailable", { count: number(failures.length) })}
+      </Typography>
+      <Typography
+        id="costume-thumbnails-code"
+        variant="body2"
+        color="text.secondary"
+        sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
       >
-        <NoneCell part={part} i18n={i18n} cells={cells} chosen={chosen === 0} onPick={onPick} />
-        {items.map((id, order) => (
-          <ItemCell
-            key={id}
-            lane={lane}
-            i18n={i18n}
-            part={part}
-            want={{ kind: "costumeItem", slot, id }}
-            order={order}
-            cells={cells}
-            chosen={chosen === id}
-            onPick={onPick}
-          />
-        ))}
-      </Box>
+        {t("costume.thumbnails.code", { code: failures[0] ?? "" })}
+      </Typography>
     </Stack>
   );
 }
