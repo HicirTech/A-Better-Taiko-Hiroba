@@ -1,6 +1,7 @@
 /** Stand-in for Hiroba and the Bandai Namco ID host, so sign-in runs without the real sites. */
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
+import { createFavoritesEditor } from "./mock-favorites";
 import {
   blankPlatePng,
   crownIconPng,
@@ -45,6 +46,8 @@ const requestLog: string[] = [];
 const costume = createCostumeEditor();
 /** Shares the costume editor's token: one per session, each page read voiding the last. */
 const profile = createProfileEditor({ issue: costume.issueTicket });
+/** The favourite editors, and the favourites my page shows; the token is shared here too. */
+const favorites = createFavoritesEditor({ issue: costume.issueTicket });
 /** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
 const IDP_MARKER = "abth-mock-idp-marker";
 /** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
@@ -93,7 +96,6 @@ const variant = {
   dan: 14,
   label: "png" as "png" | "gif",
   region: true,
-  favorites: false,
   panel: "counts" as "counts" | "zeros",
 };
 
@@ -187,15 +189,6 @@ function myPage(ticket: string): string {
     variant.dan > 0
       ? `<div style="display:flex"><div>${nickname}</div><div><img src="imgsrc_danlabel.php?taiko_no=${TAIKO_NO}"></div></div>`
       : `<div style="height:24px;">${nickname}</div>`;
-  const song = variant.favorites
-    ? `<span class="songName songNameFontnamco">サンプル曲アルファ</span>`
-    : `<span class="songName songNameFont">未設定</span>`;
-  // Two share a title, as ten catalogue titles are carried by more than one song.
-  const folder = variant.favorites
-    ? ["サンプル曲ベータ", "サンプル曲ガンマ", "サンプル曲ベータ"]
-        .map((title) => `<li><span class="songName songNameFontnamco">${title}</span></li>`)
-        .join("")
-    : "";
   const panel = variant.panel === "zeros" ? PANEL_ZEROS : PANEL_COUNTS;
   const [silver, gold, donderful] = panel.crowns;
   return `${profile.renameScript()}
@@ -213,12 +206,7 @@ function myPage(ticket: string): string {
     <div class="donderful_crown_count total_panel_crown_display">${donderful}</div></div>
   ${medalPlate()}
 </div>
-<div class="favoriteSong"><h2 class="subtitleMypage">大好きな曲</h2><div class="mypageInfoArea">
-  <ul id="songList"><li><div class="name">${song}</div></li></ul>
-  <input type="hidden" name="song_no" id="song_no" value="${variant.favorites ? "1346" : ""}">
-  <input type="hidden" id="_tckt" name="_tckt" value="${ticket}" /></div></div>
-<div class="favoriteSong"><h2 class="subtitleMypage">お気に入りの曲</h2><div class="mypageInfoArea">
-  <ul id="songList">${folder}</ul></div></div>
+${favorites.myPageBlocks(ticket)}
 ${profile.renameDialog(ticket)}`;
 }
 
@@ -379,6 +367,28 @@ Bun.serve({
         await profile.saveLetThrough();
         return profile.save(entered.session, entered.form, () => sessions.clear());
       }
+      case "/favorite_song_select.php":
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        return page(favorites.folderPage(session, searchParams));
+      case "/portal_favorite_song_select.php":
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        return page(favorites.favoriteSongPage(session));
+      case "/ajax/myfavorite_song.php":
+      case "/ajax/mypage_song.php": {
+        const entered = await ajaxEntry(request, session, (form) =>
+          favorites.record(pathname, request, form, session),
+        );
+        if (entered instanceof Response) {
+          return entered;
+        }
+        return pathname === "/ajax/myfavorite_song.php"
+          ? favorites.saveFolder(entered.session, entered.form)
+          : favorites.saveFavoriteSong(entered.session, entered.form);
+      }
       case "/imgsrc_mydon.php":
         return costume.preview(new URL(request.url).search, session?.cardChosen === true);
       case "/imgsrc_kisekae.php":
@@ -510,7 +520,6 @@ Bun.serve({
           profile.setTitle(TITLES[title]);
         }
         variant.region = flag("region", "set") ?? variant.region;
-        variant.favorites = flag("favorites", "set") ?? variant.favorites;
         const panel = searchParams.get("panel");
         if (panel === "counts" || panel === "zeros") {
           variant.panel = panel;
@@ -591,6 +600,7 @@ Bun.serve({
         return (
           costume.hook(pathname, searchParams) ??
           profile.hook(pathname, searchParams) ??
+          favorites.hook(pathname, searchParams) ??
           new Response("not found", { status: 404 })
         );
     }
