@@ -142,6 +142,26 @@ export function showsEditor(step: EditorStep): step is ShownStep {
   return step.name === "editing" || step.name === "saving";
 }
 
+/** The editor to draw, and whether it is shut to picks while a save or a read again runs. */
+export interface ShownEditor extends HeldEditor {
+  readonly shut: boolean;
+}
+
+/** A read again keeps the editor it holds on screen, shut, until the read ends. */
+export function shownEditorOf(step: EditorStep): ShownEditor | null {
+  switch (step.name) {
+    case "editing":
+      return { editor: step.editor, draft: step.draft, shut: false };
+    case "saving":
+      return { editor: step.editor, draft: step.draft, shut: true };
+    case "loading":
+      return step.held === null ? null : { ...step.held, shut: true };
+    case "loadFailed":
+    case "unread":
+      return null;
+  }
+}
+
 export function canReadEditorAgain(step: EditorStep): boolean {
   return step.name === "editing" || step.name === "loadFailed";
 }

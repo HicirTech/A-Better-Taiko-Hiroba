@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { previewSetOf, showsEditor } from "./costume-editor-state";
+import { previewSetOf, shownEditorOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
 import { PartHead, PartPanel } from "./costume-part-panel";
 import { PartTiles } from "./costume-part-tiles";
@@ -33,7 +33,7 @@ export interface WideBodyProps {
 
 export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }: WideBodyProps) {
   const { step } = editor;
-  const saving = step.name === "saving";
+  const shown = shownEditorOf(step);
   const withAside = previewSetOf(step) !== null;
   return (
     <Box
@@ -49,37 +49,37 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
       {withAside && (
         <Stack id="costume-aside" spacing={2} sx={{ gridArea: "aside", ...STAYS_IN_VIEW }}>
           <CostumePreviewBox preview={editor.preview} i18n={i18n} />
-          {showsEditor(step) && (
+          {shown !== null && (
             <PartTiles
-              view={step.editor}
-              draft={step.draft}
+              view={shown.editor}
+              draft={shown.draft}
               lane={lane}
               i18n={i18n}
               shown={part}
               wide
-              held={saving}
+              held={shown.shut}
               onPick={onPart}
             />
           )}
           {actions}
         </Stack>
       )}
-      {showsEditor(step) && (
+      {shown !== null && (
         <Stack spacing={2} sx={{ gridArea: "above", minWidth: 0 }}>
-          <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />
-          <PartHead view={step.editor} lane={lane} i18n={i18n} part={part} />
+          {showsEditor(step) && <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />}
+          <PartHead view={shown.editor} lane={lane} i18n={i18n} part={part} />
         </Stack>
       )}
       <Box sx={{ gridArea: "part", minWidth: 0 }}>
-        {showsEditor(step) ? (
+        {shown !== null ? (
           <PartPanel
-            view={step.editor}
-            draft={step.draft}
+            view={shown.editor}
+            draft={shown.draft}
             lane={lane}
             i18n={i18n}
             part={part}
             wide
-            held={saving}
+            held={shown.shut}
             onPickColour={editor.pickColour}
             onPickItem={editor.pickItem}
           />

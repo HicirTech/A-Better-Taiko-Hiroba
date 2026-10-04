@@ -1,6 +1,7 @@
 import type { MessageKey, TranslateParams, Translator } from "@abth/i18n";
 import {
   Alert,
+  Box,
   Button,
   Card,
   CardContent,
@@ -53,6 +54,7 @@ type Screen =
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
 const OVERVIEW_SPACING = 3;
+const SHUT_LOOK = (shut: boolean) => ({ opacity: shut ? 0.6 : 1, transition: "opacity 150ms" });
 const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 
 const SIGN_IN_NOTICE = {
@@ -78,6 +80,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
   const [refreshing, setRefreshing] = useState(false);
+  // A read again the user asked for leaves the page in place, shut, rather than swap it out.
+  const [shut, setShut] = useState(false);
   const updates = useUpdateReminder(port, APP_VERSION);
   const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
   const onEditorPage = page === "costume" && screen.name === "profile";
@@ -90,10 +94,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
     async (behindThePage = false): Promise<boolean> => {
-      if (behindThePage) {
-        setRefreshing(true);
-      } else {
-        setScreen({ name: "reading" });
+      setRefreshing(true);
+      if (!behindThePage) {
+        setShut(true);
+        setScreen((now) => (now.name === "profile" ? now : { name: "reading" }));
       }
       try {
         const result = await (behindThePage
@@ -121,6 +125,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
         return false;
       } finally {
         setRefreshing(false);
+        setShut(false);
       }
     },
     [port, lane],
@@ -329,53 +334,61 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             </Stack>
           )}
 
-          {screen.name === "profile" && page === "costume" && (
-            <CostumePage editor={editor} lane={lane} i18n={i18n} />
-          )}
+          {/* Laid out as if absent, so the pages keep their place in the frame. */}
+          <Box id="page-shut" inert={shut} sx={{ display: "contents", "& > *": SHUT_LOOK(shut) }}>
+            {screen.name === "profile" && page === "costume" && (
+              <CostumePage editor={editor} lane={lane} i18n={i18n} />
+            )}
 
-          {screen.name === "profile" && page === "nameTitle" && (
-            <NameTitlePage
-              profile={screen.profile}
-              lane={lane}
-              i18n={i18n}
-              title={titleEditor}
-              name={nameEditor}
-              busy={writing}
-            />
-          )}
+            {screen.name === "profile" && page === "nameTitle" && (
+              <NameTitlePage
+                profile={screen.profile}
+                lane={lane}
+                i18n={i18n}
+                title={titleEditor}
+                name={nameEditor}
+                busy={writing}
+              />
+            )}
 
-          {screen.name === "profile" && page !== "costume" && page !== "nameTitle" && (
-            <Stack spacing={page === "overview" ? OVERVIEW_SPACING : 2}>
-              {page === "overview" ? (
-                <>
-                  <OverviewHeader
-                    profile={screen.profile}
-                    lane={lane}
+            {screen.name === "profile" && page !== "costume" && page !== "nameTitle" && (
+              <Stack spacing={page === "overview" ? OVERVIEW_SPACING : 2}>
+                {page === "overview" ? (
+                  <>
+                    <OverviewHeader
+                      profile={screen.profile}
+                      lane={lane}
+                      i18n={i18n}
+                      portrait={portrait}
+                      namePlate={namePlate}
+                    />
+                    <PanelCard
+                      crowns={screen.profile.crowns}
+                      ranks={screen.profile.panel.ranks}
+                      lane={lane}
+                      toast={touchFirst ? toast : undefined}
+                      i18n={i18n}
+                    />
+                    <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
+                  </>
+                ) : (
+                  <FavoritesCard
+                    favoriteSong={screen.profile.favoriteSong}
+                    folder={screen.profile.favoriteFolder}
                     i18n={i18n}
-                    portrait={portrait}
-                    namePlate={namePlate}
                   />
-                  <PanelCard
-                    crowns={screen.profile.crowns}
-                    ranks={screen.profile.panel.ranks}
-                    lane={lane}
-                    toast={touchFirst ? toast : undefined}
-                    i18n={i18n}
-                  />
-                  <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
-                </>
-              ) : (
-                <FavoritesCard
-                  favoriteSong={screen.profile.favoriteSong}
-                  folder={screen.profile.favoriteFolder}
-                  i18n={i18n}
-                />
-              )}
-              <Typography id="last-updated" variant="caption" color="text.secondary" component="p">
-                {t("profile.fetchedAt", { time: i18n.dateTime(screen.profile.fetchedAt) })}
-              </Typography>
-            </Stack>
-          )}
+                )}
+                <Typography
+                  id="last-updated"
+                  variant="caption"
+                  color="text.secondary"
+                  component="p"
+                >
+                  {t("profile.fetchedAt", { time: i18n.dateTime(screen.profile.fetchedAt) })}
+                </Typography>
+              </Stack>
+            )}
+          </Box>
 
           {screen.name === "readFailed" && (
             <Alert severity="warning">

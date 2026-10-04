@@ -8,6 +8,7 @@ import {
   isWriting,
   previewSetOf,
   reduceEditor,
+  shownEditorOf,
   showsEditor,
   UNREAD,
 } from "../src/my-page/costume-editor-state";
@@ -503,5 +504,16 @@ describe("what the page asks of a step", () => {
     ["a save", saving(), true],
   ])("shows the editor for %s: %p", (_label, step, shown) => {
     expect(showsEditor(step)).toBe(shown);
+  });
+  type ShownCase = [label: string, step: EditorStep, shown: ReturnType<typeof shownEditorOf>];
+  test.each<ShownCase>([
+    ["nothing read", UNREAD, null],
+    ["a first read", { name: "loading", held: null }, null],
+    ["a read again, shut", { name: "loading", held }, { ...held, shut: true }],
+    ["a read that failed", { name: "loadFailed", failure: FAILURE, held }, null],
+    ["a draft, open", editing(set(), drafted), { editor: editorOf(), draft: drafted, shut: false }],
+    ["a save, shut", saving(set(), drafted), { editor: editorOf(), draft: drafted, shut: true }],
+  ])("keeps the editor on screen for %s", (_label, step, shown) => {
+    expect(shownEditorOf(step)).toEqual(shown);
   });
 });
