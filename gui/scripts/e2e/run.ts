@@ -9,6 +9,48 @@ import { type Ctx, newShared, type Phase, type Section } from "./context";
 import { setSection, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
 
+const USAGE = `Usage: bun scripts/e2e/run.ts [--no-build] [--only <section,...>]
+Sections: ${SECTIONS.map((section) => section.name).join(", ")}`;
+
+function fail(message: string): never {
+  console.error(`${message}\n${USAGE}`);
+  process.exit(2);
+}
+
+function parseArgs(argv: string[]) {
+  let build = true;
+  let only: string[] | undefined;
+  for (let at = 0; at < argv.length; at++) {
+    const arg = argv[at];
+    if (arg === "--no-build") {
+      build = false;
+    } else if (arg === "--only") {
+      only = (argv[++at] ?? "").split(",").filter((name) => name !== "");
+    } else {
+      fail(`Unknown argument: ${arg}`);
+    }
+  }
+  const unknown = (only ?? []).filter((name) => !SECTIONS.some((section) => section.name === name));
+  if (unknown.length > 0 || only?.length === 0) {
+    fail(`Unknown section: ${unknown.join(", ") || "(none given)"}`);
+  }
+  return { build, only };
+}
+
+const { build, only } = parseArgs(process.argv.slice(2));
+const selected = SECTIONS.filter((section) => only === undefined || only.includes(section.name));
+
+if (build) {
+  const built = Bun.spawn(["bun", "run", "build"], {
+    cwd: root,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  if ((await built.exited) !== 0) {
+    process.exit(1);
+  }
+}
+
 rmSync(USER_DATA, { recursive: true, force: true });
 
 const results: Record<string, unknown> = {};
@@ -63,11 +105,17 @@ async function launchMain() {
 }
 
 /** The pictures fail from the first sign-in until the pictures section restores them. */
+const picturesFail = selected.some(
+  (section) => SECTIONS.indexOf(section) <= SECTIONS.findIndex((one) => one.name === "pictures"),
+);
+
 async function signIn() {
   const { click, until } = ctx.app;
-  await fetch(`${HIROBA}/__mydon?answer=gif`);
-  await fetch(`${HIROBA}/__panel?answer=404`);
-  await fetch(`${HIROBA}/__icons?answer=404`);
+  if (picturesFail) {
+    await fetch(`${HIROBA}/__mydon?answer=gif`);
+    await fetch(`${HIROBA}/__panel?answer=404`);
+    await fetch(`${HIROBA}/__icons?answer=404`);
+  }
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
@@ -168,7 +216,7 @@ async function runSection(section: Section) {
 }
 
 try {
-  for (const section of SECTIONS) {
+  for (const section of selected) {
     await runSection(section);
   }
 } finally {
