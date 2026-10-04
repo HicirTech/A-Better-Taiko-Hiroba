@@ -31,6 +31,8 @@ export async function launch({
       ABTH_DEV_IMG_ORIGIN: IMG,
       ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
+      ABTH_DEV_SONG_CATALOGUE: `${HIROBA}/__song-catalogue`,
+      ABTH_DEV_CHINESE_NAMES: `${HIROBA}/__chinese-names`,
       ABTH_DEBUG_SAVE_READS: "1",
       ...env,
     },
