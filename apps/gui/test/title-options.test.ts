@@ -6,7 +6,6 @@ import {
   currentOptions,
   filterTitles,
   foldForSearch,
-  repeatedOptions,
   undoReadiness,
 } from "../src/name-title/title-options";
 
@@ -64,25 +63,6 @@ describe("currentOptions", () => {
     expect(currentOptions(OPTIONS, { title: "部品から作った称号" }).size).toBe(0);
     expect(currentOptions(OPTIONS, { title: "" }).size).toBe(0);
     expect(currentOptions(OPTIONS, { title: " \u{a0} " }).size).toBe(0);
-  });
-});
-
-describe("repeatedOptions", () => {
-  test("gives the ids of the titles whose name another title has", () => {
-    expect([...repeatedOptions(OPTIONS)].sort()).toEqual([104, 105]);
-  });
-
-  test("counts names that differ only in white space as one", () => {
-    const options: TitleOption[] = [
-      { id: 1, label: "称号 A" },
-      { id: 2, label: "称号\u{a0}A" },
-      { id: 3, label: "称号 B" },
-    ];
-    expect([...repeatedOptions(options)].sort()).toEqual([1, 2]);
-  });
-
-  test("gives none for a list with no repeated name", () => {
-    expect(repeatedOptions(OPTIONS.filter((one) => one.id !== 105)).size).toBe(0);
   });
 });
 

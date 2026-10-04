@@ -37,16 +37,6 @@ export function currentOptions(
   );
 }
 
-/** The ids of titles whose name another title has too: the ones to tell by number. */
-export function repeatedOptions(options: readonly TitleOption[]): ReadonlySet<number> {
-  const byName = new Map<string, number[]>();
-  for (const one of options) {
-    const name = spaced(one.label);
-    byName.set(name, [...(byName.get(name) ?? []), one.id]);
-  }
-  return new Set([...byName.values()].filter((ids) => ids.length > 1).flat());
-}
-
 // Undo goes back by name only, and only to exactly one title of today's list (the core refuses the
 // rest); `noTitle` is no title before, which this version cannot put back.
 export type UndoReadiness = "ready" | "noTitle" | "unresolved" | "ambiguous";

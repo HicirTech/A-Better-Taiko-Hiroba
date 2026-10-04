@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
 import type { TitleState } from "../session-port";
-import { currentOptions, filterTitles, repeatedOptions } from "./title-options";
+import { currentOptions, filterTitles } from "./title-options";
 
 export interface TitlePickerProps {
   readonly options: readonly TitleOption[];
@@ -19,7 +19,6 @@ export interface TitlePickerProps {
 export function TitlePicker({ options, picked, worn, busy, onPick, i18n }: TitlePickerProps) {
   const { t } = i18n;
   const current = useMemo(() => currentOptions(options, worn), [options, worn]);
-  const repeated = useMemo(() => repeatedOptions(options), [options]);
   return (
     <Autocomplete
       id="title-pick"
@@ -55,11 +54,6 @@ export function TitlePicker({ options, picked, worn, busy, onPick, i18n }: Title
               <Typography component="span" lang={HIROBA_LANG} sx={{ flexGrow: 1 }}>
                 {option.label}
               </Typography>
-              {repeated.has(option.id) && (
-                <Typography component="span" variant="body2" color="text.secondary">
-                  {t("costume.id", { id: option.id })}
-                </Typography>
-              )}
               {current.has(option.id) && <Chip size="small" label={t("title.current")} />}
             </Box>
           </li>
