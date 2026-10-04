@@ -282,6 +282,24 @@ export interface Messages {
   "difficulty.ura": string;
   /** Params: {difficulty} (a difficulty.* text) and {level}, its stars. A level badge's name. */
   "song.level": string;
+  /** A folder write: each key has the costume's key, without "folder.", as its base. */
+  "write.folder.unchanged": string;
+  "write.folder.diverged": string;
+  "write.folder.changedSincePreview": string;
+  "write.folder.nothingToChange": string;
+  /** A 大好きな曲 write, worded like the folder's. */
+  "write.favoriteSong.unchanged": string;
+  "write.favoriteSong.diverged": string;
+  "write.favoriteSong.changedSincePreview": string;
+  "write.favoriteSong.nothingToChange": string;
+  /** Hiroba's codes for a refused 大好きな曲, which come with no message of their own. */
+  "write.favoriteSong.refused1": string;
+  "write.favoriteSong.refused2": string;
+  /** Param: {number}, a slot's place in the folder, from 1. */
+  "favorites.slot": string;
+  "favorites.slot.empty": string;
+  "favorites.song.heading": string;
+  "favorites.song.none": string;
 }
 
 export type MessageKey = keyof Messages;

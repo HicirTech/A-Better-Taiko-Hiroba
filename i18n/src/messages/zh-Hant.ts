@@ -227,4 +227,20 @@ export const zhHant: Messages = {
   "difficulty.oni": "魔鬼",
   "difficulty.ura": "魔鬼(裏)",
   "song.level": "{difficulty} ★{level}",
+  "write.folder.unchanged": "廣場回覆已儲存，但讀回的收藏資料夾仍是原樣。沒有任何變化。",
+  "write.folder.diverged": "收藏資料夾沒有按計畫變更。請比較下方內容。",
+  "write.folder.changedSincePreview":
+    "讀取此頁面後，你的收藏資料夾在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
+  "write.folder.nothingToChange": "目前已經是這個收藏資料夾。沒有傳送任何內容。",
+  "write.favoriteSong.unchanged": "廣場回覆已儲存，但讀回的最愛歌曲仍是原樣。沒有任何變化。",
+  "write.favoriteSong.diverged": "最愛歌曲沒有按計畫變更。請比較下方內容。",
+  "write.favoriteSong.changedSincePreview":
+    "讀取此頁面後，你的最愛歌曲在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
+  "write.favoriteSong.nothingToChange": "目前已經是這首最愛歌曲。沒有傳送任何內容。",
+  "write.favoriteSong.refused1": "廣場表示這首歌曲尚未解鎖。",
+  "write.favoriteSong.refused2": "廣場表示這首歌曲尚未發布。",
+  "favorites.slot": "第 {number} 首",
+  "favorites.slot.empty": "（空）",
+  "favorites.song.heading": "最愛歌曲",
+  "favorites.song.none": "未設定",
 };

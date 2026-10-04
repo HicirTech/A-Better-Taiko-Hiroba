@@ -250,4 +250,22 @@ export const ja: Messages = {
   "difficulty.oni": "おに",
   "difficulty.ura": "おに裏",
   "song.level": "{difficulty} ★{level}",
+  "write.folder.unchanged":
+    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すとフォルダは元のままでした。",
+  "write.folder.diverged": "フォルダが予定どおりになりませんでした。下で比べてください。",
+  "write.folder.changedSincePreview":
+    "このページを読み込んだあとに、フォルダがほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
+  "write.folder.nothingToChange": "すでにそのフォルダです。何も送信していません。",
+  "write.favoriteSong.unchanged":
+    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すと大好きな曲は元のままでした。",
+  "write.favoriteSong.diverged": "大好きな曲が予定どおりになりませんでした。下で比べてください。",
+  "write.favoriteSong.changedSincePreview":
+    "このページを読み込んだあとに、大好きな曲がほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
+  "write.favoriteSong.nothingToChange": "すでにその大好きな曲です。何も送信していません。",
+  "write.favoriteSong.refused1": "ひろばは、この曲がまだ解禁されていないと言っています。",
+  "write.favoriteSong.refused2": "ひろばは、この曲が公開されていないと言っています。",
+  "favorites.slot": "{number}曲目",
+  "favorites.slot.empty": "（空）",
+  "favorites.song.heading": "大好きな曲",
+  "favorites.song.none": "未設定",
 };

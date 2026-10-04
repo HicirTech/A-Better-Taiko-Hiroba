@@ -228,4 +228,20 @@ export const zhHans: Messages = {
   "difficulty.oni": "魔王",
   "difficulty.ura": "魔王(里)",
   "song.level": "{difficulty} ★{level}",
+  "write.folder.unchanged": "广场回复已保存，但读回的收藏夹仍是原样。没有任何变化。",
+  "write.folder.diverged": "收藏夹没有按计划更改。请对比下方内容。",
+  "write.folder.changedSincePreview":
+    "读取此页面后，你的收藏夹在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
+  "write.folder.nothingToChange": "当前已经是这个收藏夹。没有发送任何内容。",
+  "write.favoriteSong.unchanged": "广场回复已保存，但读回的最爱歌曲仍是原样。没有任何变化。",
+  "write.favoriteSong.diverged": "最爱歌曲没有按计划更改。请对比下方内容。",
+  "write.favoriteSong.changedSincePreview":
+    "读取此页面后，你的最爱歌曲在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
+  "write.favoriteSong.nothingToChange": "当前已经是这首最爱歌曲。没有发送任何内容。",
+  "write.favoriteSong.refused1": "广场表示这首歌曲尚未解锁。",
+  "write.favoriteSong.refused2": "广场表示这首歌曲尚未发布。",
+  "favorites.slot": "第 {number} 首",
+  "favorites.slot.empty": "（空）",
+  "favorites.song.heading": "最爱歌曲",
+  "favorites.song.none": "未设置",
 };

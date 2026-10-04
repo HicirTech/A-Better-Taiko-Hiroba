@@ -244,4 +244,22 @@ export const en: Messages = {
   "difficulty.oni": "Extreme",
   "difficulty.ura": "Extreme (Inner)",
   "song.level": "{difficulty} ★{level}",
+  "write.folder.unchanged":
+    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the folder as it was.",
+  "write.folder.diverged": "The folder did not end up as planned. Compare below.",
+  "write.folder.changedSincePreview":
+    "Your folder was changed elsewhere since this page read it. Nothing was sent; the page now shows it as it is.",
+  "write.folder.nothingToChange": "That is the folder already. Nothing was sent.",
+  "write.favoriteSong.unchanged":
+    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the favourite song as it was.",
+  "write.favoriteSong.diverged": "The favourite song did not end up as planned. Compare below.",
+  "write.favoriteSong.changedSincePreview":
+    "Your favourite song was changed elsewhere since this page read it. Nothing was sent; the page now shows it as it is.",
+  "write.favoriteSong.nothingToChange": "That is your favourite song already. Nothing was sent.",
+  "write.favoriteSong.refused1": "Hiroba says this song isn't unlocked yet.",
+  "write.favoriteSong.refused2": "Hiroba says this song isn't published.",
+  "favorites.slot": "Song {number}",
+  "favorites.slot.empty": "(empty)",
+  "favorites.song.heading": "Favourite song",
+  "favorites.song.none": "Not set",
 };

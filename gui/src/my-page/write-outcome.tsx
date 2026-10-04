@@ -3,7 +3,7 @@ import { Alert, Table, TableBody, TableCell, TableHead, TableRow, Typography } f
 
 import { HIROBA_LANG } from "../language/show-language";
 import type { WriteKind, WriteSets } from "../session-port";
-import { type Cell, describeOutcome } from "./outcome-words";
+import { type Cell, type DescribeOptions, describeOutcome } from "./outcome-words";
 import type { Noticed } from "./write-ending";
 
 /** A cell's `lang`: Hiroba's own words are Japanese whatever language the page is in. */
@@ -13,15 +13,20 @@ export function WriteOutcomeNotice<K extends WriteKind>({
   outcome,
   kind,
   i18n,
+  songName,
   id = "write-outcome",
 }: {
   outcome: Noticed<WriteSets[K]>;
   kind: K;
   i18n: Translator;
+  songName?: DescribeOptions<K>["songName"];
   id?: string;
 }) {
   const { t } = i18n;
-  const { severity, message, notes, codes, comparison } = describeOutcome(outcome, i18n, { kind });
+  const { severity, message, notes, codes, comparison } = describeOutcome(outcome, i18n, {
+    kind,
+    songName,
+  });
   return (
     <Alert id={id} severity={severity} data-outcome={outcome.kind}>
       <Typography variant="body2">{message}</Typography>

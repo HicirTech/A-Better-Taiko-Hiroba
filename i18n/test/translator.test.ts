@@ -250,6 +250,7 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
   "difficulty.hard": inEach("Hard", "むずかしい", "困难", "困難"),
   "difficulty.oni": inEach("Extreme", "おに", "魔王", "魔鬼"),
   "difficulty.ura": inEach("Extreme (Inner)", "おに裏", "魔王(里)", "魔鬼(裏)"),
+  "favorites.song.heading": inEach("Favourite song", "大好きな曲", "最爱歌曲", "最愛歌曲"),
 };
 
 const COSTUME = inEach(["costume"], ["きせかえ"], ["换装"], ["換裝"]);
@@ -334,6 +335,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "變資超跟路身軀較載輯輸轉辨送這通連進逾遊過達選還部重金銀銅錄錯長閉開間關限",
     "除階隨雅面頁項預頭顏顯體鼓牌",
     "流音樂動兒童科創綜藝古典普困難魔鬼裏",
+    "首解鎖第",
     "發稍布",
     "者類星其他來太基依",
   ].join(""),
