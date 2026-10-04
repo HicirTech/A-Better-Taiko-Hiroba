@@ -12,6 +12,17 @@ import {
 import { barOf, CROWN_SHARES, legendOf, overviewHelpers, type Share } from "./overview";
 import { myPageHits, platesSettled, readHits } from "./stand-in";
 
+export const readAgainKeys = [
+  "rotationTakenUp",
+  "readAgainIsASmallFab",
+  "readAgainShutWhileReading",
+  "settingsSignedInWhileReading",
+  "fabOnlyUnderFocusOnTouch",
+  "pullPastThePointReads",
+  "pullOnlyDownFromTheTop",
+  "portraitTooltipShutInPull",
+] as const;
+
 export async function readAgain(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, currentPage, goTo, page, text, textOf, until } = ctx.app;
@@ -130,6 +141,21 @@ export async function readAgain(ctx: Ctx) {
     (await currentPage()) === "overview";
   await touchEmulated(false);
 }
+
+export const profileVariantsKeys = [
+  "medalCompleteShown",
+  "medalOddShownWithTheRest",
+  "medalNoneShown",
+  "medalCountShown",
+  "danLessRowRead",
+  "lastUpdatedLineShown",
+  "favoritesUnsetShown",
+  "favoritesSetShown",
+  "unreadableDanShownWithTheRest",
+  "twoRequestsWithDanOneWithout",
+  "danLabelPictureCostsNothing",
+  "panelZerosShown",
+] as const;
 
 export async function profileVariants(ctx: Ctx) {
   const { results, state } = ctx;

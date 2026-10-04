@@ -65,5 +65,6 @@ export type Phase = "none" | "signedOut" | "signedIn" | "after";
 export type Section = {
   name: string;
   phase: Phase;
+  keys: readonly string[];
   run: (ctx: Ctx) => Promise<void>;
 };

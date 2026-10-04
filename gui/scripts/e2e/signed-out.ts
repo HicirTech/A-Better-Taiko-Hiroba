@@ -2,6 +2,16 @@ import { BRIDGE_CHANNELS } from "../../src/session-port";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 
+export const signedOutKeys = [
+  "navigationShown",
+  "schemeFollowsSystem",
+  "menuOnNarrowWindow",
+  "costumePageInNavigation",
+  "nameTitlePageInNavigation",
+  "surface",
+  "bridgeIsThePortVerbs",
+] as const;
+
 export async function signedOut(ctx: Ctx) {
   const { results } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;

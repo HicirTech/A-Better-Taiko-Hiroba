@@ -30,6 +30,27 @@ import {
   thumbsSettled,
 } from "./stand-in";
 
+export const costumeEditorKeys = [
+  "portraitJumpsToCostumeByClick",
+  "editorNotReadAtStart",
+  "previewShownOnOpen",
+  "writesOpenWithNoFlag",
+  "editorReadOnceWhenOpened",
+  "previewKeptBetweenVisits",
+  "tileThumbnailsAskedOnceEach",
+  "noChangeSummaryShown",
+  "draftSurvivesAPageSwitch",
+  "resetRestoresTheSet",
+  "readAgainReadsTheEditorHere",
+  "readAgainKeepsADraftOverAnUnchangedSet",
+  "readAgainDropsADraftOverAMovedSet",
+  "saveBarStaysAtTheBottom",
+  "costumePageIsAColumnOnANarrowWindow",
+  "costumePageUsesTheWidthOfAWideWindow",
+  "failedSaveKeepsTheNoticeAndDraft",
+  "myDonNotAskedAfterNoChange",
+] as const;
+
 export async function costumeEditor(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, currentPage, goTo, page, text, textOf } = ctx.app;
@@ -184,6 +205,19 @@ export async function costumeEditor(ctx: Ctx) {
     same(await savedCostume(), START);
 }
 
+export const portraitPreviewKeys = [
+  "portraitIsTheCostumeButton",
+  "portraitJumpsToCostumeByKeyboard",
+  "portraitJumpsToCostumeByLongPress",
+  "noticeGoesWithReset",
+  "columnStillAcrossPages",
+  "previewChangesAfterColour",
+  "previewBurstSendsOne",
+  "previewAddressAndCookieKeptOutOfDom",
+  "previewFailureLeavesTheEditor",
+  "previewNoneOnceShut",
+] as const;
+
 export async function portraitPreview(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
@@ -337,6 +371,30 @@ export async function portraitPreview(ctx: Ctx) {
   await Bun.sleep(800);
   results.previewNoneOnceShut = same(await previewQueries(), []);
 }
+
+export const costumeWriteKeys = [
+  "colourApplied",
+  "appliedShowsNoNotice",
+  "colourSentOnlyThePlannedRequests",
+  "colourMovedOneField",
+  "postsCarryTheAjaxShape",
+  "saveIsOneClick",
+  "savedCostumeLeavesNoMessageAnywhere",
+  "historyListsTheNewSetFirstAndTheOldSecond",
+  "historyDialogListsEntriesAsNamedButtons",
+  "historyMarksTheSetWornNow",
+  "historyAsksHirobaNothing",
+  "historyDialogClosesByEscapeAndButtonAndGivesFocusBack",
+  "historyDialogFullScreenOnANarrowWindow",
+  "historyPickPutsTheSetInTheDraft",
+  "historyPickSavesLikeAnyChange",
+  "historyHoldsEachSetOnceAfterGoingBack",
+  "myDonAgainAfterWrite",
+  "kigurumiInfoAboveThePart",
+  "kigurumiBlanksTheOtherTiles",
+  "kigurumiEmptiesThePieces",
+  "kigurumiGoneBackInOnePost",
+] as const;
 
 export async function costumeWrite(ctx: Ctx) {
   const { results } = ctx;

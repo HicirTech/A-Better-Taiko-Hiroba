@@ -78,6 +78,18 @@ export function sessionHelpers(ctx: Ctx) {
   return { panelArtShownOn, myDonShownOn, medalPlateShown, shownOnReopen, signOut };
 }
 
+export const sessionExpiryKeys = [
+  "sessionGoneBeforeSaveSendsNothing",
+  "costumeSignInCardAsWideAsTheOverviews",
+  "sessionGoneAfterSaveIsDroppedAndTheEditorShowsTheSet",
+  "lostSessionHandled",
+  "cancelHandled",
+  "refusalNamed",
+  "signInForgetsThePictures",
+  "signInForgetsTheCostumePreview",
+  "sessionKept",
+] as const;
+
 export async function sessionExpiry(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, clickButton, goTo, page, until } = ctx.app;
@@ -176,6 +188,23 @@ export async function sessionExpiry(ctx: Ctx) {
     existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
 }
 
+export const reopenKeys = [
+  "signedInAfterReopen",
+  "readsOnReopen",
+  "editorNotReadOnReopen",
+  "plateOncePerDevice",
+  "scorePanelOncePerDevice",
+  "legendIconsOncePerDevice",
+  "myDonOncePerLaunch",
+  "medalPlateOncePerDevice",
+  "breakSendsNothing",
+  "titleAndNameBreakSendNothing",
+  "historyKeptAcrossRelaunch",
+  "editorReadOnceOnReopen",
+  "thumbnailsOncePerDevice",
+  "signOutHandled",
+] as const;
+
 export async function reopen(ctx: Ctx) {
   let running = ctx.app;
   const { results, state } = ctx;
@@ -273,6 +302,23 @@ export async function reopen(ctx: Ctx) {
 
   results.signOutHandled = (await signOut()) && !existsSync(SESSION_FILE);
 }
+
+export const signedOutReopenKeys = [
+  "signedOutAfterReopen",
+  "signedOutWritesSendNothing",
+  "writesOpenOnAFlaglessLaunch",
+  "writeSentWithNoFlag",
+  "picturesSurviveSignOut",
+  "medalPlateSurvivesSignOut",
+  "scorePanelSurvivesSignOut",
+  "legendIconsSurviveSignOut",
+  "myDonKeptAtSignIn",
+  "unconfirmedPlateAskedAgain",
+  "playerPicturesKeptAtSignOut",
+  "historyKeptAcrossSignOutAndIn",
+  "historyPickShowsThePictureAtOnceAsksNothing",
+  "myDonSentNoCookie",
+] as const;
 
 export async function signedOutReopen(ctx: Ctx) {
   let running = ctx.app;

@@ -5,6 +5,21 @@ import { at, costumeHelpers, gapsOf, near } from "./costume-helpers";
 import { type Box, hoverOver, pageHelpers, SHIFT_MODIFIER, same, waitFor } from "./harness";
 import { editorHits, hitsOn, START, savedCostume } from "./stand-in";
 
+export const costumeLayoutKeys = [
+  "costumeTilesNamedPartFirst",
+  "costumeInTwoColumns",
+  "costumePreviewIsSquare",
+  "costumePreviewLevelWithTheGridsFirstRow",
+  "costumeTilesInTwoRowsUnderTheirCaptions",
+  "costumeButtonsStackedInTheLeftColumn",
+  "costumeGridPackedFromTheLeft",
+  "costumeOnlyThePageScrolls",
+  "costumeGridHoldsMoreColumnsOnABigWindow",
+  "costumePageScrollsForMoreItemsThanFit",
+  "costumeLeftColumnStaysInView",
+  "costumeLeftColumnScrollsAwayOnAShortWindow",
+] as const;
+
 export async function costumeLayout(ctx: Ctx) {
   const { results } = ctx;
   const { page } = ctx.app;
@@ -190,6 +205,14 @@ export async function costumeLayout(ctx: Ctx) {
   await fetch(`${HIROBA}/__items?many=0`);
 }
 
+export const costumeTilesKeys = [
+  "costumePartPickedInTheTileShowsItsGrid",
+  "costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpace",
+  "costumeTilesNamedByTooltipOnHoverAndFocus",
+  "costumeNoneCellEmptiesASlotAndCarriesTheRing",
+  "costumeGridPickChangesItsTile",
+] as const;
+
 export async function costumeTiles(ctx: Ctx) {
   const { results } = ctx;
   const { click, page, textOf } = ctx.app;
@@ -286,6 +309,26 @@ export async function costumeTiles(ctx: Ctx) {
   results.costumeNoneCellEmptiesASlotAndCarriesTheRing = await noneCellInUse();
   results.costumeGridPickChangesItsTile = await gridPickChangesItsTile();
 }
+
+export const costumePhoneKeys = [
+  "costumePhoneFocusStaysClearOfTheBlockAndTheBar",
+  "costumePhoneGridScrollsOutOfSightUnderTheTopBlock",
+  "costumeKeepsThePartPickedAcrossWidths",
+  "costumePhoneTilesInOneRowUnderTheSquarePreview",
+  "costumePhoneGridBelowTheTiles",
+  "barHoldsHistoryLeftAndResetAndSaveRight",
+  "costumePhoneBarLabelsStayOnOneLine",
+  "costumeNoneCellEmptiesASlotOnAPhone",
+  "costumeGridPickChangesItsTileOnAPhone",
+  "costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpaceOnAPhone",
+  "narrowSaveFromTheBarIsOneClick",
+  "narrowNoticeAboveTheEditor",
+  "costumePhoneTopBlockStaysInViewOnATallWindowAndScrollsAwayOnAShortOne",
+  "costumePhoneBarFlushWithTheBottom",
+  "costumePhoneOnlyThePageScrolls",
+  "pullFromTheGridLeavesAScrolledPageAloneOnAPhone",
+  "pullReadsTheEditorOnAPhone",
+] as const;
 
 export async function costumePhone(ctx: Ctx) {
   const { results } = ctx;

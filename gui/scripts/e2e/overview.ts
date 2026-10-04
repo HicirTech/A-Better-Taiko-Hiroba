@@ -138,6 +138,26 @@ export function overviewHelpers(app: App) {
   };
 }
 
+export const overviewKeys = [
+  "profileShown",
+  "panelSharesShown",
+  "panelBlocksShown",
+  "tokenInRendererDom",
+  "danShownByName",
+  "regionLeftOffCard",
+  "taikoNoAndUrlsKeptOutOfDom",
+  "readsAfterSignIn",
+  "legendFallsBackToDots",
+  "plateDrawnUnderTitle",
+  "plateOnAppSurface",
+  "danLabelShownAsPicture",
+  "overviewShapedLikeMyPage",
+  "overviewBlocksHaveNoBorders",
+  "myDonAlignedWithTheColumn",
+  "scorePanelMissingStandsIn",
+  "headerAddressesKeptOutOfDom",
+] as const;
+
 export async function overview(ctx: Ctx) {
   const running = ctx.app;
   const { results, state, tokens } = ctx;

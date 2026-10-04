@@ -15,6 +15,16 @@ function* walk(dir: string): Generator<string> {
   }
 }
 
+export const dataFolderKeys = [
+  "userDataHits",
+  "partitionsFolder",
+  "debugReadsRedacted",
+  "titleDebugReadRedacted",
+  "noUndoKeptOnDisk",
+  "picturesFiledUnderHashes",
+  "medalIdsKeptOffDisk",
+] as const;
+
 export async function dataFolder(ctx: Ctx) {
   const { medalIds, results, tokens } = ctx;
 

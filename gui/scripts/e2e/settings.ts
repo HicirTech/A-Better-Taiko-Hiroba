@@ -5,6 +5,18 @@ import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import { platesAsked, readHits, requestLog, resetLog } from "./stand-in";
 
+export const languageKeys = [
+  "systemLanguageTaken",
+  "choicesNameEachLanguage",
+  "pageKeptAcrossLaunches",
+  "shownLanguagePickKept",
+  "pickTakesHold",
+  "pickKeptAcrossLaunches",
+  "systemDefaultTakesHold",
+  "systemDefaultKeptAcrossLaunches",
+  "choicesMoveByArrows",
+] as const;
+
 export async function language(ctx: Ctx) {
   const { results } = ctx;
 
@@ -122,6 +134,14 @@ export async function language(ctx: Ctx) {
     rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
   }
 }
+
+export const settingsKeys = [
+  "settingsLaidOutLikeGmail",
+  "languageRedrawsInPlace",
+  "languageAsksHirobaNothing",
+  "hirobaWordsMarkedJapanese",
+  "gameTermsLeftUnmarked",
+] as const;
 
 export async function settings(ctx: Ctx) {
   const { results, state } = ctx;

@@ -43,6 +43,29 @@ import {
   titleOf,
 } from "./stand-in";
 
+export const titleKeys = [
+  "titleListShown",
+  "titleWornMarked",
+  "titleAndNameWordsMarkedJapanese",
+  "titlePickerListsEachTitleOnce",
+  "titlePickerButtonsNamedInTheCatalog",
+  "titleSharedNameNamed",
+  "titlePickAloneWritesNothing",
+  "titleWriteKeepsTheFocusAndSaysNothing",
+  "titleSuccessSaysNothing",
+  "titleApplied",
+  "titleIdsNotShown",
+  "titleSentOnlyThePlannedRequests",
+  "titlePostsCarryTheAjaxShape",
+  "titleMovedOneField",
+  "titleWriteLeavesTheMyDon",
+  "titleRefusedShowsCode",
+  "titlePrecheckStopsTheSave",
+  "titleNoopSaveNotApplied",
+  "titleStaleSaysStale",
+  "titleCostumeMovedIsDiverged",
+] as const;
+
 export async function title(ctx: Ctx) {
   const { results } = ctx;
   const { goTo, page, text, textOf } = ctx.app;
@@ -304,6 +327,22 @@ export async function title(ctx: Ctx) {
   await readTitlesAgain();
 }
 
+export const nicknameKeys = [
+  "nameFieldPrefilled",
+  "nameMaxLengthAndCounter",
+  "nameUnchangedSendsNothing",
+  "nameInvalidRefusedUnsent",
+  "nameClosedShowsWhy",
+  "nameApplied",
+  "nameSuccessSaysNothing",
+  "nameSentOnlyThePlannedRequests",
+  "namePostCarriesTheFormOrder",
+  "nameRefusedForAQuickChangeCanBeSavedAgain",
+  "nameRefusedShowsHirobaWordsAsText",
+  "nameCompositionNotJudgedUntilCommitted",
+  "nameEnterWhileComposingSendsNothing",
+] as const;
+
 export async function nickname(ctx: Ctx) {
   const { results } = ctx;
   const { page, text, textOf } = ctx.app;
@@ -503,6 +542,15 @@ export async function nickname(ctx: Ctx) {
     enterInComposition.step === "idle";
 }
 
+export const nameTitleWritesKeys = [
+  "nameEnterSavesAValidNickname",
+  "noReadInsideAWriteHeldAtASave",
+  "noReadInsideAWriteHeldAtAPrecheck",
+  "signOutShutWhileATitleOrNameWriteRuns",
+  "sessionGoneAfterTitleSaveDropsTheSession",
+  "formTokensKeptOutOfDom",
+] as const;
+
 export async function nameTitleWrites(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, goTo, page, textOf, until } = ctx.app;
@@ -611,6 +659,12 @@ export async function nameTitleWrites(ctx: Ctx) {
   results.formTokensKeptOutOfDom =
     handedOut.length > 0 && !handedOut.some((ticket) => windowNow.includes(ticket));
 }
+
+export const namePlateKeys = [
+  "namePlateIsTheNicknameAndTitleButton",
+  "namePlateOpensNicknameAndTitleByClickAndKeys",
+  "namePlateOpensNicknameAndTitleByLongPress",
+] as const;
 
 export async function namePlate(ctx: Ctx) {
   // Reads the click log that portrait-preview sets up on the page.

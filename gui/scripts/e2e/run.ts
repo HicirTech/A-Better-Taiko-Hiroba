@@ -5,7 +5,7 @@ import electronPath from "electron";
 
 import { type App, launch, stop } from "./app";
 import { HIROBA, MY_PAGE, NOON_JST, root, USER_DATA } from "./config";
-import { type Ctx, newShared, type Phase } from "./context";
+import { type Ctx, newShared, type Phase, type Section } from "./context";
 import { setSection, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
 
@@ -54,6 +54,8 @@ const ctx: Ctx = {
   },
 };
 
+const errors: { section: string; message: string }[] = [];
+
 async function launchMain() {
   app = await launch({ now: NOON_JST });
   const { until } = app;
@@ -81,6 +83,11 @@ async function stopMain() {
   mock.kill();
 }
 
+const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
+
+/** Set once the app cannot be started or signed in, so the sections that need it say so at once. */
+let blocked: string | undefined;
+
 async function prepare(phase: Phase) {
   if (phase === "none") {
     return;
@@ -89,23 +96,88 @@ async function prepare(phase: Phase) {
     await stopMain();
     return;
   }
+  if (blocked !== undefined) {
+    throw new Error(`Skipped: ${blocked}`);
+  }
   if (app === undefined) {
-    await launchMain();
+    try {
+      await launchMain();
+    } catch (error) {
+      blocked = `the app did not start (${messageOf(error)})`;
+      throw error;
+    }
   }
   if (phase === "signedIn" && !signedIn) {
-    await signIn();
+    try {
+      await signIn();
+    } catch (error) {
+      blocked = `the app did not sign in (${messageOf(error)})`;
+      throw error;
+    }
     signedIn = true;
+  }
+}
+
+const RECOVERY = [
+  "/__hold-precheck?on=0",
+  "/__title-hold-precheck?on=0",
+  "/__profile-hold-save?on=0",
+  "/__hold-read?on=0",
+  "/__state?reset=1",
+  "/__profile?reset=1",
+  "/__items?many=0",
+];
+
+/** After a throw the window may be left resized or touch-emulated, and the stand-in holding a reply. */
+async function recover() {
+  const quickly = (work: Promise<unknown>) =>
+    Promise.race([work, Bun.sleep(3_000)]).catch(() => undefined);
+  if (app !== undefined) {
+    const { page } = app;
+    await quickly(page.send("Emulation.clearDeviceMetricsOverride", {}));
+    await quickly(page.send("Emulation.setTouchEmulationEnabled", { enabled: false }));
+    await quickly(page.send("Emulation.setEmulatedMedia", { features: [] }));
+  }
+  for (const path of RECOVERY) {
+    await quickly(fetch(`${HIROBA}${path}`));
+  }
+}
+
+async function runSection(section: Section) {
+  setSection(section.name);
+  const before = new Set(Object.keys(results));
+  try {
+    await prepare(section.phase);
+    await section.run(ctx);
+    const unset = section.keys.filter((key) => !(key in results));
+    const unlisted = Object.keys(results).filter(
+      (key) => !before.has(key) && !section.keys.includes(key),
+    );
+    if (unset.length > 0 || unlisted.length > 0) {
+      throw new Error(
+        `The key list is out of date. Not set: [${unset}]. Not listed: [${unlisted}]`,
+      );
+    }
+  } catch (error) {
+    errors.push({ section: section.name, message: messageOf(error) });
+    for (const key of section.keys) {
+      results[key] ??= false;
+    }
+    await recover();
   }
 }
 
 try {
   for (const section of SECTIONS) {
-    setSection(section.name);
-    await prepare(section.phase);
-    await section.run(ctx);
+    await runSection(section);
   }
 } finally {
   await stopMain();
+}
+
+if (errors.length > 0) {
+  results.errors = errors;
+  process.exitCode = 1;
 }
 
 console.log(JSON.stringify(results, null, 2));

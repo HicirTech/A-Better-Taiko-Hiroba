@@ -25,6 +25,21 @@ import {
   titleOf,
 } from "./stand-in";
 
+export const bridgeWritesKeys = [
+  "trapRefusedUnsent",
+  "previewWaitsOutAWrite",
+  "pictureWaitsOutAWrite",
+  "signOutShutWhileAWriteRuns",
+  "noReadInsideAWrite",
+  "noopSaveNotApplied",
+  "precheckStopsTheSave",
+  "postToLoginKeepsTheSession",
+  "postRedirectFollowedAsABrowserDoes",
+  "saveAfterAChangeElsewhereStopsAndKeepsTheDraft",
+  "noticeGoesWithTheNextPick",
+  "saveStoppedForAMovedSetGoesOnceTheEditorHasIt",
+] as const;
+
 export async function bridgeWrites(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
@@ -209,6 +224,8 @@ export async function bridgeWrites(ctx: Ctx) {
   await readEditorAgain();
 }
 
+export const heldWritesKeys = ["everyReadWaitsOutEveryWrite"] as const;
+
 export async function heldWrites(ctx: Ctx) {
   const running = ctx.app;
   const { results, tokens } = ctx;
@@ -290,6 +307,11 @@ export async function heldWrites(ctx: Ctx) {
   await fetch(`${HIROBA}/__state?reset=1`);
   await fetch(`${HIROBA}/__profile?reset=1`);
 }
+
+export const firstReadsKeys = [
+  "firstTitleReadWaitsOutACostumeWrite",
+  "firstEditorReadWaitsOutARename",
+] as const;
 
 export async function firstReads(ctx: Ctx) {
   const running = ctx.app;

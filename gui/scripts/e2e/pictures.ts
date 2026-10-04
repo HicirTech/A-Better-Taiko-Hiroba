@@ -37,6 +37,8 @@ function pictureHelpers(page: Page) {
   return { shownNow };
 }
 
+export const myDonFailureKeys = ["readsAfterReadAgain", "myDonFailureCoded"] as const;
+
 export async function myDonFailure(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page, textOf, until } = ctx.app;
@@ -61,6 +63,17 @@ export async function myDonFailure(ctx: Ctx) {
     !(await exists("#my-don-image")) &&
     (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
 }
+
+export const picturesKeys = [
+  "myDonShown",
+  "myDonAddressKeptOutOfDom",
+  "myDonAgainOnReadAgain",
+  "scorePanelArtShown",
+  "legendIconsShown",
+  "legendIconsAskedOnceEach",
+  "legendNamesShownAsTooltips",
+  "myDonMissingKeepsTheLast",
+] as const;
 
 export async function pictures(ctx: Ctx) {
   const running = ctx.app;
@@ -217,6 +230,12 @@ export async function pictures(ctx: Ctx) {
   await fetch(`${HIROBA}/__mydon?answer=png`);
 }
 
+export const titlePlateKeys = [
+  "myDonAlignedWithoutThePlate",
+  "plateBlankFallsBack",
+  "plateOncePerTitle",
+] as const;
+
 export async function titlePlate(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page, textOf, until } = ctx.app;
@@ -265,6 +284,16 @@ export async function titlePlate(ctx: Ctx) {
     afterTitles.length === afterOther.length &&
     askedAsMyPage(afterTitles);
 }
+
+export const medalPlateKeys = [
+  "medalPlateAskedOnlyOnScreen",
+  "medalPlateMissingReadsAsText",
+  "medalPlateDrawnUnderText",
+  "medalPlateOnAppSurface",
+  "medalIdKeptOutOfDom",
+  "medalPlateLaidOutAsOnHiroba",
+  "medalPlateOncePerIdAndState",
+] as const;
 
 export async function medalPlate(ctx: Ctx) {
   const { medalIds, results } = ctx;

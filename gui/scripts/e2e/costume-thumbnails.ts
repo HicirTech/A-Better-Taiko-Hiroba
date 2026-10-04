@@ -16,6 +16,21 @@ import {
   thumbsSettled,
 } from "./stand-in";
 
+export const thumbnailsKeys = [
+  "thumbnailsShownAsPictures",
+  "thumbnailsOnlyWhenSeen",
+  "pullFromTheGridLeavesAScrolledPageAlone",
+  "pullReadsTheEditorOnTheCostumePage",
+  "editorTermsLeftUnmarked",
+  "editorTermsInEnglish",
+  "thumbnailAddressesKeptOutOfDom",
+  "thumbnailsAskedOncePerRun",
+  "thumbnailGifLeavesTheId",
+  "failedThumbnailsAskedAgainOnReopen",
+  "thumbnailNotOfferedRefusedUnsent",
+  "pictureShapesRefused",
+] as const;
+
 export async function thumbnails(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, page, textOf } = ctx.app;
@@ -191,6 +206,14 @@ export async function thumbnails(ctx: Ctx) {
     ) && (await thumbs()).length === thumbsBeforeRefusals;
 }
 
+export const tileThumbnailsKeys = [
+  "tileThumbnailWaitsOutAWriteThenIsAskedOnce",
+  "thumbnailsOnlyWhenSeenOnAShortWindow",
+  "tileThumbnailWaitsOutAWriteOnAPhone",
+  "narrowThumbnailsOnlyWhenSeen",
+  "narrowThumbnailsAskedOncePerRun",
+] as const;
+
 export async function tileThumbnails(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page } = ctx.app;
@@ -286,6 +309,16 @@ export async function tileThumbnails(ctx: Ctx) {
   results.narrowThumbnailsAskedOncePerRun =
     thumbnailsOnAPhone.askedAfterReopen === thumbnailsOnAPhone.asked;
 }
+
+export const saveInPlaceKeys = [
+  "costumeThumbnailsInViewDuringASaveWaitForIt",
+  "costumeSaveKeepsTheEditorAndThePageInPlace",
+  "costumePhoneSaveKeepsTheEditorAndThePageInPlace",
+  "costumePreviewLevelWithTheGridsFirstRowBelowTheNotices",
+  "costumeLeftColumnStaysInViewWithANoticeAndTheMascotNote",
+  "costumeNoticeIsScrolledIntoViewAfterAFailedSave",
+  "costumePhoneNoticeIsScrolledIntoViewBetweenTheBlockAndTheBar",
+] as const;
 
 export async function saveInPlace(ctx: Ctx) {
   const { results, state } = ctx;
