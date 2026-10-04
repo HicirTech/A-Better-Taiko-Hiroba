@@ -45,8 +45,8 @@ export function LoadFailed({
   );
 }
 
-// A pressed Review is gone once the review shows, and focus would fall to the window's top; focus
-// anywhere else, such as the navigation, is left alone.
+// A pressed button that a step hides or shuts leaves focus at the window's top; the page takes it
+// then, and focus anywhere else, such as the navigation, is left alone.
 export function useFocusKept(page: RefObject<HTMLElement | null>, step: string) {
   const last = useRef(step);
   useEffect(() => {

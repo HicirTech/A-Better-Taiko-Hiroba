@@ -186,7 +186,7 @@ export interface NameChange {
 export type WriteOutcomeView<S = CostumeSet> =
   | WriteOutcome<S>
   | { readonly kind: "notSignedIn" }
-  /** An app fault, not Hiroba's answer: a post may have gone out, so the next read settles it. */
+  /** An app fault, not Hiroba's answer: a post may have gone out, so the next read shows it. */
   | { readonly kind: "interrupted" }
   /** Asked while another write was queued or running: nothing sent, and never queued after it. */
   | { readonly kind: "busy" };

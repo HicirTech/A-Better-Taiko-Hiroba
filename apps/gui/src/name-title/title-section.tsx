@@ -23,7 +23,7 @@ export function TitleSection({ title, i18n, busy }: TitleSectionProps) {
   const { step } = title;
   const card = useRef<HTMLDivElement>(null);
   useFocusKept(card, step.name);
-  // Both shut while the write runs, and focus would fall to the window's top.
+  // The picker and button shut while the write runs, so focus would fall to the window's top.
   const save = () => {
     card.current?.focus({ preventScroll: true });
     void title.save();

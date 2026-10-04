@@ -121,7 +121,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
   );
 
   // A title write that may have moved the title leaves the plate stale: read my page again.
-  const plateStale = useCallback(() => void read(true), [read]);
+  const readBehindThePage = useCallback(() => void read(true), [read]);
   // The editors live here so a draft, notice or pick survives a visit to another page.
   const editor = useCostumeEditor({
     port,
@@ -134,7 +134,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
     port,
     lane,
     onSessionGone: sessionGone,
-    onMoved: plateStale,
+    onMoved: readBehindThePage,
   });
   const { forget: forgetTitleEditor } = titleEditor;
   const nameRead = useCallback(

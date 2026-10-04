@@ -24,7 +24,7 @@ export function NameSection({ name, profile, i18n, busy }: NameSectionProps) {
   const { step } = name;
   const card = useRef<HTMLDivElement>(null);
   useFocusKept(card, step.name);
-  // Both shut while the write runs, and focus would fall to the window's top.
+  // The field and button shut while the write runs, so focus would fall to the window's top.
   const save = () => {
     card.current?.focus({ preventScroll: true });
     void name.save();
