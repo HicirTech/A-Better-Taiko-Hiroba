@@ -52,7 +52,7 @@ export function CostumeItemGrid({
         gridTemplateColumns: `repeat(auto-fill, ${cells.cell}px)`,
         gridAutoRows: `${cells.cell}px`,
         gap: `${cells.gap}px`,
-        justifyContent: "start",
+        justifyContent: "center",
       }}
     >
       <NoneCell part={part} i18n={i18n} cells={cells} chosen={chosen === 0} onPick={onPick} />
