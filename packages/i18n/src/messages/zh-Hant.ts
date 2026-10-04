@@ -171,11 +171,9 @@ export const zhHant: Messages = {
   "write.invalidTarget": "本應用程式在傳送前拒絕了此變更：{field}。",
   "write.nothingToChange": "目前已經是這套換裝。沒有傳送任何內容。",
   "write.maintenance": "廣場每天日本時間 05:00 至 07:00 維護。變更沒有傳送。",
-  "write.undoNotSaved": "無法保存復原紀錄，因此沒有傳送任何內容。",
   "write.needsConfirmation":
     "廣場要求進行本應用程式尚不支援的確認，因此沒有做任何變更。廣場的原話：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "廣場沒有接受本應用程式的要求。沒有做任何變更。",
-  "write.nothingToUndo": "沒有可復原的變更。",
   "write.busy": "另一項變更仍在傳送中，因此這項沒有傳送。",
   "write.interrupted":
     "應用程式在得知結果前就停止了，因此可能已儲存，也可能沒有。重試前請先重新讀取並查看。",

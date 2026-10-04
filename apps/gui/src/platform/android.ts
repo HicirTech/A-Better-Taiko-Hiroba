@@ -26,7 +26,6 @@ import {
   readOwnProfile,
   sessionEnded,
   signInStep,
-  type UndoStore,
 } from "../hiroba-session";
 import {
   type CostumeSet,
@@ -38,7 +37,6 @@ import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
 import { createIndexedDbPictureStore } from "./android-picture-store";
 import { createAndroidTransport } from "./android-transport";
-import { createIndexedDbUndoStore } from "./android-undo-store";
 
 const endpoints: HirobaEndpoints = import.meta.env.DEV
   ? endpointsFromOverrides(
@@ -53,18 +51,12 @@ export interface AndroidPortOptions {
   readonly closeLabel: () => string;
   /** Remembers a finished sign-in: CapacitorCookies.getCookies cannot see the session cookie. */
   readonly signedInFlag?: SignedInFlag;
-  /** Keeps pictures, undo records and costume histories across launches. Without it, no write is
-   * sent and the history is empty. */
+  /** Keeps pictures and costume histories across launches. Without it, pictures stay in memory
+   * and the history is empty. */
   readonly indexedDb?: DatabaseFactory;
   /** The clock a write checks Hiroba's daily break against. */
   readonly now?: () => Date;
 }
-
-/** Refuses every call, so no write is sent: an undo record in memory would not survive a kill. */
-const NO_UNDO_STORE: UndoStore = {
-  load: () => Promise.reject(new Error("There is nowhere to keep an undo record")),
-  save: () => Promise.reject(new Error("There is nowhere to keep an undo record")),
-};
 
 /** Refuses every call, so the history is simply empty. */
 const NO_HISTORY_STORE: CostumeHistoryStore = {
@@ -139,7 +131,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     endpoints,
     platform: "android",
     now: options.now ?? (() => new Date()),
-    undoStore: indexedDb === undefined ? NO_UNDO_STORE : createIndexedDbUndoStore(indexedDb),
     historyStore:
       indexedDb === undefined ? NO_HISTORY_STORE : createIndexedDbHistoryStore(indexedDb),
     recentPreview: previews.pictureOf,
@@ -229,13 +220,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       owner = read.value.taikoNo;
       sources = read.value.pictures;
       await pictures.confirm(read.value.taikoNo);
-      // Settles a write whose end was unknown, and dates a stale undo record.
-      const { view } = read.value;
-      await writes.profileRead({
-        taikoNo: read.value.taikoNo,
-        title: view.title,
-        nickname: view.nickname,
-      });
       return ok(read.value.view);
     },
 
@@ -268,12 +252,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     changeTitle: flushed(writes.changeTitle),
 
     changeName: flushed(writes.changeName),
-
-    // Asks Hiroba nothing, so it skips the queue.
-    pendingUndo: writes.pendingUndo,
-
-    // The port types the outcome by the kind asked; flushed passes on whatever it is given.
-    undo: flushed(writes.undo) as HirobaSessionPort["undo"],
 
     // Asks Hiroba nothing, so it skips the queue.
     costumeHistory: writes.costumeHistory,

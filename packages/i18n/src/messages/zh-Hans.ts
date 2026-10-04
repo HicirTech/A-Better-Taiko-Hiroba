@@ -172,11 +172,9 @@ export const zhHans: Messages = {
   "write.invalidTarget": "本应用在发送前拒绝了此更改：{field}。",
   "write.nothingToChange": "当前已经是这套换装。没有发送任何内容。",
   "write.maintenance": "广场每天日本时间 05:00 至 07:00 维护。更改没有发送。",
-  "write.undoNotSaved": "无法保存撤销记录，因此没有发送任何内容。",
   "write.needsConfirmation":
     "广场要求进行本应用尚不支持的确认，因此没有做任何更改。广场的原话：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "广场没有接受本应用的请求。没有做任何更改。",
-  "write.nothingToUndo": "没有可撤销的更改。",
   "write.busy": "另一项更改仍在发送中，因此这项没有发送。",
   "write.interrupted":
     "应用在得知结果前就停止了，因此可能已保存，也可能没有。重试前请先重新读取并查看。",

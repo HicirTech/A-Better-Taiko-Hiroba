@@ -2,7 +2,6 @@ import * as nodeFs from "node:fs";
 import { dirname } from "node:path";
 
 import { type CostumeHistoryStore, readCostumeHistory } from "../src/hiroba-session";
-import type { UndoFiles } from "./undo-store";
 
 interface StoredHistory {
   readonly version: 1;
@@ -10,11 +9,17 @@ interface StoredHistory {
   readonly players: Record<string, unknown>;
 }
 
+/** The file operations the store makes: node's own, unless a test hands in its own. */
+export type HistoryFiles = Pick<
+  typeof nodeFs,
+  "mkdirSync" | "readFileSync" | "renameSync" | "writeFileSync"
+>;
+
 /** The desktop's costume history: one file, saved via a flushed temporary one renamed over the
- * last, as the undo store saves, so a crash leaves the old file or the new one. */
+ * last, so a crash leaves the old file or the new one. */
 export function createCostumeHistoryStore(
   path: string,
-  files: UndoFiles = nodeFs,
+  files: HistoryFiles = nodeFs,
 ): CostumeHistoryStore {
   const read = (): Record<string, unknown> => {
     try {

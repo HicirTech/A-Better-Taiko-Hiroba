@@ -30,7 +30,6 @@ import { createDiskPictureStore } from "./picture-disk-store";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
-import { createUndoStore } from "./undo-store";
 
 const environment = startedWith();
 const { devServerUrl, endpoints } = environment;
@@ -139,7 +138,6 @@ app.whenReady().then(async () => {
     endpoints,
     platform: "desktop",
     now: environment.now,
-    undoStore: createUndoStore(join(app.getPath("userData"), "undo.json")),
     historyStore: createCostumeHistoryStore(join(app.getPath("userData"), "costume-history.json")),
     recentPreview: previews.pictureOf,
     signedIn: () => sessionCookie !== null,
@@ -187,13 +185,6 @@ app.whenReady().then(async () => {
       owner = read.value.taikoNo;
       sources = read.value.pictures;
       await pictures.confirm(read.value.taikoNo);
-      // Settles a write whose end was unknown, and dates a stale undo record.
-      const { view } = read.value;
-      await writes.profileRead({
-        taikoNo: read.value.taikoNo,
-        title: view.title,
-        nickname: view.nickname,
-      });
       return ok(read.value.view);
     },
     async signOut() {
@@ -218,8 +209,6 @@ app.whenReady().then(async () => {
     changeCostume: writes.changeCostume,
     changeTitle: writes.changeTitle,
     changeName: writes.changeName,
-    pendingUndo: writes.pendingUndo,
-    undo: writes.undo,
     costumeHistory: writes.costumeHistory,
   });
 

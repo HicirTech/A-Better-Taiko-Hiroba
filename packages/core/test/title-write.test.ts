@@ -13,33 +13,20 @@ import { fakeHiroba, NOON_JST, ORIGIN, OWNED, WORN } from "./profile-fixtures";
 const B: TitleTarget = { id: 39, title: "サンプル称号B" };
 const SHARED = "サンプル 称号";
 
-interface Run {
-  readonly outcome: WriteOutcome<TitleState>;
-  readonly undo: [TitleState, TitleState][];
-}
-
-async function change(
+function change(
   transport: Transport,
   target: TitleTarget,
-  options: { expected?: TitleState; crossCheck?: boolean; now?: Date; undoFails?: boolean } = {},
-): Promise<Run> {
-  const undo: [TitleState, TitleState][] = [];
-  const outcome = await changeTitle(
+  options: { expected?: TitleState; crossCheck?: boolean; now?: Date } = {},
+): Promise<WriteOutcome<TitleState>> {
+  return changeTitle(
     { expected: options.expected ?? { title: WORN }, target },
     {
       transport,
       hirobaOrigin: ORIGIN,
       now: () => options.now ?? NOON_JST,
       crossCheck: options.crossCheck ?? false,
-      beginUndo: async (before, expectedAfter) => {
-        if (options.undoFails) {
-          throw new Error("disk full");
-        }
-        undo.push([before, expectedAfter]);
-      },
     },
   );
-  return { outcome, undo };
 }
 
 describe("openTitleEditor", () => {
@@ -69,7 +56,7 @@ describe("openTitleEditor", () => {
 describe("changeTitle's requests", () => {
   test("sends the title page, the pre-check, one save and my page, and no more", async () => {
     const { hiroba, transport, routes } = fakeHiroba();
-    const { outcome } = await change(transport, B);
+    const outcome = await change(transport, B);
     expect(routes()).toEqual([
       "GET mypage_title_edit.php",
       "POST ajax/check_ip_title.php",
@@ -87,7 +74,7 @@ describe("changeTitle's requests", () => {
 
   test("with the cross-check, reads the costume before the title page and after my page", async () => {
     const { transport, routes } = fakeHiroba();
-    const { outcome } = await change(transport, B, { crossCheck: true });
+    const outcome = await change(transport, B, { crossCheck: true });
     // The costume page is read first: it issues a token too, so the title page must be read last.
     expect(routes()).toEqual([
       "GET mypage_kisekae.php",
@@ -139,27 +126,13 @@ describe("changeTitle's requests", () => {
     expect(postsTo("ajax/change_mydon_profile.php")).toHaveLength(1);
   });
 
-  test("keeps the undo record before the first post: the title before and the title planned", async () => {
-    const { transport } = fakeHiroba();
-    const { undo } = await change(transport, B);
-    expect(undo).toEqual([[{ title: WORN }, { title: "サンプル称号B" }]]);
-  });
-
-  test("sends nothing at all, and keeps nothing, in the 05:00-07:00 JST break", async () => {
+  test("sends nothing at all in the 05:00-07:00 JST break", async () => {
     const { transport, routes } = fakeHiroba();
-    const { outcome, undo } = await change(transport, B, {
+    const outcome = await change(transport, B, {
       now: new Date("2026-09-26T20:30:00Z"),
     });
     expect(outcome).toEqual({ kind: "maintenance" });
     expect(routes()).toEqual([]);
-    expect(undo).toEqual([]);
-  });
-
-  test("posts nothing when the undo record cannot be kept", async () => {
-    const { transport, routes } = fakeHiroba();
-    const { outcome } = await change(transport, B, { undoFails: true });
-    expect(outcome).toEqual({ kind: "undoNotSaved" });
-    expect(routes()).toEqual(["GET mypage_title_edit.php"]);
   });
 });
 
@@ -169,7 +142,7 @@ describe("changeTitle's pre-check", () => {
     async (result) => {
       const { hiroba, transport, routes } = fakeHiroba();
       hiroba.precheck = { result };
-      const { outcome } = await change(transport, B);
+      const outcome = await change(transport, B);
       expect(outcome).toEqual({ kind: "needsConfirmation" });
       expect(routes()).toEqual(["GET mypage_title_edit.php", "POST ajax/check_ip_title.php"]);
       expect(hiroba.title).toBe(WORN);
@@ -179,7 +152,7 @@ describe("changeTitle's pre-check", () => {
   test.each([0, "0", null, "false"])("a pre-check of %p stops it too", async (result) => {
     const { hiroba, transport, routes } = fakeHiroba();
     hiroba.precheck = { result };
-    const { outcome } = await change(transport, B);
+    const outcome = await change(transport, B);
     expect(outcome).toMatchObject({ kind: "stoppedBeforeWrite", reason: "precheckUnexpected" });
     expect(routes()).toEqual(["GET mypage_title_edit.php", "POST ajax/check_ip_title.php"]);
     expect(hiroba.title).toBe(WORN);
@@ -255,21 +228,21 @@ describe("changeTitle's result codes, by the title read back", () => {
     const { hiroba, transport } = fakeHiroba();
     // The token check is the fake's own: a save with the right token answers by `save`.
     hiroba.save = { message: "", ...save };
-    const { outcome } = await change(transport, B);
+    const outcome = await change(transport, B);
     expect(outcome).toMatchObject(expected);
   });
 
   test("a code the title contradicts is only a note on an applied write", async () => {
     const { hiroba, transport } = fakeHiroba();
     hiroba.save = { code: 6, stores: true, message: "" };
-    const { outcome } = await change(transport, B);
+    const outcome = await change(transport, B);
     expect(outcome.kind === "applied" && outcome.save.code).toBe(6);
   });
 
   test("keeps Hiroba's own message as text when the answer carries one, err_message included", async () => {
     const { hiroba, transport } = fakeHiroba();
     hiroba.save = { code: 5, stores: false, message: "<b>選択した称号は獲得していません。</b>" };
-    const { outcome } = await change(transport, B);
+    const outcome = await change(transport, B);
     expect(outcome.kind === "notApplied" && outcome.reason).toEqual({
       kind: "refused",
       code: 5,
@@ -289,7 +262,7 @@ describe("changeTitle's result codes, by the title read back", () => {
         return sent;
       },
     };
-    const { outcome } = await change(reading, B);
+    const outcome = await change(reading, B);
     expect(outcome).toMatchObject({ kind: "notApplied", reason: { kind: "stale" } });
     expect(routes().filter((route) => route === "POST ajax/change_mydon_profile.php")).toHaveLength(
       1,
@@ -304,7 +277,7 @@ describe("changeTitle's judgement of where the title ended", () => {
     hiroba.afterSave = () => {
       hiroba.title = "サンプル称号C";
     };
-    const { outcome } = await change(transport, B);
+    const outcome = await change(transport, B);
     expect(outcome).toMatchObject({
       kind: "diverged",
       before: { title: WORN },
@@ -318,7 +291,7 @@ describe("changeTitle's judgement of where the title ended", () => {
     hiroba.afterSave = () => {
       hiroba.costume = { ...hiroba.costume, colorFace: 3 };
     };
-    const { outcome } = await change(transport, B, { crossCheck: true });
+    const outcome = await change(transport, B, { crossCheck: true });
     expect(outcome).toMatchObject({ kind: "diverged", cross: "changed" });
   });
 
@@ -327,7 +300,7 @@ describe("changeTitle's judgement of where the title ended", () => {
     hiroba.title = "サンプル称号A";
     // The list writes an ASCII space, the title page &nbsp;, and my page (the read-back) as it
     // likes: the titles read the same.
-    const { outcome } = await change(transport, { id: 40, title: SHARED });
+    const outcome = await change(transport, { id: 40, title: SHARED });
     expect(outcome).toMatchObject({ kind: "applied", after: { title: SHARED } });
   });
 });
@@ -342,20 +315,19 @@ describe("changeTitle's refusals before anything is posted", () => {
     ["a name that more than one title has", { id: null, title: SHARED }, "title.ambiguous"],
   ])("refuses %s", async (_label, target, field) => {
     const { transport, routes } = fakeHiroba();
-    const { outcome, undo } = await change(transport, target);
+    const outcome = await change(transport, target);
     expect(outcome).toEqual({ kind: "invalidTarget", field });
     expect(routes()).toEqual(["GET mypage_title_edit.php"]);
-    expect(undo).toEqual([]);
   });
 
   test("posts nothing for the title that is worn already, by its own id or another's of the name", async () => {
     const { hiroba, transport, routes } = fakeHiroba();
-    expect((await change(transport, { id: 106, title: WORN })).outcome).toEqual({
+    expect(await change(transport, { id: 106, title: WORN })).toEqual({
       kind: "nothingToChange",
     });
     hiroba.title = SHARED;
     expect(
-      (await change(transport, { id: 41, title: SHARED }, { expected: { title: SHARED } })).outcome,
+      await change(transport, { id: 41, title: SHARED }, { expected: { title: SHARED } }),
     ).toEqual({ kind: "nothingToChange" });
     expect(routes().filter((route) => route.startsWith("POST"))).toEqual([]);
   });
@@ -363,41 +335,8 @@ describe("changeTitle's refusals before anything is posted", () => {
   test("posts nothing when the title was changed elsewhere since the editor was read", async () => {
     const { hiroba, transport, routes } = fakeHiroba();
     hiroba.title = "サンプル称号B";
-    const { outcome, undo } = await change(transport, { id: 106, title: "サンプル称号A" });
+    const outcome = await change(transport, { id: 106, title: "サンプル称号A" });
     expect(outcome).toEqual({ kind: "changedSincePreview", current: { title: "サンプル称号B" } });
     expect(routes()).toEqual(["GET mypage_title_edit.php"]);
-    expect(undo).toEqual([]);
-  });
-});
-
-describe("changeTitle as an undo", () => {
-  test("puts the title back by the name the record holds, resolved to the one id that has it", async () => {
-    const { hiroba, transport, postsTo } = fakeHiroba();
-    await change(transport, B);
-    expect(hiroba.title).toBe("サンプル称号B");
-
-    const { outcome } = await change(
-      transport,
-      { id: null, title: WORN },
-      { expected: { title: "サンプル称号B" } },
-    );
-    expect(outcome).toMatchObject({ kind: "applied", after: { title: WORN } });
-    expect(hiroba.title).toBe(WORN);
-    expect(postsTo("ajax/change_mydon_profile.php").map((post) => post.form[0])).toEqual([
-      ["newTitle", "39"],
-      ["newTitle", "106"],
-    ]);
-  });
-
-  test("refuses to put back a name two titles share, and sends no save", async () => {
-    const { hiroba, transport, postsTo } = fakeHiroba();
-    hiroba.title = "サンプル称号B";
-    const { outcome } = await change(
-      transport,
-      { id: null, title: SHARED },
-      { expected: { title: "サンプル称号B" } },
-    );
-    expect(outcome).toEqual({ kind: "invalidTarget", field: "title.ambiguous" });
-    expect(postsTo("ajax/change_mydon_profile.php")).toEqual([]);
   });
 });

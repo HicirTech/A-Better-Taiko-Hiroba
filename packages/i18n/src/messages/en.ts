@@ -185,11 +185,9 @@ export const en: Messages = {
   "write.nothingToChange": "That is the costume already. Nothing was sent.",
   "write.maintenance":
     "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. The change was not sent.",
-  "write.undoNotSaved": "The undo record could not be kept, so nothing was sent.",
   "write.needsConfirmation":
     "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.stoppedBeforeWrite": "Hiroba didn't accept the app's request. Nothing was changed.",
-  "write.nothingToUndo": "There is no change to undo.",
   "write.busy": "Another change is still being sent, so this one was not sent.",
   "write.interrupted":
     "The app stopped before it knew how this ended, so it may or may not have been saved. Use Read again and look before trying again.",

@@ -43,8 +43,6 @@ const CASES: VerbCase[] = [
     [{ expected: NAME, target: { nickname: "あたらしい" } }],
     [{ expected: NAME, target: { nickname: "" } }],
   ],
-  ["pendingUndo", [], [{}]],
-  ["undo", ["name"], ["settings"]],
   ["costumeHistory", [], [{}]],
 ];
 

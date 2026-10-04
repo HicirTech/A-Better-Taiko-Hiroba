@@ -8,8 +8,6 @@ export {
   isTitleTarget,
   isWhole,
   PORT_ARGUMENTS,
-  UNDO_SET_GUARDS,
-  WRITE_KINDS,
 } from "./arguments";
 export { BRIDGE_CHANNELS } from "./bridge-channels";
 export { checkedPort } from "./checked-port";
@@ -42,8 +40,6 @@ export type {
   TitleEditorView,
   TitleState,
   TitleTarget,
-  UndoSummary,
-  UndoSummaryOf,
   WriteKind,
   WriteOutcomeView,
   WriteSets,

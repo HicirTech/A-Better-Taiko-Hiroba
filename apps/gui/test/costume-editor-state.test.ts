@@ -392,7 +392,6 @@ describe("the set and the draft a write leaves", () => {
     ["maintenance", { kind: "maintenance" }, before, drafted],
     ["invalidTarget", { kind: "invalidTarget", field: "costume1" }, before, drafted],
     ["nothingToChange", { kind: "nothingToChange" }, before, drafted],
-    ["undoNotSaved", { kind: "undoNotSaved" }, before, drafted],
     ["interrupted", { kind: "interrupted" }, before, drafted],
     ["busy", { kind: "busy" }, before, drafted],
   ])(

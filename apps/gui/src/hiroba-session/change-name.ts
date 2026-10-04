@@ -13,7 +13,7 @@ export function changeName(
   transport: Transport,
   endpoints: HirobaEndpoints,
   { expected, target }: NameChange,
-  options: WriteOptions<NameState>,
+  options: WriteOptions,
 ): Promise<WriteOutcome<NameState>> {
   return change(
     { expected, target },

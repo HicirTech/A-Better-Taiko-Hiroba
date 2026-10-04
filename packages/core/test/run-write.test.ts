@@ -165,12 +165,7 @@ const SPEC: WriteSpec<Value, Value, Value, EditorReading<Value>, string> = {
   },
 };
 
-interface Run {
-  readonly outcome: WriteOutcome<Value>;
-  readonly undo: [Value, Value][];
-}
-
-async function write(
+function write(
   transport: Transport,
   target: number,
   options: {
@@ -178,29 +173,16 @@ async function write(
     crossCheck?: boolean;
     now?: Date;
     clock?: () => Date;
-    undoFails?: boolean;
   } = {},
   spec: WriteSpec<Value, Value, Value, EditorReading<Value>, string> = SPEC,
-): Promise<Run> {
-  const undo: [Value, Value][] = [];
-  const deps: WriteDeps<Value> = {
+): Promise<WriteOutcome<Value>> {
+  const deps: WriteDeps = {
     transport,
     hirobaOrigin: ORIGIN,
     now: options.clock ?? (() => options.now ?? NOON_JST),
     crossCheck: options.crossCheck ?? false,
-    beginUndo: async (before, expectedAfter) => {
-      if (options.undoFails) {
-        throw new Error("disk full");
-      }
-      undo.push([before, expectedAfter]);
-    },
   };
-  const outcome = await runWrite(
-    spec,
-    { expected: { n: options.expected ?? 1 }, target: { n: target } },
-    deps,
-  );
-  return { outcome, undo };
+  return runWrite(spec, { expected: { n: options.expected ?? 1 }, target: { n: target } }, deps);
 }
 
 const APPLIED_SAVE: SaveReading = {
@@ -211,16 +193,15 @@ const APPLIED_SAVE: SaveReading = {
 };
 
 describe("runWrite", () => {
-  test("reads, keeps the undo record, pre-checks, saves once and reads back, in that order", async () => {
+  test("reads, pre-checks, saves once and reads back, in that order", async () => {
     const { hiroba } = fakeHiroba();
-    const { outcome, undo } = await write(hiroba.transport, 2);
+    const outcome = await write(hiroba.transport, 2);
     expect(hiroba.requests).toEqual([
       "GET edit.php",
       "POST ajax/check.php",
       "POST ajax/save.php",
       "GET edit.php",
     ]);
-    expect(undo).toEqual([[{ n: 1 }, { n: 2 }]]);
     expect(outcome).toEqual({
       kind: "applied",
       before: { n: 1 },
@@ -241,7 +222,7 @@ describe("runWrite", () => {
 
   test("with the cross-check, reads the other page first, so the editor's token is the last one issued", async () => {
     const { hiroba } = fakeHiroba();
-    const { outcome } = await write(hiroba.transport, 2, { crossCheck: true });
+    const outcome = await write(hiroba.transport, 2, { crossCheck: true });
     expect(hiroba.requests).toEqual([
       "GET cross.php",
       "GET edit.php",
@@ -257,7 +238,7 @@ describe("runWrite", () => {
     const { hiroba, next } = fakeHiroba();
     next("GET cross.php", () => page("cross.php", `<p id="c">a</p>`));
     next("GET cross.php", () => page("cross.php", `<p id="c">b</p>`));
-    const { outcome } = await write(hiroba.transport, 2, { crossCheck: true });
+    const outcome = await write(hiroba.transport, 2, { crossCheck: true });
     expect(outcome.kind).toBe("diverged");
     expect(outcome.kind === "diverged" && outcome.cross).toBe("changed");
   });
@@ -268,7 +249,7 @@ describe("runWrite", () => {
     next("GET cross.php", () => page("cross.php", `<p id="c">b</p>`));
     // The save answers 0 and moves nothing: it is the page beside it that changed, not a refusal.
     next("POST ajax/save.php", () => json("ajax/save.php", { result: 0 }));
-    const { outcome } = await write(hiroba.transport, 2, { crossCheck: true });
+    const outcome = await write(hiroba.transport, 2, { crossCheck: true });
     expect(outcome).toMatchObject({
       kind: "diverged",
       before: { n: 1 },
@@ -282,13 +263,13 @@ describe("runWrite", () => {
     const { hiroba, next } = fakeHiroba();
     next("GET cross.php", () => page("cross.php", `<p id="c">a</p>`));
     next("GET cross.php", () => err({ kind: "timedOut", url: `${ORIGIN}/cross.php` }));
-    const { outcome } = await write(hiroba.transport, 2, { crossCheck: true });
+    const outcome = await write(hiroba.transport, 2, { crossCheck: true });
     expect(outcome.kind === "applied" && outcome.cross).toBe("unknown");
   });
 
   test("sends nothing at all in the 05:00-07:00 JST break", async () => {
     const { hiroba } = fakeHiroba();
-    const { outcome } = await write(hiroba.transport, 2, {
+    const outcome = await write(hiroba.transport, 2, {
       now: new Date("2026-09-26T20:30:00Z"),
     });
     expect(outcome).toEqual({ kind: "maintenance" });
@@ -307,11 +288,11 @@ describe("runWrite", () => {
       clock: crossingAfter(1),
       crossCheck: true,
     });
-    expect(stopped.outcome).toEqual({ kind: "maintenance" });
+    expect(stopped).toEqual({ kind: "maintenance" });
     expect(beforeThePrecheck.hiroba.requests).toEqual(["GET cross.php", "GET edit.php"]);
 
     const beforeTheSave = fakeHiroba();
-    const { outcome } = await write(beforeTheSave.hiroba.transport, 2, {
+    const outcome = await write(beforeTheSave.hiroba.transport, 2, {
       clock: crossingAfter(2),
     });
     expect(outcome).toEqual({ kind: "maintenance" });
@@ -321,38 +302,30 @@ describe("runWrite", () => {
 
   test("posts nothing when the set changed since the change was made", async () => {
     const { hiroba } = fakeHiroba(5);
-    const { outcome, undo } = await write(hiroba.transport, 2);
+    const outcome = await write(hiroba.transport, 2);
     expect(outcome).toEqual({ kind: "changedSincePreview", current: { n: 5 } });
     expect(hiroba.requests).toEqual(["GET edit.php"]);
-    expect(undo).toEqual([]);
   });
 
   test("posts nothing for a refused target, or one that changes nothing", async () => {
     const refused = fakeHiroba();
-    expect((await write(refused.hiroba.transport, -1)).outcome).toEqual({
+    expect(await write(refused.hiroba.transport, -1)).toEqual({
       kind: "invalidTarget",
       field: "n",
     });
     expect(refused.hiroba.requests).toEqual(["GET edit.php"]);
 
     const same = fakeHiroba(10);
-    expect((await write(same.hiroba.transport, 12, { expected: 10 })).outcome).toEqual({
+    expect(await write(same.hiroba.transport, 12, { expected: 10 })).toEqual({
       kind: "nothingToChange",
     });
     expect(same.hiroba.requests).toEqual(["GET edit.php"]);
   });
 
-  test("posts nothing when the undo record cannot be kept", async () => {
-    const { hiroba } = fakeHiroba();
-    const { outcome } = await write(hiroba.transport, 2, { undoFails: true, crossCheck: true });
-    expect(outcome).toEqual({ kind: "undoNotSaved" });
-    expect(hiroba.requests).toEqual(["GET cross.php", "GET edit.php"]);
-  });
-
   test("a session gone before the first post is sessionGone, and nothing was posted", async () => {
     const { hiroba, next } = fakeHiroba();
     next("GET edit.php", () => LOGIN);
-    expect((await write(hiroba.transport, 2)).outcome).toEqual({
+    expect(await write(hiroba.transport, 2)).toEqual({
       kind: "sessionGone",
       writeMayHaveHappened: false,
     });
@@ -362,7 +335,7 @@ describe("runWrite", () => {
   test("a read that fails before the first post is readFailed, with codes only", async () => {
     const { hiroba, next } = fakeHiroba();
     next("GET edit.php", () => page("edit.php", "<p>new shape</p>"));
-    const { outcome } = await write(hiroba.transport, 2);
+    const outcome = await write(hiroba.transport, 2);
     expect(outcome).toEqual({
       kind: "readFailed",
       failure: {
@@ -390,7 +363,7 @@ describe("runWrite", () => {
     for (const [answer, kind, reason] of cases) {
       const { hiroba, next } = fakeHiroba();
       next("POST ajax/check.php", answer);
-      const { outcome } = await write(hiroba.transport, 2);
+      const outcome = await write(hiroba.transport, 2);
       expect(outcome.kind).toBe(kind);
       expect(outcome.kind === "stoppedBeforeWrite" ? outcome.reason : null).toBe(reason);
       expect(hiroba.requests).toEqual(["GET edit.php", "POST ajax/check.php"]);
@@ -403,7 +376,7 @@ describe("runWrite", () => {
     gone.next("POST ajax/check.php", () => LOGIN);
     gone.next("GET edit.php", () => editPageOf(1));
     gone.next("GET edit.php", () => LOGIN);
-    expect((await write(gone.hiroba.transport, 2)).outcome).toEqual({
+    expect(await write(gone.hiroba.transport, 2)).toEqual({
       kind: "sessionGone",
       writeMayHaveHappened: false,
     });
@@ -411,7 +384,7 @@ describe("runWrite", () => {
 
     const kept = fakeHiroba();
     kept.next("POST ajax/check.php", () => LOGIN);
-    const { outcome } = await write(kept.hiroba.transport, 2);
+    const outcome = await write(kept.hiroba.transport, 2);
     expect(outcome.kind === "stoppedBeforeWrite" && outcome.reason).toBe("precheckAtLogin");
     expect(kept.hiroba.requests).toEqual(["GET edit.php", "POST ajax/check.php", "GET edit.php"]);
   });
@@ -419,7 +392,7 @@ describe("runWrite", () => {
   test("after a save that timed out, reads back and never posts again", async () => {
     const { hiroba, next } = fakeHiroba();
     next("POST ajax/save.php", () => err({ kind: "timedOut", url: `${ORIGIN}/ajax/save.php` }));
-    const { outcome } = await write(hiroba.transport, 2);
+    const outcome = await write(hiroba.transport, 2);
     expect(hiroba.requests).toEqual([
       "GET edit.php",
       "POST ajax/check.php",
@@ -433,7 +406,7 @@ describe("runWrite", () => {
     const { hiroba, next } = fakeHiroba();
     next("GET edit.php", () => editPageOf(1));
     next("GET edit.php", () => LOGIN);
-    expect((await write(hiroba.transport, 2)).outcome).toEqual({
+    expect(await write(hiroba.transport, 2)).toEqual({
       kind: "sessionGone",
       writeMayHaveHappened: true,
       before: { n: 1 },
@@ -446,7 +419,7 @@ describe("runWrite", () => {
     const { hiroba, next } = fakeHiroba();
     next("GET edit.php", () => editPageOf(1));
     next("GET edit.php", () => err({ kind: "unreachable", url: `${ORIGIN}/edit.php` }));
-    const { outcome } = await write(hiroba.transport, 2);
+    const outcome = await write(hiroba.transport, 2);
     expect(outcome.kind).toBe("outcomeUnknown");
     expect(outcome.kind === "outcomeUnknown" && outcome.failure).toEqual({ kind: "unreachable" });
   });
@@ -454,7 +427,7 @@ describe("runWrite", () => {
   test("a 0 that moved nothing is notApplied, unchanged: the answer does not prove a write", async () => {
     const { hiroba, next } = fakeHiroba();
     next("POST ajax/save.php", () => json("ajax/save.php", { result: 0 }));
-    const { outcome } = await write(hiroba.transport, 2);
+    const outcome = await write(hiroba.transport, 2);
     expect(outcome.kind === "notApplied" && outcome.reason).toEqual({ kind: "unchanged" });
     expect(outcome.kind === "notApplied" && outcome.after).toEqual({ n: 1 });
   });
@@ -465,7 +438,7 @@ describe("runWrite", () => {
       saved.hiroba.state = 2;
       return json("ajax/save.php", { result: 5, errmsg: "sample" });
     });
-    const applied = (await write(saved.hiroba.transport, 2)).outcome;
+    const applied = await write(saved.hiroba.transport, 2);
     expect(applied.kind).toBe("applied");
     expect(applied.kind === "applied" && applied.save.code).toBe(5);
 
@@ -473,7 +446,7 @@ describe("runWrite", () => {
     refused.next("POST ajax/save.php", () =>
       json("ajax/save.php", { result: 5, errmsg: "sample" }),
     );
-    const notApplied = (await write(refused.hiroba.transport, 2)).outcome;
+    const notApplied = await write(refused.hiroba.transport, 2);
     expect(notApplied.kind === "notApplied" && notApplied.reason).toEqual({
       kind: "refused",
       code: 5,
@@ -488,16 +461,14 @@ describe("runWrite", () => {
       return json("ajax/save.php", { result: 3 });
     });
     const spec = { ...SPEC, codes: { ...SPEC.codes, notSynced: 3 } };
-    expect((await write(withCode.hiroba.transport, 2, {}, spec)).outcome.kind).toBe(
-      "appliedNotSynced",
-    );
+    expect((await write(withCode.hiroba.transport, 2, {}, spec)).kind).toBe("appliedNotSynced");
 
     const without = fakeHiroba();
     without.next("POST ajax/save.php", () => {
       without.hiroba.state = 2;
       return json("ajax/save.php", { result: 3 });
     });
-    expect((await write(without.hiroba.transport, 2)).outcome.kind).toBe("applied");
+    expect((await write(without.hiroba.transport, 2)).kind).toBe("applied");
   });
 
   test("a set that moved somewhere else than planned is diverged", async () => {
@@ -506,7 +477,7 @@ describe("runWrite", () => {
       hiroba.state = 7;
       return json("ajax/save.php", { result: 0 });
     });
-    const { outcome } = await write(hiroba.transport, 2);
+    const outcome = await write(hiroba.transport, 2);
     expect(outcome).toMatchObject({
       kind: "diverged",
       before: { n: 1 },
@@ -521,9 +492,8 @@ describe("runWrite", () => {
       hiroba.state = 10;
       return json("ajax/save.php", { result: 0 });
     });
-    const { outcome, undo } = await write(hiroba.transport, 12);
-    expect(outcome.kind).toBe("applied");
-    expect(undo).toEqual([[{ n: 1 }, { n: 10 }]]);
+    const outcome = await write(hiroba.transport, 12);
+    expect(outcome).toMatchObject({ kind: "applied", after: { n: 10 } });
   });
 });
 

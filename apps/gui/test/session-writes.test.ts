@@ -1,11 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ok, type Transport } from "@abth/core";
 
 import { createCostumeHistoryStore } from "../electron/costume-history-store";
-import { createUndoStore } from "../electron/undo-store";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import {
   createProfileEditor,
@@ -18,12 +17,10 @@ import {
 import {
   type CostumeHistoryStore,
   createSessionWrites,
-  type UndoStore,
   type WritePlatform,
 } from "../src/hiroba-session";
 import { MAX_COSTUME_HISTORY } from "../src/hiroba-session/costume-history";
 import { createIndexedDbHistoryStore } from "../src/platform/android-history-store";
-import { createIndexedDbUndoStore } from "../src/platform/android-undo-store";
 import type { CostumeSet, WriteKind } from "../src/session-port";
 import { costumeSetOf, START_SET } from "./hiroba-stand-in";
 import { pictureOfSet } from "./history-fixtures";
@@ -57,28 +54,6 @@ ${dialog}`;
 
 const START = START_SET;
 
-interface StoreFaults {
-  load: boolean;
-  /** How many saves go through before every later one rejects; null lets them all through. */
-  savesAllowed: number | null;
-}
-
-function failing(store: UndoStore, faults: StoreFaults): UndoStore {
-  const refuse = (call: string) => Promise.reject(new Error(`The store refuses ${call}`));
-  return {
-    load: (kind, taikoNo) => (faults.load ? refuse("load") : store.load(kind, taikoNo)),
-    save: (kind, taikoNo, slot) => {
-      if (faults.savesAllowed === 0) {
-        return refuse("save");
-      }
-      if (faults.savesAllowed !== null) {
-        faults.savesAllowed -= 1;
-      }
-      return store.save(kind, taikoNo, slot);
-    },
-  };
-}
-
 interface HistoryFaults {
   load: boolean;
   save: boolean;
@@ -99,30 +74,14 @@ afterEach(() => {
   }
 });
 
-interface KeptSlots {
-  readonly store: UndoStore;
-  readonly history: CostumeHistoryStore;
-  readonly text: () => string;
-}
-
 const STORES = {
-  file(): KeptSlots {
+  file(): CostumeHistoryStore {
     const folder = mkdtempSync(join(tmpdir(), "abth-writes-"));
     folders.push(folder);
-    const path = join(folder, "undo.json");
-    return {
-      store: createUndoStore(path),
-      history: createCostumeHistoryStore(join(folder, "costume-history.json")),
-      text: () => readFileSync(path, "utf8"),
-    };
+    return createCostumeHistoryStore(join(folder, "costume-history.json"));
   },
-  database(): KeptSlots {
-    const indexedDb = createFakeIndexedDb();
-    return {
-      store: createIndexedDbUndoStore(indexedDb.factory),
-      history: createIndexedDbHistoryStore(indexedDb.factory),
-      text: () => JSON.stringify([...(indexedDb.tables.get("slots") ?? [])]),
-    };
+  database(): CostumeHistoryStore {
+    return createIndexedDbHistoryStore(createFakeIndexedDb().factory);
   },
 };
 type StoreName = keyof typeof STORES;
@@ -209,8 +168,6 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
       );
     },
   };
-  const kept = STORES[storeName]();
-  const faults: StoreFaults = { load: false, savesAllowed: null };
   const historyFaults: HistoryFaults = { load: false, save: false };
   let signedIn = options.signedIn ?? true;
   const writes = createSessionWrites({
@@ -219,8 +176,7 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     platform: options.platform ?? "android",
     ...(options.liveChecked && { liveChecked: options.liveChecked }),
     now: NOON_JST,
-    undoStore: failing(kept.store, faults),
-    historyStore: failingHistory(kept.history, historyFaults),
+    historyStore: failingHistory(STORES[storeName](), historyFaults),
     recentPreview: options.recentPreview ?? (() => null),
     signedIn: () => signedIn,
     endSession: () => {
@@ -249,14 +205,12 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     saved,
     setElsewhere,
     signInAgain,
-    keptText: kept.text,
-    faults,
     historyFaults,
   };
 }
 
-describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeName) => {
-  const setUp = (options: SetUpOptions = {}) => setUpOver(storeName, options);
+describe("createSessionWrites, the costume", () => {
+  const setUp = (options: SetUpOptions = {}) => setUpOver("database", options);
 
   const FOUR = [
     "GET /mypage_kisekae.php",
@@ -289,59 +243,20 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
     expect(unchecked.hiroba.log).toEqual(SIX);
   });
 
-  test("asks Hiroba nothing while signed out, and offers no undo", async () => {
+  test("asks Hiroba nothing while signed out", async () => {
     const { hiroba, writes } = setUp({ signedIn: false });
     expect(await writes.changeCostume({ expected: START, target })).toEqual({
       kind: "notSignedIn",
     });
-    expect(await writes.undo("costume")).toEqual({ kind: "notSignedIn" });
-    expect(await writes.pendingUndo()).toEqual([]);
     expect(hiroba.log).toEqual([]);
   });
 
-  test("posts nothing before my page has said whose set this is", async () => {
-    const { hiroba, writes } = setUp({ owner: null });
-    const outcome = await writes.changeCostume({
-      expected: START,
-      target: { ...START, colorFace: 3 },
-    });
-    expect(outcome).toEqual({ kind: "undoNotSaved" });
-    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
-  });
-
-  test("a change leaves an undo kept, and the undo puts the whole set back", async () => {
-    const { editor, hiroba, writes, saved, keptText } = setUp();
-    const suited = { ...START, costume1: 36, costume2: 0, costume3: 0, costume4: 0, costume5: 0 };
-    expect((await writes.changeCostume({ expected: START, target: suited })).kind).toBe("applied");
-    expect(await saved()).toEqual(suited);
-    expect(await writes.pendingUndo()).toEqual([
-      { kind: "costume", at: NOON_JST().toISOString(), before: START, after: suited },
-    ]);
-    const tickets = (await editor.hook("/__tickets", new URLSearchParams())?.json()) as string[];
-    const kept = keptText();
-    expect(tickets.some((ticket) => kept.includes(ticket))).toBe(false);
-
-    hiroba.log.length = 0;
-    expect((await writes.undo("costume")).kind).toBe("applied");
-    expect(await saved()).toEqual(START);
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(hiroba.log).toEqual([
-      "GET /mypage_top.php",
-      "GET /mypage_kisekae.php",
-      "POST /ajax/check_ip_kisekae.php",
-      "POST /ajax/change_mydon.php",
-      "GET /mypage_kisekae.php",
-      "GET /mypage_top.php",
-    ]);
-  });
-
-  test("says the costume changed after a change or an undo that applied, and after nothing else", async () => {
+  test("says the costume changed after a change that applied, and after nothing else", async () => {
     const { editor, hiroba, writes, setElsewhere } = setUp();
-    const target = { ...START, colorFace: 3 };
     expect((await writes.changeCostume({ expected: START, target })).kind).toBe("applied");
     expect(hiroba.costumeChanges).toBe(1);
-    expect((await writes.undo("costume")).kind).toBe("applied");
-    expect(hiroba.costumeChanges).toBe(2);
+
+    setElsewhere("reset=1");
     expect((await writes.changeCostume({ expected: START, target: START })).kind).toBe(
       "nothingToChange",
     );
@@ -351,71 +266,24 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
     expect((await writes.changeCostume({ expected: START, target })).kind).toBe(
       "changedSincePreview",
     );
-    expect(hiroba.costumeChanges).toBe(2);
+    expect(hiroba.costumeChanges).toBe(1);
   });
 
-  test("an undo after a change made elsewhere changes nothing, and is no longer offered", async () => {
-    const { writes, saved, setElsewhere } = setUp();
-    await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } });
-    setElsewhere("color_body=40");
-    const outcome = await writes.undo("costume");
-    expect(outcome.kind).toBe("changedSincePreview");
-    expect((await saved()).colorBody).toBe(40);
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(await writes.undo("costume")).toEqual({ kind: "nothingToUndo" });
-  });
-
-  test("a session Hiroba ends after the save is dropped, and the undo settles on the next read", async () => {
+  test("a session Hiroba ends after the save is dropped, and the editor shows the set once signed in again", async () => {
     const { editor, hiroba, writes, signInAgain } = setUp();
     editor.hook("/__expire-on-save", new URLSearchParams());
-    const target = { ...START, colorFace: 3 };
     const outcome = await writes.changeCostume({ expected: START, target });
     expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
     expect(hiroba.endedByApp).toBe(1);
-    expect(await writes.pendingUndo()).toEqual([]);
 
     signInAgain();
     const opened = await writes.openCostumeEditor();
     expect(opened.ok && opened.value.state).toEqual(target);
-    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
   });
 
-  test("keeps each player's undo apart, whatever another card writes in between", async () => {
-    let whose = OWNER;
-    const { editor, writes, setElsewhere, signInAgain } = setUp({ whose: () => whose });
-    editor.hook("/__expire-on-save", new URLSearchParams());
-    const mine = { ...START, colorFace: 3 };
-    const unknown = await writes.changeCostume({ expected: START, target: mine });
-    expect(unknown).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
-    signInAgain();
-
-    whose = OTHER;
-    setElsewhere("reset=1&color_body=40");
-    const theirs = { ...START, colorBody: 40 };
-    const changed = { ...theirs, colorLimb: 20 };
-    expect(await writes.pendingUndo()).toEqual([]);
-    editor.hook("/__noop-save", new URLSearchParams());
-    expect((await writes.changeCostume({ expected: theirs, target: changed })).kind).toBe(
-      "notApplied",
-    );
-    expect((await writes.changeCostume({ expected: theirs, target: changed })).kind).toBe(
-      "applied",
-    );
-    expect(await writes.pendingUndo()).toMatchObject([{ before: theirs, after: changed }]);
-
-    whose = OWNER;
-    setElsewhere("reset=1&color_face=3");
-    expect(await writes.pendingUndo()).toEqual([]);
-    await writes.openCostumeEditor();
-    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: mine }]);
-    whose = OTHER;
-    expect(await writes.pendingUndo()).toMatchObject([{ before: theirs, after: changed }]);
-  });
-
-  test("a write that throws after its save ends interrupted, and its pending undo is kept", async () => {
+  test("a write that throws after its save ends interrupted", async () => {
     const { hiroba, writes, saved } = setUp();
     hiroba.throwAfterSave = true;
-    const target = { ...START, colorFace: 3 };
     expect(await writes.changeCostume({ expected: START, target })).toEqual({
       kind: "interrupted",
     });
@@ -423,39 +291,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
       1,
     );
     expect(await saved()).toEqual(target);
-    expect(await writes.pendingUndo()).toEqual([]);
-
-    await writes.openCostumeEditor();
-    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
-  });
-
-  test("sends nothing when the undo cannot be kept, and breaks no read or offer", async () => {
-    const { hiroba, writes, faults } = setUp();
-    const change = { expected: START, target: { ...START, colorFace: 3 } };
-    faults.load = true;
-    expect(await writes.changeCostume(change)).toEqual({ kind: "undoNotSaved" });
-    faults.load = false;
-    faults.savesAllowed = 0;
-    expect(await writes.changeCostume(change)).toEqual({ kind: "undoNotSaved" });
-    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
-
-    faults.load = true;
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(await writes.undo("costume")).toEqual({ kind: "nothingToUndo" });
-    expect((await writes.openCostumeEditor()).ok).toBe(true);
-  });
-
-  test("a store that fails after the pending write is kept does not change how the write ended", async () => {
-    const { writes, faults, saved } = setUp();
-    const target = { ...START, colorFace: 3 };
-    faults.savesAllowed = 1;
-    expect((await writes.changeCostume({ expected: START, target })).kind).toBe("applied");
-    expect(await saved()).toEqual(target);
-    expect(await writes.pendingUndo()).toEqual([]);
-
-    faults.savesAllowed = null;
-    await writes.openCostumeEditor();
-    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: target }]);
   });
 
   test("reads no editor while signed out", async () => {
@@ -468,7 +303,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store", (storeN
 });
 
 const START_TITLE = INITIAL_PROFILE.title;
-const START_NAME = INITIAL_PROFILE.nickname;
 const owned = (id: number) => {
   const found = OWNED_TITLES.find((one) => one.id === id);
   if (found === undefined) {
@@ -481,8 +315,8 @@ const titleChange = (from: string, id: number) => ({
   target: { id, title: owned(id).label },
 });
 
-describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the title", (storeName) => {
-  const setUp = (options: SetUpOptions = {}) => setUpOver(storeName, options);
+describe("createSessionWrites, the title", () => {
+  const setUp = (options: SetUpOptions = {}) => setUpOver("database", options);
 
   const FOUR = [
     "GET /mypage_title_edit.php",
@@ -494,9 +328,10 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
 
   test("reads the costume before and after a title write on either platform: title is on neither's list", async () => {
     for (const platform of ["android", "desktop"] as const) {
-      const { hiroba, writes } = setUp({ platform });
+      const { profile, hiroba, writes } = setUp({ platform });
       expect((await writes.changeTitle(titleChange(START_TITLE, 102))).kind).toBe("applied");
       expect(hiroba.log).toEqual(SIX);
+      expect(profile.title()).toBe(owned(102).label);
     }
   });
 
@@ -506,96 +341,15 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
     expect(hiroba.log).toEqual(FOUR);
   });
 
-  test("a change leaves an undo kept, and the undo puts the title back by its name in one save", async () => {
-    const { editor, profile, hiroba, writes, keptText } = setUp();
-    expect((await writes.changeTitle(titleChange(START_TITLE, 102))).kind).toBe("applied");
-    expect(profile.title()).toBe(owned(102).label);
-    expect(await writes.pendingUndo()).toEqual([
-      {
-        kind: "title",
-        at: NOON_JST().toISOString(),
-        before: { title: START_TITLE },
-        after: { title: owned(102).label },
-      },
-    ]);
-    const tickets = (await editor.hook("/__tickets", new URLSearchParams())?.json()) as string[];
-    const kept = keptText();
-    expect(tickets.some((ticket) => kept.includes(ticket))).toBe(false);
-
-    hiroba.log.length = 0;
-    expect((await writes.undo("title")).kind).toBe("applied");
-    expect(profile.title()).toBe(START_TITLE);
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(hiroba.log).toEqual(SIX);
-    const saves = hiroba.log.filter((request) => request === "POST /ajax/change_mydon_profile.php");
-    expect(saves).toHaveLength(1);
-  });
-
-  test("keeps the costume's undo and the title's apart, one of each at most", async () => {
-    const { writes } = setUp();
-    await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } });
-    await writes.changeTitle(titleChange(START_TITLE, 102));
-    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual(["costume", "title"]);
-
-    expect((await writes.undo("title")).kind).toBe("applied");
-    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual(["costume"]);
-    expect((await writes.undo("costume")).kind).toBe("applied");
-    expect(await writes.pendingUndo()).toEqual([]);
-  });
-
-  test("says the costume changed after a costume write alone: a title write, or its undo, never does", async () => {
+  test("says the costume changed after a costume write alone: a title write never does", async () => {
     const { hiroba, writes } = setUp();
     await writes.changeTitle(titleChange(START_TITLE, 102));
-    await writes.undo("title");
     expect(hiroba.costumeChanges).toBe(0);
     await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } });
     expect(hiroba.costumeChanges).toBe(1);
   });
 
-  type UnresolvedCase = [label: string, previous: string, field: string];
-  test.each<UnresolvedCase>([
-    ["a name two titles share", owned(105).label, "title.ambiguous"],
-    ["a title in no list, as one composed of parts is", "組み合わせの称号", "title.unresolved"],
-    ["no title", "", "title.unresolved"],
-  ])("an undo to %s is refused unsent, and stays offered", async (_label, previous, field) => {
-    const { profile, hiroba, writes } = setUp();
-    profile.setTitle(previous);
-    expect((await writes.changeTitle(titleChange(previous, 101))).kind).toBe("applied");
-
-    hiroba.log.length = 0;
-    expect(await writes.undo("title")).toEqual({ kind: "invalidTarget", field });
-    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
-    expect(profile.title()).toBe(owned(101).label);
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "title", before: { title: previous }, after: { title: owned(101).label } },
-    ]);
-  });
-
-  test("an undo after a title changed elsewhere sends nothing, and is no longer offered", async () => {
-    const { profile, writes } = setUp();
-    await writes.changeTitle(titleChange(START_TITLE, 102));
-    profile.setTitle(owned(103).label);
-    expect((await writes.undo("title")).kind).toBe("changedSincePreview");
-    expect(profile.title()).toBe(owned(103).label);
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(await writes.undo("title")).toEqual({ kind: "nothingToUndo" });
-  });
-
-  test("a read of my page settles a title write whose end was not known, from the title it shows", async () => {
-    const { profile, writes, signInAgain } = setUp();
-    profile.hook("/__profile-expire-on-save", new URLSearchParams());
-    const outcome = await writes.changeTitle(titleChange(START_TITLE, 102));
-    expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
-    signInAgain();
-    expect(await writes.pendingUndo()).toEqual([]);
-
-    await writes.profileRead({ taikoNo: OWNER, nickname: START_NAME, title: owned(102).label });
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "title", before: { title: START_TITLE }, after: { title: owned(102).label } },
-    ]);
-  });
-
-  test("the title page settles it too, as the costume editor settles the costume's", async () => {
+  test("the title page shows the title that a write whose end was unknown left", async () => {
     const { profile, writes, signInAgain } = setUp();
     profile.hook("/__profile-expire-on-save", new URLSearchParams());
     await writes.changeTitle(titleChange(START_TITLE, 102));
@@ -603,97 +357,15 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
     const opened = await writes.openTitleEditor();
     expect(opened.ok && opened.value.state).toEqual({ title: owned(102).label });
     expect(opened.ok && opened.value.options).toEqual(OWNED_TITLES);
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "title", after: { title: owned(102).label } },
-    ]);
   });
 
-  test("a read of my page dates a title record the title has moved away from", async () => {
-    const { writes } = setUp();
-    await writes.changeTitle(titleChange(START_TITLE, 102));
-    await writes.profileRead({
-      taikoNo: OWNER,
-      nickname: START_NAME,
-      title: "別の場所で変えた称号",
-    });
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(await writes.undo("title")).toEqual({ kind: "nothingToUndo" });
-  });
-
-  test("a read of my page that finds nothing kept writes nothing, and leaves a current record as it is", async () => {
-    const { writes, keptText } = setUp();
-    const touched = () => {
-      try {
-        return keptText() !== "[]";
-      } catch {
-        return false;
-      }
-    };
-    await writes.profileRead({ taikoNo: OWNER, nickname: START_NAME, title: START_TITLE });
-    expect(touched()).toBe(false);
-
-    await writes.changeTitle(titleChange(START_TITLE, 102));
-    await writes.profileRead({ taikoNo: OWNER, nickname: START_NAME, title: owned(102).label });
-    expect(await writes.pendingUndo()).toMatchObject([{ kind: "title" }]);
-  });
-
-  test("a read of my page that cannot look in the store reads on", async () => {
-    const { writes, faults } = setUp();
-    faults.load = true;
-    await expect(
-      writes.profileRead({ taikoNo: OWNER, nickname: START_NAME, title: START_TITLE }),
-    ).resolves.toBeUndefined();
-  });
-
-  test("keeps each player's title undo apart, whatever another card does in between", async () => {
-    let whose = OWNER;
-    const { writes } = setUp({ whose: () => whose });
-    await writes.changeTitle(titleChange(START_TITLE, 102));
-
-    whose = OTHER;
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(await writes.undo("title")).toEqual({ kind: "nothingToUndo" });
-    await writes.profileRead({ taikoNo: OTHER, nickname: START_NAME, title: "別のカードの称号" });
-
-    whose = OWNER;
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "title", before: { title: START_TITLE } },
-    ]);
-  });
-
-  test("a title write that throws after its save ends interrupted, and the next read of the page settles it", async () => {
+  test("a title write that throws after its save ends interrupted", async () => {
     const { profile, hiroba, writes } = setUp();
     hiroba.throwAfterSave = true;
     expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
       kind: "interrupted",
     });
     expect(profile.title()).toBe(owned(102).label);
-    expect(await writes.pendingUndo()).toEqual([]);
-
-    await writes.openTitleEditor();
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "title", before: { title: START_TITLE }, after: { title: owned(102).label } },
-    ]);
-  });
-
-  test("sends nothing when the undo cannot be kept, or nobody is known to keep it for", async () => {
-    const { hiroba, writes, faults } = setUp();
-    faults.load = true;
-    expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
-      kind: "undoNotSaved",
-    });
-    faults.load = false;
-    faults.savesAllowed = 0;
-    expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
-      kind: "undoNotSaved",
-    });
-    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
-
-    const nobody = setUp({ owner: null });
-    expect(await nobody.writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
-      kind: "undoNotSaved",
-    });
-    expect(nobody.hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
   });
 
   test("reads and writes nothing while signed out", async () => {
@@ -702,7 +374,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
     expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toEqual({
       kind: "notSignedIn",
     });
-    expect(await writes.undo("title")).toEqual({ kind: "notSignedIn" });
     expect(hiroba.log).toEqual([]);
   });
 
@@ -713,7 +384,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
     expect(hiroba.endedByApp).toBe(1);
   });
 
-  test("a session Hiroba ends before the title is saved is dropped, with nothing left pending", async () => {
+  test("a session Hiroba ends before the title is saved is dropped", async () => {
     const { hiroba, writes } = setUp();
     hiroba.ended = true;
     expect(await writes.changeTitle(titleChange(START_TITLE, 102))).toMatchObject({
@@ -721,18 +392,18 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the titl
       writeMayHaveHappened: false,
     });
     expect(hiroba.endedByApp).toBe(1);
-    expect(await writes.pendingUndo()).toEqual([]);
   });
 });
 
+const START_NAME = INITIAL_PROFILE.nickname;
 const NEW_NAME = "あたらしい";
 const renameTo = (name: string, from = START_NAME) => ({
   expected: { nickname: from },
   target: { nickname: name },
 });
 
-describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name", (storeName) => {
-  const setUp = (options: SetUpOptions = {}) => setUpOver(storeName, options);
+describe("createSessionWrites, the name", () => {
+  const setUp = (options: SetUpOptions = {}) => setUpOver("database", options);
 
   // No pre-check: my page for the editor, one save, my page to read back.
   const RENAME_REQUESTS = [
@@ -748,9 +419,10 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name
 
   test("reads my page for the title before and after a rename on either platform: name is on neither's list", async () => {
     for (const platform of ["android", "desktop"] as const) {
-      const { hiroba, writes } = setUp({ platform });
+      const { profile, hiroba, writes } = setUp({ platform });
       expect((await writes.changeName(renameTo(NEW_NAME))).kind).toBe("applied");
       expect(hiroba.log).toEqual(RENAME_WITH_TITLE_READS);
+      expect(profile.nickname()).toBe(NEW_NAME);
     }
   });
 
@@ -760,57 +432,13 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name
     expect(hiroba.log).toEqual(RENAME_REQUESTS);
   });
 
-  test("a change leaves an undo kept, and the undo puts the name back in one save", async () => {
-    const { editor, profile, hiroba, writes, keptText } = setUp();
-    expect((await writes.changeName(renameTo(NEW_NAME))).kind).toBe("applied");
-    expect(profile.nickname()).toBe(NEW_NAME);
-    expect(await writes.pendingUndo()).toEqual([
-      {
-        kind: "name",
-        at: NOON_JST().toISOString(),
-        before: { nickname: START_NAME },
-        after: { nickname: NEW_NAME },
-      },
-    ]);
-    const tickets = (await editor.hook("/__tickets", new URLSearchParams())?.json()) as string[];
-    const kept = keptText();
-    expect(tickets.some((ticket) => kept.includes(ticket))).toBe(false);
-
-    hiroba.log.length = 0;
-    expect((await writes.undo("name")).kind).toBe("applied");
-    expect(profile.nickname()).toBe(START_NAME);
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(hiroba.log).toEqual(RENAME_WITH_TITLE_READS);
-    const saves = hiroba.log.filter((request) => request === "POST /ajax/change_mydon_profile.php");
-    expect(saves).toHaveLength(1);
-  });
-
-  test("keeps the costume's, the title's and the name's undo apart, in that order", async () => {
-    const { writes } = setUp();
-    await writes.changeName(renameTo(NEW_NAME));
-    await writes.changeTitle(titleChange(START_TITLE, 102));
-    await writes.changeCostume({ expected: START, target: { ...START, colorFace: 3 } });
-    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual([
-      "costume",
-      "title",
-      "name",
-    ]);
-
-    expect((await writes.undo("name")).kind).toBe("applied");
-    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual(["costume", "title"]);
-    expect((await writes.undo("title")).kind).toBe("applied");
-    expect((await writes.undo("costume")).kind).toBe("applied");
-    expect(await writes.pendingUndo()).toEqual([]);
-  });
-
-  test("says the costume changed after a costume write alone: a rename, or its undo, never does", async () => {
+  test("says the costume changed after a costume write alone: a rename never does", async () => {
     const { hiroba, writes } = setUp();
     await writes.changeName(renameTo(NEW_NAME));
-    await writes.undo("name");
     expect(hiroba.costumeChanges).toBe(0);
   });
 
-  test("shows a name the filter refuses with Hiroba's words, and keeps no undo for it", async () => {
+  test("shows a name the filter refuses with Hiroba's words", async () => {
     const { profile, writes } = setUp();
     const outcome = await writes.changeName(renameTo(REFUSED_NAME));
     expect(outcome).toMatchObject({
@@ -818,26 +446,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name
       reason: { kind: "refused", code: 1, message: FILTER_MESSAGE },
     });
     expect(profile.nickname()).toBe(START_NAME);
-    expect(await writes.pendingUndo()).toEqual([]);
-  });
-
-  test("an undo Hiroba refuses keeps the record, which is offered still", async () => {
-    const { profile, writes } = setUp();
-    await writes.changeName(renameTo(NEW_NAME));
-    profile.hook("/__rename-cooldown", new URLSearchParams("on=1"));
-
-    const outcome = await writes.undo("name");
-    expect(outcome).toMatchObject({
-      kind: "notApplied",
-      reason: { kind: "refused", code: 1 },
-    });
-    expect(profile.nickname()).toBe(NEW_NAME);
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
-    ]);
-
-    profile.hook("/__rename-cooldown", new URLSearchParams("on=0"));
-    expect((await writes.undo("name")).kind).toBe("applied");
   });
 
   type RefusedCase = [label: string, name: string, field: string];
@@ -850,7 +458,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name
     const { hiroba, writes } = setUp({ liveChecked: ["costume", "name"] });
     expect(await writes.changeName(renameTo(name))).toEqual({ kind: "invalidTarget", field });
     expect(hiroba.log).toEqual(["GET /mypage_top.php"]);
-    expect(await writes.pendingUndo()).toEqual([]);
   });
 
   test("refuses every name unsent while the page says renames are closed, though it reads the page", async () => {
@@ -869,86 +476,30 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name
     expect(hiroba.log).toEqual(["GET /mypage_top.php"]);
   });
 
-  test("a rename after the name changed elsewhere sends nothing, and an undo of it is no longer offered", async () => {
-    const { profile, writes } = setUp();
-    await writes.changeName(renameTo(NEW_NAME));
+  test("a rename after the name changed elsewhere sends nothing, and reports the name now", async () => {
+    const { profile, hiroba, writes } = setUp({ liveChecked: ["costume", "name"] });
     profile.hook("/__profile", new URLSearchParams("nickname=べつのなまえ"));
-    expect((await writes.undo("name")).kind).toBe("changedSincePreview");
-    expect(profile.nickname()).toBe("べつのなまえ");
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(await writes.undo("name")).toEqual({ kind: "nothingToUndo" });
-  });
-
-  test("a read of my page settles a rename whose end was not known, from the name it shows", async () => {
-    const { profile, writes, signInAgain } = setUp();
-    profile.hook("/__profile-expire-on-save", new URLSearchParams());
-    const outcome = await writes.changeName(renameTo(NEW_NAME));
-    expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
-    signInAgain();
-    expect(await writes.pendingUndo()).toEqual([]);
-
-    await writes.profileRead({ taikoNo: OWNER, title: START_TITLE, nickname: NEW_NAME });
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
-    ]);
-  });
-
-  test("a read of my page dates a name record the name has moved away from, and leaves the title's alone", async () => {
-    const { writes } = setUp();
-    await writes.changeName(renameTo(NEW_NAME));
-    await writes.changeTitle(titleChange(START_TITLE, 102));
-    await writes.profileRead({
-      taikoNo: OWNER,
-      title: owned(102).label,
-      nickname: "べつのなまえ",
+    expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({
+      kind: "changedSincePreview",
+      current: { nickname: "べつのなまえ" },
     });
-    expect((await writes.pendingUndo()).map((one) => one.kind)).toEqual(["title"]);
-    expect(await writes.undo("name")).toEqual({ kind: "nothingToUndo" });
+    expect(hiroba.log).toEqual(["GET /mypage_top.php"]);
   });
 
-  test("keeps each player's name undo apart", async () => {
-    let whose = OWNER;
-    const { writes } = setUp({ whose: () => whose });
-    await writes.changeName(renameTo(NEW_NAME));
-
-    whose = OTHER;
-    expect(await writes.pendingUndo()).toEqual([]);
-    expect(await writes.undo("name")).toEqual({ kind: "nothingToUndo" });
-
-    whose = OWNER;
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "name", before: { nickname: START_NAME } },
-    ]);
-  });
-
-  test("a rename that throws after its save ends interrupted, and the next read of my page settles it", async () => {
+  test("a rename that throws after its save ends interrupted", async () => {
     const { profile, hiroba, writes } = setUp();
     hiroba.throwAfterSave = true;
     expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({ kind: "interrupted" });
     expect(profile.nickname()).toBe(NEW_NAME);
-    expect(await writes.pendingUndo()).toEqual([]);
-
-    await writes.profileRead({ taikoNo: OWNER, title: START_TITLE, nickname: NEW_NAME });
-    expect(await writes.pendingUndo()).toMatchObject([
-      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
-    ]);
-  });
-
-  test("sends nothing when the undo cannot be kept", async () => {
-    const { hiroba, writes, faults } = setUp();
-    faults.savesAllowed = 0;
-    expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({ kind: "undoNotSaved" });
-    expect(hiroba.log.filter((request) => request.startsWith("POST"))).toEqual([]);
   });
 
   test("reads and writes nothing while signed out", async () => {
     const { hiroba, writes } = setUp({ signedIn: false });
     expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({ kind: "notSignedIn" });
-    expect(await writes.undo("name")).toEqual({ kind: "notSignedIn" });
     expect(hiroba.log).toEqual([]);
   });
 
-  test("a session Hiroba ends before the rename is saved is dropped, with nothing left pending", async () => {
+  test("a session Hiroba ends before the rename is saved is dropped", async () => {
     const { hiroba, writes } = setUp();
     hiroba.ended = true;
     expect(await writes.changeName(renameTo(NEW_NAME))).toMatchObject({
@@ -956,7 +507,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s undo store, the name
       writeMayHaveHappened: false,
     });
     expect(hiroba.endedByApp).toBe(1);
-    expect(await writes.pendingUndo()).toEqual([]);
   });
 });
 
@@ -1090,14 +640,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (sto
         return writes.changeCostume(CHANGE);
       },
     ],
-    [
-      "an undo that cannot be kept",
-      "undoNotSaved",
-      ({ faults, writes }) => {
-        faults.savesAllowed = 0;
-        return writes.changeCostume(CHANGE);
-      },
-    ],
   ])("records nothing for %s", async (_label, kind, run) => {
     const world = setUp();
 
@@ -1107,14 +649,14 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (sto
     expect(await world.writes.costumeHistory()).toEqual([]);
   });
 
-  test("records nothing for an undo, which puts the set back without moving the history", async () => {
-    const { writes } = setUp();
-    await writes.changeCostume(CHANGE);
-    const before = await writes.costumeHistory();
+  test("sends a write before my page has said whose set this is, and records nothing for it", async () => {
+    let whose: string | null = null;
+    const { writes } = setUp({ whose: () => whose });
 
-    expect((await writes.undo("costume")).kind).toBe("applied");
+    expect((await writes.changeCostume(CHANGE)).kind).toBe("applied");
 
-    expect(await writes.costumeHistory()).toEqual(before);
+    whose = OWNER;
+    expect(await writes.costumeHistory()).toEqual([]);
   });
 
   test("keeps each player's history apart, whatever another card writes in between", async () => {
@@ -1173,7 +715,6 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (sto
     historyFaults.load = true;
     expect((await writes.changeCostume(CHANGE)).kind).toBe("applied");
     expect(await saved()).toEqual(face(3));
-    expect(await writes.pendingUndo()).toMatchObject([{ before: START, after: face(3) }]);
     historyFaults.load = false;
     expect(await writes.costumeHistory()).toEqual([]);
 

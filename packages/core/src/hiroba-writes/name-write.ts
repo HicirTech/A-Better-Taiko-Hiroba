@@ -43,7 +43,7 @@ export const RENAME_WRITE: WriteSpec<NameState, NameState, NameBody, RenameEdito
 
 export function changeName(
   input: { readonly expected: NameState; readonly target: NameState },
-  deps: WriteDeps<NameState>,
+  deps: WriteDeps,
 ): Promise<WriteOutcome<NameState>> {
   return runWrite(RENAME_WRITE, input, deps);
 }

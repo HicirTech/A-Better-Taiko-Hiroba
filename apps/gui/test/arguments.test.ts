@@ -23,7 +23,6 @@ describe("PORT_ARGUMENTS", () => {
       changeName: _changeName,
       previewCostume: _preview,
       readPicture: _picture,
-      undo: _undo,
       ...takingNothing
     } = PORT_ARGUMENTS;
     for (const check of Object.values(takingNothing)) {
@@ -299,25 +298,6 @@ describe("PORT_ARGUMENTS.readPicture", () => {
       [Object.assign(Object.create({ inherited: true }), item)],
     ];
     for (const args of refused) {
-      expect(check(args)).toBe(false);
-    }
-  });
-});
-
-describe("PORT_ARGUMENTS.undo", () => {
-  test("takes one kind of write the app knows, and nothing else", () => {
-    const check = PORT_ARGUMENTS.undo;
-    expect(check(["costume"])).toBe(true);
-    expect(check(["title"])).toBe(true);
-    expect(check(["name"])).toBe(true);
-    for (const args of [
-      [],
-      ["settings"],
-      ["Title"],
-      ["costume", "costume"],
-      [{ kind: "costume" }],
-      [null],
-    ]) {
       expect(check(args)).toBe(false);
     }
   });

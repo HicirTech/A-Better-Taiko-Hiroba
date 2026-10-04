@@ -47,30 +47,30 @@ describe("createHirobaQueue", () => {
     const queue = createHirobaQueue();
     const read = held("read", log);
     const change = held("change", log);
-    const undo = held("undo", log);
+    const rename = held("rename", log);
     const changeCostume = queue.oneWriteAtATime(change.run, "busy");
-    const undoCostume = queue.oneWriteAtATime(undo.run, "busy");
+    const renameNickname = queue.oneWriteAtATime(rename.run, "busy");
 
     const reading = queue.oneAtATime(read.run)();
     const first = changeCostume();
     expect(await changeCostume()).toBe("busy");
-    expect(await undoCostume()).toBe("busy");
+    expect(await renameNickname()).toBe("busy");
     await read.release();
     await Bun.sleep(0);
-    expect(await undoCostume()).toBe("busy");
+    expect(await renameNickname()).toBe("busy");
     await change.release();
     expect(await Promise.all([reading, first])).toEqual(["read", "change"]);
 
-    const next = undoCostume();
-    await undo.release();
-    expect(await next).toBe("undo");
+    const next = renameNickname();
+    await rename.release();
+    expect(await next).toBe("rename");
     expect(log).toEqual([
       "read start",
       "read end",
       "change start",
       "change end",
-      "undo start",
-      "undo end",
+      "rename start",
+      "rename end",
     ]);
   });
 

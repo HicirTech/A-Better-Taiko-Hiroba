@@ -28,7 +28,7 @@ const STOP_REASON = {
 export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   spec: WriteSpec<S, T, B, E, C>,
   input: { readonly expected: S; readonly target: T },
-  deps: WriteDeps<S>,
+  deps: WriteDeps,
 ): Promise<WriteOutcome<S>> {
   if (inMaintenance(deps.now())) {
     return { kind: "maintenance" };
@@ -55,11 +55,6 @@ export async function runWrite<S, T, B, E extends EditorReading<S>, C>(
   const expectedAfter = spec.expectedAfter(before, body.value);
   if (spec.same(expectedAfter, before)) {
     return { kind: "nothingToChange" };
-  }
-  try {
-    await deps.beginUndo(before, expectedAfter);
-  } catch {
-    return { kind: "undoNotSaved" };
   }
 
   if (spec.precheck !== undefined) {

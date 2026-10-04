@@ -1,8 +1,7 @@
 import type { WriteDeps } from "@abth/core";
 
-/** A write's options beyond the transport and Hiroba's origin, which it is given. A throw from
- * `beginUndo` stops the write unsent. */
-export type WriteOptions<S> = Omit<WriteDeps<S>, "transport" | "hirobaOrigin">;
+/** A write's options beyond the transport and Hiroba's origin, which it is given. */
+export type WriteOptions = Omit<WriteDeps, "transport" | "hirobaOrigin">;
 
 /** The sites the app asks things of: the two a sign-in walks through, and the one picture host. */
 export interface HirobaEndpoints {

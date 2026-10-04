@@ -40,7 +40,7 @@ export async function readProfile(
 /** What a platform layer learns from reading my page, beside what the interface shows. */
 export interface OwnProfileRead {
   readonly view: ProfileView;
-  /** Whose page it was: tells whose undo record is whose, and whose pictures are whose. */
+  /** Whose page it was: tells whose history is whose, and whose pictures are whose. */
   readonly taikoNo: string;
   /** Where the pictures the page showed are, checked, for the platform to fetch them from. */
   readonly pictures: PictureSources;

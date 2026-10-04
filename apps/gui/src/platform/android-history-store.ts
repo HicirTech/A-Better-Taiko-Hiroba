@@ -15,7 +15,7 @@ const HISTORIES = "histories";
 const RECORD_VERSION = 1;
 
 /** Android's costume history, in a database of its own apart from the pictures, which an epoch
- * bump clears, and from the undo records. */
+ * bump clears. */
 export function createIndexedDbHistoryStore(factory: DatabaseFactory): CostumeHistoryStore {
   let opened: Promise<Database> | null = null;
   const database = () => {

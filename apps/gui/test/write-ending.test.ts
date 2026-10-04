@@ -171,7 +171,6 @@ describe("sessionNoticeOf", () => {
       { kind: "maintenance" },
       { kind: "busy" },
       { kind: "interrupted" },
-      { kind: "nothingToUndo" },
     ] as const) {
       expect(sessionNoticeOf(outcome)).toBeNull();
     }

@@ -122,7 +122,6 @@ describe("a costume write over Android's transport", () => {
         hirobaOrigin: ORIGIN,
         now: () => new Date("2026-09-27T03:00:00Z"),
         crossCheck: false,
-        beginUndo: async () => undefined,
       },
     );
 

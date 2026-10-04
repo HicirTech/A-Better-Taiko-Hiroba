@@ -67,12 +67,10 @@ const OUTCOME_MESSAGE = {
   readFailed: "failure.unexpectedPage",
   sessionGone: "write.sessionGone",
   invalidTarget: "write.invalidTarget",
-  undoNotSaved: "write.undoNotSaved",
   stoppedBeforeWrite: "write.stoppedBeforeWrite",
   appliedNotSynced: "write.appliedNotSynced",
   outcomeUnknown: "write.outcomeUnknown",
   notSignedIn: "failure.notSignedIn",
-  nothingToUndo: "write.nothingToUndo",
   interrupted: "write.interrupted",
   busy: "write.busy",
 } as const satisfies Record<Exclude<Noticed<unknown>["kind"], KindDependent>, MessageKey>;
@@ -273,12 +271,9 @@ export function describeOutcome<K extends WriteKind>(
     case "needsConfirmation":
     case "interrupted":
       return plain("warning");
-    case "undoNotSaved":
-      return plain("error");
     case "maintenance":
     case "nothingToChange":
     case "notSignedIn":
-    case "nothingToUndo":
     case "busy":
       return plain("info");
   }

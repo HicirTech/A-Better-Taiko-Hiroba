@@ -336,9 +336,7 @@ describe("describeOutcome, whatever the kind", () => {
         [{ kind: "maintenance" }, "write.maintenance"],
         [{ kind: "busy" }, "write.busy"],
         [{ kind: "interrupted" }, "write.interrupted"],
-        [{ kind: "nothingToUndo" }, "write.nothingToUndo"],
         [{ kind: "notSignedIn" }, "failure.notSignedIn"],
-        [{ kind: "undoNotSaved" }, "write.undoNotSaved"],
         [{ kind: "sessionGone", writeMayHaveHappened: false }, "write.sessionGone"],
       ];
       for (const [outcome, key] of words) {

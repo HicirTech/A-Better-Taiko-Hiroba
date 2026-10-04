@@ -13,7 +13,7 @@ export function changeTitle(
   transport: Transport,
   endpoints: HirobaEndpoints,
   { expected, target }: TitleChange,
-  options: WriteOptions<TitleState>,
+  options: WriteOptions,
 ): Promise<WriteOutcome<TitleState>> {
   return change(
     { expected, target },

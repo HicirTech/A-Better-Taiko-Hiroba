@@ -158,7 +158,7 @@ async function change(
 ): Promise<WriteOutcome<CostumeSet>> {
   return changeCostume(
     { expected, target },
-    { transport, hirobaOrigin: ORIGIN, now: () => NOON_JST, crossCheck, beginUndo: async () => {} },
+    { transport, hirobaOrigin: ORIGIN, now: () => NOON_JST, crossCheck },
   );
 }
 

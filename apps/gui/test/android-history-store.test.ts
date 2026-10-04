@@ -66,8 +66,8 @@ describe("createIndexedDbHistoryStore", () => {
     await store.load(PLAYER);
 
     expect(indexedDb.transactions).toEqual([
-      { names: ["histories"], mode: "readwrite", durability: undefined },
-      { names: ["histories"], mode: "readonly", durability: undefined },
+      { names: ["histories"], mode: "readwrite" },
+      { names: ["histories"], mode: "readonly" },
     ]);
   });
 
