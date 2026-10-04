@@ -163,8 +163,8 @@ ${keys.map((key) => `<input type="hidden" id="${TWIN_OF[key]}" value="${set[key]
 ${tabs}`;
 }
 
-type Answer = Awaited<ReturnType<Transport["send"]>>;
-const answer = (path: string, body: string, type: string): Answer =>
+export type Answer = Awaited<ReturnType<Transport["send"]>>;
+export const answer = (path: string, body: string, type: string): Answer =>
   ok({
     status: 200,
     url: `${ORIGIN}/${path}`,

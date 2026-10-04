@@ -19,7 +19,12 @@ export {
   type FavoriteSongEditorView,
   openFavoriteSongEditor,
 } from "./favorite-song-write";
-export { changeFolder, type FolderEditorView, openFolderEditor } from "./folder-write";
+export {
+  changeFolder,
+  FOLDER_WRITE,
+  type FolderEditorView,
+  openFolderEditor,
+} from "./folder-write";
 export { inMaintenance } from "./maintenance";
 export {
   checkNameTarget,
