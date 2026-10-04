@@ -43,6 +43,7 @@ export type EditorAction =
   | { readonly type: "pickedItem"; readonly part: SlotPart; readonly id: number }
   | { readonly type: "pickedHistory"; readonly set: CostumeSet }
   | { readonly type: "reset" }
+  | { readonly type: "editsDropped" }
   | { readonly type: "saveStarted" }
   | { readonly type: "writeEnded"; readonly outcome: WriteOutcomeView };
 
@@ -68,6 +69,7 @@ export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep
     case "pickedHistory":
       return step.name === "editing" ? withDraft(step, action.set) : step;
     case "reset":
+    case "editsDropped":
       return step.name === "editing" ? withDraft(step, step.editor.state) : step;
     case "saveStarted":
       return step.name === "editing" && !sameCostume(step.editor.state, step.draft)
