@@ -278,6 +278,8 @@ export interface Messages {
   "difficulty.ura": string;
   /** Params: {difficulty} (a difficulty.* text) and {level}, its stars. A level badge's name. */
   "song.level": string;
+  /** Param: {bpm}, the tempo as taiko.wiki gives it, such as 154 or 120–240. */
+  "song.bpm": string;
   /** A folder write: each key has the costume's key, without "folder.", as its base. */
   "write.folder.unchanged": string;
   "write.folder.diverged": string;
@@ -357,6 +359,21 @@ export interface Messages {
   "picker.limit": string;
   "picker.done": string;
   "picker.close": string;
+  /** The song search's way back out to the page under it. */
+  "search.leave": string;
+  "search.clear": string;
+  "search.recent": string;
+  /** Param: {query}, a search kept on the device. */
+  "search.forget": string;
+  "details.charts": string;
+  /** Param: {count}, the chart's most notes in a row. */
+  "details.maxCombo": string;
+  "details.branched": string;
+  "details.noPicture": string;
+  "details.pictureFailed": string;
+  /** Params: {difficulty} (a difficulty.* text), {n} and {count}. A chart picture's name. */
+  "details.picture": string;
+  "details.pictureCredit": string;
 }
 
 export type MessageKey = keyof Messages;

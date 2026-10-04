@@ -18,7 +18,7 @@ export const en: Messages = {
   "settings.version": "Version {version}",
   "settings.songData": "Song data",
   "settings.songDataSources":
-    "Artists, genres, star levels and song names in other languages come from taiko.wiki and the Chinese Taiko no Tatsujin Wiki (taiko.fandom.com/zh). Names from the Chinese wiki are used under CC BY-SA.",
+    "Artists, genres, star levels, tempos and song names in other languages come from taiko.wiki and the Chinese Taiko no Tatsujin Wiki (taiko.fandom.com/zh), and chart pictures from the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp/taiko-fumen) and taiko.wiki. Names from the Chinese wiki are used under CC BY-SA.",
   "settings.songLevels": "Song levels",
   "settings.shownDifficulty": "Difficulty shown first",
   "settings.shownDifficultyHint":
@@ -243,6 +243,7 @@ export const en: Messages = {
   "difficulty.oni": "Extreme",
   "difficulty.ura": "Extreme (Inner)",
   "song.level": "{difficulty} ★{level}",
+  "song.bpm": "BPM {bpm}",
   "write.folder.unchanged":
     "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the folder as it was.",
   "write.folder.diverged": "The folder did not end up as planned. Compare below.",
@@ -316,4 +317,15 @@ export const en: Messages = {
   "picker.limit": "A set holds {max} songs at most. Remove one to add another.",
   "picker.done": "Done",
   "picker.close": "Close",
+  "search.leave": "Close the search",
+  "search.clear": "Clear",
+  "search.recent": "Recent searches",
+  "search.forget": "Remove “{query}”",
+  "details.charts": "Charts",
+  "details.maxCombo": "Max combo: {count}",
+  "details.branched": "Branched chart",
+  "details.noPicture": "No picture of this chart yet.",
+  "details.pictureFailed": "Couldn't load the chart picture.",
+  "details.picture": "{difficulty} chart, picture {n} of {count}",
+  "details.pictureCredit": "Chart pictures from the Taiko no Tatsujin Fumen Wiki and taiko.wiki.",
 };

@@ -38,6 +38,7 @@ import type {
   SignInOutcome,
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
+import { SongSearch } from "./songs/song-search";
 import { RELEASES_URL, releaseUrl } from "./updates";
 import { APP_VERSION } from "./updates/app-version";
 import { UpdateDialog } from "./updates/update-dialog";
@@ -57,6 +58,7 @@ type Screen =
 
 const OVERVIEW_SPACING = 3;
 const SHUT_LOOK = (shut: boolean) => ({ opacity: shut ? 0.6 : 1, transition: "opacity 150ms" });
+const HIDDEN = { display: "none" } as const;
 const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 
 const SIGN_IN_NOTICE = {
@@ -178,7 +180,9 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const { forget: forgetNameEditor, dropEdits: dropNameEdits } = nameEditor;
   const favorites = useFavorites({ port, lane, onSessionGone: sessionGone });
   const { forget: forgetFavorites, dropEdits: dropFavoritesEdits, read: readFavorites } = favorites;
-  const catalogue = useSongCatalogue(port, onFavoritesPage);
+  // Read once someone opens the favourites or the song search, and kept from then on.
+  const [songsWanted, setSongsWanted] = useState(false);
+  const catalogue = useSongCatalogue(port, onFavoritesPage || songsWanted);
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
   const { read: readEditor } = editor;
@@ -390,31 +394,40 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             )}
 
             {screen.name === "profile" && page === "overview" && (
-              <Stack spacing={OVERVIEW_SPACING}>
-                <OverviewHeader
-                  profile={screen.profile}
-                  lane={lane}
-                  i18n={i18n}
-                  portrait={portrait}
-                  namePlate={namePlate}
-                />
-                <PanelCard
-                  crowns={screen.profile.crowns}
-                  ranks={screen.profile.panel.ranks}
-                  lane={lane}
-                  toast={touchFirst ? toast : undefined}
-                  i18n={i18n}
-                />
-                <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
-                <Typography
-                  id="last-updated"
-                  variant="caption"
-                  color="text.secondary"
-                  component="p"
-                >
-                  {t("profile.fetchedAt", { time: i18n.dateTime(screen.profile.fetchedAt) })}
-                </Typography>
-              </Stack>
+              <SongSearch
+                catalogue={catalogue}
+                port={port}
+                i18n={i18n}
+                onOpen={() => setSongsWanted(true)}
+              >
+                {(searching) => (
+                  <Stack spacing={OVERVIEW_SPACING} sx={searching ? HIDDEN : undefined}>
+                    <OverviewHeader
+                      profile={screen.profile}
+                      lane={lane}
+                      i18n={i18n}
+                      portrait={portrait}
+                      namePlate={namePlate}
+                    />
+                    <PanelCard
+                      crowns={screen.profile.crowns}
+                      ranks={screen.profile.panel.ranks}
+                      lane={lane}
+                      toast={touchFirst ? toast : undefined}
+                      i18n={i18n}
+                    />
+                    <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
+                    <Typography
+                      id="last-updated"
+                      variant="caption"
+                      color="text.secondary"
+                      component="p"
+                    >
+                      {t("profile.fetchedAt", { time: i18n.dateTime(screen.profile.fetchedAt) })}
+                    </Typography>
+                  </Stack>
+                )}
+              </SongSearch>
             )}
           </Box>
 

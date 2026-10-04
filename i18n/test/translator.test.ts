@@ -191,6 +191,7 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
   "name.counter",
   "name.siteWarning",
   "song.level",
+  "song.bpm",
   "picker.level",
 ];
 
@@ -343,6 +344,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "者類星其他來太基依",
     "替順序鍵拿起向命",
     "譜疊點橫",
+    "近大歧",
   ].join(""),
 );
 

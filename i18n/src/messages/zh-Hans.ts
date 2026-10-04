@@ -18,7 +18,7 @@ export const zhHans: Messages = {
   "settings.version": "版本 {version}",
   "settings.songData": "歌曲资料",
   "settings.songDataSources":
-    "作者、分类、星级和其他语言的歌名来自 taiko.wiki 与 太鼓之達人維基（taiko.fandom.com/zh）。太鼓之達人維基的歌名按 CC BY-SA 使用。",
+    "作者、分类、星级、BPM 和其他语言的歌名来自 taiko.wiki 与 太鼓之達人維基（taiko.fandom.com/zh），谱面图来自 太鼓达人谱面 Wiki（wikiwiki.jp/taiko-fumen）与 taiko.wiki。太鼓之達人維基的歌名按 CC BY-SA 使用。",
   "settings.songLevels": "歌曲难度",
   "settings.shownDifficulty": "默认显示的难度",
   "settings.shownDifficultyHint":
@@ -227,6 +227,7 @@ export const zhHans: Messages = {
   "difficulty.oni": "魔王",
   "difficulty.ura": "魔王(里)",
   "song.level": "{difficulty} ★{level}",
+  "song.bpm": "BPM {bpm}",
   "write.folder.unchanged": "广场回复已保存，但读回的收藏夹仍是原样。没有任何变化。",
   "write.folder.diverged": "收藏夹没有按计划更改。请对比下方内容。",
   "write.folder.changedSincePreview":
@@ -295,4 +296,15 @@ export const zhHans: Messages = {
   "picker.limit": "一个套装最多放 {max} 首歌曲。要添加新的，请先移除一首。",
   "picker.done": "完成",
   "picker.close": "关闭",
+  "search.leave": "关闭搜索",
+  "search.clear": "清除",
+  "search.recent": "最近搜索",
+  "search.forget": "删除“{query}”",
+  "details.charts": "谱面",
+  "details.maxCombo": "最大连段：{count}",
+  "details.branched": "有谱面分歧",
+  "details.noPicture": "这个谱面还没有图。",
+  "details.pictureFailed": "无法加载谱面图。",
+  "details.picture": "{difficulty}谱面（{n}/{count}）",
+  "details.pictureCredit": "谱面图来自 太鼓达人谱面 Wiki 和 taiko.wiki。",
 };

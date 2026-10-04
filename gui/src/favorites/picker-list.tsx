@@ -12,6 +12,8 @@ export interface PickerEntry {
   /** The name shown, marked, when there was a search. */
   readonly shown: Marked | null;
   readonly other: { readonly marked: Marked; readonly lang: string } | null;
+  /** The start of the line under the name, such as the song's tempo. */
+  readonly detail?: string | undefined;
 }
 
 /** What a picker that takes many songs shows: the ones in, and how many fit. */
@@ -95,6 +97,7 @@ interface RowProps {
   readonly many: boolean;
   readonly checked: boolean;
   readonly disabled: boolean;
+  readonly idPrefix: string;
   readonly onActivate: (songNo: string) => void;
 }
 
@@ -104,12 +107,21 @@ const PickerRow = memo(function PickerRow({
   many,
   checked,
   disabled,
+  idPrefix,
   onActivate,
 }: RowProps) {
   const { songNo, levels } = entry.look;
-  const row = <SongRow look={entry.look} i18n={i18n} name={markedName(entry)} withLevels={false} />;
+  const row = (
+    <SongRow
+      look={entry.look}
+      i18n={i18n}
+      name={markedName(entry)}
+      detail={entry.detail}
+      withLevels={false}
+    />
+  );
   return (
-    <li className="picker-row" id={`song-picker-row-${songNo}`} data-song-no={songNo}>
+    <li className="picker-row" id={`${idPrefix}-row-${songNo}`} data-song-no={songNo}>
       {many ? (
         <label className="picker-hit">
           <input
@@ -137,16 +149,19 @@ export function PickerList({
   many,
   onActivate,
   describedBy,
+  idPrefix = "song-picker",
 }: {
   entries: readonly PickerEntry[];
   i18n: Translator;
   many: PickedSongs | null;
   onActivate: (songNo: string) => void;
   describedBy?: string | undefined;
+  /** The list is `<idPrefix>-list`, and each row `<idPrefix>-row-<song number>`. */
+  idPrefix?: string;
 }) {
   const full = many !== null && many.picked.size >= many.limit;
   return (
-    <Box component="ul" id="song-picker-list" aria-describedby={describedBy} sx={LIST}>
+    <Box component="ul" id={`${idPrefix}-list`} aria-describedby={describedBy} sx={LIST}>
       {entries.map((entry) => {
         const checked = many?.picked.has(entry.look.songNo) ?? false;
         return (
@@ -157,6 +172,7 @@ export function PickerList({
             many={many !== null}
             checked={checked}
             disabled={full && !checked}
+            idPrefix={idPrefix}
             onActivate={onActivate}
           />
         );
