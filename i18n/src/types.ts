@@ -265,6 +265,23 @@ export interface Messages {
   "write.invalid.nameTooLong": string;
   "write.invalid.nameControl": string;
   "write.invalid.nameClosed": string;
+  /** The genres as taiko.wiki's own locale files name them. */
+  "genre.pops": string;
+  "genre.anime": string;
+  "genre.kids": string;
+  "genre.vocaloid": string;
+  "genre.game": string;
+  "genre.namco": string;
+  "genre.variety": string;
+  "genre.classic": string;
+  /** The charts as the game's terms name them. */
+  "difficulty.easy": string;
+  "difficulty.normal": string;
+  "difficulty.hard": string;
+  "difficulty.oni": string;
+  "difficulty.ura": string;
+  /** Params: {difficulty} (a difficulty.* text) and {level}, its stars. A level badge's name. */
+  "song.level": string;
 }
 
 export type MessageKey = keyof Messages;

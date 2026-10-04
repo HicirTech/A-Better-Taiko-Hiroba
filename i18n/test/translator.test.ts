@@ -190,6 +190,7 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
   "costume.item.label",
   "name.counter",
   "name.siteWarning",
+  "song.level",
 ];
 
 /** Messages that are just one game term, as each language writes it. */
@@ -236,6 +237,19 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
   "costume.part.costume4": inEach("Makeup", "メイク", "妆容", "妝容"),
   "costume.part.costume5": inEach("Mini Character", "ぷちキャラ", "小角色", "小角色"),
   "costume.remove": inEach("Remove", "はずす", "移除", "移除"),
+  "genre.pops": inEach("POPS", "ポップス", "流行", "流行音樂"),
+  "genre.anime": inEach("Anime", "アニメ", "动画", "動畫"),
+  "genre.kids": inEach("Kids", "キッズ", "儿童", "兒童"),
+  "genre.vocaloid": inEach("Vocaloid", "ボーカロイド", "VOCALOID™", "VOCALOID™"),
+  "genre.game": inEach("Game Music", "ゲームミュージック", "游戏", "遊戲音樂"),
+  "genre.namco": inEach("Namco Original", "ナムコオリジナル", "南梦宫原创", "南科原創"),
+  "genre.variety": inEach("Variety", "バラエティ", "综合", "綜藝"),
+  "genre.classic": inEach("Classic", "クラシック", "古典", "古典"),
+  "difficulty.easy": inEach("Easy", "かんたん", "简单", "簡單"),
+  "difficulty.normal": inEach("Normal", "ふつう", "普通", "普通"),
+  "difficulty.hard": inEach("Hard", "むずかしい", "困难", "困難"),
+  "difficulty.oni": inEach("Extreme", "おに", "魔王", "魔鬼"),
+  "difficulty.ura": inEach("Extreme (Inner)", "おに裏", "魔王(里)", "魔鬼(裏)"),
 };
 
 const COSTUME = inEach(["costume"], ["きせかえ"], ["换装"], ["換裝"]);
@@ -319,6 +333,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "與良色萬著藏處號虹行表被裝製要覆視覽角觸言計訊記設試話該詳認語誤請護讀",
     "變資超跟路身軀較載輯輸轉辨送這通連進逾遊過達選還部重金銀銅錄錯長閉開間關限",
     "除階隨雅面頁項預頭顏顯體鼓牌",
+    "流音樂動兒童科創綜藝古典普困難魔鬼裏",
     "發稍布",
     "者類星其他來太基依",
   ].join(""),
