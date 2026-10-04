@@ -17,6 +17,8 @@ const song = (songNo: string, title: string): CatalogueSong => ({
   artists: [],
   genres: [1],
   levels: { easy: 1, normal: 2, hard: 3, oni: 4, ura: null },
+  bpm: null,
+  charts: { easy: null, normal: null, hard: null, oni: null, ura: null },
 });
 
 function memoryStorage(): Storage {

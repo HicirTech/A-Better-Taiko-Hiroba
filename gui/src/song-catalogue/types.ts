@@ -21,6 +21,23 @@ export interface CatalogueSong {
   readonly genres: readonly Genre[];
   /** Each chart's star level; null for a chart the song does not have. */
   readonly levels: Readonly<Record<Difficulty, number | null>>;
+  readonly bpm: SongBpm | null;
+  /** What each chart holds beyond its level; null for a chart the song does not have. */
+  readonly charts: Readonly<Record<Difficulty, ChartFacts | null>>;
+}
+
+/** The lowest and highest BPM, equal for a steady song; `wobbles` where the tempo drifts. */
+export interface SongBpm {
+  readonly min: number;
+  readonly max: number;
+  readonly wobbles: boolean;
+}
+
+export interface ChartFacts {
+  readonly maxCombo: number | null;
+  readonly branched: boolean;
+  /** Pictures of the chart's notes, as taiko.wiki links them, in its order. */
+  readonly images: readonly string[];
 }
 
 /** One read of taiko.wiki's songs: all of them, or those changed since the read before. */

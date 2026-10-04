@@ -10,8 +10,11 @@ export type WikiGenre =
   | "variety"
   | "classic";
 
-interface WikiCourse {
+export interface WikiCourse {
   readonly level: number;
+  readonly maxCombo: number;
+  readonly isBranched: 0 | 1;
+  readonly images: readonly string[];
 }
 
 export interface WikiSong {
@@ -22,6 +25,8 @@ export interface WikiSong {
   readonly romaji: string | null;
   readonly artists: readonly string[];
   readonly genre: readonly WikiGenre[];
+  readonly bpm: { readonly min: number; readonly max: number };
+  readonly bpmShiver: 0 | 1;
   readonly isDeleted: 0 | 1;
   readonly courses: {
     readonly easy: WikiCourse;
@@ -34,11 +39,25 @@ export interface WikiSong {
 
 type Levels = readonly [easy: number, normal: number, hard: number, oni: number, ura?: number];
 
-interface OtherTitles {
+interface Extras {
   readonly en?: string;
   readonly zh?: string;
   readonly romaji?: string;
+  /** The lowest and highest BPM; 150 throughout when not given. */
+  readonly bpm?: readonly [min: number, max: number];
+  readonly wobbles?: boolean;
+  readonly branched?: boolean;
 }
+
+const STEADY_BPM = [150, 150] as const;
+const COMBO_PER_LEVEL = 100;
+
+const course = (level: number, branched = false): WikiCourse => ({
+  level,
+  maxCombo: level * COMBO_PER_LEVEL,
+  isBranched: branched ? 1 : 0,
+  images: [],
+});
 
 function wikiSong(
   songNo: string,
@@ -46,23 +65,26 @@ function wikiSong(
   artist: string,
   genre: readonly WikiGenre[],
   [easy, normal, hard, oni, ura]: Levels,
-  other: OtherTitles = {},
+  extras: Extras = {},
 ): WikiSong {
+  const [min, max] = extras.bpm ?? STEADY_BPM;
   return {
     songNo,
     title,
-    titleEn: other.en ?? null,
-    titleZhCN: other.zh ?? null,
-    romaji: other.romaji ?? null,
+    titleEn: extras.en ?? null,
+    titleZhCN: extras.zh ?? null,
+    romaji: extras.romaji ?? null,
     artists: [artist],
     genre,
+    bpm: { min, max },
+    bpmShiver: extras.wobbles ? 1 : 0,
     isDeleted: 0,
     courses: {
-      easy: { level: easy },
-      normal: { level: normal },
-      hard: { level: hard },
-      oni: { level: oni },
-      ura: ura === undefined ? null : { level: ura },
+      easy: course(easy),
+      normal: course(normal),
+      hard: course(hard),
+      oni: course(oni, extras.branched),
+      ura: ura === undefined ? null : course(ura),
     },
   };
 }
@@ -95,6 +117,8 @@ export const WIKI_SONGS: readonly WikiSong[] = [
     en: "Beyond the Promise",
     zh: "约定的彼端",
     romaji: "yakusoku no mukougawa",
+    bpm: [120, 240],
+    branched: true,
   }),
   wikiSong("1006", "ひこうき雲のゆくえ", "ハルカゼ", ["pops"], [1, 2, 4, 6], {
     romaji: "hikoukigumo no yukue",
@@ -110,6 +134,8 @@ export const WIKI_SONGS: readonly WikiSong[] = [
   }),
   wikiSong("1010", "勇者たちの行進曲", "星屑ラボ", ["anime"], [3, 5, 7, 9], {
     zh: "勇者们的进行曲",
+    bpm: [168, 168],
+    wobbles: true,
   }),
   wikiSong("1011", "魔法少女は眠らない", "Miracle Pocket", ["anime"], [2, 3, 5, 7], {
     en: "The Magical Girl Never Sleeps",
@@ -131,6 +157,7 @@ export const WIKI_SONGS: readonly WikiSong[] = [
   wikiSong("1018", "ネオンの雨に溺れて", "nocturne.wav", ["vocaloid"], [3, 5, 7, 8]),
   wikiSong("1019", "SIGNAL 404", "nocturne.wav", ["vocaloid"], [4, 6, 8, 10], {
     en: "SIGNAL 404",
+    bpm: [85.85, 257.5],
   }),
   wikiSong("1020", "あの日の手紙", "白鍵P", ["vocaloid"], [2, 4, 6, 8], { zh: "那天的信" }),
   wikiSong("1021", "ロストタイム・ループ", "白鍵P", ["vocaloid"], [3, 5, 7, 9, 10]),
