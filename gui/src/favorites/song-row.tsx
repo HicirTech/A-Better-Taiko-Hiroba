@@ -9,13 +9,15 @@ import { ScrollingText } from "./scrolling-text";
 import type { SongLook } from "./song-look";
 
 const ONE_LINE = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
+const NO_GENRE = { backgroundColor: "currentColor", opacity: 0.25 } as const;
 // The row's parts are plain elements: a picker draws hundreds of them.
 const ROW = {
   display: "flex",
   alignItems: "stretch",
   gap: 1,
   minWidth: 0,
-  "& .song-bar": { width: 4, flexShrink: 0, borderRadius: "2px" },
+  "& .song-bars": { display: "flex", gap: "2px", flexShrink: 0 },
+  "& .song-bar": { width: 4, borderRadius: "2px" },
   "& .song-text": { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", py: 0.25 },
   "& .song-name": { ...ONE_LINE, lineHeight: 1.4 },
   "& .song-artists": {
@@ -42,19 +44,23 @@ export interface SongRowProps {
 }
 
 export function SongRow({ look, i18n, name, end, start, scrolling, id }: SongRowProps) {
-  const { genre } = look;
+  const { genres } = look;
   return (
     <Box component="span" id={id} className="song-row" data-song-no={look.songNo} sx={ROW}>
       {start}
-      <span
-        className="song-bar"
-        aria-hidden
-        style={
-          genre === null
-            ? { backgroundColor: "currentColor", opacity: 0.25 }
-            : { backgroundColor: GENRE_COLOUR[genre] }
-        }
-      />
+      <span className="song-bars" aria-hidden>
+        {genres.length === 0 ? (
+          <span className="song-bar" style={NO_GENRE} />
+        ) : (
+          genres.map((genre) => (
+            <span
+              key={genre}
+              className="song-bar"
+              style={{ backgroundColor: GENRE_COLOUR[genre] }}
+            />
+          ))
+        )}
+      </span>
       <span className="song-text">
         {scrolling ? (
           <ScrollingText className="song-name" lang={look.lang}>
