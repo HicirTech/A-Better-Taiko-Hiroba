@@ -17,7 +17,9 @@ export const updatesKeys = [
 ] as const;
 
 const FEED_ENV = { ABTH_DEV_UPDATE_FEED: `${HIROBA}${UPDATE_FEED}` };
-const RELEASE = "https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/tag/v0.2.0";
+/** Above the app's version, whatever release it is. */
+const NEWER_VERSION = "99.0.0";
+const RELEASE = `https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/tag/v${NEWER_VERSION}`;
 const APP_VERSION = (
   JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { version: string }
 ).version;
@@ -39,7 +41,7 @@ export async function updates(ctx: Ctx) {
     waitFor("the feed asked", async () => ((await feedHits()) > hits ? true : undefined));
 
   rmSync(UPDATES_USER_DATA, { recursive: true, force: true });
-  await setFeed("version=0.2.0");
+  await setFeed(`version=${NEWER_VERSION}`);
   const hitsAtStart = await feedHits();
 
   let app = await launchUpdates({});
@@ -68,8 +70,8 @@ export async function updates(ctx: Ctx) {
     );
     results.updateDialogForANewerFeed =
       (await feedHits()) === hitsAtStart + 1 &&
-      shown.title === "A Better Taiko Hiroba 0.2.0" &&
-      same(shown.notes, ["What is new in 0.2.0", "Pictures load sooner"]);
+      shown.title === `A Better Taiko Hiroba ${NEWER_VERSION}` &&
+      same(shown.notes, [`What is new in ${NEWER_VERSION}`, "Pictures load sooner"]);
     // Caught here, or the system browser would open on the release page.
     await app.page.evaluate(
       `window.openedUrls = []; window.open = (url) => { window.openedUrls.push(String(url)); return null; };`,
@@ -131,7 +133,7 @@ export async function updates(ctx: Ctx) {
     await setFeed(`version=${APP_VERSION}`);
     await app.click("#update-check");
     await statusIs(en.t("update.upToDate"));
-    await setFeed("version=0.2.0");
+    await setFeed(`version=${NEWER_VERSION}`);
     await app.click("#update-check");
     await waitFor(
       "the dialog on a manual check",
