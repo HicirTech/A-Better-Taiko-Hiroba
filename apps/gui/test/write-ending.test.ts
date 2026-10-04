@@ -4,6 +4,7 @@ import {
   type Noticed,
   noticeOf,
   refreshed,
+  seenAfter,
   sendHeld,
   sessionNoticeOf,
 } from "../src/my-page/write-ending";
@@ -20,71 +21,82 @@ const PLANNED = { title: "別のサンプル称号" };
 const FOUND = { title: "三つ目のサンプル称号" };
 const SHOWN: Shown = { state: OLD, other: "kept" };
 
+type Seen = [label: string, outcome: WriteOutcomeView<{ title: string }>, state: { title: string }];
+
+const SEEN: Seen[] = [
+  [
+    "an applied write, to the set read back",
+    { kind: "applied", before: OLD, after: PLANNED, save: SAVE, cross: "unchanged" },
+    PLANNED,
+  ],
+  [
+    "a write that did not reach the game server",
+    { kind: "appliedNotSynced", before: OLD, after: PLANNED, save: SAVE, cross: "unchanged" },
+    PLANNED,
+  ],
+  [
+    "a write the site answered and left as it was",
+    {
+      kind: "notApplied",
+      before: OLD,
+      after: OLD,
+      reason: { kind: "unchanged" },
+      save: SAVE,
+      cross: "unchanged",
+    },
+    OLD,
+  ],
+  [
+    "a write that ended elsewhere than planned, to where it ended",
+    {
+      kind: "diverged",
+      before: OLD,
+      expectedAfter: PLANNED,
+      after: FOUND,
+      save: SAVE,
+      cross: "off",
+    },
+    FOUND,
+  ],
+  [
+    "a write stopped because the set had moved, to the set found",
+    { kind: "changedSincePreview", current: FOUND },
+    FOUND,
+  ],
+];
+
+const NOT_SEEN: WriteOutcomeView<{ title: string }>[] = [
+  { kind: "maintenance" },
+  { kind: "nothingToChange" },
+  { kind: "invalidTarget", field: "title.notOwned" },
+  { kind: "interrupted" },
+  { kind: "busy" },
+  { kind: "sessionGone", writeMayHaveHappened: false },
+  {
+    kind: "outcomeUnknown",
+    before: OLD,
+    expectedAfter: PLANNED,
+    save: SAVE,
+    failure: { kind: "unreachable" },
+  },
+];
+
+describe("seenAfter", () => {
+  test.each(SEEN)("gives the set of %s", (_label, outcome, state) => {
+    expect(seenAfter(outcome)).toEqual(state);
+  });
+
+  test.each(NOT_SEEN)("says nothing after %p", (outcome) => {
+    expect(seenAfter(outcome)).toBeNull();
+  });
+});
+
 describe("refreshed", () => {
-  type Case = [
-    label: string,
-    outcome: WriteOutcomeView<{ title: string }>,
-    state: { title: string },
-  ];
-  test.each<Case>([
-    [
-      "an applied write, to the set read back",
-      { kind: "applied", before: OLD, after: PLANNED, save: SAVE, cross: "unchanged" },
-      PLANNED,
-    ],
-    [
-      "a write that did not reach the game server",
-      { kind: "appliedNotSynced", before: OLD, after: PLANNED, save: SAVE, cross: "unchanged" },
-      PLANNED,
-    ],
-    [
-      "a write the site answered and left as it was",
-      {
-        kind: "notApplied",
-        before: OLD,
-        after: OLD,
-        reason: { kind: "unchanged" },
-        save: SAVE,
-        cross: "unchanged",
-      },
-      OLD,
-    ],
-    [
-      "a write that ended elsewhere than planned, to where it ended",
-      {
-        kind: "diverged",
-        before: OLD,
-        expectedAfter: PLANNED,
-        after: FOUND,
-        save: SAVE,
-        cross: "off",
-      },
-      FOUND,
-    ],
-    [
-      "a write stopped because the set had moved, to the set found",
-      { kind: "changedSincePreview", current: FOUND },
-      FOUND,
-    ],
-  ])("shows %s", (_label, outcome, state) => {
+  test.each(SEEN)("shows %s", (_label, outcome, state) => {
     expect(refreshed(SHOWN, outcome)).toEqual({ ...SHOWN, state });
   });
 
-  test.each<WriteOutcomeView<{ title: string }>>([
-    { kind: "maintenance" },
-    { kind: "nothingToChange" },
-    { kind: "invalidTarget", field: "title.notOwned" },
-    { kind: "interrupted" },
-    { kind: "busy" },
-    { kind: "sessionGone", writeMayHaveHappened: false },
-    {
-      kind: "outcomeUnknown",
-      before: OLD,
-      expectedAfter: PLANNED,
-      save: SAVE,
-      failure: { kind: "unreachable" },
-    },
-  ])("leaves the editor as it was after %p", (outcome) => {
+  test.each(NOT_SEEN)("leaves the editor as it was after %p", (outcome) => {
     expect(refreshed(SHOWN, outcome)).toBe(SHOWN);
   });
 });

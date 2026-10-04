@@ -1,6 +1,6 @@
 import { checkNameTarget, isErr, NAME_FORM_MAX_LENGTH } from "@abth/core";
 
-import { type Noticed, noticeOf } from "../my-page/write-ending";
+import { type Noticed, noticeOf, seenAfter } from "../my-page/write-ending";
 import type { NameState, RenameState, WriteOutcomeView } from "../session-port";
 
 type NameOutcome = WriteOutcomeView<NameState>;
@@ -90,15 +90,5 @@ export function isWritingName(step: NameStep): boolean {
 
 /** The name my page would now show, as a write read it back; null when the ending says nothing. */
 export function nameAfter(outcome: NameOutcome): string | null {
-  switch (outcome.kind) {
-    case "applied":
-    case "appliedNotSynced":
-    case "notApplied":
-    case "diverged":
-      return outcome.after.nickname;
-    case "changedSincePreview":
-      return outcome.current.nickname;
-    default:
-      return null;
-  }
+  return seenAfter(outcome)?.nickname ?? null;
 }
