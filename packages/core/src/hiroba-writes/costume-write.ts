@@ -113,7 +113,7 @@ export async function openCostumeEditor(
 
 export function changeCostume(
   input: { readonly expected: CostumeSet; readonly target: CostumeSet },
-  deps: WriteDeps<CostumeSet>,
+  deps: WriteDeps,
 ): Promise<WriteOutcome<CostumeSet>> {
   return runWrite(COSTUME_WRITE, input, deps);
 }

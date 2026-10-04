@@ -30,18 +30,9 @@ export interface DatabaseTransaction {
   objectStore(name: string): DatabaseTable;
 }
 
-export interface TransactionOptions {
-  /** `strict` asks the browser to confirm the write reached storage before it reports it done. */
-  readonly durability?: "default" | "strict" | "relaxed";
-}
-
 export interface Database {
   createObjectStore(name: string): unknown;
-  transaction(
-    names: string | string[],
-    mode: "readonly" | "readwrite",
-    options?: TransactionOptions,
-  ): DatabaseTransaction;
+  transaction(names: string | string[], mode: "readonly" | "readwrite"): DatabaseTransaction;
 }
 
 export interface DatabaseFactory {

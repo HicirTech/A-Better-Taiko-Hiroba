@@ -5,7 +5,6 @@ import type {
   DatabaseHandler,
   DatabaseTable,
   DatabaseTransaction,
-  TransactionOptions,
 } from "../src/platform/android-indexeddb";
 
 interface FakeRequest {
@@ -22,7 +21,6 @@ interface FakeTransaction extends DatabaseTransaction {
 export interface AskedTransaction {
   readonly names: readonly string[];
   readonly mode: "readonly" | "readwrite";
-  readonly durability: TransactionOptions["durability"];
 }
 
 export interface FakeIndexedDb {
@@ -99,12 +97,8 @@ export function createFakeIndexedDb(): FakeIndexedDb {
 
   const database: Database = {
     createObjectStore: (name) => tables.set(name, new Map()),
-    transaction: (names, mode, options) => {
-      transactions.push({
-        names: typeof names === "string" ? [names] : names,
-        mode,
-        durability: options?.durability,
-      });
+    transaction: (names, mode) => {
+      transactions.push({ names: typeof names === "string" ? [names] : names, mode });
       return newTransaction();
     },
   };

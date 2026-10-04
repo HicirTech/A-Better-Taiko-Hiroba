@@ -60,11 +60,8 @@ export { sessionEnded } from "./session-ended";
 export {
   BUSY_OUTCOME,
   createSessionWrites,
-  type ProfileSeen,
   type SessionWrites,
   type SessionWritesOptions,
 } from "./session-writes";
 export { signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep, WriteOptions } from "./types";
-export { isUndoSlot, readSlot } from "./undo-slot";
-export type { UndoStore } from "./undo-store";

@@ -3307,7 +3307,7 @@ try {
   results.saveStoppedForAMovedSetGoesOnceTheEditorHasIt =
     (await savedFrom(await savedCostume())) === "applied" &&
     same(await savedCostume(), { ...START, colorFace: 3 });
-  // Hiroba's set goes back to the start, and a read of the editor dates the undo that is left.
+  // Hiroba's set goes back to the start, and the editor reads it.
   await fetch(`${HIROBA}/__state?reset=1`);
   await readEditorAgain();
   const TITLE_PAGE = "/mypage_title_edit.php";
@@ -3375,12 +3375,11 @@ try {
     );
   const inSection = (section: Section, step: string) =>
     waitFor(async () => ((await stepIn(section)) === step ? true : undefined));
+  /** The kind of notice a section shows; null when it shows none, as after a plain success. */
   const outcomeOf = (section: Section) =>
     page.evaluate<string | null>(
       `document.querySelector("#${section}-outcome")?.dataset.outcome ?? null`,
     );
-  const outcomeShown = (section: Section) =>
-    waitFor(async () => (await outcomeOf(section)) ?? undefined);
   const disabledOf = (selector: string) =>
     page.evaluate<boolean | null>(
       `document.querySelector(${JSON.stringify(selector)})?.disabled ?? null`,
@@ -3389,11 +3388,17 @@ try {
     page.evaluate<string | null>(
       `document.querySelector(${JSON.stringify(selector)})?.value ?? null`,
     );
+  const titleListIn = () =>
+    page.evaluate<string | null>(`document.querySelector("#title-section")?.dataset.list ?? null`);
+  // Read again forgets the list; opening the picker reads it where the old page read did.
   const readTitlesAgain = async () => {
-    const before = await hitsOn(TITLE_PAGE);
+    const before = await myPageHits();
     await click("#read-again");
-    await waitFor(async () => ((await hitsOn(TITLE_PAGE)) > before ? true : undefined));
+    await waitFor(async () => ((await myPageHits()) > before ? true : undefined));
+    await waitFor(async () => ((await titleListIn()) === "unread" ? true : undefined));
     await inSection("title", "idle");
+    await popupOpened();
+    await popupClosed();
   };
   const ARROW_DOWN = { key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40 };
   const popupOpened = async () => {
@@ -3401,10 +3406,18 @@ try {
     await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...ARROW_DOWN });
     await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...ARROW_DOWN });
     await waitFor(async () => (await exists('[role="listbox"]')) || undefined);
+    await waitFor(async () => ((await titleListIn()) === "read" ? true : undefined));
   };
   const popupClosed = async () => {
     await press("Escape");
     await waitFor(async () => ((await exists('[role="listbox"]')) ? undefined : true));
+  };
+  /** Reads the list if a write or Read again forgot it, so typing never starts a read. */
+  const titlesRead = async () => {
+    if ((await titleListIn()) !== "read") {
+      await popupOpened();
+      await popupClosed();
+    }
   };
   type Listed = {
     id: string | undefined;
@@ -3417,67 +3430,59 @@ try {
     page.evaluate<Listed[]>(
       `[...document.querySelectorAll('[role="listbox"] [data-title-id]')].map((li) => ({ id: li.dataset.titleId, name: li.querySelector("span")?.textContent ?? "", lang: li.querySelector("span")?.lang ?? "", numbered: /#[0-9]+/.test(li.textContent), current: li.textContent.includes("Current") }))`,
     );
+  /** Whether the text under `selector` holds a title's id, or a number sign and digits. */
+  const idShownIn = (selector: string) =>
+    page.evaluate<boolean>(
+      `(() => { const text = [...document.querySelectorAll(${JSON.stringify(selector)})].map((box) => box.textContent).join(" "); return /#[0-9]+/.test(text) || ${JSON.stringify(OWNED_TITLES.map((one) => one.id))}.some((id) => new RegExp("(^|[^0-9])" + id + "([^0-9]|$)").test(text)); })()`,
+    );
+  const idsShown: boolean[] = [];
+  const SAVE = "/ajax/change_mydon_profile.php";
   const pickTitle = async (typed: string, id: number) => {
-    await page.evaluate(`document.querySelector("#title-pick").focus()`);
+    await titlesRead();
+    // A pick still held, as a refused save leaves it, would take the typing at its end.
+    await page.evaluate(`document.querySelector(".MuiAutocomplete-clearIndicator")?.click()`);
+    // The field holds the title worn, so the typing replaces it.
+    await page.evaluate(
+      `(() => { const input = document.querySelector("#title-pick"); input.focus(); input.select(); })()`,
+    );
     await page.send("Input.insertText", { text: typed });
     await waitFor(async () => (await exists(`[data-title-id="${id}"]`)) || undefined);
     await page.evaluate(`document.querySelector('[data-title-id="${id}"]').click()`);
-    await waitFor(async () => ((await disabledOf("#title-review")) === false ? true : undefined));
+    await waitFor(async () => ((await disabledOf("#title-save")) === false ? true : undefined));
   };
-  const saveTitlePicked = async () => {
-    await click("#title-review");
-    await inSection("title", "confirming");
-    await click("#title-save");
+  /** Presses a section's Save, and waits for its write to end. */
+  const saveSection = async (section: Section) => {
+    const savesBefore = await hitsOn(SAVE);
+    await click(`#${section}-save`);
+    await waitFor(async () => ((await hitsOn(SAVE)) > savesBefore ? true : undefined));
+    await inSection(section, "idle");
   };
-  /** The read after a title write runs behind the outcome; the profile is in once it ends. */
+  /** The read after a title write runs behind the page; the profile is in once it ends. */
   const rereadDone = async (readsBefore: number) => {
     await waitFor(async () => ((await myPageHits()) >= readsBefore + 2 ? true : undefined));
-    await waitFor(async () =>
-      (await exists("#title-section")) ? ((await outcomeOf("title")) ?? undefined) : undefined,
-    );
     await Bun.sleep(300);
   };
   const changeTitleInTheWindow = async (typed: string, id: number, rereads = true) => {
     const readsBefore = await myPageHits();
     await pickTitle(typed, id);
-    await saveTitlePicked();
-    const outcome = await outcomeShown("title");
+    await saveSection("title");
     if (rereads) {
       await rereadDone(readsBefore);
     }
-    return outcome;
+    return outcomeOf("title");
   };
   /** Sets the value the way a paste does, past the field's own length limit. */
   const typeName = (name: string) =>
     page.evaluate(
       `(() => { const input = document.querySelector("#name-input"); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(name)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
     );
-  const saveNameTyped = async (name: string) => {
-    await typeName(name);
-    await waitFor(async () => ((await disabledOf("#name-review")) === false ? true : undefined));
-    await click("#name-review");
-    await inSection("name", "confirming");
-    await click("#name-save");
-  };
+  const nameSavable = () =>
+    waitFor(async () => ((await disabledOf("#name-save")) === false ? true : undefined));
   const changeNameInTheWindow = async (name: string) => {
-    await saveNameTyped(name);
-    return outcomeShown("name");
-  };
-  const undoSection = async (section: Section) => {
-    const readsBefore = await myPageHits();
-    await click(`#${section}-undo`);
-    await Bun.sleep(200);
-    const outcome = await waitFor(async () =>
-      (await stepIn(section)) === "done" ? ((await outcomeOf(section)) ?? undefined) : undefined,
-    );
-    if (section === "title" && outcome === "applied") {
-      await rereadDone(readsBefore);
-    }
-    return outcome;
-  };
-  const backToIdle = async (section: Section) => {
-    await click(`#${section}-back`);
-    await inSection(section, "idle");
+    await typeName(name);
+    await nameSavable();
+    await saveSection("name");
+    return outcomeOf("name");
   };
   const bridgeTitle = (
     target = { id: 102, title: titleOf(102).label },
@@ -3490,41 +3495,38 @@ try {
     page.evaluate<{ kind: string; [key: string]: unknown }>(
       `window.abth.changeName(${JSON.stringify({ expected: { nickname: expected }, target: { nickname: target } })})`,
     );
-  const pendingUndoKinds = () =>
-    page
-      .evaluate<{ kind: string }[]>("window.abth.pendingUndo()")
-      .then((all) => all.map((one) => one.kind));
 
   await goTo("overview");
   const titleReadsBeforeThePage = await hitsOn(TITLE_PAGE);
   await goTo("nameTitle");
   await inSection("title", "idle");
   await inSection("name", "idle");
+  const wornShownUnread =
+    (await hitsOn(TITLE_PAGE)) === titleReadsBeforeThePage &&
+    (await titleListIn()) === "unread" &&
+    (await inputValueOf("#title-pick")) === INITIAL_PROFILE.title;
   await popupOpened();
   const options = await listed();
+  idsShown.push(await idShownIn('#title-section, [role="listbox"]'));
   results.titleListShown =
     titleReadsBeforeThePage === 0 &&
+    wornShownUnread &&
     (await hitsOn(TITLE_PAGE)) === 1 &&
     same(
       options.map((one) => [one.id, one.name]),
       OWNED_TITLES.map((one) => [String(one.id), one.label]),
     ) &&
     options.every((one) => one.lang === "ja") &&
-    same(
-      options.filter((one) => one.numbered).map((one) => one.id),
-      ["104", "105"],
-    ) &&
-    (await textOf("#title-count")) === "Titles to choose from: 8";
+    options.every((one) => !one.numbered) &&
+    !(await page.evaluate<boolean>(`document.body.textContent.includes("Titles to choose from")`));
   results.titleWornMarked =
     same(
       options.filter((one) => one.current).map((one) => one.id),
       ["101"],
-    ) &&
-    !(await exists("#title-shared")) &&
-    !(await exists("#title-not-listed"));
+    ) && !(await exists("#title-pick-helper-text"));
   await popupClosed();
   results.titleAndNameWordsMarkedJapanese = await page.evaluate<boolean>(
-    `(() => { const lang = (selector) => document.querySelector(selector)?.lang; return ["#title-current", "#title-pick", "#name-input", "#name-site-warning"].every((selector) => lang(selector) === "ja"); })()`,
+    `(() => { const lang = (selector) => document.querySelector(selector)?.lang; return ["#title-pick", "#name-input", "#name-hint"].every((selector) => lang(selector) === "ja"); })()`,
   );
 
   const searchedFor = async (text: string) => {
@@ -3573,8 +3575,9 @@ try {
   await readTitlesAgain();
   await popupOpened();
   const sharedMarks = (await listed()).filter((one) => one.current).map((one) => one.id);
+  idsShown.push(await idShownIn('#title-section, [role="listbox"]'));
   await popupClosed();
-  const sharedNote = await textOf("#title-shared");
+  const sharedNote = await textOf("#title-pick-helper-text");
   await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(UNLISTED_TITLE)}`);
   await readTitlesAgain();
   await popupOpened();
@@ -3583,10 +3586,9 @@ try {
   results.titleSharedNameNamed =
     same(sharedMarks, ["104", "105"]) &&
     sharedNote === "2 of your titles have this name, so the app cannot tell which one you wear." &&
-    (await textOf("#title-not-listed")) ===
+    (await textOf("#title-pick-helper-text")) ===
       "Your current title is not in this list. It may be built from parts, which this version cannot read or change back." &&
-    unlistedMarks === 0 &&
-    !(await exists("#title-shared"));
+    unlistedMarks === 0;
   await fetch(`${HIROBA}/__profile?reset=1`);
   await readTitlesAgain();
 
@@ -3597,33 +3599,43 @@ try {
   await goTo("nameTitle");
   await inSection("title", "idle");
 
+  await titlesRead();
   await resetLog();
   await fetch(`${HIROBA}/__profile-posts?reset=1`);
   const readsBeforeTitle = await myPageHits();
   await pickTitle("最後", 108);
-  await click("#title-review");
-  await inSection("title", "confirming");
-  const titleReview = await textOf("#title-changes");
+  await Bun.sleep(600);
+  results.titlePickAloneWritesNothing =
+    (await disabledOf("#title-save")) === false &&
+    sameBesideLanePictures(await requestLog(), []) &&
+    (await profilePosts()).length === 0;
   await page.evaluate(
-    `(() => { window.noticesMounted = 0; new MutationObserver((records) => { for (const record of records) for (const node of record.addedNodes) { if (node.nodeType === 1 && (node.id === "title-outcome" || node.querySelector("#title-outcome") !== null)) window.noticesMounted += 1; } }).observe(document.body, { childList: true, subtree: true }); document.querySelector("#title-save").focus(); })()`,
+    `(() => { window.noticesMounted = 0; new MutationObserver((records) => { for (const record of records) for (const node of record.addedNodes) { if (node.nodeType === 1 && (node.matches("[data-outcome]") || node.querySelector("[data-outcome]") !== null)) window.noticesMounted += 1; } }).observe(document.body, { childList: true, subtree: true }); document.querySelector("#title-save").focus(); })()`,
   );
-  await click("#title-save");
-  const titleOutcome = await outcomeShown("title");
+  await saveSection("title");
   await rereadDone(readsBeforeTitle);
-  results.titleWriteKeepsTheFocusAndAnnouncesOnce =
+  results.titleWriteKeepsTheFocusAndSaysNothing =
     (await page.evaluate<boolean>(
       `document.querySelector("#title-section")?.contains(document.activeElement) ?? false`,
-    )) && (await page.evaluate<number>("window.noticesMounted")) === 1;
+    )) && (await page.evaluate<number>("window.noticesMounted")) === 0;
   const titleLog = await requestsSettled(TITLE_REQUESTS.length + TITLE_REREAD.length);
   const titleAfter = await profileNow();
   await waitFor(async () =>
     (await textOf("#profile-title")) === `Title: ${titleOf(108).label}` ? true : undefined,
   );
+  results.titleSuccessSaysNothing =
+    (await outcomeOf("title")) === null &&
+    !(await exists("[data-outcome]")) &&
+    !/Saved\.|Undone\.|now shows/.test(await text());
+  await popupOpened();
+  const wornAfterTitleWrite = (await listed()).filter((one) => one.current).map((one) => one.id);
+  idsShown.push(await idShownIn('#title-section, [role="listbox"]'));
+  await popupClosed();
   results.titleApplied =
-    titleOutcome === "applied" &&
-    titleReview === `Title: ${INITIAL_PROFILE.title} → ${titleOf(108).label}` &&
-    (await textOf("#title-outcome")) === "Saved. Hiroba now shows the new title." &&
+    same(wornAfterTitleWrite, ["108"]) &&
+    (await inputValueOf("#title-pick")) === titleOf(108).label &&
     (await textOf("#profile-title")) === `Title: ${titleOf(108).label}`;
+  results.titleIdsNotShown = idsShown.length === 3 && idsShown.every((shown) => !shown);
   results.titleSentOnlyThePlannedRequests = runThen(titleLog, TITLE_REQUESTS, TITLE_REREAD);
   const titlePosts = await profilePosts();
   results.titlePostsCarryTheAjaxShape =
@@ -3644,22 +3656,6 @@ try {
     same(titleAfter, { title: titleOf(108).label, nickname: INITIAL_PROFILE.nickname }) &&
     same(await savedCostume(), START);
 
-  const titleUndoNote = await textOf("#title-undo-note");
-  const titleUndoOffered = (await disabledOf("#title-undo")) === false;
-  await resetLog();
-  await fetch(`${HIROBA}/__profile-posts?reset=1`);
-  const titleUndoOutcome = await undoSection("title");
-  const titleUndoLog = await requestsSettled(TITLE_REQUESTS.length + TITLE_REREAD.length);
-  results.titleUndone =
-    titleUndoOutcome === "applied" &&
-    titleUndoNote === `Goes back to: ${INITIAL_PROFILE.title}` &&
-    titleUndoOffered &&
-    (await textOf("#title-outcome")) === "Undone. Hiroba shows the title as it was." &&
-    same(await profileNow(), profileAsStarted) &&
-    runThen(titleUndoLog, TITLE_REQUESTS, TITLE_REREAD) &&
-    (await profileSaves()).length === 1 &&
-    !(await exists("#title-undo"));
-  await backToIdle("title");
   await goTo("overview");
   await waitForSeen(page, async () => (await exists("#my-don-image")) || undefined);
   const myDonAsked = await page.evaluate<boolean>(
@@ -3668,6 +3664,9 @@ try {
   results.titleWriteLeavesTheMyDon = myDonAsked && (await myDonsSettled()) === myDonsBeforeTitle;
   await goTo("nameTitle");
   await inSection("title", "idle");
+  // Hiroba's title goes back to the start, and the page reads it.
+  await fetch(`${HIROBA}/__profile?reset=1`);
+  await readTitlesAgain();
 
   await fetch(`${HIROBA}/__profile-next-result?code=5&message=`);
   const titleRefused = await changeTitleInTheWindow("別の", 102, false);
@@ -3677,8 +3676,7 @@ try {
     titleRefusedText.includes("Hiroba refused the change (code 5). Nothing changed.") &&
     titleRefusedText.includes("Hiroba says you do not own that title.") &&
     same(await profileNow(), profileAsStarted) &&
-    !(await exists("#title-undo"));
-  await backToIdle("title");
+    (await disabledOf("#title-save")) === false;
 
   const savesBeforeTitlePrechecks = await hitsOn("/ajax/change_mydon_profile.php");
   const titleStops: string[] = [];
@@ -3725,63 +3723,24 @@ try {
   await fetch(`${HIROBA}/__profile?reset=1`);
   await readTitlesAgain();
 
-  await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(titleOf(104).label)}`);
-  await readTitlesAgain();
-  const ambiguousOutcome = await changeTitleInTheWindow("サンプルの", 101);
-  const savesBeforeAmbiguous = await hitsOn("/ajax/change_mydon_profile.php");
-  const ambiguousRefusal = await page.evaluate<{ kind: string; field?: string }>(
-    `window.abth.undo("title")`,
-  );
-  results.titleUndoAmbiguousExplained =
-    ambiguousOutcome === "applied" &&
-    (await disabledOf("#title-undo")) === true &&
-    (await textOf("#title-undo-reason")) ===
-      "This undo is not available: your previous title shares its name with other titles. Pick it from the list yourself." &&
-    (await textOf("#title-undo-note")) === `Goes back to: ${titleOf(104).label}` &&
-    same(ambiguousRefusal, { kind: "invalidTarget", field: "title.ambiguous" }) &&
-    (await hitsOn("/ajax/change_mydon_profile.php")) === savesBeforeAmbiguous &&
-    (await pendingUndoKinds()).includes("title");
-  await backToIdle("title");
-  await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(UNLISTED_TITLE)}`);
-  await readTitlesAgain();
-  const unlistedOutcome = await changeTitleInTheWindow("サンプルの", 101);
-  const savesBeforeUnlisted = await hitsOn("/ajax/change_mydon_profile.php");
-  const unlistedRefusal = await page.evaluate<{ kind: string; field?: string }>(
-    `window.abth.undo("title")`,
-  );
-  results.titleUndoUnlistedExplained =
-    unlistedOutcome === "applied" &&
-    (await disabledOf("#title-undo")) === true &&
-    (await textOf("#title-undo-reason")) ===
-      "This undo is not available: your previous title is not in today's list, so the app cannot set it again." &&
-    same(unlistedRefusal, { kind: "invalidTarget", field: "title.unresolved" }) &&
-    (await hitsOn("/ajax/change_mydon_profile.php")) === savesBeforeUnlisted &&
-    (await pendingUndoKinds()).includes("title");
-  await backToIdle("title");
-  // A title changed elsewhere: the next read withdraws the pending undo.
-  await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(titleOf(102).label)}`);
-  await readTitlesAgain();
-  await fetch(`${HIROBA}/__profile?reset=1`);
-  await readTitlesAgain();
-
   await resetLog();
   await fetch(`${HIROBA}/__profile-posts?reset=1`);
   results.nameFieldPrefilled =
     (await inputValueOf("#name-input")) === INITIAL_PROFILE.nickname &&
-    (await disabledOf("#name-review")) === true &&
+    (await disabledOf("#name-save")) === true &&
     (await disabledOf("#name-input")) === false &&
     sameBesideLanePictures(await requestLog(), []);
   await typeName("あたらしい");
   results.nameMaxLengthAndCounter =
     (await attribute("#name-input", "maxlength")) === "10" &&
     (await textOf("#name-counter")) === "5 / 10" &&
-    (await disabledOf("#name-review")) === false;
+    (await disabledOf("#name-save")) === false;
   await typeName(` ${INITIAL_PROFILE.nickname} `);
-  const sameNameHelp = await textOf("#name-input-helper-text");
-  const sameNameShut = await disabledOf("#name-review");
+  const sameNameHelp = await textOf("#name-hint");
+  const sameNameShut = await disabledOf("#name-save");
   const unsendable = `あ${String.fromCharCode(1)}い`;
   const invalidNames: [string, string | null][] = [
-    ["", null],
+    ["", en.t("name.siteWarning")],
     [
       "あ".repeat(11),
       "This app refused the change before sending it: the nickname is longer than Hiroba's form takes.",
@@ -3794,7 +3753,7 @@ try {
   const invalidShown: [boolean | null, string | null][] = [];
   for (const [name] of invalidNames) {
     await typeName(name);
-    invalidShown.push([await disabledOf("#name-review"), await textOf("#name-input-helper-text")]);
+    invalidShown.push([await disabledOf("#name-save"), await textOf("#name-hint")]);
   }
   const sentBeforeTheBridge = await requestLog();
   const edgeRefused = await bridgeName(" あ");
@@ -3815,43 +3774,37 @@ try {
   await fetch(`${HIROBA}/__rename?state=closed`);
   await readTitlesAgain();
   const closedNote = await textOf("#name-closed");
-  const closedShut = [await disabledOf("#name-input"), await disabledOf("#name-review")];
+  const closedShut = [await disabledOf("#name-input"), await disabledOf("#name-save")];
   await fetch(`${HIROBA}/__rename?state=odd`);
   await readTitlesAgain();
-  const unknownNote = await textOf("#name-unknown");
   const unknownOpen = await disabledOf("#name-input");
+  const unknownNoted = (await exists("#name-closed")) || (await exists("#name-unknown"));
   await fetch(`${HIROBA}/__rename?state=open`);
   await readTitlesAgain();
   results.nameClosedShowsWhy =
     closedNote ===
       "Hiroba says nicknames can't be changed right now: 今はドンだーネームは変更できないドン！" &&
     same(closedShut, [true, true]) &&
-    unknownNote ===
-      "This version couldn't tell whether Hiroba is taking nickname changes right now. You can still try." &&
     unknownOpen === false &&
+    !unknownNoted &&
     !(await exists("#name-closed")) &&
-    !(await exists("#name-unknown")) &&
     (await profileSaves()).length === 0;
 
   await resetLog();
   await fetch(`${HIROBA}/__profile-posts?reset=1`);
   await typeName("あたらしい");
-  await click("#name-review");
-  await inSection("name", "confirming");
-  const nameReview = await textOf("#name-changes");
-  const mayNotRevert = await textOf("#name-may-not-revert");
-  await click("#name-save");
-  const nameOutcome = await outcomeShown("name");
+  await nameSavable();
+  await saveSection("name");
   const nameLog = await requestsSettled(NAME_REQUESTS.length);
   const nameAfter = await profileNow();
   results.nameApplied =
-    nameOutcome === "applied" &&
-    nameReview === `Nickname: ${INITIAL_PROFILE.nickname} → あたらしい` &&
-    mayNotRevert ===
-      "Hiroba may not let you change it back right away. Choose a nickname you are happy to keep." &&
-    (await textOf("#name-outcome")) === "Saved. Hiroba now shows the new nickname." &&
     same(nameAfter, { title: INITIAL_PROFILE.title, nickname: "あたらしい" }) &&
+    (await inputValueOf("#name-input")) === "あたらしい" &&
     (await textOf("#title-plate h2")) === "あたらしい";
+  results.nameSuccessSaysNothing =
+    (await outcomeOf("name")) === null &&
+    !(await exists("[data-outcome]")) &&
+    !/Saved\.|Undone\.|now shows/.test(await text());
   results.nameSentOnlyThePlannedRequests = sentAsPlanned(nameLog, [], NAME_REQUESTS);
   const namePosts = await profilePosts();
   results.namePostCarriesTheFormOrder =
@@ -3868,42 +3821,26 @@ try {
     }) &&
     namePosts[0]?.ticketMatched === true;
 
-  const nameUndoNote = await textOf("#name-undo-note");
-  const nameUndoWarning = await textOf("#name-undo-warning");
-  await resetLog();
-  const nameUndoOutcome = await undoSection("name");
-  const nameUndoLog = await requestsSettled(NAME_REQUESTS.length);
-  results.nameUndone =
-    nameUndoOutcome === "applied" &&
-    nameUndoNote === `Goes back to: ${INITIAL_PROFILE.nickname}` &&
-    nameUndoWarning === "Hiroba may refuse this too. If it does, the nickname stays as it is." &&
-    (await textOf("#name-outcome")) === "Undone. Hiroba shows the nickname as it was." &&
-    same(await profileNow(), profileAsStarted) &&
-    sentAsPlanned(nameUndoLog, [], NAME_REQUESTS) &&
-    !(await exists("#name-undo"));
-  await backToIdle("name");
-  await changeNameInTheWindow("あたらしい");
-  await backToIdle("name");
+  // A change back made too soon is refused: the field keeps its text, and Save can go again.
   await fetch(`${HIROBA}/__rename-cooldown?on=1`);
-  const refusedUndo = await undoSection("name");
-  const refusedUndoText = (await textOf("#name-outcome")) ?? "";
-  const nameKeptAfterRefusedUndo = (await profileNow()).nickname === "あたらしい";
-  await backToIdle("name");
-  results.nameUndoRefusedKeepsTheRecord =
-    refusedUndo === "notApplied" &&
-    refusedUndoText.includes("Hiroba refused the change (code 1). Nothing changed.") &&
-    refusedUndoText.includes(`Hiroba said: ${COOLDOWN_MESSAGE}`) &&
-    nameKeptAfterRefusedUndo &&
-    (await exists("#name-undo"));
+  const tooSoon = await changeNameInTheWindow(INITIAL_PROFILE.nickname);
+  const tooSoonText = (await textOf("#name-outcome")) ?? "";
+  const keptByTheRefusal =
+    (await inputValueOf("#name-input")) === INITIAL_PROFILE.nickname &&
+    (await profileNow()).nickname === "あたらしい" &&
+    (await disabledOf("#name-save")) === false;
   await fetch(`${HIROBA}/__rename-cooldown?on=0`);
-  const undoneAtLast = await undoSection("name");
-  await backToIdle("name");
-  results.nameUndoneOnceHirobaTakesIt =
-    undoneAtLast === "applied" && same(await profileNow(), profileAsStarted);
+  await saveSection("name");
+  results.nameRefusedForAQuickChangeCanBeSavedAgain =
+    tooSoon === "notApplied" &&
+    tooSoonText.includes("Hiroba refused the change (code 1). Nothing changed.") &&
+    tooSoonText.includes(`Hiroba said: ${COOLDOWN_MESSAGE}`) &&
+    keptByTheRefusal &&
+    (await outcomeOf("name")) === null &&
+    same(await profileNow(), profileAsStarted);
 
   const filtered = await changeNameInTheWindow(REFUSED_NAME);
   const filteredText = (await textOf("#name-outcome")) ?? "";
-  await backToIdle("name");
   const fieldAfterRefusal = await inputValueOf("#name-input");
   await fetch(
     `${HIROBA}/__profile-next-result?code=1&message=${encodeURIComponent("<b>不適切</b>な名前")}`,
@@ -3911,7 +3848,6 @@ try {
   const markedUp = await changeNameInTheWindow("あたらしい");
   const markedUpText = (await textOf("#name-outcome")) ?? "";
   const markupInOutcome = await exists("#name-outcome b");
-  await backToIdle("name");
   results.nameRefusedShowsHirobaWordsAsText =
     filtered === "notApplied" &&
     filteredText.includes(`Hiroba said: ${FILTER_MESSAGE}`) &&
@@ -3926,10 +3862,10 @@ try {
     page.evaluate<{
       value: string;
       counter: string | null;
-      reviewDisabled: boolean | null;
+      saveDisabled: boolean | null;
       helper: string | null;
     }>(
-      `({ value: document.querySelector("#name-input").value, counter: document.querySelector("#name-counter")?.textContent ?? null, reviewDisabled: document.querySelector("#name-review")?.disabled ?? null, helper: document.querySelector("#name-input-helper-text")?.textContent ?? null })`,
+      `({ value: document.querySelector("#name-input").value, counter: document.querySelector("#name-counter")?.textContent ?? null, saveDisabled: document.querySelector("#name-save")?.disabled ?? null, helper: document.querySelector("#name-hint")?.textContent ?? null })`,
     );
   await page.evaluate(
     `(() => { const input = document.querySelector("#name-input"); input.focus(); input.select(); })()`,
@@ -3942,76 +3878,93 @@ try {
   const committed = await nameField();
   results.nameCompositionNotJudgedUntilCommitted =
     composing.value === "あ" &&
-    composing.helper === null &&
+    composing.helper === en.t("name.siteWarning") &&
     composing.counter === `${[...INITIAL_PROFILE.nickname].length} / 10` &&
-    composing.reviewDisabled === true &&
+    composing.saveDisabled === true &&
     committed.value === "あたらしい" &&
-    committed.helper === null &&
+    committed.helper === en.t("name.siteWarning") &&
     committed.counter === "5 / 10" &&
-    committed.reviewDisabled === false;
+    committed.saveDisabled === false;
+  // An open composition beside a savable nickname: Enter is the IME's, and sends nothing.
+  await page.send("Input.imeSetComposition", { text: "い", selectionStart: 1, selectionEnd: 1 });
+  await Bun.sleep(200);
+  const savesBeforeEnterInComposition = await hitsOn(SAVE);
+  await page.evaluate(
+    `document.querySelector("#name-input").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true, isComposing: true }))`,
+  );
+  await Bun.sleep(300);
+  const enterInComposition = {
+    saves: (await hitsOn(SAVE)) - savesBeforeEnterInComposition,
+    saveDisabled: await disabledOf("#name-save"),
+    step: await stepIn("name"),
+  };
+  await page.send("Input.insertText", { text: "い" });
+  results.nameEnterWhileComposingSendsNothing =
+    enterInComposition.saves === 0 &&
+    enterInComposition.saveDisabled === true &&
+    enterInComposition.step === "idle";
 
   await fetch(`${HIROBA}/__profile-hold-save?on=1`);
-  const savesBeforeHeldName = await hitsOn("/ajax/change_mydon_profile.php");
-  await saveNameTyped("あたらしい");
-  await waitFor(async () =>
-    (await hitsOn("/ajax/change_mydon_profile.php")) > savesBeforeHeldName ? true : undefined,
-  );
+  const savesBeforeHeldName = await hitsOn(SAVE);
+  await typeName("あたらしい");
+  await nameSavable();
+  await press("Enter");
+  await waitFor(async () => ((await hitsOn(SAVE)) > savesBeforeHeldName ? true : undefined));
+  results.nameEnterSavesAValidNickname = (await stepIn("name")) === "saving";
   await resetLog();
   const fabShutInNameWrite = (await fabState()).shut;
-  const titleShutInNameWrite = [await disabledOf("#title-pick"), await disabledOf("#title-review")];
+  const titleShutInNameWrite = [await disabledOf("#title-pick"), await disabledOf("#title-save")];
   await goTo("settings");
   const signOutShutInNameWrite =
     (await disabledOf("#sign-out")) === true && (await textOf("#account-who")) === "Signed in";
   await goTo("nameTitle");
   const busyTitle = await bridgeTitle();
-  const busyUndo = await page.evaluate<{ kind: string }>(`window.abth.undo("name")`);
   await click("#read-again");
   await Bun.sleep(300);
   const requestsWhileHeld = await requestLog();
   await fetch(`${HIROBA}/__profile-hold-save?on=0`);
-  const heldNameOutcome = await outcomeShown("name");
+  await inSection("name", "idle");
   results.noReadInsideAWriteHeldAtASave =
     fabShutInNameWrite &&
     same(titleShutInNameWrite, [true, true]) &&
     same(busyTitle, { kind: "busy" }) &&
-    same(busyUndo, { kind: "busy" }) &&
     sameBesideLanePictures(requestsWhileHeld, []) &&
-    heldNameOutcome === "applied";
-  await undoSection("name");
-  await backToIdle("name");
+    (await outcomeOf("name")) === null &&
+    (await profileNow()).nickname === "あたらしい";
+  await fetch(`${HIROBA}/__profile?reset=1`);
+  await readTitlesAgain();
   await fetch(`${HIROBA}/__title-hold-precheck?on=1`);
   const prechecksBeforeHeldTitle = await hitsOn("/ajax/check_ip_title.php");
   const readsBeforeHeldTitle = await myPageHits();
   await pickTitle("別の", 102);
-  await saveTitlePicked();
+  await click("#title-save");
   await waitFor(async () =>
     (await hitsOn("/ajax/check_ip_title.php")) > prechecksBeforeHeldTitle ? true : undefined,
   );
   await resetLog();
   const fabShutInTitleWrite = (await fabState()).shut;
-  const nameShutInTitleWrite = [await disabledOf("#name-input"), await disabledOf("#name-review")];
+  const nameShutInTitleWrite = [await disabledOf("#name-input"), await disabledOf("#name-save")];
   await goTo("settings");
   const signOutShutInTitleWrite =
     (await disabledOf("#sign-out")) === true && (await textOf("#account-who")) === "Signed in";
   await goTo("nameTitle");
   const busyName = await bridgeName("あたらしい");
-  const busyTitleUndo = await page.evaluate<{ kind: string }>(`window.abth.undo("title")`);
   await click("#read-again");
   await Bun.sleep(300);
   const requestsWhileTitleHeld = await requestLog();
   await fetch(`${HIROBA}/__title-hold-precheck?on=0`);
-  const heldTitleOutcome = await outcomeShown("title");
+  await inSection("title", "idle");
   await rereadDone(readsBeforeHeldTitle);
   results.noReadInsideAWriteHeldAtAPrecheck =
     fabShutInTitleWrite &&
     same(nameShutInTitleWrite, [true, true]) &&
     same(busyName, { kind: "busy" }) &&
-    same(busyTitleUndo, { kind: "busy" }) &&
     sameBesideLanePictures(requestsWhileTitleHeld, []) &&
-    heldTitleOutcome === "applied";
+    (await outcomeOf("title")) === null &&
+    (await profileNow()).title === titleOf(102).label;
   results.signOutShutWhileATitleOrNameWriteRuns = signOutShutInNameWrite && signOutShutInTitleWrite;
-  await undoSection("title");
-  await backToIdle("title");
+  await fetch(`${HIROBA}/__profile?reset=1`);
+  await readTitlesAgain();
 
   await goTo("overview");
   await fetch(`${HIROBA}/__profile-expire-on-save`);
@@ -4025,24 +3978,11 @@ try {
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
-  results.sessionGoneAfterTitleSaveSettlesOnNextRead =
-    titleDropped &&
-    same(await page.evaluate("window.abth.pendingUndo()"), [
-      {
-        kind: "title",
-        at: new Date(NOON_JST).toISOString(),
-        before: { title: INITIAL_PROFILE.title },
-        after: { title: titleOf(102).label },
-      },
-    ]);
+  results.sessionGoneAfterTitleSaveDropsTheSession = titleDropped;
   await fetch(`${HIROBA}/__profile?reset=1`);
   await click("#read-again");
   await Bun.sleep(300);
   await until("Last updated");
-  results.titleAndNameLeaveNoUndoOffered = same(
-    await page.evaluate("window.abth.pendingUndo()"),
-    [],
-  );
   await resetLog();
 
   const handedOut = (await (await fetch(`${HIROBA}/__tickets`)).json()) as string[];
@@ -4167,7 +4107,6 @@ try {
   results.costumeSignInCardAsWideAsTheOverviews =
     cardWidths.overview <= 900 && near(cardWidths.costume, cardWidths.overview);
 
-  // The Overview does not read the editor, so only the explicit read below settles the undo.
   await goTo("overview");
   await click("#sign-in");
   await until("サンプルどん");
@@ -4183,20 +4122,14 @@ try {
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
-  const noUndoBeforeTheRead = same(await page.evaluate("window.abth.pendingUndo()"), []);
-  await page.evaluate("window.abth.openCostumeEditor()");
-  results.sessionGoneAfterSaveSettlesOnNextRead =
+  const editorAfterTheLostSave = await page.evaluate<{ ok: boolean; value?: { state: unknown } }>(
+    "window.abth.openCostumeEditor()",
+  );
+  results.sessionGoneAfterSaveIsDroppedAndTheEditorShowsTheSet =
     droppedAfterSave &&
-    noUndoBeforeTheRead &&
-    same(await page.evaluate("window.abth.pendingUndo()"), [
-      {
-        kind: "costume",
-        at: new Date(NOON_JST).toISOString(),
-        before: START,
-        after: { ...START, colorFace: 7 },
-      },
-    ]);
-  // Leave the undo on offer for the reopen to find.
+    editorAfterTheLostSave.ok &&
+    same(editorAfterTheLostSave.value?.state, { ...START, colorFace: 7 });
+  // The checks after the reopen start from the set the lost save left.
   await fetch(`${HIROBA}/__state?reset=1&color_face=7`);
 
   await fetch(`${HIROBA}/__expire`);
@@ -4363,11 +4296,10 @@ try {
   results.signedOutAfterReopen = (await myPageHits()) === readsBeforeSecondReopen;
   await resetLog();
   const signedOutWrites = await running.page.evaluate(
-    `Promise.all([window.abth.pendingUndo(), window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorFace: 3 } })}), window.abth.undo("costume"), window.abth.costumeHistory()])`,
+    `Promise.all([window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorFace: 3 } })}), window.abth.costumeHistory()])`,
   );
   results.signedOutWritesSendNothing =
-    same(signedOutWrites, [[], { kind: "notSignedIn" }, { kind: "notSignedIn" }, []]) &&
-    same(await requestLog(), []);
+    same(signedOutWrites, [{ kind: "notSignedIn" }, []]) && same(await requestLog(), []);
   const platesSignedOut = (await platesAsked()).length;
   const myDonsSignedOut = (await myDonsAsked()).length;
   const medalPlatesSignedOut = await hitsOn(MEDAL_PLATE);
@@ -4607,13 +4539,37 @@ try {
   );
   await running.goTo("nameTitle");
   await Bun.sleep(400);
-  const titleStepWhileHeld = await stepOn("#title-section");
+  const pickerShut = () =>
+    running.page.evaluate<boolean | null>(
+      `document.querySelector("#title-pick")?.disabled ?? null`,
+    );
+  const pickerShutWhileHeld = await pickerShut();
   const titleReadsWhileHeld = await hitsOn(TITLE_PAGE);
   await fetch(`${HIROBA}/__hold-precheck?on=0`);
   await stepIs("#title-section", "idle");
+  await waitFor(async () => ((await pickerShut()) === false ? true : undefined));
+  const titleReadsAfterTheWrite = await hitsOn(TITLE_PAGE);
+  // The arrow opens the picker once the field has the focus; pressed again until a read starts.
+  await waitFor(async () => {
+    if ((await hitsOn(TITLE_PAGE)) > titleReadsAfterTheWrite) {
+      return true;
+    }
+    await running.page.evaluate(`document.querySelector("#title-pick").focus()`);
+    for (const type of ["keyDown", "keyUp"]) {
+      await running.page.send("Input.dispatchKeyEvent", {
+        type,
+        key: "ArrowDown",
+        code: "ArrowDown",
+        windowsVirtualKeyCode: 40,
+      });
+    }
+    await Bun.sleep(500);
+    return undefined;
+  });
   results.firstTitleReadWaitsOutACostumeWrite =
-    titleStepWhileHeld === "unread" &&
+    pickerShutWhileHeld === true &&
     titleReadsWhileHeld === titleReadsBeforeFirstRead &&
+    titleReadsAfterTheWrite === titleReadsBeforeFirstRead &&
     runThen(await requestsSettled(COLOUR_REQUESTS.length + 1), COLOUR_REQUESTS, [
       `GET ${TITLE_PAGE}`,
     ]);
@@ -4630,13 +4586,11 @@ try {
   );
   await waitFor(async () =>
     (await running.page.evaluate<boolean>(
-      `document.querySelector("#name-review").disabled === false`,
+      `document.querySelector("#name-save").disabled === false`,
     ))
       ? true
       : undefined,
   );
-  await running.click("#name-review");
-  await stepIs("#name-section", "confirming");
   await resetLog();
   await fetch(`${HIROBA}/__profile-hold-save?on=1`);
   const savesBeforeFirstRead = await hitsOn("/ajax/change_mydon_profile.php");
@@ -4770,7 +4724,7 @@ results.debugReadsRedacted =
 const savedTitleEditor = join(USER_DATA, "debug", "mypage_title_edit.php.html");
 results.titleDebugReadRedacted =
   existsSync(savedTitleEditor) && readFileSync(savedTitleEditor, "utf8").includes(`value="<tckt>"`);
-results.undoKeptOnDisk = existsSync(join(USER_DATA, "undo.json"));
+results.noUndoKeptOnDisk = !existsSync(join(USER_DATA, "undo.json"));
 const PICTURES = join(USER_DATA, "pictures");
 const pictureFiles = (existsSync(PICTURES) ? [...walk(PICTURES)] : []).map((file) =>
   file.slice(PICTURES.length).split(sep).join("/"),

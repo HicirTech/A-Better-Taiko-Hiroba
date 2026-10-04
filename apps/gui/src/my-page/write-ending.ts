@@ -3,22 +3,35 @@ import type { MessageKey } from "@abth/i18n";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { WriteOutcomeView } from "../session-port";
 
-/** The editor with the set as the write last saw it; any other ending leaves it as it was. */
-export function refreshed<S, E extends { readonly state: S }>(
-  editor: E,
-  outcome: WriteOutcomeView<S>,
-): E {
+/** The set as the write last saw it; null for an ending that says nothing of it. */
+export function seenAfter<S>(outcome: WriteOutcomeView<S>): S | null {
   switch (outcome.kind) {
     case "applied":
     case "appliedNotSynced":
     case "notApplied":
     case "diverged":
-      return { ...editor, state: outcome.after };
+      return outcome.after;
     case "changedSincePreview":
-      return { ...editor, state: outcome.current };
+      return outcome.current;
     default:
-      return editor;
+      return null;
   }
+}
+
+/** The editor with the set as the write last saw it; any other ending leaves it as it was. */
+export function refreshed<S, E extends { readonly state: S }>(
+  editor: E,
+  outcome: WriteOutcomeView<S>,
+): E {
+  const seen = seenAfter(outcome);
+  return seen === null ? editor : { ...editor, state: seen };
+}
+
+/** A write's ending a page says something about: every ending but a plain `applied`. */
+export type Noticed<S> = Exclude<WriteOutcomeView<S>, { readonly kind: "applied" }>;
+
+export function noticeOf<S>(outcome: WriteOutcomeView<S>): Noticed<S> | null {
+  return outcome.kind === "applied" ? null : outcome;
 }
 
 export async function sendHeld<S>(

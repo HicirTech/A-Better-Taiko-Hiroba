@@ -8,11 +8,7 @@ import type {
   PictureWant,
   TitleState,
   TitleTarget,
-  WriteKind,
-  WriteSets,
 } from "./types";
-
-export const WRITE_KINDS: readonly WriteKind[] = ["costume", "title", "name"];
 
 /** Whether one verb's arguments, as they arrived from the interface, are ones it takes. */
 export type ArgumentCheck = (args: readonly unknown[]) => boolean;
@@ -66,8 +62,7 @@ export function isTitleState(value: unknown): value is TitleState {
   );
 }
 
-/** The interface picks a title by id and name; a title by name alone (`id` null) is how the
- * platform puts one back, and never crosses the port. */
+/** The interface picks a title by id and name. */
 export function isTitleTarget(value: unknown): value is TitleTarget {
   return (
     hasExactly(value, ["id", "title"]) &&
@@ -90,11 +85,6 @@ export function isNameState(value: unknown): value is NameState {
     value.nickname.length <= MAX_NAME_LENGTH
   );
 }
-
-/** The checks the interface's arguments go through, so a stored slot meets a write's shape. */
-export const UNDO_SET_GUARDS: {
-  readonly [K in WriteKind]: (value: unknown) => value is WriteSets[K];
-} = { costume: isCostumeSet, title: isTitleState, name: isNameState };
 
 export const isWhole = (value: unknown, least: number, most: number): value is number =>
   Number.isInteger(value) && (value as number) >= least && (value as number) <= most;
@@ -173,9 +163,6 @@ const nameChange: ArgumentCheck = (args) =>
   isNameState(args[0].expected) &&
   isNameState(args[0].target);
 
-const writeKind: ArgumentCheck = (args) =>
-  args.length === 1 && WRITE_KINDS.includes(args[0] as WriteKind);
-
 /** What each verb accepts from the interface; anything the renderer sends is untrusted until it
  * passes here. A verb with no entry is a type error, so none reaches the port unchecked. */
 export const PORT_ARGUMENTS = {
@@ -191,7 +178,5 @@ export const PORT_ARGUMENTS = {
   changeCostume: costumeChange,
   changeTitle: titleChange,
   changeName: nameChange,
-  pendingUndo: none,
-  undo: writeKind,
   costumeHistory: none,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

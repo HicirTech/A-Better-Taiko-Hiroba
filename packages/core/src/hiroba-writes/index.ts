@@ -17,10 +17,8 @@ export { spaced } from "./cross-checks";
 export { inMaintenance } from "./maintenance";
 export {
   checkNameTarget,
-  describeName,
   NAME_FIELDS,
   NAME_FORM_MAX_LENGTH,
-  type NameAdvice,
   type NameBody,
   sameName,
 } from "./name-rule";
@@ -58,12 +56,3 @@ export type {
   WriteOutcome,
   WriteSpec,
 } from "./types";
-export type { PendingUndo, UndoRecord, UndoSlot } from "./undo-record";
-export {
-  beginPending,
-  EMPTY_UNDO_SLOT,
-  offeredUndo,
-  reconcile,
-  settle,
-  undoInput,
-} from "./undo-record";

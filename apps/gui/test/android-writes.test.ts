@@ -75,7 +75,6 @@ function setUp(options: SetUpOptions = {}) {
   const hook = (path: string, query = "") => editor.hook(path, new URLSearchParams(query));
   const profileHook = (path: string, query = "") => profile.hook(path, new URLSearchParams(query));
   const profilePosts = async () => (await profileHook("/__profile-posts")?.json()) as PostRecord[];
-  const slots = () => new Map(indexedDb?.tables.get("slots") ?? []);
   return {
     editor,
     profile,
@@ -89,7 +88,6 @@ function setUp(options: SetUpOptions = {}) {
     saved,
     hook,
     profileHook,
-    slots,
   };
 }
 
@@ -135,45 +133,7 @@ describe("createAndroidPort's costume writes", () => {
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 
-  test("keeps the undo in IndexedDB, offers it, and an undo puts the whole set back and empties it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.changeCostume(CHANGE);
-
-    expect([...world.slots().keys()]).toEqual([`costume/${OWNER}`]);
-    expect(await port.pendingUndo()).toEqual([
-      { kind: "costume", at: NOON_JST().toISOString(), before: START_SET, after: TARGET },
-    ]);
-
-    native.httpRequests.length = 0;
-    expect((await port.undo("costume")).kind).toBe("applied");
-    expect(world.sent()).toEqual(SIX_REQUESTS);
-    expect(await world.saved()).toMatchObject({ color_face: START_SET.colorFace });
-    expect(await port.pendingUndo()).toEqual([]);
-    expect(world.slots().size).toBe(0);
-  });
-
-  test("keeps the pending write before the first post, so an app killed in the middle still finds it", async () => {
-    const world = setUp();
-    const first = await signedInPort(world);
-    world.hook("/__hold-precheck", "on=1");
-    void first.changeCostume(CHANGE);
-    await until(() => world.sent().includes("POST /ajax/check_ip_kisekae.php"));
-    expect(world.slots().get(`costume/${OWNER}`)).toMatchObject({
-      v: 1,
-      slot: { record: null, pending: { before: START_SET, expectedAfter: TARGET } },
-    });
-    // The save, which had gone out before the kill, landed all the same.
-    world.hook("/__state", "color_face=3");
-
-    const relaunched = await world.launch();
-    await relaunched.readProfile();
-    expect(await relaunched.pendingUndo()).toEqual([]);
-    await relaunched.openCostumeEditor();
-    expect(await relaunched.pendingUndo()).toMatchObject([{ before: START_SET, after: TARGET }]);
-  });
-
-  test("a session Hiroba ends after the save is dropped, the pending write kept, and settled at the next read", async () => {
+  test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
     const world = setUp();
     const port = await signedInPort(world);
     world.hook("/__expire-on-save");
@@ -182,30 +142,6 @@ describe("createAndroidPort's costume writes", () => {
     expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
     expect(native.cookieCalls).toEqual(["clearAllCookies", FLUSH]);
     expect(await port.isSignedIn()).toBe(false);
-    expect(world.slots().get(`costume/${OWNER}`)).toMatchObject({ slot: { pending: {} } });
-
-    world.hiroba.restore();
-    const relaunched = await world.launch();
-    await relaunched.readProfile();
-    await relaunched.openCostumeEditor();
-    expect(await relaunched.pendingUndo()).toMatchObject([{ before: START_SET, after: TARGET }]);
-  });
-
-  test("keeps another card's undo apart, and offers this card none of it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.changeCostume(CHANGE);
-
-    standIn({
-      editor: world.editor,
-      session: world.session,
-      myPage: MY_PAGE.replace(OWNER, OTHER),
-    });
-    const theirs = await world.launch();
-    await theirs.readProfile();
-    expect(await theirs.pendingUndo()).toEqual([]);
-    expect(await theirs.undo("costume")).toEqual({ kind: "nothingToUndo" });
-    expect([...world.slots().keys()]).toEqual([`costume/${OWNER}`]);
   });
 
   test("writes the cookie store to disk after every write that ends, whatever it came to", async () => {
@@ -220,14 +156,8 @@ describe("createAndroidPort's costume writes", () => {
     expect((await port.changeCostume(CHANGE)).kind).toBe("applied");
     expect(flushes()).toBe(2);
 
-    expect((await port.undo("costume")).kind).toBe("applied");
-    expect(flushes()).toBe(3);
-
-    expect(await port.undo("costume")).toEqual({ kind: "nothingToUndo" });
-    expect(flushes()).toBe(4);
-
     expect((await port.openCostumeEditor()).ok).toBe(true);
-    expect(flushes()).toBe(5);
+    expect(flushes()).toBe(3);
   });
 
   test("answers a second write busy at once, sends nothing for it, and holds a picture back until the first has read back", async () => {
@@ -241,7 +171,6 @@ describe("createAndroidPort's costume writes", () => {
     await until(() => world.sent().includes("POST /ajax/check_ip_kisekae.php"));
     const requestsInTheWrite = world.sent().length;
     expect(await port.changeCostume(CHANGE)).toEqual({ kind: "busy" });
-    expect(await port.undo("costume")).toEqual({ kind: "busy" });
     const picture = port.readPicture({ kind: "costumeItem", slot: 1, id: 4 });
     await Bun.sleep(300);
     expect(world.sent()).toHaveLength(requestsInTheWrite);
@@ -270,35 +199,30 @@ describe("createAndroidPort's costume writes", () => {
     expect(world.sent()).toEqual([]);
   });
 
-  test("does not send a write it cannot keep the undo of: the storage that will not write, or open", async () => {
+  test("sends a write whatever the storage does with the history: it will not write, or open, or is not there", async () => {
     const refusing = createFakeIndexedDb();
     const written = setUp({ indexedDb: refusing });
     const withWrites = await signedInPort(written);
     refusing.faults.writes = true;
-    expect(await withWrites.changeCostume(CHANGE)).toEqual({ kind: "undoNotSaved" });
-    expect(await written.posts()).toEqual([]);
+    expect((await withWrites.changeCostume(CHANGE)).kind).toBe("applied");
+    expect(written.sent()).toEqual(SIX_REQUESTS);
 
     const unopenable = createFakeIndexedDb();
     unopenable.faults.open = true;
     const opened = setUp({ indexedDb: unopenable });
     const port = await signedInPort(opened);
-    expect(await port.changeCostume(CHANGE)).toEqual({ kind: "undoNotSaved" });
-    expect(await opened.posts()).toEqual([]);
-  });
+    expect((await port.changeCostume(CHANGE)).kind).toBe("applied");
+    expect(opened.sent()).toEqual(SIX_REQUESTS);
 
-  test("does not send a write when the page has no IndexedDB at all", async () => {
-    const world = setUp({ indexedDb: null });
-    const port = await signedInPort(world);
-    expect(await port.changeCostume(CHANGE)).toEqual({ kind: "undoNotSaved" });
-    expect(await port.pendingUndo()).toEqual([]);
-    expect(await world.posts()).toEqual([]);
+    const none = setUp({ indexedDb: null });
+    expect((await (await signedInPort(none)).changeCostume(CHANGE)).kind).toBe("applied");
+    expect(none.sent()).toEqual(SIX_REQUESTS);
   });
 
   test("sends nothing while signed out, and reads no costume editor", async () => {
     const world = setUp({ signedIn: false });
     const port = await world.launch();
     expect(await port.changeCostume(CHANGE)).toEqual({ kind: "notSignedIn" });
-    expect(await port.undo("costume")).toEqual({ kind: "notSignedIn" });
     expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
     expect(world.sent()).toEqual([]);
   });
@@ -468,73 +392,7 @@ describe("createAndroidPort's title writes", () => {
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 
-  test("keeps the undo in IndexedDB, offers it, and an undo puts the previous title back and empties it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.changeTitle(TITLE_CHANGE);
-
-    expect([...world.slots().keys()]).toEqual([`title/${OWNER}`]);
-    expect(await port.pendingUndo()).toEqual([
-      {
-        kind: "title",
-        at: NOON_JST().toISOString(),
-        before: { title: START_TITLE },
-        after: { title: ownedTitle(102).label },
-      },
-    ]);
-
-    native.httpRequests.length = 0;
-    expect((await port.undo("title")).kind).toBe("applied");
-    expect(world.sent()).toEqual(TITLE_SIX_REQUESTS);
-    expect(world.profile.title()).toBe(START_TITLE);
-    expect(await port.pendingUndo()).toEqual([]);
-    expect(world.slots().size).toBe(0);
-  });
-
-  test("refuses an undo to a name two titles share unsent, and keeps it offered", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    const shared = ownedTitle(104).label;
-    world.profile.setTitle(shared);
-    await port.changeTitle({
-      expected: { title: shared },
-      target: { id: 101, title: ownedTitle(101).label },
-    });
-
-    native.httpRequests.length = 0;
-    expect(await port.undo("title")).toEqual({ kind: "invalidTarget", field: "title.ambiguous" });
-    expect(world.sent().filter((request) => request.startsWith("POST"))).toEqual([]);
-    expect(await port.pendingUndo()).toMatchObject([{ kind: "title", before: { title: shared } }]);
-  });
-
-  test("keeps the pending write before the first post, and a read of my page settles it after a kill", async () => {
-    const world = setUp();
-    const first = await signedInPort(world);
-    world.profileHook("/__title-hold-precheck", "on=1");
-    void first.changeTitle(TITLE_CHANGE);
-    await until(() => world.sent().includes("POST /ajax/check_ip_title.php"));
-    expect(world.slots().get(`title/${OWNER}`)).toMatchObject({
-      v: 1,
-      slot: {
-        record: null,
-        pending: {
-          before: { title: START_TITLE },
-          expectedAfter: { title: ownedTitle(102).label },
-        },
-      },
-    });
-    // The save, which had gone out before the kill, landed all the same.
-    world.profileHook("/__profile", `title=${encodeURIComponent(ownedTitle(102).label)}`);
-
-    const relaunched = await world.launch();
-    expect(await relaunched.pendingUndo()).toEqual([]);
-    await relaunched.readProfile();
-    expect(await relaunched.pendingUndo()).toMatchObject([
-      { kind: "title", before: { title: START_TITLE }, after: { title: ownedTitle(102).label } },
-    ]);
-  });
-
-  test("a session Hiroba ends after the save is dropped, the pending write kept, and settled at the next read", async () => {
+  test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
     const world = setUp();
     const port = await signedInPort(world);
     world.profileHook("/__profile-expire-on-save");
@@ -543,14 +401,6 @@ describe("createAndroidPort's title writes", () => {
     expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
     expect(native.cookieCalls).toEqual(["clearAllCookies", FLUSH]);
     expect(await port.isSignedIn()).toBe(false);
-    expect(world.slots().get(`title/${OWNER}`)).toMatchObject({ slot: { pending: {} } });
-
-    world.hiroba.restore();
-    const relaunched = await world.launch();
-    await relaunched.readProfile();
-    expect(await relaunched.pendingUndo()).toMatchObject([
-      { kind: "title", before: { title: START_TITLE }, after: { title: ownedTitle(102).label } },
-    ]);
   });
 
   test("answers a write busy while another kind's waits on its pre-check, and sends nothing for it", async () => {
@@ -563,31 +413,11 @@ describe("createAndroidPort's title writes", () => {
     const requestsInTheWrite = world.sent().length;
     expect(await port.changeCostume(CHANGE)).toEqual({ kind: "busy" });
     expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "busy" });
-    expect(await port.undo("title")).toEqual({ kind: "busy" });
-    expect(await port.undo("costume")).toEqual({ kind: "busy" });
     expect(world.sent()).toHaveLength(requestsInTheWrite);
 
     world.profileHook("/__title-hold-precheck", "on=0");
     expect((await writing).kind).toBe("applied");
     expect(world.sent()).toEqual(TITLE_SIX_REQUESTS);
-  });
-
-  test("keeps another card's title undo apart, and offers this card none of it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.changeTitle(TITLE_CHANGE);
-
-    standIn({
-      editor: world.editor,
-      profile: world.profile,
-      session: world.session,
-      myPage: profilePage(world.profile, OTHER),
-    });
-    const theirs = await world.launch();
-    await theirs.readProfile();
-    expect(await theirs.pendingUndo()).toEqual([]);
-    expect(await theirs.undo("title")).toEqual({ kind: "nothingToUndo" });
-    expect([...world.slots().keys()]).toEqual([`title/${OWNER}`]);
   });
 
   test("writes the cookie store to disk after every title write that ends, whatever it came to", async () => {
@@ -602,11 +432,8 @@ describe("createAndroidPort's title writes", () => {
     expect((await port.changeTitle(TITLE_CHANGE)).kind).toBe("applied");
     expect(flushes()).toBe(2);
 
-    expect((await port.undo("title")).kind).toBe("applied");
-    expect(flushes()).toBe(3);
-
     expect((await port.openTitleEditor()).ok).toBe(true);
-    expect(flushes()).toBe(4);
+    expect(flushes()).toBe(3);
   });
 
   test("stops at a pre-check that is not the plain false, and saves nothing", async () => {
@@ -639,39 +466,34 @@ describe("createAndroidPort's title writes", () => {
     const byName = port.changeTitle({
       expected: TITLE_CHANGE.expected,
       target: { id: null, title: ownedTitle(102).label },
-    });
+    } as never);
     await expect(byName).rejects.toThrow("Refused changeTitle: arguments it does not take");
     expect(world.sent()).toEqual([]);
   });
 
-  test("does not send a title write it cannot keep the undo of: the storage that will not write, or open, or is not there", async () => {
+  test("sends a title write whatever the storage does with the history: it will not write, or open, or is not there", async () => {
     const refusing = createFakeIndexedDb();
     const written = setUp({ indexedDb: refusing });
     const withWrites = await signedInPort(written);
     refusing.faults.writes = true;
-    expect(await withWrites.changeTitle(TITLE_CHANGE)).toEqual({ kind: "undoNotSaved" });
-    expect(await written.profilePosts()).toEqual([]);
+    expect((await withWrites.changeTitle(TITLE_CHANGE)).kind).toBe("applied");
+    expect(written.sent()).toEqual(TITLE_SIX_REQUESTS);
 
     const unopenable = createFakeIndexedDb();
     unopenable.faults.open = true;
     const opened = setUp({ indexedDb: unopenable });
-    expect(await (await signedInPort(opened)).changeTitle(TITLE_CHANGE)).toEqual({
-      kind: "undoNotSaved",
-    });
-    expect(await opened.profilePosts()).toEqual([]);
+    expect((await (await signedInPort(opened)).changeTitle(TITLE_CHANGE)).kind).toBe("applied");
+    expect(opened.sent()).toEqual(TITLE_SIX_REQUESTS);
 
     const none = setUp({ indexedDb: null });
-    expect(await (await signedInPort(none)).changeTitle(TITLE_CHANGE)).toEqual({
-      kind: "undoNotSaved",
-    });
-    expect(await none.profilePosts()).toEqual([]);
+    expect((await (await signedInPort(none)).changeTitle(TITLE_CHANGE)).kind).toBe("applied");
+    expect(none.sent()).toEqual(TITLE_SIX_REQUESTS);
   });
 
   test("sends nothing while signed out, and reads no title page", async () => {
     const world = setUp({ signedIn: false });
     const port = await world.launch();
     expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "notSignedIn" });
-    expect(await port.undo("title")).toEqual({ kind: "notSignedIn" });
     expect(await port.openTitleEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
     expect(world.sent()).toEqual([]);
   });
@@ -719,30 +541,7 @@ describe("createAndroidPort's name writes", () => {
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 
-  test("keeps the undo in IndexedDB, offers it, and an undo puts the previous name back and empties it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.changeName(NAME_CHANGE);
-
-    expect([...world.slots().keys()]).toEqual([`name/${OWNER}`]);
-    expect(await port.pendingUndo()).toEqual([
-      {
-        kind: "name",
-        at: NOON_JST().toISOString(),
-        before: { nickname: START_NAME },
-        after: { nickname: NEW_NAME },
-      },
-    ]);
-
-    native.httpRequests.length = 0;
-    expect((await port.undo("name")).kind).toBe("applied");
-    expect(world.sent()).toEqual(NAME_FIVE_REQUESTS);
-    expect(world.profile.nickname()).toBe(START_NAME);
-    expect(await port.pendingUndo()).toEqual([]);
-    expect(world.slots().size).toBe(0);
-  });
-
-  test("shows a name the filter refuses with Hiroba's words, and keeps no undo for it", async () => {
+  test("shows a name the filter refuses with Hiroba's words", async () => {
     const world = setUp();
     const port = await signedInPort(world);
     const outcome = await port.changeName({ ...NAME_CHANGE, target: { nickname: REFUSED_NAME } });
@@ -752,24 +551,6 @@ describe("createAndroidPort's name writes", () => {
       reason: { kind: "refused", code: 1, message: FILTER_MESSAGE },
     });
     expect(world.profile.nickname()).toBe(START_NAME);
-    expect(await port.pendingUndo()).toEqual([]);
-    expect(world.slots().size).toBe(0);
-  });
-
-  test("keeps the record offered when Hiroba will not take the name back", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.changeName(NAME_CHANGE);
-    world.profileHook("/__rename-cooldown", "on=1");
-
-    expect(await port.undo("name")).toMatchObject({
-      kind: "notApplied",
-      reason: { kind: "refused", code: 1 },
-    });
-    expect(world.profile.nickname()).toBe(NEW_NAME);
-    expect(await port.pendingUndo()).toMatchObject([
-      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
-    ]);
   });
 
   test("refuses every name unsent while my page says renames are closed", async () => {
@@ -785,34 +566,7 @@ describe("createAndroidPort's name writes", () => {
     expect(await world.profilePosts()).toEqual([]);
   });
 
-  test("keeps the pending write before the post, and a read of my page settles it after a kill", async () => {
-    const world = setUp();
-    const first = await signedInPort(world);
-    world.profileHook("/__profile-hold-save", "on=1");
-    void first.changeName(NAME_CHANGE);
-    await until(() => world.sent().includes("POST /ajax/change_mydon_profile.php"));
-    expect(world.slots().get(`name/${OWNER}`)).toMatchObject({
-      v: 1,
-      slot: {
-        record: null,
-        pending: {
-          before: { nickname: START_NAME },
-          expectedAfter: { nickname: NEW_NAME },
-        },
-      },
-    });
-    // The save, which had gone out before the kill, landed all the same.
-    world.profileHook("/__profile", `nickname=${encodeURIComponent(NEW_NAME)}`);
-
-    const relaunched = await world.launch();
-    expect(await relaunched.pendingUndo()).toEqual([]);
-    await relaunched.readProfile();
-    expect(await relaunched.pendingUndo()).toMatchObject([
-      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
-    ]);
-  });
-
-  test("a session Hiroba ends after the save is dropped, the pending write kept, and settled at the next read", async () => {
+  test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
     const world = setUp();
     const port = await signedInPort(world);
     world.profileHook("/__profile-expire-on-save");
@@ -821,14 +575,6 @@ describe("createAndroidPort's name writes", () => {
     expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
     expect(native.cookieCalls).toEqual(["clearAllCookies", FLUSH]);
     expect(await port.isSignedIn()).toBe(false);
-    expect(world.slots().get(`name/${OWNER}`)).toMatchObject({ slot: { pending: {} } });
-
-    world.hiroba.restore();
-    const relaunched = await world.launch();
-    await relaunched.readProfile();
-    expect(await relaunched.pendingUndo()).toMatchObject([
-      { kind: "name", before: { nickname: START_NAME }, after: { nickname: NEW_NAME } },
-    ]);
   });
 
   test("answers any other write busy while a rename waits on its save, and sends nothing for it", async () => {
@@ -842,31 +588,11 @@ describe("createAndroidPort's name writes", () => {
     expect(await port.changeCostume(CHANGE)).toEqual({ kind: "busy" });
     expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "busy" });
     expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "busy" });
-    expect(await port.undo("name")).toEqual({ kind: "busy" });
-    expect(await port.undo("title")).toEqual({ kind: "busy" });
     expect(world.sent()).toHaveLength(requestsInTheWrite);
 
     world.profileHook("/__profile-hold-save", "on=0");
     expect((await writing).kind).toBe("applied");
     expect(world.sent()).toEqual(NAME_FIVE_REQUESTS);
-  });
-
-  test("keeps another card's name undo apart, and offers this card none of it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.changeName(NAME_CHANGE);
-
-    standIn({
-      editor: world.editor,
-      profile: world.profile,
-      session: world.session,
-      myPage: profilePage(world.profile, OTHER),
-    });
-    const theirs = await world.launch();
-    await theirs.readProfile();
-    expect(await theirs.pendingUndo()).toEqual([]);
-    expect(await theirs.undo("name")).toEqual({ kind: "nothingToUndo" });
-    expect([...world.slots().keys()]).toEqual([`name/${OWNER}`]);
   });
 
   test("writes the cookie store to disk after every rename that ends, whatever it came to", async () => {
@@ -880,9 +606,6 @@ describe("createAndroidPort's name writes", () => {
 
     expect((await port.changeName(NAME_CHANGE)).kind).toBe("applied");
     expect(flushes()).toBe(2);
-
-    expect((await port.undo("name")).kind).toBe("applied");
-    expect(flushes()).toBe(3);
   });
 
   test("sends nothing in Hiroba's daily break", async () => {
@@ -905,34 +628,29 @@ describe("createAndroidPort's name writes", () => {
     expect(world.sent()).toEqual([]);
   });
 
-  test("does not send a rename it cannot keep the undo of: the storage that will not write, or open, or is not there", async () => {
+  test("sends a rename whatever the storage does with the history: it will not write, or open, or is not there", async () => {
     const refusing = createFakeIndexedDb();
     const written = setUp({ indexedDb: refusing });
     const withWrites = await signedInPort(written);
     refusing.faults.writes = true;
-    expect(await withWrites.changeName(NAME_CHANGE)).toEqual({ kind: "undoNotSaved" });
-    expect(await written.profilePosts()).toEqual([]);
+    expect((await withWrites.changeName(NAME_CHANGE)).kind).toBe("applied");
+    expect(written.sent()).toEqual(NAME_FIVE_REQUESTS);
 
     const unopenable = createFakeIndexedDb();
     unopenable.faults.open = true;
     const opened = setUp({ indexedDb: unopenable });
-    expect(await (await signedInPort(opened)).changeName(NAME_CHANGE)).toEqual({
-      kind: "undoNotSaved",
-    });
-    expect(await opened.profilePosts()).toEqual([]);
+    expect((await (await signedInPort(opened)).changeName(NAME_CHANGE)).kind).toBe("applied");
+    expect(opened.sent()).toEqual(NAME_FIVE_REQUESTS);
 
     const none = setUp({ indexedDb: null });
-    expect(await (await signedInPort(none)).changeName(NAME_CHANGE)).toEqual({
-      kind: "undoNotSaved",
-    });
-    expect(await none.profilePosts()).toEqual([]);
+    expect((await (await signedInPort(none)).changeName(NAME_CHANGE)).kind).toBe("applied");
+    expect(none.sent()).toEqual(NAME_FIVE_REQUESTS);
   });
 
   test("sends nothing while signed out", async () => {
     const world = setUp({ signedIn: false });
     const port = await world.launch();
     expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "notSignedIn" });
-    expect(await port.undo("name")).toEqual({ kind: "notSignedIn" });
     expect(world.sent()).toEqual([]);
   });
 });

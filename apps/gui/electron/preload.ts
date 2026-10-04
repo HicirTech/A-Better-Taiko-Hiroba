@@ -20,8 +20,6 @@ const port: HirobaSessionPort = {
   changeCostume: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeCostume, change),
   changeTitle: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeTitle, change),
   changeName: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeName, change),
-  pendingUndo: () => ipcRenderer.invoke(BRIDGE_CHANNELS.pendingUndo),
-  undo: (kind) => ipcRenderer.invoke(BRIDGE_CHANNELS.undo, kind),
   costumeHistory: () => ipcRenderer.invoke(BRIDGE_CHANNELS.costumeHistory),
 };
 

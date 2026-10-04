@@ -12,7 +12,5 @@ export const BRIDGE_CHANNELS = {
   changeCostume: "abth:change-costume",
   changeTitle: "abth:change-title",
   changeName: "abth:change-name",
-  pendingUndo: "abth:pending-undo",
-  undo: "abth:undo",
   costumeHistory: "abth:costume-history",
 } as const;

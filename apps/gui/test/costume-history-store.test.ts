@@ -3,8 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
-import { createCostumeHistoryStore } from "../electron/costume-history-store";
-import type { UndoFiles } from "../electron/undo-store";
+import { createCostumeHistoryStore, type HistoryFiles } from "../electron/costume-history-store";
 import { entryOf, pictureOf, SET } from "./history-fixtures";
 
 const PLAYER = "000000000000";
@@ -40,7 +39,7 @@ function fakeFiles(contents: Record<string, string> = {}) {
       disk.set(to, disk.get(from) ?? "");
       disk.delete(from);
     },
-  } as unknown as UndoFiles;
+  } as unknown as HistoryFiles;
   return { files, disk, calls, refuse };
 }
 

@@ -5,31 +5,24 @@ import type { AlertColor } from "@mui/material";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { WriteKind, WriteOutcomeView, WriteSets } from "../session-port";
 import { changedParts, isCostumePart, PART_LABEL, partValue } from "./costume-parts";
+import type { Noticed } from "./write-ending";
 
 type NotAppliedReasonKind = Extract<WriteOutcomeView, { kind: "notApplied" }>["reason"]["kind"];
 
 // A sentence a write can end with: KIND_WORDING words it for a kind, else BASE_WORDING says it.
 type Base =
-  | "applied"
-  | "undone"
   | "unchanged"
   | "diverged"
   | "crossChanged"
-  | "crossUnknown"
   | "changedSincePreview"
-  | "undoStale"
   | "nothingToChange"
   | "needsConfirmation";
 
 const BASE_WORDING = {
-  applied: "write.applied",
-  undone: "write.undone",
   unchanged: "write.notApplied.unchanged",
   diverged: "write.diverged",
   crossChanged: "write.crossChanged",
-  crossUnknown: "write.crossUnknown",
   changedSincePreview: "write.changedSincePreview",
-  undoStale: "write.undoStale",
   nothingToChange: "write.nothingToChange",
   needsConfirmation: "write.needsConfirmation",
 } as const satisfies Record<Base, MessageKey>;
@@ -38,24 +31,17 @@ const BASE_WORDING = {
 const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, MessageKey>>>>> = {
   costume: {},
   title: {
-    applied: "write.title.applied",
-    undone: "write.title.undone",
     unchanged: "write.title.unchanged",
     diverged: "write.title.diverged",
     crossChanged: "write.title.crossChanged",
-    crossUnknown: "write.title.crossUnknown",
     changedSincePreview: "write.title.changedSincePreview",
-    undoStale: "write.title.undoStale",
     nothingToChange: "write.title.nothingToChange",
     needsConfirmation: "write.title.needsConfirmation",
   },
   name: {
-    applied: "write.name.applied",
-    undone: "write.name.undone",
     unchanged: "write.name.unchanged",
     diverged: "write.name.diverged",
     changedSincePreview: "write.name.changedSincePreview",
-    undoStale: "write.name.undoStale",
     nothingToChange: "write.name.nothingToChange",
   },
 };
@@ -64,17 +50,16 @@ const wording = (kind: WriteKind, base: Base): MessageKey =>
   KIND_WORDING[kind][base] ?? BASE_WORDING[base];
 
 const OUTCOME_BASE = {
-  applied: "applied",
   notApplied: "unchanged",
   diverged: "diverged",
   changedSincePreview: "changedSincePreview",
   nothingToChange: "nothingToChange",
   needsConfirmation: "needsConfirmation",
-} as const satisfies Partial<Record<WriteOutcomeView["kind"], Base>>;
+} as const satisfies Partial<Record<Noticed<unknown>["kind"], Base>>;
 
 type KindDependent = keyof typeof OUTCOME_BASE;
 
-const isKindDependent = (outcome: WriteOutcomeView["kind"]): outcome is KindDependent =>
+const isKindDependent = (outcome: Noticed<unknown>["kind"]): outcome is KindDependent =>
   Object.hasOwn(OUTCOME_BASE, outcome);
 
 const OUTCOME_MESSAGE = {
@@ -82,15 +67,13 @@ const OUTCOME_MESSAGE = {
   readFailed: "failure.unexpectedPage",
   sessionGone: "write.sessionGone",
   invalidTarget: "write.invalidTarget",
-  undoNotSaved: "write.undoNotSaved",
   stoppedBeforeWrite: "write.stoppedBeforeWrite",
   appliedNotSynced: "write.appliedNotSynced",
   outcomeUnknown: "write.outcomeUnknown",
   notSignedIn: "failure.notSignedIn",
-  nothingToUndo: "write.nothingToUndo",
   interrupted: "write.interrupted",
   busy: "write.busy",
-} as const satisfies Record<Exclude<WriteOutcomeView["kind"], KindDependent>, MessageKey>;
+} as const satisfies Record<Exclude<Noticed<unknown>["kind"], KindDependent>, MessageKey>;
 
 const REASON_MESSAGE = {
   refused: "write.notApplied.refused",
@@ -117,8 +100,6 @@ type InvalidField =
 
 const INVALID_FIELD_MESSAGE = {
   [TITLE_FIELDS.notOwned]: "write.invalid.titleNotOwned",
-  [TITLE_FIELDS.unresolved]: "write.invalid.titleUnresolved",
-  [TITLE_FIELDS.ambiguous]: "write.invalid.titleAmbiguous",
   [NAME_FIELDS.empty]: "write.invalid.nameEmpty",
   [NAME_FIELDS.edge]: "write.invalid.nameEdge",
   [NAME_FIELDS.tooLong]: "write.invalid.nameTooLong",
@@ -202,13 +183,12 @@ export interface Described {
 
 export interface DescribeOptions<K extends WriteKind> {
   readonly kind: K;
-  readonly asUndo?: boolean;
 }
 
 export function describeOutcome<K extends WriteKind>(
-  outcome: WriteOutcomeView<WriteSets[K]>,
+  outcome: Noticed<WriteSets[K]>,
   i18n: Translator,
-  { kind, asUndo = false }: DescribeOptions<K>,
+  { kind }: DescribeOptions<K>,
 ): Described {
   const { t } = i18n;
   const plain = (
@@ -228,15 +208,6 @@ export function describeOutcome<K extends WriteKind>(
     withNow: now !== null,
   });
   switch (outcome.kind) {
-    case "applied": {
-      const notes =
-        outcome.save.code !== null && outcome.save.code !== 0
-          ? [t("write.siteNote", { code: outcome.save.code })]
-          : [];
-      return outcome.cross === "unknown"
-        ? { ...plain("warning", wording(kind, "crossUnknown")), notes }
-        : { ...plain("success", wording(kind, asUndo ? "undone" : "applied")), notes };
-    }
     case "appliedNotSynced":
       return plain("warning");
     case "notApplied": {
@@ -294,16 +265,13 @@ export function describeOutcome<K extends WriteKind>(
     case "stoppedBeforeWrite":
       return { ...plain("warning"), codes: [`${outcome.reason} ${outcome.code}`] };
     case "changedSincePreview":
-      return plain("warning", wording(kind, asUndo ? "undoStale" : "changedSincePreview"));
+      return plain("warning", wording(kind, "changedSincePreview"));
     case "needsConfirmation":
     case "interrupted":
       return plain("warning");
-    case "undoNotSaved":
-      return plain("error");
     case "maintenance":
     case "nothingToChange":
     case "notSignedIn":
-    case "nothingToUndo":
     case "busy":
       return plain("info");
   }

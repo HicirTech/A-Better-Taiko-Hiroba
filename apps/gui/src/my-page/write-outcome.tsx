@@ -2,8 +2,9 @@ import type { Translator } from "@abth/i18n";
 import { Alert, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 
 import { HIROBA_LANG } from "../language/show-language";
-import type { WriteKind, WriteOutcomeView, WriteSets } from "../session-port";
+import type { WriteKind, WriteSets } from "../session-port";
 import { type Cell, describeOutcome } from "./outcome-words";
+import type { Noticed } from "./write-ending";
 
 /** A cell's `lang`: Hiroba's own words are Japanese whatever language the page is in. */
 const langOf = ({ hirobas }: Cell) => (hirobas === true ? HIROBA_LANG : undefined);
@@ -12,20 +13,15 @@ export function WriteOutcomeNotice<K extends WriteKind>({
   outcome,
   kind,
   i18n,
-  asUndo = false,
   id = "write-outcome",
 }: {
-  outcome: WriteOutcomeView<WriteSets[K]>;
+  outcome: Noticed<WriteSets[K]>;
   kind: K;
   i18n: Translator;
-  asUndo?: boolean;
   id?: string;
 }) {
   const { t } = i18n;
-  const { severity, message, notes, codes, comparison } = describeOutcome(outcome, i18n, {
-    kind,
-    asUndo,
-  });
+  const { severity, message, notes, codes, comparison } = describeOutcome(outcome, i18n, { kind });
   return (
     <Alert id={id} severity={severity} data-outcome={outcome.kind}>
       <Typography variant="body2">{message}</Typography>

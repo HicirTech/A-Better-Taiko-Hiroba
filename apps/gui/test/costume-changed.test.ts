@@ -53,11 +53,9 @@ describe("changedTheCostume", () => {
     changedSincePreview: { kind: "changedSincePreview", current: SET },
     invalidTarget: { kind: "invalidTarget", field: "costume1" },
     nothingToChange: { kind: "nothingToChange" },
-    undoNotSaved: { kind: "undoNotSaved" },
     needsConfirmation: { kind: "needsConfirmation" },
     stoppedBeforeWrite: { kind: "stoppedBeforeWrite", reason: "precheckRejected", code: "code" },
     notSignedIn: { kind: "notSignedIn" },
-    nothingToUndo: { kind: "nothingToUndo" },
     interrupted: { kind: "interrupted" },
     busy: { kind: "busy" },
   };

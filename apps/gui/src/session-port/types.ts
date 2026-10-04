@@ -153,7 +153,7 @@ export interface PictureFailure {
   readonly code: string;
 }
 
-/** The set each kind of write changes: all the state it is made against, kept in its undo slot. */
+/** The set each kind of write changes: all the state it is made against. */
 export interface WriteSets {
   readonly costume: CostumeSet;
   readonly title: TitleState;
@@ -186,8 +186,7 @@ export interface NameChange {
 export type WriteOutcomeView<S = CostumeSet> =
   | WriteOutcome<S>
   | { readonly kind: "notSignedIn" }
-  | { readonly kind: "nothingToUndo" }
-  /** An app fault, not Hiroba's answer: a post may have gone out, so the next read settles it. */
+  /** An app fault, not Hiroba's answer: a post may have gone out, so the next read shows it. */
   | { readonly kind: "interrupted" }
   /** Asked while another write was queued or running: nothing sent, and never queued after it. */
   | { readonly kind: "busy" };
@@ -198,18 +197,6 @@ export interface CostumeHistoryEntry {
   readonly set: CostumeSet;
   readonly picture: string | null;
 }
-
-/** The last write of kind `K` as an undo can be offered: the set before it, and the set it was read
- * back as. Offered only while that set is still current, and only to the player signed in now. */
-export interface UndoSummaryOf<K extends WriteKind> {
-  readonly kind: K;
-  /** ISO 8601, when the write was started. */
-  readonly at: string;
-  readonly before: WriteSets[K];
-  readonly after: WriteSets[K];
-}
-
-export type UndoSummary = { readonly [K in WriteKind]: UndoSummaryOf<K> }[WriteKind];
 
 export interface ReadProfileOptions {
   /** Whether the read renews the My Don portrait: every read but the session's first does unless
@@ -246,11 +233,6 @@ export interface HirobaSessionPort {
   changeTitle(change: TitleChange): Promise<WriteOutcomeView<TitleState>>;
   /** One rename, with no pre-check: my page, one save and my page read back. Never retried. */
   changeName(change: NameChange): Promise<WriteOutcomeView<NameState>>;
-  /** The undo this device can offer, one per kind at most. Asks Hiroba nothing. */
-  pendingUndo(): Promise<readonly UndoSummary[]>;
-  /** Undoes the last write of `kind`, a write like any other. A set changed anywhere since stops it
-   * (`changedSincePreview`). A title goes back by its name, only if exactly one title has it. */
-  undo<K extends WriteKind>(kind: K): Promise<WriteOutcomeView<WriteSets[K]>>;
   /** The signed-in player's costume history, newest first. Asks Hiroba nothing. */
   costumeHistory(): Promise<readonly CostumeHistoryEntry[]>;
 }

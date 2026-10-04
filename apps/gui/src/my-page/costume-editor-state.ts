@@ -8,7 +8,7 @@ import {
   type WriteOutcomeView,
 } from "../session-port";
 import { type ColourPart, type SlotPart, slotOf } from "./costume-parts";
-import { refreshed } from "./write-ending";
+import { type Noticed, noticeOf, refreshed } from "./write-ending";
 
 export interface HeldEditor {
   readonly editor: CostumeEditorView;
@@ -28,7 +28,7 @@ export type EditorStep =
       readonly editor: CostumeEditorView;
       readonly draft: CostumeSet;
       /** How the last write ended, until the next pick, reset, save or read; none if it applied. */
-      readonly notice: WriteOutcomeView | null;
+      readonly notice: Noticed<CostumeSet> | null;
     }
   | { readonly name: "saving"; readonly editor: CostumeEditorView; readonly draft: CostumeSet };
 
@@ -120,7 +120,7 @@ function writeEnded(step: EditorStep, outcome: WriteOutcomeView): EditorStep {
     name: "editing",
     editor,
     draft: changedTheCostume(outcome) ? editor.state : step.draft,
-    notice: outcome.kind === "applied" ? null : outcome,
+    notice: noticeOf(outcome),
   };
 }
 

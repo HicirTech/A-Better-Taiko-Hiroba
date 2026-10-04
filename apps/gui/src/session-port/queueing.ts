@@ -17,8 +17,6 @@ export const PORT_QUEUEING = {
   changeCostume: "write",
   changeTitle: "write",
   changeName: "write",
-  pendingUndo: "unqueued",
-  undo: "write",
   costumeHistory: "unqueued",
 } as const satisfies Record<keyof HirobaSessionPort, VerbQueueing>;
 

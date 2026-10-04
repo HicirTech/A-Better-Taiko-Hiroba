@@ -33,7 +33,7 @@ describe("sameTitle", () => {
   });
 });
 
-describe("checkTitleTarget, a title picked by its id", () => {
+describe("checkTitleTarget", () => {
   test("takes an owned id under its own name, and gives the list's name for it", () => {
     expect(checkTitleTarget(EDITOR, { id: 39, title: "サンプル称号B" })).toEqual({
       ok: true,
@@ -74,44 +74,5 @@ describe("checkTitleTarget, a title picked by its id", () => {
       ok: false,
       error: { field: TITLE_FIELDS.notOwned },
     });
-  });
-});
-
-describe("checkTitleTarget, a title put back by its name", () => {
-  test("resolves a name that is exactly one title's to that title's id", () => {
-    expect(checkTitleTarget(EDITOR, { id: null, title: "サンプル称号A" })).toEqual({
-      ok: true,
-      value: { id: 106, label: "サンプル称号A" },
-    });
-  });
-
-  test("resolves a name written with other white space than the list's", () => {
-    expect(checkTitleTarget(EDITOR, { id: null, title: " サンプル称号B\u{a0}" })).toEqual({
-      ok: true,
-      value: { id: 39, label: "サンプル称号B" },
-    });
-  });
-
-  test("refuses a name that more than one title has, rather than pick the first", () => {
-    expect(checkTitleTarget(EDITOR, { id: null, title: "サンプル\u{a0}称号" })).toEqual({
-      ok: false,
-      error: { field: TITLE_FIELDS.ambiguous },
-    });
-  });
-
-  test("refuses a name no title of the list has, a composed title or one no longer listed", () => {
-    expect(checkTitleTarget(EDITOR, { id: null, title: "リストにない称号" })).toEqual({
-      ok: false,
-      error: { field: TITLE_FIELDS.unresolved },
-    });
-  });
-
-  test("refuses no name at all, which would be taking the title off", () => {
-    for (const title of ["", "  ", "\u{a0}\u{3000}"]) {
-      expect(checkTitleTarget(EDITOR, { id: null, title })).toEqual({
-        ok: false,
-        error: { field: TITLE_FIELDS.unresolved },
-      });
-    }
   });
 });

@@ -19,39 +19,26 @@ import {
 
 const NEW_NAME = "あたらしい";
 
-interface Run {
-  readonly outcome: WriteOutcome<NameState>;
-  readonly undo: [NameState, NameState][];
-}
-
-async function rename(
+function rename(
   transport: Transport,
   nickname: string,
-  options: { expected?: string; crossCheck?: boolean; now?: Date; undoFails?: boolean } = {},
-): Promise<Run> {
-  const undo: [NameState, NameState][] = [];
-  const outcome = await changeName(
-    { expected: { nickname: options.expected ?? NICKNAME }, target: { nickname } },
+  options: { crossCheck?: boolean; now?: Date } = {},
+): Promise<WriteOutcome<NameState>> {
+  return changeName(
+    { expected: { nickname: NICKNAME }, target: { nickname } },
     {
       transport,
       hirobaOrigin: ORIGIN,
       now: () => options.now ?? NOON_JST,
       crossCheck: options.crossCheck ?? false,
-      beginUndo: async (before, expectedAfter) => {
-        if (options.undoFails) {
-          throw new Error("disk full");
-        }
-        undo.push([before, expectedAfter]);
-      },
     },
   );
-  return { outcome, undo };
 }
 
 describe("changeName's requests", () => {
   test("sends my page for the editor, one save and my page to read back, and no pre-check", async () => {
     const { hiroba, transport, routes } = fakeHiroba();
-    const { outcome } = await rename(transport, NEW_NAME);
+    const outcome = await rename(transport, NEW_NAME);
     expect(routes()).toEqual([
       "GET mypage_top.php",
       "POST ajax/change_mydon_profile.php",
@@ -68,7 +55,7 @@ describe("changeName's requests", () => {
 
   test("with the cross-check, reads my page for the title before the editor and after the read-back", async () => {
     const { transport, routes } = fakeHiroba();
-    const { outcome } = await rename(transport, NEW_NAME, { crossCheck: true });
+    const outcome = await rename(transport, NEW_NAME, { crossCheck: true });
     // The editor is the second of the page's reads, so its token is the last one issued: the
     // fake answers 705 and saves nothing if another page is read between it and the post.
     expect(routes()).toEqual([
@@ -116,15 +103,9 @@ describe("changeName's requests", () => {
     expect(postsTo("ajax/change_mydon_profile.php")).toHaveLength(1);
   });
 
-  test("keeps the undo record before the first post: the name before and the name planned", async () => {
-    const { transport } = fakeHiroba();
-    const { undo } = await rename(transport, NEW_NAME);
-    expect(undo).toEqual([[{ nickname: NICKNAME }, { nickname: NEW_NAME }]]);
-  });
-
   test("keeps the fresh token the answer carries, and every token, out of the outcome", async () => {
     const { hiroba, transport } = fakeHiroba();
-    const { outcome } = await rename(transport, NEW_NAME, { crossCheck: true });
+    const outcome = await rename(transport, NEW_NAME, { crossCheck: true });
     const shown = JSON.stringify(outcome);
     for (let token = 1; token <= hiroba.tokens; token++) {
       expect(shown).not.toContain(String(token).padStart(32, "0"));
@@ -133,19 +114,11 @@ describe("changeName's requests", () => {
 
   test("sends nothing at all in the 05:00-07:00 JST break", async () => {
     const { transport, routes } = fakeHiroba();
-    const { outcome, undo } = await rename(transport, NEW_NAME, {
+    const outcome = await rename(transport, NEW_NAME, {
       now: new Date("2026-09-26T20:30:00Z"),
     });
     expect(outcome).toEqual({ kind: "maintenance" });
     expect(routes()).toEqual([]);
-    expect(undo).toEqual([]);
-  });
-
-  test("posts nothing when the undo record cannot be kept", async () => {
-    const { transport, routes } = fakeHiroba();
-    const { outcome } = await rename(transport, NEW_NAME, { undoFails: true });
-    expect(outcome).toEqual({ kind: "undoNotSaved" });
-    expect(routes()).toEqual(["GET mypage_top.php"]);
   });
 });
 
@@ -215,14 +188,14 @@ describe("changeName's result codes, by the name read back", () => {
   ])("%s", async (_label, save, expected) => {
     const { hiroba, transport } = fakeHiroba();
     hiroba.save = { message: "", ...save };
-    const { outcome } = await rename(transport, NEW_NAME);
+    const outcome = await rename(transport, NEW_NAME);
     expect(outcome).toMatchObject(expected);
   });
 
   test("shows a name the filter refuses with Hiroba's words, as the text it is", async () => {
     const { hiroba, transport } = fakeHiroba();
     hiroba.refusedNames = [NEW_NAME];
-    const { outcome } = await rename(transport, NEW_NAME);
+    const outcome = await rename(transport, NEW_NAME);
     expect(outcome.kind === "notApplied" && outcome.reason).toEqual({
       kind: "refused",
       code: 1,
@@ -234,7 +207,7 @@ describe("changeName's result codes, by the name read back", () => {
   test("keeps a message that holds markup as written, for the interface to show as text", async () => {
     const { hiroba, transport } = fakeHiroba();
     hiroba.save = { code: 1, stores: false, message: "<b>だめ</b><script>x()</script>" };
-    const { outcome } = await rename(transport, NEW_NAME);
+    const outcome = await rename(transport, NEW_NAME);
     expect(outcome.kind === "notApplied" && outcome.reason).toMatchObject({
       message: "<b>だめ</b><script>x()</script>",
     });
@@ -250,7 +223,7 @@ describe("changeName's result codes, by the name read back", () => {
         return transport.send(request);
       },
     };
-    const { outcome } = await rename(reading, NEW_NAME);
+    const outcome = await rename(reading, NEW_NAME);
     expect(outcome).toMatchObject({ kind: "notApplied", reason: { kind: "stale" } });
     expect(postsTo("ajax/change_mydon_profile.php")).toHaveLength(1);
     expect(hiroba.nickname).toBe(NICKNAME);
@@ -263,7 +236,7 @@ describe("changeName's judgement of where the name ended", () => {
     hiroba.afterSave = () => {
       hiroba.nickname = "ドン";
     };
-    const { outcome } = await rename(transport, "ﾄﾞﾝ");
+    const outcome = await rename(transport, "ﾄﾞﾝ");
     expect(outcome).toMatchObject({
       kind: "diverged",
       before: { nickname: NICKNAME },
@@ -277,7 +250,7 @@ describe("changeName's judgement of where the name ended", () => {
     hiroba.afterSave = () => {
       hiroba.title = "サンプル称号B";
     };
-    const { outcome } = await rename(transport, NEW_NAME, { crossCheck: true });
+    const outcome = await rename(transport, NEW_NAME, { crossCheck: true });
     expect(outcome).toMatchObject({ kind: "diverged", cross: "changed" });
   });
 
@@ -292,7 +265,7 @@ describe("changeName's judgement of where the name ended", () => {
         return transport.send(request);
       },
     };
-    const { outcome } = await rename(failing, NEW_NAME, { crossCheck: true });
+    const outcome = await rename(failing, NEW_NAME, { crossCheck: true });
     expect(outcome).toMatchObject({ kind: "applied", cross: "unknown" });
     expect(hiroba.nickname).toBe(NEW_NAME);
   });
@@ -309,16 +282,15 @@ describe("changeName's refusals before anything is posted", () => {
     ["a name with half a surrogate pair", "あたら\u{d800}しい", "name.control"],
   ])("refuses %s", async (_label, name, field) => {
     const { transport, routes } = fakeHiroba();
-    const { outcome, undo } = await rename(transport, name);
+    const outcome = await rename(transport, name);
     expect(outcome).toEqual({ kind: "invalidTarget", field });
     expect(routes()).toEqual(["GET mypage_top.php"]);
-    expect(undo).toEqual([]);
   });
 
   test("refuses every name while the page's flag says renames are closed", async () => {
     const { hiroba, transport, routes } = fakeHiroba();
     hiroba.renameFlag = "1";
-    const { outcome } = await rename(transport, NEW_NAME);
+    const outcome = await rename(transport, NEW_NAME);
     expect(outcome).toEqual({ kind: "invalidTarget", field: "name.closed" });
     expect(routes()).toEqual(["GET mypage_top.php"]);
   });
@@ -326,13 +298,13 @@ describe("changeName's refusals before anything is posted", () => {
   test("leaves a rename whose flag it could not read to Hiroba", async () => {
     const { hiroba, transport } = fakeHiroba();
     hiroba.renameFlag = null;
-    const { outcome } = await rename(transport, NEW_NAME);
+    const outcome = await rename(transport, NEW_NAME);
     expect(outcome.kind).toBe("applied");
   });
 
   test("posts nothing for the name that is there already", async () => {
     const { transport, routes } = fakeHiroba();
-    const { outcome } = await rename(transport, NICKNAME);
+    const outcome = await rename(transport, NICKNAME);
     expect(outcome).toEqual({ kind: "nothingToChange" });
     expect(routes()).toEqual(["GET mypage_top.php"]);
   });
@@ -340,10 +312,9 @@ describe("changeName's refusals before anything is posted", () => {
   test("posts nothing when the name was changed elsewhere since the page was read", async () => {
     const { hiroba, transport, routes } = fakeHiroba();
     hiroba.nickname = "べつのなまえ";
-    const { outcome, undo } = await rename(transport, NEW_NAME);
+    const outcome = await rename(transport, NEW_NAME);
     expect(outcome).toEqual({ kind: "changedSincePreview", current: { nickname: "べつのなまえ" } });
     expect(routes()).toEqual(["GET mypage_top.php"]);
-    expect(undo).toEqual([]);
   });
 
   test("leaves the title alone: a rename never sends a pre-check or a title", async () => {
@@ -351,38 +322,5 @@ describe("changeName's refusals before anything is posted", () => {
     await rename(transport, NEW_NAME, { crossCheck: true });
     expect(routes().some((route) => route.includes("check_ip_title"))).toBe(false);
     expect(hiroba.title).toBe(WORN);
-  });
-});
-
-describe("changeName as an undo", () => {
-  test("puts the name back the way any other rename goes, with the old name as the new one", async () => {
-    const { hiroba, transport, postsTo } = fakeHiroba();
-    await rename(transport, NEW_NAME);
-    const { outcome } = await rename(transport, NICKNAME, { expected: NEW_NAME });
-    expect(outcome).toMatchObject({ kind: "applied", after: { nickname: NICKNAME } });
-    expect(hiroba.nickname).toBe(NICKNAME);
-    expect(postsTo("ajax/change_mydon_profile.php").map((post) => post.form.slice(2))).toEqual([
-      [
-        ["oldName", NICKNAME],
-        ["newName", NEW_NAME],
-      ],
-      [
-        ["oldName", NEW_NAME],
-        ["newName", NICKNAME],
-      ],
-    ]);
-  });
-
-  test("keeps the record's name and says why when Hiroba refuses to change it back", async () => {
-    const { hiroba, transport } = fakeHiroba();
-    await rename(transport, NEW_NAME);
-    hiroba.refusedNames = [NICKNAME];
-    const { outcome } = await rename(transport, NICKNAME, { expected: NEW_NAME });
-    expect(outcome).toMatchObject({
-      kind: "notApplied",
-      before: { nickname: NEW_NAME },
-      after: { nickname: NEW_NAME },
-      reason: { kind: "refused", code: 1, message: MESSAGE_FOR_NAME_FILTER },
-    });
   });
 });

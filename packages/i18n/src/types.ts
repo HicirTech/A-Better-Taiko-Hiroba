@@ -159,18 +159,9 @@ export interface Messages {
   /** Param: {code}, why the first of them did not come, such as costumeItem=notPng; never a URL. */
   "costume.thumbnails.code": string;
   "costume.kigurumiWarning": string;
-  "costume.changesHeading": string;
-  /** Params: {part} (a costume.part text), {from}, {to} (a costume.id text or costume.remove). */
-  "costume.change": string;
   "costume.reset": string;
-  "costume.review": string;
-  "costume.back": string;
   "costume.save": string;
-  "costume.confirmIntro": string;
   "costume.saving": string;
-  /** Param: {time}, already formatted. */
-  "costume.undoWhen": string;
-  "costume.undoing": string;
   "costume.history": string;
   "costume.history.title": string;
   "costume.history.close": string;
@@ -180,55 +171,27 @@ export interface Messages {
   "costume.history.entry": string;
   /** Param: {position}. As costume.history.entry, for the entry worn now. */
   "costume.history.entryWorn": string;
-  /** Also the title's name in a list of changes (costume.change's {part}). */
+  /** Also the title row's label in a write's comparison. */
   "title.heading": string;
   "title.reading": string;
-  "title.pick": string;
   "title.open": string;
   "title.close": string;
   "title.clear": string;
   /** Param: {count}, how many titles the account may choose from. */
-  "title.count": string;
   "title.noMatch": string;
   "title.none": string;
   "title.current": string;
   /** Param: {count}, how many titles of the list have the worn title's name. */
   "title.shared": string;
   "title.notListed": string;
-  "title.reload": string;
-  "title.undoLast": string;
-  /** Param: {title}, the previous title's name, as Hiroba writes it. */
-  "title.undoBack": string;
-  /** Why the undo is shut: the previous title's name is in no title of today's list. */
-  "title.undoUnresolved": string;
-  /** Why the undo is shut: the previous title's name is several titles' of today's list. */
-  "title.undoAmbiguous": string;
-  /** Why the undo is shut: there was no title before, and a title cannot be taken off here. */
-  "title.undoNoTitle": string;
   "name.heading": string;
-  "name.field": string;
   /** Params: {count}, how many characters it holds, and {max}. */
   "name.counter": string;
   /** Hiroba's own warning above the field, as the site writes it, in every language. */
   "name.siteWarning": string;
-  /** Quotes what Hiroba's help page says a nickname may be, as the site writes it. */
-  "name.faqRule": string;
-  "name.outsideFaq": string;
-  "name.wide": string;
   "name.same": string;
   /** Quotes Hiroba's sentence that nicknames cannot be changed now, as the site writes it. */
   "name.closed": string;
-  "name.unknownState": string;
-  "name.mayNotRevert": string;
-  "name.undoLast": string;
-  /** Param: {name}, the previous nickname, as Hiroba writes it. */
-  "name.undoBack": string;
-  "name.undoMayFail": string;
-  "write.applied": string;
-  "write.undone": string;
-  /** Param: {code}. */
-  "write.siteNote": string;
-  "write.crossUnknown": string;
   "write.appliedNotSynced": string;
   "write.notApplied.unchanged": string;
   /** Param: {code}, Hiroba's code; its own message follows under write.siteMessage. */
@@ -249,16 +212,13 @@ export interface Messages {
   "write.sessionGone": string;
   "write.sessionGoneAfterSave": string;
   "write.changedSincePreview": string;
-  "write.undoStale": string;
   /** Param: {field}, which value of the set was refused, as a costume.part text. */
   "write.invalidTarget": string;
   "write.nothingToChange": string;
   "write.maintenance": string;
-  "write.undoNotSaved": string;
   /** Carries the site's own confirmation text (mydon.js); this version does not answer it. */
   "write.needsConfirmation": string;
   "write.stoppedBeforeWrite": string;
-  "write.nothingToUndo": string;
   "write.interrupted": string;
   "write.busy": string;
   /** Param: {code}, report codes: where an answer ended, status, type and size; never page text. */
@@ -267,14 +227,10 @@ export interface Messages {
   "write.planned": string;
   "write.now": string;
   /** A title's write: each key has the costume's key, without "title.", as its base. */
-  "write.title.applied": string;
-  "write.title.undone": string;
   "write.title.unchanged": string;
   "write.title.diverged": string;
   "write.title.crossChanged": string;
-  "write.title.crossUnknown": string;
   "write.title.changedSincePreview": string;
-  "write.title.undoStale": string;
   "write.title.nothingToChange": string;
   /** Carries the site's own confirmation text (check_ip_title); this version does not answer it. */
   "write.title.needsConfirmation": string;
@@ -283,19 +239,14 @@ export interface Messages {
   "write.title.refused5": string;
   "write.title.refused6": string;
   /** A rename's write, like the costume's; the title read around it uses write.cross*. */
-  "write.name.applied": string;
-  "write.name.undone": string;
   "write.name.unchanged": string;
   "write.name.diverged": string;
   "write.name.changedSincePreview": string;
-  "write.name.undoStale": string;
   "write.name.nothingToChange": string;
   /** Hiroba's code for a rename it could not carry out, which comes with no message of its own. */
   "write.name.refused2": string;
   /** The words of {field} in "write.invalidTarget": a phrase, with no capital and no full stop. */
   "write.invalid.titleNotOwned": string;
-  "write.invalid.titleUnresolved": string;
-  "write.invalid.titleAmbiguous": string;
   "write.invalid.nameEmpty": string;
   "write.invalid.nameEdge": string;
   "write.invalid.nameTooLong": string;

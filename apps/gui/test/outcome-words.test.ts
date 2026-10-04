@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { createTranslator, type MessageKey } from "@abth/i18n";
 
 import { describeOutcome } from "../src/my-page/outcome-words";
-import type { CostumeSet, NameState, TitleState, WriteOutcomeView } from "../src/session-port";
+import type { Noticed } from "../src/my-page/write-ending";
+import type { CostumeSet, NameState, TitleState } from "../src/session-port";
 import { START_SET } from "./hiroba-stand-in";
 
 const i18n = createTranslator("en");
@@ -15,27 +16,9 @@ const NOW_TITLE: TitleState = { title: "別のサンプル称号" };
 const OLD_NAME: NameState = { nickname: "サンプルどん" };
 const NEW_NAME: NameState = { nickname: "あたらしい" };
 
-type Case<S> = [label: string, outcome: WriteOutcomeView<S>, asUndo: boolean, base: MessageKey];
+type Case<S> = [label: string, outcome: Noticed<S>, base: MessageKey];
 
 const outcomesOf = <S>(before: S, after: S): Case<S>[] => [
-  [
-    "applied",
-    { kind: "applied", before, after, save: SAVE, cross: "unchanged" },
-    false,
-    "write.applied",
-  ],
-  [
-    "applied as an undo",
-    { kind: "applied", before, after, save: SAVE, cross: "unchanged" },
-    true,
-    "write.undone",
-  ],
-  [
-    "applied, the other page not read back",
-    { kind: "applied", before, after, save: SAVE, cross: "unknown" },
-    false,
-    "write.crossUnknown",
-  ],
   [
     "saved and the site said nothing happened",
     {
@@ -46,40 +29,27 @@ const outcomesOf = <S>(before: S, after: S): Case<S>[] => [
       save: SAVE,
       cross: "unchanged",
     },
-    false,
     "write.notApplied.unchanged",
   ],
   [
     "diverged",
     { kind: "diverged", before, expectedAfter: after, after: before, save: SAVE, cross: "off" },
-    false,
     "write.diverged",
   ],
   [
     "moved since the editor was read",
     { kind: "changedSincePreview", current: after },
-    false,
     "write.changedSincePreview",
   ],
-  [
-    "moved since the change an undo would reverse",
-    { kind: "changedSincePreview", current: after },
-    true,
-    "write.undoStale",
-  ],
-  ["nothing to change", { kind: "nothingToChange" }, false, "write.nothingToChange"],
-  ["a confirmation asked for", { kind: "needsConfirmation" }, false, "write.needsConfirmation"],
+  ["nothing to change", { kind: "nothingToChange" }, "write.nothingToChange"],
+  ["a confirmation asked for", { kind: "needsConfirmation" }, "write.needsConfirmation"],
 ];
 
 /** A kind's own key for a base one is `write.<kind>.<name>`, where the kind words it itself. */
 const BASE_NAME: Partial<Record<MessageKey, string>> = {
-  "write.applied": "applied",
-  "write.undone": "undone",
-  "write.crossUnknown": "crossUnknown",
   "write.notApplied.unchanged": "unchanged",
   "write.diverged": "diverged",
   "write.changedSincePreview": "changedSincePreview",
-  "write.undoStale": "undoStale",
   "write.nothingToChange": "nothingToChange",
   "write.needsConfirmation": "needsConfirmation",
 };
@@ -87,13 +57,13 @@ const BASE_NAME: Partial<Record<MessageKey, string>> = {
 describe("describeOutcome, the costume", () => {
   test.each(outcomesOf<CostumeSet>(START_SET, MOVED))(
     "words %s as the costume always has",
-    (_label, outcome, asUndo, base) => {
-      expect(describeOutcome(outcome, i18n, { kind: "costume", asUndo }).message).toBe(t(base));
+    (_label, outcome, base) => {
+      expect(describeOutcome(outcome, i18n, { kind: "costume" }).message).toBe(t(base));
     },
   );
 
   test("says the title changed too when a diverged write moved it", () => {
-    const outcome: WriteOutcomeView<CostumeSet> = {
+    const outcome: Noticed<CostumeSet> = {
       kind: "diverged",
       before: START_SET,
       expectedAfter: MOVED,
@@ -107,7 +77,7 @@ describe("describeOutcome, the costume", () => {
   });
 
   test("shows each part the plan moved, and each the write moved that it did not mean to", () => {
-    const outcome: WriteOutcomeView<CostumeSet> = {
+    const outcome: Noticed<CostumeSet> = {
       kind: "diverged",
       before: START_SET,
       expectedAfter: MOVED,
@@ -132,7 +102,7 @@ describe("describeOutcome, the costume", () => {
   });
 
   test("words a refused target by the part of the set at fault, and a code it does not know as it is", () => {
-    const refused = (field: string): WriteOutcomeView<CostumeSet> => ({
+    const refused = (field: string): Noticed<CostumeSet> => ({
       kind: "invalidTarget",
       field,
     });
@@ -148,7 +118,7 @@ describe("describeOutcome, the costume", () => {
   });
 
   test("glosses no refused code of its own: Hiroba's message alone is shown", () => {
-    const outcome: WriteOutcomeView<CostumeSet> = {
+    const outcome: Noticed<CostumeSet> = {
       kind: "notApplied",
       before: START_SET,
       after: START_SET,
@@ -165,23 +135,16 @@ describe("describeOutcome, the costume", () => {
 /** The sentences a kind words itself, by base key; the rest are the costume's. */
 const OWN: Record<"title" | "name", readonly MessageKey[]> = {
   title: [
-    "write.applied",
-    "write.undone",
-    "write.crossUnknown",
     "write.notApplied.unchanged",
     "write.diverged",
     "write.changedSincePreview",
-    "write.undoStale",
     "write.nothingToChange",
     "write.needsConfirmation",
   ],
   name: [
-    "write.applied",
-    "write.undone",
     "write.notApplied.unchanged",
     "write.diverged",
     "write.changedSincePreview",
-    "write.undoStale",
     "write.nothingToChange",
   ],
 };
@@ -192,15 +155,15 @@ const keyOf = (kind: "title" | "name", base: MessageKey): MessageKey =>
 describe("describeOutcome, the title", () => {
   test.each(outcomesOf<TitleState>(THEN, NOW_TITLE))(
     "words %s in the title's terms",
-    (_label, outcome, asUndo, base) => {
-      expect(describeOutcome(outcome, i18n, { kind: "title", asUndo }).message).toBe(
+    (_label, outcome, base) => {
+      expect(describeOutcome(outcome, i18n, { kind: "title" }).message).toBe(
         t(keyOf("title", base)),
       );
     },
   );
 
   test("says the costume changed too when a diverged write moved it", () => {
-    const outcome: WriteOutcomeView<TitleState> = {
+    const outcome: Noticed<TitleState> = {
       kind: "diverged",
       before: THEN,
       expectedAfter: NOW_TITLE,
@@ -218,7 +181,7 @@ describe("describeOutcome, the title", () => {
     [5, "write.title.refused5"],
     [6, "write.title.refused6"],
   ] as const)("glosses Hiroba's code %i, which comes with no message", (code, gloss) => {
-    const outcome: WriteOutcomeView<TitleState> = {
+    const outcome: Noticed<TitleState> = {
       kind: "notApplied",
       before: THEN,
       after: THEN,
@@ -232,7 +195,7 @@ describe("describeOutcome, the title", () => {
   });
 
   test("shows the gloss before Hiroba's own words, and none for a code it has no gloss for", () => {
-    const refused = (code: number, message: string | null): WriteOutcomeView<TitleState> => ({
+    const refused = (code: number, message: string | null): Noticed<TitleState> => ({
       kind: "notApplied",
       before: THEN,
       after: THEN,
@@ -247,19 +210,15 @@ describe("describeOutcome, the title", () => {
     expect(describeOutcome(refused(2, null), i18n, { kind: "title" }).notes).toEqual([]);
   });
 
-  test.each([
-    ["title.notOwned", "write.invalid.titleNotOwned"],
-    ["title.unresolved", "write.invalid.titleUnresolved"],
-    ["title.ambiguous", "write.invalid.titleAmbiguous"],
-  ] as const)("words the refused field %s", (field, phrase) => {
-    const outcome: WriteOutcomeView<TitleState> = { kind: "invalidTarget", field };
+  test("words a title the account does not own by its field", () => {
+    const outcome: Noticed<TitleState> = { kind: "invalidTarget", field: "title.notOwned" };
     expect(describeOutcome(outcome, i18n, { kind: "title" }).message).toBe(
-      t("write.invalidTarget", { field: t(phrase) }),
+      t("write.invalidTarget", { field: t("write.invalid.titleNotOwned") }),
     );
   });
 
   test("compares the one title, in Hiroba's words, and a title not worn as no title", () => {
-    const outcome: WriteOutcomeView<TitleState> = {
+    const outcome: Noticed<TitleState> = {
       kind: "diverged",
       before: { title: "" },
       expectedAfter: NOW_TITLE,
@@ -279,7 +238,7 @@ describe("describeOutcome, the title", () => {
   });
 
   test("compares a save whose end is not known with no column for what it is now", () => {
-    const outcome: WriteOutcomeView<TitleState> = {
+    const outcome: Noticed<TitleState> = {
       kind: "sessionGone",
       writeMayHaveHappened: true,
       before: THEN,
@@ -296,15 +255,13 @@ describe("describeOutcome, the title", () => {
 describe("describeOutcome, the name", () => {
   test.each(outcomesOf<NameState>(OLD_NAME, NEW_NAME))(
     "words %s in the name's terms, and the costume's where it has none",
-    (_label, outcome, asUndo, base) => {
-      expect(describeOutcome(outcome, i18n, { kind: "name", asUndo }).message).toBe(
-        t(keyOf("name", base)),
-      );
+    (_label, outcome, base) => {
+      expect(describeOutcome(outcome, i18n, { kind: "name" }).message).toBe(t(keyOf("name", base)));
     },
   );
 
   test("says the title changed too, in the base's words: the title is what a rename cross-checks", () => {
-    const outcome: WriteOutcomeView<NameState> = {
+    const outcome: Noticed<NameState> = {
       kind: "diverged",
       before: OLD_NAME,
       expectedAfter: NEW_NAME,
@@ -318,7 +275,7 @@ describe("describeOutcome, the name", () => {
   });
 
   test("glosses code 2, which comes with no message, and leaves code 1's own message alone", () => {
-    const refused = (code: number, message: string | null): WriteOutcomeView<NameState> => ({
+    const refused = (code: number, message: string | null): Noticed<NameState> => ({
       kind: "notApplied",
       before: OLD_NAME,
       after: OLD_NAME,
@@ -341,14 +298,14 @@ describe("describeOutcome, the name", () => {
     ["name.control", "write.invalid.nameControl"],
     ["name.closed", "write.invalid.nameClosed"],
   ] as const)("words the refused field %s", (field, phrase) => {
-    const outcome: WriteOutcomeView<NameState> = { kind: "invalidTarget", field };
+    const outcome: Noticed<NameState> = { kind: "invalidTarget", field };
     expect(describeOutcome(outcome, i18n, { kind: "name" }).message).toBe(
       t("write.invalidTarget", { field: t(phrase) }),
     );
   });
 
   test("compares the one name, in Hiroba's words", () => {
-    const outcome: WriteOutcomeView<NameState> = {
+    const outcome: Noticed<NameState> = {
       kind: "outcomeUnknown",
       before: OLD_NAME,
       expectedAfter: NEW_NAME,
@@ -371,13 +328,11 @@ describe("describeOutcome, whatever the kind", () => {
   test.each(["costume", "title", "name"] as const)(
     "words the outcomes no kind words alike for %s",
     (kind) => {
-      const words: [WriteOutcomeView<never>, MessageKey][] = [
+      const words: [Noticed<never>, MessageKey][] = [
         [{ kind: "maintenance" }, "write.maintenance"],
         [{ kind: "busy" }, "write.busy"],
         [{ kind: "interrupted" }, "write.interrupted"],
-        [{ kind: "nothingToUndo" }, "write.nothingToUndo"],
         [{ kind: "notSignedIn" }, "failure.notSignedIn"],
-        [{ kind: "undoNotSaved" }, "write.undoNotSaved"],
         [{ kind: "sessionGone", writeMayHaveHappened: false }, "write.sessionGone"],
       ];
       for (const [outcome, key] of words) {

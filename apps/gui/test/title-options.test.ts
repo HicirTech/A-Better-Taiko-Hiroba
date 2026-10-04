@@ -2,13 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import type { TitleOption } from "@abth/core";
 import { OWNED_TITLES } from "../scripts/mock-profile";
-import {
-  currentOptions,
-  filterTitles,
-  foldForSearch,
-  repeatedOptions,
-  undoReadiness,
-} from "../src/name-title/title-options";
+import { currentOptions, filterTitles, foldForSearch } from "../src/name-title/title-options";
 
 const OPTIONS: readonly TitleOption[] = OWNED_TITLES;
 const labelOf = (id: number) => OPTIONS.find((one) => one.id === id)?.label ?? "";
@@ -64,44 +58,5 @@ describe("currentOptions", () => {
     expect(currentOptions(OPTIONS, { title: "部品から作った称号" }).size).toBe(0);
     expect(currentOptions(OPTIONS, { title: "" }).size).toBe(0);
     expect(currentOptions(OPTIONS, { title: " \u{a0} " }).size).toBe(0);
-  });
-});
-
-describe("repeatedOptions", () => {
-  test("gives the ids of the titles whose name another title has", () => {
-    expect([...repeatedOptions(OPTIONS)].sort()).toEqual([104, 105]);
-  });
-
-  test("counts names that differ only in white space as one", () => {
-    const options: TitleOption[] = [
-      { id: 1, label: "称号 A" },
-      { id: 2, label: "称号\u{a0}A" },
-      { id: 3, label: "称号 B" },
-    ];
-    expect([...repeatedOptions(options)].sort()).toEqual([1, 2]);
-  });
-
-  test("gives none for a list with no repeated name", () => {
-    expect(repeatedOptions(OPTIONS.filter((one) => one.id !== 105)).size).toBe(0);
-  });
-});
-
-describe("undoReadiness", () => {
-  test("is ready when the title to go back to is exactly one title of the list", () => {
-    expect(undoReadiness(OPTIONS, { title: labelOf(101) })).toBe("ready");
-    expect(undoReadiness(OPTIONS, { title: "スペース\u{a0}入りのサンプル称号" })).toBe("ready");
-  });
-
-  test("is not when no title was worn before, which this version cannot put back", () => {
-    expect(undoReadiness(OPTIONS, { title: "" })).toBe("noTitle");
-    expect(undoReadiness(OPTIONS, { title: "\u{a0}" })).toBe("noTitle");
-  });
-
-  test("is not when the name is in no title of today's list", () => {
-    expect(undoReadiness(OPTIONS, { title: "部品から作った称号" })).toBe("unresolved");
-  });
-
-  test("is not when several titles have the name, which could put on another of them", () => {
-    expect(undoReadiness(OPTIONS, { title: labelOf(104) })).toBe("ambiguous");
   });
 });

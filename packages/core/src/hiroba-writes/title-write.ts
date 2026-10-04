@@ -76,7 +76,7 @@ export async function openTitleEditor(
 
 export function changeTitle(
   input: { readonly expected: TitleState; readonly target: TitleTarget },
-  deps: WriteDeps<TitleState>,
+  deps: WriteDeps,
 ): Promise<WriteOutcome<TitleState>> {
   return runWrite(TITLE_WRITE, input, deps);
 }

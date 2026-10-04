@@ -56,12 +56,10 @@ export interface ReadDeps {
   readonly hirobaOrigin: string;
 }
 
-export interface WriteDeps<S> extends ReadDeps {
+export interface WriteDeps extends ReadDeps {
   readonly now: () => Date;
   /** Read another page before and after, to see that nothing but the edited set moved. */
   readonly crossCheck: boolean;
-  /** Keeps a pending undo record before any post; a throw stops the write with nothing sent. */
-  readonly beginUndo: (before: S, expectedAfter: S) => Promise<void>;
 }
 
 export interface EditorReading<S> {
@@ -157,8 +155,6 @@ export type WriteOutcome<S> =
   | { readonly kind: "changedSincePreview"; readonly current: S }
   | { readonly kind: "invalidTarget"; readonly field: string }
   | { readonly kind: "nothingToChange" }
-  /** The undo record could not be kept, so nothing was posted. */
-  | { readonly kind: "undoNotSaved" }
   /** The pre-check asked for a confirmation this version does not give; nothing was saved. */
   | { readonly kind: "needsConfirmation" }
   /** The pre-check did not clear the write; nothing was saved. `code` is for a report. */

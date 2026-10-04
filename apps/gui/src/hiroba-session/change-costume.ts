@@ -13,7 +13,7 @@ export function changeCostume(
   transport: Transport,
   endpoints: HirobaEndpoints,
   { expected, target }: CostumeChange,
-  options: WriteOptions<CostumeSet>,
+  options: WriteOptions,
 ): Promise<WriteOutcome<CostumeSet>> {
   return change(
     { expected, target },

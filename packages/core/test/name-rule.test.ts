@@ -1,12 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import {
-  checkNameTarget,
-  describeName,
-  NAME_FIELDS,
-  NAME_FORM_MAX_LENGTH,
-  type NameState,
-} from "../src/index";
+import { checkNameTarget, NAME_FIELDS, NAME_FORM_MAX_LENGTH, type NameState } from "../src/index";
 
 const EDITOR = {
   state: { nickname: "サンプルどん" },
@@ -111,78 +105,5 @@ describe("checkNameTarget", () => {
     ]) {
       expect(check(name).ok).toBe(true);
     }
-  });
-});
-
-describe("describeName", () => {
-  type AdviceCase = [label: string, name: string, expected: ReturnType<typeof describeName>];
-  test.each<AdviceCase>([
-    [
-      "five hiragana, all the help page asks",
-      "あいうえお",
-      { width: 10, outsideHelpCharset: false, overFiveCharacters: false, overTenWide: false },
-    ],
-    [
-      "hiragana with the marks the help page lists",
-      "ひらー～！？",
-      { width: 12, outsideHelpCharset: false, overFiveCharacters: true, overTenWide: true },
-    ],
-    [
-      "six hiragana, one past the five",
-      "あいうえおか",
-      { width: 12, outsideHelpCharset: false, overFiveCharacters: true, overTenWide: true },
-    ],
-    [
-      "Latin letters, outside the help page's set but not past its five by its own words",
-      "Donder",
-      { width: 6, outsideHelpCharset: true, overFiveCharacters: false, overTenWide: false },
-    ],
-    [
-      "ten Latin letters, ten wide",
-      "abcdefghij",
-      { width: 10, outsideHelpCharset: true, overFiveCharacters: false, overTenWide: false },
-    ],
-    [
-      "eleven Latin letters, wider than ten",
-      "abcdefghijk",
-      { width: 11, outsideHelpCharset: true, overFiveCharacters: false, overTenWide: true },
-    ],
-    [
-      "katakana, which the help page does not name",
-      "ドン",
-      { width: 4, outsideHelpCharset: true, overFiveCharacters: false, overTenWide: false },
-    ],
-    [
-      "half-width katakana, one column each",
-      "ﾄﾞﾝ",
-      { width: 3, outsideHelpCharset: true, overFiveCharacters: false, overTenWide: false },
-    ],
-    [
-      "kanji",
-      "太鼓",
-      { width: 4, outsideHelpCharset: true, overFiveCharacters: false, overTenWide: false },
-    ],
-    [
-      "a full-width Latin letter, two columns",
-      "Ａ",
-      { width: 2, outsideHelpCharset: true, overFiveCharacters: false, overTenWide: false },
-    ],
-    [
-      "mixed Latin and kana: six characters, one not ASCII",
-      "Aあいうえお",
-      { width: 11, outsideHelpCharset: true, overFiveCharacters: true, overTenWide: true },
-    ],
-    [
-      "a character outside the BMP counts once",
-      "\u{20bb7}",
-      { width: 2, outsideHelpCharset: true, overFiveCharacters: false, overTenWide: false },
-    ],
-    [
-      "no name",
-      "",
-      { width: 0, outsideHelpCharset: false, overFiveCharacters: false, overTenWide: false },
-    ],
-  ])("reads %s", (_label, name, expected) => {
-    expect(describeName(name)).toEqual(expected);
   });
 });
