@@ -505,8 +505,8 @@ describe("what the page asks of a step", () => {
   ])("shows the editor for %s: %p", (_label, step, shown) => {
     expect(showsEditor(step)).toBe(shown);
   });
-  type ShownCase = [label: string, step: EditorStep, shown: ReturnType<typeof shownEditorOf>];
-  test.each<ShownCase>([
+  type OnScreenCase = [label: string, step: EditorStep, shown: ReturnType<typeof shownEditorOf>];
+  test.each<OnScreenCase>([
     ["nothing read", UNREAD, null],
     ["a first read", { name: "loading", held: null }, null],
     ["a read again, shut", { name: "loading", held }, { ...held, shut: true }],
