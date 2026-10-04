@@ -238,6 +238,7 @@ export const zhHant: Messages = {
   "favorites.slot.empty": "（空）",
   "favorites.reading": "正在從廣場讀取收藏…",
   "favorites.folder": "收藏資料夾",
+  "favorites.folder.heading": "收藏資料夾中的歌",
   "favorites.folderOnHiroba": "收藏資料夾（廣場）",
   "favorites.folderEmpty": "收藏資料夾是空的。",
   "favorites.sets": "歌單",

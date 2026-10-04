@@ -34,6 +34,9 @@ export function FolderCard({ shown, look, i18n, onSaveAsSet }: FolderCardProps) 
     <Card id="favorite-folder-card" variant="outlined">
       <CardContent>
         <Stack spacing={1.5}>
+          <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 500 }}>
+            {t("favorites.folder.heading")}
+          </Typography>
           {songs.length === 0 ? (
             <Typography id="favorite-folder-empty" color="text.secondary">
               {t("favorites.folderEmpty")}

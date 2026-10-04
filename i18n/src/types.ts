@@ -294,6 +294,7 @@ export interface Messages {
   "favorites.reading": string;
   /** The お気に入り folder on Hiroba, as the Favourites page names it. */
   "favorites.folder": string;
+  "favorites.folder.heading": string;
   /** The same folder in the sets drawer, among the sets kept on the device. */
   "favorites.folderOnHiroba": string;
   "favorites.folderEmpty": string;

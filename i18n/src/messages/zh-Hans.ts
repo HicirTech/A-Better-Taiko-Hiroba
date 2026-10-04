@@ -239,6 +239,7 @@ export const zhHans: Messages = {
   "favorites.slot.empty": "（空）",
   "favorites.reading": "正在从广场读取收藏…",
   "favorites.folder": "收藏夹",
+  "favorites.folder.heading": "收藏夹中的歌",
   "favorites.folderOnHiroba": "收藏夹（广场）",
   "favorites.folderEmpty": "收藏夹是空的。",
   "favorites.sets": "歌单",

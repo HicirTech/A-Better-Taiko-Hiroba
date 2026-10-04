@@ -257,6 +257,7 @@ export const en: Messages = {
   "favorites.slot.empty": "(empty)",
   "favorites.reading": "Reading your favourites from Hiroba…",
   "favorites.folder": "Favourites",
+  "favorites.folder.heading": "Songs in the folder",
   "favorites.folderOnHiroba": "Favourites (Hiroba)",
   "favorites.folderEmpty": "The favourites folder is empty.",
   "favorites.sets": "Sets",

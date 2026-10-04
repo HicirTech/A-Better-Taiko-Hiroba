@@ -263,6 +263,7 @@ export const ja: Messages = {
   "favorites.slot.empty": "（空）",
   "favorites.reading": "ひろばからお気に入りを読み込み中…",
   "favorites.folder": "お気に入り",
+  "favorites.folder.heading": "フォルダの曲",
   "favorites.folderOnHiroba": "お気に入り（ひろば）",
   "favorites.folderEmpty": "お気に入りフォルダは空です。",
   "favorites.sets": "セット",
