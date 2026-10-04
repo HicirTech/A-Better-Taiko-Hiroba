@@ -1,4 +1,3 @@
-import type { Genre } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import {
   Box,
@@ -12,17 +11,26 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { type ReactNode, useCallback, useDeferredValue, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useContext,
+  useDeferredValue,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { Waiting } from "../my-page/editor-parts";
 import { useBackCloses } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
-import { GenreGrid } from "./genre-grid";
-import { GENRE_ORDER } from "./genre-look";
 import { type PickerEntry, PickerList } from "./picker-list";
+import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
+import { matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
+import { SongFilters } from "./song-filters";
 import { lookOfCatalogue } from "./song-look";
 import { nameLanguage } from "./song-names";
-import { songsByGenre } from "./song-order";
+import { newestFirst } from "./song-order";
 import { searchSongs } from "./song-search";
 import type { SongCatalogue } from "./use-song-catalogue";
 
@@ -66,33 +74,35 @@ export function SongPicker({ open, choice, catalogue, i18n, onClose }: SongPicke
   );
 }
 
-// Its own component, so the search and the genre start over each time the picker opens.
+// Its own component, so the search and the filter start over each time the picker opens.
 function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, "open">) {
   const { t, locale } = i18n;
   const touchFirst = useTouchFirst();
   const [query, setQuery] = useState("");
-  const [genre, setGenre] = useState<Genre>(GENRE_ORDER[0]);
+  const [filter, setFilter] = useState<SongFilter>(NO_FILTER);
+  const kept = useContext(ShownDifficultyContext);
+  const shown = filter.difficulty === null ? kept : shownFor(filter.difficulty);
   const deferred = useDeferredValue(query);
-  const searching = deferred.trim() !== "";
   const scroller = useRef<HTMLDivElement>(null);
   const rewind = () => scroller.current?.scrollTo({ top: 0 });
+  const filterBy = (part: Partial<SongFilter>) => {
+    setFilter((current) => ({ ...current, ...part }));
+    rewind();
+  };
 
-  const byGenre = useMemo(() => songsByGenre(catalogue.list), [catalogue.list]);
+  const newest = useMemo(() => [...catalogue.list].sort(newestFirst), [catalogue.list]);
   const entries = useMemo<readonly PickerEntry[]>(() => {
-    if (searching) {
-      return searchSongs(catalogue.list, deferred, locale).map(({ song, shown, other }) => ({
+    const songs = newest.filter((song) => matchesFilter(song, filter));
+    if (deferred.trim() !== "") {
+      return searchSongs(songs, deferred, locale).map(({ song, shown, other }) => ({
         look: lookOfCatalogue(song, locale),
         shown,
         other: other === null ? null : { marked: other, lang: nameLanguage(song, other.text) },
       }));
     }
 
-    return (byGenre.get(genre) ?? []).map((song) => ({
-      look: lookOfCatalogue(song, locale),
-      shown: null,
-      other: null,
-    }));
-  }, [searching, deferred, genre, byGenre, catalogue.list, locale]);
+    return songs.map((song) => ({ look: lookOfCatalogue(song, locale), shown: null, other: null }));
+  }, [newest, filter, deferred, locale]);
 
   const many =
     choice.kind === "many" ? { picked: new Set(choice.picked), limit: choice.limit } : null;
@@ -175,15 +185,7 @@ function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, 
             rewind();
           }}
         />
-        <GenreGrid
-          chosen={searching ? null : genre}
-          i18n={i18n}
-          onChoose={(next) => {
-            setQuery("");
-            setGenre(next);
-            rewind();
-          }}
-        />
+        <SongFilters filter={filter} i18n={i18n} onFilter={filterBy} />
         {full && many !== null && (
           <FormHelperText id={LIMIT_NOTE_ID} sx={{ m: 0 }}>
             {t("picker.limit", { max: many.limit })}
@@ -191,7 +193,7 @@ function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, 
         )}
       </Box>
       <DialogContent ref={scroller} dividers sx={{ p: 0 }}>
-        {content}
+        <ShownDifficultyContext value={shown}>{content}</ShownDifficultyContext>
       </DialogContent>
       <DialogActions>
         <Button id="song-picker-done" onClick={onClose}>

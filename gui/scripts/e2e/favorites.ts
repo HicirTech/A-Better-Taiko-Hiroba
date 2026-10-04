@@ -1,4 +1,4 @@
-/** The Favourites page: its two cards, the sets drawer, the song picker and its search. */
+/** The Favourites page: its two cards, the sets drawer, the song picker, its filters and search. */
 import type { FavoritesState } from "../mock-favorites";
 import { HIROBA, PHONE_TALL } from "./config";
 import type { Ctx } from "./context";
@@ -11,6 +11,11 @@ const SONG_PAGE = "GET /portal_favorite_song_select.php";
 const FOLDER_SAVE = "POST /ajax/myfavorite_song.php";
 /** The stand-in's song with a title too long for any row. */
 const LONG_TITLED = "1038";
+/** The stand-in's songs Hiroba knows, the newest first. */
+const EVERY_SONG = Array.from({ length: 38 }, (_, index) => String(1038 - index));
+const INNER_TEN = ["1036", "1027", "1021", "1017", "1008", "1005"];
+const EXTREME_OR_INNER_TEN = ["1036", "1027", "1021", "1019", "1017", "1008", "1005"];
+const FILTER_CHIPS = ["#song-picker-genre", "#song-picker-difficulty", "#song-picker-level"];
 
 const favoritesNow = async (query = "") =>
   (await (await fetch(`${HIROBA}/__favorites${query}`)).json()) as FavoritesState;
@@ -18,9 +23,20 @@ const favoritesNow = async (query = "") =>
 export const favoritesKeys = [
   "readAgainReadsBothEditors",
   "songsShownWithGenreAndLevels",
+  "levelsStackBehindTheShownDifficulty",
+  "levelsSpreadOnAClickAndFoldBack",
+  "shownDifficultyFromSettings",
   "newSetAsksForItsName",
-  "pickerShowsAllEightGenres",
-  "pickerShowsAllEightGenresOnAPhone",
+  "pickerShowsItsFilters",
+  "pickerShowsItsFiltersOnAPhone",
+  "pickerOpensOnEverySong",
+  "songShowsABarPerGenre",
+  "pickerShowsTheFilteredDifficultyFirst",
+  "pickerFiltersByChartAndStars",
+  "pickerStarsAloneTakeAnyChart",
+  "pickerFiltersAddUp",
+  "pickerMenuShutByItsChip",
+  "pickerFiltersCleared",
   "searchMarksTheNameShown",
   "searchMatchesAcrossScripts",
   "longNameScrolls",
@@ -39,6 +55,7 @@ export const favoritesKeys = [
   "favoriteSongDraftDroppedOnLeaving",
   "songsMovedByALongPress",
   "setsDrawerOpensBySwipe",
+  "setsButtonHiddenOnTouch",
   "setOffersItsActionsOnALongPress",
 ] as const;
 
@@ -64,14 +81,50 @@ export async function favorites(ctx: Ctx) {
     );
   const search = (query: string) => typeInto("#song-picker-search", query);
   const rowText = (songNo: string) => textOf(`#song-picker-row-${songNo}`);
+  const placesIn = (selector: string) =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll(${JSON.stringify(`${selector} [data-difficulty]`)})].map((badge) => badge.dataset.place)`,
+    );
+  const stackOpen = (selector: string) =>
+    page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(`${selector} .level-stack`)})?.getAttribute("aria-expanded") ?? null`,
+    );
+  const barsOf = (songNos: readonly string[]) =>
+    page.evaluate<number[]>(
+      `${JSON.stringify(songNos)}.map((songNo) => document.querySelectorAll("#song-picker-row-" + songNo + " .song-bar").length)`,
+    );
+  const showDifficulty = async (difficulty: string) => {
+    await goTo("settings");
+    await shown(`#shown-difficulty-${difficulty}`);
+    await click(`#shown-difficulty-${difficulty}`);
+    await goTo("favorites");
+    await stepIs("ready");
+    await shown("#favorite-folder-slot-1 [data-difficulty]");
+  };
   const boldIn = (songNo: string) =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll("#song-picker-row-${songNo} b")].map((b) => b.textContent)`,
     );
-  const genresInView = () =>
+  const filtersInView = () =>
     page.evaluate<boolean>(
-      `[1, 2, 3, 4, 5, 6, 7, 8].every((genre) => { const box = document.querySelector("#song-picker-genre-" + genre)?.getBoundingClientRect(); return box !== undefined && box.width > 0 && box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight; })`,
+      `${JSON.stringify(FILTER_CHIPS)}.every((selector) => { const box = document.querySelector(selector)?.getBoundingClientRect(); return box !== undefined && box.width > 0 && box.left >= 0 && box.right <= innerWidth && box.top >= 0 && box.bottom <= innerHeight; })`,
     );
+  const chosenFilters = () =>
+    page.evaluate<number>(`document.querySelectorAll("#song-picker .MuiChip-filled").length`);
+  const choose = async (filter: string, value: string) => {
+    await click(`#song-picker-${filter}`);
+    await shown(`#song-picker-${filter}-${value}`);
+    await click(`#song-picker-${filter}-${value}`);
+    await gone(`#song-picker-${filter}-menu`);
+  };
+  const pickerSongs = () =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll("#song-picker-list > li")].map((row) => row.dataset.songNo)`,
+    );
+  const soon = (label: string, probe: () => Promise<boolean>) =>
+    waitFor(label, async () => (await probe()) || undefined, 5_000).catch(() => false);
+  const listed = (songs: readonly string[]) =>
+    soon(`picker lists ${songs.length} songs`, async () => same(await pickerSongs(), songs));
   const keysIn = (list: string) =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll("#${list} > li")].map((row) => row.dataset.key)`,
@@ -115,22 +168,24 @@ export async function favorites(ctx: Ctx) {
     });
     await Bun.sleep(500);
   };
-  const rightClick = async (selector: string) => {
+  // A real press, which lands on whatever covers the element, as a menu's backdrop does.
+  const mouseClick = async (selector: string, button: "left" | "right") => {
     const at = await middleOf(page, selector);
     await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
     await page.send("Input.dispatchMouseEvent", {
       type: "mousePressed",
       ...at,
-      button: "right",
+      button,
       clickCount: 1,
     });
     await page.send("Input.dispatchMouseEvent", {
       type: "mouseReleased",
       ...at,
-      button: "right",
+      button,
       clickCount: 1,
     });
   };
+  const rightClick = (selector: string) => mouseClick(selector, "right");
   const holdFinger = async (at: Point, moveTo?: Point) => {
     await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
     await Bun.sleep(500);
@@ -190,6 +245,23 @@ export async function favorites(ctx: Ctx) {
     (await textOf("#favorite-song-row"))?.includes("Wings of Light") === true &&
     same(badges, ["Easy ★2", "Normal ★3", "Hard ★5", "Extreme ★7"]);
 
+  const SLOT_1 = "#favorite-folder-slot-1";
+  results.levelsStackBehindTheShownDifficulty =
+    same(await placesIn(SLOT_1), ["before", "before", "before", "front"]) &&
+    (await stackOpen(SLOT_1)) === "false";
+  await click(`${SLOT_1} .level-stack`);
+  const spread = await stackOpen(SLOT_1);
+  await click(`${SLOT_1} .level-stack`);
+  results.levelsSpreadOnAClickAndFoldBack =
+    spread === "true" && (await stackOpen(SLOT_1)) === "false";
+
+  await showDifficulty("hard");
+  const hardInFront = await placesIn(SLOT_1);
+  await showDifficulty("oni");
+  results.shownDifficultyFromSettings =
+    same(hardInFront, ["before", "before", "front", "after"]) &&
+    same(await placesIn(SLOT_1), ["before", "before", "before", "front"]);
+
   await openDrawer();
   await click("#favorites-item-new");
   await shown("#favorite-set-name");
@@ -204,12 +276,51 @@ export async function favorites(ctx: Ctx) {
     (await editing()) === "true";
   await click("#favorite-set-add");
   await shown("#song-picker-list");
-  results.pickerShowsAllEightGenres = await genresInView();
-  results.pickerShowsAllEightGenresOnAPhone = await atSize(
+  results.pickerShowsItsFilters = await filtersInView();
+  results.pickerShowsItsFiltersOnAPhone = await atSize(
     PHONE_TALL.width,
     PHONE_TALL.height,
-    genresInView,
+    filtersInView,
   );
+  results.pickerOpensOnEverySong = (await chosenFilters()) === 0 && (await listed(EVERY_SONG));
+  results.songShowsABarPerGenre = same(await barsOf(["1012", "1001"]), [2, 1]);
+
+  await choose("difficulty", "hard");
+  results.pickerShowsTheFilteredDifficultyFirst = same(await placesIn("#song-picker-row-1019"), [
+    "before",
+    "before",
+    "front",
+    "after",
+  ]);
+
+  await choose("difficulty", "oni");
+  await choose("level", "10");
+  const extremeTen = await listed(["1019"]);
+  await choose("difficulty", "ura");
+  results.pickerFiltersByChartAndStars =
+    extremeTen &&
+    (await listed(INNER_TEN)) &&
+    (await textOf("#song-picker-difficulty")) === "Extreme (Inner)" &&
+    (await textOf("#song-picker-level")) === "★10";
+  await choose("difficulty", "all");
+  results.pickerStarsAloneTakeAnyChart = await listed(EXTREME_OR_INNER_TEN);
+
+  await choose("genre", "4");
+  const vocaloidTen = await listed(["1021", "1019", "1017"]);
+  await search("signal");
+  results.pickerFiltersAddUp = vocaloidTen && (await listed(["1019"]));
+  await search("");
+
+  await click("#song-picker-genre");
+  await shown("#song-picker-genre-menu");
+  await mouseClick("#song-picker-genre", "left");
+  results.pickerMenuShutByItsChip = await soon(
+    "genre menu shut",
+    async () => !(await exists("#song-picker-genre-menu")),
+  );
+  await mouseClick("#song-picker-level .MuiChip-deleteIcon", "left");
+  await choose("genre", "all");
+  results.pickerFiltersCleared = (await chosenFilters()) === 0 && (await listed(EVERY_SONG));
 
   await search("magic");
   await shown("#song-picker-row-1011");
@@ -356,9 +467,11 @@ export async function favorites(ctx: Ctx) {
   await click("#favorite-set-edit");
   await shown("#favorite-set-songs");
   await atSize(PHONE_TALL.width, PHONE_TALL.height, async () => {
+    const buttonWithoutTouch = await exists("#favorites-sets");
     await touchEmulated(true);
     try {
       await Bun.sleep(500);
+      results.setsButtonHiddenOnTouch = buttonWithoutTouch && !(await exists("#favorites-sets"));
       const before = await keysIn("favorite-set-songs");
       await holdFinger(
         await middleOf(page, "#favorite-set-songs > li:nth-child(1)"),

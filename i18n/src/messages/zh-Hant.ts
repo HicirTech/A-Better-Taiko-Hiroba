@@ -19,6 +19,10 @@ export const zhHant: Messages = {
   "settings.songData": "歌曲資料",
   "settings.songDataSources":
     "作者、分類、星級和其他語言的歌名來自 taiko.wiki 與 太鼓之達人維基（taiko.fandom.com/zh）。太鼓之達人維基的歌名依 CC BY-SA 使用。",
+  "settings.songLevels": "歌曲難度",
+  "settings.shownDifficulty": "預設顯示的難度",
+  "settings.shownDifficultyHint":
+    "這個難度的星級顯示在最前面，魔鬼會同時顯示裏譜面；其他星級疊在後面，點一下就橫向展開。",
   "signIn.intro":
     "使用萬代南夢宮 ID 登入，即可讀取你在鼓眾廣場的個人資料。登入頁面由廣場官方提供，本應用程式不會接觸你的密碼。",
   "signIn.action": "登入廣場",
@@ -278,7 +282,11 @@ export const zhHant: Messages = {
   "picker.title.multi": "新增歌曲",
   "picker.search": "搜尋歌曲",
   "picker.searchHint": "依曲名搜尋（日文、英文、中文、羅馬字）",
-  "picker.genres": "曲目類型",
+  "picker.genre": "分類",
+  "picker.difficulty": "難度",
+  "picker.stars": "星級",
+  "picker.all": "全部",
+  "picker.level": "★{level}",
   "picker.none": "沒有找到歌曲。",
   "picker.loading": "正在載入歌曲清單…",
   "picker.failed": "無法從 taiko.wiki 載入歌曲清單。請檢查網路後再試一次。",

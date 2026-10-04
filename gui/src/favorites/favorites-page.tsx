@@ -4,6 +4,7 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { HELD_STILL, LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
+import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import {
   type FavoriteSet,
@@ -20,6 +21,7 @@ import { FolderCard } from "./folder-card";
 import { SetNameDialog } from "./set-name-dialog";
 import { SetView } from "./set-view";
 import { SetsDrawer } from "./sets-drawer";
+import { keptShownDifficulty, ShownDifficultyContext } from "./shown-difficulty";
 import { SongCard } from "./song-card";
 import { rememberedSongs, resolveSong } from "./song-look";
 import { SongPicker } from "./song-picker";
@@ -41,7 +43,17 @@ export interface FavoritesPageProps {
   readonly i18n: Translator;
 }
 
-export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps) {
+/** The page, with the difficulty whose levels the songs show first, as kept when it opened. */
+export function FavoritesPage(props: FavoritesPageProps) {
+  const [shownDifficulty] = useState(keptShownDifficulty);
+  return (
+    <ShownDifficultyContext value={shownDifficulty}>
+      <FavoritesBody {...props} />
+    </ShownDifficultyContext>
+  );
+}
+
+function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
   const { t, locale } = i18n;
   const { step, pickSong } = favorites;
   const shown = shownFavoritesOf(step);
@@ -101,6 +113,11 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
     setDraft(null);
     setEditing(editingIt);
   };
+  const leaveEditing = () => {
+    setDraft(null);
+    setEditing(false);
+  };
+  useBackLeaves(editing, leaveEditing);
   const named = (name: string) => {
     if (naming?.kind === "new") {
       showSet(keptSets.add(name, naming.songs), naming.editing);
@@ -136,16 +153,19 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
             {set === null ? t("favorites.current") : set.name}
           </Typography>
         </Box>
-        <IconButton
-          id="favorites-sets"
-          aria-label={setsLabel}
-          title={setsLabel}
-          aria-expanded={drawerOpen}
-          aria-controls={drawerOpen ? "favorites-drawer" : undefined}
-          onClick={() => setDrawerOpen(true)}
-        >
-          <SetsIcon />
-        </IconButton>
+        {/* A touch screen opens the drawer by a swipe from the right edge instead. */}
+        {!touchFirst && (
+          <IconButton
+            id="favorites-sets"
+            aria-label={setsLabel}
+            title={setsLabel}
+            aria-expanded={drawerOpen}
+            aria-controls={drawerOpen ? "favorites-drawer" : undefined}
+            onClick={() => setDrawerOpen(true)}
+          >
+            <SetsIcon />
+          </IconButton>
+        )}
       </Box>
       {set !== null ? (
         <SetView
@@ -172,8 +192,7 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
             if (draft !== null) {
               keptSets.replaceSongs(set.id, draft);
             }
-            setDraft(null);
-            setEditing(false);
+            leaveEditing();
           }}
           onApply={() => void apply(set.songs)}
         />

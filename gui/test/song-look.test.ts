@@ -18,19 +18,19 @@ const ALPHA = song({
 const SHOWN: ShownSong = { songNo: "1002", title: "サンプル曲ベータ", genre: 5 };
 
 describe("lookOfCatalogue", () => {
-  test("shows the name in the player's language, the artists, the first genre and the levels", () => {
+  test("shows the name in the player's language, the artists, every genre and the levels", () => {
     expect(lookOfCatalogue(ALPHA, "en")).toEqual({
       songNo: "1001",
       name: "Sample Alpha",
       lang: "en",
       artists: ["アーティストA", "Artist B"],
-      genre: 3,
+      genres: [3, 1],
       levels: ALPHA.levels,
     });
   });
 
   test("has no genre for a song with none", () => {
-    expect(lookOfCatalogue(song({ genres: [] }), "ja").genre).toBeNull();
+    expect(lookOfCatalogue(song({ genres: [] }), "ja").genres).toEqual([]);
   });
 });
 
@@ -41,7 +41,7 @@ describe("lookOfShown", () => {
       name: "サンプル曲ベータ",
       lang: "ja",
       artists: [],
-      genre: 5,
+      genres: [5],
       levels: null,
     });
   });
@@ -66,7 +66,7 @@ describe("resolveSong", () => {
     expect(resolveSong("1003", catalogue, remembered, "ja")).toMatchObject({
       songNo: "1003",
       name: "#1003",
-      genre: null,
+      genres: [],
       levels: null,
     });
   });

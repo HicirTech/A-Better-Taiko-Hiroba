@@ -1,13 +1,17 @@
 import { err, type Genre, ok, type Result } from "@abth/core";
 
-import type { CatalogueSong, Difficulty, SongCatalogueRead } from "./types";
+import {
+  type CatalogueSong,
+  type Difficulty,
+  MAX_LEVEL,
+  MIN_LEVEL,
+  type SongCatalogueRead,
+} from "./types";
 
 export const MAX_CATALOGUE_LENGTH = 16 * 1024 * 1024;
 
 /** Hiroba's song numbers; a console-only song has one such as `ns2_…`, which Hiroba does not know. */
 const HIROBA_SONG_NO = /^\d{1,5}$/;
-const MIN_LEVEL = 1;
-const MAX_LEVEL = 10;
 
 const GENRE_OF_WIKI_NAME: ReadonlyMap<string, Genre> = new Map<string, Genre>([
   ["pops", 1],

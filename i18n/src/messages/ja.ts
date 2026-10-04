@@ -19,6 +19,10 @@ export const ja: Messages = {
   "settings.songData": "曲のデータ",
   "settings.songDataSources":
     "アーティスト、ジャンル、難易度の星、ほかの言語の曲名は taiko.wiki と 太鼓之達人維基（taiko.fandom.com/zh）によるものです。太鼓之達人維基の曲名は CC BY-SA に従って使っています。",
+  "settings.songLevels": "曲の難易度",
+  "settings.shownDifficulty": "手前に表示するむずかしさ",
+  "settings.shownDifficultyHint":
+    "その難易度の星を手前に、おには裏譜面も並べて表示します。ほかの星は後ろに重なり、クリックで横に広がります。",
   "signIn.intro":
     "バンダイナムコIDでログインすると、ドンだーひろばのプロフィールを読み込めます。ログイン画面はひろば公式のもので、このアプリがパスワードを見ることはありません。",
   "signIn.action": "ドンだーひろばにログイン",
@@ -303,7 +307,11 @@ export const ja: Messages = {
   "picker.title.multi": "曲を追加",
   "picker.search": "曲を検索",
   "picker.searchHint": "曲名で検索（日本語・英語・中国語・ローマ字）",
-  "picker.genres": "ジャンル",
+  "picker.genre": "ジャンル",
+  "picker.difficulty": "むずかしさ",
+  "picker.stars": "星の数",
+  "picker.all": "すべて",
+  "picker.level": "★{level}",
   "picker.none": "曲が見つかりません。",
   "picker.loading": "曲リストを読み込み中…",
   "picker.failed":

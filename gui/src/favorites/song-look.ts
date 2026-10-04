@@ -12,7 +12,8 @@ export interface SongLook {
   readonly name: string;
   readonly lang: string;
   readonly artists: readonly string[];
-  readonly genre: Genre | null;
+  /** Every genre the song is in; none when neither the catalogue nor Hiroba names one. */
+  readonly genres: readonly Genre[];
   /** Null for a song the catalogue lacks. */
   readonly levels: Readonly<Record<Difficulty, number | null>> | null;
 }
@@ -24,13 +25,20 @@ export function lookOfCatalogue(song: CatalogueSong, locale: Locale): SongLook {
     name,
     lang: nameLanguage(song, name),
     artists: song.artists,
-    genre: song.genres[0] ?? null,
+    genres: song.genres,
     levels: song.levels,
   };
 }
 
 export function lookOfShown({ songNo, title, genre }: ShownSong): SongLook {
-  return { songNo, name: title, lang: HIROBA_LANG, artists: [], genre, levels: null };
+  return {
+    songNo,
+    name: title,
+    lang: HIROBA_LANG,
+    artists: [],
+    genres: genre === null ? [] : [genre],
+    levels: null,
+  };
 }
 
 /** The songs a view names, by number: what a song shows as when the catalogue lacks it. */

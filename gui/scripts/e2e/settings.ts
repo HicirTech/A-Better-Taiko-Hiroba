@@ -166,6 +166,7 @@ export async function settings(ctx: Ctx) {
       ["language-setting", "H2", true, 1],
       ["account", "H2", true, 1],
       ["updates", "H2", true, 1],
+      ["song-levels", "H2", true, 1],
       ["song-data", "H2", true, 1],
     ],
     radios: 5,

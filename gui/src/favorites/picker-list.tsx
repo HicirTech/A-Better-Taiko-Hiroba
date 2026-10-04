@@ -1,6 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 import { Fragment, memo, type ReactNode } from "react";
+import { LEVEL_BADGES_LOOK, LevelBadges } from "./level-badges";
 import type { SongLook } from "./song-look";
 import { SongRow } from "./song-row";
 import { type Marked, segmentsOf } from "./song-search";
@@ -19,19 +20,31 @@ export interface PickedSongs {
   readonly limit: number;
 }
 
-// Rows are plain elements and drawn only when near the view: a genre lists hundreds of songs.
+// Rows are plain elements and drawn only when near the view: the list holds every song.
+// The badges sit beside the row's button, as a button may not hold another.
 const LIST = {
   listStyle: "none",
   m: 0,
   p: 0,
-  "& .picker-row": { contentVisibility: "auto", containIntrinsicSize: "auto 56px" },
+  "& .picker-row": {
+    contentVisibility: "auto",
+    containIntrinsicSize: "auto 56px",
+    display: "flex",
+    alignItems: "center",
+    pr: 2,
+    "&:hover": { bgcolor: "action.hover" },
+    "&:has(input:disabled)": { opacity: 0.5 },
+  },
   "& .picker-hit": {
     display: "flex",
     alignItems: "center",
+    alignSelf: "stretch",
     gap: 1.5,
     boxSizing: "border-box",
-    width: 1,
-    px: 2,
+    flex: 1,
+    minWidth: 0,
+    pl: 2,
+    pr: 1.5,
     py: 0.75,
     border: 0,
     bgcolor: "transparent",
@@ -39,12 +52,12 @@ const LIST = {
     font: "inherit",
     textAlign: "left",
     cursor: "pointer",
-    "&:hover": { bgcolor: "action.hover" },
     "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 },
-    "&:has(input:disabled)": { opacity: 0.5, cursor: "default" },
+    "&:has(input:disabled)": { cursor: "default" },
   },
   "& .picker-hit input": { flexShrink: 0, m: 0, width: 18, height: 18 },
   "& .picker-hit .song-row": { flex: 1, minWidth: 0 },
+  ...LEVEL_BADGES_LOOK,
 } as const;
 
 function MarkedText({ marked }: { marked: Marked }) {
@@ -93,8 +106,8 @@ const PickerRow = memo(function PickerRow({
   disabled,
   onActivate,
 }: RowProps) {
-  const { songNo } = entry.look;
-  const row = <SongRow look={entry.look} i18n={i18n} name={markedName(entry)} />;
+  const { songNo, levels } = entry.look;
+  const row = <SongRow look={entry.look} i18n={i18n} name={markedName(entry)} withLevels={false} />;
   return (
     <li className="picker-row" id={`song-picker-row-${songNo}`} data-song-no={songNo}>
       {many ? (
@@ -112,6 +125,7 @@ const PickerRow = memo(function PickerRow({
           {row}
         </button>
       )}
+      {levels !== null && <LevelBadges levels={levels} i18n={i18n} />}
     </li>
   );
 });
