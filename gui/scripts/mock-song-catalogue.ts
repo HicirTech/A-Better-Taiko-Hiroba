@@ -37,6 +37,30 @@ export interface WikiSong {
   };
 }
 
+type WikiDifficulty = keyof WikiSong["courses"];
+
+const WIKI_DIFFICULTIES: readonly WikiDifficulty[] = ["easy", "normal", "hard", "oni", "ura"];
+
+type PictureCounts = Readonly<Partial<Record<WikiDifficulty, number>>>;
+
+/** How many pictures each chart of a song has on the stand-in; a chart not named has none. */
+const CHART_PICTURES: Readonly<Record<string, PictureCounts>> = {
+  "1001": { easy: 1, normal: 1, hard: 1, oni: 1 },
+  "1005": { oni: 2, ura: 1 },
+  "1019": { oni: 1 },
+};
+
+const chartPicturePaths = (songNo: string, difficulty: WikiDifficulty): string[] =>
+  Array.from(
+    { length: CHART_PICTURES[songNo]?.[difficulty] ?? 0 },
+    (_, at) => `/__charts/${songNo}/${difficulty}-${at + 1}.png`,
+  );
+
+/** Where the stand-in serves each chart picture, a song's easiest chart first. */
+export const CHART_PICTURE_PATHS: readonly string[] = Object.keys(CHART_PICTURES).flatMap(
+  (songNo) => WIKI_DIFFICULTIES.flatMap((difficulty) => chartPicturePaths(songNo, difficulty)),
+);
+
 type Levels = readonly [easy: number, normal: number, hard: number, oni: number, ura?: number];
 
 interface Extras {
@@ -205,7 +229,29 @@ const CHANGED_LATELY: readonly WikiSong[] = [
   DELETED_SONG,
 ];
 
-/** The whole list, or, for a read that names a time, the pair the wiki would have changed since. */
-export function wikiSongsSince(after: string | null): readonly WikiSong[] {
-  return after === null ? WIKI_SONGS : CHANGED_LATELY;
+/** The song with the pictures of its charts linked on `origin`, where the stand-in serves them. */
+function linkedOn(origin: string, song: WikiSong): WikiSong {
+  if (CHART_PICTURES[song.songNo] === undefined) {
+    return song;
+  }
+  const linked = (course: WikiCourse, difficulty: WikiDifficulty): WikiCourse => ({
+    ...course,
+    images: chartPicturePaths(song.songNo, difficulty).map((path) => `${origin}${path}`),
+  });
+  const { easy, normal, hard, oni, ura } = song.courses;
+  return {
+    ...song,
+    courses: {
+      easy: linked(easy, "easy"),
+      normal: linked(normal, "normal"),
+      hard: linked(hard, "hard"),
+      oni: linked(oni, "oni"),
+      ura: ura === null ? null : linked(ura, "ura"),
+    },
+  };
+}
+
+/** The whole list, or the pair a read that names a time gets, its pictures linked on `origin`. */
+export function wikiSongsSince(after: string | null, origin: string): readonly WikiSong[] {
+  return (after === null ? WIKI_SONGS : CHANGED_LATELY).map((song) => linkedOn(origin, song));
 }

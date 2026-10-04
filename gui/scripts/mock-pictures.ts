@@ -188,6 +188,33 @@ export function crownIconPng(number: number): Uint8Array<ArrayBuffer> {
   });
 }
 
+const CHART_PICTURE_HEIGHT = 120;
+const NOTE_SPACING = 40;
+const NOTE_RADIUS = 14;
+const DON = [0xe8, 0x4a, 0x4a] as const;
+const KA = [0x4a, 0x9a, 0xe8] as const;
+
+/** How wide the stand-in's chart picture at a place in its list is: each is wider than the last. */
+export const chartPictureWidth = (at: number) => 200 + 40 * at;
+
+/** A strip of notes, red and blue by turns, on a pale ground of its place's own. */
+export function chartPicturePng(at: number): Uint8Array<ArrayBuffer> {
+  const next = randomFrom(seedOf(8, at));
+  const ground = [0xe0 + (next() % 32), 0xe0 + (next() % 32), 0xe0 + (next() % 32)];
+  const width = chartPictureWidth(at);
+  const height = CHART_PICTURE_HEIGHT;
+  const data = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const fromCentre = ((x % NOTE_SPACING) - NOTE_SPACING / 2) ** 2 + (y - height / 2) ** 2;
+      const note = Math.floor(x / NOTE_SPACING) % 2 === 0 ? DON : KA;
+      const [r = 0, g = 0, b = 0] = fromCentre <= NOTE_RADIUS ** 2 ? note : ground;
+      data.set([r, g, b, 255], (y * width + x) * 4);
+    }
+  }
+  return new Uint8Array(encode({ width, height, data, channels: 4 }));
+}
+
 function platePng(
   next: () => number,
   band: readonly number[],

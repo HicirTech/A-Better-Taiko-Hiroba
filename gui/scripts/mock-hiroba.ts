@@ -5,6 +5,7 @@ import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
 import { createFavoritesEditor } from "./mock-favorites";
 import {
   blankPlatePng,
+  chartPicturePng,
   crownIconPng,
   medalPlatePng,
   myDonPng,
@@ -13,7 +14,7 @@ import {
   titlePlatePng,
 } from "./mock-pictures";
 import { createProfileEditor, escapeHtml } from "./mock-profile";
-import { wikiSongsSince } from "./mock-song-catalogue";
+import { CHART_PICTURE_PATHS, wikiSongsSince } from "./mock-song-catalogue";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
 const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
@@ -85,6 +86,16 @@ const page = (body: string) =>
   );
 const redirect = (location: string, headers: Record<string, string> = {}) =>
   new Response(null, { status: 302, headers: { location, ...headers } });
+// As file.taiko.wiki sends a picture, with no Content-Type: Bun types bytes, but not a stream.
+const untyped = (bytes: Uint8Array) =>
+  new Response(
+    new ReadableStream({
+      start(controller) {
+        controller.enqueue(bytes);
+        controller.close();
+      },
+    }),
+  );
 const RECOMMENDED_BROWSERS = page("<p>Please use one of the recommended browsers.</p>");
 const submitSoon = (id: string) =>
   `<script>setTimeout(() => document.getElementById("${id}").submit(), 500)</script>`;
@@ -267,6 +278,11 @@ Bun.serve({
     }
     if (onPictureHost) {
       return pictureHost(request);
+    }
+    const chart = CHART_PICTURE_PATHS.indexOf(pathname);
+    if (chart >= 0) {
+      // A wiki's picture: public, and no session is asked for.
+      return untyped(chartPicturePng(chart));
     }
     const icon = ICON_PATH.exec(pathname);
     if (icon !== null) {
@@ -461,7 +477,7 @@ Bun.serve({
           headers: { "content-type": "application/json" },
         });
       case "/__song-catalogue":
-        return Response.json(wikiSongsSince(searchParams.get("after")));
+        return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
       case "/__chinese-names":
         return Response.json(chineseNamesBatch(searchParams.get("gcmcontinue")));
       case "/__last-token":
