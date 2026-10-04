@@ -24,7 +24,7 @@ import {
 } from "../src/index";
 
 /** `ai-context/` sits beside the repository, so this holds on any machine with that layout. */
-const DEFAULT_CORPUS = join(import.meta.dir, "../../../../ai-context/reference/hiroba-pages");
+const DEFAULT_CORPUS = join(import.meta.dir, "../../../ai-context/reference/hiroba-pages");
 const TAIKO_NO = "000000000000";
 const FETCHED_AT = "2026-01-01T00:00:00.000Z";
 

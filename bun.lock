@@ -12,7 +12,15 @@
         "typescript": "^5.6.0",
       },
     },
-    "apps/gui": {
+    "core": {
+      "name": "@abth/core",
+      "version": "0.0.0",
+      "dependencies": {
+        "fast-png": "8.0.0",
+        "node-html-parser": "9.0.0",
+      },
+    },
+    "gui": {
       "name": "@abth/gui",
       "version": "0.1.0",
       "devDependencies": {
@@ -40,25 +48,17 @@
         "vite": "8.3.1",
       },
     },
-    "packages/core": {
-      "name": "@abth/core",
-      "version": "0.0.0",
-      "dependencies": {
-        "fast-png": "8.0.0",
-        "node-html-parser": "9.0.0",
-      },
-    },
-    "packages/i18n": {
+    "i18n": {
       "name": "@abth/i18n",
       "version": "0.0.0",
     },
   },
   "packages": {
-    "@abth/core": ["@abth/core@workspace:packages/core"],
+    "@abth/core": ["@abth/core@workspace:core"],
 
-    "@abth/gui": ["@abth/gui@workspace:apps/gui"],
+    "@abth/gui": ["@abth/gui@workspace:gui"],
 
-    "@abth/i18n": ["@abth/i18n@workspace:packages/i18n"],
+    "@abth/i18n": ["@abth/i18n@workspace:i18n"],
 
     "@babel/code-frame": ["@babel/code-frame@7.29.7", "", { "dependencies": { "@babel/helper-validator-identifier": "^7.29.7", "js-tokens": "^4.0.0", "picocolors": "^1.1.1" } }, "sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw=="],
 
