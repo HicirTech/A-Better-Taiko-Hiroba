@@ -7,6 +7,7 @@ import {
   INITIAL_COSTUME,
   type MockSession,
 } from "../scripts/mock-costume";
+import type { FavoritesEditor } from "../scripts/mock-favorites";
 import type { ProfileEditor } from "../scripts/mock-profile";
 import { type NativeHttpRequest, native, nativeAnswerOf } from "./capacitor-fakes";
 
@@ -31,6 +32,8 @@ export interface StandInOptions {
   readonly editor: ReturnType<typeof createCostumeEditor>;
   /** The title and the name; without one, those pages and posts are not there. */
   readonly profile?: ProfileEditor;
+  /** The お気に入り folder and the 大好きな曲; without one, those pages and posts are not there. */
+  readonly favorites?: FavoritesEditor;
   readonly session: MockSession;
   /** My page: as it is, or built from the token the read just issued (for the rename dialog). */
   readonly myPage: string | ((ticket: string) => string);
@@ -49,7 +52,7 @@ const html = (body: string) =>
 const redirectTo = (location: string) => new Response(null, { status: 302, headers: { location } });
 
 /** Makes `native.httpAnswer` answer as the mock Hiroba would, for the calls the app makes next. */
-export function standIn({ editor, profile, session, myPage }: StandInOptions): StandIn {
+export function standIn({ editor, profile, favorites, session, myPage }: StandInOptions): StandIn {
   let ended = false;
 
   const route = async (asked: NativeHttpRequest, url: URL): Promise<Response> => {
@@ -118,6 +121,18 @@ export function standIn({ editor, profile, session, myPage }: StandInOptions): S
           ended = true;
         });
       }
+      case "/favorite_song_select.php":
+        if (favorites === undefined) {
+          return new Response("not found", { status: 404 });
+        }
+        return signedIn
+          ? html(favorites.folderPage(session, url.searchParams))
+          : redirectTo("/login.php");
+      case "/portal_favorite_song_select.php":
+        if (favorites === undefined) {
+          return new Response("not found", { status: 404 });
+        }
+        return signedIn ? html(favorites.favoriteSongPage(session)) : redirectTo("/login.php");
       case "/imgsrc_mydon.php":
         return editor.preview(url.search, signedIn);
       case "/imgsrc_kisekae.php":

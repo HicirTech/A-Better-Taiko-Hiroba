@@ -6,6 +6,7 @@ import {
   type MockSession,
   type PostRecord,
 } from "../scripts/mock-costume";
+import { createFavoritesEditor } from "../scripts/mock-favorites";
 import {
   createProfileEditor,
   FILTER_MESSAGE,
@@ -56,8 +57,9 @@ interface SetUpOptions {
 function setUp(options: SetUpOptions = {}) {
   const editor = createCostumeEditor();
   const profile = createProfileEditor({ issue: editor.issueTicket });
+  const favorites = createFavoritesEditor({ issue: editor.issueTicket });
   const session: MockSession = { cardChosen: true };
-  const hiroba = standIn({ editor, profile, session, myPage: profilePage(profile) });
+  const hiroba = standIn({ editor, profile, favorites, session, myPage: profilePage(profile) });
   const indexedDb = options.indexedDb === undefined ? createFakeIndexedDb() : options.indexedDb;
   const launch = () =>
     createAndroidPort({
