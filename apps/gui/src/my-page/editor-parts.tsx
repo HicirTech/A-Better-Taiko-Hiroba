@@ -17,6 +17,31 @@ export function Waiting({ id, children }: { id?: string; children: string }) {
   );
 }
 
+/** What went wrong, with the codes a user can copy into a report; inline, so it fits a helper. */
+export function FailureText({ failure, i18n }: { failure: ReadFailure; i18n: Translator }) {
+  const { t } = i18n;
+  return (
+    <>
+      {t(FAILURE_MESSAGE[failure.kind])}
+      {failure.detail !== undefined && (
+        <Typography
+          component="span"
+          variant="body2"
+          sx={{
+            display: "block",
+            mt: 1,
+            fontFamily: "monospace",
+            userSelect: "text",
+            wordBreak: "break-all",
+          }}
+        >
+          {t("failure.detail", { detail: failure.detail })}
+        </Typography>
+      )}
+    </>
+  );
+}
+
 export function LoadFailed({
   id,
   failure,
@@ -28,18 +53,9 @@ export function LoadFailed({
   i18n: Translator;
   children?: ReactNode;
 }) {
-  const { t } = i18n;
   return (
     <Alert id={id} severity="warning">
-      {t(FAILURE_MESSAGE[failure.kind])}
-      {failure.detail !== undefined && (
-        <Typography
-          variant="body2"
-          sx={{ mt: 1, fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-        >
-          {t("failure.detail", { detail: failure.detail })}
-        </Typography>
-      )}
+      <FailureText failure={failure} i18n={i18n} />
       {children}
     </Alert>
   );

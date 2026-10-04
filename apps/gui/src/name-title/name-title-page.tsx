@@ -20,10 +20,11 @@ export interface NameTitlePageProps {
   readonly i18n: Translator;
   readonly title: TitleEditor;
   readonly name: NameEditor;
+  /** Any write, the costume's too, is on its way: nothing is pressed meanwhile. */
+  readonly busy: boolean;
 }
 
-export function NameTitlePage({ profile, lane, i18n, title, name }: NameTitlePageProps) {
-  const busy = title.writing || name.writing;
+export function NameTitlePage({ profile, lane, i18n, title, name, busy }: NameTitlePageProps) {
   return (
     <Stack
       id="name-title-page"
@@ -31,7 +32,7 @@ export function NameTitlePage({ profile, lane, i18n, title, name }: NameTitlePag
       sx={{ width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, alignSelf: "center" }}
     >
       <Plate profile={profile} lane={lane} i18n={i18n} />
-      <TitleSection title={title} i18n={i18n} busy={busy} />
+      <TitleSection title={title} worn={profile.title} i18n={i18n} busy={busy} />
       <NameSection name={name} profile={profile} i18n={i18n} busy={busy} />
     </Stack>
   );

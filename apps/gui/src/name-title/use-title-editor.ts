@@ -2,34 +2,39 @@ import type { TitleOption } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
 import { useCallback, useReducer, useRef } from "react";
 
-import { sendHeld, sessionNoticeOf } from "../my-page/write-ending";
+import { seenAfter, sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import type { HirobaSessionPort, TitleState, WriteOutcomeView } from "../session-port";
+import type { HirobaSessionPort, ProfileView, TitleState, WriteOutcomeView } from "../session-port";
 import {
-  canReadTitlesAgain,
   changesTitle,
+  IDLE,
   isWritingTitle,
+  mayReadTitles,
   movedTheTitle,
   reduceTitle,
   type TitleStep,
-  UNREAD,
 } from "./title-editor-state";
 
 export interface TitleEditorOptions {
   readonly port: HirobaSessionPort;
   readonly lane: PictureLane;
+  /** The profile as the window last read it: the title worn, which a save is made against. */
+  readonly profile: Pick<ProfileView, "title"> | null;
   readonly onSessionGone: (notice: MessageKey) => void;
+  /** A write read the title back as this: the window puts it in its copy of the profile. */
+  readonly onTitle: (title: string) => void;
   /** A write left the title moved, or maybe moved: the window reads my page again for the plate. */
   readonly onMoved: () => void;
 }
 
 export interface TitleEditor {
   readonly step: TitleStep;
-  readonly reading: boolean;
   readonly writing: boolean;
-  readonly canRead: boolean;
-  read(): Promise<void>;
+  /** Reads the titles to choose from when the picker opens; none if they are read already. */
+  readList(): Promise<void>;
+  /** Drops the list, and what the last write said, when my page is read again. */
+  forgetList(): void;
   /** Drops everything of the section when a session ends or begins. */
   forget(): void;
   pick(option: TitleOption | null): void;
@@ -39,23 +44,31 @@ export interface TitleEditor {
 export function useTitleEditor({
   port,
   lane,
+  profile,
   onSessionGone,
+  onTitle,
   onMoved,
 }: TitleEditorOptions): TitleEditor {
-  const [step, dispatch] = useReducer(reduceTitle, UNREAD);
-  const sessionGeneration = useRef(0);
-  // One read at a time, also under StrictMode's double effects, which would ask Hiroba twice.
+  const [step, dispatch] = useReducer(reduceTitle, IDLE);
+  // An answer on its way is let go when a session ends, the list is forgotten or a write ends.
+  const generation = useRef(0);
+  // One read at a time, also when the picker opens twice before the page draws.
   const reading = useRef<number | null>(null);
   const writing = useRef(false);
 
   const forget = useCallback(() => {
-    sessionGeneration.current += 1;
+    generation.current += 1;
     dispatch({ type: "forget" });
   }, []);
 
-  const mayRead = step.name === "unread" || canReadTitlesAgain(step);
-  const read = useCallback(async () => {
-    const mine = sessionGeneration.current;
+  const forgetList = useCallback(() => {
+    generation.current += 1;
+    dispatch({ type: "listForgotten" });
+  }, []);
+
+  const mayRead = mayReadTitles(step);
+  const readList = useCallback(async () => {
+    const mine = generation.current;
     if (!mayRead || reading.current === mine || writing.current) {
       return;
     }
@@ -66,7 +79,7 @@ export function useTitleEditor({
     if (reading.current === mine) {
       reading.current = null;
     }
-    if (mine !== sessionGeneration.current) {
+    if (mine !== generation.current) {
       return;
     }
 
@@ -80,6 +93,7 @@ export function useTitleEditor({
   }, [mayRead, port, forget, onSessionGone]);
 
   const writeEnded = (outcome: WriteOutcomeView<TitleState>) => {
+    generation.current += 1;
     dispatch({ type: "writeEnded", outcome });
     const gone = sessionNoticeOf(outcome);
     if (gone !== null) {
@@ -88,43 +102,45 @@ export function useTitleEditor({
       return;
     }
 
+    const seen = seenAfter(outcome);
+    if (seen !== null) {
+      onTitle(seen.title);
+    }
     if (movedTheTitle(outcome)) {
       onMoved();
     }
   };
 
   const save = async () => {
+    const picked = step.picked;
     if (
       step.name !== "idle" ||
-      step.picked === null ||
-      !changesTitle(step.editor, step.picked) ||
+      profile === null ||
+      picked === null ||
+      !changesTitle(profile.title, picked) ||
       writing.current
     ) {
       return;
     }
 
-    const { editor, picked } = step;
+    const expected = { title: profile.title };
     writing.current = true;
-    const mine = sessionGeneration.current;
+    const mine = generation.current;
     dispatch({ type: "saveStarted" });
     const outcome = await sendHeld(lane, () =>
-      port.changeTitle({
-        expected: editor.state,
-        target: { id: picked.id, title: picked.label },
-      }),
+      port.changeTitle({ expected, target: { id: picked.id, title: picked.label } }),
     );
     writing.current = false;
-    if (mine === sessionGeneration.current) {
+    if (mine === generation.current) {
       writeEnded(outcome);
     }
   };
 
   return {
     step,
-    reading: step.name === "loading",
     writing: isWritingTitle(step),
-    canRead: canReadTitlesAgain(step),
-    read,
+    readList,
+    forgetList,
     forget,
     pick: (option) => dispatch({ type: "picked", option }),
     save,

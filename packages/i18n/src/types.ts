@@ -174,19 +174,16 @@ export interface Messages {
   /** Also the title row's label in a write's comparison. */
   "title.heading": string;
   "title.reading": string;
-  "title.pick": string;
   "title.open": string;
   "title.close": string;
   "title.clear": string;
   /** Param: {count}, how many titles the account may choose from. */
-  "title.count": string;
   "title.noMatch": string;
   "title.none": string;
   "title.current": string;
   /** Param: {count}, how many titles of the list have the worn title's name. */
   "title.shared": string;
   "title.notListed": string;
-  "title.reload": string;
   "name.heading": string;
   "name.field": string;
   /** Params: {count}, how many characters it holds, and {max}. */

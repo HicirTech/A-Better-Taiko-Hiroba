@@ -130,24 +130,30 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
     onSessionGone: sessionGone,
   });
   const { forget: forgetEditor } = editor;
-  const titleEditor = useTitleEditor({
-    port,
-    lane,
-    onSessionGone: sessionGone,
-    onMoved: readBehindThePage,
-  });
-  const { forget: forgetTitleEditor } = titleEditor;
-  const nameRead = useCallback(
-    (nickname: string) =>
+  // What a write read back goes into the window's copy of the profile, ahead of the next read.
+  const putInProfile = useCallback(
+    (worn: Partial<Pick<ProfileView, "nickname" | "title">>) =>
       setScreen((now) =>
-        now.name === "profile" ? { name: "profile", profile: { ...now.profile, nickname } } : now,
+        now.name === "profile" ? { name: "profile", profile: { ...now.profile, ...worn } } : now,
       ),
     [],
   );
+  const nameRead = useCallback((nickname: string) => putInProfile({ nickname }), [putInProfile]);
+  const titleRead = useCallback((title: string) => putInProfile({ title }), [putInProfile]);
+  const wornProfile = screen.name === "profile" ? screen.profile : null;
+  const titleEditor = useTitleEditor({
+    port,
+    lane,
+    profile: wornProfile,
+    onSessionGone: sessionGone,
+    onTitle: titleRead,
+    onMoved: readBehindThePage,
+  });
+  const { forget: forgetTitleEditor, forgetList: forgetTitleList } = titleEditor;
   const nameEditor = useNameEditor({
     port,
     lane,
-    profile: screen.name === "profile" ? screen.profile : null,
+    profile: wornProfile,
     onSessionGone: sessionGone,
     onNickname: nameRead,
   });
@@ -155,20 +161,13 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing;
   const { read: readEditor } = editor;
-  const { read: readTitles } = titleEditor;
   const editorUnread = editor.step.name === "unread";
-  const titlesUnread = titleEditor.step.name === "unread";
   // A first read waits for any write to end rather than rely on the request queue alone.
   useEffect(() => {
     if (onEditorPage && editorUnread && !writing) {
       void readEditor();
     }
   }, [onEditorPage, editorUnread, writing, readEditor]);
-  useEffect(() => {
-    if (onNameTitlePage && titlesUnread && !writing) {
-      void readTitles();
-    }
-  }, [onNameTitlePage, titlesUnread, writing, readTitles]);
 
   const signIn = async () => {
     // Hiroba may have ended the last session itself, so no sign-out forgot its pictures.
@@ -224,12 +223,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
   }, [port, read]);
 
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
-  const canReadAgain =
-    signedIn &&
-    !writing &&
-    !refreshing &&
-    (!onEditorPage || editor.canRead) &&
-    (!onNameTitlePage || titleEditor.canRead);
+  const canReadAgain = signedIn && !writing && !refreshing && (!onEditorPage || editor.canRead);
   // Turns away a second ask that lands before the Fab is shut.
   const readAgainStarted = useRef(false);
   const readAgain = async () => {
@@ -241,7 +235,8 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
       if (onEditorPage) {
         await editor.read();
       } else if ((await read()) && onNameTitlePage) {
-        await titleEditor.read();
+        // The titles are read again when the picker next opens.
+        forgetTitleList();
       }
     } finally {
       readAgainStarted.current = false;
@@ -253,12 +248,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
         <>
           <FrameCorner>
             <ReadAgainFab
-              reading={
-                screen.name === "reading" ||
-                refreshing ||
-                (onEditorPage && editor.reading) ||
-                (onNameTitlePage && titleEditor.reading)
-              }
+              reading={screen.name === "reading" || refreshing || (onEditorPage && editor.reading)}
               canRead={canReadAgain}
               touchFirst={touchFirst}
               onRead={readAgain}
@@ -338,6 +328,7 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
               i18n={i18n}
               title={titleEditor}
               name={nameEditor}
+              busy={writing}
             />
           )}
 
