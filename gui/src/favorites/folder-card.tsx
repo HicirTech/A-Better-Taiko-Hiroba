@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 
 import { Waiting } from "../my-page/editor-parts";
 import { WriteOutcomeNotice } from "../my-page/write-outcome";
@@ -20,12 +20,13 @@ export interface FolderCardProps {
   readonly shown: ShownFavorites;
   readonly look: (songNo: string) => SongLook;
   readonly i18n: Translator;
+  readonly onSaveAsSet: () => void;
 }
 
-/** The songs in the お気に入り folder, in slot order. */
-export function FolderCard({ shown, look, i18n }: FolderCardProps) {
+/** The songs in the お気に入り folder, in slot order, and the way to keep them as a set. */
+export function FolderCard({ shown, look, i18n, onSaveAsSet }: FolderCardProps) {
   const { t } = i18n;
-  const { view, notice, saving } = shown;
+  const { view, notice, saving, shut } = shown;
   const songs = view.folder.state.slots.flatMap((songNo, index) =>
     songNo === null ? [] : [{ slot: index + 1, songNo }],
   );
@@ -46,6 +47,15 @@ export function FolderCard({ shown, look, i18n }: FolderCardProps) {
               ))}
             </Box>
           )}
+          <Button
+            id="favorite-folder-save-as-set"
+            variant="outlined"
+            disabled={shut || songs.length === 0}
+            onClick={onSaveAsSet}
+            sx={{ alignSelf: "flex-start" }}
+          >
+            {t("favorites.saveAsSet")}
+          </Button>
           {saving === "folder" && (
             <Waiting id="favorite-folder-saving">{t("costume.saving")}</Waiting>
           )}

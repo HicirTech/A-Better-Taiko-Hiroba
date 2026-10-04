@@ -337,6 +337,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "流音樂動兒童科創綜藝古典普困難魔鬼裏",
     "首解鎖第",
     "增搜尋依文英羅馬類型找放",
+    "相刪將影響",
     "發稍布",
     "者類星其他來太基依",
   ].join(""),

@@ -294,7 +294,27 @@ export interface Messages {
   "favorites.reading": string;
   /** The お気に入り folder on Hiroba, as the Favourites page names it. */
   "favorites.folder": string;
+  /** The same folder in the sets drawer, among the sets kept on the device. */
+  "favorites.folderOnHiroba": string;
   "favorites.folderEmpty": string;
+  "favorites.sets": string;
+  "favorites.newSet": string;
+  /** Param: {number}, from 1. A new set's name until the player renames it. */
+  "favorites.setName": string;
+  "favorites.set.nameLabel": string;
+  /** Marks a set whose songs are the folder's, in the order of its slots. */
+  "favorites.set.sameAsFolder": string;
+  "favorites.setEmpty": string;
+  "favorites.saveAsSet": string;
+  "favorites.addSongs": string;
+  /** Param: {name}, the song as the page shows it. */
+  "favorites.removeSong": string;
+  "favorites.apply": string;
+  "favorites.delete": string;
+  "favorites.delete.title": string;
+  /** Param: {name}, the set's name. */
+  "favorites.delete.body": string;
+  "favorites.delete.cancel": string;
   "favorites.song.heading": string;
   "favorites.song.none": string;
   "favorites.song.change": string;
