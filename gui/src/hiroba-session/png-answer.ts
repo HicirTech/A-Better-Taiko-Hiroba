@@ -132,13 +132,18 @@ export function describeAnswer(
 const PNG_DATA_URL_PREFIX = "data:image/png;base64,";
 const BASE64 = /^[A-Za-z0-9+/]*={0,2}$/;
 
-/** A PNG as a `data:` URL, the only form a picture crosses in. `btoa` exists in both shells. */
-export function pngDataUrl(bytes: Uint8Array): string {
+/** `bytes` in base64. `btoa` exists in both shells. */
+export function base64Of(bytes: Uint8Array): string {
   let binary = "";
   for (let at = 0; at < bytes.length; at += 0x2000) {
     binary += String.fromCharCode(...bytes.subarray(at, at + 0x2000));
   }
-  return `${PNG_DATA_URL_PREFIX}${btoa(binary)}`;
+  return btoa(binary);
+}
+
+/** A PNG as a `data:` URL, the only form a picture crosses in. */
+export function pngDataUrl(bytes: Uint8Array): string {
+  return `${PNG_DATA_URL_PREFIX}${base64Of(bytes)}`;
 }
 
 /** Whether `value` is a `pngDataUrl` of at most `maxBytes` bytes, as read back from storage. */

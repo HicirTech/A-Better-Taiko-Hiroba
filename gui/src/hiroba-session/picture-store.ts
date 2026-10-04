@@ -23,7 +23,7 @@ export function pictureKeyPath(key: PictureKey): string {
     : `player/${sha256Hex(key.player ?? "")}/${name}`;
 }
 
-/** Where the checked PNG bytes of fetched pictures are kept, and nothing else: no URL, header or
+/** Where the checked bytes of fetched pictures are kept, and nothing else: no URL, header or
  * cookie. A cache only: an entry it cannot give back is a miss. */
 export interface PictureStore {
   get(key: PictureKey): Promise<Uint8Array | null>;
