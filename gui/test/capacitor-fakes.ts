@@ -62,6 +62,8 @@ export const native = {
   /** Cookie-store calls in order: "clearAllCookies", "clearCookies <url>", "deleteCookie <key>". */
   cookieCalls: [] as string[],
   openedWith: [] as { url: string; options: Record<string, unknown> }[],
+  /** Each page the app sent to the default browser. */
+  externalUrls: [] as string[],
   closeCalls: 0,
   openFails: false,
   /** close() resolves but the browser stays open, as seen on a slow real sign-in. */
@@ -77,6 +79,7 @@ export const native = {
     this.cookieCalls.length = 0;
     this.closeIgnored = false;
     this.openedWith.length = 0;
+    this.externalUrls.length = 0;
     this.closeCalls = 0;
     this.openFails = false;
     this.listeners.clear();
@@ -136,6 +139,9 @@ mock.module("@capacitor/inappbrowser", () => ({
         throw new Error("No activity to open the browser in");
       }
       native.openedWith.push(args);
+    },
+    openInExternalBrowser: async ({ url }: { url: string }) => {
+      native.externalUrls.push(url);
     },
     close: async () => {
       native.closeCalls += 1;

@@ -33,6 +33,7 @@ import {
   type HirobaSessionPort,
   type SignInOutcome,
 } from "../session-port";
+import { feedUrlFor, readUpdateFeed } from "../updates";
 import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
 import { createIndexedDbPictureStore } from "./android-picture-store";
@@ -45,6 +46,11 @@ const endpoints: HirobaEndpoints = import.meta.env.DEV
       import.meta.env.VITE_ABTH_DEV_IMG_ORIGIN,
     )
   : HIROBA_ENDPOINTS;
+
+const updateFeedUrl = feedUrlFor(
+  Boolean(import.meta.env.DEV),
+  import.meta.env.VITE_ABTH_DEV_UPDATE_FEED,
+);
 
 export interface AndroidPortOptions {
   /** Asked each time the browser opens, so it follows a language picked since. */
@@ -255,6 +261,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     // Asks Hiroba nothing, so it skips the queue.
     costumeHistory: writes.costumeHistory,
+
+    readUpdateFeed: () => readUpdateFeed(transport, updateFeedUrl),
   });
 
   return checkedPort(port);

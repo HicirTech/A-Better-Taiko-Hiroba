@@ -56,6 +56,7 @@ import {
 } from "./session";
 import { language, languageKeys, settings, settingsKeys } from "./settings";
 import { signedOut, signedOutKeys } from "./signed-out";
+import { updates, updatesKeys } from "./updates";
 import {
   bridgeWrites,
   bridgeWritesKeys,
@@ -68,6 +69,7 @@ import {
 /** Every section, in the order the report lists their checks. */
 export const SECTIONS: readonly Section[] = [
   { name: "language", phase: "none", keys: languageKeys, run: language },
+  { name: "updates", phase: "none", keys: updatesKeys, run: updates },
   { name: "signed-out", phase: "signedOut", keys: signedOutKeys, run: signedOut },
   { name: "overview", phase: "signedIn", keys: overviewKeys, run: overview },
   { name: "settings", phase: "signedIn", keys: settingsKeys, run: settings },

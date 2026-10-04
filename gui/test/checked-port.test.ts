@@ -44,6 +44,7 @@ const CASES: VerbCase[] = [
     [{ expected: NAME, target: { nickname: "" } }],
   ],
   ["costumeHistory", [], [{}]],
+  ["readUpdateFeed", [], [{ url: "https://example.test/update.json" }]],
 ];
 
 function recordingPort() {

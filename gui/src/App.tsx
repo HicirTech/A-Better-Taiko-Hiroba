@@ -24,7 +24,7 @@ import { useTitleEditor } from "./name-title/use-title-editor";
 import { FrameCorner } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { createPictureLane } from "./pictures/picture-lane";
-import type { SystemToast } from "./platform";
+import type { SystemLink, SystemToast } from "./platform";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFab } from "./read-again/read-again-fab";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
@@ -35,6 +35,10 @@ import type {
   SignInOutcome,
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
+import { RELEASES_URL, releaseUrl } from "./updates";
+import { APP_VERSION } from "./updates/app-version";
+import { UpdateDialog } from "./updates/update-dialog";
+import { useUpdateReminder } from "./updates/use-update-reminder";
 
 type Screen =
   | { readonly name: "checking" }
@@ -60,6 +64,7 @@ const SIGN_IN_NOTICE = {
 
 export interface AppProps {
   readonly port: HirobaSessionPort;
+  readonly link: SystemLink;
   readonly i18n: Translator;
   readonly page: Page;
   readonly onNavigate: (page: Page) => void;
@@ -69,10 +74,11 @@ export interface AppProps {
   readonly toast?: SystemToast;
 }
 
-export function App({ port, i18n, page, onNavigate, language, toast }: AppProps) {
+export function App({ port, link, i18n, page, onNavigate, language, toast }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
   const [refreshing, setRefreshing] = useState(false);
+  const updates = useUpdateReminder(port, APP_VERSION);
   const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
   const onEditorPage = page === "costume" && screen.name === "profile";
   const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
@@ -275,6 +281,12 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
                     }
                   : { kind: "signedOut" }
           }
+          updates={{
+            version: APP_VERSION,
+            check: updates.manual,
+            onCheck: updates.checkNow,
+            onOpenReleases: () => link.open(RELEASES_URL),
+          }}
         />
       ) : (
         <Stack spacing={3}>
@@ -386,6 +398,15 @@ export function App({ port, i18n, page, onNavigate, language, toast }: AppProps)
           )}
         </Stack>
       )}
+      <UpdateDialog
+        offer={updates.offer}
+        i18n={i18n}
+        onDownload={(version) => {
+          link.open(releaseUrl(version));
+          updates.later();
+        }}
+        onLater={updates.later}
+      />
     </>
   );
 }

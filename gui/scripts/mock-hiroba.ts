@@ -38,6 +38,8 @@ const POST_REDIRECT_STATUSES: readonly number[] = [301, 302, 303, 307, 308];
 let releaseReads: (() => void) | null = null;
 let readsHeld: Promise<void> = Promise.resolve();
 const hits = new Map<string, number>();
+/** The update feed the app may be pointed at: none until a check sets one. */
+let updateFeed: { readonly status: number; readonly body: string } = { status: 404, body: "" };
 const requestLog: string[] = [];
 const costume = createCostumeEditor();
 /** Shares the costume editor's token: one per session, each page read voiding the last. */
@@ -424,6 +426,28 @@ Bun.serve({
           return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
         }
         return new Response(danLabelPng(variant.dan), { headers: { "content-type": "image/png" } });
+      case "/__update-feed": {
+        const version = searchParams.get("version");
+        updateFeed =
+          version === null
+            ? { status: Number(searchParams.get("status") ?? 404), body: "" }
+            : {
+                status: 200,
+                body: JSON.stringify({
+                  version,
+                  notes: {
+                    en: [`What is new in ${version}`, "Pictures load sooner"],
+                    ja: ["新機能"],
+                  },
+                }),
+              };
+        return new Response("feed set");
+      }
+      case "/__update-feed/update.json":
+        return new Response(updateFeed.body, {
+          status: updateFeed.status,
+          headers: { "content-type": "application/json" },
+        });
       case "/__last-token":
         return new Response(lastIssued);
       case "/__expire":

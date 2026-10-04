@@ -9,10 +9,11 @@ on:
     tags: ["v*.*.*"]
   pull_request:
     branches: [main]
-    # What a release is made of: workflow, version and builder config, Android project.
+    # What a release is made of: workflow, version and builder config, update feed, Android project.
     paths:
       - .github/workflows/release.yml
       - gui/package.json
+      - gui/update.json
       - gui/android/**
   workflow_dispatch:
 
@@ -25,7 +26,7 @@ permissions:
   contents: read
 
 jobs:
-  # Reads the version once and stops a tag that does not match it before anything is built.
+  # Reads the version once. A tag or an update feed that does not match it stops the run unbuilt.
   version:
     name: Version
     runs-on: ubuntu-latest
@@ -53,6 +54,25 @@ jobs:
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "publish=$publish" >> "$GITHUB_OUTPUT"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # The same pin as in ci.yml: keep them in step.
+          bun-version: 1.4.2
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # Every installed app reads this file from the release, so it is checked before any build.
+      - name: Check the update feed
+        run: bun run check:update-feed
 
   android:
     name: Android release APK
@@ -214,6 +234,12 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Only the feed, which goes out as it stands at the tag.
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: gui/update.json
+          sparse-checkout-cone-mode: false
+
       - uses: actions/download-artifact@v4
         with:
           path: dist
@@ -225,8 +251,9 @@ jobs:
           GH_REPO: ${{ github.repository }}
           VERSION: ${{ needs.version.outputs.version }}
         run: |
-          ls -l dist
+          ls -l dist gui/update.json
           gh release create "v$VERSION" --verify-tag --title "A Better Taiko Hiroba $VERSION" --generate-notes \
             "dist/ABTH-$VERSION.apk" \
             "dist/ABTH-$VERSION-setup.exe" \
-            "dist/ABTH-$VERSION-portable.zip"
+            "dist/ABTH-$VERSION-portable.zip" \
+            gui/update.json

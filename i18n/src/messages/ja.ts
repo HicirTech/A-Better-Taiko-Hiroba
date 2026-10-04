@@ -14,6 +14,8 @@ export const ja: Messages = {
   "settings.signedInAs": "{name}としてログイン中",
   "settings.signedIn": "ログイン中",
   "settings.signedOut": "ログインしていません",
+  "settings.updates": "アップデート",
+  "settings.version": "バージョン {version}",
   "signIn.intro":
     "バンダイナムコIDでログインすると、ドンだーひろばのプロフィールを読み込めます。ログイン画面はひろば公式のもので、このアプリがパスワードを見ることはありません。",
   "signIn.action": "ドンだーひろばにログイン",
@@ -29,6 +31,13 @@ export const ja: Messages = {
   "signOut.action": "ログアウト",
   "signOut.note":
     "ログアウトするまで、この端末ではログインしたままです。ひろばの画像はログアウト後もこの端末に残ります。",
+  "update.check": "アップデートを確認",
+  "update.checking": "アップデートを確認中…",
+  "update.upToDate": "最新バージョンです。",
+  "update.failed": "アップデートを確認できませんでした。",
+  "update.openReleases": "リリースページを開く",
+  "update.download": "ダウンロード",
+  "update.later": "あとで",
   "profile.reading": "ひろばからプロフィールを読み込み中…",
   "profile.readAgain": "再読み込み",
   "profile.title": "称号：{title}",

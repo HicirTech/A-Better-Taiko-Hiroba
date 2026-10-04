@@ -14,6 +14,8 @@ export const en: Messages = {
   "settings.signedInAs": "Signed in as {name}",
   "settings.signedIn": "Signed in",
   "settings.signedOut": "Not signed in",
+  "settings.updates": "Updates",
+  "settings.version": "Version {version}",
   "signIn.intro":
     "Sign in with your Bandai Namco ID to read your Donder Hiroba profile. The sign-in page is Hiroba's own; this app never sees your password.",
   "signIn.action": "Sign in to Hiroba",
@@ -28,6 +30,13 @@ export const en: Messages = {
   "signOut.action": "Sign out",
   "signOut.note":
     "You stay signed in on this device until you sign out. Hiroba's pictures stay here after that too.",
+  "update.check": "Check for updates",
+  "update.checking": "Checking for updates…",
+  "update.upToDate": "You're up to date.",
+  "update.failed": "Couldn't check for updates.",
+  "update.openReleases": "Open the releases page",
+  "update.download": "Download",
+  "update.later": "Later",
   "profile.reading": "Reading your profile from Hiroba…",
   "profile.readAgain": "Read again",
   "profile.title": "Title: {title}",

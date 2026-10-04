@@ -3,6 +3,7 @@ import { Button, Divider, List, ListItem, ListItemText, Paper, SvgIcon } from "@
 import { type ReactNode, useId } from "react";
 
 import { SettingsSection } from "./settings-section";
+import { UpdatesSection, type UpdatesSectionProps } from "./updates-section";
 
 export type AccountState =
   | { readonly kind: "checking" }
@@ -21,6 +22,8 @@ export interface SettingsPageProps {
   /** The language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
   readonly account: AccountState;
+  /** The updates section; left out where there is no port to ask. */
+  readonly updates?: Omit<UpdatesSectionProps, "i18n">;
 }
 
 // Material's "account_circle" icon (Apache 2.0), inline: the icons package is not a dependency.
@@ -32,7 +35,7 @@ function AccountIcon() {
   );
 }
 
-export function SettingsPage({ i18n, language, account }: SettingsPageProps) {
+export function SettingsPage({ i18n, language, account, updates }: SettingsPageProps) {
   const { t } = i18n;
   const headingId = useId();
   const who =
@@ -77,6 +80,12 @@ export function SettingsPage({ i18n, language, account }: SettingsPageProps) {
           </ListItem>
         </List>
       </SettingsSection>
+      {updates !== undefined && (
+        <>
+          <Divider />
+          <UpdatesSection i18n={i18n} {...updates} />
+        </>
+      )}
     </Paper>
   );
 }

@@ -165,6 +165,7 @@ export async function settings(ctx: Ctx) {
     sections: [
       ["language-setting", "H2", true, 1],
       ["account", "H2", true, 1],
+      ["updates", "H2", true, 1],
     ],
     radios: 5,
     checked: 1,

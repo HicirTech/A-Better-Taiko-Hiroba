@@ -8,10 +8,12 @@ export async function launch({
   now,
   lang = "en-US",
   userData = USER_DATA,
+  env = {},
 }: {
   now: string;
   lang?: string;
   userData?: string;
+  env?: Record<string, string>;
 }) {
   const args = [
     `--remote-debugging-port=${CDP_PORT}`,
@@ -30,6 +32,7 @@ export async function launch({
       ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
       ABTH_DEBUG_SAVE_READS: "1",
+      ...env,
     },
     stdout: "ignore",
     stderr: "ignore",

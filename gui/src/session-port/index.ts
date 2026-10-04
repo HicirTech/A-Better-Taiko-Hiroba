@@ -40,6 +40,8 @@ export type {
   TitleEditorView,
   TitleState,
   TitleTarget,
+  UpdateFeed,
+  UpdateFeedFailure,
   WriteKind,
   WriteOutcomeView,
   WriteSets,
