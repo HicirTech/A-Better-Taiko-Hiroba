@@ -75,7 +75,7 @@ export async function bridgeWrites(ctx: Ctx) {
     async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeHeld || undefined,
   );
   const previewDuringWrite = page.evaluate<boolean>(
-    `window.abth.previewCostume(${JSON.stringify(START)}).then((result) => result.ok)`,
+    `window.abth.previewCostume(${JSON.stringify({ ...START, colorBody: 39 })}).then((result) => result.ok)`,
   );
   await Bun.sleep(300);
   await fetch(`${HIROBA}/__hold-precheck?on=0`);
@@ -248,7 +248,8 @@ export async function heldWrites(ctx: Ctx) {
       requests: [`GET ${TITLE_PAGE}`],
     },
     previewCostume: {
-      call: `window.abth.previewCostume(${JSON.stringify(START)}).then((result) => result.ok)`,
+      // A set never drawn this run each time: a picture already held would come from memory.
+      call: `window.abth.previewCostume({ ...${JSON.stringify(START)}, colorBody: (window.unseenBody = (window.unseenBody ?? 40) + 1) }).then((result) => result.ok)`,
       requests: [PREVIEW],
     },
   };

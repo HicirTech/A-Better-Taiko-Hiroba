@@ -328,6 +328,7 @@ export async function title(ctx: Ctx) {
 }
 
 export const nicknameKeys = [
+  "nameTitleEditsDroppedOnLeaving",
   "nameFieldPrefilled",
   "nameMaxLengthAndCounter",
   "nameUnchangedSendsNothing",
@@ -354,11 +355,28 @@ export async function nickname(ctx: Ctx) {
     inputValueOf,
     nameSavable,
     outcomeOf,
+    pickTitle,
     readTitlesAgain,
     saveSection,
     stepIn,
     typeName,
   } = nameTitleHelpers(ctx.app);
+
+  await typeName("あたらしい");
+  await pickTitle("最後", 108);
+  const titleReads = await hitsOn(TITLE_PAGE);
+  const editorReads = await hitsOn("/mypage_kisekae.php");
+  await ctx.app.goTo("overview");
+  await ctx.app.goTo("nameTitle");
+  await Bun.sleep(400);
+  results.nameTitleEditsDroppedOnLeaving =
+    (await inputValueOf("#name-input")) === INITIAL_PROFILE.nickname &&
+    (await inputValueOf("#title-pick")) === INITIAL_PROFILE.title &&
+    (await disabledOf("#name-save")) === true &&
+    (await disabledOf("#title-save")) === true &&
+    !(await exists("[data-outcome]")) &&
+    (await hitsOn(TITLE_PAGE)) === titleReads &&
+    (await hitsOn("/mypage_kisekae.php")) === editorReads;
 
   await resetLog();
   await fetch(`${HIROBA}/__profile-posts?reset=1`);
