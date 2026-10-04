@@ -133,14 +133,14 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
 
   // A title write that may have moved the title leaves the plate stale: read my page again.
   const readBehindThePage = useCallback(() => void read(true), [read]);
-  // The editors live here so a draft, notice or pick survives a visit to another page.
+  // The editors live here so what they read from Hiroba is kept across pages; their edits are not.
   const editor = useCostumeEditor({
     port,
     lane,
     shown: onEditorPage,
     onSessionGone: sessionGone,
   });
-  const { forget: forgetEditor } = editor;
+  const { forget: forgetEditor, dropEdits: dropEditorEdits } = editor;
   // What a write read back goes into the window's copy of the profile, ahead of the next read.
   const putInProfile = useCallback(
     (worn: Partial<Pick<ProfileView, "nickname" | "title">>) =>
@@ -160,7 +160,11 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     onTitle: titleRead,
     onMoved: readBehindThePage,
   });
-  const { forget: forgetTitleEditor, forgetList: forgetTitleList } = titleEditor;
+  const {
+    forget: forgetTitleEditor,
+    forgetList: forgetTitleList,
+    dropEdits: dropTitleEdits,
+  } = titleEditor;
   const nameEditor = useNameEditor({
     port,
     lane,
@@ -168,7 +172,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     onSessionGone: sessionGone,
     onNickname: nameRead,
   });
-  const { forget: forgetNameEditor } = nameEditor;
+  const { forget: forgetNameEditor, dropEdits: dropNameEdits } = nameEditor;
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing;
   const { read: readEditor } = editor;
@@ -212,6 +216,17 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       forgetNameEditor();
     }
   }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor]);
+
+  // Leaving a page drops the edits made on it; the editors keep what they read from Hiroba.
+  useEffect(() => {
+    if (page !== "costume") {
+      dropEditorEdits();
+    }
+    if (page !== "nameTitle") {
+      dropTitleEdits();
+      dropNameEdits();
+    }
+  }, [page, dropEditorEdits, dropTitleEdits, dropNameEdits]);
 
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const portrait: OpenAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
