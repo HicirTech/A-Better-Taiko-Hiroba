@@ -150,10 +150,6 @@ export const zhHans: Messages = {
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
   "name.same": "当前已经是这个昵称。",
   "name.closed": "广场表示现在不能更改昵称：今はドンだーネームは変更できないドン！",
-  "write.applied": "已保存。广场现在显示新的换装。",
-  "write.undone": "已撤销。广场的换装已恢复原样。",
-  "write.siteNote": "广场返回了代码 {code}，但读回结果显示更改已生效。",
-  "write.crossUnknown": "已保存，但无法再次读取称号进行核对。请到你的个人页面查看。",
   "write.appliedNotSynced":
     "广场已保存，但未能同步到游戏服务器。本应用无法重新发送；请在广场自己的页面上再设置一次以同步。",
   "write.notApplied.unchanged": "广场回复已保存，但读回的换装仍是原样。没有任何变化。",
@@ -190,12 +186,9 @@ export const zhHans: Messages = {
   "write.before": "更改前",
   "write.planned": "计划",
   "write.now": "当前",
-  "write.title.applied": "已保存。广场现在显示新的称号。",
-  "write.title.undone": "已撤销。广场的称号已恢复原样。",
   "write.title.unchanged": "广场回复已保存，但读回的称号仍是原样。没有任何变化。",
   "write.title.diverged": "称号没有按计划更改。请对比下方内容。",
   "write.title.crossChanged": "你的换装也变了。",
-  "write.title.crossUnknown": "已保存，但无法再次读取换装进行核对。请到你的个人页面查看。",
   "write.title.changedSincePreview":
     "打开列表后，你的称号在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
   "write.title.undoStale": "那次更改之后，你的称号又在别处被更改，因此没有撤销，也无法再撤销。",
@@ -205,8 +198,6 @@ export const zhHans: Messages = {
   "write.title.refused1": "广场表示没有选择称号。",
   "write.title.refused5": "广场表示你没有获得该称号。",
   "write.title.refused6": "广场报告了错误，请重新选择。",
-  "write.name.applied": "已保存。广场现在显示新的昵称。",
-  "write.name.undone": "已撤销。广场的昵称已恢复原样。",
   "write.name.unchanged": "广场回复已保存，但读回的昵称仍是原样。没有任何变化。",
   "write.name.diverged": "昵称没有按计划更改。请对比下方内容。",
   "write.name.changedSincePreview":

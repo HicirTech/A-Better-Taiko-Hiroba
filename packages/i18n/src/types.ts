@@ -198,11 +198,6 @@ export interface Messages {
   "name.same": string;
   /** Quotes Hiroba's sentence that nicknames cannot be changed now, as the site writes it. */
   "name.closed": string;
-  "write.applied": string;
-  "write.undone": string;
-  /** Param: {code}. */
-  "write.siteNote": string;
-  "write.crossUnknown": string;
   "write.appliedNotSynced": string;
   "write.notApplied.unchanged": string;
   /** Param: {code}, Hiroba's code; its own message follows under write.siteMessage. */
@@ -241,12 +236,9 @@ export interface Messages {
   "write.planned": string;
   "write.now": string;
   /** A title's write: each key has the costume's key, without "title.", as its base. */
-  "write.title.applied": string;
-  "write.title.undone": string;
   "write.title.unchanged": string;
   "write.title.diverged": string;
   "write.title.crossChanged": string;
-  "write.title.crossUnknown": string;
   "write.title.changedSincePreview": string;
   "write.title.undoStale": string;
   "write.title.nothingToChange": string;
@@ -257,8 +249,6 @@ export interface Messages {
   "write.title.refused5": string;
   "write.title.refused6": string;
   /** A rename's write, like the costume's; the title read around it uses write.cross*. */
-  "write.name.applied": string;
-  "write.name.undone": string;
   "write.name.unchanged": string;
   "write.name.diverged": string;
   "write.name.changedSincePreview": string;

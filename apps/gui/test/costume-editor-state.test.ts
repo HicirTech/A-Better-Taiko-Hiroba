@@ -11,6 +11,7 @@ import {
   showsEditor,
   UNREAD,
 } from "../src/my-page/costume-editor-state";
+import type { Noticed } from "../src/my-page/write-ending";
 import type {
   CostumeEditorView,
   CostumeSet,
@@ -51,7 +52,7 @@ const applied = (before: CostumeSet, after: CostumeSet): WriteOutcomeView => ({
 const editing = (
   state = set(),
   draft = state,
-  notice: WriteOutcomeView | null = null,
+  notice: Noticed<CostumeSet> | null = null,
 ): EditorStep => ({ name: "editing", editor: editorOf(state), draft, notice });
 const saving = (state = set(), draft = state): EditorStep => ({
   name: "saving",
@@ -137,7 +138,7 @@ describe("a read of the editor", () => {
   });
 
   test("drops the notice of the last write, in the read and after it", () => {
-    const outcome: WriteOutcomeView = { kind: "interrupted" };
+    const outcome: Noticed<CostumeSet> = { kind: "interrupted" };
     const fresh = editorOf(set());
     const loading = run(editing(set(), set({ colorFace: 9 }), outcome), { type: "readStarted" });
 
@@ -335,7 +336,7 @@ describe("the set and the draft a write leaves", () => {
   const elsewhere = set({ colorBody: 40 });
   const drafted = set({ colorFace: 9, costume5: 0 });
 
-  const notApplied: WriteOutcomeView = {
+  const notApplied: Noticed<CostumeSet> = {
     kind: "notApplied",
     before,
     after: before,
@@ -343,7 +344,7 @@ describe("the set and the draft a write leaves", () => {
     save: SAVE,
     cross: "unchanged",
   };
-  const diverged: WriteOutcomeView = {
+  const diverged: Noticed<CostumeSet> = {
     kind: "diverged",
     before,
     expectedAfter: planned,
@@ -351,45 +352,55 @@ describe("the set and the draft a write leaves", () => {
     save: SAVE,
     cross: "unchanged",
   };
-  const appliedNotSynced: WriteOutcomeView = {
+  const appliedNotSynced: Noticed<CostumeSet> = {
     kind: "appliedNotSynced",
     before,
     after: planned,
     save: SAVE,
     cross: "unchanged",
   };
-  const changedSincePreview: WriteOutcomeView = { kind: "changedSincePreview", current: elsewhere };
+  const changedSincePreview: Noticed<CostumeSet> = {
+    kind: "changedSincePreview",
+    current: elsewhere,
+  };
+
+  test("after applied the editor and the draft hold the set the write read back, and nothing is said", () => {
+    const step = run(saving(before, drafted), {
+      type: "writeEnded",
+      outcome: applied(before, planned),
+    });
+
+    expect(step).toEqual({
+      name: "editing",
+      editor: editorOf(planned),
+      draft: planned,
+      notice: null,
+    });
+  });
 
   type OutcomeCase = [
     label: string,
-    outcome: WriteOutcomeView,
+    outcome: Noticed<CostumeSet>,
     state: CostumeSet,
     draft: CostumeSet,
-    noticed: boolean,
   ];
   test.each<OutcomeCase>([
-    ["applied", applied(before, planned), planned, planned, false],
-    ["appliedNotSynced", appliedNotSynced, planned, planned, true],
-    ["notApplied", notApplied, before, drafted, true],
-    ["diverged", diverged, elsewhere, drafted, true],
-    ["changedSincePreview", changedSincePreview, elsewhere, drafted, true],
-    ["maintenance", { kind: "maintenance" }, before, drafted, true],
-    ["invalidTarget", { kind: "invalidTarget", field: "costume1" }, before, drafted, true],
-    ["nothingToChange", { kind: "nothingToChange" }, before, drafted, true],
-    ["undoNotSaved", { kind: "undoNotSaved" }, before, drafted, true],
-    ["interrupted", { kind: "interrupted" }, before, drafted, true],
-    ["busy", { kind: "busy" }, before, drafted, true],
+    ["appliedNotSynced", appliedNotSynced, planned, planned],
+    ["notApplied", notApplied, before, drafted],
+    ["diverged", diverged, elsewhere, drafted],
+    ["changedSincePreview", changedSincePreview, elsewhere, drafted],
+    ["maintenance", { kind: "maintenance" }, before, drafted],
+    ["invalidTarget", { kind: "invalidTarget", field: "costume1" }, before, drafted],
+    ["nothingToChange", { kind: "nothingToChange" }, before, drafted],
+    ["undoNotSaved", { kind: "undoNotSaved" }, before, drafted],
+    ["interrupted", { kind: "interrupted" }, before, drafted],
+    ["busy", { kind: "busy" }, before, drafted],
   ])(
-    "after %s the editor holds the set the write read back, and the draft is as it should be",
-    (_label, outcome, state, draft, noticed) => {
+    "after %s the editor holds the set the write read back, the draft is as it should be, and the ending is the notice",
+    (_label, outcome, state, draft) => {
       const step = run(saving(before, drafted), { type: "writeEnded", outcome });
 
-      expect(step).toEqual({
-        name: "editing",
-        editor: editorOf(state),
-        draft,
-        notice: noticed ? outcome : null,
-      });
+      expect(step).toEqual({ name: "editing", editor: editorOf(state), draft, notice: outcome });
     },
   );
 
@@ -409,7 +420,7 @@ describe("the set and the draft a write leaves", () => {
 });
 
 describe("the notice of a write", () => {
-  const notice: WriteOutcomeView = { kind: "interrupted" };
+  const notice: Noticed<CostumeSet> = { kind: "interrupted" };
   const drafted = set({ colorFace: 9 });
   const noticed = () => editing(set(), drafted, notice);
 

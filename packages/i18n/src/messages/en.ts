@@ -157,11 +157,6 @@ export const en: Messages = {
   "name.same": "That is your nickname already.",
   "name.closed":
     "Hiroba says nicknames can't be changed right now: 今はドンだーネームは変更できないドン！",
-  "write.applied": "Saved. Hiroba now shows the new costume.",
-  "write.undone": "Undone. Hiroba shows the costume as it was.",
-  "write.siteNote": "Hiroba answered code {code}, but the read-back shows the change.",
-  "write.crossUnknown":
-    "Saved, but your title could not be read again to check it. Look at it on your page.",
   "write.appliedNotSynced":
     "Hiroba saved it but couldn't reach the game server. This app cannot send it again; set it again on Hiroba's own page to pass it on.",
   "write.notApplied.unchanged":
@@ -205,14 +200,10 @@ export const en: Messages = {
   "write.before": "Before",
   "write.planned": "Planned",
   "write.now": "Now",
-  "write.title.applied": "Saved. Hiroba now shows the new title.",
-  "write.title.undone": "Undone. Hiroba shows the title as it was.",
   "write.title.unchanged":
     "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the title as it was.",
   "write.title.diverged": "The title did not end up as planned. Compare below.",
   "write.title.crossChanged": "Your costume changed too.",
-  "write.title.crossUnknown":
-    "Saved, but your costume could not be read again to check it. Look at it on your page.",
   "write.title.changedSincePreview":
     "Your title was changed elsewhere since the list was opened. Nothing was sent; the page now shows it as it is.",
   "write.title.undoStale":
@@ -224,8 +215,6 @@ export const en: Messages = {
   "write.title.refused1": "Hiroba says no title was chosen.",
   "write.title.refused5": "Hiroba says you do not own that title.",
   "write.title.refused6": "Hiroba reported an error and asks you to choose again.",
-  "write.name.applied": "Saved. Hiroba now shows the new nickname.",
-  "write.name.undone": "Undone. Hiroba shows the nickname as it was.",
   "write.name.unchanged":
     "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the nickname as it was.",
   "write.name.diverged": "The nickname did not end up as planned. Compare below.",

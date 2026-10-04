@@ -158,11 +158,6 @@ export const ja: Messages = {
   "name.same": "すでにそのドンだーネームです。",
   "name.closed":
     "ひろばが今はドンだーネームを変更できないと言っています：今はドンだーネームは変更できないドン！",
-  "write.applied": "保存しました。ひろばに新しいきせかえが反映されています。",
-  "write.undone": "元に戻しました。ひろばのきせかえは元どおりです。",
-  "write.siteNote": "ひろばはコード {code} を返しましたが、読み直すと変更は反映されています。",
-  "write.crossUnknown":
-    "保存しましたが、確認のための称号の再読み込みができませんでした。マイページで確かめてください。",
   "write.appliedNotSynced":
     "ひろばには保存されましたが、ゲームサーバーに届きませんでした。このアプリからは再送信できません。届けるには、ひろばのページでもう一度設定してください。",
   "write.notApplied.unchanged":
@@ -211,14 +206,10 @@ export const ja: Messages = {
   "write.before": "変更前",
   "write.planned": "予定",
   "write.now": "現在",
-  "write.title.applied": "保存しました。ひろばに新しい称号が反映されています。",
-  "write.title.undone": "元に戻しました。ひろばの称号は元どおりです。",
   "write.title.unchanged":
     "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すと称号は元のままでした。",
   "write.title.diverged": "称号が予定どおりになりませんでした。下で比べてください。",
   "write.title.crossChanged": "きせかえも変わっています。",
-  "write.title.crossUnknown":
-    "保存しましたが、確認のためのきせかえの再読み込みができませんでした。マイページで確かめてください。",
   "write.title.changedSincePreview":
     "一覧を開いたあとに、称号がほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
   "write.title.undoStale":
@@ -230,8 +221,6 @@ export const ja: Messages = {
   "write.title.refused1": "ひろばは、称号が選ばれていないと言っています。",
   "write.title.refused5": "ひろばは、その称号を獲得していないと言っています。",
   "write.title.refused6": "ひろばがエラーを返し、もう一度選ぶよう求めています。",
-  "write.name.applied": "保存しました。ひろばに新しいドンだーネームが反映されています。",
-  "write.name.undone": "元に戻しました。ひろばのドンだーネームは元どおりです。",
   "write.name.unchanged":
     "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すとドンだーネームは元のままでした。",
   "write.name.diverged": "ドンだーネームが予定どおりになりませんでした。下で比べてください。",

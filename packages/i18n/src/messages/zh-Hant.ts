@@ -149,10 +149,6 @@ export const zhHant: Messages = {
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
   "name.same": "目前已經是這個暱稱。",
   "name.closed": "廣場表示現在不能變更暱稱：今はドンだーネームは変更できないドン！",
-  "write.applied": "已儲存。廣場現在顯示新的換裝。",
-  "write.undone": "已復原。廣場的換裝已恢復原樣。",
-  "write.siteNote": "廣場回傳了代碼 {code}，但讀回結果顯示變更已生效。",
-  "write.crossUnknown": "已儲存，但無法再次讀取稱號進行核對。請到你的個人頁面查看。",
   "write.appliedNotSynced":
     "廣場已儲存，但未能同步到遊戲伺服器。本應用程式無法重新傳送；請在廣場自己的頁面上再設定一次以同步。",
   "write.notApplied.unchanged": "廣場回覆已儲存，但讀回的換裝仍是原樣。沒有任何變化。",
@@ -189,12 +185,9 @@ export const zhHant: Messages = {
   "write.before": "變更前",
   "write.planned": "計畫",
   "write.now": "目前",
-  "write.title.applied": "已儲存。廣場現在顯示新的稱號。",
-  "write.title.undone": "已復原。廣場的稱號已恢復原樣。",
   "write.title.unchanged": "廣場回覆已儲存，但讀回的稱號仍是原樣。沒有任何變化。",
   "write.title.diverged": "稱號沒有按計畫變更。請比較下方內容。",
   "write.title.crossChanged": "你的換裝也變了。",
-  "write.title.crossUnknown": "已儲存，但無法再次讀取換裝進行核對。請到你的個人頁面查看。",
   "write.title.changedSincePreview":
     "開啟清單後，你的稱號在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
   "write.title.undoStale": "那次變更之後，你的稱號又在別處被變更，因此沒有復原，也無法再復原。",
@@ -204,8 +197,6 @@ export const zhHant: Messages = {
   "write.title.refused1": "廣場表示沒有選擇稱號。",
   "write.title.refused5": "廣場表示你沒有獲得該稱號。",
   "write.title.refused6": "廣場回報了錯誤，請重新選擇。",
-  "write.name.applied": "已儲存。廣場現在顯示新的暱稱。",
-  "write.name.undone": "已復原。廣場的暱稱已恢復原樣。",
   "write.name.unchanged": "廣場回覆已儲存，但讀回的暱稱仍是原樣。沒有任何變化。",
   "write.name.diverged": "暱稱沒有按計畫變更。請比較下方內容。",
   "write.name.changedSincePreview":
