@@ -16,7 +16,7 @@ const NOW_TITLE: TitleState = { title: "別のサンプル称号" };
 const OLD_NAME: NameState = { nickname: "サンプルどん" };
 const NEW_NAME: NameState = { nickname: "あたらしい" };
 
-type Case<S> = [label: string, outcome: Noticed<S>, asUndo: boolean, base: MessageKey];
+type Case<S> = [label: string, outcome: Noticed<S>, base: MessageKey];
 
 const outcomesOf = <S>(before: S, after: S): Case<S>[] => [
   [
@@ -29,29 +29,20 @@ const outcomesOf = <S>(before: S, after: S): Case<S>[] => [
       save: SAVE,
       cross: "unchanged",
     },
-    false,
     "write.notApplied.unchanged",
   ],
   [
     "diverged",
     { kind: "diverged", before, expectedAfter: after, after: before, save: SAVE, cross: "off" },
-    false,
     "write.diverged",
   ],
   [
     "moved since the editor was read",
     { kind: "changedSincePreview", current: after },
-    false,
     "write.changedSincePreview",
   ],
-  [
-    "moved since the change an undo would reverse",
-    { kind: "changedSincePreview", current: after },
-    true,
-    "write.undoStale",
-  ],
-  ["nothing to change", { kind: "nothingToChange" }, false, "write.nothingToChange"],
-  ["a confirmation asked for", { kind: "needsConfirmation" }, false, "write.needsConfirmation"],
+  ["nothing to change", { kind: "nothingToChange" }, "write.nothingToChange"],
+  ["a confirmation asked for", { kind: "needsConfirmation" }, "write.needsConfirmation"],
 ];
 
 /** A kind's own key for a base one is `write.<kind>.<name>`, where the kind words it itself. */
@@ -59,7 +50,6 @@ const BASE_NAME: Partial<Record<MessageKey, string>> = {
   "write.notApplied.unchanged": "unchanged",
   "write.diverged": "diverged",
   "write.changedSincePreview": "changedSincePreview",
-  "write.undoStale": "undoStale",
   "write.nothingToChange": "nothingToChange",
   "write.needsConfirmation": "needsConfirmation",
 };
@@ -67,8 +57,8 @@ const BASE_NAME: Partial<Record<MessageKey, string>> = {
 describe("describeOutcome, the costume", () => {
   test.each(outcomesOf<CostumeSet>(START_SET, MOVED))(
     "words %s as the costume always has",
-    (_label, outcome, asUndo, base) => {
-      expect(describeOutcome(outcome, i18n, { kind: "costume", asUndo }).message).toBe(t(base));
+    (_label, outcome, base) => {
+      expect(describeOutcome(outcome, i18n, { kind: "costume" }).message).toBe(t(base));
     },
   );
 
@@ -148,7 +138,6 @@ const OWN: Record<"title" | "name", readonly MessageKey[]> = {
     "write.notApplied.unchanged",
     "write.diverged",
     "write.changedSincePreview",
-    "write.undoStale",
     "write.nothingToChange",
     "write.needsConfirmation",
   ],
@@ -156,7 +145,6 @@ const OWN: Record<"title" | "name", readonly MessageKey[]> = {
     "write.notApplied.unchanged",
     "write.diverged",
     "write.changedSincePreview",
-    "write.undoStale",
     "write.nothingToChange",
   ],
 };
@@ -167,8 +155,8 @@ const keyOf = (kind: "title" | "name", base: MessageKey): MessageKey =>
 describe("describeOutcome, the title", () => {
   test.each(outcomesOf<TitleState>(THEN, NOW_TITLE))(
     "words %s in the title's terms",
-    (_label, outcome, asUndo, base) => {
-      expect(describeOutcome(outcome, i18n, { kind: "title", asUndo }).message).toBe(
+    (_label, outcome, base) => {
+      expect(describeOutcome(outcome, i18n, { kind: "title" }).message).toBe(
         t(keyOf("title", base)),
       );
     },
@@ -271,10 +259,8 @@ describe("describeOutcome, the title", () => {
 describe("describeOutcome, the name", () => {
   test.each(outcomesOf<NameState>(OLD_NAME, NEW_NAME))(
     "words %s in the name's terms, and the costume's where it has none",
-    (_label, outcome, asUndo, base) => {
-      expect(describeOutcome(outcome, i18n, { kind: "name", asUndo }).message).toBe(
-        t(keyOf("name", base)),
-      );
+    (_label, outcome, base) => {
+      expect(describeOutcome(outcome, i18n, { kind: "name" }).message).toBe(t(keyOf("name", base)));
     },
   );
 

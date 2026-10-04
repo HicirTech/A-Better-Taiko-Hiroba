@@ -121,7 +121,6 @@ export const zhHant: Messages = {
   "costume.reset": "重設",
   "costume.save": "儲存到廣場",
   "costume.saving": "正在儲存…隨後讀回核對",
-  "costume.undoWhen": "變更於 {time}",
   "costume.history": "歷史記錄",
   "costume.history.title": "換裝歷史記錄",
   "costume.history.close": "關閉",
@@ -169,7 +168,6 @@ export const zhHant: Messages = {
   "write.sessionGoneAfterSave": "廣場的工作階段已結束。不確定變更是否已儲存，請登入後查看。",
   "write.changedSincePreview":
     "編輯器上次讀取之後，你的換裝在別處被變更了。沒有傳送任何內容；編輯器現在顯示的是目前狀態。",
-  "write.undoStale": "那次變更之後，你的換裝又在別處被變更，因此沒有復原，也無法再復原。",
   "write.invalidTarget": "本應用程式在傳送前拒絕了此變更：{field}。",
   "write.nothingToChange": "目前已經是這套換裝。沒有傳送任何內容。",
   "write.maintenance": "廣場每天日本時間 05:00 至 07:00 維護。變更沒有傳送。",
@@ -190,7 +188,6 @@ export const zhHant: Messages = {
   "write.title.crossChanged": "你的換裝也變了。",
   "write.title.changedSincePreview":
     "開啟清單後，你的稱號在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
-  "write.title.undoStale": "那次變更之後，你的稱號又在別處被變更，因此沒有復原，也無法再復原。",
   "write.title.nothingToChange": "目前已經是這個稱號（廣場只顯示名稱）。沒有傳送任何內容。",
   "write.title.needsConfirmation":
     "廣場要求進行本應用程式尚不支援的確認，因此沒有做任何變更。廣場的原話：この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
@@ -201,7 +198,6 @@ export const zhHant: Messages = {
   "write.name.diverged": "暱稱沒有按計畫變更。請比較下方內容。",
   "write.name.changedSincePreview":
     "讀取此頁面後，你的暱稱在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
-  "write.name.undoStale": "那次變更之後，你的暱稱又在別處被變更，因此沒有改回，也無法再改回。",
   "write.name.nothingToChange": "目前已經是這個暱稱。沒有傳送任何內容。",
   "write.name.refused2": "廣場未能更新暱稱。",
   "write.invalid.titleNotOwned": "該稱號不在你的清單中",

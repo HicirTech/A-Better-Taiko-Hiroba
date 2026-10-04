@@ -128,7 +128,6 @@ export const ja: Messages = {
   "costume.reset": "リセット",
   "costume.save": "ひろばに保存",
   "costume.saving": "保存中…そのあと読み直します",
-  "costume.undoWhen": "{time} に変更",
   "costume.history": "履歴",
   "costume.history.title": "きせかえの履歴",
   "costume.history.close": "閉じる",
@@ -187,8 +186,6 @@ export const ja: Messages = {
     "ひろばのセッションが切れました。変更が保存されたかはわかりません。ログインしてから確かめてください。",
   "write.changedSincePreview":
     "エディターが前回読み込んだあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
-  "write.undoStale":
-    "その変更のあとにきせかえがほかの場所で変更されたため、元に戻しませんでした。この変更はもう元に戻せません。",
   "write.invalidTarget": "送信する前に、アプリが変更を止めました：{field}。",
   "write.nothingToChange": "すでにそのきせかえです。何も送信していません。",
   "write.maintenance":
@@ -212,8 +209,6 @@ export const ja: Messages = {
   "write.title.crossChanged": "きせかえも変わっています。",
   "write.title.changedSincePreview":
     "一覧を開いたあとに、称号がほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.title.undoStale":
-    "その変更のあとに称号がほかの場所で変更されたため、元に戻しませんでした。この変更はもう元に戻せません。",
   "write.title.nothingToChange":
     "すでにその称号です（ひろばは名前だけを表示します）。何も送信していません。",
   "write.title.needsConfirmation":
@@ -226,8 +221,6 @@ export const ja: Messages = {
   "write.name.diverged": "ドンだーネームが予定どおりになりませんでした。下で比べてください。",
   "write.name.changedSincePreview":
     "このページを読み込んだあとに、ドンだーネームがほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.name.undoStale":
-    "その変更のあとにドンだーネームがほかの場所で変更されたため、元に戻しませんでした。この変更はもう元に戻せません。",
   "write.name.nothingToChange": "すでにそのドンだーネームです。何も送信していません。",
   "write.name.refused2": "ひろばがドンだーネームを更新できませんでした。",
   "write.invalid.titleNotOwned": "その称号は一覧にありません",

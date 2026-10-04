@@ -127,7 +127,6 @@ export const en: Messages = {
   "costume.reset": "Reset",
   "costume.save": "Save to Hiroba",
   "costume.saving": "Saving… then reading it back",
-  "costume.undoWhen": "Changed {time}",
   "costume.history": "History",
   "costume.history.title": "Costume history",
   "costume.history.close": "Close",
@@ -182,8 +181,6 @@ export const en: Messages = {
     "Hiroba ended the session. Whether the change was saved is unknown; check it after signing in.",
   "write.changedSincePreview":
     "Your costume was changed elsewhere since the editor last read it. Nothing was sent; the editor now shows it as it is.",
-  "write.undoStale":
-    "Your costume was changed elsewhere after that change, so it was not undone. The undo is no longer offered.",
   "write.invalidTarget": "This app refused the change before sending it: {field}.",
   "write.nothingToChange": "That is the costume already. Nothing was sent.",
   "write.maintenance":
@@ -206,8 +203,6 @@ export const en: Messages = {
   "write.title.crossChanged": "Your costume changed too.",
   "write.title.changedSincePreview":
     "Your title was changed elsewhere since the list was opened. Nothing was sent; the page now shows it as it is.",
-  "write.title.undoStale":
-    "Your title was changed elsewhere after that change, so it was not undone. The undo is no longer offered.",
   "write.title.nothingToChange":
     "That is your title already; Hiroba shows only its name. Nothing was sent.",
   "write.title.needsConfirmation":
@@ -220,8 +215,6 @@ export const en: Messages = {
   "write.name.diverged": "The nickname did not end up as planned. Compare below.",
   "write.name.changedSincePreview":
     "Your nickname was changed elsewhere since this page was read. Nothing was sent; the page now shows it as it is.",
-  "write.name.undoStale":
-    "Your nickname was changed elsewhere after that change, so it was not changed back. The undo is no longer offered.",
   "write.name.nothingToChange": "That is your nickname already. Nothing was sent.",
   "write.name.refused2": "Hiroba could not update the nickname.",
   "write.invalid.titleNotOwned": "that title is not in your list",

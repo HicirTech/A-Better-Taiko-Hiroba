@@ -162,8 +162,6 @@ export interface Messages {
   "costume.reset": string;
   "costume.save": string;
   "costume.saving": string;
-  /** Param: {time}, already formatted. */
-  "costume.undoWhen": string;
   "costume.history": string;
   "costume.history.title": string;
   "costume.history.close": string;
@@ -218,7 +216,6 @@ export interface Messages {
   "write.sessionGone": string;
   "write.sessionGoneAfterSave": string;
   "write.changedSincePreview": string;
-  "write.undoStale": string;
   /** Param: {field}, which value of the set was refused, as a costume.part text. */
   "write.invalidTarget": string;
   "write.nothingToChange": string;
@@ -240,7 +237,6 @@ export interface Messages {
   "write.title.diverged": string;
   "write.title.crossChanged": string;
   "write.title.changedSincePreview": string;
-  "write.title.undoStale": string;
   "write.title.nothingToChange": string;
   /** Carries the site's own confirmation text (check_ip_title); this version does not answer it. */
   "write.title.needsConfirmation": string;
@@ -252,7 +248,6 @@ export interface Messages {
   "write.name.unchanged": string;
   "write.name.diverged": string;
   "write.name.changedSincePreview": string;
-  "write.name.undoStale": string;
   "write.name.nothingToChange": string;
   /** Hiroba's code for a rename it could not carry out, which comes with no message of its own. */
   "write.name.refused2": string;

@@ -15,7 +15,6 @@ type Base =
   | "diverged"
   | "crossChanged"
   | "changedSincePreview"
-  | "undoStale"
   | "nothingToChange"
   | "needsConfirmation";
 
@@ -24,7 +23,6 @@ const BASE_WORDING = {
   diverged: "write.diverged",
   crossChanged: "write.crossChanged",
   changedSincePreview: "write.changedSincePreview",
-  undoStale: "write.undoStale",
   nothingToChange: "write.nothingToChange",
   needsConfirmation: "write.needsConfirmation",
 } as const satisfies Record<Base, MessageKey>;
@@ -37,7 +35,6 @@ const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, Mes
     diverged: "write.title.diverged",
     crossChanged: "write.title.crossChanged",
     changedSincePreview: "write.title.changedSincePreview",
-    undoStale: "write.title.undoStale",
     nothingToChange: "write.title.nothingToChange",
     needsConfirmation: "write.title.needsConfirmation",
   },
@@ -45,7 +42,6 @@ const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, Mes
     unchanged: "write.name.unchanged",
     diverged: "write.name.diverged",
     changedSincePreview: "write.name.changedSincePreview",
-    undoStale: "write.name.undoStale",
     nothingToChange: "write.name.nothingToChange",
   },
 };
@@ -191,13 +187,12 @@ export interface Described {
 
 export interface DescribeOptions<K extends WriteKind> {
   readonly kind: K;
-  readonly asUndo?: boolean;
 }
 
 export function describeOutcome<K extends WriteKind>(
   outcome: Noticed<WriteSets[K]>,
   i18n: Translator,
-  { kind, asUndo = false }: DescribeOptions<K>,
+  { kind }: DescribeOptions<K>,
 ): Described {
   const { t } = i18n;
   const plain = (
@@ -274,7 +269,7 @@ export function describeOutcome<K extends WriteKind>(
     case "stoppedBeforeWrite":
       return { ...plain("warning"), codes: [`${outcome.reason} ${outcome.code}`] };
     case "changedSincePreview":
-      return plain("warning", wording(kind, asUndo ? "undoStale" : "changedSincePreview"));
+      return plain("warning", wording(kind, "changedSincePreview"));
     case "needsConfirmation":
     case "interrupted":
       return plain("warning");

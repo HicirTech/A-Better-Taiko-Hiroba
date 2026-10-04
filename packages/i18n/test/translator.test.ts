@@ -255,7 +255,6 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
   "write.notApplied.unchanged": COSTUME,
   "write.diverged": COSTUME,
   "write.changedSincePreview": COSTUME,
-  "write.undoStale": COSTUME,
   "write.nothingToChange": COSTUME,
   "write.title.crossChanged": COSTUME,
   // Saved but the server was not told, and the same set cannot be sent twice ("nothing to change"):
@@ -311,14 +310,14 @@ const NOT_TRADITIONAL =
 const TRADITIONAL: ReadonlySet<string> = new Set(
   [
     "一七三上下不並中主之乎九也了二五人仍代以件任伺但位何作你使供保個做停偶傳儲",
-    "元先入內全八六共再冠出分列初別到前包化十南卡即卸原又取受另只可合同名",
+    "元先入內全八六共再冠出分列初別到前包化十南卡即卸原取受另只可合同名",
     "史否含和咚哪啟單器四回因圖在執報場外多夢天夾套妝字存完官定宮容密對小尚",
     "就尾展工己已帳幣度廣建式張後得從復恢息情愛態應成或戲戴把拒括持按排接提換",
     "援擇支收改料新斷方於日易是時暫暱曲更最會有服期未本束板枚果查核格框桌極概",
     "樣機檢次歌止正此步歷段每比求沒法消清為無片版狀獲玄王現用由留畫登白的目直相看眾",
     "知確碼示移程稱空穿窗立符簡粉粹系紀級紫組結絕統經維網線編縮績繪置而肢能臉自至",
     "與良色萬著藏處號虹行表被裝製要覆視覽角觸言計訊記設試話該詳認語誤請護讀",
-    "變資超跟路身軀較載輯輸轉辨送這通連進逾遊過達選還那部重金銀銅錄錯長閉開間關限",
+    "變資超跟路身軀較載輯輸轉辨送這通連進逾遊過達選還部重金銀銅錄錯長閉開間關限",
     "除階隨雅面頁項預頭顏顯體鼓牌",
   ].join(""),
 );

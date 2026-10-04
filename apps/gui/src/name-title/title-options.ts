@@ -1,12 +1,4 @@
-import {
-  checkTitleTarget,
-  isErr,
-  sameTitle,
-  spaced,
-  TITLE_FIELDS,
-  type TitleOption,
-  type TitleState,
-} from "@abth/core";
+import { sameTitle, spaced, type TitleOption, type TitleState } from "@abth/core";
 
 /** NFKC-folded so full-width and half-width forms match, lower-cased, spaces collapsed. */
 export function foldForSearch(text: string): string {
@@ -35,22 +27,4 @@ export function currentOptions(
   return new Set(
     options.filter((one) => sameTitle({ title: one.label }, worn)).map((one) => one.id),
   );
-}
-
-// Undo goes back by name only, and only to exactly one title of today's list (the core refuses the
-// rest); `noTitle` is no title before, which this version cannot put back.
-export type UndoReadiness = "ready" | "noTitle" | "unresolved" | "ambiguous";
-
-export function undoReadiness(
-  options: readonly TitleOption[],
-  goesBackTo: TitleState,
-): UndoReadiness {
-  if (spaced(goesBackTo.title) === "") {
-    return "noTitle";
-  }
-  const checked = checkTitleTarget({ options }, { id: null, title: goesBackTo.title });
-  if (!isErr(checked)) {
-    return "ready";
-  }
-  return checked.error.field === TITLE_FIELDS.ambiguous ? "ambiguous" : "unresolved";
 }

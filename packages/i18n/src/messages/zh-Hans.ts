@@ -122,7 +122,6 @@ export const zhHans: Messages = {
   "costume.reset": "重置",
   "costume.save": "保存到广场",
   "costume.saving": "正在保存…随后读回核对",
-  "costume.undoWhen": "更改于 {time}",
   "costume.history": "历史记录",
   "costume.history.title": "换装历史记录",
   "costume.history.close": "关闭",
@@ -170,7 +169,6 @@ export const zhHans: Messages = {
   "write.sessionGoneAfterSave": "广场的会话已结束。不确定更改是否已保存，请登录后查看。",
   "write.changedSincePreview":
     "编辑器上次读取之后，你的换装在别处被更改了。没有发送任何内容；编辑器现在显示的是当前状态。",
-  "write.undoStale": "那次更改之后，你的换装又在别处被更改，因此没有撤销，也无法再撤销。",
   "write.invalidTarget": "本应用在发送前拒绝了此更改：{field}。",
   "write.nothingToChange": "当前已经是这套换装。没有发送任何内容。",
   "write.maintenance": "广场每天日本时间 05:00 至 07:00 维护。更改没有发送。",
@@ -191,7 +189,6 @@ export const zhHans: Messages = {
   "write.title.crossChanged": "你的换装也变了。",
   "write.title.changedSincePreview":
     "打开列表后，你的称号在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
-  "write.title.undoStale": "那次更改之后，你的称号又在别处被更改，因此没有撤销，也无法再撤销。",
   "write.title.nothingToChange": "当前已经是这个称号（广场只显示名称）。没有发送任何内容。",
   "write.title.needsConfirmation":
     "广场要求进行本应用尚不支持的确认，因此没有做任何更改。广场的原话：この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
@@ -202,7 +199,6 @@ export const zhHans: Messages = {
   "write.name.diverged": "昵称没有按计划更改。请对比下方内容。",
   "write.name.changedSincePreview":
     "读取此页面后，你的昵称在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
-  "write.name.undoStale": "那次更改之后，你的昵称又在别处被更改，因此没有改回，也无法再改回。",
   "write.name.nothingToChange": "当前已经是这个昵称。没有发送任何内容。",
   "write.name.refused2": "广场未能更新昵称。",
   "write.invalid.titleNotOwned": "该称号不在你的列表中",

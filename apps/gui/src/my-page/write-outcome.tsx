@@ -13,20 +13,15 @@ export function WriteOutcomeNotice<K extends WriteKind>({
   outcome,
   kind,
   i18n,
-  asUndo = false,
   id = "write-outcome",
 }: {
   outcome: Noticed<WriteSets[K]>;
   kind: K;
   i18n: Translator;
-  asUndo?: boolean;
   id?: string;
 }) {
   const { t } = i18n;
-  const { severity, message, notes, codes, comparison } = describeOutcome(outcome, i18n, {
-    kind,
-    asUndo,
-  });
+  const { severity, message, notes, codes, comparison } = describeOutcome(outcome, i18n, { kind });
   return (
     <Alert id={id} severity={severity} data-outcome={outcome.kind}>
       <Typography variant="body2">{message}</Typography>
