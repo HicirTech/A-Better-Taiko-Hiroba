@@ -13,7 +13,7 @@ tooltip); the season's どんメダル on Hiroba's own plate, and your favourite
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On a wide window a side panel, like Gmail's, lists its five pages:
-**Overview** (the identity card with the score panel, the shares and the どんメダル),
+**Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
@@ -273,6 +273,10 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
 ### The Favourites page
 
 The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker opens on every song; three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its inner chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit and Apply: Edit lets its songs be added, taken out and moved, and turns Apply into Save, with Reset for the edits; Android's Back drops the edits and leaves editing. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls.
+
+### The song search
+
+The Overview's top band holds a search field, as Gmail's does, across the whole band on a touch screen. It searches taiko.wiki's song list as the song picker does, by part of any of a song's names, and lists each song with its tempo as taiko.wiki gives it: a range for a song whose tempo changes, and ≈ for one whose tempo wobbles. The last ten searches are kept on the device, and each can be removed. A song opens in a dialog, full screen on a phone, with its names, artists, genres and tempo, and a button for each chart with its level. A chart shows its max combo, whether it branches, and pictures of its notes, which taiko.wiki links on its own host and on the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp); each is read once and kept on the device. The dialog opens on the difficulty chosen in Settings, and on the inner chart for Extreme when the song has one. Back, the arrow or Escape leaves the search.
 
 ### The costume preview
 

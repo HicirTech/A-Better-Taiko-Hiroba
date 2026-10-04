@@ -23,6 +23,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [x] Change your favourite song and your favourites folder
 - [x] Keep sets of favourite songs on your device, and swap the whole folder for one in a single save
 - [x] Find songs by genre, difficulty and stars, and by part of a name in Japanese, English or Chinese, with the artists and each chart's star level
+- [x] Look up any song from the Overview: its tempo, each chart's level and max combo, and pictures of its notes
 - [ ] Browse offline, from a local database
 - [ ] Hold several accounts at once
 - [ ] Sync incrementally, and resume where it stopped
