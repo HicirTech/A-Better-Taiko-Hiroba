@@ -4,6 +4,7 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { HELD_STILL, LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
+import { useTouchFirst } from "../navigation/use-touch-first";
 import { filledSlots, newSetName, SET_SONG_LIMIT, sameSongs } from "./favorite-sets";
 import { SetsIcon } from "./favorites-icons";
 import { type FavoritesStep, shownFavoritesOf } from "./favorites-state";
@@ -16,6 +17,7 @@ import { rememberedSongs, resolveSong } from "./song-look";
 import { SongPicker } from "./song-picker";
 import { useFavoriteSets } from "./use-favorite-sets";
 import type { FavoritesEditor } from "./use-favorites";
+import { useSetsSwipe } from "./use-sets-swipe";
 import type { SongCatalogue } from "./use-song-catalogue";
 
 const NO_SONGS: readonly string[] = [];
@@ -38,6 +40,8 @@ export function FavoritesPage({ favorites, catalogue, i18n }: FavoritesPageProps
   const [picking, setPicking] = useState<"song" | "set" | null>(null);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
+  const touchFirst = useTouchFirst();
+  useSetsSwipe({ active: touchFirst, open: drawerOpen, onOpenChange: setDrawerOpen });
 
   const set = sets.find((one) => one.id === selectedId) ?? null;
   const setId = set?.id ?? null;

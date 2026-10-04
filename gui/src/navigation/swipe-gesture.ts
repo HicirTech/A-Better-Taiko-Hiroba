@@ -6,7 +6,7 @@ export const SWIPE_STRAIGHTNESS = 2;
 // Not the edge alone: Android's gesture navigation takes an edge swipe as Back.
 export const OPENING_AREA_SHARE = 2 / 3;
 
-/** `right` opens the menu and `left` closes it. */
+/** The way the finger travels. */
 export type SwipeDirection = "right" | "left";
 
 export interface Swipe {
