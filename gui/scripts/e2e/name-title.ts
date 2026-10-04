@@ -166,7 +166,11 @@ export async function title(ctx: Ctx) {
 
   // Settle the portrait fetches of earlier reads, so only a title write's are counted below.
   await goTo("overview");
-  await waitForSeen(page, async () => (await exists("#my-don-image")) || undefined);
+  await waitForSeen(
+    "My Don picture",
+    page,
+    async () => (await exists("#my-don-image")) || undefined,
+  );
   const myDonsBeforeTitle = await myDonsSettled();
   await goTo("nameTitle");
   await inSection("title", "idle");
@@ -192,7 +196,7 @@ export async function title(ctx: Ctx) {
     )) && (await page.evaluate<number>("window.noticesMounted")) === 0;
   const titleLog = await requestsSettled(TITLE_REQUESTS.length + TITLE_REREAD.length);
   const titleAfter = await profileNow();
-  await waitFor(async () =>
+  await waitFor("new title on the profile", async () =>
     (await textOf("#profile-title")) === `Title: ${titleOf(108).label}` ? true : undefined,
   );
   results.titleSuccessSaysNothing =
@@ -229,7 +233,11 @@ export async function title(ctx: Ctx) {
     same(await savedCostume(), START);
 
   await goTo("overview");
-  await waitForSeen(page, async () => (await exists("#my-don-image")) || undefined);
+  await waitForSeen(
+    "My Don picture",
+    page,
+    async () => (await exists("#my-don-image")) || undefined,
+  );
   const myDonAsked = await page.evaluate<boolean>(
     `window.abth.readPicture({ kind: "myDon" }).then((result) => result.ok)`,
   );
@@ -283,7 +291,7 @@ export async function title(ctx: Ctx) {
   await fetch(`${HIROBA}/__title-hold-precheck?on=1`);
   const titlePrechecksBefore = await hitsOn("/ajax/check_ip_title.php");
   const titleWhileCostumeMoves = bridgeTitle();
-  await waitFor(async () =>
+  await waitFor("held title pre-check", async () =>
     (await hitsOn("/ajax/check_ip_title.php")) > titlePrechecksBefore ? true : undefined,
   );
   await fetch(`${HIROBA}/__state?color_face=9`);
@@ -518,7 +526,9 @@ export async function nameTitleWrites(ctx: Ctx) {
   await typeName("あたらしい");
   await nameSavable();
   await press("Enter");
-  await waitFor(async () => ((await hitsOn(SAVE)) > savesBeforeHeldName ? true : undefined));
+  await waitFor("name save sent", async () =>
+    (await hitsOn(SAVE)) > savesBeforeHeldName ? true : undefined,
+  );
   results.nameEnterSavesAValidNickname = (await stepIn("name")) === "saving";
   await resetLog();
   const fabShutInNameWrite = (await fabState()).shut;
@@ -547,7 +557,7 @@ export async function nameTitleWrites(ctx: Ctx) {
   const readsBeforeHeldTitle = await myPageHits();
   await pickTitle("別の", 102);
   await click("#title-save");
-  await waitFor(async () =>
+  await waitFor("held title pre-check", async () =>
     (await hitsOn("/ajax/check_ip_title.php")) > prechecksBeforeHeldTitle ? true : undefined,
   );
   await resetLog();
@@ -615,7 +625,10 @@ export async function namePlate(ctx: Ctx) {
   const plateButtonBounds = await boxOf("#name-title-open");
   await tooltipClosed();
   await hoverOver(page, "#name-title-open");
-  const plateTooltip = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  const plateTooltip = await waitFor(
+    "name plate tooltip",
+    async () => (await textOf('[role="tooltip"]')) ?? undefined,
+  );
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   await tooltipClosed();
   results.namePlateIsTheNicknameAndTitleButton =
@@ -632,6 +645,7 @@ export async function namePlate(ctx: Ctx) {
     await page.evaluate(`document.querySelector("#name-title-open").focus()`);
     await keys();
     const opened = await waitFor(
+      "Nickname & title page by keys",
       async () => (await currentPage()) === "nameTitle" || undefined,
       5_000,
     );
@@ -648,6 +662,7 @@ export async function namePlate(ctx: Ctx) {
     });
   }
   const openedByMouse = await waitFor(
+    "Nickname & title page by mouse",
     async () => (await currentPage()) === "nameTitle" || undefined,
     5_000,
   );
@@ -663,7 +678,7 @@ export async function namePlate(ctx: Ctx) {
 
   await page.evaluate("document.activeElement?.blur(); window.touchClicks.length = 0");
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
-  const plateHint = await waitFor(() =>
+  const plateHint = await waitFor("name plate hint", () =>
     page.evaluate<string | undefined>(
       `document.getElementById(document.querySelector("#name-title-open").getAttribute("aria-describedby") ?? "")?.textContent`,
     ),
@@ -672,6 +687,7 @@ export async function namePlate(ctx: Ctx) {
   await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPlate] });
   await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   const plateTapClicked = await waitFor(
+    "tap click",
     async () => (await touchClicks()).includes("touch") || undefined,
   );
   await Bun.sleep(2 * LONG_PRESS_MS);
@@ -684,6 +700,7 @@ export async function namePlate(ctx: Ctx) {
   const clicksBeforePlateHold = await touchClicks();
   await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPlate] });
   const plateWentByLongPress = await waitFor(
+    "Nickname & title page by long press",
     async () => (await currentPage()) === "nameTitle" || undefined,
     5_000,
   );

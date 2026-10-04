@@ -52,7 +52,7 @@ export async function costumeEditor(ctx: Ctx) {
   const editorReadsAtStart = await editorHits();
   await fetch(`${HIROBA}/__previews?reset=1`);
   await click("#costume-open");
-  await waitFor(async () => (await currentPage()) === "costume" || undefined);
+  await waitFor("costume page", async () => (await currentPage()) === "costume" || undefined);
   const jumpedByClick = (await textOf("main h1")) === "Costume";
   await inStep("editing");
   const onOpening = await previewOtherThan(null);
@@ -202,7 +202,10 @@ export async function portraitPreview(ctx: Ctx) {
   const OPEN_COSTUME = "Open the Costume page";
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   await hoverOver(page, "#costume-open");
-  const nameOnHover = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  const nameOnHover = await waitFor(
+    "portrait tooltip",
+    async () => (await textOf('[role="tooltip"]')) ?? undefined,
+  );
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   results.portraitIsTheCostumeButton =
     (await page.evaluate<boolean>(
@@ -215,6 +218,7 @@ export async function portraitPreview(ctx: Ctx) {
     await page.evaluate(`document.querySelector("#costume-open").focus()`);
     await keys();
     const opened = await waitFor(
+      "costume page by keys",
       async () => (await currentPage()) === "costume" || undefined,
       5_000,
     );
@@ -232,7 +236,7 @@ export async function portraitPreview(ctx: Ctx) {
 
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
-  const longPressHint = await waitFor(() =>
+  const longPressHint = await waitFor("long-press hint", () =>
     page.evaluate<string | undefined>(
       `document.getElementById(document.querySelector("#costume-open").getAttribute("aria-describedby") ?? "")?.textContent`,
     ),
@@ -247,6 +251,7 @@ export async function portraitPreview(ctx: Ctx) {
   await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });
   await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   const tapClicked = await waitFor(
+    "tap click",
     async () => (await touchClicks()).includes("touch") || undefined,
   );
   await Bun.sleep(2 * LONG_PRESS_MS);
@@ -261,6 +266,7 @@ export async function portraitPreview(ctx: Ctx) {
   const clicksBeforeLongPress = await touchClicks();
   await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });
   const wentByLongPress = await waitFor(
+    "costume page by long press",
     async () => (await currentPage()) === "costume" || undefined,
     5_000,
   );
@@ -315,7 +321,10 @@ export async function portraitPreview(ctx: Ctx) {
     !tokens.some((token) => withPreview.includes(token));
   await fetch(`${HIROBA}/__preview?answer=gif`);
   await click("#swatch-colorFace-20");
-  await waitFor(async () => (await exists("#costume-preview-unavailable")) || undefined);
+  await waitFor(
+    "preview unavailable notice",
+    async () => (await exists("#costume-preview-unavailable")) || undefined,
+  );
   results.previewFailureLeavesTheEditor =
     (await textOf("#costume-preview-code")) ===
       "Code for a report: preview=notPng status=200 type=image/gif bytes=43" &&
@@ -399,6 +408,7 @@ export async function costumeWrite(ctx: Ctx) {
     posts.filter((post) => post.path === "/ajax/change_mydon.php").length === 1;
   await goTo("overview");
   await waitForSeen(
+    "My Don asked again",
     page,
     async () => (await myDonsAsked()).length > myDonsBeforeColour || undefined,
   );
@@ -451,6 +461,7 @@ export async function costumeWrite(ctx: Ctx) {
   await press("Escape");
   await historyClosed();
   const focusAfterEscape = await waitFor(
+    "focus back after Escape",
     async () =>
       (await page.evaluate<string>("document.activeElement?.id ?? ''")) === "costume-history" ||
       undefined,
@@ -459,6 +470,7 @@ export async function costumeWrite(ctx: Ctx) {
   await click("#costume-history-close");
   await historyClosed();
   const focusAfterClose = await waitFor(
+    "focus back after Close",
     async () =>
       (await page.evaluate<string>("document.activeElement?.id ?? ''")) === "costume-history" ||
       undefined,
@@ -468,13 +480,14 @@ export async function costumeWrite(ctx: Ctx) {
   // On a phone the button is the bar's, another element: the dialog from it gives focus back.
   const historyOnAPhone = await atSize(PHONE.width, PHONE.height, async () => {
     await openHistory();
-    const dialog = await waitFor(async () => {
+    const dialog = await waitFor("full-screen history dialog", async () => {
       const box = await boxOf('[role="dialog"]');
       return box.width >= 479 ? box : undefined;
     });
     await press("Escape");
     await historyClosed();
     const focusBack = await waitFor(
+      "focus back on a phone",
       async () =>
         (await page.evaluate<string>("document.activeElement?.id ?? ''")) === "costume-history" ||
         undefined,
@@ -505,6 +518,7 @@ export async function costumeWrite(ctx: Ctx) {
     ) && afterGoingBack.every(({ picture }) => picture?.startsWith(PNG_URL) === true);
   await goTo("overview");
   await waitForSeen(
+    "My Don asked after going back",
     page,
     async () => (await myDonsAsked()).length > myDonsBeforeGoingBack || undefined,
   );
@@ -519,9 +533,9 @@ export async function costumeWrite(ctx: Ctx) {
   let kigurumiBlanksTheOtherTiles = false;
   const kigurumiOutcome = await changeInTheWindow(async () => {
     await showPart("costume1");
-    await waitFor(async () => (await exists("#item-costume1-36")) || undefined);
+    await waitFor("Mascot tile", async () => (await exists("#item-costume1-36")) || undefined);
     await click("#item-costume1-36");
-    await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
+    await waitFor("kigurumi warning", async () => (await exists("#kigurumi-warning")) || undefined);
     kigurumiInfoAboveThePart = await aboveThePart("#kigurumi-warning");
     kigurumiBlanksTheOtherTiles = await page.evaluate<boolean>(
       `[["costume2", "Head"], ["costume3", "Body"], ["costume4", "Makeup"], ["costume5", "Mini Character"]].every(([part, name]) => document.querySelector("#costume-part-" + part + " img") === null && document.querySelector("#costume-part-" + part).getAttribute("aria-label") === name)`,

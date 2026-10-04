@@ -17,7 +17,9 @@ export function nameTitleHelpers(app: App) {
       `document.querySelector("#${section}-section")?.dataset.step ?? null`,
     );
   const inSection = (section: Section, step: string) =>
-    waitFor(async () => ((await stepIn(section)) === step ? true : undefined));
+    waitFor(`${section} step ${step}`, async () =>
+      (await stepIn(section)) === step ? true : undefined,
+    );
   /** The kind of notice a section shows; null when it shows none, as after a plain success. */
   const outcomeOf = (section: Section) =>
     page.evaluate<string | null>(
@@ -37,8 +39,10 @@ export function nameTitleHelpers(app: App) {
   const readTitlesAgain = async () => {
     const before = await myPageHits();
     await click("#read-again");
-    await waitFor(async () => ((await myPageHits()) > before ? true : undefined));
-    await waitFor(async () => ((await titleListIn()) === "unread" ? true : undefined));
+    await waitFor("my page read", async () => ((await myPageHits()) > before ? true : undefined));
+    await waitFor("title list forgotten", async () =>
+      (await titleListIn()) === "unread" ? true : undefined,
+    );
     await inSection("title", "idle");
     await popupOpened();
     await popupClosed();
@@ -48,12 +52,16 @@ export function nameTitleHelpers(app: App) {
     await page.evaluate(`document.querySelector("#title-pick").focus()`);
     await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...ARROW_DOWN });
     await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...ARROW_DOWN });
-    await waitFor(async () => (await exists('[role="listbox"]')) || undefined);
-    await waitFor(async () => ((await titleListIn()) === "read" ? true : undefined));
+    await waitFor("title list shown", async () => (await exists('[role="listbox"]')) || undefined);
+    await waitFor("title list read", async () =>
+      (await titleListIn()) === "read" ? true : undefined,
+    );
   };
   const popupClosed = async () => {
     await press("Escape");
-    await waitFor(async () => ((await exists('[role="listbox"]')) ? undefined : true));
+    await waitFor("title list closed", async () =>
+      (await exists('[role="listbox"]')) ? undefined : true,
+    );
   };
   /** Reads the list if a write or Read again forgot it, so typing never starts a read. */
   const titlesRead = async () => {
@@ -88,20 +96,29 @@ export function nameTitleHelpers(app: App) {
       `(() => { const input = document.querySelector("#title-pick"); input.focus(); input.select(); })()`,
     );
     await page.send("Input.insertText", { text: typed });
-    await waitFor(async () => (await exists(`[data-title-id="${id}"]`)) || undefined);
+    await waitFor(
+      `title option ${id}`,
+      async () => (await exists(`[data-title-id="${id}"]`)) || undefined,
+    );
     await page.evaluate(`document.querySelector('[data-title-id="${id}"]').click()`);
-    await waitFor(async () => ((await disabledOf("#title-save")) === false ? true : undefined));
+    await waitFor("title save enabled", async () =>
+      (await disabledOf("#title-save")) === false ? true : undefined,
+    );
   };
   /** Presses a section's Save, and waits for its write to end. */
   const saveSection = async (section: Section) => {
     const savesBefore = await hitsOn(SAVE);
     await click(`#${section}-save`);
-    await waitFor(async () => ((await hitsOn(SAVE)) > savesBefore ? true : undefined));
+    await waitFor(`${section} save sent`, async () =>
+      (await hitsOn(SAVE)) > savesBefore ? true : undefined,
+    );
     await inSection(section, "idle");
   };
   /** The read after a title write runs behind the page; the profile is in once it ends. */
   const rereadDone = async (readsBefore: number) => {
-    await waitFor(async () => ((await myPageHits()) >= readsBefore + 2 ? true : undefined));
+    await waitFor("profile reread", async () =>
+      (await myPageHits()) >= readsBefore + 2 ? true : undefined,
+    );
     await Bun.sleep(300);
   };
   const changeTitleInTheWindow = async (typed: string, id: number, rereads = true) => {
@@ -119,7 +136,9 @@ export function nameTitleHelpers(app: App) {
       `(() => { const input = document.querySelector("#name-input"); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(name)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
     );
   const nameSavable = () =>
-    waitFor(async () => ((await disabledOf("#name-save")) === false ? true : undefined));
+    waitFor("name save enabled", async () =>
+      (await disabledOf("#name-save")) === false ? true : undefined,
+    );
   const changeNameInTheWindow = async (name: string) => {
     await typeName(name);
     await nameSavable();

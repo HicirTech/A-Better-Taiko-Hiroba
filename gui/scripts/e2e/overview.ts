@@ -58,7 +58,7 @@ export function overviewHelpers(app: App) {
       `(() => { const items = [...document.querySelectorAll("#ranks li, #crowns li")]; return { images: items.filter((item) => item.querySelector("img") !== null).length, dots: items.filter((item) => item.querySelector('[aria-hidden="true"] > span') !== null).length }; })()`,
     );
   const legendIconsShownOn = (app: App) =>
-    waitForSeen(app.page, async () =>
+    waitForSeen("legend icons", app.page, async () =>
       (await legendPictures(app)).images === ICON_PATHS.length ? true : undefined,
     );
 
@@ -70,7 +70,7 @@ export function overviewHelpers(app: App) {
 
   const settledHeader = async () => {
     let before = "";
-    return waitFor(async () => {
+    return waitFor("steady header", async () => {
       const now = await headerBoxes();
       const shown = JSON.stringify(now);
       const steady = shown === before;
@@ -176,7 +176,7 @@ export async function overview(ctx: Ctx) {
     !rendered.includes("000000000000") && !rendered.includes("imgsrc");
   results.readsAfterSignIn = await myPageHits();
 
-  await waitForSeen(page, async () =>
+  await waitForSeen("legend icon requests", page, async () =>
     (await iconHits()) === ICON_PATHS.length ? true : undefined,
   );
   results.legendFallsBackToDots =
@@ -185,8 +185,16 @@ export async function overview(ctx: Ctx) {
     same(await allOf("#crowns li", "ariaLabel"), namesOf(CROWN_SHARES)) &&
     (await textOf("#rank-5-percent")) === "30.4%";
 
-  await waitForSeen(page, async () => (await attribute("#title-plate-image", "src")) ?? undefined);
-  await waitForSeen(page, async () => (await textOf("#pictures-code")) ?? undefined);
+  await waitForSeen(
+    "title plate picture",
+    page,
+    async () => (await attribute("#title-plate-image", "src")) ?? undefined,
+  );
+  await waitForSeen(
+    "pictures code",
+    page,
+    async () => (await textOf("#pictures-code")) ?? undefined,
+  );
 
   const myDonFailureAtSignIn =
     (await myDonsSettled()) === 1 &&
@@ -222,10 +230,10 @@ export async function overview(ctx: Ctx) {
     deviceScaleFactor: 0,
     mobile: false,
   });
-  await waitFor(async () => (await exists("#nav-menu")) || undefined);
+  await waitFor("drawer button", async () => (await exists("#nav-menu")) || undefined);
   const narrow = await headerBoxes();
   await page.send("Emulation.clearDeviceMetricsOverride", {});
-  await waitFor(async () => (await exists("#nav-overview")) || undefined);
+  await waitFor("side panel", async () => (await exists("#nav-overview")) || undefined);
   results.overviewShapedLikeMyPage =
     wide.myDon.right <= wide.plate.left &&
     Math.abs(wide.myDon.top - wide.plate.top) < 1 &&

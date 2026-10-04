@@ -52,7 +52,10 @@ export async function language(ctx: Ctx) {
       lang: "en-US",
       userData: LANGUAGE_USER_DATA,
     });
-    await waitFor(async () => (await inLanguage.textOf("#language-setting")) ?? undefined);
+    await waitFor(
+      "settings page",
+      async () => (await inLanguage.textOf("#language-setting")) ?? undefined,
+    );
     results.pageKeptAcrossLaunches =
       (await inLanguage.currentPage()) === "settings" &&
       (await inLanguage.textOf("#sign-in")) === null;
@@ -106,7 +109,7 @@ export async function language(ctx: Ctx) {
       `document.querySelector("#language-setting input:checked").focus()`,
     );
     await arrowDown();
-    const checkedByArrow = await waitFor(async () => {
+    const checkedByArrow = await waitFor("English checked", async () => {
       const shown = await languageShown(inLanguage.page);
       return shown.checked === "English" ? shown.lang : undefined;
     });
@@ -155,6 +158,7 @@ export async function settings(ctx: Ctx) {
     await goTo("settings");
     await click(`#language-${locale}`);
     await waitFor(
+      `language ${locale}`,
       async () =>
         (await page.evaluate<string>("document.documentElement.lang")) === locale || undefined,
     );

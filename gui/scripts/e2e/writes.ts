@@ -56,6 +56,7 @@ export async function bridgeWrites(ctx: Ctx) {
   const prechecksBeforeHeld = await hitsOn("/ajax/check_ip_kisekae.php");
   const heldWrite = bridgeChange({ ...START, colorLimb: 20 });
   await waitFor(
+    "held pre-check",
     async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeHeld || undefined,
   );
   const previewDuringWrite = page.evaluate<boolean>(
@@ -74,6 +75,7 @@ export async function bridgeWrites(ctx: Ctx) {
   const prechecksBeforeThumbnail = await hitsOn("/ajax/check_ip_kisekae.php");
   const writeBeforeThumbnail = bridgeChange({ ...START, colorLimb: 20 });
   await waitFor(
+    "held pre-check",
     async () =>
       (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeThumbnail || undefined,
   );
@@ -96,6 +98,7 @@ export async function bridgeWrites(ctx: Ctx) {
   const prechecksBeforeHeldSave = await hitsOn("/ajax/check_ip_kisekae.php");
   await click("#costume-save");
   await waitFor(
+    "held pre-check",
     async () => (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeHeldSave || undefined,
   );
   const fabShutInWrite = (await fabState()).shut;
@@ -263,7 +266,7 @@ export async function heldWrites(ctx: Ctx) {
     await fetch(`${HIROBA}${held.hold}?on=1`);
     const heldBefore = await hitsOn(held.heldAt);
     const writing = running.page.evaluate<{ kind: string }>(held.call);
-    await waitFor(async () => (await hitsOn(held.heldAt)) > heldBefore || undefined);
+    await waitFor("held write", async () => (await hitsOn(held.heldAt)) > heldBefore || undefined);
     const reading = readsAsked.map((read) => running.page.evaluate<boolean>(read.call));
     await Bun.sleep(300);
     const whileHeld = await requestLog();
@@ -298,7 +301,9 @@ export async function firstReads(ctx: Ctx) {
       `document.querySelector(${JSON.stringify(selector)})?.dataset.step ?? null`,
     );
   const stepIs = (selector: string, step: string) =>
-    waitFor(async () => ((await stepOn(selector)) === step ? true : undefined));
+    waitFor(`${selector} step ${step}`, async () =>
+      (await stepOn(selector)) === step ? true : undefined,
+    );
   await running.goTo("costume");
   await stepIs("#costume-page", "editing");
   await running.click("#swatch-colorFace-3");
@@ -309,6 +314,7 @@ export async function firstReads(ctx: Ctx) {
   const titleReadsBeforeFirstRead = await hitsOn(TITLE_PAGE);
   await running.click("#costume-save");
   await waitFor(
+    "held pre-check",
     async () =>
       (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeFirstRead || undefined,
   );
@@ -322,10 +328,12 @@ export async function firstReads(ctx: Ctx) {
   const titleReadsWhileHeld = await hitsOn(TITLE_PAGE);
   await fetch(`${HIROBA}/__hold-precheck?on=0`);
   await stepIs("#title-section", "idle");
-  await waitFor(async () => ((await pickerShut()) === false ? true : undefined));
+  await waitFor("title picker enabled", async () =>
+    (await pickerShut()) === false ? true : undefined,
+  );
   const titleReadsAfterTheWrite = await hitsOn(TITLE_PAGE);
   // The arrow opens the picker once the field has the focus; pressed again until a read starts.
-  await waitFor(async () => {
+  await waitFor("title read", async () => {
     if ((await hitsOn(TITLE_PAGE)) > titleReadsAfterTheWrite) {
       return true;
     }
@@ -359,7 +367,7 @@ export async function firstReads(ctx: Ctx) {
   await running.page.evaluate(
     `(() => { const input = document.querySelector("#name-input"); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "あたらしい"); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
   );
-  await waitFor(async () =>
+  await waitFor("name save enabled", async () =>
     (await running.page.evaluate<boolean>(
       `document.querySelector("#name-save").disabled === false`,
     ))
@@ -372,6 +380,7 @@ export async function firstReads(ctx: Ctx) {
   const editorReadsBeforeFirstRead = await hitsOn("/mypage_kisekae.php");
   await running.click("#name-save");
   await waitFor(
+    "held name save",
     async () =>
       (await hitsOn("/ajax/change_mydon_profile.php")) > savesBeforeFirstRead || undefined,
   );

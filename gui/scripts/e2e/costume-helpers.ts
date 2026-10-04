@@ -41,14 +41,14 @@ export function costumeHelpers(app: App) {
   const stepOf = () =>
     page.evaluate<string | null>(`document.querySelector("#costume-page")?.dataset.step ?? null`);
   const inStep = (name: string) =>
-    waitFor(async () => ((await stepOf()) === name ? true : undefined));
+    waitFor(`costume step ${name}`, async () => ((await stepOf()) === name ? true : undefined));
   const pressedOf = (selector: string) => attribute(selector, "aria-pressed");
   const previewSrc = () =>
     page.evaluate<string | null>(
       `document.querySelector("#costume-preview-image")?.getAttribute("src") ?? null`,
     );
   const previewOtherThan = (before: string | null) =>
-    waitFor(async () => {
+    waitFor("new preview", async () => {
       const src = await previewSrc();
       const loading = await exists("#costume-preview-loading");
       return src !== null && src !== before && !loading ? src : undefined;
@@ -60,7 +60,9 @@ export function costumeHelpers(app: App) {
   const readEditorAgain = async () => {
     const before = await editorHits();
     await click("#read-again");
-    await waitFor(async () => ((await editorHits()) > before ? true : undefined));
+    await waitFor("editor read again", async () =>
+      (await editorHits()) > before ? true : undefined,
+    );
     await inStep("editing");
   };
 
@@ -76,7 +78,7 @@ export function costumeHelpers(app: App) {
   /** The page reads the editor once per session, so a change made elsewhere needs a read again. */
   const openFreshEditor = async () => {
     await goTo("costume");
-    const step = await waitFor(async () => (await stepOf()) ?? undefined);
+    const step = await waitFor("costume step known", async () => (await stepOf()) ?? undefined);
     if (step !== "unread" && step !== "loading") {
       await readEditorAgain();
     }
@@ -105,6 +107,7 @@ export function costumeHelpers(app: App) {
   const savedFrom = async (before: Record<string, number>) => {
     await click("#costume-save");
     return waitFor(
+      "save outcome",
       async () =>
         (await pageOutcome()) ??
         ((await stepOf()) === "editing" && !same(await savedCostume(), before)
@@ -132,7 +135,7 @@ export function costumeHelpers(app: App) {
     );
   /** From the keyboard, as a person without a pointer does: the button is focused, then Enter. */
   const openHistory = async () => {
-    await waitFor(async () =>
+    await waitFor("history button enabled", async () =>
       (await page.evaluate<boolean>(
         `document.querySelector("#costume-history")?.disabled === false`,
       ))
@@ -141,10 +144,15 @@ export function costumeHelpers(app: App) {
     );
     await page.evaluate(`document.querySelector("#costume-history").focus()`);
     await press("Enter");
-    await waitFor(async () => (await exists("#costume-history-entry-0")) || undefined);
+    await waitFor(
+      "history dialog open",
+      async () => (await exists("#costume-history-entry-0")) || undefined,
+    );
   };
   const historyClosed = () =>
-    waitFor(async () => ((await exists("#costume-history-dialog")) ? undefined : true));
+    waitFor("history dialog closed", async () =>
+      (await exists("#costume-history-dialog")) ? undefined : true,
+    );
   const pickFromHistory = async (index: number) => {
     await openHistory();
     await click(`#costume-history-entry-${index}`);
@@ -235,7 +243,7 @@ export function costumeHelpers(app: App) {
 
   const noneCellInUse = async () => {
     await showPart("costume2");
-    await waitFor(async () => (await exists("#item-costume2-59 img")) || undefined);
+    await waitFor("Head tiles", async () => (await exists("#item-costume2-59 img")) || undefined);
     const first = await firstCellOf("#costume-items-costume2");
     const before = await ringedOf("#item-costume2-0");
     await click("#item-costume2-0");
@@ -282,7 +290,7 @@ export function costumeHelpers(app: App) {
         (await backgroundOf("#swatch-colorFace-9")) &&
       (await backgroundOf("#costume-part-colorBody")) === torsoTile;
     await showPart("costume3");
-    await waitFor(async () => (await exists("#item-costume3-70 img")) || undefined);
+    await waitFor("Body tiles", async () => (await exists("#item-costume3-70 img")) || undefined);
     await click("#item-costume3-70");
     const bodyTileShowsTheItem =
       (await pictureAt("#costume-part-costume3 img")) ===
@@ -309,17 +317,20 @@ export function costumeHelpers(app: App) {
   const focusedId = () => page.evaluate<string>("document.activeElement.id");
   const tilesByKeyboard = async () => {
     await showPart("colorLimb");
-    await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
+    await waitFor("Limbs palette", async () => (await exists("#swatch-colorLimb-12")) || undefined);
     await page.evaluate(`document.querySelector("#costume-part-colorFace").focus()`);
     await press("ArrowRight");
     const focusedByArrow = await focusedId();
     const stillSelected = await tabsSelected();
     await press("Enter");
-    await waitFor(async () => (await exists("#swatch-colorBody-12")) || undefined);
+    await waitFor("Torso palette", async () => (await exists("#swatch-colorBody-12")) || undefined);
     const pickedByEnter = await tabsSelected();
     await press("ArrowRight");
     await press(" ");
-    await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
+    await waitFor(
+      "Limbs palette again",
+      async () => (await exists("#swatch-colorLimb-12")) || undefined,
+    );
     const pickedBySpace = await tabsSelected();
     await press("ArrowRight");
     const wrappedWithinTheGroup = await focusedId();

@@ -48,7 +48,11 @@ export async function myDonFailure(ctx: Ctx) {
   await Bun.sleep(300);
   results.readsAfterReadAgain = await myPageHits();
 
-  await waitForSeen(page, async () => (await myDonsAsked()).length > 1 || undefined);
+  await waitForSeen(
+    "My Don asked",
+    page,
+    async () => (await myDonsAsked()).length > 1 || undefined,
+  );
   const myDonsFailed = await myDonsSettled();
   state.myDonsFailed = myDonsFailed;
   results.myDonFailureCoded =
@@ -70,7 +74,11 @@ export async function pictures(ctx: Ctx) {
   await click("#read-again");
   await Bun.sleep(300);
   await until("Last updated");
-  await waitForSeen(page, async () => (await attribute("#my-don-image", "src")) ?? undefined);
+  await waitForSeen(
+    "My Don picture",
+    page,
+    async () => (await attribute("#my-don-image", "src")) ?? undefined,
+  );
   const myDonsAtFirst = await myDonsSettled();
   const tile = await page.evaluate<{ width: number; height: number }>(
     `(() => { const box = document.querySelector("#my-don").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
@@ -99,12 +107,20 @@ export async function pictures(ctx: Ctx) {
   await click("#read-again");
   await Bun.sleep(300);
   await until("Last updated");
-  await waitForSeen(page, async () => (await myDonsAsked()).length > myDonsAtFirst || undefined);
+  await waitForSeen(
+    "My Don asked again",
+    page,
+    async () => (await myDonsAsked()).length > myDonsAtFirst || undefined,
+  );
   const myDonsAfterReadAgain = await myDonsSettled();
   results.myDonAgainOnReadAgain =
     myDonsAfterReadAgain === myDonsAtFirst + 1 &&
     (await attribute("#my-don-image", "src"))?.startsWith("data:image/png;base64,") === true;
-  await waitForSeen(page, async () => (await exists("#score-panel-image")) || undefined);
+  await waitForSeen(
+    "score panel picture",
+    page,
+    async () => (await exists("#score-panel-image")) || undefined,
+  );
   const art = await boxOf("#score-panel-image");
   const panelBox = await boxOf("#score-panel");
   results.scorePanelArtShown =
@@ -145,7 +161,10 @@ export async function pictures(ctx: Ctx) {
       `document.querySelector(${JSON.stringify(selector)}).scrollIntoView({ block: "center" })`,
     );
     await hoverOver(page, selector);
-    const shown = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+    const shown = await waitFor(
+      "legend tooltip",
+      async () => (await textOf('[role="tooltip"]')) ?? undefined,
+    );
     await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
     await tooltipClosed();
     return shown;
@@ -163,7 +182,10 @@ export async function pictures(ctx: Ctx) {
   await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SHIFT_KEY });
   await page.send("Input.dispatchKeyEvent", { type: "keyUp", key: "Shift", code: "ShiftLeft" });
   await page.evaluate(`document.querySelector("#crowns li").focus()`);
-  const nameOnFocus = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  const nameOnFocus = await waitFor(
+    "legend tooltip on focus",
+    async () => (await textOf('[role="tooltip"]')) ?? undefined,
+  );
   await page.evaluate("document.activeElement.blur()");
   await tooltipClosed();
   const keyboardReachable = await page.evaluate<boolean>(
@@ -183,6 +205,7 @@ export async function pictures(ctx: Ctx) {
   await Bun.sleep(300);
   await until("Last updated");
   await waitForSeen(
+    "My Don asked after a gif",
     page,
     async () => (await myDonsAsked()).length > myDonsAfterReadAgain || undefined,
   );
@@ -206,7 +229,7 @@ export async function titlePlate(ctx: Ctx) {
     await click("#read-again");
     await Bun.sleep(300);
     await until("Last updated");
-    await waitForSeen(page, async () => (await ready()) || undefined);
+    await waitForSeen("read result", page, async () => (await ready()) || undefined);
     return platesSettled();
   };
 
@@ -256,7 +279,7 @@ export async function medalPlate(ctx: Ctx) {
   };
   const showMedal = async (ready: () => Promise<boolean>) => {
     await page.evaluate(`document.querySelector("#medal").scrollIntoView({ block: "center" })`);
-    await waitForSeen(page, async () => (await ready()) || undefined);
+    await waitForSeen("medal result", page, async () => (await ready()) || undefined);
     return medalPlatesSettled();
   };
   const readMedalShowing = async (ready: () => Promise<boolean>) => {

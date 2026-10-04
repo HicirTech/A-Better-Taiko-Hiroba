@@ -36,7 +36,10 @@ export async function readAgain(ctx: Ctx) {
   const fabBox = await boxOf("#read-again");
   const profileBox = await boxOf("#profile");
   await hoverOver(page, "#read-again");
-  const fabTooltip = await waitFor(async () => (await textOf('[role="tooltip"]')) ?? undefined);
+  const fabTooltip = await waitFor(
+    "Read again tooltip",
+    async () => (await textOf('[role="tooltip"]')) ?? undefined,
+  );
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   results.readAgainIsASmallFab =
     (await attribute("#read-again", "aria-label")) === "Read again" &&
@@ -50,7 +53,7 @@ export async function readAgain(ctx: Ctx) {
   const readsBeforeHeld = await myPageHits();
   await fetch(`${HIROBA}/__hold-read?on=1`);
   await click("#read-again");
-  await waitFor(async () => (await myPageHits()) > readsBeforeHeld || undefined);
+  await waitFor("held read", async () => (await myPageHits()) > readsBeforeHeld || undefined);
   const fabWhileReading = await fabState();
   await click("#read-again");
   await Bun.sleep(300);
@@ -88,7 +91,10 @@ export async function readAgain(ctx: Ctx) {
   await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SHIFT });
   await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SHIFT });
   await page.evaluate(`document.querySelector("#read-again").focus()`);
-  const fabShownUnderFocus = await waitFor(async () => (await fabWidth()) > 1 || undefined);
+  const fabShownUnderFocus = await waitFor(
+    "Read again shown under focus",
+    async () => (await fabWidth()) > 1 || undefined,
+  );
   await page.evaluate("document.activeElement.blur()");
   results.fabOnlyUnderFocusOnTouch =
     fabKeptForScreenReaders && fabShownUnderFocus && (await fabWidth()) <= 1;
@@ -135,7 +141,9 @@ export async function profileVariants(ctx: Ctx) {
   const readShowing = async (selector: string) => {
     const before = await readHits();
     await click("#read-again");
-    await waitFor(async () => ((await textOf(selector)) === null ? undefined : true));
+    await waitFor(`${selector} shown`, async () =>
+      (await textOf(selector)) === null ? undefined : true,
+    );
     await Bun.sleep(300);
     return (await readHits()) - before;
   };
@@ -185,7 +193,9 @@ export async function profileVariants(ctx: Ctx) {
     );
   const closedAtFirst = (await folderOpen()) === "false";
   await click(folderSummary);
-  await waitFor(async () => ((await folderOpen()) === "true" ? true : undefined));
+  await waitFor("favourites folder open", async () =>
+    (await folderOpen()) === "true" ? true : undefined,
+  );
   const folderRows = await page.evaluate<string[]>(
     `[...document.querySelectorAll("#favorite-folder li")].map((row) => row.textContent)`,
   );
@@ -219,7 +229,9 @@ export async function profileVariants(ctx: Ctx) {
 
   await fetch(`${HIROBA}/__variant?panel=zeros`);
   await click("#read-again");
-  await waitFor(async () => ((await textOf("#crowns-silver")) === "0 of 0" ? true : undefined));
+  await waitFor("zero panel", async () =>
+    (await textOf("#crowns-silver")) === "0 of 0" ? true : undefined,
+  );
   const ZERO_RANK_SHARES: readonly Share[] = [
     ["White Iki", "4.0%", 4],
     ["Bronze Iki", "9.1%", 9],

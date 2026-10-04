@@ -34,7 +34,7 @@ export async function launch({
     stdout: "ignore",
     stderr: "ignore",
   });
-  const target = await waitFor(async () => {
+  const target = await waitFor("app window", async () => {
     const list = (await (await fetch(`http://127.0.0.1:${CDP_PORT}/json/list`)).json()) as {
       url: string;
       webSocketDebuggerUrl: string;
@@ -54,14 +54,14 @@ export async function launch({
       `[...document.querySelectorAll("button")].find((b) => b.textContent.trim() === ${JSON.stringify(label)}).click()`,
     );
   const until = (needle: string) =>
-    waitFor(async () => (await text()).includes(needle) || undefined);
+    waitFor(`text ${needle}`, async () => (await text()).includes(needle) || undefined);
   const currentPage = () =>
     page.evaluate<string | null>(
       `document.querySelector('[aria-current="page"]')?.id.replace("nav-", "") ?? null`,
     );
   const goTo = async (to: "overview" | "costume" | "nameTitle" | "favorites" | "settings") => {
     await click(`#nav-${to}`);
-    await waitFor(async () => (await currentPage()) === to || undefined);
+    await waitFor(`page ${to}`, async () => (await currentPage()) === to || undefined);
   };
   return { proc, page, text, textOf, click, clickButton, until, currentPage, goTo };
 }

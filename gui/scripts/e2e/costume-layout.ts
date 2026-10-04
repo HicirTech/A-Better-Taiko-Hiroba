@@ -39,10 +39,13 @@ export async function costumeLayout(ctx: Ctx) {
   );
   const wideAt = (width: number, height: number) =>
     atSize(width, height, async () => {
-      await waitFor(async () => (await exists("#costume-actions")) || undefined);
-      await waitFor(async () => (await exists("#costume-preview-image")) || undefined);
+      await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
+      await waitFor(
+        "costume preview",
+        async () => (await exists("#costume-preview-image")) || undefined,
+      );
       await showPart("colorFace");
-      await waitFor(async () => (await exists("#costume-palette")) || undefined);
+      await waitFor("colour palette", async () => (await exists("#costume-palette")) || undefined);
       const palette = {
         box: await boxOf("#costume-palette"),
         tracks: await tracksOf("#costume-palette"),
@@ -50,7 +53,10 @@ export async function costumeLayout(ctx: Ctx) {
         scrolling: await scrollingBoxes(),
       };
       await showPart("costume1");
-      await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+      await waitFor(
+        "Mascot grid",
+        async () => (await exists("#costume-items-costume1")) || undefined,
+      );
       const items = {
         box: await boxOf("#costume-items-costume1"),
         tracks: await tracksOf("#costume-items-costume1"),
@@ -128,9 +134,12 @@ export async function costumeLayout(ctx: Ctx) {
   results.costumeGridHoldsMoreColumnsOnABigWindow =
     onBig.items.tracks > onDefault.items.tracks && onBig.palette.tracks > onDefault.palette.tracks;
   const stuck = await atSize(960, 720, async () => {
-    await waitFor(async () => (await exists("#costume-actions")) || undefined);
+    await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
     await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await waitFor(
+      "Mascot grid",
+      async () => (await exists("#costume-items-costume1")) || undefined,
+    );
     await page.evaluate("window.scrollTo(0, 0)");
     const gridBefore = await boxOf("#costume-items-costume1");
     const scrolledBy = await scrollToTheEnd();
@@ -148,9 +157,12 @@ export async function costumeLayout(ctx: Ctx) {
     stuck.after.bottom <= stuck.windowHeight &&
     stuck.gridAfter.top < stuck.gridBefore.top - 50;
   const onAShortWindow = await atSize(1100, 480, async () => {
-    await waitFor(async () => (await exists("#costume-actions")) || undefined);
+    await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
     await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await waitFor(
+      "Mascot grid",
+      async () => (await exists("#costume-items-costume1")) || undefined,
+    );
     await page.evaluate("window.scrollTo(0, 0)");
     const before = await boxOf("#costume-aside");
     const scrolledBy = await scrollToTheEnd();
@@ -197,7 +209,7 @@ export async function costumeTiles(ctx: Ctx) {
     `(() => { const lists = [...document.querySelectorAll('#costume-aside [role="tablist"]')]; return { orientations: lists.map((list) => list.getAttribute("aria-orientation")), names: lists.map((list) => document.getElementById(list.getAttribute("aria-labelledby") ?? "")?.textContent ?? null), tabs: lists.map((list) => [...list.querySelectorAll('[role="tab"]')].map((tab) => tab.id)), headings: [...document.querySelectorAll("#costume-aside h2")].map((heading) => heading.tagName) }; })()`,
   );
   await click("#costume-part-costume3");
-  await waitFor(async () => (await exists("#costume-items-costume3")) || undefined);
+  await waitFor("Body grid", async () => (await exists("#costume-items-costume3")) || undefined);
   const panelFacts = () =>
     page.evaluate<Record<string, unknown>>(
       `(() => { const panel = document.querySelector("#costume-grid"); return { role: panel.getAttribute("role"), labelledby: panel.getAttribute("aria-labelledby"), controlling: [...document.querySelectorAll("#costume-aside [aria-controls]")].map((tab) => tab.id + ">" + tab.getAttribute("aria-controls")) }; })()`,
@@ -208,7 +220,7 @@ export async function costumeTiles(ctx: Ctx) {
     panel: await panelFacts(),
   };
   await click("#costume-part-colorLimb");
-  await waitFor(async () => (await exists("#swatch-colorLimb-12")) || undefined);
+  await waitFor("Limbs palette", async () => (await exists("#swatch-colorLimb-12")) || undefined);
   const colourPart = {
     selected: await tabsSelected(),
     shown: await gridShown(),
@@ -253,18 +265,19 @@ export async function costumeTiles(ctx: Ctx) {
 
   results.costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpace = await tilesByKeyboard();
   const tooltipGone = () =>
-    waitFor(async () => ((await exists('[role="tooltip"]')) ? undefined : true));
+    waitFor("tooltip closed", async () => ((await exists('[role="tooltip"]')) ? undefined : true));
   await page.evaluate("document.activeElement.blur()");
   await tooltipGone();
   await hoverOver(page, "#costume-part-costume3");
   const tileNameOnHover = await waitFor(
+    "tile tooltip on hover",
     async () => (await textOf('[role="tooltip"]')) ?? undefined,
   );
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
   await tooltipGone();
   await page.evaluate(`document.querySelector("#costume-part-costume3").focus()`);
   await press("ArrowRight");
-  const tileNameOnFocus = await waitFor(async () => {
+  const tileNameOnFocus = await waitFor("tile tooltip on focus", async () => {
     const name = await textOf('[role="tooltip"]');
     return name === "Makeup" ? name : undefined;
   });
@@ -306,7 +319,10 @@ export async function costumePhone(ctx: Ctx) {
   const tabbedAcrossTheSlot = (width: number, height: number) =>
     atSize(width, height, async () => {
       await showPart("costume1");
-      await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+      await waitFor(
+        "Mascot grid",
+        async () => (await exists("#costume-items-costume1")) || undefined,
+      );
       await page.evaluate("window.scrollTo(0, 0)");
       await page.evaluate(
         `document.querySelector("#item-costume1-0").focus({ preventScroll: true })`,
@@ -342,7 +358,10 @@ export async function costumePhone(ctx: Ctx) {
     );
   const scrolledUnderTheBlock = await atSize(390, 700, async () => {
     await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await waitFor(
+      "Mascot grid",
+      async () => (await exists("#costume-items-costume1")) || undefined,
+    );
     const end = await scrollToTheEnd();
     const counts: { over: number; seen: number }[] = [];
     for (const part of [0.25, 0.5, 0.75, 1]) {
@@ -364,13 +383,13 @@ export async function costumePhone(ctx: Ctx) {
   await openFreshEditor();
   await click("#costume-part-costume4");
   const phone = await atSize(PHONE_TALL.width, PHONE_TALL.height, async () => {
-    await waitFor(async () => (await exists("#costume-bar")) || undefined);
+    await waitFor("costume bar", async () => (await exists("#costume-bar")) || undefined);
     const kept = {
       part: await attribute("#costume-part-costume4", "aria-selected"),
       grid: await exists("#costume-items-costume4"),
     };
     await showPart("colorBody");
-    await waitFor(async () => (await exists("#costume-palette")) || undefined);
+    await waitFor("colour palette", async () => (await exists("#costume-palette")) || undefined);
     const layout = {
       page: await boxOf("#costume-page"),
       aside: await boxOf("#costume-aside"),
@@ -388,7 +407,10 @@ export async function costumePhone(ctx: Ctx) {
     const barBox = await boxOf("#costume-bar");
     const barFlushNow = await barFlush();
     await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await waitFor(
+      "Mascot grid",
+      async () => (await exists("#costume-items-costume1")) || undefined,
+    );
     const items = {
       tracks: await tracksOf("#costume-items-costume1"),
       row: await firstRowOf('#costume-items-costume1 [id^="item-costume1-"]'),
@@ -429,7 +451,7 @@ export async function costumePhone(ctx: Ctx) {
       noticeAboveTheGrid,
     };
   });
-  await waitFor(async () => (await exists("#costume-actions")) || undefined);
+  await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
   const { layout } = phone;
   results.costumeKeepsThePartPickedAcrossWidths =
     same(phone.kept, { part: "true", grid: true }) &&
@@ -482,7 +504,7 @@ export async function costumePhone(ctx: Ctx) {
     );
   const barLabelsAt = (width: number) =>
     atSize(width, 700, async () => {
-      await waitFor(async () => (await exists("#costume-bar")) || undefined);
+      await waitFor("costume bar", async () => (await exists("#costume-bar")) || undefined);
       const bar = await boxOf("#costume-bar");
       const buttons = await buttonsIn("#costume-bar");
       return {
@@ -508,9 +530,12 @@ export async function costumePhone(ctx: Ctx) {
   results.narrowNoticeAboveTheEditor = phone.unmoved === "notApplied" && phone.noticeAboveTheGrid;
   const phoneScrolling = (size: { width: number; height: number }) =>
     atSize(size.width, size.height, async () => {
-      await waitFor(async () => (await exists("#costume-bar")) || undefined);
+      await waitFor("costume bar", async () => (await exists("#costume-bar")) || undefined);
       await showPart("costume1");
-      await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+      await waitFor(
+        "Mascot grid",
+        async () => (await exists("#costume-items-costume1")) || undefined,
+      );
       await page.evaluate("window.scrollTo(0, 0)");
       const before = await boxOf("#costume-aside");
       const scrolls = await documentScrolls();
@@ -549,9 +574,12 @@ export async function costumePhone(ctx: Ctx) {
     onAShortPhone.scrolls &&
     [layout, onATallPhone, onAShortPhone].every(({ scrolling }) => scrolling.length === 0);
   const pullOnAPhone = await atSize(PHONE_SHORT.width, PHONE_SHORT.height, async () => {
-    await waitFor(async () => (await exists("#costume-bar")) || undefined);
+    await waitFor("costume bar", async () => (await exists("#costume-bar")) || undefined);
     await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await waitFor(
+      "Mascot grid",
+      async () => (await exists("#costume-items-costume1")) || undefined,
+    );
     await touchEmulated(true);
     await page.evaluate("window.scrollTo(0, 0)");
     const grid = await boxOf("#costume-items-costume1");
@@ -569,7 +597,9 @@ export async function costumePhone(ctx: Ctx) {
       !(await pullIndicator()).shown;
     await page.evaluate("window.scrollTo(0, 0)");
     await swipe(from, to);
-    await waitFor(async () => ((await editorHits()) > readsBefore ? true : undefined));
+    await waitFor("editor read again", async () =>
+      (await editorHits()) > readsBefore ? true : undefined,
+    );
     await inStep("editing");
     const reads = (await editorHits()) === readsBefore + 1;
     await touchEmulated(false);

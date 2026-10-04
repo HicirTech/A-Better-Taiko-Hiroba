@@ -46,8 +46,15 @@ export function middleOf(page: Page, selector: string): Promise<{ x: number; y: 
   );
 }
 
+/** The section that is running, named by a wait that times out. */
+let runningSection = "";
+export const setSection = (name: string) => {
+  runningSection = name;
+};
+
 /** A hidden window asks for no picture: fail at once rather than at the wait's timeout. */
 export async function waitForSeen<T>(
+  label: string,
   page: { evaluate<V>(expression: string): Promise<V> },
   probe: () => Promise<T | undefined>,
 ): Promise<T> {
@@ -55,10 +62,11 @@ export async function waitForSeen<T>(
   if (visibility !== "visible") {
     throw new Error(`The window is ${visibility}: it asks for no picture until it is seen`);
   }
-  return waitFor(probe);
+  return waitFor(label, probe);
 }
 
 export async function waitFor<T>(
+  label: string,
   probe: () => Promise<T | undefined>,
   timeoutMs = 30_000,
 ): Promise<T> {
@@ -74,7 +82,9 @@ export async function waitFor<T>(
     }
     await Bun.sleep(200);
   }
-  throw new Error(`Timed out after ${timeoutMs} ms`);
+  throw new Error(
+    `Timed out after ${timeoutMs} ms waiting for "${label}" in section ${runningSection}`,
+  );
 }
 
 export async function connect(url: string) {
@@ -125,10 +135,10 @@ export function pageHelpers(page: Page) {
   const menuOpened = async () => {
     await page.evaluate(`document.querySelector("#nav-menu").focus()`);
     await press("Enter");
-    return waitFor(async () => (await exists("#nav-favorites")) || undefined);
+    return waitFor("drawer open", async () => (await exists("#nav-favorites")) || undefined);
   };
   const menuClosed = () =>
-    waitFor(async () => ((await exists("#nav-overview")) ? undefined : true));
+    waitFor("drawer closed", async () => ((await exists("#nav-overview")) ? undefined : true));
 
   const allOf = (selector: string, property: "textContent" | "title" | "ariaLabel") =>
     page.evaluate<string[]>(
@@ -151,7 +161,7 @@ export function pageHelpers(page: Page) {
     });
     const sideBySide = width >= MD_WIDTH_PX;
     try {
-      await waitFor(async () =>
+      await waitFor(`window ${width}px wide`, async () =>
         (await page.evaluate<number>("innerWidth")) === width &&
         (await exists(sideBySide ? "#nav-overview" : "#nav-menu"))
           ? true
@@ -160,7 +170,7 @@ export function pageHelpers(page: Page) {
       return await run();
     } finally {
       await page.send("Emulation.clearDeviceMetricsOverride", {});
-      await waitFor(async () =>
+      await waitFor("own window size", async () =>
         (await page.evaluate<number>("innerWidth")) === ownWidth && (await exists("#nav-overview"))
           ? true
           : undefined,
@@ -174,7 +184,7 @@ export function pageHelpers(page: Page) {
     Math.abs(one.left - other.left) < 1 && Math.abs(one.right - other.right) < 1;
 
   const tooltipClosed = () =>
-    waitFor(async () => ((await exists('[role="tooltip"]')) ? undefined : true));
+    waitFor("tooltip closed", async () => ((await exists('[role="tooltip"]')) ? undefined : true));
 
   const fabState = () =>
     page.evaluate<{ shut: boolean; spinning: boolean }>(
@@ -203,7 +213,10 @@ export function pageHelpers(page: Page) {
   const fabWidth = async () => (await boxOf("#read-again")).width;
   const touchEmulated = async (enabled: boolean) => {
     await page.send("Emulation.setTouchEmulationEnabled", { enabled, maxTouchPoints: 5 });
-    await waitFor(async () => (await fabWidth()) <= 1 === enabled || undefined);
+    await waitFor(
+      `touch emulation ${enabled ? "on" : "off"}`,
+      async () => (await fabWidth()) <= 1 === enabled || undefined,
+    );
   };
 
   const touchClicks = () => page.evaluate<string[]>("window.touchClicks");

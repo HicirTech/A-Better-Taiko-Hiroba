@@ -228,7 +228,7 @@ export const runThen = (log: string[], run: string[], after: string[]) => {
   );
 };
 export const requestsSettled = async (count: number) => {
-  await waitFor(async () =>
+  await waitFor(`${count} requests`, async () =>
     (await requestLog()).filter((line) => !isPicture(line)).length >= count ? true : undefined,
   );
   await Bun.sleep(400);

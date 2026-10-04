@@ -33,7 +33,10 @@ export async function thumbnails(ctx: Ctx) {
   const openItems = async (fresh = false) => {
     await (fresh ? openFreshEditor() : openEditing());
     await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await waitFor(
+      "Mascot grid",
+      async () => (await exists("#costume-items-costume1")) || undefined,
+    );
   };
   await fetch(`${HIROBA}/__thumbs?reset=1`);
   const owned = (await (await fetch(`${HIROBA}/__items?many=1`)).json()) as Record<
@@ -47,7 +50,10 @@ export async function thumbnails(ctx: Ctx) {
     ownedIn(slot).filter((id) => id !== START[`costume${slot}`]);
 
   await openItems(true);
-  await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
+  await waitFor(
+    "Mascot #4 picture",
+    async () => (await exists("#item-costume1-4 img")) || undefined,
+  );
   const seen = await thumbsSettled();
   results.thumbnailsShownAsPictures =
     (
@@ -77,7 +83,9 @@ export async function thumbnails(ctx: Ctx) {
   await page.evaluate("window.scrollTo(0, 0)");
   const myPageReadsBeforeGridPull = await myPageHits();
   await swipe(fromGrid, pulledOnGrid);
-  await waitFor(async () => ((await editorHits()) > editorReadsBeforeGridPull ? true : undefined));
+  await waitFor("editor read by pull", async () =>
+    (await editorHits()) > editorReadsBeforeGridPull ? true : undefined,
+  );
   await inStep("editing");
   results.pullReadsTheEditorOnTheCostumePage =
     (await editorHits()) === editorReadsBeforeGridPull + 1 &&
@@ -106,12 +114,18 @@ export async function thumbnails(ctx: Ctx) {
   const askedBeforeReopen = (await thumbsSettled()).length;
   await leaveTheCostumePage();
   await openItems();
-  await waitFor(async () => (await exists("#item-costume1-4 img")) || undefined);
+  await waitFor(
+    "Mascot #4 picture",
+    async () => (await exists("#item-costume1-4 img")) || undefined,
+  );
   await Bun.sleep(1500);
   results.thumbnailsAskedOncePerRun = (await thumbs()).length === askedBeforeReopen;
   await fetch(`${HIROBA}/__thumb?answer=gif`);
   await click("#costume-part-costume2");
-  await waitFor(async () => (await exists("#costume-thumbnails-code")) || undefined);
+  await waitFor(
+    "thumbnail notice",
+    async () => (await exists("#costume-thumbnails-code")) || undefined,
+  );
   const thumbsAfterGif = await thumbsSettled();
   await click("#costume-part-costume1");
   await Bun.sleep(300);
@@ -136,7 +150,7 @@ export async function thumbnails(ctx: Ctx) {
   await leaveTheCostumePage();
   await openItems();
   await click("#costume-part-costume2");
-  await waitFor(async () => (await exists("#costume-items-costume2")) || undefined);
+  await waitFor("Head grid", async () => (await exists("#costume-items-costume2")) || undefined);
   const askedOnReopen = (await thumbsSettled()).slice(thumbsAfterGif.length);
   results.failedThumbnailsAskedAgainOnReopen =
     same(
@@ -186,7 +200,10 @@ export async function tileThumbnails(ctx: Ctx) {
 
   const farItemSavedAtOnce = async (items: readonly number[]) => {
     await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await waitFor(
+      "Mascot grid",
+      async () => (await exists("#costume-items-costume1")) || undefined,
+    );
     const farItem = items[items.length - 1];
     const thumbsBeforePick = (await thumbsSettled()).length;
     await resetLog();
@@ -196,6 +213,7 @@ export async function tileThumbnails(ctx: Ctx) {
       `(async () => { document.querySelector("#item-costume1-${farItem}").click(); await new Promise((resolve) => requestAnimationFrame(resolve)); document.querySelector("#costume-save").click(); })()`,
     );
     await waitFor(
+      "held pre-check",
       async () =>
         (await hitsOn("/ajax/check_ip_kisekae.php")) > prechecksBeforeFarSave || undefined,
     );
@@ -204,7 +222,10 @@ export async function tileThumbnails(ctx: Ctx) {
     await fetch(`${HIROBA}/__hold-precheck?on=0`);
     await inStep("editing");
     const tiledAfterTheWrite = (await thumbsSettled()).slice(thumbsBeforePick);
-    await waitFor(async () => (await exists("#costume-part-costume1 img")) || undefined);
+    await waitFor(
+      "worn Mascot tile picture",
+      async () => (await exists("#costume-part-costume1 img")) || undefined,
+    );
     const waitedItOut =
       thumbsDuringTheWrite === 0 &&
       same(
@@ -222,7 +243,10 @@ export async function tileThumbnails(ctx: Ctx) {
 
   const slotInTheWindow = async (firstItem: number | undefined) => {
     await showPart("costume1");
-    await waitFor(async () => (await exists(`#item-costume1-${firstItem} img`)) || undefined);
+    await waitFor(
+      `Mascot #${firstItem} picture`,
+      async () => (await exists(`#item-costume1-${firstItem} img`)) || undefined,
+    );
   };
   const freshList = async (which: "2" | "3") => {
     const fresh = (await (await fetch(`${HIROBA}/__items?many=${which}`)).json()) as Record<
@@ -288,7 +312,10 @@ export async function saveInPlace(ctx: Ctx) {
     await withOnlyTheMascotSlot();
     return atSize(width, height, async () => {
       await showPart("costume1");
-      await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+      await waitFor(
+        "Mascot grid",
+        async () => (await exists("#costume-items-costume1")) || undefined,
+      );
       const farItem = phoneItems[phoneItems.length - 1];
       await page.evaluate(`document.querySelector("#item-costume1-${farItem}").click()`);
       const end = await scrollToTheEnd();
@@ -321,7 +348,10 @@ export async function saveInPlace(ctx: Ctx) {
   await withOnlyTheMascotSlot();
   results.costumeThumbnailsInViewDuringASaveWaitForIt = await atSize(960, 720, async () => {
     await showPart("costume1");
-    await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+    await waitFor(
+      "Mascot grid",
+      async () => (await exists("#costume-items-costume1")) || undefined,
+    );
     await page.evaluate("window.scrollTo(0, 0)");
     await click(`#item-costume1-${phoneItems[0]}`);
     const askedBefore = (await thumbsSettled()).length;
@@ -355,14 +385,23 @@ export async function saveInPlace(ctx: Ctx) {
         await showPart("colorFace");
         await click("#swatch-colorFace-55");
         await showPart("costume1");
-        await waitFor(async () => (await exists("#costume-items-costume1")) || undefined);
+        await waitFor(
+          "Mascot grid",
+          async () => (await exists("#costume-items-costume1")) || undefined,
+        );
         await click(`#item-costume1-${phoneItems[0]}`);
-        await waitFor(async () => (await exists("#kigurumi-warning")) || undefined);
-        await waitFor(async () => (await exists("#costume-preview-unavailable")) || undefined);
+        await waitFor(
+          "kigurumi warning",
+          async () => (await exists("#kigurumi-warning")) || undefined,
+        );
+        await waitFor(
+          "preview unavailable notice",
+          async () => (await exists("#costume-preview-unavailable")) || undefined,
+        );
         await scrollToTheEnd();
         await fetch(`${HIROBA}/__noop-save`);
         await click("#costume-save");
-        await waitFor(async () => (await exists("#write-outcome")) || undefined);
+        await waitFor("write notice", async () => (await exists("#write-outcome")) || undefined);
         return await run();
       });
     } finally {
@@ -375,12 +414,16 @@ export async function saveInPlace(ctx: Ctx) {
     clearBottom: () => Promise<number>,
   ) => {
     try {
-      return await waitFor(async () => {
-        const notice = await boxOf("#write-outcome");
-        const fits =
-          notice.top >= (await clearTop()) - 0.5 && notice.bottom <= (await clearBottom()) + 0.5;
-        return fits ? true : undefined;
-      }, 3_000);
+      return await waitFor(
+        "notice in view",
+        async () => {
+          const notice = await boxOf("#write-outcome");
+          const fits =
+            notice.top >= (await clearTop()) - 0.5 && notice.bottom <= (await clearBottom()) + 0.5;
+          return fits ? true : undefined;
+        },
+        3_000,
+      );
     } catch {
       return false;
     }

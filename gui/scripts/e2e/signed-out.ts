@@ -58,6 +58,7 @@ export async function signedOut(ctx: Ctx) {
       features: [{ name: "prefers-color-scheme", value: scheme }],
     });
     await waitFor(
+      `colour scheme ${scheme}`,
       async () =>
         (await page.evaluate<string>("getComputedStyle(document.documentElement).colorScheme")) ===
           scheme || undefined,
@@ -86,7 +87,7 @@ export async function signedOut(ctx: Ctx) {
     deviceScaleFactor: 0,
     mobile: false,
   });
-  await waitFor(async () => (await exists("#nav-menu")) || undefined);
+  await waitFor("drawer button", async () => (await exists("#nav-menu")) || undefined);
   const menuFloats =
     !(await exists("nav")) &&
     (await attribute("#nav-menu", "aria-label")) === "Menu" &&
@@ -117,6 +118,7 @@ export async function signedOut(ctx: Ctx) {
   await press("Escape");
   await menuClosed();
   const focusBack = await waitFor(
+    "focus back on the drawer button",
     async () =>
       (await page.evaluate<string | undefined>("document.activeElement?.id")) === "nav-menu" ||
       undefined,
@@ -125,7 +127,7 @@ export async function signedOut(ctx: Ctx) {
   await click(".MuiBackdrop-root");
   await menuClosed();
   await page.send("Emulation.clearDeviceMetricsOverride", {});
-  await waitFor(async () => (await exists("#nav-overview")) || undefined);
+  await waitFor("side panel", async () => (await exists("#nav-overview")) || undefined);
   results.menuOnNarrowWindow =
     menuFloats &&
     drawerShown &&

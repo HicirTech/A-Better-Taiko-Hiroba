@@ -6,7 +6,7 @@ import electronPath from "electron";
 import { type App, launch, stop } from "./app";
 import { HIROBA, MY_PAGE, NOON_JST, root, USER_DATA } from "./config";
 import { type Ctx, newShared, type Phase } from "./context";
-import { withoutPictureBytes } from "./harness";
+import { setSection, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
 
 rmSync(USER_DATA, { recursive: true, force: true });
@@ -100,6 +100,7 @@ async function prepare(phase: Phase) {
 
 try {
   for (const section of SECTIONS) {
+    setSection(section.name);
     await prepare(section.phase);
     await section.run(ctx);
   }

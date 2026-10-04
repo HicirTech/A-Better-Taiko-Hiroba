@@ -29,6 +29,7 @@ import {
 export function sessionHelpers(ctx: Ctx) {
   const panelArtShownOn = (app: App) =>
     waitForSeen(
+      "score panel picture",
       app.page,
       async () =>
         (await app.page.evaluate<boolean>(
@@ -39,6 +40,7 @@ export function sessionHelpers(ctx: Ctx) {
   // The launch's read is the session's first, which renews nothing.
   const myDonShownOn = (app: App) =>
     waitForSeen(
+      "My Don picture",
       app.page,
       async () =>
         (await app.page.evaluate<boolean>(`document.querySelector("#my-don-image") !== null`)) ||
@@ -50,6 +52,7 @@ export function sessionHelpers(ctx: Ctx) {
       `document.querySelector("#medal").scrollIntoView({ block: "center" })`,
     );
     await waitForSeen(
+      "medal plate picture",
       ctx.app.page,
       async () =>
         (await ctx.app.page.evaluate<boolean>(
@@ -150,7 +153,11 @@ export async function sessionExpiry(ctx: Ctx) {
   );
   await click("#sign-in");
   await until("サンプルどん");
-  await waitForSeen(page, async () => (await exists("#my-don-image")) || undefined);
+  await waitForSeen(
+    "My Don picture",
+    page,
+    async () => (await exists("#my-don-image")) || undefined,
+  );
   results.signInForgetsThePictures =
     same(await page.evaluate("window.firstCard"), [false, false]) &&
     (await exists("#title-plate-image"));
@@ -195,6 +202,7 @@ export async function reopen(ctx: Ctx) {
   await Bun.sleep(1000);
   results.editorNotReadOnReopen = (await editorHits()) === editorReadsBeforeReopen;
   await waitForSeen(
+    "title plate picture",
     running.page,
     async () =>
       (await running.page.evaluate<boolean>(
@@ -230,7 +238,7 @@ export async function reopen(ctx: Ctx) {
     same(await requestLog(), []);
 
   await running.goTo("costume");
-  await waitFor(async () =>
+  await waitFor("history button enabled", async () =>
     (await running.page.evaluate<boolean>(
       `document.querySelector("#costume-history")?.disabled === false`,
     ))
@@ -244,14 +252,19 @@ export async function reopen(ctx: Ctx) {
       historyBeforeReopen,
     );
   results.editorReadOnceOnReopen = (await editorHits()) === editorReadsBeforeReopen + 1;
-  await waitFor(async () => (await shownOnReopen("#costume-part-costume1")) || undefined);
+  await waitFor(
+    "Mascot tile",
+    async () => (await shownOnReopen("#costume-part-costume1")) || undefined,
+  );
   await showPartOn(running, "costume1");
   await waitForSeen(
+    "Mascot #4 picture",
     running.page,
     async () => (await shownOnReopen("#item-costume1-4 img")) || undefined,
   );
   await running.click("#costume-part-costume2");
   await waitForSeen(
+    "Head #21 picture",
     running.page,
     async () => (await shownOnReopen("#item-costume2-21 img")) || undefined,
   );
@@ -291,8 +304,12 @@ export async function signedOutReopen(ctx: Ctx) {
   tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
   const editorReadsBeforeOpening = await editorHits();
   await running.click("#costume-open");
-  await waitFor(async () => (await running.currentPage()) === "costume" || undefined);
   await waitFor(
+    "costume page",
+    async () => (await running.currentPage()) === "costume" || undefined,
+  );
+  await waitFor(
+    "editing step",
     async () =>
       (await running.page.evaluate<string | null>(
         `document.querySelector("#costume-page")?.getAttribute("data-step") ?? null`,
@@ -314,6 +331,7 @@ export async function signedOutReopen(ctx: Ctx) {
     sentAsPlanned(await requestLog(), [], ["GET /mypage_kisekae.php"]);
   await running.goTo("overview");
   await waitForSeen(
+    "title plate picture",
     running.page,
     async () =>
       (await running.page.evaluate<boolean>(
@@ -337,6 +355,7 @@ export async function signedOutReopen(ctx: Ctx) {
   // An unconfirmed plate is asked again: Hiroba draws a blank one for a session it ended unseen.
   const plateShown = () =>
     waitForSeen(
+      "title plate picture",
       running.page,
       async () =>
         (await running.page.evaluate<boolean>(
@@ -355,7 +374,10 @@ export async function signedOutReopen(ctx: Ctx) {
   await fetch(`${HIROBA}/__variant?title=third`);
   await running.click("#read-again");
   await running.until("三つ目のサンプル称号");
-  await waitFor(async () => (await platesAsked()).length > platesBeforeThird || undefined);
+  await waitFor(
+    "title plate asked again",
+    async () => (await platesAsked()).length > platesBeforeThird || undefined,
+  );
   await plateShown();
   const platesUnconfirmed = (await platesSettled()).length;
   results.unconfirmedPlateAskedAgain = (await platesAfterSignOutAndIn()) === platesUnconfirmed + 1;
@@ -374,7 +396,7 @@ export async function signedOutReopen(ctx: Ctx) {
       running.page.evaluate<{ src: string | null; loading: boolean }>(
         `({ src: document.querySelector("#costume-preview-image")?.getAttribute("src") ?? null, loading: document.querySelector("#costume-preview-loading") !== null })`,
       );
-    await waitFor(async () => {
+    await waitFor("preview and history ready", async () => {
       const { src, loading } = await previewHere();
       const historyReady = await running.page.evaluate<boolean>(
         `document.querySelector("#costume-history")?.disabled === false`,
@@ -393,12 +415,17 @@ export async function signedOutReopen(ctx: Ctx) {
     const hitsBefore = await hitsOn("/imgsrc_mydon.php");
     await fetch(`${HIROBA}/__previews?reset=1`);
     await running.click("#costume-history");
-    await waitFor(async () => (await shownOnReopen(`#costume-history-entry-${at}`)) || undefined);
+    await waitFor(
+      "history entry",
+      async () => (await shownOnReopen(`#costume-history-entry-${at}`)) || undefined,
+    );
     await running.click(`#costume-history-entry-${at}`);
-    await waitFor(async () =>
+    await waitFor("history dialog closed", async () =>
       (await shownOnReopen("#costume-history-dialog")) ? undefined : true,
     );
-    await waitFor(async () => ((await previewHere()).src === picture ? true : undefined));
+    await waitFor("picked preview", async () =>
+      (await previewHere()).src === picture ? true : undefined,
+    );
     await Bun.sleep(800);
     const asksNothing =
       !(await shownOnReopen("#costume-preview-loading")) &&
