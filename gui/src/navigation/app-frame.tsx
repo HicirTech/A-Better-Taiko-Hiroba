@@ -26,6 +26,8 @@ import {
   SettingsIcon,
 } from "./page-icons";
 import { PAGES, type Page } from "./pages";
+import { useMenuSwipe } from "./use-menu-swipe";
+import { useTouchFirst } from "./use-touch-first";
 import { useWideWindow } from "./use-wide-window";
 import { WiderFrameContext } from "./wider-frame";
 
@@ -205,6 +207,8 @@ function MenuDrawer({
 }: NavigationProps & { readonly open: boolean; readonly onOpenChange: (open: boolean) => void }) {
   const drawerId = useId();
   const label = i18n.t("nav.menu");
+  const touchFirst = useTouchFirst();
+  useMenuSwipe({ active: touchFirst, open, onOpenChange: setOpen });
   const pick = (next: Page) => {
     setOpen(false);
     onNavigate(next);
