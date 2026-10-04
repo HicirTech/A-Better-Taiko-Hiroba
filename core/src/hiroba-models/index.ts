@@ -15,7 +15,7 @@ export {
   isBetterDanClearState,
 } from "./dan";
 export type { FavoriteSongState, FolderState, ShownSong } from "./favorite";
-export { FOLDER_SLOT_COUNT } from "./favorite";
+export { FOLDER_SLOT_COUNT, isSongNo } from "./favorite";
 export { FormToken } from "./form-token";
 export type { NameState, TitleOption, TitleState } from "./identity";
 export type {

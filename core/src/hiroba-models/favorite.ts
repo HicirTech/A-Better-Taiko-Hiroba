@@ -3,6 +3,11 @@ import type { Genre } from "./vocabulary";
 /** How many songs the お気に入り folder holds. */
 export const FOLDER_SLOT_COUNT = 30;
 
+/** A song number as the favourite pages carry it: one to five digits. */
+export function isSongNo(value: string): boolean {
+  return /^\d{1,5}$/.test(value);
+}
+
 /** The お気に入り folder: its slots in order, 1 to 30, each a song number or null when empty. */
 export interface FolderState {
   readonly slots: readonly (string | null)[];

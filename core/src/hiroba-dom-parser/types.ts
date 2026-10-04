@@ -2,6 +2,8 @@ import type {
   CostumeSet,
   CrownState,
   DanClearState,
+  FavoriteSongState,
+  FolderState,
   FormToken,
   Genre,
   Level,
@@ -10,10 +12,12 @@ import type {
   Score,
   ScoreRank,
   ScoreRecord,
+  ShownSong,
   Song,
   TitleOption,
   TitleState,
 } from "../hiroba-models";
+import type { EditorReading } from "../hiroba-writes/types";
 
 export interface CostumeEditorReading {
   readonly state: CostumeSet;
@@ -34,6 +38,18 @@ export interface TitleEditorReading {
   readonly token: FormToken;
   /** Owned titles; a name can repeat under another id. The two leading list entries are skipped. */
   readonly options: readonly TitleOption[];
+}
+
+export interface FolderEditorReading extends EditorReading<FolderState> {
+  /** The filled slots' songs as the page shows them, in slot order. */
+  readonly songs: readonly ShownSong[];
+}
+
+export interface FavoriteSongEditorReading extends EditorReading<FavoriteSongState> {
+  /** Null when no song is set. */
+  readonly song: ShownSong | null;
+  /** The form's `bsf`, kept as the page holds it: the save posts it back. */
+  readonly bsf: string;
 }
 
 export interface RenameEditorReading {

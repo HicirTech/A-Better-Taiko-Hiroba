@@ -10,6 +10,8 @@ import {
   parseCostumePage,
   parseDanBoardPage,
   parseDanDetailPage,
+  parseFavoriteSongEditorPage,
+  parseFolderEditorPage,
   parsePlayerRowsPage,
   parseProfilePage,
   parsePublicProfilePage,
@@ -159,6 +161,16 @@ const ROUTES: readonly Route[] = [
     run: (html) => attempt(parseTitleEditorPage(html)),
   },
   {
+    match: /^favorite-folder-edit/,
+    parser: "parseFolderEditorPage",
+    run: (html) => attempt(parseFolderEditorPage(html)),
+  },
+  {
+    match: /^favorite-song-edit/,
+    parser: "parseFavoriteSongEditorPage",
+    run: (html) => attempt(parseFavoriteSongEditorPage(html)),
+  },
+  {
     match: /^(friend-|block-list|user-search-)/,
     parser: "parsePlayerRowsPage",
     run: (html) => attempt(parsePlayerRowsPage(html, "user_search.php")),
@@ -204,7 +216,10 @@ const UNROUTED: readonly { readonly match: RegExp; readonly reason: string }[] =
     match: /^title-parts/,
     reason: "the parts composer is a separate feature, not in the first title and name writes",
   },
-  { match: /^(select-song|form-data|portal-|favorite-)/, reason: "favourite write flow — E12" },
+  {
+    match: /^(select-song|form-data|portal-|favorite-(?!(folder|song)-edit))/,
+    reason: "favourite write flow — E12",
+  },
   { match: /^(rank-list-noparam)/, reason: "routed above" },
 ];
 
