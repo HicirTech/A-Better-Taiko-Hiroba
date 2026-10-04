@@ -1,0 +1,22 @@
+import type { Genre } from "./vocabulary";
+
+/** How many songs the お気に入り folder holds. */
+export const FOLDER_SLOT_COUNT = 30;
+
+/** The お気に入り folder: its slots in order, 1 to 30, each a song number or null when empty. */
+export interface FolderState {
+  readonly slots: readonly (string | null)[];
+}
+
+/** The 大好きな曲: its song number, or null when none is set. */
+export interface FavoriteSongState {
+  readonly songNo: string | null;
+}
+
+/** A song as a favourite editor shows it: Hiroba's own title and genre. */
+export interface ShownSong {
+  readonly songNo: string;
+  readonly title: string;
+  /** Null when the page names no genre this app knows. */
+  readonly genre: Genre | null;
+}
