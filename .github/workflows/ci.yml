@@ -50,6 +50,10 @@ jobs:
       - name: Test
         run: bun test
 
+      # The release's update.json, which the app reads: valid, and the version in gui/package.json.
+      - name: Update feed
+        run: bun run check:update-feed
+
       # The web bundle and Electron's main and preload; no Electron binary, packaging or Android.
       - name: Build GUI
         run: bun run --cwd gui build
