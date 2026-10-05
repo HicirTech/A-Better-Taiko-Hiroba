@@ -435,14 +435,6 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
                       i18n={i18n}
                     />
                     <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
-                    <Typography
-                      id="last-updated"
-                      variant="caption"
-                      color="text.secondary"
-                      component="p"
-                    >
-                      {t("profile.fetchedAt", { time: i18n.dateTime(screen.profile.fetchedAt) })}
-                    </Typography>
                   </Stack>
                 )}
               </SongSearch>

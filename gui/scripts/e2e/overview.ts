@@ -48,9 +48,9 @@ export function overviewHelpers(app: App) {
   const { allOf, boxOf } = pageHelpers(page);
 
   const lastUpdated = async () => ({
-    text: (await textOf("#last-updated")) ?? "",
+    text: (await textOf("#nav-last-updated")) ?? "",
     fontSize: await page.evaluate<string>(
-      `getComputedStyle(document.querySelector("#last-updated")).fontSize`,
+      `getComputedStyle(document.querySelector("#nav-last-updated")).fontSize`,
     ),
   });
 
@@ -183,8 +183,7 @@ export async function overview(ctx: Ctx) {
       `document.querySelector("#panel-footnote") === null && ["#ranks-bar", "#crowns-bar"].every((bar) => document.querySelector(bar)?.getAttribute("aria-hidden") === "true")`,
     ));
 
-  const updatedOnOverview = await lastUpdated();
-  state.updatedOnOverview = updatedOnOverview;
+  state.lastUpdated = await lastUpdated();
   const rendered = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );

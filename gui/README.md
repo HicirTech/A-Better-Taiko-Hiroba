@@ -40,13 +40,13 @@ unpackaged build reads no feed, and so never asks GitHub, unless `ABTH_DEV_UPDAT
 project's repository in the system's browser.
 
 Signed in, the foot of the navigation (the side panel, or the drawer) says when your page was last
-read and holds **Read again**, a refresh arrow; F5, Ctrl+R or ⌘R read again too, unless a dialog is
-open. The button spins while a read runs, and it is shut then, and while a costume, title or
+read, in the device's time zone, with the month as a short name and the time to the minute, and it
+holds **Read again**, a refresh arrow; F5, Ctrl+R or ⌘R read again too, unless a dialog is open. The
+Overview itself has no line for the time. The button spins while a read runs, and it is shut then, and while a costume, title or
 nickname save runs, so one read runs at a time and none inside a write. On a touch-first screen
 (`pointer: coarse`), pull the page down from its top instead: a round indicator follows the finger,
 and letting go once its ring is full reads again (a page that has scrolled is the finger's to scroll
-back, and pulls nothing). The line under the page still says when it was read, in the device's time
-zone, with the month as a short name and the time to the second. On the Costume and Favourites pages
+back, and pulls nothing). On the Costume and Favourites pages
 the same button, keys and pull read the page's editors again instead of your page; on the
 Nickname & title page they read your page and then the list of titles.
 

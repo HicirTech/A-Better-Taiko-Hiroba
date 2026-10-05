@@ -202,7 +202,7 @@ export async function settings(ctx: Ctx) {
   const readsBeforeLanguage = await readHits();
   const platesBeforeLanguage = (await platesAsked()).length;
   await pickLanguage("ja");
-  const japaneseUpdate = (await textOf("#last-updated")) ?? "";
+  const japaneseUpdate = (await textOf("#nav-last-updated")) ?? "";
   const japaneseLead = ja.t("profile.fetchedAt", { time: "" });
   results.languageRedrawsInPlace =
     (await textOf("#rank-8")) === ja.t("panel.countOf", { count: "3", total: "102" }) &&

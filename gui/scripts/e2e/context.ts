@@ -8,7 +8,7 @@ import type { PlateAsked } from "./stand-in";
 export type Shared = {
   platesAtSignIn: PlateAsked[]; // overview
   platesAfterRereads: PlateAsked[]; // read-again
-  updatedOnOverview: { text: string; fontSize: string }; // overview
+  lastUpdated: { text: string; fontSize: string }; // overview
   myDonFailureAtSignIn: boolean; // overview
   overviewScrolls: boolean; // settings
   columnOnOverview: Box; // settings
@@ -36,7 +36,7 @@ const NO_POINT: Point = { x: 0, y: 0 };
 export const newShared = (): Shared => ({
   platesAtSignIn: [],
   platesAfterRereads: [],
-  updatedOnOverview: { text: "", fontSize: "" },
+  lastUpdated: { text: "", fontSize: "" },
   myDonFailureAtSignIn: false,
   overviewScrolls: false,
   columnOnOverview: NO_BOX,

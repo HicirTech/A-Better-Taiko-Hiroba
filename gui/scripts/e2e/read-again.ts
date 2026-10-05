@@ -69,7 +69,7 @@ export async function readAgain(ctx: Ctx) {
   await waitFor("held read", async () => (await myPageHits()) > readsBeforeHeld || undefined);
   const fabWhileReading = await fabState();
   const pageWhileReading = await page.evaluate<{ kept: boolean; shut: boolean }>(
-    `({ kept: document.querySelector("#last-updated") !== null, shut: document.querySelector("#page-shut")?.hasAttribute("inert") ?? false })`,
+    `({ kept: document.querySelector("#profile") !== null, shut: document.querySelector("#page-shut")?.hasAttribute("inert") ?? false })`,
   );
   await click("#read-again");
   await Bun.sleep(300);
@@ -165,7 +165,7 @@ export const profileVariantsKeys = [
   "medalNoneShown",
   "medalCountShown",
   "danLessRowRead",
-  "lastUpdatedLineShown",
+  "lastUpdatedAtTheNavFoot",
   "unreadableDanShownWithTheRest",
   "twoRequestsWithDanOneWithout",
   "danLabelPictureCostsNothing",
@@ -176,7 +176,7 @@ export async function profileVariants(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page, text, textOf } = ctx.app;
   const { allOf } = pageHelpers(page);
-  const { updatedOnOverview } = state;
+  const { lastUpdated } = state;
 
   const readShowing = async (selector: string) => {
     const before = await readHits();
@@ -210,9 +210,10 @@ export async function profileVariants(ctx: Ctx) {
     (await text()).includes("サンプルどん") &&
     (await textOf("#dan")) === null &&
     (await textOf("#dan-unreadable")) === null;
-  const LAST_UPDATED = /^Last updated [A-Z][a-z]{2} \d{1,2}, \d{4}, \d{1,2}:\d{2}:\d{2} [AP]M$/;
-  results.lastUpdatedLineShown =
-    LAST_UPDATED.test(updatedOnOverview.text) && updatedOnOverview.fontSize === "12px";
+  // Brief, as the foot is narrow: no year and no seconds, and the time on one line.
+  const LAST_UPDATED = /^Last updated [A-Z][a-z]{2}\s\d{1,2},\s\d{1,2}:\d{2}\s[AP]M$/;
+  results.lastUpdatedAtTheNavFoot =
+    LAST_UPDATED.test(lastUpdated.text) && lastUpdated.fontSize === "12px";
   await fetch(`${HIROBA}/__variant?dan=14&label=gif`);
   requestsPerRead.push(await readShowing("#dan-unreadable"));
   const afterGif = withoutPictureBytes(
