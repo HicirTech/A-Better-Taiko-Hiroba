@@ -25,7 +25,7 @@ export function ReadAgainFoot({ reading, canRead, fetchedAt, onRead, i18n }: Rea
         sx={{ flexGrow: 1, minWidth: 0 }}
       >
         {fetchedAt !== null &&
-          i18n.t("profile.fetchedAt", { time: unbroken(i18n.briefDateTime(fetchedAt)) })}
+          i18n.t("profile.fetchedAt", { time: unbroken(i18n.dateTime(fetchedAt)) })}
       </Typography>
       {/* None while it is shut: a disabled button sends no event to open or close it. */}
       <Tooltip title={canRead ? label : ""}>

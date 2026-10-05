@@ -20,8 +20,6 @@ export interface Translator {
   number(value: number): string;
   /** A date and time of day as the locale writes them, in the device's zone; a dash for none. */
   dateTime(value: Date | number | string): string;
-  /** The same, short enough for a narrow column: no year and no seconds. */
-  briefDateTime(value: Date | number | string): string;
 }
 
 /** Replaces each `{name}` with its parameter; a placeholder without one stays as written. */
@@ -34,17 +32,9 @@ function interpolate(template: string, params: TranslateParams | undefined): str
   );
 }
 
-/** The whole date with the month as a short name, and the time to the second. */
+/** Brief enough for a narrow column: the month as a short name and the day, and the time to the
+ * minute, with no year and no seconds. */
 const DATE_TIME: Intl.DateTimeFormatOptions = {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "numeric",
-  second: "numeric",
-};
-/** The month as a short name and the day, and the time to the minute. */
-const BRIEF_DATE_TIME: Intl.DateTimeFormatOptions = {
   month: "short",
   day: "numeric",
   hour: "numeric",
@@ -54,19 +44,17 @@ const BRIEF_DATE_TIME: Intl.DateTimeFormatOptions = {
 /** Shown for a moment that reads as no date: Intl throws on it, taking the window down. */
 const UNKNOWN_TIME = "—";
 
-const formatOf = (format: Intl.DateTimeFormat) => (value: Date | number | string) => {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? UNKNOWN_TIME : format.format(date);
-};
-
 export function createTranslator(locale: Locale = DEFAULT_LOCALE): Translator {
   const table = CATALOG[locale];
   const numbers = new Intl.NumberFormat(locale);
+  const dates = new Intl.DateTimeFormat(locale, DATE_TIME);
   return {
     locale,
     t: (key, params) => interpolate(table[key], params),
     number: (value) => numbers.format(value),
-    dateTime: formatOf(new Intl.DateTimeFormat(locale, DATE_TIME)),
-    briefDateTime: formatOf(new Intl.DateTimeFormat(locale, BRIEF_DATE_TIME)),
+    dateTime: (value) => {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? UNKNOWN_TIME : dates.format(date);
+    },
   };
 }

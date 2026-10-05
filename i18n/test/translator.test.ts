@@ -41,10 +41,10 @@ describe("the translator's formats", () => {
     expect([0, 12, 1234].map(number)).toEqual(["0", "12", "1,234"]);
   });
 
-  test("writes a moment in the local zone, with the short month and the seconds", () => {
+  test("writes a moment in the local zone, with the short month and neither year nor seconds", () => {
     const { dateTime } = createTranslator("en");
-    const text = dateTime(new Date(2026, 9, 3, 16, 17, 54));
-    expect(text).toStartWith("Oct 3, 2026, 4:17:54");
+    const text = dateTime(new Date(2026, 9, 3, 16, 7, 54));
+    expect(text).toStartWith("Oct 3, 4:07");
     expect(text).toEndWith("PM");
   });
 
@@ -52,14 +52,6 @@ describe("the translator's formats", () => {
     const at = new Date(2026, 9, 3, 16, 17, 54);
     const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(at);
     expect(createTranslator(locale).dateTime(at)).toContain(month);
-  });
-
-  test("writes a brief moment with neither the year nor the seconds", () => {
-    const { briefDateTime } = createTranslator("en");
-    const text = briefDateTime(new Date(2026, 9, 3, 16, 7, 54));
-    expect(text).toStartWith("Oct 3, 4:07");
-    expect(text).toEndWith("PM");
-    expect(briefDateTime("not a moment")).toBe("—");
   });
 
   test("reads a Date, a number and an ISO string of one moment alike", () => {
