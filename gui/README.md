@@ -332,7 +332,10 @@ The block at the top is drawn as my page draws its header: your My Don on the le
 spans the right column from the top of the plate to the foot of the score panel; on the right your
 title over Hiroba's own title plate, your nickname in its cream box and your dan's own label in the
 blue one, and under the plate [the score panel](#the-score-panel). On a narrow window they stack,
-the portrait first. All sit on the app's own surface rather than Hiroba's yellow, with no
+the portrait first, and the plate's top, the room Hiroba keeps over its band for decorations,
+tucks under the portrait: the first thing the plate draws below the portrait sits as close to it as
+the panel sits to the plate, decorations beside the portrait stay in view, and a tap on the portrait
+is the portrait's. All sit on the app's own surface rather than Hiroba's yellow, with no
 background art and no frame. Your region is not shown. The words stay text over the pictures, and
 the block keeps Hiroba's proportions at any width, up to half again its size. The plate is also the
 button to [the Nickname & title page](#the-nickname--title-page). The label is the picture the read already fetches to read
@@ -354,7 +357,7 @@ What it costs Hiroba:
   session still good, and kept under your player, so never given to another account. Until then it
   is shown, not kept: a sign-out before that read asks for it again.
 
-Until the plate comes, or if it does not, a plain band of the same shape stands in, and a line
+Until the plate comes, or if it does not, a plain band stands in where the plate's band goes, and a line
 under the card gives a code for a report. Without a session, Hiroba answers a blank plate, a PNG
 that no check can tell from yours, which is why the plate is asked for only after a read that
 found the session good, and kept only once the next read finds it good still: a blank plate that
