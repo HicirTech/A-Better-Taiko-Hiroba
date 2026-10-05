@@ -31,6 +31,7 @@ import { useBackCloses } from "../navigation/back-closers";
 import type { HirobaSessionPort } from "../session-port";
 import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
 import { ChartPicture } from "./chart-picture";
+import { ChartViewer, type ShownChart } from "./chart-viewer";
 import { bpmText, openingChart } from "./song-facts";
 
 const TITLE_ID = "song-details-title";
@@ -100,6 +101,7 @@ function DetailsBody({
 }: Omit<SongDetailsProps, "song"> & { song: ListedSong }) {
   const { t, locale } = i18n;
   const [chart, setChart] = useState(() => openingChart(song.levels, keptShownDifficulty()));
+  const [viewing, setViewing] = useState<ShownChart | null>(null);
   const name = shownName(song, locale);
   const charted = DIFFICULTIES.flatMap((difficulty) => {
     const level = song.levels[difficulty];
@@ -191,6 +193,7 @@ function DetailsBody({
                   })}
                   port={port}
                   i18n={i18n}
+                  onOpen={setViewing}
                 />
               ))}
               <Typography variant="caption" color="text.secondary">
@@ -204,6 +207,7 @@ function DetailsBody({
           )}
         </Stack>
       </DialogContent>
+      <ChartViewer chart={viewing} i18n={i18n} onClose={() => setViewing(null)} />
     </>
   );
 }
