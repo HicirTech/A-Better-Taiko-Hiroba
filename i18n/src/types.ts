@@ -38,6 +38,8 @@ export interface Messages {
   "settings.chineseWikiGives": string;
   "settings.chartWiki": string;
   "settings.chartWikiGives": string;
+  "settings.github": string;
+  "settings.githubGives": string;
   "settings.songLevels": string;
   "settings.shownDifficulty": string;
   "settings.shownDifficultyHint": string;

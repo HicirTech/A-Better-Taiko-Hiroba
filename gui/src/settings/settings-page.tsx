@@ -2,6 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Button, Divider, List, ListItem, ListItemText, Paper, SvgIcon } from "@mui/material";
 import { type ReactNode, useId } from "react";
 
+import { GitHubSection } from "./github-section";
 import { SettingsSection } from "./settings-section";
 import { SongDataSection } from "./song-data-section";
 import { SongLevelsSection } from "./song-levels-section";
@@ -26,6 +27,8 @@ export interface SettingsPageProps {
   readonly account: AccountState;
   /** The updates section; left out where there is no port to ask. */
   readonly updates?: Omit<UpdatesSectionProps, "i18n">;
+  /** Opens the repository's page; the section is left out where nothing can open it. */
+  readonly onOpenRepository?: () => void;
 }
 
 // Material's "account_circle" icon (Apache 2.0), inline: the icons package is not a dependency.
@@ -37,7 +40,13 @@ function AccountIcon() {
   );
 }
 
-export function SettingsPage({ i18n, language, account, updates }: SettingsPageProps) {
+export function SettingsPage({
+  i18n,
+  language,
+  account,
+  updates,
+  onOpenRepository,
+}: SettingsPageProps) {
   const { t } = i18n;
   const headingId = useId();
   const who =
@@ -92,6 +101,12 @@ export function SettingsPage({ i18n, language, account, updates }: SettingsPageP
       <SongLevelsSection i18n={i18n} />
       <Divider />
       <SongDataSection i18n={i18n} />
+      {onOpenRepository !== undefined && (
+        <>
+          <Divider />
+          <GitHubSection i18n={i18n} onOpen={onOpenRepository} />
+        </>
+      )}
     </Paper>
   );
 }

@@ -24,6 +24,8 @@ export const en: Messages = {
   "settings.chineseWikiGives": "Official Chinese song names, used under CC BY-SA",
   "settings.chartWiki": "Taiko no Tatsujin Fumen Wiki (wikiwiki.jp/taiko-fumen)",
   "settings.chartWikiGives": "Chart pictures",
+  "settings.github": "GitHub",
+  "settings.githubGives": "The app's source code, its issues and its releases",
   "settings.songLevels": "Song levels",
   "settings.shownDifficulty": "Difficulty shown first",
   "settings.shownDifficultyHint":

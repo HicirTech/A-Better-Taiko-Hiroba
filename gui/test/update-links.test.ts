@@ -2,8 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import {
   feedUrlFor,
+  openableUrlOf,
   RELEASES_URL,
-  releasesUrlOf,
+  REPOSITORY_URL,
   releaseUrl,
   UPDATE_FEED_URL,
 } from "../src/updates";
@@ -39,18 +40,19 @@ describe("releaseUrl", () => {
   });
 });
 
-describe("releasesUrlOf", () => {
+describe("openableUrlOf", () => {
   test.each([
+    REPOSITORY_URL,
     RELEASES_URL,
     `${RELEASES_URL}/`,
     `${RELEASES_URL}/tag/v0.2.0`,
     `${RELEASES_URL}/latest/download/update.json`,
   ])("takes %s", (url) => {
-    expect(releasesUrlOf(url)).toBe(url);
+    expect(openableUrlOf(url)).toBe(url);
   });
 
   test("gives the address as a browser spells it", () => {
-    expect(releasesUrlOf("https://GITHUB.com:443/HicirTech/A-Better-Taiko-Hiroba/releases")).toBe(
+    expect(openableUrlOf("https://GITHUB.com:443/HicirTech/A-Better-Taiko-Hiroba/releases")).toBe(
       RELEASES_URL,
     );
   });
@@ -61,7 +63,8 @@ describe("releasesUrlOf", () => {
     "javascript:alert(1)",
     "file:///C:/Windows/System32/calc.exe",
     "http://github.com/HicirTech/A-Better-Taiko-Hiroba/releases",
-    "https://github.com/HicirTech/A-Better-Taiko-Hiroba",
+    `${REPOSITORY_URL}/`,
+    `${REPOSITORY_URL}?tab=1`,
     "https://github.com/HicirTech/A-Better-Taiko-Hiroba/issues",
     "https://github.com/HicirTech/Another-Repository/releases",
     `${RELEASES_URL}-old`,
@@ -73,6 +76,6 @@ describe("releasesUrlOf", () => {
     "https://github.com@example.test/HicirTech/A-Better-Taiko-Hiroba/releases",
     `https://example.test/${RELEASES_URL}`,
   ])("refuses %s", (url) => {
-    expect(releasesUrlOf(url)).toBeNull();
+    expect(openableUrlOf(url)).toBeNull();
   });
 });

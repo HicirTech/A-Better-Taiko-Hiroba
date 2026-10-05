@@ -23,6 +23,8 @@ export const zhHans: Messages = {
   "settings.chineseWikiGives": "官方中文歌名，按 CC BY-SA 使用",
   "settings.chartWiki": "太鼓达人谱面 Wiki（wikiwiki.jp/taiko-fumen）",
   "settings.chartWikiGives": "谱面图",
+  "settings.github": "GitHub",
+  "settings.githubGives": "应用的源代码、问题反馈和版本发布",
   "settings.songLevels": "歌曲难度",
   "settings.shownDifficulty": "默认显示的难度",
   "settings.shownDifficultyHint":

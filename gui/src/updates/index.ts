@@ -12,8 +12,10 @@ export {
 } from "./update-feed";
 export {
   feedUrlFor,
+  openableUrlOf,
   RELEASES_URL,
-  releasesUrlOf,
+  REPOSITORY_NAME,
+  REPOSITORY_URL,
   releaseUrl,
   UPDATE_FEED_URL,
 } from "./update-links";

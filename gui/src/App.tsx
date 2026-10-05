@@ -39,7 +39,7 @@ import type {
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
 import { SongSearch } from "./songs/song-search";
-import { RELEASES_URL, releaseUrl } from "./updates";
+import { RELEASES_URL, REPOSITORY_URL, releaseUrl } from "./updates";
 import { APP_VERSION } from "./updates/app-version";
 import { UpdateDialog } from "./updates/update-dialog";
 import { useUpdateReminder } from "./updates/use-update-reminder";
@@ -330,6 +330,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             onCheck: updates.checkNow,
             onOpenReleases: () => link.open(RELEASES_URL),
           }}
+          onOpenRepository={() => link.open(REPOSITORY_URL)}
         />
       ) : (
         <Stack spacing={3}>

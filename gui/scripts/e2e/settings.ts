@@ -137,6 +137,7 @@ export async function language(ctx: Ctx) {
 
 export const settingsKeys = [
   "settingsLaidOutLikeGmail",
+  "githubOpensTheRepository",
   "languageRedrawsInPlace",
   "languageAsksHirobaNothing",
   "hirobaWordsMarkedJapanese",
@@ -168,6 +169,7 @@ export async function settings(ctx: Ctx) {
       ["updates", "H2", true, 1],
       ["song-levels", "H2", true, 1],
       ["song-data", "H2", true, 1],
+      ["github", "H2", true, 1],
     ],
     radios: 5,
     checked: 1,
@@ -175,6 +177,16 @@ export async function settings(ctx: Ctx) {
     signOutBeside: true,
     casing: "uppercase",
   });
+  // Caught here, or the system's browser would open on the repository's page.
+  await page.evaluate(
+    `window.openedUrls = []; window.open = (url) => { window.openedUrls.push(String(url)); return null; };`,
+  );
+  await click("#github-repository");
+  results.githubOpensTheRepository =
+    (await textOf("#github-repository"))?.includes("HicirTech/A-Better-Taiko-Hiroba") === true &&
+    same(await page.evaluate<string[]>("window.openedUrls"), [
+      "https://github.com/HicirTech/A-Better-Taiko-Hiroba",
+    ]);
   await goTo("overview");
 
   const pickLanguage = async (locale: string) => {

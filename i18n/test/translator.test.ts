@@ -194,6 +194,7 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
   "song.bpm",
   "picker.level",
   "settings.taikoWiki",
+  "settings.github",
 ];
 
 /** Messages that are just one game term, as each language writes it. */
@@ -346,6 +347,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "替順序鍵拿起向命",
     "譜疊點橫",
     "大歧及",
+    "始問題",
   ].join(""),
 );
 

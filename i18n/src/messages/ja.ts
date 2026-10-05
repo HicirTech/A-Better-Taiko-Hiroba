@@ -24,6 +24,8 @@ export const ja: Messages = {
   "settings.chineseWikiGives": "公式の中国語の曲名（CC BY-SA に従って使用）",
   "settings.chartWiki": "太鼓の達人 譜面とかWiki（wikiwiki.jp/taiko-fumen）",
   "settings.chartWikiGives": "譜面の画像",
+  "settings.github": "GitHub",
+  "settings.githubGives": "アプリのソースコード、不具合の報告、リリース",
   "settings.songLevels": "曲の難易度",
   "settings.shownDifficulty": "手前に表示するむずかしさ",
   "settings.shownDifficultyHint":
