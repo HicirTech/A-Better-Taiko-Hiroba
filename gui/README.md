@@ -18,15 +18,15 @@ The window has no header. On a wide window a side panel, like Gmail's, lists its
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
-at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
+at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
 Costume, Nickname & title, Favourites or Settings back to the Overview, and from the Overview leaves
 the app as before.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
 The app is light or dark as the system is (Windows' app mode, Android's dark theme), and the
 page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
-The app opens on the page last shown on the device;
-signed out, the Overview, Costume, Nickname & title and Favourites show the sign-in card, and Settings
-still works.
+The app opens on the page last shown on the device. Signed out, the window holds the sign-in card
+alone, on the Overview: a sign-out, or a session Hiroba ends, goes back to it, and Settings opens
+again after the next sign-in.
 Settings is laid out as Gmail's settings are: sections with small headings, each with its icon, and
 each setting one row with its name, a line on it where one helps, and its control. **Language**
 lists its choices with radio buttons; **Account** says who is signed in, by the nickname your page
@@ -36,18 +36,19 @@ build and a **Check for updates** button; once a day, when the app opens, it als
 from the latest GitHub release, and a newer version it has not told of yet opens a dialog with the
 release's notes, **Download** (that release's page, in the system's browser) and **Later**. An
 unpackaged build reads no feed, and so never asks GitHub, unless `ABTH_DEV_UPDATE_FEED`
-(`VITE_ABTH_DEV_UPDATE_FEED` on Android) names one.
+(`VITE_ABTH_DEV_UPDATE_FEED` on Android) names one. At the foot of the page, **GitHub** opens the
+project's repository in the system's browser.
 
-Signed in, the Overview reads your page again from a small round **Read again**
-button with a refresh arrow at the top right, which stays there as the page scrolls. It spins
-while a read runs, and it is shut then, and while a costume, title or nickname save runs, so
-one read runs at a time and none inside a write. On a touch-first screen (`pointer: coarse`), pull
-the page down from its top instead: a round indicator follows the finger, and letting go once its ring is full
-reads again (a page that has scrolled is the finger's to scroll back, and pulls nothing). There the
-button is drawn only when the keyboard's focus is on it, and it stays for screen readers. The line under the page still says when it was read, in
-the device's time zone, with the month as a short name and the time to the second.
-On the Costume and Favourites pages the same button, and the same pull, read the page's editors again
-instead of your page; on the Nickname & title page they read your page and then the list of titles.
+Signed in, the foot of the navigation (the side panel, or the drawer) says when your page was last
+read and holds **Read again**, a refresh arrow; F5, Ctrl+R or ⌘R read again too, unless a dialog is
+open. The button spins while a read runs, and it is shut then, and while a costume, title or
+nickname save runs, so one read runs at a time and none inside a write. On a touch-first screen
+(`pointer: coarse`), pull the page down from its top instead: a round indicator follows the finger,
+and letting go once its ring is full reads again (a page that has scrolled is the finger's to scroll
+back, and pulls nothing). The line under the page still says when it was read, in the device's time
+zone, with the month as a short name and the time to the second. On the Costume and Favourites pages
+the same button, keys and pull read the page's editors again instead of your page; on the
+Nickname & title page they read your page and then the list of titles.
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -266,7 +267,7 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
   pick or the nickname typed stays too, so a save that failed can be pressed again. After a title
   write that moved the title, your page is read again once, for the plate, behind the page, so the
   section keeps its notice and the keyboard's focus; the My Don is not fetched anew for it, since
-  only a costume change and your own **Read again** do that. The Fab spins and Sign out is shut
+  only a costume change and your own **Read again** do that. **Read again** spins and Sign out is shut
   meanwhile. A rename puts the nickname it read back into the window's copy of your page, and reads
   nothing more. The page has no undo and no history.
 
