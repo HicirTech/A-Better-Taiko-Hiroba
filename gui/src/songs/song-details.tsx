@@ -27,7 +27,7 @@ import { keptShownDifficulty } from "../favorites/shown-difficulty";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import type { ListedSong } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { useBackCloses } from "../navigation/back-closers";
+import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
@@ -73,7 +73,9 @@ export function SongDetails({ song, port, lane, i18n, onClose }: SongDetailsProp
   if (song !== null && song !== last) {
     setLast(song);
   }
-  useBackCloses(song !== null, onClose);
+  // A page of its own on a phone: Back leaves it as it leaves a mode, and the menu's swipe still
+  // opens the menu over it.
+  useBackLeaves(song !== null, onClose);
   return (
     <Dialog
       id="song-details"

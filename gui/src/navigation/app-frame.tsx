@@ -282,6 +282,8 @@ function MenuDrawer({
         variant="temporary"
         open={open}
         onClose={() => setOpen(false)}
+        // Over a dialog that lets the menu's swipe through, such as a song's details.
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
         slotProps={{ paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX } } }}
       >
         <Box component="nav" aria-label={label}>

@@ -25,6 +25,7 @@ export const songSearchKeys = [
   "detailsShowTheChartPictures",
   "chartPictureAskedOnce",
   "detailsCloseOnlyWithAPointer",
+  "menuSwipesOverTheDetails",
   "searchLeftByItsArrow",
   "portraitCloseToItsPlateOnAPhone",
 ] as const;
@@ -32,7 +33,7 @@ export const songSearchKeys = [
 export async function songSearch(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, boxOf, exists, press, touchEmulated } = pageHelpers(page);
+  const { atSize, attribute, boxOf, exists, press, swipe, touchEmulated } = pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
@@ -182,6 +183,33 @@ export async function songSearch(ctx: Ctx) {
         await touchEmulated(false);
       }
     }));
+
+  const menuOpen = async () => (await attribute("#nav-menu", "aria-expanded")) === "true";
+  // Each slide ends before the next move: a closing menu still holds the keys from the details.
+  const settle = () => Bun.sleep(500);
+  results.menuSwipesOverTheDetails = await atSize(PHONE_TALL.width, PHONE_TALL.height, async () => {
+    await touchEmulated(true);
+    try {
+      await openSong("signal", "1019");
+      await swipe({ x: 60, y: 420 }, { x: 200, y: 430 });
+      const menuOnTop = await soon("the menu over the details", async () => {
+        const drawn = await page.evaluate<boolean>(
+          `(document.elementFromPoint(40, 420)?.closest(".MuiDrawer-paper") ?? null) !== null`,
+        );
+        return (await menuOpen()) && drawn;
+      });
+      await settle();
+      await swipe({ x: 200, y: 420 }, { x: 60, y: 425 });
+      const menuShut = await soon("the menu shut", async () => !(await menuOpen()));
+      await settle();
+      const detailsKept = await exists("#song-details-title");
+      await press("Escape");
+      await gone("#song-details");
+      return menuOnTop && menuShut && detailsKept;
+    } finally {
+      await touchEmulated(false);
+    }
+  });
 
   await search("signal");
   await click("#song-search-leave");
