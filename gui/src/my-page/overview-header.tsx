@@ -58,7 +58,7 @@ export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: Ove
         sx={{
           display: "grid",
           width: 1,
-          gap: `${COLUMN_GAP_PX}px`,
+          columnGap: `${COLUMN_GAP_PX}px`,
           alignItems: "start",
           justifyItems: "center",
           gridTemplateColumns: {
@@ -75,13 +75,16 @@ export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: Ove
           <MyDonPortrait ref={portraitBox} answer={myDon} action={portrait} i18n={i18n} />
         </Box>
         <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
-          <TitlePlate
-            ref={plateBox}
-            profile={profile}
-            answer={plate}
-            i18n={i18n}
-            action={namePlate}
-          />
+          {/* Under the portrait on a phone, as close to it as the panel sits to the plate. */}
+          <Box sx={{ pt: { xs: hp(PANEL_MARGIN), sm: 0 } }}>
+            <TitlePlate
+              ref={plateBox}
+              profile={profile}
+              answer={plate}
+              i18n={i18n}
+              action={namePlate}
+            />
+          </Box>
           <Box sx={{ m: hp(PANEL_MARGIN) }}>
             <ScorePanel
               ref={panelBox}
