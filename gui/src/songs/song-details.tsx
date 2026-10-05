@@ -28,10 +28,12 @@ import { nameLanguage, shownName } from "../favorites/song-names";
 import type { ListedSong } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { useBackCloses } from "../navigation/back-closers";
+import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
 import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
 import { ChartPicture } from "./chart-picture";
 import { ChartViewer, type ShownChart } from "./chart-viewer";
+import { CourseIcon } from "./course-icon";
 import { bpmText, openingChart } from "./song-facts";
 
 const TITLE_ID = "song-details-title";
@@ -40,7 +42,8 @@ const TITLE_ID = "song-details-title";
 const chartButton = (difficulty: Difficulty) => {
   const colour = DIFFICULTY_COLOUR[difficulty];
   return {
-    px: 1.5,
+    gap: 0.5,
+    px: 1,
     py: 0.5,
     textTransform: "none",
     fontWeight: 600,
@@ -56,11 +59,13 @@ export interface SongDetailsProps {
   /** The song to show; none shuts the dialog. */
   readonly song: ListedSong | null;
   readonly port: Pick<HirobaSessionPort, "readChartPicture">;
+  /** Where the charts' difficulty icons, Hiroba's own, are read. */
+  readonly lane: PictureLane;
   readonly i18n: Translator;
   readonly onClose: () => void;
 }
 
-export function SongDetails({ song, port, i18n, onClose }: SongDetailsProps) {
+export function SongDetails({ song, port, lane, i18n, onClose }: SongDetailsProps) {
   const narrow = useMediaQuery(useTheme().breakpoints.down("sm"), { noSsr: true });
   // Kept while the dialog fades out, so it does not go blank on its way.
   const [last, setLast] = useState(song);
@@ -79,7 +84,14 @@ export function SongDetails({ song, port, i18n, onClose }: SongDetailsProps) {
       aria-labelledby={TITLE_ID}
     >
       {last !== null && (
-        <DetailsBody key={last.songNo} song={last} port={port} i18n={i18n} onClose={onClose} />
+        <DetailsBody
+          key={last.songNo}
+          song={last}
+          port={port}
+          lane={lane}
+          i18n={i18n}
+          onClose={onClose}
+        />
       )}
     </Dialog>
   );
@@ -96,6 +108,7 @@ function otherNames(song: ListedSong, shown: string): { text: string; lang: stri
 function DetailsBody({
   song,
   port,
+  lane,
   i18n,
   onClose,
 }: Omit<SongDetailsProps, "song"> & { song: ListedSong }) {
@@ -160,16 +173,18 @@ function DetailsBody({
             aria-label={t("details.charts")}
             sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
           >
-            {charted.map(({ difficulty, level }) => (
+            {charted.map(({ difficulty, level }, index) => (
               <ToggleButton
                 key={difficulty}
                 id={`song-details-chart-${difficulty}`}
                 value={difficulty}
                 selected={difficulty === chart}
                 onChange={() => setChart(difficulty)}
+                aria-label={t("song.level", { difficulty: t(DIFFICULTY_LABEL[difficulty]), level })}
                 sx={chartButton(difficulty)}
               >
-                {t("song.level", { difficulty: t(DIFFICULTY_LABEL[difficulty]), level })}
+                <CourseIcon difficulty={difficulty} lane={lane} order={index} />
+                {t("picker.level", { level })}
               </ToggleButton>
             ))}
           </Box>

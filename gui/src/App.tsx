@@ -397,6 +397,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               <SongSearch
                 catalogue={catalogue}
                 port={port}
+                lane={lane}
                 i18n={i18n}
                 onOpen={() => setSongsWanted(true)}
               >

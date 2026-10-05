@@ -22,6 +22,7 @@ import { searchSongs } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { Waiting } from "../my-page/editor-parts";
 import { FrameTop } from "../navigation/app-frame";
+import type { PictureLane } from "../pictures/picture-lane";
 import { useBackLeaves } from "../navigation/back-closers";
 import type { HirobaSessionPort } from "../session-port";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
@@ -32,6 +33,7 @@ import { SongSearchBar } from "./song-search-bar";
 
 export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
+  readonly lane: PictureLane;
   readonly port: Pick<HirobaSessionPort, "readChartPicture">;
   readonly i18n: Translator;
   /** The first time the search opens, so the song list is read only once someone looks. */
@@ -41,7 +43,7 @@ export interface SongSearchProps {
 }
 
 /** The songs searched for by name, the searches made before, and a song's details. */
-export function SongSearch({ catalogue, port, i18n, onOpen, children }: SongSearchProps) {
+export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: SongSearchProps) {
   const { t, locale } = i18n;
   const [active, setActive] = useState(false);
   const [query, setQuery] = useState("");
@@ -179,6 +181,7 @@ export function SongSearch({ catalogue, port, i18n, onOpen, children }: SongSear
       {children(active)}
       <SongDetails
         song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
+        lane={lane}
         port={port}
         i18n={i18n}
         onClose={() => setOpenSongNo(null)}
