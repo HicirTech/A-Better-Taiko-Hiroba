@@ -220,9 +220,6 @@ function DetailsBody({
                   onOpen={setViewing}
                 />
               ))}
-              <Typography variant="caption" color="text.secondary">
-                {t("details.pictureCredit")}
-              </Typography>
             </Stack>
           ) : (
             <FormHelperText id="song-details-no-picture" sx={{ m: 0 }}>

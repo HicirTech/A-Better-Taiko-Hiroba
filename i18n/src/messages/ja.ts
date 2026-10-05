@@ -17,8 +17,13 @@ export const ja: Messages = {
   "settings.updates": "アップデート",
   "settings.version": "バージョン {version}",
   "settings.songData": "曲のデータ",
-  "settings.songDataSources":
-    "アーティスト、ジャンル、難易度の星、BPM、ほかの言語の曲名は taiko.wiki と 太鼓之達人維基（taiko.fandom.com/zh）、譜面の画像は 太鼓の達人 譜面とかWiki（wikiwiki.jp/taiko-fumen）と taiko.wiki によるものです。太鼓之達人維基の曲名は CC BY-SA に従って使っています。",
+  "settings.taikoWiki": "taiko.wiki",
+  "settings.taikoWikiGives":
+    "アーティスト、ジャンル、難易度の星、BPM、ほかの言語の曲名、譜面の画像へのリンク",
+  "settings.chineseWiki": "太鼓之達人維基（taiko.fandom.com/zh）",
+  "settings.chineseWikiGives": "公式の中国語の曲名（CC BY-SA に従って使用）",
+  "settings.chartWiki": "太鼓の達人 譜面とかWiki（wikiwiki.jp/taiko-fumen）",
+  "settings.chartWikiGives": "譜面の画像",
   "settings.songLevels": "曲の難易度",
   "settings.shownDifficulty": "手前に表示するむずかしさ",
   "settings.shownDifficultyHint":
@@ -331,5 +336,4 @@ export const ja: Messages = {
   "details.noPicture": "この譜面の画像はまだありません。",
   "details.pictureFailed": "譜面の画像を読み込めませんでした。",
   "details.picture": "{difficulty}の譜面（{n}/{count}）",
-  "details.pictureCredit": "譜面の画像：太鼓の達人 譜面とかWiki、taiko.wiki",
 };

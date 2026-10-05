@@ -17,8 +17,12 @@ export const zhHant: Messages = {
   "settings.updates": "更新",
   "settings.version": "版本 {version}",
   "settings.songData": "歌曲資料",
-  "settings.songDataSources":
-    "作者、分類、星級、BPM 和其他語言的歌名來自 taiko.wiki 與 太鼓之達人維基（taiko.fandom.com/zh），譜面圖來自 太鼓達人譜面 Wiki（wikiwiki.jp/taiko-fumen）與 taiko.wiki。太鼓之達人維基的歌名依 CC BY-SA 使用。",
+  "settings.taikoWiki": "taiko.wiki",
+  "settings.taikoWikiGives": "作者、分類、星級、BPM、其他語言的歌名，以及譜面圖的連結",
+  "settings.chineseWiki": "太鼓之達人維基（taiko.fandom.com/zh）",
+  "settings.chineseWikiGives": "官方中文歌名，依 CC BY-SA 使用",
+  "settings.chartWiki": "太鼓達人譜面 Wiki（wikiwiki.jp/taiko-fumen）",
+  "settings.chartWikiGives": "譜面圖",
   "settings.songLevels": "歌曲難度",
   "settings.shownDifficulty": "預設顯示的難度",
   "settings.shownDifficultyHint":
@@ -305,5 +309,4 @@ export const zhHant: Messages = {
   "details.noPicture": "這個譜面還沒有圖。",
   "details.pictureFailed": "無法載入譜面圖。",
   "details.picture": "{difficulty}譜面（{n}/{count}）",
-  "details.pictureCredit": "譜面圖來自 太鼓達人譜面 Wiki 與 taiko.wiki。",
 };

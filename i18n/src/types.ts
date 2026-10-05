@@ -32,7 +32,12 @@ export interface Messages {
   /** Param: {version}, this build's version, such as 0.1.0. */
   "settings.version": string;
   "settings.songData": string;
-  "settings.songDataSources": string;
+  "settings.taikoWiki": string;
+  "settings.taikoWikiGives": string;
+  "settings.chineseWiki": string;
+  "settings.chineseWikiGives": string;
+  "settings.chartWiki": string;
+  "settings.chartWikiGives": string;
   "settings.songLevels": string;
   "settings.shownDifficulty": string;
   "settings.shownDifficultyHint": string;
@@ -372,7 +377,6 @@ export interface Messages {
   "details.pictureFailed": string;
   /** Params: {difficulty} (a difficulty.* text), {n} and {count}. A chart picture's name. */
   "details.picture": string;
-  "details.pictureCredit": string;
 }
 
 export type MessageKey = keyof Messages;

@@ -17,8 +17,13 @@ export const en: Messages = {
   "settings.updates": "Updates",
   "settings.version": "Version {version}",
   "settings.songData": "Song data",
-  "settings.songDataSources":
-    "Artists, genres, star levels, tempos and song names in other languages come from taiko.wiki and the Chinese Taiko no Tatsujin Wiki (taiko.fandom.com/zh), and chart pictures from the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp/taiko-fumen) and taiko.wiki. Names from the Chinese wiki are used under CC BY-SA.",
+  "settings.taikoWiki": "taiko.wiki",
+  "settings.taikoWikiGives":
+    "Artists, genres, star levels, BPM, song names in other languages, and the chart pictures it links",
+  "settings.chineseWiki": "Chinese Taiko no Tatsujin Wiki (taiko.fandom.com/zh)",
+  "settings.chineseWikiGives": "Official Chinese song names, used under CC BY-SA",
+  "settings.chartWiki": "Taiko no Tatsujin Fumen Wiki (wikiwiki.jp/taiko-fumen)",
+  "settings.chartWikiGives": "Chart pictures",
   "settings.songLevels": "Song levels",
   "settings.shownDifficulty": "Difficulty shown first",
   "settings.shownDifficultyHint":
@@ -326,5 +331,4 @@ export const en: Messages = {
   "details.noPicture": "No picture of this chart yet.",
   "details.pictureFailed": "Couldn't load the chart picture.",
   "details.picture": "{difficulty} chart, picture {n} of {count}",
-  "details.pictureCredit": "Chart pictures from the Taiko no Tatsujin Fumen Wiki and taiko.wiki.",
 };
