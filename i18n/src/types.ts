@@ -363,6 +363,8 @@ export interface Messages {
   /** Param: {code}, why the song list did not come, such as unreachable; never a URL. */
   "picker.code": string;
   "picker.retry": string;
+  "picker.offeredReading": string;
+  "picker.offeredFailed": string;
   /** Param: {max}, how many songs a set holds. */
   "picker.limit": string;
   "picker.done": string;

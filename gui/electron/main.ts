@@ -23,6 +23,7 @@ import {
   queuePort,
   readOwnProfile,
   sessionEnded,
+  whenQueueQuiet,
 } from "../src/hiroba-session";
 import {
   BRIDGE_CHANNELS,
@@ -267,6 +268,7 @@ app.whenReady().then(async () => {
     openFavorites: writes.openFavorites,
     changeFolder: writes.changeFolder,
     changeFavoriteSong: writes.changeFavoriteSong,
+    readSongPicker: whenQueueQuiet(queue, writes.readSongPicker),
     readSongCatalogue: (since) =>
       readSongCatalogue(feedTransport, environment.songCatalogueUrl, since),
     readChineseNames: () => readChineseNames(feedTransport, environment.chineseNamesUrl),

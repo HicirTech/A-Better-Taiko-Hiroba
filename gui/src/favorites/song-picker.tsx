@@ -24,7 +24,9 @@ import {
 import { Waiting } from "../my-page/editor-parts";
 import { useBackCloses } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
+import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { FavoriteSongState } from "../session-port";
+import type { PickableState } from "./pickable-songs";
 import { type PickerEntry, PickerList } from "./picker-list";
 import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
 import { matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
@@ -52,11 +54,14 @@ export interface SongPickerProps {
   readonly open: boolean;
   readonly choice: SongChoice;
   readonly catalogue: SongCatalogue;
+  /** Only the songs Hiroba's own picker offers are listed; a choice of one lists 裏 entries too. */
+  readonly pickable: PickableState;
+  readonly onReadPickable: () => void;
   readonly i18n: Translator;
   readonly onClose: () => void;
 }
 
-export function SongPicker({ open, choice, catalogue, i18n, onClose }: SongPickerProps) {
+export function SongPicker({ open, onClose, ...body }: SongPickerProps) {
   const narrow = useMediaQuery(useTheme().breakpoints.down("sm"), { noSsr: true });
   useBackCloses(open, onClose);
   return (
@@ -70,13 +75,20 @@ export function SongPicker({ open, choice, catalogue, i18n, onClose }: SongPicke
       aria-labelledby={TITLE_ID}
       slotProps={{ paper: { sx: { height: 1 } } }}
     >
-      <PickerBody choice={choice} catalogue={catalogue} i18n={i18n} onClose={onClose} />
+      <PickerBody {...body} onClose={onClose} />
     </Dialog>
   );
 }
 
 // Its own component, so the search and the filter start over each time the picker opens.
-function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, "open">) {
+function PickerBody({
+  choice,
+  catalogue,
+  pickable,
+  onReadPickable,
+  i18n,
+  onClose,
+}: Omit<SongPickerProps, "open">) {
   const { t, locale } = i18n;
   const touchFirst = useTouchFirst();
   const [query, setQuery] = useState("");
@@ -92,31 +104,47 @@ function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, 
   };
 
   const newest = useMemo(() => [...catalogue.list].sort(newestFirst), [catalogue.list]);
+  // The list kept from the last read serves while a newer one is read.
+  const { offered, status } = pickable;
+  const withUra = choice.kind === "one";
   const entries = useMemo<readonly PickerEntry[]>(() => {
-    const songs = newest.filter((song) => matchesFilter(song, filter));
-    if (deferred.trim() !== "") {
-      return searchSongs(songs, deferred, locale).map(({ song, shown, other }) => ({
-        look: lookOfCatalogue(song, locale),
-        shown,
-        other: other === null ? null : { marked: other, lang: nameLanguage(song, other.text) },
-      }));
+    if (offered === null) {
+      return [];
     }
-
-    return songs.map((song) => ({ look: lookOfCatalogue(song, locale), shown: null, other: null }));
-  }, [newest, filter, deferred, locale]);
+    const songs = newest.filter(
+      (song) => offered.songs.has(song.songNo) && matchesFilter(song, filter),
+    );
+    const listed: readonly PickerEntry[] =
+      deferred.trim() === ""
+        ? songs.map((song) => ({ look: lookOfCatalogue(song, locale), shown: null, other: null }))
+        : searchSongs(songs, deferred, locale).map(({ song, shown, other }) => ({
+            look: lookOfCatalogue(song, locale),
+            shown,
+            other: other === null ? null : { marked: other, lang: nameLanguage(song, other.text) },
+          }));
+    if (!withUra) {
+      return listed;
+    }
+    // Hiroba lists a song's 裏 entry as a row of its own, just after the song.
+    return listed.flatMap((entry) =>
+      offered.ura.has(entry.look.songNo)
+        ? [entry, { ...entry, ura: true, detail: t("favorites.ura") }]
+        : [entry],
+    );
+  }, [newest, offered, withUra, filter, deferred, locale, t]);
 
   const many =
     choice.kind === "many" ? { picked: new Set(choice.picked), limit: choice.limit } : null;
   const onPick = choice.kind === "one" ? choice.onPick : null;
   const onToggle = choice.kind === "many" ? choice.onToggle : null;
   const activate = useCallback(
-    (songNo: string) => {
+    (songNo: string, ura: boolean) => {
       if (onToggle !== null) {
         onToggle(songNo);
         return;
       }
 
-      onPick?.({ songNo, ura: false });
+      onPick?.({ songNo, ura });
       onClose();
     },
     [onPick, onToggle, onClose],
@@ -147,6 +175,32 @@ function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, 
         <Button id="song-picker-retry" onClick={catalogue.retry} sx={{ mt: 1 }}>
           {t("picker.retry")}
         </Button>
+      </Box>
+    );
+  } else if (offered === null && status.kind === "failed") {
+    const { kind, detail } = status.failure;
+    content = (
+      <Box sx={{ p: 2 }}>
+        <FormHelperText id="song-picker-offered-failed" error>
+          {t("picker.offeredFailed")} {t(FAILURE_MESSAGE[kind])}
+          {detail !== undefined && (
+            <Box
+              component="span"
+              sx={{ display: "block", mt: 0.5, fontFamily: "monospace", userSelect: "text" }}
+            >
+              {t("failure.detail", { detail })}
+            </Box>
+          )}
+        </FormHelperText>
+        <Button id="song-picker-offered-retry" onClick={onReadPickable} sx={{ mt: 1 }}>
+          {t("picker.retry")}
+        </Button>
+      </Box>
+    );
+  } else if (offered === null) {
+    content = (
+      <Box sx={{ p: 2 }}>
+        <Waiting id="song-picker-offered-reading">{t("picker.offeredReading")}</Waiting>
       </Box>
     );
   } else if (entries.length === 0) {

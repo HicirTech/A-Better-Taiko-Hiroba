@@ -264,6 +264,7 @@ export const PORT_ARGUMENTS = {
   openFavorites: none,
   changeFolder: folderChange,
   changeFavoriteSong: favoriteSongChange,
+  readSongPicker: none,
   readSongCatalogue: catalogueSince,
   readChineseNames: none,
   readChartPicture: chartUrl,

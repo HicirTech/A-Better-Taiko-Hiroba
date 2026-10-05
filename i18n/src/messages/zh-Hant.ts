@@ -300,6 +300,8 @@ export const zhHant: Messages = {
   "picker.failed": "無法從 taiko.wiki 載入歌曲清單。請檢查網路後再試一次。",
   "picker.code": "回報代碼：{code}",
   "picker.retry": "重試",
+  "picker.offeredReading": "正在讀取廣場上能選的歌曲…",
+  "picker.offeredFailed": "讀取不到廣場上能選的歌曲，暫時不能選歌。",
   "picker.limit": "一個套裝最多放 {max} 首歌曲。要新增，請先移除一首。",
   "picker.done": "完成",
   "picker.close": "關閉",

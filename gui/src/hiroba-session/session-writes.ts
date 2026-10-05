@@ -26,6 +26,7 @@ import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
 import { openFavorites } from "./open-favorites";
 import { openTitleEditor } from "./open-title-editor";
+import { readSongPicker } from "./read-song-picker";
 import { sessionEnded } from "./session-ended";
 import type { HirobaEndpoints, WriteOptions } from "./types";
 
@@ -60,6 +61,7 @@ export type SessionWrites = Pick<
   | "changeName"
   | "changeFolder"
   | "changeFavoriteSong"
+  | "readSongPicker"
   | "costumeHistory"
 > & {
   /** A preview came: a history entry of that set with no picture takes it. */
@@ -186,6 +188,8 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     openTitleEditor: () => opened(openTitleEditor),
 
     openFavorites: () => opened(openFavorites),
+
+    readSongPicker: () => opened(readSongPicker),
 
     async changeCostume(change) {
       if (!options.signedIn()) {

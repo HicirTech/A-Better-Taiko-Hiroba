@@ -322,6 +322,8 @@ export const en: Messages = {
     "The song list could not be loaded from taiko.wiki. Check your connection and try again.",
   "picker.code": "Code for a report: {code}",
   "picker.retry": "Retry",
+  "picker.offeredReading": "Reading the songs Hiroba takes…",
+  "picker.offeredFailed": "The songs Hiroba takes could not be read, so none can be picked yet.",
   "picker.limit": "A set holds {max} songs at most. Remove one to add another.",
   "picker.done": "Done",
   "picker.close": "Close",

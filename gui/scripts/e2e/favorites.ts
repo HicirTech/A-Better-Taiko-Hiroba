@@ -1,9 +1,9 @@
 /** The Favourites page: its two cards, the sets drawer, the song picker, its filters and search. */
-import type { FavoritesState } from "../mock-favorites";
+import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
 import { HIROBA, PHONE_TALL } from "./config";
 import type { Ctx } from "./context";
 import { middleOf, type Point, pageHelpers, same, waitFor } from "./harness";
-import { requestLog, resetLog } from "./stand-in";
+import { hitsOn, requestLog, resetLog } from "./stand-in";
 
 const START_FOLDER = ["1001", "1008", "1014", "1020", "1031", "1026"];
 const FOLDER_PAGE = "GET /favorite_song_select.php";
@@ -11,8 +11,12 @@ const SONG_PAGE = "GET /portal_favorite_song_select.php";
 const FOLDER_SAVE = "POST /ajax/myfavorite_song.php";
 /** The stand-in's song with a title too long for any row. */
 const LONG_TITLED = "1038";
-/** The stand-in's songs Hiroba knows, the newest first. */
-const EVERY_SONG = Array.from({ length: 38 }, (_, index) => String(1038 - index));
+/** The stand-in's songs Hiroba's own picker offers, the newest first. */
+const EVERY_SONG = Array.from({ length: 38 }, (_, index) => String(1038 - index)).filter(
+  (songNo) => songNo !== LOCKED_SONG,
+);
+/** A song with an inner chart, whose 裏 entry the 大好きな曲 picker lists as a row of its own. */
+const WITH_INNER = "1005";
 const INNER_TEN = ["1036", "1027", "1021", "1017", "1008", "1005"];
 const EXTREME_OR_INNER_TEN = ["1036", "1027", "1021", "1019", "1017", "1008", "1005"];
 const FILTER_CHIPS = ["#song-picker-genre", "#song-picker-difficulty", "#song-picker-level"];
@@ -57,6 +61,9 @@ export const favoritesKeys = [
   "setRenamedFromItsMenu",
   "setDeletedFromItsMenu",
   "favoriteSongPickedThenSaved",
+  "pickerReadBesideTheProfile",
+  "favoritePickerOffersWhatHirobaOffers",
+  "innerEntrySavedAndShown",
   "favoriteSongDraftDroppedOnLeaving",
   "songsMovedByALongPress",
   "setsDrawerOpensBySwipe",
@@ -504,6 +511,33 @@ export async function favorites(ctx: Ctx) {
   await stepIs("ready");
   results.favoriteSongDraftDroppedOnLeaving =
     !(await exists("#favorite-song-save")) && (await favoritesNow()).favoriteSong === "1002";
+
+  // The picker's songs are read beside the profile: the handoff, its redirect and eight genres.
+  results.pickerReadBesideTheProfile =
+    (await hitsOn("/form_data.php")) > 0 && (await hitsOn("/select_song.php")) >= 9;
+  await click("#favorite-song-change");
+  await shown(`#song-picker-row-${WITH_INNER}-ura button`);
+  results.favoritePickerOffersWhatHirobaOffers =
+    !(await exists(`#song-picker-row-${LOCKED_SONG}`)) &&
+    (await exists(`#song-picker-row-${WITH_INNER} button`)) &&
+    (await textOf(`#song-picker-row-${WITH_INNER}-ura .song-artists`))?.startsWith(
+      "Inner chart",
+    ) === true &&
+    !(await exists("#song-picker-row-1001-ura"));
+  await page.evaluate(
+    `document.querySelector("#song-picker-row-${WITH_INNER}-ura button").click()`,
+  );
+  await gone("#song-picker");
+  await shown("#favorite-song-save");
+  await click("#favorite-song-save");
+  await gone("#favorite-song-saving");
+  await gone("#favorite-song-save");
+  const innerSaved = await favoritesNow();
+  results.innerEntrySavedAndShown =
+    innerSaved.favoriteSong === WITH_INNER &&
+    innerSaved.favoriteSongUra &&
+    (await textOf("#favorite-song-row .song-artists"))?.startsWith("Inner chart") === true &&
+    !(await exists("#favorite-song-outcome"));
 
   await openDrawer();
   await click("#favorites-item-set-0");

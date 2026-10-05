@@ -1,7 +1,8 @@
 import type { HirobaSessionPort } from "./types";
 
 /** `read` waits for every verb before it; `write` is a whole turn and answers `busy` at once while
- * another runs; `unqueued` asks Hiroba nothing, or queues only the fetch it needs (a picture). */
+ * another runs; `unqueued` asks Hiroba nothing, or queues itself: a picture its fetch, the picker
+ * its read once the queue is quiet. */
 export type VerbQueueing = "read" | "write" | "unqueued";
 
 export const PORT_QUEUEING = {
@@ -22,6 +23,7 @@ export const PORT_QUEUEING = {
   openFavorites: "read",
   changeFolder: "write",
   changeFavoriteSong: "write",
+  readSongPicker: "unqueued",
   readSongCatalogue: "unqueued",
   readChineseNames: "unqueued",
   readChartPicture: "unqueued",

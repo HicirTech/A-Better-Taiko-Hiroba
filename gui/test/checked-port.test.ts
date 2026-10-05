@@ -57,6 +57,7 @@ const CASES: VerbCase[] = [
     [{ expected: { songNo: "1178", ura: true }, target: { songNo: null, ura: false } }],
     [{ expected: { songNo: "1178", ura: false }, target: { songNo: null, ura: true } }],
   ],
+  ["readSongPicker", [], [{ genre: 1 }]],
   ["readSongCatalogue", [null], ["0&genre=1"]],
   ["readChineseNames", [], [{ gcmlimit: "max" }]],
   ["readChartPicture", ["https://file.taiko.wiki/fumen/670/oni"], ["file:///etc/passwd"]],

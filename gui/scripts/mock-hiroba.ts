@@ -401,6 +401,20 @@ Bun.serve({
           return redirect("/login.php");
         }
         return page(favorites.favoriteSongPage(session));
+      case "/form_data.php":
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        return redirect(
+          favorites.enterPicker(session, searchParams) ? "/select_song.php" : "/index.php",
+        );
+      case "/select_song.php": {
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        const shown = favorites.pickerPage(session, Number(searchParams.get("genre") ?? "1"));
+        return shown === null ? redirect("/index.php") : page(shown);
+      }
       case "/ajax/myfavorite_song.php":
       case "/ajax/mypage_song.php": {
         const entered = await ajaxEntry(request, session, (form) =>

@@ -133,6 +133,26 @@ export function standIn({ editor, profile, favorites, session, myPage }: StandIn
           return new Response("not found", { status: 404 });
         }
         return signedIn ? html(favorites.favoriteSongPage(session)) : redirectTo("/login.php");
+      case "/form_data.php":
+        if (favorites === undefined) {
+          return new Response("not found", { status: 404 });
+        }
+        if (!signedIn) {
+          return redirectTo("/login.php");
+        }
+        return redirectTo(
+          favorites.enterPicker(session, url.searchParams) ? "/select_song.php" : "/index.php",
+        );
+      case "/select_song.php": {
+        if (favorites === undefined) {
+          return new Response("not found", { status: 404 });
+        }
+        if (!signedIn) {
+          return redirectTo("/login.php");
+        }
+        const shown = favorites.pickerPage(session, Number(url.searchParams.get("genre") ?? "1"));
+        return shown === null ? redirectTo("/index.php") : html(shown);
+      }
       case "/imgsrc_mydon.php":
         return editor.preview(url.search, signedIn);
       case "/imgsrc_kisekae.php":

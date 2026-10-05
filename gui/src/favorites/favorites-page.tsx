@@ -21,6 +21,7 @@ import {
 import { SetsIcon } from "./favorites-icons";
 import { type FavoritesStep, shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
+import type { PickableState } from "./pickable-songs";
 import { SetNameDialog } from "./set-name-dialog";
 import { SetView } from "./set-view";
 import { SetsDrawer } from "./sets-drawer";
@@ -47,6 +48,9 @@ export interface FavoritesPageProps {
   /** A song's details read its charts' pictures here, and Hiroba's difficulty icons from `lane`. */
   readonly port: Pick<HirobaSessionPort, "readChartPicture">;
   readonly lane: PictureLane;
+  /** The songs Hiroba's own picker offers: neither picker lists any other. */
+  readonly pickable: PickableState;
+  readonly onReadPickable: () => void;
   readonly i18n: Translator;
 }
 
@@ -60,7 +64,15 @@ export function FavoritesPage(props: FavoritesPageProps) {
   );
 }
 
-function FavoritesBody({ favorites, catalogue, port, lane, i18n }: FavoritesPageProps) {
+function FavoritesBody({
+  favorites,
+  catalogue,
+  port,
+  lane,
+  pickable,
+  onReadPickable,
+  i18n,
+}: FavoritesPageProps) {
   const { t, locale } = i18n;
   const { step, pickSong } = favorites;
   const shown = shownFavoritesOf(step);
@@ -279,6 +291,8 @@ function FavoritesBody({ favorites, catalogue, port, lane, i18n }: FavoritesPage
         open={picking === "song"}
         choice={songChoice}
         catalogue={catalogue}
+        pickable={pickable}
+        onReadPickable={onReadPickable}
         i18n={i18n}
         onClose={() => setPicking(null)}
       />
@@ -301,6 +315,8 @@ function FavoritesBody({ favorites, catalogue, port, lane, i18n }: FavoritesPage
           open={picking === "set"}
           choice={setChoice}
           catalogue={catalogue}
+          pickable={pickable}
+          onReadPickable={onReadPickable}
           i18n={i18n}
           onClose={() => setPicking(null)}
         />

@@ -327,6 +327,8 @@ export const ja: Messages = {
     "taiko.wiki から曲リストを読み込めませんでした。通信環境を確認して、もう一度お試しください。",
   "picker.code": "報告用コード：{code}",
   "picker.retry": "再試行",
+  "picker.offeredReading": "ひろばで選べる曲を読み込み中…",
+  "picker.offeredFailed": "ひろばで選べる曲を読み込めなかったため、まだ曲を選べません。",
   "picker.limit": "セットに入れられる曲は最大{max}曲です。追加するには、どれか外してください。",
   "picker.done": "完了",
   "picker.close": "閉じる",
