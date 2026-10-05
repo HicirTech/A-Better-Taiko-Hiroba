@@ -1,4 +1,4 @@
-import type { Costume } from "../hiroba-models";
+import type { Costume, CostumeSet } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { parsePage, requireMarker } from "./parser";
 import type { ParseFailure } from "./types";
@@ -25,6 +25,12 @@ export function parseCostumePage(
   taikoNo: string,
   fetchedAt: string,
 ): Result<Costume, ParseFailure> {
+  const set = parseCostumeSet(html);
+  return isErr(set) ? set : ok({ taikoNo, ...set.value, fetchedAt });
+}
+
+/** The worn set alone, from the hidden fields; the item lists below them are not read. */
+export function parseCostumeSet(html: string): Result<CostumeSet, ParseFailure> {
   const page = parsePage(html, PAGE);
   if (isErr(page)) {
     return page;
@@ -46,7 +52,6 @@ export function parseCostumePage(
   }
 
   return ok({
-    taikoNo,
     colorBody: values.color_body,
     colorLimb: values.color_limb,
     colorFace: values.color_face,
@@ -55,6 +60,5 @@ export function parseCostumePage(
     costume3: values.costume_3,
     costume4: values.costume_4,
     costume5: values.costume_5,
-    fetchedAt,
   });
 }

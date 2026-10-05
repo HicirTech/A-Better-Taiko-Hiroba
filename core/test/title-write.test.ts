@@ -2,6 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import {
   changeTitle,
+  isErr,
+  ok,
+  openCostumeEditor,
   openTitleEditor,
   type TitleState,
   type TitleTarget,
@@ -84,6 +87,29 @@ describe("changeTitle's requests", () => {
       "GET mypage_top.php",
       "GET mypage_kisekae.php",
     ]);
+    expect(outcome).toMatchObject({ kind: "applied", cross: "unchanged" });
+  });
+
+  test("with the cross-check, a costume item the editor cannot read does not stop it", async () => {
+    const { transport } = fakeHiroba();
+    const unreadableItem: Transport = {
+      send: async (request) => {
+        const sent = await transport.send(request);
+        if (isErr(sent) || !request.url.endsWith("/mypage_kisekae.php")) {
+          return sent;
+        }
+        const page = new TextDecoder()
+          .decode(sent.value.body)
+          .replace(
+            `<a name="36"><img srctmp="imgsrc_kisekae.php?cos=36&type=1">`,
+            `<a name="36"><img src="image/sp/640/cos_icon_non_640.png">`,
+          );
+        return ok({ ...sent.value, body: new TextEncoder().encode(page) });
+      },
+    };
+    const editor = await openCostumeEditor({ transport: unreadableItem, hirobaOrigin: ORIGIN });
+    expect(isErr(editor) && editor.error.kind).toBe("unexpectedPage");
+    const outcome = await change(unreadableItem, B, { crossCheck: true });
     expect(outcome).toMatchObject({ kind: "applied", cross: "unchanged" });
   });
 
