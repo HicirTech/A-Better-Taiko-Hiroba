@@ -1,13 +1,25 @@
 {
-  "version": "0.3.2",
+  "version": "0.3.3",
   "notes": {
     "en": [
-      "Changing your favourite song no longer fails as not unlocked when the song set before was an inner chart"
+      "The song pickers list only the songs Hiroba itself lets you pick, and the favourite song's picker offers a song's inner chart too",
+      "A favourite song set to its inner chart says so under its name",
+      "Read again stays quick: the songs Hiroba offers are read afterwards in the background and kept on the device"
     ],
     "ja": [
-      "裏譜面を大好きな曲にしていたとき、別の曲に変えると「まだ解禁されていない」と断られていた問題を直しました"
+      "曲選びには、ひろばで実際に選べる曲だけを表示します。大好きな曲では裏譜面も選べます",
+      "大好きな曲を裏譜面にしていると、曲名の下にそう表示します",
+      "再読み込みは速いままです。ひろばで選べる曲はそのあと裏で読み込み、端末に保存します"
     ],
-    "zh-Hans": ["最爱歌曲原本设的是里谱面时，换成别的歌不会再被提示「尚未解锁」"],
-    "zh-Hant": ["最愛歌曲原本設的是裏譜面時，換成別的歌不會再被提示「尚未解鎖」"]
+    "zh-Hans": [
+      "选歌时只列出广场上真正能选的歌曲，最爱歌曲还能选里谱面",
+      "最爱歌曲设的是里谱面时，会在歌名下方标出",
+      "重新读取依旧很快：能选的歌曲之后在后台读取，并存在本机"
+    ],
+    "zh-Hant": [
+      "選歌時只列出廣場上真正能選的歌曲，最愛歌曲還能選裏譜面",
+      "最愛歌曲設的是裏譜面時，會在歌名下方標出",
+      "重新讀取依舊很快：能選的歌曲之後在背景讀取，並存在本機"
+    ]
   }
 }

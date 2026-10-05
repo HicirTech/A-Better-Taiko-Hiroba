@@ -1,7 +1,7 @@
 {
   "name": "@abth/gui",
   "productName": "A Better Taiko Hiroba",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "description": "The desktop and Android app of A Better Taiko Hiroba",
   "author": "HicirTech",
