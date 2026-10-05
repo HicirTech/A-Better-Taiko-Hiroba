@@ -1,11 +1,13 @@
 import type { Translator } from "@abth/i18n";
-import { IconButton, InputBase, Paper } from "@mui/material";
+import { Box, IconButton, InputBase, Paper } from "@mui/material";
 import type { RefObject } from "react";
 
 import { CloseIcon } from "../favorites/favorites-icons";
 import { ArrowBackIcon, SearchIcon } from "./song-icons";
 
 const BAR_PX = 48;
+/** An icon button's own size, so the field starts at one place with the mark or the way back. */
+const BUTTON_PX = 40;
 const BAR = {
   display: "flex",
   alignItems: "center",
@@ -13,7 +15,15 @@ const BAR = {
   px: 0.5,
   borderRadius: `${BAR_PX / 2}px`,
   bgcolor: "background.paper",
-  "& > .MuiSvgIcon-root": { mx: 1.5, color: "text.secondary" },
+} as const;
+const MARK = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  width: BUTTON_PX,
+  height: BUTTON_PX,
+  color: "text.secondary",
 } as const;
 
 export interface SongSearchBarProps {
@@ -56,7 +66,9 @@ export function SongSearchBar({
           <ArrowBackIcon />
         </IconButton>
       ) : (
-        <SearchIcon />
+        <Box component="span" sx={MARK}>
+          <SearchIcon />
+        </Box>
       )}
       <InputBase
         id="song-search-input"
