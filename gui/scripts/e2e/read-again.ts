@@ -27,7 +27,7 @@ export const readAgainKeys = [
 export async function readAgain(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, currentPage, goTo, page, text, textOf, until } = ctx.app;
-  const { attribute, boxOf, exists, fabState, pullIndicator, swipe, touchEmulated } =
+  const { atSize, attribute, boxOf, exists, fabState, pullIndicator, swipe, touchEmulated } =
     pageHelpers(page);
 
   await fetch(`${HIROBA}/__rotate`);
@@ -138,8 +138,11 @@ export async function readAgain(ctx: Ctx) {
     !(await pullIndicator()).shown;
   const readsByUpwardSwipe = await readsBySwipe(pulledBy(0, 200), pullFrom);
   const readsBySidewaysSwipe = await readsBySwipe(pullFrom, pulledBy(200, 40));
-  await page.evaluate("window.scrollTo(0, 200)");
-  const readsByPullBelowTop = await readsBySwipe(pullFrom, pulledBy(0, 200));
+  // The window opens with the whole Overview in view: a shorter one lets it scroll.
+  const readsByPullBelowTop = await atSize(946, 500, async () => {
+    await page.evaluate("window.scrollTo(0, 200)");
+    return readsBySwipe(pullFrom, pulledBy(0, 200));
+  });
   results.pullOnlyDownFromTheTop =
     readsByUpwardSwipe === 0 && readsBySidewaysSwipe === 0 && readsByPullBelowTop === 0;
   const onTile = await middleOf(page, "#my-don");

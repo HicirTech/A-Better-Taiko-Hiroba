@@ -12,7 +12,8 @@ on hover or keyboard focus, and on Android as a Toast on a long-press; its count
 tooltip); the season's どんメダル on Hiroba's own plate, and your favourite songs. It can also change your costume (きせかえ), your title (称号) and your nickname
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
-The window has no header. On a wide window a side panel, like Gmail's, lists its five pages:
+The window has no header. On the desktop it opens as tall as the Overview, so the Overview shows
+whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its five pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),

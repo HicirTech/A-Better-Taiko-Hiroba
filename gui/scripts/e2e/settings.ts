@@ -147,17 +147,20 @@ export const settingsKeys = [
 export async function settings(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { column } = pageHelpers(page);
+  const { atSize, column } = pageHelpers(page);
 
-  const overviewScrolls = await page.evaluate<boolean>(
-    "document.documentElement.scrollHeight > window.innerHeight",
-  );
-  const columnOnOverview = await column();
-  await goTo("settings");
-  const columnOnSettings = await column();
-  state.overviewScrolls = overviewScrolls;
-  state.columnOnOverview = columnOnOverview;
-  state.columnOnSettings = columnOnSettings;
+  // The window opens with the whole Overview in view: a shorter one makes it scroll.
+  const measured = await atSize(946, 600, async () => {
+    const overviewScrolls = await page.evaluate<boolean>(
+      "document.documentElement.scrollHeight > window.innerHeight",
+    );
+    const columnOnOverview = await column();
+    await goTo("settings");
+    return { overviewScrolls, columnOnOverview, columnOnSettings: await column() };
+  });
+  state.overviewScrolls = measured.overviewScrolls;
+  state.columnOnOverview = measured.columnOnOverview;
+  state.columnOnSettings = measured.columnOnSettings;
 
   const settingsLayout = await page.evaluate<Record<string, unknown>>(
     `(() => { const sections = [...document.querySelectorAll("main section")]; const signOut = document.querySelector("#sign-out"); return { sections: sections.map((section) => [section.id, document.getElementById(section.getAttribute("aria-labelledby"))?.tagName ?? null, section.querySelector("h2 svg") !== null, section.querySelectorAll("ul").length]), radios: document.querySelectorAll('#language-setting li input[type="radio"]').length, checked: document.querySelectorAll("#language-setting input:checked").length, who: document.querySelector("#account-who")?.textContent ?? null, signOutBeside: signOut?.closest("li") === document.querySelector("#account-who")?.closest("li"), casing: signOut === null ? null : getComputedStyle(signOut).textTransform }; })()`,

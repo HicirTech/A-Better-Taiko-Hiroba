@@ -6,6 +6,7 @@ import {
   type IpcMainInvokeEvent,
   ipcMain,
   Menu,
+  screen,
   session,
   shell,
 } from "electron";
@@ -64,6 +65,11 @@ function startedWith(): DesktopEnvironment {
 const chromeMajor = process.versions.chrome.split(".")[0];
 const userAgent = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeMajor}.0.0.0 Safari/537.36`;
 app.userAgentFallback = userAgent;
+
+// The window opens as tall as the Overview at its width, with no scrollbar; a screen with less
+// room gives what its work area holds, less the title bar and the borders.
+const WINDOW_CONTENT_PX = { width: 946, height: 736 } as const;
+const WINDOW_FRAME_PX = 40;
 
 // Dev profiles stay out of the real %APPDATA%, where the installed app keeps its session.
 if (environment.userData !== undefined) {
@@ -154,9 +160,11 @@ app.whenReady().then(async () => {
     callback(false),
   );
 
+  const room = screen.getPrimaryDisplay().workAreaSize.height - WINDOW_FRAME_PX;
   const mainWindow = new BrowserWindow({
-    width: 960,
-    height: 720,
+    useContentSize: true,
+    width: WINDOW_CONTENT_PX.width,
+    height: Math.min(WINDOW_CONTENT_PX.height, room),
     // A packaged app has no menu; a development one keeps its shortcuts, its bar shown by Alt.
     autoHideMenuBar: true,
     webPreferences: {
