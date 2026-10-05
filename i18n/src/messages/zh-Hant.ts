@@ -298,7 +298,6 @@ export const zhHant: Messages = {
   "picker.close": "關閉",
   "search.leave": "關閉搜尋",
   "search.clear": "清除",
-  "search.recent": "最近搜尋",
   "search.forget": "刪除「{query}」",
   "details.charts": "譜面",
   "details.maxCombo": "最大連段：{count}",

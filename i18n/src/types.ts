@@ -362,7 +362,6 @@ export interface Messages {
   /** The song search's way back out to the page under it. */
   "search.leave": string;
   "search.clear": string;
-  "search.recent": string;
   /** Param: {query}, a search kept on the device. */
   "search.forget": string;
   "details.charts": string;

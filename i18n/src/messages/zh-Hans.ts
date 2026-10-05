@@ -298,7 +298,6 @@ export const zhHans: Messages = {
   "picker.close": "关闭",
   "search.leave": "关闭搜索",
   "search.clear": "清除",
-  "search.recent": "最近搜索",
   "search.forget": "删除“{query}”",
   "details.charts": "谱面",
   "details.maxCombo": "最大连段：{count}",

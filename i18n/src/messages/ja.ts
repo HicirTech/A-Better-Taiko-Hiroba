@@ -324,7 +324,6 @@ export const ja: Messages = {
   "picker.close": "閉じる",
   "search.leave": "検索を閉じる",
   "search.clear": "クリア",
-  "search.recent": "最近の検索",
   "search.forget": "「{query}」を削除",
   "details.charts": "譜面",
   "details.maxCombo": "最大コンボ数：{count}",

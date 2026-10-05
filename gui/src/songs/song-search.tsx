@@ -9,7 +9,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListSubheader,
   Paper,
 } from "@mui/material";
 import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
@@ -22,8 +21,8 @@ import { searchSongs } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { Waiting } from "../my-page/editor-parts";
 import { FrameTop } from "../navigation/app-frame";
-import type { PictureLane } from "../pictures/picture-lane";
 import { useBackLeaves } from "../navigation/back-closers";
+import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
 import { SongDetails } from "./song-details";
@@ -33,8 +32,8 @@ import { SongSearchBar } from "./song-search-bar";
 
 export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
-  readonly lane: PictureLane;
   readonly port: Pick<HirobaSessionPort, "readChartPicture">;
+  readonly lane: PictureLane;
   readonly i18n: Translator;
   /** The first time the search opens, so the song list is read only once someone looks. */
   readonly onOpen: () => void;
@@ -83,6 +82,8 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
     [catalogue.list, deferred, locale, t],
   );
 
+  // The searches kept stand under the field as they are; results and notes come in a frame.
+  const unframed = catalogue.state === "ready" && query.trim() === "";
   let panel: ReactNode;
   if (catalogue.state === "loading") {
     panel = <Waiting id="song-search-loading">{t("picker.loading")}</Waiting>;
@@ -102,16 +103,10 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
         </Button>
       </>
     );
-  } else if (query.trim() === "") {
+  } else if (unframed) {
     panel =
-      recent.length === 0 ? (
-        <FormHelperText id="song-search-hint">{t("picker.searchHint")}</FormHelperText>
-      ) : (
-        <List
-          id="song-search-recent"
-          disablePadding
-          subheader={<ListSubheader disableSticky>{t("search.recent")}</ListSubheader>}
-        >
+      recent.length === 0 ? null : (
+        <List id="song-search-recent" disablePadding>
           {recent.map((one) => (
             <ListItem
               key={one}
@@ -171,18 +166,22 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
           }}
         />
       </FrameTop>
-      {active && (
+      {active && panel !== null && (
         <ShownDifficultyContext value={shownDifficulty}>
-          <Paper id="song-search-panel" variant="outlined" sx={{ py: 1, overflow: "hidden" }}>
-            {panel}
-          </Paper>
+          {unframed ? (
+            <Box id="song-search-panel">{panel}</Box>
+          ) : (
+            <Paper id="song-search-panel" variant="outlined" sx={{ py: 1, overflow: "hidden" }}>
+              {panel}
+            </Paper>
+          )}
         </ShownDifficultyContext>
       )}
       {children(active)}
       <SongDetails
         song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
-        lane={lane}
         port={port}
+        lane={lane}
         i18n={i18n}
         onClose={() => setOpenSongNo(null)}
       />

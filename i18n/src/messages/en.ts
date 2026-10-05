@@ -319,7 +319,6 @@ export const en: Messages = {
   "picker.close": "Close",
   "search.leave": "Close the search",
   "search.clear": "Clear",
-  "search.recent": "Recent searches",
   "search.forget": "Remove “{query}”",
   "details.charts": "Charts",
   "details.maxCombo": "Max combo: {count}",
