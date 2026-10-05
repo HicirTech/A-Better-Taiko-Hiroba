@@ -28,6 +28,7 @@ import { nameLanguage, shownName } from "../favorites/song-names";
 import type { ListedSong } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { useBackCloses } from "../navigation/back-closers";
+import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
 import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
@@ -113,6 +114,8 @@ function DetailsBody({
   onClose,
 }: Omit<SongDetailsProps, "song"> & { song: ListedSong }) {
   const { t, locale } = i18n;
+  // A touch screen's Back shuts the dialog, so it draws no close button.
+  const touchFirst = useTouchFirst();
   const [chart, setChart] = useState(() => openingChart(song.levels, keptShownDifficulty()));
   const [viewing, setViewing] = useState<ShownChart | null>(null);
   const name = shownName(song, locale);
@@ -125,17 +128,23 @@ function DetailsBody({
 
   return (
     <>
-      <DialogTitle id={TITLE_ID} lang={nameLanguage(song, name)} sx={{ pr: 7 }}>
+      <DialogTitle
+        id={TITLE_ID}
+        lang={nameLanguage(song, name)}
+        sx={touchFirst ? undefined : { pr: 7 }}
+      >
         {name}
       </DialogTitle>
-      <IconButton
-        id="song-details-close"
-        aria-label={t("picker.close")}
-        onClick={onClose}
-        sx={{ position: "absolute", top: 12, right: 12 }}
-      >
-        <CloseIcon />
-      </IconButton>
+      {!touchFirst && (
+        <IconButton
+          id="song-details-close"
+          aria-label={t("picker.close")}
+          onClick={onClose}
+          sx={{ position: "absolute", top: 12, right: 12 }}
+        >
+          <CloseIcon />
+        </IconButton>
+      )}
       <DialogContent dividers>
         <Stack spacing={2}>
           <Box>
