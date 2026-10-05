@@ -2,7 +2,7 @@
 
 [中文](README.zh-CN.md)
 
-A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses and changes your own play data — scores, profile, My Don, favourite songs, settings — from a desktop app, an Android app and, later, the command line, with an interface that stays out of your way. It runs on your own device and talks to Hiroba directly; none of your data passes through a server of ours.
+A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses your own play scores, changes profile, view My Don, apply favourite songs, change hiroba settings — from a desktop or Android app
 
 ## Download
 
