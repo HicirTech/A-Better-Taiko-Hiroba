@@ -41,6 +41,7 @@
         "zip"
       ],
       "artifactName": "ABTH-${version}-portable.${ext}",
+      "icon": "icons/app-icon.png",
       "signExecutable": false
     },
     "nsis": {
