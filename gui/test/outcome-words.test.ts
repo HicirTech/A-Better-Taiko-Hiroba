@@ -26,8 +26,8 @@ const folderOf = (...songs: string[]): FolderState => ({
 });
 const FOLDER_THEN = folderOf("1001", "1002", "1003");
 const FOLDER_NOW = folderOf("1001", "1004");
-const SONG_THEN: FavoriteSongState = { songNo: "1001" };
-const SONG_NOW: FavoriteSongState = { songNo: "1002" };
+const SONG_THEN: FavoriteSongState = { songNo: "1001", ura: false };
+const SONG_NOW: FavoriteSongState = { songNo: "1002", ura: false };
 const TITLES: Readonly<Record<string, string>> = {
   "1001": "サンプル曲アルファ",
   "1002": "サンプル曲ベータ",
@@ -471,7 +471,7 @@ describe("describeOutcome, the favourite song", () => {
       kind: "diverged",
       before: SONG_THEN,
       expectedAfter: SONG_NOW,
-      after: { songNo: null },
+      after: { songNo: null, ura: false },
       save: SAVE,
       cross: "off",
     };

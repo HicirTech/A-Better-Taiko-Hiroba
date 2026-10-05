@@ -306,6 +306,7 @@ export const en: Messages = {
   "favorites.song.heading": "Favourite song",
   "favorites.song.none": "Not set",
   "favorites.song.change": "Change",
+  "favorites.ura": "Inner chart",
   "picker.title.single": "Choose your favourite song",
   "picker.title.multi": "Add songs",
   "picker.search": "Search songs",

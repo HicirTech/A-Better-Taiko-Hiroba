@@ -54,8 +54,8 @@ const CASES: VerbCase[] = [
   ],
   [
     "changeFavoriteSong",
-    [{ expected: { songNo: "1178" }, target: { songNo: null } }],
-    [{ expected: { songNo: "1178" }, target: { songNo: "1178&bsf=1" } }],
+    [{ expected: { songNo: "1178", ura: true }, target: { songNo: null, ura: false } }],
+    [{ expected: { songNo: "1178", ura: false }, target: { songNo: null, ura: true } }],
   ],
   ["readSongCatalogue", [null], ["0&genre=1"]],
   ["readChineseNames", [], [{ gcmlimit: "max" }]],

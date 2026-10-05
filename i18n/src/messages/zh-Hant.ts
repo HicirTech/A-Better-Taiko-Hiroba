@@ -285,6 +285,7 @@ export const zhHant: Messages = {
   "favorites.song.heading": "最愛歌曲",
   "favorites.song.none": "未設定",
   "favorites.song.change": "變更",
+  "favorites.ura": "裏譜面",
   "picker.title.single": "選擇最愛歌曲",
   "picker.title.multi": "新增歌曲",
   "picker.search": "搜尋歌曲",

@@ -59,6 +59,7 @@ describe("the favourites stand-in at the start", () => {
     expect(await standIn().state()).toEqual({
       folder: slots(...START_FOLDER),
       favoriteSong: "1008",
+      favoriteSongUra: false,
       staging: slots(),
       initStages: true,
       emptyClears: true,

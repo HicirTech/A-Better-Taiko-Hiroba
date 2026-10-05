@@ -29,27 +29,33 @@ function failureOf(result: Result<unknown, ParseFailure>): ParseFailure {
 }
 
 describe("parseFavoriteSongEditorPage", () => {
-  test("reads the song number, the song's title and genre, the bsf and the token", () => {
-    const { state, song, bsf, token } = readOf(songPage({ songNo: "1002", bsf: "3" }));
-    expect(state).toEqual({ songNo: "1002" });
+  test("reads the song number, the song's title and genre, and the token", () => {
+    const { state, song, token } = readOf(songPage({ songNo: "1002", bsf: "0" }));
+    expect(state).toEqual({ songNo: "1002", ura: false });
     expect(song).toEqual({ songNo: "1002", title: "サンプル曲B", genre: 8 });
-    expect(bsf).toBe("3");
     expect(token.reveal()).toBe(TOKEN);
   });
 
-  test("reads a page with no song set as no song, and still reads the bsf", () => {
-    const { state, song, bsf } = readOf(songPage({ songNo: null, bsf: "3" }));
-    expect(state).toEqual({ songNo: null });
+  test("reads bsf 1 as the song's 裏 entry", () => {
+    expect(readOf(songPage({ songNo: "1002", bsf: "1" })).state).toEqual({
+      songNo: "1002",
+      ura: true,
+    });
+  });
+
+  test("reads a page with no song set as no song, whatever its bsf", () => {
+    const { state, song } = readOf(songPage({ songNo: null, bsf: "1" }));
+    expect(state).toEqual({ songNo: null, ura: false });
     expect(song).toBeNull();
-    expect(bsf).toBe("3");
   });
 
   test.each<[label: string, bsf: string]>([
     ["empty", ""],
-    ["spaced", " 3 "],
+    ["spaced", " 1 "],
     ["not a number", "x-1"],
-  ])("takes a bsf that is %s as it is", (_label, bsf) => {
-    expect(readOf(songPage({ bsf })).bsf).toBe(bsf);
+    ["another number", "3"],
+  ])("reads a bsf that is %s as the song itself", (_label, bsf) => {
+    expect(readOf(songPage({ bsf })).state.ura).toBe(false);
   });
 
   test("reads a title trimmed and decoded", () => {

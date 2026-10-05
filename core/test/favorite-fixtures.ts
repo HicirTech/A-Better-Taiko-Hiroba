@@ -113,7 +113,7 @@ export function songPage({
 <input type="hidden" name="from" value="/portal_favorite_song_select.php">
 <h2 class="subtitleMypage">${heading}</h2>
 <div class="mypageInfoArea"><ul id="songList"><li class="contentBox">
-<div class="songNameArea clearfix"><div class="name">${songSpan(songNo, songs)}</div></div>
+<div class="songNameArea${bsf === "1" ? " ura" : ""} clearfix"><div class="name">${songSpan(songNo, songs)}</div></div>
 </li></ul></div>
 <input type="hidden" id="_tckt" name="_tckt" value="${token}" />
 <input type="hidden" name="song_no" id="song_no"
@@ -142,7 +142,7 @@ export function fakeFavorites() {
     initStages: true,
     /** Whether a staging request with an empty value leaves its slot as it was. */
     ignoresEmpty: false,
-    /** The 大好きな曲 Hiroba has saved, and the `bsf` its page holds. */
+    /** The 大好きな曲 Hiroba has saved, and the `bsf` its page holds: 1 for a 裏 entry. */
     song: "1001" as string | null,
     bsf: "0",
     token: "",
@@ -208,6 +208,7 @@ export function fakeFavorites() {
     const { code, stores, message } = hiroba.save;
     if (stores) {
       hiroba.song = form.get("song_no") || null;
+      hiroba.bsf = form.get("bsf") ?? "";
     }
     hiroba.afterSave();
     return json(path, { result: code, errmsg: message });

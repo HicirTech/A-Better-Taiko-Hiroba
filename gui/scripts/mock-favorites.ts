@@ -37,8 +37,9 @@ type Slots = (string | null)[];
 export interface FavoritesState {
   /** The saved お気に入り folder: a song number or null for each of its slots. */
   folder: Slots;
-  /** The saved 大好きな曲. */
+  /** The saved 大好きな曲, and whether it is the song's 裏 entry. */
   favoriteSong: string | null;
+  favoriteSongUra: boolean;
   /** What the editor holds and the save posts; Hiroba keeps it for the session. */
   staging: Slots;
   /** Whether `init=1` loads the saved folder into the staging. */
@@ -52,6 +53,7 @@ const emptySlots = (): Slots => Array.from({ length: FOLDER_SLOT_COUNT }, () => 
 const startState = (): FavoritesState => ({
   folder: emptySlots().map((_, index) => START_FOLDER[index] ?? null),
   favoriteSong: START_FAVORITE_SONG,
+  favoriteSongUra: false,
   staging: emptySlots(),
   initStages: true,
   emptyClears: true,
@@ -154,7 +156,7 @@ ${slots.join("\n")}
       return `<h2 class="subtitleMypage">「大好きな曲」の設定</h2>
 ${songSpan(songOf(favoriteSong))}
 <input type="hidden" name="song_no" id="song_no" value="${favoriteSong ?? ""}">
-<input type="hidden" name="bsf" id="bsf" value="0">
+<input type="hidden" name="bsf" id="bsf" value="${favoriteSong === null ? "" : state.favoriteSongUra ? 1 : 0}">
 <input type="hidden" id="_tckt" name="_tckt" value="${issue(session)}">`;
     },
 
@@ -184,10 +186,17 @@ ${songSpan(songOf(favoriteSong))}
       }
       session.ticket = undefined;
       const songNo = form.get("song_no");
+      const ura = form.get("bsf") === "1";
       if (songNo === "") {
         state.favoriteSong = null;
-      } else if (songNo !== null && HIROBA_SONGS.has(songNo)) {
+        state.favoriteSongUra = false;
+      } else if (
+        songNo !== null &&
+        HIROBA_SONGS.has(songNo) &&
+        (!ura || HIROBA_SONGS.get(songNo)?.courses.ura !== null)
+      ) {
         state.favoriteSong = songNo;
+        state.favoriteSongUra = ura;
       } else {
         return Response.json({ result: 1 });
       }

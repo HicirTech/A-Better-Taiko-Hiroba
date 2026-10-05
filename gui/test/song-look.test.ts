@@ -77,7 +77,7 @@ describe("rememberedSongs", () => {
   const favourite: ShownSong = { songNo: "1003", title: "サンプル曲ガンマ", genre: 2 };
   const view = (song: ShownSong | null): FavoritesView => ({
     folder: { state: { slots: ["1002"] }, songs: [folderSong] },
-    song: { state: { songNo: song?.songNo ?? null }, song },
+    song: { state: { songNo: song?.songNo ?? null, ura: false }, song },
   });
 
   test("names the songs of the folder and the song set, by number", () => {

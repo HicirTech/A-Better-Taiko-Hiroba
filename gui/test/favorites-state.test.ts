@@ -20,6 +20,7 @@ import type {
 } from "../src/session-port";
 
 const SAVE: SaveReading = { answer: "json", code: 0, message: null, report: "report" };
+const song = (songNo: string | null, ura = false): FavoriteSongState => ({ songNo, ura });
 const FAILURE: ReadFailure = { kind: "unreachable" };
 
 const folderOf = (...songs: string[]): FolderState => ({
@@ -29,7 +30,7 @@ const viewOf = (songNo: string | null = "1001", folder: string[] = ["1001", "100
   const shown = (one: string) => ({ songNo: one, title: `曲${one}`, genre: 1 }) as const;
   return {
     folder: { state: folderOf(...folder), songs: folder.map(shown) },
-    song: { state: { songNo }, song: songNo === null ? null : shown(songNo) },
+    song: { state: song(songNo), song: songNo === null ? null : shown(songNo) },
   } satisfies FavoritesView;
 };
 
@@ -82,7 +83,7 @@ describe("a read of the favourites", () => {
   });
 
   test("keeps a draft when the song set is the one it was made over", () => {
-    const draft = { songNo: "1005" };
+    const draft = song("1005");
     const fresh = viewOf("1001", ["1009"]);
     const step = run(
       ready(viewOf("1001"), draft),
@@ -95,7 +96,7 @@ describe("a read of the favourites", () => {
   test("drops a draft when the song set has moved since", () => {
     const fresh = viewOf("1007");
     const step = run(
-      ready(viewOf("1001"), { songNo: "1005" }),
+      ready(viewOf("1001"), song("1005")),
       { type: "readStarted" },
       { type: "readEnded", result: ok(fresh) },
     );
@@ -104,7 +105,7 @@ describe("a read of the favourites", () => {
 
   test("holds the view and the draft through a read that fails, for the read after it", () => {
     const view = viewOf("1001");
-    const draft = { songNo: "1005" };
+    const draft = song("1005");
     const failed = run(
       ready(view, draft),
       { type: "readStarted" },
@@ -131,50 +132,54 @@ describe("a read of the favourites", () => {
   });
 
   test("is forgotten when a session ends", () => {
-    expect(run(ready(viewOf(), { songNo: "1005" }), { type: "forget" })).toBe(UNREAD);
+    expect(run(ready(viewOf(), song("1005")), { type: "forget" })).toBe(UNREAD);
   });
 });
 
 describe("a pick for the 大好きな曲", () => {
   test("puts the song in the draft", () => {
-    expect(run(ready(), { type: "songPicked", songNo: "1005" })).toEqual(
-      ready(viewOf(), { songNo: "1005" }),
+    expect(run(ready(), { type: "songPicked", song: song("1005") })).toEqual(
+      ready(viewOf(), song("1005")),
     );
   });
 
   test("makes no draft of the song already set", () => {
-    const step = ready(viewOf("1001"), { songNo: "1005" });
-    expect(run(step, { type: "songPicked", songNo: "1001" })).toEqual(ready(viewOf("1001")));
+    const step = ready(viewOf("1001"), song("1005"));
+    expect(run(step, { type: "songPicked", song: song("1001") })).toEqual(ready(viewOf("1001")));
+  });
+
+  test("drafts the 裏 entry of the song already set: another entry, so a change", () => {
+    expect(run(ready(viewOf("1001")), { type: "songPicked", song: song("1001", true) })).toEqual(
+      ready(viewOf("1001"), song("1001", true)),
+    );
   });
 
   test("can pick none, to clear the song", () => {
-    expect(run(ready(), { type: "songPicked", songNo: null })).toEqual(
-      ready(viewOf(), { songNo: null }),
+    expect(run(ready(), { type: "songPicked", song: song(null) })).toEqual(
+      ready(viewOf(), song(null)),
     );
   });
 
   test("clears the last write's notice", () => {
     const notice: FavoritesNotice = { write: "folder", outcome: { kind: "nothingToChange" } };
-    expect(run(ready(viewOf(), null, notice), { type: "songPicked", songNo: "1005" })).toEqual(
-      ready(viewOf(), { songNo: "1005" }),
+    expect(run(ready(viewOf(), null, notice), { type: "songPicked", song: song("1005") })).toEqual(
+      ready(viewOf(), song("1005")),
     );
   });
 
   test("changes nothing when it picks the song picked, or when the favourites are not shown", () => {
-    const step = ready(viewOf(), { songNo: "1005" });
-    expect(run(step, { type: "songPicked", songNo: "1005" })).toBe(step);
-    const busy = saving("favoriteSong", viewOf(), { songNo: "1005" });
-    expect(run(busy, { type: "songPicked", songNo: "1006" })).toBe(busy);
-    expect(run(UNREAD, { type: "songPicked", songNo: "1006" })).toBe(UNREAD);
+    const step = ready(viewOf(), song("1005"));
+    expect(run(step, { type: "songPicked", song: song("1005") })).toBe(step);
+    const busy = saving("favoriteSong", viewOf(), song("1005"));
+    expect(run(busy, { type: "songPicked", song: song("1006") })).toBe(busy);
+    expect(run(UNREAD, { type: "songPicked", song: song("1006") })).toBe(UNREAD);
   });
 });
 
 describe("dropping the draft", () => {
   test("puts the row back to the song set, with no notice", () => {
     const notice: FavoritesNotice = { write: "folder", outcome: { kind: "nothingToChange" } };
-    expect(run(ready(viewOf(), { songNo: "1005" }, notice), { type: "draftDropped" })).toEqual(
-      ready(),
-    );
+    expect(run(ready(viewOf(), song("1005"), notice), { type: "draftDropped" })).toEqual(ready());
   });
 
   test("returns the very same step when there is nothing to drop", () => {
@@ -183,16 +188,16 @@ describe("dropping the draft", () => {
   });
 
   test("leaves a write on its way alone", () => {
-    const busy = saving("favoriteSong", viewOf(), { songNo: "1005" });
+    const busy = saving("favoriteSong", viewOf(), song("1005"));
     expect(run(busy, { type: "draftDropped" })).toBe(busy);
   });
 });
 
 describe("starting a save", () => {
   test("shuts the favourites while the song is written, keeping the draft", () => {
-    const step = ready(viewOf(), { songNo: "1005" });
+    const step = ready(viewOf(), song("1005"));
     expect(run(step, { type: "saveStarted", write: "favoriteSong" })).toEqual(
-      saving("favoriteSong", viewOf(), { songNo: "1005" }),
+      saving("favoriteSong", viewOf(), song("1005")),
     );
   });
 
@@ -203,9 +208,9 @@ describe("starting a save", () => {
 
   test("shuts the favourites while the folder is written, a draft or none", () => {
     expect(run(ready(), { type: "saveStarted", write: "folder" })).toEqual(saving("folder"));
-    expect(
-      run(ready(viewOf(), { songNo: "1005" }), { type: "saveStarted", write: "folder" }),
-    ).toEqual(saving("folder", viewOf(), { songNo: "1005" }));
+    expect(run(ready(viewOf(), song("1005")), { type: "saveStarted", write: "folder" })).toEqual(
+      saving("folder", viewOf(), song("1005")),
+    );
   });
 
   test("does not begin a second write, or begin one before a read", () => {
@@ -217,12 +222,12 @@ describe("starting a save", () => {
 
 describe("the end of a 大好きな曲 write", () => {
   const before = viewOf("1001");
-  const draft = { songNo: "1005" };
+  const draft = song("1005");
 
   test("takes the song read back, drops the draft it saved, and says nothing", () => {
     const step = run(saving("favoriteSong", before, draft), {
       type: "songWritten",
-      outcome: appliedSong({ songNo: "1001" }, draft),
+      outcome: appliedSong(song("1001"), draft),
     });
     expect(step).toEqual(ready({ ...before, song: { ...before.song, state: draft } }));
   });
@@ -230,8 +235,8 @@ describe("the end of a 大好きな曲 write", () => {
   test("keeps the draft and says how it ended when nothing was saved", () => {
     const outcome: WriteOutcomeView<FavoriteSongState> = {
       kind: "notApplied",
-      before: { songNo: "1001" },
-      after: { songNo: "1001" },
+      before: song("1001"),
+      after: song("1001"),
       reason: { kind: "refused", code: 1, message: null },
       save: SAVE,
       cross: "off",
@@ -243,15 +248,15 @@ describe("the end of a 大好きな曲 write", () => {
   test("shows the song as the write last saw it, though it is not the draft", () => {
     const outcome: WriteOutcomeView<FavoriteSongState> = {
       kind: "diverged",
-      before: { songNo: "1001" },
+      before: song("1001"),
       expectedAfter: draft,
-      after: { songNo: "1008" },
+      after: song("1008"),
       save: SAVE,
       cross: "off",
     };
     const step = run(saving("favoriteSong", before, draft), { type: "songWritten", outcome });
     expect(step).toEqual(
-      ready({ ...before, song: { ...before.song, state: { songNo: "1008" } } }, draft, {
+      ready({ ...before, song: { ...before.song, state: song("1008") } }, draft, {
         write: "favoriteSong",
         outcome,
       }),
@@ -261,7 +266,7 @@ describe("the end of a 大好きな曲 write", () => {
   test("shows the song another place set, when the write found it moved", () => {
     const outcome: WriteOutcomeView<FavoriteSongState> = {
       kind: "changedSincePreview",
-      current: { songNo: "1005" },
+      current: song("1005"),
     };
     const step = run(saving("favoriteSong", before, draft), { type: "songWritten", outcome });
     expect(step).toMatchObject({
@@ -279,7 +284,7 @@ describe("the end of a 大好きな曲 write", () => {
   });
 
   test("ends only a write of the song that was begun", () => {
-    const outcome = appliedSong({ songNo: "1001" }, draft);
+    const outcome = appliedSong(song("1001"), draft);
     const folderBusy = saving("folder", before, draft);
     expect(run(folderBusy, { type: "songWritten", outcome })).toBe(folderBusy);
     const step = ready(before, draft);
@@ -292,7 +297,7 @@ describe("the end of a folder write", () => {
 
   test("takes the folder read back and says nothing, leaving the draft alone", () => {
     const after = folderOf("1003", "1004", "1005");
-    const draft = { songNo: "1009" };
+    const draft = song("1009");
     const step = run(saving("folder", view, draft), {
       type: "folderWritten",
       outcome: appliedFolder(view.folder.state, after),
@@ -332,14 +337,14 @@ describe("the end of a folder write", () => {
 
   test("ends only a write of the folder that was begun", () => {
     const outcome = appliedFolder(view.folder.state, folderOf("1003"));
-    const songBusy = saving("favoriteSong", view, { songNo: "1005" });
+    const songBusy = saving("favoriteSong", view, song("1005"));
     expect(run(songBusy, { type: "folderWritten", outcome })).toBe(songBusy);
   });
 });
 
 describe("what the page asks of a step", () => {
   const view = viewOf();
-  const held = { view, draft: { songNo: "1005" } };
+  const held = { view, draft: song("1005") };
 
   test("reads again only from the favourites shown or a failed read", () => {
     expect(canReadFavoritesAgain(ready())).toBe(true);

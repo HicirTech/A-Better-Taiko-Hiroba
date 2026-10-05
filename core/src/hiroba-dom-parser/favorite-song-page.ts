@@ -8,7 +8,10 @@ const HEADING = `h2.subtitleMypage:contains("「大好きな曲」の設定")`;
 const SONG_NO = "input#song_no";
 const BSF = "input#bsf";
 
-/** Reads the 大好きな曲 editor, with the form's own `bsf`. */
+/** `bsf` as the picker's links set it: 1 for a song's 裏 entry. */
+const URA_BSF = "1";
+
+/** Reads the 大好きな曲 editor; its `bsf` says whether the song set is the 裏 entry. */
 export function parseFavoriteSongEditorPage(
   html: string,
 ): Result<FavoriteSongEditorReading, ParseFailure> {
@@ -44,10 +47,6 @@ export function parseFavoriteSongEditorPage(
   if (isErr(song)) {
     return song;
   }
-  return ok({
-    state: { songNo: songNo.value },
-    token: token.value,
-    song: song.value,
-    bsf: bsf.value.getAttribute("value") ?? "",
-  });
+  const ura = songNo.value !== null && bsf.value.getAttribute("value") === URA_BSF;
+  return ok({ state: { songNo: songNo.value, ura }, token: token.value, song: song.value });
 }

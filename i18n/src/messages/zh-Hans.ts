@@ -285,6 +285,7 @@ export const zhHans: Messages = {
   "favorites.song.heading": "最爱歌曲",
   "favorites.song.none": "未设置",
   "favorites.song.change": "更改",
+  "favorites.ura": "里谱面",
   "picker.title.single": "选择最爱歌曲",
   "picker.title.multi": "添加歌曲",
   "picker.search": "搜索歌曲",

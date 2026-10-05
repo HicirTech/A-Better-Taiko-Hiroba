@@ -24,6 +24,7 @@ import {
 import { Waiting } from "../my-page/editor-parts";
 import { useBackCloses } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
+import type { FavoriteSongState } from "../session-port";
 import { type PickerEntry, PickerList } from "./picker-list";
 import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
 import { matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
@@ -39,7 +40,7 @@ const LIMIT_NOTE_ID = "song-picker-limit";
 
 /** One song to pick, which closes the picker; or many to check, which the Done button closes. */
 export type SongChoice =
-  | { readonly kind: "one"; readonly onPick: (songNo: string) => void }
+  | { readonly kind: "one"; readonly onPick: (song: FavoriteSongState) => void }
   | {
       readonly kind: "many";
       readonly picked: readonly string[];
@@ -115,7 +116,7 @@ function PickerBody({ choice, catalogue, i18n, onClose }: Omit<SongPickerProps, 
         return;
       }
 
-      onPick?.(songNo);
+      onPick?.({ songNo, ura: false });
       onClose();
     },
     [onPick, onToggle, onClose],

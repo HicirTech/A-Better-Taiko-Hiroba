@@ -311,6 +311,7 @@ export const ja: Messages = {
   "favorites.song.heading": "大好きな曲",
   "favorites.song.none": "未設定",
   "favorites.song.change": "変更",
+  "favorites.ura": "裏譜面",
   "picker.title.single": "大好きな曲を選ぶ",
   "picker.title.multi": "曲を追加",
   "picker.search": "曲を検索",

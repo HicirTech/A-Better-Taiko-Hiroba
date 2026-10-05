@@ -19,6 +19,7 @@ export {
   FAVORITE_SONG_WRITE,
   type FavoriteSongEditorView,
   openFavoriteSongEditor,
+  sameFavoriteSong,
 } from "./favorite-song-write";
 export {
   changeFolder,

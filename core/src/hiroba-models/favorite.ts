@@ -16,6 +16,8 @@ export interface FolderState {
 /** The 大好きな曲: its song number, or null when none is set. */
 export interface FavoriteSongState {
   readonly songNo: string | null;
+  /** The song's 裏 entry rather than the song; false when none is set. */
+  readonly ura: boolean;
 }
 
 /** A song as a favourite editor shows it: Hiroba's own title and genre. */

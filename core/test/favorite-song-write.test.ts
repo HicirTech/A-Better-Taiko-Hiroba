@@ -10,7 +10,8 @@ import {
 import { fakeFavorites } from "./favorite-fixtures";
 import { NOON_JST, ORIGIN } from "./profile-fixtures";
 
-const SAVED: FavoriteSongState = { songNo: "1001" };
+const song = (songNo: string | null, ura = false): FavoriteSongState => ({ songNo, ura });
+const SAVED = song("1001");
 const EDITOR = "GET portal_favorite_song_select.php";
 const SAVE = "POST ajax/mypage_song.php";
 
@@ -26,9 +27,8 @@ function change(
 }
 
 describe("openFavoriteSongEditor", () => {
-  test("reads the song number and the song with one GET, and leaves the token and bsf behind", async () => {
+  test("reads the song number and the song with one GET, and leaves the token behind", async () => {
     const { hiroba, transport, routes } = fakeFavorites();
-    hiroba.bsf = "7";
     const opened = await openFavoriteSongEditor({ transport, hirobaOrigin: ORIGIN });
     expect(routes()).toEqual([EDITOR]);
     expect(opened.ok && opened.value.state).toEqual(SAVED);
@@ -45,7 +45,7 @@ describe("openFavoriteSongEditor", () => {
     const { hiroba, transport } = fakeFavorites();
     hiroba.song = null;
     const opened = await openFavoriteSongEditor({ transport, hirobaOrigin: ORIGIN });
-    expect(opened.ok && opened.value).toEqual({ state: { songNo: null }, song: null });
+    expect(opened.ok && opened.value).toEqual({ state: song(null), song: null });
   });
 
   test("reads a session that is gone as such", async () => {
@@ -59,11 +59,11 @@ describe("openFavoriteSongEditor", () => {
 });
 
 describe("changeFavoriteSong's requests", () => {
-  test("sets a song with the page, one save and the page again, posting the song's bsf 0", async () => {
+  test("sets a song with the page, one save and the page again, posting bsf 0 for the song", async () => {
     const { hiroba, transport, routes, postsTo } = fakeFavorites();
     // The page holds 1 while the song set is a 裏 entry; the new song is picked as itself.
     hiroba.bsf = "1";
-    const outcome = await change(transport, { songNo: "1002" });
+    const outcome = await change(transport, song("1002"), { expected: song("1001", true) });
     expect(routes()).toEqual([EDITOR, SAVE, EDITOR]);
     const [save] = postsTo("ajax/mypage_song.php");
     expect(save?.form).toEqual([
@@ -80,27 +80,42 @@ describe("changeFavoriteSong's requests", () => {
     expect(hiroba.song).toBe("1002");
     expect(outcome).toMatchObject({
       kind: "applied",
-      before: SAVED,
-      after: { songNo: "1002" },
+      before: song("1001", true),
+      after: song("1002"),
       cross: "off",
     });
+  });
+
+  test("sets a song's 裏 entry by posting bsf 1, and reads it back as that entry", async () => {
+    const { hiroba, transport, postsTo } = fakeFavorites();
+    const outcome = await change(transport, song("1002", true));
+    const [save] = postsTo("ajax/mypage_song.php");
+    expect(save?.form).toContainEqual(["bsf", "1"]);
+    expect(hiroba.bsf).toBe("1");
+    expect(outcome).toMatchObject({ kind: "applied", after: song("1002", true) });
+  });
+
+  test("changes the song set to its own 裏 entry: a change, not the same song", async () => {
+    const { transport } = fakeFavorites();
+    const outcome = await change(transport, song("1001", true));
+    expect(outcome).toMatchObject({ kind: "applied", before: SAVED, after: song("1001", true) });
   });
 
   test("sets a song where none was set", async () => {
     const { hiroba, transport } = fakeFavorites();
     hiroba.song = null;
-    const outcome = await change(transport, { songNo: "1003" }, { expected: { songNo: null } });
+    const outcome = await change(transport, song("1003"), { expected: song(null) });
     expect(outcome).toMatchObject({
       kind: "applied",
-      before: { songNo: null },
-      after: { songNo: "1003" },
+      before: song(null),
+      after: song("1003"),
     });
   });
 
   test("clears the song by posting an empty song number and an empty bsf", async () => {
     const { hiroba, transport, postsTo } = fakeFavorites();
-    hiroba.bsf = "7";
-    const outcome = await change(transport, { songNo: null });
+    hiroba.bsf = "1";
+    const outcome = await change(transport, song(null), { expected: song("1001", true) });
     const [save] = postsTo("ajax/mypage_song.php");
     expect(save?.form).toEqual([
       ["song_no", ""],
@@ -108,13 +123,13 @@ describe("changeFavoriteSong's requests", () => {
       ["_tckt", "1".padStart(32, "0")],
     ]);
     expect(hiroba.song).toBeNull();
-    expect(outcome).toMatchObject({ kind: "applied", after: { songNo: null } });
+    expect(outcome).toMatchObject({ kind: "applied", after: song(null) });
   });
 
   test("sends the save once, whatever the answer", async () => {
     const { hiroba, transport, postsTo } = fakeFavorites();
     hiroba.save = { code: 99, stores: false, message: "" };
-    await change(transport, { songNo: "1002" });
+    await change(transport, song("1002"));
     expect(postsTo("ajax/mypage_song.php")).toHaveLength(1);
   });
 });
@@ -167,35 +182,36 @@ describe("changeFavoriteSong's result codes, by the song read back", () => {
   ])("%s", async (_label, save, expected) => {
     const { hiroba, transport } = fakeFavorites();
     hiroba.save = { message: "", ...save };
-    const outcome = await change(transport, { songNo: "1002" });
+    const outcome = await change(transport, song("1002"));
     expect(outcome).toMatchObject(expected);
   });
 });
 
 describe("changeFavoriteSong's refusals before anything is posted", () => {
-  type RefusedCase = [label: string, songNo: string];
+  type RefusedCase = [label: string, target: FavoriteSongState];
   test.each<RefusedCase>([
-    ["a song number with a letter", "12a"],
-    ["a song number of six digits", "100000"],
-    ["an empty song number", ""],
-  ])("refuses %s", async (_label, songNo) => {
+    ["a song number with a letter", song("12a")],
+    ["a song number of six digits", song("100000")],
+    ["an empty song number", song("")],
+    ["a 裏 entry of no song", song(null, true)],
+  ])("refuses %s", async (_label, target) => {
     const { transport, routes } = fakeFavorites();
-    const outcome = await change(transport, { songNo });
+    const outcome = await change(transport, target);
     expect(outcome).toEqual({ kind: "invalidTarget", field: "favoriteSong" });
     expect(routes()).toEqual([EDITOR]);
   });
 
   test("posts nothing for the song that is set already", async () => {
     const { transport, routes } = fakeFavorites();
-    expect(await change(transport, { songNo: "1001" })).toEqual({ kind: "nothingToChange" });
+    expect(await change(transport, song("1001"))).toEqual({ kind: "nothingToChange" });
     expect(routes()).toEqual([EDITOR]);
   });
 
   test("posts nothing when the song was changed elsewhere since the editor was read", async () => {
     const { hiroba, transport, routes } = fakeFavorites();
     hiroba.song = "1003";
-    const outcome = await change(transport, { songNo: "1002" });
-    expect(outcome).toEqual({ kind: "changedSincePreview", current: { songNo: "1003" } });
+    const outcome = await change(transport, song("1002"));
+    expect(outcome).toEqual({ kind: "changedSincePreview", current: song("1003") });
     expect(routes()).toEqual([EDITOR]);
   });
 
@@ -204,7 +220,7 @@ describe("changeFavoriteSong's refusals before anything is posted", () => {
     const gone: Transport = {
       send: () => transport.send({ method: "GET", url: `${ORIGIN}/login.php` }),
     };
-    const outcome = await change(gone, { songNo: "1002" });
+    const outcome = await change(gone, song("1002"));
     expect(outcome).toEqual({ kind: "sessionGone", writeMayHaveHappened: false });
     expect(routes()).toEqual(["GET login.php"]);
   });
