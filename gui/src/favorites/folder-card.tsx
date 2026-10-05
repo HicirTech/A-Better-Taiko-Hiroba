@@ -24,7 +24,7 @@ import type { FavoriteSet } from "./favorite-sets";
 import { ArrowDropDownIcon, CheckIcon } from "./favorites-icons";
 import type { ShownFavorites } from "./favorites-state";
 import type { SongLook } from "./song-look";
-import { SongRow } from "./song-row";
+import { type DetailsOpener, SongRow } from "./song-row";
 
 const LIST = {
   listStyle: "none",
@@ -40,6 +40,7 @@ export interface FolderCardProps {
   readonly shown: ShownFavorites;
   readonly look: (songNo: string) => SongLook;
   readonly i18n: Translator;
+  readonly openDetails: DetailsOpener;
   /** The kept sets, to save the folder into one of them. */
   readonly sets: readonly FavoriteSet[];
   /** The set whose songs are the folder's, in its order; null when no set is. */
@@ -53,6 +54,7 @@ export function FolderCard({
   shown,
   look,
   i18n,
+  openDetails,
   sets,
   inUse,
   onSaveAsSet,
@@ -129,6 +131,7 @@ export function FolderCard({
                     look={look(songNo)}
                     i18n={i18n}
                     scrolling
+                    onOpen={openDetails(songNo)}
                   />
                 </li>
               ))}

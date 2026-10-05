@@ -27,8 +27,28 @@ const ROW = {
     lineHeight: 1.4,
   },
   "& .song-end": { alignSelf: "center", display: "flex", alignItems: "center", gap: 0.5 },
+  "& .song-open": {
+    display: "flex",
+    alignItems: "stretch",
+    gap: 1,
+    flex: 1,
+    minWidth: 0,
+    p: 0,
+    border: 0,
+    borderRadius: 1,
+    bgcolor: "transparent",
+    color: "inherit",
+    font: "inherit",
+    textAlign: "left",
+    cursor: "pointer",
+    "&:hover": { bgcolor: "action.hover" },
+    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: 2 },
+  },
   ...LEVEL_BADGES_LOOK,
 } as const;
+
+/** The way to a song's details, for a row's `onOpen`; undefined for a song without any. */
+export type DetailsOpener = (songNo: string) => (() => void) | undefined;
 
 export interface SongRowProps {
   readonly look: SongLook;
@@ -45,6 +65,9 @@ export interface SongRowProps {
   readonly withLevels?: boolean;
   /** Before the artists on the second line: such as the song's tempo. */
   readonly detail?: string | undefined;
+  /** Makes the bars and the words a button, such as one that opens the song's details. The badges
+   * stay beside it, as a button may not hold another. */
+  readonly onOpen?: (() => void) | undefined;
   readonly id?: string;
 }
 
@@ -57,13 +80,13 @@ export function SongRow({
   scrolling,
   withLevels = true,
   detail,
+  onOpen,
   id,
 }: SongRowProps) {
   const { genres, artists } = look;
   const levels = withLevels ? look.levels : null;
-  return (
-    <Box component="span" id={id} className="song-row" data-song-no={look.songNo} sx={ROW}>
-      {start}
+  const song = (
+    <>
       <span className="song-bars" aria-hidden>
         {genres.length === 0 ? (
           <span className="song-bar" style={NO_GENRE} />
@@ -95,6 +118,18 @@ export function SongRow({
           </span>
         )}
       </span>
+    </>
+  );
+  return (
+    <Box component="span" id={id} className="song-row" data-song-no={look.songNo} sx={ROW}>
+      {start}
+      {onOpen === undefined ? (
+        song
+      ) : (
+        <button type="button" className="song-open" aria-haspopup="dialog" onClick={onOpen}>
+          {song}
+        </button>
+      )}
       {(levels !== null || end !== undefined) && (
         <span className="song-end">
           {levels !== null && <LevelBadges levels={levels} i18n={i18n} />}

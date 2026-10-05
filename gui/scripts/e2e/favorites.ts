@@ -25,7 +25,11 @@ export const favoritesKeys = [
   "songsShownWithGenreAndLevels",
   "levelsStackBehindTheShownDifficulty",
   "levelsSpreadOnAClickAndFoldBack",
+  "badgesOpenNoDetails",
   "shownDifficultyFromSettings",
+  "folderSongOpensItsDetails",
+  "favoriteSongOpensItsDetails",
+  "setsSwipeWaitsForTheDetails",
   "newSetAsksForItsName",
   "pickerShowsItsFilters",
   "pickerShowsItsFiltersOnAPhone",
@@ -43,6 +47,7 @@ export const favoritesKeys = [
   "songsMovedByTheirHandle",
   "setEditsWaitForSave",
   "setShownBeforeEditing",
+  "setSongOpensItsDetailsOnlyWhenShown",
   "setBuiltAndApplied",
   "setAppliedWithNoMessage",
   "folderShowsTheSetInUse",
@@ -254,6 +259,10 @@ export async function favorites(ctx: Ctx) {
   await click(`${SLOT_1} .level-stack`);
   results.levelsSpreadOnAClickAndFoldBack =
     spread === "true" && (await stackOpen(SLOT_1)) === "false";
+  results.badgesOpenNoDetails =
+    (await exists(`${SLOT_1} .song-open`)) &&
+    !(await exists(`${SLOT_1} .song-open .level-stack`)) &&
+    !(await exists("#song-details"));
 
   await showDifficulty("hard");
   const hardInFront = await placesIn(SLOT_1);
@@ -261,6 +270,38 @@ export async function favorites(ctx: Ctx) {
   results.shownDifficultyFromSettings =
     same(hardInFront, ["before", "before", "front", "after"]) &&
     same(await placesIn(SLOT_1), ["before", "before", "before", "front"]);
+
+  const detailsTitleOf = async (row: string) => {
+    const name = await textOf(`${row} .song-name`);
+    await click(`${row} .song-open`);
+    await shown("#song-details-title");
+    const title = await textOf("#song-details-title");
+    await press("Escape");
+    await gone("#song-details");
+    return name !== null && title === name;
+  };
+  results.folderSongOpensItsDetails = await detailsTitleOf(SLOT_1);
+  results.favoriteSongOpensItsDetails = await detailsTitleOf("#favorite-song-row");
+  results.setsSwipeWaitsForTheDetails = await atSize(
+    PHONE_TALL.width,
+    PHONE_TALL.height,
+    async () => {
+      await touchEmulated(true);
+      try {
+        await click(`${SLOT_1} .song-open`);
+        await shown("#song-details-title");
+        const y = PHONE_TALL.height / 2;
+        await swipe({ x: PHONE_TALL.width - 60, y }, { x: PHONE_TALL.width - 200, y: y + 10 });
+        await Bun.sleep(800);
+        const drawerUnder = await exists("#favorites-drawer");
+        await press("Escape");
+        await gone("#song-details");
+        return !drawerUnder;
+      } finally {
+        await touchEmulated(false);
+      }
+    },
+  );
 
   await openDrawer();
   await click("#favorites-item-new");
@@ -344,6 +385,7 @@ export async function favorites(ctx: Ctx) {
   await shown(`#favorite-set-song-${LONG_TITLED}`);
   await Bun.sleep(500);
   results.longNameScrolls = await exists(`#favorite-set-song-${LONG_TITLED} .scrolling`);
+  const noDetailsWhileEditing = !(await exists("#favorite-set-songs .song-open"));
 
   const pickedOrder = await keysIn("favorite-set-songs");
   await dragByMouse(
@@ -365,6 +407,8 @@ export async function favorites(ctx: Ctx) {
     (await exists("#favorite-set-edit")) &&
     !(await exists("#favorite-set-songs .drag-handle")) &&
     !(await exists("#favorite-set-songs button[data-song-no]"));
+  results.setSongOpensItsDetailsOnlyWhenShown =
+    noDetailsWhileEditing && (await detailsTitleOf(`#favorite-set-song-${LONG_TITLED}`));
 
   await resetLog();
   await click("#favorite-set-apply");

@@ -6,6 +6,9 @@ import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { HELD_STILL, LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
 import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
+import type { PictureLane } from "../pictures/picture-lane";
+import type { HirobaSessionPort } from "../session-port";
+import { SongDetails } from "../songs/song-details";
 import {
   type FavoriteSet,
   filledSlots,
@@ -25,6 +28,7 @@ import { keptShownDifficulty, ShownDifficultyContext } from "./shown-difficulty"
 import { SongCard } from "./song-card";
 import { rememberedSongs, resolveSong } from "./song-look";
 import { SongPicker } from "./song-picker";
+import type { DetailsOpener } from "./song-row";
 import { useFavoriteSets } from "./use-favorite-sets";
 import type { FavoritesEditor } from "./use-favorites";
 import { useSetsSwipe } from "./use-sets-swipe";
@@ -40,6 +44,9 @@ type Naming =
 export interface FavoritesPageProps {
   readonly favorites: FavoritesEditor;
   readonly catalogue: SongCatalogue;
+  /** A song's details read its charts' pictures here, and Hiroba's difficulty icons from `lane`. */
+  readonly port: Pick<HirobaSessionPort, "readChartPicture">;
+  readonly lane: PictureLane;
   readonly i18n: Translator;
 }
 
@@ -53,7 +60,7 @@ export function FavoritesPage(props: FavoritesPageProps) {
   );
 }
 
-function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
+function FavoritesBody({ favorites, catalogue, port, lane, i18n }: FavoritesPageProps) {
   const { t, locale } = i18n;
   const { step, pickSong } = favorites;
   const shown = shownFavoritesOf(step);
@@ -67,10 +74,16 @@ function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
   const [naming, setNaming] = useState<Naming | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [picking, setPicking] = useState<"song" | "set" | null>(null);
+  const [openSongNo, setOpenSongNo] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
   const touchFirst = useTouchFirst();
-  useSetsSwipe({ active: touchFirst, open: drawerOpen, onOpenChange: setDrawerOpen });
+  // A song's details stand over the page, so the sets' swipe waits until they shut.
+  useSetsSwipe({
+    active: touchFirst && openSongNo === null,
+    open: drawerOpen,
+    onOpenChange: setDrawerOpen,
+  });
 
   const set = sets.find((one) => one.id === selectedId) ?? null;
   const setId = set?.id ?? null;
@@ -84,6 +97,10 @@ function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
   const look = useCallback(
     (songNo: string) => resolveSong(songNo, catalogue.songs, remembered, locale),
     [catalogue.songs, remembered, locale],
+  );
+  const openDetails = useCallback<DetailsOpener>(
+    (songNo) => (catalogue.songs.has(songNo) ? () => setOpenSongNo(songNo) : undefined),
+    [catalogue.songs],
   );
   const songChoice = useMemo(() => ({ kind: "one", onPick: pickSong }) as const, [pickSong]);
   const savedSongs = set?.songs ?? NO_SONGS;
@@ -173,6 +190,7 @@ function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
           songs={editedSongs}
           look={look}
           i18n={i18n}
+          openDetails={openDetails}
           editing={editing}
           edited={edited}
           canApply={
@@ -204,6 +222,7 @@ function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
             shown={shown}
             look={look}
             i18n={i18n}
+            openDetails={openDetails}
             onChange={() => setPicking("song")}
             onSave={saveSong}
             onReset={favorites.resetSong}
@@ -212,6 +231,7 @@ function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
             shown={shown}
             look={look}
             i18n={i18n}
+            openDetails={openDetails}
             sets={sets}
             inUse={inUse}
             onSaveAsSet={() =>
@@ -285,6 +305,13 @@ function FavoritesBody({ favorites, catalogue, i18n }: FavoritesPageProps) {
           onClose={() => setPicking(null)}
         />
       )}
+      <SongDetails
+        song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
+        port={port}
+        lane={lane}
+        i18n={i18n}
+        onClose={() => setOpenSongNo(null)}
+      />
     </Stack>
   );
 }

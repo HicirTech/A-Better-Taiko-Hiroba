@@ -8,6 +8,8 @@ import { hitsOn } from "./stand-in";
 /** The stand-in's one picture of 1005's inner chart. */
 const INNER_PICTURE = "/__charts/1005/ura-1.png";
 const EDGE_PX = 24;
+/** The narrowest phone the details are drawn for. */
+const NARROW_PHONE = { width: 360, height: 780 } as const;
 
 export const songSearchKeys = [
   "searchBarInTheTopBand",
@@ -24,6 +26,7 @@ export const songSearchKeys = [
   "detailsOpenOnTheShownDifficulty",
   "detailsShowTheChartPictures",
   "chartPictureAskedOnce",
+  "fiveChartsInOneRowOnAPhone",
   "detailsCloseOnlyWithAPointer",
   "menuSwipesOverTheDetails",
   "searchLeftByItsArrow",
@@ -168,6 +171,19 @@ export async function songSearch(ctx: Ctx) {
   await closeSong();
   await showDifficulty("oni");
   results.detailsOpenOnTheShownDifficulty = hardChosen;
+
+  results.fiveChartsInOneRowOnAPhone = await atSize(
+    NARROW_PHONE.width,
+    NARROW_PHONE.height,
+    async () => {
+      await openSong("約束", "1005");
+      const tops = await page.evaluate<number[]>(
+        `[...document.querySelectorAll('#song-details [role="group"] button')].map((button) => Math.round(button.getBoundingClientRect().top))`,
+      );
+      await closeSong();
+      return tops.length === 5 && new Set(tops).size === 1;
+    },
+  );
 
   results.detailsCloseOnlyWithAPointer =
     (await exists("#song-search-input")) &&

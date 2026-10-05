@@ -42,9 +42,10 @@ const TITLE_ID = "song-details-title";
 // color-mix, as a chart's colour can be a light-dark() pair, which MUI's alpha() cannot read.
 const chartButton = (difficulty: Difficulty) => {
   const colour = DIFFICULTY_COLOUR[difficulty];
+  // Tight enough that five charts stand in one row on a phone 360 pixels wide.
   return {
-    gap: 0.5,
-    px: 1,
+    gap: 0.25,
+    px: 0.5,
     py: 0.5,
     textTransform: "none",
     fontWeight: 600,
@@ -182,7 +183,7 @@ function DetailsBody({
           <Box
             role="group"
             aria-label={t("details.charts")}
-            sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}
+            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
           >
             {charted.map(({ difficulty, level }, index) => (
               <ToggleButton
