@@ -30,7 +30,11 @@ import {
   PORT_ARGUMENTS,
   type SignInOutcome,
 } from "../src/session-port";
-import { readChineseNames, readSongCatalogue } from "../src/song-catalogue";
+import {
+  createChartPictureReader,
+  readChineseNames,
+  readSongCatalogue,
+} from "../src/song-catalogue";
 import { readUpdateFeed, releasesUrlOf } from "../src/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createCostumeHistoryStore } from "./costume-history-store";
@@ -119,6 +123,12 @@ const pictures = createPictureReader({
   queue,
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
+});
+// Asked of the wiki's hosts, not Hiroba: the feed's transport holds no session, and no queue.
+const chartPictures = createChartPictureReader({
+  transport: feedTransport,
+  store: createDiskPictureStore(join(app.getPath("userData"), "charts")),
+  chartOrigin: environment.chartOrigin,
 });
 // The writes come up with the window: until then a kept picture fills no history.
 let previewKept: (set: CostumeSet, picture: string) => void = () => undefined;
@@ -251,6 +261,7 @@ app.whenReady().then(async () => {
     readSongCatalogue: (since) =>
       readSongCatalogue(feedTransport, environment.songCatalogueUrl, since),
     readChineseNames: () => readChineseNames(feedTransport, environment.chineseNamesUrl),
+    readChartPicture: chartPictures,
   });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

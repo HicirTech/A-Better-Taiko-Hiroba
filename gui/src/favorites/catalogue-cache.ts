@@ -5,9 +5,12 @@ const KEY = "abth.songCatalogue";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SONG_NO = /^\d{1,5}$/;
 
+// A list kept before its songs carried a tempo and charts is no list, so it is read again in full.
+const VERSION = 2;
+
 /** The song list as kept on the device, and when the read that brought it was sent. */
 export interface KeptCatalogue {
-  readonly v: 1;
+  readonly v: typeof VERSION;
   readonly sentAt: number;
   readonly songs: readonly CatalogueSong[];
 }
@@ -21,13 +24,30 @@ const isGenre = (value: unknown): boolean =>
 const isLevel = (value: unknown): boolean =>
   value === null || (typeof value === "number" && Number.isInteger(value) && value >= 1);
 
-function isCatalogueSong(value: unknown): value is CatalogueSong {
-  if (typeof value !== "object" || value === null) {
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const isBpm = (value: unknown): boolean =>
+  value === null ||
+  (isRecord(value) &&
+    typeof value.min === "number" &&
+    typeof value.max === "number" &&
+    typeof value.wobbles === "boolean");
+
+const isChart = (value: unknown): boolean =>
+  value === null ||
+  (isRecord(value) &&
+    (value.maxCombo === null || typeof value.maxCombo === "number") &&
+    typeof value.branched === "boolean" &&
+    Array.isArray(value.images) &&
+    value.images.every((image) => typeof image === "string"));
+
+function isCatalogueSong(song: unknown): song is CatalogueSong {
+  if (!isRecord(song)) {
     return false;
   }
 
-  const song = value as Record<string, unknown>;
-  const levels = song.levels as Record<string, unknown> | null;
+  const { levels, charts } = song;
   return (
     typeof song.songNo === "string" &&
     SONG_NO.test(song.songNo) &&
@@ -39,9 +59,11 @@ function isCatalogueSong(value: unknown): value is CatalogueSong {
     song.artists.every((artist) => typeof artist === "string") &&
     Array.isArray(song.genres) &&
     song.genres.every(isGenre) &&
-    typeof levels === "object" &&
-    levels !== null &&
-    DIFFICULTIES.every((difficulty) => isLevel(levels[difficulty]))
+    isRecord(levels) &&
+    DIFFICULTIES.every((difficulty) => isLevel(levels[difficulty])) &&
+    isBpm(song.bpm) &&
+    isRecord(charts) &&
+    DIFFICULTIES.every((difficulty) => isChart(charts[difficulty]))
   );
 }
 
@@ -52,7 +74,7 @@ function isKept(value: unknown): value is KeptCatalogue {
 
   const { v, sentAt, songs } = value as Record<string, unknown>;
   return (
-    v === 1 &&
+    v === VERSION &&
     typeof sentAt === "number" &&
     Number.isFinite(sentAt) &&
     Array.isArray(songs) &&
@@ -91,7 +113,7 @@ export function mergeCatalogue(kept: KeptCatalogue | null, read: SongCatalogueRe
   for (const songNo of read.removed) {
     bySongNo.delete(songNo);
   }
-  return { v: 1, sentAt: read.sentAt, songs: [...bySongNo.values()] };
+  return { v: VERSION, sentAt: read.sentAt, songs: [...bySongNo.values()] };
 }
 
 /** What to ask taiko.wiki for, or none while the song list kept is a day old at most. */

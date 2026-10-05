@@ -191,7 +191,9 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
   "name.counter",
   "name.siteWarning",
   "song.level",
+  "song.bpm",
   "picker.level",
+  "settings.taikoWiki",
 ];
 
 /** Messages that are just one game term, as each language writes it. */
@@ -340,9 +342,10 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "增搜尋依文英羅馬類找放",
     "相刪將影響",
     "發稍布",
-    "者類星其他來太基依",
+    "者類星其他太基依",
     "替順序鍵拿起向命",
     "譜疊點橫",
+    "大歧及",
   ].join(""),
 );
 

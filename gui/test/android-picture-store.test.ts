@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import { PICTURE_EPOCH, type PictureKey } from "../src/hiroba-session";
-import { createIndexedDbPictureStore } from "../src/platform/android-picture-store";
+import type { DatabaseFactory } from "../src/platform/android-indexeddb";
+import {
+  CHART_PICTURE_DATABASE,
+  createIndexedDbPictureStore,
+} from "../src/platform/android-picture-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const TAIKO_NO = "000000000000";
@@ -69,6 +73,20 @@ describe("createIndexedDbPictureStore", () => {
     expect(await bumped.get(item(36))).toBeNull();
     expect(indexedDb.tables.get("pictures")?.size).toBe(0);
     expect(indexedDb.tables.get("meta")?.get("epoch")).toBe(PICTURE_EPOCH);
+  });
+
+  test("opens the database it is named for, and the pictures' own when named none", async () => {
+    const indexedDb = createFakeIndexedDb();
+    const opened: string[] = [];
+    const factory: DatabaseFactory = {
+      open: (name, version) => {
+        opened.push(name);
+        return indexedDb.factory.open(name, version);
+      },
+    };
+    await createIndexedDbPictureStore(factory).get(item(36));
+    await createIndexedDbPictureStore(factory, CHART_PICTURE_DATABASE).get(item(36));
+    expect(opened).toEqual(["abth-pictures", "abth-charts"]);
   });
 
   test("keeps the run's pictures in memory when IndexedDB cannot be opened", async () => {

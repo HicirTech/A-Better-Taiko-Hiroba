@@ -17,8 +17,12 @@ export const zhHant: Messages = {
   "settings.updates": "更新",
   "settings.version": "版本 {version}",
   "settings.songData": "歌曲資料",
-  "settings.songDataSources":
-    "作者、分類、星級和其他語言的歌名來自 taiko.wiki 與 太鼓之達人維基（taiko.fandom.com/zh）。太鼓之達人維基的歌名依 CC BY-SA 使用。",
+  "settings.taikoWiki": "taiko.wiki",
+  "settings.taikoWikiGives": "作者、分類、星級、BPM、其他語言的歌名，以及譜面圖的連結",
+  "settings.chineseWiki": "太鼓之達人維基（taiko.fandom.com/zh）",
+  "settings.chineseWikiGives": "官方中文歌名，依 CC BY-SA 使用",
+  "settings.chartWiki": "太鼓達人譜面 Wiki（wikiwiki.jp/taiko-fumen）",
+  "settings.chartWikiGives": "譜面圖",
   "settings.songLevels": "歌曲難度",
   "settings.shownDifficulty": "預設顯示的難度",
   "settings.shownDifficultyHint":
@@ -226,6 +230,7 @@ export const zhHant: Messages = {
   "difficulty.oni": "魔鬼",
   "difficulty.ura": "魔鬼(裏)",
   "song.level": "{difficulty} ★{level}",
+  "song.bpm": "BPM {bpm}",
   "write.folder.unchanged": "廣場回覆已儲存，但讀回的收藏資料夾仍是原樣。沒有任何變化。",
   "write.folder.diverged": "收藏資料夾沒有按計畫變更。請比較下方內容。",
   "write.folder.changedSincePreview":
@@ -295,4 +300,13 @@ export const zhHant: Messages = {
   "picker.limit": "一個套裝最多放 {max} 首歌曲。要新增，請先移除一首。",
   "picker.done": "完成",
   "picker.close": "關閉",
+  "search.leave": "關閉搜尋",
+  "search.clear": "清除",
+  "search.forget": "刪除「{query}」",
+  "details.charts": "譜面",
+  "details.maxCombo": "最大連段：{count}",
+  "details.branched": "有譜面分歧",
+  "details.noPicture": "這個譜面還沒有圖。",
+  "details.pictureFailed": "無法載入譜面圖。",
+  "details.picture": "{difficulty}譜面（{n}/{count}）",
 };

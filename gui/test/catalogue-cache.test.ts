@@ -12,7 +12,7 @@ import { song } from "./song-fixtures";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const kept = (songs: CatalogueSong[], sentAt = 1_000): KeptCatalogue => ({ v: 1, sentAt, songs });
+const kept = (songs: CatalogueSong[], sentAt = 1_000): KeptCatalogue => ({ v: 2, sentAt, songs });
 const numbers = (catalogue: KeptCatalogue) => catalogue.songs.map((one) => one.songNo);
 
 describe("mergeCatalogue", () => {
@@ -73,7 +73,7 @@ describe("keepCatalogue and loadCatalogue", () => {
     const storage = memoryStorage();
     keepCatalogue(kept([FULL], 42), storage);
     expect(JSON.parse(storage.getItem("abth.songCatalogue") ?? "null")).toEqual({
-      v: 1,
+      v: 2,
       sentAt: 42,
       songs: [FULL],
     });
@@ -83,33 +83,28 @@ describe("keepCatalogue and loadCatalogue", () => {
     expect(loadCatalogue(memoryStorage())).toBeNull();
   });
 
+  const keptText = (songs: unknown[], v = 2) => JSON.stringify({ v, sentAt: 1, songs });
   test.each([
     ["text that is not JSON", "{"],
     ["something that is no object", "[]"],
-    ["another version", JSON.stringify({ v: 2, sentAt: 1, songs: [] })],
-    ["no read time", JSON.stringify({ v: 1, songs: [] })],
-    ["a read time that is no number", JSON.stringify({ v: 1, sentAt: "1", songs: [] })],
-    ["songs that are no list", JSON.stringify({ v: 1, sentAt: 1, songs: {} })],
-    ["a song with no title", JSON.stringify({ v: 1, sentAt: 1, songs: [{ ...FULL, title: 3 }] })],
-    [
-      "a song with a number that is no number",
-      JSON.stringify({ v: 1, sentAt: 1, songs: [{ ...FULL, songNo: "ns2_sample" }] }),
-    ],
-    [
-      "a song with a genre the game does not have",
-      JSON.stringify({ v: 1, sentAt: 1, songs: [{ ...FULL, genres: [9] }] }),
-    ],
+    ["a list kept before songs had a tempo and charts", keptText([], 1)],
+    ["a later version", keptText([], 3)],
+    ["no read time", JSON.stringify({ v: 2, songs: [] })],
+    ["a read time that is no number", JSON.stringify({ v: 2, sentAt: "1", songs: [] })],
+    ["songs that are no list", JSON.stringify({ v: 2, sentAt: 1, songs: {} })],
+    ["a song with no title", keptText([{ ...FULL, title: 3 }])],
+    ["a song with a number that is no number", keptText([{ ...FULL, songNo: "ns2_sample" }])],
+    ["a song with a genre the game does not have", keptText([{ ...FULL, genres: [9] }])],
     [
       "a song with a level that is no number",
-      JSON.stringify({
-        v: 1,
-        sentAt: 1,
-        songs: [{ ...FULL, levels: { ...FULL.levels, oni: "8" } }],
-      }),
+      keptText([{ ...FULL, levels: { ...FULL.levels, oni: "8" } }]),
     ],
+    ["a song with no levels", keptText([{ ...FULL, levels: undefined }])],
+    ["a song with a tempo that is no tempo", keptText([{ ...FULL, bpm: "154" }])],
+    ["a song with no charts", keptText([{ ...FULL, charts: undefined }])],
     [
-      "a song with no levels",
-      JSON.stringify({ v: 1, sentAt: 1, songs: [{ ...FULL, levels: undefined }] }),
+      "a song with a chart whose pictures are no list",
+      keptText([{ ...FULL, charts: { ...FULL.charts, oni: { ...FULL.charts.oni, images: "a" } } }]),
     ],
   ])("treat %s as nothing kept", (_label, text) => {
     const storage = memoryStorage();

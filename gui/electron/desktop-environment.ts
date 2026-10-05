@@ -3,7 +3,7 @@ import {
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
 } from "../src/hiroba-session";
-import { CHINESE_NAMES_URL, catalogueUrlFor } from "../src/song-catalogue";
+import { CHINESE_NAMES_URL, catalogueUrlFor, chartOriginFor } from "../src/song-catalogue";
 import { feedUrlFor } from "../src/updates";
 
 export type Environment = Readonly<Record<string, string | undefined>>;
@@ -23,6 +23,8 @@ export interface DesktopEnvironment {
   readonly songCatalogueUrl: string | undefined;
   /** Where the Chinese wiki's song names are read; undefined when this run reads none. */
   readonly chineseNamesUrl: string | undefined;
+  /** The stand-in's origin chart pictures are read from too; undefined when this run has none. */
+  readonly chartOrigin: string | undefined;
 }
 
 /** Only a development run takes anything from the environment: a packaged build uses real sites,
@@ -31,6 +33,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
   const updateFeedUrl = feedUrlFor(!packaged, env.ABTH_DEV_UPDATE_FEED);
   const songCatalogueUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_SONG_CATALOGUE);
   const chineseNamesUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_CHINESE_NAMES, CHINESE_NAMES_URL);
+  const chartOrigin = chartOriginFor(!packaged, env.ABTH_DEV_CHART_ORIGIN);
   if (packaged) {
     return {
       devServerUrl: undefined,
@@ -40,6 +43,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
       updateFeedUrl,
       songCatalogueUrl,
       chineseNamesUrl,
+      chartOrigin,
     };
   }
   const fixed = Date.parse(env.ABTH_DEV_NOW ?? "");
@@ -55,5 +59,6 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
     updateFeedUrl,
     songCatalogueUrl,
     chineseNamesUrl,
+    chartOrigin,
   };
 }

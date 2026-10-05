@@ -10,8 +10,11 @@ export type WikiGenre =
   | "variety"
   | "classic";
 
-interface WikiCourse {
+export interface WikiCourse {
   readonly level: number;
+  readonly maxCombo: number;
+  readonly isBranched: 0 | 1;
+  readonly images: readonly string[];
 }
 
 export interface WikiSong {
@@ -22,6 +25,8 @@ export interface WikiSong {
   readonly romaji: string | null;
   readonly artists: readonly string[];
   readonly genre: readonly WikiGenre[];
+  readonly bpm: { readonly min: number; readonly max: number };
+  readonly bpmShiver: 0 | 1;
   readonly isDeleted: 0 | 1;
   readonly courses: {
     readonly easy: WikiCourse;
@@ -32,13 +37,51 @@ export interface WikiSong {
   };
 }
 
+type WikiDifficulty = keyof WikiSong["courses"];
+
+const WIKI_DIFFICULTIES: readonly WikiDifficulty[] = ["easy", "normal", "hard", "oni", "ura"];
+
+type PictureCounts = Readonly<Partial<Record<WikiDifficulty, number>>>;
+
+/** How many pictures each chart of a song has on the stand-in; a chart not named has none. */
+const CHART_PICTURES: Readonly<Record<string, PictureCounts>> = {
+  "1001": { easy: 1, normal: 1, hard: 1, oni: 1 },
+  "1005": { oni: 2, ura: 1 },
+  "1019": { oni: 1 },
+};
+
+const chartPicturePaths = (songNo: string, difficulty: WikiDifficulty): string[] =>
+  Array.from(
+    { length: CHART_PICTURES[songNo]?.[difficulty] ?? 0 },
+    (_, at) => `/__charts/${songNo}/${difficulty}-${at + 1}.png`,
+  );
+
+/** Where the stand-in serves each chart picture, a song's easiest chart first. */
+export const CHART_PICTURE_PATHS: readonly string[] = Object.keys(CHART_PICTURES).flatMap(
+  (songNo) => WIKI_DIFFICULTIES.flatMap((difficulty) => chartPicturePaths(songNo, difficulty)),
+);
+
 type Levels = readonly [easy: number, normal: number, hard: number, oni: number, ura?: number];
 
-interface OtherTitles {
+interface Extras {
   readonly en?: string;
   readonly zh?: string;
   readonly romaji?: string;
+  /** The lowest and highest BPM; 150 throughout when not given. */
+  readonly bpm?: readonly [min: number, max: number];
+  readonly wobbles?: boolean;
+  readonly branched?: boolean;
 }
+
+const STEADY_BPM = [150, 150] as const;
+const COMBO_PER_LEVEL = 100;
+
+const course = (level: number, branched = false): WikiCourse => ({
+  level,
+  maxCombo: level * COMBO_PER_LEVEL,
+  isBranched: branched ? 1 : 0,
+  images: [],
+});
 
 function wikiSong(
   songNo: string,
@@ -46,23 +89,26 @@ function wikiSong(
   artist: string,
   genre: readonly WikiGenre[],
   [easy, normal, hard, oni, ura]: Levels,
-  other: OtherTitles = {},
+  extras: Extras = {},
 ): WikiSong {
+  const [min, max] = extras.bpm ?? STEADY_BPM;
   return {
     songNo,
     title,
-    titleEn: other.en ?? null,
-    titleZhCN: other.zh ?? null,
-    romaji: other.romaji ?? null,
+    titleEn: extras.en ?? null,
+    titleZhCN: extras.zh ?? null,
+    romaji: extras.romaji ?? null,
     artists: [artist],
     genre,
+    bpm: { min, max },
+    bpmShiver: extras.wobbles ? 1 : 0,
     isDeleted: 0,
     courses: {
-      easy: { level: easy },
-      normal: { level: normal },
-      hard: { level: hard },
-      oni: { level: oni },
-      ura: ura === undefined ? null : { level: ura },
+      easy: course(easy),
+      normal: course(normal),
+      hard: course(hard),
+      oni: course(oni, extras.branched),
+      ura: ura === undefined ? null : course(ura),
     },
   };
 }
@@ -95,6 +141,8 @@ export const WIKI_SONGS: readonly WikiSong[] = [
     en: "Beyond the Promise",
     zh: "约定的彼端",
     romaji: "yakusoku no mukougawa",
+    bpm: [120, 240],
+    branched: true,
   }),
   wikiSong("1006", "ひこうき雲のゆくえ", "ハルカゼ", ["pops"], [1, 2, 4, 6], {
     romaji: "hikoukigumo no yukue",
@@ -110,6 +158,8 @@ export const WIKI_SONGS: readonly WikiSong[] = [
   }),
   wikiSong("1010", "勇者たちの行進曲", "星屑ラボ", ["anime"], [3, 5, 7, 9], {
     zh: "勇者们的进行曲",
+    bpm: [168, 168],
+    wobbles: true,
   }),
   wikiSong("1011", "魔法少女は眠らない", "Miracle Pocket", ["anime"], [2, 3, 5, 7], {
     en: "The Magical Girl Never Sleeps",
@@ -131,6 +181,7 @@ export const WIKI_SONGS: readonly WikiSong[] = [
   wikiSong("1018", "ネオンの雨に溺れて", "nocturne.wav", ["vocaloid"], [3, 5, 7, 8]),
   wikiSong("1019", "SIGNAL 404", "nocturne.wav", ["vocaloid"], [4, 6, 8, 10], {
     en: "SIGNAL 404",
+    bpm: [85.85, 257.5],
   }),
   wikiSong("1020", "あの日の手紙", "白鍵P", ["vocaloid"], [2, 4, 6, 8], { zh: "那天的信" }),
   wikiSong("1021", "ロストタイム・ループ", "白鍵P", ["vocaloid"], [3, 5, 7, 9, 10]),
@@ -178,7 +229,29 @@ const CHANGED_LATELY: readonly WikiSong[] = [
   DELETED_SONG,
 ];
 
-/** The whole list, or, for a read that names a time, the pair the wiki would have changed since. */
-export function wikiSongsSince(after: string | null): readonly WikiSong[] {
-  return after === null ? WIKI_SONGS : CHANGED_LATELY;
+/** The song with the pictures of its charts linked on `origin`, where the stand-in serves them. */
+function linkedOn(origin: string, song: WikiSong): WikiSong {
+  if (CHART_PICTURES[song.songNo] === undefined) {
+    return song;
+  }
+  const linked = (course: WikiCourse, difficulty: WikiDifficulty): WikiCourse => ({
+    ...course,
+    images: chartPicturePaths(song.songNo, difficulty).map((path) => `${origin}${path}`),
+  });
+  const { easy, normal, hard, oni, ura } = song.courses;
+  return {
+    ...song,
+    courses: {
+      easy: linked(easy, "easy"),
+      normal: linked(normal, "normal"),
+      hard: linked(hard, "hard"),
+      oni: linked(oni, "oni"),
+      ura: ura === null ? null : linked(ura, "ura"),
+    },
+  };
+}
+
+/** The whole list, or the pair a read that names a time gets, its pictures linked on `origin`. */
+export function wikiSongsSince(after: string | null, origin: string): readonly WikiSong[] {
+  return (after === null ? WIKI_SONGS : CHANGED_LATELY).map((song) => linkedOn(origin, song));
 }

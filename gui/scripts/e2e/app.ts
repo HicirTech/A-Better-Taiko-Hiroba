@@ -33,6 +33,7 @@ export async function launch({
       ABTH_DEV_NOW: now,
       ABTH_DEV_SONG_CATALOGUE: `${HIROBA}/__song-catalogue`,
       ABTH_DEV_CHINESE_NAMES: `${HIROBA}/__chinese-names`,
+      ABTH_DEV_CHART_ORIGIN: HIROBA,
       ABTH_DEBUG_SAVE_READS: "1",
       ...env,
     },

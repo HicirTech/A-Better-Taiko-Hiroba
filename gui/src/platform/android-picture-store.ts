@@ -12,9 +12,11 @@ import {
   succeeded,
 } from "./android-indexeddb";
 
-const DATABASE = "abth-pictures";
+const PICTURE_DATABASE = "abth-pictures";
+/** Chart pictures have a database of their own, so neither kind's clearing reaches the other. */
+export const CHART_PICTURE_DATABASE = "abth-charts";
 const DATABASE_VERSION = 1;
-/** The pictures' PNG bytes, each under its pictureKeyPath. */
+/** The pictures' bytes, each under its pictureKeyPath. */
 const PICTURES = "pictures";
 /** One record, under EPOCH_KEY: the PICTURE_EPOCH the pictures were kept under. */
 const META = "meta";
@@ -22,8 +24,11 @@ const EPOCH_KEY = "epoch";
 
 /** Android's pictures, in the page's IndexedDB across launches and sign-outs; a PICTURE_EPOCH bump
  * clears them. If it cannot open, this run's pictures stay in memory; nothing throws. */
-export function createIndexedDbPictureStore(factory: DatabaseFactory): PictureStore {
-  const opened: Promise<PictureStore> = openPictureDatabase(factory).then(databaseStore, () =>
+export function createIndexedDbPictureStore(
+  factory: DatabaseFactory,
+  name: string = PICTURE_DATABASE,
+): PictureStore {
+  const opened: Promise<PictureStore> = openPictureDatabase(factory, name).then(databaseStore, () =>
     createMemoryPictureStore(),
   );
   return {
@@ -56,8 +61,8 @@ function databaseStore(database: Database): PictureStore {
   };
 }
 
-async function openPictureDatabase(factory: DatabaseFactory): Promise<Database> {
-  const database = await openDatabase(factory, DATABASE, DATABASE_VERSION, (created) => {
+async function openPictureDatabase(factory: DatabaseFactory, name: string): Promise<Database> {
+  const database = await openDatabase(factory, name, DATABASE_VERSION, (created) => {
     created.createObjectStore(PICTURES);
     created.createObjectStore(META);
   });

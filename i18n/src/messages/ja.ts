@@ -17,8 +17,13 @@ export const ja: Messages = {
   "settings.updates": "アップデート",
   "settings.version": "バージョン {version}",
   "settings.songData": "曲のデータ",
-  "settings.songDataSources":
-    "アーティスト、ジャンル、難易度の星、ほかの言語の曲名は taiko.wiki と 太鼓之達人維基（taiko.fandom.com/zh）によるものです。太鼓之達人維基の曲名は CC BY-SA に従って使っています。",
+  "settings.taikoWiki": "taiko.wiki",
+  "settings.taikoWikiGives":
+    "アーティスト、ジャンル、難易度の星、BPM、ほかの言語の曲名、譜面の画像へのリンク",
+  "settings.chineseWiki": "太鼓之達人維基（taiko.fandom.com/zh）",
+  "settings.chineseWikiGives": "公式の中国語の曲名（CC BY-SA に従って使用）",
+  "settings.chartWiki": "太鼓の達人 譜面とかWiki（wikiwiki.jp/taiko-fumen）",
+  "settings.chartWikiGives": "譜面の画像",
   "settings.songLevels": "曲の難易度",
   "settings.shownDifficulty": "手前に表示するむずかしさ",
   "settings.shownDifficultyHint":
@@ -249,6 +254,7 @@ export const ja: Messages = {
   "difficulty.oni": "おに",
   "difficulty.ura": "おに裏",
   "song.level": "{difficulty} ★{level}",
+  "song.bpm": "BPM {bpm}",
   "write.folder.unchanged":
     "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すとフォルダは元のままでした。",
   "write.folder.diverged": "フォルダが予定どおりになりませんでした。下で比べてください。",
@@ -321,4 +327,13 @@ export const ja: Messages = {
   "picker.limit": "セットに入れられる曲は最大{max}曲です。追加するには、どれか外してください。",
   "picker.done": "完了",
   "picker.close": "閉じる",
+  "search.leave": "検索を閉じる",
+  "search.clear": "クリア",
+  "search.forget": "「{query}」を削除",
+  "details.charts": "譜面",
+  "details.maxCombo": "最大コンボ数：{count}",
+  "details.branched": "譜面分岐あり",
+  "details.noPicture": "この譜面の画像はまだありません。",
+  "details.pictureFailed": "譜面の画像を読み込めませんでした。",
+  "details.picture": "{difficulty}の譜面（{n}/{count}）",
 };

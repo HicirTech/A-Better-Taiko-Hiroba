@@ -13,12 +13,12 @@ tooltip); the season's どんメダル on Hiroba's own plate, and your favourite
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On a wide window a side panel, like Gmail's, lists its five pages:
-**Overview** (the identity card with the score panel, the shares and the どんメダル),
+**Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
-at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
+at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
 Costume, Nickname & title, Favourites or Settings back to the Overview, and from the Overview leaves
 the app as before.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
@@ -274,6 +274,10 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
 
 The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker opens on every song; three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its inner chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit and Apply: Edit lets its songs be added, taken out and moved, and turns Apply into Save, with Reset for the edits; Android's Back drops the edits and leaves editing. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls.
 
+### The song search
+
+The Overview's top band holds a search field, as Gmail's does, across the whole band on a touch screen. It searches taiko.wiki's song list as the song picker does, by part of any of a song's names, and lists each song with its tempo as taiko.wiki gives it: a range for a song whose tempo changes, and ≈ for one whose tempo wobbles. The last ten searches are listed under the empty field, kept on the device, and each can be removed. A song opens in a dialog, full screen on a phone, with its names, artists, genres and tempo, and a button for each chart with Hiroba's icon of its difficulty and its level. A chart shows its max combo, whether it branches, and pictures of its notes, which taiko.wiki links on its own host, on the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp) and on Imgur; each is read once and kept on the device, and Settings names the sites. A picture opens full screen, where two fingers, the mouse wheel or a double click zoom it and a drag moves it; a pinch zooms nothing else in the app. The dialog opens on the difficulty chosen in Settings, and on the inner chart for Extreme when the song has one; on a touch screen it has no close button, as Back closes it, and the menu's swipe opens the menu over it as over a page, Back closing the menu first. Back, the arrow or Escape leaves the search.
+
 ### The costume preview
 
 The Costume page shows at its top Hiroba's own picture of the set as picked, as Hiroba's editor
@@ -328,7 +332,10 @@ The block at the top is drawn as my page draws its header: your My Don on the le
 spans the right column from the top of the plate to the foot of the score panel; on the right your
 title over Hiroba's own title plate, your nickname in its cream box and your dan's own label in the
 blue one, and under the plate [the score panel](#the-score-panel). On a narrow window they stack,
-the portrait first. All sit on the app's own surface rather than Hiroba's yellow, with no
+the portrait first, and the plate's top, the room Hiroba keeps over its band for decorations,
+tucks under the portrait: the first thing the plate draws below the portrait sits as close to it as
+the panel sits to the plate, decorations beside the portrait stay in view, and a tap on the portrait
+is the portrait's. All sit on the app's own surface rather than Hiroba's yellow, with no
 background art and no frame. Your region is not shown. The words stay text over the pictures, and
 the block keeps Hiroba's proportions at any width, up to half again its size. The plate is also the
 button to [the Nickname & title page](#the-nickname--title-page). The label is the picture the read already fetches to read
@@ -350,7 +357,7 @@ What it costs Hiroba:
   session still good, and kept under your player, so never given to another account. Until then it
   is shown, not kept: a sign-out before that read asks for it again.
 
-Until the plate comes, or if it does not, a plain band of the same shape stands in, and a line
+Until the plate comes, or if it does not, a plain band stands in where the plate's band goes, and a line
 under the card gives a code for a report. Without a session, Hiroba answers a blank plate, a PNG
 that no check can tell from yours, which is why the plate is asked for only after a read that
 found the session good, and kept only once the next read finds it good still: a blank plate that
@@ -606,7 +613,7 @@ that way.
 
 ## Where pictures are kept
 
-Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, a legend's icon,
+Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, a legend's or a difficulty's icon,
 your title plate or your どんメダル plate, is fetched once and kept on the device for good, since arcades often
 have poor networks. Your My Don is kept too, the last one fetched, and fetched anew only as
 [The My Don portrait](#the-my-don-portrait) says. Signing out deletes none of them, and neither
@@ -624,6 +631,10 @@ no URL, header, cookie, taiko number, title or medal id.
   origin, so a run against the stand-in keeps its pictures and its costume histories
   (`abth-costume-history`), the latter in a database of its own that no `PICTURE_EPOCH` clears,
   apart from the installed build's.
+
+The pictures of charts, from off Hiroba, are kept the same way, as checked PNG, JPEG, WebP or GIF bytes
+under hashed names, but apart: in `charts` beside `pictures` on the desktop, and in the IndexedDB
+`abth-charts` on Android.
 
 Nothing in the app deletes a picture but a new `PICTURE_EPOCH` in
 `src/hiroba-session/picture-store.ts`: the next launch clears whatever an older one kept. To clear

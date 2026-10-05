@@ -49,23 +49,48 @@ const PLATE_WIDTH = 600;
 const PLATE_HEIGHT = 100;
 const NAME_BOX = [0xf8, 0xf0, 0xe0] as const;
 const DAN_BOX = [0x5a, 0x8d, 0xf2] as const;
+const CREST = [0xe0, 0x40, 0x80] as const;
+
+/** A plate's shape: its height, the row its band starts on, and what it draws over the band. */
+interface PlateShape {
+  readonly height: number;
+  readonly bandTop: number;
+  /** A crest at the right, beside a portrait standing above the plate. */
+  readonly crest: boolean;
+  /** The row a tab of the band rises to, under such a portrait; null for none. */
+  readonly tabTop: number | null;
+}
+
+const BAND_ONLY: PlateShape = { height: PLATE_HEIGHT, bandTop: 0, crest: false, tabTop: null };
+/** A title plate keeps room over its band, as Hiroba's does. */
+export const TITLE_PLATE = {
+  width: PLATE_WIDTH,
+  height: 164,
+  bandTop: 67,
+  crest: true,
+  tabTop: 55,
+} as const satisfies PlateShape & { readonly width: number };
 
 /** The plate of a player wearing `title` ("" for none). */
 export function titlePlatePng(title: string): Uint8Array<ArrayBuffer> {
   const next = randomFrom(seedOf(1, ...Array.from(title, (c) => c.codePointAt(0) ?? 0)));
-  return platePng(next, [next() % 256, next() % 256, next() % 256], true);
+  return platePng(next, [next() % 256, next() % 256, next() % 256], true, TITLE_PLATE);
 }
 
 /** The plate without a session: a PNG no check on its bytes can tell from a player's. */
 export function blankPlatePng(): Uint8Array<ArrayBuffer> {
-  return platePng(randomFrom(seedOf(2)), [0x9a, 0x9a, 0x9a], false);
+  return platePng(randomFrom(seedOf(2)), [0x9a, 0x9a, 0x9a], false, {
+    ...TITLE_PLATE,
+    crest: false,
+    tabTop: null,
+  });
 }
 
 /** One plate per id and state; no count or COMPLETE on it, my page writes those as text. */
 export function medalPlatePng(id: string, complete: boolean): Uint8Array<ArrayBuffer> {
   // A complete plate gets its own picture too: Hiroba's art may change then (unverified).
   const next = randomFrom(seedOf(3, complete ? 1 : 0, ...Array.from(id, (c) => c.charCodeAt(0))));
-  return platePng(next, [next() % 256, next() % 256, next() % 256], false);
+  return platePng(next, [next() % 256, next() % 256, next() % 256], false, BAND_ONLY);
 }
 
 const PORTRAIT_SIDE = 290;
@@ -149,11 +174,13 @@ export function scorePanelPng(level: number): Uint8Array<ArrayBuffer> {
 /** The legends' icons: image/sp/640/best_score_rank_<2..8>_640.png and crown_0<1..4>_640.png. */
 const RANK_ICON = { width: 128, height: 96 } as const;
 const CROWN_ICON = { width: 52, height: 59 } as const;
+/** A chart's difficulty: image/sp/640/icon_course02_<1..5>_640.png. */
+const COURSE_ICON = { width: 64, height: 64 } as const;
 
 /** The pixels `inside` in one colour of the seed's own: only the size is Hiroba's. */
 function iconPng(
   seed: number,
-  { width, height }: typeof RANK_ICON | typeof CROWN_ICON,
+  { width, height }: { readonly width: number; readonly height: number },
   inside: (x: number, y: number) => boolean,
 ): Uint8Array<ArrayBuffer> {
   const next = randomFrom(seed);
@@ -188,34 +215,83 @@ export function crownIconPng(number: number): Uint8Array<ArrayBuffer> {
   });
 }
 
+/** A disc for a chart's difficulty, 1 (かんたん) to 5 (the inner おに). */
+export function courseIconPng(number: number): Uint8Array<ArrayBuffer> {
+  const radius = COURSE_ICON.width / 2;
+  return iconPng(
+    seedOf(8, number),
+    COURSE_ICON,
+    (x, y) => (x - radius) ** 2 + (y - radius) ** 2 <= radius ** 2,
+  );
+}
+
+const CHART_PICTURE_HEIGHT = 120;
+const NOTE_SPACING = 40;
+const NOTE_RADIUS = 14;
+const DON = [0xe8, 0x4a, 0x4a] as const;
+const KA = [0x4a, 0x9a, 0xe8] as const;
+
+/** How wide the stand-in's chart picture at a place in its list is: each is wider than the last. */
+export const chartPictureWidth = (at: number) => 200 + 40 * at;
+
+/** A strip of notes, red and blue by turns, on a pale ground of its place's own. */
+export function chartPicturePng(at: number): Uint8Array<ArrayBuffer> {
+  const next = randomFrom(seedOf(8, at));
+  const ground = [0xe0 + (next() % 32), 0xe0 + (next() % 32), 0xe0 + (next() % 32)];
+  const width = chartPictureWidth(at);
+  const height = CHART_PICTURE_HEIGHT;
+  const data = new Uint8Array(width * height * 4);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const fromCentre = ((x % NOTE_SPACING) - NOTE_SPACING / 2) ** 2 + (y - height / 2) ** 2;
+      const note = Math.floor(x / NOTE_SPACING) % 2 === 0 ? DON : KA;
+      const [r = 0, g = 0, b = 0] = fromCentre <= NOTE_RADIUS ** 2 ? note : ground;
+      data.set([r, g, b, 255], (y * width + x) * 4);
+    }
+  }
+  return new Uint8Array(encode({ width, height, data, channels: 4 }));
+}
+
 function platePng(
   next: () => number,
   band: readonly number[],
   boxes: boolean,
+  shape: PlateShape,
 ): Uint8Array<ArrayBuffer> {
   const width = PLATE_WIDTH;
-  const height = PLATE_HEIGHT;
-  // Hiroba's layout, in the units of its 290-wide plate and its 47 rows.
+  const { height, bandTop, tabTop } = shape;
+  const bandHeight = height - bandTop;
+  // Hiroba's layout, in the units of its 290-wide plate and its band's 47 rows.
   const x = (units: number) => (units * width) / 290;
-  const y = (units: number) => (units * height) / 47;
-  const radius = height / 2;
+  const y = (units: number) => bandTop + (units * bandHeight) / 47;
+  const radius = bandHeight / 2;
+  const crest = { x: x(262), y: bandTop / 2, radius: bandTop * 0.4 };
   const data = new Uint8Array(width * height * 4);
   for (let row = 0; row < height; row++) {
     for (let column = 0; column < width; column++) {
       const noise = next();
       const nearEnd = Math.min(column, width - 1 - column);
-      const inside =
-        nearEnd >= radius || (radius - nearEnd) ** 2 + (row - radius) ** 2 <= radius ** 2;
+      const inBand =
+        row >= bandTop &&
+        (nearEnd >= radius ||
+          (radius - nearEnd) ** 2 + (row - bandTop - radius) ** 2 <= radius ** 2);
+      const inTab =
+        tabTop !== null && row >= tabTop && row < bandTop && column >= x(135) && column < x(155);
+      const inCrest =
+        shape.crest && (column - crest.x) ** 2 + (row - crest.y) ** 2 <= crest.radius ** 2;
       const inRow = boxes && row >= y(23) && row < y(46);
-      const colour = !inRow
-        ? band
-        : column >= x(10) && column < x(145)
-          ? NAME_BOX
-          : column >= x(145) && column < x(280)
-            ? DAN_BOX
-            : band;
+      const colour = inCrest
+        ? CREST
+        : !inRow
+          ? band
+          : column >= x(10) && column < x(145)
+            ? NAME_BOX
+            : column >= x(145) && column < x(280)
+              ? DAN_BOX
+              : band;
       const [r = 0, g = 0, b = 0] = colour;
-      data.set([r ^ (noise & 1), g, b, inside ? 255 : 0], (row * width + column) * 4);
+      const drawn = inBand || inTab || inCrest;
+      data.set([r ^ (noise & 1), g, b, drawn ? 255 : 0], (row * width + column) * 4);
     }
   }
   return new Uint8Array(encode({ width, height, data, channels: 4 }));

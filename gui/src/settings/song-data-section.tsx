@@ -1,4 +1,4 @@
-import type { Translator } from "@abth/i18n";
+import type { MessageKey, Translator } from "@abth/i18n";
 import { List, ListItem, ListItemText, SvgIcon } from "@mui/material";
 import { useId } from "react";
 
@@ -13,7 +13,14 @@ function MusicNoteIcon() {
   );
 }
 
-/** Where the songs' artists, levels and names come from, as the Chinese wiki's licence asks. */
+/** Each source, and what of the songs it gives. */
+const SOURCES: readonly { id: string; name: MessageKey; gives: MessageKey }[] = [
+  { id: "taiko-wiki", name: "settings.taikoWiki", gives: "settings.taikoWikiGives" },
+  { id: "chinese-wiki", name: "settings.chineseWiki", gives: "settings.chineseWikiGives" },
+  { id: "chart-wiki", name: "settings.chartWiki", gives: "settings.chartWikiGives" },
+];
+
+/** Where the songs' data and chart pictures come from, as the Chinese wiki's licence asks. */
 export function SongDataSection({ i18n }: { readonly i18n: Translator }) {
   const headingId = useId();
   return (
@@ -24,12 +31,11 @@ export function SongDataSection({ i18n }: { readonly i18n: Translator }) {
       title={i18n.t("settings.songData")}
     >
       <List disablePadding>
-        <ListItem>
-          <ListItemText
-            secondary={i18n.t("settings.songDataSources")}
-            slotProps={{ secondary: { id: "song-data-sources" } }}
-          />
-        </ListItem>
+        {SOURCES.map(({ id, name, gives }) => (
+          <ListItem key={id} id={`song-data-${id}`}>
+            <ListItemText primary={i18n.t(name)} secondary={i18n.t(gives)} />
+          </ListItem>
+        ))}
       </List>
     </SettingsSection>
   );

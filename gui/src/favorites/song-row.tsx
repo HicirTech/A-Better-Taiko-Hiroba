@@ -43,6 +43,8 @@ export interface SongRowProps {
   readonly scrolling?: boolean;
   /** False where the caller draws the level badges itself, outside the row. */
   readonly withLevels?: boolean;
+  /** Before the artists on the second line: such as the song's tempo. */
+  readonly detail?: string | undefined;
   readonly id?: string;
 }
 
@@ -54,9 +56,10 @@ export function SongRow({
   start,
   scrolling,
   withLevels = true,
+  detail,
   id,
 }: SongRowProps) {
-  const { genres } = look;
+  const { genres, artists } = look;
   const levels = withLevels ? look.levels : null;
   return (
     <Box component="span" id={id} className="song-row" data-song-no={look.songNo} sx={ROW}>
@@ -84,9 +87,11 @@ export function SongRow({
             {name ?? look.name}
           </span>
         )}
-        {look.artists.length > 0 && (
-          <span className="song-artists" lang={HIROBA_LANG}>
-            {look.artists.join(", ")}
+        {(artists.length > 0 || detail !== undefined) && (
+          <span className="song-artists">
+            {detail}
+            {detail !== undefined && artists.length > 0 && " · "}
+            {artists.length > 0 && <span lang={HIROBA_LANG}>{artists.join(", ")}</span>}
           </span>
         )}
       </span>

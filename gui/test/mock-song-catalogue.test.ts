@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { isOk } from "@abth/core";
 
-import { WIKI_SONGS, wikiSongsSince } from "../scripts/mock-song-catalogue";
-import { parseWikiSongs } from "../src/song-catalogue";
+import { CHART_PICTURE_PATHS, WIKI_SONGS, wikiSongsSince } from "../scripts/mock-song-catalogue";
+import { DIFFICULTIES, parseWikiSongs } from "../src/song-catalogue";
+
+const ORIGIN = "http://hiroba.test:8807";
 
 function readByApp(songs: readonly unknown[]) {
   const read = parseWikiSongs(JSON.stringify(songs));
@@ -49,12 +51,13 @@ describe("the mock's song list", () => {
 
 describe("wikiSongsSince", () => {
   test("gives the whole list when no time is named", () => {
-    expect(wikiSongsSince(null)).toBe(WIKI_SONGS);
+    const songNos = (songs: readonly { songNo: string }[]) => songs.map(({ songNo }) => songNo);
+    expect(songNos(wikiSongsSince(null, ORIGIN))).toEqual(songNos(WIKI_SONGS));
   });
 
   test("gives a fixed pair for any time: a listed song, changed, and the deleted one", () => {
-    const pair = wikiSongsSince("1780000000000");
-    expect(wikiSongsSince("1")).toEqual(pair);
+    const pair = wikiSongsSince("1780000000000", ORIGIN);
+    expect(wikiSongsSince("1", ORIGIN)).toEqual(pair);
     expect(pair).toHaveLength(2);
     const [changed, deleted] = pair;
     const listed = WIKI_SONGS.find(({ songNo }) => songNo === changed?.songNo);
@@ -62,5 +65,40 @@ describe("wikiSongsSince", () => {
     expect(changed).not.toEqual(listed);
     expect(deleted?.isDeleted).toBe(1);
     expect(readByApp(pair).removed).toEqual([deleted?.songNo ?? ""]);
+  });
+});
+
+describe("the mock's chart pictures", () => {
+  const read = readByApp(wikiSongsSince(null, ORIGIN));
+  const linked = read.songs.flatMap((song) =>
+    DIFFICULTIES.flatMap((difficulty) =>
+      (song.charts[difficulty]?.images ?? []).map(
+        (address) => [song.songNo, difficulty, address] as const,
+      ),
+    ),
+  );
+
+  test("go to song 1001's every chart, 1005's oni (two) and ura, and 1019's oni", () => {
+    expect(linked).toEqual([
+      ["1001", "easy", `${ORIGIN}/__charts/1001/easy-1.png`],
+      ["1001", "normal", `${ORIGIN}/__charts/1001/normal-1.png`],
+      ["1001", "hard", `${ORIGIN}/__charts/1001/hard-1.png`],
+      ["1001", "oni", `${ORIGIN}/__charts/1001/oni-1.png`],
+      ["1005", "oni", `${ORIGIN}/__charts/1005/oni-1.png`],
+      ["1005", "oni", `${ORIGIN}/__charts/1005/oni-2.png`],
+      ["1005", "ura", `${ORIGIN}/__charts/1005/ura-1.png`],
+      ["1019", "oni", `${ORIGIN}/__charts/1019/oni-1.png`],
+    ]);
+  });
+
+  test("are served at the paths the list links, each once, and linked on the origin given", () => {
+    expect(linked.map(([, , address]) => address.slice(ORIGIN.length))).toEqual([
+      ...CHART_PICTURE_PATHS,
+    ]);
+    expect(new Set(CHART_PICTURE_PATHS).size).toBe(CHART_PICTURE_PATHS.length);
+    const other = readByApp(wikiSongsSince(null, "http://hiroba.example:9"));
+    expect(other.songs.find(({ songNo }) => songNo === "1019")?.charts.oni?.images).toEqual([
+      "http://hiroba.example:9/__charts/1019/oni-1.png",
+    ]);
   });
 });

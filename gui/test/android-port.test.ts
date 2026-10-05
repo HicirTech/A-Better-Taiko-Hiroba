@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
-import { medalPlatePng, myDonPng, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
+import {
+  medalPlatePng,
+  myDonPng,
+  TITLE_PLATE,
+  thumbnailPng,
+  titlePlatePng,
+} from "../scripts/mock-pictures";
 import {
   CLOSE_LABEL,
   HIROBA,
@@ -375,7 +381,10 @@ describe("createAndroidPort's pictures", () => {
     expect(native.httpRequests).toEqual([]);
     expect((await port.readProfile()).ok).toBe(true);
     const plate = await port.readPicture(PLATE);
-    expect(plate.ok && [plate.value.width, plate.value.height]).toEqual([600, 100]);
+    expect(plate.ok && [plate.value.width, plate.value.height]).toEqual([
+      TITLE_PLATE.width,
+      TITLE_PLATE.height,
+    ]);
     expect(await port.readPicture(PLATE)).toEqual(plate);
     expect(native.httpRequests.map(({ url }) => url)).toEqual([
       `${HIROBA}/mypage_top.php`,

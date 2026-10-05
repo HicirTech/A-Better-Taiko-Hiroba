@@ -26,6 +26,7 @@ describe("PORT_ARGUMENTS", () => {
       changeFolder: _changeFolder,
       changeFavoriteSong: _changeFavoriteSong,
       readSongCatalogue: _catalogue,
+      readChartPicture: _chartPicture,
       ...takingNothing
     } = PORT_ARGUMENTS;
     for (const check of Object.values(takingNothing)) {
@@ -33,6 +34,24 @@ describe("PORT_ARGUMENTS", () => {
       expect(check([undefined])).toBe(false);
       expect(check([{ url: "https://example.test/" }])).toBe(false);
     }
+  });
+
+  test("readChartPicture takes one web address", () => {
+    const check = PORT_ARGUMENTS.readChartPicture;
+    expect(check(["https://cdn.wikiwiki.jp/to/w/taiko-fumen/a.png?rev=1"])).toBe(true);
+    expect(check(["http://hiroba.127.0.0.1.sslip.io:8807/__charts/1001/oni.png"])).toBe(true);
+  });
+
+  test.each<[why: string, args: unknown[]]>([
+    ["nothing", []],
+    ["two addresses", ["https://file.taiko.wiki/a", "https://file.taiko.wiki/b"]],
+    ["no text", [{ url: "https://file.taiko.wiki/a" }]],
+    ["no address", ["fumen/670/oni"]],
+    ["a file", ["file:///etc/passwd"]],
+    ["script", ["javascript:alert(1)"]],
+    ["an address too long", [`https://file.taiko.wiki/${"a".repeat(2048)}`]],
+  ])("readChartPicture refuses %s", (_why, args) => {
+    expect(PORT_ARGUMENTS.readChartPicture(args)).toBe(false);
   });
 
   test("changeCostume takes one change: two sets of eight whole numbers from 0 to 9999", () => {
@@ -242,6 +261,9 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     for (const crown of ["silver", "gold", "donderful"]) {
       expect(check([{ kind: "crownIcon", crown }])).toBe(true);
     }
+    for (const difficulty of ["easy", "normal", "hard", "oni", "ura"]) {
+      expect(check([{ kind: "courseIcon", difficulty }])).toBe(true);
+    }
   });
 
   test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
@@ -261,6 +283,10 @@ describe("PORT_ARGUMENTS.readPicture", () => {
       [{ kind: "crownIcon", crown: 2 }],
       [{ kind: "crownIcon", rank: 5 }],
       [{ kind: "crownIcon", crown: "gold", src: "image/sp/640/crown_02_640.png" }],
+      [{ kind: "courseIcon" }],
+      [{ kind: "courseIcon", difficulty: "expert" }],
+      [{ kind: "courseIcon", difficulty: 4 }],
+      [{ kind: "courseIcon", difficulty: "oni", path: "image/sp/640/icon_course02_4_640.png" }],
       [
         { kind: "rankIcon", rank: 5 },
         { kind: "rankIcon", rank: 5 },

@@ -144,6 +144,29 @@ export function FrameCorner({ children }: { children: ReactNode }) {
   );
 }
 
+/** Room beside a band button: a small button and the gap after it. */
+const BAND_BUTTON_ROOM_PX = 48;
+
+/** A page's bar across the top band, clear of the menu button and the corner's action. */
+export function FrameTop({ children }: { children: ReactNode }) {
+  const wide = useWideWindow();
+  // A touch screen draws neither button: its swipes and pull stand in for them.
+  const room = useTouchFirst() ? 0 : BAND_BUTTON_ROOM_PX;
+  return (
+    <Box sx={{ position: "sticky", top: BELOW_TOP_BAND, zIndex: "appBar", height: 0 }}>
+      <Box
+        sx={{
+          transform: `translateY(${MENU_INSET_PX - TOP_BAND_PX}px)`,
+          ml: wide ? 0 : `${room}px`,
+          mr: `${room}px`,
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+}
+
 // A bottom bar sits flush with the window's edge: the page fills the window and the bar, its last
 // child, overlaps the frame's bottom room by a negative margin (a Stack's child may not have one).
 export const BOTTOM_BAR_PAGE = { minHeight: PAGE_HEIGHT } as const;
@@ -259,6 +282,8 @@ function MenuDrawer({
         variant="temporary"
         open={open}
         onClose={() => setOpen(false)}
+        // Over a dialog that lets the menu's swipe through, such as a song's details.
+        sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
         slotProps={{ paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX } } }}
       >
         <Box component="nav" aria-label={label}>

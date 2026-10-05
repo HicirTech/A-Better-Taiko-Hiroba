@@ -3,15 +3,20 @@ import { isOk } from "@abth/core";
 
 import {
   blankPlatePng,
+  chartPicturePng,
+  chartPictureWidth,
   crownIconPng,
   medalPlatePng,
   myDonPng,
   rankIconPng,
   scorePanelPng,
+  TITLE_PLATE,
   thumbnailPng,
   titlePlatePng,
 } from "../scripts/mock-pictures";
+import { CHART_PICTURE_PATHS } from "../scripts/mock-song-catalogue";
 import { checkPng, type PngRules } from "../src/hiroba-session/png-answer";
+import { sniffPicture } from "../src/song-catalogue/sniff-picture";
 
 const sizeUnder = (body: Uint8Array, rules: PngRules) => {
   const checked = checkPng(
@@ -43,9 +48,12 @@ describe("thumbnailPng", () => {
 describe("titlePlatePng and blankPlatePng", () => {
   const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280 };
 
-  test("draw a 600×100 PNG within a plate's bounds, not the proportions the app reserves", () => {
+  test("draw a 600×164 PNG within a plate's bounds, not the proportions the app reserves", () => {
     for (const plate of [titlePlatePng("サンプルの称号"), titlePlatePng(""), blankPlatePng()]) {
-      expect(sizeUnder(plate, PLATE_RULES)).toEqual({ width: 600, height: 100 });
+      expect(sizeUnder(plate, PLATE_RULES)).toEqual({
+        width: TITLE_PLATE.width,
+        height: TITLE_PLATE.height,
+      });
     }
   });
 
@@ -122,5 +130,28 @@ describe("myDonPng", () => {
   test("gives each costume a portrait of its own, the same on every run", () => {
     expect(myDonPng(SET)).toEqual(myDonPng(SET));
     expect(myDonPng(SET)).not.toEqual(myDonPng([...SET.slice(0, 2), 3, ...SET.slice(3)]));
+  });
+});
+
+describe("chartPicturePng", () => {
+  const places = CHART_PICTURE_PATHS.map((_path, at) => at);
+
+  test("draws a strip as wide as its place in the list says, which the app reads as a PNG", () => {
+    for (const at of places) {
+      expect(sniffPicture(chartPicturePng(at))).toEqual({
+        format: "png",
+        width: chartPictureWidth(at),
+        height: 120,
+      });
+    }
+  });
+
+  test("gives each place a width and a picture of its own, the same on every run, small", () => {
+    expect(new Set(places.map(chartPictureWidth)).size).toBe(places.length);
+    expect(chartPicturePng(2)).toEqual(chartPicturePng(2));
+    expect(chartPicturePng(2)).not.toEqual(chartPicturePng(3));
+    for (const at of places) {
+      expect(chartPicturePng(at).byteLength).toBeLessThan(20 * 1024);
+    }
   });
 });

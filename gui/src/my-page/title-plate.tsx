@@ -20,6 +20,9 @@ const PLATE_WIDTH = 290;
 const hp = hirobaPx(PLATE_WIDTH);
 // A plate's own proportions, kept until its picture gives its size.
 const RESERVED_RATIO = 150 / 556;
+// The band the title and the name row are drawn on: the plate's bottom rows. Above it, the plate
+// keeps room for its decorations, empty on most plates.
+const BAND_ROWS = 47;
 const MAX_WIDTH = PLATE_WIDTH * MAX_BLOCK_SCALE;
 // Hiroba's colours, sampled from its plate; the same in either theme.
 const ON_PLATE = "#000";
@@ -40,6 +43,10 @@ export interface TitlePlateProps {
 /** The plate's height over its width: the picture's own, or the proportions reserved for it. */
 export const plateHeightRatio = (plate: PictureView | null): number =>
   plate === null ? RESERVED_RATIO : plate.height / plate.width;
+
+/** How far down the plate its band starts, over the plate's height. */
+export const plateBandTop = (plate: PictureView | null): number =>
+  Math.max(0, 1 - BAND_ROWS / (PLATE_WIDTH * plateHeightRatio(plate)));
 
 export function TitlePlate({ profile, answer, i18n, ref, action }: TitlePlateProps) {
   const { t } = i18n;
@@ -99,7 +106,15 @@ function PlateStandIn() {
     <Box
       id="title-plate-stand-in"
       aria-hidden
-      sx={{ position: "absolute", inset: 0, bgcolor: BAND, borderRadius: hp(10) }}
+      sx={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: hp(BAND_ROWS),
+        bgcolor: BAND,
+        borderRadius: hp(10),
+      }}
     >
       <Box sx={{ ...box, left: hp(10), width: hp(135), bgcolor: NAME_BOX }} />
       <Box sx={{ ...box, left: hp(145), width: hp(135), bgcolor: DAN_BOX }} />

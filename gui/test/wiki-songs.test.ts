@@ -22,6 +22,20 @@ const wikiEntry = (fields: Record<string, unknown> = {}) => ({
   ...fields,
 });
 
+type Levels = CatalogueSong["levels"];
+const BARE_CHART = { maxCombo: null, branched: false, images: [] };
+/** The levels, and a bare chart for each of them, as courses with nothing but a level read. */
+const charted = (levels: Levels): Pick<CatalogueSong, "levels" | "charts"> => ({
+  levels,
+  charts: {
+    easy: levels.easy === null ? null : BARE_CHART,
+    normal: levels.normal === null ? null : BARE_CHART,
+    hard: levels.hard === null ? null : BARE_CHART,
+    oni: levels.oni === null ? null : BARE_CHART,
+    ura: levels.ura === null ? null : BARE_CHART,
+  },
+});
+
 const SAMPLE: CatalogueSong = {
   songNo: "1001",
   title: "サンプル曲",
@@ -30,7 +44,8 @@ const SAMPLE: CatalogueSong = {
   romaji: "sanpuru kyoku",
   artists: ["Sample Artist"],
   genres: [1],
-  levels: { easy: 2, normal: 3, hard: 5, oni: 7, ura: null },
+  ...charted({ easy: 2, normal: 3, hard: 5, oni: 7, ura: null }),
+  bpm: null,
 };
 const NO_LEVELS = { easy: null, normal: null, hard: null, oni: null, ura: null };
 
@@ -133,7 +148,7 @@ describe("parseWikiSongs", () => {
     ["5", null],
     [null, null],
   ])("reads the level %p of a chart as %p", (level, kept) => {
-    expectSong({ courses: { oni: { level } } }, { levels: { ...NO_LEVELS, oni: kept } });
+    expectSong({ courses: { oni: { level } } }, charted({ ...NO_LEVELS, oni: kept }));
   });
 
   test("reads the ura along with the other charts", () => {
@@ -144,7 +159,7 @@ describe("parseWikiSongs", () => {
       oni: { level: 8 },
       ura: { level: 10 },
     };
-    expectSong({ courses }, { levels: { easy: 1, normal: 2, hard: 4, oni: 8, ura: 10 } });
+    expectSong({ courses }, charted({ easy: 1, normal: 2, hard: 4, oni: 8, ura: 10 }));
   });
 
   type CoursesCase = [why: string, courses: unknown];
@@ -156,7 +171,71 @@ describe("parseWikiSongs", () => {
     ["a chart is null", { oni: null }],
     ["a chart has no level", { oni: {} }],
   ])("has no levels when %s", (_why, courses) => {
-    expectSong({ courses }, { levels: NO_LEVELS });
+    expectSong({ courses }, charted(NO_LEVELS));
+  });
+
+  type BpmCase = [why: string, fields: Record<string, unknown>, kept: CatalogueSong["bpm"]];
+  test.each<BpmCase>([
+    ["a steady tempo", { bpm: { min: 154, max: 154 } }, { min: 154, max: 154, wobbles: false }],
+    [
+      "a tempo that changes, in fractions",
+      { bpm: { min: 85.85, max: 257.5 }, bpmShiver: 0 },
+      { min: 85.85, max: 257.5, wobbles: false },
+    ],
+    [
+      "a tempo that wobbles",
+      { bpm: { min: 168, max: 168 }, bpmShiver: 1 },
+      { min: 168, max: 168, wobbles: true },
+    ],
+    ["no tempo", {}, null],
+    ["a tempo as text", { bpm: "154" }, null],
+    ["a lowest above the highest", { bpm: { min: 200, max: 100 } }, null],
+    ["a tempo of none", { bpm: { min: 0, max: 0 } }, null],
+    ["a tempo missing its highest", { bpm: { min: 154 } }, null],
+  ])("reads %s", (_why, fields, kept) => {
+    expectSong(fields, { bpm: kept });
+  });
+
+  test("reads a chart's combo, its branches and its pictures, dropping what is no address", () => {
+    const oni = {
+      level: 7,
+      maxCombo: 831,
+      isBranched: 1,
+      images: [
+        "https://cdn.wikiwiki.jp/to/w/taiko-fumen/oni.png?rev=1",
+        "",
+        "javascript:alert(1)",
+        5,
+        "https://file.taiko.wiki/fumen/1001/oni",
+      ],
+    };
+    expect(readOne({ courses: { oni } })).toEqual(
+      ok({
+        songs: [
+          {
+            ...SAMPLE,
+            ...charted({ ...NO_LEVELS, oni: 7 }),
+            charts: {
+              ...charted({ ...NO_LEVELS, oni: 7 }).charts,
+              oni: {
+                maxCombo: 831,
+                branched: true,
+                images: [
+                  "https://cdn.wikiwiki.jp/to/w/taiko-fumen/oni.png?rev=1",
+                  "https://file.taiko.wiki/fumen/1001/oni",
+                ],
+              },
+            },
+          },
+        ],
+        removed: [],
+      }),
+    );
+  });
+
+  test.each([0, -1, 2.5, "831", null])("keeps no combo of %p", (maxCombo) => {
+    const courses = { oni: { level: 7, maxCombo } };
+    expectSong({ courses }, charted({ ...NO_LEVELS, oni: 7 }));
   });
 
   test.each(["ns2_sample", "", "123456", "12a", " 1001", "-1", "1.5", "１００１"])(

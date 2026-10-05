@@ -8,11 +8,12 @@ import {
   pictureKeyPath,
 } from "../src/hiroba-session";
 
-/** The desktop's pictures on disk under `folder`, one PNG per pictureKeyPath, kept across launches
+/** The desktop's pictures on disk under `folder`, one file per pictureKeyPath, kept across launches
  * and sign-outs; opening the store removes every other PICTURE_EPOCH's folder. Nothing throws. */
 export function createDiskPictureStore(folder: string): PictureStore {
   const epochFolder = join(folder, PICTURE_EPOCH);
   dropOtherEpochs(folder);
+  // The extension is only a name: a chart picture may be a JPEG, a WebP or a GIF.
   const fileOf = (key: PictureKey) => join(epochFolder, `${pictureKeyPath(key)}.png`);
 
   return {

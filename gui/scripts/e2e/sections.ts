@@ -59,6 +59,7 @@ import {
 } from "./session";
 import { language, languageKeys, settings, settingsKeys } from "./settings";
 import { signedOut, signedOutKeys } from "./signed-out";
+import { songSearch, songSearchKeys } from "./song-search";
 import { updates, updatesKeys } from "./updates";
 import {
   bridgeWrites,
@@ -99,6 +100,7 @@ export const SECTIONS: readonly Section[] = [
   { name: "name-plate", phase: "signedIn", keys: namePlateKeys, run: namePlate },
   { name: "favorite-writes", phase: "signedIn", keys: favoriteWritesKeys, run: favoriteWrites },
   { name: "favorites", phase: "signedIn", keys: favoritesKeys, run: favorites },
+  { name: "song-search", phase: "signedIn", keys: songSearchKeys, run: songSearch },
   { name: "session-expiry", phase: "signedIn", keys: sessionExpiryKeys, run: sessionExpiry },
   { name: "reopen", phase: "signedIn", keys: reopenKeys, run: reopen },
   { name: "signed-out-reopen", phase: "signedIn", keys: signedOutReopenKeys, run: signedOutReopen },

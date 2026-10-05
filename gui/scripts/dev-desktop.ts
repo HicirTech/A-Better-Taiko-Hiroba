@@ -21,6 +21,7 @@ const mockEnv = real
       ABTH_DEV_HIROBA_ORIGIN: HIROBA_ORIGIN,
       ABTH_DEV_IDP_HOST: "id.127.0.0.1.sslip.io:8808",
       ABTH_DEV_IMG_ORIGIN: "http://img.127.0.0.1.sslip.io:8807",
+      ABTH_DEV_CHART_ORIGIN: HIROBA_ORIGIN,
       // Not the installed app's %APPDATA%: its real session and history would meet the mock.
       ABTH_DEV_USER_DATA: join(root, "out", "dev-user-data"),
     };

@@ -21,6 +21,8 @@ const SONG: CatalogueSong = {
   artists: [],
   genres: [1],
   levels: { easy: null, normal: null, hard: null, oni: null, ura: null },
+  bpm: null,
+  charts: { easy: null, normal: null, hard: null, oni: null, ura: null },
 };
 const SENT_AT = 1_780_000_000_000;
 const SINCE = 1_779_000_000_000;

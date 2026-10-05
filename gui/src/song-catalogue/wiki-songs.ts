@@ -2,9 +2,11 @@ import { err, type Genre, ok, type Result } from "@abth/core";
 
 import {
   type CatalogueSong,
+  type ChartFacts,
   type Difficulty,
   MAX_LEVEL,
   MIN_LEVEL,
+  type SongBpm,
   type SongCatalogueRead,
 } from "./types";
 
@@ -12,6 +14,9 @@ export const MAX_CATALOGUE_LENGTH = 16 * 1024 * 1024;
 
 /** Hiroba's song numbers; a console-only song has one such as `ns2_…`, which Hiroba does not know. */
 const HIROBA_SONG_NO = /^\d{1,5}$/;
+// The limits sit far above what taiko.wiki lists, and are still limits.
+const MAX_CHART_IMAGES = 16;
+const MAX_URL_LENGTH = 2048;
 
 const GENRE_OF_WIKI_NAME: ReadonlyMap<string, Genre> = new Map<string, Genre>([
   ["pops", 1],
@@ -61,10 +66,16 @@ function genresOf(names: unknown): Genre[] {
   return genres;
 }
 
+/** A course the song has: one with a star level. */
+function courseOf(courses: unknown, difficulty: Difficulty): WikiEntry | null {
+  const course = isEntry(courses) ? courses[difficulty] : null;
+  return isEntry(course) && isLevel(course.level) ? course : null;
+}
+
 function levelsOf(courses: unknown): Record<Difficulty, number | null> {
   const levelOf = (difficulty: Difficulty): number | null => {
-    const course = isEntry(courses) ? courses[difficulty] : null;
-    return isEntry(course) && isLevel(course.level) ? course.level : null;
+    const course = courseOf(courses, difficulty);
+    return course !== null && isLevel(course.level) ? course.level : null;
   };
   return {
     easy: levelOf("easy"),
@@ -73,6 +84,60 @@ function levelsOf(courses: unknown): Record<Difficulty, number | null> {
     oni: levelOf("oni"),
     ura: levelOf("ura"),
   };
+}
+
+function isWebAddress(text: string): boolean {
+  try {
+    const { protocol } = new URL(text);
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+function imagesOf(value: unknown): string[] {
+  const urls = Array.isArray(value) ? value : [];
+  return urls
+    .filter((url): url is string => typeof url === "string" && url.length <= MAX_URL_LENGTH)
+    .filter(isWebAddress)
+    .slice(0, MAX_CHART_IMAGES);
+}
+
+function chartsOf(courses: unknown): Record<Difficulty, ChartFacts | null> {
+  const chartOf = (difficulty: Difficulty): ChartFacts | null => {
+    const course = courseOf(courses, difficulty);
+    if (course === null) {
+      return null;
+    }
+
+    const { maxCombo } = course;
+    return {
+      maxCombo:
+        typeof maxCombo === "number" && Number.isInteger(maxCombo) && maxCombo > 0
+          ? maxCombo
+          : null,
+      branched: course.isBranched === 1,
+      images: imagesOf(course.images),
+    };
+  };
+  return {
+    easy: chartOf("easy"),
+    normal: chartOf("normal"),
+    hard: chartOf("hard"),
+    oni: chartOf("oni"),
+    ura: chartOf("ura"),
+  };
+}
+
+const isTempo = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value) && value > 0;
+
+function bpmOf(value: unknown, wobbles: unknown): SongBpm | null {
+  if (!isEntry(value) || !isTempo(value.min) || !isTempo(value.max) || value.min > value.max) {
+    return null;
+  }
+
+  return { min: value.min, max: value.max, wobbles: wobbles === 1 };
 }
 
 function songOf(entry: WikiEntry, songNo: string): CatalogueSong | null {
@@ -89,6 +154,8 @@ function songOf(entry: WikiEntry, songNo: string): CatalogueSong | null {
     artists: artistsOf(entry.artists),
     genres: genresOf(entry.genre),
     levels: levelsOf(entry.courses),
+    bpm: bpmOf(entry.bpm, entry.bpmShiver),
+    charts: chartsOf(entry.courses),
   };
 }
 

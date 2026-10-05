@@ -1,6 +1,14 @@
 // The song lists, which need no window, so the main process and the Android shell share them.
-export { CHINESE_NAMES_URL, catalogueUrlFor, SONG_CATALOGUE_URL } from "./catalogue-links";
+export {
+  CHART_PICTURE_HOSTS,
+  CHINESE_NAMES_URL,
+  catalogueUrlFor,
+  chartOriginFor,
+  isChartPictureAddress,
+  SONG_CATALOGUE_URL,
+} from "./catalogue-links";
 export { officialNames, parseChineseNamesBatch } from "./chinese-names";
+export { CHART_PICTURE_MAX_BYTES, createChartPictureReader } from "./read-chart-picture";
 export { readChineseNames } from "./read-chinese-names";
 export { readSongCatalogue } from "./read-song-catalogue";
 export {

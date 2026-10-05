@@ -3,19 +3,23 @@ import { Box, Chip, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import { type PictureAnswer, type PictureLane, viewOf } from "../pictures/picture-lane";
+import { useDrawnTop } from "../pictures/use-drawn-top";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
 import { MY_DON, MyDonPortrait } from "./my-don-portrait";
 import type { OpenAction } from "./open-button";
 import { panelHeightRatio, ScorePanel, scorePanelWant } from "./score-panel";
-import { plateHeightRatio, TitlePlate } from "./title-plate";
+import { plateBandTop, plateHeightRatio, TitlePlate } from "./title-plate";
 
 // Hiroba's header, #mydon_area: 290 pixels wide.
 const AREA_WIDTH = 290;
 const hp = hirobaPx(AREA_WIDTH);
 const PANEL_MARGIN = 5;
 const PORTRAIT_SIDE_ABOVE = 136;
+// The plate's columns under the portrait, which stands above it on a phone.
+const UNDER_PORTRAIT_FROM = (AREA_WIDTH - PORTRAIT_SIDE_ABOVE) / 2 / AREA_WIDTH;
+const UNDER_PORTRAIT_TO = 1 - UNDER_PORTRAIT_FROM;
 const COLUMN_GAP_PX = 16;
 const PLATE: PictureWant = { kind: "titlePlate" };
 
@@ -26,6 +30,13 @@ const failureOf = (answer: PictureAnswer | undefined): string | null =>
 function tileSideRatio(plate: PictureView | null, art: PictureView | null): number {
   const panelWidth = (AREA_WIDTH - 2 * PANEL_MARGIN) / AREA_WIDTH;
   return plateHeightRatio(plate) + PANEL_MARGIN / AREA_WIDTH + panelWidth * panelHeightRatio(art);
+}
+
+/** The plate's top rows that draw nothing under the portrait, never its band: on a phone they tuck
+ * under the portrait. In Hiroba pixels. */
+function tuckedRows(plate: PictureView | null, drawnTop: number | null): number {
+  const bandTop = plateBandTop(plate);
+  return Math.min(drawnTop ?? bandTop, bandTop) * AREA_WIDTH * plateHeightRatio(plate);
 }
 
 export interface OverviewHeaderProps {
@@ -49,7 +60,10 @@ export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: Ove
     order: 2,
   });
   const failure = failureOf(plate) ?? failureOf(myDon) ?? failureOf(panel);
-  const tileSide = tileSideRatio(viewOf(plate), viewOf(panel));
+  const plateView = viewOf(plate);
+  const tileSide = tileSideRatio(plateView, viewOf(panel));
+  const drawnTop = useDrawnTop(plateView, UNDER_PORTRAIT_FROM, UNDER_PORTRAIT_TO);
+  const tucked = tuckedRows(plateView, drawnTop);
 
   return (
     <Stack id="profile" spacing={1} sx={{ alignItems: "center" }}>
@@ -58,7 +72,7 @@ export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: Ove
         sx={{
           display: "grid",
           width: 1,
-          gap: `${COLUMN_GAP_PX}px`,
+          columnGap: `${COLUMN_GAP_PX}px`,
           alignItems: "start",
           justifyItems: "center",
           gridTemplateColumns: {
@@ -71,17 +85,28 @@ export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: Ove
           },
         }}
       >
-        <Box sx={{ width: { xs: `${(PORTRAIT_SIDE_ABOVE / AREA_WIDTH) * 100}%`, sm: 1 } }}>
+        {/* Over the plate's tucked top, so a tap there is the portrait's. */}
+        <Box
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            width: { xs: `${(PORTRAIT_SIDE_ABOVE / AREA_WIDTH) * 100}%`, sm: 1 },
+          }}
+        >
           <MyDonPortrait ref={portraitBox} answer={myDon} action={portrait} i18n={i18n} />
         </Box>
         <Box sx={{ ...HIROBA_BLOCK, width: 1 }}>
-          <TitlePlate
-            ref={plateBox}
-            profile={profile}
-            answer={plate}
-            i18n={i18n}
-            action={namePlate}
-          />
+          {/* What the plate draws under the portrait on a phone sits as close to it as the panel
+              sits to the plate. */}
+          <Box sx={{ mt: { xs: hp(PANEL_MARGIN - tucked), sm: 0 } }}>
+            <TitlePlate
+              ref={plateBox}
+              profile={profile}
+              answer={plate}
+              i18n={i18n}
+              action={namePlate}
+            />
+          </Box>
           <Box sx={{ m: hp(PANEL_MARGIN) }}>
             <ScorePanel
               ref={panelBox}

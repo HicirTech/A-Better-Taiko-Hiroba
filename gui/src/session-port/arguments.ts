@@ -1,5 +1,7 @@
 import type { ScoreRank } from "@abth/core";
 
+import { DIFFICULTIES } from "../song-catalogue/types";
+
 import type {
   CostumeSet,
   CrownKind,
@@ -159,6 +161,13 @@ export function isPictureWant(value: unknown): value is PictureWant {
       Object.hasOwn(CROWN_ICONS, value.crown)
     );
   }
+  if (hasExactly(value, ["kind", "difficulty"])) {
+    return (
+      value.kind === "courseIcon" &&
+      typeof value.difficulty === "string" &&
+      (DIFFICULTIES as readonly string[]).includes(value.difficulty)
+    );
+  }
   return (
     hasExactly(value, ["kind", "slot", "id"]) &&
     value.kind === "costumeItem" &&
@@ -212,6 +221,24 @@ const favoriteSongChange: ArgumentCheck = (args) =>
 const catalogueSince: ArgumentCheck = (args) =>
   args.length === 1 && (args[0] === null || isWhole(args[0], 0, Number.MAX_SAFE_INTEGER));
 
+const MAX_URL_LENGTH = 2048;
+
+function isWebAddress(text: string): boolean {
+  try {
+    const { protocol } = new URL(text);
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+// Any web address passes here; the platform reads only its chart hosts'.
+const chartUrl: ArgumentCheck = (args) =>
+  args.length === 1 &&
+  typeof args[0] === "string" &&
+  args[0].length <= MAX_URL_LENGTH &&
+  isWebAddress(args[0]);
+
 /** What each verb accepts from the interface; anything the renderer sends is untrusted until it
  * passes here. A verb with no entry is a type error, so none reaches the port unchecked. */
 export const PORT_ARGUMENTS = {
@@ -234,4 +261,5 @@ export const PORT_ARGUMENTS = {
   changeFavoriteSong: favoriteSongChange,
   readSongCatalogue: catalogueSince,
   readChineseNames: none,
+  readChartPicture: chartUrl,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;
