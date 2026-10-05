@@ -2,6 +2,8 @@
 // title's span, an empty one beside a 未設定 span.
 import {
   FOLDER_SLOT_COUNT,
+  type Genre,
+  type SongPickerRow,
   type Transport,
   type TransportPost,
   type TransportRequest,
@@ -125,6 +127,48 @@ ${bsf === null ? "" : `<input type="hidden" name="bsf" id="bsf" value="${bsf}">`
 </body></html>`;
 }
 
+/** The genre tabs in the picker's own order, by the name in their pictures. */
+const PICKER_TABS: readonly (readonly [Genre, string])[] = [
+  [1, "jpop"],
+  [3, "kids"],
+  [2, "anime"],
+  [4, "vocaloid"],
+  [5, "game"],
+  [7, "variety"],
+  [8, "classic"],
+  [6, "namco"],
+];
+
+/** One genre of the 大好きな曲 picker, its tab drawn as the one shown, a 裏 row in its own style. */
+export function pickerPage(genre: Genre, rows: readonly SongPickerRow[], songs = SONGS): string {
+  const tabs = PICKER_TABS.map(
+    ([tab, name]) =>
+      `<li><a href="/select_song.php?genre=${tab}"><img src="image/sp/640/genre_tab_new_${name}_${tab === genre ? "on" : "off"}_640.png" alt="" /></a></li>`,
+  ).join("\n");
+  const items = rows.map(({ songNo, ura }) => {
+    const { title, font } = songOf(songNo, songs);
+    return `<li class="contentBox songLisrArea${font} clearfix" style="cursor: pointer;">
+<div class="songNameArea${ura ? " ura" : ""}">
+<a href="/portal_favorite_song_select.php?song_no=${songNo}&session_flg=1&bsf=${ura ? 1 : 0}">
+<span class="songName songNameFont${font}">${title}</span>
+</a>
+</div>
+</li>`;
+  });
+  return `<html><body>
+<div id="content">
+<ul class="tabList clearfix tabMenu" id="tabList">
+${tabs}
+</ul>
+<ul id="songList">
+<div id="tab-genre" class="clearfix">
+${items.join("\n")}
+</div>
+</ul>
+</div>
+</body></html>`;
+}
+
 /** The thirty slots, the given songs first and the rest empty. */
 export function slotsOf(...songNos: string[]): (string | null)[] {
   return Array.from({ length: FOLDER_SLOT_COUNT }, (_, index) => songNos[index] ?? null);
@@ -145,6 +189,17 @@ export function fakeFavorites() {
     /** The 大好きな曲 Hiroba has saved, and the `bsf` its page holds: 1 for a 裏 entry. */
     song: "1001" as string | null,
     bsf: "0",
+    /** What the picker offers per genre; a genre left out is an empty page. */
+    picker: {
+      6: [
+        { songNo: "1001", ura: false },
+        { songNo: "1001", ura: true },
+        { songNo: "1002", ura: false },
+      ],
+      8: [{ songNo: "1002", ura: false }],
+    } as Partial<Record<Genre, readonly SongPickerRow[]>>,
+    /** Whether the handoff has opened the picker for this session. */
+    pickerOpen: false,
     token: "",
     tokens: 0,
     requests: [] as TransportRequest[],
@@ -225,6 +280,23 @@ export function fakeFavorites() {
       if (request.method === "GET" && path === "portal_favorite_song_select.php") {
         const page = songPage({ songNo: hiroba.song, bsf: hiroba.bsf, token: issue() });
         return answer(path, page, "text/html");
+      }
+      // The handoff takes the editor's form and lands on the picker; without it, the top page.
+      if (request.method === "GET" && path === "form_data.php") {
+        const opens =
+          url.searchParams.get("from") === "/portal_favorite_song_select.php" &&
+          url.searchParams.get("list_type") === "song" &&
+          url.searchParams.get("_tckt") === hiroba.token;
+        hiroba.pickerOpen = opens;
+        return opens
+          ? answer("select_song.php", pickerPage(1, hiroba.picker[1] ?? []), "text/html")
+          : answer("index.php", "<html><body>top</body></html>", "text/html");
+      }
+      if (request.method === "GET" && path === "select_song.php") {
+        const genre = Number(url.searchParams.get("genre")) as Genre;
+        return hiroba.pickerOpen
+          ? answer(path, pickerPage(genre, hiroba.picker[genre] ?? []), "text/html")
+          : answer("index.php", "<html><body>top</body></html>", "text/html");
       }
       if (request.method === "POST" && path === "ajax/myfavorite_song.php") {
         return saveFolder(request);

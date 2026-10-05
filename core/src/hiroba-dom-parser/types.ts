@@ -50,6 +50,12 @@ export interface FavoriteSongEditorReading extends EditorReading<FavoriteSongSta
   readonly song: ShownSong | null;
 }
 
+/** One row of Hiroba's 大好きな曲 picker: a song, or the song's 裏 entry. */
+export interface SongPickerRow {
+  readonly songNo: string;
+  readonly ura: boolean;
+}
+
 export interface RenameEditorReading {
   readonly state: NameState;
   readonly token: FormToken;

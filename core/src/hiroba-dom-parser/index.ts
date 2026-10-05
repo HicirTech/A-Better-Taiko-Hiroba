@@ -12,6 +12,7 @@ export { parseRecentPlaysPage, scoreFromRecentPlay } from "./recent-plays-page";
 export { parseRenameEditorPage } from "./rename-form";
 export { parsePublicScoreDetailPage, parseScoreDetailPage } from "./score-detail-page";
 export { parseScoreListPage } from "./score-list-page";
+export { parseSongPickerPage } from "./song-picker-page";
 export { parseTitleEditorPage } from "./title-editor-page";
 export type {
   CostumeEditorReading,
@@ -35,6 +36,7 @@ export type {
   RenameEditorReading,
   ScoreListReading,
   SiteErrorFailure,
+  SongPickerRow,
   TitleEditorReading,
   UnreadableValueFailure,
   WrongPageFailure,

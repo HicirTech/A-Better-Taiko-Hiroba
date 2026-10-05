@@ -20,6 +20,12 @@ export interface FavoriteSongState {
   readonly ura: boolean;
 }
 
+/** The songs Hiroba's own 大好きな曲 picker offers, by number, and those it offers a 裏 entry of. */
+export interface PickableSongs {
+  readonly songs: readonly string[];
+  readonly ura: readonly string[];
+}
+
 /** A song as a favourite editor shows it: Hiroba's own title and genre. */
 export interface ShownSong {
   readonly songNo: string;
