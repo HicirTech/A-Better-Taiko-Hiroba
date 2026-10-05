@@ -143,7 +143,8 @@ while a write of any kind runs reads when the write has ended, not before.
 A kind of write that has not been made for real from a platform also reads one other page before
 and after, to see that nothing else moved: a costume write reads your title on my page (six
 requests, not four), a title write reads your costume (six, not four), and a rename reads your title
-on my page (five, not three). `LIVE_CHECKED_WRITES` in `src/hiroba-session/live-checked-writes.ts`
+on my page (five, not three). The title write reads only the set you wear, not the lists of items,
+so an item the Costume page cannot read does not stop it. `LIVE_CHECKED_WRITES` in `src/hiroba-session/live-checked-writes.ts`
 lists, for each platform, the kinds that have. That list decides those two reads and nothing else:
 it opens nothing and shuts nothing.
 

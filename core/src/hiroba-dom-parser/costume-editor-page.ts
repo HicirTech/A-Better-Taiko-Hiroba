@@ -26,6 +26,9 @@ const SLOT_TABS = ["kigu", "head", "body", "make", "acce"] as const;
 /** The three colour tabs: かお, どう, てあし. Their palettes are the same one, three times. */
 const COLOUR_TABS = ["face", "body", "limb"] as const;
 
+const THUMBNAIL_COS = /[?&]cos=(\d+)/;
+const THUMBNAIL_TYPE = /[?&]type=(\d+)/;
+
 export function parseCostumeEditorPage(html: string): Result<CostumeEditorReading, ParseFailure> {
   const page = parsePage(html, PAGE);
   if (isErr(page)) {
@@ -125,17 +128,20 @@ function readSlot(root: HTMLElement, tab: string, slot: number): Result<number[]
   if (isErr(container)) {
     return container;
   }
+  const anchors = container.value.querySelectorAll("a[name]");
   const ids: number[] = [];
-  for (const anchor of container.value.querySelectorAll("a[name]")) {
+  for (const [index, anchor] of anchors.entries()) {
     const name = anchor.getAttribute("name") ?? "";
     const source = anchor.querySelector("img")?.getAttribute("srctmp") ?? "";
-    const cos = source.match(/[?&]cos=(\d+)/)?.[1];
-    const type = source.match(/[?&]type=(\d+)/)?.[1];
+    const cos = source.match(THUMBNAIL_COS)?.[1];
+    const type = source.match(THUMBNAIL_TYPE)?.[1];
     if (!/^\d+$/.test(name) || cos !== name || type !== String(slot)) {
+      // A report carries the marker but never `raw`, so the marker says which part broke.
+      const shape = itemShape(anchor, name, slot);
       return err({
         kind: "unreadableValue",
         page: PAGE,
-        marker: `${marker} a[name]`,
+        marker: `${marker} a[name] (${index + 1} of ${anchors.length}: ${shape})`,
         raw: `${name} ${source}`,
       });
     }
@@ -145,6 +151,36 @@ function readSlot(root: HTMLElement, tab: string, slot: number): Result<number[]
     }
   }
   return ok(ids);
+}
+
+/** The item's parts as fixed codes: a report may carry these, never the page's own text. */
+function itemShape(anchor: HTMLElement, name: string, slot: number): string {
+  const images = anchor.querySelectorAll("img");
+  const thumbnail = images.find((image) => image.hasAttribute("srctmp"));
+  const source = thumbnail?.getAttribute("srctmp") ?? "";
+  const cos = source.match(THUMBNAIL_COS)?.[1];
+  const type = source.match(THUMBNAIL_TYPE)?.[1];
+  const nameCode = /^\d+$/.test(name) ? "num" : name === "" ? "empty" : "other";
+  const srctmpCode = thumbnail === undefined ? "none" : thumbnail === images[0] ? "first" : "later";
+  return [
+    `name=${nameCode}`,
+    `img=${images.length}`,
+    `src=${sourceKind(images[0]?.getAttribute("src"))}`,
+    `srctmp=${srctmpCode}`,
+    `cos=${cos === undefined ? "none" : cos === name ? "same" : "other"}`,
+    `type=${type === undefined ? "none" : type === String(slot) ? "same" : "other"}`,
+  ].join(" ");
+}
+
+/** The served page holds a loader gif until its tab opens; anything else is an unseen shape. */
+function sourceKind(src: string | undefined): string {
+  if (src === undefined || src === "") {
+    return "none";
+  }
+  if (src.includes("ajax-loader")) {
+    return "loader";
+  }
+  return src.includes("imgsrc_kisekae.php") ? "item" : "other";
 }
 
 function readPalette(root: HTMLElement, tab: string): Result<CostumeSwatch[], ParseFailure> {

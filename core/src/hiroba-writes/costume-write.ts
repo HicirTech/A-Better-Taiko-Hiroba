@@ -2,6 +2,7 @@ import {
   type CostumeEditorReading,
   type CostumeSwatch,
   parseCostumeEditorPage,
+  parseCostumeSet,
 } from "../hiroba-dom-parser";
 import type { CostumeSet } from "../hiroba-models";
 import { isErr, ok, type Result } from "../operation-results";
@@ -66,10 +67,8 @@ const COSTUME_CODES: SaveCodes = {
 
 const readEditor = (deps: ReadDeps) => readHirobaPage(deps, EDITOR_PATH, parseCostumeEditorPage);
 
-const readSet = async (deps: ReadDeps): Promise<Result<CostumeSet, HirobaReadFailure>> => {
-  const read = await readEditor(deps);
-  return isErr(read) ? read : ok(read.value.state);
-};
+// Only the worn set: an item list the editor cannot read must not stop a title change.
+const readSet = (deps: ReadDeps) => readHirobaPage(deps, EDITOR_PATH, parseCostumeSet);
 
 /** A title that cannot combine with a costume item removes it, so title writes check the set. */
 export const COSTUME_STAYS: CrossCheck<CostumeSet> = { read: readSet, same: sameCostume };

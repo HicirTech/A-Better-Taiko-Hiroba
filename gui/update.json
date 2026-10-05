@@ -1,37 +1,21 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "notes": {
     "en": [
-      "Look up any song from the search bar on the Overview: its BPM, each chart's star level and max combo, and pictures of its notes that open full screen and zoom",
-      "Tap a song in your favourites to open its details",
-      "Filter the song picker by genre, difficulty and star level, and choose in Settings the difficulty each song shows first",
-      "Read again from the foot of the menu, or with F5 or Ctrl+R on the desktop",
-      "A new app icon, and the desktop window opens tall enough for the whole Overview",
-      "Settings links to the project on GitHub"
+      "Changing your title works even when the Costume page cannot read one of your items",
+      "When the Costume page cannot read an item, the details for a report say which item it is and which part was unexpected"
     ],
     "ja": [
-      "トップの検索バーから曲を調べられます：BPM、各難易度の星と最大コンボ数、全画面で拡大できる譜面の画像",
-      "お気に入りの曲をタップすると詳細を開けます",
-      "曲選びをジャンル・難易度・星で絞り込めます。手前に表示するむずかしさは設定で選べます",
-      "メニューの下から再読み込みできます。デスクトップ版では F5 や Ctrl+R でも",
-      "新しいアプリアイコン。デスクトップ版のウィンドウはトップ全体が収まる高さで開きます",
-      "設定から GitHub のプロジェクトページを開けます"
+      "きせかえページで読み込めないアイテムがあっても、称号を変更できます",
+      "きせかえページでアイテムを読み込めないとき、報告用の詳細に何番目のアイテムのどこが想定と違うかを表示します"
     ],
     "zh-Hans": [
-      "在首页的搜索栏查歌：看 BPM、各难度的星级和最大连段，以及可以全屏放大的谱面图",
-      "在收藏页点歌就能打开歌曲详情",
-      "选歌可以按分类、难度和星级筛选，默认显示的难度可以在设置里选",
-      "在菜单底部重新读取，电脑版也可以按 F5 或 Ctrl+R",
-      "新的应用图标；电脑版窗口打开时就能完整显示首页",
-      "设置页可以打开项目的 GitHub"
+      "换装页里有读不了的道具时，也能照常更换称号",
+      "换装页读不了某件道具时，报告详情会写明是第几件、哪一部分跟预期不同"
     ],
     "zh-Hant": [
-      "在首頁的搜尋列查歌：看 BPM、各難度的星級和最大連段，以及可以全螢幕放大的譜面圖",
-      "在收藏頁點歌就能開啟歌曲詳情",
-      "選歌可以依分類、難度和星級篩選，預設顯示的難度可以在設定裡選",
-      "在選單底部重新讀取，電腦版也可以按 F5 或 Ctrl+R",
-      "新的應用程式圖示；電腦版視窗開啟時就能完整顯示首頁",
-      "設定頁可以開啟專案的 GitHub"
+      "換裝頁裡有讀不了的道具時，也能照常更換稱號",
+      "換裝頁讀不了某件道具時，回報詳情會寫明是第幾件、哪一部分跟預期不同"
     ]
   }
 }
