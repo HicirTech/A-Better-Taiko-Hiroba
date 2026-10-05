@@ -43,7 +43,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 
 **Polite by default.** Hiroba is someone else's service. Fetching is deliberately slow and incremental, and it backs off when the site pushes back. Fetching more is always something you ask for, never something that happens on its own.
 
-**Song data from the community.** Artists, star levels and the songs' names in other languages come from [taiko.wiki](https://taiko.wiki/) and the Chinese [太鼓之達人維基](https://taiko.fandom.com/zh/) (its names are used under CC BY-SA). The app reads their public lists and sends them nothing of yours.
+**Song data from the community.** Artists, star levels, tempos and the songs' names in other languages come from [taiko.wiki](https://taiko.wiki/) and the Chinese [太鼓之達人維基](https://taiko.fandom.com/zh/) (its names are used under CC BY-SA). The pictures of the charts are those taiko.wiki links, on its own host, on the [太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) and on Imgur. The app reads what they publish and sends them nothing of yours.
 
 **Your account, your call.** The toolkit signs in as you and can change your real Taiko profile. The account it touches is yours, and so is the responsibility.
 

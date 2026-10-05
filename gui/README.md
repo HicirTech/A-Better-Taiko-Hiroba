@@ -276,7 +276,7 @@ The page of the 大好きな曲 and the お気に入り folder, read from Hiroba
 
 ### The song search
 
-The Overview's top band holds a search field, as Gmail's does, across the whole band on a touch screen. It searches taiko.wiki's song list as the song picker does, by part of any of a song's names, and lists each song with its tempo as taiko.wiki gives it: a range for a song whose tempo changes, and ≈ for one whose tempo wobbles. The last ten searches are kept on the device, and each can be removed. A song opens in a dialog, full screen on a phone, with its names, artists, genres and tempo, and a button for each chart with its level. A chart shows its max combo, whether it branches, and pictures of its notes, which taiko.wiki links on its own host and on the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp); each is read once and kept on the device. The dialog opens on the difficulty chosen in Settings, and on the inner chart for Extreme when the song has one. Back, the arrow or Escape leaves the search.
+The Overview's top band holds a search field, as Gmail's does, across the whole band on a touch screen. It searches taiko.wiki's song list as the song picker does, by part of any of a song's names, and lists each song with its tempo as taiko.wiki gives it: a range for a song whose tempo changes, and ≈ for one whose tempo wobbles. The last ten searches are listed under the empty field, kept on the device, and each can be removed. A song opens in a dialog, full screen on a phone, with its names, artists, genres and tempo, and a button for each chart with Hiroba's icon of its difficulty and its level. A chart shows its max combo, whether it branches, and pictures of its notes, which taiko.wiki links on its own host, on the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp) and on Imgur; each is read once and kept on the device, and Settings names the sites. A picture opens full screen, where two fingers, the mouse wheel or a double click zoom it and a drag moves it; a pinch zooms nothing else in the app. The dialog opens on the difficulty chosen in Settings, and on the inner chart for Extreme when the song has one; on a touch screen it has no close button, as Back closes it. Back, the arrow or Escape leaves the search.
 
 ### The costume preview
 
@@ -610,7 +610,7 @@ that way.
 
 ## Where pictures are kept
 
-Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, a legend's icon,
+Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, a legend's or a difficulty's icon,
 your title plate or your どんメダル plate, is fetched once and kept on the device for good, since arcades often
 have poor networks. Your My Don is kept too, the last one fetched, and fetched anew only as
 [The My Don portrait](#the-my-don-portrait) says. Signing out deletes none of them, and neither
@@ -628,6 +628,10 @@ no URL, header, cookie, taiko number, title or medal id.
   origin, so a run against the stand-in keeps its pictures and its costume histories
   (`abth-costume-history`), the latter in a database of its own that no `PICTURE_EPOCH` clears,
   apart from the installed build's.
+
+The pictures of charts, from off Hiroba, are kept the same way, as checked PNG, JPEG, WebP or GIF bytes
+under hashed names, but apart: in `charts` beside `pictures` on the desktop, and in the IndexedDB
+`abth-charts` on Android.
 
 Nothing in the app deletes a picture but a new `PICTURE_EPOCH` in
 `src/hiroba-session/picture-store.ts`: the next launch clears whatever an older one kept. To clear
