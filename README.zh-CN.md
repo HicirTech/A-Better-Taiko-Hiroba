@@ -1,6 +1,5 @@
-<p align="center"><img src="gui/icons/app-icon.png" alt="" width="128"></p>
-
 # A Better Taiko Hiroba - 一个更好的鼓众广场
+<img width="256" height="256" alt="应用图标" src="gui/icons/app-icon.png" />
 
 [English](README.md)
 

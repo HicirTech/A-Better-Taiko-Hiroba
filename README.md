@@ -1,6 +1,5 @@
-<p align="center"><img src="gui/icons/app-icon.png" alt="" width="128"></p>
-
 # A Better Taiko Hiroba
+<img width="256" height="256" alt="App icon" src="gui/icons/app-icon.png" />
 
 [中文](README.zh-CN.md)
 
