@@ -255,12 +255,16 @@ export async function overview(ctx: Ctx) {
   const narrow = await headerBoxes();
   await page.send("Emulation.clearDeviceMetricsOverride", {});
   await waitFor("side panel", async () => (await exists("#nav-overview")) || undefined);
+  // On a narrow window the plate's empty top tucks under the portrait: the stand-in's tab is the
+  // first thing it draws there.
+  const narrowPlateDrawn =
+    narrow.plate.top + (narrow.plate.height * TITLE_PLATE.tabTop) / TITLE_PLATE.height;
   results.overviewShapedLikeMyPage =
     wide.myDon.right <= wide.plate.left &&
     Math.abs(wide.myDon.top - wide.plate.top) < 1 &&
     wide.plate.bottom <= wide.panel.top &&
     wide.panel.left > wide.myDon.right &&
-    narrow.myDon.bottom <= narrow.plate.top &&
+    narrow.myDon.bottom <= narrowPlateDrawn &&
     narrow.plate.bottom <= narrow.panel.top &&
     Math.abs(narrow.myDon.left + narrow.myDon.right - narrow.plate.left - narrow.plate.right) < 2 &&
     plainSurface;

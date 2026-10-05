@@ -1,4 +1,5 @@
 /** The Overview's song search: its bar, the searches kept, a song's details and chart pictures. */
+import { TITLE_PLATE } from "../mock-pictures";
 import { PHONE_TALL, TOP_BAND_PX } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
@@ -191,14 +192,21 @@ export async function songSearch(ctx: Ctx) {
     )) &&
     (await page.evaluate<string>(`document.querySelector("#song-search-input").value`)) === "";
 
-  results.portraitCloseToItsPlateOnAPhone = await atSize(
-    PHONE_TALL.width,
-    PHONE_TALL.height,
-    async () => {
+  results.portraitCloseToItsPlateOnAPhone = await atSize(PHONE_TALL.width, PHONE_TALL.height, () =>
+    soon("the plate's empty top under the portrait", async () => {
       const myDon = await boxOf("#my-don");
       const plate = await boxOf("#title-plate");
       const panel = await boxOf("#score-panel");
-      return Math.abs(plate.top - myDon.bottom - (panel.top - plate.bottom)) <= 2;
-    },
+      // The stand-in plate's tab is the first thing it draws under the portrait.
+      const drawnTop = plate.top + (plate.height * TITLE_PLATE.tabTop) / TITLE_PLATE.height;
+      const footIsThePortraits = await page.evaluate<boolean>(
+        `(document.elementFromPoint(${myDon.left + myDon.width / 2}, ${myDon.bottom - 2})?.closest("#costume-open") ?? null) !== null`,
+      );
+      return (
+        plate.top < myDon.bottom &&
+        Math.abs(drawnTop - myDon.bottom - (panel.top - plate.bottom)) <= 2 &&
+        footIsThePortraits
+      );
+    }),
   );
 }
