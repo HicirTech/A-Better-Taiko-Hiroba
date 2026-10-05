@@ -41,10 +41,10 @@ describe("the translator's formats", () => {
     expect([0, 12, 1234].map(number)).toEqual(["0", "12", "1,234"]);
   });
 
-  test("writes a moment in the local zone, with the short month and the seconds", () => {
+  test("writes a moment in the local zone, with the short month and neither year nor seconds", () => {
     const { dateTime } = createTranslator("en");
-    const text = dateTime(new Date(2026, 9, 3, 16, 17, 54));
-    expect(text).toStartWith("Oct 3, 2026, 4:17:54");
+    const text = dateTime(new Date(2026, 9, 3, 16, 7, 54));
+    expect(text).toStartWith("Oct 3, 4:07");
     expect(text).toEndWith("PM");
   });
 
@@ -194,6 +194,7 @@ const SAME_EVERYWHERE: readonly MessageKey[] = [
   "song.bpm",
   "picker.level",
   "settings.taikoWiki",
+  "settings.github",
 ];
 
 /** Messages that are just one game term, as each language writes it. */
@@ -346,6 +347,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "替順序鍵拿起向命",
     "譜疊點橫",
     "大歧及",
+    "始問題",
   ].join(""),
 );
 

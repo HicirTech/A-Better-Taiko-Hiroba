@@ -119,6 +119,9 @@ export async function updates(ctx: Ctx) {
     results.updateFailureSilentOnLaunch =
       !(await dialogShown(app)) && !(await app.text()).includes(en.t("update.failed"));
 
+    // Settings opens only after a sign-in.
+    await app.click("#sign-in");
+    await app.until("サンプルどん");
     await app.goTo("settings");
     const versionLine = await app.textOf("#app-version");
     const statusIs = (wanted: string) =>

@@ -35,7 +35,7 @@ import {
   readChineseNames,
   readSongCatalogue,
 } from "../src/song-catalogue";
-import { readUpdateFeed, releasesUrlOf } from "../src/updates";
+import { openableUrlOf, readUpdateFeed } from "../src/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
@@ -166,12 +166,13 @@ app.whenReady().then(async () => {
       nodeIntegration: false,
     },
   });
-  // No window opens; a link to the releases page opens in the system's browser, and no other does.
+  // No window opens; a link to the repository's page or to its releases opens in the system's
+  // browser, and no other does.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    const releases = releasesUrlOf(url);
-    if (releases !== null) {
+    const openable = openableUrlOf(url);
+    if (openable !== null) {
       // A browser that will not open must not become an unhandled rejection in this process.
-      shell.openExternal(releases).catch(() => undefined);
+      shell.openExternal(openable).catch(() => undefined);
     }
     return { action: "deny" };
   });

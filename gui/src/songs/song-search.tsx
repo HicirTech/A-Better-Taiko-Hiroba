@@ -82,8 +82,9 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
     [catalogue.list, deferred, locale, t],
   );
 
-  // The searches kept stand under the field as they are; results and notes come in a frame.
-  const unframed = catalogue.state === "ready" && query.trim() === "";
+  const searched = catalogue.state === "ready" && query.trim() !== "";
+  // Only the songs found come in a frame; the searches kept and the notes stand as they are.
+  const framed = searched && entries.length > 0;
   let panel: ReactNode;
   if (catalogue.state === "loading") {
     panel = <Waiting id="song-search-loading">{t("picker.loading")}</Waiting>;
@@ -103,7 +104,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
         </Button>
       </>
     );
-  } else if (unframed) {
+  } else if (!searched) {
     panel =
       recent.length === 0 ? null : (
         <List id="song-search-recent" disablePadding>
@@ -168,12 +169,12 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
       </FrameTop>
       {active && panel !== null && (
         <ShownDifficultyContext value={shownDifficulty}>
-          {unframed ? (
-            <Box id="song-search-panel">{panel}</Box>
-          ) : (
+          {framed ? (
             <Paper id="song-search-panel" variant="outlined" sx={{ py: 1, overflow: "hidden" }}>
               {panel}
             </Paper>
+          ) : (
+            <Box id="song-search-panel">{panel}</Box>
           )}
         </ShownDifficultyContext>
       )}

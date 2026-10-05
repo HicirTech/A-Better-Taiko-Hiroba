@@ -210,12 +210,17 @@ export function pageHelpers(page: Page) {
     page.evaluate<{ shown: boolean; ring: string | null }>(
       `(() => { const indicator = document.querySelector("#pull-indicator"); return { shown: indicator !== null && getComputedStyle(indicator).opacity === "1", ring: indicator?.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow") ?? null }; })()`,
     );
-  const fabWidth = async () => (await boxOf("#read-again")).width;
   const touchEmulated = async (enabled: boolean) => {
     await page.send("Emulation.setTouchEmulationEnabled", { enabled, maxTouchPoints: 5 });
     await waitFor(
       `touch emulation ${enabled ? "on" : "off"}`,
-      async () => (await fabWidth()) <= 1 === enabled || undefined,
+      async () =>
+        (await page.evaluate<boolean>(`matchMedia("(pointer: coarse)").matches`)) === enabled ||
+        undefined,
+    );
+    // The window redraws for the pointer it now has before anything is asked of it.
+    await page.evaluate(
+      "new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))",
     );
   };
 
@@ -236,7 +241,6 @@ export function pageHelpers(page: Page) {
     fabState,
     swipe,
     pullIndicator,
-    fabWidth,
     touchEmulated,
     touchClicks,
   };

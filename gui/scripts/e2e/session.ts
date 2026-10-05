@@ -3,7 +3,7 @@ import { INITIAL_PROFILE, OWNED_TITLES } from "../mock-profile";
 import { type App, launch, stop } from "./app";
 import { HIROBA, IN_THE_BREAK, MEDAL_PLATE, NOON_JST, PANEL_ART, SESSION_FILE } from "./config";
 import type { Ctx } from "./context";
-import { costumeHelpers, type HistoryEntry, near } from "./costume-helpers";
+import { costumeHelpers, type HistoryEntry } from "./costume-helpers";
 import { pageHelpers, same, waitFor, waitForSeen } from "./harness";
 import { overviewHelpers } from "./overview";
 import {
@@ -72,7 +72,7 @@ export function sessionHelpers(ctx: Ctx) {
     const offered = (await ctx.app.textOf("#sign-out")) === "Sign out";
     await ctx.app.click("#sign-out");
     await ctx.app.until("Sign in to Hiroba");
-    return offered && (await ctx.app.currentPage()) === "overview";
+    return offered && (await ctx.app.textOf("main h1")) === "Overview";
   };
 
   return { panelArtShownOn, myDonShownOn, medalPlateShown, shownOnReopen, signOut };
@@ -80,7 +80,7 @@ export function sessionHelpers(ctx: Ctx) {
 
 export const sessionExpiryKeys = [
   "sessionGoneBeforeSaveSendsNothing",
-  "costumeSignInCardAsWideAsTheOverviews",
+  "sessionLossLandsOnTheSignIn",
   "sessionGoneAfterSaveIsDroppedAndTheEditorShowsTheSet",
   "lostSessionHandled",
   "cancelHandled",
@@ -93,7 +93,7 @@ export const sessionExpiryKeys = [
 export async function sessionExpiry(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, clickButton, goTo, page, until } = ctx.app;
-  const { atSize, boxOf, exists } = pageHelpers(page);
+  const { exists } = pageHelpers(page);
   const { bridgeChange, inStep, openFreshEditor, previewOtherThan } = costumeHelpers(ctx.app);
 
   await openFreshEditor();
@@ -107,18 +107,15 @@ export async function sessionExpiry(ctx: Ctx) {
     (await hitsOn("/ajax/check_ip_kisekae.php")) === postsBeforeExpiry &&
     (await exists("#sign-in")) &&
     !(await page.evaluate<boolean>("window.abth.isSignedIn()"));
-  const signInCardWidth = async (to: "overview" | "costume") => {
-    await goTo(to);
-    return (await boxOf("#sign-in-card")).width;
-  };
-  const cardWidths = await atSize(1920, 1080, async () => ({
-    overview: await signInCardWidth("overview"),
-    costume: await signInCardWidth("costume"),
-  }));
-  results.costumeSignInCardAsWideAsTheOverviews =
-    cardWidths.overview <= 900 && near(cardWidths.costume, cardWidths.overview);
+  // Lost on the Costume page, the session leaves the sign-in card alone, on the Overview.
+  results.sessionLossLandsOnTheSignIn =
+    (await waitFor(
+      "the sign-in on the Overview",
+      async () => (await ctx.app.textOf("main h1")) === "Overview" || undefined,
+    )) &&
+    !(await exists("nav")) &&
+    (await exists("#sign-in-card #sign-in"));
 
-  await goTo("overview");
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());

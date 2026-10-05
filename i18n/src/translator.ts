@@ -32,14 +32,13 @@ function interpolate(template: string, params: TranslateParams | undefined): str
   );
 }
 
-/** The whole date with the month as a short name, and the time to the second. */
+/** Brief enough for a narrow column: the month as a short name and the day, and the time to the
+ * minute, with no year and no seconds. */
 const DATE_TIME: Intl.DateTimeFormatOptions = {
-  year: "numeric",
   month: "short",
   day: "numeric",
   hour: "numeric",
-  minute: "numeric",
-  second: "numeric",
+  minute: "2-digit",
 };
 
 /** Shown for a moment that reads as no date: Intl throws on it, taking the window down. */

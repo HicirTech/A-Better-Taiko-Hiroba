@@ -16,6 +16,7 @@ export const songSearchKeys = [
   "searchBarAcrossAPhone",
   "searchFieldKeepsItsPlace",
   "searchShowsTheTempo",
+  "notFoundUnframed",
   "searchKeptWhenASongOpens",
   "keptSearchesUnframed",
   "searchAgainFromTheKeptOne",
@@ -110,6 +111,10 @@ export async function songSearch(ctx: Ctx) {
   results.searchFieldKeepsItsPlace = (await fieldLeft()) === leftAtRest;
   results.searchShowsTheTempo =
     (await textOf("#song-search-row-1019"))?.includes("BPM 85.85–257.5") === true;
+  const framedWithSongs = await exists("#song-search-panel.MuiPaper-root");
+  await search("iqwioe");
+  await shown("#song-search-none");
+  results.notFoundUnframed = framedWithSongs && !(await exists("#song-search-panel.MuiPaper-root"));
 
   await openSong("signal", "1019");
   await closeSong();
@@ -232,7 +237,7 @@ export async function songSearch(ctx: Ctx) {
   await gone("#song-search-panel");
   results.searchLeftByItsArrow =
     (await page.evaluate<boolean>(
-      `(document.querySelector("#last-updated")?.getClientRects().length ?? 0) > 0`,
+      `(document.querySelector("#profile")?.getClientRects().length ?? 0) > 0`,
     )) &&
     (await page.evaluate<string>(`document.querySelector("#song-search-input").value`)) === "";
 
