@@ -390,7 +390,13 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             )}
 
             {screen.name === "profile" && page === "favorites" && (
-              <FavoritesPage favorites={favorites} catalogue={catalogue} i18n={i18n} />
+              <FavoritesPage
+                favorites={favorites}
+                catalogue={catalogue}
+                port={port}
+                lane={lane}
+                i18n={i18n}
+              />
             )}
 
             {screen.name === "profile" && page === "overview" && (

@@ -4,7 +4,7 @@ import { Box, Button, Card, CardContent, IconButton, Stack, Typography } from "@
 import { Waiting } from "../my-page/editor-parts";
 import { CloseIcon } from "./favorites-icons";
 import type { SongLook } from "./song-look";
-import { SongRow } from "./song-row";
+import { type DetailsOpener, SongRow } from "./song-row";
 import { SortableList } from "./sortable-list";
 
 const LIST = {
@@ -21,6 +21,8 @@ export interface SetViewProps {
   readonly songs: readonly string[];
   readonly look: (songNo: string) => SongLook;
   readonly i18n: Translator;
+  /** Opens a song's details while the set is only shown, not edited. */
+  readonly openDetails: DetailsOpener;
   /** Edit was pressed: the songs can be added, taken out and moved until Save. */
   readonly editing: boolean;
   /** The edits differ from the set's songs, so Reset can drop them. */
@@ -45,6 +47,7 @@ export function SetView({
   songs: songNos,
   look,
   i18n,
+  openDetails,
   editing,
   edited,
   canApply,
@@ -143,6 +146,7 @@ export function SetView({
                     look={look(songNo)}
                     i18n={i18n}
                     scrolling
+                    onOpen={openDetails(songNo)}
                   />
                 </li>
               ))}
