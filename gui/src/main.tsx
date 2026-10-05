@@ -17,7 +17,7 @@ import { Shell } from "./shell";
 const theme = createTheme({
   colorSchemes: { dark: true },
   components: {
-    // Keep the scrollbar's room on every page so the column and Fab stand still.
+    // Keep the scrollbar's room on every page so the column stands still.
     // Not scrollbar-gutter: MUI's modals make up for this way alone.
     MuiCssBaseline: { styleOverrides: { html: { overflowY: "scroll" } } },
   },

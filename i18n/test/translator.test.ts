@@ -54,6 +54,14 @@ describe("the translator's formats", () => {
     expect(createTranslator(locale).dateTime(at)).toContain(month);
   });
 
+  test("writes a brief moment with neither the year nor the seconds", () => {
+    const { briefDateTime } = createTranslator("en");
+    const text = briefDateTime(new Date(2026, 9, 3, 16, 7, 54));
+    expect(text).toStartWith("Oct 3, 4:07");
+    expect(text).toEndWith("PM");
+    expect(briefDateTime("not a moment")).toBe("—");
+  });
+
   test("reads a Date, a number and an ISO string of one moment alike", () => {
     const { dateTime } = createTranslator("en");
     const at = "2026-09-28T03:04:05Z";

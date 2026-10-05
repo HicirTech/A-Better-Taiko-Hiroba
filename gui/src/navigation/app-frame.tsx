@@ -12,7 +12,16 @@ import {
   SvgIcon,
   Typography,
 } from "@mui/material";
-import { type ReactNode, useEffect, useEffectEvent, useId, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useEffectEvent,
+  useId,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 
 import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { SystemBack } from "../platform";
@@ -57,6 +66,16 @@ interface NavigationProps {
   readonly i18n: Translator;
 }
 
+/** Where the navigation's foot is drawn, while there is one to draw it in. */
+type FootRef = (foot: HTMLElement | null) => void;
+const NavFootContext = createContext<HTMLElement | null>(null);
+
+/** Drawn at the foot of the navigation, such as the way to read again; nowhere while it is shut. */
+export function NavFoot({ children }: { children: ReactNode }) {
+  const foot = useContext(NavFootContext);
+  return foot === null ? null : createPortal(children, foot);
+}
+
 export function AppFrame({
   page,
   onNavigate,
@@ -67,6 +86,7 @@ export function AppFrame({
   const wide = useWideWindow();
   const [wider, setWider] = useState(false);
   const [navigation, setNavigation] = useState(true);
+  const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   // Shut a menu left open on a wide window, or by a sign-out, so it does not reopen unasked.
   if ((wide || !navigation) && menuOpen) {
@@ -100,12 +120,13 @@ export function AppFrame({
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
           {navigation &&
             (wide ? (
-              <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
+              <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} footRef={setFoot} />
             ) : (
               <MenuDrawer
                 page={page}
                 onNavigate={onNavigate}
                 i18n={i18n}
+                footRef={setFoot}
                 open={menuOpen}
                 onOpenChange={setMenuOpen}
               />
@@ -120,7 +141,9 @@ export function AppFrame({
               </Typography>
               <WiderFrameContext value={setWider}>
                 <FrameNavigationContext value={setNavigation}>
-                  <BackModesContext value={modes}>{children}</BackModesContext>
+                  <NavFootContext value={foot}>
+                    <BackModesContext value={modes}>{children}</BackModesContext>
+                  </NavFootContext>
                 </FrameNavigationContext>
               </WiderFrameContext>
             </Container>
@@ -131,39 +154,21 @@ export function AppFrame({
   );
 }
 
-/** A page's own action, stuck in the top band at the right; render it first for focus order. */
-export function FrameCorner({ children }: { children: ReactNode }) {
-  return (
-    <Box
-      sx={{
-        position: "sticky",
-        top: BELOW_TOP_BAND,
-        zIndex: "appBar",
-        height: 0,
-        display: "flex",
-        justifyContent: "flex-end",
-      }}
-    >
-      <Box sx={{ transform: `translateY(${MENU_INSET_PX - TOP_BAND_PX}px)` }}>{children}</Box>
-    </Box>
-  );
-}
-
 /** Room beside a band button: a small button and the gap after it. */
 const BAND_BUTTON_ROOM_PX = 48;
 
-/** A page's bar across the top band, clear of the menu button and the corner's action. */
+/** A page's bar across the top band, clear of the menu button. */
 export function FrameTop({ children }: { children: ReactNode }) {
   const wide = useWideWindow();
-  // A touch screen draws neither button: its swipes and pull stand in for them.
-  const room = useTouchFirst() ? 0 : BAND_BUTTON_ROOM_PX;
+  const touchFirst = useTouchFirst();
+  // A touch screen draws no menu button: its swipe stands in for it.
+  const room = wide || touchFirst ? 0 : BAND_BUTTON_ROOM_PX;
   return (
     <Box sx={{ position: "sticky", top: BELOW_TOP_BAND, zIndex: "appBar", height: 0 }}>
       <Box
         sx={{
           transform: `translateY(${MENU_INSET_PX - TOP_BAND_PX}px)`,
-          ml: wide ? 0 : `${room}px`,
-          mr: `${room}px`,
+          ml: `${room}px`,
         }}
       >
         {children}
@@ -217,14 +222,20 @@ function PageList({ page, onNavigate, i18n }: NavigationProps) {
   );
 }
 
-function SidePanel(props: NavigationProps) {
+// The drawers' paper is a column: the foot sits at its bottom, below the pages.
+const FOOT = { mt: "auto" } as const;
+
+function SidePanel({ footRef, ...props }: NavigationProps & { readonly footRef: FootRef }) {
   return (
-    <Box component="nav" sx={{ width: PANEL_WIDTH_PX, flexShrink: 0 }}>
+    <Box sx={{ width: PANEL_WIDTH_PX, flexShrink: 0 }}>
       <Drawer
         variant="permanent"
         sx={{ "& .MuiDrawer-paper": { width: PANEL_WIDTH_PX, boxSizing: "border-box" } }}
       >
-        <PageList {...props} />
+        <Box component="nav">
+          <PageList {...props} />
+        </Box>
+        <Box ref={footRef} sx={FOOT} />
       </Drawer>
     </Box>
   );
@@ -248,9 +259,14 @@ function MenuDrawer({
   page,
   onNavigate,
   i18n,
+  footRef,
   open,
   onOpenChange: setOpen,
-}: NavigationProps & { readonly open: boolean; readonly onOpenChange: (open: boolean) => void }) {
+}: NavigationProps & {
+  readonly footRef: FootRef;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+}) {
   const drawerId = useId();
   const label = i18n.t("nav.menu");
   const touchFirst = useTouchFirst();
@@ -294,6 +310,7 @@ function MenuDrawer({
         <Box component="nav" aria-label={label}>
           <PageList page={page} onNavigate={pick} i18n={i18n} />
         </Box>
+        <Box ref={footRef} sx={FOOT} />
       </Drawer>
     </>
   );

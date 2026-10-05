@@ -24,13 +24,14 @@ import { useCostumeEditor } from "./my-page/use-costume-editor";
 import { NameTitlePage } from "./name-title/name-title-page";
 import { useNameEditor } from "./name-title/use-name-editor";
 import { useTitleEditor } from "./name-title/use-title-editor";
-import { FrameCorner } from "./navigation/app-frame";
+import { NavFoot } from "./navigation/app-frame";
 import { useFrameNavigation } from "./navigation/frame-navigation";
 import type { Page } from "./navigation/pages";
 import { createPictureLane } from "./pictures/picture-lane";
 import type { SystemLink, SystemToast } from "./platform";
 import { PullToRead } from "./read-again/pull-to-read";
-import { ReadAgainFab } from "./read-again/read-again-fab";
+import { ReadAgainFoot } from "./read-again/read-again-foot";
+import { useReadAgainKeys } from "./read-again/use-read-again-keys";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
 import type {
   HirobaSessionPort,
@@ -281,7 +282,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const pageEditor = onEditorPage ? editor : onFavoritesPage ? favorites : null;
   const canReadAgain =
     signedIn && !writing && !refreshing && (pageEditor === null || pageEditor.canRead);
-  // Turns away a second ask that lands before the Fab is shut.
+  // Turns away a second ask, by the button or a key, that lands before the button is shut.
   const readAgainStarted = useRef(false);
   const readAgain = async () => {
     if (!canReadAgain || readAgainStarted.current) {
@@ -299,21 +300,22 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       readAgainStarted.current = false;
     }
   };
+  useReadAgainKeys(signedIn, readAgain);
   return (
     <>
+      {(signedIn || screen.name === "reading") && (
+        <NavFoot>
+          <ReadAgainFoot
+            reading={screen.name === "reading" || refreshing || (pageEditor?.reading ?? false)}
+            canRead={canReadAgain}
+            fetchedAt={screen.name === "profile" ? screen.profile.fetchedAt : null}
+            onRead={readAgain}
+            i18n={i18n}
+          />
+        </NavFoot>
+      )}
       {page !== "settings" && (signedIn || screen.name === "reading") && (
-        <>
-          <FrameCorner>
-            <ReadAgainFab
-              reading={screen.name === "reading" || refreshing || (pageEditor?.reading ?? false)}
-              canRead={canReadAgain}
-              touchFirst={touchFirst}
-              onRead={readAgain}
-              i18n={i18n}
-            />
-          </FrameCorner>
-          <PullToRead active={touchFirst} canRead={canReadAgain} onRead={readAgain} />
-        </>
+        <PullToRead active={touchFirst} canRead={canReadAgain} onRead={readAgain} />
       )}
       {page === "settings" ? (
         <SettingsPage

@@ -14,11 +14,11 @@ import { myPageHits, platesSettled, readHits } from "./stand-in";
 
 export const readAgainKeys = [
   "rotationTakenUp",
-  "readAgainIsASmallFab",
+  "readAgainAtTheNavFoot",
   "readAgainShutWhileReading",
   "readAgainKeepsThePageInPlace",
   "settingsSignedInWhileReading",
-  "fabOnlyUnderFocusOnTouch",
+  "readAgainByF5",
   "pullPastThePointReads",
   "pullOnlyDownFromTheTop",
   "portraitTooltipShutInPull",
@@ -27,7 +27,7 @@ export const readAgainKeys = [
 export async function readAgain(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, currentPage, goTo, page, text, textOf, until } = ctx.app;
-  const { attribute, boxOf, exists, fabState, fabWidth, pullIndicator, swipe, touchEmulated } =
+  const { attribute, boxOf, exists, fabState, pullIndicator, swipe, touchEmulated } =
     pageHelpers(page);
 
   await fetch(`${HIROBA}/__rotate`);
@@ -45,22 +45,23 @@ export async function readAgain(ctx: Ctx) {
   const platesAfterRereads = await platesSettled();
   state.platesAfterRereads = platesAfterRereads;
 
-  const fabBox = await boxOf("#read-again");
+  const footBox = await boxOf("#read-again");
+  const pagesBox = await boxOf("nav");
   const profileBox = await boxOf("#profile");
   await hoverOver(page, "#read-again");
-  const fabTooltip = await waitFor(
+  const footTooltip = await waitFor(
     "Read again tooltip",
     async () => (await textOf('[role="tooltip"]')) ?? undefined,
   );
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
-  results.readAgainIsASmallFab =
+  results.readAgainAtTheNavFoot =
     (await attribute("#read-again", "aria-label")) === "Read again" &&
-    fabTooltip === "Read again" &&
+    footTooltip === "Read again" &&
     (await page.evaluate<boolean>(
-      `document.querySelector("#read-again").classList.contains("MuiFab-sizeSmall")`,
+      `document.querySelector("#read-again").closest(".MuiDrawer-paper") !== null && document.querySelector(".MuiFab-root") === null`,
     )) &&
-    fabBox.bottom <= profileBox.top &&
-    Math.abs(fabBox.right - profileBox.right) < 1;
+    footBox.top >= pagesBox.bottom &&
+    ((await textOf("#nav-last-updated")) ?? "").startsWith("Last updated");
 
   const readsBeforeHeld = await myPageHits();
   await fetch(`${HIROBA}/__hold-read?on=1`);
@@ -107,21 +108,21 @@ export async function readAgain(ctx: Ctx) {
     return (await myPageHits()) - before;
   };
 
+  // F5 reads again, and the window itself is not reloaded: the mark set here outlives the read.
+  await page.evaluate("window.notReloaded = true");
+  const readsBeforeF5 = await myPageHits();
+  const F5 = { key: "F5", code: "F5", windowsVirtualKeyCode: 116 };
+  await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...F5 });
+  await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...F5 });
+  await waitFor("a read by F5", async () => (await myPageHits()) > readsBeforeF5 || undefined);
+  await waitFor("the read by F5 ended", async () =>
+    same(await fabState(), { shut: false, spinning: false }) ? true : undefined,
+  );
+  results.readAgainByF5 =
+    (await myPageHits()) === readsBeforeF5 + 1 &&
+    (await page.evaluate<boolean>("window.notReloaded === true"));
+
   await touchEmulated(true);
-  const fabKeptForScreenReaders = await page.evaluate<boolean>(
-    `(() => { const fab = document.querySelector("#read-again"); const style = getComputedStyle(fab); return fab.getAttribute("aria-label") === "Read again" && !fab.closest("[aria-hidden]") && style.display !== "none" && style.visibility !== "hidden"; })()`,
-  );
-  const SHIFT = { key: "Shift", code: "ShiftLeft", windowsVirtualKeyCode: 16 };
-  await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...SHIFT });
-  await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...SHIFT });
-  await page.evaluate(`document.querySelector("#read-again").focus()`);
-  const fabShownUnderFocus = await waitFor(
-    "Read again shown under focus",
-    async () => (await fabWidth()) > 1 || undefined,
-  );
-  await page.evaluate("document.activeElement.blur()");
-  results.fabOnlyUnderFocusOnTouch =
-    fabKeptForScreenReaders && fabShownUnderFocus && (await fabWidth()) <= 1;
   const pullFrom = { x: profileBox.left + profileBox.width / 2, y: profileBox.top + 40 };
   const pulledBy = (dx: number, dy: number) => ({ x: pullFrom.x + dx, y: pullFrom.y + dy });
   state.pull = { pullFrom, pulledBy };
