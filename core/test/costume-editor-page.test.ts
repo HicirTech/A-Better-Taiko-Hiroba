@@ -111,7 +111,47 @@ describe("parseCostumeEditorPage", () => {
     const result = parseCostumeEditorPage(misfiled);
     expect(isErr(result) && result.error.kind).toBe("unreadableValue");
     expect(isErr(result) && "marker" in result.error && result.error.marker).toBe(
-      "#tab-cos-make a[name]",
+      "#tab-cos-make a[name] (1 of 1: name=num img=1 src=loader srctmp=first cos=same type=other)",
+    );
+  });
+
+  type ShapeCase = [label: string, shown: string, shape: string];
+  const LOADER = `<img src="image/sp/640/ajax-loader_640.gif"`;
+  test.each<ShapeCase>([
+    [
+      "a picture before the thumbnail",
+      `<li><a name="36"><img src="image/sp/640/new.png">${LOADER} srctmp="imgsrc_kisekae.php?cos=36&type=1"></a></li>`,
+      "name=num img=2 src=other srctmp=later cos=same type=same",
+    ],
+    [
+      "a picture with no thumbnail",
+      `<li><a name="36"><img src="image/sp/640/cos_icon_non_640.png"></a></li>`,
+      "name=num img=1 src=other srctmp=none cos=none type=none",
+    ],
+    [
+      "a thumbnail already in src",
+      `<li><a name="36"><img src="imgsrc_kisekae.php?cos=36&type=1"></a></li>`,
+      "name=num img=1 src=item srctmp=none cos=none type=none",
+    ],
+    [
+      "a thumbnail of another id",
+      `<li><a name="36">${LOADER} srctmp="imgsrc_kisekae.php?cos=37&type=1"></a></li>`,
+      "name=num img=1 src=loader srctmp=first cos=other type=same",
+    ],
+    [
+      "an empty name",
+      `<li><a name="">${LOADER} srctmp="imgsrc_kisekae.php?cos=36&type=1"></a></li>`,
+      "name=empty img=1 src=loader srctmp=first cos=other type=same",
+    ],
+    [
+      "no picture",
+      `<li><a name="36"></a></li>`,
+      "name=num img=0 src=none srctmp=none cos=none type=none",
+    ],
+  ])("names the parts of %s, and where the item sits, in codes", (_label, shown, shape) => {
+    const result = parseCostumeEditorPage(EDITOR_EXCERPT.replace(item(36, 1), shown));
+    expect(isErr(result) && "marker" in result.error && result.error.marker).toBe(
+      `#tab-cos-kigu a[name] (2 of 2: ${shape})`,
     );
   });
 
