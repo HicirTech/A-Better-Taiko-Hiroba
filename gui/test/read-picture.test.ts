@@ -10,6 +10,7 @@ import {
   myDonPng,
   rankIconPng,
   scorePanelPng,
+  TITLE_PLATE,
   thumbnailPng,
   titlePlatePng,
 } from "../scripts/mock-pictures";
@@ -357,7 +358,10 @@ describe("createPictureReader, the title plate", () => {
     ]);
     expect(events).toEqual(["sleep 37", "queue", "send "]);
     expect(read.ok && decode(read.value.src)).toEqual(titlePlatePng(TITLE));
-    expect(read.ok && [read.value.width, read.value.height]).toEqual([600, 100]);
+    expect(read.ok && [read.value.width, read.value.height]).toEqual([
+      TITLE_PLATE.width,
+      TITLE_PLATE.height,
+    ]);
   });
 
   test("asks for the public form, by the page's own number, when my page wrote that", async () => {

@@ -10,6 +10,7 @@ import {
   myDonPng,
   rankIconPng,
   scorePanelPng,
+  TITLE_PLATE,
   thumbnailPng,
   titlePlatePng,
 } from "../scripts/mock-pictures";
@@ -47,9 +48,12 @@ describe("thumbnailPng", () => {
 describe("titlePlatePng and blankPlatePng", () => {
   const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280 };
 
-  test("draw a 600×100 PNG within a plate's bounds, not the proportions the app reserves", () => {
+  test("draw a 600×164 PNG within a plate's bounds, not the proportions the app reserves", () => {
     for (const plate of [titlePlatePng("サンプルの称号"), titlePlatePng(""), blankPlatePng()]) {
-      expect(sizeUnder(plate, PLATE_RULES)).toEqual({ width: 600, height: 100 });
+      expect(sizeUnder(plate, PLATE_RULES)).toEqual({
+        width: TITLE_PLATE.width,
+        height: TITLE_PLATE.height,
+      });
     }
   });
 

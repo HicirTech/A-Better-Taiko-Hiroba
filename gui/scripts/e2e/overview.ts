@@ -1,3 +1,4 @@
+import { TITLE_PLATE } from "../mock-pictures";
 import type { App } from "./app";
 import { MY_DON_GIF_CODE, PANEL_ART } from "./config";
 import type { Ctx } from "./context";
@@ -228,7 +229,7 @@ export async function overview(ctx: Ctx) {
   );
   results.plateDrawnUnderTitle =
     (await attribute("#title-plate-image", "src"))?.startsWith("data:image/png;base64,") === true &&
-    Math.abs(plateBox.width / plateBox.height - 600 / 100) < 0.05 &&
+    Math.abs(plateBox.width / plateBox.height - TITLE_PLATE.width / TITLE_PLATE.height) < 0.05 &&
     (await textOf("#profile-title")) === "Title: サンプルの称号" &&
     (await textOf("#profile h2")) === "サンプルどん" &&
     (await textOf("#dan")) === "Dan-i: 9th Dan" &&
