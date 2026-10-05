@@ -11,21 +11,27 @@ const EDGE_PX = 24;
 export const songSearchKeys = [
   "searchBarInTheTopBand",
   "searchBarAcrossAPhone",
+  "searchFieldKeepsItsPlace",
   "searchShowsTheTempo",
   "searchKeptWhenASongOpens",
+  "keptSearchesUnframed",
   "searchAgainFromTheKeptOne",
   "searchForgotten",
   "detailsOpenOnTheInnerChart",
+  "detailsChartsShowTheirIcons",
+  "chartPictureOpensFullScreen",
   "detailsOpenOnTheShownDifficulty",
   "detailsShowTheChartPictures",
   "chartPictureAskedOnce",
+  "detailsCloseOnlyWithAPointer",
   "searchLeftByItsArrow",
+  "portraitCloseToItsPlateOnAPhone",
 ] as const;
 
 export async function songSearch(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, boxOf, exists, touchEmulated } = pageHelpers(page);
+  const { atSize, boxOf, exists, press, touchEmulated } = pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
@@ -52,6 +58,8 @@ export async function songSearch(ctx: Ctx) {
     await click("#song-details-close");
     await gone("#song-details");
   };
+  const soon = (label: string, probe: () => Promise<boolean>) =>
+    waitFor(label, async () => (await probe()) || undefined, 5_000).catch(() => false);
   const pictureDrawn = () =>
     waitFor(
       "a chart picture drawn",
@@ -87,8 +95,14 @@ export async function songSearch(ctx: Ctx) {
     }
   });
 
+  const fieldLeft = () =>
+    page.evaluate<number>(
+      `document.querySelector("#song-search-input").getBoundingClientRect().left`,
+    );
+  const leftAtRest = await fieldLeft();
   await search("signal");
   await shown("#song-search-row-1019");
+  results.searchFieldKeepsItsPlace = (await fieldLeft()) === leftAtRest;
   results.searchShowsTheTempo =
     (await textOf("#song-search-row-1019"))?.includes("BPM 85.85–257.5") === true;
 
@@ -97,6 +111,9 @@ export async function songSearch(ctx: Ctx) {
   await search("");
   await shown("#song-search-recent");
   results.searchKeptWhenASongOpens = same(await kept(), ["signal"]);
+  results.keptSearchesUnframed =
+    !(await exists("#song-search-panel.MuiPaper-root")) &&
+    !((await textOf("#song-search-panel")) ?? "").includes("Recent searches");
 
   await click("#song-search-recent li .MuiListItemButton-root");
   await shown("#song-search-row-1019");
@@ -107,12 +124,31 @@ export async function songSearch(ctx: Ctx) {
   await search("");
   await shown("#song-search-recent");
   await click("#song-search-recent li .MuiIconButton-root");
-  await shown("#song-search-hint");
-  results.searchForgotten = !(await exists("#song-search-recent"));
+  await gone("#song-search-recent");
+  results.searchForgotten = !(await exists("#song-search-panel"));
 
   await openSong("約束", "1005");
   results.detailsOpenOnTheInnerChart = (await chosenChart()) === "song-details-chart-ura";
   await pictureDrawn();
+  results.detailsChartsShowTheirIcons = await soon("chart icons drawn", () =>
+    page.evaluate<boolean>(
+      `(() => { const icons = [...document.querySelectorAll("#song-details .course-icon img")]; return icons.length === 5 && icons.every((img) => img.complete && img.naturalWidth > 0); })()`,
+    ),
+  );
+  await click("#song-details-pictures .chart-picture-open");
+  await shown("#chart-viewer img");
+  await page.evaluate(
+    `document.querySelector(".chart-viewer-frame").dispatchEvent(new WheelEvent("wheel", { deltaY: -300, clientX: 100, clientY: 100, bubbles: true }))`,
+  );
+  results.chartPictureOpensFullScreen = await soon(
+    "the picture zoomed",
+    async () =>
+      Number(
+        await page.evaluate<string>(`document.querySelector(".chart-viewer-frame").dataset.scale`),
+      ) > 1,
+  );
+  await press("Escape");
+  await gone("#chart-viewer");
   const innerAsked = await hitsOn(INNER_PICTURE);
   await click("#song-details-chart-easy");
   await shown("#song-details-no-picture");
@@ -131,6 +167,21 @@ export async function songSearch(ctx: Ctx) {
   await showDifficulty("oni");
   results.detailsOpenOnTheShownDifficulty = hardChosen;
 
+  results.detailsCloseOnlyWithAPointer =
+    (await exists("#song-search-input")) &&
+    (await atSize(PHONE_TALL.width, PHONE_TALL.height, async () => {
+      await touchEmulated(true);
+      try {
+        await openSong("signal", "1019");
+        const closeDrawn = await exists("#song-details-close");
+        await press("Escape");
+        await gone("#song-details");
+        return !closeDrawn;
+      } finally {
+        await touchEmulated(false);
+      }
+    }));
+
   await search("signal");
   await click("#song-search-leave");
   await gone("#song-search-panel");
@@ -139,4 +190,15 @@ export async function songSearch(ctx: Ctx) {
       `(document.querySelector("#last-updated")?.getClientRects().length ?? 0) > 0`,
     )) &&
     (await page.evaluate<string>(`document.querySelector("#song-search-input").value`)) === "";
+
+  results.portraitCloseToItsPlateOnAPhone = await atSize(
+    PHONE_TALL.width,
+    PHONE_TALL.height,
+    async () => {
+      const myDon = await boxOf("#my-don");
+      const plate = await boxOf("#title-plate");
+      const panel = await boxOf("#score-panel");
+      return Math.abs(plate.top - myDon.bottom - (panel.top - plate.bottom)) <= 2;
+    },
+  );
 }
