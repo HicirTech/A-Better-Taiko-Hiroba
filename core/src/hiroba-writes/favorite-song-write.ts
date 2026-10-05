@@ -26,11 +26,15 @@ export interface FavoriteSongEditorView {
   readonly song: ShownSong | null;
 }
 
-/** The song to post and the page's own `bsf`, which the save posts back. */
+/** The song to post, and the `bsf` the site's picker sends with it. */
 interface FavoriteSongBody {
   readonly songNo: string | null;
   readonly bsf: string;
 }
+
+// The picker's links carry bsf=0 for a song and 1 for its 裏 entry. The page's own bsf is the set
+// song's, so posting it back would ask for the new song's 裏 entry.
+const SONG_BSF = "0";
 
 /** From `favoriteSongComp` (mydon.js): 1 not unlocked and 2 not published carry no message. */
 const FAVORITE_SONG_CODES: SaveCodes = {
@@ -57,11 +61,10 @@ const FAVORITE_SONG_CODES: SaveCodes = {
 const readEditor = (deps: ReadDeps) => readHirobaPage(deps, PAGE, parseFavoriteSongEditorPage);
 
 function checkFavoriteSongTarget(
-  editor: Pick<FavoriteSongEditorReading, "bsf">,
   target: FavoriteSongState,
 ): Result<FavoriteSongBody, InvalidTarget> {
   return target.songNo === null || isSongNo(target.songNo)
-    ? ok({ songNo: target.songNo, bsf: editor.bsf })
+    ? ok({ songNo: target.songNo, bsf: SONG_BSF })
     : err({ field: FAVORITE_SONG_FIELD });
 }
 
@@ -74,7 +77,7 @@ export const FAVORITE_SONG_WRITE: WriteSpec<
 > = {
   readEditor,
   same: (left, right) => left.songNo === right.songNo,
-  normalise: checkFavoriteSongTarget,
+  normalise: (_editor, target) => checkFavoriteSongTarget(target),
   expectedAfter: (_before, body) => ({ songNo: body.songNo }),
   // The site posts both fields empty to clear the song.
   save: (editor, body) => ({

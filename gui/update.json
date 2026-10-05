@@ -1,21 +1,13 @@
 {
-  "version": "0.3.1",
+  "version": "0.3.2",
   "notes": {
     "en": [
-      "Changing your title works even when the Costume page cannot read one of your items",
-      "When the Costume page cannot read an item, the details for a report say which item it is and which part was unexpected"
+      "Changing your favourite song no longer fails as not unlocked when the song set before was an inner chart"
     ],
     "ja": [
-      "きせかえページで読み込めないアイテムがあっても、称号を変更できます",
-      "きせかえページでアイテムを読み込めないとき、報告用の詳細に何番目のアイテムのどこが想定と違うかを表示します"
+      "裏譜面を大好きな曲にしていたとき、別の曲に変えると「まだ解禁されていない」と断られていた問題を直しました"
     ],
-    "zh-Hans": [
-      "换装页里有读不了的道具时，也能照常更换称号",
-      "换装页读不了某件道具时，报告详情会写明是第几件、哪一部分跟预期不同"
-    ],
-    "zh-Hant": [
-      "換裝頁裡有讀不了的道具時，也能照常更換稱號",
-      "換裝頁讀不了某件道具時，回報詳情會寫明是第幾件、哪一部分跟預期不同"
-    ]
+    "zh-Hans": ["最爱歌曲原本设的是里谱面时，换成别的歌不会再被提示「尚未解锁」"],
+    "zh-Hant": ["最愛歌曲原本設的是裏譜面時，換成別的歌不會再被提示「尚未解鎖」"]
   }
 }
