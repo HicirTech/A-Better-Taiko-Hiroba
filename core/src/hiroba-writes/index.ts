@@ -14,11 +14,13 @@ export {
   openCostumeEditor,
 } from "./costume-write";
 export { spaced } from "./cross-checks";
+export { readSongPicker } from "./favorite-song-picker";
 export {
   changeFavoriteSong,
   FAVORITE_SONG_WRITE,
   type FavoriteSongEditorView,
   openFavoriteSongEditor,
+  sameFavoriteSong,
 } from "./favorite-song-write";
 export {
   changeFolder,

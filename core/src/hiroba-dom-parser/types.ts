@@ -48,8 +48,12 @@ export interface FolderEditorReading extends EditorReading<FolderState> {
 export interface FavoriteSongEditorReading extends EditorReading<FavoriteSongState> {
   /** Null when no song is set. */
   readonly song: ShownSong | null;
-  /** The form's `bsf`, as the picker's link set it: 1 for a song's 裏 entry, 0 for the song. */
-  readonly bsf: string;
+}
+
+/** One row of Hiroba's 大好きな曲 picker: a song, or the song's 裏 entry. */
+export interface SongPickerRow {
+  readonly songNo: string;
+  readonly ura: boolean;
 }
 
 export interface RenameEditorReading {

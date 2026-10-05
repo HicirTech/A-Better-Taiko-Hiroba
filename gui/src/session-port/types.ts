@@ -7,6 +7,7 @@ import type {
   FolderState,
   MedalProgress,
   NameState,
+  PickableSongs,
   RenameState,
   Result,
   ScoreRank,
@@ -34,6 +35,7 @@ export type {
   FolderEditorView,
   FolderState,
   NameState,
+  PickableSongs,
   RenameState,
   ShownSong,
   SongCatalogueFailure,
@@ -294,6 +296,9 @@ export interface HirobaSessionPort {
   changeFolder(change: FolderChange): Promise<WriteOutcomeView<FolderState>>;
   /** One 大好きな曲 write: its editor, one save, then the song read back. Never retried. */
   changeFavoriteSong(change: FavoriteSongChange): Promise<WriteOutcomeView<FavoriteSongState>>;
+  /** The songs Hiroba's own 大好きな曲 picker offers: its editor, the handoff that opens the picker,
+   * then a GET for each of the eight genres. Its form token stays with the platform. */
+  readSongPicker(): Promise<Result<PickableSongs, ReadFailure>>;
   /** taiko.wiki's songs, all or those changed since `since` (ms since 1970): one GET that carries
    * no session. Asks Hiroba nothing, so it is never queued. */
   readSongCatalogue(since: number | null): Promise<Result<SongCatalogueRead, SongCatalogueFailure>>;

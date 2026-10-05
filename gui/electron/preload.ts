@@ -25,6 +25,7 @@ const port: HirobaSessionPort = {
   openFavorites: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openFavorites),
   changeFolder: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFolder, change),
   changeFavoriteSong: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFavoriteSong, change),
+  readSongPicker: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readSongPicker),
   readSongCatalogue: (since) => ipcRenderer.invoke(BRIDGE_CHANNELS.readSongCatalogue, since),
   readChineseNames: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readChineseNames),
   readChartPicture: (url) => ipcRenderer.invoke(BRIDGE_CHANNELS.readChartPicture, url),

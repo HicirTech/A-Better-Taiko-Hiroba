@@ -14,6 +14,8 @@ export interface PickerEntry {
   readonly other: { readonly marked: Marked; readonly lang: string } | null;
   /** The start of the line under the name, such as the song's tempo. */
   readonly detail?: string | undefined;
+  /** The song's 裏 entry, a row of its own beside the song's. */
+  readonly ura?: boolean;
 }
 
 /** What a picker that takes many songs shows: the ones in, and how many fit. */
@@ -98,8 +100,10 @@ interface RowProps {
   readonly checked: boolean;
   readonly disabled: boolean;
   readonly idPrefix: string;
-  readonly onActivate: (songNo: string) => void;
+  readonly onActivate: (songNo: string, ura: boolean) => void;
 }
+
+const rowKey = (entry: PickerEntry) => `${entry.look.songNo}${entry.ura === true ? "-ura" : ""}`;
 
 const PickerRow = memo(function PickerRow({
   entry,
@@ -111,6 +115,7 @@ const PickerRow = memo(function PickerRow({
   onActivate,
 }: RowProps) {
   const { songNo, levels } = entry.look;
+  const ura = entry.ura === true;
   const row = (
     <SongRow
       look={entry.look}
@@ -121,19 +126,19 @@ const PickerRow = memo(function PickerRow({
     />
   );
   return (
-    <li className="picker-row" id={`${idPrefix}-row-${songNo}`} data-song-no={songNo}>
+    <li className="picker-row" id={`${idPrefix}-row-${rowKey(entry)}`} data-song-no={songNo}>
       {many ? (
         <label className="picker-hit">
           <input
             type="checkbox"
             checked={checked}
             disabled={disabled}
-            onChange={() => onActivate(songNo)}
+            onChange={() => onActivate(songNo, ura)}
           />
           {row}
         </label>
       ) : (
-        <button type="button" className="picker-hit" onClick={() => onActivate(songNo)}>
+        <button type="button" className="picker-hit" onClick={() => onActivate(songNo, ura)}>
           {row}
         </button>
       )}
@@ -154,9 +159,9 @@ export function PickerList({
   entries: readonly PickerEntry[];
   i18n: Translator;
   many: PickedSongs | null;
-  onActivate: (songNo: string) => void;
+  onActivate: (songNo: string, ura: boolean) => void;
   describedBy?: string | undefined;
-  /** The list is `<idPrefix>-list`, and each row `<idPrefix>-row-<song number>`. */
+  /** The list is `<idPrefix>-list`, each row `<idPrefix>-row-<song number>`, a 裏 row `…-ura`. */
   idPrefix?: string;
 }) {
   const full = many !== null && many.picked.size >= many.limit;
@@ -166,7 +171,7 @@ export function PickerList({
         const checked = many?.picked.has(entry.look.songNo) ?? false;
         return (
           <PickerRow
-            key={entry.look.songNo}
+            key={rowKey(entry)}
             entry={entry}
             i18n={i18n}
             many={many !== null}

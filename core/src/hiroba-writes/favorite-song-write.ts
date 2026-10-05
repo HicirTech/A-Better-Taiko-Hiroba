@@ -26,16 +26,6 @@ export interface FavoriteSongEditorView {
   readonly song: ShownSong | null;
 }
 
-/** The song to post, and the `bsf` the site's picker sends with it. */
-interface FavoriteSongBody {
-  readonly songNo: string | null;
-  readonly bsf: string;
-}
-
-// The picker's links carry bsf=0 for a song and 1 for its 裏 entry. The page's own bsf is the set
-// song's, so posting it back would ask for the new song's 裏 entry.
-const SONG_BSF = "0";
-
 /** From `favoriteSongComp` (mydon.js): 1 not unlocked and 2 not published carry no message. */
 const FAVORITE_SONG_CODES: SaveCodes = {
   reason(save: SaveReading): NotAppliedReason {
@@ -58,40 +48,54 @@ const FAVORITE_SONG_CODES: SaveCodes = {
   },
 };
 
-const readEditor = (deps: ReadDeps) => readHirobaPage(deps, PAGE, parseFavoriteSongEditorPage);
+/** `bsf` as the picker's links carry it: 1 for a 裏 entry, 0 for a song, empty with no song. */
+export function bsfOf(state: FavoriteSongState): string {
+  if (state.songNo === null) {
+    return "";
+  }
+  return state.ura ? "1" : "0";
+}
+
+/** The same song, and the same entry of it: the song itself or its 裏 entry. */
+export function sameFavoriteSong(left: FavoriteSongState, right: FavoriteSongState): boolean {
+  return left.songNo === right.songNo && left.ura === right.ura;
+}
+
+export const readFavoriteSongEditor = (deps: ReadDeps) =>
+  readHirobaPage(deps, PAGE, parseFavoriteSongEditorPage);
 
 function checkFavoriteSongTarget(
   target: FavoriteSongState,
-): Result<FavoriteSongBody, InvalidTarget> {
-  return target.songNo === null || isSongNo(target.songNo)
-    ? ok({ songNo: target.songNo, bsf: SONG_BSF })
+): Result<FavoriteSongState, InvalidTarget> {
+  const valid = target.songNo === null ? !target.ura : isSongNo(target.songNo);
+  return valid
+    ? ok({ songNo: target.songNo, ura: target.ura })
     : err({ field: FAVORITE_SONG_FIELD });
 }
 
 export const FAVORITE_SONG_WRITE: WriteSpec<
   FavoriteSongState,
   FavoriteSongState,
-  FavoriteSongBody,
+  FavoriteSongState,
   FavoriteSongEditorReading,
   never
 > = {
-  readEditor,
-  same: (left, right) => left.songNo === right.songNo,
+  readEditor: readFavoriteSongEditor,
+  same: sameFavoriteSong,
   normalise: (_editor, target) => checkFavoriteSongTarget(target),
-  expectedAfter: (_before, body) => ({ songNo: body.songNo }),
-  // The site posts both fields empty to clear the song.
+  expectedAfter: (_before, body) => body,
   save: (editor, body) => ({
     path: SAVE_PATH,
     referer: PAGE,
     form: [
       ["song_no", body.songNo ?? ""],
-      ["bsf", body.songNo === null ? "" : body.bsf],
+      ["bsf", bsfOf(body)],
       ["_tckt", editor.token],
     ],
   }),
   codes: FAVORITE_SONG_CODES,
   readBack: async (deps) => {
-    const read = await readEditor(deps);
+    const read = await readFavoriteSongEditor(deps);
     return isErr(read) ? read : ok(read.value.state);
   },
 };
@@ -99,7 +103,7 @@ export const FAVORITE_SONG_WRITE: WriteSpec<
 export async function openFavoriteSongEditor(
   deps: ReadDeps,
 ): Promise<Result<FavoriteSongEditorView, HirobaReadFailure>> {
-  const read = await readEditor(deps);
+  const read = await readFavoriteSongEditor(deps);
   if (isErr(read)) {
     return read;
   }

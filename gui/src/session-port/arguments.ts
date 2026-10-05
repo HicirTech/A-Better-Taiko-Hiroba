@@ -110,8 +110,13 @@ export function isFolderState(value: unknown): value is FolderState {
   );
 }
 
+/** A song number or none, and its 裏 entry only where there is a song. */
 export function isFavoriteSongState(value: unknown): value is FavoriteSongState {
-  return hasExactly(value, ["songNo"]) && (value.songNo === null || isSongNo(value.songNo));
+  return (
+    hasExactly(value, ["songNo", "ura"]) &&
+    typeof value.ura === "boolean" &&
+    (value.songNo === null ? !value.ura : isSongNo(value.songNo))
+  );
 }
 
 /** The songs a folder write puts in order: at most 30, none twice. */
@@ -259,6 +264,7 @@ export const PORT_ARGUMENTS = {
   openFavorites: none,
   changeFolder: folderChange,
   changeFavoriteSong: favoriteSongChange,
+  readSongPicker: none,
   readSongCatalogue: catalogueSince,
   readChineseNames: none,
   readChartPicture: chartUrl,

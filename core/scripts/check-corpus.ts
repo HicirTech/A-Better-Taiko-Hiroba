@@ -22,6 +22,7 @@ import {
   parseRenameEditorPage,
   parseScoreDetailPage,
   parseScoreListPage,
+  parseSongPickerPage,
   parseTitleEditorPage,
 } from "../src/index";
 
@@ -85,6 +86,8 @@ const SITE_ERROR = "the site's error page — a bad parameter or a value that do
 const LOGGED_OUT = "captured while logged out, on purpose";
 /** The same error page, carrying a privacy refusal rather than a bad request. */
 const CLOSED_PROFILE = "the site's error page — this player has closed their profile";
+/** The picker reached from the folder editor: its rows link to a slot, never to the 大好きな曲. */
+const FOLDER_PICKER = "the folder editor's picker — its rows link to a slot";
 
 const ROUTES: readonly Route[] = [
   {
@@ -171,6 +174,20 @@ const ROUTES: readonly Route[] = [
     run: (html) => attempt(parseFavoriteSongEditorPage(html)),
   },
   {
+    match: /^select-song-favorite-genre\d/,
+    parser: "parseSongPickerPage",
+    run: (html, file) => attempt(parseSongPickerPage(html, genreOf(file))),
+  },
+  {
+    match: /^select-song-folder-genre\d/,
+    parser: "parseSongPickerPage",
+    run: (html, file) => attempt(parseSongPickerPage(html, genreOf(file))),
+    expect: (_file, failure) =>
+      failure.kind === "unreadableValue" && failure.marker === "#songList a[href]"
+        ? FOLDER_PICKER
+        : null,
+  },
+  {
     match: /^(friend-|block-list|user-search-)/,
     parser: "parsePlayerRowsPage",
     run: (html) => attempt(parsePlayerRowsPage(html, "user_search.php")),
@@ -217,7 +234,7 @@ const UNROUTED: readonly { readonly match: RegExp; readonly reason: string }[] =
     reason: "the parts composer is a separate feature, not in the first title and name writes",
   },
   {
-    match: /^(select-song|form-data|portal-|favorite-(?!(folder|song)-edit))/,
+    match: /^(form-data|portal-|favorite-(?!(folder|song)-edit))/,
     reason: "favourite write flow — E12",
   },
   { match: /^(rank-list-noparam)/, reason: "routed above" },

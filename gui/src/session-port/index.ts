@@ -38,6 +38,7 @@ export type {
   IconWant,
   NameChange,
   NameState,
+  PickableSongs,
   PictureFailure,
   PictureView,
   PictureWant,

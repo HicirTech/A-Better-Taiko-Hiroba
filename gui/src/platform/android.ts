@@ -26,6 +26,7 @@ import {
   readOwnProfile,
   sessionEnded,
   signInStep,
+  whenQueueQuiet,
 } from "../hiroba-session";
 import {
   type CostumeSet,
@@ -306,6 +307,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     changeFolder: flushed(writes.changeFolder),
 
     changeFavoriteSong: flushed(writes.changeFavoriteSong),
+
+    readSongPicker: flushed(whenQueueQuiet(queue, writes.readSongPicker)),
 
     readSongCatalogue: (since) => readSongCatalogue(transport, songCatalogueUrl, since),
 

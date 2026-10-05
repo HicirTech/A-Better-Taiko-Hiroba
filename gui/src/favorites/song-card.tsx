@@ -29,7 +29,7 @@ export function SongCard({
 }: SongCardProps) {
   const { t } = i18n;
   const { view, draft, notice, shut, saving } = shown;
-  const songNo = draft === null ? view.song.state.songNo : draft.songNo;
+  const { songNo, ura } = draft ?? view.song.state;
   return (
     <Card id="favorite-song-card" variant="outlined">
       <CardContent>
@@ -46,6 +46,7 @@ export function SongCard({
               id="favorite-song-row"
               look={look(songNo)}
               i18n={i18n}
+              detail={ura ? t("favorites.ura") : undefined}
               scrolling
               onOpen={openDetails(songNo)}
             />

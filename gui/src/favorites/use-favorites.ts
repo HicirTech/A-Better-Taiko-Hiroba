@@ -4,7 +4,7 @@ import { useCallback, useReducer, useRef } from "react";
 import { sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import type { HirobaSessionPort, WriteOutcomeView } from "../session-port";
+import type { FavoriteSongState, HirobaSessionPort, WriteOutcomeView } from "../session-port";
 import {
   canReadFavoritesAgain,
   type FavoritesAction,
@@ -30,7 +30,7 @@ export interface FavoritesEditor {
   /** Drops everything of the favourites when a session ends or begins. */
   forget(): void;
   /** Puts a song in the draft for the 大好きな曲. */
-  pickSong(songNo: string): void;
+  pickSong(song: FavoriteSongState): void;
   saveSong(): Promise<void>;
   /** Drops the draft, putting the row back to the song set. */
   resetSong(): void;
@@ -52,7 +52,10 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     dispatch({ type: "forget" });
   }, []);
   const dropEdits = useCallback(() => dispatch({ type: "draftDropped" }), []);
-  const pickSong = useCallback((songNo: string) => dispatch({ type: "songPicked", songNo }), []);
+  const pickSong = useCallback(
+    (song: FavoriteSongState) => dispatch({ type: "songPicked", song }),
+    [],
+  );
 
   const mayRead = step.name === "unread" || canReadFavoritesAgain(step);
   const read = useCallback(async () => {

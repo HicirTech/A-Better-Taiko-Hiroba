@@ -24,6 +24,37 @@ const GENRE_CLASS: Readonly<Record<WikiGenre, string>> = {
   classic: "classic",
 };
 
+/** A song Hiroba knows but has not unlocked for this player: its own picker leaves it out. */
+export const LOCKED_SONG = "1035";
+
+/** The songs Hiroba's own picker offers, each with its 裏 entry where it has an inner chart. */
+const PICKABLE_SONGS: readonly WikiSong[] = [...HIROBA_SONGS.values()].filter(
+  ({ songNo }) => songNo !== LOCKED_SONG,
+);
+const hasUra = (song: WikiSong) => song.courses.ura !== null;
+
+/** The picker's genre numbers, and its tabs in its own order by the name in their pictures. */
+const GENRE_NUMBER: Readonly<Record<WikiGenre, number>> = {
+  pops: 1,
+  anime: 2,
+  kids: 3,
+  vocaloid: 4,
+  game: 5,
+  namco: 6,
+  variety: 7,
+  classic: 8,
+};
+const PICKER_TABS: readonly (readonly [number, string])[] = [
+  [1, "jpop"],
+  [3, "kids"],
+  [2, "anime"],
+  [4, "vocaloid"],
+  [5, "game"],
+  [7, "variety"],
+  [8, "classic"],
+  [6, "namco"],
+];
+
 /** The songs in slots 1 to 6 of the saved folder at the start; two of them share a title. */
 const START_FOLDER = ["1001", "1008", "1014", "1020", "1031", "1026"];
 const START_FAVORITE_SONG = "1008";
@@ -37,8 +68,9 @@ type Slots = (string | null)[];
 export interface FavoritesState {
   /** The saved お気に入り folder: a song number or null for each of its slots. */
   folder: Slots;
-  /** The saved 大好きな曲. */
+  /** The saved 大好きな曲, and whether it is the song's 裏 entry. */
   favoriteSong: string | null;
+  favoriteSongUra: boolean;
   /** What the editor holds and the save posts; Hiroba keeps it for the session. */
   staging: Slots;
   /** Whether `init=1` loads the saved folder into the staging. */
@@ -52,6 +84,7 @@ const emptySlots = (): Slots => Array.from({ length: FOLDER_SLOT_COUNT }, () => 
 const startState = (): FavoritesState => ({
   folder: emptySlots().map((_, index) => START_FOLDER[index] ?? null),
   favoriteSong: START_FAVORITE_SONG,
+  favoriteSongUra: false,
   staging: emptySlots(),
   initStages: true,
   emptyClears: true,
@@ -95,6 +128,10 @@ export interface FavoritesEditorOptions {
 export function createFavoritesEditor({ issue }: FavoritesEditorOptions) {
   let state = startState();
   const posts: PostRecord[] = [];
+  /** The sessions whose picker the handoff opened. */
+  const pickerOpen = new WeakSet<MockSession>();
+  const offers = (songNo: string, ura: boolean) =>
+    PICKABLE_SONGS.some((song) => song.songNo === songNo && (!ura || hasUra(song)));
 
   const isStale = (session: MockSession, form: URLSearchParams) =>
     session.ticket === undefined || form.get("_tckt") !== session.ticket;
@@ -154,8 +191,42 @@ ${slots.join("\n")}
       return `<h2 class="subtitleMypage">「大好きな曲」の設定</h2>
 ${songSpan(songOf(favoriteSong))}
 <input type="hidden" name="song_no" id="song_no" value="${favoriteSong ?? ""}">
-<input type="hidden" name="bsf" id="bsf" value="0">
+<input type="hidden" name="bsf" id="bsf" value="${favoriteSong === null ? "" : state.favoriteSongUra ? 1 : 0}">
 <input type="hidden" id="_tckt" name="_tckt" value="${issue(session)}">`;
+    },
+
+    /** The handoff the 大好きな曲 editor's button sends; it opens the picker for the session. */
+    enterPicker(session: MockSession, params: URLSearchParams): boolean {
+      const opens =
+        params.get("from") === "/portal_favorite_song_select.php" &&
+        params.get("list_type") === "song" &&
+        params.get("_tckt") === session.ticket;
+      if (opens) {
+        pickerOpen.add(session);
+      } else {
+        pickerOpen.delete(session);
+      }
+      return opens;
+    },
+
+    /** One genre of the picker, or null when no handoff opened it for the session. */
+    pickerPage(session: MockSession, genre: number): string | null {
+      if (!pickerOpen.has(session)) {
+        return null;
+      }
+      const tabs = PICKER_TABS.map(
+        ([tab, name]) =>
+          `<li><a href="/select_song.php?genre=${tab}"><img src="image/sp/640/genre_tab_new_${name}_${tab === genre ? "on" : "off"}_640.png" alt="" /></a></li>`,
+      );
+      const rows = PICKABLE_SONGS.filter((song) =>
+        song.genre.some((one) => GENRE_NUMBER[one] === genre),
+      ).flatMap((song) => {
+        const row = (ura: boolean) =>
+          `<li class="contentBox clearfix"><div class="songNameArea${ura ? " ura" : ""}"><a href="/portal_favorite_song_select.php?song_no=${song.songNo}&session_flg=1&bsf=${ura ? 1 : 0}">${songSpan(song)}</a></div></li>`;
+        return hasUra(song) ? [row(false), row(true)] : [row(false)];
+      });
+      return `<ul class="tabList clearfix tabMenu" id="tabList">${tabs.join("")}</ul>
+<ul id="songList"><div id="tab-genre" class="clearfix">${rows.join("")}</div></ul>`;
     },
 
     record(
@@ -184,10 +255,13 @@ ${songSpan(songOf(favoriteSong))}
       }
       session.ticket = undefined;
       const songNo = form.get("song_no");
+      const ura = form.get("bsf") === "1";
       if (songNo === "") {
         state.favoriteSong = null;
-      } else if (songNo !== null && HIROBA_SONGS.has(songNo)) {
+        state.favoriteSongUra = false;
+      } else if (songNo !== null && offers(songNo, ura)) {
         state.favoriteSong = songNo;
+        state.favoriteSongUra = ura;
       } else {
         return Response.json({ result: 1 });
       }

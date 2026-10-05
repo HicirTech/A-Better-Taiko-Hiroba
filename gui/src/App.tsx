@@ -14,6 +14,7 @@ import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } fro
 
 import { FavoritesPage } from "./favorites/favorites-page";
 import { useFavorites } from "./favorites/use-favorites";
+import { usePickableSongs } from "./favorites/use-pickable-songs";
 import { useSongCatalogue } from "./favorites/use-song-catalogue";
 import { CostumePage } from "./my-page/costume-page";
 import { MedalCard } from "./my-page/medal-card";
@@ -97,6 +98,12 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
   );
+  const {
+    pickable,
+    refresh: refreshPickable,
+    readIfStale: readPickableIfStale,
+    forget: forgetPickable,
+  } = usePickableSongs(port, sessionGone);
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
@@ -122,6 +129,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             lane.forgetFailures(kind);
           }
           setScreen({ name: "profile", profile: result.value });
+          // Beside each read of my page, what Hiroba's picker offers, read once the pictures are in.
+          if (!behindThePage) {
+            refreshPickable();
+          }
           return true;
         }
         if (SESSION_GONE.has(result.error.kind)) {
@@ -135,7 +146,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
         setShut(false);
       }
     },
-    [port, lane],
+    [port, lane, refreshPickable],
   );
 
   // A title write that may have moved the title leaves the plate stale: read my page again.
@@ -201,6 +212,12 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       void readFavorites();
     }
   }, [onFavoritesPage, favoritesUnread, writing, readFavorites]);
+  // A list no read has brought since my page's last, or whose read failed, is read on the page.
+  useEffect(() => {
+    if (onFavoritesPage) {
+      readPickableIfStale();
+    }
+  }, [onFavoritesPage, readPickableIfStale]);
 
   const signIn = async () => {
     // Hiroba may have ended the last session itself, so no sign-out forgot its pictures.
@@ -240,8 +257,16 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       forgetTitleEditor();
       forgetNameEditor();
       forgetFavorites();
+      forgetPickable();
     }
-  }, [noSession, forgetEditor, forgetTitleEditor, forgetNameEditor, forgetFavorites]);
+  }, [
+    noSession,
+    forgetEditor,
+    forgetTitleEditor,
+    forgetNameEditor,
+    forgetFavorites,
+    forgetPickable,
+  ]);
 
   // Leaving a page drops the edits made on it; the editors keep what they read from Hiroba.
   useEffect(() => {
@@ -406,6 +431,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
                 catalogue={catalogue}
                 port={port}
                 lane={lane}
+                pickable={pickable}
+                onReadPickable={refreshPickable}
                 i18n={i18n}
               />
             )}

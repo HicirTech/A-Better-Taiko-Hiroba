@@ -87,10 +87,10 @@ export async function favoriteWrites(ctx: Ctx) {
   await favoritesNow("?reset=1");
   await resetLog();
   const set = await call<Outcome>(
-    `window.abth.changeFavoriteSong(${JSON.stringify({ expected: { songNo: "1008" }, target: { songNo: "1001" } })})`,
+    `window.abth.changeFavoriteSong(${JSON.stringify({ expected: { songNo: "1008", ura: false }, target: { songNo: "1001", ura: false } })})`,
   );
   const cleared = await call<Outcome>(
-    `window.abth.changeFavoriteSong(${JSON.stringify({ expected: { songNo: "1001" }, target: { songNo: null } })})`,
+    `window.abth.changeFavoriteSong(${JSON.stringify({ expected: { songNo: "1001", ura: false }, target: { songNo: null, ura: false } })})`,
   );
   results.favoriteSongSetAndCleared =
     set.kind === "applied" &&

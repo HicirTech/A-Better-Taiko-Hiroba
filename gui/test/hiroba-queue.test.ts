@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createHirobaQueue } from "../src/hiroba-session";
+import { createHirobaQueue, whenQueueQuiet } from "../src/hiroba-session";
 
 /** A verb that logs when it starts and ends, and ends only when its test lets it. */
 function held(name: string, log: string[]) {
@@ -82,5 +82,49 @@ describe("createHirobaQueue", () => {
     await expect(failing()).rejects.toThrow("fault");
     expect(await queue.oneWriteAtATime(async () => "written", "busy")()).toBe("written");
     expect(await queue.oneAtATime(async () => "read")()).toBe("read");
+  });
+
+  test("lets a quiet wait go only once nothing has run or waited for that long", async () => {
+    const log: string[] = [];
+    const queue = createHirobaQueue();
+    const read = held("read", log);
+    const reading = queue.oneAtATime(read.run)();
+    let quiet = false;
+    const waiting = queue.whenQuiet(40).then(() => {
+      quiet = true;
+    });
+    await read.release();
+    await reading;
+    const ended = Date.now();
+    await Bun.sleep(10);
+    expect(quiet).toBe(false);
+    await waiting;
+    expect(Date.now() - ended).toBeGreaterThanOrEqual(35);
+  });
+
+  test("goes at once when the queue has long been quiet", async () => {
+    const queue = createHirobaQueue();
+    const started = Date.now();
+    await queue.whenQuiet(1000);
+    expect(Date.now() - started).toBeLessThan(100);
+  });
+});
+
+describe("whenQueueQuiet", () => {
+  test("lets a read asked while it waits go first, then goes itself", async () => {
+    const log: string[] = [];
+    const queue = createHirobaQueue();
+    const first = held("first", log);
+    const page = held("page", log);
+    const reading = queue.oneAtATime(first.run)();
+    const picker = whenQueueQuiet(queue, async () => {
+      log.push("picker");
+      return "picker";
+    })();
+    await first.release();
+    const asked = queue.oneAtATime(page.run)();
+    await page.release();
+    expect(await Promise.all([reading, asked, picker])).toEqual(["first", "page", "picker"]);
+    expect(log).toEqual(["first start", "first end", "page start", "page end", "picker"]);
   });
 });

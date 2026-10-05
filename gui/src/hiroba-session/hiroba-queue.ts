@@ -7,16 +7,28 @@ export interface HirobaQueue {
     run: (...args: A) => Promise<R>,
     busy: R,
   ): (...args: A) => Promise<R>;
+  /** Resolves once no turn has run or waited for `quietMs`. */
+  whenQuiet(quietMs: number): Promise<void>;
 }
 
-export function createHirobaQueue(): HirobaQueue {
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+export function createHirobaQueue(now: () => number = Date.now): HirobaQueue {
   let queue: Promise<unknown> = Promise.resolve();
   let writing = false;
+  let turns = 0;
+  let lastEnded = Number.NEGATIVE_INFINITY;
   const oneAtATime: HirobaQueue["oneAtATime"] =
     (run) =>
     (...args) => {
+      turns += 1;
       const turn = queue.then(() => run(...args));
-      queue = turn.catch(() => undefined);
+      queue = turn
+        .catch(() => undefined)
+        .then(() => {
+          turns -= 1;
+          lastEnded = now();
+        });
       return turn;
     };
   return {
@@ -34,6 +46,16 @@ export function createHirobaQueue(): HirobaQueue {
           writing = false;
         }
       };
+    },
+    async whenQuiet(quietMs) {
+      for (;;) {
+        await queue;
+        const quietFor = now() - lastEnded;
+        if (turns === 0 && quietFor >= quietMs) {
+          return;
+        }
+        await sleep(turns === 0 ? quietMs - quietFor : 0);
+      }
     },
   };
 }

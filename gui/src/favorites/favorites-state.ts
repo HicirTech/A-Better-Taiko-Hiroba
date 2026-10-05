@@ -1,4 +1,4 @@
-import type { Result } from "@abth/core";
+import { type Result, sameFavoriteSong } from "@abth/core";
 
 import { type Noticed, noticeOf, refreshed } from "../my-page/write-ending";
 import type {
@@ -52,7 +52,7 @@ export type FavoritesAction =
   | { readonly type: "forget" }
   | { readonly type: "readStarted" }
   | { readonly type: "readEnded"; readonly result: Result<FavoritesView, ReadFailure> }
-  | { readonly type: "songPicked"; readonly songNo: string | null }
+  | { readonly type: "songPicked"; readonly song: FavoriteSongState }
   | { readonly type: "draftDropped" }
   | { readonly type: "saveStarted"; readonly write: SavingWrite }
   | { readonly type: "songWritten"; readonly outcome: WriteOutcomeView<FavoriteSongState> }
@@ -70,7 +70,7 @@ export function reduceFavorites(step: FavoritesStep, action: FavoritesAction): F
     case "readEnded":
       return step.name === "loading" ? readEnded(step.held, action.result) : step;
     case "songPicked":
-      return step.name === "ready" ? withDraft(step, draftOf(step, action.songNo)) : step;
+      return step.name === "ready" ? withDraft(step, draftOf(step, action.song)) : step;
     case "draftDropped":
       return step.name === "ready" ? withDraft(step, null) : step;
     case "saveStarted":
@@ -87,12 +87,16 @@ export function reduceFavorites(step: FavoritesStep, action: FavoritesAction): F
 }
 
 /** Picking the song already set is no change, so no draft. */
-function draftOf(step: ReadyStep, songNo: string | null): SongDraft {
-  return songNo === step.view.song.state.songNo ? null : { songNo };
+function draftOf(step: ReadyStep, song: FavoriteSongState): SongDraft {
+  return sameFavoriteSong(song, step.view.song.state) ? null : song;
+}
+
+function sameDraft(left: SongDraft, right: SongDraft): boolean {
+  return left === null || right === null ? left === right : sameFavoriteSong(left, right);
 }
 
 function withDraft(step: ReadyStep, draft: SongDraft): ReadyStep {
-  return step.draft?.songNo === draft?.songNo && step.notice === null
+  return sameDraft(step.draft, draft) && step.notice === null
     ? step
     : { ...step, draft, notice: null };
 }
@@ -119,7 +123,7 @@ function readEnded(
   }
 
   const view = result.value;
-  const keepsDraft = held !== null && held.view.song.state.songNo === view.song.state.songNo;
+  const keepsDraft = held !== null && sameFavoriteSong(held.view.song.state, view.song.state);
   return { name: "ready", view, draft: keepsDraft ? held.draft : null, notice: null };
 }
 
@@ -136,7 +140,7 @@ function songWritten(
   outcome: WriteOutcomeView<FavoriteSongState>,
 ): FavoritesStep {
   const song = refreshed(step.view.song, outcome);
-  const saved = step.draft?.songNo === song.state.songNo;
+  const saved = sameDraft(step.draft, song.state);
   const noticed = noticeOf(outcome);
   return {
     name: "ready",
