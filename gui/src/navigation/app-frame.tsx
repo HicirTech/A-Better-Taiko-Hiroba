@@ -18,6 +18,7 @@ import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { SystemBack } from "../platform";
 import { backAction } from "./back-action";
 import { BackClosersContext, BackModesContext, createBackClosers } from "./back-closers";
+import { FrameNavigationContext } from "./frame-navigation";
 import { MenuOpenContext } from "./menu-open";
 import {
   CostumeIcon,
@@ -65,9 +66,10 @@ export function AppFrame({
 }: NavigationProps & { back?: SystemBack; children: ReactNode }) {
   const wide = useWideWindow();
   const [wider, setWider] = useState(false);
+  const [navigation, setNavigation] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  // Shut a menu left open on a wide window, so it does not reopen unasked when the window narrows.
-  if (wide && menuOpen) {
+  // Shut a menu left open on a wide window, or by a sign-out, so it does not reopen unasked.
+  if ((wide || !navigation) && menuOpen) {
     setMenuOpen(false);
   }
   const [closers] = useState(createBackClosers);
@@ -96,17 +98,18 @@ export function AppFrame({
     <BackClosersContext value={closers}>
       <MenuOpenContext value={menuOpen}>
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
-          {wide ? (
-            <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
-          ) : (
-            <MenuDrawer
-              page={page}
-              onNavigate={onNavigate}
-              i18n={i18n}
-              open={menuOpen}
-              onOpenChange={setMenuOpen}
-            />
-          )}
+          {navigation &&
+            (wide ? (
+              <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} />
+            ) : (
+              <MenuDrawer
+                page={page}
+                onNavigate={onNavigate}
+                i18n={i18n}
+                open={menuOpen}
+                onOpenChange={setMenuOpen}
+              />
+            ))}
           <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
             <Container
               maxWidth={wider ? "lg" : "md"}
@@ -116,7 +119,9 @@ export function AppFrame({
                 {i18n.t(PAGE_ENTRY[page].label)}
               </Typography>
               <WiderFrameContext value={setWider}>
-                <BackModesContext value={modes}>{children}</BackModesContext>
+                <FrameNavigationContext value={setNavigation}>
+                  <BackModesContext value={modes}>{children}</BackModesContext>
+                </FrameNavigationContext>
               </WiderFrameContext>
             </Container>
           </Box>

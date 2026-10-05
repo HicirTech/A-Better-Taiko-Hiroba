@@ -3,7 +3,7 @@ import { launch, stop } from "./app";
 import { en, ja, LANGUAGE_USER_DATA, NOON_JST, zhHant } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
-import { platesAsked, readHits, requestLog, resetLog } from "./stand-in";
+import { platesAsked, readHits } from "./stand-in";
 
 export const languageKeys = [
   "systemLanguageTaken",
@@ -26,7 +26,6 @@ export async function language(ctx: Ctx) {
       `({ lang: document.documentElement.lang, title: document.title, overview: document.querySelector("#nav-overview")?.textContent ?? null, checked: document.querySelector("#language-setting input:checked")?.closest("label")?.textContent ?? null })`,
     );
   rmSync(LANGUAGE_USER_DATA, { recursive: true, force: true });
-  await resetLog();
   let inLanguage = await launch({
     now: NOON_JST,
     lang: "zh-TW",
@@ -35,6 +34,9 @@ export async function language(ctx: Ctx) {
 
   try {
     await inLanguage.until(zhHant.t("signIn.action"));
+    // Settings opens only after a sign-in; the launches below keep its session.
+    await inLanguage.click("#sign-in");
+    await inLanguage.until("サンプルどん");
     await inLanguage.goTo("settings");
     results.systemLanguageTaken = same(await languageShown(inLanguage.page), {
       lang: "zh-Hant",
@@ -88,8 +90,7 @@ export async function language(ctx: Ctx) {
       userData: LANGUAGE_USER_DATA,
     });
     await inLanguage.until(ja.t("settings.account"));
-    results.pickKeptAcrossLaunches =
-      (await languageShown(inLanguage.page)).lang === "ja" && same(await requestLog(), []);
+    results.pickKeptAcrossLaunches = (await languageShown(inLanguage.page)).lang === "ja";
     await inLanguage.click("#language-system");
     await inLanguage.until(zhHant.t("settings.account"));
     results.systemDefaultTakesHold = same(await languageShown(inLanguage.page), {
@@ -105,13 +106,12 @@ export async function language(ctx: Ctx) {
       userData: LANGUAGE_USER_DATA,
     });
     await inLanguage.until(en.t("settings.account"));
-    results.systemDefaultKeptAcrossLaunches =
-      same(await languageShown(inLanguage.page), {
-        lang: "en",
-        title: "A Better Taiko Hiroba",
-        overview: en.t("nav.overview"),
-        checked: en.t("language.system", { name: "English" }),
-      }) && same(await requestLog(), []);
+    results.systemDefaultKeptAcrossLaunches = same(await languageShown(inLanguage.page), {
+      lang: "en",
+      title: "A Better Taiko Hiroba",
+      overview: en.t("nav.overview"),
+      checked: en.t("language.system", { name: "English" }),
+    });
     const ARROW_DOWN = { key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40 };
     const arrowDown = async () => {
       await inLanguage.page.send("Input.dispatchKeyEvent", { type: "keyDown", ...ARROW_DOWN });

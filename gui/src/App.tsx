@@ -25,6 +25,7 @@ import { NameTitlePage } from "./name-title/name-title-page";
 import { useNameEditor } from "./name-title/use-name-editor";
 import { useTitleEditor } from "./name-title/use-title-editor";
 import { FrameCorner } from "./navigation/app-frame";
+import { useFrameNavigation } from "./navigation/frame-navigation";
 import type { Page } from "./navigation/pages";
 import { createPictureLane } from "./pictures/picture-lane";
 import type { SystemLink, SystemToast } from "./platform";
@@ -225,6 +226,13 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
 
   // Another player may sign in next: keep nothing of the last session's editors.
   const noSession = screen.name === "signedOut" || screen.name === "signingIn";
+  // Before a sign-in there is only the sign-in card, on the Overview, and no navigation.
+  useFrameNavigation(!noSession);
+  useEffect(() => {
+    if (noSession && page !== "overview") {
+      onNavigate("overview");
+    }
+  }, [noSession, page, onNavigate]);
   useEffect(() => {
     if (noSession) {
       forgetEditor();
