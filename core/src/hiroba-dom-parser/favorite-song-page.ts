@@ -8,7 +8,7 @@ const HEADING = `h2.subtitleMypage:contains("「大好きな曲」の設定")`;
 const SONG_NO = "input#song_no";
 const BSF = "input#bsf";
 
-/** Reads the 大好きな曲 editor; `bsf` is the form's own field, posted back unchanged. */
+/** Reads the 大好きな曲 editor, with the form's own `bsf`. */
 export function parseFavoriteSongEditorPage(
   html: string,
 ): Result<FavoriteSongEditorReading, ParseFailure> {

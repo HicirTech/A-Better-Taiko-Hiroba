@@ -59,15 +59,16 @@ describe("openFavoriteSongEditor", () => {
 });
 
 describe("changeFavoriteSong's requests", () => {
-  test("sets a song with the page, one save and the page again, posting the page's own bsf", async () => {
+  test("sets a song with the page, one save and the page again, posting the song's bsf 0", async () => {
     const { hiroba, transport, routes, postsTo } = fakeFavorites();
-    hiroba.bsf = "7";
+    // The page holds 1 while the song set is a 裏 entry; the new song is picked as itself.
+    hiroba.bsf = "1";
     const outcome = await change(transport, { songNo: "1002" });
     expect(routes()).toEqual([EDITOR, SAVE, EDITOR]);
     const [save] = postsTo("ajax/mypage_song.php");
     expect(save?.form).toEqual([
       ["song_no", "1002"],
-      ["bsf", "7"],
+      ["bsf", "0"],
       ["_tckt", "1".padStart(32, "0")],
     ]);
     expect(save?.headers).toEqual({
