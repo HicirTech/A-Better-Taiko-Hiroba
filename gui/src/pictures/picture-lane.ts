@@ -58,7 +58,8 @@ const KIND_RANK: Readonly<Record<PictureWant["kind"], number>> = {
   myDon: 3,
   rankIcon: 4,
   crownIcon: 5,
-  costumeItem: 6,
+  courseIcon: 6,
+  costumeItem: 7,
 };
 
 export const wantKey = (want: PictureWant): string => {
@@ -69,6 +70,8 @@ export const wantKey = (want: PictureWant): string => {
       return `${want.kind}/${want.rank}`;
     case "crownIcon":
       return `${want.kind}/${want.crown}`;
+    case "courseIcon":
+      return `${want.kind}/${want.difficulty}`;
     default:
       return want.kind;
   }

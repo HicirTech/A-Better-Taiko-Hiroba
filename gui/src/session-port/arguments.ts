@@ -1,5 +1,7 @@
 import type { ScoreRank } from "@abth/core";
 
+import { DIFFICULTIES } from "../song-catalogue/types";
+
 import type {
   CostumeSet,
   CrownKind,
@@ -157,6 +159,13 @@ export function isPictureWant(value: unknown): value is PictureWant {
       value.kind === "crownIcon" &&
       typeof value.crown === "string" &&
       Object.hasOwn(CROWN_ICONS, value.crown)
+    );
+  }
+  if (hasExactly(value, ["kind", "difficulty"])) {
+    return (
+      value.kind === "courseIcon" &&
+      typeof value.difficulty === "string" &&
+      (DIFFICULTIES as readonly string[]).includes(value.difficulty)
     );
   }
   return (

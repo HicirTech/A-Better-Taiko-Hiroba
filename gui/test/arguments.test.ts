@@ -261,6 +261,9 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     for (const crown of ["silver", "gold", "donderful"]) {
       expect(check([{ kind: "crownIcon", crown }])).toBe(true);
     }
+    for (const difficulty of ["easy", "normal", "hard", "oni", "ura"]) {
+      expect(check([{ kind: "courseIcon", difficulty }])).toBe(true);
+    }
   });
 
   test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
@@ -280,6 +283,10 @@ describe("PORT_ARGUMENTS.readPicture", () => {
       [{ kind: "crownIcon", crown: 2 }],
       [{ kind: "crownIcon", rank: 5 }],
       [{ kind: "crownIcon", crown: "gold", src: "image/sp/640/crown_02_640.png" }],
+      [{ kind: "courseIcon" }],
+      [{ kind: "courseIcon", difficulty: "expert" }],
+      [{ kind: "courseIcon", difficulty: 4 }],
+      [{ kind: "courseIcon", difficulty: "oni", path: "image/sp/640/icon_course02_4_640.png" }],
       [
         { kind: "rankIcon", rank: 5 },
         { kind: "rankIcon", rank: 5 },

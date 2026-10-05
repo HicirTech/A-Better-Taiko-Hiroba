@@ -10,6 +10,7 @@ import {
 
 import {
   type CostumeSlot,
+  type CourseIconWant,
   type IconWant,
   isPictureWant,
   type PictureFailure,
@@ -18,6 +19,7 @@ import {
 } from "../session-port";
 import type { HirobaQueue } from "./hiroba-queue";
 import {
+  courseIconPath,
   crownIconPath,
   MEDAL_PLATE_PATH,
   type MedalPlateSource,
@@ -183,7 +185,7 @@ function requestOf(
       keptAfterRead: false,
     };
   }
-  if (want.kind === "rankIcon" || want.kind === "crownIcon") {
+  if (want.kind === "rankIcon" || want.kind === "crownIcon" || want.kind === "courseIcon") {
     return iconRequest(want, origin);
   }
   const { owner, sources } = state;
@@ -222,11 +224,19 @@ function requestOf(
   };
 }
 
-function iconRequest(want: IconWant, origin: string): PictureRequest {
-  const { path, name } =
-    want.kind === "rankIcon"
-      ? { path: rankIconPath(want.rank), name: `rank/${want.rank}` }
-      : { path: crownIconPath(want.crown), name: `crown/${want.crown}` };
+function iconSource(want: IconWant | CourseIconWant): { path: string; name: string } {
+  switch (want.kind) {
+    case "rankIcon":
+      return { path: rankIconPath(want.rank), name: `rank/${want.rank}` };
+    case "crownIcon":
+      return { path: crownIconPath(want.crown), name: `crown/${want.crown}` };
+    case "courseIcon":
+      return { path: courseIconPath(want.difficulty), name: `course/${want.difficulty}` };
+  }
+}
+
+function iconRequest(want: IconWant | CourseIconWant, origin: string): PictureRequest {
+  const { path, name } = iconSource(want);
   return {
     kind: want.kind,
     url: `${origin}${path}`,

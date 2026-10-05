@@ -6,6 +6,7 @@ import { createFavoritesEditor } from "./mock-favorites";
 import {
   blankPlatePng,
   chartPicturePng,
+  courseIconPng,
   crownIconPng,
   medalPlatePng,
   myDonPng,
@@ -176,7 +177,8 @@ let medalSeason: keyof typeof SEASONS = 1;
 let tokenPlateAnswer: "png" | "gif" = "png";
 const PANEL_LEVEL = 5;
 let panelAnswer: "png" | "404" = "png";
-const ICON_PATH = /^\/image\/sp\/640\/(?:best_score_rank_([2-8])|crown_0([1-4]))_640\.png$/;
+const ICON_PATH =
+  /^\/image\/sp\/640\/(?:best_score_rank_([2-8])|crown_0([1-4])|icon_course02_([1-5]))_640\.png$/;
 let iconAnswer: "png" | "404" = "png";
 const MEDAL_PROGRESS: Readonly<Record<MedalState, string>> = {
   none: "",
@@ -287,11 +289,16 @@ Bun.serve({
     const icon = ICON_PATH.exec(pathname);
     if (icon !== null) {
       // Static art, as Hiroba's is: no session is asked for.
-      const [, rank, crown] = icon;
+      const [, rank, crown, course] = icon;
       if (iconAnswer === "404") {
         return new Response("not found", { status: 404 });
       }
-      const body = rank !== undefined ? rankIconPng(Number(rank)) : crownIconPng(Number(crown));
+      const body =
+        rank !== undefined
+          ? rankIconPng(Number(rank))
+          : crown !== undefined
+            ? crownIconPng(Number(crown))
+            : courseIconPng(Number(course));
       return new Response(body, { headers: { "content-type": "image/png" } });
     }
     switch (pathname) {

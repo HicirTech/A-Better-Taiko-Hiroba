@@ -149,11 +149,13 @@ export function scorePanelPng(level: number): Uint8Array<ArrayBuffer> {
 /** The legends' icons: image/sp/640/best_score_rank_<2..8>_640.png and crown_0<1..4>_640.png. */
 const RANK_ICON = { width: 128, height: 96 } as const;
 const CROWN_ICON = { width: 52, height: 59 } as const;
+/** A chart's difficulty: image/sp/640/icon_course02_<1..5>_640.png. */
+const COURSE_ICON = { width: 64, height: 64 } as const;
 
 /** The pixels `inside` in one colour of the seed's own: only the size is Hiroba's. */
 function iconPng(
   seed: number,
-  { width, height }: typeof RANK_ICON | typeof CROWN_ICON,
+  { width, height }: { readonly width: number; readonly height: number },
   inside: (x: number, y: number) => boolean,
 ): Uint8Array<ArrayBuffer> {
   const next = randomFrom(seed);
@@ -186,6 +188,16 @@ export function crownIconPng(number: number): Uint8Array<ArrayBuffer> {
     const onStud = studs.some((s) => (x - s.x) ** 2 + (y - s.y) ** 2 <= (width * 0.12) ** 2);
     return onBase || onStud;
   });
+}
+
+/** A disc for a chart's difficulty, 1 (かんたん) to 5 (the inner おに). */
+export function courseIconPng(number: number): Uint8Array<ArrayBuffer> {
+  const radius = COURSE_ICON.width / 2;
+  return iconPng(
+    seedOf(8, number),
+    COURSE_ICON,
+    (x, y) => (x - radius) ** 2 + (y - radius) ** 2 <= radius ** 2,
+  );
 }
 
 const CHART_PICTURE_HEIGHT = 120;

@@ -19,6 +19,7 @@ import type {
 
 import type {
   ChineseNamesRead,
+  Difficulty,
   SongCatalogueFailure,
   SongCatalogueRead,
 } from "../song-catalogue/types";
@@ -156,10 +157,13 @@ export type PictureWant =
   | { readonly kind: "medalPlate" }
   | { readonly kind: "myDon" }
   | { readonly kind: "rankIcon"; readonly rank: ScoreRank }
-  | { readonly kind: "crownIcon"; readonly crown: CrownKind };
+  | { readonly kind: "crownIcon"; readonly crown: CrownKind }
+  | { readonly kind: "courseIcon"; readonly difficulty: Difficulty };
 
 /** The pictures that are icons of the legends: shared art, the same for every account. */
 export type IconWant = Extract<PictureWant, { readonly kind: "rankIcon" | "crownIcon" }>;
+/** A chart's difficulty as Hiroba draws it: shared art, the same for every account. */
+export type CourseIconWant = Extract<PictureWant, { readonly kind: "courseIcon" }>;
 
 /** A picture for the interface: a `data:image/png` URL, which is no address, and the PNG's own
  * size, so its box can be sized before it is drawn. */

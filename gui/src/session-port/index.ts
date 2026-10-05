@@ -23,6 +23,7 @@ export type {
   CostumePreviewFailure,
   CostumeSet,
   CostumeSlot,
+  CourseIconWant,
   CrownKind,
   DanNumber,
   DanView,

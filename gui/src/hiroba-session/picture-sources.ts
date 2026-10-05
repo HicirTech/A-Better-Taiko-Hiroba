@@ -1,6 +1,7 @@
 import type { MedalProgress, Profile, ScoreRank } from "@abth/core";
 
 import { type CrownKind, isWhole } from "../session-port";
+import type { Difficulty } from "../song-catalogue/types";
 import type { HirobaEndpoints } from "./types";
 
 export const TITLE_PLATE_PATH = "/imgsrc_titleplate.php";
@@ -12,6 +13,15 @@ export const rankIconPath = (rank: ScoreRank): string =>
 const CROWN_ICON_NUMBER: Readonly<Record<CrownKind, number>> = { gold: 2, silver: 3, donderful: 4 };
 export const crownIconPath = (crown: CrownKind): string =>
   `/image/sp/640/crown_0${CROWN_ICON_NUMBER[crown]}_640.png`;
+const COURSE_ICON_NUMBER: Readonly<Record<Difficulty, number>> = {
+  easy: 1,
+  normal: 2,
+  hard: 3,
+  oni: 4,
+  ura: 5,
+};
+export const courseIconPath = (difficulty: Difficulty): string =>
+  `/image/sp/640/icon_course02_${COURSE_ICON_NUMBER[difficulty]}_640.png`;
 const PANEL_LEVEL_LEAST = 1;
 const PANEL_LEVEL_MOST = 99;
 export const MEDAL_PLATE_PATH = "/imgsrc_tokenplate.php";
