@@ -116,6 +116,8 @@ async function signIn() {
     await fetch(`${HIROBA}/__panel?answer=404`);
     await fetch(`${HIROBA}/__icons?answer=404`);
   }
+  // Earlier sections sign in on their own apps; this count is the main run's.
+  await fetch(`${HIROBA}/__hits-reset`);
   await click("#sign-in");
   await until("サンプルどん");
   tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
