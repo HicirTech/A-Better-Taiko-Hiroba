@@ -537,7 +537,7 @@ waiting on the other:
 
 | Job | Runs on | Makes |
 |---|---|---|
-| **Android release APK** | ubuntu-latest, JDK 21 | `ABTH-<version>.apk`, signed with the release key from [the signing secrets](#setting-up-the-signing-secrets). |
+| **Android release APK** | Ubuntu 26.04, JDK 21 | `ABTH-<version>.apk`, signed with the release key from [the signing secrets](#setting-up-the-signing-secrets). |
 | **Windows installer and zip** | windows-latest | `ABTH-<version>-setup.exe`, the NSIS installer, and `ABTH-<version>-portable.zip`, the build that needs no install ([Desktop](#desktop) says how to run it). Both are x64 and not code-signed. |
 
 Each uploads its files as an artifact of the run (**android** and **windows**, kept for 14 days).
