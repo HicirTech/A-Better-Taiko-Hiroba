@@ -207,6 +207,7 @@ export async function settings(ctx: Ctx) {
   await pickLanguage("ja");
   const japaneseUpdate = (await textOf("#nav-last-updated")) ?? "";
   const japaneseLead = ja.t("profile.fetchedAt", { time: "" });
+  const japaneseTime = japaneseUpdate.slice(japaneseLead.length);
   results.languageRedrawsInPlace =
     (await textOf("#rank-8")) === ja.t("panel.countOf", { count: "3", total: "102" }) &&
     (await textOf("#rank-5-percent")) === "30.4%" &&
@@ -214,9 +215,10 @@ export async function settings(ctx: Ctx) {
     (await textOf("#dan")) === ja.t("profile.dan", { dan: "九段" }) &&
     (await textOf("#profile h2")) === "サンプルどん" &&
     japaneseUpdate.startsWith(japaneseLead) &&
-    /^\d{4}年\d{1,2}月\d{1,2}日 \d{1,2}:\d{2}:\d{2}$/.test(
-      japaneseUpdate.slice(japaneseLead.length),
-    );
+    japaneseTime.length > 0 &&
+    !/\d{4}年/.test(japaneseTime) &&
+    !/\d{2}:\d{2}:\d{2}/.test(japaneseTime) &&
+    /\d{1,2}:\d{2}/.test(japaneseTime);
   await pickLanguage("en");
   await Bun.sleep(1000);
   results.languageAsksHirobaNothing =

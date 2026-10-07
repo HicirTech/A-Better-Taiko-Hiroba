@@ -160,18 +160,25 @@ export function pageHelpers(page: Page) {
       mobile: false,
     });
     const sideBySide = width >= MD_WIDTH_PX;
+    // Signed out, the window has no navigation: the sign-in card is what has settled.
+    const shellReady = async (wide: boolean) => {
+      if (await exists("#sign-in")) {
+        return !(await exists("nav"));
+      }
+      return await exists(wide ? "#nav-overview" : "#nav-menu");
+    };
     try {
       await waitFor(`window ${width}px wide`, async () =>
-        (await page.evaluate<number>("innerWidth")) === width &&
-        (await exists(sideBySide ? "#nav-overview" : "#nav-menu"))
+        (await page.evaluate<number>("innerWidth")) === width && (await shellReady(sideBySide))
           ? true
           : undefined,
       );
       return await run();
     } finally {
       await page.send("Emulation.clearDeviceMetricsOverride", {});
+      const ownWide = ownWidth >= MD_WIDTH_PX;
       await waitFor("own window size", async () =>
-        (await page.evaluate<number>("innerWidth")) === ownWidth && (await exists("#nav-overview"))
+        (await page.evaluate<number>("innerWidth")) === ownWidth && (await shellReady(ownWide))
           ? true
           : undefined,
       );

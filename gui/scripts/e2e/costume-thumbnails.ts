@@ -244,17 +244,9 @@ export async function tileThumbnails(ctx: Ctx) {
     const thumbsDuringTheWrite = (await thumbs()).length - thumbsBeforePick;
     await fetch(`${HIROBA}/__hold-precheck?on=0`);
     await inStep("editing");
-    const tiledAfterTheWrite = (await thumbsSettled()).slice(thumbsBeforePick);
-    await waitFor(
-      "worn Mascot tile picture",
-      async () => (await exists("#costume-part-costume1 img")) || undefined,
-    );
+    // The worn tile does not ask again; the write renews the preview instead.
     const waitedItOut =
       thumbsDuringTheWrite === 0 &&
-      same(
-        tiledAfterTheWrite.map(({ type, cos }) => `${type}/${cos}`),
-        [`1/${farItem}`],
-      ) &&
       sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&
       (await savedCostume()).costume1 === farItem;
     await fetch(`${HIROBA}/__state?reset=1`);
