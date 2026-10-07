@@ -24,6 +24,14 @@ function hasChart(
   return level === null ? levels[difficulty] !== null : levels[difficulty] === level;
 }
 
+/** Whether these charts meet the difficulty and star filters. Genre is the song's. */
+export function matchesCharts(
+  levels: Readonly<Record<Difficulty, number | null>>,
+  { difficulty, level }: SongFilter,
+): boolean {
+  return hasChart(levels, difficulty, level);
+}
+
 export function matchesFilter(
   song: CatalogueSong,
   { genre, difficulty, level }: SongFilter,

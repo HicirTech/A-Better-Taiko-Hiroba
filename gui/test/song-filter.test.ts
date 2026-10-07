@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { matchesFilter, NO_FILTER, type SongFilter } from "../src/favorites/song-filter";
+import {
+  matchesCharts,
+  matchesFilter,
+  NO_FILTER,
+  type SongFilter,
+} from "../src/favorites/song-filter";
 import { song } from "./song-fixtures";
 
 const INNER_TEN = song({
@@ -41,5 +46,22 @@ describe("matchesFilter", () => {
     expect(SONGS.filter((one) => matchesFilter(one, chosen)).map((one) => one.songNo)).toEqual(
       taken,
     );
+  });
+});
+
+const FRONT = { easy: 3, normal: 5, hard: 7, oni: 9, ura: null } as const;
+const INNER = { easy: null, normal: null, hard: null, oni: null, ura: 10 } as const;
+
+describe("matchesCharts", () => {
+  test("keeps a row only when its own charts meet the filter", () => {
+    expect(matchesCharts(FRONT, { ...NO_FILTER, difficulty: "oni" })).toBe(true);
+    expect(matchesCharts(INNER, { ...NO_FILTER, difficulty: "oni" })).toBe(false);
+    expect(matchesCharts(FRONT, { ...NO_FILTER, difficulty: "ura" })).toBe(false);
+    expect(matchesCharts(INNER, { ...NO_FILTER, difficulty: "ura" })).toBe(true);
+    expect(matchesCharts(FRONT, { ...NO_FILTER, level: 10 })).toBe(false);
+    expect(matchesCharts(INNER, { ...NO_FILTER, level: 10 })).toBe(true);
+    expect(matchesCharts(INNER, { ...NO_FILTER, difficulty: "ura", level: 9 })).toBe(false);
+    expect(matchesCharts(FRONT, NO_FILTER)).toBe(true);
+    expect(matchesCharts(INNER, NO_FILTER)).toBe(true);
   });
 });
