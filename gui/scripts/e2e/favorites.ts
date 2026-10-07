@@ -63,6 +63,8 @@ export const favoritesKeys = [
   "favoriteSongPickedThenSaved",
   "pickerReadBesideTheProfile",
   "favoritePickerOffersWhatHirobaOffers",
+  "favoritePickerFiltersEachSide",
+  "innerRowWearsItsColour",
   "innerEntrySavedAndShown",
   "favoriteSongDraftDroppedOnLeaving",
   "songsMovedByALongPress",
@@ -96,6 +98,10 @@ export async function favorites(ctx: Ctx) {
   const placesIn = (selector: string) =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll(${JSON.stringify(`${selector} [data-difficulty]`)})].map((badge) => badge.dataset.place)`,
+    );
+  const difficultiesIn = (selector: string) =>
+    page.evaluate<string[]>(
+      `[...document.querySelectorAll(${JSON.stringify(`${selector} [data-difficulty]`)})].map((badge) => badge.dataset.difficulty)`,
     );
   const stackOpen = (selector: string) =>
     page.evaluate<string | null>(
@@ -520,10 +526,30 @@ export async function favorites(ctx: Ctx) {
   results.favoritePickerOffersWhatHirobaOffers =
     !(await exists(`#song-picker-row-${LOCKED_SONG}`)) &&
     (await exists(`#song-picker-row-${WITH_INNER} button`)) &&
-    (await textOf(`#song-picker-row-${WITH_INNER}-ura .song-artists`))?.startsWith(
-      "Inner chart",
-    ) === true &&
+    same(await difficultiesIn(`#song-picker-row-${WITH_INNER}`), [
+      "easy",
+      "normal",
+      "hard",
+      "oni",
+    ]) &&
+    same(await difficultiesIn(`#song-picker-row-${WITH_INNER}-ura`), ["ura"]) &&
+    (await textOf(`#song-picker-row-${WITH_INNER}-ura .song-artists`))?.includes("Inner chart") !==
+      true &&
     !(await exists("#song-picker-row-1001-ura"));
+  results.innerRowWearsItsColour = await page.evaluate<boolean>(
+    `(() => { const inner = document.querySelector("#song-picker-row-${WITH_INNER}-ura"); const front = document.querySelector("#song-picker-row-${WITH_INNER}"); const bg = inner ? getComputedStyle(inner).backgroundColor : ""; return inner?.classList.contains("picker-row-ura") === true && front?.classList.contains("picker-row-ura") !== true && bg !== "" && bg !== "transparent" && bg !== "rgba(0, 0, 0, 0)"; })()`,
+  );
+  await choose("difficulty", "ura");
+  const innerOnly =
+    !(await exists(`#song-picker-row-${WITH_INNER} button`)) &&
+    (await exists(`#song-picker-row-${WITH_INNER}-ura button`));
+  await choose("difficulty", "oni");
+  const frontOnly =
+    (await exists(`#song-picker-row-${WITH_INNER} button`)) &&
+    !(await exists(`#song-picker-row-${WITH_INNER}-ura`));
+  await choose("difficulty", "all");
+  results.favoritePickerFiltersEachSide = innerOnly && frontOnly;
+  await shown(`#song-picker-row-${WITH_INNER}-ura button`);
   await page.evaluate(
     `document.querySelector("#song-picker-row-${WITH_INNER}-ura button").click()`,
   );

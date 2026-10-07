@@ -29,9 +29,9 @@ import type { FavoriteSongState } from "../session-port";
 import type { PickableState } from "./pickable-songs";
 import { type PickerEntry, PickerList } from "./picker-list";
 import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
-import { matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
+import { matchesCharts, matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
 import { SongFilters } from "./song-filters";
-import { lookOfCatalogue } from "./song-look";
+import { levelsOfEntry, lookOfCatalogue } from "./song-look";
 import { nameLanguage } from "./song-names";
 import { newestFirst } from "./song-order";
 import { searchSongs } from "./song-search";
@@ -112,7 +112,9 @@ function PickerBody({
       return [];
     }
     const songs = newest.filter(
-      (song) => offered.songs.has(song.songNo) && matchesFilter(song, filter),
+      (song) =>
+        offered.songs.has(song.songNo) &&
+        matchesFilter(song, withUra ? { ...filter, difficulty: null, level: null } : filter),
     );
     const listed: readonly PickerEntry[] =
       deferred.trim() === ""
@@ -126,12 +128,20 @@ function PickerBody({
       return listed;
     }
     // Hiroba lists a song's 裏 entry as a row of its own, just after the song.
-    return listed.flatMap((entry) =>
-      offered.ura.has(entry.look.songNo)
-        ? [entry, { ...entry, ura: true, detail: t("favorites.ura") }]
-        : [entry],
-    );
-  }, [newest, offered, withUra, filter, deferred, locale, t]);
+    const side = (entry: PickerEntry, ura: boolean): PickerEntry => ({
+      ...entry,
+      ...(ura ? { ura: true } : {}),
+      look: { ...entry.look, levels: levelsOfEntry(entry.look.levels, ura) },
+    });
+    // A chart filter applies to the row, once 表 and 裏 are separate.
+    return listed
+      .flatMap((entry) =>
+        offered.ura.has(entry.look.songNo)
+          ? [side(entry, false), side(entry, true)]
+          : [side(entry, false)],
+      )
+      .filter((entry) => entry.look.levels !== null && matchesCharts(entry.look.levels, filter));
+  }, [newest, offered, withUra, filter, deferred, locale]);
 
   const many =
     choice.kind === "many" ? { picked: new Set(choice.picked), limit: choice.limit } : null;

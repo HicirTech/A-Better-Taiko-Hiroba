@@ -18,6 +18,17 @@ export interface SongLook {
   readonly levels: Readonly<Record<Difficulty, number | null>> | null;
 }
 
+/** A 表 row is not the inner chart, and a 裏 row is only that chart. */
+export function levelsOfEntry(levels: SongLook["levels"], ura: boolean): SongLook["levels"] {
+  if (levels === null) {
+    return null;
+  }
+  if (ura) {
+    return { easy: null, normal: null, hard: null, oni: null, ura: levels.ura };
+  }
+  return { ...levels, ura: null };
+}
+
 export function lookOfCatalogue(song: CatalogueSong, locale: Locale): SongLook {
   const name = shownName(song, locale);
   return {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  levelsOfEntry,
   lookOfCatalogue,
   lookOfShown,
   rememberedSongs,
@@ -16,6 +17,26 @@ const ALPHA = song({
   genres: [3, 1],
 });
 const SHOWN: ShownSong = { songNo: "1002", title: "サンプル曲ベータ", genre: 5 };
+
+const WITH_INNER = { easy: 3, normal: 5, hard: 7, oni: 9, ura: 10 } as const;
+
+describe("levelsOfEntry", () => {
+  test("leaves the inner chart off a 表 row and keeps only that chart on a 裏 row", () => {
+    expect(levelsOfEntry(WITH_INNER, false)).toEqual({ ...WITH_INNER, ura: null });
+    expect(levelsOfEntry(WITH_INNER, true)).toEqual({
+      easy: null,
+      normal: null,
+      hard: null,
+      oni: null,
+      ura: 10,
+    });
+  });
+
+  test("keeps no charts for a song the catalogue lacks", () => {
+    expect(levelsOfEntry(null, false)).toBeNull();
+    expect(levelsOfEntry(null, true)).toBeNull();
+  });
+});
 
 describe("lookOfCatalogue", () => {
   test("shows the name in the player's language, the artists, every genre and the levels", () => {

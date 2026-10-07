@@ -1,6 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 import { Fragment, memo, type ReactNode } from "react";
+import { DIFFICULTY_COLOUR } from "./genre-look";
 import { LEVEL_BADGES_LOOK, LevelBadges } from "./level-badges";
 import type { SongLook } from "./song-look";
 import { SongRow } from "./song-row";
@@ -61,6 +62,13 @@ const LIST = {
   },
   "& .picker-hit input": { flexShrink: 0, m: 0, width: 18, height: 18 },
   "& .picker-hit .song-row": { flex: 1, minWidth: 0 },
+  // A wash of the inner chart's colour, lighter than its badge.
+  "& .picker-row.picker-row-ura": {
+    bgcolor: `color-mix(in srgb, ${DIFFICULTY_COLOUR.ura} 24%, transparent)`,
+  },
+  "& .picker-row.picker-row-ura:hover": {
+    bgcolor: `color-mix(in srgb, ${DIFFICULTY_COLOUR.ura} 34%, transparent)`,
+  },
   ...LEVEL_BADGES_LOOK,
 } as const;
 
@@ -126,7 +134,11 @@ const PickerRow = memo(function PickerRow({
     />
   );
   return (
-    <li className="picker-row" id={`${idPrefix}-row-${rowKey(entry)}`} data-song-no={songNo}>
+    <li
+      className={ura ? "picker-row picker-row-ura" : "picker-row"}
+      id={`${idPrefix}-row-${rowKey(entry)}`}
+      data-song-no={songNo}
+    >
       {many ? (
         <label className="picker-hit">
           <input
