@@ -139,7 +139,8 @@ Every read of Hiroba goes in the same queue as the writes, on both platforms: yo
 editor, the list of titles and Hiroba's picture of the set, and a picture's fetch too. Up to five
 reads run at once. A write waits for the running reads to end, goes before the reads still waiting
 and holds the queue for all its requests, so no read and no picture lands between them. A page
-first shown while a write of any kind runs reads when the write has ended, not before.
+first shown while a write of any kind runs reads when the write has ended, not before. Pictures go
+five at a time too, the rest waiting their turn in screen order.
 
 When the session ends, by a sign-out or because Hiroba ended it, the queue stops: a read or a write
 that is running sends nothing after the request on its way, one still waiting sends nothing, and
@@ -317,7 +318,7 @@ What it costs Hiroba:
 - A thumbnail is asked for only once its cell has stayed in the window, or within a row of it, for
   150 ms, so a fling past a row asks nothing: the rows on screen and the one after, and each row
   that scrolls into view.
-- In the queue with every other request to Hiroba, up to five reads at once, after a random pause
+- Five at a time at most, in the queue with every other request to Hiroba, after a random pause
   of up to 100 ms, so never between a write's requests; none is asked for while a save runs.
   At most 300 in a run, and 8 s each on the desktop.
 - Never retried while the page stays shown. One that did not come is asked for once more the next

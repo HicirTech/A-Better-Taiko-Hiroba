@@ -23,6 +23,8 @@ export const PICTURE_TOGETHER_MS = 16;
 
 export interface PictureLaneOptions {
   readonly load: (want: PictureWant) => Promise<Result<PictureView, PictureFailure>>;
+  /** The most pictures on their way at once. */
+  readonly atOnce: number;
   readonly dwellMs?: number;
   readonly timers?: LaneTimers;
 }
@@ -96,7 +98,7 @@ interface Waiter {
   timer: unknown;
 }
 
-/** Loads Hiroba's pictures one at a time, only for what has stayed on screen for the dwell. */
+/** Loads Hiroba's pictures, `atOnce` at most, only for what has stayed on screen for the dwell. */
 export function createPictureLane(options: PictureLaneOptions): PictureLane {
   const dwellMs = options.dwellMs ?? PICTURE_DWELL_MS;
   const timers = options.timers ?? PAGE_TIMERS;
@@ -104,8 +106,9 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
   const stale = new Set<string>();
   const waiters = new Set<Waiter>();
   const listeners = new Set<() => void>();
+  // The keys of the pictures on their way: each is asked for once, however many wait for it.
+  const sending = new Set<string>();
   let held = 0;
-  let sending = false;
   let seq = 0;
   let changes = 0;
   let generation = 0;
@@ -122,23 +125,30 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
     one.order - other.order ||
     one.seq - other.seq;
 
-  const pump = () => {
-    if (held > 0 || sending) {
-      return;
-    }
+  const nextToSend = (): Waiter | null => {
     const soon = timers.now() + PICTURE_TOGETHER_MS;
     let next: Waiter | null = null;
     for (const waiter of waiters) {
       const over = waiter.ready || waiter.due <= soon;
-      if (over && (next === null || before(waiter, next) < 0)) {
+      if (over && !sending.has(waiter.key) && (next === null || before(waiter, next) < 0)) {
         next = waiter;
       }
     }
-    if (next === null) {
-      return;
+    return next;
+  };
+
+  const pump = () => {
+    while (held === 0 && sending.size < options.atOnce) {
+      const next = nextToSend();
+      if (next === null) {
+        return;
+      }
+      send(next);
     }
-    const { want, key } = next;
-    sending = true;
+  };
+
+  const send = ({ want, key }: Waiter) => {
+    sending.add(key);
     const asked = generation;
     options
       .load(want)
@@ -148,7 +158,7 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
         (): PictureAnswer => ({ failure: `${want.kind}=callFailed` }),
       )
       .then((answer) => {
-        sending = false;
+        sending.delete(key);
         if (asked === generation) {
           answers.set(key, answer);
           stale.delete(key);
