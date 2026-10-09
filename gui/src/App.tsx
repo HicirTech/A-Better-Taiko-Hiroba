@@ -129,7 +129,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             lane.forgetFailures(kind);
           }
           setScreen({ name: "profile", profile: result.value });
-          // Beside each read of my page, what Hiroba's picker offers, read once the pictures are in.
+          // Beside each read of my page, what Hiroba's picker offers, read alone, pictures after.
           if (!behindThePage) {
             refreshPickable();
           }
