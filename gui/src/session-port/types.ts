@@ -275,7 +275,7 @@ export interface HirobaSessionPort {
   /** Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried,
    * as a `data:image/png` URL. Changes nothing, allowed whenever signed in; the caller paces it. */
   previewCostume(set: CostumeSet): Promise<Result<string, CostumePreviewFailure>>;
-  /** One of Hiroba's pictures, as `want` names it: from the store, or one GET in the queue, never
+  /** One of Hiroba's pictures, as `want` names it: from the store, or one pipelined GET, never
    * retried. Refused unsent when the platform's state allows no request. Rate is the caller's. */
   readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /** One costume write: the editor, the pre-check, one save and the read-back. Never retried. */

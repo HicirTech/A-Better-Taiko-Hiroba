@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { BUSY_OUTCOME, createHirobaQueue, queuePort } from "../src/hiroba-session";
+import { BUSY_OUTCOME, queuePort } from "../src/hiroba-session";
+import { createPipeline, IO_READ_CONSUMERS } from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type HirobaSessionPort,
@@ -13,6 +14,7 @@ type Verb = keyof HirobaSessionPort;
 const VERBS = Object.keys(PORT_QUEUEING) as Verb[];
 const queuedAs = (how: VerbQueueing) => VERBS.filter((verb) => PORT_QUEUEING[verb] === how);
 const READS = queuedAs("read");
+const EXCLUSIVE = queuedAs("exclusive");
 const WRITES = queuedAs("write");
 const UNQUEUED = queuedAs("unqueued");
 
@@ -33,7 +35,7 @@ function watchedPort() {
       },
     ]),
   ) as unknown as HirobaSessionPort;
-  const port = queuePort(createHirobaQueue(), verbs);
+  const port = queuePort({ io: createPipeline(IO_READ_CONSUMERS) }, verbs);
   const ask = (verb: Verb, ...args: unknown[]) =>
     (port[verb] as (...values: unknown[]) => Promise<unknown>)(...args);
   const letGo = async (verb: Verb) => {
@@ -66,6 +68,10 @@ describe("PORT_QUEUEING", () => {
       "changeFavoriteSong",
     ]);
   });
+
+  test("runs the picker alone, as it carries a form token", () => {
+    expect(EXCLUSIVE).toEqual(["readSongPicker"]);
+  });
 });
 
 describe("queuePort", () => {
@@ -94,6 +100,24 @@ describe("queuePort", () => {
       await writing;
       expect(events).toEqual([`begin ${running}`, `end ${running}`]);
     });
+
+    test.each(EXCLUSIVE)(
+      "a %s asked for waits until it has ended, and is not busy",
+      async (alone) => {
+        const { events, ask, letGo } = watchedPort();
+        const writing = ask(running);
+        await settle();
+        const picking = ask(alone);
+        await settle();
+        expect(events).toEqual([`begin ${running}`]);
+
+        await letGo(running);
+        expect(events).toEqual([`begin ${running}`, `end ${running}`, `begin ${alone}`]);
+        await letGo(alone);
+        expect(await picking).not.toEqual(BUSY_OUTCOME);
+        await writing;
+      },
+    );
 
     test.each(UNQUEUED)("a %s asked for is not held up", async (free) => {
       const { events, ask, letGo } = watchedPort();

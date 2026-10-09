@@ -12,7 +12,6 @@ import {
 } from "electron";
 
 import {
-  createHirobaQueue,
   createPictureReader,
   createRecentPreviews,
   createSessionWrites,
@@ -23,8 +22,8 @@ import {
   queuePort,
   readOwnProfile,
   sessionEnded,
-  whenQueueQuiet,
 } from "../src/hiroba-session";
+import { createPipeline, IO_READ_CONSUMERS } from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
@@ -119,15 +118,17 @@ const feedTransport = createUpdateFeedTransport({
   hirobaOrigin: endpoints.hirobaOrigin,
 });
 
-// Verbs that ask Hiroba something run through it one at a time, so no read lands inside a write.
-const queue = createHirobaQueue();
+// Everything that asks Hiroba something goes through `io`, so no read lands inside a write.
+const pipelines = {
+  io: createPipeline(IO_READ_CONSUMERS),
+};
 
-// A kept picture answers at once, even while a write runs; only a fetch waits in the queue.
+// A kept picture answers at once, even while a write runs; only a fetch waits in the pipeline.
 const pictures = createPictureReader({
   transport: readTransport,
   endpoints,
   store: createDiskPictureStore(join(app.getPath("userData"), "pictures")),
-  queue,
+  pipeline: pipelines.io,
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
@@ -204,7 +205,7 @@ app.whenReady().then(async () => {
   });
   previewKept = (set, picture) => void writes.previewKept(set, picture);
 
-  const port = queuePort(queue, {
+  const port = queuePort(pipelines, {
     async isSignedIn() {
       return sessionCookie !== null;
     },
@@ -268,7 +269,7 @@ app.whenReady().then(async () => {
     openFavorites: writes.openFavorites,
     changeFolder: writes.changeFolder,
     changeFavoriteSong: writes.changeFavoriteSong,
-    readSongPicker: whenQueueQuiet(queue, writes.readSongPicker),
+    readSongPicker: writes.readSongPicker,
     readSongCatalogue: (since) =>
       readSongCatalogue(feedTransport, environment.songCatalogueUrl, since),
     readChineseNames: () => readChineseNames(feedTransport, environment.chineseNamesUrl),

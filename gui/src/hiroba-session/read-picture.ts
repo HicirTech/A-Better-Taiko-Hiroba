@@ -8,6 +8,7 @@ import {
   type TransportResponse,
 } from "@abth/core";
 
+import type { Pipeline } from "../pipelines";
 import {
   type CostumeSlot,
   type CourseIconWant,
@@ -17,7 +18,6 @@ import {
   type PictureView,
   type PictureWant,
 } from "../session-port";
-import type { HirobaQueue } from "./hiroba-queue";
 import {
   courseIconPath,
   crownIconPath,
@@ -56,7 +56,7 @@ const MY_DON_RULES = { minBytes: 5 * 1024, maxBytes: 512 * 1024, maxSide: 640 } 
 const SLOT_FIELDS = ["costume1", "costume2", "costume3", "costume4", "costume5"] as const;
 
 export interface PictureLimits {
-  /** Up to this many milliseconds, at random, waited before each fetch, outside the queue. */
+  /** Up to this many milliseconds, at random, waited before each fetch, outside the pipeline. */
   readonly jitterMs: number;
   /** At least this long between the end of one picture fetch and the start of the next. */
   readonly minGapMs: number;
@@ -102,8 +102,8 @@ export interface PictureReaderOptions {
   readonly transport: Transport;
   readonly endpoints: HirobaEndpoints;
   readonly store: PictureStore;
-  /** Every request to Hiroba goes through it, so no picture lands between a write's requests. */
-  readonly queue: Pick<HirobaQueue, "oneAtATime">;
+  /** Hiroba's IO pipeline: each fetch is a read group, so no picture lands inside a write. */
+  readonly pipeline: Pick<Pipeline, "read">;
   readonly limits: PictureLimits;
   /** Read at each call, and again when a fetch's turn comes. */
   readonly state: () => PictureReadState;
@@ -319,7 +319,7 @@ function myDonRequest(
 
 /** Hiroba's pictures for the window: it names what it wants, and the address is built here. */
 export function createPictureReader(options: PictureReaderOptions): PictureReader {
-  const { transport, endpoints, store, queue, limits } = options;
+  const { transport, endpoints, store, pipeline, limits } = options;
   const clock = options.clock ?? REAL_CLOCK;
   const random = options.random ?? Math.random;
   const inFlight = new Map<string, Promise<Result<PictureView, PictureFailure>>>();
@@ -395,7 +395,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   ): Promise<Result<PictureView, PictureFailure>> => {
     const gap = Math.max(0, lastFetchEnded + limits.minGapMs - clock.now());
     await clock.sleep(gap + random() * limits.jitterMs);
-    return queue.oneAtATime(async (): Promise<Result<PictureView, PictureFailure>> => {
+    return pipeline.read(async (): Promise<Result<PictureView, PictureFailure>> => {
       // The session may have gone while this waited its turn: then nothing is sent.
       const state = options.state();
       if (!state.signedIn || since !== generation) {
