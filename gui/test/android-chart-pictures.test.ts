@@ -66,7 +66,8 @@ describe("the Android port's readChartPicture", () => {
       },
     };
     await (await openPort(factory)).readChartPicture(FILE);
-    expect([...opened].sort()).toEqual(["abth-charts", "abth-pictures"]);
+    // The pipelines' histories load as the port starts.
+    expect([...opened].sort()).toEqual(["abth-charts", "abth-pictures", "abth-pipelines"]);
   });
 
   test("reads nothing at an address off the chart hosts, a stand-in's included", async () => {

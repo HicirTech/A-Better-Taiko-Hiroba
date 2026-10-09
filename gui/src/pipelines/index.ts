@@ -13,3 +13,14 @@ export {
   type PipelineOptions,
   type SentRequest,
 } from "./pipeline";
+export {
+  createMemoryPipelineStore,
+  createPipelineLog,
+  KEPT_GROUPS,
+  type PictureTally,
+  type PipelineHistory,
+  type PipelineHistoryStore,
+  type PipelineLog,
+  type PipelineLogOptions,
+  readPipelineHistory,
+} from "./pipeline-log";

@@ -71,3 +71,20 @@ export function completed(transaction: DatabaseTransaction): Promise<void> {
     transaction.onabort = () => reject(transaction.error);
   });
 }
+
+/** Opens the database on first use. A failed opening is not remembered: the next use tries again. */
+export function lazyDatabase(
+  factory: DatabaseFactory,
+  name: string,
+  version: number,
+  upgrade: (database: Database) => void,
+): () => Promise<Database> {
+  let opened: Promise<Database> | null = null;
+  return () => {
+    opened ??= openDatabase(factory, name, version, upgrade).catch((error: unknown) => {
+      opened = null;
+      throw error;
+    });
+    return opened;
+  };
+}

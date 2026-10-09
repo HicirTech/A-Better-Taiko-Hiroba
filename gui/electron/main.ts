@@ -17,13 +17,19 @@ import {
   createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
   offeredOf,
+  PICTURE_OPERATION,
   type PictureSources,
   previewCostume,
   queuePort,
   readOwnProfile,
   sessionEnded,
 } from "../src/hiroba-session";
-import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../src/pipelines";
+import {
+  createPipeline,
+  createPipelineLog,
+  EXTERNAL_READ_CONSUMERS,
+  IO_READ_CONSUMERS,
+} from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
@@ -32,6 +38,7 @@ import {
   type SignInOutcome,
 } from "../src/session-port";
 import {
+  CHART_PICTURE_OPERATION,
   createChartPictureReader,
   readChineseNames,
   readSongCatalogue,
@@ -42,6 +49,7 @@ import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
 import { createDiskPictureStore } from "./picture-disk-store";
+import { createPipelineHistoryStore } from "./pipeline-history-store";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
@@ -119,11 +127,28 @@ const feedTransport = createUpdateFeedTransport({
   hirobaOrigin: endpoints.hirobaOrigin,
 });
 
+const pipelineStore = (name: string) =>
+  createPipelineHistoryStore(join(app.getPath("userData"), "pipelines", `${name}.json`));
+const logs = {
+  io: createPipelineLog({ counted: new Set([PICTURE_OPERATION]), store: pipelineStore("io") }),
+  external: createPipelineLog({
+    counted: new Set([CHART_PICTURE_OPERATION]),
+    store: pipelineStore("external"),
+  }),
+};
 // Everything that asks Hiroba something goes through `io`, so no read lands inside a write. A
 // group sends through its own transport, made from its pipeline's.
 const pipelines = {
-  io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: readTransport }),
-  external: createPipeline({ readConsumers: EXTERNAL_READ_CONSUMERS, transport: feedTransport }),
+  io: createPipeline({
+    readConsumers: IO_READ_CONSUMERS,
+    transport: readTransport,
+    ended: logs.io.add,
+  }),
+  external: createPipeline({
+    readConsumers: EXTERNAL_READ_CONSUMERS,
+    transport: feedTransport,
+    ended: logs.external.add,
+  }),
 };
 
 // A kept picture answers at once, even while a write runs; only a fetch waits in the pipeline.

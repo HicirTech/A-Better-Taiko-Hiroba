@@ -19,6 +19,7 @@ import {
   idpOrigin,
   loginPageUrl,
   offeredOf,
+  PICTURE_OPERATION,
   type PictureSources,
   previewCostume,
   queuePort,
@@ -26,7 +27,13 @@ import {
   sessionEnded,
   signInStep,
 } from "../hiroba-session";
-import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../pipelines";
+import {
+  createMemoryPipelineStore,
+  createPipeline,
+  createPipelineLog,
+  EXTERNAL_READ_CONSUMERS,
+  IO_READ_CONSUMERS,
+} from "../pipelines";
 import {
   type CostumeSet,
   checkedPort,
@@ -34,6 +41,7 @@ import {
   type SignInOutcome,
 } from "../session-port";
 import {
+  CHART_PICTURE_OPERATION,
   CHINESE_NAMES_URL,
   catalogueUrlFor,
   chartOriginFor,
@@ -45,6 +53,7 @@ import { feedUrlFor, readUpdateFeed } from "../updates";
 import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
 import { CHART_PICTURE_DATABASE, createIndexedDbPictureStore } from "./android-picture-store";
+import { createIndexedDbPipelineStores } from "./android-pipeline-store";
 import { createAndroidTransport } from "./android-transport";
 
 const endpoints: HirobaEndpoints = import.meta.env.DEV
@@ -127,10 +136,25 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const transport = createAndroidTransport();
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
+  const pipelineStore =
+    options.indexedDb === undefined
+      ? () => createMemoryPipelineStore()
+      : createIndexedDbPipelineStores(options.indexedDb);
+  const logs = {
+    io: createPipelineLog({ counted: new Set([PICTURE_OPERATION]), store: pipelineStore("io") }),
+    external: createPipelineLog({
+      counted: new Set([CHART_PICTURE_OPERATION]),
+      store: pipelineStore("external"),
+    }),
+  };
   // One transport for every site: a group sends through its own, made from it.
   const pipelines = {
-    io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport }),
-    external: createPipeline({ readConsumers: EXTERNAL_READ_CONSUMERS, transport }),
+    io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport, ended: logs.io.add }),
+    external: createPipeline({
+      readConsumers: EXTERNAL_READ_CONSUMERS,
+      transport,
+      ended: logs.external.add,
+    }),
   };
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
