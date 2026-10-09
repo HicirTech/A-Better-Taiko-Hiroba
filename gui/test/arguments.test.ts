@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { SCORE_RANK_NAMES } from "@abth/core";
 
+import { KEPT_GROUPS } from "../src/pipelines";
 import { PORT_ARGUMENTS } from "../src/session-port";
 
 const SET = {
@@ -27,6 +28,7 @@ describe("PORT_ARGUMENTS", () => {
       changeFavoriteSong: _changeFavoriteSong,
       readSongCatalogue: _catalogue,
       readChartPicture: _chartPicture,
+      readPipelines: _pipelines,
       ...takingNothing
     } = PORT_ARGUMENTS;
     for (const check of Object.values(takingNothing)) {
@@ -34,6 +36,24 @@ describe("PORT_ARGUMENTS", () => {
       expect(check([undefined])).toBe(false);
       expect(check([{ url: "https://example.test/" }])).toBe(false);
     }
+  });
+
+  test("readPipelines takes how many ended groups of each pipeline to give: none up to all kept", () => {
+    const check = PORT_ARGUMENTS.readPipelines;
+    expect(check([0])).toBe(true);
+    expect(check([12])).toBe(true);
+    expect(check([KEPT_GROUPS])).toBe(true);
+  });
+
+  test.each<[why: string, args: unknown[]]>([
+    ["nothing", []],
+    ["more than are kept", [KEPT_GROUPS + 1]],
+    ["fewer than none", [-1]],
+    ["a fraction", [1.5]],
+    ["a number as text", ["12"]],
+    ["two numbers", [12, 12]],
+  ])("readPipelines refuses %s", (_why, args) => {
+    expect(PORT_ARGUMENTS.readPipelines(args)).toBe(false);
   });
 
   test("readChartPicture takes one web address", () => {

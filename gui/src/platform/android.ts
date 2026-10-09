@@ -26,6 +26,7 @@ import {
   readOwnProfile,
   sessionEnded,
   signInStep,
+  viewOfPipelines,
 } from "../hiroba-session";
 import {
   createMemoryPipelineStore,
@@ -342,6 +343,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readChineseNames: (site) => readChineseNames(site, chineseNamesUrl),
 
     readChartPicture: chartPictures,
+
+    readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });
 
   return checkedPort(port);

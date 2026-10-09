@@ -1,5 +1,7 @@
 import type { ScoreRank } from "@abth/core";
 
+// Not the index: the preload must not load the pipelines, and the core with them.
+import { KEPT_GROUPS } from "../pipelines/kept-groups";
 import { DIFFICULTIES } from "../song-catalogue/types";
 
 import type {
@@ -237,6 +239,14 @@ function isWebAddress(text: string): boolean {
   }
 }
 
+// How many ended groups of each pipeline the page asks for: none, up to all that are kept.
+const historyLimit: ArgumentCheck = (args) =>
+  args.length === 1 &&
+  typeof args[0] === "number" &&
+  Number.isSafeInteger(args[0]) &&
+  args[0] >= 0 &&
+  args[0] <= KEPT_GROUPS;
+
 // Any web address passes here; the platform reads only its chart hosts'.
 const chartUrl: ArgumentCheck = (args) =>
   args.length === 1 &&
@@ -268,4 +278,5 @@ export const PORT_ARGUMENTS = {
   readSongCatalogue: catalogueSince,
   readChineseNames: none,
   readChartPicture: chartUrl,
+  readPipelines: historyLimit,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

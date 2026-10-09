@@ -23,6 +23,7 @@ import {
   queuePort,
   readOwnProfile,
   sessionEnded,
+  viewOfPipelines,
 } from "../src/hiroba-session";
 import {
   createPipeline,
@@ -301,6 +302,7 @@ app.whenReady().then(async () => {
       readSongCatalogue(site, environment.songCatalogueUrl, since),
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),
     readChartPicture: chartPictures,
+    readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

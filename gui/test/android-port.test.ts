@@ -140,6 +140,36 @@ describe("createAndroidPort", () => {
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
 
+  test("tells what its pipelines run and ran: a read of my page that ended, in Hiroba's", async () => {
+    native.httpAnswer = myPageAnswer;
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.readProfile();
+
+    const view = await port.readPipelines(12);
+    expect(view.io).toEqual({
+      running: [],
+      waiting: [],
+      ended: [
+        expect.objectContaining({
+          operation: "readProfile",
+          kind: "read",
+          requests: 1,
+          outcome: "succeeded",
+        }),
+      ],
+      pictures: { came: 0, failed: 0 },
+    });
+    expect(view.external).toEqual({
+      running: [],
+      waiting: [],
+      ended: [],
+      pictures: { came: 0, failed: 0 },
+    });
+  });
+
   test("sign-out wipes the cookie store and forgets the sign-in", async () => {
     const flag = memoryFlag();
     const { port, outcome } = await startSignIn(flag);

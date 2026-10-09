@@ -1,8 +1,16 @@
 import { type Result, SONG_PICKER_REQUESTS, type Transport } from "@abth/core";
 
-import { type CodedFailure, type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
+import {
+  type CodedFailure,
+  type GroupAsked,
+  type Pipeline,
+  type PipelineLog,
+  resultFailure,
+  viewOfPipeline,
+} from "../pipelines";
 import {
   type HirobaSessionPort,
+  type PipelinesView,
   PORT_QUEUEING,
   type PortImplementation,
   type WriteOutcomeView,
@@ -13,6 +21,24 @@ import { BUSY_OUTCOME } from "./session-writes";
 export interface PortPipelines {
   readonly io: Pipeline;
   readonly external: Pipeline;
+}
+
+/** The pipelines' histories, under the same names. */
+export interface PortLogs {
+  readonly io: PipelineLog;
+  readonly external: PipelineLog;
+}
+
+/** Both pipelines as the pipelines page shows them, each with its newest `history` that ended. */
+export function viewOfPipelines(
+  pipelines: PortPipelines,
+  logs: PortLogs,
+  history: number,
+): PipelinesView {
+  return {
+    io: viewOfPipeline(pipelines.io, logs.io, history),
+    external: viewOfPipeline(pipelines.external, logs.external, history),
+  };
 }
 
 /** What a write ends in that counts as done: saved, or nothing there was to save. */

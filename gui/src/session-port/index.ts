@@ -48,6 +48,7 @@ export type {
   PictureFailure,
   PictureView,
   PictureWant,
+  PipelinesView,
   ProfileView,
   ReadFailure,
   ReadFailureKind,

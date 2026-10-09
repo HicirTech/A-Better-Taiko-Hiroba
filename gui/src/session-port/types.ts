@@ -18,6 +18,7 @@ import type {
   WriteOutcome,
 } from "@abth/core";
 
+import type { PipelineView } from "../pipelines/pipeline-view";
 import type {
   ChineseNamesRead,
   Difficulty,
@@ -307,4 +308,15 @@ export interface HirobaSessionPort {
   readChineseNames(): Promise<Result<ChineseNamesRead, SongCatalogueFailure>>;
   /** A picture of a chart's notes, from a chart host the song list links, kept on the device. */
   readChartPicture(url: string): Promise<Result<PictureView, PictureFailure>>;
+  /** What each pipeline runs and has waiting now, and its newest `history` groups that ended.
+   * Asks no site anything. */
+  readPipelines(history: number): Promise<PipelinesView>;
+}
+
+/** Both pipelines as the pipelines page shows them. */
+export interface PipelinesView {
+  /** Hiroba's. */
+  readonly io: PipelineView;
+  /** The other sites'. */
+  readonly external: PipelineView;
 }

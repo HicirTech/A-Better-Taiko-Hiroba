@@ -1,7 +1,5 @@
+import { KEPT_GROUPS } from "./kept-groups";
 import type { EndedGroup, GroupKind } from "./pipeline";
-
-/** How many ended groups a pipeline's history keeps. */
-export const KEPT_GROUPS = 1000;
 
 /** How long a change waits to be saved, so a run of pictures is saved once. */
 const SAVE_DELAY_MS = 1000;

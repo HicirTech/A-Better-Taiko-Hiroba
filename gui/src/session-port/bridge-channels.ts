@@ -21,4 +21,5 @@ export const BRIDGE_CHANNELS = {
   readSongCatalogue: "abth:read-song-catalogue",
   readChineseNames: "abth:read-chinese-names",
   readChartPicture: "abth:read-chart-picture",
+  readPipelines: "abth:read-pipelines",
 } as const;
