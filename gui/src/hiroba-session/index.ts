@@ -41,13 +41,14 @@ export {
   pictureKeyPath,
 } from "./picture-store";
 export { previewCostume, previewUrl } from "./preview-costume";
-export { type PortPipelines, queuePort } from "./queue-port";
+export { type PortPipelines, queuePort, writeFailure } from "./queue-port";
 export {
   ANDROID_PICTURE_LIMITS,
   createPictureReader,
   DESKTOP_PICTURE_LIMITS,
   offeredOf,
   offerKey,
+  PICTURE_OPERATION,
   type PictureClock,
   type PictureLimits,
   type PictureReader,

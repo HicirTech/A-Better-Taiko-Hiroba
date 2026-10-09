@@ -26,6 +26,7 @@ import {
   type PictureStore,
   pictureKeyPath,
 } from "../src/hiroba-session";
+import type { Pipeline } from "../src/pipelines";
 
 const ORIGIN = "https://hiroba.test";
 const IMG_ORIGIN = "https://img.test";
@@ -76,18 +77,15 @@ function setUp(
       return (options.answer ?? (async (asked) => png(asked.url)))(request, signal);
     },
   };
-  const pipeline = {
-    read<A extends unknown[], R>(group: (...args: A) => Promise<R>) {
-      return (...args: A) => {
-        events.push("pipeline");
-        return group(...args);
-      };
+  const pipeline: Pick<Pipeline, "read"> = {
+    read(_asked, group) {
+      events.push("pipeline");
+      return group(transport);
     },
   };
   let state: PictureReadState = options.state ?? STATE;
   const store = options.store ?? createMemoryPictureStore();
   const reader = createPictureReader({
-    transport,
     endpoints: options.endpoints ?? ENDPOINTS,
     store,
     pipeline,

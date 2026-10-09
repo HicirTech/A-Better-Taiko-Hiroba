@@ -143,8 +143,8 @@ first shown while a write of any kind runs reads when the write has ended, not b
 five at a time too, the rest waiting their turn in screen order.
 
 When the session ends, by a sign-out or because Hiroba ended it, the queue stops: a read or a write
-that is running sends nothing after the request on its way, one still waiting sends nothing, and
-whatever is asked after that waits until they have all ended.
+that is running sends nothing after the request on its way, and one still waiting sends nothing.
+Each sends through a transport of its own, so what is asked after that does not wait for them.
 
 A kind of write that has not been made for real from a platform also reads one other page before
 and after, to see that nothing else moved: a costume write reads your title on my page (six

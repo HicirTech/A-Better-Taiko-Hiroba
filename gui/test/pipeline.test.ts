@@ -1,10 +1,25 @@
 import { describe, expect, test } from "bun:test";
-import { ok, type Transport } from "@abth/core";
+import { err, ok, type Result, type Transport } from "@abth/core";
 
-import { createPipeline, IO_READ_CONSUMERS } from "../src/pipelines";
+import {
+  createPipeline,
+  type EndedGroup,
+  type GroupAsked,
+  IO_READ_CONSUMERS,
+} from "../src/pipelines";
+
+const HIROBA = "https://donderhiroba.jp";
 
 /** Gives whatever the pipeline has let start a turn of the event loop to begin. */
 const settle = () => Bun.sleep(0);
+
+/** A transport no group here sends through. */
+const UNUSED: Transport = {
+  send: async (request) => err({ kind: "unreachable", url: request.url }),
+};
+
+/** A group whose result never reads as a failure. */
+const asked = (operation: string): GroupAsked<unknown> => ({ operation, failureOf: () => null });
 
 /** A group that logs when it starts and ends, and ends only when its test lets it. */
 function held(name: string, log: string[]) {
@@ -25,13 +40,13 @@ function held(name: string, log: string[]) {
   return { run, release };
 }
 
-/** A transport that logs each request it is sent, and answers each only when its test lets it. */
+/** A transport that logs each path it is sent, and answers each only when its test lets it. */
 function heldTransport() {
   const sent: string[] = [];
   const answers: (() => void)[] = [];
   const transport: Transport = {
     async send(request) {
-      sent.push(request.url);
+      sent.push(new URL(request.url).pathname);
       await new Promise<void>((resolve) => answers.push(resolve));
       return ok({ status: 200, url: request.url, headers: {}, body: new Uint8Array() });
     },
@@ -44,28 +59,34 @@ function heldTransport() {
   return { transport, sent, answer };
 }
 
-/** A group that sends each of `urls` in turn, and gives up at the first that gets no answer. */
-const walk = (transport: Transport, urls: readonly string[]) => async () => {
-  for (const url of urls) {
-    const sent = await transport.send({ method: "GET", url });
+/** A group that GETs each of `paths` in turn, and gives up at the first that gets no answer. */
+const walk = (paths: readonly string[]) => async (transport: Transport) => {
+  for (const path of paths) {
+    const sent = await transport.send({ method: "GET", url: `${HIROBA}${path}` });
     if (!sent.ok) {
-      return `${url}: ${sent.error.kind}`;
+      return `${path}: ${sent.error.kind}`;
     }
   }
   return "done";
 };
 
+/** A walk's group as its asker sees it: anything but "done" failed. */
+const walking = (operation: string): GroupAsked<string> => ({
+  operation,
+  failureOf: (result) => (result === "done" ? null : result),
+});
+
 describe("createPipeline", () => {
   test("with one read consumer, runs every group one at a time in the order asked", async () => {
     const log: string[] = [];
-    const pipeline = createPipeline(1);
+    const pipeline = createPipeline({ readConsumers: 1, transport: UNUSED });
     const first = held("first", log);
     const write = held("write", log);
     const second = held("second", log);
-    const reading = pipeline.read(first.run)();
-    const writing = pipeline.write(write.run, "busy")();
+    const reading = pipeline.read(asked("first"), first.run);
+    const writing = pipeline.write(asked("write"), write.run, "busy");
     await settle();
-    const readingAgain = pipeline.read(second.run)();
+    const readingAgain = pipeline.read(asked("second"), second.run);
     await first.release();
     await write.release();
     await second.release();
@@ -86,27 +107,31 @@ describe("createPipeline", () => {
 
   test("runs read groups side by side up to its read consumers, the next as one ends", async () => {
     const log: string[] = [];
-    const pipeline = createPipeline(2);
+    const pipeline = createPipeline({ readConsumers: 2, transport: UNUSED });
     const a = held("a", log);
     const b = held("b", log);
     const c = held("c", log);
-    const asked = [pipeline.read(a.run)(), pipeline.read(b.run)(), pipeline.read(c.run)()];
+    const reads = [
+      pipeline.read(asked("a"), a.run),
+      pipeline.read(asked("b"), b.run),
+      pipeline.read(asked("c"), c.run),
+    ];
     await settle();
     expect(log).toEqual(["a start", "b start"]);
     await a.release();
     expect(log).toEqual(["a start", "b start", "a end", "c start"]);
     await b.release();
     await c.release();
-    expect(await Promise.all(asked)).toEqual(["a", "b", "c"]);
+    expect(await Promise.all(reads)).toEqual(["a", "b", "c"]);
   });
 
   test("Hiroba's pipeline runs its read consumers' worth of groups, and one more as one ends", async () => {
     const log: string[] = [];
-    const pipeline = createPipeline(IO_READ_CONSUMERS);
+    const pipeline = createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED });
     const groups = Array.from({ length: IO_READ_CONSUMERS + 1 }, (_, index) =>
       held(`read ${index}`, log),
     );
-    const asked = groups.map((group) => pipeline.read(group.run)());
+    const reads = groups.map((group) => pipeline.read(asked("read"), group.run));
     await settle();
     expect(log).toHaveLength(IO_READ_CONSUMERS);
     await groups[0]?.release();
@@ -114,26 +139,30 @@ describe("createPipeline", () => {
     for (const group of groups.slice(1)) {
       await group.release();
     }
-    await Promise.all(asked);
+    await Promise.all(reads);
   });
 
   test("a write waits for the running reads, goes before the waiting ones, and holds new ones", async () => {
     const log: string[] = [];
-    const pipeline = createPipeline(2);
+    const pipeline = createPipeline({ readConsumers: 2, transport: UNUSED });
     const a = held("a", log);
     const b = held("b", log);
     const c = held("c", log);
     const d = held("d", log);
     const write = held("write", log);
-    const reads = [pipeline.read(a.run)(), pipeline.read(b.run)(), pipeline.read(c.run)()];
-    const writing = pipeline.write(write.run, "busy")();
+    const reads = [
+      pipeline.read(asked("a"), a.run),
+      pipeline.read(asked("b"), b.run),
+      pipeline.read(asked("c"), c.run),
+    ];
+    const writing = pipeline.write(asked("write"), write.run, "busy");
     await settle();
     expect(log).toEqual(["a start", "b start"]);
     await a.release();
     expect(log).toEqual(["a start", "b start", "a end"]);
     await b.release();
     expect(log.slice(-2)).toEqual(["b end", "write start"]);
-    const late = pipeline.read(d.run)();
+    const late = pipeline.read(asked("d"), d.run);
     await settle();
     expect(log.at(-1)).toBe("write start");
     await write.release();
@@ -145,14 +174,14 @@ describe("createPipeline", () => {
 
   test("an exclusive group runs alone like a write, but waits instead of answering busy", async () => {
     const log: string[] = [];
-    const pipeline = createPipeline(2);
+    const pipeline = createPipeline({ readConsumers: 2, transport: UNUSED });
     const write = held("write", log);
     const picker = held("picker", log);
     const read = held("read", log);
-    const writing = pipeline.write(write.run, "busy")();
+    const writing = pipeline.write(asked("write"), write.run, "busy");
     await settle();
-    const picking = pipeline.exclusive(picker.run)();
-    const reading = pipeline.read(read.run)();
+    const picking = pipeline.exclusive(asked("picker"), picker.run);
+    const reading = pipeline.read(asked("read"), read.run);
     await settle();
     expect(log).toEqual(["write start"]);
     await write.release();
@@ -165,14 +194,14 @@ describe("createPipeline", () => {
 
   test("groups that run alone go in the order they were asked", async () => {
     const log: string[] = [];
-    const pipeline = createPipeline(2);
+    const pipeline = createPipeline({ readConsumers: 2, transport: UNUSED });
     const read = held("read", log);
     const picker = held("picker", log);
     const write = held("write", log);
-    const reading = pipeline.read(read.run)();
+    const reading = pipeline.read(asked("read"), read.run);
     await settle();
-    const picking = pipeline.exclusive(picker.run)();
-    const writing = pipeline.write(write.run, "busy")();
+    const picking = pipeline.exclusive(asked("picker"), picker.run);
+    const writing = pipeline.write(asked("write"), write.run, "busy");
     await read.release();
     await picker.release();
     await write.release();
@@ -189,14 +218,14 @@ describe("createPipeline", () => {
 
   test("answers busy to a write asked for while another waits or runs, and runs it not", async () => {
     const log: string[] = [];
-    const pipeline = createPipeline(1);
+    const pipeline = createPipeline({ readConsumers: 1, transport: UNUSED });
     const read = held("read", log);
     const change = held("change", log);
     const rename = held("rename", log);
-    const changeCostume = pipeline.write(change.run, "busy");
-    const renameNickname = pipeline.write(rename.run, "busy");
+    const changeCostume = () => pipeline.write(asked("change"), change.run, "busy");
+    const renameNickname = () => pipeline.write(asked("rename"), rename.run, "busy");
 
-    const reading = pipeline.read(read.run)();
+    const reading = pipeline.read(asked("read"), read.run);
     const first = changeCostume();
     expect(await changeCostume()).toBe("busy");
     expect(await renameNickname()).toBe("busy");
@@ -219,26 +248,26 @@ describe("createPipeline", () => {
   });
 
   test("a group that rejects frees its turn for the next", async () => {
-    const pipeline = createPipeline(1);
-    const failingWrite = pipeline.write(async () => {
+    const pipeline = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const fault = async () => {
       throw new Error("fault");
-    }, "busy");
-    await expect(failingWrite()).rejects.toThrow("fault");
-    expect(await pipeline.write(async () => "written", "busy")()).toBe("written");
-    await expect(
-      pipeline.read(async () => {
-        throw new Error("lost");
-      })(),
-    ).rejects.toThrow("lost");
-    expect(await pipeline.read(async () => "read")()).toBe("read");
-    expect(await pipeline.exclusive(async () => "alone")()).toBe("alone");
+    };
+    await expect(pipeline.write(asked("write"), fault, "busy")).rejects.toThrow("fault");
+    expect(await pipeline.write(asked("write"), async () => "written", "busy")).toBe("written");
+    await expect(pipeline.read(asked("read"), fault)).rejects.toThrow("fault");
+    expect(await pipeline.read(asked("read"), async () => "read")).toBe("read");
+    expect(await pipeline.exclusive(asked("alone"), async () => "alone")).toBe("alone");
   });
+});
 
-  test("stopped, a running group sends no request after the one on its way", async () => {
-    const pipeline = createPipeline(IO_READ_CONSUMERS);
+describe("createPipeline, stopped", () => {
+  test("a running group sends no request after the one on its way", async () => {
     const hiroba = heldTransport();
-    const gated = pipeline.gate(hiroba.transport);
-    const picking = pipeline.exclusive(walk(gated, ["/editor", "/handoff"]))();
+    const pipeline = createPipeline({
+      readConsumers: IO_READ_CONSUMERS,
+      transport: hiroba.transport,
+    });
+    const picking = pipeline.exclusive(walking("readSongPicker"), walk(["/editor", "/handoff"]));
     await settle();
 
     pipeline.stop();
@@ -248,55 +277,223 @@ describe("createPipeline", () => {
     expect(hiroba.sent).toEqual(["/editor"]);
   });
 
-  test("stopped, a waiting group sends nothing, and one asked after waits for both to end", async () => {
-    const pipeline = createPipeline(1);
+  test("a waiting group is let go at once and sends nothing", async () => {
     const hiroba = heldTransport();
-    const gated = pipeline.gate(hiroba.transport);
-    const reading = pipeline.read(walk(gated, ["/top", "/dan"]))();
-    const writing = pipeline.write(walk(gated, ["/editor", "/post"]), "busy")();
+    const pipeline = createPipeline({ readConsumers: 1, transport: hiroba.transport });
+    const reading = pipeline.read(walking("readProfile"), walk(["/top"]));
+    const writing = pipeline.write(walking("changeCostume"), walk(["/editor", "/post"]), "busy");
     await settle();
 
     pipeline.stop();
-    const next = pipeline.read(walk(gated, ["/top"]))();
 
     expect(await writing).toBe("/editor: cancelled");
-    await settle();
     expect(hiroba.sent).toEqual(["/top"]);
     await hiroba.answer();
-    expect(await reading).toBe("/dan: cancelled");
-    await hiroba.answer();
-    expect(await next).toBe("done");
-    expect(hiroba.sent).toEqual(["/top", "/top"]);
+    expect(await reading).toBe("done");
   });
 
-  test("stopped twice, a group asked between the stops ends too before a later one starts", async () => {
-    const pipeline = createPipeline(2);
+  test("a group asked after it sends at once, beside a stopped one still ending", async () => {
     const hiroba = heldTransport();
-    const gated = pipeline.gate(hiroba.transport);
-    const first = pipeline.read(walk(gated, ["/a", "/a2"]))();
+    const pipeline = createPipeline({ readConsumers: 2, transport: hiroba.transport });
+    const before = pipeline.read(walking("readProfile"), walk(["/top", "/dan"]));
     await settle();
 
     pipeline.stop();
-    const between = pipeline.read(walk(gated, ["/b"]))();
-    pipeline.stop();
-    const after = pipeline.read(walk(gated, ["/c"]))();
+    const after = pipeline.read(walking("readProfile"), walk(["/top"]));
+    await settle();
 
-    expect(await between).toBe("/b: cancelled");
+    expect(hiroba.sent).toEqual(["/top", "/top"]);
     await hiroba.answer();
-    expect(await first).toBe("/a2: cancelled");
+    expect(await before).toBe("/dan: cancelled");
     await hiroba.answer();
     expect(await after).toBe("done");
-    expect(hiroba.sent).toEqual(["/a", "/c"]);
   });
 
-  test("a stop with no group asked lets the next group send at once", async () => {
-    const pipeline = createPipeline(1);
+  test("with no group asked, it lets the next group send at once", async () => {
     const hiroba = heldTransport();
+    const pipeline = createPipeline({ readConsumers: 1, transport: hiroba.transport });
 
     pipeline.stop();
-    const reading = pipeline.read(walk(pipeline.gate(hiroba.transport), ["/top"]))();
+    const reading = pipeline.read(walking("readProfile"), walk(["/top"]));
     await hiroba.answer();
 
     expect(await reading).toBe("done");
+  });
+});
+
+describe("createPipeline, what it tells", () => {
+  function told(readConsumers = 1) {
+    const hiroba = heldTransport();
+    const ended: EndedGroup[] = [];
+    let time = 1000;
+    const pipeline = createPipeline({
+      readConsumers,
+      transport: hiroba.transport,
+      ended: (group) => ended.push(group),
+      clock: () => time,
+    });
+    const at = (ms: number) => {
+      time = ms;
+    };
+    return { hiroba, ended, pipeline, at };
+  }
+
+  test("gives the running groups, then the waiting ones in the order they will start", async () => {
+    const { hiroba, pipeline, at } = told();
+    const reading = pipeline.read(walking("readProfile"), walk(["/mypage_top.php"]));
+    const later = pipeline.read(walking("openFavorites"), walk(["/favorite_song_select.php"]));
+    at(2000);
+    const picking = pipeline.exclusive(
+      { ...walking("readSongPicker"), expectedRequests: 10 },
+      walk(["/portal_favorite_song_select.php"]),
+    );
+    await settle();
+
+    expect(pipeline.now()).toEqual({
+      running: [
+        {
+          id: 1,
+          operation: "readProfile",
+          kind: "read",
+          askedAt: 1000,
+          startedAt: 1000,
+          sent: [{ method: "GET", path: "/mypage_top.php" }],
+          expectedRequests: null,
+        },
+      ],
+      waiting: [
+        {
+          id: 3,
+          operation: "readSongPicker",
+          kind: "exclusive",
+          askedAt: 2000,
+          startedAt: null,
+          sent: [],
+          expectedRequests: 10,
+        },
+        {
+          id: 2,
+          operation: "openFavorites",
+          kind: "read",
+          askedAt: 1000,
+          startedAt: null,
+          sent: [],
+          expectedRequests: null,
+        },
+      ],
+    });
+    for (let answered = 0; answered < 3; answered++) {
+      await hiroba.answer();
+    }
+    await Promise.all([reading, later, picking]);
+    expect(pipeline.now()).toEqual({ running: [], waiting: [] });
+  });
+
+  test("tells of a group that succeeded: its operation, kind, times and requests", async () => {
+    const { hiroba, ended, pipeline, at } = told();
+    const reading = pipeline.read(walking("readProfile"), walk(["/mypage_top.php", "/dan.php"]));
+    await settle();
+    at(1500);
+    await hiroba.answer();
+    at(2000);
+    await hiroba.answer();
+    await reading;
+
+    expect(ended).toEqual([
+      {
+        operation: "readProfile",
+        kind: "read",
+        startedAt: 1000,
+        endedAt: 2000,
+        requests: 2,
+        outcome: "succeeded",
+      },
+    ]);
+  });
+
+  test("tells of a group that failed: the last request it sent, and the code its result gives", async () => {
+    const { hiroba, ended, pipeline } = told();
+    const failing: GroupAsked<Result<string, { readonly kind: string }>> = {
+      operation: "openCostumeEditor",
+      failureOf: (result) => (result.ok ? null : result.error.kind),
+    };
+    const opening = pipeline.read(failing, async (transport) => {
+      await transport.send({ method: "GET", url: `${HIROBA}/mypage_kisekae.php?tab=1` });
+      return err({ kind: "unexpectedPage" });
+    });
+    await hiroba.answer();
+    await opening;
+
+    expect(ended).toEqual([
+      {
+        operation: "openCostumeEditor",
+        kind: "read",
+        startedAt: 1000,
+        endedAt: 1000,
+        requests: 1,
+        outcome: "failed",
+        code: "unexpectedPage",
+        at: { index: 1, request: { method: "GET", path: "/mypage_kisekae.php" } },
+      },
+    ]);
+  });
+
+  test("tells of a write that failed before it sent anything: no request", async () => {
+    const { ended, pipeline } = told();
+    const writing = pipeline.write(
+      { operation: "changeCostume", failureOf: (outcome: { kind: string }) => outcome.kind },
+      async () => ({ kind: "notSignedIn" }),
+      { kind: "busy" },
+    );
+    await writing;
+
+    expect(ended).toEqual([
+      expect.objectContaining({ kind: "write", requests: 0, outcome: "failed", at: null }),
+    ]);
+  });
+
+  test("tells of a group the stop ended as stopped, at the last request it sent", async () => {
+    const { hiroba, ended, pipeline } = told();
+    const picking = pipeline.exclusive(
+      walking("readSongPicker"),
+      walk(["/portal_favorite_song_select.php", "/form_data.php"]),
+    );
+    await settle();
+    pipeline.stop();
+    await hiroba.answer();
+    await picking;
+
+    expect(ended).toEqual([
+      expect.objectContaining({
+        operation: "readSongPicker",
+        kind: "exclusive",
+        requests: 1,
+        outcome: "stopped",
+        code: "/form_data.php: cancelled",
+        at: { index: 1, request: { method: "GET", path: "/portal_favorite_song_select.php" } },
+      }),
+    ]);
+  });
+
+  test("tells of a group that threw as failed, and its error still reaches its asker", async () => {
+    const { ended, pipeline } = told();
+    const reading = pipeline.read(asked("readProfile"), async () => {
+      throw new Error("fault");
+    });
+
+    await expect(reading).rejects.toThrow("fault");
+    expect(ended).toEqual([
+      expect.objectContaining({ requests: 0, outcome: "failed", code: "threw", at: null }),
+    ]);
+  });
+
+  test("gives no query in a request it tells of", async () => {
+    const { hiroba, pipeline } = told();
+    const reading = pipeline.read(walking("readSongPicker"), walk(["/select_song.php?genre=3"]));
+    await settle();
+
+    expect(pipeline.now().running[0]?.sent).toEqual([{ method: "GET", path: "/select_song.php" }]);
+    await hiroba.answer();
+    await reading;
   });
 });

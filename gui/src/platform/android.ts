@@ -1,4 +1,4 @@
-import { err, ok } from "@abth/core";
+import { err, ok, type Transport } from "@abth/core";
 import { CapacitorCookies } from "@capacitor/core";
 import {
   DefaultAndroidWebViewOptions,
@@ -127,24 +127,23 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const transport = createAndroidTransport();
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
+  // One transport for every site: a group sends through its own, made from it.
   const pipelines = {
-    io: createPipeline(IO_READ_CONSUMERS),
-    external: createPipeline(EXTERNAL_READ_CONSUMERS),
+    io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport }),
+    external: createPipeline({ readConsumers: EXTERNAL_READ_CONSUMERS, transport }),
   };
-  // Hiroba's requests stop with the session; the other sites' do not.
-  const hiroba = pipelines.io.gate(transport);
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
   let sources: PictureSources | null = null;
   const previews = createRecentPreviews((set, picture) => void writes.previewKept(set, picture));
-  const servedPreview = previews.keeping(async (set: CostumeSet) => {
-    if (!signedIn) {
-      return err({ code: "preview=notSignedIn" });
-    }
-    return previewCostume(hiroba, endpoints, set);
-  });
+  const servedPreview = (hiroba: Transport) =>
+    previews.keeping(async (set: CostumeSet) => {
+      if (!signedIn) {
+        return err({ code: "preview=notSignedIn" });
+      }
+      return previewCostume(hiroba, endpoints, set);
+    });
   const pictures = createPictureReader({
-    transport: hiroba,
     endpoints,
     store:
       options.indexedDb === undefined
@@ -155,7 +154,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     state: () => ({ signedIn, offered, owner, sources }),
   });
   const chartPictures = createChartPictureReader({
-    transport,
     store:
       options.indexedDb === undefined
         ? createMemoryPictureStore()
@@ -178,7 +176,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
   const { indexedDb } = options;
   const writes = createSessionWrites({
-    transport: hiroba,
     endpoints,
     platform: "android",
     now: options.now ?? (() => new Date()),
@@ -254,7 +251,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await InAppBrowser.close().catch(() => undefined);
     },
 
-    readProfile: async (options) => {
+    readProfile: async (hiroba, options) => {
       if (!signedIn) {
         return err({ kind: "notSignedIn" });
       }
@@ -281,8 +278,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await forget();
     },
 
-    openCostumeEditor: flushed(async () => {
-      const read = await writes.openCostumeEditor();
+    openCostumeEditor: flushed(async (hiroba) => {
+      const read = await writes.openCostumeEditor(hiroba);
       if (read.ok) {
         previews.wear(read.value.state);
         offered = offeredOf(read.value);
@@ -293,7 +290,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     openTitleEditor: flushed(writes.openTitleEditor),
 
     // Its failure forgets nothing: the next page read says whether the session is over.
-    previewCostume: servedPreview,
+    previewCostume: (hiroba, set) => servedPreview(hiroba)(set),
 
     readPicture: (want) => pictures.read(want),
 
@@ -306,7 +303,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     // Asks Hiroba nothing, so it skips the pipelines.
     costumeHistory: writes.costumeHistory,
 
-    readUpdateFeed: () => readUpdateFeed(transport, updateFeedUrl),
+    readUpdateFeed: (site) => readUpdateFeed(site, updateFeedUrl),
 
     openFavorites: flushed(writes.openFavorites),
 
@@ -316,9 +313,9 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     readSongPicker: flushed(writes.readSongPicker),
 
-    readSongCatalogue: (since) => readSongCatalogue(transport, songCatalogueUrl, since),
+    readSongCatalogue: (site, since) => readSongCatalogue(site, songCatalogueUrl, since),
 
-    readChineseNames: () => readChineseNames(transport, chineseNamesUrl),
+    readChineseNames: (site) => readChineseNames(site, chineseNamesUrl),
 
     readChartPicture: chartPictures,
   });

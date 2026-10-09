@@ -1,13 +1,21 @@
 import { describe, expect, test } from "bun:test";
+import { err, ok, SONG_PICKER_REQUESTS, type Transport } from "@abth/core";
 
-import { BUSY_OUTCOME, queuePort } from "../src/hiroba-session";
-import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../src/pipelines";
+import { BUSY_OUTCOME, queuePort, writeFailure } from "../src/hiroba-session";
+import {
+  createPipeline,
+  type EndedGroup,
+  EXTERNAL_READ_CONSUMERS,
+  IO_READ_CONSUMERS,
+} from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
   PORT_QUEUEING,
+  type PortImplementation,
   type VerbQueueing,
+  type WriteOutcomeView,
 } from "../src/session-port";
 
 type Verb = keyof HirobaSessionPort;
@@ -22,24 +30,31 @@ const UNQUEUED = queuedAs("unqueued");
 /** Gives the next turn of the event loop to whatever the queue has ready to run. */
 const settle = () => Bun.sleep(1);
 
+/** A transport no verb here sends through. */
+const UNUSED: Transport = {
+  send: async (request) => err({ kind: "unreachable", url: request.url }),
+};
+
 function watchedPort() {
   const events: string[] = [];
   const gates = new Map<Verb, () => void>();
   const verbs = Object.fromEntries(
     VERBS.map((verb) => [
       verb,
-      async (...args: unknown[]) => {
+      async (...received: unknown[]) => {
+        // A verb in a pipeline gets its group's transport first.
+        const args = PORT_QUEUEING[verb] === "unqueued" ? received : received.slice(1);
         events.push(`begin ${verb}`);
         await new Promise<void>((resolve) => gates.set(verb, resolve));
         events.push(`end ${verb}`);
-        return { verb, args };
+        return ok({ verb, args });
       },
     ]),
-  ) as unknown as HirobaSessionPort;
+  ) as unknown as PortImplementation;
   const port = queuePort(
     {
-      io: createPipeline(IO_READ_CONSUMERS),
-      external: createPipeline(EXTERNAL_READ_CONSUMERS),
+      io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED }),
+      external: createPipeline({ readConsumers: EXTERNAL_READ_CONSUMERS, transport: UNUSED }),
     },
     verbs,
   );
@@ -170,6 +185,105 @@ describe("queuePort", () => {
     const answered = ask("previewCostume", { colorFace: 3 });
     await settle();
     await letGo("previewCostume");
-    expect(await answered).toEqual({ verb: "previewCostume", args: [{ colorFace: 3 }] });
+    expect(await answered).toEqual(ok({ verb: "previewCostume", args: [{ colorFace: 3 }] }));
+  });
+});
+
+describe("queuePort, as the pipelines page sees its groups", () => {
+  function told(answer: (verb: Verb) => Promise<unknown>) {
+    const ended: EndedGroup[] = [];
+    const tell = (group: EndedGroup) => {
+      ended.push(group);
+    };
+    const pipelines = {
+      io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED, ended: tell }),
+      external: createPipeline({
+        readConsumers: EXTERNAL_READ_CONSUMERS,
+        transport: UNUSED,
+        ended: tell,
+      }),
+    };
+    const verbs = Object.fromEntries(
+      VERBS.map((verb) => [verb, () => answer(verb)]),
+    ) as unknown as PortImplementation;
+    const port = queuePort(pipelines, verbs);
+    const ask = (verb: Verb) => (port[verb] as () => Promise<unknown>)();
+    return { ended, pipelines, ask };
+  }
+
+  test("names each group by its verb, and reads a read's failure as its code", async () => {
+    const { ended, ask } = told(async () => err({ kind: "unexpectedPage", detail: "status=500" }));
+    await ask("openFavorites");
+    await ask("readChineseNames");
+
+    expect(ended).toEqual([
+      expect.objectContaining({
+        operation: "openFavorites",
+        kind: "read",
+        outcome: "failed",
+        code: "unexpectedPage status=500",
+      }),
+      expect.objectContaining({
+        operation: "readChineseNames",
+        kind: "read",
+        outcome: "failed",
+        code: "unexpectedPage status=500",
+      }),
+    ]);
+  });
+
+  test("reads a write that had nothing to save as done, and any other by its kind", async () => {
+    const { ended, ask } = told(async (verb) =>
+      verb === "changeCostume" ? { kind: "nothingToChange" } : { kind: "changedSincePreview" },
+    );
+    await ask("changeCostume");
+    await ask("changeName");
+
+    expect(ended).toEqual([
+      expect.objectContaining({ operation: "changeCostume", kind: "write", outcome: "succeeded" }),
+      expect.objectContaining({
+        operation: "changeName",
+        kind: "write",
+        outcome: "failed",
+        code: "changedSincePreview",
+      }),
+    ]);
+  });
+
+  test("gives the picker's requests before it starts", async () => {
+    let letGo: () => void = () => undefined;
+    const { pipelines, ask } = told(
+      () =>
+        new Promise((resolve) => {
+          letGo = () => resolve(ok(null));
+        }),
+    );
+    const picking = ask("readSongPicker");
+    await settle();
+
+    expect(pipelines.io.now().running).toEqual([
+      expect.objectContaining({
+        operation: "readSongPicker",
+        kind: "exclusive",
+        expectedRequests: SONG_PICKER_REQUESTS,
+      }),
+    ]);
+    letGo();
+    await picking;
+  });
+});
+
+describe("writeFailure", () => {
+  test.each<[outcome: WriteOutcomeView<unknown>, failure: string | null]>([
+    [{ kind: "nothingToChange" }, null],
+    [{ kind: "readFailed", failure: { kind: "timedOut" } }, "readFailed timedOut"],
+    [
+      { kind: "stoppedBeforeWrite", reason: "precheckRejected", code: "result=705" },
+      "stoppedBeforeWrite result=705",
+    ],
+    [{ kind: "maintenance" }, "maintenance"],
+    [{ kind: "interrupted" }, "interrupted"],
+  ])("reads %p as %p", (outcome, failure) => {
+    expect(writeFailure(outcome)).toBe(failure);
   });
 });
