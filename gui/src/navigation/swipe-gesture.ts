@@ -44,3 +44,26 @@ export function swipeReached({ start, direction }: Swipe, at: TouchPoint): boole
   const across = Math.abs(at.y - start.y);
   return along >= SWIPE_DISTANCE_PX && along >= SWIPE_STRAIGHTNESS * across;
 }
+
+export interface PipelinesSwipeContext {
+  readonly fingers: number;
+  readonly menuOpen: boolean;
+  readonly pipelinesShown: boolean;
+  readonly claimed: boolean;
+}
+
+/** One level past the menu: right from the open menu to the pipelines page, left back from it. */
+export function pipelinesSwipeStarted(
+  at: TouchPoint,
+  context: PipelinesSwipeContext,
+): Swipe | null {
+  if (context.fingers !== 1 || context.claimed) {
+    return null;
+  }
+
+  if (context.pipelinesShown) {
+    return { start: at, direction: "left" };
+  }
+
+  return context.menuOpen ? { start: at, direction: "right" } : null;
+}

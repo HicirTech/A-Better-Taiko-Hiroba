@@ -348,6 +348,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "譜疊點橫",
     "大歧及",
     "始問題",
+    "管來源",
   ].join(""),
 );
 

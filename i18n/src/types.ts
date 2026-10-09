@@ -22,6 +22,9 @@ export interface Messages {
   "nav.favorites": string;
   "nav.settings": string;
   "nav.menu": string;
+  "nav.pipelines": string;
+  "pipelines.io": string;
+  "pipelines.external": string;
   "settings.language": string;
   "settings.account": string;
   /** Param: {name}, the nickname, as Hiroba writes it. */

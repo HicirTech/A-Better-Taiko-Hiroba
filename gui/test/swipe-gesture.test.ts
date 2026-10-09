@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import {
   OPENING_AREA_SHARE,
+  type PipelinesSwipeContext,
+  pipelinesSwipeStarted,
   SWIPE_DISTANCE_PX,
   SWIPE_STRAIGHTNESS,
   type Swipe,
@@ -24,6 +26,35 @@ const landed = (at: TouchPoint = START, overrides: Partial<SwipeContext> = {}) =
     claimed: false,
     ...overrides,
   });
+
+describe("pipelinesSwipeStarted", () => {
+  const landedFor = (context: Partial<PipelinesSwipeContext>) =>
+    pipelinesSwipeStarted(START, {
+      fingers: 1,
+      menuOpen: false,
+      pipelinesShown: false,
+      claimed: false,
+      ...context,
+    });
+
+  test("lets one finger on the open menu begin the swipe right to the pipelines page", () => {
+    expect(landedFor({ menuOpen: true })).toEqual({ start: START, direction: "right" });
+  });
+
+  test("lets one finger on the pipelines page begin the swipe left back to the menu", () => {
+    expect(landedFor({ pipelinesShown: true })).toEqual({ start: START, direction: "left" });
+  });
+
+  type RefusedCase = [label: string, context: Partial<PipelinesSwipeContext>];
+  test.each<RefusedCase>([
+    ["a page with the menu shut", {}],
+    ["two fingers on the open menu", { menuOpen: true, fingers: 2 }],
+    ["two fingers on the pipelines page", { pipelinesShown: true, fingers: 2 }],
+    ["a touch that a text field or a dialog has", { pipelinesShown: true, claimed: true }],
+  ])("never begins one for %s", (_label, context) => {
+    expect(landedFor(context)).toBeNull();
+  });
+});
 
 describe("swipeStarted", () => {
   test("lets one finger in the left two thirds begin the swipe that opens the menu", () => {
