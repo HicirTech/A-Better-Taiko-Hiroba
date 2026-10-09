@@ -140,25 +140,17 @@ describe("queuePort", () => {
     });
   });
 
-  test.each(READS)(
-    "a read waits for a %s that is running, and each read for the ones before it",
-    async (first) => {
-      const { events, ask, letGo } = watchedPort();
-      const others = READS.filter((read) => read !== first);
-      const asked = [ask(first), ...others.map((read) => ask(read))];
-      await settle();
-      expect(events).toEqual([`begin ${first}`]);
-      await letGo(first);
-      expect(events.at(-1)).toBe(`begin ${others[0]}`);
-      for (const read of others) {
-        await letGo(read);
-      }
-      await Promise.all(asked);
-      expect(events).toEqual(
-        [first, ...others].flatMap((read) => [`begin ${read}`, `end ${read}`]),
-      );
-    },
-  );
+  test("runs the reads side by side, as many at once as the IO pipeline's read consumers", async () => {
+    const { events, ask, letGo } = watchedPort();
+    const asked = READS.map((read) => ask(read));
+    await settle();
+    expect(events).toEqual(READS.slice(0, IO_READ_CONSUMERS).map((read) => `begin ${read}`));
+    for (const read of READS) {
+      await letGo(read);
+    }
+    await Promise.all(asked);
+    expect(events.filter((event) => event.startsWith("end "))).toHaveLength(READS.length);
+  });
 
   test("a write asked for behind a read waits for it, and a second write meanwhile answers busy", async () => {
     const { events, ask, letGo } = watchedPort();

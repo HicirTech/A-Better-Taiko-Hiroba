@@ -136,10 +136,10 @@ Hiroba's daily maintenance: the clock is looked at before a write starts and aga
 each post.
 
 Every read of Hiroba goes in the same queue as the writes, on both platforms: your page, the costume
-editor, the list of titles and Hiroba's picture of the set, and a picture's fetch too. A write goes
-before the reads still waiting and holds the queue for all its requests, so no read and no picture
-lands between them. A page first shown while a write of any kind runs reads when the write has
-ended, not before.
+editor, the list of titles and Hiroba's picture of the set, and a picture's fetch too. Up to five
+reads run at once. A write waits for the running reads to end, goes before the reads still waiting
+and holds the queue for all its requests, so no read and no picture lands between them. A page
+first shown while a write of any kind runs reads when the write has ended, not before.
 
 A kind of write that has not been made for real from a platform also reads one other page before
 and after, to see that nothing else moved: a costume write reads your title on my page (six
@@ -313,8 +313,8 @@ What it costs Hiroba:
 - A thumbnail is asked for only once its cell has stayed in the window, or within a row of it, for
   150 ms, so a fling past a row asks nothing: the rows on screen and the one after, and each row
   that scrolls into view.
-- One at a time, after a random pause of up to 100 ms, in the queue with every other request to
-  Hiroba, so never between a write's requests; none is asked for while a save runs.
+- In the queue with every other request to Hiroba, up to five reads at once, after a random pause
+  of up to 100 ms, so never between a write's requests; none is asked for while a save runs.
   At most 300 in a run, and 8 s each on the desktop.
 - Never retried while the page stays shown. One that did not come is asked for once more the next
   time the page is shown or the editor is read again, and its cell is seen, within the same 300: if
@@ -354,9 +354,9 @@ What it costs Hiroba:
 - One request per title. The plate is kept per player, under the title shown over it, so a read
   that finds the same title asks Hiroba for nothing once its plate has come, and a title changed
   anywhere, on Hiroba's own site too, costs one request after the next read.
-- Asked for once the card is on screen after a read, one at a time in the queue with every other
-  request, so never between a write's requests. Never retried: a plate that did not come is asked
-  for once more after each read, and only then.
+- Asked for once the card is on screen after a read, in the queue with every other request, so
+  never between a write's requests. Never retried: a plate that did not come is asked for once more
+  after each read, and only then.
 - Kept on the device for good, sign-outs and relaunches included, once a later read has found the
   session still good, and kept under your player, so never given to another account. Until then it
   is shown, not kept: a sign-out before that read asks for it again.
@@ -375,7 +375,7 @@ ranks and the three crowns written as text over its art, where my page writes th
 `image/sp/640/total_score_image_<n>.png`; the platform takes `<n>` from the art your page shows,
 and the window asks for "the score panel", and nothing more. The art shows no count and names no
 player, so it is kept on the device for good for every account: fetched once, asked for only once
-the panel is on screen, one at a time in the queue, and never again after it came, relaunches and
+the panel is on screen, in the queue, and never again after it came, relaunches and
 sign-outs included. Until it comes, if it does not, or for a panel of a layout not yet seen (only
 `total_score_image_5` has been), a plain panel of the same geometry stands in and names what each
 count counts, and a line under the card gives a code for a report. Art that did not come is asked
@@ -389,8 +389,8 @@ screen readers get the name and the percent. The icons are static art on Hiroba'
 `image/sp/640/best_score_rank_<n>_640.png` for the ranks, and `image/sp/640/crown_0<n>_640.png` for
 the crowns, by the recent-plays page's numbering, where gold is 02 and silver is 03. The window asks
 for "a rank's icon" or "a crown's icon", and nothing more. The art names no player, so it is kept on
-the device for good for every account: fetched once, asked for only once its item is on screen, one
-at a time in the queue, and never again after it came, relaunches and sign-outs included. Until it
+the device for good for every account: fetched once, asked for only once its item is on screen, in
+the queue, and never again after it came, relaunches and sign-outs included. Until it
 comes, or if it does not, the item's colour as a dot stands in, as in the bar above it; an icon that
 did not come is asked for once more after each read.
 
@@ -404,8 +404,8 @@ window, a code or a file name. The window asks for "the どんメダル plate", 
 - One request per season, and one more once the set is COMPLETE, in case the art changes then. The
   plate is kept on the device for good, under your player, by its id and state, so a read that
   finds the same season asks Hiroba for nothing, and no other account is given it.
-- Asked for once the card is on screen after a read, one at a time in the queue with every other
-  request. Never retried: a plate that did not come is asked for once more after each read.
+- Asked for once the card is on screen after a read, in the queue with every other request. Never
+  retried: a plate that did not come is asked for once more after each read.
 
 Until the plate comes, or if it does not, a pale pill of the same shape stands in under the same
 words, and a line under it gives a code for a report. A page with no どんメダル plate, and one this
@@ -427,7 +427,7 @@ name. The window asks for "the My Don", and nothing more.
   nothing.
 - Fetched anew only after a costume change applies, and after you press **Read again**, so
   a change made on Hiroba's own site shows after the next **Read again**. Asked for once the tile is
-  on screen, one at a time in the queue, so never between a write's requests. If that fetch fails,
+  on screen, in the queue, so never between a write's requests. If that fetch fails,
   the one kept stays on the tile until the next of those.
 
 Until the first one comes the tile is empty, with a small spinner; if it does not come, the tile

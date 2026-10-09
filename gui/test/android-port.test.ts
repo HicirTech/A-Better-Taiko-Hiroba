@@ -204,7 +204,7 @@ describe("createAndroidPort's costume preview", () => {
     expect(native.cookieCalls).toEqual([]);
   });
 
-  test("asks Hiroba one thing at a time: a preview waits for a read already on its way", async () => {
+  test("asks Hiroba for reads side by side: a preview goes out beside the reads on their way", async () => {
     const answers: (() => void)[] = [];
     native.httpAnswer = () =>
       new Promise((resolve) => {
@@ -219,22 +219,16 @@ describe("createAndroidPort's costume preview", () => {
     const reading = port.readProfile();
     const opening = port.openCostumeEditor();
     const previewing = port.previewCostume(SET);
-    await until(() => native.httpRequests.length === 1);
-    await Bun.sleep(5);
-    expect(native.httpRequests).toHaveLength(1);
-    answers.shift()?.();
-    await until(() => native.httpRequests.length === 2);
-    await Bun.sleep(5);
-    expect(native.httpRequests).toHaveLength(2);
-    answers.shift()?.();
     await until(() => native.httpRequests.length === 3);
-    answers.shift()?.();
-    await Promise.all([reading, opening, previewing]);
-    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
-      "/mypage_top.php",
-      "/mypage_kisekae.php",
+    expect(native.httpRequests.map(({ url }) => new URL(url).pathname).sort()).toEqual([
       "/imgsrc_mydon.php",
+      "/mypage_kisekae.php",
+      "/mypage_top.php",
     ]);
+    for (const answered of answers.splice(0)) {
+      answered();
+    }
+    await Promise.all([reading, opening, previewing]);
   });
 
   test("a no-session GIF is a failure with codes, and forgets nothing", async () => {
@@ -340,7 +334,7 @@ describe("createAndroidPort's pictures", () => {
     expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
   });
 
-  test("a picture's fetch waits for a read already on its way", async () => {
+  test("a picture's fetch goes out beside a read already on its way", async () => {
     answerAsHiroba();
     const port = await createAndroidPort({
       closeLabel: () => CLOSE_LABEL,
@@ -349,18 +343,20 @@ describe("createAndroidPort's pictures", () => {
     await port.openCostumeEditor();
     const answer = native.httpAnswer;
     let release: () => void = () => undefined;
-    native.httpAnswer = () =>
-      new Promise((resolve) => {
-        release = () => resolve(answer());
-      });
+    native.httpAnswer = () => {
+      // Answered for the request just made, then held back if it is the editor's.
+      const answered = answer();
+      const asked = new URL(native.httpRequests.at(-1)?.url ?? "");
+      return asked.pathname === "/mypage_kisekae.php"
+        ? new Promise((resolve) => {
+            release = () => resolve(answered);
+          })
+        : answered;
+    };
     const reading = port.openCostumeEditor();
-    const picture = port.readPicture(THUMB);
-    await Bun.sleep(150);
-    expect(native.httpRequests).toHaveLength(2);
-    native.httpAnswer = answer;
+    expect((await port.readPicture(THUMB)).ok).toBe(true);
     release();
-    await reading;
-    expect((await picture).ok).toBe(true);
+    expect((await reading).ok).toBe(true);
     expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
       "/mypage_kisekae.php",
       "/mypage_kisekae.php",

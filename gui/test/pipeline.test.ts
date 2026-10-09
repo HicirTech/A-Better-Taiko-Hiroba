@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createPipeline } from "../src/pipelines";
+import { createPipeline, IO_READ_CONSUMERS } from "../src/pipelines";
 
 /** Gives whatever the pipeline has let start a turn of the event loop to begin. */
 const settle = () => Bun.sleep(0);
@@ -67,6 +67,23 @@ describe("createPipeline", () => {
     await b.release();
     await c.release();
     expect(await Promise.all(asked)).toEqual(["a", "b", "c"]);
+  });
+
+  test("Hiroba's pipeline runs its read consumers' worth of groups, and one more as one ends", async () => {
+    const log: string[] = [];
+    const pipeline = createPipeline(IO_READ_CONSUMERS);
+    const groups = Array.from({ length: IO_READ_CONSUMERS + 1 }, (_, index) =>
+      held(`read ${index}`, log),
+    );
+    const asked = groups.map((group) => pipeline.read(group.run)());
+    await settle();
+    expect(log).toHaveLength(IO_READ_CONSUMERS);
+    await groups[0]?.release();
+    expect(log.slice(-2)).toEqual(["read 0 end", `read ${IO_READ_CONSUMERS} start`]);
+    for (const group of groups.slice(1)) {
+      await group.release();
+    }
+    await Promise.all(asked);
   });
 
   test("a write waits for the running reads, goes before the waiting ones, and holds new ones", async () => {
