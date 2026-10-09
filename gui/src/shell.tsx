@@ -49,7 +49,9 @@ export function Shell({
       onNavigate={navigate}
       i18n={i18n}
       {...(platform?.shell === "android" ? { back: platform.back } : {})}
-      {...(platform !== null ? { pipelines: <PipelinesPage i18n={i18n} /> } : {})}
+      {...(platform !== null
+        ? { pipelines: <PipelinesPage port={platform.port} i18n={i18n} /> }
+        : {})}
     >
       {platform !== null ? (
         <App

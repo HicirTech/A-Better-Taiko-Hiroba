@@ -42,7 +42,6 @@ import {
   type SignInOutcome,
 } from "../session-port";
 import {
-  CHART_PICTURE_OPERATION,
   CHINESE_NAMES_URL,
   catalogueUrlFor,
   chartOriginFor,
@@ -143,10 +142,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       : createIndexedDbPipelineStores(options.indexedDb);
   const logs = {
     io: createPipelineLog({ counted: new Set([PICTURE_OPERATION]), store: pipelineStore("io") }),
-    external: createPipelineLog({
-      counted: new Set([CHART_PICTURE_OPERATION]),
-      store: pipelineStore("external"),
-    }),
+    // Few, and each asked for: its chart pictures are listed as its other groups are.
+    external: createPipelineLog({ counted: new Set(), store: pipelineStore("external") }),
   };
   // One transport for every site: a group sends through its own, made from it.
   const pipelines = {
