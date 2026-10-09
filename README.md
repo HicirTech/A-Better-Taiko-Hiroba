@@ -25,6 +25,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [x] Keep sets of favourite songs on your device, and swap the whole folder for one in a single save
 - [x] Find songs by genre, difficulty and stars, and by part of a name in Japanese, English or Chinese, with the artists and each chart's star level
 - [x] Look up any song from the Overview, or open one from your favourites: its tempo, each chart's level and max combo, and pictures of its notes that open full screen and zoom
+- [ ] See what the app is asking each site, and how each request went, on a page of its own
 - [ ] Browse offline, from a local database
 - [ ] Hold several accounts at once
 - [ ] Sync incrementally, and resume where it stopped
@@ -42,7 +43,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 
 **Unofficial.** This project is not affiliated with, endorsed by, or connected to Bandai Namco Entertainment. Taiko no Tatsujin and Donder Hiroba are theirs.
 
-**Polite by default.** Hiroba is someone else's service. Fetching is deliberately slow and incremental, and it backs off when the site pushes back. Fetching more is always something you ask for, never something that happens on its own.
+**Polite by default.** Hiroba is someone else's service. The app sends it at most five reads at once and one write at a time, never retries a request by itself, fetches each picture once and keeps it, and stops asking the moment you sign out. Fetching more is always something you ask for, never something that happens on its own.
 
 **Song data from the community.** Artists, star levels, tempos and the songs' names in other languages come from [taiko.wiki](https://taiko.wiki/) and the Chinese [太鼓之達人維基](https://taiko.fandom.com/zh/) (its names are used under CC BY-SA). The pictures of the charts are those taiko.wiki links, on its own host, on the [太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) and on Imgur. The app reads what they publish and sends them nothing of yours.
 
