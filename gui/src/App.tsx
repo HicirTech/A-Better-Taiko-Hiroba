@@ -29,6 +29,7 @@ import { NavFoot } from "./navigation/app-frame";
 import { useFrameNavigation } from "./navigation/frame-navigation";
 import type { Page } from "./navigation/pages";
 import { createPictureLane } from "./pictures/picture-lane";
+import { IO_READ_CONSUMERS } from "./pipelines";
 import type { SystemLink, SystemToast } from "./platform";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
@@ -90,7 +91,11 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   // A read again the user asked for leaves the page in place, shut, rather than swap it out.
   const [shut, setShut] = useState(false);
   const updates = useUpdateReminder(port, APP_VERSION);
-  const lane = useMemo(() => createPictureLane({ load: (want) => port.readPicture(want) }), [port]);
+  // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
+  const lane = useMemo(
+    () => createPictureLane({ load: (want) => port.readPicture(want), atOnce: IO_READ_CONSUMERS }),
+    [port],
+  );
   const onEditorPage = page === "costume" && screen.name === "profile";
   const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
   const onFavoritesPage = page === "favorites" && screen.name === "profile";
@@ -129,7 +134,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             lane.forgetFailures(kind);
           }
           setScreen({ name: "profile", profile: result.value });
-          // Beside each read of my page, what Hiroba's picker offers, read once the pictures are in.
+          // Beside each read of my page, what Hiroba's picker offers, read alone, pictures after.
           if (!behindThePage) {
             refreshPickable();
           }

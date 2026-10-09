@@ -1,10 +1,9 @@
 import type { HirobaSessionPort } from "./types";
 
-/** `read` waits for every verb before it; `write` is a whole turn and answers `busy` at once while
- * another runs; `unqueued` asks Hiroba nothing, or queues itself: a picture its fetch, the picker
- * its read once the queue is quiet. */
-export type VerbQueueing = "read" | "write" | "unqueued";
+/** How a verb runs: `read` beside others, `exclusive` or `write` alone, `external` elsewhere. */
+export type VerbQueueing = "read" | "exclusive" | "write" | "external" | "unqueued";
 
+/** `unqueued` verbs ask nothing, or put their own fetches in a pipeline (pictures, charts). */
 export const PORT_QUEUEING = {
   isSignedIn: "unqueued",
   signIn: "unqueued",
@@ -19,13 +18,13 @@ export const PORT_QUEUEING = {
   changeTitle: "write",
   changeName: "write",
   costumeHistory: "unqueued",
-  readUpdateFeed: "unqueued",
+  readUpdateFeed: "external",
   openFavorites: "read",
   changeFolder: "write",
   changeFavoriteSong: "write",
-  readSongPicker: "unqueued",
-  readSongCatalogue: "unqueued",
-  readChineseNames: "unqueued",
+  readSongPicker: "exclusive",
+  readSongCatalogue: "external",
+  readChineseNames: "external",
   readChartPicture: "unqueued",
 } as const satisfies Record<keyof HirobaSessionPort, VerbQueueing>;
 

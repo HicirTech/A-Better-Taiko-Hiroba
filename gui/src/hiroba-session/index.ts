@@ -19,7 +19,6 @@ export {
   POST_FOLLOWED_AS_GET,
   resolveRedirect,
 } from "./form-post";
-export { createHirobaQueue, type HirobaQueue } from "./hiroba-queue";
 export { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 export { openCostumeEditor } from "./open-costume-editor";
 export { openTitleEditor } from "./open-title-editor";
@@ -42,7 +41,7 @@ export {
   pictureKeyPath,
 } from "./picture-store";
 export { previewCostume, previewUrl } from "./preview-costume";
-export { queuePort } from "./queue-port";
+export { type PortPipelines, queuePort } from "./queue-port";
 export {
   ANDROID_PICTURE_LIMITS,
   createPictureReader,
@@ -55,7 +54,6 @@ export {
   type PictureReadState,
 } from "./read-picture";
 export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
-export { whenQueueQuiet } from "./read-song-picker";
 export { createRecentPreviews } from "./recent-previews";
 export { sessionEnded } from "./session-ended";
 export {

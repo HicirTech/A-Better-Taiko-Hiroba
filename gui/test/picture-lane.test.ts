@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { err, ok, type Result } from "@abth/core";
 
 import { createPictureLane, type LaneTimers } from "../src/pictures/picture-lane";
+import { IO_READ_CONSUMERS } from "../src/pipelines";
 import type { PictureFailure, PictureView, PictureWant } from "../src/session-port";
 
 const item = (id: number, slot: 1 | 2 | 3 | 4 | 5 = 1): PictureWant => ({
@@ -84,11 +85,19 @@ function heldPort() {
   return { load, asked, answer, outstanding: () => answers.length };
 }
 
-function setUp() {
+/** One at a time unless asked otherwise, so each answer shows which picture is asked next. */
+function setUp(atOnce = 1) {
   const port = heldPort();
   const { timers, advance } = manualTimers();
-  const lane = createPictureLane({ load: port.load, timers, dwellMs: 150 });
+  const lane = createPictureLane({ load: port.load, timers, dwellMs: 150, atOnce });
   return { lane, port, advance };
+}
+
+/** Asks for thumbnails 1 to `count`, the last first, each as far down the screen as its number. */
+function askUpTo(lane: ReturnType<typeof createPictureLane>, count: number) {
+  for (let id = count; id >= 1; id--) {
+    lane.ask(item(id), { order: id });
+  }
 }
 
 describe("createPictureLane", () => {
@@ -106,6 +115,41 @@ describe("createPictureLane", () => {
     await port.answer(ok(view(30)));
     expect(port.asked).toEqual(["1/10", "1/20", "1/30"]);
     expect(lane.peek(item(30))).toEqual({ view: view(30) });
+  });
+
+  test("sends as many as Hiroba's read consumers together, down the screen, the next as one comes", async () => {
+    const { lane, port, advance } = setUp(IO_READ_CONSUMERS);
+    askUpTo(lane, IO_READ_CONSUMERS + 1);
+    await advance(150);
+    expect(port.asked).toEqual(
+      Array.from({ length: IO_READ_CONSUMERS }, (_, index) => `1/${index + 1}`),
+    );
+    await port.answer(ok(view(1)));
+    expect(port.asked.at(-1)).toBe(`1/${IO_READ_CONSUMERS + 1}`);
+    expect(port.outstanding()).toBe(IO_READ_CONSUMERS);
+  });
+
+  test("held, sends none, and once released sends as many as Hiroba's read consumers", async () => {
+    const { lane, port, advance } = setUp(IO_READ_CONSUMERS);
+    lane.hold();
+    askUpTo(lane, IO_READ_CONSUMERS + 1);
+    await advance(1000);
+    expect(port.asked).toEqual([]);
+    lane.release();
+    expect(port.outstanding()).toBe(IO_READ_CONSUMERS);
+  });
+
+  test("never sends a picture again while it is on its way, though asked for again", async () => {
+    const { lane, port, advance } = setUp(IO_READ_CONSUMERS);
+    lane.ask(item(4), { order: 0 });
+    await advance(150);
+    lane.ask(item(4), { order: 1 });
+    await advance(150);
+    expect(port.asked).toEqual(["1/4"]);
+    await port.answer(ok(view(4)));
+    await advance(1000);
+    expect(port.asked).toEqual(["1/4"]);
+    expect(lane.peek(item(4))).toEqual({ view: view(4) });
   });
 
   test("asks in order down the screen for pictures whose dwells end a little apart", async () => {
@@ -367,6 +411,7 @@ describe("createPictureLane", () => {
         return ok(view(14));
       },
       timers,
+      atOnce: 1,
     });
     lane.ask(item(4), { order: 0 });
     lane.ask(item(14), { order: 1 });

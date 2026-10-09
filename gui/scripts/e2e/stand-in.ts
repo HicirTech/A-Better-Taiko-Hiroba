@@ -171,6 +171,26 @@ export const sameBesideLanePictures = (log: string[], expected: string[]) => {
   );
 };
 
+/** `run` first and whole, then each of `reads` in its own order, however they interleave. */
+export const runThenReadsBesideLanePictures = (log: string[], run: string[], reads: string[][]) => {
+  const start = log.findIndex((line) => !LANE_PICTURES.includes(line));
+  if (start < 0 || !same(log.slice(start, start + run.length), run)) {
+    return false;
+  }
+  const waiting = reads.map((requests) => [...requests]);
+  for (const line of log.slice(start + run.length)) {
+    if (LANE_PICTURES.includes(line)) {
+      continue;
+    }
+    const next = waiting.find((requests) => requests[0] === line);
+    if (next === undefined) {
+      return false;
+    }
+    next.shift();
+  }
+  return waiting.every((requests) => requests.length === 0);
+};
+
 // The desktop's costume writes are live-checked, so no other page is read around them.
 export const COLOUR_REQUESTS = [
   "GET /mypage_kisekae.php",

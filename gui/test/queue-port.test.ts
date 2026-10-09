@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { BUSY_OUTCOME, createHirobaQueue, queuePort } from "../src/hiroba-session";
+import { BUSY_OUTCOME, queuePort } from "../src/hiroba-session";
+import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type HirobaSessionPort,
@@ -13,7 +14,9 @@ type Verb = keyof HirobaSessionPort;
 const VERBS = Object.keys(PORT_QUEUEING) as Verb[];
 const queuedAs = (how: VerbQueueing) => VERBS.filter((verb) => PORT_QUEUEING[verb] === how);
 const READS = queuedAs("read");
+const EXCLUSIVE = queuedAs("exclusive");
 const WRITES = queuedAs("write");
+const EXTERNAL = queuedAs("external");
 const UNQUEUED = queuedAs("unqueued");
 
 /** Gives the next turn of the event loop to whatever the queue has ready to run. */
@@ -33,7 +36,13 @@ function watchedPort() {
       },
     ]),
   ) as unknown as HirobaSessionPort;
-  const port = queuePort(createHirobaQueue(), verbs);
+  const port = queuePort(
+    {
+      io: createPipeline(IO_READ_CONSUMERS),
+      external: createPipeline(EXTERNAL_READ_CONSUMERS),
+    },
+    verbs,
+  );
   const ask = (verb: Verb, ...args: unknown[]) =>
     (port[verb] as (...values: unknown[]) => Promise<unknown>)(...args);
   const letGo = async (verb: Verb) => {
@@ -66,6 +75,11 @@ describe("PORT_QUEUEING", () => {
       "changeFavoriteSong",
     ]);
   });
+
+  test("runs the picker alone, as it carries a form token, and other sites in their own pipeline", () => {
+    expect(EXCLUSIVE).toEqual(["readSongPicker"]);
+    expect(EXTERNAL).toEqual(["readUpdateFeed", "readSongCatalogue", "readChineseNames"]);
+  });
 });
 
 describe("queuePort", () => {
@@ -95,7 +109,25 @@ describe("queuePort", () => {
       expect(events).toEqual([`begin ${running}`, `end ${running}`]);
     });
 
-    test.each(UNQUEUED)("a %s asked for is not held up", async (free) => {
+    test.each(EXCLUSIVE)(
+      "a %s asked for waits until it has ended, and is not busy",
+      async (alone) => {
+        const { events, ask, letGo } = watchedPort();
+        const writing = ask(running);
+        await settle();
+        const picking = ask(alone);
+        await settle();
+        expect(events).toEqual([`begin ${running}`]);
+
+        await letGo(running);
+        expect(events).toEqual([`begin ${running}`, `end ${running}`, `begin ${alone}`]);
+        await letGo(alone);
+        expect(await picking).not.toEqual(BUSY_OUTCOME);
+        await writing;
+      },
+    );
+
+    test.each([...EXTERNAL, ...UNQUEUED])("a %s asked for is not held up", async (free) => {
       const { events, ask, letGo } = watchedPort();
       const writing = ask(running);
       await settle();
@@ -108,25 +140,17 @@ describe("queuePort", () => {
     });
   });
 
-  test.each(READS)(
-    "a read waits for a %s that is running, and each read for the ones before it",
-    async (first) => {
-      const { events, ask, letGo } = watchedPort();
-      const others = READS.filter((read) => read !== first);
-      const asked = [ask(first), ...others.map((read) => ask(read))];
-      await settle();
-      expect(events).toEqual([`begin ${first}`]);
-      await letGo(first);
-      expect(events.at(-1)).toBe(`begin ${others[0]}`);
-      for (const read of others) {
-        await letGo(read);
-      }
-      await Promise.all(asked);
-      expect(events).toEqual(
-        [first, ...others].flatMap((read) => [`begin ${read}`, `end ${read}`]),
-      );
-    },
-  );
+  test("runs the reads side by side, as many at once as the IO pipeline's read consumers", async () => {
+    const { events, ask, letGo } = watchedPort();
+    const asked = READS.map((read) => ask(read));
+    await settle();
+    expect(events).toEqual(READS.slice(0, IO_READ_CONSUMERS).map((read) => `begin ${read}`));
+    for (const read of READS) {
+      await letGo(read);
+    }
+    await Promise.all(asked);
+    expect(events.filter((event) => event.startsWith("end "))).toHaveLength(READS.length);
+  });
 
   test("a write asked for behind a read waits for it, and a second write meanwhile answers busy", async () => {
     const { events, ask, letGo } = watchedPort();

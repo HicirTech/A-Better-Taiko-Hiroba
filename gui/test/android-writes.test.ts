@@ -135,6 +135,30 @@ describe("createAndroidPort's costume writes", () => {
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 
+  test("signed out while a request is on its way, sends nothing after it and saves nothing", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    const answer = native.httpAnswer;
+    let release: () => void = () => undefined;
+    native.httpAnswer = () => {
+      // Answered for the request just made; the first is held back until the sign-out.
+      const answered = answer();
+      return native.httpRequests.length === 1
+        ? new Promise((resolve) => {
+            release = () => resolve(answered);
+          })
+        : answered;
+    };
+    const saving = port.changeCostume(CHANGE);
+    await until(() => native.httpRequests.length === 1);
+    await port.signOut();
+    release();
+
+    expect(await saving).toMatchObject({ kind: "readFailed", failure: { kind: "cancelled" } });
+    expect(world.sent()).toEqual(["GET /mypage_top.php"]);
+    expect(await world.posts()).toEqual([]);
+  });
+
   test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
     const world = setUp();
     const port = await signedInPort(world);

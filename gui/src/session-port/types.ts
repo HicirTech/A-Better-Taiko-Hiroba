@@ -275,7 +275,7 @@ export interface HirobaSessionPort {
   /** Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried,
    * as a `data:image/png` URL. Changes nothing, allowed whenever signed in; the caller paces it. */
   previewCostume(set: CostumeSet): Promise<Result<string, CostumePreviewFailure>>;
-  /** One of Hiroba's pictures, as `want` names it: from the store, or one GET in the queue, never
+  /** One of Hiroba's pictures, as `want` names it: from the store, or one pipelined GET, never
    * retried. Refused unsent when the platform's state allows no request. Rate is the caller's. */
   readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
   /** One costume write: the editor, the pre-check, one save and the read-back. Never retried. */
@@ -286,7 +286,7 @@ export interface HirobaSessionPort {
   changeName(change: NameChange): Promise<WriteOutcomeView<NameState>>;
   /** The signed-in player's costume history, newest first. Asks Hiroba nothing. */
   costumeHistory(): Promise<readonly CostumeHistoryEntry[]>;
-  /** The update feed: one GET that carries no session. Asks Hiroba nothing, so it is never queued. */
+  /** The update feed: one GET that carries no session, in the pipeline for other sites. */
   readUpdateFeed(): Promise<Result<UpdateFeed, UpdateFeedFailure>>;
   /** The お気に入り folder's editor, then the 大好きな曲's: two GETs. Their form tokens stay with
    * the platform. */
@@ -300,10 +300,10 @@ export interface HirobaSessionPort {
    * then a GET for each of the eight genres. Its form token stays with the platform. */
   readSongPicker(): Promise<Result<PickableSongs, ReadFailure>>;
   /** taiko.wiki's songs, all or those changed since `since` (ms since 1970): one GET that carries
-   * no session. Asks Hiroba nothing, so it is never queued. */
+   * no session, in the pipeline for other sites. */
   readSongCatalogue(since: number | null): Promise<Result<SongCatalogueRead, SongCatalogueFailure>>;
   /** The Chinese wiki's official song names: one GET for each batch of 50 pages, carrying no
-   * session. Asks Hiroba nothing, so it is never queued. */
+   * session, all in one group of the pipeline for other sites. */
   readChineseNames(): Promise<Result<ChineseNamesRead, SongCatalogueFailure>>;
   /** A picture of a chart's notes, from a chart host the song list links, kept on the device. */
   readChartPicture(url: string): Promise<Result<PictureView, PictureFailure>>;

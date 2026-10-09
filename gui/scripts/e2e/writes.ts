@@ -15,6 +15,7 @@ import {
   requestsSettled,
   resetLog,
   runThen,
+  runThenReadsBesideLanePictures,
   START,
   sameBesideLanePictures,
   savedCostume,
@@ -301,10 +302,11 @@ export async function heldWrites(ctx: Ctx) {
       sameBesideLanePictures(whileHeld, upToTheHold) &&
         ended.kind === "applied" &&
         answered.every(Boolean) &&
-        sameBesideLanePictures(afterwards, [
-          ...held.run,
-          ...readsAsked.flatMap((read) => read.requests),
-        ]),
+        runThenReadsBesideLanePictures(
+          afterwards,
+          held.run,
+          readsAsked.map((read) => read.requests),
+        ),
     );
   }
   results.everyReadWaitsOutEveryWrite =

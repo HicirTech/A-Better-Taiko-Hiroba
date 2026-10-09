@@ -1,20 +1,32 @@
+import type { Pipeline } from "../pipelines";
 import { type HirobaSessionPort, PORT_QUEUEING } from "../session-port";
-import type { HirobaQueue } from "./hiroba-queue";
 import { BUSY_OUTCOME } from "./session-writes";
 
-/** `port` with each verb in the queue as `PORT_QUEUEING` says, for a shell to hand its window.
- * Every shell queues its verbs here and nowhere else, so none is left outside it. */
-export function queuePort(queue: HirobaQueue, port: HirobaSessionPort): HirobaSessionPort {
+/** The pipelines the port's verbs run in. */
+export interface PortPipelines {
+  readonly io: Pipeline;
+  readonly external: Pipeline;
+}
+
+/** `port` with each verb run as `PORT_QUEUEING` says: the one place a shell queues its verbs. */
+export function queuePort(pipelines: PortPipelines, port: HirobaSessionPort): HirobaSessionPort {
+  const { io, external } = pipelines;
   const queued: Partial<Record<keyof HirobaSessionPort, (...args: unknown[]) => Promise<unknown>>> =
     {};
   for (const verb of Object.keys(PORT_QUEUEING) as (keyof HirobaSessionPort)[]) {
     const run = port[verb] as (...args: unknown[]) => Promise<unknown>;
     switch (PORT_QUEUEING[verb]) {
       case "read":
-        queued[verb] = queue.oneAtATime(run);
+        queued[verb] = io.read(run);
+        break;
+      case "exclusive":
+        queued[verb] = io.exclusive(run);
         break;
       case "write":
-        queued[verb] = queue.oneWriteAtATime(run, BUSY_OUTCOME);
+        queued[verb] = io.write(run, BUSY_OUTCOME);
+        break;
+      case "external":
+        queued[verb] = external.read(run);
         break;
       case "unqueued":
         queued[verb] = run;

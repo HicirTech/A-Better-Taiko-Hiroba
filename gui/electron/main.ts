@@ -12,7 +12,6 @@ import {
 } from "electron";
 
 import {
-  createHirobaQueue,
   createPictureReader,
   createRecentPreviews,
   createSessionWrites,
@@ -23,8 +22,8 @@ import {
   queuePort,
   readOwnProfile,
   sessionEnded,
-  whenQueueQuiet,
 } from "../src/hiroba-session";
+import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
@@ -92,6 +91,7 @@ const setSession = (value: string | null) => {
   sessionCookie = value;
   sessionStore?.save(value);
   if (value === null) {
+    pipelines.io.stop();
     owner = null;
     sources = null;
     offered = new Set();
@@ -109,32 +109,37 @@ const transport = createHirobaTransport({
   userAgent,
   hirobaOrigin: endpoints.hirobaOrigin,
 });
-const readTransport =
+// Everything that asks Hiroba something goes through `io`, so no read lands inside a write.
+const pipelines = {
+  io: createPipeline(IO_READ_CONSUMERS),
+  external: createPipeline(EXTERNAL_READ_CONSUMERS),
+};
+// Hiroba's requests stop with the session; the other sites' do not.
+const readTransport = pipelines.io.gate(
   process.env.ABTH_DEBUG_SAVE_READS === "1"
     ? saveReads(transport, join(app.getPath("userData"), "debug"))
-    : transport;
+    : transport,
+);
 
 const feedTransport = createUpdateFeedTransport({
   userAgent,
   hirobaOrigin: endpoints.hirobaOrigin,
 });
 
-// Verbs that ask Hiroba something run through it one at a time, so no read lands inside a write.
-const queue = createHirobaQueue();
-
-// A kept picture answers at once, even while a write runs; only a fetch waits in the queue.
+// A kept picture answers at once, even while a write runs; only a fetch waits in the pipeline.
 const pictures = createPictureReader({
   transport: readTransport,
   endpoints,
   store: createDiskPictureStore(join(app.getPath("userData"), "pictures")),
-  queue,
+  pipeline: pipelines.io,
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
-// Asked of the wiki's hosts, not Hiroba: the feed's transport holds no session, and no queue.
+// Asked of the wiki's hosts, not Hiroba: the feed's transport holds no session.
 const chartPictures = createChartPictureReader({
   transport: feedTransport,
   store: createDiskPictureStore(join(app.getPath("userData"), "charts")),
+  pipeline: pipelines.external,
   chartOrigin: environment.chartOrigin,
 });
 // The writes come up with the window: until then a kept picture fills no history.
@@ -204,7 +209,7 @@ app.whenReady().then(async () => {
   });
   previewKept = (set, picture) => void writes.previewKept(set, picture);
 
-  const port = queuePort(queue, {
+  const port = queuePort(pipelines, {
     async isSignedIn() {
       return sessionCookie !== null;
     },
@@ -268,7 +273,7 @@ app.whenReady().then(async () => {
     openFavorites: writes.openFavorites,
     changeFolder: writes.changeFolder,
     changeFavoriteSong: writes.changeFavoriteSong,
-    readSongPicker: whenQueueQuiet(queue, writes.readSongPicker),
+    readSongPicker: writes.readSongPicker,
     readSongCatalogue: (since) =>
       readSongCatalogue(feedTransport, environment.songCatalogueUrl, since),
     readChineseNames: () => readChineseNames(feedTransport, environment.chineseNamesUrl),

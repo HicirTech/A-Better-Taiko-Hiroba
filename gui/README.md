@@ -136,9 +136,15 @@ Hiroba's daily maintenance: the clock is looked at before a write starts and aga
 each post.
 
 Every read of Hiroba goes in the same queue as the writes, on both platforms: your page, the costume
-editor, the list of titles and Hiroba's picture of the set, and a picture's fetch too. A write holds
-the queue for all its requests, so no read and no picture lands between them. A page first shown
-while a write of any kind runs reads when the write has ended, not before.
+editor, the list of titles and Hiroba's picture of the set, and a picture's fetch too. Up to five
+reads run at once. A write waits for the running reads to end, goes before the reads still waiting
+and holds the queue for all its requests, so no read and no picture lands between them. A page
+first shown while a write of any kind runs reads when the write has ended, not before. Pictures go
+five at a time too, the rest waiting their turn in screen order.
+
+When the session ends, by a sign-out or because Hiroba ended it, the queue stops: a read or a write
+that is running sends nothing after the request on its way, one still waiting sends nothing, and
+whatever is asked after that waits until they have all ended.
 
 A kind of write that has not been made for real from a platform also reads one other page before
 and after, to see that nothing else moved: a costume write reads your title on my page (six
@@ -275,7 +281,7 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
 
 ### The Favourites page
 
-The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker lists only the songs Hiroba's own picker offers, and opens on all of them. They are read after each read of my page, once nothing else is waiting to ask Hiroba, so the page and its pictures come first; they are kept on the device for the next launch, read on the Favourites page when no read has brought them since, and gone at a sign-out. The list kept serves while a newer one is read; with none yet, the picker says it is reading, or why it could not, with Retry; the 大好きな曲's picker also lists a song's inner chart as a row of its own, as Hiroba's does, showing only that chart's level and leaving it off the song's own row; a difficulty or star filter keeps only the rows whose charts match, and an inner row is tinted with that chart's colour. A 大好きな曲 set to one says so under its name. Three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its inner chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit and Apply: Edit lets its songs be added, taken out and moved, and turns Apply into Save, with Reset for the edits; Android's Back drops the edits and leaves editing. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls. In the current favourites, and in a set while it is only shown, a click on a song's name opens its details, as [the song search](#the-song-search) does (its level badges keep their own click, and a song taiko.wiki's list lacks has no details); while they are open, a swipe from the right edge leaves the drawer shut.
+The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker lists only the songs Hiroba's own picker offers, and opens on all of them. They are read after each read of my page, alone: the requests already sent end first, and the rest wait until the list is read; they are kept on the device for the next launch, read on the Favourites page when no read has brought them since, and gone at a sign-out. The list kept serves while a newer one is read; with none yet, the picker says it is reading, or why it could not, with Retry; the 大好きな曲's picker also lists a song's inner chart as a row of its own, as Hiroba's does, showing only that chart's level and leaving it off the song's own row; a difficulty or star filter keeps only the rows whose charts match, and an inner row is tinted with that chart's colour. A 大好きな曲 set to one says so under its name. Three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its inner chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit and Apply: Edit lets its songs be added, taken out and moved, and turns Apply into Save, with Reset for the edits; Android's Back drops the edits and leaves editing. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls. In the current favourites, and in a set while it is only shown, a click on a song's name opens its details, as [the song search](#the-song-search) does (its level badges keep their own click, and a song taiko.wiki's list lacks has no details); while they are open, a swipe from the right edge leaves the drawer shut.
 
 ### The song search
 
@@ -312,8 +318,8 @@ What it costs Hiroba:
 - A thumbnail is asked for only once its cell has stayed in the window, or within a row of it, for
   150 ms, so a fling past a row asks nothing: the rows on screen and the one after, and each row
   that scrolls into view.
-- One at a time, after a random pause of up to 100 ms, in the queue with every other request to
-  Hiroba, so never between a write's requests; none is asked for while a save runs.
+- Five at a time at most, in the queue with every other request to Hiroba, after a random pause
+  of up to 100 ms, so never between a write's requests; none is asked for while a save runs.
   At most 300 in a run, and 8 s each on the desktop.
 - Never retried while the page stays shown. One that did not come is asked for once more the next
   time the page is shown or the editor is read again, and its cell is seen, within the same 300: if
@@ -353,9 +359,9 @@ What it costs Hiroba:
 - One request per title. The plate is kept per player, under the title shown over it, so a read
   that finds the same title asks Hiroba for nothing once its plate has come, and a title changed
   anywhere, on Hiroba's own site too, costs one request after the next read.
-- Asked for once the card is on screen after a read, one at a time in the queue with every other
-  request, so never between a write's requests. Never retried: a plate that did not come is asked
-  for once more after each read, and only then.
+- Asked for once the card is on screen after a read, in the queue with every other request, so
+  never between a write's requests. Never retried: a plate that did not come is asked for once more
+  after each read, and only then.
 - Kept on the device for good, sign-outs and relaunches included, once a later read has found the
   session still good, and kept under your player, so never given to another account. Until then it
   is shown, not kept: a sign-out before that read asks for it again.
@@ -374,7 +380,7 @@ ranks and the three crowns written as text over its art, where my page writes th
 `image/sp/640/total_score_image_<n>.png`; the platform takes `<n>` from the art your page shows,
 and the window asks for "the score panel", and nothing more. The art shows no count and names no
 player, so it is kept on the device for good for every account: fetched once, asked for only once
-the panel is on screen, one at a time in the queue, and never again after it came, relaunches and
+the panel is on screen, in the queue, and never again after it came, relaunches and
 sign-outs included. Until it comes, if it does not, or for a panel of a layout not yet seen (only
 `total_score_image_5` has been), a plain panel of the same geometry stands in and names what each
 count counts, and a line under the card gives a code for a report. Art that did not come is asked
@@ -388,8 +394,8 @@ screen readers get the name and the percent. The icons are static art on Hiroba'
 `image/sp/640/best_score_rank_<n>_640.png` for the ranks, and `image/sp/640/crown_0<n>_640.png` for
 the crowns, by the recent-plays page's numbering, where gold is 02 and silver is 03. The window asks
 for "a rank's icon" or "a crown's icon", and nothing more. The art names no player, so it is kept on
-the device for good for every account: fetched once, asked for only once its item is on screen, one
-at a time in the queue, and never again after it came, relaunches and sign-outs included. Until it
+the device for good for every account: fetched once, asked for only once its item is on screen, in
+the queue, and never again after it came, relaunches and sign-outs included. Until it
 comes, or if it does not, the item's colour as a dot stands in, as in the bar above it; an icon that
 did not come is asked for once more after each read.
 
@@ -403,8 +409,8 @@ window, a code or a file name. The window asks for "the どんメダル plate", 
 - One request per season, and one more once the set is COMPLETE, in case the art changes then. The
   plate is kept on the device for good, under your player, by its id and state, so a read that
   finds the same season asks Hiroba for nothing, and no other account is given it.
-- Asked for once the card is on screen after a read, one at a time in the queue with every other
-  request. Never retried: a plate that did not come is asked for once more after each read.
+- Asked for once the card is on screen after a read, in the queue with every other request. Never
+  retried: a plate that did not come is asked for once more after each read.
 
 Until the plate comes, or if it does not, a pale pill of the same shape stands in under the same
 words, and a line under it gives a code for a report. A page with no どんメダル plate, and one this
@@ -426,7 +432,7 @@ name. The window asks for "the My Don", and nothing more.
   nothing.
 - Fetched anew only after a costume change applies, and after you press **Read again**, so
   a change made on Hiroba's own site shows after the next **Read again**. Asked for once the tile is
-  on screen, one at a time in the queue, so never between a write's requests. If that fetch fails,
+  on screen, in the queue, so never between a write's requests. If that fetch fails,
   the one kept stays on the tile until the next of those.
 
 Until the first one comes the tile is empty, with a small spinner; if it does not come, the tile

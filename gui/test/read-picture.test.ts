@@ -76,11 +76,11 @@ function setUp(
       return (options.answer ?? (async (asked) => png(asked.url)))(request, signal);
     },
   };
-  const queue = {
-    oneAtATime<A extends unknown[], R>(run: (...args: A) => Promise<R>) {
+  const pipeline = {
+    read<A extends unknown[], R>(group: (...args: A) => Promise<R>) {
       return (...args: A) => {
-        events.push("queue");
-        return run(...args);
+        events.push("pipeline");
+        return group(...args);
       };
     },
   };
@@ -90,7 +90,7 @@ function setUp(
     transport,
     endpoints: options.endpoints ?? ENDPOINTS,
     store,
-    queue,
+    pipeline,
     limits: options.limits ?? LIMITS,
     state: () => state,
     clock: {
@@ -129,7 +129,7 @@ describe("createPictureReader, an item's thumbnail", () => {
         },
       },
     ]);
-    expect(events).toEqual(["sleep 37", "queue", "send ?cos=36&type=1"]);
+    expect(events).toEqual(["sleep 37", "pipeline", "send ?cos=36&type=1"]);
     expect(read.ok && read.value.src.startsWith("data:image/png;base64,")).toBe(true);
     expect(read.ok && decode(read.value.src)).toEqual(thumbnailPng(1, 36));
     expect(read.ok && [read.value.width, read.value.height]).toEqual([40, 40]);
@@ -356,7 +356,7 @@ describe("createPictureReader, the title plate", () => {
         },
       },
     ]);
-    expect(events).toEqual(["sleep 37", "queue", "send "]);
+    expect(events).toEqual(["sleep 37", "pipeline", "send "]);
     expect(read.ok && decode(read.value.src)).toEqual(titlePlatePng(TITLE));
     expect(read.ok && [read.value.width, read.value.height]).toEqual([
       TITLE_PLATE.width,
@@ -621,7 +621,7 @@ describe("createPictureReader, the score panel's art", () => {
         },
       },
     ]);
-    expect(events).toEqual(["sleep 37", "queue", "send "]);
+    expect(events).toEqual(["sleep 37", "pipeline", "send "]);
     expect(read.ok && decode(read.value.src)).toEqual(scorePanelPng(5));
     expect(read.ok && [read.value.width, read.value.height]).toEqual([600, 356]);
   });
@@ -717,7 +717,7 @@ describe("createPictureReader, the rank and crown icons", () => {
         },
       },
     ]);
-    expect(events).toEqual(["sleep 37", "queue", "send "]);
+    expect(events).toEqual(["sleep 37", "pipeline", "send "]);
     expect(read.ok && decode(read.value.src)).toEqual(rankIconPng(5));
     expect(read.ok && [read.value.width, read.value.height]).toEqual([128, 96]);
   });
@@ -885,7 +885,7 @@ describe("createPictureReader, the どんメダル plate", () => {
         },
       },
     ]);
-    expect(events).toEqual(["sleep 37", "queue", `send ?id=${ID}`]);
+    expect(events).toEqual(["sleep 37", "pipeline", `send ?id=${ID}`]);
     expect(read.ok && decode(read.value.src)).toEqual(medalPlatePng(ID, false));
     expect(read.ok && [read.value.width, read.value.height]).toEqual([600, 100]);
   });
@@ -1018,7 +1018,7 @@ describe("createPictureReader, the My Don portrait", () => {
         },
       },
     ]);
-    expect(events).toEqual(["sleep 37", "queue", `send ?v=&kind=mydon&fn=mydon_${OWNER}`]);
+    expect(events).toEqual(["sleep 37", "pipeline", `send ?v=&kind=mydon&fn=mydon_${OWNER}`]);
     expect(read.ok && decode(read.value.src)).toEqual(myDonPng(BEFORE));
     expect(read.ok && [read.value.width, read.value.height]).toEqual([290, 290]);
   });

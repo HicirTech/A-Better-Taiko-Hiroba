@@ -9,7 +9,6 @@ import {
 import {
   ANDROID_PICTURE_LIMITS,
   type CostumeHistoryStore,
-  createHirobaQueue,
   createMemoryPictureStore,
   createPictureReader,
   createRecentPreviews,
@@ -26,8 +25,8 @@ import {
   readOwnProfile,
   sessionEnded,
   signInStep,
-  whenQueueQuiet,
 } from "../hiroba-session";
+import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../pipelines";
 import {
   type CostumeSet,
   checkedPort,
@@ -128,7 +127,12 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const transport = createAndroidTransport();
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
-  const queue = createHirobaQueue();
+  const pipelines = {
+    io: createPipeline(IO_READ_CONSUMERS),
+    external: createPipeline(EXTERNAL_READ_CONSUMERS),
+  };
+  // Hiroba's requests stop with the session; the other sites' do not.
+  const hiroba = pipelines.io.gate(transport);
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
   let sources: PictureSources | null = null;
@@ -137,16 +141,16 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     if (!signedIn) {
       return err({ code: "preview=notSignedIn" });
     }
-    return previewCostume(transport, endpoints, set);
+    return previewCostume(hiroba, endpoints, set);
   });
   const pictures = createPictureReader({
-    transport,
+    transport: hiroba,
     endpoints,
     store:
       options.indexedDb === undefined
         ? createMemoryPictureStore()
         : createIndexedDbPictureStore(options.indexedDb),
-    queue,
+    pipeline: pipelines.io,
     limits: ANDROID_PICTURE_LIMITS,
     state: () => ({ signedIn, offered, owner, sources }),
   });
@@ -156,10 +160,12 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       options.indexedDb === undefined
         ? createMemoryPictureStore()
         : createIndexedDbPictureStore(options.indexedDb, CHART_PICTURE_DATABASE),
+    pipeline: pipelines.external,
     chartOrigin,
   });
 
   const forget = async () => {
+    pipelines.io.stop();
     signedIn = false;
     flag.set(false);
     offered = new Set();
@@ -172,7 +178,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
   const { indexedDb } = options;
   const writes = createSessionWrites({
-    transport,
+    transport: hiroba,
     endpoints,
     platform: "android",
     now: options.now ?? (() => new Date()),
@@ -188,7 +194,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     },
   });
 
-  const port = queuePort(queue, {
+  const port = queuePort(pipelines, {
     async isSignedIn() {
       return signedIn;
     },
@@ -255,7 +261,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       if (options?.renewsPortrait !== false) {
         pictures.myPageAsked();
       }
-      const read = await readOwnProfile(transport, endpoints);
+      const read = await readOwnProfile(hiroba, endpoints);
       if (!read.ok && sessionEnded(read.error)) {
         await forget();
       } else {
@@ -297,7 +303,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     changeName: flushed(writes.changeName),
 
-    // Asks Hiroba nothing, so it skips the queue.
+    // Asks Hiroba nothing, so it skips the pipelines.
     costumeHistory: writes.costumeHistory,
 
     readUpdateFeed: () => readUpdateFeed(transport, updateFeedUrl),
@@ -308,7 +314,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     changeFavoriteSong: flushed(writes.changeFavoriteSong),
 
-    readSongPicker: flushed(whenQueueQuiet(queue, writes.readSongPicker)),
+    readSongPicker: flushed(writes.readSongPicker),
 
     readSongCatalogue: (since) => readSongCatalogue(transport, songCatalogueUrl, since),
 
