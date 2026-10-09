@@ -2,6 +2,7 @@ import { err, ok, type Result, type Transport } from "@abth/core";
 
 import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../hiroba-session/picture-store";
 import { base64Of } from "../hiroba-session/png-answer";
+import type { Pipeline } from "../pipelines";
 import type { PictureFailure, PictureView } from "../session-port/types";
 import { isChartPictureAddress } from "./catalogue-links";
 import { sniffPicture } from "./sniff-picture";
@@ -12,6 +13,8 @@ const CHART_PICTURE_TIMEOUT_MS = 30_000;
 export interface ChartPictureReaderOptions {
   readonly transport: Transport;
   readonly store: PictureStore;
+  /** The pipeline for sites other than Hiroba: each fetch is a read group in it. */
+  readonly pipeline: Pick<Pipeline, "read">;
   /** In a development run, the stand-in's origin, read beside the chart hosts. */
   readonly chartOrigin: string | undefined;
 }
@@ -35,7 +38,7 @@ function viewOf(bytes: Uint8Array): Result<PictureView, "tooLarge" | "notPicture
 
 /** Chart pictures: one GET each, with no session, kept on the device once they pass the checks. */
 export function createChartPictureReader(options: ChartPictureReaderOptions): ChartPictureReader {
-  const { transport, store, chartOrigin } = options;
+  const { transport, store, pipeline, chartOrigin } = options;
   const inFlight = new Map<string, Promise<Result<PictureView, PictureFailure>>>();
 
   const read = async (url: string): Promise<Result<PictureView, PictureFailure>> => {
@@ -53,10 +56,9 @@ export function createChartPictureReader(options: ChartPictureReaderOptions): Ch
     if (keptView?.ok) {
       return keptView;
     }
-    const sent = await transport.send(
-      { method: "GET", url },
-      AbortSignal.timeout(CHART_PICTURE_TIMEOUT_MS),
-    );
+    const sent = await pipeline.read(() =>
+      transport.send({ method: "GET", url }, AbortSignal.timeout(CHART_PICTURE_TIMEOUT_MS)),
+    )();
     if (!sent.ok) {
       return failed(sent.error.kind === "unreachable" ? "unreachable" : "timedOut");
     }

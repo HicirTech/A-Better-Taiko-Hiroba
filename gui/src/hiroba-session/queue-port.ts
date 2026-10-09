@@ -5,11 +5,12 @@ import { BUSY_OUTCOME } from "./session-writes";
 /** The pipelines the port's verbs run in. */
 export interface PortPipelines {
   readonly io: Pipeline;
+  readonly external: Pipeline;
 }
 
 /** `port` with each verb run as `PORT_QUEUEING` says: the one place a shell queues its verbs. */
 export function queuePort(pipelines: PortPipelines, port: HirobaSessionPort): HirobaSessionPort {
-  const { io } = pipelines;
+  const { io, external } = pipelines;
   const queued: Partial<Record<keyof HirobaSessionPort, (...args: unknown[]) => Promise<unknown>>> =
     {};
   for (const verb of Object.keys(PORT_QUEUEING) as (keyof HirobaSessionPort)[]) {
@@ -23,6 +24,9 @@ export function queuePort(pipelines: PortPipelines, port: HirobaSessionPort): Hi
         break;
       case "write":
         queued[verb] = io.write(run, BUSY_OUTCOME);
+        break;
+      case "external":
+        queued[verb] = external.read(run);
         break;
       case "unqueued":
         queued[verb] = run;

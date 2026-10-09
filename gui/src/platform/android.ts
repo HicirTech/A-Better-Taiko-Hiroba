@@ -26,7 +26,7 @@ import {
   sessionEnded,
   signInStep,
 } from "../hiroba-session";
-import { createPipeline, IO_READ_CONSUMERS } from "../pipelines";
+import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../pipelines";
 import {
   type CostumeSet,
   checkedPort,
@@ -129,6 +129,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   let signedIn = flag.get();
   const pipelines = {
     io: createPipeline(IO_READ_CONSUMERS),
+    external: createPipeline(EXTERNAL_READ_CONSUMERS),
   };
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
@@ -157,6 +158,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       options.indexedDb === undefined
         ? createMemoryPictureStore()
         : createIndexedDbPictureStore(options.indexedDb, CHART_PICTURE_DATABASE),
+    pipeline: pipelines.external,
     chartOrigin,
   });
 

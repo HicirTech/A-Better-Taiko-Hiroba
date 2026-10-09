@@ -23,7 +23,7 @@ import {
   readOwnProfile,
   sessionEnded,
 } from "../src/hiroba-session";
-import { createPipeline, IO_READ_CONSUMERS } from "../src/pipelines";
+import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
@@ -121,6 +121,7 @@ const feedTransport = createUpdateFeedTransport({
 // Everything that asks Hiroba something goes through `io`, so no read lands inside a write.
 const pipelines = {
   io: createPipeline(IO_READ_CONSUMERS),
+  external: createPipeline(EXTERNAL_READ_CONSUMERS),
 };
 
 // A kept picture answers at once, even while a write runs; only a fetch waits in the pipeline.
@@ -132,10 +133,11 @@ const pictures = createPictureReader({
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
-// Asked of the wiki's hosts, not Hiroba: the feed's transport holds no session, and no queue.
+// Asked of the wiki's hosts, not Hiroba: the feed's transport holds no session.
 const chartPictures = createChartPictureReader({
   transport: feedTransport,
   store: createDiskPictureStore(join(app.getPath("userData"), "charts")),
+  pipeline: pipelines.external,
   chartOrigin: environment.chartOrigin,
 });
 // The writes come up with the window: until then a kept picture fills no history.

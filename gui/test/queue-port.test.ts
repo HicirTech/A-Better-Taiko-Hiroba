@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { BUSY_OUTCOME, queuePort } from "../src/hiroba-session";
-import { createPipeline, IO_READ_CONSUMERS } from "../src/pipelines";
+import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type HirobaSessionPort,
@@ -16,6 +16,7 @@ const queuedAs = (how: VerbQueueing) => VERBS.filter((verb) => PORT_QUEUEING[ver
 const READS = queuedAs("read");
 const EXCLUSIVE = queuedAs("exclusive");
 const WRITES = queuedAs("write");
+const EXTERNAL = queuedAs("external");
 const UNQUEUED = queuedAs("unqueued");
 
 /** Gives the next turn of the event loop to whatever the queue has ready to run. */
@@ -35,7 +36,13 @@ function watchedPort() {
       },
     ]),
   ) as unknown as HirobaSessionPort;
-  const port = queuePort({ io: createPipeline(IO_READ_CONSUMERS) }, verbs);
+  const port = queuePort(
+    {
+      io: createPipeline(IO_READ_CONSUMERS),
+      external: createPipeline(EXTERNAL_READ_CONSUMERS),
+    },
+    verbs,
+  );
   const ask = (verb: Verb, ...args: unknown[]) =>
     (port[verb] as (...values: unknown[]) => Promise<unknown>)(...args);
   const letGo = async (verb: Verb) => {
@@ -69,8 +76,9 @@ describe("PORT_QUEUEING", () => {
     ]);
   });
 
-  test("runs the picker alone, as it carries a form token", () => {
+  test("runs the picker alone, as it carries a form token, and other sites in their own pipeline", () => {
     expect(EXCLUSIVE).toEqual(["readSongPicker"]);
+    expect(EXTERNAL).toEqual(["readUpdateFeed", "readSongCatalogue", "readChineseNames"]);
   });
 });
 
@@ -119,7 +127,7 @@ describe("queuePort", () => {
       },
     );
 
-    test.each(UNQUEUED)("a %s asked for is not held up", async (free) => {
+    test.each([...EXTERNAL, ...UNQUEUED])("a %s asked for is not held up", async (free) => {
       const { events, ask, letGo } = watchedPort();
       const writing = ask(running);
       await settle();

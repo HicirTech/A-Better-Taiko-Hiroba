@@ -11,6 +11,7 @@ import {
   type PictureKey,
   type PictureStore,
 } from "../src/hiroba-session";
+import type { Pipeline } from "../src/pipelines";
 import { CHART_PICTURE_MAX_BYTES, createChartPictureReader } from "../src/song-catalogue";
 import { FFMPEG_JPEG, FFMPEG_LOSSY, gif, png } from "./picture-fixtures";
 
@@ -58,7 +59,33 @@ function recordingStore() {
   return { store, puts };
 }
 
-function setUp(options: { respond?: Responder; chartOrigin?: string; store?: PictureStore } = {}) {
+type ReadOnly = Pick<Pipeline, "read">;
+
+/** Runs every read group at once. */
+const OPEN_PIPELINE: ReadOnly = { read: (group) => group };
+
+/** A pipeline that has not run a read group yet, and runs the latest one when told to. */
+function heldPipeline() {
+  let runLatest: () => void = () => undefined;
+  const pipeline: ReadOnly = {
+    read:
+      (group) =>
+      (...args) =>
+        new Promise((resolve, reject) => {
+          runLatest = () => void group(...args).then(resolve, reject);
+        }),
+  };
+  return { pipeline, run: () => runLatest() };
+}
+
+function setUp(
+  options: {
+    respond?: Responder;
+    chartOrigin?: string;
+    store?: PictureStore;
+    pipeline?: ReadOnly;
+  } = {},
+) {
   const sent: { request: TransportRequest; signal: AbortSignal | undefined }[] = [];
   const transport: Transport = {
     async send(request, signal) {
@@ -67,7 +94,12 @@ function setUp(options: { respond?: Responder; chartOrigin?: string; store?: Pic
     },
   };
   const store = options.store ?? createMemoryPictureStore();
-  const reader = createChartPictureReader({ transport, store, chartOrigin: options.chartOrigin });
+  const reader = createChartPictureReader({
+    transport,
+    store,
+    pipeline: options.pipeline ?? OPEN_PIPELINE,
+    chartOrigin: options.chartOrigin,
+  });
   return { reader, sent, store };
 }
 
@@ -103,6 +135,17 @@ describe("createChartPictureReader, a picture it reads", () => {
     expect(await reader(FILE)).toEqual(err({ code: "chart=tooLarge" }));
   });
 
+  test("sends its GET only when the pipeline runs its read group", async () => {
+    const held = heldPipeline();
+    const { reader, sent } = setUp({ pipeline: held.pipeline });
+    const reading = reader(FILE);
+    await Bun.sleep(0);
+    expect(sent).toEqual([]);
+    held.run();
+    expect(await reading).toEqual(view("png", PNG, 300, 20));
+    expect(sent).toHaveLength(1);
+  });
+
   test("follows a redirect to another chart host", async () => {
     const { reader } = setUp({ respond: () => answer(PNG, WIKI) });
     expect(await reader(FILE)).toEqual(view("png", PNG, 300, 20));
@@ -129,6 +172,14 @@ describe("createChartPictureReader, a picture it keeps", () => {
     const relaunched = setUp({ store });
     expect(await relaunched.reader(FILE)).toEqual(read);
     expect(relaunched.sent).toHaveLength(0);
+  });
+
+  test("answers a kept picture without waiting for a read group", async () => {
+    const store = createMemoryPictureStore();
+    await store.put(keyOf(FILE), PNG);
+    const { reader, sent } = setUp({ store, pipeline: heldPipeline().pipeline });
+    expect(await reader(FILE)).toEqual(view("png", PNG, 300, 20));
+    expect(sent).toEqual([]);
   });
 
   test("keeps each address apart", async () => {
