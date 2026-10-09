@@ -91,6 +91,7 @@ const setSession = (value: string | null) => {
   sessionCookie = value;
   sessionStore?.save(value);
   if (value === null) {
+    pipelines.io.stop();
     owner = null;
     sources = null;
     offered = new Set();
@@ -108,21 +109,22 @@ const transport = createHirobaTransport({
   userAgent,
   hirobaOrigin: endpoints.hirobaOrigin,
 });
-const readTransport =
-  process.env.ABTH_DEBUG_SAVE_READS === "1"
-    ? saveReads(transport, join(app.getPath("userData"), "debug"))
-    : transport;
-
-const feedTransport = createUpdateFeedTransport({
-  userAgent,
-  hirobaOrigin: endpoints.hirobaOrigin,
-});
-
 // Everything that asks Hiroba something goes through `io`, so no read lands inside a write.
 const pipelines = {
   io: createPipeline(IO_READ_CONSUMERS),
   external: createPipeline(EXTERNAL_READ_CONSUMERS),
 };
+// Hiroba's requests stop with the session; the other sites' do not.
+const readTransport = pipelines.io.gate(
+  process.env.ABTH_DEBUG_SAVE_READS === "1"
+    ? saveReads(transport, join(app.getPath("userData"), "debug"))
+    : transport,
+);
+
+const feedTransport = createUpdateFeedTransport({
+  userAgent,
+  hirobaOrigin: endpoints.hirobaOrigin,
+});
 
 // A kept picture answers at once, even while a write runs; only a fetch waits in the pipeline.
 const pictures = createPictureReader({

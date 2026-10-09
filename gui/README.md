@@ -141,6 +141,10 @@ reads run at once. A write waits for the running reads to end, goes before the r
 and holds the queue for all its requests, so no read and no picture lands between them. A page
 first shown while a write of any kind runs reads when the write has ended, not before.
 
+When the session ends, by a sign-out or because Hiroba ended it, the queue stops: a read or a write
+that is running sends nothing after the request on its way, one still waiting sends nothing, and
+whatever is asked after that waits until they have all ended.
+
 A kind of write that has not been made for real from a platform also reads one other page before
 and after, to see that nothing else moved: a costume write reads your title on my page (six
 requests, not four), a title write reads your costume (six, not four), and a rename reads your title

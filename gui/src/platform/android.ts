@@ -131,6 +131,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     io: createPipeline(IO_READ_CONSUMERS),
     external: createPipeline(EXTERNAL_READ_CONSUMERS),
   };
+  // Hiroba's requests stop with the session; the other sites' do not.
+  const hiroba = pipelines.io.gate(transport);
   let offered: ReadonlySet<string> = new Set();
   let owner: string | null = null;
   let sources: PictureSources | null = null;
@@ -139,10 +141,10 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     if (!signedIn) {
       return err({ code: "preview=notSignedIn" });
     }
-    return previewCostume(transport, endpoints, set);
+    return previewCostume(hiroba, endpoints, set);
   });
   const pictures = createPictureReader({
-    transport,
+    transport: hiroba,
     endpoints,
     store:
       options.indexedDb === undefined
@@ -163,6 +165,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   });
 
   const forget = async () => {
+    pipelines.io.stop();
     signedIn = false;
     flag.set(false);
     offered = new Set();
@@ -175,7 +178,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
   const { indexedDb } = options;
   const writes = createSessionWrites({
-    transport,
+    transport: hiroba,
     endpoints,
     platform: "android",
     now: options.now ?? (() => new Date()),
@@ -258,7 +261,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       if (options?.renewsPortrait !== false) {
         pictures.myPageAsked();
       }
-      const read = await readOwnProfile(transport, endpoints);
+      const read = await readOwnProfile(hiroba, endpoints);
       if (!read.ok && sessionEnded(read.error)) {
         await forget();
       } else {
