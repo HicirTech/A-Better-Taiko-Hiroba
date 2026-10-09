@@ -8,17 +8,21 @@ import { inTextField, useSwipe } from "./use-swipe";
 export interface PipelinesSwipeProps {
   /** Whether the screen is touch-first and has a pipelines page to go to. */
   readonly active: boolean;
-  readonly menuOpen: boolean;
+  /** The pages' list is in view: the menu is open, or a wide window's panel is there. */
+  readonly pagesShown: boolean;
   readonly pipelinesShown: boolean;
+  /** Where the pages' list ends, from the window's left edge: the swipe past it starts on it. */
+  readonly listRightPx: number;
   /** Right to the pipelines page, left back to the menu. */
   readonly onSwiped: (direction: SwipeDirection) => void;
 }
 
-/** The swipe between the open menu and the pipelines page, beside the menu's own. */
+/** The swipe between the pages' list and the pipelines page, beside the menu's own. */
 export function usePipelinesSwipe({
   active,
-  menuOpen,
+  pagesShown,
   pipelinesShown,
+  listRightPx,
   onSwiped,
 }: PipelinesSwipeProps): void {
   const closers = useContext(BackClosersContext);
@@ -30,8 +34,9 @@ export function usePipelinesSwipe({
         ? null
         : pipelinesSwipeStarted(pointOf(finger), {
             fingers: event.touches.length,
-            menuOpen,
+            pagesShown,
             pipelinesShown,
+            listRightPx,
             claimed: closers.isOpen() || inTextField(event.target),
           });
     },

@@ -141,8 +141,10 @@ export function AppFrame({
     pipelines === undefined ? undefined : { shown: pipelinesShown, onShownChange: showPipelines };
   usePipelinesSwipe({
     active: touchFirst && toggle !== undefined,
-    menuOpen,
+    // A wide window's panel is the menu always open: the same swipe goes past it.
+    pagesShown: navigation && (menuOpen || wide),
     pipelinesShown,
+    listRightPx: PANEL_WIDTH_PX,
     onSwiped: (direction: SwipeDirection) => {
       showPipelines(direction === "right");
       // Back from the pipelines page is the menu it was reached from.
@@ -293,6 +295,9 @@ function ArrowForwardIcon() {
   );
 }
 
+const TITLE_ROW = { px: 3, pt: 2.5, pb: 1.5 } as const;
+const ARROW_ROW = { pl: 1.5, pr: 3, pt: 1.5, pb: 0.5 } as const;
+
 function PageList({
   page,
   onNavigate,
@@ -305,25 +310,34 @@ function PageList({
     </Typography>
   );
   const pipelinesLabel = i18n.t("nav.pipelines");
+  const touchFirst = useTouchFirst();
   return (
     <>
       {toggle === undefined ? (
-        <Box sx={{ px: 3, pt: 2.5, pb: 1.5 }}>{title}</Box>
+        <Box sx={TITLE_ROW}>{title}</Box>
       ) : (
         // The pipelines page lies one level past the pages, to the left: the arrow says which way.
+        // A touch screen draws no arrow, as it draws no menu button: its swipe stands in for it.
         <Box
-          sx={{ display: "flex", alignItems: "center", gap: 0.5, pl: 1.5, pr: 3, pt: 1.5, pb: 0.5 }}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            ...(touchFirst ? TITLE_ROW : ARROW_ROW),
+          }}
         >
-          <IconButton
-            id="nav-pipelines"
-            size="small"
-            aria-label={pipelinesLabel}
-            title={pipelinesLabel}
-            aria-pressed={toggle.shown}
-            onClick={() => toggle.onShownChange(!toggle.shown)}
-          >
-            {toggle.shown ? <ArrowForwardIcon /> : <ArrowBackIcon />}
-          </IconButton>
+          <Box sx={touchFirst ? HIDDEN_UNTIL_FOCUSED : undefined}>
+            <IconButton
+              id="nav-pipelines"
+              size="small"
+              aria-label={pipelinesLabel}
+              title={pipelinesLabel}
+              aria-pressed={toggle.shown}
+              onClick={() => toggle.onShownChange(!toggle.shown)}
+            >
+              {toggle.shown ? <ArrowForwardIcon /> : <ArrowBackIcon />}
+            </IconButton>
+          </Box>
           {title}
         </Box>
       )}
