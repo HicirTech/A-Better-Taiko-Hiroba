@@ -1,5 +1,5 @@
 import { type FavoriteSongEditorReading, parseSongPickerPage } from "../hiroba-dom-parser";
-import type { Genre, PickableSongs } from "../hiroba-models";
+import { GENRES, type PickableSongs } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { describeAnswer } from "./ajax";
 import { bsfOf, readFavoriteSongEditor } from "./favorite-song-write";
@@ -10,7 +10,6 @@ import type { HirobaReadFailure, ReadDeps } from "./types";
 const EDITOR_PATH = "/portal_favorite_song_select.php";
 const HANDOFF_PATH = "form_data.php";
 const PICKER = "select_song.php";
-const GENRES: readonly Genre[] = [1, 2, 3, 4, 5, 6, 7, 8];
 
 /** The requests a whole read of the picker sends: the editor, the handoff, then each genre. */
 export const SONG_PICKER_REQUESTS = 2 + GENRES.length;

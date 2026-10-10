@@ -1,5 +1,8 @@
 export type Genre = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
+/** Every genre, in Hiroba's numbering: one score list and one picker page each. */
+export const GENRES: readonly Genre[] = [1, 2, 3, 4, 5, 6, 7, 8];
+
 /** Ura is level 5 of the same song: it shares the song's `songNo` and is not a second song. */
 export type Level = 1 | 2 | 3 | 4 | 5;
 
