@@ -10,7 +10,7 @@ export const ja: Messages = {
   "nav.settings": "設定",
   "nav.menu": "メニュー",
   "nav.pipelines": "パイプライン",
-  "pipelines.io": "ひろば",
+  "pipelines.io": "ひろばとのやりとり",
   "pipelines.external": "外部データソース",
   "pipelines.now": "実行中と待機中",
   "pipelines.ended": "最近終わったもの",

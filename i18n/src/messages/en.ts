@@ -10,7 +10,7 @@ export const en: Messages = {
   "nav.settings": "Settings",
   "nav.menu": "Menu",
   "nav.pipelines": "Pipelines",
-  "pipelines.io": "Hiroba",
+  "pipelines.io": "Hiroba interaction",
   "pipelines.external": "External sources",
   "pipelines.now": "Running and waiting",
   "pipelines.ended": "Recently ended",

@@ -358,6 +358,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "始問題",
     "管來源",
     "隊近等待失敗獨佔寫功秒我",
+    "交互",
   ].join(""),
 );
 

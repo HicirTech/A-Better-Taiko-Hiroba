@@ -10,7 +10,7 @@ export const zhHans: Messages = {
   "nav.settings": "设置",
   "nav.menu": "菜单",
   "nav.pipelines": "管线",
-  "pipelines.io": "广场",
+  "pipelines.io": "广场交互",
   "pipelines.external": "外部数据源",
   "pipelines.now": "正在跑和排队的组",
   "pipelines.ended": "最近结束的组",

@@ -70,7 +70,7 @@ export async function pipelinesPage(ctx: Ctx) {
     (await attribute("#nav-pipelines", "aria-pressed")) === "true" &&
     (await textOf("main h1")) === "Pipelines" &&
     (await currentPage()) === null &&
-    same(headings, ["Hiroba", "Hiroba pictures", "External sources"]);
+    same(headings, ["Hiroba interaction", "Hiroba pictures", "External sources"]);
 
   // A success opens its details as a failure does; a second press puts them away.
   const newest = await waitFor("an ended Hiroba group", async () => {

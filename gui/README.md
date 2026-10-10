@@ -295,23 +295,24 @@ The Overview's top band holds a search field, as Gmail's does, across the whole 
 ### The pipelines page
 
 What the two pipelines run, have waiting and ended, read again four times a second while the page is
-shown and not at all otherwise. **Hiroba**, **Hiroba pictures** and **External sources** each have a
-section: Hiroba's pictures run in its pipeline, beside its other reads, and are shown apart, each by
-what it shows (My Don, a plate, the score panel, an icon or a costume thumbnail); External sources
-lists its chart pictures as it does its other groups. A section's first row has a block for each
-operation group, ten at most: the running ones first and solid, the waiting ones after them and
-pale, blue for a read, purple for a read that runs alone (the song picker's) and orange for a write.
-With more than ten groups the tenth breathes, or shows a + with reduced motion, and the number at
-the row's end is how many groups wait. Its second row has the last twelve groups that ended, each
-new one pushing in from the left on a wash of its mark's colour: ✓ succeeded, ✕ failed and ⊘ stopped
-by a sign-out. **More** lists every group kept. A block, a cell or a row of that list shows at the
-section's foot the operation, how it ended, when it started, how long it took and how many requests
-it sent; for one that did not succeed, the last request it sent and the code for a report; for one
-still running, how long it has run and the request it is on. Each section keeps its last 1000 groups
-on the device, across sign-outs and relaunches, a picture only once it was asked of Hiroba:
-`pipelines\io.json`, `pipelines\pictures.json` and `pipelines\external.json` in the app's data
-folder on the desktop, the `abth-pipelines` database on Android. They hold operations, outcomes,
-codes, times and the paths of requests, never a query, a form or anything of the player's.
+shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures** and **External sources**
+each have a section: Hiroba's pictures run in its pipeline, beside its other reads, and are shown
+apart, each by what it shows (My Don, a plate, the score panel, an icon or a costume thumbnail);
+External sources lists its chart pictures as it does its other groups. A section's first row has a
+block for each operation group, ten at most: the running ones first and solid, the waiting ones
+after them and pale, blue for a read, purple for a read that runs alone (the song picker's) and
+orange for a write. With more than ten groups the tenth breathes, or shows a + with reduced motion,
+and the number at the row's end is how many groups wait. Its second row has the last twelve groups
+that ended, each new one pushing in from the left on a wash of its mark's colour: ✓ succeeded, ✕
+failed and ⊘ stopped by a sign-out. **More** lists every group kept. A block, a cell or a row of
+that list shows at the section's foot the operation, how it ended, when it started, how long it took
+and how many requests it sent; for one that did not succeed, the last request it sent and the code
+for a report; for one still running, how long it has run and the request it is on. Each section
+keeps its last 1000 groups on the device, across sign-outs and relaunches, a picture only once it
+was asked of Hiroba: `pipelines\io.json`, `pipelines\pictures.json` and `pipelines\external.json` in
+the app's data folder on the desktop, the `abth-pipelines` database on Android. They hold
+operations, outcomes, codes, times and the paths of requests, never a query, a form or anything of
+the player's.
 
 ### The costume preview
 

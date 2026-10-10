@@ -10,7 +10,7 @@ export const zhHant: Messages = {
   "nav.settings": "設定",
   "nav.menu": "選單",
   "nav.pipelines": "管線",
-  "pipelines.io": "廣場",
+  "pipelines.io": "廣場交互",
   "pipelines.external": "外部資料來源",
   "pipelines.now": "正在執行和排隊的組",
   "pipelines.ended": "最近結束的組",
