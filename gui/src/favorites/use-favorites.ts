@@ -3,6 +3,7 @@ import { useCallback, useReducer, useRef } from "react";
 
 import { sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
+import { afterRefresh } from "../read-again/after-refresh";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
 import type { FavoriteSongState, HirobaSessionPort, WriteOutcomeView } from "../session-port";
 import {
@@ -26,7 +27,8 @@ export interface FavoritesEditor {
   readonly reading: boolean;
   readonly writing: boolean;
   readonly canRead: boolean;
-  read(): Promise<void>;
+  /** Reads the two editors, after Hiroba's own refresh when `refreshFirst`. */
+  read(refreshFirst?: boolean): Promise<void>;
   /** Drops everything of the favourites when a session ends or begins. */
   forget(): void;
   /** Puts a song in the draft for the 大好きな曲. */
@@ -58,30 +60,34 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
   );
 
   const mayRead = step.name === "unread" || canReadFavoritesAgain(step);
-  const read = useCallback(async () => {
-    const mine = generation.current;
-    if (!mayRead || reading.current === mine || writing.current) {
-      return;
-    }
+  const read = useCallback(
+    async (refreshFirst?: boolean) => {
+      const mine = generation.current;
+      if (!mayRead || reading.current === mine || writing.current) {
+        return;
+      }
 
-    reading.current = mine;
-    dispatch({ type: "readStarted" });
-    const result = await port.openFavorites();
-    if (reading.current === mine) {
-      reading.current = null;
-    }
-    if (mine !== generation.current) {
-      return;
-    }
+      reading.current = mine;
+      dispatch({ type: "readStarted" });
+      const open = () => port.openFavorites();
+      const result = await (refreshFirst ? afterRefresh(port, open) : open());
+      if (reading.current === mine) {
+        reading.current = null;
+      }
+      if (mine !== generation.current) {
+        return;
+      }
 
-    if (!result.ok && SESSION_GONE.has(result.error.kind)) {
-      forget();
-      onSessionGone(FAILURE_MESSAGE[result.error.kind]);
-      return;
-    }
+      if (!result.ok && SESSION_GONE.has(result.error.kind)) {
+        forget();
+        onSessionGone(FAILURE_MESSAGE[result.error.kind]);
+        return;
+      }
 
-    dispatch({ type: "readEnded", result });
-  }, [mayRead, port, forget, onSessionGone]);
+      dispatch({ type: "readEnded", result });
+    },
+    [mayRead, port, forget, onSessionGone],
+  );
 
   const write = async <S>(
     kind: SavingWrite,

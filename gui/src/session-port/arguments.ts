@@ -261,6 +261,7 @@ export const PORT_ARGUMENTS = {
   signIn: none,
   cancelSignIn: none,
   readProfile: profileRead,
+  refreshHiroba: none,
   signOut: none,
   openCostumeEditor: none,
   openTitleEditor: none,

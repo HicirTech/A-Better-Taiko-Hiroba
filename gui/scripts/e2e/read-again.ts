@@ -10,7 +10,17 @@ import {
   withoutPictureBytes,
 } from "./harness";
 import { barOf, CROWN_SHARES, legendOf, type Share } from "./overview";
-import { myPageHits, platesSettled, readHits } from "./stand-in";
+import {
+  LANE_PICTURES,
+  myPageHits,
+  platesSettled,
+  READ_AGAIN_MY_PAGE_READS,
+  REFRESH,
+  readHits,
+  refreshHits,
+  requestLog,
+  resetLog,
+} from "./stand-in";
 
 export const readAgainKeys = [
   "rotationTakenUp",
@@ -19,6 +29,8 @@ export const readAgainKeys = [
   "readAgainKeepsThePageInPlace",
   "settingsSignedInWhileReading",
   "readAgainByF5",
+  "readAgainRefreshesHirobaFirst",
+  "failedRefreshStopsTheRead",
   "pullPastThePointReads",
   "pullOnlyDownFromTheTop",
   "portraitTooltipShutInPull",
@@ -111,6 +123,8 @@ export async function readAgain(ctx: Ctx) {
   // F5 reads again, and the window itself is not reloaded: the mark set here outlives the read.
   await page.evaluate("window.notReloaded = true");
   const readsBeforeF5 = await myPageHits();
+  const refreshesBeforeF5 = await refreshHits();
+  await resetLog();
   const F5 = { key: "F5", code: "F5", windowsVirtualKeyCode: 116 };
   await page.send("Input.dispatchKeyEvent", { type: "keyDown", ...F5 });
   await page.send("Input.dispatchKeyEvent", { type: "keyUp", ...F5 });
@@ -119,8 +133,31 @@ export async function readAgain(ctx: Ctx) {
     same(await fabState(), { shut: false, spinning: false }) ? true : undefined,
   );
   results.readAgainByF5 =
-    (await myPageHits()) === readsBeforeF5 + 1 &&
+    (await myPageHits()) === readsBeforeF5 + READ_AGAIN_MY_PAGE_READS &&
     (await page.evaluate<boolean>("window.notReloaded === true"));
+  const sinceF5 = (await requestLog()).filter((line) => !LANE_PICTURES.includes(line));
+  results.readAgainRefreshesHirobaFirst =
+    (await refreshHits()) === refreshesBeforeF5 + 1 &&
+    same(sinceF5.slice(0, 3), ["GET /mypage_top.php", `POST ${REFRESH}`, "GET /mypage_top.php"]);
+
+  // A refresh Hiroba refuses is the read's failure, and nothing is read after it.
+  await fetch(`${HIROBA}/__history?refresh=901`);
+  const readsBeforeRefused = await myPageHits();
+  await click("#read-again");
+  await waitFor("the refused refresh", async () => (await exists("#failure-detail")) || undefined);
+  const refusedRead = {
+    words: (await text()).includes("Hiroba could not refresh your play data"),
+    detail: (await textOf("#failure-detail"))?.includes("result=901") ?? false,
+    reads: (await myPageHits()) - readsBeforeRefused,
+  };
+  await fetch(`${HIROBA}/__history?refresh=0`);
+  await click("#read-again");
+  await waitFor("the page read again", async () =>
+    (await exists("#profile")) && same(await fabState(), { shut: false, spinning: false })
+      ? true
+      : undefined,
+  );
+  results.failedRefreshStopsTheRead = same(refusedRead, { words: true, detail: true, reads: 1 });
 
   await touchEmulated(true);
   const pullFrom = { x: profileBox.left + profileBox.width / 2, y: profileBox.top + 40 };
@@ -134,7 +171,7 @@ export async function readAgain(ctx: Ctx) {
   results.pullPastThePointReads =
     readsByShortPull === 0 &&
     same(ringAtFullPull, { shown: true, ring: "100" }) &&
-    (await myPageHits()) === readsBeforePull + 1 &&
+    (await myPageHits()) === readsBeforePull + READ_AGAIN_MY_PAGE_READS &&
     !(await pullIndicator()).shown;
   const readsByUpwardSwipe = await readsBySwipe(pulledBy(0, 200), pullFrom);
   const readsBySidewaysSwipe = await readsBySwipe(pullFrom, pulledBy(200, 40));
@@ -230,9 +267,10 @@ export async function profileVariants(ctx: Ctx) {
     (await textOf("#crowns-silver")) === "11 of 14" &&
     !afterGif.includes("000000000000") &&
     !afterGif.includes("imgsrc");
-  // A read is two requests while my page shows a dan (the page and its label), one without.
+  // A read is two requests while my page shows a dan (the page and its label), one without, after
+  // the read of my page for the refresh's token.
   results.twoRequestsWithDanOneWithout =
-    JSON.stringify(requestsPerRead) === JSON.stringify([2, 2, 2, 1, 2]);
+    JSON.stringify(requestsPerRead) === JSON.stringify([3, 3, 3, 2, 3]);
   results.danLabelPictureCostsNothing =
     results.twoRequestsWithDanOneWithout === true && results.danLabelShownAsPicture === true;
   await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set`);

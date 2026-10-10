@@ -22,6 +22,8 @@ import {
   myPageHits,
   previewQueries,
   previewQuery,
+  REFRESH,
+  refreshHits,
   requestLog,
   resetLog,
   START,
@@ -131,9 +133,13 @@ export async function costumeEditor(ctx: Ctx) {
     ));
 
   const myPageReadsBeforeAgain = await myPageHits();
+  const refreshesBeforeAgain = await refreshHits();
   await readEditorAgain();
+  // My page is read once, for the refresh's token, and not as the page.
   results.readAgainReadsTheEditorHere =
-    (await editorHits()) === 2 && (await myPageHits()) === myPageReadsBeforeAgain;
+    (await editorHits()) === 2 &&
+    (await myPageHits()) === myPageReadsBeforeAgain + 1 &&
+    (await refreshHits()) === refreshesBeforeAgain + 1;
   await click("#swatch-colorFace-3");
   await readEditorAgain();
   results.readAgainKeepsADraftOverAnUnchangedSet =
@@ -424,9 +430,10 @@ export async function costumeWrite(ctx: Ctx) {
   results.colourApplied = colourOutcome === "applied";
   results.appliedShowsNoNotice =
     !(await exists("#write-outcome")) && (await stepOf()) === "editing";
+  // The editor is read again first, after the refresh's read of my page and its post.
   results.colourSentOnlyThePlannedRequests = sentAsPlanned(
     await requestLog(),
-    ["GET /mypage_kisekae.php"],
+    ["GET /mypage_top.php", `POST ${REFRESH}`, "GET /mypage_kisekae.php"],
     COLOUR_REQUESTS,
   );
   results.colourMovedOneField = same(await savedCostume(), { ...START, colorFace: 3 });

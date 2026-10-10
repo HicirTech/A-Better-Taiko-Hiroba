@@ -3,6 +3,7 @@ import { chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
 import { createFavoritesEditor } from "./mock-favorites";
+import { createPlayHistory } from "./mock-history";
 import {
   blankPlatePng,
   chartPicturePng,
@@ -51,6 +52,7 @@ const costume = createCostumeEditor();
 const profile = createProfileEditor({ issue: costume.issueTicket });
 /** The favourite editors, and the favourites my page shows; the token is shared here too. */
 const favorites = createFavoritesEditor({ issue: costume.issueTicket });
+const history = createPlayHistory();
 /** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
 const IDP_MARKER = "abth-mock-idp-marker";
 /** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
@@ -352,6 +354,15 @@ Bun.serve({
         // My page carries forms (rename, 大好きな曲) with a token, so reading it issues a new one.
         return page(myPage(costume.issueTicket(session)));
       }
+      case "/ajax/update_score.php": {
+        const entered = await ajaxEntry(request, session, () => undefined);
+        if (entered instanceof Response) {
+          return entered;
+        }
+        return Response.json(
+          history.refresh(entered.session, entered.form, `${HIROBA}/mypage_top.php`),
+        );
+      }
       case "/mypage_kisekae.php":
         if (!session?.cardChosen) {
           return redirect("/login.php");
@@ -497,6 +508,8 @@ Bun.serve({
           status: updateFeed.status,
           headers: { "content-type": "application/json" },
         });
+      case "/__history":
+        return Response.json(history.control(searchParams));
       case "/__song-catalogue":
         return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
       case "/__chinese-names":

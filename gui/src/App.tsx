@@ -31,6 +31,7 @@ import type { Page } from "./navigation/pages";
 import { createPictureLane } from "./pictures/picture-lane";
 import { IO_READ_CONSUMERS } from "./pipelines";
 import type { SystemLink, SystemToast } from "./platform";
+import { afterRefresh } from "./read-again/after-refresh";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { useReadAgainKeys } from "./read-again/use-read-again-keys";
@@ -113,16 +114,16 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
-    async (behindThePage = false): Promise<boolean> => {
+    async (behindThePage = false, refreshFirst = false): Promise<boolean> => {
       setRefreshing(true);
       if (!behindThePage) {
         setShut(true);
         setScreen((now) => (now.name === "profile" ? now : { name: "reading" }));
       }
       try {
-        const result = await (behindThePage
-          ? port.readProfile({ renewsPortrait: false })
-          : port.readProfile());
+        const readProfile = () =>
+          behindThePage ? port.readProfile({ renewsPortrait: false }) : port.readProfile();
+        const result = await (refreshFirst ? afterRefresh(port, readProfile) : readProfile());
         if (result.ok) {
           // Plates change with the title or season, the portrait with any costume change.
           // Fixed art is kept for good once it came, so only its failures are forgotten.
@@ -316,8 +317,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           // The pickers' list is read again when a picker next opens.
           markPickableStale();
         }
-        await pageEditor.read();
-      } else if ((await read()) && onNameTitlePage) {
+        await pageEditor.read(true);
+      } else if ((await read(false, true)) && onNameTitlePage) {
         // The titles are read again when the picker next opens.
         forgetTitleList();
       }

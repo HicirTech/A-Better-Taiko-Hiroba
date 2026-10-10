@@ -104,7 +104,7 @@ export async function thumbnails(ctx: Ctx) {
   await inStep("editing");
   results.pullReadsTheEditorOnTheCostumePage =
     (await editorHits()) === editorReadsBeforeGridPull + 1 &&
-    (await myPageHits()) === myPageReadsBeforeGridPull;
+    (await myPageHits()) === myPageReadsBeforeGridPull + 1;
   await touchEmulated(false);
   const editorTerms = await page.evaluate<(string | null)[][]>(
     `["#costume-group-items", "#costume-part-costume1", "#item-costume1-0", "#item-costume1-4"].map((selector) => { const node = document.querySelector(selector); return [node?.lang ?? null, node?.getAttribute("aria-label") ?? node?.textContent ?? null]; })`,

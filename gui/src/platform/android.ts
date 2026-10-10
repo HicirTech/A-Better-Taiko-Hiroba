@@ -339,6 +339,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     readSongPicker: flushed(writes.readSongPicker),
 
+    refreshHiroba: flushed(writes.refreshHiroba),
+
     readSongCatalogue: (site, since) => readSongCatalogue(site, songCatalogueUrl, since),
 
     readChineseNames: (site) => readChineseNames(site, chineseNamesUrl),

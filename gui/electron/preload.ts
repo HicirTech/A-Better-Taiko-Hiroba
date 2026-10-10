@@ -12,6 +12,7 @@ const port: HirobaSessionPort = {
     options === undefined
       ? ipcRenderer.invoke(BRIDGE_CHANNELS.readProfile)
       : ipcRenderer.invoke(BRIDGE_CHANNELS.readProfile, options),
+  refreshHiroba: () => ipcRenderer.invoke(BRIDGE_CHANNELS.refreshHiroba),
   signOut: () => ipcRenderer.invoke(BRIDGE_CHANNELS.signOut),
   openCostumeEditor: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openCostumeEditor),
   openTitleEditor: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openTitleEditor),

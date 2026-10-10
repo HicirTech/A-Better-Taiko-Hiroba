@@ -295,6 +295,7 @@ app.whenReady().then(async () => {
     changeFolder: writes.changeFolder,
     changeFavoriteSong: writes.changeFavoriteSong,
     readSongPicker: writes.readSongPicker,
+    refreshHiroba: writes.refreshHiroba,
     readSongCatalogue: (site, since) =>
       readSongCatalogue(site, environment.songCatalogueUrl, since),
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),

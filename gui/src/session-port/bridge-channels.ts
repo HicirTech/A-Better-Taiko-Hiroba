@@ -4,6 +4,7 @@ export const BRIDGE_CHANNELS = {
   signIn: "abth:sign-in",
   cancelSignIn: "abth:cancel-sign-in",
   readProfile: "abth:read-profile",
+  refreshHiroba: "abth:refresh-hiroba",
   signOut: "abth:sign-out",
   openCostumeEditor: "abth:open-costume-editor",
   openTitleEditor: "abth:open-title-editor",

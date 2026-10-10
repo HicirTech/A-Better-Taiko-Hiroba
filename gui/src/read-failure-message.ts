@@ -11,6 +11,8 @@ export const FAILURE_MESSAGE = {
   cancelled: "failure.cancelled",
   siteError: "failure.siteError",
   unexpectedPage: "failure.unexpectedPage",
+  maintenance: "failure.maintenance",
+  notRefreshed: "failure.notRefreshed",
 } as const satisfies Record<ReadFailureKind, MessageKey>;
 
 /** Failures after which the platform has already dropped the session: back to signing in. */

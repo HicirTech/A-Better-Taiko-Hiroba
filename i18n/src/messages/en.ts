@@ -36,6 +36,7 @@ export const en: Messages = {
   "pipelines.noRequest": "No request was sent",
   "pipelines.code": "Code: {code}",
   "pipelines.op.readProfile": "My page",
+  "pipelines.op.refreshHiroba": "Hiroba refresh",
   "pipelines.op.openCostumeEditor": "Costume editor",
   "pipelines.op.openTitleEditor": "Title editor",
   "pipelines.op.previewCostume": "Costume preview",
@@ -164,6 +165,9 @@ export const en: Messages = {
   "failure.siteError":
     "Hiroba answered with an error. It is closed for maintenance every day from 05:00 to 07:00 JST.",
   "failure.unexpectedPage": "Hiroba answered with a page this app did not expect.",
+  "failure.maintenance":
+    "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. It was not asked to refresh.",
+  "failure.notRefreshed": "Hiroba could not refresh your play data, so nothing more was read.",
   "failure.detail": "Details for a report: {detail}",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
   "plate.open": "Open the Nickname & title page",

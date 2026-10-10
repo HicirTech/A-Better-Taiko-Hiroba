@@ -36,6 +36,7 @@ export const ja: Messages = {
   "pipelines.noRequest": "リクエストは送っていません",
   "pipelines.code": "コード：{code}",
   "pipelines.op.readProfile": "マイページ",
+  "pipelines.op.refreshHiroba": "ひろばの更新",
   "pipelines.op.openCostumeEditor": "きせかえ画面",
   "pipelines.op.openTitleEditor": "称号画面",
   "pipelines.op.previewCostume": "きせかえプレビュー",
@@ -165,6 +166,9 @@ export const ja: Messages = {
   "failure.siteError":
     "ひろばがエラーを返しました。毎日 05:00〜07:00（日本時間）はメンテナンスで使えません。",
   "failure.unexpectedPage": "ひろばから想定外のページが返ってきました。",
+  "failure.maintenance":
+    "ひろばは毎日 05:00〜07:00（日本時間）がメンテナンスです。更新は頼んでいません。",
+  "failure.notRefreshed": "ひろばがプレイデータを更新できなかったため、読み込みを止めました。",
   "failure.detail": "報告用の詳細：{detail}",
   "platform.unsupported": "このビルドは、デスクトップ版か Android 版のアプリの中でしか動きません。",
   "plate.open": "ドンだーネームと称号のページを開く",

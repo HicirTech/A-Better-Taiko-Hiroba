@@ -100,8 +100,8 @@ describe("PORT_QUEUEING", () => {
     ]);
   });
 
-  test("runs the picker alone, as it carries a form token, and other sites in their own pipeline", () => {
-    expect(EXCLUSIVE).toEqual(["readSongPicker"]);
+  test("runs the refresh and the picker alone, as they carry a form token, and other sites apart", () => {
+    expect(EXCLUSIVE).toEqual(["refreshHiroba", "readSongPicker"]);
     expect(EXTERNAL).toEqual(["readUpdateFeed", "readSongCatalogue", "readChineseNames"]);
   });
 });

@@ -49,6 +49,7 @@ export interface Messages {
   "pipelines.noRequest": string;
   "pipelines.code": string;
   "pipelines.op.readProfile": string;
+  "pipelines.op.refreshHiroba": string;
   "pipelines.op.openCostumeEditor": string;
   "pipelines.op.openTitleEditor": string;
   "pipelines.op.previewCostume": string;
@@ -189,6 +190,8 @@ export interface Messages {
   "failure.cancelled": string;
   "failure.siteError": string;
   "failure.unexpectedPage": string;
+  "failure.maintenance": string;
+  "failure.notRefreshed": string;
   /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
   "failure.detail": string;
   "platform.unsupported": string;

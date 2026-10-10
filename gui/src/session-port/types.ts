@@ -126,12 +126,16 @@ export type ReadFailureKind =
   | "timedOut"
   | "cancelled"
   | "siteError"
-  | "unexpectedPage";
+  | "unexpectedPage"
+  /** Hiroba's daily maintenance: it was not asked to refresh. */
+  | "maintenance"
+  /** Hiroba did not refresh its copy of the player's data. */
+  | "notRefreshed";
 
 export interface ReadFailure {
   readonly kind: ReadFailureKind;
-  /** For `unexpectedPage` only: codes a user can copy into a report (path, status, content type,
-   * size, parser verdict, selector). Never page text, a query string or a cookie. */
+  /** For `unexpectedPage` and `notRefreshed`: codes a user can copy into a report (path, status,
+   * content type, size, parser verdict, selector, result). Never page text, a query or a cookie. */
   readonly detail?: string;
 }
 
@@ -266,6 +270,8 @@ export interface HirobaSessionPort {
   cancelSignIn(): Promise<void>;
   /** My page, then its dan label if it shows one: one request, or two with a dan. Never retried. */
   readProfile(options?: ReadProfileOptions): Promise<Result<ProfileView, ReadFailure>>;
+  /** Hiroba's own ↻: my page for a fresh token, then one post, alone. Never retried. */
+  refreshHiroba(): Promise<Result<void, ReadFailure>>;
   /** Forgets the session on this device. Hiroba is not told. */
   signOut(): Promise<void>;
   /** The costume editor: one GET. Its form token stays with the platform. */

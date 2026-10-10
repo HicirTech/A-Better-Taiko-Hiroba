@@ -55,6 +55,10 @@ and letting go once its ring is full reads again (a page that has scrolled is th
 back, and pulls nothing). On the Costume and Favourites pages
 the same button, keys and pull read the page's editors again instead of your page; on the
 Nickname & title page they read your page and then the list of titles.
+Each of them first asks Hiroba to refresh its copy of your play from the game server, as the ↻ on
+Hiroba's own pages does: my page is read for a fresh form token and the ↻'s post sent once, alone in
+the queue, and a refresh Hiroba refuses stops the read there, with the reason. The read after a
+sign-in or at a launch does not ask for one.
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -300,8 +304,8 @@ each have a section: Hiroba's pictures run in its pipeline, beside its other rea
 apart, each by what it shows (My Don, a plate, the score panel, an icon or a costume thumbnail);
 External sources lists its chart pictures as it does its other groups. A section's first row has a
 block for each operation group, ten at most: the running ones first and solid, the waiting ones
-after them and pale, blue for a read, purple for a read that runs alone (the song picker's) and
-orange for a write. With more than ten groups the tenth breathes, or shows a + with reduced motion,
+after them and pale, blue for a read, purple for a read that runs alone (the song picker's, and
+Hiroba's refresh) and orange for a write. With more than ten groups the tenth breathes, or shows a + with reduced motion,
 and the number at the row's end is how many groups wait. Its second row has the last twelve groups
 that ended, each new one pushing in from the left on a wash of its mark's colour: ✓ succeeded, ✕
 failed and ⊘ stopped by a sign-out. **More** lists every group kept. A block, a cell or a row of

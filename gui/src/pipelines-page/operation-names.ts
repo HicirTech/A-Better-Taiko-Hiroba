@@ -5,6 +5,7 @@ import type { PictureWant } from "../session-port";
 /** Each operation's name on the pipelines page, by the name its group runs as. */
 export const OPERATION_NAMES: Readonly<Record<string, MessageKey>> = {
   readProfile: "pipelines.op.readProfile",
+  refreshHiroba: "pipelines.op.refreshHiroba",
   openCostumeEditor: "pipelines.op.openCostumeEditor",
   openTitleEditor: "pipelines.op.openTitleEditor",
   previewCostume: "pipelines.op.previewCostume",

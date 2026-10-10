@@ -11,6 +11,7 @@ export const PORT_QUEUEING = {
   signIn: "unqueued",
   cancelSignIn: "unqueued",
   readProfile: "read",
+  refreshHiroba: "exclusive",
   signOut: "unqueued",
   openCostumeEditor: "read",
   openTitleEditor: "read",
