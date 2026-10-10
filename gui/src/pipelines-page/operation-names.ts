@@ -1,5 +1,7 @@
+import type { Genre, Level } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 
+import { DIFFICULTY_LABEL, GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import type { PictureWant } from "../session-port";
 
 /** Each operation's name on the pipelines page, by the name its group runs as. */
@@ -47,7 +49,24 @@ export const PAGE_NAMES: Readonly<Record<string, MessageKey>> = {
   recentPlaysPage: "pipelines.op.recentPlaysPage",
 };
 
-/** A group's name: what its picture shows, the page a walk read, or its operation's. */
+/** A score read's name, from its subject: a genre's list, or a chart as `songNo/level`. */
+function scoreReadName(i18n: Translator, operation: string, subject: string): string | null {
+  const [song = "", level = ""] = subject.split("/");
+  const genre = Number(subject);
+  if (operation === "scoreList" && Object.hasOwn(GENRE_LABEL, genre)) {
+    return i18n.t("pipelines.op.scoreList", { genre: i18n.t(GENRE_LABEL[genre as Genre]) });
+  }
+  if (operation === "scoreDetail" && Object.hasOwn(LEVEL_DIFFICULTY, level)) {
+    const difficulty = LEVEL_DIFFICULTY[Number(level) as Level];
+    return i18n.t("pipelines.op.scoreDetail", {
+      song,
+      difficulty: i18n.t(DIFFICULTY_LABEL[difficulty]),
+    });
+  }
+  return null;
+}
+
+/** A group's name: its picture, the page a walk read, the score it read, or its operation. */
 export function groupName(
   i18n: Translator,
   group: { readonly operation: string; readonly subject?: string },
@@ -58,6 +77,10 @@ export function groupName(
     : undefined;
   if (subject !== undefined && pageKey !== undefined) {
     return i18n.t(pageKey, { page: subject });
+  }
+  const scoreRead = subject === undefined ? null : scoreReadName(i18n, group.operation, subject);
+  if (scoreRead !== null) {
+    return scoreRead;
   }
   const key =
     subject !== undefined && Object.hasOwn(PICTURE_NAMES, subject)

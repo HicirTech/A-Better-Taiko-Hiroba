@@ -361,6 +361,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "交互",
     "它整理玩所繼續",
     "近紀打隱形反輔助往拉速",
+    "裡幾鐘",
   ].join(""),
 );
 

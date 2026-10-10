@@ -38,6 +38,8 @@ import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { useReadAgainKeys } from "./read-again/use-read-again-keys";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
+import { ScoresPage, scoresReadingText } from "./scores/scores-page";
+import { useScores } from "./scores/use-scores";
 import type {
   HirobaSessionPort,
   ProfileView,
@@ -103,6 +105,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
   const onFavoritesPage = page === "favorites" && screen.name === "profile";
   const onHistoryPage = page === "history" && screen.name === "profile";
+  const onScoresPage = page === "scores" && screen.name === "profile";
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
@@ -115,6 +118,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     forget: forgetPickable,
   } = usePickableSongs(port, sessionGone);
   const history = useRecentPlays(port, sessionGone);
+  const scores = useScores(port, sessionGone);
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
@@ -311,7 +315,9 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       ? favorites
       : onHistoryPage
         ? history
-        : null;
+        : onScoresPage
+          ? scores
+          : null;
   const canReadAgain =
     signedIn && !writing && !refreshing && (pageEditor === null || pageEditor.canRead);
   // Turns away a second ask, by the button or a key, that lands before the button is shut.
@@ -325,6 +331,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       if (onHistoryPage) {
         // A walk can run for minutes: Read again on another page must not wait for it.
         void history.read();
+      } else if (onScoresPage) {
+        void scores.read();
       } else if (pageEditor !== null) {
         if (onFavoritesPage) {
           // The pickers' list is read again when a picker next opens.
@@ -349,7 +357,11 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             canRead={canReadAgain}
             fetchedAt={screen.name === "profile" ? screen.profile.fetchedAt : null}
             progress={
-              history.page === null ? null : t("history.readingPage", { page: history.page })
+              scores.reading
+                ? scoresReadingText(i18n, scores.progress, scores.song)
+                : history.page === null
+                  ? null
+                  : t("history.readingPage", { page: history.page })
             }
             onRead={readAgain}
             i18n={i18n}
@@ -429,6 +441,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           <Box id="page-shut" inert={shut} sx={{ display: "contents", "& > *": SHUT_LOOK(shut) }}>
             {screen.name === "profile" && page === "history" && (
               <HistoryPage history={history} lane={lane} touchFirst={touchFirst} i18n={i18n} />
+            )}
+
+            {screen.name === "profile" && page === "scores" && (
+              <ScoresPage scores={scores} lane={lane} touchFirst={touchFirst} i18n={i18n} />
             )}
 
             {screen.name === "profile" && page === "costume" && (

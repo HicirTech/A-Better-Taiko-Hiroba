@@ -18,6 +18,7 @@ export interface Messages {
   "language.system": string;
   "nav.overview": string;
   "nav.history": string;
+  "nav.scores": string;
   "nav.costume": string;
   "nav.nameTitle": string;
   "nav.favorites": string;
@@ -33,6 +34,7 @@ export interface Messages {
   "pipelines.less": string;
   "pipelines.pictures": string;
   "pipelines.history": string;
+  "pipelines.scores": string;
   "pipelines.read": string;
   "pipelines.exclusive": string;
   "pipelines.write": string;
@@ -54,6 +56,10 @@ export interface Messages {
   "pipelines.op.refreshHiroba": string;
   /** Param: {page}. A page of the recent plays walk, in the play history pipeline. */
   "pipelines.op.recentPlaysPage": string;
+  /** Param: {genre}, its name. A genre's score list, in Hiroba's IO pipeline. */
+  "pipelines.op.scoreList": string;
+  /** Params: {song}, its number, and {difficulty}. A chart's details, in the scores pipeline. */
+  "pipelines.op.scoreDetail": string;
   "pipelines.op.openCostumeEditor": string;
   "pipelines.op.openTitleEditor": string;
   "pipelines.op.previewCostume": string;
@@ -99,6 +105,24 @@ export interface Messages {
   "history.kimagure": string;
   "history.detarame": string;
   "history.support": string;
+  /** Param: {page}. While a read of scores walks recent plays. */
+  "scores.readingPlays": string;
+  /** Params: {done} and {total}, the lists or the charts read so far, and how many in all. */
+  "scores.readingLists": string;
+  "scores.readingCharts": string;
+  /** Param: {song}, Hiroba's title. While one song's scores are read again. */
+  "scores.readingSong": string;
+  /** Param: {genre}. Under a read's failure: the list whose request failed. */
+  "scores.failedList": string;
+  /** Params: {song} and {difficulty}. Under a read's failure: the chart whose request failed. */
+  "scores.failedChart": string;
+  /** On the scores page with nothing kept yet: how to read them, on a touch screen or not. */
+  "scores.emptyPull": string;
+  "scores.emptyReadAgain": string;
+  /** Param: {count}, charts played or stopped at but not read yet. */
+  "scores.unread": string;
+  /** A song's action: read its charts again. */
+  "scores.readSong": string;
   "settings.language": string;
   "settings.account": string;
   /** Param: {name}, the nickname, as Hiroba writes it. */

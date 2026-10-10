@@ -1,7 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { createTranslator } from "@abth/i18n";
 
-import { PICTURE_OPERATION, RECENT_PLAYS_PAGE_OPERATION } from "../src/hiroba-session";
+import {
+  PICTURE_OPERATION,
+  RECENT_PLAYS_PAGE_OPERATION,
+  SCORE_DETAIL_OPERATION,
+  SCORE_LIST_OPERATION,
+} from "../src/hiroba-session";
 import type { EndedGroup, GroupNow, PipelineView } from "../src/pipelines";
 import {
   groupName,
@@ -135,5 +140,16 @@ describe("operationName", () => {
       "近期游玩第 37 页",
     );
     expect(Object.keys(PAGE_NAMES)).toEqual([RECENT_PLAYS_PAGE_OPERATION]);
+  });
+
+  test("names a score list by its genre, and a chart's details by its song and difficulty", () => {
+    const zh = createTranslator("zh-Hans");
+
+    expect(groupName(zh, { operation: SCORE_LIST_OPERATION, subject: "6" })).toBe(
+      "成绩列表：南梦宫原创",
+    );
+    expect(groupName(zh, { operation: SCORE_DETAIL_OPERATION, subject: "1178/5" })).toBe(
+      "成绩详情：曲号 1178（魔王(里)）",
+    );
   });
 });

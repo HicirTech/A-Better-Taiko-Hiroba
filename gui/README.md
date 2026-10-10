@@ -13,15 +13,16 @@ tooltip); the season's どんメダル on Hiroba's own plate, and your favourite
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On the desktop it opens as tall as the Overview, so the Overview shows
-whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its six pages:
+whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its seven pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
 **Recent plays** (the あそんだ曲 feed, see [Recent plays](#recent-plays)),
+**Scores** (every chart you played, see [Scores](#scores)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
-Costume, Nickname & title, Favourites, Recent plays or Settings back to the Overview, and from the Overview leaves
+Costume, Nickname & title, Favourites, Recent plays, Scores or Settings back to the Overview, and from the Overview leaves
 the app as before.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
@@ -179,7 +180,7 @@ when you are done.
 
 ### Recent plays
 
-The page of `history_recent_score.php`, second in the navigation, between the Overview and Costume.
+The page of `history_recent_score.php`, second in the navigation, between the Overview and Scores.
 It shows the walk stored on the device, newest first, and has no button of its own: it reads again
 only when you ask, by a pull on a touch screen, or Read again and its keys, and says so while it has
 nothing yet. Each read first asks Hiroba to refresh, then walks the feed: page 1 alone, then up to
@@ -192,9 +193,24 @@ as a lifebuoy), then the score with the longest combo, and the 良/可/不可/�
 the feed also carries are kept for a page of a chart's details. The rows have no date and no song
 number, and stay on the device after a sign-out.
 
+### Scores
+
+Every chart you played, read from Hiroba's score lists and detail pages, third in the navigation,
+between Recent plays and Costume. As Recent plays does, it reads only when you ask, by a pull on a
+touch screen, or Read again and its keys, and each read first asks Hiroba to refresh. The first read
+takes the eight score lists, in Hiroba's own pipeline since a list carries a form token, then the
+details of every chart they show played, five at once in a pipeline of their own; it takes a few
+minutes, and the page says how far it has come. A later read walks recent plays and reads again the
+details of each chart played since; a walk on the Recent plays page marks those charts too, and the
+page counts them until it reads them. A title the lists do not carry yet reads its genre's list
+again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
+from there next time. A row looks as one of Recent plays does, and its menu (a right-click, or on a
+touch screen a long press) reads all the song's charts again. The scores stay on the device, each
+player's apart, after a sign-out too.
+
 ### The Costume page
 
-The page of the きせかえ editor, third in the navigation, between Recent plays and Nickname & title. The
+The page of the きせかえ editor, fourth in the navigation, between Scores and Nickname & title. The
 My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
 on a touch-first screen (`pointer: coarse`) a long-press of about half a second, held still, so a
 tap, a scroll or a pull begun on it goes nowhere; a pointer on it shows its name, and where a
@@ -316,11 +332,13 @@ The Overview's top band holds a search field, as Gmail's does, across the whole 
 
 ### The pipelines page
 
-What the three pipelines run, have waiting and ended, read again four times a second while the page
-is shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures**, **Play history** and
-**External sources** each have a section: Hiroba's pictures run in its pipeline, beside its other
+What the four pipelines run, have waiting and ended, read again four times a second while the page
+is shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures**, **Play history**,
+**Scores** and **External sources** each have a section: Hiroba's pictures run in its pipeline, beside its other
 reads, and are shown apart, each by what it shows (My Don, a plate, the score panel, an icon or a
-costume thumbnail); Play history lists each page of recent plays it read by its number; External
+costume thumbnail); Play history lists each page of recent plays it read by its number; Scores
+lists each chart's details it read by song number and difficulty, and Hiroba interaction each score
+list by its genre; External
 sources lists its chart pictures as it does its other groups. A section's first row has a
 block for each operation group, ten at most: the running ones first and solid, the waiting ones
 after them and pale, blue for a read, purple for a read that runs alone (the song picker's, and

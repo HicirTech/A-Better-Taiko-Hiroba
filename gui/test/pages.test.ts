@@ -8,6 +8,7 @@ describe("PAGES", () => {
     expect([...PAGES]).toEqual([
       "overview",
       "history",
+      "scores",
       "costume",
       "nameTitle",
       "favorites",
@@ -47,9 +48,11 @@ describe("keptPage", () => {
 });
 
 describe("isPage", () => {
-  test("accepts the six pages and nothing else", () => {
+  test("accepts the seven pages and nothing else", () => {
     expect(
-      ["overview", "history", "costume", "nameTitle", "favorites", "settings"].every(isPage),
+      ["overview", "history", "scores", "costume", "nameTitle", "favorites", "settings"].every(
+        isPage,
+      ),
     ).toBe(true);
     expect(
       [null, "", "Overview", "Costume", "favourites", "name-title", "nametitle"].some(isPage),

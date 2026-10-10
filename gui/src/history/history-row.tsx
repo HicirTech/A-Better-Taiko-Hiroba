@@ -1,22 +1,20 @@
-import { type Level, playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
+import { playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, SvgIcon } from "@mui/material";
+import type { MouseEvent } from "react";
 
-import { DIFFICULTY_LABEL, GENRE_COLOUR, GENRE_LABEL } from "../favorites/genre-look";
+import {
+  DIFFICULTY_LABEL,
+  GENRE_COLOUR,
+  GENRE_LABEL,
+  LEVEL_DIFFICULTY,
+} from "../favorites/genre-look";
 import { HIROBA_LANG } from "../language/hiroba-lang";
+import type { LongPressHandlers } from "../my-page/use-long-press";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CrownKind } from "../session-port";
-import type { Difficulty } from "../song-catalogue/types";
 import { CourseIcon } from "../songs/course-icon";
-
-const LEVEL_DIFFICULTY = {
-  1: "easy",
-  2: "normal",
-  3: "hard",
-  4: "oni",
-  5: "ura",
-} as const satisfies Record<Level, Difficulty>;
 
 const CROWN_KEY = {
   silver: "crowns.silver",
@@ -58,17 +56,24 @@ const ROW = {
   "& .song-facts": { color: "text.secondary", fontSize: "0.8125rem", lineHeight: 1.45 },
 } as const;
 
+/** What a row answers besides being shown: a right-click, or a long press, to open its actions. */
+export type RowHandlers =
+  | { readonly onContextMenu: (event: MouseEvent) => void }
+  | LongPressHandlers;
+
 /** One recent play: the difficulty and the song, its marks as Hiroba's icons, then its counts. */
 export function HistoryRow({
   play,
   lane,
   order,
   i18n,
+  handlers,
 }: {
   readonly play: RecentPlay;
   readonly lane: PictureLane;
   readonly order: number;
   readonly i18n: Translator;
+  readonly handlers?: RowHandlers;
 }) {
   const { t, number } = i18n;
   const difficulty = LEVEL_DIFFICULTY[play.level];
@@ -92,7 +97,13 @@ export function HistoryRow({
     labeled(t("history.roll"), record.drumroll, number),
   ].filter((part) => part !== null);
   return (
-    <Box component="li" className="history-row" sx={ROW}>
+    <Box
+      component="li"
+      className="history-row"
+      sx={ROW}
+      aria-haspopup={handlers === undefined ? undefined : "menu"}
+      {...handlers}
+    >
       <span
         className="song-bars"
         {...(genre === null ? { "aria-hidden": true } : { role: "img", "aria-label": genre })}

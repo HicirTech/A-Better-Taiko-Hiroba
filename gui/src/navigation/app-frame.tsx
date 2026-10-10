@@ -39,6 +39,7 @@ import {
   HistoryIcon,
   NameTitleIcon,
   OverviewIcon,
+  ScoresIcon,
   SettingsIcon,
 } from "./page-icons";
 import { PAGES, type Page } from "./pages";
@@ -53,6 +54,7 @@ const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly i
   {
     overview: { label: "nav.overview", icon: <OverviewIcon /> },
     history: { label: "nav.history", icon: <HistoryIcon /> },
+    scores: { label: "nav.scores", icon: <ScoresIcon /> },
     costume: { label: "nav.costume", icon: <CostumeIcon /> },
     nameTitle: { label: "nav.nameTitle", icon: <NameTitleIcon /> },
     favorites: { label: "nav.favorites", icon: <FavoritesIcon /> },
