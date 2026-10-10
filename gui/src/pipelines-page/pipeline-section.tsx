@@ -45,6 +45,9 @@ const OUTCOME_COLOR: Readonly<Record<EndedGroup["outcome"], string>> = {
   stopped: "text.disabled",
 };
 
+// A wash of the mark's own colour, lighter than the mark.
+const MARK_WASH = "color-mix(in srgb, currentColor 18%, transparent)";
+
 const BREATHE = keyframes`
   50% { opacity: 0.35; }
 `;
@@ -282,7 +285,7 @@ function EndedCell({
       onClick={onPick}
       sx={{
         ...SLOT,
-        bgcolor: "action.hover",
+        bgcolor: MARK_WASH,
         color: OUTCOME_COLOR[group.outcome],
         fontWeight: 700,
         // The newest pushes in from the left, as the older ones move along.
