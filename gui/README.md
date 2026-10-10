@@ -22,6 +22,11 @@ signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
 Costume, Nickname & title, Favourites or Settings back to the Overview, and from the Overview leaves
 the app as before.
+One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
+touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
+opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button left of the
+app's name in the list opens it, and → or any page of the list goes back; on a touch-first screen
+that button is drawn only when the keyboard's focus is on it.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
 The app is light or dark as the system is (Windows' app mode, Android's dark theme), and the
 page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
@@ -143,8 +148,8 @@ first shown while a write of any kind runs reads when the write has ended, not b
 five at a time too, the rest waiting their turn in screen order.
 
 When the session ends, by a sign-out or because Hiroba ended it, the queue stops: a read or a write
-that is running sends nothing after the request on its way, one still waiting sends nothing, and
-whatever is asked after that waits until they have all ended.
+that is running sends nothing after the request on its way, and one still waiting sends nothing.
+Each sends through a transport of its own, so what is asked after that does not wait for them.
 
 A kind of write that has not been made for real from a platform also reads one other page before
 and after, to see that nothing else moved: a costume write reads your title on my page (six
@@ -286,6 +291,28 @@ The page of the 大好きな曲 and the お気に入り folder, read from Hiroba
 ### The song search
 
 The Overview's top band holds a search field, as Gmail's does, across the whole band on a touch screen. It searches taiko.wiki's song list as the song picker does, by part of any of a song's names, and lists each song with its tempo as taiko.wiki gives it: a range for a song whose tempo changes, and ≈ for one whose tempo wobbles. The last ten searches are listed under the empty field, kept on the device, and each can be removed. A song opens in a dialog, full screen on a phone, with its names, artists, genres and tempo, and a button for each chart with Hiroba's icon of its difficulty and its level. A chart shows its max combo, whether it branches, and pictures of its notes, which taiko.wiki links on its own host, on the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp) and on Imgur; each is read once and kept on the device, and Settings names the sites. A picture opens full screen, where two fingers, the mouse wheel or a double click zoom it and a drag moves it; a pinch zooms nothing else in the app. The dialog opens on the difficulty chosen in Settings, and on the inner chart for Extreme when the song has one; on a touch screen it has no close button, as Back closes it, and the menu's swipe opens the menu over it as over a page, Back closing the menu first. Back, the arrow or Escape leaves the search.
+
+### The pipelines page
+
+What the two pipelines run, have waiting and ended, read again four times a second while the page is
+shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures** and **External sources**
+each have a section: Hiroba's pictures run in its pipeline, beside its other reads, and are shown
+apart, each by what it shows (My Don, a plate, the score panel, an icon or a costume thumbnail);
+External sources lists its chart pictures as it does its other groups. A section's first row has a
+block for each operation group, ten at most: the running ones first and solid, the waiting ones
+after them and pale, blue for a read, purple for a read that runs alone (the song picker's) and
+orange for a write. With more than ten groups the tenth breathes, or shows a + with reduced motion,
+and the number at the row's end is how many groups wait. Its second row has the last twelve groups
+that ended, each new one pushing in from the left on a wash of its mark's colour: ✓ succeeded, ✕
+failed and ⊘ stopped by a sign-out. **More** lists every group kept. A block, a cell or a row of
+that list shows at the section's foot the operation, how it ended, when it started, how long it took
+and how many requests it sent; for one that did not succeed, the last request it sent and the code
+for a report; for one still running, how long it has run and the request it is on. Each section
+keeps its last 1000 groups on the device, across sign-outs and relaunches, a picture only once it
+was asked of Hiroba: `pipelines\io.json`, `pipelines\pictures.json` and `pipelines\external.json` in
+the app's data folder on the desktop, the `abth-pipelines` database on Android. They hold
+operations, outcomes, codes, times and the paths of requests, never a query, a form or anything of
+the player's.
 
 ### The costume preview
 

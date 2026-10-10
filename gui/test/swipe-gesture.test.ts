@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import {
   OPENING_AREA_SHARE,
+  type PipelinesSwipeContext,
+  pipelinesSwipeStarted,
   SWIPE_DISTANCE_PX,
   SWIPE_STRAIGHTNESS,
   type Swipe,
@@ -15,6 +17,8 @@ import type { TouchPoint } from "../src/read-again/pull-gesture";
 const WINDOW_WIDTH_PX = 360;
 const OPENING_LIMIT_PX = WINDOW_WIDTH_PX * OPENING_AREA_SHARE;
 const START = { x: 100, y: 400 };
+/** A list as wide as the panel, which ends left of where a page's own swipes begin. */
+const LIST_RIGHT_PX = 240;
 
 const landed = (at: TouchPoint = START, overrides: Partial<SwipeContext> = {}) =>
   swipeStarted(at, {
@@ -24,6 +28,47 @@ const landed = (at: TouchPoint = START, overrides: Partial<SwipeContext> = {}) =
     claimed: false,
     ...overrides,
   });
+
+describe("pipelinesSwipeStarted", () => {
+  const landedFor = (context: Partial<PipelinesSwipeContext>, at: TouchPoint = START) =>
+    pipelinesSwipeStarted(at, {
+      fingers: 1,
+      pagesShown: false,
+      pipelinesShown: false,
+      listRightPx: LIST_RIGHT_PX,
+      claimed: false,
+      ...context,
+    });
+
+  test("lets one finger on the pages' list begin the swipe right to the pipelines page", () => {
+    expect(landedFor({ pagesShown: true })).toEqual({ start: START, direction: "right" });
+  });
+
+  test("begins that swipe on the list only, never on the page beside it", () => {
+    const edge = { x: LIST_RIGHT_PX, y: START.y };
+    const beyond = { x: LIST_RIGHT_PX + 1, y: START.y };
+    expect(landedFor({ pagesShown: true }, edge)).toEqual({ start: edge, direction: "right" });
+    expect(landedFor({ pagesShown: true }, beyond)).toBeNull();
+  });
+
+  test("lets one finger anywhere on the pipelines page begin the swipe left back", () => {
+    const farRight = { x: WINDOW_WIDTH_PX - 1, y: START.y };
+    expect(landedFor({ pipelinesShown: true }, farRight)).toEqual({
+      start: farRight,
+      direction: "left",
+    });
+  });
+
+  type RefusedCase = [label: string, context: Partial<PipelinesSwipeContext>];
+  test.each<RefusedCase>([
+    ["a page with no pages' list in view", {}],
+    ["two fingers on the pages' list", { pagesShown: true, fingers: 2 }],
+    ["two fingers on the pipelines page", { pipelinesShown: true, fingers: 2 }],
+    ["a touch that a text field or a dialog has", { pipelinesShown: true, claimed: true }],
+  ])("never begins one for %s", (_label, context) => {
+    expect(landedFor(context)).toBeNull();
+  });
+});
 
 describe("swipeStarted", () => {
   test("lets one finger in the left two thirds begin the swipe that opens the menu", () => {

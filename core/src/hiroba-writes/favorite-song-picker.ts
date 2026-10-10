@@ -12,6 +12,9 @@ const HANDOFF_PATH = "form_data.php";
 const PICKER = "select_song.php";
 const GENRES: readonly Genre[] = [1, 2, 3, 4, 5, 6, 7, 8];
 
+/** The requests a whole read of the picker sends: the editor, the handoff, then each genre. */
+export const SONG_PICKER_REQUESTS = 2 + GENRES.length;
+
 /** Every song Hiroba's own 大好きな曲 picker offers, walked the way the editor's button walks it. */
 export async function readSongPicker(
   deps: ReadDeps,

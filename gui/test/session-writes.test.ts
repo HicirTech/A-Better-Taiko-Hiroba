@@ -98,6 +98,23 @@ interface SetUpOptions {
   recentPreview?: (set: CostumeSet) => string | null;
 }
 
+type Writes = ReturnType<typeof createSessionWrites>;
+
+/** The writes as their pipeline runs them: each queued verb sends through `transport`. */
+function bound(writes: Writes, transport: Transport) {
+  return {
+    ...writes,
+    openCostumeEditor: () => writes.openCostumeEditor(transport),
+    openTitleEditor: () => writes.openTitleEditor(transport),
+    changeCostume: (change: Parameters<Writes["changeCostume"]>[1]) =>
+      writes.changeCostume(transport, change),
+    changeTitle: (change: Parameters<Writes["changeTitle"]>[1]) =>
+      writes.changeTitle(transport, change),
+    changeName: (change: Parameters<Writes["changeName"]>[1]) =>
+      writes.changeName(transport, change),
+  };
+}
+
 function setUpOver(storeName: StoreName, options: SetUpOptions) {
   const editor = createCostumeEditor();
   const profile = createProfileEditor({ issue: editor.issueTicket });
@@ -171,7 +188,6 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
   const historyFaults: HistoryFaults = { load: false, save: false };
   let signedIn = options.signedIn ?? true;
   const writes = createSessionWrites({
-    transport,
     endpoints: ENDPOINTS,
     platform: options.platform ?? "android",
     ...(options.liveChecked && { liveChecked: options.liveChecked }),
@@ -201,7 +217,7 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     editor,
     profile,
     hiroba,
-    writes,
+    writes: bound(writes, transport),
     saved,
     setElsewhere,
     signInAgain,

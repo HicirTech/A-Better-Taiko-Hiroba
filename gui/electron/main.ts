@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { err, ok } from "@abth/core";
+import { err, ok, type Transport } from "@abth/core";
 import {
   app,
   BrowserWindow,
@@ -16,14 +16,21 @@ import {
   createRecentPreviews,
   createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
+  keepHirobaEnded,
   offeredOf,
   type PictureSources,
   previewCostume,
   queuePort,
   readOwnProfile,
   sessionEnded,
+  viewOfPipelines,
 } from "../src/hiroba-session";
-import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../src/pipelines";
+import {
+  createPipeline,
+  createPipelineLog,
+  EXTERNAL_READ_CONSUMERS,
+  IO_READ_CONSUMERS,
+} from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
@@ -42,6 +49,7 @@ import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
 import { createDiskPictureStore } from "./picture-disk-store";
+import { createPipelineHistoryStore } from "./pipeline-history-store";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
@@ -109,35 +117,48 @@ const transport = createHirobaTransport({
   userAgent,
   hirobaOrigin: endpoints.hirobaOrigin,
 });
-// Everything that asks Hiroba something goes through `io`, so no read lands inside a write.
-const pipelines = {
-  io: createPipeline(IO_READ_CONSUMERS),
-  external: createPipeline(EXTERNAL_READ_CONSUMERS),
-};
-// Hiroba's requests stop with the session; the other sites' do not.
-const readTransport = pipelines.io.gate(
+const readTransport =
   process.env.ABTH_DEBUG_SAVE_READS === "1"
     ? saveReads(transport, join(app.getPath("userData"), "debug"))
-    : transport,
-);
+    : transport;
 
 const feedTransport = createUpdateFeedTransport({
   userAgent,
   hirobaOrigin: endpoints.hirobaOrigin,
 });
 
+const pipelineStore = (name: string) =>
+  createPipelineHistoryStore(join(app.getPath("userData"), "pipelines", `${name}.json`));
+const logs = {
+  io: createPipelineLog({ store: pipelineStore("io") }),
+  pictures: createPipelineLog({ store: pipelineStore("pictures") }),
+  external: createPipelineLog({ store: pipelineStore("external") }),
+};
+// Everything that asks Hiroba something goes through `io`, so no read lands inside a write. A
+// group sends through its own transport, made from its pipeline's.
+const pipelines = {
+  io: createPipeline({
+    readConsumers: IO_READ_CONSUMERS,
+    transport: readTransport,
+    ended: keepHirobaEnded(logs),
+  }),
+  external: createPipeline({
+    readConsumers: EXTERNAL_READ_CONSUMERS,
+    transport: feedTransport,
+    ended: logs.external.add,
+  }),
+};
+
 // A kept picture answers at once, even while a write runs; only a fetch waits in the pipeline.
 const pictures = createPictureReader({
-  transport: readTransport,
   endpoints,
   store: createDiskPictureStore(join(app.getPath("userData"), "pictures")),
   pipeline: pipelines.io,
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
-// Asked of the wiki's hosts, not Hiroba: the feed's transport holds no session.
+// Asked of the wiki's hosts, not Hiroba: the external pipeline's transport holds no session.
 const chartPictures = createChartPictureReader({
-  transport: feedTransport,
   store: createDiskPictureStore(join(app.getPath("userData"), "charts")),
   pipeline: pipelines.external,
   chartOrigin: environment.chartOrigin,
@@ -145,12 +166,13 @@ const chartPictures = createChartPictureReader({
 // The writes come up with the window: until then a kept picture fills no history.
 let previewKept: (set: CostumeSet, picture: string) => void = () => undefined;
 const previews = createRecentPreviews((set, picture) => previewKept(set, picture));
-const servedPreview = previews.keeping(async (set: CostumeSet) => {
-  if (sessionCookie === null) {
-    return err({ code: "preview=notSignedIn" });
-  }
-  return previewCostume(readTransport, endpoints, set);
-});
+const servedPreview = (hiroba: Transport) =>
+  previews.keeping(async (set: CostumeSet) => {
+    if (sessionCookie === null) {
+      return err({ code: "preview=notSignedIn" });
+    }
+    return previewCostume(hiroba, endpoints, set);
+  });
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -193,7 +215,6 @@ app.whenReady().then(async () => {
   mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
   const writes = createSessionWrites({
-    transport: readTransport,
     endpoints,
     platform: "desktop",
     now: environment.now,
@@ -231,14 +252,14 @@ app.whenReady().then(async () => {
     async cancelSignIn() {
       signInAttempt?.cancel();
     },
-    readProfile: async (options) => {
+    readProfile: async (hiroba, options) => {
       if (sessionCookie === null) {
         return err({ kind: "notSignedIn" });
       }
       if (options?.renewsPortrait !== false) {
         pictures.myPageAsked();
       }
-      const read = await readOwnProfile(readTransport, endpoints);
+      const read = await readOwnProfile(hiroba, endpoints);
       if (!read.ok) {
         if (sessionEnded(read.error)) {
           setSession(null);
@@ -253,8 +274,8 @@ app.whenReady().then(async () => {
     async signOut() {
       setSession(null);
     },
-    openCostumeEditor: async () => {
-      const read = await writes.openCostumeEditor();
+    openCostumeEditor: async (hiroba) => {
+      const read = await writes.openCostumeEditor(hiroba);
       if (read.ok) {
         previews.wear(read.value.state);
         offered = offeredOf(read.value);
@@ -263,21 +284,22 @@ app.whenReady().then(async () => {
     },
     openTitleEditor: writes.openTitleEditor,
     // Its failure leaves the session be: the next page read says whether it is over.
-    previewCostume: servedPreview,
+    previewCostume: (hiroba, set) => servedPreview(hiroba)(set),
     readPicture: (want) => pictures.read(want),
     changeCostume: writes.changeCostume,
     changeTitle: writes.changeTitle,
     changeName: writes.changeName,
     costumeHistory: writes.costumeHistory,
-    readUpdateFeed: () => readUpdateFeed(feedTransport, environment.updateFeedUrl),
+    readUpdateFeed: (site) => readUpdateFeed(site, environment.updateFeedUrl),
     openFavorites: writes.openFavorites,
     changeFolder: writes.changeFolder,
     changeFavoriteSong: writes.changeFavoriteSong,
     readSongPicker: writes.readSongPicker,
-    readSongCatalogue: (since) =>
-      readSongCatalogue(feedTransport, environment.songCatalogueUrl, since),
-    readChineseNames: () => readChineseNames(feedTransport, environment.chineseNamesUrl),
+    readSongCatalogue: (site, since) =>
+      readSongCatalogue(site, environment.songCatalogueUrl, since),
+    readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),
     readChartPicture: chartPictures,
+    readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.

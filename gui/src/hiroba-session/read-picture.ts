@@ -4,11 +4,10 @@ import {
   isErr,
   ok,
   type Result,
-  type Transport,
   type TransportResponse,
 } from "@abth/core";
 
-import type { Pipeline } from "../pipelines";
+import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
 import {
   type CostumeSlot,
   type CourseIconWant,
@@ -98,11 +97,10 @@ export interface PictureReadState {
 }
 
 export interface PictureReaderOptions {
-  /** The platform's transport: it adds the session, and only for Hiroba's own origin. */
-  readonly transport: Transport;
   readonly endpoints: HirobaEndpoints;
   readonly store: PictureStore;
-  /** Hiroba's IO pipeline: each fetch is a read group, so no picture lands inside a write. */
+  /** Hiroba's IO pipeline: each fetch is a read group, so no picture lands inside a write; the
+   * group's transport adds the session, and only for Hiroba's own origin. */
   readonly pipeline: Pick<Pipeline, "read">;
   readonly limits: PictureLimits;
   /** Read at each call, and again when a fetch's turn comes. */
@@ -317,9 +315,16 @@ function myDonRequest(
   };
 }
 
+/** The operation a picture's fetch runs as in Hiroba's pipeline. */
+export const PICTURE_OPERATION = "picture";
+const PICTURE: GroupAsked<Result<PictureView, PictureFailure>> = {
+  operation: PICTURE_OPERATION,
+  failureOf: resultFailure,
+};
+
 /** Hiroba's pictures for the window: it names what it wants, and the address is built here. */
 export function createPictureReader(options: PictureReaderOptions): PictureReader {
-  const { transport, endpoints, store, pipeline, limits } = options;
+  const { endpoints, store, pipeline, limits } = options;
   const clock = options.clock ?? REAL_CLOCK;
   const random = options.random ?? Math.random;
   const inFlight = new Map<string, Promise<Result<PictureView, PictureFailure>>>();
@@ -395,7 +400,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   ): Promise<Result<PictureView, PictureFailure>> => {
     const gap = Math.max(0, lastFetchEnded + limits.minGapMs - clock.now());
     await clock.sleep(gap + random() * limits.jitterMs);
-    return pipeline.read(async (): Promise<Result<PictureView, PictureFailure>> => {
+    return pipeline.read({ ...PICTURE, subject: want.kind }, async (transport) => {
       // The session may have gone while this waited its turn: then nothing is sent.
       const state = options.state();
       if (!state.signedIn || since !== generation) {
@@ -455,7 +460,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         }
       }
       return ok({ src: pngDataUrl(checked.value.bytes), ...checked.value.size });
-    })();
+    });
   };
 
   return {

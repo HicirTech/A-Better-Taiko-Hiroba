@@ -54,6 +54,14 @@ describe("the translator's formats", () => {
     expect(createTranslator(locale).dateTime(at)).toContain(month);
   });
 
+  test("writes a time of day to the second in the local zone, with no date", () => {
+    const { time } = createTranslator("en");
+    const text = time(new Date(2026, 9, 3, 16, 7, 54));
+    expect(text).toStartWith("4:07:54");
+    expect(text).toEndWith("PM");
+    expect(time("no time")).toBe("—");
+  });
+
   test("reads a Date, a number and an ISO string of one moment alike", () => {
     const { dateTime } = createTranslator("en");
     const at = "2026-09-28T03:04:05Z";
@@ -348,6 +356,9 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "譜疊點橫",
     "大歧及",
     "始問題",
+    "管來源",
+    "隊近等待失敗獨佔寫功秒我",
+    "交互",
   ].join(""),
 );
 

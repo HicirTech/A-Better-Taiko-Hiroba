@@ -140,6 +140,31 @@ describe("createAndroidPort", () => {
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
 
+  test("tells what its pipelines run and ran: a read of my page that ended, in Hiroba's", async () => {
+    native.httpAnswer = myPageAnswer;
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.readProfile();
+
+    const view = await port.readPipelines(12);
+    expect(view.io).toEqual({
+      running: [],
+      waiting: [],
+      ended: [
+        expect.objectContaining({
+          operation: "readProfile",
+          kind: "read",
+          requests: 1,
+          outcome: "succeeded",
+        }),
+      ],
+    });
+    expect(view.pictures).toEqual({ running: [], waiting: [], ended: [] });
+    expect(view.external).toEqual({ running: [], waiting: [], ended: [] });
+  });
+
   test("sign-out wipes the cookie store and forgets the sign-in", async () => {
     const flag = memoryFlag();
     const { port, outcome } = await startSignIn(flag);
@@ -332,6 +357,28 @@ describe("createAndroidPort's pictures", () => {
       Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
     });
     expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
+  });
+
+  test("tells of a picture it fetched in a section of its own, by what it shows", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.openCostumeEditor();
+    await port.readPicture(THUMB);
+    await port.readPicture(THUMB);
+
+    const view = await port.readPipelines(12);
+    expect(view.pictures.ended).toEqual([
+      expect.objectContaining({
+        operation: "picture",
+        subject: "costumeItem",
+        requests: 1,
+        outcome: "succeeded",
+      }),
+    ]);
+    expect(view.io.ended.map(({ operation }) => operation)).toEqual(["openCostumeEditor"]);
   });
 
   test("a picture's fetch goes out beside a read already on its way", async () => {

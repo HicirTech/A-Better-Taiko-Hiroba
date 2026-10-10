@@ -1,11 +1,5 @@
 import { type CostumeHistoryStore, readCostumeHistory } from "../hiroba-session";
-import {
-  completed,
-  type Database,
-  type DatabaseFactory,
-  openDatabase,
-  succeeded,
-} from "./android-indexeddb";
+import { completed, type DatabaseFactory, lazyDatabase, succeeded } from "./android-indexeddb";
 
 const DATABASE = "abth-costume-history";
 const DATABASE_VERSION = 1;
@@ -17,17 +11,9 @@ const RECORD_VERSION = 1;
 /** Android's costume history, in a database of its own apart from the pictures, which an epoch
  * bump clears. */
 export function createIndexedDbHistoryStore(factory: DatabaseFactory): CostumeHistoryStore {
-  let opened: Promise<Database> | null = null;
-  const database = () => {
-    opened ??= openDatabase(factory, DATABASE, DATABASE_VERSION, (created) => {
-      created.createObjectStore(HISTORIES);
-    }).catch((error: unknown) => {
-      // A failed opening is not remembered, so the next call tries again.
-      opened = null;
-      throw error;
-    });
-    return opened;
-  };
+  const database = lazyDatabase(factory, DATABASE, DATABASE_VERSION, (created) => {
+    created.createObjectStore(HISTORIES);
+  });
   return {
     async load(taikoNo) {
       const table = (await database()).transaction(HISTORIES, "readonly").objectStore(HISTORIES);

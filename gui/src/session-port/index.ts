@@ -14,7 +14,13 @@ export {
 export { BRIDGE_CHANNELS } from "./bridge-channels";
 export { checkedPort } from "./checked-port";
 export { changedTheCostume } from "./costume-changed";
-export { PORT_QUEUEING, type VerbQueueing, type VerbsQueued } from "./queueing";
+export {
+  PORT_QUEUEING,
+  type PortImplementation,
+  type VerbImplementation,
+  type VerbQueueing,
+  type VerbsQueued,
+} from "./queueing";
 export type {
   ChineseNamesRead,
   CostumeChange,
@@ -42,6 +48,7 @@ export type {
   PictureFailure,
   PictureView,
   PictureWant,
+  PipelinesView,
   ProfileView,
   ReadFailure,
   ReadFailureKind,

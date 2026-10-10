@@ -44,3 +44,32 @@ export function swipeReached({ start, direction }: Swipe, at: TouchPoint): boole
   const across = Math.abs(at.y - start.y);
   return along >= SWIPE_DISTANCE_PX && along >= SWIPE_STRAIGHTNESS * across;
 }
+
+export interface PipelinesSwipeContext {
+  readonly fingers: number;
+  /** The pages' list is in view: the menu is open, or a wide window's panel is there. */
+  readonly pagesShown: boolean;
+  readonly pipelinesShown: boolean;
+  /** Where the pages' list ends, from the window's left edge. */
+  readonly listRightPx: number;
+  readonly claimed: boolean;
+}
+
+/** One level past the pages' list: right from it to the pipelines page, left back from that. */
+export function pipelinesSwipeStarted(
+  at: TouchPoint,
+  context: PipelinesSwipeContext,
+): Swipe | null {
+  if (context.fingers !== 1 || context.claimed) {
+    return null;
+  }
+
+  if (context.pipelinesShown) {
+    return { start: at, direction: "left" };
+  }
+
+  // On the list itself: the page beside a wide window's panel keeps its own swipes.
+  return context.pagesShown && at.x <= context.listRightPx
+    ? { start: at, direction: "right" }
+    : null;
+}

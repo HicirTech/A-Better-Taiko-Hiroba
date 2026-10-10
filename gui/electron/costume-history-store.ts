@@ -1,7 +1,7 @@
 import * as nodeFs from "node:fs";
-import { dirname } from "node:path";
 
 import { type CostumeHistoryStore, readCostumeHistory } from "../src/hiroba-session";
+import { replaceFile } from "./replace-file";
 
 interface StoredHistory {
   readonly version: 1;
@@ -15,8 +15,7 @@ export type HistoryFiles = Pick<
   "mkdirSync" | "readFileSync" | "renameSync" | "writeFileSync"
 >;
 
-/** The desktop's costume history: one file, saved via a flushed temporary one renamed over the
- * last, so a crash leaves the old file or the new one. */
+/** The desktop's costume history: one file, replaced whole at each save. */
 export function createCostumeHistoryStore(
   path: string,
   files: HistoryFiles = nodeFs,
@@ -45,10 +44,7 @@ export function createCostumeHistoryStore(
         players[taikoNo] = entries;
       }
       const stored: StoredHistory = { version: 1, players };
-      const temporary = `${path}.tmp`;
-      files.mkdirSync(dirname(path), { recursive: true });
-      files.writeFileSync(temporary, JSON.stringify(stored), { flush: true });
-      files.renameSync(temporary, path);
+      replaceFile(path, JSON.stringify(stored), files);
     },
   };
 }

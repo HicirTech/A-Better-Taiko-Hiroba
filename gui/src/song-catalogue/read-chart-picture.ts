@@ -1,8 +1,8 @@
-import { err, ok, type Result, type Transport } from "@abth/core";
+import { err, ok, type Result } from "@abth/core";
 
 import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../hiroba-session/picture-store";
 import { base64Of } from "../hiroba-session/png-answer";
-import type { Pipeline } from "../pipelines";
+import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
 import type { PictureFailure, PictureView } from "../session-port/types";
 import { isChartPictureAddress } from "./catalogue-links";
 import { sniffPicture } from "./sniff-picture";
@@ -10,8 +10,14 @@ import { sniffPicture } from "./sniff-picture";
 export const CHART_PICTURE_MAX_BYTES = 4 * 1024 * 1024;
 const CHART_PICTURE_TIMEOUT_MS = 30_000;
 
+/** The operation a chart picture's fetch runs as in its pipeline. */
+export const CHART_PICTURE_OPERATION = "chartPicture";
+const CHART_PICTURE: GroupAsked<Result<PictureView, PictureFailure>> = {
+  operation: CHART_PICTURE_OPERATION,
+  failureOf: resultFailure,
+};
+
 export interface ChartPictureReaderOptions {
-  readonly transport: Transport;
   readonly store: PictureStore;
   /** The pipeline for sites other than Hiroba: each fetch is a read group in it. */
   readonly pipeline: Pick<Pipeline, "read">;
@@ -38,7 +44,7 @@ function viewOf(bytes: Uint8Array): Result<PictureView, "tooLarge" | "notPicture
 
 /** Chart pictures: one GET each, with no session, kept on the device once they pass the checks. */
 export function createChartPictureReader(options: ChartPictureReaderOptions): ChartPictureReader {
-  const { transport, store, pipeline, chartOrigin } = options;
+  const { store, pipeline, chartOrigin } = options;
   const inFlight = new Map<string, Promise<Result<PictureView, PictureFailure>>>();
 
   const read = async (url: string): Promise<Result<PictureView, PictureFailure>> => {
@@ -56,25 +62,29 @@ export function createChartPictureReader(options: ChartPictureReaderOptions): Ch
     if (keptView?.ok) {
       return keptView;
     }
-    const sent = await pipeline.read(() =>
-      transport.send({ method: "GET", url }, AbortSignal.timeout(CHART_PICTURE_TIMEOUT_MS)),
-    )();
-    if (!sent.ok) {
-      return failed(sent.error.kind === "unreachable" ? "unreachable" : "timedOut");
-    }
-    const { status, url: endedAt, body } = sent.value;
-    if (!isChartPictureAddress(endedAt, chartOrigin)) {
-      return failed("notAllowed");
-    }
-    if (status !== 200) {
-      return failed(`status-${status}`);
-    }
-    const view = viewOf(body);
-    if (!view.ok) {
-      return failed(view.error);
-    }
-    await store.put(key, body);
-    return view;
+    // The checks are in the group too, so the pipelines page counts a picture refused as failed.
+    return pipeline.read(CHART_PICTURE, async (transport) => {
+      const sent = await transport.send(
+        { method: "GET", url },
+        AbortSignal.timeout(CHART_PICTURE_TIMEOUT_MS),
+      );
+      if (!sent.ok) {
+        return failed(sent.error.kind === "unreachable" ? "unreachable" : "timedOut");
+      }
+      const { status, url: endedAt, body } = sent.value;
+      if (!isChartPictureAddress(endedAt, chartOrigin)) {
+        return failed("notAllowed");
+      }
+      if (status !== 200) {
+        return failed(`status-${status}`);
+      }
+      const view = viewOf(body);
+      if (!view.ok) {
+        return failed(view.error);
+      }
+      await store.put(key, body);
+      return view;
+    });
   };
 
   return (url) => {

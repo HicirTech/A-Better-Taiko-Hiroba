@@ -11,6 +11,7 @@ import {
   type NameChange,
   type ReadFailure,
   type TitleChange,
+  type VerbImplementation,
   type WriteKind,
   type WriteOutcomeView,
   type WriteSets,
@@ -31,7 +32,6 @@ import { sessionEnded } from "./session-ended";
 import type { HirobaEndpoints, WriteOptions } from "./types";
 
 export interface SessionWritesOptions {
-  readonly transport: Transport;
   readonly endpoints: HirobaEndpoints;
   /** The shell: whose list of live-checked kinds decides which writes also cross-check. */
   readonly platform: WritePlatform;
@@ -50,23 +50,24 @@ export interface SessionWritesOptions {
   readonly costumeChanged: (worn: CostumeSet) => void;
 }
 
-/** The port's write verbs, the same on every shell. */
-export type SessionWrites = Pick<
-  HirobaSessionPort,
-  | "openCostumeEditor"
-  | "openTitleEditor"
-  | "openFavorites"
-  | "changeCostume"
-  | "changeTitle"
-  | "changeName"
-  | "changeFolder"
-  | "changeFavoriteSong"
-  | "readSongPicker"
-  | "costumeHistory"
-> & {
+type QueuedWrites = {
+  readonly [V in
+    | "openCostumeEditor"
+    | "openTitleEditor"
+    | "openFavorites"
+    | "changeCostume"
+    | "changeTitle"
+    | "changeName"
+    | "changeFolder"
+    | "changeFavoriteSong"
+    | "readSongPicker"]: VerbImplementation<V>;
+};
+
+/** The port's write verbs, the same on every shell; a queued one takes its group's transport. */
+export interface SessionWrites extends QueuedWrites, Pick<HirobaSessionPort, "costumeHistory"> {
   /** A preview came: a history entry of that set with no picture takes it. */
   previewKept(set: CostumeSet, picture: string): Promise<void>;
-};
+}
 
 export const BUSY_OUTCOME: { readonly kind: "busy" } = { kind: "busy" };
 
@@ -144,6 +145,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   };
 
   async function write<K extends WriteKind, Input>(
+    transport: Transport,
     definition: WriteKindDefinition<K, Input>,
     input: Input,
   ): Promise<WriteOutcomeView<WriteSets[K]>> {
@@ -151,7 +153,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     const taikoNo = options.owner();
     let outcome: WriteOutcome<WriteSets[K]>;
     try {
-      outcome = await definition.run(options.transport, options.endpoints, input, {
+      outcome = await definition.run(transport, options.endpoints, input, {
         now: options.now,
         crossCheck: !liveChecked.includes(definition.kind),
       });
@@ -167,6 +169,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   }
 
   async function opened<Editor>(
+    transport: Transport,
     read: (
       transport: Transport,
       endpoints: HirobaEndpoints,
@@ -175,7 +178,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     if (!options.signedIn()) {
       return err({ kind: "notSignedIn" });
     }
-    const result = await read(options.transport, options.endpoints);
+    const result = await read(transport, options.endpoints);
     if (!result.ok && sessionEnded(result.error)) {
       await options.endSession();
     }
@@ -183,47 +186,47 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   }
 
   return {
-    openCostumeEditor: () => opened(openCostumeEditor),
+    openCostumeEditor: (transport) => opened(transport, openCostumeEditor),
 
-    openTitleEditor: () => opened(openTitleEditor),
+    openTitleEditor: (transport) => opened(transport, openTitleEditor),
 
-    openFavorites: () => opened(openFavorites),
+    openFavorites: (transport) => opened(transport, openFavorites),
 
-    readSongPicker: () => opened(readSongPicker),
+    readSongPicker: (transport) => opened(transport, readSongPicker),
 
-    async changeCostume(change) {
+    async changeCostume(transport, change) {
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
-      return write(costume, change);
+      return write(transport, costume, change);
     },
 
-    async changeTitle(change) {
+    async changeTitle(transport, change) {
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
-      return write(title, change);
+      return write(transport, title, change);
     },
 
-    async changeName(change) {
+    async changeName(transport, change) {
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
-      return write(name, change);
+      return write(transport, name, change);
     },
 
-    async changeFolder(change) {
+    async changeFolder(transport, change) {
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
-      return write(folder, change);
+      return write(transport, folder, change);
     },
 
-    async changeFavoriteSong(change) {
+    async changeFavoriteSong(transport, change) {
       if (!options.signedIn()) {
         return { kind: "notSignedIn" };
       }
-      return write(favoriteSong, change);
+      return write(transport, favoriteSong, change);
     },
 
     async previewKept(set, picture) {

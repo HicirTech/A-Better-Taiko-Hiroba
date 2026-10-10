@@ -9,8 +9,10 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
+  Slide,
   SvgIcon,
   Typography,
+  useMediaQuery,
 } from "@mui/material";
 import {
   createContext,
@@ -19,6 +21,8 @@ import {
   useEffect,
   useEffectEvent,
   useId,
+  useLayoutEffect,
+  useRef,
   useState,
 } from "react";
 import { createPortal } from "react-dom";
@@ -37,7 +41,9 @@ import {
   SettingsIcon,
 } from "./page-icons";
 import { PAGES, type Page } from "./pages";
+import type { SwipeDirection } from "./swipe-gesture";
 import { useMenuSwipe } from "./use-menu-swipe";
+import { usePipelinesSwipe } from "./use-pipelines-swipe";
 import { useTouchFirst } from "./use-touch-first";
 import { useWideWindow } from "./use-wide-window";
 import { WiderFrameContext } from "./wider-frame";
@@ -66,6 +72,12 @@ interface NavigationProps {
   readonly i18n: Translator;
 }
 
+/** The way to the pipelines page from the pages' list, where there is one. */
+interface PipelinesToggle {
+  readonly shown: boolean;
+  readonly onShownChange: (shown: boolean) => void;
+}
+
 /** Where the navigation's foot is drawn, while there is one to draw it in. */
 type FootRef = (foot: HTMLElement | null) => void;
 const NavFootContext = createContext<HTMLElement | null>(null);
@@ -81,28 +93,83 @@ export function AppFrame({
   onNavigate,
   i18n,
   back,
+  pipelines,
   children,
-}: NavigationProps & { back?: SystemBack; children: ReactNode }) {
+}: NavigationProps & {
+  back?: SystemBack;
+  /** The page one level past the menu; without it there is no way there. */
+  pipelines?: ReactNode;
+  children: ReactNode;
+}) {
   const wide = useWideWindow();
+  const touchFirst = useTouchFirst();
+  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [wider, setWider] = useState(false);
   const [navigation, setNavigation] = useState(true);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [pipelinesShown, setPipelinesShown] = useState(false);
   // Shut a menu left open on a wide window, or by a sign-out, so it does not reopen unasked.
   if ((wide || !navigation) && menuOpen) {
     setMenuOpen(false);
   }
+  // A sign-out takes the pipelines page with the menu: neither is there while signed out.
+  if (!navigation && pipelinesShown) {
+    setPipelinesShown(false);
+  }
+  // The page under the pipelines page goes back to where it was scrolled.
+  const pageScroll = useRef(0);
+  useLayoutEffect(() => {
+    if (!pipelinesShown) {
+      window.scrollTo(0, pageScroll.current);
+    }
+  }, [pipelinesShown]);
+  const showPipelines = (shown: boolean) => {
+    if (shown) {
+      pageScroll.current = window.scrollY;
+      window.scrollTo(0, 0);
+    }
+    setMenuOpen(false);
+    setPipelinesShown(shown);
+  };
+  const navigate = (next: Page) => {
+    pageScroll.current = 0;
+    setPipelinesShown(false);
+    onNavigate(next);
+  };
+  const toggle: PipelinesToggle | undefined =
+    pipelines === undefined ? undefined : { shown: pipelinesShown, onShownChange: showPipelines };
+  usePipelinesSwipe({
+    active: touchFirst && toggle !== undefined,
+    // A wide window's panel is the menu always open: the same swipe goes past it.
+    pagesShown: navigation && (menuOpen || wide),
+    pipelinesShown,
+    listRightPx: PANEL_WIDTH_PX,
+    onSwiped: (direction: SwipeDirection) => {
+      showPipelines(direction === "right");
+      // Back from the pipelines page is the menu it was reached from.
+      if (direction === "left" && !wide) {
+        setMenuOpen(true);
+      }
+    },
+  });
   const [closers] = useState(createBackClosers);
   const [modes] = useState(createBackClosers);
   const pressedBack = useEffectEvent((system: SystemBack) => {
     const action = backAction({
       overlayOpen: closers.isOpen(),
+      pipelinesShown,
       menuOpen,
       modeOn: modes.isOpen(),
       page,
     });
     if (action === "closeOverlay") {
       closers.closeLatest();
+    } else if (action === "leavePipelines") {
+      showPipelines(false);
+      if (!wide) {
+        setMenuOpen(true);
+      }
     } else if (action === "closeMenu") {
       setMenuOpen(false);
     } else if (action === "leaveMode") {
@@ -120,13 +187,20 @@ export function AppFrame({
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
           {navigation &&
             (wide ? (
-              <SidePanel page={page} onNavigate={onNavigate} i18n={i18n} footRef={setFoot} />
+              <SidePanel
+                page={page}
+                onNavigate={navigate}
+                i18n={i18n}
+                footRef={setFoot}
+                toggle={toggle}
+              />
             ) : (
               <MenuDrawer
                 page={page}
-                onNavigate={onNavigate}
+                onNavigate={navigate}
                 i18n={i18n}
                 footRef={setFoot}
+                toggle={toggle}
                 open={menuOpen}
                 onOpenChange={setMenuOpen}
               />
@@ -137,15 +211,30 @@ export function AppFrame({
               sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
             >
               <Typography component="h1" sx={VISUALLY_HIDDEN}>
-                {i18n.t(PAGE_ENTRY[page].label)}
+                {i18n.t(pipelinesShown ? "nav.pipelines" : PAGE_ENTRY[page].label)}
               </Typography>
-              <WiderFrameContext value={setWider}>
-                <FrameNavigationContext value={setNavigation}>
-                  <NavFootContext value={foot}>
-                    <BackModesContext value={modes}>{children}</BackModesContext>
-                  </NavFootContext>
-                </FrameNavigationContext>
-              </WiderFrameContext>
+              {/* Kept, only hidden, under the pipelines page: going back reads nothing again. */}
+              <Box hidden={pipelinesShown}>
+                <WiderFrameContext value={setWider}>
+                  <FrameNavigationContext value={setNavigation}>
+                    <NavFootContext value={foot}>
+                      <BackModesContext value={modes}>{children}</BackModesContext>
+                    </NavFootContext>
+                  </FrameNavigationContext>
+                </WiderFrameContext>
+              </Box>
+              {pipelines !== undefined && (
+                <Slide
+                  direction="right"
+                  in={pipelinesShown}
+                  enter={!reducedMotion}
+                  exit={false}
+                  mountOnEnter
+                  unmountOnExit
+                >
+                  <Box>{pipelines}</Box>
+                </Slide>
+              )}
             </Container>
           </Box>
         </Box>
@@ -189,34 +278,89 @@ export const STAYS_IN_VIEW = {
   [WHEN_TALL]: { position: "sticky", top: BELOW_TOP_BAND },
 } as const;
 
-function PageList({ page, onNavigate, i18n }: NavigationProps) {
+// Material's "arrow_back" and "arrow_forward" icons (Apache 2.0), inline as the menu's is.
+function ArrowBackIcon() {
+  return (
+    <SvgIcon aria-hidden>
+      <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+    </SvgIcon>
+  );
+}
+
+function ArrowForwardIcon() {
+  return (
+    <SvgIcon aria-hidden>
+      <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+    </SvgIcon>
+  );
+}
+
+const TITLE_ROW = { px: 3, pt: 2.5, pb: 1.5 } as const;
+const ARROW_ROW = { pl: 1.5, pr: 3, pt: 1.5, pb: 0.5 } as const;
+
+function PageList({
+  page,
+  onNavigate,
+  i18n,
+  toggle,
+}: NavigationProps & { readonly toggle: PipelinesToggle | undefined }) {
+  const title = (
+    <Typography variant="subtitle2" color="text.secondary" noWrap>
+      {i18n.t("app.title")}
+    </Typography>
+  );
+  const pipelinesLabel = i18n.t("nav.pipelines");
+  const touchFirst = useTouchFirst();
   return (
     <>
-      <Typography
-        variant="subtitle2"
-        color="text.secondary"
-        noWrap
-        sx={{ px: 3, pt: 2.5, pb: 1.5 }}
-      >
-        {i18n.t("app.title")}
-      </Typography>
+      {toggle === undefined ? (
+        <Box sx={TITLE_ROW}>{title}</Box>
+      ) : (
+        // The pipelines page lies one level past the pages, to the left: the arrow says which way.
+        // A touch screen draws no arrow, as it draws no menu button: its swipe stands in for it.
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            ...(touchFirst ? TITLE_ROW : ARROW_ROW),
+          }}
+        >
+          <Box sx={touchFirst ? HIDDEN_UNTIL_FOCUSED : undefined}>
+            <IconButton
+              id="nav-pipelines"
+              size="small"
+              aria-label={pipelinesLabel}
+              title={pipelinesLabel}
+              aria-pressed={toggle.shown}
+              onClick={() => toggle.onShownChange(!toggle.shown)}
+            >
+              {toggle.shown ? <ArrowForwardIcon /> : <ArrowBackIcon />}
+            </IconButton>
+          </Box>
+          {title}
+        </Box>
+      )}
       <List disablePadding>
-        {PAGES.map((each) => (
-          <ListItemButton
-            key={each}
-            id={`nav-${each}`}
-            selected={each === page}
-            aria-current={each === page ? "page" : undefined}
-            onClick={() => onNavigate(each)}
-            sx={{ mr: 1.5, borderRadius: "0 999px 999px 0" }}
-          >
-            <ListItemIcon>{PAGE_ENTRY[each].icon}</ListItemIcon>
-            <ListItemText
-              primary={i18n.t(PAGE_ENTRY[each].label)}
-              slotProps={{ primary: { sx: { fontWeight: each === page ? 600 : undefined } } }}
-            />
-          </ListItemButton>
-        ))}
+        {PAGES.map((each) => {
+          const current = toggle?.shown !== true && each === page;
+          return (
+            <ListItemButton
+              key={each}
+              id={`nav-${each}`}
+              selected={current}
+              aria-current={current ? "page" : undefined}
+              onClick={() => onNavigate(each)}
+              sx={{ mr: 1.5, borderRadius: "0 999px 999px 0" }}
+            >
+              <ListItemIcon>{PAGE_ENTRY[each].icon}</ListItemIcon>
+              <ListItemText
+                primary={i18n.t(PAGE_ENTRY[each].label)}
+                slotProps={{ primary: { sx: { fontWeight: current ? 600 : undefined } } }}
+              />
+            </ListItemButton>
+          );
+        })}
       </List>
     </>
   );
@@ -225,7 +369,13 @@ function PageList({ page, onNavigate, i18n }: NavigationProps) {
 // The drawers' paper is a column: the foot sits at its bottom, below the pages.
 const FOOT = { mt: "auto" } as const;
 
-function SidePanel({ footRef, ...props }: NavigationProps & { readonly footRef: FootRef }) {
+function SidePanel({
+  footRef,
+  ...props
+}: NavigationProps & {
+  readonly footRef: FootRef;
+  readonly toggle: PipelinesToggle | undefined;
+}) {
   return (
     <Box sx={{ width: PANEL_WIDTH_PX, flexShrink: 0 }}>
       <Drawer
@@ -260,17 +410,20 @@ function MenuDrawer({
   onNavigate,
   i18n,
   footRef,
+  toggle,
   open,
   onOpenChange: setOpen,
 }: NavigationProps & {
   readonly footRef: FootRef;
+  readonly toggle: PipelinesToggle | undefined;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }) {
   const drawerId = useId();
   const label = i18n.t("nav.menu");
   const touchFirst = useTouchFirst();
-  useMenuSwipe({ active: touchFirst, open, onOpenChange: setOpen });
+  // On the pipelines page a swipe is the pipelines' own: left goes back to this menu.
+  useMenuSwipe({ active: touchFirst && toggle?.shown !== true, open, onOpenChange: setOpen });
   const pick = (next: Page) => {
     setOpen(false);
     onNavigate(next);
@@ -308,7 +461,7 @@ function MenuDrawer({
         slotProps={{ paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX } } }}
       >
         <Box component="nav" aria-label={label}>
-          <PageList page={page} onNavigate={pick} i18n={i18n} />
+          <PageList page={page} onNavigate={pick} i18n={i18n} toggle={toggle} />
         </Box>
         <Box ref={footRef} sx={FOOT} />
       </Drawer>

@@ -14,7 +14,7 @@ export {
   openCostumeEditor,
 } from "./costume-write";
 export { spaced } from "./cross-checks";
-export { readSongPicker } from "./favorite-song-picker";
+export { readSongPicker, SONG_PICKER_REQUESTS } from "./favorite-song-picker";
 export {
   changeFavoriteSong,
   FAVORITE_SONG_WRITE,

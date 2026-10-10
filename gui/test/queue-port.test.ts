@@ -1,13 +1,30 @@
 import { describe, expect, test } from "bun:test";
+import { err, ok, SONG_PICKER_REQUESTS, type Transport } from "@abth/core";
 
-import { BUSY_OUTCOME, queuePort } from "../src/hiroba-session";
-import { createPipeline, EXTERNAL_READ_CONSUMERS, IO_READ_CONSUMERS } from "../src/pipelines";
+import {
+  BUSY_OUTCOME,
+  keepHirobaEnded,
+  PICTURE_OPERATION,
+  queuePort,
+  viewOfPipelines,
+  writeFailure,
+} from "../src/hiroba-session";
+import {
+  createMemoryPipelineStore,
+  createPipeline,
+  createPipelineLog,
+  type EndedGroup,
+  EXTERNAL_READ_CONSUMERS,
+  IO_READ_CONSUMERS,
+} from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
   PORT_QUEUEING,
+  type PortImplementation,
   type VerbQueueing,
+  type WriteOutcomeView,
 } from "../src/session-port";
 
 type Verb = keyof HirobaSessionPort;
@@ -22,24 +39,31 @@ const UNQUEUED = queuedAs("unqueued");
 /** Gives the next turn of the event loop to whatever the queue has ready to run. */
 const settle = () => Bun.sleep(1);
 
+/** A transport no verb here sends through. */
+const UNUSED: Transport = {
+  send: async (request) => err({ kind: "unreachable", url: request.url }),
+};
+
 function watchedPort() {
   const events: string[] = [];
   const gates = new Map<Verb, () => void>();
   const verbs = Object.fromEntries(
     VERBS.map((verb) => [
       verb,
-      async (...args: unknown[]) => {
+      async (...received: unknown[]) => {
+        // A verb in a pipeline gets its group's transport first.
+        const args = PORT_QUEUEING[verb] === "unqueued" ? received : received.slice(1);
         events.push(`begin ${verb}`);
         await new Promise<void>((resolve) => gates.set(verb, resolve));
         events.push(`end ${verb}`);
-        return { verb, args };
+        return ok({ verb, args });
       },
     ]),
-  ) as unknown as HirobaSessionPort;
+  ) as unknown as PortImplementation;
   const port = queuePort(
     {
-      io: createPipeline(IO_READ_CONSUMERS),
-      external: createPipeline(EXTERNAL_READ_CONSUMERS),
+      io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED }),
+      external: createPipeline({ readConsumers: EXTERNAL_READ_CONSUMERS, transport: UNUSED }),
     },
     verbs,
   );
@@ -170,6 +194,162 @@ describe("queuePort", () => {
     const answered = ask("previewCostume", { colorFace: 3 });
     await settle();
     await letGo("previewCostume");
-    expect(await answered).toEqual({ verb: "previewCostume", args: [{ colorFace: 3 }] });
+    expect(await answered).toEqual(ok({ verb: "previewCostume", args: [{ colorFace: 3 }] }));
+  });
+});
+
+describe("queuePort, as the pipelines page sees its groups", () => {
+  function told(answer: (verb: Verb) => Promise<unknown>) {
+    const ended: EndedGroup[] = [];
+    const tell = (group: EndedGroup) => {
+      ended.push(group);
+    };
+    const pipelines = {
+      io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED, ended: tell }),
+      external: createPipeline({
+        readConsumers: EXTERNAL_READ_CONSUMERS,
+        transport: UNUSED,
+        ended: tell,
+      }),
+    };
+    const verbs = Object.fromEntries(
+      VERBS.map((verb) => [verb, () => answer(verb)]),
+    ) as unknown as PortImplementation;
+    const port = queuePort(pipelines, verbs);
+    const ask = (verb: Verb) => (port[verb] as () => Promise<unknown>)();
+    return { ended, pipelines, ask };
+  }
+
+  test("names each group by its verb, and reads a read's failure as its code", async () => {
+    const { ended, ask } = told(async () => err({ kind: "unexpectedPage", detail: "status=500" }));
+    await ask("openFavorites");
+    await ask("readChineseNames");
+
+    expect(ended).toEqual([
+      expect.objectContaining({
+        operation: "openFavorites",
+        kind: "read",
+        outcome: "failed",
+        code: "unexpectedPage status=500",
+      }),
+      expect.objectContaining({
+        operation: "readChineseNames",
+        kind: "read",
+        outcome: "failed",
+        code: "unexpectedPage status=500",
+      }),
+    ]);
+  });
+
+  test("reads a write that had nothing to save as done, and any other by its kind", async () => {
+    const { ended, ask } = told(async (verb) =>
+      verb === "changeCostume" ? { kind: "nothingToChange" } : { kind: "changedSincePreview" },
+    );
+    await ask("changeCostume");
+    await ask("changeName");
+
+    expect(ended).toEqual([
+      expect.objectContaining({ operation: "changeCostume", kind: "write", outcome: "succeeded" }),
+      expect.objectContaining({
+        operation: "changeName",
+        kind: "write",
+        outcome: "failed",
+        code: "changedSincePreview",
+      }),
+    ]);
+  });
+
+  test("gives the picker's requests before it starts", async () => {
+    let letGo: () => void = () => undefined;
+    const { pipelines, ask } = told(
+      () =>
+        new Promise((resolve) => {
+          letGo = () => resolve(ok(null));
+        }),
+    );
+    const picking = ask("readSongPicker");
+    await settle();
+
+    expect(pipelines.io.now().running).toEqual([
+      expect.objectContaining({
+        operation: "readSongPicker",
+        kind: "exclusive",
+        expectedRequests: SONG_PICKER_REQUESTS,
+      }),
+    ]);
+    letGo();
+    await picking;
+  });
+});
+
+describe("Hiroba's pictures, apart from its other groups", () => {
+  const log = () =>
+    createPipelineLog({ store: createMemoryPipelineStore(), later: () => undefined });
+  const ended = (overrides: Partial<EndedGroup> = {}): EndedGroup =>
+    ({
+      operation: "readProfile",
+      kind: "read",
+      startedAt: 1000,
+      endedAt: 1300,
+      requests: 1,
+      outcome: "succeeded",
+      ...overrides,
+    }) as EndedGroup;
+
+  test("keeps a picture apart from the rest, and none that asked Hiroba nothing", () => {
+    const logs = { io: log(), pictures: log() };
+    const keep = keepHirobaEnded(logs);
+    const fetched = ended({ operation: PICTURE_OPERATION, subject: "myDon" });
+    keep(ended());
+    keep(fetched);
+    keep(ended({ operation: PICTURE_OPERATION, subject: "rankIcon", requests: 0 }));
+
+    expect(logs.io.history(12).ended).toEqual([ended()]);
+    expect(logs.pictures.history(12).ended).toEqual([fetched]);
+  });
+
+  test("shows the pictures running and waiting in their own view, and the rest in Hiroba's", async () => {
+    const io = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const external = createPipeline({ readConsumers: 1, transport: UNUSED });
+    let letGo: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      letGo = resolve;
+    });
+    const asked = (operation: string, subject?: string) => ({
+      operation,
+      ...(subject === undefined ? {} : { subject }),
+      failureOf: () => null,
+    });
+    const fetching = io.read(asked(PICTURE_OPERATION, "myDon"), () => held);
+    const reading = io.read(asked("readProfile"), async () => undefined);
+    const nextPicture = io.read(asked(PICTURE_OPERATION, "titlePlate"), async () => undefined);
+    await settle();
+
+    const view = viewOfPipelines(
+      { io, external },
+      { io: log(), pictures: log(), external: log() },
+      12,
+    );
+    expect(view.pictures.running).toEqual([expect.objectContaining({ subject: "myDon" })]);
+    expect(view.pictures.waiting).toEqual([expect.objectContaining({ subject: "titlePlate" })]);
+    expect(view.io.running).toEqual([]);
+    expect(view.io.waiting).toEqual([expect.objectContaining({ operation: "readProfile" })]);
+    letGo();
+    await Promise.all([fetching, reading, nextPicture]);
+  });
+});
+
+describe("writeFailure", () => {
+  test.each<[outcome: WriteOutcomeView<unknown>, failure: string | null]>([
+    [{ kind: "nothingToChange" }, null],
+    [{ kind: "readFailed", failure: { kind: "timedOut" } }, "readFailed timedOut"],
+    [
+      { kind: "stoppedBeforeWrite", reason: "precheckRejected", code: "result=705" },
+      "stoppedBeforeWrite result=705",
+    ],
+    [{ kind: "maintenance" }, "maintenance"],
+    [{ kind: "interrupted" }, "interrupted"],
+  ])("reads %p as %p", (outcome, failure) => {
+    expect(writeFailure(outcome)).toBe(failure);
   });
 });

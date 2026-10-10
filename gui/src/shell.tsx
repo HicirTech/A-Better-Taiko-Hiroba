@@ -8,6 +8,7 @@ import { forgetLocale, pickedLocale, rememberLocale, systemLocale } from "./lang
 import { showLanguage } from "./language/show-language";
 import { AppFrame } from "./navigation/app-frame";
 import { keepPage, keptPage, type Page } from "./navigation/pages";
+import { PipelinesPage } from "./pipelines-page/pipelines-page";
 import type { Platform } from "./platform";
 import { SettingsPage } from "./settings/settings-page";
 
@@ -48,6 +49,9 @@ export function Shell({
       onNavigate={navigate}
       i18n={i18n}
       {...(platform?.shell === "android" ? { back: platform.back } : {})}
+      {...(platform !== null
+        ? { pipelines: <PipelinesPage port={platform.port} i18n={i18n} /> }
+        : {})}
     >
       {platform !== null ? (
         <App

@@ -61,20 +61,20 @@ function recordingStore() {
 
 type ReadOnly = Pick<Pipeline, "read">;
 
-/** Runs every read group at once. */
-const OPEN_PIPELINE: ReadOnly = { read: (group) => group };
+/** Runs every read group at once, through the transport it is given. */
+const openPipeline = (transport: Transport): ReadOnly => ({
+  read: (_asked, group) => group(transport),
+});
 
 /** A pipeline that has not run a read group yet, and runs the latest one when told to. */
 function heldPipeline() {
   let runLatest: () => void = () => undefined;
-  const pipeline: ReadOnly = {
-    read:
-      (group) =>
-      (...args) =>
-        new Promise((resolve, reject) => {
-          runLatest = () => void group(...args).then(resolve, reject);
-        }),
-  };
+  const pipeline = (transport: Transport): ReadOnly => ({
+    read: (_asked, group) =>
+      new Promise((resolve, reject) => {
+        runLatest = () => void group(transport).then(resolve, reject);
+      }),
+  });
   return { pipeline, run: () => runLatest() };
 }
 
@@ -83,7 +83,7 @@ function setUp(
     respond?: Responder;
     chartOrigin?: string;
     store?: PictureStore;
-    pipeline?: ReadOnly;
+    pipeline?: (transport: Transport) => ReadOnly;
   } = {},
 ) {
   const sent: { request: TransportRequest; signal: AbortSignal | undefined }[] = [];
@@ -95,9 +95,8 @@ function setUp(
   };
   const store = options.store ?? createMemoryPictureStore();
   const reader = createChartPictureReader({
-    transport,
     store,
-    pipeline: options.pipeline ?? OPEN_PIPELINE,
+    pipeline: (options.pipeline ?? openPipeline)(transport),
     chartOrigin: options.chartOrigin,
   });
   return { reader, sent, store };
