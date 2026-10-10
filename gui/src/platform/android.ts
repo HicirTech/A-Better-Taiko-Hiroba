@@ -17,9 +17,9 @@ import {
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
   idpOrigin,
+  keepHirobaEnded,
   loginPageUrl,
   offeredOf,
-  PICTURE_OPERATION,
   type PictureSources,
   previewCostume,
   queuePort,
@@ -141,13 +141,17 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       ? () => createMemoryPipelineStore()
       : createIndexedDbPipelineStores(options.indexedDb);
   const logs = {
-    io: createPipelineLog({ counted: new Set([PICTURE_OPERATION]), store: pipelineStore("io") }),
-    // Few, and each asked for: its chart pictures are listed as its other groups are.
-    external: createPipelineLog({ counted: new Set(), store: pipelineStore("external") }),
+    io: createPipelineLog({ store: pipelineStore("io") }),
+    pictures: createPipelineLog({ store: pipelineStore("pictures") }),
+    external: createPipelineLog({ store: pipelineStore("external") }),
   };
   // One transport for every site: a group sends through its own, made from it.
   const pipelines = {
-    io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport, ended: logs.io.add }),
+    io: createPipeline({
+      readConsumers: IO_READ_CONSUMERS,
+      transport,
+      ended: keepHirobaEnded(logs),
+    }),
     external: createPipeline({
       readConsumers: EXTERNAL_READ_CONSUMERS,
       transport,

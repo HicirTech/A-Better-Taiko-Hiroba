@@ -13,10 +13,9 @@ import {
 import { alpha } from "@mui/material/styles";
 import { useId, useState } from "react";
 
-import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { EndedGroup, GroupKind, GroupNow, PipelineView } from "../pipelines";
 import { GroupDetails } from "./group-details";
-import { operationName } from "./operation-names";
+import { groupName } from "./operation-names";
 import {
   BLOCKS,
   blockRow,
@@ -79,7 +78,6 @@ export function PipelineSection({
   id,
   i18n,
   name,
-  pictures,
   view,
   listed,
   onListed,
@@ -87,8 +85,6 @@ export function PipelineSection({
   readonly id: string;
   readonly i18n: Translator;
   readonly name: MessageKey;
-  /** What its pictures are called in their tally; none for a section that lists its pictures. */
-  readonly pictures?: MessageKey;
   /** Null until the first read. */
   readonly view: PipelineView | null;
   /** Whether its whole kept history is listed. */
@@ -153,9 +149,6 @@ export function PipelineSection({
         })}
       </Box>
       <Box sx={{ display: "flex", alignItems: "center", mt: 0.5 }}>
-        {pictures !== undefined && (
-          <Tally i18n={i18n} what={t(pictures)} tally={view?.pictures ?? { came: 0, failed: 0 }} />
-        )}
         <Button
           size="small"
           sx={{ ml: "auto" }}
@@ -178,7 +171,7 @@ export function PipelineSection({
                 <span aria-hidden>{OUTCOME_MARK[group.outcome]}</span>
               </ListItemIcon>
               <ListItemText
-                primary={`${operationName(i18n, group.operation)} · ${t(`pipelines.${group.outcome}`)}`}
+                primary={`${groupName(i18n, group)} · ${t(`pipelines.${group.outcome}`)}`}
                 secondary={`${i18n.time(group.startedAt)} · ${t("pipelines.took", {
                   seconds: secondsOf(i18n, group.endedAt - group.startedAt),
                 })}`}
@@ -191,28 +184,6 @@ export function PipelineSection({
         <GroupDetails id={`${id}-details`} i18n={i18n} picked={picked} view={view} />
       )}
     </Box>
-  );
-}
-
-/** The pictures that came and those that failed, counted rather than listed. */
-function Tally({
-  i18n,
-  what,
-  tally,
-}: {
-  readonly i18n: Translator;
-  readonly what: string;
-  readonly tally: PipelineView["pictures"];
-}) {
-  const came = i18n.number(tally.came);
-  const failed = i18n.number(tally.failed);
-  return (
-    <Typography variant="body2" color="text.secondary">
-      <span aria-hidden>{`${what} ✓${came} ✕${failed}`}</span>
-      <Box component="span" sx={VISUALLY_HIDDEN}>
-        {i18n.t("pipelines.tally", { what, came, failed })}
-      </Box>
-    </Typography>
   );
 }
 
@@ -244,7 +215,7 @@ function Block({
     : t("pipelines.queued", { seconds: secondsOf(i18n, Date.now() - group.askedAt) });
   return (
     <ButtonBase
-      aria-label={`${operationName(i18n, group.operation)} · ${t(`pipelines.${group.kind}`)} · ${state}`}
+      aria-label={`${groupName(i18n, group)} · ${t(`pipelines.${group.kind}`)} · ${state}`}
       aria-pressed={picked}
       onClick={onPick}
       sx={(theme) => ({
@@ -280,7 +251,7 @@ function EndedCell({
   const { t } = i18n;
   return (
     <ButtonBase
-      aria-label={`${operationName(i18n, group.operation)} · ${t(`pipelines.${group.outcome}`)}`}
+      aria-label={`${groupName(i18n, group)} · ${t(`pipelines.${group.outcome}`)}`}
       aria-pressed={picked}
       onClick={onPick}
       sx={{

@@ -31,7 +31,6 @@ export interface Messages {
   "pipelines.more": string;
   "pipelines.less": string;
   "pipelines.pictures": string;
-  "pipelines.tally": string;
   "pipelines.read": string;
   "pipelines.exclusive": string;
   "pipelines.write": string;
@@ -65,6 +64,14 @@ export interface Messages {
   "pipelines.op.readChineseNames": string;
   "pipelines.op.picture": string;
   "pipelines.op.chartPicture": string;
+  "pipelines.picture.myDon": string;
+  "pipelines.picture.titlePlate": string;
+  "pipelines.picture.medalPlate": string;
+  "pipelines.picture.scorePanel": string;
+  "pipelines.picture.rankIcon": string;
+  "pipelines.picture.crownIcon": string;
+  "pipelines.picture.courseIcon": string;
+  "pipelines.picture.costumeItem": string;
   "settings.language": string;
   "settings.account": string;
   /** Param: {name}, the nickname, as Hiroba writes it. */

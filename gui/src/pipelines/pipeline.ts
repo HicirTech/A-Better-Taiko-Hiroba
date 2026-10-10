@@ -17,12 +17,15 @@ export interface GroupAsked<R> {
   readonly failureOf: (result: R) => string | null;
   /** How many requests the group sends, when that is known before it starts. */
   readonly expectedRequests?: number;
+  /** What the group is for, when its operation serves several things: the kind of a picture. */
+  readonly subject?: string;
 }
 
 /** A group now in the pipeline, running or waiting. */
 export interface GroupNow {
   readonly id: number;
   readonly operation: string;
+  readonly subject?: string;
   readonly kind: GroupKind;
   readonly askedAt: number;
   /** Null while it waits for its turn. */
@@ -39,6 +42,7 @@ export interface EndedAt {
 
 interface EndedCommon {
   readonly operation: string;
+  readonly subject?: string;
   readonly kind: GroupKind;
   readonly startedAt: number;
   readonly endedAt: number;
@@ -84,6 +88,7 @@ export interface PipelineOptions {
 interface Turn {
   readonly id: number;
   readonly operation: string;
+  readonly subject: string | undefined;
   readonly kind: GroupKind;
   readonly askedAt: number;
   readonly expectedRequests: number | null;
@@ -108,6 +113,8 @@ const pathOf = (url: string) => {
     return "?";
   }
 };
+
+const subjectOf = (turn: Turn) => (turn.subject === undefined ? {} : { subject: turn.subject });
 
 export function createPipeline(options: PipelineOptions): Pipeline {
   const clock = options.clock ?? Date.now;
@@ -159,6 +166,7 @@ export function createPipeline(options: PipelineOptions): Pipeline {
   const endedOf = (turn: Turn, code: string | null, endedAt: number): EndedGroup => {
     const common = {
       operation: turn.operation,
+      ...subjectOf(turn),
       kind: turn.kind,
       startedAt: turn.startedAt ?? endedAt,
       endedAt,
@@ -187,6 +195,7 @@ export function createPipeline(options: PipelineOptions): Pipeline {
     const turn: Turn = {
       id: lastId,
       operation: asked.operation,
+      subject: asked.subject,
       kind,
       askedAt: clock(),
       expectedRequests: asked.expectedRequests ?? null,
@@ -223,6 +232,7 @@ export function createPipeline(options: PipelineOptions): Pipeline {
   const viewOf = (turn: Turn): GroupNow => ({
     id: turn.id,
     operation: turn.operation,
+    ...subjectOf(turn),
     kind: turn.kind,
     askedAt: turn.askedAt,
     startedAt: turn.startedAt,

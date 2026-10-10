@@ -17,7 +17,6 @@ export {
 export {
   createMemoryPipelineStore,
   createPipelineLog,
-  type PictureTally,
   type PipelineHistory,
   type PipelineHistoryStore,
   type PipelineLog,

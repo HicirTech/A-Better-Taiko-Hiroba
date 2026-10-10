@@ -17,9 +17,8 @@ const HISTORY: PipelineHistory = {
       outcome: "succeeded",
     },
   ],
-  pictures: { came: 2, failed: 1 },
 };
-const NONE: PipelineHistory = { ended: [], pictures: { came: 0, failed: 0 } };
+const NONE: PipelineHistory = { ended: [] };
 
 const folders: string[] = [];
 afterEach(() => {

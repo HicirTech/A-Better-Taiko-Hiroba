@@ -313,10 +313,12 @@ export interface HirobaSessionPort {
   readPipelines(history: number): Promise<PipelinesView>;
 }
 
-/** Both pipelines as the pipelines page shows them. */
+/** Both pipelines as the pipelines page shows them: Hiroba's pictures apart from the rest. */
 export interface PipelinesView {
-  /** Hiroba's. */
+  /** Hiroba's, but for its pictures. */
   readonly io: PipelineView;
+  /** Hiroba's pictures: they run in Hiroba's pipeline, beside its other reads. */
+  readonly pictures: PipelineView;
   /** The other sites'. */
   readonly external: PipelineView;
 }

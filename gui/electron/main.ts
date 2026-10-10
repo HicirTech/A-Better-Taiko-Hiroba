@@ -16,8 +16,8 @@ import {
   createRecentPreviews,
   createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
+  keepHirobaEnded,
   offeredOf,
-  PICTURE_OPERATION,
   type PictureSources,
   previewCostume,
   queuePort,
@@ -130,9 +130,9 @@ const feedTransport = createUpdateFeedTransport({
 const pipelineStore = (name: string) =>
   createPipelineHistoryStore(join(app.getPath("userData"), "pipelines", `${name}.json`));
 const logs = {
-  io: createPipelineLog({ counted: new Set([PICTURE_OPERATION]), store: pipelineStore("io") }),
-  // Few, and each asked for: its chart pictures are listed as its other groups are.
-  external: createPipelineLog({ counted: new Set(), store: pipelineStore("external") }),
+  io: createPipelineLog({ store: pipelineStore("io") }),
+  pictures: createPipelineLog({ store: pipelineStore("pictures") }),
+  external: createPipelineLog({ store: pipelineStore("external") }),
 };
 // Everything that asks Hiroba something goes through `io`, so no read lands inside a write. A
 // group sends through its own transport, made from its pipeline's.
@@ -140,7 +140,7 @@ const pipelines = {
   io: createPipeline({
     readConsumers: IO_READ_CONSUMERS,
     transport: readTransport,
-    ended: logs.io.add,
+    ended: keepHirobaEnded(logs),
   }),
   external: createPipeline({
     readConsumers: EXTERNAL_READ_CONSUMERS,

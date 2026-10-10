@@ -160,14 +160,9 @@ describe("createAndroidPort", () => {
           outcome: "succeeded",
         }),
       ],
-      pictures: { came: 0, failed: 0 },
     });
-    expect(view.external).toEqual({
-      running: [],
-      waiting: [],
-      ended: [],
-      pictures: { came: 0, failed: 0 },
-    });
+    expect(view.pictures).toEqual({ running: [], waiting: [], ended: [] });
+    expect(view.external).toEqual({ running: [], waiting: [], ended: [] });
   });
 
   test("sign-out wipes the cookie store and forgets the sign-in", async () => {
@@ -362,6 +357,28 @@ describe("createAndroidPort's pictures", () => {
       Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
     });
     expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
+  });
+
+  test("tells of a picture it fetched in a section of its own, by what it shows", async () => {
+    answerAsHiroba();
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.openCostumeEditor();
+    await port.readPicture(THUMB);
+    await port.readPicture(THUMB);
+
+    const view = await port.readPipelines(12);
+    expect(view.pictures.ended).toEqual([
+      expect.objectContaining({
+        operation: "picture",
+        subject: "costumeItem",
+        requests: 1,
+        outcome: "succeeded",
+      }),
+    ]);
+    expect(view.io.ended.map(({ operation }) => operation)).toEqual(["openCostumeEditor"]);
   });
 
   test("a picture's fetch goes out beside a read already on its way", async () => {

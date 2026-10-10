@@ -1,9 +1,18 @@
 import { describe, expect, test } from "bun:test";
 import { err, ok, SONG_PICKER_REQUESTS, type Transport } from "@abth/core";
 
-import { BUSY_OUTCOME, queuePort, writeFailure } from "../src/hiroba-session";
 import {
+  BUSY_OUTCOME,
+  keepHirobaEnded,
+  PICTURE_OPERATION,
+  queuePort,
+  viewOfPipelines,
+  writeFailure,
+} from "../src/hiroba-session";
+import {
+  createMemoryPipelineStore,
   createPipeline,
+  createPipelineLog,
   type EndedGroup,
   EXTERNAL_READ_CONSUMERS,
   IO_READ_CONSUMERS,
@@ -270,6 +279,63 @@ describe("queuePort, as the pipelines page sees its groups", () => {
     ]);
     letGo();
     await picking;
+  });
+});
+
+describe("Hiroba's pictures, apart from its other groups", () => {
+  const log = () =>
+    createPipelineLog({ store: createMemoryPipelineStore(), later: () => undefined });
+  const ended = (overrides: Partial<EndedGroup> = {}): EndedGroup =>
+    ({
+      operation: "readProfile",
+      kind: "read",
+      startedAt: 1000,
+      endedAt: 1300,
+      requests: 1,
+      outcome: "succeeded",
+      ...overrides,
+    }) as EndedGroup;
+
+  test("keeps a picture apart from the rest, and none that asked Hiroba nothing", () => {
+    const logs = { io: log(), pictures: log() };
+    const keep = keepHirobaEnded(logs);
+    const fetched = ended({ operation: PICTURE_OPERATION, subject: "myDon" });
+    keep(ended());
+    keep(fetched);
+    keep(ended({ operation: PICTURE_OPERATION, subject: "rankIcon", requests: 0 }));
+
+    expect(logs.io.history(12).ended).toEqual([ended()]);
+    expect(logs.pictures.history(12).ended).toEqual([fetched]);
+  });
+
+  test("shows the pictures running and waiting in their own view, and the rest in Hiroba's", async () => {
+    const io = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const external = createPipeline({ readConsumers: 1, transport: UNUSED });
+    let letGo: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      letGo = resolve;
+    });
+    const asked = (operation: string, subject?: string) => ({
+      operation,
+      ...(subject === undefined ? {} : { subject }),
+      failureOf: () => null,
+    });
+    const fetching = io.read(asked(PICTURE_OPERATION, "myDon"), () => held);
+    const reading = io.read(asked("readProfile"), async () => undefined);
+    const nextPicture = io.read(asked(PICTURE_OPERATION, "titlePlate"), async () => undefined);
+    await settle();
+
+    const view = viewOfPipelines(
+      { io, external },
+      { io: log(), pictures: log(), external: log() },
+      12,
+    );
+    expect(view.pictures.running).toEqual([expect.objectContaining({ subject: "myDon" })]);
+    expect(view.pictures.waiting).toEqual([expect.objectContaining({ subject: "titlePlate" })]);
+    expect(view.io.running).toEqual([]);
+    expect(view.io.waiting).toEqual([expect.objectContaining({ operation: "readProfile" })]);
+    letGo();
+    await Promise.all([fetching, reading, nextPicture]);
   });
 });
 

@@ -400,7 +400,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   ): Promise<Result<PictureView, PictureFailure>> => {
     const gap = Math.max(0, lastFetchEnded + limits.minGapMs - clock.now());
     await clock.sleep(gap + random() * limits.jitterMs);
-    return pipeline.read(PICTURE, async (transport) => {
+    return pipeline.read({ ...PICTURE, subject: want.kind }, async (transport) => {
       // The session may have gone while this waited its turn: then nothing is sent.
       const state = options.state();
       if (!state.signedIn || since !== generation) {

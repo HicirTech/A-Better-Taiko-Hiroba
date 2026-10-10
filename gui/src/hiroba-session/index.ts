@@ -42,6 +42,7 @@ export {
 } from "./picture-store";
 export { previewCostume, previewUrl } from "./preview-costume";
 export {
+  keepHirobaEnded,
   type PortLogs,
   type PortPipelines,
   queuePort,

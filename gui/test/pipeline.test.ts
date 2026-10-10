@@ -389,6 +389,32 @@ describe("createPipeline, what it tells", () => {
     expect(pipeline.now()).toEqual({ running: [], waiting: [] });
   });
 
+  test("tells what a group is for, when its asker says, while it waits, runs and when it ends", async () => {
+    const { hiroba, ended, pipeline } = told();
+    const reading = pipeline.read(walking("readProfile"), walk(["/mypage_top.php"]));
+    const fetching = pipeline.read(
+      { ...walking("picture"), subject: "myDon" },
+      walk(["/imgsrc.php"]),
+    );
+    await settle();
+    expect(pipeline.now().waiting).toEqual([
+      expect.objectContaining({ operation: "picture", subject: "myDon" }),
+    ]);
+
+    await hiroba.answer();
+    await settle();
+    expect(pipeline.now().running).toEqual([
+      expect.objectContaining({ operation: "picture", subject: "myDon" }),
+    ]);
+    await hiroba.answer();
+    await Promise.all([reading, fetching]);
+    expect(ended.map((group) => [group.operation, group.subject])).toEqual([
+      ["readProfile", undefined],
+      ["picture", "myDon"],
+    ]);
+    expect(Object.hasOwn(ended[0] ?? {}, "subject")).toBe(false);
+  });
+
   test("tells of a group that succeeded: its operation, kind, times and requests", async () => {
     const { hiroba, ended, pipeline, at } = told();
     const reading = pipeline.read(walking("readProfile"), walk(["/mypage_top.php", "/dan.php"]));

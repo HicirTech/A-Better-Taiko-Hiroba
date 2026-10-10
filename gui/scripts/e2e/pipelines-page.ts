@@ -1,4 +1,6 @@
 /** The pipelines page, one level past the pages' list: by its arrow, or by a swipe on a touch screen. */
+import { PICTURE_NAMES } from "../../src/pipelines-page/operation-names";
+import { en } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import { platesAsked, readHits } from "./stand-in";
@@ -7,7 +9,7 @@ export const pipelinesPageKeys = [
   "pipelinesOpenByTheArrow",
   "endedGroupOpensItsDetails",
   "keptHistoryReachesTheSignIn",
-  "hirobaPicturesCountedNotListed",
+  "picturesListedApart",
   "externalListsChartPictures",
   "pipelinesLeftByTheArrow",
   "pipelinesAskHirobaNothing",
@@ -21,7 +23,11 @@ export const pipelinesPageKeys = [
 const TABLET = { width: 1056, height: 800 } as const;
 const PHONE = { width: 390, height: 844 } as const;
 const MY_PAGE_READ = "My page · Succeeded";
+const MY_DON_READ = "My Don · Succeeded";
 const CHART_PICTURE_READ = "Chart picture · Succeeded";
+const PICTURE_NAMES_SHOWN = Object.values(PICTURE_NAMES).map((key) => en.t(key));
+const namesAPicture = (line: string) =>
+  PICTURE_NAMES_SHOWN.some((name) => line.startsWith(`${name} · `));
 // When the group started, how long it took and how many requests it sent.
 const FACTS = /^started \d{1,2}:\d{2}:\d{2}(\s[AP]M)? · took \d+(\.\d)? s · requests: \d+$/;
 const ENDED_ROW = '[aria-label="Recently ended"] button';
@@ -56,7 +62,7 @@ export async function pipelinesPage(ctx: Ctx) {
   const platesBefore = (await platesAsked()).length;
   await click("#nav-pipelines");
   await opened();
-  // The page under it is only hidden: what is seen is the pipelines' two sections.
+  // The page under it is only hidden: what is seen is the pipelines' three sections.
   const headings = await page.evaluate<(string | null)[]>(
     `[...document.querySelectorAll("main section")].filter((section) => section.checkVisibility()).map((section) => document.getElementById(section.getAttribute("aria-labelledby"))?.textContent ?? null)`,
   );
@@ -64,7 +70,7 @@ export async function pipelinesPage(ctx: Ctx) {
     (await attribute("#nav-pipelines", "aria-pressed")) === "true" &&
     (await textOf("main h1")) === "Pipelines" &&
     (await currentPage()) === null &&
-    same(headings, ["Hiroba", "External sources"]);
+    same(headings, ["Hiroba", "Hiroba pictures", "External sources"]);
 
   // A success opens its details as a failure does; a second press puts them away.
   const newest = await waitFor("an ended Hiroba group", async () => {
@@ -94,17 +100,26 @@ export async function pipelinesPage(ctx: Ctx) {
     signInDetails.length === 2 &&
     FACTS.test(signInDetails[1] ?? "") &&
     (await textOf('#pipeline-io button[aria-expanded="true"]')) === "Less";
-  const tally = /Pictures: ([\d,]+) came, [\d,]+ failed/.exec((await textOf("#pipeline-io")) ?? "");
-  results.hirobaPicturesCountedNotListed =
-    Number((tally?.[1] ?? "0").replaceAll(",", "")) > 0 &&
-    !hirobaListed.some((line) => line.startsWith("Picture ·"));
 
-  // Chart pictures come one by one, each asked for: they are listed rather than counted.
+  // Hiroba's pictures are listed in a section of their own, each by what it shows.
+  await click('#pipeline-pictures button[aria-expanded="false"]');
+  await settle();
+  const picturesListed = await listedIn("pipeline-pictures", MY_DON_READ);
+  await page.evaluate(
+    `[...document.querySelectorAll("#pipeline-pictures .MuiListItemButton-root")].find((item) => item.querySelector(".MuiListItemText-primary")?.textContent === ${JSON.stringify(MY_DON_READ)}).click()`,
+  );
+  const myDonDetails = await detailsOf("pipeline-pictures", MY_DON_READ);
+  results.picturesListedApart =
+    picturesListed.every(namesAPicture) &&
+    !hirobaListed.some((line) => namesAPicture(line) || line.startsWith("Picture · ")) &&
+    FACTS.test(myDonDetails[1] ?? "");
+
+  // Chart pictures come from other sites: they are listed with those, not with Hiroba's.
   await click('#pipeline-external button[aria-expanded="false"]');
   await settle();
   await listedIn("pipeline-external", CHART_PICTURE_READ);
-  results.externalListsChartPictures = !((await textOf("#pipeline-external")) ?? "").includes(
-    "Pictures:",
+  results.externalListsChartPictures = !picturesListed.some((line) =>
+    line.startsWith("Chart picture ·"),
   );
 
   await click("#nav-pipelines");

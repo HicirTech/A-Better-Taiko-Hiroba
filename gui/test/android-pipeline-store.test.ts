@@ -17,10 +17,21 @@ const HISTORY: PipelineHistory = {
       at: { index: 2, request: { method: "GET", path: "/mypage_kisekae.php" } },
     },
   ],
-  pictures: { came: 5, failed: 0 },
 };
-const OTHER: PipelineHistory = { ended: [], pictures: { came: 1, failed: 1 } };
-const NONE: PipelineHistory = { ended: [], pictures: { came: 0, failed: 0 } };
+const OTHER: PipelineHistory = {
+  ended: [
+    {
+      operation: "picture",
+      subject: "myDon",
+      kind: "read",
+      startedAt: 4000,
+      endedAt: 4200,
+      requests: 1,
+      outcome: "succeeded",
+    },
+  ],
+};
+const NONE: PipelineHistory = { ended: [] };
 
 describe("createIndexedDbPipelineStores", () => {
   test("keeps each pipeline's history apart, for the next stores of the same database", async () => {

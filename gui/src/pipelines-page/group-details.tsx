@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 
 import type { EndedGroup, GroupNow, PipelineView, SentRequest } from "../pipelines";
-import { operationName } from "./operation-names";
+import { groupName } from "./operation-names";
 import type { Picked } from "./pipeline-rows";
 
 /** Milliseconds as seconds to the tenth, as the locale writes them. */
@@ -59,11 +59,11 @@ function nowLines(i18n: Translator, group: GroupNow | undefined): string[] | nul
       : t("pipelines.running", { seconds: secondsOf(i18n, Date.now() - group.startedAt) });
   const last = group.sent.at(-1);
   if (last === undefined) {
-    return [`${operationName(i18n, group.operation)} · ${elapsed}`];
+    return [`${groupName(i18n, group)} · ${elapsed}`];
   }
   const where = { index: group.sent.length, request: requestOf(last) };
   return [
-    `${operationName(i18n, group.operation)} · ${elapsed}`,
+    `${groupName(i18n, group)} · ${elapsed}`,
     group.expectedRequests === null
       ? t("pipelines.onRequest", where)
       : t("pipelines.onRequestOf", { ...where, total: group.expectedRequests }),
@@ -78,7 +78,7 @@ function endedLines(i18n: Translator, group: EndedGroup): string[] {
     t("pipelines.took", { seconds: secondsOf(i18n, group.endedAt - group.startedAt) }),
     t("pipelines.requests", { count: i18n.number(group.requests) }),
   ].join(" · ");
-  const head = `${operationName(i18n, group.operation)} · ${outcome}`;
+  const head = `${groupName(i18n, group)} · ${outcome}`;
   if (group.outcome === "succeeded") {
     return [head, facts];
   }

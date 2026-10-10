@@ -4,16 +4,9 @@ import type { EndedGroup, GroupKind } from "./pipeline";
 /** How long a change waits to be saved, so a run of pictures is saved once. */
 const SAVE_DELAY_MS = 1000;
 
-/** The pictures a pipeline fetched, counted rather than listed. */
-export interface PictureTally {
-  readonly came: number;
-  readonly failed: number;
-}
-
 /** What a pipeline keeps of its groups that ended: the newest first. */
 export interface PipelineHistory {
   readonly ended: readonly EndedGroup[];
-  readonly pictures: PictureTally;
 }
 
 /** Where a pipeline's history is kept between launches. */
@@ -23,27 +16,24 @@ export interface PipelineHistoryStore {
 }
 
 export interface PipelineLog {
-  /** Takes each group as it ends: `createPipeline`'s `ended`. */
+  /** Takes each group as it ends: `createPipeline`'s `ended`, or what it hands on. */
   readonly add: (group: EndedGroup) => void;
-  /** The newest `limit` groups that ended, and the pictures' tally. */
+  /** The newest `limit` groups that ended. */
   history(limit: number): PipelineHistory;
 }
 
 export interface PipelineLogOptions {
-  /** The operations counted rather than listed: the pictures'. */
-  readonly counted: ReadonlySet<string>;
   readonly store: PipelineHistoryStore;
   /** Runs `save` later: `setTimeout`, unless a test hands in its own. */
   readonly later?: (save: () => void, ms: number) => void;
 }
 
-const NONE: PipelineHistory = { ended: [], pictures: { came: 0, failed: 0 } };
+const NONE: PipelineHistory = { ended: [] };
 
 /** A pipeline's history, loaded from its store and saved to it a moment after each change. */
 export function createPipelineLog(options: PipelineLogOptions): PipelineLog {
   const later = options.later ?? ((save, ms) => void setTimeout(save, ms));
   let ended: readonly EndedGroup[] = [];
-  let pictures: PictureTally = NONE.pictures;
   // Nothing is saved before the kept history has loaded, which would write over it.
   let loaded = false;
   let changed = false;
@@ -52,7 +42,7 @@ export function createPipelineLog(options: PipelineLogOptions): PipelineLog {
   const save = () => {
     saving = false;
     changed = false;
-    options.store.save({ ended, pictures }).catch(() => undefined);
+    options.store.save({ ended }).catch(() => undefined);
   };
   const changes = () => {
     changed = true;
@@ -68,10 +58,6 @@ export function createPipelineLog(options: PipelineLogOptions): PipelineLog {
     .then((kept) => {
       // Groups that ended while it loaded are the newer ones.
       ended = [...ended, ...kept.ended].slice(0, KEPT_GROUPS);
-      pictures = {
-        came: pictures.came + kept.pictures.came,
-        failed: pictures.failed + kept.pictures.failed,
-      };
       loaded = true;
       if (changed) {
         changes();
@@ -80,18 +66,10 @@ export function createPipelineLog(options: PipelineLogOptions): PipelineLog {
 
   return {
     add(group) {
-      if (!options.counted.has(group.operation)) {
-        ended = [group, ...ended].slice(0, KEPT_GROUPS);
-        changes();
-      } else if (group.requests > 0 && group.outcome !== "stopped") {
-        pictures =
-          group.outcome === "succeeded"
-            ? { ...pictures, came: pictures.came + 1 }
-            : { ...pictures, failed: pictures.failed + 1 };
-        changes();
-      }
+      ended = [group, ...ended].slice(0, KEPT_GROUPS);
+      changes();
     },
-    history: (limit) => ({ ended: ended.slice(0, limit), pictures }),
+    history: (limit) => ({ ended: ended.slice(0, limit) }),
   };
 }
 
@@ -110,23 +88,20 @@ const KINDS: ReadonlySet<unknown> = new Set<GroupKind>(["read", "exclusive", "wr
 const UNSUCCESSFUL: ReadonlySet<unknown> = new Set(["failed", "stopped"]);
 const METHODS: ReadonlySet<unknown> = new Set(["GET", "POST"]);
 
-/** A history as a store kept it: groups that do not read as one are dropped, and a tally that
- * does not read as one is zero. */
+/** A history as a store kept it: groups that do not read as one are dropped. */
 export function readPipelineHistory(stored: unknown): PipelineHistory {
   if (!isRecord(stored)) {
     return NONE;
   }
   const ended = Array.isArray(stored.ended) ? stored.ended.filter(isEndedGroup) : [];
-  return {
-    ended: ended.slice(0, KEPT_GROUPS),
-    pictures: isTally(stored.pictures) ? stored.pictures : NONE.pictures,
-  };
+  return { ended: ended.slice(0, KEPT_GROUPS) };
 }
 
 function isEndedGroup(value: unknown): value is EndedGroup {
   if (
     !isRecord(value) ||
     typeof value.operation !== "string" ||
+    !(value.subject === undefined || typeof value.subject === "string") ||
     !KINDS.has(value.kind) ||
     !isCount(value.startedAt) ||
     !isCount(value.endedAt) ||
@@ -148,10 +123,6 @@ function isEndedAt(value: unknown): boolean {
     return false;
   }
   return METHODS.has(value.request.method) && typeof value.request.path === "string";
-}
-
-function isTally(value: unknown): value is PictureTally {
-  return isRecord(value) && isCount(value.came) && isCount(value.failed);
 }
 
 function isCount(value: unknown): value is number {

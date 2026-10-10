@@ -2,6 +2,7 @@ import { type Result, SONG_PICKER_REQUESTS, type Transport } from "@abth/core";
 
 import {
   type CodedFailure,
+  type EndedGroup,
   type GroupAsked,
   type Pipeline,
   type PipelineLog,
@@ -15,6 +16,7 @@ import {
   type PortImplementation,
   type WriteOutcomeView,
 } from "../session-port";
+import { PICTURE_OPERATION } from "./read-picture";
 import { BUSY_OUTCOME } from "./session-writes";
 
 /** The pipelines the port's verbs run in. */
@@ -23,20 +25,38 @@ export interface PortPipelines {
   readonly external: Pipeline;
 }
 
-/** The pipelines' histories, under the same names. */
+/** The pipelines' histories, under the same names, with Hiroba's pictures kept apart. */
 export interface PortLogs {
   readonly io: PipelineLog;
+  readonly pictures: PipelineLog;
   readonly external: PipelineLog;
 }
 
-/** Both pipelines as the pipelines page shows them, each with its newest `history` that ended. */
+const isPicture = (group: { readonly operation: string }) => group.operation === PICTURE_OPERATION;
+
+/** Keeps each of Hiroba's groups as it ends: a picture apart from the rest, and only one that
+ * asked Hiroba for it, not one found on the device. */
+export function keepHirobaEnded(
+  logs: Pick<PortLogs, "io" | "pictures">,
+): (group: EndedGroup) => void {
+  return (group) => {
+    if (!isPicture(group)) {
+      logs.io.add(group);
+    } else if (group.requests > 0) {
+      logs.pictures.add(group);
+    }
+  };
+}
+
+/** The pipelines as the pipelines page shows them, each with its newest `history` that ended. */
 export function viewOfPipelines(
   pipelines: PortPipelines,
   logs: PortLogs,
   history: number,
 ): PipelinesView {
   return {
-    io: viewOfPipeline(pipelines.io, logs.io, history),
+    io: viewOfPipeline(pipelines.io, logs.io, history, (group) => !isPicture(group)),
+    pictures: viewOfPipeline(pipelines.io, logs.pictures, history, isPicture),
     external: viewOfPipeline(pipelines.external, logs.external, history),
   };
 }

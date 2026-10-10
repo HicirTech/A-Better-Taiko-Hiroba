@@ -10,8 +10,6 @@ import {
   readPipelineHistory,
 } from "../src/pipelines";
 
-const PICTURE = "picture";
-
 const group = (overrides: Partial<EndedGroup> = {}): EndedGroup =>
   ({
     operation: "readProfile",
@@ -23,16 +21,17 @@ const group = (overrides: Partial<EndedGroup> = {}): EndedGroup =>
     ...overrides,
   }) as EndedGroup;
 
-const failedPicture = (outcome: "failed" | "stopped", requests = 1): EndedGroup => ({
-  operation: PICTURE,
+const stoppedPicture: EndedGroup = {
+  operation: "picture",
+  subject: "costumeItem",
   kind: "read",
   startedAt: 1000,
   endedAt: 1100,
-  requests,
-  outcome,
-  code: "costumeItem=timedOut",
-  at: null,
-});
+  requests: 1,
+  outcome: "stopped",
+  code: "costumeItem=cancelled",
+  at: { index: 1, request: { method: "GET", path: "/imgsrc_kisekae.php" } },
+};
 
 /** Lets the log's own promises settle. */
 const settle = () => Bun.sleep(0);
@@ -40,7 +39,6 @@ const settle = () => Bun.sleep(0);
 function setUp(store: PipelineHistoryStore = createMemoryPipelineStore()) {
   const saves: (() => void)[] = [];
   const log = createPipelineLog({
-    counted: new Set([PICTURE]),
     store,
     later: (save) => {
       saves.push(save);
@@ -85,63 +83,30 @@ describe("createPipelineLog", () => {
     expect(log.history(12).ended).toHaveLength(12);
   });
 
-  test("counts the pictures that came and those that failed, and lists none of them", async () => {
-    const { log } = setUp();
-    await settle();
-    log.add(group({ operation: PICTURE }));
-    log.add(group({ operation: PICTURE }));
-    log.add(failedPicture("failed"));
-
-    expect(log.history(12)).toEqual({ ended: [], pictures: { came: 2, failed: 1 } });
-  });
-
-  test("counts no picture stopped by a sign-out, nor one that sent nothing", async () => {
-    const { log } = setUp();
-    await settle();
-    log.add(failedPicture("stopped"));
-    log.add(failedPicture("failed", 0));
-    log.add(group({ operation: PICTURE, requests: 0 }));
-
-    expect(log.history(12).pictures).toEqual({ came: 0, failed: 0 });
-  });
-
   test("saves a moment after a change, once for a run of changes, and the latest of them", async () => {
-    const held = heldStore({ ended: [], pictures: { came: 0, failed: 0 } });
+    const held = heldStore({ ended: [] });
     const { log, saves, saveNow } = setUp(held.store);
     held.load();
     await settle();
     log.add(group({ startedAt: 1 }));
-    log.add(group({ operation: PICTURE }));
     log.add(group({ startedAt: 2 }));
 
     expect(saves).toHaveLength(1);
     await saveNow();
-    expect(held.saved).toEqual([
-      {
-        ended: [group({ startedAt: 2 }), group({ startedAt: 1 })],
-        pictures: { came: 1, failed: 0 },
-      },
-    ]);
+    expect(held.saved).toEqual([{ ended: [group({ startedAt: 2 }), group({ startedAt: 1 })] }]);
     log.add(group({ startedAt: 3 }));
     expect(saves).toHaveLength(1);
   });
 
   test("puts what was kept behind the groups that ended while it loaded, and saves nothing before", async () => {
-    const held = heldStore({
-      ended: [group({ startedAt: 1 })],
-      pictures: { came: 4, failed: 1 },
-    });
+    const held = heldStore({ ended: [group({ startedAt: 1 })] });
     const { log, saves, saveNow } = setUp(held.store);
     log.add(group({ startedAt: 2 }));
-    log.add(group({ operation: PICTURE }));
     expect(saves).toHaveLength(0);
 
     held.load();
     await settle();
-    expect(log.history(12)).toEqual({
-      ended: [group({ startedAt: 2 }), group({ startedAt: 1 })],
-      pictures: { came: 5, failed: 1 },
-    });
+    expect(log.history(12)).toEqual({ ended: [group({ startedAt: 2 }), group({ startedAt: 1 })] });
     expect(saves).toHaveLength(1);
     await saveNow();
     expect(held.saved).toHaveLength(1);
@@ -159,7 +124,7 @@ describe("createPipelineLog", () => {
     log.add(group());
     await saveNow();
 
-    expect(saved).toEqual([{ ended: [group()], pictures: { came: 0, failed: 0 } }]);
+    expect(saved).toEqual([{ ended: [group()] }]);
   });
 });
 
@@ -173,9 +138,8 @@ describe("readPipelineHistory", () => {
           code: "readFailed timedOut",
           at: { index: 2, request: { method: "POST", path: "/ajax/change_mydon.php" } },
         } as Partial<EndedGroup>),
-        failedPicture("stopped"),
+        stoppedPicture,
       ],
-      pictures: { came: 3, failed: 2 },
     };
 
     expect(readPipelineHistory(JSON.parse(JSON.stringify(history)))).toEqual(history);
@@ -184,20 +148,21 @@ describe("readPipelineHistory", () => {
   test.each<[name: string, stored: unknown]>([
     ["no object", "history"],
     ["a list", []],
-    ["no groups", { pictures: { came: 1, failed: 0 } }],
+    ["no groups", {}],
   ])("reads %s as an empty history", (_name, stored) => {
     expect(readPipelineHistory(stored).ended).toEqual([]);
   });
 
-  test("drops what does not read as a group, and a tally that does not read as one", () => {
+  test("drops what does not read as a group, and the pictures' tally an earlier version kept", () => {
     const broken = [
       { ...group(), kind: "sideways" },
+      { ...group(), subject: 3 },
       { ...group(), requests: -1 },
       { ...group(), outcome: "failed" },
       { ...group(), outcome: "failed", code: "x", at: { index: 1, request: { method: "PUT" } } },
     ];
     const read = readPipelineHistory({ ended: [...broken, group()], pictures: { came: "3" } });
 
-    expect(read).toEqual({ ended: [group()], pictures: { came: 0, failed: 0 } });
+    expect(read).toEqual({ ended: [group()] });
   });
 });
