@@ -1,56 +1,91 @@
 import type { Translator } from "@abth/i18n";
-import {
-  Dialog,
-  DialogTitle,
-  List,
-  ListItemButton,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Stack,
-  Typography,
-} from "@mui/material";
-import { useCallback, useEffect, useState } from "react";
+import { Stack, TextField, Typography } from "@mui/material";
+import { useContext, useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { DIFFICULTY_LABEL, GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import { HistoryRow } from "../history/history-row";
+import { ShownDifficultyContext } from "../favorites/shown-difficulty";
+import { nameLanguage, shownName } from "../favorites/song-names";
+import { fold, searchedNames } from "../favorites/song-search";
+import type { SongCatalogue } from "../favorites/use-song-catalogue";
+import { HistoryRow, type RowProps } from "../history/history-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { LoadFailed, Waiting } from "../my-page/editor-parts";
-import { useLongPress } from "../my-page/use-long-press";
-import { useBackCloses } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
+import { ScoreDetails } from "./score-details";
+import { ScoreFilters } from "./score-filters";
+import {
+  type ListedScore,
+  matchesScore,
+  matchesSearch,
+  type ScoreFilter,
+  type ScoreSort,
+  sortScores,
+  startingFilter,
+} from "./score-order";
 import type { ScoresState } from "./use-scores";
 
 const LIST = { listStyle: "none", m: 0, p: 0 } as const;
-const ACTIONS_TITLE_ID = "scores-actions-title";
 
-/** The scores page: every played chart's newest reading, read by a pull, Read again or its keys. */
+const chartOf = ({ songNo, level }: ScoreView) => `${songNo}/${level}`;
+
+/** A chart's score as the page lists it, its song named as the player's language names it. */
+function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Translator["locale"]) {
+  const song = catalogue.songs.get(score.songNo);
+  const name = song === undefined ? score.songTitle : shownName(song, locale);
+  const names = song === undefined ? [] : searchedNames(song);
+  return {
+    score,
+    name,
+    nameLang: song === undefined ? HIROBA_LANG : nameLanguage(song, name),
+    searched: [score.songTitle, ...names].map(fold),
+    stars: song?.levels[LEVEL_DIFFICULTY[score.level]] ?? null,
+  } satisfies ListedScore;
+}
+
+/** The scores page: every played chart's newest reading, searched, narrowed and sorted. */
 export function ScoresPage({
   scores,
+  catalogue,
   lane,
   touchFirst,
   i18n,
 }: {
   readonly scores: ScoresState;
+  /** taiko.wiki's song list: the names in the player's language, and each chart's stars. */
+  readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
-  /** A touch screen: a pull reads, and a long press opens a song's actions. */
+  /** A touch screen: a pull reads. */
   readonly touchFirst: boolean;
   readonly i18n: Translator;
 }) {
-  const { t, number } = i18n;
+  const { t, number, locale } = i18n;
   const { view, reading, progress, song, failure, load, readSong } = scores;
   useEffect(load, [load]);
-  const [menu, setMenu] = useState<{ score: ScoreView; x: number; y: number } | null>(null);
-  const [offering, setOffering] = useState<ScoreView | null>(null);
-  const stopOffering = useCallback(() => setOffering(null), []);
-  useBackCloses(offering !== null, stopOffering);
-  const readAgain = (score: ScoreView) => {
-    setMenu(null);
-    setOffering(null);
-    void readSong(score);
-  };
+  const shownDifficulty = useContext(ShownDifficultyContext);
+  const [query, setQuery] = useState("");
+  const deferred = useDeferredValue(query);
+  const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(shownDifficulty));
+  const [sort, setSort] = useState<ScoreSort | null>(null);
+  const [opened, setOpened] = useState<string | null>(null);
+
   const rows = view?.scores ?? [];
+  const listed = useMemo(
+    () => rows.map((score) => listedOf(score, catalogue, locale)),
+    [rows, catalogue, locale],
+  );
+  const names = useMemo(() => new Intl.Collator(locale), [locale]);
+  const folded = fold(deferred).trim();
+  const shown = useMemo(
+    () =>
+      sortScores(
+        listed.filter((one) => matchesScore(one, filter) && matchesSearch(one, folded)),
+        sort,
+        names,
+      ),
+    [listed, filter, folded, sort, names],
+  );
+  const openedScore = listed.find((one) => chartOf(one.score) === opened) ?? null;
   const settled = view !== null && !reading && failure === null;
   return (
     <Stack spacing={2} id="scores-page">
@@ -79,90 +114,92 @@ export function ScoresPage({
           {t("scores.unread", { count: number(view.unread) })}
         </Typography>
       )}
+      {rows.length > 0 && (
+        <Stack spacing={1.5}>
+          <TextField
+            id="scores-search"
+            type="search"
+            size="small"
+            label={t("picker.search")}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <ScoreFilters
+            filter={filter}
+            sort={sort}
+            i18n={i18n}
+            onFilter={(part) => setFilter((now) => ({ ...now, ...part }))}
+            onSort={setSort}
+          />
+        </Stack>
+      )}
+      {rows.length > 0 && shown.length === 0 && (
+        <Typography id="scores-no-match" color="text.secondary">
+          {t("scores.noMatch")}
+        </Typography>
+      )}
       <Stack component="ul" id="scores-list" spacing={0} sx={LIST}>
-        {rows.map((score, index) => (
+        {shown.map((one, index) => (
           <ScoreRow
-            key={`${score.songNo}/${score.level}`}
-            score={score}
+            key={chartOf(one.score)}
+            listed={one}
             lane={lane}
             order={index}
-            byLongPress={touchFirst}
             i18n={i18n}
-            onMenu={(x, y) => setMenu({ score, x, y })}
-            onHold={() => setOffering(score)}
+            onOpen={() => setOpened(chartOf(one.score))}
           />
         ))}
       </Stack>
-      <Menu
-        id="scores-menu"
-        open={menu !== null}
-        onClose={() => setMenu(null)}
-        anchorReference="anchorPosition"
-        anchorPosition={menu === null ? undefined : { top: menu.y, left: menu.x }}
-      >
-        <MenuItem id="scores-menu-read-song" onClick={() => menu && readAgain(menu.score)}>
-          {t("scores.readSong")}
-        </MenuItem>
-      </Menu>
-      <Dialog
-        id="scores-actions"
-        open={offering !== null}
-        onClose={stopOffering}
-        aria-labelledby={ACTIONS_TITLE_ID}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle id={ACTIONS_TITLE_ID} lang={HIROBA_LANG}>
-          {offering?.songTitle}
-        </DialogTitle>
-        <List disablePadding sx={{ pb: 1 }}>
-          <ListItemButton
-            id="scores-actions-read-song"
-            onClick={() => offering && readAgain(offering)}
-          >
-            <ListItemText primary={t("scores.readSong")} />
-          </ListItemButton>
-        </List>
-      </Dialog>
+      <ScoreDetails
+        listed={openedScore}
+        lane={lane}
+        reading={reading}
+        readingSong={song !== null && song.songNo === openedScore?.score.songNo}
+        i18n={i18n}
+        onReadSong={(score) => void readSong(score)}
+        onClose={() => setOpened(null)}
+      />
     </Stack>
   );
 }
 
-/** A chart's row: a right-click on a PC, or a long press on a phone, opens its song's actions. */
+/** A chart's row: a click, Enter or Space opens its details. */
 function ScoreRow({
-  score,
+  listed,
   lane,
   order,
-  byLongPress,
   i18n,
-  onMenu,
-  onHold,
+  onOpen,
 }: {
-  readonly score: ScoreView;
+  readonly listed: ListedScore;
   readonly lane: PictureLane;
   readonly order: number;
-  readonly byLongPress: boolean;
   readonly i18n: Translator;
-  readonly onMenu: (x: number, y: number) => void;
-  readonly onHold: () => void;
+  readonly onOpen: () => void;
 }) {
-  const held = useLongPress(byLongPress, onHold);
+  const { score } = listed;
+  const rowProps: RowProps = {
+    role: "button",
+    tabIndex: 0,
+    "aria-haspopup": "dialog",
+    "data-song-no": score.songNo,
+    "data-level": score.level,
+    onClick: onOpen,
+    onKeyDown: (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onOpen();
+      }
+    },
+  };
   return (
     <HistoryRow
       play={score}
+      name={{ text: listed.name, lang: listed.nameLang }}
       lane={lane}
       order={order}
       i18n={i18n}
-      handlers={
-        byLongPress
-          ? held
-          : {
-              onContextMenu: (event) => {
-                event.preventDefault();
-                onMenu(event.clientX, event.clientY);
-              },
-            }
-      }
+      rowProps={rowProps}
     />
   );
 }

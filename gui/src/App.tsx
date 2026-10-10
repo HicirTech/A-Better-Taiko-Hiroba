@@ -36,6 +36,7 @@ import type { SystemLink, SystemToast } from "./platform";
 import { afterRefresh } from "./read-again/after-refresh";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
+import { SHUT_LOOK } from "./read-again/shut-look";
 import { useReadAgainKeys } from "./read-again/use-read-again-keys";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
 import { ScoresPage, scoresReadingText } from "./scores/scores-page";
@@ -66,7 +67,6 @@ type Screen =
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
 const OVERVIEW_SPACING = 3;
-const SHUT_LOOK = (shut: boolean) => ({ opacity: shut ? 0.6 : 1, transition: "opacity 150ms" });
 const HIDDEN = { display: "none" } as const;
 const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 
@@ -206,7 +206,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const { forget: forgetFavorites, dropEdits: dropFavoritesEdits, read: readFavorites } = favorites;
   // Read once someone opens the favourites or the song search, and kept from then on.
   const [songsWanted, setSongsWanted] = useState(false);
-  const catalogue = useSongCatalogue(port, onFavoritesPage || songsWanted);
+  const catalogue = useSongCatalogue(port, onFavoritesPage || onScoresPage || songsWanted);
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
   const { read: readEditor } = editor;
@@ -444,7 +444,13 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             )}
 
             {screen.name === "profile" && page === "scores" && (
-              <ScoresPage scores={scores} lane={lane} touchFirst={touchFirst} i18n={i18n} />
+              <ScoresPage
+                scores={scores}
+                catalogue={catalogue}
+                lane={lane}
+                touchFirst={touchFirst}
+                i18n={i18n}
+              />
             )}
 
             {screen.name === "profile" && page === "costume" && (

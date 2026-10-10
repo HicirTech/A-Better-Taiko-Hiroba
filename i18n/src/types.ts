@@ -125,6 +125,31 @@ export interface Messages {
   "scores.unread": string;
   /** A song's action: read its charts again. */
   "scores.readSong": string;
+  /** The sort chip's name, and its menu's. */
+  "scores.sort": string;
+  /** The sorts: by name, the order with none chosen, then the others. */
+  "scores.sort.name": string;
+  "scores.sort.score": string;
+  "scores.sort.rank": string;
+  "scores.sort.crown": string;
+  "scores.sort.recent": string;
+  /** With charts kept, but none the search and the filters leave. */
+  "scores.noMatch": string;
+  /** A chart's details: Hiroba's Japan ranking, and its place there. */
+  "scores.ranking": string;
+  /** Param: {place}, the place, as the locale writes a count. */
+  "scores.place": string;
+  "scores.noPlace": string;
+  /** The four play counts: also the sorts by plays, full combos and clears. */
+  "scores.plays": string;
+  "scores.clears": string;
+  "scores.fullCombos": string;
+  "scores.donderfuls": string;
+  /** 区間毎詳細成績, and one section of it. Param: {number}, from 1. */
+  "scores.sections": string;
+  "scores.section": string;
+  /** Param: {time}, when the chart's details were read. */
+  "scores.readAt": string;
   "settings.language": string;
   "settings.account": string;
   /** Param: {name}, the nickname, as Hiroba writes it. */
