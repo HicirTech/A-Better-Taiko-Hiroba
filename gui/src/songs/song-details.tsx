@@ -13,7 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { useState } from "react";
+import { useContext, useState } from "react";
 
 import { CloseIcon } from "../favorites/favorites-icons";
 import {
@@ -28,6 +28,7 @@ import { nameLanguage, shownName } from "../favorites/song-names";
 import type { ListedSong } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { useBackLeaves } from "../navigation/back-closers";
+import { PipelinesShownContext } from "../navigation/pipelines-shown";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
@@ -77,10 +78,11 @@ export function SongDetails({ song, port, lane, i18n, onClose }: SongDetailsProp
   // A page of its own on a phone: Back leaves it as it leaves a mode, and the menu's swipe still
   // opens the menu over it.
   useBackLeaves(song !== null, onClose);
+  const covered = useContext(PipelinesShownContext);
   return (
     <Dialog
       id="song-details"
-      open={song !== null}
+      open={song !== null && !covered}
       onClose={onClose}
       fullScreen={narrow}
       fullWidth

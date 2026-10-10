@@ -12,7 +12,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 ## What it does
 
 - [x] Sign in with your Bandai Namco ID and stay signed in
-- [ ] Show every song at every difficulty: crowns, ranks, scores, hit counts, play options
+- [x] Show every chart you played: crowns, ranks, scores, hit counts, play options
 - [x] Show your profile, My Don, title, dan rank, score counts and favourite songs
 - [x] Show your recent plays
 - [x] Change your title

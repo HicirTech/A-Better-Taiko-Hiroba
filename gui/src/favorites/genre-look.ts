@@ -1,4 +1,4 @@
-import type { Genre } from "@abth/core";
+import type { Genre, Level } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
 
 import type { Difficulty } from "../song-catalogue/types";
@@ -39,6 +39,15 @@ export const DIFFICULTY_COLOUR: Readonly<Record<Difficulty, string>> = {
 
 /** White reads on every chart's colour. */
 export const DIFFICULTY_TEXT = "#fff";
+
+/** Hiroba's level numbers, 5 being the ura chart. */
+export const LEVEL_DIFFICULTY = {
+  1: "easy",
+  2: "normal",
+  3: "hard",
+  4: "oni",
+  5: "ura",
+} as const satisfies Record<Level, Difficulty>;
 
 export const DIFFICULTY_LABEL = {
   easy: "difficulty.easy",

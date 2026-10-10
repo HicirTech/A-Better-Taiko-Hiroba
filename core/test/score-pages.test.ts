@@ -305,7 +305,97 @@ describe("parseScoreDetailPage", () => {
         options: { speed: 2, doron: false, abekobe: false, random: "none", supportChart: null },
       },
       fetchedAt: T,
+      ranking: null,
+      sections: [],
     });
+  });
+
+  test("reads the Japan ranking's place, and none where the page shows ---位", () => {
+    const place = (shown: string) =>
+      parseScoreDetailPage(
+        detailExcerpt({ crown: 2, rank: 6, stage: 3, optionCodes: [] }).replace(
+          '<div class="scoreDetailTable">',
+          `<div class="scoreDetailTable"><div class="ranking"><img src="x.png" /><span>${shown}</span></div>`,
+        ),
+        "000000000000",
+        "1178",
+        4,
+        T,
+      );
+    const ranked = place("5503位");
+    const unranked = place("---位");
+    expect(isOk(ranked) && ranked.value.ranking).toBe(5503);
+    expect(isOk(unranked) && unranked.value.ranking).toBeNull();
+  });
+
+  test("reads each section's own crown, score and hits, which run up to the next label", () => {
+    const block = (n: number, crown: number, score: string) => `
+      <div class="section_lavel"><span>区間${n}</span></div>
+      <div class="section_crown"><img class="crown" src="image/sp/640/crown_large_${crown}_640.png"></div>
+      <div class="high_score"><span>${score}点</span></div>
+      <div class="good_cnt"><span>10${n}回</span></div>
+      <div class="ng_cnt"><span>${n}回</span></div>
+      <div class="ok_cnt"><span>2${n}回</span></div>
+      <div class="pound_cnt"><span>3${n}回</span></div>`;
+    // As Hiroba lays them out: every section's blocks side by side in one table.
+    const html = detailExcerpt({ crown: 1, rank: 5, stage: 4, optionCodes: [] }).replace(
+      "</body>",
+      `<div class="scoreDetailTable">${block(1, 1, "158540")}${block(2, 2, "217070")}</div></body>`,
+    );
+
+    const result = parseScoreDetailPage(html, "000000000000", "1370", 4, T);
+
+    expect(isOk(result) && result.value.sections).toEqual([
+      { crown: "silver", score: 158540, good: 101, ok: 21, bad: 1, drumroll: 31 },
+      { crown: "gold", score: 217070, good: 102, ok: 22, bad: 2, drumroll: 32 },
+    ]);
+    expect(isOk(result) && result.value.crown).toBe("silver");
+  });
+
+  test("reads a section with no crown as played, and fails on a crown it cannot read", () => {
+    const section = (crown: string) => `<div class="scoreDetailTable">
+      <div class="section_lavel"><span>区間1</span></div>
+      <div class="section_crown">${crown}</div>
+      <div class="high_score"><span>98200点</span></div>
+      <div class="good_cnt"><span>101回</span></div>
+      <div class="ng_cnt"><span>40回</span></div>
+      <div class="ok_cnt"><span>21回</span></div>
+      <div class="pound_cnt"><span>0回</span></div></div></body>`;
+    const parse = (crown: string) =>
+      parseScoreDetailPage(
+        detailExcerpt({ crown: 0, rank: null, stage: 2, optionCodes: [] }).replace(
+          "</body>",
+          section(crown),
+        ),
+        "000000000000",
+        "1236",
+        4,
+        T,
+      );
+
+    const uncleared = parse("");
+    const unknown = parse('<img class="crown" src="image/sp/640/crown_new_640.png">');
+
+    expect(isOk(uncleared) && uncleared.value.sections).toEqual([
+      { crown: "played", score: 98200, good: 101, ok: 21, bad: 40, drumroll: 0 },
+    ]);
+    expect(!isOk(unknown) && unknown.error).toEqual({
+      kind: "unreadableValue",
+      page: "score_detail.php",
+      marker: ".section_crown img.crown",
+      raw: "image/sp/640/crown_new_640.png",
+    });
+  });
+
+  test("a page with no section reads none", () => {
+    const result = parseScoreDetailPage(
+      detailExcerpt({ crown: 2, rank: 6, stage: 3, optionCodes: [] }),
+      "000000000000",
+      "1178",
+      4,
+      T,
+    );
+    expect(isOk(result) && result.value.sections).toEqual([]);
   });
 
   test("the per-section blocks repeat the record's markers and must not bleed into it", () => {
@@ -394,6 +484,8 @@ describe("parseScoreDetailPage", () => {
       fidelity: "detail",
       record: null,
       fetchedAt: T,
+      ranking: null,
+      sections: [],
     });
   });
 

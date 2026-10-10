@@ -17,6 +17,7 @@ import {
   EXTERNAL_READ_CONSUMERS,
   HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
+  SCORE_READ_CONSUMERS,
 } from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
@@ -65,6 +66,7 @@ function watchedPort() {
     {
       io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED }),
       history: createPipeline({ readConsumers: HISTORY_READ_CONSUMERS, transport: UNUSED }),
+      scores: createPipeline({ readConsumers: SCORE_READ_CONSUMERS, transport: UNUSED }),
       external: createPipeline({ readConsumers: EXTERNAL_READ_CONSUMERS, transport: UNUSED }),
     },
     verbs,
@@ -209,6 +211,7 @@ describe("queuePort, as the pipelines page sees its groups", () => {
     const pipelines = {
       io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED, ended: tell }),
       history: createPipeline({ readConsumers: 1, transport: UNUSED, ended: tell }),
+      scores: createPipeline({ readConsumers: 1, transport: UNUSED, ended: tell }),
       external: createPipeline({
         readConsumers: EXTERNAL_READ_CONSUMERS,
         transport: UNUSED,
@@ -314,6 +317,7 @@ describe("Hiroba's pictures, apart from its other groups", () => {
   test("shows the pictures running and waiting in their own view, and the rest in Hiroba's", async () => {
     const io = createPipeline({ readConsumers: 1, transport: UNUSED });
     const history = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const scores = createPipeline({ readConsumers: 1, transport: UNUSED });
     const external = createPipeline({ readConsumers: 1, transport: UNUSED });
     let letGo: () => void = () => undefined;
     const held = new Promise<void>((resolve) => {
@@ -330,8 +334,8 @@ describe("Hiroba's pictures, apart from its other groups", () => {
     await settle();
 
     const view = viewOfPipelines(
-      { io, history, external },
-      { io: log(), pictures: log(), history: log(), external: log() },
+      { io, history, scores, external },
+      { io: log(), pictures: log(), history: log(), scores: log(), external: log() },
       12,
     );
     expect(view.pictures.running).toEqual([expect.objectContaining({ subject: "myDon" })]);
@@ -345,6 +349,7 @@ describe("Hiroba's pictures, apart from its other groups", () => {
   test("shows the play history's groups in a view of their own", async () => {
     const io = createPipeline({ readConsumers: 1, transport: UNUSED });
     const history = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const scores = createPipeline({ readConsumers: 1, transport: UNUSED });
     const external = createPipeline({ readConsumers: 1, transport: UNUSED });
     let letGo: () => void = () => undefined;
     const held = new Promise<void>((resolve) => {
@@ -357,8 +362,8 @@ describe("Hiroba's pictures, apart from its other groups", () => {
     await settle();
 
     const view = viewOfPipelines(
-      { io, history, external },
-      { io: log(), pictures: log(), history: log(), external: log() },
+      { io, history, scores, external },
+      { io: log(), pictures: log(), history: log(), scores: log(), external: log() },
       12,
     );
 
@@ -368,6 +373,35 @@ describe("Hiroba's pictures, apart from its other groups", () => {
     expect(view.io.running).toEqual([]);
     letGo();
     await page;
+  });
+
+  test("shows the score details' groups in a view of their own", async () => {
+    const io = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const history = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const scores = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const external = createPipeline({ readConsumers: 1, transport: UNUSED });
+    let letGo: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      letGo = resolve;
+    });
+    const detail = scores.read(
+      { operation: "scoreDetail", subject: "1178/4", failureOf: () => null },
+      () => held,
+    );
+    await settle();
+
+    const view = viewOfPipelines(
+      { io, history, scores, external },
+      { io: log(), pictures: log(), history: log(), scores: log(), external: log() },
+      12,
+    );
+
+    expect(view.scores.running).toEqual([
+      expect.objectContaining({ operation: "scoreDetail", subject: "1178/4" }),
+    ]);
+    expect(view.history.running).toEqual([]);
+    letGo();
+    await detail;
   });
 });
 

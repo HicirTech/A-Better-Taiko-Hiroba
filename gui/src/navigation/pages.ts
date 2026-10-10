@@ -4,6 +4,7 @@ import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
 export const PAGES = [
   "overview",
   "history",
+  "scores",
   "costume",
   "nameTitle",
   "favorites",

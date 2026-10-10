@@ -41,7 +41,7 @@ describe("the charts", () => {
       "Normal",
       "Hard",
       "Extreme",
-      "Extreme (Inner)",
+      "Extreme (Ura)",
     ]);
   });
 });

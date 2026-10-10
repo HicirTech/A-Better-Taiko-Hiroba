@@ -7,6 +7,7 @@ import {
   playedOrNone,
   type Score,
   type ScoreRank,
+  type ScoreSection,
 } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { findImageBySrc, readCountText } from "./element-readers";
@@ -44,6 +45,16 @@ const PLAY_COUNTS_NOT_PRINTED = {
 } as const;
 
 const OPTION_MARKER = ".optionImage img";
+const RANKING_MARKER = ".ranking span";
+/** The site's own spelling. Each label opens a section, whose blocks run up to the next label. */
+const SECTION_LABEL = "section_lavel";
+const SECTION_COUNTS = {
+  score: "high_score",
+  good: "good_cnt",
+  ok: "ok_cnt",
+  bad: "ng_cnt",
+  drumroll: "pound_cnt",
+} as const;
 const SUPPORT_CHART_NOT_SHOWN = null;
 
 /** The My Don's profile link, which names whose chart this is. */
@@ -80,6 +91,8 @@ export function parseScoreDetailPage(
       fidelity: "detail",
       record: null,
       fetchedAt,
+      ranking: null,
+      sections: [],
     });
   }
 
@@ -95,6 +108,10 @@ export function parseScoreDetailPage(
   if (isErr(options)) {
     return options;
   }
+  const sections = readSections(root);
+  if (isErr(sections)) {
+    return sections;
+  }
 
   return ok({
     taikoNo,
@@ -105,6 +122,9 @@ export function parseScoreDetailPage(
     fidelity: "detail",
     record: { ...counts.value, options: options.value },
     fetchedAt,
+    // `---位` is the place of a chart that holds none.
+    ranking: readCountText(root.querySelector(RANKING_MARKER)?.text),
+    sections: sections.value,
   });
 }
 
@@ -243,4 +263,61 @@ function readOptions(root: HTMLElement): Result<PlayOptions, ParseFailure> {
     PAGE,
     OPTION_MARKER,
   );
+}
+
+/** 区間毎詳細成績, which only some charts carry: a crown, a score and four counts each. */
+function readSections(root: HTMLElement): Result<readonly ScoreSection[], ParseFailure> {
+  const sections: ScoreSection[] = [];
+  for (const label of root.querySelectorAll(`.${SECTION_LABEL}`)) {
+    const blocks = blocksAfter(label);
+    const crownSrc =
+      blocks
+        .find((block) => block.classList.contains("section_crown"))
+        ?.querySelector("img.crown")
+        ?.getAttribute("src") ?? null;
+    // A section not cleared draws no crown at all, as crown_large_0 does for a whole chart.
+    const crownRaw = crownSrc === null ? "0" : crownSrc.match(/crown_large_(\d)_/)?.[1];
+    if (crownRaw === undefined) {
+      return err({
+        kind: "unreadableValue",
+        page: PAGE,
+        marker: ".section_crown img.crown",
+        raw: crownSrc ?? "",
+      });
+    }
+    const counts: Partial<Record<keyof typeof SECTION_COUNTS, number>> = {};
+    for (const [field, name] of Object.entries(SECTION_COUNTS) as [
+      keyof typeof SECTION_COUNTS,
+      string,
+    ][]) {
+      const block = blocks.find((each) => each.classList.contains(name));
+      const raw = block?.querySelector("span")?.text.trim() ?? "";
+      const value = readCountText(raw);
+      if (value === null) {
+        return err({
+          kind: "unreadableValue",
+          page: PAGE,
+          marker: `.${SECTION_LABEL} ~ .${name}`,
+          raw,
+        });
+      }
+      counts[field] = value;
+    }
+    const crown = CLEARED_CROWNS[Number(crownRaw)] ?? "played";
+    // Complete by construction: the loop covers every count or has already returned.
+    sections.push({ crown, ...(counts as Record<keyof typeof SECTION_COUNTS, number>) });
+  }
+  return ok(sections);
+}
+
+function blocksAfter(label: HTMLElement): HTMLElement[] {
+  const blocks: HTMLElement[] = [];
+  for (
+    let next = label.nextElementSibling;
+    next !== null && !next.classList.contains(SECTION_LABEL);
+    next = next.nextElementSibling
+  ) {
+    blocks.push(next);
+  }
+  return blocks;
 }

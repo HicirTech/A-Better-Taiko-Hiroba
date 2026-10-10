@@ -8,7 +8,7 @@ import { ENDED_CELLS } from "./pipeline-rows";
 import { PipelineSection } from "./pipeline-section";
 import { usePipelinesView } from "./use-pipelines-view";
 
-type SectionName = "io" | "pictures" | "history" | "external";
+type SectionName = "io" | "pictures" | "history" | "scores" | "external";
 
 /** A section for each pipeline, and one for Hiroba's pictures, laid out as the settings page is. */
 export function PipelinesPage({
@@ -58,6 +58,15 @@ export function PipelinesPage({
         view={view?.history ?? null}
         listed={listed.has("history")}
         onListed={list("history")}
+      />
+      <Divider />
+      <PipelineSection
+        id="pipeline-scores"
+        i18n={i18n}
+        name="pipelines.scores"
+        view={view?.scores ?? null}
+        listed={listed.has("scores")}
+        onListed={list("scores")}
       />
       <Divider />
       <PipelineSection

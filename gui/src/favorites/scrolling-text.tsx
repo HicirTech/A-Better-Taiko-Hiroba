@@ -14,10 +14,12 @@ const SCROLL = keyframes`
 /** One line that scrolls to its end and back when it does not fit; an ellipsis with less motion. */
 export function ScrollingText({
   children,
+  id,
   className,
   lang,
 }: {
   children: ReactNode;
+  id?: string;
   className?: string;
   lang?: string;
 }) {
@@ -45,6 +47,7 @@ export function ScrollingText({
     <Box
       component="span"
       ref={box}
+      id={id}
       className={className}
       lang={lang}
       sx={{ display: "block", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}

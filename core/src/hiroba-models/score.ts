@@ -14,6 +14,20 @@ export interface Score {
   readonly fidelity: ScoreFidelity;
   readonly record: ScoreRecord | null;
   readonly fetchedAt: string;
+  /** My own detail page only: the Japan ranking's place, null where the page shows none. */
+  readonly ranking?: number | null;
+  /** My own detail page only: 区間毎詳細成績, none where the page lists none. */
+  readonly sections?: readonly ScoreSection[];
+}
+
+/** One section of a chart: its own crown, score and hits. */
+export interface ScoreSection {
+  readonly crown: CrownState;
+  readonly score: number;
+  readonly good: number;
+  readonly ok: number;
+  readonly bad: number;
+  readonly drumroll: number;
 }
 
 /** The four play counts are null where the page prints none, never 0; the rest always read. */

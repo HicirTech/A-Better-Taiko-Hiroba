@@ -24,6 +24,8 @@ export interface PortPipelines {
   readonly io: Pipeline;
   /** Hiroba's play history: read-only there, so it runs beside `io` and its writes. */
   readonly history: Pipeline;
+  /** Hiroba's score details: they carry no form token, so they run beside `io` and its writes. */
+  readonly scores: Pipeline;
   readonly external: Pipeline;
 }
 
@@ -32,6 +34,7 @@ export interface PortLogs {
   readonly io: PipelineLog;
   readonly pictures: PipelineLog;
   readonly history: PipelineLog;
+  readonly scores: PipelineLog;
   readonly external: PipelineLog;
 }
 
@@ -61,6 +64,7 @@ export function viewOfPipelines(
     io: viewOfPipeline(pipelines.io, logs.io, history, (group) => !isPicture(group)),
     pictures: viewOfPipeline(pipelines.io, logs.pictures, history, isPicture),
     history: viewOfPipeline(pipelines.history, logs.history, history),
+    scores: viewOfPipeline(pipelines.scores, logs.scores, history),
     external: viewOfPipeline(pipelines.external, logs.external, history),
   };
 }

@@ -1,24 +1,22 @@
-import { type Level, playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
+import { playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, SvgIcon } from "@mui/material";
+import type { KeyboardEvent } from "react";
 
-import { DIFFICULTY_LABEL, GENRE_COLOUR, GENRE_LABEL } from "../favorites/genre-look";
+import {
+  DIFFICULTY_LABEL,
+  GENRE_COLOUR,
+  GENRE_LABEL,
+  LEVEL_DIFFICULTY,
+} from "../favorites/genre-look";
+import { ScrollingText } from "../favorites/scrolling-text";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CrownKind } from "../session-port";
-import type { Difficulty } from "../song-catalogue/types";
 import { CourseIcon } from "../songs/course-icon";
 
-const LEVEL_DIFFICULTY = {
-  1: "easy",
-  2: "normal",
-  3: "hard",
-  4: "oni",
-  5: "ura",
-} as const satisfies Record<Level, Difficulty>;
-
-const CROWN_KEY = {
+export const CROWN_KEY = {
   silver: "crowns.silver",
   gold: "crowns.gold",
   donderful: "crowns.donderful",
@@ -36,7 +34,8 @@ const RANK_KEY = {
 
 const MARK_PX = 20;
 // The art's proportions: a crown is taller than wide, a rank wider than tall, an option square.
-const CROWN_WIDTH_PX = Math.round((MARK_PX * 52) / 59);
+export const CROWN_RATIO = 52 / 59;
+const CROWN_WIDTH_PX = Math.round(MARK_PX * CROWN_RATIO);
 const RANK_WIDTH_PX = Math.round((MARK_PX * 128) / 96);
 
 const ONE_LINE = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
@@ -58,17 +57,42 @@ const ROW = {
   "& .song-facts": { color: "text.secondary", fontSize: "0.8125rem", lineHeight: 1.45 },
 } as const;
 
+const OPENABLE_ROW = {
+  ...ROW,
+  cursor: "pointer",
+  "&:hover, &:focus-visible": { bgcolor: "action.hover" },
+} as const;
+
+/** What a row answers besides being shown: a click for its details, and what a test finds it by. */
+export interface RowProps {
+  readonly onClick?: () => void;
+  readonly onKeyDown?: (event: KeyboardEvent) => void;
+  readonly role?: "button";
+  readonly tabIndex?: number;
+  readonly "aria-haspopup"?: "dialog";
+  readonly "data-song-no"?: string;
+  readonly "data-level"?: number;
+}
+
 /** One recent play: the difficulty and the song, its marks as Hiroba's icons, then its counts. */
 export function HistoryRow({
   play,
   lane,
   order,
   i18n,
+  name,
+  rowProps,
+  heading,
 }: {
   readonly play: RecentPlay;
   readonly lane: PictureLane;
   readonly order: number;
   readonly i18n: Translator;
+  /** The song's name as shown, and its language; Hiroba's own title by default. */
+  readonly name?: { readonly text: string; readonly lang: string };
+  readonly rowProps?: RowProps;
+  /** The title's id where the row heads a chart's details, which list its hits below it. */
+  readonly heading?: string;
 }) {
   const { t, number } = i18n;
   const difficulty = LEVEL_DIFFICULTY[play.level];
@@ -92,7 +116,12 @@ export function HistoryRow({
     labeled(t("history.roll"), record.drumroll, number),
   ].filter((part) => part !== null);
   return (
-    <Box component="li" className="history-row" sx={ROW}>
+    <Box
+      component={heading === undefined ? "li" : "div"}
+      className="history-row"
+      sx={rowProps?.onClick === undefined ? ROW : OPENABLE_ROW}
+      {...rowProps}
+    >
       <span
         className="song-bars"
         {...(genre === null ? { "aria-hidden": true } : { role: "img", "aria-label": genre })}
@@ -111,9 +140,15 @@ export function HistoryRow({
             order={order}
             label={t(DIFFICULTY_LABEL[difficulty])}
           />
-          <span className="song-name" lang={HIROBA_LANG}>
-            {play.songTitle}
-          </span>
+          {heading === undefined ? (
+            <span className="song-name" lang={name?.lang ?? HIROBA_LANG}>
+              {name?.text ?? play.songTitle}
+            </span>
+          ) : (
+            <ScrollingText id={heading} className="song-name" lang={name?.lang ?? HIROBA_LANG}>
+              {name?.text ?? play.songTitle}
+            </ScrollingText>
+          )}
           <span className="play-marks">
             {play.crown !== "none" && play.crown !== "played" && (
               <HirobaIcon
@@ -150,7 +185,7 @@ export function HistoryRow({
           </span>
         </span>
         <span className="song-facts">{score.join(" · ")}</span>
-        <span className="song-facts">{hits.join(" · ")}</span>
+        {heading === undefined && <span className="song-facts">{hits.join(" · ")}</span>}
       </span>
     </Box>
   );

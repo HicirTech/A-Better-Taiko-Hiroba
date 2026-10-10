@@ -11,6 +11,8 @@ export type RecentPlaysStop = "known" | "clamped" | "short" | "cap";
 
 export interface RecentPlaysReading {
   readonly plays: readonly RecentPlay[];
+  /** The rows above the first one the last walk stored, newest first: the charts played since. */
+  readonly fresh: readonly RecentPlay[];
   readonly pagesFetched: number;
   readonly stop: RecentPlaysStop;
 }
@@ -112,7 +114,10 @@ export async function readRecentPlays<F>(
       walked = err({ page, failure: rows.error });
     } else {
       const stop = walk.took(page, rows.value);
-      walked = stop === null ? null : ok({ plays: walk.plays(), pagesFetched: page, stop });
+      walked =
+        stop === null
+          ? null
+          : ok({ plays: walk.plays(), fresh: walk.fresh(), pagesFetched: page, stop });
     }
   }
   // Pages asked past the stop end before the walk does; nothing of them is kept.
@@ -149,7 +154,7 @@ function walkFrom(previous: readonly RecentPlay[] | null, pageCap: number) {
     }
     return page >= pageCap ? "cap" : null;
   };
-  return { took, plays: () => mergeRecentPlays(fresh, previous) };
+  return { took, fresh: () => [...fresh], plays: () => mergeRecentPlays(fresh, previous) };
 }
 
 function same(left: readonly string[], right: readonly string[]): boolean {

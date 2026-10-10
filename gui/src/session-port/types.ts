@@ -5,6 +5,8 @@ import type {
   FavoriteSongState,
   FolderEditorView,
   FolderState,
+  Genre,
+  Level,
   MedalProgress,
   NameState,
   PickableSongs,
@@ -14,6 +16,7 @@ import type {
   RenameState,
   Result,
   ScoreRank,
+  ScoreSection,
   ShownSong,
   TitleEditorView,
   TitleState,
@@ -148,6 +151,52 @@ export interface ReadFailure {
 export interface RecentPlaysFailure extends ReadFailure {
   readonly page?: number;
 }
+
+/** A chart's newest reading as the scores page shows it, by Hiroba's title and first genre. */
+export interface ScoreView extends RecentPlay {
+  readonly songNo: string;
+  /** Every genre the score lists name the song in. */
+  readonly genres: readonly Genre[];
+  /** The Japan ranking's place, null where Hiroba shows none. */
+  readonly ranking: number | null;
+  readonly sections: readonly ScoreSection[];
+  /** Its place in recent plays, 0 the newest; null when they no longer show it. */
+  readonly recent: number | null;
+  /** When its details were read. */
+  readonly fetchedAt: string;
+}
+
+/** The kept scores: each played chart with its details, and the charts a read has yet to detail. */
+export interface ScoresView {
+  readonly scores: readonly ScoreView[];
+  readonly unread: number;
+}
+
+/** A read of scores that ended, with how many charts' details it read: none when nothing was new. */
+export interface ScoresRead extends ScoresView {
+  readonly detailed: number;
+}
+
+/** Where a read of scores stopped: a page of recent plays, a genre's list, or a chart's details. */
+export type ScoresStop =
+  | { readonly kind: "recentPlays"; readonly page: number }
+  | { readonly kind: "list"; readonly genre: Genre }
+  | {
+      readonly kind: "detail";
+      readonly songNo: string;
+      /** Hiroba's title, from the lists; null for a song they do not name. */
+      readonly songTitle: string | null;
+      readonly level: Level;
+    };
+
+export interface ScoresFailure extends ReadFailure {
+  readonly at?: ScoresStop;
+}
+
+/** How far a read of scores has come: the walk's page, or the lists or charts read so far. */
+export type ScoresProgress =
+  | { readonly step: "recentPlays"; readonly page: number }
+  | { readonly step: "lists" | "details"; readonly done: number; readonly total: number };
 
 /** Why Hiroba's picture of a costume set did not come, as codes a user can copy into a report.
  * Never the picture's URL or query, never a cookie. */
@@ -325,6 +374,16 @@ export interface HirobaSessionPort {
   readRecentPlays(): Promise<Result<RecentPlaysReading, RecentPlaysFailure>>;
   /** The page a recent-plays walk has started asking for, or null when none is running. */
   recentPlaysProgress(): Promise<number | null>;
+  /** The kept scores. Asks Hiroba nothing. */
+  scores(): Promise<ScoresView>;
+  /** Walks recent plays, takes the lists it needs, then details what is left. Never retried. */
+  readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
+  /** As `readScores`, but takes every list, then every played chart again. Never retried. */
+  readEveryScore(): Promise<Result<ScoresRead, ScoresFailure>>;
+  /** Details each of one song's charts again, in the scores pipeline. Never retried. */
+  readSongScores(songNo: string): Promise<Result<ScoresRead, ScoresFailure>>;
+  /** How far a read of scores has come, or null when none is running. */
+  scoresProgress(): Promise<ScoresProgress | null>;
   /** taiko.wiki's songs, all or those changed since `since` (ms since 1970): one GET that carries
    * no session, in the pipeline for other sites. */
   readSongCatalogue(since: number | null): Promise<Result<SongCatalogueRead, SongCatalogueFailure>>;
@@ -346,6 +405,8 @@ export interface PipelinesView {
   readonly pictures: PipelineView;
   /** Hiroba's play history, read in a pipeline of its own. */
   readonly history: PipelineView;
+  /** Hiroba's score details, read in a pipeline of their own. */
+  readonly scores: PipelineView;
   /** The other sites'. */
   readonly external: PipelineView;
 }

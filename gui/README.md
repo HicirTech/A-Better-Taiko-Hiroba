@@ -13,15 +13,16 @@ tooltip); the season's どんメダル on Hiroba's own plate, and your favourite
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On the desktop it opens as tall as the Overview, so the Overview shows
-whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its six pages:
+whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its seven pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
 **Recent plays** (the あそんだ曲 feed, see [Recent plays](#recent-plays)),
+**Scores** (every chart you played, see [Scores](#scores)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
-Costume, Nickname & title, Favourites, Recent plays or Settings back to the Overview, and from the Overview leaves
+Costume, Nickname & title, Favourites, Recent plays, Scores or Settings back to the Overview, and from the Overview leaves
 the app as before.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
@@ -179,7 +180,7 @@ when you are done.
 
 ### Recent plays
 
-The page of `history_recent_score.php`, second in the navigation, between the Overview and Costume.
+The page of `history_recent_score.php`, second in the navigation, between the Overview and Scores.
 It shows the walk stored on the device, newest first, and has no button of its own: it reads again
 only when you ask, by a pull on a touch screen, or Read again and its keys, and says so while it has
 nothing yet. Each read first asks Hiroba to refresh, then walks the feed: page 1 alone, then up to
@@ -192,9 +193,33 @@ as a lifebuoy), then the score with the longest combo, and the 良/可/不可/�
 the feed also carries are kept for a page of a chart's details. The rows have no date and no song
 number, and stay on the device after a sign-out.
 
+### Scores
+
+Every chart you played, read from Hiroba's score lists and detail pages, third in the navigation,
+between Recent plays and Costume. As Recent plays does, it reads only when you ask, by a pull on a
+touch screen, or Read again and its keys, and each read first asks Hiroba to refresh. The first read
+takes the eight score lists, in Hiroba's own pipeline since a list carries a form token, then the
+details of every chart they show played, five at once in a pipeline of their own; it takes a few
+minutes, and the page says how far it has come. A later read walks recent plays and reads again the
+details of each chart played since; a walk on the Recent plays page marks those charts too, and the
+page counts them until it reads them; a read that finds none says that nothing changed, since the
+scores follow recent plays. A title the lists do not carry yet reads its genre's list again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
+from there next time. A row looks as one of Recent plays does, the song named in the player's
+language from taiko.wiki's list. A search over every name of a song, chips that each tick any
+number of genres, difficulties (Settings' one at first, Extreme with its Ura charts) and star
+levels, and a sort chip (score, rank, genre, crown, plays, full combos, clears, or recent plays, a
+chart they no longer show last; by name with none) work together, ties going by song number. A
+click on a row opens the chart in full, as Hiroba's own detail page has it, headed as its row is
+but for the hits, listed below with the Japan place, the four play counts and, where the chart has
+them, each section's hits and score with its crown over it (a section not cleared has none); a pull
+there, or its refresh button on a computer, reads all the song's charts again. A pull held past
+the point for six seconds, or Read again held down as long on a computer, asks first, then reads
+every list and every played chart again, as the first read does. The scores stay on the device,
+each player's apart, after a sign-out too.
+
 ### The Costume page
 
-The page of the きせかえ editor, third in the navigation, between Recent plays and Nickname & title. The
+The page of the きせかえ editor, fourth in the navigation, between Scores and Nickname & title. The
 My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
 on a touch-first screen (`pointer: coarse`) a long-press of about half a second, held still, so a
 tap, a scroll or a pull begun on it goes nowhere; a pointer on it shows its name, and where a
@@ -308,19 +333,21 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
 
 ### The Favourites page
 
-The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker lists only the songs Hiroba's own picker offers, and opens on all of them. They are read, alone, as a picker opens, if no read has brought them since the app started or the page was last read again: the requests already sent end first, and the rest wait until the list is read; they are kept on the device for the next launch, and gone at a sign-out. The list kept serves while a newer one is read; with none yet, the picker says it is reading, or why it could not, with Retry; the 大好きな曲's picker also lists a song's inner chart as a row of its own, as Hiroba's does, showing only that chart's level and leaving it off the song's own row; a difficulty or star filter keeps only the rows whose charts match, and an inner row is tinted with that chart's colour. A 大好きな曲 set to one says so under its name. Three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its inner chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit and Apply: Edit lets its songs be added, taken out and moved, and turns Apply into Save, with Reset for the edits; Android's Back drops the edits and leaves editing. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls. In the current favourites, and in a set while it is only shown, a click on a song's name opens its details, as [the song search](#the-song-search) does (its level badges keep their own click, and a song taiko.wiki's list lacks has no details); while they are open, a swipe from the right edge leaves the drawer shut.
+The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker lists only the songs Hiroba's own picker offers, and opens on all of them. They are read, alone, as a picker opens, if no read has brought them since the app started or the page was last read again: the requests already sent end first, and the rest wait until the list is read; they are kept on the device for the next launch, and gone at a sign-out. The list kept serves while a newer one is read; with none yet, the picker says it is reading, or why it could not, with Retry; the 大好きな曲's picker also lists a song's Ura chart as a row of its own, as Hiroba's does, showing only that chart's level and leaving it off the song's own row; a difficulty or star filter keeps only the rows whose charts match, and an Ura row is tinted with that chart's colour. A 大好きな曲 set to one says so under its name. Three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its Ura chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit and Apply: Edit lets its songs be added, taken out and moved, and turns Apply into Save, with Reset for the edits; Android's Back drops the edits and leaves editing. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls. In the current favourites, and in a set while it is only shown, a click on a song's name opens its details, as [the song search](#the-song-search) does (its level badges keep their own click, and a song taiko.wiki's list lacks has no details); while they are open, a swipe from the right edge leaves the drawer shut.
 
 ### The song search
 
-The Overview's top band holds a search field, as Gmail's does, across the whole band on a touch screen. It searches taiko.wiki's song list as the song picker does, by part of any of a song's names, and lists each song with its tempo as taiko.wiki gives it: a range for a song whose tempo changes, and ≈ for one whose tempo wobbles. The last ten searches are listed under the empty field, kept on the device, and each can be removed. A song opens in a dialog, full screen on a phone, with its names, artists, genres and tempo, and a button for each chart with Hiroba's icon of its difficulty and its level. A chart shows its max combo, whether it branches, and pictures of its notes, which taiko.wiki links on its own host, on the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp) and on Imgur; each is read once and kept on the device, and Settings names the sites. A picture opens full screen, where two fingers, the mouse wheel or a double click zoom it and a drag moves it; a pinch zooms nothing else in the app. The dialog opens on the difficulty chosen in Settings, and on the inner chart for Extreme when the song has one; on a touch screen it has no close button, as Back closes it, and the menu's swipe opens the menu over it as over a page, Back closing the menu first. Back, the arrow or Escape leaves the search.
+The Overview's top band holds a search field, as Gmail's does, across the whole band on a touch screen. It searches taiko.wiki's song list as the song picker does, by part of any of a song's names, and lists each song with its tempo as taiko.wiki gives it: a range for a song whose tempo changes, and ≈ for one whose tempo wobbles. The last ten searches are listed under the empty field, kept on the device, and each can be removed. A song opens in a dialog, full screen on a phone, with its names, artists, genres and tempo, and a button for each chart with Hiroba's icon of its difficulty and its level. A chart shows its max combo, whether it branches, and pictures of its notes, which taiko.wiki links on its own host, on the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp) and on Imgur; each is read once and kept on the device, and Settings names the sites. A picture opens full screen, where two fingers, the mouse wheel or a double click zoom it and a drag moves it; a pinch zooms nothing else in the app. The dialog opens on the difficulty chosen in Settings, and on the Ura chart for Extreme when the song has one; on a touch screen it has no close button, as Back closes it, and the menu's swipe opens the menu over it as over a page, Back closing the menu first. Back, the arrow or Escape leaves the search.
 
 ### The pipelines page
 
-What the three pipelines run, have waiting and ended, read again four times a second while the page
-is shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures**, **Play history** and
-**External sources** each have a section: Hiroba's pictures run in its pipeline, beside its other
+What the four pipelines run, have waiting and ended, read again four times a second while the page
+is shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures**, **Play history**,
+**Scores** and **External sources** each have a section: Hiroba's pictures run in its pipeline, beside its other
 reads, and are shown apart, each by what it shows (My Don, a plate, the score panel, an icon or a
-costume thumbnail); Play history lists each page of recent plays it read by its number; External
+costume thumbnail); Play history lists each page of recent plays it read by its number; Scores
+lists each chart's details it read by song number and difficulty, and Hiroba interaction each score
+list by its genre; External
 sources lists its chart pictures as it does its other groups. A section's first row has a
 block for each operation group, ten at most: the running ones first and solid, the waiting ones
 after them and pale, blue for a read, purple for a read that runs alone (the song picker's, and

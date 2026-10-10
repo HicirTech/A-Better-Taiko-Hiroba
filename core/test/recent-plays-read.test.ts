@@ -159,6 +159,29 @@ describe("readRecentPlays", () => {
     expect(source.asked).toEqual([1]);
   });
 
+  test("names as fresh only the rows above the first one the last walk stored", async () => {
+    const older = play("older");
+    const source = feed([[play("new"), play("old-head", 2000), older], pageOf(2)]);
+
+    const read = await readRecentPlays({
+      fetchPage: source.fetchPage,
+      previous: [play("old-head"), older],
+    });
+
+    expect(
+      isOk(read) && read.value.fresh.map((row) => [row.songTitle, row.record.highScore]),
+    ).toEqual([
+      ["new", 1000],
+      ["old-head", 2000],
+    ]);
+  });
+
+  test("a first walk names every row it read as fresh", async () => {
+    const pages = [pageOf(1), pageOf(2, 2)];
+    const read = await readRecentPlays({ fetchPage: feed(pages).fetchPage, previous: null });
+    expect(isOk(read) && read.value.fresh).toEqual(pages.flat());
+  });
+
   test("does not stop on a replayed head, which would hide a chart played before that replay", async () => {
     const head = play("head");
     const below = play("below");

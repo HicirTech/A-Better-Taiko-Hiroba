@@ -17,6 +17,7 @@ import {
   titlePlatePng,
 } from "./mock-pictures";
 import { createProfileEditor, escapeHtml } from "./mock-profile";
+import { createScorePages } from "./mock-scores";
 import { CHART_PICTURE_PATHS, wikiSongsSince } from "./mock-song-catalogue";
 
 const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
@@ -54,6 +55,7 @@ const profile = createProfileEditor({ issue: costume.issueTicket });
 /** The favourite editors, and the favourites my page shows; the token is shared here too. */
 const favorites = createFavoritesEditor({ issue: costume.issueTicket });
 const history = createPlayHistory();
+const scores = createScorePages(history);
 /** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
 const IDP_MARKER = "abth-mock-idp-marker";
 /** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
@@ -364,6 +366,22 @@ Bun.serve({
         const rows = await history.page(Number(searchParams.get("page") ?? "1"));
         return page(rows ?? ERROR_SHELL_BODY);
       }
+      case "/score_list.php": {
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        // A list carries a form token, as my page does, so reading one issues a new token.
+        const genre = Number(searchParams.get("genre") ?? "0");
+        return page(scores.list(genre, costume.issueTicket(session)));
+      }
+      case "/score_detail.php": {
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        const songNo = searchParams.get("song_no") ?? "";
+        const detail = scores.detail(songNo, Number(searchParams.get("level") ?? "0"));
+        return page(detail ?? ERROR_SHELL_BODY);
+      }
       case "/ajax/update_score.php": {
         const entered = await ajaxEntry(request, session, () => undefined);
         if (entered instanceof Response) {
@@ -520,6 +538,8 @@ Bun.serve({
         });
       case "/__history":
         return Response.json(history.control(searchParams));
+      case "/__scores":
+        return Response.json(scores.control(searchParams));
       case "/__song-catalogue":
         return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
       case "/__chinese-names":

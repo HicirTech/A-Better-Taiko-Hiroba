@@ -6,6 +6,8 @@ export interface TouchPoint {
 export const PULL_THRESHOLD_PX = 64;
 export const PULL_LIMIT_PX = 128;
 export const PULL_RESISTANCE = 0.5;
+/** How long a pull past the point, or a press on read again, is held to ask for more. */
+export const LONG_HOLD_MS = 6000;
 // Under the browser's own slop, so a pull is decided before the browser starts to scroll.
 export const PULL_SLOP_PX = 8;
 

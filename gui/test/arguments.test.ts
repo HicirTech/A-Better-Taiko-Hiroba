@@ -29,6 +29,7 @@ describe("PORT_ARGUMENTS", () => {
       readSongCatalogue: _catalogue,
       readChartPicture: _chartPicture,
       readPipelines: _pipelines,
+      readSongScores: _songScores,
       ...takingNothing
     } = PORT_ARGUMENTS;
     for (const check of Object.values(takingNothing)) {
@@ -36,6 +37,17 @@ describe("PORT_ARGUMENTS", () => {
       expect(check([undefined])).toBe(false);
       expect(check([{ url: "https://example.test/" }])).toBe(false);
     }
+  });
+
+  test("readSongScores takes one song number, which becomes the detail pages' query", () => {
+    const check = PORT_ARGUMENTS.readSongScores;
+    expect(check(["1178"])).toBe(true);
+    expect(check(["1"])).toBe(true);
+    expect(check([])).toBe(false);
+    expect(check([1178])).toBe(false);
+    expect(check(["123456"])).toBe(false);
+    expect(check(["1178&level=5"])).toBe(false);
+    expect(check(["1178", "1179"])).toBe(false);
   });
 
   test("readPipelines takes how many ended groups of each pipeline to give: none up to all kept", () => {

@@ -6,7 +6,7 @@ const PAGE_SIZE = 5;
 const LAST_PAGE = 200;
 
 /** The counts each row prints, by the name of their label picture; every value is invented. */
-const COUNTS = [
+export const COUNTS = [
   ["good", 400],
   ["ok", 30],
   ["ng", 2],
@@ -18,7 +18,17 @@ const COUNTS = [
   ["dondaful_combo", 0],
 ] as const;
 
-const GENRE_FONTS = ["jpop", "anime", "kids", "vocaloid", "game", "namco", "variety", "classic"];
+/** The title fonts, in Hiroba's genre numbering: index 0 is genre 1. */
+export const GENRE_FONTS = [
+  "jpop",
+  "anime",
+  "kids",
+  "vocaloid",
+  "game",
+  "namco",
+  "variety",
+  "classic",
+];
 
 export interface MockPlay {
   readonly title: string;
@@ -35,9 +45,11 @@ export interface MockPlay {
   readonly support: boolean;
 }
 
+export const mockTitle = (n: number) => `サンプル曲 ${n}`;
+
 /** The `n`th chart played in the stand-in's life; some with options, as Hiroba draws them. */
 export const mockPlay = (n: number): MockPlay => ({
-  title: `サンプル曲 ${n}`,
+  title: mockTitle(n),
   score: 800000 + n,
   level: 1 + (n % 5),
   font: GENRE_FONTS[n % GENRE_FONTS.length] ?? "namco",
@@ -95,12 +107,31 @@ export function createPlayHistory() {
   let releasePages: (() => void) | null = null;
   let pagesHeld: Promise<void> = Promise.resolve();
   const asked: number[] = [];
+  const replays = new Map<number, number>();
 
   const playAt = (into: MockPlay[], count: number) => {
     for (let one = 0; one < count; one += 1) {
       made += 1;
       into.unshift(mockPlay(made));
     }
+  };
+  // A replay scores higher and clears gold, so the chart's record moves.
+  const playAgain = (n: number): MockPlay => {
+    const times = (replays.get(n) ?? 0) + 1;
+    replays.set(n, times);
+    const first = mockPlay(n);
+    return { ...first, score: first.score + 1000 * times, crown: 2 };
+  };
+  // Hiroba lists each chart once, at its newest play.
+  const keepNewest = () => {
+    const seen = new Set<string>();
+    const newest = shown.filter((play) => {
+      const chart = `${play.title}/${play.level}`;
+      const first = !seen.has(chart);
+      seen.add(chart);
+      return first;
+    });
+    shown.splice(0, shown.length, ...newest);
   };
 
   return {
@@ -126,14 +157,25 @@ export function createPlayHistory() {
       }
       refreshes += 1;
       shown.unshift(...pending.splice(0));
+      keepNewest();
       return { result: 0, back_url: backUrl };
     },
+
+    /** How many songs the plays have named so far: `サンプル曲 1` up. */
+    songCount: () => made,
+
+    /** Hiroba's copy of song `n`'s chart at `level`: its newest play, or none. */
+    bestOf: (n: number, level: number): MockPlay | undefined =>
+      shown.find((play) => play.title === mockTitle(n) && play.level === level),
 
     /** `/__history`: plays shown at once or after a refresh, the refresh's answer, a page to fail. */
     control(params: URLSearchParams): unknown {
       const count = (name: string) => Number(params.get(name) ?? "0");
       playAt(shown, count("shown"));
       playAt(pending, count("play"));
+      if (params.has("replay")) {
+        pending.unshift(playAgain(count("replay")));
+      }
       if (params.has("refresh")) {
         refreshAnswer = count("refresh");
       }

@@ -1,6 +1,11 @@
 // The pipelines a shell sends its requests through.
 
-export { EXTERNAL_READ_CONSUMERS, HISTORY_READ_CONSUMERS, IO_READ_CONSUMERS } from "./consumers";
+export {
+  EXTERNAL_READ_CONSUMERS,
+  HISTORY_READ_CONSUMERS,
+  IO_READ_CONSUMERS,
+  SCORE_READ_CONSUMERS,
+} from "./consumers";
 export { type CodedFailure, resultFailure } from "./failure";
 export { KEPT_GROUPS } from "./kept-groups";
 export {

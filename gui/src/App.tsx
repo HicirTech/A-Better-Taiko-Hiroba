@@ -36,8 +36,12 @@ import type { SystemLink, SystemToast } from "./platform";
 import { afterRefresh } from "./read-again/after-refresh";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
+import { SHUT_LOOK } from "./read-again/shut-look";
 import { useReadAgainKeys } from "./read-again/use-read-again-keys";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
+import { ReadEveryDialog } from "./scores/read-every-dialog";
+import { ScoresPage, scoresReadingText } from "./scores/scores-page";
+import { useScores } from "./scores/use-scores";
 import type {
   HirobaSessionPort,
   ProfileView,
@@ -64,7 +68,6 @@ type Screen =
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
 const OVERVIEW_SPACING = 3;
-const SHUT_LOOK = (shut: boolean) => ({ opacity: shut ? 0.6 : 1, transition: "opacity 150ms" });
 const HIDDEN = { display: "none" } as const;
 const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 
@@ -103,6 +106,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
   const onFavoritesPage = page === "favorites" && screen.name === "profile";
   const onHistoryPage = page === "history" && screen.name === "profile";
+  const onScoresPage = page === "scores" && screen.name === "profile";
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
@@ -115,6 +119,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     forget: forgetPickable,
   } = usePickableSongs(port, sessionGone);
   const history = useRecentPlays(port, sessionGone);
+  const scores = useScores(port, sessionGone);
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
@@ -202,7 +207,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const { forget: forgetFavorites, dropEdits: dropFavoritesEdits, read: readFavorites } = favorites;
   // Read once someone opens the favourites or the song search, and kept from then on.
   const [songsWanted, setSongsWanted] = useState(false);
-  const catalogue = useSongCatalogue(port, onFavoritesPage || songsWanted);
+  const catalogue = useSongCatalogue(port, onFavoritesPage || onScoresPage || songsWanted);
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
   const { read: readEditor } = editor;
@@ -311,7 +316,9 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       ? favorites
       : onHistoryPage
         ? history
-        : null;
+        : onScoresPage
+          ? scores
+          : null;
   const canReadAgain =
     signedIn && !writing && !refreshing && (pageEditor === null || pageEditor.canRead);
   // Turns away a second ask, by the button or a key, that lands before the button is shut.
@@ -325,6 +332,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       if (onHistoryPage) {
         // A walk can run for minutes: Read again on another page must not wait for it.
         void history.read();
+      } else if (onScoresPage) {
+        void scores.read();
       } else if (pageEditor !== null) {
         if (onFavoritesPage) {
           // The pickers' list is read again when a picker next opens.
@@ -340,6 +349,13 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     }
   };
   useReadAgainKeys(signedIn, readAgain);
+  // Reading every score takes minutes, so the scores page asks for it by a long hold.
+  const [askingEvery, setAskingEvery] = useState(false);
+  if (askingEvery && !onScoresPage) {
+    setAskingEvery(false);
+  }
+  const keptCharts = scores.view?.scores.length ?? 0;
+  const askEvery = onScoresPage && keptCharts > 0 ? () => setAskingEvery(true) : undefined;
   return (
     <>
       {(signedIn || screen.name === "reading") && (
@@ -349,15 +365,38 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             canRead={canReadAgain}
             fetchedAt={screen.name === "profile" ? screen.profile.fetchedAt : null}
             progress={
-              history.page === null ? null : t("history.readingPage", { page: history.page })
+              scores.reading
+                ? scoresReadingText(i18n, scores.progress, scores.song)
+                : history.page === null
+                  ? null
+                  : t("history.readingPage", { page: history.page })
             }
             onRead={readAgain}
+            onHeld={askEvery}
             i18n={i18n}
           />
         </NavFoot>
       )}
       {page !== "settings" && (signedIn || screen.name === "reading") && (
-        <PullToRead active={touchFirst} canRead={canReadAgain} onRead={readAgain} />
+        <PullToRead
+          active={touchFirst}
+          canRead={canReadAgain}
+          onRead={readAgain}
+          onHeld={askEvery}
+        />
+      )}
+      {onScoresPage && (
+        <ReadEveryDialog
+          open={askingEvery}
+          charts={keptCharts}
+          i18n={i18n}
+          onAnswer={(confirmed) => {
+            setAskingEvery(false);
+            if (confirmed) {
+              void scores.readEvery();
+            }
+          }}
+        />
       )}
       {page === "settings" ? (
         <SettingsPage
@@ -429,6 +468,16 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           <Box id="page-shut" inert={shut} sx={{ display: "contents", "& > *": SHUT_LOOK(shut) }}>
             {screen.name === "profile" && page === "history" && (
               <HistoryPage history={history} lane={lane} touchFirst={touchFirst} i18n={i18n} />
+            )}
+
+            {screen.name === "profile" && page === "scores" && (
+              <ScoresPage
+                scores={scores}
+                catalogue={catalogue}
+                lane={lane}
+                touchFirst={touchFirst}
+                i18n={i18n}
+              />
             )}
 
             {screen.name === "profile" && page === "costume" && (

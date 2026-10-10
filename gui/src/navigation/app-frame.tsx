@@ -39,9 +39,11 @@ import {
   HistoryIcon,
   NameTitleIcon,
   OverviewIcon,
+  ScoresIcon,
   SettingsIcon,
 } from "./page-icons";
 import { PAGES, type Page } from "./pages";
+import { PipelinesShownContext } from "./pipelines-shown";
 import type { SwipeDirection } from "./swipe-gesture";
 import { useMenuSwipe } from "./use-menu-swipe";
 import { usePipelinesSwipe } from "./use-pipelines-swipe";
@@ -53,6 +55,7 @@ const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly i
   {
     overview: { label: "nav.overview", icon: <OverviewIcon /> },
     history: { label: "nav.history", icon: <HistoryIcon /> },
+    scores: { label: "nav.scores", icon: <ScoresIcon /> },
     costume: { label: "nav.costume", icon: <CostumeIcon /> },
     nameTitle: { label: "nav.nameTitle", icon: <NameTitleIcon /> },
     favorites: { label: "nav.favorites", icon: <FavoritesIcon /> },
@@ -220,7 +223,9 @@ export function AppFrame({
                 <WiderFrameContext value={setWider}>
                   <FrameNavigationContext value={setNavigation}>
                     <NavFootContext value={foot}>
-                      <BackModesContext value={modes}>{children}</BackModesContext>
+                      <PipelinesShownContext value={pipelinesShown}>
+                        <BackModesContext value={modes}>{children}</BackModesContext>
+                      </PipelinesShownContext>
                     </NavFootContext>
                   </FrameNavigationContext>
                 </WiderFrameContext>
