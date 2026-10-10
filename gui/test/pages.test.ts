@@ -5,7 +5,14 @@ import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("PAGES", () => {
   test("lists the Costume page, then Nickname & title, between the Overview and Favourites", () => {
-    expect([...PAGES]).toEqual(["overview", "costume", "nameTitle", "favorites", "settings"]);
+    expect([...PAGES]).toEqual([
+      "overview",
+      "history",
+      "costume",
+      "nameTitle",
+      "favorites",
+      "settings",
+    ]);
   });
 });
 
@@ -40,8 +47,10 @@ describe("keptPage", () => {
 });
 
 describe("isPage", () => {
-  test("accepts the five pages and nothing else", () => {
-    expect(["overview", "costume", "nameTitle", "favorites", "settings"].every(isPage)).toBe(true);
+  test("accepts the six pages and nothing else", () => {
+    expect(
+      ["overview", "history", "costume", "nameTitle", "favorites", "settings"].every(isPage),
+    ).toBe(true);
     expect(
       [null, "", "Overview", "Costume", "favourites", "name-title", "nametitle"].some(isPage),
     ).toBe(false);

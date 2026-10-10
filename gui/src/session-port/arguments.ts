@@ -147,6 +147,8 @@ const CROWN_ICONS: Readonly<Record<CrownKind, true>> = {
   gold: true,
   donderful: true,
 };
+// The shape of core's `PLAY_OPTION_CODES`, not the list: the preload loads no core.
+const OPTION_CODE = /^a\d{1,2}$/;
 
 /** A picture the interface may ask for, and nothing else: no URL, no source, no other key. はずす (0)
  * has no picture, so an item's id starts at 1. */
@@ -173,6 +175,13 @@ export function isPictureWant(value: unknown): value is PictureWant {
       value.kind === "courseIcon" &&
       typeof value.difficulty === "string" &&
       (DIFFICULTIES as readonly string[]).includes(value.difficulty)
+    );
+  }
+  if (hasExactly(value, ["kind", "option"])) {
+    return (
+      value.kind === "optionIcon" &&
+      typeof value.option === "string" &&
+      OPTION_CODE.test(value.option)
     );
   }
   return (
@@ -261,6 +270,7 @@ export const PORT_ARGUMENTS = {
   signIn: none,
   cancelSignIn: none,
   readProfile: profileRead,
+  refreshHiroba: none,
   signOut: none,
   openCostumeEditor: none,
   openTitleEditor: none,
@@ -275,6 +285,9 @@ export const PORT_ARGUMENTS = {
   changeFolder: folderChange,
   changeFavoriteSong: favoriteSongChange,
   readSongPicker: none,
+  recentPlays: none,
+  readRecentPlays: none,
+  recentPlaysProgress: none,
   readSongCatalogue: catalogueSince,
   readChineseNames: none,
   readChartPicture: chartUrl,

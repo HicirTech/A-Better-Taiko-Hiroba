@@ -19,6 +19,7 @@ import {
   parseRankDetailPage,
   parseRankListPage,
   parseRecentPlaysPage,
+  parseRefreshToken,
   parseRenameEditorPage,
   parseScoreDetailPage,
   parseScoreListPage,
@@ -137,6 +138,11 @@ const ROUTES: readonly Route[] = [
     match: /^(profile|mypage-top)/,
     parser: "parseRenameEditorPage",
     run: (html) => attempt(parseRenameEditorPage(html)),
+  },
+  {
+    match: /^(profile|mypage-top)/,
+    parser: "parseRefreshToken",
+    run: (html) => attempt(parseRefreshToken(html)),
   },
   {
     // The subject must match the filename: a wrong one trips the parser's own mismatch check.

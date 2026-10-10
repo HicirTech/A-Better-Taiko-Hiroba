@@ -2,7 +2,12 @@ import { describe, expect, test } from "bun:test";
 import type { Medal, Profile, ScoreRank } from "@abth/core";
 
 import { pictureSourcesOf } from "../src/hiroba-session";
-import { courseIconPath, crownIconPath, rankIconPath } from "../src/hiroba-session/picture-sources";
+import {
+  courseIconPath,
+  crownIconPath,
+  optionIconPath,
+  rankIconPath,
+} from "../src/hiroba-session/picture-sources";
 
 const ENDPOINTS = {
   hirobaOrigin: "https://hiroba.test",
@@ -241,5 +246,12 @@ describe("courseIconPath", () => {
   test("names a chart's icon by Hiroba's numbering, from かんたん at 1 to the inner おに at 5", () => {
     const paths = (["easy", "normal", "hard", "oni", "ura"] as const).map(courseIconPath);
     expect(paths).toEqual([1, 2, 3, 4, 5].map((n) => `/image/sp/640/icon_course02_${n}_640.png`));
+  });
+});
+
+describe("optionIconPath", () => {
+  test("names a play option's icon by its code, as the recent plays page draws it", () => {
+    expect(optionIconPath("a1")).toBe("/image/sp/640/status_10_a1_640.png");
+    expect(optionIconPath("a15")).toBe("/image/sp/640/status_10_a15_640.png");
   });
 });

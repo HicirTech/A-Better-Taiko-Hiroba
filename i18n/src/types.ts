@@ -17,6 +17,7 @@ export interface Messages {
   /** Param: {name}, the system's language in its own words (LOCALE_NAMES). */
   "language.system": string;
   "nav.overview": string;
+  "nav.history": string;
   "nav.costume": string;
   "nav.nameTitle": string;
   "nav.favorites": string;
@@ -31,6 +32,7 @@ export interface Messages {
   "pipelines.more": string;
   "pipelines.less": string;
   "pipelines.pictures": string;
+  "pipelines.history": string;
   "pipelines.read": string;
   "pipelines.exclusive": string;
   "pipelines.write": string;
@@ -49,6 +51,9 @@ export interface Messages {
   "pipelines.noRequest": string;
   "pipelines.code": string;
   "pipelines.op.readProfile": string;
+  "pipelines.op.refreshHiroba": string;
+  /** Param: {page}. A page of the recent plays walk, in the play history pipeline. */
+  "pipelines.op.recentPlaysPage": string;
   "pipelines.op.openCostumeEditor": string;
   "pipelines.op.openTitleEditor": string;
   "pipelines.op.previewCostume": string;
@@ -71,7 +76,29 @@ export interface Messages {
   "pipelines.picture.rankIcon": string;
   "pipelines.picture.crownIcon": string;
   "pipelines.picture.courseIcon": string;
+  "pipelines.picture.optionIcon": string;
   "pipelines.picture.costumeItem": string;
+  /** Param: {page}. In the navigation's foot while recent plays are read. */
+  "history.readingPage": string;
+  /** Param: {page}. Under a walk's failure: the page whose request failed. */
+  "history.failedPage": string;
+  /** On the recent plays page with nothing kept yet: how to read them, on a touch screen or not. */
+  "history.emptyPull": string;
+  "history.emptyReadAgain": string;
+  /** 良, 可, 不可, 連打 and the longest combo: a row's hit counts, in taiko.wiki's words. */
+  "history.good": string;
+  "history.ok": string;
+  "history.bad": string;
+  "history.roll": string;
+  "history.combo": string;
+  /** Param: {speed}, the speed option's multiplier: its icon's name, shown when it is not 1. */
+  "history.speed": string;
+  /** The play options ドロン, あべこべ, きまぐれ, でたらめ and サポート譜面: their icons' names. */
+  "history.doron": string;
+  "history.abekobe": string;
+  "history.kimagure": string;
+  "history.detarame": string;
+  "history.support": string;
   "settings.language": string;
   "settings.account": string;
   /** Param: {name}, the nickname, as Hiroba writes it. */
@@ -189,6 +216,8 @@ export interface Messages {
   "failure.cancelled": string;
   "failure.siteError": string;
   "failure.unexpectedPage": string;
+  "failure.maintenance": string;
+  "failure.notRefreshed": string;
   /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
   "failure.detail": string;
   "platform.unsupported": string;

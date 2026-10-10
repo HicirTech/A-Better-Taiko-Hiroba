@@ -13,6 +13,7 @@ import {
 
 import {
   createPictureReader,
+  createRecentPlaysReader,
   createRecentPreviews,
   createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
@@ -29,6 +30,7 @@ import {
   createPipeline,
   createPipelineLog,
   EXTERNAL_READ_CONSUMERS,
+  HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
 } from "../src/pipelines";
 import {
@@ -50,6 +52,7 @@ import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environme
 import { createHirobaTransport } from "./hiroba-transport";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { createPipelineHistoryStore } from "./pipeline-history-store";
+import { createRecentPlaysStore } from "./recent-plays-store";
 import { saveReads } from "./save-reads";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
@@ -100,6 +103,7 @@ const setSession = (value: string | null) => {
   sessionStore?.save(value);
   if (value === null) {
     pipelines.io.stop();
+    pipelines.history.stop();
     owner = null;
     sources = null;
     offered = new Set();
@@ -132,15 +136,21 @@ const pipelineStore = (name: string) =>
 const logs = {
   io: createPipelineLog({ store: pipelineStore("io") }),
   pictures: createPipelineLog({ store: pipelineStore("pictures") }),
+  history: createPipelineLog({ store: pipelineStore("history") }),
   external: createPipelineLog({ store: pipelineStore("external") }),
 };
-// Everything that asks Hiroba something goes through `io`, so no read lands inside a write. A
-// group sends through its own transport, made from its pipeline's.
+// Hiroba is asked through `io`, so no read lands inside a write, but for its play history: those
+// pages carry no form token. A group sends through its own transport, made from its pipeline's.
 const pipelines = {
   io: createPipeline({
     readConsumers: IO_READ_CONSUMERS,
     transport: readTransport,
     ended: keepHirobaEnded(logs),
+  }),
+  history: createPipeline({
+    readConsumers: HISTORY_READ_CONSUMERS,
+    transport: readTransport,
+    ended: logs.history.add,
   }),
   external: createPipeline({
     readConsumers: EXTERNAL_READ_CONSUMERS,
@@ -295,6 +305,14 @@ app.whenReady().then(async () => {
     changeFolder: writes.changeFolder,
     changeFavoriteSong: writes.changeFavoriteSong,
     readSongPicker: writes.readSongPicker,
+    refreshHiroba: writes.refreshHiroba,
+    ...createRecentPlaysReader({
+      endpoints,
+      pipeline: pipelines.history,
+      store: createRecentPlaysStore(join(app.getPath("userData"), "recent-plays.json")),
+      owner: () => owner,
+      endSession: () => setSession(null),
+    }),
     readSongCatalogue: (site, since) =>
       readSongCatalogue(site, environment.songCatalogueUrl, since),
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),

@@ -9,6 +9,7 @@ import {
   PULL_THRESHOLD_PX,
   type PullContext,
   type PullState,
+  pullHoldsThePage,
   pullMoved,
   pullReleased,
   pullStarted,
@@ -82,6 +83,20 @@ describe("pullMoved", () => {
   test("ends the pull once the page has scrolled under it", () => {
     const pulling = movedDown(landed(), PULL_SLOP_PX);
     expect(pullMoved(pulling, { x: START.x, y: START.y + 40 }, 1)).toBe(NO_PULL);
+  });
+});
+
+describe("pullHoldsThePage", () => {
+  type HoldCase = [label: string, state: PullState, dx: number, dy: number, holds: boolean];
+  test.each<HoldCase>([
+    ["a first pixel down, within the slop", landed(), 0, 1, true],
+    ["a move as far down as sideways", landed(), 2, 2, true],
+    ["a move up", landed(), 0, -1, false],
+    ["a move more sideways than down", landed(), 3, 2, false],
+    ["a touch that is no pull", NO_PULL, 0, 4, false],
+    ["a pull, even with the finger back up", movedDown(landed(), PULL_SLOP_PX), 0, -4, true],
+  ])("holds the page still under %s: %p", (_label, state, dx, dy, holds) => {
+    expect(pullHoldsThePage(state, { x: START.x + dx, y: START.y + dy })).toBe(holds);
   });
 });
 

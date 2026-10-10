@@ -1,4 +1,11 @@
-import { err, type Result, sameCostume, type Transport, type WriteOutcome } from "@abth/core";
+import {
+  err,
+  type Result,
+  refreshHiroba,
+  sameCostume,
+  type Transport,
+  type WriteOutcome,
+} from "@abth/core";
 
 import {
   type CostumeChange,
@@ -60,7 +67,8 @@ type QueuedWrites = {
     | "changeName"
     | "changeFolder"
     | "changeFavoriteSong"
-    | "readSongPicker"]: VerbImplementation<V>;
+    | "readSongPicker"
+    | "refreshHiroba"]: VerbImplementation<V>;
 };
 
 /** The port's write verbs, the same on every shell; a queued one takes its group's transport. */
@@ -193,6 +201,11 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     openFavorites: (transport) => opened(transport, openFavorites),
 
     readSongPicker: (transport) => opened(transport, readSongPicker),
+
+    refreshHiroba: (transport) =>
+      opened(transport, (hiroba, { hirobaOrigin }) =>
+        refreshHiroba({ transport: hiroba, hirobaOrigin, now: options.now }),
+      ),
 
     async changeCostume(transport, change) {
       if (!options.signedIn()) {

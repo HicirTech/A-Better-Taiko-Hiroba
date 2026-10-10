@@ -3,6 +3,7 @@ import { chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
 import { createFavoritesEditor } from "./mock-favorites";
+import { createPlayHistory } from "./mock-history";
 import {
   blankPlatePng,
   chartPicturePng,
@@ -10,6 +11,7 @@ import {
   crownIconPng,
   medalPlatePng,
   myDonPng,
+  optionIconPng,
   rankIconPng,
   scorePanelPng,
   titlePlatePng,
@@ -51,6 +53,7 @@ const costume = createCostumeEditor();
 const profile = createProfileEditor({ issue: costume.issueTicket });
 /** The favourite editors, and the favourites my page shows; the token is shared here too. */
 const favorites = createFavoritesEditor({ issue: costume.issueTicket });
+const history = createPlayHistory();
 /** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
 const IDP_MARKER = "abth-mock-idp-marker";
 /** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
@@ -178,7 +181,7 @@ let tokenPlateAnswer: "png" | "gif" = "png";
 const PANEL_LEVEL = 5;
 let panelAnswer: "png" | "404" = "png";
 const ICON_PATH =
-  /^\/image\/sp\/640\/(?:best_score_rank_([2-8])|crown_0([1-4])|icon_course02_([1-5]))_640\.png$/;
+  /^\/image\/sp\/640\/(?:best_score_rank_([2-8])|crown_0([1-4])|icon_course02_([1-5])|status_10_(a\d{1,2}))_640\.png$/;
 let iconAnswer: "png" | "404" = "png";
 const MEDAL_PROGRESS: Readonly<Record<MedalState, string>> = {
   none: "",
@@ -289,7 +292,7 @@ Bun.serve({
     const icon = ICON_PATH.exec(pathname);
     if (icon !== null) {
       // Static art, as Hiroba's is: no session is asked for.
-      const [, rank, crown, course] = icon;
+      const [, rank, crown, course, option] = icon;
       if (iconAnswer === "404") {
         return new Response("not found", { status: 404 });
       }
@@ -298,7 +301,9 @@ Bun.serve({
           ? rankIconPng(Number(rank))
           : crown !== undefined
             ? crownIconPng(Number(crown))
-            : courseIconPng(Number(course));
+            : option !== undefined
+              ? optionIconPng(option)
+              : courseIconPng(Number(course));
       return new Response(body, { headers: { "content-type": "image/png" } });
     }
     switch (pathname) {
@@ -351,6 +356,22 @@ Bun.serve({
         await readsHeld;
         // My page carries forms (rename, 大好きな曲) with a token, so reading it issues a new one.
         return page(myPage(costume.issueTicket(session)));
+      }
+      case "/history_recent_score.php": {
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        const rows = await history.page(Number(searchParams.get("page") ?? "1"));
+        return page(rows ?? ERROR_SHELL_BODY);
+      }
+      case "/ajax/update_score.php": {
+        const entered = await ajaxEntry(request, session, () => undefined);
+        if (entered instanceof Response) {
+          return entered;
+        }
+        return Response.json(
+          history.refresh(entered.session, entered.form, `${HIROBA}/mypage_top.php`),
+        );
       }
       case "/mypage_kisekae.php":
         if (!session?.cardChosen) {
@@ -497,6 +518,8 @@ Bun.serve({
           status: updateFeed.status,
           headers: { "content-type": "application/json" },
         });
+      case "/__history":
+        return Response.json(history.control(searchParams));
       case "/__song-catalogue":
         return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
       case "/__chinese-names":

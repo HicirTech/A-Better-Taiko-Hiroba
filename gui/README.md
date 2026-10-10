@@ -13,14 +13,15 @@ tooltip); the season's どんメダル on Hiroba's own plate, and your favourite
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On the desktop it opens as tall as the Overview, so the Overview shows
-whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its five pages:
+whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its six pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
+**Recent plays** (the あそんだ曲 feed, see [Recent plays](#recent-plays)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
-Costume, Nickname & title, Favourites or Settings back to the Overview, and from the Overview leaves
+Costume, Nickname & title, Favourites, Recent plays or Settings back to the Overview, and from the Overview leaves
 the app as before.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
@@ -55,6 +56,10 @@ and letting go once its ring is full reads again (a page that has scrolled is th
 back, and pulls nothing). On the Costume and Favourites pages
 the same button, keys and pull read the page's editors again instead of your page; on the
 Nickname & title page they read your page and then the list of titles.
+Each of them first asks Hiroba to refresh its copy of your play from the game server, as the ↻ on
+Hiroba's own pages does: my page is read for a fresh form token and the ↻'s post sent once, alone in
+the queue, and a refresh Hiroba refuses stops the read there, with the reason. The read after a
+sign-in or at a launch does not ask for one.
 
 The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
@@ -145,7 +150,9 @@ editor, the list of titles and Hiroba's picture of the set, and a picture's fetc
 reads run at once. A write waits for the running reads to end, goes before the reads still waiting
 and holds the queue for all its requests, so no read and no picture lands between them. A page
 first shown while a write of any kind runs reads when the write has ended, not before. Pictures go
-five at a time too, the rest waiting their turn in screen order.
+five at a time too, the rest waiting their turn in screen order. Your play history is read beside
+the queue, in a pipeline of its own, up to three pages at once and during a write too: its pages
+carry no form token.
 
 When the session ends, by a sign-out or because Hiroba ended it, the queue stops: a read or a write
 that is running sends nothing after the request on its way, and one still waiting sends nothing.
@@ -170,9 +177,24 @@ nickname that was asked for, taken or refused, so the folder holds those too, be
 carry your nickname, taiko number and title already: keep the folder to yourself, and delete it
 when you are done.
 
+### Recent plays
+
+The page of `history_recent_score.php`, second in the navigation, between the Overview and Costume.
+It shows the walk stored on the device, newest first, and has no button of its own: it reads again
+only when you ask, by a pull on a touch screen, or Read again and its keys, and says so while it has
+nothing yet. Each read first asks Hiroba to refresh, then walks the feed: page 1 alone, then up to
+three pages at once, in the play history's pipeline. The first read walks up to 200 pages, five
+charts a page, and a later read stops at the first chart whose record is already stored. A page that
+fails ends the read with nothing of it kept, and the notice names the page; the navigation's foot
+names the page being read. A row is the genre's colour, the difficulty's icon and the song, its
+crown, rank and play options as Hiroba's icons (the support chart, whose picture has not been seen,
+as a lifebuoy), then the score with the longest combo, and the 良/可/不可/連打 hits. The play counts
+the feed also carries are kept for a page of a chart's details. The rows have no date and no song
+number, and stay on the device after a sign-out.
+
 ### The Costume page
 
-The page of the きせかえ editor, second in the navigation, between the Overview and Favourites. The
+The page of the きせかえ editor, third in the navigation, between Recent plays and Nickname & title. The
 My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
 on a touch-first screen (`pointer: coarse`) a long-press of about half a second, held still, so a
 tap, a scroll or a pull begun on it goes nowhere; a pointer on it shows its name, and where a
@@ -294,14 +316,15 @@ The Overview's top band holds a search field, as Gmail's does, across the whole 
 
 ### The pipelines page
 
-What the two pipelines run, have waiting and ended, read again four times a second while the page is
-shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures** and **External sources**
-each have a section: Hiroba's pictures run in its pipeline, beside its other reads, and are shown
-apart, each by what it shows (My Don, a plate, the score panel, an icon or a costume thumbnail);
-External sources lists its chart pictures as it does its other groups. A section's first row has a
+What the three pipelines run, have waiting and ended, read again four times a second while the page
+is shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures**, **Play history** and
+**External sources** each have a section: Hiroba's pictures run in its pipeline, beside its other
+reads, and are shown apart, each by what it shows (My Don, a plate, the score panel, an icon or a
+costume thumbnail); Play history lists each page of recent plays it read by its number; External
+sources lists its chart pictures as it does its other groups. A section's first row has a
 block for each operation group, ten at most: the running ones first and solid, the waiting ones
-after them and pale, blue for a read, purple for a read that runs alone (the song picker's) and
-orange for a write. With more than ten groups the tenth breathes, or shows a + with reduced motion,
+after them and pale, blue for a read, purple for a read that runs alone (the song picker's, and
+Hiroba's refresh) and orange for a write. With more than ten groups the tenth breathes, or shows a + with reduced motion,
 and the number at the row's end is how many groups wait. Its second row has the last twelve groups
 that ended, each new one pushing in from the left on a wash of its mark's colour: ✓ succeeded, ✕
 failed and ⊘ stopped by a sign-out. **More** lists every group kept. A block, a cell or a row of
@@ -309,8 +332,9 @@ that list shows at the section's foot the operation, how it ended, when it start
 and how many requests it sent; for one that did not succeed, the last request it sent and the code
 for a report; for one still running, how long it has run and the request it is on. Each section
 keeps its last 1000 groups on the device, across sign-outs and relaunches, a picture only once it
-was asked of Hiroba: `pipelines\io.json`, `pipelines\pictures.json` and `pipelines\external.json` in
-the app's data folder on the desktop, the `abth-pipelines` database on Android. They hold
+was asked of Hiroba: `pipelines\io.json`, `pipelines\pictures.json`, `pipelines\history.json` and
+`pipelines\external.json` in the app's data folder on the desktop, the `abth-pipelines` database on
+Android. They hold
 operations, outcomes, codes, times and the paths of requests, never a query, a form or anything of
 the player's.
 

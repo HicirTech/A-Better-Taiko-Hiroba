@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
+import { mockPlay, recentPlaysPage } from "../scripts/mock-history";
 import {
   medalPlatePng,
   myDonPng,
@@ -176,6 +177,34 @@ describe("createAndroidPort", () => {
     expect(native.cookieCalls).toEqual(["clearAllCookies"]);
     expect(flag.get()).toBe(false);
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+  });
+
+  test("reads recent plays in a pipeline of their own, and keeps them through a sign-out", async () => {
+    const plays = Array.from({ length: 7 }, (_, index) => mockPlay(7 - index));
+    native.httpAnswer = async () => {
+      const url = native.httpRequests.at(-1)?.url ?? "";
+      if (!url.includes("history_recent_score.php")) {
+        return myPageAnswer();
+      }
+      const start = (Number(new URL(url).searchParams.get("page") ?? "1") - 1) * 5;
+      const page = recentPlaysPage(plays.slice(start, start + 5));
+      return { status: 200, url, headers: {}, data: nativeBase64(page) };
+    };
+    const port = await createAndroidPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+    });
+    await port.readProfile();
+
+    const read = await port.readRecentPlays();
+    const view = await port.readPipelines(12);
+    await signOutAndIn(port);
+    await port.readProfile();
+
+    expect(read.ok && read.value.plays).toHaveLength(7);
+    expect(view.history.ended.map((group) => group.subject).sort()).toEqual(["1", "2", "3", "4"]);
+    expect(view.io.ended.map((group) => group.operation)).toEqual(["readProfile"]);
+    expect(await port.recentPlays()).toHaveLength(7);
   });
 });
 

@@ -3,6 +3,7 @@ import type { MessageKey } from "@abth/i18n";
 import { useCallback, useReducer, useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
+import { afterRefresh } from "../read-again/after-refresh";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
 import {
   type CostumeHistoryEntry,
@@ -40,7 +41,8 @@ export interface CostumeEditor {
   readonly reading: boolean;
   readonly writing: boolean;
   readonly canRead: boolean;
-  read(): Promise<void>;
+  /** Reads the editor, after Hiroba's own refresh when `refreshFirst`. */
+  read(refreshFirst?: boolean): Promise<void>;
   /** Drops everything of the editor, its picture included, when a session ends or begins. */
   forget(): void;
   pickColour(part: ColourPart, id: number): void;
@@ -82,35 +84,39 @@ export function useCostumeEditor({
   const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
 
   const mayRead = step.name === "unread" || canReadEditorAgain(step);
-  const read = useCallback(async () => {
-    const mine = sessionGeneration.current;
-    if (!mayRead || reading.current === mine || writing.current) {
-      return;
-    }
+  const read = useCallback(
+    async (refreshFirst?: boolean) => {
+      const mine = sessionGeneration.current;
+      if (!mayRead || reading.current === mine || writing.current) {
+        return;
+      }
 
-    reading.current = mine;
-    // A thumbnail that did not come last time is asked for again once, in this reading.
-    lane.forgetFailures("costumeItem");
-    dispatch({ type: "readStarted" });
-    const result = await port.openCostumeEditor();
-    if (reading.current === mine) {
-      reading.current = null;
-    }
-    if (mine !== sessionGeneration.current) {
-      return;
-    }
+      reading.current = mine;
+      // A thumbnail that did not come last time is asked for again once, in this reading.
+      lane.forgetFailures("costumeItem");
+      dispatch({ type: "readStarted" });
+      const open = () => port.openCostumeEditor();
+      const result = await (refreshFirst ? afterRefresh(port, open) : open());
+      if (reading.current === mine) {
+        reading.current = null;
+      }
+      if (mine !== sessionGeneration.current) {
+        return;
+      }
 
-    if (!result.ok && SESSION_GONE.has(result.error.kind)) {
-      forget();
-      onSessionGone(FAILURE_MESSAGE[result.error.kind]);
-      return;
-    }
+      if (!result.ok && SESSION_GONE.has(result.error.kind)) {
+        forget();
+        onSessionGone(FAILURE_MESSAGE[result.error.kind]);
+        return;
+      }
 
-    dispatch({ type: "readEnded", result });
-    if (result.ok) {
-      await refreshHistory();
-    }
-  }, [mayRead, port, lane, forget, onSessionGone, refreshHistory]);
+      dispatch({ type: "readEnded", result });
+      if (result.ok) {
+        await refreshHistory();
+      }
+    },
+    [mayRead, port, lane, forget, onSessionGone, refreshHistory],
+  );
 
   const writeEnded = (outcome: WriteOutcomeView) => {
     dispatch({ type: "writeEnded", outcome });

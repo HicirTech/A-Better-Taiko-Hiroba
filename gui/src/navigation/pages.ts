@@ -1,7 +1,14 @@
 import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
 
 /** The window's pages, in the order the navigation lists them. */
-export const PAGES = ["overview", "costume", "nameTitle", "favorites", "settings"] as const;
+export const PAGES = [
+  "overview",
+  "history",
+  "costume",
+  "nameTitle",
+  "favorites",
+  "settings",
+] as const;
 export type Page = (typeof PAGES)[number];
 
 const PAGE_KEY = "abth.page";

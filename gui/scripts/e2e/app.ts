@@ -65,7 +65,9 @@ export async function launch({
     page.evaluate<string | null>(
       `document.querySelector('[aria-current="page"]')?.id.replace("nav-", "") ?? null`,
     );
-  const goTo = async (to: "overview" | "costume" | "nameTitle" | "favorites" | "settings") => {
+  const goTo = async (
+    to: "overview" | "history" | "costume" | "nameTitle" | "favorites" | "settings",
+  ) => {
     await click(`#nav-${to}`);
     await waitFor(`page ${to}`, async () => (await currentPage()) === to || undefined);
   };

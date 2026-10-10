@@ -8,6 +8,9 @@ import type {
   MedalProgress,
   NameState,
   PickableSongs,
+  PlayOptionCode,
+  RecentPlay,
+  RecentPlaysReading,
   RenameState,
   Result,
   ScoreRank,
@@ -37,6 +40,8 @@ export type {
   FolderState,
   NameState,
   PickableSongs,
+  RecentPlay,
+  RecentPlaysReading,
   RenameState,
   ShownSong,
   SongCatalogueFailure,
@@ -126,13 +131,22 @@ export type ReadFailureKind =
   | "timedOut"
   | "cancelled"
   | "siteError"
-  | "unexpectedPage";
+  | "unexpectedPage"
+  /** Hiroba's daily maintenance: it was not asked to refresh. */
+  | "maintenance"
+  /** Hiroba did not refresh its copy of the player's data. */
+  | "notRefreshed";
 
 export interface ReadFailure {
   readonly kind: ReadFailureKind;
-  /** For `unexpectedPage` only: codes a user can copy into a report (path, status, content type,
-   * size, parser verdict, selector). Never page text, a query string or a cookie. */
+  /** For `unexpectedPage` and `notRefreshed`: codes a user can copy into a report (path, status,
+   * content type, size, parser verdict, selector, result). Never page text, a query or a cookie. */
   readonly detail?: string;
+}
+
+/** A walk of recent plays that failed, with the page it failed at once it had asked for one. */
+export interface RecentPlaysFailure extends ReadFailure {
+  readonly page?: number;
 }
 
 /** Why Hiroba's picture of a costume set did not come, as codes a user can copy into a report.
@@ -161,12 +175,15 @@ export type PictureWant =
   | { readonly kind: "myDon" }
   | { readonly kind: "rankIcon"; readonly rank: ScoreRank }
   | { readonly kind: "crownIcon"; readonly crown: CrownKind }
-  | { readonly kind: "courseIcon"; readonly difficulty: Difficulty };
+  | { readonly kind: "courseIcon"; readonly difficulty: Difficulty }
+  | { readonly kind: "optionIcon"; readonly option: PlayOptionCode };
 
 /** The pictures that are icons of the legends: shared art, the same for every account. */
 export type IconWant = Extract<PictureWant, { readonly kind: "rankIcon" | "crownIcon" }>;
 /** A chart's difficulty as Hiroba draws it: shared art, the same for every account. */
 export type CourseIconWant = Extract<PictureWant, { readonly kind: "courseIcon" }>;
+
+export type OptionIconWant = Extract<PictureWant, { readonly kind: "optionIcon" }>;
 
 /** A picture for the interface: a `data:image/png` URL, which is no address, and the PNG's own
  * size, so its box can be sized before it is drawn. */
@@ -266,6 +283,8 @@ export interface HirobaSessionPort {
   cancelSignIn(): Promise<void>;
   /** My page, then its dan label if it shows one: one request, or two with a dan. Never retried. */
   readProfile(options?: ReadProfileOptions): Promise<Result<ProfileView, ReadFailure>>;
+  /** Hiroba's own ↻: my page for a fresh token, then one post, alone. Never retried. */
+  refreshHiroba(): Promise<Result<void, ReadFailure>>;
   /** Forgets the session on this device. Hiroba is not told. */
   signOut(): Promise<void>;
   /** The costume editor: one GET. Its form token stays with the platform. */
@@ -300,6 +319,12 @@ export interface HirobaSessionPort {
   /** The songs Hiroba's own 大好きな曲 picker offers: its editor, the handoff that opens the picker,
    * then a GET for each of the eight genres. Its form token stays with the platform. */
   readSongPicker(): Promise<Result<PickableSongs, ReadFailure>>;
+  /** The stored recent-plays walk, newest first. Asks Hiroba nothing. */
+  recentPlays(): Promise<readonly RecentPlay[]>;
+  /** Walks `history_recent_score.php` in the play history pipeline, then stores the rows. */
+  readRecentPlays(): Promise<Result<RecentPlaysReading, RecentPlaysFailure>>;
+  /** The page a recent-plays walk has started asking for, or null when none is running. */
+  recentPlaysProgress(): Promise<number | null>;
   /** taiko.wiki's songs, all or those changed since `since` (ms since 1970): one GET that carries
    * no session, in the pipeline for other sites. */
   readSongCatalogue(since: number | null): Promise<Result<SongCatalogueRead, SongCatalogueFailure>>;
@@ -313,12 +338,14 @@ export interface HirobaSessionPort {
   readPipelines(history: number): Promise<PipelinesView>;
 }
 
-/** Both pipelines as the pipelines page shows them: Hiroba's pictures apart from the rest. */
+/** The pipelines as the pipelines page shows them: Hiroba's pictures apart from the rest. */
 export interface PipelinesView {
   /** Hiroba's, but for its pictures. */
   readonly io: PipelineView;
   /** Hiroba's pictures: they run in Hiroba's pipeline, beside its other reads. */
   readonly pictures: PipelineView;
+  /** Hiroba's play history, read in a pipeline of its own. */
+  readonly history: PipelineView;
   /** The other sites'. */
   readonly external: PipelineView;
 }

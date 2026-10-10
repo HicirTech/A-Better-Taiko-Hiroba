@@ -22,6 +22,8 @@ import { BUSY_OUTCOME } from "./session-writes";
 /** The pipelines the port's verbs run in. */
 export interface PortPipelines {
   readonly io: Pipeline;
+  /** Hiroba's play history: read-only there, so it runs beside `io` and its writes. */
+  readonly history: Pipeline;
   readonly external: Pipeline;
 }
 
@@ -29,6 +31,7 @@ export interface PortPipelines {
 export interface PortLogs {
   readonly io: PipelineLog;
   readonly pictures: PipelineLog;
+  readonly history: PipelineLog;
   readonly external: PipelineLog;
 }
 
@@ -57,6 +60,7 @@ export function viewOfPipelines(
   return {
     io: viewOfPipeline(pipelines.io, logs.io, history, (group) => !isPicture(group)),
     pictures: viewOfPipeline(pipelines.io, logs.pictures, history, isPicture),
+    history: viewOfPipeline(pipelines.history, logs.history, history),
     external: viewOfPipeline(pipelines.external, logs.external, history),
   };
 }

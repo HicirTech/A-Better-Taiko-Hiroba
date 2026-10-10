@@ -52,7 +52,7 @@ export interface PictureLane {
   version(): number;
 }
 
-// Small plates and art first, then the portrait (the largest), the legends' icons, the thumbnails.
+// Small plates and art first, then the portrait (the largest), the icons, the thumbnails.
 const KIND_RANK: Readonly<Record<PictureWant["kind"], number>> = {
   titlePlate: 0,
   scorePanel: 1,
@@ -61,7 +61,8 @@ const KIND_RANK: Readonly<Record<PictureWant["kind"], number>> = {
   rankIcon: 4,
   crownIcon: 5,
   courseIcon: 6,
-  costumeItem: 7,
+  optionIcon: 7,
+  costumeItem: 8,
 };
 
 export const wantKey = (want: PictureWant): string => {
@@ -74,6 +75,8 @@ export const wantKey = (want: PictureWant): string => {
       return `${want.kind}/${want.crown}`;
     case "courseIcon":
       return `${want.kind}/${want.difficulty}`;
+    case "optionIcon":
+      return `${want.kind}/${want.option}`;
     default:
       return want.kind;
   }

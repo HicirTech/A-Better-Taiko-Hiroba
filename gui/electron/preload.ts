@@ -12,6 +12,7 @@ const port: HirobaSessionPort = {
     options === undefined
       ? ipcRenderer.invoke(BRIDGE_CHANNELS.readProfile)
       : ipcRenderer.invoke(BRIDGE_CHANNELS.readProfile, options),
+  refreshHiroba: () => ipcRenderer.invoke(BRIDGE_CHANNELS.refreshHiroba),
   signOut: () => ipcRenderer.invoke(BRIDGE_CHANNELS.signOut),
   openCostumeEditor: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openCostumeEditor),
   openTitleEditor: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openTitleEditor),
@@ -26,6 +27,9 @@ const port: HirobaSessionPort = {
   changeFolder: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFolder, change),
   changeFavoriteSong: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFavoriteSong, change),
   readSongPicker: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readSongPicker),
+  recentPlays: () => ipcRenderer.invoke(BRIDGE_CHANNELS.recentPlays),
+  readRecentPlays: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readRecentPlays),
+  recentPlaysProgress: () => ipcRenderer.invoke(BRIDGE_CHANNELS.recentPlaysProgress),
   readSongCatalogue: (since) => ipcRenderer.invoke(BRIDGE_CHANNELS.readSongCatalogue, since),
   readChineseNames: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readChineseNames),
   readChartPicture: (url) => ipcRenderer.invoke(BRIDGE_CHANNELS.readChartPicture, url),

@@ -1,7 +1,7 @@
 import { INITIAL_PROFILE, OWNED_TITLES } from "../mock-profile";
 import type { App } from "./app";
-import { pageHelpers, waitFor } from "./harness";
-import { hitsOn, myPageHits, titleOf } from "./stand-in";
+import { pageHelpers, same, waitFor } from "./harness";
+import { hitsOn, myPageHits, READ_AGAIN_MY_PAGE_READS, titleOf } from "./stand-in";
 
 export const UNLISTED_TITLE = "部品から作った称号";
 
@@ -9,7 +9,7 @@ export const SAVE = "/ajax/change_mydon_profile.php";
 
 export function nameTitleHelpers(app: App) {
   const { click, page } = app;
-  const { exists, press } = pageHelpers(page);
+  const { exists, fabState, press } = pageHelpers(page);
 
   type Section = "title" | "name";
   const stepIn = (section: Section) =>
@@ -39,7 +39,13 @@ export function nameTitleHelpers(app: App) {
   const readTitlesAgain = async () => {
     const before = await myPageHits();
     await click("#read-again");
-    await waitFor("my page read", async () => ((await myPageHits()) > before ? true : undefined));
+    await waitFor("my page read", async () =>
+      (await myPageHits()) >= before + READ_AGAIN_MY_PAGE_READS ? true : undefined,
+    );
+    // The page is shut until the read ends, and keys do nothing in it.
+    await waitFor("the read ended", async () =>
+      same(await fabState(), { shut: false, spinning: false }) ? true : undefined,
+    );
     await waitFor("title list forgotten", async () =>
       (await titleListIn()) === "unread" ? true : undefined,
     );

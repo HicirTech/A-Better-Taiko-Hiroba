@@ -36,6 +36,7 @@ import { MenuOpenContext } from "./menu-open";
 import {
   CostumeIcon,
   FavoritesIcon,
+  HistoryIcon,
   NameTitleIcon,
   OverviewIcon,
   SettingsIcon,
@@ -51,6 +52,7 @@ import { WiderFrameContext } from "./wider-frame";
 const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly icon: ReactNode }>> =
   {
     overview: { label: "nav.overview", icon: <OverviewIcon /> },
+    history: { label: "nav.history", icon: <HistoryIcon /> },
     costume: { label: "nav.costume", icon: <CostumeIcon /> },
     nameTitle: { label: "nav.nameTitle", icon: <NameTitleIcon /> },
     favorites: { label: "nav.favorites", icon: <FavoritesIcon /> },

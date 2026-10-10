@@ -1,4 +1,4 @@
-import type { MedalProgress, Profile, ScoreRank } from "@abth/core";
+import type { MedalProgress, PlayOptionCode, Profile, ScoreRank } from "@abth/core";
 
 import { type CrownKind, isWhole } from "../session-port";
 import type { Difficulty } from "../song-catalogue/types";
@@ -22,6 +22,8 @@ const COURSE_ICON_NUMBER: Readonly<Record<Difficulty, number>> = {
 };
 export const courseIconPath = (difficulty: Difficulty): string =>
   `/image/sp/640/icon_course02_${COURSE_ICON_NUMBER[difficulty]}_640.png`;
+export const optionIconPath = (option: PlayOptionCode): string =>
+  `/image/sp/640/status_10_${option}_640.png`;
 const PANEL_LEVEL_LEAST = 1;
 const PANEL_LEVEL_MOST = 99;
 export const MEDAL_PLATE_PATH = "/imgsrc_tokenplate.php";

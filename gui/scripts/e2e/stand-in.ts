@@ -29,6 +29,11 @@ export const hitsOn = async (path: string) =>
   Number(await (await fetch(`${HIROBA}/__hits?path=${path}`)).text());
 export const myPageHits = () => hitsOn(MY_PAGE);
 export const readHits = async () => (await hitsOn(MY_PAGE)) + (await hitsOn(DAN_LABEL));
+/** Hiroba's own ↻: a read again first reads my page for its token, then posts it. */
+export const REFRESH = "/ajax/update_score.php";
+export const refreshHits = () => hitsOn(REFRESH);
+/** My page's reads in one read again of it: the refresh's, then the page's own. */
+export const READ_AGAIN_MY_PAGE_READS = 2;
 
 export const savedCostume = async () =>
   asAppSet((await (await fetch(`${HIROBA}/__state`)).json()) as CostumeState);

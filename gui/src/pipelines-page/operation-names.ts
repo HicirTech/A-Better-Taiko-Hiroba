@@ -5,6 +5,7 @@ import type { PictureWant } from "../session-port";
 /** Each operation's name on the pipelines page, by the name its group runs as. */
 export const OPERATION_NAMES: Readonly<Record<string, MessageKey>> = {
   readProfile: "pipelines.op.readProfile",
+  refreshHiroba: "pipelines.op.refreshHiroba",
   openCostumeEditor: "pipelines.op.openCostumeEditor",
   openTitleEditor: "pipelines.op.openTitleEditor",
   previewCostume: "pipelines.op.previewCostume",
@@ -31,6 +32,7 @@ export const PICTURE_NAMES: Readonly<Record<string, MessageKey>> = {
   rankIcon: "pipelines.picture.rankIcon",
   crownIcon: "pipelines.picture.crownIcon",
   courseIcon: "pipelines.picture.courseIcon",
+  optionIcon: "pipelines.picture.optionIcon",
   costumeItem: "pipelines.picture.costumeItem",
 } satisfies Record<PictureWant["kind"], MessageKey>;
 
@@ -40,12 +42,23 @@ export function operationName(i18n: Translator, operation: string): string {
   return key === undefined ? operation : i18n.t(key);
 }
 
-/** A group's name: what its picture shows, for a picture, and its operation's otherwise. */
+/** The operations whose subject is the page they read, named with that page. */
+export const PAGE_NAMES: Readonly<Record<string, MessageKey>> = {
+  recentPlaysPage: "pipelines.op.recentPlaysPage",
+};
+
+/** A group's name: what its picture shows, the page a walk read, or its operation's. */
 export function groupName(
   i18n: Translator,
   group: { readonly operation: string; readonly subject?: string },
 ): string {
   const { subject } = group;
+  const pageKey = Object.hasOwn(PAGE_NAMES, group.operation)
+    ? PAGE_NAMES[group.operation]
+    : undefined;
+  if (subject !== undefined && pageKey !== undefined) {
+    return i18n.t(pageKey, { page: subject });
+  }
   const key =
     subject !== undefined && Object.hasOwn(PICTURE_NAMES, subject)
       ? PICTURE_NAMES[subject]

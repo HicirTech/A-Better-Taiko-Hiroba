@@ -199,6 +199,9 @@ export function fakeHiroba() {
     refusedNames: [] as string[],
     /** Run just after a save is handled, as a change made at that moment elsewhere. */
     afterSave: () => {},
+    /** What the ↻'s post answers when its token is the newest: 0 refreshes. */
+    refreshResult: 0,
+    refreshes: 0,
   };
   const issue = () => {
     hiroba.token = `${++hiroba.tokens}`.padStart(32, "0");
@@ -252,6 +255,17 @@ export function fakeHiroba() {
     return json(path, body(newName, newName, code, message, code === 0 ? issue() : ""));
   };
 
+  const refresh = (request: TransportPost): Answer => {
+    const path = "ajax/update_score.php";
+    if (new Map(request.form).get("_tckt") !== hiroba.token) {
+      return json(path, { result: 705 });
+    }
+    if (hiroba.refreshResult === 0) {
+      hiroba.refreshes += 1;
+    }
+    return json(path, { result: hiroba.refreshResult, back_url: `${ORIGIN}/mypage_top.php` });
+  };
+
   const transport: Transport = {
     async send(request) {
       hiroba.requests.push(request);
@@ -284,6 +298,9 @@ export function fakeHiroba() {
       }
       if (request.method === "POST" && path === "ajax/change_mydon_profile.php") {
         return save(request);
+      }
+      if (request.method === "POST" && path === "ajax/update_score.php") {
+        return refresh(request);
       }
       return answer(path, "not found", "text/plain");
     },

@@ -7,6 +7,7 @@ import {
   PULL_THRESHOLD_PX,
   type PullState,
   pointOf,
+  pullHoldsThePage,
   pullMoved,
   pullReleased,
   pullStarted,
@@ -57,9 +58,10 @@ export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
         show(NO_PULL);
         return;
       }
-      show(pullMoved(pull, pointOf(finger), scrollTop()));
-      // The finger draws the indicator: the page must not scroll or glow under it.
-      if (pull.phase === "pulling" && event.cancelable) {
+      const at = pointOf(finger);
+      show(pullMoved(pull, at, scrollTop()));
+      // From the first move down, or a long page's WebView stretches it before the pull is decided.
+      if (pullHoldsThePage(pull, at) && event.cancelable) {
         event.preventDefault();
       }
     };
