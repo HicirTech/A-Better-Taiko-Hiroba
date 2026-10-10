@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { SCORE_RANK_NAMES } from "@abth/core";
+import { PLAY_OPTION_CODES, SCORE_RANK_NAMES } from "@abth/core";
 
 import { KEPT_GROUPS } from "../src/pipelines";
 import { PORT_ARGUMENTS } from "../src/session-port";
@@ -286,6 +286,12 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     }
   });
 
+  test("takes a play option's icon by each code core names", () => {
+    for (const option of PLAY_OPTION_CODES) {
+      expect(PORT_ARGUMENTS.readPicture([{ kind: "optionIcon", option }])).toBe(true);
+    }
+  });
+
   test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
     const check = PORT_ARGUMENTS.readPicture;
     const item = { kind: "costumeItem", slot: 1, id: 36 };
@@ -307,6 +313,11 @@ describe("PORT_ARGUMENTS.readPicture", () => {
       [{ kind: "courseIcon", difficulty: "expert" }],
       [{ kind: "courseIcon", difficulty: 4 }],
       [{ kind: "courseIcon", difficulty: "oni", path: "image/sp/640/icon_course02_4_640.png" }],
+      [{ kind: "optionIcon" }],
+      [{ kind: "optionIcon", option: "a1/../x" }],
+      [{ kind: "optionIcon", option: "b1" }],
+      [{ kind: "optionIcon", option: 1 }],
+      [{ kind: "optionIcon", option: "a1", url: "https://example.test/status_10_a1_640.png" }],
       [
         { kind: "rankIcon", rank: 5 },
         { kind: "rankIcon", rank: 5 },

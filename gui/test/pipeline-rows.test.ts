@@ -1,9 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import { createTranslator } from "@abth/i18n";
 
-import { PICTURE_OPERATION } from "../src/hiroba-session";
+import { PICTURE_OPERATION, RECENT_PLAYS_PAGE_OPERATION } from "../src/hiroba-session";
 import type { EndedGroup, GroupNow, PipelineView } from "../src/pipelines";
-import { groupName, OPERATION_NAMES, operationName } from "../src/pipelines-page/operation-names";
+import {
+  groupName,
+  OPERATION_NAMES,
+  operationName,
+  PAGE_NAMES,
+} from "../src/pipelines-page/operation-names";
 import {
   BLOCKS,
   blockRow,
@@ -121,5 +126,14 @@ describe("operationName", () => {
     expect(groupName(zh, { operation: PICTURE_OPERATION, subject: "myDon" })).toBe("小咚");
     expect(groupName(zh, { operation: PICTURE_OPERATION, subject: "somethingNew" })).toBe("图片");
     expect(groupName(zh, { operation: "changeCostume" })).toBe("换装保存");
+  });
+
+  test("names each page of the recent plays walk with its page", () => {
+    const zh = createTranslator("zh-Hans");
+
+    expect(groupName(zh, { operation: RECENT_PLAYS_PAGE_OPERATION, subject: "37" })).toBe(
+      "近期游玩第 37 页",
+    );
+    expect(Object.keys(PAGE_NAMES)).toEqual([RECENT_PLAYS_PAGE_OPERATION]);
   });
 });

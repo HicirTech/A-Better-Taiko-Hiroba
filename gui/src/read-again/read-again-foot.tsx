@@ -6,6 +6,8 @@ export interface ReadAgainFootProps {
   readonly canRead: boolean;
   /** When the page shown was read; null before the first read. */
   readonly fetchedAt: Date | number | string | null;
+  /** Replaces the time while a walk is on a page, such as a recent-plays read. */
+  readonly progress?: string | null;
   readonly onRead: () => void;
   readonly i18n: Translator;
 }
@@ -14,7 +16,14 @@ export interface ReadAgainFootProps {
 const unbroken = (text: string) => text.replaceAll(" ", " ");
 
 /** At the foot of the navigation: when the page was last read, and the way to read it again. */
-export function ReadAgainFoot({ reading, canRead, fetchedAt, onRead, i18n }: ReadAgainFootProps) {
+export function ReadAgainFoot({
+  reading,
+  canRead,
+  fetchedAt,
+  progress,
+  onRead,
+  i18n,
+}: ReadAgainFootProps) {
   const label = i18n.t("profile.readAgain");
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, pl: 3, pr: 1.5, py: 1.5 }}>
@@ -24,8 +33,10 @@ export function ReadAgainFoot({ reading, canRead, fetchedAt, onRead, i18n }: Rea
         color="text.secondary"
         sx={{ flexGrow: 1, minWidth: 0 }}
       >
-        {fetchedAt !== null &&
-          i18n.t("profile.fetchedAt", { time: unbroken(i18n.dateTime(fetchedAt)) })}
+        {progress != null && progress !== ""
+          ? progress
+          : fetchedAt !== null &&
+            i18n.t("profile.fetchedAt", { time: unbroken(i18n.dateTime(fetchedAt)) })}
       </Typography>
       {/* None while it is shut: a disabled button sends no event to open or close it. */}
       <Tooltip title={canRead ? label : ""}>

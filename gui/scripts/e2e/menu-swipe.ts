@@ -15,6 +15,7 @@ const PHONE = { width: 390, height: 844 } as const;
 const NAVIGATION = [
   "A Better Taiko Hiroba",
   "Overview",
+  "Recent plays",
   "Costume",
   "Nickname & title",
   "Favourites",
@@ -23,6 +24,7 @@ const NAVIGATION = [
 const PAGE_ENTRIES = [
   "nav-pipelines",
   "nav-overview",
+  "nav-history",
   "nav-costume",
   "nav-nameTitle",
   "nav-favorites",

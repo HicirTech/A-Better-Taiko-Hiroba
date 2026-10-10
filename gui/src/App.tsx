@@ -16,6 +16,8 @@ import { FavoritesPage } from "./favorites/favorites-page";
 import { useFavorites } from "./favorites/use-favorites";
 import { usePickableSongs } from "./favorites/use-pickable-songs";
 import { useSongCatalogue } from "./favorites/use-song-catalogue";
+import { HistoryPage } from "./history/history-page";
+import { useRecentPlays } from "./history/use-recent-plays";
 import { CostumePage } from "./my-page/costume-page";
 import { MedalCard } from "./my-page/medal-card";
 import type { OpenAction } from "./my-page/open-button";
@@ -100,6 +102,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const onEditorPage = page === "costume" && screen.name === "profile";
   const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
   const onFavoritesPage = page === "favorites" && screen.name === "profile";
+  const onHistoryPage = page === "history" && screen.name === "profile";
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
@@ -111,6 +114,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     markStale: markPickableStale,
     forget: forgetPickable,
   } = usePickableSongs(port, sessionGone);
+  const history = useRecentPlays(port, sessionGone);
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
@@ -301,7 +305,13 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
 
   const signedIn = screen.name === "profile" || screen.name === "readFailed";
   // The page that reads an editor of its own reads that again, not my page.
-  const pageEditor = onEditorPage ? editor : onFavoritesPage ? favorites : null;
+  const pageEditor = onEditorPage
+    ? editor
+    : onFavoritesPage
+      ? favorites
+      : onHistoryPage
+        ? history
+        : null;
   const canReadAgain =
     signedIn && !writing && !refreshing && (pageEditor === null || pageEditor.canRead);
   // Turns away a second ask, by the button or a key, that lands before the button is shut.
@@ -312,7 +322,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     }
     readAgainStarted.current = true;
     try {
-      if (pageEditor !== null) {
+      if (onHistoryPage) {
+        // A walk can run for minutes: Read again on another page must not wait for it.
+        void history.read();
+      } else if (pageEditor !== null) {
         if (onFavoritesPage) {
           // The pickers' list is read again when a picker next opens.
           markPickableStale();
@@ -335,6 +348,9 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             reading={screen.name === "reading" || refreshing || (pageEditor?.reading ?? false)}
             canRead={canReadAgain}
             fetchedAt={screen.name === "profile" ? screen.profile.fetchedAt : null}
+            progress={
+              history.page === null ? null : t("history.readingPage", { page: history.page })
+            }
             onRead={readAgain}
             i18n={i18n}
           />
@@ -411,6 +427,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
 
           {/* Laid out as if absent, so the pages keep their place in the frame. */}
           <Box id="page-shut" inert={shut} sx={{ display: "contents", "& > *": SHUT_LOOK(shut) }}>
+            {screen.name === "profile" && page === "history" && (
+              <HistoryPage history={history} lane={lane} touchFirst={touchFirst} i18n={i18n} />
+            )}
+
             {screen.name === "profile" && page === "costume" && (
               <CostumePage editor={editor} lane={lane} i18n={i18n} />
             )}

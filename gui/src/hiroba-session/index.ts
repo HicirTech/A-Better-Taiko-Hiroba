@@ -62,6 +62,17 @@ export {
   type PictureReadState,
 } from "./read-picture";
 export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
+export type { RecentPlaysReader } from "./read-recent-plays";
+export {
+  createRecentPlaysReader,
+  RECENT_PLAYS_PAGE_OPERATION,
+  recentPlaysPath,
+} from "./read-recent-plays";
+export type { RecentPlaysStore } from "./recent-plays-store";
+export {
+  createMemoryRecentPlaysStore,
+  readStoredRecentPlays,
+} from "./recent-plays-store";
 export { createRecentPreviews } from "./recent-previews";
 export { sessionEnded } from "./session-ended";
 export {

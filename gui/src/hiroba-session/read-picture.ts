@@ -13,6 +13,7 @@ import {
   type CourseIconWant,
   type IconWant,
   isPictureWant,
+  type OptionIconWant,
   type PictureFailure,
   type PictureView,
   type PictureWant,
@@ -25,6 +26,7 @@ import {
   MY_DON_PATH,
   type MyDonSource,
   type NoPictureSource,
+  optionIconPath,
   type PictureSources,
   rankIconPath,
   type ScorePanelSource,
@@ -183,7 +185,12 @@ function requestOf(
       keptAfterRead: false,
     };
   }
-  if (want.kind === "rankIcon" || want.kind === "crownIcon" || want.kind === "courseIcon") {
+  if (
+    want.kind === "rankIcon" ||
+    want.kind === "crownIcon" ||
+    want.kind === "courseIcon" ||
+    want.kind === "optionIcon"
+  ) {
     return iconRequest(want, origin);
   }
   const { owner, sources } = state;
@@ -222,7 +229,9 @@ function requestOf(
   };
 }
 
-function iconSource(want: IconWant | CourseIconWant): { path: string; name: string } {
+type SharedIconWant = IconWant | CourseIconWant | OptionIconWant;
+
+function iconSource(want: SharedIconWant): { path: string; name: string } {
   switch (want.kind) {
     case "rankIcon":
       return { path: rankIconPath(want.rank), name: `rank/${want.rank}` };
@@ -230,10 +239,12 @@ function iconSource(want: IconWant | CourseIconWant): { path: string; name: stri
       return { path: crownIconPath(want.crown), name: `crown/${want.crown}` };
     case "courseIcon":
       return { path: courseIconPath(want.difficulty), name: `course/${want.difficulty}` };
+    case "optionIcon":
+      return { path: optionIconPath(want.option), name: `option/${want.option}` };
   }
 }
 
-function iconRequest(want: IconWant | CourseIconWant, origin: string): PictureRequest {
+function iconRequest(want: SharedIconWant, origin: string): PictureRequest {
   const { path, name } = iconSource(want);
   return {
     kind: want.kind,

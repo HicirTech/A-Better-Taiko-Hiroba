@@ -10,7 +10,9 @@ import {
   ANDROID_PICTURE_LIMITS,
   type CostumeHistoryStore,
   createMemoryPictureStore,
+  createMemoryRecentPlaysStore,
   createPictureReader,
+  createRecentPlaysReader,
   createRecentPreviews,
   createSessionWrites,
   endpointsFromOverrides,
@@ -33,6 +35,7 @@ import {
   createPipeline,
   createPipelineLog,
   EXTERNAL_READ_CONSUMERS,
+  HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
 } from "../pipelines";
 import {
@@ -54,6 +57,7 @@ import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
 import { CHART_PICTURE_DATABASE, createIndexedDbPictureStore } from "./android-picture-store";
 import { createIndexedDbPipelineStores } from "./android-pipeline-store";
+import { createIndexedDbRecentPlaysStore } from "./android-recent-plays-store";
 import { createAndroidTransport } from "./android-transport";
 
 const endpoints: HirobaEndpoints = import.meta.env.DEV
@@ -143,6 +147,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const logs = {
     io: createPipelineLog({ store: pipelineStore("io") }),
     pictures: createPipelineLog({ store: pipelineStore("pictures") }),
+    history: createPipelineLog({ store: pipelineStore("history") }),
     external: createPipelineLog({ store: pipelineStore("external") }),
   };
   // One transport for every site: a group sends through its own, made from it.
@@ -151,6 +156,11 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       readConsumers: IO_READ_CONSUMERS,
       transport,
       ended: keepHirobaEnded(logs),
+    }),
+    history: createPipeline({
+      readConsumers: HISTORY_READ_CONSUMERS,
+      transport,
+      ended: logs.history.add,
     }),
     external: createPipeline({
       readConsumers: EXTERNAL_READ_CONSUMERS,
@@ -190,6 +200,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
   const forget = async () => {
     pipelines.io.stop();
+    pipelines.history.stop();
     signedIn = false;
     flag.set(false);
     offered = new Set();
@@ -215,6 +226,16 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       pictures.costumeChanged();
       previews.wear(worn);
     },
+  });
+  const recentPlays = createRecentPlaysReader({
+    endpoints,
+    pipeline: pipelines.history,
+    store:
+      indexedDb === undefined
+        ? createMemoryRecentPlaysStore()
+        : createIndexedDbRecentPlaysStore(indexedDb),
+    owner: () => owner,
+    endSession: forget,
   });
 
   const port = queuePort(pipelines, {
@@ -340,6 +361,12 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readSongPicker: flushed(writes.readSongPicker),
 
     refreshHiroba: flushed(writes.refreshHiroba),
+
+    recentPlays: recentPlays.recentPlays,
+
+    readRecentPlays: flushed(recentPlays.readRecentPlays),
+
+    recentPlaysProgress: recentPlays.recentPlaysProgress,
 
     readSongCatalogue: (site, since) => readSongCatalogue(site, songCatalogueUrl, since),
 

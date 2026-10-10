@@ -15,6 +15,7 @@ import {
   createPipelineLog,
   type EndedGroup,
   EXTERNAL_READ_CONSUMERS,
+  HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
 } from "../src/pipelines";
 import {
@@ -63,6 +64,7 @@ function watchedPort() {
   const port = queuePort(
     {
       io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED }),
+      history: createPipeline({ readConsumers: HISTORY_READ_CONSUMERS, transport: UNUSED }),
       external: createPipeline({ readConsumers: EXTERNAL_READ_CONSUMERS, transport: UNUSED }),
     },
     verbs,
@@ -206,6 +208,7 @@ describe("queuePort, as the pipelines page sees its groups", () => {
     };
     const pipelines = {
       io: createPipeline({ readConsumers: IO_READ_CONSUMERS, transport: UNUSED, ended: tell }),
+      history: createPipeline({ readConsumers: 1, transport: UNUSED, ended: tell }),
       external: createPipeline({
         readConsumers: EXTERNAL_READ_CONSUMERS,
         transport: UNUSED,
@@ -310,6 +313,7 @@ describe("Hiroba's pictures, apart from its other groups", () => {
 
   test("shows the pictures running and waiting in their own view, and the rest in Hiroba's", async () => {
     const io = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const history = createPipeline({ readConsumers: 1, transport: UNUSED });
     const external = createPipeline({ readConsumers: 1, transport: UNUSED });
     let letGo: () => void = () => undefined;
     const held = new Promise<void>((resolve) => {
@@ -326,8 +330,8 @@ describe("Hiroba's pictures, apart from its other groups", () => {
     await settle();
 
     const view = viewOfPipelines(
-      { io, external },
-      { io: log(), pictures: log(), external: log() },
+      { io, history, external },
+      { io: log(), pictures: log(), history: log(), external: log() },
       12,
     );
     expect(view.pictures.running).toEqual([expect.objectContaining({ subject: "myDon" })]);
@@ -336,6 +340,34 @@ describe("Hiroba's pictures, apart from its other groups", () => {
     expect(view.io.waiting).toEqual([expect.objectContaining({ operation: "readProfile" })]);
     letGo();
     await Promise.all([fetching, reading, nextPicture]);
+  });
+
+  test("shows the play history's groups in a view of their own", async () => {
+    const io = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const history = createPipeline({ readConsumers: 1, transport: UNUSED });
+    const external = createPipeline({ readConsumers: 1, transport: UNUSED });
+    let letGo: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      letGo = resolve;
+    });
+    const page = history.read(
+      { operation: "recentPlaysPage", subject: "2", failureOf: () => null },
+      () => held,
+    );
+    await settle();
+
+    const view = viewOfPipelines(
+      { io, history, external },
+      { io: log(), pictures: log(), history: log(), external: log() },
+      12,
+    );
+
+    expect(view.history.running).toEqual([
+      expect.objectContaining({ operation: "recentPlaysPage", subject: "2" }),
+    ]);
+    expect(view.io.running).toEqual([]);
+    letGo();
+    await page;
   });
 });
 

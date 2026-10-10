@@ -14,7 +14,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [x] Sign in with your Bandai Namco ID and stay signed in
 - [ ] Show every song at every difficulty: crowns, ranks, scores, hit counts, play options
 - [x] Show your profile, My Don, title, dan rank, score counts and favourite songs
-- [ ] Show your recent plays
+- [x] Show your recent plays
 - [x] Change your title
 - [ ] Build your title part by part
 - [x] Change your nickname

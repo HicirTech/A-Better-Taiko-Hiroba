@@ -7,6 +7,7 @@ import { platesAsked, readHits } from "./stand-in";
 
 export const pipelinesPageKeys = [
   "pipelinesOpenByTheArrow",
+  "playHistoryListsItsPages",
   "endedGroupOpensItsDetails",
   "keptHistoryReachesTheSignIn",
   "picturesListedApart",
@@ -62,7 +63,7 @@ export async function pipelinesPage(ctx: Ctx) {
   const platesBefore = (await platesAsked()).length;
   await click("#nav-pipelines");
   await opened();
-  // The page under it is only hidden: what is seen is the pipelines' three sections.
+  // The page under it is only hidden: what is seen is the pipelines' four sections.
   const headings = await page.evaluate<(string | null)[]>(
     `[...document.querySelectorAll("main section")].filter((section) => section.checkVisibility()).map((section) => document.getElementById(section.getAttribute("aria-labelledby"))?.textContent ?? null)`,
   );
@@ -70,7 +71,16 @@ export async function pipelinesPage(ctx: Ctx) {
     (await attribute("#nav-pipelines", "aria-pressed")) === "true" &&
     (await textOf("main h1")) === "Pipelines" &&
     (await currentPage()) === null &&
-    same(headings, ["Hiroba interaction", "Hiroba pictures", "External sources"]);
+    same(headings, ["Hiroba interaction", "Hiroba pictures", "Play history", "External sources"]);
+
+  // The recent plays read before: each page a group, named by its page, the failed one with it.
+  const walked = await page.evaluate<(string | null)[]>(
+    `[...document.querySelectorAll(${JSON.stringify(`#pipeline-history ${ENDED_ROW}`)})].map((cell) => cell.getAttribute("aria-label"))`,
+  );
+  results.playHistoryListsItsPages =
+    walked.length > 0 &&
+    walked.every((label) => /^Recent plays, page \d+ · (Succeeded|Failed)$/.test(label ?? "")) &&
+    walked.includes("Recent plays, page 1 · Succeeded");
 
   // A success opens its details as a failure does; a second press puts them away.
   const newest = await waitFor("an ended Hiroba group", async () => {

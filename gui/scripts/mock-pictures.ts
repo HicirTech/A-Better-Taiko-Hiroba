@@ -176,6 +176,8 @@ const RANK_ICON = { width: 128, height: 96 } as const;
 const CROWN_ICON = { width: 52, height: 59 } as const;
 /** A chart's difficulty: image/sp/640/icon_course02_<1..5>_640.png. */
 const COURSE_ICON = { width: 64, height: 64 } as const;
+/** A play option: image/sp/640/status_10_<code>_640.png, 90 pixels square as Hiroba's are. */
+const OPTION_ICON = { width: 90, height: 90 } as const;
 
 /** The pixels `inside` in one colour of the seed's own: only the size is Hiroba's. */
 function iconPng(
@@ -213,6 +215,17 @@ export function crownIconPng(number: number): Uint8Array<ArrayBuffer> {
     const onStud = studs.some((s) => (x - s.x) ** 2 + (y - s.y) ** 2 <= (width * 0.12) ** 2);
     return onBase || onStud;
   });
+}
+
+/** A square with a margin for a play option, `a1` to `a35`; the code's number makes its colour. */
+export function optionIconPng(code: string): Uint8Array<ArrayBuffer> {
+  const margin = OPTION_ICON.width * 0.1;
+  const far = OPTION_ICON.width - margin;
+  return iconPng(
+    seedOf(9, Number(code.slice(1))),
+    OPTION_ICON,
+    (x, y) => x >= margin && x < far && y >= margin && y < far,
+  );
 }
 
 /** A disc for a chart's difficulty, 1 (かんたん) to 5 (the inner おに). */

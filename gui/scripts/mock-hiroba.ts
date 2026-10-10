@@ -11,6 +11,7 @@ import {
   crownIconPng,
   medalPlatePng,
   myDonPng,
+  optionIconPng,
   rankIconPng,
   scorePanelPng,
   titlePlatePng,
@@ -180,7 +181,7 @@ let tokenPlateAnswer: "png" | "gif" = "png";
 const PANEL_LEVEL = 5;
 let panelAnswer: "png" | "404" = "png";
 const ICON_PATH =
-  /^\/image\/sp\/640\/(?:best_score_rank_([2-8])|crown_0([1-4])|icon_course02_([1-5]))_640\.png$/;
+  /^\/image\/sp\/640\/(?:best_score_rank_([2-8])|crown_0([1-4])|icon_course02_([1-5])|status_10_(a\d{1,2}))_640\.png$/;
 let iconAnswer: "png" | "404" = "png";
 const MEDAL_PROGRESS: Readonly<Record<MedalState, string>> = {
   none: "",
@@ -291,7 +292,7 @@ Bun.serve({
     const icon = ICON_PATH.exec(pathname);
     if (icon !== null) {
       // Static art, as Hiroba's is: no session is asked for.
-      const [, rank, crown, course] = icon;
+      const [, rank, crown, course, option] = icon;
       if (iconAnswer === "404") {
         return new Response("not found", { status: 404 });
       }
@@ -300,7 +301,9 @@ Bun.serve({
           ? rankIconPng(Number(rank))
           : crown !== undefined
             ? crownIconPng(Number(crown))
-            : courseIconPng(Number(course));
+            : option !== undefined
+              ? optionIconPng(option)
+              : courseIconPng(Number(course));
       return new Response(body, { headers: { "content-type": "image/png" } });
     }
     switch (pathname) {
@@ -353,6 +356,13 @@ Bun.serve({
         await readsHeld;
         // My page carries forms (rename, 大好きな曲) with a token, so reading it issues a new one.
         return page(myPage(costume.issueTicket(session)));
+      }
+      case "/history_recent_score.php": {
+        if (!session?.cardChosen) {
+          return redirect("/login.php");
+        }
+        const rows = await history.page(Number(searchParams.get("page") ?? "1"));
+        return page(rows ?? ERROR_SHELL_BODY);
       }
       case "/ajax/update_score.php": {
         const entered = await ajaxEntry(request, session, () => undefined);
