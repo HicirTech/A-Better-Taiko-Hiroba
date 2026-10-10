@@ -359,7 +359,7 @@ export async function favorites(ctx: Ctx) {
   results.pickerFiltersByChartAndStars =
     extremeTen &&
     (await listed(INNER_TEN)) &&
-    (await textOf("#song-picker-difficulty")) === "Extreme (Inner)" &&
+    (await textOf("#song-picker-difficulty")) === "Extreme (Ura)" &&
     (await textOf("#song-picker-level")) === "★10";
   await choose("difficulty", "all");
   results.pickerStarsAloneTakeAnyChart = await listed(EXTREME_OR_INNER_TEN);
@@ -557,7 +557,7 @@ export async function favorites(ctx: Ctx) {
       "oni",
     ]) &&
     same(await difficultiesIn(`#song-picker-row-${WITH_INNER}-ura`), ["ura"]) &&
-    (await textOf(`#song-picker-row-${WITH_INNER}-ura .song-artists`))?.includes("Inner chart") !==
+    (await textOf(`#song-picker-row-${WITH_INNER}-ura .song-artists`))?.includes("Ura chart") !==
       true &&
     !(await exists("#song-picker-row-1001-ura"));
   results.innerRowWearsItsColour = await page.evaluate<boolean>(
@@ -586,7 +586,7 @@ export async function favorites(ctx: Ctx) {
   results.innerEntrySavedAndShown =
     innerSaved.favoriteSong === WITH_INNER &&
     innerSaved.favoriteSongUra &&
-    (await textOf("#favorite-song-row .song-artists"))?.startsWith("Inner chart") === true &&
+    (await textOf("#favorite-song-row .song-artists"))?.startsWith("Ura chart") === true &&
     !(await exists("#favorite-song-outcome"));
   const readsBeforeReopen = await pickerReads();
   await click("#favorite-song-change");

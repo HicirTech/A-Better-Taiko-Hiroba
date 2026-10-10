@@ -261,7 +261,7 @@ const AS_WRITTEN: Readonly<Partial<Record<MessageKey, PerLanguage<string>>>> = {
   "difficulty.normal": inEach("Normal", "ふつう", "普通", "普通"),
   "difficulty.hard": inEach("Hard", "むずかしい", "困难", "困難"),
   "difficulty.oni": inEach("Extreme", "おに", "魔王", "魔鬼"),
-  "difficulty.ura": inEach("Extreme (Inner)", "おに裏", "魔王(里)", "魔鬼(裏)"),
+  "difficulty.ura": inEach("Extreme (Ura)", "おに裏", "魔王(里)", "魔鬼(裏)"),
   "favorites.song.heading": inEach("Favourite song", "大好きな曲", "最爱歌曲", "最愛歌曲"),
 };
 

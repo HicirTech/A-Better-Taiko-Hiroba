@@ -117,7 +117,7 @@ export const en: Messages = {
   "settings.songLevels": "Song levels",
   "settings.shownDifficulty": "Difficulty shown first",
   "settings.shownDifficultyHint":
-    "Its star level shows in front, with the inner chart beside Extreme; the other levels stack behind it and spread out on a click.",
+    "Its star level shows in front, with the Ura chart beside Extreme; the other levels stack behind it and spread out on a click.",
   "signIn.intro":
     "Sign in with your Bandai Namco ID to read your Donder Hiroba profile. The sign-in page is Hiroba's own; this app never sees your password.",
   "signIn.action": "Sign in to Hiroba",
@@ -339,7 +339,7 @@ export const en: Messages = {
   "difficulty.normal": "Normal",
   "difficulty.hard": "Hard",
   "difficulty.oni": "Extreme",
-  "difficulty.ura": "Extreme (Inner)",
+  "difficulty.ura": "Extreme (Ura)",
   "song.level": "{difficulty} ★{level}",
   "song.bpm": "BPM {bpm}",
   "write.folder.unchanged":
@@ -397,7 +397,7 @@ export const en: Messages = {
   "favorites.song.heading": "Favourite song",
   "favorites.song.none": "Not set",
   "favorites.song.change": "Change",
-  "favorites.ura": "Inner chart",
+  "favorites.ura": "Ura chart",
   "picker.title.single": "Choose your favourite song",
   "picker.title.multi": "Add songs",
   "picker.search": "Search songs",
