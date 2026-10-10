@@ -14,9 +14,11 @@ import {
   ok,
   parseScoreDetailPage,
   parseScoreListPage,
+  type RecentPlay,
   type RecentPlaysReading,
   type Result,
   readHirobaPage,
+  recentOrder,
   type ScoreBook,
   songCharts,
 } from "@abth/core";
@@ -65,6 +67,8 @@ export interface ScoresReaderOptions {
   /** Walks recent plays as their page does; the walk notes what it found here itself. */
   readonly walk: () => Promise<Result<RecentPlaysReading, RecentPlaysFailure>>;
   readonly walkProgress: () => Promise<number | null>;
+  /** The recent plays kept on the device, newest first: the order the page can sort by. */
+  readonly recentPlays: () => Promise<readonly RecentPlay[]>;
   readonly now?: () => Date;
 }
 
@@ -200,13 +204,15 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
     return detailed === null ? readOf(taikoNo, charts) : failed(detailed);
   };
 
+  const viewNow = async (taikoNo: string) =>
+    viewOf(await books.of(taikoNo), await options.recentPlays());
   const readOf = async (taikoNo: string, charts: readonly Chart[]) =>
-    ok({ ...viewOf(await books.of(taikoNo)), detailed: charts.length });
+    ok({ ...(await viewNow(taikoNo)), detailed: charts.length });
 
   return {
     async scores() {
       const taikoNo = owner();
-      return taikoNo === null ? viewOf(EMPTY_SCORE_BOOK) : viewOf(await books.of(taikoNo));
+      return taikoNo === null ? viewOf(EMPTY_SCORE_BOOK, []) : viewNow(taikoNo);
     },
     readScores() {
       running ??= readAll().finally(() => {
@@ -278,36 +284,35 @@ function createBooks(store: ScoresStore) {
   };
 }
 
-/** The played charts with details, by Hiroba's title, then the harder chart first. */
-function viewOf(book: ScoreBook): ScoresView {
+/** The played charts with details, in song number order: the page sorts them its own way. */
+function viewOf(book: ScoreBook, plays: readonly RecentPlay[]): ScoresView {
   const songs = new Map(book.songs.map((song) => [song.songNo, song]));
-  const scores = Object.values(book.scores).flatMap((score): ScoreView[] => {
+  const recent = recentOrder(book, plays);
+  const scores = Object.entries(book.scores).flatMap(([key, score]): ScoreView[] => {
     const song = songs.get(score.songNo);
     if (score.record === null || song === undefined) {
       return [];
     }
-    const { songNo, level, crown, scoreRank, record } = score;
+    const { songNo, level, crown, scoreRank, record, fetchedAt } = score;
     return [
       {
         songNo,
         songTitle: song.title,
         genre: song.genres[0] ?? null,
+        genres: song.genres,
         level,
         crown,
         scoreRank,
         record,
+        ranking: score.ranking ?? null,
+        sections: score.sections ?? [],
+        recent: recent.get(key) ?? null,
+        fetchedAt,
       },
     ];
   });
-  scores.sort((left, right) => compareTitles(left, right) || right.level - left.level);
-  return { scores, unread: chartsToRead(book).length };
-}
-
-const TITLE_ORDER = new Intl.Collator("ja");
-
-function compareTitles(left: ScoreView, right: ScoreView): number {
-  return (
-    TITLE_ORDER.compare(left.songTitle, right.songTitle) ||
-    Number(left.songNo) - Number(right.songNo)
+  scores.sort(
+    (left, right) => Number(left.songNo) - Number(right.songNo) || left.level - right.level,
   );
+  return { scores, unread: chartsToRead(book).length };
 }

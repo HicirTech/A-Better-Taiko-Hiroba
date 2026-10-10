@@ -16,6 +16,7 @@ import type {
   RenameState,
   Result,
   ScoreRank,
+  ScoreSection,
   ShownSong,
   TitleEditorView,
   TitleState,
@@ -154,6 +155,15 @@ export interface RecentPlaysFailure extends ReadFailure {
 /** A chart's newest reading as the scores page shows it, by Hiroba's title and first genre. */
 export interface ScoreView extends RecentPlay {
   readonly songNo: string;
+  /** Every genre the score lists name the song in. */
+  readonly genres: readonly Genre[];
+  /** The Japan ranking's place, null where Hiroba shows none. */
+  readonly ranking: number | null;
+  readonly sections: readonly ScoreSection[];
+  /** Its place in recent plays, 0 the newest; null when they no longer show it. */
+  readonly recent: number | null;
+  /** When its details were read. */
+  readonly fetchedAt: string;
 }
 
 /** The kept scores: each played chart with its details, and the charts a read has yet to detail. */

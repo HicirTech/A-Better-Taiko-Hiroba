@@ -259,6 +259,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     endSession: forget,
     walk: recentPlays.readRecentPlays,
     walkProgress: recentPlays.recentPlaysProgress,
+    recentPlays: recentPlays.recentPlays,
   });
 
   const port = queuePort(pipelines, {

@@ -44,7 +44,27 @@ function songBlocks(n: number, genre: number, played: PlayedCharts): string {
   return hasUra(n) ? own + block(true, `<li></li><li></li><li></li>${anchor(5)}`) : own;
 }
 
-function detailPage(best: MockPlay): string {
+/** Song `n`'s Japan place, none for every fourth song, as for an account that holds none. */
+const rankingOf = (n: number) => (n % 4 === 0 ? "---" : String(1000 + n));
+
+/** Every third song has three AI battle sections; an odd one's second, not cleared, has no crown. */
+function sectionBlocks(n: number, best: MockPlay): string {
+  if (n % 3 !== 0) {
+    return "";
+  }
+  const section = (number: number, crown: number) => `
+    <div class="section_lavel"><span>区間${number}</span></div>
+    <div class="section_crown">${crown === 0 ? "" : `<img class="crown" src="image/sp/640/crown_large_${crown}_640.png" />`}</div>
+    <div class="high_score"><img src="image/sp/640/score_back_0_640.png" /><span>${Math.floor(best.score / 3) + number}点</span></div>
+    <div class="good_cnt"><img src="image/sp/640/score_name_good_640.png" /><span>${100 + number}回</span></div>
+    <div class="ng_cnt"><img src="image/sp/640/score_name_ng_640.png" /><span>${number - 1}回</span></div>
+    <div class="ok_cnt"><img src="image/sp/640/score_name_ok_640.png" /><span>${10 + number}回</span></div>
+    <div class="pound_cnt"><img src="image/sp/640/score_name_pound_640.png" /><span>${3 * number}回</span></div>`;
+  return `<div class="scoreDetail"><h2 class="subtitleMypage">区間毎詳細成績</h2>
+  <div class="scoreDetailTable">${section(1, 2)}${section(2, n % 2 === 0 ? 1 : 0)}${section(3, 2)}</div></div>`;
+}
+
+function detailPage(n: number, best: MockPlay): string {
   const counts = COUNTS.map(
     ([key, value]) => `<div class="${key}_cnt"><span>${value}回</span></div>`,
   );
@@ -58,10 +78,11 @@ function detailPage(best: MockPlay): string {
   return `<div class="scoreDetailArea">
   <img class="crown" src="image/sp/640/crown_large_${DETAIL_CROWNS[best.crown] ?? 0}_640.png">
   <img class="best_score_icon" src="image/sp/640/best_score_rank_${best.rank}_640.png">
+  <div class="ranking"><img src="image/sp/640/ranking_all_back_640.png" /><span>${rankingOf(n)}位</span></div>
   <div class="high_score"><span>${best.score}点</span></div>
   ${counts.join("")}
   <div class="optionImage">${images.join("")}</div>
-</div>`;
+</div>${sectionBlocks(n, best)}`;
 }
 
 const NOT_PLAYED = `<div class="error"><div id="error" class="contentBox errorArea">未プレイまたは同期中です。<br>プレイ済みの場合は同期して下さい。</div></div>`;
@@ -96,7 +117,7 @@ export function createScorePages(played: PlayedCharts) {
         return null;
       }
       const best = played.bestOf(n, level);
-      return best === undefined ? NOT_PLAYED : detailPage(best);
+      return best === undefined ? NOT_PLAYED : detailPage(n, best);
     },
 
     /** `/__scores`: a chart whose details fail (`fail=1012/3`, `fail=` for none), and the charts

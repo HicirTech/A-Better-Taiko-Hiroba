@@ -101,6 +101,7 @@ function readersOver(transport: Transport) {
     endSession,
     walk: recentPlays.readRecentPlays,
     walkProgress: recentPlays.recentPlaysProgress,
+    recentPlays: recentPlays.recentPlays,
   });
   const groups = (name: string, operation: string) =>
     ended
@@ -124,6 +125,23 @@ describe("createScoresReader", () => {
     expect(groups("io", SCORE_LIST_OPERATION)).toEqual(["1", "2", "3", "4", "5", "6", "7", "8"]);
     expect(groups("scores", SCORE_DETAIL_OPERATION)).toHaveLength(12);
     expect(sorted(hiroba.detailsAsked())).toEqual(groups("scores", SCORE_DETAIL_OPERATION));
+  });
+
+  test("shows each chart's place, sections, genres and place in recent plays", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores } = readersOver(hiroba.transport);
+
+    const read = await scores.readScores();
+    const third = read.ok ? read.value.scores.find((score) => score.songNo === "1003") : null;
+    const fourth = read.ok ? read.value.scores.find((score) => score.songNo === "1004") : null;
+
+    // Recent plays run from song 12, the newest, down to song 1.
+    expect(third?.recent).toBe(9);
+    expect(third?.ranking).toBe(1003);
+    expect(third?.sections).toHaveLength(3);
+    expect(third?.genres).toEqual([4]);
+    expect(fourth?.ranking).toBeNull();
+    expect(fourth?.sections).toEqual([]);
   });
 
   test("a later read details only the charts recent plays show were played since", async () => {

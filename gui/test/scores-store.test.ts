@@ -18,6 +18,8 @@ const listed: Score = {
   fidelity: "list",
   record: null,
   fetchedAt: "2026-10-10T12:00:00.000Z",
+  ranking: null,
+  sections: [],
 };
 const detailed: Score = {
   ...listed,
@@ -36,6 +38,8 @@ const detailed: Score = {
     donderfulComboCount: 0,
     options: { speed: 1.5, doron: false, abekobe: false, random: "none", supportChart: null },
   },
+  ranking: 5503,
+  sections: [{ crown: "gold", score: 139020, good: 100, ok: 6, bad: 0, drumroll: 0 }],
 };
 const BOOK: ScoreBook = {
   songs: [{ songNo: "1178", title: "サンプル曲", genres: [1, 6] }],
@@ -79,6 +83,14 @@ describe("readStoredScoreBook", () => {
     ["a book whose full read is not a yes or a no", { ...BOOK, full: "yes" }],
   ])("reads %s as a book never read", (_name, stored) => {
     expect(readStoredScoreBook(stored)).toEqual(EMPTY_SCORE_BOOK);
+  });
+
+  test("reads a chart kept before its ranking and sections were read as having none", () => {
+    const { ranking: _ranking, sections: _sections, ...older } = detailed;
+    const kept = { ...BOOK, scores: { "1178/5": older } };
+    const read = readStoredScoreBook(JSON.parse(JSON.stringify(kept)));
+    expect(read.scores["1178/5"]?.ranking).toBeNull();
+    expect(read.scores["1178/5"]?.sections).toEqual([]);
   });
 
   test("drops a chart whose record is broken, and the mark that named it", () => {

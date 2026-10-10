@@ -6,6 +6,7 @@ import {
   type Score,
   type ScoreBook,
   type ScoreFidelity,
+  type ScoreSection,
   type Song,
   type UnlistedPlay,
 } from "@abth/core";
@@ -91,6 +92,8 @@ function scoreOf(value: unknown): Score[] {
   if (value.record !== null && record === null) {
     return [];
   }
+  // A book kept before the ranking and the sections were read has neither: they read as none.
+  const sections = Array.isArray(value.sections) ? value.sections.flatMap(sectionOf) : [];
   return [
     {
       taikoNo: value.taikoNo,
@@ -101,8 +104,35 @@ function scoreOf(value: unknown): Score[] {
       fidelity: value.fidelity as ScoreFidelity,
       record,
       fetchedAt: value.fetchedAt,
+      ranking: isWholeNumber(value.ranking) ? value.ranking : null,
+      sections,
     },
   ];
+}
+
+function sectionOf(value: unknown): ScoreSection[] {
+  if (!isObject(value) || !CROWNS.has(value.crown as CrownState)) {
+    return [];
+  }
+  const { score, good, ok, bad, drumroll } = value;
+  const counts = [score, good, ok, bad, drumroll];
+  if (!counts.every(isWholeNumber)) {
+    return [];
+  }
+  return [
+    {
+      crown: value.crown as CrownState,
+      score: score as number,
+      good: good as number,
+      ok: ok as number,
+      bad: bad as number,
+      drumroll: drumroll as number,
+    },
+  ];
+}
+
+function isWholeNumber(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
 function unlistedOf(value: unknown): UnlistedPlay[] {

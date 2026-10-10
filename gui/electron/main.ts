@@ -266,6 +266,7 @@ app.whenReady().then(async () => {
     endSession: () => setSession(null),
     walk: recentPlays.readRecentPlays,
     walkProgress: recentPlays.recentPlaysProgress,
+    recentPlays: recentPlays.recentPlays,
   });
 
   const port = queuePort(pipelines, {
