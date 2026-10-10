@@ -30,7 +30,14 @@ export type {
   ProfileVisibility,
   PublicProfile,
 } from "./player";
-export type { PlayOptions, RandomMode, Score, ScoreFidelity, ScoreRecord } from "./score";
+export type {
+  PlayOptions,
+  RandomMode,
+  Score,
+  ScoreFidelity,
+  ScoreRecord,
+  ScoreSection,
+} from "./score";
 export type { Chart, GenreReading, Song } from "./song";
 export { mergeGenreIntoCatalogue, updateCatalogue } from "./song";
 export type { AmbiguousTitle, ResolvedSong, SongResolution, UnknownTitle } from "./song-resolution";
