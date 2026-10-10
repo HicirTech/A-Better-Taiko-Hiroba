@@ -39,6 +39,7 @@ import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { SHUT_LOOK } from "./read-again/shut-look";
 import { useReadAgainKeys } from "./read-again/use-read-again-keys";
 import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
+import { ReadEveryDialog } from "./scores/read-every-dialog";
 import { ScoresPage, scoresReadingText } from "./scores/scores-page";
 import { useScores } from "./scores/use-scores";
 import type {
@@ -348,6 +349,13 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     }
   };
   useReadAgainKeys(signedIn, readAgain);
+  // Reading every score takes minutes, so the scores page asks for it by a long hold.
+  const [askingEvery, setAskingEvery] = useState(false);
+  if (askingEvery && !onScoresPage) {
+    setAskingEvery(false);
+  }
+  const keptCharts = scores.view?.scores.length ?? 0;
+  const askEvery = onScoresPage && keptCharts > 0 ? () => setAskingEvery(true) : undefined;
   return (
     <>
       {(signedIn || screen.name === "reading") && (
@@ -364,12 +372,31 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
                   : t("history.readingPage", { page: history.page })
             }
             onRead={readAgain}
+            onHeld={askEvery}
             i18n={i18n}
           />
         </NavFoot>
       )}
       {page !== "settings" && (signedIn || screen.name === "reading") && (
-        <PullToRead active={touchFirst} canRead={canReadAgain} onRead={readAgain} />
+        <PullToRead
+          active={touchFirst}
+          canRead={canReadAgain}
+          onRead={readAgain}
+          onHeld={askEvery}
+        />
+      )}
+      {onScoresPage && (
+        <ReadEveryDialog
+          open={askingEvery}
+          charts={keptCharts}
+          i18n={i18n}
+          onAnswer={(confirmed) => {
+            setAskingEvery(false);
+            if (confirmed) {
+              void scores.readEvery();
+            }
+          }}
+        />
       )}
       {page === "settings" ? (
         <SettingsPage

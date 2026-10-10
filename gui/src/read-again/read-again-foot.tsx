@@ -1,6 +1,8 @@
 import type { Translator } from "@abth/i18n";
 import { Box, CircularProgress, IconButton, SvgIcon, Tooltip, Typography } from "@mui/material";
 
+import { HoldRing, usePressHold } from "./long-hold";
+
 export interface ReadAgainFootProps {
   readonly reading: boolean;
   readonly canRead: boolean;
@@ -9,6 +11,8 @@ export interface ReadAgainFootProps {
   /** Replaces the time while a walk is on a page, such as a recent-plays read. */
   readonly progress?: string | null;
   readonly onRead: () => void;
+  /** Where a page reads more by a long hold: the button held that long asks for it. */
+  readonly onHeld?: (() => void) | undefined;
   readonly i18n: Translator;
 }
 
@@ -22,9 +26,11 @@ export function ReadAgainFoot({
   fetchedAt,
   progress,
   onRead,
+  onHeld,
   i18n,
 }: ReadAgainFootProps) {
   const label = i18n.t("profile.readAgain");
+  const hold = usePressHold(canRead ? onHeld : undefined);
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, pl: 3, pr: 1.5, py: 1.5 }}>
       <Typography
@@ -40,8 +46,21 @@ export function ReadAgainFoot({
       </Typography>
       {/* None while it is shut: a disabled button sends no event to open or close it. */}
       <Tooltip title={canRead ? label : ""}>
-        <IconButton id="read-again" aria-label={label} disabled={!canRead} onClick={onRead}>
+        <IconButton
+          id="read-again"
+          aria-label={label}
+          disabled={!canRead}
+          onClick={() => {
+            if (!hold.endsAHold()) {
+              onRead();
+            }
+          }}
+          {...hold.handlers}
+        >
           {reading ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
+          {hold.since !== null && (
+            <HoldRing since={hold.since} size={36} sx={{ position: "absolute", top: 2, left: 2 }} />
+          )}
         </IconButton>
       </Tooltip>
     </Box>

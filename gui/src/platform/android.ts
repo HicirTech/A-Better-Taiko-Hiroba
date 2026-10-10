@@ -395,6 +395,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     scores: scores.scores,
 
     readScores: flushed(scores.readScores),
+    readEveryScore: flushed(scores.readEveryScore),
 
     readSongScores: flushed(scores.readSongScores),
 

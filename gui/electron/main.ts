@@ -340,6 +340,7 @@ app.whenReady().then(async () => {
     recentPlaysProgress: recentPlays.recentPlaysProgress,
     scores: scores.scores,
     readScores: scores.readScores,
+    readEveryScore: scores.readEveryScore,
     readSongScores: scores.readSongScores,
     scoresProgress: scores.scoresProgress,
     readSongCatalogue: (site, since) =>

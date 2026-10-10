@@ -24,6 +24,7 @@ export const BRIDGE_CHANNELS = {
   recentPlaysProgress: "abth:recent-plays-progress",
   scores: "abth:scores",
   readScores: "abth:read-scores",
+  readEveryScore: "abth:read-every-score",
   readSongScores: "abth:read-song-scores",
   scoresProgress: "abth:scores-progress",
   readSongCatalogue: "abth:read-song-catalogue",

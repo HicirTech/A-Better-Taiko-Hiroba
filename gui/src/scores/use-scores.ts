@@ -31,6 +31,8 @@ export interface ScoresState {
   readonly load: () => void;
   /** Reads what the book needs, after Hiroba's own refresh. A second ask while one runs does nothing. */
   readonly read: () => Promise<void>;
+  /** Reads every list and every played chart again, after Hiroba's own refresh: minutes. */
+  readonly readEvery: () => Promise<void>;
   /** Reads one song's charts again, after Hiroba's own refresh. */
   readonly readSong: (song: ScoreView) => Promise<void>;
 }
@@ -39,7 +41,12 @@ export interface ScoresState {
 export function useScores(
   port: Pick<
     HirobaSessionPort,
-    "refreshHiroba" | "scores" | "readScores" | "readSongScores" | "scoresProgress"
+    | "refreshHiroba"
+    | "scores"
+    | "readScores"
+    | "readEveryScore"
+    | "readSongScores"
+    | "scoresProgress"
   >,
   onSessionGone: (notice: MessageKey) => void,
 ): ScoresState {
@@ -105,6 +112,7 @@ export function useScores(
     [port, settle],
   );
   const read = useCallback(() => run(() => port.readScores(), null), [port, run]);
+  const readEvery = useCallback(() => run(() => port.readEveryScore(), null), [port, run]);
   const readSong = useCallback(
     (chosen: ScoreView) => run(() => port.readSongScores(chosen.songNo), chosen),
     [port, run],
@@ -119,6 +127,7 @@ export function useScores(
     nothingNew,
     load,
     read,
+    readEvery,
     readSong,
   };
 }

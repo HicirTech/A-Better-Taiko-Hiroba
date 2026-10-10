@@ -363,6 +363,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "近紀打隱形反輔助往拉速",
     "裡幾鐘去",
     "數皇篩國區",
+    "慢需",
   ].join(""),
 );
 

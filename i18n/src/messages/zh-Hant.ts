@@ -95,6 +95,11 @@ export const zhHant: Messages = {
     "上次讀取之後近期遊玩裡沒有新的紀錄，成績沒有變化。成績跟著近期遊玩更新：先去玩幾首，再來讀取。",
   "scores.unread": "還有 {count} 張譜面沒讀，重新讀取即可讀到。",
   "scores.readSong": "重新讀取這首歌的成績",
+  "scores.readEvery.title": "重新讀取全部成績？",
+  "scores.readEvery.body":
+    "這會從廣場重新讀取你玩過的全部 {count} 張譜面的成績，比較慢，需要幾分鐘。",
+  "scores.readEvery.cancel": "取消",
+  "scores.readEvery.confirm": "全部重新讀取",
   "scores.sort": "排序",
   "scores.sort.name": "歌名",
   "scores.sort.score": "分數",

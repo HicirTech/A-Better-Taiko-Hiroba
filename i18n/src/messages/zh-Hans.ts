@@ -95,6 +95,11 @@ export const zhHans: Messages = {
     "上次读取之后近期游玩里没有新的记录，成绩没有变化。成绩跟着近期游玩更新：先去玩几首，再来读取。",
   "scores.unread": "还有 {count} 张谱面没读，重新读取即可读到。",
   "scores.readSong": "重新读取这首歌的成绩",
+  "scores.readEvery.title": "重新读取全部成绩？",
+  "scores.readEvery.body":
+    "这会从广场重新读取你玩过的全部 {count} 张谱面的成绩，比较慢，需要几分钟。",
+  "scores.readEvery.cancel": "取消",
+  "scores.readEvery.confirm": "全部重新读取",
   "scores.sort": "排序",
   "scores.sort.name": "歌名",
   "scores.sort.score": "分数",

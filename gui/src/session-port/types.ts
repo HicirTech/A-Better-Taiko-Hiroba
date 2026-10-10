@@ -378,6 +378,8 @@ export interface HirobaSessionPort {
   scores(): Promise<ScoresView>;
   /** Walks recent plays, takes the lists it needs, then details what is left. Never retried. */
   readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
+  /** As `readScores`, but takes every list, then every played chart again. Never retried. */
+  readEveryScore(): Promise<Result<ScoresRead, ScoresFailure>>;
   /** Details each of one song's charts again, in the scores pipeline. Never retried. */
   readSongScores(songNo: string): Promise<Result<ScoresRead, ScoresFailure>>;
   /** How far a read of scores has come, or null when none is running. */

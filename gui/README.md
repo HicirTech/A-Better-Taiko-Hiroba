@@ -212,8 +212,10 @@ chart they no longer show last; by name with none) work together, ties going by 
 click on a row opens the chart in full, as Hiroba's own detail page has it, headed as its row is
 but for the hits, listed below with the Japan place, the four play counts and, where the chart has
 them, each section's hits and score with its crown over it (a section not cleared has none); a pull
-there, or its refresh button on a computer, reads all the song's charts again. The scores stay on
-the device, each player's apart, after a sign-out too.
+there, or its refresh button on a computer, reads all the song's charts again. A pull held past
+the point for six seconds, or Read again held down as long on a computer, asks first, then reads
+every list and every played chart again, as the first read does. The scores stay on the device,
+each player's apart, after a sign-out too.
 
 ### The Costume page
 

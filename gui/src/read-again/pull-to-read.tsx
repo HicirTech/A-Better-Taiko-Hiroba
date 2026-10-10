@@ -2,7 +2,9 @@ import { Box, CircularProgress, Paper } from "@mui/material";
 import { type RefObject, useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { gesturesHeld } from "../navigation/gesture-hold";
+import { HoldRing } from "./long-hold";
 import {
+  LONG_HOLD_MS,
   NO_PULL,
   PULL_THRESHOLD_PX,
   type PullState,
@@ -24,6 +26,8 @@ export interface PullToReadProps {
   readonly region?: RefObject<HTMLElement | null>;
   /** The indicator's id: a dialog's pull draws one beside the page's. */
   readonly id?: string;
+  /** Where a page reads more by a long hold: a pull held past the point that long asks for it. */
+  readonly onHeld?: (() => void) | undefined;
 }
 
 export function PullToRead({
@@ -32,11 +36,15 @@ export function PullToRead({
   onRead,
   region,
   id = "pull-indicator",
+  onHeld,
 }: PullToReadProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [distance, setDistance] = useState(0);
+  const [holdingSince, setHoldingSince] = useState<number | null>(null);
   const mayRead = useEffectEvent(() => canRead);
   const read = useEffectEvent(onRead);
+  const held = useEffectEvent(() => onHeld?.());
+  const holds = onHeld !== undefined;
   useEffect(() => {
     const box = region?.current ?? null;
     const area = box ?? ref.current?.closest("main");
@@ -45,9 +53,25 @@ export function PullToRead({
     }
     const scrollTop = () => (box === null ? pageScrollTop() : box.scrollTop);
     let pull: PullState = NO_PULL;
+    let holdTimer: ReturnType<typeof setTimeout> | undefined;
+    const stopHold = () => {
+      clearTimeout(holdTimer);
+      holdTimer = undefined;
+      setHoldingSince(null);
+    };
     const show = (next: PullState) => {
       pull = next;
       setDistance(next.phase === "pulling" ? next.distancePx : 0);
+      if (!holds || !pullReleased(next)) {
+        stopHold();
+      } else if (holdTimer === undefined) {
+        setHoldingSince(Date.now());
+        // The rest of the gesture neither reads nor holds the page once the hold has asked.
+        holdTimer = setTimeout(() => {
+          show(NO_PULL);
+          held();
+        }, LONG_HOLD_MS);
+      }
     };
     const start = (event: TouchEvent) => {
       const finger = event.touches[0];
@@ -93,18 +117,28 @@ export function PullToRead({
       area.removeEventListener("touchmove", move);
       area.removeEventListener("touchend", end);
       area.removeEventListener("touchcancel", end);
+      stopHold();
       setDistance(0);
     };
-  }, [active, region]);
+  }, [active, region, holds]);
 
   return (
     <Box ref={ref} sx={{ position: "relative", height: 0 }}>
-      {active && <PullIndicator id={id} distance={distance} />}
+      {active && <PullIndicator id={id} distance={distance} holdingSince={holdingSince} />}
     </Box>
   );
 }
 
-function PullIndicator({ id, distance }: { id: string; distance: number }) {
+function PullIndicator({
+  id,
+  distance,
+  holdingSince,
+}: {
+  id: string;
+  distance: number;
+  /** When the pull came past the point, for a page that reads more by a long hold. */
+  holdingSince: number | null;
+}) {
   const pulling = distance > 0;
   return (
     <Box
@@ -133,11 +167,15 @@ function PullIndicator({ id, distance }: { id: string; distance: number }) {
           justifyContent: "center",
         }}
       >
-        <CircularProgress
-          size={24}
-          variant="determinate"
-          value={Math.min(100, (distance / PULL_THRESHOLD_PX) * 100)}
-        />
+        {holdingSince === null ? (
+          <CircularProgress
+            size={24}
+            variant="determinate"
+            value={Math.min(100, (distance / PULL_THRESHOLD_PX) * 100)}
+          />
+        ) : (
+          <HoldRing since={holdingSince} size={24} />
+        )}
       </Paper>
     </Box>
   );

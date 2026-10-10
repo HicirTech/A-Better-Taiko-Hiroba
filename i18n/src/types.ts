@@ -125,6 +125,12 @@ export interface Messages {
   "scores.unread": string;
   /** A song's action: read its charts again. */
   "scores.readSong": string;
+  /** Asks before a read of every score, after a long hold on the page's read again. */
+  "scores.readEvery.title": string;
+  /** Param: {count}, the played charts, as the locale writes a count. */
+  "scores.readEvery.body": string;
+  "scores.readEvery.cancel": string;
+  "scores.readEvery.confirm": string;
   /** The sort chip's name, and its menu's. */
   "scores.sort": string;
   /** The sorts: by name, the order with none chosen, then the others. */

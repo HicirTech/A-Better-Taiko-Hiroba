@@ -98,6 +98,11 @@ export const ja: Messages = {
     "前回の読み込みから、あそんだ曲が増えていないので、スコアは変わっていません。スコアはあそんだ曲から更新します。遊んでから、もう一度読み込んでください。",
   "scores.unread": "まだ読み込んでいない譜面が {count} 件あります。再読み込みで読み込みます。",
   "scores.readSong": "この曲のスコアを読み込み直す",
+  "scores.readEvery.title": "すべてのスコアを読み込み直しますか？",
+  "scores.readEvery.body":
+    "プレイした {count} 譜面すべてのスコアを広場から読み込み直します。数分かかります。",
+  "scores.readEvery.cancel": "キャンセル",
+  "scores.readEvery.confirm": "読み込み直す",
   "scores.sort": "並べ替え",
   "scores.sort.name": "曲名",
   "scores.sort.score": "スコア",

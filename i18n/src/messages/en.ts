@@ -97,6 +97,11 @@ export const en: Messages = {
     "No chart was played since the last read, so no score changed. Scores follow recent plays: play some, then read again.",
   "scores.unread": "{count} charts are still to read. Read again reads them.",
   "scores.readSong": "Read this song's scores again",
+  "scores.readEvery.title": "Read every score again?",
+  "scores.readEvery.body":
+    "This reads the scores of all {count} charts you have played again from Hiroba. It is slow: it takes several minutes.",
+  "scores.readEvery.cancel": "Cancel",
+  "scores.readEvery.confirm": "Read all again",
   "scores.sort": "Sort",
   "scores.sort.name": "Name",
   "scores.sort.score": "Score",

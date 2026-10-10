@@ -173,6 +173,19 @@ describe("createScoresReader", () => {
     expect(hiroba.detailsAsked()).toEqual([]);
   });
 
+  test("a read of every score takes every list and every played chart again", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores, groups } = readersOver(hiroba.transport);
+    await scores.readScores();
+    hiroba.detailsAsked(true);
+
+    const read = await scores.readEveryScore();
+
+    expect(read.ok && read.value.detailed).toBe(12);
+    expect(hiroba.detailsAsked()).toHaveLength(12);
+    expect(groups("io", SCORE_LIST_OPERATION)).toHaveLength(16);
+  });
+
   test("a title no list carries yet reads its genre's list again, then that chart", async () => {
     const hiroba = hirobaWith(12);
     const { scores, groups } = readersOver(hiroba.transport);

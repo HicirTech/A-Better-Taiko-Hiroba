@@ -31,6 +31,7 @@ export const PORT_QUEUEING = {
   recentPlaysProgress: "unqueued",
   scores: "unqueued",
   readScores: "unqueued",
+  readEveryScore: "unqueued",
   readSongScores: "unqueued",
   scoresProgress: "unqueued",
   readSongCatalogue: "external",

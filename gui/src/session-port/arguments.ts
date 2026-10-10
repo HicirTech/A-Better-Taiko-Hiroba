@@ -292,6 +292,7 @@ export const PORT_ARGUMENTS = {
   recentPlaysProgress: none,
   scores: none,
   readScores: none,
+  readEveryScore: none,
   readSongScores: oneSongNo,
   scoresProgress: none,
   readSongCatalogue: catalogueSince,

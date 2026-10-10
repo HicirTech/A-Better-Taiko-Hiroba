@@ -1,4 +1,5 @@
 /** Scores: read only when asked, every list and played chart first, then what recent plays name. */
+import { LONG_HOLD_MS } from "../../src/read-again/pull-gesture";
 import { en, HIROBA } from "./config";
 import type { Ctx } from "./context";
 import { middleOf, pageHelpers, same, waitFor } from "./harness";
@@ -16,6 +17,7 @@ export const scoresKeys = [
   "songReadAgainFromItsDetails",
   "stoppedReadNamesItsChart",
   "readFindingNothingNewSaysSo",
+  "everyScoreReadAfterALongHold",
   "difficultyFilterTakesSeveral",
   "scoresSortedByScore",
   "scoresSearchedByAnyName",
@@ -23,6 +25,7 @@ export const scoresKeys = [
   "scoreDetailsShowRankingAndSections",
   "sectionCrownsOverTheirScores",
   "songReadAgainByAPullOnItsDetails",
+  "longPullAsksToReadEveryScore",
   "detailsStepAsideForThePipelines",
 ] as const;
 
@@ -87,7 +90,7 @@ export async function scores(ctx: Ctx) {
   };
   const readAgain = () => readAfter(() => click("#read-again"));
   // A real press: an SVG has no click(), and a chip's × is one.
-  const mousePress = async (selector: string, button: "left" | "right") => {
+  const mousePress = async (selector: string, button: "left" | "right", heldMs = 0) => {
     await page.evaluate(
       `document.querySelector(${JSON.stringify(selector)}).scrollIntoView({ block: "center" })`,
     );
@@ -100,6 +103,7 @@ export async function scores(ctx: Ctx) {
       button,
       clickCount: 1,
     });
+    await Bun.sleep(heldMs);
     await page.send("Input.dispatchMouseEvent", {
       type: "mouseReleased",
       ...at,
@@ -212,6 +216,37 @@ export async function scores(ctx: Ctx) {
     (await textOf("#scores-nothing-new")) === en.t("scores.nothingNew") &&
     (await takeAsked()).length === 0;
 
+  // A long hold on read again asks before reading every score: no reads nothing, yes reads every
+  // list and every played chart again.
+  const longHeld = LONG_HOLD_MS + 500;
+  const askedToReadEvery = () =>
+    waitFor(
+      "the read-every question",
+      async () => (await exists("#scores-read-every-confirm")) || undefined,
+    );
+  const notAsked = async () => {
+    await click("#scores-read-every-cancel");
+    await waitFor("the question gone", async () =>
+      (await exists("#scores-read-every")) ? undefined : true,
+    );
+    await Bun.sleep(500);
+  };
+  const listsBefore = await hitsOn(SCORE_LIST);
+  const refreshesBefore = await refreshHits();
+  await mousePress("#read-again", "left", longHeld);
+  await askedToReadEvery();
+  await notAsked();
+  const noReadsNothing =
+    (await refreshHits()) === refreshesBefore && (await detailsAsked()).length === 0;
+  await mousePress("#read-again", "left", longHeld);
+  await askedToReadEvery();
+  await readAfter(() => click("#scores-read-every-confirm"));
+  const everyPlayed = Array.from({ length: shown + 2 }, (_, index) => chart(index + 1));
+  results.everyScoreReadAfterALongHold =
+    noReadsNothing &&
+    same(sorted(await takeAsked()), sorted(everyPlayed)) &&
+    (await hitsOn(SCORE_LIST)) === listsBefore + 8;
+
   // The page starts at Settings' difficulty again each time it opens: let every chart show.
   await mousePress("#scores-difficulty .MuiChip-deleteIcon", "left");
   await rowsAre(shown + 2);
@@ -298,6 +333,17 @@ export async function scores(ctx: Ctx) {
     await touchEmulated(true);
     try {
       await Bun.sleep(500);
+      // A pull held past the point asks the same, and the lift after it reads nothing.
+      await page.evaluate("window.scrollTo(0, 0)");
+      const refreshesBeforeTheHold = await refreshHits();
+      const heldPullAsked = await swipe({ x: 195, y: 300 }, { x: 197, y: 520 }, async () => {
+        await Bun.sleep(longHeld);
+        return exists("#scores-read-every-confirm");
+      });
+      await notAsked();
+      results.longPullAsksToReadEveryScore =
+        heldPullAsked === true && (await refreshHits()) === refreshesBeforeTheHold;
+
       await takeAsked();
       await click(rowOf(chart(4)));
       await detailsOpened();

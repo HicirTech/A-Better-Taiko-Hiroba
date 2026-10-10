@@ -1,4 +1,5 @@
 import {
+  askedInFull,
   type Chart,
   chartKey,
   chartsToRead,
@@ -49,6 +50,8 @@ export interface ScoresReader {
   scores(): Promise<ScoresView>;
   /** The walk, the lists the book needs, then the details left; a second call shares it. */
   readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
+  /** As `readScores`, but every list, then every played chart, as the first read takes them. */
+  readEveryScore(): Promise<Result<ScoresRead, ScoresFailure>>;
   readSongScores(songNo: string): Promise<Result<ScoresRead, ScoresFailure>>;
   scoresProgress(): Promise<ScoresProgress | null>;
   /** Marks the charts a walk of recent plays found played, whichever page walked. */
@@ -72,7 +75,7 @@ export interface ScoresReaderOptions {
   readonly now?: () => Date;
 }
 
-/** The port's four verbs, the same on every shell. */
+/** The port's five verbs, the same on every shell. */
 export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
   const { endpoints, owner } = options;
   const now = options.now ?? (() => new Date());
@@ -204,6 +207,15 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
     return detailed === null ? readOf(taikoNo, charts) : failed(detailed);
   };
 
+  // One read of all at a time: a second ask shares the one running.
+  const once = (read: () => Promise<Result<ScoresRead, ScoresFailure>>) => {
+    running ??= read().finally(() => {
+      running = null;
+      progress = null;
+    });
+    return running;
+  };
+
   const viewNow = async (taikoNo: string) =>
     viewOf(await books.of(taikoNo), await options.recentPlays());
   const readOf = async (taikoNo: string, charts: readonly Chart[]) =>
@@ -214,13 +226,16 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
       const taikoNo = owner();
       return taikoNo === null ? viewOf(EMPTY_SCORE_BOOK, []) : viewNow(taikoNo);
     },
-    readScores() {
-      running ??= readAll().finally(() => {
-        running = null;
-        progress = null;
-      });
-      return running;
-    },
+    readScores: () => once(readAll),
+    readEveryScore: () =>
+      once(async () => {
+        const taikoNo = owner();
+        if (taikoNo !== null) {
+          await books.change(taikoNo, askedInFull);
+          await books.save(taikoNo);
+        }
+        return readAll();
+      }),
     async readSongScores(songNo) {
       const taikoNo = owner();
       if (taikoNo === null) {
