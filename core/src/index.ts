@@ -6,3 +6,4 @@ export * from "./hiroba-models";
 export * from "./hiroba-writes";
 export * from "./http-transport";
 export * from "./operation-results";
+export * from "./recent-plays";
