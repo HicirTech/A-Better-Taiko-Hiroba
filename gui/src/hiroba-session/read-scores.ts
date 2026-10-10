@@ -26,6 +26,7 @@ import type {
   RecentPlaysFailure,
   ScoresFailure,
   ScoresProgress,
+  ScoresRead,
   ScoresView,
   ScoreView,
 } from "../session-port";
@@ -45,8 +46,8 @@ export interface ScoresReader {
   /** The kept scores. Asks Hiroba nothing. */
   scores(): Promise<ScoresView>;
   /** The walk, the lists the book needs, then the details left; a second call shares it. */
-  readScores(): Promise<Result<ScoresView, ScoresFailure>>;
-  readSongScores(songNo: string): Promise<Result<ScoresView, ScoresFailure>>;
+  readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
+  readSongScores(songNo: string): Promise<Result<ScoresRead, ScoresFailure>>;
   scoresProgress(): Promise<ScoresProgress | null>;
   /** Marks the charts a walk of recent plays found played, whichever page walked. */
   noteWalk(taikoNo: string, walk: RecentPlaysReading): Promise<void>;
@@ -73,7 +74,7 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
   const now = options.now ?? (() => new Date());
   const books = createBooks(options.store);
   let progress: ScoresProgress | null = null;
-  let running: Promise<Result<ScoresView, ScoresFailure>> | null = null;
+  let running: Promise<Result<ScoresRead, ScoresFailure>> | null = null;
 
   const failed = async (failure: ScoresFailure): Promise<Result<never, ScoresFailure>> => {
     if (sessionEnded(failure)) {
@@ -175,7 +176,7 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
     return stop.failure;
   };
 
-  const readAll = async (): Promise<Result<ScoresView, ScoresFailure>> => {
+  const readAll = async (): Promise<Result<ScoresRead, ScoresFailure>> => {
     const taikoNo = owner();
     if (taikoNo === null) {
       return err({ kind: "notSignedIn" });
@@ -196,8 +197,11 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
     const detailed = await readDetails(taikoNo, charts, (done) => {
       progress = { step: "details", done, total: charts.length };
     });
-    return detailed === null ? ok(viewOf(await books.of(taikoNo))) : failed(detailed);
+    return detailed === null ? readOf(taikoNo, charts) : failed(detailed);
   };
+
+  const readOf = async (taikoNo: string, charts: readonly Chart[]) =>
+    ok({ ...viewOf(await books.of(taikoNo)), detailed: charts.length });
 
   return {
     async scores() {
@@ -218,7 +222,7 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
       }
       const charts = songCharts(await books.of(taikoNo), songNo);
       const detailed = await readDetails(taikoNo, charts, () => undefined);
-      return detailed === null ? ok(viewOf(await books.of(taikoNo))) : failed(detailed);
+      return detailed === null ? readOf(taikoNo, charts) : failed(detailed);
     },
     async scoresProgress() {
       if (progress?.step !== "recentPlays") {

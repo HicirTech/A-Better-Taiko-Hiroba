@@ -58,6 +58,7 @@ export type {
   RenameState,
   ScoresFailure,
   ScoresProgress,
+  ScoresRead,
   ScoresStop,
   ScoresView,
   ScoreView,

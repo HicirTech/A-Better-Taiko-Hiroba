@@ -202,8 +202,8 @@ takes the eight score lists, in Hiroba's own pipeline since a list carries a for
 details of every chart they show played, five at once in a pipeline of their own; it takes a few
 minutes, and the page says how far it has come. A later read walks recent plays and reads again the
 details of each chart played since; a walk on the Recent plays page marks those charts too, and the
-page counts them until it reads them. A title the lists do not carry yet reads its genre's list
-again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
+page counts them until it reads them; a read that finds none says that nothing changed, since the
+scores follow recent plays. A title the lists do not carry yet reads its genre's list again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
 from there next time. A row looks as one of Recent plays does, and its menu (a right-click, or on a
 touch screen a long press) reads all the song's charts again. The scores stay on the device, each
 player's apart, after a sign-out too.

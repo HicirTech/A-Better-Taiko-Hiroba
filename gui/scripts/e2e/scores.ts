@@ -14,6 +14,7 @@ export const scoresKeys = [
   "recentPlaysWalkMarksScores",
   "songReadAgainFromItsMenu",
   "stoppedReadNamesItsChart",
+  "readFindingNothingNewSaysSo",
 ] as const;
 
 const control = async <T>(path: string, params = ""): Promise<T> =>
@@ -149,5 +150,13 @@ export async function scores(ctx: Ctx) {
     ) &&
     same(await takeAsked(), [failing]) &&
     !(await exists("#scores-failure"));
+
+  // Nothing played since: the read details no chart, and the page says why nothing changed.
+  const saidAfterARead = await exists("#scores-nothing-new");
+  await readAgain();
+  results.readFindingNothingNewSaysSo =
+    !saidAfterARead &&
+    (await textOf("#scores-nothing-new")) === en.t("scores.nothingNew") &&
+    (await takeAsked()).length === 0;
   await goTo("overview");
 }

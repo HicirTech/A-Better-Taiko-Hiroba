@@ -162,6 +162,11 @@ export interface ScoresView {
   readonly unread: number;
 }
 
+/** A read of scores that ended, with how many charts' details it read: none when nothing was new. */
+export interface ScoresRead extends ScoresView {
+  readonly detailed: number;
+}
+
 /** Where a read of scores stopped: a page of recent plays, a genre's list, or a chart's details. */
 export type ScoresStop =
   | { readonly kind: "recentPlays"; readonly page: number }
@@ -362,9 +367,9 @@ export interface HirobaSessionPort {
   /** The kept scores. Asks Hiroba nothing. */
   scores(): Promise<ScoresView>;
   /** Walks recent plays, takes the lists it needs, then details what is left. Never retried. */
-  readScores(): Promise<Result<ScoresView, ScoresFailure>>;
+  readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
   /** Details each of one song's charts again, in the scores pipeline. Never retried. */
-  readSongScores(songNo: string): Promise<Result<ScoresView, ScoresFailure>>;
+  readSongScores(songNo: string): Promise<Result<ScoresRead, ScoresFailure>>;
   /** How far a read of scores has come, or null when none is running. */
   scoresProgress(): Promise<ScoresProgress | null>;
   /** taiko.wiki's songs, all or those changed since `since` (ms since 1970): one GET that carries

@@ -69,6 +69,11 @@ export function ScoresPage({
           {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
         </Typography>
       )}
+      {settled && rows.length > 0 && scores.nothingNew && (
+        <Typography id="scores-nothing-new" color="text.secondary">
+          {t("scores.nothingNew")}
+        </Typography>
+      )}
       {settled && rows.length > 0 && view.unread > 0 && (
         <Typography id="scores-unread" color="text.secondary">
           {t("scores.unread", { count: number(view.unread) })}

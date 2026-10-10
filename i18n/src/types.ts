@@ -119,6 +119,8 @@ export interface Messages {
   /** On the scores page with nothing kept yet: how to read them, on a touch screen or not. */
   "scores.emptyPull": string;
   "scores.emptyReadAgain": string;
+  /** After a read of all scores that found no chart played since the last: why nothing changed. */
+  "scores.nothingNew": string;
   /** Param: {count}, charts played or stopped at but not read yet. */
   "scores.unread": string;
   /** A song's action: read its charts again. */

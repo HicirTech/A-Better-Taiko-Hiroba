@@ -8,6 +8,7 @@ import type {
   HirobaSessionPort,
   ScoresFailure,
   ScoresProgress,
+  ScoresRead,
   ScoresView,
   ScoreView,
 } from "../session-port";
@@ -24,6 +25,8 @@ export interface ScoresState {
   /** The song whose scores are being read again by hand. */
   readonly song: ScoreView | null;
   readonly failure: ScoresFailure | null;
+  /** The last read of all scores found no chart played since the one before. */
+  readonly nothingNew: boolean;
   /** Brings the kept scores: the page asks as it opens. */
   readonly load: () => void;
   /** Reads what the book needs, after Hiroba's own refresh. A second ask while one runs does nothing. */
@@ -45,10 +48,12 @@ export function useScores(
   const [progress, setProgress] = useState<ScoresProgress | null>(null);
   const [song, setSong] = useState<ScoreView | null>(null);
   const [failure, setFailure] = useState<ScoresFailure | null>(null);
+  const [nothingNew, setNothingNew] = useState(false);
   const running = useRef(false);
   const load = useCallback(() => {
     setView(null);
     setFailure(null);
+    setNothingNew(false);
     void port.scores().then(setView);
   }, [port]);
   // A read that stopped kept what it read: the page shows that, with where it stopped.
@@ -66,7 +71,7 @@ export function useScores(
     [port, onSessionGone],
   );
   const run = useCallback(
-    async (ask: () => Promise<Result<ScoresView, ScoresFailure>>, chosen: ScoreView | null) => {
+    async (ask: () => Promise<Result<ScoresRead, ScoresFailure>>, chosen: ScoreView | null) => {
       if (running.current) {
         return;
       }
@@ -74,6 +79,7 @@ export function useScores(
       setReading(true);
       setSong(chosen);
       setFailure(null);
+      setNothingNew(false);
       const poll =
         chosen === null
           ? setInterval(() => {
@@ -85,7 +91,9 @@ export function useScores(
             }, POLL_MS)
           : undefined;
       try {
-        await settle(await afterRefresh(port, ask));
+        const result = await afterRefresh(port, ask);
+        setNothingNew(chosen === null && result.ok && result.value.detailed === 0);
+        await settle(result);
       } finally {
         clearInterval(poll);
         running.current = false;
@@ -101,5 +109,16 @@ export function useScores(
     (chosen: ScoreView) => run(() => port.readSongScores(chosen.songNo), chosen),
     [port, run],
   );
-  return { view, reading, canRead: !reading, progress, song, failure, load, read, readSong };
+  return {
+    view,
+    reading,
+    canRead: !reading,
+    progress,
+    song,
+    failure,
+    nothingNew,
+    load,
+    read,
+    readSong,
+  };
 }

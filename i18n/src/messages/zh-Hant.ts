@@ -91,6 +91,8 @@ export const zhHant: Messages = {
   "scores.failedChart": "在「{song}」（{difficulty}）停下了。再讀一次會從這裡接著讀。",
   "scores.emptyPull": "還沒有成績。把頁面往下拉即可讀取全部成績，第一次要幾分鐘。",
   "scores.emptyReadAgain": "還沒有成績。按「重新讀取」或 F5 即可讀取全部成績，第一次要幾分鐘。",
+  "scores.nothingNew":
+    "上次讀取之後近期遊玩裡沒有新的紀錄，成績沒有變化。成績跟著近期遊玩更新：先去玩幾首，再來讀取。",
   "scores.unread": "還有 {count} 張譜面沒讀，重新讀取即可讀到。",
   "scores.readSong": "重新讀取這首歌的成績",
   "settings.language": "語言",

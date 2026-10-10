@@ -136,9 +136,23 @@ describe("createScoresReader", () => {
     const read = await scores.readScores();
 
     expect(sorted(hiroba.detailsAsked())).toEqual(["1003/4", "1013/4"]);
+    expect(read.ok && read.value.detailed).toBe(2);
     expect(groups("io", SCORE_LIST_OPERATION)).toHaveLength(8);
     const replayed = read.ok ? read.value.scores.find((score) => score.songNo === "1003") : null;
     expect(replayed?.record.highScore).toBe(801003);
+  });
+
+  test("a read with nothing played since details nothing, and says it detailed none", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores } = readersOver(hiroba.transport);
+    await scores.readScores();
+    hiroba.detailsAsked(true);
+
+    const read = await scores.readScores();
+
+    expect(read.ok && read.value.detailed).toBe(0);
+    expect(read.ok && read.value.scores).toHaveLength(12);
+    expect(hiroba.detailsAsked()).toEqual([]);
   });
 
   test("a title no list carries yet reads its genre's list again, then that chart", async () => {

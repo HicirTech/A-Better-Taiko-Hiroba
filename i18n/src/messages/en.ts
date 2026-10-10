@@ -93,6 +93,8 @@ export const en: Messages = {
     "No scores here yet. Pull the page down to read them all; the first read takes a few minutes.",
   "scores.emptyReadAgain":
     "No scores here yet. Press Read again, or F5, to read them all; the first read takes a few minutes.",
+  "scores.nothingNew":
+    "No chart was played since the last read, so no score changed. Scores follow recent plays: play some, then read again.",
   "scores.unread": "{count} charts are still to read. Read again reads them.",
   "scores.readSong": "Read this song's scores again",
   "settings.language": "Language",
