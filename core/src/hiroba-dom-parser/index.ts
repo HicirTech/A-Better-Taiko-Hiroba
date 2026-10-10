@@ -9,6 +9,7 @@ export { parseProfilePage } from "./profile-page";
 export { parsePublicProfilePage } from "./public-profile-page";
 export { parseRankDetailPage, parseRankListPage } from "./ranking-pages";
 export { parseRecentPlaysPage, scoreFromRecentPlay } from "./recent-plays-page";
+export { parseRefreshToken } from "./refresh-token";
 export { parseRenameEditorPage } from "./rename-form";
 export { parsePublicScoreDetailPage, parseScoreDetailPage } from "./score-detail-page";
 export { parseScoreListPage } from "./score-list-page";

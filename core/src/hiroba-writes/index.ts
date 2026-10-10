@@ -38,6 +38,7 @@ export {
 } from "./name-rule";
 export { changeName, RENAME_WRITE } from "./name-write";
 export { readHirobaPage, sessionEnded } from "./read-page";
+export { type RefreshDeps, type RefreshFailure, refreshHiroba } from "./refresh";
 export { runWrite } from "./run-write";
 export {
   checkTitleTarget,
