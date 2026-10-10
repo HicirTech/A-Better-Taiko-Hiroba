@@ -7,5 +7,6 @@ export {
   foldLists,
   genresToRead,
   noteWalk,
+  recentOrder,
   songCharts,
 } from "./book";

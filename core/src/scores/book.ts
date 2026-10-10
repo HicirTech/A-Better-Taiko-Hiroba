@@ -75,6 +75,22 @@ export function songCharts(book: ScoreBook, songNo: string): readonly Chart[] {
     .map(({ level }) => ({ songNo, level }));
 }
 
+/** Each chart's place in recent plays, 0 the newest; a chart they no longer show has none. */
+export function recentOrder(
+  book: ScoreBook,
+  plays: readonly RecentPlay[],
+): ReadonlyMap<string, number> {
+  const order = new Map<string, number>();
+  plays.forEach((play, place) => {
+    for (const key of chartKeysOf(book, play)) {
+      if (!order.has(key)) {
+        order.set(key, place);
+      }
+    }
+  });
+  return order;
+}
+
 /** Marks the charts a walk found played; a walk that outran the feed calls a full read. */
 export function noteWalk(
   book: ScoreBook,

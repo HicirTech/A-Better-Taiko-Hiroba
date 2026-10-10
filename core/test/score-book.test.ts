@@ -14,6 +14,7 @@ import {
   type Level,
   noteWalk,
   type RecentPlay,
+  recentOrder,
   type Score,
   type ScoreBook,
   type ScoreRecord,
@@ -192,6 +193,20 @@ describe("the score book", () => {
     const newer = foldDetail(readInFull(), detailOf(listed("100", 2), LATER));
     const older = foldDetail(newer, listed("100", 2));
     expect(older.scores["100/2"]?.fetchedAt).toBe(LATER);
+  });
+
+  test("places each chart where recent plays last show it, and a chart they lack nowhere", () => {
+    const order = recentOrder(readInFull(), [
+      play("一番目", 1, 4),
+      play("同じ名前", 5, 4),
+      play("一番目", 1, 4),
+      play("一番目", 1, 2),
+    ]);
+    expect([...order.entries()]).toEqual([
+      ["100/4", 0],
+      ["102/4", 1],
+      ["100/2", 3],
+    ]);
   });
 
   test("a song's charts are the levels its lists name, easiest first", () => {
