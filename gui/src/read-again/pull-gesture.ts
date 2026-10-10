@@ -53,6 +53,15 @@ export function pullMoved(state: PullState, at: TouchPoint, scrollTopPx: number)
   return { phase: "pulling", start: state.start, distancePx: pulledDistance(down) };
 }
 
+/** Whether the page must stay still under a move: a pull, or one going down that may become one. */
+export function pullHoldsThePage(state: PullState, at: TouchPoint): boolean {
+  if (state.phase !== "undecided") {
+    return state.phase === "pulling";
+  }
+  const down = at.y - state.start.y;
+  return down > 0 && down >= Math.abs(at.x - state.start.x);
+}
+
 export function movedPastSlop(start: TouchPoint, at: TouchPoint): boolean {
   return Math.max(Math.abs(at.x - start.x), Math.abs(at.y - start.y)) >= PULL_SLOP_PX;
 }
