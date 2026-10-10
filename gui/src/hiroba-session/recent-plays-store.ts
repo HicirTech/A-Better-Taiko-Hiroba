@@ -6,7 +6,7 @@ export interface RecentPlaysStore {
   save(taikoNo: string, plays: readonly RecentPlay[]): Promise<void>;
 }
 
-const CROWNS = new Set<CrownState>(["none", "played", "silver", "gold", "donderful"]);
+export const CROWNS = new Set<CrownState>(["none", "played", "silver", "gold", "donderful"]);
 const RANDOMS = new Set<RandomMode>(["none", "kimagure", "detarame"]);
 
 /** The well-formed rows of a stored walk. A broken file reads as a first read, not a crash. */
@@ -63,7 +63,7 @@ function playOf(value: unknown): RecentPlay[] {
   ];
 }
 
-function recordOf(value: unknown): RecentPlay["record"] | null {
+export function recordOf(value: unknown): RecentPlay["record"] | null {
   if (!isObject(value) || !isObject(value.options)) {
     return null;
   }
@@ -114,18 +114,18 @@ function recordOf(value: unknown): RecentPlay["record"] | null {
   };
 }
 
-function isGenre(value: unknown): value is Genre | null {
+export function isGenre(value: unknown): value is Genre | null {
   return value === null || (typeof value === "number" && value >= 1 && value <= 8);
 }
 
-function isLevel(value: unknown): value is Level {
+export function isLevel(value: unknown): value is Level {
   return typeof value === "number" && value >= 1 && value <= 5;
 }
 
-function isRank(value: unknown): value is ScoreRank | null {
+export function isRank(value: unknown): value is ScoreRank | null {
   return value === null || (typeof value === "number" && value >= 2 && value <= 8);
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
+export function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }

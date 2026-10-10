@@ -4,5 +4,8 @@ export const IO_READ_CONSUMERS = 5;
 /** Pages of Hiroba's play history read at once, in a pipeline of their own. */
 export const HISTORY_READ_CONSUMERS = 3;
 
+/** Hiroba's score detail pages read at once, in a pipeline of their own. */
+export const SCORE_READ_CONSUMERS = 5;
+
 /** Read groups the pipeline for every other site runs at once. */
 export const EXTERNAL_READ_CONSUMERS = 5;

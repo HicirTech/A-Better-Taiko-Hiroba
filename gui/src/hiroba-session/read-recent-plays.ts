@@ -50,6 +50,8 @@ export interface RecentPlaysReaderOptions {
   readonly store: RecentPlaysStore;
   readonly owner: () => string | null;
   readonly endSession: () => void | Promise<void>;
+  /** Told of each walk once it is stored, before the walk answers: what it found was played. */
+  readonly walked?: (taikoNo: string, reading: RecentPlaysReading) => Promise<void>;
 }
 
 /** The port's three verbs, the same on every shell. */
@@ -86,6 +88,7 @@ export function createRecentPlaysReader(options: RecentPlaysReaderOptions): Rece
       return err({ ...failure, page });
     }
     await store.save(taikoNo, read.value.plays);
+    await options.walked?.(taikoNo, read.value);
     return read;
   };
   return {

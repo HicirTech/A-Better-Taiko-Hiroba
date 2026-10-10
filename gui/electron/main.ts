@@ -15,6 +15,7 @@ import {
   createPictureReader,
   createRecentPlaysReader,
   createRecentPreviews,
+  createScoresReader,
   createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
   keepHirobaEnded,
@@ -32,6 +33,7 @@ import {
   EXTERNAL_READ_CONSUMERS,
   HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
+  SCORE_READ_CONSUMERS,
 } from "../src/pipelines";
 import {
   BRIDGE_CHANNELS,
@@ -54,6 +56,7 @@ import { createDiskPictureStore } from "./picture-disk-store";
 import { createPipelineHistoryStore } from "./pipeline-history-store";
 import { createRecentPlaysStore } from "./recent-plays-store";
 import { saveReads } from "./save-reads";
+import { createScoresStore } from "./scores-store";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
 import { createUpdateFeedTransport } from "./update-feed-transport";
@@ -104,6 +107,7 @@ const setSession = (value: string | null) => {
   if (value === null) {
     pipelines.io.stop();
     pipelines.history.stop();
+    pipelines.scores.stop();
     owner = null;
     sources = null;
     offered = new Set();
@@ -137,10 +141,11 @@ const logs = {
   io: createPipelineLog({ store: pipelineStore("io") }),
   pictures: createPipelineLog({ store: pipelineStore("pictures") }),
   history: createPipelineLog({ store: pipelineStore("history") }),
+  scores: createPipelineLog({ store: pipelineStore("scores") }),
   external: createPipelineLog({ store: pipelineStore("external") }),
 };
-// Hiroba is asked through `io`, so no read lands inside a write, but for its play history: those
-// pages carry no form token. A group sends through its own transport, made from its pipeline's.
+// Hiroba is asked through `io`, so no read lands inside a write, but for its play history and
+// score details: those pages carry no form token. A group sends through its own transport.
 const pipelines = {
   io: createPipeline({
     readConsumers: IO_READ_CONSUMERS,
@@ -151,6 +156,11 @@ const pipelines = {
     readConsumers: HISTORY_READ_CONSUMERS,
     transport: readTransport,
     ended: logs.history.add,
+  }),
+  scores: createPipeline({
+    readConsumers: SCORE_READ_CONSUMERS,
+    transport: readTransport,
+    ended: logs.scores.add,
   }),
   external: createPipeline({
     readConsumers: EXTERNAL_READ_CONSUMERS,
@@ -239,6 +249,24 @@ app.whenReady().then(async () => {
     },
   });
   previewKept = (set, picture) => void writes.previewKept(set, picture);
+  const recentPlays = createRecentPlaysReader({
+    endpoints,
+    pipeline: pipelines.history,
+    store: createRecentPlaysStore(join(app.getPath("userData"), "recent-plays.json")),
+    owner: () => owner,
+    endSession: () => setSession(null),
+    walked: (taikoNo, reading) => scores.noteWalk(taikoNo, reading),
+  });
+  const scores = createScoresReader({
+    endpoints,
+    io: pipelines.io,
+    pipeline: pipelines.scores,
+    store: createScoresStore(join(app.getPath("userData"), "scores.json")),
+    owner: () => owner,
+    endSession: () => setSession(null),
+    walk: recentPlays.readRecentPlays,
+    walkProgress: recentPlays.recentPlaysProgress,
+  });
 
   const port = queuePort(pipelines, {
     async isSignedIn() {
@@ -306,13 +334,13 @@ app.whenReady().then(async () => {
     changeFavoriteSong: writes.changeFavoriteSong,
     readSongPicker: writes.readSongPicker,
     refreshHiroba: writes.refreshHiroba,
-    ...createRecentPlaysReader({
-      endpoints,
-      pipeline: pipelines.history,
-      store: createRecentPlaysStore(join(app.getPath("userData"), "recent-plays.json")),
-      owner: () => owner,
-      endSession: () => setSession(null),
-    }),
+    recentPlays: recentPlays.recentPlays,
+    readRecentPlays: recentPlays.readRecentPlays,
+    recentPlaysProgress: recentPlays.recentPlaysProgress,
+    scores: scores.scores,
+    readScores: scores.readScores,
+    readSongScores: scores.readSongScores,
+    scoresProgress: scores.scoresProgress,
     readSongCatalogue: (site, since) =>
       readSongCatalogue(site, environment.songCatalogueUrl, since),
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),

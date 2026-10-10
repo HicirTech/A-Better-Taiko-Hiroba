@@ -68,12 +68,20 @@ export {
   RECENT_PLAYS_PAGE_OPERATION,
   recentPlaysPath,
 } from "./read-recent-plays";
+export type { ScoresReader, ScoresReaderOptions } from "./read-scores";
+export {
+  createScoresReader,
+  SCORE_DETAIL_OPERATION,
+  SCORE_LIST_OPERATION,
+} from "./read-scores";
 export type { RecentPlaysStore } from "./recent-plays-store";
 export {
   createMemoryRecentPlaysStore,
   readStoredRecentPlays,
 } from "./recent-plays-store";
 export { createRecentPreviews } from "./recent-previews";
+export type { ScoresStore } from "./scores-store";
+export { createMemoryScoresStore, readStoredScoreBook } from "./scores-store";
 export { sessionEnded } from "./session-ended";
 export {
   BUSY_OUTCOME,

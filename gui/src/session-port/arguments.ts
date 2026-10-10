@@ -233,6 +233,8 @@ const favoriteSongChange: ArgumentCheck = (args) =>
   isFavoriteSongState(args[0].expected) &&
   isFavoriteSongState(args[0].target);
 
+const oneSongNo: ArgumentCheck = (args) => args.length === 1 && isSongNo(args[0]);
+
 // `since` becomes the catalogue address's query, so only a whole number of milliseconds may.
 const catalogueSince: ArgumentCheck = (args) =>
   args.length === 1 && (args[0] === null || isWhole(args[0], 0, Number.MAX_SAFE_INTEGER));
@@ -288,6 +290,10 @@ export const PORT_ARGUMENTS = {
   recentPlays: none,
   readRecentPlays: none,
   recentPlaysProgress: none,
+  scores: none,
+  readScores: none,
+  readSongScores: oneSongNo,
+  scoresProgress: none,
   readSongCatalogue: catalogueSince,
   readChineseNames: none,
   readChartPicture: chartUrl,

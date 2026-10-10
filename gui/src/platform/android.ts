@@ -11,9 +11,11 @@ import {
   type CostumeHistoryStore,
   createMemoryPictureStore,
   createMemoryRecentPlaysStore,
+  createMemoryScoresStore,
   createPictureReader,
   createRecentPlaysReader,
   createRecentPreviews,
+  createScoresReader,
   createSessionWrites,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
@@ -37,6 +39,7 @@ import {
   EXTERNAL_READ_CONSUMERS,
   HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
+  SCORE_READ_CONSUMERS,
 } from "../pipelines";
 import {
   type CostumeSet,
@@ -58,6 +61,7 @@ import type { DatabaseFactory } from "./android-indexeddb";
 import { CHART_PICTURE_DATABASE, createIndexedDbPictureStore } from "./android-picture-store";
 import { createIndexedDbPipelineStores } from "./android-pipeline-store";
 import { createIndexedDbRecentPlaysStore } from "./android-recent-plays-store";
+import { createIndexedDbScoresStore } from "./android-scores-store";
 import { createAndroidTransport } from "./android-transport";
 
 const endpoints: HirobaEndpoints = import.meta.env.DEV
@@ -148,6 +152,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     io: createPipelineLog({ store: pipelineStore("io") }),
     pictures: createPipelineLog({ store: pipelineStore("pictures") }),
     history: createPipelineLog({ store: pipelineStore("history") }),
+    scores: createPipelineLog({ store: pipelineStore("scores") }),
     external: createPipelineLog({ store: pipelineStore("external") }),
   };
   // One transport for every site: a group sends through its own, made from it.
@@ -161,6 +166,11 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       readConsumers: HISTORY_READ_CONSUMERS,
       transport,
       ended: logs.history.add,
+    }),
+    scores: createPipeline({
+      readConsumers: SCORE_READ_CONSUMERS,
+      transport,
+      ended: logs.scores.add,
     }),
     external: createPipeline({
       readConsumers: EXTERNAL_READ_CONSUMERS,
@@ -201,6 +211,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
   const forget = async () => {
     pipelines.io.stop();
     pipelines.history.stop();
+    pipelines.scores.stop();
     signedIn = false;
     flag.set(false);
     offered = new Set();
@@ -236,6 +247,18 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         : createIndexedDbRecentPlaysStore(indexedDb),
     owner: () => owner,
     endSession: forget,
+    walked: (taikoNo, reading) => scores.noteWalk(taikoNo, reading),
+  });
+  const scores = createScoresReader({
+    endpoints,
+    io: pipelines.io,
+    pipeline: pipelines.scores,
+    store:
+      indexedDb === undefined ? createMemoryScoresStore() : createIndexedDbScoresStore(indexedDb),
+    owner: () => owner,
+    endSession: forget,
+    walk: recentPlays.readRecentPlays,
+    walkProgress: recentPlays.recentPlaysProgress,
   });
 
   const port = queuePort(pipelines, {
@@ -367,6 +390,14 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readRecentPlays: flushed(recentPlays.readRecentPlays),
 
     recentPlaysProgress: recentPlays.recentPlaysProgress,
+
+    scores: scores.scores,
+
+    readScores: flushed(scores.readScores),
+
+    readSongScores: flushed(scores.readSongScores),
+
+    scoresProgress: scores.scoresProgress,
 
     readSongCatalogue: (site, since) => readSongCatalogue(site, songCatalogueUrl, since),
 
