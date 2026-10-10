@@ -43,6 +43,7 @@ import {
   SettingsIcon,
 } from "./page-icons";
 import { PAGES, type Page } from "./pages";
+import { PipelinesShownContext } from "./pipelines-shown";
 import type { SwipeDirection } from "./swipe-gesture";
 import { useMenuSwipe } from "./use-menu-swipe";
 import { usePipelinesSwipe } from "./use-pipelines-swipe";
@@ -222,7 +223,9 @@ export function AppFrame({
                 <WiderFrameContext value={setWider}>
                   <FrameNavigationContext value={setNavigation}>
                     <NavFootContext value={foot}>
-                      <BackModesContext value={modes}>{children}</BackModesContext>
+                      <PipelinesShownContext value={pipelinesShown}>
+                        <BackModesContext value={modes}>{children}</BackModesContext>
+                      </PipelinesShownContext>
                     </NavFootContext>
                   </FrameNavigationContext>
                 </WiderFrameContext>
