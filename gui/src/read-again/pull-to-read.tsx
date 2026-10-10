@@ -1,5 +1,5 @@
 import { Box, CircularProgress, Paper } from "@mui/material";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { type RefObject, useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { gesturesHeld } from "../navigation/gesture-hold";
 import {
@@ -20,18 +20,30 @@ export interface PullToReadProps {
   readonly active: boolean;
   readonly canRead: boolean;
   readonly onRead: () => void;
+  /** A box that scrolls on its own, such as a dialog's, pulled in place of the page. */
+  readonly region?: RefObject<HTMLElement | null>;
+  /** The indicator's id: a dialog's pull draws one beside the page's. */
+  readonly id?: string;
 }
 
-export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
+export function PullToRead({
+  active,
+  canRead,
+  onRead,
+  region,
+  id = "pull-indicator",
+}: PullToReadProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [distance, setDistance] = useState(0);
   const mayRead = useEffectEvent(() => canRead);
   const read = useEffectEvent(onRead);
   useEffect(() => {
-    const region = ref.current?.closest("main");
-    if (!active || region == null) {
+    const box = region?.current ?? null;
+    const area = box ?? ref.current?.closest("main");
+    if (!active || area == null) {
       return;
     }
+    const scrollTop = () => (box === null ? pageScrollTop() : box.scrollTop);
     let pull: PullState = NO_PULL;
     const show = (next: PullState) => {
       pull = next;
@@ -72,31 +84,31 @@ export function PullToRead({ active, canRead, onRead }: PullToReadProps) {
         read();
       }
     };
-    region.addEventListener("touchstart", start, { passive: true });
-    region.addEventListener("touchmove", move, { passive: false });
-    region.addEventListener("touchend", end);
-    region.addEventListener("touchcancel", end);
+    area.addEventListener("touchstart", start, { passive: true });
+    area.addEventListener("touchmove", move, { passive: false });
+    area.addEventListener("touchend", end);
+    area.addEventListener("touchcancel", end);
     return () => {
-      region.removeEventListener("touchstart", start);
-      region.removeEventListener("touchmove", move);
-      region.removeEventListener("touchend", end);
-      region.removeEventListener("touchcancel", end);
+      area.removeEventListener("touchstart", start);
+      area.removeEventListener("touchmove", move);
+      area.removeEventListener("touchend", end);
+      area.removeEventListener("touchcancel", end);
       setDistance(0);
     };
-  }, [active]);
+  }, [active, region]);
 
   return (
     <Box ref={ref} sx={{ position: "relative", height: 0 }}>
-      {active && <PullIndicator distance={distance} />}
+      {active && <PullIndicator id={id} distance={distance} />}
     </Box>
   );
 }
 
-function PullIndicator({ distance }: { distance: number }) {
+function PullIndicator({ id, distance }: { id: string; distance: number }) {
   const pulling = distance > 0;
   return (
     <Box
-      id="pull-indicator"
+      id={id}
       aria-hidden
       sx={{
         position: "absolute",
@@ -131,6 +143,6 @@ function PullIndicator({ distance }: { distance: number }) {
   );
 }
 
-function scrollTop(): number {
+function pageScrollTop(): number {
   return document.scrollingElement?.scrollTop ?? 0;
 }
