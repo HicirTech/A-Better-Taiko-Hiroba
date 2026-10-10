@@ -107,6 +107,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     pickable,
     refresh: refreshPickable,
     readIfStale: readPickableIfStale,
+    markStale: markPickableStale,
     forget: forgetPickable,
   } = usePickableSongs(port, sessionGone);
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
@@ -134,10 +135,6 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             lane.forgetFailures(kind);
           }
           setScreen({ name: "profile", profile: result.value });
-          // Beside each read of my page, what Hiroba's picker offers, read alone, pictures after.
-          if (!behindThePage) {
-            refreshPickable();
-          }
           return true;
         }
         if (SESSION_GONE.has(result.error.kind)) {
@@ -151,7 +148,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
         setShut(false);
       }
     },
-    [port, lane, refreshPickable],
+    [port, lane],
   );
 
   // A title write that may have moved the title leaves the plate stale: read my page again.
@@ -217,12 +214,6 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       void readFavorites();
     }
   }, [onFavoritesPage, favoritesUnread, writing, readFavorites]);
-  // A list no read has brought since my page's last, or whose read failed, is read on the page.
-  useEffect(() => {
-    if (onFavoritesPage) {
-      readPickableIfStale();
-    }
-  }, [onFavoritesPage, readPickableIfStale]);
 
   const signIn = async () => {
     // Hiroba may have ended the last session itself, so no sign-out forgot its pictures.
@@ -321,6 +312,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     readAgainStarted.current = true;
     try {
       if (pageEditor !== null) {
+        if (onFavoritesPage) {
+          // The pickers' list is read again when a picker next opens.
+          markPickableStale();
+        }
         await pageEditor.read();
       } else if ((await read()) && onNameTitlePage) {
         // The titles are read again when the picker next opens.
@@ -438,6 +433,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
                 lane={lane}
                 pickable={pickable}
                 onReadPickable={refreshPickable}
+                onPickerOpen={readPickableIfStale}
                 i18n={i18n}
               />
             )}

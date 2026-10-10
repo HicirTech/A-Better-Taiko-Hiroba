@@ -13,10 +13,12 @@ import {
 
 export interface PickableReading {
   readonly pickable: PickableState;
-  /** Reads again, unless a read runs: each read of my page asks. The list held still serves. */
+  /** Reads again, unless a read runs: the picker's retry. The list held still serves. */
   refresh(): void;
-  /** Reads when no read since the last of my page has brought a list, and none runs. */
+  /** Reads when the list is stale and no read runs: as a picker opens. */
   readIfStale(): void;
+  /** Leaves the list to be read again when a picker next opens. */
+  markStale(): void;
   /** Drops the list, the kept copy too, as another player may sign in next. */
   forget(): void;
 }
@@ -63,6 +65,13 @@ export function usePickableSongs(
     }
   }, [refresh]);
 
+  const markStale = useCallback(() => {
+    stale.current = true;
+    setPickable((now) =>
+      now.status.kind === "current" ? { ...now, status: { kind: "stale" } } : now,
+    );
+  }, []);
+
   const forget = useCallback(() => {
     latest.current += 1;
     reading.current = false;
@@ -71,5 +80,5 @@ export function usePickableSongs(
     setPickable({ offered: null, status: { kind: "stale" } });
   }, []);
 
-  return { pickable, refresh, readIfStale, forget };
+  return { pickable, refresh, readIfStale, markStale, forget };
 }

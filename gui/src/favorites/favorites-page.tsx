@@ -51,6 +51,8 @@ export interface FavoritesPageProps {
   /** The songs Hiroba's own picker offers: neither picker lists any other. */
   readonly pickable: PickableState;
   readonly onReadPickable: () => void;
+  /** As a picker opens: reads the list when it is stale. */
+  readonly onPickerOpen: () => void;
   readonly i18n: Translator;
 }
 
@@ -71,6 +73,7 @@ function FavoritesBody({
   lane,
   pickable,
   onReadPickable,
+  onPickerOpen,
   i18n,
 }: FavoritesPageProps) {
   const { t, locale } = i18n;
@@ -86,6 +89,10 @@ function FavoritesBody({
   const [naming, setNaming] = useState<Naming | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [picking, setPicking] = useState<"song" | "set" | null>(null);
+  const openPicker = (picker: "song" | "set") => {
+    onPickerOpen();
+    setPicking(picker);
+  };
   const [openSongNo, setOpenSongNo] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
@@ -214,7 +221,7 @@ function FavoritesBody({
           applying={shown?.saving === "folder"}
           byLongPress={touchFirst}
           onEdit={() => setEditing(true)}
-          onAddSongs={() => setPicking("set")}
+          onAddSongs={() => openPicker("set")}
           onRemoveSong={(songNo) => edit((songs) => songs.filter((song) => song !== songNo))}
           onMoveSong={(from, to) => edit((songs) => moved(songs, from, to))}
           onReset={() => setDraft(null)}
@@ -235,7 +242,7 @@ function FavoritesBody({
             look={look}
             i18n={i18n}
             openDetails={openDetails}
-            onChange={() => setPicking("song")}
+            onChange={() => openPicker("song")}
             onSave={saveSong}
             onReset={favorites.resetSong}
           />

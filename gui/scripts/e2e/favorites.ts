@@ -3,7 +3,7 @@ import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
 import { HIROBA, PHONE_TALL } from "./config";
 import type { Ctx } from "./context";
 import { middleOf, type Point, pageHelpers, same, waitFor } from "./harness";
-import { hitsOn, requestLog, resetLog } from "./stand-in";
+import { hitsOn, myPageHits, requestLog, resetLog } from "./stand-in";
 
 const START_FOLDER = ["1001", "1008", "1014", "1020", "1031", "1026"];
 const FOLDER_PAGE = "GET /favorite_song_select.php";
@@ -61,7 +61,8 @@ export const favoritesKeys = [
   "setRenamedFromItsMenu",
   "setDeletedFromItsMenu",
   "favoriteSongPickedThenSaved",
-  "pickerReadBesideTheProfile",
+  "pickerListLeftAloneByAReadAgain",
+  "pickerListReadAsAPickerOpens",
   "favoritePickerOffersWhatHirobaOffers",
   "favoritePickerFiltersEachSide",
   "innerRowWearsItsColour",
@@ -76,7 +77,7 @@ export const favoritesKeys = [
 export async function favorites(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, boxOf, exists, press, swipe, touchEmulated } = pageHelpers(page);
+  const { atSize, boxOf, exists, fabState, press, swipe, touchEmulated } = pageHelpers(page);
   const stepIs = (step: string) =>
     waitFor(`favourites ${step}`, async () =>
       (await page.evaluate<string | null>(
@@ -233,17 +234,21 @@ export async function favorites(ctx: Ctx) {
     await gone("#favorite-set-name-dialog");
   };
 
+  const readBothEditorsAgain = async () => {
+    await resetLog();
+    await click("#read-again");
+    await waitFor("both editors read", async () => {
+      const log = await requestLog();
+      return log.includes(FOLDER_PAGE) && log.includes(SONG_PAGE) ? true : undefined;
+    });
+    await stepIs("ready");
+  };
+
   // Earlier sections opened this page and wrote the folder underneath it: read it again.
   await favoritesNow("?reset=1");
   await goTo("favorites");
   await stepIs("ready");
-  await resetLog();
-  await click("#read-again");
-  await waitFor("both editors read", async () => {
-    const log = await requestLog();
-    return log.includes(FOLDER_PAGE) && log.includes(SONG_PAGE) ? true : undefined;
-  });
-  await stepIs("ready");
+  await readBothEditorsAgain();
   const entryLog = await requestLog();
   results.readAgainReadsBothEditors =
     same(
@@ -518,11 +523,30 @@ export async function favorites(ctx: Ctx) {
   results.favoriteSongDraftDroppedOnLeaving =
     !(await exists("#favorite-song-save")) && (await favoritesNow()).favoriteSong === "1002";
 
-  // The picker's songs are read beside the profile: the handoff, its redirect and eight genres.
-  results.pickerReadBesideTheProfile =
-    (await hitsOn("/form_data.php")) > 0 && (await hitsOn("/select_song.php")) >= 9;
+  // The pickers' list is read as a picker opens: a read again, on any page, only lets it go stale.
+  const pickerReads = () => hitsOn("/form_data.php");
+  const readsBeforeReadAgain = await pickerReads();
+  await goTo("overview");
+  const myPageBefore = await myPageHits();
+  await click("#read-again");
+  await waitFor("my page read again", async () =>
+    (await myPageHits()) > myPageBefore && same(await fabState(), { shut: false, spinning: false })
+      ? true
+      : undefined,
+  );
+  await goTo("favorites");
+  await stepIs("ready");
+  await readBothEditorsAgain();
+  await Bun.sleep(1000);
+  const readsBeforeOpen = await pickerReads();
+  results.pickerListLeftAloneByAReadAgain = readsBeforeOpen === readsBeforeReadAgain;
   await click("#favorite-song-change");
   await shown(`#song-picker-row-${WITH_INNER}-ura button`);
+  const readAsItOpened = await waitFor(
+    "the pickers' list read as the picker opened",
+    async () => ((await pickerReads()) > readsBeforeOpen ? true : undefined),
+    5_000,
+  ).catch(() => false);
   results.favoritePickerOffersWhatHirobaOffers =
     !(await exists(`#song-picker-row-${LOCKED_SONG}`)) &&
     (await exists(`#song-picker-row-${WITH_INNER} button`)) &&
@@ -564,6 +588,15 @@ export async function favorites(ctx: Ctx) {
     innerSaved.favoriteSongUra &&
     (await textOf("#favorite-song-row .song-artists"))?.startsWith("Inner chart") === true &&
     !(await exists("#favorite-song-outcome"));
+  const readsBeforeReopen = await pickerReads();
+  await click("#favorite-song-change");
+  await shown("#song-picker-list");
+  await Bun.sleep(1000);
+  const readOnReopen = (await pickerReads()) !== readsBeforeReopen;
+  await press("Escape");
+  await gone("#song-picker");
+  await Bun.sleep(500);
+  results.pickerListReadAsAPickerOpens = readAsItOpened && !readOnReopen;
 
   await openDrawer();
   await click("#favorites-item-set-0");
