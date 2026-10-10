@@ -4,6 +4,12 @@ export { parseDanBoardPage, parseDanDetailPage } from "./dan-pages";
 export { parseFolderEditorPage } from "./favorite-folder-page";
 export { parseFavoriteSongEditorPage } from "./favorite-song-page";
 export { type ParseOptions, parsePage, requireMarker } from "./parser";
+export {
+  PLAY_OPTION_CODES,
+  type PlayOptionCode,
+  type PlayOptionIcon,
+  playOptionIcons,
+} from "./play-options";
 export { parsePlayerRowsPage } from "./player-rows";
 export { parseProfilePage } from "./profile-page";
 export { parsePublicProfilePage } from "./public-profile-page";
