@@ -27,7 +27,7 @@ export interface ScoreBook {
   /** Charts played since their last reading, by `chartKey`: their details are read again. */
   readonly stale: readonly string[];
   readonly unlisted: readonly UnlistedPlay[];
-  /** All lists and all played charts are read next: none read yet, or a walk outran the feed. */
+  /** Every list and played chart is read next: none read yet, the feed outrun, or asked for. */
   readonly full: boolean;
 }
 
@@ -115,6 +115,9 @@ export function noteWalk(
   }
   return { ...book, stale: [...stale], unlisted };
 }
+
+/** The book once the player asks for every score again: its next read is a full one. */
+export const askedInFull = (book: ScoreBook): ScoreBook => ({ ...book, full: true });
 
 /** Folds in a read's lists; a full read that took all eight reads every played chart again. */
 export function foldLists(book: ScoreBook, lists: readonly GenreList[]): ScoreBook {

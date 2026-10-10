@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  askedInFull,
   type CrownState,
   chartKey,
   chartsToRead,
@@ -176,6 +177,12 @@ describe("the score book", () => {
     const outran = noteWalk(readInFull(), { fresh: [], stop: "cap" });
     expect(genresToRead(outran)).toEqual(GENRES);
     expect(keys(foldLists(outran, LISTS))).toEqual(["100/2", "100/4", "101/4", "102/4"]);
+  });
+
+  test("a book asked for in full takes every list, then reads every played chart again", () => {
+    const asked = askedInFull(readInFull());
+    expect(genresToRead(asked)).toEqual(GENRES);
+    expect(keys(foldLists(asked, LISTS))).toEqual(["100/2", "100/4", "101/4", "102/4"]);
   });
 
   test("a list showing another crown or rank than the details reads that chart again", () => {
