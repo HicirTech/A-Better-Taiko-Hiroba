@@ -73,6 +73,7 @@ const secondsOf = (i18n: Translator, ms: number) => i18n.number(Math.round(ms / 
 
 /** One pipeline: what runs and waits now, what ended, and the details of what is picked. */
 export function PipelineSection({
+  id,
   i18n,
   name,
   pictures,
@@ -80,6 +81,7 @@ export function PipelineSection({
   listed,
   onListed,
 }: {
+  readonly id: string;
   readonly i18n: Translator;
   readonly name: MessageKey;
   /** What its pictures are called in their tally; none for a section that lists its pictures. */
@@ -103,7 +105,7 @@ export function PipelineSection({
   const row = blockRow(view ?? { running: [], waiting: [] });
   const ended = view?.ended ?? [];
   return (
-    <Box component="section" aria-labelledby={headingId} sx={{ px: 2, py: 1.5 }}>
+    <Box component="section" id={id} aria-labelledby={headingId} sx={{ px: 2, py: 1.5 }}>
       <Typography id={headingId} variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
         {t(name)}
       </Typography>
@@ -182,7 +184,9 @@ export function PipelineSection({
           ))}
         </List>
       )}
-      {picked !== null && view !== null && <GroupDetails i18n={i18n} picked={picked} view={view} />}
+      {picked !== null && view !== null && (
+        <GroupDetails id={`${id}-details`} i18n={i18n} picked={picked} view={view} />
+      )}
     </Box>
   );
 }

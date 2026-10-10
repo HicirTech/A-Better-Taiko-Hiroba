@@ -48,6 +48,7 @@ import {
   titlePlate,
   titlePlateKeys,
 } from "./pictures";
+import { pipelinesPage, pipelinesPageKeys } from "./pipelines-page";
 import { profileVariants, profileVariantsKeys, readAgain, readAgainKeys } from "./read-again";
 import {
   reopen,
@@ -101,6 +102,7 @@ export const SECTIONS: readonly Section[] = [
   { name: "favorite-writes", phase: "signedIn", keys: favoriteWritesKeys, run: favoriteWrites },
   { name: "favorites", phase: "signedIn", keys: favoritesKeys, run: favorites },
   { name: "song-search", phase: "signedIn", keys: songSearchKeys, run: songSearch },
+  { name: "pipelines-page", phase: "signedIn", keys: pipelinesPageKeys, run: pipelinesPage },
   { name: "session-expiry", phase: "signedIn", keys: sessionExpiryKeys, run: sessionExpiry },
   { name: "reopen", phase: "signedIn", keys: reopenKeys, run: reopen },
   { name: "signed-out-reopen", phase: "signedIn", keys: signedOutReopenKeys, run: signedOutReopen },

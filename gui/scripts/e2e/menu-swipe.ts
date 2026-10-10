@@ -21,6 +21,7 @@ const NAVIGATION = [
   "Settings",
 ].join("");
 const PAGE_ENTRIES = [
+  "nav-pipelines",
   "nav-overview",
   "nav-costume",
   "nav-nameTitle",

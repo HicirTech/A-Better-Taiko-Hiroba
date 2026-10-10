@@ -34,6 +34,7 @@ export function PipelinesPage({
   return (
     <Paper variant="outlined">
       <PipelineSection
+        id="pipeline-io"
         i18n={i18n}
         name="pipelines.io"
         pictures="pipelines.pictures"
@@ -43,6 +44,7 @@ export function PipelinesPage({
       />
       <Divider />
       <PipelineSection
+        id="pipeline-external"
         i18n={i18n}
         name="pipelines.external"
         view={view?.external ?? null}

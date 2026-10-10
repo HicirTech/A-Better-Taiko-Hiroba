@@ -12,10 +12,12 @@ const requestOf = (request: SentRequest) => `${request.method} ${request.path}`;
 
 /** What the page tells of the picked group, under its section. */
 export function GroupDetails({
+  id,
   i18n,
   picked,
   view,
 }: {
+  readonly id: string;
   readonly i18n: Translator;
   readonly picked: Picked;
   readonly view: PipelineView;
@@ -31,7 +33,7 @@ export function GroupDetails({
     return null;
   }
   return (
-    <Box sx={{ mt: 1.5, px: 1.5, py: 1, borderRadius: 1, bgcolor: "action.hover" }}>
+    <Box id={id} sx={{ mt: 1.5, px: 1.5, py: 1, borderRadius: 1, bgcolor: "action.hover" }}>
       {lines.map((line, index) => (
         <Typography
           key={line}
