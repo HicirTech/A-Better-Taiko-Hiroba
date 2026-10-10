@@ -27,7 +27,7 @@ export const en: Messages = {
   "pipelines.stopped": "Stopped by the sign-out",
   "pipelines.running": "Running for {seconds} s",
   "pipelines.queued": "Waiting for {seconds} s",
-  "pipelines.requests": "{count} requests",
+  "pipelines.requests": "requests: {count}",
   "pipelines.took": "took {seconds} s",
   "pipelines.startedAt": "started {time}",
   "pipelines.onRequest": "Request {index}: {request}",
