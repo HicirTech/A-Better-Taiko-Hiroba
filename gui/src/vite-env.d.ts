@@ -10,6 +10,8 @@ interface ImportMetaEnv {
   readonly VITE_ABTH_DEV_IDP_HOST?: string;
   /** The origin of the stand-in's picture host, e.g. http://img.<ip>.sslip.io:8807. */
   readonly VITE_ABTH_DEV_IMG_ORIGIN?: string;
+  /** The host (and port) of the stand-in for a service that refuses an embedded browser. */
+  readonly VITE_ABTH_DEV_REFUSING_HOST?: string;
   /** The address of a stand-in update feed; without it a development run checks for no update. */
   readonly VITE_ABTH_DEV_UPDATE_FEED?: string;
   /** The address of a stand-in song list; without it a development run reads none. */

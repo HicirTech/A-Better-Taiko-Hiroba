@@ -680,17 +680,22 @@ Hiroba's session is one cookie, `_token_v2`. No code in the interface ever holds
 **Desktop.** The sign-in window runs on an in-memory browser session, new for every attempt and
 cleared when the window closes. It opens any https page the sign-in passes through, such as the
 sign-in of another account Bandai Namco ID offers, and the popups such pages open, on that same
-session and each titled with the host it is on; a page that is not https ends the attempt. The
-cookie is held in the main process, and kept on disk, in plain text, in `session.json` in the app's
-data folder (`%APPDATA%\A Better Taiko Hiroba`), so you stay signed in across launches until you
-sign out or Hiroba ends the session. Signing out, or a read or write that finds the session gone,
-deletes the file.
+session and each titled with the host it is on; a page that is not https ends the attempt. A
+service known to refuse a sign-in inside an app (Google) is never loaded: the attempt ends, and
+Hiroba's sign-in page opens in the system's browser, where a mail address and password can be
+added to the Bandai Namco ID once, for signing in here. The cookie is held in the main process,
+and kept on disk, in plain text, in `session.json` in the app's data folder
+(`%APPDATA%\A Better Taiko Hiroba`), so you stay signed in across launches until you sign out or
+Hiroba ends the session. Signing out, or a read or write that finds the session gone, deletes the
+file.
 
 **Android.** The sign-in runs in the in-app browser, which shares the app's WebView cookie store,
-and Capacitor's native HTTP client reads Hiroba through that same store. The store is kept across
-launches, so you stay signed in there too. The app wipes every cookie when a sign-in starts, when
-one is cancelled or cannot open, at sign-out, and when a read finds the session gone. Between a
-sign-in and the next sign-out, the app's private storage holds:
+and Capacitor's native HTTP client reads Hiroba through that same store. A service known to refuse
+a sign-in inside an app is closed as soon as its page has loaded, and the system's browser opens
+as on the desktop. The store is kept across launches, so you stay signed in there too. The app
+wipes every cookie when a sign-in starts, when one is cancelled, ends at such a service or cannot
+open, at sign-out, and when a read finds the session gone. Between a sign-in and the next
+sign-out, the app's private storage holds:
 
 - `_token_v2`, in plain text, in the WebView cookie database (`app_webview/Default/Cookies`);
 - the Bandai Namco ID host's Domain cookies (its host-only cookies are cleared after sign-in);

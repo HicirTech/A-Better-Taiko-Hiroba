@@ -1,24 +1,29 @@
 import { randomUUID } from "node:crypto";
-import { BrowserWindow, type Session, session } from "electron";
+import { BrowserWindow, type Session, session, shell } from "electron";
 
 import {
   type HirobaEndpoints,
   loginPageUrl,
   SESSION_COOKIE_NAME,
+  signInHost,
   signInStep,
+  systemBrowserEntryUrl,
 } from "../src/hiroba-session";
 
 export type SignInResult =
   | { readonly kind: "captured"; readonly cookie: string }
   | { readonly kind: "cancelled" }
   | { readonly kind: "noSession" }
-  | { readonly kind: "refused"; readonly host: string };
+  | { readonly kind: "refused"; readonly host: string }
+  | { readonly kind: "refuser"; readonly host: string };
 
 export interface SignInAttempt {
   readonly result: Promise<SignInResult>;
   /** Closes the window; `result` then settles as cancelled unless it already landed. */
   cancel(): void;
 }
+
+type Ending = "refused" | "refuser";
 
 const POPUP_WIDTH = 480;
 const POPUP_HEIGHT = 680;
@@ -61,36 +66,45 @@ export function openSignInWindow(
     };
   });
 
-  // A refused navigation ends the attempt and names the host: refusing it quietly left the window
+  // An ended navigation closes the window and names the host: refusing it quietly left the window
   // on its page, which looked like a button that does nothing.
-  const refuse = (url: string) => {
-    settle({ kind: "refused", host: hostOf(url) });
+  const end = (kind: Ending, url: string) => {
+    settle({ kind, host: signInHost(url) });
+    if (kind === "refuser") {
+      openEntryInSystemBrowser(endpoints);
+    }
     window.close();
   };
-  const refused = (url: string) => signInStep(url, endpoints) === "elsewhere";
+  const ending = (url: string): Ending | null => {
+    const step = signInStep(url, endpoints);
+    return step === "elsewhere" ? "refused" : step === "refuser" ? "refuser" : null;
+  };
   // The sign-in's own window and each popup its pages open keep to one rule, on one session.
   const guard = (shown: BrowserWindow, firstUrl: string) => {
     const guarded = shown.webContents;
     // The title is the host, so the player sees where a password goes.
-    shown.setTitle(hostOf(firstUrl));
+    shown.setTitle(signInHost(firstUrl));
     shown.on("page-title-updated", (event) => event.preventDefault());
-    guarded.on("did-navigate", (_event, url) => shown.setTitle(hostOf(url)));
+    guarded.on("did-navigate", (_event, url) => shown.setTitle(signInHost(url)));
     guarded.on("will-navigate", (event) => {
-      if (refused(event.url)) {
+      const kind = ending(event.url);
+      if (kind !== null) {
         event.preventDefault();
-        refuse(event.url);
+        end(kind, event.url);
       }
     });
     guarded.on("will-redirect", (event) => {
-      if (event.isMainFrame && refused(event.url)) {
+      const kind = event.isMainFrame ? ending(event.url) : null;
+      if (kind !== null) {
         event.preventDefault();
-        refuse(event.url);
+        end(kind, event.url);
       }
     });
     guarded.setWindowOpenHandler(({ url }) => {
       // Some sign-in scripts open a popup blank and send it on: its navigations are guarded.
-      if (url !== "about:blank" && refused(url)) {
-        refuse(url);
+      const kind = url === "about:blank" ? null : ending(url);
+      if (kind !== null) {
+        end(kind, url);
         return { action: "deny" };
       }
       return {
@@ -137,13 +151,16 @@ export function openSignInWindow(
   };
 }
 
-/** The host only: a sign-in URL's path and query carry OAuth state that must not reach the UI. */
-function hostOf(url: string): string {
-  try {
-    return new URL(url).host || "?";
-  } catch {
-    return "?";
+// The service's own URL never leaves the app: it carries OAuth state. The system's browser starts
+// the sign-in over from the fixed login page.
+function openEntryInSystemBrowser(endpoints: HirobaEndpoints): void {
+  const entry = systemBrowserEntryUrl(endpoints);
+  if (entry === null) {
+    return;
   }
+  shell.openExternal(entry).catch((error: unknown) => {
+    process.stderr.write(`The system's browser did not open ${entry}: ${String(error)}\n`);
+  });
 }
 
 // Electron cannot destroy a Session, so its contents are cleared instead.

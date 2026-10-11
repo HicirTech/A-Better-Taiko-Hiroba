@@ -76,6 +76,7 @@ const SIGN_IN_NOTICE = {
   noSession: "signIn.noSession",
   unavailable: "signIn.unavailable",
   refused: "signIn.refused",
+  refuser: "signIn.refuser",
 } as const satisfies Record<Exclude<SignInOutcome["kind"], "signedIn">, MessageKey>;
 
 export interface AppProps {
@@ -236,7 +237,9 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       setScreen({
         name: "signedOut",
         notice: SIGN_IN_NOTICE[outcome.kind],
-        ...(outcome.kind === "refused" && { noticeParams: { host: outcome.host } }),
+        ...((outcome.kind === "refused" || outcome.kind === "refuser") && {
+          noticeParams: { host: outcome.host },
+        }),
       });
     }
   };

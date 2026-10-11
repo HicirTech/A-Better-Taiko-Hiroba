@@ -188,6 +188,8 @@ export interface Messages {
   "signIn.unavailable": string;
   /** Param: {host}, where the sign-in was sent, on a page that is not https. */
   "signIn.refused": string;
+  /** Param: {host}, a service that refuses to sign in inside an app; the system's browser opens. */
+  "signIn.refuser": string;
   "signOut.action": string;
   "signOut.note": string;
   "update.check": string;

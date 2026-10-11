@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { HIROBA_ENDPOINTS, signInStep } from "../src/hiroba-session";
+import { HIROBA_ENDPOINTS, signInHost, signInStep } from "../src/hiroba-session";
 
 const ENDPOINTS = {
   hirobaOrigin: "https://hiroba.test",
@@ -84,6 +84,33 @@ describe("signInStep", () => {
     expect(signInStep("https://auth.id.test/v2/oauth2/auth", ENDPOINTS)).toBe("idp");
   });
 
+  test("names a service known to refuse an embedded browser: exact host, Hiroba's scheme", () => {
+    const google = "https://accounts.google.com/o/oauth2/v2/auth?client_id=x&state=y";
+    expect(signInStep(google, HIROBA_ENDPOINTS)).toBe("refuser");
+    expect(signInStep("https://accounts.google.com.attacker.test/", HIROBA_ENDPOINTS)).toBe(
+      "service",
+    );
+    expect(signInStep("https://www.google.com/", HIROBA_ENDPOINTS)).toBe("service");
+    expect(signInStep("https://accounts.google.com:8443/", HIROBA_ENDPOINTS)).toBe("service");
+    expect(signInStep("http://accounts.google.com/", HIROBA_ENDPOINTS)).toBe("elsewhere");
+    // Endpoints that name no refuser know none.
+    expect(signInStep("https://accounts.google.com/", ENDPOINTS)).toBe("service");
+  });
+
+  test("names a stand-in's refuser on its own scheme and port", () => {
+    const mock = {
+      hirobaOrigin: "http://hiroba.test:8807",
+      idpHost: "id.test:8808",
+      idpDomain: "id.test",
+      imgOrigin: null,
+      refusingHosts: ["refuses.test:8808"],
+    };
+    expect(signInStep("http://refuses.test:8808/signin.html", mock)).toBe("refuser");
+    expect(signInStep("http://REFUSES.test:8808/", mock)).toBe("refuser");
+    expect(signInStep("https://refuses.test:8808/signin.html", mock)).toBe("service");
+    expect(signInStep("http://refuses.test/signin.html", mock)).toBe("elsewhere");
+  });
+
   test("fails closed when the endpoints do not parse", () => {
     const broken = {
       hirobaOrigin: "not an origin",
@@ -98,5 +125,19 @@ describe("signInStep", () => {
   test("treats a missing or unparseable URL as elsewhere", () => {
     expect(signInStep(undefined, ENDPOINTS)).toBe("elsewhere");
     expect(signInStep("not a url", ENDPOINTS)).toBe("elsewhere");
+  });
+});
+
+describe("signInHost", () => {
+  test("keeps the host and port only, never the path or query", () => {
+    expect(signInHost("https://accounts.google.com/o/oauth2/auth?state=secret")).toBe(
+      "accounts.google.com",
+    );
+    expect(signInHost("http://refuses.test:8808/signin.html")).toBe("refuses.test:8808");
+  });
+
+  test("gives a question mark for a URL it cannot read", () => {
+    expect(signInHost("not a url")).toBe("?");
+    expect(signInHost(undefined)).toBe("?");
   });
 });

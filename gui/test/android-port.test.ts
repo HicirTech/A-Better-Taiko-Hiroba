@@ -115,6 +115,18 @@ describe("createAndroidPort", () => {
     expect(native.httpRequests).toHaveLength(0);
   });
 
+  test("a service that refuses embedded browsers ends the attempt and opens the system's browser", async () => {
+    const { port, outcome } = await startSignIn();
+    native.emit("browserPageNavigationCompleted", {
+      url: "https://accounts.google.com/o/oauth2/v2/auth?state=secret",
+    });
+    expect(await outcome).toEqual({ kind: "refuser", host: "accounts.google.com" });
+    expect(native.closeCalls).toBe(1);
+    expect(native.externalUrls).toEqual([`${HIROBA}/login.php`]);
+    expect(native.cookieCalls.at(-1)).toBe("clearAllCookies");
+    expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
+  });
+
   test("a browser that cannot open ends the attempt instead of hanging", async () => {
     native.openFails = true;
     const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL });

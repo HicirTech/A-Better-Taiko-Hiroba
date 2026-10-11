@@ -53,6 +53,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
       env.ABTH_DEV_HIROBA_ORIGIN,
       env.ABTH_DEV_IDP_HOST,
       env.ABTH_DEV_IMG_ORIGIN,
+      env.ABTH_DEV_REFUSING_HOST,
     ),
     userData: env.ABTH_DEV_USER_DATA || undefined,
     now: Number.isNaN(fixed) ? () => new Date() : () => new Date(fixed),

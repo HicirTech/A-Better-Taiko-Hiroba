@@ -21,6 +21,9 @@ export function signInStep(rawUrl: string | undefined, endpoints: HirobaEndpoint
     // Endpoints that do not parse make every URL elsewhere, so a bad override fails closed.
     return "elsewhere";
   }
+  if (url.protocol === hiroba.protocol && (endpoints.refusingHosts ?? []).includes(url.host)) {
+    return "refuser";
+  }
   if (isOnIdpDomain(url, idp, endpoints.idpDomain.toLowerCase())) {
     return "idp";
   }
@@ -34,6 +37,15 @@ export function signInStep(rawUrl: string | undefined, endpoints: HirobaEndpoint
     return "cardSelect";
   }
   return LANDING_PATHS.has(url.pathname) ? "landed" : "otherHiroba";
+}
+
+/** The host only: a sign-in URL's path and query carry OAuth state that must not reach the UI. */
+export function signInHost(rawUrl: string | undefined): string {
+  try {
+    return new URL(rawUrl ?? "").host || "?";
+  } catch {
+    return "?";
+  }
 }
 
 function isOnIdpDomain(url: URL, idp: URL, domain: string): boolean {

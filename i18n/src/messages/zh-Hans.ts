@@ -147,6 +147,8 @@ export const zhHans: Messages = {
   "signIn.noSession": "登录已完成，但广场没有建立会话。请重试。",
   "signIn.unavailable": "无法打开登录窗口。请重试。",
   "signIn.refused": "登录被转到了不是 https、本应用不会打开的 {host}，已中止。请报告这个主机名。",
+  "signIn.refuser":
+    "登录已中止：{host} 不允许在应用内登录。正在用浏览器打开广场的登录页；在浏览器里登录不会让本应用登录。请在那里给 Bandai Namco ID 添加一次邮箱和密码，然后在这里用它们登录。",
   "signOut.action": "退出登录",
   "signOut.note":
     "在你退出登录之前，本设备会一直保持登录。广场的图片在退出登录后仍会留在本设备上。",
