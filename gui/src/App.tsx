@@ -213,7 +213,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const [songsWanted, setSongsWanted] = useState(false);
   const catalogue = useSongCatalogue(
     port,
-    onFavoritesPage || onScoresPage || onRatingPage || songsWanted,
+    onFavoritesPage || onHistoryPage || onScoresPage || onRatingPage || songsWanted,
   );
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
@@ -484,7 +484,13 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           {/* Laid out as if absent, so the pages keep their place in the frame. */}
           <Box id="page-shut" inert={shut} sx={{ display: "contents", "& > *": SHUT_LOOK(shut) }}>
             {screen.name === "profile" && page === "history" && (
-              <HistoryPage history={history} lane={lane} touchFirst={touchFirst} i18n={i18n} />
+              <HistoryPage
+                history={history}
+                catalogue={catalogue}
+                lane={lane}
+                touchFirst={touchFirst}
+                i18n={i18n}
+              />
             )}
 
             {screen.name === "profile" && page === "scores" && (

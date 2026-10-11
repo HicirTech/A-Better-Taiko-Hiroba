@@ -108,7 +108,7 @@ export async function favoriteWrites(ctx: Ctx) {
   }>("window.abth.readSongCatalogue(1)");
   results.songCatalogueRead =
     whole.ok &&
-    whole.value?.songs.length === 38 &&
+    whole.value?.songs.length === 39 &&
     same(whole.value?.removed, ["1039"]) &&
     since.ok &&
     same(

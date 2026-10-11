@@ -9,6 +9,7 @@ const HISTORY_PAGE = "/history_recent_score.php";
 export const recentPlaysKeys = [
   "recentPlaysReadOnlyWhenAsked",
   "firstWalkReadsTheFeed",
+  "playNamedFromTheSongList",
   "walkRefreshesHirobaFirst",
   "rowMarksDrawnAsIcons",
   "laterWalkStopsAtAKeptRow",
@@ -95,6 +96,15 @@ export async function recentPlays(ctx: Ctx) {
     firstWalk.asked[0] === 1 &&
     [1, 2, 3, 4, 5].every((page) => firstWalk.asked.filter((one) => one === page).length === 1);
   results.walkRefreshesHirobaFirst = (await refreshHits()) === refreshesBefore + 1;
+  // The song list names play 2's song alone; the other plays keep Hiroba's titles.
+  const second = await waitFor("play 2 named from the song list", async () => {
+    const name = await page.evaluate<{ text: string | null; lang: string | null } | null>(
+      `(() => { const name = [...document.querySelectorAll("#history-list .song-name")][21]; return name ? { text: name.textContent, lang: name.getAttribute("lang") } : null; })()`,
+    );
+    return name?.text === "Sample Song Two" ? name : undefined;
+  }).catch(() => null);
+  results.playNamedFromTheSongList =
+    second?.lang === "en" && (await titles())[22] === "サンプル曲 1";
 
   // Play 12 has a gold crown, rank 7, きまぐれ, ドロン and speed 1.5; play 13 the support chart.
   const twelfth = await waitFor("play 12's icons", async () => {
