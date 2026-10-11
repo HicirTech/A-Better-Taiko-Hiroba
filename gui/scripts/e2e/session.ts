@@ -153,7 +153,7 @@ export async function sessionExpiry(ctx: Ctx) {
 
   await fetch(`${HIROBA}/__offsite?on=1`);
   await click("#sign-in");
-  await until("offsite.127.0.0.1.sslip.io:8808, which this app does not open");
+  await until("offsite.127.0.0.1.sslip.io:8808, which is not on https");
   await fetch(`${HIROBA}/__offsite?on=0`);
   results.refusalNamed = true;
 

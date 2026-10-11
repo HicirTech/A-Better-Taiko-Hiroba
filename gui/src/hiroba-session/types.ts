@@ -29,5 +29,7 @@ export type SignInStep =
   | "landed"
   /** Any other Hiroba page, including the callback hop whose name nobody has recorded. */
   | "otherHiroba"
-  /** Neither site, including either one on another scheme or port. */
+  /** Any other https page: a service the sign-in passes through, such as another account's. */
+  | "service"
+  /** Not https and neither site, including either one on another scheme or port. */
   | "elsewhere";

@@ -146,7 +146,7 @@ export const zhHans: Messages = {
   "signIn.cancelled": "已取消登录。",
   "signIn.noSession": "登录已完成，但广场没有建立会话。请重试。",
   "signIn.unavailable": "无法打开登录窗口。请重试。",
-  "signIn.refused": "登录被转到了本应用不会打开的 {host}，已中止。请报告这个主机名。",
+  "signIn.refused": "登录被转到了不是 https、本应用不会打开的 {host}，已中止。请报告这个主机名。",
   "signOut.action": "退出登录",
   "signOut.note":
     "在你退出登录之前，本设备会一直保持登录。广场的图片在退出登录后仍会留在本设备上。",

@@ -25,7 +25,7 @@ export function signInStep(rawUrl: string | undefined, endpoints: HirobaEndpoint
     return "idp";
   }
   if (url.origin !== hiroba.origin) {
-    return "elsewhere";
+    return url.protocol === "https:" ? "service" : "elsewhere";
   }
   if (HIROBA_LOGIN_PATHS.has(url.pathname)) {
     return "hirobaLogin";
