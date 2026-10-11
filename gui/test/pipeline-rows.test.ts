@@ -23,7 +23,7 @@ import {
   pickedNow,
 } from "../src/pipelines-page/pipeline-rows";
 import { PORT_QUEUEING } from "../src/session-port";
-import { CHART_PICTURE_OPERATION } from "../src/song-catalogue";
+import { CHART_DENSITY_OPERATION, CHART_PICTURE_OPERATION } from "../src/song-catalogue";
 
 const now = (id: number, overrides: Partial<GroupNow> = {}): GroupNow => ({
   id,
@@ -112,11 +112,16 @@ describe("endedKey", () => {
 });
 
 describe("operationName", () => {
-  test("has a name for every group a pipeline runs: each queued verb and the pictures", () => {
+  test("has a name for every group a pipeline runs: queued verbs, pictures and chart files", () => {
     const queued = Object.entries(PORT_QUEUEING)
       .filter(([, how]) => how !== "unqueued")
       .map(([verb]) => verb);
-    const operations = [...queued, PICTURE_OPERATION, CHART_PICTURE_OPERATION].sort();
+    const operations = [
+      ...queued,
+      PICTURE_OPERATION,
+      CHART_PICTURE_OPERATION,
+      CHART_DENSITY_OPERATION,
+    ].sort();
 
     expect(Object.keys(OPERATION_NAMES).sort()).toEqual(operations);
   });

@@ -29,6 +29,7 @@ describe("PORT_ARGUMENTS", () => {
       readSongCatalogue: _catalogue,
       readRatingData: _ratingData,
       readChartPicture: _chartPicture,
+      readChartDensity: _chartDensity,
       readPipelines: _pipelines,
       readSongScores: _songScores,
       ...takingNothing
@@ -95,6 +96,17 @@ describe("PORT_ARGUMENTS", () => {
     ["an address too long", [`https://file.taiko.wiki/${"a".repeat(2048)}`]],
   ])("readChartPicture refuses %s", (_why, args) => {
     expect(PORT_ARGUMENTS.readChartPicture(args)).toBe(false);
+  });
+
+  test("readChartDensity takes one song number and whether to read its chart again", () => {
+    const check = PORT_ARGUMENTS.readChartDensity;
+    expect(check(["1001", false])).toBe(true);
+    expect(check(["1001", true])).toBe(true);
+    expect(check(["1001"])).toBe(false);
+    expect(check(["1001", "true"])).toBe(false);
+    expect(check(["../1001", false])).toBe(false);
+    expect(check([1001, false])).toBe(false);
+    expect(check(["1001", false, false])).toBe(false);
   });
 
   test("changeCostume takes one change: two sets of eight whole numbers from 0 to 9999", () => {

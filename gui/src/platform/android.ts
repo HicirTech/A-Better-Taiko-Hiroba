@@ -55,14 +55,21 @@ import {
   CHINESE_NAMES_URL,
   catalogueUrlFor,
   chartOriginFor,
+  createChartDensityReader,
   createChartPictureReader,
+  ESE_CHARTS_URL,
+  ESE_MAPPING_URL,
   readChineseNames,
   readSongCatalogue,
 } from "../song-catalogue";
 import { feedUrlFor, readUpdateFeed } from "../updates";
 import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
-import { CHART_PICTURE_DATABASE, createIndexedDbPictureStore } from "./android-picture-store";
+import {
+  CHART_DENSITY_DATABASE,
+  CHART_PICTURE_DATABASE,
+  createIndexedDbPictureStore,
+} from "./android-picture-store";
 import { createIndexedDbPipelineStores } from "./android-pipeline-store";
 import { createIndexedDbRecentPlaysStore } from "./android-recent-plays-store";
 import { createIndexedDbScoresStore } from "./android-scores-store";
@@ -104,6 +111,18 @@ const ratingDataUrls = {
 const chartOrigin = chartOriginFor(
   Boolean(import.meta.env.DEV),
   import.meta.env.VITE_ABTH_DEV_CHART_ORIGIN,
+);
+
+const eseMappingUrl = catalogueUrlFor(
+  Boolean(import.meta.env.DEV),
+  import.meta.env.VITE_ABTH_DEV_ESE_MAPPING,
+  ESE_MAPPING_URL,
+);
+
+const eseChartsUrl = catalogueUrlFor(
+  Boolean(import.meta.env.DEV),
+  import.meta.env.VITE_ABTH_DEV_ESE_CHARTS,
+  ESE_CHARTS_URL,
 );
 
 export interface AndroidPortOptions {
@@ -219,6 +238,15 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         : createIndexedDbPictureStore(options.indexedDb, CHART_PICTURE_DATABASE),
     pipeline: pipelines.external,
     chartOrigin,
+  });
+  const chartDensities = createChartDensityReader({
+    store:
+      options.indexedDb === undefined
+        ? createMemoryPictureStore()
+        : createIndexedDbPictureStore(options.indexedDb, CHART_DENSITY_DATABASE),
+    pipeline: pipelines.external,
+    mappingUrl: eseMappingUrl,
+    chartsUrl: eseChartsUrl,
   });
 
   const forget = async () => {
@@ -438,6 +466,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readRatingData: (site, system) => readRatingData(site, ratingDataUrls[system]),
 
     readChartPicture: chartPictures,
+
+    readChartDensity: chartDensities,
 
     readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });

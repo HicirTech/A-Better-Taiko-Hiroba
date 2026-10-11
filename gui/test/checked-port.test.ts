@@ -71,6 +71,7 @@ const CASES: VerbCase[] = [
   ["readChineseNames", [], [{ gcmlimit: "max" }]],
   ["readRatingData", ["ourtaikoV1"], ["https://example.test/feed"]],
   ["readChartPicture", ["https://file.taiko.wiki/fumen/670/oni"], ["file:///etc/passwd"]],
+  ["readChartDensity", ["1001", false], ["1001/../oni.tja", false]],
   ["readPipelines", [12], [1001]],
 ];
 

@@ -61,6 +61,7 @@ export const ja: Messages = {
   "pipelines.op.readRatingData": "レーティングのデータ",
   "pipelines.op.picture": "画像",
   "pipelines.op.chartPicture": "譜面の画像",
+  "pipelines.op.chartDensity": "譜面ファイル",
   "pipelines.picture.myDon": "マイどん",
   "pipelines.picture.titlePlate": "ネームプレート",
   "pipelines.picture.medalPlate": "どんメダルのプレート",

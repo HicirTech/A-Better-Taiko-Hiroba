@@ -61,6 +61,7 @@ export const zhHans: Messages = {
   "pipelines.op.readRatingData": "Rating 数据",
   "pipelines.op.picture": "图片",
   "pipelines.op.chartPicture": "谱面图",
+  "pipelines.op.chartDensity": "谱面文件",
   "pipelines.picture.myDon": "小咚",
   "pipelines.picture.titlePlate": "名牌",
   "pipelines.picture.medalPlate": "咚币",

@@ -28,10 +28,12 @@ import type {
 import type { PipelineView } from "../pipelines/pipeline-view";
 import type { RatingDataRead } from "../rating/read-rating-data";
 import type {
+  ChartDensityFailure,
   ChineseNamesRead,
   Difficulty,
   SongCatalogueFailure,
   SongCatalogueRead,
+  SongDensityRead,
 } from "../song-catalogue/types";
 import type { UpdateFeed, UpdateFeedFailure } from "../updates/update-feed";
 
@@ -398,6 +400,11 @@ export interface HirobaSessionPort {
   readRatingData(system: RatingSystem): Promise<Result<RatingDataRead, SongCatalogueFailure>>;
   /** A picture of a chart's notes, from a chart host the song list links, kept on the device. */
   readChartPicture(url: string): Promise<Result<PictureView, PictureFailure>>;
+  /** A song's note density from its ESE chart, kept on the device; `again` reads the chart anew. */
+  readChartDensity(
+    songNo: string,
+    again: boolean,
+  ): Promise<Result<SongDensityRead, ChartDensityFailure>>;
   /** What each pipeline runs and has waiting now, and its newest `history` groups that ended.
    * Asks no site anything. */
   readPipelines(history: number): Promise<PipelinesView>;

@@ -2,6 +2,7 @@
 import { chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
+import { ESE_CHARTS_PATH, ESE_MAPPING, ESE_MAPPING_PATH, eseChart } from "./mock-ese";
 import { createFavoritesEditor } from "./mock-favorites";
 import { createPlayHistory } from "./mock-history";
 import {
@@ -303,6 +304,15 @@ Bun.serve({
     if (chart >= 0) {
       // A wiki's picture: public, and no session is asked for.
       return untyped(chartPicturePng(chart));
+    }
+    if (pathname === ESE_MAPPING_PATH) {
+      return Response.json(ESE_MAPPING);
+    }
+    if (pathname.startsWith(ESE_CHARTS_PATH)) {
+      const tja = eseChart(pathname);
+      return tja === null
+        ? new Response("Not found", { status: 404 })
+        : new Response(tja, { headers: { "content-type": "text/plain; charset=utf-8" } });
     }
     const icon = ICON_PATH.exec(pathname);
     if (icon !== null) {

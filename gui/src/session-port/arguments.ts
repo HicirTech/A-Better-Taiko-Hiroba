@@ -235,6 +235,9 @@ const favoriteSongChange: ArgumentCheck = (args) =>
 
 const oneSongNo: ArgumentCheck = (args) => args.length === 1 && isSongNo(args[0]);
 
+const songNoAndAgain: ArgumentCheck = (args) =>
+  args.length === 2 && isSongNo(args[0]) && typeof args[1] === "boolean";
+
 // `since` becomes the catalogue address's query, so only a whole number of milliseconds may.
 const catalogueSince: ArgumentCheck = (args) =>
   args.length === 1 && (args[0] === null || isWhole(args[0], 0, Number.MAX_SAFE_INTEGER));
@@ -304,5 +307,6 @@ export const PORT_ARGUMENTS = {
   readChineseNames: none,
   readRatingData: ratingSystem,
   readChartPicture: chartUrl,
+  readChartDensity: songNoAndAgain,
   readPipelines: historyLimit,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

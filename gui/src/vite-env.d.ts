@@ -22,4 +22,8 @@ interface ImportMetaEnv {
   readonly VITE_ABTH_DEV_CHART_ORIGIN?: string;
   /** The address of a stand-in rating data feed; without it a development run reads none. */
   readonly VITE_ABTH_DEV_RATING_DATA?: string;
+  /** A stand-in's map of songs to chart files; without it a development run reads none. */
+  readonly VITE_ABTH_DEV_ESE_MAPPING?: string;
+  /** Where a stand-in serves chart files, ending in a slash. */
+  readonly VITE_ABTH_DEV_ESE_CHARTS?: string;
 }

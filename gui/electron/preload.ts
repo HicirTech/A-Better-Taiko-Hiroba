@@ -39,6 +39,8 @@ const port: HirobaSessionPort = {
   readChineseNames: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readChineseNames),
   readRatingData: (system) => ipcRenderer.invoke(BRIDGE_CHANNELS.readRatingData, system),
   readChartPicture: (url) => ipcRenderer.invoke(BRIDGE_CHANNELS.readChartPicture, url),
+  readChartDensity: (songNo, again) =>
+    ipcRenderer.invoke(BRIDGE_CHANNELS.readChartDensity, songNo, again),
   readPipelines: (history) => ipcRenderer.invoke(BRIDGE_CHANNELS.readPipelines, history),
 };
 

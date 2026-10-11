@@ -61,6 +61,7 @@ export const en: Messages = {
   "pipelines.op.readRatingData": "Rating data",
   "pipelines.op.picture": "Picture",
   "pipelines.op.chartPicture": "Chart picture",
+  "pipelines.op.chartDensity": "Chart file",
   "pipelines.picture.myDon": "My Don",
   "pipelines.picture.titlePlate": "Name plate",
   "pipelines.picture.medalPlate": "Don Medal plate",

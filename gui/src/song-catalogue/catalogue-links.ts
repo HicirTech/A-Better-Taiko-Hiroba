@@ -4,6 +4,12 @@ export const SONG_CATALOGUE_URL = "https://taiko.wiki/api/v1/song/all";
 /** The API of the Chinese Taiko wiki, whose song pages give the official Chinese names. */
 export const CHINESE_NAMES_URL = "https://taiko.fandom.com/zh/api.php";
 
+/** OurTaiko's map from Hiroba's song numbers to the chart files in ESE. */
+export const ESE_MAPPING_URL = "https://cdn.ourtaiko.org/api/ese_mapping";
+
+/** Where ESE, the TJADB community's charts of every official song, serves its files. */
+export const ESE_CHARTS_URL = "https://ese.tjadataba.se/ESE/ESE/raw/branch/master/";
+
 /** The hosts taiko.wiki's chart pictures sit on. */
 export const CHART_PICTURE_HOSTS: readonly string[] = [
   "file.taiko.wiki",

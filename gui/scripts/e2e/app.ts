@@ -1,6 +1,7 @@
 /** Starts the desktop app under test, and closes it. */
 
 import electronPath from "electron";
+import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "../mock-ese";
 import {
   CDP_PORT,
   HIROBA,
@@ -43,6 +44,8 @@ export async function launch({
       ABTH_DEV_NOW: now,
       ABTH_DEV_SONG_CATALOGUE: `${HIROBA}/__song-catalogue`,
       ABTH_DEV_RATING_DATA: `${HIROBA}${RATING_DATA}`,
+      ABTH_DEV_ESE_MAPPING: `${HIROBA}${ESE_MAPPING_PATH}`,
+      ABTH_DEV_ESE_CHARTS: `${HIROBA}${ESE_CHARTS_PATH}`,
       ABTH_DEV_CHINESE_NAMES: `${HIROBA}/__chinese-names`,
       ABTH_DEV_CHART_ORIGIN: HIROBA,
       ABTH_DEBUG_SAVE_READS: "1",

@@ -6,7 +6,13 @@ import {
   type HirobaEndpoints,
 } from "../src/hiroba-session";
 import { RATING_DATA_URL } from "../src/rating/rating-links";
-import { CHINESE_NAMES_URL, catalogueUrlFor, chartOriginFor } from "../src/song-catalogue";
+import {
+  CHINESE_NAMES_URL,
+  catalogueUrlFor,
+  chartOriginFor,
+  ESE_CHARTS_URL,
+  ESE_MAPPING_URL,
+} from "../src/song-catalogue";
 import { feedUrlFor } from "../src/updates";
 
 export type Environment = Readonly<Record<string, string | undefined>>;
@@ -30,6 +36,10 @@ export interface DesktopEnvironment {
   readonly ratingDataUrls: Readonly<Record<RatingSystem, string | undefined>>;
   /** The stand-in's origin chart pictures are read from too; undefined when this run has none. */
   readonly chartOrigin: string | undefined;
+  /** Where the map of song numbers to chart files is read; undefined when this run reads none. */
+  readonly eseMappingUrl: string | undefined;
+  /** Where the chart files are read; undefined when this run reads none. */
+  readonly eseChartsUrl: string | undefined;
 }
 
 /** Only a development run takes anything from the environment: a packaged build uses real sites,
@@ -42,6 +52,8 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
     ourtaikoV1: catalogueUrlFor(!packaged, env.ABTH_DEV_RATING_DATA, RATING_DATA_URL.ourtaikoV1),
   };
   const chartOrigin = chartOriginFor(!packaged, env.ABTH_DEV_CHART_ORIGIN);
+  const eseMappingUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_ESE_MAPPING, ESE_MAPPING_URL);
+  const eseChartsUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_ESE_CHARTS, ESE_CHARTS_URL);
   if (packaged) {
     return {
       devServerUrl: undefined,
@@ -53,6 +65,8 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
       chineseNamesUrl,
       ratingDataUrls,
       chartOrigin,
+      eseMappingUrl,
+      eseChartsUrl,
     };
   }
   const fixed = Date.parse(env.ABTH_DEV_NOW ?? "");
@@ -71,5 +85,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
     chineseNamesUrl,
     ratingDataUrls,
     chartOrigin,
+    eseMappingUrl,
+    eseChartsUrl,
   };
 }

@@ -44,6 +44,7 @@ import {
   type SignInOutcome,
 } from "../src/session-port";
 import {
+  createChartDensityReader,
   createChartPictureReader,
   readChineseNames,
   readSongCatalogue,
@@ -183,6 +184,12 @@ const chartPictures = createChartPictureReader({
   store: createDiskPictureStore(join(app.getPath("userData"), "charts")),
   pipeline: pipelines.external,
   chartOrigin: environment.chartOrigin,
+});
+const chartDensities = createChartDensityReader({
+  store: createDiskPictureStore(join(app.getPath("userData"), "densities")),
+  pipeline: pipelines.external,
+  mappingUrl: environment.eseMappingUrl,
+  chartsUrl: environment.eseChartsUrl,
 });
 // The writes come up with the window: until then a kept picture fills no history.
 let previewKept: (set: CostumeSet, picture: string) => void = () => undefined;
@@ -354,6 +361,7 @@ app.whenReady().then(async () => {
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),
     readRatingData: (site, system) => readRatingData(site, environment.ratingDataUrls[system]),
     readChartPicture: chartPictures,
+    readChartDensity: chartDensities,
     readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });
 
