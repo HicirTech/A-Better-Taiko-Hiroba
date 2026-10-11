@@ -1,4 +1,11 @@
 /** The Overview's song search: its bar, the searches kept, a song's details and chart pictures. */
+import {
+  BRANCHED_CHART,
+  MISCOUNTED_CHART,
+  MISSING_CHART,
+  PLAIN_CHART,
+  servedChartPath,
+} from "../mock-ese";
 import { TITLE_PLATE } from "../mock-pictures";
 import { PHONE_TALL, TOP_BAND_PX } from "./config";
 import type { Ctx } from "./context";
@@ -25,6 +32,11 @@ export const songSearchKeys = [
   "detailsChartsShowTheirIcons",
   "chartPictureOpensFullScreen",
   "detailsOpenOnTheShownDifficulty",
+  "densityDrawnForAMappedChart",
+  "densityBranchesChosen",
+  "densityKeptAndReadAgain",
+  "densityNotDrawnWhenTheNotesDiffer",
+  "densityNotDrawnWithoutAChart",
   "detailsShowTheChartPictures",
   "chartPictureAskedOnce",
   "fiveChartsInOneRowOnAPhone",
@@ -177,13 +189,52 @@ export async function songSearch(ctx: Ctx) {
   await showDifficulty("oni");
   results.detailsOpenOnTheShownDifficulty = hardChosen;
 
+  // 1001's Oni chart: 700 notes over the stand-in's 120 seconds.
+  await openSong("夜明け", PLAIN_CHART);
+  await shown("#song-density-line");
+  results.densityDrawnForAMappedChart = ((await textOf("#song-details-facts")) ?? "").includes(
+    "Average 5.83 hits/s",
+  );
+  await closeSong();
+
+  const peak = () => textOf("#song-density-peak");
+  const chartHits = () => hitsOn(encodeURIComponent(servedChartPath(BRANCHED_CHART)));
+  await openSong("約束", BRANCHED_CHART);
+  await click("#song-details-chart-oni");
+  await shown("#song-density-branches");
+  const masterFirst = (await attribute("#song-density-branch-master", "aria-pressed")) === "true";
+  const masterPeak = await peak();
+  await click("#song-density-branch-normal");
+  results.densityBranchesChosen =
+    masterFirst &&
+    (await soon("the normal branch's line", async () => (await peak()) !== masterPeak)) &&
+    (await attribute("#song-density-branch-normal", "aria-pressed")) === "true";
+  // Read as the song first opened above; every opening since used the numbers kept.
+  const readOnce = (await chartHits()) === 1;
+  await click("#song-details-read-chart");
+  results.densityKeptAndReadAgain =
+    readOnce && (await soon("the chart read again", async () => (await chartHits()) === 2));
+  await waitFor("the chart read", async () =>
+    (await attribute("#song-details-read-chart", "disabled")) === null ? true : undefined,
+  );
+  await closeSong();
+
+  await openSong("ひこうき", MISCOUNTED_CHART);
+  await shown("#song-density-none");
+  results.densityNotDrawnWhenTheNotesDiffer = !(await exists("#song-density-line"));
+  await closeSong();
+  await openSong("白い季節", MISSING_CHART);
+  await shown("#song-density-none");
+  results.densityNotDrawnWithoutAChart = !(await exists("#song-density-line"));
+  await closeSong();
+
   results.fiveChartsInOneRowOnAPhone = await atSize(
     NARROW_PHONE.width,
     NARROW_PHONE.height,
     async () => {
       await openSong("約束", "1005");
       const tops = await page.evaluate<number[]>(
-        `[...document.querySelectorAll('#song-details [role="group"] button')].map((button) => Math.round(button.getBoundingClientRect().top))`,
+        `[...document.querySelectorAll("#song-details-charts button")].map((button) => Math.round(button.getBoundingClientRect().top))`,
       );
       await closeSong();
       return tops.length === 5 && new Set(tops).size === 1;

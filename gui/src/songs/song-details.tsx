@@ -2,6 +2,7 @@ import type { Translator } from "@abth/i18n";
 import {
   Box,
   Chip,
+  CircularProgress,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -9,11 +10,12 @@ import {
   IconButton,
   Stack,
   ToggleButton,
+  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { CloseIcon } from "../favorites/favorites-icons";
 import {
@@ -31,8 +33,11 @@ import { useBackLeaves } from "../navigation/back-closers";
 import { PipelinesShownContext } from "../navigation/pipelines-shown";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
+import { PullToRead } from "../read-again/pull-to-read";
+import { RefreshIcon } from "../read-again/read-again-foot";
 import type { HirobaSessionPort } from "../session-port";
 import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import { ChartDensitySection, type DensityState } from "./chart-density";
 import { ChartPicture } from "./chart-picture";
 import { ChartViewer, type ShownChart } from "./chart-viewer";
 import { CourseIcon } from "./course-icon";
@@ -61,7 +66,7 @@ const chartButton = (difficulty: Difficulty) => {
 export interface SongDetailsProps {
   /** The song to show; none shuts the dialog. */
   readonly song: ListedSong | null;
-  readonly port: Pick<HirobaSessionPort, "readChartPicture">;
+  readonly port: Pick<HirobaSessionPort, "readChartPicture" | "readChartDensity">;
   /** Where the charts' difficulty icons, Hiroba's own, are read. */
   readonly lane: PictureLane;
   readonly i18n: Translator;
@@ -110,6 +115,12 @@ function otherNames(song: ListedSong, shown: string): { text: string; lang: stri
   return [...new Set(names)].map((text) => ({ text, lang: nameLanguage(song, text) }));
 }
 
+/** Notes per second as taiko.wiki's own average is shown: two decimals. */
+const averageText = (value: number, locale: Translator["locale"]) =>
+  new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+    value,
+  );
+
 // Its own component, so each song opens on the chart its levels and the setting choose.
 function DetailsBody({
   song,
@@ -119,8 +130,30 @@ function DetailsBody({
   onClose,
 }: Omit<SongDetailsProps, "song"> & { song: ListedSong }) {
   const { t, locale } = i18n;
-  // A touch screen's Back shuts the dialog, so it draws no close button.
+  // A touch screen's Back shuts the dialog and a pull reads the chart again: no buttons.
   const touchFirst = useTouchFirst();
+  const content = useRef<HTMLDivElement>(null);
+  const [density, setDensity] = useState<DensityState>({
+    reading: true,
+    read: null,
+    failure: null,
+  });
+  const readDensity = useCallback(
+    async (again: boolean) => {
+      setDensity((was) => ({ ...was, reading: true }));
+      const result = await port.readChartDensity(song.songNo, again);
+      setDensity((was) =>
+        result.ok
+          ? { reading: false, read: result.value, failure: null }
+          : { reading: false, read: was.read, failure: result.error.code },
+      );
+    },
+    [port, song.songNo],
+  );
+  useEffect(() => {
+    void readDensity(false);
+  }, [readDensity]);
+  const readLabel = t("details.readDensity");
   const [chart, setChart] = useState(() => openingChart(song.levels, keptShownDifficulty()));
   const [viewing, setViewing] = useState<ShownChart | null>(null);
   const name = shownName(song, locale);
@@ -136,21 +169,36 @@ function DetailsBody({
       <DialogTitle
         id={TITLE_ID}
         lang={nameLanguage(song, name)}
-        sx={touchFirst ? undefined : { pr: 7 }}
+        sx={touchFirst ? undefined : { pr: 13 }}
       >
         {name}
       </DialogTitle>
       {!touchFirst && (
-        <IconButton
-          id="song-details-close"
-          aria-label={t("picker.close")}
-          onClick={onClose}
-          sx={{ position: "absolute", top: 12, right: 12 }}
-        >
-          <CloseIcon />
-        </IconButton>
+        <Box sx={{ position: "absolute", top: 12, right: 12, display: "flex" }}>
+          {/* None while it is shut: a disabled button sends no event to open or close it. */}
+          <Tooltip title={density.reading ? "" : readLabel}>
+            <IconButton
+              id="song-details-read-chart"
+              aria-label={readLabel}
+              disabled={density.reading}
+              onClick={() => void readDensity(true)}
+            >
+              {density.reading ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
+            </IconButton>
+          </Tooltip>
+          <IconButton id="song-details-close" aria-label={t("picker.close")} onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
       )}
-      <DialogContent dividers>
+      <DialogContent ref={content} dividers>
+        <PullToRead
+          active={touchFirst}
+          canRead={!density.reading}
+          onRead={() => void readDensity(true)}
+          region={content}
+          id="song-details-pull"
+        />
         <Stack spacing={2}>
           <Box>
             {otherNames(song, name).map(({ text, lang }) => (
@@ -183,6 +231,7 @@ function DetailsBody({
             )}
           </Box>
           <Box
+            id="song-details-charts"
             role="group"
             aria-label={t("details.charts")}
             sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
@@ -204,10 +253,26 @@ function DetailsBody({
           </Box>
           {facts !== null && (
             <Typography id="song-details-facts" variant="body2" color="text.secondary">
-              {facts.maxCombo !== null && t("details.maxCombo", { count: facts.maxCombo })}
-              {facts.maxCombo !== null && facts.branched && " · "}
-              {facts.branched && t("details.branched")}
+              {[
+                facts.maxCombo !== null && t("details.maxCombo", { count: facts.maxCombo }),
+                facts.maxCombo !== null &&
+                  facts.playTime !== null &&
+                  t("details.averageDensity", {
+                    value: averageText(facts.maxCombo / facts.playTime, locale),
+                  }),
+                facts.branched && t("details.branched"),
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </Typography>
+          )}
+          {chart !== null && (
+            <ChartDensitySection
+              state={density}
+              density={density.read?.[chart]}
+              maxCombo={facts?.maxCombo ?? null}
+              i18n={i18n}
+            />
           )}
           {chart !== null && images.length > 0 ? (
             <Stack id="song-details-pictures" spacing={1}>
