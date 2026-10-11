@@ -85,6 +85,7 @@ export const sessionExpiryKeys = [
   "lostSessionHandled",
   "cancelHandled",
   "refusalNamed",
+  "signInThroughAPopup",
   "signInForgetsThePictures",
   "signInForgetsTheCostumePreview",
   "sessionKept",
@@ -160,8 +161,12 @@ export async function sessionExpiry(ctx: Ctx) {
   await page.evaluate(
     `(() => { window.firstCard = null; const observer = new MutationObserver(() => { if (document.querySelector("#profile") === null) return; window.firstCard = ["#title-plate-image", "#my-don-image"].map((selector) => document.querySelector(selector) !== null); observer.disconnect(); }); observer.observe(document.body, { childList: true, subtree: true }); })()`,
   );
+  // This sign-in finishes in a popup, as some services' do: it must share the sign-in's session.
+  await fetch(`${HIROBA}/__popup?on=1`);
   await click("#sign-in");
   await until("サンプルどん");
+  const popup = (await (await fetch(`${HIROBA}/__popup?on=0`)).json()) as { signIns: number };
+  results.signInThroughAPopup = popup.signIns === 1;
   await waitForSeen(
     "My Don picture",
     page,
