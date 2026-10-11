@@ -1,7 +1,7 @@
 import { playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, SvgIcon } from "@mui/material";
-import type { KeyboardEvent } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 
 import {
   DIFFICULTY_LABEL,
@@ -83,6 +83,7 @@ export function HistoryRow({
   name,
   rowProps,
   heading,
+  lead,
 }: {
   readonly play: RecentPlay;
   readonly lane: PictureLane;
@@ -93,6 +94,8 @@ export function HistoryRow({
   readonly rowProps?: RowProps;
   /** The title's id where the row heads a chart's details, which list its hits below it. */
   readonly heading?: string;
+  /** Shown first in the row, before the genre's bar: what the page rates the chart. */
+  readonly lead?: ReactNode;
 }) {
   const { t, number } = i18n;
   const difficulty = LEVEL_DIFFICULTY[play.level];
@@ -122,6 +125,7 @@ export function HistoryRow({
       sx={rowProps?.onClick === undefined ? ROW : OPENABLE_ROW}
       {...rowProps}
     >
+      {lead}
       <span
         className="song-bars"
         {...(genre === null ? { "aria-hidden": true } : { role: "img", "aria-label": genre })}

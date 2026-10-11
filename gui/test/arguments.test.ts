@@ -27,6 +27,7 @@ describe("PORT_ARGUMENTS", () => {
       changeFolder: _changeFolder,
       changeFavoriteSong: _changeFavoriteSong,
       readSongCatalogue: _catalogue,
+      readRatingData: _ratingData,
       readChartPicture: _chartPicture,
       readPipelines: _pipelines,
       readSongScores: _songScores,
@@ -37,6 +38,16 @@ describe("PORT_ARGUMENTS", () => {
       expect(check([undefined])).toBe(false);
       expect(check([{ url: "https://example.test/" }])).toBe(false);
     }
+  });
+
+  test("readRatingData takes one rating system the app knows, and nothing else", () => {
+    const check = PORT_ARGUMENTS.readRatingData;
+    expect(check(["ourtaikoV1"])).toBe(true);
+    expect(check([])).toBe(false);
+    expect(check(["ourtaikoV2"])).toBe(false);
+    expect(check(["toString"])).toBe(false);
+    expect(check(["ourtaikoV1", "ourtaikoV1"])).toBe(false);
+    expect(check([{ system: "ourtaikoV1" }])).toBe(false);
   });
 
   test("readSongScores takes one song number, which becomes the detail pages' query", () => {

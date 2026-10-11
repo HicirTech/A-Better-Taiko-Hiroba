@@ -12,6 +12,8 @@ export const IMG = "http://img.127.0.0.1.sslip.io:8807";
 export const REFUSING_HOST = "refuses.127.0.0.1.sslip.io:8808";
 export const IDP_MARKER = "abth-mock-idp-marker";
 export const MY_PAGE = "/mypage_top.php";
+/** The stand-in's rating data. */
+export const RATING_DATA = "/__rating-data";
 export const DAN_LABEL = "/imgsrc_danlabel.php";
 export const MEDAL_PLATE = "/imgsrc_tokenplate.php";
 export const PANEL_ART = "/image/sp/640/total_score_image_5.png";

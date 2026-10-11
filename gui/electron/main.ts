@@ -35,6 +35,7 @@ import {
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
 } from "../src/pipelines";
+import { readRatingData } from "../src/rating/read-rating-data";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
@@ -346,6 +347,7 @@ app.whenReady().then(async () => {
     readSongCatalogue: (site, since) =>
       readSongCatalogue(site, environment.songCatalogueUrl, since),
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),
+    readRatingData: (site, system) => readRatingData(site, environment.ratingDataUrls[system]),
     readChartPicture: chartPictures,
     readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });

@@ -19,6 +19,7 @@ export interface Messages {
   "nav.overview": string;
   "nav.history": string;
   "nav.scores": string;
+  "nav.rating": string;
   "nav.costume": string;
   "nav.nameTitle": string;
   "nav.favorites": string;
@@ -73,6 +74,7 @@ export interface Messages {
   "pipelines.op.readUpdateFeed": string;
   "pipelines.op.readSongCatalogue": string;
   "pipelines.op.readChineseNames": string;
+  "pipelines.op.readRatingData": string;
   "pipelines.op.picture": string;
   "pipelines.op.chartPicture": string;
   "pipelines.picture.myDon": string;
@@ -123,6 +125,22 @@ export interface Messages {
   "scores.nothingNew": string;
   /** Param: {count}, charts played or stopped at but not read yet. */
   "scores.unread": string;
+  "rating.figure.rating": string;
+  "rating.figure.power": string;
+  "rating.figure.stamina": string;
+  "rating.figure.speed": string;
+  "rating.figure.accuracy": string;
+  "rating.figure.rhythm": string;
+  "rating.figure.complex": string;
+  "rating.best": string;
+  "rating.next": string;
+  /** Param: {value}, the chart's constant in its system. */
+  "rating.constant": string;
+  /** Param: {value}, the chart's accuracy as a percentage. */
+  "rating.accuracy": string;
+  "rating.readingData": string;
+  "rating.dataFailed": string;
+  "rating.noneRated": string;
   /** A song's action: read its charts again. */
   "scores.readSong": string;
   /** Asks before a read of every score, after a long hold on the page's read again. */
@@ -172,6 +190,8 @@ export interface Messages {
   "settings.chineseWikiGives": string;
   "settings.chartWiki": string;
   "settings.chartWikiGives": string;
+  "settings.ourTaiko": string;
+  "settings.ourTaikoGives": string;
   "settings.github": string;
   "settings.githubGives": string;
   "settings.songLevels": string;

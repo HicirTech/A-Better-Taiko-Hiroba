@@ -1,7 +1,16 @@
 /** Starts the desktop app under test, and closes it. */
 
 import electronPath from "electron";
-import { CDP_PORT, HIROBA, IDP_HOST, IMG, REFUSING_HOST, root, USER_DATA } from "./config";
+import {
+  CDP_PORT,
+  HIROBA,
+  IDP_HOST,
+  IMG,
+  RATING_DATA,
+  REFUSING_HOST,
+  root,
+  USER_DATA,
+} from "./config";
 import { connect, waitFor } from "./harness";
 
 export async function launch({
@@ -33,6 +42,7 @@ export async function launch({
       ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
       ABTH_DEV_SONG_CATALOGUE: `${HIROBA}/__song-catalogue`,
+      ABTH_DEV_RATING_DATA: `${HIROBA}${RATING_DATA}`,
       ABTH_DEV_CHINESE_NAMES: `${HIROBA}/__chinese-names`,
       ABTH_DEV_CHART_ORIGIN: HIROBA,
       ABTH_DEBUG_SAVE_READS: "1",
@@ -67,7 +77,15 @@ export async function launch({
       `document.querySelector('[aria-current="page"]')?.id.replace("nav-", "") ?? null`,
     );
   const goTo = async (
-    to: "overview" | "history" | "scores" | "costume" | "nameTitle" | "favorites" | "settings",
+    to:
+      | "overview"
+      | "history"
+      | "scores"
+      | "rating"
+      | "costume"
+      | "nameTitle"
+      | "favorites"
+      | "settings",
   ) => {
     await click(`#nav-${to}`);
     await waitFor(`page ${to}`, async () => (await currentPage()) === to || undefined);

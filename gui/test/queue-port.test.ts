@@ -106,7 +106,12 @@ describe("PORT_QUEUEING", () => {
 
   test("runs the refresh and the picker alone, as they carry a form token, and other sites apart", () => {
     expect(EXCLUSIVE).toEqual(["refreshHiroba", "readSongPicker"]);
-    expect(EXTERNAL).toEqual(["readUpdateFeed", "readSongCatalogue", "readChineseNames"]);
+    expect(EXTERNAL).toEqual([
+      "readUpdateFeed",
+      "readSongCatalogue",
+      "readChineseNames",
+      "readRatingData",
+    ]);
   });
 });
 

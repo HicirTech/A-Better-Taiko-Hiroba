@@ -4,7 +4,7 @@ import { COUNTS, GENRE_FONTS, type MockPlay, mockPlay, mockTitle } from "./mock-
 /** Songs past the last one played, so every list has charts never played. */
 const UNPLAYED_SONGS = 3;
 /** Song `n` is song number 1000 + n. */
-const SONG_NO_BASE = 1000;
+export const SONG_NO_BASE = 1000;
 const OPTION_SLOTS = 4;
 
 /** The play history's copy, as the score pages read it. */

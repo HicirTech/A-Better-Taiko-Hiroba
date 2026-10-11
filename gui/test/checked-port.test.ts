@@ -69,6 +69,7 @@ const CASES: VerbCase[] = [
   ["scoresProgress", [], [1]],
   ["readSongCatalogue", [null], ["0&genre=1"]],
   ["readChineseNames", [], [{ gcmlimit: "max" }]],
+  ["readRatingData", ["ourtaikoV1"], ["https://example.test/feed"]],
   ["readChartPicture", ["https://file.taiko.wiki/fumen/670/oni"], ["file:///etc/passwd"]],
   ["readPipelines", [12], [1001]],
 ];

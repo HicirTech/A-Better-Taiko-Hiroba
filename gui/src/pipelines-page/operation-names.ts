@@ -21,6 +21,7 @@ export const OPERATION_NAMES: Readonly<Record<string, MessageKey>> = {
   readUpdateFeed: "pipelines.op.readUpdateFeed",
   readSongCatalogue: "pipelines.op.readSongCatalogue",
   readChineseNames: "pipelines.op.readChineseNames",
+  readRatingData: "pipelines.op.readRatingData",
   picture: "pipelines.op.picture",
   chartPicture: "pipelines.op.chartPicture",
 };

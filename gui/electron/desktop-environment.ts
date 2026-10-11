@@ -1,8 +1,11 @@
+import type { RatingSystem } from "@abth/core";
+
 import {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
 } from "../src/hiroba-session";
+import { RATING_DATA_URL } from "../src/rating/rating-links";
 import { CHINESE_NAMES_URL, catalogueUrlFor, chartOriginFor } from "../src/song-catalogue";
 import { feedUrlFor } from "../src/updates";
 
@@ -23,6 +26,8 @@ export interface DesktopEnvironment {
   readonly songCatalogueUrl: string | undefined;
   /** Where the Chinese wiki's song names are read; undefined when this run reads none. */
   readonly chineseNamesUrl: string | undefined;
+  /** Where each rating system's data is read; undefined when this run reads none. */
+  readonly ratingDataUrls: Readonly<Record<RatingSystem, string | undefined>>;
   /** The stand-in's origin chart pictures are read from too; undefined when this run has none. */
   readonly chartOrigin: string | undefined;
 }
@@ -33,6 +38,9 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
   const updateFeedUrl = feedUrlFor(!packaged, env.ABTH_DEV_UPDATE_FEED);
   const songCatalogueUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_SONG_CATALOGUE);
   const chineseNamesUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_CHINESE_NAMES, CHINESE_NAMES_URL);
+  const ratingDataUrls = {
+    ourtaikoV1: catalogueUrlFor(!packaged, env.ABTH_DEV_RATING_DATA, RATING_DATA_URL.ourtaikoV1),
+  };
   const chartOrigin = chartOriginFor(!packaged, env.ABTH_DEV_CHART_ORIGIN);
   if (packaged) {
     return {
@@ -43,6 +51,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
       updateFeedUrl,
       songCatalogueUrl,
       chineseNamesUrl,
+      ratingDataUrls,
       chartOrigin,
     };
   }
@@ -60,6 +69,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
     updateFeedUrl,
     songCatalogueUrl,
     chineseNamesUrl,
+    ratingDataUrls,
     chartOrigin,
   };
 }

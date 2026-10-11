@@ -18,9 +18,10 @@ const SOURCES: readonly { id: string; name: MessageKey; gives: MessageKey }[] = 
   { id: "taiko-wiki", name: "settings.taikoWiki", gives: "settings.taikoWikiGives" },
   { id: "chinese-wiki", name: "settings.chineseWiki", gives: "settings.chineseWikiGives" },
   { id: "chart-wiki", name: "settings.chartWiki", gives: "settings.chartWikiGives" },
+  { id: "ourtaiko", name: "settings.ourTaiko", gives: "settings.ourTaikoGives" },
 ];
 
-/** Where the songs' data and chart pictures come from, as the Chinese wiki's licence asks. */
+/** Where the song data, chart pictures and rating data come from, as their licences ask. */
 export function SongDataSection({ i18n }: { readonly i18n: Translator }) {
   const headingId = useId();
   return (

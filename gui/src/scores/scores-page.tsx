@@ -30,7 +30,7 @@ const LIST = { listStyle: "none", m: 0, p: 0 } as const;
 const chartOf = ({ songNo, level }: ScoreView) => `${songNo}/${level}`;
 
 /** A chart's score as the page lists it, its song named as the player's language names it. */
-function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Translator["locale"]) {
+export function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Translator["locale"]) {
   const song = catalogue.songs.get(score.songNo);
   const name = song === undefined ? score.songTitle : shownName(song, locale);
   const names = song === undefined ? [] : searchedNames(song);

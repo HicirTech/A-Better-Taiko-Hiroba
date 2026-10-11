@@ -15,6 +15,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [x] Show every chart you played: crowns, ranks, scores, hit counts, play options
 - [x] Show your profile, My Don, title, dan rank, score counts and favourite songs
 - [x] Show your recent plays
+- [x] Work out your rating and skills from your scores, and show the charts it counts
 - [x] Change your title
 - [ ] Build your title part by part
 - [x] Change your nickname
@@ -45,7 +46,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 
 **Polite by default.** Hiroba is someone else's service. The app sends it at most five reads at once and one write at a time, never retries a request by itself, fetches each picture once and keeps it, and stops asking the moment you sign out. Fetching more is always something you ask for, never something that happens on its own.
 
-**Song data from the community.** Artists, star levels, tempos and the songs' names in other languages come from [taiko.wiki](https://taiko.wiki/) and the Chinese [太鼓之達人維基](https://taiko.fandom.com/zh/) (its names are used under CC BY-SA). The pictures of the charts are those taiko.wiki links, on its own host, on the [太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) and on Imgur. The app reads what they publish and sends them nothing of yours.
+**Song data from the community.** Artists, star levels, tempos and the songs' names in other languages come from [taiko.wiki](https://taiko.wiki/) and the Chinese [太鼓之達人維基](https://taiko.fandom.com/zh/) (its names are used under CC BY-SA). The pictures of the charts are those taiko.wiki links, on its own host, on the [太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) and on Imgur. The rating is worked out as [OurTaikoWiki](https://github.com/OurTaiko/OurTaikoWiki)'s first rating does (MIT), from the chart constants and measurements OurTaiko publishes. The app reads what they publish and sends them nothing of yours.
 
 **Your account, your call.** The toolkit signs in as you and can change your real Taiko profile. The account it touches is yours, and so is the responsibility.
 
