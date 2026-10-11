@@ -24,6 +24,7 @@ export const OPERATION_NAMES: Readonly<Record<string, MessageKey>> = {
   readRatingData: "pipelines.op.readRatingData",
   picture: "pipelines.op.picture",
   chartPicture: "pipelines.op.chartPicture",
+  chartDensity: "pipelines.op.chartDensity",
 };
 
 /** Each of Hiroba's pictures' names, by the kind its group is for. */

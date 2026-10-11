@@ -110,12 +110,14 @@ function chartsOf(courses: unknown): Record<Difficulty, ChartFacts | null> {
       return null;
     }
 
-    const { maxCombo } = course;
+    const { maxCombo, playTime } = course;
     return {
       maxCombo:
         typeof maxCombo === "number" && Number.isInteger(maxCombo) && maxCombo > 0
           ? maxCombo
           : null,
+      playTime:
+        typeof playTime === "number" && Number.isFinite(playTime) && playTime > 0 ? playTime : null,
       branched: course.isBranched === 1,
       images: imagesOf(course.images),
     };

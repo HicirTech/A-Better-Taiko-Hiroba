@@ -1,4 +1,4 @@
-import type { Genre } from "@abth/core";
+import type { ChartDensity, Genre } from "@abth/core";
 
 /** A song's charts in the game's order; only some songs have an ura (おに裏). */
 export const DIFFICULTIES = ["easy", "normal", "hard", "oni", "ura"] as const;
@@ -35,6 +35,8 @@ export interface SongBpm {
 
 export interface ChartFacts {
   readonly maxCombo: number | null;
+  /** taiko.wiki's length of the chart in seconds; its notes per second are maxCombo over it. */
+  readonly playTime: number | null;
   readonly branched: boolean;
   /** Pictures of the chart's notes, as taiko.wiki links them, in its order. */
   readonly images: readonly string[];
@@ -66,4 +68,12 @@ export interface ChineseNamesRead {
 /** Codes, not sentences. */
 export interface SongCatalogueFailure {
   readonly code: "notConfigured" | "unreachable" | "timedOut" | "badAnswer";
+}
+
+/** A song's note density for each chart its TJA holds. */
+export type SongDensityRead = Readonly<Partial<Record<Difficulty, ChartDensity>>>;
+
+/** Codes, not sentences; `noChart` is a song ESE has no chart for. */
+export interface ChartDensityFailure {
+  readonly code: SongCatalogueFailure["code"] | "noChart";
 }

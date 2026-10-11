@@ -13,6 +13,7 @@ export type WikiGenre =
 export interface WikiCourse {
   readonly level: number;
   readonly maxCombo: number;
+  readonly playTime: number;
   readonly isBranched: 0 | 1;
   readonly images: readonly string[];
 }
@@ -75,10 +76,12 @@ interface Extras {
 
 const STEADY_BPM = [150, 150] as const;
 const COMBO_PER_LEVEL = 100;
+const PLAY_SECONDS = 120;
 
 const course = (level: number, branched = false): WikiCourse => ({
   level,
   maxCombo: level * COMBO_PER_LEVEL,
+  playTime: PLAY_SECONDS,
   isBranched: branched ? 1 : 0,
   images: [],
 });

@@ -4,7 +4,13 @@ import { join } from "node:path";
 import electronPath from "electron";
 import { createServer } from "vite";
 import { RATING_DATA_URL } from "../src/rating/rating-links";
-import { CHINESE_NAMES_URL, SONG_CATALOGUE_URL } from "../src/song-catalogue";
+import {
+  CHINESE_NAMES_URL,
+  ESE_CHARTS_URL,
+  ESE_MAPPING_URL,
+  SONG_CATALOGUE_URL,
+} from "../src/song-catalogue";
+import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "./mock-ese";
 
 const root = join(import.meta.dir, "..");
 const real = process.argv.includes("--real");
@@ -27,11 +33,14 @@ const mockEnv = real
       // Not the installed app's %APPDATA%: its real session and history would meet the mock.
       ABTH_DEV_USER_DATA: join(root, "out", "dev-user-data"),
     };
-// An unpackaged build reads the song lists and the rating data only from the addresses it is given.
+// An unpackaged build reads the song lists, the rating data and the chart files only from the
+// addresses it is given.
 const songCatalogueEnv = {
   ABTH_DEV_SONG_CATALOGUE: real ? SONG_CATALOGUE_URL : `${HIROBA_ORIGIN}/__song-catalogue`,
   ABTH_DEV_CHINESE_NAMES: real ? CHINESE_NAMES_URL : `${HIROBA_ORIGIN}/__chinese-names`,
   ABTH_DEV_RATING_DATA: real ? RATING_DATA_URL.ourtaikoV1 : `${HIROBA_ORIGIN}/__rating-data`,
+  ABTH_DEV_ESE_MAPPING: real ? ESE_MAPPING_URL : `${HIROBA_ORIGIN}${ESE_MAPPING_PATH}`,
+  ABTH_DEV_ESE_CHARTS: real ? ESE_CHARTS_URL : `${HIROBA_ORIGIN}${ESE_CHARTS_PATH}`,
 };
 
 const vite = await createServer({ configFile: join(root, "vite.config.ts"), root });

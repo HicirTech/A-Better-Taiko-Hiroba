@@ -5,8 +5,8 @@ const KEY = "abth.songCatalogue";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SONG_NO = /^\d{1,5}$/;
 
-// A list kept before its songs carried a tempo and charts is no list, so it is read again in full.
-const VERSION = 2;
+// A list kept before its charts carried their play time is no list, so it is read again in full.
+const VERSION = 3;
 
 /** The song list as kept on the device, and when the read that brought it was sent. */
 export interface KeptCatalogue {
@@ -38,6 +38,7 @@ const isChart = (value: unknown): boolean =>
   value === null ||
   (isRecord(value) &&
     (value.maxCombo === null || typeof value.maxCombo === "number") &&
+    (value.playTime === null || typeof value.playTime === "number") &&
     typeof value.branched === "boolean" &&
     Array.isArray(value.images) &&
     value.images.every((image) => typeof image === "string"));

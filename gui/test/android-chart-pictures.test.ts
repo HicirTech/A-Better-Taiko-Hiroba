@@ -56,7 +56,7 @@ describe("the Android port's readChartPicture", () => {
     expect(native.httpRequests).toHaveLength(1);
   });
 
-  test("keeps chart pictures in a database of their own, beside the pictures'", async () => {
+  test("keeps chart pictures, and the numbers read from charts, in databases of their own", async () => {
     const indexedDb = createFakeIndexedDb();
     const opened: string[] = [];
     const factory: DatabaseFactory = {
@@ -67,7 +67,12 @@ describe("the Android port's readChartPicture", () => {
     };
     await (await openPort(factory)).readChartPicture(FILE);
     // The pipelines' histories load as the port starts.
-    expect([...opened].sort()).toEqual(["abth-charts", "abth-pictures", "abth-pipelines"]);
+    expect([...opened].sort()).toEqual([
+      "abth-charts",
+      "abth-densities",
+      "abth-pictures",
+      "abth-pipelines",
+    ]);
   });
 
   test("reads nothing at an address off the chart hosts, a stand-in's included", async () => {

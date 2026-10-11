@@ -366,6 +366,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "慢需",
     "允許瀏讓那電子郵然們",
     "力手精節奏複候補才測量值算公",
+    "檔案庫烈高平均",
   ].join(""),
 );
 

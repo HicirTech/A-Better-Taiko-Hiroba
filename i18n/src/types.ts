@@ -77,6 +77,7 @@ export interface Messages {
   "pipelines.op.readRatingData": string;
   "pipelines.op.picture": string;
   "pipelines.op.chartPicture": string;
+  "pipelines.op.chartDensity": string;
   "pipelines.picture.myDon": string;
   "pipelines.picture.titlePlate": string;
   "pipelines.picture.medalPlate": string;
@@ -192,6 +193,10 @@ export interface Messages {
   "settings.chartWikiGives": string;
   "settings.ourTaiko": string;
   "settings.ourTaikoGives": string;
+  "settings.fumenDb": string;
+  "settings.fumenDbGives": string;
+  "settings.ese": string;
+  "settings.eseGives": string;
   "settings.github": string;
   "settings.githubGives": string;
   "settings.songLevels": string;
@@ -537,6 +542,22 @@ export interface Messages {
   "details.maxCombo": string;
   "details.branched": string;
   "details.noPicture": string;
+  /** Notes hit in each second over a song: 烈度 in Chinese, 密度 in Japanese. */
+  "details.density": string;
+  /** Param: {value}, the most notes in one second. */
+  "details.densityPeak": string;
+  /** Params: {peak}, the most notes in one second, and {at}, when it comes, as m:ss. */
+  "details.densityLine": string;
+  "details.densityReading": string;
+  "details.noDensity": string;
+  "details.densityFailed": string;
+  "details.readDensity": string;
+  /** Param: {value}, the chart's notes over its length, two decimals. */
+  "details.averageDensity": string;
+  "details.branch": string;
+  "details.branch.normal": string;
+  "details.branch.advanced": string;
+  "details.branch.master": string;
   "details.pictureFailed": string;
   /** Params: {difficulty} (a difficulty.* text), {n} and {count}. A chart picture's name. */
   "details.picture": string;

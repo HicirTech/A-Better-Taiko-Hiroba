@@ -19,6 +19,8 @@ const SOURCES: readonly { id: string; name: MessageKey; gives: MessageKey }[] = 
   { id: "chinese-wiki", name: "settings.chineseWiki", gives: "settings.chineseWikiGives" },
   { id: "chart-wiki", name: "settings.chartWiki", gives: "settings.chartWikiGives" },
   { id: "ourtaiko", name: "settings.ourTaiko", gives: "settings.ourTaikoGives" },
+  { id: "fumendb", name: "settings.fumenDb", gives: "settings.fumenDbGives" },
+  { id: "ese", name: "settings.ese", gives: "settings.eseGives" },
 ];
 
 /** Where the song data, chart pictures and rating data come from, as their licences ask. */

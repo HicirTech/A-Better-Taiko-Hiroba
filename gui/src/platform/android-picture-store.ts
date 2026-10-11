@@ -15,6 +15,8 @@ import {
 const PICTURE_DATABASE = "abth-pictures";
 /** Chart pictures have a database of their own, so neither kind's clearing reaches the other. */
 export const CHART_PICTURE_DATABASE = "abth-charts";
+/** The numbers read from each song's chart file, in a database of their own too. */
+export const CHART_DENSITY_DATABASE = "abth-densities";
 const DATABASE_VERSION = 1;
 /** The pictures' bytes, each under its pictureKeyPath. */
 const PICTURES = "pictures";
