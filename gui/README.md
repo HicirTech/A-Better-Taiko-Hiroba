@@ -117,6 +117,7 @@ Run every script below from this folder, or from the root with `bun run --cwd gu
 | `bun run e2e:desktop` | Builds the app, drives it against the local stand-in (nothing reaches the real sites) and prints a JSON report with one key per check. `--only <section,...>` runs just those sections (named in `scripts/e2e/sections.ts`), and `--no-build` skips the build, to fix one check without the whole run. A pass has no `errors` entry and every key `true`, except `tokenInRendererDom` and `partitionsFolder` (`false`), `readsAfterSignIn`, `readsAfterReadAgain` and `readsOnReopen` (`1`, `2` and `1`), `userDataHits` (empty) and `surface` (an object). |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable zip in `release/`, for x64: `ABTH-<version>-setup.exe` and `ABTH-<version>-portable.zip`. |
+| `bun run dist:mac` | On a Mac only: a disk image per processor in `release/`, `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel, each app signed ad hoc. |
 | `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
 
 A packaged build talks only to the real sites. The stand-in is reachable only from an unpackaged
@@ -126,6 +127,12 @@ the end-to-end run set; without it no picture host is asked anything, and set al
 
 The installer and the exe in the zip are not code-signed, so Windows SmartScreen warns before the
 first run.
+
+The macOS app has no Apple certificate and is not notarized, so macOS blocks its first start: drag
+it from the disk image to Applications, open it once, then allow it under System Settings → Privacy
+& Security → **Open Anyway**. It keeps its data in
+`~/Library/Application Support/A Better Taiko Hiroba`, and keeps the menu bar's app and Edit menus,
+through which a Mac copies, pastes and quits.
 
 The zip needs no install: unzip it into a folder of its own (Explorer's **Extract All** makes one)
 and run `A Better Taiko Hiroba.exe` in it. It starts faster than a self-extracting exe, which
@@ -627,18 +634,19 @@ release is made of, which is the workflow itself, `gui/package.json` (which also
 electron-builder's configuration, under `build`), `gui/update.json` and `gui/android/**`.
 
 A **Version** job reads the version first, checks `gui/update.json` against it, and on a tag run
-stops the run unless the tag is `v` and that version. Then two jobs run side by side, neither
-waiting on the other:
+stops the run unless the tag is `v` and that version. Then three jobs run side by side, none
+waiting on another:
 
 | Job | Runs on | Makes |
 |---|---|---|
 | **Android release APK** | Ubuntu 26.04, JDK 21 | `ABTH-<version>.apk`, signed with the release key from [the signing secrets](#setting-up-the-signing-secrets). |
 | **Windows installer and zip** | windows-latest | `ABTH-<version>-setup.exe`, the NSIS installer, and `ABTH-<version>-portable.zip`, the build that needs no install ([Desktop](#desktop) says how to run it). Both are x64 and not code-signed. |
+| **macOS disk images** | macos-latest | `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel Macs. Each app is signed ad hoc, with no Apple certificate, and is not notarized ([Desktop](#desktop) says how to open it). |
 
-Each uploads its files as an artifact of the run (**android** and **windows**, kept for 14 days).
-On a tag, a **Release** job then runs after both. It downloads the artifacts and runs
+Each uploads its files as an artifact of the run (**android**, **windows** and **mac**, kept for 14
+days). On a tag, a **Release** job then runs after all three. It downloads the artifacts and runs
 `gh release create v<version> --title "A Better Taiko Hiroba <version>" --generate-notes` with the
-three files and `gui/update.json` (the release's asset `update.json`, which the app reads), as
+five files and `gui/update.json` (the release's asset `update.json`, which the app reads), as
 `GITHUB_TOKEN` with `contents: write`; the notes list the pull requests merged since the last
 release. **The release is published, not a draft**: its files are public as soon as that
 job ends. A dry run never reaches that job.

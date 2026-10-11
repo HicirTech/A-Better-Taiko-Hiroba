@@ -7,7 +7,7 @@ A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-dat
 
 ## Download
 
-Get the latest version from the [Releases page](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest): an installer or a portable zip for Windows, and an APK for Android. The app tells you when a newer version is out.
+Get the latest version from the [Releases page](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest): an installer or a portable zip for Windows, a disk image for macOS (Apple silicon or Intel), and an APK for Android. The app tells you when a newer version is out.
 
 ## What it does
 
@@ -32,6 +32,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [ ] Sync incrementally, and resume where it stopped
 - [ ] Run on the command line
 - [x] Run as a desktop app, on Windows
+- [x] Run as a desktop app, on macOS
 - [x] Run as an Android app
 - [ ] Run as an iOS app — later
 - [ ] Run as a web app — later
