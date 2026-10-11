@@ -20,8 +20,10 @@ export interface SignInAttempt {
   cancel(): void;
 }
 
-/** Opens Hiroba's sign-in in a window on an in-memory partition, new for every attempt, so nothing
- * it sets reaches the disk or the next attempt. It may only navigate between the two sites. */
+const POPUP_WIDTH = 480;
+const POPUP_HEIGHT = 680;
+
+/** Opens Hiroba's sign-in on an in-memory partition new for each attempt, which nothing outlives. */
 export function openSignInWindow(
   parent: BrowserWindow,
   endpoints: HirobaEndpoints,
@@ -32,13 +34,19 @@ export function openSignInWindow(
   signInSession.setUserAgent(userAgent);
   signInSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   signInSession.setPermissionCheckHandler(() => false);
+  const webPreferences = {
+    partition,
+    sandbox: true,
+    contextIsolation: true,
+    nodeIntegration: false,
+  };
 
   const window = new BrowserWindow({
     parent,
     width: 480,
     height: 760,
     autoHideMenuBar: true,
-    webPreferences: { partition, sandbox: true, contextIsolation: true, nodeIntegration: false },
+    webPreferences,
   });
   const contents = window.webContents;
 
@@ -55,22 +63,50 @@ export function openSignInWindow(
 
   // A refused navigation ends the attempt and names the host: refusing it quietly left the window
   // on its page, which looked like a button that does nothing.
-  const refuse = (event: { preventDefault(): void }, url: string) => {
-    event.preventDefault();
+  const refuse = (url: string) => {
     settle({ kind: "refused", host: hostOf(url) });
     window.close();
   };
-  contents.setWindowOpenHandler(() => ({ action: "deny" }));
-  contents.on("will-navigate", (event) => {
-    if (signInStep(event.url, endpoints) === "elsewhere") {
-      refuse(event, event.url);
-    }
-  });
-  contents.on("will-redirect", (event) => {
-    if (event.isMainFrame && signInStep(event.url, endpoints) === "elsewhere") {
-      refuse(event, event.url);
-    }
-  });
+  const refused = (url: string) => signInStep(url, endpoints) === "elsewhere";
+  // The sign-in's own window and each popup its pages open keep to one rule, on one session.
+  const guard = (shown: BrowserWindow, firstUrl: string) => {
+    const guarded = shown.webContents;
+    // The title is the host, so the player sees where a password goes.
+    shown.setTitle(hostOf(firstUrl));
+    shown.on("page-title-updated", (event) => event.preventDefault());
+    guarded.on("did-navigate", (_event, url) => shown.setTitle(hostOf(url)));
+    guarded.on("will-navigate", (event) => {
+      if (refused(event.url)) {
+        event.preventDefault();
+        refuse(event.url);
+      }
+    });
+    guarded.on("will-redirect", (event) => {
+      if (event.isMainFrame && refused(event.url)) {
+        event.preventDefault();
+        refuse(event.url);
+      }
+    });
+    guarded.setWindowOpenHandler(({ url }) => {
+      // Some sign-in scripts open a popup blank and send it on: its navigations are guarded.
+      if (url !== "about:blank" && refused(url)) {
+        refuse(url);
+        return { action: "deny" };
+      }
+      return {
+        action: "allow",
+        overrideBrowserWindowOptions: {
+          parent: window,
+          width: POPUP_WIDTH,
+          height: POPUP_HEIGHT,
+          autoHideMenuBar: true,
+          webPreferences,
+        },
+      };
+    });
+    guarded.on("did-create-window", (popup, details) => guard(popup, details.url));
+  };
+  guard(window, loginPageUrl(endpoints));
 
   contents.on("did-finish-load", async () => {
     if (signInStep(contents.getURL(), endpoints) !== "landed") {

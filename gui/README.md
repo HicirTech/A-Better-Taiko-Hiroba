@@ -678,10 +678,13 @@ keystore backed up elsewhere: an app signed with another key cannot update the i
 Hiroba's session is one cookie, `_token_v2`. No code in the interface ever holds its value.
 
 **Desktop.** The sign-in window runs on an in-memory browser session, new for every attempt and
-cleared when the window closes. The cookie is held in the main process, and kept on disk, in plain
-text, in `session.json` in the app's data folder (`%APPDATA%\A Better Taiko Hiroba`), so you stay
-signed in across launches until you sign out or Hiroba ends the session. Signing out, or a read or
-write that finds the session gone, deletes the file.
+cleared when the window closes. It opens any https page the sign-in passes through, such as the
+sign-in of another account Bandai Namco ID offers, and the popups such pages open, on that same
+session and each titled with the host it is on; a page that is not https ends the attempt. The
+cookie is held in the main process, and kept on disk, in plain text, in `session.json` in the app's
+data folder (`%APPDATA%\A Better Taiko Hiroba`), so you stay signed in across launches until you
+sign out or Hiroba ends the session. Signing out, or a read or write that finds the session gone,
+deletes the file.
 
 **Android.** The sign-in runs in the in-app browser, which shares the app's WebView cookie store,
 and Capacitor's native HTTP client reads Hiroba through that same store. The store is kept across
