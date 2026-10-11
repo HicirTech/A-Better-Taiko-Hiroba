@@ -13,16 +13,17 @@ tooltip); the season's どんメダル on Hiroba's own plate, and your favourite
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On the desktop it opens as tall as the Overview, so the Overview shows
-whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its seven pages:
+whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its eight pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
 **Recent plays** (the あそんだ曲 feed, see [Recent plays](#recent-plays)),
 **Scores** (every chart you played, see [Scores](#scores)),
+**Rating** (your rating and skills, worked out from your scores, see [Rating](#rating)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
-Costume, Nickname & title, Favourites, Recent plays, Scores or Settings back to the Overview, and from the Overview leaves
+Costume, Nickname & title, Favourites, Recent plays, Scores, Rating or Settings back to the Overview, and from the Overview leaves
 the app as before.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
@@ -196,7 +197,7 @@ number, and stay on the device after a sign-out.
 ### Scores
 
 Every chart you played, read from Hiroba's score lists and detail pages, third in the navigation,
-between Recent plays and Costume. As Recent plays does, it reads only when you ask, by a pull on a
+between Recent plays and Rating. As Recent plays does, it reads only when you ask, by a pull on a
 touch screen, or Read again and its keys, and each read first asks Hiroba to refresh. The first read
 takes the eight score lists, in Hiroba's own pipeline since a list carries a form token, then the
 details of every chart they show played, five at once in a pipeline of their own; it takes a few
@@ -217,9 +218,19 @@ the point for six seconds, or Read again held down as long on a computer, asks f
 every list and every played chart again, as the first read does. The scores stay on the device,
 each player's apart, after a sign-out too.
 
+### Rating
+
+Your rating, worked out on the device from the kept scores as OurTaikoWiki's first rating does,
+fourth in the navigation, between Scores and Costume. Each Oni or Ura chart played with 75% accuracy
+or more is rated from its constant and its accuracy, and the rating comes from the best twenty. The
+page shows it above a radar of six skills, then the twenty charts it counts and the next twenty; a
+click on one opens its details, as on Scores. The constants are OurTaiko's published list, read the
+first time the page opens and again with each Read again or pull, which reads the scores too, and
+kept on the device; Settings names OurTaiko with the song data's other sources.
+
 ### The Costume page
 
-The page of the きせかえ editor, fourth in the navigation, between Scores and Nickname & title. The
+The page of the きせかえ editor, fifth in the navigation, between Rating and Nickname & title. The
 My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
 on a touch-first screen (`pointer: coarse`) a long-press of about half a second, held still, so a
 tap, a scroll or a pull begun on it goes nowhere; a pointer on it shows its name, and where a
@@ -281,7 +292,7 @@ Shift+Tab is scrolled clear of the tiles above it and the bar below.
 
 ### The Nickname & title page
 
-The page that changes your title (称号) and your nickname (ドンだーネーム): third in the navigation,
+The page that changes your title (称号) and your nickname (ドンだーネーム): sixth in the navigation,
 between Costume and Favourites, with a pencil beside its name. The name plate on the Overview is the
 way to it, as the portrait is to Costume: a click, Enter or Space, and on a touch-first screen a
 long-press. It opens on Hiroba's title plate as the Overview draws it, so the result is seen at

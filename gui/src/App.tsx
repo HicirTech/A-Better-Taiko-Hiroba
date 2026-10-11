@@ -33,6 +33,7 @@ import type { Page } from "./navigation/pages";
 import { createPictureLane } from "./pictures/picture-lane";
 import { IO_READ_CONSUMERS } from "./pipelines";
 import type { SystemLink, SystemToast } from "./platform";
+import { RatingPage, useRatingData } from "./rating";
 import { afterRefresh } from "./read-again/after-refresh";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
@@ -108,6 +109,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const onFavoritesPage = page === "favorites" && screen.name === "profile";
   const onHistoryPage = page === "history" && screen.name === "profile";
   const onScoresPage = page === "scores" && screen.name === "profile";
+  const onRatingPage = page === "rating" && screen.name === "profile";
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
@@ -121,6 +123,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   } = usePickableSongs(port, sessionGone);
   const history = useRecentPlays(port, sessionGone);
   const scores = useScores(port, sessionGone);
+  const ratingData = useRatingData(port);
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
@@ -208,7 +211,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const { forget: forgetFavorites, dropEdits: dropFavoritesEdits, read: readFavorites } = favorites;
   // Read once someone opens the favourites or the song search, and kept from then on.
   const [songsWanted, setSongsWanted] = useState(false);
-  const catalogue = useSongCatalogue(port, onFavoritesPage || onScoresPage || songsWanted);
+  const catalogue = useSongCatalogue(
+    port,
+    onFavoritesPage || onScoresPage || onRatingPage || songsWanted,
+  );
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
   const { read: readEditor } = editor;
@@ -319,7 +325,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       ? favorites
       : onHistoryPage
         ? history
-        : onScoresPage
+        : onScoresPage || onRatingPage
           ? scores
           : null;
   const canReadAgain =
@@ -337,6 +343,9 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
         void history.read();
       } else if (onScoresPage) {
         void scores.read();
+      } else if (onRatingPage) {
+        void scores.read();
+        void ratingData.read();
       } else if (pageEditor !== null) {
         if (onFavoritesPage) {
           // The pickers' list is read again when a picker next opens.
@@ -364,7 +373,12 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       {(signedIn || screen.name === "reading") && (
         <NavFoot>
           <ReadAgainFoot
-            reading={screen.name === "reading" || refreshing || (pageEditor?.reading ?? false)}
+            reading={
+              screen.name === "reading" ||
+              refreshing ||
+              (pageEditor?.reading ?? false) ||
+              (onRatingPage && ratingData.reading)
+            }
             canRead={canReadAgain}
             fetchedAt={screen.name === "profile" ? screen.profile.fetchedAt : null}
             progress={
@@ -476,6 +490,17 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             {screen.name === "profile" && page === "scores" && (
               <ScoresPage
                 scores={scores}
+                catalogue={catalogue}
+                lane={lane}
+                touchFirst={touchFirst}
+                i18n={i18n}
+              />
+            )}
+
+            {screen.name === "profile" && page === "rating" && (
+              <RatingPage
+                scores={scores}
+                ratingData={ratingData}
                 catalogue={catalogue}
                 lane={lane}
                 touchFirst={touchFirst}
