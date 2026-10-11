@@ -12,9 +12,10 @@ const FOLDER_SAVE = "POST /ajax/myfavorite_song.php";
 /** The stand-in's song with a title too long for any row. */
 const LONG_TITLED = "1038";
 /** The stand-in's songs Hiroba's own picker offers, the newest first. */
-const EVERY_SONG = Array.from({ length: 38 }, (_, index) => String(1038 - index)).filter(
-  (songNo) => songNo !== LOCKED_SONG,
-);
+const EVERY_SONG = [
+  "1099",
+  ...Array.from({ length: 38 }, (_, index) => String(1038 - index)),
+].filter((songNo) => songNo !== LOCKED_SONG);
 /** A song with an inner chart, whose 裏 entry the 大好きな曲 picker lists as a row of its own. */
 const WITH_INNER = "1005";
 const INNER_TEN = ["1036", "1027", "1021", "1017", "1008", "1005"];

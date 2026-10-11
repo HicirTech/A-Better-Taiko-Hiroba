@@ -222,6 +222,11 @@ export const WIKI_SONGS: readonly WikiSong[] = [
     ["pops"],
     [2, 4, 6, 8],
   ),
+  // Titled as the stand-in's Hiroba titles its second play, and kids as that play's font says.
+  wikiSong("1099", "サンプル曲 2", "ハルカゼ", ["kids"], [1, 2, 3, 4], {
+    en: "Sample Song Two",
+    zh: "示例曲二",
+  }),
   DELETED_SONG,
   wikiSong("ns2_sample", "コンソール限定サンプル", "Pixel Garden", ["variety"], [2, 3, 5, 7]),
 ];

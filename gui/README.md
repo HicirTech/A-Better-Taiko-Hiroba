@@ -199,7 +199,9 @@ names the page being read. A row is the genre's colour, the difficulty's icon an
 crown, rank and play options as Hiroba's icons (the support chart, whose picture has not been seen,
 as a lifebuoy), then the score with the longest combo, and the 良/可/不可/連打 hits. The play counts
 the feed also carries are kept for a page of a chart's details. The rows have no date and no song
-number, and stay on the device after a sign-out.
+number, and stay on the device after a sign-out. A song is named in the player's language when its
+title and genre find one song in taiko.wiki's list, a cover the wiki marks with a bracketed end
+counting as its original's title; otherwise it keeps Hiroba's title.
 
 ### Scores
 

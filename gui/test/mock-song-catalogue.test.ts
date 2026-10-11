@@ -18,7 +18,7 @@ describe("the mock's song list", () => {
   const read = readByApp(WIKI_SONGS);
 
   test("holds about forty songs, numbered from 1001", () => {
-    expect(WIKI_SONGS).toHaveLength(40);
+    expect(WIKI_SONGS).toHaveLength(41);
     expect(WIKI_SONGS[0]?.songNo).toBe("1001");
     expect(read.songs.every(({ songNo }) => Number(songNo) >= 1001)).toBe(true);
   });
