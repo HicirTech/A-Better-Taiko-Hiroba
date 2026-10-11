@@ -20,4 +20,6 @@ interface ImportMetaEnv {
   readonly VITE_ABTH_DEV_CHINESE_NAMES?: string;
   /** The origin of a stand-in's chart pictures, read beside the chart hosts in development. */
   readonly VITE_ABTH_DEV_CHART_ORIGIN?: string;
+  /** The address of a stand-in rating data feed; without it a development run reads none. */
+  readonly VITE_ABTH_DEV_RATING_DATA?: string;
 }

@@ -17,6 +17,7 @@ import {
   titlePlatePng,
 } from "./mock-pictures";
 import { createProfileEditor, escapeHtml } from "./mock-profile";
+import { ratingDataAnswer } from "./mock-rating-data";
 import { createScorePages } from "./mock-scores";
 import { CHART_PICTURE_PATHS, wikiSongsSince } from "./mock-song-catalogue";
 
@@ -554,6 +555,8 @@ Bun.serve({
         return Response.json(scores.control(searchParams));
       case "/__song-catalogue":
         return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
+      case "/__rating-data":
+        return Response.json(ratingDataAnswer());
       case "/__chinese-names":
         return Response.json(chineseNamesBatch(searchParams.get("gcmcontinue")));
       case "/__last-token":

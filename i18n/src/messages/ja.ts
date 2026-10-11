@@ -58,6 +58,7 @@ export const ja: Messages = {
   "pipelines.op.readSongCatalogue": "taiko.wiki の曲リスト",
   "pipelines.op.readChineseNames": "中国語の曲名",
   "pipelines.op.picture": "画像",
+  "pipelines.op.readRatingData": "レーティングのデータ",
   "pipelines.op.chartPicture": "譜面の画像",
   "pipelines.picture.myDon": "マイどん",
   "pipelines.picture.titlePlate": "ネームプレート",

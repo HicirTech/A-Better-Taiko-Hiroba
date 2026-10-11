@@ -29,6 +29,7 @@ export const BRIDGE_CHANNELS = {
   scoresProgress: "abth:scores-progress",
   readSongCatalogue: "abth:read-song-catalogue",
   readChineseNames: "abth:read-chinese-names",
+  readRatingData: "abth:read-rating-data",
   readChartPicture: "abth:read-chart-picture",
   readPipelines: "abth:read-pipelines",
 } as const;

@@ -1,4 +1,4 @@
-import type { ScoreRank } from "@abth/core";
+import type { RatingSystem, ScoreRank } from "@abth/core";
 
 // Not the index: the preload must not load the pipelines, and the core with them.
 import { KEPT_GROUPS } from "../pipelines/kept-groups";
@@ -258,6 +258,11 @@ const historyLimit: ArgumentCheck = (args) =>
   args[0] >= 0 &&
   args[0] <= KEPT_GROUPS;
 
+const RATING_SYSTEM: Readonly<Record<RatingSystem, true>> = { ourtaikoV1: true };
+
+const ratingSystem: ArgumentCheck = (args) =>
+  args.length === 1 && typeof args[0] === "string" && Object.hasOwn(RATING_SYSTEM, args[0]);
+
 // Any web address passes here; the platform reads only its chart hosts'.
 const chartUrl: ArgumentCheck = (args) =>
   args.length === 1 &&
@@ -297,6 +302,7 @@ export const PORT_ARGUMENTS = {
   scoresProgress: none,
   readSongCatalogue: catalogueSince,
   readChineseNames: none,
+  readRatingData: ratingSystem,
   readChartPicture: chartUrl,
   readPipelines: historyLimit,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

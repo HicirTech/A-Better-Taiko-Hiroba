@@ -36,6 +36,7 @@ export const PORT_QUEUEING = {
   scoresProgress: "unqueued",
   readSongCatalogue: "external",
   readChineseNames: "external",
+  readRatingData: "external",
   readChartPicture: "unqueued",
   readPipelines: "unqueued",
 } as const satisfies Record<keyof HirobaSessionPort, VerbQueueing>;

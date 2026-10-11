@@ -58,6 +58,7 @@ export const zhHant: Messages = {
   "pipelines.op.readSongCatalogue": "taiko.wiki 歌曲列表",
   "pipelines.op.readChineseNames": "中文歌名",
   "pipelines.op.picture": "圖片",
+  "pipelines.op.readRatingData": "Rating 資料",
   "pipelines.op.chartPicture": "譜面圖",
   "pipelines.picture.myDon": "小咚",
   "pipelines.picture.titlePlate": "名牌",

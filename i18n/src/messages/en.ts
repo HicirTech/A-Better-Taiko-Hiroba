@@ -58,6 +58,7 @@ export const en: Messages = {
   "pipelines.op.readSongCatalogue": "taiko.wiki song list",
   "pipelines.op.readChineseNames": "Chinese song names",
   "pipelines.op.picture": "Picture",
+  "pipelines.op.readRatingData": "Rating data",
   "pipelines.op.chartPicture": "Chart picture",
   "pipelines.picture.myDon": "My Don",
   "pipelines.picture.titlePlate": "Name plate",

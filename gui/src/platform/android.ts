@@ -43,6 +43,8 @@ import {
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
 } from "../pipelines";
+import { RATING_DATA_URL } from "../rating/rating-links";
+import { readRatingData } from "../rating/read-rating-data";
 import {
   type CostumeSet,
   checkedPort,
@@ -90,6 +92,14 @@ const chineseNamesUrl = catalogueUrlFor(
   import.meta.env.VITE_ABTH_DEV_CHINESE_NAMES,
   CHINESE_NAMES_URL,
 );
+
+const ratingDataUrls = {
+  ourtaikoV1: catalogueUrlFor(
+    Boolean(import.meta.env.DEV),
+    import.meta.env.VITE_ABTH_DEV_RATING_DATA,
+    RATING_DATA_URL.ourtaikoV1,
+  ),
+};
 
 const chartOrigin = chartOriginFor(
   Boolean(import.meta.env.DEV),
@@ -424,6 +434,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readSongCatalogue: (site, since) => readSongCatalogue(site, songCatalogueUrl, since),
 
     readChineseNames: (site) => readChineseNames(site, chineseNamesUrl),
+
+    readRatingData: (site, system) => readRatingData(site, ratingDataUrls[system]),
 
     readChartPicture: chartPictures,
 

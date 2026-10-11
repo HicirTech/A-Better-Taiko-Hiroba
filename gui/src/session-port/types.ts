@@ -11,6 +11,7 @@ import type {
   NameState,
   PickableSongs,
   PlayOptionCode,
+  RatingSystem,
   RecentPlay,
   RecentPlaysReading,
   RenameState,
@@ -25,6 +26,7 @@ import type {
 } from "@abth/core";
 
 import type { PipelineView } from "../pipelines/pipeline-view";
+import type { RatingDataRead } from "../rating/read-rating-data";
 import type {
   ChineseNamesRead,
   Difficulty,
@@ -392,6 +394,8 @@ export interface HirobaSessionPort {
   /** The Chinese wiki's official song names: one GET for each batch of 50 pages, carrying no
    * session, all in one group of the pipeline for other sites. */
   readChineseNames(): Promise<Result<ChineseNamesRead, SongCatalogueFailure>>;
+  /** A rating system's data: one GET that carries no session, in the pipeline for other sites. */
+  readRatingData(system: RatingSystem): Promise<Result<RatingDataRead, SongCatalogueFailure>>;
   /** A picture of a chart's notes, from a chart host the song list links, kept on the device. */
   readChartPicture(url: string): Promise<Result<PictureView, PictureFailure>>;
   /** What each pipeline runs and has waiting now, and its newest `history` groups that ended.

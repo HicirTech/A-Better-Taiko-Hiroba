@@ -74,6 +74,7 @@ export interface Messages {
   "pipelines.op.readSongCatalogue": string;
   "pipelines.op.readChineseNames": string;
   "pipelines.op.picture": string;
+  "pipelines.op.readRatingData": string;
   "pipelines.op.chartPicture": string;
   "pipelines.picture.myDon": string;
   "pipelines.picture.titlePlate": string;
