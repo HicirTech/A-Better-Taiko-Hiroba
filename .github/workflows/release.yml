@@ -225,11 +225,63 @@ jobs:
           # The files are compressed already.
           compression-level: 0
 
+  mac:
+    name: macOS disk images
+    needs: version
+    runs-on: macos-latest
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # The same pin as in ci.yml: keep them in step.
+          bun-version: 1.4.2
+
+      - name: Cache dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Build GUI
+        run: bun run --cwd gui build
+
+      # With no Apple certificate the configuration signs ad hoc: Apple silicon runs only signed code.
+      - name: Package
+        working-directory: gui
+        run: bunx electron-builder --mac dmg --arm64 --x64 --publish never
+
+      - name: Check the names and signatures
+        run: |
+          ls -l gui/release
+          test -f "gui/release/ABTH-$VERSION-mac-arm64.dmg"
+          test -f "gui/release/ABTH-$VERSION-mac-x64.dmg"
+          codesign --verify --deep --strict "gui/release/mac-arm64/A Better Taiko Hiroba.app"
+          codesign --verify --deep --strict "gui/release/mac/A Better Taiko Hiroba.app"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mac
+          path: |
+            gui/release/ABTH-${{ needs.version.outputs.version }}-mac-arm64.dmg
+            gui/release/ABTH-${{ needs.version.outputs.version }}-mac-x64.dmg
+          if-no-files-found: error
+          retention-days: 14
+          # The files are compressed already.
+          compression-level: 0
+
   # Only a tag run publishes, as a published release, not a draft; a dry run stops at its artifacts.
   release:
     name: Release
     if: needs.version.outputs.publish == 'true'
-    needs: [version, android, windows]
+    needs: [version, android, windows, mac]
     runs-on: ubuntu-26.04
     permissions:
       contents: write
@@ -256,4 +308,6 @@ jobs:
             "dist/ABTH-$VERSION.apk" \
             "dist/ABTH-$VERSION-setup.exe" \
             "dist/ABTH-$VERSION-portable.zip" \
+            "dist/ABTH-$VERSION-mac-arm64.dmg" \
+            "dist/ABTH-$VERSION-mac-x64.dmg" \
             gui/update.json

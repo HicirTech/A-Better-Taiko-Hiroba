@@ -17,6 +17,7 @@
     "e2e:desktop": "bun scripts/e2e/run.ts",
     "dist:dir": "bun run build && electron-builder --win --dir",
     "dist:win": "bun run build && electron-builder --win nsis zip --x64",
+    "dist:mac": "bun run build && electron-builder --mac dmg --arm64 --x64",
     "smoke:packaged": "bun scripts/smoke-packaged.ts",
     "android:apk": "bun scripts/android.ts apk",
     "android:run": "bun scripts/android.ts run",
@@ -46,6 +47,15 @@
     },
     "nsis": {
       "artifactName": "ABTH-${version}-setup.${ext}"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "artifactName": "ABTH-${version}-mac-${arch}.${ext}",
+      "icon": "icons/app-icon.png",
+      "identity": "-",
+      "hardenedRuntime": false
     },
     "electronFuses": {
       "runAsNode": false,
