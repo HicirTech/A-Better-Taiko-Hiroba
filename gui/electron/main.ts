@@ -200,7 +200,12 @@ if (!app.requestSingleInstanceLock()) {
 
 app.whenReady().then(async () => {
   if (app.isPackaged) {
-    Menu.setApplicationMenu(null);
+    // On macOS copy, paste and quit go through the menu bar: keep its app and Edit menus.
+    Menu.setApplicationMenu(
+      process.platform === "darwin"
+        ? Menu.buildFromTemplate([{ role: "appMenu" }, { role: "editMenu" }])
+        : null,
+    );
   }
   serveWebBundle();
   sessionStore = createSessionStore(join(app.getPath("userData"), "session.json"));
