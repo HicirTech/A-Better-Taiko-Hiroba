@@ -254,8 +254,11 @@ jobs:
         run: bun run --cwd gui build
 
       # With no Apple certificate the configuration signs ad hoc: Apple silicon runs only signed code.
+      # That takes no secret, so a pull request's dry run signs too.
       - name: Package
         working-directory: gui
+        env:
+          CSC_FOR_PULL_REQUEST: "true"
         run: bunx electron-builder --mac dmg --arm64 --x64 --publish never
 
       - name: Check the names and signatures
