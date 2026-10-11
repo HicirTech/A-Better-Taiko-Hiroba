@@ -7,14 +7,15 @@
 
 ## 下载
 
-在 [Releases 页面](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest)下载最新版本：Windows 有安装包和免安装的 zip，安卓是 APK。有新版本时，App 会提醒你。
+在 [Releases 页面](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest)下载最新版本：Windows 有安装包和免安装的 zip，macOS 有磁盘映像（dmg，Apple 芯片和 Intel 各一个），安卓是 APK。有新版本时，App 会提醒你。
 
 ## 它能做什么
 
 * [x] 用万代南梦宫 ID 登录，并保持登录状态
-* [ ] 查看所有曲目的全部难度：皇冠、评价、分数、打击数、游玩选项
+* [x] 查看所有玩过的谱面：皇冠、评价、分数、打击数、游玩选项
 * [x] 查看自己的资料、小咚、称号、段位、成绩统计和收藏曲目
 * [x] 查看近期游玩记录
+* [x] 根据成绩算出你的 Rating 和各项能力，并列出计入的谱面
 * [x] 更换称号
 * [ ] 按部件拼出称号
 * [x] 修改昵称
@@ -31,6 +32,7 @@
 * [ ] 增量同步，断点可续传
 * [ ] 以命令行方式运行
 * [x] 作为桌面端应用运行（Windows）
+* [x] 作为桌面端应用运行（macOS）
 * [x] 作为安卓端应用运行
 * [ ] 作为 iOS 端应用运行——后期
 * [ ] 作为 Web 端应用运行——后期
@@ -45,7 +47,7 @@
 
 鼓众广场是南梦宫的服务, 为了不被南梦宫ban, App 对它很克制: 同时最多 5 个读取、写入一次一个, 请求失败不会自动重试, 每张图只拿一次就存在本机, 登出后立刻停下
 
-**歌曲资料来自社区。** 作者、星级、BPM 和其他语言的歌名来自 [taiko.wiki](https://taiko.wiki/) 和中文的 [太鼓之達人維基](https://taiko.fandom.com/zh/)（其歌名按 CC BY-SA 使用）。谱面图是 taiko.wiki 链接的图片，存放在它自己的服务器、[太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) 和 Imgur 上。App 只读取它们公开的内容，不会向它们发送你的任何数据。
+**歌曲资料来自社区。** 作者、星级、BPM 和其他语言的歌名来自 [taiko.wiki](https://taiko.wiki/) 和中文的 [太鼓之達人維基](https://taiko.fandom.com/zh/)（其歌名按 CC BY-SA 使用）。谱面图是 taiko.wiki 链接的图片，存放在它自己的服务器、[太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) 和 Imgur 上。Rating 按 [OurTaikoWiki](https://github.com/OurTaiko/OurTaikoWiki) 的第一版 Rating 计算（MIT），用的是 OurTaiko 公开的谱面定数和测量值。App 只读取它们公开的内容，不会向它们发送你的任何数据。
 
 这套工具会以你的身份登录，并操作你真实的太鼓资料: 数据无价, 谨慎操作
 
