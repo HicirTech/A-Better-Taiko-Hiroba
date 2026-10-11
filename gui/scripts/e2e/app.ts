@@ -1,7 +1,7 @@
 /** Starts the desktop app under test, and closes it. */
 
 import electronPath from "electron";
-import { CDP_PORT, HIROBA, IDP_HOST, IMG, root, USER_DATA } from "./config";
+import { CDP_PORT, HIROBA, IDP_HOST, IMG, REFUSING_HOST, root, USER_DATA } from "./config";
 import { connect, waitFor } from "./harness";
 
 export async function launch({
@@ -29,6 +29,7 @@ export async function launch({
       ABTH_DEV_HIROBA_ORIGIN: HIROBA,
       ABTH_DEV_IDP_HOST: IDP_HOST,
       ABTH_DEV_IMG_ORIGIN: IMG,
+      ABTH_DEV_REFUSING_HOST: REFUSING_HOST,
       ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
       ABTH_DEV_SONG_CATALOGUE: `${HIROBA}/__song-catalogue`,
