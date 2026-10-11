@@ -65,7 +65,9 @@ export type SignInOutcome =
   | { readonly kind: "unavailable" }
   /** The sign-in view was sent off the two sites it may open. Only the host crosses, never a path
    * or query: those carry the OAuth state. */
-  | { readonly kind: "refused"; readonly host: string };
+  | { readonly kind: "refused"; readonly host: string }
+  /** A service known to refuse an embedded browser: the sign-in goes on in the system's browser. */
+  | { readonly kind: "refuser"; readonly host: string };
 
 /** A dan's board number as core numbers it: 1 (五級) to 15 (十段), then 16 to 19 for the four named
  * ranks, which my page's label has never shown. */

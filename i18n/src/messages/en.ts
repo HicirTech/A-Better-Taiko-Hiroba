@@ -150,7 +150,9 @@ export const en: Messages = {
   "signIn.noSession": "Sign-in finished, but Hiroba did not start a session. Please try again.",
   "signIn.unavailable": "The sign-in window could not be opened. Please try again.",
   "signIn.refused":
-    "Sign-in stopped: it was sent to {host}, which this app does not open. Please report that host name.",
+    "Sign-in stopped: it was sent to {host}, which is not on https and which this app does not open. Please report that host name.",
+  "signIn.refuser":
+    "Sign-in stopped: {host} does not sign in inside an app. Hiroba's sign-in page is opening in your browser; signing in there does not sign this app in. Add a mail address and password to your Bandai Namco ID there once, then sign in here with them.",
   "signOut.action": "Sign out",
   "signOut.note":
     "You stay signed in on this device until you sign out. Hiroba's pictures stay here after that too.",

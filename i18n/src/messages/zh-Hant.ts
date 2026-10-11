@@ -146,7 +146,10 @@ export const zhHant: Messages = {
   "signIn.cancelled": "已取消登入。",
   "signIn.noSession": "登入已完成，但廣場沒有建立工作階段。請再試一次。",
   "signIn.unavailable": "無法開啟登入視窗。請再試一次。",
-  "signIn.refused": "登入被轉到了本應用程式不會開啟的 {host}，已中止。請回報這個主機名稱。",
+  "signIn.refused":
+    "登入被轉到了不是 https、本應用程式不會開啟的 {host}，已中止。請回報這個主機名稱。",
+  "signIn.refuser":
+    "登入已中止：{host} 不允許在應用程式內登入。正在用瀏覽器開啟廣場的登入頁；在瀏覽器裡登入不會讓本應用程式登入。請在那裡為 Bandai Namco ID 新增一次電子郵件和密碼，然後在這裡用它們登入。",
   "signOut.action": "登出",
   "signOut.note": "在你登出之前，這部裝置會一直保持登入。廣場的圖片在登出後仍會留在這部裝置上。",
   "update.check": "檢查更新",

@@ -5,6 +5,7 @@ export const HIROBA_ENDPOINTS: HirobaEndpoints = {
   idpHost: "account.bandainamcoid.com",
   idpDomain: "bandainamcoid.com",
   imgOrigin: "https://img.taiko-p.jp",
+  refusingHosts: ["accounts.google.com"],
 };
 
 /** The one cookie that is the Hiroba session. Only a platform transport ever reads its value. */
@@ -17,26 +18,35 @@ export const loginPageUrl = (endpoints: HirobaEndpoints): string =>
 export const myPageUrl = (endpoints: HirobaEndpoints): string =>
   `${endpoints.hirobaOrigin}/mypage_top.php`;
 
+/** The page the system browser opens when a service refuses to sign in inside the app: the login
+ * page, which is fixed and https; a stand-in's http page never leaves the app, so null. */
+export function systemBrowserEntryUrl(endpoints: HirobaEndpoints): string | null {
+  const entry = loginPageUrl(endpoints);
+  return entry.startsWith("https://") ? entry : null;
+}
+
 /** The ID host's origin. It is served on the same scheme as Hiroba: https, or http for the mock. */
 export const idpOrigin = (endpoints: HirobaEndpoints): string =>
   `${new URL(endpoints.hirobaOrigin).protocol}//${endpoints.idpHost}`;
 
 /** Development only: a local stand-in's endpoints. Both overrides or neither, as one alone would
- * leave the other on the real site; the picture host's is optional and needs both of them. */
+ * leave the other on the real site; the picture host's and the refusing host's need both. */
 export function endpointsFromOverrides(
   hirobaOrigin: string | undefined,
   idpHost: string | undefined,
   imgOrigin?: string,
+  refusingHost?: string,
 ): HirobaEndpoints {
   const origin = hirobaOrigin ?? "";
   const host = idpHost ?? "";
   const pictures = imgOrigin ?? "";
-  if (origin === "" && host === "" && pictures === "") {
+  const refuser = refusingHost ?? "";
+  if (origin === "" && host === "" && pictures === "" && refuser === "") {
     return HIROBA_ENDPOINTS;
   }
   if (origin === "" || host === "") {
     throw new Error(
-      "Set both development endpoint overrides, or neither, and the picture host's only with both.",
+      "Set both development endpoint overrides, or neither, and the others only with both.",
     );
   }
   return {
@@ -46,5 +56,6 @@ export function endpointsFromOverrides(
     idpDomain: host.replace(/:\d+$/, ""),
     // No override, no picture host: a stand-in run can never reach the real one.
     imgOrigin: pictures === "" ? null : pictures,
+    refusingHosts: refuser === "" ? [] : [refuser],
   };
 }

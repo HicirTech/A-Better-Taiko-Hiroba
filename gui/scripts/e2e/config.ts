@@ -8,6 +8,8 @@ export const CDP_PORT = 9333;
 export const IDP_HOST = "id.127.0.0.1.sslip.io:8808";
 /** The stand-in's picture host: outside Hiroba's cookie Domain. */
 export const IMG = "http://img.127.0.0.1.sslip.io:8807";
+/** The stand-in for a service that refuses to sign in inside an app. */
+export const REFUSING_HOST = "refuses.127.0.0.1.sslip.io:8808";
 export const IDP_MARKER = "abth-mock-idp-marker";
 export const MY_PAGE = "/mypage_top.php";
 export const DAN_LABEL = "/imgsrc_danlabel.php";

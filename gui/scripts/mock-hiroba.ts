@@ -32,6 +32,8 @@ const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
 // The OAuth hop is on a second ID host, as the real one: allowing only the form's host stops there.
 const IDP_AUTH = `http://auth.${IDP_HOST}:${IDP_PORT}`;
 const IMG = `http://${IMG_HOST}:${HIROBA_PORT}`;
+/** A service that refuses embedded browsers, off both sites, as Google is. */
+const REFUSER_HOST = `refuses.${IP}.sslip.io:${IDP_PORT}`;
 const TAIKO_NO = "000000000000";
 
 const sessions = new Map<string, MockSession>();
@@ -39,6 +41,11 @@ let lastIssued = "";
 let rotateNext = false;
 let holdIdForm = false;
 let sendOffsite = false;
+/** Set while /__popup?on=1 has the ID form finish in a popup, as some services' sign-ins do. */
+let signInByPopup = false;
+let popupSignIns = 0;
+/** Set while /__refuser?on=1 has the ID page open a service that refuses embedded browsers. */
+let signInByRefuser = false;
 let postToLogin = false;
 let redirectNextPost: { status: number; rotate: boolean } | null = null;
 const POST_REDIRECT_STATUSES: readonly number[] = [301, 302, 303, 307, 308];
@@ -105,6 +112,11 @@ const untyped = (bytes: Uint8Array) =>
 const RECOMMENDED_BROWSERS = page("<p>Please use one of the recommended browsers.</p>");
 const submitSoon = (id: string) =>
   `<script>setTimeout(() => document.getElementById("${id}").submit(), 500)</script>`;
+const POPUP_DONE = "abth-mock-popup-done";
+/** The ID form's page finishes in a popup, which tells it when its own form may go. */
+const POPUP_SIGN_IN = `<script>addEventListener("message", (event) => { if (event.origin === location.origin && event.data === "${POPUP_DONE}") document.getElementById("f").submit(); }); setTimeout(() => window.open("/popup.html", "abth_mock_popup"), 500)</script>`;
+/** The ID form's page sends the sign-in to a refusing service's popup, as Google's does. */
+const REFUSER_SIGN_IN = `<script>setTimeout(() => window.open("http://${REFUSER_HOST}/signin.html", "abth_mock_refuser"), 500)</script>`;
 
 // odd: a name with neither a count nor COMPLETE, a shape no page has shown.
 type MedalState = "none" | "collecting" | "complete" | "odd";
@@ -563,6 +575,15 @@ Bun.serve({
       case "/__offsite":
         sendOffsite = searchParams.get("on") === "1";
         return new Response(sendOffsite ? "offsite" : "onsite");
+      case "/__popup": {
+        signInByPopup = searchParams.get("on") === "1";
+        const signIns = popupSignIns;
+        popupSignIns = 0;
+        return Response.json({ signIns });
+      }
+      case "/__refuser":
+        signInByRefuser = searchParams.get("on") === "1";
+        return new Response(signInByRefuser ? "refusing" : "accepting");
       case "/__hold-read": {
         const on = searchParams.get("on");
         if (on === "1" && releaseReads === null) {
@@ -703,9 +724,30 @@ Bun.serve({
         );
       case "/login.html":
         return page(
-          `<form id="f" method="post" action="/login"><input name="back" type="hidden" value="${url.searchParams.get("redirect_uri") ?? ""}"></form><button form="f">Sign in</button><script>localStorage.setItem("abth_mock_idp", "${IDP_MARKER}-storage")</script>${holdIdForm ? "" : submitSoon("f")}`,
+          `<form id="f" method="post" action="/login"><input name="back" type="hidden" value="${url.searchParams.get("redirect_uri") ?? ""}"></form><button form="f">Sign in</button><script>localStorage.setItem("abth_mock_idp", "${IDP_MARKER}-storage")</script>${holdIdForm ? "" : signInByRefuser ? REFUSER_SIGN_IN : signInByPopup ? POPUP_SIGN_IN : submitSoon("f")}`,
+        );
+      case "/signin.html":
+        return page("<p>This service does not sign in inside apps.</p>");
+      case "/popup.html":
+        return page(`<form id="p" method="post" action="/popup-login"></form>${submitSoon("p")}`);
+      case "/popup-login":
+        return new Response(
+          `<!doctype html><script>opener.postMessage("${POPUP_DONE}", location.origin); close();</script>`,
+          {
+            headers: {
+              "content-type": "text/html; charset=utf-8",
+              "set-cookie": `idp_popup=${IDP_MARKER}-popup; Path=/; Max-Age=2592000`,
+            },
+          },
         );
       case "/login": {
+        if (signInByPopup) {
+          // The popup's cookie reaches this window only if both share the sign-in's session.
+          if (!cookieNamesOf(request).includes("idp_popup")) {
+            return page("<p>The popup's sign-in never reached this window.</p>");
+          }
+          popupSignIns += 1;
+        }
         const back = String((await request.formData()).get("back") ?? "");
         const response = redirect(`/passkeyInfo.html?back=${encodeURIComponent(back)}`);
         response.headers.append(

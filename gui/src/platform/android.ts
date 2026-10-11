@@ -29,7 +29,9 @@ import {
   queuePort,
   readOwnProfile,
   sessionEnded,
+  signInHost,
   signInStep,
+  systemBrowserEntryUrl,
   viewOfPipelines,
 } from "../hiroba-session";
 import {
@@ -69,6 +71,7 @@ const endpoints: HirobaEndpoints = import.meta.env.DEV
       import.meta.env.VITE_ABTH_DEV_HIROBA_ORIGIN,
       import.meta.env.VITE_ABTH_DEV_IDP_HOST,
       import.meta.env.VITE_ABTH_DEV_IMG_ORIGIN,
+      import.meta.env.VITE_ABTH_DEV_REFUSING_HOST,
     )
   : HIROBA_ENDPOINTS;
 
@@ -271,13 +274,22 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       await forget();
       await InAppBrowser.removeAllListeners();
       let landed = false;
+      let refuser: string | null = null;
       let browserClosed: () => void = () => undefined;
       const closed = new Promise<void>((resolve) => {
         browserClosed = resolve;
       });
+      // The in-app browser has no hook before a page loads, so a refuser's page shows for a moment.
       await InAppBrowser.addListener("browserPageNavigationCompleted", ({ url }) => {
-        if (!landed && signInStep(url, endpoints) === "landed") {
+        if (landed || refuser !== null) {
+          return;
+        }
+        const step = signInStep(url, endpoints);
+        if (step === "landed") {
           landed = true;
+          void InAppBrowser.close();
+        } else if (step === "refuser") {
+          refuser = signInHost(url);
           void InAppBrowser.close();
         }
       });
@@ -306,6 +318,14 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
       }
       await closed;
       await InAppBrowser.removeAllListeners();
+      if (refuser !== null) {
+        await forget();
+        const entry = systemBrowserEntryUrl(endpoints);
+        if (entry !== null) {
+          await InAppBrowser.openInExternalBrowser({ url: entry });
+        }
+        return { kind: "refuser", host: refuser } satisfies SignInOutcome;
+      }
       if (!landed) {
         await forget();
         return { kind: "cancelled" } satisfies SignInOutcome;

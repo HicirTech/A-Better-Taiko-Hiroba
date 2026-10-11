@@ -15,6 +15,7 @@ describe("endpointsFromOverrides", () => {
       idpHost: "id.test:8808",
       idpDomain: "id.test",
       imgOrigin: null,
+      refusingHosts: [],
     });
   });
 
@@ -26,7 +27,21 @@ describe("endpointsFromOverrides", () => {
       idpHost: "id.test:8808",
       idpDomain: "id.test",
       imgOrigin: "http://img.test:8807",
+      refusingHosts: [],
     });
+  });
+
+  test("takes a refusing host's override beside the other two, and knows Google without one", () => {
+    expect(
+      endpointsFromOverrides(
+        "http://hiroba.test:8807",
+        "id.test:8808",
+        undefined,
+        "refuses.test:8808",
+      ).refusingHosts,
+    ).toEqual(["refuses.test:8808"]);
+    expect(HIROBA_ENDPOINTS.refusingHosts).toEqual(["accounts.google.com"]);
+    expect(() => endpointsFromOverrides(undefined, undefined, undefined, "refuses.test")).toThrow();
   });
 
   test("refuses one override alone rather than reaching the real other site", () => {

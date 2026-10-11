@@ -85,6 +85,8 @@ export const sessionExpiryKeys = [
   "lostSessionHandled",
   "cancelHandled",
   "refusalNamed",
+  "refuserEndsTheAttempt",
+  "signInThroughAPopup",
   "signInForgetsThePictures",
   "signInForgetsTheCostumePreview",
   "sessionKept",
@@ -153,15 +155,27 @@ export async function sessionExpiry(ctx: Ctx) {
 
   await fetch(`${HIROBA}/__offsite?on=1`);
   await click("#sign-in");
-  await until("offsite.127.0.0.1.sslip.io:8808, which this app does not open");
+  await until("offsite.127.0.0.1.sslip.io:8808, which is not on https");
   await fetch(`${HIROBA}/__offsite?on=0`);
   results.refusalNamed = true;
+
+  // A service that refuses embedded browsers is never loaded: its popup ends the attempt. The
+  // stand-in's entry page is http, so no browser opens here.
+  await fetch(`${HIROBA}/__refuser?on=1`);
+  await click("#sign-in");
+  await until("refuses.127.0.0.1.sslip.io:8808 does not sign in inside an app");
+  await fetch(`${HIROBA}/__refuser?on=0`);
+  results.refuserEndsTheAttempt = true;
 
   await page.evaluate(
     `(() => { window.firstCard = null; const observer = new MutationObserver(() => { if (document.querySelector("#profile") === null) return; window.firstCard = ["#title-plate-image", "#my-don-image"].map((selector) => document.querySelector(selector) !== null); observer.disconnect(); }); observer.observe(document.body, { childList: true, subtree: true }); })()`,
   );
+  // This sign-in finishes in a popup, as some services' do: it must share the sign-in's session.
+  await fetch(`${HIROBA}/__popup?on=1`);
   await click("#sign-in");
   await until("サンプルどん");
+  const popup = (await (await fetch(`${HIROBA}/__popup?on=0`)).json()) as { signIns: number };
+  results.signInThroughAPopup = popup.signIns === 1;
   await waitForSeen(
     "My Don picture",
     page,

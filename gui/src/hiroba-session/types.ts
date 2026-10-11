@@ -15,6 +15,9 @@ export interface HirobaEndpoints {
   /** The one host off Hiroba my page's pictures come from (`https://img.taiko-p.jp`, the My Don
    * portrait); never sent the session. Null when there is none: then nothing is asked of it. */
   readonly imgOrigin: string | null;
+  /** Hosts of services known to refuse a sign-in inside an embedded browser (`accounts.google.com`):
+   * their pages are never loaded. Absent means none known. */
+  readonly refusingHosts?: readonly string[];
 }
 
 /** Where a URL seen during sign-in is, judged by origin and path only, never by substring. */
@@ -29,5 +32,9 @@ export type SignInStep =
   | "landed"
   /** Any other Hiroba page, including the callback hop whose name nobody has recorded. */
   | "otherHiroba"
-  /** Neither site, including either one on another scheme or port. */
+  /** A service known to refuse an embedded browser, on Hiroba's scheme: the attempt ends here. */
+  | "refuser"
+  /** Any other https page: a service the sign-in passes through, such as another account's. */
+  | "service"
+  /** Not https and neither site, including either one on another scheme or port. */
   | "elsewhere";

@@ -12,6 +12,7 @@ export {
   loginPageUrl,
   myPageUrl,
   SESSION_COOKIE_NAME,
+  systemBrowserEntryUrl,
 } from "./endpoints";
 export {
   encodeForm,
@@ -89,5 +90,5 @@ export {
   type SessionWrites,
   type SessionWritesOptions,
 } from "./session-writes";
-export { signInStep } from "./sign-in-step";
+export { signInHost, signInStep } from "./sign-in-step";
 export type { HirobaEndpoints, SignInStep, WriteOptions } from "./types";

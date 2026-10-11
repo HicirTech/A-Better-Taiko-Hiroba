@@ -364,6 +364,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "裡幾鐘去",
     "數皇篩國區",
     "慢需",
+    "允許瀏讓那電子郵然們",
   ].join(""),
 );
 
