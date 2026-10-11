@@ -9,3 +9,4 @@ export * from "./operation-results";
 export * from "./rating";
 export * from "./recent-plays";
 export * from "./scores";
+export * from "./tja";
