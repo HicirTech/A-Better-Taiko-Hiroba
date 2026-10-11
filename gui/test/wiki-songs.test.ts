@@ -23,7 +23,7 @@ const wikiEntry = (fields: Record<string, unknown> = {}) => ({
 });
 
 type Levels = CatalogueSong["levels"];
-const BARE_CHART = { maxCombo: null, branched: false, images: [] };
+const BARE_CHART = { maxCombo: null, playTime: null, branched: false, images: [] };
 /** The levels, and a bare chart for each of them, as courses with nothing but a level read. */
 const charted = (levels: Levels): Pick<CatalogueSong, "levels" | "charts"> => ({
   levels,
@@ -196,10 +196,11 @@ describe("parseWikiSongs", () => {
     expectSong(fields, { bpm: kept });
   });
 
-  test("reads a chart's combo, its branches and its pictures, dropping what is no address", () => {
+  test("reads a chart's combo, length, branches and pictures, dropping what is no address", () => {
     const oni = {
       level: 7,
       maxCombo: 831,
+      playTime: 112.85,
       isBranched: 1,
       images: [
         "https://cdn.wikiwiki.jp/to/w/taiko-fumen/oni.png?rev=1",
@@ -219,6 +220,7 @@ describe("parseWikiSongs", () => {
               ...charted({ ...NO_LEVELS, oni: 7 }).charts,
               oni: {
                 maxCombo: 831,
+                playTime: 112.85,
                 branched: true,
                 images: [
                   "https://cdn.wikiwiki.jp/to/w/taiko-fumen/oni.png?rev=1",
@@ -237,6 +239,14 @@ describe("parseWikiSongs", () => {
     const courses = { oni: { level: 7, maxCombo } };
     expectSong({ courses }, charted({ ...NO_LEVELS, oni: 7 }));
   });
+
+  test.each([0, -1, Number.POSITIVE_INFINITY, "112", null])(
+    "keeps no play time of %p",
+    (playTime) => {
+      const courses = { oni: { level: 7, playTime } };
+      expectSong({ courses }, charted({ ...NO_LEVELS, oni: 7 }));
+    },
+  );
 
   test.each(["ns2_sample", "", "123456", "12a", " 1001", "-1", "1.5", "１００１"])(
     "skips the song numbered %p",

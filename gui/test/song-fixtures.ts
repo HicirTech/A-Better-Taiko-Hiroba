@@ -3,6 +3,7 @@ import type { CatalogueSong, ChartFacts } from "../src/song-catalogue/types";
 /** A chart with a combo and no pictures; every field can be overridden. */
 export const chart = (overrides: Partial<ChartFacts> = {}): ChartFacts => ({
   maxCombo: 300,
+  playTime: 120,
   branched: false,
   images: [],
   ...overrides,

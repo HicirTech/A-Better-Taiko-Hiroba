@@ -35,6 +35,8 @@ export interface SongBpm {
 
 export interface ChartFacts {
   readonly maxCombo: number | null;
+  /** taiko.wiki's length of the chart in seconds; its notes per second are maxCombo over it. */
+  readonly playTime: number | null;
   readonly branched: boolean;
   /** Pictures of the chart's notes, as taiko.wiki links them, in its order. */
   readonly images: readonly string[];
