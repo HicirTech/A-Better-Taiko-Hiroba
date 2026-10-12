@@ -2,7 +2,7 @@ import { decode } from "fast-png";
 
 import type { DanClearState } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
-import { matchGlyph, measureGlyph } from "./glyph-matcher";
+import { matchGlyph, measureGlyph, nearestGlyph } from "./glyph-matcher";
 import { LABEL_TEMPLATES, PLATE_NAME_TEMPLATES } from "./glyph-templates";
 import { classifyStamp, PLATE_HEIGHT, PLATE_WIDTH } from "./stamp-classifier";
 import type { DanImageFailure, LabelReading, PlateReading } from "./types";
@@ -84,7 +84,13 @@ export function readDanLabel(bytes: Uint8Array): Result<LabelReading, DanImageFa
   }
   const match = matchGlyph(grid, LABEL_TEMPLATES, LABEL_MAX_DISTANCE, LABEL_MIN_SEPARATION);
   if (match === null) {
-    return err({ kind: "unreadableGlyph", nearestDan: null, nearestDistance: null });
+    // A glyph no template matches, such as a styling never seen: the caller may look elsewhere.
+    const nearest = nearestGlyph(grid, LABEL_TEMPLATES);
+    return err({
+      kind: "unreadableGlyph",
+      nearestDan: nearest?.key ?? null,
+      nearestDistance: nearest?.distance ?? null,
+    });
   }
   return ok({ dan: match.key });
 }
