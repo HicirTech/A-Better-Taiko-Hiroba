@@ -1,16 +1,26 @@
 import { describe, expect, test } from "bun:test";
-import { ok, type Transport } from "@abth/core";
+import {
+  EMPTY_SCORE_BOOK,
+  isMilestone,
+  ok,
+  type ScoreBook,
+  type ScoreChangeLog,
+  type Transport,
+} from "@abth/core";
 
 import type { MockSession } from "../scripts/mock-costume";
 import { createPlayHistory } from "../scripts/mock-history";
 import { createScorePages } from "../scripts/mock-scores";
 import {
   createMemoryRecentPlaysStore,
+  createMemoryScoreChangesStore,
   createMemoryScoresStore,
   createRecentPlaysReader,
   createScoresReader,
   SCORE_DETAIL_OPERATION,
   SCORE_LIST_OPERATION,
+  type ScoreChangesStore,
+  type ScoresStore,
 } from "../src/hiroba-session";
 import {
   createPipeline,
@@ -72,7 +82,10 @@ function hirobaWith(shown: number) {
   return { history, scores, transport, play, detailsAsked };
 }
 
-function readersOver(transport: Transport) {
+function readersOver(
+  transport: Transport,
+  kept = { book: createMemoryScoresStore(), changes: createMemoryScoreChangesStore() },
+) {
   const ended: { readonly pipeline: string; readonly group: EndedGroup }[] = [];
   const pipeline = (name: string, readConsumers: number) =>
     createPipeline({
@@ -96,7 +109,8 @@ function readersOver(transport: Transport) {
     endpoints: ENDPOINTS,
     io: pipeline("io", IO_READ_CONSUMERS),
     pipeline: pipeline("scores", SCORE_READ_CONSUMERS),
-    store: createMemoryScoresStore(),
+    store: kept.book,
+    changes: kept.changes,
     owner: () => OWNER,
     endSession,
     walk: recentPlays.readRecentPlays,
@@ -108,10 +122,17 @@ function readersOver(transport: Transport) {
       .filter((one) => one.pipeline === name && one.group.operation === operation)
       .map((one) => one.group.subject ?? "")
       .sort();
-  return { recentPlays, scores, groups, sessionEnds: () => sessionEnds };
+  const log = () => kept.changes.load(OWNER);
+  return { recentPlays, scores, groups, sessionEnds: () => sessionEnds, log };
 }
 
 const sorted = (values: readonly string[]) => [...values].sort();
+/** Each logged row as its chart, then its crown and high score before and after. */
+const rowsOf = (log: ScoreChangeLog | null) =>
+  (log?.changes ?? []).map(
+    ({ songNo, level, from, to }) =>
+      `${songNo}/${level} ${from.crown} ${from.highScore} > ${to.crown} ${to.highScore}`,
+  );
 
 describe("createScoresReader", () => {
   test("a first read takes every list in Hiroba's IO pipeline, then each played chart's details", async () => {
@@ -296,5 +317,156 @@ describe("createScoresReader", () => {
 
     expect(during).toEqual({ step: "recentPlays", page: 1 });
     expect(await scores.scoresProgress()).toBeNull();
+  });
+});
+
+describe("the log of what reads of scores change", () => {
+  test("a first read logs nothing, and starts the log once it has ended", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores, log } = readersOver(hiroba.transport);
+
+    await scores.readScores();
+
+    expect(await log()).toEqual({ baselined: true, changes: [] });
+  });
+
+  test("a later read logs a better score, and a chart played for the first time", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores, log } = readersOver(hiroba.transport);
+    await scores.readScores();
+
+    hiroba.play({ replay: "3", play: "1" });
+    await scores.readScores();
+    await scores.readScores();
+
+    // Song 13 was listed unplayed; the second read of the two found nothing new.
+    expect(sorted(rowsOf(await log()))).toEqual([
+      "1003/4 gold 800003 > gold 801003",
+      "1013/4 none null > silver 800013",
+    ]);
+  });
+
+  test("a first clear stays a milestone though a list read in the same read showed it first", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores, log } = readersOver(hiroba.transport);
+    await scores.readScores();
+
+    hiroba.play({ play: "1" });
+    await scores.readEveryScore();
+
+    const changes = (await log())?.changes ?? [];
+    expect(rowsOf(await log())).toEqual(["1013/4 silver null > silver 800013"]);
+    expect(changes.every(isMilestone)).toBe(true);
+  });
+
+  test("a first read that stopped logs nothing, nor does the read that ends it", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores, log } = readersOver(hiroba.transport);
+    hiroba.scores.control(new URLSearchParams({ fail: "1009/5" }));
+    await scores.readScores();
+    expect(await log()).toEqual({ baselined: false, changes: [] });
+
+    hiroba.scores.control(new URLSearchParams({ fail: "" }));
+    await scores.readScores();
+
+    expect(await log()).toEqual({ baselined: true, changes: [] });
+  });
+
+  test("a song read before any full read logs nothing", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores, log } = readersOver(hiroba.transport);
+
+    await scores.readSongScores("1003", { level: 4, title: "サンプル曲 3", genre: 4 });
+
+    expect(await log()).toEqual({ baselined: false, changes: [] });
+  });
+
+  test("a player whose scores were read before the log was kept logs the next change", async () => {
+    const hiroba = hirobaWith(12);
+    const book = createMemoryScoresStore();
+    await readersOver(hiroba.transport, {
+      book,
+      changes: createMemoryScoreChangesStore(),
+    }).scores.readScores();
+
+    hiroba.play({ replay: "3" });
+    const later = readersOver(hiroba.transport, { book, changes: createMemoryScoreChangesStore() });
+    await later.scores.readScores();
+
+    expect(rowsOf(await later.log())).toEqual(["1003/4 gold 800003 > gold 801003"]);
+  });
+
+  test("the log is kept across launches, each launch adding to it", async () => {
+    const hiroba = hirobaWith(12);
+    const kept = { book: createMemoryScoresStore(), changes: createMemoryScoreChangesStore() };
+    await readersOver(hiroba.transport, kept).scores.readScores();
+    hiroba.play({ replay: "3" });
+    await readersOver(hiroba.transport, kept).scores.readScores();
+
+    hiroba.play({ replay: "4" });
+    const third = readersOver(hiroba.transport, kept);
+    await third.scores.readScores();
+
+    expect(rowsOf(await third.log())).toEqual([
+      "1003/4 gold 800003 > gold 801003",
+      "1004/5 silver 800004 > gold 801004",
+    ]);
+  });
+
+  test("every book a save writes has its rows in the log written before it", async () => {
+    const hiroba = hirobaWith(30);
+    const books = createMemoryScoresStore();
+    const logs = createMemoryScoreChangesStore();
+    let written: ScoreChangeLog | null = null;
+    const pairs: { readonly book: ScoreBook; readonly log: ScoreChangeLog | null }[] = [];
+    // A slow log, so the other details fold in while it is written.
+    const changes: ScoreChangesStore = {
+      load: (taikoNo) => logs.load(taikoNo),
+      save: async (taikoNo, log) => {
+        await Bun.sleep(20);
+        written = log;
+        await logs.save(taikoNo, log);
+      },
+    };
+    const store: ScoresStore = {
+      load: (taikoNo) => books.load(taikoNo),
+      save: async (taikoNo, book) => {
+        pairs.push({ book, log: written });
+        await books.save(taikoNo, book);
+      },
+    };
+    const { scores } = readersOver(hiroba.transport, { book: store, changes });
+    await scores.readScores();
+    const before = await books.load(OWNER);
+    for (let n = 1; n <= 30; n += 1) {
+      hiroba.play({ replay: String(n) });
+    }
+    pairs.length = 0;
+
+    await scores.readScores();
+
+    const unlogged = pairs.flatMap(({ book, log }) => {
+      const logged = new Set((log?.changes ?? []).map(({ songNo, level }) => `${songNo}/${level}`));
+      return Object.keys(book.scores).filter(
+        (key) => book.scores[key] !== before.scores[key] && !logged.has(key),
+      );
+    });
+    expect(pairs.length).toBeGreaterThan(1);
+    expect(unlogged).toEqual([]);
+  });
+
+  test("a log that cannot be written keeps the book from being written", async () => {
+    const hiroba = hirobaWith(12);
+    const book = createMemoryScoresStore();
+    const refusing: ScoreChangesStore = {
+      load: async () => null,
+      save: async () => {
+        throw new Error("no room");
+      },
+    };
+    const { scores } = readersOver(hiroba.transport, { book, changes: refusing });
+
+    await expect(scores.readScores()).rejects.toThrow("no room");
+    expect(await book.load(OWNER)).toEqual(EMPTY_SCORE_BOOK);
   });
 });

@@ -61,6 +61,7 @@ import { createDiskPictureStore } from "./picture-disk-store";
 import { createPipelineHistoryStore } from "./pipeline-history-store";
 import { createRecentPlaysStore } from "./recent-plays-store";
 import { saveReads } from "./save-reads";
+import { createScoreChangesStore } from "./score-changes-store";
 import { createScoresStore } from "./scores-store";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
@@ -285,6 +286,7 @@ app.whenReady().then(async () => {
     io: pipelines.io,
     pipeline: pipelines.scores,
     store: createScoresStore(join(app.getPath("userData"), "scores.json")),
+    changes: createScoreChangesStore(join(app.getPath("userData"), "score-changes.json")),
     owner: () => owner,
     endSession: () => setSession(null),
     walk: recentPlays.readRecentPlays,
