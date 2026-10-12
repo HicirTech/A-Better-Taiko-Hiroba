@@ -1,8 +1,21 @@
 import { describe, expect, test } from "bun:test";
-import { EMPTY_SCORE_BOOK, type Score, type ScoreBook } from "@abth/core";
+import {
+  EMPTY_SCORE_BOOK,
+  MAX_SCORE_CHANGES,
+  type Score,
+  type ScoreBook,
+  type ScoreChange,
+  type ScoreChangeLog,
+} from "@abth/core";
 
+import { createScoreChangesStore } from "../electron/score-changes-store";
 import { createScoresStore, type ScoresFiles } from "../electron/scores-store";
-import { readStoredScoreBook } from "../src/hiroba-session";
+import {
+  createMemoryScoreChangesStore,
+  readStoredScoreBook,
+  readStoredScoreChanges,
+} from "../src/hiroba-session";
+import { createIndexedDbScoreChangesStore } from "../src/platform/android-score-changes-store";
 import { createIndexedDbScoresStore } from "../src/platform/android-scores-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
@@ -48,6 +61,59 @@ const BOOK: ScoreBook = {
   unlisted: [{ songTitle: "新曲", genre: 2, level: 4 }],
   full: false,
 };
+
+/** 1178's Ura, first cleared, then played again for a better score. */
+const CHANGES: readonly ScoreChange[] = [
+  {
+    songNo: "1178",
+    level: 5,
+    from: {
+      crown: "none",
+      scoreRank: null,
+      highScore: null,
+      stageCount: null,
+      clearCount: null,
+      fullComboCount: null,
+      donderfulComboCount: null,
+      fetchedAt: "2026-10-09T12:00:00.000Z",
+    },
+    to: {
+      crown: "silver",
+      scoreRank: 5,
+      highScore: 940000,
+      stageCount: 3,
+      clearCount: 3,
+      fullComboCount: 0,
+      donderfulComboCount: 0,
+      fetchedAt: "2026-10-10T12:00:00.000Z",
+    },
+  },
+  {
+    songNo: "1178",
+    level: 5,
+    from: {
+      crown: "silver",
+      scoreRank: 5,
+      highScore: 940000,
+      stageCount: 3,
+      clearCount: 3,
+      fullComboCount: 0,
+      donderfulComboCount: 0,
+      fetchedAt: "2026-10-10T12:00:00.000Z",
+    },
+    to: {
+      crown: "gold",
+      scoreRank: 6,
+      highScore: 950180,
+      stageCount: 4,
+      clearCount: 4,
+      fullComboCount: 2,
+      donderfulComboCount: 0,
+      fetchedAt: "2026-10-11T12:00:00.000Z",
+    },
+  },
+];
+const LOG: ScoreChangeLog = { baselined: true, changes: CHANGES };
 
 /** Files in memory, as the desktop store writes them. */
 function fakeFiles() {
@@ -101,6 +167,35 @@ describe("readStoredScoreBook", () => {
   });
 });
 
+describe("readStoredScoreChanges", () => {
+  test("reads a kept log back whole", () => {
+    expect(readStoredScoreChanges(JSON.parse(JSON.stringify(LOG)))).toEqual(LOG);
+  });
+
+  test.each<[name: string, stored: unknown]>([
+    ["nothing", undefined],
+    ["another shape", { changes: {} }],
+    ["a log whose start is not a yes or a no", { ...LOG, baselined: "yes" }],
+  ])("reads %s as no log", (_name, stored) => {
+    expect(readStoredScoreChanges(stored)).toBeNull();
+  });
+
+  test("drops a row with a broken reading, and keeps the others", () => {
+    const broken = { ...CHANGES[1], to: { ...CHANGES[1]?.to, stageCount: -1 } };
+    const read = readStoredScoreChanges({ baselined: true, changes: [CHANGES[0], broken] });
+    expect(read?.changes).toEqual(CHANGES.slice(0, 1));
+  });
+
+  test("keeps no more rows than the cap from what is kept", () => {
+    const gold = CHANGES[1]?.to;
+    const replayed = { songNo: "1178", level: 5, from: gold, to: { ...gold, stageCount: 5 } };
+    const changes = Array.from({ length: MAX_SCORE_CHANGES + 2 }, () => replayed);
+    expect(readStoredScoreChanges({ baselined: true, changes })?.changes).toHaveLength(
+      MAX_SCORE_CHANGES,
+    );
+  });
+});
+
 describe("the score stores", () => {
   test("the desktop's keeps each player's book in one file, across stores", async () => {
     const { files } = fakeFiles();
@@ -121,5 +216,26 @@ describe("the score stores", () => {
       EMPTY_SCORE_BOOK,
     );
     expect([...indexedDb.tables.keys()]).toEqual(["books"]);
+  });
+
+  test("the logs of changes: none until saved, then each player's own, on every platform", async () => {
+    const { files } = fakeFiles();
+    const indexedDb = createFakeIndexedDb();
+    const stores = [
+      () => createMemoryScoreChangesStore(),
+      () => createScoreChangesStore("score-changes.json", files),
+      () => createIndexedDbScoreChangesStore(indexedDb.factory),
+    ];
+    const memory = createMemoryScoreChangesStore();
+    for (const storeOf of stores) {
+      const store = storeOf === stores[0] ? memory : storeOf();
+      expect(await store.load(PLAYER)).toBeNull();
+      await store.save(PLAYER, LOG);
+      await store.save(OTHER, { baselined: false, changes: [] });
+      const again = storeOf === stores[0] ? memory : storeOf();
+      expect(await again.load(PLAYER)).toEqual(LOG);
+      expect(await again.load(OTHER)).toEqual({ baselined: false, changes: [] });
+    }
+    expect([...indexedDb.tables.keys()]).toEqual(["changes"]);
   });
 });

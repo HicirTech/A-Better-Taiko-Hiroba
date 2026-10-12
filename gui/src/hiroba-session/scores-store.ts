@@ -131,7 +131,7 @@ function sectionOf(value: unknown): ScoreSection[] {
   ];
 }
 
-function isWholeNumber(value: unknown): value is number {
+export function isWholeNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isInteger(value) && value >= 0;
 }
 
@@ -147,7 +147,7 @@ function unlistedOf(value: unknown): UnlistedPlay[] {
   return [{ songTitle: value.songTitle, genre: value.genre, level: value.level }];
 }
 
-function isSongNo(value: unknown): value is string {
+export function isSongNo(value: unknown): value is string {
   return typeof value === "string" && SONG_NO.test(value);
 }
 
