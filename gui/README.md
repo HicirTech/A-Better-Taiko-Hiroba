@@ -231,7 +231,10 @@ them, each section's hits and score with its crown over it (a section not cleare
 there, or its refresh button on a computer, reads all the song's charts again. A pull held past
 the point for six seconds, or Read again held down as long on a computer, asks first, then reads
 every list and every played chart again, as the first read does. The scores stay on the device,
-each player's apart, after a sign-out too.
+each player's apart, after a sign-out too. From the end of a player's first full read on, each read
+also keeps a log of the charts it changed, their crown, rank, high score and play counts before and
+after: at most 5000 rows, never dropping a chart's first clear, full combo or donderful. Nothing
+shows it yet.
 
 ### Rating
 
