@@ -22,6 +22,7 @@ export {
   type VerbsQueued,
 } from "./queueing";
 export type {
+  ChartHits,
   ChineseNamesRead,
   CostumeChange,
   CostumeEditorView,
@@ -42,6 +43,8 @@ export type {
   FolderState,
   HirobaSessionPort,
   IconWant,
+  ListedChart,
+  ListedChartsView,
   NameChange,
   NameState,
   OptionIconWant,

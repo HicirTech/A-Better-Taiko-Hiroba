@@ -165,6 +165,23 @@ describe("createScoresReader", () => {
     expect(fourth?.sections).toEqual([]);
   });
 
+  test("lists every chart the lists name, played or not, with the hits of those detailed", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores } = readersOver(hiroba.transport);
+
+    const before = await scores.listedCharts();
+    const read = await scores.readScores();
+    const listed = await scores.listedCharts();
+    const detailed = listed.charts.filter((chart) => chart.hits !== null);
+    const order = listed.charts.map(({ songNo, level }) => Number(songNo) * 10 + level);
+
+    expect(before.charts).toEqual([]);
+    expect(detailed).toHaveLength(12);
+    expect(listed.charts.some((chart) => chart.crown === "none" && chart.hits === null)).toBe(true);
+    expect(order).toEqual([...order].sort((left, right) => left - right));
+    expect(listed.songs).toEqual(read.ok ? read.value.songs : []);
+  });
+
   test("a later read details only the charts recent plays show were played since", async () => {
     const hiroba = hirobaWith(12);
     const { scores, groups } = readersOver(hiroba.transport);

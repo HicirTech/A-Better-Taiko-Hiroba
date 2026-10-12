@@ -32,6 +32,7 @@ import {
 
 import { type Pipeline, resultFailure, SCORE_READ_CONSUMERS } from "../pipelines";
 import type {
+  ListedChartsView,
   PlayedChart,
   RecentPlaysFailure,
   ScoresFailure,
@@ -40,6 +41,7 @@ import type {
   ScoresView,
   ScoreView,
 } from "../session-port";
+import { listedChartsOf } from "./listed-charts";
 import type { ScoreChangesStore } from "./score-changes-store";
 import type { ScoresStore } from "./scores-store";
 import { sessionEnded } from "./session-ended";
@@ -56,6 +58,8 @@ const DETAILS_PER_SAVE = 25;
 export interface ScoresReader {
   /** The kept scores. Asks Hiroba nothing. */
   scores(): Promise<ScoresView>;
+  /** Every chart the lists name, played or not. Asks Hiroba nothing. */
+  listedCharts(): Promise<ListedChartsView>;
   /** The walk, the lists the book needs, then the details left; a second call shares it. */
   readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
   /** As `readScores`, but every list, then every played chart, as the first read takes them. */
@@ -243,6 +247,10 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
     async scores() {
       const taikoNo = owner();
       return taikoNo === null ? viewOf(EMPTY_SCORE_BOOK, []) : viewNow(taikoNo);
+    },
+    async listedCharts() {
+      const taikoNo = owner();
+      return listedChartsOf(taikoNo === null ? EMPTY_SCORE_BOOK : await books.of(taikoNo));
     },
     readScores: () => once(readAll),
     readEveryScore: () =>

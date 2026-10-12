@@ -31,6 +31,7 @@ const port: HirobaSessionPort = {
   readRecentPlays: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readRecentPlays),
   recentPlaysProgress: () => ipcRenderer.invoke(BRIDGE_CHANNELS.recentPlaysProgress),
   scores: () => ipcRenderer.invoke(BRIDGE_CHANNELS.scores),
+  listedCharts: () => ipcRenderer.invoke(BRIDGE_CHANNELS.listedCharts),
   readScores: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readScores),
   readEveryScore: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readEveryScore),
   readSongScores: (songNo, played) =>

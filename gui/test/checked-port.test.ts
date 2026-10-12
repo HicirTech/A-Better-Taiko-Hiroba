@@ -63,6 +63,7 @@ const CASES: VerbCase[] = [
   ["readRecentPlays", [], [{ page: 1 }]],
   ["recentPlaysProgress", [], [{ page: 1 }]],
   ["scores", [], [{ taikoNo: "000000000000" }]],
+  ["listedCharts", [], [{ taikoNo: "000000000000" }]],
   ["readScores", [], [{ full: true }]],
   ["readEveryScore", [], [{ full: true }]],
   ["readSongScores", ["1178", null], ["1178&level=5", null]],
