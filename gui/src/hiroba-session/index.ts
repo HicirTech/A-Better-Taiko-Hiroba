@@ -81,6 +81,11 @@ export {
   readStoredRecentPlays,
 } from "./recent-plays-store";
 export { createRecentPreviews } from "./recent-previews";
+export type { ScoreChangesStore } from "./score-changes-store";
+export {
+  createMemoryScoreChangesStore,
+  readStoredScoreChanges,
+} from "./score-changes-store";
 export type { ScoresStore } from "./scores-store";
 export { createMemoryScoresStore, readStoredScoreBook } from "./scores-store";
 export { sessionEnded } from "./session-ended";

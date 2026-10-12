@@ -11,6 +11,7 @@ import {
   type CostumeHistoryStore,
   createMemoryPictureStore,
   createMemoryRecentPlaysStore,
+  createMemoryScoreChangesStore,
   createMemoryScoresStore,
   createPictureReader,
   createRecentPlaysReader,
@@ -76,6 +77,7 @@ import {
 } from "./android-picture-store";
 import { createIndexedDbPipelineStores } from "./android-pipeline-store";
 import { createIndexedDbRecentPlaysStore } from "./android-recent-plays-store";
+import { createIndexedDbScoreChangesStore } from "./android-score-changes-store";
 import { createIndexedDbScoresStore } from "./android-scores-store";
 import { createAndroidTransport } from "./android-transport";
 
@@ -306,6 +308,10 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     pipeline: pipelines.scores,
     store:
       indexedDb === undefined ? createMemoryScoresStore() : createIndexedDbScoresStore(indexedDb),
+    changes:
+      indexedDb === undefined
+        ? createMemoryScoreChangesStore()
+        : createIndexedDbScoreChangesStore(indexedDb),
     owner: () => owner,
     endSession: forget,
     walk: recentPlays.readRecentPlays,
@@ -461,6 +467,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     recentPlaysProgress: recentPlays.recentPlaysProgress,
 
     scores: scores.scores,
+    listedCharts: scores.listedCharts,
 
     readScores: flushed(scores.readScores),
     readEveryScore: flushed(scores.readEveryScore),

@@ -1,9 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Stack, TextField, Typography } from "@mui/material";
-import { useContext, useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { DIFFICULTY_LABEL, GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import { ShownDifficultyContext } from "../favorites/shown-difficulty";
+import { keptShownDifficulty } from "../favorites/shown-difficulty";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import { fold, searchedNames } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
@@ -62,10 +62,9 @@ export function ScoresPage({
   const { t, number, locale } = i18n;
   const { view, reading, progress, song, failure, load, readSong } = scores;
   useEffect(load, [load]);
-  const shownDifficulty = useContext(ShownDifficultyContext);
   const [query, setQuery] = useState("");
   const deferred = useDeferredValue(query);
-  const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(shownDifficulty));
+  const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(keptShownDifficulty()));
   const [sort, setSort] = useState<ScoreSort | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
 

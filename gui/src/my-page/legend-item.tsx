@@ -22,7 +22,8 @@ export interface LegendItemProps {
   readonly percent: string;
   /** The dot that stands in until the icon comes. */
   readonly colour: string;
-  readonly icon: IconWant;
+  /** None where the dot is all the item has. */
+  readonly icon: IconWant | null;
   /** The count as screen readers get it: "4 of 102". */
   readonly count: string;
   /** Among the legend's items, left to right: the lane asks for the earlier icons first. */
@@ -80,7 +81,11 @@ export function LegendItem({
           flexShrink: 0,
           height: ICON_HEIGHT_PX,
           aspectRatio:
-            picture === null ? RESERVED_RATIO[icon.kind] : picture.width / picture.height,
+            picture !== null
+              ? picture.width / picture.height
+              : icon === null
+                ? undefined
+                : RESERVED_RATIO[icon.kind],
         }}
       >
         {picture === null ? (

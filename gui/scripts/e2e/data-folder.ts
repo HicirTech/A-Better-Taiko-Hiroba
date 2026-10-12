@@ -23,7 +23,15 @@ export const dataFolderKeys = [
   "noUndoKeptOnDisk",
   "picturesFiledUnderHashes",
   "medalIdsKeptOffDisk",
+  "scoreChangesKept",
 ] as const;
+
+interface KeptChange {
+  readonly songNo: string;
+  readonly level: number;
+  readonly from: { readonly highScore: number | null };
+  readonly to: { readonly highScore: number | null };
+}
 
 export async function dataFolder(ctx: Ctx) {
   const { medalIds, results, tokens } = ctx;
@@ -70,4 +78,22 @@ export async function dataFolder(ctx: Ctx) {
         (id) => !file.includes(id) && (inDebugCopies(file) || !bytes.includes(id)),
       );
     });
+
+  // The scores section replays song 5 after its first read: the log on disk keeps that change.
+  const changesFile = join(USER_DATA, "score-changes.json");
+  const players = existsSync(changesFile)
+    ? (
+        JSON.parse(readFileSync(changesFile, "utf8")) as {
+          players?: Record<string, { baselined?: boolean; changes?: KeptChange[] }>;
+        }
+      ).players
+    : undefined;
+  results.scoreChangesKept = Object.values(players ?? {}).some(
+    ({ baselined, changes }) =>
+      baselined === true &&
+      (changes ?? []).some(
+        ({ songNo, level, from, to }) =>
+          songNo === "1005" && level === 1 && from.highScore === 800005 && to.highScore === 801005,
+      ),
+  );
 }

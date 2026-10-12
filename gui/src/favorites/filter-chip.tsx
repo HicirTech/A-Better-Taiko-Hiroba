@@ -22,7 +22,7 @@ const THEME_FILL: FilterFill = { colour: "primary.main", text: "primary.contrast
 const BELOW = { vertical: "bottom", horizontal: "left" } as const;
 const FROM_TOP = { vertical: "top", horizontal: "left" } as const;
 
-const UNCHOSEN_CHIP = {
+const ARROWED_CHIP = {
   "& .MuiChip-label": { display: "inline-flex", alignItems: "center", pr: 0.75 },
 } as const;
 
@@ -58,7 +58,8 @@ function MenuChip({
   id: string;
   name: string;
   choice: ChipChoice | null;
-  onClear: () => void;
+  /** None for a chip that always holds a choice: it keeps its arrow and has no ×. */
+  onClear: (() => void) | null;
   /** The menu's items, given the way to shut it. */
   items: (close: () => void) => ReactNode;
 }) {
@@ -66,15 +67,16 @@ function MenuChip({
   const close = () => setAnchor(null);
   useBackCloses(anchor !== null, close);
   const menuId = `${id}-menu`;
+  const arrowed = choice === null || onClear === null;
   return (
     <>
       <Chip
         id={id}
         variant={choice === null ? "outlined" : "filled"}
         label={
-          choice === null ? (
+          arrowed ? (
             <>
-              {name}
+              {choice?.label ?? name}
               <ArrowDropDownIcon />
             </>
           ) : (
@@ -82,11 +84,14 @@ function MenuChip({
           )
         }
         onClick={(event) => setAnchor(event.currentTarget)}
-        onDelete={choice === null ? undefined : onClear}
+        onDelete={choice === null || onClear === null ? undefined : onClear}
         aria-haspopup="menu"
         aria-expanded={anchor !== null}
         aria-controls={anchor !== null ? menuId : undefined}
-        sx={choice === null ? UNCHOSEN_CHIP : chosenChip(choice.fill)}
+        sx={{
+          ...(choice !== null && chosenChip(choice.fill)),
+          ...(arrowed && ARROWED_CHIP),
+        }}
       />
       <Menu
         id={menuId}
@@ -111,6 +116,7 @@ export function FilterChip<T extends string | number>({
   chosen,
   i18n,
   allLabel,
+  required = false,
   onChoose,
 }: {
   id: string;
@@ -120,6 +126,8 @@ export function FilterChip<T extends string | number>({
   i18n: Translator;
   /** The menu's first item, which clears the choice; "All" unless a chip's none means another. */
   allLabel?: string;
+  /** A choice is always made: the menu has no first item and the chip no ×. */
+  required?: boolean;
   onChoose: (value: T | null) => void;
 }) {
   const picked = options.find((option) => option.value === chosen) ?? null;
@@ -149,9 +157,9 @@ export function FilterChip<T extends string | number>({
       id={id}
       name={name}
       choice={picked === null ? null : { label: picked.label, fill: picked.fill ?? THEME_FILL }}
-      onClear={() => onChoose(null)}
+      onClear={required ? null : () => onChoose(null)}
       items={(close) => [
-        item(null, allLabel ?? i18n.t("picker.all"), null, close),
+        ...(required ? [] : [item(null, allLabel ?? i18n.t("picker.all"), null, close)]),
         ...options.map((option) => item(option.value, option.label, option.fill, close)),
       ]}
     />

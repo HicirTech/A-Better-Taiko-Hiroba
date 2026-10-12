@@ -31,6 +31,7 @@ import { type PickerEntry, PickerList } from "./picker-list";
 import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
 import { matchesCharts, matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
 import { SongFilters } from "./song-filters";
+import { SongListFailed } from "./song-list-failed";
 import { levelsOfEntry, lookOfCatalogue } from "./song-look";
 import { nameLanguage } from "./song-names";
 import { newestFirst } from "./song-order";
@@ -171,20 +172,7 @@ function PickerBody({
   } else if (catalogue.state === "failed") {
     content = (
       <Box sx={{ p: 2 }}>
-        <FormHelperText id="song-picker-failed" error>
-          {t("picker.failed")}
-          {catalogue.failure !== null && (
-            <Box
-              component="span"
-              sx={{ display: "block", mt: 0.5, fontFamily: "monospace", userSelect: "text" }}
-            >
-              {t("picker.code", { code: catalogue.failure })}
-            </Box>
-          )}
-        </FormHelperText>
-        <Button id="song-picker-retry" onClick={catalogue.retry} sx={{ mt: 1 }}>
-          {t("picker.retry")}
-        </Button>
+        <SongListFailed id="song-picker" catalogue={catalogue} i18n={i18n} />
       </Box>
     );
   } else if (offered === null && status.kind === "failed") {

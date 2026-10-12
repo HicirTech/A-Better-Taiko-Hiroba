@@ -1,4 +1,4 @@
-import type { CrownState, Genre } from "@abth/core";
+import { CROWN_ORDER, type Genre } from "@abth/core";
 
 import { GENRE_ORDER, LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { type ShownDifficulty, shownFor } from "../favorites/shown-difficulty";
@@ -42,14 +42,6 @@ export const startingFilter = (shown: ShownDifficulty): ScoreFilter => ({
   difficulties: DIFFICULTIES.filter((difficulty) => shownFor(difficulty) === shown),
   stars: [],
 });
-
-const CROWN_ORDER: Readonly<Record<CrownState, number>> = {
-  donderful: 4,
-  gold: 3,
-  silver: 2,
-  played: 1,
-  none: 0,
-};
 
 export function matchesScore(listed: ListedScore, { genres, difficulties, stars }: ScoreFilter) {
   const { score } = listed;

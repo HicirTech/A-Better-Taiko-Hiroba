@@ -4,12 +4,13 @@ import { isPage, keepPage, keptPage, PAGES } from "../src/navigation/pages";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("PAGES", () => {
-  test("lists the Costume page, then Nickname & title, between the Overview and Favourites", () => {
+  test("lists Know yourself after Rating, then Costume and Nickname & title before Favourites", () => {
     expect([...PAGES]).toEqual([
       "overview",
       "history",
       "scores",
       "rating",
+      "knowYourself",
       "costume",
       "nameTitle",
       "favorites",
@@ -49,13 +50,14 @@ describe("keptPage", () => {
 });
 
 describe("isPage", () => {
-  test("accepts the eight pages and nothing else", () => {
+  test("accepts the nine pages and nothing else", () => {
     expect(
       [
         "overview",
         "history",
         "scores",
         "rating",
+        "knowYourself",
         "costume",
         "nameTitle",
         "favorites",

@@ -26,6 +26,7 @@ import {
 import { dataFolder, dataFolderKeys } from "./data-folder";
 import { favoriteWrites, favoriteWritesKeys } from "./favorite-writes";
 import { favorites, favoritesKeys } from "./favorites";
+import { knowYourself, knowYourselfKeys } from "./know-yourself";
 import { menuSwipe, menuSwipeKeys } from "./menu-swipe";
 import {
   namePlate,
@@ -123,6 +124,7 @@ export const SECTIONS: readonly Section[] = [
     run: recentPlayDetails,
   },
   { name: "recent-play-sets", phase: "signedIn", keys: recentPlaySetsKeys, run: recentPlaySets },
+  { name: "know-yourself", phase: "signedIn", keys: knowYourselfKeys, run: knowYourself },
   { name: "session-expiry", phase: "signedIn", keys: sessionExpiryKeys, run: sessionExpiry },
   { name: "reopen", phase: "signedIn", keys: reopenKeys, run: reopen },
   { name: "signed-out-reopen", phase: "signedIn", keys: signedOutReopenKeys, run: signedOutReopen },

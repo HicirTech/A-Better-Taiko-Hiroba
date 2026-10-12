@@ -37,6 +37,15 @@ export const SCORE_RANK_TIERS: readonly ScoreRankTier[] = [
 /** The score list marks `played` itself; detail pages do not, so see `playedOrNone`. */
 export type CrownState = "none" | "played" | "silver" | "gold" | "donderful";
 
+/** Each crown's place, the unplayed lowest: Hiroba keeps a chart's best crown, so it only rises. */
+export const CROWN_ORDER: Readonly<Record<CrownState, number>> = {
+  none: 0,
+  played: 1,
+  silver: 2,
+  gold: 3,
+  donderful: 4,
+};
+
 /** Played or not, from the play count: detail and recent-plays pages have no played marker. */
 export function playedOrNone(stageCount: number): CrownState {
   return stageCount > 0 ? "played" : "none";

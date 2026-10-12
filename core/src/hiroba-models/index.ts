@@ -50,4 +50,10 @@ export type {
   ScoreRank,
   ScoreRankTier,
 } from "./vocabulary";
-export { GENRES, playedOrNone, SCORE_RANK_NAMES, SCORE_RANK_TIERS } from "./vocabulary";
+export {
+  CROWN_ORDER,
+  GENRES,
+  playedOrNone,
+  SCORE_RANK_NAMES,
+  SCORE_RANK_TIERS,
+} from "./vocabulary";

@@ -1,24 +1,8 @@
 import type { Translator } from "@abth/i18n";
-import {
-  Dialog,
-  DialogTitle,
-  List,
-  ListItemButton,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography,
-} from "@mui/material";
+import { Menu, MenuItem, Typography } from "@mui/material";
 
+import { type Choice, ChoiceDialog } from "../favorites/choice-dialog";
 import { type FavoriteSet, refusedSong, SET_SONG_LIMIT } from "../favorites/favorite-sets";
-import { useBackCloses } from "../navigation/back-closers";
-
-const TITLE_ID = "history-add-to-set-title";
-// The set's name greyed, but the reason it cannot take the song left readable.
-const REFUSED = {
-  "&.Mui-disabled": { opacity: 1 },
-  "&.Mui-disabled .MuiListItemText-primary": { color: "text.disabled" },
-} as const;
 
 /** Where a right-click landed. */
 export interface Point {
@@ -33,16 +17,6 @@ export interface NamedSong {
   readonly lang: string;
   /** Its genres and artists. */
   readonly detail: string;
-}
-
-interface Choice {
-  readonly id: string;
-  readonly primary: string;
-  /** The language of a song's name. */
-  readonly lang?: string;
-  readonly secondary: string | null;
-  /** None for a set that cannot take the song. */
-  readonly onChoose: (() => void) | null;
 }
 
 /** A recent play's own menu on a computer: its one action, which asks where in a dialog. */
@@ -100,7 +74,6 @@ export function AddToSetDialog({
   onClose,
 }: AddToSetDialogProps) {
   const { t, number } = i18n;
-  useBackCloses(true, onClose);
   const choices: readonly Choice[] =
     songNo === null
       ? candidates.map((song) => ({
@@ -133,49 +106,19 @@ export function AddToSetDialog({
           },
         ];
   return (
-    <Dialog
+    <ChoiceDialog
       id="history-add-to-set"
-      open
-      onClose={onClose}
-      aria-labelledby={TITLE_ID}
-      fullWidth
-      maxWidth="xs"
-    >
-      <DialogTitle id={TITLE_ID} sx={{ pb: 0.5 }}>
-        {songNo === null && candidates.length > 0 ? t("history.whichSong") : t("history.addToSet")}
-      </DialogTitle>
-      <Typography
-        lang={name.lang}
-        variant="body2"
-        color="text.secondary"
-        noWrap
-        sx={{ px: 3, pb: 1 }}
-      >
-        {name.text}
-      </Typography>
-      {choices.length > 0 ? (
-        <List disablePadding sx={{ pb: 1 }}>
-          {choices.map((choice) => (
-            <ListItemButton
-              key={choice.id}
-              id={choice.id}
-              disabled={choice.onChoose === null}
-              onClick={choice.onChoose ?? undefined}
-              sx={{ ...REFUSED, px: 3 }}
-            >
-              <ListItemText
-                primary={choice.primary}
-                secondary={choice.secondary}
-                slotProps={{ primary: { noWrap: true, lang: choice.lang } }}
-              />
-            </ListItemButton>
-          ))}
-        </List>
-      ) : (
+      title={
+        songNo === null && candidates.length > 0 ? t("history.whichSong") : t("history.addToSet")
+      }
+      subtitle={name}
+      choices={choices}
+      empty={
         <Typography id="history-add-unknown" color="text.secondary" sx={{ px: 3, pt: 1, pb: 3 }}>
           {t("history.unknownSong")}
         </Typography>
-      )}
-    </Dialog>
+      }
+      onClose={onClose}
+    />
   );
 }

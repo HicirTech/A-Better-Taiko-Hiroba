@@ -145,6 +145,12 @@ export function refusedSong(set: FavoriteSet, songNo: string): "holds" | "full" 
   return set.songs.length < SET_SONG_LIMIT ? null : "full";
 }
 
+/** The songs a set can take at its end: those it lacks, while it has room. */
+export function addableSongs(held: readonly string[], songs: readonly string[]): string[] {
+  const room = Math.max(0, SET_SONG_LIMIT - held.length);
+  return songs.filter((song) => !held.includes(song)).slice(0, room);
+}
+
 export function sameSongs(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((song, index) => song === b[index]);
 }

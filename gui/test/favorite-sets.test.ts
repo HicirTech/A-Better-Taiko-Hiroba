@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  addableSongs,
   addSet,
   type FavoriteSet,
   filledSlots,
@@ -186,6 +187,22 @@ describe("refusedSong", () => {
     const full = set("a", songNumbers(SET_SONG_LIMIT));
     expect(refusedSong(full, "2000")).toBe("full");
     expect(refusedSong(full, "1000")).toBe("holds");
+  });
+});
+
+describe("addableSongs", () => {
+  test("takes the songs a set lacks, in their order", () => {
+    expect(addableSongs(["1001", "1003"], ["1002", "1003", "1004"])).toEqual(["1002", "1004"]);
+  });
+
+  test("takes only as many as the set has room for", () => {
+    const held = songNumbers(SET_SONG_LIMIT - 2);
+    expect(addableSongs(held, ["2001", "2002", "2003"])).toEqual(["2001", "2002"]);
+  });
+
+  test("takes none into a full set, or one that holds them all", () => {
+    expect(addableSongs(songNumbers(SET_SONG_LIMIT), ["2001"])).toEqual([]);
+    expect(addableSongs(["1001", "1002"], ["1002", "1001"])).toEqual([]);
   });
 });
 

@@ -1,6 +1,7 @@
 import type {
   CostumeEditorView,
   CostumeSet,
+  CrownState,
   FavoriteSongEditorView,
   FavoriteSongState,
   FolderEditorView,
@@ -17,6 +18,7 @@ import type {
   RenameState,
   Result,
   ScoreRank,
+  ScoreRecord,
   ScoreSection,
   ShownSong,
   Song,
@@ -179,6 +181,25 @@ export interface ScoresView {
   readonly scores: readonly ScoreView[];
   readonly unread: number;
   /** The songs the lists named, by Hiroba's own titles: what a recent play is found by. */
+  readonly songs: readonly Song[];
+}
+
+/** The hits of a chart's newest details. */
+export type ChartHits = Pick<ScoreRecord, "highScore" | "good" | "ok" | "bad">;
+
+/** A chart a score list names, played or not. */
+export interface ListedChart {
+  readonly songNo: string;
+  readonly level: Level;
+  readonly crown: CrownState;
+  readonly scoreRank: ScoreRank | null;
+  /** None where no details of it were ever read. */
+  readonly hits: ChartHits | null;
+}
+
+/** Every chart the lists name, with the songs by Hiroba's own titles. */
+export interface ListedChartsView {
+  readonly charts: readonly ListedChart[];
   readonly songs: readonly Song[];
 }
 
@@ -393,6 +414,8 @@ export interface HirobaSessionPort {
   recentPlaysProgress(): Promise<number | null>;
   /** The kept scores. Asks Hiroba nothing. */
   scores(): Promise<ScoresView>;
+  /** Every chart the lists name, played or not. Asks Hiroba nothing. */
+  listedCharts(): Promise<ListedChartsView>;
   /** Walks recent plays, takes the lists it needs, then details what is left. Never retried. */
   readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
   /** As `readScores`, but takes every list, then every played chart again. Never retried. */

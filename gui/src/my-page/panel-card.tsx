@@ -1,14 +1,11 @@
-import { SCORE_RANK_TIERS, type ScoreRank } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Stack } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import type { ProfileView } from "../session-port";
-import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
+import { CROWN_COLOUR, RANK_COLOUR, RANKS_WORST_FIRST } from "./panel-colours";
 import { ShareBlock, type ShareItem } from "./share-block";
-
-const RANKS_WORST_FIRST: readonly ScoreRank[] = SCORE_RANK_TIERS.flatMap((tier) => tier.ranks);
 
 export function PanelCard({
   crowns,

@@ -11,6 +11,7 @@ import {
   type GenreList,
   genresToRead,
   isErr,
+  logDetail,
   notePlayedSong,
   noteWalk as noteWalkInBook,
   ok,
@@ -21,12 +22,17 @@ import {
   type Result,
   readHirobaPage,
   recentOrder,
+  type Score,
   type ScoreBook,
+  type ScoreChangeLog,
   songCharts,
+  startingLog,
+  withBaseline,
 } from "@abth/core";
 
 import { type Pipeline, resultFailure, SCORE_READ_CONSUMERS } from "../pipelines";
 import type {
+  ListedChartsView,
   PlayedChart,
   RecentPlaysFailure,
   ScoresFailure,
@@ -35,6 +41,8 @@ import type {
   ScoresView,
   ScoreView,
 } from "../session-port";
+import { listedChartsOf } from "./listed-charts";
+import type { ScoreChangesStore } from "./score-changes-store";
 import type { ScoresStore } from "./scores-store";
 import { sessionEnded } from "./session-ended";
 import type { HirobaEndpoints } from "./types";
@@ -50,6 +58,8 @@ const DETAILS_PER_SAVE = 25;
 export interface ScoresReader {
   /** The kept scores. Asks Hiroba nothing. */
   scores(): Promise<ScoresView>;
+  /** Every chart the lists name, played or not. Asks Hiroba nothing. */
+  listedCharts(): Promise<ListedChartsView>;
   /** The walk, the lists the book needs, then the details left; a second call shares it. */
   readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
   /** As `readScores`, but every list, then every played chart, as the first read takes them. */
@@ -71,6 +81,8 @@ export interface ScoresReaderOptions {
   /** The scores pipeline: each chart's details are a read group in it. */
   readonly pipeline: Pick<Pipeline, "read">;
   readonly store: ScoresStore;
+  /** What each read changes, kept per player beside the book. */
+  readonly changes: ScoreChangesStore;
   readonly owner: () => string | null;
   readonly endSession: () => void | Promise<void>;
   /** Walks recent plays as their page does; the walk notes what it found here itself. */
@@ -85,7 +97,7 @@ export interface ScoresReaderOptions {
 export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
   const { endpoints, owner } = options;
   const now = options.now ?? (() => new Date());
-  const books = createBooks(options.store);
+  const books = createBooks(options.store, options.changes);
   let progress: ScoresProgress | null = null;
   let running: Promise<Result<ScoresRead, ScoresFailure>> | null = null;
 
@@ -176,7 +188,7 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
           stop.failure ??= { ...answer.error, at: { kind: "detail", songNo, songTitle, level } };
           return;
         }
-        await books.change(taikoNo, (book) => foldDetail(book, answer.value));
+        await books.fold(taikoNo, answer.value);
         done += 1;
         told(done);
         if (done % DETAILS_PER_SAVE === 0) {
@@ -210,7 +222,11 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
     const detailed = await readDetails(taikoNo, charts, (done) => {
       progress = { step: "details", done, total: charts.length };
     });
-    return detailed === null ? readOf(taikoNo, charts) : failed(detailed);
+    if (detailed !== null) {
+      return failed(detailed);
+    }
+    await books.baseline(taikoNo);
+    return readOf(taikoNo, charts);
   };
 
   // One read of all at a time: a second ask shares the one running.
@@ -231,6 +247,10 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
     async scores() {
       const taikoNo = owner();
       return taikoNo === null ? viewOf(EMPTY_SCORE_BOOK, []) : viewNow(taikoNo);
+    },
+    async listedCharts() {
+      const taikoNo = owner();
+      return listedChartsOf(taikoNo === null ? EMPTY_SCORE_BOOK : await books.of(taikoNo));
     },
     readScores: () => once(readAll),
     readEveryScore: () =>
@@ -273,18 +293,28 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
   };
 }
 
-/** Each player's book, loaded once and changed in place; saves go one after another. */
-function createBooks(store: ScoresStore) {
-  const kept = new Map<string, ScoreBook>();
-  const loads = new Map<string, Promise<void>>();
+/** A player's book and log of changes, as last loaded or changed. */
+interface Kept {
+  book: ScoreBook;
+  log: ScoreChangeLog;
+  /** The log as last written: none until a first save writes one. */
+  savedLog: ScoreChangeLog | null;
+}
+
+/** Each player's book and log, loaded once and changed in place; saves go one after another. */
+function createBooks(store: ScoresStore, changes: ScoreChangesStore) {
+  const kept = new Map<string, Kept>();
+  const loads = new Map<string, Promise<Kept>>();
   let saving: Promise<void> = Promise.resolve();
 
-  const loaded = (taikoNo: string): Promise<void> => {
+  const held = (taikoNo: string): Promise<Kept> => {
     let load = loads.get(taikoNo);
     if (load === undefined) {
-      load = store.load(taikoNo).then(
-        (book) => {
-          kept.set(taikoNo, book);
+      load = Promise.all([store.load(taikoNo), changes.load(taikoNo)]).then(
+        ([book, log]) => {
+          const one = { book, log: log ?? startingLog(book), savedLog: log };
+          kept.set(taikoNo, one);
+          return one;
         },
         (error: unknown) => {
           loads.delete(taikoNo);
@@ -295,22 +325,47 @@ function createBooks(store: ScoresStore) {
     }
     return load;
   };
-  const of = async (taikoNo: string): Promise<ScoreBook> => {
-    await loaded(taikoNo);
-    return kept.get(taikoNo) ?? EMPTY_SCORE_BOOK;
+  // The log goes first: a book written without its rows would read the same chart as unchanged.
+  const save = (taikoNo: string): Promise<void> => {
+    const saved = saving.then(async () => {
+      const one = kept.get(taikoNo);
+      if (one === undefined) {
+        return;
+      }
+      // Both as they stand now: a fold landing while the log is written waits for the next save.
+      const { book, log } = one;
+      if (log !== one.savedLog) {
+        await changes.save(taikoNo, log);
+        one.savedLog = log;
+      }
+      await store.save(taikoNo, book);
+    });
+    saving = saved.catch(() => undefined);
+    return saved;
   };
   return {
-    of,
+    of: async (taikoNo: string): Promise<ScoreBook> => (await held(taikoNo)).book,
     // Takes the book only once loaded, so two changes in flight both land.
     async change(taikoNo: string, how: (book: ScoreBook) => ScoreBook): Promise<void> {
-      await loaded(taikoNo);
-      kept.set(taikoNo, how(kept.get(taikoNo) ?? EMPTY_SCORE_BOOK));
+      const one = await held(taikoNo);
+      one.book = how(one.book);
     },
-    save(taikoNo: string): Promise<void> {
-      const saved = saving.then(() => store.save(taikoNo, kept.get(taikoNo) ?? EMPTY_SCORE_BOOK));
-      saving = saved.catch(() => undefined);
-      return saved;
+    /** Folds in a chart's details, and logs how they differ from the reading they replace. */
+    async fold(taikoNo: string, score: Score): Promise<void> {
+      const one = await held(taikoNo);
+      one.log = logDetail(one.log, one.book, score);
+      one.book = foldDetail(one.book, score);
     },
+    /** Starts the log once a read has taken every chart it needed: changes after it are kept. */
+    async baseline(taikoNo: string): Promise<void> {
+      const one = await held(taikoNo);
+      const log = withBaseline(one.log);
+      if (log !== one.log) {
+        one.log = log;
+        await save(taikoNo);
+      }
+    },
+    save,
   };
 }
 
