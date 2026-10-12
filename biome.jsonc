@@ -3,7 +3,8 @@
 
   // Biome only looks at files git would track, so build output and dependencies need no rules here.
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "ignoreUnknown": false },
+  // Vendored code keeps its upstream form, so it can still be compared with upstream.
+  "files": { "ignoreUnknown": false, "includes": ["**", "!gui/src/vendor"] },
 
   "formatter": {
     "enabled": true,
