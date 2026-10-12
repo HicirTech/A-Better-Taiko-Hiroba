@@ -11,6 +11,7 @@ import {
 } from "./harness";
 import { barOf, CROWN_SHARES, legendOf, type Share } from "./overview";
 import {
+  hitsOn,
   LANE_PICTURES,
   myPageHits,
   platesSettled,
@@ -209,6 +210,7 @@ export const profileVariantsKeys = [
   "unreadableDanShownWithTheRest",
   "twoRequestsWithDanOneWithout",
   "danLabelPictureCostsNothing",
+  "namedRankReadFromItsPlates",
   "panelZerosShown",
 ] as const;
 
@@ -273,6 +275,16 @@ export async function profileVariants(ctx: Ctx) {
     JSON.stringify(requestsPerRead) === JSON.stringify([3, 3, 3, 2, 3]);
   results.danLabelPictureCostsNothing =
     results.twoRequestsWithDanOneWithout === true && results.danLabelShownAsPicture === true;
+
+  // A 名人's label matches no label template: plates 19, 18 and 17 are read, and 17 is stamped.
+  const PLATE = "/imgsrc_dani.php";
+  const platesBefore = await hitsOn(PLATE);
+  await fetch(`${HIROBA}/__variant?dan=17&label=png`);
+  await readShowing("#dan");
+  results.namedRankReadFromItsPlates =
+    (await textOf("#dan")) === "Dan-i: Meijin" &&
+    (await textOf("#dan-unreadable")) === null &&
+    (await hitsOn(PLATE)) - platesBefore === 3;
   await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set`);
 
   await fetch(`${HIROBA}/__variant?panel=zeros`);
