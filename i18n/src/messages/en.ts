@@ -91,7 +91,11 @@ export const en: Messages = {
   "history.sharedTitle":
     "More than one song has this title, so the app cannot tell which was played.",
   "history.unknownSong":
-    "The app does not know this song yet. Read again on the Scores page, then open the play again.",
+    "The app does not know this song yet. Read again on the Scores page, then try again.",
+  "history.addToSet": "Add to a set",
+  "history.whichSong": "Which song was it?",
+  "history.setHolds": "Already has this song",
+  "history.setFull": "Already holds {count} songs",
   "scores.readingPlays": "Reading recent plays, page {page}…",
   "scores.readingLists": "Reading the score lists ({done} of {total})…",
   "scores.readingCharts": "Reading scores ({done} of {total})…",
