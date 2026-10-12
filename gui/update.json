@@ -1,41 +1,13 @@
 {
-  "version": "0.5.0",
+  "version": "0.5.1",
   "notes": {
     "en": [
-      "Scores, a new page: every chart you played, read from Hiroba and kept on the device, to search, filter and sort, each opening its full details",
-      "Rating, a new page: your rating and six skills, worked out from your scores as OurTaikoWiki's first rating does, with the charts it counts",
-      "Know yourself, a new page: the star level you are stuck at, your score ranks, your best hits/s and BPM ranges and the charts close to a Full Combo or a Donderful Combo; the charts you have not cleared can go to a set",
-      "Recent plays name songs in your language, open a chart's details, and add a song to a set by a right-click or a long press",
-      "A song's details show each chart's note density over the song and its average hits/s, and draw its chart pictures from the chart itself; Settings can switch back to taiko.wiki's pictures",
-      "Sign in with the other accounts a Bandai Namco ID offers; a Google sign-in opens your browser instead and says how to add a mail address and password to sign in here",
-      "A macOS version: disk images for Apple silicon and Intel Macs"
+      "The dan of a Kuroto, Meijin, Chojin or Tatsujin now shows on the Overview, in place of \"Dan-i: couldn't read\""
     ],
     "ja": [
-      "新しいページ「スコアデータ」：あそんだすべての譜面をひろばから読み込んで端末に保存し、検索・絞り込み・並べ替えができます。譜面ごとに詳しい成績を開けます",
-      "新しいページ「レーティング」：スコアから OurTaikoWiki の初代レーティングと同じ方法でレーティングと6つの能力を計算し、対象の譜面を表示します",
-      "新しいページ「自分を知る」：壁になっている★、スコアランク、得意な打/秒と BPM、フルコンボやドンダフルコンボまであと少しの譜面がわかります。未クリアの譜面はセットに追加できます",
-      "あそんだ曲では、曲名をあなたの言語で表示し、譜面の詳細を開けます。右クリックか長押しで曲をセットに追加できます",
-      "曲の詳細では、各譜面の密度の推移と平均の打/秒を表示し、譜面の画像を譜面データから描きます。設定で taiko.wiki の画像に戻せます",
-      "バンダイナムコIDで使えるほかのアカウントでもログインできます。Google でのログインはブラウザで開き、ここでログインするためのメールアドレスとパスワードの追加方法を案内します",
-      "macOS 版：Apple シリコンと Intel の Mac 向けのディスクイメージ"
+      "玄人・名人・超人・達人の段位が、「段位：読み取れませんでした」ではなく概要に表示されるようになりました"
     ],
-    "zh-Hans": [
-      "新增「成绩」页面：读取你玩过的所有谱面并存在本机，可以搜索、筛选和排序，点开谱面看完整成绩",
-      "新增「Rating」页面：按 OurTaikoWiki 第一版 Rating 的算法，从成绩算出你的 Rating 和六项能力，并列出计入的谱面",
-      "新增「自我认知」页面：看出你卡在哪个星级、成绩排名、最合适的打/秒和 BPM 范围，以及差一点全连段或全良的谱面，还能把没通关的谱面加入套装",
-      "近期游玩用你的语言显示歌名，可以点开谱面详情，也能右键或长按把歌加入套装",
-      "歌曲详情显示每张谱面的烈度曲线和平均打/秒，并直接根据谱面画出谱面图；设置里可以改回 taiko.wiki 的图片",
-      "可以用万代南梦宫 ID 支持的其他账号登录；用 Google 登录时会改在浏览器里打开，并说明怎样添加邮箱和密码以便在这里登录",
-      "新增 macOS 版：提供 Apple 芯片和 Intel Mac 的磁盘映像"
-    ],
-    "zh-Hant": [
-      "新增「成績」頁面：讀取你玩過的所有譜面並存在本機，可以搜尋、篩選和排序，點開譜面看完整成績",
-      "新增「Rating」頁面：按 OurTaikoWiki 第一版 Rating 的演算法，從成績算出你的 Rating 和六項能力，並列出計入的譜面",
-      "新增「自我認知」頁面：看出你卡在哪個星級、成績排名、最合適的打/秒和 BPM 範圍，以及差一點全連段或全良的譜面，還能把沒通過的譜面加入套裝",
-      "近期遊玩用你的語言顯示歌名，可以點開譜面詳情，也能右鍵或長按把歌加入套裝",
-      "歌曲詳情顯示每張譜面的烈度曲線和平均打/秒，並直接根據譜面畫出譜面圖；設定裡可以改回 taiko.wiki 的圖片",
-      "可以用萬代南夢宮 ID 支援的其他帳號登入；用 Google 登入時會改在瀏覽器裡開啟，並說明怎樣新增電子郵件和密碼以便在這裡登入",
-      "新增 macOS 版：提供 Apple 晶片和 Intel Mac 的磁碟映像"
-    ]
+    "zh-Hans": ["玄人、名人、超人和达人的段位现在会显示在概览里，不再显示「段位：无法读取」"],
+    "zh-Hant": ["玄人、名人、超人和達人的段位現在會顯示在概覽裡，不再顯示「段位：無法讀取」"]
   }
 }
