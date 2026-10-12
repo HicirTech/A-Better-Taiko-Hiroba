@@ -20,7 +20,7 @@ export interface DensityState {
 }
 
 /** The path taiko.wiki's max combo counts: a branched chart's master branch. */
-const masterOf = (density: ChartDensity): NoteDensity =>
+export const masterOf = (density: ChartDensity): NoteDensity =>
   density.branched ? density.lines.master : density.line;
 
 /** A chart's note density over the song, drawn only once its notes match taiko.wiki's count. */
