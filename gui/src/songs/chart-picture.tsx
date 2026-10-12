@@ -41,7 +41,7 @@ function ReadChartPicture({
 
   useEffect(() => {
     let current = true;
-    void port.readChartPicture(url).then((result) => {
+    void port.readChartPicture(url, "any").then((result) => {
       if (current) {
         setShown(
           result.ok

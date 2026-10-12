@@ -7,8 +7,8 @@ import {
   type PictureKey,
   type PictureStore,
 } from "../src/hiroba-session";
-import { createChartDensityReader } from "../src/song-catalogue";
-import { mappingOf } from "../src/song-catalogue/read-chart-density";
+import { createChartDensityReader, createEseChartFiles } from "../src/song-catalogue";
+import { mappingOf } from "../src/song-catalogue/ese-chart-files";
 
 const MAPPING = "https://cdn.ourtaiko.test/api/ese_mapping";
 const CHARTS = "https://ese.test/ESE/ESE/raw/branch/master/";
@@ -45,8 +45,10 @@ function setUp(
   const reader = createChartDensityReader({
     store,
     pipeline: { read: (_asked, group) => group(transport) },
-    mappingUrl: options.addresses === false ? undefined : MAPPING,
-    chartsUrl: options.addresses === false ? undefined : CHARTS,
+    files: createEseChartFiles({
+      mappingUrl: options.addresses === false ? undefined : MAPPING,
+      chartsUrl: options.addresses === false ? undefined : CHARTS,
+    }),
   });
   return { reader, sent, store };
 }

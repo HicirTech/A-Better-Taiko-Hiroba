@@ -4,6 +4,15 @@ import type { ChartDensity, Genre } from "@abth/core";
 export const DIFFICULTIES = ["easy", "normal", "hard", "oni", "ura"] as const;
 export type Difficulty = (typeof DIFFICULTIES)[number];
 
+export const isDifficulty = (value: string): value is Difficulty =>
+  (DIFFICULTIES as readonly string[]).includes(value);
+
+/** The most bytes a chart picture may have, fetched or drawn. */
+export const CHART_PICTURE_MAX_BYTES = 4 * 1024 * 1024;
+
+/** How to read a chart picture: only the one kept, the one kept or else a fetch, or a new fetch. */
+export type ChartPictureRead = "kept" | "any" | "again";
+
 export const MIN_LEVEL = 1;
 export const MAX_LEVEL = 10;
 
@@ -73,7 +82,7 @@ export interface SongCatalogueFailure {
 /** A song's note density for each chart its TJA holds. */
 export type SongDensityRead = Readonly<Partial<Record<Difficulty, ChartDensity>>>;
 
-/** Codes, not sentences; `noChart` is a song ESE has no chart for. */
-export interface ChartDensityFailure {
+/** Codes, not sentences; `noChart` is a song ESE has no chart file for. */
+export interface ChartFileFailure {
   readonly code: SongCatalogueFailure["code"] | "noChart";
 }

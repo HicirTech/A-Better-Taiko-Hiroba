@@ -62,6 +62,7 @@ export const en: Messages = {
   "pipelines.op.picture": "Picture",
   "pipelines.op.chartPicture": "Chart picture",
   "pipelines.op.chartDensity": "Chart file",
+  "pipelines.op.chartTja": "Chart file to draw",
   "pipelines.picture.myDon": "My Don",
   "pipelines.picture.titlePlate": "Name plate",
   "pipelines.picture.medalPlate": "Don Medal plate",

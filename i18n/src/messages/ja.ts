@@ -62,6 +62,7 @@ export const ja: Messages = {
   "pipelines.op.picture": "画像",
   "pipelines.op.chartPicture": "譜面の画像",
   "pipelines.op.chartDensity": "譜面ファイル",
+  "pipelines.op.chartTja": "描画する譜面ファイル",
   "pipelines.picture.myDon": "マイどん",
   "pipelines.picture.titlePlate": "ネームプレート",
   "pipelines.picture.medalPlate": "どんメダルのプレート",

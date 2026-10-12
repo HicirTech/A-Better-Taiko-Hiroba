@@ -78,6 +78,7 @@ export interface Messages {
   "pipelines.op.picture": string;
   "pipelines.op.chartPicture": string;
   "pipelines.op.chartDensity": string;
+  "pipelines.op.chartTja": string;
   "pipelines.picture.myDon": string;
   "pipelines.picture.titlePlate": string;
   "pipelines.picture.medalPlate": string;

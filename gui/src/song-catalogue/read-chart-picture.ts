@@ -6,8 +6,8 @@ import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
 import type { PictureFailure, PictureView } from "../session-port/types";
 import { isChartPictureAddress } from "./catalogue-links";
 import { sniffPicture } from "./sniff-picture";
+import { CHART_PICTURE_MAX_BYTES, type ChartPictureRead } from "./types";
 
-export const CHART_PICTURE_MAX_BYTES = 4 * 1024 * 1024;
 const CHART_PICTURE_TIMEOUT_MS = 30_000;
 
 /** The operation a chart picture's fetch runs as in its pipeline. */
@@ -25,12 +25,15 @@ export interface ChartPictureReaderOptions {
   readonly chartOrigin: string | undefined;
 }
 
-export type ChartPictureReader = (url: string) => Promise<Result<PictureView, PictureFailure>>;
+export type ChartPictureReader = (
+  url: string,
+  read: ChartPictureRead,
+) => Promise<Result<PictureView, PictureFailure>>;
 
 const failed = (why: string): Result<never, PictureFailure> => err({ code: `chart=${why}` });
 
 /** The picture `bytes` hold, judged by the bytes alone and never by a header of the answer. */
-function viewOf(bytes: Uint8Array): Result<PictureView, "tooLarge" | "notPicture"> {
+export function viewOf(bytes: Uint8Array): Result<PictureView, "tooLarge" | "notPicture"> {
   if (bytes.byteLength > CHART_PICTURE_MAX_BYTES) {
     return err("tooLarge");
   }
@@ -47,7 +50,10 @@ export function createChartPictureReader(options: ChartPictureReaderOptions): Ch
   const { store, pipeline, chartOrigin } = options;
   const inFlight = new Map<string, Promise<Result<PictureView, PictureFailure>>>();
 
-  const read = async (url: string): Promise<Result<PictureView, PictureFailure>> => {
+  const read = async (
+    url: string,
+    how: ChartPictureRead,
+  ): Promise<Result<PictureView, PictureFailure>> => {
     if (!isChartPictureAddress(url, chartOrigin)) {
       return failed("notAllowed");
     }
@@ -57,10 +63,15 @@ export function createChartPictureReader(options: ChartPictureReaderOptions): Ch
       player: null,
       name: `${PICTURE_EPOCH}/chart/${url}`,
     };
-    const kept = await store.get(key);
-    const keptView = kept === null ? null : viewOf(kept);
-    if (keptView?.ok) {
-      return keptView;
+    if (how !== "again") {
+      const kept = await store.get(key);
+      const keptView = kept === null ? null : viewOf(kept);
+      if (keptView?.ok) {
+        return keptView;
+      }
+      if (how === "kept") {
+        return failed("notKept");
+      }
     }
     // The checks are in the group too, so the pipelines page counts a picture refused as failed.
     return pipeline.read(CHART_PICTURE, async (transport) => {
@@ -87,13 +98,14 @@ export function createChartPictureReader(options: ChartPictureReaderOptions): Ch
     });
   };
 
-  return (url) => {
-    const onItsWay = inFlight.get(url);
+  return (url, how) => {
+    const asked = `${how} ${url}`;
+    const onItsWay = inFlight.get(asked);
     if (onItsWay !== undefined) {
       return onItsWay;
     }
-    const reading = read(url).finally(() => inFlight.delete(url));
-    inFlight.set(url, reading);
+    const reading = read(url, how).finally(() => inFlight.delete(asked));
+    inFlight.set(asked, reading);
     return reading;
   };
 }

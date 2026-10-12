@@ -70,8 +70,15 @@ const CASES: VerbCase[] = [
   ["readSongCatalogue", [null], ["0&genre=1"]],
   ["readChineseNames", [], [{ gcmlimit: "max" }]],
   ["readRatingData", ["ourtaikoV1"], ["https://example.test/feed"]],
-  ["readChartPicture", ["https://file.taiko.wiki/fumen/670/oni"], ["file:///etc/passwd"]],
+  [
+    "readChartPicture",
+    ["https://file.taiko.wiki/fumen/670/oni", "any"],
+    ["file:///etc/passwd", "any"],
+  ],
   ["readChartDensity", ["1001", false], ["1001/../oni.tja", false]],
+  ["readChartTja", ["1001"], ["1001/../oni.tja"]],
+  ["readDrawnChart", ["1001", "oni"], ["1001", "inner"]],
+  ["keepDrawnChart", ["1001", "oni", new Uint8Array(8)], ["1001", "oni", "a picture"]],
   ["readPipelines", [12], [1001]],
 ];
 

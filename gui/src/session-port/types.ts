@@ -28,7 +28,8 @@ import type {
 import type { PipelineView } from "../pipelines/pipeline-view";
 import type { RatingDataRead } from "../rating/read-rating-data";
 import type {
-  ChartDensityFailure,
+  ChartFileFailure,
+  ChartPictureRead,
   ChineseNamesRead,
   Difficulty,
   SongCatalogueFailure,
@@ -399,12 +400,21 @@ export interface HirobaSessionPort {
   /** A rating system's data: one GET that carries no session, in the pipeline for other sites. */
   readRatingData(system: RatingSystem): Promise<Result<RatingDataRead, SongCatalogueFailure>>;
   /** A picture of a chart's notes, from a chart host the song list links, kept on the device. */
-  readChartPicture(url: string): Promise<Result<PictureView, PictureFailure>>;
+  readChartPicture(
+    url: string,
+    read: ChartPictureRead,
+  ): Promise<Result<PictureView, PictureFailure>>;
   /** A song's note density from its ESE chart, kept on the device; `again` reads the chart anew. */
   readChartDensity(
     songNo: string,
     again: boolean,
-  ): Promise<Result<SongDensityRead, ChartDensityFailure>>;
+  ): Promise<Result<SongDensityRead, ChartFileFailure>>;
+  /** A song's ESE chart file as text, for the page to draw: one GET each time, never kept. */
+  readChartTja(songNo: string): Promise<Result<string, ChartFileFailure>>;
+  /** A chart the page drew from TJA and kept, or null when none is kept. Asks no site anything. */
+  readDrawnChart(songNo: string, difficulty: Difficulty): Promise<PictureView | null>;
+  /** Keeps a chart the page drew, as a PNG; one that cannot be kept is simply not kept. */
+  keepDrawnChart(songNo: string, difficulty: Difficulty, png: Uint8Array): Promise<void>;
   /** What each pipeline runs and has waiting now, and its newest `history` groups that ended.
    * Asks no site anything. */
   readPipelines(history: number): Promise<PipelinesView>;

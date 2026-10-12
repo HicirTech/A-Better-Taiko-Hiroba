@@ -62,6 +62,7 @@ export const zhHant: Messages = {
   "pipelines.op.picture": "圖片",
   "pipelines.op.chartPicture": "譜面圖",
   "pipelines.op.chartDensity": "譜面檔案",
+  "pipelines.op.chartTja": "要繪製的譜面檔案",
   "pipelines.picture.myDon": "小咚",
   "pipelines.picture.titlePlate": "名牌",
   "pipelines.picture.medalPlate": "咚幣",
