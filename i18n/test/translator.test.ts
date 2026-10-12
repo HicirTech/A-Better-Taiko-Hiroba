@@ -370,6 +370,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "好根據授權切",
     "叫識",
     "加滿",
+    "各況半住率低勾些差適範圍擅夠",
   ].join(""),
 );
 

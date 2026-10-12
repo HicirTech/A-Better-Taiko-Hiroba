@@ -6,6 +6,7 @@ export const PAGES = [
   "history",
   "scores",
   "rating",
+  "knowYourself",
   "costume",
   "nameTitle",
   "favorites",

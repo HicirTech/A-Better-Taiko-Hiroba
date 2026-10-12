@@ -18,6 +18,7 @@ import { usePickableSongs } from "./favorites/use-pickable-songs";
 import { useSongCatalogue } from "./favorites/use-song-catalogue";
 import { HistoryPage } from "./history/history-page";
 import { useRecentPlays } from "./history/use-recent-plays";
+import { KnowYourselfPage } from "./know-yourself";
 import { CostumePage } from "./my-page/costume-page";
 import { MedalCard } from "./my-page/medal-card";
 import type { OpenAction } from "./my-page/open-button";
@@ -110,6 +111,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const onHistoryPage = page === "history" && screen.name === "profile";
   const onScoresPage = page === "scores" && screen.name === "profile";
   const onRatingPage = page === "rating" && screen.name === "profile";
+  const onKnowPage = page === "knowYourself" && screen.name === "profile";
   const sessionGone = useCallback(
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
@@ -213,7 +215,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const [songsWanted, setSongsWanted] = useState(false);
   const catalogue = useSongCatalogue(
     port,
-    onFavoritesPage || onHistoryPage || onScoresPage || onRatingPage || songsWanted,
+    onFavoritesPage || onHistoryPage || onScoresPage || onRatingPage || onKnowPage || songsWanted,
   );
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
@@ -325,7 +327,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       ? favorites
       : onHistoryPage
         ? history
-        : onScoresPage || onRatingPage
+        : onScoresPage || onRatingPage || onKnowPage
           ? scores
           : null;
   const canReadAgain =
@@ -341,7 +343,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       if (onHistoryPage) {
         // A walk can run for minutes: Read again on another page must not wait for it.
         void history.read();
-      } else if (onScoresPage) {
+      } else if (onScoresPage || onKnowPage) {
         void scores.read();
       } else if (onRatingPage) {
         void scores.read();
@@ -511,6 +513,18 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
                 catalogue={catalogue}
                 lane={lane}
                 touchFirst={touchFirst}
+                i18n={i18n}
+              />
+            )}
+
+            {screen.name === "profile" && page === "knowYourself" && (
+              <KnowYourselfPage
+                scores={scores}
+                port={port}
+                catalogue={catalogue}
+                lane={lane}
+                touchFirst={touchFirst}
+                toast={touchFirst ? toast : undefined}
                 i18n={i18n}
               />
             )}

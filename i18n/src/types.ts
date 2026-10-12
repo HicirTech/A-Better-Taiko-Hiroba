@@ -20,6 +20,7 @@ export interface Messages {
   "nav.history": string;
   "nav.scores": string;
   "nav.rating": string;
+  "nav.knowYourself": string;
   "nav.costume": string;
   "nav.nameTitle": string;
   "nav.favorites": string;
@@ -296,6 +297,42 @@ export interface Messages {
   "panel.countOf": string;
   /** The same count, named. Adds {name}. */
   "panel.countTitle": string;
+  "know.ladder": string;
+  "know.never": string;
+  "know.tried": string;
+  "know.noRank": string;
+  "know.unknown": string;
+  /** Param: {stars}, a star level. */
+  "know.wall": string;
+  "know.noWall": string;
+  "know.addTicked": string;
+  /** Param: {count}, the songs it adds. */
+  "know.addNearest": string;
+  /** Params: {count}, the songs a set has room for, and {total}, the songs to add. */
+  "know.setTakes": string;
+  "know.setHoldsAll": string;
+  "know.perSecond": string;
+  "know.bpm": string;
+  "know.reach.help": string;
+  /** Param: {count}, the charts. */
+  "know.almost.fullCombo.count": string;
+  "know.almost.fullCombo.none": string;
+  /** Param: {count}, the charts. */
+  "know.almost.donderful.count": string;
+  "know.almost.donderful.none": string;
+  /** Param: {rank}, a score rank's name. */
+  "know.ranks.middle": string;
+  "know.ranks.middleNone": string;
+  "know.ranks.none": string;
+  /** Param: {range}, one or more bands such as 5.5–6.0. */
+  "know.best.perSecond": string;
+  /** Param: {range}, one or more bands such as 160–179. */
+  "know.best.bpm": string;
+  "know.best.changing": string;
+  "know.best.none": string;
+  "know.changing": string;
+  "know.almost.fullCombo": string;
+  "know.almost.donderful": string;
   "panel.art": string;
   /** The plate's own name is Hiroba's data, shown as written. */
   "medal.heading": string;

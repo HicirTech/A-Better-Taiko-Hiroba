@@ -19,3 +19,9 @@ export const RANK_COLOUR: Readonly<Record<ScoreRank, string>> = {
 };
 
 export const CROWN_COLOUR = { silver: "#abcdcd", gold: "#e3c63a", donderful: RAINBOW } as const;
+
+/** A chart never played, and one played but not cleared: greys under the crowns' colours. */
+export const UNCLEARED_COLOUR = {
+  none: "light-dark(#dfe3e8, #3a4047)",
+  played: "light-dark(#8c97a5, #7a8594)",
+} as const;
