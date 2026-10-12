@@ -1039,7 +1039,8 @@ export function createLayout(
 
   let totalHeight = layoutHeight;
   if (options.showAttribution) {
-    totalHeight += constants.statusFontSize * (options.tjaSourceName ? 4.2 : 3.0); // Add space for attribution above bottom inset
+    // ABTH: one line more than upstream's, for this copy's maintainer.
+    totalHeight += constants.statusFontSize * (options.tjaSourceName ? 5.4 : 4.2); // Add space for attribution above bottom inset
   }
 
   const longNoteSegments = calculateLongNoteSegments(virtualBars, barFrames, constants);

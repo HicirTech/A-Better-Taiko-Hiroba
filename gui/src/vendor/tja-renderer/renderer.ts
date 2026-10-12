@@ -2244,12 +2244,15 @@ export function renderLayout(
     const effectivePaddingBottom = insets?.bottom ?? INSETS.bottom;
     const x = logicalCanvasWidth - effectivePaddingX;
     const yBase = totalHeight - effectivePaddingBottom - fontSize * 0.8;
-    if (options.tjaSourceName) {
-      canvasContext.fillText(`TJA source: ${options.tjaSourceName}`, x, yBase - fontSize * 1.2);
-      canvasContext.fillText("TJA renderer by Jack", x, yBase);
-    } else {
-      canvasContext.fillText("TJA renderer by Jack", x, yBase);
-    }
+    // ABTH: the renderer's author, then this copy's maintainer.
+    const credits = [
+      ...(options.tjaSourceName ? [`TJA source: ${options.tjaSourceName}`] : []),
+      "TJA renderer by Jack",
+      "Enhanced by HicirTech/腋毛科技",
+    ];
+    credits.forEach((line, index) => {
+      canvasContext.fillText(line, x, yBase - fontSize * 1.2 * (credits.length - 1 - index));
+    });
     canvasContext.restore();
   }
 
