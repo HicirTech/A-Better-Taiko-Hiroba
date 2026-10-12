@@ -137,6 +137,14 @@ export function toggledSongs(songs: readonly string[], songNo: string): readonly
   return songs.length < SET_SONG_LIMIT ? [...songs, songNo] : songs;
 }
 
+/** Why a set cannot take a song at its end: it holds the song already, or it is full; else null. */
+export function refusedSong(set: FavoriteSet, songNo: string): "holds" | "full" | null {
+  if (set.songs.includes(songNo)) {
+    return "holds";
+  }
+  return set.songs.length < SET_SONG_LIMIT ? null : "full";
+}
+
 export function sameSongs(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((song, index) => song === b[index]);
 }
