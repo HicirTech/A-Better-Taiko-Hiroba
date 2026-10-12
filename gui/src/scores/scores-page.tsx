@@ -23,7 +23,7 @@ import {
   sortScores,
   startingFilter,
 } from "./score-order";
-import type { ScoresState } from "./use-scores";
+import type { ChosenSong, ScoresState } from "./use-scores";
 
 const LIST = { listStyle: "none", m: 0, p: 0 } as const;
 
@@ -199,7 +199,7 @@ function ScoreRow({
 export function scoresReadingText(
   i18n: Translator,
   progress: ScoresProgress | null,
-  song: ScoreView | null,
+  song: ChosenSong | null,
 ): string {
   if (song !== null) {
     return i18n.t("scores.readingSong", { song: song.songTitle });

@@ -6,6 +6,7 @@ import { afterRefresh } from "../read-again/after-refresh";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
 import type {
   HirobaSessionPort,
+  PlayedChart,
   ScoresFailure,
   ScoresProgress,
   ScoresRead,
@@ -15,6 +16,9 @@ import type {
 
 const POLL_MS = 200;
 
+/** The song a read of one song is for, named as its reading text names it. */
+export type ChosenSong = Pick<ScoreView, "songNo" | "songTitle">;
+
 export interface ScoresState {
   /** The kept scores; null until `load` has brought them. */
   readonly view: ScoresView | null;
@@ -23,7 +27,7 @@ export interface ScoresState {
   /** How far a read of all scores has come, while one runs. */
   readonly progress: ScoresProgress | null;
   /** The song whose scores are being read again by hand. */
-  readonly song: ScoreView | null;
+  readonly song: ChosenSong | null;
   readonly failure: ScoresFailure | null;
   /** The last read of all scores found no chart played since the one before. */
   readonly nothingNew: boolean;
@@ -33,8 +37,8 @@ export interface ScoresState {
   readonly read: () => Promise<void>;
   /** Reads every list and every played chart again, after Hiroba's own refresh: minutes. */
   readonly readEvery: () => Promise<void>;
-  /** Reads one song's charts again, after Hiroba's own refresh. */
-  readonly readSong: (song: ScoreView) => Promise<void>;
+  /** Reads one song's charts again, `played` among them, after Hiroba's own refresh. */
+  readonly readSong: (song: ChosenSong, played?: PlayedChart) => Promise<void>;
 }
 
 /** The kept scores, a read that reports how far it has come, and a read of one song. */
@@ -53,7 +57,7 @@ export function useScores(
   const [view, setView] = useState<ScoresView | null>(null);
   const [reading, setReading] = useState(false);
   const [progress, setProgress] = useState<ScoresProgress | null>(null);
-  const [song, setSong] = useState<ScoreView | null>(null);
+  const [song, setSong] = useState<ChosenSong | null>(null);
   const [failure, setFailure] = useState<ScoresFailure | null>(null);
   const [nothingNew, setNothingNew] = useState(false);
   const running = useRef(false);
@@ -78,7 +82,7 @@ export function useScores(
     [port, onSessionGone],
   );
   const run = useCallback(
-    async (ask: () => Promise<Result<ScoresRead, ScoresFailure>>, chosen: ScoreView | null) => {
+    async (ask: () => Promise<Result<ScoresRead, ScoresFailure>>, chosen: ChosenSong | null) => {
       if (running.current) {
         return;
       }
@@ -114,7 +118,8 @@ export function useScores(
   const read = useCallback(() => run(() => port.readScores(), null), [port, run]);
   const readEvery = useCallback(() => run(() => port.readEveryScore(), null), [port, run]);
   const readSong = useCallback(
-    (chosen: ScoreView) => run(() => port.readSongScores(chosen.songNo), chosen),
+    (chosen: ChosenSong, played?: PlayedChart) =>
+      run(() => port.readSongScores(chosen.songNo, played ?? null), chosen),
     [port, run],
   );
   return {

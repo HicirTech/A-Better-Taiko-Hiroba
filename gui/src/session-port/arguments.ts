@@ -1,4 +1,4 @@
-import type { RatingSystem, ScoreRank } from "@abth/core";
+import type { Genre, Level, RatingSystem, ScoreRank } from "@abth/core";
 
 // Not the index: the preload must not load the pipelines, and the core with them.
 import { KEPT_GROUPS } from "../pipelines/kept-groups";
@@ -17,6 +17,7 @@ import type {
   HirobaSessionPort,
   NameState,
   PictureWant,
+  PlayedChart,
   TitleState,
   TitleTarget,
 } from "./types";
@@ -240,6 +241,35 @@ const favoriteSongChange: ArgumentCheck = (args) =>
 
 const oneSongNo: ArgumentCheck = (args) => args.length === 1 && isSongNo(args[0]);
 
+const LEVEL: Readonly<Record<Level, true>> = { 1: true, 2: true, 3: true, 4: true, 5: true };
+const GENRE: Readonly<Record<Genre, true>> = {
+  1: true,
+  2: true,
+  3: true,
+  4: true,
+  5: true,
+  6: true,
+  7: true,
+  8: true,
+};
+const MAX_SONG_TITLE_LENGTH = 200;
+
+function isPlayedChart(value: unknown): value is PlayedChart {
+  return (
+    hasExactly(value, ["level", "title", "genre"]) &&
+    typeof value.level === "number" &&
+    Object.hasOwn(LEVEL, value.level) &&
+    typeof value.title === "string" &&
+    value.title.length >= 1 &&
+    value.title.length <= MAX_SONG_TITLE_LENGTH &&
+    (value.genre === null || (typeof value.genre === "number" && Object.hasOwn(GENRE, value.genre)))
+  );
+}
+
+// The level goes into a detail page's address; the title and genre only into the kept book.
+const songScores: ArgumentCheck = (args) =>
+  args.length === 2 && isSongNo(args[0]) && (args[1] === null || isPlayedChart(args[1]));
+
 const songNoAndAgain: ArgumentCheck = (args) =>
   args.length === 2 && isSongNo(args[0]) && typeof args[1] === "boolean";
 
@@ -326,7 +356,7 @@ export const PORT_ARGUMENTS = {
   scores: none,
   readScores: none,
   readEveryScore: none,
-  readSongScores: oneSongNo,
+  readSongScores: songScores,
   scoresProgress: none,
   readSongCatalogue: catalogueSince,
   readChineseNames: none,

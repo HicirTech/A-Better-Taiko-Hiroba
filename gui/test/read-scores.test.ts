@@ -258,7 +258,7 @@ describe("createScoresReader", () => {
     await scores.readScores();
     hiroba.detailsAsked(true);
 
-    await scores.readSongScores("1004");
+    await scores.readSongScores("1004", null);
 
     expect(sorted(hiroba.detailsAsked())).toEqual([
       "1004/1",
@@ -267,6 +267,20 @@ describe("createScoresReader", () => {
       "1004/4",
       "1004/5",
     ]);
+  });
+
+  test("a read of one song for a recent play takes in a song no list named, and its played chart", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores } = readersOver(hiroba.transport);
+
+    const read = await scores.readSongScores("1003", { level: 4, title: "サンプル曲 3", genre: 4 });
+
+    expect(hiroba.detailsAsked()).toEqual(["1003/4"]);
+    const view = read.ok ? read.value : null;
+    expect(
+      view?.scores.map(({ songNo, level, songTitle }) => `${songNo}/${level} ${songTitle}`),
+    ).toEqual(["1003/4 サンプル曲 3"]);
+    expect(view?.songs).toEqual([{ songNo: "1003", title: "サンプル曲 3", genres: [4] }]);
   });
 
   test("shows the walk's page while it runs, and nothing once the read ended", async () => {
