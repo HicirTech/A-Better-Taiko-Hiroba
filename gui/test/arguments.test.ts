@@ -3,6 +3,7 @@ import { PLAY_OPTION_CODES, SCORE_RANK_NAMES } from "@abth/core";
 
 import { KEPT_GROUPS } from "../src/pipelines";
 import { PORT_ARGUMENTS } from "../src/session-port";
+import { CHART_PICTURE_MAX_BYTES } from "../src/song-catalogue";
 
 const SET = {
   colorBody: 12,
@@ -30,6 +31,9 @@ describe("PORT_ARGUMENTS", () => {
       readRatingData: _ratingData,
       readChartPicture: _chartPicture,
       readChartDensity: _chartDensity,
+      readChartTja: _chartTja,
+      readDrawnChart: _drawnChart,
+      keepDrawnChart: _keepDrawnChart,
       readPipelines: _pipelines,
       readSongScores: _songScores,
       ...takingNothing
@@ -80,20 +84,25 @@ describe("PORT_ARGUMENTS", () => {
     expect(PORT_ARGUMENTS.readPipelines(args)).toBe(false);
   });
 
-  test("readChartPicture takes one web address", () => {
+  test("readChartPicture takes one web address and how to read it", () => {
     const check = PORT_ARGUMENTS.readChartPicture;
-    expect(check(["https://cdn.wikiwiki.jp/to/w/taiko-fumen/a.png?rev=1"])).toBe(true);
-    expect(check(["http://hiroba.127.0.0.1.sslip.io:8807/__charts/1001/oni.png"])).toBe(true);
+    expect(check(["https://cdn.wikiwiki.jp/to/w/taiko-fumen/a.png?rev=1", "any"])).toBe(true);
+    expect(check(["http://hiroba.127.0.0.1.sslip.io:8807/__charts/1001/oni.png", "kept"])).toBe(
+      true,
+    );
+    expect(check(["https://file.taiko.wiki/fumen/670/oni", "again"])).toBe(true);
   });
 
   test.each<[why: string, args: unknown[]]>([
     ["nothing", []],
+    ["no way to read it", ["https://file.taiko.wiki/a"]],
+    ["a way it does not know", ["https://file.taiko.wiki/a", "fresh"]],
     ["two addresses", ["https://file.taiko.wiki/a", "https://file.taiko.wiki/b"]],
-    ["no text", [{ url: "https://file.taiko.wiki/a" }]],
-    ["no address", ["fumen/670/oni"]],
-    ["a file", ["file:///etc/passwd"]],
-    ["script", ["javascript:alert(1)"]],
-    ["an address too long", [`https://file.taiko.wiki/${"a".repeat(2048)}`]],
+    ["no text", [{ url: "https://file.taiko.wiki/a" }, "any"]],
+    ["no address", ["fumen/670/oni", "any"]],
+    ["a file", ["file:///etc/passwd", "any"]],
+    ["script", ["javascript:alert(1)", "any"]],
+    ["an address too long", [`https://file.taiko.wiki/${"a".repeat(2048)}`, "any"]],
   ])("readChartPicture refuses %s", (_why, args) => {
     expect(PORT_ARGUMENTS.readChartPicture(args)).toBe(false);
   });
@@ -107,6 +116,32 @@ describe("PORT_ARGUMENTS", () => {
     expect(check(["../1001", false])).toBe(false);
     expect(check([1001, false])).toBe(false);
     expect(check(["1001", false, false])).toBe(false);
+  });
+
+  test("readChartTja takes one song number", () => {
+    const check = PORT_ARGUMENTS.readChartTja;
+    expect(check(["1001"])).toBe(true);
+    expect(check([])).toBe(false);
+    expect(check(["../1001"])).toBe(false);
+    expect(check(["1001", true])).toBe(false);
+  });
+
+  test("readDrawnChart takes a song number and one of its difficulties", () => {
+    const check = PORT_ARGUMENTS.readDrawnChart;
+    expect(check(["1001", "ura"])).toBe(true);
+    expect(check(["1001"])).toBe(false);
+    expect(check(["1001", "inner"])).toBe(false);
+    expect(check(["1001/..", "oni"])).toBe(false);
+  });
+
+  test("keepDrawnChart takes a song number, a difficulty and at most a picture's bytes", () => {
+    const check = PORT_ARGUMENTS.keepDrawnChart;
+    expect(check(["1001", "oni", new Uint8Array(CHART_PICTURE_MAX_BYTES)])).toBe(true);
+    expect(check(["1001", "oni", new Uint8Array(CHART_PICTURE_MAX_BYTES + 1)])).toBe(false);
+    expect(check(["1001", "oni", "data:image/png;base64,iVBORw0KGgo="])).toBe(false);
+    expect(check(["1001", "oni", [137, 80, 78, 71]])).toBe(false);
+    expect(check(["1001", "inner", new Uint8Array(8)])).toBe(false);
+    expect(check(["1001", "oni"])).toBe(false);
   });
 
   test("changeCostume takes one change: two sets of eight whole numbers from 0 to 9999", () => {

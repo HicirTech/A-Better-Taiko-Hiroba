@@ -62,6 +62,7 @@ export const en: Messages = {
   "pipelines.op.picture": "Picture",
   "pipelines.op.chartPicture": "Chart picture",
   "pipelines.op.chartDensity": "Chart file",
+  "pipelines.op.chartTja": "Chart file to draw",
   "pipelines.picture.myDon": "My Don",
   "pipelines.picture.titlePlate": "Name plate",
   "pipelines.picture.medalPlate": "Don Medal plate",
@@ -145,6 +146,11 @@ export const en: Messages = {
   "settings.updates": "Updates",
   "settings.version": "Version {version}",
   "settings.songData": "Song data",
+  "settings.chartSource": "Chart pictures",
+  "settings.chartSourceHint":
+    "TJA Renderer draws each chart from its TJA file in ESE; taiko.wiki shows the pictures its editors link.",
+  "settings.chartSource.tja": "TJA Renderer",
+  "settings.chartSource.wiki": "taiko.wiki",
   "settings.taikoWiki": "taiko.wiki",
   "settings.taikoWikiGives":
     "Artists, genres, star levels, BPM, song names in other languages, and the chart pictures it links",
@@ -160,7 +166,9 @@ export const en: Messages = {
     "The chart constants and measurements behind the rating, through OurTaiko",
   "settings.ese": "ESE by TJADB (ese.tjadataba.se)",
   "settings.eseGives":
-    "Each song's chart file, read for its note density; only the counts are kept",
+    "Each song's chart file, read for its note density and drawn pictures; only the counts and the pictures are kept",
+  "settings.tjaRenderer": "TJA Renderer (github.com/jack9966qk/TJARenderer)",
+  "settings.tjaRendererGives": "Draws the chart pictures from TJA files, under the MIT License",
   "settings.github": "GitHub",
   "settings.githubGives": "The app's source code, its issues and its releases",
   "settings.songLevels": "Song levels",
@@ -490,4 +498,7 @@ export const en: Messages = {
   "details.branch.master": "Master",
   "details.pictureFailed": "Couldn't load the chart picture.",
   "details.picture": "{difficulty} chart, picture {n} of {count}",
+  "details.drawnPicture": "{difficulty} chart, drawn from its TJA file",
+  "details.noTja": "TJA Renderer cannot draw this chart, so taiko.wiki's pictures are shown.",
+  "details.chartDiffers": "This chart differs from the game's.",
 };

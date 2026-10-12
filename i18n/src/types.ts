@@ -78,6 +78,7 @@ export interface Messages {
   "pipelines.op.picture": string;
   "pipelines.op.chartPicture": string;
   "pipelines.op.chartDensity": string;
+  "pipelines.op.chartTja": string;
   "pipelines.picture.myDon": string;
   "pipelines.picture.titlePlate": string;
   "pipelines.picture.medalPlate": string;
@@ -185,6 +186,10 @@ export interface Messages {
   /** Param: {version}, this build's version, such as 0.1.0. */
   "settings.version": string;
   "settings.songData": string;
+  "settings.chartSource": string;
+  "settings.chartSourceHint": string;
+  "settings.chartSource.tja": string;
+  "settings.chartSource.wiki": string;
   "settings.taikoWiki": string;
   "settings.taikoWikiGives": string;
   "settings.chineseWiki": string;
@@ -197,6 +202,8 @@ export interface Messages {
   "settings.fumenDbGives": string;
   "settings.ese": string;
   "settings.eseGives": string;
+  "settings.tjaRenderer": string;
+  "settings.tjaRendererGives": string;
   "settings.github": string;
   "settings.githubGives": string;
   "settings.songLevels": string;
@@ -561,6 +568,9 @@ export interface Messages {
   "details.pictureFailed": string;
   /** Params: {difficulty} (a difficulty.* text), {n} and {count}. A chart picture's name. */
   "details.picture": string;
+  "details.drawnPicture": string;
+  "details.noTja": string;
+  "details.chartDiffers": string;
 }
 
 export type MessageKey = keyof Messages;

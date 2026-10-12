@@ -62,6 +62,7 @@ export const ja: Messages = {
   "pipelines.op.picture": "画像",
   "pipelines.op.chartPicture": "譜面の画像",
   "pipelines.op.chartDensity": "譜面ファイル",
+  "pipelines.op.chartTja": "描画する譜面ファイル",
   "pipelines.picture.myDon": "マイどん",
   "pipelines.picture.titlePlate": "ネームプレート",
   "pipelines.picture.medalPlate": "どんメダルのプレート",
@@ -146,6 +147,11 @@ export const ja: Messages = {
   "settings.updates": "アップデート",
   "settings.version": "バージョン {version}",
   "settings.songData": "曲のデータ",
+  "settings.chartSource": "譜面の画像",
+  "settings.chartSourceHint":
+    "TJA Renderer は ESE の TJA ファイルから譜面を描きます。taiko.wiki は編集者がリンクした画像を表示します。",
+  "settings.chartSource.tja": "TJA Renderer",
+  "settings.chartSource.wiki": "taiko.wiki",
   "settings.taikoWiki": "taiko.wiki",
   "settings.taikoWikiGives":
     "アーティスト、ジャンル、難易度の星、BPM、ほかの言語の曲名、譜面の画像へのリンク",
@@ -159,7 +165,9 @@ export const ja: Messages = {
   "settings.fumenDb": "太鼓の達人 譜面とかデータベース（fumen-database.com）",
   "settings.fumenDbGives": "レーティングに使う譜面の定数と測定値（OurTaiko 経由）",
   "settings.ese": "TJADB の ESE（ese.tjadataba.se）",
-  "settings.eseGives": "各曲の譜面ファイル（密度を読むためで、保存するのは数値だけ）",
+  "settings.eseGives": "各曲の譜面ファイル（密度と描画のためで、保存するのは数値と描いた画像だけ）",
+  "settings.tjaRenderer": "TJA Renderer（github.com/jack9966qk/TJARenderer）",
+  "settings.tjaRendererGives": "TJA ファイルから譜面の画像を描画（MIT ライセンス）",
   "settings.github": "GitHub",
   "settings.githubGives": "アプリのソースコード、不具合の報告、リリース",
   "settings.songLevels": "曲の難易度",
@@ -494,4 +502,7 @@ export const ja: Messages = {
   "details.branch.master": "達人譜面",
   "details.pictureFailed": "譜面の画像を読み込めませんでした。",
   "details.picture": "{difficulty}の譜面（{n}/{count}）",
+  "details.drawnPicture": "{difficulty}の譜面（TJA ファイルから描画）",
+  "details.noTja": "TJA Renderer ではこの譜面を描けないため、taiko.wiki の画像を表示しています。",
+  "details.chartDiffers": "この譜面はゲームの譜面と異なります。",
 };

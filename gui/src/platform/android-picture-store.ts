@@ -17,6 +17,8 @@ const PICTURE_DATABASE = "abth-pictures";
 export const CHART_PICTURE_DATABASE = "abth-charts";
 /** The numbers read from each song's chart file, in a database of their own too. */
 export const CHART_DENSITY_DATABASE = "abth-densities";
+/** The charts the page drew from TJA, apart from the pictures it fetched. */
+export const DRAWN_CHART_DATABASE = "abth-drawn-charts";
 const DATABASE_VERSION = 1;
 /** The pictures' bytes, each under its pictureKeyPath. */
 const PICTURES = "pictures";

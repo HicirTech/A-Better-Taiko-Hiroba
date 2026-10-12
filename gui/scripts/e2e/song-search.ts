@@ -1,4 +1,5 @@
 /** The Overview's song search: its bar, the searches kept, a song's details and chart pictures. */
+import { LONG_HOLD_MS } from "../../src/read-again/pull-gesture";
 import {
   BRANCHED_CHART,
   MISCOUNTED_CHART,
@@ -28,6 +29,7 @@ export const songSearchKeys = [
   "keptSearchesUnframed",
   "searchAgainFromTheKeptOne",
   "searchForgotten",
+  "chartSourceDefaultsToTja",
   "detailsOpenOnTheInnerChart",
   "detailsChartsShowTheirIcons",
   "chartPictureOpensFullScreen",
@@ -37,6 +39,12 @@ export const songSearchKeys = [
   "densityKeptAndReadAgain",
   "densityNotDrawnWhenTheNotesDiffer",
   "densityNotDrawnWithoutAChart",
+  "keptWikiPictureStaysUnderTja",
+  "longHoldRedrawsTheSong",
+  "chartDrawnFromTheTja",
+  "drawnChartKept",
+  "noTjaFallsBackWithANotice",
+  "differingChartDrawnWithANote",
   "detailsShowTheChartPictures",
   "chartPictureAskedOnce",
   "fiveChartsInOneRowOnAPhone",
@@ -49,7 +57,8 @@ export const songSearchKeys = [
 export async function songSearch(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, boxOf, exists, press, swipe, touchEmulated } = pageHelpers(page);
+  const { atSize, attribute, boxOf, exists, mousePress, press, swipe, touchEmulated } =
+    pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
@@ -93,6 +102,21 @@ export async function songSearch(ctx: Ctx) {
     await goTo("overview");
     await shown("#song-search-input");
   };
+  const chooseChartSource = async (source: "tja" | "wiki") => {
+    await goTo("settings");
+    await shown(`#chart-source-${source}`);
+    await click(`#chart-source-${source}`);
+    await goTo("overview");
+    await shown("#song-search-input");
+  };
+  const chartDrawn = () =>
+    waitFor(
+      "a chart drawn from its TJA",
+      async () =>
+        (await page.evaluate<boolean>(
+          `[...document.querySelectorAll("#song-details-pictures img.drawn-chart")].some((img) => img.complete && img.naturalWidth > 0)`,
+        )) || undefined,
+    );
 
   await goTo("overview");
   await shown("#song-search");
@@ -148,6 +172,13 @@ export async function songSearch(ctx: Ctx) {
   await click("#song-search-recent li .MuiIconButton-root");
   await gone("#song-search-recent");
   results.searchForgotten = !(await exists("#song-search-panel"));
+
+  // taiko.wiki's pictures first, as before the app drew any: a new install draws from TJA.
+  await goTo("settings");
+  await shown("#chart-source-tja");
+  results.chartSourceDefaultsToTja =
+    (await attribute("#chart-source-tja", "aria-pressed")) === "true";
+  await chooseChartSource("wiki");
 
   await openSong("約束", "1005");
   results.detailsOpenOnTheInnerChart = (await chosenChart()) === "song-details-chart-ura";
@@ -228,16 +259,72 @@ export async function songSearch(ctx: Ctx) {
   results.densityNotDrawnWithoutAChart = !(await exists("#song-density-line"));
   await closeSong();
 
+  // Drawn from TJA again: the taiko.wiki pictures read above stay until a long hold.
+  await chooseChartSource("tja");
+  const branchedRead = await chartHits();
+  await openSong("約束", BRANCHED_CHART);
+  await pictureDrawn();
+  results.keptWikiPictureStaysUnderTja =
+    !(await exists("#song-details-pictures img.drawn-chart")) &&
+    (await chartHits()) === branchedRead;
+  const innerRead = await hitsOn(INNER_PICTURE);
+  await mousePress("#song-details-read-chart", "left", LONG_HOLD_MS + 500);
+  const redrawn = await chartDrawn().then(
+    () => true,
+    () => false,
+  );
+  // The density read again, and the chart file once more for the drawing.
+  results.longHoldRedrawsTheSong =
+    redrawn &&
+    (await chartHits()) === branchedRead + 2 &&
+    (await hitsOn(INNER_PICTURE)) === innerRead;
+  await waitFor("the song reloaded", async () =>
+    (await attribute("#song-details-read-chart", "disabled")) === null ? true : undefined,
+  );
+  await closeSong();
+
+  const plainHits = () => hitsOn(encodeURIComponent(servedChartPath(PLAIN_CHART)));
+  const plainRead = await plainHits();
+  await openSong("夜明け", PLAIN_CHART);
+  await pictureDrawn();
+  await click("#song-details-chart-easy");
+  await chartDrawn();
+  results.chartDrawnFromTheTja =
+    (await plainHits()) === plainRead + 1 && (await hitsOn("/__charts/1001/easy-1.png")) === 0;
+  await closeSong();
+  await openSong("夜明け", PLAIN_CHART);
+  await click("#song-details-chart-easy");
+  await chartDrawn();
+  results.drawnChartKept = (await plainHits()) === plainRead + 1;
+  await closeSong();
+
+  await openSong("白い季節", MISSING_CHART);
+  await shown("#song-details-no-tja");
+  results.noTjaFallsBackWithANotice = await exists("#song-details-no-picture");
+  await closeSong();
+  await openSong("ひこうき", MISCOUNTED_CHART);
+  await chartDrawn();
+  results.differingChartDrawnWithANote = await soon("the line under the drawing", () =>
+    exists("#song-details-chart-differs"),
+  );
+  await closeSong();
+
   results.fiveChartsInOneRowOnAPhone = await atSize(
     NARROW_PHONE.width,
     NARROW_PHONE.height,
     async () => {
-      await openSong("約束", "1005");
-      const tops = await page.evaluate<number[]>(
-        `[...document.querySelectorAll("#song-details-charts button")].map((button) => Math.round(button.getBoundingClientRect().top))`,
-      );
-      await closeSong();
-      return tops.length === 5 && new Set(tops).size === 1;
+      // A phone's scroll bar floats over the page; the desktop's would take a drawn chart's column.
+      await page.send("Emulation.setScrollbarsHidden", { hidden: true });
+      try {
+        await openSong("約束", "1005");
+        const tops = await page.evaluate<number[]>(
+          `[...document.querySelectorAll("#song-details-charts button")].map((button) => Math.round(button.getBoundingClientRect().top))`,
+        );
+        await closeSong();
+        return tops.length === 5 && new Set(tops).size === 1;
+      } finally {
+        await page.send("Emulation.setScrollbarsHidden", { hidden: false });
+      }
     },
   );
 

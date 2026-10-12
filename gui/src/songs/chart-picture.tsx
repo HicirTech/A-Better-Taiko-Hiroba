@@ -36,12 +36,11 @@ function ReadChartPicture({
   onOpen,
   onRetry,
 }: ChartPictureProps & { onRetry: () => void }) {
-  const { t } = i18n;
   const [shown, setShown] = useState<Shown>({ kind: "loading" });
 
   useEffect(() => {
     let current = true;
-    void port.readChartPicture(url).then((result) => {
+    void port.readChartPicture(url, "any").then((result) => {
       if (current) {
         setShown(
           result.ok
@@ -56,42 +55,84 @@ function ReadChartPicture({
   }, [url, port]);
 
   if (shown.kind === "loading") {
-    return <Skeleton variant="rounded" height={LOADING_HEIGHT_PX} aria-label={label} />;
+    return <PictureLoading label={label} />;
   }
 
   if (shown.kind === "failed") {
     return (
-      <Box className="chart-picture-failed">
-        <FormHelperText error>
-          {t("details.pictureFailed")}
-          <Box
-            component="span"
-            sx={{ display: "block", fontFamily: "monospace", userSelect: "text" }}
-          >
-            {t("picker.code", { code: shown.code })}
-          </Box>
-        </FormHelperText>
-        <Button size="small" onClick={onRetry}>
-          {t("picker.retry")}
-        </Button>
-      </Box>
+      <PictureFailed
+        message={i18n.t("details.pictureFailed")}
+        code={shown.code}
+        i18n={i18n}
+        onRetry={onRetry}
+      />
     );
   }
 
-  const { picture } = shown;
+  return <PictureButton picture={shown.picture} label={label} onOpen={onOpen} />;
+}
+
+export function PictureLoading({ label }: { readonly label: string }) {
+  return <Skeleton variant="rounded" height={LOADING_HEIGHT_PX} aria-label={label} />;
+}
+
+/** A failure to show a chart picture, its code, and a retry. */
+export function PictureFailed({
+  message,
+  code,
+  i18n,
+  onRetry,
+}: {
+  readonly message: string;
+  readonly code: string;
+  readonly i18n: Translator;
+  readonly onRetry: () => void;
+}) {
+  const { t } = i18n;
+  return (
+    <Box className="chart-picture-failed">
+      <FormHelperText error>
+        {message}
+        <Box
+          component="span"
+          sx={{ display: "block", fontFamily: "monospace", userSelect: "text" }}
+        >
+          {t("picker.code", { code })}
+        </Box>
+      </FormHelperText>
+      <Button size="small" onClick={onRetry}>
+        {t("picker.retry")}
+      </Button>
+    </Box>
+  );
+}
+
+/** A chart picture as wide as its column, its corners rounded; a tap opens it. */
+export function PictureButton({
+  picture,
+  label,
+  drawn = false,
+  onOpen,
+}: {
+  readonly picture: PictureView;
+  readonly label: string;
+  /** Drawn from TJA rather than fetched. */
+  readonly drawn?: boolean;
+  readonly onOpen: (chart: ShownChart) => void;
+}) {
   return (
     <ButtonBase
       className="chart-picture-open"
       onClick={() => onOpen({ picture, label })}
-      sx={{ display: "block", maxWidth: "100%", borderRadius: 1, overflow: "hidden" }}
+      sx={{ display: "block", width: "100%", borderRadius: 1, overflow: "hidden" }}
     >
       <img
-        className="chart-picture"
+        className={drawn ? "chart-picture drawn-chart" : "chart-picture"}
         src={picture.src}
         width={picture.width}
         height={picture.height}
         alt={label}
-        style={{ display: "block", maxWidth: "100%", height: "auto" }}
+        style={{ display: "block", width: "100%", height: "auto" }}
       />
     </ButtonBase>
   );

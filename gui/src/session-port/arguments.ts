@@ -2,7 +2,12 @@ import type { RatingSystem, ScoreRank } from "@abth/core";
 
 // Not the index: the preload must not load the pipelines, and the core with them.
 import { KEPT_GROUPS } from "../pipelines/kept-groups";
-import { DIFFICULTIES } from "../song-catalogue/types";
+import {
+  CHART_PICTURE_MAX_BYTES,
+  type ChartPictureRead,
+  DIFFICULTIES,
+  isDifficulty,
+} from "../song-catalogue/types";
 
 import type {
   CostumeSet,
@@ -266,12 +271,32 @@ const RATING_SYSTEM: Readonly<Record<RatingSystem, true>> = { ourtaikoV1: true }
 const ratingSystem: ArgumentCheck = (args) =>
   args.length === 1 && typeof args[0] === "string" && Object.hasOwn(RATING_SYSTEM, args[0]);
 
+const CHART_PICTURE_READ: Readonly<Record<ChartPictureRead, true>> = {
+  kept: true,
+  any: true,
+  again: true,
+};
+
 // Any web address passes here; the platform reads only its chart hosts'.
 const chartUrl: ArgumentCheck = (args) =>
-  args.length === 1 &&
+  args.length === 2 &&
   typeof args[0] === "string" &&
   args[0].length <= MAX_URL_LENGTH &&
-  isWebAddress(args[0]);
+  isWebAddress(args[0]) &&
+  typeof args[1] === "string" &&
+  Object.hasOwn(CHART_PICTURE_READ, args[1]);
+
+const isSongChart = (songNo: unknown, difficulty: unknown) =>
+  isSongNo(songNo) && typeof difficulty === "string" && isDifficulty(difficulty);
+
+const songChart: ArgumentCheck = (args) => args.length === 2 && isSongChart(args[0], args[1]);
+
+// The bytes are the page's: the platform keeps only a PNG among them.
+const drawnChart: ArgumentCheck = (args) =>
+  args.length === 3 &&
+  isSongChart(args[0], args[1]) &&
+  args[2] instanceof Uint8Array &&
+  args[2].byteLength <= CHART_PICTURE_MAX_BYTES;
 
 /** What each verb accepts from the interface; anything the renderer sends is untrusted until it
  * passes here. A verb with no entry is a type error, so none reaches the port unchecked. */
@@ -308,5 +333,8 @@ export const PORT_ARGUMENTS = {
   readRatingData: ratingSystem,
   readChartPicture: chartUrl,
   readChartDensity: songNoAndAgain,
+  readChartTja: oneSongNo,
+  readDrawnChart: songChart,
+  keepDrawnChart: drawnChart,
   readPipelines: historyLimit,
 } as const satisfies Record<keyof HirobaSessionPort, ArgumentCheck>;

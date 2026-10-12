@@ -23,7 +23,11 @@ import {
   pickedNow,
 } from "../src/pipelines-page/pipeline-rows";
 import { PORT_QUEUEING } from "../src/session-port";
-import { CHART_DENSITY_OPERATION, CHART_PICTURE_OPERATION } from "../src/song-catalogue";
+import {
+  CHART_DENSITY_OPERATION,
+  CHART_PICTURE_OPERATION,
+  CHART_TJA_OPERATION,
+} from "../src/song-catalogue";
 
 const now = (id: number, overrides: Partial<GroupNow> = {}): GroupNow => ({
   id,
@@ -121,6 +125,7 @@ describe("operationName", () => {
       PICTURE_OPERATION,
       CHART_PICTURE_OPERATION,
       CHART_DENSITY_OPERATION,
+      CHART_TJA_OPERATION,
     ].sort();
 
     expect(Object.keys(OPERATION_NAMES).sort()).toEqual(operations);

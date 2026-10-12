@@ -1,0 +1,130 @@
+import type { Result } from "@abth/core";
+import type { Translator } from "@abth/i18n";
+import { FormHelperText, Stack } from "@mui/material";
+import { useEffect, useState } from "react";
+
+import { DIFFICULTY_LABEL } from "../favorites/genre-look";
+import type { HirobaSessionPort } from "../session-port";
+import type { ChartFileFailure, Difficulty } from "../song-catalogue/types";
+import { ChartPicture, PictureButton, PictureFailed, PictureLoading } from "./chart-picture";
+import type { ChartSource } from "./chart-source";
+import type { ShownChart } from "./chart-viewer";
+import { drawChart } from "./draw-chart";
+import { type ChartShown, findChartPicture } from "./find-chart-picture";
+
+const WIKI: ChartShown = { kind: "wiki", noTja: false };
+
+interface ChartPicturesProps {
+  readonly songNo: string;
+  readonly difficulty: Difficulty;
+  /** taiko.wiki's pictures of the chart. */
+  readonly images: readonly string[];
+  readonly source: ChartSource;
+  /** Whether the chart file's notes differ from the game's count. */
+  readonly differs: boolean;
+  /** The song's chart file, read once for the details. */
+  readonly tja: () => Promise<Result<string, ChartFileFailure>>;
+  /** Bumped by a reload of the whole song, so the pictures kept are taken anew. */
+  readonly generation: number;
+  readonly port: Pick<HirobaSessionPort, "readChartPicture" | "readDrawnChart" | "keepDrawnChart">;
+  readonly i18n: Translator;
+  readonly onOpen: (chart: ShownChart) => void;
+}
+
+/** A chart's pictures, drawn from its TJA or taiko.wiki's, as Settings choose. */
+export function ChartPictures(props: ChartPicturesProps) {
+  const { songNo, difficulty, images, source, differs, tja, generation, port, i18n, onOpen } =
+    props;
+  const { t } = i18n;
+  const [attempt, setAttempt] = useState(0);
+  // Kept while a reload draws anew: the picture shown stays until its successor is ready.
+  const [shown, setShown] = useState<ChartShown | null>(source === "wiki" ? WIKI : null);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a reload or a retry asks again
+  useEffect(() => {
+    if (source === "wiki") {
+      return;
+    }
+
+    let current = true;
+    void findChartPicture({ songNo, difficulty, images, port, tja, draw: drawChart }).then(
+      (next) => {
+        if (current) {
+          setShown(next);
+        }
+      },
+    );
+    return () => {
+      current = false;
+    };
+  }, [songNo, difficulty, images, source, tja, port, generation, attempt]);
+
+  const chartName = t(DIFFICULTY_LABEL[difficulty]);
+  if (shown === null) {
+    return <PictureLoading label={t("details.drawnPicture", { difficulty: chartName })} />;
+  }
+
+  if (shown.kind === "failed") {
+    return (
+      <PictureFailed
+        message={t("details.densityFailed")}
+        code={shown.code}
+        i18n={i18n}
+        onRetry={() => {
+          setShown(null);
+          setAttempt((now) => now + 1);
+        }}
+      />
+    );
+  }
+
+  if (shown.kind === "drawn") {
+    return (
+      <Stack id="song-details-pictures" spacing={0.5}>
+        <PictureButton
+          picture={shown.picture}
+          label={t("details.drawnPicture", { difficulty: chartName })}
+          drawn
+          onOpen={onOpen}
+        />
+        {differs && (
+          <FormHelperText id="song-details-chart-differs" sx={{ m: 0 }}>
+            {t("details.chartDiffers")}
+          </FormHelperText>
+        )}
+      </Stack>
+    );
+  }
+
+  return (
+    <Stack spacing={1}>
+      {shown.noTja && (
+        <FormHelperText id="song-details-no-tja" sx={{ m: 0 }}>
+          {t("details.noTja")}
+        </FormHelperText>
+      )}
+      {images.length > 0 ? (
+        <Stack id="song-details-pictures" spacing={1}>
+          {images.map((url, index) => (
+            <ChartPicture
+              key={`${generation} ${url}`}
+              url={url}
+              label={t("details.picture", {
+                difficulty: chartName,
+                n: index + 1,
+                count: images.length,
+              })}
+              port={port}
+              i18n={i18n}
+              onOpen={onOpen}
+            />
+          ))}
+        </Stack>
+      ) : (
+        <FormHelperText id="song-details-no-picture" sx={{ m: 0 }}>
+          {t("details.noPicture")}
+        </FormHelperText>
+      )}
+    </Stack>
+  );
+}

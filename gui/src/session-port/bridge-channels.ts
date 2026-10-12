@@ -32,5 +32,8 @@ export const BRIDGE_CHANNELS = {
   readRatingData: "abth:read-rating-data",
   readChartPicture: "abth:read-chart-picture",
   readChartDensity: "abth:read-chart-density",
+  readChartTja: "abth:read-chart-tja",
+  readDrawnChart: "abth:read-drawn-chart",
+  keepDrawnChart: "abth:keep-drawn-chart",
   readPipelines: "abth:read-pipelines",
 } as const;

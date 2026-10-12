@@ -2,7 +2,7 @@
 import { LONG_HOLD_MS } from "../../src/read-again/pull-gesture";
 import { en, HIROBA } from "./config";
 import type { Ctx } from "./context";
-import { middleOf, pageHelpers, same, waitFor } from "./harness";
+import { pageHelpers, same, waitFor } from "./harness";
 import { hitsOn, refreshHits } from "./stand-in";
 
 const SCORE_LIST = "/score_list.php";
@@ -68,7 +68,8 @@ interface RowLook {
 export async function scores(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, exists, fabState, press, swipe, touchEmulated } = pageHelpers(page);
+  const { atSize, attribute, exists, fabState, mousePress, press, swipe, touchEmulated } =
+    pageHelpers(page);
   const shownRows = () =>
     page.evaluate<ShownRow[]>(
       `[...document.querySelectorAll("#scores-list .history-row")].map((row) => ({ chart: row.dataset.songNo + "/" + row.dataset.level, facts: row.querySelector(".song-facts")?.textContent ?? "" }))`,
@@ -89,28 +90,6 @@ export async function scores(ctx: Ctx) {
     await settled();
   };
   const readAgain = () => readAfter(() => click("#read-again"));
-  // A real press: an SVG has no click(), and a chip's × is one.
-  const mousePress = async (selector: string, button: "left" | "right", heldMs = 0) => {
-    await page.evaluate(
-      `document.querySelector(${JSON.stringify(selector)}).scrollIntoView({ block: "center" })`,
-    );
-    await Bun.sleep(300);
-    const at = await middleOf(page, selector);
-    await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
-    await page.send("Input.dispatchMouseEvent", {
-      type: "mousePressed",
-      ...at,
-      button,
-      clickCount: 1,
-    });
-    await Bun.sleep(heldMs);
-    await page.send("Input.dispatchMouseEvent", {
-      type: "mouseReleased",
-      ...at,
-      button,
-      clickCount: 1,
-    });
-  };
   const choose = async (chip: string, value: string) => {
     await click(`#${chip}`);
     await waitFor(`${chip}'s menu`, async () => (await exists(`#${chip}-${value}`)) || undefined);

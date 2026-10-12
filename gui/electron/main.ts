@@ -46,6 +46,9 @@ import {
 import {
   createChartDensityReader,
   createChartPictureReader,
+  createChartTjaReader,
+  createDrawnCharts,
+  createEseChartFiles,
   readChineseNames,
   readSongCatalogue,
 } from "../src/song-catalogue";
@@ -185,12 +188,19 @@ const chartPictures = createChartPictureReader({
   pipeline: pipelines.external,
   chartOrigin: environment.chartOrigin,
 });
-const chartDensities = createChartDensityReader({
-  store: createDiskPictureStore(join(app.getPath("userData"), "densities")),
-  pipeline: pipelines.external,
+const chartFiles = createEseChartFiles({
   mappingUrl: environment.eseMappingUrl,
   chartsUrl: environment.eseChartsUrl,
 });
+const chartDensities = createChartDensityReader({
+  store: createDiskPictureStore(join(app.getPath("userData"), "densities")),
+  pipeline: pipelines.external,
+  files: chartFiles,
+});
+const chartTja = createChartTjaReader({ pipeline: pipelines.external, files: chartFiles });
+const drawnCharts = createDrawnCharts(
+  createDiskPictureStore(join(app.getPath("userData"), "drawn-charts")),
+);
 // The writes come up with the window: until then a kept picture fills no history.
 let previewKept: (set: CostumeSet, picture: string) => void = () => undefined;
 const previews = createRecentPreviews((set, picture) => previewKept(set, picture));
@@ -362,6 +372,9 @@ app.whenReady().then(async () => {
     readRatingData: (site, system) => readRatingData(site, environment.ratingDataUrls[system]),
     readChartPicture: chartPictures,
     readChartDensity: chartDensities,
+    readChartTja: chartTja,
+    readDrawnChart: drawnCharts.read,
+    keepDrawnChart: drawnCharts.keep,
     readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });
 

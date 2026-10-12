@@ -57,6 +57,9 @@ import {
   chartOriginFor,
   createChartDensityReader,
   createChartPictureReader,
+  createChartTjaReader,
+  createDrawnCharts,
+  createEseChartFiles,
   ESE_CHARTS_URL,
   ESE_MAPPING_URL,
   readChineseNames,
@@ -69,6 +72,7 @@ import {
   CHART_DENSITY_DATABASE,
   CHART_PICTURE_DATABASE,
   createIndexedDbPictureStore,
+  DRAWN_CHART_DATABASE,
 } from "./android-picture-store";
 import { createIndexedDbPipelineStores } from "./android-pipeline-store";
 import { createIndexedDbRecentPlaysStore } from "./android-recent-plays-store";
@@ -239,15 +243,21 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     pipeline: pipelines.external,
     chartOrigin,
   });
+  const chartFiles = createEseChartFiles({ mappingUrl: eseMappingUrl, chartsUrl: eseChartsUrl });
   const chartDensities = createChartDensityReader({
     store:
       options.indexedDb === undefined
         ? createMemoryPictureStore()
         : createIndexedDbPictureStore(options.indexedDb, CHART_DENSITY_DATABASE),
     pipeline: pipelines.external,
-    mappingUrl: eseMappingUrl,
-    chartsUrl: eseChartsUrl,
+    files: chartFiles,
   });
+  const chartTja = createChartTjaReader({ pipeline: pipelines.external, files: chartFiles });
+  const drawnCharts = createDrawnCharts(
+    options.indexedDb === undefined
+      ? createMemoryPictureStore()
+      : createIndexedDbPictureStore(options.indexedDb, DRAWN_CHART_DATABASE),
+  );
 
   const forget = async () => {
     pipelines.io.stop();
@@ -468,6 +478,12 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readChartPicture: chartPictures,
 
     readChartDensity: chartDensities,
+
+    readChartTja: chartTja,
+
+    readDrawnChart: drawnCharts.read,
+
+    keepDrawnChart: drawnCharts.keep,
 
     readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });

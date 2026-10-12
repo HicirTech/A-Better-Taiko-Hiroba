@@ -12,7 +12,11 @@ import {
   type PictureStore,
 } from "../src/hiroba-session";
 import type { Pipeline } from "../src/pipelines";
-import { CHART_PICTURE_MAX_BYTES, createChartPictureReader } from "../src/song-catalogue";
+import {
+  CHART_PICTURE_MAX_BYTES,
+  type ChartPictureRead,
+  createChartPictureReader,
+} from "../src/song-catalogue";
 import { FFMPEG_JPEG, FFMPEG_LOSSY, gif, png } from "./picture-fixtures";
 
 const FILE = "https://file.taiko.wiki/fumen/670/oni";
@@ -94,11 +98,13 @@ function setUp(
     },
   };
   const store = options.store ?? createMemoryPictureStore();
-  const reader = createChartPictureReader({
+  const read = createChartPictureReader({
     store,
     pipeline: (options.pipeline ?? openPipeline)(transport),
     chartOrigin: options.chartOrigin,
   });
+  // Read as a song's details read: the kept picture, or else a fetched one.
+  const reader = (url: string, how: ChartPictureRead = "any") => read(url, how);
   return { reader, sent, store };
 }
 
@@ -228,6 +234,37 @@ describe("createChartPictureReader, a picture it keeps", () => {
     expect(first).toEqual(view("png", PNG, 300, 20));
     expect(second).toEqual(first);
     expect(sent).toHaveLength(1);
+  });
+});
+
+describe("createChartPictureReader, asked for the kept picture only, or for one anew", () => {
+  test("answers the kept picture alone, and fetches nothing when none is kept", async () => {
+    const store = createMemoryPictureStore();
+    const { reader, sent } = setUp({ store });
+    expect(await reader(FILE, "kept")).toEqual(err({ code: "chart=notKept" }));
+    expect(sent).toEqual([]);
+
+    await store.put(keyOf(FILE), PNG);
+    expect(await reader(FILE, "kept")).toEqual(view("png", PNG, 300, 20));
+    expect(sent).toEqual([]);
+  });
+
+  test("fetches anew past a kept picture, and keeps the new one in its place", async () => {
+    const store = createMemoryPictureStore();
+    await store.put(keyOf(FILE), PNG);
+    const newer = gif(18, 12);
+    const { reader, sent } = setUp({ store, respond: (asked) => answer(newer, asked.url) });
+    expect(await reader(FILE, "again")).toEqual(view("gif", newer, 18, 12));
+    expect(sent).toHaveLength(1);
+    expect(await store.get(keyOf(FILE))).toEqual(newer);
+  });
+
+  test("keeps the picture it had when a fetch anew fails", async () => {
+    const store = createMemoryPictureStore();
+    await store.put(keyOf(FILE), PNG);
+    const { reader } = setUp({ store, respond: (asked) => answer(PNG, asked.url, 404) });
+    expect(await reader(FILE, "again")).toEqual(err({ code: "chart=status-404" }));
+    expect(await reader(FILE, "kept")).toEqual(view("png", PNG, 300, 20));
   });
 });
 

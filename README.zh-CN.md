@@ -27,6 +27,7 @@
 * [x] 按分类、难度、星级以及日文、英文、中文歌名的一部分找歌，条件可以叠加，并显示作者和各难度的星级
 * [x] 在首页查歌，或在收藏页点开歌曲：看 BPM、各难度的星级和最大连段，以及可以全屏放大的谱面图
 * [x] 用折线查看谱面每秒的打数（烈度），分歧谱面可以分别查看
+* [x] 查看由 TJA 文件画出的谱面图，分歧谱面三条一起显示；也可以按你的选择改看 taiko.wiki 的图
 * [x] 在单独的页面上查看 App 正在向各网站请求什么、每个请求的结果
 * [ ] 断网时也能浏览本地数据库
 * [ ] 同时管理多个账号
@@ -48,7 +49,7 @@
 
 鼓众广场是南梦宫的服务, 为了不被南梦宫ban, App 对它很克制: 同时最多 5 个读取、写入一次一个, 请求失败不会自动重试, 每张图只拿一次就存在本机, 登出后立刻停下
 
-**歌曲资料来自社区。** 作者、星级、BPM 和其他语言的歌名来自 [taiko.wiki](https://taiko.wiki/) 和中文的 [太鼓之達人維基](https://taiko.fandom.com/zh/)（其歌名按 CC BY-SA 使用）。谱面图是 taiko.wiki 链接的图片，存放在它自己的服务器、[太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) 和 Imgur 上。Rating 按 [OurTaikoWiki](https://github.com/OurTaiko/OurTaikoWiki) 的第一版 Rating 计算（MIT），用的是 [FumenDB](https://fumen-database.com/) 测量、OurTaiko 公开的谱面定数和测量值。谱面的烈度读自 TJADB 社区的谱面文件 [ESE](https://ese.tjadataba.se/ESE/ESE)，按 OurTaiko 的对应表对上歌曲；App 只保存算出的数字，从不保存谱面。App 只读取它们公开的内容，不会向它们发送你的任何数据。
+**歌曲资料来自社区。** 作者、星级、BPM 和其他语言的歌名来自 [taiko.wiki](https://taiko.wiki/) 和中文的 [太鼓之達人維基](https://taiko.fandom.com/zh/)（其歌名按 CC BY-SA 使用）。谱面图由 [TJA Renderer](https://github.com/jack9966qk/TJARenderer)（MIT）画出，也可以在设置里改用 taiko.wiki 链接的图片，它们存放在它自己的服务器、[太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) 和 Imgur 上。Rating 按 [OurTaikoWiki](https://github.com/OurTaiko/OurTaikoWiki) 的第一版 Rating 计算（MIT），用的是 [FumenDB](https://fumen-database.com/) 测量、OurTaiko 公开的谱面定数和测量值。谱面的烈度和画出的谱面图读自 TJADB 社区的谱面文件 [ESE](https://ese.tjadataba.se/ESE/ESE)，按 OurTaiko 的对应表对上歌曲；App 只保存算出的数字和画好的图，从不保存谱面。App 只读取它们公开的内容，不会向它们发送你的任何数据。
 
 这套工具会以你的身份登录，并操作你真实的太鼓资料: 数据无价, 谨慎操作
 

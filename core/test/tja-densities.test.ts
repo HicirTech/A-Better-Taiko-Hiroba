@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { type ChartDensity, type Level, tjaDensities } from "../src/index";
+import { type ChartDensity, courseLevel, type Level, tjaDensities } from "../src/index";
 
 // Hand-written charts: no chart from a TJA collection is kept in this repository.
 const chart = (body: string, headers = "BPM:120\nCOURSE:Oni") =>
@@ -113,5 +113,18 @@ describe("tjaDensities", () => {
   test("keeps a level's first chart when a file repeats it", () => {
     const text = `${chart("1,")}\n${chart("1111,")}`;
     expect(oniLine(text)?.notes).toBe(1);
+  });
+});
+
+describe("courseLevel", () => {
+  test("reads a course by its name or its number, the inner chart as Edit or Ura", () => {
+    expect(["Easy", "normal", "HARD", "3", " Edit ", "ura", "4"].map(courseLevel)).toEqual([
+      1, 2, 3, 4, 5, 5, 5,
+    ]);
+  });
+
+  test("reads no level for any other course", () => {
+    expect(courseLevel("Tower")).toBeUndefined();
+    expect(courseLevel("5")).toBeUndefined();
   });
 });

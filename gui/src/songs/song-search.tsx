@@ -32,7 +32,10 @@ import { SongSearchBar } from "./song-search-bar";
 
 export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
-  readonly port: Pick<HirobaSessionPort, "readChartPicture" | "readChartDensity">;
+  readonly port: Pick<
+    HirobaSessionPort,
+    "readChartPicture" | "readChartDensity" | "readChartTja" | "readDrawnChart" | "keepDrawnChart"
+  >;
   readonly lane: PictureLane;
   readonly i18n: Translator;
   /** The first time the search opens, so the song list is read only once someone looks. */

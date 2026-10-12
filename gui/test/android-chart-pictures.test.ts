@@ -36,7 +36,7 @@ describe("the Android port's readChartPicture", () => {
 
   test("reads the picture with one GET that carries no session, and touches no cookie", async () => {
     const port = await openPort();
-    expect(await port.readChartPicture(FILE)).toEqual({ ok: true, value: JPEG_VIEW });
+    expect(await port.readChartPicture(FILE, "any")).toEqual({ ok: true, value: JPEG_VIEW });
     expect(native.httpRequests.map(({ method, url }) => ({ method, url }))).toEqual([
       { method: "GET", url: FILE },
     ]);
@@ -47,16 +47,16 @@ describe("the Android port's readChartPicture", () => {
   test("answers a picture it kept with no request, and so after a relaunch", async () => {
     const indexedDb = createFakeIndexedDb();
     const first = await openPort(indexedDb.factory);
-    const read = await first.readChartPicture(FILE);
+    const read = await first.readChartPicture(FILE, "any");
     expect(read.ok).toBe(true);
-    expect(await first.readChartPicture(FILE)).toEqual(read);
+    expect(await first.readChartPicture(FILE, "any")).toEqual(read);
 
     const relaunched = await openPort(indexedDb.factory);
-    expect(await relaunched.readChartPicture(FILE)).toEqual(read);
+    expect(await relaunched.readChartPicture(FILE, "kept")).toEqual(read);
     expect(native.httpRequests).toHaveLength(1);
   });
 
-  test("keeps chart pictures, and the numbers read from charts, in databases of their own", async () => {
+  test("keeps chart pictures, drawn charts and the numbers read from charts, in databases of their own", async () => {
     const indexedDb = createFakeIndexedDb();
     const opened: string[] = [];
     const factory: DatabaseFactory = {
@@ -65,11 +65,12 @@ describe("the Android port's readChartPicture", () => {
         return indexedDb.factory.open(name, version);
       },
     };
-    await (await openPort(factory)).readChartPicture(FILE);
+    await (await openPort(factory)).readChartPicture(FILE, "any");
     // The pipelines' histories load as the port starts.
     expect([...opened].sort()).toEqual([
       "abth-charts",
       "abth-densities",
+      "abth-drawn-charts",
       "abth-pictures",
       "abth-pipelines",
     ]);
@@ -83,7 +84,7 @@ describe("the Android port's readChartPicture", () => {
       "http://file.taiko.wiki/fumen/670/oni",
       "http://hiroba.127.0.0.1.sslip.io:8807/__charts/1001/oni-1.png",
     ]) {
-      expect(await port.readChartPicture(address)).toEqual(refused);
+      expect(await port.readChartPicture(address, "any")).toEqual(refused);
     }
     expect(native.httpRequests).toEqual([]);
   });
@@ -91,12 +92,12 @@ describe("the Android port's readChartPicture", () => {
   test("answers a failed request, a missing picture and a page as codes", async () => {
     const port = await openPort();
     native.httpAnswer = () => Promise.reject(new Error("offline"));
-    expect(await port.readChartPicture(FILE)).toEqual({
+    expect(await port.readChartPicture(FILE, "any")).toEqual({
       ok: false,
       error: { code: "chart=unreachable" },
     });
     native.httpAnswer = async () => ({ status: 404, url: FILE, headers: {}, data: "Not Found" });
-    expect(await port.readChartPicture(FILE)).toEqual({
+    expect(await port.readChartPicture(FILE, "any")).toEqual({
       ok: false,
       error: { code: "chart=status-404" },
     });
@@ -106,7 +107,7 @@ describe("the Android port's readChartPicture", () => {
       headers: { "Content-Type": "text/html" },
       data: nativeBase64("<html>Sign in</html>"),
     });
-    expect(await port.readChartPicture(FILE)).toEqual({
+    expect(await port.readChartPicture(FILE, "any")).toEqual({
       ok: false,
       error: { code: "chart=notPicture" },
     });

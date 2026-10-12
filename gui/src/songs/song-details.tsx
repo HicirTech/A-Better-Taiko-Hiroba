@@ -1,3 +1,4 @@
+import type { Result } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import {
   Box,
@@ -33,17 +34,23 @@ import { useBackLeaves } from "../navigation/back-closers";
 import { PipelinesShownContext } from "../navigation/pipelines-shown";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
+import { HoldRing, usePressHold } from "../read-again/long-hold";
 import { PullToRead } from "../read-again/pull-to-read";
 import { RefreshIcon } from "../read-again/read-again-foot";
 import type { HirobaSessionPort } from "../session-port";
-import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
-import { ChartDensitySection, type DensityState } from "./chart-density";
-import { ChartPicture } from "./chart-picture";
+import { type ChartFileFailure, DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import { ChartDensitySection, type DensityState, masterOf } from "./chart-density";
+import { ChartPictures } from "./chart-pictures";
+import { keptChartSource } from "./chart-source";
 import { ChartViewer, type ShownChart } from "./chart-viewer";
 import { CourseIcon } from "./course-icon";
+import { drawChart } from "./draw-chart";
+import { reloadCharts } from "./find-chart-picture";
 import { bpmText, openingChart } from "./song-facts";
 
 const TITLE_ID = "song-details-title";
+/** One empty list for a chart with no facts, so its pictures are not asked for at every render. */
+const NO_IMAGES: readonly string[] = [];
 
 // color-mix, as a chart's colour can be a light-dark() pair, which MUI's alpha() cannot read.
 const chartButton = (difficulty: Difficulty) => {
@@ -66,7 +73,10 @@ const chartButton = (difficulty: Difficulty) => {
 export interface SongDetailsProps {
   /** The song to show; none shuts the dialog. */
   readonly song: ListedSong | null;
-  readonly port: Pick<HirobaSessionPort, "readChartPicture" | "readChartDensity">;
+  readonly port: Pick<
+    HirobaSessionPort,
+    "readChartPicture" | "readChartDensity" | "readChartTja" | "readDrawnChart" | "keepDrawnChart"
+  >;
   /** Where the charts' difficulty icons, Hiroba's own, are read. */
   readonly lane: PictureLane;
   readonly i18n: Translator;
@@ -153,6 +163,24 @@ function DetailsBody({
   useEffect(() => {
     void readDensity(false);
   }, [readDensity]);
+  const [source] = useState(keptChartSource);
+  // The song's chart file, held for the dialog's life alone: a failed read is not held.
+  const tjaRead = useRef<Promise<Result<string, ChartFileFailure>> | null>(null);
+  const readTja = useCallback(() => {
+    const reading =
+      tjaRead.current ??
+      port.readChartTja(song.songNo).then((result) => {
+        if (!result.ok) {
+          tjaRead.current = null;
+        }
+        return result;
+      });
+    tjaRead.current = reading;
+    return reading;
+  }, [port, song.songNo]);
+  const [generation, setGeneration] = useState(0);
+  const [reloading, setReloading] = useState(false);
+  const busy = density.reading || reloading;
   const readLabel = t("details.readDensity");
   const [chart, setChart] = useState(() => openingChart(song.levels, keptShownDifficulty()));
   const [viewing, setViewing] = useState<ShownChart | null>(null);
@@ -162,7 +190,32 @@ function DetailsBody({
     return level === null ? [] : [{ difficulty, level }];
   });
   const facts = chart === null ? null : song.charts[chart];
-  const images = facts?.images ?? [];
+  const chartDensity = chart === null ? undefined : density.read?.[chart];
+  const differs =
+    chartDensity !== undefined &&
+    facts !== null &&
+    facts.maxCombo !== null &&
+    masterOf(chartDensity).notes !== facts.maxCombo;
+  const reloadSong = async () => {
+    setReloading(true);
+    tjaRead.current = null;
+    const reread = readDensity(true);
+    await reloadCharts({
+      songNo: song.songNo,
+      charts: charted.map(({ difficulty }) => ({
+        difficulty,
+        images: song.charts[difficulty]?.images ?? [],
+      })),
+      source,
+      port,
+      tja: readTja,
+      draw: drawChart,
+    });
+    await reread;
+    setGeneration((now) => now + 1);
+    setReloading(false);
+  };
+  const hold = usePressHold(busy ? undefined : () => void reloadSong());
 
   return (
     <>
@@ -176,14 +229,26 @@ function DetailsBody({
       {!touchFirst && (
         <Box sx={{ position: "absolute", top: 12, right: 12, display: "flex" }}>
           {/* None while it is shut: a disabled button sends no event to open or close it. */}
-          <Tooltip title={density.reading ? "" : readLabel}>
+          <Tooltip title={busy ? "" : readLabel}>
             <IconButton
               id="song-details-read-chart"
               aria-label={readLabel}
-              disabled={density.reading}
-              onClick={() => void readDensity(true)}
+              disabled={busy}
+              onClick={() => {
+                if (!hold.endsAHold()) {
+                  void readDensity(true);
+                }
+              }}
+              {...hold.handlers}
             >
-              {density.reading ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
+              {busy ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
+              {hold.since !== null && (
+                <HoldRing
+                  since={hold.since}
+                  size={36}
+                  sx={{ position: "absolute", top: 2, left: 2 }}
+                />
+              )}
             </IconButton>
           </Tooltip>
           <IconButton id="song-details-close" aria-label={t("picker.close")} onClick={onClose}>
@@ -194,8 +259,9 @@ function DetailsBody({
       <DialogContent ref={content} dividers>
         <PullToRead
           active={touchFirst}
-          canRead={!density.reading}
+          canRead={!busy}
           onRead={() => void readDensity(true)}
+          onHeld={() => void reloadSong()}
           region={content}
           id="song-details-pull"
         />
@@ -269,28 +335,25 @@ function DetailsBody({
           {chart !== null && (
             <ChartDensitySection
               state={density}
-              density={density.read?.[chart]}
+              density={chartDensity}
               maxCombo={facts?.maxCombo ?? null}
               i18n={i18n}
             />
           )}
-          {chart !== null && images.length > 0 ? (
-            <Stack id="song-details-pictures" spacing={1}>
-              {images.map((url, index) => (
-                <ChartPicture
-                  key={url}
-                  url={url}
-                  label={t("details.picture", {
-                    difficulty: t(DIFFICULTY_LABEL[chart]),
-                    n: index + 1,
-                    count: images.length,
-                  })}
-                  port={port}
-                  i18n={i18n}
-                  onOpen={setViewing}
-                />
-              ))}
-            </Stack>
+          {chart !== null ? (
+            <ChartPictures
+              key={chart}
+              songNo={song.songNo}
+              difficulty={chart}
+              images={facts?.images ?? NO_IMAGES}
+              source={source}
+              differs={differs}
+              tja={readTja}
+              generation={generation}
+              port={port}
+              i18n={i18n}
+              onOpen={setViewing}
+            />
           ) : (
             <FormHelperText id="song-details-no-picture" sx={{ m: 0 }}>
               {t("details.noPicture")}
