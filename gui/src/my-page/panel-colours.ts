@@ -1,7 +1,11 @@
-import type { ScoreRank } from "@abth/core";
+import { SCORE_RANK_TIERS, type ScoreRank } from "@abth/core";
 
 /** 虹極's colours, and the donderful crown's: both are rainbows on Hiroba's icons. */
 const RAINBOW = "linear-gradient(90deg, #ff5f6d, #ffc371, #47e891, #4facfe, #a86cf5)";
+
+export const RANKS_WORST_FIRST: readonly ScoreRank[] = SCORE_RANK_TIERS.flatMap(
+  (tier) => tier.ranks,
+);
 
 // From each rank's icon; white is drawn grey so it shows on a light background.
 export const RANK_COLOUR: Readonly<Record<ScoreRank, string>> = {
