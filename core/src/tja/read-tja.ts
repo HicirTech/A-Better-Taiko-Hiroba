@@ -45,6 +45,11 @@ type Step =
   | { readonly kind: "bpm"; readonly bpm: number }
   | { readonly kind: "delay"; readonly seconds: number };
 
+/** The level a TJA's COURSE names, by its name or its number; undefined for any other. */
+export function courseLevel(course: string): Level | undefined {
+  return COURSE_LEVEL[course.trim().toLowerCase()];
+}
+
 /** The note density of every single-player chart in a TJA's text; the text itself is not kept. */
 export function tjaDensities(text: string): SongDensity {
   const densities = new Map<Level, ChartDensity>();
@@ -91,7 +96,7 @@ function chartsOf(text: string): ChartSource[] {
     const value = (header[2] ?? "").trim();
     switch ((header[1] ?? "").toUpperCase()) {
       case "COURSE":
-        level = COURSE_LEVEL[value.toLowerCase()];
+        level = courseLevel(value);
         double = false;
         break;
       case "BPM": {
