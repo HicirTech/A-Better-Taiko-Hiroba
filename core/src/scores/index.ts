@@ -7,6 +7,7 @@ export {
   foldDetail,
   foldLists,
   genresToRead,
+  notePlayedSong,
   noteWalk,
   recentOrder,
   songCharts,

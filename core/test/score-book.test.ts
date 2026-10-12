@@ -13,6 +13,7 @@ import {
   type GenreList,
   genresToRead,
   type Level,
+  notePlayedSong,
   noteWalk,
   type RecentPlay,
   recentOrder,
@@ -214,6 +215,18 @@ describe("the score book", () => {
       ["102/4", 1],
       ["100/2", 3],
     ]);
+  });
+
+  test("takes in a song a recent play names before its list does, and only once", () => {
+    const song = { songNo: "103", title: "新曲", genres: [2 as const] };
+    const noted = notePlayedSong(readInFull(), song);
+    expect(noted.songs.at(-1)).toEqual(song);
+    expect(notePlayedSong(noted, { ...song, title: "別の名前" })).toBe(noted);
+  });
+
+  test("leaves a song the lists named as they named it", () => {
+    const book = readInFull();
+    expect(notePlayedSong(book, { songNo: "100", title: "一番目", genres: [] })).toBe(book);
   });
 
   test("a song's charts are the levels its lists name, easiest first", () => {
