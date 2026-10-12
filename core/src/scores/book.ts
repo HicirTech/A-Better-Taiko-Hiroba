@@ -141,14 +141,15 @@ export function foldLists(book: ScoreBook, lists: readonly GenreList[]): ScoreBo
   return { ...folded, stale: [...stale], unlisted: [], full: false };
 }
 
+/** Whether a reading takes the place of the one kept: it is not older. */
+export function replaces(kept: Score | undefined, score: Score): boolean {
+  return kept === undefined || kept.fetchedAt <= score.fetchedAt;
+}
+
 /** Folds in one chart's details, unless a newer reading is already kept. */
 export function foldDetail(book: ScoreBook, score: Score): ScoreBook {
   const key = chartKey(score);
-  const kept = book.scores[key];
-  const scores =
-    kept !== undefined && kept.fetchedAt > score.fetchedAt
-      ? book.scores
-      : { ...book.scores, [key]: score };
+  const scores = replaces(book.scores[key], score) ? { ...book.scores, [key]: score } : book.scores;
   return { ...book, scores, stale: book.stale.filter((each) => each !== key) };
 }
 
