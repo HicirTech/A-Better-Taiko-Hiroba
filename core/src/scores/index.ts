@@ -12,3 +12,13 @@ export {
   recentOrder,
   songCharts,
 } from "./book";
+export type { ChartReading, ScoreChange, ScoreChangeLog } from "./changes";
+export {
+  capChanges,
+  changeOf,
+  isMilestone,
+  logDetail,
+  MAX_SCORE_CHANGES,
+  startingLog,
+  withBaseline,
+} from "./changes";
