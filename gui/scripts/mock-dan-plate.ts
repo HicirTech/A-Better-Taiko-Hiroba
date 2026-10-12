@@ -1,4 +1,4 @@
-/** Dan plates drawn from core's plate templates, stamped red when passed: none of Hiroba's art. */
+/** Dan plates drawn from core's plate templates, with a stamp when passed: none of Hiroba's art. */
 import {
   decodeTemplate,
   GLYPH_GRID_HEIGHT,
@@ -17,12 +17,17 @@ const NAME_INK: Rgb = [10, 10, 10];
 const STAMP_INK: Rgb = [20, 20, 20];
 const WHITE_SWIRL: Rgb = [250, 250, 250];
 const RED_GLYPH: Rgb = [200, 35, 25];
+/** Neither red nor gold: a stamp whose colours fit none of the six states. */
+const BLUE_GLYPH: Rgb = [40, 70, 200];
+
+/** A red clear's stamp, one in colours no state has, or none. */
+export type PlateStamp = "redClear" | "unknownColours" | null;
 /** Where the reader looks for the name, and where the stamp sits. */
 const NAME = { x0: 185, x1: 395, y0: 30, y1: 170 } as const;
 const STAMP = { cx: 500, cy: 99, swirl: 55, ring: 78 } as const;
 
-/** A plate for `dan`, stamped as a red clear when `passed`; the named ranks' plates are silver. */
-export function danPlatePng(dan: number, passed: boolean): Uint8Array {
+/** A plate for `dan` carrying `stamp`; the named ranks' plates are silver. */
+export function danPlatePng(dan: number, stamp: PlateStamp): Uint8Array {
   const template = PLATE_NAME_TEMPLATES[dan];
   if (template === undefined) {
     throw new Error(`No plate template for dan ${dan}`);
@@ -36,7 +41,7 @@ export function danPlatePng(dan: number, passed: boolean): Uint8Array {
     }
   }
   paintName(decodeTemplate(template), (x, y) => put(x, y, NAME_INK));
-  if (passed) {
+  if (stamp !== null) {
     for (let y = 0; y < PLATE_HEIGHT; y++) {
       for (let x = 0; x < PLATE_WIDTH; x++) {
         const d = Math.hypot(x - STAMP.cx, y - STAMP.cy);
@@ -49,7 +54,7 @@ export function danPlatePng(dan: number, passed: boolean): Uint8Array {
     }
     for (let y = STAMP.cy - 25; y < STAMP.cy + 25; y++) {
       for (let x = STAMP.cx - 30; x < STAMP.cx + 30; x++) {
-        put(x, y, RED_GLYPH);
+        put(x, y, stamp === "redClear" ? RED_GLYPH : BLUE_GLYPH);
       }
     }
   }

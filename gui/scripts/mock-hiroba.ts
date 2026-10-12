@@ -544,7 +544,7 @@ Bun.serve({
         if (!searchParams.has("taiko_no") || !Number.isInteger(dan) || dan < 1 || dan > 19) {
           return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
         }
-        return new Response(danPlatePng(dan, dan <= variant.dan), {
+        return new Response(danPlatePng(dan, dan <= variant.dan ? "redClear" : null), {
           headers: { "content-type": "image/png" },
         });
       }

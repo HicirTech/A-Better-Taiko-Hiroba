@@ -19,7 +19,7 @@ const MAX_LABEL_SIDE = 512;
 /** The first and the last board number the catalog names: 五級, and 達人, the fourth named rank. */
 const FIRST_DAN = 1;
 const LAST_DAN = 19;
-/** 達人, 超人, 名人 and 玄人: no label of theirs has been seen, so their plates are read instead. */
+/** 達人, 超人, 名人 and 玄人: a label that matches no template is read off their plates instead. */
 const NAMED_RANKS = [19, 18, 17, 16] as const;
 // A plate is a 640×198 PNG of tens of kilobytes.
 const MAX_PLATE_BYTES = 256 * 1024;
@@ -101,6 +101,10 @@ async function readNamedRank(
       return `plate${dan}=${checked.error.why} ${describeAnswer(sent.value, { path: PLATE_PATH })}`;
     }
     const plate = readDanPlate(checked.value.bytes, dan);
+    // A stamp in colours no state has is still a stamp: the dan is asked here, not the tier.
+    if (isErr(plate) && plate.error.kind === "indeterminateStamp") {
+      return dan;
+    }
     if (isErr(plate)) {
       return `plate${dan}=${plate.error.kind}`;
     }

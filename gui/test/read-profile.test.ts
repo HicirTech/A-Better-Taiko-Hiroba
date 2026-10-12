@@ -79,7 +79,7 @@ const platesUpTo =
       status: 200,
       url: plateUrl(dan),
       headers: { "content-type": "image/png" },
-      body: danPlatePng(dan, dan <= highest),
+      body: danPlatePng(dan, dan <= highest ? "redClear" : null),
     });
 const labelPicture = (bytes: Uint8Array, width = 96, height = 40) => ({
   src: pngDataUrl(bytes),
@@ -409,6 +409,20 @@ describe("readProfile's dan label", () => {
 
     expect(dan).toEqual({ board: 17, picture: labelPicture(unknownLabelPng(17)) });
     expect(asked).toEqual([MY_PAGE_URL, LABEL_URL, plateUrl(19), plateUrl(18), plateUrl(17)]);
+  });
+
+  test("a stamp in colours no state has still marks its plate passed", async () => {
+    const plates = (dan: number): Answer =>
+      ok({
+        status: 200,
+        url: plateUrl(dan),
+        headers: { "content-type": "image/png" },
+        body: danPlatePng(dan, dan === 17 ? "unknownColours" : null),
+      });
+
+    expect((await readWith(UNKNOWN_MEIJIN, MY_PAGE_EXCERPT, plates)).dan).toMatchObject({
+      board: 17,
+    });
   });
 
   test("a label no template matches, with no named plate stamped, is unreadable after all four", async () => {
