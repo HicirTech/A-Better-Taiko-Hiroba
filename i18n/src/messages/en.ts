@@ -87,6 +87,11 @@ export const en: Messages = {
   "history.kimagure": "Whimsical",
   "history.detarame": "Chaotic",
   "history.support": "Support chart",
+  "history.noScore": "Hiroba has no score for this chart yet: not played, or still syncing.",
+  "history.sharedTitle":
+    "More than one song has this title, so the app cannot tell which was played.",
+  "history.unknownSong":
+    "The app does not know this song yet. Read again on the Scores page, then open the play again.",
   "scores.readingPlays": "Reading recent plays, page {page}…",
   "scores.readingLists": "Reading the score lists ({done} of {total})…",
   "scores.readingCharts": "Reading scores ({done} of {total})…",

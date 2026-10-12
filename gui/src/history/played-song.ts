@@ -1,4 +1,4 @@
-import { type RecentPlay, resolveSongTitle, type SongResolution } from "@abth/core";
+import { type RecentPlay, resolveSongTitle, type Song, type SongResolution } from "@abth/core";
 
 import type { CatalogueSong } from "../song-catalogue/types";
 
@@ -18,11 +18,16 @@ export function songsByTitle(songs: Iterable<CatalogueSong>): SongsByTitle {
   return byTitle;
 }
 
-/** The song a recent play names, by its title and genre, resolved as core resolves any title. */
+/** The song a recent play names: by Hiroba's titles in the lists first, then by taiko.wiki's. */
 export function playedSong(
   byTitle: SongsByTitle,
   play: Pick<RecentPlay, "songTitle" | "genre">,
+  listed: readonly Song[],
 ): SongResolution {
+  const found = resolveSongTitle(listed, play.songTitle, play.genre);
+  if (found.outcome !== "unknown") {
+    return found;
+  }
   const named = (byTitle.get(play.songTitle) ?? []).map(({ songNo, genres }) => ({
     songNo,
     title: play.songTitle,

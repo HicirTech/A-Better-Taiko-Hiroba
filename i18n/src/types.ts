@@ -109,6 +109,9 @@ export interface Messages {
   "history.kimagure": string;
   "history.detarame": string;
   "history.support": string;
+  "history.noScore": string;
+  "history.sharedTitle": string;
+  "history.unknownSong": string;
   /** Param: {page}. While a read of scores walks recent plays. */
   "scores.readingPlays": string;
   /** Params: {done} and {total}, the lists or the charts read so far, and how many in all. */

@@ -486,6 +486,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             {screen.name === "profile" && page === "history" && (
               <HistoryPage
                 history={history}
+                scores={scores}
                 catalogue={catalogue}
                 lane={lane}
                 touchFirst={touchFirst}
