@@ -1,7 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import {
   Box,
-  Button,
   FormHelperText,
   IconButton,
   List,
@@ -15,6 +14,7 @@ import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "rea
 import { CloseIcon } from "../favorites/favorites-icons";
 import { type PickerEntry, PickerList } from "../favorites/picker-list";
 import { keptShownDifficulty, ShownDifficultyContext } from "../favorites/shown-difficulty";
+import { SongListFailed } from "../favorites/song-list-failed";
 import { lookOfCatalogue } from "../favorites/song-look";
 import { nameLanguage } from "../favorites/song-names";
 import { searchSongs } from "../favorites/song-search";
@@ -92,21 +92,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
   if (catalogue.state === "loading") {
     panel = <Waiting id="song-search-loading">{t("picker.loading")}</Waiting>;
   } else if (catalogue.state === "failed") {
-    panel = (
-      <>
-        <FormHelperText id="song-search-failed" error>
-          {t("picker.failed")}
-          {catalogue.failure !== null && (
-            <Box component="span" sx={{ display: "block", mt: 0.5, fontFamily: "monospace" }}>
-              {t("picker.code", { code: catalogue.failure })}
-            </Box>
-          )}
-        </FormHelperText>
-        <Button onClick={catalogue.retry} sx={{ mt: 1 }}>
-          {t("picker.retry")}
-        </Button>
-      </>
-    );
+    panel = <SongListFailed id="song-search" catalogue={catalogue} i18n={i18n} />;
   } else if (!searched) {
     panel =
       recent.length === 0 ? null : (
