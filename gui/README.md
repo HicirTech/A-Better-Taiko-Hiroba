@@ -3,8 +3,8 @@
 The desktop and Android app of A Better Taiko Hiroba. One React and Material UI web bundle runs in
 two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
 pages and reads your own page: one request per read, and one more for your dan label when the page
-shows one, since the page gives the dan only as that picture. A named rank's label (玄人 to 達人)
-is one the app cannot read, so it reads your dan plates instead, from 達人 down to the first one
+shows one, since the page gives the dan only as that picture. A label it cannot read, such as one
+drawn in a styling never seen, sends it to your dan plates instead, from 達人 down to the first one
 stamped: up to four requests more. The Overview opens as your page's
 header does: your My Don as Hiroba draws it, beside your nickname, title and dan on Hiroba's own
 title plate and dan label, and under them Hiroba's score panel, its ten counts written over its art.
