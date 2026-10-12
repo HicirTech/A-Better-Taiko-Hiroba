@@ -54,6 +54,8 @@ import { profileVariants, profileVariantsKeys, readAgain, readAgainKeys } from "
 import {
   recentPlayDetails,
   recentPlayDetailsKeys,
+  recentPlaySets,
+  recentPlaySetsKeys,
   recentPlays,
   recentPlaysKeys,
 } from "./recent-plays";
@@ -120,6 +122,7 @@ export const SECTIONS: readonly Section[] = [
     keys: recentPlayDetailsKeys,
     run: recentPlayDetails,
   },
+  { name: "recent-play-sets", phase: "signedIn", keys: recentPlaySetsKeys, run: recentPlaySets },
   { name: "session-expiry", phase: "signedIn", keys: sessionExpiryKeys, run: sessionExpiry },
   { name: "reopen", phase: "signedIn", keys: reopenKeys, run: reopen },
   { name: "signed-out-reopen", phase: "signedIn", keys: signedOutReopenKeys, run: signedOutReopen },

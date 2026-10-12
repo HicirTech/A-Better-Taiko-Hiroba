@@ -8,6 +8,7 @@ import {
   loadSets,
   moved,
   newSetName,
+  refusedSong,
   removeSet,
   renameSet,
   SET_NAME_MAX_LENGTH,
@@ -169,6 +170,22 @@ describe("toggledSongs", () => {
     const full = songNumbers(SET_SONG_LIMIT);
     expect(toggledSongs(full, "2000")).toBe(full);
     expect(toggledSongs(full, "1000")).toHaveLength(SET_SONG_LIMIT - 1);
+  });
+});
+
+describe("refusedSong", () => {
+  test("lets a set with room take a song it lacks", () => {
+    expect(refusedSong(set("a", ["1001"]), "1002")).toBeNull();
+  });
+
+  test("refuses a song the set holds, wherever it is", () => {
+    expect(refusedSong(set("a", ["1001", "1002"]), "1001")).toBe("holds");
+  });
+
+  test("refuses any new song once the set is full, but names a held one as held", () => {
+    const full = set("a", songNumbers(SET_SONG_LIMIT));
+    expect(refusedSong(full, "2000")).toBe("full");
+    expect(refusedSong(full, "1000")).toBe("holds");
   });
 });
 

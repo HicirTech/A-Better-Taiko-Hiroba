@@ -1,7 +1,7 @@
 import { playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, SvgIcon } from "@mui/material";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 import {
   DIFFICULTY_LABEL,
@@ -11,6 +11,7 @@ import {
 } from "../favorites/genre-look";
 import { ScrollingText } from "../favorites/scrolling-text";
 import { HIROBA_LANG } from "../language/hiroba-lang";
+import type { LongPressHandlers } from "../my-page/use-long-press";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CrownKind } from "../session-port";
@@ -63,10 +64,11 @@ const OPENABLE_ROW = {
   "&:hover, &:focus-visible": { bgcolor: "action.hover" },
 } as const;
 
-/** What a row answers besides being shown: a click for its details, and what a test finds it by. */
-export interface RowProps {
+/** What a row answers besides being shown: its details, its own menu, what a test finds it by. */
+export interface RowProps extends Partial<LongPressHandlers> {
   readonly onClick?: () => void;
   readonly onKeyDown?: (event: KeyboardEvent) => void;
+  readonly onContextMenu?: (event: MouseEvent) => void;
   readonly role?: "button";
   readonly tabIndex?: number;
   readonly "aria-haspopup"?: "dialog";

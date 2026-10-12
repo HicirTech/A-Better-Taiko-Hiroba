@@ -3,16 +3,22 @@ import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { newSetName } from "../favorites/favorite-sets";
+import { GENRE_LABEL } from "../favorites/genre-look";
+import { SetNameDialog } from "../favorites/set-name-dialog";
 import { nameLanguage, shownName } from "../favorites/song-names";
+import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { useLongPress } from "../my-page/use-long-press";
 import type { PictureLane } from "../pictures/picture-lane";
 import { type PlayNotice, ScoreDetails } from "../scores/score-details";
 import { listedOf, scoresReadingText } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
-import { HistoryRow, opensOnPress } from "./history-row";
+import { HistoryRow, opensOnPress, type RowProps } from "./history-row";
 import { type PlacedPlay, placePlay, playedChart } from "./placed-play";
+import { AddToSetDialog, type NamedSong, PlayMenu, type Point } from "./play-menu";
 import { playedSong, songsByTitle } from "./played-song";
 import type { RecentPlaysState } from "./use-recent-plays";
 
@@ -33,7 +39,7 @@ export function HistoryPage({
   /** taiko.wiki's song list: a play it finds the song of is named in the player's language. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
-  /** Whether a pull reads again here, or Read again does. */
+  /** Whether a pull reads again here, or Read again does, and a long press opens a play's menu. */
   readonly touchFirst: boolean;
   readonly i18n: Translator;
 }) {
@@ -57,6 +63,34 @@ export function HistoryPage({
     return { text, lang: nameLanguage(song, text) };
   };
 
+  const kept = useFavoriteSets();
+  const [menu, setMenu] = useState<{ readonly play: RecentPlay; readonly at: Point } | null>(null);
+  // The play whose song is being added to a set.
+  const [adding, setAdding] = useState<RecentPlay | null>(null);
+  // Where the play's title is shared, the song the player chose among those sharing it.
+  const [chosen, setChosen] = useState<string | null>(null);
+  // The song a new set starts with, while its name is asked.
+  const [naming, setNaming] = useState<string | null>(null);
+  const found = adding === null ? null : playedSong(byTitle, adding, view?.songs ?? []);
+  // Its genres and artists tell it from the songs that share its title.
+  const namedSong = (songNo: string): NamedSong => {
+    const song = catalogue.songs.get(songNo);
+    const listed = view?.songs.find((one) => one.songNo === songNo);
+    const text = song === undefined ? (listed?.title ?? songNo) : shownName(song, i18n.locale);
+    const genres = (song?.genres ?? listed?.genres ?? []).map((genre) =>
+      i18n.t(GENRE_LABEL[genre]),
+    );
+    return {
+      songNo,
+      text,
+      lang: song === undefined ? HIROBA_LANG : nameLanguage(song, text),
+      detail: [...genres, ...(song?.artists ?? [])].join(" · "),
+    };
+  };
+  const shut = () => {
+    setAdding(null);
+    setChosen(null);
+  };
   const placed = opened === null || view === null ? null : placePlay(opened, view, byTitle);
   const openedKey = opened === null ? null : recentPlayKey(opened);
   const unread = placed?.kind === "unread" ? placed.songNo : null;
@@ -121,14 +155,16 @@ export function HistoryPage({
       )}
       <Stack component="ul" id="history-list" spacing={0} sx={LIST}>
         {rows.map((play, index) => (
-          <HistoryRow
+          <PlayRow
             key={recentPlayKey(play)}
             play={play}
             name={nameOf(play)}
             lane={lane}
             order={index}
+            touchFirst={touchFirst}
             i18n={i18n}
-            rowProps={opensOnPress(() => setOpened(play))}
+            onOpen={() => setOpened(play)}
+            onHold={(at) => (at === null ? setAdding(play) : setMenu({ play, at }))}
           />
         ))}
       </Stack>
@@ -142,7 +178,86 @@ export function HistoryPage({
         onReadSong={(score) => void readSong(score)}
         onClose={close}
       />
+      {menu !== null && (
+        <PlayMenu
+          at={menu.at}
+          i18n={i18n}
+          onAddToSet={() => {
+            setAdding(menu.play);
+            setMenu(null);
+          }}
+          onClose={() => setMenu(null)}
+        />
+      )}
+      {adding !== null && found !== null && (
+        <AddToSetDialog
+          name={nameOf(adding)}
+          songNo={found.outcome === "resolved" ? found.songNo : chosen}
+          candidates={found.outcome === "ambiguous" ? found.candidates.map(namedSong) : []}
+          sets={kept.sets}
+          i18n={i18n}
+          onChooseSong={setChosen}
+          onAdd={(set, songNo) => {
+            kept.replaceSongs(set.id, [...set.songs, songNo]);
+            shut();
+          }}
+          onNewSet={(songNo) => {
+            shut();
+            setNaming(songNo);
+          }}
+          onClose={shut}
+        />
+      )}
+      {naming !== null && (
+        <SetNameDialog
+          title={i18n.t("favorites.newSet")}
+          initial={newSetName(kept.sets, (number) => i18n.t("favorites.setName", { number }))}
+          i18n={i18n}
+          onCancel={() => setNaming(null)}
+          onSave={(name) => {
+            kept.add(name, [naming]);
+            setNaming(null);
+          }}
+        />
+      )}
     </Stack>
+  );
+}
+
+/** A play's row: a click opens its chart's details; a right-click, or a long press, its menu. */
+function PlayRow({
+  play,
+  name,
+  lane,
+  order,
+  touchFirst,
+  i18n,
+  onOpen,
+  onHold,
+}: {
+  readonly play: RecentPlay;
+  readonly name: { readonly text: string; readonly lang: string };
+  readonly lane: PictureLane;
+  readonly order: number;
+  readonly touchFirst: boolean;
+  readonly i18n: Translator;
+  readonly onOpen: () => void;
+  /** Where the right-click landed; none for a long press. */
+  readonly onHold: (at: Point | null) => void;
+}) {
+  const longPress = useLongPress(touchFirst, () => onHold(null));
+  const rowProps: RowProps = {
+    ...opensOnPress(onOpen),
+    ...(touchFirst ? longPress : {}),
+    onContextMenu: (event) => {
+      event.preventDefault();
+      if (!touchFirst) {
+        onHold({ x: event.clientX, y: event.clientY });
+      }
+    },
+  };
+  return (
+    <HistoryRow play={play} name={name} lane={lane} order={order} i18n={i18n} rowProps={rowProps} />
   );
 }
 

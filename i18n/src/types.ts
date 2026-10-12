@@ -112,6 +112,10 @@ export interface Messages {
   "history.noScore": string;
   "history.sharedTitle": string;
   "history.unknownSong": string;
+  "history.addToSet": string;
+  "history.whichSong": string;
+  "history.setHolds": string;
+  "history.setFull": string;
   /** Param: {page}. While a read of scores walks recent plays. */
   "scores.readingPlays": string;
   /** Params: {done} and {total}, the lists or the charts read so far, and how many in all. */

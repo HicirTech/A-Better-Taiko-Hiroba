@@ -369,6 +369,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "檔案庫烈高平均",
     "好根據授權切",
     "叫識",
+    "加滿",
   ].join(""),
 );
 

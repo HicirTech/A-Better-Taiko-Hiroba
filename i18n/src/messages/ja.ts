@@ -90,7 +90,11 @@ export const ja: Messages = {
   "history.noScore": "広場にこの譜面のスコアがまだありません（未プレイまたは同期中）。",
   "history.sharedTitle": "同じ曲名の曲が複数あるため、どの曲をあそんだか分かりません。",
   "history.unknownSong":
-    "この曲はまだ分かりません。「スコアデータ」で再読み込みしてから、もう一度開いてください。",
+    "この曲はまだ分かりません。「スコアデータ」で再読み込みしてから、もう一度お試しください。",
+  "history.addToSet": "セットに追加",
+  "history.whichSong": "どの曲でしたか？",
+  "history.setHolds": "この曲はもう入っています",
+  "history.setFull": "すでに {count} 曲入っています",
   "scores.readingPlays": "あそんだ曲 {page} ページ目を読み込み中…",
   "scores.readingLists": "スコア一覧を読み込み中（{done} / {total}）…",
   "scores.readingCharts": "スコアを読み込み中（{done} / {total}）…",

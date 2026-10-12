@@ -204,7 +204,10 @@ score lists, else in taiko.wiki's list, a cover the wiki marks with a bracketed 
 original's title; the song is named in the player's language where taiko.wiki has it, and keeps
 Hiroba's title otherwise. A click on a row opens its chart in full, as Scores does; a chart never
 read in full is read there, after Hiroba's refresh, and a play whose song the app cannot tell (a
-title two songs share, or one no list nor taiko.wiki has yet) says why.
+title two songs share, or one no list nor taiko.wiki has yet) says why. A right-click on a row, or
+a long press on a touch screen, opens its menu, which adds the song to the end of a set kept on the
+device, or to a new one: a set that holds the song already, or is full, says so and cannot be
+chosen, a title several songs share asks which song first, and nothing is sent to Hiroba.
 
 ### Scores
 
