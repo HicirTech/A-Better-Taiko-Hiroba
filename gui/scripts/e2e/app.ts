@@ -85,6 +85,7 @@ export async function launch({
       | "history"
       | "scores"
       | "rating"
+      | "knowYourself"
       | "costume"
       | "nameTitle"
       | "favorites"
