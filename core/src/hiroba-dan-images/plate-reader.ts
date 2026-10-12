@@ -84,7 +84,7 @@ export function readDanLabel(bytes: Uint8Array): Result<LabelReading, DanImageFa
   }
   const match = matchGlyph(grid, LABEL_TEMPLATES, LABEL_MAX_DISTANCE, LABEL_MIN_SEPARATION);
   if (match === null) {
-    // A glyph none of the numbered ranks match: a named rank's, which no label shows us yet.
+    // A glyph no template matches, such as a styling never seen: the caller may look elsewhere.
     const nearest = nearestGlyph(grid, LABEL_TEMPLATES);
     return err({
       kind: "unreadableGlyph",

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 import { encode } from "fast-png";
 
-import { danLabelPng, NO_LABEL_GIF } from "../scripts/mock-dan-label";
+import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "../scripts/mock-dan-label";
 import { danPlatePng } from "../scripts/mock-dan-plate";
 import { readOwnProfile, readProfile } from "../src/hiroba-session";
 import { pngDataUrl } from "../src/hiroba-session/png-answer";
@@ -68,6 +68,7 @@ const labelAnswer = (type: string, body: Uint8Array, status = 200, url = LABEL_U
 
 const NINTH_DAN = labelAnswer("image/png", danLabelPng(14));
 const MEIJIN = labelAnswer("image/png", danLabelPng(17));
+const UNKNOWN_MEIJIN = labelAnswer("image/png", unknownLabelPng(17));
 const plateUrl = (dan: number) =>
   `https://hiroba.test/imgsrc_dani.php?taiko_no=000000000000&dan=${dan}&img=0`;
 /** The plates of a player who has passed up to `highest`. */
@@ -396,28 +397,35 @@ describe("readProfile's dan label", () => {
     });
   });
 
-  test("a named rank, which no label template holds, is read off its plates from 達人 down", async () => {
+  test("a named rank's label reads as its dan, with no plate asked", async () => {
     const { dan, asked } = await readWith(MEIJIN, MY_PAGE_EXCERPT, platesUpTo(17));
 
     expect(dan).toEqual({ board: 17, picture: labelPicture(danLabelPng(17)) });
+    expect(asked).toEqual([MY_PAGE_URL, LABEL_URL]);
+  });
+
+  test("a label no template matches is read off the named plates, from 達人 down", async () => {
+    const { dan, asked } = await readWith(UNKNOWN_MEIJIN, MY_PAGE_EXCERPT, platesUpTo(17));
+
+    expect(dan).toEqual({ board: 17, picture: labelPicture(unknownLabelPng(17)) });
     expect(asked).toEqual([MY_PAGE_URL, LABEL_URL, plateUrl(19), plateUrl(18), plateUrl(17)]);
   });
 
-  test("a named-rank label with no named plate stamped is unreadable, after all four", async () => {
-    const { dan, asked } = await readWith(MEIJIN, MY_PAGE_EXCERPT, platesUpTo(15));
+  test("a label no template matches, with no named plate stamped, is unreadable after all four", async () => {
+    const { dan, asked } = await readWith(UNKNOWN_MEIJIN, MY_PAGE_EXCERPT, platesUpTo(15));
 
     expect(dan).toEqual({
       unreadable: true,
       code: "dan=unreadableGlyph plates=unstamped",
-      picture: labelPicture(danLabelPng(17)),
+      picture: labelPicture(unknownLabelPng(17)),
     });
     expect(asked).toHaveLength(6);
   });
 
   test("a plate that does not read stops there and says which, never naming the player", async () => {
     const gif = labelAnswer("image/gif", NO_LABEL_GIF, 200, plateUrl(19));
-    const failed = await readWith(MEIJIN, MY_PAGE_EXCERPT, () => gif);
-    const timedOut = await readWith(MEIJIN, MY_PAGE_EXCERPT, (dan) =>
+    const failed = await readWith(UNKNOWN_MEIJIN, MY_PAGE_EXCERPT, () => gif);
+    const timedOut = await readWith(UNKNOWN_MEIJIN, MY_PAGE_EXCERPT, (dan) =>
       err({ kind: "timedOut", url: plateUrl(dan) }),
     );
 

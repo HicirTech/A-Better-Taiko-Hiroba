@@ -106,13 +106,25 @@ function solveColumn(targets: readonly number[]): number[] {
   return perRow;
 }
 
-/** A label for any dan; a named rank's, which no label template holds, takes its plate's glyph. */
+/** A label for any of the 19 dans, which the reader takes as that dan. */
 export function danLabelPng(dan: number): Uint8Array {
-  const template = LABEL_TEMPLATES[dan] ?? PLATE_NAME_TEMPLATES[dan];
+  const template = LABEL_TEMPLATES[dan];
   if (template === undefined) {
     throw new Error(`No label template for dan ${dan}`);
   }
-  const grid = decodeTemplate(template);
+  return labelPng(decodeTemplate(template));
+}
+
+/** A label in a styling never seen, drawn from the dan's plate glyph, which no template holds. */
+export function unknownLabelPng(dan: number): Uint8Array {
+  const template = PLATE_NAME_TEMPLATES[dan];
+  if (template === undefined) {
+    throw new Error(`No plate template for dan ${dan}`);
+  }
+  return labelPng(decodeTemplate(template));
+}
+
+function labelPng(grid: Float64Array): Uint8Array {
   const data = new Uint8Array(WIDTH * HEIGHT * 4);
   for (let gx = 0; gx < GLYPH_GRID_WIDTH; gx++) {
     const targets = CELLS.map((_, gy) => grid[gy * GLYPH_GRID_WIDTH + gx] ?? 0);
