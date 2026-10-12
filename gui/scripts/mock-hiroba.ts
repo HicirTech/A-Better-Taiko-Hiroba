@@ -1,7 +1,7 @@
 /** Stand-in for Hiroba and the Bandai Namco ID host, so sign-in runs without the real sites. */
 import { chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
-import { danLabelPng, NO_LABEL_GIF } from "./mock-dan-label";
+import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "./mock-dan-label";
 import { danPlatePng } from "./mock-dan-plate";
 import { ESE_CHARTS_PATH, ESE_MAPPING, ESE_MAPPING_PATH, eseChart } from "./mock-ese";
 import { createFavoritesEditor } from "./mock-favorites";
@@ -127,7 +127,8 @@ let medalState: MedalState = "collecting";
 const variant = {
   /** 0 for none, else the dan (1 to 19) whose label my page shows, and the highest plate passed. */
   dan: 14,
-  label: "png" as "png" | "gif",
+  /** `unknown`: a label in a styling no template holds, which sends the app to the plates. */
+  label: "png" as "png" | "gif" | "unknown",
   region: true,
   panel: "counts" as "counts" | "zeros",
 };
@@ -537,7 +538,10 @@ Bun.serve({
         if (variant.dan === 0 || variant.label === "gif" || !searchParams.has("taiko_no")) {
           return new Response(NO_LABEL_GIF, { headers: { "content-type": "image/gif" } });
         }
-        return new Response(danLabelPng(variant.dan), { headers: { "content-type": "image/png" } });
+        return new Response(
+          variant.label === "unknown" ? unknownLabelPng(variant.dan) : danLabelPng(variant.dan),
+          { headers: { "content-type": "image/png" } },
+        );
       case "/imgsrc_dani.php": {
         // Public as well, and drawn for any dan: stamped up to the dan the player has passed.
         const dan = Number(searchParams.get("dan"));
@@ -640,7 +644,7 @@ Bun.serve({
           variant.dan = Number(dan);
         }
         const label = searchParams.get("label");
-        if (label === "png" || label === "gif") {
+        if (label === "png" || label === "gif" || label === "unknown") {
           variant.label = label;
         }
         const title = searchParams.get("title");

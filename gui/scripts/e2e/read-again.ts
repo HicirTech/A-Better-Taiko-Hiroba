@@ -210,7 +210,8 @@ export const profileVariantsKeys = [
   "unreadableDanShownWithTheRest",
   "twoRequestsWithDanOneWithout",
   "danLabelPictureCostsNothing",
-  "namedRankReadFromItsPlates",
+  "namedRankReadOffItsLabel",
+  "unknownLabelReadOffThePlates",
   "panelZerosShown",
 ] as const;
 
@@ -276,15 +277,23 @@ export async function profileVariants(ctx: Ctx) {
   results.danLabelPictureCostsNothing =
     results.twoRequestsWithDanOneWithout === true && results.danLabelShownAsPicture === true;
 
-  // A 名人's label matches no label template: plates 19, 18 and 17 are read, and 17 is stamped.
+  // A 名人's label reads as its dan, with no plate asked.
   const PLATE = "/imgsrc_dani.php";
-  const platesBefore = await hitsOn(PLATE);
+  let plates = await hitsOn(PLATE);
   await fetch(`${HIROBA}/__variant?dan=17&label=png`);
   await readShowing("#dan");
-  results.namedRankReadFromItsPlates =
+  results.namedRankReadOffItsLabel =
     (await textOf("#dan")) === "Dan-i: Meijin" &&
     (await textOf("#dan-unreadable")) === null &&
-    (await hitsOn(PLATE)) - platesBefore === 3;
+    (await hitsOn(PLATE)) === plates;
+  // A label in a styling no template holds sends the read to the plates: 19, then a stamped 18.
+  plates = await hitsOn(PLATE);
+  await fetch(`${HIROBA}/__variant?dan=18&label=unknown`);
+  await click("#read-again");
+  await waitFor("超人 read off the plates", async () =>
+    (await textOf("#dan")) === "Dan-i: Chojin" ? true : undefined,
+  );
+  results.unknownLabelReadOffThePlates = (await hitsOn(PLATE)) - plates === 2;
   await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set`);
 
   await fetch(`${HIROBA}/__variant?panel=zeros`);
