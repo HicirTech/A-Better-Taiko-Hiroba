@@ -66,11 +66,10 @@ export interface GlyphMatch {
   readonly runnerUpDistance: number;
 }
 
-export function matchGlyph(
+/** The template nearest the glyph, with the runner-up's distance; none without templates. */
+export function nearestGlyph(
   grid: Float64Array,
   templates: Readonly<Record<number, string>>,
-  maxDistance: number,
-  minSeparation: number,
 ): GlyphMatch | null {
   let best: GlyphMatch | null = null;
   let bestDistance = Number.POSITIVE_INFINITY;
@@ -85,12 +84,21 @@ export function matchGlyph(
       runnerUp = d;
     }
   }
+  return best === null
+    ? null
+    : { key: best.key, distance: bestDistance, runnerUpDistance: runnerUp };
+}
+
+export function matchGlyph(
+  grid: Float64Array,
+  templates: Readonly<Record<number, string>>,
+  maxDistance: number,
+  minSeparation: number,
+): GlyphMatch | null {
+  const nearest = nearestGlyph(grid, templates);
   // A wrong answer is worse than none: refuse a far winner (an uncovered rank) or a close tie.
-  if (best === null || bestDistance > maxDistance) {
+  if (nearest === null || nearest.distance > maxDistance) {
     return null;
   }
-  if (runnerUp - bestDistance < minSeparation) {
-    return null;
-  }
-  return { key: best.key, distance: bestDistance, runnerUpDistance: runnerUp };
+  return nearest.runnerUpDistance - nearest.distance < minSeparation ? null : nearest;
 }

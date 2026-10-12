@@ -128,11 +128,15 @@ function makePlate(
   return new Uint8Array(encode({ width: PLATE_WIDTH, height: PLATE_HEIGHT, data, channels: 3 }));
 }
 
-function makeLabel(dan: number, text: Rgb = [20, 20, 20]): Uint8Array {
+function makeLabel(
+  dan: number,
+  text: Rgb = [20, 20, 20],
+  templates: Readonly<Record<number, string>> = LABEL_TEMPLATES,
+): Uint8Array {
   const width = 96;
   const height = 40;
   const data = new Uint8Array(width * height * 4);
-  paintTemplate(templateGrid(dan, LABEL_TEMPLATES), 0, width, 0, height, (x, y) => {
+  paintTemplate(templateGrid(dan, templates), 0, width, 0, height, (x, y) => {
     const i = (y * width + x) * 4;
     data[i] = text[0];
     data[i + 1] = text[1];
@@ -152,12 +156,9 @@ describe("the templates are well formed", () => {
     }
   });
 
-  test("label templates cover the numbered ranks, and say so by their absence above them", () => {
-    for (let dan = 1; dan <= 15; dan++) {
+  test("label templates cover every rank on the board, the named ranks too", () => {
+    for (let dan = 1; dan <= 19; dan++) {
       expect(LABEL_TEMPLATES[dan]).toBeDefined();
-    }
-    for (const namedRank of [16, 17, 18, 19]) {
-      expect(LABEL_TEMPLATES[namedRank]).toBeUndefined();
     }
   });
 
@@ -312,7 +313,7 @@ describe("readDanLabel", () => {
   // A 96×40 label gives about twelve pixels a cell, so a painted glyph cannot match a template at
   // the reader's threshold; only "never the wrong dan" is asserted here.
   test("never mistakes one dan for another, however imprecise the glyph", () => {
-    for (let dan = 1; dan <= 15; dan++) {
+    for (let dan = 1; dan <= 19; dan++) {
       const result = readDanLabel(makeLabel(dan));
       if (isOk(result)) {
         expect(result.value.dan).toBe(dan);
@@ -353,8 +354,8 @@ describe("readDanLabel", () => {
     }
   });
 
-  test("a named rank, which no label template covers, is refused rather than rounded", () => {
-    // Stand-in for a shape the label set does not hold (a plate template is another rendering).
+  test("a shape no label template holds is refused rather than rounded", () => {
+    // A plate's glyph is another rendering of the same name: the label set does not hold it.
     const foreign = templateGrid(17, PLATE_NAME_TEMPLATES);
 
     expect(matchGlyph(foreign, LABEL_TEMPLATES, 0.4, 0.2)).toBeNull();
@@ -370,7 +371,23 @@ describe("readDanLabel", () => {
     if (!isErr(result)) {
       throw new Error("expected a failure");
     }
-    expect(result.error.kind).toBe("unreadableGlyph");
+    expect(result.error).toEqual({
+      kind: "unreadableGlyph",
+      nearestDan: null,
+      nearestDistance: null,
+    });
+  });
+
+  test("a glyph no template matches keeps the nearest one, so a caller can tell it from a blank", () => {
+    // A label drawn from a plate's glyph, a shape the label templates do not hold.
+    const result = readDanLabel(makeLabel(17, [20, 20, 20], PLATE_NAME_TEMPLATES));
+
+    if (!isErr(result) || result.error.kind !== "unreadableGlyph") {
+      throw new Error("expected an unreadable glyph");
+    }
+    expect(result.error.nearestDan).toBeGreaterThanOrEqual(1);
+    expect(result.error.nearestDan).toBeLessThanOrEqual(19);
+    expect(result.error.nearestDistance).toBeGreaterThan(0.4);
   });
 });
 
