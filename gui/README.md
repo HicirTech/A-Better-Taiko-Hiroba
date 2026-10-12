@@ -13,17 +13,18 @@ tooltip); the season's どんメダル on Hiroba's own plate, and your favourite
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On the desktop it opens as tall as the Overview, so the Overview shows
-whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its eight pages:
+whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its nine pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
 **Recent plays** (the あそんだ曲 feed, see [Recent plays](#recent-plays)),
 **Scores** (every chart you played, see [Scores](#scores)),
 **Rating** (your rating and skills, worked out from your scores, see [Rating](#rating)),
+**Know yourself** (where you stand, from your scores, see [Know yourself](#know-yourself)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
-Costume, Nickname & title, Favourites, Recent plays, Scores, Rating or Settings back to the Overview, and from the Overview leaves
+Costume, Nickname & title, Favourites, Recent plays, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
 the app as before.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
@@ -239,16 +240,40 @@ shows it yet.
 ### Rating
 
 Your rating, worked out on the device from the kept scores as OurTaikoWiki's first rating does,
-fourth in the navigation, between Scores and Costume. Each Oni or Ura chart played with 75% accuracy
+fourth in the navigation, between Scores and Know yourself. Each Oni or Ura chart played with 75% accuracy
 or more is rated from its constant and its accuracy, and the rating comes from the best twenty. The
 page shows it above a radar of six skills, then the twenty charts it counts and the next twenty; a
 click on one opens its details, as on Scores. The constants are OurTaiko's published list, read the
 first time the page opens and again with each Read again or pull, which reads the scores too, and
 kept on the device; Settings names OurTaiko with the song data's other sources.
 
+### Know yourself
+
+Where you stand, worked out on the device from the kept scores and taiko.wiki's song list, fifth in
+the navigation, between Rating and Costume. It asks Hiroba nothing of its own; Read again and a pull
+read the scores, as on Scores. A chip picks the difficulty, Settings' one at first, Extreme with its
+Ura charts, and every chart the score lists name counts, played or not, but double-play songs. The
+page is six parts, each folded at first under one sentence of what it finds:
+- **Clear ladder**: a bar per star level of the charts never played, played, cleared, full combo and
+  donderful; its sentence names the wall, the first level, going up, with five or more tried charts
+  of which fewer than half are cleared.
+- **Score ranks**: each rank's share of the played charts per star level, and the rank half of
+  them reach.
+- **Hits/s** and **BPM**: the same bars as the clear ladder by hits per second (taiko.wiki's max
+  combo over play time, in bands of half a hit) or by BPM (the one tempo the song search shows, in
+  bands of twenty, below 80 and from 300 up in one band each; songs given a range of tempos in a row
+  of their own). Each names the band, marked by a trophy, whose played charts are most often among
+  the top tenth of high scores at the difficulty, of the bands with ten or more.
+- **Near a Full Combo** and **Near a Donderful Combo**: cleared charts a few Bad from a full combo,
+  and full combos a few OK from a donderful, from each chart's highest-score play, and how many.
+
+A row of the clear ladder, Hits/s or BPM opens its charts not yet cleared, the nearest to the
+player's level first, which chips narrow to those never played or those played; some of them, or
+the nearest thirty songs, go to a set on the device.
+
 ### The Costume page
 
-The page of the きせかえ editor, fifth in the navigation, between Rating and Nickname & title. The
+The page of the きせかえ editor, sixth in the navigation, between Know yourself and Nickname & title. The
 My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
 on a touch-first screen (`pointer: coarse`) a long-press of about half a second, held still, so a
 tap, a scroll or a pull begun on it goes nowhere; a pointer on it shows its name, and where a
@@ -310,7 +335,7 @@ Shift+Tab is scrolled clear of the tiles above it and the bar below.
 
 ### The Nickname & title page
 
-The page that changes your title (称号) and your nickname (ドンだーネーム): sixth in the navigation,
+The page that changes your title (称号) and your nickname (ドンだーネーム): seventh in the navigation,
 between Costume and Favourites, with a pencil beside its name. The name plate on the Overview is the
 way to it, as the portrait is to Costume: a click, Enter or Space, and on a touch-first screen a
 long-press. It opens on Hiroba's title plate as the Overview draws it, so the result is seen at
