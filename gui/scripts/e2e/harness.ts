@@ -233,6 +233,29 @@ export function pageHelpers(page: Page) {
 
   const touchClicks = () => page.evaluate<string[]>("window.touchClicks");
 
+  // A real press: an SVG has no click(), and a chip's × is one.
+  const mousePress = async (selector: string, button: "left" | "right", heldMs = 0) => {
+    await page.evaluate(
+      `document.querySelector(${JSON.stringify(selector)}).scrollIntoView({ block: "center" })`,
+    );
+    await Bun.sleep(300);
+    const at = await middleOf(page, selector);
+    await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...at });
+    await page.send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      ...at,
+      button,
+      clickCount: 1,
+    });
+    await Bun.sleep(heldMs);
+    await page.send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      ...at,
+      button,
+      clickCount: 1,
+    });
+  };
+
   return {
     exists,
     attribute,
@@ -250,5 +273,6 @@ export function pageHelpers(page: Page) {
     pullIndicator,
     touchEmulated,
     touchClicks,
+    mousePress,
   };
 }
