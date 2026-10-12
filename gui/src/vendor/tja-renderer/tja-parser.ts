@@ -566,7 +566,8 @@ export function parseTJA(content: string): Record<string, ParsedChart> {
       }
 
       // Create Charts
-      const createChart = (bars: NoteType[][], params: BarParams[], type: BranchName): ParsedChart => {
+      const createChart = (written: NoteType[][], params: BarParams[], type: BranchName): ParsedChart => {
+        const bars = joinRepeatedLongNoteStarts(written);
         return {
           bars,
           barParams: params,
@@ -642,6 +643,29 @@ export function parseTJA(content: string): Record<string, ParsedChart> {
   }
 
   return parsedCourses;
+}
+
+const LONG_NOTE_STARTS = [NoteType.Drumroll, NoteType.DrumrollBig, NoteType.Balloon, NoteType.Kusudama];
+
+/** ABTH: a long note's start written again before its end goes on with it, as in the game. */
+function joinRepeatedLongNoteStarts(bars: NoteType[][]): NoteType[][] {
+  let open = false;
+  return bars.map((bar) =>
+    bar.map((note) => {
+      if (note === NoteType.End) {
+        open = false;
+        return note;
+      }
+      if (!LONG_NOTE_STARTS.includes(note)) {
+        return note;
+      }
+      if (open) {
+        return NoteType.None;
+      }
+      open = true;
+      return note;
+    }),
+  );
 }
 
 function detectLoop(bars: NoteType[][]): LoopInfo | undefined {
