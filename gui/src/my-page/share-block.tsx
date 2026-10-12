@@ -14,8 +14,100 @@ export interface ShareItem {
   readonly count: number;
   /** A CSS background for its dot and its part of the bar: a colour, or a gradient. */
   readonly colour: string;
-  /** Its icon in the legend; the dot stands in until it comes. */
-  readonly icon: IconWant;
+  /** Its icon in the legend, which the dot stands in for until it comes; none keeps the dot. */
+  readonly icon?: IconWant;
+}
+
+const countsOf = (i18n: Translator, count: number, total: number) => ({
+  count: i18n.number(count),
+  total: i18n.number(total),
+});
+
+/** The items' shares as one bar; with a label it is a picture screen readers name. */
+export function ShareBar({
+  id,
+  items,
+  i18n,
+  label,
+}: {
+  id: string;
+  items: readonly ShareItem[];
+  i18n: Translator;
+  label?: string;
+}) {
+  const { total, rows } = sharesOf(items, i18n.locale);
+  return (
+    <Box
+      id={id}
+      {...(label === undefined ? { "aria-hidden": true } : { role: "img", "aria-label": label })}
+      sx={{
+        display: "flex",
+        gap: "2px",
+        height: 8,
+        borderRadius: 4,
+        overflow: "hidden",
+        bgcolor: total === 0 ? "action.hover" : undefined,
+      }}
+    >
+      {rows
+        .filter((row) => row.count > 0)
+        .map((row) => (
+          <Box
+            key={row.id}
+            title={i18n.t("panel.countTitle", {
+              name: row.name,
+              ...countsOf(i18n, row.count, total),
+            })}
+            sx={{ flex: `${row.count} 1 0`, minWidth: 0, background: row.colour }}
+          />
+        ))}
+    </Box>
+  );
+}
+
+/** The items' icons and percents, each named by its tooltip, or by a long-press's Toast. */
+export function ShareLegend({
+  items,
+  lane,
+  toast,
+  i18n,
+}: {
+  items: readonly ShareItem[];
+  lane: PictureLane;
+  toast: SystemToast | undefined;
+  i18n: Translator;
+}) {
+  const { total, rows } = sharesOf(items, i18n.locale);
+  return (
+    <Box
+      component="ul"
+      sx={{
+        display: "flex",
+        flexWrap: "wrap",
+        columnGap: 2,
+        rowGap: 0.5,
+        listStyle: "none",
+        m: 0,
+        mt: 1,
+        p: 0,
+      }}
+    >
+      {rows.map((row, order) => (
+        <LegendItem
+          key={row.id}
+          id={row.id}
+          name={row.name}
+          percent={row.percent}
+          colour={row.colour}
+          icon={row.icon ?? null}
+          count={i18n.t("panel.countOf", countsOf(i18n, row.count, total))}
+          order={order}
+          lane={lane}
+          toast={toast}
+        />
+      ))}
+    </Box>
+  );
 }
 
 export function ShareBlock({
@@ -33,69 +125,13 @@ export function ShareBlock({
   toast: SystemToast | undefined;
   i18n: Translator;
 }) {
-  const { t, locale, number } = i18n;
-  const { total, rows } = sharesOf(items, locale);
-  const counted = (count: number) => ({
-    count: number(count),
-    total: number(total),
-  });
-  const titleOf = (item: ShareItem) =>
-    t("panel.countTitle", { name: item.name, ...counted(item.count) });
   return (
     <Box id={id} component="section">
       <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
         {heading}
       </Typography>
-      <Box
-        id={`${id}-bar`}
-        aria-hidden
-        sx={{
-          display: "flex",
-          gap: "2px",
-          height: 8,
-          borderRadius: 4,
-          overflow: "hidden",
-          bgcolor: total === 0 ? "action.hover" : undefined,
-        }}
-      >
-        {rows
-          .filter((row) => row.count > 0)
-          .map((row) => (
-            <Box
-              key={row.id}
-              title={titleOf(row)}
-              sx={{ flex: `${row.count} 1 0`, minWidth: 0, background: row.colour }}
-            />
-          ))}
-      </Box>
-      <Box
-        component="ul"
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          columnGap: 2,
-          rowGap: 0.5,
-          listStyle: "none",
-          m: 0,
-          mt: 1,
-          p: 0,
-        }}
-      >
-        {rows.map((row, order) => (
-          <LegendItem
-            key={row.id}
-            id={row.id}
-            name={row.name}
-            percent={row.percent}
-            colour={row.colour}
-            icon={row.icon}
-            count={t("panel.countOf", counted(row.count))}
-            order={order}
-            lane={lane}
-            toast={toast}
-          />
-        ))}
-      </Box>
+      <ShareBar id={`${id}-bar`} items={items} i18n={i18n} />
+      <ShareLegend items={items} lane={lane} toast={toast} i18n={i18n} />
     </Box>
   );
 }
