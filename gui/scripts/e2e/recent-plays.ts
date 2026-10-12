@@ -1,4 +1,5 @@
 /** Recent plays: read only when asked, after Hiroba's refresh, in a pipeline of their own. */
+import { mockTitle } from "../mock-history";
 import { en, HIROBA } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
@@ -18,6 +19,12 @@ export const recentPlaysKeys = [
   "walkedPageInTheFoot",
   "hirobaReadsBesideAWalk",
   "recentPlaysKeptAfterSignOut",
+] as const;
+
+export const recentPlayDetailsKeys = [
+  "playOpensItsKeptChartDetails",
+  "unreadChartReadAsItsPlayOpens",
+  "unknownSongSaysWhy",
 ] as const;
 
 interface HistoryState {
@@ -54,16 +61,14 @@ const rowLook = (title: string) =>
     };
   })()`;
 
-export async function recentPlays(ctx: Ctx) {
-  const { results, tokens } = ctx;
-  const { click, goTo, page, textOf, until } = ctx.app;
-  const { exists, fabState } = pageHelpers(page);
+/** The recent plays page's titles, and its read again. */
+function historyPage(ctx: Ctx) {
+  const { click, page } = ctx.app;
+  const { fabState } = pageHelpers(page);
   const titles = () =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll("#history-list .song-name")].map((name) => name.textContent)`,
     );
-  const rowsAre = (count: number) =>
-    waitFor(`${count} recent plays`, async () => (await titles()).length === count || undefined);
   const walkEnded = () =>
     waitFor("the walk ended", async () =>
       same(await fabState(), { shut: false, spinning: false }) ? true : undefined,
@@ -74,6 +79,16 @@ export async function recentPlays(ctx: Ctx) {
     await click("#read-again");
     await waitFor("the walk's refresh", async () => (await refreshHits()) > refreshes || undefined);
   };
+  return { titles, walkEnded, readAgain };
+}
+
+export async function recentPlays(ctx: Ctx) {
+  const { results, tokens } = ctx;
+  const { click, goTo, page, textOf, until } = ctx.app;
+  const { exists, fabState } = pageHelpers(page);
+  const { titles, walkEnded, readAgain } = historyPage(ctx);
+  const rowsAre = (count: number) =>
+    waitFor(`${count} recent plays`, async () => (await titles()).length === count || undefined);
 
   await goTo("history");
   await Bun.sleep(500);
@@ -191,5 +206,90 @@ export async function recentPlays(ctx: Ctx) {
   await goTo("history");
   await rowsAre(38);
   results.recentPlaysKeptAfterSignOut = (await hitsOn(HISTORY_PAGE)) === pagesBeforeSignIn;
+  await goTo("overview");
+}
+
+/** A play opens its chart's details: those kept at once, unread ones read there, else why not. */
+export async function recentPlayDetails(ctx: Ctx) {
+  const { results } = ctx;
+  const { goTo, page, textOf } = ctx.app;
+  const { exists, press } = pageHelpers(page);
+  const { titles, walkEnded, readAgain } = historyPage(ctx);
+  const detailsAsked = async (params = "") =>
+    ((await (await fetch(`${HIROBA}/__scores?${params}`)).json()) as { asked: string[] }).asked;
+  /** The charts whose details were asked since the last take. */
+  const takeAsked = async () => {
+    const asked = await detailsAsked();
+    await detailsAsked("forget=1");
+    return asked;
+  };
+  const newestIs = (n: number) =>
+    waitFor(
+      `song ${n}'s play on top`,
+      async () => (await titles())[0] === mockTitle(n) || undefined,
+    );
+  const openPlay = (n: number) =>
+    page.evaluate(
+      `[...document.querySelectorAll("#history-list .history-row")].find((row) => row.querySelector(".song-name")?.textContent === ${JSON.stringify(mockTitle(n))}).click()`,
+    );
+  const chartShown = () =>
+    waitFor(
+      "the chart's details",
+      async () => (await exists("#score-details-ranking")) || undefined,
+    );
+  const detailsShut = async () => {
+    await press("Escape");
+    await waitFor("the details shut", async () =>
+      (await exists("#score-details")) ? undefined : true,
+    );
+    await Bun.sleep(500);
+  };
+
+  // The scores section detailed every chart played up to song 40: its play opens and reads nothing.
+  await goTo("history");
+  await newestIs(40);
+  await takeAsked();
+  const refreshesBefore = await refreshHits();
+  await openPlay(40);
+  await chartShown();
+  results.playOpensItsKeptChartDetails =
+    (await textOf("#score-details-title")) === mockTitle(40) &&
+    (await takeAsked()).length === 0 &&
+    (await refreshHits()) === refreshesBefore;
+  await detailsShut();
+
+  // Song 41 was listed unplayed: its play reads the song there, after Hiroba's refresh.
+  await history("play=1");
+  await readAgain();
+  await walkEnded();
+  await newestIs(41);
+  await takeAsked();
+  const refreshesBeforeTheRead = await refreshHits();
+  await openPlay(41);
+  await chartShown();
+  results.unreadChartReadAsItsPlayOpens =
+    (await textOf("#score-details-title")) === mockTitle(41) &&
+    same([...(await takeAsked())].sort(), ["1041/1", "1041/2", "1041/3", "1041/4"]) &&
+    (await refreshHits()) === refreshesBeforeTheRead + 1;
+  await detailsShut();
+
+  // Song 44 is in no list, nor in taiko.wiki: the details say why, and read nothing.
+  await history("play=3");
+  await readAgain();
+  await walkEnded();
+  await newestIs(44);
+  const refreshesBeforeTheNotice = await refreshHits();
+  await openPlay(44);
+  const notice = await waitFor(
+    "the play's notice",
+    async () => (await textOf("#score-details-notice")) ?? undefined,
+  );
+  await Bun.sleep(500);
+  results.unknownSongSaysWhy =
+    notice === en.t("history.unknownSong") &&
+    (await textOf("#score-details-title")) === mockTitle(44) &&
+    (await takeAsked()).length === 0 &&
+    (await refreshHits()) === refreshesBeforeTheNotice;
+  await detailsShut();
   await goTo("overview");
 }
