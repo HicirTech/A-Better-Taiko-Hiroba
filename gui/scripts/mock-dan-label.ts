@@ -1,5 +1,11 @@
 /** Dan labels laid out in the reader's own cells from core's templates, so it accepts them. */
-import { decodeTemplate, GLYPH_GRID_HEIGHT, GLYPH_GRID_WIDTH, LABEL_TEMPLATES } from "@abth/core";
+import {
+  decodeTemplate,
+  GLYPH_GRID_HEIGHT,
+  GLYPH_GRID_WIDTH,
+  LABEL_TEMPLATES,
+  PLATE_NAME_TEMPLATES,
+} from "@abth/core";
 import { encode } from "fast-png";
 
 const WIDTH = 96;
@@ -100,9 +106,9 @@ function solveColumn(targets: readonly number[]): number[] {
   return perRow;
 }
 
-/** A label for dan 1 to 15, the numbered ranks core has label templates for. */
+/** A label for any dan; a named rank's, which no label template holds, takes its plate's glyph. */
 export function danLabelPng(dan: number): Uint8Array {
-  const template = LABEL_TEMPLATES[dan];
+  const template = LABEL_TEMPLATES[dan] ?? PLATE_NAME_TEMPLATES[dan];
   if (template === undefined) {
     throw new Error(`No label template for dan ${dan}`);
   }

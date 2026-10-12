@@ -10,8 +10,15 @@ describe("the mock's dan labels", () => {
     expect(read).toEqual(DAN_NAMES.map((_, index) => ({ ok: true, value: { dan: index + 1 } })));
   });
 
-  test("a named rank has no label template, so the mock has no label for it", () => {
-    expect(() => danLabelPng(16)).toThrow("No label template for dan 16");
+  test("a named rank's label takes its plate's glyph, which the reader cannot place", () => {
+    for (const dan of [16, 17, 18, 19]) {
+      const read = readDanLabel(danLabelPng(dan));
+      expect(read.ok).toBe(false);
+      expect(
+        !read.ok && read.error.kind === "unreadableGlyph" && read.error.nearestDan,
+      ).toBeTruthy();
+    }
+    expect(() => danLabelPng(20)).toThrow("No label template for dan 20");
   });
 
   test("the no-label answer is a 43-byte GIF, which the reader refuses as no image", () => {

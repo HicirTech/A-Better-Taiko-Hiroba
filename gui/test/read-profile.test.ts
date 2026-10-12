@@ -3,6 +3,7 @@ import { err, ok, type Transport, type TransportRequest } from "@abth/core";
 import { encode } from "fast-png";
 
 import { danLabelPng, NO_LABEL_GIF } from "../scripts/mock-dan-label";
+import { danPlatePng } from "../scripts/mock-dan-plate";
 import { readOwnProfile, readProfile } from "../src/hiroba-session";
 import { pngDataUrl } from "../src/hiroba-session/png-answer";
 
@@ -66,6 +67,19 @@ const labelAnswer = (type: string, body: Uint8Array, status = 200, url = LABEL_U
   ok({ status, url, headers: { "content-type": type }, body });
 
 const NINTH_DAN = labelAnswer("image/png", danLabelPng(14));
+const MEIJIN = labelAnswer("image/png", danLabelPng(17));
+const plateUrl = (dan: number) =>
+  `https://hiroba.test/imgsrc_dani.php?taiko_no=000000000000&dan=${dan}&img=0`;
+/** The plates of a player who has passed up to `highest`. */
+const platesUpTo =
+  (highest: number) =>
+  (dan: number): Answer =>
+    ok({
+      status: 200,
+      url: plateUrl(dan),
+      headers: { "content-type": "image/png" },
+      body: danPlatePng(dan, dan <= highest),
+    });
 const labelPicture = (bytes: Uint8Array, width = 96, height = 40) => ({
   src: pngDataUrl(bytes),
   width,
@@ -78,11 +92,20 @@ function fakeTransport(
   myPage: Answer,
   label: Answer = NINTH_DAN,
   requests: TransportRequest[] = [],
+  plate: (dan: number) => Answer = () => myPage,
 ): Transport {
   return {
     async send(request) {
       requests.push(request);
-      return new URL(request.url).pathname === "/imgsrc_danlabel.php" ? label : myPage;
+      const url = new URL(request.url);
+      switch (url.pathname) {
+        case "/imgsrc_danlabel.php":
+          return label;
+        case "/imgsrc_dani.php":
+          return plate(Number(url.searchParams.get("dan")));
+        default:
+          return myPage;
+      }
     },
   };
 }
@@ -256,17 +279,23 @@ describe("readProfile", () => {
 });
 
 describe("readProfile's dan label", () => {
-  async function danAfter(label: Answer, html = MY_PAGE_EXCERPT) {
+  /** The dan read, and the URLs asked for in order. */
+  async function readWith(label: Answer, html: string, plate?: (dan: number) => Answer) {
     const requests: TransportRequest[] = [];
     const read = await readProfile(
-      fakeTransport(page(MY_PAGE_URL, html), label, requests),
+      fakeTransport(page(MY_PAGE_URL, html), label, requests, plate),
       ENDPOINTS,
       NOW,
     );
     if (!read.ok) {
       throw new Error(`the profile failed: ${JSON.stringify(read.error)}`);
     }
-    return { dan: read.value.dan, requests: requests.length };
+    return { dan: read.value.dan, asked: requests.map((request) => request.url) };
+  }
+
+  async function danAfter(label: Answer, html = MY_PAGE_EXCERPT) {
+    const { dan, asked } = await readWith(label, html);
+    return { dan, requests: asked.length };
   }
 
   test("a dan-less my page asks for no label and carries no dan", async () => {
@@ -365,5 +394,38 @@ describe("readProfile's dan label", () => {
       dan: { unreadable: true, code: "dan=unexpectedSrc", picture: null },
       requests: 1,
     });
+  });
+
+  test("a named rank, which no label template holds, is read off its plates from 達人 down", async () => {
+    const { dan, asked } = await readWith(MEIJIN, MY_PAGE_EXCERPT, platesUpTo(17));
+
+    expect(dan).toEqual({ board: 17, picture: labelPicture(danLabelPng(17)) });
+    expect(asked).toEqual([MY_PAGE_URL, LABEL_URL, plateUrl(19), plateUrl(18), plateUrl(17)]);
+  });
+
+  test("a named-rank label with no named plate stamped is unreadable, after all four", async () => {
+    const { dan, asked } = await readWith(MEIJIN, MY_PAGE_EXCERPT, platesUpTo(15));
+
+    expect(dan).toEqual({
+      unreadable: true,
+      code: "dan=unreadableGlyph plates=unstamped",
+      picture: labelPicture(danLabelPng(17)),
+    });
+    expect(asked).toHaveLength(6);
+  });
+
+  test("a plate that does not read stops there and says which, never naming the player", async () => {
+    const gif = labelAnswer("image/gif", NO_LABEL_GIF, 200, plateUrl(19));
+    const failed = await readWith(MEIJIN, MY_PAGE_EXCERPT, () => gif);
+    const timedOut = await readWith(MEIJIN, MY_PAGE_EXCERPT, (dan) =>
+      err({ kind: "timedOut", url: plateUrl(dan) }),
+    );
+
+    expect(failed.dan).toMatchObject({
+      unreadable: true,
+      code: "dan=unreadableGlyph plate19=notPng status=200 type=image/gif bytes=43",
+    });
+    expect(timedOut.dan).toMatchObject({ code: "dan=unreadableGlyph plate19=timedOut" });
+    expect(failed.asked).toHaveLength(3);
   });
 });
