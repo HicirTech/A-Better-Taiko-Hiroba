@@ -2,8 +2,15 @@
 import { mockTitle } from "../mock-history";
 import { en, HIROBA } from "./config";
 import type { Ctx } from "./context";
-import { pageHelpers, same, waitFor } from "./harness";
-import { hitsOn, myPageHits, READ_AGAIN_MY_PAGE_READS, refreshHits } from "./stand-in";
+import { middleOf, pageHelpers, same, waitFor } from "./harness";
+import {
+  hitsOn,
+  myPageHits,
+  READ_AGAIN_MY_PAGE_READS,
+  refreshHits,
+  requestLog,
+  resetLog,
+} from "./stand-in";
 
 const HISTORY_PAGE = "/history_recent_score.php";
 
@@ -26,6 +33,31 @@ export const recentPlayDetailsKeys = [
   "unreadChartReadAsItsPlayOpens",
   "unknownSongSaysWhy",
 ] as const;
+
+export const recentPlaySetsKeys = [
+  "rightClickOffersOneAction",
+  "playMenuAddsToANewSet",
+  "playMenuMarksASetHoldingTheSong",
+  "playMenuAddsToTheEndOfASet",
+  "playMenuSendsNothingToHiroba",
+  "playMenuMarksAFullSet",
+  "playMenuSaysWhyForAnUnknownSong",
+  "playHeldOnAPhoneOffersTheSets",
+] as const;
+
+/** Where the app keeps the sets, as the Favourites page writes them. */
+const SETS_KEY = "abth.favoriteSets";
+
+interface KeptSet {
+  readonly name: string;
+  readonly songs: readonly string[];
+}
+
+/** A line of the add-to-set dialog: whether it is shut to a choice, and what it says. */
+interface MenuLine {
+  readonly refused: boolean;
+  readonly text: string;
+}
 
 interface HistoryState {
   readonly shown: number;
@@ -291,5 +323,133 @@ export async function recentPlayDetails(ctx: Ctx) {
     (await takeAsked()).length === 0 &&
     (await refreshHits()) === refreshesBeforeTheNotice;
   await detailsShut();
+  await goTo("overview");
+}
+
+/** A play's own menu adds its song to a set on the device, or to a new one, sending nothing. */
+export async function recentPlaySets(ctx: Ctx) {
+  const { results } = ctx;
+  const { click, goTo, page, textOf } = ctx.app;
+  const { exists, mousePress, press, touchEmulated } = pageHelpers(page);
+  const { titles } = historyPage(ctx);
+  const shown = (selector: string) =>
+    waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
+  const gone = (selector: string) =>
+    waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  const kept = () =>
+    page.evaluate<KeptSet[]>(
+      `(JSON.parse(localStorage.getItem(${JSON.stringify(SETS_KEY)}) ?? "{}").sets ?? []).map(({ name, songs }) => ({ name, songs }))`,
+    );
+  const rowOf = async (n: number) =>
+    `#history-list > li:nth-child(${(await titles()).indexOf(mockTitle(n)) + 1})`;
+  // A right-click's menu holds one action, which opens the dialog.
+  const openDialog = async (n: number) => {
+    await mousePress(await rowOf(n), "right");
+    await shown("#history-play-menu");
+    await click("#history-play-menu-add");
+    await shown("#history-add-to-set");
+  };
+  const shutDialog = async () => {
+    await press("Escape");
+    await gone("#history-add-to-set");
+    await Bun.sleep(300);
+  };
+  const lineOf = (selector: string) =>
+    page.evaluate<MenuLine | null>(
+      `(() => { const line = document.querySelector(${JSON.stringify(selector)}); return line === null ? null : { refused: line.classList.contains("Mui-disabled"), text: line.textContent }; })()`,
+    );
+  const before = await page.evaluate<string | null>(
+    `localStorage.getItem(${JSON.stringify(SETS_KEY)})`,
+  );
+
+  await goTo("history");
+  await waitFor("song 44's play on top", async () =>
+    (await titles())[0] === mockTitle(44) ? true : undefined,
+  );
+  await resetLog();
+
+  await mousePress(await rowOf(40), "right");
+  await shown("#history-play-menu");
+  const actions = await page.evaluate<string[]>(
+    `[...document.querySelectorAll("#history-play-menu [role=menuitem]")].map((item) => item.textContent)`,
+  );
+  await press("Escape");
+  await gone("#history-play-menu");
+  await Bun.sleep(300);
+  results.rightClickOffersOneAction = same(actions, [en.t("history.addToSet")]);
+
+  // A new set from the dialog starts with the play's song, named as the Favourites page names one.
+  await openDialog(40);
+  await click("#history-add-new-set");
+  await shown("#favorite-set-name-dialog");
+  await click("#favorite-set-name-save");
+  await gone("#favorite-set-name-dialog");
+  const sets = await kept();
+  const index = sets.length - 1;
+  results.playMenuAddsToANewSet = same(sets[index]?.songs ?? [], ["1040"]);
+
+  await openDialog(40);
+  const holding = await lineOf(`#history-add-set-${index}`);
+  await shutDialog();
+  results.playMenuMarksASetHoldingTheSong =
+    holding?.refused === true && holding.text.includes(en.t("history.setHolds"));
+
+  await openDialog(41);
+  await click(`#history-add-set-${index}`);
+  await gone("#history-add-to-set");
+  results.playMenuAddsToTheEndOfASet = same((await kept())[index]?.songs ?? [], ["1040", "1041"]);
+  results.playMenuSendsNothingToHiroba = (await requestLog()).length === 0;
+
+  // A full set, kept as the Favourites page keeps one, is read as the page opens again.
+  await page.evaluate(
+    `(() => { const kept = JSON.parse(localStorage.getItem(${JSON.stringify(SETS_KEY)})); kept.sets.push({ id: "e2e-full", name: "Full", songs: Array.from({ length: 30 }, (_, at) => String(2000 + at)) }); localStorage.setItem(${JSON.stringify(SETS_KEY)}, JSON.stringify(kept)); })()`,
+  );
+  await goTo("overview");
+  await goTo("history");
+  await waitFor("the plays shown again", async () =>
+    (await titles())[0] === mockTitle(44) ? true : undefined,
+  );
+  await openDialog(41);
+  const full = await lineOf(`#history-add-set-${index + 1}`);
+  await shutDialog();
+  results.playMenuMarksAFullSet =
+    full?.refused === true && full.text.includes(en.t("history.setFull", { count: "30" }));
+
+  // Song 44 is in no list, nor in taiko.wiki: the dialog says why, and offers no set.
+  await openDialog(44);
+  const unknown = await textOf("#history-add-unknown");
+  const offersSets = await exists("#history-add-new-set");
+  await shutDialog();
+  results.playMenuSaysWhyForAnUnknownSong = unknown === en.t("history.unknownSong") && !offersSets;
+
+  // A long press let go in place opens the dialog at once, and opens no details.
+  await touchEmulated(true);
+  try {
+    const row = await rowOf(41);
+    await page.evaluate(
+      `document.querySelector(${JSON.stringify(row)}).scrollIntoView({ block: "center" })`,
+    );
+    await Bun.sleep(300);
+    const at = await middleOf(page, row);
+    await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
+    await Bun.sleep(800);
+    await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await shown("#history-add-to-set");
+    await Bun.sleep(500);
+    const offered =
+      (await exists(`#history-add-set-${index}`)) && (await exists("#history-add-new-set"));
+    const menuOpened = await exists("#history-play-menu");
+    const detailsOpened = await exists("#score-details");
+    await shutDialog();
+    results.playHeldOnAPhoneOffersTheSets = offered && !menuOpened && !detailsOpened;
+  } finally {
+    await touchEmulated(false);
+  }
+
+  await page.evaluate(
+    before === null
+      ? `localStorage.removeItem(${JSON.stringify(SETS_KEY)})`
+      : `localStorage.setItem(${JSON.stringify(SETS_KEY)}, ${JSON.stringify(before)})`,
+  );
   await goTo("overview");
 }
