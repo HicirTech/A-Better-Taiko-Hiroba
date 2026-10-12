@@ -74,6 +74,22 @@ export interface RowProps {
   readonly "data-level"?: number;
 }
 
+/** A row a click, Enter or Space opens, as a button that opens a dialog. */
+export function opensOnPress(onOpen: () => void): RowProps {
+  return {
+    role: "button",
+    tabIndex: 0,
+    "aria-haspopup": "dialog",
+    onClick: onOpen,
+    onKeyDown: (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onOpen();
+      }
+    },
+  };
+}
+
 /** One recent play: the difficulty and the song, its marks as Hiroba's icons, then its counts. */
 export function HistoryRow({
   play,

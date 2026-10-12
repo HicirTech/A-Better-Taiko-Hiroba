@@ -7,7 +7,7 @@ import { ShownDifficultyContext } from "../favorites/shown-difficulty";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import { fold, searchedNames } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { HistoryRow, type RowProps } from "../history/history-row";
+import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { LoadFailed, Waiting } from "../my-page/editor-parts";
 import type { PictureLane } from "../pictures/picture-lane";
@@ -179,18 +179,9 @@ function ScoreRow({
 }) {
   const { score } = listed;
   const rowProps: RowProps = {
-    role: "button",
-    tabIndex: 0,
-    "aria-haspopup": "dialog",
+    ...opensOnPress(onOpen),
     "data-song-no": score.songNo,
     "data-level": score.level,
-    onClick: onOpen,
-    onKeyDown: (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        onOpen();
-      }
-    },
   };
   return (
     <HistoryRow
