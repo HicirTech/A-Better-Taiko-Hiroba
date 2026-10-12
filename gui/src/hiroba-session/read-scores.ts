@@ -11,6 +11,7 @@ import {
   type GenreList,
   genresToRead,
   isErr,
+  notePlayedSong,
   noteWalk as noteWalkInBook,
   ok,
   parseScoreDetailPage,
@@ -26,6 +27,7 @@ import {
 
 import { type Pipeline, resultFailure, SCORE_READ_CONSUMERS } from "../pipelines";
 import type {
+  PlayedChart,
   RecentPlaysFailure,
   ScoresFailure,
   ScoresProgress,
@@ -52,7 +54,11 @@ export interface ScoresReader {
   readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
   /** As `readScores`, but every list, then every played chart, as the first read takes them. */
   readEveryScore(): Promise<Result<ScoresRead, ScoresFailure>>;
-  readSongScores(songNo: string): Promise<Result<ScoresRead, ScoresFailure>>;
+  /** The song's listed charts and the played one; a song no list named yet is taken in. */
+  readSongScores(
+    songNo: string,
+    played: PlayedChart | null,
+  ): Promise<Result<ScoresRead, ScoresFailure>>;
   scoresProgress(): Promise<ScoresProgress | null>;
   /** Marks the charts a walk of recent plays found played, whichever page walked. */
   noteWalk(taikoNo: string, walk: RecentPlaysReading): Promise<void>;
@@ -236,12 +242,21 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
         }
         return readAll();
       }),
-    async readSongScores(songNo) {
+    async readSongScores(songNo, played) {
       const taikoNo = owner();
       if (taikoNo === null) {
         return err({ kind: "notSignedIn" });
       }
-      const charts = songCharts(await books.of(taikoNo), songNo);
+      if (played !== null) {
+        const { title, genre } = played;
+        const genres = genre === null ? [] : [genre];
+        await books.change(taikoNo, (book) => notePlayedSong(book, { songNo, title, genres }));
+      }
+      const listed = songCharts(await books.of(taikoNo), songNo);
+      const charts =
+        played === null || listed.some(({ level }) => level === played.level)
+          ? listed
+          : [...listed, { songNo, level: played.level }];
       const detailed = await readDetails(taikoNo, charts, () => undefined);
       return detailed === null ? readOf(taikoNo, charts) : failed(detailed);
     },
@@ -329,5 +344,5 @@ function viewOf(book: ScoreBook, plays: readonly RecentPlay[]): ScoresView {
   scores.sort(
     (left, right) => Number(left.songNo) - Number(right.songNo) || left.level - right.level,
   );
-  return { scores, unread: chartsToRead(book).length };
+  return { scores, unread: chartsToRead(book).length, songs: book.songs };
 }

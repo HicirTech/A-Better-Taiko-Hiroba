@@ -4,7 +4,7 @@ import { Box, FormHelperText, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { HistoryRow, type RowProps } from "../history/history-row";
+import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
 import { LoadFailed, Waiting } from "../my-page/editor-parts";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
@@ -209,18 +209,9 @@ function RatedRow({
   const { t, locale } = i18n;
   const listed = listedOf(score, catalogue, locale);
   const rowProps: RowProps = {
-    role: "button",
-    tabIndex: 0,
-    "aria-haspopup": "dialog",
+    ...opensOnPress(onOpen),
     "data-song-no": score.songNo,
     "data-level": score.level,
-    onClick: onOpen,
-    onKeyDown: (event) => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        onOpen();
-      }
-    },
   };
   return (
     <HistoryRow

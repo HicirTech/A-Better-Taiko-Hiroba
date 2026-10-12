@@ -50,6 +50,7 @@ export type {
   PictureView,
   PictureWant,
   PipelinesView,
+  PlayedChart,
   ProfileView,
   ReadFailure,
   ReadFailureKind,

@@ -65,7 +65,7 @@ const CASES: VerbCase[] = [
   ["scores", [], [{ taikoNo: "000000000000" }]],
   ["readScores", [], [{ full: true }]],
   ["readEveryScore", [], [{ full: true }]],
-  ["readSongScores", ["1178"], ["1178&level=5"]],
+  ["readSongScores", ["1178", null], ["1178&level=5", null]],
   ["scoresProgress", [], [1]],
   ["readSongCatalogue", [null], ["0&genre=1"]],
   ["readChineseNames", [], [{ gcmlimit: "max" }]],

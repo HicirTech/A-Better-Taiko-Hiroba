@@ -51,7 +51,12 @@ import {
 import { pipelinesPage, pipelinesPageKeys } from "./pipelines-page";
 import { rating, ratingKeys } from "./rating";
 import { profileVariants, profileVariantsKeys, readAgain, readAgainKeys } from "./read-again";
-import { recentPlays, recentPlaysKeys } from "./recent-plays";
+import {
+  recentPlayDetails,
+  recentPlayDetailsKeys,
+  recentPlays,
+  recentPlaysKeys,
+} from "./recent-plays";
 import { scores, scoresKeys } from "./scores";
 import {
   reopen,
@@ -109,6 +114,12 @@ export const SECTIONS: readonly Section[] = [
   { name: "scores", phase: "signedIn", keys: scoresKeys, run: scores },
   { name: "pipelines-page", phase: "signedIn", keys: pipelinesPageKeys, run: pipelinesPage },
   { name: "rating", phase: "signedIn", keys: ratingKeys, run: rating },
+  {
+    name: "recent-play-details",
+    phase: "signedIn",
+    keys: recentPlayDetailsKeys,
+    run: recentPlayDetails,
+  },
   { name: "session-expiry", phase: "signedIn", keys: sessionExpiryKeys, run: sessionExpiry },
   { name: "reopen", phase: "signedIn", keys: reopenKeys, run: reopen },
   { name: "signed-out-reopen", phase: "signedIn", keys: signedOutReopenKeys, run: signedOutReopen },

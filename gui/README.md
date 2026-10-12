@@ -199,9 +199,12 @@ names the page being read. A row is the genre's colour, the difficulty's icon an
 crown, rank and play options as Hiroba's icons (the support chart, whose picture has not been seen,
 as a lifebuoy), then the score with the longest combo, and the 良/可/不可/連打 hits. The play counts
 the feed also carries are kept for a page of a chart's details. The rows have no date and no song
-number, and stay on the device after a sign-out. A song is named in the player's language when its
-title and genre find one song in taiko.wiki's list, a cover the wiki marks with a bracketed end
-counting as its original's title; otherwise it keeps Hiroba's title.
+number, and stay on the device after a sign-out. A play's title and genre find its song in the
+score lists, else in taiko.wiki's list, a cover the wiki marks with a bracketed end counting as its
+original's title; the song is named in the player's language where taiko.wiki has it, and keeps
+Hiroba's title otherwise. A click on a row opens its chart in full, as Scores does; a chart never
+read in full is read there, after Hiroba's refresh, and a play whose song the app cannot tell (a
+title two songs share, or one no list nor taiko.wiki has yet) says why.
 
 ### Scores
 

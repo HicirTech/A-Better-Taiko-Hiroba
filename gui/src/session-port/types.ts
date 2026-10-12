@@ -19,6 +19,7 @@ import type {
   ScoreRank,
   ScoreSection,
   ShownSong,
+  Song,
   TitleEditorView,
   TitleState,
   TitleTarget,
@@ -177,6 +178,15 @@ export interface ScoreView extends RecentPlay {
 export interface ScoresView {
   readonly scores: readonly ScoreView[];
   readonly unread: number;
+  /** The songs the lists named, by Hiroba's own titles: what a recent play is found by. */
+  readonly songs: readonly Song[];
+}
+
+/** A recent play's chart, as its row names it: read with its song though no list named it yet. */
+export interface PlayedChart {
+  readonly level: Level;
+  readonly title: string;
+  readonly genre: Genre | null;
 }
 
 /** A read of scores that ended, with how many charts' details it read: none when nothing was new. */
@@ -387,8 +397,11 @@ export interface HirobaSessionPort {
   readScores(): Promise<Result<ScoresRead, ScoresFailure>>;
   /** As `readScores`, but takes every list, then every played chart again. Never retried. */
   readEveryScore(): Promise<Result<ScoresRead, ScoresFailure>>;
-  /** Details each of one song's charts again, in the scores pipeline. Never retried. */
-  readSongScores(songNo: string): Promise<Result<ScoresRead, ScoresFailure>>;
+  /** Details a song's charts again, `played` among them, in the scores pipeline. Never retried. */
+  readSongScores(
+    songNo: string,
+    played: PlayedChart | null,
+  ): Promise<Result<ScoresRead, ScoresFailure>>;
   /** How far a read of scores has come, or null when none is running. */
   scoresProgress(): Promise<ScoresProgress | null>;
   /** taiko.wiki's songs, all or those changed since `since` (ms since 1970): one GET that carries

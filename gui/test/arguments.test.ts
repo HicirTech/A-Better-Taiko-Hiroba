@@ -5,6 +5,7 @@ import { KEPT_GROUPS } from "../src/pipelines";
 import { PORT_ARGUMENTS } from "../src/session-port";
 import { CHART_PICTURE_MAX_BYTES } from "../src/song-catalogue";
 
+const PLAYED = { level: 4, title: "サンプル曲", genre: 2 };
 const SET = {
   colorBody: 12,
   colorLimb: 12,
@@ -55,15 +56,30 @@ describe("PORT_ARGUMENTS", () => {
     expect(check([{ system: "ourtaikoV1" }])).toBe(false);
   });
 
-  test("readSongScores takes one song number, which becomes the detail pages' query", () => {
+  test("readSongScores takes a song number, which becomes the detail pages' query, and a played chart or none", () => {
     const check = PORT_ARGUMENTS.readSongScores;
-    expect(check(["1178"])).toBe(true);
-    expect(check(["1"])).toBe(true);
+    expect(check(["1178", null])).toBe(true);
+    expect(check(["1", PLAYED])).toBe(true);
+    expect(check(["1178", { ...PLAYED, genre: null }])).toBe(true);
+    expect(check(["1178"])).toBe(false);
     expect(check([])).toBe(false);
-    expect(check([1178])).toBe(false);
-    expect(check(["123456"])).toBe(false);
-    expect(check(["1178&level=5"])).toBe(false);
+    expect(check([1178, null])).toBe(false);
+    expect(check(["123456", null])).toBe(false);
+    expect(check(["1178&level=5", null])).toBe(false);
     expect(check(["1178", "1179"])).toBe(false);
+    expect(check(["1178", null, null])).toBe(false);
+  });
+
+  test.each<[why: string, played: unknown]>([
+    ["a level past 裏", { ...PLAYED, level: 6 }],
+    ["a level as text", { ...PLAYED, level: "4" }],
+    ["no title", { ...PLAYED, title: "" }],
+    ["a title longer than any song's", { ...PLAYED, title: "曲".repeat(201) }],
+    ["a genre Hiroba has not", { ...PLAYED, genre: 9 }],
+    ["a key more", { ...PLAYED, songNo: "1178" }],
+    ["a key less", { level: 4, title: "サンプル曲" }],
+  ])("readSongScores refuses a played chart with %s", (_why, played) => {
+    expect(PORT_ARGUMENTS.readSongScores(["1178", played])).toBe(false);
   });
 
   test("readPipelines takes how many ended groups of each pipeline to give: none up to all kept", () => {

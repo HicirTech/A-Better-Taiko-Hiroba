@@ -116,6 +116,13 @@ export function noteWalk(
   return { ...book, stale: [...stale], unlisted };
 }
 
+/** A song a recent play names that no list has named yet: Hiroba's title and the play's genre. */
+export function notePlayedSong(book: ScoreBook, song: Song): ScoreBook {
+  return book.songs.some(({ songNo }) => songNo === song.songNo)
+    ? book
+    : { ...book, songs: [...book.songs, song] };
+}
+
 /** The book once the player asks for every score again: its next read is a full one. */
 export const askedInFull = (book: ScoreBook): ScoreBook => ({ ...book, full: true });
 

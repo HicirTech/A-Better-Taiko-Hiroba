@@ -19,6 +19,12 @@ const EDGE_PX = 24;
 /** The narrowest phone the details are drawn for. */
 const NARROW_PHONE = { width: 360, height: 780 } as const;
 
+/** A long press on the details' read button: whether it reloaded the song, and what it heard. */
+interface LongHold {
+  readonly took: boolean;
+  readonly events: readonly string[];
+}
+
 export const songSearchKeys = [
   "searchBarInTheTopBand",
   "searchBarAcrossAPhone",
@@ -41,6 +47,9 @@ export const songSearchKeys = [
   "densityNotDrawnWithoutAChart",
   "keptWikiPictureStaysUnderTja",
   "longHoldRedrawsTheSong",
+  "longHoldReadsTheChartFileTwice",
+  "longHoldLeavesTaikoWikiPictures",
+  "longHoldPresses",
   "chartDrawnFromTheTja",
   "drawnChartKept",
   "noTjaFallsBackWithANotice",
@@ -267,20 +276,48 @@ export async function songSearch(ctx: Ctx) {
   results.keptWikiPictureStaysUnderTja =
     !(await exists("#song-details-pictures img.drawn-chart")) &&
     (await chartHits()) === branchedRead;
-  const innerRead = await hitsOn(INNER_PICTURE);
-  await mousePress("#song-details-read-chart", "left", LONG_HOLD_MS + 500);
+  const readButtonReady = (label: string) =>
+    waitFor(label, async () =>
+      (await attribute("#song-details-read-chart", "disabled")) === null ? true : undefined,
+    );
+  // The reload shuts the button until it ends: a press that shut it took.
+  const holdToReload = async (): Promise<LongHold> => {
+    await page.evaluate(`(() => {
+      const button = document.querySelector("#song-details-read-chart");
+      const hold = { took: false, events: [] };
+      let pressed = performance.now();
+      button.addEventListener("pointerdown", () => { pressed = performance.now(); });
+      for (const type of ["pointerdown", "pointerleave", "pointercancel", "pointerup"]) {
+        button.addEventListener(type, () => hold.events.push(type + "@" + Math.round(performance.now() - pressed)));
+      }
+      new MutationObserver((records) => {
+        if (records.some((record) => record.oldValue === null)) hold.took = true;
+      }).observe(button, { attributeFilter: ["disabled"], attributeOldValue: true });
+      window.__longHold = hold;
+    })()`);
+    await mousePress("#song-details-read-chart", "left", LONG_HOLD_MS + 500);
+    return page.evaluate<LongHold>("window.__longHold");
+  };
+  // A press cut short from outside the window reloads nothing: it is pressed once more.
+  const presses: LongHold[] = [];
+  let chartBefore = 0;
+  let innerBefore = 0;
+  while (presses.length < 2 && presses.at(-1)?.took !== true) {
+    await readButtonReady("the read button ready");
+    chartBefore = await chartHits();
+    innerBefore = await hitsOn(INNER_PICTURE);
+    presses.push(await holdToReload());
+  }
   const redrawn = await chartDrawn().then(
     () => true,
     () => false,
   );
+  await readButtonReady("the song reloaded");
+  results.longHoldPresses = presses;
+  results.longHoldRedrawsTheSong = redrawn;
   // The density read again, and the chart file once more for the drawing.
-  results.longHoldRedrawsTheSong =
-    redrawn &&
-    (await chartHits()) === branchedRead + 2 &&
-    (await hitsOn(INNER_PICTURE)) === innerRead;
-  await waitFor("the song reloaded", async () =>
-    (await attribute("#song-details-read-chart", "disabled")) === null ? true : undefined,
-  );
+  results.longHoldReadsTheChartFileTwice = (await chartHits()) === chartBefore + 2;
+  results.longHoldLeavesTaikoWikiPictures = (await hitsOn(INNER_PICTURE)) === innerBefore;
   await closeSong();
 
   const plainHits = () => hitsOn(encodeURIComponent(servedChartPath(PLAIN_CHART)));
