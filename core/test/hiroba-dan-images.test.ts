@@ -128,11 +128,15 @@ function makePlate(
   return new Uint8Array(encode({ width: PLATE_WIDTH, height: PLATE_HEIGHT, data, channels: 3 }));
 }
 
-function makeLabel(dan: number, text: Rgb = [20, 20, 20]): Uint8Array {
+function makeLabel(
+  dan: number,
+  text: Rgb = [20, 20, 20],
+  templates: Readonly<Record<number, string>> = LABEL_TEMPLATES,
+): Uint8Array {
   const width = 96;
   const height = 40;
   const data = new Uint8Array(width * height * 4);
-  paintTemplate(templateGrid(dan, LABEL_TEMPLATES), 0, width, 0, height, (x, y) => {
+  paintTemplate(templateGrid(dan, templates), 0, width, 0, height, (x, y) => {
     const i = (y * width + x) * 4;
     data[i] = text[0];
     data[i + 1] = text[1];
@@ -370,7 +374,23 @@ describe("readDanLabel", () => {
     if (!isErr(result)) {
       throw new Error("expected a failure");
     }
-    expect(result.error.kind).toBe("unreadableGlyph");
+    expect(result.error).toEqual({
+      kind: "unreadableGlyph",
+      nearestDan: null,
+      nearestDistance: null,
+    });
+  });
+
+  test("a glyph no numbered rank matches keeps the nearest one, so a named rank can be told apart", () => {
+    // A named rank's label drawn from its plate's glyph, a shape the label templates do not hold.
+    const result = readDanLabel(makeLabel(17, [20, 20, 20], PLATE_NAME_TEMPLATES));
+
+    if (!isErr(result) || result.error.kind !== "unreadableGlyph") {
+      throw new Error("expected an unreadable glyph");
+    }
+    expect(result.error.nearestDan).toBeGreaterThanOrEqual(1);
+    expect(result.error.nearestDan).toBeLessThanOrEqual(15);
+    expect(result.error.nearestDistance).toBeGreaterThan(0.4);
   });
 });
 
