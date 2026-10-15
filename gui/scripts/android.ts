@@ -21,7 +21,7 @@ function fail(message: string): never {
 }
 
 function buildApk(task: "assembleDebug" | "assembleRelease"): void {
-  run(["bun", "run", "build:web"]);
+  run(["bun", "run", "build:web"], join(root, ".."));
   run(["bun", "x", "cap", "sync", "android"]);
   const gradle =
     process.platform === "win32" ? ["cmd.exe", "/d", "/c", "gradlew.bat"] : ["./gradlew"];
@@ -78,5 +78,7 @@ switch (command) {
     buildApk("assembleRelease");
     break;
   default:
-    fail("Usage: bun scripts/android.ts apk | run <serial> | live <serial> <LAN IP> | release");
+    fail(
+      "Usage: bun run android:apk | android:run <serial> | android:live <serial> <LAN IP> | android:release",
+    );
 }
