@@ -150,7 +150,7 @@ jobs:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
-        run: bun run --cwd gui android:release
+        run: bun run android:release
 
       - name: Name the APK
         env:
@@ -199,7 +199,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build GUI
-        run: bun run --cwd gui build
+        run: bun run build
 
       # No publishing here: the release job publishes. Code signing is off in the configuration.
       - name: Package
@@ -251,7 +251,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build GUI
-        run: bun run --cwd gui build
+        run: bun run build
 
       # With no Apple certificate the configuration signs ad hoc: Apple silicon runs only signed code.
       # That takes no secret, so a pull request's dry run signs too.

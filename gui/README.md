@@ -107,7 +107,9 @@ Electron binary once:
 bun node_modules/electron/install.js
 ```
 
-Run every script below from this folder, or from the root with `bun run --cwd gui <script>`.
+Run every `bun run` script below from the repository's root; other commands, and the paths in this
+file, are relative to this folder. `bun run check` runs the checks of CI side by side, all but the
+GUI bundle: format, lint, typecheck, the tests and the update feed.
 
 ## Desktop
 
@@ -117,7 +119,7 @@ Run every script below from this folder, or from the root with `bun run --cwd gu
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e:desktop` | Builds the app, drives it against the local stand-in (nothing reaches the real sites) and prints a JSON report with one key per check. `--only <section,...>` runs just those sections (named in `scripts/e2e/sections.ts`), and `--no-build` skips the build, to fix one check without the whole run. A pass has no `errors` entry and every key `true`, except `tokenInRendererDom` and `partitionsFolder` (`false`), `readsAfterSignIn`, `readsAfterReadAgain` and `readsOnReopen` (`1`, `2` and `1`), `userDataHits` (empty) and `surface` (an object). |
+| `bun run e2e` | Builds the app, drives it against the local stand-in (nothing reaches the real sites) and prints a JSON report with one key per check. `--only <section,...>` runs just those sections (named in `scripts/e2e/sections.ts`), and `--no-build` skips the build, to fix one check without the whole run. A pass has no `errors` entry and every key `true`, except `tokenInRendererDom` and `partitionsFolder` (`false`), `readsAfterSignIn`, `readsAfterReadAgain` and `readsOnReopen` (`1`, `2` and `1`), `userDataHits` (empty) and `surface` (an object). |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable zip in `release/`, for x64: `ABTH-<version>-setup.exe` and `ABTH-<version>-portable.zip`. |
 | `bun run dist:mac` | On a Mac only: a disk image per processor in `release/`, `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel, each app signed ad hoc. |

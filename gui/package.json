@@ -8,22 +8,6 @@
   "license": "MIT",
   "type": "module",
   "main": "out/electron/main.cjs",
-  "scripts": {
-    "dev": "bun scripts/dev-desktop.ts",
-    "build:web": "bun --bun vite build",
-    "build:electron": "bun scripts/build-electron.ts",
-    "build": "bun run build:web && bun run build:electron",
-    "start": "electron .",
-    "e2e:desktop": "bun scripts/e2e/run.ts",
-    "dist:dir": "bun run build && electron-builder --win --dir",
-    "dist:win": "bun run build && electron-builder --win nsis zip --x64",
-    "dist:mac": "bun run build && electron-builder --mac dmg --arm64 --x64",
-    "smoke:packaged": "bun scripts/smoke-packaged.ts",
-    "android:apk": "bun scripts/android.ts apk",
-    "android:run": "bun scripts/android.ts run",
-    "android:live": "bun scripts/android.ts live",
-    "android:release": "bun scripts/android.ts release"
-  },
   "build": {
     "appId": "com.hicirtech.taikohiroba",
     "productName": "A Better Taiko Hiroba",

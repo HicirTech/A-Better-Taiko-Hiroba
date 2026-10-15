@@ -9,7 +9,7 @@ import { type Ctx, newShared, type Phase, type Section } from "./context";
 import { setSection, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
 
-const USAGE = `Usage: bun scripts/e2e/run.ts [--no-build] [--only <section,...>]
+const USAGE = `Usage: bun run e2e [--no-build] [--only <section,...>]
 Sections: ${SECTIONS.map((section) => section.name).join(", ")}`;
 
 function fail(message: string): never {
@@ -42,7 +42,7 @@ const selected = SECTIONS.filter((section) => only === undefined || only.include
 
 if (build) {
   const built = Bun.spawn(["bun", "run", "build"], {
-    cwd: root,
+    cwd: join(root, ".."),
     stdout: "inherit",
     stderr: "inherit",
   });

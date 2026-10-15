@@ -56,7 +56,7 @@ jobs:
 
       # The web bundle and Electron's main and preload; no Electron binary, packaging or Android.
       - name: Build GUI
-        run: bun run --cwd gui build
+        run: bun run build
 
   # Alongside Checks, not after it: the Android build shares nothing with it but the install.
   android:
@@ -99,4 +99,4 @@ jobs:
 
       # The runner's own Android SDK (ANDROID_HOME) has what the project builds against.
       - name: Build debug APK
-        run: bun run --cwd gui android:apk
+        run: bun run android:apk
