@@ -44,7 +44,8 @@ function looksAtTheBuild(file: string, text: string): string[] {
 /** Every look at the build or environment, by file; none of them shuts or opens a write. */
 const LOOKS_AT_THE_BUILD: Readonly<Record<string, readonly string[]>> = {
   // isPackaged and env feed desktopEnvironment: dev endpoints, data folder, server, clock, the
-  // update feed, the song lists, the chart pictures and files, and the rating data only.
+  // update feed, the song lists, the chart pictures and files, the rating data and where windows
+  // open only.
   // A packaged build has no menu; ABTH_DEBUG_SAVE_READS keeps a debug copy of reads in any build.
   "electron/main.ts": [
     "app.isPackaged",
@@ -61,6 +62,7 @@ const LOOKS_AT_THE_BUILD: Readonly<Record<string, readonly string[]>> = {
     "env.ABTH_DEV_IDP_HOST",
     "env.ABTH_DEV_IMG_ORIGIN",
     "env.ABTH_DEV_NOW",
+    "env.ABTH_DEV_OFF_SCREEN",
     "env.ABTH_DEV_RATING_DATA",
     "env.ABTH_DEV_REFUSING_HOST",
     "env.ABTH_DEV_SERVER_URL",

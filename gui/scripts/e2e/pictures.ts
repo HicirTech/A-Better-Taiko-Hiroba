@@ -146,11 +146,8 @@ export async function pictures(ctx: Ctx) {
     !(await exists("#score-panel-loading")) &&
     (await panelCountsInPlace(PANEL_COUNTS)) &&
     !(await exists("#pictures-unavailable"));
-  const panelArtFetches = await hitsOn(PANEL_ART);
-  state.panelArtFetches = panelArtFetches;
   await legendIconsShownOn(running);
   const iconFetches = await iconsSettled();
-  state.iconFetches = iconFetches;
   const iconSources = await page.evaluate<Record<string, string>>(
     `Object.fromEntries([...document.querySelectorAll("#ranks li, #crowns li")].map((item) => [item.querySelector('[id]:not([id$="-percent"])').id, item.querySelector("img").getAttribute("src")]))`,
   );

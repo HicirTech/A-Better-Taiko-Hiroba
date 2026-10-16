@@ -685,10 +685,10 @@ export const namePlateKeys = [
 ] as const;
 
 export async function namePlate(ctx: Ctx) {
-  // Reads the click log that portrait-preview sets up on the page.
   const { results } = ctx;
   const { currentPage, goTo, page, textOf } = ctx.app;
-  const { attribute, boxOf, press, swipe, tooltipClosed, touchClicks } = pageHelpers(page);
+  const { attribute, boxOf, press, recordClicks, swipe, tooltipClosed, touchClicks } =
+    pageHelpers(page);
 
   // The name plate is the button to the Nickname & title page, as the portrait is to Costume.
   const OPEN_NAME_TITLE = "Open the Nickname & title page";
@@ -748,7 +748,8 @@ export async function namePlate(ctx: Ctx) {
   results.namePlateOpensNicknameAndTitleByClickAndKeys =
     openedByMouse && nameTitleShown && openedByEnter && openedBySpace;
 
-  await page.evaluate("document.activeElement?.blur(); window.touchClicks.length = 0");
+  await page.evaluate("document.activeElement?.blur()");
+  await recordClicks();
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
   const plateHint = await waitFor("name plate hint", () =>
     page.evaluate<string | undefined>(

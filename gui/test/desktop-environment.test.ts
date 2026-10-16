@@ -13,6 +13,7 @@ const DEVELOPMENT = {
   ABTH_DEV_NOW: "2026-09-27T03:00:00Z",
   ABTH_DEV_UPDATE_FEED: "http://feed.test:8809/update.json",
   ABTH_DEV_CHART_ORIGIN: "http://hiroba.test:8807",
+  ABTH_DEV_OFF_SCREEN: "1",
 };
 
 describe("desktopEnvironment", () => {
@@ -23,6 +24,7 @@ describe("desktopEnvironment", () => {
     expect(environment.devServerUrl).toBeUndefined();
     expect(environment.userData).toBeUndefined();
     expect(environment.chartOrigin).toBeUndefined();
+    expect(environment.offScreen).toBe(false);
     expect(Math.abs(environment.now().getTime() - Date.now())).toBeLessThan(5_000);
   });
 
@@ -43,6 +45,12 @@ describe("desktopEnvironment", () => {
     expect(environment.now().toISOString()).toBe("2026-09-27T03:00:00.000Z");
     expect(environment.updateFeedUrl).toBe("http://feed.test:8809/update.json");
     expect(environment.chartOrigin).toBe("http://hiroba.test:8807");
+    expect(environment.offScreen).toBe(true);
+  });
+
+  test("a development run opens its windows on screen unless the variable is exactly 1", () => {
+    expect(desktopEnvironment(false, {}).offScreen).toBe(false);
+    expect(desktopEnvironment(false, { ABTH_DEV_OFF_SCREEN: "true" }).offScreen).toBe(false);
   });
 
   test("a development run reads no stand-in's chart pictures unless it names an origin", () => {

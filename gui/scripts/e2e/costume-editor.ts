@@ -227,9 +227,10 @@ export const portraitPreviewKeys = [
 ] as const;
 
 export async function portraitPreview(ctx: Ctx) {
-  const { results, state, tokens } = ctx;
+  const { results, tokens } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
-  const { attribute, column, exists, press, sameColumn, swipe, touchClicks } = pageHelpers(page);
+  const { atSize, attribute, column, exists, press, recordClicks, sameColumn, swipe, touchClicks } =
+    pageHelpers(page);
   const {
     inStep,
     leaveTheCostumePage,
@@ -239,7 +240,17 @@ export async function portraitPreview(ctx: Ctx) {
     savable,
     stepOf,
   } = costumeHelpers(ctx.app);
-  const { columnOnOverview, columnOnSettings, overviewScrolls } = state;
+
+  // The window opens with the whole Overview in view: a shorter one makes it scroll.
+  const measured = await atSize(946, 600, async () => {
+    const overviewScrolls = await page.evaluate<boolean>(
+      "document.documentElement.scrollHeight > window.innerHeight",
+    );
+    const columnOnOverview = await column();
+    await goTo("settings");
+    return { overviewScrolls, columnOnOverview, columnOnSettings: await column() };
+  });
+  await goTo("overview");
 
   const OPEN_COSTUME = "Open the Costume page";
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: 0, y: 0 });
@@ -285,9 +296,7 @@ export async function portraitPreview(ctx: Ctx) {
   );
   results.portraitJumpsToCostumeByKeyboard = openedByKeysWithMouse && (await openedByKeys());
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
-  await page.evaluate(
-    `window.touchClicks = []; document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true)`,
-  );
+  await recordClicks();
 
   const onPortrait = await middleOf(page, "#costume-open");
   await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });
@@ -329,9 +338,9 @@ export async function portraitPreview(ctx: Ctx) {
   await inStep("editing");
   const onOpen = await previewOtherThan(null);
   results.columnStillAcrossPages =
-    overviewScrolls &&
-    sameColumn(columnOnOverview, columnOnSettings) &&
-    sameColumn(columnOnSettings, await column());
+    measured.overviewScrolls &&
+    sameColumn(measured.columnOnOverview, measured.columnOnSettings) &&
+    sameColumn(measured.columnOnSettings, await column());
   await fetch(`${HIROBA}/__previews?reset=1`);
   await click("#swatch-colorFace-4");
   const afterColour = await previewOtherThan(onOpen);

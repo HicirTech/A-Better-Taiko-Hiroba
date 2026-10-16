@@ -3,13 +3,23 @@ import { createTranslator } from "@abth/i18n";
 
 export const root = join(import.meta.dir, "..", "..");
 
-export const HIROBA = "http://hiroba.127.0.0.1.sslip.io:8807";
-export const CDP_PORT = 9333;
-export const IDP_HOST = "id.127.0.0.1.sslip.io:8808";
+/** Set by a run with lanes in each lane's process, to that lane's index. */
+export const LANE_VARIABLE = "ABTH_E2E_LANE";
+/** Which lane of a run this process is: each lane has its own stand-in, ports and folders. */
+export const LANE = Number(process.env[LANE_VARIABLE] ?? "0");
+const PORT_STEP = 10;
+
+export const HIROBA_PORT = 8807 + LANE * PORT_STEP;
+export const IDP_PORT = 8808 + LANE * PORT_STEP;
+export const HIROBA = `http://hiroba.127.0.0.1.sslip.io:${HIROBA_PORT}`;
+export const CDP_PORT = 9333 + LANE * PORT_STEP;
+export const IDP_HOST = `id.127.0.0.1.sslip.io:${IDP_PORT}`;
 /** The stand-in's picture host: outside Hiroba's cookie Domain. */
-export const IMG = "http://img.127.0.0.1.sslip.io:8807";
+export const IMG = `http://img.127.0.0.1.sslip.io:${HIROBA_PORT}`;
 /** The stand-in for a service that refuses to sign in inside an app. */
-export const REFUSING_HOST = "refuses.127.0.0.1.sslip.io:8808";
+export const REFUSING_HOST = `refuses.127.0.0.1.sslip.io:${IDP_PORT}`;
+/** A sign-in page that is not on https. */
+export const OFFSITE_HOST = `offsite.127.0.0.1.sslip.io:${IDP_PORT}`;
 export const IDP_MARKER = "abth-mock-idp-marker";
 export const MY_PAGE = "/mypage_top.php";
 /** The stand-in's rating data. */
@@ -17,10 +27,13 @@ export const RATING_DATA = "/__rating-data";
 export const DAN_LABEL = "/imgsrc_danlabel.php";
 export const MEDAL_PLATE = "/imgsrc_tokenplate.php";
 export const PANEL_ART = "/image/sp/640/total_score_image_5.png";
-export const USER_DATA = join(root, "out", "e2e-user-data");
+/** The app's data folder of a lane; lane 0's keeps the name a run without lanes uses. */
+export const userDataOf = (lane: number, name = "e2e-user-data") =>
+  join(root, "out", lane === 0 ? name : `${name}-lane${lane}`);
+export const USER_DATA = userDataOf(LANE);
 /** Its own folder: a language picked there must not reach the runs that read English. */
-export const LANGUAGE_USER_DATA = join(root, "out", "e2e-user-data-language");
-export const UPDATES_USER_DATA = join(root, "out", "e2e-user-data-updates");
+export const LANGUAGE_USER_DATA = userDataOf(LANE, "e2e-user-data-language");
+export const UPDATES_USER_DATA = userDataOf(LANE, "e2e-user-data-updates");
 export const UPDATE_FEED = "/__update-feed/update.json";
 /** MUI's md: from this width the app frame shows its side panel. */
 export const MD_WIDTH_PX = 900;

@@ -40,6 +40,8 @@ export interface DesktopEnvironment {
   readonly eseMappingUrl: string | undefined;
   /** Where the chart files are read; undefined when this run reads none. */
   readonly eseChartsUrl: string | undefined;
+  /** Windows open off every display, out of the taskbar and unfocused, for runs nobody watches. */
+  readonly offScreen: boolean;
 }
 
 /** Only a development run takes anything from the environment: a packaged build uses real sites,
@@ -67,6 +69,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
       chartOrigin,
       eseMappingUrl,
       eseChartsUrl,
+      offScreen: false,
     };
   }
   const fixed = Date.parse(env.ABTH_DEV_NOW ?? "");
@@ -87,5 +90,6 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
     chartOrigin,
     eseMappingUrl,
     eseChartsUrl,
+    offScreen: env.ABTH_DEV_OFF_SCREEN === "1",
   };
 }

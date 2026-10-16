@@ -119,7 +119,7 @@ GUI bundle: format, lint, typecheck, the tests and the update feed.
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e` | Builds the app, drives it against the local stand-in (nothing reaches the real sites) and prints a JSON report with one key per check. `--only <section,...>` runs just those sections (named in `scripts/e2e/sections.ts`), and `--no-build` skips the build, to fix one check without the whole run. A pass has no `errors` entry and every key `true`, except `tokenInRendererDom` and `partitionsFolder` (`false`), `readsAfterSignIn`, `readsAfterReadAgain` and `readsOnReopen` (`1`, `2` and `1`), `userDataHits` (empty) and `surface` (an object). |
+| `bun run e2e` | Builds the app, drives it against the local stand-in (nothing reaches the real sites) and prints a JSON report with one key per check. Its sections run in lanes side by side, each lane with an app, a stand-in, ports and a data folder of its own (each section's `lane`); `--serial` runs them one after another in one app. `--only <section,...>` runs just those sections (named in `scripts/e2e/sections.ts`), and `--no-build` skips the build, to fix one check without the whole run. A pass has no `errors` entry and every key `true`, except `tokenInRendererDom` and `partitionsFolder` (`false`), `readsAfterSignIn`, `readsAfterReadAgain` and `readsOnReopen` (`1`, `3` and `1`) and `userDataHits` (empty); `scripts/e2e/verdict.ts` holds that list, and the run exits with an error when a check misses it. `surface`, `longHoldPresses`, `setupMs` (the build), `laneMs` (each lane's time) and `sectionMs` (each section's) only inform. The app's windows open off every display, out of the taskbar and unfocused, so the computer stays in use during a run; `--show` opens them on screen to watch. A window shown may be covered, since the run stops Chromium counting a covered window as hidden, but not minimised: a hidden page asks for no picture. |
 | `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
 | `bun run dist:win` | An NSIS installer and a portable zip in `release/`, for x64: `ABTH-<version>-setup.exe` and `ABTH-<version>-portable.zip`. |
 | `bun run dist:mac` | On a Mac only: a disk image per processor in `release/`, `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel, each app signed ad hoc. |
@@ -129,6 +129,8 @@ A packaged build talks only to the real sites. The stand-in is reachable only fr
 build, and only when both `ABTH_DEV_HIROBA_ORIGIN` and `ABTH_DEV_IDP_HOST` are set; one without the
 other stops the app. `ABTH_DEV_IMG_ORIGIN` adds the stand-in's picture host, which `bun run dev` and
 the end-to-end run set; without it no picture host is asked anything, and set alone it stops the app.
+`ABTH_DEV_OFF_SCREEN=1` opens the windows off every display at their full size, out of the taskbar
+and unfocused, and keeps them there; the end-to-end run sets it unless given `--show`.
 
 The installer and the exe in the zip are not code-signed, so Windows SmartScreen warns before the
 first run.

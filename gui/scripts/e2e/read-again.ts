@@ -5,6 +5,7 @@ import {
   middleOf,
   type Point,
   pageHelpers,
+  pullAt,
   same,
   waitFor,
   withoutPictureBytes,
@@ -161,9 +162,7 @@ export async function readAgain(ctx: Ctx) {
   results.failedRefreshStopsTheRead = same(refusedRead, { words: true, detail: true, reads: 1 });
 
   await touchEmulated(true);
-  const pullFrom = { x: profileBox.left + profileBox.width / 2, y: profileBox.top + 40 };
-  const pulledBy = (dx: number, dy: number) => ({ x: pullFrom.x + dx, y: pullFrom.y + dy });
-  state.pull = { pullFrom, pulledBy };
+  const { pullFrom, pulledBy } = pullAt(profileBox);
   const readsByShortPull = await readsBySwipe(pullFrom, pulledBy(0, 100));
   const readsBeforePull = await myPageHits();
   const ringAtFullPull = await swipe(pullFrom, pulledBy(0, 200), pullIndicator);

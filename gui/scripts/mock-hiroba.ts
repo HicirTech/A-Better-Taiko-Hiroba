@@ -28,8 +28,9 @@ const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
 const IDP_HOST = `id.${IP}.sslip.io`;
 /** The picture host's stand-in: on Hiroba's server and port, and outside its cookie's Domain. */
 const IMG_HOST = `img.${IP}.sslip.io`;
-const HIROBA_PORT = 8807;
-const IDP_PORT = 8808;
+// The end-to-end run starts one stand-in per lane, each on ports of its own.
+const HIROBA_PORT = Number(process.env.ABTH_MOCK_HIROBA_PORT ?? 8807);
+const IDP_PORT = Number(process.env.ABTH_MOCK_IDP_PORT ?? 8808);
 const HIROBA = `http://${HIROBA_HOST}:${HIROBA_PORT}`;
 const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
 // The OAuth hop is on a second ID host, as the real one: allowing only the form's host stops there.

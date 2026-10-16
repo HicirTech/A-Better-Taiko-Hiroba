@@ -35,6 +35,13 @@ export type Box = {
 
 export type Point = { x: number; y: number };
 
+/** A pull that starts 40 px inside `box`, and the points it is pulled to. */
+export const pullAt = (box: Box) => {
+  const pullFrom = { x: box.left + box.width / 2, y: box.top + 40 };
+  const pulledBy = (dx: number, dy: number) => ({ x: pullFrom.x + dx, y: pullFrom.y + dy });
+  return { pullFrom, pulledBy };
+};
+
 export async function hoverOver(page: Page, selector: string): Promise<void> {
   const middle = await middleOf(page, selector);
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...middle });
@@ -60,7 +67,9 @@ export async function waitForSeen<T>(
 ): Promise<T> {
   const visibility = await page.evaluate<string>("document.visibilityState");
   if (visibility !== "visible") {
-    throw new Error(`The window is ${visibility}: it asks for no picture until it is seen`);
+    throw new Error(
+      `The window is ${visibility}: it asks for no picture until it is seen. A minimised window hides it; a covered one does not`,
+    );
   }
   return waitFor(label, probe);
 }
@@ -231,6 +240,11 @@ export function pageHelpers(page: Page) {
     );
   };
 
+  /** Starts `window.touchClicks` afresh: the pointer type of each click from now on. */
+  const recordClicks = () =>
+    page.evaluate(
+      `(() => { if (window.touchClicks === undefined) document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true); window.touchClicks = []; })()`,
+    );
   const touchClicks = () => page.evaluate<string[]>("window.touchClicks");
 
   // A real press: an SVG has no click(), and a chip's × is one.
@@ -272,6 +286,7 @@ export function pageHelpers(page: Page) {
     swipe,
     pullIndicator,
     touchEmulated,
+    recordClicks,
     touchClicks,
     mousePress,
   };

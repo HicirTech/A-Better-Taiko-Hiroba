@@ -14,6 +14,13 @@ import {
 } from "./config";
 import { connect, waitFor } from "./harness";
 
+let windowsShown = false;
+
+/** Opens the app's windows on screen, for a person watching the run, instead of off every display. */
+export function showWindows(): void {
+  windowsShown = true;
+}
+
 export async function launch({
   now,
   lang = "en-US",
@@ -49,6 +56,7 @@ export async function launch({
       ABTH_DEV_CHINESE_NAMES: `${HIROBA}/__chinese-names`,
       ABTH_DEV_CHART_ORIGIN: HIROBA,
       ABTH_DEBUG_SAVE_READS: "1",
+      ...(windowsShown ? {} : { ABTH_DEV_OFF_SCREEN: "1" }),
       ...env,
     },
     stdout: "ignore",
@@ -92,7 +100,14 @@ export async function launch({
       | "settings",
   ) => {
     await click(`#nav-${to}`);
-    await waitFor(`page ${to}`, async () => (await currentPage()) === to || undefined);
+    await waitFor(`page ${to}`, async () => (await currentPage()) === to || undefined).catch(
+      async (error: Error) => {
+        const shown = await page.evaluate<string>(
+          `JSON.stringify({ page: document.querySelector('[aria-current="page"]')?.id ?? null, nav: document.querySelector("#nav-${to}") !== null, signIn: document.querySelector("#sign-in") !== null, size: innerWidth + "x" + innerHeight, seen: document.visibilityState })`,
+        );
+        throw new Error(`${error.message}; the window shows ${shown}`);
+      },
+    );
   };
   return { proc, page, text, textOf, click, clickButton, until, currentPage, goTo };
 }
