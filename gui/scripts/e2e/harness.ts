@@ -254,6 +254,12 @@ export function pageHelpers(page: Page) {
       `(() => { if (window.touchClicks === undefined) document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true); window.touchClicks = []; })()`,
     );
   const touchClicks = () => page.evaluate<string[]>("window.touchClicks");
+  /** Starts `window.touchMoves` afresh: how many touch moves the page hears from now on. */
+  const countTouchMoves = () =>
+    page.evaluate(
+      `(() => { if (window.touchMoves === undefined) document.addEventListener("touchmove", () => { window.touchMoves += 1; }, true); window.touchMoves = 0; })()`,
+    );
+  const touchMoves = () => page.evaluate<number>("window.touchMoves");
 
   // A real press: an SVG has no click(), and a chip's × is one.
   const mousePress = async (selector: string, button: "left" | "right", heldMs = 0) => {
@@ -296,6 +302,8 @@ export function pageHelpers(page: Page) {
     touchEmulated,
     recordClicks,
     touchClicks,
+    countTouchMoves,
+    touchMoves,
     mousePress,
   };
 }
