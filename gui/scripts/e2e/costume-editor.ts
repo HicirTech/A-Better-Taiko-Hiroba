@@ -229,7 +229,8 @@ export const portraitPreviewKeys = [
 export async function portraitPreview(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
-  const { attribute, column, exists, press, sameColumn, swipe, touchClicks } = pageHelpers(page);
+  const { attribute, column, exists, press, recordClicks, sameColumn, swipe, touchClicks } =
+    pageHelpers(page);
   const {
     inStep,
     leaveTheCostumePage,
@@ -285,9 +286,7 @@ export async function portraitPreview(ctx: Ctx) {
   );
   results.portraitJumpsToCostumeByKeyboard = openedByKeysWithMouse && (await openedByKeys());
   await page.evaluate("document.activeElement?.blur(); window.scrollTo(0, 0)");
-  await page.evaluate(
-    `window.touchClicks = []; document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true)`,
-  );
+  await recordClicks();
 
   const onPortrait = await middleOf(page, "#costume-open");
   await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [onPortrait] });

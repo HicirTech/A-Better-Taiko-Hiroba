@@ -233,6 +233,11 @@ export function pageHelpers(page: Page) {
     );
   };
 
+  /** Starts `window.touchClicks` afresh: the pointer type of each click from now on. */
+  const recordClicks = () =>
+    page.evaluate(
+      `(() => { if (window.touchClicks === undefined) document.addEventListener("click", (event) => window.touchClicks.push(event.pointerType), true); window.touchClicks = []; })()`,
+    );
   const touchClicks = () => page.evaluate<string[]>("window.touchClicks");
 
   // A real press: an SVG has no click(), and a chip's × is one.
@@ -274,6 +279,7 @@ export function pageHelpers(page: Page) {
     swipe,
     pullIndicator,
     touchEmulated,
+    recordClicks,
     touchClicks,
     mousePress,
   };
