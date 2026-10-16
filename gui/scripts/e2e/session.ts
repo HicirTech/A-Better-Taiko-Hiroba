@@ -232,8 +232,11 @@ export async function reopen(ctx: Ctx) {
   const { legendIconsShownOn } = overviewHelpers(running);
   const { medalPlateShown, myDonShownOn, panelArtShownOn, shownOnReopen, signOut } =
     sessionHelpers(ctx);
-  const { iconFetches, panelArtFetches } = state;
 
+  await panelArtShownOn(running);
+  const panelArtFetches = await hitsOn(PANEL_ART);
+  await legendIconsShownOn(running);
+  const iconFetches = await iconsSettled();
   const historyBeforeReopen = await historyNow();
   state.historyBeforeReopen = historyBeforeReopen;
   const readsBeforeReopen = await myPageHits();
@@ -346,8 +349,10 @@ export async function signedOutReopen(ctx: Ctx) {
   const { legendIconsShownOn } = overviewHelpers(running);
   const { medalPlateShown, myDonShownOn, panelArtShownOn, shownOnReopen, signOut } =
     sessionHelpers(ctx);
-  const { historyBeforeReopen, iconFetches, panelArtFetches } = state;
+  const { historyBeforeReopen } = state;
 
+  const panelArtFetches = await hitsOn(PANEL_ART);
+  const iconFetches = await iconsSettled();
   const readsBeforeSecondReopen = await myPageHits();
   await stop(running);
   running = await launch({ now: NOON_JST });

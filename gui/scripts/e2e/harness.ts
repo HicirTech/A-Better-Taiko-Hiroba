@@ -35,6 +35,13 @@ export type Box = {
 
 export type Point = { x: number; y: number };
 
+/** A pull that starts 40 px inside `box`, and the points it is pulled to. */
+export const pullAt = (box: Box) => {
+  const pullFrom = { x: box.left + box.width / 2, y: box.top + 40 };
+  const pulledBy = (dx: number, dy: number) => ({ x: pullFrom.x + dx, y: pullFrom.y + dy });
+  return { pullFrom, pulledBy };
+};
+
 export async function hoverOver(page: Page, selector: string): Promise<void> {
   const middle = await middleOf(page, selector);
   await page.send("Input.dispatchMouseEvent", { type: "mouseMoved", ...middle });

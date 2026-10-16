@@ -3,7 +3,7 @@ import { INITIAL_PROFILE } from "../mock-profile";
 import { DAN_LABEL, HIROBA } from "./config";
 import type { Ctx } from "./context";
 import { costumeHelpers } from "./costume-helpers";
-import { pageHelpers, same, waitFor } from "./harness";
+import { pageHelpers, pullAt, same, waitFor } from "./harness";
 import { sessionHelpers } from "./session";
 import {
   COLOUR_REQUESTS,
@@ -42,9 +42,9 @@ export const bridgeWritesKeys = [
 ] as const;
 
 export async function bridgeWrites(ctx: Ctx) {
-  const { results, state } = ctx;
+  const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { exists, fabState, swipe, touchEmulated } = pageHelpers(page);
+  const { boxOf, exists, fabState, swipe, touchEmulated } = pageHelpers(page);
   const {
     bridgeChange,
     inStep,
@@ -55,11 +55,11 @@ export async function bridgeWrites(ctx: Ctx) {
     savedFrom,
     stepOf,
   } = costumeHelpers(ctx.app);
-  const { pullFrom, pulledBy } = state.pull;
 
   // Wait for the My Don fetched after those changes, before the log is read.
   await goTo("overview");
   await myDonsSettled();
+  const { pullFrom, pulledBy } = pullAt(await boxOf("#profile"));
 
   await resetLog();
   const trap = await bridgeChange({ ...START, costume1: 36 });
