@@ -60,7 +60,9 @@ export async function waitForSeen<T>(
 ): Promise<T> {
   const visibility = await page.evaluate<string>("document.visibilityState");
   if (visibility !== "visible") {
-    throw new Error(`The window is ${visibility}: it asks for no picture until it is seen`);
+    throw new Error(
+      `The window is ${visibility}: it asks for no picture until it is seen. A minimised window hides it; a covered one does not`,
+    );
   }
   return waitFor(label, probe);
 }
