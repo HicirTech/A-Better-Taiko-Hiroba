@@ -100,7 +100,14 @@ export async function launch({
       | "settings",
   ) => {
     await click(`#nav-${to}`);
-    await waitFor(`page ${to}`, async () => (await currentPage()) === to || undefined);
+    await waitFor(`page ${to}`, async () => (await currentPage()) === to || undefined).catch(
+      async (error: Error) => {
+        const shown = await page.evaluate<string>(
+          `JSON.stringify({ page: document.querySelector('[aria-current="page"]')?.id ?? null, nav: document.querySelector("#nav-${to}") !== null, signIn: document.querySelector("#sign-in") !== null, size: innerWidth + "x" + innerHeight, seen: document.visibilityState })`,
+        );
+        throw new Error(`${error.message}; the window shows ${shown}`);
+      },
+    );
   };
   return { proc, page, text, textOf, click, clickButton, until, currentPage, goTo };
 }
