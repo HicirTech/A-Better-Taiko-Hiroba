@@ -4,7 +4,16 @@ import { join } from "node:path";
 import electronPath from "electron";
 
 import { type App, launch, stop } from "./app";
-import { HIROBA, HIROBA_PORT, IDP_PORT, MY_PAGE, NOON_JST, root, USER_DATA } from "./config";
+import {
+  CDP_PORT,
+  HIROBA,
+  HIROBA_PORT,
+  IDP_PORT,
+  MY_PAGE,
+  NOON_JST,
+  root,
+  USER_DATA,
+} from "./config";
 import {
   type AfterSection,
   type Ctx,
@@ -150,11 +159,28 @@ const RECOVERY = [
   "/__items?many=0",
 ];
 
+/** Whether a process listens on `port` already, as the apps of a run stopped midway do. */
+function taken(port: number): boolean {
+  try {
+    Bun.listen({ hostname: "127.0.0.1", port, socket: { data: () => undefined } }).stop(true);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 /** Runs `sections` in order; `setupChecks` adds the checks of the app, stand-in and harness. */
 export async function runLane(
   sections: readonly LaneSection[],
   { setupChecks }: { setupChecks: boolean },
 ): Promise<LaneReport> {
+  const busy = [HIROBA_PORT, IDP_PORT, CDP_PORT].filter(taken);
+  if (busy.length > 0) {
+    return failedReport(sections, {
+      section: "lane start",
+      message: `Port ${busy.join(", ")} is taken: an earlier run stopped midway may still hold it`,
+    });
+  }
   const report = newReport();
   const { results, tokens } = report;
 
