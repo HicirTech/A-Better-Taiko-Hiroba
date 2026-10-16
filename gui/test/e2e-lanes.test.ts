@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { LaneSection } from "../scripts/e2e/context";
-import { mergeReports, newReport, printedReport } from "../scripts/e2e/lane";
+import { mergeReports, newReport, printedReport, REPORT_MARK } from "../scripts/e2e/lane";
 import { SECTIONS } from "../scripts/e2e/sections";
 
 const section = (name: string, keys: string[]): LaneSection => ({
@@ -40,10 +40,11 @@ describe("e2e lanes", () => {
     });
   });
 
-  test("reads back the report a lane printed", () => {
+  test("reads back the report a lane printed on its marked line, among other lines", () => {
     const printed = { ...newReport(), results: { scored: true }, sectionMs: { scores: 7 } };
     const lane = { name: "songs" as const, sections: [], exitCode: 0 };
-    expect(printedReport(JSON.stringify(printed), lane)).toEqual(printed);
+    const output = `a stray line\n${REPORT_MARK}${JSON.stringify(printed)}\r\nanother one\n`;
+    expect(printedReport(output, lane)).toEqual(printed);
   });
 
   test("fails each check of a lane that printed no report, and says how it ended", () => {

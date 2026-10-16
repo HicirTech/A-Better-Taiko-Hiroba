@@ -45,24 +45,45 @@ export function mergeReports(reports: readonly LaneReport[]): LaneReport {
   };
 }
 
+/** Opens the line a lane's process prints its report on, so other output cannot hide it. */
+export const REPORT_MARK = "abth-e2e-lane-report ";
+
+/** A report in which every check of `sections` fails, for the one error that stopped them. */
+export function failedReport(
+  sections: readonly LaneSection[],
+  error: LaneReport["errors"][number],
+): LaneReport {
+  const report = newReport();
+  report.errors.push(error);
+  for (const key of sections.flatMap((section) => section.keys)) {
+    report.results[key] = false;
+  }
+  return report;
+}
+
+const reportOn = (line: string | undefined) => {
+  try {
+    return line === undefined
+      ? undefined
+      : (JSON.parse(line.slice(REPORT_MARK.length)) as LaneReport);
+  } catch {
+    return undefined;
+  }
+};
+
 /** The report a lane's process printed; with none printed, each of its sections' checks fails. */
 export function printedReport(
   printed: string,
   lane: { name: Lane; sections: readonly LaneSection[]; exitCode: number },
 ): LaneReport {
-  try {
-    return JSON.parse(printed) as LaneReport;
-  } catch {
-    const report = newReport();
-    report.errors.push({
+  const marked = printed.split(/\r?\n/).findLast((line) => line.startsWith(REPORT_MARK));
+  return (
+    reportOn(marked) ??
+    failedReport(lane.sections, {
       section: `${lane.name} lane`,
       message: `Its process ended with code ${lane.exitCode} and printed no report`,
-    });
-    for (const key of lane.sections.flatMap((section) => section.keys)) {
-      report.results[key] = false;
-    }
-    return report;
-  }
+    })
+  );
 }
 
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
