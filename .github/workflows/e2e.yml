@@ -1,0 +1,55 @@
+name: E2E
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel a superseded run of the same branch.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: Desktop e2e
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # The same pin as in ci.yml: keep them in step.
+          bun-version: 1.4.2
+
+      - name: Cache dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # Bun runs no package's install script, so Electron's own binary is fetched here.
+      - name: Electron binary
+        run: bun node_modules/electron/install.js
+
+      # The run drives the app against the local stand-in; nothing reaches the real sites.
+      - name: E2E
+        shell: bash
+        run: |
+          set -o pipefail
+          bun run e2e 2>&1 | tee e2e-report.txt
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: e2e-report
+          path: e2e-report.txt
+          retention-days: 14
