@@ -8,6 +8,7 @@ import { HIROBA, MY_PAGE, NOON_JST, root, USER_DATA } from "./config";
 import { type Ctx, newShared, type Phase, type Section } from "./context";
 import { setSection, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
+import { wrongChecks } from "./verdict";
 
 const USAGE = `Usage: bun run e2e [--no-build] [--only <section,...>]
 Sections: ${SECTIONS.map((section) => section.name).join(", ")}`;
@@ -234,7 +235,13 @@ results.sectionMs = sectionMs;
 
 if (errors.length > 0) {
   results.errors = errors;
+}
+const wrong = wrongChecks(results);
+if (errors.length > 0 || wrong.length > 0) {
   process.exitCode = 1;
 }
 
 console.log(JSON.stringify(results, null, 2));
+if (wrong.length > 0) {
+  console.error(`Wrong: ${wrong.join(", ")}`);
+}
