@@ -104,9 +104,19 @@ export const sessionExpiryKeys = [
 export async function sessionExpiry(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, clickButton, goTo, page, until } = ctx.app;
-  const { exists } = pageHelpers(page);
+  const { exists, fabState } = pageHelpers(page);
   const { bridgeChange, inStep, openFreshEditor, previewOtherThan } = costumeHelpers(ctx.app);
 
+  // A plate is kept once a later read finds its session alive: what follows needs it kept.
+  await goTo("overview");
+  const readsBeforeConfirming = await myPageHits();
+  await click("#read-again");
+  await waitFor("the plates confirmed", async () =>
+    (await myPageHits()) > readsBeforeConfirming &&
+    same(await fabState(), { shut: false, spinning: false })
+      ? true
+      : undefined,
+  );
   await openFreshEditor();
   const postsBeforeExpiry = await hitsOn("/ajax/check_ip_kisekae.php");
   await click("#swatch-colorFace-9");
