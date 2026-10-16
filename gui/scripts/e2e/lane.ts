@@ -18,6 +18,7 @@ import {
   type AfterSection,
   type Ctx,
   type Lane,
+  type LanePortraits,
   type LaneSection,
   newShared,
   type Section,
@@ -25,12 +26,14 @@ import {
 import { holdOwnSize, setSection, waitFor, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
 import { sessionHelpers } from "./session";
+import { myDonsAsked } from "./stand-in";
 
 /** A lane's checks and times, with the tokens and medal ids its data folder must not hold. */
 export type LaneReport = {
   results: Record<string, unknown>;
   tokens: string[];
   medalIds: string[];
+  portraits: LanePortraits[];
   errors: { section: string; message: string }[];
   sectionMs: Record<string, number>;
 };
@@ -39,6 +42,7 @@ export const newReport = (): LaneReport => ({
   results: {},
   tokens: [],
   medalIds: [],
+  portraits: [],
   errors: [],
   sectionMs: {},
 });
@@ -49,6 +53,7 @@ export function mergeReports(reports: readonly LaneReport[]): LaneReport {
     results: Object.fromEntries(reports.flatMap((report) => Object.entries(report.results))),
     tokens: reports.flatMap((report) => report.tokens),
     medalIds: reports.flatMap((report) => report.medalIds),
+    portraits: reports.flatMap((report) => report.portraits),
     errors: reports.flatMap((report) => report.errors),
     sectionMs: Object.fromEntries(reports.flatMap((report) => Object.entries(report.sectionMs))),
   };
@@ -103,6 +108,7 @@ function contextOf(report: LaneReport, held: { app?: App }): Ctx {
     results: report.results,
     tokens: report.tokens,
     medalIds: report.medalIds,
+    portraits: report.portraits,
     state: newShared(),
     get app() {
       if (held.app === undefined) {
@@ -316,6 +322,7 @@ export async function runLane(
       report.errors.push({ section: "sign-out at the lane's end", message: messageOf(error) });
     }
     tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
+    report.portraits.push({ hiroba: HIROBA, asked: await myDonsAsked() });
   } finally {
     if (held.app !== undefined) {
       await stop(held.app);

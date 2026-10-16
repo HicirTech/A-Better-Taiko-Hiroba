@@ -62,6 +62,8 @@ import {
 } from "./recent-plays";
 import { scores, scoresKeys } from "./scores";
 import {
+  portraitRequests,
+  portraitRequestsKeys,
   reopen,
   reopenKeys,
   sessionExpiry,
@@ -269,5 +271,6 @@ export const SECTIONS: readonly Section[] = [
     keys: firstReadsKeys,
     run: firstReads,
   },
+  { name: "portrait-requests", phase: "after", keys: portraitRequestsKeys, run: portraitRequests },
   { name: "data-folder", phase: "after", keys: dataFolderKeys, run: dataFolder },
 ];

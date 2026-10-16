@@ -128,7 +128,7 @@ export const platesSettled = async () => {
   }
   return platesAsked();
 };
-type PortraitAsked = { query: string; referer: string | null; cookies: string[] };
+export type PortraitAsked = { query: string; referer: string | null; cookies: string[] };
 export const myDonsAsked = async () =>
   (await (await fetch(`${HIROBA}/__mydons`)).json()) as PortraitAsked[];
 export const myDonsSettled = async () => {

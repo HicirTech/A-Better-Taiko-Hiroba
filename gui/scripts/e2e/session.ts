@@ -350,7 +350,6 @@ export const signedOutReopenKeys = [
   "playerPicturesKeptAtSignOut",
   "historyKeptAcrossSignOutAndIn",
   "historyPickShowsThePictureAtOnceAsksNothing",
-  "myDonSentNoCookie",
 ] as const;
 
 export async function signedOutReopen(ctx: Ctx) {
@@ -521,13 +520,21 @@ export async function signedOutReopen(ctx: Ctx) {
   results.historyPickShowsThePictureAtOnceAsksNothing = await historyPickAfterSignIn();
   await signOut();
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
-  const portraits = await myDonsAsked();
-  results.myDonSentNoCookie =
-    portraits.length > 3 &&
-    portraits.every(
-      (portrait) =>
-        portrait.cookies.length === 0 &&
-        portrait.referer === `${HIROBA}/` &&
-        portrait.query === "?v=&kind=mydon&fn=mydon_000000000000",
+}
+
+export const portraitRequestsKeys = ["myDonSentNoCookie"] as const;
+
+/** Every lane's My Don requests went bare, from Hiroba's top page, once the lanes have stopped. */
+export async function portraitRequests(ctx: Ctx) {
+  const asked = ctx.portraits.flatMap(({ hiroba, asked }) =>
+    asked.map((portrait) => ({ hiroba, ...portrait })),
+  );
+  ctx.results.myDonSentNoCookie =
+    asked.length > 3 &&
+    asked.every(
+      ({ hiroba, cookies, referer, query }) =>
+        cookies.length === 0 &&
+        referer === `${hiroba}/` &&
+        query === "?v=&kind=mydon&fn=mydon_000000000000",
     );
 }
