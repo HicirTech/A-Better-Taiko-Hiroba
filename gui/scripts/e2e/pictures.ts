@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { HIROBA, MY_DON_GIF_CODE, PANEL_ART, USER_DATA } from "./config";
+import { HIROBA, MY_DON_GIF_CODE, PAGE_SIZE, PANEL_ART, USER_DATA } from "./config";
 import type { Ctx } from "./context";
 import {
+  holdOwnSize,
   hoverOver,
   type Page,
   pageHelpers,
@@ -370,7 +371,7 @@ export async function medalPlate(ctx: Ctx) {
   // A viewport this short puts the card below the fold; the default 960×720 shows its top edge.
   const SHORT_VIEWPORT_PX = 400;
   await page.send("Emulation.setDeviceMetricsOverride", {
-    width: 0,
+    width: PAGE_SIZE.width,
     height: SHORT_VIEWPORT_PX,
     deviceScaleFactor: 0,
     mobile: false,
@@ -383,7 +384,7 @@ export async function medalPlate(ctx: Ctx) {
     ));
   const medalPlatesOffScreen = await medalPlatesSettled();
   const medalPlatesPerRead = [await showMedal(() => shownNow("#medal-plate-code"))];
-  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  await holdOwnSize(page);
   results.medalPlateAskedOnlyOnScreen =
     newSeasonBelowFold &&
     medalPlatesOffScreen === medalPlatesBefore &&

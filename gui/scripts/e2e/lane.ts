@@ -13,7 +13,7 @@ import {
   newShared,
   type Section,
 } from "./context";
-import { setSection, waitFor, withoutPictureBytes } from "./harness";
+import { holdOwnSize, setSection, waitFor, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
 import { sessionHelpers } from "./session";
 
@@ -237,7 +237,7 @@ export async function runLane(
       Promise.race([work, Bun.sleep(3_000)]).catch(() => undefined);
     if (held.app !== undefined) {
       const { page } = held.app;
-      await quickly(page.send("Emulation.clearDeviceMetricsOverride", {}));
+      await quickly(holdOwnSize(page));
       await quickly(page.send("Emulation.setTouchEmulationEnabled", { enabled: false }));
       await quickly(page.send("Emulation.setEmulatedMedia", { features: [] }));
     }

@@ -37,6 +37,8 @@ export const UPDATES_USER_DATA = userDataOf(LANE, "e2e-user-data-updates");
 export const UPDATE_FEED = "/__update-feed/update.json";
 /** MUI's md: from this width the app frame shows its side panel. */
 export const MD_WIDTH_PX = 900;
+/** The page size every app is held to: a display that sleeps or goes resizes windows, not pages. */
+export const PAGE_SIZE = { width: 946, height: 738 } as const;
 export const PHONE = { width: 480, height: 800 } as const;
 export const PHONE_TALL = { width: 390, height: 844 } as const;
 export const PHONE_SHORT = { width: 390, height: 600 } as const;

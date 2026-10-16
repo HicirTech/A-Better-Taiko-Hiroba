@@ -1,6 +1,6 @@
 /** Talks to the app over the DevTools Protocol, and waits for what its page shows. */
 
-import { MD_WIDTH_PX } from "./config";
+import { MD_WIDTH_PX, PAGE_SIZE } from "./config";
 
 export const same = (left: unknown, right: unknown) =>
   JSON.stringify(left) === JSON.stringify(right);
@@ -10,6 +10,14 @@ export const withoutPictureBytes = (html: string) =>
   html.replace(/data:image\/png;base64,[A-Za-z0-9+/]*={0,2}/g, "data:image/png;base64,");
 
 export type Page = Awaited<ReturnType<typeof connect>>;
+
+/** Holds the page at `PAGE_SIZE`, whatever size its window has. */
+export const holdOwnSize = (page: Page) =>
+  page.send("Emulation.setDeviceMetricsOverride", {
+    ...PAGE_SIZE,
+    deviceScaleFactor: 0,
+    mobile: false,
+  });
 
 const KEYS = {
   Enter: { code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
@@ -159,9 +167,8 @@ export function pageHelpers(page: Page) {
       `(() => { const box = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height }; })()`,
     );
 
-  /** Runs `run` in a window of this size, and gives the window its own size back. */
+  /** Runs `run` in a window of this size, and gives the page its own size back. */
   const atSize = async <T>(width: number, height: number, run: () => Promise<T>): Promise<T> => {
-    const ownWidth = await page.evaluate<number>("innerWidth");
     await page.send("Emulation.setDeviceMetricsOverride", {
       width,
       height,
@@ -184,10 +191,11 @@ export function pageHelpers(page: Page) {
       );
       return await run();
     } finally {
-      await page.send("Emulation.clearDeviceMetricsOverride", {});
-      const ownWide = ownWidth >= MD_WIDTH_PX;
+      await holdOwnSize(page);
+      const ownWide = PAGE_SIZE.width >= MD_WIDTH_PX;
       await waitFor("own window size", async () =>
-        (await page.evaluate<number>("innerWidth")) === ownWidth && (await shellReady(ownWide))
+        (await page.evaluate<number>("innerWidth")) === PAGE_SIZE.width &&
+        (await shellReady(ownWide))
           ? true
           : undefined,
       );
