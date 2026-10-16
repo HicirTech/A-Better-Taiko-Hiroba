@@ -1,7 +1,16 @@
 import { existsSync, readFileSync } from "node:fs";
 import { INITIAL_PROFILE, OWNED_TITLES } from "../mock-profile";
 import { type App, launch, stop } from "./app";
-import { HIROBA, IN_THE_BREAK, MEDAL_PLATE, NOON_JST, PANEL_ART, SESSION_FILE } from "./config";
+import {
+  HIROBA,
+  IN_THE_BREAK,
+  MEDAL_PLATE,
+  NOON_JST,
+  OFFSITE_HOST,
+  PANEL_ART,
+  REFUSING_HOST,
+  SESSION_FILE,
+} from "./config";
 import type { Ctx } from "./context";
 import { costumeHelpers, type HistoryEntry } from "./costume-helpers";
 import { pageHelpers, same, waitFor, waitForSeen } from "./harness";
@@ -155,7 +164,7 @@ export async function sessionExpiry(ctx: Ctx) {
 
   await fetch(`${HIROBA}/__offsite?on=1`);
   await click("#sign-in");
-  await until("offsite.127.0.0.1.sslip.io:8808, which is not on https");
+  await until(`${OFFSITE_HOST}, which is not on https`);
   await fetch(`${HIROBA}/__offsite?on=0`);
   results.refusalNamed = true;
 
@@ -163,7 +172,7 @@ export async function sessionExpiry(ctx: Ctx) {
   // stand-in's entry page is http, so no browser opens here.
   await fetch(`${HIROBA}/__refuser?on=1`);
   await click("#sign-in");
-  await until("refuses.127.0.0.1.sslip.io:8808 does not sign in inside an app");
+  await until(`${REFUSING_HOST} does not sign in inside an app`);
   await fetch(`${HIROBA}/__refuser?on=0`);
   results.refuserEndsTheAttempt = true;
 
