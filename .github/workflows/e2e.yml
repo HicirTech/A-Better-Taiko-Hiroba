@@ -40,6 +40,13 @@ jobs:
       - name: Electron binary
         run: bun node_modules/electron/install.js
 
+      # The app sizes its window to the work area, so a small display gives it less room.
+      - name: Display
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.Windows.Forms
+          [System.Windows.Forms.Screen]::AllScreens | ForEach-Object { "$($_.DeviceName) bounds $($_.Bounds) work area $($_.WorkingArea)" }
+
       # The run drives the app against the local stand-in; nothing reaches the real sites.
       - name: E2E
         shell: bash
