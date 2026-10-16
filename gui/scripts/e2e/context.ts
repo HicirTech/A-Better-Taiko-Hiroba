@@ -39,9 +39,18 @@ export type Ctx = {
 /** Where the run stands when a section starts: no app yet, signed out, signed in, or closed. */
 export type Phase = "none" | "signedOut" | "signedIn" | "after";
 
-export type Section = {
+/** The lanes a run splits its sections into: each runs in a process, app and stand-in of its own. */
+export const LANES = ["profile", "costume", "names", "songs"] as const;
+export type Lane = (typeof LANES)[number];
+
+type SectionBody = {
   name: string;
-  phase: Phase;
   keys: readonly string[];
   run: (ctx: Ctx) => Promise<void>;
 };
+
+/** A section reads `Shared` values and app state only from earlier sections of its lane. */
+export type LaneSection = SectionBody & { phase: Exclude<Phase, "after">; lane: Lane };
+/** A section that reads what every lane left on disk, once they have all stopped. */
+export type AfterSection = SectionBody & { phase: "after" };
+export type Section = LaneSection | AfterSection;
