@@ -3,14 +3,14 @@ import { rmSync } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
 
-import { type App, launch, stop } from "./app";
+import { type App, launch, showWindows, stop } from "./app";
 import { HIROBA, MY_PAGE, NOON_JST, root, USER_DATA } from "./config";
 import { type Ctx, newShared, type Phase, type Section } from "./context";
 import { setSection, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
 import { wrongChecks } from "./verdict";
 
-const USAGE = `Usage: bun run e2e [--no-build] [--only <section,...>]
+const USAGE = `Usage: bun run e2e [--no-build] [--show] [--only <section,...>]
 Sections: ${SECTIONS.map((section) => section.name).join(", ")}`;
 
 function fail(message: string): never {
@@ -25,6 +25,8 @@ function parseArgs(argv: string[]) {
     const arg = argv[at];
     if (arg === "--no-build") {
       build = false;
+    } else if (arg === "--show") {
+      showWindows();
     } else if (arg === "--only") {
       only = (argv[++at] ?? "").split(",").filter((name) => name !== "");
     } else {

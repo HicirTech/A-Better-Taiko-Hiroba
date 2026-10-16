@@ -57,6 +57,7 @@ import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
+import { OFF_SCREEN_OPTIONS, showOffScreen } from "./off-screen";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { createPipelineHistoryStore } from "./pipeline-history-store";
 import { createRecentPlaysStore } from "./recent-plays-store";
@@ -236,9 +237,13 @@ app.whenReady().then(async () => {
   const mainWindow = new BrowserWindow({
     useContentSize: true,
     width: WINDOW_CONTENT_PX.width,
-    height: Math.min(WINDOW_CONTENT_PX.height, room),
+    // Off every display, the window fits none, so it has the same size on any machine.
+    height: environment.offScreen
+      ? WINDOW_CONTENT_PX.height
+      : Math.min(WINDOW_CONTENT_PX.height, room),
     // A packaged app has no menu; a development one keeps its shortcuts, its bar shown by Alt.
     autoHideMenuBar: true,
+    ...(environment.offScreen ? OFF_SCREEN_OPTIONS : {}),
     webPreferences: {
       preload: join(app.getAppPath(), "out", "electron", "preload.cjs"),
       sandbox: true,
@@ -246,6 +251,9 @@ app.whenReady().then(async () => {
       nodeIntegration: false,
     },
   });
+  if (environment.offScreen) {
+    showOffScreen(mainWindow);
+  }
   // No window opens; a link to the repository's page or to its releases opens in the system's
   // browser, and no other does.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -301,7 +309,7 @@ app.whenReady().then(async () => {
     async signIn(): Promise<SignInOutcome> {
       signInAttempt?.cancel();
       setSession(null);
-      const attempt = openSignInWindow(mainWindow, endpoints, userAgent);
+      const attempt = openSignInWindow(mainWindow, endpoints, userAgent, environment.offScreen);
       signInAttempt = attempt;
       const result = await attempt.result;
       if (signInAttempt === attempt) {

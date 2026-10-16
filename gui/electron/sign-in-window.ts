@@ -9,6 +9,7 @@ import {
   signInStep,
   systemBrowserEntryUrl,
 } from "../src/hiroba-session";
+import { OFF_SCREEN_OPTIONS, showOffScreen } from "./off-screen";
 
 export type SignInResult =
   | { readonly kind: "captured"; readonly cookie: string }
@@ -33,6 +34,7 @@ export function openSignInWindow(
   parent: BrowserWindow,
   endpoints: HirobaEndpoints,
   userAgent: string,
+  offScreen: boolean,
 ): SignInAttempt {
   const partition = `abth-sign-in-${randomUUID()}`;
   const signInSession = session.fromPartition(partition, { cache: false });
@@ -51,8 +53,12 @@ export function openSignInWindow(
     width: 480,
     height: 760,
     autoHideMenuBar: true,
+    ...(offScreen ? OFF_SCREEN_OPTIONS : {}),
     webPreferences,
   });
+  if (offScreen) {
+    showOffScreen(window);
+  }
   const contents = window.webContents;
 
   let settle: (result: SignInResult) => void = () => undefined;
@@ -114,11 +120,17 @@ export function openSignInWindow(
           width: POPUP_WIDTH,
           height: POPUP_HEIGHT,
           autoHideMenuBar: true,
+          ...(offScreen ? OFF_SCREEN_OPTIONS : {}),
           webPreferences,
         },
       };
     });
-    guarded.on("did-create-window", (popup, details) => guard(popup, details.url));
+    guarded.on("did-create-window", (popup, details) => {
+      if (offScreen) {
+        showOffScreen(popup);
+      }
+      guard(popup, details.url);
+    });
   };
   guard(window, loginPageUrl(endpoints));
 
