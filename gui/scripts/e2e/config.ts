@@ -9,8 +9,9 @@ export const LANE_VARIABLE = "ABTH_E2E_LANE";
 export const LANE = Number(process.env[LANE_VARIABLE] ?? "0");
 const PORT_STEP = 10;
 
-export const HIROBA_PORT = 8807 + LANE * PORT_STEP;
-export const IDP_PORT = 8808 + LANE * PORT_STEP;
+// The dev run's stand-in takes 8807 and 8808, and may be running beside a run.
+export const HIROBA_PORT = 8907 + LANE * PORT_STEP;
+export const IDP_PORT = 8908 + LANE * PORT_STEP;
 export const HIROBA = `http://hiroba.127.0.0.1.sslip.io:${HIROBA_PORT}`;
 export const CDP_PORT = 9333 + LANE * PORT_STEP;
 export const IDP_HOST = `id.127.0.0.1.sslip.io:${IDP_PORT}`;
