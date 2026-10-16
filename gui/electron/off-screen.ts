@@ -11,18 +11,17 @@ export const OFF_SCREEN_OPTIONS: BrowserWindowConstructorOptions = {
 /** Moves a window left of every display, shows it without taking focus, and keeps it there. */
 export function showOffScreen(window: BrowserWindow): void {
   // Made first, then moved: a window made off every display has no frame, so its page grows.
-  const { width, height } = window.getBounds();
   const keep = () => {
     const leftmost = Math.min(0, ...screen.getAllDisplays().map((display) => display.bounds.x));
-    const place = { x: leftmost - width - GAP_PX, y: 0, width, height };
-    const now = window.getBounds();
-    if (now.x !== place.x || now.y !== place.y || now.width !== width || now.height !== height) {
-      window.setBounds(place);
+    const { x, y, width } = window.getBounds();
+    const left = leftmost - width - GAP_PX;
+    if (x !== left || y !== 0) {
+      window.setPosition(left, 0);
     }
   };
   keep();
   window.showInactive();
-  // A display that sleeps or goes makes Windows move and shrink windows; this one goes back.
+  // A display that sleeps or goes moves windows; this one goes back. Resized off every display a
+  // window loses its frame, so its size is left alone: the e2e holds the page's size itself.
   window.on("move", keep);
-  window.on("resize", keep);
 }

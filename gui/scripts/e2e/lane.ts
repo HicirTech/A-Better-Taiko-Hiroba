@@ -4,24 +4,36 @@ import { join } from "node:path";
 import electronPath from "electron";
 
 import { type App, launch, stop } from "./app";
-import { HIROBA, HIROBA_PORT, IDP_PORT, MY_PAGE, NOON_JST, root, USER_DATA } from "./config";
+import {
+  CDP_PORT,
+  HIROBA,
+  HIROBA_PORT,
+  IDP_PORT,
+  MY_PAGE,
+  NOON_JST,
+  root,
+  USER_DATA,
+} from "./config";
 import {
   type AfterSection,
   type Ctx,
   type Lane,
+  type LanePortraits,
   type LaneSection,
   newShared,
   type Section,
 } from "./context";
-import { setSection, waitFor, withoutPictureBytes } from "./harness";
+import { holdOwnSize, setSection, waitFor, withoutPictureBytes } from "./harness";
 import { SECTIONS } from "./sections";
 import { sessionHelpers } from "./session";
+import { myDonsAsked } from "./stand-in";
 
 /** A lane's checks and times, with the tokens and medal ids its data folder must not hold. */
 export type LaneReport = {
   results: Record<string, unknown>;
   tokens: string[];
   medalIds: string[];
+  portraits: LanePortraits[];
   errors: { section: string; message: string }[];
   sectionMs: Record<string, number>;
 };
@@ -30,6 +42,7 @@ export const newReport = (): LaneReport => ({
   results: {},
   tokens: [],
   medalIds: [],
+  portraits: [],
   errors: [],
   sectionMs: {},
 });
@@ -40,29 +53,51 @@ export function mergeReports(reports: readonly LaneReport[]): LaneReport {
     results: Object.fromEntries(reports.flatMap((report) => Object.entries(report.results))),
     tokens: reports.flatMap((report) => report.tokens),
     medalIds: reports.flatMap((report) => report.medalIds),
+    portraits: reports.flatMap((report) => report.portraits),
     errors: reports.flatMap((report) => report.errors),
     sectionMs: Object.fromEntries(reports.flatMap((report) => Object.entries(report.sectionMs))),
   };
 }
+
+/** Opens the line a lane's process prints its report on, so other output cannot hide it. */
+export const REPORT_MARK = "abth-e2e-lane-report ";
+
+/** A report in which every check of `sections` fails, for the one error that stopped them. */
+export function failedReport(
+  sections: readonly LaneSection[],
+  error: LaneReport["errors"][number],
+): LaneReport {
+  const report = newReport();
+  report.errors.push(error);
+  for (const key of sections.flatMap((section) => section.keys)) {
+    report.results[key] = false;
+  }
+  return report;
+}
+
+const reportOn = (line: string | undefined) => {
+  try {
+    return line === undefined
+      ? undefined
+      : (JSON.parse(line.slice(REPORT_MARK.length)) as LaneReport);
+  } catch {
+    return undefined;
+  }
+};
 
 /** The report a lane's process printed; with none printed, each of its sections' checks fails. */
 export function printedReport(
   printed: string,
   lane: { name: Lane; sections: readonly LaneSection[]; exitCode: number },
 ): LaneReport {
-  try {
-    return JSON.parse(printed) as LaneReport;
-  } catch {
-    const report = newReport();
-    report.errors.push({
+  const marked = printed.split(/\r?\n/).findLast((line) => line.startsWith(REPORT_MARK));
+  return (
+    reportOn(marked) ??
+    failedReport(lane.sections, {
       section: `${lane.name} lane`,
       message: `Its process ended with code ${lane.exitCode} and printed no report`,
-    });
-    for (const key of lane.sections.flatMap((section) => section.keys)) {
-      report.results[key] = false;
-    }
-    return report;
-  }
+    })
+  );
 }
 
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error));
@@ -73,6 +108,7 @@ function contextOf(report: LaneReport, held: { app?: App }): Ctx {
     results: report.results,
     tokens: report.tokens,
     medalIds: report.medalIds,
+    portraits: report.portraits,
     state: newShared(),
     get app() {
       if (held.app === undefined) {
@@ -129,11 +165,28 @@ const RECOVERY = [
   "/__items?many=0",
 ];
 
+/** Whether a process listens on `port` already, as the apps of a run stopped midway do. */
+function taken(port: number): boolean {
+  try {
+    Bun.listen({ hostname: "127.0.0.1", port, socket: { data: () => undefined } }).stop(true);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
 /** Runs `sections` in order; `setupChecks` adds the checks of the app, stand-in and harness. */
 export async function runLane(
   sections: readonly LaneSection[],
   { setupChecks }: { setupChecks: boolean },
 ): Promise<LaneReport> {
+  const busy = [HIROBA_PORT, IDP_PORT, CDP_PORT].filter(taken);
+  if (busy.length > 0) {
+    return failedReport(sections, {
+      section: "lane start",
+      message: `Port ${busy.join(", ")} is taken: an earlier run stopped midway may still hold it`,
+    });
+  }
   const report = newReport();
   const { results, tokens } = report;
 
@@ -237,7 +290,7 @@ export async function runLane(
       Promise.race([work, Bun.sleep(3_000)]).catch(() => undefined);
     if (held.app !== undefined) {
       const { page } = held.app;
-      await quickly(page.send("Emulation.clearDeviceMetricsOverride", {}));
+      await quickly(holdOwnSize(page));
       await quickly(page.send("Emulation.setTouchEmulationEnabled", { enabled: false }));
       await quickly(page.send("Emulation.setEmulatedMedia", { features: [] }));
     }
@@ -269,6 +322,7 @@ export async function runLane(
       report.errors.push({ section: "sign-out at the lane's end", message: messageOf(error) });
     }
     tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
+    report.portraits.push({ hiroba: HIROBA, asked: await myDonsAsked() });
   } finally {
     if (held.app !== undefined) {
       await stop(held.app);

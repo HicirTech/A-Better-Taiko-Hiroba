@@ -5,7 +5,14 @@ import { join } from "node:path";
 import { showWindows } from "./app";
 import { LANE, LANE_VARIABLE, root, userDataOf } from "./config";
 import { type AfterSection, LANES, type Lane, type LaneSection } from "./context";
-import { type LaneReport, mergeReports, printedReport, runAfter, runLane } from "./lane";
+import {
+  type LaneReport,
+  mergeReports,
+  printedReport,
+  REPORT_MARK,
+  runAfter,
+  runLane,
+} from "./lane";
 import { SECTIONS } from "./sections";
 import { wrongChecks } from "./verdict";
 
@@ -135,7 +142,7 @@ async function runOneLane() {
     fail(`No lane ${LANE}`);
   }
   const report = await runLane(sectionsOf(lane), { setupChecks: lane === lanes[0] });
-  console.log(JSON.stringify(report));
+  console.log(`${REPORT_MARK}${JSON.stringify(report)}`);
 }
 
 if (process.env[LANE_VARIABLE] === undefined) {

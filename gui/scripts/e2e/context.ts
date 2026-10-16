@@ -1,7 +1,7 @@
 /** What a section is given, and how one is declared. */
 import type { App } from "./app";
 import type { HistoryEntry } from "./costume-helpers";
-import type { PlateAsked } from "./stand-in";
+import type { PlateAsked, PortraitAsked } from "./stand-in";
 
 /** Values one section hands to later ones; the note names the section that sets each. */
 export type Shared = {
@@ -27,12 +27,16 @@ export const newShared = (): Shared => ({
   historyBeforeReopen: [],
 });
 
+/** One lane's My Don requests, with the stand-in they went to. */
+export type LanePortraits = { hiroba: string; asked: PortraitAsked[] };
+
 export type Ctx = {
   /** The app now running; a section that relaunches it sets the new one. */
   app: App;
   results: Record<string, unknown>;
   tokens: string[];
   medalIds: string[];
+  portraits: LanePortraits[];
   state: Shared;
 };
 

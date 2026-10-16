@@ -44,7 +44,8 @@ export const bridgeWritesKeys = [
 export async function bridgeWrites(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { boxOf, exists, fabState, swipe, touchEmulated } = pageHelpers(page);
+  const { boxOf, countTouchMoves, exists, fabState, swipe, touchEmulated, touchMoves } =
+    pageHelpers(page);
   const {
     bridgeChange,
     inStep,
@@ -127,13 +128,16 @@ export async function bridgeWrites(ctx: Ctx) {
   const savingOnReturn = (await stepOf()) === "saving";
   await click("#read-again");
   await touchEmulated(true);
+  await countTouchMoves();
   await swipe(pullFrom, pulledBy(0, 200));
+  const pullHeard = (await touchMoves()) > 0;
   await touchEmulated(false);
   await Bun.sleep(300);
   await fetch(`${HIROBA}/__hold-precheck?on=0`);
   results.signOutShutWhileAWriteRuns = signOutShutInWrite && signedInInWrite && savingOnReturn;
   await inStep("editing");
   results.noReadInsideAWrite =
+    pullHeard &&
     fabShutInWrite &&
     !(await exists("#write-outcome")) &&
     sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&

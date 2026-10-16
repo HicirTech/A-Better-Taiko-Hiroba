@@ -2,7 +2,14 @@ import { TITLE_PLATE } from "../mock-pictures";
 import type { App } from "./app";
 import { MY_DON_GIF_CODE, PANEL_ART } from "./config";
 import type { Ctx } from "./context";
-import { pageHelpers, same, waitFor, waitForSeen, withoutPictureBytes } from "./harness";
+import {
+  holdOwnSize,
+  pageHelpers,
+  same,
+  waitFor,
+  waitForSeen,
+  withoutPictureBytes,
+} from "./harness";
 import { hitsOn, ICON_PATHS, iconHits, myDonsSettled, myPageHits, platesSettled } from "./stand-in";
 
 export type Share = readonly [name: string, percent: string, count: number];
@@ -88,8 +95,8 @@ export function overviewHelpers(app: App) {
       mobile: false,
     });
     const { myDon, plate, panel } = await settledHeader();
-    await page.send("Emulation.clearDeviceMetricsOverride", {});
-    // The checks after this one measure the panel, so it settles back at the window's own size.
+    await holdOwnSize(page);
+    // The checks after this one measure the panel, so it settles back at the page's own size.
     await settledHeader();
     return (
       myDon.right <= plate.left &&
@@ -252,7 +259,7 @@ export async function overview(ctx: Ctx) {
   });
   await waitFor("drawer button", async () => (await exists("#nav-menu")) || undefined);
   const narrow = await headerBoxes();
-  await page.send("Emulation.clearDeviceMetricsOverride", {});
+  await holdOwnSize(page);
   await waitFor("side panel", async () => (await exists("#nav-overview")) || undefined);
   // On a narrow window the plate's empty top tucks under the portrait: the stand-in's tab is the
   // first thing it draws there.

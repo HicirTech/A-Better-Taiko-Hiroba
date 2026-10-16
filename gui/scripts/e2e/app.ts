@@ -12,7 +12,7 @@ import {
   root,
   USER_DATA,
 } from "./config";
-import { connect, waitFor } from "./harness";
+import { connect, holdOwnSize, waitFor } from "./harness";
 
 let windowsShown = false;
 
@@ -70,6 +70,7 @@ export async function launch({
     return list.find((t) => t.url.startsWith("app://gui/"));
   });
   const page = await connect(target.webSocketDebuggerUrl);
+  await holdOwnSize(page);
   const text = () => page.evaluate<string>("document.body.textContent");
   const textOf = (selector: string) =>
     page.evaluate<string | null>(
