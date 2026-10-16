@@ -39,6 +39,7 @@ function parseArgs(argv: string[]) {
 
 const { build, only } = parseArgs(process.argv.slice(2));
 const selected = SECTIONS.filter((section) => only === undefined || only.includes(section.name));
+const startedAt = performance.now();
 
 if (build) {
   const built = Bun.spawn(["bun", "run", "build"], {
@@ -193,8 +194,11 @@ async function recover() {
   }
 }
 
+const sectionMs: Record<string, number> = {};
+
 async function runSection(section: Section) {
   setSection(section.name);
+  const started = performance.now();
   const before = new Set(Object.keys(results));
   try {
     await prepare(section.phase);
@@ -215,8 +219,10 @@ async function runSection(section: Section) {
     }
     await recover();
   }
+  sectionMs[section.name] = Math.round(performance.now() - started);
 }
 
+results.setupMs = Math.round(performance.now() - startedAt);
 try {
   for (const section of selected) {
     await runSection(section);
@@ -224,6 +230,7 @@ try {
 } finally {
   await stopMain();
 }
+results.sectionMs = sectionMs;
 
 if (errors.length > 0) {
   results.errors = errors;
