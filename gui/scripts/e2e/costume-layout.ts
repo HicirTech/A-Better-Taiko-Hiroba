@@ -322,7 +322,7 @@ export const costumePhoneKeys = [
   "costumeGridPickChangesItsTileOnAPhone",
   "costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpaceOnAPhone",
   "narrowSaveFromTheBarIsOneClick",
-  "narrowNoticeAboveTheEditor",
+  "narrowNoticeAboveTheBar",
   "costumePhoneTopBlockStaysInViewOnATallWindowAndScrollsAwayOnAShortOne",
   "costumePhoneBarFlushWithTheBottom",
   "costumePhoneOnlyThePageScrolls",
@@ -476,8 +476,9 @@ export async function costumePhone(ctx: Ctx) {
     await fetch(`${HIROBA}/__noop-save`);
     await click("#swatch-colorBody-41");
     const unmoved = await savedFrom(await savedCostume());
-    const noticeAboveTheGrid = await page.evaluate<boolean>(
-      `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const aside = document.querySelector("#costume-aside"); const panel = document.querySelector("#costume-grid"); return notice !== null && notice.getBoundingClientRect().top >= aside.getBoundingClientRect().bottom && notice.getBoundingClientRect().bottom <= panel.getBoundingClientRect().top; })()`,
+    // Material keeps a snackbar 8 pixels off a phone's foot; here it keeps them off the bar.
+    const noticeAboveTheBar = await page.evaluate<boolean>(
+      `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const bar = document.querySelector("#costume-bar"); return notice !== null && Math.abs(notice.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 8)) < 1.5; })()`,
     );
     return {
       kept,
@@ -491,7 +492,7 @@ export async function costumePhone(ctx: Ctx) {
       keyboard,
       savedFromTheBar,
       unmoved,
-      noticeAboveTheGrid,
+      noticeAboveTheBar,
     };
   });
   await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
@@ -570,7 +571,7 @@ export async function costumePhone(ctx: Ctx) {
     saves: 1,
     moved: true,
   });
-  results.narrowNoticeAboveTheEditor = phone.unmoved === "notApplied" && phone.noticeAboveTheGrid;
+  results.narrowNoticeAboveTheBar = phone.unmoved === "notApplied" && phone.noticeAboveTheBar;
   const phoneScrolling = (size: { width: number; height: number }) =>
     atSize(size.width, size.height, async () => {
       await waitFor("costume bar", async () => (await exists("#costume-bar")) || undefined);

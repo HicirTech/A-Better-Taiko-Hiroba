@@ -1,106 +1,37 @@
-import { FOLDER_SLOT_COUNT, NAME_FIELDS, TITLE_FIELDS } from "@abth/core";
+import { NAME_FIELDS, TITLE_FIELDS } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-import type { AlertColor } from "@mui/material";
 
-import { numberedSong } from "../favorites/song-names";
-import { FAILURE_MESSAGE } from "../read-failure-message";
-import type { WriteKind, WriteOutcomeView, WriteSets } from "../session-port";
-import { changedParts, isCostumePart, PART_LABEL, partValue } from "./costume-parts";
+import type { WriteKind, WriteSets } from "../session-port";
+import { isCostumePart, PART_LABEL } from "./costume-parts";
 import type { Noticed } from "./write-ending";
 
-type NotAppliedReasonKind = Extract<WriteOutcomeView, { kind: "notApplied" }>["reason"]["kind"];
-
-// A sentence a write can end with: KIND_WORDING words it for a kind, else BASE_WORDING says it.
-type Base =
-  | "unchanged"
-  | "diverged"
-  | "crossChanged"
-  | "changedSincePreview"
-  | "needsConfirmation";
-
-const BASE_WORDING = {
-  unchanged: "write.notApplied.unchanged",
-  diverged: "write.diverged",
-  crossChanged: "write.crossChanged",
-  changedSincePreview: "write.changedSincePreview",
-  needsConfirmation: "write.needsConfirmation",
-} as const satisfies Record<Base, MessageKey>;
-
-// Costume is the base, so its entry is empty; a rename and the favourites have no pre-check.
-const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, MessageKey>>>>> = {
+// Hiroba's own words, never translated: what its pages say for refusal codes that come without
+// words, from title.js, dialog.js and mydon.js.
+const REFUSED_WORDS: Readonly<Record<WriteKind, Readonly<Partial<Record<number, string>>>>> = {
   costume: {},
   title: {
-    unchanged: "write.title.unchanged",
-    diverged: "write.title.diverged",
-    crossChanged: "write.title.crossChanged",
-    changedSincePreview: "write.title.changedSincePreview",
-    needsConfirmation: "write.title.needsConfirmation",
+    1: "称号が選択されていません。",
+    5: "選択した称号は獲得していません。",
+    6: "エラーが発生しました。もう一度選択してください。",
   },
-  name: {
-    unchanged: "write.name.unchanged",
-    diverged: "write.name.diverged",
-    changedSincePreview: "write.name.changedSincePreview",
-  },
-  folder: {
-    unchanged: "write.folder.unchanged",
-    diverged: "write.folder.diverged",
-    changedSincePreview: "write.folder.changedSincePreview",
-  },
+  name: { 2: "変更に失敗しました。" },
+  folder: {},
   favoriteSong: {
-    unchanged: "write.favoriteSong.unchanged",
-    diverged: "write.favoriteSong.diverged",
-    changedSincePreview: "write.favoriteSong.changedSincePreview",
+    1: "この曲はまだ開放されていないため、設定できません。",
+    2: "楽曲が公開されていません。",
   },
 };
 
-const wording = (kind: WriteKind, base: Base): MessageKey =>
-  KIND_WORDING[kind][base] ?? BASE_WORDING[base];
+// What Hiroba's pages say for a save it kept but could not pass to the game server (result 3).
+const GAME_SERVER_MISSED =
+  "ゲームサーバーへの通信に失敗しました。設定が正しく行われていない可能性がありますので、再度設定してください。";
 
-const OUTCOME_BASE = {
-  notApplied: "unchanged",
-  diverged: "diverged",
-  changedSincePreview: "changedSincePreview",
-  needsConfirmation: "needsConfirmation",
-} as const satisfies Partial<Record<Noticed<unknown>["kind"], Base>>;
-
-type KindDependent = keyof typeof OUTCOME_BASE;
-
-const isKindDependent = (outcome: Noticed<unknown>["kind"]): outcome is KindDependent =>
-  Object.hasOwn(OUTCOME_BASE, outcome);
-
-const OUTCOME_MESSAGE = {
-  maintenance: "write.maintenance",
-  readFailed: "failure.unexpectedPage",
-  sessionGone: "write.sessionGone",
-  invalidTarget: "write.invalidTarget",
-  stoppedBeforeWrite: "write.stoppedBeforeWrite",
-  notStaged: "write.notStaged",
-  appliedNotSynced: "write.appliedNotSynced",
-  outcomeUnknown: "write.outcomeUnknown",
-  notSignedIn: "failure.notSignedIn",
-  interrupted: "write.interrupted",
-  busy: "write.busy",
-} as const satisfies Record<Exclude<Noticed<unknown>["kind"], KindDependent>, MessageKey>;
-
-const REASON_MESSAGE = {
-  refused: "write.notApplied.refused",
-  stale: "write.notApplied.stale",
-  siteMaintenance: "write.notApplied.siteMaintenance",
-  failed: "write.notApplied.failed",
-  noAnswer: "write.notApplied.noAnswer",
-  rejected: "write.notApplied.rejected",
-  endedAtLogin: "write.notApplied.endedAtLogin",
-  endpointMissing: "write.notApplied.endpointMissing",
-  unexpected: "write.notApplied.unexpected",
-} as const satisfies Record<Exclude<NotAppliedReasonKind, "unchanged">, MessageKey>;
-
-// The app's gloss on refusal codes Hiroba gives no message for; its own words, when any, follow.
-const REFUSED_GLOSS: Readonly<Record<WriteKind, Readonly<Partial<Record<number, MessageKey>>>>> = {
-  costume: {},
-  title: { 1: "write.title.refused1", 5: "write.title.refused5", 6: "write.title.refused6" },
-  name: { 2: "write.name.refused2" },
-  folder: {},
-  favoriteSong: { 1: "write.favoriteSong.refused1", 2: "write.favoriteSong.refused2" },
+// The confirmations Hiroba's pre-checks ask, which this app does not give.
+const CONFIRMATION_WORDS: Readonly<Partial<Record<WriteKind, string>>> = {
+  costume:
+    "これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
+  title:
+    "この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
 };
 
 type InvalidField =
@@ -125,206 +56,32 @@ export function invalidFieldText(field: string, { t }: Translator): string {
     : field;
 }
 
-/** A comparison cell; `hirobas` marks Hiroba's own words, which are never translated. */
-export interface Cell {
-  readonly text: string;
-  readonly hirobas?: true;
-}
+/** What a write's ending says: it failed, with Hiroba's words if any, or Hiroba was read back. */
+export type OutcomeWords =
+  | { readonly said: "failed"; readonly hirobas: string | null }
+  | { readonly said: "readBack" };
 
-export interface ComparisonRow {
-  readonly label: Cell;
-  readonly before: Cell;
-  readonly planned: Cell;
-  readonly now: Cell | null;
-}
-
-type SongNamer = (songNo: string) => string;
-
-type Rows<S> = (
-  before: S,
-  planned: S,
-  now: S | null,
-  i18n: Translator,
-  songName: SongNamer,
-) => readonly ComparisonRow[];
-
-// Each part the plan changed, and each the write changed that the plan did not mean to.
-const costumeRows: Rows<WriteSets["costume"]> = (before, planned, now, i18n) => {
-  const { t } = i18n;
-  const parts = changedParts(before, planned).concat(
-    now === null ? [] : changedParts(planned, now).filter((part) => before[part] === planned[part]),
-  );
-  const cell = (part: (typeof parts)[number], set: WriteSets["costume"]): Cell => ({
-    text: partValue(part, set[part], i18n),
-  });
-  return parts.map((part) => ({
-    label: { text: t(PART_LABEL[part]) },
-    before: cell(part, before),
-    planned: cell(part, planned),
-    now: now === null ? null : cell(part, now),
-  }));
-};
-
-const singleRow =
-  <S>(
-    label: MessageKey,
-    textOf: (set: S, i18n: Translator, songName: SongNamer) => Cell,
-  ): Rows<S> =>
-  (before, planned, now, i18n, songName) => [
-    {
-      label: { text: i18n.t(label) },
-      before: textOf(before, i18n, songName),
-      planned: textOf(planned, i18n, songName),
-      now: now === null ? null : textOf(now, i18n, songName),
-    },
-  ];
-
-const songCell = (songNo: string | null, { t }: Translator, songName: SongNamer): Cell => ({
-  text: songNo === null ? t("favorites.slot.empty") : songName(songNo),
-});
-
-// Each slot the plan changed, and each the write changed that the plan did not mean to.
-const folderRows: Rows<WriteSets["folder"]> = (before, planned, now, i18n, songName) => {
-  const songAt = (state: WriteSets["folder"], slot: number) => state.slots[slot] ?? null;
-  const slots = Array.from({ length: FOLDER_SLOT_COUNT }, (_, slot) => slot).filter(
-    (slot) =>
-      songAt(before, slot) !== songAt(planned, slot) ||
-      (now !== null && songAt(now, slot) !== songAt(planned, slot)),
-  );
-  const cell = (state: WriteSets["folder"], slot: number) =>
-    songCell(songAt(state, slot), i18n, songName);
-  return slots.map((slot) => ({
-    label: { text: i18n.t("favorites.slot", { number: slot + 1 }) },
-    before: cell(before, slot),
-    planned: cell(planned, slot),
-    now: now === null ? null : cell(now, slot),
-  }));
-};
-
-const ROWS: { readonly [K in WriteKind]: Rows<WriteSets[K]> } = {
-  costume: costumeRows,
-  title: singleRow("title.heading", ({ title }, { t }) =>
-    title === "" ? { text: t("profile.noTitle") } : { text: title, hirobas: true },
-  ),
-  name: singleRow("name.heading", ({ nickname }) => ({ text: nickname, hirobas: true })),
-  folder: folderRows,
-  favoriteSong: singleRow("favorites.song.heading", ({ songNo }, i18n, songName) =>
-    songCell(songNo, i18n, songName),
-  ),
-};
-
-export interface Comparison {
-  readonly rows: readonly ComparisonRow[];
-  readonly withNow: boolean;
-}
-
-export interface Described {
-  readonly severity: AlertColor;
-  readonly message: string;
-  readonly notes: readonly string[];
-  /** Report codes, shown to copy; never page text. */
-  readonly codes: readonly string[];
-  readonly comparison: Comparison | null;
-}
-
-export interface DescribeOptions<K extends WriteKind> {
-  readonly kind: K;
-  /** How a comparison names a song; its number alone where the page knows no title. */
-  readonly songName?: SongNamer | undefined;
-}
-
-export function describeOutcome<K extends WriteKind>(
+export function outcomeWords<K extends WriteKind>(
+  kind: K,
   outcome: Noticed<WriteSets[K]>,
-  i18n: Translator,
-  { kind, songName = numberedSong }: DescribeOptions<K>,
-): Described {
-  const { t } = i18n;
-  const plain = (
-    severity: AlertColor,
-    key: MessageKey = isKindDependent(outcome.kind)
-      ? wording(kind, OUTCOME_BASE[outcome.kind])
-      : OUTCOME_MESSAGE[outcome.kind],
-  ) => ({
-    severity,
-    message: t(key),
-    notes: [] as string[],
-    codes: [] as string[],
-    comparison: null,
-  });
-  const compared = (before: WriteSets[K], planned: WriteSets[K], now: WriteSets[K] | null) => ({
-    rows: ROWS[kind](before, planned, now, i18n, songName),
-    withNow: now !== null,
+): OutcomeWords {
+  const failed = (hirobas: string | null | undefined): OutcomeWords => ({
+    said: "failed",
+    hirobas: hirobas ?? null,
   });
   switch (outcome.kind) {
-    case "appliedNotSynced":
-      return plain("warning");
-    case "notApplied": {
-      const { reason, save } = outcome;
-      const gloss = reason.kind === "refused" ? REFUSED_GLOSS[kind][reason.code] : undefined;
-      const message =
-        reason.kind === "refused"
-          ? t(REASON_MESSAGE.refused, { code: reason.code })
-          : reason.kind === "unchanged"
-            ? t(wording(kind, "unchanged"))
-            : t(REASON_MESSAGE[reason.kind]);
-      return {
-        severity: "warning",
-        message,
-        notes: [
-          ...(gloss === undefined ? [] : [t(gloss)]),
-          ...(reason.kind === "refused" && reason.message !== null
-            ? [t("write.siteMessage", { message: reason.message })]
-            : []),
-        ],
-        codes: save.answer === "json" ? [] : [save.report],
-        comparison: null,
-      };
-    }
     case "diverged":
-      return {
-        ...plain("warning"),
-        notes: outcome.cross === "changed" ? [t(wording(kind, "crossChanged"))] : [],
-        comparison: compared(outcome.before, outcome.expectedAfter, outcome.after),
-      };
-    case "outcomeUnknown":
-      return {
-        ...plain("warning"),
-        notes: [t(FAILURE_MESSAGE[outcome.failure.kind])],
-        codes: outcome.failure.detail === undefined ? [] : [outcome.failure.detail],
-        comparison: compared(outcome.before, outcome.expectedAfter, null),
-      };
-    case "sessionGone":
-      return outcome.writeMayHaveHappened
-        ? {
-            ...plain("warning", "write.sessionGoneAfterSave"),
-            comparison: compared(outcome.before, outcome.expectedAfter, null),
-          }
-        : plain("info");
-    case "readFailed":
-      return {
-        ...plain("error", FAILURE_MESSAGE[outcome.failure.kind]),
-        codes: outcome.failure.detail === undefined ? [] : [outcome.failure.detail],
-      };
-    case "invalidTarget":
-      return {
-        ...plain("error"),
-        message: t("write.invalidTarget", { field: invalidFieldText(outcome.field, i18n) }),
-      };
-    case "stoppedBeforeWrite":
-      return { ...plain("warning"), codes: [`${outcome.reason} ${outcome.code}`] };
-    case "notStaged":
-      return {
-        ...plain("warning"),
-        comparison: compared(outcome.before, outcome.expectedAfter, outcome.staged),
-      };
     case "changedSincePreview":
-      return plain("warning", wording(kind, "changedSincePreview"));
+      return { said: "readBack" };
+    case "appliedNotSynced":
+      return failed(GAME_SERVER_MISSED);
     case "needsConfirmation":
-    case "interrupted":
-      return plain("warning");
-    case "maintenance":
-    case "notSignedIn":
-    case "busy":
-      return plain("info");
+      return failed(CONFIRMATION_WORDS[kind]);
+    case "notApplied":
+      return outcome.reason.kind === "refused"
+        ? failed(outcome.reason.message ?? REFUSED_WORDS[kind][outcome.reason.code])
+        : failed(null);
+    default:
+      return failed(null);
   }
 }

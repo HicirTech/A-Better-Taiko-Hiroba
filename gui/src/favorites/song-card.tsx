@@ -2,7 +2,6 @@ import type { Translator } from "@abth/i18n";
 import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 
 import { Waiting } from "../my-page/editor-parts";
-import { WriteOutcomeNotice } from "../my-page/write-outcome";
 import type { ShownFavorites } from "./favorites-state";
 import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongRow } from "./song-row";
@@ -28,7 +27,7 @@ export function SongCard({
   onReset,
 }: SongCardProps) {
   const { t } = i18n;
-  const { view, draft, notice, shut, saving } = shown;
+  const { view, draft, shut, saving } = shown;
   const { songNo, ura } = draft ?? view.song.state;
   return (
     <Card id="favorite-song-card" variant="outlined">
@@ -74,15 +73,6 @@ export function SongCard({
           </Box>
           {saving === "favoriteSong" && (
             <Waiting id="favorite-song-saving">{t("costume.saving")}</Waiting>
-          )}
-          {notice?.write === "favoriteSong" && (
-            <WriteOutcomeNotice
-              id="favorite-song-outcome"
-              kind="favoriteSong"
-              outcome={notice.outcome}
-              i18n={i18n}
-              songName={(songNo) => look(songNo).name}
-            />
           )}
         </Stack>
       </CardContent>

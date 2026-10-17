@@ -18,7 +18,6 @@ import {
 import { useId, useState } from "react";
 
 import { Waiting } from "../my-page/editor-parts";
-import { WriteOutcomeNotice } from "../my-page/write-outcome";
 import { useBackCloses } from "../navigation/back-closers";
 import type { FavoriteSet } from "./favorite-sets";
 import { ArrowDropDownIcon, CheckIcon } from "./favorites-icons";
@@ -61,7 +60,7 @@ export function FolderCard({
   onSaveToSet,
 }: FolderCardProps) {
   const { t } = i18n;
-  const { view, notice, saving, shut } = shown;
+  const { view, saving, shut } = shown;
   const songs = view.folder.state.slots.flatMap((songNo, index) =>
     songNo === null ? [] : [{ slot: index + 1, songNo }],
   );
@@ -139,15 +138,6 @@ export function FolderCard({
           )}
           {saving === "folder" && (
             <Waiting id="favorite-folder-saving">{t("costume.saving")}</Waiting>
-          )}
-          {notice?.write === "folder" && (
-            <WriteOutcomeNotice
-              id="favorite-folder-outcome"
-              kind="folder"
-              outcome={notice.outcome}
-              i18n={i18n}
-              songName={(songNo) => look(songNo).name}
-            />
           )}
         </Stack>
       </CardContent>

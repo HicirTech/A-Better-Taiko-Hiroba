@@ -195,6 +195,12 @@ describe("reduceName, a write's ending", () => {
     );
   });
 
+  test("drops the notice once said, keeping what was typed", () => {
+    expect(reduce(idle("あ", refusedOutcome), { type: "noticeClosed" })).toEqual(idle("あ"));
+    const step = idle("あ");
+    expect(reduce(step, { type: "noticeClosed" })).toBe(step);
+  });
+
   test("shows the name worn, and says so, after a save the game server was not told of", () => {
     expect(reduce(saving(), { type: "writeEnded", outcome: notSyncedOutcome })).toEqual(
       idle(null, notSyncedOutcome),

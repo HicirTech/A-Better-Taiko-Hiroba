@@ -31,6 +31,8 @@ export interface NameEditor {
   /** Drops the typed nickname and the last write's notice when the page is left. */
   dropEdits(): void;
   type(value: string): void;
+  /** Drops the last write's notice once the window has said it. */
+  closeNotice(): void;
   save(): Promise<void>;
 }
 
@@ -96,6 +98,7 @@ export function useNameEditor({
     forget,
     dropEdits,
     type: (value) => dispatch({ type: "typed", value }),
+    closeNotice: () => dispatch({ type: "noticeClosed" }),
     save,
   };
 }

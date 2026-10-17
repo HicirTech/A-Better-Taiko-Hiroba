@@ -48,13 +48,3 @@ const saving: ShownFavorites = shownFavorites({
 });
 
 export const Saving: Story = { args: { shown: saving } };
-
-/** A write that ended without saving, such as one in Hiroba's daily maintenance. */
-export const NotSaved: Story = {
-  args: {
-    shown: shownFavorites({
-      draft: { songNo: "1005", ura: false },
-      notice: { write: "favoriteSong", outcome: { kind: "maintenance" } },
-    }),
-  },
-};

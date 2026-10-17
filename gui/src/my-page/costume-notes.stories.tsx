@@ -17,7 +17,7 @@ const meta = {
           name: "editing",
           editor: STORY_EDITOR,
           draft: DRAFT,
-          notice: { kind: "maintenance" },
+          notice: null,
         }}
         preview={previewOf(DRAFT, { failure: "preview=notPng status=200" })}
         i18n={i18nOf(globals)}
@@ -29,5 +29,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Every note the Costume page can show at once: the last write, the preview, the きぐるみ. */
+/** Every note the Costume page can show at once: the preview and the きぐるみ. */
 export const AllAtOnce: Story = {};

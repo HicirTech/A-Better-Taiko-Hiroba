@@ -458,7 +458,7 @@ export async function favorites(ctx: Ctx) {
   await click("#favorite-set-apply");
   await shown("#favorite-folder-outcome");
   results.notStagedSaysSoAndSavesNothing =
-    (await textOf("#favorite-folder-outcome"))?.includes("didn't take every song") === true &&
+    (await textOf("#favorite-folder-outcome")) === "Sync to Hiroba failed. Please try again." &&
     !(await requestLog()).includes(FOLDER_SAVE) &&
     same((await favoritesNow()).folder.slice(0, 3), ["1003", "1001", LONG_TITLED]);
   await favoritesNow("?emptyClears=1");

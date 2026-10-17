@@ -358,62 +358,13 @@ export const en: Messages = {
   "name.same": "That is your nickname already.",
   "name.closed":
     "Hiroba says nicknames can't be changed right now: 今はドンだーネームは変更できないドン！",
-  "write.appliedNotSynced":
-    "Hiroba saved it but couldn't reach the game server. This app cannot send it again; set it again on Hiroba's own page to pass it on.",
-  "write.notApplied.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the costume as it was.",
-  "write.notApplied.refused": "Hiroba refused the change (code {code}). Nothing changed.",
-  "write.notApplied.stale":
-    "The editor had gone stale. Use Read again, then retry. Nothing changed.",
-  "write.notApplied.siteMaintenance": "Hiroba is in maintenance. Nothing changed.",
-  "write.notApplied.failed": "Hiroba could not save it. Nothing changed.",
-  "write.notApplied.noAnswer": "Hiroba did not answer the save, and nothing changed.",
-  "write.notApplied.rejected": "Hiroba didn't accept the app's request. Nothing changed.",
-  "write.notApplied.endedAtLogin": "Hiroba sent the save to its sign-in page. Nothing changed.",
-  "write.notApplied.endpointMissing":
-    "Hiroba no longer has the page that saves this. Nothing changed.",
-  "write.notApplied.unexpected":
-    "Hiroba answered the save in a way this app did not expect. Nothing changed.",
-  "write.siteMessage": "Hiroba said: {message}",
-  "write.diverged": "The costume did not end up as planned. Compare below.",
-  "write.crossChanged": "Your title changed too.",
-  "write.outcomeUnknown": "Couldn't read the result back. Use Read again before trying again.",
   "write.sessionGone": "Hiroba ended the session before anything was saved. Please sign in again.",
   "write.sessionGoneAfterSave":
     "Hiroba ended the session. Whether the change was saved is unknown; check it after signing in.",
-  "write.changedSincePreview":
-    "Your costume was changed elsewhere since the editor last read it. Nothing was sent; the editor now shows it as it is.",
   "write.invalidTarget": "This app refused the change before sending it: {field}.",
-  "write.maintenance":
-    "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. The change was not sent.",
-  "write.needsConfirmation":
-    "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  "write.stoppedBeforeWrite": "Hiroba didn't accept the app's request. Nothing was changed.",
-  "write.notStaged": "Hiroba didn't take every song, so nothing was saved.",
-  "write.busy": "Another change is still being sent, so this one was not sent.",
-  "write.interrupted":
-    "The app stopped before it knew how this ended, so it may or may not have been saved. Use Read again and look before trying again.",
-  "write.code": "Code for a report: {code}",
-  "write.before": "Before",
-  "write.planned": "Planned",
-  "write.now": "Now",
-  "write.title.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the title as it was.",
-  "write.title.diverged": "The title did not end up as planned. Compare below.",
-  "write.title.crossChanged": "Your costume changed too.",
-  "write.title.changedSincePreview":
-    "Your title was changed elsewhere since the list was opened. Nothing was sent; the page now shows it as it is.",
-  "write.title.needsConfirmation":
-    "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  "write.title.refused1": "Hiroba says no title was chosen.",
-  "write.title.refused5": "Hiroba says you do not own that title.",
-  "write.title.refused6": "Hiroba reported an error and asks you to choose again.",
-  "write.name.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the nickname as it was.",
-  "write.name.diverged": "The nickname did not end up as planned. Compare below.",
-  "write.name.changedSincePreview":
-    "Your nickname was changed elsewhere since this page was read. Nothing was sent; the page now shows it as it is.",
-  "write.name.refused2": "Hiroba could not update the nickname.",
+  "write.failed": "Sync to Hiroba failed. Please try again.",
+  "write.failedBecause": "Sync to Hiroba failed ({words}). Please try again.",
+  "write.readBack": "Hiroba's result differs from what was expected. Its data has been read back.",
   "write.invalid.titleNotOwned": "that title is not in your list",
   "write.invalid.nameEmpty": "the nickname is empty",
   "write.invalid.nameEdge": "the nickname starts or ends with a space",
@@ -435,20 +386,6 @@ export const en: Messages = {
   "difficulty.ura": "Extreme (Ura)",
   "song.level": "{difficulty} ★{level}",
   "song.bpm": "BPM {bpm}",
-  "write.folder.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the folder as it was.",
-  "write.folder.diverged": "The folder did not end up as planned. Compare below.",
-  "write.folder.changedSincePreview":
-    "Your folder was changed elsewhere since this page read it. Nothing was sent; the page now shows it as it is.",
-  "write.favoriteSong.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the favourite song as it was.",
-  "write.favoriteSong.diverged": "The favourite song did not end up as planned. Compare below.",
-  "write.favoriteSong.changedSincePreview":
-    "Your favourite song was changed elsewhere since this page read it. Nothing was sent; the page now shows it as it is.",
-  "write.favoriteSong.refused1": "Hiroba says this song isn't unlocked yet.",
-  "write.favoriteSong.refused2": "Hiroba says this song isn't published.",
-  "favorites.slot": "Song {number}",
-  "favorites.slot.empty": "(empty)",
   "favorites.reading": "Reading your favourites from Hiroba…",
   "favorites.folder.heading": "Songs in the folder",
   "favorites.folderEmpty": "The favourites folder is empty.",

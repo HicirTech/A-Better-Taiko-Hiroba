@@ -418,57 +418,14 @@ export interface Messages {
   "name.same": string;
   /** Quotes Hiroba's sentence that nicknames cannot be changed now, as the site writes it. */
   "name.closed": string;
-  "write.appliedNotSynced": string;
-  "write.notApplied.unchanged": string;
-  /** Param: {code}, Hiroba's code; its own message follows under write.siteMessage. */
-  "write.notApplied.refused": string;
-  "write.notApplied.stale": string;
-  "write.notApplied.siteMaintenance": string;
-  "write.notApplied.failed": string;
-  "write.notApplied.noAnswer": string;
-  "write.notApplied.rejected": string;
-  "write.notApplied.endedAtLogin": string;
-  "write.notApplied.endpointMissing": string;
-  "write.notApplied.unexpected": string;
-  /** Param: {message}, Hiroba's own words for a write, shown as plain text. */
-  "write.siteMessage": string;
-  "write.diverged": string;
-  "write.crossChanged": string;
-  "write.outcomeUnknown": string;
   "write.sessionGone": string;
   "write.sessionGoneAfterSave": string;
-  "write.changedSincePreview": string;
   /** Param: {field}, which value of the set was refused, as a costume.part text. */
   "write.invalidTarget": string;
-  "write.maintenance": string;
-  /** Carries the site's own confirmation text (mydon.js); this version does not answer it. */
-  "write.needsConfirmation": string;
-  "write.stoppedBeforeWrite": string;
-  "write.notStaged": string;
-  "write.interrupted": string;
-  "write.busy": string;
-  /** Param: {code}, report codes: where an answer ended, status, type and size; never page text. */
-  "write.code": string;
-  "write.before": string;
-  "write.planned": string;
-  "write.now": string;
-  /** A title's write: each key has the costume's key, without "title.", as its base. */
-  "write.title.unchanged": string;
-  "write.title.diverged": string;
-  "write.title.crossChanged": string;
-  "write.title.changedSincePreview": string;
-  /** Carries the site's own confirmation text (check_ip_title); this version does not answer it. */
-  "write.title.needsConfirmation": string;
-  /** Hiroba's codes for a refused title, which come with no message of their own. */
-  "write.title.refused1": string;
-  "write.title.refused5": string;
-  "write.title.refused6": string;
-  /** A rename's write, like the costume's; the title read around it uses write.cross*. */
-  "write.name.unchanged": string;
-  "write.name.diverged": string;
-  "write.name.changedSincePreview": string;
-  /** Hiroba's code for a rename it could not carry out, which comes with no message of its own. */
-  "write.name.refused2": string;
+  "write.failed": string;
+  /** Param: {words}, Hiroba's own words for the failure, as the site writes them. */
+  "write.failedBecause": string;
+  "write.readBack": string;
   /** The words of {field} in "write.invalidTarget": a phrase, with no capital and no full stop. */
   "write.invalid.titleNotOwned": string;
   "write.invalid.nameEmpty": string;
@@ -495,20 +452,6 @@ export interface Messages {
   "song.level": string;
   /** Param: {bpm}, the tempo as taiko.wiki gives it, such as 154 or 120–240. */
   "song.bpm": string;
-  /** A folder write: each key has the costume's key, without "folder.", as its base. */
-  "write.folder.unchanged": string;
-  "write.folder.diverged": string;
-  "write.folder.changedSincePreview": string;
-  /** A 大好きな曲 write, worded like the folder's. */
-  "write.favoriteSong.unchanged": string;
-  "write.favoriteSong.diverged": string;
-  "write.favoriteSong.changedSincePreview": string;
-  /** Hiroba's codes for a refused 大好きな曲, which come with no message of their own. */
-  "write.favoriteSong.refused1": string;
-  "write.favoriteSong.refused2": string;
-  /** Param: {number}, a slot's place in the folder, from 1. */
-  "favorites.slot": string;
-  "favorites.slot.empty": string;
   "favorites.reading": string;
   /** The お気に入り folder on Hiroba, as the Favourites page names it. */
   "favorites.folder.heading": string;

@@ -315,8 +315,8 @@ export const saveInPlaceKeys = [
   "costumePhoneSaveKeepsTheEditorAndThePageInPlace",
   "costumePreviewLevelWithTheGridsFirstRowBelowTheNotices",
   "costumeLeftColumnStaysInViewWithANoticeAndTheMascotNote",
-  "costumeNoticeIsScrolledIntoViewAfterAFailedSave",
-  "costumePhoneNoticeIsScrolledIntoViewBetweenTheBlockAndTheBar",
+  "costumeNoticeIsInViewAfterAFailedSave",
+  "costumePhoneNoticeIsBetweenTheBlockAndTheBar",
 ] as const;
 
 export async function saveInPlace(ctx: Ctx) {
@@ -499,16 +499,13 @@ export async function saveInPlace(ctx: Ctx) {
     ({ apart, end, stuckOverhangs }) =>
       apart && end > 100 && stuckOverhangs.length > 0 && stuckOverhangs.every((one) => one <= 0.5),
   );
-  results.costumeNoticeIsScrolledIntoViewAfterAFailedSave = wideWithTheNotesUp.every(
+  results.costumeNoticeIsInViewAfterAFailedSave = wideWithTheNotesUp.every(
     ({ noticeSeen }) => noticeSeen,
   );
-  results.costumePhoneNoticeIsScrolledIntoViewBetweenTheBlockAndTheBar = await withTheNotesUp(
-    390,
-    700,
-    () =>
-      noticeIsInView(
-        async () => (await boxOf("#costume-aside")).bottom,
-        async () => (await boxOf("#costume-bar")).top,
-      ),
+  results.costumePhoneNoticeIsBetweenTheBlockAndTheBar = await withTheNotesUp(390, 700, () =>
+    noticeIsInView(
+      async () => (await boxOf("#costume-aside")).bottom,
+      async () => (await boxOf("#costume-bar")).top,
+    ),
   );
 }

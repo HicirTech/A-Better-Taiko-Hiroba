@@ -292,6 +292,21 @@ describe("the end of a 大好きな曲 write", () => {
   });
 });
 
+describe("a write's notice", () => {
+  const notice: FavoritesNotice = { write: "favoriteSong", outcome: { kind: "interrupted" } };
+
+  test("goes once said, leaving the draft", () => {
+    expect(run(ready(viewOf(), song("1005"), notice), { type: "noticeClosed" })).toEqual(
+      ready(viewOf(), song("1005")),
+    );
+  });
+
+  test("is the very same step when said with none to say", () => {
+    const step = ready(viewOf(), song("1005"));
+    expect(run(step, { type: "noticeClosed" })).toBe(step);
+  });
+});
+
 describe("the end of a folder write", () => {
   const view = viewOf("1001", ["1001", "1002"]);
 

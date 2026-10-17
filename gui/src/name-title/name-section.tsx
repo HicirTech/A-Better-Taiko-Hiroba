@@ -6,7 +6,7 @@ import { type KeyboardEvent, useRef, useState } from "react";
 import { HIROBA_LANG } from "../language/show-language";
 import { useFocusKept, Waiting } from "../my-page/editor-parts";
 import { invalidFieldText } from "../my-page/outcome-words";
-import { WriteOutcomeNotice } from "../my-page/write-outcome";
+import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import type { ProfileView } from "../session-port";
 import { ControlWithSave } from "./control-with-save";
 import { judgeName, type WornName } from "./name-editor-state";
@@ -103,7 +103,13 @@ export function NameSection({ name, profile, i18n, busy }: NameSectionProps) {
       </ControlWithSave>
       {step.name === "saving" && <Waiting id="name-saving">{t("costume.saving")}</Waiting>}
       {step.name === "idle" && step.notice !== null && (
-        <WriteOutcomeNotice id="name-outcome" kind="name" outcome={step.notice} i18n={i18n} />
+        <WriteOutcomeSnackbar
+          id="name-outcome"
+          kind="name"
+          outcome={step.notice}
+          i18n={i18n}
+          onClosed={name.closeNotice}
+        />
       )}
     </Stack>
   );

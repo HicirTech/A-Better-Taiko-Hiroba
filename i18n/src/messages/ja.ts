@@ -357,67 +357,14 @@ export const ja: Messages = {
   "name.same": "すでにそのドンだーネームです。",
   "name.closed":
     "ひろばが今はドンだーネームを変更できないと言っています：今はドンだーネームは変更できないドン！",
-  "write.appliedNotSynced":
-    "ひろばには保存されましたが、ゲームサーバーに届きませんでした。このアプリからは再送信できません。届けるには、ひろばのページでもう一度設定してください。",
-  "write.notApplied.unchanged":
-    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すときせかえは元のままでした。",
-  "write.notApplied.refused":
-    "ひろばが変更を受け付けませんでした（コード {code}）。何も変わっていません。",
-  "write.notApplied.stale":
-    "エディターの情報が古くなっていました。再読み込みしてから、やり直してください。何も変わっていません。",
-  "write.notApplied.siteMaintenance": "ひろばはメンテナンス中です。何も変わっていません。",
-  "write.notApplied.failed": "ひろばで保存できませんでした。何も変わっていません。",
-  "write.notApplied.noAnswer": "ひろばから保存の応答がなく、何も変わっていません。",
-  "write.notApplied.rejected":
-    "ひろばがアプリのリクエストを受け付けませんでした。何も変わっていません。",
-  "write.notApplied.endedAtLogin":
-    "ひろばが保存をログインページに回しました。何も変わっていません。",
-  "write.notApplied.endpointMissing":
-    "ひろばに、これを保存するページがなくなっています。何も変わっていません。",
-  "write.notApplied.unexpected":
-    "ひろばから保存に対して想定外の応答がありました。何も変わっていません。",
-  "write.siteMessage": "ひろばからのメッセージ：{message}",
-  "write.diverged": "きせかえが予定どおりになりませんでした。下で比べてください。",
-  "write.crossChanged": "称号も変わっています。",
-  "write.outcomeUnknown": "結果を読み直せませんでした。やり直す前に、再読み込みしてください。",
   "write.sessionGone":
     "何も保存される前に、ひろばのセッションが切れました。もう一度ログインしてください。",
   "write.sessionGoneAfterSave":
     "ひろばのセッションが切れました。変更が保存されたかはわかりません。ログインしてから確かめてください。",
-  "write.changedSincePreview":
-    "エディターが前回読み込んだあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
   "write.invalidTarget": "送信する前に、アプリが変更を止めました：{field}。",
-  "write.maintenance":
-    "ひろばは毎日 05:00〜07:00（日本時間）がメンテナンスです。変更は送信していません。",
-  "write.needsConfirmation":
-    "ひろばが、このアプリではまだ答えられない確認を求めたため、何も変更していません。ひろばのメッセージ：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  "write.stoppedBeforeWrite":
-    "ひろばがアプリのリクエストを受け付けませんでした。何も変更していません。",
-  "write.notStaged": "ひろばがすべての曲を受け付けなかったため、何も保存していません。",
-  "write.busy": "別の変更を送信中のため、この変更は送信していません。",
-  "write.interrupted":
-    "結果がわかる前にアプリが止まったため、保存されたかどうかわかりません。やり直す前に、再読み込みして確かめてください。",
-  "write.code": "報告用コード：{code}",
-  "write.before": "変更前",
-  "write.planned": "予定",
-  "write.now": "現在",
-  "write.title.unchanged":
-    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すと称号は元のままでした。",
-  "write.title.diverged": "称号が予定どおりになりませんでした。下で比べてください。",
-  "write.title.crossChanged": "きせかえも変わっています。",
-  "write.title.changedSincePreview":
-    "一覧を開いたあとに、称号がほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.title.needsConfirmation":
-    "ひろばが、このアプリではまだ答えられない確認を求めたため、何も変更していません。ひろばのメッセージ：この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  "write.title.refused1": "ひろばは、称号が選ばれていないと言っています。",
-  "write.title.refused5": "ひろばは、その称号を獲得していないと言っています。",
-  "write.title.refused6": "ひろばがエラーを返し、もう一度選ぶよう求めています。",
-  "write.name.unchanged":
-    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すとドンだーネームは元のままでした。",
-  "write.name.diverged": "ドンだーネームが予定どおりになりませんでした。下で比べてください。",
-  "write.name.changedSincePreview":
-    "このページを読み込んだあとに、ドンだーネームがほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.name.refused2": "ひろばがドンだーネームを更新できませんでした。",
+  "write.failed": "ひろばへの同期に失敗しました。もう一度お試しください。",
+  "write.failedBecause": "ひろばへの同期に失敗しました（{words}）。もう一度お試しください。",
+  "write.readBack": "ひろばの結果が想定と違いました。ひろばのデータを読み直しました。",
   "write.invalid.titleNotOwned": "その称号は一覧にありません",
   "write.invalid.nameEmpty": "ドンだーネームが空です",
   "write.invalid.nameEdge": "ドンだーネームの先頭か末尾に空白があります",
@@ -439,20 +386,6 @@ export const ja: Messages = {
   "difficulty.ura": "おに裏",
   "song.level": "{difficulty} ★{level}",
   "song.bpm": "BPM {bpm}",
-  "write.folder.unchanged":
-    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すとフォルダは元のままでした。",
-  "write.folder.diverged": "フォルダが予定どおりになりませんでした。下で比べてください。",
-  "write.folder.changedSincePreview":
-    "このページを読み込んだあとに、フォルダがほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.favoriteSong.unchanged":
-    "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すと大好きな曲は元のままでした。",
-  "write.favoriteSong.diverged": "大好きな曲が予定どおりになりませんでした。下で比べてください。",
-  "write.favoriteSong.changedSincePreview":
-    "このページを読み込んだあとに、大好きな曲がほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.favoriteSong.refused1": "ひろばは、この曲がまだ解禁されていないと言っています。",
-  "write.favoriteSong.refused2": "ひろばは、この曲が公開されていないと言っています。",
-  "favorites.slot": "{number}曲目",
-  "favorites.slot.empty": "（空）",
   "favorites.reading": "ひろばからお気に入りを読み込み中…",
   "favorites.folder.heading": "フォルダの曲",
   "favorites.folderEmpty": "お気に入りフォルダは空です。",

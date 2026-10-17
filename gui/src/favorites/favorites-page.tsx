@@ -4,6 +4,7 @@ import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { HELD_STILL, useFocusKept, Waiting } from "../my-page/editor-parts";
+import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
@@ -266,6 +267,24 @@ function FavoritesBody({
             onSaveToSet={(id) => keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))}
           />
         </Stack>
+      )}
+      {shown?.notice?.write === "favoriteSong" && (
+        <WriteOutcomeSnackbar
+          id="favorite-song-outcome"
+          kind="favoriteSong"
+          outcome={shown.notice.outcome}
+          i18n={i18n}
+          onClosed={favorites.closeNotice}
+        />
+      )}
+      {shown?.notice?.write === "folder" && (
+        <WriteOutcomeSnackbar
+          id="favorite-folder-outcome"
+          kind="folder"
+          outcome={shown.notice.outcome}
+          i18n={i18n}
+          onClosed={favorites.closeNotice}
+        />
       )}
       <SetsDrawer
         open={drawerOpen}

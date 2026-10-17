@@ -17,7 +17,7 @@ export type TitleStep =
       readonly name: "idle";
       readonly list: TitleList;
       readonly picked: TitleOption | null;
-      /** How the last write ended, until the next pick, save or read; none if it applied. */
+      /** How the last write ended, until it is said or the next pick, save or read. */
       readonly notice: Noticed<TitleState> | null;
     }
   | { readonly name: "saving"; readonly list: TitleList; readonly picked: TitleOption };
@@ -32,7 +32,8 @@ export type TitleAction =
   | { readonly type: "readEnded"; readonly result: Result<TitleEditorView, ReadFailure> }
   | { readonly type: "picked"; readonly option: TitleOption | null }
   | { readonly type: "saveStarted" }
-  | { readonly type: "writeEnded"; readonly outcome: TitleOutcome };
+  | { readonly type: "writeEnded"; readonly outcome: TitleOutcome }
+  | { readonly type: "noticeClosed" };
 
 const UNREAD: TitleList = { name: "unread" };
 
@@ -67,6 +68,8 @@ export function reduceTitle(step: TitleStep, action: TitleAction): TitleStep {
         : step;
     case "writeEnded":
       return writeEnded(step, action.outcome);
+    case "noticeClosed":
+      return step.name === "idle" && step.notice !== null ? { ...step, notice: null } : step;
   }
 }
 

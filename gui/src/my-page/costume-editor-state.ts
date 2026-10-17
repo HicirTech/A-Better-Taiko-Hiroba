@@ -21,7 +21,7 @@ export type EditorStep =
       readonly name: "editing";
       readonly editor: CostumeEditorView;
       readonly draft: CostumeSet;
-      /** How the last write ended, until the next pick, reset, save or read; none if it applied. */
+      /** How the last write ended, until it is said or the next pick, reset, save or read. */
       readonly notice: Noticed<CostumeSet> | null;
     }
   | { readonly name: "saving"; readonly editor: CostumeEditorView; readonly draft: CostumeSet };
@@ -39,7 +39,8 @@ export type EditorAction =
   | { readonly type: "reset" }
   | { readonly type: "editsDropped" }
   | { readonly type: "saveStarted" }
-  | { readonly type: "writeEnded"; readonly outcome: WriteOutcomeView };
+  | { readonly type: "writeEnded"; readonly outcome: WriteOutcomeView }
+  | { readonly type: "noticeClosed" };
 
 export const UNREAD: EditorStep = { name: "unread" };
 
@@ -71,6 +72,8 @@ export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep
         : step;
     case "writeEnded":
       return writeEnded(step, action.outcome);
+    case "noticeClosed":
+      return step.name === "editing" && step.notice !== null ? { ...step, notice: null } : step;
   }
 }
 

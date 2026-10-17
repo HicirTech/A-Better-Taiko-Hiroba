@@ -59,7 +59,7 @@ export const titleKeys = [
   "titlePostsCarryTheAjaxShape",
   "titleMovedOneField",
   "titleWriteLeavesTheMyDon",
-  "titleRefusedShowsCode",
+  "titleRefusedSaysSoInItsPagesWords",
   "titlePrecheckStopsTheSave",
   "titleNoopSaveNotApplied",
   "titleStaleSaysStale",
@@ -274,10 +274,10 @@ export async function title(ctx: Ctx) {
   await fetch(`${HIROBA}/__profile-next-result?code=5&message=`);
   const titleRefused = await changeTitleInTheWindow("別の", 102, false);
   const titleRefusedText = (await textOf("#title-outcome")) ?? "";
-  results.titleRefusedShowsCode =
+  results.titleRefusedSaysSoInItsPagesWords =
     titleRefused === "notApplied" &&
-    titleRefusedText.includes("Hiroba refused the change (code 5). Nothing changed.") &&
-    titleRefusedText.includes("Hiroba says you do not own that title.") &&
+    titleRefusedText ===
+      "Sync to Hiroba failed (選択した称号は獲得していません。). Please try again." &&
     same(await profileNow(), profileAsStarted) &&
     (await inputValueOf("#title-pick")) === INITIAL_PROFILE.title &&
     (await disabledOf("#title-save")) === true;
@@ -489,8 +489,7 @@ export async function nickname(ctx: Ctx) {
   await changeNameInTheWindow(INITIAL_PROFILE.nickname);
   results.nameRefusedForAQuickChangeCanBeSavedAgain =
     tooSoon === "notApplied" &&
-    tooSoonText.includes("Hiroba refused the change (code 1). Nothing changed.") &&
-    tooSoonText.includes(`Hiroba said: ${COOLDOWN_MESSAGE}`) &&
+    tooSoonText === `Sync to Hiroba failed (${COOLDOWN_MESSAGE}). Please try again.` &&
     wornAfterTheRefusal &&
     (await outcomeOf("name")) === null &&
     same(await profileNow(), profileAsStarted);
@@ -506,10 +505,10 @@ export async function nickname(ctx: Ctx) {
   const markupInOutcome = await exists("#name-outcome b");
   results.nameRefusedShowsHirobaWordsAsText =
     filtered === "notApplied" &&
-    filteredText.includes(`Hiroba said: ${FILTER_MESSAGE}`) &&
+    filteredText === `Sync to Hiroba failed (${FILTER_MESSAGE}). Please try again.` &&
     fieldAfterRefusal === INITIAL_PROFILE.nickname &&
     markedUp === "notApplied" &&
-    markedUpText.includes("Hiroba said: <b>不適切</b>な名前") &&
+    markedUpText === "Sync to Hiroba failed (<b>不適切</b>な名前). Please try again." &&
     !markupInOutcome &&
     same(await profileNow(), profileAsStarted);
   await typeName(INITIAL_PROFILE.nickname);

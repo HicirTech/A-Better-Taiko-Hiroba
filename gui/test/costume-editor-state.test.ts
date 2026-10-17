@@ -480,7 +480,7 @@ describe("the notice of a write", () => {
   const drafted = set({ colorFace: 9 });
   const noticed = () => editing(set(), drafted, notice);
 
-  test("stays through nothing but the next pick, Reset, Save or read", () => {
+  test("stays until it is said, or the next pick, Reset, Save or read", () => {
     const step = noticed();
 
     expect(step).toMatchObject({ notice });
@@ -492,6 +492,18 @@ describe("the notice of a write", () => {
       notice: null,
     });
     expect(reduceEditor(step, { type: "reset" })).toEqual(editing());
+  });
+
+  test("goes once said, leaving the draft", () => {
+    const step = noticed();
+
+    expect(reduceEditor(step, { type: "noticeClosed" })).toEqual(editing(set(), drafted));
+  });
+
+  test("is the very same step when said with none to say", () => {
+    const step = editing(set(), drafted);
+
+    expect(reduceEditor(step, { type: "noticeClosed" })).toBe(step);
   });
 
   test("goes with a pick of what the draft holds already, which is still a pick", () => {

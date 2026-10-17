@@ -277,6 +277,12 @@ describe("reduceTitle, a write's ending", () => {
     const step = idle(listed());
     expect(reduce(step, { type: "writeEnded", outcome: { kind: "busy" } })).toBe(step);
   });
+
+  test("drops the notice once said, keeping the list and the pick", () => {
+    expect(reduce(idle(listed(), B, refused), { type: "noticeClosed" })).toEqual(idle(listed(), B));
+    const step = idle(listed(), B);
+    expect(reduce(step, { type: "noticeClosed" })).toBe(step);
+  });
 });
 
 describe("what a step allows", () => {

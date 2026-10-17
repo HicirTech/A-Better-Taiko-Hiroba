@@ -3,7 +3,7 @@ import { Stack } from "@mui/material";
 import { useRef } from "react";
 
 import { useFocusKept, Waiting } from "../my-page/editor-parts";
-import { WriteOutcomeNotice } from "../my-page/write-outcome";
+import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { ControlWithSave } from "./control-with-save";
 import { canSaveTitle } from "./title-editor-state";
@@ -60,7 +60,13 @@ export function TitleSection({ title, worn, i18n, busy }: TitleSectionProps) {
       )}
       {step.name === "saving" && <Waiting id="title-saving">{t("costume.saving")}</Waiting>}
       {step.name === "idle" && step.notice !== null && (
-        <WriteOutcomeNotice id="title-outcome" kind="title" outcome={step.notice} i18n={i18n} />
+        <WriteOutcomeSnackbar
+          id="title-outcome"
+          kind="title"
+          outcome={step.notice}
+          i18n={i18n}
+          onClosed={title.closeNotice}
+        />
       )}
     </Stack>
   );

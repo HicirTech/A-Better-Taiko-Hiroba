@@ -58,7 +58,6 @@ export async function costumeEditor(ctx: Ctx) {
   const { click, currentPage, goTo, page, text, textOf } = ctx.app;
   const { atSize, boxOf, exists } = pageHelpers(page);
   const {
-    aboveThePart,
     barFlush,
     changeInTheWindow,
     inStep,
@@ -201,7 +200,7 @@ export async function costumeEditor(ctx: Ctx) {
 
   results.failedSaveSaysSoAndShowsHirobasSet =
     noChange === "notApplied" &&
-    (await aboveThePart("#write-outcome")) &&
+    (await textOf("#write-outcome")) === "Sync to Hiroba failed. Please try again." &&
     (await stepOf()) === "editing" &&
     (await pressedOf("#swatch-colorFace-3")) === "false" &&
     !(await savable()) &&

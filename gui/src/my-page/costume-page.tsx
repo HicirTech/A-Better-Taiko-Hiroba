@@ -15,6 +15,7 @@ import { WideBody } from "./costume-wide-body";
 import { useFocusKept, Waiting } from "./editor-parts";
 import { BAR_REF } from "./stuck-clearance";
 import type { CostumeEditor } from "./use-costume-editor";
+import { WriteOutcomeSnackbar } from "./write-outcome";
 
 // MUI's sm width: a narrow window's column need not stretch across it.
 export const COLUMN_MAX_WIDTH_PX = 600;
@@ -85,6 +86,14 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
           <NarrowBody {...body} />
           {actions !== null && <ActionBar>{actions}</ActionBar>}
         </>
+      )}
+      {step.name === "editing" && step.notice !== null && (
+        <WriteOutcomeSnackbar
+          kind="costume"
+          outcome={step.notice}
+          i18n={i18n}
+          onClosed={editor.closeNotice}
+        />
       )}
       {step.name === "editing" && (
         <CostumeHistoryDialog

@@ -295,8 +295,8 @@ keyboard focus. Under the tiles come **Sync to Hiroba**, then **History** and **
 draft back to the set as read. The column starts level with the first row of the part's cells, so a
 notice over them moves it down; it stays in view as the page scrolls, on a window at least 640 px
 tall, and holds only these, so it is never taller than the window. The right is the part picked:
-over its name stand a write's notice, the words for a picture that did not come and the Mascot note,
-when there are any, then its name, the words for thumbnails that did not come, and its palette or
+over its name stand the words for a picture that did not come and the Mascot note, when there are
+any, then its name, the words for thumbnails that did not come, and its palette or
 items' thumbnails, as many to a row as fit from the left; the items begin with **None** (Hiroba's
 はずす), which empties the slot. On a narrow window the page is a column, as wide as the window on a
 phone: a square picture of 160 px with the same tiles in one row under it, which stay in view as the
@@ -322,10 +322,12 @@ Shift+Tab is scrolled clear of the tiles above it and the bar below.
   set as read. The write goes the way [Writes](#writes) says, and the page shows its progress where
   the buttons were, with the tiles and the grid held still, dimmed and out of reach, and the page
   scrolled where it was. When it ends the editor is ready at once, and a write that applied says
-  nothing: the picture and the My Don show it. Any other ending shows its notice over the part
-  picked, scrolled into view, until the next pick, **Reset**, save, history pick or read. A write
-  that read the set back leaves the editor on it with no draft; one that read nothing back leaves
-  the draft as it was, so it can be synced again. There is no Snackbar, and the page has no undo.
+  nothing: the picture and the My Don show it. Any other ending is said in a snackbar at the
+  window's foot (above the bar on a narrow window) for a few seconds, or until the next pick,
+  **Reset**, save, history pick or read: a failed sync says so, with Hiroba's own words in
+  parentheses when there are some, and a set found other than planned says Hiroba was read back. A
+  write that read the set back leaves the editor on it with no draft; one that read nothing back
+  leaves the draft as it was, so it can be synced again. The page has no undo.
 - **History.** The costumes you wore, newest first, each set once and at most 30, kept on the
   device per taiko number (`costume-history.json` in the app's data folder on the desktop, the
   `abth-costume-history` database on Android), across relaunches and sign-outs, and shown only to
@@ -380,17 +382,15 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
   the field is shut and the section says why, in Hiroba's words; when it hands none the app can
   read, the field stays open. The editor read at write time decides again.
 - **Outcomes.** A write that applied says nothing: the page shows the new title or nickname. Any
-  other ending shows its notice in the section, worded for the title and the nickname apart from the
-  costume's (Hiroba's code for a title it will not take, or a nickname it could not update, comes
-  with no message, so the page says what it means), with Hiroba's own words, when it has some,
-  shown as the plain text they are. The notice stays until the next pick, typing or save. A write
-  that read Hiroba back shows the title or nickname Hiroba holds, with no pick or typing left; one
-  that read nothing back keeps them, so it can be synced again. After a title write that moved the
-  title, your page is read again once, for the plate, behind the page, so the section keeps its
-  notice and the keyboard's focus; the My Don is not fetched anew for it, since only a costume
-  change and your own **Read again** do that. **Read again** spins and Sign out is shut meanwhile.
-  A rename puts the nickname it read back into the window's copy of your page, and reads nothing
-  more. The page has no undo and no history.
+  other ending is said in a snackbar, as the costume's is, with Hiroba's own words shown as the
+  plain text they are (for a code that comes with no message, the words Hiroba's page shows for
+  it), until the next pick, typing or save. A write that read Hiroba back shows the title or
+  nickname Hiroba holds, with no pick or typing left; one that read nothing back keeps them, so it
+  can be synced again. After a title write that moved the title, your page is read again once, for
+  the plate, behind the page, so the section keeps the keyboard's focus; the My Don is not fetched
+  anew for it, since only a costume change and your own **Read again** do that. **Read again**
+  spins and Sign out is shut meanwhile. A rename puts the nickname it read back into the window's
+  copy of your page, and reads nothing more. The page has no undo and no history.
 
 ### The Favourites page
 
