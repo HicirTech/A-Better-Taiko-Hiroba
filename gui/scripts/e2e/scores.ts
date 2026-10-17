@@ -1,6 +1,6 @@
 /** Scores: read only when asked, every list and played chart first, then what recent plays name. */
 import { LONG_HOLD_MS } from "../../src/read-again/pull-gesture";
-import { en, HIROBA } from "./config";
+import { en, HIROBA, TOP_BAND_PX } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import { hitsOn, refreshHits } from "./stand-in";
@@ -20,6 +20,7 @@ export const scoresKeys = [
   "everyScoreReadAfterALongHold",
   "difficultyFilterTakesSeveral",
   "scoresSortedByScore",
+  "scoresSearchInTheTopBand",
   "scoresSearchedByAnyName",
   "scoreDetailsHeadedLikeTheirRow",
   "scoreDetailsShowRankingAndSections",
@@ -68,7 +69,7 @@ interface RowLook {
 export async function scores(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, exists, fabState, mousePress, press, swipe, touchEmulated } =
+  const { atSize, attribute, boxOf, exists, fabState, mousePress, press, swipe, touchEmulated } =
     pageHelpers(page);
   const shownRows = () =>
     page.evaluate<ShownRow[]>(
@@ -262,14 +263,26 @@ export async function scores(ctx: Ctx) {
     byScore.length === shown + 2 &&
     byScore.every((score, at) => at === 0 || (byScore[at - 1] ?? 0) >= score);
 
+  // The search sits in the top band, and stays there as the list scrolls under it.
+  const searchInTheBand = async () => {
+    const bar = await boxOf("#scores-search");
+    return bar.top >= 0 && bar.bottom <= TOP_BAND_PX;
+  };
+  const bandAtTheTop = await searchInTheBand();
+  await page.evaluate("window.scrollTo(0, 400)");
+  await Bun.sleep(200);
+  const bandScrolled = await searchInTheBand();
+  await page.evaluate("window.scrollTo(0, 0)");
+  results.scoresSearchInTheTopBand = bandAtTheTop && bandScrolled;
+
   // A search finds a song by any of its names: taiko.wiki's English one here.
-  await typeInto("#scores-search", "sketch");
+  await typeInto("#scores-search-input", "sketch");
   await rowsAre(1);
   results.scoresSearchedByAnyName = same(
     (await shownRows()).map((row) => row.chart),
     [chart(1)],
   );
-  await typeInto("#scores-search", "");
+  await typeInto("#scores-search-input", "");
   await rowsAre(shown + 2);
 
   // A row opens its details, headed as the row is but for its hits, which the facts list below;

@@ -407,7 +407,7 @@ export const zhHans: Messages = {
   "picker.title.single": "选择最爱歌曲",
   "picker.title.multi": "添加歌曲",
   "picker.search": "搜索歌曲",
-  "picker.searchHint": "按曲名搜索（日文、英文、中文、罗马字）",
+  "picker.searchHint": "日文、英文、中文或罗马字",
   "picker.genre": "分类",
   "picker.difficulty": "难度",
   "picker.stars": "星级",

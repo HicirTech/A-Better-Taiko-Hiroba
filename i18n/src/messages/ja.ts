@@ -427,7 +427,7 @@ export const ja: Messages = {
   "picker.title.single": "大好きな曲を選ぶ",
   "picker.title.multi": "曲を追加",
   "picker.search": "曲を検索",
-  "picker.searchHint": "曲名で検索（日本語・英語・中国語・ローマ字）",
+  "picker.searchHint": "日本語・英語・中国語・ローマ字",
   "picker.genre": "ジャンル",
   "picker.difficulty": "むずかしさ",
   "picker.stars": "星の数",

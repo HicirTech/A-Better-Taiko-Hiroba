@@ -408,7 +408,7 @@ export const zhHant: Messages = {
   "picker.title.single": "選擇最愛歌曲",
   "picker.title.multi": "新增歌曲",
   "picker.search": "搜尋歌曲",
-  "picker.searchHint": "依曲名搜尋（日文、英文、中文、羅馬字）",
+  "picker.searchHint": "日文、英文、中文或羅馬字",
   "picker.genre": "分類",
   "picker.difficulty": "難度",
   "picker.stars": "星級",

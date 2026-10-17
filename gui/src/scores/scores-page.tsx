@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Stack, TextField, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { DIFFICULTY_LABEL, GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
@@ -10,9 +10,11 @@ import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { Waiting } from "../my-page/editor-parts";
+import { FrameTop } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { SearchField } from "../ui/search-field";
 import { ScoreDetails } from "./score-details";
 import { ScoreFilters } from "./score-filters";
 import {
@@ -88,42 +90,47 @@ export function ScoresPage({
   const openedScore = listed.find((one) => chartOf(one.score) === opened) ?? null;
   const settled = view !== null && !reading && failure === null;
   return (
-    <Stack spacing={2} id="scores-page">
-      {reading && <Waiting id="scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>}
-      {failure !== null && (
-        <LoadFailed id="scores-failure" failure={failure} i18n={i18n}>
-          {failure.at !== undefined && (
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {stopText(i18n, failure.at)}
-            </Typography>
-          )}
-        </LoadFailed>
-      )}
-      {settled && rows.length === 0 && (
-        <Typography id="scores-empty" color="text.secondary">
-          {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
-        </Typography>
-      )}
-      {settled && rows.length > 0 && scores.nothingNew && (
-        <Typography id="scores-nothing-new" color="text.secondary">
-          {t("scores.nothingNew")}
-        </Typography>
-      )}
-      {settled && rows.length > 0 && view.unread > 0 && (
-        <Typography id="scores-unread" color="text.secondary">
-          {t("scores.unread", { count: number(view.unread) })}
-        </Typography>
-      )}
+    <>
       {rows.length > 0 && (
-        <Stack spacing={1.5}>
-          <TextField
+        <FrameTop>
+          <SearchField
             id="scores-search"
-            type="search"
-            size="small"
-            label={t("picker.search")}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            query={query}
+            i18n={i18n}
+            hint={t("picker.searchHint")}
+            onQuery={setQuery}
           />
+        </FrameTop>
+      )}
+      <Stack spacing={2} id="scores-page">
+        {reading && (
+          <Waiting id="scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
+        )}
+        {failure !== null && (
+          <LoadFailed id="scores-failure" failure={failure} i18n={i18n}>
+            {failure.at !== undefined && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {stopText(i18n, failure.at)}
+              </Typography>
+            )}
+          </LoadFailed>
+        )}
+        {settled && rows.length === 0 && (
+          <Typography id="scores-empty" color="text.secondary">
+            {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
+          </Typography>
+        )}
+        {settled && rows.length > 0 && scores.nothingNew && (
+          <Typography id="scores-nothing-new" color="text.secondary">
+            {t("scores.nothingNew")}
+          </Typography>
+        )}
+        {settled && rows.length > 0 && view.unread > 0 && (
+          <Typography id="scores-unread" color="text.secondary">
+            {t("scores.unread", { count: number(view.unread) })}
+          </Typography>
+        )}
+        {rows.length > 0 && (
           <ScoreFilters
             filter={filter}
             sort={sort}
@@ -131,35 +138,35 @@ export function ScoresPage({
             onFilter={(part) => setFilter((now) => ({ ...now, ...part }))}
             onSort={setSort}
           />
+        )}
+        {rows.length > 0 && shown.length === 0 && (
+          <Typography id="scores-no-match" color="text.secondary">
+            {t("scores.noMatch")}
+          </Typography>
+        )}
+        <Stack component="ul" id="scores-list" spacing={0} sx={LIST}>
+          {shown.map((one, index) => (
+            <ScoreRow
+              key={chartOf(one.score)}
+              listed={one}
+              lane={lane}
+              order={index}
+              i18n={i18n}
+              onOpen={() => setOpened(chartOf(one.score))}
+            />
+          ))}
         </Stack>
-      )}
-      {rows.length > 0 && shown.length === 0 && (
-        <Typography id="scores-no-match" color="text.secondary">
-          {t("scores.noMatch")}
-        </Typography>
-      )}
-      <Stack component="ul" id="scores-list" spacing={0} sx={LIST}>
-        {shown.map((one, index) => (
-          <ScoreRow
-            key={chartOf(one.score)}
-            listed={one}
-            lane={lane}
-            order={index}
-            i18n={i18n}
-            onOpen={() => setOpened(chartOf(one.score))}
-          />
-        ))}
+        <ScoreDetails
+          listed={openedScore}
+          lane={lane}
+          reading={reading}
+          readingSong={song !== null && song.songNo === openedScore?.score.songNo}
+          i18n={i18n}
+          onReadSong={(score) => void readSong(score)}
+          onClose={() => setOpened(null)}
+        />
       </Stack>
-      <ScoreDetails
-        listed={openedScore}
-        lane={lane}
-        reading={reading}
-        readingSong={song !== null && song.songNo === openedScore?.score.songNo}
-        i18n={i18n}
-        onReadSong={(score) => void readSong(score)}
-        onClose={() => setOpened(null)}
-      />
-    </Stack>
+    </>
   );
 }
 

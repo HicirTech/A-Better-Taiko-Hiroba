@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogTitle,
   FormHelperText,
-  TextField,
   useMediaQuery,
   useTheme,
 } from "@mui/material";
@@ -27,6 +26,7 @@ import { useTouchFirst } from "../navigation/use-touch-first";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { FavoriteSongState } from "../session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
+import { SearchField } from "../ui/search-field";
 import type { PickableState } from "./pickable-songs";
 import { type PickerEntry, PickerList } from "./picker-list";
 import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
@@ -210,16 +210,14 @@ function PickerBody({ choice, catalogue, pickable, i18n, onClose }: Omit<SongPic
         {many === null ? t("picker.title.single") : t("picker.title.multi")}
       </DialogTitle>
       <Box sx={{ px: 3, pb: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <TextField
+        <SearchField
           id="song-picker-search"
-          type="search"
-          fullWidth
+          query={query}
+          i18n={i18n}
           autoFocus={!touchFirst}
-          label={t("picker.search")}
-          helperText={t("picker.searchHint")}
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
+          hint={t("picker.searchHint")}
+          onQuery={(next) => {
+            setQuery(next);
             rewind();
           }}
         />

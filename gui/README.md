@@ -228,7 +228,8 @@ details of each chart played since; a walk on the Recent plays page marks those 
 page counts them until it reads them; a read that finds none says that nothing changed, since the
 scores follow recent plays. A title the lists do not carry yet reads its genre's list again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
 from there next time. A row looks as one of Recent plays does, the song named in the player's
-language from taiko.wiki's list. A search over every name of a song, chips that each tick any
+language from taiko.wiki's list. A search over every name of a song, in the top band as the
+Overview's is and staying there as the list scrolls, chips that each tick any
 number of genres, difficulties (Settings' one at first, Extreme with its Ura charts) and star
 levels, and a sort chip (score, rank, genre, crown, plays, full combos, clears, or recent plays, a
 chart they no longer show last; by name with none) work together, ties going by song number. A

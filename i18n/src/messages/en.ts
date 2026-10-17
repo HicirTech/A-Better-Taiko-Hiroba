@@ -428,7 +428,7 @@ export const en: Messages = {
   "picker.title.single": "Choose your favourite song",
   "picker.title.multi": "Add songs",
   "picker.search": "Search songs",
-  "picker.searchHint": "By name, in Japanese, English, Chinese or romaji",
+  "picker.searchHint": "Japanese, English, Chinese or romaji",
   "picker.genre": "Genre",
   "picker.difficulty": "Difficulty",
   "picker.stars": "Stars",

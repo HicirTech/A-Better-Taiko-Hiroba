@@ -98,7 +98,7 @@ export async function favorites(ctx: Ctx) {
     page.evaluate(
       `(() => { const input = document.querySelector(${JSON.stringify(selector)}); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
     );
-  const search = (query: string) => typeInto("#song-picker-search", query);
+  const search = (query: string) => typeInto("#song-picker-search-input", query);
   const rowText = (songNo: string) => textOf(`#song-picker-row-${songNo}`);
   const placesIn = (selector: string) =>
     page.evaluate<string[]>(
