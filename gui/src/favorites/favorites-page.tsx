@@ -3,7 +3,7 @@ import { Box, IconButton, Stack, Typography } from "@mui/material";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
-import { HELD_STILL, useFocusKept, Waiting } from "../my-page/editor-parts";
+import { HELD_STILL, useFocusKept } from "../my-page/editor-parts";
 import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
@@ -240,7 +240,7 @@ function FavoritesBody({
           onApply={() => void apply(set.songs)}
         />
       ) : shown === null ? (
-        progressOf(step, i18n)
+        failureOf(step, i18n)
       ) : (
         <Stack spacing={2} inert={shown.shut} sx={shown.shut ? HELD_STILL : undefined}>
           <SongCard
@@ -344,15 +344,9 @@ function FavoritesBody({
   );
 }
 
-function progressOf(step: FavoritesStep, i18n: Translator): ReactNode {
-  switch (step.name) {
-    case "unread":
-    case "loading":
-      return <Waiting id="favorites-reading">{i18n.t("favorites.reading")}</Waiting>;
-    case "loadFailed":
-      return <LoadFailed id="favorites-load-failed" failure={step.failure} i18n={i18n} />;
-    case "ready":
-    case "saving":
-      return null;
-  }
+// A first read waits under the page's skeleton, and a read again under the held favourites.
+function failureOf(step: FavoritesStep, i18n: Translator): ReactNode {
+  return step.name === "loadFailed" ? (
+    <LoadFailed id="favorites-load-failed" failure={step.failure} i18n={i18n} />
+  ) : null;
 }

@@ -85,7 +85,7 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
     void editor.save();
   };
   const actions = actionsOf(editor, i18n, () => setHistoryOpen(true), save, wide);
-  const body = { editor, lane, i18n, part, onPart: setPart, progress: progressOf(step, i18n) };
+  const body = { editor, lane, i18n, part, onPart: setPart, progress: failureOf(step, i18n) };
   return (
     <Box ref={page} id="costume-page" data-step={step.name} tabIndex={-1} sx={pageOf(wide)}>
       {wide ? (
@@ -121,20 +121,11 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   );
 }
 
-function progressOf(step: EditorStep, i18n: Translator): ReactNode {
-  const { t } = i18n;
-  switch (step.name) {
-    case "unread":
-      return <Waiting>{t("costume.reading")}</Waiting>;
-    case "loading":
-      // A read again leaves the held editor on screen, shut; only a first read waits here.
-      return step.held === null ? <Waiting>{t("costume.reading")}</Waiting> : null;
-    case "loadFailed":
-      return <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />;
-    case "saving":
-    case "editing":
-      return null;
-  }
+// A first read waits under the page's skeleton, and a read again under the held editor.
+function failureOf(step: EditorStep, i18n: Translator): ReactNode {
+  return step.name === "loadFailed" ? (
+    <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />
+  ) : null;
 }
 
 function actionsOf(

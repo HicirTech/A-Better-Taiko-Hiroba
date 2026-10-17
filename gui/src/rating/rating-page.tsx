@@ -131,9 +131,6 @@ export function RatingPage({
         <Waiting id="rating-scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
       )}
       {failure !== null && <LoadFailed id="rating-scores-failure" failure={failure} i18n={i18n} />}
-      {ratingData.reading && data === null && (
-        <Waiting id="rating-data-reading">{t("rating.readingData")}</Waiting>
-      )}
       {ratingData.failure !== null && (
         <ReadFailureAlert
           id="rating-data-failure"

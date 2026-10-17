@@ -149,9 +149,6 @@ export function KnowYourselfPage({
         <Waiting id="know-scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
       )}
       {failure !== null && <LoadFailed id="know-scores-failure" failure={failure} i18n={i18n} />}
-      {catalogue.state === "loading" && (
-        <Waiting id="know-songs-loading">{t("picker.loading")}</Waiting>
-      )}
       {catalogue.state === "failed" && (
         <Box>
           <SongListFailed id="know-songs" catalogue={catalogue} i18n={i18n} />
