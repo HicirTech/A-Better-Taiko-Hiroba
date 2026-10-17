@@ -15,7 +15,8 @@ export const STILL = {
   menuButton: "abth-menu-button",
 } as const;
 
-const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+/** Where the system asks for less motion, nothing slides. */
+export const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
 
 /** Makes `change` one move of the window: a slide where the browser draws one, at once otherwise. */
 export function moveWindow(move: WindowMove, change: () => void): void {

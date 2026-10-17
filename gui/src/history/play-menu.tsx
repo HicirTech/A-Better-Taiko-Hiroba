@@ -119,6 +119,7 @@ export function AddToSetDialog({
           {t("history.unknownSong")}
         </Typography>
       }
+      i18n={i18n}
       onClose={onClose}
       onBack={songNo !== null && candidates.length > 0 ? () => onChooseSong(null) : undefined}
     />

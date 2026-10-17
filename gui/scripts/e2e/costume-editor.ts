@@ -538,7 +538,7 @@ export async function costumeWrite(ctx: Ctx) {
       undefined,
   );
   await openHistory();
-  await click("#costume-history-close");
+  await click("#costume-history-dialog-close");
   await historyClosed();
   const focusAfterClose = await waitFor(
     "focus back after Close",
@@ -566,7 +566,7 @@ export async function costumeWrite(ctx: Ctx) {
     return { dialog, focusBack };
   });
   results.historyDialogFullScreenOnANarrowWindow =
-    wideDialog.width <= 600 &&
+    wideDialog.width <= 900 &&
     historyOnAPhone.dialog.left < 1 &&
     historyOnAPhone.dialog.right > 479 &&
     historyOnAPhone.dialog.bottom - historyOnAPhone.dialog.top >= 799 &&

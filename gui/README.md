@@ -35,7 +35,10 @@ the window is idle once the Overview is read. A page still waiting for its first
 app opens, the Costume page's and Favourites' first read from Hiroba, the rating data or the song list)
 shows its own shape in grey, or nothing if the read ends within 0.4 seconds, and fades in once it comes;
 a page moved to while it waits slides in with that shape. The lists of Recent plays and Scores draw
-only the rows near the window, so thousands of them open and scroll as quickly as a few.
+only the rows near the window, so thousands of them open and scroll as quickly as a few. A question
+or a name to type opens in one small dialog; a deeper task (a song's or a chart's details, the song
+picker, the costume history, a chart picture) slides in from below in one large panel, the whole
+window on a phone, with one way to close it: its × on a computer, Back on a touch screen.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
 opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button at the foot of the

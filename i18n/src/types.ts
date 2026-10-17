@@ -390,7 +390,6 @@ export interface Messages {
   "costume.saving": string;
   "costume.history": string;
   "costume.history.title": string;
-  "costume.history.close": string;
   /** Marks the entry that is the set Hiroba shows now. */
   "costume.history.wornNow": string;
   /** Param: {position}, 1 for the newest. An entry's name as a button. */
@@ -512,7 +511,6 @@ export interface Messages {
   "picker.offeredFailed": string;
   /** Param: {max}, how many songs a set holds. */
   "picker.limit": string;
-  "picker.done": string;
   "picker.close": string;
   /** The song search's way back out to the page under it. */
   "search.leave": string;

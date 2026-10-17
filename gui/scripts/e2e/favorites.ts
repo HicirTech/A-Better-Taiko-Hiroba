@@ -415,7 +415,7 @@ export async function favorites(ctx: Ctx) {
   for (const songNo of ["1001", "1003", LONG_TITLED]) {
     await page.evaluate(`document.querySelector("#song-picker-row-${songNo} input").click()`);
   }
-  await click("#song-picker-done");
+  await click("#song-picker-close");
   await gone("#song-picker");
   await shown(`#favorite-set-song-${LONG_TITLED}`);
   await Bun.sleep(500);

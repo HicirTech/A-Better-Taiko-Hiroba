@@ -4,21 +4,15 @@ import {
   Box,
   Chip,
   CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogTitle,
   FormHelperText,
   IconButton,
   Stack,
   ToggleButton,
   Tooltip,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { CloseIcon } from "../favorites/favorites-icons";
 import {
   DIFFICULTY_COLOUR,
   DIFFICULTY_LABEL,
@@ -30,8 +24,6 @@ import { keptShownDifficulty } from "../favorites/shown-difficulty";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import type { ListedSong } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { useBackLeaves } from "../navigation/back-closers";
-import { PipelinesShownContext } from "../navigation/pipelines-shown";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import { HoldRing, usePressHold } from "../read-again/long-hold";
@@ -39,6 +31,7 @@ import { PullToRead } from "../read-again/pull-to-read";
 import { RefreshIcon } from "../read-again/read-again-foot";
 import type { HirobaSessionPort } from "../session-port";
 import { type ChartFileFailure, DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import { LargeModal } from "../ui/large-modal";
 import { ChartDensitySection, type DensityState, masterOf } from "./chart-density";
 import { ChartPictures } from "./chart-pictures";
 import { keptChartSource } from "./chart-source";
@@ -48,7 +41,6 @@ import { drawChart } from "./draw-chart";
 import { reloadCharts } from "./find-chart-picture";
 import { bpmText, openingChart } from "./song-facts";
 
-const TITLE_ID = "song-details-title";
 /** One empty list for a chart with no facts, so its pictures are not asked for at every render. */
 const NO_IMAGES: readonly string[] = [];
 
@@ -84,37 +76,21 @@ export interface SongDetailsProps {
 }
 
 export function SongDetails({ song, port, lane, i18n, onClose }: SongDetailsProps) {
-  const narrow = useMediaQuery(useTheme().breakpoints.down("sm"), { noSsr: true });
-  // Kept while the dialog fades out, so it does not go blank on its way.
+  // Kept while the modal slides away, so it does not go blank on its way.
   const [last, setLast] = useState(song);
   if (song !== null && song !== last) {
     setLast(song);
   }
-  // A page of its own on a phone: Back leaves it as it leaves a mode, and the menu's swipe still
-  // opens the menu over it.
-  useBackLeaves(song !== null, onClose);
-  const covered = useContext(PipelinesShownContext);
-  return (
-    <Dialog
-      id="song-details"
-      open={song !== null && !covered}
+  return last === null ? null : (
+    <DetailsBody
+      key={last.songNo}
+      open={song !== null}
+      song={last}
+      port={port}
+      lane={lane}
+      i18n={i18n}
       onClose={onClose}
-      fullScreen={narrow}
-      fullWidth
-      maxWidth="md"
-      aria-labelledby={TITLE_ID}
-    >
-      {last !== null && (
-        <DetailsBody
-          key={last.songNo}
-          song={last}
-          port={port}
-          lane={lane}
-          i18n={i18n}
-          onClose={onClose}
-        />
-      )}
-    </Dialog>
+    />
   );
 }
 
@@ -133,14 +109,15 @@ const averageText = (value: number, locale: Translator["locale"]) =>
 
 // Its own component, so each song opens on the chart its levels and the setting choose.
 function DetailsBody({
+  open,
   song,
   port,
   lane,
   i18n,
   onClose,
-}: Omit<SongDetailsProps, "song"> & { song: ListedSong }) {
+}: Omit<SongDetailsProps, "song"> & { open: boolean; song: ListedSong }) {
   const { t, locale } = i18n;
-  // A touch screen's Back shuts the dialog and a pull reads the chart again: no buttons.
+  // A touch screen's pull reads the chart again, where a computer has the button.
   const touchFirst = useTouchFirst();
   const content = useRef<HTMLDivElement>(null);
   const [density, setDensity] = useState<DensityState>({
@@ -219,16 +196,13 @@ function DetailsBody({
 
   return (
     <>
-      <DialogTitle
-        id={TITLE_ID}
-        lang={nameLanguage(song, name)}
-        sx={touchFirst ? undefined : { pr: 13 }}
-      >
-        {name}
-      </DialogTitle>
-      {!touchFirst && (
-        <Box sx={{ position: "absolute", top: 12, right: 12, display: "flex" }}>
-          {/* None while it is shut: a disabled button sends no event to open or close it. */}
+      <LargeModal
+        id="song-details"
+        open={open}
+        title={name}
+        titleLang={nameLanguage(song, name)}
+        actions={
+          // None while it is shut: a disabled button sends no event to open or close it.
           <Tooltip title={busy ? "" : readLabel}>
             <IconButton
               id="song-details-read-chart"
@@ -251,12 +225,12 @@ function DetailsBody({
               )}
             </IconButton>
           </Tooltip>
-          <IconButton id="song-details-close" aria-label={t("picker.close")} onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      )}
-      <DialogContent ref={content} dividers>
+        }
+        pageLike
+        contentRef={content}
+        i18n={i18n}
+        onClose={onClose}
+      >
         <PullToRead
           active={touchFirst}
           canRead={!busy}
@@ -360,7 +334,7 @@ function DetailsBody({
             </FormHelperText>
           )}
         </Stack>
-      </DialogContent>
+      </LargeModal>
       <ChartViewer chart={viewing} i18n={i18n} onClose={() => setViewing(null)} />
     </>
   );

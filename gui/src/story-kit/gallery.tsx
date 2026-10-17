@@ -41,6 +41,7 @@ const inCells = (outer: Theme): Theme => {
       ...outer.components,
       MuiDialog: { defaultProps: inPlace },
       MuiDrawer: { defaultProps: { ModalProps: inPlace } },
+      MuiModal: { defaultProps: inPlace },
       MuiPopover: { defaultProps: inPlace },
     },
   };
