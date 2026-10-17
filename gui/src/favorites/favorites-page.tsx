@@ -12,7 +12,6 @@ import type { HirobaSessionPort } from "../session-port";
 import { SongDetails } from "../songs/song-details";
 import { LoadFailed } from "../ui/read-failure-alert";
 import {
-  type FavoriteSet,
   filledSlots,
   moved,
   newSetName,
@@ -40,9 +39,11 @@ import type { SongCatalogue } from "./use-song-catalogue";
 const NO_SONGS: readonly string[] = [];
 
 /** What the name dialog asks for: a new set, opened for editing or not, or a set's new name. */
-type Naming =
-  | { readonly kind: "new"; readonly songs: readonly string[]; readonly editing: boolean }
-  | { readonly kind: "rename"; readonly set: FavoriteSet };
+/** A new set whose name is asked: its songs, and whether it opens in edit mode. */
+interface Naming {
+  readonly songs: readonly string[];
+  readonly editing: boolean;
+}
 
 export interface FavoritesPageProps {
   readonly favorites: FavoritesEditor;
@@ -159,12 +160,11 @@ function FavoritesBody({
   };
   useBackLeaves(editing, leaveEditing);
   const named = (name: string) => {
-    if (naming?.kind === "new") {
+    if (naming !== null) {
       showSet(keptSets.add(name, naming.songs), naming.editing);
-    } else if (naming?.kind === "rename") {
-      keptSets.rename(naming.set.id, name);
     }
     setNaming(null);
+    setDrawerOpen(false);
   };
 
   // Focus leaves the button a write shuts, so it is not dropped to the window's top.
@@ -258,11 +258,7 @@ function FavoritesBody({
             sets={sets}
             inUse={inUse}
             onSaveAsSet={() =>
-              setNaming({
-                kind: "new",
-                songs: filledSlots(shown.view.folder.state),
-                editing: false,
-              })
+              setNaming({ songs: filledSlots(shown.view.folder.state), editing: false })
             }
             onSaveToSet={(id) => keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))}
           />
@@ -297,17 +293,9 @@ function FavoritesBody({
           showSet(id);
           setDrawerOpen(false);
         }}
-        onAdd={() => {
-          setDrawerOpen(false);
-          setNaming({ kind: "new", songs: [], editing: true });
-        }}
+        onAdd={() => setNaming({ songs: [], editing: true })}
         onMove={keptSets.moveSet}
-        onRename={(id) => {
-          const chosen = sets.find((one) => one.id === id);
-          if (chosen !== undefined) {
-            setNaming({ kind: "rename", set: chosen });
-          }
-        }}
+        onRename={keptSets.rename}
         onDelete={(id) => {
           keptSets.remove(id);
           if (id === selectedId) {
@@ -326,13 +314,8 @@ function FavoritesBody({
       />
       {naming !== null && (
         <SetNameDialog
-          key={naming.kind === "rename" ? naming.set.id : "new"}
-          title={t(naming.kind === "rename" ? "favorites.rename.title" : "favorites.newSet")}
-          initial={
-            naming.kind === "rename"
-              ? naming.set.name
-              : newSetName(sets, (number) => t("favorites.setName", { number }))
-          }
+          title={t("favorites.newSet")}
+          initial={newSetName(sets, (number) => t("favorites.setName", { number }))}
           i18n={i18n}
           onCancel={() => setNaming(null)}
           onSave={named}

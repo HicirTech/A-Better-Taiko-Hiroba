@@ -68,6 +68,7 @@ export function FolderCard({
   const [menuAt, setMenuAt] = useState<HTMLElement | null>(null);
   const [replacing, setReplacing] = useState<FavoriteSet | null>(null);
   const stopReplacing = () => setReplacing(null);
+  useBackCloses(menuAt !== null, () => setMenuAt(null));
   useBackCloses(replacing !== null, stopReplacing);
   return (
     <Card id="favorite-folder-card" variant="outlined">
@@ -146,10 +147,7 @@ export function FolderCard({
           <MenuItem
             key={set.id}
             id={`favorite-folder-save-to-set-${index}`}
-            onClick={() => {
-              setMenuAt(null);
-              setReplacing(set);
-            }}
+            onClick={() => setReplacing(set)}
           >
             {set.name}
           </MenuItem>
@@ -180,6 +178,7 @@ export function FolderCard({
                 onSaveToSet(replacing.id);
               }
               stopReplacing();
+              setMenuAt(null);
             }}
           >
             {t("favorites.replace.confirm")}

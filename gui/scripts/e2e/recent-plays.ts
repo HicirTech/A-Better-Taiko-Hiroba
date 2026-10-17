@@ -37,6 +37,7 @@ export const recentPlayDetailsKeys = [
 export const recentPlaySetsKeys = [
   "rightClickOffersOneAction",
   "playMenuAddsToANewSet",
+  "playNewSetCancelGoesBackToTheChooser",
   "playMenuMarksASetHoldingTheSong",
   "playMenuAddsToTheEndOfASet",
   "playMenuSendsNothingToHiroba",
@@ -382,8 +383,14 @@ export async function recentPlaySets(ctx: Ctx) {
   await openDialog(40);
   await click("#history-add-new-set");
   await shown("#favorite-set-name-dialog");
+  await press("Escape");
+  await gone("#favorite-set-name-dialog");
+  results.playNewSetCancelGoesBackToTheChooser = await exists("#history-add-to-set");
+  await click("#history-add-new-set");
+  await shown("#favorite-set-name-dialog");
   await click("#favorite-set-name-save");
   await gone("#favorite-set-name-dialog");
+  await gone("#history-add-to-set");
   const sets = await kept();
   const index = sets.length - 1;
   results.playMenuAddsToANewSet = same(sets[index]?.songs ?? [], ["1040"]);

@@ -36,6 +36,7 @@ export const favoritesKeys = [
   "favoriteSongOpensItsDetails",
   "setsSwipeWaitsForTheDetails",
   "newSetAsksForItsName",
+  "newSetCancelGoesBackToTheDrawer",
   "pickerShowsItsFilters",
   "pickerShowsItsFiltersOnAPhone",
   "pickerOpensOnEverySong",
@@ -57,6 +58,7 @@ export const favoritesKeys = [
   "setAppliedWithNoMessage",
   "folderShowsTheSetInUse",
   "notStagedSaysSoAndSavesNothing",
+  "replaceCancelGoesBackToTheMenu",
   "folderSavedIntoASet",
   "setsMovedByTheirHandle",
   "setRenamedFromItsMenu",
@@ -73,6 +75,7 @@ export const favoritesKeys = [
   "setsDrawerOpensBySwipe",
   "setsButtonHiddenOnTouch",
   "setOffersItsActionsOnALongPress",
+  "setActionsStayUnderTheirDialogs",
 ] as const;
 
 export async function favorites(ctx: Ctx) {
@@ -325,6 +328,12 @@ export async function favorites(ctx: Ctx) {
   await openDrawer();
   await click("#favorites-item-new");
   await shown("#favorite-set-name");
+  // Esc stands in for Android's Back: a dialog goes back to where it was opened from.
+  await press("Escape");
+  await gone("#favorite-set-name-dialog");
+  results.newSetCancelGoesBackToTheDrawer = await exists("#favorites-drawer");
+  await click("#favorites-item-new");
+  await shown("#favorite-set-name");
   const offeredName = await page.evaluate<string>(
     `document.querySelector("#favorite-set-name").value`,
   );
@@ -465,6 +474,11 @@ export async function favorites(ctx: Ctx) {
 
   await click("#favorite-folder-save-to-set");
   await shown("#favorite-folder-save-to-set-0");
+  await click("#favorite-folder-save-to-set-0");
+  await shown("#favorite-folder-replace-confirm");
+  await press("Escape");
+  await gone("#favorite-folder-replace-dialog");
+  results.replaceCancelGoesBackToTheMenu = await exists("#favorite-folder-save-to-set-0");
   await click("#favorite-folder-save-to-set-0");
   await shown("#favorite-folder-replace-confirm");
   await click("#favorite-folder-replace-confirm");
@@ -631,6 +645,17 @@ export async function favorites(ctx: Ctx) {
       results.setOffersItsActionsOnALongPress =
         (await exists("#favorite-set-actions-rename")) &&
         (await exists("#favorite-set-actions-delete"));
+      await click("#favorite-set-actions-rename");
+      await shown("#favorite-set-name-dialog");
+      await press("Escape");
+      await gone("#favorite-set-name-dialog");
+      const actionsUnderTheName = await exists("#favorite-set-actions-rename");
+      await click("#favorite-set-actions-delete");
+      await shown("#favorite-set-delete-dialog");
+      await press("Escape");
+      await gone("#favorite-set-delete-dialog");
+      results.setActionsStayUnderTheirDialogs =
+        actionsUnderTheName && (await exists("#favorite-set-actions-delete"));
       await press("Escape");
       await gone("#favorite-set-actions");
       await swipe({ x: PHONE_TALL.width - 200, y }, { x: PHONE_TALL.width - 40, y: y + 10 });

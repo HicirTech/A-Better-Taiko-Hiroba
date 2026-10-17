@@ -202,10 +202,7 @@ export function HistoryPage({
             kept.replaceSongs(set.id, [...set.songs, songNo]);
             shut();
           }}
-          onNewSet={(songNo) => {
-            shut();
-            setNaming(songNo);
-          }}
+          onNewSet={setNaming}
           onClose={shut}
         />
       )}
@@ -218,6 +215,7 @@ export function HistoryPage({
           onSave={(name) => {
             kept.add(name, [naming]);
             setNaming(null);
+            shut();
           }}
         />
       )}

@@ -214,10 +214,7 @@ export function KnowYourselfPage({
             kept.replaceSongs(set.id, [...set.songs, ...added]);
             setAdding(null);
           }}
-          onNewSet={() => {
-            setNaming(adding.slice(0, SET_SONG_LIMIT));
-            setAdding(null);
-          }}
+          onNewSet={() => setNaming(adding.slice(0, SET_SONG_LIMIT))}
           onClose={() => setAdding(null)}
         />
       )}
@@ -230,6 +227,7 @@ export function KnowYourselfPage({
           onSave={(name) => {
             kept.add(name, naming);
             setNaming(null);
+            setAdding(null);
           }}
         />
       )}

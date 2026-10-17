@@ -1,9 +1,10 @@
 import { spaced, type TitleOption } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Autocomplete, Box, Chip, TextField, Typography } from "@mui/material";
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
+import { useBackCloses } from "../navigation/back-closers";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { TitleList } from "./title-editor-state";
 import { currentOptions, filterTitles } from "./title-options";
@@ -26,6 +27,9 @@ export interface TitlePickerProps {
 
 export function TitlePicker({ worn, picked, list, busy, onOpen, onPick, i18n }: TitlePickerProps) {
   const { t } = i18n;
+  // Open as the page knows it, so Android's Back shuts the list before it leaves the page.
+  const [open, setOpen] = useState(false);
+  useBackCloses(open, () => setOpen(false));
   const listed = list.name === "read" ? list.options : NOT_LISTED;
   const current = useMemo(() => currentOptions(listed, { title: worn }), [listed, worn]);
   // The select shows the title worn until another is picked.
@@ -52,7 +56,12 @@ export function TitlePicker({ worn, picked, list, busy, onOpen, onPick, i18n }: 
       disableClearable={picked === null}
       loading={list.name === "unread" || list.name === "loading"}
       loadingText={t("title.reading")}
-      onOpen={onOpen}
+      open={open}
+      onOpen={() => {
+        setOpen(true);
+        onOpen();
+      }}
+      onClose={() => setOpen(false)}
       onChange={(_event, option) => onPick(option)}
       getOptionLabel={(option) => option.label}
       // Keyed by id: MUI keys by label otherwise, so two titles of one name would share a key and

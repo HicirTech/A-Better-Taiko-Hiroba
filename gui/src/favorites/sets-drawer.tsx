@@ -22,6 +22,7 @@ import { type MouseEvent, useState } from "react";
 import { useBackCloses } from "../navigation/back-closers";
 import { type FavoriteSet, sameSongs } from "./favorite-sets";
 import { AddIcon, CheckIcon } from "./favorites-icons";
+import { SetNameDialog } from "./set-name-dialog";
 import { SortableList } from "./sortable-list";
 
 const DRAWER_WIDTH_PX = 280;
@@ -41,7 +42,7 @@ export interface SetsDrawerProps {
   readonly onPick: (id: string | null) => void;
   readonly onAdd: () => void;
   readonly onMove: (from: number, to: number) => void;
-  readonly onRename: (id: string) => void;
+  readonly onRename: (id: string, name: string) => void;
   readonly onDelete: (id: string) => void;
   readonly onClose: () => void;
 }
@@ -65,6 +66,7 @@ export function SetsDrawer({
   const [menu, setMenu] = useState<{ set: FavoriteSet; x: number; y: number } | null>(null);
   const [offering, setOffering] = useState<FavoriteSet | null>(null);
   const [deleting, setDeleting] = useState<FavoriteSet | null>(null);
+  const [renaming, setRenaming] = useState<FavoriteSet | null>(null);
   const stopOffering = () => setOffering(null);
   const stopDeleting = () => setDeleting(null);
   useBackCloses(open, onClose);
@@ -76,12 +78,10 @@ export function SetsDrawer({
   };
   const rename = (set: FavoriteSet) => {
     setMenu(null);
-    setOffering(null);
-    onRename(set.id);
+    setRenaming(set);
   };
   const askToDelete = (set: FavoriteSet) => {
     setMenu(null);
-    setOffering(null);
     setDeleting(set);
   };
   return (
@@ -221,12 +221,27 @@ export function SetsDrawer({
                 onDelete(deleting.id);
               }
               stopDeleting();
+              stopOffering();
             }}
           >
             {t("favorites.delete")}
           </Button>
         </DialogActions>
       </Dialog>
+      {renaming !== null && (
+        <SetNameDialog
+          key={renaming.id}
+          title={t("favorites.rename.title")}
+          initial={renaming.name}
+          i18n={i18n}
+          onCancel={() => setRenaming(null)}
+          onSave={(name) => {
+            onRename(renaming.id, name);
+            setRenaming(null);
+            stopOffering();
+          }}
+        />
+      )}
     </Drawer>
   );
 }

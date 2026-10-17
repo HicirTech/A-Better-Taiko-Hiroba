@@ -27,6 +27,7 @@ export function ChoiceDialog({
   choices,
   empty,
   onClose,
+  onBack,
 }: {
   readonly id: string;
   readonly title: string;
@@ -36,11 +37,21 @@ export function ChoiceDialog({
   /** What stands in for the choices when there are none. */
   readonly empty?: ReactNode;
   readonly onClose: () => void;
+  /** Where the choice follows an earlier question: Back and Esc go back to it, a click out closes. */
+  readonly onBack?: (() => void) | undefined;
 }) {
-  useBackCloses(true, onClose);
+  const back = onBack ?? onClose;
+  useBackCloses(true, back);
   const titleId = `${id}-title`;
   return (
-    <Dialog id={id} open onClose={onClose} aria-labelledby={titleId} fullWidth maxWidth="xs">
+    <Dialog
+      id={id}
+      open
+      onClose={(_event, reason) => (reason === "escapeKeyDown" ? back() : onClose())}
+      aria-labelledby={titleId}
+      fullWidth
+      maxWidth="xs"
+    >
       <DialogTitle id={titleId} sx={{ pb: subtitle === null ? undefined : 0.5 }}>
         {title}
       </DialogTitle>
