@@ -1,0 +1,65 @@
+import { type ReactNode, useEffect, useState } from "react";
+import { action } from "storybook/actions";
+
+import { type CostumeEditor, useCostumeEditor } from "../my-page/use-costume-editor";
+import { type NameEditor, useNameEditor } from "../name-title/use-name-editor";
+import { type TitleEditor, useTitleEditor } from "../name-title/use-title-editor";
+import type { HirobaSessionPort } from "../session-port";
+import { STORY_PROFILE } from "./profile";
+import { STORY_LANE } from "./story-pictures";
+import { createStoryPort } from "./story-port";
+
+/** A story port that lasts as long as the story: the editors keep what they read by their port. */
+function useStoryPort(changes: Partial<HirobaSessionPort>): HirobaSessionPort {
+  const [port] = useState(() => createStoryPort(changes));
+  return port;
+}
+
+/** The Costume page's editor on a story port, read as the page reads it when shown. */
+export function WithCostumeEditor({
+  changes = {},
+  children,
+}: {
+  readonly changes?: Partial<HirobaSessionPort>;
+  readonly children: (editor: CostumeEditor) => ReactNode;
+}) {
+  const port = useStoryPort(changes);
+  const editor = useCostumeEditor({
+    port,
+    lane: STORY_LANE,
+    shown: true,
+    onSessionGone: action("session gone"),
+  });
+  const { read } = editor;
+  useEffect(() => {
+    void read();
+  }, [read]);
+  return children(editor);
+}
+
+/** The Nickname and title page's two editors on a story port, for the made-up player. */
+export function WithNameAndTitle({
+  changes = {},
+  children,
+}: {
+  readonly changes?: Partial<HirobaSessionPort>;
+  readonly children: (name: NameEditor, title: TitleEditor) => ReactNode;
+}) {
+  const port = useStoryPort(changes);
+  const name = useNameEditor({
+    port,
+    lane: STORY_LANE,
+    profile: STORY_PROFILE,
+    onSessionGone: action("session gone"),
+    onNickname: action("nickname read back"),
+  });
+  const title = useTitleEditor({
+    port,
+    lane: STORY_LANE,
+    profile: STORY_PROFILE,
+    onSessionGone: action("session gone"),
+    onTitle: action("title read back"),
+    onMoved: action("moved"),
+  });
+  return children(name, title);
+}
