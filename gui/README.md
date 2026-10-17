@@ -95,7 +95,7 @@ Chinese to Hiroba's own words.
 ## What you need
 
 - **Bun 1.4.2.** It installs packages, runs every script, bundles Electron's code and runs Vite.
-- **Node 22.** Only the Capacitor CLI needs it.
+- **Node 22.** Only the Capacitor CLI and Storybook need it.
 - **JDK 21**, with `JAVA_HOME` set, and the **Android SDK** with platform 36 and build-tools 36,
   with `ANDROID_HOME` set. Only the Android scripts need them.
 - **adb** on the `PATH`, for a device.
@@ -621,6 +621,40 @@ requests: no read and no picture goes out between them. The WebView's cookie sto
 disk after each write. The port also checks every call's arguments, as the desktop's main process
 does for its window. Nothing is shut by the build: the release APK writes as the debug one does,
 and the list that decides the two extra reads is the one [Writes](#writes) describes.
+
+## Storybook
+
+| Script | What it does |
+|---|---|
+| `bun run storybook` | Storybook on `http://localhost:6006`: stories for every component in `src`, from a chip to a whole page. |
+| `bun run storybook --pack <folder>` | The same, drawing the pictures of a resource pack kept outside the repository. |
+| `bun run build:storybook` | The same as a static site in `out/storybook`, always with the stand-ins. |
+
+The stories draw made-up data and the stand-in's pictures (`scripts/mock-pictures.ts`), and ask
+nothing of Hiroba or any other site; a whole page runs on a port that answers from the same data.
+The toolbar picks the device (the PC's window as it opens, or an Android phone or tablet, both touch
+screens), the language and light or dark. The sidebar groups the components by kind, and each kind
+opens with its members side by side.
+
+A resource pack is a folder, outside every git work tree, named by its absolute path. Its
+`pack.json` lists PNG files below it by the keys the picture lane uses (`wantKey` in
+`src/pictures/picture-lane.ts`), plus `danLabel/<board>` for a dan's label and
+`chartPicture/<song>/<difficulty>/<n>` for a chart's pictures, and JSON files by the names in
+`src/story-kit/pack.ts`: each is what the port answers for a page, or a feed's own text.
+
+```json
+{
+  "format": "abth-story-pack",
+  "version": 1,
+  "label": "my pack",
+  "pictures": { "rankIcon/5": "pictures/rankIcon/5.png", "danLabel/10": "pictures/danLabel/10.png" },
+  "data": { "recentPlays": "data/recentPlays.json" }
+}
+```
+
+Whole pages read the pack's data and the components keep the made-up data; anything the pack lacks
+keeps its stand-in. The repository ships no pack, only the local Storybook reads one, it then
+answers this machine alone, and a build refuses to start while a pack is named.
 
 ## Releases
 
