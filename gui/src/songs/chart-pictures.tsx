@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { DIFFICULTY_LABEL } from "../favorites/genre-look";
 import type { HirobaSessionPort } from "../session-port";
 import type { ChartFileFailure, Difficulty } from "../song-catalogue/types";
-import { ChartPicture, PictureButton, PictureFailed, PictureLoading } from "./chart-picture";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
+import { ChartPicture, PictureButton, PictureLoading } from "./chart-picture";
 import type { ChartSource } from "./chart-source";
 import type { ShownChart } from "./chart-viewer";
 import { drawChart } from "./draw-chart";
@@ -36,11 +37,10 @@ export function ChartPictures(props: ChartPicturesProps) {
   const { songNo, difficulty, images, source, differs, tja, generation, port, i18n, onOpen } =
     props;
   const { t } = i18n;
-  const [attempt, setAttempt] = useState(0);
   // Kept while a reload draws anew: the picture shown stays until its successor is ready.
   const [shown, setShown] = useState<ChartShown | null>(source === "wiki" ? WIKI : null);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: a reload or a retry asks again
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a reload asks again
   useEffect(() => {
     if (source === "wiki") {
       return;
@@ -57,7 +57,7 @@ export function ChartPictures(props: ChartPicturesProps) {
     return () => {
       current = false;
     };
-  }, [songNo, difficulty, images, source, tja, port, generation, attempt]);
+  }, [songNo, difficulty, images, source, tja, port, generation]);
 
   const chartName = t(DIFFICULTY_LABEL[difficulty]);
   if (shown === null) {
@@ -65,17 +65,7 @@ export function ChartPictures(props: ChartPicturesProps) {
   }
 
   if (shown.kind === "failed") {
-    return (
-      <PictureFailed
-        message={t("details.densityFailed")}
-        code={shown.code}
-        i18n={i18n}
-        onRetry={() => {
-          setShown(null);
-          setAttempt((now) => now + 1);
-        }}
-      />
-    );
+    return <ReadFailureAlert message={t("details.densityFailed")} code={shown.code} i18n={i18n} />;
   }
 
   if (shown.kind === "drawn") {

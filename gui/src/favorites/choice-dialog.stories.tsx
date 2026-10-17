@@ -8,17 +8,19 @@ import { i18nOf } from "../story-kit/env";
 import { ChoiceDialog } from "./choice-dialog";
 import { SET_SONG_LIMIT } from "./favorite-sets";
 
-type Args = Omit<ComponentProps<typeof ChoiceDialog>, "title" | "choices">;
+type Args = Omit<ComponentProps<typeof ChoiceDialog>, "title" | "choices" | "i18n">;
 
 const meta = {
   title: "Dialogs/ChoiceDialog",
   tags: ["favorites"],
   parameters: { layout: "fullscreen" },
   render: (args, { globals }) => {
-    const { t, number } = i18nOf(globals);
+    const i18n = i18nOf(globals);
+    const { t, number } = i18n;
     return (
       <ChoiceDialog
         {...args}
+        i18n={i18n}
         title={t("history.addToSet")}
         choices={[
           { id: "set-1", primary: "練習用", secondary: null, onChoose: action("choose") },
@@ -55,15 +57,16 @@ export const WithoutSubtitle: Story = { args: { subtitle: null } };
 /** No choice to make: what stands in for them shows instead. */
 export const Empty: Story = {
   render: (args, { globals }) => {
-    const { t } = i18nOf(globals);
+    const i18n = i18nOf(globals);
     return (
       <ChoiceDialog
         {...args}
-        title={t("history.addToSet")}
+        i18n={i18n}
+        title={i18n.t("history.addToSet")}
         choices={[]}
         empty={
           <Typography color="text.secondary" sx={{ px: 3, pt: 1, pb: 3 }}>
-            {t("history.unknownSong")}
+            {i18n.t("history.unknownSong")}
           </Typography>
         }
       />

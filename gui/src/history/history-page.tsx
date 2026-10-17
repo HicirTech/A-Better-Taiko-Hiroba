@@ -10,19 +10,19 @@ import { nameLanguage, shownName } from "../favorites/song-names";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { Waiting } from "../my-page/editor-parts";
 import { useLongPress } from "../my-page/use-long-press";
 import type { PictureLane } from "../pictures/picture-lane";
 import { type PlayNotice, ScoreDetails } from "../scores/score-details";
 import { listedOf, scoresReadingText } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
-import { HistoryRow, opensOnPress, type RowProps } from "./history-row";
+import { LoadFailed } from "../ui/read-failure-alert";
+import { RowList, type RowPlace } from "../ui/row-list";
+import { HISTORY_ROW_PX, HistoryRow, opensOnPress, type RowProps } from "./history-row";
 import { type PlacedPlay, placePlay, playedChart } from "./placed-play";
 import { AddToSetDialog, type NamedSong, PlayMenu, type Point } from "./play-menu";
 import { playedSong, songsByTitle } from "./played-song";
 import type { RecentPlaysState } from "./use-recent-plays";
-
-const LIST = { listStyle: "none", m: 0, p: 0 } as const;
 
 /** The recent-plays page: the stored walk, read again by a pull, Read again or its keys. */
 export function HistoryPage({
@@ -153,21 +153,21 @@ export function HistoryPage({
           {i18n.t(touchFirst ? "history.emptyPull" : "history.emptyReadAgain")}
         </Typography>
       )}
-      <Stack component="ul" id="history-list" spacing={0} sx={LIST}>
-        {rows.map((play, index) => (
+      <RowList id="history-list" rows={rows} keyOf={recentPlayKey} rowPx={HISTORY_ROW_PX}>
+        {(play, index, place) => (
           <PlayRow
-            key={recentPlayKey(play)}
             play={play}
             name={nameOf(play)}
             lane={lane}
             order={index}
+            place={place}
             touchFirst={touchFirst}
             i18n={i18n}
             onOpen={() => setOpened(play)}
             onHold={(at) => (at === null ? setAdding(play) : setMenu({ play, at }))}
           />
-        ))}
-      </Stack>
+        )}
+      </RowList>
       <ScoreDetails
         listed={placed?.kind === "scored" ? listedOf(placed.score, catalogue, i18n.locale) : null}
         notice={notice}
@@ -201,10 +201,7 @@ export function HistoryPage({
             kept.replaceSongs(set.id, [...set.songs, songNo]);
             shut();
           }}
-          onNewSet={(songNo) => {
-            shut();
-            setNaming(songNo);
-          }}
+          onNewSet={setNaming}
           onClose={shut}
         />
       )}
@@ -217,6 +214,7 @@ export function HistoryPage({
           onSave={(name) => {
             kept.add(name, [naming]);
             setNaming(null);
+            shut();
           }}
         />
       )}
@@ -230,6 +228,7 @@ function PlayRow({
   name,
   lane,
   order,
+  place,
   touchFirst,
   i18n,
   onOpen,
@@ -239,6 +238,7 @@ function PlayRow({
   readonly name: { readonly text: string; readonly lang: string };
   readonly lane: PictureLane;
   readonly order: number;
+  readonly place: RowPlace;
   readonly touchFirst: boolean;
   readonly i18n: Translator;
   readonly onOpen: () => void;
@@ -257,7 +257,15 @@ function PlayRow({
     },
   };
   return (
-    <HistoryRow play={play} name={name} lane={lane} order={order} i18n={i18n} rowProps={rowProps} />
+    <HistoryRow
+      play={play}
+      name={name}
+      lane={lane}
+      order={order}
+      i18n={i18n}
+      rowProps={rowProps}
+      place={place}
+    />
   );
 }
 

@@ -42,8 +42,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Charts not cleared, the nearest first, with chips for never played and played; some or the
- * nearest go to a set. */
+/** Charts not cleared, the nearest first, with chips for never and already played. */
 export const NotCleared: Story = {};
 
 /** The same list with no chips. */

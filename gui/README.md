@@ -25,14 +25,26 @@ whole with no scrollbar, unless the screen has less room. On a wide window a sid
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
-at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back closes the drawer or an open dialog (the Costume page's History, say), goes from
+at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back goes one level back: it closes the drawer or the dialog on top (the Costume page's History, say), and a dialog opened from a drawer, a menu or another dialog goes back to it; it goes from
 Costume, Nickname & title, Favourites, Recent plays, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
 the app as before.
+A page lower in the list slides in from below and one higher up from above, as the list's highlight
+slides to its row; picking the page already shown does nothing. Recent plays, Scores, Rating and Know
+yourself show at once what they showed before, and what the device keeps for them is brought in while
+the window is idle once the Overview is read. A page still waiting for its first read (my page as the
+app opens, the Costume page's and Favourites' first read from Hiroba, the rating data or the song list)
+shows its own shape in grey, or nothing if the read ends within 0.4 seconds, and fades in once it comes;
+a page moved to while it waits slides in with that shape. The lists of Recent plays and Scores draw
+only the rows near the window, so thousands of them open and scroll as quickly as a few. A question
+or a name to type opens in one small dialog; a deeper task (a song's or a chart's details, the song
+picker, the costume history, a chart picture) slides in from below in one large panel, the whole
+window on a phone, with one way to close it: its × on a computer, Back on a touch screen.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
-opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button left of the
-app's name in the list opens it, and → or any page of the list goes back; on a touch-first screen
-that button is drawn only when the keyboard's focus is on it.
+opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button at the foot of the
+list, beside the last update, opens it, and → or any page of the list goes back; on a touch-first screen
+that button is drawn only when the keyboard's focus is on it. The pipelines page slides in from the left
+and back out the same way. Where the system asks for reduced motion, nothing slides.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
 The app is light or dark as the system is (Windows' app mode, Android's dark theme), and the
 page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
@@ -228,7 +240,8 @@ details of each chart played since; a walk on the Recent plays page marks those 
 page counts them until it reads them; a read that finds none says that nothing changed, since the
 scores follow recent plays. A title the lists do not carry yet reads its genre's list again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
 from there next time. A row looks as one of Recent plays does, the song named in the player's
-language from taiko.wiki's list. A search over every name of a song, chips that each tick any
+language from taiko.wiki's list. A search over every name of a song, in the top band as the
+Overview's is and staying there as the list scrolls, chips that each tick any
 number of genres, difficulties (Settings' one at first, Extreme with its Ura charts) and star
 levels, and a sort chip (score, rank, genre, crown, plays, full combos, clears, or recent plays, a
 chart they no longer show last; by name with none) work together, ties going by song number. A
@@ -291,19 +304,19 @@ two rows, **Colours** and **Costume** (Hiroba's いろ and きせかえ; Head, B
 Character, then the Mascot, which is often empty), each tile holding what the draft has there: a
 swatch, the item's thumbnail, or a blank tile for none. A click, or Enter or Space, picks a part, the
 arrow keys move along a row and Tab goes to the other, and a tile's name shows on hover and on
-keyboard focus. Under the tiles come **Save to Hiroba**, then **History** and **Reset** to put the
+keyboard focus. Under the tiles come **Sync to Hiroba**, then **History** and **Reset** to put the
 draft back to the set as read. The column starts level with the first row of the part's cells, so a
 notice over them moves it down; it stays in view as the page scrolls, on a window at least 640 px
 tall, and holds only these, so it is never taller than the window. The right is the part picked:
-over its name stand a write's notice, the words for a picture that did not come and the Mascot note,
-when there are any, then its name, the words for thumbnails that did not come, and its palette or
+over its name stand the words for a picture that did not come and the Mascot note, when there are
+any, then its name, the words for thumbnails that did not come, and its palette or
 items' thumbnails, as many to a row as fit from the left; the items begin with **None** (Hiroba's
 はずす), which empties the slot. On a narrow window the page is a column, as wide as the window on a
 phone: a square picture of 160 px with the same tiles in one row under it, which stay in view as the
 page scrolls on a window at least 640 px tall, hiding the cells from the window's top edge to a gap
 under the tiles, then the same notes and the part's grid, and the buttons in a bar at the bottom edge
 of the window, which stays there as the page scrolls: **History** at the left, then **Reset** and
-**Save to Hiroba**, each label on one line, the bar's padding and gaps shrinking on a window under
+**Sync to Hiroba**, each label on one line, the bar's padding and gaps shrinking on a window under
 390 px wide. The part picked is the same in both. On a narrow window a cell reached by Tab or
 Shift+Tab is scrolled clear of the tiles above it and the bar below.
 
@@ -318,14 +331,16 @@ Shift+Tab is scrolled clear of the tiles above it and the bar below.
 - **The draft** is dropped when you leave the page for another: it goes back to the set as read, and
   the notice of a write is cleared. What was read is kept, so coming back reads nothing again, and a
   set already drawn is shown without asking.
-- **The write.** **Save to Hiroba** is one press, with no review, and shut while the draft is the
+- **The write.** **Sync to Hiroba** is one press, with no review, and shut while the draft is the
   set as read. The write goes the way [Writes](#writes) says, and the page shows its progress where
   the buttons were, with the tiles and the grid held still, dimmed and out of reach, and the page
-  scrolled where it was. When it ends the editor is ready at once, on the set Hiroba now shows if the
-  costume changed, and a write that applied says nothing: the picture and the My Don show it. Any
-  other ending shows its notice over the part picked, scrolled into view, until the next pick,
-  **Reset**, save, history pick or read, and leaves the draft as it was, so a save that failed can
-  be pressed again. There is no Snackbar, and the page has no undo.
+  scrolled where it was. When it ends the editor is ready at once, and a write that applied says
+  nothing: the picture and the My Don show it. Any other ending is said in a snackbar at the
+  window's foot (above the bar on a narrow window) for a few seconds, or until the next pick,
+  **Reset**, save, history pick or read: a failed sync says so, with Hiroba's own words in
+  parentheses when there are some, and a set found other than planned says Hiroba was read back. A
+  write that read the set back leaves the editor on it with no draft; one that read nothing back
+  leaves the draft as it was, so it can be synced again. The page has no undo.
 - **History.** The costumes you wore, newest first, each set once and at most 30, kept on the
   device per taiko number (`costume-history.json` in the app's data folder on the desktop, the
   `abth-costume-history` database on Android), across relaunches and sign-outs, and shown only to
@@ -336,7 +351,7 @@ Shift+Tab is scrolled clear of the tiles above it and the bar below.
   memory, and dropped when the session ends), or the picture it had. A failed or unknown
   write changes nothing. **History** opens a dialog, full screen on a narrow window, with a button
   for each entry and the set worn now marked. A pick puts its set in the draft and its picture on
-  the big preview at once, asking Hiroba for nothing; **Save to Hiroba** then writes it like any
+  the big preview at once, asking Hiroba for nothing; **Sync to Hiroba** then writes it like any
   other change.
 
 ### The Nickname & title page
@@ -345,7 +360,7 @@ The page that changes your title (称号) and your nickname (ドンだーネー�
 between Costume and Favourites, with a pencil beside its name. The name plate on the Overview is the
 way to it, as the portrait is to Costume: a click, Enter or Space, and on a touch-first screen a
 long-press. It opens on Hiroba's title plate as the Overview draws it, so the result is seen at
-once, then two sections, **Title** and **Nickname**, each saved with one press of **Save to Hiroba**
+once, then two sections, **Title** and **Nickname**, each saved with one press of **Sync to Hiroba**
 and no review. Both are open in every build. One write runs at a time, from either section: while
 it does, nothing on the page is pressed, and a write asked for elsewhere answers busy and sends
 nothing. Leaving the page for another drops both sections' edits: the field goes back to the
@@ -365,35 +380,34 @@ so coming back reads nothing again. A pick or a typed nickname survives a read o
   that several share marks all of them and says the app cannot tell which you wear, and a name none
   has says it may be built from parts, which this version can neither read nor change back. There
   is no remove and no composer. The picker's own buttons, to show the list and to clear what was
-  picked, are named in the app's language too. A pick alone writes nothing: **Save to Hiroba** is
+  picked, are named in the app's language too. A pick alone writes nothing: **Sync to Hiroba** is
   shut until the pick is not the title worn, and the write starts when it is pressed.
 - **Nickname.** The field holds the nickname you wear, to the ten characters Hiroba's form takes,
   with a counter, Hiroba's own warning against personal information under it, and the nickname is
   trimmed before it is sent. What the form itself would not take is refused, in the page and again
   by the core: no nickname, white space at either end, more than ten, a character that cannot be
   sent. Nothing else is judged, since nicknames outside Hiroba's help page exist on the site. A
-  nickname is not sent if it is the one worn. **Save to Hiroba** saves it, and so does Enter in the
+  nickname is not sent if it is the one worn. **Sync to Hiroba** saves it, and so does Enter in the
   field, except while an IME composition is open: then the field judges nothing, and the counter,
-  the note that it is the nickname worn and **Save to Hiroba** read the nickname as it stood, until
+  the note that it is the nickname worn and **Sync to Hiroba** read the nickname as it stood, until
   the composition is committed.
 - **Nickname, closed.** When my page hands its rename dialog the flag that says renames are closed,
   the field is shut and the section says why, in Hiroba's words; when it hands none the app can
   read, the field stays open. The editor read at write time decides again.
 - **Outcomes.** A write that applied says nothing: the page shows the new title or nickname. Any
-  other ending shows its notice in the section, worded for the title and the nickname apart from the
-  costume's (Hiroba's code for a title it will not take, or a nickname it could not update, comes
-  with no message, so the page says what it means), with Hiroba's own words, when it has some,
-  shown as the plain text they are. The notice stays until the next pick, typing or save, and the
-  pick or the nickname typed stays too, so a save that failed can be pressed again. After a title
-  write that moved the title, your page is read again once, for the plate, behind the page, so the
-  section keeps its notice and the keyboard's focus; the My Don is not fetched anew for it, since
-  only a costume change and your own **Read again** do that. **Read again** spins and Sign out is shut
-  meanwhile. A rename puts the nickname it read back into the window's copy of your page, and reads
-  nothing more. The page has no undo and no history.
+  other ending is said in a snackbar, as the costume's is, with Hiroba's own words shown as the
+  plain text they are (for a code that comes with no message, the words Hiroba's page shows for
+  it), until the next pick, typing or save. A write that read Hiroba back shows the title or
+  nickname Hiroba holds, with no pick or typing left; one that read nothing back keeps them, so it
+  can be synced again. After a title write that moved the title, your page is read again once, for
+  the plate, behind the page, so the section keeps the keyboard's focus; the My Don is not fetched
+  anew for it, since only a costume change and your own **Read again** do that. **Read again**
+  spins and Sign out is shut meanwhile. A rename puts the nickname it read back into the window's
+  copy of your page, and reads nothing more. The page has no undo and no history.
 
 ### The Favourites page
 
-The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker lists only the songs Hiroba's own picker offers, and opens on all of them. They are read, alone, as a picker opens, if no read has brought them since the app started or the page was last read again: the requests already sent end first, and the rest wait until the list is read; they are kept on the device for the next launch, and gone at a sign-out. The list kept serves while a newer one is read; with none yet, the picker says it is reading, or why it could not, with Retry; the 大好きな曲's picker also lists a song's Ura chart as a row of its own, as Hiroba's does, showing only that chart's level and leaving it off the song's own row; a difficulty or star filter keeps only the rows whose charts match, and an Ura row is tinted with that chart's colour. A 大好きな曲 set to one says so under its name. Three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its Ura chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit and Apply: Edit lets its songs be added, taken out and moved, and turns Apply into Save, with Reset for the edits; Android's Back drops the edits and leaves editing. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls. In the current favourites, and in a set while it is only shown, a click on a song's name opens its details, as [the song search](#the-song-search) does (its level badges keep their own click, and a song taiko.wiki's list lacks has no details); while they are open, a swipe from the right edge leaves the drawer shut.
+The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker lists only the songs Hiroba's own picker offers, and opens on all of them. They are read, alone, as a picker opens, if no read has brought them since the app started or the page was last read again: the requests already sent end first, and the rest wait until the list is read; they are kept on the device for the next launch, and gone at a sign-out. The list kept serves while a newer one is read; with none yet, the picker says it is reading, or why it could not, and reads them again when it next opens; the 大好きな曲's picker also lists a song's Ura chart as a row of its own, as Hiroba's does, showing only that chart's level and leaving it off the song's own row; a difficulty or star filter keeps only the rows whose charts match, and an Ura row is tinted with that chart's colour. A 大好きな曲 set to one says so under its name. Three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its Ura chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit and Sync to Hiroba: Edit lets its songs be added, taken out and moved, and turns Sync to Hiroba into Save, with Reset for the edits; Android's Back drops the edits and leaves editing, and from a set shown goes back to the current favourites. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls. In the current favourites, and in a set while it is only shown, a click on a song's name opens its details, as [the song search](#the-song-search) does (its level badges keep their own click, and a song taiko.wiki's list lacks has no details); while they are open, a swipe from the right edge leaves the drawer shut.
 
 ### The song search
 

@@ -21,6 +21,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The Costume page in a narrow window: the preview and the tiles in one sticky block over the
- * grid, and Save in a bar at the bottom. */
+/** A narrow window: the preview and tiles over the grid, and Save in a bar at the bottom. */
 export const OneColumn: Story = {};

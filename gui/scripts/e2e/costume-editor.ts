@@ -49,7 +49,7 @@ export const costumeEditorKeys = [
   "saveBarStaysAtTheBottom",
   "costumePageIsAColumnOnANarrowWindow",
   "costumePageUsesTheWidthOfAWideWindow",
-  "failedSaveKeepsTheNoticeAndDraft",
+  "failedSaveSaysSoAndShowsHirobasSet",
   "myDonNotAskedAfterNoChange",
 ] as const;
 
@@ -58,7 +58,6 @@ export async function costumeEditor(ctx: Ctx) {
   const { click, currentPage, goTo, page, text, textOf } = ctx.app;
   const { atSize, boxOf, exists } = pageHelpers(page);
   const {
-    aboveThePart,
     barFlush,
     changeInTheWindow,
     inStep,
@@ -199,12 +198,12 @@ export async function costumeEditor(ctx: Ctx) {
   await fetch(`${HIROBA}/__noop-save`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
 
-  results.failedSaveKeepsTheNoticeAndDraft =
+  results.failedSaveSaysSoAndShowsHirobasSet =
     noChange === "notApplied" &&
-    (await aboveThePart("#write-outcome")) &&
+    (await textOf("#write-outcome")) === "Sync to Hiroba failed. Please try again." &&
     (await stepOf()) === "editing" &&
-    (await pressedOf("#swatch-colorFace-3")) === "true" &&
-    (await savable()) &&
+    (await pressedOf("#swatch-colorFace-3")) === "false" &&
+    !(await savable()) &&
     same(await savedCostume(), START);
   await leaveTheCostumePage();
   results.myDonNotAskedAfterNoChange =
@@ -539,7 +538,7 @@ export async function costumeWrite(ctx: Ctx) {
       undefined,
   );
   await openHistory();
-  await click("#costume-history-close");
+  await click("#costume-history-dialog-close");
   await historyClosed();
   const focusAfterClose = await waitFor(
     "focus back after Close",
@@ -567,7 +566,7 @@ export async function costumeWrite(ctx: Ctx) {
     return { dialog, focusBack };
   });
   results.historyDialogFullScreenOnANarrowWindow =
-    wideDialog.width <= 600 &&
+    wideDialog.width <= 900 &&
     historyOnAPhone.dialog.left < 1 &&
     historyOnAPhone.dialog.right > 479 &&
     historyOnAPhone.dialog.bottom - historyOnAPhone.dialog.top >= 799 &&

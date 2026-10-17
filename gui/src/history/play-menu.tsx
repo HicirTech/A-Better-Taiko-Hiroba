@@ -55,7 +55,8 @@ export interface AddToSetDialogProps {
   readonly candidates: readonly NamedSong[];
   readonly sets: readonly FavoriteSet[];
   readonly i18n: Translator;
-  readonly onChooseSong: (songNo: string) => void;
+  /** Picks the song among those sharing the title; null asks which one again. */
+  readonly onChooseSong: (songNo: string | null) => void;
   readonly onAdd: (set: FavoriteSet, songNo: string) => void;
   readonly onNewSet: (songNo: string) => void;
   readonly onClose: () => void;
@@ -118,7 +119,9 @@ export function AddToSetDialog({
           {t("history.unknownSong")}
         </Typography>
       }
+      i18n={i18n}
       onClose={onClose}
+      onBack={songNo !== null && candidates.length > 0 ? () => onChooseSong(null) : undefined}
     />
   );
 }

@@ -15,7 +15,6 @@ import type { SongCatalogue } from "./use-song-catalogue";
 interface Args {
   readonly onPick: (song: FavoriteSongState) => void;
   readonly onToggle: (songNo: string) => void;
-  readonly onReadPickable: () => void;
   readonly onClose: () => void;
 }
 
@@ -35,7 +34,6 @@ const pickerOf = (
     choice={choice}
     catalogue={catalogue}
     pickable={pickable}
-    onReadPickable={args.onReadPickable}
     i18n={i18n}
     onClose={args.onClose}
   />
@@ -70,7 +68,7 @@ const meta = {
   parameters: { layout: "fullscreen" },
   render: (args, { globals }) =>
     pickerOf(args, i18nOf(globals), { kind: "one", onPick: args.onPick }),
-  args: { onPick: fn(), onToggle: fn(), onReadPickable: fn(), onClose: fn() },
+  args: { onPick: fn(), onToggle: fn(), onClose: fn() },
 } satisfies Meta<Args>;
 
 export default meta;

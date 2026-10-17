@@ -36,6 +36,7 @@ export const favoritesKeys = [
   "favoriteSongOpensItsDetails",
   "setsSwipeWaitsForTheDetails",
   "newSetAsksForItsName",
+  "newSetCancelGoesBackToTheDrawer",
   "pickerShowsItsFilters",
   "pickerShowsItsFiltersOnAPhone",
   "pickerOpensOnEverySong",
@@ -57,6 +58,7 @@ export const favoritesKeys = [
   "setAppliedWithNoMessage",
   "folderShowsTheSetInUse",
   "notStagedSaysSoAndSavesNothing",
+  "replaceCancelGoesBackToTheMenu",
   "folderSavedIntoASet",
   "setsMovedByTheirHandle",
   "setRenamedFromItsMenu",
@@ -73,6 +75,7 @@ export const favoritesKeys = [
   "setsDrawerOpensBySwipe",
   "setsButtonHiddenOnTouch",
   "setOffersItsActionsOnALongPress",
+  "setActionsStayUnderTheirDialogs",
 ] as const;
 
 export async function favorites(ctx: Ctx) {
@@ -95,7 +98,7 @@ export async function favorites(ctx: Ctx) {
     page.evaluate(
       `(() => { const input = document.querySelector(${JSON.stringify(selector)}); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
     );
-  const search = (query: string) => typeInto("#song-picker-search", query);
+  const search = (query: string) => typeInto("#song-picker-search-input", query);
   const rowText = (songNo: string) => textOf(`#song-picker-row-${songNo}`);
   const placesIn = (selector: string) =>
     page.evaluate<string[]>(
@@ -221,6 +224,13 @@ export async function favorites(ctx: Ctx) {
     await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await Bun.sleep(500);
   };
+  // A hold's lift presses the dialog it opens; click() has no press of its own to clear that, so
+  // the Dialog would take it for a click on its backdrop. A finger's tap has one.
+  const tapFinger = async (selector: string) => {
+    const at = await middleOf(page, selector);
+    await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
+    await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
   const openDrawer = async () => {
     await click("#favorites-sets");
     await shown("#favorites-drawer");
@@ -325,6 +335,12 @@ export async function favorites(ctx: Ctx) {
   await openDrawer();
   await click("#favorites-item-new");
   await shown("#favorite-set-name");
+  // Esc stands in for Android's Back: a dialog goes back to where it was opened from.
+  await press("Escape");
+  await gone("#favorite-set-name-dialog");
+  results.newSetCancelGoesBackToTheDrawer = await exists("#favorites-drawer");
+  await click("#favorites-item-new");
+  await shown("#favorite-set-name");
   const offeredName = await page.evaluate<string>(
     `document.querySelector("#favorite-set-name").value`,
   );
@@ -399,7 +415,7 @@ export async function favorites(ctx: Ctx) {
   for (const songNo of ["1001", "1003", LONG_TITLED]) {
     await page.evaluate(`document.querySelector("#song-picker-row-${songNo} input").click()`);
   }
-  await click("#song-picker-done");
+  await click("#song-picker-close");
   await gone("#song-picker");
   await shown(`#favorite-set-song-${LONG_TITLED}`);
   await Bun.sleep(500);
@@ -458,13 +474,18 @@ export async function favorites(ctx: Ctx) {
   await click("#favorite-set-apply");
   await shown("#favorite-folder-outcome");
   results.notStagedSaysSoAndSavesNothing =
-    (await textOf("#favorite-folder-outcome"))?.includes("didn't take every song") === true &&
+    (await textOf("#favorite-folder-outcome")) === "Sync to Hiroba failed. Please try again." &&
     !(await requestLog()).includes(FOLDER_SAVE) &&
     same((await favoritesNow()).folder.slice(0, 3), ["1003", "1001", LONG_TITLED]);
   await favoritesNow("?emptyClears=1");
 
   await click("#favorite-folder-save-to-set");
   await shown("#favorite-folder-save-to-set-0");
+  await click("#favorite-folder-save-to-set-0");
+  await shown("#favorite-folder-replace-confirm");
+  await press("Escape");
+  await gone("#favorite-folder-replace-dialog");
+  results.replaceCancelGoesBackToTheMenu = await exists("#favorite-folder-save-to-set-0");
   await click("#favorite-folder-save-to-set-0");
   await shown("#favorite-folder-replace-confirm");
   await click("#favorite-folder-replace-confirm");
@@ -631,6 +652,17 @@ export async function favorites(ctx: Ctx) {
       results.setOffersItsActionsOnALongPress =
         (await exists("#favorite-set-actions-rename")) &&
         (await exists("#favorite-set-actions-delete"));
+      await tapFinger("#favorite-set-actions-rename");
+      await shown("#favorite-set-name-dialog");
+      await press("Escape");
+      await gone("#favorite-set-name-dialog");
+      const actionsUnderTheName = await exists("#favorite-set-actions-rename");
+      await tapFinger("#favorite-set-actions-delete");
+      await shown("#favorite-set-delete-dialog");
+      await press("Escape");
+      await gone("#favorite-set-delete-dialog");
+      results.setActionsStayUnderTheirDialogs =
+        actionsUnderTheName && (await exists("#favorite-set-actions-delete"));
       await press("Escape");
       await gone("#favorite-set-actions");
       await swipe({ x: PHONE_TALL.width - 200, y }, { x: PHONE_TALL.width - 40, y: y + 10 });

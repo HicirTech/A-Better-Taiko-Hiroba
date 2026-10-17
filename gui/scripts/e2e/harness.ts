@@ -261,6 +261,56 @@ export function pageHelpers(page: Page) {
     );
   const touchMoves = () => page.evaluate<number>("window.touchMoves");
 
+  // A long list keeps only the rows near the window in the page: the window walks it to see more.
+  /** Every row of a long list, read by `read`; the window walks it from the top and back. */
+  const listRows = <T>(list: string, read: string) =>
+    page.evaluate<T[]>(`(async () => {
+      const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const read = ${read};
+      const from = scrollY;
+      const seen = new Map();
+      scrollTo(0, 0);
+      await frame();
+      for (;;) {
+        for (const row of document.querySelectorAll(${JSON.stringify(`${list} > li`)})) seen.set(Number(row.dataset.index), read(row));
+        const before = scrollY;
+        scrollBy(0, innerHeight);
+        await frame();
+        if (scrollY === before) break;
+      }
+      scrollTo(0, from);
+      await frame();
+      return [...seen].sort(([one], [other]) => one - other).map(([, value]) => value);
+    })()`);
+  /** The selector of the long list's row that `matches`, walked to and put mid-window. */
+  const rowInView = async (list: string, matches: string) => {
+    const index = await page.evaluate<number | null>(`(async () => {
+      const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const matches = ${matches};
+      const found = () => [...document.querySelectorAll(${JSON.stringify(`${list} > li`)})].find(matches);
+      let row = found();
+      if (row === undefined) {
+        scrollTo(0, 0);
+        await frame();
+        row = found();
+      }
+      while (row === undefined) {
+        const before = scrollY;
+        scrollBy(0, innerHeight);
+        await frame();
+        if (scrollY === before) return null;
+        row = found();
+      }
+      row.scrollIntoView({ block: "center" });
+      await frame();
+      return Number(row.dataset.index);
+    })()`);
+    if (index === null) {
+      throw new Error(`No row of ${list} matches ${matches}`);
+    }
+    return `${list} > li[data-index="${index}"]`;
+  };
+
   // A real press: an SVG has no click(), and a chip's × is one.
   const mousePress = async (selector: string, button: "left" | "right", heldMs = 0) => {
     await page.evaluate(
@@ -304,6 +354,8 @@ export function pageHelpers(page: Page) {
     touchClicks,
     countTouchMoves,
     touchMoves,
+    listRows,
+    rowInView,
     mousePress,
   };
 }

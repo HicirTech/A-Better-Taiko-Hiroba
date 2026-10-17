@@ -7,6 +7,7 @@ import * as SongRow from "../../favorites/song-row.stories";
 import * as SortableList from "../../favorites/sortable-list.stories";
 import * as HistoryRow from "../../history/history-row.stories";
 import * as ChartList from "../../know-yourself/chart-list.stories";
+import * as RowList from "../../ui/row-list.stories";
 import { Gallery } from "../gallery";
 
 const meta = {
@@ -20,6 +21,7 @@ const meta = {
         { name: "SongRow", meta: SongRow.default, story: SongRow.WithTempo },
         { name: "SongRow, opening details", meta: SongRow.default, story: SongRow.OpensDetails },
         { name: "HistoryRow", meta: HistoryRow.default, story: HistoryRow.Plays },
+        { name: "RowList", meta: RowList.default, story: RowList.AFewRows },
         { name: "PickerList", meta: PickerList.default, story: PickerList.SearchMarked },
         { name: "ChartList", meta: ChartList.default, story: ChartList.NotCleared },
         { name: "SortableList", meta: SortableList.default, story: SortableList.Sets },

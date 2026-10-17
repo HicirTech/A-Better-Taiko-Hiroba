@@ -1,6 +1,6 @@
 import { playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-import { Box, SvgIcon } from "@mui/material";
+import { Box, Skeleton, Stack, SvgIcon } from "@mui/material";
 import type { KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 import {
@@ -15,7 +15,8 @@ import type { LongPressHandlers } from "../my-page/use-long-press";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CrownKind } from "../session-port";
-import { CourseIcon } from "../songs/course-icon";
+import { COURSE_ICON_PX, CourseIcon } from "../songs/course-icon";
+import type { RowPlace } from "../ui/row-list";
 
 export const CROWN_KEY = {
   silver: "crowns.silver",
@@ -40,15 +41,19 @@ const CROWN_WIDTH_PX = Math.round(MARK_PX * CROWN_RATIO);
 const RANK_WIDTH_PX = Math.round((MARK_PX * 128) / 96);
 
 const ONE_LINE = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
+// A bar as tall as its row.
+const STRETCHED = { height: "auto" } as const;
+const PLAIN_LIST = { listStyle: "none", m: 0, p: 0 } as const;
+const SKELETON_ROWS = [...Array(9).keys()];
 const NO_GENRE = { backgroundColor: "currentColor", opacity: 0.25 } as const;
+/** About how tall a row draws, before a list measures it. */
+export const HISTORY_ROW_PX = 78;
 const ROW = {
   display: "flex",
   gap: 1.5,
   minWidth: 0,
   px: 2,
   py: 0.75,
-  contentVisibility: "auto",
-  containIntrinsicSize: "auto 72px",
   "& .song-bars": { display: "flex", gap: "2px", flexShrink: 0, alignSelf: "stretch" },
   "& .song-bar": { width: 4, borderRadius: "2px" },
   "& .song-text": { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 0.25 },
@@ -100,6 +105,7 @@ export function HistoryRow({
   i18n,
   name,
   rowProps,
+  place,
   heading,
   lead,
 }: {
@@ -110,6 +116,8 @@ export function HistoryRow({
   /** The song's name as shown, and its language; Hiroba's own title by default. */
   readonly name?: { readonly text: string; readonly lang: string };
   readonly rowProps?: RowProps;
+  /** Where a long list put the row. */
+  readonly place?: RowPlace;
   /** The title's id where the row heads a chart's details, which list its hits below it. */
   readonly heading?: string;
   /** Shown first in the row, before the genre's bar: what the page rates the chart. */
@@ -142,6 +150,7 @@ export function HistoryRow({
       className="history-row"
       sx={rowProps?.onClick === undefined ? ROW : OPENABLE_ROW}
       {...rowProps}
+      {...place}
     >
       {lead}
       <span
@@ -210,6 +219,42 @@ export function HistoryRow({
         {heading === undefined && <span className="song-facts">{hits.join(" · ")}</span>}
       </span>
     </Box>
+  );
+}
+
+/** A play row's shape while a page's first read runs. */
+export function HistoryRowSkeleton() {
+  return (
+    <Box component="li" aria-hidden sx={ROW}>
+      <span className="song-bars">
+        <Skeleton variant="rectangular" className="song-bar" sx={STRETCHED} />
+      </span>
+      <span className="song-text">
+        <span className="song-head">
+          <Skeleton variant="circular" width={COURSE_ICON_PX} height={COURSE_ICON_PX} />
+          <span className="song-name">
+            <Skeleton width="55%" />
+          </span>
+          <span className="play-marks">
+            <Skeleton variant="rounded" width={CROWN_WIDTH_PX} height={MARK_PX} />
+            <Skeleton variant="rounded" width={RANK_WIDTH_PX} height={MARK_PX} />
+          </span>
+        </span>
+        <Skeleton className="song-facts" width="35%" />
+        <Skeleton className="song-facts" width="55%" />
+      </span>
+    </Box>
+  );
+}
+
+/** As many play rows' shapes as fill a window, while a page's first read runs. */
+export function HistoryRowsSkeleton() {
+  return (
+    <Stack component="ul" spacing={0} aria-hidden sx={PLAIN_LIST}>
+      {SKELETON_ROWS.map((key) => (
+        <HistoryRowSkeleton key={key} />
+      ))}
+    </Stack>
   );
 }
 

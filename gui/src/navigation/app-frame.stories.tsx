@@ -56,8 +56,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The window's frame: a side panel of pages on a wide window, a menu elsewhere, and the way to the
- * pipelines page one level past it. */
+/** The frame: a side panel or a menu of pages, and the pipelines page past it. */
 export const Frame: Story = {};
 
 /** On a phone a swipe right from the left two thirds opens the menu. */

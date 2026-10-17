@@ -5,7 +5,7 @@ import * as CostumeItemGrid from "../../my-page/costume-item-grid.stories";
 import * as Palette from "../../my-page/costume-palette.stories";
 import * as PartPanel from "../../my-page/costume-part-panel.stories";
 import * as TitlePicker from "../../name-title/title-picker.stories";
-import * as SongSearchBar from "../../songs/song-search-bar.stories";
+import * as SearchField from "../../ui/search-field.stories";
 import { Gallery } from "../gallery";
 
 const meta = {
@@ -16,7 +16,7 @@ const meta = {
     <Gallery
       context={context}
       members={[
-        { name: "SongSearchBar", meta: SongSearchBar.default, story: SongSearchBar.Searching },
+        { name: "SearchField", meta: SearchField.default, story: SearchField.Searching },
         { name: "TitlePicker", meta: TitlePicker.default, story: TitlePicker.Titles },
         {
           name: "LanguageSetting",

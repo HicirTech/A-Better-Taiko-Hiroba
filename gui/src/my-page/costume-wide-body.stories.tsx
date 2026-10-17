@@ -20,6 +20,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The Costume page in a wide window, which lays it out in two columns: the preview, the part
- * tiles and Save stay at the left while the grid of the part on show fills the right. */
+/** A wide window: the preview, tiles and Save at the left, the part's grid at the right. */
 export const TwoColumns: Story = {};

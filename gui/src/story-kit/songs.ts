@@ -54,6 +54,6 @@ export function storyCatalogue(state: SongCatalogue["state"] = "ready"): SongCat
     list,
     state,
     failure: state === "failed" ? "unreachable" : null,
-    retry: action("retry"),
+    readIfFailed: action("read if failed"),
   };
 }

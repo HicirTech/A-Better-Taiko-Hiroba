@@ -95,7 +95,7 @@ export function SetView({
                   disabled={!canApply}
                   onClick={onApply}
                 >
-                  {t("favorites.apply")}
+                  {t("write.sync")}
                 </Button>
               </>
             )}

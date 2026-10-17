@@ -1,19 +1,21 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Paper, Stack } from "@mui/material";
+import { Box, Button, Paper, Skeleton, Stack } from "@mui/material";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import { useWideWindow } from "../navigation/use-wide-window";
 import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import { LoadFailed } from "../ui/read-failure-alert";
 import { type EditorStep, shownEditorOf } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
-import { NarrowBody } from "./costume-narrow-body";
+import { NarrowBody, NarrowBodySkeleton } from "./costume-narrow-body";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
-import { WideBody } from "./costume-wide-body";
-import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
+import { WideBody, WideBodySkeleton } from "./costume-wide-body";
+import { useFocusKept, Waiting } from "./editor-parts";
 import { BAR_REF } from "./stuck-clearance";
 import type { CostumeEditor } from "./use-costume-editor";
+import { WriteOutcomeSnackbar } from "./write-outcome";
 
 // MUI's sm width: a narrow window's column need not stretch across it.
 export const COLUMN_MAX_WIDTH_PX = 600;
@@ -24,6 +26,32 @@ const TOUCH_TARGET_PX = 48;
 const ONE_LINE_LABEL = { whiteSpace: "nowrap" } as const;
 const SNUG_TEXT_BUTTON = { [WHEN_SNUG]: { minWidth: TOUCH_TARGET_PX, px: 0.25 } } as const;
 const SNUG_CONTAINED_BUTTON = { [WHEN_SNUG]: { px: 1 } } as const;
+const pageOf = (wide: boolean) =>
+  ({
+    display: "flex",
+    flexDirection: "column",
+    width: 1,
+    ...(!wide && {
+      ...BOTTOM_BAR_PAGE,
+      maxWidth: COLUMN_MAX_WIDTH_PX,
+      // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
+      alignSelf: "center",
+    }),
+    outline: "none",
+  }) as const;
+const ACTION_BAR = {
+  ...BOTTOM_BAR,
+  // Sticky, not fixed: it takes the column's width and clears the navigation unmeasured.
+  position: "sticky",
+  bottom: 0,
+  zIndex: 1,
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: 1,
+  p: `${BAR_PADDING_PX}px`,
+  pb: `calc(${BAR_PADDING_PX}px + env(safe-area-inset-bottom, 0px))`,
+  [WHEN_SNUG]: { px: 1 },
+} as const;
 
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
@@ -57,26 +85,9 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
     void editor.save();
   };
   const actions = actionsOf(editor, i18n, () => setHistoryOpen(true), save, wide);
-  const body = { editor, lane, i18n, part, onPart: setPart, progress: progressOf(step, i18n) };
+  const body = { editor, lane, i18n, part, onPart: setPart, progress: failureOf(step, i18n) };
   return (
-    <Box
-      ref={page}
-      id="costume-page"
-      data-step={step.name}
-      tabIndex={-1}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        width: 1,
-        ...(!wide && {
-          ...BOTTOM_BAR_PAGE,
-          maxWidth: COLUMN_MAX_WIDTH_PX,
-          // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
-          alignSelf: "center",
-        }),
-        outline: "none",
-      }}
-    >
+    <Box ref={page} id="costume-page" data-step={step.name} tabIndex={-1} sx={pageOf(wide)}>
       {wide ? (
         <WideBody {...body} actions={actions} />
       ) : (
@@ -84,6 +95,14 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
           <NarrowBody {...body} />
           {actions !== null && <ActionBar>{actions}</ActionBar>}
         </>
+      )}
+      {step.name === "editing" && step.notice !== null && (
+        <WriteOutcomeSnackbar
+          kind="costume"
+          outcome={step.notice}
+          i18n={i18n}
+          onClosed={editor.closeNotice}
+        />
       )}
       {step.name === "editing" && (
         <CostumeHistoryDialog
@@ -102,20 +121,11 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   );
 }
 
-function progressOf(step: EditorStep, i18n: Translator): ReactNode {
-  const { t } = i18n;
-  switch (step.name) {
-    case "unread":
-      return <Waiting>{t("costume.reading")}</Waiting>;
-    case "loading":
-      // A read again leaves the held editor on screen, shut; only a first read waits here.
-      return step.held === null ? <Waiting>{t("costume.reading")}</Waiting> : null;
-    case "loadFailed":
-      return <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />;
-    case "saving":
-    case "editing":
-      return null;
-  }
+// A first read waits under the page's skeleton, and a read again under the held editor.
+function failureOf(step: EditorStep, i18n: Translator): ReactNode {
+  return step.name === "loadFailed" ? (
+    <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />
+  ) : null;
 }
 
 function actionsOf(
@@ -163,7 +173,7 @@ function actionsOf(
       onClick={onSave}
       sx={{ ...ONE_LINE_LABEL, ...SNUG_CONTAINED_BUTTON }}
     >
-      {t("costume.save")}
+      {t("write.sync")}
     </Button>
   );
   return (
@@ -213,25 +223,28 @@ function ActionArea({
 
 function ActionBar({ children }: { children: ReactNode }) {
   return (
-    <Paper
-      ref={BAR_REF}
-      id="costume-bar"
-      elevation={3}
-      sx={{
-        ...BOTTOM_BAR,
-        // Sticky, not fixed: it takes the column's width and clears the navigation unmeasured.
-        position: "sticky",
-        bottom: 0,
-        zIndex: 1,
-        display: "flex",
-        justifyContent: "flex-end",
-        gap: 1,
-        p: `${BAR_PADDING_PX}px`,
-        pb: `calc(${BAR_PADDING_PX}px + env(safe-area-inset-bottom, 0px))`,
-        [WHEN_SNUG]: { px: 1 },
-      }}
-    >
+    <Paper ref={BAR_REF} id="costume-bar" elevation={3} sx={ACTION_BAR}>
       {children}
     </Paper>
+  );
+}
+
+/** The Costume page's shape while its first read runs, as wide or narrow as the window. */
+export function CostumePageSkeleton() {
+  const wide = useWideWindow();
+  useWiderFrame();
+  return (
+    <Box sx={pageOf(wide)}>
+      {wide ? (
+        <WideBodySkeleton />
+      ) : (
+        <>
+          <NarrowBodySkeleton />
+          <Paper elevation={3} sx={ACTION_BAR}>
+            <Skeleton variant="rounded" width={140} height={36} />
+          </Paper>
+        </>
+      )}
+    </Box>
   );
 }

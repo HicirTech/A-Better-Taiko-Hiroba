@@ -1,6 +1,4 @@
-/** The local Storybook, on Node as Storybook needs: `bun run storybook [--pack <folder>]`. A pack's
- * pictures, kept outside the repository, are drawn in place of the stand-ins and never leave this
- * machine, so `--host` is refused. Every other argument goes to `storybook dev`. */
+/** The local Storybook on Node, with an optional `--pack <folder>`; `--host` is refused. */
 import { dirname, isAbsolute, join } from "node:path";
 
 import { PACK_VARIABLE, readStoryPack } from "../.storybook/pack";

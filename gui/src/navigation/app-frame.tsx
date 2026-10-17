@@ -9,11 +9,10 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
-  Slide,
   SvgIcon,
   Typography,
-  useMediaQuery,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import {
   createContext,
   type ReactNode,
@@ -52,6 +51,7 @@ import { usePipelinesSwipe } from "./use-pipelines-swipe";
 import { useTouchFirst } from "./use-touch-first";
 import { useWideWindow } from "./use-wide-window";
 import { WiderFrameContext } from "./wider-frame";
+import { MOVE_TIMING, moveWindow, STILL, WindowMoveStyles } from "./window-move";
 
 const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly icon: ReactNode }>> =
   {
@@ -112,20 +112,21 @@ export function AppFrame({
 }) {
   const wide = useWideWindow();
   const touchFirst = useTouchFirst();
-  const reducedMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
   const [wider, setWider] = useState(false);
   const [navigation, setNavigation] = useState(true);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [pipelinesShown, setPipelinesShown] = useState(false);
+  // The page the pipelines page was opened over, while it is shown.
+  const [pipelinesOver, setPipelinesOver] = useState<Page | null>(null);
   // Shut a menu left open on a wide window, or by a sign-out, so it does not reopen unasked.
   if ((wide || !navigation) && menuOpen) {
     setMenuOpen(false);
   }
-  // A sign-out takes the pipelines page with the menu: neither is there while signed out.
-  if (!navigation && pipelinesShown) {
-    setPipelinesShown(false);
+  // A sign-out takes the pipelines page with the menu, and going to another page takes it too.
+  if (pipelinesOver !== null && (!navigation || pipelinesOver !== page)) {
+    setPipelinesOver(null);
   }
+  const pipelinesShown = pipelinesOver !== null;
   // The page under the pipelines page goes back to where it was scrolled.
   const pageScroll = useRef(0);
   useLayoutEffect(() => {
@@ -133,17 +134,25 @@ export function AppFrame({
       window.scrollTo(0, pageScroll.current);
     }
   }, [pipelinesShown]);
-  const showPipelines = (shown: boolean) => {
+  const showPipelines = (shown: boolean, menuAfter = false) => {
     if (shown) {
       pageScroll.current = window.scrollY;
-      window.scrollTo(0, 0);
     }
-    setMenuOpen(false);
-    setPipelinesShown(shown);
+    moveWindow(shown ? "pipelinesIn" : "pipelinesOut", () => {
+      if (shown) {
+        window.scrollTo(0, 0);
+      }
+      setMenuOpen(menuAfter);
+      setPipelinesOver(shown ? page : null);
+    });
   };
   const navigate = (next: Page) => {
+    // The page under the pipelines page: back to it as it was, as the arrow goes.
+    if (pipelinesShown && next === page) {
+      showPipelines(false);
+      return;
+    }
     pageScroll.current = 0;
-    setPipelinesShown(false);
     onNavigate(next);
   };
   const toggle: PipelinesToggle | undefined =
@@ -155,11 +164,8 @@ export function AppFrame({
     pipelinesShown,
     listRightPx: PANEL_WIDTH_PX,
     onSwiped: (direction: SwipeDirection) => {
-      showPipelines(direction === "right");
       // Back from the pipelines page is the menu it was reached from.
-      if (direction === "left" && !wide) {
-        setMenuOpen(true);
-      }
+      showPipelines(direction === "right", direction === "left" && !wide);
     },
   });
   const [closers] = useState(createBackClosers);
@@ -175,10 +181,7 @@ export function AppFrame({
     if (action === "closeOverlay") {
       closers.closeLatest();
     } else if (action === "leavePipelines") {
-      showPipelines(false);
-      if (!wide) {
-        setMenuOpen(true);
-      }
+      showPipelines(false, !wide);
     } else if (action === "closeMenu") {
       setMenuOpen(false);
     } else if (action === "leaveMode") {
@@ -193,6 +196,7 @@ export function AppFrame({
   return (
     <BackClosersContext value={closers}>
       <MenuOpenContext value={menuOpen}>
+        <WindowMoveStyles />
         <Box sx={{ display: "flex", minHeight: "100vh" }}>
           {navigation &&
             (wide ? (
@@ -234,18 +238,7 @@ export function AppFrame({
                   </FrameNavigationContext>
                 </WiderFrameContext>
               </Box>
-              {pipelines !== undefined && (
-                <Slide
-                  direction="right"
-                  in={pipelinesShown}
-                  enter={!reducedMotion}
-                  exit={false}
-                  mountOnEnter
-                  unmountOnExit
-                >
-                  <Box>{pipelines}</Box>
-                </Slide>
-              )}
+              {pipelines !== undefined && pipelinesShown && <Box>{pipelines}</Box>}
             </Container>
           </Box>
         </Box>
@@ -306,8 +299,14 @@ function ArrowForwardIcon() {
   );
 }
 
-const TITLE_ROW = { px: 3, pt: 2.5, pb: 1.5 } as const;
-const ARROW_ROW = { pl: 1.5, pr: 3, pt: 1.5, pb: 0.5 } as const;
+/** A page row's shape: flush with the panel's left edge, round at the right. */
+const ROW_SHAPE = { mr: 1.5, borderRadius: "0 999px 999px 0" } as const;
+
+/** Where the current page's row lies in the list. */
+interface RowPlace {
+  readonly top: number;
+  readonly height: number;
+}
 
 function PageList({
   page,
@@ -315,44 +314,41 @@ function PageList({
   i18n,
   toggle,
 }: NavigationProps & { readonly toggle: PipelinesToggle | undefined }) {
-  const title = (
-    <Typography variant="subtitle2" color="text.secondary" noWrap>
-      {i18n.t("app.title")}
-    </Typography>
-  );
-  const pipelinesLabel = i18n.t("nav.pipelines");
-  const touchFirst = useTouchFirst();
+  const list = useRef<HTMLUListElement>(null);
+  const [place, setPlace] = useState<RowPlace | null>(null);
+  // Measured after every render: a label in another language can take two lines.
+  useLayoutEffect(() => {
+    const row = list.current?.querySelector<HTMLElement>('[aria-current="page"]');
+    const next = row == null ? null : { top: row.offsetTop, height: row.offsetHeight };
+    setPlace((now) => (now?.top === next?.top && now?.height === next?.height ? now : next));
+  });
   return (
     <>
-      {toggle === undefined ? (
-        <Box sx={TITLE_ROW}>{title}</Box>
-      ) : (
-        // The pipelines page lies one level past the pages, to the left: the arrow says which way.
-        // A touch screen draws no arrow, as it draws no menu button: its swipe stands in for it.
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 0.5,
-            ...(touchFirst ? TITLE_ROW : ARROW_ROW),
-          }}
-        >
-          <Box sx={touchFirst ? HIDDEN_UNTIL_FOCUSED : undefined}>
-            <IconButton
-              id="nav-pipelines"
-              size="small"
-              aria-label={pipelinesLabel}
-              title={pipelinesLabel}
-              aria-pressed={toggle.shown}
-              onClick={() => toggle.onShownChange(!toggle.shown)}
-            >
-              {toggle.shown ? <ArrowForwardIcon /> : <ArrowBackIcon />}
-            </IconButton>
-          </Box>
-          {title}
-        </Box>
-      )}
-      <List disablePadding>
+      <Box sx={{ px: 3, pt: 2.5, pb: 1.5 }}>
+        <Typography variant="subtitle2" color="text.secondary" noWrap>
+          {i18n.t("app.title")}
+        </Typography>
+      </Box>
+      <List ref={list} disablePadding>
+        {place !== null && (
+          // The highlight travels to the new page's row as the page moves.
+          <Box
+            aria-hidden
+            sx={(theme) => ({
+              ...ROW_SHAPE,
+              position: "absolute",
+              left: 0,
+              right: 0,
+              top: 0,
+              height: place.height,
+              transform: `translateY(${place.top}px)`,
+              bgcolor: alpha(theme.palette.primary.main, theme.palette.action.selectedOpacity),
+              transition: `transform ${MOVE_TIMING}, height ${MOVE_TIMING}`,
+              "@media (prefers-reduced-motion: reduce)": { transition: "none" },
+              pointerEvents: "none",
+            })}
+          />
+        )}
         {PAGES.map((each) => {
           const current = toggle?.shown !== true && each === page;
           return (
@@ -362,7 +358,10 @@ function PageList({
               selected={current}
               aria-current={current ? "page" : undefined}
               onClick={() => onNavigate(each)}
-              sx={{ mr: 1.5, borderRadius: "0 999px 999px 0" }}
+              sx={{
+                ...ROW_SHAPE,
+                "&.Mui-selected, &.Mui-selected:hover": { bgcolor: "transparent" },
+              }}
             >
               <ListItemIcon>{PAGE_ENTRY[each].icon}</ListItemIcon>
               <ListItemText
@@ -377,8 +376,50 @@ function PageList({
   );
 }
 
-// The drawers' paper is a column: the foot sits at its bottom, below the pages.
-const FOOT = { mt: "auto" } as const;
+/** The navigation's foot: the way to the pipelines page, then what the app puts there. */
+function Foot({
+  footRef,
+  toggle,
+  i18n,
+}: {
+  readonly footRef: FootRef;
+  readonly toggle: PipelinesToggle | undefined;
+  readonly i18n: Translator;
+}) {
+  const touchFirst = useTouchFirst();
+  const label = i18n.t("nav.pipelines");
+  return (
+    <Box
+      sx={{
+        mt: "auto",
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
+        pl: toggle !== undefined && !touchFirst ? 1.5 : 3,
+        pr: 1.5,
+        py: 1.5,
+      }}
+    >
+      {toggle !== undefined && (
+        // The pipelines page lies one level past the pages, to the left: the arrow says which way.
+        // A touch screen draws no arrow, as it draws no menu button: its swipe stands in for it.
+        <Box sx={touchFirst ? HIDDEN_UNTIL_FOCUSED : undefined}>
+          <IconButton
+            id="nav-pipelines"
+            size="small"
+            aria-label={label}
+            title={label}
+            aria-pressed={toggle.shown}
+            onClick={() => toggle.onShownChange(!toggle.shown)}
+          >
+            {toggle.shown ? <ArrowForwardIcon /> : <ArrowBackIcon />}
+          </IconButton>
+        </Box>
+      )}
+      <Box ref={footRef} sx={{ flexGrow: 1, minWidth: 0 }} />
+    </Box>
+  );
+}
 
 function SidePanel({
   footRef,
@@ -391,12 +432,18 @@ function SidePanel({
     <Box sx={{ width: PANEL_WIDTH_PX, flexShrink: 0 }}>
       <Drawer
         variant="permanent"
-        sx={{ "& .MuiDrawer-paper": { width: PANEL_WIDTH_PX, boxSizing: "border-box" } }}
+        sx={{
+          "& .MuiDrawer-paper": {
+            width: PANEL_WIDTH_PX,
+            boxSizing: "border-box",
+            viewTransitionName: STILL.nav,
+          },
+        }}
       >
         <Box component="nav">
           <PageList {...props} />
         </Box>
-        <Box ref={footRef} sx={FOOT} />
+        <Foot footRef={footRef} toggle={props.toggle} i18n={props.i18n} />
       </Drawer>
     </Box>
   );
@@ -449,6 +496,7 @@ function MenuDrawer({
           left: `calc(${MENU_INSET_PX}px + env(safe-area-inset-left, 0px))`,
           zIndex: "appBar",
           borderRadius: "50%",
+          viewTransitionName: STILL.menuButton,
           ...(touchFirst ? HIDDEN_UNTIL_FOCUSED : {}),
         }}
       >
@@ -469,12 +517,15 @@ function MenuDrawer({
         onClose={() => setOpen(false)}
         // Over a dialog that lets the menu's swipe through, such as a song's details.
         sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
-        slotProps={{ paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX } } }}
+        slotProps={{
+          paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX, viewTransitionName: STILL.nav } },
+          backdrop: { sx: { viewTransitionName: STILL.scrim } },
+        }}
       >
         <Box component="nav" aria-label={label}>
           <PageList page={page} onNavigate={pick} i18n={i18n} toggle={toggle} />
         </Box>
-        <Box ref={footRef} sx={FOOT} />
+        <Foot footRef={footRef} toggle={toggle} i18n={i18n} />
       </Drawer>
     </>
   );

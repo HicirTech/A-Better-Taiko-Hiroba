@@ -1,8 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { CostumeSet, HirobaSessionPort } from "../session-port";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
 import {
   createPreviewScheduler,
   NO_PREVIEW,
@@ -105,26 +106,19 @@ export function CostumePreviewBox({
   );
 }
 
-/** The words for a picture that did not come, with the code to report. */
+/** A preview that did not come, with the code to report. */
 export function PreviewFailure({ preview, i18n }: { preview: PreviewState; i18n: Translator }) {
-  const { t } = i18n;
   if (preview.failure === null) {
     return null;
   }
 
   return (
-    <Stack id="costume-preview-unavailable">
-      <Typography variant="body2" color="text.secondary">
-        {t("costume.preview.unavailable")}
-      </Typography>
-      <Typography
-        id="costume-preview-code"
-        variant="body2"
-        color="text.secondary"
-        sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-      >
-        {t("costume.preview.code", { code: preview.failure })}
-      </Typography>
-    </Stack>
+    <ReadFailureAlert
+      id="costume-preview-unavailable"
+      message={i18n.t("costume.preview.unavailable")}
+      code={preview.failure}
+      codeId="costume-preview-code"
+      i18n={i18n}
+    />
   );
 }

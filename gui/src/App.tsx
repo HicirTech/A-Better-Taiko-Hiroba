@@ -19,6 +19,7 @@ import { useSongCatalogue } from "./favorites/use-song-catalogue";
 import { HistoryPage } from "./history/history-page";
 import { useRecentPlays } from "./history/use-recent-plays";
 import { KnowYourselfPage } from "./know-yourself";
+import { useListedCharts } from "./know-yourself/use-listed-charts";
 import { CostumePage } from "./my-page/costume-page";
 import { MedalCard } from "./my-page/medal-card";
 import type { OpenAction } from "./my-page/open-button";
@@ -31,6 +32,7 @@ import { useTitleEditor } from "./name-title/use-title-editor";
 import { NavFoot } from "./navigation/app-frame";
 import { useFrameNavigation } from "./navigation/frame-navigation";
 import type { Page } from "./navigation/pages";
+import { PAGE_SKELETONS } from "./page-skeletons";
 import { createPictureLane } from "./pictures/picture-lane";
 import { IO_READ_CONSUMERS } from "./pipelines";
 import type { SystemLink, SystemToast } from "./platform";
@@ -52,6 +54,9 @@ import type {
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
 import { SongSearch } from "./songs/song-search";
+import { FADES_IN, useFirstRead } from "./ui/first-read";
+import { PageSkeleton } from "./ui/page-skeleton";
+import { LoadFailed } from "./ui/read-failure-alert";
 import { RELEASES_URL, REPOSITORY_URL, releaseUrl } from "./updates";
 import { APP_VERSION } from "./updates/app-version";
 import { UpdateDialog } from "./updates/update-dialog";
@@ -70,6 +75,17 @@ type Screen =
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
 const OVERVIEW_SPACING = 3;
+// The pages that read Hiroba first, and what their skeleton says is read.
+const FIRST_READ_LABEL: Partial<Record<Page, MessageKey>> = {
+  costume: "costume.reading",
+  favorites: "favorites.reading",
+  rating: "rating.readingData",
+  knowYourself: "picker.loading",
+};
+
+/** An editor read for the first time: nothing of Hiroba's held to show meanwhile. */
+const readsFirst = (step: { readonly name: string; readonly held?: unknown }) =>
+  step.name === "unread" || (step.name === "loading" && step.held === null);
 const HIDDEN = { display: "none" } as const;
 const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 
@@ -118,14 +134,17 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   );
   const {
     pickable,
-    refresh: refreshPickable,
     readIfStale: readPickableIfStale,
     markStale: markPickableStale,
     forget: forgetPickable,
   } = usePickableSongs(port, sessionGone);
   const history = useRecentPlays(port, sessionGone);
+  const { load: loadPlays, markStale: markPlaysStale, forget: forgetPlays } = history;
   const scores = useScores(port, sessionGone);
+  const { load: loadScores, markStale: markScoresStale, forget: forgetScores } = scores;
+  const listed = useListedCharts(port, scores.view);
   const ratingData = useRatingData(port);
+  const { load: loadRatingData } = ratingData;
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
@@ -233,6 +252,45 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       void readFavorites();
     }
   }, [onFavoritesPage, favoritesUnread, writing, readFavorites]);
+  // A page is drawn once it has something to show, so its first read starts here as it opens.
+  useEffect(() => {
+    if (onHistoryPage) {
+      loadPlays();
+    }
+    if (onHistoryPage || onScoresPage || onRatingPage || onKnowPage) {
+      loadScores();
+    }
+    if (onRatingPage) {
+      loadRatingData();
+    }
+  }, [
+    onHistoryPage,
+    onScoresPage,
+    onRatingPage,
+    onKnowPage,
+    loadPlays,
+    loadScores,
+    loadRatingData,
+  ]);
+  const profileWaits = screen.name === "checking" || screen.name === "reading";
+  // What each page waits for on its first visit, once my page is read.
+  const firstReads: Readonly<Record<Exclude<Page, "settings">, boolean>> = {
+    overview: false,
+    history: history.plays === null,
+    scores: scores.view === null,
+    rating: scores.view === null || (ratingData.data === null && ratingData.failure === null),
+    knowYourself: scores.view === null || listed === null || catalogue.state === "loading",
+    costume: readsFirst(editor.step),
+    nameTitle: false,
+    favorites: readsFirst(favorites.step),
+  };
+  const pageWaits =
+    page !== "settings" && (profileWaits || (screen.name === "profile" && firstReads[page]));
+  const firstRead = useFirstRead(pageWaits, page);
+  const PageShape = page === "settings" ? null : PAGE_SKELETONS[page];
+  const waitLabel = profileWaits
+    ? "profile.reading"
+    : (FIRST_READ_LABEL[page] ?? (`nav.${page}` as const));
 
   const signIn = async () => {
     // Hiroba may have ended the last session itself, so no sign-out forgot its pictures.
@@ -275,6 +333,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       forgetNameEditor();
       forgetFavorites();
       forgetPickable();
+      forgetScores();
+      forgetPlays();
     }
   }, [
     noSession,
@@ -283,7 +343,21 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     forgetNameEditor,
     forgetFavorites,
     forgetPickable,
+    forgetScores,
+    forgetPlays,
   ]);
+  // What the device keeps comes in while the window is idle, so no page waits for it later.
+  const profileShown = screen.name === "profile";
+  useEffect(() => {
+    if (!profileShown) {
+      return;
+    }
+    const idle = requestIdleCallback(() => {
+      loadScores();
+      loadPlays();
+    });
+    return () => cancelIdleCallback(idle);
+  }, [profileShown, loadScores, loadPlays]);
 
   // Leaving a page drops the edits made on it; the editors keep what they read from Hiroba.
   useEffect(() => {
@@ -342,11 +416,12 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     try {
       if (onHistoryPage) {
         // A walk can run for minutes: Read again on another page must not wait for it.
-        void history.read();
+        // It notes its plays in the scores too, and a read of the scores walks the plays.
+        void history.read().then(markScoresStale);
       } else if (onScoresPage || onKnowPage) {
-        void scores.read();
+        void scores.read().then(markPlaysStale);
       } else if (onRatingPage) {
-        void scores.read();
+        void scores.read().then(markPlaysStale);
         void ratingData.read();
       } else if (pageEditor !== null) {
         if (onFavoritesPage) {
@@ -412,7 +487,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           onAnswer={(confirmed) => {
             setAskingEvery(false);
             if (confirmed) {
-              void scores.readEvery();
+              void scores.readEvery().then(markPlaysStale);
             }
           }}
         />
@@ -474,18 +549,22 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             </Card>
           )}
 
-          {screen.name === "checking" && <CircularProgress size={24} />}
-
-          {screen.name === "reading" && (
-            <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-              <CircularProgress size={24} />
-              <Typography>{t("profile.reading")}</Typography>
-            </Stack>
+          {firstRead.skeleton && PageShape !== null && (
+            <PageSkeleton page={page} label={t(waitLabel)}>
+              <PageShape />
+            </PageSkeleton>
           )}
 
           {/* Laid out as if absent, so the pages keep their place in the frame. */}
-          <Box id="page-shut" inert={shut} sx={{ display: "contents", "& > *": SHUT_LOOK(shut) }}>
-            {screen.name === "profile" && page === "history" && (
+          <Box
+            id="page-shut"
+            inert={shut}
+            sx={{
+              display: "contents",
+              "& > *": { ...SHUT_LOOK(shut), ...(firstRead.fades ? FADES_IN : {}) },
+            }}
+          >
+            {screen.name === "profile" && !pageWaits && page === "history" && (
               <HistoryPage
                 history={history}
                 scores={scores}
@@ -496,7 +575,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && page === "scores" && (
+            {screen.name === "profile" && !pageWaits && page === "scores" && (
               <ScoresPage
                 scores={scores}
                 catalogue={catalogue}
@@ -506,7 +585,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && page === "rating" && (
+            {screen.name === "profile" && !pageWaits && page === "rating" && (
               <RatingPage
                 scores={scores}
                 ratingData={ratingData}
@@ -517,10 +596,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && page === "knowYourself" && (
+            {screen.name === "profile" && !pageWaits && page === "knowYourself" && (
               <KnowYourselfPage
                 scores={scores}
-                port={port}
+                listed={listed}
                 catalogue={catalogue}
                 lane={lane}
                 touchFirst={touchFirst}
@@ -529,11 +608,11 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && page === "costume" && (
+            {screen.name === "profile" && !pageWaits && page === "costume" && (
               <CostumePage editor={editor} lane={lane} i18n={i18n} />
             )}
 
-            {screen.name === "profile" && page === "nameTitle" && (
+            {screen.name === "profile" && !pageWaits && page === "nameTitle" && (
               <NameTitlePage
                 profile={screen.profile}
                 lane={lane}
@@ -544,20 +623,19 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && page === "favorites" && (
+            {screen.name === "profile" && !pageWaits && page === "favorites" && (
               <FavoritesPage
                 favorites={favorites}
                 catalogue={catalogue}
                 port={port}
                 lane={lane}
                 pickable={pickable}
-                onReadPickable={refreshPickable}
                 onPickerOpen={readPickableIfStale}
                 i18n={i18n}
               />
             )}
 
-            {screen.name === "profile" && page === "overview" && (
+            {screen.name === "profile" && !pageWaits && page === "overview" && (
               <SongSearch
                 catalogue={catalogue}
                 port={port}
@@ -589,23 +667,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           </Box>
 
           {screen.name === "readFailed" && (
-            <Alert severity="warning">
-              {t(FAILURE_MESSAGE[screen.kind])}
-              {screen.detail !== undefined && (
-                <Typography
-                  id="failure-detail"
-                  variant="body2"
-                  sx={{
-                    mt: 1,
-                    fontFamily: "monospace",
-                    userSelect: "text",
-                    wordBreak: "break-all",
-                  }}
-                >
-                  {t("failure.detail", { detail: screen.detail })}
-                </Typography>
-              )}
-            </Alert>
+            <LoadFailed id="read-failure" failure={screen} codeId="failure-detail" i18n={i18n} />
           )}
         </Stack>
       )}

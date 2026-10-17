@@ -51,6 +51,7 @@ export function AddSongsDialog({
       title={t("history.addToSet")}
       subtitle={null}
       choices={choices}
+      i18n={i18n}
       onClose={onClose}
     />
   );

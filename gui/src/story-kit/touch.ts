@@ -15,8 +15,7 @@ function sendTouch(target: Element, type: string, at: TouchPoint, touching: bool
   );
 }
 
-/** A finger put on `target` at `from` and drawn to `to` in a few moves; let go there only when
- * `release`. */
+/** A finger put on `target` at `from` and drawn to `to`; let go there only when `release`. */
 export function touchDrag(
   target: Element,
   from: TouchPoint,

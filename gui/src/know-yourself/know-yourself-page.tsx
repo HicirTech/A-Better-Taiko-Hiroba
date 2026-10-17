@@ -12,13 +12,14 @@ import { SongListFailed } from "../favorites/song-list-failed";
 import { resolveSong } from "../favorites/song-look";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { Waiting } from "../my-page/editor-parts";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
 import { listedOf, scoresReadingText } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
-import type { HirobaSessionPort, ShownSong } from "../session-port";
+import type { ListedChartsView, ShownSong } from "../session-port";
+import { LoadFailed } from "../ui/read-failure-alert";
 import { AddSongsDialog } from "./add-songs-dialog";
 import { BandItem } from "./band-item";
 import { ChartList } from "./chart-list";
@@ -28,12 +29,11 @@ import { type KnownChart, knownCharts, shownAt } from "./known-charts";
 import { NearMissItem } from "./near-miss-item";
 import type { PageParts } from "./page-parts";
 import { RanksItem } from "./ranks-item";
-import { useListedCharts } from "./use-listed-charts";
 
 /** Where the player stands, from the kept scores and taiko.wiki's list; asks Hiroba nothing. */
 export function KnowYourselfPage({
   scores,
-  port,
+  listed,
   catalogue,
   lane,
   touchFirst,
@@ -41,7 +41,8 @@ export function KnowYourselfPage({
   i18n,
 }: {
   readonly scores: ScoresState;
-  readonly port: Pick<HirobaSessionPort, "listedCharts">;
+  /** Every chart the lists name, held by the window across visits. */
+  readonly listed: ListedChartsView | null;
   /** taiko.wiki's song list: each chart's stars, notes and tempo, and the names. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
@@ -53,8 +54,10 @@ export function KnowYourselfPage({
 }) {
   const { t, number, locale } = i18n;
   const { view, reading, progress, song, failure, load, readSong } = scores;
+  const { readIfFailed } = catalogue;
   useEffect(load, [load]);
-  const listed = useListedCharts(port, view);
+  // A song list that could not be read is read again as the page opens.
+  useEffect(readIfFailed, [readIfFailed]);
   const kept = useFavoriteSets();
   const [shown, setShown] = useState(keptShownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);
@@ -146,9 +149,6 @@ export function KnowYourselfPage({
         <Waiting id="know-scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
       )}
       {failure !== null && <LoadFailed id="know-scores-failure" failure={failure} i18n={i18n} />}
-      {catalogue.state === "loading" && (
-        <Waiting id="know-songs-loading">{t("picker.loading")}</Waiting>
-      )}
       {catalogue.state === "failed" && (
         <Box>
           <SongListFailed id="know-songs" catalogue={catalogue} i18n={i18n} />
@@ -210,10 +210,7 @@ export function KnowYourselfPage({
             kept.replaceSongs(set.id, [...set.songs, ...added]);
             setAdding(null);
           }}
-          onNewSet={() => {
-            setNaming(adding.slice(0, SET_SONG_LIMIT));
-            setAdding(null);
-          }}
+          onNewSet={() => setNaming(adding.slice(0, SET_SONG_LIMIT))}
           onClose={() => setAdding(null)}
         />
       )}
@@ -226,6 +223,7 @@ export function KnowYourselfPage({
           onSave={(name) => {
             kept.add(name, naming);
             setNaming(null);
+            setAdding(null);
           }}
         />
       )}

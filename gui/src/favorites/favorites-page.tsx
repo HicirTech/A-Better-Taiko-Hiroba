@@ -3,14 +3,15 @@ import { Box, IconButton, Stack, Typography } from "@mui/material";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
-import { HELD_STILL, LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
+import { HELD_STILL, useFocusKept } from "../my-page/editor-parts";
+import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
 import { SongDetails } from "../songs/song-details";
+import { LoadFailed } from "../ui/read-failure-alert";
 import {
-  type FavoriteSet,
   filledSlots,
   moved,
   newSetName,
@@ -38,9 +39,11 @@ import type { SongCatalogue } from "./use-song-catalogue";
 const NO_SONGS: readonly string[] = [];
 
 /** What the name dialog asks for: a new set, opened for editing or not, or a set's new name. */
-type Naming =
-  | { readonly kind: "new"; readonly songs: readonly string[]; readonly editing: boolean }
-  | { readonly kind: "rename"; readonly set: FavoriteSet };
+/** A new set whose name is asked: its songs, and whether it opens in edit mode. */
+interface Naming {
+  readonly songs: readonly string[];
+  readonly editing: boolean;
+}
 
 export interface FavoritesPageProps {
   readonly favorites: FavoritesEditor;
@@ -53,7 +56,6 @@ export interface FavoritesPageProps {
   readonly lane: PictureLane;
   /** The songs Hiroba's own picker offers: neither picker lists any other. */
   readonly pickable: PickableState;
-  readonly onReadPickable: () => void;
   /** As a picker opens: reads the list when it is stale. */
   readonly onPickerOpen: () => void;
   readonly i18n: Translator;
@@ -75,7 +77,6 @@ function FavoritesBody({
   port,
   lane,
   pickable,
-  onReadPickable,
   onPickerOpen,
   i18n,
 }: FavoritesPageProps) {
@@ -94,6 +95,7 @@ function FavoritesBody({
   const [picking, setPicking] = useState<"song" | "set" | null>(null);
   const openPicker = (picker: "song" | "set") => {
     onPickerOpen();
+    catalogue.readIfFailed();
     setPicking(picker);
   };
   const [openSongNo, setOpenSongNo] = useState<string | null>(null);
@@ -156,14 +158,15 @@ function FavoritesBody({
     setDraft(null);
     setEditing(false);
   };
+  // A set shown from the drawer is a level of its own: Back goes to the current favourites.
+  useBackLeaves(set !== null, () => showSet(null));
   useBackLeaves(editing, leaveEditing);
   const named = (name: string) => {
-    if (naming?.kind === "new") {
+    if (naming !== null) {
       showSet(keptSets.add(name, naming.songs), naming.editing);
-    } else if (naming?.kind === "rename") {
-      keptSets.rename(naming.set.id, name);
     }
     setNaming(null);
+    setDrawerOpen(false);
   };
 
   // Focus leaves the button a write shuts, so it is not dropped to the window's top.
@@ -237,7 +240,7 @@ function FavoritesBody({
           onApply={() => void apply(set.songs)}
         />
       ) : shown === null ? (
-        progressOf(step, i18n)
+        failureOf(step, i18n)
       ) : (
         <Stack spacing={2} inert={shown.shut} sx={shown.shut ? HELD_STILL : undefined}>
           <SongCard
@@ -257,15 +260,29 @@ function FavoritesBody({
             sets={sets}
             inUse={inUse}
             onSaveAsSet={() =>
-              setNaming({
-                kind: "new",
-                songs: filledSlots(shown.view.folder.state),
-                editing: false,
-              })
+              setNaming({ songs: filledSlots(shown.view.folder.state), editing: false })
             }
             onSaveToSet={(id) => keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))}
           />
         </Stack>
+      )}
+      {shown?.notice?.write === "favoriteSong" && (
+        <WriteOutcomeSnackbar
+          id="favorite-song-outcome"
+          kind="favoriteSong"
+          outcome={shown.notice.outcome}
+          i18n={i18n}
+          onClosed={favorites.closeNotice}
+        />
+      )}
+      {shown?.notice?.write === "folder" && (
+        <WriteOutcomeSnackbar
+          id="favorite-folder-outcome"
+          kind="folder"
+          outcome={shown.notice.outcome}
+          i18n={i18n}
+          onClosed={favorites.closeNotice}
+        />
       )}
       <SetsDrawer
         open={drawerOpen}
@@ -278,17 +295,9 @@ function FavoritesBody({
           showSet(id);
           setDrawerOpen(false);
         }}
-        onAdd={() => {
-          setDrawerOpen(false);
-          setNaming({ kind: "new", songs: [], editing: true });
-        }}
+        onAdd={() => setNaming({ songs: [], editing: true })}
         onMove={keptSets.moveSet}
-        onRename={(id) => {
-          const chosen = sets.find((one) => one.id === id);
-          if (chosen !== undefined) {
-            setNaming({ kind: "rename", set: chosen });
-          }
-        }}
+        onRename={keptSets.rename}
         onDelete={(id) => {
           keptSets.remove(id);
           if (id === selectedId) {
@@ -302,19 +311,13 @@ function FavoritesBody({
         choice={songChoice}
         catalogue={catalogue}
         pickable={pickable}
-        onReadPickable={onReadPickable}
         i18n={i18n}
         onClose={() => setPicking(null)}
       />
       {naming !== null && (
         <SetNameDialog
-          key={naming.kind === "rename" ? naming.set.id : "new"}
-          title={t(naming.kind === "rename" ? "favorites.rename.title" : "favorites.newSet")}
-          initial={
-            naming.kind === "rename"
-              ? naming.set.name
-              : newSetName(sets, (number) => t("favorites.setName", { number }))
-          }
+          title={t("favorites.newSet")}
+          initial={newSetName(sets, (number) => t("favorites.setName", { number }))}
           i18n={i18n}
           onCancel={() => setNaming(null)}
           onSave={named}
@@ -326,7 +329,6 @@ function FavoritesBody({
           choice={setChoice}
           catalogue={catalogue}
           pickable={pickable}
-          onReadPickable={onReadPickable}
           i18n={i18n}
           onClose={() => setPicking(null)}
         />
@@ -342,15 +344,9 @@ function FavoritesBody({
   );
 }
 
-function progressOf(step: FavoritesStep, i18n: Translator): ReactNode {
-  switch (step.name) {
-    case "unread":
-    case "loading":
-      return <Waiting id="favorites-reading">{i18n.t("favorites.reading")}</Waiting>;
-    case "loadFailed":
-      return <LoadFailed id="favorites-load-failed" failure={step.failure} i18n={i18n} />;
-    case "ready":
-    case "saving":
-      return null;
-  }
+// A first read waits under the page's skeleton, and a read again under the held favourites.
+function failureOf(step: FavoritesStep, i18n: Translator): ReactNode {
+  return step.name === "loadFailed" ? (
+    <LoadFailed id="favorites-load-failed" failure={step.failure} i18n={i18n} />
+  ) : null;
 }

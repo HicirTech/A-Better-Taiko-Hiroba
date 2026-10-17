@@ -33,8 +33,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A song's facts and charts: each chart's density over the song and its picture, drawn from its
- * TJA; full screen on a phone. */
+/** A song's facts and charts, each with its density and picture; full screen on a phone. */
 export const Song: Story = {};
 
 /** Branched charts and an inner chart; the tempo changes halfway. */

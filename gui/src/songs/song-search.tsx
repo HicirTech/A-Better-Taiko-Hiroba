@@ -24,11 +24,11 @@ import { FrameTop } from "../navigation/app-frame";
 import { useBackLeaves } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
+import { SearchField } from "../ui/search-field";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
 import { SongDetails } from "./song-details";
 import { bpmText } from "./song-facts";
 import { HistoryIcon } from "./song-icons";
-import { SongSearchBar } from "./song-search-bar";
 
 export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
@@ -59,6 +59,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
     if (!active) {
       setActive(true);
       onOpen();
+      catalogue.readIfFailed();
     }
   };
   const leave = () => {
@@ -138,9 +139,9 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
   return (
     <>
       <FrameTop>
-        <SongSearchBar
+        <SearchField
+          id="song-search"
           query={query}
-          active={active}
           i18n={i18n}
           inputRef={input}
           onQuery={(next) => {
@@ -148,12 +149,10 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
             activate();
             setQuery(next);
           }}
-          onActivate={activate}
-          onLeave={leave}
-          onSubmit={() => {
-            setRecent(rememberSearch(query));
-            input.current?.blur();
-          }}
+          onFocus={activate}
+          onLeave={active ? leave : undefined}
+          onSubmit={() => setRecent(rememberSearch(query))}
+          hint={recent.length === 0 ? t("picker.searchHint") : undefined}
         />
       </FrameTop>
       {active && panel !== null && (

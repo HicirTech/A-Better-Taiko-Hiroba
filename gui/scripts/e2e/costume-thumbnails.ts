@@ -148,8 +148,10 @@ export async function thumbnails(ctx: Ctx) {
   await Bun.sleep(1500);
   const slotTwoAsked = thumbsAfterGif.slice(askedBeforeReopen);
   results.thumbnailGifLeavesTheId =
-    (await textOf("#costume-thumbnails-unavailable > :first-child")) ===
-      `Some thumbnails didn't load (${unfetchedIn(2).length}); their numbers are shown instead.` &&
+    ((await textOf("#costume-thumbnails-unavailable"))?.startsWith(
+      `Some thumbnails didn't load (${unfetchedIn(2).length}); their numbers are shown instead.`,
+    ) ??
+      false) &&
     (await textOf("#costume-thumbnails-code")) ===
       "Code for a report: costumeItem=notPng status=200 type=image/gif bytes=43" &&
     (await page.evaluate<number>(
@@ -313,8 +315,8 @@ export const saveInPlaceKeys = [
   "costumePhoneSaveKeepsTheEditorAndThePageInPlace",
   "costumePreviewLevelWithTheGridsFirstRowBelowTheNotices",
   "costumeLeftColumnStaysInViewWithANoticeAndTheMascotNote",
-  "costumeNoticeIsScrolledIntoViewAfterAFailedSave",
-  "costumePhoneNoticeIsScrolledIntoViewBetweenTheBlockAndTheBar",
+  "costumeNoticeIsInViewAfterAFailedSave",
+  "costumePhoneNoticeIsBetweenTheBlockAndTheBar",
 ] as const;
 
 export async function saveInPlace(ctx: Ctx) {
@@ -429,12 +431,14 @@ export async function saveInPlace(ctx: Ctx) {
           async () => (await exists("#costume-preview-unavailable")) || undefined,
         );
         await scrollToTheEnd();
-        await fetch(`${HIROBA}/__noop-save`);
+        // A save stopped for a confirmation reads nothing back, so the draft and its notes stay.
+        await fetch(`${HIROBA}/__precheck?answer=true`);
         await click("#costume-save");
         await waitFor("write notice", async () => (await exists("#write-outcome")) || undefined);
         return await run();
       });
     } finally {
+      await fetch(`${HIROBA}/__precheck?answer=false`);
       await fetch(`${HIROBA}/__preview?answer=png`);
       await click("#costume-reset");
     }
@@ -495,16 +499,13 @@ export async function saveInPlace(ctx: Ctx) {
     ({ apart, end, stuckOverhangs }) =>
       apart && end > 100 && stuckOverhangs.length > 0 && stuckOverhangs.every((one) => one <= 0.5),
   );
-  results.costumeNoticeIsScrolledIntoViewAfterAFailedSave = wideWithTheNotesUp.every(
+  results.costumeNoticeIsInViewAfterAFailedSave = wideWithTheNotesUp.every(
     ({ noticeSeen }) => noticeSeen,
   );
-  results.costumePhoneNoticeIsScrolledIntoViewBetweenTheBlockAndTheBar = await withTheNotesUp(
-    390,
-    700,
-    () =>
-      noticeIsInView(
-        async () => (await boxOf("#costume-aside")).bottom,
-        async () => (await boxOf("#costume-bar")).top,
-      ),
+  results.costumePhoneNoticeIsBetweenTheBlockAndTheBar = await withTheNotesUp(390, 700, () =>
+    noticeIsInView(
+      async () => (await boxOf("#costume-aside")).bottom,
+      async () => (await boxOf("#costume-bar")).top,
+    ),
   );
 }

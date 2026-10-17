@@ -27,6 +27,11 @@ function publishHeightOf(property: string) {
 export const BLOCK_REF = publishHeightOf(BLOCK_HEIGHT);
 export const BAR_REF = publishHeightOf(BAR_HEIGHT);
 
+/** Keeps a snackbar's gap at the window's foot, as Material sets it, above the bar stuck there. */
+export const ABOVE_STUCK_BAR = {
+  bottom: { xs: `calc(var(${BAR_HEIGHT}, 0px) + 8px)`, sm: `calc(var(${BAR_HEIGHT}, 0px) + 24px)` },
+} as const;
+
 /** Keeps what scrolls into view, a focused cell or a notice, clear of the band, block and bar. */
 export const CLEAR_OF_STUCK = {
   scrollMarginTop: `calc(${BELOW_TOP_BAND} + ${RING_ROOM_PX}px)`,

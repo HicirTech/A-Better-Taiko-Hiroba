@@ -3,8 +3,7 @@ import { join, sep } from "node:path";
 
 import type { Plugin } from "vite";
 
-/** Names the folder of a resource pack to the local Storybook: pictures kept outside the
- * repository, drawn in place of the stand-ins. `scripts/storybook.ts` sets it from `--pack`. */
+/** Names a resource pack's folder to the local Storybook; `scripts/storybook.ts` sets it. */
 export const PACK_VARIABLE = "ABTH_STORY_PACK";
 
 const PACK_MODULE = "virtual:abth-story-pack";
@@ -25,8 +24,7 @@ const PICTURE_PATH = /^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*\.png$/;
 const DATA_PATH = /^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*\.json$/;
 const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 
-/** A resource pack as the stories read it: a label, each picture's PNG in base64 by key, and each
- * data file's JSON text by name. */
+/** A pack as stories read it: a label, PNGs in base64 by key, JSON files' text by name. */
 export interface StoryPack {
   readonly label: string;
   readonly pictures: Readonly<Record<string, string>>;
@@ -94,8 +92,7 @@ function readData(root: string, name: string, path: unknown): string {
   return text;
 }
 
-/** Reads the pack in `folder`: a `pack.json` naming its PNG pictures and JSON data files, all
- * below the folder. Throws on anything else. */
+/** Reads the pack in `folder`: its `pack.json` and the files it names; throws otherwise. */
 export function readStoryPack(folder: string): StoryPack {
   const root = realpathSync(folder);
   const manifest: unknown = JSON.parse(readFileSync(join(root, MANIFEST), "utf8"));
@@ -113,8 +110,7 @@ export function readStoryPack(folder: string): StoryPack {
   return { label: manifest.label, pictures, data };
 }
 
-/** Answers `virtual:abth-story-pack` with `pack`, or null without one. With a pack, the dev server
- * answers this machine alone: the pictures are not to be handed around. */
+/** Answers the pack's module with `pack`, or null; with a pack, answers this machine alone. */
 export function storyPackPlugin(pack: StoryPack | null): Plugin {
   return {
     name: "abth-story-pack",

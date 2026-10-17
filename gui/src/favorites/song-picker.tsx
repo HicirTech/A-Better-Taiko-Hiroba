@@ -1,16 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormHelperText,
-  TextField,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { Box, FormHelperText } from "@mui/material";
 import {
   type ReactNode,
   useCallback,
@@ -22,10 +11,12 @@ import {
 } from "react";
 
 import { Waiting } from "../my-page/editor-parts";
-import { useBackCloses } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { FavoriteSongState } from "../session-port";
+import { LargeModal } from "../ui/large-modal";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
+import { SearchField } from "../ui/search-field";
 import type { PickableState } from "./pickable-songs";
 import { type PickerEntry, PickerList } from "./picker-list";
 import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
@@ -38,10 +29,9 @@ import { newestFirst } from "./song-order";
 import { searchSongs } from "./song-search";
 import type { SongCatalogue } from "./use-song-catalogue";
 
-const TITLE_ID = "song-picker-title";
 const LIMIT_NOTE_ID = "song-picker-limit";
 
-/** One song to pick, which closes the picker; or many to check, which the Done button closes. */
+/** One song to pick, which closes the picker; or many to check until the picker is closed. */
 export type SongChoice =
   | { readonly kind: "one"; readonly onPick: (song: FavoriteSongState) => void }
   | {
@@ -57,39 +47,30 @@ export interface SongPickerProps {
   readonly catalogue: SongCatalogue;
   /** Only the songs Hiroba's own picker offers are listed; a choice of one lists 裏 entries too. */
   readonly pickable: PickableState;
-  readonly onReadPickable: () => void;
   readonly i18n: Translator;
   readonly onClose: () => void;
 }
 
 export function SongPicker({ open, onClose, ...body }: SongPickerProps) {
-  const narrow = useMediaQuery(useTheme().breakpoints.down("sm"), { noSsr: true });
-  useBackCloses(open, onClose);
-  return (
-    <Dialog
-      id="song-picker"
-      open={open}
-      onClose={onClose}
-      fullScreen={narrow}
-      fullWidth
-      maxWidth="md"
-      aria-labelledby={TITLE_ID}
-      slotProps={{ paper: { sx: { height: 1 } } }}
-    >
-      <PickerBody {...body} onClose={onClose} />
-    </Dialog>
-  );
+  // Drawn from its opening until it has slid away, so the search and the filter start over.
+  const [drawn, setDrawn] = useState(open);
+  if (open && !drawn) {
+    setDrawn(true);
+  }
+  return drawn ? (
+    <PickerBody {...body} open={open} onClose={onClose} onExited={() => setDrawn(false)} />
+  ) : null;
 }
 
-// Its own component, so the search and the filter start over each time the picker opens.
 function PickerBody({
+  open,
   choice,
   catalogue,
   pickable,
-  onReadPickable,
   i18n,
   onClose,
-}: Omit<SongPickerProps, "open">) {
+  onExited,
+}: SongPickerProps & { readonly onExited: () => void }) {
   const { t, locale } = i18n;
   const touchFirst = useTouchFirst();
   const [query, setQuery] = useState("");
@@ -179,20 +160,12 @@ function PickerBody({
     const { kind, detail } = status.failure;
     content = (
       <Box sx={{ p: 2 }}>
-        <FormHelperText id="song-picker-offered-failed" error>
-          {t("picker.offeredFailed")} {t(FAILURE_MESSAGE[kind])}
-          {detail !== undefined && (
-            <Box
-              component="span"
-              sx={{ display: "block", mt: 0.5, fontFamily: "monospace", userSelect: "text" }}
-            >
-              {t("failure.detail", { detail })}
-            </Box>
-          )}
-        </FormHelperText>
-        <Button id="song-picker-offered-retry" onClick={onReadPickable} sx={{ mt: 1 }}>
-          {t("picker.retry")}
-        </Button>
+        <ReadFailureAlert
+          id="song-picker-offered-failed"
+          message={`${t("picker.offeredFailed")} ${t(FAILURE_MESSAGE[kind])}`}
+          code={detail ?? null}
+          i18n={i18n}
+        />
       </Box>
     );
   } else if (offered === null) {
@@ -220,39 +193,39 @@ function PickerBody({
   }
 
   return (
-    <>
-      <DialogTitle id={TITLE_ID}>
-        {many === null ? t("picker.title.single") : t("picker.title.multi")}
-      </DialogTitle>
-      <Box sx={{ px: 3, pb: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
-        <TextField
-          id="song-picker-search"
-          type="search"
-          fullWidth
-          autoFocus={!touchFirst}
-          label={t("picker.search")}
-          helperText={t("picker.searchHint")}
-          value={query}
-          onChange={(event) => {
-            setQuery(event.target.value);
-            rewind();
-          }}
-        />
-        <SongFilters filter={filter} i18n={i18n} onFilter={filterBy} />
-        {full && many !== null && (
-          <FormHelperText id={LIMIT_NOTE_ID} sx={{ m: 0 }}>
-            {t("picker.limit", { max: many.limit })}
-          </FormHelperText>
-        )}
-      </Box>
-      <DialogContent ref={scroller} dividers sx={{ p: 0 }}>
-        <ShownDifficultyContext value={shown}>{content}</ShownDifficultyContext>
-      </DialogContent>
-      <DialogActions>
-        <Button id="song-picker-done" onClick={onClose}>
-          {many === null ? t("picker.close") : t("picker.done")}
-        </Button>
-      </DialogActions>
-    </>
+    <LargeModal
+      id="song-picker"
+      open={open}
+      title={many === null ? t("picker.title.single") : t("picker.title.multi")}
+      head={
+        <>
+          <SearchField
+            id="song-picker-search"
+            query={query}
+            i18n={i18n}
+            autoFocus={!touchFirst}
+            hint={t("picker.searchHint")}
+            onQuery={(next) => {
+              setQuery(next);
+              rewind();
+            }}
+          />
+          <SongFilters filter={filter} i18n={i18n} onFilter={filterBy} />
+          {full && many !== null && (
+            <FormHelperText id={LIMIT_NOTE_ID} sx={{ m: 0 }}>
+              {t("picker.limit", { max: many.limit })}
+            </FormHelperText>
+          )}
+        </>
+      }
+      fills
+      flush
+      contentRef={scroller}
+      i18n={i18n}
+      onExited={onExited}
+      onClose={onClose}
+    >
+      <ShownDifficultyContext value={shown}>{content}</ShownDifficultyContext>
+    </LargeModal>
   );
 }

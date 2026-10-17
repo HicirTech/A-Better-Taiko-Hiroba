@@ -279,19 +279,6 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
     ["小咚", "換裝"],
   ),
   "costume.reading": COSTUME,
-  "write.notApplied.unchanged": COSTUME,
-  "write.diverged": COSTUME,
-  "write.changedSincePreview": COSTUME,
-  "write.nothingToChange": COSTUME,
-  "write.title.crossChanged": COSTUME,
-  // Saved but the server was not told, and the same set cannot be sent twice ("nothing to change"):
-  // the message sends the user to Hiroba's own page.
-  "write.appliedNotSynced": inEach(
-    ["This app cannot send it again", "on Hiroba's own page"],
-    ["このアプリからは再送信できません", "ひろばのページでもう一度設定"],
-    ["本应用无法重新发送", "广场自己的页面上再设置一次"],
-    ["本應用程式無法重新傳送", "廣場自己的頁面上再設定一次"],
-  ),
   "medal.none": inEach(["Don Medal"], ["どんメダル"], ["咚币"], ["咚幣"]),
   "medal.unrecognised": inEach(["Don Medal"], ["どんメダル"], ["咚币"], ["咚幣"]),
   "costume.kigurumiWarning": inEach(
@@ -300,12 +287,6 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
     ["人偶装", "头", "身体", "妆容", "小角色"],
     ["人偶裝", "頭", "身體", "妝容", "小角色"],
   ),
-  "write.needsConfirmation": inEveryLanguage([
-    "これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  ]),
-  "write.title.needsConfirmation": inEveryLanguage([
-    "この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  ]),
   "name.siteWarning": inEveryLanguage([
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
   ]),
@@ -313,12 +294,7 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
 };
 
 /** Messages that keep Japanese in every language: Hiroba's own warning and the sentences quoted. */
-const KEEPS_JAPANESE: readonly MessageKey[] = [
-  "name.siteWarning",
-  "name.closed",
-  "write.needsConfirmation",
-  "write.title.needsConfirmation",
-];
+const KEEPS_JAPANESE: readonly MessageKey[] = ["name.siteWarning", "name.closed"];
 
 const KANA = /[\p{Script=Hiragana}\p{Script=Katakana}]/u;
 
@@ -336,18 +312,18 @@ const NOT_TRADITIONAL =
 // reviewed as Traditional. A new character fails the test below until it is reviewed and added.
 const TRADITIONAL: ReadonlySet<string> = new Set(
   [
-    "一七三上下不並中主之乎九也了二五人仍代以件任伺但位何作你使供保個做停偶傳儲",
-    "元先入內全八六共再冠出分列初別到前包化十南卡即卸原取受另只可合同名",
+    "一七三上下不並中主之九也了二五人仍代以件任但位何作你使供保個停偶傳儲",
+    "元先入內全八六共再冠出分列初到前包化十南卡即卸原取受只可合同名",
     "史否含和咚哪啟單器四回因圖在執報場外多夢天夾套妝字存完官定宮容密對小尚",
-    "就尾展工己已帳幣度廣建式張後得從息情愛態應成或戲戴把拒括持按排接提換",
-    "援擇支收改料新斷方於日易是時暫暱曲更最會有服期未本束板枚果查核格框桌極概",
-    "樣機檢次歌止正此步歷段每比求沒法消清為無片版狀獲玄王現用由留畫登白的目直看眾",
+    "就尾展工已帳幣度廣建式張後得從情愛應成或戲戴把拒括持按排接提換",
+    "擇收改料新斷方於日易是時暫暱曲更最會有期未本束板枚果查核格框桌極概",
+    "機檢次歌止正此步歷段每比求決沒法消清為無片版獲玄王現用由留畫登白的目直看眾",
     "知確碼示移程稱空穿窗立符簡粉粹系級紫組結絕統經維網線編縮績繪置而肢能臉自至",
-    "與良色萬著藏處號虹行表被裝製要覆視覽角觸言計訊記設試話該詳認語誤請護讀",
-    "變資超跟路身軀較載輯輸轉辨送這通連進逾遊過達選還部重金銀銅錄錯長閉開間關限",
+    "與良色萬著藏處號虹行表被裝製要視覽角觸言計記設試該詳認語誤請護讀",
+    "變資超跟路身軀較載輯輸轉辨送這通連逾遊過達選還部重金銀銅錄錯長閉開間關限",
     "除階隨雅面頁項預頭顏顯體鼓牌",
     "流音樂動兒童科創綜藝古典普困難魔鬼裏",
-    "首解鎖第",
+    "首解第",
     "增搜尋依文英羅馬類找放",
     "相刪將影響",
     "發稍布",

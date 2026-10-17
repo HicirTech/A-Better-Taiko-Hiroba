@@ -12,6 +12,7 @@ export const knowYourselfKeys = [
   "ladderRowOpensItsChartsNotCleared",
   "gapListNarrowsToNeverPlayed",
   "nearestGapsGoToANewSet",
+  "knowNewSetCancelGoesBackToTheChooser",
   "setHoldingTheTickedSongsIsRefused",
   "rankRowsOpenNothing",
   "bpmBandsAWobblingTempoByItsNumber",
@@ -126,8 +127,14 @@ export async function knowYourself(ctx: Ctx) {
   await shown("#know-add-to-set");
   await click("#know-add-new-set");
   await shown("#favorite-set-name-dialog");
+  await press("Escape");
+  await gone("#favorite-set-name-dialog");
+  results.knowNewSetCancelGoesBackToTheChooser = await exists("#know-add-to-set");
+  await click("#know-add-new-set");
+  await shown("#favorite-set-name-dialog");
   await click("#favorite-set-name-save");
   await gone("#favorite-set-name-dialog");
+  await gone("#know-add-to-set");
   const sets = await kept();
   const index = sets.length - 1;
   results.nearestGapsGoToANewSet = nearest.length > 0 && same(sets[index]?.songs ?? [], nearest);

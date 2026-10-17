@@ -25,7 +25,6 @@ const NAVIGATION = [
   "Settings",
 ].join("");
 const PAGE_ENTRIES = [
-  "nav-pipelines",
   "nav-overview",
   "nav-history",
   "nav-scores",

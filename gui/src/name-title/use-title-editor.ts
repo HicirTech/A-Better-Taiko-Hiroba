@@ -40,6 +40,8 @@ export interface TitleEditor {
   /** Drops the pick and the last write's notice when the page is left; the list stays. */
   dropEdits(): void;
   pick(option: TitleOption | null): void;
+  /** Drops the last write's notice once the window has said it. */
+  closeNotice(): void;
   save(): Promise<void>;
 }
 
@@ -148,6 +150,7 @@ export function useTitleEditor({
     forget,
     dropEdits,
     pick: (option) => dispatch({ type: "picked", option }),
+    closeNotice: () => dispatch({ type: "noticeClosed" }),
     save,
   };
 }

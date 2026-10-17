@@ -2,8 +2,7 @@ import type { Viewport } from "storybook/viewport";
 
 import { WINDOW_CONTENT_PX } from "../platform/desktop-window";
 
-/** The devices the toolbar's viewports stand for: the PC's window as it opens, and two Android
- * touch screens. */
+/** The toolbar's devices: the PC's window as it opens, and two Android touch screens. */
 export const DEVICES = {
   pc: {
     name: "PC",

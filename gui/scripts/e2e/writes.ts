@@ -36,7 +36,7 @@ export const bridgeWritesKeys = [
   "precheckStopsTheSave",
   "postToLoginKeepsTheSession",
   "postRedirectFollowedAsABrowserDoes",
-  "saveAfterAChangeElsewhereStopsAndKeepsTheDraft",
+  "saveAfterAChangeElsewhereStopsAndShowsHirobasSet",
   "noticeGoesWithTheNextPick",
   "saveStoppedForAMovedSetGoesOnceTheEditorHasIt",
 ] as const;
@@ -209,21 +209,23 @@ export async function bridgeWrites(ctx: Ctx) {
   await fetch(`${HIROBA}/__state?color_body=40`);
   const savesBeforeStaleSave = await hitsOn("/ajax/change_mydon.php");
   const staleOutcome = await savedFrom(await savedCostume());
-  results.saveAfterAChangeElsewhereStopsAndKeepsTheDraft =
+  const staleDraftDropped =
+    (await pressedOf("#swatch-colorFace-3")) === "false" && !(await savable());
+  await click("#costume-part-colorBody");
+  results.saveAfterAChangeElsewhereStopsAndShowsHirobasSet =
     staleOutcome === "changedSincePreview" &&
     (await hitsOn("/ajax/change_mydon.php")) === savesBeforeStaleSave &&
     (await savedCostume()).colorBody === 40 &&
-    (await pressedOf("#swatch-colorFace-3")) === "true" &&
-    (await savable());
-  await click("#costume-part-colorBody");
+    staleDraftDropped &&
+    (await pressedOf("#swatch-colorBody-40")) === "true";
   await click("#costume-part-colorFace");
   const noticeStaysThroughTabs = await exists("#write-outcome");
   await click("#swatch-colorFace-3");
   results.noticeGoesWithTheNextPick = noticeStaysThroughTabs && !(await exists("#write-outcome"));
-  // Pressed again, the draft goes over the set Hiroba shows now, which the stop brought in.
+  // Picked again over the set the stop brought in, the change goes through and keeps that set.
   results.saveStoppedForAMovedSetGoesOnceTheEditorHasIt =
     (await savedFrom(await savedCostume())) === "applied" &&
-    same(await savedCostume(), { ...START, colorFace: 3 });
+    same(await savedCostume(), { ...START, colorBody: 40, colorFace: 3 });
   // Hiroba's set goes back to the start, and the editor reads it.
   await fetch(`${HIROBA}/__state?reset=1`);
   await readEditorAgain();
@@ -419,12 +421,14 @@ export async function firstReads(ctx: Ctx) {
   );
   await running.goTo("costume");
   await Bun.sleep(400);
-  const editorStepWhileHeld = await stepOn("#costume-page");
+  const skeletonWhileHeld = await running.page.evaluate<boolean>(
+    `document.querySelector('#page-skeleton[data-page="costume"]') !== null && document.querySelector("#costume-page") === null`,
+  );
   const editorReadsWhileHeld = await hitsOn("/mypage_kisekae.php");
   await fetch(`${HIROBA}/__profile-hold-save?on=0`);
   await stepIs("#costume-page", "editing");
   results.firstEditorReadWaitsOutARename =
-    editorStepWhileHeld === "unread" &&
+    skeletonWhileHeld &&
     editorReadsWhileHeld === editorReadsBeforeFirstRead &&
     runThen(await requestsSettled(NAME_REQUESTS.length + 1), NAME_REQUESTS, [
       "GET /mypage_kisekae.php",

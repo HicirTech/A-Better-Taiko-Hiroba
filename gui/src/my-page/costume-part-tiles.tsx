@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Tab, type TabProps, Tabs, Tooltip, Typography } from "@mui/material";
+import { Box, Skeleton, Tab, type TabProps, Tabs, Tooltip, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
@@ -48,6 +48,20 @@ const tabList = (columns: number) =>
     p: `${RING_ROOM_PX}px`,
   }) as const;
 
+const WIDE_GROUPS = { display: "flex", flexDirection: "column", gap: `${GROUP_GAP_PX}px` } as const;
+const NARROW_GROUPS = {
+  display: "grid",
+  // The groups shrink alike, so the tiles of both stay one size.
+  gridTemplateColumns: `${COLOURS_WIDTH_PX}fr ${ITEMS_WIDTH_PX}fr`,
+  columnGap: `${GROUP_GAP_PX}px`,
+  width: 1,
+  maxWidth: ROW_MAX_PX,
+  alignSelf: "center",
+} as const;
+const CAPTION = { display: "block", mb: 0.5 } as const;
+const columnsOf = (parts: readonly CostumePart[], wide: boolean) =>
+  wide ? SLOT_PARTS.length : parts.length;
+
 export interface PartTilesProps {
   readonly view: CostumeEditorView;
   readonly draft: CostumeSet;
@@ -68,20 +82,7 @@ export function PartTiles(props: PartTilesProps) {
   return (
     <Box
       inert={props.held}
-      sx={[
-        props.wide
-          ? { display: "flex", flexDirection: "column", gap: `${GROUP_GAP_PX}px` }
-          : {
-              display: "grid",
-              // The groups shrink alike, so the tiles of both stay one size.
-              gridTemplateColumns: `${COLOURS_WIDTH_PX}fr ${ITEMS_WIDTH_PX}fr`,
-              columnGap: `${GROUP_GAP_PX}px`,
-              width: 1,
-              maxWidth: ROW_MAX_PX,
-              alignSelf: "center",
-            },
-        props.held && HELD_STILL,
-      ]}
+      sx={[props.wide ? WIDE_GROUPS : NARROW_GROUPS, props.held && HELD_STILL]}
     >
       <TileGroup id="colours" caption={t("costume.tab.colours")} parts={COLOUR_PARTS} {...props} />
       <TileGroup id="items" caption={t("costume.tab.items")} parts={SLOT_TILE_ORDER} {...props} />
@@ -110,7 +111,7 @@ function TileGroup({
         component="h2"
         variant="caption"
         color="text.secondary"
-        sx={wide ? { display: "block", mb: 0.5 } : VISUALLY_HIDDEN}
+        sx={wide ? CAPTION : VISUALLY_HIDDEN}
       >
         {caption}
       </Typography>
@@ -120,7 +121,7 @@ function TileGroup({
         onChange={(_event, part: CostumePart) => onPick(part)}
         slotProps={{
           indicator: { sx: { display: "none" } },
-          list: { sx: tabList(wide ? SLOT_PARTS.length : parts.length) },
+          list: { sx: tabList(columnsOf(parts, wide)) },
         }}
         sx={{ minHeight: 0, m: `-${RING_ROOM_PX}px` }}
       >
@@ -200,6 +201,24 @@ function SlotPicture({ part, item, lane }: { part: SlotPart; item: number; lane:
   return (
     <Box ref={tile} sx={{ position: "relative", width: 1, height: 1, display: "flex" }}>
       <ItemPicture answer={answer} size="100%" />
+    </Box>
+  );
+}
+
+/** The tiles' shape while the page's first read runs. */
+export function PartTilesSkeleton({ wide }: { readonly wide: boolean }) {
+  return (
+    <Box aria-hidden sx={wide ? WIDE_GROUPS : NARROW_GROUPS}>
+      {[COLOUR_PARTS, SLOT_TILE_ORDER].map((parts) => (
+        <Box key={parts[0]} sx={{ minWidth: 0 }}>
+          {wide && <Skeleton width={56} sx={{ ...CAPTION, fontSize: "0.75rem" }} />}
+          <Box sx={{ ...tabList(columnsOf(parts, wide)), m: `-${RING_ROOM_PX}px` }}>
+            {parts.map((part) => (
+              <Skeleton key={part} variant="rounded" sx={{ ...TILE, height: "auto" }} />
+            ))}
+          </Box>
+        </Box>
+      ))}
     </Box>
   );
 }

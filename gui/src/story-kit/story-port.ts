@@ -212,8 +212,7 @@ export const STORY_CHART_PORT = {
   "readChartPicture" | "readChartDensity" | "readChartTja" | "readDrawnChart" | "keepDrawnChart"
 >;
 
-/** A port that answers every verb from made-up data, asks no site anything, and takes every
- * write; `changes` replace verbs, such as one that never answers or one that fails. */
+/** A port answering every verb from story data, taking every write; `changes` replace verbs. */
 export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): HirobaSessionPort {
   let signedIn = true;
   const port: HirobaSessionPort = {

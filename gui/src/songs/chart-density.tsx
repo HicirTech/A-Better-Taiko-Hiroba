@@ -4,6 +4,7 @@ import { Box, FormHelperText, ToggleButton, ToggleButtonGroup, Typography } from
 import { useState } from "react";
 
 import type { SongDensityRead } from "../song-catalogue/types";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { clockText, DensityLine, peakOf } from "./density-line";
 
 const BRANCH_LABEL: Readonly<Record<ChartBranch, MessageKey>> = {
@@ -102,12 +103,12 @@ export function ChartDensitySection({
         )
       )}
       {failed && (
-        <FormHelperText id="song-density-failure" error sx={{ m: 0, mt: 0.5 }}>
-          {t("details.densityFailed")}
-          <Box component="span" sx={{ display: "block", mt: 0.5, fontFamily: "monospace" }}>
-            {t("picker.code", { code: state.failure ?? "" })}
-          </Box>
-        </FormHelperText>
+        <ReadFailureAlert
+          id="song-density-failure"
+          message={t("details.densityFailed")}
+          code={state.failure}
+          i18n={i18n}
+        />
       )}
     </Box>
   );

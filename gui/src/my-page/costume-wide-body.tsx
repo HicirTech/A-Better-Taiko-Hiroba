@@ -1,13 +1,14 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Stack } from "@mui/material";
+import { Box, Skeleton, Stack } from "@mui/material";
 import type { ReactNode } from "react";
 
 import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { previewSetOf, shownEditorOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
+import { PaletteSkeleton } from "./costume-palette";
 import { PartHead, PartPanel } from "./costume-part-panel";
-import { PartTiles } from "./costume-part-tiles";
+import { PartTiles, PartTilesSkeleton } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
 import type { CostumeEditor } from "./use-costume-editor";
@@ -17,6 +18,18 @@ const SIDE_COLUMN_WIDTH = "clamp(232px, 25%, 280px)";
 // Whatever stands above the part's cells, the side column starts in the cells' row.
 const AREAS_WITH_ASIDE = '". above" "aside part"';
 const AREAS_WITHOUT_ASIDE = '"above" "part"';
+const bodyGrid = (withAside: boolean) =>
+  ({
+    display: "grid",
+    gridTemplateColumns: withAside ? `${SIDE_COLUMN_WIDTH} minmax(0, 1fr)` : "minmax(0, 1fr)",
+    gridTemplateAreas: withAside ? AREAS_WITH_ASIDE : AREAS_WITHOUT_ASIDE,
+    alignItems: "start",
+    columnGap: 3,
+    flexGrow: 1,
+  }) as const;
+const ASIDE = { gridArea: "aside", ...STAYS_IN_VIEW } as const;
+const ABOVE = { gridArea: "above", minWidth: 0 } as const;
+const PART = { gridArea: "part", minWidth: 0 } as const;
 
 export interface WideBodyProps {
   readonly editor: CostumeEditor;
@@ -36,18 +49,9 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
   const shown = shownEditorOf(step);
   const withAside = previewSetOf(step) !== null;
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: withAside ? `${SIDE_COLUMN_WIDTH} minmax(0, 1fr)` : "minmax(0, 1fr)",
-        gridTemplateAreas: withAside ? AREAS_WITH_ASIDE : AREAS_WITHOUT_ASIDE,
-        alignItems: "start",
-        columnGap: 3,
-        flexGrow: 1,
-      }}
-    >
+    <Box sx={bodyGrid(withAside)}>
       {withAside && (
-        <Stack id="costume-aside" spacing={2} sx={{ gridArea: "aside", ...STAYS_IN_VIEW }}>
+        <Stack id="costume-aside" spacing={2} sx={ASIDE}>
           <CostumePreviewBox preview={editor.preview} i18n={i18n} />
           {shown !== null && (
             <PartTiles
@@ -65,12 +69,12 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
         </Stack>
       )}
       {shown !== null && (
-        <Stack spacing={2} sx={{ gridArea: "above", minWidth: 0 }}>
+        <Stack spacing={2} sx={ABOVE}>
           {showsEditor(step) && <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />}
           <PartHead view={shown.editor} lane={lane} i18n={i18n} part={part} />
         </Stack>
       )}
-      <Box sx={{ gridArea: "part", minWidth: 0 }}>
+      <Box sx={PART}>
         {shown !== null ? (
           <PartPanel
             view={shown.editor}
@@ -86,6 +90,33 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
         ) : (
           progress
         )}
+      </Box>
+    </Box>
+  );
+}
+
+const ART = { width: 1, height: "auto", aspectRatio: "1" } as const;
+
+/** The two columns' shape while the page's first read runs. */
+export function WideBodySkeleton() {
+  return (
+    <Box aria-hidden sx={bodyGrid(true)}>
+      <Stack spacing={2} sx={ASIDE}>
+        <Skeleton variant="rounded" sx={ART} />
+        <PartTilesSkeleton wide />
+        <Stack spacing={1}>
+          <Skeleton variant="rounded" height={36} />
+          <Stack direction="row" sx={{ justifyContent: "space-around" }}>
+            <Skeleton width={64} />
+            <Skeleton width={56} />
+          </Stack>
+        </Stack>
+      </Stack>
+      <Box sx={{ ...ABOVE, pb: 1.5 }}>
+        <Skeleton width={72} />
+      </Box>
+      <Box sx={PART}>
+        <PaletteSkeleton wide />
       </Box>
     </Box>
   );

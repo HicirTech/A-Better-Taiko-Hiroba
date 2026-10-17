@@ -5,11 +5,6 @@ import {
   Card,
   CardContent,
   Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Menu,
   MenuItem,
   Stack,
@@ -18,8 +13,8 @@ import {
 import { useId, useState } from "react";
 
 import { Waiting } from "../my-page/editor-parts";
-import { WriteOutcomeNotice } from "../my-page/write-outcome";
 import { useBackCloses } from "../navigation/back-closers";
+import { SimpleDialog } from "../ui/simple-dialog";
 import type { FavoriteSet } from "./favorite-sets";
 import { ArrowDropDownIcon, CheckIcon } from "./favorites-icons";
 import type { ShownFavorites } from "./favorites-state";
@@ -34,7 +29,6 @@ const LIST = {
   flexDirection: "column",
   gap: 1,
 } as const;
-const REPLACE_TITLE_ID = "favorite-folder-replace-title";
 
 export interface FolderCardProps {
   readonly shown: ShownFavorites;
@@ -61,7 +55,7 @@ export function FolderCard({
   onSaveToSet,
 }: FolderCardProps) {
   const { t } = i18n;
-  const { view, notice, saving, shut } = shown;
+  const { view, saving, shut } = shown;
   const songs = view.folder.state.slots.flatMap((songNo, index) =>
     songNo === null ? [] : [{ slot: index + 1, songNo }],
   );
@@ -69,7 +63,7 @@ export function FolderCard({
   const [menuAt, setMenuAt] = useState<HTMLElement | null>(null);
   const [replacing, setReplacing] = useState<FavoriteSet | null>(null);
   const stopReplacing = () => setReplacing(null);
-  useBackCloses(replacing !== null, stopReplacing);
+  useBackCloses(menuAt !== null, () => setMenuAt(null));
   return (
     <Card id="favorite-folder-card" variant="outlined">
       <CardContent>
@@ -140,15 +134,6 @@ export function FolderCard({
           {saving === "folder" && (
             <Waiting id="favorite-folder-saving">{t("costume.saving")}</Waiting>
           )}
-          {notice?.write === "folder" && (
-            <WriteOutcomeNotice
-              id="favorite-folder-outcome"
-              kind="folder"
-              outcome={notice.outcome}
-              i18n={i18n}
-              songName={(songNo) => look(songNo).name}
-            />
-          )}
         </Stack>
       </CardContent>
       <Menu id={menuId} anchorEl={menuAt} open={menuAt !== null} onClose={() => setMenuAt(null)}>
@@ -156,46 +141,34 @@ export function FolderCard({
           <MenuItem
             key={set.id}
             id={`favorite-folder-save-to-set-${index}`}
-            onClick={() => {
-              setMenuAt(null);
-              setReplacing(set);
-            }}
+            onClick={() => setReplacing(set)}
           >
             {set.name}
           </MenuItem>
         ))}
       </Menu>
-      <Dialog
+      <SimpleDialog
         id="favorite-folder-replace-dialog"
         open={replacing !== null}
-        onClose={stopReplacing}
-        aria-labelledby={REPLACE_TITLE_ID}
-      >
-        <DialogTitle id={REPLACE_TITLE_ID}>
-          {t("favorites.replace.title", { name: replacing?.name ?? "" })}
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t("favorites.replace.body", { name: replacing?.name ?? "" })}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button id="favorite-folder-replace-cancel" onClick={stopReplacing}>
-            {t("favorites.delete.cancel")}
-          </Button>
-          <Button
-            id="favorite-folder-replace-confirm"
-            onClick={() => {
+        title={t("favorites.replace.title", { name: replacing?.name ?? "" })}
+        message={t("favorites.replace.body", { name: replacing?.name ?? "" })}
+        cancel={{ id: "favorite-folder-replace-cancel", label: t("favorites.delete.cancel") }}
+        actions={[
+          {
+            id: "favorite-folder-replace-confirm",
+            label: t("favorites.replace.confirm"),
+            destructive: true,
+            onClick: () => {
               if (replacing !== null) {
                 onSaveToSet(replacing.id);
               }
               stopReplacing();
-            }}
-          >
-            {t("favorites.replace.confirm")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+              setMenuAt(null);
+            },
+          },
+        ]}
+        onClose={stopReplacing}
+      />
     </Card>
   );
 }

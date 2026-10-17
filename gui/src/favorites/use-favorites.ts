@@ -40,6 +40,8 @@ export interface FavoritesEditor {
   applySet(songs: readonly string[]): Promise<void>;
   /** Drops the draft and the last write's notice when the page is left; what was read stays. */
   dropEdits(): void;
+  /** Drops the last write's notice once the window has said it. */
+  closeNotice(): void;
 }
 
 export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): FavoritesEditor {
@@ -149,5 +151,6 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     resetSong: dropEdits,
     applySet,
     dropEdits,
+    closeNotice: () => dispatch({ type: "noticeClosed" }),
   };
 }

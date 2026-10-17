@@ -161,7 +161,7 @@ describe("a pick for the 大好きな曲", () => {
   });
 
   test("clears the last write's notice", () => {
-    const notice: FavoritesNotice = { write: "folder", outcome: { kind: "nothingToChange" } };
+    const notice: FavoritesNotice = { write: "folder", outcome: { kind: "interrupted" } };
     expect(run(ready(viewOf(), null, notice), { type: "songPicked", song: song("1005") })).toEqual(
       ready(viewOf(), song("1005")),
     );
@@ -178,7 +178,7 @@ describe("a pick for the 大好きな曲", () => {
 
 describe("dropping the draft", () => {
   test("puts the row back to the song set, with no notice", () => {
-    const notice: FavoritesNotice = { write: "folder", outcome: { kind: "nothingToChange" } };
+    const notice: FavoritesNotice = { write: "folder", outcome: { kind: "interrupted" } };
     expect(run(ready(viewOf(), song("1005"), notice), { type: "draftDropped" })).toEqual(ready());
   });
 
@@ -232,7 +232,7 @@ describe("the end of a 大好きな曲 write", () => {
     expect(step).toEqual(ready({ ...before, song: { ...before.song, state: draft } }));
   });
 
-  test("keeps the draft and says how it ended when nothing was saved", () => {
+  test("drops the draft for the song read back, and says how it ended, when nothing was saved", () => {
     const outcome: WriteOutcomeView<FavoriteSongState> = {
       kind: "notApplied",
       before: song("1001"),
@@ -242,10 +242,10 @@ describe("the end of a 大好きな曲 write", () => {
       cross: "off",
     };
     const step = run(saving("favoriteSong", before, draft), { type: "songWritten", outcome });
-    expect(step).toEqual(ready(before, draft, { write: "favoriteSong", outcome }));
+    expect(step).toEqual(ready(before, null, { write: "favoriteSong", outcome }));
   });
 
-  test("shows the song as the write last saw it, though it is not the draft", () => {
+  test("shows the song as the write last saw it, with no draft, when it ended apart from the plan", () => {
     const outcome: WriteOutcomeView<FavoriteSongState> = {
       kind: "diverged",
       before: song("1001"),
@@ -256,7 +256,7 @@ describe("the end of a 大好きな曲 write", () => {
     };
     const step = run(saving("favoriteSong", before, draft), { type: "songWritten", outcome });
     expect(step).toEqual(
-      ready({ ...before, song: { ...before.song, state: song("1008") } }, draft, {
+      ready({ ...before, song: { ...before.song, state: song("1008") } }, null, {
         write: "favoriteSong",
         outcome,
       }),
@@ -289,6 +289,21 @@ describe("the end of a 大好きな曲 write", () => {
     expect(run(folderBusy, { type: "songWritten", outcome })).toBe(folderBusy);
     const step = ready(before, draft);
     expect(run(step, { type: "songWritten", outcome })).toBe(step);
+  });
+});
+
+describe("a write's notice", () => {
+  const notice: FavoritesNotice = { write: "favoriteSong", outcome: { kind: "interrupted" } };
+
+  test("goes once said, leaving the draft", () => {
+    expect(run(ready(viewOf(), song("1005"), notice), { type: "noticeClosed" })).toEqual(
+      ready(viewOf(), song("1005")),
+    );
+  });
+
+  test("is the very same step when said with none to say", () => {
+    const step = ready(viewOf(), song("1005"));
+    expect(run(step, { type: "noticeClosed" })).toBe(step);
   });
 });
 
@@ -360,7 +375,7 @@ describe("what the page asks of a step", () => {
   });
 
   test("shows the favourites ready, shut while a save runs or a read again runs, else nothing", () => {
-    const notice: FavoritesNotice = { write: "folder", outcome: { kind: "nothingToChange" } };
+    const notice: FavoritesNotice = { write: "folder", outcome: { kind: "interrupted" } };
     expect(shownFavoritesOf(ready(view, held.draft, notice))).toEqual({
       ...held,
       notice,

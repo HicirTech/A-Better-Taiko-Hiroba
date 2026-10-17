@@ -1,10 +1,11 @@
 import type { Translator } from "@abth/i18n";
-import { Box, ButtonBase, Skeleton, Stack, SvgIcon, Typography } from "@mui/material";
+import { Box, ButtonBase, Skeleton, SvgIcon, Typography } from "@mui/material";
 import { type ReactNode, useRef, useSyncExternalStore } from "react";
 
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant } from "../session-port";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";
 import { pickRing } from "./pick-ring";
 import { CLEAR_OF_STUCK } from "./stuck-clearance";
@@ -94,19 +95,13 @@ export function ThumbnailsUnavailable({ lane, i18n, part, items }: ThumbnailsUna
   }
 
   return (
-    <Stack id="costume-thumbnails-unavailable">
-      <Typography variant="body2" color="text.secondary">
-        {t("costume.thumbnails.unavailable", { count: number(failures.length) })}
-      </Typography>
-      <Typography
-        id="costume-thumbnails-code"
-        variant="body2"
-        color="text.secondary"
-        sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-      >
-        {t("costume.thumbnails.code", { code: failures[0] ?? "" })}
-      </Typography>
-    </Stack>
+    <ReadFailureAlert
+      id="costume-thumbnails-unavailable"
+      message={t("costume.thumbnails.unavailable", { count: number(failures.length) })}
+      code={failures[0] ?? null}
+      codeId="costume-thumbnails-code"
+      i18n={i18n}
+    />
   );
 }
 

@@ -9,6 +9,12 @@ import { STORY_PROFILE } from "./profile";
 import { STORY_LANE } from "./story-pictures";
 import { createStoryPort } from "./story-port";
 
+// Made once, as the app makes its own: the editors build their callbacks on them.
+const SESSION_GONE = action("session gone");
+const NICKNAME_READ = action("nickname read back");
+const TITLE_READ = action("title read back");
+const MOVED = action("moved");
+
 /** A story port that lasts as long as the story: the editors keep what they read by their port. */
 function useStoryPort(changes: Partial<HirobaSessionPort>): HirobaSessionPort {
   const [port] = useState(() => createStoryPort(changes));
@@ -28,12 +34,16 @@ export function WithCostumeEditor({
     port,
     lane: STORY_LANE,
     shown: true,
-    onSessionGone: action("session gone"),
+    onSessionGone: SESSION_GONE,
   });
   const { read } = editor;
+  // Once, as the app reads it, while it is unread: `read` itself changes with every step.
+  const unread = editor.step.name === "unread";
   useEffect(() => {
-    void read();
-  }, [read]);
+    if (unread) {
+      void read();
+    }
+  }, [unread, read]);
   return children(editor);
 }
 
@@ -50,16 +60,16 @@ export function WithNameAndTitle({
     port,
     lane: STORY_LANE,
     profile: STORY_PROFILE,
-    onSessionGone: action("session gone"),
-    onNickname: action("nickname read back"),
+    onSessionGone: SESSION_GONE,
+    onNickname: NICKNAME_READ,
   });
   const title = useTitleEditor({
     port,
     lane: STORY_LANE,
     profile: STORY_PROFILE,
-    onSessionGone: action("session gone"),
-    onTitle: action("title read back"),
-    onMoved: action("moved"),
+    onSessionGone: SESSION_GONE,
+    onTitle: TITLE_READ,
+    onMoved: MOVED,
   });
   return children(name, title);
 }

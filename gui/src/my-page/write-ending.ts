@@ -27,11 +27,19 @@ export function refreshed<S, E extends { readonly state: S }>(
   return seen === null ? editor : { ...editor, state: seen };
 }
 
-/** A write's ending a page says something about: every ending but a plain `applied`. */
-export type Noticed<S> = Exclude<WriteOutcomeView<S>, { readonly kind: "applied" }>;
+/** Whether the write ended knowing Hiroba's set, so the page shows that set with no edits. */
+export function endsTheEdit(outcome: WriteOutcomeView<unknown>): boolean {
+  return outcome.kind === "nothingToChange" || seenAfter(outcome) !== null;
+}
+
+/** A write's ending a page says something about: all but `applied` and `nothingToChange`. */
+export type Noticed<S> = Exclude<
+  WriteOutcomeView<S>,
+  { readonly kind: "applied" | "nothingToChange" }
+>;
 
 export function noticeOf<S>(outcome: WriteOutcomeView<S>): Noticed<S> | null {
-  return outcome.kind === "applied" ? null : outcome;
+  return outcome.kind === "applied" || outcome.kind === "nothingToChange" ? null : outcome;
 }
 
 export async function sendHeld<S>(

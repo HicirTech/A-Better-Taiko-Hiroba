@@ -59,7 +59,7 @@ export const titleKeys = [
   "titlePostsCarryTheAjaxShape",
   "titleMovedOneField",
   "titleWriteLeavesTheMyDon",
-  "titleRefusedShowsCode",
+  "titleRefusedSaysSoInItsPagesWords",
   "titlePrecheckStopsTheSave",
   "titleNoopSaveNotApplied",
   "titleStaleSaysStale",
@@ -274,12 +274,13 @@ export async function title(ctx: Ctx) {
   await fetch(`${HIROBA}/__profile-next-result?code=5&message=`);
   const titleRefused = await changeTitleInTheWindow("別の", 102, false);
   const titleRefusedText = (await textOf("#title-outcome")) ?? "";
-  results.titleRefusedShowsCode =
+  results.titleRefusedSaysSoInItsPagesWords =
     titleRefused === "notApplied" &&
-    titleRefusedText.includes("Hiroba refused the change (code 5). Nothing changed.") &&
-    titleRefusedText.includes("Hiroba says you do not own that title.") &&
+    titleRefusedText ===
+      "Sync to Hiroba failed (選択した称号は獲得していません。). Please try again." &&
     same(await profileNow(), profileAsStarted) &&
-    (await disabledOf("#title-save")) === false;
+    (await inputValueOf("#title-pick")) === INITIAL_PROFILE.title &&
+    (await disabledOf("#title-save")) === true;
 
   const savesBeforeTitlePrechecks = await hitsOn("/ajax/change_mydon_profile.php");
   const titleStops: string[] = [];
@@ -476,21 +477,20 @@ export async function nickname(ctx: Ctx) {
     }) &&
     namePosts[0]?.ticketMatched === true;
 
-  // A change back made too soon is refused: the field keeps its text, and Save can go again.
+  // A change back made too soon is refused: the field shows the name worn, and typed again it saves.
   await fetch(`${HIROBA}/__rename-cooldown?on=1`);
   const tooSoon = await changeNameInTheWindow(INITIAL_PROFILE.nickname);
   const tooSoonText = (await textOf("#name-outcome")) ?? "";
-  const keptByTheRefusal =
-    (await inputValueOf("#name-input")) === INITIAL_PROFILE.nickname &&
+  const wornAfterTheRefusal =
+    (await inputValueOf("#name-input")) === "あたらしい" &&
     (await profileNow()).nickname === "あたらしい" &&
-    (await disabledOf("#name-save")) === false;
+    (await disabledOf("#name-save")) === true;
   await fetch(`${HIROBA}/__rename-cooldown?on=0`);
-  await saveSection("name");
+  await changeNameInTheWindow(INITIAL_PROFILE.nickname);
   results.nameRefusedForAQuickChangeCanBeSavedAgain =
     tooSoon === "notApplied" &&
-    tooSoonText.includes("Hiroba refused the change (code 1). Nothing changed.") &&
-    tooSoonText.includes(`Hiroba said: ${COOLDOWN_MESSAGE}`) &&
-    keptByTheRefusal &&
+    tooSoonText === `Sync to Hiroba failed (${COOLDOWN_MESSAGE}). Please try again.` &&
+    wornAfterTheRefusal &&
     (await outcomeOf("name")) === null &&
     same(await profileNow(), profileAsStarted);
 
@@ -505,10 +505,10 @@ export async function nickname(ctx: Ctx) {
   const markupInOutcome = await exists("#name-outcome b");
   results.nameRefusedShowsHirobaWordsAsText =
     filtered === "notApplied" &&
-    filteredText.includes(`Hiroba said: ${FILTER_MESSAGE}`) &&
-    fieldAfterRefusal === REFUSED_NAME &&
+    filteredText === `Sync to Hiroba failed (${FILTER_MESSAGE}). Please try again.` &&
+    fieldAfterRefusal === INITIAL_PROFILE.nickname &&
     markedUp === "notApplied" &&
-    markedUpText.includes("Hiroba said: <b>不適切</b>な名前") &&
+    markedUpText === "Sync to Hiroba failed (<b>不適切</b>な名前). Please try again." &&
     !markupInOutcome &&
     same(await profileNow(), profileAsStarted);
   await typeName(INITIAL_PROFILE.nickname);
