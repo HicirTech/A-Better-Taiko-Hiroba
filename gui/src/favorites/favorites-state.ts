@@ -1,6 +1,6 @@
 import { type Result, sameFavoriteSong } from "@abth/core";
 
-import { type Noticed, noticeOf, refreshed } from "../my-page/write-ending";
+import { endsTheEdit, type Noticed, noticeOf, refreshed } from "../my-page/write-ending";
 import type {
   FavoriteSongState,
   FavoritesView,
@@ -140,12 +140,11 @@ function songWritten(
   outcome: WriteOutcomeView<FavoriteSongState>,
 ): FavoritesStep {
   const song = refreshed(step.view.song, outcome);
-  const saved = sameDraft(step.draft, song.state);
   const noticed = noticeOf(outcome);
   return {
     name: "ready",
     view: { ...step.view, song },
-    draft: saved ? null : step.draft,
+    draft: endsTheEdit(outcome) ? null : step.draft,
     notice: noticed === null ? null : { write: "favoriteSong", outcome: noticed },
   };
 }

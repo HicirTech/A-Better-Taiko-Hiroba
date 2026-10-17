@@ -282,7 +282,6 @@ const QUOTED: Readonly<Partial<Record<MessageKey, PerLanguage<readonly string[]>
   "write.notApplied.unchanged": COSTUME,
   "write.diverged": COSTUME,
   "write.changedSincePreview": COSTUME,
-  "write.nothingToChange": COSTUME,
   "write.title.crossChanged": COSTUME,
   // Saved but the server was not told, and the same set cannot be sent twice ("nothing to change"):
   // the message sends the user to Hiroba's own page.

@@ -1,6 +1,6 @@
 import { type Result, sameTitle, type TitleOption } from "@abth/core";
 
-import { type Noticed, noticeOf } from "../my-page/write-ending";
+import { endsTheEdit, type Noticed, noticeOf } from "../my-page/write-ending";
 import type { ReadFailure, TitleEditorView, TitleState, WriteOutcomeView } from "../session-port";
 
 type TitleOutcome = WriteOutcomeView<TitleState>;
@@ -95,9 +95,6 @@ function readEnded(step: Idle, result: Result<TitleEditorView, ReadFailure>): Ti
   return { ...step, list: { name: "read", options }, picked: kept ? picked : null };
 }
 
-const leavesTheTitle = (outcome: TitleOutcome): boolean =>
-  outcome.kind === "applied" || outcome.kind === "appliedNotSynced";
-
 function writeEnded(step: TitleStep, outcome: TitleOutcome): TitleStep {
   if (step.name !== "saving") {
     return step;
@@ -105,7 +102,7 @@ function writeEnded(step: TitleStep, outcome: TitleOutcome): TitleStep {
   return {
     name: "idle",
     list: UNREAD,
-    picked: leavesTheTitle(outcome) ? null : step.picked,
+    picked: endsTheEdit(outcome) ? null : step.picked,
     notice: noticeOf(outcome),
   };
 }

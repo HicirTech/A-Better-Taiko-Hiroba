@@ -361,7 +361,6 @@ export const zhHans: Messages = {
   "write.changedSincePreview":
     "编辑器上次读取之后，你的换装在别处被更改了。没有发送任何内容；编辑器现在显示的是当前状态。",
   "write.invalidTarget": "本应用在发送前拒绝了此更改：{field}。",
-  "write.nothingToChange": "当前已经是这套换装。没有发送任何内容。",
   "write.maintenance": "广场每天日本时间 05:00 至 07:00 维护。更改没有发送。",
   "write.needsConfirmation":
     "广场要求进行本应用尚不支持的确认，因此没有做任何更改。广场的原话：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
@@ -379,7 +378,6 @@ export const zhHans: Messages = {
   "write.title.crossChanged": "你的换装也变了。",
   "write.title.changedSincePreview":
     "打开列表后，你的称号在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
-  "write.title.nothingToChange": "当前已经是这个称号（广场只显示名称）。没有发送任何内容。",
   "write.title.needsConfirmation":
     "广场要求进行本应用尚不支持的确认，因此没有做任何更改。广场的原话：この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.title.refused1": "广场表示没有选择称号。",
@@ -389,7 +387,6 @@ export const zhHans: Messages = {
   "write.name.diverged": "昵称没有按计划更改。请对比下方内容。",
   "write.name.changedSincePreview":
     "读取此页面后，你的昵称在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
-  "write.name.nothingToChange": "当前已经是这个昵称。没有发送任何内容。",
   "write.name.refused2": "广场未能更新昵称。",
   "write.invalid.titleNotOwned": "该称号不在你的列表中",
   "write.invalid.nameEmpty": "昵称为空",
@@ -416,12 +413,10 @@ export const zhHans: Messages = {
   "write.folder.diverged": "收藏夹没有按计划更改。请对比下方内容。",
   "write.folder.changedSincePreview":
     "读取此页面后，你的收藏夹在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
-  "write.folder.nothingToChange": "当前已经是这个收藏夹。没有发送任何内容。",
   "write.favoriteSong.unchanged": "广场回复已保存，但读回的最爱歌曲仍是原样。没有任何变化。",
   "write.favoriteSong.diverged": "最爱歌曲没有按计划更改。请对比下方内容。",
   "write.favoriteSong.changedSincePreview":
     "读取此页面后，你的最爱歌曲在别处被更改了。没有发送任何内容；页面现在显示的是当前状态。",
-  "write.favoriteSong.nothingToChange": "当前已经是这首最爱歌曲。没有发送任何内容。",
   "write.favoriteSong.refused1": "广场表示这首歌曲尚未解锁。",
   "write.favoriteSong.refused2": "广场表示这首歌曲尚未发布。",
   "favorites.slot": "第 {number} 首",

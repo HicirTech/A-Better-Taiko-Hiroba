@@ -384,7 +384,6 @@ export const en: Messages = {
   "write.changedSincePreview":
     "Your costume was changed elsewhere since the editor last read it. Nothing was sent; the editor now shows it as it is.",
   "write.invalidTarget": "This app refused the change before sending it: {field}.",
-  "write.nothingToChange": "That is the costume already. Nothing was sent.",
   "write.maintenance":
     "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. The change was not sent.",
   "write.needsConfirmation":
@@ -404,8 +403,6 @@ export const en: Messages = {
   "write.title.crossChanged": "Your costume changed too.",
   "write.title.changedSincePreview":
     "Your title was changed elsewhere since the list was opened. Nothing was sent; the page now shows it as it is.",
-  "write.title.nothingToChange":
-    "That is your title already; Hiroba shows only its name. Nothing was sent.",
   "write.title.needsConfirmation":
     "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.title.refused1": "Hiroba says no title was chosen.",
@@ -416,7 +413,6 @@ export const en: Messages = {
   "write.name.diverged": "The nickname did not end up as planned. Compare below.",
   "write.name.changedSincePreview":
     "Your nickname was changed elsewhere since this page was read. Nothing was sent; the page now shows it as it is.",
-  "write.name.nothingToChange": "That is your nickname already. Nothing was sent.",
   "write.name.refused2": "Hiroba could not update the nickname.",
   "write.invalid.titleNotOwned": "that title is not in your list",
   "write.invalid.nameEmpty": "the nickname is empty",
@@ -444,13 +440,11 @@ export const en: Messages = {
   "write.folder.diverged": "The folder did not end up as planned. Compare below.",
   "write.folder.changedSincePreview":
     "Your folder was changed elsewhere since this page read it. Nothing was sent; the page now shows it as it is.",
-  "write.folder.nothingToChange": "That is the folder already. Nothing was sent.",
   "write.favoriteSong.unchanged":
     "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the favourite song as it was.",
   "write.favoriteSong.diverged": "The favourite song did not end up as planned. Compare below.",
   "write.favoriteSong.changedSincePreview":
     "Your favourite song was changed elsewhere since this page read it. Nothing was sent; the page now shows it as it is.",
-  "write.favoriteSong.nothingToChange": "That is your favourite song already. Nothing was sent.",
   "write.favoriteSong.refused1": "Hiroba says this song isn't unlocked yet.",
   "write.favoriteSong.refused2": "Hiroba says this song isn't published.",
   "favorites.slot": "Song {number}",

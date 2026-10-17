@@ -16,7 +16,6 @@ type Base =
   | "diverged"
   | "crossChanged"
   | "changedSincePreview"
-  | "nothingToChange"
   | "needsConfirmation";
 
 const BASE_WORDING = {
@@ -24,7 +23,6 @@ const BASE_WORDING = {
   diverged: "write.diverged",
   crossChanged: "write.crossChanged",
   changedSincePreview: "write.changedSincePreview",
-  nothingToChange: "write.nothingToChange",
   needsConfirmation: "write.needsConfirmation",
 } as const satisfies Record<Base, MessageKey>;
 
@@ -36,26 +34,22 @@ const KIND_WORDING: Readonly<Record<WriteKind, Readonly<Partial<Record<Base, Mes
     diverged: "write.title.diverged",
     crossChanged: "write.title.crossChanged",
     changedSincePreview: "write.title.changedSincePreview",
-    nothingToChange: "write.title.nothingToChange",
     needsConfirmation: "write.title.needsConfirmation",
   },
   name: {
     unchanged: "write.name.unchanged",
     diverged: "write.name.diverged",
     changedSincePreview: "write.name.changedSincePreview",
-    nothingToChange: "write.name.nothingToChange",
   },
   folder: {
     unchanged: "write.folder.unchanged",
     diverged: "write.folder.diverged",
     changedSincePreview: "write.folder.changedSincePreview",
-    nothingToChange: "write.folder.nothingToChange",
   },
   favoriteSong: {
     unchanged: "write.favoriteSong.unchanged",
     diverged: "write.favoriteSong.diverged",
     changedSincePreview: "write.favoriteSong.changedSincePreview",
-    nothingToChange: "write.favoriteSong.nothingToChange",
   },
 };
 
@@ -66,7 +60,6 @@ const OUTCOME_BASE = {
   notApplied: "unchanged",
   diverged: "diverged",
   changedSincePreview: "changedSincePreview",
-  nothingToChange: "nothingToChange",
   needsConfirmation: "needsConfirmation",
 } as const satisfies Partial<Record<Noticed<unknown>["kind"], Base>>;
 
@@ -330,7 +323,6 @@ export function describeOutcome<K extends WriteKind>(
     case "interrupted":
       return plain("warning");
     case "maintenance":
-    case "nothingToChange":
     case "notSignedIn":
     case "busy":
       return plain("info");

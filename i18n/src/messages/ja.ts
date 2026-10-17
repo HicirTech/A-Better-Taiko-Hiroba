@@ -387,7 +387,6 @@ export const ja: Messages = {
   "write.changedSincePreview":
     "エディターが前回読み込んだあとに、きせかえがほかの場所で変更されました。何も送信していません。エディターには今の状態を表示しています。",
   "write.invalidTarget": "送信する前に、アプリが変更を止めました：{field}。",
-  "write.nothingToChange": "すでにそのきせかえです。何も送信していません。",
   "write.maintenance":
     "ひろばは毎日 05:00〜07:00（日本時間）がメンテナンスです。変更は送信していません。",
   "write.needsConfirmation":
@@ -408,8 +407,6 @@ export const ja: Messages = {
   "write.title.crossChanged": "きせかえも変わっています。",
   "write.title.changedSincePreview":
     "一覧を開いたあとに、称号がほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.title.nothingToChange":
-    "すでにその称号です（ひろばは名前だけを表示します）。何も送信していません。",
   "write.title.needsConfirmation":
     "ひろばが、このアプリではまだ答えられない確認を求めたため、何も変更していません。ひろばのメッセージ：この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.title.refused1": "ひろばは、称号が選ばれていないと言っています。",
@@ -420,7 +417,6 @@ export const ja: Messages = {
   "write.name.diverged": "ドンだーネームが予定どおりになりませんでした。下で比べてください。",
   "write.name.changedSincePreview":
     "このページを読み込んだあとに、ドンだーネームがほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.name.nothingToChange": "すでにそのドンだーネームです。何も送信していません。",
   "write.name.refused2": "ひろばがドンだーネームを更新できませんでした。",
   "write.invalid.titleNotOwned": "その称号は一覧にありません",
   "write.invalid.nameEmpty": "ドンだーネームが空です",
@@ -448,13 +444,11 @@ export const ja: Messages = {
   "write.folder.diverged": "フォルダが予定どおりになりませんでした。下で比べてください。",
   "write.folder.changedSincePreview":
     "このページを読み込んだあとに、フォルダがほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.folder.nothingToChange": "すでにそのフォルダです。何も送信していません。",
   "write.favoriteSong.unchanged":
     "ひろばでは何も変わっていません。保存したという応答でしたが、読み直すと大好きな曲は元のままでした。",
   "write.favoriteSong.diverged": "大好きな曲が予定どおりになりませんでした。下で比べてください。",
   "write.favoriteSong.changedSincePreview":
     "このページを読み込んだあとに、大好きな曲がほかの場所で変更されました。何も送信していません。ページには今の状態を表示しています。",
-  "write.favoriteSong.nothingToChange": "すでにその大好きな曲です。何も送信していません。",
   "write.favoriteSong.refused1": "ひろばは、この曲がまだ解禁されていないと言っています。",
   "write.favoriteSong.refused2": "ひろばは、この曲が公開されていないと言っています。",
   "favorites.slot": "{number}曲目",

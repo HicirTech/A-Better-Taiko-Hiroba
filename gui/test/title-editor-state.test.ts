@@ -237,9 +237,9 @@ describe("reduceTitle, a write's ending", () => {
     expect(reduce(saving(), { type: "writeEnded", outcome })).toEqual(idle());
   });
 
-  test("keeps the pick and says why after a save the site refused, forgetting the list", () => {
+  test("picks none and says why after a save the site refused, forgetting the list", () => {
     expect(reduce(saving(), { type: "writeEnded", outcome: refused })).toEqual(
-      idle(unread, B, refused),
+      idle(unread, null, refused),
     );
   });
 
@@ -254,12 +254,18 @@ describe("reduceTitle, a write's ending", () => {
     expect(reduce(saving(), { type: "writeEnded", outcome })).toEqual(idle(unread, null, outcome));
   });
 
-  test("keeps the pick when a write stopped because the title had moved", () => {
+  test("picks none and says so when a write found the title had moved", () => {
     const outcome: Noticed<TitleState> = {
       kind: "changedSincePreview",
       current: { title: C.label },
     };
-    expect(reduce(saving(), { type: "writeEnded", outcome })).toEqual(idle(unread, B, outcome));
+    expect(reduce(saving(), { type: "writeEnded", outcome })).toEqual(idle(unread, null, outcome));
+  });
+
+  test("picks none and says nothing when Hiroba had the title already", () => {
+    expect(reduce(saving(), { type: "writeEnded", outcome: { kind: "nothingToChange" } })).toEqual(
+      idle(),
+    );
   });
 
   test("keeps the pick for an ending that says nothing of the title", () => {

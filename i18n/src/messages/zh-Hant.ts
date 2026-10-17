@@ -361,7 +361,6 @@ export const zhHant: Messages = {
   "write.changedSincePreview":
     "編輯器上次讀取之後，你的換裝在別處被變更了。沒有傳送任何內容；編輯器現在顯示的是目前狀態。",
   "write.invalidTarget": "本應用程式在傳送前拒絕了此變更：{field}。",
-  "write.nothingToChange": "目前已經是這套換裝。沒有傳送任何內容。",
   "write.maintenance": "廣場每天日本時間 05:00 至 07:00 維護。變更沒有傳送。",
   "write.needsConfirmation":
     "廣場要求進行本應用程式尚不支援的確認，因此沒有做任何變更。廣場的原話：これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
@@ -379,7 +378,6 @@ export const zhHant: Messages = {
   "write.title.crossChanged": "你的換裝也變了。",
   "write.title.changedSincePreview":
     "開啟清單後，你的稱號在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
-  "write.title.nothingToChange": "目前已經是這個稱號（廣場只顯示名稱）。沒有傳送任何內容。",
   "write.title.needsConfirmation":
     "廣場要求進行本應用程式尚不支援的確認，因此沒有做任何變更。廣場的原話：この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
   "write.title.refused1": "廣場表示沒有選擇稱號。",
@@ -389,7 +387,6 @@ export const zhHant: Messages = {
   "write.name.diverged": "暱稱沒有按計畫變更。請比較下方內容。",
   "write.name.changedSincePreview":
     "讀取此頁面後，你的暱稱在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
-  "write.name.nothingToChange": "目前已經是這個暱稱。沒有傳送任何內容。",
   "write.name.refused2": "廣場未能更新暱稱。",
   "write.invalid.titleNotOwned": "該稱號不在你的清單中",
   "write.invalid.nameEmpty": "暱稱為空",
@@ -416,12 +413,10 @@ export const zhHant: Messages = {
   "write.folder.diverged": "收藏資料夾沒有按計畫變更。請比較下方內容。",
   "write.folder.changedSincePreview":
     "讀取此頁面後，你的收藏資料夾在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
-  "write.folder.nothingToChange": "目前已經是這個收藏資料夾。沒有傳送任何內容。",
   "write.favoriteSong.unchanged": "廣場回覆已儲存，但讀回的最愛歌曲仍是原樣。沒有任何變化。",
   "write.favoriteSong.diverged": "最愛歌曲沒有按計畫變更。請比較下方內容。",
   "write.favoriteSong.changedSincePreview":
     "讀取此頁面後，你的最愛歌曲在別處被變更了。沒有傳送任何內容；頁面現在顯示的是目前狀態。",
-  "write.favoriteSong.nothingToChange": "目前已經是這首最愛歌曲。沒有傳送任何內容。",
   "write.favoriteSong.refused1": "廣場表示這首歌曲尚未解鎖。",
   "write.favoriteSong.refused2": "廣場表示這首歌曲尚未發布。",
   "favorites.slot": "第 {number} 首",

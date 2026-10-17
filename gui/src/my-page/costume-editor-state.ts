@@ -1,14 +1,8 @@
 import { draftCostumeChange, type Result, sameCostume } from "@abth/core";
 
-import {
-  type CostumeEditorView,
-  type CostumeSet,
-  changedTheCostume,
-  type ReadFailure,
-  type WriteOutcomeView,
-} from "../session-port";
+import type { CostumeEditorView, CostumeSet, ReadFailure, WriteOutcomeView } from "../session-port";
 import { type ColourPart, type SlotPart, slotOf } from "./costume-parts";
-import { type Noticed, noticeOf, refreshed } from "./write-ending";
+import { endsTheEdit, type Noticed, noticeOf, refreshed } from "./write-ending";
 
 export interface HeldEditor {
   readonly editor: CostumeEditorView;
@@ -121,7 +115,7 @@ function writeEnded(step: EditorStep, outcome: WriteOutcomeView): EditorStep {
   return {
     name: "editing",
     editor,
-    draft: changedTheCostume(outcome) ? editor.state : step.draft,
+    draft: endsTheEdit(outcome) ? editor.state : step.draft,
     notice: noticeOf(outcome),
   };
 }

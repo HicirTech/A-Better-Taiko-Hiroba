@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
 import {
+  endsTheEdit,
   type Noticed,
   noticeOf,
   refreshed,
@@ -101,8 +102,26 @@ describe("refreshed", () => {
   });
 });
 
+describe("endsTheEdit", () => {
+  test.each(SEEN)("ends the edit after %s", (_label, outcome) => {
+    expect(endsTheEdit(outcome)).toBe(true);
+  });
+
+  test("ends the edit when Hiroba held the set already", () => {
+    expect(endsTheEdit({ kind: "nothingToChange" })).toBe(true);
+  });
+
+  test.each(NOT_SEEN.filter(({ kind }) => kind !== "nothingToChange"))(
+    "keeps the edit after %p",
+    (outcome) => {
+      expect(endsTheEdit(outcome)).toBe(false);
+    },
+  );
+});
+
 describe("noticeOf", () => {
-  test("says nothing of a write that applied", () => {
+  test("says nothing of a write that applied or found nothing to change", () => {
+    expect(noticeOf({ kind: "nothingToChange" })).toBeNull();
     const applied: WriteOutcomeView<{ title: string }> = {
       kind: "applied",
       before: OLD,

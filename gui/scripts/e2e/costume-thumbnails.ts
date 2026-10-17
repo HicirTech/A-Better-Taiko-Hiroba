@@ -431,12 +431,14 @@ export async function saveInPlace(ctx: Ctx) {
           async () => (await exists("#costume-preview-unavailable")) || undefined,
         );
         await scrollToTheEnd();
-        await fetch(`${HIROBA}/__noop-save`);
+        // A save stopped for a confirmation reads nothing back, so the draft and its notes stay.
+        await fetch(`${HIROBA}/__precheck?answer=true`);
         await click("#costume-save");
         await waitFor("write notice", async () => (await exists("#write-outcome")) || undefined);
         return await run();
       });
     } finally {
+      await fetch(`${HIROBA}/__precheck?answer=false`);
       await fetch(`${HIROBA}/__preview?answer=png`);
       await click("#costume-reset");
     }

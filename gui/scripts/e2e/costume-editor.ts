@@ -49,7 +49,7 @@ export const costumeEditorKeys = [
   "saveBarStaysAtTheBottom",
   "costumePageIsAColumnOnANarrowWindow",
   "costumePageUsesTheWidthOfAWideWindow",
-  "failedSaveKeepsTheNoticeAndDraft",
+  "failedSaveSaysSoAndShowsHirobasSet",
   "myDonNotAskedAfterNoChange",
 ] as const;
 
@@ -199,12 +199,12 @@ export async function costumeEditor(ctx: Ctx) {
   await fetch(`${HIROBA}/__noop-save`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
 
-  results.failedSaveKeepsTheNoticeAndDraft =
+  results.failedSaveSaysSoAndShowsHirobasSet =
     noChange === "notApplied" &&
     (await aboveThePart("#write-outcome")) &&
     (await stepOf()) === "editing" &&
-    (await pressedOf("#swatch-colorFace-3")) === "true" &&
-    (await savable()) &&
+    (await pressedOf("#swatch-colorFace-3")) === "false" &&
+    !(await savable()) &&
     same(await savedCostume(), START);
   await leaveTheCostumePage();
   results.myDonNotAskedAfterNoChange =

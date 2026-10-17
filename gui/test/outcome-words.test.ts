@@ -60,7 +60,6 @@ const outcomesOf = <S>(before: S, after: S): Case<S>[] => [
     { kind: "changedSincePreview", current: after },
     "write.changedSincePreview",
   ],
-  ["nothing to change", { kind: "nothingToChange" }, "write.nothingToChange"],
   ["a confirmation asked for", { kind: "needsConfirmation" }, "write.needsConfirmation"],
 ];
 
@@ -69,7 +68,6 @@ const BASE_NAME: Partial<Record<MessageKey, string>> = {
   "write.notApplied.unchanged": "unchanged",
   "write.diverged": "diverged",
   "write.changedSincePreview": "changedSincePreview",
-  "write.nothingToChange": "nothingToChange",
   "write.needsConfirmation": "needsConfirmation",
 };
 
@@ -158,26 +156,22 @@ const OWN: Record<OwnKind, readonly MessageKey[]> = {
     "write.notApplied.unchanged",
     "write.diverged",
     "write.changedSincePreview",
-    "write.nothingToChange",
     "write.needsConfirmation",
   ],
   name: [
     "write.notApplied.unchanged",
     "write.diverged",
     "write.changedSincePreview",
-    "write.nothingToChange",
   ],
   folder: [
     "write.notApplied.unchanged",
     "write.diverged",
     "write.changedSincePreview",
-    "write.nothingToChange",
   ],
   favoriteSong: [
     "write.notApplied.unchanged",
     "write.diverged",
     "write.changedSincePreview",
-    "write.nothingToChange",
   ],
 };
 

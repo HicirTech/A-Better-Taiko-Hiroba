@@ -1,6 +1,6 @@
 import { checkNameTarget, isErr, NAME_FORM_MAX_LENGTH } from "@abth/core";
 
-import { type Noticed, noticeOf, seenAfter } from "../my-page/write-ending";
+import { endsTheEdit, type Noticed, noticeOf, seenAfter } from "../my-page/write-ending";
 import type { NameState, RenameState, WriteOutcomeView } from "../session-port";
 
 type NameOutcome = WriteOutcomeView<NameState>;
@@ -73,16 +73,13 @@ export function reduceName(step: NameStep, action: NameAction): NameStep {
   }
 }
 
-const leavesTheName = (outcome: NameOutcome): boolean =>
-  outcome.kind === "applied" || outcome.kind === "appliedNotSynced";
-
 function writeEnded(step: NameStep, outcome: NameOutcome): NameStep {
   if (step.name !== "saving") {
     return step;
   }
   return {
     name: "idle",
-    typed: leavesTheName(outcome) ? null : step.typed,
+    typed: endsTheEdit(outcome) ? null : step.typed,
     notice: noticeOf(outcome),
   };
 }

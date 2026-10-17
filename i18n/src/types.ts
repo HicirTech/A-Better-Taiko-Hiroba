@@ -440,7 +440,6 @@ export interface Messages {
   "write.changedSincePreview": string;
   /** Param: {field}, which value of the set was refused, as a costume.part text. */
   "write.invalidTarget": string;
-  "write.nothingToChange": string;
   "write.maintenance": string;
   /** Carries the site's own confirmation text (mydon.js); this version does not answer it. */
   "write.needsConfirmation": string;
@@ -458,7 +457,6 @@ export interface Messages {
   "write.title.diverged": string;
   "write.title.crossChanged": string;
   "write.title.changedSincePreview": string;
-  "write.title.nothingToChange": string;
   /** Carries the site's own confirmation text (check_ip_title); this version does not answer it. */
   "write.title.needsConfirmation": string;
   /** Hiroba's codes for a refused title, which come with no message of their own. */
@@ -469,7 +467,6 @@ export interface Messages {
   "write.name.unchanged": string;
   "write.name.diverged": string;
   "write.name.changedSincePreview": string;
-  "write.name.nothingToChange": string;
   /** Hiroba's code for a rename it could not carry out, which comes with no message of its own. */
   "write.name.refused2": string;
   /** The words of {field} in "write.invalidTarget": a phrase, with no capital and no full stop. */
@@ -502,12 +499,10 @@ export interface Messages {
   "write.folder.unchanged": string;
   "write.folder.diverged": string;
   "write.folder.changedSincePreview": string;
-  "write.folder.nothingToChange": string;
   /** A 大好きな曲 write, worded like the folder's. */
   "write.favoriteSong.unchanged": string;
   "write.favoriteSong.diverged": string;
   "write.favoriteSong.changedSincePreview": string;
-  "write.favoriteSong.nothingToChange": string;
   /** Hiroba's codes for a refused 大好きな曲, which come with no message of their own. */
   "write.favoriteSong.refused1": string;
   "write.favoriteSong.refused2": string;
