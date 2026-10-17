@@ -1,4 +1,13 @@
 {
   "extends": "../tsconfig.base.json",
-  "include": ["vite.config.ts", "capacitor.config.ts", "scripts/**/*.ts", "test/**/*.ts"]
+  "compilerOptions": {
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "vite.config.ts",
+    "capacitor.config.ts",
+    ".storybook/main.ts",
+    "scripts/**/*.ts",
+    "test/**/*.ts"
+  ]
 }

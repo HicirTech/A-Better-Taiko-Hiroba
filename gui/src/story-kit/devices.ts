@@ -1,0 +1,39 @@
+import type { Viewport } from "storybook/viewport";
+
+import { WINDOW_CONTENT_PX } from "../platform/desktop-window";
+
+/** The devices the toolbar's viewports stand for: the PC's window as it opens, and two Android
+ * touch screens. */
+export const DEVICES = {
+  pc: {
+    name: "PC",
+    styles: { width: `${WINDOW_CONTENT_PX.width}px`, height: `${WINDOW_CONTENT_PX.height}px` },
+    type: "desktop",
+  },
+  phone: { name: "Android phone", styles: { width: "412px", height: "915px" }, type: "mobile" },
+  tablet: { name: "Android tablet", styles: { width: "1280px", height: "800px" }, type: "tablet" },
+} as const satisfies Record<string, Viewport>;
+
+export type Device = keyof typeof DEVICES;
+
+const isDevice = (value: unknown): value is Device =>
+  typeof value === "string" && Object.hasOwn(DEVICES, value);
+
+/** The device a story is seen on, from the viewport global; a PC's when the toolbar has none. */
+export function deviceOf(globals: { readonly viewport?: unknown }): Device {
+  const { viewport } = globals;
+  const value =
+    typeof viewport === "object" && viewport !== null && "value" in viewport
+      ? viewport.value
+      : viewport;
+  return isDevice(value) ? value : "pc";
+}
+
+export const isTouchScreen = (device: Device): boolean => DEVICES[device].type !== "desktop";
+
+/** Whether the story is seen on a touch screen, where the app reads a long press. */
+export const touchOf = (globals: { readonly viewport?: unknown }): boolean =>
+  isTouchScreen(deviceOf(globals));
+
+/** A story pinned to a device, which the toolbar then leaves as it is. */
+export const onDevice = (device: Device) => ({ viewport: { value: device, isRotated: false } });

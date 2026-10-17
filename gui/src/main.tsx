@@ -1,11 +1,7 @@
-// Roboto is bundled, not fetched: the Android app must work without a CDN.
-import "@fontsource/roboto/latin-300.css";
-import "@fontsource/roboto/latin-400.css";
-import "@fontsource/roboto/latin-500.css";
-import "@fontsource/roboto/latin-700.css";
+import "./theme/fonts";
 
 import { createTranslator, type Translator } from "@abth/i18n";
-import { CssBaseline, createTheme, ThemeProvider } from "@mui/material";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -13,23 +9,8 @@ import { startingLocale } from "./language/locale-choice";
 import { showLanguage } from "./language/show-language";
 import { connectPlatform } from "./platform";
 import { Shell } from "./shell";
+import { appTheme } from "./theme/app-theme";
 
-const theme = createTheme({
-  colorSchemes: { dark: true },
-  components: {
-    MuiCssBaseline: {
-      styleOverrides: {
-        html: {
-          // Keep the scrollbar's room on every page so the column stands still.
-          // Not scrollbar-gutter: MUI's modals make up for this way alone.
-          overflowY: "scroll",
-          // A pull at the top reads again: no stretch or glow of the page's own competes with it.
-          overscrollBehaviorY: "none",
-        },
-      },
-    },
-  },
-});
 const initial = startingLocale();
 // The in-app browser's close button reads the language shown as it opens.
 let shown: Translator = createTranslator(initial);
@@ -45,7 +26,7 @@ if (container === null) {
 const platform = await connectPlatform({ closeLabel: () => shown.t("signIn.closeBrowser") });
 createRoot(container).render(
   <StrictMode>
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={appTheme}>
       <CssBaseline enableColorScheme />
       <Shell platform={platform} onShown={onShown} />
     </ThemeProvider>
