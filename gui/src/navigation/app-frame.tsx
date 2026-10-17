@@ -306,52 +306,19 @@ function ArrowForwardIcon() {
   );
 }
 
-const TITLE_ROW = { px: 3, pt: 2.5, pb: 1.5 } as const;
-const ARROW_ROW = { pl: 1.5, pr: 3, pt: 1.5, pb: 0.5 } as const;
-
 function PageList({
   page,
   onNavigate,
   i18n,
   toggle,
 }: NavigationProps & { readonly toggle: PipelinesToggle | undefined }) {
-  const title = (
-    <Typography variant="subtitle2" color="text.secondary" noWrap>
-      {i18n.t("app.title")}
-    </Typography>
-  );
-  const pipelinesLabel = i18n.t("nav.pipelines");
-  const touchFirst = useTouchFirst();
   return (
     <>
-      {toggle === undefined ? (
-        <Box sx={TITLE_ROW}>{title}</Box>
-      ) : (
-        // The pipelines page lies one level past the pages, to the left: the arrow says which way.
-        // A touch screen draws no arrow, as it draws no menu button: its swipe stands in for it.
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 0.5,
-            ...(touchFirst ? TITLE_ROW : ARROW_ROW),
-          }}
-        >
-          <Box sx={touchFirst ? HIDDEN_UNTIL_FOCUSED : undefined}>
-            <IconButton
-              id="nav-pipelines"
-              size="small"
-              aria-label={pipelinesLabel}
-              title={pipelinesLabel}
-              aria-pressed={toggle.shown}
-              onClick={() => toggle.onShownChange(!toggle.shown)}
-            >
-              {toggle.shown ? <ArrowForwardIcon /> : <ArrowBackIcon />}
-            </IconButton>
-          </Box>
-          {title}
-        </Box>
-      )}
+      <Box sx={{ px: 3, pt: 2.5, pb: 1.5 }}>
+        <Typography variant="subtitle2" color="text.secondary" noWrap>
+          {i18n.t("app.title")}
+        </Typography>
+      </Box>
       <List disablePadding>
         {PAGES.map((each) => {
           const current = toggle?.shown !== true && each === page;
@@ -377,8 +344,50 @@ function PageList({
   );
 }
 
-// The drawers' paper is a column: the foot sits at its bottom, below the pages.
-const FOOT = { mt: "auto" } as const;
+/** The navigation's foot: the way to the pipelines page, then what the app puts there. */
+function Foot({
+  footRef,
+  toggle,
+  i18n,
+}: {
+  readonly footRef: FootRef;
+  readonly toggle: PipelinesToggle | undefined;
+  readonly i18n: Translator;
+}) {
+  const touchFirst = useTouchFirst();
+  const label = i18n.t("nav.pipelines");
+  return (
+    <Box
+      sx={{
+        mt: "auto",
+        display: "flex",
+        alignItems: "center",
+        gap: 0.5,
+        pl: toggle !== undefined && !touchFirst ? 1.5 : 3,
+        pr: 1.5,
+        py: 1.5,
+      }}
+    >
+      {toggle !== undefined && (
+        // The pipelines page lies one level past the pages, to the left: the arrow says which way.
+        // A touch screen draws no arrow, as it draws no menu button: its swipe stands in for it.
+        <Box sx={touchFirst ? HIDDEN_UNTIL_FOCUSED : undefined}>
+          <IconButton
+            id="nav-pipelines"
+            size="small"
+            aria-label={label}
+            title={label}
+            aria-pressed={toggle.shown}
+            onClick={() => toggle.onShownChange(!toggle.shown)}
+          >
+            {toggle.shown ? <ArrowForwardIcon /> : <ArrowBackIcon />}
+          </IconButton>
+        </Box>
+      )}
+      <Box ref={footRef} sx={{ flexGrow: 1, minWidth: 0 }} />
+    </Box>
+  );
+}
 
 function SidePanel({
   footRef,
@@ -396,7 +405,7 @@ function SidePanel({
         <Box component="nav">
           <PageList {...props} />
         </Box>
-        <Box ref={footRef} sx={FOOT} />
+        <Foot footRef={footRef} toggle={props.toggle} i18n={props.i18n} />
       </Drawer>
     </Box>
   );
@@ -474,7 +483,7 @@ function MenuDrawer({
         <Box component="nav" aria-label={label}>
           <PageList page={page} onNavigate={pick} i18n={i18n} toggle={toggle} />
         </Box>
-        <Box ref={footRef} sx={FOOT} />
+        <Foot footRef={footRef} toggle={toggle} i18n={i18n} />
       </Drawer>
     </>
   );

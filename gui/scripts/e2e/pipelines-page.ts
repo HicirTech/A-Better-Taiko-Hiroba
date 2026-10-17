@@ -6,6 +6,7 @@ import { pageHelpers, same, waitFor } from "./harness";
 import { platesAsked, readHits } from "./stand-in";
 
 export const pipelinesPageKeys = [
+  "pipelinesArrowBesideTheLastRead",
   "pipelinesOpenByTheArrow",
   "playHistoryListsItsPages",
   "scoresListItsCharts",
@@ -37,7 +38,7 @@ const ENDED_ROW = '[aria-label="Recently ended"] button';
 export async function pipelinesPage(ctx: Ctx) {
   const { results } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, exists, menuClosed, swipe, touchEmulated } = pageHelpers(page);
+  const { atSize, attribute, boxOf, exists, menuClosed, swipe, touchEmulated } = pageHelpers(page);
   const settle = () => Bun.sleep(500);
   // The page is there only while it is shown.
   const shown = () => exists("#pipeline-io");
@@ -60,6 +61,13 @@ export async function pipelinesPage(ctx: Ctx) {
     });
 
   await goTo("overview");
+  const arrow = await boxOf("#nav-pipelines");
+  const lastRead = await boxOf("#nav-last-updated");
+  const readAgain = await boxOf("#read-again");
+  results.pipelinesArrowBesideTheLastRead =
+    Math.abs((arrow.top + arrow.bottom) / 2 - (readAgain.top + readAgain.bottom) / 2) < 2 &&
+    arrow.right <= lastRead.left &&
+    lastRead.right <= readAgain.left;
   const readsBefore = await readHits();
   const platesBefore = (await platesAsked()).length;
   await click("#nav-pipelines");

@@ -32,7 +32,7 @@ export function ReadAgainFoot({
   const label = i18n.t("profile.readAgain");
   const hold = usePressHold(canRead ? onHeld : undefined);
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, pl: 3, pr: 1.5, py: 1.5 }}>
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       <Typography
         id="nav-last-updated"
         variant="caption"

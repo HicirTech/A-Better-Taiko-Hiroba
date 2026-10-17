@@ -30,8 +30,8 @@ Costume, Nickname & title, Favourites, Recent plays, Scores, Rating, Know yourse
 the app as before.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
-opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button left of the
-app's name in the list opens it, and → or any page of the list goes back; on a touch-first screen
+opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button at the foot of the
+list, beside the last update, opens it, and → or any page of the list goes back; on a touch-first screen
 that button is drawn only when the keyboard's focus is on it.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
 The app is light or dark as the system is (Windows' app mode, Android's dark theme), and the
