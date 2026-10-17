@@ -158,6 +158,8 @@ function FavoritesBody({
     setDraft(null);
     setEditing(false);
   };
+  // A set shown from the drawer is a level of its own: Back goes to the current favourites.
+  useBackLeaves(set !== null, () => showSet(null));
   useBackLeaves(editing, leaveEditing);
   const named = (name: string) => {
     if (naming !== null) {
