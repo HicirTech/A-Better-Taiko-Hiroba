@@ -18,7 +18,7 @@ import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
 import { listedOf, scoresReadingText } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
-import type { HirobaSessionPort, ShownSong } from "../session-port";
+import type { ListedChartsView, ShownSong } from "../session-port";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { AddSongsDialog } from "./add-songs-dialog";
 import { BandItem } from "./band-item";
@@ -29,12 +29,11 @@ import { type KnownChart, knownCharts, shownAt } from "./known-charts";
 import { NearMissItem } from "./near-miss-item";
 import type { PageParts } from "./page-parts";
 import { RanksItem } from "./ranks-item";
-import { useListedCharts } from "./use-listed-charts";
 
 /** Where the player stands, from the kept scores and taiko.wiki's list; asks Hiroba nothing. */
 export function KnowYourselfPage({
   scores,
-  port,
+  listed,
   catalogue,
   lane,
   touchFirst,
@@ -42,7 +41,8 @@ export function KnowYourselfPage({
   i18n,
 }: {
   readonly scores: ScoresState;
-  readonly port: Pick<HirobaSessionPort, "listedCharts">;
+  /** Every chart the lists name, held by the window across visits. */
+  readonly listed: ListedChartsView | null;
   /** taiko.wiki's song list: each chart's stars, notes and tempo, and the names. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
@@ -58,7 +58,6 @@ export function KnowYourselfPage({
   useEffect(load, [load]);
   // A song list that could not be read is read again as the page opens.
   useEffect(readIfFailed, [readIfFailed]);
-  const listed = useListedCharts(port, view);
   const kept = useFavoriteSets();
   const [shown, setShown] = useState(keptShownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);

@@ -19,6 +19,7 @@ import { useSongCatalogue } from "./favorites/use-song-catalogue";
 import { HistoryPage } from "./history/history-page";
 import { useRecentPlays } from "./history/use-recent-plays";
 import { KnowYourselfPage } from "./know-yourself";
+import { useListedCharts } from "./know-yourself/use-listed-charts";
 import { CostumePage } from "./my-page/costume-page";
 import { MedalCard } from "./my-page/medal-card";
 import type { OpenAction } from "./my-page/open-button";
@@ -124,7 +125,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     forget: forgetPickable,
   } = usePickableSongs(port, sessionGone);
   const history = useRecentPlays(port, sessionGone);
+  const { load: loadPlays, markStale: markPlaysStale, forget: forgetPlays } = history;
   const scores = useScores(port, sessionGone);
+  const { load: loadScores, markStale: markScoresStale, forget: forgetScores } = scores;
+  const listed = useListedCharts(port, scores.view);
   const ratingData = useRatingData(port);
   // behindThePage keeps the page mounted, with its outcome notice and focus, and leaves the
   // portrait alone: a title write does not change the costume.
@@ -275,6 +279,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       forgetNameEditor();
       forgetFavorites();
       forgetPickable();
+      forgetScores();
+      forgetPlays();
     }
   }, [
     noSession,
@@ -283,7 +289,21 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     forgetNameEditor,
     forgetFavorites,
     forgetPickable,
+    forgetScores,
+    forgetPlays,
   ]);
+  // What the device keeps comes in while the window is idle, so no page waits for it later.
+  const profileShown = screen.name === "profile";
+  useEffect(() => {
+    if (!profileShown) {
+      return;
+    }
+    const idle = requestIdleCallback(() => {
+      loadScores();
+      loadPlays();
+    });
+    return () => cancelIdleCallback(idle);
+  }, [profileShown, loadScores, loadPlays]);
 
   // Leaving a page drops the edits made on it; the editors keep what they read from Hiroba.
   useEffect(() => {
@@ -342,11 +362,12 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     try {
       if (onHistoryPage) {
         // A walk can run for minutes: Read again on another page must not wait for it.
-        void history.read();
+        // It notes its plays in the scores too, and a read of the scores walks the plays.
+        void history.read().then(markScoresStale);
       } else if (onScoresPage || onKnowPage) {
-        void scores.read();
+        void scores.read().then(markPlaysStale);
       } else if (onRatingPage) {
-        void scores.read();
+        void scores.read().then(markPlaysStale);
         void ratingData.read();
       } else if (pageEditor !== null) {
         if (onFavoritesPage) {
@@ -412,7 +433,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           onAnswer={(confirmed) => {
             setAskingEvery(false);
             if (confirmed) {
-              void scores.readEvery();
+              void scores.readEvery().then(markPlaysStale);
             }
           }}
         />
@@ -520,7 +541,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             {screen.name === "profile" && page === "knowYourself" && (
               <KnowYourselfPage
                 scores={scores}
-                port={port}
+                listed={listed}
                 catalogue={catalogue}
                 lane={lane}
                 touchFirst={touchFirst}

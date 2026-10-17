@@ -29,7 +29,9 @@ at the top left opens the same list in a drawer. On a touch-first screen (`point
 Costume, Nickname & title, Favourites, Recent plays, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
 the app as before.
 A page lower in the list slides in from below and one higher up from above, as the list's highlight
-slides to its row; picking the page already shown does nothing.
+slides to its row; picking the page already shown does nothing. Recent plays, Scores, Rating and Know
+yourself show at once what they showed before, and what the device keeps for them is brought in while
+the window is idle once the Overview is read.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
 opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button at the foot of the

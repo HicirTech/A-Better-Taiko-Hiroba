@@ -13,6 +13,7 @@ import type {
   ScoresView,
   ScoreView,
 } from "../session-port";
+import { useHeldCopy } from "../use-held-copy";
 
 const POLL_MS = 200;
 
@@ -31,8 +32,12 @@ export interface ScoresState {
   readonly failure: ScoresFailure | null;
   /** The last read of all scores found no chart played since the one before. */
   readonly nothingNew: boolean;
-  /** Brings the kept scores: the page asks as it opens. */
+  /** Brings the kept scores unless they are held: the page asks as it opens. */
   readonly load: () => void;
+  /** The kept scores changed by another read, such as a walk of the recent plays. */
+  readonly markStale: () => void;
+  /** Drops the scores held, for another player's session. */
+  readonly forget: () => void;
   /** Reads what the book needs, after Hiroba's own refresh. A second ask while one runs does nothing. */
   readonly read: () => Promise<void>;
   /** Reads every list and every played chart again, after Hiroba's own refresh: minutes. */
@@ -54,7 +59,8 @@ export function useScores(
   >,
   onSessionGone: (notice: MessageKey) => void,
 ): ScoresState {
-  const [view, setView] = useState<ScoresView | null>(null);
+  const kept = useHeldCopy(useCallback(() => port.scores(), [port]));
+  const { load: loadKept, hold } = kept;
   const [reading, setReading] = useState(false);
   const [progress, setProgress] = useState<ScoresProgress | null>(null);
   const [song, setSong] = useState<ChosenSong | null>(null);
@@ -62,24 +68,23 @@ export function useScores(
   const [nothingNew, setNothingNew] = useState(false);
   const running = useRef(false);
   const load = useCallback(() => {
-    setView(null);
     setFailure(null);
     setNothingNew(false);
-    void port.scores().then(setView);
-  }, [port]);
+    loadKept();
+  }, [loadKept]);
   // A read that stopped kept what it read: the page shows that, with where it stopped.
   const settle = useCallback(
     async (result: Result<ScoresView, ScoresFailure>) => {
       if (result.ok) {
-        setView(result.value);
+        hold(result.value);
       } else if (SESSION_GONE.has(result.error.kind)) {
         onSessionGone(FAILURE_MESSAGE[result.error.kind]);
       } else {
         setFailure(result.error);
-        setView(await port.scores());
+        hold(await port.scores());
       }
     },
-    [port, onSessionGone],
+    [port, onSessionGone, hold],
   );
   const run = useCallback(
     async (ask: () => Promise<Result<ScoresRead, ScoresFailure>>, chosen: ChosenSong | null) => {
@@ -123,7 +128,7 @@ export function useScores(
     [port, run],
   );
   return {
-    view,
+    view: kept.value,
     reading,
     canRead: !reading,
     progress,
@@ -131,6 +136,8 @@ export function useScores(
     failure,
     nothingNew,
     load,
+    markStale: kept.markStale,
+    forget: kept.forget,
     read,
     readEvery,
     readSong,
