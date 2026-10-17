@@ -59,6 +59,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
     if (!active) {
       setActive(true);
       onOpen();
+      catalogue.readIfFailed();
     }
   };
   const leave = () => {

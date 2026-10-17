@@ -26,6 +26,7 @@ import { useBackCloses } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { FavoriteSongState } from "../session-port";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
 import type { PickableState } from "./pickable-songs";
 import { type PickerEntry, PickerList } from "./picker-list";
 import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
@@ -57,7 +58,6 @@ export interface SongPickerProps {
   readonly catalogue: SongCatalogue;
   /** Only the songs Hiroba's own picker offers are listed; a choice of one lists 裏 entries too. */
   readonly pickable: PickableState;
-  readonly onReadPickable: () => void;
   readonly i18n: Translator;
   readonly onClose: () => void;
 }
@@ -82,14 +82,7 @@ export function SongPicker({ open, onClose, ...body }: SongPickerProps) {
 }
 
 // Its own component, so the search and the filter start over each time the picker opens.
-function PickerBody({
-  choice,
-  catalogue,
-  pickable,
-  onReadPickable,
-  i18n,
-  onClose,
-}: Omit<SongPickerProps, "open">) {
+function PickerBody({ choice, catalogue, pickable, i18n, onClose }: Omit<SongPickerProps, "open">) {
   const { t, locale } = i18n;
   const touchFirst = useTouchFirst();
   const [query, setQuery] = useState("");
@@ -179,20 +172,12 @@ function PickerBody({
     const { kind, detail } = status.failure;
     content = (
       <Box sx={{ p: 2 }}>
-        <FormHelperText id="song-picker-offered-failed" error>
-          {t("picker.offeredFailed")} {t(FAILURE_MESSAGE[kind])}
-          {detail !== undefined && (
-            <Box
-              component="span"
-              sx={{ display: "block", mt: 0.5, fontFamily: "monospace", userSelect: "text" }}
-            >
-              {t("failure.detail", { detail })}
-            </Box>
-          )}
-        </FormHelperText>
-        <Button id="song-picker-offered-retry" onClick={onReadPickable} sx={{ mt: 1 }}>
-          {t("picker.retry")}
-        </Button>
+        <ReadFailureAlert
+          id="song-picker-offered-failed"
+          message={`${t("picker.offeredFailed")} ${t(FAILURE_MESSAGE[kind])}`}
+          code={detail ?? null}
+          i18n={i18n}
+        />
       </Box>
     );
   } else if (offered === null) {

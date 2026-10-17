@@ -4,7 +4,6 @@ import { Autocomplete, Box, Chip, TextField, Typography } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
-import { FailureText } from "../my-page/editor-parts";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { TitleList } from "./title-editor-state";
 import { currentOptions, filterTitles } from "./title-options";
@@ -74,7 +73,6 @@ export function TitlePicker({ worn, picked, list, busy, onOpen, onPick, i18n }: 
           {...params}
           label={t("title.heading")}
           placeholder={wornOption === null ? t("profile.noTitle") : undefined}
-          error={list.name === "failed"}
           helperText={noteOf(list, current.size, worn, i18n)}
           slotProps={{
             ...params.slotProps,
@@ -108,8 +106,6 @@ function noteOf(
   i18n: Translator,
 ): ReactNode | undefined {
   switch (list.name) {
-    case "failed":
-      return <FailureText failure={list.failure} i18n={i18n} />;
     case "read":
       if (matches > 1) {
         return i18n.t("title.shared", { count: matches });

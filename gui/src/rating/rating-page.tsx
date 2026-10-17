@@ -1,16 +1,17 @@
 import { type ChartRating, chartKey, type RatingFigure, rateOurTaikoV1 } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-import { Box, FormHelperText, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { Waiting } from "../my-page/editor-parts";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
 import { listedOf, scoresReadingText } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ScoreView } from "../session-port";
+import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
 import { RatingRadar } from "./rating-radar";
 import type { RatingDataState } from "./use-rating-data";
 
@@ -134,12 +135,12 @@ export function RatingPage({
         <Waiting id="rating-data-reading">{t("rating.readingData")}</Waiting>
       )}
       {ratingData.failure !== null && (
-        <FormHelperText id="rating-data-failure" error sx={{ m: 0 }}>
-          {t("rating.dataFailed")}
-          <Box component="span" sx={{ display: "block", mt: 0.5, fontFamily: "monospace" }}>
-            {t("picker.code", { code: ratingData.failure })}
-          </Box>
-        </FormHelperText>
+        <ReadFailureAlert
+          id="rating-data-failure"
+          message={t("rating.dataFailed")}
+          code={ratingData.failure}
+          i18n={i18n}
+        />
       )}
       {settled && view.scores.length === 0 && (
         <Typography id="rating-empty" color="text.secondary">

@@ -9,9 +9,10 @@ import { fold, searchedNames } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { Waiting } from "../my-page/editor-parts";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
+import { LoadFailed } from "../ui/read-failure-alert";
 import { ScoreDetails } from "./score-details";
 import { ScoreFilters } from "./score-filters";
 import {

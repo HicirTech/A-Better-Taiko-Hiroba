@@ -52,6 +52,7 @@ import type {
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
 import { SongSearch } from "./songs/song-search";
+import { LoadFailed } from "./ui/read-failure-alert";
 import { RELEASES_URL, REPOSITORY_URL, releaseUrl } from "./updates";
 import { APP_VERSION } from "./updates/app-version";
 import { UpdateDialog } from "./updates/update-dialog";
@@ -118,7 +119,6 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   );
   const {
     pickable,
-    refresh: refreshPickable,
     readIfStale: readPickableIfStale,
     markStale: markPickableStale,
     forget: forgetPickable,
@@ -551,7 +551,6 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
                 port={port}
                 lane={lane}
                 pickable={pickable}
-                onReadPickable={refreshPickable}
                 onPickerOpen={readPickableIfStale}
                 i18n={i18n}
               />
@@ -589,23 +588,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           </Box>
 
           {screen.name === "readFailed" && (
-            <Alert severity="warning">
-              {t(FAILURE_MESSAGE[screen.kind])}
-              {screen.detail !== undefined && (
-                <Typography
-                  id="failure-detail"
-                  variant="body2"
-                  sx={{
-                    mt: 1,
-                    fontFamily: "monospace",
-                    userSelect: "text",
-                    wordBreak: "break-all",
-                  }}
-                >
-                  {t("failure.detail", { detail: screen.detail })}
-                </Typography>
-              )}
-            </Alert>
+            <LoadFailed id="read-failure" failure={screen} codeId="failure-detail" i18n={i18n} />
           )}
         </Stack>
       )}

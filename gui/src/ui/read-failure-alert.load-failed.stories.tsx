@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import type { ReadFailure } from "../session-port";
 import { i18nOf } from "../story-kit/env";
-import { LoadFailed } from "./editor-parts";
+import { LoadFailed } from "./read-failure-alert";
 
 interface Args {
   readonly failure: ReadFailure;
@@ -11,7 +11,7 @@ interface Args {
 
 const meta = {
   title: "Status/LoadFailed",
-  tags: ["my-page"],
+  tags: ["ui"],
   render: ({ failure }, { globals }) => (
     <LoadFailed id="story-load-failed" failure={failure} i18n={i18nOf(globals)} />
   ),

@@ -148,8 +148,10 @@ export async function thumbnails(ctx: Ctx) {
   await Bun.sleep(1500);
   const slotTwoAsked = thumbsAfterGif.slice(askedBeforeReopen);
   results.thumbnailGifLeavesTheId =
-    (await textOf("#costume-thumbnails-unavailable > :first-child")) ===
-      `Some thumbnails didn't load (${unfetchedIn(2).length}); their numbers are shown instead.` &&
+    ((await textOf("#costume-thumbnails-unavailable"))?.startsWith(
+      `Some thumbnails didn't load (${unfetchedIn(2).length}); their numbers are shown instead.`,
+    ) ??
+      false) &&
     (await textOf("#costume-thumbnails-code")) ===
       "Code for a report: costumeItem=notPng status=200 type=image/gif bytes=43" &&
     (await page.evaluate<number>(

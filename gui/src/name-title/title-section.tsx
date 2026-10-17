@@ -4,6 +4,7 @@ import { useRef } from "react";
 
 import { useFocusKept, Waiting } from "../my-page/editor-parts";
 import { WriteOutcomeNotice } from "../my-page/write-outcome";
+import { LoadFailed } from "../ui/read-failure-alert";
 import { ControlWithSave } from "./control-with-save";
 import { canSaveTitle } from "./title-editor-state";
 import { TitlePicker } from "./title-picker";
@@ -54,6 +55,9 @@ export function TitleSection({ title, worn, i18n, busy }: TitleSectionProps) {
           i18n={i18n}
         />
       </ControlWithSave>
+      {step.list.name === "failed" && (
+        <LoadFailed id="title-list-failure" failure={step.list.failure} i18n={i18n} />
+      )}
       {step.name === "saving" && <Waiting id="title-saving">{t("costume.saving")}</Waiting>}
       {step.name === "idle" && step.notice !== null && (
         <WriteOutcomeNotice id="title-outcome" kind="title" outcome={step.notice} i18n={i18n} />

@@ -12,13 +12,14 @@ import { SongListFailed } from "../favorites/song-list-failed";
 import { resolveSong } from "../favorites/song-look";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { Waiting } from "../my-page/editor-parts";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
 import { listedOf, scoresReadingText } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { HirobaSessionPort, ShownSong } from "../session-port";
+import { LoadFailed } from "../ui/read-failure-alert";
 import { AddSongsDialog } from "./add-songs-dialog";
 import { BandItem } from "./band-item";
 import { ChartList } from "./chart-list";
@@ -53,7 +54,10 @@ export function KnowYourselfPage({
 }) {
   const { t, number, locale } = i18n;
   const { view, reading, progress, song, failure, load, readSong } = scores;
+  const { readIfFailed } = catalogue;
   useEffect(load, [load]);
+  // A song list that could not be read is read again as the page opens.
+  useEffect(readIfFailed, [readIfFailed]);
   const listed = useListedCharts(port, view);
   const kept = useFavoriteSets();
   const [shown, setShown] = useState(keptShownDifficulty);

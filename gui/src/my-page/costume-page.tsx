@@ -6,12 +6,13 @@ import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import { useWideWindow } from "../navigation/use-wide-window";
 import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import { LoadFailed } from "../ui/read-failure-alert";
 import { type EditorStep, shownEditorOf } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { NarrowBody } from "./costume-narrow-body";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
 import { WideBody } from "./costume-wide-body";
-import { LoadFailed, useFocusKept, Waiting } from "./editor-parts";
+import { useFocusKept, Waiting } from "./editor-parts";
 import { BAR_REF } from "./stuck-clearance";
 import type { CostumeEditor } from "./use-costume-editor";
 

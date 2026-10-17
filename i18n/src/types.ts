@@ -353,8 +353,9 @@ export interface Messages {
   "failure.unexpectedPage": string;
   "failure.maintenance": string;
   "failure.notRefreshed": string;
-  /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
-  "failure.detail": string;
+  "failure.mayClear": string;
+  /** Param: {code}, codes for a report (path, status, parser verdict); never page text. */
+  "failure.code": string;
   "platform.unsupported": string;
   /** The name plate on the Overview: its accessible name, and what a long-press on it opens. */
   "plate.open": string;
@@ -365,8 +366,6 @@ export interface Messages {
   "costume.preview.alt": string;
   "costume.preview.loading": string;
   "costume.preview.unavailable": string;
-  /** Param: {code}, why it did not come, such as preview=notPng; never a URL or a query. */
-  "costume.preview.code": string;
   "costume.tab.colours": string;
   "costume.tab.items": string;
   /** By the tab's name in Hiroba's guide: かお, どう, てあし, then the five slots from きぐるみ (mascot). */
@@ -385,8 +384,6 @@ export interface Messages {
   "costume.item.label": string;
   /** Param: {count}, how many did not come. */
   "costume.thumbnails.unavailable": string;
-  /** Param: {code}, why the first of them did not come, such as costumeItem=notPng; never a URL. */
-  "costume.thumbnails.code": string;
   "costume.kigurumiWarning": string;
   "costume.reset": string;
   "costume.save": string;
@@ -574,9 +571,6 @@ export interface Messages {
   "picker.none": string;
   "picker.loading": string;
   "picker.failed": string;
-  /** Param: {code}, why the song list did not come, such as unreachable; never a URL. */
-  "picker.code": string;
-  "picker.retry": string;
   "picker.offeredReading": string;
   "picker.offeredFailed": string;
   /** Param: {max}, how many songs a set holds. */
