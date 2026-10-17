@@ -1,13 +1,14 @@
 import { createTranslator, type Locale, type Translator } from "@abth/i18n";
 import { Alert } from "@mui/material";
-import { useCallback, useLayoutEffect, useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useState } from "react";
 
 import { App } from "./App";
 import { LanguageSetting } from "./language/language-setting";
 import { forgetLocale, pickedLocale, rememberLocale, systemLocale } from "./language/locale-choice";
 import { showLanguage } from "./language/show-language";
 import { AppFrame } from "./navigation/app-frame";
-import { keepPage, keptPage, type Page } from "./navigation/pages";
+import { keepPage, keptPage } from "./navigation/pages";
+import { useShownPage } from "./navigation/use-shown-page";
 import { PipelinesPage } from "./pipelines-page/pipelines-page";
 import type { Platform } from "./platform";
 import { SettingsPage } from "./settings/settings-page";
@@ -28,12 +29,7 @@ export function Shell({
     showLanguage(i18n);
     onShown(i18n);
   }, [i18n, onShown]);
-  const [page, setPage] = useState(keptPage);
-  const navigate = useCallback((next: Page) => {
-    keepPage(next);
-    setPage(next);
-    window.scrollTo(0, 0);
-  }, []);
+  const [page, navigate] = useShownPage(keptPage, keepPage);
   const pick = (next: Locale | null) => {
     if (next === null) {
       forgetLocale();

@@ -28,11 +28,14 @@ signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back goes one level back: it closes the drawer or the dialog on top (the Costume page's History, say), and a dialog opened from a drawer, a menu or another dialog goes back to it; it goes from
 Costume, Nickname & title, Favourites, Recent plays, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
 the app as before.
+A page lower in the list slides in from below and one higher up from above, as the list's highlight
+slides to its row; picking the page already shown does nothing.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
 opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button at the foot of the
 list, beside the last update, opens it, and → or any page of the list goes back; on a touch-first screen
-that button is drawn only when the keyboard's focus is on it.
+that button is drawn only when the keyboard's focus is on it. The pipelines page slides in from the left
+and back out the same way. Where the system asks for reduced motion, nothing slides.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
 The app is light or dark as the system is (Windows' app mode, Android's dark theme), and the
 page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
