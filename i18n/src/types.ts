@@ -386,7 +386,7 @@ export interface Messages {
   "costume.thumbnails.unavailable": string;
   "costume.kigurumiWarning": string;
   "costume.reset": string;
-  "costume.save": string;
+  "write.sync": string;
   "costume.saving": string;
   "costume.history": string;
   "costume.history.title": string;
@@ -547,7 +547,6 @@ export interface Messages {
   "favorites.addSongs": string;
   /** Param: {name}, the song as the page shows it. */
   "favorites.removeSong": string;
-  "favorites.apply": string;
   "favorites.delete": string;
   "favorites.delete.title": string;
   /** Param: {name}, the set's name. */

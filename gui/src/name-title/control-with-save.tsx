@@ -26,7 +26,7 @@ export function ControlWithSave({
         onClick={onSave}
         sx={{ height: 56, ml: "auto", flexShrink: 0, whiteSpace: "nowrap" }}
       >
-        {i18n.t("costume.save")}
+        {i18n.t("write.sync")}
       </Button>
     </Box>
   );

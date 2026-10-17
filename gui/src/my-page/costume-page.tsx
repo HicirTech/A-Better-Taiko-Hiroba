@@ -164,7 +164,7 @@ function actionsOf(
       onClick={onSave}
       sx={{ ...ONE_LINE_LABEL, ...SNUG_CONTAINED_BUTTON }}
     >
-      {t("costume.save")}
+      {t("write.sync")}
     </Button>
   );
   return (

@@ -331,7 +331,7 @@ export const en: Messages = {
     "Some thumbnails didn't load ({count}); their numbers are shown instead.",
   "costume.kigurumiWarning": "A Mascot takes off Head, Body, Makeup and Mini Character.",
   "costume.reset": "Reset",
-  "costume.save": "Save to Hiroba",
+  "write.sync": "Sync to Hiroba",
   "costume.saving": "Saving… then reading it back",
   "costume.history": "History",
   "costume.history.title": "Costume history",
@@ -485,7 +485,6 @@ export const en: Messages = {
   "sort.cancelled": "{name} went back to where it was.",
   "favorites.addSongs": "Add songs",
   "favorites.removeSong": "Remove {name}",
-  "favorites.apply": "Apply",
   "favorites.delete": "Delete",
   "favorites.delete.title": "Delete this set?",
   "favorites.delete.body":

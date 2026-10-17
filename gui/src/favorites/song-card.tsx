@@ -67,7 +67,7 @@ export function SongCard({
                   disabled={shut}
                   onClick={onSave}
                 >
-                  {t("costume.save")}
+                  {t("write.sync")}
                 </Button>
               </>
             )}
