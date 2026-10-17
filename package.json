@@ -17,6 +17,8 @@
     "build": "bun run build:web && bun run build:electron",
     "start": "electron gui",
     "e2e": "bun gui/scripts/e2e/run.ts",
+    "storybook": "storybook dev --config-dir gui/.storybook --port 6006 --exact-port --disable-telemetry --no-version-updates",
+    "build:storybook": "storybook build --config-dir gui/.storybook --output-dir gui/out/storybook --disable-telemetry",
     "dist:dir": "bun run build && electron-builder --projectDir gui --win --dir",
     "dist:win": "bun run build && electron-builder --projectDir gui --win nsis zip --x64",
     "dist:mac": "bun run build && electron-builder --projectDir gui --mac dmg --arm64 --x64",
