@@ -7,13 +7,14 @@ import { keptShownDifficulty } from "../favorites/shown-difficulty";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import { fold, searchedNames } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
+import { HISTORY_ROW_PX, HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { Waiting } from "../my-page/editor-parts";
 import { FrameTop } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { RowList, type RowPlace } from "../ui/row-list";
 import { SearchField } from "../ui/search-field";
 import { ScoreDetails } from "./score-details";
 import { ScoreFilters } from "./score-filters";
@@ -28,9 +29,8 @@ import {
 } from "./score-order";
 import type { ChosenSong, ScoresState } from "./use-scores";
 
-const LIST = { listStyle: "none", m: 0, p: 0 } as const;
-
 const chartOf = ({ songNo, level }: ScoreView) => `${songNo}/${level}`;
+const listedChart = (listed: ListedScore) => chartOf(listed.score);
 
 /** A chart's score as the page lists it, its song named as the player's language names it. */
 export function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Translator["locale"]) {
@@ -87,7 +87,7 @@ export function ScoresPage({
       ),
     [listed, filter, folded, sort, names],
   );
-  const openedScore = listed.find((one) => chartOf(one.score) === opened) ?? null;
+  const openedScore = listed.find((one) => listedChart(one) === opened) ?? null;
   const settled = view !== null && !reading && failure === null;
   return (
     <>
@@ -144,18 +144,18 @@ export function ScoresPage({
             {t("scores.noMatch")}
           </Typography>
         )}
-        <Stack component="ul" id="scores-list" spacing={0} sx={LIST}>
-          {shown.map((one, index) => (
+        <RowList id="scores-list" rows={shown} keyOf={listedChart} rowPx={HISTORY_ROW_PX}>
+          {(one, index, place) => (
             <ScoreRow
-              key={chartOf(one.score)}
               listed={one}
               lane={lane}
               order={index}
+              place={place}
               i18n={i18n}
-              onOpen={() => setOpened(chartOf(one.score))}
+              onOpen={() => setOpened(listedChart(one))}
             />
-          ))}
-        </Stack>
+          )}
+        </RowList>
         <ScoreDetails
           listed={openedScore}
           lane={lane}
@@ -175,12 +175,14 @@ function ScoreRow({
   listed,
   lane,
   order,
+  place,
   i18n,
   onOpen,
 }: {
   readonly listed: ListedScore;
   readonly lane: PictureLane;
   readonly order: number;
+  readonly place: RowPlace;
   readonly i18n: Translator;
   readonly onOpen: () => void;
 }) {
@@ -198,6 +200,7 @@ function ScoreRow({
       order={order}
       i18n={i18n}
       rowProps={rowProps}
+      place={place}
     />
   );
 }

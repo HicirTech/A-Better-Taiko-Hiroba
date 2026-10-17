@@ -49,9 +49,9 @@ const chart = (n: number) => `${1000 + n}/${levelOf(n)}`;
 const sorted = (charts: readonly string[]) => [...charts].sort();
 /** Every chart of song 1004, 裏 included, as a read of the song asks them. */
 const SONG_1004 = ["1004/1", "1004/2", "1004/3", "1004/4", "1004/5"];
-const rowOf = (charted: string) => {
+const isChart = (charted: string) => {
   const [songNo, level] = charted.split("/");
-  return `#scores-list [data-song-no="${songNo}"][data-level="${level}"]`;
+  return `(row) => row.dataset.songNo === "${songNo}" && row.dataset.level === "${level}"`;
 };
 
 interface ShownRow {
@@ -69,12 +69,25 @@ interface RowLook {
 export async function scores(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, boxOf, exists, fabState, mousePress, press, swipe, touchEmulated } =
-    pageHelpers(page);
+  const {
+    atSize,
+    attribute,
+    boxOf,
+    exists,
+    fabState,
+    listRows,
+    mousePress,
+    press,
+    rowInView,
+    swipe,
+    touchEmulated,
+  } = pageHelpers(page);
   const shownRows = () =>
-    page.evaluate<ShownRow[]>(
-      `[...document.querySelectorAll("#scores-list .history-row")].map((row) => ({ chart: row.dataset.songNo + "/" + row.dataset.level, facts: row.querySelector(".song-facts")?.textContent ?? "" }))`,
+    listRows<ShownRow>(
+      "#scores-list",
+      `(row) => ({ chart: row.dataset.songNo + "/" + row.dataset.level, facts: row.querySelector(".song-facts")?.textContent ?? "" })`,
     );
+  const rowOf = (charted: string) => rowInView("#scores-list", isChart(charted));
   const rowsAre = (count: number) =>
     waitFor(`${count} score rows`, async () => (await shownRows()).length === count || undefined);
   const settled = () =>
@@ -147,7 +160,7 @@ export async function scores(ctx: Ctx) {
   results.laterReadDetailsWhatWasPlayed =
     same(sorted(laterAsked), sorted([chart(5), chart(shown + 1)])) &&
     (await hitsOn(SCORE_LIST)) === 8 &&
-    (await textOf(`${rowOf(chart(5))} .song-facts`)) === "801,005 · Max combo 120";
+    (await textOf(`${await rowOf(chart(5))} .song-facts`)) === "801,005 · Max combo 120";
 
   // A walk on the recent plays page marks the replay for the scores, which say so.
   await history("replay=7");
@@ -163,7 +176,7 @@ export async function scores(ctx: Ctx) {
     unread === en.t("scores.unread", { count: "1" }) && same(await takeAsked(), [chart(7)]);
 
   // The refresh in a chart's details reads its song again: each of the song's charts.
-  await click(rowOf(chart(4)));
+  await click(await rowOf(chart(4)));
   await detailsOpened();
   await readAfter(() => click("#score-details-read-song"));
   results.songReadAgainFromItsDetails = same(sorted(await takeAsked()), SONG_1004);
@@ -291,8 +304,9 @@ export async function scores(ctx: Ctx) {
     page.evaluate<RowLook>(
       `(() => { const row = document.querySelector(${JSON.stringify(selector)}); return { name: row.querySelector(".song-name").textContent, marks: [...row.querySelectorAll(".play-marks [role=img]")].map((mark) => mark.getAttribute("aria-label")), facts: [...row.querySelectorAll(".song-facts")].map((line) => line.textContent) }; })()`,
     );
-  const rowLook = await lookOf(rowOf(chart(6)));
-  await mousePress(rowOf(chart(6)), "left");
+  const sixth = await rowOf(chart(6));
+  const rowLook = await lookOf(sixth);
+  await mousePress(sixth, "left");
   await detailsOpened();
   const headLook = await lookOf("#score-details .history-row");
   results.scoreDetailsHeadedLikeTheirRow =
@@ -337,7 +351,7 @@ export async function scores(ctx: Ctx) {
         heldPullAsked === true && (await refreshHits()) === refreshesBeforeTheHold;
 
       await takeAsked();
-      await click(rowOf(chart(4)));
+      await click(await rowOf(chart(4)));
       await detailsOpened();
       const refreshes = await refreshHits();
       await swipe({ x: 195, y: 300 }, { x: 197, y: 520 });

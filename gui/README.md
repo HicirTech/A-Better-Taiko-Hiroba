@@ -34,7 +34,8 @@ yourself show at once what they showed before, and what the device keeps for the
 the window is idle once the Overview is read. A page still waiting for its first read (my page as the
 app opens, the Costume page's and Favourites' first read from Hiroba, the rating data or the song list)
 shows its own shape in grey, or nothing if the read ends within 0.4 seconds, and fades in once it comes;
-a page moved to while it waits slides in with that shape.
+a page moved to while it waits slides in with that shape. The lists of Recent plays and Scores draw
+only the rows near the window, so thousands of them open and scroll as quickly as a few.
 One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
 touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
 opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button at the foot of the
