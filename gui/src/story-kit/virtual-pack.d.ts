@@ -1,5 +1,4 @@
-/** What `.storybook/pack.ts` answers: the resource pack named to the local Storybook, each
- * picture's PNG in base64 and each data file's text by name, or null without one. */
+/** What `.storybook/pack.ts` answers: the pack's pictures and data files, or null. */
 declare module "virtual:abth-story-pack" {
   const pack: {
     readonly label: string;

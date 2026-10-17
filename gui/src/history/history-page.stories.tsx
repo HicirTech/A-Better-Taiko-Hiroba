@@ -17,8 +17,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The plays kept, newest first; a play opens its chart's details, and its menu adds its song to a
- * set: a right-click on a PC, a long press on an Android device. */
+/** The plays kept, newest first; a play opens its chart, its menu adds its song to a set. */
 export const InTheWindow: Story = {};
 
 /** Nothing kept yet, and the first read on its way. */

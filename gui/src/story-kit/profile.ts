@@ -36,7 +36,6 @@ export const STORY_PROFILE: ProfileView = {
 
 const packProfile = packData("profile");
 
-/** The player a whole page reads: the resource pack's, with the made-up player's dan as the pages
- * do not name it, else the made-up player. */
+/** The player a whole page reads: the pack's, with the made-up dan, else the made-up one. */
 export const PAGE_PROFILE: ProfileView =
   packProfile === null ? STORY_PROFILE : { ...packProfile, dan: STORY_PROFILE.dan };

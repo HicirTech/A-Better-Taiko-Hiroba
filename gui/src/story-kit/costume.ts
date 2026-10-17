@@ -39,8 +39,7 @@ const packItems = (slot: number): number[] =>
     .map((key) => Number(key.slice(key.lastIndexOf("/") + 1)))
     .sort((a, b) => a - b);
 
-/** The costume editor as Hiroba shows it: the resource pack's, else a palette of 63 made-up
- * colours and each slot's items, the pack's own where it holds a slot's pictures. */
+/** The costume editor: the pack's, else made-up colours with the pack's or made-up items. */
 export const STORY_EDITOR: CostumeEditorView = packData("costumeEditor") ?? {
   state: STORY_SET,
   palette: Array.from({ length: SWATCHES }, (_, id) => ({

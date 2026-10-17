@@ -42,8 +42,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A chart's scores: its marks, counts and hits, with a button that reads the song again; full
- * screen on a phone. */
+/** A chart's marks, counts and hits, and the song read again; full screen on a phone. */
 export const Chart: Story = {};
 
 export const ReadingTheSong: Story = { args: { reading: true, readingSong: true } };

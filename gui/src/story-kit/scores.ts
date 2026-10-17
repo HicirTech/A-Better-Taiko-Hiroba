@@ -121,8 +121,7 @@ export const STORY_RATING_DATA = JSON.stringify(
   }),
 );
 
-/** The kept scores, the listed charts and OurTaiko's data a whole page reads: the resource pack's,
- * else the made-up ones. */
+/** The scores, listed charts and OurTaiko data a whole page reads: the pack's, else made up. */
 export const PAGE_SCORES: ScoresView = packData("scores") ?? STORY_SCORES;
 export const PAGE_LISTED: ListedChartsView = packData("listedCharts") ?? STORY_LISTED;
 export const PAGE_RATING_DATA: string = packData("ratingData") ?? STORY_RATING_DATA;

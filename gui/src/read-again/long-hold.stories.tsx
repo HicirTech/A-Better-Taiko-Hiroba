@@ -18,6 +18,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The ring that fills while Read again or a pull is held for six seconds, which reads every score
- * again. */
+/** The ring that fills while Read again or a pull is held six seconds to read every score. */
 export const Filling: Story = {};

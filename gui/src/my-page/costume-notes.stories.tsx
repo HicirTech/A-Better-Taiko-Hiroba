@@ -29,6 +29,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Everything the Costume page can say over the part on show, one under another: how the last
- * write ended, a preview that did not come, and the きぐるみ's note. */
+/** Every note the Costume page can show at once: the last write, the preview, the きぐるみ. */
 export const AllAtOnce: Story = {};

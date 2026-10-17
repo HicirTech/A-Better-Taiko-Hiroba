@@ -26,6 +26,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The app's own buttons: pictures that open a page or a picture, Read again, and Save beside a
- * field. */
+/** The app's own buttons: pictures that open things, Read again, and Save beside a field. */
 export const SideBySide: Story = { name: "Side by side" };

@@ -36,8 +36,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The current favourites shown; on a PC a set's right-click menu renames or deletes it, on an
- * Android device a long press let go in place does. */
+/** The current favourites; a set's menu is a right-click on a PC, a long press on Android. */
 export const CurrentFavourites: Story = {};
 
 export const ASetShown: Story = { args: { selectedId: STORY_SETS[0]?.id ?? null } };

@@ -1,5 +1,4 @@
-/** The pictures stories draw: a resource pack's, when one is named and holds the picture, else the
- * e2e's synthetic stand-ins. The repository holds no Bandai Namco art, nothing copied. */
+/** The pictures stories draw: the pack's where it has them, else the e2e's stand-ins. */
 import { err, ok } from "@abth/core";
 
 import {

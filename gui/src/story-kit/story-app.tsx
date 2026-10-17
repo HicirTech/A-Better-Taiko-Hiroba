@@ -26,8 +26,7 @@ export const appOn =
     <StoryApp changes={changes} first={first} globals={globals} />
   );
 
-/** The whole window as the shell draws it, on a story port with `changes`, in the toolbar's
- * language; an Android device gets Android's Back and Toast. */
+/** The whole window as the shell draws it, on a story port; Android gets Back and Toast. */
 export function StoryApp({
   changes,
   first,

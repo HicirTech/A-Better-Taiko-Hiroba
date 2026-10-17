@@ -36,8 +36,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The Overview's head: the portrait, the title plate and the score panel, side by side on a PC,
- * the portrait over the plate on a phone. */
+/** The portrait, title plate and score panel: side by side on a PC, stacked on a phone. */
 export const Shown: Story = {};
 
 export const PicturesOnTheirWay: Story = {

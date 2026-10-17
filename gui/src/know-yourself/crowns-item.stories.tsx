@@ -14,6 +14,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The clear ladder, folded under its sentence: a click opens the crowns by star level, and a star
- * level opens its charts not cleared. */
+/** The clear ladder: the crowns by star level, and a level's charts not cleared. */
 export const ClearLadder: Story = {};

@@ -58,6 +58,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Every icon a module exports, by module, to see the ones drawn twice. Icons a component keeps to
- * itself show in that component's stories. */
+/** Every icon a module exports, by module, to see the ones drawn twice. */
 export const SideBySide: Story = { name: "Side by side" };
