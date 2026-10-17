@@ -35,6 +35,7 @@ import {
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
 } from "../src/pipelines";
+import { WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
 import { readRatingData } from "../src/rating/read-rating-data";
 import {
   BRIDGE_CHANNELS,
@@ -87,9 +88,8 @@ const chromeMajor = process.versions.chrome.split(".")[0];
 const userAgent = `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeMajor}.0.0.0 Safari/537.36`;
 app.userAgentFallback = userAgent;
 
-// The window opens as tall as the Overview at its width, with no scrollbar; a screen with less
-// room gives what its work area holds, less the title bar and the borders.
-const WINDOW_CONTENT_PX = { width: 946, height: 736 } as const;
+// A screen with less room than the window's content gives what its work area holds, less the
+// title bar and the borders.
 const WINDOW_FRAME_PX = 40;
 
 // Dev profiles stay out of the real %APPDATA%, where the installed app keeps its session.
