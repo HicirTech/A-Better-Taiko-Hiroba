@@ -230,7 +230,9 @@ export async function pipelinesPage(ctx: Ctx) {
       await swipe({ x: 300, y: 420 }, { x: 180, y: 425 });
       await closed();
       await waitFor("the menu again", async () => (await menuOpen()) || undefined);
-      results.pipelinesSwipeFromTheMenu = menuShut && (await currentPage()) === "favorites";
+      // The page under the pipelines page hears none of it: Favourites opens no sets drawer.
+      results.pipelinesSwipeFromTheMenu =
+        menuShut && (await currentPage()) === "favorites" && !(await exists("#favorites-drawer"));
       await click(".MuiBackdrop-root");
       await menuClosed();
     } finally {
