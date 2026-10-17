@@ -1,6 +1,6 @@
 import type { MedalProgress } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Skeleton, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
@@ -184,5 +184,20 @@ function MedalPlate({ name, progress, lane, i18n }: MedalPlateProps) {
         </Stack>
       )}
     </Stack>
+  );
+}
+
+/** The どんメダル block's shape while the page's first read runs: its heading and its plate. */
+export function MedalCardSkeleton() {
+  return (
+    <Box aria-hidden>
+      <Skeleton width={110} sx={{ fontSize: "1rem", lineHeight: 1.75, mb: 1 }} />
+      <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
+        <Skeleton
+          variant="rounded"
+          sx={{ width: 1, height: hp(STAND_IN_HEIGHT), borderRadius: hp(25) }}
+        />
+      </Box>
+    </Box>
   );
 }

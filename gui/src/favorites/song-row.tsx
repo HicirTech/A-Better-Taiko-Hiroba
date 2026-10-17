@@ -1,15 +1,17 @@
 import type { Translator } from "@abth/i18n";
-import { Box } from "@mui/material";
+import { Box, Skeleton } from "@mui/material";
 import type { ReactNode } from "react";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { GENRE_COLOUR } from "./genre-look";
-import { LEVEL_BADGES_LOOK, LevelBadges } from "./level-badges";
+import { LEVEL_BADGE_PX, LEVEL_BADGES_LOOK, LevelBadges } from "./level-badges";
 import { ScrollingText } from "./scrolling-text";
 import type { SongLook } from "./song-look";
 
 const ONE_LINE = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
 const NO_GENRE = { backgroundColor: "currentColor", opacity: 0.25 } as const;
+// A bar as tall as its row.
+const STRETCHED = { height: "auto" } as const;
 // The row's parts are plain elements: a picker draws hundreds of them.
 const ROW = {
   display: "flex",
@@ -136,6 +138,28 @@ export function SongRow({
           {end}
         </span>
       )}
+    </Box>
+  );
+}
+
+/** A song row's shape while a page's first read runs. */
+export function SongRowSkeleton() {
+  return (
+    <Box component="span" aria-hidden sx={ROW}>
+      <span className="song-bars">
+        <Skeleton variant="rectangular" className="song-bar" sx={STRETCHED} />
+      </span>
+      <span className="song-text">
+        <span className="song-name">
+          <Skeleton width="60%" />
+        </span>
+        <span className="song-artists">
+          <Skeleton width="35%" />
+        </span>
+      </span>
+      <span className="song-end">
+        <Skeleton variant="rounded" width={LEVEL_BADGE_PX} height={LEVEL_BADGE_PX} />
+      </span>
     </Box>
   );
 }

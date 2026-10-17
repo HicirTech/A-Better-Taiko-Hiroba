@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, CircularProgress, Skeleton, Typography } from "@mui/material";
 import type { Ref } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
@@ -240,5 +240,24 @@ function DanLabel({ picture }: { picture: PictureView }) {
         display: "block",
       }}
     />
+  );
+}
+
+/** The plate's shape while the page's first read runs: its band, in the room kept for it. */
+export function TitlePlateSkeleton() {
+  return (
+    <Box aria-hidden sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
+      <Box sx={{ position: "relative", width: 1, aspectRatio: 1 / plateHeightRatio(null) }}>
+        <Skeleton
+          variant="rounded"
+          sx={{
+            position: "absolute",
+            inset: "auto 0 0",
+            height: hp(BAND_ROWS),
+            borderRadius: hp(BAND_ROWS / 2),
+          }}
+        />
+      </Box>
+    </Box>
   );
 }

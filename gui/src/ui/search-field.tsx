@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Box, IconButton, InputBase, Paper } from "@mui/material";
+import { Box, IconButton, InputBase, Paper, Skeleton } from "@mui/material";
 import { type RefObject, useState } from "react";
 
 import { CloseIcon } from "../favorites/favorites-icons";
@@ -119,4 +119,9 @@ export function SearchField({
       )}
     </Paper>
   );
+}
+
+/** A search field's shape while its page's first read runs. */
+export function SearchFieldSkeleton() {
+  return <Skeleton variant="rounded" height={BAR_PX} sx={{ borderRadius: BAR.borderRadius }} />;
 }

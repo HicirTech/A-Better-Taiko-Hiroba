@@ -5,7 +5,7 @@ import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL, DIFFICULTY_TEXT } from "./genre-lo
 import { type Chart, ShownDifficultyContext, stackOf } from "./shown-difficulty";
 import type { SongLook } from "./song-look";
 
-const BADGE_PX = 20;
+export const LEVEL_BADGE_PX = 20;
 const GAP_PX = 2;
 /** How much of a stacked badge shows beside the one over it. */
 const PEEK_PX = 4;
@@ -29,24 +29,24 @@ export const LEVEL_BADGES_LOOK = {
   "& .level-badge": {
     position: "relative",
     boxSizing: "border-box",
-    minWidth: BADGE_PX,
-    height: BADGE_PX,
+    minWidth: LEVEL_BADGE_PX,
+    height: LEVEL_BADGE_PX,
     px: "3px",
     borderRadius: "4px",
     color: DIFFICULTY_TEXT,
     fontSize: "0.6875rem",
     fontWeight: 700,
-    lineHeight: `${BADGE_PX}px`,
+    lineHeight: `${LEVEL_BADGE_PX}px`,
     textAlign: "center",
     "@media (prefers-reduced-motion: no-preference)": { transition: "margin 160ms, color 160ms" },
   },
   "& .level-badge + .level-badge": { ml: `${GAP_PX}px` },
   "& .level-stack[aria-expanded='false'] .level-badge.before": {
-    mr: `${-(BADGE_PX - PEEK_PX + GAP_PX)}px`,
+    mr: `${-(LEVEL_BADGE_PX - PEEK_PX + GAP_PX)}px`,
     color: "transparent",
   },
   "& .level-stack[aria-expanded='false'] .level-badge.after": {
-    ml: `${-(BADGE_PX - PEEK_PX)}px`,
+    ml: `${-(LEVEL_BADGE_PX - PEEK_PX)}px`,
     color: "transparent",
   },
 } as const;

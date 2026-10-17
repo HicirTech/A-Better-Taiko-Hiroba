@@ -421,12 +421,14 @@ export async function firstReads(ctx: Ctx) {
   );
   await running.goTo("costume");
   await Bun.sleep(400);
-  const editorStepWhileHeld = await stepOn("#costume-page");
+  const skeletonWhileHeld = await running.page.evaluate<boolean>(
+    `document.querySelector('#page-skeleton[data-page="costume"]') !== null && document.querySelector("#costume-page") === null`,
+  );
   const editorReadsWhileHeld = await hitsOn("/mypage_kisekae.php");
   await fetch(`${HIROBA}/__profile-hold-save?on=0`);
   await stepIs("#costume-page", "editing");
   results.firstEditorReadWaitsOutARename =
-    editorStepWhileHeld === "unread" &&
+    skeletonWhileHeld &&
     editorReadsWhileHeld === editorReadsBeforeFirstRead &&
     runThen(await requestsSettled(NAME_REQUESTS.length + 1), NAME_REQUESTS, [
       "GET /mypage_kisekae.php",
