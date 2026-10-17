@@ -224,6 +224,13 @@ export async function favorites(ctx: Ctx) {
     await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await Bun.sleep(500);
   };
+  // A hold's lift presses the dialog it opens; click() has no press of its own to clear that, so
+  // the Dialog would take it for a click on its backdrop. A finger's tap has one.
+  const tapFinger = async (selector: string) => {
+    const at = await middleOf(page, selector);
+    await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
+    await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  };
   const openDrawer = async () => {
     await click("#favorites-sets");
     await shown("#favorites-drawer");
@@ -645,12 +652,12 @@ export async function favorites(ctx: Ctx) {
       results.setOffersItsActionsOnALongPress =
         (await exists("#favorite-set-actions-rename")) &&
         (await exists("#favorite-set-actions-delete"));
-      await click("#favorite-set-actions-rename");
+      await tapFinger("#favorite-set-actions-rename");
       await shown("#favorite-set-name-dialog");
       await press("Escape");
       await gone("#favorite-set-name-dialog");
       const actionsUnderTheName = await exists("#favorite-set-actions-rename");
-      await click("#favorite-set-actions-delete");
+      await tapFinger("#favorite-set-actions-delete");
       await shown("#favorite-set-delete-dialog");
       await press("Escape");
       await gone("#favorite-set-delete-dialog");
