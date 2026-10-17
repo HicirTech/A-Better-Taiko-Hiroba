@@ -10,6 +10,7 @@ import * as ReadEveryDialog from "../../scores/read-every-dialog.stories";
 import * as ScoreDetails from "../../scores/score-details.stories";
 import * as ChartViewer from "../../songs/chart-viewer.stories";
 import * as SongDetails from "../../songs/song-details.stories";
+import * as SimpleDialog from "../../ui/simple-dialog.stories";
 import * as UpdateDialog from "../../updates/update-dialog.stories";
 import { Gallery } from "../gallery";
 
@@ -22,6 +23,12 @@ const meta = {
       overlays
       context={context}
       members={[
+        { name: "SimpleDialog", meta: SimpleDialog.default, story: SimpleDialog.ADeletion },
+        {
+          name: "SimpleDialog, a line to type",
+          meta: SimpleDialog.default,
+          story: SimpleDialog.ALineToType,
+        },
         { name: "ChoiceDialog", meta: ChoiceDialog.default, story: ChoiceDialog.WithSubtitle },
         { name: "AddToSetDialog", meta: AddToSetDialog.default, story: AddToSetDialog.WhichSet },
         { name: "AddSongsDialog", meta: AddSongsDialog.default, story: AddSongsDialog.WhichSet },

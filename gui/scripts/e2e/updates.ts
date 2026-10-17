@@ -66,7 +66,7 @@ export async function updates(ctx: Ctx) {
     await firstScreen(app);
     await waitFor("the update dialog", async () => (await dialogShown(app)) || undefined);
     const shown = await app.page.evaluate<{ title: string | null; notes: string[] }>(
-      `({ title: document.querySelector("#update-dialog .MuiDialogTitle-root")?.textContent ?? null, notes: [...document.querySelectorAll("#update-notes li")].map((li) => li.textContent) })`,
+      `({ title: document.querySelector("#update-dialog .MuiDialogTitle-root")?.textContent ?? null, notes: [...document.querySelectorAll("#update-dialog-message li")].map((li) => li.textContent) })`,
     );
     results.updateDialogForANewerFeed =
       (await feedHits()) === hitsAtStart + 1 &&
