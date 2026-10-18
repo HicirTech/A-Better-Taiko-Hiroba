@@ -277,7 +277,6 @@ export const zhHans: Messages = {
   "medal.complete": "COMPLETE",
   "medal.none": "广场目前没有显示咚币。",
   "medal.unrecognised": "此版本暂时无法读取广场的咚币。",
-  "medal.code": "报告代码：{code}",
   "failure.notSignedIn": "你尚未登录。",
   "failure.loggedOut": "广场的会话已结束。请重新登录。",
   "failure.cardSelectUnfinished": "登录在选择卡片前中断了。请重新登录并选择你的卡片。",

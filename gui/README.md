@@ -572,8 +572,9 @@ window, a code or a file name. The window asks for "the どんメダル plate", 
   retried: a plate that did not come is asked for once more after each read.
 
 Until the plate comes, or if it does not, a pale pill of the same shape stands in under the same
-words, and a line under it gives a code for a report. A page with no どんメダル plate, and one this
-version cannot read, show the card as before, and ask for no picture. With
+words, and a line under it gives a code for a report. A page with no どんメダル plate says so in grey
+words; one this version cannot read says so in a yellow notice with its code for a report, as a read
+that failed does, though a refresh cannot bring it; neither asks for a picture. With
 `ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`, named by its path alone.
 
 ### The My Don portrait

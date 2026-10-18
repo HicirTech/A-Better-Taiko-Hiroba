@@ -7,6 +7,7 @@ import { HIROBA_LANG } from "../language/show-language";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant, ProfileView } from "../session-port";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, VISUALLY_HIDDEN } from "./hiroba-px";
 
@@ -55,17 +56,14 @@ export function MedalCard({ medal, lane, i18n }: MedalCardProps) {
               {medal.name}
             </Typography>
           )}
-          <Typography id="medal-unrecognised" color="text.secondary" sx={{ mt: 0.5 }}>
-            {t("medal.unrecognised")}
-          </Typography>
-          <Typography
-            id="medal-code"
-            variant="body2"
-            color="text.secondary"
-            sx={{ mt: 0.5, fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-          >
-            {t("medal.code", { code: `medal=${progress.reason}` })}
-          </Typography>
+          <ReadFailureAlert
+            id="medal-unrecognised"
+            message={t("medal.unrecognised")}
+            code={`medal=${progress.reason}`}
+            codeId="medal-code"
+            mayClear={false}
+            i18n={i18n}
+          />
         </>
       )}
     </Box>

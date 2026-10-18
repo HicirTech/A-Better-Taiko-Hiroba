@@ -11,6 +11,7 @@ export function ReadFailureAlert({
   message,
   code,
   codeId,
+  mayClear = true,
   i18n,
   children,
 }: {
@@ -20,6 +21,8 @@ export function ReadFailureAlert({
   /** The code a user copies into a report, or null when there is none. */
   readonly code: string | null;
   readonly codeId?: string | undefined;
+  /** Whether a refresh or another try may bring it: not for what this version cannot read. */
+  readonly mayClear?: boolean | undefined;
   readonly i18n: Translator;
   /** More about what is missing, such as which page of a walk could not be read. */
   readonly children?: ReactNode;
@@ -27,7 +30,8 @@ export function ReadFailureAlert({
   const { t } = i18n;
   return (
     <Alert id={id} severity="warning">
-      {message} {t("failure.mayClear")}
+      {message}
+      {mayClear ? ` ${t("failure.mayClear")}` : null}
       {children}
       {code !== null && (
         <Typography

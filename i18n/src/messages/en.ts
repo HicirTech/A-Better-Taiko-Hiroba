@@ -289,7 +289,6 @@ export const en: Messages = {
   "medal.complete": "COMPLETE",
   "medal.none": "Hiroba isn't showing a Don Medal plate right now.",
   "medal.unrecognised": "This version can't read Hiroba's Don Medal plate yet.",
-  "medal.code": "Code for a report: {code}",
   "failure.notSignedIn": "You are not signed in.",
   "failure.loggedOut": "Your Hiroba session has ended. Please sign in again.",
   "failure.cardSelectUnfinished":

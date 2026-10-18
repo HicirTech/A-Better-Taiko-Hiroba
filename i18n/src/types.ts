@@ -342,7 +342,6 @@ export interface Messages {
   "medal.none": string;
   "medal.unrecognised": string;
   /** Param: {code}, which part of the plate did not read, such as medal=noCountNoComplete. */
-  "medal.code": string;
   "failure.notSignedIn": string;
   "failure.loggedOut": string;
   "failure.cardSelectUnfinished": string;

@@ -287,7 +287,6 @@ export const ja: Messages = {
   "medal.complete": "COMPLETE",
   "medal.none": "今はひろばにどんメダルのプレートが出ていません。",
   "medal.unrecognised": "このバージョンでは、ひろばのどんメダルのプレートをまだ読み取れません。",
-  "medal.code": "報告用コード：{code}",
   "failure.notSignedIn": "ログインしていません。",
   "failure.loggedOut": "ひろばのセッションが切れました。もう一度ログインしてください。",
   "failure.cardSelectUnfinished":
