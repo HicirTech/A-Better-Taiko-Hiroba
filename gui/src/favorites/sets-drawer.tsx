@@ -85,6 +85,7 @@ export function SetsDrawer({
     >
       <Box component="nav" aria-label={t("favorites.sets")}>
         <Typography
+          component="p"
           variant="subtitle2"
           color="text.secondary"
           noWrap

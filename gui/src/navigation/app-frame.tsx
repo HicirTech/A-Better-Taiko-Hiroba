@@ -306,7 +306,7 @@ function PageList({
   return (
     <>
       <Box sx={{ px: 3, pt: 2.5, pb: 1.5 }}>
-        <Typography variant="subtitle2" color="text.secondary" noWrap>
+        <Typography component="p" variant="subtitle2" color="text.secondary" noWrap>
           {i18n.t("app.title")}
         </Typography>
       </Box>
