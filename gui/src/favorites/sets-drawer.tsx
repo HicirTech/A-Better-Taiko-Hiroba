@@ -143,7 +143,7 @@ export function SetsDrawer({
         <List disablePadding>
           <ListItemButton id="favorites-item-new" onClick={onAdd}>
             <ListItemIcon>
-              <AddIcon />
+              <AddIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText primary={t("favorites.newSet")} />
           </ListItemButton>

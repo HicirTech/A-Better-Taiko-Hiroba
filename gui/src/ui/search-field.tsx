@@ -113,7 +113,7 @@ export function SearchField({
       />
       {query !== "" && (
         <IconButton id={`${id}-clear`} aria-label={t("search.clear")} onClick={() => onQuery("")}>
-          <CloseIcon fontSize="small" />
+          <CloseIcon />
         </IconButton>
       )}
     </Paper>

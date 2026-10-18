@@ -95,7 +95,7 @@ export function LargeModal({
       onClick={onClose}
       sx={picture ? OVER_THE_PICTURE : undefined}
     >
-      <CloseIcon fontSize="small" />
+      <CloseIcon />
     </IconButton>
   );
   const size = whole

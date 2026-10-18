@@ -19,18 +19,17 @@ const MARK = {
   display: "inline-flex",
   ml: 0.5,
   color: "primary.main",
-  "& .MuiSvgIcon-root": { fontSize: "1.125rem" },
 } as const;
 
 /** The trophy marking where the top scores are most common; named where no words are beside it. */
 function TopScoresMark({ label }: { readonly label: string | null }) {
   return label === null ? (
     <Box component="span" aria-hidden sx={MARK}>
-      <EmojiEventsIcon />
+      <EmojiEventsIcon fontSize="small" />
     </Box>
   ) : (
     <Box component="span" role="img" aria-label={label} title={label} sx={MARK}>
-      <EmojiEventsIcon />
+      <EmojiEventsIcon fontSize="small" />
     </Box>
   );
 }
