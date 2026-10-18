@@ -203,14 +203,12 @@ export async function sessionExpiry(ctx: Ctx) {
   results.signInForgetsThePictures =
     same(await page.evaluate("window.firstCard"), [false, false]) &&
     (await exists("#title-plate-image"));
-  await page.evaluate(
-    `(() => { window.costumeFirstFrame = null; const observer = new MutationObserver(() => { if (document.querySelector("#costume-preview") === null) return; window.costumeFirstFrame = document.querySelector("#costume-preview-image") !== null; observer.disconnect(); }); observer.observe(document.body, { childList: true, subtree: true }); })()`,
-  );
+  // Forgotten, the preview is asked of Hiroba again: the shell shows one it holds with no request.
+  const previewsBefore = (await previewQueries()).length;
   await goTo("costume");
   await inStep("editing");
   await previewOtherThan(null);
-  results.signInForgetsTheCostumePreview =
-    (await page.evaluate("window.costumeFirstFrame")) === false;
+  results.signInForgetsTheCostumePreview = (await previewQueries()).length > previewsBefore;
   await goTo("overview");
   const kept = (await (await fetch(`${HIROBA}/__last-token`)).text()).trim();
   tokens.push(kept);
