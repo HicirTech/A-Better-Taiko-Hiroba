@@ -1,9 +1,10 @@
 import { keyframes } from "@emotion/react";
 import { useEffect, useState } from "react";
 
+import { FADE_MS, moveWindow } from "../navigation/window-move";
+
 /** How long a first read may run before its page shows a skeleton: a quicker one shows nothing. */
 export const SKELETON_AFTER_MS = 400;
-const FADE_MS = 200;
 
 const FADE_IN = keyframes`from { opacity: 0; }`;
 
@@ -15,9 +16,9 @@ export const FADES_IN = {
 
 /** What a page shows while its first read runs, and as the read ends. */
 export interface FirstRead {
-  /** The read has run long enough to show the page's skeleton. */
+  /** The page's skeleton stands in for it: the read has run a while, or its page takes over. */
   readonly skeleton: boolean;
-  /** The page has just come after a wait, and fades in. */
+  /** The page has just come after a short wait, and fades in. */
   readonly fades: boolean;
 }
 
@@ -36,17 +37,25 @@ export function useFirstRead(waiting: boolean, place: string): FirstRead {
   } else if (waiting && !seen.waited) {
     setSeen({ ...seen, waited: true });
   }
+  const { long } = seen;
   useEffect(() => {
     if (waiting) {
-      const long = setTimeout(() => setSeen((now) => ({ ...now, long: true })), SKELETON_AFTER_MS);
-      return () => clearTimeout(long);
+      const shapes = setTimeout(
+        () => setSeen((now) => ({ ...now, long: true })),
+        SKELETON_AFTER_MS,
+      );
+      return () => clearTimeout(shapes);
+    }
+    if (long) {
+      // The skeleton fades out as the page fades in, in one move of the window.
+      moveWindow("reveal", () =>
+        setSeen((now) => (now.place === place ? { place, waited: false, long: false } : now)),
+      );
+      return;
     }
     // Faded in, the page is shown as any other.
-    const shown = setTimeout(
-      () => setSeen((now) => ({ ...now, waited: false, long: false })),
-      FADE_MS,
-    );
+    const shown = setTimeout(() => setSeen((now) => ({ ...now, waited: false })), FADE_MS);
     return () => clearTimeout(shown);
-  }, [waiting]);
-  return { skeleton: waiting && seen.long, fades: !waiting && seen.waited };
+  }, [waiting, long, place]);
+  return { skeleton: long, fades: !waiting && !long && seen.waited };
 }

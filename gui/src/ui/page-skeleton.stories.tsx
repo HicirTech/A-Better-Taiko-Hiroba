@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import type { Page } from "../navigation/pages";
 import { appOn } from "../story-kit/story-app";
-import { neverAnswers } from "../story-kit/story-port";
+import { createStoryPort, neverAnswers } from "../story-kit/story-port";
 
 const meta = {
   title: "Status/PageSkeleton",
@@ -15,6 +15,24 @@ type Story = StoryObj<typeof meta>;
 
 /** The window opened on `page` while my page is read, which never ends here. */
 const reading = (page: Page): Story => ({ render: appOn(page, { readProfile: neverAnswers }) });
+
+const SLOW_READ_MS = 2_500;
+
+/** The window opened on `page`, my page read slowly: the skeleton, then the page taking over. */
+const readSlowly = (page: Page): Story => ({
+  render: appOn(page, {
+    readProfile: () =>
+      new Promise((done) => setTimeout(done, SLOW_READ_MS)).then(() =>
+        createStoryPort().readProfile(),
+      ),
+  }),
+});
+
+/** The Overview's skeleton fading out as the page fades in; Storybook's Remount shows it again. */
+export const OverviewAfterAWait = readSlowly("overview");
+
+/** Scores after a wait: the device's copy comes a moment after my page. */
+export const ScoresAfterAWait = readSlowly("scores");
 
 /** The Overview's shape: the search, the portrait, plate and panel, the shares and the medal. */
 export const Overview = reading("overview");

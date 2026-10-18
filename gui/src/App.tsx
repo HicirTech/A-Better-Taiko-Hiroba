@@ -287,6 +287,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const pageWaits =
     page !== "settings" && (profileWaits || (screen.name === "profile" && firstReads[page]));
   const firstRead = useFirstRead(pageWaits, page);
+  // The skeleton stands alone until the page, or what came in its place, takes over from it.
+  const pageShown = screen.name === "profile" && !pageWaits && !firstRead.skeleton;
   const PageShape = page === "settings" ? null : PAGE_SKELETONS[page];
   const waitLabel = profileWaits
     ? "profile.reading"
@@ -519,7 +521,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
         />
       ) : (
         <Stack spacing={3}>
-          {(screen.name === "signedOut" || screen.name === "signingIn") && (
+          {!firstRead.skeleton && (screen.name === "signedOut" || screen.name === "signingIn") && (
             <Card id="sign-in-card" variant="outlined">
               <CardContent>
                 <Stack spacing={2}>
@@ -564,7 +566,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               "& > *": { ...SHUT_LOOK(shut), ...(firstRead.fades ? FADES_IN : {}) },
             }}
           >
-            {screen.name === "profile" && !pageWaits && page === "history" && (
+            {pageShown && page === "history" && (
               <HistoryPage
                 history={history}
                 scores={scores}
@@ -575,7 +577,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && !pageWaits && page === "scores" && (
+            {pageShown && page === "scores" && (
               <ScoresPage
                 scores={scores}
                 catalogue={catalogue}
@@ -585,7 +587,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && !pageWaits && page === "rating" && (
+            {pageShown && page === "rating" && (
               <RatingPage
                 scores={scores}
                 ratingData={ratingData}
@@ -596,7 +598,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && !pageWaits && page === "knowYourself" && (
+            {pageShown && page === "knowYourself" && (
               <KnowYourselfPage
                 scores={scores}
                 listed={listed}
@@ -608,11 +610,11 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && !pageWaits && page === "costume" && (
+            {pageShown && page === "costume" && (
               <CostumePage editor={editor} lane={lane} i18n={i18n} />
             )}
 
-            {screen.name === "profile" && !pageWaits && page === "nameTitle" && (
+            {pageShown && page === "nameTitle" && (
               <NameTitlePage
                 profile={screen.profile}
                 lane={lane}
@@ -623,7 +625,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && !pageWaits && page === "favorites" && (
+            {pageShown && page === "favorites" && (
               <FavoritesPage
                 favorites={favorites}
                 catalogue={catalogue}
@@ -635,7 +637,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {screen.name === "profile" && !pageWaits && page === "overview" && (
+            {pageShown && page === "overview" && (
               <SongSearch
                 catalogue={catalogue}
                 port={port}
@@ -666,7 +668,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             )}
           </Box>
 
-          {screen.name === "readFailed" && (
+          {!firstRead.skeleton && screen.name === "readFailed" && (
             <LoadFailed id="read-failure" failure={screen} codeId="failure-detail" i18n={i18n} />
           )}
         </Stack>
