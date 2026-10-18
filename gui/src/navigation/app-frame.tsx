@@ -9,7 +9,6 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
-  SvgIcon,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
@@ -28,21 +27,24 @@ import { createPortal } from "react-dom";
 
 import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { SystemBack } from "../platform";
+import {
+  ArrowBackIcon,
+  ArrowForwardIcon,
+  CheckroomIcon,
+  EditIcon,
+  EmojiEventsIcon,
+  FavoriteIcon,
+  HistoryIcon,
+  HomeIcon,
+  LeaderboardIcon,
+  MenuIcon,
+  PsychologyIcon,
+  SettingsIcon,
+} from "../ui/icons";
 import { backAction } from "./back-action";
 import { BackClosersContext, BackModesContext, createBackClosers } from "./back-closers";
 import { FrameNavigationContext } from "./frame-navigation";
 import { MenuOpenContext } from "./menu-open";
-import {
-  CostumeIcon,
-  FavoritesIcon,
-  HistoryIcon,
-  KnowYourselfIcon,
-  NameTitleIcon,
-  OverviewIcon,
-  RatingIcon,
-  ScoresIcon,
-  SettingsIcon,
-} from "./page-icons";
 import { PAGES, type Page } from "./pages";
 import { PipelinesShownContext } from "./pipelines-shown";
 import type { SwipeDirection } from "./swipe-gesture";
@@ -55,14 +57,14 @@ import { MOVE_TIMING, moveWindow, STILL, WindowMoveStyles } from "./window-move"
 
 const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly icon: ReactNode }>> =
   {
-    overview: { label: "nav.overview", icon: <OverviewIcon /> },
+    overview: { label: "nav.overview", icon: <HomeIcon /> },
     history: { label: "nav.history", icon: <HistoryIcon /> },
-    scores: { label: "nav.scores", icon: <ScoresIcon /> },
-    rating: { label: "nav.rating", icon: <RatingIcon /> },
-    knowYourself: { label: "nav.knowYourself", icon: <KnowYourselfIcon /> },
-    costume: { label: "nav.costume", icon: <CostumeIcon /> },
-    nameTitle: { label: "nav.nameTitle", icon: <NameTitleIcon /> },
-    favorites: { label: "nav.favorites", icon: <FavoritesIcon /> },
+    scores: { label: "nav.scores", icon: <EmojiEventsIcon /> },
+    rating: { label: "nav.rating", icon: <LeaderboardIcon /> },
+    knowYourself: { label: "nav.knowYourself", icon: <PsychologyIcon /> },
+    costume: { label: "nav.costume", icon: <CheckroomIcon /> },
+    nameTitle: { label: "nav.nameTitle", icon: <EditIcon /> },
+    favorites: { label: "nav.favorites", icon: <FavoriteIcon /> },
     settings: { label: "nav.settings", icon: <SettingsIcon /> },
   };
 
@@ -278,23 +280,6 @@ export const STAYS_IN_VIEW = {
   [WHEN_TALL]: { position: "sticky", top: BELOW_TOP_BAND },
 } as const;
 
-// Material's "arrow_back" and "arrow_forward" icons (Apache 2.0), inline as the menu's is.
-function ArrowBackIcon() {
-  return (
-    <SvgIcon aria-hidden>
-      <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-    </SvgIcon>
-  );
-}
-
-function ArrowForwardIcon() {
-  return (
-    <SvgIcon aria-hidden>
-      <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
-    </SvgIcon>
-  );
-}
-
 /** A page row's shape: flush with the panel's left edge, round at the right. */
 const ROW_SHAPE = { mr: 1.5, borderRadius: "0 999px 999px 0" } as const;
 
@@ -442,15 +427,6 @@ function SidePanel({
         <Foot footRef={footRef} toggle={props.toggle} i18n={props.i18n} />
       </Drawer>
     </Box>
-  );
-}
-
-// Material's "menu" icon (Apache 2.0), inline because the icons package is not a dependency.
-function MenuIcon() {
-  return (
-    <SvgIcon aria-hidden>
-      <path d="M3 18h18v-2H3zm0-5h18v-2H3zm0-7v2h18V6z" />
-    </SvgIcon>
   );
 }
 

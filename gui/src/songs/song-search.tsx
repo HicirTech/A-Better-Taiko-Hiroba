@@ -10,7 +10,6 @@ import {
   Paper,
 } from "@mui/material";
 import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
-import { CloseIcon } from "../favorites/favorites-icons";
 import { type PickerEntry, PickerList } from "../favorites/picker-list";
 import { keptShownDifficulty, ShownDifficultyContext } from "../favorites/shown-difficulty";
 import { SongListFailed } from "../favorites/song-list-failed";
@@ -22,13 +21,13 @@ import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import { useBackLeaves } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
+import { CloseIcon, HistoryIcon } from "../ui/icons";
 import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";
 import { StatusNote } from "../ui/status-note";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
 import { SongDetails } from "./song-details";
 import { bpmText } from "./song-facts";
-import { HistoryIcon } from "./song-icons";
 
 // A search with nothing found fills the window's page, so its words stand in the middle of it.
 const FILLS_THE_PAGE = {
@@ -115,13 +114,13 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
                   aria-label={t("search.forget", { query: one })}
                   onClick={() => setRecent(forgetSearch(one))}
                 >
-                  <CloseIcon />
+                  <CloseIcon fontSize="small" />
                 </IconButton>
               }
             >
               <ListItemButton onClick={() => setQuery(one)}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
-                  <HistoryIcon />
+                  <HistoryIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary={one} />
               </ListItemButton>

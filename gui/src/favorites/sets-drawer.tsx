@@ -14,9 +14,9 @@ import {
 import { type MouseEvent, useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
+import { AddIcon, CheckIcon } from "../ui/icons";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { type FavoriteSet, sameSongs } from "./favorite-sets";
-import { AddIcon, CheckIcon } from "./favorites-icons";
 import { SetNameDialog } from "./set-name-dialog";
 import { SortableList } from "./sortable-list";
 
@@ -132,7 +132,9 @@ export function SetsDrawer({
                   sx={{ minWidth: 0, pl: handle === null ? 2 : 1 }}
                 >
                   <ListItemText primary={set.name} slotProps={{ primary: { noWrap: true } }} />
-                  {same && <CheckIcon titleAccess={t("favorites.set.sameAsFolder")} />}
+                  {same && (
+                    <CheckIcon fontSize="small" titleAccess={t("favorites.set.sameAsFolder")} />
+                  )}
                 </ListItemButton>
               </Box>
             );

@@ -5,7 +5,7 @@ import { action } from "storybook/actions";
 import { bpmText } from "../songs/song-facts";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { lookOf, storySong } from "../story-kit/songs";
-import { CloseIcon, DragHandleIcon } from "./favorites-icons";
+import { CloseIcon, DragIndicatorIcon } from "../ui/icons";
 import { lookOfShown } from "./song-look";
 import { SongRow } from "./song-row";
 
@@ -103,12 +103,12 @@ export const WithHandleAndRemove: Story = {
               component="span"
               sx={{ display: "flex", alignItems: "center", color: "text.secondary" }}
             >
-              <DragHandleIcon />
+              <DragIndicatorIcon fontSize="small" />
             </Box>
           }
           end={
             <IconButton size="small" aria-label={label} title={label} onClick={action("remove")}>
-              <CloseIcon />
+              <CloseIcon fontSize="small" />
             </IconButton>
           }
         />

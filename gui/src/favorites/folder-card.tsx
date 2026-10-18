@@ -13,10 +13,10 @@ import {
 import { useId, useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
+import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { StatusNote } from "../ui/status-note";
 import type { FavoriteSet } from "./favorite-sets";
-import { ArrowDropDownIcon, CheckIcon } from "./favorites-icons";
 import type { ShownFavorites } from "./favorites-state";
 import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongRow } from "./song-row";
@@ -75,7 +75,7 @@ export function FolderCard({
             {inUse !== null ? (
               <Chip
                 id="favorite-folder-set"
-                icon={<CheckIcon />}
+                icon={<CheckIcon fontSize="small" />}
                 label={t("favorites.inUse", { name: inUse.name })}
                 color="primary"
                 variant="outlined"
@@ -99,7 +99,7 @@ export function FolderCard({
                       variant="outlined"
                       size="small"
                       disabled={shut}
-                      endIcon={<ArrowDropDownIcon />}
+                      endIcon={<ArrowDropDownIcon fontSize="small" />}
                       aria-haspopup="menu"
                       aria-controls={menuAt === null ? undefined : menuId}
                       aria-expanded={menuAt !== null}

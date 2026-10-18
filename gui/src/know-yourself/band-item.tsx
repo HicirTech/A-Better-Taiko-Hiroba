@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, FormHelperText } from "@mui/material";
 import { useMemo } from "react";
 
-import { ScoresIcon } from "../navigation/page-icons";
+import { EmojiEventsIcon } from "../ui/icons";
 import { gatheringGroups, goodScores } from "./good-scores";
 import { byBpm, byHitsPerSecond, type GroupKey, groupId } from "./groups";
 import { KnowItem } from "./know-item";
@@ -26,11 +26,11 @@ const MARK = {
 function TopScoresMark({ label }: { readonly label: string | null }) {
   return label === null ? (
     <Box component="span" aria-hidden sx={MARK}>
-      <ScoresIcon />
+      <EmojiEventsIcon />
     </Box>
   ) : (
     <Box component="span" role="img" aria-label={label} title={label} sx={MARK}>
-      <ScoresIcon />
+      <EmojiEventsIcon />
     </Box>
   );
 }

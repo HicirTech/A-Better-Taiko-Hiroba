@@ -10,6 +10,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
 import { SongDetails } from "../songs/song-details";
 import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
+import { ListIcon } from "../ui/icons";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
 import {
@@ -20,7 +21,6 @@ import {
   sameSongs,
   toggledSongs,
 } from "./favorite-sets";
-import { SetsIcon } from "./favorites-icons";
 import { type FavoritesStep, shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
 import type { PickableState } from "./pickable-songs";
@@ -221,7 +221,7 @@ function FavoritesBody({
               aria-controls={drawerOpen ? "favorites-drawer" : undefined}
               onClick={() => setDrawerOpen(true)}
             >
-              <SetsIcon />
+              <ListIcon />
             </IconButton>
           )}
         </Box>

@@ -1,7 +1,7 @@
 import { Box, ButtonBase, Collapse, Paper, Typography } from "@mui/material";
 import { type ReactNode, useState } from "react";
 
-import { ArrowDropDownIcon } from "../favorites/favorites-icons";
+import { ArrowDropDownIcon } from "../ui/icons";
 
 const WORDS = { display: "block", flex: 1, minWidth: 0, textAlign: "left" } as const;
 const HEAD = { display: "flex", alignItems: "center", gap: 1, width: 1, px: 2, py: 1.5 } as const;
@@ -65,7 +65,7 @@ export function KnowItem({
             sx={OPENER}
           >
             {words}
-            <ArrowDropDownIcon />
+            <ArrowDropDownIcon fontSize="small" />
           </ButtonBase>
         )}
       </Typography>

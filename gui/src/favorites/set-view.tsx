@@ -1,8 +1,8 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Card, CardContent, IconButton, Stack } from "@mui/material";
 
+import { CloseIcon } from "../ui/icons";
 import { StatusNote } from "../ui/status-note";
-import { CloseIcon } from "./favorites-icons";
 import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongRow } from "./song-row";
 import { SortableList } from "./sortable-list";
@@ -108,7 +108,7 @@ export function SetView({
                         data-song-no={songNo}
                         onClick={() => onRemoveSong(songNo)}
                       >
-                        <CloseIcon />
+                        <CloseIcon fontSize="small" />
                       </IconButton>
                     }
                   />

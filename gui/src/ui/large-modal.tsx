@@ -12,12 +12,12 @@ import {
 } from "@mui/material";
 import { type ReactNode, type RefObject, useContext } from "react";
 
-import { CloseIcon } from "../favorites/favorites-icons";
 import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import { useBackCloses, useBackLeaves } from "../navigation/back-closers";
 import { PipelinesShownContext } from "../navigation/pipelines-shown";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { REDUCED_MOTION } from "../navigation/window-move";
+import { CloseIcon } from "./icons";
 
 /** The panel's width on a computer; on a phone it takes the whole window. */
 const WIDTH_PX = 900;
@@ -95,7 +95,7 @@ export function LargeModal({
       onClick={onClose}
       sx={picture ? OVER_THE_PICTURE : undefined}
     >
-      <CloseIcon />
+      <CloseIcon fontSize="small" />
     </IconButton>
   );
   const size = whole

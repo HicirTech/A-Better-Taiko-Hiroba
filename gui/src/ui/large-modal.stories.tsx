@@ -5,10 +5,10 @@ import { useState } from "react";
 import { fn } from "storybook/test";
 
 import { chartPicturePng } from "../../scripts/mock-pictures";
-import { RefreshIcon } from "../read-again/read-again-foot";
 import { i18nOf } from "../story-kit/env";
 import { pictureOf } from "../story-kit/picture-of";
 import { STORY_SONGS } from "../story-kit/songs";
+import { RefreshIcon } from "./icons";
 import { LargeModal } from "./large-modal";
 import { SearchField } from "./search-field";
 

@@ -2,8 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, IconButton, InputBase, Paper, Skeleton } from "@mui/material";
 import { type RefObject, useState } from "react";
 
-import { CloseIcon } from "../favorites/favorites-icons";
-import { ArrowBackIcon, SearchIcon } from "../songs/song-icons";
+import { ArrowBackIcon, CloseIcon, SearchIcon } from "./icons";
 
 const BAR_PX = 48;
 /** An icon button's own size, so the field starts at one place with the mark or the way back. */
@@ -114,7 +113,7 @@ export function SearchField({
       />
       {query !== "" && (
         <IconButton id={`${id}-clear`} aria-label={t("search.clear")} onClick={() => onQuery("")}>
-          <CloseIcon />
+          <CloseIcon fontSize="small" />
         </IconButton>
       )}
     </Paper>

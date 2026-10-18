@@ -1,7 +1,8 @@
 import type { MessageKey, Translator } from "@abth/i18n";
-import { Box, Button, List, ListItem, ListItemText, SvgIcon } from "@mui/material";
+import { Box, Button, List, ListItem, ListItemText } from "@mui/material";
 import { useId } from "react";
 
+import { FileDownloadIcon } from "../ui/icons";
 import type { ManualCheck } from "../updates/use-update-reminder";
 import { SettingsSection } from "./settings-section";
 
@@ -20,15 +21,6 @@ const STATUS: Readonly<Record<ManualCheck, MessageKey | null>> = {
   failed: "update.failed",
 };
 
-// Material's "file_download" icon (Apache 2.0), inline: the icons package is not a dependency.
-function DownloadIcon() {
-  return (
-    <SvgIcon aria-hidden fontSize="small">
-      <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-    </SvgIcon>
-  );
-}
-
 /** The build's version, with a button that checks the latest release for a newer one. */
 export function UpdatesSection({
   i18n,
@@ -44,7 +36,7 @@ export function UpdatesSection({
     <SettingsSection
       id="updates"
       headingId={headingId}
-      icon={<DownloadIcon />}
+      icon={<FileDownloadIcon fontSize="small" />}
       title={t("settings.updates")}
     >
       <List disablePadding>

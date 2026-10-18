@@ -1,7 +1,8 @@
-import { List, ListItem, ListItemText, Paper, SvgIcon } from "@mui/material";
+import { List, ListItem, ListItemText, Paper } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { i18nOf } from "../story-kit/env";
+import { AccountCircleIcon } from "../ui/icons";
 import { SettingsSection } from "./settings-section";
 
 const meta = {
@@ -14,11 +15,7 @@ const meta = {
         <SettingsSection
           id="story-section"
           headingId="story-section-heading"
-          icon={
-            <SvgIcon aria-hidden fontSize="small">
-              <circle cx="12" cy="12" r="8" />
-            </SvgIcon>
-          }
+          icon={<AccountCircleIcon fontSize="small" />}
           title={t("settings.account")}
         >
           <List disablePadding>

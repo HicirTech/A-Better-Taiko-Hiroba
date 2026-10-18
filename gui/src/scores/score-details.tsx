@@ -8,9 +8,9 @@ import { useTouchFirst } from "../navigation/use-touch-first";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import { PullToRead } from "../read-again/pull-to-read";
-import { RefreshIcon } from "../read-again/read-again-foot";
 import { SHUT_LOOK } from "../read-again/shut-look";
 import type { ScoreView } from "../session-port";
+import { RefreshIcon } from "../ui/icons";
 import { LargeModal } from "../ui/large-modal";
 import type { ListedScore } from "./score-order";
 

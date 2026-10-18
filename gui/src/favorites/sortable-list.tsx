@@ -23,7 +23,7 @@ import { Box, type SxProps, type Theme } from "@mui/material";
 import { type ReactNode, useRef } from "react";
 
 import { holdGestures } from "../navigation/gesture-hold";
-import { DragHandleIcon } from "./favorites-icons";
+import { DragIndicatorIcon } from "../ui/icons";
 
 const VERTICAL: Modifier = ({ transform }) => ({ ...transform, x: 0 });
 // A finger held still this long picks a row up; one that moves sooner scrolls the page.
@@ -203,7 +203,7 @@ function SortableRow({
       title={handleLabel}
       sx={HANDLE}
     >
-      <DragHandleIcon />
+      <DragIndicatorIcon fontSize="small" />
     </Box>
   );
   return (

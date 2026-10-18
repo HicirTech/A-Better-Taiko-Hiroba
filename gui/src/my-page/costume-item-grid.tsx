@@ -1,10 +1,11 @@
 import type { Translator } from "@abth/i18n";
-import { Box, ButtonBase, Skeleton, SvgIcon, Typography } from "@mui/material";
+import { Box, ButtonBase, Skeleton, Typography } from "@mui/material";
 import { type ReactNode, useRef, useSyncExternalStore } from "react";
 
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant } from "../session-port";
+import { BlockIcon } from "../ui/icons";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";
 import { pickRing } from "./pick-ring";
@@ -173,9 +174,7 @@ function NoneCell({
         ...CLEAR_OF_STUCK,
       }}
     >
-      <SvgIcon aria-hidden sx={{ fontSize: cells.picture / 2 }}>
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z" />
-      </SvgIcon>
+      <BlockIcon sx={{ fontSize: cells.picture / 2 }} />
     </ButtonBase>
   );
 }
