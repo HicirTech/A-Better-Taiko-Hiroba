@@ -142,7 +142,6 @@ export function ItemPicture({
   );
 }
 
-// Material's "block" icon (Apache 2.0), inline because the icons package is not a dependency.
 function NoneCell({
   part,
   i18n,
