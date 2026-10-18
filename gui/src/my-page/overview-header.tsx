@@ -1,11 +1,12 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Chip, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, Skeleton, Stack } from "@mui/material";
 import { useRef } from "react";
 
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { useDrawnTop } from "../pictures/use-drawn-top";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
 import { MY_DON, MyDonPortrait } from "./my-don-portrait";
 import type { OpenAction } from "./open-button";
@@ -118,22 +119,15 @@ export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: Ove
         </Box>
       </Box>
       {dan !== null && "unreadable" in dan && (
-        <Stack spacing={0.5} sx={{ alignItems: "center" }}>
-          <Chip
+        <Box sx={{ alignSelf: "stretch" }}>
+          <ReadFailureAlert
             id="dan-unreadable"
-            label={t("profile.danUnreadable")}
-            size="small"
-            variant="outlined"
+            message={t("profile.danUnreadable")}
+            code={dan.code}
+            codeId="dan-code"
+            i18n={i18n}
           />
-          <Typography
-            id="dan-code"
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-          >
-            {t("profile.danCode", { code: dan.code })}
-          </Typography>
-        </Stack>
+        </Box>
       )}
     </Stack>
   );

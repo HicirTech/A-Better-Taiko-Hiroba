@@ -249,8 +249,6 @@ export interface Messages {
   /** Param: {dan}, a `dan.N` text, N being the board number read off my page's label. */
   "profile.dan": string;
   "profile.danUnreadable": string;
-  /** Param: {code}, why the label did not read, such as dan=notPng; never page text or a URL. */
-  "profile.danCode": string;
   /** Board numbers as core numbers them: 1 (五級) to 15 (十段); 16 to 19 are 玄人, 名人, 超人, 達人. */
   // 日本語 is core's DAN_NAMES, which a test holds it to; the others are taiko.wiki's.
   "dan.1": string;

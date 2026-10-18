@@ -48,6 +48,20 @@ export const PicturesFailed: Story = {
   render: ({ profile }, { globals }) => header(profile, FAILING_LANE, globals),
 };
 
+/** A dan that could not be read: the read failure's notice under the head, with its code. */
+export const UnreadableDan: Story = {
+  args: {
+    profile: {
+      ...STORY_PROFILE,
+      dan: {
+        unreadable: true,
+        code: "dan=notPng status=200 type=image/gif bytes=43",
+        picture: null,
+      },
+    },
+  },
+};
+
 /** A player with no title, no dan and a long name. */
 export const Bare: Story = {
   args: {
