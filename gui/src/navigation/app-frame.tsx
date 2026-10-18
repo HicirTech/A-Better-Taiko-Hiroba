@@ -73,7 +73,8 @@ const TOP_BAND_PX = 64;
 const PAGE_BOTTOM_PX = 32;
 const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 export const BELOW_TOP_BAND = `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`;
-const PAGE_HEIGHT = `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`;
+/** The window's room for a page: below the top band and above the frame's bottom room. */
+export const PAGE_HEIGHT = `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`;
 
 interface NavigationProps {
   readonly page: Page;
