@@ -362,8 +362,10 @@ The page that changes your title (称号) and your nickname (ドンだーネー�
 between Costume and Favourites, with a pencil beside its name. The name plate on the Overview is the
 way to it, as the portrait is to Costume: a click, Enter or Space, and on a touch-first screen a
 long-press. It opens on Hiroba's title plate as the Overview draws it, so the result is seen at
-once, then two sections, **Title** and **Nickname**, each saved with one press of **Sync to Hiroba**
-and no review. Both are open in every build. One write runs at a time, from either section: while
+once, then two sections, **Title** and **Nickname**, over the same bar as the Costume page's: one
+press of **Sync to Hiroba** sends what changed, with no review, the title first and then the
+nickname, and a title Hiroba does not take keeps the nickname back, to be sent again; **Reset** drops
+both. Both are open in every build. One write runs at a time, from either section: while
 it does, nothing on the page is pressed, and a write asked for elsewhere answers busy and sends
 nothing. Leaving the page for another drops both sections' edits: the field goes back to the
 nickname worn, the pick is cleared and so are both notices, while the titles already read are kept,

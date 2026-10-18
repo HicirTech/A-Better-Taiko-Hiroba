@@ -205,17 +205,17 @@ export async function title(ctx: Ctx) {
   await pickTitle("最後", 108);
   await Bun.sleep(600);
   results.titlePickAloneWritesNothing =
-    (await disabledOf("#title-save")) === false &&
+    (await disabledOf("#name-title-save")) === false &&
     sameBesideLanePictures(await requestLog(), []) &&
     (await profilePosts()).length === 0;
   await page.evaluate(
-    `(() => { window.noticesMounted = 0; new MutationObserver((records) => { for (const record of records) for (const node of record.addedNodes) { if (node.nodeType === 1 && (node.matches("[data-outcome]") || node.querySelector("[data-outcome]") !== null)) window.noticesMounted += 1; } }).observe(document.body, { childList: true, subtree: true }); document.querySelector("#title-save").focus(); })()`,
+    `(() => { window.noticesMounted = 0; new MutationObserver((records) => { for (const record of records) for (const node of record.addedNodes) { if (node.nodeType === 1 && (node.matches("[data-outcome]") || node.querySelector("[data-outcome]") !== null)) window.noticesMounted += 1; } }).observe(document.body, { childList: true, subtree: true }); document.querySelector("#name-title-save").focus(); })()`,
   );
   await saveSection("title");
   await rereadDone(readsBeforeTitle);
   results.titleWriteKeepsTheFocusAndSaysNothing =
     (await page.evaluate<boolean>(
-      `document.querySelector("#title-section")?.contains(document.activeElement) ?? false`,
+      `document.querySelector("#name-title-page")?.contains(document.activeElement) ?? false`,
     )) && (await page.evaluate<number>("window.noticesMounted")) === 0;
   const titleLog = await requestsSettled(TITLE_REQUESTS.length + TITLE_REREAD.length);
   const titleAfter = await profileNow();
@@ -280,7 +280,7 @@ export async function title(ctx: Ctx) {
       "Sync to Hiroba failed (選択した称号は獲得していません。). Please try again." &&
     same(await profileNow(), profileAsStarted) &&
     (await inputValueOf("#title-pick")) === INITIAL_PROFILE.title &&
-    (await disabledOf("#title-save")) === true;
+    (await disabledOf("#name-title-save")) === true;
 
   const savesBeforeTitlePrechecks = await hitsOn("/ajax/change_mydon_profile.php");
   const titleStops: string[] = [];
@@ -373,8 +373,7 @@ export async function nickname(ctx: Ctx) {
   results.nameTitleEditsDroppedOnLeaving =
     (await inputValueOf("#name-input")) === INITIAL_PROFILE.nickname &&
     (await inputValueOf("#title-pick")) === INITIAL_PROFILE.title &&
-    (await disabledOf("#name-save")) === true &&
-    (await disabledOf("#title-save")) === true &&
+    (await disabledOf("#name-title-save")) === true &&
     !(await exists("[data-outcome]")) &&
     (await hitsOn(TITLE_PAGE)) === titleReads &&
     (await hitsOn("/mypage_kisekae.php")) === editorReads;
@@ -383,17 +382,17 @@ export async function nickname(ctx: Ctx) {
   await fetch(`${HIROBA}/__profile-posts?reset=1`);
   results.nameFieldPrefilled =
     (await inputValueOf("#name-input")) === INITIAL_PROFILE.nickname &&
-    (await disabledOf("#name-save")) === true &&
+    (await disabledOf("#name-title-save")) === true &&
     (await disabledOf("#name-input")) === false &&
     sameBesideLanePictures(await requestLog(), []);
   await typeName("あたらしい");
   results.nameMaxLengthAndCounter =
     (await attribute("#name-input", "maxlength")) === "10" &&
     (await textOf("#name-counter")) === "5 / 10" &&
-    (await disabledOf("#name-save")) === false;
+    (await disabledOf("#name-title-save")) === false;
   await typeName(` ${INITIAL_PROFILE.nickname} `);
   const sameNameHelp = await textOf("#name-hint");
-  const sameNameShut = await disabledOf("#name-save");
+  const sameNameShut = await disabledOf("#name-title-save");
   const unsendable = `あ${String.fromCharCode(1)}い`;
   const invalidNames: [string, string | null][] = [
     ["", en.t("name.siteWarning")],
@@ -409,7 +408,7 @@ export async function nickname(ctx: Ctx) {
   const invalidShown: [boolean | null, string | null][] = [];
   for (const [name] of invalidNames) {
     await typeName(name);
-    invalidShown.push([await disabledOf("#name-save"), await textOf("#name-hint")]);
+    invalidShown.push([await disabledOf("#name-title-save"), await textOf("#name-hint")]);
   }
   const sentBeforeTheBridge = await requestLog();
   const edgeRefused = await bridgeName(" あ");
@@ -430,7 +429,7 @@ export async function nickname(ctx: Ctx) {
   await fetch(`${HIROBA}/__rename?state=closed`);
   await readTitlesAgain();
   const closedNote = await textOf("#name-closed");
-  const closedShut = [await disabledOf("#name-input"), await disabledOf("#name-save")];
+  const closedShut = [await disabledOf("#name-input"), await disabledOf("#name-title-save")];
   await fetch(`${HIROBA}/__rename?state=odd`);
   await readTitlesAgain();
   const unknownOpen = await disabledOf("#name-input");
@@ -484,7 +483,7 @@ export async function nickname(ctx: Ctx) {
   const wornAfterTheRefusal =
     (await inputValueOf("#name-input")) === "あたらしい" &&
     (await profileNow()).nickname === "あたらしい" &&
-    (await disabledOf("#name-save")) === true;
+    (await disabledOf("#name-title-save")) === true;
   await fetch(`${HIROBA}/__rename-cooldown?on=0`);
   await changeNameInTheWindow(INITIAL_PROFILE.nickname);
   results.nameRefusedForAQuickChangeCanBeSavedAgain =
@@ -520,7 +519,7 @@ export async function nickname(ctx: Ctx) {
       saveDisabled: boolean | null;
       helper: string | null;
     }>(
-      `({ value: document.querySelector("#name-input").value, counter: document.querySelector("#name-counter")?.textContent ?? null, saveDisabled: document.querySelector("#name-save")?.disabled ?? null, helper: document.querySelector("#name-hint")?.textContent ?? null })`,
+      `({ value: document.querySelector("#name-input").value, counter: document.querySelector("#name-counter")?.textContent ?? null, saveDisabled: document.querySelector("#name-title-save")?.disabled ?? null, helper: document.querySelector("#name-hint")?.textContent ?? null })`,
     );
   await page.evaluate(
     `(() => { const input = document.querySelector("#name-input"); input.focus(); input.select(); })()`,
@@ -550,7 +549,7 @@ export async function nickname(ctx: Ctx) {
   await Bun.sleep(300);
   const enterInComposition = {
     saves: (await hitsOn(SAVE)) - savesBeforeEnterInComposition,
-    saveDisabled: await disabledOf("#name-save"),
+    saveDisabled: await disabledOf("#name-title-save"),
     step: await stepIn("name"),
   };
   await page.send("Input.insertText", { text: "い" });
@@ -598,7 +597,10 @@ export async function nameTitleWrites(ctx: Ctx) {
   results.nameEnterSavesAValidNickname = (await stepIn("name")) === "saving";
   await resetLog();
   const fabShutInNameWrite = (await fabState()).shut;
-  const titleShutInNameWrite = [await disabledOf("#title-pick"), await disabledOf("#title-save")];
+  const titleShutInNameWrite = [
+    await disabledOf("#title-pick"),
+    await disabledOf("#name-title-save"),
+  ];
   await goTo("settings");
   const signOutShutInNameWrite =
     (await disabledOf("#sign-out")) === true && (await textOf("#account-who")) === "Signed in";
@@ -622,13 +624,16 @@ export async function nameTitleWrites(ctx: Ctx) {
   const prechecksBeforeHeldTitle = await hitsOn("/ajax/check_ip_title.php");
   const readsBeforeHeldTitle = await myPageHits();
   await pickTitle("別の", 102);
-  await click("#title-save");
+  await click("#name-title-save");
   await waitFor("held title pre-check", async () =>
     (await hitsOn("/ajax/check_ip_title.php")) > prechecksBeforeHeldTitle ? true : undefined,
   );
   await resetLog();
   const fabShutInTitleWrite = (await fabState()).shut;
-  const nameShutInTitleWrite = [await disabledOf("#name-input"), await disabledOf("#name-save")];
+  const nameShutInTitleWrite = [
+    await disabledOf("#name-input"),
+    await disabledOf("#name-title-save"),
+  ];
   await goTo("settings");
   const signOutShutInTitleWrite =
     (await disabledOf("#sign-out")) === true && (await textOf("#account-who")) === "Signed in";

@@ -8,13 +8,14 @@ import { MedalCardSkeleton } from "./my-page/medal-card";
 import { OverviewHeaderSkeleton } from "./my-page/overview-header";
 import { ShareBlockSkeleton } from "./my-page/share-block";
 import { TitlePlateSkeleton } from "./my-page/title-plate";
-import { ControlWithSaveSkeleton } from "./name-title/control-with-save";
 import { FrameTop } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { useTouchFirst } from "./navigation/use-touch-first";
 import { SearchFieldSkeleton } from "./ui/search-field";
+import { SYNC_BAR_PAGE, SyncBarSkeleton } from "./ui/sync-bar";
 
 const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, alignSelf: "center" } as const;
+const FIELD_PX = 56;
 const HEADING = { fontSize: "1rem", lineHeight: 1.75 } as const;
 const KNOW_CARDS = [...Array(6).keys()];
 const FOLDER_ROWS = [...Array(8).keys()];
@@ -110,16 +111,19 @@ function KnowYourselfSkeleton() {
 
 function NameTitleSkeleton() {
   return (
-    <Stack spacing={3} sx={COLUMN}>
-      <Box sx={{ display: "flex", justifyContent: "center" }}>
-        <TitlePlateSkeleton />
-      </Box>
-      <ControlWithSaveSkeleton />
-      <Stack spacing={1}>
-        <ControlWithSaveSkeleton />
-        <Skeleton width="70%" sx={{ fontSize: "0.75rem" }} />
+    <Box sx={{ ...SYNC_BAR_PAGE, ...COLUMN }}>
+      <Stack spacing={3} sx={{ pb: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center" }}>
+          <TitlePlateSkeleton />
+        </Box>
+        <Skeleton variant="rounded" height={FIELD_PX} />
+        <Stack spacing={1}>
+          <Skeleton variant="rounded" height={FIELD_PX} />
+          <Skeleton width="70%" sx={{ fontSize: "0.75rem" }} />
+        </Stack>
       </Stack>
-    </Stack>
+      <SyncBarSkeleton />
+    </Box>
   );
 }
 

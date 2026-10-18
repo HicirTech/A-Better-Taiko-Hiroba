@@ -108,13 +108,13 @@ export function nameTitleHelpers(app: App) {
     );
     await page.evaluate(`document.querySelector('[data-title-id="${id}"]').click()`);
     await waitFor("title save enabled", async () =>
-      (await disabledOf("#title-save")) === false ? true : undefined,
+      (await disabledOf("#name-title-save")) === false ? true : undefined,
     );
   };
-  /** Presses a section's Save, and waits for its write to end. */
+  /** Presses the page's Sync to Hiroba, and waits for the section's write to end. */
   const saveSection = async (section: Section) => {
     const savesBefore = await hitsOn(SAVE);
-    await click(`#${section}-save`);
+    await click("#name-title-save");
     await waitFor(`${section} save sent`, async () =>
       (await hitsOn(SAVE)) > savesBefore ? true : undefined,
     );
@@ -143,7 +143,7 @@ export function nameTitleHelpers(app: App) {
     );
   const nameSavable = () =>
     waitFor("name save enabled", async () =>
-      (await disabledOf("#name-save")) === false ? true : undefined,
+      (await disabledOf("#name-title-save")) === false ? true : undefined,
     );
   const changeNameInTheWindow = async (name: string) => {
     await typeName(name);

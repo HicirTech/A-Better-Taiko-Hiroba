@@ -404,7 +404,7 @@ export async function firstReads(ctx: Ctx) {
   );
   await waitFor("name save enabled", async () =>
     (await running.page.evaluate<boolean>(
-      `document.querySelector("#name-save").disabled === false`,
+      `document.querySelector("#name-title-save").disabled === false`,
     ))
       ? true
       : undefined,
@@ -413,7 +413,7 @@ export async function firstReads(ctx: Ctx) {
   await fetch(`${HIROBA}/__profile-hold-save?on=1`);
   const savesBeforeFirstRead = await hitsOn("/ajax/change_mydon_profile.php");
   const editorReadsBeforeFirstRead = await hitsOn("/mypage_kisekae.php");
-  await running.click("#name-save");
+  await running.click("#name-title-save");
   await waitFor(
     "held name save",
     async () =>
