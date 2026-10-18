@@ -17,6 +17,7 @@ import { LargeModal } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SearchField } from "../ui/search-field";
+import { StatusNote } from "../ui/status-note";
 import type { PickableState } from "./pickable-songs";
 import { type PickerEntry, PickerList } from "./picker-list";
 import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
@@ -176,8 +177,10 @@ function PickerBody({
     );
   } else if (entries.length === 0) {
     content = (
-      <Box sx={{ p: 2 }}>
-        <FormHelperText id="song-picker-none">{t("picker.none")}</FormHelperText>
+      <Box sx={{ height: 1, display: "flex", flexDirection: "column" }}>
+        <StatusNote id="song-picker-none" fill>
+          {t("picker.none")}
+        </StatusNote>
       </Box>
     );
   } else {

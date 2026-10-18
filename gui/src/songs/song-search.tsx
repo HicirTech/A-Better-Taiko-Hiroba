@@ -1,7 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import {
   Box,
-  FormHelperText,
   IconButton,
   List,
   ListItem,
@@ -19,16 +18,24 @@ import { lookOfCatalogue } from "../favorites/song-look";
 import { nameLanguage } from "../favorites/song-names";
 import { searchSongs } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { FrameTop } from "../navigation/app-frame";
+import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import { useBackLeaves } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
 import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";
+import { StatusNote } from "../ui/status-note";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
 import { SongDetails } from "./song-details";
 import { bpmText } from "./song-facts";
 import { HistoryIcon } from "./song-icons";
+
+// A search with nothing found fills the window's page, so its words stand in the middle of it.
+const FILLS_THE_PAGE = {
+  display: "flex",
+  flexDirection: "column",
+  minHeight: PAGE_HEIGHT,
+} as const;
 
 export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
@@ -123,7 +130,11 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
         </List>
       );
   } else if (entries.length === 0) {
-    panel = <FormHelperText id="song-search-none">{t("picker.none")}</FormHelperText>;
+    panel = (
+      <StatusNote id="song-search-none" fill>
+        {t("picker.none")}
+      </StatusNote>
+    );
   } else {
     panel = (
       <PickerList
@@ -162,7 +173,9 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
               {panel}
             </Paper>
           ) : (
-            <Box id="song-search-panel">{panel}</Box>
+            <Box id="song-search-panel" sx={searched ? FILLS_THE_PAGE : undefined}>
+              {panel}
+            </Box>
           )}
         </ShownDifficultyContext>
       )}

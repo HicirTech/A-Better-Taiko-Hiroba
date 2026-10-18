@@ -1,6 +1,6 @@
 import { chartKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { newSetName, SET_SONG_LIMIT } from "../favorites/favorite-sets";
@@ -12,6 +12,7 @@ import { SongListFailed } from "../favorites/song-list-failed";
 import { resolveSong } from "../favorites/song-look";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
+import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
@@ -19,6 +20,7 @@ import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../session-port";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { StatusNote } from "../ui/status-note";
 import { AddSongsDialog } from "./add-songs-dialog";
 import { BandItem } from "./band-item";
 import { ChartList } from "./chart-list";
@@ -143,7 +145,7 @@ export function KnowYourselfPage({
     fill: { colour: DIFFICULTY_COLOUR[difficulty], text: DIFFICULTY_TEXT },
   }));
   return (
-    <Stack spacing={3} id="know-yourself-page">
+    <Stack spacing={3} id="know-yourself-page" sx={{ minHeight: PAGE_HEIGHT }}>
       {reading && (
         <ScoresReading id="know-scores-reading" i18n={i18n} progress={progress} song={song} />
       )}
@@ -154,14 +156,14 @@ export function KnowYourselfPage({
         </Box>
       )}
       {settled && listed !== null && listed.charts.length === 0 && (
-        <Typography id="know-empty" color="text.secondary">
+        <StatusNote id="know-empty" fill>
           {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
-        </Typography>
+        </StatusNote>
       )}
       {settled && view.unread > 0 && (
-        <Typography id="know-unread" color="text.secondary">
+        <StatusNote id="know-unread">
           {t("scores.unread", { count: number(view.unread) })}
-        </Typography>
+        </StatusNote>
       )}
       {known !== null && known.length > 0 && (
         <>

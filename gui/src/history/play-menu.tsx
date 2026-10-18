@@ -1,8 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { Menu, MenuItem, Typography } from "@mui/material";
+import { Box, Menu, MenuItem } from "@mui/material";
 
 import { type Choice, ChoiceDialog } from "../favorites/choice-dialog";
 import { type FavoriteSet, refusedSong, SET_SONG_LIMIT } from "../favorites/favorite-sets";
+import { StatusNote } from "../ui/status-note";
 
 /** Where a right-click landed. */
 export interface Point {
@@ -115,9 +116,9 @@ export function AddToSetDialog({
       subtitle={name}
       choices={choices}
       empty={
-        <Typography id="history-add-unknown" color="text.secondary" sx={{ px: 3, pt: 1, pb: 3 }}>
-          {t("history.unknownSong")}
-        </Typography>
+        <Box sx={{ px: 3 }}>
+          <StatusNote id="history-add-unknown">{t("history.unknownSong")}</StatusNote>
+        </Box>
       }
       i18n={i18n}
       onClose={onClose}

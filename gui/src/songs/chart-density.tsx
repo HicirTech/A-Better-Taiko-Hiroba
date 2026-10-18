@@ -1,11 +1,12 @@
 import { CHART_BRANCHES, type ChartBranch, type ChartDensity, type NoteDensity } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-import { Box, FormHelperText, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useState } from "react";
 
 import type { SongDensityRead } from "../song-catalogue/types";
 import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
+import { StatusNote } from "../ui/status-note";
 import { clockText, DensityLine, peakOf } from "./density-line";
 
 const BRANCH_LABEL: Readonly<Record<ChartBranch, MessageKey>> = {
@@ -95,11 +96,7 @@ export function ChartDensitySection({
       ) : state.reading && state.read === null ? (
         <ProgressBar id="song-density-reading" label={t("details.densityReading")} />
       ) : (
-        !failed && (
-          <FormHelperText id="song-density-none" sx={{ m: 0 }}>
-            {t("details.noDensity")}
-          </FormHelperText>
-        )
+        !failed && <StatusNote id="song-density-none">{t("details.noDensity")}</StatusNote>
       )}
       {failed && (
         <ReadFailureAlert

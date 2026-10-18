@@ -7,6 +7,7 @@ import { DIFFICULTY_LABEL } from "../favorites/genre-look";
 import type { HirobaSessionPort } from "../session-port";
 import type { ChartFileFailure, Difficulty } from "../song-catalogue/types";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
+import { StatusNote } from "../ui/status-note";
 import { ChartPicture, PictureButton, PictureLoading } from "./chart-picture";
 import type { ChartSource } from "./chart-source";
 import type { ShownChart } from "./chart-viewer";
@@ -111,9 +112,7 @@ export function ChartPictures(props: ChartPicturesProps) {
           ))}
         </Stack>
       ) : (
-        <FormHelperText id="song-details-no-picture" sx={{ m: 0 }}>
-          {t("details.noPicture")}
-        </FormHelperText>
+        <StatusNote id="song-details-no-picture">{t("details.noPicture")}</StatusNote>
       )}
     </Stack>
   );

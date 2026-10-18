@@ -7,6 +7,7 @@ import { HIROBA_LANG } from "../language/show-language";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant, ProfileView } from "../session-port";
+import { StatusNote } from "../ui/status-note";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, VISUALLY_HIDDEN } from "./hiroba-px";
 
 // Hiroba's どんメダル block: a picture across the 290-pixel area, in a block 52 high at least, with
@@ -43,11 +44,7 @@ export function MedalCard({ medal, lane, i18n }: MedalCardProps) {
       <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
         {t("medal.heading")}
       </Typography>
-      {medal === null && (
-        <Typography id="medal-none" color="text.secondary">
-          {t("medal.none")}
-        </Typography>
-      )}
+      {medal === null && <StatusNote id="medal-none">{t("medal.none")}</StatusNote>}
       {medal !== null && medal.progress.kind !== "unrecognised" && (
         <MedalPlate name={medal.name} progress={medal.progress} lane={lane} i18n={i18n} />
       )}

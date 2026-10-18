@@ -36,7 +36,10 @@ app opens, the Costume page's and Favourites' first read from Hiroba, the rating
 shows its own shape in grey with a moving bar over its middle, or nothing if the read ends within 0.4
 seconds, and fades in over that shape once it comes; a page moved to while it waits slides in with that
 shape. A read under way says what it reads over a short bar, which fills once the read knows how much
-there is, as a read of every score does with its lists and charts. The lists of Recent plays and Scores draw
+there is, as a read of every score does with its lists and charts. Where there is nothing to show, grey
+words say why, and how to fill it: in the middle of the window when a page, or a search, has nothing at
+all, and in its place in a card, a song's details or a dialog; what a read found, such as charts still
+unread, is said in the same words over the list. The lists of Recent plays and Scores draw
 only the rows near the window, so thousands of them open and scroll as quickly as a few. A question
 or a name to type opens in one small dialog; a deeper task (a song's or a chart's details, the song
 picker, the costume history, a chart picture) slides in from below in one large panel, the whole

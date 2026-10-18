@@ -4,7 +4,6 @@ import {
   Box,
   Chip,
   CircularProgress,
-  FormHelperText,
   IconButton,
   Stack,
   ToggleButton,
@@ -32,6 +31,7 @@ import { RefreshIcon } from "../read-again/read-again-foot";
 import type { HirobaSessionPort } from "../session-port";
 import { type ChartFileFailure, DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
 import { LargeModal } from "../ui/large-modal";
+import { StatusNote } from "../ui/status-note";
 import { ChartDensitySection, type DensityState, masterOf } from "./chart-density";
 import { ChartPictures } from "./chart-pictures";
 import { keptChartSource } from "./chart-source";
@@ -337,9 +337,7 @@ function DetailsBody({
               onOpen={setViewing}
             />
           ) : (
-            <FormHelperText id="song-details-no-picture" sx={{ m: 0 }}>
-              {t("details.noPicture")}
-            </FormHelperText>
+            <StatusNote id="song-details-no-picture">{t("details.noPicture")}</StatusNote>
           )}
         </Stack>
       </LargeModal>

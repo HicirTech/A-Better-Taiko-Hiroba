@@ -11,6 +11,7 @@ import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { useLongPress } from "../my-page/use-long-press";
+import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { type PlayNotice, ScoreDetails } from "../scores/score-details";
 import { listedOf, ScoresReading } from "../scores/scores-page";
@@ -18,6 +19,7 @@ import type { ScoresState } from "../scores/use-scores";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
+import { StatusNote } from "../ui/status-note";
 import { HISTORY_ROW_PX, HistoryRow, opensOnPress, type RowProps } from "./history-row";
 import { type PlacedPlay, placePlay, playedChart } from "./placed-play";
 import { AddToSetDialog, type NamedSong, PlayMenu, type Point } from "./play-menu";
@@ -135,7 +137,7 @@ export function HistoryPage({
   };
 
   return (
-    <Stack spacing={2} id="history-page">
+    <Stack spacing={2} id="history-page" sx={{ minHeight: PAGE_HEIGHT }}>
       {reading && rows.length === 0 && (
         <ProgressBar
           id="history-reading"
@@ -152,9 +154,9 @@ export function HistoryPage({
         </LoadFailed>
       )}
       {plays !== null && rows.length === 0 && !reading && (
-        <Typography id="history-empty" color="text.secondary">
+        <StatusNote id="history-empty" fill>
           {i18n.t(touchFirst ? "history.emptyPull" : "history.emptyReadAgain")}
-        </Typography>
+        </StatusNote>
       )}
       <RowList id="history-list" rows={rows} keyOf={recentPlayKey} rowPx={HISTORY_ROW_PX}>
         {(play, index, place) => (
@@ -290,7 +292,7 @@ function PlayWhy({
   const { t } = i18n;
   if (placed.kind === "unplaced") {
     const why = placed.why === "shared" ? "history.sharedTitle" : "history.unknownSong";
-    return <Typography color="text.secondary">{t(why)}</Typography>;
+    return <StatusNote>{t(why)}</StatusNote>;
   }
   if (scores.reading) {
     return <ScoresReading i18n={i18n} progress={scores.progress} song={scores.song} />;
@@ -301,5 +303,5 @@ function PlayWhy({
   if (scores.failure !== null) {
     return <LoadFailed id="history-play-failure" failure={scores.failure} i18n={i18n} />;
   }
-  return <Typography color="text.secondary">{t("history.noScore")}</Typography>;
+  return <StatusNote>{t("history.noScore")}</StatusNote>;
 }

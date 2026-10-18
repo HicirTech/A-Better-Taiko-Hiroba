@@ -1,6 +1,7 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Card, CardContent, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, IconButton, Stack } from "@mui/material";
 
+import { StatusNote } from "../ui/status-note";
 import { CloseIcon } from "./favorites-icons";
 import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongRow } from "./song-row";
@@ -81,9 +82,7 @@ export function SetView({
             )}
           </Box>
           {songs.length === 0 ? (
-            <Typography id="favorite-set-empty" color="text.secondary">
-              {t("favorites.setEmpty")}
-            </Typography>
+            <StatusNote id="favorite-set-empty">{t("favorites.setEmpty")}</StatusNote>
           ) : editing ? (
             <SortableList
               id="favorite-set-songs"

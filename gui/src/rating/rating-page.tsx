@@ -5,12 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
+import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
 import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ScoreView } from "../session-port";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
+import { StatusNote } from "../ui/status-note";
 import { RatingRadar } from "./rating-radar";
 import type { RatingDataState } from "./use-rating-data";
 
@@ -125,7 +127,7 @@ export function RatingPage({
     );
 
   return (
-    <Stack spacing={2} id="rating-page">
+    <Stack spacing={2} id="rating-page" sx={{ minHeight: PAGE_HEIGHT }}>
       {reading && (
         <ScoresReading id="rating-scores-reading" i18n={i18n} progress={progress} song={song} />
       )}
@@ -139,14 +141,14 @@ export function RatingPage({
         />
       )}
       {settled && view.scores.length === 0 && (
-        <Typography id="rating-empty" color="text.secondary">
+        <StatusNote id="rating-empty" fill>
           {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
-        </Typography>
+        </StatusNote>
       )}
       {rated !== null && view !== null && view.scores.length > 0 && charts.length === 0 && (
-        <Typography id="rating-none" color="text.secondary">
+        <StatusNote id="rating-none" fill>
           {t("rating.noneRated")}
-        </Typography>
+        </StatusNote>
       )}
       {total !== undefined && charts.length > 0 && (
         <Stack

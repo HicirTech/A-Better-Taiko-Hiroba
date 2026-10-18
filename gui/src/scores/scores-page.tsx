@@ -9,13 +9,14 @@ import { fold, searchedNames } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HISTORY_ROW_PX, HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { FrameTop } from "../navigation/app-frame";
+import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
 import { SearchField } from "../ui/search-field";
+import { StatusNote } from "../ui/status-note";
 import { ScoreDetails } from "./score-details";
 import { ScoreFilters } from "./score-filters";
 import {
@@ -102,7 +103,7 @@ export function ScoresPage({
           />
         </FrameTop>
       )}
-      <Stack spacing={2} id="scores-page">
+      <Stack spacing={2} id="scores-page" sx={{ minHeight: PAGE_HEIGHT }}>
         {reading && (
           <ScoresReading id="scores-reading" i18n={i18n} progress={progress} song={song} />
         )}
@@ -116,19 +117,17 @@ export function ScoresPage({
           </LoadFailed>
         )}
         {settled && rows.length === 0 && (
-          <Typography id="scores-empty" color="text.secondary">
+          <StatusNote id="scores-empty" fill>
             {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
-          </Typography>
+          </StatusNote>
         )}
         {settled && rows.length > 0 && scores.nothingNew && (
-          <Typography id="scores-nothing-new" color="text.secondary">
-            {t("scores.nothingNew")}
-          </Typography>
+          <StatusNote id="scores-nothing-new">{t("scores.nothingNew")}</StatusNote>
         )}
         {settled && rows.length > 0 && view.unread > 0 && (
-          <Typography id="scores-unread" color="text.secondary">
+          <StatusNote id="scores-unread">
             {t("scores.unread", { count: number(view.unread) })}
-          </Typography>
+          </StatusNote>
         )}
         {rows.length > 0 && (
           <ScoreFilters
@@ -140,9 +139,9 @@ export function ScoresPage({
           />
         )}
         {rows.length > 0 && shown.length === 0 && (
-          <Typography id="scores-no-match" color="text.secondary">
+          <StatusNote id="scores-no-match" fill>
             {t("scores.noMatch")}
-          </Typography>
+          </StatusNote>
         )}
         <RowList id="scores-list" rows={shown} keyOf={listedChart} rowPx={HISTORY_ROW_PX}>
           {(one, index, place) => (

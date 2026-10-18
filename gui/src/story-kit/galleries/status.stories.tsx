@@ -13,6 +13,7 @@ import * as OperationSnackbar from "../../ui/operation-snackbar.stories";
 import * as ProgressBar from "../../ui/progress-bar.stories";
 import * as LoadFailed from "../../ui/read-failure-alert.load-failed.stories";
 import * as ReadFailureAlert from "../../ui/read-failure-alert.stories";
+import * as StatusNote from "../../ui/status-note.stories";
 import { Gallery } from "../gallery";
 
 const meta = {
@@ -41,6 +42,7 @@ const meta = {
           fixed: true,
         },
         { name: "ProgressBar", meta: ProgressBar.default, story: ProgressBar.AReadOfEveryScore },
+        { name: "StatusNote", meta: StatusNote.default, story: StatusNote.InACard },
         { name: "HoldRing", meta: HoldRing.default, story: HoldRing.Filling },
         { name: "PictureLoading", meta: PictureLoading.default, story: PictureLoading.Loading },
         { name: "LoadFailed", meta: LoadFailed.default, story: LoadFailed.WithCodes },

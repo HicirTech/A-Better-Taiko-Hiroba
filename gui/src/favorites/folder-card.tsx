@@ -14,6 +14,7 @@ import { useId, useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
 import { SimpleDialog } from "../ui/simple-dialog";
+import { StatusNote } from "../ui/status-note";
 import type { FavoriteSet } from "./favorite-sets";
 import { ArrowDropDownIcon, CheckIcon } from "./favorites-icons";
 import type { ShownFavorites } from "./favorites-state";
@@ -112,9 +113,7 @@ export function FolderCard({
             )}
           </Box>
           {songs.length === 0 ? (
-            <Typography id="favorite-folder-empty" color="text.secondary">
-              {t("favorites.folderEmpty")}
-            </Typography>
+            <StatusNote id="favorite-folder-empty">{t("favorites.folderEmpty")}</StatusNote>
           ) : (
             <Box component="ul" id="favorite-folder-list" sx={LIST}>
               {songs.map(({ slot, songNo }) => (

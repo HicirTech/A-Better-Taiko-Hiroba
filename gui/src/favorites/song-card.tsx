@@ -1,6 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 
+import { StatusNote } from "../ui/status-note";
 import type { ShownFavorites } from "./favorites-state";
 import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongRow } from "./song-row";
@@ -26,9 +27,7 @@ export function SongCard({ shown, look, i18n, openDetails, onChange }: SongCardP
             {t("favorites.song.heading")}
           </Typography>
           {songNo === null ? (
-            <Typography id="favorite-song-none" color="text.secondary">
-              {t("favorites.song.none")}
-            </Typography>
+            <StatusNote id="favorite-song-none">{t("favorites.song.none")}</StatusNote>
           ) : (
             <SongRow
               id="favorite-song-row"
