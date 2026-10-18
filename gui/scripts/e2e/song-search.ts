@@ -29,6 +29,7 @@ export const songSearchKeys = [
   "searchBarInTheTopBand",
   "searchBarAcrossAPhone",
   "searchFieldKeepsItsPlace",
+  "searchFieldLefts",
   "searchShowsTheTempo",
   "notFoundUnframed",
   "searchKeptWhenASongOpens",
@@ -154,7 +155,10 @@ export async function songSearch(ctx: Ctx) {
   const leftAtRest = await fieldLeft();
   await search("signal");
   await shown("#song-search-row-1019");
-  results.searchFieldKeepsItsPlace = (await fieldLeft()) === leftAtRest;
+  const leftSearching = await fieldLeft();
+  results.searchFieldKeepsItsPlace = leftSearching === leftAtRest;
+  // Both places, so a run that finds the field moved shows by how much.
+  results.searchFieldLefts = [leftAtRest, leftSearching];
   results.searchShowsTheTempo =
     (await textOf("#song-search-row-1019"))?.includes("BPM 85.85–257.5") === true;
   const framedWithSongs = await exists("#song-search-panel.MuiPaper-root");
