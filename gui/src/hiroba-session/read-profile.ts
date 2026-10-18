@@ -27,16 +27,6 @@ const READ_FAILURE_OF_PARSE_FAILURE = {
   wrongPage: "unexpectedPage",
 } as const satisfies Record<ParseFailure["kind"], ReadFailureKind>;
 
-/** Reads the signed-in player's own page once, with no retry, keeping what the interface shows. */
-export async function readProfile(
-  transport: Transport,
-  endpoints: HirobaEndpoints,
-  now: () => Date = () => new Date(),
-): Promise<Result<ProfileView, ReadFailure>> {
-  const read = await readOwnProfile(transport, endpoints, now);
-  return isErr(read) ? read : ok(read.value.view);
-}
-
 /** What a platform layer learns from reading my page, beside what the interface shows. */
 export interface OwnProfileRead {
   readonly view: ProfileView;
@@ -46,8 +36,7 @@ export interface OwnProfileRead {
   readonly pictures: PictureSources;
 }
 
-/** `readProfile` for a platform layer, which also learns whose page it read and where its pictures
- * are. Both stay with the platform and never reach the view. */
+/** Reads my page once, with no retry; whose it is and its pictures stay with the platform. */
 export async function readOwnProfile(
   transport: Transport,
   endpoints: HirobaEndpoints,
