@@ -1,8 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, Skeleton, Typography } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import type { Ref } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
+import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
 import type { PictureView, ProfileView } from "../session-port";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
@@ -47,37 +48,16 @@ export function TitlePlate({ profile, answer, i18n, ref, action }: TitlePlatePro
   const plate = viewOf(answer);
   return (
     <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
-      <Box
+      <HirobaPicture
         ref={ref}
         id="title-plate"
-        aria-busy={answer === undefined}
-        sx={{
-          position: "relative",
-          width: 1,
-          color: ON_PLATE,
-          aspectRatio: 1 / plateHeightRatio(plate),
-        }}
+        src={plate?.src ?? null}
+        onItsWay={answer === undefined}
+        standIn={<PlateStandIn />}
+        wordsColour={ON_PLATE}
+        sx={{ width: 1, color: ON_PLATE, aspectRatio: 1 / plateHeightRatio(plate) }}
+        i18n={i18n}
       >
-        {plate === null ? (
-          <PlateStandIn />
-        ) : (
-          <Box
-            component="img"
-            id="title-plate-image"
-            src={plate.src}
-            alt=""
-            aria-hidden
-            sx={{ position: "absolute", inset: 0, width: 1, height: 1, display: "block" }}
-          />
-        )}
-        {answer === undefined && (
-          <CircularProgress
-            id="title-plate-loading"
-            size={14}
-            aria-label={t("pictures.loading")}
-            sx={{ position: "absolute", top: 2, right: 4, color: ON_PLATE }}
-          />
-        )}
         <Title title={profile.title} i18n={i18n} />
         <NameRow profile={profile} i18n={i18n} />
         {action !== undefined && (
@@ -89,7 +69,7 @@ export function TitlePlate({ profile, answer, i18n, ref, action }: TitlePlatePro
             sx={{ ...FOCUS_RING, position: "absolute", inset: 0, borderRadius: hp(10) }}
           />
         )}
-      </Box>
+      </HirobaPicture>
     </Box>
   );
 }

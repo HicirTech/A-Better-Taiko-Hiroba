@@ -1,9 +1,10 @@
 import type { MedalProgress } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, Skeleton, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
+import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant, ProfileView } from "../session-port";
@@ -87,21 +88,12 @@ function MedalPlate({ name, progress, lane, i18n }: MedalPlateProps) {
   return (
     <Stack spacing={1}>
       <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
-        <Box
+        <HirobaPicture
           ref={plateBox}
           id="medal-plate"
-          aria-busy={answer === undefined}
-          sx={{
-            position: "relative",
-            width: 1,
-            minHeight: hp(BLOCK_HEIGHT),
-            color: ON_PLATE,
-            // Hiroba's body text sets the line below the picture, which the words are lifted from.
-            fontSize: hp(14),
-            lineHeight: 1.5,
-          }}
-        >
-          {plate === null ? (
+          src={plate?.src ?? null}
+          onItsWay={answer === undefined}
+          standIn={
             <Box
               id="medal-plate-stand-in"
               aria-hidden
@@ -113,24 +105,19 @@ function MedalPlate({ name, progress, lane, i18n }: MedalPlateProps) {
                 borderRadius: hp(25),
               }}
             />
-          ) : (
-            <Box
-              component="img"
-              id="medal-plate-image"
-              src={plate.src}
-              alt=""
-              aria-hidden
-              sx={{ width: 1 }}
-            />
-          )}
-          {answer === undefined && (
-            <CircularProgress
-              id="medal-plate-loading"
-              size={14}
-              aria-label={t("pictures.loading")}
-              sx={{ position: "absolute", top: 2, right: 4, color: ON_PLATE }}
-            />
-          )}
+          }
+          wordsColour={ON_PLATE}
+          sx={{
+            width: 1,
+            minHeight: hp(BLOCK_HEIGHT),
+            color: ON_PLATE,
+            // Hiroba's body text sets the line below the picture, which the words are lifted from.
+            fontSize: hp(14),
+            lineHeight: 1.5,
+          }}
+          imageSx={{ width: 1 }}
+          i18n={i18n}
+        >
           <Box sx={{ position: "absolute", left: 0, right: 0, mt: hp(-WORDS_LIFT) }}>
             <Box
               id="medal-name"
@@ -161,7 +148,7 @@ function MedalPlate({ name, progress, lane, i18n }: MedalPlateProps) {
               </Box>
             )}
           </Box>
-        </Box>
+        </HirobaPicture>
       </Box>
       {failure !== null && (
         <Stack id="medal-plate-unavailable">

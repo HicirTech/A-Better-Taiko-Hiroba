@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import { HirobaPicture } from "../pictures/hiroba-picture";
 import type { CostumeSet, HirobaSessionPort } from "../session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import {
@@ -64,11 +64,14 @@ export function CostumePreviewBox({
 }) {
   const { t } = i18n;
   return (
-    <Box
+    <HirobaPicture
       id="costume-preview"
-      aria-busy={preview.loading}
+      src={preview.image}
+      onItsWay={preview.loading}
+      alt={t("costume.preview.alt")}
+      loadingLabel={t("costume.preview.loading")}
+      wordsColour="text.secondary"
       sx={{
-        position: "relative",
         width: 1,
         aspectRatio: "1",
         display: "flex",
@@ -78,31 +81,15 @@ export function CostumePreviewBox({
         bgcolor: "action.hover",
         ...(size !== undefined && { width: size, maxWidth: 1, alignSelf: "center" }),
       }}
-    >
-      {preview.image !== null && (
-        <Box
-          component="img"
-          id="costume-preview-image"
-          src={preview.image}
-          alt={t("costume.preview.alt")}
-          sx={{
-            width: 1,
-            height: 1,
-            objectFit: "contain",
-            // Dimmed when the picture for the latest pick did not come: it is an older set's.
-            opacity: preview.failure === null ? 1 : 0.35,
-          }}
-        />
-      )}
-      {preview.loading && (
-        <CircularProgress
-          id="costume-preview-loading"
-          size={20}
-          aria-label={t("costume.preview.loading")}
-          sx={{ position: "absolute", top: 8, right: 8 }}
-        />
-      )}
-    </Box>
+      imageSx={{
+        width: 1,
+        height: 1,
+        objectFit: "contain",
+        // Dimmed when the picture for the latest pick did not come: it is an older set's.
+        opacity: preview.failure === null ? 1 : 0.35,
+      }}
+      i18n={i18n}
+    />
   );
 }
 
