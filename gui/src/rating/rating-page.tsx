@@ -12,6 +12,7 @@ import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ScoreView } from "../session-port";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
+import { SectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import { RatingRadar } from "./rating-radar";
 import type { RatingDataState } from "./use-rating-data";
@@ -98,10 +99,10 @@ export function RatingPage({
   const settled = view !== null && !reading && failure === null;
   const list = (id: string, heading: MessageKey, shown: readonly ChartRating[]) =>
     shown.length > 0 && (
-      <Stack component="section" spacing={0.5} aria-labelledby={`${id}-heading`}>
-        <Typography id={`${id}-heading`} component="h2" variant="subtitle1" sx={{ px: 2 }}>
-          {t(heading)}
-        </Typography>
+      <Box component="section" aria-labelledby={`${id}-heading`}>
+        <Box sx={{ px: 2 }}>
+          <SectionTitle id={`${id}-heading`}>{t(heading)}</SectionTitle>
+        </Box>
         <Stack component="ul" id={id} spacing={0} sx={LIST}>
           {shown.map((chart, index) => {
             const score = scoreOf.get(chartKey(chart));
@@ -123,7 +124,7 @@ export function RatingPage({
             );
           })}
         </Stack>
-      </Stack>
+      </Box>
     );
 
   return (

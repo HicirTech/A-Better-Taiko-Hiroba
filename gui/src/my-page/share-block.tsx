@@ -1,13 +1,13 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Skeleton, Typography } from "@mui/material";
+import { Box, Skeleton } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import type { IconWant } from "../session-port";
+import { SectionTitle, SectionTitleSkeleton } from "../ui/section-title";
 import { LegendItem } from "./legend-item";
 import { sharesOf } from "./shares";
 
-const HEADING = { fontWeight: 500, mb: 1 } as const;
 const BAR = {
   display: "flex",
   gap: "2px",
@@ -127,9 +127,7 @@ export function ShareBlock({
 }) {
   return (
     <Box id={id} component="section">
-      <Typography variant="subtitle1" component="h2" sx={HEADING}>
-        {heading}
-      </Typography>
+      <SectionTitle>{heading}</SectionTitle>
       <ShareBar id={`${id}-bar`} items={items} i18n={i18n} />
       <ShareLegend items={items} lane={lane} toast={toast} i18n={i18n} />
     </Box>
@@ -142,7 +140,7 @@ const LEGEND_KEYS = [...Array(8).keys()];
 export function ShareBlockSkeleton({ items }: { readonly items: number }) {
   return (
     <Box aria-hidden>
-      <Skeleton width={110} sx={{ ...HEADING, fontSize: "1rem", lineHeight: 1.75 }} />
+      <SectionTitleSkeleton width={110} />
       <Skeleton variant="rounded" sx={BAR} />
       <Box sx={LEGEND}>
         {LEGEND_KEYS.slice(0, items).map((key) => (

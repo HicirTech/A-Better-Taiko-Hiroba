@@ -1,19 +1,10 @@
 import type { Translator } from "@abth/i18n";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  Menu,
-  MenuItem,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Card, CardContent, Chip, Menu, MenuItem, Stack } from "@mui/material";
 import { useId, useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
 import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
+import { SectionTitle } from "../ui/section-title";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { StatusNote } from "../ui/status-note";
 import type { FavoriteSet } from "./favorite-sets";
@@ -67,12 +58,10 @@ export function FolderCard({
   return (
     <Card id="favorite-folder-card" variant="outlined">
       <CardContent>
-        <Stack spacing={1.5}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
-            <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 500, flexGrow: 1 }}>
-              {t("favorites.folder.heading")}
-            </Typography>
-            {inUse !== null ? (
+        <SectionTitle
+          level={3}
+          end={
+            inUse !== null ? (
               <Chip
                 id="favorite-folder-set"
                 icon={<CheckIcon fontSize="small" />}
@@ -110,8 +99,12 @@ export function FolderCard({
                   )}
                 </>
               )
-            )}
-          </Box>
+            )
+          }
+        >
+          {t("favorites.folder.heading")}
+        </SectionTitle>
+        <Stack spacing={1.5}>
           {songs.length === 0 ? (
             <StatusNote id="favorite-folder-empty">{t("favorites.folderEmpty")}</StatusNote>
           ) : (

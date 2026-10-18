@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { BELOW_TOP_BAND, STAYS_IN_VIEW, WHEN_TALL } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import { SectionTitleSkeleton } from "../ui/section-title";
 import { previewSetOf, shownEditorOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
 import { PaletteSkeleton } from "./costume-palette";
@@ -124,7 +125,7 @@ export function NarrowBodySkeleton() {
         />
         <PartTilesSkeleton wide={false} />
       </Stack>
-      <Skeleton width={72} sx={{ mb: 1.5 }} />
+      <SectionTitleSkeleton width={72} />
       <PaletteSkeleton wide={false} />
     </Box>
   );

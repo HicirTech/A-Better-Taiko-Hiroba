@@ -56,7 +56,7 @@ page's `color-scheme` follows, so its scrollbars and the system's own widgets do
 The app opens on the page last shown on the device. Signed out, the window holds the sign-in card
 alone, on the Overview: a sign-out, or a session Hiroba ends, goes back to it, and Settings opens
 again after the next sign-in.
-Settings is laid out as Gmail's settings are: sections with small headings, each with its icon, and
+Settings is laid out as Gmail's settings are: sections with headings, each with its icon, and
 each setting one row with its name, a line on it where one helps, and its control. **Language**
 lists its choices with radio buttons; **Account** says who is signed in, by the nickname your page
 gives, with the note on staying signed in and **Sign out** beside it. While a read runs it says

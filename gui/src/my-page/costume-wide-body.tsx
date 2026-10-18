@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import { SectionTitleSkeleton } from "../ui/section-title";
 import { previewSetOf, shownEditorOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
 import { PaletteSkeleton } from "./costume-palette";
@@ -104,8 +105,8 @@ export function WideBodySkeleton() {
         <Skeleton variant="rounded" sx={ART} />
         <PartTilesSkeleton wide />
       </Stack>
-      <Box sx={{ ...ABOVE, pb: 1.5 }}>
-        <Skeleton width={72} />
+      <Box sx={ABOVE}>
+        <SectionTitleSkeleton width={72} />
       </Box>
       <Box sx={PART}>
         <PaletteSkeleton wide />

@@ -16,6 +16,7 @@ import { useId, useState } from "react";
 
 import type { EndedGroup, GroupKind, GroupNow, PipelineView } from "../pipelines";
 import { BlockIcon, CheckIcon, CloseIcon } from "../ui/icons";
+import { SectionTitle } from "../ui/section-title";
 import { GroupDetails } from "./group-details";
 import { groupName } from "./operation-names";
 import {
@@ -109,9 +110,7 @@ export function PipelineSection({
   const ended = view?.ended ?? [];
   return (
     <Box component="section" id={id} aria-labelledby={headingId} sx={{ px: 2, py: 1.5 }}>
-      <Typography id={headingId} variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
-        {t(name)}
-      </Typography>
+      <SectionTitle id={headingId}>{t(name)}</SectionTitle>
       <Box role="group" aria-label={t("pipelines.now")} sx={ROW}>
         {BLOCK_PLACES.map((place, index) => {
           const group = row.groups[index];

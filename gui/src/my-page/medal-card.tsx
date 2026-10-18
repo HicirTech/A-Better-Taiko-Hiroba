@@ -8,6 +8,7 @@ import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant, ProfileView } from "../session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
+import { SectionTitle, SectionTitleSkeleton } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
@@ -43,9 +44,7 @@ export function MedalCard({ medal, lane, i18n }: MedalCardProps) {
   const progress = medal?.progress;
   return (
     <Box id="medal" component="section">
-      <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
-        {t("medal.heading")}
-      </Typography>
+      <SectionTitle>{t("medal.heading")}</SectionTitle>
       {medal === null && <StatusNote id="medal-none">{t("medal.none")}</StatusNote>}
       {medal !== null && medal.progress.kind !== "unrecognised" && (
         <MedalPlate name={medal.name} progress={medal.progress} lane={lane} i18n={i18n} />
@@ -187,7 +186,7 @@ function MedalPlate({ name, progress, lane, i18n }: MedalPlateProps) {
 export function MedalCardSkeleton() {
   return (
     <Box aria-hidden>
-      <Skeleton width={110} sx={{ fontSize: "1rem", lineHeight: 1.75, mb: 1 }} />
+      <SectionTitleSkeleton width={110} />
       <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
         <Skeleton
           variant="rounded"

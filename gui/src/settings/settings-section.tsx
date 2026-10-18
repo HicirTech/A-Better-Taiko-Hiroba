@@ -1,5 +1,7 @@
-import { Box, ListSubheader } from "@mui/material";
+import { Box } from "@mui/material";
 import type { ReactNode } from "react";
+
+import { SectionTitle } from "../ui/section-title";
 
 export interface SettingsSectionProps {
   readonly id: string;
@@ -13,15 +15,11 @@ export interface SettingsSectionProps {
 export function SettingsSection({ id, headingId, icon, title, children }: SettingsSectionProps) {
   return (
     <Box component="section" id={id} aria-labelledby={headingId}>
-      <ListSubheader
-        component="h2"
-        id={headingId}
-        disableSticky
-        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-      >
-        {icon}
-        {title}
-      </ListSubheader>
+      <Box sx={{ px: 2, pt: 2 }}>
+        <SectionTitle id={headingId} start={icon}>
+          {title}
+        </SectionTitle>
+      </Box>
       {children}
     </Box>
   );

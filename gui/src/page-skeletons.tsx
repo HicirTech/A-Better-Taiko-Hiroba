@@ -12,6 +12,7 @@ import { FrameTop } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { useTouchFirst } from "./navigation/use-touch-first";
 import { SearchFieldSkeleton } from "./ui/search-field";
+import { SectionTitleSkeleton } from "./ui/section-title";
 import { SYNC_BAR_PAGE, SyncBarSkeleton } from "./ui/sync-bar";
 
 // Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
@@ -86,10 +87,12 @@ function RatingSkeleton() {
           <Skeleton variant="circular" width={200} height={200} />
         </Box>
       </Stack>
-      <Stack spacing={0.5}>
-        <Skeleton width={150} sx={{ ...HEADING, mx: 2 }} />
+      <Box>
+        <Box sx={{ px: 2 }}>
+          <SectionTitleSkeleton width={150} />
+        </Box>
         <HistoryRowsSkeleton />
-      </Stack>
+      </Box>
     </Stack>
   );
 }
@@ -141,8 +144,8 @@ function FavoritesSkeleton() {
         </Box>
         <Card variant="outlined">
           <CardContent>
+            <SectionTitleSkeleton width={120} />
             <Stack spacing={1.5}>
-              <Skeleton width={120} sx={HEADING} />
               <SongRowSkeleton />
               <Skeleton variant="rounded" width={96} height={36} />
             </Stack>
@@ -150,13 +153,13 @@ function FavoritesSkeleton() {
         </Card>
         <Card variant="outlined">
           <CardContent>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+              <Skeleton width={140} sx={HEADING} />
+              <Box sx={{ flexGrow: 1 }} />
+              <Skeleton variant="rounded" width={100} height={30} />
+              <Skeleton variant="rounded" width={110} height={30} />
+            </Box>
             <Stack spacing={1.5}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Skeleton width={140} sx={HEADING} />
-                <Box sx={{ flexGrow: 1 }} />
-                <Skeleton variant="rounded" width={100} height={30} />
-                <Skeleton variant="rounded" width={110} height={30} />
-              </Box>
               {FOLDER_ROWS.map((key) => (
                 <SongRowSkeleton key={key} />
               ))}

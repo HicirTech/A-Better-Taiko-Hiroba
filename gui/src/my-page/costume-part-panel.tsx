@@ -1,9 +1,10 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CostumeEditorView, CostumeSet } from "../session-port";
 import { HELD_STILL } from "../ui/editor-parts";
+import { SectionTitle } from "../ui/section-title";
 import { CostumeItemGrid, ThumbnailsUnavailable } from "./costume-item-grid";
 import { Palette } from "./costume-palette";
 import { PARTS_PANEL_ID, partTabId } from "./costume-part-tiles";
@@ -23,17 +24,18 @@ export interface PartHeadProps {
   readonly part: CostumePart;
 }
 
+// A notice under the part's name keeps the titles' gap to the cells.
+const NOTICE_UNDER_THE_TITLE = { "& > .MuiAlert-root": { mb: 1 } } as const;
+
 /** What stands over the part's cells: its name, and the words for thumbnails that did not come. */
 export function PartHead({ view, lane, i18n, part }: PartHeadProps) {
   return (
-    <Stack spacing={1.5} sx={{ pb: 1.5 }}>
-      <Typography component="h2" variant="subtitle1">
-        {i18n.t(PART_LABEL[part])}
-      </Typography>
+    <Box sx={NOTICE_UNDER_THE_TITLE}>
+      <SectionTitle>{i18n.t(PART_LABEL[part])}</SectionTitle>
       {isSlotPart(part) && (
         <ThumbnailsUnavailable lane={lane} i18n={i18n} part={part} items={itemsOf(view, part)} />
       )}
-    </Stack>
+    </Box>
   );
 }
 
