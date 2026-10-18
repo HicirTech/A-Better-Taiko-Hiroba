@@ -6,7 +6,6 @@ import {
   ArrowDropDownIcon,
   CheckIcon,
   CloseIcon,
-  DeleteIcon,
   DragHandleIcon,
   SetsIcon,
 } from "./favorites-icons";
@@ -22,7 +21,6 @@ const meta = {
         ["CheckIcon", <CheckIcon key="check" />],
         ["AddIcon", <AddIcon key="add" />],
         ["DragHandleIcon", <DragHandleIcon key="drag" />],
-        ["DeleteIcon", <DeleteIcon key="delete" />],
         ["ArrowDropDownIcon", <ArrowDropDownIcon key="drop" />],
       ]}
     />
