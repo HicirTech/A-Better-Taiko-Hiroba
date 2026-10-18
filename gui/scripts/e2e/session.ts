@@ -399,7 +399,7 @@ export async function signedOutReopen(ctx: Ctx) {
     (await running.textOf("main h1")) === "Costume" &&
     (await editorHits()) === editorReadsBeforeOpening + 1 &&
     (await running.page.evaluate<boolean>(
-      `["#costume-part-colorFace", "#costume-save", "#costume-history", "#costume-actions"].every((selector) => document.querySelector(selector) !== null)`,
+      `["#costume-part-colorFace", "#costume-save", "#costume-history", "#costume-bar"].every((selector) => document.querySelector(selector) !== null)`,
     ));
   await resetLog();
   const leftAsIs = { ...START, colorFace: 7 };

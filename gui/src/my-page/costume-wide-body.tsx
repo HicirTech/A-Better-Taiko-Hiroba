@@ -38,13 +38,11 @@ export interface WideBodyProps {
   /** The part on show. */
   readonly part: CostumePart;
   readonly onPart: (part: CostumePart) => void;
-  /** The buttons under the tiles, or a save's progress; null while there is no editor to act on. */
-  readonly actions: ReactNode;
   /** What stands in place of the part on show while the editor is not at hand. */
   readonly progress: ReactNode;
 }
 
-export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }: WideBodyProps) {
+export function WideBody({ editor, lane, i18n, part, onPart, progress }: WideBodyProps) {
   const { step } = editor;
   const shown = shownEditorOf(step);
   const withAside = previewSetOf(step) !== null;
@@ -65,7 +63,6 @@ export function WideBody({ editor, lane, i18n, part, onPart, actions, progress }
               onPick={onPart}
             />
           )}
-          {actions}
         </Stack>
       )}
       {shown !== null && (
@@ -104,13 +101,6 @@ export function WideBodySkeleton() {
       <Stack spacing={2} sx={ASIDE}>
         <Skeleton variant="rounded" sx={ART} />
         <PartTilesSkeleton wide />
-        <Stack spacing={1}>
-          <Skeleton variant="rounded" height={36} />
-          <Stack direction="row" sx={{ justifyContent: "space-around" }}>
-            <Skeleton width={64} />
-            <Skeleton width={56} />
-          </Stack>
-        </Stack>
       </Stack>
       <Box sx={{ ...ABOVE, pb: 1.5 }}>
         <Skeleton width={72} />

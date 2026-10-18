@@ -473,8 +473,8 @@ export async function costumeWrite(ctx: Ctx) {
     !(await exists("#costume-review")) &&
     !(await exists("#costume-back")) &&
     same(
-      (await buttonsIn("#costume-actions")).map(({ id }) => id),
-      ["costume-save", "costume-history", "costume-reset"],
+      (await buttonsIn("#costume-bar")).map(({ id }) => id),
+      ["costume-history", "costume-reset", "costume-save"],
     ) &&
     posts.filter((post) => post.path === "/ajax/change_mydon.php").length === 1;
   await goTo("overview");

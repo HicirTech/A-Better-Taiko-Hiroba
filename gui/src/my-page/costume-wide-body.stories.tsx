@@ -20,5 +20,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A wide window: the preview, tiles and Save at the left, the part's grid at the right. */
+/** A wide window: the preview and tiles at the left, the part's grid at the right, the bar under. */
 export const TwoColumns: Story = {};

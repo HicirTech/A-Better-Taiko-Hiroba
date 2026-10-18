@@ -1,57 +1,34 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Paper, Skeleton, Stack } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
-import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
 import { useWideWindow } from "../navigation/use-wide-window";
 import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { BAR_TEXT_BUTTON, SYNC_BAR_PAGE, SyncBar, SyncBarSkeleton } from "../ui/sync-bar";
 import { type EditorStep, shownEditorOf } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { NarrowBody, NarrowBodySkeleton } from "./costume-narrow-body";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
 import { WideBody, WideBodySkeleton } from "./costume-wide-body";
-import { useFocusKept, Waiting } from "./editor-parts";
-import { BAR_REF } from "./stuck-clearance";
+import { useFocusKept } from "./editor-parts";
 import type { CostumeEditor } from "./use-costume-editor";
 import { WriteOutcomeSnackbar } from "./write-outcome";
 
 // MUI's sm width: a narrow window's column need not stretch across it.
 export const COLUMN_MAX_WIDTH_PX = 600;
-const BAR_PADDING_PX = 12;
-// Below this width the bar gives up padding and gaps before a label would wrap.
-const WHEN_SNUG = "@media (max-width: 389px)";
-const TOUCH_TARGET_PX = 48;
-const ONE_LINE_LABEL = { whiteSpace: "nowrap" } as const;
-const SNUG_TEXT_BUTTON = { [WHEN_SNUG]: { minWidth: TOUCH_TARGET_PX, px: 0.25 } } as const;
-const SNUG_CONTAINED_BUTTON = { [WHEN_SNUG]: { px: 1 } } as const;
 const pageOf = (wide: boolean) =>
   ({
-    display: "flex",
-    flexDirection: "column",
+    ...SYNC_BAR_PAGE,
     width: 1,
     ...(!wide && {
-      ...BOTTOM_BAR_PAGE,
       maxWidth: COLUMN_MAX_WIDTH_PX,
       // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
       alignSelf: "center",
     }),
     outline: "none",
   }) as const;
-const ACTION_BAR = {
-  ...BOTTOM_BAR,
-  // Sticky, not fixed: it takes the column's width and clears the navigation unmeasured.
-  position: "sticky",
-  bottom: 0,
-  zIndex: 1,
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: 1,
-  p: `${BAR_PADDING_PX}px`,
-  pb: `calc(${BAR_PADDING_PX}px + env(safe-area-inset-bottom, 0px))`,
-  [WHEN_SNUG]: { px: 1 },
-} as const;
 
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
@@ -84,18 +61,16 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
     page.current?.focus({ preventScroll: true });
     void editor.save();
   };
-  const actions = actionsOf(editor, i18n, () => setHistoryOpen(true), save, wide);
   const body = { editor, lane, i18n, part, onPart: setPart, progress: failureOf(step, i18n) };
   return (
     <Box ref={page} id="costume-page" data-step={step.name} tabIndex={-1} sx={pageOf(wide)}>
-      {wide ? (
-        <WideBody {...body} actions={actions} />
-      ) : (
-        <>
-          <NarrowBody {...body} />
-          {actions !== null && <ActionBar>{actions}</ActionBar>}
-        </>
-      )}
+      {wide ? <WideBody {...body} /> : <NarrowBody {...body} />}
+      <CostumeBar
+        editor={editor}
+        i18n={i18n}
+        onHistory={() => setHistoryOpen(true)}
+        onSave={save}
+      />
       {step.name === "editing" && step.notice !== null && (
         <WriteOutcomeSnackbar
           kind="costume"
@@ -128,104 +103,46 @@ function failureOf(step: EditorStep, i18n: Translator): ReactNode {
   ) : null;
 }
 
-function actionsOf(
-  editor: CostumeEditor,
-  i18n: Translator,
-  onHistory: () => void,
-  onSave: () => void,
-  wide: boolean,
-): ReactNode {
-  const { t } = i18n;
+/** The page's sync bar, its History first; none while there is no editor to act on. */
+function CostumeBar({
+  editor,
+  i18n,
+  onHistory,
+  onSave,
+}: {
+  readonly editor: CostumeEditor;
+  readonly i18n: Translator;
+  readonly onHistory: () => void;
+  readonly onSave: () => void;
+}) {
   const { step } = editor;
   const shown = shownEditorOf(step);
   if (shown === null) {
     return null;
   }
 
-  const unchanged = changedParts(shown.editor.state, shown.draft).length === 0;
+  const changed = changedParts(shown.editor.state, shown.draft).length > 0;
   const reading = step.name === "loading";
-  const history = (
-    <Button
-      id="costume-history"
-      disabled={reading || editor.history.length === 0}
-      onClick={onHistory}
-      sx={{ ...ONE_LINE_LABEL, ...SNUG_TEXT_BUTTON, ...(wide ? { flex: 1 } : { mr: "auto" }) }}
-    >
-      {t("costume.history")}
-    </Button>
-  );
-  const reset = (
-    <Button
-      id="costume-reset"
-      disabled={reading || unchanged}
-      onClick={editor.reset}
-      sx={{ ...ONE_LINE_LABEL, ...SNUG_TEXT_BUTTON, ...(wide && { flex: 1 }) }}
-    >
-      {t("costume.reset")}
-    </Button>
-  );
-  const save = (
-    <Button
-      id="costume-save"
-      variant="contained"
-      fullWidth={wide}
-      disabled={reading || unchanged}
-      onClick={onSave}
-      sx={{ ...ONE_LINE_LABEL, ...SNUG_CONTAINED_BUTTON }}
-    >
-      {t("write.sync")}
-    </Button>
-  );
   return (
-    <ActionArea
-      id={wide ? "costume-actions" : undefined}
+    <SyncBar
+      id="costume"
+      canSync={!reading && changed}
+      onSync={onSave}
+      onReset={editor.reset}
+      canReset={!reading && changed}
       saving={step.name === "saving"}
-      progress={<Waiting id="costume-saving">{t("costume.saving")}</Waiting>}
-    >
-      {wide ? (
-        <Stack spacing={1}>
-          {save}
-          <Box sx={{ display: "flex", gap: 1 }}>
-            {history}
-            {reset}
-          </Box>
-        </Stack>
-      ) : (
-        <Box sx={{ display: "flex", gap: 1, [WHEN_SNUG]: { gap: 0.5 } }}>
-          {history}
-          {reset}
-          {save}
-        </Box>
-      )}
-    </ActionArea>
-  );
-}
-
-/** The buttons, hidden by a save while its progress takes their place, so nothing moves. */
-function ActionArea({
-  id,
-  saving,
-  progress,
-  children,
-}: {
-  id?: string | undefined;
-  saving: boolean;
-  progress: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <Box id={id} sx={{ display: "grid", width: 1 }}>
-      <Box sx={{ gridArea: "1 / 1", visibility: saving ? "hidden" : "visible" }}>{children}</Box>
-      {saving && <Box sx={{ gridArea: "1 / 1", alignSelf: "center" }}>{progress}</Box>}
-    </Box>
-  );
-}
-
-function ActionBar({ children }: { children: ReactNode }) {
-  return (
-    <Paper ref={BAR_REF} id="costume-bar" elevation={3} sx={ACTION_BAR}>
-      {children}
-    </Paper>
+      start={
+        <Button
+          id="costume-history"
+          disabled={reading || editor.history.length === 0}
+          onClick={onHistory}
+          sx={BAR_TEXT_BUTTON}
+        >
+          {i18n.t("costume.history")}
+        </Button>
+      }
+      i18n={i18n}
+    />
   );
 }
 
@@ -235,16 +152,8 @@ export function CostumePageSkeleton() {
   useWiderFrame();
   return (
     <Box sx={pageOf(wide)}>
-      {wide ? (
-        <WideBodySkeleton />
-      ) : (
-        <>
-          <NarrowBodySkeleton />
-          <Paper elevation={3} sx={ACTION_BAR}>
-            <Skeleton variant="rounded" width={140} height={36} />
-          </Paper>
-        </>
-      )}
+      {wide ? <WideBodySkeleton /> : <NarrowBodySkeleton />}
+      <SyncBarSkeleton />
     </Box>
   );
 }

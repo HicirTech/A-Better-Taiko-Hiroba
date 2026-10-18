@@ -306,20 +306,20 @@ two rows, **Colours** and **Costume** (Hiroba's いろ and きせかえ; Head, B
 Character, then the Mascot, which is often empty), each tile holding what the draft has there: a
 swatch, the item's thumbnail, or a blank tile for none. A click, or Enter or Space, picks a part, the
 arrow keys move along a row and Tab goes to the other, and a tile's name shows on hover and on
-keyboard focus. Under the tiles come **Sync to Hiroba**, then **History** and **Reset** to put the
-draft back to the set as read. The column starts level with the first row of the part's cells, so a
-notice over them moves it down; it stays in view as the page scrolls, on a window at least 640 px
-tall, and holds only these, so it is never taller than the window. The right is the part picked:
+keyboard focus. The column starts level with the first row of the part's cells, so a notice over
+them moves it down; it stays in view as the page scrolls, on a window at least 640 px tall, and holds
+only the picture and the tiles, so it is never taller than the window. The right is the part picked:
 over its name stand the words for a picture that did not come and the Mascot note, when there are
 any, then its name, the words for thumbnails that did not come, and its palette or
 items' thumbnails, as many to a row as fit from the left; the items begin with **None** (Hiroba's
 はずす), which empties the slot. On a narrow window the page is a column, as wide as the window on a
 phone: a square picture of 160 px with the same tiles in one row under it, which stay in view as the
 page scrolls on a window at least 640 px tall, hiding the cells from the window's top edge to a gap
-under the tiles, then the same notes and the part's grid, and the buttons in a bar at the bottom edge
-of the window, which stays there as the page scrolls: **History** at the left, then **Reset** and
-**Sync to Hiroba**, each label on one line, the bar's padding and gaps shrinking on a window under
-390 px wide. The part picked is the same in both. On a narrow window a cell reached by Tab or
+under the tiles, then the same notes and the part's grid. On any window the buttons are in a bar at
+the bottom edge of the window, which stays there as the page scrolls: **History** at the left, then
+**Reset**, which puts the draft back to the set as read, and **Sync to Hiroba**, each label on one
+line, the bar's padding and gaps shrinking on a window under 390 px wide; while a write runs, its
+words over a moving bar stand in for the buttons. The part picked is the same in both. On a narrow window a cell reached by Tab or
 Shift+Tab is scrolled clear of the tiles above it and the bar below.
 
 - **Reading.** The editor (`mypage_kisekae.php`) is read once, when the page is first shown in a
