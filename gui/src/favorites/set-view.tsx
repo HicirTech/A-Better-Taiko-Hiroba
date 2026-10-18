@@ -1,7 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Card, CardContent, IconButton, Stack, Typography } from "@mui/material";
 
-import { Waiting } from "../my-page/editor-parts";
 import { CloseIcon } from "./favorites-icons";
 import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongRow } from "./song-row";
@@ -27,10 +26,6 @@ export interface SetViewProps {
   readonly editing: boolean;
   /** The edits differ from the set's songs, so Reset can drop them. */
   readonly edited: boolean;
-  /** The folder is read and no write runs, and applying the set would change it. */
-  readonly canApply: boolean;
-  /** The folder is being written. */
-  readonly applying: boolean;
   /** While editing, a long press moves a song, as on a phone; otherwise its handle does. */
   readonly byLongPress: boolean;
   readonly onEdit: () => void;
@@ -39,10 +34,9 @@ export interface SetViewProps {
   readonly onMoveSong: (from: number, to: number) => void;
   readonly onReset: () => void;
   readonly onSave: () => void;
-  readonly onApply: () => void;
 }
 
-/** A set: shown with Edit and Apply, and while edited with Add songs, Reset and Save. */
+/** A set: shown with Edit, edited with Add songs, Reset and Save; the page's bar syncs it. */
 export function SetView({
   songs: songNos,
   look,
@@ -50,8 +44,6 @@ export function SetView({
   openDetails,
   editing,
   edited,
-  canApply,
-  applying,
   byLongPress,
   onEdit,
   onAddSongs,
@@ -59,7 +51,6 @@ export function SetView({
   onMoveSong,
   onReset,
   onSave,
-  onApply,
 }: SetViewProps) {
   const { t } = i18n;
   const songs = songNos.map((songNo) => ({ key: songNo, name: look(songNo).name }));
@@ -84,23 +75,11 @@ export function SetView({
                 </Button>
               </>
             ) : (
-              <>
-                <Button id="favorite-set-edit" variant="outlined" onClick={onEdit}>
-                  {t("favorites.edit")}
-                </Button>
-                <Box sx={{ flexGrow: 1 }} />
-                <Button
-                  id="favorite-set-apply"
-                  variant="contained"
-                  disabled={!canApply}
-                  onClick={onApply}
-                >
-                  {t("write.sync")}
-                </Button>
-              </>
+              <Button id="favorite-set-edit" variant="outlined" onClick={onEdit}>
+                {t("favorites.edit")}
+              </Button>
             )}
           </Box>
-          {applying && <Waiting id="favorite-set-applying">{t("costume.saving")}</Waiting>}
           {songs.length === 0 ? (
             <Typography id="favorite-set-empty" color="text.secondary">
               {t("favorites.setEmpty")}

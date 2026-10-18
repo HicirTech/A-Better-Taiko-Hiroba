@@ -1,7 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Card, CardContent, Stack, Typography } from "@mui/material";
 
-import { Waiting } from "../my-page/editor-parts";
 import type { ShownFavorites } from "./favorites-state";
 import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongRow } from "./song-row";
@@ -12,22 +11,12 @@ export interface SongCardProps {
   readonly i18n: Translator;
   readonly openDetails: DetailsOpener;
   readonly onChange: () => void;
-  readonly onSave: () => void;
-  readonly onReset: () => void;
 }
 
-/** The 大好きな曲, or the one picked to replace it, with Save and Reset once one is picked. */
-export function SongCard({
-  shown,
-  look,
-  i18n,
-  openDetails,
-  onChange,
-  onSave,
-  onReset,
-}: SongCardProps) {
+/** The 大好きな曲, or the one picked to replace it; the page's sync bar sends the pick. */
+export function SongCard({ shown, look, i18n, openDetails, onChange }: SongCardProps) {
   const { t } = i18n;
-  const { view, draft, shut, saving } = shown;
+  const { view, draft, shut } = shown;
   const { songNo, ura } = draft ?? view.song.state;
   return (
     <Card id="favorite-song-card" variant="outlined">
@@ -50,30 +39,11 @@ export function SongCard({
               onOpen={openDetails(songNo)}
             />
           )}
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
+          <Box>
             <Button id="favorite-song-change" variant="outlined" disabled={shut} onClick={onChange}>
               {t("favorites.song.change")}
             </Button>
-            {draft !== null && (
-              <>
-                <Box sx={{ flexGrow: 1 }} />
-                <Button id="favorite-song-reset" disabled={shut} onClick={onReset}>
-                  {t("costume.reset")}
-                </Button>
-                <Button
-                  id="favorite-song-save"
-                  variant="contained"
-                  disabled={shut}
-                  onClick={onSave}
-                >
-                  {t("write.sync")}
-                </Button>
-              </>
-            )}
           </Box>
-          {saving === "favoriteSong" && (
-            <Waiting id="favorite-song-saving">{t("costume.saving")}</Waiting>
-          )}
         </Stack>
       </CardContent>
     </Card>

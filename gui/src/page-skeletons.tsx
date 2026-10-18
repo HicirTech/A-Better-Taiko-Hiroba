@@ -131,37 +131,40 @@ function FavoritesSkeleton() {
   // A touch screen opens the sets by a swipe, so it has no button for them.
   const touchFirst = useTouchFirst();
   return (
-    <Stack spacing={2} sx={COLUMN}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, minHeight: 40 }}>
-        <Skeleton width={180} sx={{ fontSize: "1.25rem" }} />
-        <Box sx={{ flexGrow: 1 }} />
-        {!touchFirst && <Skeleton variant="circular" width={40} height={40} />}
-      </Box>
-      <Card variant="outlined">
-        <CardContent>
-          <Stack spacing={1.5}>
-            <Skeleton width={120} sx={HEADING} />
-            <SongRowSkeleton />
-            <Skeleton variant="rounded" width={96} height={36} />
-          </Stack>
-        </CardContent>
-      </Card>
-      <Card variant="outlined">
-        <CardContent>
-          <Stack spacing={1.5}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Skeleton width={140} sx={HEADING} />
-              <Box sx={{ flexGrow: 1 }} />
-              <Skeleton variant="rounded" width={100} height={30} />
-              <Skeleton variant="rounded" width={110} height={30} />
-            </Box>
-            {FOLDER_ROWS.map((key) => (
-              <SongRowSkeleton key={key} />
-            ))}
-          </Stack>
-        </CardContent>
-      </Card>
-    </Stack>
+    <Box sx={{ ...SYNC_BAR_PAGE, ...COLUMN }}>
+      <Stack spacing={2} sx={{ pb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minHeight: 40 }}>
+          <Skeleton width={180} sx={{ fontSize: "1.25rem" }} />
+          <Box sx={{ flexGrow: 1 }} />
+          {!touchFirst && <Skeleton variant="circular" width={40} height={40} />}
+        </Box>
+        <Card variant="outlined">
+          <CardContent>
+            <Stack spacing={1.5}>
+              <Skeleton width={120} sx={HEADING} />
+              <SongRowSkeleton />
+              <Skeleton variant="rounded" width={96} height={36} />
+            </Stack>
+          </CardContent>
+        </Card>
+        <Card variant="outlined">
+          <CardContent>
+            <Stack spacing={1.5}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Skeleton width={140} sx={HEADING} />
+                <Box sx={{ flexGrow: 1 }} />
+                <Skeleton variant="rounded" width={100} height={30} />
+                <Skeleton variant="rounded" width={110} height={30} />
+              </Box>
+              {FOLDER_ROWS.map((key) => (
+                <SongRowSkeleton key={key} />
+              ))}
+            </Stack>
+          </CardContent>
+        </Card>
+      </Stack>
+      <SyncBarSkeleton />
+    </Box>
   );
 }
 

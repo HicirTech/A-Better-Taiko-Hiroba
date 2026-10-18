@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import { useId, useState } from "react";
 
-import { Waiting } from "../my-page/editor-parts";
 import { useBackCloses } from "../navigation/back-closers";
 import { SimpleDialog } from "../ui/simple-dialog";
 import type { FavoriteSet } from "./favorite-sets";
@@ -55,7 +54,7 @@ export function FolderCard({
   onSaveToSet,
 }: FolderCardProps) {
   const { t } = i18n;
-  const { view, saving, shut } = shown;
+  const { view, shut } = shown;
   const songs = view.folder.state.slots.flatMap((songNo, index) =>
     songNo === null ? [] : [{ slot: index + 1, songNo }],
   );
@@ -130,9 +129,6 @@ export function FolderCard({
                 </li>
               ))}
             </Box>
-          )}
-          {saving === "folder" && (
-            <Waiting id="favorite-folder-saving">{t("costume.saving")}</Waiting>
           )}
         </Stack>
       </CardContent>

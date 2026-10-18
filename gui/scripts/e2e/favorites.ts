@@ -94,6 +94,11 @@ export async function favorites(ctx: Ctx) {
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
     waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  /** Whether the page's Sync to Hiroba is shut, or not there at all. */
+  const syncShut = () =>
+    page.evaluate<boolean>(`document.querySelector("#favorites-save")?.disabled !== false`);
+  const syncLit = () =>
+    waitFor("Sync to Hiroba lit", async () => ((await syncShut()) ? undefined : true));
   const typeInto = (selector: string, text: string) =>
     page.evaluate(
       `(() => { const input = document.querySelector(${JSON.stringify(selector)}); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
@@ -434,7 +439,7 @@ export async function favorites(ctx: Ctx) {
 
   const keptBeforeSave = await keptSongs();
   await click("#favorite-set-save");
-  await shown("#favorite-set-apply");
+  await shown("#favorite-set-edit");
   results.setEditsWaitForSave =
     same(keptBeforeSave, []) && same(await keptSongs(), ["1003", "1001", LONG_TITLED]);
   results.setShownBeforeEditing =
@@ -446,7 +451,7 @@ export async function favorites(ctx: Ctx) {
     noDetailsWhileEditing && (await detailsTitleOf(`#favorite-set-song-${LONG_TITLED}`));
 
   await resetLog();
-  await click("#favorite-set-apply");
+  await click("#favorites-save");
   await stepIs("ready");
   await shown("#favorite-folder-list");
   await Bun.sleep(500);
@@ -469,9 +474,9 @@ export async function favorites(ctx: Ctx) {
     `document.querySelector('#favorite-set-songs button[data-song-no="${LONG_TITLED}"]').click()`,
   );
   await click("#favorite-set-save");
-  await shown("#favorite-set-apply");
+  await shown("#favorite-set-edit");
   await resetLog();
-  await click("#favorite-set-apply");
+  await click("#favorites-save");
   await shown("#favorite-folder-outcome");
   results.notStagedSaysSoAndSavesNothing =
     (await textOf("#favorite-folder-outcome")) === "Sync to Hiroba failed. Please try again." &&
@@ -528,22 +533,21 @@ export async function favorites(ctx: Ctx) {
   await shown("#song-picker-row-1002 button");
   await page.evaluate(`document.querySelector("#song-picker-row-1002 button").click()`);
   await gone("#song-picker");
-  await shown("#favorite-song-save");
-  await click("#favorite-song-save");
-  await gone("#favorite-song-saving");
-  await gone("#favorite-song-save");
+  await syncLit();
+  await click("#favorites-save");
+  await stepIs("ready");
   results.favoriteSongPickedThenSaved =
     (await favoritesNow()).favoriteSong === "1002" && !(await exists("#favorite-song-outcome"));
 
   await click("#favorite-song-change");
   await shown("#song-picker-row-1004 button");
   await page.evaluate(`document.querySelector("#song-picker-row-1004 button").click()`);
-  await shown("#favorite-song-save");
+  await syncLit();
   await goTo("overview");
   await goTo("favorites");
   await stepIs("ready");
   results.favoriteSongDraftDroppedOnLeaving =
-    !(await exists("#favorite-song-save")) && (await favoritesNow()).favoriteSong === "1002";
+    (await syncShut()) && (await favoritesNow()).favoriteSong === "1002";
 
   // The pickers' list is read as a picker opens: a read again, on any page, only lets it go stale.
   const pickerReads = () => hitsOn("/form_data.php");
@@ -600,10 +604,9 @@ export async function favorites(ctx: Ctx) {
     `document.querySelector("#song-picker-row-${WITH_INNER}-ura button").click()`,
   );
   await gone("#song-picker");
-  await shown("#favorite-song-save");
-  await click("#favorite-song-save");
-  await gone("#favorite-song-saving");
-  await gone("#favorite-song-save");
+  await syncLit();
+  await click("#favorites-save");
+  await stepIs("ready");
   const innerSaved = await favoritesNow();
   results.innerEntrySavedAndShown =
     innerSaved.favoriteSong === WITH_INNER &&
