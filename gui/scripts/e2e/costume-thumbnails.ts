@@ -401,7 +401,7 @@ export async function saveInPlace(ctx: Ctx) {
   });
   results.costumeSaveKeepsTheEditorAndThePageInPlace = keptInPlace(
     await saveFromTheEndOfTheSlot(960, 720),
-    "costume-aside",
+    "costume-bar",
   );
   results.costumePhoneSaveKeepsTheEditorAndThePageInPlace = keptInPlace(
     await saveFromTheEndOfTheSlot(390, 700),
