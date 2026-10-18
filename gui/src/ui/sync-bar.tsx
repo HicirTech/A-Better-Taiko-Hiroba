@@ -2,9 +2,9 @@ import type { Translator } from "@abth/i18n";
 import { Box, Button, Paper, Skeleton } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { BAR_REF } from "../my-page/stuck-clearance";
-import { BOTTOM_BAR, BOTTOM_BAR_PAGE } from "../navigation/app-frame";
+import { PAGE_BOTTOM_PX, PAGE_HEIGHT } from "../navigation/app-frame";
 import { ProgressBar } from "./progress-bar";
+import { publishHeightOf } from "./publish-height";
 
 const BAR_PADDING_PX = 12;
 // Below this width the bar gives up padding and gaps before a label would wrap.
@@ -12,6 +12,16 @@ const WHEN_SNUG = "@media (max-width: 389px)";
 const TOUCH_TARGET_PX = 48;
 const ONE_LINE_LABEL = { whiteSpace: "nowrap" } as const;
 const SNUG_CONTAINED_BUTTON = { ...ONE_LINE_LABEL, [WHEN_SNUG]: { px: 1 } } as const;
+const BAR_HEIGHT = "--sync-bar-height";
+const BAR_REF = publishHeightOf(BAR_HEIGHT);
+
+/** The bar's height while a page shows one, else 0: for what must stay clear of it. */
+export const SYNC_BAR_HEIGHT = `var(${BAR_HEIGHT}, 0px)`;
+
+/** Keeps a snackbar's gap at the window's foot, as Material sets it, above the bar. */
+export const ABOVE_SYNC_BAR = {
+  bottom: { xs: `calc(${SYNC_BAR_HEIGHT} + 8px)`, sm: `calc(${SYNC_BAR_HEIGHT} + 24px)` },
+} as const;
 
 /** A text button in the bar, such as the costume's History: one line, snug on a narrow phone. */
 export const BAR_TEXT_BUTTON = {
@@ -21,13 +31,15 @@ export const BAR_TEXT_BUTTON = {
 
 /** A page with the bar: as tall as the window at least, so the bar stands at the window's foot. */
 export const SYNC_BAR_PAGE = {
-  ...BOTTOM_BAR_PAGE,
+  minHeight: PAGE_HEIGHT,
   display: "flex",
   flexDirection: "column",
 } as const;
 
 const BAR = {
-  ...BOTTOM_BAR,
+  // Flush with the window's foot: the bar, the page's last child, takes back the frame's bottom
+  // room by a negative margin (a Stack's child may not have one).
+  mb: `-${PAGE_BOTTOM_PX}px`,
   // Sticky, not fixed: it takes the column's width and clears the navigation unmeasured.
   position: "sticky",
   bottom: 0,

@@ -70,7 +70,7 @@ const PANEL_WIDTH_PX = 240;
 const MENU_INSET_PX = 8;
 // The band the floating buttons sit in; fixed so every page starts at the same height.
 const TOP_BAND_PX = 64;
-const PAGE_BOTTOM_PX = 32;
+export const PAGE_BOTTOM_PX = 32;
 const SAFE_TOP = "env(safe-area-inset-top, 0px)";
 export const BELOW_TOP_BAND = `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`;
 /** The window's room for a page: below the top band and above the frame's bottom room. */
@@ -270,11 +270,6 @@ export function FrameTop({ children }: { children: ReactNode }) {
     </Box>
   );
 }
-
-// A bottom bar sits flush with the window's edge: the page fills the window and the bar, its last
-// child, overlaps the frame's bottom room by a negative margin (a Stack's child may not have one).
-export const BOTTOM_BAR_PAGE = { minHeight: PAGE_HEIGHT } as const;
-export const BOTTOM_BAR = { mb: `-${PAGE_BOTTOM_PX}px` } as const;
 
 /** Below this height a block that stays in view would crowd the page, so it scrolls with it. */
 const TALL_WINDOW_PX = 640;

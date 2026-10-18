@@ -1,7 +1,7 @@
 import { Snackbar } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { ABOVE_STUCK_BAR } from "../my-page/stuck-clearance";
+import { ABOVE_SYNC_BAR } from "./sync-bar";
 
 // Long enough to read a sentence twice; a click elsewhere does not cut it short.
 const SHOWN_MS = 6000;
@@ -33,7 +33,7 @@ export function OperationSnackbar({
       message={message}
       autoHideDuration={SHOWN_MS}
       anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      sx={ABOVE_STUCK_BAR}
+      sx={ABOVE_SYNC_BAR}
       onClose={(_event, reason) => {
         if (reason !== "clickaway") {
           onClose();
