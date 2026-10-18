@@ -186,7 +186,8 @@ export async function costumeLayout(ctx: Ctx) {
     const scrolledBy = await scrollToTheEnd();
     const after = await boxOf("#costume-aside");
     const own = await page.evaluate<boolean>(
-      `(() => { const node = document.querySelector("#costume-aside"); return node.scrollHeight > node.clientHeight + 1 || getComputedStyle(node).overflowY !== "visible"; })()`,
+      // The tiles' pick ring has its room past the column's edge, by design.
+      `(() => { const node = document.querySelector("#costume-aside"); return node.scrollHeight > node.clientHeight + ${RING_ROOM_PX} + 1 || getComputedStyle(node).overflowY !== "visible"; })()`,
     );
     const scrolling = await scrollingBoxes();
     await page.evaluate("window.scrollTo(0, 0)");
