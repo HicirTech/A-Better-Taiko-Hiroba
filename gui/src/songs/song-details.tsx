@@ -76,7 +76,8 @@ export interface SongDetailsProps {
 }
 
 export function SongDetails({ song, port, lane, i18n, onClose }: SongDetailsProps) {
-  // Kept while the modal slides away, so it does not go blank on its way.
+  // Kept while the modal slides away, so it does not go blank on its way, then dropped, so the
+  // song opens afresh; stepping aside for the pipelines page keeps it.
   const [last, setLast] = useState(song);
   if (song !== null && song !== last) {
     setLast(song);
@@ -90,6 +91,11 @@ export function SongDetails({ song, port, lane, i18n, onClose }: SongDetailsProp
       lane={lane}
       i18n={i18n}
       onClose={onClose}
+      onExited={() => {
+        if (song === null) {
+          setLast(null);
+        }
+      }}
     />
   );
 }
@@ -115,7 +121,8 @@ function DetailsBody({
   lane,
   i18n,
   onClose,
-}: Omit<SongDetailsProps, "song"> & { open: boolean; song: ListedSong }) {
+  onExited,
+}: Omit<SongDetailsProps, "song"> & { open: boolean; song: ListedSong; onExited: () => void }) {
   const { t, locale } = i18n;
   // A touch screen's pull reads the chart again, where a computer has the button.
   const touchFirst = useTouchFirst();
@@ -229,6 +236,7 @@ function DetailsBody({
         pageLike
         contentRef={content}
         i18n={i18n}
+        onExited={onExited}
         onClose={onClose}
       >
         <PullToRead
