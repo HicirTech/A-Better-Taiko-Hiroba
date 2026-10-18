@@ -525,12 +525,12 @@ What it costs Hiroba:
   session still good, and kept under your player, so never given to another account. Until then it
   is shown, not kept: a sign-out before that read asks for it again.
 
-Until the plate comes, or if it does not, a plain band stands in where the plate's band goes, and a line
-under the card gives a code for a report. Without a session, Hiroba answers a blank plate, a PNG
-that no check can tell from yours, which is why the plate is asked for only after a read that
-found the session good, and kept only once the next read finds it good still: a blank plate that
-came as Hiroba ended the session unseen is shown until that read at most, and never kept. With
-`ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`.
+Until the plate comes, or if it does not, a plain band stands in where the plate's band goes, and
+nothing is said: the pipelines page keeps the code for a report. Without a session, Hiroba answers
+a blank plate, a PNG that no check can tell from yours, which is why the plate is asked for only
+after a read that found the session good, and kept only once the next read finds it good still: a
+blank plate that came as Hiroba ended the session unseen is shown until that read at most, and
+never kept. With `ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`.
 
 ### The score panel
 
@@ -542,7 +542,7 @@ player, so it is kept on the device for good for every account: fetched once, as
 the panel is on screen, in the queue, and never again after it came, relaunches and
 sign-outs included. Until it comes, if it does not, or for a panel of a layout not yet seen (only
 `total_score_image_5` has been), a plain panel of the same geometry stands in and names what each
-count counts, and a line under the card gives a code for a report. Art that did not come is asked
+count counts, and nothing is said: the pipelines page keeps the code. Art that did not come is asked
 for once more after each read.
 
 ### The legends' icons
@@ -572,10 +572,10 @@ window, a code or a file name. The window asks for "the どんメダル plate", 
   retried: a plate that did not come is asked for once more after each read.
 
 Until the plate comes, or if it does not, a pale pill of the same shape stands in under the same
-words, and a line under it gives a code for a report. A page with no どんメダル plate says so in grey
-words; one this version cannot read says so in a yellow notice with its code for a report, as a read
-that failed does, though a refresh cannot bring it; neither asks for a picture. With
-`ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`, named by its path alone.
+words, and nothing is said: the pipelines page keeps the code. A page with no どんメダル plate says
+so in grey words; one this version cannot read says so in a yellow notice with its code for a
+report, as a read that failed does, though a refresh cannot bring it; neither asks for a picture.
+With `ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`, named by its path alone.
 
 ### The My Don portrait
 
@@ -596,7 +596,7 @@ name. The window asks for "the My Don", and nothing more.
   the one kept stays on the tile until the next of those.
 
 Until the first one comes the tile is empty, with a small spinner; if it does not come, the tile
-stays empty and the line under the card gives a code for a report; it is asked for once more after
+stays empty and nothing is said (the pipelines page keeps the code); it is asked for once more after
 the next read. With `ABTH_DEBUG_SAVE_READS=1`,
 each is kept in `debug\history`, named by its path alone. On Android, the WebView's cookie store
 decides what the native HTTP client sends: Hiroba's session is kept for Hiroba's domain alone, so

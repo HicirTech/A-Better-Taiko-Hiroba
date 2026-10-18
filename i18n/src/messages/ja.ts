@@ -236,8 +236,6 @@ export const ja: Messages = {
   "dan.19": "達人",
   "profile.myDonAlt": "あなたのマイどん（ひろばの画像）",
   "pictures.loading": "ひろばの画像を読み込み中…",
-  "pictures.unavailable": "ひろばの画像の一部を読み込めなかったため、簡易表示にしています。",
-  "pictures.code": "報告用コード：{code}",
   "scoreRank.2": "白粋",
   "scoreRank.3": "銅粋",
   "scoreRank.4": "銀粋",

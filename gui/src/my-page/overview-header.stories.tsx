@@ -43,7 +43,7 @@ export const PicturesOnTheirWay: Story = {
   render: ({ profile }, { globals }) => header(profile, WAITING_LANE, globals),
 };
 
-/** Pictures that did not come: the codes to report under the head. */
+/** Pictures that did not come: their stand-ins, and no words about them. */
 export const PicturesFailed: Story = {
   render: ({ profile }, { globals }) => header(profile, FAILING_LANE, globals),
 };

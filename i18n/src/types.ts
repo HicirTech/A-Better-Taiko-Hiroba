@@ -274,9 +274,6 @@ export interface Messages {
   "dan.19": string;
   "profile.myDonAlt": string;
   "pictures.loading": string;
-  "pictures.unavailable": string;
-  /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
-  "pictures.code": string;
   /** Score ranks by Hiroba's rank image number (best_score_rank_N, 2 to 8); no page names them. */
   // 日本語 is core's SCORE_RANK_NAMES, held by a test; English romanises colour and tier; pink is 粉.
   "scoreRank.2": string;

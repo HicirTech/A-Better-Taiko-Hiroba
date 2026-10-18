@@ -237,9 +237,6 @@ export const en: Messages = {
   "dan.19": "Tatsujin",
   "profile.myDonAlt": "Your My Don, as Hiroba draws it",
   "pictures.loading": "Loading Hiroba's picture…",
-  "pictures.unavailable":
-    "Some of Hiroba's pictures didn't load; plain stand-ins are shown instead.",
-  "pictures.code": "Code for a report: {code}",
   "scoreRank.2": "White Iki",
   "scoreRank.3": "Bronze Iki",
   "scoreRank.4": "Silver Iki",

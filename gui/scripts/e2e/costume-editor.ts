@@ -1,6 +1,6 @@
 import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
 import { COSTUME_FIELDS } from "../mock-costume";
-import { HIROBA, MY_DON_GIF_CODE, PHONE } from "./config";
+import { HIROBA, PHONE } from "./config";
 import type { Ctx } from "./context";
 import { costumeHelpers, PNG_URL } from "./costume-helpers";
 import {
@@ -209,7 +209,7 @@ export async function costumeEditor(ctx: Ctx) {
   results.myDonNotAskedAfterNoChange =
     noChange === "notApplied" &&
     (await myDonsSettled()) === myDonsFailed &&
-    (await textOf("#pictures-code")) === MY_DON_GIF_CODE &&
+    !(await exists("#my-don-image")) &&
     same(await savedCostume(), START);
 }
 

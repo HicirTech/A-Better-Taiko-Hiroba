@@ -1,6 +1,6 @@
 import type { MedalProgress } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import { useRef } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
@@ -83,89 +83,71 @@ function MedalPlate({ name, progress, lane, i18n }: MedalPlateProps) {
   const plateBox = useRef<HTMLDivElement>(null);
   const answer = usePicture(lane, PLATE, plateBox, { rootMargin: "0px", order: 0 });
   const plate = viewOf(answer);
-  const failure = answer !== undefined && "failure" in answer ? answer.failure : null;
 
   return (
-    <Stack spacing={1}>
-      <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
-        <HirobaPicture
-          ref={plateBox}
-          id="medal-plate"
-          src={plate?.src ?? null}
-          onItsWay={answer === undefined}
-          standIn={
-            <Box
-              id="medal-plate-stand-in"
-              aria-hidden
-              sx={{
-                display: "inline-block",
-                width: 1,
-                height: hp(STAND_IN_HEIGHT),
-                bgcolor: STAND_IN,
-                borderRadius: hp(25),
-              }}
-            />
-          }
-          wordsColour={ON_PLATE}
-          sx={{
-            width: 1,
-            minHeight: hp(BLOCK_HEIGHT),
-            color: ON_PLATE,
-            // Hiroba's body text sets the line below the picture, which the words are lifted from.
-            fontSize: hp(14),
-            lineHeight: 1.5,
-          }}
-          imageSx={{ width: 1 }}
-          i18n={i18n}
-        >
-          <Box sx={{ position: "absolute", left: 0, right: 0, mt: hp(-WORDS_LIFT) }}>
-            <Box
-              id="medal-name"
-              lang={HIROBA_LANG}
-              sx={{ ...WORDS, ml: hp(NAME_LEFT), width: hp(NAME_WIDTH), wordBreak: "break-all" }}
-            >
-              {name}
-            </Box>
-            {progress.kind === "collecting" ? (
-              <>
-                <Box
-                  id="medal-count-shown"
-                  aria-hidden
-                  sx={{ ...WORDS, position: "absolute", top: 0, left: hp(COUNT_LEFT) }}
-                >
-                  {number(progress.count)}
-                </Box>
-                <Box component="span" id="medal-count" sx={VISUALLY_HIDDEN}>
-                  {t("medal.count", { count: number(progress.count) })}
-                </Box>
-              </>
-            ) : (
-              <Box
-                id="medal-complete"
-                sx={{ ...WORDS, position: "absolute", top: 0, left: hp(COMPLETE_LEFT) }}
-              >
-                {t("medal.complete")}
-              </Box>
-            )}
-          </Box>
-        </HirobaPicture>
-      </Box>
-      {failure !== null && (
-        <Stack id="medal-plate-unavailable">
-          <Typography variant="body2" color="text.secondary">
-            {t("pictures.unavailable")}
-          </Typography>
-          <Typography
-            id="medal-plate-code"
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
+    <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
+      <HirobaPicture
+        ref={plateBox}
+        id="medal-plate"
+        src={plate?.src ?? null}
+        onItsWay={answer === undefined}
+        standIn={
+          <Box
+            id="medal-plate-stand-in"
+            aria-hidden
+            sx={{
+              display: "inline-block",
+              width: 1,
+              height: hp(STAND_IN_HEIGHT),
+              bgcolor: STAND_IN,
+              borderRadius: hp(25),
+            }}
+          />
+        }
+        wordsColour={ON_PLATE}
+        sx={{
+          width: 1,
+          minHeight: hp(BLOCK_HEIGHT),
+          color: ON_PLATE,
+          // Hiroba's body text sets the line below the picture, which the words are lifted from.
+          fontSize: hp(14),
+          lineHeight: 1.5,
+        }}
+        imageSx={{ width: 1 }}
+        i18n={i18n}
+      >
+        <Box sx={{ position: "absolute", left: 0, right: 0, mt: hp(-WORDS_LIFT) }}>
+          <Box
+            id="medal-name"
+            lang={HIROBA_LANG}
+            sx={{ ...WORDS, ml: hp(NAME_LEFT), width: hp(NAME_WIDTH), wordBreak: "break-all" }}
           >
-            {t("pictures.code", { code: failure })}
-          </Typography>
-        </Stack>
-      )}
-    </Stack>
+            {name}
+          </Box>
+          {progress.kind === "collecting" ? (
+            <>
+              <Box
+                id="medal-count-shown"
+                aria-hidden
+                sx={{ ...WORDS, position: "absolute", top: 0, left: hp(COUNT_LEFT) }}
+              >
+                {number(progress.count)}
+              </Box>
+              <Box component="span" id="medal-count" sx={VISUALLY_HIDDEN}>
+                {t("medal.count", { count: number(progress.count) })}
+              </Box>
+            </>
+          ) : (
+            <Box
+              id="medal-complete"
+              sx={{ ...WORDS, position: "absolute", top: 0, left: hp(COMPLETE_LEFT) }}
+            >
+              {t("medal.complete")}
+            </Box>
+          )}
+        </Box>
+      </HirobaPicture>
+    </Box>
   );
 }
 

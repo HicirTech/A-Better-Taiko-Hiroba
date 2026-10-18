@@ -227,8 +227,6 @@ export const zhHant: Messages = {
   "dan.19": "達人",
   "profile.myDonAlt": "你的小咚，由廣場繪製",
   "pictures.loading": "正在載入廣場的圖片…",
-  "pictures.unavailable": "部分廣場圖片未能載入，已改用簡易顯示。",
-  "pictures.code": "回報代碼：{code}",
   "scoreRank.2": "白粹",
   "scoreRank.3": "銅粹",
   "scoreRank.4": "銀粹",

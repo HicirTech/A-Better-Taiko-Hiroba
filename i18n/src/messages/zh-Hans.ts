@@ -227,8 +227,6 @@ export const zhHans: Messages = {
   "dan.19": "达人",
   "profile.myDonAlt": "你的小咚，由广场绘制",
   "pictures.loading": "正在加载广场的图片…",
-  "pictures.unavailable": "部分广场图片未能加载，已改用简易显示。",
-  "pictures.code": "报告代码：{code}",
   "scoreRank.2": "白粹",
   "scoreRank.3": "铜粹",
   "scoreRank.4": "银粹",

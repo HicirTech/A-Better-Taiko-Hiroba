@@ -103,7 +103,7 @@ export const Shown: Story = {
   ),
 };
 
-/** Every large frame whose picture did not come. */
+/** Every large frame whose picture did not come: silent stand-ins; the preview says why. */
 export const Failed: Story = {
   render: (_args, { globals }) => (
     <EveryFrame

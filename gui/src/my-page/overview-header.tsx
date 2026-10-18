@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, Chip, Skeleton, Stack, Typography } from "@mui/material";
 import { useRef } from "react";
 
-import { type PictureAnswer, type PictureLane, viewOf } from "../pictures/picture-lane";
+import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { useDrawnTop } from "../pictures/use-drawn-top";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../session-port";
@@ -22,9 +22,6 @@ const UNDER_PORTRAIT_FROM = (AREA_WIDTH - PORTRAIT_SIDE_ABOVE) / 2 / AREA_WIDTH;
 const UNDER_PORTRAIT_TO = 1 - UNDER_PORTRAIT_FROM;
 const COLUMN_GAP_PX = 16;
 const PLATE: PictureWant = { kind: "titlePlate" };
-
-const failureOf = (answer: PictureAnswer | undefined): string | null =>
-  answer !== undefined && "failure" in answer ? answer.failure : null;
 
 /** The tile's side over the column's width: the plate, the panel's margin and the panel. */
 function tileSideRatio(plate: PictureView | null, art: PictureView | null): number {
@@ -87,7 +84,6 @@ export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: Ove
     ...IN_THE_WINDOW,
     order: 2,
   });
-  const failure = failureOf(plate) ?? failureOf(myDon) ?? failureOf(panel);
   const plateView = viewOf(plate);
   const tileSide = tileSideRatio(plateView, viewOf(panel));
   const drawnTop = useDrawnTop(plateView, UNDER_PORTRAIT_FROM, UNDER_PORTRAIT_TO);
@@ -136,21 +132,6 @@ export function OverviewHeader({ profile, lane, i18n, portrait, namePlate }: Ove
             sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
           >
             {t("profile.danCode", { code: dan.code })}
-          </Typography>
-        </Stack>
-      )}
-      {failure !== null && (
-        <Stack id="pictures-unavailable" sx={{ alignItems: "center", textAlign: "center" }}>
-          <Typography variant="body2" color="text.secondary">
-            {t("pictures.unavailable")}
-          </Typography>
-          <Typography
-            id="pictures-code"
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-          >
-            {t("pictures.code", { code: failure })}
           </Typography>
         </Stack>
       )}
