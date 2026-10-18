@@ -6,6 +6,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { CostumeEditorView, CostumeSet } from "../session-port";
 import { HELD_STILL } from "../ui/editor-parts";
+import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { ItemPicture } from "./costume-item-grid";
 import {
   COLOUR_PARTS,
@@ -18,7 +19,6 @@ import {
   slotOf,
   tileName,
 } from "./costume-parts";
-import { VISUALLY_HIDDEN } from "./hiroba-px";
 import { pickRing, RING_ROOM_PX } from "./pick-ring";
 
 export const PARTS_PANEL_ID = "costume-grid";

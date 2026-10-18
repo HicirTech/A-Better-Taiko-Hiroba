@@ -12,12 +12,12 @@ import {
 } from "@mui/material";
 import { type ReactNode, type RefObject, useContext } from "react";
 
-import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import { useBackCloses, useBackLeaves } from "../navigation/back-closers";
 import { PipelinesShownContext } from "../navigation/pipelines-shown";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { REDUCED_MOTION } from "../navigation/window-move";
 import { CloseIcon } from "./icons";
+import { VISUALLY_HIDDEN } from "./visually-hidden";
 
 /** The panel's width on a computer; on a phone it takes the whole window. */
 const WIDTH_PX = 900;

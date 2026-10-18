@@ -9,7 +9,8 @@ import { usePicture } from "../pictures/use-picture";
 import type { PictureWant, ProfileView } from "../session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
-import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, VISUALLY_HIDDEN } from "./hiroba-px";
+import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
+import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
 
 // Hiroba's どんメダル block: a picture across the 290-pixel area, in a block 52 high at least, with
 // its words lifted onto the picture from the line below it, by these offsets.

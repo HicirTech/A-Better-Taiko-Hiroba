@@ -25,7 +25,6 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
-import { VISUALLY_HIDDEN } from "../my-page/hiroba-px";
 import type { SystemBack } from "../platform";
 import {
   ArrowBackIcon,
@@ -41,6 +40,7 @@ import {
   PsychologyIcon,
   SettingsIcon,
 } from "../ui/icons";
+import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { backAction } from "./back-action";
 import { BackClosersContext, BackModesContext, createBackClosers } from "./back-closers";
 import { FrameNavigationContext } from "./frame-navigation";

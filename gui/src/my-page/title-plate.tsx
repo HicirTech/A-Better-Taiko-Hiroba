@@ -5,14 +5,8 @@ import type { Ref } from "react";
 import { HIROBA_LANG } from "../language/show-language";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
 import type { PictureView, ProfileView } from "../session-port";
-import {
-  HIROBA_BLOCK,
-  hirobaPx,
-  MAX_BLOCK_SCALE,
-  ONE_LINE,
-  OUTLINED,
-  VISUALLY_HIDDEN,
-} from "./hiroba-px";
+import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
+import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, ONE_LINE, OUTLINED } from "./hiroba-px";
 import { FOCUS_RING, type OpenAction, OpenButton } from "./open-button";
 
 // Hiroba's #mydon_area: the plate is 290 pixels wide.
