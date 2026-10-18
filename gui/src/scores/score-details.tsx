@@ -12,6 +12,7 @@ import { SHUT_LOOK } from "../read-again/shut-look";
 import type { ScoreView } from "../session-port";
 import { RefreshIcon } from "../ui/icons";
 import { LargeModal } from "../ui/large-modal";
+import { SubsectionTitle } from "../ui/section-title";
 import type { ListedScore } from "./score-order";
 
 const TITLE_ID = "score-details-title";
@@ -196,9 +197,7 @@ function ChartFacts({
 
       {score.sections.length > 0 && (
         <Box>
-          <Typography variant="subtitle2" gutterBottom>
-            {t("scores.sections")}
-          </Typography>
+          <SubsectionTitle>{t("scores.sections")}</SubsectionTitle>
           <Stack component="ol" id="score-details-sections" spacing={1} sx={{ m: 0, p: 0 }}>
             {score.sections.map((section, index) => (
               <Box

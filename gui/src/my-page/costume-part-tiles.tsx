@@ -1,12 +1,12 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Skeleton, Tab, type TabProps, Tabs, Tooltip, Typography } from "@mui/material";
+import { Box, Skeleton, Tab, type TabProps, Tabs, Tooltip } from "@mui/material";
 import { useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { CostumeEditorView, CostumeSet } from "../session-port";
 import { HELD_STILL } from "../ui/editor-parts";
-import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
+import { SubsectionTitle, SubsectionTitleSkeleton } from "../ui/section-title";
 import { ItemPicture } from "./costume-item-grid";
 import {
   COLOUR_PARTS,
@@ -58,7 +58,6 @@ const NARROW_GROUPS = {
   maxWidth: ROW_MAX_PX,
   alignSelf: "center",
 } as const;
-const CAPTION = { display: "block", mb: 0.5 } as const;
 const columnsOf = (parts: readonly CostumePart[], wide: boolean) =>
   wide ? SLOT_PARTS.length : parts.length;
 
@@ -106,15 +105,9 @@ function TileGroup({
   const captionId = `costume-group-${id}`;
   return (
     <Box sx={{ minWidth: 0 }}>
-      <Typography
-        id={captionId}
-        component="h2"
-        variant="caption"
-        color="text.secondary"
-        sx={wide ? CAPTION : VISUALLY_HIDDEN}
-      >
+      <SubsectionTitle id={captionId} level={2} visuallyHidden={!wide}>
         {caption}
-      </Typography>
+      </SubsectionTitle>
       <Tabs
         aria-labelledby={captionId}
         value={parts.includes(shown) ? shown : false}
@@ -211,7 +204,7 @@ export function PartTilesSkeleton({ wide }: { readonly wide: boolean }) {
     <Box aria-hidden sx={wide ? WIDE_GROUPS : NARROW_GROUPS}>
       {[COLOUR_PARTS, SLOT_TILE_ORDER].map((parts) => (
         <Box key={parts[0]} sx={{ minWidth: 0 }}>
-          {wide && <Skeleton width={56} sx={{ ...CAPTION, fontSize: "0.75rem" }} />}
+          {wide && <SubsectionTitleSkeleton width={56} />}
           <Box sx={{ ...tabList(columnsOf(parts, wide)), m: `-${RING_ROOM_PX}px` }}>
             {parts.map((part) => (
               <Skeleton key={part} variant="rounded" sx={{ ...TILE, height: "auto" }} />

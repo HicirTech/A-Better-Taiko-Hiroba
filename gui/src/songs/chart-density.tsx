@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { SongDensityRead } from "../song-catalogue/types";
 import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
+import { SubsectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import { clockText, DensityLine, peakOf } from "./density-line";
 
@@ -47,47 +48,44 @@ export function ChartDensitySection({
   const failed = state.failure !== null && state.failure !== "noChart";
   return (
     <Box component="section" id="song-density" aria-labelledby="song-density-title">
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          columnGap: 1,
-          rowGap: 0.5,
-          mb: 1,
-        }}
-      >
-        <Typography id="song-density-title" component="h3" variant="subtitle2">
-          {t("details.density")}
-        </Typography>
-        {peak !== null && (
-          <Typography id="song-density-peak" variant="body2" color="text.secondary">
-            {t("details.densityPeak", { value: peak.count })}
-          </Typography>
-        )}
-        {checked && density.branched && (
-          <ToggleButtonGroup
-            id="song-density-branches"
-            size="small"
-            exclusive
-            value={branch}
-            onChange={(_event, chosen: ChartBranch | null) => chosen !== null && setBranch(chosen)}
-            aria-label={t("details.branch")}
-            sx={{ ml: "auto" }}
-          >
-            {CHART_BRANCHES.map((each) => (
-              <ToggleButton
-                key={each}
-                id={`song-density-branch-${each}`}
-                value={each}
-                sx={{ py: 0.25, px: 1, textTransform: "none" }}
+      <SubsectionTitle
+        id="song-density-title"
+        end={
+          <>
+            {peak !== null && (
+              <Typography id="song-density-peak" variant="body2" color="text.secondary">
+                {t("details.densityPeak", { value: peak.count })}
+              </Typography>
+            )}
+            {checked && density.branched && (
+              <ToggleButtonGroup
+                id="song-density-branches"
+                size="small"
+                exclusive
+                value={branch}
+                onChange={(_event, chosen: ChartBranch | null) =>
+                  chosen !== null && setBranch(chosen)
+                }
+                aria-label={t("details.branch")}
+                sx={{ ml: "auto" }}
               >
-                {t(BRANCH_LABEL[each])}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        )}
-      </Box>
+                {CHART_BRANCHES.map((each) => (
+                  <ToggleButton
+                    key={each}
+                    id={`song-density-branch-${each}`}
+                    value={each}
+                    sx={{ py: 0.25, px: 1, textTransform: "none" }}
+                  >
+                    {t(BRANCH_LABEL[each])}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            )}
+          </>
+        }
+      >
+        {t("details.density")}
+      </SubsectionTitle>
       {line !== null && peak !== null ? (
         <DensityLine
           density={line}
