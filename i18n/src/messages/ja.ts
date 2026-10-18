@@ -328,9 +328,9 @@ export const ja: Messages = {
   "costume.thumbnails.unavailable":
     "サムネイルを {count} 件読み込めなかったため、番号で表示しています。",
   "costume.kigurumiWarning": "きぐるみにすると、あたま・からだ・メイク・ぷちキャラははずれます。",
-  "costume.reset": "リセット",
+  "edit.reset": "リセット",
   "write.sync": "ひろばに同期",
-  "costume.saving": "保存中…そのあと読み直します",
+  "write.saving": "保存中…そのあと読み直します",
   "costume.history": "履歴",
   "costume.history.title": "きせかえの履歴",
   "costume.history.wornNow": "今のきせかえ",

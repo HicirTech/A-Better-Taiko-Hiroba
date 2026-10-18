@@ -384,9 +384,9 @@ export interface Messages {
   /** Param: {count}, how many did not come. */
   "costume.thumbnails.unavailable": string;
   "costume.kigurumiWarning": string;
-  "costume.reset": string;
+  "edit.reset": string;
   "write.sync": string;
-  "costume.saving": string;
+  "write.saving": string;
   "costume.history": string;
   "costume.history.title": string;
   /** Marks the entry that is the set Hiroba shows now. */

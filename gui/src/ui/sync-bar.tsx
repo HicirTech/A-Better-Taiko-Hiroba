@@ -92,7 +92,7 @@ export function SyncBar({
           <Box sx={{ flexGrow: 1 }} />
           {onReset !== undefined && (
             <Button id={`${id}-reset`} disabled={!canReset} onClick={onReset} sx={BAR_TEXT_BUTTON}>
-              {t("costume.reset")}
+              {t("edit.reset")}
             </Button>
           )}
           <Button
@@ -107,7 +107,7 @@ export function SyncBar({
         </Box>
         {saving && (
           <Box sx={{ gridArea: "1 / 1", alignSelf: "center" }}>
-            <ProgressBar id={`${id}-saving`} label={t("costume.saving")} />
+            <ProgressBar id={`${id}-saving`} label={t("write.saving")} />
           </Box>
         )}
       </Box>

@@ -329,9 +329,9 @@ export const en: Messages = {
   "costume.thumbnails.unavailable":
     "Some thumbnails didn't load ({count}); their numbers are shown instead.",
   "costume.kigurumiWarning": "A Mascot takes off Head, Body, Makeup and Mini Character.",
-  "costume.reset": "Reset",
+  "edit.reset": "Reset",
   "write.sync": "Sync to Hiroba",
-  "costume.saving": "Saving… then reading it back",
+  "write.saving": "Saving… then reading it back",
   "costume.history": "History",
   "costume.history.title": "Costume history",
   "costume.history.wornNow": "Worn now",

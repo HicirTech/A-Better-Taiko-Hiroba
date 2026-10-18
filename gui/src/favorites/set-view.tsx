@@ -68,7 +68,7 @@ export function SetView({
                 <Box sx={{ flexGrow: 1 }} />
                 {edited && (
                   <Button id="favorite-set-reset" onClick={onReset}>
-                    {t("costume.reset")}
+                    {t("edit.reset")}
                   </Button>
                 )}
                 <Button id="favorite-set-save" variant="contained" onClick={onSave}>
