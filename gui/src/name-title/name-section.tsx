@@ -4,10 +4,10 @@ import { Alert, Box, Stack, TextField } from "@mui/material";
 import { type KeyboardEvent, useRef } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
-import { useFocusKept } from "../my-page/editor-parts";
 import { invalidFieldText } from "../my-page/outcome-words";
 import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import type { ProfileView } from "../session-port";
+import { useFocusKept } from "../ui/editor-parts";
 import { judgeName, type WornName } from "./name-editor-state";
 import type { NameEditor } from "./use-name-editor";
 

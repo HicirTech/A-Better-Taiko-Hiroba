@@ -3,6 +3,7 @@ import { Box, Stack, Typography } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CostumeEditorView, CostumeSet } from "../session-port";
+import { HELD_STILL } from "../ui/editor-parts";
 import { CostumeItemGrid, ThumbnailsUnavailable } from "./costume-item-grid";
 import { Palette } from "./costume-palette";
 import { PARTS_PANEL_ID, partTabId } from "./costume-part-tiles";
@@ -14,7 +15,6 @@ import {
   PART_LABEL,
   type SlotPart,
 } from "./costume-parts";
-import { HELD_STILL } from "./editor-parts";
 
 export interface PartHeadProps {
   readonly view: CostumeEditorView;

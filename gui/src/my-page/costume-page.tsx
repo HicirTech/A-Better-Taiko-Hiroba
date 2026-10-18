@@ -5,6 +5,7 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 import { useWideWindow } from "../navigation/use-wide-window";
 import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import { useFocusKept } from "../ui/editor-parts";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { BAR_TEXT_BUTTON, SYNC_BAR_PAGE, SyncBar, SyncBarSkeleton } from "../ui/sync-bar";
 import { type EditorStep, shownEditorOf } from "./costume-editor-state";
@@ -12,7 +13,6 @@ import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { NarrowBody, NarrowBodySkeleton } from "./costume-narrow-body";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
 import { WideBody, WideBodySkeleton } from "./costume-wide-body";
-import { useFocusKept } from "./editor-parts";
 import type { CostumeEditor } from "./use-costume-editor";
 import { WriteOutcomeSnackbar } from "./write-outcome";
 
