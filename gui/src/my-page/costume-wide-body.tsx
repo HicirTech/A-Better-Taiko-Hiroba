@@ -24,6 +24,8 @@ const bodyGrid = (withAside: boolean) =>
     gridTemplateColumns: withAside ? `${SIDE_COLUMN_WIDTH} minmax(0, 1fr)` : "minmax(0, 1fr)",
     gridTemplateAreas: withAside ? AREAS_WITH_ASIDE : AREAS_WITHOUT_ASIDE,
     alignItems: "start",
+    // Rows as tall as what they hold: a page taller than the grid keeps the room under it.
+    alignContent: "start",
     columnGap: 3,
     flexGrow: 1,
   }) as const;
