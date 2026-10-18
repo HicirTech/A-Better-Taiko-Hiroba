@@ -75,6 +75,7 @@ export async function scores(ctx: Ctx) {
     boxOf,
     exists,
     fabState,
+    inPlace,
     listRows,
     mousePress,
     press,
@@ -110,8 +111,13 @@ export async function scores(ctx: Ctx) {
     await click(`#${chip}-${value}`);
     await Bun.sleep(500);
   };
-  const detailsOpened = () =>
-    waitFor("the score's details", async () => (await exists("#score-details-title")) || undefined);
+  const detailsOpened = async () => {
+    await waitFor(
+      "the score's details",
+      async () => (await exists("#score-details-title")) || undefined,
+    );
+    return inPlace("#score-details");
+  };
   const detailsShut = async () => {
     await press("Escape");
     await waitFor("the details shut", async () =>

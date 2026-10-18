@@ -66,7 +66,7 @@ export const songSearchKeys = [
 export async function songSearch(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, boxOf, exists, mousePress, press, swipe, touchEmulated } =
+  const { atSize, attribute, boxOf, exists, inPlace, mousePress, press, swipe, touchEmulated } =
     pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
@@ -89,6 +89,7 @@ export async function songSearch(ctx: Ctx) {
     await shown(`#song-search-row-${songNo} button`);
     await page.evaluate(`document.querySelector("#song-search-row-${songNo} button").click()`);
     await shown("#song-details-title");
+    await inPlace("#song-details");
   };
   const closeSong = async () => {
     await click("#song-details-close");

@@ -311,6 +311,16 @@ export function pageHelpers(page: Page) {
     return `${list} > li[data-index="${index}"]`;
   };
 
+  /** Waits until a modal's panel has slid in, as a finger can touch only what is there. */
+  const inPlace = (modal: string) =>
+    waitFor(
+      `${modal} in place`,
+      async () =>
+        (await page.evaluate<boolean>(
+          `document.querySelector(${JSON.stringify(`${modal} [role="dialog"]`)})?.getAnimations().length === 0`,
+        )) || undefined,
+    );
+
   // A real press: an SVG has no click(), and a chip's × is one.
   const mousePress = async (selector: string, button: "left" | "right", heldMs = 0) => {
     await page.evaluate(
@@ -356,6 +366,7 @@ export function pageHelpers(page: Page) {
     touchMoves,
     listRows,
     rowInView,
+    inPlace,
     mousePress,
   };
 }
