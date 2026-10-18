@@ -24,8 +24,10 @@ const pageOf = (wide: boolean) =>
     width: 1,
     ...(!wide && {
       maxWidth: COLUMN_MAX_WIDTH_PX,
-      // Centred by alignment: the Stack holding the page keeps its children's margins at 0.
+      // Centred by alignment in the page's Stack, which keeps its children's margins at 0, and
+      // by margins in the skeleton's box.
       alignSelf: "center",
+      mx: "auto",
     }),
     outline: "none",
   }) as const;

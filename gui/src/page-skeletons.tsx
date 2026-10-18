@@ -14,7 +14,8 @@ import { useTouchFirst } from "./navigation/use-touch-first";
 import { SearchFieldSkeleton } from "./ui/search-field";
 import { SYNC_BAR_PAGE, SyncBarSkeleton } from "./ui/sync-bar";
 
-const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, alignSelf: "center" } as const;
+// Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
+const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" } as const;
 const FIELD_PX = 56;
 const HEADING = { fontSize: "1rem", lineHeight: 1.75 } as const;
 const KNOW_CARDS = [...Array(6).keys()];
