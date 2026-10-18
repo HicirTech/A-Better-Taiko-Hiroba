@@ -4,7 +4,6 @@ import * as SongListFailed from "../../favorites/song-list-failed.stories";
 import * as ThumbnailsUnavailable from "../../my-page/costume-item-grid.thumbnails-unavailable.stories";
 import * as CostumeNotes from "../../my-page/costume-notes.stories";
 import * as PreviewFailure from "../../my-page/costume-preview-box.preview-failure.stories";
-import * as Waiting from "../../my-page/editor-parts.stories";
 import * as KigurumiInfo from "../../my-page/kigurumi-info.stories";
 import * as WriteOutcomeSnackbar from "../../my-page/write-outcome.stories";
 import * as HoldRing from "../../read-again/long-hold.stories";
@@ -42,7 +41,6 @@ const meta = {
           fixed: true,
         },
         { name: "ProgressBar", meta: ProgressBar.default, story: ProgressBar.AReadOfEveryScore },
-        { name: "Waiting", meta: Waiting.default, story: Waiting.Saving },
         { name: "HoldRing", meta: HoldRing.default, story: HoldRing.Filling },
         { name: "PictureLoading", meta: PictureLoading.default, story: PictureLoading.Loading },
         { name: "LoadFailed", meta: LoadFailed.default, story: LoadFailed.WithCodes },
