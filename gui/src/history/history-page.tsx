@@ -10,12 +10,12 @@ import { nameLanguage, shownName } from "../favorites/song-names";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { Waiting } from "../my-page/editor-parts";
 import { useLongPress } from "../my-page/use-long-press";
 import type { PictureLane } from "../pictures/picture-lane";
 import { type PlayNotice, ScoreDetails } from "../scores/score-details";
-import { listedOf, scoresReadingText } from "../scores/scores-page";
+import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
+import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
 import { HISTORY_ROW_PX, HistoryRow, opensOnPress, type RowProps } from "./history-row";
@@ -137,7 +137,10 @@ export function HistoryPage({
   return (
     <Stack spacing={2} id="history-page">
       {reading && rows.length === 0 && (
-        <Waiting id="history-reading">{i18n.t("history.readingPage", { page: page ?? 1 })}</Waiting>
+        <ProgressBar
+          id="history-reading"
+          label={i18n.t("history.readingPage", { page: page ?? 1 })}
+        />
       )}
       {failure !== null && (
         <LoadFailed id="history-failure" failure={failure} i18n={i18n}>
@@ -289,14 +292,11 @@ function PlayWhy({
     const why = placed.why === "shared" ? "history.sharedTitle" : "history.unknownSong";
     return <Typography color="text.secondary">{t(why)}</Typography>;
   }
-  if (scores.reading || !asked) {
-    return (
-      <Waiting>
-        {scores.reading
-          ? scoresReadingText(i18n, scores.progress, scores.song)
-          : t("scores.readingSong", { song: play.songTitle })}
-      </Waiting>
-    );
+  if (scores.reading) {
+    return <ScoresReading i18n={i18n} progress={scores.progress} song={scores.song} />;
+  }
+  if (!asked) {
+    return <ProgressBar label={t("scores.readingSong", { song: play.songTitle })} />;
   }
   if (scores.failure !== null) {
     return <LoadFailed id="history-play-failure" failure={scores.failure} i18n={i18n} />;

@@ -34,7 +34,9 @@ yourself show at once what they showed before, and what the device keeps for the
 the window is idle once the Overview is read. A page still waiting for its first read (my page as the
 app opens, the Costume page's and Favourites' first read from Hiroba, the rating data or the song list)
 shows its own shape in grey, or nothing if the read ends within 0.4 seconds, and fades in once it comes;
-a page moved to while it waits slides in with that shape. The lists of Recent plays and Scores draw
+a page moved to while it waits slides in with that shape. A read under way says what it reads over a
+short bar, which fills once the read knows how much there is, as a read of every score does with its
+lists and charts. The lists of Recent plays and Scores draw
 only the rows near the window, so thousands of them open and scroll as quickly as a few. A question
 or a name to type opens in one small dialog; a deeper task (a song's or a chart's details, the song
 picker, the costume history, a chart picture) slides in from below in one large panel, the whole

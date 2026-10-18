@@ -9,10 +9,10 @@ import { fold, searchedNames } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HISTORY_ROW_PX, HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { Waiting } from "../my-page/editor-parts";
 import { FrameTop } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
+import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
 import { SearchField } from "../ui/search-field";
@@ -104,7 +104,7 @@ export function ScoresPage({
       )}
       <Stack spacing={2} id="scores-page">
         {reading && (
-          <Waiting id="scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
+          <ScoresReading id="scores-reading" i18n={i18n} progress={progress} song={song} />
         )}
         {failure !== null && (
           <LoadFailed id="scores-failure" failure={failure} i18n={i18n}>
@@ -219,6 +219,28 @@ export function scoresReadingText(
   }
   const key = progress.step === "lists" ? "scores.readingLists" : "scores.readingCharts";
   return i18n.t(key, { done: i18n.number(progress.done), total: i18n.number(progress.total) });
+}
+
+/** A read of scores as a progress bar: it fills once the read knows its lists or charts. */
+export function ScoresReading({
+  id,
+  i18n,
+  progress,
+  song,
+}: {
+  readonly id?: string | undefined;
+  readonly i18n: Translator;
+  readonly progress: ScoresProgress | null;
+  readonly song: ChosenSong | null;
+}) {
+  const counted = song === null && progress !== null && progress.step !== "recentPlays";
+  return (
+    <ProgressBar
+      id={id}
+      label={scoresReadingText(i18n, progress, song)}
+      progress={counted ? progress : null}
+    />
+  );
 }
 
 function stopText(i18n: Translator, at: ScoresStop): string {

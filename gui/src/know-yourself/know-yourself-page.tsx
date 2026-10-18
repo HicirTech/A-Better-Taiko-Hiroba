@@ -12,11 +12,10 @@ import { SongListFailed } from "../favorites/song-list-failed";
 import { resolveSong } from "../favorites/song-look";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { Waiting } from "../my-page/editor-parts";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf, scoresReadingText } from "../scores/scores-page";
+import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../session-port";
 import { LoadFailed } from "../ui/read-failure-alert";
@@ -146,7 +145,7 @@ export function KnowYourselfPage({
   return (
     <Stack spacing={3} id="know-yourself-page">
       {reading && (
-        <Waiting id="know-scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
+        <ScoresReading id="know-scores-reading" i18n={i18n} progress={progress} song={song} />
       )}
       {failure !== null && <LoadFailed id="know-scores-failure" failure={failure} i18n={i18n} />}
       {catalogue.state === "failed" && (

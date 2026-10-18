@@ -5,10 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
-import { Waiting } from "../my-page/editor-parts";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf, scoresReadingText } from "../scores/scores-page";
+import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ScoreView } from "../session-port";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
@@ -128,7 +127,7 @@ export function RatingPage({
   return (
     <Stack spacing={2} id="rating-page">
       {reading && (
-        <Waiting id="rating-scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
+        <ScoresReading id="rating-scores-reading" i18n={i18n} progress={progress} song={song} />
       )}
       {failure !== null && <LoadFailed id="rating-scores-failure" failure={failure} i18n={i18n} />}
       {ratingData.failure !== null && (

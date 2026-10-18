@@ -14,7 +14,3 @@ type Story = StoryObj<typeof meta>;
 
 /** A spinner and what it waits for, such as a save on its way. */
 export const Saving: Story = {};
-
-export const Reading: Story = {
-  render: (_args, { globals }) => <Waiting>{i18nOf(globals).t("picker.loading")}</Waiting>,
-};

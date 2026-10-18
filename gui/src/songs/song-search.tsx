@@ -19,11 +19,11 @@ import { lookOfCatalogue } from "../favorites/song-look";
 import { nameLanguage } from "../favorites/song-names";
 import { searchSongs } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { Waiting } from "../my-page/editor-parts";
 import { FrameTop } from "../navigation/app-frame";
 import { useBackLeaves } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
+import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
 import { SongDetails } from "./song-details";
@@ -91,7 +91,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
   const framed = searched && entries.length > 0;
   let panel: ReactNode;
   if (catalogue.state === "loading") {
-    panel = <Waiting id="song-search-loading">{t("picker.loading")}</Waiting>;
+    panel = <ProgressBar id="song-search-loading" label={t("picker.loading")} />;
   } else if (catalogue.state === "failed") {
     panel = <SongListFailed id="song-search" catalogue={catalogue} i18n={i18n} />;
   } else if (!searched) {

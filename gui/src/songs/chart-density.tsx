@@ -4,6 +4,7 @@ import { Box, FormHelperText, ToggleButton, ToggleButtonGroup, Typography } from
 import { useState } from "react";
 
 import type { SongDensityRead } from "../song-catalogue/types";
+import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { clockText, DensityLine, peakOf } from "./density-line";
 
@@ -92,9 +93,7 @@ export function ChartDensitySection({
           label={t("details.densityLine", { peak: peak.count, at: clockText(peak.at) })}
         />
       ) : state.reading && state.read === null ? (
-        <FormHelperText id="song-density-reading" sx={{ m: 0 }}>
-          {t("details.densityReading")}
-        </FormHelperText>
+        <ProgressBar id="song-density-reading" label={t("details.densityReading")} />
       ) : (
         !failed && (
           <FormHelperText id="song-density-none" sx={{ m: 0 }}>

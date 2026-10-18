@@ -10,11 +10,11 @@ import {
   useState,
 } from "react";
 
-import { Waiting } from "../my-page/editor-parts";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { FAILURE_MESSAGE } from "../read-failure-message";
 import type { FavoriteSongState } from "../session-port";
 import { LargeModal } from "../ui/large-modal";
+import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SearchField } from "../ui/search-field";
 import type { PickableState } from "./pickable-songs";
@@ -147,7 +147,7 @@ function PickerBody({
   if (catalogue.state === "loading") {
     content = (
       <Box sx={{ p: 2 }}>
-        <Waiting id="song-picker-loading">{t("picker.loading")}</Waiting>
+        <ProgressBar id="song-picker-loading" label={t("picker.loading")} />
       </Box>
     );
   } else if (catalogue.state === "failed") {
@@ -171,7 +171,7 @@ function PickerBody({
   } else if (offered === null) {
     content = (
       <Box sx={{ p: 2 }}>
-        <Waiting id="song-picker-offered-reading">{t("picker.offeredReading")}</Waiting>
+        <ProgressBar id="song-picker-offered-reading" label={t("picker.offeredReading")} />
       </Box>
     );
   } else if (entries.length === 0) {

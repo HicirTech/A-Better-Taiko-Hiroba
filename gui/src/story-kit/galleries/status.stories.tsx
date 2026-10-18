@@ -11,6 +11,7 @@ import * as HoldRing from "../../read-again/long-hold.stories";
 import * as PictureLoading from "../../songs/chart-picture.picture-loading.stories";
 import * as ChartPicture from "../../songs/chart-picture.stories";
 import * as OperationSnackbar from "../../ui/operation-snackbar.stories";
+import * as ProgressBar from "../../ui/progress-bar.stories";
 import * as LoadFailed from "../../ui/read-failure-alert.load-failed.stories";
 import * as ReadFailureAlert from "../../ui/read-failure-alert.stories";
 import { Gallery } from "../gallery";
@@ -40,6 +41,7 @@ const meta = {
           story: WriteOutcomeSnackbar.RefusedInHirobasWords,
           fixed: true,
         },
+        { name: "ProgressBar", meta: ProgressBar.default, story: ProgressBar.AReadOfEveryScore },
         { name: "Waiting", meta: Waiting.default, story: Waiting.Saving },
         { name: "HoldRing", meta: HoldRing.default, story: HoldRing.Filling },
         { name: "PictureLoading", meta: PictureLoading.default, story: PictureLoading.Loading },
