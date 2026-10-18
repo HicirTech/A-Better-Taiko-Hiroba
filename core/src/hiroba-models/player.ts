@@ -1,10 +1,5 @@
 import type { RenameState, ScoreRank } from "./vocabulary";
 
-/** One player, keyed by taiko number. One Bandai Namco session can hold up to three. */
-export interface Player {
-  readonly taikoNo: string;
-}
-
 export interface Profile {
   readonly taikoNo: string;
   readonly nickname: string;
