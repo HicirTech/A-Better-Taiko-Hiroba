@@ -80,7 +80,7 @@ function LanguageChoice({
         control={<Radio />}
         label={label}
         {...(lang === undefined ? {} : { lang })}
-        sx={{ m: 0, pl: 1, pr: 2, width: 1 }}
+        sx={{ m: 0, pl: 0, pr: 1, width: 1 }}
       />
     </ListItem>
   );

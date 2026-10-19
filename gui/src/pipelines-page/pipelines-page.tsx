@@ -1,9 +1,10 @@
 import type { Translator } from "@abth/i18n";
-import { Divider, Paper } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useState } from "react";
 
 import { KEPT_GROUPS } from "../pipelines";
 import type { HirobaSessionPort } from "../session-port";
+import { CARD_GAP } from "../ui/section-card";
 import { ENDED_CELLS } from "./pipeline-rows";
 import { PipelineSection } from "./pipeline-section";
 import { usePipelinesView } from "./use-pipelines-view";
@@ -32,7 +33,7 @@ export function PipelinesPage({
       return next;
     });
   return (
-    <Paper variant="outlined">
+    <Stack spacing={CARD_GAP}>
       <PipelineSection
         id="pipeline-io"
         i18n={i18n}
@@ -41,7 +42,6 @@ export function PipelinesPage({
         listed={listed.has("io")}
         onListed={list("io")}
       />
-      <Divider />
       <PipelineSection
         id="pipeline-pictures"
         i18n={i18n}
@@ -50,7 +50,6 @@ export function PipelinesPage({
         listed={listed.has("pictures")}
         onListed={list("pictures")}
       />
-      <Divider />
       <PipelineSection
         id="pipeline-history"
         i18n={i18n}
@@ -59,7 +58,6 @@ export function PipelinesPage({
         listed={listed.has("history")}
         onListed={list("history")}
       />
-      <Divider />
       <PipelineSection
         id="pipeline-scores"
         i18n={i18n}
@@ -68,7 +66,6 @@ export function PipelinesPage({
         listed={listed.has("scores")}
         onListed={list("scores")}
       />
-      <Divider />
       <PipelineSection
         id="pipeline-external"
         i18n={i18n}
@@ -77,6 +74,6 @@ export function PipelinesPage({
         listed={listed.has("external")}
         onListed={list("external")}
       />
-    </Paper>
+    </Stack>
   );
 }

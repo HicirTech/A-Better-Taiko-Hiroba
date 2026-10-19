@@ -1,8 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { Button, Divider, List, ListItem, ListItemText, Paper } from "@mui/material";
+import { Button, List, ListItem, ListItemText, Stack } from "@mui/material";
 import { type ReactNode, useId } from "react";
 
 import { AccountCircleIcon } from "../ui/icons";
+import { CARD_GAP } from "../ui/section-card";
 import { GitHubSection } from "./github-section";
 import { SettingsSection } from "./settings-section";
 import { SongDataSection } from "./song-data-section";
@@ -56,9 +57,8 @@ export function SettingsPage({
         ? { disabled: true }
         : null;
   return (
-    <Paper variant="outlined">
+    <Stack spacing={CARD_GAP}>
       {language}
-      <Divider />
       <SettingsSection
         id="account"
         headingId={headingId}
@@ -83,22 +83,10 @@ export function SettingsPage({
           </ListItem>
         </List>
       </SettingsSection>
-      {updates !== undefined && (
-        <>
-          <Divider />
-          <UpdatesSection i18n={i18n} {...updates} />
-        </>
-      )}
-      <Divider />
+      {updates !== undefined && <UpdatesSection i18n={i18n} {...updates} />}
       <SongLevelsSection i18n={i18n} />
-      <Divider />
       <SongDataSection i18n={i18n} />
-      {onOpenRepository !== undefined && (
-        <>
-          <Divider />
-          <GitHubSection i18n={i18n} onOpen={onOpenRepository} />
-        </>
-      )}
-    </Paper>
+      {onOpenRepository !== undefined && <GitHubSection i18n={i18n} onOpen={onOpenRepository} />}
+    </Stack>
   );
 }

@@ -1,4 +1,4 @@
-import { Paper } from "@mui/material";
+import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { i18nOf } from "../story-kit/env";
@@ -8,9 +8,9 @@ const meta = {
   title: "Cards and sections/SongLevelsSection",
   tags: ["settings"],
   render: (_args, { globals }) => (
-    <Paper variant="outlined" sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: 600 }}>
       <SongLevelsSection i18n={i18nOf(globals)} />
-    </Paper>
+    </Box>
   ),
 } satisfies Meta;
 

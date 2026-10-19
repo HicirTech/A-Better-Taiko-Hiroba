@@ -1,4 +1,4 @@
-import { Box, Button, List, ListItem, ListItemText, Paper, Skeleton } from "@mui/material";
+import { Box, Button, List, ListItem, ListItemText, Skeleton } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { i18nOf } from "../story-kit/env";
@@ -63,18 +63,18 @@ export const WithAnIconAtItsStart: Story = {
   render: (_args, { globals }) => {
     const { t } = i18nOf(globals);
     return (
-      <Paper variant="outlined" sx={{ maxWidth: 600 }}>
-        <Box sx={{ px: 2, pt: 2 }}>
+      <SectionCard flush sx={{ maxWidth: 600 }}>
+        <Box sx={{ px: 1, pt: 1 }}>
           <SectionTitle start={<TranslateIcon fontSize="small" />}>
             {t("settings.language")}
           </SectionTitle>
         </Box>
         <List>
-          <ListItem>
+          <ListItem sx={{ px: 1 }}>
             <ListItemText primary={t("language.system", { name: "English" })} />
           </ListItem>
         </List>
-      </Paper>
+      </SectionCard>
     );
   },
 };
