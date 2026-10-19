@@ -33,7 +33,7 @@ const isHirobaPage = (line: string) => !/\.(png|gif|jpe?g)$/.test(line) && !line
 export async function knowYourself(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { attribute, exists, press } = pageHelpers(page);
+  const { attribute, exists, listRows, press } = pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
@@ -47,14 +47,12 @@ export async function knowYourself(ctx: Ctx) {
     page.evaluate<number[]>(
       `[...document.querySelectorAll('[id^="${rows}-"][id$="-total"]')].filter((cell) => !cell.id.startsWith("${rows}-all-")).map((cell) => Number(cell.textContent))`,
     );
+  // A chart list draws only the rows near the window: these walk it.
   const notesIn = (list: string) =>
-    page.evaluate<string[]>(
-      `[...document.querySelectorAll("#${list} li .chart-note")].map((note) => note.textContent)`,
-    );
-  const songsIn = (list: string) =>
-    page.evaluate<string[]>(
-      `[...new Set([...document.querySelectorAll("#${list} li[data-song-no]")].map((row) => row.dataset.songNo))]`,
-    );
+    listRows<string>(`#${list}-rows`, "(row) => row.querySelector('.chart-note')?.textContent");
+  const songsIn = async (list: string) => [
+    ...new Set(await listRows<string>(`#${list}-rows`, "(row) => row.dataset.songNo")),
+  ];
   const kept = () =>
     page.evaluate<{ name: string; songs: string[] }[]>(
       `(JSON.parse(localStorage.getItem(${JSON.stringify(SETS_KEY)}) ?? "{}").sets ?? []).map(({ name, songs }) => ({ name, songs }))`,

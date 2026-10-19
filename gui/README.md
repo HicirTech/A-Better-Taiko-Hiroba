@@ -39,8 +39,9 @@ shape. A read under way says what it reads over a short bar, which fills once th
 there is, as a read of every score does with its lists and charts. Where there is nothing to show, grey
 words say why, and how to fill it: in the middle of the window when a page, or a search, has nothing at
 all, and in its place in a card, a song's details or a dialog; what a read found, such as charts still
-unread, is said in the same words over the list. The lists of Recent plays and Scores draw
-only the rows near the window, so thousands of them open and scroll as quickly as a few. A question
+unread, is said in the same words over the list. The lists of Recent plays and Scores, the song
+picker, the song search's results and Know yourself's charts draw only the rows near the window, so
+thousands of them open and scroll as quickly as a few. A question
 or a name to type opens in one small dialog; a deeper task (a song's or a chart's details, the song
 picker, the costume history, a chart picture) slides in from below in one large panel, the whole
 window on a phone, with one way to close it: its × on a computer, Back on a touch screen.
