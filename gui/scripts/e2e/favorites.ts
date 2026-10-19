@@ -81,7 +81,8 @@ export const favoritesKeys = [
 export async function favorites(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, boxOf, exists, fabState, press, swipe, touchEmulated } = pageHelpers(page);
+  const { atSize, boxOf, exists, fabState, listRows, press, rowInView, swipe, touchEmulated } =
+    pageHelpers(page);
   const stepIs = (step: string) =>
     waitFor(`favourites ${step}`, async () =>
       (await page.evaluate<string | null>(
@@ -117,10 +118,30 @@ export async function favorites(ctx: Ctx) {
     page.evaluate<string | null>(
       `document.querySelector(${JSON.stringify(`${selector} .level-stack`)})?.getAttribute("aria-expanded") ?? null`,
     );
-  const barsOf = (songNos: readonly string[]) =>
-    page.evaluate<number[]>(
-      `${JSON.stringify(songNos)}.map((songNo) => document.querySelectorAll("#song-picker-row-" + songNo + " .song-bar").length)`,
-    );
+  // The picker draws only the rows near its dialog's window: a check walks to the row it reads.
+  const PICKER = "#song-picker-list";
+  const PICKER_BODY = "#song-picker-content";
+  /** The picker's row of `key`, a song's number or `<number>-ura` for its inner chart, in view. */
+  const toRow = async (key: string) => {
+    await shown(`${PICKER} > li`);
+    await rowInView(PICKER, `(row) => row.id === "song-picker-row-${key}"`, PICKER_BODY);
+    return `#song-picker-row-${key}`;
+  };
+  /** Every row's key, the whole list walked. */
+  const pickerKeys = () =>
+    listRows<string>(PICKER, `(row) => row.id.slice("song-picker-row-".length)`, PICKER_BODY);
+  const barsOf = async (songNos: readonly string[]) => {
+    const bars: number[] = [];
+    for (const songNo of songNos) {
+      const row = await toRow(songNo);
+      bars.push(
+        await page.evaluate<number>(
+          `document.querySelectorAll(${JSON.stringify(`${row} .song-bar`)}).length`,
+        ),
+      );
+    }
+    return bars;
+  };
   const showDifficulty = async (difficulty: string) => {
     await goTo("settings");
     await shown(`#shown-difficulty-${difficulty}`);
@@ -145,10 +166,7 @@ export async function favorites(ctx: Ctx) {
     await click(`#song-picker-${filter}-${value}`);
     await gone(`#song-picker-${filter}-menu`);
   };
-  const pickerSongs = () =>
-    page.evaluate<string[]>(
-      `[...document.querySelectorAll("#song-picker-list > li")].map((row) => row.dataset.songNo)`,
-    );
+  const pickerSongs = () => listRows<string>(PICKER, "(row) => row.dataset.songNo", PICKER_BODY);
   const soon = (label: string, probe: () => Promise<boolean>) =>
     waitFor(label, async () => (await probe()) || undefined, 5_000).catch(() => false);
   const listed = (songs: readonly string[]) =>
@@ -367,7 +385,7 @@ export async function favorites(ctx: Ctx) {
   results.songShowsABarPerGenre = same(await barsOf(["1012", "1001"]), [2, 1]);
 
   await choose("difficulty", "hard");
-  results.pickerShowsTheFilteredDifficultyFirst = same(await placesIn("#song-picker-row-1019"), [
+  results.pickerShowsTheFilteredDifficultyFirst = same(await placesIn(await toRow("1019")), [
     "before",
     "before",
     "front",
@@ -416,9 +434,9 @@ export async function favorites(ctx: Ctx) {
     same(await boldIn("1011"), ["会入睡"]);
 
   await search("");
-  await shown(`#song-picker-row-${LONG_TITLED}`);
   for (const songNo of ["1001", "1003", LONG_TITLED]) {
-    await page.evaluate(`document.querySelector("#song-picker-row-${songNo} input").click()`);
+    const row = await toRow(songNo);
+    await page.evaluate(`document.querySelector(${JSON.stringify(`${row} input`)}).click()`);
   }
   await click("#song-picker-close");
   await gone("#song-picker");
@@ -530,8 +548,7 @@ export async function favorites(ctx: Ctx) {
   await gone("#favorites-drawer");
 
   await click("#favorite-song-change");
-  await shown("#song-picker-row-1002 button");
-  await page.evaluate(`document.querySelector("#song-picker-row-1002 button").click()`);
+  await page.evaluate(`document.querySelector("${await toRow("1002")} button").click()`);
   await gone("#song-picker");
   await syncLit();
   await click("#favorites-save");
@@ -540,8 +557,7 @@ export async function favorites(ctx: Ctx) {
     (await favoritesNow()).favoriteSong === "1002" && !(await exists("#favorite-song-outcome"));
 
   await click("#favorite-song-change");
-  await shown("#song-picker-row-1004 button");
-  await page.evaluate(`document.querySelector("#song-picker-row-1004 button").click()`);
+  await page.evaluate(`document.querySelector("${await toRow("1004")} button").click()`);
   await syncLit();
   await goTo("overview");
   await goTo("favorites");
@@ -567,41 +583,35 @@ export async function favorites(ctx: Ctx) {
   const readsBeforeOpen = await pickerReads();
   results.pickerListLeftAloneByAReadAgain = readsBeforeOpen === readsBeforeReadAgain;
   await click("#favorite-song-change");
-  await shown(`#song-picker-row-${WITH_INNER}-ura button`);
+  await toRow(`${WITH_INNER}-ura`);
   const readAsItOpened = await waitFor(
     "the pickers' list read as the picker opened",
     async () => ((await pickerReads()) > readsBeforeOpen ? true : undefined),
     5_000,
   ).catch(() => false);
+  const offeredKeys = await pickerKeys();
+  const front = await toRow(WITH_INNER);
   results.favoritePickerOffersWhatHirobaOffers =
-    !(await exists(`#song-picker-row-${LOCKED_SONG}`)) &&
-    (await exists(`#song-picker-row-${WITH_INNER} button`)) &&
-    same(await difficultiesIn(`#song-picker-row-${WITH_INNER}`), [
-      "easy",
-      "normal",
-      "hard",
-      "oni",
-    ]) &&
-    same(await difficultiesIn(`#song-picker-row-${WITH_INNER}-ura`), ["ura"]) &&
-    (await textOf(`#song-picker-row-${WITH_INNER}-ura .song-artists`))?.includes("Ura chart") !==
-      true &&
-    !(await exists("#song-picker-row-1001-ura"));
+    !offeredKeys.includes(LOCKED_SONG) &&
+    (await exists(`${front} button`)) &&
+    same(await difficultiesIn(front), ["easy", "normal", "hard", "oni"]) &&
+    same(await difficultiesIn(`${front}-ura`), ["ura"]) &&
+    (await textOf(`${front}-ura .song-line`))?.includes("Ura chart") !== true &&
+    !offeredKeys.includes("1001-ura");
+  // An inner chart's row is washed in its colour; the song's own row beside it is not.
   results.innerRowWearsItsColour = await page.evaluate<boolean>(
-    `(() => { const inner = document.querySelector("#song-picker-row-${WITH_INNER}-ura"); const front = document.querySelector("#song-picker-row-${WITH_INNER}"); const bg = inner ? getComputedStyle(inner).backgroundColor : ""; return inner?.classList.contains("picker-row-ura") === true && front?.classList.contains("picker-row-ura") !== true && bg !== "" && bg !== "transparent" && bg !== "rgba(0, 0, 0, 0)"; })()`,
+    `(() => { const wash = (row) => (row ? getComputedStyle(row).backgroundColor : ""); const clear = (colour) => colour === "" || colour === "transparent" || colour === "rgba(0, 0, 0, 0)"; const inner = document.querySelector("${front}-ura"); const own = document.querySelector("${front}"); return inner !== null && own !== null && !clear(wash(inner)) && clear(wash(own)); })()`,
   );
   await choose("difficulty", "ura");
-  const innerOnly =
-    !(await exists(`#song-picker-row-${WITH_INNER} button`)) &&
-    (await exists(`#song-picker-row-${WITH_INNER}-ura button`));
+  const innerKeys = await pickerKeys();
+  const innerOnly = !innerKeys.includes(WITH_INNER) && innerKeys.includes(`${WITH_INNER}-ura`);
   await choose("difficulty", "oni");
-  const frontOnly =
-    (await exists(`#song-picker-row-${WITH_INNER} button`)) &&
-    !(await exists(`#song-picker-row-${WITH_INNER}-ura`));
+  const frontKeys = await pickerKeys();
+  const frontOnly = frontKeys.includes(WITH_INNER) && !frontKeys.includes(`${WITH_INNER}-ura`);
   await choose("difficulty", "all");
   results.favoritePickerFiltersEachSide = innerOnly && frontOnly;
-  await shown(`#song-picker-row-${WITH_INNER}-ura button`);
   await page.evaluate(
-    `document.querySelector("#song-picker-row-${WITH_INNER}-ura button").click()`,
+    `document.querySelector("${await toRow(`${WITH_INNER}-ura`)} button").click()`,
   );
   await gone("#song-picker");
   await syncLit();

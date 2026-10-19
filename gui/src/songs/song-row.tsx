@@ -42,6 +42,7 @@ const ROW = {
     outline: "none",
   },
   "& button.song-open, & label.song-open": { cursor: "pointer" },
+  "& label.song-open:has(input:disabled)": { cursor: "default" },
   "& .song-bars": { display: "flex", alignSelf: "stretch", gap: "2px", flexShrink: 0 },
   "& .song-bar": { width: 4, borderRadius: "2px" },
   "& .song-text": { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 0.25 },

@@ -191,6 +191,7 @@ function PickerBody({
         many={many}
         onActivate={activate}
         describedBy={full ? LIMIT_NOTE_ID : undefined}
+        scroller={scroller}
       />
     );
   }

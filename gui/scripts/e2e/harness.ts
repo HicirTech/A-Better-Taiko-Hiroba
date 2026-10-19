@@ -262,43 +262,51 @@ export function pageHelpers(page: Page) {
   const touchMoves = () => page.evaluate<number>("window.touchMoves");
 
   // A long list keeps only the rows near the window in the page: the window walks it to see more.
-  /** Every row of a long list, read by `read`; the window walks it from the top and back. */
-  const listRows = <T>(list: string, read: string) =>
+  // What a list scrolls in: the page, or the element `scroller` names, such as a dialog's body.
+  const scrolling = (scroller?: string) =>
+    `const box = ${scroller === undefined ? "null" : `document.querySelector(${JSON.stringify(scroller)})`};
+      const at = () => (box === null ? scrollY : box.scrollTop);
+      const to = (top) => (box === null ? scrollTo(0, top) : box.scrollTo(0, top));
+      const onward = () => (box === null ? scrollBy(0, innerHeight) : box.scrollBy(0, box.clientHeight));`;
+  /** Every row of a long list, read by `read`; its scroll walks it from the top and back. */
+  const listRows = <T>(list: string, read: string, scroller?: string) =>
     page.evaluate<T[]>(`(async () => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const read = ${read};
-      const from = scrollY;
+      ${scrolling(scroller)}
+      const from = at();
       const seen = new Map();
-      scrollTo(0, 0);
+      to(0);
       await frame();
       for (;;) {
         for (const row of document.querySelectorAll(${JSON.stringify(`${list} > li`)})) seen.set(Number(row.dataset.index), read(row));
-        const before = scrollY;
-        scrollBy(0, innerHeight);
+        const before = at();
+        onward();
         await frame();
-        if (scrollY === before) break;
+        if (at() === before) break;
       }
-      scrollTo(0, from);
+      to(from);
       await frame();
       return [...seen].sort(([one], [other]) => one - other).map(([, value]) => value);
     })()`);
   /** The selector of the long list's row that `matches`, walked to and put mid-window. */
-  const rowInView = async (list: string, matches: string) => {
+  const rowInView = async (list: string, matches: string, scroller?: string) => {
     const index = await page.evaluate<number | null>(`(async () => {
       const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
       const matches = ${matches};
+      ${scrolling(scroller)}
       const found = () => [...document.querySelectorAll(${JSON.stringify(`${list} > li`)})].find(matches);
       let row = found();
       if (row === undefined) {
-        scrollTo(0, 0);
+        to(0);
         await frame();
         row = found();
       }
       while (row === undefined) {
-        const before = scrollY;
-        scrollBy(0, innerHeight);
+        const before = at();
+        onward();
         await frame();
-        if (scrollY === before) return null;
+        if (at() === before) return null;
         row = found();
       }
       row.scrollIntoView({ block: "center" });

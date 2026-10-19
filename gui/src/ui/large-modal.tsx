@@ -183,6 +183,7 @@ export function LargeModal({
           )}
           <Box
             ref={contentRef}
+            id={`${id}-content`}
             sx={{
               flex: 1,
               minHeight: 0,
