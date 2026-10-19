@@ -20,6 +20,7 @@ import * as SettingsSection from "../../settings/settings-section.stories";
 import * as SongDataSection from "../../settings/song-data-section.stories";
 import * as SongLevelsSection from "../../settings/song-levels-section.stories";
 import * as UpdatesSection from "../../settings/updates-section.stories";
+import * as SectionCard from "../../ui/section-card.stories";
 import * as SectionTitle from "../../ui/section-title.stories";
 import * as SubsectionTitle from "../../ui/section-title.subsection-title.stories";
 import { Gallery } from "../gallery";
@@ -38,6 +39,7 @@ const meta = {
           story: OverviewHeader.Shown,
           wide: true,
         },
+        { name: "SectionCard", meta: SectionCard.default, story: SectionCard.Stacked },
         {
           name: "SectionTitle",
           meta: SectionTitle.default,
