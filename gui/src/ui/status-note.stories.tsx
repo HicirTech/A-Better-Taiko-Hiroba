@@ -1,8 +1,9 @@
-import { Box, Card, CardContent, Skeleton, Stack, Typography } from "@mui/material";
+import { Box, Skeleton, Stack, Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { PAGE_HEIGHT } from "../navigation/app-frame";
 import { i18nOf } from "../story-kit/env";
+import { SectionCard } from "./section-card";
 import { StatusNote } from "./status-note";
 
 const CHIPS = [80, 170, 72, 64];
@@ -57,14 +58,12 @@ export const InACard: Story = {
     const { t } = i18nOf(globals);
     return (
       <Box sx={{ p: 2, maxWidth: 600 }}>
-        <Card variant="outlined">
-          <CardContent>
-            <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 500 }}>
-              {t("favorites.folder.heading")}
-            </Typography>
-            <StatusNote>{t("favorites.folderEmpty")}</StatusNote>
-          </CardContent>
-        </Card>
+        <SectionCard>
+          <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 500 }}>
+            {t("favorites.folder.heading")}
+          </Typography>
+          <StatusNote>{t("favorites.folderEmpty")}</StatusNote>
+        </SectionCard>
       </Box>
     );
   },

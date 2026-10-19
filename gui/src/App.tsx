@@ -3,8 +3,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   Stack,
   Typography,
@@ -57,6 +55,7 @@ import { SongSearch } from "./songs/song-search";
 import { FADES_IN, useFirstRead } from "./ui/first-read";
 import { PageSkeleton } from "./ui/page-skeleton";
 import { LoadFailed } from "./ui/read-failure-alert";
+import { SectionCard } from "./ui/section-card";
 import { RELEASES_URL, REPOSITORY_URL, releaseUrl } from "./updates";
 import { APP_VERSION } from "./updates/app-version";
 import { UpdateDialog } from "./updates/update-dialog";
@@ -522,33 +521,31 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       ) : (
         <Stack spacing={3}>
           {!firstRead.skeleton && (screen.name === "signedOut" || screen.name === "signingIn") && (
-            <Card id="sign-in-card" variant="outlined">
-              <CardContent>
-                <Stack spacing={2}>
-                  {screen.name === "signedOut" ? (
-                    <>
-                      {screen.notice !== null && (
-                        <Alert severity="info">{t(screen.notice, screen.noticeParams)}</Alert>
-                      )}
-                      <Typography>{t("signIn.intro")}</Typography>
-                      <Button id="sign-in" variant="contained" onClick={signIn}>
-                        {t("signIn.action")}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                        <CircularProgress size={24} />
-                        <Typography>{t("signIn.inProgress")}</Typography>
-                      </Stack>
-                      <Button variant="outlined" onClick={() => void port.cancelSignIn()}>
-                        {t("signIn.cancel")}
-                      </Button>
-                    </>
-                  )}
-                </Stack>
-              </CardContent>
-            </Card>
+            <SectionCard id="sign-in-card">
+              <Stack spacing={2}>
+                {screen.name === "signedOut" ? (
+                  <>
+                    {screen.notice !== null && (
+                      <Alert severity="info">{t(screen.notice, screen.noticeParams)}</Alert>
+                    )}
+                    <Typography>{t("signIn.intro")}</Typography>
+                    <Button id="sign-in" variant="contained" onClick={signIn}>
+                      {t("signIn.action")}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                      <CircularProgress size={24} />
+                      <Typography>{t("signIn.inProgress")}</Typography>
+                    </Stack>
+                    <Button variant="outlined" onClick={() => void port.cancelSignIn()}>
+                      {t("signIn.cancel")}
+                    </Button>
+                  </>
+                )}
+              </Stack>
+            </SectionCard>
           )}
 
           {firstRead.skeleton && PageShape !== null && (

@@ -1,10 +1,11 @@
-import { Box, ButtonBase, Collapse, Paper, Typography } from "@mui/material";
+import { Box, ButtonBase, Collapse, Typography } from "@mui/material";
 import { type ReactNode, useState } from "react";
 
 import { ArrowDropDownIcon } from "../ui/icons";
+import { SectionCard } from "../ui/section-card";
 
 const WORDS = { display: "block", flex: 1, minWidth: 0, textAlign: "left" } as const;
-const HEAD = { display: "flex", alignItems: "center", gap: 1, width: 1, px: 2, py: 1.5 } as const;
+const HEAD = { display: "flex", alignItems: "center", gap: 1, width: 1, px: 1, py: 1 } as const;
 const TITLE = { display: "block", fontWeight: 500 } as const;
 const OPENER = {
   ...HEAD,
@@ -49,7 +50,7 @@ export function KnowItem({
     </Box>
   );
   return (
-    <Paper id={id} component="section" variant="outlined" sx={{ borderRadius: 2 }}>
+    <SectionCard id={id} component="section" flush>
       {details === null ? (
         <Box sx={HEAD}>{words(false)}</Box>
       ) : (
@@ -70,11 +71,11 @@ export function KnowItem({
       )}
       {details !== null && (
         <Collapse in={open} unmountOnExit>
-          <Box id={`${id}-content`} sx={{ px: 2, pb: 2 }}>
+          <Box id={`${id}-content`} sx={{ px: 1, pb: 1 }}>
             {details()}
           </Box>
         </Collapse>
       )}
-    </Paper>
+    </SectionCard>
   );
 }

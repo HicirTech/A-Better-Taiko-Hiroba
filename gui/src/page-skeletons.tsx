@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Paper, Skeleton, Stack } from "@mui/material";
+import { Box, Skeleton, Stack } from "@mui/material";
 import type { ComponentType } from "react";
 
 import { SongRowSkeleton } from "./favorites/song-row";
@@ -12,6 +12,7 @@ import { FrameTop } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { useTouchFirst } from "./navigation/use-touch-first";
 import { SearchFieldSkeleton } from "./ui/search-field";
+import { CARD_GAP, SectionCard } from "./ui/section-card";
 import { SectionTitleSkeleton } from "./ui/section-title";
 import { SYNC_BAR_PAGE, SyncBarSkeleton } from "./ui/sync-bar";
 
@@ -101,12 +102,12 @@ function KnowYourselfSkeleton() {
   return (
     <Stack spacing={3}>
       <Skeleton variant="rounded" width={96} height={32} sx={{ borderRadius: 4 }} />
-      <Stack spacing={1.5}>
+      <Stack spacing={CARD_GAP}>
         {KNOW_CARDS.map((key) => (
-          <Paper key={key} variant="outlined" sx={{ borderRadius: 2, px: 2, py: 1.5 }}>
+          <SectionCard key={key}>
             <Skeleton width={120} sx={HEADING} />
             <Skeleton width="70%" sx={{ fontSize: "0.875rem" }} />
-          </Paper>
+          </SectionCard>
         ))}
       </Stack>
     </Stack>
@@ -142,17 +143,15 @@ function FavoritesSkeleton() {
           <Box sx={{ flexGrow: 1 }} />
           {!touchFirst && <Skeleton variant="circular" width={40} height={40} />}
         </Box>
-        <Card variant="outlined">
-          <CardContent>
+        <Stack spacing={CARD_GAP}>
+          <SectionCard>
             <SectionTitleSkeleton width={120} />
             <Stack spacing={1.5}>
               <SongRowSkeleton />
               <Skeleton variant="rounded" width={96} height={36} />
             </Stack>
-          </CardContent>
-        </Card>
-        <Card variant="outlined">
-          <CardContent>
+          </SectionCard>
+          <SectionCard>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
               <Skeleton width={140} sx={HEADING} />
               <Box sx={{ flexGrow: 1 }} />
@@ -164,8 +163,8 @@ function FavoritesSkeleton() {
                 <SongRowSkeleton key={key} />
               ))}
             </Stack>
-          </CardContent>
-        </Card>
+          </SectionCard>
+        </Stack>
       </Stack>
       <SyncBarSkeleton />
     </Box>

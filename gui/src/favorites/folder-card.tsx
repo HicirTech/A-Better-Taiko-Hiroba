@@ -1,9 +1,10 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Card, CardContent, Chip, Menu, MenuItem, Stack } from "@mui/material";
+import { Box, Button, Chip, Menu, MenuItem, Stack } from "@mui/material";
 import { useId, useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
 import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
+import { SectionCard } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { StatusNote } from "../ui/status-note";
@@ -56,74 +57,72 @@ export function FolderCard({
   const stopReplacing = () => setReplacing(null);
   useBackCloses(menuAt !== null, () => setMenuAt(null));
   return (
-    <Card id="favorite-folder-card" variant="outlined">
-      <CardContent>
-        <SectionTitle
-          level={3}
-          end={
-            inUse !== null ? (
-              <Chip
-                id="favorite-folder-set"
-                icon={<CheckIcon fontSize="small" />}
-                label={t("favorites.inUse", { name: inUse.name })}
-                color="primary"
-                variant="outlined"
-                size="small"
-              />
-            ) : (
-              songs.length > 0 && (
-                <>
+    <SectionCard id="favorite-folder-card">
+      <SectionTitle
+        level={3}
+        end={
+          inUse !== null ? (
+            <Chip
+              id="favorite-folder-set"
+              icon={<CheckIcon fontSize="small" />}
+              label={t("favorites.inUse", { name: inUse.name })}
+              color="primary"
+              variant="outlined"
+              size="small"
+            />
+          ) : (
+            songs.length > 0 && (
+              <>
+                <Button
+                  id="favorite-folder-save-as-set"
+                  variant="outlined"
+                  size="small"
+                  disabled={shut}
+                  onClick={onSaveAsSet}
+                >
+                  {t("favorites.saveAsSet")}
+                </Button>
+                {sets.length > 0 && (
                   <Button
-                    id="favorite-folder-save-as-set"
+                    id="favorite-folder-save-to-set"
                     variant="outlined"
                     size="small"
                     disabled={shut}
-                    onClick={onSaveAsSet}
+                    endIcon={<ArrowDropDownIcon fontSize="small" />}
+                    aria-haspopup="menu"
+                    aria-controls={menuAt === null ? undefined : menuId}
+                    aria-expanded={menuAt !== null}
+                    onClick={(event) => setMenuAt(event.currentTarget)}
                   >
-                    {t("favorites.saveAsSet")}
+                    {t("favorites.saveToSet")}
                   </Button>
-                  {sets.length > 0 && (
-                    <Button
-                      id="favorite-folder-save-to-set"
-                      variant="outlined"
-                      size="small"
-                      disabled={shut}
-                      endIcon={<ArrowDropDownIcon fontSize="small" />}
-                      aria-haspopup="menu"
-                      aria-controls={menuAt === null ? undefined : menuId}
-                      aria-expanded={menuAt !== null}
-                      onClick={(event) => setMenuAt(event.currentTarget)}
-                    >
-                      {t("favorites.saveToSet")}
-                    </Button>
-                  )}
-                </>
-              )
+                )}
+              </>
             )
-          }
-        >
-          {t("favorites.folder.heading")}
-        </SectionTitle>
-        <Stack spacing={1.5}>
-          {songs.length === 0 ? (
-            <StatusNote id="favorite-folder-empty">{t("favorites.folderEmpty")}</StatusNote>
-          ) : (
-            <Box component="ul" id="favorite-folder-list" sx={LIST}>
-              {songs.map(({ slot, songNo }) => (
-                <li key={slot}>
-                  <SongRow
-                    id={`favorite-folder-slot-${slot}`}
-                    look={look(songNo)}
-                    i18n={i18n}
-                    scrolling
-                    onOpen={openDetails(songNo)}
-                  />
-                </li>
-              ))}
-            </Box>
-          )}
-        </Stack>
-      </CardContent>
+          )
+        }
+      >
+        {t("favorites.folder.heading")}
+      </SectionTitle>
+      <Stack spacing={1.5}>
+        {songs.length === 0 ? (
+          <StatusNote id="favorite-folder-empty">{t("favorites.folderEmpty")}</StatusNote>
+        ) : (
+          <Box component="ul" id="favorite-folder-list" sx={LIST}>
+            {songs.map(({ slot, songNo }) => (
+              <li key={slot}>
+                <SongRow
+                  id={`favorite-folder-slot-${slot}`}
+                  look={look(songNo)}
+                  i18n={i18n}
+                  scrolling
+                  onOpen={openDetails(songNo)}
+                />
+              </li>
+            ))}
+          </Box>
+        )}
+      </Stack>
       <Menu id={menuId} anchorEl={menuAt} open={menuAt !== null} onClose={() => setMenuAt(null)}>
         {sets.map((set, index) => (
           <MenuItem
@@ -157,6 +156,6 @@ export function FolderCard({
         ]}
         onClose={stopReplacing}
       />
-    </Card>
+    </SectionCard>
   );
 }

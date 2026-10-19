@@ -7,7 +7,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Paper,
 } from "@mui/material";
 import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
 import { type PickerEntry, PickerList } from "../favorites/picker-list";
@@ -24,6 +23,7 @@ import type { HirobaSessionPort } from "../session-port";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
 import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";
+import { SectionCard } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
 import { SongDetails } from "./song-details";
@@ -168,9 +168,9 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
       {active && panel !== null && (
         <ShownDifficultyContext value={shownDifficulty}>
           {framed ? (
-            <Paper id="song-search-panel" variant="outlined" sx={{ py: 1, overflow: "hidden" }}>
+            <SectionCard id="song-search-panel" flush sx={{ py: 1 }}>
               {panel}
-            </Paper>
+            </SectionCard>
           ) : (
             <Box id="song-search-panel" sx={searched ? FILLS_THE_PAGE : undefined}>
               {panel}

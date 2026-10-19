@@ -1,18 +1,9 @@
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  Skeleton,
-} from "@mui/material";
+import { Box, Button, List, ListItem, ListItemText, Paper, Skeleton } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { i18nOf } from "../story-kit/env";
 import { TranslateIcon } from "./icons";
+import { SectionCard } from "./section-card";
 import { SectionTitle } from "./section-title";
 
 // What a title stands over: the stories show the title, not what it titles.
@@ -38,12 +29,10 @@ export const AboveItsContent: Story = {};
 /** A card's title (h3 under the page's own), as the favourites' cards have. */
 export const InACard: Story = {
   render: (_args, { globals }) => (
-    <Card variant="outlined" sx={{ maxWidth: 600 }}>
-      <CardContent>
-        <SectionTitle level={3}>{i18nOf(globals).t("favorites.song.heading")}</SectionTitle>
-        {CONTENT}
-      </CardContent>
-    </Card>
+    <SectionCard sx={{ maxWidth: 600 }}>
+      <SectionTitle level={3}>{i18nOf(globals).t("favorites.song.heading")}</SectionTitle>
+      {CONTENT}
+    </SectionCard>
   ),
 };
 
@@ -52,21 +41,19 @@ export const WithThingsAtItsEnd: Story = {
   render: (_args, { globals }) => {
     const { t } = i18nOf(globals);
     return (
-      <Card variant="outlined" sx={{ maxWidth: 600 }}>
-        <CardContent>
-          <SectionTitle
-            level={3}
-            end={
-              <Button variant="outlined" size="small">
-                {t("favorites.saveAsSet")}
-              </Button>
-            }
-          >
-            {t("favorites.folder.heading")}
-          </SectionTitle>
-          {CONTENT}
-        </CardContent>
-      </Card>
+      <SectionCard sx={{ maxWidth: 600 }}>
+        <SectionTitle
+          level={3}
+          end={
+            <Button variant="outlined" size="small">
+              {t("favorites.saveAsSet")}
+            </Button>
+          }
+        >
+          {t("favorites.folder.heading")}
+        </SectionTitle>
+        {CONTENT}
+      </SectionCard>
     );
   },
 };

@@ -1,7 +1,8 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Card, CardContent, IconButton, Stack } from "@mui/material";
+import { Box, Button, IconButton, Stack } from "@mui/material";
 
 import { CloseIcon } from "../ui/icons";
+import { SectionCard } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
 import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongRow } from "./song-row";
@@ -56,82 +57,80 @@ export function SetView({
   const { t } = i18n;
   const songs = songNos.map((songNo) => ({ key: songNo, name: look(songNo).name }));
   return (
-    <Card id="favorite-set-view" variant="outlined" data-editing={editing}>
-      <CardContent>
-        <Stack spacing={1.5}>
-          <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
-            {editing ? (
-              <>
-                <Button id="favorite-set-add" variant="outlined" onClick={onAddSongs}>
-                  {t("favorites.addSongs")}
-                </Button>
-                <Box sx={{ flexGrow: 1 }} />
-                {edited && (
-                  <Button id="favorite-set-reset" onClick={onReset}>
-                    {t("edit.reset")}
-                  </Button>
-                )}
-                <Button id="favorite-set-save" variant="contained" onClick={onSave}>
-                  {t("favorites.saveSet")}
-                </Button>
-              </>
-            ) : (
-              <Button id="favorite-set-edit" variant="outlined" onClick={onEdit}>
-                {t("favorites.edit")}
+    <SectionCard id="favorite-set-view" data-editing={editing}>
+      <Stack spacing={1.5}>
+        <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
+          {editing ? (
+            <>
+              <Button id="favorite-set-add" variant="outlined" onClick={onAddSongs}>
+                {t("favorites.addSongs")}
               </Button>
-            )}
-          </Box>
-          {songs.length === 0 ? (
-            <StatusNote id="favorite-set-empty">{t("favorites.setEmpty")}</StatusNote>
-          ) : editing ? (
-            <SortableList
-              id="favorite-set-songs"
-              items={songs}
-              byLongPress={byLongPress}
-              i18n={i18n}
-              onMove={onMoveSong}
-              renderItem={(songNo, handle) => {
-                const shown = look(songNo);
-                const label = t("favorites.removeSong", { name: shown.name });
-                return (
-                  <SongRow
-                    id={`favorite-set-song-${songNo}`}
-                    look={shown}
-                    i18n={i18n}
-                    scrolling
-                    start={handle}
-                    end={
-                      <IconButton
-                        size="small"
-                        aria-label={label}
-                        title={label}
-                        data-song-no={songNo}
-                        onClick={() => onRemoveSong(songNo)}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    }
-                  />
-                );
-              }}
-            />
+              <Box sx={{ flexGrow: 1 }} />
+              {edited && (
+                <Button id="favorite-set-reset" onClick={onReset}>
+                  {t("edit.reset")}
+                </Button>
+              )}
+              <Button id="favorite-set-save" variant="contained" onClick={onSave}>
+                {t("favorites.saveSet")}
+              </Button>
+            </>
           ) : (
-            <Box component="ul" id="favorite-set-songs" sx={LIST}>
-              {songNos.map((songNo) => (
-                <li key={songNo} data-key={songNo}>
-                  <SongRow
-                    id={`favorite-set-song-${songNo}`}
-                    look={look(songNo)}
-                    i18n={i18n}
-                    scrolling
-                    onOpen={openDetails(songNo)}
-                  />
-                </li>
-              ))}
-            </Box>
+            <Button id="favorite-set-edit" variant="outlined" onClick={onEdit}>
+              {t("favorites.edit")}
+            </Button>
           )}
-        </Stack>
-      </CardContent>
-    </Card>
+        </Box>
+        {songs.length === 0 ? (
+          <StatusNote id="favorite-set-empty">{t("favorites.setEmpty")}</StatusNote>
+        ) : editing ? (
+          <SortableList
+            id="favorite-set-songs"
+            items={songs}
+            byLongPress={byLongPress}
+            i18n={i18n}
+            onMove={onMoveSong}
+            renderItem={(songNo, handle) => {
+              const shown = look(songNo);
+              const label = t("favorites.removeSong", { name: shown.name });
+              return (
+                <SongRow
+                  id={`favorite-set-song-${songNo}`}
+                  look={shown}
+                  i18n={i18n}
+                  scrolling
+                  start={handle}
+                  end={
+                    <IconButton
+                      size="small"
+                      aria-label={label}
+                      title={label}
+                      data-song-no={songNo}
+                      onClick={() => onRemoveSong(songNo)}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  }
+                />
+              );
+            }}
+          />
+        ) : (
+          <Box component="ul" id="favorite-set-songs" sx={LIST}>
+            {songNos.map((songNo) => (
+              <li key={songNo} data-key={songNo}>
+                <SongRow
+                  id={`favorite-set-song-${songNo}`}
+                  look={look(songNo)}
+                  i18n={i18n}
+                  scrolling
+                  onOpen={openDetails(songNo)}
+                />
+              </li>
+            ))}
+          </Box>
+        )}
+      </Stack>
+    </SectionCard>
   );
 }

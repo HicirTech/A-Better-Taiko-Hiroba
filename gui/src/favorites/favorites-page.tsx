@@ -12,6 +12,7 @@ import { SongDetails } from "../songs/song-details";
 import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
 import { ListIcon } from "../ui/icons";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { CARD_GAP } from "../ui/section-card";
 import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
 import {
   filledSlots,
@@ -250,7 +251,7 @@ function FavoritesBody({
         ) : shown === null ? (
           failureOf(step, i18n)
         ) : (
-          <Stack spacing={2} inert={shown.shut} sx={shown.shut ? HELD_STILL : undefined}>
+          <Stack spacing={CARD_GAP} inert={shown.shut} sx={shown.shut ? HELD_STILL : undefined}>
             <SongCard
               shown={shown}
               look={look}

@@ -1,6 +1,7 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Card, CardContent, Stack } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 
+import { SectionCard } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import type { ShownFavorites } from "./favorites-state";
@@ -21,29 +22,27 @@ export function SongCard({ shown, look, i18n, openDetails, onChange }: SongCardP
   const { view, draft, shut } = shown;
   const { songNo, ura } = draft ?? view.song.state;
   return (
-    <Card id="favorite-song-card" variant="outlined">
-      <CardContent>
-        <SectionTitle level={3}>{t("favorites.song.heading")}</SectionTitle>
-        <Stack spacing={1.5}>
-          {songNo === null ? (
-            <StatusNote id="favorite-song-none">{t("favorites.song.none")}</StatusNote>
-          ) : (
-            <SongRow
-              id="favorite-song-row"
-              look={look(songNo)}
-              i18n={i18n}
-              detail={ura ? t("favorites.ura") : undefined}
-              scrolling
-              onOpen={openDetails(songNo)}
-            />
-          )}
-          <Box>
-            <Button id="favorite-song-change" variant="outlined" disabled={shut} onClick={onChange}>
-              {t("favorites.song.change")}
-            </Button>
-          </Box>
-        </Stack>
-      </CardContent>
-    </Card>
+    <SectionCard id="favorite-song-card">
+      <SectionTitle level={3}>{t("favorites.song.heading")}</SectionTitle>
+      <Stack spacing={1.5}>
+        {songNo === null ? (
+          <StatusNote id="favorite-song-none">{t("favorites.song.none")}</StatusNote>
+        ) : (
+          <SongRow
+            id="favorite-song-row"
+            look={look(songNo)}
+            i18n={i18n}
+            detail={ura ? t("favorites.ura") : undefined}
+            scrolling
+            onOpen={openDetails(songNo)}
+          />
+        )}
+        <Box>
+          <Button id="favorite-song-change" variant="outlined" disabled={shut} onClick={onChange}>
+            {t("favorites.song.change")}
+          </Button>
+        </Box>
+      </Stack>
+    </SectionCard>
   );
 }

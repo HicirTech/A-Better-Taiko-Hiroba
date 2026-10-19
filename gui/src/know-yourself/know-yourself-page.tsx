@@ -20,6 +20,7 @@ import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../session-port";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { CARD_GAP } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
 import { AddSongsDialog } from "./add-songs-dialog";
 import { BandItem } from "./band-item";
@@ -183,7 +184,7 @@ export function KnowYourselfPage({
               }}
             />
           </Box>
-          <Stack spacing={1.5}>
+          <Stack spacing={CARD_GAP}>
             <CrownsItem charts={here} parts={parts} />
             <RanksItem charts={here} parts={parts} />
             <BandItem view="perSecond" charts={here} parts={parts} />
