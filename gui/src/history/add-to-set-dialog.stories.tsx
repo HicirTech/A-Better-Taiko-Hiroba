@@ -7,7 +7,7 @@ import { nameLanguage, shownName } from "../favorites/song-names";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SETS } from "../story-kit/sets";
 import { storySong } from "../story-kit/songs";
-import { AddToSetDialog, type AddToSetDialogProps, type NamedSong } from "./play-menu";
+import { AddToSetDialog, type AddToSetDialogProps, type NamedSong } from "./add-to-set-dialog";
 
 type Args = Omit<AddToSetDialogProps, "i18n" | "candidates">;
 

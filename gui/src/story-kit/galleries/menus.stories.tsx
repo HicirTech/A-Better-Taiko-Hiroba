@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import * as PlayMenu from "../../history/play-menu.stories";
 import * as ItemMenu from "../../ui/item-menu.stories";
 import { Gallery } from "../gallery";
 
@@ -24,7 +23,6 @@ const meta = {
           meta: ItemMenu.default,
           story: ItemMenu.OneActionOnAComputer,
         },
-        { name: "PlayMenu", meta: PlayMenu.default, story: PlayMenu.RightClicked },
       ]}
     />
   ),

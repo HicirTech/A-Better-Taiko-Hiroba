@@ -10,18 +10,19 @@ import { nameLanguage, shownName } from "../favorites/song-names";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { useLongPress } from "../my-page/use-long-press";
 import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { type PlayNotice, ScoreDetails } from "../scores/score-details";
 import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
+import type { ItemAction, Point } from "../ui/item-actions";
+import { ItemMenu, useItemMenu, useItemPress } from "../ui/item-menu";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
 import { StatusNote } from "../ui/status-note";
+import { AddToSetDialog, type NamedSong } from "./add-to-set-dialog";
 import { type PlacedPlay, placePlay, playedChart } from "./placed-play";
-import { AddToSetDialog, type NamedSong, PlayMenu, type Point } from "./play-menu";
 import { PLAY_ROW_PX, PlayRow } from "./play-row";
 import { playedSong, songsByTitle } from "./played-song";
 import type { RecentPlaysState } from "./use-recent-plays";
@@ -68,9 +69,12 @@ export function HistoryPage({
   };
 
   const kept = useFavoriteSets();
-  const [menu, setMenu] = useState<{ readonly play: RecentPlay; readonly at: Point } | null>(null);
   // The play whose song is being added to a set.
   const [adding, setAdding] = useState<RecentPlay | null>(null);
+  const playActions = (play: RecentPlay): readonly ItemAction[] => [
+    { key: "add", label: i18n.t("history.addToSet"), chooses: true, onPick: () => setAdding(play) },
+  ];
+  const menu = useItemMenu(playActions);
   // Where the play's title is shared, the song the player chose among those sharing it.
   const [chosen, setChosen] = useState<string | null>(null);
   // The song a new set starts with, while its name is asked.
@@ -178,7 +182,7 @@ export function HistoryPage({
               touchFirst={touchFirst}
               i18n={i18n}
               onOpen={() => setOpened(play)}
-              onHold={(at) => (at === null ? setAdding(play) : setMenu({ play, at }))}
+              onMenu={(at) => menu.open(play, at)}
             />
           );
         }}
@@ -193,17 +197,15 @@ export function HistoryPage({
         onReadSong={(score) => void readSong(score)}
         onClose={close}
       />
-      {menu !== null && (
-        <PlayMenu
-          at={menu.at}
-          i18n={i18n}
-          onAddToSet={() => {
-            setAdding(menu.play);
-            setMenu(null);
-          }}
-          onClose={() => setMenu(null)}
-        />
-      )}
+      <ItemMenu
+        id="history-play-menu"
+        dialogId="history-play-actions"
+        opened={menu.opened}
+        nameOf={(play) => nameOf(play).text}
+        actionsOf={playActions}
+        cancel={i18n.t("favorites.delete.cancel")}
+        onClose={menu.close}
+      />
       {adding !== null && found !== null && (
         <AddToSetDialog
           name={nameOf(adding)}
@@ -249,7 +251,7 @@ function RecentPlayRow({
   touchFirst,
   i18n,
   onOpen,
-  onHold,
+  onMenu,
 }: {
   readonly play: RecentPlay;
   readonly name: { readonly text: string; readonly lang: string };
@@ -262,9 +264,9 @@ function RecentPlayRow({
   readonly i18n: Translator;
   readonly onOpen: () => void;
   /** Where the right-click landed; none for a long press. */
-  readonly onHold: (at: Point | null) => void;
+  readonly onMenu: (at: Point | null) => void;
 }) {
-  const longPress = useLongPress(touchFirst, () => onHold(null));
+  const { handlers, held } = useItemPress(touchFirst, onMenu);
   return (
     <PlayRow
       play={play}
@@ -275,15 +277,8 @@ function RecentPlayRow({
       order={order}
       i18n={i18n}
       onOpen={onOpen}
-      handlers={{
-        ...(touchFirst ? longPress : {}),
-        onContextMenu: (event) => {
-          event.preventDefault();
-          if (!touchFirst) {
-            onHold({ x: event.clientX, y: event.clientY });
-          }
-        },
-      }}
+      handlers={handlers}
+      held={held}
       place={place}
     />
   );

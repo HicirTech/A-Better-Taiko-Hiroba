@@ -1,15 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Menu, MenuItem } from "@mui/material";
+import { Box } from "@mui/material";
 
 import { type Choice, ChoiceDialog } from "../favorites/choice-dialog";
 import { type FavoriteSet, refusedSong, SET_SONG_LIMIT } from "../favorites/favorite-sets";
 import { StatusNote } from "../ui/status-note";
-
-/** Where a right-click landed. */
-export interface Point {
-  readonly x: number;
-  readonly y: number;
-}
 
 /** A song the dialog names: in the player's language, with what tells it from a same-titled one. */
 export interface NamedSong {
@@ -18,33 +12,6 @@ export interface NamedSong {
   readonly lang: string;
   /** Its genres and artists. */
   readonly detail: string;
-}
-
-/** A recent play's own menu on a computer: its one action, which asks where in a dialog. */
-export function PlayMenu({
-  at,
-  i18n,
-  onAddToSet,
-  onClose,
-}: {
-  readonly at: Point;
-  readonly i18n: Translator;
-  readonly onAddToSet: () => void;
-  readonly onClose: () => void;
-}) {
-  return (
-    <Menu
-      id="history-play-menu"
-      open
-      onClose={onClose}
-      anchorReference="anchorPosition"
-      anchorPosition={{ top: at.y, left: at.x }}
-    >
-      <MenuItem id="history-play-menu-add" onClick={onAddToSet}>
-        {i18n.t("history.addToSet")}
-      </MenuItem>
-    </Menu>
-  );
 }
 
 export interface AddToSetDialogProps {

@@ -7,14 +7,14 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Menu,
-  MenuItem,
   Typography,
 } from "@mui/material";
-import { type MouseEvent, useState } from "react";
+import { useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
 import { AddIcon, CheckIcon } from "../ui/icons";
+import { type ItemAction, pointerOf } from "../ui/item-actions";
+import { ItemMenu, useItemMenu } from "../ui/item-menu";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { type FavoriteSet, sameSongs } from "./favorite-sets";
 import { SetNameDialog } from "./set-name-dialog";
@@ -56,25 +56,20 @@ export function SetsDrawer({
   onClose,
 }: SetsDrawerProps) {
   const { t } = i18n;
-  const [menu, setMenu] = useState<{ set: FavoriteSet; x: number; y: number } | null>(null);
-  const [offering, setOffering] = useState<FavoriteSet | null>(null);
   const [deleting, setDeleting] = useState<FavoriteSet | null>(null);
   const [renaming, setRenaming] = useState<FavoriteSet | null>(null);
-  const stopOffering = () => setOffering(null);
   const stopDeleting = () => setDeleting(null);
   useBackCloses(open, onClose);
-  const openMenu = (set: FavoriteSet, event: MouseEvent) => {
-    event.preventDefault();
-    setMenu({ set, x: event.clientX, y: event.clientY });
-  };
-  const rename = (set: FavoriteSet) => {
-    setMenu(null);
-    setRenaming(set);
-  };
-  const askToDelete = (set: FavoriteSet) => {
-    setMenu(null);
-    setDeleting(set);
-  };
+  const actionsOf = (set: FavoriteSet): readonly ItemAction[] => [
+    { key: "rename", label: t("favorites.rename"), onPick: () => setRenaming(set) },
+    {
+      key: "delete",
+      label: t("favorites.delete"),
+      destructive: true,
+      onPick: () => setDeleting(set),
+    },
+  ];
+  const menu = useItemMenu(actionsOf);
   return (
     <Drawer
       anchor="right"
@@ -110,7 +105,12 @@ export function SetsDrawer({
           byLongPress={byLongPress}
           i18n={i18n}
           onMove={onMove}
-          onHold={(id) => setOffering(sets.find((set) => set.id === id) ?? null)}
+          onHold={(id) => {
+            const set = sets.find((one) => one.id === id);
+            if (set !== undefined) {
+              menu.open(set, null);
+            }
+          }}
           sx={{ gap: 0 }}
           renderItem={(id, handle) => {
             const index = sets.findIndex((set) => set.id === id);
@@ -127,9 +127,15 @@ export function SetsDrawer({
                   data-same-as-folder={same}
                   selected={set.id === selectedId}
                   aria-current={set.id === selectedId ? "true" : undefined}
-                  aria-haspopup="menu"
                   onClick={() => onPick(set.id)}
-                  onContextMenu={byLongPress ? undefined : (event) => openMenu(set, event)}
+                  onContextMenu={
+                    byLongPress
+                      ? undefined
+                      : (event) => {
+                          event.preventDefault();
+                          menu.open(set, pointerOf(event));
+                        }
+                  }
                   sx={{ minWidth: 0, pl: handle === null ? 2 : 1 }}
                 >
                   <ListItemText primary={set.name} slotProps={{ primary: { noWrap: true } }} />
@@ -150,39 +156,14 @@ export function SetsDrawer({
           </ListItemButton>
         </List>
       </Box>
-      <Menu
+      <ItemMenu
         id="favorite-set-menu"
-        open={menu !== null}
-        onClose={() => setMenu(null)}
-        anchorReference="anchorPosition"
-        anchorPosition={menu === null ? undefined : { top: menu.y, left: menu.x }}
-      >
-        <MenuItem id="favorite-set-menu-rename" onClick={() => menu && rename(menu.set)}>
-          {t("favorites.rename")}
-        </MenuItem>
-        <MenuItem id="favorite-set-menu-delete" onClick={() => menu && askToDelete(menu.set)}>
-          {t("favorites.delete")}
-        </MenuItem>
-      </Menu>
-      <SimpleDialog
-        id="favorite-set-actions"
-        open={offering !== null}
-        title={offering?.name ?? ""}
-        cancel={{ id: "favorite-set-actions-cancel", label: t("favorites.delete.cancel") }}
-        actions={[
-          {
-            id: "favorite-set-actions-rename",
-            label: t("favorites.rename"),
-            onClick: () => offering && rename(offering),
-          },
-          {
-            id: "favorite-set-actions-delete",
-            label: t("favorites.delete"),
-            destructive: true,
-            onClick: () => offering && askToDelete(offering),
-          },
-        ]}
-        onClose={stopOffering}
+        dialogId="favorite-set-actions"
+        opened={menu.opened}
+        nameOf={(set) => set.name}
+        actionsOf={actionsOf}
+        cancel={t("favorites.delete.cancel")}
+        onClose={menu.close}
       />
       <SimpleDialog
         id="favorite-set-delete-dialog"
@@ -200,7 +181,7 @@ export function SetsDrawer({
                 onDelete(deleting.id);
               }
               stopDeleting();
-              stopOffering();
+              menu.close();
             },
           },
         ]}
@@ -216,7 +197,7 @@ export function SetsDrawer({
           onSave={(name) => {
             onRename(renaming.id, name);
             setRenaming(null);
-            stopOffering();
+            menu.close();
           }}
         />
       )}

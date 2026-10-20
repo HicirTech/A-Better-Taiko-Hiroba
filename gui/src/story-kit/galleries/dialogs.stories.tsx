@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import * as ChoiceDialog from "../../favorites/choice-dialog.stories";
 import * as SetNameDialog from "../../favorites/set-name-dialog.stories";
 import * as SongPicker from "../../favorites/song-picker.stories";
-import * as AddToSetDialog from "../../history/play-menu.add-to-set-dialog.stories";
+import * as AddToSetDialog from "../../history/add-to-set-dialog.stories";
 import * as AddSongsDialog from "../../know-yourself/add-songs-dialog.stories";
 import * as CostumeHistoryDialog from "../../my-page/costume-history-dialog.stories";
 import * as ReadEveryDialog from "../../scores/read-every-dialog.stories";
