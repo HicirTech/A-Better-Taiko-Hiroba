@@ -220,14 +220,15 @@ nothing yet. Each read first asks Hiroba to refresh, then walks the feed: page 1
 three pages at once, in the play history's pipeline. The first read walks up to 200 pages, five
 charts a page, and a later read stops at the first chart whose record is already stored. A page that
 fails ends the read with nothing of it kept, and the notice names the page; the navigation's foot
-names the page being read. A row is the genre's colour, the difficulty's icon and the song, its
-crown, rank and play options as Hiroba's icons (the support chart, whose picture has not been seen,
-as a lifebuoy), then the score with the longest combo, and the 良/可/不可/連打 hits. The play counts
+names the page being read. A row is a bar for each of the song's genres, the song, the score with
+the longest combo and the 良/可/不可/連打 hits; at its end Hiroba's icons of the difficulty, the crown,
+the rank and the play options (the support chart, whose picture has not been seen, as a lifebuoy),
+with the chart's star level under them, where taiko.wiki's list has the song. The play counts
 the feed also carries are kept for a page of a chart's details. The rows have no date and no song
 number, and stay on the device after a sign-out. A play's title and genre find its song in the
 score lists, else in taiko.wiki's list, a cover the wiki marks with a bracketed end counting as its
 original's title; the song is named in the player's language where taiko.wiki has it, and keeps
-Hiroba's title otherwise. A click on a row opens its chart in full, as Scores does; a chart never
+Hiroba's title otherwise. A click anywhere on a row opens its chart in full, as Scores does; a chart never
 read in full is read there, after Hiroba's refresh, and a play whose song the app cannot tell (a
 title two songs share, or one no list nor taiko.wiki has yet) says why. A right-click on a row, or
 a long press on a touch screen, opens its menu, which adds the song to the end of a set kept on the

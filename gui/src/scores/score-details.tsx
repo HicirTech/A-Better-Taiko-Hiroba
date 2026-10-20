@@ -1,9 +1,10 @@
-import type { RecentPlay } from "@abth/core";
+import type { Genre, RecentPlay } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, CircularProgress, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import { type ReactNode, useRef, useState } from "react";
 
-import { CROWN_KEY, CROWN_RATIO, HistoryRow } from "../history/history-row";
+import { CROWN_KEY, CROWN_RATIO } from "../history/play-marks";
+import { PlayRow } from "../history/play-row";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
@@ -28,11 +29,16 @@ const FACTS = {
   "& .fact-name": { color: "text.secondary" },
 } as const;
 const ROW = { display: "flex", alignItems: "center", gap: 1 } as const;
+// The head's words stand in line with the details' under them.
+const HEAD_ROW = { px: 2 } as const;
 
 /** A recent play whose chart's details are not here: its row, why, and a read of its song. */
 export interface PlayNotice {
   readonly play: RecentPlay;
   readonly name: { readonly text: string; readonly lang: string };
+  /** The song's genres and the chart's star level from the song list, as its row showed them. */
+  readonly genres: readonly Genre[] | undefined;
+  readonly stars: number | null;
   readonly why: ReactNode;
   /** Reads the play's song again; none when the app does not know the song. */
   readonly onRead: (() => void) | null;
@@ -108,12 +114,23 @@ function DetailsBody({
           readSong: () => onReadSong(shown.score),
         }
       : { play: shown.play, name: shown.name, readSong: shown.onRead };
+  const { genres, stars } = shown;
   return (
     <LargeModal
       id="score-details"
       open={open}
       title={
-        <HistoryRow play={play} name={name} lane={lane} order={0} i18n={i18n} heading={TITLE_ID} />
+        <PlayRow
+          play={play}
+          name={name}
+          genres={genres}
+          stars={stars}
+          lane={lane}
+          order={0}
+          i18n={i18n}
+          heading={TITLE_ID}
+          sx={HEAD_ROW}
+        />
       }
       actions={
         readSong !== null && (

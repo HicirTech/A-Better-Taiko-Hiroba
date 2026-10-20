@@ -4,7 +4,7 @@ import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 
-import { HISTORY_ROW_PX, HistoryRow, opensOnPress } from "../history/history-row";
+import { PLAY_ROW_PX, PlayRow } from "../history/play-row";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PLAYS } from "../story-kit/plays";
 import { STORY_LANE } from "../story-kit/story-pictures";
@@ -28,14 +28,14 @@ const MANY = numbered(5000);
 
 const list = (rows: readonly Numbered[], i18n: Translator) => (
   <Box sx={{ maxWidth: 640 }}>
-    <RowList id="story-rows" rows={rows} keyOf={keyOf} rowPx={HISTORY_ROW_PX}>
+    <RowList id="story-rows" rows={rows} keyOf={keyOf} rowPx={PLAY_ROW_PX}>
       {({ play }, index, place) => (
-        <HistoryRow
+        <PlayRow
           play={play}
           lane={STORY_LANE}
           order={index}
           i18n={i18n}
-          rowProps={opensOnPress(action("open details"))}
+          onOpen={action("open details")}
           place={place}
         />
       )}

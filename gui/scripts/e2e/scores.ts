@@ -86,7 +86,7 @@ export async function scores(ctx: Ctx) {
   const shownRows = () =>
     listRows<ShownRow>(
       "#scores-list",
-      `(row) => ({ chart: row.dataset.songNo + "/" + row.dataset.level, facts: row.querySelector(".song-facts")?.textContent ?? "" })`,
+      `(row) => ({ chart: row.dataset.songNo + "/" + row.dataset.level, facts: row.querySelector(".song-line")?.textContent ?? "" })`,
     );
   const rowOf = (charted: string) => rowInView("#scores-list", isChart(charted));
   const rowsAre = (count: number) =>
@@ -166,7 +166,7 @@ export async function scores(ctx: Ctx) {
   results.laterReadDetailsWhatWasPlayed =
     same(sorted(laterAsked), sorted([chart(5), chart(shown + 1)])) &&
     (await hitsOn(SCORE_LIST)) === 8 &&
-    (await textOf(`${await rowOf(chart(5))} .song-facts`)) === "801,005 · Max combo 120";
+    (await textOf(`${await rowOf(chart(5))} .song-line`)) === "801,005 · Max combo 120";
 
   // A walk on the recent plays page marks the replay for the scores, which say so.
   await history("replay=7");
@@ -182,7 +182,7 @@ export async function scores(ctx: Ctx) {
     unread === en.t("scores.unread", { count: "1" }) && same(await takeAsked(), [chart(7)]);
 
   // The refresh in a chart's details reads its song again: each of the song's charts.
-  await click(await rowOf(chart(4)));
+  await click(`${await rowOf(chart(4))} .song-open`);
   await detailsOpened();
   await readAfter(() => click("#score-details-read-song"));
   results.songReadAgainFromItsDetails = same(sorted(await takeAsked()), SONG_1004);
@@ -308,13 +308,13 @@ export async function scores(ctx: Ctx) {
   // there the Japan place and the sections, each section's crown over its score.
   const lookOf = (selector: string) =>
     page.evaluate<RowLook>(
-      `(() => { const row = document.querySelector(${JSON.stringify(selector)}); return { name: row.querySelector(".song-name").textContent, marks: [...row.querySelectorAll(".play-marks [role=img]")].map((mark) => mark.getAttribute("aria-label")), facts: [...row.querySelectorAll(".song-facts")].map((line) => line.textContent) }; })()`,
+      `(() => { const row = document.querySelector(${JSON.stringify(selector)}); return { name: row.querySelector(".song-name").textContent, marks: [...row.querySelectorAll(".play-marks [role=img]")].map((mark) => mark.getAttribute("aria-label")), facts: [...row.querySelectorAll(".song-line")].map((line) => line.textContent) }; })()`,
     );
   const sixth = await rowOf(chart(6));
   const rowLook = await lookOf(sixth);
   await mousePress(sixth, "left");
   await detailsOpened();
-  const headLook = await lookOf("#score-details .history-row");
+  const headLook = await lookOf("#score-details .song-row");
   results.scoreDetailsHeadedLikeTheirRow =
     headLook.name === rowLook.name &&
     headLook.marks.length > 0 &&
@@ -357,7 +357,7 @@ export async function scores(ctx: Ctx) {
         heldPullAsked === true && (await refreshHits()) === refreshesBeforeTheHold;
 
       await takeAsked();
-      await click(await rowOf(chart(4)));
+      await click(`${await rowOf(chart(4))} .song-open`);
       await detailsOpened();
       const refreshes = await refreshHits();
       await swipe({ x: 195, y: 300 }, { x: 197, y: 520 });

@@ -8,7 +8,7 @@ import { action } from "storybook/actions";
 import { DIFFICULTY_COLOUR, LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { LevelBadges } from "../favorites/level-badges";
 import { levelsOfEntry, type SongLook } from "../favorites/song-look";
-import { CROWN_KEY, CROWN_RATIO } from "../history/history-row";
+import { CROWN_KEY, CROWN_RATIO } from "../history/play-marks";
 import { gapKindOf, gapsOf } from "../know-yourself/gaps";
 import type { KnownChart } from "../know-yourself/known-charts";
 import { HirobaIcon } from "../pictures/hiroba-icon";

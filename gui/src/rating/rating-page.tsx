@@ -4,7 +4,7 @@ import { Box, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
+import { PlayRow } from "../history/play-row";
 import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
@@ -100,7 +100,7 @@ export function RatingPage({
   const list = (id: string, heading: MessageKey, shown: readonly ChartRating[]) =>
     shown.length > 0 && (
       <Box component="section" aria-labelledby={`${id}-heading`}>
-        <Box sx={{ px: 2 }}>
+        <Box sx={{ px: 1 }}>
           <SectionTitle id={`${id}-heading`}>{t(heading)}</SectionTitle>
         </Box>
         <Stack component="ul" id={id} spacing={0} sx={LIST}>
@@ -208,19 +208,18 @@ function RatedRow({
 }) {
   const { t, locale } = i18n;
   const listed = listedOf(score, catalogue, locale);
-  const rowProps: RowProps = {
-    ...opensOnPress(onOpen),
-    "data-song-no": score.songNo,
-    "data-level": score.level,
-  };
   return (
-    <HistoryRow
+    <PlayRow
       play={score}
       name={{ text: listed.name, lang: listed.nameLang }}
+      genres={listed.genres}
+      stars={listed.stars}
       lane={lane}
       order={order}
       i18n={i18n}
-      rowProps={rowProps}
+      onOpen={onOpen}
+      data-song-no={score.songNo}
+      data-level={score.level}
       lead={
         <Box component="span" className="rating-lead" sx={LEAD}>
           <span className="rating-value">{formats.figure.format(chart.figures.rating)}</span>

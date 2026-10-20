@@ -1,5 +1,5 @@
 import type { Genre } from "@abth/core";
-import { Box, Checkbox, type SxProps, type Theme } from "@mui/material";
+import { Box, Checkbox, Skeleton, type SxProps, type Theme } from "@mui/material";
 import type { MouseEvent, ReactNode } from "react";
 
 import { GENRE_COLOUR } from "../favorites/genre-look";
@@ -10,6 +10,8 @@ import type { RowPlace } from "../ui/row-list";
 
 const ONE_LINE = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
 const NO_GENRE = { backgroundColor: "currentColor", opacity: 0.25 } as const;
+// A bar as tall as its row.
+const STRETCHED = { height: "auto" } as const;
 // The row's parts are plain elements styled from here: a picker draws hundreds of rows.
 const ROW = {
   position: "relative",
@@ -55,11 +57,20 @@ const ROW = {
   "& .song-bars": { display: "flex", alignSelf: "stretch", gap: "2px", flexShrink: 0 },
   "& .song-bar": { width: 4, borderRadius: "2px" },
   "& .song-text": { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 0.25 },
+  // A chart's marks end the name's line and the next; the lines after those run on under them.
+  "& .song-text-marked": {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    columnGap: 1,
+    rowGap: 0.25,
+    alignItems: "start",
+  },
+  "& .song-text-marked > .song-line ~ .song-line": { gridColumn: "1 / -1" },
   "& .song-name": { ...ONE_LINE, lineHeight: 1.4 },
   "& .song-line": { ...ONE_LINE, color: "text.secondary", fontSize: "0.8125rem", lineHeight: 1.4 },
   "& .song-end": { display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 },
   // The name's line is 22.4 px and a mark 20: a pixel down sets their middles together.
-  "& .song-marks": { display: "flex", alignSelf: "flex-start", flexShrink: 0, mt: "1px" },
+  "& .song-marks": { display: "flex", gridColumn: 2, gridRow: "1 / span 2", mt: "1px" },
   ...LEVEL_BADGES_LOOK,
 } as const;
 
@@ -107,8 +118,12 @@ export interface SongRowProps {
   readonly className?: string;
   /** Before the press, a control of its own: a check box beside the row, a handle that moves it. */
   readonly start?: ReactNode;
+  /** First in the press, before the bars: what a page rates the chart. */
+  readonly lead?: ReactNode;
   /** One bar per genre; none drawn faint. */
   readonly genres: readonly Genre[];
+  /** The genres' names, where screen readers are to hear them, as a play's row tells them. */
+  readonly genresLabel?: string | undefined;
   readonly name: ReactNode;
   readonly lang: string;
   /** A name too long for the row scrolls rather than ends in an ellipsis. */
@@ -127,7 +142,7 @@ export interface SongRowProps {
   readonly pressOpens?: boolean;
   /** A check box the whole row ticks, in place of a press. */
   readonly tick?: RowTick | undefined;
-  readonly handlers?: RowHandlers;
+  readonly handlers?: RowHandlers | undefined;
   /** Where a long list put the row. */
   readonly place?: RowPlace | undefined;
   readonly sx?: SxProps<Theme>;
@@ -139,7 +154,9 @@ export function SongRow({
   component = "li",
   className,
   start,
+  lead,
   genres,
+  genresLabel,
   name,
   lang,
   scrolling = false,
@@ -158,7 +175,13 @@ export function SongRow({
   const pressable = onPress !== undefined || tick !== undefined;
   const song = (
     <>
-      <span className="song-bars" aria-hidden>
+      {lead}
+      <span
+        className="song-bars"
+        {...(genresLabel === undefined
+          ? { "aria-hidden": true }
+          : { role: "img", "aria-label": genresLabel, title: genresLabel })}
+      >
         {genres.length === 0 ? (
           <span className="song-bar" style={NO_GENRE} />
         ) : (
@@ -171,7 +194,7 @@ export function SongRow({
           ))
         )}
       </span>
-      <span className="song-text">
+      <span className={marks === undefined ? "song-text" : "song-text song-text-marked"}>
         {scrolling ? (
           <ScrollingText
             {...(nameId === undefined ? {} : { id: nameId })}
@@ -191,8 +214,8 @@ export function SongRow({
             {line}
           </span>
         ))}
+        {marks !== undefined && <span className="song-marks">{marks}</span>}
       </span>
-      {marks !== undefined && <span className="song-marks">{marks}</span>}
     </>
   );
   return (
@@ -225,6 +248,42 @@ export function SongRow({
       ) : (
         <span className="song-open">{song}</span>
       )}
+      {end !== undefined && <span className="song-end">{end}</span>}
+    </Box>
+  );
+}
+
+/** A row's shape while a page's first read runs: its bar, name and grey lines, its marks or end. */
+export function SongRowSkeleton({
+  component = "li",
+  lines = 1,
+  marks,
+  end,
+}: {
+  readonly component?: "li" | "div";
+  readonly lines?: number;
+  readonly marks?: ReactNode;
+  readonly end?: ReactNode;
+}) {
+  return (
+    <Box component={component} aria-hidden className="song-row" sx={ROW}>
+      <span className="song-open">
+        <span className="song-bars">
+          <Skeleton variant="rectangular" className="song-bar" sx={STRETCHED} />
+        </span>
+        <span className={marks === undefined ? "song-text" : "song-text song-text-marked"}>
+          <span className="song-name">
+            <Skeleton width="55%" />
+          </span>
+          {Array.from({ length: lines }, (_, index) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: a line is its place under the name
+            <span key={index} className="song-line">
+              <Skeleton width={index === 0 ? "35%" : "55%"} />
+            </span>
+          ))}
+          {marks !== undefined && <span className="song-marks">{marks}</span>}
+        </span>
+      </span>
       {end !== undefined && <span className="song-end">{end}</span>}
     </Box>
   );

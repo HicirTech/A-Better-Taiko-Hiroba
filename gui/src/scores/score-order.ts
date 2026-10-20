@@ -27,6 +27,8 @@ export interface ListedScore {
   readonly searched: readonly string[];
   /** taiko.wiki's star level for the chart; null where its list lacks it. */
   readonly stars: number | null;
+  /** taiko.wiki's genres for the song; none where its list lacks it. */
+  readonly genres: readonly Genre[];
 }
 
 /** What the page narrows its charts to: any of the chosen of each part, and none leaves it open. */

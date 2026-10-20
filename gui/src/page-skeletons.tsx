@@ -2,7 +2,7 @@ import { Box, Skeleton, Stack } from "@mui/material";
 import type { ComponentType } from "react";
 
 import { SongRowSkeleton } from "./favorites/song-row";
-import { HistoryRowsSkeleton } from "./history/history-row";
+import { PlayRowsSkeleton } from "./history/play-row";
 import { COLUMN_MAX_WIDTH_PX, CostumePageSkeleton } from "./my-page/costume-page";
 import { MedalCardSkeleton } from "./my-page/medal-card";
 import { OverviewHeaderSkeleton } from "./my-page/overview-header";
@@ -50,7 +50,7 @@ function OverviewSkeleton() {
 }
 
 function HistorySkeleton() {
-  return <HistoryRowsSkeleton />;
+  return <PlayRowsSkeleton />;
 }
 
 function ScoresSkeleton() {
@@ -69,7 +69,7 @@ function ScoresSkeleton() {
             />
           ))}
         </Box>
-        <HistoryRowsSkeleton />
+        <PlayRowsSkeleton />
       </Stack>
     </>
   );
@@ -89,10 +89,10 @@ function RatingSkeleton() {
         </Box>
       </Stack>
       <Box>
-        <Box sx={{ px: 2 }}>
+        <Box sx={{ px: 1 }}>
           <SectionTitleSkeleton width={150} />
         </Box>
-        <HistoryRowsSkeleton />
+        <PlayRowsSkeleton />
       </Box>
     </Stack>
   );

@@ -7,7 +7,7 @@ import { keptShownDifficulty } from "../favorites/shown-difficulty";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import { fold, searchedNames } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { HISTORY_ROW_PX, HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
+import { PLAY_ROW_PX, PlayRow } from "../history/play-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
@@ -44,6 +44,7 @@ export function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Tra
     nameLang: song === undefined ? HIROBA_LANG : nameLanguage(song, name),
     searched: [score.songTitle, ...names].map(fold),
     stars: song?.levels[LEVEL_DIFFICULTY[score.level]] ?? null,
+    genres: song?.genres ?? [],
   } satisfies ListedScore;
 }
 
@@ -143,7 +144,7 @@ export function ScoresPage({
             {t("scores.noMatch")}
           </StatusNote>
         )}
-        <RowList id="scores-list" rows={shown} keyOf={listedChart} rowPx={HISTORY_ROW_PX}>
+        <RowList id="scores-list" rows={shown} keyOf={listedChart} rowPx={PLAY_ROW_PX}>
           {(one, index, place) => (
             <ScoreRow
               listed={one}
@@ -186,20 +187,19 @@ function ScoreRow({
   readonly onOpen: () => void;
 }) {
   const { score } = listed;
-  const rowProps: RowProps = {
-    ...opensOnPress(onOpen),
-    "data-song-no": score.songNo,
-    "data-level": score.level,
-  };
   return (
-    <HistoryRow
+    <PlayRow
       play={score}
       name={{ text: listed.name, lang: listed.nameLang }}
+      genres={listed.genres}
+      stars={listed.stars}
       lane={lane}
       order={order}
       i18n={i18n}
-      rowProps={rowProps}
+      onOpen={onOpen}
       place={place}
+      data-song-no={score.songNo}
+      data-level={score.level}
     />
   );
 }

@@ -1,10 +1,10 @@
-import { type RecentPlay, recentPlayKey } from "@abth/core";
+import { type Genre, type RecentPlay, recentPlayKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { newSetName } from "../favorites/favorite-sets";
-import { GENRE_LABEL } from "../favorites/genre-look";
+import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { SetNameDialog } from "../favorites/set-name-dialog";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
@@ -20,9 +20,9 @@ import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
 import { StatusNote } from "../ui/status-note";
-import { HISTORY_ROW_PX, HistoryRow, opensOnPress, type RowProps } from "./history-row";
 import { type PlacedPlay, placePlay, playedChart } from "./placed-play";
 import { AddToSetDialog, type NamedSong, PlayMenu, type Point } from "./play-menu";
+import { PLAY_ROW_PX, PlayRow } from "./play-row";
 import { playedSong, songsByTitle } from "./played-song";
 import type { RecentPlaysState } from "./use-recent-plays";
 
@@ -54,10 +54,12 @@ export function HistoryPage({
   const [opened, setOpened] = useState<RecentPlay | null>(null);
   // Read once each time it opens: a play whose read found nothing is not read in a loop.
   const [asked, setAsked] = useState<string | null>(null);
-  // Hiroba's own title where no one song is found for the play, or taiko.wiki does not have it.
-  const nameOf = (play: RecentPlay) => {
+  const songOf = (play: RecentPlay) => {
     const found = playedSong(byTitle, play, view?.songs ?? []);
-    const song = found.outcome === "resolved" ? catalogue.songs.get(found.songNo) : undefined;
+    return found.outcome === "resolved" ? catalogue.songs.get(found.songNo) : undefined;
+  };
+  // Hiroba's own title where no one song is found for the play, or taiko.wiki does not have it.
+  const nameOf = (play: RecentPlay, song = songOf(play)) => {
     if (song === undefined) {
       return { text: play.songTitle, lang: HIROBA_LANG };
     }
@@ -108,12 +110,15 @@ export function HistoryPage({
       readPlayed(opened, unread);
     }
   }, [opened, unread, scoresReading, asked, openedKey, readPlayed]);
+  const openedSong = opened === null ? undefined : songOf(opened);
   const notice: PlayNotice | null =
     opened === null || placed === null || placed.kind === "scored"
       ? null
       : {
           play: opened,
-          name: nameOf(opened),
+          name: nameOf(opened, openedSong),
+          genres: openedSong?.genres,
+          stars: openedSong?.levels[LEVEL_DIFFICULTY[opened.level]] ?? null,
           why: (
             <PlayWhy
               placed={placed}
@@ -158,20 +163,25 @@ export function HistoryPage({
           {i18n.t(touchFirst ? "history.emptyPull" : "history.emptyReadAgain")}
         </StatusNote>
       )}
-      <RowList id="history-list" rows={rows} keyOf={recentPlayKey} rowPx={HISTORY_ROW_PX}>
-        {(play, index, place) => (
-          <PlayRow
-            play={play}
-            name={nameOf(play)}
-            lane={lane}
-            order={index}
-            place={place}
-            touchFirst={touchFirst}
-            i18n={i18n}
-            onOpen={() => setOpened(play)}
-            onHold={(at) => (at === null ? setAdding(play) : setMenu({ play, at }))}
-          />
-        )}
+      <RowList id="history-list" rows={rows} keyOf={recentPlayKey} rowPx={PLAY_ROW_PX}>
+        {(play, index, place) => {
+          const song = songOf(play);
+          return (
+            <RecentPlayRow
+              play={play}
+              name={nameOf(play, song)}
+              genres={song?.genres}
+              stars={song?.levels[LEVEL_DIFFICULTY[play.level]] ?? null}
+              lane={lane}
+              order={index}
+              place={place}
+              touchFirst={touchFirst}
+              i18n={i18n}
+              onOpen={() => setOpened(play)}
+              onHold={(at) => (at === null ? setAdding(play) : setMenu({ play, at }))}
+            />
+          );
+        }}
       </RowList>
       <ScoreDetails
         listed={placed?.kind === "scored" ? listedOf(placed.score, catalogue, i18n.locale) : null}
@@ -228,9 +238,11 @@ export function HistoryPage({
 }
 
 /** A play's row: a click opens its chart's details; a right-click, or a long press, its menu. */
-function PlayRow({
+function RecentPlayRow({
   play,
   name,
+  genres,
+  stars,
   lane,
   order,
   place,
@@ -241,6 +253,8 @@ function PlayRow({
 }: {
   readonly play: RecentPlay;
   readonly name: { readonly text: string; readonly lang: string };
+  readonly genres: readonly Genre[] | undefined;
+  readonly stars: number | null;
   readonly lane: PictureLane;
   readonly order: number;
   readonly place: RowPlace;
@@ -251,24 +265,25 @@ function PlayRow({
   readonly onHold: (at: Point | null) => void;
 }) {
   const longPress = useLongPress(touchFirst, () => onHold(null));
-  const rowProps: RowProps = {
-    ...opensOnPress(onOpen),
-    ...(touchFirst ? longPress : {}),
-    onContextMenu: (event) => {
-      event.preventDefault();
-      if (!touchFirst) {
-        onHold({ x: event.clientX, y: event.clientY });
-      }
-    },
-  };
   return (
-    <HistoryRow
+    <PlayRow
       play={play}
       name={name}
+      genres={genres}
+      stars={stars}
       lane={lane}
       order={order}
       i18n={i18n}
-      rowProps={rowProps}
+      onOpen={onOpen}
+      handlers={{
+        ...(touchFirst ? longPress : {}),
+        onContextMenu: (event) => {
+          event.preventDefault();
+          if (!touchFirst) {
+            onHold({ x: event.clientX, y: event.clientY });
+          }
+        },
+      }}
       place={place}
     />
   );

@@ -90,8 +90,8 @@ const rowLook = (selector: string) =>
     return {
       marks: [...row.querySelectorAll(".play-marks [role=img]")].map((mark) => mark.getAttribute("aria-label")),
       drawn: pictures.length > 0 && pictures.every((img) => img.complete && img.naturalWidth > 0),
-      facts: [...row.querySelectorAll(".song-facts")].map((line) => line.textContent),
-      named: (row.querySelector(".song-head .course-icon")?.getAttribute("aria-label") ?? null) !== null && (row.querySelector(".song-bars")?.getAttribute("aria-label") ?? null) !== null,
+      facts: [...row.querySelectorAll(".song-line")].map((line) => line.textContent),
+      named: (row.querySelector(".course-icon")?.getAttribute("aria-label") ?? null) !== null && (row.querySelector(".song-bars")?.getAttribute("aria-label") ?? null) !== null,
       support: row.querySelector(".play-marks svg[aria-label]") !== null,
     };
   })()`;
@@ -161,7 +161,7 @@ export async function recentPlays(ctx: Ctx) {
   results.playNamedFromTheSongList =
     second?.lang === "en" && (await titles())[22] === "サンプル曲 1";
 
-  // Play 12 has a gold crown, rank 7, きまぐれ, ドロン and speed 1.5; play 13 the support chart.
+  // Play 12: Hard, a gold crown, rank 7, きまぐれ, ドロン, speed 1.5; play 13: the support chart.
   const twelfth = await waitFor("play 12's icons", async () => {
     const look = await lookOf("サンプル曲 12");
     return look?.drawn === true ? look : undefined;
@@ -169,6 +169,7 @@ export async function recentPlays(ctx: Ctx) {
   const thirteenth = await lookOf("サンプル曲 13");
   results.rowMarksDrawnAsIcons =
     same(twelfth.marks, [
+      en.t("difficulty.hard"),
       en.t("crowns.gold"),
       en.t("scoreRank.7"),
       en.t("history.kimagure"),
@@ -269,7 +270,7 @@ export async function recentPlayDetails(ctx: Ctx) {
       async () => (await titles())[0] === mockTitle(n) || undefined,
     );
   const openPlay = async (n: number) =>
-    click(await rowInView("#history-list", isTitled(mockTitle(n))));
+    click(`${await rowInView("#history-list", isTitled(mockTitle(n)))} .song-open`);
   const chartShown = () =>
     waitFor(
       "the chart's details",
