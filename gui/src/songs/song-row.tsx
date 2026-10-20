@@ -24,6 +24,7 @@ const ROW = {
   px: 1,
   py: 0.75,
   "&.song-row-pressable:hover": { bgcolor: "action.hover" },
+  "&.song-row-held, &.song-row-held:hover": { bgcolor: "action.selected" },
   "&:has(> .song-open:focus-visible, > .song-open input:focus-visible)": {
     outline: "2px solid",
     outlineColor: "primary.main",
@@ -134,7 +135,7 @@ export interface SongRowProps {
   readonly lines?: readonly ReactNode[];
   /** Last in the press, at the name's line: a chart's difficulty and level, the page's marks. */
   readonly marks?: ReactNode;
-  /** After the press, controls of their own: the levels' badges, a button that takes the song out. */
+  /** After the press, its own controls: the levels' badges, a button that takes the song out. */
   readonly end?: ReactNode;
   /** What a press on the row does, which its page decides: open details, pick the song. */
   readonly onPress?: (() => void) | undefined;
@@ -143,6 +144,8 @@ export interface SongRowProps {
   /** A check box the whole row ticks, in place of a press. */
   readonly tick?: RowTick | undefined;
   readonly handlers?: RowHandlers | undefined;
+  /** A long press has held long enough: the row lights, telling the finger it may let go. */
+  readonly held?: boolean;
   /** Where a long list put the row. */
   readonly place?: RowPlace | undefined;
   readonly sx?: SxProps<Theme>;
@@ -168,6 +171,7 @@ export function SongRow({
   pressOpens = false,
   tick,
   handlers,
+  held = false,
   place,
   sx,
   ...rest
@@ -221,7 +225,12 @@ export function SongRow({
   return (
     <Box
       component={component}
-      className={["song-row", pressable ? "song-row-pressable" : "", className ?? ""]
+      className={[
+        "song-row",
+        pressable ? "song-row-pressable" : "",
+        held ? "song-row-held" : "",
+        className ?? "",
+      ]
         .filter((part) => part !== "")
         .join(" ")}
       {...rest}

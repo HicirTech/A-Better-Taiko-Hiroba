@@ -38,6 +38,8 @@ export interface PlayRowProps {
   /** What a press on the row opens: its chart's details. */
   readonly onOpen?: (() => void) | undefined;
   readonly handlers?: RowHandlers;
+  /** A long press on it has held long enough. */
+  readonly held?: boolean;
   readonly place?: RowPlace | undefined;
   readonly sx?: SxProps<Theme>;
   readonly [data: `data-${string}`]: string | number | undefined;
@@ -56,6 +58,7 @@ export function PlayRow({
   lead,
   onOpen,
   handlers,
+  held = false,
   place,
   sx,
   ...rest
@@ -103,6 +106,7 @@ export function PlayRow({
       onPress={onOpen}
       pressOpens
       handlers={handlers}
+      held={held}
       place={place}
       sx={[COUNTS, ...(Array.isArray(sx) ? sx : [sx])]}
     />

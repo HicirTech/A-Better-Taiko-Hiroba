@@ -1,4 +1,4 @@
-import { type TouchEvent, useCallback, useEffect, useRef } from "react";
+import { type TouchEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { movedPastSlop, pointOf, type TouchPoint } from "../read-again/pull-gesture";
 import { swallowTouchClick } from "./swallow-touch-click";
@@ -19,17 +19,35 @@ type Press =
       readonly landed: TouchPoint;
       readonly timer: ReturnType<typeof setTimeout>;
     }
-  | { readonly phase: "held" };
+  | { readonly phase: "held"; readonly landed: TouchPoint };
 
-// The lift after a long-press must make no click, which would land on whatever onHeld opened: the
-// element's touchend stops it, and swallowTouchClick covers an element onHeld has taken away.
-export function useLongPress(enabled: boolean, onHeld: () => void): LongPressHandlers {
+interface PressEnds {
+  /** The press has been held long enough. */
+  readonly took: () => void;
+  /** Given, the press acts only when the finger lifts in place once it took. */
+  readonly letGo?: () => void;
+  /** The press is over, whether it acted or not. */
+  readonly over?: () => void;
+}
+
+// The lift after a long-press must make no click, which would land on whatever it opened: the
+// element's touchend stops it, and swallowTouchClick covers an element the press has taken away.
+function usePress(enabled: boolean, ends: PressEnds): LongPressHandlers {
   const press = useRef<Press | null>(null);
+  const latest = useRef(ends);
+  useEffect(() => {
+    latest.current = ends;
+  });
   const cancel = useCallback(() => {
-    if (press.current?.phase === "waiting") {
+    if (press.current === null) {
+      return;
+    }
+
+    if (press.current.phase === "waiting") {
       clearTimeout(press.current.timer);
     }
     press.current = null;
+    latest.current.over?.();
   }, []);
   useEffect(() => {
     if (!enabled) {
@@ -46,33 +64,64 @@ export function useLongPress(enabled: boolean, onHeld: () => void): LongPressHan
         return;
       }
 
+      const landed = pointOf(finger);
       const timer = setTimeout(() => {
-        press.current = { phase: "held" };
-        swallowTouchClick();
-        onHeld();
+        press.current = { phase: "held", landed };
+        latest.current.took();
       }, LONG_PRESS_MS);
-      press.current = { phase: "waiting", landed: pointOf(finger), timer };
+      press.current = { phase: "waiting", landed, timer };
     },
     onTouchMove: (event) => {
-      const finger = event.touches[0];
-      if (press.current?.phase !== "waiting") {
+      const now = press.current;
+      // One that acted as it took is done with the finger; one waiting to be let go is not.
+      if (now === null || (now.phase === "held" && latest.current.letGo === undefined)) {
         return;
       }
 
+      const finger = event.touches[0];
       if (
         event.touches.length !== 1 ||
         finger === undefined ||
-        movedPastSlop(press.current.landed, pointOf(finger))
+        movedPastSlop(now.landed, pointOf(finger))
       ) {
         cancel();
       }
     },
     onTouchEnd: (event) => {
+      const { letGo } = latest.current;
       if (press.current?.phase === "held") {
         event.preventDefault();
+        if (letGo !== undefined) {
+          swallowTouchClick();
+          letGo();
+        }
       }
       cancel();
     },
     onTouchCancel: cancel,
   };
+}
+
+/** A press held long enough acts as it takes, as the portrait opens the Costume page. */
+export function useLongPress(enabled: boolean, onHeld: () => void): LongPressHandlers {
+  return usePress(enabled, {
+    took: () => {
+      swallowTouchClick();
+      onHeld();
+    },
+  });
+}
+
+/** A long press that acts when let go in place, as an item's menu; `held` once it took. */
+export function useLongPressLetGo(
+  enabled: boolean,
+  onLetGo: () => void,
+): { readonly handlers: LongPressHandlers; readonly held: boolean } {
+  const [held, setHeld] = useState(false);
+  const handlers = usePress(enabled, {
+    took: () => setHeld(true),
+    letGo: onLetGo,
+    over: () => setHeld(false),
+  });
+  return { handlers, held };
 }
