@@ -4,23 +4,14 @@ import { useId, useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
 import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
-import { SectionCard } from "../ui/section-card";
+import { CARD_ROWS, SectionCard } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { StatusNote } from "../ui/status-note";
 import type { FavoriteSet } from "./favorite-sets";
 import type { ShownFavorites } from "./favorites-state";
 import type { SongLook } from "./song-look";
-import { type DetailsOpener, SongRow } from "./song-row";
-
-const LIST = {
-  listStyle: "none",
-  m: 0,
-  p: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: 1,
-} as const;
+import { type DetailsOpener, SongLookRow } from "./song-look-row";
 
 export interface FolderCardProps {
   readonly shown: ShownFavorites;
@@ -104,21 +95,20 @@ export function FolderCard({
       >
         {t("favorites.folder.heading")}
       </SectionTitle>
-      <Stack spacing={1.5}>
+      <Stack spacing={1.5} useFlexGap>
         {songs.length === 0 ? (
           <StatusNote id="favorite-folder-empty">{t("favorites.folderEmpty")}</StatusNote>
         ) : (
-          <Box component="ul" id="favorite-folder-list" sx={LIST}>
+          <Box component="ul" id="favorite-folder-list" sx={CARD_ROWS}>
             {songs.map(({ slot, songNo }) => (
-              <li key={slot}>
-                <SongRow
-                  id={`favorite-folder-slot-${slot}`}
-                  look={look(songNo)}
-                  i18n={i18n}
-                  scrolling
-                  onOpen={openDetails(songNo)}
-                />
-              </li>
+              <SongLookRow
+                key={slot}
+                id={`favorite-folder-slot-${slot}`}
+                look={look(songNo)}
+                i18n={i18n}
+                scrolling
+                onOpen={openDetails(songNo)}
+              />
             ))}
           </Box>
         )}

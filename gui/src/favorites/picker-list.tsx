@@ -1,12 +1,12 @@
 import type { Translator } from "@abth/i18n";
 import { Fragment, type ReactNode, type RefObject } from "react";
 
-import { HIROBA_LANG } from "../language/hiroba-lang";
 import { SongRow } from "../songs/song-row";
 import { RowList } from "../ui/row-list";
 import { DIFFICULTY_COLOUR } from "./genre-look";
 import { LevelBadges } from "./level-badges";
 import type { SongLook } from "./song-look";
+import { artistsLine } from "./song-look-row";
 import { type Marked, segmentsOf } from "./song-search";
 
 /** A song in the list, and the names a search marked in it. */
@@ -67,21 +67,6 @@ function markedName({ look, shown, other }: PickerEntry): ReactNode {
   );
 }
 
-/** The line under the name: the detail, such as the tempo, then the artists. */
-function lineOf({ look, detail }: PickerEntry): ReactNode[] {
-  const { artists } = look;
-  if (artists.length === 0 && detail === undefined) {
-    return [];
-  }
-  return [
-    <Fragment key="line">
-      {detail}
-      {detail !== undefined && artists.length > 0 && " · "}
-      {artists.length > 0 && <span lang={HIROBA_LANG}>{artists.join(", ")}</span>}
-    </Fragment>,
-  ];
-}
-
 const rowKey = (entry: PickerEntry) => `${entry.look.songNo}${entry.ura === true ? "-ura" : ""}`;
 
 /** The songs, one tap or one check box each; at the limit the rows not checked are shut. */
@@ -126,7 +111,7 @@ export function PickerList({
             genres={look.genres}
             name={markedName(entry)}
             lang={look.lang}
-            lines={lineOf(entry)}
+            lines={artistsLine(entry.look, entry.detail)}
             end={
               look.levels === null ? undefined : <LevelBadges levels={look.levels} i18n={i18n} />
             }

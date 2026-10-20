@@ -7,7 +7,7 @@ import { i18nOf, localeOf } from "../story-kit/env";
 import { lookOf, storySong } from "../story-kit/songs";
 import { CloseIcon, DragIndicatorIcon } from "../ui/icons";
 import { lookOfShown } from "./song-look";
-import { SongRow } from "./song-row";
+import { SongLookRow } from "./song-look-row";
 
 interface Args {
   /** The stand-in song the row draws. */
@@ -18,11 +18,12 @@ interface Args {
 }
 
 const meta = {
-  title: "Rows and lists/SongRow",
+  title: "Rows and lists/SongLookRow",
   tags: ["favorites"],
   render: ({ songNo, widthPx, scrolling }, { globals }) => (
     <Box sx={{ width: widthPx }}>
-      <SongRow
+      <SongLookRow
+        component="div"
         look={lookOf(songNo, localeOf(globals))}
         i18n={i18nOf(globals)}
         scrolling={scrolling}
@@ -48,7 +49,8 @@ export const WithTempo: Story = {
     const { bpm } = storySong(songNo);
     return (
       <Box sx={{ width: widthPx }}>
-        <SongRow
+        <SongLookRow
+          component="div"
           look={lookOf(songNo, i18n.locale)}
           i18n={i18n}
           detail={bpm === null ? undefined : i18n.t("song.bpm", { bpm: bpmText(bpm) })}
@@ -58,11 +60,12 @@ export const WithTempo: Story = {
   },
 };
 
-/** The bars and words are a button that opens the song's details; the badges stay beside it. */
+/** A press anywhere on the row opens the song's details; its levels' badges stay their own. */
 export const OpensDetails: Story = {
   render: ({ songNo, widthPx }, { globals }) => (
     <Box sx={{ width: widthPx }}>
-      <SongRow
+      <SongLookRow
+        component="div"
         look={lookOf(songNo, localeOf(globals))}
         i18n={i18nOf(globals)}
         onOpen={action("open details")}
@@ -78,7 +81,8 @@ export const LongNameScrolls: Story = { args: { songNo: "1009", widthPx: 300, sc
 export const NotInTheSongList: Story = {
   render: ({ widthPx }, { globals }) => (
     <Box sx={{ width: widthPx }}>
-      <SongRow
+      <SongLookRow
+        component="div"
         look={lookOfShown({ songNo: "1999", title: "曲リストにない曲", genre: 6 })}
         i18n={i18nOf(globals)}
       />
@@ -94,7 +98,8 @@ export const WithHandleAndRemove: Story = {
     const label = i18n.t("favorites.removeSong", { name: look.name });
     return (
       <Box sx={{ width: widthPx }}>
-        <SongRow
+        <SongLookRow
+          component="div"
           look={look}
           i18n={i18n}
           scrolling

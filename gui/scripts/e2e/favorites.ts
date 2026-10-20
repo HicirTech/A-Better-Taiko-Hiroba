@@ -443,7 +443,7 @@ export async function favorites(ctx: Ctx) {
   await shown(`#favorite-set-song-${LONG_TITLED}`);
   await Bun.sleep(500);
   results.longNameScrolls = await exists(`#favorite-set-song-${LONG_TITLED} .scrolling`);
-  const noDetailsWhileEditing = !(await exists("#favorite-set-songs .song-open"));
+  const noDetailsWhileEditing = !(await exists("#favorite-set-songs button.song-open"));
 
   const pickedOrder = await keysIn("favorite-set-songs");
   await dragByMouse(
@@ -621,7 +621,7 @@ export async function favorites(ctx: Ctx) {
   results.innerEntrySavedAndShown =
     innerSaved.favoriteSong === WITH_INNER &&
     innerSaved.favoriteSongUra &&
-    (await textOf("#favorite-song-row .song-artists"))?.startsWith("Ura chart") === true &&
+    (await textOf("#favorite-song-row .song-line"))?.startsWith("Ura chart") === true &&
     !(await exists("#favorite-song-outcome"));
   const readsBeforeReopen = await pickerReads();
   await click("#favorite-song-change");

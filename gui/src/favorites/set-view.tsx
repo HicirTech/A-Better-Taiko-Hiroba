@@ -2,20 +2,13 @@ import type { Translator } from "@abth/i18n";
 import { Box, Button, IconButton, Stack } from "@mui/material";
 
 import { CloseIcon } from "../ui/icons";
-import { SectionCard } from "../ui/section-card";
+import { CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
 import type { SongLook } from "./song-look";
-import { type DetailsOpener, SongRow } from "./song-row";
+import { type DetailsOpener, SongLookRow } from "./song-look-row";
 import { SortableList } from "./sortable-list";
 
-const LIST = {
-  listStyle: "none",
-  m: 0,
-  p: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: 1,
-} as const;
+const SORTED_ROWS = { gap: 0, ...TO_THE_CARD_SIDES } as const;
 
 export interface SetViewProps {
   /** The songs as shown: the set's own, or, while it is edited, the edits. */
@@ -58,7 +51,7 @@ export function SetView({
   const songs = songNos.map((songNo) => ({ key: songNo, name: look(songNo).name }));
   return (
     <SectionCard id="favorite-set-view" data-editing={editing}>
-      <Stack spacing={1.5}>
+      <Stack spacing={1.5} useFlexGap>
         <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
           {editing ? (
             <>
@@ -90,12 +83,14 @@ export function SetView({
             byLongPress={byLongPress}
             i18n={i18n}
             onMove={onMoveSong}
+            sx={SORTED_ROWS}
             renderItem={(songNo, handle) => {
               const shown = look(songNo);
               const label = t("favorites.removeSong", { name: shown.name });
               return (
-                <SongRow
+                <SongLookRow
                   id={`favorite-set-song-${songNo}`}
+                  component="div"
                   look={shown}
                   i18n={i18n}
                   scrolling
@@ -116,17 +111,17 @@ export function SetView({
             }}
           />
         ) : (
-          <Box component="ul" id="favorite-set-songs" sx={LIST}>
+          <Box component="ul" id="favorite-set-songs" sx={CARD_ROWS}>
             {songNos.map((songNo) => (
-              <li key={songNo} data-key={songNo}>
-                <SongRow
-                  id={`favorite-set-song-${songNo}`}
-                  look={look(songNo)}
-                  i18n={i18n}
-                  scrolling
-                  onOpen={openDetails(songNo)}
-                />
-              </li>
+              <SongLookRow
+                key={songNo}
+                id={`favorite-set-song-${songNo}`}
+                data-key={songNo}
+                look={look(songNo)}
+                i18n={i18n}
+                scrolling
+                onOpen={openDetails(songNo)}
+              />
             ))}
           </Box>
         )}

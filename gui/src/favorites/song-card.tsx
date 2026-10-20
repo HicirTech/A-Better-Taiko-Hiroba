@@ -1,12 +1,12 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Stack } from "@mui/material";
 
-import { SectionCard } from "../ui/section-card";
+import { SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import type { ShownFavorites } from "./favorites-state";
 import type { SongLook } from "./song-look";
-import { type DetailsOpener, SongRow } from "./song-row";
+import { type DetailsOpener, SongLookRow } from "./song-look-row";
 
 export interface SongCardProps {
   readonly shown: ShownFavorites;
@@ -24,18 +24,21 @@ export function SongCard({ shown, look, i18n, openDetails, onChange }: SongCardP
   return (
     <SectionCard id="favorite-song-card">
       <SectionTitle level={3}>{t("favorites.song.heading")}</SectionTitle>
-      <Stack spacing={1.5}>
+      <Stack spacing={1.5} useFlexGap>
         {songNo === null ? (
           <StatusNote id="favorite-song-none">{t("favorites.song.none")}</StatusNote>
         ) : (
-          <SongRow
-            id="favorite-song-row"
-            look={look(songNo)}
-            i18n={i18n}
-            detail={ura ? t("favorites.ura") : undefined}
-            scrolling
-            onOpen={openDetails(songNo)}
-          />
+          <Box sx={TO_THE_CARD_SIDES}>
+            <SongLookRow
+              id="favorite-song-row"
+              component="div"
+              look={look(songNo)}
+              i18n={i18n}
+              detail={ura ? t("favorites.ura") : undefined}
+              scrolling
+              onOpen={openDetails(songNo)}
+            />
+          </Box>
         )}
         <Box>
           <Button id="favorite-song-change" variant="outlined" disabled={shut} onClick={onChange}>

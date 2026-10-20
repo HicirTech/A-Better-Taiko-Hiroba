@@ -1,7 +1,7 @@
 import { Box, Skeleton, Stack } from "@mui/material";
 import type { ComponentType } from "react";
 
-import { SongRowSkeleton } from "./favorites/song-row";
+import { SongLookRowSkeleton } from "./favorites/song-look-row";
 import { PlayRowsSkeleton } from "./history/play-row";
 import { COLUMN_MAX_WIDTH_PX, CostumePageSkeleton } from "./my-page/costume-page";
 import { MedalCardSkeleton } from "./my-page/medal-card";
@@ -12,7 +12,7 @@ import { FrameTop } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import { useTouchFirst } from "./navigation/use-touch-first";
 import { SearchFieldSkeleton } from "./ui/search-field";
-import { CARD_GAP, SectionCard } from "./ui/section-card";
+import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "./ui/section-card";
 import { SectionTitleSkeleton } from "./ui/section-title";
 import { SYNC_BAR_PAGE, SyncBarSkeleton } from "./ui/sync-bar";
 
@@ -146,8 +146,10 @@ function FavoritesSkeleton() {
         <Stack spacing={CARD_GAP}>
           <SectionCard>
             <SectionTitleSkeleton width={120} />
-            <Stack spacing={1.5}>
-              <SongRowSkeleton />
+            <Stack spacing={1.5} useFlexGap>
+              <Box sx={TO_THE_CARD_SIDES}>
+                <SongLookRowSkeleton component="div" />
+              </Box>
               <Skeleton variant="rounded" width={96} height={36} />
             </Stack>
           </SectionCard>
@@ -158,11 +160,11 @@ function FavoritesSkeleton() {
               <Skeleton variant="rounded" width={100} height={30} />
               <Skeleton variant="rounded" width={110} height={30} />
             </Box>
-            <Stack spacing={1.5}>
+            <Box component="ul" sx={CARD_ROWS}>
               {FOLDER_ROWS.map((key) => (
-                <SongRowSkeleton key={key} />
+                <SongLookRowSkeleton key={key} />
               ))}
-            </Stack>
+            </Box>
           </SectionCard>
         </Stack>
       </Stack>

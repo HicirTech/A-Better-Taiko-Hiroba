@@ -2,22 +2,14 @@ import type { Translator } from "@abth/i18n";
 import { Box, Button, List, ListItemButton, ListItemText, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { SongRow } from "../favorites/song-row";
+import { SongLookRow } from "../favorites/song-look-row";
 import { i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
 import { FOLDER_SONGS } from "../story-kit/favorites";
 import { lookOf } from "../story-kit/songs";
-import { CARD_GAP, SectionCard } from "./section-card";
+import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "./section-card";
 import { SectionTitle } from "./section-title";
 
 const COLUMN = { maxWidth: 600 } as const;
-const LIST = {
-  listStyle: "none",
-  m: 0,
-  p: 0,
-  display: "flex",
-  flexDirection: "column",
-  gap: 1,
-} as const;
 
 /** What the favourites' song card holds: its title, the song, and the button under it. */
 function SongParts({ globals }: { readonly globals: StoryGlobals }) {
@@ -25,8 +17,15 @@ function SongParts({ globals }: { readonly globals: StoryGlobals }) {
   return (
     <>
       <SectionTitle level={3}>{i18n.t("favorites.song.heading")}</SectionTitle>
-      <Stack spacing={1.5}>
-        <SongRow id="story-card-song" look={lookOf("1001", localeOf(globals))} i18n={i18n} />
+      <Stack spacing={1.5} useFlexGap>
+        <Box sx={TO_THE_CARD_SIDES}>
+          <SongLookRow
+            id="story-card-song"
+            component="div"
+            look={lookOf("1001", localeOf(globals))}
+            i18n={i18n}
+          />
+        </Box>
         <Box>
           <Button variant="outlined">{i18n.t("favorites.song.change")}</Button>
         </Box>
@@ -50,15 +49,14 @@ function FolderParts({ globals }: { readonly globals: StoryGlobals }) {
       >
         {i18n.t("favorites.folder.heading")}
       </SectionTitle>
-      <Box component="ul" sx={LIST}>
+      <Box component="ul" sx={CARD_ROWS}>
         {FOLDER_SONGS.slice(0, 3).map((songNo) => (
-          <li key={songNo}>
-            <SongRow
-              id={`story-card-folder-${songNo}`}
-              look={lookOf(songNo, localeOf(globals))}
-              i18n={i18n}
-            />
-          </li>
+          <SongLookRow
+            key={songNo}
+            id={`story-card-folder-${songNo}`}
+            look={lookOf(songNo, localeOf(globals))}
+            i18n={i18n}
+          />
         ))}
       </Box>
     </>

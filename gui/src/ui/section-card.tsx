@@ -5,6 +5,10 @@ import type { ReactNode } from "react";
 const PADDING = 1;
 /** The room between two cards, in the theme's steps. */
 export const CARD_GAP = 1;
+/** Takes rows out through a card's room to its sides; a Stack round them needs useFlexGap. */
+export const TO_THE_CARD_SIDES = { mx: -PADDING } as const;
+/** A card's list of rows that keep their own room, as far as the card's sides. */
+export const CARD_ROWS = { listStyle: "none", m: 0, p: 0, ...TO_THE_CARD_SIDES } as const;
 
 export interface SectionCardProps {
   readonly id?: string;
