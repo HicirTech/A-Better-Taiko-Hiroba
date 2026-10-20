@@ -1,4 +1,5 @@
 /** Recent plays: read only when asked, after Hiroba's refresh, in a pipeline of their own. */
+import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
 import { mockTitle } from "../mock-history";
 import { en, HIROBA } from "./config";
 import type { Ctx } from "./context";
@@ -444,7 +445,7 @@ export async function recentPlaySets(ctx: Ctx) {
     await Bun.sleep(300);
     const at = await middleOf(page, row);
     await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
-    await Bun.sleep(800);
+    await Bun.sleep(2 * LONG_PRESS_MS);
     await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await shown("#history-add-to-set");
     await Bun.sleep(500);

@@ -50,7 +50,7 @@ const FIRST_SET = "#favorites-item-set-0";
 export const ASetsActions: Story = {
   play: async ({ globals }) => {
     if (touchOf(globals)) {
-      await touchHold(await found(FIRST_SET), LONG_PRESS_MS);
+      await touchHold(await found(FIRST_SET), 2 * LONG_PRESS_MS);
     } else {
       await rightClick(FIRST_SET);
     }
@@ -61,7 +61,7 @@ export const ASetsActions: Story = {
 export const DeletingASet: Story = {
   play: async ({ globals }) => {
     if (touchOf(globals)) {
-      await touchHold(await found(FIRST_SET), LONG_PRESS_MS);
+      await touchHold(await found(FIRST_SET), 2 * LONG_PRESS_MS);
       await press("#favorite-set-actions-delete");
     } else {
       await rightClick(FIRST_SET);

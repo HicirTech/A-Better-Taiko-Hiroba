@@ -302,7 +302,7 @@ the nearest thirty songs, go to a set on the device.
 
 The page of the きせかえ editor, sixth in the navigation, between Know yourself and Nickname & title. The
 My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
-on a touch-first screen (`pointer: coarse`) a long-press of about half a second, held still, so a
+on a touch-first screen (`pointer: coarse`) a long-press of 0.7 seconds, held still, so a
 tap, a scroll or a pull begun on it goes nowhere; a pointer on it shows its name, and where a
 long-press opens it, screen readers are told to long-press.
 

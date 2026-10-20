@@ -1,4 +1,5 @@
 /** The Favourites page: its two cards, the sets drawer, the song picker, its filters and search. */
+import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
 import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
 import { HIROBA, PHONE_TALL } from "./config";
 import type { Ctx } from "./context";
@@ -234,7 +235,7 @@ export async function favorites(ctx: Ctx) {
   const rightClick = (selector: string) => mouseClick(selector, "right");
   const holdFinger = async (at: Point, moveTo?: Point) => {
     await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
-    await Bun.sleep(500);
+    await Bun.sleep(2 * LONG_PRESS_MS);
     if (moveTo !== undefined) {
       for (let step = 1; step <= 10; step++) {
         await page.send("Input.dispatchTouchEvent", {

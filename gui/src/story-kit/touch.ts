@@ -1,6 +1,8 @@
 import type { TouchPoint } from "../read-again/pull-gesture";
 
 const STEPS = 8;
+// A finger lifts before it can tap again: a sortable list eats clicks for 50 ms after a lift.
+const AFTER_LIFT_MS = 100;
 
 /** A touch event of one finger at `at` on `target`, as a phone reports it. */
 function sendTouch(target: Element, type: string, at: TouchPoint, touching: boolean): void {
@@ -42,4 +44,5 @@ export async function touchHold(target: Element, ms: number): Promise<void> {
   sendTouch(target, "touchstart", at, true);
   await new Promise((resolve) => setTimeout(resolve, ms));
   sendTouch(target, "touchend", at, false);
+  await new Promise((resolve) => setTimeout(resolve, AFTER_LIFT_MS));
 }

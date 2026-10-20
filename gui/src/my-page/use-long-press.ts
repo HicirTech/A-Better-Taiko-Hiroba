@@ -3,8 +3,8 @@ import { type TouchEvent, useCallback, useEffect, useRef, useState } from "react
 import { movedPastSlop, pointOf, type TouchPoint } from "../read-again/pull-gesture";
 import { swallowTouchClick } from "./swallow-touch-click";
 
-/** About Android's own long-press time. */
-export const LONG_PRESS_MS = 500;
+/** Every long press in the app, held still: long enough that a hurried tap never makes one. */
+export const LONG_PRESS_MS = 700;
 
 export interface LongPressHandlers {
   readonly onTouchStart: (event: TouchEvent) => void;

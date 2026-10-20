@@ -22,12 +22,13 @@ import { CSS } from "@dnd-kit/utilities";
 import { Box, type SxProps, type Theme } from "@mui/material";
 import { type ReactNode, useRef } from "react";
 
+import { LONG_PRESS_MS } from "../my-page/use-long-press";
 import { holdGestures } from "../navigation/gesture-hold";
 import { DragIndicatorIcon } from "../ui/icons";
 
 const VERTICAL: Modifier = ({ transform }) => ({ ...transform, x: 0 });
 // A finger held still this long picks a row up; one that moves sooner scrolls the page.
-const TOUCH_HOLD = { delay: 300, tolerance: 8 } as const;
+const TOUCH_HOLD = { delay: LONG_PRESS_MS, tolerance: 8 } as const;
 const MOUSE_DRAG = { distance: 4 } as const;
 // A finger let go within this of where the row was picked up meant the press, not a move.
 const HELD_IN_PLACE_PX = 8;
