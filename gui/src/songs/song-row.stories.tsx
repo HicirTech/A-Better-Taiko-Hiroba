@@ -101,7 +101,7 @@ function PlayRowNew({
       name={look.name}
       lang={look.lang}
       lines={playLines(play, i18n)}
-      end={
+      marks={
         <ChartMarks
           difficulty={difficulty}
           level={look.levels?.[difficulty] ?? null}
@@ -112,7 +112,6 @@ function PlayRowNew({
           {playMarks(play, order, i18n)}
         </ChartMarks>
       }
-      endAtTop
       onPress={action("open the score's details")}
       pressOpens
     />
@@ -234,7 +233,7 @@ function KnownRowNew({
       name={look.name}
       lang={look.lang}
       lines={look.artists.length > 0 ? [look.artists.join(", ")] : []}
-      end={
+      marks={
         <ChartMarks
           difficulty={chart.difficulty}
           level={chart.stars}
@@ -247,7 +246,6 @@ function KnownRowNew({
           </Typography>
         </ChartMarks>
       }
-      endAtTop
       onPress={action("open the chart's details")}
       pressOpens
     />

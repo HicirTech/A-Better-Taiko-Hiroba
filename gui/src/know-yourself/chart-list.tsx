@@ -116,7 +116,7 @@ export function ChartList({
                     ]
                   : []
               }
-              end={
+              marks={
                 <ChartMarks
                   difficulty={chart.difficulty}
                   level={chart.stars}
@@ -135,7 +135,6 @@ export function ChartList({
                   </Typography>
                 </ChartMarks>
               }
-              endAtTop
               onPress={opener(chart)}
               pressOpens
               place={place}

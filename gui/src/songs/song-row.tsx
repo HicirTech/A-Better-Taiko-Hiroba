@@ -12,6 +12,9 @@ const ONE_LINE = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "no
 const NO_GENRE = { backgroundColor: "currentColor", opacity: 0.25 } as const;
 // The row's parts are plain elements styled from here: a picker draws hundreds of rows.
 const ROW = {
+  position: "relative",
+  // The whole row presses, as it lights: a layer under its parts takes what falls between them.
+  isolation: "isolate",
   display: "flex",
   alignItems: "center",
   gap: 1,
@@ -42,6 +45,12 @@ const ROW = {
     outline: "none",
   },
   "& button.song-open, & label.song-open": { cursor: "pointer" },
+  "& button.song-open::after, & label.song-open::after": {
+    content: '""',
+    position: "absolute",
+    inset: 0,
+    zIndex: -1,
+  },
   "& label.song-open:has(input:disabled)": { cursor: "default" },
   "& .song-bars": { display: "flex", alignSelf: "stretch", gap: "2px", flexShrink: 0 },
   "& .song-bar": { width: 4, borderRadius: "2px" },
@@ -50,7 +59,7 @@ const ROW = {
   "& .song-line": { ...ONE_LINE, color: "text.secondary", fontSize: "0.8125rem", lineHeight: 1.4 },
   "& .song-end": { display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 },
   // The name's line is 22.4 px and a mark 20: a pixel down sets their middles together.
-  "& .song-end-top": { alignSelf: "flex-start", mt: "1px" },
+  "& .song-marks": { display: "flex", alignSelf: "flex-start", flexShrink: 0, mt: "1px" },
   ...LEVEL_BADGES_LOOK,
 } as const;
 
@@ -96,7 +105,7 @@ export interface SongRowProps {
   /** A row of a list, or a block that heads a chart's details. */
   readonly component?: "li" | "div";
   readonly className?: string;
-  /** Before the bars: a check box beside the row, a handle that moves it, what a page rates. */
+  /** Before the press, a control of its own: a check box beside the row, a handle that moves it. */
   readonly start?: ReactNode;
   /** One bar per genre; none drawn faint. */
   readonly genres: readonly Genre[];
@@ -108,10 +117,10 @@ export interface SongRowProps {
   readonly nameId?: string;
   /** The grey lines under the name: artists, a tempo, a play's score and hits. */
   readonly lines?: readonly ReactNode[];
-  /** At the row's end: the charts' levels, a chart's marks, a button that takes the song out. */
+  /** Last in the press, at the name's line: a chart's difficulty and level, the page's marks. */
+  readonly marks?: ReactNode;
+  /** After the press, controls of their own: the levels' badges, a button that takes the song out. */
   readonly end?: ReactNode;
-  /** The end stands at the name's line, as a chart's marks do, rather than in the row's middle. */
-  readonly endAtTop?: boolean;
   /** What a press on the row does, which its page decides: open details, pick the song. */
   readonly onPress?: (() => void) | undefined;
   /** The press opens a dialog, as screen readers are told. */
@@ -136,8 +145,8 @@ export function SongRow({
   scrolling = false,
   nameId,
   lines = [],
+  marks,
   end,
-  endAtTop = false,
   onPress,
   pressOpens = false,
   tick,
@@ -183,6 +192,7 @@ export function SongRow({
           </span>
         ))}
       </span>
+      {marks !== undefined && <span className="song-marks">{marks}</span>}
     </>
   );
   return (
@@ -215,9 +225,7 @@ export function SongRow({
       ) : (
         <span className="song-open">{song}</span>
       )}
-      {end !== undefined && (
-        <span className={endAtTop ? "song-end song-end-top" : "song-end"}>{end}</span>
-      )}
+      {end !== undefined && <span className="song-end">{end}</span>}
     </Box>
   );
 }
