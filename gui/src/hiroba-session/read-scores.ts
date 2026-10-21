@@ -90,13 +90,11 @@ export interface ScoresReaderOptions {
   readonly walkProgress: () => Promise<number | null>;
   /** The recent plays kept on the device, newest first: the order the page can sort by. */
   readonly recentPlays: () => Promise<readonly RecentPlay[]>;
-  readonly now?: () => Date;
 }
 
 /** The port's five verbs, the same on every shell. */
 export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
   const { endpoints, owner } = options;
-  const now = options.now ?? (() => new Date());
   const books = createBooks(options.store, options.changes);
   let progress: ScoresProgress | null = null;
   let running: Promise<Result<ScoresRead, ScoresFailure>> | null = null;
@@ -117,7 +115,7 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
     }
     let done = 0;
     progress = { step: "lists", done, total: genres.length };
-    const fetchedAt = now().toISOString();
+    const fetchedAt = new Date().toISOString();
     const answers = await Promise.all(
       genres.map(async (genre) => {
         const answer = await options.io.read(
@@ -158,7 +156,7 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
         readHirobaPage(
           { transport, hirobaOrigin: endpoints.hirobaOrigin },
           `score_detail.php?song_no=${songNo}&level=${level}`,
-          (html) => parseScoreDetailPage(html, taikoNo, songNo, level, now().toISOString()),
+          (html) => parseScoreDetailPage(html, taikoNo, songNo, level, new Date().toISOString()),
         ),
     );
 

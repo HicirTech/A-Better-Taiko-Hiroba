@@ -427,12 +427,11 @@ describe("the set and the draft a write leaves", () => {
   ];
   test.each<OutcomeCase>([
     ["appliedNotSynced", appliedNotSynced, planned, planned],
-    ["notApplied", notApplied, before, drafted],
-    ["diverged", diverged, elsewhere, drafted],
-    ["changedSincePreview", changedSincePreview, elsewhere, drafted],
+    ["notApplied", notApplied, before, before],
+    ["diverged", diverged, elsewhere, elsewhere],
+    ["changedSincePreview", changedSincePreview, elsewhere, elsewhere],
     ["maintenance", { kind: "maintenance" }, before, drafted],
     ["invalidTarget", { kind: "invalidTarget", field: "costume1" }, before, drafted],
-    ["nothingToChange", { kind: "nothingToChange" }, before, drafted],
     ["interrupted", { kind: "interrupted" }, before, drafted],
     ["busy", { kind: "busy" }, before, drafted],
   ])(
@@ -444,8 +443,25 @@ describe("the set and the draft a write leaves", () => {
     },
   );
 
-  test("leaves a draft that a failed save can be pressed again with", () => {
-    const failed = run(saving(before, drafted), { type: "writeEnded", outcome: notApplied });
+  test("drops the draft for the set Hiroba holds already when there was nothing to change", () => {
+    const step = run(saving(before, drafted), {
+      type: "writeEnded",
+      outcome: { kind: "nothingToChange" },
+    });
+
+    expect(step).toEqual({
+      name: "editing",
+      editor: editorOf(before),
+      draft: before,
+      notice: null,
+    });
+  });
+
+  test("leaves a draft that a save which read nothing back can be pressed again with", () => {
+    const failed = run(saving(before, drafted), {
+      type: "writeEnded",
+      outcome: { kind: "maintenance" },
+    });
 
     expect(run(failed, { type: "saveStarted" })).toEqual(saving(before, drafted));
   });
@@ -464,7 +480,7 @@ describe("the notice of a write", () => {
   const drafted = set({ colorFace: 9 });
   const noticed = () => editing(set(), drafted, notice);
 
-  test("stays through nothing but the next pick, Reset, Save or read", () => {
+  test("stays until it is said, or the next pick, Reset, Save or read", () => {
     const step = noticed();
 
     expect(step).toMatchObject({ notice });
@@ -476,6 +492,18 @@ describe("the notice of a write", () => {
       notice: null,
     });
     expect(reduceEditor(step, { type: "reset" })).toEqual(editing());
+  });
+
+  test("goes once said, leaving the draft", () => {
+    const step = noticed();
+
+    expect(reduceEditor(step, { type: "noticeClosed" })).toEqual(editing(set(), drafted));
+  });
+
+  test("is the very same step when said with none to say", () => {
+    const step = editing(set(), drafted);
+
+    expect(reduceEditor(step, { type: "noticeClosed" })).toBe(step);
   });
 
   test("goes with a pick of what the draft holds already, which is still a pick", () => {

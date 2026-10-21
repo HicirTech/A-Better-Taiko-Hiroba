@@ -8,12 +8,16 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  type SvgIconProps,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useId, useState } from "react";
 
 import type { EndedGroup, GroupKind, GroupNow, PipelineView } from "../pipelines";
+import { BlockIcon, CheckIcon, CloseIcon } from "../ui/icons";
+import { SectionCard } from "../ui/section-card";
+import { SectionTitle } from "../ui/section-title";
 import { GroupDetails } from "./group-details";
 import { groupName } from "./operation-names";
 import {
@@ -32,10 +36,10 @@ const KIND_COLOR: Readonly<Record<GroupKind, "info" | "secondary" | "warning">> 
   write: "warning",
 };
 
-const OUTCOME_MARK: Readonly<Record<EndedGroup["outcome"], string>> = {
-  succeeded: "✓",
-  failed: "✕",
-  stopped: "⊘",
+const OUTCOME_MARK: Readonly<Record<EndedGroup["outcome"], typeof CheckIcon>> = {
+  succeeded: CheckIcon,
+  failed: CloseIcon,
+  stopped: BlockIcon,
 };
 
 const OUTCOME_COLOR: Readonly<Record<EndedGroup["outcome"], string>> = {
@@ -67,6 +71,8 @@ const BLOCK_PLACES = Array.from({ length: BLOCKS }, (_, place) => `block-${place
 const ENDED_PLACES = Array.from({ length: ENDED_CELLS }, (_, place) => `ended-${place}`);
 
 const SLOT = { height: 24, borderRadius: 0.5 } as const;
+// A row's 20 px mark would fill the 24 px cell.
+const CELL_MARK_PX = 16;
 const EMPTY_SLOT = { ...SLOT, bgcolor: "action.hover" } as const;
 
 const PICKED = { outline: "2px solid", outlineColor: "text.primary", outlineOffset: 1 } as const;
@@ -104,10 +110,8 @@ export function PipelineSection({
   const row = blockRow(view ?? { running: [], waiting: [] });
   const ended = view?.ended ?? [];
   return (
-    <Box component="section" id={id} aria-labelledby={headingId} sx={{ px: 2, py: 1.5 }}>
-      <Typography id={headingId} variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
-        {t(name)}
-      </Typography>
+    <SectionCard component="section" id={id} aria-labelledby={headingId}>
+      <SectionTitle id={headingId}>{t(name)}</SectionTitle>
       <Box role="group" aria-label={t("pipelines.now")} sx={ROW}>
         {BLOCK_PLACES.map((place, index) => {
           const group = row.groups[index];
@@ -168,7 +172,7 @@ export function PipelineSection({
               onClick={() => pick({ kind: "ended", group })}
             >
               <ListItemIcon sx={{ minWidth: 32, color: OUTCOME_COLOR[group.outcome] }}>
-                <span aria-hidden>{OUTCOME_MARK[group.outcome]}</span>
+                <OutcomeMark outcome={group.outcome} fontSize="small" />
               </ListItemIcon>
               <ListItemText
                 primary={`${groupName(i18n, group)} · ${t(`pipelines.${group.outcome}`)}`}
@@ -183,7 +187,7 @@ export function PipelineSection({
       {picked !== null && view !== null && (
         <GroupDetails id={`${id}-details`} i18n={i18n} picked={picked} view={view} />
       )}
-    </Box>
+    </SectionCard>
   );
 }
 
@@ -237,6 +241,14 @@ function Block({
   );
 }
 
+function OutcomeMark({
+  outcome,
+  ...icon
+}: { readonly outcome: EndedGroup["outcome"] } & SvgIconProps) {
+  const Mark = OUTCOME_MARK[outcome];
+  return <Mark {...icon} />;
+}
+
 function EndedCell({
   i18n,
   group,
@@ -258,14 +270,13 @@ function EndedCell({
         ...SLOT,
         bgcolor: MARK_WASH,
         color: OUTCOME_COLOR[group.outcome],
-        fontWeight: 700,
         // The newest pushes in from the left, as the older ones move along.
         animation: `${PUSH_IN} 200ms ease-out`,
         "@media (prefers-reduced-motion: reduce)": { animation: "none" },
         ...(picked ? PICKED : {}),
       }}
     >
-      <span aria-hidden>{OUTCOME_MARK[group.outcome]}</span>
+      <OutcomeMark outcome={group.outcome} sx={{ fontSize: CELL_MARK_PX }} />
     </ButtonBase>
   );
 }

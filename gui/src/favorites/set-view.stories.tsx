@@ -29,33 +29,25 @@ const meta = {
     songs: STORY_SETS[0]?.songs ?? [],
     editing: false,
     edited: false,
-    canApply: true,
-    applying: false,
     onEdit: fn(),
     onAddSongs: fn(),
     onRemoveSong: fn(),
     onMoveSong: fn(),
     onReset: fn(),
     onSave: fn(),
-    onApply: fn(),
   },
 } satisfies Meta<Args>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Shown: Edit, and Apply lit while applying would change the folder. */
+/** Shown: Edit; the page's sync bar sends the set to Hiroba's folder. */
 export const Shown: Story = {};
-
-/** The folder already holds these songs: Apply stays unlit. */
-export const AlreadyTheFolder: Story = { args: { canApply: false } };
 
 /** Edit was pressed: songs can be added, moved by their handles and taken out, until Save. */
 export const Editing: Story = { args: { editing: true } };
 
 /** Edits made: Reset can drop them. */
 export const Edited: Story = { args: { editing: true, edited: true } };
-
-export const Applying: Story = { args: { applying: true, canApply: false } };
 
 export const Empty: Story = { args: { songs: [] } };

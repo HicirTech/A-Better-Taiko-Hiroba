@@ -6,7 +6,7 @@ export interface SetsSwipeContext {
   readonly fingers: number;
   readonly drawerOpen: boolean;
   readonly windowWidthPx: number;
-  /** The touch belongs to the navigation menu, a dialog or a text field, so it opens nothing. */
+  /** The menu, the pipelines page, a dialog or a text field has the touch: it opens nothing. */
   readonly claimed: boolean;
 }
 

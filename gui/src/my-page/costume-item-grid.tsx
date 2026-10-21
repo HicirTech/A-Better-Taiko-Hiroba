@@ -1,10 +1,12 @@
 import type { Translator } from "@abth/i18n";
-import { Box, ButtonBase, Skeleton, Stack, SvgIcon, Typography } from "@mui/material";
+import { Box, ButtonBase, Skeleton, Typography } from "@mui/material";
 import { type ReactNode, useRef, useSyncExternalStore } from "react";
 
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
 import type { PictureWant } from "../session-port";
+import { BlockIcon } from "../ui/icons";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";
 import { pickRing } from "./pick-ring";
 import { CLEAR_OF_STUCK } from "./stuck-clearance";
@@ -94,19 +96,13 @@ export function ThumbnailsUnavailable({ lane, i18n, part, items }: ThumbnailsUna
   }
 
   return (
-    <Stack id="costume-thumbnails-unavailable">
-      <Typography variant="body2" color="text.secondary">
-        {t("costume.thumbnails.unavailable", { count: number(failures.length) })}
-      </Typography>
-      <Typography
-        id="costume-thumbnails-code"
-        variant="body2"
-        color="text.secondary"
-        sx={{ fontFamily: "monospace", userSelect: "text", wordBreak: "break-all" }}
-      >
-        {t("costume.thumbnails.code", { code: failures[0] ?? "" })}
-      </Typography>
-    </Stack>
+    <ReadFailureAlert
+      id="costume-thumbnails-unavailable"
+      message={t("costume.thumbnails.unavailable", { count: number(failures.length) })}
+      code={failures[0] ?? null}
+      codeId="costume-thumbnails-code"
+      i18n={i18n}
+    />
   );
 }
 
@@ -146,7 +142,6 @@ export function ItemPicture({
   );
 }
 
-// Material's "block" icon (Apache 2.0), inline because the icons package is not a dependency.
 function NoneCell({
   part,
   i18n,
@@ -178,9 +173,7 @@ function NoneCell({
         ...CLEAR_OF_STUCK,
       }}
     >
-      <SvgIcon aria-hidden sx={{ fontSize: cells.picture / 2 }}>
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z" />
-      </SvgIcon>
+      <BlockIcon sx={{ fontSize: cells.picture / 2 }} />
     </ButtonBase>
   );
 }

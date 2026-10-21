@@ -5,7 +5,7 @@ import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { SystemToast } from "../platform";
 import type { IconWant } from "../session-port";
-import { VISUALLY_HIDDEN } from "./hiroba-px";
+import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { nameByLongPress } from "./name-by-long-press";
 import { useLongPress } from "./use-long-press";
 

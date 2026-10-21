@@ -1,10 +1,12 @@
 import type { Translator } from "@abth/i18n";
-import { Box } from "@mui/material";
-import { Fragment, memo, type ReactNode } from "react";
+import { Fragment, type ReactNode, type RefObject } from "react";
+
+import { SongRow } from "../songs/song-row";
+import { RowList } from "../ui/row-list";
 import { DIFFICULTY_COLOUR } from "./genre-look";
-import { LEVEL_BADGES_LOOK, LevelBadges } from "./level-badges";
+import { LevelBadges } from "./level-badges";
 import type { SongLook } from "./song-look";
-import { SongRow } from "./song-row";
+import { artistsLine } from "./song-look-row";
 import { type Marked, segmentsOf } from "./song-search";
 
 /** A song in the list, and the names a search marked in it. */
@@ -25,51 +27,15 @@ export interface PickedSongs {
   readonly limit: number;
 }
 
-// Rows are plain elements and drawn only when near the view: the list holds every song.
-// The badges sit beside the row's button, as a button may not hold another.
-const LIST = {
-  listStyle: "none",
-  m: 0,
-  p: 0,
-  "& .picker-row": {
-    contentVisibility: "auto",
-    containIntrinsicSize: "auto 56px",
-    display: "flex",
-    alignItems: "center",
-    pr: 2,
-    "&:hover": { bgcolor: "action.hover" },
-    "&:has(input:disabled)": { opacity: 0.5 },
-  },
-  "& .picker-hit": {
-    display: "flex",
-    alignItems: "center",
-    alignSelf: "stretch",
-    gap: 1.5,
-    boxSizing: "border-box",
-    flex: 1,
-    minWidth: 0,
-    pl: 2,
-    pr: 1.5,
-    py: 0.75,
-    border: 0,
-    bgcolor: "transparent",
-    color: "inherit",
-    font: "inherit",
-    textAlign: "left",
-    cursor: "pointer",
-    "&:focus-visible": { outline: "2px solid", outlineColor: "primary.main", outlineOffset: -2 },
-    "&:has(input:disabled)": { cursor: "default" },
-  },
-  "& .picker-hit input": { flexShrink: 0, m: 0, width: 18, height: 18 },
-  "& .picker-hit .song-row": { flex: 1, minWidth: 0 },
-  // A wash of the inner chart's colour, lighter than its badge.
-  "& .picker-row.picker-row-ura": {
-    bgcolor: `color-mix(in srgb, ${DIFFICULTY_COLOUR.ura} 24%, transparent)`,
-  },
-  "& .picker-row.picker-row-ura:hover": {
+/** About how tall a row draws, before the list measures it. */
+const PICKER_ROW_PX = 55;
+
+// A wash of the inner chart's colour, lighter than its badge.
+const URA_ROW = {
+  bgcolor: `color-mix(in srgb, ${DIFFICULTY_COLOUR.ura} 24%, transparent)`,
+  "&.song-row-pressable:hover": {
     bgcolor: `color-mix(in srgb, ${DIFFICULTY_COLOUR.ura} 34%, transparent)`,
   },
-  ...LEVEL_BADGES_LOOK,
 } as const;
 
 function MarkedText({ marked }: { marked: Marked }) {
@@ -82,9 +48,9 @@ function MarkedText({ marked }: { marked: Marked }) {
   return <>{parts}</>;
 }
 
-function markedName({ shown, other }: PickerEntry): ReactNode {
+function markedName({ look, shown, other }: PickerEntry): ReactNode {
   if (shown === null) {
-    return undefined;
+    return look.name;
   }
 
   return (
@@ -101,63 +67,7 @@ function markedName({ shown, other }: PickerEntry): ReactNode {
   );
 }
 
-interface RowProps {
-  readonly entry: PickerEntry;
-  readonly i18n: Translator;
-  readonly many: boolean;
-  readonly checked: boolean;
-  readonly disabled: boolean;
-  readonly idPrefix: string;
-  readonly onActivate: (songNo: string, ura: boolean) => void;
-}
-
 const rowKey = (entry: PickerEntry) => `${entry.look.songNo}${entry.ura === true ? "-ura" : ""}`;
-
-const PickerRow = memo(function PickerRow({
-  entry,
-  i18n,
-  many,
-  checked,
-  disabled,
-  idPrefix,
-  onActivate,
-}: RowProps) {
-  const { songNo, levels } = entry.look;
-  const ura = entry.ura === true;
-  const row = (
-    <SongRow
-      look={entry.look}
-      i18n={i18n}
-      name={markedName(entry)}
-      detail={entry.detail}
-      withLevels={false}
-    />
-  );
-  return (
-    <li
-      className={ura ? "picker-row picker-row-ura" : "picker-row"}
-      id={`${idPrefix}-row-${rowKey(entry)}`}
-      data-song-no={songNo}
-    >
-      {many ? (
-        <label className="picker-hit">
-          <input
-            type="checkbox"
-            checked={checked}
-            disabled={disabled}
-            onChange={() => onActivate(songNo, ura)}
-          />
-          {row}
-        </label>
-      ) : (
-        <button type="button" className="picker-hit" onClick={() => onActivate(songNo, ura)}>
-          {row}
-        </button>
-      )}
-      {levels !== null && <LevelBadges levels={levels} i18n={i18n} />}
-    </li>
-  );
-});
 
 /** The songs, one tap or one check box each; at the limit the rows not checked are shut. */
 export function PickerList({
@@ -167,6 +77,7 @@ export function PickerList({
   onActivate,
   describedBy,
   idPrefix = "song-picker",
+  scroller,
 }: {
   entries: readonly PickerEntry[];
   i18n: Translator;
@@ -175,25 +86,43 @@ export function PickerList({
   describedBy?: string | undefined;
   /** The list is `<idPrefix>-list`, each row `<idPrefix>-row-<song number>`, a 裏 row `…-ura`. */
   idPrefix?: string;
+  /** What the list scrolls in, such as the picker's dialog; the page otherwise. */
+  scroller?: RefObject<HTMLElement | null> | undefined;
 }) {
   const full = many !== null && many.picked.size >= many.limit;
   return (
-    <Box component="ul" id={`${idPrefix}-list`} aria-describedby={describedBy} sx={LIST}>
-      {entries.map((entry) => {
-        const checked = many?.picked.has(entry.look.songNo) ?? false;
+    <RowList
+      id={`${idPrefix}-list`}
+      rows={entries}
+      keyOf={rowKey}
+      rowPx={PICKER_ROW_PX}
+      scroller={scroller}
+      describedBy={describedBy}
+    >
+      {(entry, _index, place) => {
+        const { look } = entry;
+        const ura = entry.ura === true;
+        const activate = () => onActivate(look.songNo, ura);
+        const checked = many?.picked.has(look.songNo) ?? false;
         return (
-          <PickerRow
-            key={rowKey(entry)}
-            entry={entry}
-            i18n={i18n}
-            many={many !== null}
-            checked={checked}
-            disabled={full && !checked}
-            idPrefix={idPrefix}
-            onActivate={onActivate}
+          <SongRow
+            id={`${idPrefix}-row-${rowKey(entry)}`}
+            data-song-no={look.songNo}
+            genres={look.genres}
+            name={markedName(entry)}
+            lang={look.lang}
+            lines={artistsLine(entry.look, entry.detail)}
+            end={
+              look.levels === null ? undefined : <LevelBadges levels={look.levels} i18n={i18n} />
+            }
+            {...(many === null
+              ? { onPress: activate }
+              : { tick: { checked, disabled: full && !checked, onChange: activate } })}
+            place={place}
+            {...(ura ? { sx: URA_ROW } : {})}
           />
         );
-      })}
-    </Box>
+      }}
+    </RowList>
   );
 }

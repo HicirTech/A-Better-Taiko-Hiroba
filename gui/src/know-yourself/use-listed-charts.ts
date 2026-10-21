@@ -8,6 +8,10 @@ export function useListedCharts(
   scores: ScoresView | null,
 ): ListedChartsView | null {
   const [listed, setListed] = useState<ListedChartsView | null>(null);
+  // Scores dropped for another player's session take their charts with them.
+  if (scores === null && listed !== null) {
+    setListed(null);
+  }
   useEffect(() => {
     if (scores === null) {
       return;

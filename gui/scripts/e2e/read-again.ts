@@ -262,7 +262,9 @@ export async function profileVariants(ctx: Ctx) {
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );
   results.unreadableDanShownWithTheRest =
-    (await textOf("#dan-unreadable")) === "Dan-i: couldn't read" &&
+    (await textOf("#dan-unreadable"))?.startsWith(
+      "Your dan-i could not be read. Refreshing or trying again may fix this.",
+    ) === true &&
     (await textOf("#dan-code")) ===
       "Code for a report: dan=notPng status=200 type=image/gif bytes=43" &&
     (await textOf("#dan")) === null &&

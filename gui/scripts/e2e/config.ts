@@ -50,8 +50,9 @@ export const IN_THE_BREAK = "2026-09-26T20:30:00Z";
 
 export const SESSION_FILE = join(USER_DATA, "session.json");
 
-export const MY_DON_GIF_CODE = "Code for a report: myDon=notPng status=200 type=image/gif bytes=43";
-
 export const en = createTranslator("en");
 export const ja = createTranslator("ja");
 export const zhHant = createTranslator("zh-Hant");
+
+// How a read failure's notice gives its code; a picture that did not come gives none.
+export const REPORT_CODE = en.t("failure.code", { code: "" }).trim();

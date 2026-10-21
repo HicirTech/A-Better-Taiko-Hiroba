@@ -26,7 +26,6 @@ export interface PreviewSchedulerOptions {
   readonly load: (set: CostumeSet) => Promise<Result<string, CostumePreviewFailure>>;
   /** Called on every change while started, and on reset. */
   readonly onState: (state: PreviewState) => void;
-  readonly delayMs?: number;
   readonly timers?: PreviewTimers;
 }
 
@@ -52,7 +51,6 @@ export const keyOf = (set: CostumeSet) => COSTUME_PARTS.map((part) => set[part])
 
 /** Asks Hiroba for the set's picture sparingly: one in flight, after a pause, never a retry. */
 export function createPreviewScheduler(options: PreviewSchedulerOptions): PreviewScheduler {
-  const delayMs = options.delayMs ?? PREVIEW_DELAY_MS;
   const timers = options.timers ?? PAGE_TIMERS;
   const kept = new Map<string, string>();
   let state = NO_PREVIEW;
@@ -159,7 +157,7 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
       return;
     }
     show({ ...state, loading: true, failure: null });
-    timer = timers.set(send, delayMs);
+    timer = timers.set(send, PREVIEW_DELAY_MS);
   };
 
   return {

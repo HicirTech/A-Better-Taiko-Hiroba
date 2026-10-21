@@ -1,7 +1,8 @@
-import { Dialog, DialogTitle, List, ListItemButton, ListItemText, Typography } from "@mui/material";
+import type { Translator } from "@abth/i18n";
+import { List, ListItemButton, ListItemText, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { useBackCloses } from "../navigation/back-closers";
+import { LargeModal } from "../ui/large-modal";
 
 // The choice's name greyed, but the reason it cannot be made left readable.
 const REFUSED = {
@@ -26,7 +27,9 @@ export function ChoiceDialog({
   subtitle,
   choices,
   empty,
+  i18n,
   onClose,
+  onBack,
 }: {
   readonly id: string;
   readonly title: string;
@@ -35,28 +38,30 @@ export function ChoiceDialog({
   readonly choices: readonly Choice[];
   /** What stands in for the choices when there are none. */
   readonly empty?: ReactNode;
+  readonly i18n: Translator;
   readonly onClose: () => void;
+  /** Where the choice follows an earlier question: Back and Esc go back to it, a click out closes. */
+  readonly onBack?: (() => void) | undefined;
 }) {
-  useBackCloses(true, onClose);
-  const titleId = `${id}-title`;
   return (
-    <Dialog id={id} open onClose={onClose} aria-labelledby={titleId} fullWidth maxWidth="xs">
-      <DialogTitle id={titleId} sx={{ pb: subtitle === null ? undefined : 0.5 }}>
-        {title}
-      </DialogTitle>
-      {subtitle !== null && (
-        <Typography
-          lang={subtitle.lang}
-          variant="body2"
-          color="text.secondary"
-          noWrap
-          sx={{ px: 3, pb: 1 }}
-        >
-          {subtitle.text}
-        </Typography>
-      )}
+    <LargeModal
+      id={id}
+      open
+      title={title}
+      head={
+        subtitle === null ? undefined : (
+          <Typography lang={subtitle.lang} variant="body2" color="text.secondary" noWrap>
+            {subtitle.text}
+          </Typography>
+        )
+      }
+      flush
+      i18n={i18n}
+      onClose={onClose}
+      onBack={onBack}
+    >
       {choices.length > 0 ? (
-        <List disablePadding sx={{ pb: 1 }}>
+        <List disablePadding sx={{ py: 1 }}>
           {choices.map((choice) => (
             <ListItemButton
               key={choice.id}
@@ -76,6 +81,6 @@ export function ChoiceDialog({
       ) : (
         empty
       )}
-    </Dialog>
+    </LargeModal>
   );
 }

@@ -36,8 +36,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The current favourites shown; on a PC a set's right-click menu renames or deletes it, on an
- * Android device a long press let go in place does. */
+/** The current favourites; a set's menu is a right-click on a PC, a long press on Android. */
 export const CurrentFavourites: Story = {};
 
 export const ASetShown: Story = { args: { selectedId: STORY_SETS[0]?.id ?? null } };
@@ -51,7 +50,7 @@ const FIRST_SET = "#favorites-item-set-0";
 export const ASetsActions: Story = {
   play: async ({ globals }) => {
     if (touchOf(globals)) {
-      await touchHold(await found(FIRST_SET), LONG_PRESS_MS);
+      await touchHold(await found(FIRST_SET), 2 * LONG_PRESS_MS);
     } else {
       await rightClick(FIRST_SET);
     }
@@ -62,7 +61,7 @@ export const ASetsActions: Story = {
 export const DeletingASet: Story = {
   play: async ({ globals }) => {
     if (touchOf(globals)) {
-      await touchHold(await found(FIRST_SET), LONG_PRESS_MS);
+      await touchHold(await found(FIRST_SET), 2 * LONG_PRESS_MS);
       await press("#favorite-set-actions-delete");
     } else {
       await rightClick(FIRST_SET);

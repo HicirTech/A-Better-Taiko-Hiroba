@@ -62,7 +62,7 @@ export {
   type PictureReader,
   type PictureReadState,
 } from "./read-picture";
-export { type OwnProfileRead, readOwnProfile, readProfile } from "./read-profile";
+export { type OwnProfileRead, readOwnProfile } from "./read-profile";
 export type { RecentPlaysReader } from "./read-recent-plays";
 export {
   createRecentPlaysReader,

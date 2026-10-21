@@ -61,7 +61,7 @@ export async function rating(ctx: Ctx) {
     skills.map((skill) => en.t(`rating.figure.${skill}`)),
   );
 
-  await click("#rating-best .history-row");
+  await click("#rating-best .song-open");
   const opened = await waitFor(
     "the score's details",
     async () => (await exists("#score-details-title")) || undefined,

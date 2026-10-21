@@ -1,7 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { Button, Divider, List, ListItem, ListItemText, Paper, SvgIcon } from "@mui/material";
+import { Button, List, ListItem, ListItemText, Stack } from "@mui/material";
 import { type ReactNode, useId } from "react";
 
+import { AccountCircleIcon } from "../ui/icons";
+import { CARD_GAP } from "../ui/section-card";
 import { GitHubSection } from "./github-section";
 import { SettingsSection } from "./settings-section";
 import { SongDataSection } from "./song-data-section";
@@ -31,15 +33,6 @@ export interface SettingsPageProps {
   readonly onOpenRepository?: () => void;
 }
 
-// Material's "account_circle" icon (Apache 2.0), inline: the icons package is not a dependency.
-function AccountIcon() {
-  return (
-    <SvgIcon aria-hidden fontSize="small">
-      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2m0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6m0 14c-2.03 0-4.43-.82-6.14-2.88C7.55 15.8 9.68 15 12 15s4.45.8 6.14 2.12C16.43 19.18 14.03 20 12 20" />
-    </SvgIcon>
-  );
-}
-
 export function SettingsPage({
   i18n,
   language,
@@ -64,13 +57,12 @@ export function SettingsPage({
         ? { disabled: true }
         : null;
   return (
-    <Paper variant="outlined">
+    <Stack spacing={CARD_GAP}>
       {language}
-      <Divider />
       <SettingsSection
         id="account"
         headingId={headingId}
-        icon={<AccountIcon />}
+        icon={<AccountCircleIcon fontSize="small" />}
         title={t("settings.account")}
       >
         <List disablePadding>
@@ -91,22 +83,10 @@ export function SettingsPage({
           </ListItem>
         </List>
       </SettingsSection>
-      {updates !== undefined && (
-        <>
-          <Divider />
-          <UpdatesSection i18n={i18n} {...updates} />
-        </>
-      )}
-      <Divider />
+      {updates !== undefined && <UpdatesSection i18n={i18n} {...updates} />}
       <SongLevelsSection i18n={i18n} />
-      <Divider />
       <SongDataSection i18n={i18n} />
-      {onOpenRepository !== undefined && (
-        <>
-          <Divider />
-          <GitHubSection i18n={i18n} onOpen={onOpenRepository} />
-        </>
-      )}
-    </Paper>
+      {onOpenRepository !== undefined && <GitHubSection i18n={i18n} onOpen={onOpenRepository} />}
+    </Stack>
   );
 }

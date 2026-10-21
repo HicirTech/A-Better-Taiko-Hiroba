@@ -1,6 +1,6 @@
 import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
 import { COSTUME_FIELDS } from "../mock-costume";
-import { HIROBA, MY_DON_GIF_CODE, PHONE } from "./config";
+import { HIROBA, PHONE } from "./config";
 import type { Ctx } from "./context";
 import { costumeHelpers, PNG_URL } from "./costume-helpers";
 import {
@@ -49,7 +49,7 @@ export const costumeEditorKeys = [
   "saveBarStaysAtTheBottom",
   "costumePageIsAColumnOnANarrowWindow",
   "costumePageUsesTheWidthOfAWideWindow",
-  "failedSaveKeepsTheNoticeAndDraft",
+  "failedSaveSaysSoAndShowsHirobasSet",
   "myDonNotAskedAfterNoChange",
 ] as const;
 
@@ -58,7 +58,6 @@ export async function costumeEditor(ctx: Ctx) {
   const { click, currentPage, goTo, page, text, textOf } = ctx.app;
   const { atSize, boxOf, exists } = pageHelpers(page);
   const {
-    aboveThePart,
     barFlush,
     changeInTheWindow,
     inStep,
@@ -199,18 +198,18 @@ export async function costumeEditor(ctx: Ctx) {
   await fetch(`${HIROBA}/__noop-save`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
 
-  results.failedSaveKeepsTheNoticeAndDraft =
+  results.failedSaveSaysSoAndShowsHirobasSet =
     noChange === "notApplied" &&
-    (await aboveThePart("#write-outcome")) &&
+    (await textOf("#write-outcome")) === "Sync to Hiroba failed. Please try again." &&
     (await stepOf()) === "editing" &&
-    (await pressedOf("#swatch-colorFace-3")) === "true" &&
-    (await savable()) &&
+    (await pressedOf("#swatch-colorFace-3")) === "false" &&
+    !(await savable()) &&
     same(await savedCostume(), START);
   await leaveTheCostumePage();
   results.myDonNotAskedAfterNoChange =
     noChange === "notApplied" &&
     (await myDonsSettled()) === myDonsFailed &&
-    (await textOf("#pictures-code")) === MY_DON_GIF_CODE &&
+    !(await exists("#my-don-image")) &&
     same(await savedCostume(), START);
 }
 
@@ -474,8 +473,8 @@ export async function costumeWrite(ctx: Ctx) {
     !(await exists("#costume-review")) &&
     !(await exists("#costume-back")) &&
     same(
-      (await buttonsIn("#costume-actions")).map(({ id }) => id),
-      ["costume-save", "costume-history", "costume-reset"],
+      (await buttonsIn("#costume-bar")).map(({ id }) => id),
+      ["costume-history", "costume-reset", "costume-save"],
     ) &&
     posts.filter((post) => post.path === "/ajax/change_mydon.php").length === 1;
   await goTo("overview");
@@ -539,7 +538,7 @@ export async function costumeWrite(ctx: Ctx) {
       undefined,
   );
   await openHistory();
-  await click("#costume-history-close");
+  await click("#costume-history-dialog-close");
   await historyClosed();
   const focusAfterClose = await waitFor(
     "focus back after Close",
@@ -567,7 +566,7 @@ export async function costumeWrite(ctx: Ctx) {
     return { dialog, focusBack };
   });
   results.historyDialogFullScreenOnANarrowWindow =
-    wideDialog.width <= 600 &&
+    wideDialog.width <= 900 &&
     historyOnAPhone.dialog.left < 1 &&
     historyOnAPhone.dialog.right > 479 &&
     historyOnAPhone.dialog.bottom - historyOnAPhone.dialog.top >= 799 &&

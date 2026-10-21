@@ -1,5 +1,13 @@
-import { Box, ListSubheader } from "@mui/material";
+import { Box } from "@mui/material";
 import type { ReactNode } from "react";
+
+import { SectionCard } from "../ui/section-card";
+import { SectionTitle } from "../ui/section-title";
+
+// The rows reach the card's edges, and keep the card's room before their words.
+const ROWS = {
+  "& .MuiListItem-gutters.MuiListItem-padding, & .MuiListItemButton-gutters": { px: 1 },
+} as const;
 
 export interface SettingsSectionProps {
   readonly id: string;
@@ -12,17 +20,13 @@ export interface SettingsSectionProps {
 
 export function SettingsSection({ id, headingId, icon, title, children }: SettingsSectionProps) {
   return (
-    <Box component="section" id={id} aria-labelledby={headingId}>
-      <ListSubheader
-        component="h2"
-        id={headingId}
-        disableSticky
-        sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-      >
-        {icon}
-        {title}
-      </ListSubheader>
+    <SectionCard component="section" id={id} aria-labelledby={headingId} flush sx={ROWS}>
+      <Box sx={{ px: 1, pt: 1 }}>
+        <SectionTitle id={headingId} start={icon}>
+          {title}
+        </SectionTitle>
+      </Box>
       {children}
-    </Box>
+    </SectionCard>
   );
 }

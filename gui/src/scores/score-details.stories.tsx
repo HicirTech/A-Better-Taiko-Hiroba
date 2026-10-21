@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 import { fn } from "storybook/test";
 
+import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import type { ScoreView } from "../session-port";
 import { i18nOf, localeOf } from "../story-kit/env";
@@ -21,6 +22,8 @@ interface Args {
 }
 
 const BRANCHED = STORY_SCORES.scores.find((score) => score.songNo === "1005");
+const UNREAD_SONG = storySong("1009");
+const UNREAD_PLAY = storyPlay("1009");
 
 const meta = {
   title: "Dialogs/ScoreDetails",
@@ -42,8 +45,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A chart's scores: its marks, counts and hits, with a button that reads the song again; full
- * screen on a phone. */
+/** A chart's marks, counts and hits, and the song read again; full screen on a phone. */
 export const Chart: Story = {};
 
 export const ReadingTheSong: Story = { args: { reading: true, readingSong: true } };
@@ -55,8 +57,10 @@ export const PlayWithoutDetails: Story = {
       {...args}
       listed={null}
       notice={{
-        play: storyPlay("1009"),
-        name: { text: storySong("1009").title, lang: HIROBA_LANG },
+        play: UNREAD_PLAY,
+        name: { text: UNREAD_SONG.title, lang: HIROBA_LANG },
+        genres: UNREAD_SONG.genres,
+        stars: UNREAD_SONG.levels[LEVEL_DIFFICULTY[UNREAD_PLAY.level]],
         why: <Typography color="text.secondary">{i18nOf(globals).t("history.noScore")}</Typography>,
         onRead: action("read the song"),
       }}

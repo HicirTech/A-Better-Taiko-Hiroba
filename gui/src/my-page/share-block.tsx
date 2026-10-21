@@ -1,11 +1,30 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Typography } from "@mui/material";
+import { Box, Skeleton } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import type { IconWant } from "../session-port";
+import { SectionTitle, SectionTitleSkeleton } from "../ui/section-title";
 import { LegendItem } from "./legend-item";
 import { sharesOf } from "./shares";
+
+const BAR = {
+  display: "flex",
+  gap: "2px",
+  height: 8,
+  borderRadius: 4,
+  overflow: "hidden",
+} as const;
+const LEGEND = {
+  display: "flex",
+  flexWrap: "wrap",
+  columnGap: 2,
+  rowGap: 0.5,
+  listStyle: "none",
+  m: 0,
+  mt: 1,
+  p: 0,
+} as const;
 
 export interface ShareItem {
   /** The id of its count, the text for screen readers: rank-8, crowns-silver. */
@@ -40,14 +59,7 @@ export function ShareBar({
     <Box
       id={id}
       {...(label === undefined ? { "aria-hidden": true } : { role: "img", "aria-label": label })}
-      sx={{
-        display: "flex",
-        gap: "2px",
-        height: 8,
-        borderRadius: 4,
-        overflow: "hidden",
-        bgcolor: total === 0 ? "action.hover" : undefined,
-      }}
+      sx={{ ...BAR, bgcolor: total === 0 ? "action.hover" : undefined }}
     >
       {rows
         .filter((row) => row.count > 0)
@@ -79,19 +91,7 @@ export function ShareLegend({
 }) {
   const { total, rows } = sharesOf(items, i18n.locale);
   return (
-    <Box
-      component="ul"
-      sx={{
-        display: "flex",
-        flexWrap: "wrap",
-        columnGap: 2,
-        rowGap: 0.5,
-        listStyle: "none",
-        m: 0,
-        mt: 1,
-        p: 0,
-      }}
-    >
+    <Box component="ul" sx={LEGEND}>
       {rows.map((row, order) => (
         <LegendItem
           key={row.id}
@@ -127,11 +127,26 @@ export function ShareBlock({
 }) {
   return (
     <Box id={id} component="section">
-      <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 500, mb: 1 }}>
-        {heading}
-      </Typography>
+      <SectionTitle>{heading}</SectionTitle>
       <ShareBar id={`${id}-bar`} items={items} i18n={i18n} />
       <ShareLegend items={items} lane={lane} toast={toast} i18n={i18n} />
+    </Box>
+  );
+}
+
+const LEGEND_KEYS = [...Array(8).keys()];
+
+/** A block's shape while the page's first read runs: its heading, its bar and its legend. */
+export function ShareBlockSkeleton({ items }: { readonly items: number }) {
+  return (
+    <Box aria-hidden>
+      <SectionTitleSkeleton width={110} />
+      <Skeleton variant="rounded" sx={BAR} />
+      <Box sx={LEGEND}>
+        {LEGEND_KEYS.slice(0, items).map((key) => (
+          <Skeleton key={key} width={64} />
+        ))}
+      </Box>
     </Box>
   );
 }

@@ -1,28 +1,31 @@
-import { type RecentPlay, recentPlayKey } from "@abth/core";
+import { type Genre, type RecentPlay, recentPlayKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { newSetName } from "../favorites/favorite-sets";
-import { GENRE_LABEL } from "../favorites/genre-look";
+import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { SetNameDialog } from "../favorites/set-name-dialog";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
-import { useLongPress } from "../my-page/use-long-press";
+import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { type PlayNotice, ScoreDetails } from "../scores/score-details";
-import { listedOf, scoresReadingText } from "../scores/scores-page";
+import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
-import { HistoryRow, opensOnPress, type RowProps } from "./history-row";
+import type { ItemAction, Point } from "../ui/item-actions";
+import { ItemMenu, useItemMenu, useItemPress } from "../ui/item-menu";
+import { ProgressBar } from "../ui/progress-bar";
+import { LoadFailed } from "../ui/read-failure-alert";
+import { RowList, type RowPlace } from "../ui/row-list";
+import { StatusNote } from "../ui/status-note";
+import { AddToSetDialog, type NamedSong } from "./add-to-set-dialog";
 import { type PlacedPlay, placePlay, playedChart } from "./placed-play";
-import { AddToSetDialog, type NamedSong, PlayMenu, type Point } from "./play-menu";
+import { PLAY_ROW_PX, PlayRow } from "./play-row";
 import { playedSong, songsByTitle } from "./played-song";
 import type { RecentPlaysState } from "./use-recent-plays";
-
-const LIST = { listStyle: "none", m: 0, p: 0 } as const;
 
 /** The recent-plays page: the stored walk, read again by a pull, Read again or its keys. */
 export function HistoryPage({
@@ -52,10 +55,12 @@ export function HistoryPage({
   const [opened, setOpened] = useState<RecentPlay | null>(null);
   // Read once each time it opens: a play whose read found nothing is not read in a loop.
   const [asked, setAsked] = useState<string | null>(null);
-  // Hiroba's own title where no one song is found for the play, or taiko.wiki does not have it.
-  const nameOf = (play: RecentPlay) => {
+  const songOf = (play: RecentPlay) => {
     const found = playedSong(byTitle, play, view?.songs ?? []);
-    const song = found.outcome === "resolved" ? catalogue.songs.get(found.songNo) : undefined;
+    return found.outcome === "resolved" ? catalogue.songs.get(found.songNo) : undefined;
+  };
+  // Hiroba's own title where no one song is found for the play, or taiko.wiki does not have it.
+  const nameOf = (play: RecentPlay, song = songOf(play)) => {
     if (song === undefined) {
       return { text: play.songTitle, lang: HIROBA_LANG };
     }
@@ -64,9 +69,12 @@ export function HistoryPage({
   };
 
   const kept = useFavoriteSets();
-  const [menu, setMenu] = useState<{ readonly play: RecentPlay; readonly at: Point } | null>(null);
   // The play whose song is being added to a set.
   const [adding, setAdding] = useState<RecentPlay | null>(null);
+  const playActions = (play: RecentPlay): readonly ItemAction[] => [
+    { key: "add", label: i18n.t("history.addToSet"), chooses: true, onPick: () => setAdding(play) },
+  ];
+  const menu = useItemMenu(playActions);
   // Where the play's title is shared, the song the player chose among those sharing it.
   const [chosen, setChosen] = useState<string | null>(null);
   // The song a new set starts with, while its name is asked.
@@ -106,12 +114,15 @@ export function HistoryPage({
       readPlayed(opened, unread);
     }
   }, [opened, unread, scoresReading, asked, openedKey, readPlayed]);
+  const openedSong = opened === null ? undefined : songOf(opened);
   const notice: PlayNotice | null =
     opened === null || placed === null || placed.kind === "scored"
       ? null
       : {
           play: opened,
-          name: nameOf(opened),
+          name: nameOf(opened, openedSong),
+          genres: openedSong?.genres,
+          stars: openedSong?.levels[LEVEL_DIFFICULTY[opened.level]] ?? null,
           why: (
             <PlayWhy
               placed={placed}
@@ -135,9 +146,12 @@ export function HistoryPage({
   };
 
   return (
-    <Stack spacing={2} id="history-page">
+    <Stack spacing={2} id="history-page" sx={{ minHeight: PAGE_HEIGHT }}>
       {reading && rows.length === 0 && (
-        <Waiting id="history-reading">{i18n.t("history.readingPage", { page: page ?? 1 })}</Waiting>
+        <ProgressBar
+          id="history-reading"
+          label={i18n.t("history.readingPage", { page: page ?? 1 })}
+        />
       )}
       {failure !== null && (
         <LoadFailed id="history-failure" failure={failure} i18n={i18n}>
@@ -149,25 +163,30 @@ export function HistoryPage({
         </LoadFailed>
       )}
       {plays !== null && rows.length === 0 && !reading && (
-        <Typography id="history-empty" color="text.secondary">
+        <StatusNote id="history-empty" fill>
           {i18n.t(touchFirst ? "history.emptyPull" : "history.emptyReadAgain")}
-        </Typography>
+        </StatusNote>
       )}
-      <Stack component="ul" id="history-list" spacing={0} sx={LIST}>
-        {rows.map((play, index) => (
-          <PlayRow
-            key={recentPlayKey(play)}
-            play={play}
-            name={nameOf(play)}
-            lane={lane}
-            order={index}
-            touchFirst={touchFirst}
-            i18n={i18n}
-            onOpen={() => setOpened(play)}
-            onHold={(at) => (at === null ? setAdding(play) : setMenu({ play, at }))}
-          />
-        ))}
-      </Stack>
+      <RowList id="history-list" rows={rows} keyOf={recentPlayKey} rowPx={PLAY_ROW_PX}>
+        {(play, index, place) => {
+          const song = songOf(play);
+          return (
+            <RecentPlayRow
+              play={play}
+              name={nameOf(play, song)}
+              genres={song?.genres}
+              stars={song?.levels[LEVEL_DIFFICULTY[play.level]] ?? null}
+              lane={lane}
+              order={index}
+              place={place}
+              touchFirst={touchFirst}
+              i18n={i18n}
+              onOpen={() => setOpened(play)}
+              onMenu={(at) => menu.open(play, at)}
+            />
+          );
+        }}
+      </RowList>
       <ScoreDetails
         listed={placed?.kind === "scored" ? listedOf(placed.score, catalogue, i18n.locale) : null}
         notice={notice}
@@ -178,17 +197,15 @@ export function HistoryPage({
         onReadSong={(score) => void readSong(score)}
         onClose={close}
       />
-      {menu !== null && (
-        <PlayMenu
-          at={menu.at}
-          i18n={i18n}
-          onAddToSet={() => {
-            setAdding(menu.play);
-            setMenu(null);
-          }}
-          onClose={() => setMenu(null)}
-        />
-      )}
+      <ItemMenu
+        id="history-play-menu"
+        dialogId="history-play-actions"
+        opened={menu.opened}
+        nameOf={(play) => nameOf(play).text}
+        actionsOf={playActions}
+        cancel={i18n.t("favorites.delete.cancel")}
+        onClose={menu.close}
+      />
       {adding !== null && found !== null && (
         <AddToSetDialog
           name={nameOf(adding)}
@@ -201,10 +218,7 @@ export function HistoryPage({
             kept.replaceSongs(set.id, [...set.songs, songNo]);
             shut();
           }}
-          onNewSet={(songNo) => {
-            shut();
-            setNaming(songNo);
-          }}
+          onNewSet={setNaming}
           onClose={shut}
         />
       )}
@@ -217,6 +231,7 @@ export function HistoryPage({
           onSave={(name) => {
             kept.add(name, [naming]);
             setNaming(null);
+            shut();
           }}
         />
       )}
@@ -225,39 +240,47 @@ export function HistoryPage({
 }
 
 /** A play's row: a click opens its chart's details; a right-click, or a long press, its menu. */
-function PlayRow({
+function RecentPlayRow({
   play,
   name,
+  genres,
+  stars,
   lane,
   order,
+  place,
   touchFirst,
   i18n,
   onOpen,
-  onHold,
+  onMenu,
 }: {
   readonly play: RecentPlay;
   readonly name: { readonly text: string; readonly lang: string };
+  readonly genres: readonly Genre[] | undefined;
+  readonly stars: number | null;
   readonly lane: PictureLane;
   readonly order: number;
+  readonly place: RowPlace;
   readonly touchFirst: boolean;
   readonly i18n: Translator;
   readonly onOpen: () => void;
   /** Where the right-click landed; none for a long press. */
-  readonly onHold: (at: Point | null) => void;
+  readonly onMenu: (at: Point | null) => void;
 }) {
-  const longPress = useLongPress(touchFirst, () => onHold(null));
-  const rowProps: RowProps = {
-    ...opensOnPress(onOpen),
-    ...(touchFirst ? longPress : {}),
-    onContextMenu: (event) => {
-      event.preventDefault();
-      if (!touchFirst) {
-        onHold({ x: event.clientX, y: event.clientY });
-      }
-    },
-  };
+  const { handlers, held } = useItemPress(touchFirst, onMenu);
   return (
-    <HistoryRow play={play} name={name} lane={lane} order={order} i18n={i18n} rowProps={rowProps} />
+    <PlayRow
+      play={play}
+      name={name}
+      genres={genres}
+      stars={stars}
+      lane={lane}
+      order={order}
+      i18n={i18n}
+      onOpen={onOpen}
+      handlers={handlers}
+      held={held}
+      place={place}
+    />
   );
 }
 
@@ -279,19 +302,16 @@ function PlayWhy({
   const { t } = i18n;
   if (placed.kind === "unplaced") {
     const why = placed.why === "shared" ? "history.sharedTitle" : "history.unknownSong";
-    return <Typography color="text.secondary">{t(why)}</Typography>;
+    return <StatusNote>{t(why)}</StatusNote>;
   }
-  if (scores.reading || !asked) {
-    return (
-      <Waiting>
-        {scores.reading
-          ? scoresReadingText(i18n, scores.progress, scores.song)
-          : t("scores.readingSong", { song: play.songTitle })}
-      </Waiting>
-    );
+  if (scores.reading) {
+    return <ScoresReading i18n={i18n} progress={scores.progress} song={scores.song} />;
+  }
+  if (!asked) {
+    return <ProgressBar label={t("scores.readingSong", { song: play.songTitle })} />;
   }
   if (scores.failure !== null) {
     return <LoadFailed id="history-play-failure" failure={scores.failure} i18n={i18n} />;
   }
-  return <Typography color="text.secondary">{t("history.noScore")}</Typography>;
+  return <StatusNote>{t("history.noScore")}</StatusNote>;
 }

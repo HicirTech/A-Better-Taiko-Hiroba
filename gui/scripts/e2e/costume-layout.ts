@@ -11,7 +11,7 @@ export const costumeLayoutKeys = [
   "costumePreviewIsSquare",
   "costumePreviewLevelWithTheGridsFirstRow",
   "costumeTilesInTwoRowsUnderTheirCaptions",
-  "costumeButtonsStackedInTheLeftColumn",
+  "costumeBarAtTheFootOnAWideWindow",
   "costumeGridCentred",
   "costumeOnlyThePageScrolls",
   "costumeGridHoldsMoreColumnsOnABigWindow",
@@ -25,7 +25,10 @@ export async function costumeLayout(ctx: Ctx) {
   const { page } = ctx.app;
   const { atSize, boxOf, exists } = pageHelpers(page);
   const {
+    barFlush,
+    buttonsIn,
     firstRowOf,
+    inTwoColumns,
     openFreshEditor,
     positionOf,
     scrollToTheEnd,
@@ -54,7 +57,7 @@ export async function costumeLayout(ctx: Ctx) {
   );
   const wideAt = (width: number, height: number) =>
     atSize(width, height, async () => {
-      await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
+      await waitFor("costume in two columns", async () => (await inTwoColumns()) || undefined);
       await waitFor(
         "costume preview",
         async () => (await exists("#costume-preview-image")) || undefined,
@@ -84,10 +87,9 @@ export async function costumeLayout(ctx: Ctx) {
         preview: await boxOf("#costume-preview-image"),
         captions: [await boxOf("#costume-group-colours"), await boxOf("#costume-group-items")],
         tiles: await tileBoxes(),
-        save: await boxOf("#costume-save"),
-        history: await boxOf("#costume-history"),
-        reset: await boxOf("#costume-reset"),
-        bar: await exists("#costume-bar"),
+        bar: await boxOf("#costume-bar"),
+        buttons: await buttonsIn("#costume-bar"),
+        flush: await barFlush(),
         palette,
         items,
       };
@@ -95,11 +97,10 @@ export async function costumeLayout(ctx: Ctx) {
   type WideFacts = Awaited<ReturnType<typeof wideAt>>;
   const onDefault = await wideAt(960, 720);
   const onBig = await wideAt(1920, 1080);
-  const twoColumns = ({ aside, panel, bar }: WideFacts, asideWidth: number) =>
+  const twoColumns = ({ aside, panel }: WideFacts, asideWidth: number) =>
     near(aside.width, asideWidth) &&
     near(panel.left - aside.right, 24) &&
-    near(panel.top, aside.top) &&
-    !bar;
+    near(panel.top, aside.top);
   results.costumeInTwoColumns =
     twoColumns(onDefault, 232) && twoColumns(onBig, 280) && onDefault.panel.width > 390;
   const squarePreview = ({ preview, aside }: WideFacts) =>
@@ -128,16 +129,18 @@ export async function costumeLayout(ctx: Ctx) {
   };
   results.costumeTilesInTwoRowsUnderTheirCaptions =
     tilesUnderTheirCaptions(onDefault) && tilesUnderTheirCaptions(onBig);
-  const buttonsStacked = ({ aside, save, history, reset }: WideFacts) =>
-    near(save.width, aside.width) &&
-    near(save.left, aside.left) &&
-    save.bottom <= history.top &&
-    near(history.top, reset.top) &&
-    history.right <= reset.left &&
-    [save, history, reset].every(
-      (box) => box.left >= aside.left - 1 && box.right <= aside.right + 1 && box.height < 45,
-    );
-  results.costumeButtonsStackedInTheLeftColumn = buttonsStacked(onDefault) && buttonsStacked(onBig);
+  // The bar at the window's foot, as on a phone: History at its left, Reset and Sync at its right.
+  const barAtTheFoot = ({ aside, bar, buttons, flush }: WideFacts) =>
+    same(
+      buttons.map(({ id }) => id),
+      ["costume-history", "costume-reset", "costume-save"],
+    ) &&
+    Math.abs((buttons[0]?.left ?? 0) - (bar.left + 12)) < 2 &&
+    Math.abs(bar.right - 12 - (buttons[2]?.right ?? 0)) < 2 &&
+    (buttons[1]?.right ?? 0) <= (buttons[2]?.left ?? 0) &&
+    near(bar.left, aside.left) &&
+    flush;
+  results.costumeBarAtTheFootOnAWideWindow = barAtTheFoot(onDefault) && barAtTheFoot(onBig);
   const centred = ({ box, row }: { box: Box; row: Box[] }) =>
     row.length > 1 && evenSides(row, box) && gapsOf(row).every((gap) => near(gap, 8));
   results.costumeGridCentred = [onDefault, onBig].every(
@@ -149,7 +152,7 @@ export async function costumeLayout(ctx: Ctx) {
   results.costumeGridHoldsMoreColumnsOnABigWindow =
     onBig.items.tracks > onDefault.items.tracks && onBig.palette.tracks > onDefault.palette.tracks;
   const stuck = await atSize(960, 720, async () => {
-    await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
+    await waitFor("costume in two columns", async () => (await inTwoColumns()) || undefined);
     await showPart("costume1");
     await waitFor(
       "Mascot grid",
@@ -172,7 +175,7 @@ export async function costumeLayout(ctx: Ctx) {
     stuck.after.bottom <= stuck.windowHeight &&
     stuck.gridAfter.top < stuck.gridBefore.top - 50;
   const onAShortWindow = await atSize(1100, 480, async () => {
-    await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
+    await waitFor("costume in two columns", async () => (await inTwoColumns()) || undefined);
     await showPart("costume1");
     await waitFor(
       "Mascot grid",
@@ -183,7 +186,8 @@ export async function costumeLayout(ctx: Ctx) {
     const scrolledBy = await scrollToTheEnd();
     const after = await boxOf("#costume-aside");
     const own = await page.evaluate<boolean>(
-      `(() => { const node = document.querySelector("#costume-aside"); return node.scrollHeight > node.clientHeight + 1 || getComputedStyle(node).overflowY !== "visible"; })()`,
+      // The tiles' pick ring has its room past the column's edge, by design.
+      `(() => { const node = document.querySelector("#costume-aside"); return node.scrollHeight > node.clientHeight + ${RING_ROOM_PX} + 1 || getComputedStyle(node).overflowY !== "visible"; })()`,
     );
     const scrolling = await scrollingBoxes();
     await page.evaluate("window.scrollTo(0, 0)");
@@ -322,7 +326,7 @@ export const costumePhoneKeys = [
   "costumeGridPickChangesItsTileOnAPhone",
   "costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpaceOnAPhone",
   "narrowSaveFromTheBarIsOneClick",
-  "narrowNoticeAboveTheEditor",
+  "narrowNoticeAboveTheBar",
   "costumePhoneTopBlockStaysInViewOnATallWindowAndScrollsAwayOnAShortOne",
   "costumePhoneBarFlushWithTheBottom",
   "costumePhoneOnlyThePageScrolls",
@@ -344,6 +348,7 @@ export async function costumePhone(ctx: Ctx) {
     gridPickChangesItsTile,
     gridShown,
     inStep,
+    inTwoColumns,
     noneCellInUse,
     openFreshEditor,
     positionOf,
@@ -443,7 +448,7 @@ export async function costumePhone(ctx: Ctx) {
       swatches: await tracksOf("#costume-palette"),
       swatchRow: await firstRowOf('#costume-palette [id^="swatch-colorBody-"]'),
       scrolling: await scrollingBoxes(),
-      noColumns: !(await exists("#costume-actions")),
+      noColumns: !(await inTwoColumns()),
       tabRows: await exists("#costume-tab-colours"),
     };
     const barButtons = await buttonsIn("#costume-bar");
@@ -476,8 +481,9 @@ export async function costumePhone(ctx: Ctx) {
     await fetch(`${HIROBA}/__noop-save`);
     await click("#swatch-colorBody-41");
     const unmoved = await savedFrom(await savedCostume());
-    const noticeAboveTheGrid = await page.evaluate<boolean>(
-      `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const aside = document.querySelector("#costume-aside"); const panel = document.querySelector("#costume-grid"); return notice !== null && notice.getBoundingClientRect().top >= aside.getBoundingClientRect().bottom && notice.getBoundingClientRect().bottom <= panel.getBoundingClientRect().top; })()`,
+    // Material keeps a snackbar 8 pixels off a phone's foot; here it keeps them off the bar.
+    const noticeAboveTheBar = await page.evaluate<boolean>(
+      `(() => { const notice = document.querySelector("#costume-page #write-outcome"); const bar = document.querySelector("#costume-bar"); return notice !== null && Math.abs(notice.getBoundingClientRect().bottom - (bar.getBoundingClientRect().top - 8)) < 1.5; })()`,
     );
     return {
       kept,
@@ -491,10 +497,10 @@ export async function costumePhone(ctx: Ctx) {
       keyboard,
       savedFromTheBar,
       unmoved,
-      noticeAboveTheGrid,
+      noticeAboveTheBar,
     };
   });
-  await waitFor("costume actions", async () => (await exists("#costume-actions")) || undefined);
+  await waitFor("costume in two columns", async () => (await inTwoColumns()) || undefined);
   const { layout } = phone;
   results.costumeKeepsThePartPickedAcrossWidths =
     same(phone.kept, { part: "true", grid: true }) &&
@@ -570,7 +576,7 @@ export async function costumePhone(ctx: Ctx) {
     saves: 1,
     moved: true,
   });
-  results.narrowNoticeAboveTheEditor = phone.unmoved === "notApplied" && phone.noticeAboveTheGrid;
+  results.narrowNoticeAboveTheBar = phone.unmoved === "notApplied" && phone.noticeAboveTheBar;
   const phoneScrolling = (size: { width: number; height: number }) =>
     atSize(size.width, size.height, async () => {
       await waitFor("costume bar", async () => (await exists("#costume-bar")) || undefined);

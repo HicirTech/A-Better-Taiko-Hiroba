@@ -1,11 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Dialog, IconButton } from "@mui/material";
+import { Box } from "@mui/material";
 import { type PointerEvent, useRef, useState, type WheelEvent } from "react";
 
-import { CloseIcon } from "../favorites/favorites-icons";
-import { useBackCloses } from "../navigation/back-closers";
-import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureView } from "../session-port";
+import { LargeModal } from "../ui/large-modal";
 import { distanceOf, FITTED, midpointOf, type Point, type ZoomView, zoomedView } from "./zoom";
 
 const DOUBLE_CLICK_ZOOM = 2.5;
@@ -38,28 +36,22 @@ export function ChartViewer({
   i18n: Translator;
   onClose: () => void;
 }) {
-  const touchFirst = useTouchFirst();
-  useBackCloses(chart !== null, onClose);
+  // Kept while the viewer slides away, so it does not go blank on its way.
+  const [last, setLast] = useState(chart);
+  if (chart !== null && chart !== last) {
+    setLast(chart);
+  }
   return (
-    <Dialog
+    <LargeModal
       id="chart-viewer"
       open={chart !== null}
+      title={last?.label ?? ""}
+      picture
+      i18n={i18n}
       onClose={onClose}
-      fullScreen
-      slotProps={{ paper: { sx: { bgcolor: "common.black" } } }}
     >
-      {chart !== null && <ZoomablePicture chart={chart} />}
-      {!touchFirst && (
-        <IconButton
-          id="chart-viewer-close"
-          aria-label={i18n.t("picker.close")}
-          onClick={onClose}
-          sx={{ position: "absolute", top: 8, right: 8, color: "common.white" }}
-        >
-          <CloseIcon />
-        </IconButton>
-      )}
-    </Dialog>
+      {last !== null && <ZoomablePicture chart={last} />}
+    </LargeModal>
   );
 }
 

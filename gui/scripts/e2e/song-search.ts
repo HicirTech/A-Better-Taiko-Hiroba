@@ -29,6 +29,7 @@ export const songSearchKeys = [
   "searchBarInTheTopBand",
   "searchBarAcrossAPhone",
   "searchFieldKeepsItsPlace",
+  "searchFieldLefts",
   "searchShowsTheTempo",
   "notFoundUnframed",
   "searchKeptWhenASongOpens",
@@ -66,7 +67,7 @@ export const songSearchKeys = [
 export async function songSearch(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, boxOf, exists, mousePress, press, swipe, touchEmulated } =
+  const { atSize, attribute, boxOf, exists, inPlace, mousePress, press, swipe, touchEmulated } =
     pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
@@ -89,6 +90,7 @@ export async function songSearch(ctx: Ctx) {
     await shown(`#song-search-row-${songNo} button`);
     await page.evaluate(`document.querySelector("#song-search-row-${songNo} button").click()`);
     await shown("#song-details-title");
+    await inPlace("#song-details");
   };
   const closeSong = async () => {
     await click("#song-details-close");
@@ -153,7 +155,10 @@ export async function songSearch(ctx: Ctx) {
   const leftAtRest = await fieldLeft();
   await search("signal");
   await shown("#song-search-row-1019");
-  results.searchFieldKeepsItsPlace = (await fieldLeft()) === leftAtRest;
+  const leftSearching = await fieldLeft();
+  results.searchFieldKeepsItsPlace = leftSearching === leftAtRest;
+  // Both places, so a run that finds the field moved shows by how much.
+  results.searchFieldLefts = [leftAtRest, leftSearching];
   results.searchShowsTheTempo =
     (await textOf("#song-search-row-1019"))?.includes("BPM 85.85–257.5") === true;
   const framedWithSongs = await exists("#song-search-panel.MuiPaper-root");

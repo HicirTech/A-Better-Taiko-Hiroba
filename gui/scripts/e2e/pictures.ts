@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { HIROBA, MY_DON_GIF_CODE, PAGE_SIZE, PANEL_ART, USER_DATA } from "./config";
+import { HIROBA, PAGE_SIZE, PANEL_ART, REPORT_CODE, USER_DATA } from "./config";
 import type { Ctx } from "./context";
 import {
   holdOwnSize,
@@ -34,16 +34,22 @@ const medalIdShown = () =>
 function pictureHelpers(page: Page) {
   const shownNow = (selector: string) =>
     page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  const standsIn = (frame: string) => shownNow(`${frame}-stand-in`);
+  // A frame that has its answer, whether its picture came or not.
+  const quiet = async (frame: string) =>
+    (await page.evaluate<string | null>(
+      `document.querySelector(${JSON.stringify(frame)})?.getAttribute("aria-busy") ?? null`,
+    )) === "false";
 
-  return { shownNow };
+  return { quiet, shownNow, standsIn };
 }
 
-export const myDonFailureKeys = ["readsAfterReadAgain", "myDonFailureCoded"] as const;
+export const myDonFailureKeys = ["readsAfterReadAgain", "myDonFailureSaysNothing"] as const;
 
 export async function myDonFailure(ctx: Ctx) {
   const { results, state } = ctx;
-  const { click, page, textOf, until } = ctx.app;
-  const { exists } = pageHelpers(page);
+  const { click, page, text, until } = ctx.app;
+  const { attribute, exists } = pageHelpers(page);
   const { myDonFailureAtSignIn } = state;
 
   await click("#read-again");
@@ -58,11 +64,12 @@ export async function myDonFailure(ctx: Ctx) {
   );
   const myDonsFailed = await myDonsSettled();
   state.myDonsFailed = myDonsFailed;
-  results.myDonFailureCoded =
+  results.myDonFailureSaysNothing =
     myDonFailureAtSignIn &&
     myDonsFailed === 2 &&
     !(await exists("#my-don-image")) &&
-    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+    (await attribute("#my-don", "aria-busy")) === "false" &&
+    !(await text()).includes(REPORT_CODE);
 }
 
 export const picturesKeys = [
@@ -79,7 +86,7 @@ export const picturesKeys = [
 export async function pictures(ctx: Ctx) {
   const running = ctx.app;
   const { results, state } = ctx;
-  const { click, page, textOf, until } = running;
+  const { click, page, text, textOf, until } = running;
   const { allOf, attribute, boxOf, exists, tooltipClosed } = pageHelpers(page);
   const { legendIconsShownOn, legendPictures, panelCountsInPlace } = overviewHelpers(running);
   const { myDonsFailed } = state;
@@ -104,8 +111,7 @@ export async function pictures(ctx: Ctx) {
     tile.width > 0 &&
     Math.abs(tile.width - tile.height) < 1 &&
     !(await exists("#my-don-loading")) &&
-    (await textOf("#pictures-code")) ===
-      "Code for a report: scorePanel=notPng status=404 type=text/plain;charset=utf-8 bytes=9";
+    !(await text()).includes(REPORT_CODE);
   const withMyDon = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );
@@ -145,8 +151,7 @@ export async function pictures(ctx: Ctx) {
     Math.abs(art.width - panelBox.width) < 1 &&
     !(await exists("#score-panel-stand-in")) &&
     !(await exists("#score-panel-loading")) &&
-    (await panelCountsInPlace(PANEL_COUNTS)) &&
-    !(await exists("#pictures-unavailable"));
+    (await panelCountsInPlace(PANEL_COUNTS));
   await legendIconsShownOn(running);
   const iconFetches = await iconsSettled();
   const iconSources = await page.evaluate<Record<string, string>>(
@@ -223,8 +228,7 @@ export async function pictures(ctx: Ctx) {
   const myDonsAfterGif = await myDonsSettled();
   results.myDonMissingKeepsTheLast =
     myDonsAfterGif === myDonsAfterReadAgain + 1 &&
-    (await attribute("#my-don-image", "src")) === keptMyDon &&
-    !(await exists("#pictures-unavailable"));
+    (await attribute("#my-don-image", "src")) === keptMyDon;
   await fetch(`${HIROBA}/__mydon?answer=png`);
 }
 
@@ -236,9 +240,9 @@ export const titlePlateKeys = [
 
 export async function titlePlate(ctx: Ctx) {
   const { results, state } = ctx;
-  const { click, page, textOf, until } = ctx.app;
+  const { click, page, text, textOf, until } = ctx.app;
   const { tileAlignedAt } = overviewHelpers(ctx.app);
-  const { shownNow } = pictureHelpers(page);
+  const { quiet, shownNow, standsIn } = pictureHelpers(page);
   const { platesAfterRereads, platesAtSignIn } = state;
 
   const platesBeforeOther = (await platesSettled()).length;
@@ -252,10 +256,9 @@ export async function titlePlate(ctx: Ctx) {
 
   await fetch(`${HIROBA}/__titleplate?answer=gif`);
   await fetch(`${HIROBA}/__variant?title=other`);
-  await readAndWait(() => shownNow("#pictures-code"));
+  await readAndWait(async () => (await standsIn("#title-plate")) && (await quiet("#title-plate")));
   const blankShown =
-    (await textOf("#pictures-code")) ===
-      "Code for a report: titlePlate=notPng status=200 type=image/gif bytes=43" &&
+    !(await text()).includes(REPORT_CODE) &&
     (await shownNow("#title-plate-stand-in")) &&
     !(await shownNow("#title-plate-image")) &&
     (await textOf("#profile-title")) === "Title: 別のサンプル称号" &&
@@ -264,10 +267,7 @@ export async function titlePlate(ctx: Ctx) {
   results.myDonAlignedWithoutThePlate = await tileAlignedAt(1100);
   await fetch(`${HIROBA}/__titleplate?answer=png`);
   const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
-  results.plateBlankFallsBack =
-    blankShown &&
-    !(await shownNow("#pictures-unavailable")) &&
-    afterOther.length - platesBeforeOther === 2;
+  results.plateBlankFallsBack = blankShown && afterOther.length - platesBeforeOther === 2;
   await fetch(`${HIROBA}/__variant?title=set`);
   await readAndWait(async () => (await textOf("#profile-title")) === "Title: サンプルの称号");
   await fetch(`${HIROBA}/__variant?title=other`);
@@ -295,9 +295,9 @@ export const medalPlateKeys = [
 
 export async function medalPlate(ctx: Ctx) {
   const { medalIds, results } = ctx;
-  const { click, page, textOf, until } = ctx.app;
+  const { click, page, text, textOf, until } = ctx.app;
   const { attribute } = pageHelpers(page);
-  const { shownNow } = pictureHelpers(page);
+  const { quiet, shownNow, standsIn } = pictureHelpers(page);
 
   const readMedal = async () => {
     await click("#read-again");
@@ -383,7 +383,9 @@ export async function medalPlate(ctx: Ctx) {
       `document.querySelector("#medal-plate").getBoundingClientRect().top >= innerHeight`,
     ));
   const medalPlatesOffScreen = await medalPlatesSettled();
-  const medalPlatesPerRead = [await showMedal(() => shownNow("#medal-plate-code"))];
+  const medalPlatesPerRead = [
+    await showMedal(async () => (await standsIn("#medal-plate")) && (await quiet("#medal-plate"))),
+  ];
   await holdOwnSize(page);
   results.medalPlateAskedOnlyOnScreen =
     newSeasonBelowFold &&
@@ -391,8 +393,7 @@ export async function medalPlate(ctx: Ctx) {
     medalPlatesPerRead[0] === medalPlatesBefore + 1;
   medalIds.push(medalIdShown());
   results.medalPlateMissingReadsAsText =
-    (await textOf("#medal-plate-code")) ===
-      "Code for a report: medalPlate=notPng status=200 type=image/gif bytes=43" &&
+    !(await text()).includes(REPORT_CODE) &&
     (await shownNow("#medal-plate-stand-in")) &&
     !(await shownNow("#medal-plate-image")) &&
     (await textOf("#medal-name")) === "どんメダル2026冬" &&
@@ -409,8 +410,7 @@ export async function medalPlate(ctx: Ctx) {
     (await textOf("#medal-name")) === "どんメダル2026冬" &&
     (await textOf("#medal-count")) === "Collected: 12" &&
     (await textOf("#medal-plate"))?.replace("Collected: 12", "").includes("12") === true &&
-    !(await shownNow("#medal-plate-stand-in")) &&
-    !(await shownNow("#medal-plate-unavailable"));
+    !(await shownNow("#medal-plate-stand-in"));
   results.medalPlateOnAppSurface = await page.evaluate<boolean>(
     `(() => { const colours = []; for (let box = document.querySelector("#medal-plate"); box !== null; box = box.parentElement) { colours.push(getComputedStyle(box).backgroundColor); if (box.id === "medal") return !colours.includes("rgb(255, 204, 0)"); } return false; })()`,
   );

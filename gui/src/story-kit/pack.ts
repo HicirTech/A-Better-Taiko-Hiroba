@@ -23,16 +23,14 @@ const VIEWS: ReadonlyMap<string, PictureView> = new Map(
   ]),
 );
 
-/** The resource pack's picture under `key` (a lane's `wantKey`, or `danLabel/<board>`), or null
- * when no pack is named or it holds none. */
+/** The pack's picture under `key` (a lane's `wantKey`, or `danLabel/<board>`), or null. */
 export const packView = (key: string): PictureView | null => VIEWS.get(key) ?? null;
 
 /** The keys the pack holds that begin with `prefix`, such as `costumeItem/2/`. */
 export const packKeys = (prefix: string): readonly string[] =>
   [...VIEWS.keys()].filter((key) => key.startsWith(prefix));
 
-/** What each of a pack's data files holds: a feed's own text, or what the app's port answers for
- * a page. The pack's builder writes them with this app's own parsers; nothing here checks them. */
+/** Each pack data file: a feed's text, or the port's answer for a page, as the builder wrote. */
 export interface PackData {
   /** taiko.wiki's song list, as `readSongCatalogue` reads it. */
   readonly songCatalogue: string;

@@ -69,6 +69,12 @@ export function costumeHelpers(app: App) {
     await inStep("editing");
   };
 
+  /** Whether the page stands in two columns: the part's grid right of the side column. */
+  const inTwoColumns = () =>
+    page.evaluate<boolean>(
+      `(() => { const aside = document.querySelector("#costume-aside")?.getBoundingClientRect(); const grid = document.querySelector("#costume-grid")?.getBoundingClientRect(); return aside !== undefined && grid !== undefined && grid.left >= aside.right; })()`,
+    );
+
   const barFlush = () =>
     page.evaluate<boolean>(
       `Math.abs(document.querySelector("#costume-bar").getBoundingClientRect().bottom - window.innerHeight) < 1`,
@@ -362,6 +368,7 @@ export function costumeHelpers(app: App) {
     savable,
     readEditorAgain,
     barFlush,
+    inTwoColumns,
     pageOutcome,
     openFreshEditor,
     openEditing,

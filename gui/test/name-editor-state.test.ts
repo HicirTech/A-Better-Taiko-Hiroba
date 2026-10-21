@@ -177,10 +177,28 @@ describe("reduceName, a write's ending", () => {
     );
   });
 
-  test("keeps what was typed, and says why, after a name Hiroba refused", () => {
+  test("shows the name worn in the field, and says why, after a name Hiroba refused", () => {
     expect(reduce(saving(), { type: "writeEnded", outcome: refusedOutcome })).toEqual(
-      idle(NEW.nickname, refusedOutcome),
+      idle(null, refusedOutcome),
     );
+  });
+
+  test("keeps what was typed, and says so, after an ending that read nothing back", () => {
+    expect(reduce(saving(), { type: "writeEnded", outcome: { kind: "maintenance" } })).toEqual(
+      idle(NEW.nickname, { kind: "maintenance" }),
+    );
+  });
+
+  test("shows the name worn, and says nothing, when Hiroba had the name already", () => {
+    expect(reduce(saving(), { type: "writeEnded", outcome: { kind: "nothingToChange" } })).toEqual(
+      idle(null),
+    );
+  });
+
+  test("drops the notice once said, keeping what was typed", () => {
+    expect(reduce(idle("あ", refusedOutcome), { type: "noticeClosed" })).toEqual(idle("あ"));
+    const step = idle("あ");
+    expect(reduce(step, { type: "noticeClosed" })).toBe(step);
   });
 
   test("shows the name worn, and says so, after a save the game server was not told of", () => {

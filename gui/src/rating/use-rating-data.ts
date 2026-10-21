@@ -13,7 +13,7 @@ export interface RatingDataState {
   readonly data: OurTaikoV1Data | null;
   readonly reading: boolean;
   readonly failure: SongCatalogueFailure["code"] | null;
-  /** Brings the data kept on the device, and reads it when none is: the page asks as it opens. */
+  /** Brings the data kept on the device unless it is held, and reads it when none is kept. */
   readonly load: () => void;
   /** Reads the data again: every refresh asks, as a system's constants change. */
   readonly read: () => Promise<void>;
@@ -25,6 +25,8 @@ export function useRatingData(port: Pick<HirobaSessionPort, "readRatingData">): 
   const [reading, setReading] = useState(false);
   const [failure, setFailure] = useState<SongCatalogueFailure["code"] | null>(null);
   const running = useRef(false);
+  // The data held is the device's copy: a read that keeps new data holds it too.
+  const held = useRef<OurTaikoV1Data | null>(null);
 
   const read = useCallback(async () => {
     if (running.current) {
@@ -37,6 +39,7 @@ export function useRatingData(port: Pick<HirobaSessionPort, "readRatingData">): 
     const parsed = result.ok ? ratingDataOf(result.value.text) : null;
     if (result.ok && parsed !== null) {
       keepRatingData(SYSTEM, result.value);
+      held.current = parsed;
       setData(parsed);
     } else {
       setFailure(result.ok ? "badAnswer" : result.error.code);
@@ -46,8 +49,12 @@ export function useRatingData(port: Pick<HirobaSessionPort, "readRatingData">): 
   }, [port]);
 
   const load = useCallback(() => {
+    if (held.current !== null) {
+      return;
+    }
     const kept = loadRatingData(SYSTEM);
     const keptData = kept === null ? null : ratingDataOf(kept.text);
+    held.current = keptData;
     setData(keptData);
     if (keptData === null) {
       void read();

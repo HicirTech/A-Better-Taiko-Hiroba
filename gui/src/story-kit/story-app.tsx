@@ -5,6 +5,7 @@ import { App } from "../App";
 import { LanguageSetting } from "../language/language-setting";
 import { AppFrame } from "../navigation/app-frame";
 import type { Page } from "../navigation/pages";
+import { useShownPage } from "../navigation/use-shown-page";
 import { PipelinesPage } from "../pipelines-page/pipelines-page";
 import type { HirobaSessionPort } from "../session-port";
 import { touchOf } from "./devices";
@@ -26,8 +27,7 @@ export const appOn =
     <StoryApp changes={changes} first={first} globals={globals} />
   );
 
-/** The whole window as the shell draws it, on a story port with `changes`, in the toolbar's
- * language; an Android device gets Android's Back and Toast. */
+/** The whole window as the shell draws it, on a story port; Android gets Back and Toast. */
 export function StoryApp({
   changes,
   first,
@@ -42,11 +42,7 @@ export function StoryApp({
   const [port] = useState(() => createStoryPort(changes));
   const i18n = i18nOf(globals);
   const android = touchOf(globals);
-  const [page, setPage] = useState(first);
-  const navigate = (next: Page) => {
-    setPage(next);
-    window.scrollTo(0, 0);
-  };
+  const [page, navigate] = useShownPage(() => first);
   return (
     <AppFrame
       page={page}

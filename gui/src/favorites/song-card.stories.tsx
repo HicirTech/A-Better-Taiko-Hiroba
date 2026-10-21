@@ -9,7 +9,7 @@ import { lookOf } from "../story-kit/songs";
 import type { ShownFavorites } from "./favorites-state";
 import { SongCard, type SongCardProps } from "./song-card";
 
-type Args = Pick<SongCardProps, "shown" | "onChange" | "onSave" | "onReset">;
+type Args = Pick<SongCardProps, "shown" | "onChange">;
 
 const meta = {
   title: "Cards and sections/SongCard",
@@ -24,7 +24,7 @@ const meta = {
       />
     </Box>
   ),
-  args: { shown: shownFavorites(), onChange: fn(), onSave: fn(), onReset: fn() },
+  args: { shown: shownFavorites(), onChange: fn() },
 } satisfies Meta<Args>;
 
 export default meta;
@@ -36,7 +36,7 @@ export const NoneSet: Story = {
   args: { shown: shownFavorites({ view: storyFavorites(undefined, null) }) },
 };
 
-/** A song picked to replace it: Reset and Save wait for the player. */
+/** A song picked to replace it: the page's sync bar sends it. */
 export const Picked: Story = {
   args: { shown: shownFavorites({ draft: { songNo: "1005", ura: true } }) },
 };
@@ -48,13 +48,3 @@ const saving: ShownFavorites = shownFavorites({
 });
 
 export const Saving: Story = { args: { shown: saving } };
-
-/** A write that ended without saving, such as one in Hiroba's daily maintenance. */
-export const NotSaved: Story = {
-  args: {
-    shown: shownFavorites({
-      draft: { songNo: "1005", ura: false },
-      notice: { write: "favoriteSong", outcome: { kind: "maintenance" } },
-    }),
-  },
-};

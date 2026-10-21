@@ -1,10 +1,12 @@
-import { Box, ButtonBase, Collapse, Paper, Typography } from "@mui/material";
+import { Box, ButtonBase, Collapse, Typography } from "@mui/material";
 import { type ReactNode, useState } from "react";
 
-import { ArrowDropDownIcon } from "../favorites/favorites-icons";
+import { ArrowDropDownIcon } from "../ui/icons";
+import { SectionCard } from "../ui/section-card";
 
 const WORDS = { display: "block", flex: 1, minWidth: 0, textAlign: "left" } as const;
-const HEAD = { display: "flex", alignItems: "center", gap: 1, width: 1, px: 2, py: 1.5 } as const;
+const HEAD = { display: "flex", alignItems: "center", gap: 1, width: 1, px: 1, py: 1 } as const;
+const TITLE = { display: "block", fontWeight: 500 } as const;
 const OPENER = {
   ...HEAD,
   borderRadius: "inherit",
@@ -28,18 +30,16 @@ export function KnowItem({
   readonly details: (() => ReactNode) | null;
 }) {
   const [open, setOpen] = useState(false);
-  const words = (
-    <Box component="span" sx={WORDS}>
-      <Typography
-        id={`${id}-title`}
-        component="span"
-        variant="subtitle1"
-        sx={{ display: "block", fontWeight: 500 }}
-      >
+  const titleId = `${id}-title`;
+  const summaryId = `${id}-summary`;
+  // The heading holds the title alone: inside the fold's button, the title alone names the button.
+  const words = (inButton: boolean) => (
+    <Box component={inButton ? "span" : "div"} sx={WORDS}>
+      <Typography id={titleId} component={inButton ? "span" : "h2"} variant="subtitle1" sx={TITLE}>
         {title}
       </Typography>
       <Typography
-        id={`${id}-summary`}
+        id={summaryId}
         component="span"
         variant="body2"
         color="text.secondary"
@@ -50,32 +50,32 @@ export function KnowItem({
     </Box>
   );
   return (
-    <Paper id={id} component="section" variant="outlined" sx={{ borderRadius: 2 }}>
-      <Typography component="h2" sx={{ m: 0 }}>
-        {details === null ? (
-          <Box component="span" sx={HEAD}>
-            {words}
-          </Box>
-        ) : (
+    <SectionCard id={id} component="section" flush>
+      {details === null ? (
+        <Box sx={HEAD}>{words(false)}</Box>
+      ) : (
+        <Typography component="h2" sx={{ m: 0 }}>
           <ButtonBase
             id={`${id}-header`}
             aria-expanded={open}
             aria-controls={`${id}-content`}
+            aria-labelledby={titleId}
+            aria-describedby={summaryId}
             onClick={() => setOpen((now) => !now)}
             sx={OPENER}
           >
-            {words}
-            <ArrowDropDownIcon />
+            {words(true)}
+            <ArrowDropDownIcon fontSize="small" />
           </ButtonBase>
-        )}
-      </Typography>
+        </Typography>
+      )}
       {details !== null && (
         <Collapse in={open} unmountOnExit>
-          <Box id={`${id}-content`} sx={{ px: 2, pb: 2 }}>
+          <Box id={`${id}-content`} sx={{ px: 1, pb: 1 }}>
             {details()}
           </Box>
         </Collapse>
       )}
-    </Paper>
+    </SectionCard>
   );
 }

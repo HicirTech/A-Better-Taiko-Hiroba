@@ -1,6 +1,6 @@
 import { type Result, sameFavoriteSong } from "@abth/core";
 
-import { type Noticed, noticeOf, refreshed } from "../my-page/write-ending";
+import { endsTheEdit, type Noticed, noticeOf, refreshed } from "../my-page/write-ending";
 import type {
   FavoriteSongState,
   FavoritesView,
@@ -35,7 +35,7 @@ export type FavoritesStep =
       readonly name: "ready";
       readonly view: FavoritesView;
       readonly draft: SongDraft;
-      /** How the last write ended, until the next pick, reset, save or read; none if it applied. */
+      /** How the last write ended, until it is said or the next pick, reset, save or read. */
       readonly notice: FavoritesNotice | null;
     }
   | {
@@ -56,7 +56,8 @@ export type FavoritesAction =
   | { readonly type: "draftDropped" }
   | { readonly type: "saveStarted"; readonly write: SavingWrite }
   | { readonly type: "songWritten"; readonly outcome: WriteOutcomeView<FavoriteSongState> }
-  | { readonly type: "folderWritten"; readonly outcome: WriteOutcomeView<FolderState> };
+  | { readonly type: "folderWritten"; readonly outcome: WriteOutcomeView<FolderState> }
+  | { readonly type: "noticeClosed" };
 
 export const UNREAD: FavoritesStep = { name: "unread" };
 
@@ -83,6 +84,8 @@ export function reduceFavorites(step: FavoritesStep, action: FavoritesAction): F
       return step.name === "saving" && step.write === "folder"
         ? folderWritten(step, action.outcome)
         : step;
+    case "noticeClosed":
+      return step.name === "ready" && step.notice !== null ? { ...step, notice: null } : step;
   }
 }
 
@@ -140,12 +143,11 @@ function songWritten(
   outcome: WriteOutcomeView<FavoriteSongState>,
 ): FavoritesStep {
   const song = refreshed(step.view.song, outcome);
-  const saved = sameDraft(step.draft, song.state);
   const noticed = noticeOf(outcome);
   return {
     name: "ready",
     view: { ...step.view, song },
-    draft: saved ? null : step.draft,
+    draft: endsTheEdit(outcome) ? null : step.draft,
     notice: noticed === null ? null : { write: "favoriteSong", outcome: noticed },
   };
 }

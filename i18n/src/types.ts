@@ -249,8 +249,6 @@ export interface Messages {
   /** Param: {dan}, a `dan.N` text, N being the board number read off my page's label. */
   "profile.dan": string;
   "profile.danUnreadable": string;
-  /** Param: {code}, why the label did not read, such as dan=notPng; never page text or a URL. */
-  "profile.danCode": string;
   /** Board numbers as core numbers them: 1 (五級) to 15 (十段); 16 to 19 are 玄人, 名人, 超人, 達人. */
   // 日本語 is core's DAN_NAMES, which a test holds it to; the others are taiko.wiki's.
   "dan.1": string;
@@ -274,9 +272,6 @@ export interface Messages {
   "dan.19": string;
   "profile.myDonAlt": string;
   "pictures.loading": string;
-  "pictures.unavailable": string;
-  /** Param: {code}, why the first did not come, such as titlePlate=notPng; never a URL. */
-  "pictures.code": string;
   /** Score ranks by Hiroba's rank image number (best_score_rank_N, 2 to 8); no page names them. */
   // 日本語 is core's SCORE_RANK_NAMES, held by a test; English romanises colour and tier; pink is 粉.
   "scoreRank.2": string;
@@ -342,7 +337,6 @@ export interface Messages {
   "medal.none": string;
   "medal.unrecognised": string;
   /** Param: {code}, which part of the plate did not read, such as medal=noCountNoComplete. */
-  "medal.code": string;
   "failure.notSignedIn": string;
   "failure.loggedOut": string;
   "failure.cardSelectUnfinished": string;
@@ -353,8 +347,9 @@ export interface Messages {
   "failure.unexpectedPage": string;
   "failure.maintenance": string;
   "failure.notRefreshed": string;
-  /** Param: {detail}, codes for a report (path, status, parser verdict); never page text. */
-  "failure.detail": string;
+  "failure.mayClear": string;
+  /** Param: {code}, codes for a report (path, status, parser verdict); never page text. */
+  "failure.code": string;
   "platform.unsupported": string;
   /** The name plate on the Overview: its accessible name, and what a long-press on it opens. */
   "plate.open": string;
@@ -365,8 +360,6 @@ export interface Messages {
   "costume.preview.alt": string;
   "costume.preview.loading": string;
   "costume.preview.unavailable": string;
-  /** Param: {code}, why it did not come, such as preview=notPng; never a URL or a query. */
-  "costume.preview.code": string;
   "costume.tab.colours": string;
   "costume.tab.items": string;
   /** By the tab's name in Hiroba's guide: かお, どう, てあし, then the five slots from きぐるみ (mascot). */
@@ -385,15 +378,12 @@ export interface Messages {
   "costume.item.label": string;
   /** Param: {count}, how many did not come. */
   "costume.thumbnails.unavailable": string;
-  /** Param: {code}, why the first of them did not come, such as costumeItem=notPng; never a URL. */
-  "costume.thumbnails.code": string;
   "costume.kigurumiWarning": string;
-  "costume.reset": string;
-  "costume.save": string;
-  "costume.saving": string;
+  "edit.reset": string;
+  "write.sync": string;
+  "write.saving": string;
   "costume.history": string;
   "costume.history.title": string;
-  "costume.history.close": string;
   /** Marks the entry that is the set Hiroba shows now. */
   "costume.history.wornNow": string;
   /** Param: {position}, 1 for the newest. An entry's name as a button. */
@@ -421,60 +411,14 @@ export interface Messages {
   "name.same": string;
   /** Quotes Hiroba's sentence that nicknames cannot be changed now, as the site writes it. */
   "name.closed": string;
-  "write.appliedNotSynced": string;
-  "write.notApplied.unchanged": string;
-  /** Param: {code}, Hiroba's code; its own message follows under write.siteMessage. */
-  "write.notApplied.refused": string;
-  "write.notApplied.stale": string;
-  "write.notApplied.siteMaintenance": string;
-  "write.notApplied.failed": string;
-  "write.notApplied.noAnswer": string;
-  "write.notApplied.rejected": string;
-  "write.notApplied.endedAtLogin": string;
-  "write.notApplied.endpointMissing": string;
-  "write.notApplied.unexpected": string;
-  /** Param: {message}, Hiroba's own words for a write, shown as plain text. */
-  "write.siteMessage": string;
-  "write.diverged": string;
-  "write.crossChanged": string;
-  "write.outcomeUnknown": string;
   "write.sessionGone": string;
   "write.sessionGoneAfterSave": string;
-  "write.changedSincePreview": string;
   /** Param: {field}, which value of the set was refused, as a costume.part text. */
   "write.invalidTarget": string;
-  "write.nothingToChange": string;
-  "write.maintenance": string;
-  /** Carries the site's own confirmation text (mydon.js); this version does not answer it. */
-  "write.needsConfirmation": string;
-  "write.stoppedBeforeWrite": string;
-  "write.notStaged": string;
-  "write.interrupted": string;
-  "write.busy": string;
-  /** Param: {code}, report codes: where an answer ended, status, type and size; never page text. */
-  "write.code": string;
-  "write.before": string;
-  "write.planned": string;
-  "write.now": string;
-  /** A title's write: each key has the costume's key, without "title.", as its base. */
-  "write.title.unchanged": string;
-  "write.title.diverged": string;
-  "write.title.crossChanged": string;
-  "write.title.changedSincePreview": string;
-  "write.title.nothingToChange": string;
-  /** Carries the site's own confirmation text (check_ip_title); this version does not answer it. */
-  "write.title.needsConfirmation": string;
-  /** Hiroba's codes for a refused title, which come with no message of their own. */
-  "write.title.refused1": string;
-  "write.title.refused5": string;
-  "write.title.refused6": string;
-  /** A rename's write, like the costume's; the title read around it uses write.cross*. */
-  "write.name.unchanged": string;
-  "write.name.diverged": string;
-  "write.name.changedSincePreview": string;
-  "write.name.nothingToChange": string;
-  /** Hiroba's code for a rename it could not carry out, which comes with no message of its own. */
-  "write.name.refused2": string;
+  "write.failed": string;
+  /** Param: {words}, Hiroba's own words for the failure, as the site writes them. */
+  "write.failedBecause": string;
+  "write.readBack": string;
   /** The words of {field} in "write.invalidTarget": a phrase, with no capital and no full stop. */
   "write.invalid.titleNotOwned": string;
   "write.invalid.nameEmpty": string;
@@ -501,22 +445,6 @@ export interface Messages {
   "song.level": string;
   /** Param: {bpm}, the tempo as taiko.wiki gives it, such as 154 or 120–240. */
   "song.bpm": string;
-  /** A folder write: each key has the costume's key, without "folder.", as its base. */
-  "write.folder.unchanged": string;
-  "write.folder.diverged": string;
-  "write.folder.changedSincePreview": string;
-  "write.folder.nothingToChange": string;
-  /** A 大好きな曲 write, worded like the folder's. */
-  "write.favoriteSong.unchanged": string;
-  "write.favoriteSong.diverged": string;
-  "write.favoriteSong.changedSincePreview": string;
-  "write.favoriteSong.nothingToChange": string;
-  /** Hiroba's codes for a refused 大好きな曲, which come with no message of their own. */
-  "write.favoriteSong.refused1": string;
-  "write.favoriteSong.refused2": string;
-  /** Param: {number}, a slot's place in the folder, from 1. */
-  "favorites.slot": string;
-  "favorites.slot.empty": string;
   "favorites.reading": string;
   /** The お気に入り folder on Hiroba, as the Favourites page names it. */
   "favorites.folder.heading": string;
@@ -550,7 +478,6 @@ export interface Messages {
   "favorites.addSongs": string;
   /** Param: {name}, the song as the page shows it. */
   "favorites.removeSong": string;
-  "favorites.apply": string;
   "favorites.delete": string;
   "favorites.delete.title": string;
   /** Param: {name}, the set's name. */
@@ -574,14 +501,10 @@ export interface Messages {
   "picker.none": string;
   "picker.loading": string;
   "picker.failed": string;
-  /** Param: {code}, why the song list did not come, such as unreachable; never a URL. */
-  "picker.code": string;
-  "picker.retry": string;
   "picker.offeredReading": string;
   "picker.offeredFailed": string;
   /** Param: {max}, how many songs a set holds. */
   "picker.limit": string;
-  "picker.done": string;
   "picker.close": string;
   /** The song search's way back out to the page under it. */
   "search.leave": string;

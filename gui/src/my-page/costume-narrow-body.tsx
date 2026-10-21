@@ -1,13 +1,15 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Stack } from "@mui/material";
+import { Box, Skeleton, Stack } from "@mui/material";
 import type { ReactNode } from "react";
 
 import { BELOW_TOP_BAND, STAYS_IN_VIEW, WHEN_TALL } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import { SectionTitleSkeleton } from "../ui/section-title";
 import { previewSetOf, shownEditorOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
+import { PaletteSkeleton } from "./costume-palette";
 import { PartHead, PartPanel } from "./costume-part-panel";
-import { PartTiles } from "./costume-part-tiles";
+import { PartTiles, PartTilesSkeleton } from "./costume-part-tiles";
 import type { CostumePart } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
 import { RING_ROOM_PX } from "./pick-ring";
@@ -32,6 +34,9 @@ const COVERS_THE_TOP_BAND = {
   },
 } as const;
 
+// Not a Stack: it would take the margins from the block below.
+const BODY = { display: "flex", flexDirection: "column", flexGrow: 1, pb: 2 } as const;
+
 export interface NarrowBodyProps {
   readonly editor: CostumeEditor;
   readonly lane: PictureLane;
@@ -47,8 +52,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
   const { step } = editor;
   const shown = shownEditorOf(step);
   return (
-    // Not a Stack: it would take the margins from the block below.
-    <Box sx={{ display: "flex", flexDirection: "column", flexGrow: 1, pb: 2 }}>
+    <Box sx={BODY}>
       {previewSetOf(step) !== null && (
         <Stack
           ref={BLOCK_REF}
@@ -104,6 +108,25 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
       ) : (
         progress
       )}
+    </Box>
+  );
+}
+
+/** The column's shape while the page's first read runs: the preview, the tiles and a palette. */
+export function NarrowBodySkeleton() {
+  return (
+    <Box aria-hidden sx={BODY}>
+      <Stack spacing={1.5} sx={{ pb: 3 }}>
+        <Skeleton
+          variant="rounded"
+          width={PREVIEW_PX}
+          height={PREVIEW_PX}
+          sx={{ maxWidth: 1, alignSelf: "center" }}
+        />
+        <PartTilesSkeleton wide={false} />
+      </Stack>
+      <SectionTitleSkeleton width={72} />
+      <PaletteSkeleton wide={false} />
     </Box>
   );
 }

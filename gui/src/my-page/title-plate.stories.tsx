@@ -52,7 +52,7 @@ export const Failed: Story = { args: { answer: { failure: "titlePlate=notPng sta
 
 export const NoDan: Story = { args: { profile: { ...STORY_PROFILE, dan: null } } };
 
-/** A dan label this version cannot read: the codes to report. */
+/** A dan label that could not be read: the plate shows no dan. */
 export const UnreadableDan: Story = {
   args: {
     profile: {
