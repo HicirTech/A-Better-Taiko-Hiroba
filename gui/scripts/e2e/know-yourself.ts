@@ -38,9 +38,17 @@ export async function knowYourself(ctx: Ctx) {
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
     waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  // A part unfolds over a moment and clips what it holds until it has: a check waits it out.
   const unfold = async (part: string) => {
     await click(`#know-${part}-header`);
     await shown(`#know-${part}-content`);
+    await waitFor(
+      `#know-${part} unfolded`,
+      async () =>
+        (await page.evaluate<boolean>(
+          `document.querySelector("#know-${part}-content")?.closest(".MuiCollapse-root")?.classList.contains("MuiCollapse-entered") === true`,
+        )) || undefined,
+    );
   };
   const totalOf = async (row: string) => Number(await textOf(`${row}-total`));
   const rowTotals = (rows: string) =>
