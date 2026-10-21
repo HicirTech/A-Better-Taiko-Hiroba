@@ -1,6 +1,6 @@
 import { checkNameTarget, isErr, NAME_FORM_MAX_LENGTH } from "@abth/core";
 
-import { type Noticed, noticeOf, seenAfter } from "../my-page/write-ending";
+import { endsTheEdit, type Noticed, noticeOf, seenAfter } from "../my-page/write-ending";
 import type { NameState, RenameState, WriteOutcomeView } from "../session-port";
 
 type NameOutcome = WriteOutcomeView<NameState>;
@@ -10,7 +10,7 @@ export type NameStep =
   | {
       readonly name: "idle";
       readonly typed: string | null;
-      /** How the last write ended, until the next typing or save; none if it applied. */
+      /** How the last write ended, until it is said or the next typing or save. */
       readonly notice: Noticed<NameState> | null;
     }
   | { readonly name: "saving"; readonly typed: string | null };
@@ -25,7 +25,8 @@ export type NameAction =
   | { readonly type: "editsDropped" }
   | { readonly type: "typed"; readonly value: string }
   | { readonly type: "saveStarted" }
-  | { readonly type: "writeEnded"; readonly outcome: NameOutcome };
+  | { readonly type: "writeEnded"; readonly outcome: NameOutcome }
+  | { readonly type: "noticeClosed" };
 
 export const IDLE: NameStep = { name: "idle", typed: null, notice: null };
 
@@ -70,11 +71,10 @@ export function reduceName(step: NameStep, action: NameAction): NameStep {
       return step.name === "idle" ? { name: "saving", typed: step.typed } : step;
     case "writeEnded":
       return writeEnded(step, action.outcome);
+    case "noticeClosed":
+      return step.name === "idle" && step.notice !== null ? { ...step, notice: null } : step;
   }
 }
-
-const leavesTheName = (outcome: NameOutcome): boolean =>
-  outcome.kind === "applied" || outcome.kind === "appliedNotSynced";
 
 function writeEnded(step: NameStep, outcome: NameOutcome): NameStep {
   if (step.name !== "saving") {
@@ -82,7 +82,7 @@ function writeEnded(step: NameStep, outcome: NameOutcome): NameStep {
   }
   return {
     name: "idle",
-    typed: leavesTheName(outcome) ? null : step.typed,
+    typed: endsTheEdit(outcome) ? null : step.typed,
     notice: noticeOf(outcome),
   };
 }

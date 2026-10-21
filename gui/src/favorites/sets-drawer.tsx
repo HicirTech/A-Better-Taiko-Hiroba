@@ -1,32 +1,26 @@
 import type { Translator } from "@abth/i18n";
 import {
   Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Divider,
   Drawer,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Menu,
-  MenuItem,
   Typography,
 } from "@mui/material";
-import { type MouseEvent, useState } from "react";
+import { useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
+import { AddIcon, CheckIcon } from "../ui/icons";
+import { type ItemAction, pointerOf } from "../ui/item-actions";
+import { ItemMenu, useItemMenu } from "../ui/item-menu";
+import { SimpleDialog } from "../ui/simple-dialog";
 import { type FavoriteSet, sameSongs } from "./favorite-sets";
-import { AddIcon, CheckIcon } from "./favorites-icons";
+import { SetNameDialog } from "./set-name-dialog";
 import { SortableList } from "./sortable-list";
 
 const DRAWER_WIDTH_PX = 280;
-const DELETE_TITLE_ID = "favorite-set-delete-title";
-const ACTIONS_TITLE_ID = "favorite-set-actions-title";
 
 export interface SetsDrawerProps {
   readonly open: boolean;
@@ -41,7 +35,7 @@ export interface SetsDrawerProps {
   readonly onPick: (id: string | null) => void;
   readonly onAdd: () => void;
   readonly onMove: (from: number, to: number) => void;
-  readonly onRename: (id: string) => void;
+  readonly onRename: (id: string, name: string) => void;
   readonly onDelete: (id: string) => void;
   readonly onClose: () => void;
 }
@@ -62,28 +56,20 @@ export function SetsDrawer({
   onClose,
 }: SetsDrawerProps) {
   const { t } = i18n;
-  const [menu, setMenu] = useState<{ set: FavoriteSet; x: number; y: number } | null>(null);
-  const [offering, setOffering] = useState<FavoriteSet | null>(null);
   const [deleting, setDeleting] = useState<FavoriteSet | null>(null);
-  const stopOffering = () => setOffering(null);
+  const [renaming, setRenaming] = useState<FavoriteSet | null>(null);
   const stopDeleting = () => setDeleting(null);
   useBackCloses(open, onClose);
-  useBackCloses(offering !== null, stopOffering);
-  useBackCloses(deleting !== null, stopDeleting);
-  const openMenu = (set: FavoriteSet, event: MouseEvent) => {
-    event.preventDefault();
-    setMenu({ set, x: event.clientX, y: event.clientY });
-  };
-  const rename = (set: FavoriteSet) => {
-    setMenu(null);
-    setOffering(null);
-    onRename(set.id);
-  };
-  const askToDelete = (set: FavoriteSet) => {
-    setMenu(null);
-    setOffering(null);
-    setDeleting(set);
-  };
+  const actionsOf = (set: FavoriteSet): readonly ItemAction[] => [
+    { key: "rename", label: t("favorites.rename"), onPick: () => setRenaming(set) },
+    {
+      key: "delete",
+      label: t("favorites.delete"),
+      destructive: true,
+      onPick: () => setDeleting(set),
+    },
+  ];
+  const menu = useItemMenu(actionsOf);
   return (
     <Drawer
       anchor="right"
@@ -94,6 +80,7 @@ export function SetsDrawer({
     >
       <Box component="nav" aria-label={t("favorites.sets")}>
         <Typography
+          component="p"
           variant="subtitle2"
           color="text.secondary"
           noWrap
@@ -118,7 +105,12 @@ export function SetsDrawer({
           byLongPress={byLongPress}
           i18n={i18n}
           onMove={onMove}
-          onHold={(id) => setOffering(sets.find((set) => set.id === id) ?? null)}
+          onHold={(id) => {
+            const set = sets.find((one) => one.id === id);
+            if (set !== undefined) {
+              menu.open(set, null);
+            }
+          }}
           sx={{ gap: 0 }}
           renderItem={(id, handle) => {
             const index = sets.findIndex((set) => set.id === id);
@@ -135,13 +127,21 @@ export function SetsDrawer({
                   data-same-as-folder={same}
                   selected={set.id === selectedId}
                   aria-current={set.id === selectedId ? "true" : undefined}
-                  aria-haspopup="menu"
                   onClick={() => onPick(set.id)}
-                  onContextMenu={byLongPress ? undefined : (event) => openMenu(set, event)}
+                  onContextMenu={
+                    byLongPress
+                      ? undefined
+                      : (event) => {
+                          event.preventDefault();
+                          menu.open(set, pointerOf(event));
+                        }
+                  }
                   sx={{ minWidth: 0, pl: handle === null ? 2 : 1 }}
                 >
                   <ListItemText primary={set.name} slotProps={{ primary: { noWrap: true } }} />
-                  {same && <CheckIcon titleAccess={t("favorites.set.sameAsFolder")} />}
+                  {same && (
+                    <CheckIcon fontSize="small" titleAccess={t("favorites.set.sameAsFolder")} />
+                  )}
                 </ListItemButton>
               </Box>
             );
@@ -150,83 +150,57 @@ export function SetsDrawer({
         <List disablePadding>
           <ListItemButton id="favorites-item-new" onClick={onAdd}>
             <ListItemIcon>
-              <AddIcon />
+              <AddIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText primary={t("favorites.newSet")} />
           </ListItemButton>
         </List>
       </Box>
-      <Menu
+      <ItemMenu
         id="favorite-set-menu"
-        open={menu !== null}
-        onClose={() => setMenu(null)}
-        anchorReference="anchorPosition"
-        anchorPosition={menu === null ? undefined : { top: menu.y, left: menu.x }}
-      >
-        <MenuItem id="favorite-set-menu-rename" onClick={() => menu && rename(menu.set)}>
-          {t("favorites.rename")}
-        </MenuItem>
-        <MenuItem id="favorite-set-menu-delete" onClick={() => menu && askToDelete(menu.set)}>
-          {t("favorites.delete")}
-        </MenuItem>
-      </Menu>
-      <Dialog
-        id="favorite-set-actions"
-        open={offering !== null}
-        onClose={stopOffering}
-        aria-labelledby={ACTIONS_TITLE_ID}
-        fullWidth
-        maxWidth="xs"
-      >
-        <DialogTitle id={ACTIONS_TITLE_ID}>{offering?.name}</DialogTitle>
-        <List disablePadding sx={{ pb: 1 }}>
-          <ListItemButton
-            id="favorite-set-actions-rename"
-            onClick={() => offering && rename(offering)}
-          >
-            <ListItemText primary={t("favorites.rename")} />
-          </ListItemButton>
-          <ListItemButton
-            id="favorite-set-actions-delete"
-            onClick={() => offering && askToDelete(offering)}
-          >
-            <ListItemText
-              primary={t("favorites.delete")}
-              slotProps={{ primary: { color: "error" } }}
-            />
-          </ListItemButton>
-        </List>
-      </Dialog>
-      <Dialog
+        dialogId="favorite-set-actions"
+        opened={menu.opened}
+        nameOf={(set) => set.name}
+        actionsOf={actionsOf}
+        cancel={t("favorites.delete.cancel")}
+        onClose={menu.close}
+      />
+      <SimpleDialog
         id="favorite-set-delete-dialog"
         open={deleting !== null}
-        onClose={stopDeleting}
-        aria-labelledby={DELETE_TITLE_ID}
-      >
-        <DialogTitle id={DELETE_TITLE_ID}>{t("favorites.delete.title")}</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {t("favorites.delete.body", { name: deleting?.name ?? "" })}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button id="favorite-set-delete-cancel" onClick={stopDeleting}>
-            {t("favorites.delete.cancel")}
-          </Button>
-          <Button
-            id="favorite-set-delete-confirm"
-            color="error"
-            onClick={() => {
+        title={t("favorites.delete.title")}
+        message={t("favorites.delete.body", { name: deleting?.name ?? "" })}
+        cancel={{ id: "favorite-set-delete-cancel", label: t("favorites.delete.cancel") }}
+        actions={[
+          {
+            id: "favorite-set-delete-confirm",
+            label: t("favorites.delete"),
+            destructive: true,
+            onClick: () => {
               if (deleting !== null) {
                 onDelete(deleting.id);
               }
               stopDeleting();
-            }}
-          >
-            {t("favorites.delete")}
-          </Button>
-        </DialogActions>
-      </Dialog>
+              menu.close();
+            },
+          },
+        ]}
+        onClose={stopDeleting}
+      />
+      {renaming !== null && (
+        <SetNameDialog
+          key={renaming.id}
+          title={t("favorites.rename.title")}
+          initial={renaming.name}
+          i18n={i18n}
+          onCancel={() => setRenaming(null)}
+          onSave={(name) => {
+            onRename(renaming.id, name);
+            setRenaming(null);
+            menu.close();
+          }}
+        />
+      )}
     </Drawer>
   );
 }

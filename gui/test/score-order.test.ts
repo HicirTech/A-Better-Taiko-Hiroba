@@ -59,6 +59,7 @@ function listed(
     nameLang: "ja",
     searched: [name],
     stars: set.stars ?? 7,
+    genres: [],
   };
 }
 

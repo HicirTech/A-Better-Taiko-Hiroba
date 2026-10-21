@@ -1,18 +1,13 @@
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, Skeleton, Typography } from "@mui/material";
 import type { Ref } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
+import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
 import type { PictureView, ProfileView } from "../session-port";
-import {
-  HIROBA_BLOCK,
-  hirobaPx,
-  MAX_BLOCK_SCALE,
-  ONE_LINE,
-  OUTLINED,
-  VISUALLY_HIDDEN,
-} from "./hiroba-px";
+import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
+import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, ONE_LINE, OUTLINED } from "./hiroba-px";
 import { FOCUS_RING, type OpenAction, OpenButton } from "./open-button";
 
 // Hiroba's #mydon_area: the plate is 290 pixels wide.
@@ -53,37 +48,16 @@ export function TitlePlate({ profile, answer, i18n, ref, action }: TitlePlatePro
   const plate = viewOf(answer);
   return (
     <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
-      <Box
+      <HirobaPicture
         ref={ref}
         id="title-plate"
-        aria-busy={answer === undefined}
-        sx={{
-          position: "relative",
-          width: 1,
-          color: ON_PLATE,
-          aspectRatio: 1 / plateHeightRatio(plate),
-        }}
+        src={plate?.src ?? null}
+        onItsWay={answer === undefined}
+        standIn={<PlateStandIn />}
+        wordsColour={ON_PLATE}
+        sx={{ width: 1, color: ON_PLATE, aspectRatio: 1 / plateHeightRatio(plate) }}
+        i18n={i18n}
       >
-        {plate === null ? (
-          <PlateStandIn />
-        ) : (
-          <Box
-            component="img"
-            id="title-plate-image"
-            src={plate.src}
-            alt=""
-            aria-hidden
-            sx={{ position: "absolute", inset: 0, width: 1, height: 1, display: "block" }}
-          />
-        )}
-        {answer === undefined && (
-          <CircularProgress
-            id="title-plate-loading"
-            size={14}
-            aria-label={t("pictures.loading")}
-            sx={{ position: "absolute", top: 2, right: 4, color: ON_PLATE }}
-          />
-        )}
         <Title title={profile.title} i18n={i18n} />
         <NameRow profile={profile} i18n={i18n} />
         {action !== undefined && (
@@ -95,7 +69,7 @@ export function TitlePlate({ profile, answer, i18n, ref, action }: TitlePlatePro
             sx={{ ...FOCUS_RING, position: "absolute", inset: 0, borderRadius: hp(10) }}
           />
         )}
-      </Box>
+      </HirobaPicture>
     </Box>
   );
 }
@@ -240,5 +214,24 @@ function DanLabel({ picture }: { picture: PictureView }) {
         display: "block",
       }}
     />
+  );
+}
+
+/** The plate's shape while the page's first read runs: its band, in the room kept for it. */
+export function TitlePlateSkeleton() {
+  return (
+    <Box aria-hidden sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
+      <Box sx={{ position: "relative", width: 1, aspectRatio: 1 / plateHeightRatio(null) }}>
+        <Skeleton
+          variant="rounded"
+          sx={{
+            position: "absolute",
+            inset: "auto 0 0",
+            height: hp(BAND_ROWS),
+            borderRadius: hp(BAND_ROWS / 2),
+          }}
+        />
+      </Box>
+    </Box>
   );
 }

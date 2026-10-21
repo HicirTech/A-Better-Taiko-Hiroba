@@ -1,14 +1,8 @@
 import { draftCostumeChange, type Result, sameCostume } from "@abth/core";
 
-import {
-  type CostumeEditorView,
-  type CostumeSet,
-  changedTheCostume,
-  type ReadFailure,
-  type WriteOutcomeView,
-} from "../session-port";
+import type { CostumeEditorView, CostumeSet, ReadFailure, WriteOutcomeView } from "../session-port";
 import { type ColourPart, type SlotPart, slotOf } from "./costume-parts";
-import { type Noticed, noticeOf, refreshed } from "./write-ending";
+import { endsTheEdit, type Noticed, noticeOf, refreshed } from "./write-ending";
 
 export interface HeldEditor {
   readonly editor: CostumeEditorView;
@@ -27,7 +21,7 @@ export type EditorStep =
       readonly name: "editing";
       readonly editor: CostumeEditorView;
       readonly draft: CostumeSet;
-      /** How the last write ended, until the next pick, reset, save or read; none if it applied. */
+      /** How the last write ended, until it is said or the next pick, reset, save or read. */
       readonly notice: Noticed<CostumeSet> | null;
     }
   | { readonly name: "saving"; readonly editor: CostumeEditorView; readonly draft: CostumeSet };
@@ -45,7 +39,8 @@ export type EditorAction =
   | { readonly type: "reset" }
   | { readonly type: "editsDropped" }
   | { readonly type: "saveStarted" }
-  | { readonly type: "writeEnded"; readonly outcome: WriteOutcomeView };
+  | { readonly type: "writeEnded"; readonly outcome: WriteOutcomeView }
+  | { readonly type: "noticeClosed" };
 
 export const UNREAD: EditorStep = { name: "unread" };
 
@@ -77,6 +72,8 @@ export function reduceEditor(step: EditorStep, action: EditorAction): EditorStep
         : step;
     case "writeEnded":
       return writeEnded(step, action.outcome);
+    case "noticeClosed":
+      return step.name === "editing" && step.notice !== null ? { ...step, notice: null } : step;
   }
 }
 
@@ -121,7 +118,7 @@ function writeEnded(step: EditorStep, outcome: WriteOutcomeView): EditorStep {
   return {
     name: "editing",
     editor,
-    draft: changedTheCostume(outcome) ? editor.state : step.draft,
+    draft: endsTheEdit(outcome) ? editor.state : step.draft,
     notice: noticeOf(outcome),
   };
 }

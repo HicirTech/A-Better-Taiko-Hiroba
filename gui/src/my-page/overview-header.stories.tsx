@@ -36,17 +36,30 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The Overview's head: the portrait, the title plate and the score panel, side by side on a PC,
- * the portrait over the plate on a phone. */
+/** The portrait, title plate and score panel: side by side on a PC, stacked on a phone. */
 export const Shown: Story = {};
 
 export const PicturesOnTheirWay: Story = {
   render: ({ profile }, { globals }) => header(profile, WAITING_LANE, globals),
 };
 
-/** Pictures that did not come: the codes to report under the head. */
+/** Pictures that did not come: their stand-ins, and no words about them. */
 export const PicturesFailed: Story = {
   render: ({ profile }, { globals }) => header(profile, FAILING_LANE, globals),
+};
+
+/** A dan that could not be read: the read failure's notice under the head, with its code. */
+export const UnreadableDan: Story = {
+  args: {
+    profile: {
+      ...STORY_PROFILE,
+      dan: {
+        unreadable: true,
+        code: "dan=notPng status=200 type=image/gif bytes=43",
+        picture: null,
+      },
+    },
+  },
 };
 
 /** A player with no title, no dan and a long name. */

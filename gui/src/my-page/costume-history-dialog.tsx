@@ -1,25 +1,13 @@
 import { sameCostume } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import {
-  Box,
-  Button,
-  ButtonBase,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
+import { Box, ButtonBase, Typography } from "@mui/material";
 
-import { useBackCloses } from "../navigation/back-closers";
 import type { CostumeHistoryEntry, CostumeSet } from "../session-port";
+import { LargeModal } from "../ui/large-modal";
 import { keyOf } from "./costume-preview";
 import { pickRing } from "./pick-ring";
 
 const TILE_MIN_PX = 104;
-const TITLE_ID = "costume-history-title";
 
 export interface CostumeHistoryDialogProps {
   readonly open: boolean;
@@ -41,53 +29,41 @@ export function CostumeHistoryDialog({
   onClose,
 }: CostumeHistoryDialogProps) {
   const { t } = i18n;
-  const narrow = useMediaQuery(useTheme().breakpoints.down("sm"), { noSsr: true });
-  useBackCloses(open, onClose);
   return (
-    <Dialog
+    <LargeModal
       id="costume-history-dialog"
       open={open}
+      title={t("costume.history.title")}
+      i18n={i18n}
       onClose={onClose}
-      fullScreen={narrow}
-      fullWidth
-      maxWidth="sm"
-      aria-labelledby={TITLE_ID}
     >
-      <DialogTitle id={TITLE_ID}>{t("costume.history.title")}</DialogTitle>
-      <DialogContent>
-        <Box
-          component="ul"
-          id="costume-history-list"
-          sx={{
-            display: "grid",
-            gridTemplateColumns: `repeat(auto-fill, minmax(${TILE_MIN_PX}px, 1fr))`,
-            gap: 1.5,
-            listStyle: "none",
-            m: 0,
-            p: 0,
-            // Room for the focus ring, which is drawn outside each tile.
-            pt: 0.5,
-          }}
-        >
-          {entries.map((entry, index) => (
-            <Box component="li" key={keyOf(entry.set)}>
-              <HistoryTile
-                entry={entry}
-                position={index + 1}
-                isWorn={sameCostume(entry.set, worn)}
-                i18n={i18n}
-                onPick={onPick}
-              />
-            </Box>
-          ))}
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button id="costume-history-close" onClick={onClose}>
-          {t("costume.history.close")}
-        </Button>
-      </DialogActions>
-    </Dialog>
+      <Box
+        component="ul"
+        id="costume-history-list"
+        sx={{
+          display: "grid",
+          gridTemplateColumns: `repeat(auto-fill, minmax(${TILE_MIN_PX}px, 1fr))`,
+          gap: 1.5,
+          listStyle: "none",
+          m: 0,
+          p: 0,
+          // Room for the focus ring, which is drawn outside each tile.
+          pt: 0.5,
+        }}
+      >
+        {entries.map((entry, index) => (
+          <Box component="li" key={keyOf(entry.set)}>
+            <HistoryTile
+              entry={entry}
+              position={index + 1}
+              isWorn={sameCostume(entry.set, worn)}
+              i18n={i18n}
+              onPick={onPick}
+            />
+          </Box>
+        ))}
+      </Box>
+    </LargeModal>
   );
 }
 

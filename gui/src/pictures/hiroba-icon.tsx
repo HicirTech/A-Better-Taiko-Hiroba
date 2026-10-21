@@ -1,10 +1,11 @@
+import { Skeleton } from "@mui/material";
 import { useRef } from "react";
 
 import type { PictureWant } from "../session-port";
 import { type PictureLane, viewOf } from "./picture-lane";
 import { IN_THE_WINDOW, usePicture } from "./use-picture";
 
-/** One of Hiroba's icons, in a space of its own size until it comes; named when it has a label. */
+/** One of Hiroba's icons, a grey block of its size until it comes; named when it has a label. */
 export function HirobaIcon({
   want,
   width,
@@ -36,7 +37,9 @@ export function HirobaIcon({
       {...named}
       style={{ display: "inline-flex", flexShrink: 0, width, height }}
     >
-      {picture !== null && (
+      {picture === null ? (
+        <Skeleton variant="rounded" animation={false} width={width} height={height} />
+      ) : (
         <img
           src={picture.src}
           alt=""

@@ -1,6 +1,6 @@
 import { TITLE_PLATE } from "../mock-pictures";
 import type { App } from "./app";
-import { MY_DON_GIF_CODE, PANEL_ART } from "./config";
+import { PANEL_ART, REPORT_CODE } from "./config";
 import type { Ctx } from "./context";
 import {
   holdOwnSize,
@@ -218,9 +218,9 @@ export async function overview(ctx: Ctx) {
     async () => (await attribute("#title-plate-image", "src")) ?? undefined,
   );
   await waitForSeen(
-    "pictures code",
+    "My Don answered",
     page,
-    async () => (await textOf("#pictures-code")) ?? undefined,
+    async () => (await attribute("#my-don", "aria-busy")) === "false" || undefined,
   );
 
   const myDonFailureAtSignIn =
@@ -228,7 +228,7 @@ export async function overview(ctx: Ctx) {
     !(await exists("#my-don-image")) &&
     (await attribute("#my-don", "aria-busy")) === "false" &&
     (await exists("#title-plate-image")) &&
-    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+    !(await text()).includes(REPORT_CODE);
   state.myDonFailureAtSignIn = myDonFailureAtSignIn;
   const plateBox = await page.evaluate<{ width: number; height: number }>(
     `(() => { const box = document.querySelector("#title-plate").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
@@ -239,8 +239,7 @@ export async function overview(ctx: Ctx) {
     (await textOf("#profile-title")) === "Title: サンプルの称号" &&
     (await textOf("#profile h2")) === "サンプルどん" &&
     (await textOf("#dan")) === "Dan-i: 9th Dan" &&
-    (await textOf("#title-plate-stand-in")) === null &&
-    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+    (await textOf("#title-plate-stand-in")) === null;
   results.plateOnAppSurface = await page.evaluate<boolean>(
     `(() => { const colours = []; for (let box = document.querySelector("#title-plate"); box !== null; box = box.parentElement) { colours.push(getComputedStyle(box).backgroundColor); if (box.id === "profile") return !colours.includes("rgb(255, 204, 0)"); } return false; })()`,
   );
@@ -298,7 +297,7 @@ export async function overview(ctx: Ctx) {
       Array(7).fill(""),
     ) &&
     (await panelCountsInPlace(PANEL_COUNTS)) &&
-    (await textOf("#pictures-code")) === MY_DON_GIF_CODE;
+    !(await text()).includes(REPORT_CODE);
   const withPlate = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );

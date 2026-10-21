@@ -2,10 +2,10 @@ import type { Translator } from "@abth/i18n";
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { Fragment, type ReactNode } from "react";
 
-import { ArrowDropDownIcon } from "../favorites/favorites-icons";
 import { ShareBar, ShareLegend } from "../my-page/share-block";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
+import { ArrowDropDownIcon } from "../ui/icons";
 import type { Segment } from "./segments";
 
 /** A row of share bars: a star level or a band, its count in each segment, and what it opens. */
@@ -112,7 +112,7 @@ export function ShareRows({
                 >
                   {row.label}
                   {row.badge}
-                  <ArrowDropDownIcon />
+                  <ArrowDropDownIcon fontSize="small" />
                 </ButtonBase>
               )}
               <ShareBar

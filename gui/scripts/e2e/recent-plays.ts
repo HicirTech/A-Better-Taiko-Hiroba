@@ -1,4 +1,5 @@
 /** Recent plays: read only when asked, after Hiroba's refresh, in a pipeline of their own. */
+import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
 import { mockTitle } from "../mock-history";
 import { en, HIROBA } from "./config";
 import type { Ctx } from "./context";
@@ -37,6 +38,7 @@ export const recentPlayDetailsKeys = [
 export const recentPlaySetsKeys = [
   "rightClickOffersOneAction",
   "playMenuAddsToANewSet",
+  "playNewSetCancelGoesBackToTheChooser",
   "playMenuMarksASetHoldingTheSong",
   "playMenuAddsToTheEndOfASet",
   "playMenuSendsNothingToHiroba",
@@ -77,18 +79,20 @@ interface RowLook {
 const history = async (params = ""): Promise<HistoryState> =>
   (await (await fetch(`${HIROBA}/__history?${params}`)).json()) as HistoryState;
 
-/** The row of `title`, scrolled into view: its marks' names, whether their pictures came, its facts. */
-const rowLook = (title: string) =>
+const isTitled = (title: string) =>
+  `(row) => row.querySelector(".song-name")?.textContent === ${JSON.stringify(title)}`;
+
+/** The row at `selector`: its marks' names, whether their pictures came, its facts. */
+const rowLook = (selector: string) =>
   `(() => {
-    const row = [...document.querySelectorAll("#history-list .history-row")].find((li) => li.querySelector(".song-name")?.textContent === ${JSON.stringify(title)});
-    if (row === undefined) return null;
-    row.scrollIntoView({ block: "center" });
+    const row = document.querySelector(${JSON.stringify(selector)});
+    if (row === null) return null;
     const pictures = [...row.querySelectorAll(".play-marks img")];
     return {
       marks: [...row.querySelectorAll(".play-marks [role=img]")].map((mark) => mark.getAttribute("aria-label")),
       drawn: pictures.length > 0 && pictures.every((img) => img.complete && img.naturalWidth > 0),
-      facts: [...row.querySelectorAll(".song-facts")].map((line) => line.textContent),
-      named: (row.querySelector(".song-head .course-icon")?.getAttribute("aria-label") ?? null) !== null && (row.querySelector(".song-bars")?.getAttribute("aria-label") ?? null) !== null,
+      facts: [...row.querySelectorAll(".song-line")].map((line) => line.textContent),
+      named: (row.querySelector(".course-icon")?.getAttribute("aria-label") ?? null) !== null && (row.querySelector(".song-bars")?.getAttribute("aria-label") ?? null) !== null,
       support: row.querySelector(".play-marks svg[aria-label]") !== null,
     };
   })()`;
@@ -96,10 +100,11 @@ const rowLook = (title: string) =>
 /** The recent plays page's titles, and its read again. */
 function historyPage(ctx: Ctx) {
   const { click, page } = ctx.app;
-  const { fabState } = pageHelpers(page);
+  const { fabState, listRows } = pageHelpers(page);
   const titles = () =>
-    page.evaluate<string[]>(
-      `[...document.querySelectorAll("#history-list .song-name")].map((name) => name.textContent)`,
+    listRows<string>(
+      "#history-list",
+      `(row) => row.querySelector(".song-name")?.textContent ?? ""`,
     );
   const walkEnded = () =>
     waitFor("the walk ended", async () =>
@@ -117,8 +122,10 @@ function historyPage(ctx: Ctx) {
 export async function recentPlays(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, goTo, page, textOf, until } = ctx.app;
-  const { exists, fabState } = pageHelpers(page);
+  const { exists, fabState, listRows, rowInView } = pageHelpers(page);
   const { titles, walkEnded, readAgain } = historyPage(ctx);
+  const lookOf = async (title: string) =>
+    page.evaluate<RowLook | null>(rowLook(await rowInView("#history-list", isTitled(title))));
   const rowsAre = (count: number) =>
     waitFor(`${count} recent plays`, async () => (await titles()).length === count || undefined);
 
@@ -145,22 +152,25 @@ export async function recentPlays(ctx: Ctx) {
   results.walkRefreshesHirobaFirst = (await refreshHits()) === refreshesBefore + 1;
   // The song list names play 2's song alone; the other plays keep Hiroba's titles.
   const second = await waitFor("play 2 named from the song list", async () => {
-    const name = await page.evaluate<{ text: string | null; lang: string | null } | null>(
-      `(() => { const name = [...document.querySelectorAll("#history-list .song-name")][21]; return name ? { text: name.textContent, lang: name.getAttribute("lang") } : null; })()`,
+    const names = await listRows<{ text: string | null; lang: string | null }>(
+      "#history-list",
+      `(row) => { const name = row.querySelector(".song-name"); return { text: name?.textContent ?? null, lang: name?.getAttribute("lang") ?? null }; }`,
     );
+    const name = names[21];
     return name?.text === "Sample Song Two" ? name : undefined;
   }).catch(() => null);
   results.playNamedFromTheSongList =
     second?.lang === "en" && (await titles())[22] === "サンプル曲 1";
 
-  // Play 12 has a gold crown, rank 7, きまぐれ, ドロン and speed 1.5; play 13 the support chart.
+  // Play 12: Hard, a gold crown, rank 7, きまぐれ, ドロン, speed 1.5; play 13: the support chart.
   const twelfth = await waitFor("play 12's icons", async () => {
-    const look = await page.evaluate<RowLook | null>(rowLook("サンプル曲 12"));
+    const look = await lookOf("サンプル曲 12");
     return look?.drawn === true ? look : undefined;
   });
-  const thirteenth = await page.evaluate<RowLook | null>(rowLook("サンプル曲 13"));
+  const thirteenth = await lookOf("サンプル曲 13");
   results.rowMarksDrawnAsIcons =
     same(twelfth.marks, [
+      en.t("difficulty.hard"),
       en.t("crowns.gold"),
       en.t("scoreRank.7"),
       en.t("history.kimagure"),
@@ -244,8 +254,8 @@ export async function recentPlays(ctx: Ctx) {
 /** A play opens its chart's details: those kept at once, unread ones read there, else why not. */
 export async function recentPlayDetails(ctx: Ctx) {
   const { results } = ctx;
-  const { goTo, page, textOf } = ctx.app;
-  const { exists, press } = pageHelpers(page);
+  const { click, goTo, page, textOf } = ctx.app;
+  const { exists, press, rowInView } = pageHelpers(page);
   const { titles, walkEnded, readAgain } = historyPage(ctx);
   const detailsAsked = async (params = "") =>
     ((await (await fetch(`${HIROBA}/__scores?${params}`)).json()) as { asked: string[] }).asked;
@@ -260,10 +270,8 @@ export async function recentPlayDetails(ctx: Ctx) {
       `song ${n}'s play on top`,
       async () => (await titles())[0] === mockTitle(n) || undefined,
     );
-  const openPlay = (n: number) =>
-    page.evaluate(
-      `[...document.querySelectorAll("#history-list .history-row")].find((row) => row.querySelector(".song-name")?.textContent === ${JSON.stringify(mockTitle(n))}).click()`,
-    );
+  const openPlay = async (n: number) =>
+    click(`${await rowInView("#history-list", isTitled(mockTitle(n)))} .song-open`);
   const chartShown = () =>
     waitFor(
       "the chart's details",
@@ -330,7 +338,7 @@ export async function recentPlayDetails(ctx: Ctx) {
 export async function recentPlaySets(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { exists, mousePress, press, touchEmulated } = pageHelpers(page);
+  const { exists, mousePress, press, rowInView, touchEmulated } = pageHelpers(page);
   const { titles } = historyPage(ctx);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
@@ -340,8 +348,7 @@ export async function recentPlaySets(ctx: Ctx) {
     page.evaluate<KeptSet[]>(
       `(JSON.parse(localStorage.getItem(${JSON.stringify(SETS_KEY)}) ?? "{}").sets ?? []).map(({ name, songs }) => ({ name, songs }))`,
     );
-  const rowOf = async (n: number) =>
-    `#history-list > li:nth-child(${(await titles()).indexOf(mockTitle(n)) + 1})`;
+  const rowOf = (n: number) => rowInView("#history-list", isTitled(mockTitle(n)));
   // A right-click's menu holds one action, which opens the dialog.
   const openDialog = async (n: number) => {
     await mousePress(await rowOf(n), "right");
@@ -382,8 +389,14 @@ export async function recentPlaySets(ctx: Ctx) {
   await openDialog(40);
   await click("#history-add-new-set");
   await shown("#favorite-set-name-dialog");
+  await press("Escape");
+  await gone("#favorite-set-name-dialog");
+  results.playNewSetCancelGoesBackToTheChooser = await exists("#history-add-to-set");
+  await click("#history-add-new-set");
+  await shown("#favorite-set-name-dialog");
   await click("#favorite-set-name-save");
   await gone("#favorite-set-name-dialog");
+  await gone("#history-add-to-set");
   const sets = await kept();
   const index = sets.length - 1;
   results.playMenuAddsToANewSet = same(sets[index]?.songs ?? [], ["1040"]);
@@ -432,7 +445,7 @@ export async function recentPlaySets(ctx: Ctx) {
     await Bun.sleep(300);
     const at = await middleOf(page, row);
     await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
-    await Bun.sleep(800);
+    await Bun.sleep(2 * LONG_PRESS_MS);
     await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await shown("#history-add-to-set");
     await Bun.sleep(500);

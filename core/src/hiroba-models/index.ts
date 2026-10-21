@@ -24,7 +24,6 @@ export type {
   Medal,
   MedalProgress,
   MedalUnrecognisedReason,
-  Player,
   Profile,
   ProfileSummary,
   ProfileVisibility,

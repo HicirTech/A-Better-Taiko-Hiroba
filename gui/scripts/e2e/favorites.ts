@@ -1,4 +1,5 @@
 /** The Favourites page: its two cards, the sets drawer, the song picker, its filters and search. */
+import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
 import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
 import { HIROBA, PHONE_TALL } from "./config";
 import type { Ctx } from "./context";
@@ -36,6 +37,7 @@ export const favoritesKeys = [
   "favoriteSongOpensItsDetails",
   "setsSwipeWaitsForTheDetails",
   "newSetAsksForItsName",
+  "newSetCancelGoesBackToTheDrawer",
   "pickerShowsItsFilters",
   "pickerShowsItsFiltersOnAPhone",
   "pickerOpensOnEverySong",
@@ -57,6 +59,7 @@ export const favoritesKeys = [
   "setAppliedWithNoMessage",
   "folderShowsTheSetInUse",
   "notStagedSaysSoAndSavesNothing",
+  "replaceCancelGoesBackToTheMenu",
   "folderSavedIntoASet",
   "setsMovedByTheirHandle",
   "setRenamedFromItsMenu",
@@ -73,12 +76,14 @@ export const favoritesKeys = [
   "setsDrawerOpensBySwipe",
   "setsButtonHiddenOnTouch",
   "setOffersItsActionsOnALongPress",
+  "setActionsStayUnderTheirDialogs",
 ] as const;
 
 export async function favorites(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, boxOf, exists, fabState, press, swipe, touchEmulated } = pageHelpers(page);
+  const { atSize, boxOf, exists, fabState, listRows, press, rowInView, swipe, touchEmulated } =
+    pageHelpers(page);
   const stepIs = (step: string) =>
     waitFor(`favourites ${step}`, async () =>
       (await page.evaluate<string | null>(
@@ -91,11 +96,16 @@ export async function favorites(ctx: Ctx) {
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
     waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  /** Whether the page's Sync to Hiroba is shut, or not there at all. */
+  const syncShut = () =>
+    page.evaluate<boolean>(`document.querySelector("#favorites-save")?.disabled !== false`);
+  const syncLit = () =>
+    waitFor("Sync to Hiroba lit", async () => ((await syncShut()) ? undefined : true));
   const typeInto = (selector: string, text: string) =>
     page.evaluate(
       `(() => { const input = document.querySelector(${JSON.stringify(selector)}); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
     );
-  const search = (query: string) => typeInto("#song-picker-search", query);
+  const search = (query: string) => typeInto("#song-picker-search-input", query);
   const rowText = (songNo: string) => textOf(`#song-picker-row-${songNo}`);
   const placesIn = (selector: string) =>
     page.evaluate<string[]>(
@@ -109,10 +119,30 @@ export async function favorites(ctx: Ctx) {
     page.evaluate<string | null>(
       `document.querySelector(${JSON.stringify(`${selector} .level-stack`)})?.getAttribute("aria-expanded") ?? null`,
     );
-  const barsOf = (songNos: readonly string[]) =>
-    page.evaluate<number[]>(
-      `${JSON.stringify(songNos)}.map((songNo) => document.querySelectorAll("#song-picker-row-" + songNo + " .song-bar").length)`,
-    );
+  // The picker draws only the rows near its dialog's window: a check walks to the row it reads.
+  const PICKER = "#song-picker-list";
+  const PICKER_BODY = "#song-picker-content";
+  /** The picker's row of `key`, a song's number or `<number>-ura` for its inner chart, in view. */
+  const toRow = async (key: string) => {
+    await shown(`${PICKER} > li`);
+    await rowInView(PICKER, `(row) => row.id === "song-picker-row-${key}"`, PICKER_BODY);
+    return `#song-picker-row-${key}`;
+  };
+  /** Every row's key, the whole list walked. */
+  const pickerKeys = () =>
+    listRows<string>(PICKER, `(row) => row.id.slice("song-picker-row-".length)`, PICKER_BODY);
+  const barsOf = async (songNos: readonly string[]) => {
+    const bars: number[] = [];
+    for (const songNo of songNos) {
+      const row = await toRow(songNo);
+      bars.push(
+        await page.evaluate<number>(
+          `document.querySelectorAll(${JSON.stringify(`${row} .song-bar`)}).length`,
+        ),
+      );
+    }
+    return bars;
+  };
   const showDifficulty = async (difficulty: string) => {
     await goTo("settings");
     await shown(`#shown-difficulty-${difficulty}`);
@@ -137,10 +167,7 @@ export async function favorites(ctx: Ctx) {
     await click(`#song-picker-${filter}-${value}`);
     await gone(`#song-picker-${filter}-menu`);
   };
-  const pickerSongs = () =>
-    page.evaluate<string[]>(
-      `[...document.querySelectorAll("#song-picker-list > li")].map((row) => row.dataset.songNo)`,
-    );
+  const pickerSongs = () => listRows<string>(PICKER, "(row) => row.dataset.songNo", PICKER_BODY);
   const soon = (label: string, probe: () => Promise<boolean>) =>
     waitFor(label, async () => (await probe()) || undefined, 5_000).catch(() => false);
   const listed = (songs: readonly string[]) =>
@@ -208,7 +235,7 @@ export async function favorites(ctx: Ctx) {
   const rightClick = (selector: string) => mouseClick(selector, "right");
   const holdFinger = async (at: Point, moveTo?: Point) => {
     await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
-    await Bun.sleep(500);
+    await Bun.sleep(2 * LONG_PRESS_MS);
     if (moveTo !== undefined) {
       for (let step = 1; step <= 10; step++) {
         await page.send("Input.dispatchTouchEvent", {
@@ -220,6 +247,13 @@ export async function favorites(ctx: Ctx) {
     }
     await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
     await Bun.sleep(500);
+  };
+  // A hold's lift presses the dialog it opens; click() has no press of its own to clear that, so
+  // the Dialog would take it for a click on its backdrop. A finger's tap has one.
+  const tapFinger = async (selector: string) => {
+    const at = await middleOf(page, selector);
+    await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [at] });
+    await page.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
   };
   const openDrawer = async () => {
     await click("#favorites-sets");
@@ -325,6 +359,12 @@ export async function favorites(ctx: Ctx) {
   await openDrawer();
   await click("#favorites-item-new");
   await shown("#favorite-set-name");
+  // Esc stands in for Android's Back: a dialog goes back to where it was opened from.
+  await press("Escape");
+  await gone("#favorite-set-name-dialog");
+  results.newSetCancelGoesBackToTheDrawer = await exists("#favorites-drawer");
+  await click("#favorites-item-new");
+  await shown("#favorite-set-name");
   const offeredName = await page.evaluate<string>(
     `document.querySelector("#favorite-set-name").value`,
   );
@@ -346,7 +386,7 @@ export async function favorites(ctx: Ctx) {
   results.songShowsABarPerGenre = same(await barsOf(["1012", "1001"]), [2, 1]);
 
   await choose("difficulty", "hard");
-  results.pickerShowsTheFilteredDifficultyFirst = same(await placesIn("#song-picker-row-1019"), [
+  results.pickerShowsTheFilteredDifficultyFirst = same(await placesIn(await toRow("1019")), [
     "before",
     "before",
     "front",
@@ -395,16 +435,16 @@ export async function favorites(ctx: Ctx) {
     same(await boldIn("1011"), ["会入睡"]);
 
   await search("");
-  await shown(`#song-picker-row-${LONG_TITLED}`);
   for (const songNo of ["1001", "1003", LONG_TITLED]) {
-    await page.evaluate(`document.querySelector("#song-picker-row-${songNo} input").click()`);
+    const row = await toRow(songNo);
+    await page.evaluate(`document.querySelector(${JSON.stringify(`${row} input`)}).click()`);
   }
-  await click("#song-picker-done");
+  await click("#song-picker-close");
   await gone("#song-picker");
   await shown(`#favorite-set-song-${LONG_TITLED}`);
   await Bun.sleep(500);
   results.longNameScrolls = await exists(`#favorite-set-song-${LONG_TITLED} .scrolling`);
-  const noDetailsWhileEditing = !(await exists("#favorite-set-songs .song-open"));
+  const noDetailsWhileEditing = !(await exists("#favorite-set-songs button.song-open"));
 
   const pickedOrder = await keysIn("favorite-set-songs");
   await dragByMouse(
@@ -418,7 +458,7 @@ export async function favorites(ctx: Ctx) {
 
   const keptBeforeSave = await keptSongs();
   await click("#favorite-set-save");
-  await shown("#favorite-set-apply");
+  await shown("#favorite-set-edit");
   results.setEditsWaitForSave =
     same(keptBeforeSave, []) && same(await keptSongs(), ["1003", "1001", LONG_TITLED]);
   results.setShownBeforeEditing =
@@ -430,7 +470,7 @@ export async function favorites(ctx: Ctx) {
     noDetailsWhileEditing && (await detailsTitleOf(`#favorite-set-song-${LONG_TITLED}`));
 
   await resetLog();
-  await click("#favorite-set-apply");
+  await click("#favorites-save");
   await stepIs("ready");
   await shown("#favorite-folder-list");
   await Bun.sleep(500);
@@ -453,18 +493,23 @@ export async function favorites(ctx: Ctx) {
     `document.querySelector('#favorite-set-songs button[data-song-no="${LONG_TITLED}"]').click()`,
   );
   await click("#favorite-set-save");
-  await shown("#favorite-set-apply");
+  await shown("#favorite-set-edit");
   await resetLog();
-  await click("#favorite-set-apply");
+  await click("#favorites-save");
   await shown("#favorite-folder-outcome");
   results.notStagedSaysSoAndSavesNothing =
-    (await textOf("#favorite-folder-outcome"))?.includes("didn't take every song") === true &&
+    (await textOf("#favorite-folder-outcome")) === "Sync to Hiroba failed. Please try again." &&
     !(await requestLog()).includes(FOLDER_SAVE) &&
     same((await favoritesNow()).folder.slice(0, 3), ["1003", "1001", LONG_TITLED]);
   await favoritesNow("?emptyClears=1");
 
   await click("#favorite-folder-save-to-set");
   await shown("#favorite-folder-save-to-set-0");
+  await click("#favorite-folder-save-to-set-0");
+  await shown("#favorite-folder-replace-confirm");
+  await press("Escape");
+  await gone("#favorite-folder-replace-dialog");
+  results.replaceCancelGoesBackToTheMenu = await exists("#favorite-folder-save-to-set-0");
   await click("#favorite-folder-save-to-set-0");
   await shown("#favorite-folder-replace-confirm");
   await click("#favorite-folder-replace-confirm");
@@ -504,25 +549,22 @@ export async function favorites(ctx: Ctx) {
   await gone("#favorites-drawer");
 
   await click("#favorite-song-change");
-  await shown("#song-picker-row-1002 button");
-  await page.evaluate(`document.querySelector("#song-picker-row-1002 button").click()`);
+  await page.evaluate(`document.querySelector("${await toRow("1002")} button").click()`);
   await gone("#song-picker");
-  await shown("#favorite-song-save");
-  await click("#favorite-song-save");
-  await gone("#favorite-song-saving");
-  await gone("#favorite-song-save");
+  await syncLit();
+  await click("#favorites-save");
+  await stepIs("ready");
   results.favoriteSongPickedThenSaved =
     (await favoritesNow()).favoriteSong === "1002" && !(await exists("#favorite-song-outcome"));
 
   await click("#favorite-song-change");
-  await shown("#song-picker-row-1004 button");
-  await page.evaluate(`document.querySelector("#song-picker-row-1004 button").click()`);
-  await shown("#favorite-song-save");
+  await page.evaluate(`document.querySelector("${await toRow("1004")} button").click()`);
+  await syncLit();
   await goTo("overview");
   await goTo("favorites");
   await stepIs("ready");
   results.favoriteSongDraftDroppedOnLeaving =
-    !(await exists("#favorite-song-save")) && (await favoritesNow()).favoriteSong === "1002";
+    (await syncShut()) && (await favoritesNow()).favoriteSong === "1002";
 
   // The pickers' list is read as a picker opens: a read again, on any page, only lets it go stale.
   const pickerReads = () => hitsOn("/form_data.php");
@@ -542,52 +584,45 @@ export async function favorites(ctx: Ctx) {
   const readsBeforeOpen = await pickerReads();
   results.pickerListLeftAloneByAReadAgain = readsBeforeOpen === readsBeforeReadAgain;
   await click("#favorite-song-change");
-  await shown(`#song-picker-row-${WITH_INNER}-ura button`);
+  await toRow(`${WITH_INNER}-ura`);
   const readAsItOpened = await waitFor(
     "the pickers' list read as the picker opened",
     async () => ((await pickerReads()) > readsBeforeOpen ? true : undefined),
     5_000,
   ).catch(() => false);
+  const offeredKeys = await pickerKeys();
+  const front = await toRow(WITH_INNER);
   results.favoritePickerOffersWhatHirobaOffers =
-    !(await exists(`#song-picker-row-${LOCKED_SONG}`)) &&
-    (await exists(`#song-picker-row-${WITH_INNER} button`)) &&
-    same(await difficultiesIn(`#song-picker-row-${WITH_INNER}`), [
-      "easy",
-      "normal",
-      "hard",
-      "oni",
-    ]) &&
-    same(await difficultiesIn(`#song-picker-row-${WITH_INNER}-ura`), ["ura"]) &&
-    (await textOf(`#song-picker-row-${WITH_INNER}-ura .song-artists`))?.includes("Ura chart") !==
-      true &&
-    !(await exists("#song-picker-row-1001-ura"));
+    !offeredKeys.includes(LOCKED_SONG) &&
+    (await exists(`${front} button`)) &&
+    same(await difficultiesIn(front), ["easy", "normal", "hard", "oni"]) &&
+    same(await difficultiesIn(`${front}-ura`), ["ura"]) &&
+    (await textOf(`${front}-ura .song-line`))?.includes("Ura chart") !== true &&
+    !offeredKeys.includes("1001-ura");
+  // An inner chart's row is washed in its colour; the song's own row beside it is not.
   results.innerRowWearsItsColour = await page.evaluate<boolean>(
-    `(() => { const inner = document.querySelector("#song-picker-row-${WITH_INNER}-ura"); const front = document.querySelector("#song-picker-row-${WITH_INNER}"); const bg = inner ? getComputedStyle(inner).backgroundColor : ""; return inner?.classList.contains("picker-row-ura") === true && front?.classList.contains("picker-row-ura") !== true && bg !== "" && bg !== "transparent" && bg !== "rgba(0, 0, 0, 0)"; })()`,
+    `(() => { const wash = (row) => (row ? getComputedStyle(row).backgroundColor : ""); const clear = (colour) => colour === "" || colour === "transparent" || colour === "rgba(0, 0, 0, 0)"; const inner = document.querySelector("${front}-ura"); const own = document.querySelector("${front}"); return inner !== null && own !== null && !clear(wash(inner)) && clear(wash(own)); })()`,
   );
   await choose("difficulty", "ura");
-  const innerOnly =
-    !(await exists(`#song-picker-row-${WITH_INNER} button`)) &&
-    (await exists(`#song-picker-row-${WITH_INNER}-ura button`));
+  const innerKeys = await pickerKeys();
+  const innerOnly = !innerKeys.includes(WITH_INNER) && innerKeys.includes(`${WITH_INNER}-ura`);
   await choose("difficulty", "oni");
-  const frontOnly =
-    (await exists(`#song-picker-row-${WITH_INNER} button`)) &&
-    !(await exists(`#song-picker-row-${WITH_INNER}-ura`));
+  const frontKeys = await pickerKeys();
+  const frontOnly = frontKeys.includes(WITH_INNER) && !frontKeys.includes(`${WITH_INNER}-ura`);
   await choose("difficulty", "all");
   results.favoritePickerFiltersEachSide = innerOnly && frontOnly;
-  await shown(`#song-picker-row-${WITH_INNER}-ura button`);
   await page.evaluate(
-    `document.querySelector("#song-picker-row-${WITH_INNER}-ura button").click()`,
+    `document.querySelector("${await toRow(`${WITH_INNER}-ura`)} button").click()`,
   );
   await gone("#song-picker");
-  await shown("#favorite-song-save");
-  await click("#favorite-song-save");
-  await gone("#favorite-song-saving");
-  await gone("#favorite-song-save");
+  await syncLit();
+  await click("#favorites-save");
+  await stepIs("ready");
   const innerSaved = await favoritesNow();
   results.innerEntrySavedAndShown =
     innerSaved.favoriteSong === WITH_INNER &&
     innerSaved.favoriteSongUra &&
-    (await textOf("#favorite-song-row .song-artists"))?.startsWith("Ura chart") === true &&
+    (await textOf("#favorite-song-row .song-line"))?.startsWith("Ura chart") === true &&
     !(await exists("#favorite-song-outcome"));
   const readsBeforeReopen = await pickerReads();
   await click("#favorite-song-change");
@@ -631,6 +666,17 @@ export async function favorites(ctx: Ctx) {
       results.setOffersItsActionsOnALongPress =
         (await exists("#favorite-set-actions-rename")) &&
         (await exists("#favorite-set-actions-delete"));
+      await tapFinger("#favorite-set-actions-rename");
+      await shown("#favorite-set-name-dialog");
+      await press("Escape");
+      await gone("#favorite-set-name-dialog");
+      const actionsUnderTheName = await exists("#favorite-set-actions-rename");
+      await tapFinger("#favorite-set-actions-delete");
+      await shown("#favorite-set-delete-dialog");
+      await press("Escape");
+      await gone("#favorite-set-delete-dialog");
+      results.setActionsStayUnderTheirDialogs =
+        actionsUnderTheName && (await exists("#favorite-set-actions-delete"));
       await press("Escape");
       await gone("#favorite-set-actions");
       await swipe({ x: PHONE_TALL.width - 200, y }, { x: PHONE_TALL.width - 40, y: y + 10 });

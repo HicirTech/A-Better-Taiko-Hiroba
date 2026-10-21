@@ -1,11 +1,13 @@
 import type { ScoreRank } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress } from "@mui/material";
+import { Box } from "@mui/material";
 import type { Ref } from "react";
 
+import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
 import type { CrownKind, PictureView, PictureWant, ProfileView } from "../session-port";
-import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, OUTLINED, VISUALLY_HIDDEN } from "./hiroba-px";
+import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
+import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, OUTLINED } from "./hiroba-px";
 import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
 
 // Hiroba's .total_score: 280 wide, #mydon_area's 290 less its margins.
@@ -38,8 +40,9 @@ const PANEL_SPOTS: readonly (readonly [Counted, Spot])[] = [
 const LAID_OUT_LEVELS: ReadonlySet<number> = new Set([5]);
 const ART: PictureWant = { kind: "scorePanel" };
 // As on Hiroba, in either theme: white outlined on the art's dark rows, black on its pale one.
+const ON_RANKS = "#fff";
 const TONE = {
-  rank: { color: "#fff", textShadow: OUTLINED },
+  rank: { color: ON_RANKS, textShadow: OUTLINED },
   crown: { color: "#000" },
 } as const;
 // The stand-in is plain on purpose, so it is not taken for Hiroba's art.
@@ -79,38 +82,18 @@ export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps
   const counts = countsOf(panel.ranks, crowns, i18n);
   return (
     <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
-      <Box
+      <HirobaPicture
         ref={ref}
         id="score-panel"
         role="group"
         aria-label={t("panel.art")}
-        aria-busy={asking}
-        sx={{
-          position: "relative",
-          width: 1,
-          aspectRatio: 1 / panelHeightRatio(art),
-        }}
+        src={art?.src ?? null}
+        onItsWay={asking}
+        standIn={<PanelStandIn counts={counts} />}
+        wordsColour={ON_RANKS}
+        sx={{ width: 1, aspectRatio: 1 / panelHeightRatio(art) }}
+        i18n={i18n}
       >
-        {art === null ? (
-          <PanelStandIn counts={counts} />
-        ) : (
-          <Box
-            component="img"
-            id="score-panel-image"
-            src={art.src}
-            alt=""
-            aria-hidden
-            sx={{ position: "absolute", inset: 0, width: 1, height: 1, display: "block" }}
-          />
-        )}
-        {asking && (
-          <CircularProgress
-            id="score-panel-loading"
-            size={14}
-            aria-label={t("pictures.loading")}
-            sx={{ position: "absolute", top: 4, left: 4, color: "#fff" }}
-          />
-        )}
         <Box component="dl" sx={{ m: 0 }}>
           {counts.map(({ id, name, count, spot: [column, row], tone }) => (
             <Box
@@ -136,7 +119,7 @@ export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps
             </Box>
           ))}
         </Box>
-      </Box>
+      </HirobaPicture>
     </Box>
   );
 }

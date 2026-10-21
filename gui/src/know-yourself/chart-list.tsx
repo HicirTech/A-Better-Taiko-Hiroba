@@ -1,24 +1,23 @@
 import { chartKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Checkbox, Chip, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 
 import { SET_SONG_LIMIT } from "../favorites/favorite-sets";
-import { DIFFICULTY_LABEL } from "../favorites/genre-look";
 import type { SongLook } from "../favorites/song-look";
-import { SongRow } from "../favorites/song-row";
+import { HIROBA_LANG } from "../language/hiroba-lang";
 import type { PictureLane } from "../pictures/picture-lane";
-import { CourseIcon } from "../songs/course-icon";
+import { ChartMarks } from "../songs/chart-level";
+import { RowCheckbox, SongRow } from "../songs/song-row";
+import { RowList } from "../ui/row-list";
 import { type GapKind, gapKindOf, songsOf } from "./gaps";
 import type { KnownChart } from "./known-charts";
 
 const GAP_KINDS: readonly GapKind[] = ["never", "notCleared"];
 const GAP_LABEL = { never: "know.never", notCleared: "know.tried" } as const;
 
-const LIST = { listStyle: "none", m: 0, p: 0 } as const;
-// Rows off screen skip their layout: an opened list can hold hundreds of charts.
-const ROW = { contentVisibility: "auto", containIntrinsicSize: "auto 44px", py: 0.25 } as const;
-const END = { "& .chart-note": { color: "text.secondary", whiteSpace: "nowrap" } } as const;
+/** About how tall a chart's row draws, before the list measures it. */
+const CHART_ROW_PX = 58;
 
 /** Charts to tick and add to a set, or the nearest at once; a played one opens its details. */
 export function ChartList({
@@ -90,55 +89,59 @@ export function ChartList({
           </Button>
         )}
       </Box>
-      <Box component="ul" sx={LIST}>
-        {shown.map((chart, order) => {
+      <RowList id={`${id}-rows`} rows={shown} keyOf={chartKey} rowPx={CHART_ROW_PX}>
+        {(chart, order, place) => {
           const key = chartKey(chart);
           const look = lookOf(chart.songNo);
           return (
-            <Box
-              component="li"
-              key={key}
+            <SongRow
               data-song-no={chart.songNo}
               data-level={chart.level}
-              sx={ROW}
-            >
-              <SongRow
-                look={look}
-                i18n={i18n}
-                withLevels={false}
-                onOpen={opener(chart)}
-                start={
-                  <Checkbox
-                    size="small"
-                    checked={ticked.has(key)}
-                    onChange={() => tick(key)}
-                    slotProps={{ input: { "aria-label": look.name } }}
-                    sx={{ alignSelf: "center", p: 0.5 }}
-                  />
-                }
-                end={
-                  <Box component="span" sx={{ display: "contents", ...END }}>
-                    <CourseIcon
-                      difficulty={chart.difficulty}
-                      lane={lane}
-                      order={order}
-                      label={t(DIFFICULTY_LABEL[chart.difficulty])}
-                    />
-                    {chart.stars !== null && (
-                      <Typography component="span" variant="body2">
-                        {t("picker.level", { level: chart.stars })}
-                      </Typography>
-                    )}
-                    <Typography component="span" variant="body2" className="chart-note">
-                      {note(chart)}
-                    </Typography>
-                  </Box>
-                }
-              />
-            </Box>
+              start={
+                <RowCheckbox
+                  checked={ticked.has(key)}
+                  label={look.name}
+                  onChange={() => tick(key)}
+                />
+              }
+              genres={look.genres}
+              name={look.name}
+              lang={look.lang}
+              lines={
+                look.artists.length > 0
+                  ? [
+                      <span key="artists" lang={HIROBA_LANG}>
+                        {look.artists.join(", ")}
+                      </span>,
+                    ]
+                  : []
+              }
+              marks={
+                <ChartMarks
+                  difficulty={chart.difficulty}
+                  level={chart.stars}
+                  lane={lane}
+                  order={order}
+                  i18n={i18n}
+                >
+                  <Typography
+                    component="span"
+                    variant="body2"
+                    color="text.secondary"
+                    noWrap
+                    className="chart-note"
+                  >
+                    {note(chart)}
+                  </Typography>
+                </ChartMarks>
+              }
+              onPress={opener(chart)}
+              pressOpens
+              place={place}
+            />
           );
-        })}
-      </Box>
+        }}
+      </RowList>
     </Stack>
   );
 }

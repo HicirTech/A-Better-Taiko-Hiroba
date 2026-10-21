@@ -2,7 +2,7 @@ import type { TitleOption } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
 import { useCallback, useReducer, useRef } from "react";
 
-import { seenAfter, sendHeld, sessionNoticeOf } from "../my-page/write-ending";
+import { noticeOf, seenAfter, sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
 import type { HirobaSessionPort, ProfileView, TitleState, WriteOutcomeView } from "../session-port";
@@ -40,7 +40,10 @@ export interface TitleEditor {
   /** Drops the pick and the last write's notice when the page is left; the list stays. */
   dropEdits(): void;
   pick(option: TitleOption | null): void;
-  save(): Promise<void>;
+  /** Drops the last write's notice once the window has said it. */
+  closeNotice(): void;
+  /** Sends the pick: true once Hiroba has taken it, or held it already. */
+  save(): Promise<boolean>;
 }
 
 export function useTitleEditor({
@@ -124,7 +127,7 @@ export function useTitleEditor({
       !changesTitle(profile.title, picked) ||
       writing.current
     ) {
-      return;
+      return false;
     }
 
     const expected = { title: profile.title };
@@ -135,9 +138,11 @@ export function useTitleEditor({
       port.changeTitle({ expected, target: { id: picked.id, title: picked.label } }),
     );
     writing.current = false;
-    if (mine === generation.current) {
+    const current = mine === generation.current;
+    if (current) {
       writeEnded(outcome);
     }
+    return current && noticeOf(outcome) === null;
   };
 
   return {
@@ -148,6 +153,7 @@ export function useTitleEditor({
     forget,
     dropEdits,
     pick: (option) => dispatch({ type: "picked", option }),
+    closeNotice: () => dispatch({ type: "noticeClosed" }),
     save,
   };
 }

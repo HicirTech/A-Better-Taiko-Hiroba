@@ -1,7 +1,6 @@
 import { fireEvent, userEvent, waitFor } from "storybook/test";
 
-/** The element `selector` finds anywhere in the page, a menu's or a dialog's too, once it is there
- * and can be pressed. */
+/** The element `selector` finds anywhere in the page, once it is there and can be pressed. */
 export const found = (selector: string): Promise<HTMLElement> =>
   waitFor(() => {
     const element = document.querySelector<HTMLElement>(selector);

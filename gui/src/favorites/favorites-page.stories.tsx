@@ -17,8 +17,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The 大好きな曲 and the お気に入り folder, the sets kept on the device in the drawer: a button on
- * a PC, a swipe from the right edge on an Android device. */
+/** The 大好きな曲, the お気に入り folder, and the sets kept on the device in the drawer. */
 export const InTheWindow: Story = {};
 
 /** No set kept yet. */

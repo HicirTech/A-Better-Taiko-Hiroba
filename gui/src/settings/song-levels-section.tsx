@@ -1,12 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import {
-  List,
-  ListItem,
-  ListItemText,
-  SvgIcon,
-  ToggleButton,
-  ToggleButtonGroup,
-} from "@mui/material";
+import { List, ListItem, ListItemText, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useId, useState } from "react";
 
 import { DIFFICULTY_LABEL } from "../favorites/genre-look";
@@ -16,16 +9,8 @@ import {
   SHOWN_DIFFICULTIES,
   type ShownDifficulty,
 } from "../favorites/shown-difficulty";
+import { StarIcon } from "../ui/icons";
 import { SettingsSection } from "./settings-section";
-
-// Material's "star" icon (Apache 2.0), inline: the icons package is not a dependency.
-function StarIcon() {
-  return (
-    <SvgIcon aria-hidden fontSize="small">
-      <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-    </SvgIcon>
-  );
-}
 
 /** The difficulty whose level a song shows in front, its other levels stacked behind it. */
 export function SongLevelsSection({ i18n }: { readonly i18n: Translator }) {
@@ -46,7 +31,7 @@ export function SongLevelsSection({ i18n }: { readonly i18n: Translator }) {
     <SettingsSection
       id="song-levels"
       headingId={headingId}
-      icon={<StarIcon />}
+      icon={<StarIcon fontSize="small" />}
       title={t("settings.songLevels")}
     >
       <List disablePadding>

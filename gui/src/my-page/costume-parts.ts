@@ -46,10 +46,6 @@ export function itemsOf(editor: CostumeEditorView, part: SlotPart): number[] {
   return [...owned, ...(worn !== 0 && !owned.includes(worn) ? [worn] : [])];
 }
 
-export function partValue(part: CostumePart, value: number, { t }: Translator): string {
-  return isSlotPart(part) && value === 0 ? t("costume.remove") : t("costume.id", { id: value });
-}
-
 /** A tile's accessible name: the part, then its pick; an empty slot is the part alone. */
 export function tileName(part: CostumePart, pick: number, { t }: Translator): string {
   const name = t(PART_LABEL[part]);

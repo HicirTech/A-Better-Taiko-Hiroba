@@ -1,16 +1,19 @@
 import { type ChartRating, chartKey, type RatingFigure, rateOurTaikoV1 } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-import { Box, FormHelperText, Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { PlayRow } from "../history/play-row";
+import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf, scoresReadingText } from "../scores/scores-page";
+import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ScoreView } from "../session-port";
+import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
+import { SectionTitle } from "../ui/section-title";
+import { StatusNote } from "../ui/status-note";
 import { RatingRadar } from "./rating-radar";
 import type { RatingDataState } from "./use-rating-data";
 
@@ -96,10 +99,10 @@ export function RatingPage({
   const settled = view !== null && !reading && failure === null;
   const list = (id: string, heading: MessageKey, shown: readonly ChartRating[]) =>
     shown.length > 0 && (
-      <Stack component="section" spacing={0.5} aria-labelledby={`${id}-heading`}>
-        <Typography id={`${id}-heading`} component="h2" variant="subtitle1" sx={{ px: 2 }}>
-          {t(heading)}
-        </Typography>
+      <Box component="section" aria-labelledby={`${id}-heading`}>
+        <Box sx={{ px: 1 }}>
+          <SectionTitle id={`${id}-heading`}>{t(heading)}</SectionTitle>
+        </Box>
         <Stack component="ul" id={id} spacing={0} sx={LIST}>
           {shown.map((chart, index) => {
             const score = scoreOf.get(chartKey(chart));
@@ -121,35 +124,32 @@ export function RatingPage({
             );
           })}
         </Stack>
-      </Stack>
+      </Box>
     );
 
   return (
-    <Stack spacing={2} id="rating-page">
+    <Stack spacing={2} id="rating-page" sx={{ minHeight: PAGE_HEIGHT }}>
       {reading && (
-        <Waiting id="rating-scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
+        <ScoresReading id="rating-scores-reading" i18n={i18n} progress={progress} song={song} />
       )}
       {failure !== null && <LoadFailed id="rating-scores-failure" failure={failure} i18n={i18n} />}
-      {ratingData.reading && data === null && (
-        <Waiting id="rating-data-reading">{t("rating.readingData")}</Waiting>
-      )}
       {ratingData.failure !== null && (
-        <FormHelperText id="rating-data-failure" error sx={{ m: 0 }}>
-          {t("rating.dataFailed")}
-          <Box component="span" sx={{ display: "block", mt: 0.5, fontFamily: "monospace" }}>
-            {t("picker.code", { code: ratingData.failure })}
-          </Box>
-        </FormHelperText>
+        <ReadFailureAlert
+          id="rating-data-failure"
+          message={t("rating.dataFailed")}
+          code={ratingData.failure}
+          i18n={i18n}
+        />
       )}
       {settled && view.scores.length === 0 && (
-        <Typography id="rating-empty" color="text.secondary">
+        <StatusNote id="rating-empty" fill>
           {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
-        </Typography>
+        </StatusNote>
       )}
       {rated !== null && view !== null && view.scores.length > 0 && charts.length === 0 && (
-        <Typography id="rating-none" color="text.secondary">
+        <StatusNote id="rating-none" fill>
           {t("rating.noneRated")}
-        </Typography>
+        </StatusNote>
       )}
       {total !== undefined && charts.length > 0 && (
         <Stack
@@ -208,19 +208,18 @@ function RatedRow({
 }) {
   const { t, locale } = i18n;
   const listed = listedOf(score, catalogue, locale);
-  const rowProps: RowProps = {
-    ...opensOnPress(onOpen),
-    "data-song-no": score.songNo,
-    "data-level": score.level,
-  };
   return (
-    <HistoryRow
+    <PlayRow
       play={score}
       name={{ text: listed.name, lang: listed.nameLang }}
+      genres={listed.genres}
+      stars={listed.stars}
       lane={lane}
       order={order}
       i18n={i18n}
-      rowProps={rowProps}
+      onOpen={onOpen}
+      data-song-no={score.songNo}
+      data-level={score.level}
       lead={
         <Box component="span" className="rating-lead" sx={LEAD}>
           <span className="rating-value">{formats.figure.format(chart.figures.rating)}</span>

@@ -3,7 +3,7 @@ import { Box, Checkbox, Chip, ListItemIcon, Menu, MenuItem, type Theme } from "@
 import { type ReactNode, useState } from "react";
 
 import { useBackCloses } from "../navigation/back-closers";
-import { ArrowDropDownIcon } from "./favorites-icons";
+import { ArrowDropDownIcon } from "../ui/icons";
 
 /** The colour a choice is known by, and the text that reads on it. */
 export interface FilterFill {
@@ -77,7 +77,7 @@ function MenuChip({
           arrowed ? (
             <>
               {choice?.label ?? name}
-              <ArrowDropDownIcon />
+              <ArrowDropDownIcon fontSize="small" />
             </>
           ) : (
             choice.label

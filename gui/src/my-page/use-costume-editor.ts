@@ -53,6 +53,8 @@ export interface CostumeEditor {
   reset(): void;
   /** Drops the draft and the last write's notice when the page is left; what was read stays. */
   dropEdits(): void;
+  /** Drops the last write's notice once the window has said it. */
+  closeNotice(): void;
   save(): Promise<void>;
 }
 
@@ -170,6 +172,7 @@ export function useCostumeEditor({
     },
     reset: () => dispatch({ type: "reset" }),
     dropEdits,
+    closeNotice: () => dispatch({ type: "noticeClosed" }),
     save,
   };
 }

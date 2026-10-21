@@ -33,6 +33,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** A picture that opens a page: a click and its tooltip on a PC; on an Android device a tap does
- * nothing and a long press opens it. */
+/** A picture that opens a page: a click on a PC, a long press on Android. */
 export const OpensAPage: Story = {};

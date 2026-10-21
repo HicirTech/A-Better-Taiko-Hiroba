@@ -1,7 +1,7 @@
 import type { MessageKey } from "@abth/i18n";
 import { useCallback, useReducer, useRef } from "react";
 
-import { sendHeld, sessionNoticeOf } from "../my-page/write-ending";
+import { noticeOf, sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort, NameState, ProfileView, WriteOutcomeView } from "../session-port";
 import {
@@ -31,7 +31,10 @@ export interface NameEditor {
   /** Drops the typed nickname and the last write's notice when the page is left. */
   dropEdits(): void;
   type(value: string): void;
-  save(): Promise<void>;
+  /** Drops the last write's notice once the window has said it. */
+  closeNotice(): void;
+  /** Sends the nickname typed: true once Hiroba has taken it, or held it already. */
+  save(): Promise<boolean>;
 }
 
 export function useNameEditor({
@@ -69,13 +72,13 @@ export function useNameEditor({
 
   const save = async () => {
     if (step.name !== "idle" || profile === null || writing.current) {
-      return;
+      return false;
     }
 
     const expected = { nickname: profile.nickname };
     const verdict = judgeName(step.typed, { ...expected, rename: profile.rename });
     if (verdict.kind !== "ok") {
-      return;
+      return false;
     }
 
     writing.current = true;
@@ -85,9 +88,11 @@ export function useNameEditor({
       port.changeName({ expected, target: verdict.target }),
     );
     writing.current = false;
-    if (mine === sessionGeneration.current) {
+    const current = mine === sessionGeneration.current;
+    if (current) {
       writeEnded(outcome);
     }
+    return current && noticeOf(outcome) === null;
   };
 
   return {
@@ -96,6 +101,7 @@ export function useNameEditor({
     forget,
     dropEdits,
     type: (value) => dispatch({ type: "typed", value }),
+    closeNotice: () => dispatch({ type: "noticeClosed" }),
     save,
   };
 }

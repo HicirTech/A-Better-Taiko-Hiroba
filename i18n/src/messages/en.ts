@@ -214,8 +214,7 @@ export const en: Messages = {
   "profile.fetchedAt": "Last updated {time}",
   "profile.noTitle": "No title",
   "profile.dan": "Dan-i: {dan}",
-  "profile.danUnreadable": "Dan-i: couldn't read",
-  "profile.danCode": "Code for a report: {code}",
+  "profile.danUnreadable": "Your dan-i could not be read.",
   "dan.1": "5th Kyu",
   "dan.2": "4th Kyu",
   "dan.3": "3rd Kyu",
@@ -237,9 +236,6 @@ export const en: Messages = {
   "dan.19": "Tatsujin",
   "profile.myDonAlt": "Your My Don, as Hiroba draws it",
   "pictures.loading": "Loading Hiroba's picture…",
-  "pictures.unavailable":
-    "Some of Hiroba's pictures didn't load; plain stand-ins are shown instead.",
-  "pictures.code": "Code for a report: {code}",
   "scoreRank.2": "White Iki",
   "scoreRank.3": "Bronze Iki",
   "scoreRank.4": "Silver Iki",
@@ -289,7 +285,6 @@ export const en: Messages = {
   "medal.complete": "COMPLETE",
   "medal.none": "Hiroba isn't showing a Don Medal plate right now.",
   "medal.unrecognised": "This version can't read Hiroba's Don Medal plate yet.",
-  "medal.code": "Code for a report: {code}",
   "failure.notSignedIn": "You are not signed in.",
   "failure.loggedOut": "Your Hiroba session has ended. Please sign in again.",
   "failure.cardSelectUnfinished":
@@ -303,7 +298,8 @@ export const en: Messages = {
   "failure.maintenance":
     "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. It was not asked to refresh.",
   "failure.notRefreshed": "Hiroba could not refresh your play data, so nothing more was read.",
-  "failure.detail": "Details for a report: {detail}",
+  "failure.mayClear": "Refreshing or trying again may fix this.",
+  "failure.code": "Code for a report: {code}",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
   "plate.open": "Open the Nickname & title page",
   "plate.openByLongPress": "Long-press your name plate to open the Nickname & title page.",
@@ -312,8 +308,7 @@ export const en: Messages = {
   "costume.reading": "Reading your costume from Hiroba…",
   "costume.preview.alt": "My Don in this costume, as Hiroba draws it",
   "costume.preview.loading": "Updating the preview…",
-  "costume.preview.unavailable": "Preview unavailable",
-  "costume.preview.code": "Code for a report: {code}",
+  "costume.preview.unavailable": "The preview could not be shown.",
   "costume.tab.colours": "Colours",
   "costume.tab.items": "Costume",
   "costume.part.colorFace": "Face",
@@ -329,14 +324,12 @@ export const en: Messages = {
   "costume.item.label": "{part} #{id}",
   "costume.thumbnails.unavailable":
     "Some thumbnails didn't load ({count}); their numbers are shown instead.",
-  "costume.thumbnails.code": "Code for a report: {code}",
   "costume.kigurumiWarning": "A Mascot takes off Head, Body, Makeup and Mini Character.",
-  "costume.reset": "Reset",
-  "costume.save": "Save to Hiroba",
-  "costume.saving": "Saving… then reading it back",
+  "edit.reset": "Reset",
+  "write.sync": "Sync to Hiroba",
+  "write.saving": "Saving… then reading it back",
   "costume.history": "History",
   "costume.history.title": "Costume history",
-  "costume.history.close": "Close",
   "costume.history.wornNow": "Worn now",
   "costume.history.entry": "Costume {position}",
   "costume.history.entryWorn": "Costume {position}, worn now",
@@ -359,66 +352,13 @@ export const en: Messages = {
   "name.same": "That is your nickname already.",
   "name.closed":
     "Hiroba says nicknames can't be changed right now: 今はドンだーネームは変更できないドン！",
-  "write.appliedNotSynced":
-    "Hiroba saved it but couldn't reach the game server. This app cannot send it again; set it again on Hiroba's own page to pass it on.",
-  "write.notApplied.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the costume as it was.",
-  "write.notApplied.refused": "Hiroba refused the change (code {code}). Nothing changed.",
-  "write.notApplied.stale":
-    "The editor had gone stale. Use Read again, then retry. Nothing changed.",
-  "write.notApplied.siteMaintenance": "Hiroba is in maintenance. Nothing changed.",
-  "write.notApplied.failed": "Hiroba could not save it. Nothing changed.",
-  "write.notApplied.noAnswer": "Hiroba did not answer the save, and nothing changed.",
-  "write.notApplied.rejected": "Hiroba didn't accept the app's request. Nothing changed.",
-  "write.notApplied.endedAtLogin": "Hiroba sent the save to its sign-in page. Nothing changed.",
-  "write.notApplied.endpointMissing":
-    "Hiroba no longer has the page that saves this. Nothing changed.",
-  "write.notApplied.unexpected":
-    "Hiroba answered the save in a way this app did not expect. Nothing changed.",
-  "write.siteMessage": "Hiroba said: {message}",
-  "write.diverged": "The costume did not end up as planned. Compare below.",
-  "write.crossChanged": "Your title changed too.",
-  "write.outcomeUnknown": "Couldn't read the result back. Use Read again before trying again.",
   "write.sessionGone": "Hiroba ended the session before anything was saved. Please sign in again.",
   "write.sessionGoneAfterSave":
     "Hiroba ended the session. Whether the change was saved is unknown; check it after signing in.",
-  "write.changedSincePreview":
-    "Your costume was changed elsewhere since the editor last read it. Nothing was sent; the editor now shows it as it is.",
   "write.invalidTarget": "This app refused the change before sending it: {field}.",
-  "write.nothingToChange": "That is the costume already. Nothing was sent.",
-  "write.maintenance":
-    "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. The change was not sent.",
-  "write.needsConfirmation":
-    "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: これにきせかえますか？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  "write.stoppedBeforeWrite": "Hiroba didn't accept the app's request. Nothing was changed.",
-  "write.notStaged": "Hiroba didn't take every song, so nothing was saved.",
-  "write.busy": "Another change is still being sent, so this one was not sent.",
-  "write.interrupted":
-    "The app stopped before it knew how this ended, so it may or may not have been saved. Use Read again and look before trying again.",
-  "write.code": "Code for a report: {code}",
-  "write.before": "Before",
-  "write.planned": "Planned",
-  "write.now": "Now",
-  "write.title.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the title as it was.",
-  "write.title.diverged": "The title did not end up as planned. Compare below.",
-  "write.title.crossChanged": "Your costume changed too.",
-  "write.title.changedSincePreview":
-    "Your title was changed elsewhere since the list was opened. Nothing was sent; the page now shows it as it is.",
-  "write.title.nothingToChange":
-    "That is your title already; Hiroba shows only its name. Nothing was sent.",
-  "write.title.needsConfirmation":
-    "Hiroba asked for a confirmation this app does not give yet, so nothing was changed. Hiroba's words: この称号に設定しますカッ？ ※組合せできない称号やきせかえが含まれています。OKするとあたらしく選んだもの以外は外れます。",
-  "write.title.refused1": "Hiroba says no title was chosen.",
-  "write.title.refused5": "Hiroba says you do not own that title.",
-  "write.title.refused6": "Hiroba reported an error and asks you to choose again.",
-  "write.name.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the nickname as it was.",
-  "write.name.diverged": "The nickname did not end up as planned. Compare below.",
-  "write.name.changedSincePreview":
-    "Your nickname was changed elsewhere since this page was read. Nothing was sent; the page now shows it as it is.",
-  "write.name.nothingToChange": "That is your nickname already. Nothing was sent.",
-  "write.name.refused2": "Hiroba could not update the nickname.",
+  "write.failed": "Sync to Hiroba failed. Please try again.",
+  "write.failedBecause": "Sync to Hiroba failed ({words}). Please try again.",
+  "write.readBack": "Hiroba's result differs from what was expected. Its data has been read back.",
   "write.invalid.titleNotOwned": "that title is not in your list",
   "write.invalid.nameEmpty": "the nickname is empty",
   "write.invalid.nameEdge": "the nickname starts or ends with a space",
@@ -440,22 +380,6 @@ export const en: Messages = {
   "difficulty.ura": "Extreme (Ura)",
   "song.level": "{difficulty} ★{level}",
   "song.bpm": "BPM {bpm}",
-  "write.folder.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the folder as it was.",
-  "write.folder.diverged": "The folder did not end up as planned. Compare below.",
-  "write.folder.changedSincePreview":
-    "Your folder was changed elsewhere since this page read it. Nothing was sent; the page now shows it as it is.",
-  "write.folder.nothingToChange": "That is the folder already. Nothing was sent.",
-  "write.favoriteSong.unchanged":
-    "Nothing changed on Hiroba. It answered that it saved, but reading it back shows the favourite song as it was.",
-  "write.favoriteSong.diverged": "The favourite song did not end up as planned. Compare below.",
-  "write.favoriteSong.changedSincePreview":
-    "Your favourite song was changed elsewhere since this page read it. Nothing was sent; the page now shows it as it is.",
-  "write.favoriteSong.nothingToChange": "That is your favourite song already. Nothing was sent.",
-  "write.favoriteSong.refused1": "Hiroba says this song isn't unlocked yet.",
-  "write.favoriteSong.refused2": "Hiroba says this song isn't published.",
-  "favorites.slot": "Song {number}",
-  "favorites.slot.empty": "(empty)",
   "favorites.reading": "Reading your favourites from Hiroba…",
   "favorites.folder.heading": "Songs in the folder",
   "favorites.folderEmpty": "The favourites folder is empty.",
@@ -486,7 +410,6 @@ export const en: Messages = {
   "sort.cancelled": "{name} went back to where it was.",
   "favorites.addSongs": "Add songs",
   "favorites.removeSong": "Remove {name}",
-  "favorites.apply": "Apply",
   "favorites.delete": "Delete",
   "favorites.delete.title": "Delete this set?",
   "favorites.delete.body":
@@ -499,7 +422,7 @@ export const en: Messages = {
   "picker.title.single": "Choose your favourite song",
   "picker.title.multi": "Add songs",
   "picker.search": "Search songs",
-  "picker.searchHint": "By name, in Japanese, English, Chinese or romaji",
+  "picker.searchHint": "Japanese, English, Chinese or romaji",
   "picker.genre": "Genre",
   "picker.difficulty": "Difficulty",
   "picker.stars": "Stars",
@@ -507,14 +430,10 @@ export const en: Messages = {
   "picker.level": "★{level}",
   "picker.none": "No songs found.",
   "picker.loading": "Loading the song list…",
-  "picker.failed":
-    "The song list could not be loaded from taiko.wiki. Check your connection and try again.",
-  "picker.code": "Code for a report: {code}",
-  "picker.retry": "Retry",
+  "picker.failed": "The song list could not be loaded from taiko.wiki. Check your connection.",
   "picker.offeredReading": "Reading the songs Hiroba takes…",
   "picker.offeredFailed": "The songs Hiroba takes could not be read, so none can be picked yet.",
   "picker.limit": "A set holds {max} songs at most. Remove one to add another.",
-  "picker.done": "Done",
   "picker.close": "Close",
   "search.leave": "Close the search",
   "search.clear": "Clear",

@@ -3,14 +3,18 @@ import { Box, IconButton, Stack, Typography } from "@mui/material";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 
 import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
-import { HELD_STILL, LoadFailed, useFocusKept, Waiting } from "../my-page/editor-parts";
+import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
 import { SongDetails } from "../songs/song-details";
+import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
+import { ListIcon } from "../ui/icons";
+import { LoadFailed } from "../ui/read-failure-alert";
+import { CARD_GAP } from "../ui/section-card";
+import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
 import {
-  type FavoriteSet,
   filledSlots,
   moved,
   newSetName,
@@ -18,7 +22,6 @@ import {
   sameSongs,
   toggledSongs,
 } from "./favorite-sets";
-import { SetsIcon } from "./favorites-icons";
 import { type FavoritesStep, shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
 import type { PickableState } from "./pickable-songs";
@@ -28,8 +31,8 @@ import { SetsDrawer } from "./sets-drawer";
 import { keptShownDifficulty, ShownDifficultyContext } from "./shown-difficulty";
 import { SongCard } from "./song-card";
 import { rememberedSongs, resolveSong } from "./song-look";
+import type { DetailsOpener } from "./song-look-row";
 import { SongPicker } from "./song-picker";
-import type { DetailsOpener } from "./song-row";
 import { useFavoriteSets } from "./use-favorite-sets";
 import type { FavoritesEditor } from "./use-favorites";
 import { useSetsSwipe } from "./use-sets-swipe";
@@ -38,9 +41,11 @@ import type { SongCatalogue } from "./use-song-catalogue";
 const NO_SONGS: readonly string[] = [];
 
 /** What the name dialog asks for: a new set, opened for editing or not, or a set's new name. */
-type Naming =
-  | { readonly kind: "new"; readonly songs: readonly string[]; readonly editing: boolean }
-  | { readonly kind: "rename"; readonly set: FavoriteSet };
+/** A new set whose name is asked: its songs, and whether it opens in edit mode. */
+interface Naming {
+  readonly songs: readonly string[];
+  readonly editing: boolean;
+}
 
 export interface FavoritesPageProps {
   readonly favorites: FavoritesEditor;
@@ -53,7 +58,6 @@ export interface FavoritesPageProps {
   readonly lane: PictureLane;
   /** The songs Hiroba's own picker offers: neither picker lists any other. */
   readonly pickable: PickableState;
-  readonly onReadPickable: () => void;
   /** As a picker opens: reads the list when it is stale. */
   readonly onPickerOpen: () => void;
   readonly i18n: Translator;
@@ -75,7 +79,6 @@ function FavoritesBody({
   port,
   lane,
   pickable,
-  onReadPickable,
   onPickerOpen,
   i18n,
 }: FavoritesPageProps) {
@@ -94,6 +97,7 @@ function FavoritesBody({
   const [picking, setPicking] = useState<"song" | "set" | null>(null);
   const openPicker = (picker: "song" | "set") => {
     onPickerOpen();
+    catalogue.readIfFailed();
     setPicking(picker);
   };
   const [openSongNo, setOpenSongNo] = useState<string | null>(null);
@@ -156,14 +160,15 @@ function FavoritesBody({
     setDraft(null);
     setEditing(false);
   };
+  // A set shown from the drawer is a level of its own: Back goes to the current favourites.
+  useBackLeaves(set !== null, () => showSet(null));
   useBackLeaves(editing, leaveEditing);
   const named = (name: string) => {
-    if (naming?.kind === "new") {
+    if (naming !== null) {
       showSet(keptSets.add(name, naming.songs), naming.editing);
-    } else if (naming?.kind === "rename") {
-      keptSets.rename(naming.set.id, name);
     }
     setNaming(null);
+    setDrawerOpen(false);
   };
 
   // Focus leaves the button a write shuts, so it is not dropped to the window's top.
@@ -177,95 +182,126 @@ function FavoritesBody({
     showSet(null);
   };
   const setsLabel = t("favorites.sets");
+  // A set shown syncs as it is kept; its edits, on the device, wait for Save first.
+  const canApply =
+    set !== null &&
+    !editing &&
+    shown !== null &&
+    !shown.shut &&
+    set.songs.length > 0 &&
+    !sameSongs(set.songs, folderSongs ?? NO_SONGS);
+  const songPicked = shown !== null && !shown.shut && shown.draft !== null;
   return (
-    <Stack
+    <Box
       id="favorites-page"
       ref={page}
       data-step={step.name}
       tabIndex={-1}
-      spacing={2}
-      sx={{ width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, alignSelf: "center", outline: "none" }}
+      sx={{
+        ...SYNC_BAR_PAGE,
+        width: 1,
+        maxWidth: COLUMN_MAX_WIDTH_PX,
+        alignSelf: "center",
+        outline: "none",
+      }}
     >
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <Typography id="favorites-name" variant="h6" component="h2" noWrap>
-            {set === null ? t("favorites.current") : set.name}
-          </Typography>
+      <Stack spacing={2} sx={{ pb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Typography id="favorites-name" variant="h6" component="h2" noWrap>
+              {set === null ? t("favorites.current") : set.name}
+            </Typography>
+          </Box>
+          {/* A touch screen opens the drawer by a swipe from the right edge instead. */}
+          {!touchFirst && (
+            <IconButton
+              id="favorites-sets"
+              aria-label={setsLabel}
+              title={setsLabel}
+              aria-expanded={drawerOpen}
+              aria-controls={drawerOpen ? "favorites-drawer" : undefined}
+              onClick={() => setDrawerOpen(true)}
+            >
+              <ListIcon />
+            </IconButton>
+          )}
         </Box>
-        {/* A touch screen opens the drawer by a swipe from the right edge instead. */}
-        {!touchFirst && (
-          <IconButton
-            id="favorites-sets"
-            aria-label={setsLabel}
-            title={setsLabel}
-            aria-expanded={drawerOpen}
-            aria-controls={drawerOpen ? "favorites-drawer" : undefined}
-            onClick={() => setDrawerOpen(true)}
-          >
-            <SetsIcon />
-          </IconButton>
+        {set !== null ? (
+          <SetView
+            key={set.id}
+            songs={editedSongs}
+            look={look}
+            i18n={i18n}
+            openDetails={openDetails}
+            editing={editing}
+            edited={edited}
+            byLongPress={touchFirst}
+            onEdit={() => setEditing(true)}
+            onAddSongs={() => openPicker("set")}
+            onRemoveSong={(songNo) => edit((songs) => songs.filter((song) => song !== songNo))}
+            onMoveSong={(from, to) => edit((songs) => moved(songs, from, to))}
+            onReset={() => setDraft(null)}
+            onSave={() => {
+              if (draft !== null) {
+                keptSets.replaceSongs(set.id, draft);
+              }
+              leaveEditing();
+            }}
+          />
+        ) : shown === null ? (
+          failureOf(step, i18n)
+        ) : (
+          <Stack spacing={CARD_GAP} inert={shown.shut} sx={shown.shut ? HELD_STILL : undefined}>
+            <SongCard
+              shown={shown}
+              look={look}
+              i18n={i18n}
+              openDetails={openDetails}
+              onChange={() => openPicker("song")}
+            />
+            <FolderCard
+              shown={shown}
+              look={look}
+              i18n={i18n}
+              openDetails={openDetails}
+              sets={sets}
+              inUse={inUse}
+              onSaveAsSet={() =>
+                setNaming({ songs: filledSlots(shown.view.folder.state), editing: false })
+              }
+              onSaveToSet={(id) => keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))}
+            />
+          </Stack>
         )}
-      </Box>
-      {set !== null ? (
-        <SetView
-          key={set.id}
-          songs={editedSongs}
-          look={look}
+      </Stack>
+      {(set !== null || shown !== null) && (
+        <SyncBar
+          id="favorites"
+          canSync={set !== null ? canApply : songPicked}
+          onSync={set !== null ? () => void apply(set.songs) : saveSong}
+          onReset={set !== null ? undefined : favorites.resetSong}
+          canReset={songPicked}
+          saving={shown !== null && shown.saving !== null}
           i18n={i18n}
-          openDetails={openDetails}
-          editing={editing}
-          edited={edited}
-          canApply={
-            shown !== null &&
-            !shown.shut &&
-            set.songs.length > 0 &&
-            !sameSongs(set.songs, folderSongs ?? NO_SONGS)
-          }
-          applying={shown?.saving === "folder"}
-          byLongPress={touchFirst}
-          onEdit={() => setEditing(true)}
-          onAddSongs={() => openPicker("set")}
-          onRemoveSong={(songNo) => edit((songs) => songs.filter((song) => song !== songNo))}
-          onMoveSong={(from, to) => edit((songs) => moved(songs, from, to))}
-          onReset={() => setDraft(null)}
-          onSave={() => {
-            if (draft !== null) {
-              keptSets.replaceSongs(set.id, draft);
-            }
-            leaveEditing();
-          }}
-          onApply={() => void apply(set.songs)}
         />
-      ) : shown === null ? (
-        progressOf(step, i18n)
-      ) : (
-        <Stack spacing={2} inert={shown.shut} sx={shown.shut ? HELD_STILL : undefined}>
-          <SongCard
-            shown={shown}
-            look={look}
-            i18n={i18n}
-            openDetails={openDetails}
-            onChange={() => openPicker("song")}
-            onSave={saveSong}
-            onReset={favorites.resetSong}
-          />
-          <FolderCard
-            shown={shown}
-            look={look}
-            i18n={i18n}
-            openDetails={openDetails}
-            sets={sets}
-            inUse={inUse}
-            onSaveAsSet={() =>
-              setNaming({
-                kind: "new",
-                songs: filledSlots(shown.view.folder.state),
-                editing: false,
-              })
-            }
-            onSaveToSet={(id) => keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))}
-          />
-        </Stack>
+      )}
+      {shown?.notice?.write === "favoriteSong" && (
+        <WriteOutcomeSnackbar
+          id="favorite-song-outcome"
+          kind="favoriteSong"
+          outcome={shown.notice.outcome}
+          i18n={i18n}
+          onClosed={favorites.closeNotice}
+        />
+      )}
+      {shown?.notice?.write === "folder" && (
+        <WriteOutcomeSnackbar
+          id="favorite-folder-outcome"
+          kind="folder"
+          outcome={shown.notice.outcome}
+          i18n={i18n}
+          onClosed={favorites.closeNotice}
+        />
       )}
       <SetsDrawer
         open={drawerOpen}
@@ -278,17 +314,9 @@ function FavoritesBody({
           showSet(id);
           setDrawerOpen(false);
         }}
-        onAdd={() => {
-          setDrawerOpen(false);
-          setNaming({ kind: "new", songs: [], editing: true });
-        }}
+        onAdd={() => setNaming({ songs: [], editing: true })}
         onMove={keptSets.moveSet}
-        onRename={(id) => {
-          const chosen = sets.find((one) => one.id === id);
-          if (chosen !== undefined) {
-            setNaming({ kind: "rename", set: chosen });
-          }
-        }}
+        onRename={keptSets.rename}
         onDelete={(id) => {
           keptSets.remove(id);
           if (id === selectedId) {
@@ -302,19 +330,13 @@ function FavoritesBody({
         choice={songChoice}
         catalogue={catalogue}
         pickable={pickable}
-        onReadPickable={onReadPickable}
         i18n={i18n}
         onClose={() => setPicking(null)}
       />
       {naming !== null && (
         <SetNameDialog
-          key={naming.kind === "rename" ? naming.set.id : "new"}
-          title={t(naming.kind === "rename" ? "favorites.rename.title" : "favorites.newSet")}
-          initial={
-            naming.kind === "rename"
-              ? naming.set.name
-              : newSetName(sets, (number) => t("favorites.setName", { number }))
-          }
+          title={t("favorites.newSet")}
+          initial={newSetName(sets, (number) => t("favorites.setName", { number }))}
           i18n={i18n}
           onCancel={() => setNaming(null)}
           onSave={named}
@@ -326,7 +348,6 @@ function FavoritesBody({
           choice={setChoice}
           catalogue={catalogue}
           pickable={pickable}
-          onReadPickable={onReadPickable}
           i18n={i18n}
           onClose={() => setPicking(null)}
         />
@@ -338,19 +359,13 @@ function FavoritesBody({
         i18n={i18n}
         onClose={() => setOpenSongNo(null)}
       />
-    </Stack>
+    </Box>
   );
 }
 
-function progressOf(step: FavoritesStep, i18n: Translator): ReactNode {
-  switch (step.name) {
-    case "unread":
-    case "loading":
-      return <Waiting id="favorites-reading">{i18n.t("favorites.reading")}</Waiting>;
-    case "loadFailed":
-      return <LoadFailed id="favorites-load-failed" failure={step.failure} i18n={i18n} />;
-    case "ready":
-    case "saving":
-      return null;
-  }
+// A first read waits under the page's skeleton, and a read again under the held favourites.
+function failureOf(step: FavoritesStep, i18n: Translator): ReactNode {
+  return step.name === "loadFailed" ? (
+    <LoadFailed id="favorites-load-failed" failure={step.failure} i18n={i18n} />
+  ) : null;
 }

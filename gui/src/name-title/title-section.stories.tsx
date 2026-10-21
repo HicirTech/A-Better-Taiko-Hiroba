@@ -28,5 +28,5 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** The title worn, its picker and Save on one row; a pick saves to Hiroba, with what came of it. */
+/** The title worn and its picker; the page's bar sends a pick to Hiroba. */
 export const Title: Story = {};

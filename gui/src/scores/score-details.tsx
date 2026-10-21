@@ -1,30 +1,19 @@
-import type { RecentPlay } from "@abth/core";
+import type { Genre, RecentPlay } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import {
-  Box,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import { type ReactNode, useContext, useRef, useState } from "react";
+import { Box, Stack, Typography } from "@mui/material";
+import { type ReactNode, useRef, useState } from "react";
 
-import { CloseIcon } from "../favorites/favorites-icons";
-import { CROWN_KEY, CROWN_RATIO, HistoryRow } from "../history/history-row";
-import { useBackLeaves } from "../navigation/back-closers";
-import { PipelinesShownContext } from "../navigation/pipelines-shown";
+import { CROWN_KEY, CROWN_RATIO } from "../history/play-marks";
+import { PlayRow } from "../history/play-row";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import { PullToRead } from "../read-again/pull-to-read";
-import { RefreshIcon } from "../read-again/read-again-foot";
 import { SHUT_LOOK } from "../read-again/shut-look";
 import type { ScoreView } from "../session-port";
+import { LargeModal } from "../ui/large-modal";
+import { ReadAgainButton } from "../ui/read-again-button";
+import { SubsectionTitle } from "../ui/section-title";
 import type { ListedScore } from "./score-order";
 
 const TITLE_ID = "score-details-title";
@@ -40,11 +29,16 @@ const FACTS = {
   "& .fact-name": { color: "text.secondary" },
 } as const;
 const ROW = { display: "flex", alignItems: "center", gap: 1 } as const;
+// The head's words stand in line with the details' under them.
+const HEAD_ROW = { px: 2 } as const;
 
 /** A recent play whose chart's details are not here: its row, why, and a read of its song. */
 export interface PlayNotice {
   readonly play: RecentPlay;
   readonly name: { readonly text: string; readonly lang: string };
+  /** The song's genres and the chart's star level from the song list, as its row showed them. */
+  readonly genres: readonly Genre[] | undefined;
+  readonly stars: number | null;
   readonly why: ReactNode;
   /** Reads the play's song again; none when the app does not know the song. */
   readonly onRead: (() => void) | null;
@@ -74,41 +68,28 @@ export function ScoreDetails({
   readonly onReadSong: (score: ScoreView) => void;
   readonly onClose: () => void;
 }) {
-  const narrow = useMediaQuery(useTheme().breakpoints.down("sm"), { noSsr: true });
   const shown = listed ?? notice;
-  // Kept while the dialog fades out, so it does not go blank on its way.
+  // Kept while the modal slides away, so it does not go blank on its way.
   const [last, setLast] = useState(shown);
   if (shown !== null && shown !== last) {
     setLast(shown);
   }
-  useBackLeaves(shown !== null, onClose);
-  const covered = useContext(PipelinesShownContext);
-  return (
-    <Dialog
-      id="score-details"
-      open={shown !== null && !covered}
+  return last === null ? null : (
+    <DetailsBody
+      open={shown !== null}
+      shown={last}
+      lane={lane}
+      reading={reading}
+      readingSong={readingSong}
+      i18n={i18n}
+      onReadSong={onReadSong}
       onClose={onClose}
-      fullScreen={narrow}
-      fullWidth
-      maxWidth="sm"
-      aria-labelledby={TITLE_ID}
-    >
-      {last !== null && (
-        <DetailsBody
-          shown={last}
-          lane={lane}
-          reading={reading}
-          readingSong={readingSong}
-          i18n={i18n}
-          onReadSong={onReadSong}
-          onClose={onClose}
-        />
-      )}
-    </Dialog>
+    />
   );
 }
 
 function DetailsBody({
+  open,
   shown,
   lane,
   reading,
@@ -117,10 +98,11 @@ function DetailsBody({
   onReadSong,
   onClose,
 }: Omit<Parameters<typeof ScoreDetails>[0], "listed" | "notice"> & {
+  readonly open: boolean;
   readonly shown: ListedScore | PlayNotice;
 }) {
   const { t } = i18n;
-  // A touch screen's Back shuts the dialog and a pull reads it again, so it draws no buttons.
+  // A touch screen's pull reads it again, where a computer has the button.
   const touchFirst = useTouchFirst();
   const content = useRef<HTMLDivElement>(null);
   const readLabel = t("scores.readSong");
@@ -132,48 +114,55 @@ function DetailsBody({
           readSong: () => onReadSong(shown.score),
         }
       : { play: shown.play, name: shown.name, readSong: shown.onRead };
+  const { genres, stars } = shown;
   return (
-    <>
-      <Box sx={{ pt: 1, pl: 1, pr: touchFirst ? 1 : 9 }}>
-        <HistoryRow play={play} name={name} lane={lane} order={0} i18n={i18n} heading={TITLE_ID} />
-      </Box>
-      {!touchFirst && (
-        <Box sx={{ position: "absolute", right: 8, top: 8, display: "flex" }}>
-          {readSong !== null && (
-            // None while it is shut: a disabled button sends no event to open or close it.
-            <Tooltip title={reading ? "" : readLabel}>
-              <IconButton
-                id="score-details-read-song"
-                aria-label={readLabel}
-                disabled={reading}
-                onClick={readSong}
-              >
-                {readingSong ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
-              </IconButton>
-            </Tooltip>
-          )}
-          <IconButton aria-label={t("picker.close")} onClick={onClose}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-      )}
-      <DialogContent ref={content} sx={{ pt: 1 }}>
-        {readSong !== null && (
-          <PullToRead
-            active={touchFirst}
+    <LargeModal
+      id="score-details"
+      open={open}
+      title={
+        <PlayRow
+          play={play}
+          name={name}
+          genres={genres}
+          stars={stars}
+          lane={lane}
+          order={0}
+          i18n={i18n}
+          heading={TITLE_ID}
+          sx={HEAD_ROW}
+        />
+      }
+      actions={
+        readSong !== null && (
+          <ReadAgainButton
+            id="score-details-read-song"
+            label={readLabel}
             canRead={!reading}
+            reading={readingSong}
             onRead={readSong}
-            region={content}
-            id="score-details-pull"
           />
-        )}
-        {"score" in shown ? (
-          <ChartFacts score={shown.score} lane={lane} readingSong={readingSong} i18n={i18n} />
-        ) : (
-          <Box id="score-details-notice">{shown.why}</Box>
-        )}
-      </DialogContent>
-    </>
+        )
+      }
+      pageLike
+      contentRef={content}
+      i18n={i18n}
+      onClose={onClose}
+    >
+      {readSong !== null && (
+        <PullToRead
+          active={touchFirst}
+          canRead={!reading}
+          onRead={readSong}
+          region={content}
+          id="score-details-pull"
+        />
+      )}
+      {"score" in shown ? (
+        <ChartFacts score={shown.score} lane={lane} readingSong={readingSong} i18n={i18n} />
+      ) : (
+        <Box id="score-details-notice">{shown.why}</Box>
+      )}
+    </LargeModal>
   );
 }
 
@@ -221,9 +210,7 @@ function ChartFacts({
 
       {score.sections.length > 0 && (
         <Box>
-          <Typography variant="subtitle2" gutterBottom>
-            {t("scores.sections")}
-          </Typography>
+          <SubsectionTitle>{t("scores.sections")}</SubsectionTitle>
           <Stack component="ol" id="score-details-sections" spacing={1} sx={{ m: 0, p: 0 }}>
             {score.sections.map((section, index) => (
               <Box

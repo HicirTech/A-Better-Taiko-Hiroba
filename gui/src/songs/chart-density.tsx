@@ -1,9 +1,13 @@
 import { CHART_BRANCHES, type ChartBranch, type ChartDensity, type NoteDensity } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-import { Box, FormHelperText, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useState } from "react";
 
 import type { SongDensityRead } from "../song-catalogue/types";
+import { ProgressBar } from "../ui/progress-bar";
+import { ReadFailureAlert } from "../ui/read-failure-alert";
+import { SubsectionTitle } from "../ui/section-title";
+import { StatusNote } from "../ui/status-note";
 import { clockText, DensityLine, peakOf } from "./density-line";
 
 const BRANCH_LABEL: Readonly<Record<ChartBranch, MessageKey>> = {
@@ -44,70 +48,61 @@ export function ChartDensitySection({
   const failed = state.failure !== null && state.failure !== "noChart";
   return (
     <Box component="section" id="song-density" aria-labelledby="song-density-title">
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          columnGap: 1,
-          rowGap: 0.5,
-          mb: 1,
-        }}
-      >
-        <Typography id="song-density-title" component="h3" variant="subtitle2">
-          {t("details.density")}
-        </Typography>
-        {peak !== null && (
-          <Typography id="song-density-peak" variant="body2" color="text.secondary">
-            {t("details.densityPeak", { value: peak.count })}
-          </Typography>
-        )}
-        {checked && density.branched && (
-          <ToggleButtonGroup
-            id="song-density-branches"
-            size="small"
-            exclusive
-            value={branch}
-            onChange={(_event, chosen: ChartBranch | null) => chosen !== null && setBranch(chosen)}
-            aria-label={t("details.branch")}
-            sx={{ ml: "auto" }}
-          >
-            {CHART_BRANCHES.map((each) => (
-              <ToggleButton
-                key={each}
-                id={`song-density-branch-${each}`}
-                value={each}
-                sx={{ py: 0.25, px: 1, textTransform: "none" }}
+      <SubsectionTitle
+        id="song-density-title"
+        end={
+          <>
+            {peak !== null && (
+              <Typography id="song-density-peak" variant="body2" color="text.secondary">
+                {t("details.densityPeak", { value: peak.count })}
+              </Typography>
+            )}
+            {checked && density.branched && (
+              <ToggleButtonGroup
+                id="song-density-branches"
+                size="small"
+                exclusive
+                value={branch}
+                onChange={(_event, chosen: ChartBranch | null) =>
+                  chosen !== null && setBranch(chosen)
+                }
+                aria-label={t("details.branch")}
+                sx={{ ml: "auto" }}
               >
-                {t(BRANCH_LABEL[each])}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        )}
-      </Box>
+                {CHART_BRANCHES.map((each) => (
+                  <ToggleButton
+                    key={each}
+                    id={`song-density-branch-${each}`}
+                    value={each}
+                    sx={{ py: 0.25, px: 1, textTransform: "none" }}
+                  >
+                    {t(BRANCH_LABEL[each])}
+                  </ToggleButton>
+                ))}
+              </ToggleButtonGroup>
+            )}
+          </>
+        }
+      >
+        {t("details.density")}
+      </SubsectionTitle>
       {line !== null && peak !== null ? (
         <DensityLine
           density={line}
           label={t("details.densityLine", { peak: peak.count, at: clockText(peak.at) })}
         />
       ) : state.reading && state.read === null ? (
-        <FormHelperText id="song-density-reading" sx={{ m: 0 }}>
-          {t("details.densityReading")}
-        </FormHelperText>
+        <ProgressBar id="song-density-reading" label={t("details.densityReading")} />
       ) : (
-        !failed && (
-          <FormHelperText id="song-density-none" sx={{ m: 0 }}>
-            {t("details.noDensity")}
-          </FormHelperText>
-        )
+        !failed && <StatusNote id="song-density-none">{t("details.noDensity")}</StatusNote>
       )}
       {failed && (
-        <FormHelperText id="song-density-failure" error sx={{ m: 0, mt: 0.5 }}>
-          {t("details.densityFailed")}
-          <Box component="span" sx={{ display: "block", mt: 0.5, fontFamily: "monospace" }}>
-            {t("picker.code", { code: state.failure ?? "" })}
-          </Box>
-        </FormHelperText>
+        <ReadFailureAlert
+          id="song-density-failure"
+          message={t("details.densityFailed")}
+          code={state.failure}
+          i18n={i18n}
+        />
       )}
     </Box>
   );

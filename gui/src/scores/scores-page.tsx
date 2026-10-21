@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Stack, TextField, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 
 import { DIFFICULTY_LABEL, GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
@@ -7,11 +7,16 @@ import { keptShownDifficulty } from "../favorites/shown-difficulty";
 import { nameLanguage, shownName } from "../favorites/song-names";
 import { fold, searchedNames } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { HistoryRow, opensOnPress, type RowProps } from "../history/history-row";
+import { PLAY_ROW_PX, PlayRow } from "../history/play-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
+import { ProgressBar } from "../ui/progress-bar";
+import { LoadFailed } from "../ui/read-failure-alert";
+import { RowList, type RowPlace } from "../ui/row-list";
+import { SearchField } from "../ui/search-field";
+import { StatusNote } from "../ui/status-note";
 import { ScoreDetails } from "./score-details";
 import { ScoreFilters } from "./score-filters";
 import {
@@ -25,9 +30,8 @@ import {
 } from "./score-order";
 import type { ChosenSong, ScoresState } from "./use-scores";
 
-const LIST = { listStyle: "none", m: 0, p: 0 } as const;
-
 const chartOf = ({ songNo, level }: ScoreView) => `${songNo}/${level}`;
+const listedChart = (listed: ListedScore) => chartOf(listed.score);
 
 /** A chart's score as the page lists it, its song named as the player's language names it. */
 export function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Translator["locale"]) {
@@ -40,6 +44,7 @@ export function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Tra
     nameLang: song === undefined ? HIROBA_LANG : nameLanguage(song, name),
     searched: [score.songTitle, ...names].map(fold),
     stars: song?.levels[LEVEL_DIFFICULTY[score.level]] ?? null,
+    genres: song?.genres ?? [],
   } satisfies ListedScore;
 }
 
@@ -84,45 +89,48 @@ export function ScoresPage({
       ),
     [listed, filter, folded, sort, names],
   );
-  const openedScore = listed.find((one) => chartOf(one.score) === opened) ?? null;
+  const openedScore = listed.find((one) => listedChart(one) === opened) ?? null;
   const settled = view !== null && !reading && failure === null;
   return (
-    <Stack spacing={2} id="scores-page">
-      {reading && <Waiting id="scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>}
-      {failure !== null && (
-        <LoadFailed id="scores-failure" failure={failure} i18n={i18n}>
-          {failure.at !== undefined && (
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {stopText(i18n, failure.at)}
-            </Typography>
-          )}
-        </LoadFailed>
-      )}
-      {settled && rows.length === 0 && (
-        <Typography id="scores-empty" color="text.secondary">
-          {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
-        </Typography>
-      )}
-      {settled && rows.length > 0 && scores.nothingNew && (
-        <Typography id="scores-nothing-new" color="text.secondary">
-          {t("scores.nothingNew")}
-        </Typography>
-      )}
-      {settled && rows.length > 0 && view.unread > 0 && (
-        <Typography id="scores-unread" color="text.secondary">
-          {t("scores.unread", { count: number(view.unread) })}
-        </Typography>
-      )}
+    <>
       {rows.length > 0 && (
-        <Stack spacing={1.5}>
-          <TextField
+        <FrameTop>
+          <SearchField
             id="scores-search"
-            type="search"
-            size="small"
-            label={t("picker.search")}
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            query={query}
+            i18n={i18n}
+            hint={t("picker.searchHint")}
+            onQuery={setQuery}
           />
+        </FrameTop>
+      )}
+      <Stack spacing={2} id="scores-page" sx={{ minHeight: PAGE_HEIGHT }}>
+        {reading && (
+          <ScoresReading id="scores-reading" i18n={i18n} progress={progress} song={song} />
+        )}
+        {failure !== null && (
+          <LoadFailed id="scores-failure" failure={failure} i18n={i18n}>
+            {failure.at !== undefined && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                {stopText(i18n, failure.at)}
+              </Typography>
+            )}
+          </LoadFailed>
+        )}
+        {settled && rows.length === 0 && (
+          <StatusNote id="scores-empty" fill>
+            {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
+          </StatusNote>
+        )}
+        {settled && rows.length > 0 && scores.nothingNew && (
+          <StatusNote id="scores-nothing-new">{t("scores.nothingNew")}</StatusNote>
+        )}
+        {settled && rows.length > 0 && view.unread > 0 && (
+          <StatusNote id="scores-unread">
+            {t("scores.unread", { count: number(view.unread) })}
+          </StatusNote>
+        )}
+        {rows.length > 0 && (
           <ScoreFilters
             filter={filter}
             sort={sort}
@@ -130,35 +138,35 @@ export function ScoresPage({
             onFilter={(part) => setFilter((now) => ({ ...now, ...part }))}
             onSort={setSort}
           />
-        </Stack>
-      )}
-      {rows.length > 0 && shown.length === 0 && (
-        <Typography id="scores-no-match" color="text.secondary">
-          {t("scores.noMatch")}
-        </Typography>
-      )}
-      <Stack component="ul" id="scores-list" spacing={0} sx={LIST}>
-        {shown.map((one, index) => (
-          <ScoreRow
-            key={chartOf(one.score)}
-            listed={one}
-            lane={lane}
-            order={index}
-            i18n={i18n}
-            onOpen={() => setOpened(chartOf(one.score))}
-          />
-        ))}
+        )}
+        {rows.length > 0 && shown.length === 0 && (
+          <StatusNote id="scores-no-match" fill>
+            {t("scores.noMatch")}
+          </StatusNote>
+        )}
+        <RowList id="scores-list" rows={shown} keyOf={listedChart} rowPx={PLAY_ROW_PX}>
+          {(one, index, place) => (
+            <ScoreRow
+              listed={one}
+              lane={lane}
+              order={index}
+              place={place}
+              i18n={i18n}
+              onOpen={() => setOpened(listedChart(one))}
+            />
+          )}
+        </RowList>
+        <ScoreDetails
+          listed={openedScore}
+          lane={lane}
+          reading={reading}
+          readingSong={song !== null && song.songNo === openedScore?.score.songNo}
+          i18n={i18n}
+          onReadSong={(score) => void readSong(score)}
+          onClose={() => setOpened(null)}
+        />
       </Stack>
-      <ScoreDetails
-        listed={openedScore}
-        lane={lane}
-        reading={reading}
-        readingSong={song !== null && song.songNo === openedScore?.score.songNo}
-        i18n={i18n}
-        onReadSong={(score) => void readSong(score)}
-        onClose={() => setOpened(null)}
-      />
-    </Stack>
+    </>
   );
 }
 
@@ -167,29 +175,31 @@ function ScoreRow({
   listed,
   lane,
   order,
+  place,
   i18n,
   onOpen,
 }: {
   readonly listed: ListedScore;
   readonly lane: PictureLane;
   readonly order: number;
+  readonly place: RowPlace;
   readonly i18n: Translator;
   readonly onOpen: () => void;
 }) {
   const { score } = listed;
-  const rowProps: RowProps = {
-    ...opensOnPress(onOpen),
-    "data-song-no": score.songNo,
-    "data-level": score.level,
-  };
   return (
-    <HistoryRow
+    <PlayRow
       play={score}
       name={{ text: listed.name, lang: listed.nameLang }}
+      genres={listed.genres}
+      stars={listed.stars}
       lane={lane}
       order={order}
       i18n={i18n}
-      rowProps={rowProps}
+      onOpen={onOpen}
+      place={place}
+      data-song-no={score.songNo}
+      data-level={score.level}
     />
   );
 }
@@ -208,6 +218,28 @@ export function scoresReadingText(
   }
   const key = progress.step === "lists" ? "scores.readingLists" : "scores.readingCharts";
   return i18n.t(key, { done: i18n.number(progress.done), total: i18n.number(progress.total) });
+}
+
+/** A read of scores as a progress bar: it fills once the read knows its lists or charts. */
+export function ScoresReading({
+  id,
+  i18n,
+  progress,
+  song,
+}: {
+  readonly id?: string | undefined;
+  readonly i18n: Translator;
+  readonly progress: ScoresProgress | null;
+  readonly song: ChosenSong | null;
+}) {
+  const counted = song === null && progress !== null && progress.step !== "recentPlays";
+  return (
+    <ProgressBar
+      id={id}
+      label={scoresReadingText(i18n, progress, song)}
+      progress={counted ? progress : null}
+    />
+  );
 }
 
 function stopText(i18n: Translator, at: ScoresStop): string {

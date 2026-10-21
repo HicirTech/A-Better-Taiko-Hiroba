@@ -26,7 +26,7 @@ export const OptionIcon: Story = {
   args: { want: { kind: "optionIcon", option: "a7" }, width: 30, height: 30, label: "でたらめ" },
 };
 
-/** The space an icon keeps while it is on its way. */
+/** A grey block of the icon's size while it is on its way. */
 export const Waiting: Story = { render: (args) => <HirobaIcon {...args} lane={WAITING_LANE} /> };
 
 export const Failed: Story = { render: (args) => <HirobaIcon {...args} lane={FAILING_LANE} /> };

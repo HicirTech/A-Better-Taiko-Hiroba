@@ -12,6 +12,7 @@ export const knowYourselfKeys = [
   "ladderRowOpensItsChartsNotCleared",
   "gapListNarrowsToNeverPlayed",
   "nearestGapsGoToANewSet",
+  "knowNewSetCancelGoesBackToTheChooser",
   "setHoldingTheTickedSongsIsRefused",
   "rankRowsOpenNothing",
   "bpmBandsAWobblingTempoByItsNumber",
@@ -32,28 +33,34 @@ const isHirobaPage = (line: string) => !/\.(png|gif|jpe?g)$/.test(line) && !line
 export async function knowYourself(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { attribute, exists, press } = pageHelpers(page);
+  const { attribute, exists, listRows, press } = pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
     waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  // A part unfolds over a moment and clips what it holds until it has: a check waits it out.
   const unfold = async (part: string) => {
     await click(`#know-${part}-header`);
     await shown(`#know-${part}-content`);
+    await waitFor(
+      `#know-${part} unfolded`,
+      async () =>
+        (await page.evaluate<boolean>(
+          `document.querySelector("#know-${part}-content")?.closest(".MuiCollapse-root")?.classList.contains("MuiCollapse-entered") === true`,
+        )) || undefined,
+    );
   };
   const totalOf = async (row: string) => Number(await textOf(`${row}-total`));
   const rowTotals = (rows: string) =>
     page.evaluate<number[]>(
       `[...document.querySelectorAll('[id^="${rows}-"][id$="-total"]')].filter((cell) => !cell.id.startsWith("${rows}-all-")).map((cell) => Number(cell.textContent))`,
     );
+  // A chart list draws only the rows near the window: these walk it.
   const notesIn = (list: string) =>
-    page.evaluate<string[]>(
-      `[...document.querySelectorAll("#${list} li .chart-note")].map((note) => note.textContent)`,
-    );
-  const songsIn = (list: string) =>
-    page.evaluate<string[]>(
-      `[...new Set([...document.querySelectorAll("#${list} li[data-song-no]")].map((row) => row.dataset.songNo))]`,
-    );
+    listRows<string>(`#${list}-rows`, "(row) => row.querySelector('.chart-note')?.textContent");
+  const songsIn = async (list: string) => [
+    ...new Set(await listRows<string>(`#${list}-rows`, "(row) => row.dataset.songNo")),
+  ];
   const kept = () =>
     page.evaluate<{ name: string; songs: string[] }[]>(
       `(JSON.parse(localStorage.getItem(${JSON.stringify(SETS_KEY)}) ?? "{}").sets ?? []).map(({ name, songs }) => ({ name, songs }))`,
@@ -126,8 +133,14 @@ export async function knowYourself(ctx: Ctx) {
   await shown("#know-add-to-set");
   await click("#know-add-new-set");
   await shown("#favorite-set-name-dialog");
+  await press("Escape");
+  await gone("#favorite-set-name-dialog");
+  results.knowNewSetCancelGoesBackToTheChooser = await exists("#know-add-to-set");
+  await click("#know-add-new-set");
+  await shown("#favorite-set-name-dialog");
   await click("#favorite-set-name-save");
   await gone("#favorite-set-name-dialog");
+  await gone("#know-add-to-set");
   const sets = await kept();
   const index = sets.length - 1;
   results.nearestGapsGoToANewSet = nearest.length > 0 && same(sets[index]?.songs ?? [], nearest);

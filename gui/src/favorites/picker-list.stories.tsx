@@ -115,3 +115,31 @@ export const InnerChartRows: Story = {
     );
   },
 };
+
+// As many rows as the whole song list gives the picker.
+const MANY = 1500;
+
+/** A picker of many over the whole song list: only the rows near the window are drawn. */
+export const ThousandsOfSongs: Story = {
+  render: (args, { globals }) => {
+    const locale = localeOf(globals);
+    const entries = Array.from({ length: MANY }, (_, index) => index).flatMap((index) => {
+      const song = STORY_SONGS[index % STORY_SONGS.length];
+      if (song === undefined) {
+        return [];
+      }
+      const look = lookOfCatalogue(song, locale);
+      return [{ look: { ...look, songNo: `${90000 + index}` }, shown: null, other: null }];
+    });
+    return (
+      <Box sx={{ maxWidth: 640 }}>
+        <PickerList
+          {...args}
+          entries={entries}
+          i18n={i18nOf(globals)}
+          many={pickedOf(["90001"], 30)}
+        />
+      </Box>
+    );
+  },
+};

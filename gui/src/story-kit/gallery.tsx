@@ -14,6 +14,8 @@ export interface Member {
   readonly story: StoryParts;
   /** The whole row, for a member as wide as a page. */
   readonly wide?: boolean;
+  /** Drawn at the window's edge, as a snackbar is: its cell holds it. */
+  readonly fixed?: boolean;
 }
 
 /** What a story draws, given the gallery's own context: the renders read only its globals. */
@@ -39,6 +41,7 @@ const inCells = (outer: Theme): Theme => {
       ...outer.components,
       MuiDialog: { defaultProps: inPlace },
       MuiDrawer: { defaultProps: { ModalProps: inPlace } },
+      MuiModal: { defaultProps: inPlace },
       MuiPopover: { defaultProps: inPlace },
     },
   };
@@ -65,30 +68,37 @@ export function Gallery({
         p: 2,
       }}
     >
-      {members.map((member) => (
-        <Box key={member.name} sx={member.wide === true ? { gridColumn: "1 / -1" } : undefined}>
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{ display: "block", mb: 0.5, fontFamily: "monospace" }}
-          >
-            {member.name}
-          </Typography>
-          <Box
-            sx={{
-              position: "relative",
-              border: 1,
-              borderColor: "divider",
-              borderRadius: 1,
-              p: overlays ? 0 : 2,
-              // A transform makes the box hold what is fixed inside it, such as a dialog.
-              ...(overlays && { height: 520, overflow: "hidden", transform: "translateZ(0)" }),
-            }}
-          >
-            {viewOf(member, context)}
+      {members.map((member) => {
+        const holds = overlays || member.fixed === true;
+        return (
+          <Box key={member.name} sx={member.wide === true ? { gridColumn: "1 / -1" } : undefined}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mb: 0.5, fontFamily: "monospace" }}
+            >
+              {member.name}
+            </Typography>
+            <Box
+              sx={{
+                position: "relative",
+                border: 1,
+                borderColor: "divider",
+                borderRadius: 1,
+                p: overlays ? 0 : 2,
+                // A transform makes the box hold what is fixed inside it, such as a dialog.
+                ...(holds && {
+                  height: overlays ? 520 : 120,
+                  overflow: "hidden",
+                  transform: "translateZ(0)",
+                }),
+              }}
+            >
+              {viewOf(member, context)}
+            </Box>
           </Box>
-        </Box>
-      ))}
+        );
+      })}
     </Box>
   );
   return overlays ? <ThemeProvider theme={inCells}>{grid}</ThemeProvider> : grid;

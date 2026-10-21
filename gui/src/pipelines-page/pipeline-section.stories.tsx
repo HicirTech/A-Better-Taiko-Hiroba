@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Paper } from "@mui/material";
+import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useState } from "react";
 import { fn } from "storybook/test";
@@ -21,7 +21,7 @@ function IoSection({ args, i18n, first }: { args: Args; i18n: Translator; first:
     void createStoryPort().readPipelines(10).then(setView);
   }, []);
   return (
-    <Paper variant="outlined" sx={{ maxWidth: 640 }}>
+    <Box sx={{ maxWidth: 640 }}>
       <PipelineSection
         id="story-pipeline"
         i18n={i18n}
@@ -33,7 +33,7 @@ function IoSection({ args, i18n, first }: { args: Args; i18n: Translator; first:
           args.onListed(next);
         }}
       />
-    </Paper>
+    </Box>
   );
 }
 

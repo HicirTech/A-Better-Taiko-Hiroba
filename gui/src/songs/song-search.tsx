@@ -1,17 +1,14 @@
 import type { Translator } from "@abth/i18n";
 import {
   Box,
-  FormHelperText,
   IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Paper,
 } from "@mui/material";
 import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
-import { CloseIcon } from "../favorites/favorites-icons";
 import { type PickerEntry, PickerList } from "../favorites/picker-list";
 import { keptShownDifficulty, ShownDifficultyContext } from "../favorites/shown-difficulty";
 import { SongListFailed } from "../favorites/song-list-failed";
@@ -19,16 +16,25 @@ import { lookOfCatalogue } from "../favorites/song-look";
 import { nameLanguage } from "../favorites/song-names";
 import { searchSongs } from "../favorites/song-search";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { Waiting } from "../my-page/editor-parts";
-import { FrameTop } from "../navigation/app-frame";
+import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import { useBackLeaves } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../session-port";
+import { CloseIcon, HistoryIcon } from "../ui/icons";
+import { ProgressBar } from "../ui/progress-bar";
+import { SearchField } from "../ui/search-field";
+import { SectionCard } from "../ui/section-card";
+import { StatusNote } from "../ui/status-note";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
 import { SongDetails } from "./song-details";
 import { bpmText } from "./song-facts";
-import { HistoryIcon } from "./song-icons";
-import { SongSearchBar } from "./song-search-bar";
+
+// A search with nothing found fills the window's page, so its words stand in the middle of it.
+const FILLS_THE_PAGE = {
+  display: "flex",
+  flexDirection: "column",
+  minHeight: PAGE_HEIGHT,
+} as const;
 
 export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
@@ -59,6 +65,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
     if (!active) {
       setActive(true);
       onOpen();
+      catalogue.readIfFailed();
     }
   };
   const leave = () => {
@@ -90,7 +97,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
   const framed = searched && entries.length > 0;
   let panel: ReactNode;
   if (catalogue.state === "loading") {
-    panel = <Waiting id="song-search-loading">{t("picker.loading")}</Waiting>;
+    panel = <ProgressBar id="song-search-loading" label={t("picker.loading")} />;
   } else if (catalogue.state === "failed") {
     panel = <SongListFailed id="song-search" catalogue={catalogue} i18n={i18n} />;
   } else if (!searched) {
@@ -107,13 +114,13 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
                   aria-label={t("search.forget", { query: one })}
                   onClick={() => setRecent(forgetSearch(one))}
                 >
-                  <CloseIcon />
+                  <CloseIcon fontSize="small" />
                 </IconButton>
               }
             >
               <ListItemButton onClick={() => setQuery(one)}>
                 <ListItemIcon sx={{ minWidth: 40 }}>
-                  <HistoryIcon />
+                  <HistoryIcon fontSize="small" />
                 </ListItemIcon>
                 <ListItemText primary={one} />
               </ListItemButton>
@@ -122,7 +129,11 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
         </List>
       );
   } else if (entries.length === 0) {
-    panel = <FormHelperText id="song-search-none">{t("picker.none")}</FormHelperText>;
+    panel = (
+      <StatusNote id="song-search-none" fill>
+        {t("picker.none")}
+      </StatusNote>
+    );
   } else {
     panel = (
       <PickerList
@@ -138,9 +149,9 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
   return (
     <>
       <FrameTop>
-        <SongSearchBar
+        <SearchField
+          id="song-search"
           query={query}
-          active={active}
           i18n={i18n}
           inputRef={input}
           onQuery={(next) => {
@@ -148,22 +159,22 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
             activate();
             setQuery(next);
           }}
-          onActivate={activate}
-          onLeave={leave}
-          onSubmit={() => {
-            setRecent(rememberSearch(query));
-            input.current?.blur();
-          }}
+          onFocus={activate}
+          onLeave={active ? leave : undefined}
+          onSubmit={() => setRecent(rememberSearch(query))}
+          hint={recent.length === 0 ? t("picker.searchHint") : undefined}
         />
       </FrameTop>
       {active && panel !== null && (
         <ShownDifficultyContext value={shownDifficulty}>
           {framed ? (
-            <Paper id="song-search-panel" variant="outlined" sx={{ py: 1, overflow: "hidden" }}>
+            <SectionCard id="song-search-panel" flush sx={{ py: 1 }}>
               {panel}
-            </Paper>
+            </SectionCard>
           ) : (
-            <Box id="song-search-panel">{panel}</Box>
+            <Box id="song-search-panel" sx={searched ? FILLS_THE_PAGE : undefined}>
+              {panel}
+            </Box>
           )}
         </ShownDifficultyContext>
       )}

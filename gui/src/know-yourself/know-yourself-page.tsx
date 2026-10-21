@@ -1,6 +1,6 @@
 import { chartKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, Stack, Typography } from "@mui/material";
+import { Box, Stack } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { newSetName, SET_SONG_LIMIT } from "../favorites/favorite-sets";
@@ -12,13 +12,16 @@ import { SongListFailed } from "../favorites/song-list-failed";
 import { resolveSong } from "../favorites/song-look";
 import { useFavoriteSets } from "../favorites/use-favorite-sets";
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { LoadFailed, Waiting } from "../my-page/editor-parts";
+import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf, scoresReadingText } from "../scores/scores-page";
+import { listedOf, ScoresReading } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
-import type { HirobaSessionPort, ShownSong } from "../session-port";
+import type { ListedChartsView, ShownSong } from "../session-port";
+import { LoadFailed } from "../ui/read-failure-alert";
+import { CARD_GAP } from "../ui/section-card";
+import { StatusNote } from "../ui/status-note";
 import { AddSongsDialog } from "./add-songs-dialog";
 import { BandItem } from "./band-item";
 import { ChartList } from "./chart-list";
@@ -28,12 +31,11 @@ import { type KnownChart, knownCharts, shownAt } from "./known-charts";
 import { NearMissItem } from "./near-miss-item";
 import type { PageParts } from "./page-parts";
 import { RanksItem } from "./ranks-item";
-import { useListedCharts } from "./use-listed-charts";
 
 /** Where the player stands, from the kept scores and taiko.wiki's list; asks Hiroba nothing. */
 export function KnowYourselfPage({
   scores,
-  port,
+  listed,
   catalogue,
   lane,
   touchFirst,
@@ -41,7 +43,8 @@ export function KnowYourselfPage({
   i18n,
 }: {
   readonly scores: ScoresState;
-  readonly port: Pick<HirobaSessionPort, "listedCharts">;
+  /** Every chart the lists name, held by the window across visits. */
+  readonly listed: ListedChartsView | null;
   /** taiko.wiki's song list: each chart's stars, notes and tempo, and the names. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
@@ -53,8 +56,10 @@ export function KnowYourselfPage({
 }) {
   const { t, number, locale } = i18n;
   const { view, reading, progress, song, failure, load, readSong } = scores;
+  const { readIfFailed } = catalogue;
   useEffect(load, [load]);
-  const listed = useListedCharts(port, view);
+  // A song list that could not be read is read again as the page opens.
+  useEffect(readIfFailed, [readIfFailed]);
   const kept = useFavoriteSets();
   const [shown, setShown] = useState(keptShownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);
@@ -141,28 +146,25 @@ export function KnowYourselfPage({
     fill: { colour: DIFFICULTY_COLOUR[difficulty], text: DIFFICULTY_TEXT },
   }));
   return (
-    <Stack spacing={3} id="know-yourself-page">
+    <Stack spacing={3} id="know-yourself-page" sx={{ minHeight: PAGE_HEIGHT }}>
       {reading && (
-        <Waiting id="know-scores-reading">{scoresReadingText(i18n, progress, song)}</Waiting>
+        <ScoresReading id="know-scores-reading" i18n={i18n} progress={progress} song={song} />
       )}
       {failure !== null && <LoadFailed id="know-scores-failure" failure={failure} i18n={i18n} />}
-      {catalogue.state === "loading" && (
-        <Waiting id="know-songs-loading">{t("picker.loading")}</Waiting>
-      )}
       {catalogue.state === "failed" && (
         <Box>
           <SongListFailed id="know-songs" catalogue={catalogue} i18n={i18n} />
         </Box>
       )}
       {settled && listed !== null && listed.charts.length === 0 && (
-        <Typography id="know-empty" color="text.secondary">
+        <StatusNote id="know-empty" fill>
           {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
-        </Typography>
+        </StatusNote>
       )}
       {settled && view.unread > 0 && (
-        <Typography id="know-unread" color="text.secondary">
+        <StatusNote id="know-unread">
           {t("scores.unread", { count: number(view.unread) })}
-        </Typography>
+        </StatusNote>
       )}
       {known !== null && known.length > 0 && (
         <>
@@ -182,7 +184,7 @@ export function KnowYourselfPage({
               }}
             />
           </Box>
-          <Stack spacing={1.5}>
+          <Stack spacing={CARD_GAP}>
             <CrownsItem charts={here} parts={parts} />
             <RanksItem charts={here} parts={parts} />
             <BandItem view="perSecond" charts={here} parts={parts} />
@@ -210,10 +212,7 @@ export function KnowYourselfPage({
             kept.replaceSongs(set.id, [...set.songs, ...added]);
             setAdding(null);
           }}
-          onNewSet={() => {
-            setNaming(adding.slice(0, SET_SONG_LIMIT));
-            setAdding(null);
-          }}
+          onNewSet={() => setNaming(adding.slice(0, SET_SONG_LIMIT))}
           onClose={() => setAdding(null)}
         />
       )}
@@ -226,6 +225,7 @@ export function KnowYourselfPage({
           onSave={(name) => {
             kept.add(name, naming);
             setNaming(null);
+            setAdding(null);
           }}
         />
       )}

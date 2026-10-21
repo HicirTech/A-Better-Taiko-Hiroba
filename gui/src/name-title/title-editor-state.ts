@@ -1,6 +1,6 @@
 import { type Result, sameTitle, type TitleOption } from "@abth/core";
 
-import { type Noticed, noticeOf } from "../my-page/write-ending";
+import { endsTheEdit, type Noticed, noticeOf } from "../my-page/write-ending";
 import type { ReadFailure, TitleEditorView, TitleState, WriteOutcomeView } from "../session-port";
 
 type TitleOutcome = WriteOutcomeView<TitleState>;
@@ -17,7 +17,7 @@ export type TitleStep =
       readonly name: "idle";
       readonly list: TitleList;
       readonly picked: TitleOption | null;
-      /** How the last write ended, until the next pick, save or read; none if it applied. */
+      /** How the last write ended, until it is said or the next pick, save or read. */
       readonly notice: Noticed<TitleState> | null;
     }
   | { readonly name: "saving"; readonly list: TitleList; readonly picked: TitleOption };
@@ -32,7 +32,8 @@ export type TitleAction =
   | { readonly type: "readEnded"; readonly result: Result<TitleEditorView, ReadFailure> }
   | { readonly type: "picked"; readonly option: TitleOption | null }
   | { readonly type: "saveStarted" }
-  | { readonly type: "writeEnded"; readonly outcome: TitleOutcome };
+  | { readonly type: "writeEnded"; readonly outcome: TitleOutcome }
+  | { readonly type: "noticeClosed" };
 
 const UNREAD: TitleList = { name: "unread" };
 
@@ -67,6 +68,8 @@ export function reduceTitle(step: TitleStep, action: TitleAction): TitleStep {
         : step;
     case "writeEnded":
       return writeEnded(step, action.outcome);
+    case "noticeClosed":
+      return step.name === "idle" && step.notice !== null ? { ...step, notice: null } : step;
   }
 }
 
@@ -95,9 +98,6 @@ function readEnded(step: Idle, result: Result<TitleEditorView, ReadFailure>): Ti
   return { ...step, list: { name: "read", options }, picked: kept ? picked : null };
 }
 
-const leavesTheTitle = (outcome: TitleOutcome): boolean =>
-  outcome.kind === "applied" || outcome.kind === "appliedNotSynced";
-
 function writeEnded(step: TitleStep, outcome: TitleOutcome): TitleStep {
   if (step.name !== "saving") {
     return step;
@@ -105,7 +105,7 @@ function writeEnded(step: TitleStep, outcome: TitleOutcome): TitleStep {
   return {
     name: "idle",
     list: UNREAD,
-    picked: leavesTheTitle(outcome) ? null : step.picked,
+    picked: endsTheEdit(outcome) ? null : step.picked,
     notice: noticeOf(outcome),
   };
 }

@@ -261,6 +261,74 @@ export function pageHelpers(page: Page) {
     );
   const touchMoves = () => page.evaluate<number>("window.touchMoves");
 
+  // A long list keeps only the rows near the window in the page: the window walks it to see more.
+  // What a list scrolls in: the page, or the element `scroller` names, such as a dialog's body.
+  const scrolling = (scroller?: string) =>
+    `const box = ${scroller === undefined ? "null" : `document.querySelector(${JSON.stringify(scroller)})`};
+      const at = () => (box === null ? scrollY : box.scrollTop);
+      const to = (top) => (box === null ? scrollTo(0, top) : box.scrollTo(0, top));
+      const onward = () => (box === null ? scrollBy(0, innerHeight) : box.scrollBy(0, box.clientHeight));`;
+  /** Every row of a long list, read by `read`; its scroll walks it from the top and back. */
+  const listRows = <T>(list: string, read: string, scroller?: string) =>
+    page.evaluate<T[]>(`(async () => {
+      const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const read = ${read};
+      ${scrolling(scroller)}
+      const from = at();
+      const seen = new Map();
+      to(0);
+      await frame();
+      for (;;) {
+        for (const row of document.querySelectorAll(${JSON.stringify(`${list} > li`)})) seen.set(Number(row.dataset.index), read(row));
+        const before = at();
+        onward();
+        await frame();
+        if (at() === before) break;
+      }
+      to(from);
+      await frame();
+      return [...seen].sort(([one], [other]) => one - other).map(([, value]) => value);
+    })()`);
+  /** The selector of the long list's row that `matches`, walked to and put mid-window. */
+  const rowInView = async (list: string, matches: string, scroller?: string) => {
+    const index = await page.evaluate<number | null>(`(async () => {
+      const frame = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+      const matches = ${matches};
+      ${scrolling(scroller)}
+      const found = () => [...document.querySelectorAll(${JSON.stringify(`${list} > li`)})].find(matches);
+      let row = found();
+      if (row === undefined) {
+        to(0);
+        await frame();
+        row = found();
+      }
+      while (row === undefined) {
+        const before = at();
+        onward();
+        await frame();
+        if (at() === before) return null;
+        row = found();
+      }
+      row.scrollIntoView({ block: "center" });
+      await frame();
+      return Number(row.dataset.index);
+    })()`);
+    if (index === null) {
+      throw new Error(`No row of ${list} matches ${matches}`);
+    }
+    return `${list} > li[data-index="${index}"]`;
+  };
+
+  /** Waits until a modal's panel has slid in, as a finger can touch only what is there. */
+  const inPlace = (modal: string) =>
+    waitFor(
+      `${modal} in place`,
+      async () =>
+        (await page.evaluate<boolean>(
+          `document.querySelector(${JSON.stringify(`${modal} [role="dialog"]`)})?.getAnimations().length === 0`,
+        )) || undefined,
+    );
+
   // A real press: an SVG has no click(), and a chip's × is one.
   const mousePress = async (selector: string, button: "left" | "right", heldMs = 0) => {
     await page.evaluate(
@@ -304,6 +372,9 @@ export function pageHelpers(page: Page) {
     touchClicks,
     countTouchMoves,
     touchMoves,
+    listRows,
+    rowInView,
+    inPlace,
     mousePress,
   };
 }

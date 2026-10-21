@@ -1,4 +1,4 @@
-import { Paper } from "@mui/material";
+import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
@@ -11,9 +11,9 @@ const meta = {
   title: "Cards and sections/UpdatesSection",
   tags: ["settings"],
   render: (args, { globals }) => (
-    <Paper variant="outlined" sx={{ maxWidth: 600 }}>
+    <Box sx={{ maxWidth: 600 }}>
       <UpdatesSection {...args} i18n={i18nOf(globals)} />
-    </Paper>
+    </Box>
   ),
   args: { version: "0.5.1", check: "idle", onCheck: fn(), onOpenReleases: fn() },
 } satisfies Meta<Args>;

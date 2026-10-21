@@ -29,7 +29,8 @@ export interface SongCatalogue {
   /** `failed` only when no song list is kept to use; a kept one is used without a word. */
   readonly state: "loading" | "ready" | "failed";
   readonly failure: SongCatalogueFailure["code"] | null;
-  retry(): void;
+  /** Reads the list again if the last read failed with none kept: as a part that needs it opens. */
+  readIfFailed(): void;
 }
 
 const NONE: readonly CatalogueSong[] = [];
@@ -42,6 +43,7 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
   const [failure, setFailure] = useState<SongCatalogueFailure["code"] | null>(null);
   const started = useRef(false);
   const reading = useRef(false);
+  const failed = useRef(false);
 
   const refresh = useCallback(
     async (known: KeptCatalogue | null) => {
@@ -51,6 +53,7 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
       }
 
       reading.current = true;
+      failed.current = false;
       setFailure(null);
       const result = await port.readSongCatalogue(ask.since);
       reading.current = false;
@@ -59,6 +62,7 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
         keepCatalogue(merged);
         setKept(merged);
       } else if (known === null) {
+        failed.current = true;
         setFailure(result.error.code);
       }
     },
@@ -93,6 +97,12 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
     void refresh(cached).then(() => refreshNames(cachedNames));
   }, [needed, refresh, refreshNames]);
 
+  const readIfFailed = useCallback(() => {
+    if (failed.current) {
+      void refresh(null);
+    }
+  }, [refresh]);
+
   const known = kept?.songs ?? NONE;
   const list = useMemo(() => {
     const named = chineseNamesBySong(known, names?.pages ?? []);
@@ -104,6 +114,6 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
     list,
     state: kept !== null ? "ready" : failure !== null ? "failed" : "loading",
     failure,
-    retry: () => void refresh(kept),
+    readIfFailed,
   };
 }

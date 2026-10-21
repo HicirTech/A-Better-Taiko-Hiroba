@@ -2,6 +2,7 @@ import { useContext } from "react";
 
 import { BackClosersContext } from "../navigation/back-closers";
 import { MenuOpenContext } from "../navigation/menu-open";
+import { PipelinesShownContext } from "../navigation/pipelines-shown";
 import { inTextField, useSwipe } from "../navigation/use-swipe";
 import { pointOf } from "../read-again/pull-gesture";
 import { setsSwipeStarted } from "./sets-swipe";
@@ -16,6 +17,7 @@ export interface SetsSwipeProps {
 export function useSetsSwipe({ active, open, onOpenChange }: SetsSwipeProps): void {
   const closers = useContext(BackClosersContext);
   const menuOpen = useContext(MenuOpenContext);
+  const covered = useContext(PipelinesShownContext);
   useSwipe({
     active,
     begin: (event) => {
@@ -26,7 +28,7 @@ export function useSetsSwipe({ active, open, onOpenChange }: SetsSwipeProps): vo
             fingers: event.touches.length,
             drawerOpen: open,
             windowWidthPx: window.innerWidth,
-            claimed: menuOpen || closers.isOpen() || inTextField(event.target),
+            claimed: menuOpen || covered || closers.isOpen() || inTextField(event.target),
           });
     },
     onReached: (swipe) => onOpenChange(swipe.direction === "left"),

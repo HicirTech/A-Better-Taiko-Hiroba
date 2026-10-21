@@ -4,7 +4,7 @@ import { encode } from "fast-png";
 
 import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "../scripts/mock-dan-label";
 import { danPlatePng } from "../scripts/mock-dan-plate";
-import { readOwnProfile, readProfile } from "../src/hiroba-session";
+import { readOwnProfile } from "../src/hiroba-session";
 import { pngDataUrl } from "../src/hiroba-session/png-answer";
 
 const ENDPOINTS = {
@@ -117,10 +117,10 @@ function blankPng(width: number, height: number): Uint8Array {
   );
 }
 
-describe("readProfile", () => {
+describe("readOwnProfile", () => {
   test("asks for my page, then the dan label it shows, with nothing but the method and the URL", async () => {
     const requests: TransportRequest[] = [];
-    await readProfile(
+    await readOwnProfile(
       fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT), NINTH_DAN, requests),
       ENDPOINTS,
       NOW,
@@ -133,21 +133,20 @@ describe("readProfile", () => {
 
   test("carries identity, the dan, the panel, the medal and favourites to the view", async () => {
     const transport = fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT));
-    expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(
-      ok({
-        nickname: "サンプルどん",
-        title: "サンプルの称号",
-        rename: "unknown",
-        region: "サンプル",
-        dan: { board: 14, picture: labelPicture(danLabelPng(14)) },
-        crowns: { silver: 11, gold: 2, donderful: 1 },
-        panel: { countLevel: 5, ranks: { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7 } },
-        medal: { name: "どんメダル2026秋", progress: { kind: "complete" } },
-        favoriteSong: null,
-        favoriteFolder: ["サンプル曲"],
-        fetchedAt: "2026-09-27T00:00:00.000Z",
-      }),
-    );
+    const read = await readOwnProfile(transport, ENDPOINTS, NOW);
+    expect(read.ok && read.value.view).toEqual({
+      nickname: "サンプルどん",
+      title: "サンプルの称号",
+      rename: "unknown",
+      region: "サンプル",
+      dan: { board: 14, picture: labelPicture(danLabelPng(14)) },
+      crowns: { silver: 11, gold: 2, donderful: 1 },
+      panel: { countLevel: 5, ranks: { 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7 } },
+      medal: { name: "どんメダル2026秋", progress: { kind: "complete" } },
+      favoriteSong: null,
+      favoriteFolder: ["サンプル曲"],
+      fetchedAt: "2026-09-27T00:00:00.000Z",
+    });
   });
 
   test.each([
@@ -158,8 +157,8 @@ describe("readProfile", () => {
       "</body>",
       `<script>jQuery(function($){ $( '#rename_img' ).rename( '#dialog', 'サンプルどん', $( '#_tckt' ).val(),  '${flag}' ); });</script></body>`,
     );
-    const read = await readProfile(fakeTransport(page(MY_PAGE_URL, wired)), ENDPOINTS, NOW);
-    expect(read.ok && read.value.rename).toBe(rename);
+    const read = await readOwnProfile(fakeTransport(page(MY_PAGE_URL, wired)), ENDPOINTS, NOW);
+    expect(read.ok && read.value.view.rename).toBe(rename);
   });
 
   test("carries a set 大好きな曲 to the view as its title alone", async () => {
@@ -169,21 +168,20 @@ describe("readProfile", () => {
     ).replace('id="song_no" value=""', 'id="song_no" value="1346"');
     expect(set).toContain("サンプル曲アルファ");
     expect(set).toContain('value="1346"');
-    const read = await readProfile(fakeTransport(page(MY_PAGE_URL, set)), ENDPOINTS, NOW);
+    const read = await readOwnProfile(fakeTransport(page(MY_PAGE_URL, set)), ENDPOINTS, NOW);
     expect(read.ok).toBe(true);
     if (!read.ok) return;
-    expect(read.value.favoriteSong).toBe("サンプル曲アルファ");
-    expect(read.value.favoriteFolder).toEqual(["サンプル曲"]);
-    expect(JSON.stringify(read.value)).not.toContain("1346");
+    expect(read.value.view.favoriteSong).toBe("サンプル曲アルファ");
+    expect(read.value.view.favoriteFolder).toEqual(["サンプル曲"]);
+    expect(JSON.stringify(read.value.view)).not.toContain("1346");
   });
 
   test("lets neither the taiko number nor any URL through to the view, dan read or not", async () => {
     expect(MY_PAGE_EXCERPT).toContain("taiko_no=000000000000");
     for (const label of [NINTH_DAN, labelAnswer("image/gif", NO_LABEL_GIF)]) {
       const transport = fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT), label);
-      const view = withoutPictureBytes(
-        JSON.stringify(await readProfile(transport, ENDPOINTS, NOW)),
-      );
+      const read = await readOwnProfile(transport, ENDPOINTS, NOW);
+      const view = withoutPictureBytes(JSON.stringify(read.ok && read.value.view));
       expect(view).not.toContain("000000000000");
       expect(view).not.toContain("imgsrc");
       expect(view).not.toContain("taiko");
@@ -197,13 +195,8 @@ describe("readProfile", () => {
       ENDPOINTS,
       NOW,
     );
-    const view = await readProfile(
-      fakeTransport(page(MY_PAGE_URL, MY_PAGE_EXCERPT)),
-      ENDPOINTS,
-      NOW,
-    );
-    if (!own.ok || !view.ok) {
-      throw new Error("expected both reads to succeed");
+    if (!own.ok) {
+      throw new Error("expected the read to succeed");
     }
     expect(own.value.taikoNo).toBe("000000000000");
     expect(own.value.pictures).toEqual({
@@ -212,7 +205,6 @@ describe("readProfile", () => {
       medalPlate: { id: MEDAL_PLATE_ID, progress: "complete" },
       myDon: { v: "" },
     });
-    expect(own.value.view).toEqual(view.value);
     const shown = withoutPictureBytes(JSON.stringify(own.value.view));
     expect(shown).not.toContain("000000000000");
     expect(shown).not.toContain("titleplate");
@@ -230,18 +222,18 @@ describe("readProfile", () => {
       NINTH_DAN,
       requests,
     );
-    expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "loggedOut" }));
+    expect(await readOwnProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "loggedOut" }));
     expect(requests).toHaveLength(1);
   });
 
   test("reads a login form served at my page's own URL as a lost session", async () => {
     const transport = fakeTransport(page(MY_PAGE_URL, LOGIN_PAGE_EXCERPT));
-    expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "loggedOut" }));
+    expect(await readOwnProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "loggedOut" }));
   });
 
   test("names an unfinished card select instead of an unreadable page", async () => {
     const transport = fakeTransport(page("https://hiroba.test/login_select.php", "<html></html>"));
-    expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(
+    expect(await readOwnProfile(transport, ENDPOINTS, NOW)).toEqual(
       err({ kind: "cardSelectUnfinished" }),
     );
   });
@@ -249,7 +241,7 @@ describe("readProfile", () => {
   test("reports a page of another shape with codes for a report, not its text", async () => {
     const other = "<html><body><p>サンプルの本文 000000000000</p></body></html>";
     const transport = fakeTransport(page("https://hiroba.test/mypage_top.php?x=secret", other));
-    const read = await readProfile(transport, ENDPOINTS, NOW);
+    const read = await readOwnProfile(transport, ENDPOINTS, NOW);
     expect(read.ok).toBe(false);
     if (read.ok) return;
     expect(read.error.kind).toBe("unexpectedPage");
@@ -263,7 +255,7 @@ describe("readProfile", () => {
 
   test("names where the read ended when it is not a Hiroba page it can read", async () => {
     const transport = fakeTransport(page("https://hiroba.test/index.php", "<html></html>"));
-    expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(
+    expect(await readOwnProfile(transport, ENDPOINTS, NOW)).toEqual(
       err({
         kind: "unexpectedPage",
         detail: "step=landed path=/index.php status=200 type=- bytes=13",
@@ -275,15 +267,15 @@ describe("readProfile", () => {
     const transport: Transport = {
       send: async (request) => err({ kind: "timedOut", url: request.url }),
     };
-    expect(await readProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "timedOut" }));
+    expect(await readOwnProfile(transport, ENDPOINTS, NOW)).toEqual(err({ kind: "timedOut" }));
   });
 });
 
-describe("readProfile's dan label", () => {
+describe("readOwnProfile's dan label", () => {
   /** The dan read, and the URLs asked for in order. */
   async function readWith(label: Answer, html: string, plate?: (dan: number) => Answer) {
     const requests: TransportRequest[] = [];
-    const read = await readProfile(
+    const read = await readOwnProfile(
       fakeTransport(page(MY_PAGE_URL, html), label, requests, plate),
       ENDPOINTS,
       NOW,
@@ -291,7 +283,7 @@ describe("readProfile's dan label", () => {
     if (!read.ok) {
       throw new Error(`the profile failed: ${JSON.stringify(read.error)}`);
     }
-    return { dan: read.value.dan, asked: requests.map((request) => request.url) };
+    return { dan: read.value.view.dan, asked: requests.map((request) => request.url) };
   }
 
   async function danAfter(label: Answer, html = MY_PAGE_EXCERPT) {
