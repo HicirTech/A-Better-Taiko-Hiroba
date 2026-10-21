@@ -1,13 +1,57 @@
 {
-  "version": "0.5.1",
+  "version": "0.5.9",
   "notes": {
     "en": [
-      "The dan of a Kuroto, Meijin, Chojin or Tatsujin now shows on the Overview, in place of \"Dan-i: couldn't read\""
+      "TL;DR: a stopgap release. It does not yet meet the bar for 0.6.0, so it ships as 0.5.9; 0.6.0 follows within one to two weeks",
+      "A cleaner, consistent look: every page draws its cards, rows, buttons, icons and section titles the same way, with smaller margins that leave more room on a phone",
+      "Pages slide in from below or above by their place in the menu; picking the page already shown does nothing",
+      "A page shows at once what it showed before; while its first read runs, it draws its shape in grey with a bar over it",
+      "Long lists open and scroll quickly, thousands of rows included: Scores, Recent plays, the song picker, the song search and Know yourself",
+      "Costume, Nickname & title and Favourites sync to Hiroba from one bar at the foot of the window; a sync that fails says so at the bottom, in Hiroba's own words where it gave some",
+      "A read that failed says what is missing where it would be, and that refreshing or trying again may fix it; a page or list with nothing says why in grey words in the middle",
+      "Rows in Recent plays, Scores and Rating show a bar for each genre and the chart's star level under Hiroba's icons, and open wherever you press them",
+      "The Read again button keeps its size while it reads, and the Overview, Scores and the song picker share one rounded search field",
+      "On Android, Back goes one step back: a dialog opened from another closes alone",
+      "Every long press takes 0.7 seconds; a set's or a play's actions open as you let go, and a computer's right-click menu shows Delete in red"
     ],
     "ja": [
-      "玄人・名人・超人・達人の段位が、「段位：読み取れませんでした」ではなく概要に表示されるようになりました"
+      "TL;DR：暫定版です。0.6.0 のリリース基準にまだ届かないため、0.5.9 として公開します。0.6.0 は1〜2週間以内に公開予定です",
+      "見た目をすっきりそろえました：どのページでも、カード・行・ボタン・アイコン・見出しを同じように表示し、余白を小さくしてスマホでも広く使えます",
+      "ページはメニューでの並びに合わせて上下にスライドして切り替わります。表示中のページを選んでも何も起きません",
+      "ページは前に表示した内容をすぐに表示します。最初の読み込み中は、ページの形をグレーで表示し、その上に進み具合のバーを出します",
+      "数千行あっても、長いリストがすばやく開いてスクロールできます：スコアデータ、あそんだ曲、曲の選択、曲の検索、自分を知る",
+      "きせかえ・ドンだーネームと称号・お気に入りは、画面下のバーひとつからひろばに同期します。同期に失敗すると画面下でお知らせし、ひろばの説明があればそのまま表示します",
+      "読み込みに失敗したときは、表示できない部分の場所に何が足りないかを示し、更新するか、もう一度試すと直るかもしれないと伝えます。表示するものがないページやリストは、その理由を中央にグレーで表示します",
+      "あそんだ曲・スコアデータ・レーティングの行に、ジャンルごとのバーと、ひろばのアイコンの下に譜面の★を表示します。行のどこを押しても開きます",
+      "再読み込みボタンは読み込み中も大きさが変わりません。概要・スコアデータ・曲の選択の検索欄は、同じ丸い形になりました",
+      "Android の戻るボタンはひとつ前に戻ります：ほかのダイアログから開いたダイアログは、それだけを閉じます",
+      "長押しはすべて0.7秒になりました。セットやあそんだ曲の操作は指を離したときに開き、パソコンの右クリックメニューでは「削除」が赤く表示されます"
     ],
-    "zh-Hans": ["玄人、名人、超人和达人的段位现在会显示在概览里，不再显示「段位：无法读取」"],
-    "zh-Hant": ["玄人、名人、超人和達人的段位現在會顯示在概覽裡，不再顯示「段位：無法讀取」"]
+    "zh-Hans": [
+      "TL;DR：这是一个临时版本。因为还达不到 0.6.0 的发布标准，先发 0.5.9；0.6.0 会在接下来一到两周内发布",
+      "界面更整洁统一：每个页面的卡片、列表行、按钮、图标和标题都用同一种样子，边距更小，手机上能显示更多内容",
+      "切换页面时按菜单里的上下顺序从上方或下方滑入；点当前已显示的页面不会有任何变化",
+      "之前看过的页面会立刻显示上次的内容；第一次读取时先显示灰色的页面轮廓，上面盖着一条进度条",
+      "长列表即使有几千行也能很快打开和滚动：成绩、近期游玩、选歌、查歌和自我认知",
+      "换装、昵称与称号和收藏都从窗口底部的同一条横栏同步到广场；同步失败时会在底部提示，广场给出原因时会原样显示",
+      "读取失败时，会在缺少内容的位置说明缺了什么，并提示刷新或重试可能会解决；没有内容的页面或列表会在中间用灰字说明原因",
+      "近期游玩、成绩和 Rating 的每一行显示每个分类的色条，并在广场图标下方显示谱面星级；点这一行的任何地方都能打开",
+      "「重新读取」按钮读取时大小不再变化；概览、成绩和选歌里的搜索框统一成同一种圆角长条",
+      "安卓的返回键一次只退一层：从另一个对话框里打开的对话框只会关掉它自己",
+      "所有长按都改为 0.7 秒；套装和近期游玩的操作在松手时弹出，电脑右键菜单里的「删除」显示为红色"
+    ],
+    "zh-Hant": [
+      "TL;DR：這是一個臨時版本。因為還達不到 0.6.0 的發布標準，先發 0.5.9；0.6.0 會在接下來一到兩週內發布",
+      "介面更整潔統一：每個頁面的卡片、列表行、按鈕、圖示和標題都用同一種樣子，邊距更小，手機上能顯示更多內容",
+      "切換頁面時按選單裡的上下順序從上方或下方滑入；點目前已顯示的頁面不會有任何變化",
+      "之前看過的頁面會立刻顯示上次的內容；第一次讀取時先顯示灰色的頁面輪廓，上面蓋著一條進度條",
+      "長列表即使有幾千行也能很快開啟和捲動：成績、近期遊玩、選歌、查歌和自我認知",
+      "換裝、暱稱與稱號和收藏都從視窗底部的同一條橫欄同步到廣場；同步失敗時會在底部提示，廣場給出原因時會原樣顯示",
+      "讀取失敗時，會在缺少內容的位置說明缺了什麼，並提示重新整理或重試可能會解決；沒有內容的頁面或列表會在中間用灰字說明原因",
+      "近期遊玩、成績和 Rating 的每一行顯示每個分類的色條，並在廣場圖示下方顯示譜面星級；點這一行的任何地方都能開啟",
+      "「重新讀取」按鈕讀取時大小不再變化；概覽、成績和選歌裡的搜尋框統一成同一種圓角長條",
+      "Android 的返回鍵一次只退一層：從另一個對話框裡開啟的對話框只會關掉它自己",
+      "所有長按都改為 0.7 秒；套裝和近期遊玩的操作在放開時彈出，電腦右鍵選單裡的「刪除」顯示為紅色"
+    ]
   }
 }
