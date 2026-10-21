@@ -1,8 +1,7 @@
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, IconButton, Tooltip, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 
-import { RefreshIcon } from "../ui/icons";
-import { HoldRing, usePressHold } from "./long-hold";
+import { ReadAgainButton } from "../ui/read-again-button";
 
 export interface ReadAgainFootProps {
   readonly reading: boolean;
@@ -30,8 +29,6 @@ export function ReadAgainFoot({
   onHeld,
   i18n,
 }: ReadAgainFootProps) {
-  const label = i18n.t("profile.readAgain");
-  const hold = usePressHold(canRead ? onHeld : undefined);
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
       <Typography
@@ -45,25 +42,14 @@ export function ReadAgainFoot({
           : fetchedAt !== null &&
             i18n.t("profile.fetchedAt", { time: unbroken(i18n.dateTime(fetchedAt)) })}
       </Typography>
-      {/* None while it is shut: a disabled button sends no event to open or close it. */}
-      <Tooltip title={canRead ? label : ""}>
-        <IconButton
-          id="read-again"
-          aria-label={label}
-          disabled={!canRead}
-          onClick={() => {
-            if (!hold.endsAHold()) {
-              onRead();
-            }
-          }}
-          {...hold.handlers}
-        >
-          {reading ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
-          {hold.since !== null && (
-            <HoldRing since={hold.since} size={36} sx={{ position: "absolute", top: 2, left: 2 }} />
-          )}
-        </IconButton>
-      </Tooltip>
+      <ReadAgainButton
+        id="read-again"
+        label={i18n.t("profile.readAgain")}
+        canRead={canRead}
+        reading={reading}
+        onRead={onRead}
+        onHeld={onHeld}
+      />
     </Box>
   );
 }

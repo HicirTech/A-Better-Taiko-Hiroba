@@ -1,6 +1,6 @@
 import type { Genre, RecentPlay } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, CircularProgress, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { type ReactNode, useRef, useState } from "react";
 
 import { CROWN_KEY, CROWN_RATIO } from "../history/play-marks";
@@ -11,8 +11,8 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { PullToRead } from "../read-again/pull-to-read";
 import { SHUT_LOOK } from "../read-again/shut-look";
 import type { ScoreView } from "../session-port";
-import { RefreshIcon } from "../ui/icons";
 import { LargeModal } from "../ui/large-modal";
+import { ReadAgainButton } from "../ui/read-again-button";
 import { SubsectionTitle } from "../ui/section-title";
 import type { ListedScore } from "./score-order";
 
@@ -134,17 +134,13 @@ function DetailsBody({
       }
       actions={
         readSong !== null && (
-          // None while it is shut: a disabled button sends no event to open or close it.
-          <Tooltip title={reading ? "" : readLabel}>
-            <IconButton
-              id="score-details-read-song"
-              aria-label={readLabel}
-              disabled={reading}
-              onClick={readSong}
-            >
-              {readingSong ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
-            </IconButton>
-          </Tooltip>
+          <ReadAgainButton
+            id="score-details-read-song"
+            label={readLabel}
+            canRead={!reading}
+            reading={readingSong}
+            onRead={readSong}
+          />
         )
       }
       pageLike

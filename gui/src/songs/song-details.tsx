@@ -1,15 +1,6 @@
 import type { Result } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import {
-  Box,
-  Chip,
-  CircularProgress,
-  IconButton,
-  Stack,
-  ToggleButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Box, Chip, Stack, ToggleButton, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
@@ -25,12 +16,11 @@ import type { ListedSong } from "../favorites/use-song-catalogue";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
-import { HoldRing, usePressHold } from "../read-again/long-hold";
 import { PullToRead } from "../read-again/pull-to-read";
 import type { HirobaSessionPort } from "../session-port";
 import { type ChartFileFailure, DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
-import { RefreshIcon } from "../ui/icons";
 import { LargeModal } from "../ui/large-modal";
+import { ReadAgainButton } from "../ui/read-again-button";
 import { StatusNote } from "../ui/status-note";
 import { ChartDensitySection, type DensityState, masterOf } from "./chart-density";
 import { ChartPictures } from "./chart-pictures";
@@ -199,7 +189,6 @@ function DetailsBody({
     setGeneration((now) => now + 1);
     setReloading(false);
   };
-  const hold = usePressHold(busy ? undefined : () => void reloadSong());
 
   return (
     <>
@@ -209,29 +198,14 @@ function DetailsBody({
         title={name}
         titleLang={nameLanguage(song, name)}
         actions={
-          // None while it is shut: a disabled button sends no event to open or close it.
-          <Tooltip title={busy ? "" : readLabel}>
-            <IconButton
-              id="song-details-read-chart"
-              aria-label={readLabel}
-              disabled={busy}
-              onClick={() => {
-                if (!hold.endsAHold()) {
-                  void readDensity(true);
-                }
-              }}
-              {...hold.handlers}
-            >
-              {busy ? <CircularProgress size={20} aria-hidden /> : <RefreshIcon />}
-              {hold.since !== null && (
-                <HoldRing
-                  since={hold.since}
-                  size={36}
-                  sx={{ position: "absolute", top: 2, left: 2 }}
-                />
-              )}
-            </IconButton>
-          </Tooltip>
+          <ReadAgainButton
+            id="song-details-read-chart"
+            label={readLabel}
+            canRead={!busy}
+            reading={busy}
+            onRead={() => void readDensity(true)}
+            onHeld={() => void reloadSong()}
+          />
         }
         pageLike
         contentRef={content}
