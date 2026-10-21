@@ -1,13 +1,37 @@
 {
-  "version": "0.5.1",
+  "version": "0.6.0",
   "notes": {
     "en": [
-      "The dan of a Kuroto, Meijin, Chojin or Tatsujin now shows on the Overview, in place of \"Dan-i: couldn't read\""
+      "A cleaner, consistent look: every page draws its cards, rows, buttons, icons and section titles the same way",
+      "Pages slide in from below or above and show at once what they showed before; a page waiting for its first read draws its shape in grey",
+      "Long lists open and scroll quickly, thousands of rows included: Scores, Recent plays, the song picker, the song search and Know yourself",
+      "Costume, Nickname & title and Favourites sync to Hiroba from one bar at the foot of the window, and a sync that fails says so at the bottom",
+      "Rows in Recent plays, Scores and Rating show a bar for each genre and the chart's star level, and open wherever you press them",
+      "On Android, Back goes one step back; every long press takes 0.7 seconds, and a set's or a play's actions open as you let go"
     ],
     "ja": [
-      "玄人・名人・超人・達人の段位が、「段位：読み取れませんでした」ではなく概要に表示されるようになりました"
+      "見た目をすっきりそろえました：どのページでも、カード・行・ボタン・アイコン・見出しを同じように表示します",
+      "ページは上下にスライドして切り替わり、前に表示した内容をすぐに表示します。最初の読み込み中はページの形をグレーで表示します",
+      "数千行あっても、長いリストがすばやく開いてスクロールできます：スコアデータ、あそんだ曲、曲の選択、曲の検索、自分を知る",
+      "きせかえ・ドンだーネームと称号・お気に入りは、画面下のバーひとつからひろばに同期します。同期に失敗すると画面下でお知らせします",
+      "あそんだ曲・スコアデータ・レーティングの行に、ジャンルごとのバーと譜面の★を表示します。行のどこを押しても開きます",
+      "Android の戻るボタンはひとつ前に戻ります。長押しはすべて0.7秒になり、セットやあそんだ曲の操作は指を離したときに開きます"
     ],
-    "zh-Hans": ["玄人、名人、超人和达人的段位现在会显示在概览里，不再显示「段位：无法读取」"],
-    "zh-Hant": ["玄人、名人、超人和達人的段位現在會顯示在概覽裡，不再顯示「段位：無法讀取」"]
+    "zh-Hans": [
+      "界面更整洁统一：每个页面的卡片、列表行、按钮、图标和标题都用同一种样子",
+      "切换页面时从上方或下方滑入，之前看过的内容立刻显示；第一次读取时先显示灰色的页面轮廓",
+      "长列表即使有几千行也能很快打开和滚动：成绩、近期游玩、选歌、查歌和自我认知",
+      "换装、昵称与称号和收藏都从窗口底部的同一条横栏同步到广场；同步失败时会在底部提示",
+      "近期游玩、成绩和 Rating 的每一行显示每个分类的色条和谱面星级，点这一行的任何地方都能打开",
+      "安卓的返回键一次只退一层；所有长按都改为 0.7 秒，套装和近期游玩的操作在松手时弹出"
+    ],
+    "zh-Hant": [
+      "介面更整潔統一：每個頁面的卡片、列表行、按鈕、圖示和標題都用同一種樣子",
+      "切換頁面時從上方或下方滑入，之前看過的內容立刻顯示；第一次讀取時先顯示灰色的頁面輪廓",
+      "長列表即使有幾千行也能很快開啟和捲動：成績、近期遊玩、選歌、查歌和自我認知",
+      "換裝、暱稱與稱號和收藏都從視窗底部的同一條橫欄同步到廣場；同步失敗時會在底部提示",
+      "近期遊玩、成績和 Rating 的每一行顯示每個分類的色條和譜面星級，點這一行的任何地方都能開啟",
+      "Android 的返回鍵一次只退一層；所有長按都改為 0.7 秒，套裝和近期遊玩的操作在放開時彈出"
+    ]
   }
 }
