@@ -89,6 +89,14 @@ const readsFirst = (step: { readonly name: string; readonly held?: unknown }) =>
   step.name === "unread" || (step.name === "loading" && step.held === null);
 const HIDDEN = { display: "none" } as const;
 const SHOWS_SCORES: ReadonlySet<Page> = new Set(["scores", "rating", "knowYourself"]);
+const SHOWS_SONG_NAMES: ReadonlySet<Page> = new Set([
+  "overview",
+  "history",
+  "scores",
+  "rating",
+  "knowYourself",
+  "favorites",
+]);
 const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 
 const SIGN_IN_NOTICE = {
@@ -123,7 +131,6 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     [port],
   );
   const onEditorPage = page === "costume" && screen.name === "profile";
-  const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
   const onFavoritesPage = page === "favorites" && screen.name === "profile";
   const onHistoryPage = page === "history" && screen.name === "profile";
   const onScoresPage = page === "scores" && screen.name === "profile";
@@ -459,31 +466,40 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     signedIn && !writing && !myPageReading && (pageEditor === null || pageEditor.canRead);
   // Turns away a second ask, by the button or a key, that lands before the button is shut.
   const readAgainStarted = useRef(false);
+  // What Read again reads on each page: the kinds of data it shows, each once. A walk or a read
+  // of the scores can run for minutes, so Read again on another page does not wait for it.
+  const readsAgain: Readonly<Record<Page, () => Promise<unknown> | undefined>> = {
+    overview: () => read(false, true),
+    // A walk notes its plays in the scores, and a read of the scores walks the plays.
+    history: () => void history.read().then(markScoresStale),
+    scores: () => void scores.read().then(markPlaysStale),
+    rating: () => void Promise.all([scores.read().then(markPlaysStale), ratingData.read()]),
+    knowYourself: () => void scores.read().then(markPlaysStale),
+    costume: () => editor.read(true),
+    nameTitle: async () => {
+      // The titles are read again when the picker next opens.
+      if (await read(false, true)) {
+        forgetTitleList();
+      }
+    },
+    favorites: () => {
+      // The pickers' list is read again when a picker next opens.
+      markPickableStale();
+      return favorites.read(true);
+    },
+    settings: () => read(false, true),
+  };
   const readAgain = async () => {
     if (!canReadAgain || readAgainStarted.current) {
       return;
     }
     readAgainStarted.current = true;
     try {
-      if (onHistoryPage) {
-        // A walk can run for minutes: Read again on another page must not wait for it.
-        // It notes its plays in the scores too, and a read of the scores walks the plays.
-        void history.read().then(markScoresStale);
-      } else if (onScoresPage || onKnowPage) {
-        void scores.read().then(markPlaysStale);
-      } else if (onRatingPage) {
-        void scores.read().then(markPlaysStale);
-        void ratingData.read();
-      } else if (pageEditor !== null) {
-        if (onFavoritesPage) {
-          // The pickers' list is read again when a picker next opens.
-          markPickableStale();
-        }
-        await pageEditor.read(true);
-      } else if ((await read(false, true)) && onNameTitlePage) {
-        // The titles are read again when the picker next opens.
-        forgetTitleList();
+      if (SHOWS_SONG_NAMES.has(page)) {
+        catalogue.readIfStale();
       }
+      // With my page unread, every page waits on it, so it alone is read.
+      await (screen.name === "profile" ? readsAgain[page]() : read(false, true));
     } finally {
       readAgainStarted.current = false;
     }

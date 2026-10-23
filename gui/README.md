@@ -80,7 +80,8 @@ nickname save runs, so one read runs at a time and none inside a write. On a tou
 and letting go once its ring is full reads again (a page that has scrolled is the finger's to scroll
 back, and pulls nothing). On the Costume and Favourites pages
 the same button, keys and pull read the page's editors again instead of your page; on the
-Nickname & title page they read your page and then the list of titles.
+Nickname & title page they read your page and then the list of titles. On a page that names songs
+they also read taiko.wiki's song list again when the one kept is a day old.
 Each of them first asks Hiroba to refresh its copy of your play from the game server, as the ↻ on
 Hiroba's own pages does: my page is read for a fresh form token and the ↻'s post sent once, alone in
 the queue, and a refresh Hiroba refuses stops the read there, with the reason. The read after a

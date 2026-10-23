@@ -35,6 +35,8 @@ export interface SongCatalogue {
   readonly failure: SongCatalogueFailure["code"] | null;
   /** Reads the list again if the last read failed with none kept: as a part that needs it opens. */
   readIfFailed(): void;
+  /** Reads the list again if the one kept is a day old, as Read again does on a page of songs. */
+  readIfStale(): void;
 }
 
 const NONE: readonly CatalogueSong[] = [];
@@ -108,6 +110,12 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
     }
   }, [reads, refresh]);
 
+  const readIfStale = useCallback(() => {
+    if (started.current) {
+      void refresh(keptNow.current);
+    }
+  }, [refresh]);
+
   const known = kept?.songs ?? NONE;
   const list = useMemo(() => {
     const named = chineseNamesBySong(known, names?.pages ?? []);
@@ -121,5 +129,6 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
     state: kept !== null ? "ready" : status.phase === "failed" ? "failed" : "loading",
     failure: kept === null ? (status.failure?.code ?? null) : null,
     readIfFailed,
+    readIfStale,
   };
 }

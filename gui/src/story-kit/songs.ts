@@ -61,5 +61,6 @@ export function storyCatalogue(state: SongCatalogue["state"] = "ready"): SongCat
     state,
     failure,
     readIfFailed: action("read if failed"),
+    readIfStale: action("read if stale"),
   };
 }
