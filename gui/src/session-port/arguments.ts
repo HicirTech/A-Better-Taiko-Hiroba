@@ -352,6 +352,7 @@ export const PORT_ARGUMENTS = {
   readSongPicker: none,
   recentPlays: none,
   readRecentPlays: none,
+  readEveryRecentPlay: none,
   recentPlaysProgress: none,
   scores: none,
   listedCharts: none,

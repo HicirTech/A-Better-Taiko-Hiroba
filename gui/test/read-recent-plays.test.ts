@@ -106,6 +106,23 @@ describe("createRecentPlaysReader", () => {
     expect(sessionEnds()).toBe(1);
   });
 
+  test("walks every page again past the plays stored, keeping that walk in their place", async () => {
+    const { history, transport } = hirobaWith(12);
+    const { reader, store } = readerOver(transport);
+    await reader.readRecentPlays();
+    const first = asked(history).length;
+
+    const again = await reader.readRecentPlays();
+    const stoppedAt = asked(history).length;
+    const every = await reader.readEveryRecentPlay();
+
+    expect(again.ok && again.value.stop).toBe("known");
+    expect(stoppedAt - first).toBe(1);
+    expect(every.ok && [every.value.stop, every.value.fresh.length]).toEqual(["short", 0]);
+    expect(asked(history).slice(stoppedAt)).toContain(3);
+    expect(await store.load(OWNER)).toHaveLength(12);
+  });
+
   test("tells the newest page asked while a walk runs, and nothing once it ended", async () => {
     const { history, transport } = hirobaWith(12);
     const { reader } = readerOver(transport);

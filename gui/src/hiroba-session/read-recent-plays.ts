@@ -39,6 +39,8 @@ export interface RecentPlaysReader {
   recentPlays(): Promise<readonly RecentPlay[]>;
   /** Walks the feed, then stores what it read. A second call shares the walk already running. */
   readRecentPlays(): Promise<Result<RecentPlaysReading, RecentPlaysFailure>>;
+  /** As `readRecentPlays`, but walks every page past the rows stored, which its walk replaces. */
+  readEveryRecentPlay(): Promise<Result<RecentPlaysReading, RecentPlaysFailure>>;
   /** The newest page whose request has started, or null when no walk is running. */
   recentPlaysProgress(): Promise<number | null>;
 }
@@ -67,7 +69,9 @@ export function createRecentPlaysReader(options: RecentPlaysReaderOptions): Rece
     );
   let walking: Promise<Result<RecentPlaysReading, RecentPlaysFailure>> | null = null;
   let progress: number | null = null;
-  const walk = async (): Promise<Result<RecentPlaysReading, RecentPlaysFailure>> => {
+  const walk = async (
+    everyPage: boolean,
+  ): Promise<Result<RecentPlaysReading, RecentPlaysFailure>> => {
     const taikoNo = owner();
     if (taikoNo === null) {
       return err({ kind: "notSignedIn" });
@@ -75,6 +79,7 @@ export function createRecentPlaysReader(options: RecentPlaysReaderOptions): Rece
     const read = await walkRecentPlays({
       fetchPage,
       previous: await store.load(taikoNo),
+      everyPage,
       atOnce: HISTORY_READ_CONSUMERS,
       onPage: (page) => {
         progress = page;
@@ -91,18 +96,21 @@ export function createRecentPlaysReader(options: RecentPlaysReaderOptions): Rece
     await options.walked?.(taikoNo, read.value);
     return read;
   };
+  // A second call, of either kind, shares the walk already running.
+  const shared = (everyPage: boolean) => {
+    walking ??= walk(everyPage).finally(() => {
+      progress = null;
+      walking = null;
+    });
+    return walking;
+  };
   return {
     async recentPlays() {
       const taikoNo = owner();
       return taikoNo === null ? [] : store.load(taikoNo);
     },
-    readRecentPlays() {
-      walking ??= walk().finally(() => {
-        progress = null;
-        walking = null;
-      });
-      return walking;
-    },
+    readRecentPlays: () => shared(false),
+    readEveryRecentPlay: () => shared(true),
     recentPlaysProgress: () => Promise.resolve(progress),
   };
 }

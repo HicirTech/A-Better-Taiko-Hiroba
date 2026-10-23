@@ -15,6 +15,7 @@ import { useFavorites } from "./favorites/use-favorites";
 import { usePickableSongs } from "./favorites/use-pickable-songs";
 import { useSongCatalogue } from "./favorites/use-song-catalogue";
 import { HistoryPage } from "./history/history-page";
+import { ReadEveryPlayDialog } from "./history/read-every-play-dialog";
 import { useRecentPlays } from "./history/use-recent-plays";
 import { KnowYourselfPage } from "./know-yourself";
 import { useListedCharts } from "./know-yourself/use-listed-charts";
@@ -488,13 +489,17 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     }
   };
   useReadAgainKeys(signedIn, readAgain);
-  // Reading every score takes minutes, so the scores page asks for it by a long hold.
+  // Reading every score or every play takes minutes, so their pages ask for it by a long hold.
   const [askingEvery, setAskingEvery] = useState(false);
-  if (askingEvery && !onScoresPage) {
+  if (askingEvery && !onScoresPage && !onHistoryPage) {
     setAskingEvery(false);
   }
   const keptCharts = scores.view?.scores.length ?? 0;
-  const askEvery = onScoresPage && keptCharts > 0 ? () => setAskingEvery(true) : undefined;
+  const keptPlays = history.plays?.length ?? 0;
+  const askEvery =
+    (onScoresPage && keptCharts > 0) || (onHistoryPage && keptPlays > 0)
+      ? () => setAskingEvery(true)
+      : undefined;
   // A read again of my page that failed stands over what the page read before.
   const myPageFailure = screen.name === "profile" && myPageStatus.failure !== null && (
     <LoadFailed
@@ -546,6 +551,18 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             setAskingEvery(false);
             if (confirmed) {
               void scores.readEvery().then(markPlaysStale);
+            }
+          }}
+        />
+      )}
+      {onHistoryPage && (
+        <ReadEveryPlayDialog
+          open={askingEvery}
+          i18n={i18n}
+          onAnswer={(confirmed) => {
+            setAskingEvery(false);
+            if (confirmed) {
+              void history.readEvery().then(markScoresStale);
             }
           }}
         />

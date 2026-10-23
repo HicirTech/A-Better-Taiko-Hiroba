@@ -463,6 +463,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     recentPlays: recentPlays.recentPlays,
 
     readRecentPlays: flushed(recentPlays.readRecentPlays),
+    readEveryRecentPlay: flushed(recentPlays.readEveryRecentPlay),
 
     recentPlaysProgress: recentPlays.recentPlaysProgress,
 

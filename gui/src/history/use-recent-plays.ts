@@ -1,4 +1,4 @@
-import type { RecentPlay } from "@abth/core";
+import type { RecentPlay, RecentPlaysReading, Result } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
 import { useCallback } from "react";
 
@@ -27,13 +27,19 @@ export interface RecentPlaysState {
   readonly forget: () => void;
   /** Walks the feed again, after Hiroba's own refresh. A second ask while one runs does nothing. */
   readonly read: () => Promise<void>;
+  /** As `read`, but walks every page past the plays stored, which the walk replaces: minutes. */
+  readonly readEvery: () => Promise<void>;
 }
 
 /** The stored walk, and a read that reports the page it has reached. */
 export function useRecentPlays(
   port: Pick<
     HirobaSessionPort,
-    "refreshHiroba" | "recentPlays" | "readRecentPlays" | "recentPlaysProgress"
+    | "refreshHiroba"
+    | "recentPlays"
+    | "readRecentPlays"
+    | "readEveryRecentPlay"
+    | "recentPlaysProgress"
   >,
   onSessionGone: (notice: MessageKey) => void,
 ): RecentPlaysState {
@@ -48,16 +54,21 @@ export function useRecentPlays(
     walk.forget();
     forgetKept();
   }, [walk, forgetKept]);
-  const read = useCallback(async () => {
-    await walk.run(() => afterRefresh(port, () => port.readRecentPlays()), {
-      progress: () => port.recentPlaysProgress(),
-      keep: (result) => {
-        if (result.ok) {
-          hold(result.value.plays);
-        }
-      },
-    });
-  }, [walk, port, hold]);
+  const walkWith = useCallback(
+    async (ask: () => Promise<Result<RecentPlaysReading, RecentPlaysFailure>>) => {
+      await walk.run(() => afterRefresh(port, ask), {
+        progress: () => port.recentPlaysProgress(),
+        keep: (result) => {
+          if (result.ok) {
+            hold(result.value.plays);
+          }
+        },
+      });
+    },
+    [walk, port, hold],
+  );
+  const read = useCallback(() => walkWith(() => port.readRecentPlays()), [port, walkWith]);
+  const readEvery = useCallback(() => walkWith(() => port.readEveryRecentPlay()), [port, walkWith]);
   return {
     plays: kept.value,
     status,
@@ -69,5 +80,6 @@ export function useRecentPlays(
     markStale: kept.markStale,
     forget,
     read,
+    readEvery,
   };
 }

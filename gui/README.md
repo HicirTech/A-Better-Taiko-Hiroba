@@ -222,7 +222,9 @@ nothing yet. Each read first asks Hiroba to refresh, then walks the feed: page 1
 three pages at once, in the play history's pipeline. The first read walks up to 200 pages, five
 charts a page, and a later read stops at the first chart whose record is already stored. A page that
 fails ends the read with nothing of it kept, and the notice names the page; the page's skeleton and
-the navigation's foot name the page being read. A row is a bar for each of the song's genres, the song, the score with
+the navigation's foot name the page being read. A pull held six seconds, or Read again held down as
+long on a computer, asks first, then walks every page again from the first, past the charts stored,
+and keeps that walk in their place. A row is a bar for each of the song's genres, the song, the score with
 the longest combo and the 良/可/不可/連打 hits; at its end Hiroba's icons of the difficulty, the crown,
 the rank and the play options (the support chart, whose picture has not been seen, as a lifebuoy),
 with the chart's star level under them, where taiko.wiki's list has the song. The play counts

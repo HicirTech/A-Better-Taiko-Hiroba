@@ -1,5 +1,6 @@
 /** Recent plays: read only when asked, after Hiroba's refresh, in a pipeline of their own. */
 import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
+import { LONG_HOLD_MS } from "../../src/read-again/pull-gesture";
 import { mockTitle } from "../mock-history";
 import { en, HIROBA } from "./config";
 import type { Ctx } from "./context";
@@ -26,6 +27,7 @@ export const recentPlaysKeys = [
   "readAgainWalksOnThePage",
   "walkedPageInTheFoot",
   "walkedPageOnTheSkeleton",
+  "longHoldWalksEveryPlayAgain",
   "hirobaReadsBesideAWalk",
   "recentPlaysKeptAfterSignOut",
 ] as const;
@@ -123,7 +125,7 @@ function historyPage(ctx: Ctx) {
 export async function recentPlays(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, goTo, page, textOf, until } = ctx.app;
-  const { exists, fabState, listRows, rowInView } = pageHelpers(page);
+  const { exists, fabState, listRows, mousePress, rowInView } = pageHelpers(page);
   const { titles, walkEnded, readAgain } = historyPage(ctx);
   const lookOf = async (title: string) =>
     page.evaluate<RowLook | null>(rowLook(await rowInView("#history-list", isTitled(title))));
@@ -241,6 +243,34 @@ export async function recentPlays(ctx: Ctx) {
   results.walkedPageInTheFoot = footWhileWalking === "Reading page 1…";
   results.walkedPageOnTheSkeleton = skeletonWhileWalking === "Reading page 1…";
   results.hirobaReadsBesideAWalk = stillHeld;
+
+  // A long hold on read again asks before walking every page: no walks nothing, yes walks the
+  // feed from its first page to its end, past the plays kept, and keeps what it read.
+  const longHeld = LONG_HOLD_MS + 500;
+  const askedToWalkEvery = () =>
+    waitFor(
+      "the walk-every question",
+      async () => (await exists("#history-read-every-confirm")) || undefined,
+    );
+  await history("forget=1");
+  await mousePress("#read-again", "left", longHeld);
+  await askedToWalkEvery();
+  await click("#history-read-every-cancel");
+  await waitFor("the question gone", async () =>
+    (await exists("#history-read-every")) ? undefined : true,
+  );
+  await Bun.sleep(500);
+  const noWalksNothing = (await history()).asked.length === 0;
+  await mousePress("#read-again", "left", longHeld);
+  await askedToWalkEvery();
+  await click("#history-read-every-confirm");
+  await waitFor(
+    "the walk of every page",
+    async () => (await history()).asked.includes(8) || undefined,
+  );
+  await walkEnded();
+  await rowsAre(38);
+  results.longHoldWalksEveryPlayAgain = noWalksNothing && (await titles())[0] === "サンプル曲 38";
 
   // A sign-out keeps the plays: signed in again, the page shows them before any read.
   await goTo("settings");
