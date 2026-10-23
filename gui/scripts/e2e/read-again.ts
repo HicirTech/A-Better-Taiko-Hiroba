@@ -28,7 +28,7 @@ export const readAgainKeys = [
   "rotationTakenUp",
   "readAgainAtTheNavFoot",
   "readAgainShutWhileReading",
-  "readAgainKeepsThePageInPlace",
+  "readAgainShutsThenShowsItsSkeleton",
   "settingsSignedInWhileReading",
   "readAgainByF5",
   "readAgainRefreshesHirobaFirst",
@@ -83,10 +83,18 @@ export async function readAgain(ctx: Ctx) {
   const readsBeforeHeld = await myPageHits();
   await fetch(`${HIROBA}/__hold-read?on=1`);
   await click("#read-again");
+  // A read again shuts the page at once and keeps it a moment, then its skeleton stands in.
+  const pageAtOnce = await waitFor("the page shut", async () => {
+    const now = await page.evaluate<{ kept: boolean; shut: boolean }>(
+      `({ kept: document.querySelector("#profile") !== null, shut: document.querySelector("#page-shut")?.hasAttribute("inert") ?? false })`,
+    );
+    return now.shut ? now : undefined;
+  });
   await waitFor("held read", async () => (await myPageHits()) > readsBeforeHeld || undefined);
   const fabWhileReading = await fabState();
-  const pageWhileReading = await page.evaluate<{ kept: boolean; shut: boolean }>(
-    `({ kept: document.querySelector("#profile") !== null, shut: document.querySelector("#page-shut")?.hasAttribute("inert") ?? false })`,
+  const skeletonWhileReading = await waitFor(
+    "the skeleton of the page read again",
+    async () => (await exists('#page-skeleton[data-page="overview"]')) || undefined,
   );
   await click("#read-again");
   await Bun.sleep(300);
@@ -101,9 +109,10 @@ export async function readAgain(ctx: Ctx) {
   await waitFor("the read ended", async () =>
     same(await fabState(), { shut: false, spinning: false }) ? true : undefined,
   );
-  results.readAgainKeepsThePageInPlace =
-    pageWhileReading.kept &&
-    pageWhileReading.shut &&
+  await waitFor("the page back", async () => (await exists("#profile")) || undefined);
+  results.readAgainShutsThenShowsItsSkeleton =
+    pageAtOnce.kept &&
+    skeletonWhileReading &&
     !(await page.evaluate<boolean>(
       `document.querySelector("#page-shut")?.hasAttribute("inert") ?? true`,
     ));
@@ -156,7 +165,7 @@ export async function readAgain(ctx: Ctx) {
     reads: (await myPageHits()) - readsBeforeRefused,
   };
 
-  // My page unread, the song search still finds and opens a song, the failure giving way to it.
+  // My page's read failed: the song search still finds and opens a song, the failure gives way.
   const searchesBefore = await page.evaluate<string | null>(
     `localStorage.getItem(${JSON.stringify(SEARCHES_KEY)})`,
   );
@@ -192,9 +201,12 @@ export async function readAgain(ctx: Ctx) {
   );
   results.songSearchKeptWhenMyPageFails = fieldThere && !failureWhileSearching && failureBack;
   await fetch(`${HIROBA}/__history?refresh=0`);
+  const readsBeforeAgain = await myPageHits();
   await click("#read-again");
   await waitFor("the page read again", async () =>
-    (await exists("#profile")) && same(await fabState(), { shut: false, spinning: false })
+    (await myPageHits()) > readsBeforeAgain &&
+    (await exists("#profile")) &&
+    same(await fabState(), { shut: false, spinning: false })
       ? true
       : undefined,
   );

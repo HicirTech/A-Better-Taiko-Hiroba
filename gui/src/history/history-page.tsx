@@ -46,10 +46,8 @@ export function HistoryPage({
   readonly touchFirst: boolean;
   readonly i18n: Translator;
 }) {
-  const { plays, reading, page, failure, load } = history;
-  useEffect(load, [load]);
-  const { view, reading: scoresReading, song, load: loadScores, readSong } = scores;
-  useEffect(loadScores, [loadScores]);
+  const { plays, reading, failure } = history;
+  const { view, reading: scoresReading, song, readSong } = scores;
   const rows = plays ?? [];
   const byTitle = useMemo(() => songsByTitle(catalogue.songs.values()), [catalogue.songs]);
   const [opened, setOpened] = useState<RecentPlay | null>(null);
@@ -147,12 +145,6 @@ export function HistoryPage({
 
   return (
     <Stack spacing={2} id="history-page" sx={{ minHeight: PAGE_HEIGHT }}>
-      {reading && rows.length === 0 && (
-        <ProgressBar
-          id="history-reading"
-          label={i18n.t("history.readingPage", { page: page ?? 1 })}
-        />
-      )}
       {failure !== null && (
         <LoadFailed id="history-failure" failure={failure} i18n={i18n}>
           {failure.page !== undefined && (

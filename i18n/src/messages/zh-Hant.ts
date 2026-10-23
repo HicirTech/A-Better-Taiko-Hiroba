@@ -77,6 +77,11 @@ export const zhHant: Messages = {
   "history.failedPage": "在第 {page} 頁停下了。",
   "history.emptyPull": "還沒有近期遊玩紀錄。把頁面往下拉即可讀取。",
   "history.emptyReadAgain": "還沒有近期遊玩紀錄。按「重新讀取」或 F5 即可讀取。",
+  "history.readEvery.title": "重新讀取全部近期遊玩？",
+  "history.readEvery.body":
+    "這會從廣場的第一頁一直讀到最後一頁，重新讀取你的全部近期遊玩，並替換裝置上存的紀錄，比較慢，可能需要幾分鐘。",
+  "history.readEvery.cancel": "取消",
+  "history.readEvery.confirm": "全部重新讀取",
   "history.good": "良",
   "history.ok": "可",
   "history.bad": "不可",

@@ -96,6 +96,11 @@ export interface Messages {
   /** On the recent plays page with nothing kept yet: how to read them, on a touch screen or not. */
   "history.emptyPull": string;
   "history.emptyReadAgain": string;
+  /** Asks before a walk of every recent play, after a long hold on the page's read again. */
+  "history.readEvery.title": string;
+  "history.readEvery.body": string;
+  "history.readEvery.cancel": string;
+  "history.readEvery.confirm": string;
   /** 良, 可, 不可, 連打 and the longest combo: a row's hit counts, in taiko.wiki's words. */
   "history.good": string;
   "history.ok": string;

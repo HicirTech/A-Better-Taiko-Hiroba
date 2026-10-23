@@ -1,6 +1,8 @@
+import { err } from "@abth/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import type { Page } from "../navigation/pages";
+import { found } from "../story-kit/steps";
 import { appOn } from "../story-kit/story-app";
 import { createStoryPort, neverAnswers } from "../story-kit/story-port";
 
@@ -57,3 +59,44 @@ export const NicknameAndTitle = reading("nameTitle");
 
 /** Favourites: the heading, the favourite song and the folder's rows. */
 export const Favourites = reading("favorites");
+
+// A whole window's first reads can take longer than a play's usual wait of a second.
+const FIRST_READS_MS = 10_000;
+
+/** F5 on the page shown, as a computer reads again. */
+const readAgain = async (page: string) => {
+  await found(page, FIRST_READS_MS);
+  window.dispatchEvent(new KeyboardEvent("keydown", { key: "F5" }));
+};
+
+/** Scores read again, never ending: shut at once, then its skeleton, the charts counted. */
+export const ScoresReadAgain: Story = {
+  render: appOn("scores", {
+    readScores: neverAnswers,
+    scoresProgress: () => Promise.resolve({ step: "details", done: 12, total: 40 }),
+  }),
+  play: () => readAgain("#scores-page"),
+};
+
+/** Recent plays read again, the walk never ending: its skeleton says the page it has reached. */
+export const RecentPlaysReadAgain: Story = {
+  render: appOn("history", {
+    readRecentPlays: neverAnswers,
+    recentPlaysProgress: () => Promise.resolve(3),
+  }),
+  play: () => readAgain("#history-page"),
+};
+
+/** The Overview read again, the refresh refused: my page as read before, the failure over it. */
+export const OverviewReadAgainFailed: Story = {
+  render: appOn("overview", {
+    refreshHiroba: () => Promise.resolve(err({ kind: "notRefreshed" })),
+  }),
+  play: () => readAgain("#profile"),
+};
+
+/** Costume read again, the refresh refused: the editor read before, open, under the failure. */
+export const CostumeReadAgainFailed: Story = {
+  render: appOn("costume", { refreshHiroba: () => Promise.resolve(err({ kind: "notRefreshed" })) }),
+  play: () => readAgain('#costume-page[data-step="editing"]'),
+};

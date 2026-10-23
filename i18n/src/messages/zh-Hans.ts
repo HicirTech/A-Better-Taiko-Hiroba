@@ -77,6 +77,11 @@ export const zhHans: Messages = {
   "history.failedPage": "在第 {page} 页停下了。",
   "history.emptyPull": "还没有近期游玩记录。把页面往下拉即可读取。",
   "history.emptyReadAgain": "还没有近期游玩记录。按「重新读取」或 F5 即可读取。",
+  "history.readEvery.title": "重新读取全部近期游玩？",
+  "history.readEvery.body":
+    "这会从广场的第一页一直读到最后一页，重新读取你的全部近期游玩，并替换设备上存的记录，比较慢，可能需要几分钟。",
+  "history.readEvery.cancel": "取消",
+  "history.readEvery.confirm": "全部重新读取",
   "history.good": "良",
   "history.ok": "可",
   "history.bad": "不可",

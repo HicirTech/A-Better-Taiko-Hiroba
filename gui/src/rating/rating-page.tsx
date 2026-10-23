@@ -1,14 +1,14 @@
 import { type ChartRating, chartKey, type RatingFigure, rateOurTaikoV1 } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Stack, Typography } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { PlayRow } from "../history/play-row";
 import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf, ScoresReading } from "../scores/scores-page";
+import { listedOf } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ScoreView } from "../session-port";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
@@ -66,10 +66,8 @@ export function RatingPage({
   readonly i18n: Translator;
 }) {
   const { t, locale } = i18n;
-  const { view, reading, progress, song, failure, load, readSong } = scores;
-  const { data, load: loadData } = ratingData;
-  useEffect(load, [load]);
-  useEffect(loadData, [loadData]);
+  const { view, reading, song, failure, readSong } = scores;
+  const { data } = ratingData;
   const [opened, setOpened] = useState<string | null>(null);
   const formats = useMemo(
     () => ({
@@ -129,9 +127,6 @@ export function RatingPage({
 
   return (
     <Stack spacing={2} id="rating-page" sx={{ minHeight: PAGE_HEIGHT }}>
-      {reading && (
-        <ScoresReading id="rating-scores-reading" i18n={i18n} progress={progress} song={song} />
-      )}
       {failure !== null && <LoadFailed id="rating-scores-failure" failure={failure} i18n={i18n} />}
       {ratingData.failure !== null && (
         <ReadFailureAlert

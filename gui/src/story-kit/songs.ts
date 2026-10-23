@@ -49,11 +49,18 @@ export const lookOf = (songNo: string, locale: Locale): SongLook =>
 /** The song list as the app holds it: ready, still on its way, or failed with none kept. */
 export function storyCatalogue(state: SongCatalogue["state"] = "ready"): SongCatalogue {
   const list = state === "ready" ? STORY_SONGS : [];
+  const failure = state === "failed" ? "unreachable" : null;
   return {
     songs: new Map(list.map((song) => [song.songNo, song])),
     list,
+    status: {
+      phase: state === "ready" ? "read" : state === "failed" ? "failed" : "reading",
+      failure: failure === null ? null : { code: failure },
+      progress: null,
+    },
     state,
-    failure: state === "failed" ? "unreachable" : null,
+    failure,
     readIfFailed: action("read if failed"),
+    readIfStale: action("read if stale"),
   };
 }

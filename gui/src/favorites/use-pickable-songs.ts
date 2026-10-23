@@ -1,18 +1,23 @@
 import type { MessageKey } from "@abth/i18n";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
-import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import type { HirobaSessionPort } from "../session-port";
+import { hirobaSession } from "../read-failure-message";
+import type { ReadStatus } from "../reads/read-run";
+import { useReadRun } from "../reads/use-read-run";
+import type { HirobaSessionPort, ReadFailure } from "../session-port";
 import {
   forgetPickable,
   keepPickable,
   loadPickable,
+  type OfferedSongs,
   offeredOf,
   type PickableState,
 } from "./pickable-songs";
 
 export interface PickableReading {
   readonly pickable: PickableState;
+  /** Where the read of the list stands. */
+  readonly status: ReadStatus<ReadFailure, never>;
   /** Reads again, unless a read runs: the picker's retry. The list held still serves. */
   refresh(): void;
   /** Reads when the list is stale and no read runs: as a picker opens. */
@@ -27,37 +32,27 @@ export function usePickableSongs(
   port: Pick<HirobaSessionPort, "readSongPicker">,
   onSessionGone: (notice: MessageKey) => void,
 ): PickableReading {
-  const [pickable, setPickable] = useState<PickableState>(() => ({
-    offered: loadPickable(),
-    status: { kind: "stale" },
-  }));
-  const latest = useRef(0);
-  const reading = useRef(false);
+  const [offered, setOffered] = useState<OfferedSongs | null>(loadPickable);
+  const [reads, status] = useReadRun<ReadFailure>(hirobaSession(onSessionGone));
+  // Stale until a read brings the list: as `staleShown`, for the callbacks that must not change.
   const stale = useRef(true);
+  const [staleShown, setStaleShown] = useState(true);
+  const putStale = useCallback((next: boolean) => {
+    stale.current = next;
+    setStaleShown(next);
+  }, []);
 
   const refresh = useCallback(() => {
-    if (reading.current) {
-      return;
-    }
-    reading.current = true;
-    const run = ++latest.current;
-    setPickable((now) => ({ ...now, status: { kind: "reading" } }));
-    void port.readSongPicker().then((result) => {
-      if (run !== latest.current) {
-        return;
-      }
-      reading.current = false;
-      stale.current = !result.ok;
-      if (result.ok) {
-        keepPickable(result.value);
-        setPickable({ offered: offeredOf(result.value), status: { kind: "current" } });
-      } else if (SESSION_GONE.has(result.error.kind)) {
-        onSessionGone(FAILURE_MESSAGE[result.error.kind]);
-      } else {
-        setPickable((now) => ({ ...now, status: { kind: "failed", failure: result.error } }));
-      }
+    void reads.run(() => port.readSongPicker(), {
+      keep: (result) => {
+        putStale(!result.ok);
+        if (result.ok) {
+          keepPickable(result.value);
+          setOffered(offeredOf(result.value));
+        }
+      },
     });
-  }, [port, onSessionGone]);
+  }, [reads, port, putStale]);
 
   const readIfStale = useCallback(() => {
     if (stale.current) {
@@ -65,20 +60,26 @@ export function usePickableSongs(
     }
   }, [refresh]);
 
-  const markStale = useCallback(() => {
-    stale.current = true;
-    setPickable((now) =>
-      now.status.kind === "current" ? { ...now, status: { kind: "stale" } } : now,
-    );
-  }, []);
+  const markStale = useCallback(() => putStale(true), [putStale]);
 
   const forget = useCallback(() => {
-    latest.current += 1;
-    reading.current = false;
-    stale.current = true;
+    reads.forget();
+    putStale(true);
     forgetPickable();
-    setPickable({ offered: null, status: { kind: "stale" } });
-  }, []);
+    setOffered(null);
+  }, [reads, putStale]);
 
-  return { pickable, refresh, readIfStale, markStale, forget };
+  const pickable = useMemo<PickableState>(
+    () => ({
+      offered,
+      status:
+        status.phase === "reading"
+          ? { kind: "reading" }
+          : status.failure !== null
+            ? { kind: "failed", failure: status.failure }
+            : { kind: staleShown ? "stale" : "current" },
+    }),
+    [offered, status, staleShown],
+  );
+  return { pickable, status, refresh, readIfStale, markStale, forget };
 }

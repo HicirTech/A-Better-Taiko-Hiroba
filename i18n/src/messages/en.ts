@@ -77,6 +77,11 @@ export const en: Messages = {
   "history.failedPage": "It stopped at page {page}.",
   "history.emptyPull": "No recent plays here yet. Pull the page down to read them.",
   "history.emptyReadAgain": "No recent plays here yet. Press Read again, or F5, to read them.",
+  "history.readEvery.title": "Read every recent play again?",
+  "history.readEvery.body":
+    "This reads all your recent plays again from Hiroba, from the first page to the last, in place of those kept. It is slow: it can take several minutes.",
+  "history.readEvery.cancel": "Cancel",
+  "history.readEvery.confirm": "Read all again",
   "history.good": "Good",
   "history.ok": "OK",
   "history.bad": "Bad",

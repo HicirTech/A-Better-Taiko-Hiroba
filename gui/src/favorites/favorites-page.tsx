@@ -22,7 +22,7 @@ import {
   sameSongs,
   toggledSongs,
 } from "./favorite-sets";
-import { type FavoritesStep, shownFavoritesOf } from "./favorites-state";
+import { shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
 import type { PickableState } from "./pickable-songs";
 import { SetNameDialog } from "./set-name-dialog";
@@ -249,29 +249,34 @@ function FavoritesBody({
             }}
           />
         ) : shown === null ? (
-          failureOf(step, i18n)
+          failureOf(favorites, i18n)
         ) : (
-          <Stack spacing={CARD_GAP} inert={shown.shut} sx={shown.shut ? HELD_STILL : undefined}>
-            <SongCard
-              shown={shown}
-              look={look}
-              i18n={i18n}
-              openDetails={openDetails}
-              onChange={() => openPicker("song")}
-            />
-            <FolderCard
-              shown={shown}
-              look={look}
-              i18n={i18n}
-              openDetails={openDetails}
-              sets={sets}
-              inUse={inUse}
-              onSaveAsSet={() =>
-                setNaming({ songs: filledSlots(shown.view.folder.state), editing: false })
-              }
-              onSaveToSet={(id) => keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))}
-            />
-          </Stack>
+          <>
+            {failureOf(favorites, i18n)}
+            <Stack spacing={CARD_GAP} inert={shown.shut} sx={shown.shut ? HELD_STILL : undefined}>
+              <SongCard
+                shown={shown}
+                look={look}
+                i18n={i18n}
+                openDetails={openDetails}
+                onChange={() => openPicker("song")}
+              />
+              <FolderCard
+                shown={shown}
+                look={look}
+                i18n={i18n}
+                openDetails={openDetails}
+                sets={sets}
+                inUse={inUse}
+                onSaveAsSet={() =>
+                  setNaming({ songs: filledSlots(shown.view.folder.state), editing: false })
+                }
+                onSaveToSet={(id) =>
+                  keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))
+                }
+              />
+            </Stack>
+          </>
         )}
       </Stack>
       {(set !== null || shown !== null) && (
@@ -363,9 +368,10 @@ function FavoritesBody({
   );
 }
 
-// A first read waits under the page's skeleton, and a read again under the held favourites.
-function failureOf(step: FavoritesStep, i18n: Translator): ReactNode {
-  return step.name === "loadFailed" ? (
-    <LoadFailed id="favorites-load-failed" failure={step.failure} i18n={i18n} />
-  ) : null;
+// Any read waits under the page's skeleton; one that failed says so here, over what it held.
+function failureOf(favorites: FavoritesEditor, i18n: Translator): ReactNode {
+  const { failure } = favorites.status;
+  return failure === null ? null : (
+    <LoadFailed id="favorites-load-failed" failure={failure} i18n={i18n} />
+  );
 }

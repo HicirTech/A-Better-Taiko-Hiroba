@@ -77,6 +77,11 @@ export const ja: Messages = {
   "history.failedPage": "{page} ページ目で止まりました。",
   "history.emptyPull": "まだあそんだ曲がありません。画面を下に引っぱると読み込みます。",
   "history.emptyReadAgain": "まだあそんだ曲がありません。「再読み込み」か F5 で読み込みます。",
+  "history.readEvery.title": "あそんだ曲をすべて読み込み直しますか？",
+  "history.readEvery.body":
+    "ひろばの最初のページから最後のページまで、あそんだ曲をすべて読み込み直して、保存してある記録と入れ替えます。数分かかることがあります。",
+  "history.readEvery.cancel": "キャンセル",
+  "history.readEvery.confirm": "読み込み直す",
   "history.good": "良",
   "history.ok": "可",
   "history.bad": "不可",

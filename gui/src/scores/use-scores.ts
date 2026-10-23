@@ -1,9 +1,11 @@
 import type { Result } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { afterRefresh } from "../read-again/after-refresh";
-import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
+import { hirobaSession } from "../read-failure-message";
+import type { ReadStatus } from "../reads/read-run";
+import { useReadRun } from "../reads/use-read-run";
 import type {
   HirobaSessionPort,
   PlayedChart,
@@ -15,14 +17,14 @@ import type {
 } from "../session-port";
 import { useHeldCopy } from "../use-held-copy";
 
-const POLL_MS = 200;
-
 /** The song a read of one song is for, named as its reading text names it. */
 export type ChosenSong = Pick<ScoreView, "songNo" | "songTitle">;
 
 export interface ScoresState {
   /** The kept scores; null until `load` has brought them. */
   readonly view: ScoresView | null;
+  /** Where the read stands, its progress how far a read of all scores has come. */
+  readonly status: ReadStatus<ScoresFailure, ScoresProgress>;
   readonly reading: boolean;
   readonly canRead: boolean;
   /** How far a read of all scores has come, while one runs. */
@@ -36,7 +38,7 @@ export interface ScoresState {
   readonly load: () => void;
   /** The kept scores changed by another read, such as a walk of the recent plays. */
   readonly markStale: () => void;
-  /** Drops the scores held, for another player's session. */
+  /** Drops the scores held, and a read on its way, for another player's session. */
   readonly forget: () => void;
   /** Reads what the book needs, after Hiroba's own refresh. A second ask while one runs does nothing. */
   readonly read: () => Promise<void>;
@@ -60,65 +62,37 @@ export function useScores(
   onSessionGone: (notice: MessageKey) => void,
 ): ScoresState {
   const kept = useHeldCopy(useCallback(() => port.scores(), [port]));
-  const { load: loadKept, hold } = kept;
-  const [reading, setReading] = useState(false);
-  const [progress, setProgress] = useState<ScoresProgress | null>(null);
+  const { load: loadKept, hold, forget: forgetKept } = kept;
+  const [reads, status] = useReadRun<ScoresFailure, ScoresProgress>(hirobaSession(onSessionGone));
   const [song, setSong] = useState<ChosenSong | null>(null);
-  const [failure, setFailure] = useState<ScoresFailure | null>(null);
   const [nothingNew, setNothingNew] = useState(false);
-  const running = useRef(false);
   const load = useCallback(() => {
-    setFailure(null);
+    reads.settle();
     setNothingNew(false);
     loadKept();
-  }, [loadKept]);
-  // A read that stopped kept what it read: the page shows that, with where it stopped.
-  const settle = useCallback(
-    async (result: Result<ScoresView, ScoresFailure>) => {
-      if (result.ok) {
-        hold(result.value);
-      } else if (SESSION_GONE.has(result.error.kind)) {
-        onSessionGone(FAILURE_MESSAGE[result.error.kind]);
-      } else {
-        setFailure(result.error);
-        hold(await port.scores());
-      }
-    },
-    [port, onSessionGone, hold],
-  );
+  }, [reads, loadKept]);
+  const forget = useCallback(() => {
+    reads.forget();
+    forgetKept();
+  }, [reads, forgetKept]);
   const run = useCallback(
     async (ask: () => Promise<Result<ScoresRead, ScoresFailure>>, chosen: ChosenSong | null) => {
-      if (running.current) {
+      if (reads.status().phase === "reading") {
         return;
       }
-      running.current = true;
-      setReading(true);
       setSong(chosen);
-      setFailure(null);
       setNothingNew(false);
-      const poll =
-        chosen === null
-          ? setInterval(() => {
-              void port.scoresProgress().then((now) => {
-                if (running.current) {
-                  setProgress(now);
-                }
-              });
-            }, POLL_MS)
-          : undefined;
-      try {
-        const result = await afterRefresh(port, ask);
-        setNothingNew(chosen === null && result.ok && result.value.detailed === 0);
-        await settle(result);
-      } finally {
-        clearInterval(poll);
-        running.current = false;
-        setReading(false);
-        setProgress(null);
-        setSong(null);
-      }
+      await reads.run(() => afterRefresh(port, ask), {
+        ...(chosen === null && { progress: () => port.scoresProgress() }),
+        // A read that stopped kept what it read: the page shows that, with where it stopped.
+        keep: async (result) => {
+          setNothingNew(chosen === null && result.ok && result.value.detailed === 0);
+          hold(result.ok ? result.value : await port.scores());
+        },
+      });
+      setSong(null);
     },
-    [port, settle],
+    [reads, port, hold],
   );
   const read = useCallback(() => run(() => port.readScores(), null), [port, run]);
   const readEvery = useCallback(() => run(() => port.readEveryScore(), null), [port, run]);
@@ -129,15 +103,16 @@ export function useScores(
   );
   return {
     view: kept.value,
-    reading,
-    canRead: !reading,
-    progress,
+    status,
+    reading: status.phase === "reading",
+    canRead: status.phase !== "reading",
+    progress: status.progress,
     song,
-    failure,
+    failure: status.failure,
     nothingNew,
     load,
     markStale: kept.markStale,
-    forget: kept.forget,
+    forget,
     read,
     readEvery,
     readSong,

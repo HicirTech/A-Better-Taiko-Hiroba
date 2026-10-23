@@ -4,6 +4,7 @@ import * as ChoiceDialog from "../../favorites/choice-dialog.stories";
 import * as SetNameDialog from "../../favorites/set-name-dialog.stories";
 import * as SongPicker from "../../favorites/song-picker.stories";
 import * as AddToSetDialog from "../../history/add-to-set-dialog.stories";
+import * as ReadEveryPlayDialog from "../../history/read-every-play-dialog.stories";
 import * as AddSongsDialog from "../../know-yourself/add-songs-dialog.stories";
 import * as CostumeHistoryDialog from "../../my-page/costume-history-dialog.stories";
 import * as ReadEveryDialog from "../../scores/read-every-dialog.stories";
@@ -37,6 +38,11 @@ const meta = {
         { name: "SetNameDialog", meta: SetNameDialog.default, story: SetNameDialog.NewSet },
         { name: "UpdateDialog", meta: UpdateDialog.default, story: UpdateDialog.NewVersion },
         { name: "ReadEveryDialog", meta: ReadEveryDialog.default, story: ReadEveryDialog.Asking },
+        {
+          name: "ReadEveryPlayDialog",
+          meta: ReadEveryPlayDialog.default,
+          story: ReadEveryPlayDialog.Asking,
+        },
         {
           name: "CostumeHistoryDialog",
           meta: CostumeHistoryDialog.default,
