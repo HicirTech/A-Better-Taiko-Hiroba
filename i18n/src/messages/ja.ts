@@ -292,8 +292,8 @@ export const ja: Messages = {
     "ひろばに接続できませんでした。通信環境を確認して、もう一度お試しください。",
   "failure.timedOut": "ひろばの応答に時間がかかりすぎました。もう一度お試しください。",
   "failure.cancelled": "リクエストを中止しました。",
-  "failure.siteError":
-    "ひろばがエラーを返しました。毎日 05:00〜07:00（日本時間）はメンテナンスで使えません。",
+  "failure.siteError": "ひろばがエラーを返しました。一時的な不具合が起きている可能性があります。",
+  "failure.siteErrorInMaintenance": "ひろばは毎日 05:00〜07:00（日本時間）のメンテナンス中です。",
   "failure.unexpectedPage": "ひろばから想定外のページが返ってきました。",
   "failure.maintenance":
     "ひろばは毎日 05:00〜07:00（日本時間）がメンテナンスです。更新は頼んでいません。",

@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Alert, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { FAILURE_MESSAGE } from "../read-failure-message";
+import { failureMessageOf } from "../read-failure-message";
 import type { ReadFailure } from "../session-port";
 
 /** What a read could not bring, where it would be drawn; it offers no retry. */
@@ -70,7 +70,7 @@ export function LoadFailed({
   return (
     <ReadFailureAlert
       id={id}
-      message={i18n.t(FAILURE_MESSAGE[failure.kind])}
+      message={i18n.t(failureMessageOf(failure.kind, new Date()))}
       code={failure.detail ?? null}
       codeId={codeId}
       i18n={i18n}
