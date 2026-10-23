@@ -87,6 +87,8 @@ const SITE_ERROR = "the site's error page — a bad parameter or a value that do
 const LOGGED_OUT = "captured while logged out, on purpose";
 /** The same error page, carrying a privacy refusal rather than a bad request. */
 const CLOSED_PROFILE = "the site's error page — this player has closed their profile";
+/** The same error page, in English, sent while the site was down. */
+const SITE_DOWN = "the site's error page — sent while the site was down";
 /** The picker reached from the folder editor: its rows link to a slot, never to the 大好きな曲. */
 const FOLDER_PICKER = "the folder editor's picker — its rows link to a slot";
 
@@ -220,6 +222,13 @@ const ROUTES: readonly Route[] = [
     parser: "parseRankDetailPage",
     run: (html) => attempt(parseRankDetailPage(html)),
     expect: (file) => (/nochart|pref48/.test(file) ? SITE_ERROR : null),
+  },
+  {
+    // Met in place of any page; my page is the first the app reads.
+    match: /^error-/,
+    parser: "parseProfilePage",
+    run: (html) => attempt(parseProfilePage(html, FETCHED_AT)),
+    expect: (_file, failure) => (failure.kind === "siteError" ? SITE_DOWN : null),
   },
 ];
 

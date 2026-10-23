@@ -19,6 +19,15 @@ const PROFILE_EXCERPT = `
   </div>
 </body></html>`;
 
+const errorPage = (heading: string, firstCell: string, message: string) => `
+<html><body>
+  <header><h1>${heading}</h1><ul class="left "><li class="boxLink"></li></ul></header>
+  <div id="content"><div><table><tr>
+    <td>${firstCell}</td>
+    <td>${message}</td>
+  </tr></table></div></div>
+</body></html>`;
+
 describe("parsePage", () => {
   test("accepts a logged-in page", () => {
     const result = parsePage(PROFILE_EXCERPT, "mypage_top.php");
@@ -53,6 +62,19 @@ describe("parsePage", () => {
     </body></html>`;
 
     expect(isOk(parsePage(withLink, "mypage_top.php"))).toBe(true);
+  });
+
+  // The English page leaves the caution picture's cell holding a full-width space.
+  test.each<[heading: string, firstCell: string, message: string]>([
+    ["エラー", '<img src="image/sp/640/caution_640.png">', "指定されたページは存在しません。"],
+    ["Error", "　", "You cannot access this site from your country."],
+  ])("reads the error page headed %p as siteError, with its message", (heading, cell, message) => {
+    const result = parsePage(errorPage(heading, cell, message), "mypage_top.php");
+
+    if (!isErr(result)) {
+      throw new Error("expected a siteError failure");
+    }
+    expect(result.error).toEqual({ kind: "siteError", page: "mypage_top.php", message });
   });
 });
 

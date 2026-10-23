@@ -6,10 +6,11 @@ import type { ParseFailure } from "./types";
 /** Only the logged-out answer carries the login form; logged-in pages never do. */
 const LOGIN_FORM_MARKER = "form#login_form";
 
-// Hiroba's error page arrives at HTTP 200: match its heading, never a message (a fifth is likely).
+// Hiroba's error page arrives at HTTP 200, headed in Japanese or in English: match its heading,
+// never a message, which varies.
 // The no-data container (`div#error.contentBox.errorArea`) is an ordinary page, not an error.
 const ERROR_SHELL_MARKER = "h1";
-const ERROR_SHELL_HEADING = "エラー";
+const ERROR_SHELL_HEADINGS: ReadonlySet<string> = new Set(["エラー", "Error"]);
 
 export interface ParseOptions {
   /** Keeps unclosed tags; otherwise a stray `<div>` makes the parser drop the title page's form. */
@@ -26,7 +27,7 @@ export function parsePage(
   if (root.querySelector(LOGIN_FORM_MARKER) !== null) {
     return err({ kind: "loggedOut", page });
   }
-  if (root.querySelector(ERROR_SHELL_MARKER)?.text.trim() === ERROR_SHELL_HEADING) {
+  if (ERROR_SHELL_HEADINGS.has(root.querySelector(ERROR_SHELL_MARKER)?.text.trim() ?? "")) {
     return err({
       kind: "siteError",
       page,
