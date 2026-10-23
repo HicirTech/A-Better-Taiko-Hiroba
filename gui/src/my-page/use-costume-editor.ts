@@ -5,10 +5,13 @@ import { useCallback, useReducer, useRef } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { afterRefresh } from "../read-again/after-refresh";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
+import type { ReadStatus } from "../reads/read-run";
+import { useReadRun } from "../reads/use-read-run";
 import {
   type CostumeHistoryEntry,
   changedTheCostume,
   type HirobaSessionPort,
+  type ReadFailure,
   type WriteOutcomeView,
 } from "../session-port";
 import {
@@ -38,6 +41,8 @@ export interface CostumeEditor {
   readonly preview: PreviewState;
   /** The player's earlier costumes, newest first; from the platform, never Hiroba. */
   readonly history: readonly CostumeHistoryEntry[];
+  /** Where the read of the editor stands. */
+  readonly status: ReadStatus<ReadFailure, never>;
   readonly reading: boolean;
   readonly writing: boolean;
   readonly canRead: boolean;
@@ -72,52 +77,45 @@ export function useCostumeEditor({
   } = useCostumePreview(port, previewSetOf(step), shown);
   const sessionGeneration = useRef(0);
   const { history, refreshHistory, clearHistory } = useCostumeHistory(port, sessionGeneration);
-  // One read at a time, also under StrictMode's double effects, which would ask Hiroba twice.
-  const reading = useRef<number | null>(null);
   const writing = useRef(false);
+  const [reads, status] = useReadRun<ReadFailure>({
+    endsTheSession: (failure) => SESSION_GONE.has(failure.kind),
+    onSessionEnded: (failure) => {
+      forget();
+      onSessionGone(FAILURE_MESSAGE[failure.kind]);
+    },
+  });
 
   const forget = useCallback(() => {
     sessionGeneration.current += 1;
+    reads.forget();
     dispatch({ type: "forget" });
     clearHistory();
     resetPreview();
-  }, [clearHistory, resetPreview]);
+  }, [reads, clearHistory, resetPreview]);
 
   const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
 
   const mayRead = step.name === "unread" || canReadEditorAgain(step);
   const read = useCallback(
     async (refreshFirst?: boolean) => {
-      const mine = sessionGeneration.current;
-      if (!mayRead || reading.current === mine || writing.current) {
+      // One read at a time, also under StrictMode's double effects, which would ask Hiroba twice.
+      if (!mayRead || writing.current || reads.status().phase === "reading") {
         return;
       }
 
-      reading.current = mine;
       // A thumbnail that did not come last time is asked for again once, in this reading.
       lane.forgetFailures("costumeItem");
       dispatch({ type: "readStarted" });
       const open = () => port.openCostumeEditor();
-      const result = await (refreshFirst ? afterRefresh(port, open) : open());
-      if (reading.current === mine) {
-        reading.current = null;
-      }
-      if (mine !== sessionGeneration.current) {
-        return;
-      }
-
-      if (!result.ok && SESSION_GONE.has(result.error.kind)) {
-        forget();
-        onSessionGone(FAILURE_MESSAGE[result.error.kind]);
-        return;
-      }
-
-      dispatch({ type: "readEnded", result });
-      if (result.ok) {
+      const result = await reads.run(() => (refreshFirst ? afterRefresh(port, open) : open()), {
+        keep: (answer) => dispatch({ type: "readEnded", result: answer }),
+      });
+      if (result?.ok === true) {
         await refreshHistory();
       }
     },
-    [mayRead, port, lane, forget, onSessionGone, refreshHistory],
+    [mayRead, reads, port, lane, refreshHistory],
   );
 
   const writeEnded = (outcome: WriteOutcomeView) => {
@@ -157,6 +155,7 @@ export function useCostumeEditor({
     step,
     preview,
     history,
+    status,
     reading: step.name === "loading",
     writing: isWriting(step),
     canRead: canReadEditorAgain(step),

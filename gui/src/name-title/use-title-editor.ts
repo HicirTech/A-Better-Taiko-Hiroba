@@ -5,7 +5,15 @@ import { useCallback, useReducer, useRef } from "react";
 import { noticeOf, seenAfter, sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import type { HirobaSessionPort, ProfileView, TitleState, WriteOutcomeView } from "../session-port";
+import type { ReadStatus } from "../reads/read-run";
+import { useReadRun } from "../reads/use-read-run";
+import type {
+  HirobaSessionPort,
+  ProfileView,
+  ReadFailure,
+  TitleState,
+  WriteOutcomeView,
+} from "../session-port";
 import {
   changesTitle,
   IDLE,
@@ -30,6 +38,8 @@ export interface TitleEditorOptions {
 
 export interface TitleEditor {
   readonly step: TitleStep;
+  /** Where the read of the titles to choose from stands. */
+  readonly status: ReadStatus<ReadFailure, never>;
   readonly writing: boolean;
   /** Reads the titles to choose from when the picker opens; none if they are read already. */
   readList(): Promise<void>;
@@ -57,50 +67,47 @@ export function useTitleEditor({
   const [step, dispatch] = useReducer(reduceTitle, IDLE);
   // An answer on its way is let go when a session ends, the list is forgotten or a write ends.
   const generation = useRef(0);
-  // One read at a time, also when the picker opens twice before the page draws.
-  const reading = useRef<number | null>(null);
   const writing = useRef(false);
+  const [reads, status] = useReadRun<ReadFailure>({
+    endsTheSession: (failure) => SESSION_GONE.has(failure.kind),
+    onSessionEnded: (failure) => {
+      forget();
+      onSessionGone(FAILURE_MESSAGE[failure.kind]);
+    },
+  });
 
   const forget = useCallback(() => {
     generation.current += 1;
+    reads.forget();
     dispatch({ type: "forget" });
-  }, []);
+  }, [reads]);
 
   const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
 
   const forgetList = useCallback(() => {
     generation.current += 1;
+    reads.forget();
     dispatch({ type: "listForgotten" });
-  }, []);
+  }, [reads]);
 
   const mayRead = mayReadTitles(step);
   const readList = useCallback(async () => {
-    const mine = generation.current;
-    if (!mayRead || reading.current === mine || writing.current) {
+    // One read at a time, also when the picker opens twice before the page draws.
+    if (!mayRead || writing.current || reads.status().phase === "reading") {
       return;
     }
 
-    reading.current = mine;
     dispatch({ type: "readStarted" });
-    const result = await port.openTitleEditor();
-    if (reading.current === mine) {
-      reading.current = null;
-    }
-    if (mine !== generation.current) {
-      return;
-    }
-
-    if (!result.ok && SESSION_GONE.has(result.error.kind)) {
-      forget();
-      onSessionGone(FAILURE_MESSAGE[result.error.kind]);
-      return;
-    }
-
-    dispatch({ type: "readEnded", result });
-  }, [mayRead, port, forget, onSessionGone]);
+    await reads.run(() => port.openTitleEditor(), {
+      keep: (result) => dispatch({ type: "readEnded", result }),
+    });
+  }, [mayRead, reads, port]);
 
   const writeEnded = (outcome: WriteOutcomeView<TitleState>) => {
     generation.current += 1;
+    if (reads.status().phase === "reading") {
+      reads.forget();
+    }
     dispatch({ type: "writeEnded", outcome });
     const gone = sessionNoticeOf(outcome);
     if (gone !== null) {
@@ -147,6 +154,7 @@ export function useTitleEditor({
 
   return {
     step,
+    status,
     writing: isWritingTitle(step),
     readList,
     forgetList,

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import type { ReadStatus } from "../reads/read-run";
+import { useReadRun } from "../reads/use-read-run";
 import type { HirobaSessionPort } from "../session-port";
 import type {
   CatalogueSong,
@@ -26,6 +28,8 @@ export type ListedSong = CatalogueSong & { readonly chineseNames: readonly strin
 export interface SongCatalogue {
   readonly songs: ReadonlyMap<string, ListedSong>;
   readonly list: readonly ListedSong[];
+  /** Where the read of the list stands; a failure with a list kept goes unsaid. */
+  readonly status: ReadStatus<SongCatalogueFailure, never>;
   /** `failed` only when no song list is kept to use; a kept one is used without a word. */
   readonly state: "loading" | "ready" | "failed";
   readonly failure: SongCatalogueFailure["code"] | null;
@@ -40,33 +44,30 @@ const NONE: readonly CatalogueSong[] = [];
 export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): SongCatalogue {
   const [kept, setKept] = useState<KeptCatalogue | null>(null);
   const [names, setNames] = useState<ChineseNamesRead | null>(null);
-  const [failure, setFailure] = useState<SongCatalogueFailure["code"] | null>(null);
+  const [reads, status] = useReadRun<SongCatalogueFailure>();
+  const [nameReads] = useReadRun<SongCatalogueFailure>();
   const started = useRef(false);
-  const reading = useRef(false);
-  const failed = useRef(false);
+  // The list kept, for the callbacks that must not change with it.
+  const keptNow = useRef<KeptCatalogue | null>(null);
 
   const refresh = useCallback(
     async (known: KeptCatalogue | null) => {
       const ask = nextCatalogueRead(known, Date.now());
-      if (ask === null || reading.current) {
+      if (ask === null) {
         return;
       }
-
-      reading.current = true;
-      failed.current = false;
-      setFailure(null);
-      const result = await port.readSongCatalogue(ask.since);
-      reading.current = false;
-      if (result.ok) {
-        const merged = mergeCatalogue(known, result.value);
-        keepCatalogue(merged);
-        setKept(merged);
-      } else if (known === null) {
-        failed.current = true;
-        setFailure(result.error.code);
-      }
+      await reads.run(() => port.readSongCatalogue(ask.since), {
+        keep: (result) => {
+          if (result.ok) {
+            const merged = mergeCatalogue(known, result.value);
+            keepCatalogue(merged);
+            keptNow.current = merged;
+            setKept(merged);
+          }
+        },
+      });
     },
-    [port],
+    [reads, port],
   );
 
   // The names only add to what search finds and what Chinese shows, so a failure says nothing.
@@ -75,13 +76,16 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
       if (known !== null && Date.now() - known.sentAt <= CHINESE_NAMES_MAX_AGE_MS) {
         return;
       }
-      const result = await port.readChineseNames();
-      if (result.ok) {
-        keepChineseNames(result.value);
-        setNames(result.value);
-      }
+      await nameReads.run(() => port.readChineseNames(), {
+        keep: (result) => {
+          if (result.ok) {
+            keepChineseNames(result.value);
+            setNames(result.value);
+          }
+        },
+      });
     },
-    [port],
+    [nameReads, port],
   );
 
   useEffect(() => {
@@ -92,16 +96,17 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
     started.current = true;
     const cached = loadCatalogue();
     const cachedNames = loadChineseNames();
+    keptNow.current = cached;
     setKept(cached);
     setNames(cachedNames);
     void refresh(cached).then(() => refreshNames(cachedNames));
   }, [needed, refresh, refreshNames]);
 
   const readIfFailed = useCallback(() => {
-    if (failed.current) {
+    if (keptNow.current === null && reads.status().phase === "failed") {
       void refresh(null);
     }
-  }, [refresh]);
+  }, [reads, refresh]);
 
   const known = kept?.songs ?? NONE;
   const list = useMemo(() => {
@@ -112,8 +117,9 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
   return {
     songs,
     list,
-    state: kept !== null ? "ready" : failure !== null ? "failed" : "loading",
-    failure,
+    status,
+    state: kept !== null ? "ready" : status.phase === "failed" ? "failed" : "loading",
+    failure: kept === null ? (status.failure?.code ?? null) : null,
     readIfFailed,
   };
 }

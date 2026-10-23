@@ -5,7 +5,14 @@ import { sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
 import { afterRefresh } from "../read-again/after-refresh";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import type { FavoriteSongState, HirobaSessionPort, WriteOutcomeView } from "../session-port";
+import type { ReadStatus } from "../reads/read-run";
+import { useReadRun } from "../reads/use-read-run";
+import type {
+  FavoriteSongState,
+  HirobaSessionPort,
+  ReadFailure,
+  WriteOutcomeView,
+} from "../session-port";
 import {
   canReadFavoritesAgain,
   type FavoritesAction,
@@ -24,6 +31,8 @@ export interface FavoritesOptions {
 
 export interface FavoritesEditor {
   readonly step: FavoritesStep;
+  /** Where the read of the two editors stands. */
+  readonly status: ReadStatus<ReadFailure, never>;
   readonly reading: boolean;
   readonly writing: boolean;
   readonly canRead: boolean;
@@ -47,14 +56,20 @@ export interface FavoritesEditor {
 export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): FavoritesEditor {
   const [step, dispatch] = useReducer(reduceFavorites, UNREAD);
   const generation = useRef(0);
-  // One read at a time, also under StrictMode's double effects, which would ask Hiroba twice.
-  const reading = useRef<number | null>(null);
   const writing = useRef(false);
+  const [reads, status] = useReadRun<ReadFailure>({
+    endsTheSession: (failure) => SESSION_GONE.has(failure.kind),
+    onSessionEnded: (failure) => {
+      forget();
+      onSessionGone(FAILURE_MESSAGE[failure.kind]);
+    },
+  });
 
   const forget = useCallback(() => {
     generation.current += 1;
+    reads.forget();
     dispatch({ type: "forget" });
-  }, []);
+  }, [reads]);
   const dropEdits = useCallback(() => dispatch({ type: "draftDropped" }), []);
   const pickSong = useCallback(
     (song: FavoriteSongState) => dispatch({ type: "songPicked", song }),
@@ -64,31 +79,18 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
   const mayRead = step.name === "unread" || canReadFavoritesAgain(step);
   const read = useCallback(
     async (refreshFirst?: boolean) => {
-      const mine = generation.current;
-      if (!mayRead || reading.current === mine || writing.current) {
+      // One read at a time, also under StrictMode's double effects, which would ask Hiroba twice.
+      if (!mayRead || writing.current || reads.status().phase === "reading") {
         return;
       }
 
-      reading.current = mine;
       dispatch({ type: "readStarted" });
       const open = () => port.openFavorites();
-      const result = await (refreshFirst ? afterRefresh(port, open) : open());
-      if (reading.current === mine) {
-        reading.current = null;
-      }
-      if (mine !== generation.current) {
-        return;
-      }
-
-      if (!result.ok && SESSION_GONE.has(result.error.kind)) {
-        forget();
-        onSessionGone(FAILURE_MESSAGE[result.error.kind]);
-        return;
-      }
-
-      dispatch({ type: "readEnded", result });
+      await reads.run(() => (refreshFirst ? afterRefresh(port, open) : open()), {
+        keep: (result) => dispatch({ type: "readEnded", result }),
+      });
     },
-    [mayRead, port, forget, onSessionGone],
+    [mayRead, reads, port],
   );
 
   const write = async <S>(
@@ -141,6 +143,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
 
   return {
     step,
+    status,
     reading: step.name === "loading",
     writing: isWritingFavorites(step),
     canRead: canReadFavoritesAgain(step),
