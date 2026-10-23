@@ -15,6 +15,7 @@ import { useFavorites } from "./favorites/use-favorites";
 import { usePickableSongs } from "./favorites/use-pickable-songs";
 import { useSongCatalogue } from "./favorites/use-song-catalogue";
 import { HistoryPage } from "./history/history-page";
+import { ReadEveryPlayDialog } from "./history/read-every-play-dialog";
 import { useRecentPlays } from "./history/use-recent-plays";
 import { KnowYourselfPage } from "./know-yourself";
 import { useListedCharts } from "./know-yourself/use-listed-charts";
@@ -38,22 +39,23 @@ import { RatingPage, useRatingData } from "./rating";
 import { afterRefresh } from "./read-again/after-refresh";
 import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
-import { SHUT_LOOK } from "./read-again/shut-look";
 import { useReadAgainKeys } from "./read-again/use-read-again-keys";
-import { FAILURE_MESSAGE, SESSION_GONE } from "./read-failure-message";
+import { hirobaSession } from "./read-failure-message";
+import { useReadRun } from "./reads/use-read-run";
 import { ReadEveryDialog } from "./scores/read-every-dialog";
-import { ScoresPage, scoresReadingText } from "./scores/scores-page";
+import { ScoresPage, scoresReadingProgress, scoresReadingText } from "./scores/scores-page";
 import { useScores } from "./scores/use-scores";
 import type {
   HirobaSessionPort,
   ProfileView,
+  ReadFailure,
   ReadFailureKind,
   SignInOutcome,
 } from "./session-port";
 import { SettingsPage } from "./settings/settings-page";
 import { SongSearch } from "./songs/song-search";
-import { FADES_IN, useFirstRead } from "./ui/first-read";
-import { PageSkeleton } from "./ui/page-skeleton";
+import { FADES_IN, usePageRead } from "./ui/page-read";
+import { PageSkeleton, type SkeletonProgress } from "./ui/page-skeleton";
 import { LoadFailed } from "./ui/read-failure-alert";
 import { SectionCard } from "./ui/section-card";
 import { RELEASES_URL, REPOSITORY_URL, releaseUrl } from "./updates";
@@ -74,8 +76,8 @@ type Screen =
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
 const OVERVIEW_SPACING = 3;
-// The pages that read Hiroba first, and what their skeleton says is read.
-const FIRST_READ_LABEL: Partial<Record<Page, MessageKey>> = {
+// The pages that read data of their own, and what their skeleton says is read.
+const READ_LABEL: Partial<Record<Page, MessageKey>> = {
   costume: "costume.reading",
   favorites: "favorites.reading",
   rating: "rating.readingData",
@@ -86,6 +88,15 @@ const FIRST_READ_LABEL: Partial<Record<Page, MessageKey>> = {
 const readsFirst = (step: { readonly name: string; readonly held?: unknown }) =>
   step.name === "unread" || (step.name === "loading" && step.held === null);
 const HIDDEN = { display: "none" } as const;
+const SHOWS_SCORES: ReadonlySet<Page> = new Set(["scores", "rating", "knowYourself"]);
+const SHOWS_SONG_NAMES: ReadonlySet<Page> = new Set([
+  "overview",
+  "history",
+  "scores",
+  "rating",
+  "knowYourself",
+  "favorites",
+]);
 const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 
 const SIGN_IN_NOTICE = {
@@ -111,9 +122,8 @@ export interface AppProps {
 export function App({ port, link, i18n, page, onNavigate, language, toast }: AppProps) {
   const { t } = i18n;
   const [screen, setScreen] = useState<Screen>({ name: "checking" });
-  const [refreshing, setRefreshing] = useState(false);
-  // A read again the user asked for leaves the page in place, shut, rather than swap it out.
-  const [shut, setShut] = useState(false);
+  // Whether the read of my page running is the page's own: one behind it, after a write, is not.
+  const [readInView, setReadInView] = useState(false);
   const updates = useUpdateReminder(port, APP_VERSION);
   // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
   const lane = useMemo(
@@ -121,7 +131,6 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     [port],
   );
   const onEditorPage = page === "costume" && screen.name === "profile";
-  const onNameTitlePage = page === "nameTitle" && screen.name === "profile";
   const onFavoritesPage = page === "favorites" && screen.name === "profile";
   const onHistoryPage = page === "history" && screen.name === "profile";
   const onScoresPage = page === "scores" && screen.name === "profile";
@@ -131,6 +140,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
     [],
   );
+  const [myPage, myPageStatus] = useReadRun<ReadFailure>(hirobaSession(sessionGone));
+  const myPageReading = myPageStatus.phase === "reading";
   const {
     pickable,
     readIfStale: readPickableIfStale,
@@ -148,41 +159,43 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   // portrait alone: a title write does not change the costume.
   const read = useCallback(
     async (behindThePage = false, refreshFirst = false): Promise<boolean> => {
-      setRefreshing(true);
+      if (myPage.status().phase === "reading") {
+        return false;
+      }
+      setReadInView(!behindThePage);
       if (!behindThePage) {
-        setShut(true);
         setScreen((now) => (now.name === "profile" ? now : { name: "reading" }));
       }
-      try {
-        const readProfile = () =>
-          behindThePage ? port.readProfile({ renewsPortrait: false }) : port.readProfile();
-        const result = await (refreshFirst ? afterRefresh(port, readProfile) : readProfile());
-        if (result.ok) {
-          // Plates change with the title or season, the portrait with any costume change.
-          // Fixed art is kept for good once it came, so only its failures are forgotten.
-          lane.renew("titlePlate");
-          lane.renew("medalPlate");
-          if (!behindThePage) {
-            lane.renew("myDon");
-          }
-          for (const kind of FIXED_ART) {
-            lane.forgetFailures(kind);
-          }
-          setScreen({ name: "profile", profile: result.value });
-          return true;
-        }
-        if (SESSION_GONE.has(result.error.kind)) {
-          setScreen({ name: "signedOut", notice: FAILURE_MESSAGE[result.error.kind] });
-        } else {
-          setScreen({ name: "readFailed", ...result.error });
-        }
-        return false;
-      } finally {
-        setRefreshing(false);
-        setShut(false);
-      }
+      const readProfile = () =>
+        behindThePage ? port.readProfile({ renewsPortrait: false }) : port.readProfile();
+      const result = await myPage.run(
+        () => (refreshFirst ? afterRefresh(port, readProfile) : readProfile()),
+        {
+          keep: (answer) => {
+            if (!answer.ok) {
+              // My page shown stays, the failure over it; with none, the failure takes its place.
+              setScreen((now) =>
+                now.name === "profile" ? now : { name: "readFailed", ...answer.error },
+              );
+              return;
+            }
+            // Plates change with the title or season, the portrait with any costume change.
+            // Fixed art is kept for good once it came, so only its failures are forgotten.
+            lane.renew("titlePlate");
+            lane.renew("medalPlate");
+            if (!behindThePage) {
+              lane.renew("myDon");
+            }
+            for (const kind of FIXED_ART) {
+              lane.forgetFailures(kind);
+            }
+            setScreen({ name: "profile", profile: answer.value });
+          },
+        },
+      );
+      return result?.ok === true;
     },
-    [port, lane],
+    [myPage, port, lane],
   );
 
   // A title write that may have moved the title leaves the plate stale: read my page again.
@@ -290,16 +303,47 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     nameTitle: false,
     favorites: readsFirst(favorites.step),
   };
+  // A whole read of the scores holds the pages showing them; one song's, for its details, does not.
+  const scoresRead = scores.reading && scores.song === null;
+  const myPageInView = myPageReading && readInView;
+  // What each page's own data is being read for: the page waits for it, as on its first visit.
+  const readsNow: Readonly<Record<Exclude<Page, "settings">, boolean>> = {
+    overview: myPageInView,
+    history: history.reading,
+    scores: scoresRead,
+    rating: scoresRead || ratingData.reading,
+    knowYourself: scoresRead,
+    costume: editor.reading,
+    nameTitle: myPageInView,
+    favorites: favorites.reading,
+  };
   const pageWaits =
-    page !== "settings" && (profileWaits || (screen.name === "profile" && firstReads[page]));
-  const firstRead = useFirstRead(pageWaits, page);
+    page !== "settings" &&
+    (profileWaits || (screen.name === "profile" && (firstReads[page] || readsNow[page])));
+  // A page read again stays on screen, shut, until its skeleton stands in for it.
+  const pageHolds = page !== "settings" && screen.name === "profile" && !firstReads[page];
+  const pageRead = usePageRead(pageWaits, page, pageHolds);
   // The skeleton stands alone until the page, or what came in its place, takes over from it.
-  const pageShown = screen.name === "profile" && !pageWaits && !firstRead.skeleton;
-  const failureShown = screen.name === "readFailed" && !firstRead.skeleton;
+  const pageShown = screen.name === "profile" && !pageRead.skeleton && (!pageWaits || pageHolds);
+  const failureShown = screen.name === "readFailed" && !pageRead.skeleton;
   const PageShape = page === "settings" ? null : PAGE_SKELETONS[page];
-  const waitLabel = profileWaits
-    ? "profile.reading"
-    : (FIRST_READ_LABEL[page] ?? (`nav.${page}` as const));
+  const waitLabel =
+    profileWaits || myPageInView
+      ? "profile.reading"
+      : (READ_LABEL[page] ?? (`nav.${page}` as const));
+  // The skeleton's bar says how far the page's read has come, where the read can tell.
+  const skeletonProgress: SkeletonProgress | null =
+    page === "history" && history.reading
+      ? { words: t("history.readingPage", { page: history.page ?? 1 }), done: null }
+      : SHOWS_SCORES.has(page) && scoresRead
+        ? scoresReadingProgress(i18n, scores.progress, null)
+        : null;
+  // A skeleton is drawn from the top, so a page read again comes back at its top.
+  useEffect(() => {
+    if (pageRead.skeleton) {
+      window.scrollTo(0, 0);
+    }
+  }, [pageRead.skeleton]);
 
   const signIn = async () => {
     // Hiroba may have ended the last session itself, so no sign-out forgot its pictures.
@@ -321,6 +365,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
 
   const signOut = async () => {
     lane.forget();
+    myPage.forget();
     await port.signOut();
     setScreen({ name: "signedOut", notice: null });
     onNavigate("overview");
@@ -337,6 +382,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   }, [noSession, page, onNavigate]);
   useEffect(() => {
     if (noSession) {
+      myPage.forget();
       forgetEditor();
       forgetTitleEditor();
       forgetNameEditor();
@@ -347,6 +393,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     }
   }, [
     noSession,
+    myPage,
     forgetEditor,
     forgetTitleEditor,
     forgetNameEditor,
@@ -369,7 +416,9 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   }, [profileShown, loadScores, loadPlays]);
 
   // Leaving a page drops the edits made on it; the editors keep what they read from Hiroba.
+  // A failed read of my page is said on the page it failed on, until another opens.
   useEffect(() => {
+    myPage.settle();
     if (page !== "costume") {
       dropEditorEdits();
     }
@@ -380,7 +429,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     if (page !== "favorites") {
       dropFavoritesEdits();
     }
-  }, [page, dropEditorEdits, dropTitleEdits, dropNameEdits, dropFavoritesEdits]);
+  }, [page, myPage, dropEditorEdits, dropTitleEdits, dropNameEdits, dropFavoritesEdits]);
 
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const portrait: OpenAction = { open: () => onNavigate("costume"), byLongPress: touchFirst };
@@ -414,54 +463,75 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           ? scores
           : null;
   const canReadAgain =
-    signedIn && !writing && !refreshing && (pageEditor === null || pageEditor.canRead);
+    signedIn && !writing && !myPageReading && (pageEditor === null || pageEditor.canRead);
   // Turns away a second ask, by the button or a key, that lands before the button is shut.
   const readAgainStarted = useRef(false);
+  // What Read again reads on each page: the kinds of data it shows, each once. A walk or a read
+  // of the scores can run for minutes, so Read again on another page does not wait for it.
+  const readsAgain: Readonly<Record<Page, () => Promise<unknown> | undefined>> = {
+    overview: () => read(false, true),
+    // A walk notes its plays in the scores, and a read of the scores walks the plays.
+    history: () => void history.read().then(markScoresStale),
+    scores: () => void scores.read().then(markPlaysStale),
+    rating: () => void Promise.all([scores.read().then(markPlaysStale), ratingData.read()]),
+    knowYourself: () => void scores.read().then(markPlaysStale),
+    costume: () => editor.read(true),
+    nameTitle: async () => {
+      // The titles are read again when the picker next opens.
+      if (await read(false, true)) {
+        forgetTitleList();
+      }
+    },
+    favorites: () => {
+      // The pickers' list is read again when a picker next opens.
+      markPickableStale();
+      return favorites.read(true);
+    },
+    settings: () => read(false, true),
+  };
   const readAgain = async () => {
     if (!canReadAgain || readAgainStarted.current) {
       return;
     }
     readAgainStarted.current = true;
     try {
-      if (onHistoryPage) {
-        // A walk can run for minutes: Read again on another page must not wait for it.
-        // It notes its plays in the scores too, and a read of the scores walks the plays.
-        void history.read().then(markScoresStale);
-      } else if (onScoresPage || onKnowPage) {
-        void scores.read().then(markPlaysStale);
-      } else if (onRatingPage) {
-        void scores.read().then(markPlaysStale);
-        void ratingData.read();
-      } else if (pageEditor !== null) {
-        if (onFavoritesPage) {
-          // The pickers' list is read again when a picker next opens.
-          markPickableStale();
-        }
-        await pageEditor.read(true);
-      } else if ((await read(false, true)) && onNameTitlePage) {
-        // The titles are read again when the picker next opens.
-        forgetTitleList();
+      if (SHOWS_SONG_NAMES.has(page)) {
+        catalogue.readIfStale();
       }
+      // With my page unread, every page waits on it, so it alone is read.
+      await (screen.name === "profile" ? readsAgain[page]() : read(false, true));
     } finally {
       readAgainStarted.current = false;
     }
   };
   useReadAgainKeys(signedIn, readAgain);
-  // Reading every score takes minutes, so the scores page asks for it by a long hold.
+  // Reading every score or every play takes minutes, so their pages ask for it by a long hold.
   const [askingEvery, setAskingEvery] = useState(false);
-  if (askingEvery && !onScoresPage) {
+  if (askingEvery && !onScoresPage && !onHistoryPage) {
     setAskingEvery(false);
   }
   const keptCharts = scores.view?.scores.length ?? 0;
-  const askEvery = onScoresPage && keptCharts > 0 ? () => setAskingEvery(true) : undefined;
+  const keptPlays = history.plays?.length ?? 0;
+  const askEvery =
+    (onScoresPage && keptCharts > 0) || (onHistoryPage && keptPlays > 0)
+      ? () => setAskingEvery(true)
+      : undefined;
+  // A read again of my page that failed stands over what the page read before.
+  const myPageFailure = screen.name === "profile" && myPageStatus.failure !== null && (
+    <LoadFailed
+      id="read-failure"
+      failure={myPageStatus.failure}
+      codeId="failure-detail"
+      i18n={i18n}
+    />
+  );
   return (
     <>
       {(signedIn || screen.name === "reading") && (
         <NavFoot>
           <ReadAgainFoot
             reading={
-              screen.name === "reading" ||
-              refreshing ||
+              myPageReading ||
               (pageEditor?.reading ?? false) ||
               (onRatingPage && ratingData.reading)
             }
@@ -501,6 +571,18 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           }}
         />
       )}
+      {onHistoryPage && (
+        <ReadEveryPlayDialog
+          open={askingEvery}
+          i18n={i18n}
+          onAnswer={(confirmed) => {
+            setAskingEvery(false);
+            if (confirmed) {
+              void history.readEvery().then(markScoresStale);
+            }
+          }}
+        />
+      )}
       {page === "settings" ? (
         <SettingsPage
           i18n={i18n}
@@ -508,7 +590,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           account={
             screen.name === "checking"
               ? { kind: "checking" }
-              : screen.name === "reading" || refreshing || writing
+              : myPageReading || writing
                 ? { kind: "reading" }
                 : signedIn
                   ? {
@@ -528,7 +610,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
         />
       ) : (
         <Stack spacing={3}>
-          {!firstRead.skeleton && (screen.name === "signedOut" || screen.name === "signingIn") && (
+          {!pageRead.skeleton && (screen.name === "signedOut" || screen.name === "signingIn") && (
             <SectionCard id="sign-in-card">
               <Stack spacing={2}>
                 {screen.name === "signedOut" ? (
@@ -556,8 +638,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
             </SectionCard>
           )}
 
-          {firstRead.skeleton && PageShape !== null && (
-            <PageSkeleton page={page} label={t(waitLabel)}>
+          {pageRead.skeleton && PageShape !== null && (
+            <PageSkeleton page={page} label={t(waitLabel)} progress={skeletonProgress}>
               <PageShape />
             </PageSkeleton>
           )}
@@ -565,11 +647,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
           {/* Laid out as if absent, so the pages keep their place in the frame. */}
           <Box
             id="page-shut"
-            inert={shut}
-            sx={{
-              display: "contents",
-              "& > *": { ...SHUT_LOOK(shut), ...(firstRead.fades ? FADES_IN : {}) },
-            }}
+            inert={pageWaits}
+            sx={{ display: "contents", "& > *": pageRead.fades ? FADES_IN : {} }}
           >
             {pageShown && page === "history" && (
               <HistoryPage
@@ -619,6 +698,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               <CostumePage editor={editor} lane={lane} i18n={i18n} />
             )}
 
+            {pageShown && page === "nameTitle" && myPageFailure}
             {pageShown && page === "nameTitle" && (
               <NameTitlePage
                 profile={screen.profile}
@@ -655,6 +735,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
                   <Stack spacing={OVERVIEW_SPACING} sx={searching ? HIDDEN : undefined}>
                     {screen.name === "profile" ? (
                       <>
+                        {myPageFailure}
                         <OverviewHeader
                           profile={screen.profile}
                           lane={lane}

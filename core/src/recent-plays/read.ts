@@ -27,6 +27,8 @@ export interface RecentPlaysReadDeps<F> {
   readonly atOnce?: number;
   /** Called as a page's request starts, so a caller can show which page is in flight. */
   onPage?(page: number): void;
+  /** Walks past the rows the last walk stored to the feed's end, and keeps that walk instead. */
+  readonly everyPage?: boolean;
 }
 
 /** A walk that failed, at the page whose request failed. */
@@ -88,7 +90,7 @@ export async function readRecentPlays<F>(
 ): Promise<Result<RecentPlaysReading, RecentPlaysPageFailure<F>>> {
   const pageCap = deps.pageCap ?? RECENT_PLAYS_PAGE_CAP;
   const atOnce = deps.atOnce ?? 1;
-  const walk = walkFrom(deps.previous, pageCap);
+  const walk = walkFrom(deps.previous, pageCap, deps.everyPage === true);
   const answers = new Map<number, Promise<Result<readonly RecentPlay[], F>>>();
   const ask = (page: number) => {
     deps.onPage?.(page);
@@ -126,10 +128,13 @@ export async function readRecentPlays<F>(
 }
 
 /** Takes a walk's pages in order, and says where it stops. */
-function walkFrom(previous: readonly RecentPlay[] | null, pageCap: number) {
+function walkFrom(previous: readonly RecentPlay[] | null, pageCap: number, everyPage: boolean) {
   const known =
     previous === null || previous.length === 0 ? null : new Set(previous.map(recentPlayKey));
   const fresh: RecentPlay[] = [];
+  const walked: RecentPlay[] = [];
+  // Fresh ends at the first row the last walk stored, where an every-page walk goes on.
+  let pastKnown = false;
   let pageOne: readonly string[] = [];
 
   const took = (page: number, rows: readonly RecentPlay[]): RecentPlaysStop | null => {
@@ -141,20 +146,27 @@ function walkFrom(previous: readonly RecentPlay[] | null, pageCap: number) {
     if (page === 1) {
       pageOne = keys;
     }
-    if (known !== null) {
-      const hit = keys.findIndex((key) => known.has(key));
-      if (hit >= 0) {
-        fresh.push(...rows.slice(0, hit));
+    walked.push(...rows);
+    const hit = known === null || pastKnown ? -1 : keys.findIndex((key) => known.has(key));
+    if (hit >= 0) {
+      fresh.push(...rows.slice(0, hit));
+      if (!everyPage) {
         return "known";
       }
+      pastKnown = true;
+    } else if (!pastKnown) {
+      fresh.push(...rows);
     }
-    fresh.push(...rows);
     if (rows.length < RECENT_PLAYS_PAGE_SIZE) {
       return "short";
     }
     return page >= pageCap ? "cap" : null;
   };
-  return { took, fresh: () => [...fresh], plays: () => mergeRecentPlays(fresh, previous) };
+  return {
+    took,
+    fresh: () => [...fresh],
+    plays: () => (everyPage ? mergeRecentPlays(walked, null) : mergeRecentPlays(fresh, previous)),
+  };
 }
 
 function same(left: readonly string[], right: readonly string[]): boolean {

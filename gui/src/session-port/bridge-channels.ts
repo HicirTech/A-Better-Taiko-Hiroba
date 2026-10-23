@@ -21,6 +21,7 @@ export const BRIDGE_CHANNELS = {
   readSongPicker: "abth:read-song-picker",
   recentPlays: "abth:recent-plays",
   readRecentPlays: "abth:read-recent-plays",
+  readEveryRecentPlay: "abth:read-every-recent-play",
   recentPlaysProgress: "abth:recent-plays-progress",
   scores: "abth:scores",
   listedCharts: "abth:listed-charts",

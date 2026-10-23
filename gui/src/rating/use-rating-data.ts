@@ -1,6 +1,8 @@
-import type { OurTaikoV1Data, RatingSystem } from "@abth/core";
+import { err, type OurTaikoV1Data, ok, type RatingSystem } from "@abth/core";
 import { useCallback, useRef, useState } from "react";
 
+import type { ReadStatus } from "../reads/read-run";
+import { useReadRun } from "../reads/use-read-run";
 import type { HirobaSessionPort } from "../session-port";
 import type { SongCatalogueFailure } from "../song-catalogue";
 import { keepRatingData, loadRatingData } from "./rating-data-cache";
@@ -8,11 +10,15 @@ import { ratingDataOf } from "./read-rating-data";
 
 const SYSTEM: RatingSystem = "ourtaikoV1";
 
+type RatingDataFailure = SongCatalogueFailure["code"];
+
 export interface RatingDataState {
   /** The data last read; null until some is. */
   readonly data: OurTaikoV1Data | null;
+  /** Where the read of the data stands. */
+  readonly status: ReadStatus<RatingDataFailure, never>;
   readonly reading: boolean;
-  readonly failure: SongCatalogueFailure["code"] | null;
+  readonly failure: RatingDataFailure | null;
   /** Brings the data kept on the device unless it is held, and reads it when none is kept. */
   readonly load: () => void;
   /** Reads the data again: every refresh asks, as a system's constants change. */
@@ -22,31 +28,31 @@ export interface RatingDataState {
 /** The rating data the page computes with: kept on the device, read again on each refresh. */
 export function useRatingData(port: Pick<HirobaSessionPort, "readRatingData">): RatingDataState {
   const [data, setData] = useState<OurTaikoV1Data | null>(null);
-  const [reading, setReading] = useState(false);
-  const [failure, setFailure] = useState<SongCatalogueFailure["code"] | null>(null);
-  const running = useRef(false);
+  const [reads, status] = useReadRun<RatingDataFailure>();
   // The data held is the device's copy: a read that keeps new data holds it too.
   const held = useRef<OurTaikoV1Data | null>(null);
 
   const read = useCallback(async () => {
-    if (running.current) {
-      return;
-    }
-    running.current = true;
-    setReading(true);
-    setFailure(null);
-    const result = await port.readRatingData(SYSTEM);
-    const parsed = result.ok ? ratingDataOf(result.value.text) : null;
-    if (result.ok && parsed !== null) {
-      keepRatingData(SYSTEM, result.value);
-      held.current = parsed;
-      setData(parsed);
-    } else {
-      setFailure(result.ok ? "badAnswer" : result.error.code);
-    }
-    running.current = false;
-    setReading(false);
-  }, [port]);
+    await reads.run(
+      async () => {
+        const result = await port.readRatingData(SYSTEM);
+        if (!result.ok) {
+          return err(result.error.code);
+        }
+        const parsed = ratingDataOf(result.value.text);
+        return parsed === null ? err("badAnswer") : ok({ read: result.value, parsed });
+      },
+      {
+        keep: (result) => {
+          if (result.ok) {
+            keepRatingData(SYSTEM, result.value.read);
+            held.current = result.value.parsed;
+            setData(result.value.parsed);
+          }
+        },
+      },
+    );
+  }, [reads, port]);
 
   const load = useCallback(() => {
     if (held.current !== null) {
@@ -61,5 +67,12 @@ export function useRatingData(port: Pick<HirobaSessionPort, "readRatingData">): 
     }
   }, [read]);
 
-  return { data, reading, failure, load, read };
+  return {
+    data,
+    status,
+    reading: status.phase === "reading",
+    failure: status.failure,
+    load,
+    read,
+  };
 }

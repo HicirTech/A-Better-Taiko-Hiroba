@@ -93,7 +93,7 @@ export async function scores(ctx: Ctx) {
     waitFor(`${count} score rows`, async () => (await shownRows()).length === count || undefined);
   const settled = () =>
     waitFor("the read settled", async () =>
-      same(await fabState(), { shut: false, spinning: false }) && !(await exists("#scores-reading"))
+      same(await fabState(), { shut: false, spinning: false }) && !(await exists("#page-skeleton"))
         ? true
         : undefined,
     );

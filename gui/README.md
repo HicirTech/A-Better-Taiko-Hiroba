@@ -31,12 +31,14 @@ the app as before.
 A page lower in the list slides in from below and one higher up from above, as the list's highlight
 slides to its row; picking the page already shown does nothing. Recent plays, Scores, Rating and Know
 yourself show at once what they showed before, and what the device keeps for them is brought in while
-the window is idle once the Overview is read. A page still waiting for its first read (my page as the
-app opens, the Costume page's and Favourites' first read from Hiroba, the rating data or the song list)
-shows its own shape in grey with a moving bar over its middle, or nothing if the read ends within 0.4
-seconds, and fades in over that shape once it comes; a page moved to while it waits slides in with that
-shape. A read under way says what it reads over a short bar, which fills once the read knows how much
-there is, as a read of every score does with its lists and charts. Where there is nothing to show, grey
+the window is idle once the Overview is read. A page whose own data is being read, the first time or again (my page, the Costume page's and
+Favourites' editors, the plays, the scores, the rating data or the song list), cannot be used
+meanwhile, and past 0.4 seconds shows its own shape in grey with a short bar in the middle of the
+window, which names and fills the read's progress where the read can tell (the page of recent plays it
+has reached, the lists and charts of a read of the scores); the page comes back at its top over that
+shape once the read ends, and a quicker read leaves it as it was; a page moved to while it waits
+slides in with that shape. A read again that fails on a page that had content shows that content with
+the failure over it, and Costume and Favourites can still be edited and synced then. Where there is nothing to show, grey
 words say why, and how to fill it: in the middle of the window when a page, or a search, has nothing at
 all, and in its place in a card, a song's details or a dialog; what a read found, such as charts still
 unread, is said in the same words over the list. The lists of Recent plays and Scores, the song
@@ -78,7 +80,8 @@ nickname save runs, so one read runs at a time and none inside a write. On a tou
 and letting go once its ring is full reads again (a page that has scrolled is the finger's to scroll
 back, and pulls nothing). On the Costume and Favourites pages
 the same button, keys and pull read the page's editors again instead of your page; on the
-Nickname & title page they read your page and then the list of titles.
+Nickname & title page they read your page and then the list of titles. On a page that names songs
+they also read taiko.wiki's song list again when the one kept is a day old.
 Each of them first asks Hiroba to refresh its copy of your play from the game server, as the ↻ on
 Hiroba's own pages does: my page is read for a fresh form token and the ↻'s post sent once, alone in
 the queue, and a refresh Hiroba refuses stops the read there, with the reason. The read after a
@@ -219,8 +222,10 @@ only when you ask, by a pull on a touch screen, or Read again and its keys, and 
 nothing yet. Each read first asks Hiroba to refresh, then walks the feed: page 1 alone, then up to
 three pages at once, in the play history's pipeline. The first read walks up to 200 pages, five
 charts a page, and a later read stops at the first chart whose record is already stored. A page that
-fails ends the read with nothing of it kept, and the notice names the page; the navigation's foot
-names the page being read. A row is a bar for each of the song's genres, the song, the score with
+fails ends the read with nothing of it kept, and the notice names the page; the page's skeleton and
+the navigation's foot name the page being read. A pull held six seconds, or Read again held down as
+long on a computer, asks first, then walks every page again from the first, past the charts stored,
+and keeps that walk in their place. A row is a bar for each of the song's genres, the song, the score with
 the longest combo and the 良/可/不可/連打 hits; at its end Hiroba's icons of the difficulty, the crown,
 the rank and the play options (the support chart, whose picture has not been seen, as a lifebuoy),
 with the chart's star level under them, where taiko.wiki's list has the song. The play counts

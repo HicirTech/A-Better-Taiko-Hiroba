@@ -28,6 +28,7 @@ export const PORT_QUEUEING = {
   readSongPicker: "exclusive",
   recentPlays: "unqueued",
   readRecentPlays: "unqueued",
+  readEveryRecentPlay: "unqueued",
   recentPlaysProgress: "unqueued",
   scores: "unqueued",
   listedCharts: "unqueued",

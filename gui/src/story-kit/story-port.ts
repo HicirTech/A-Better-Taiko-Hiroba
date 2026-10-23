@@ -255,6 +255,8 @@ export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): Hirob
     recentPlays: () => Promise.resolve(PAGE_PLAYS),
     readRecentPlays: () =>
       later(ok({ plays: PAGE_PLAYS, fresh: [], pagesFetched: 1, stop: "known" })),
+    readEveryRecentPlay: () =>
+      later(ok({ plays: PAGE_PLAYS, fresh: [], pagesFetched: 10, stop: "short" })),
     recentPlaysProgress: () => Promise.resolve(null),
     scores: () => Promise.resolve(PAGE_SCORES),
     listedCharts: () => Promise.resolve(PAGE_LISTED),

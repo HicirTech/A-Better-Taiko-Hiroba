@@ -29,3 +29,12 @@ export const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
   "loggedOut",
   "cardSelectUnfinished",
 ]);
+
+/** A read of Hiroba's options: a failure that ended the session sends the window to sign in. */
+export function hirobaSession(onSessionGone: (notice: MessageKey) => void) {
+  return {
+    endsTheSession: (failure: { readonly kind: ReadFailureKind }) => SESSION_GONE.has(failure.kind),
+    onSessionEnded: (failure: { readonly kind: ReadFailureKind }) =>
+      onSessionGone(FAILURE_MESSAGE[failure.kind]),
+  };
+}

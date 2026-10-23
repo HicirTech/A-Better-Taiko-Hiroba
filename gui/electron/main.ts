@@ -370,6 +370,7 @@ app.whenReady().then(async () => {
     refreshHiroba: writes.refreshHiroba,
     recentPlays: recentPlays.recentPlays,
     readRecentPlays: recentPlays.readRecentPlays,
+    readEveryRecentPlay: recentPlays.readEveryRecentPlay,
     recentPlaysProgress: recentPlays.recentPlaysProgress,
     scores: scores.scores,
     listedCharts: scores.listedCharts,

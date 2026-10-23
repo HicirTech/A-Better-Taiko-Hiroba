@@ -79,8 +79,7 @@ export async function rating(ctx: Ctx) {
     (await hitsOn(RATING_DATA)) === dataReads + 2 ? true : undefined,
   );
   await waitFor("the read settled", async () =>
-    same(await fabState(), { shut: false, spinning: false }) &&
-    !(await exists("#rating-scores-reading"))
+    same(await fabState(), { shut: false, spinning: false }) && !(await exists("#page-skeleton"))
       ? true
       : undefined,
   );
