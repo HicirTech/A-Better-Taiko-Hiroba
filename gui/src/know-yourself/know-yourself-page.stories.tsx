@@ -1,3 +1,4 @@
+import { err } from "@abth/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { keepSets } from "../favorites/favorite-sets";
@@ -22,6 +23,13 @@ export const InTheWindow: Story = {};
 /** The song list is on its way. */
 export const SongListReading: Story = {
   render: appOn("knowYourself", { readSongCatalogue: neverAnswers }),
+};
+
+/** The song list could not be read: said once, not read again until the page opens again. */
+export const SongListFailed: Story = {
+  render: appOn("knowYourself", {
+    readSongCatalogue: () => Promise.resolve(err({ code: "unreachable" })),
+  }),
 };
 
 /** No chart listed yet: how to read the scores. */

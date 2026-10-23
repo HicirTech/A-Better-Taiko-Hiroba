@@ -1,6 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 
 import { DIFFICULTY_LABEL, GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { keptShownDifficulty } from "../favorites/shown-difficulty";
@@ -65,8 +65,7 @@ export function ScoresPage({
   readonly i18n: Translator;
 }) {
   const { t, number, locale } = i18n;
-  const { view, reading, progress, song, failure, load, readSong } = scores;
-  useEffect(load, [load]);
+  const { view, reading, progress, song, failure, readSong } = scores;
   const [query, setQuery] = useState("");
   const deferred = useDeferredValue(query);
   const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(keptShownDifficulty()));

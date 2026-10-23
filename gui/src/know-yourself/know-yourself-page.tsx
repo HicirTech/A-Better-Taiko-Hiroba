@@ -1,7 +1,7 @@
 import { chartKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Stack } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { newSetName, SET_SONG_LIMIT } from "../favorites/favorite-sets";
 import { FilterChip } from "../favorites/filter-chip";
@@ -55,11 +55,7 @@ export function KnowYourselfPage({
   readonly i18n: Translator;
 }) {
   const { t, number, locale } = i18n;
-  const { view, reading, progress, song, failure, load, readSong } = scores;
-  const { readIfFailed } = catalogue;
-  useEffect(load, [load]);
-  // A song list that could not be read is read again as the page opens.
-  useEffect(readIfFailed, [readIfFailed]);
+  const { view, reading, progress, song, failure, readSong } = scores;
   const kept = useFavoriteSets();
   const [shown, setShown] = useState(keptShownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);

@@ -46,10 +46,8 @@ export function HistoryPage({
   readonly touchFirst: boolean;
   readonly i18n: Translator;
 }) {
-  const { plays, reading, page, failure, load } = history;
-  useEffect(load, [load]);
-  const { view, reading: scoresReading, song, load: loadScores, readSong } = scores;
-  useEffect(loadScores, [loadScores]);
+  const { plays, reading, page, failure } = history;
+  const { view, reading: scoresReading, song, readSong } = scores;
   const rows = plays ?? [];
   const byTitle = useMemo(() => songsByTitle(catalogue.songs.values()), [catalogue.songs]);
   const [opened, setOpened] = useState<RecentPlay | null>(null);
