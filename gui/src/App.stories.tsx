@@ -25,12 +25,17 @@ export const SignedOut: Story = {
 /** My page is on its way. */
 export const Reading: Story = { render: appOn("overview", { readProfile: neverAnswers }) };
 
-/** My page did not come: why, in place of the profile. */
+/** My page did not come: why, in place of the profile, under the song search. */
 export const ReadFailed: Story = {
   render: appOn("overview", {
     readProfile: () =>
       Promise.resolve(err({ kind: "unexpectedPage", detail: "path=/mypage_top.php status=200" })),
   }),
+};
+
+/** Hiroba's own error page came in place of my page: the song search works all the same. */
+export const HirobaError: Story = {
+  render: appOn("overview", { readProfile: () => Promise.resolve(err({ kind: "siteError" })) }),
 };
 
 /** A newer release is out: what is new, with Download and Later. */

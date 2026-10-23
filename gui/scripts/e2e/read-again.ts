@@ -33,10 +33,13 @@ export const readAgainKeys = [
   "readAgainByF5",
   "readAgainRefreshesHirobaFirst",
   "failedRefreshStopsTheRead",
+  "songSearchKeptWhenMyPageFails",
   "pullPastThePointReads",
   "pullOnlyDownFromTheTop",
   "portraitTooltipShutInPull",
 ] as const;
+
+const SEARCHES_KEY = "abth.songSearches";
 
 export async function readAgain(ctx: Ctx) {
   const { results, state, tokens } = ctx;
@@ -152,6 +155,42 @@ export async function readAgain(ctx: Ctx) {
     detail: (await textOf("#failure-detail"))?.includes("result=901") ?? false,
     reads: (await myPageHits()) - readsBeforeRefused,
   };
+
+  // My page unread, the song search still finds and opens a song, the failure giving way to it.
+  const searchesBefore = await page.evaluate<string | null>(
+    `localStorage.getItem(${JSON.stringify(SEARCHES_KEY)})`,
+  );
+  const failureSeen = () =>
+    page.evaluate<boolean>(`document.querySelector("#read-failure")?.checkVisibility() === true`);
+  const fieldThere = await exists("#song-search-input");
+  await page.evaluate(
+    `(() => { const input = document.querySelector("#song-search-input"); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, "signal"); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
+  );
+  await waitFor(
+    "a song found, my page unread",
+    async () => (await exists("#song-search-row-1019 button")) || undefined,
+  );
+  const failureWhileSearching = await failureSeen();
+  await click("#song-search-row-1019 button");
+  await waitFor(
+    "its details, my page unread",
+    async () => (await exists("#song-details-title")) || undefined,
+  );
+  await click("#song-details-close");
+  await waitFor("the details closed", async () =>
+    (await exists("#song-details")) ? undefined : true,
+  );
+  await click("#song-search-leave");
+  const failureBack = await waitFor(
+    "the failure back",
+    async () => (await failureSeen()) || undefined,
+  );
+  await page.evaluate(
+    searchesBefore === null
+      ? `localStorage.removeItem(${JSON.stringify(SEARCHES_KEY)})`
+      : `localStorage.setItem(${JSON.stringify(SEARCHES_KEY)}, ${JSON.stringify(searchesBefore)})`,
+  );
+  results.songSearchKeptWhenMyPageFails = fieldThere && !failureWhileSearching && failureBack;
   await fetch(`${HIROBA}/__history?refresh=0`);
   await click("#read-again");
   await waitFor("the page read again", async () =>
