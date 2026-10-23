@@ -122,7 +122,10 @@ function readEnded(
   result: Result<FavoritesView, ReadFailure>,
 ): FavoritesStep {
   if (!result.ok) {
-    return { name: "loadFailed", failure: result.error, held };
+    // A read again that failed gives the favourites back as held: their read says the failure.
+    return held === null
+      ? { name: "loadFailed", failure: result.error, held }
+      : { name: "ready", view: held.view, draft: held.draft, notice: null };
   }
 
   const view = result.value;
@@ -162,7 +165,7 @@ function folderWritten(step: SavingStep, outcome: WriteOutcomeView<FolderState>)
   };
 }
 
-/** The favourites to draw, and whether they are shut to presses while a write or a read runs. */
+/** The favourites to draw, and whether they are shut to presses while a write runs. */
 export interface ShownFavorites extends HeldFavorites {
   readonly notice: FavoritesNotice | null;
   readonly shut: boolean;
@@ -170,7 +173,7 @@ export interface ShownFavorites extends HeldFavorites {
   readonly saving: SavingWrite | null;
 }
 
-/** A read again keeps the favourites it holds on screen, shut, until the read ends. */
+/** A read again keeps the favourites it holds on screen until the read ends. */
 export function shownFavoritesOf(step: FavoritesStep): ShownFavorites | null {
   switch (step.name) {
     case "ready":
@@ -178,7 +181,7 @@ export function shownFavoritesOf(step: FavoritesStep): ShownFavorites | null {
     case "saving":
       return { view: step.view, draft: step.draft, notice: null, shut: true, saving: step.write };
     case "loading":
-      return step.held === null ? null : { ...step.held, notice: null, shut: true, saving: null };
+      return step.held === null ? null : { ...step.held, notice: null, shut: false, saving: null };
     case "loadFailed":
     case "unread":
       return null;

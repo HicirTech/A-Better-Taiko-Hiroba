@@ -25,6 +25,7 @@ export const recentPlaysKeys = [
   "failedPageNamedAndNothingKept",
   "readAgainWalksOnThePage",
   "walkedPageInTheFoot",
+  "walkedPageOnTheSkeleton",
   "hirobaReadsBesideAWalk",
   "recentPlaysKeptAfterSignOut",
 ] as const;
@@ -220,6 +221,9 @@ export async function recentPlays(ctx: Ctx) {
   // The page is polled for five times a second.
   await Bun.sleep(500);
   const footWhileWalking = await textOf("#nav-last-updated");
+  const skeletonWhileWalking = await textOf(
+    '#page-skeleton[data-page="history"] #page-skeleton-words',
+  );
   await goTo("overview");
   const myPageBefore = await myPageHits();
   await click("#read-again");
@@ -235,6 +239,7 @@ export async function recentPlays(ctx: Ctx) {
   await rowsAre(38);
   await walkEnded();
   results.walkedPageInTheFoot = footWhileWalking === "Reading page 1…";
+  results.walkedPageOnTheSkeleton = skeletonWhileWalking === "Reading page 1…";
   results.hirobaReadsBesideAWalk = stillHeld;
 
   // A sign-out keeps the plays: signed in again, the page shows them before any read.

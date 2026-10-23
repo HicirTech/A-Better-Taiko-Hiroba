@@ -41,11 +41,11 @@ export interface WideBodyProps {
   /** The part on show. */
   readonly part: CostumePart;
   readonly onPart: (part: CostumePart) => void;
-  /** What stands in place of the part on show while the editor is not at hand. */
-  readonly progress: ReactNode;
+  /** Why the last read failed: over the editor held, or in its place when none is. */
+  readonly failure: ReactNode;
 }
 
-export function WideBody({ editor, lane, i18n, part, onPart, progress }: WideBodyProps) {
+export function WideBody({ editor, lane, i18n, part, onPart, failure }: WideBodyProps) {
   const { step } = editor;
   const shown = shownEditorOf(step);
   const withAside = previewSetOf(step) !== null;
@@ -70,6 +70,7 @@ export function WideBody({ editor, lane, i18n, part, onPart, progress }: WideBod
       )}
       {shown !== null && (
         <Stack spacing={2} sx={ABOVE}>
+          {failure}
           {showsEditor(step) && <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />}
           <PartHead view={shown.editor} lane={lane} i18n={i18n} part={part} />
         </Stack>
@@ -88,7 +89,7 @@ export function WideBody({ editor, lane, i18n, part, onPart, progress }: WideBod
             onPickItem={editor.pickItem}
           />
         ) : (
-          progress
+          failure
         )}
       </Box>
     </Box>

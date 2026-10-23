@@ -1,14 +1,17 @@
 import { fireEvent, userEvent, waitFor } from "storybook/test";
 
 /** The element `selector` finds anywhere in the page, once it is there and can be pressed. */
-export const found = (selector: string): Promise<HTMLElement> =>
-  waitFor(() => {
-    const element = document.querySelector<HTMLElement>(selector);
-    if (element === null || element.hasAttribute("disabled")) {
-      throw new Error(`${selector} is not there to press yet`);
-    }
-    return element;
-  });
+export const found = (selector: string, timeout?: number): Promise<HTMLElement> =>
+  waitFor(
+    () => {
+      const element = document.querySelector<HTMLElement>(selector);
+      if (element === null || element.hasAttribute("disabled")) {
+        throw new Error(`${selector} is not there to press yet`);
+      }
+      return element;
+    },
+    timeout === undefined ? undefined : { timeout },
+  );
 
 /** A play's step: a click on what `selector` finds. */
 export async function press(selector: string): Promise<void> {

@@ -103,7 +103,7 @@ describe("a read of the favourites", () => {
     expect(step).toEqual({ name: "ready", view: fresh, draft: null, notice: null });
   });
 
-  test("holds the view and the draft through a read that fails, for the read after it", () => {
+  test("gives the favourites back with their draft when a read again fails, for the next read", () => {
     const view = viewOf("1001");
     const draft = song("1005");
     const failed = run(
@@ -111,7 +111,7 @@ describe("a read of the favourites", () => {
       { type: "readStarted" },
       { type: "readEnded", result: err(FAILURE) },
     );
-    expect(failed).toEqual({ name: "loadFailed", failure: FAILURE, held: { view, draft } });
+    expect(failed).toEqual({ name: "ready", view, draft, notice: null });
     expect(run(failed, { type: "readStarted" })).toEqual({
       name: "loading",
       held: { view, draft },
@@ -374,7 +374,7 @@ describe("what the page asks of a step", () => {
     expect(isWritingFavorites(ready())).toBe(false);
   });
 
-  test("shows the favourites ready, shut while a save runs or a read again runs, else nothing", () => {
+  test("shows the favourites, open while a read again runs, shut while a save runs, else nothing", () => {
     const notice: FavoritesNotice = { write: "folder", outcome: { kind: "interrupted" } };
     expect(shownFavoritesOf(ready(view, held.draft, notice))).toEqual({
       ...held,
@@ -391,7 +391,7 @@ describe("what the page asks of a step", () => {
     expect(shownFavoritesOf({ name: "loading", held })).toEqual({
       ...held,
       notice: null,
-      shut: true,
+      shut: false,
       saving: null,
     });
     expect(shownFavoritesOf({ name: "loading", held: null })).toBeNull();

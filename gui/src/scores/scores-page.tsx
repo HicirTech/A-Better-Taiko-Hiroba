@@ -12,6 +12,7 @@ import { HIROBA_LANG } from "../language/hiroba-lang";
 import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
+import type { SkeletonProgress } from "../ui/page-skeleton";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
@@ -65,7 +66,7 @@ export function ScoresPage({
   readonly i18n: Translator;
 }) {
   const { t, number, locale } = i18n;
-  const { view, reading, progress, song, failure, readSong } = scores;
+  const { view, reading, song, failure, readSong } = scores;
   const [query, setQuery] = useState("");
   const deferred = useDeferredValue(query);
   const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(keptShownDifficulty()));
@@ -104,9 +105,6 @@ export function ScoresPage({
         </FrameTop>
       )}
       <Stack spacing={2} id="scores-page" sx={{ minHeight: PAGE_HEIGHT }}>
-        {reading && (
-          <ScoresReading id="scores-reading" i18n={i18n} progress={progress} song={song} />
-        )}
         {failure !== null && (
           <LoadFailed id="scores-failure" failure={failure} i18n={i18n}>
             {failure.at !== undefined && (
@@ -219,6 +217,16 @@ export function scoresReadingText(
   return i18n.t(key, { done: i18n.number(progress.done), total: i18n.number(progress.total) });
 }
 
+/** A read of scores as a bar says it: its words, counted once it knows its lists or charts. */
+export function scoresReadingProgress(
+  i18n: Translator,
+  progress: ScoresProgress | null,
+  song: ChosenSong | null,
+): SkeletonProgress {
+  const counted = song === null && progress !== null && progress.step !== "recentPlays";
+  return { words: scoresReadingText(i18n, progress, song), done: counted ? progress : null };
+}
+
 /** A read of scores as a progress bar: it fills once the read knows its lists or charts. */
 export function ScoresReading({
   id,
@@ -231,14 +239,8 @@ export function ScoresReading({
   readonly progress: ScoresProgress | null;
   readonly song: ChosenSong | null;
 }) {
-  const counted = song === null && progress !== null && progress.step !== "recentPlays";
-  return (
-    <ProgressBar
-      id={id}
-      label={scoresReadingText(i18n, progress, song)}
-      progress={counted ? progress : null}
-    />
-  );
+  const { words, done } = scoresReadingProgress(i18n, progress, song);
+  return <ProgressBar id={id} label={words} progress={done} />;
 }
 
 function stopText(i18n: Translator, at: ScoresStop): string {

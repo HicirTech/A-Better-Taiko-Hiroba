@@ -15,6 +15,13 @@ export const BAR = {
   "& .MuiLinearProgress-bar": { borderRadius: 1 },
 } as const;
 
+/** How full a bar for `progress` is, in percent: null where it moves back and forth. */
+export function fillOf(progress: Done | null | undefined): number | null {
+  return progress === null || progress === undefined || progress.total === 0
+    ? null
+    : (100 * progress.done) / progress.total;
+}
+
 /** The app's one progress bar: centred words over a bar that fills where the total is known. */
 export function ProgressBar({
   id,
@@ -28,10 +35,7 @@ export function ProgressBar({
   readonly progress?: Done | null | undefined;
 }) {
   const labelId = useId();
-  const value =
-    progress === null || progress === undefined || progress.total === 0
-      ? null
-      : (100 * progress.done) / progress.total;
+  const value = fillOf(progress);
   return (
     <Box id={id}>
       <Typography

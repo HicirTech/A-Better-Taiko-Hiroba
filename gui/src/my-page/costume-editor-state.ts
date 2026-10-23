@@ -101,7 +101,10 @@ function readEnded(
   result: Result<CostumeEditorView, ReadFailure>,
 ): EditorStep {
   if (!result.ok) {
-    return { name: "loadFailed", failure: result.error, held };
+    // A read again that failed gives the editor back as it held it: its read says the failure.
+    return held === null
+      ? { name: "loadFailed", failure: result.error, held }
+      : { name: "editing", editor: held.editor, draft: held.draft, notice: null };
   }
 
   const editor = result.value;
@@ -141,12 +144,12 @@ export function showsEditor(step: EditorStep): step is ShownStep {
   return step.name === "editing" || step.name === "saving";
 }
 
-/** The editor to draw, and whether it is shut to picks while a save or a read again runs. */
+/** The editor to draw, and whether it is shut to picks while a save runs. */
 export interface ShownEditor extends HeldEditor {
   readonly shut: boolean;
 }
 
-/** A read again keeps the editor it holds on screen, shut, until the read ends. */
+/** A read again keeps the editor it holds on screen until the read ends. */
 export function shownEditorOf(step: EditorStep): ShownEditor | null {
   switch (step.name) {
     case "editing":
@@ -154,7 +157,7 @@ export function shownEditorOf(step: EditorStep): ShownEditor | null {
     case "saving":
       return { editor: step.editor, draft: step.draft, shut: true };
     case "loading":
-      return step.held === null ? null : { ...step.held, shut: true };
+      return step.held === null ? null : { ...step.held, shut: false };
     case "loadFailed":
     case "unread":
       return null;

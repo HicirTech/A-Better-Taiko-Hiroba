@@ -8,7 +8,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { useFocusKept } from "../ui/editor-parts";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { BAR_TEXT_BUTTON, SYNC_BAR_PAGE, SyncBar, SyncBarSkeleton } from "../ui/sync-bar";
-import { type EditorStep, shownEditorOf } from "./costume-editor-state";
+import { shownEditorOf } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { NarrowBody, NarrowBodySkeleton } from "./costume-narrow-body";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
@@ -63,7 +63,7 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
     page.current?.focus({ preventScroll: true });
     void editor.save();
   };
-  const body = { editor, lane, i18n, part, onPart: setPart, progress: failureOf(step, i18n) };
+  const body = { editor, lane, i18n, part, onPart: setPart, failure: failureOf(editor, i18n) };
   return (
     <Box ref={page} id="costume-page" data-step={step.name} tabIndex={-1} sx={pageOf(wide)}>
       {wide ? <WideBody {...body} /> : <NarrowBody {...body} />}
@@ -98,11 +98,12 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
   );
 }
 
-// A first read waits under the page's skeleton, and a read again under the held editor.
-function failureOf(step: EditorStep, i18n: Translator): ReactNode {
-  return step.name === "loadFailed" ? (
-    <LoadFailed id="costume-load-failed" failure={step.failure} i18n={i18n} />
-  ) : null;
+// Any read waits under the page's skeleton; one that failed says so here, over what it held.
+function failureOf(editor: CostumeEditor, i18n: Translator): ReactNode {
+  const { failure } = editor.status;
+  return failure === null ? null : (
+    <LoadFailed id="costume-load-failed" failure={failure} i18n={i18n} />
+  );
 }
 
 /** The page's sync bar, its History first; none while there is no editor to act on. */
@@ -124,19 +125,19 @@ function CostumeBar({
   }
 
   const changed = changedParts(shown.editor.state, shown.draft).length > 0;
-  const reading = step.name === "loading";
+  const editable = step.name === "editing";
   return (
     <SyncBar
       id="costume"
-      canSync={!reading && changed}
+      canSync={editable && changed}
       onSync={onSave}
       onReset={editor.reset}
-      canReset={!reading && changed}
+      canReset={editable && changed}
       saving={step.name === "saving"}
       start={
         <Button
           id="costume-history"
-          disabled={reading || editor.history.length === 0}
+          disabled={!editable || editor.history.length === 0}
           onClick={onHistory}
           sx={BAR_TEXT_BUTTON}
         >

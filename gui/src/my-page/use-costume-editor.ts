@@ -94,7 +94,10 @@ export function useCostumeEditor({
     resetPreview();
   }, [reads, clearHistory, resetPreview]);
 
-  const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
+  const dropEdits = useCallback(() => {
+    reads.settle();
+    dispatch({ type: "editsDropped" });
+  }, [reads]);
 
   const mayRead = step.name === "unread" || canReadEditorAgain(step);
   const read = useCallback(

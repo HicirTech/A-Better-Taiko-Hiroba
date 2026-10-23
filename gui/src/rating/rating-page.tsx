@@ -8,7 +8,7 @@ import { PlayRow } from "../history/play-row";
 import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf, ScoresReading } from "../scores/scores-page";
+import { listedOf } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ScoreView } from "../session-port";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
@@ -66,7 +66,7 @@ export function RatingPage({
   readonly i18n: Translator;
 }) {
   const { t, locale } = i18n;
-  const { view, reading, progress, song, failure, readSong } = scores;
+  const { view, reading, song, failure, readSong } = scores;
   const { data } = ratingData;
   const [opened, setOpened] = useState<string | null>(null);
   const formats = useMemo(
@@ -127,9 +127,6 @@ export function RatingPage({
 
   return (
     <Stack spacing={2} id="rating-page" sx={{ minHeight: PAGE_HEIGHT }}>
-      {reading && (
-        <ScoresReading id="rating-scores-reading" i18n={i18n} progress={progress} song={song} />
-      )}
       {failure !== null && <LoadFailed id="rating-scores-failure" failure={failure} i18n={i18n} />}
       {ratingData.failure !== null && (
         <ReadFailureAlert

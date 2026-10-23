@@ -111,7 +111,7 @@ describe("a read of the editor", () => {
     expect(step).toEqual({ name: "editing", editor: moved, draft: moved.state, notice: null });
   });
 
-  test("holds the draft through a read that fails, for the read after it", () => {
+  test("gives the editor back with its draft when a read again fails, for the read after it", () => {
     const draft = set({ colorFace: 9 });
     const failed = run(
       editing(set(), draft),
@@ -124,7 +124,7 @@ describe("a read of the editor", () => {
       { type: "readEnded", result: ok(editorOf(set())) },
     );
 
-    expect(failed).toMatchObject({ name: "loadFailed", held: { draft } });
+    expect(failed).toEqual(editing(set(), draft));
     expect(draftOf(again)).toEqual(draft);
   });
 
@@ -577,7 +577,7 @@ describe("what the page asks of a step", () => {
   test.each<OnScreenCase>([
     ["nothing read", UNREAD, null],
     ["a first read", { name: "loading", held: null }, null],
-    ["a read again, shut", { name: "loading", held }, { ...held, shut: true }],
+    ["a read again, open", { name: "loading", held }, { ...held, shut: false }],
     ["a read that failed", { name: "loadFailed", failure: FAILURE, held }, null],
     ["a draft, open", editing(set(), drafted), { editor: editorOf(), draft: drafted, shut: false }],
     ["a save, shut", saving(set(), drafted), { editor: editorOf(), draft: drafted, shut: true }],

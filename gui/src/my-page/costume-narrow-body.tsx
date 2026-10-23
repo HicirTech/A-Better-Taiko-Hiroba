@@ -45,10 +45,10 @@ export interface NarrowBodyProps {
   readonly part: CostumePart;
   readonly onPart: (part: CostumePart) => void;
   /** What stands in place of the part on show while the editor is not at hand. */
-  readonly progress: ReactNode;
+  readonly failure: ReactNode;
 }
 
-export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: NarrowBodyProps) {
+export function NarrowBody({ editor, lane, i18n, part, onPart, failure }: NarrowBodyProps) {
   const { step } = editor;
   const shown = shownEditorOf(step);
   return (
@@ -89,6 +89,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
       )}
       {shown !== null ? (
         <Stack spacing={2}>
+          {failure}
           {showsEditor(step) && <CostumeNotes step={step} preview={editor.preview} i18n={i18n} />}
           <Box>
             <PartHead view={shown.editor} lane={lane} i18n={i18n} part={part} />
@@ -106,7 +107,7 @@ export function NarrowBody({ editor, lane, i18n, part, onPart, progress }: Narro
           </Box>
         </Stack>
       ) : (
-        progress
+        failure
       )}
     </Box>
   );

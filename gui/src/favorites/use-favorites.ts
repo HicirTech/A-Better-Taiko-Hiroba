@@ -70,7 +70,10 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     reads.forget();
     dispatch({ type: "forget" });
   }, [reads]);
-  const dropEdits = useCallback(() => dispatch({ type: "draftDropped" }), []);
+  const dropEdits = useCallback(() => {
+    reads.settle();
+    dispatch({ type: "draftDropped" });
+  }, [reads]);
   const pickSong = useCallback(
     (song: FavoriteSongState) => dispatch({ type: "songPicked", song }),
     [],
@@ -151,7 +154,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     forget,
     pickSong,
     saveSong,
-    resetSong: dropEdits,
+    resetSong: () => dispatch({ type: "draftDropped" }),
     applySet,
     dropEdits,
     closeNotice: () => dispatch({ type: "noticeClosed" }),

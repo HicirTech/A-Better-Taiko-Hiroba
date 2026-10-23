@@ -16,7 +16,7 @@ import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf, ScoresReading } from "../scores/scores-page";
+import { listedOf } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../session-port";
 import { LoadFailed } from "../ui/read-failure-alert";
@@ -55,7 +55,7 @@ export function KnowYourselfPage({
   readonly i18n: Translator;
 }) {
   const { t, number, locale } = i18n;
-  const { view, reading, progress, song, failure, readSong } = scores;
+  const { view, reading, song, failure, readSong } = scores;
   const kept = useFavoriteSets();
   const [shown, setShown] = useState(keptShownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);
@@ -143,9 +143,6 @@ export function KnowYourselfPage({
   }));
   return (
     <Stack spacing={3} id="know-yourself-page" sx={{ minHeight: PAGE_HEIGHT }}>
-      {reading && (
-        <ScoresReading id="know-scores-reading" i18n={i18n} progress={progress} song={song} />
-      )}
       {failure !== null && <LoadFailed id="know-scores-failure" failure={failure} i18n={i18n} />}
       {catalogue.state === "failed" && (
         <Box>
