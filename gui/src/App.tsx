@@ -288,6 +288,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const firstRead = useFirstRead(pageWaits, page);
   // The skeleton stands alone until the page, or what came in its place, takes over from it.
   const pageShown = screen.name === "profile" && !pageWaits && !firstRead.skeleton;
+  const failureShown = screen.name === "readFailed" && !firstRead.skeleton;
   const PageShape = page === "settings" ? null : PAGE_SKELETONS[page];
   const waitLabel = profileWaits
     ? "profile.reading"
@@ -634,7 +635,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               />
             )}
 
-            {pageShown && page === "overview" && (
+            {/* The song search asks Hiroba nothing: it stays when my page could not be read. */}
+            {(pageShown || failureShown) && page === "overview" && (
               <SongSearch
                 catalogue={catalogue}
                 port={port}
@@ -644,28 +646,39 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
               >
                 {(searching) => (
                   <Stack spacing={OVERVIEW_SPACING} sx={searching ? HIDDEN : undefined}>
-                    <OverviewHeader
-                      profile={screen.profile}
-                      lane={lane}
-                      i18n={i18n}
-                      portrait={portrait}
-                      namePlate={namePlate}
-                    />
-                    <PanelCard
-                      crowns={screen.profile.crowns}
-                      ranks={screen.profile.panel.ranks}
-                      lane={lane}
-                      toast={touchFirst ? toast : undefined}
-                      i18n={i18n}
-                    />
-                    <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
+                    {screen.name === "profile" ? (
+                      <>
+                        <OverviewHeader
+                          profile={screen.profile}
+                          lane={lane}
+                          i18n={i18n}
+                          portrait={portrait}
+                          namePlate={namePlate}
+                        />
+                        <PanelCard
+                          crowns={screen.profile.crowns}
+                          ranks={screen.profile.panel.ranks}
+                          lane={lane}
+                          toast={touchFirst ? toast : undefined}
+                          i18n={i18n}
+                        />
+                        <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
+                      </>
+                    ) : (
+                      <LoadFailed
+                        id="read-failure"
+                        failure={screen}
+                        codeId="failure-detail"
+                        i18n={i18n}
+                      />
+                    )}
                   </Stack>
                 )}
               </SongSearch>
             )}
           </Box>
 
-          {!firstRead.skeleton && screen.name === "readFailed" && (
+          {failureShown && page !== "overview" && (
             <LoadFailed id="read-failure" failure={screen} codeId="failure-detail" i18n={i18n} />
           )}
         </Stack>
