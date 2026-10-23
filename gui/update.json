@@ -1,25 +1,21 @@
 {
-  "version": "0.5.10",
+  "version": "0.5.11",
   "notes": {
     "en": [
-      "Hiroba's error page in English is read as Hiroba's error, as the Japanese one is",
-      "Hiroba's error says it is the daily maintenance only from 05:00 to 07:00 JST, and at other times that Hiroba may be having trouble for now",
-      "When the Overview cannot read Hiroba, its song search still works"
+      "Urgent fix: when the Rating page cannot read OurTaiko's rating data, it no longer asks OurTaiko again and again, and says the read failed",
+      "Know yourself likewise reads taiko.wiki's song list once when it cannot be read, and again only when the page is opened again"
     ],
     "ja": [
-      "英語のひろばのエラーページも、日本語のものと同じくひろばのエラーとして扱います",
-      "ひろばのエラーは、日本時間 05:00〜07:00 のときだけ毎日のメンテナンスと表示し、それ以外の時間は一時的な不具合の可能性があると表示します",
-      "概要がひろばを読み込めないときも、曲の検索は使えます"
+      "緊急修正：レーティングのページが OurTaiko のレーティングデータを読み込めないとき、OurTaiko に何度も読み込みに行かなくなり、読み込めなかったことを表示します",
+      "自分を知るのページも同じく、taiko.wiki の曲リストを読み込めないときは一度だけ読み込み、ページを開き直したときにだけ読み込み直します"
     ],
     "zh-Hans": [
-      "广场的英文报错页也会像日文报错页一样，识别为广场报错",
-      "广场报错时，只在日本时间 05:00 至 07:00 提示每日维护，其他时间提示广场或许暂时出了故障",
-      "概览读不到广场时，查歌照样能用"
+      "紧急修复：Rating 页面读不到 OurTaiko 的 Rating 数据时，不会再一遍又一遍地向 OurTaiko 请求，而是提示读取失败",
+      "自我认知页面同样如此：读不到 taiko.wiki 的歌单时只读一次，重新打开页面时才再读"
     ],
     "zh-Hant": [
-      "廣場的英文錯誤頁也會像日文錯誤頁一樣，辨識為廣場錯誤",
-      "廣場回傳錯誤時，只在日本時間 05:00 至 07:00 提示每日維護，其他時間提示廣場或許暫時出了故障",
-      "概覽讀不到廣場時，查歌照樣能用"
+      "緊急修復：Rating 頁面讀不到 OurTaiko 的 Rating 資料時，不會再一遍又一遍地向 OurTaiko 請求，而是提示讀取失敗",
+      "自我認知頁面同樣如此：讀不到 taiko.wiki 的歌單時只讀一次，重新打開頁面時才再讀"
     ]
   }
 }
