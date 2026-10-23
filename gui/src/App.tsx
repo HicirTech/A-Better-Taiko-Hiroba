@@ -235,6 +235,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     port,
     onFavoritesPage || onHistoryPage || onScoresPage || onRatingPage || onKnowPage || songsWanted,
   );
+  const { readIfFailed: readCatalogueIfFailed } = catalogue;
 
   const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
   const { read: readEditor } = editor;
@@ -251,7 +252,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
       void readFavorites();
     }
   }, [onFavoritesPage, favoritesUnread, writing, readFavorites]);
-  // A page is drawn once it has something to show, so its first read starts here as it opens.
+  // A page is drawn once it has something to show, and drawn anew after a skeleton, so what it
+  // reads as it opens starts here, once a visit: read as it is drawn, a failure would read again.
   useEffect(() => {
     if (onHistoryPage) {
       loadPlays();
@@ -262,6 +264,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     if (onRatingPage) {
       loadRatingData();
     }
+    if (onKnowPage) {
+      // A song list that could not be read is read again as the page opens.
+      readCatalogueIfFailed();
+    }
   }, [
     onHistoryPage,
     onScoresPage,
@@ -270,6 +276,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     loadPlays,
     loadScores,
     loadRatingData,
+    readCatalogueIfFailed,
   ]);
   const profileWaits = screen.name === "checking" || screen.name === "reading";
   // What each page waits for on its first visit, once my page is read.

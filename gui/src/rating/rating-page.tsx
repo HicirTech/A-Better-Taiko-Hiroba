@@ -1,7 +1,7 @@
 import { type ChartRating, chartKey, type RatingFigure, rateOurTaikoV1 } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Stack, Typography } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { PlayRow } from "../history/play-row";
@@ -66,10 +66,8 @@ export function RatingPage({
   readonly i18n: Translator;
 }) {
   const { t, locale } = i18n;
-  const { view, reading, progress, song, failure, load, readSong } = scores;
-  const { data, load: loadData } = ratingData;
-  useEffect(load, [load]);
-  useEffect(loadData, [loadData]);
+  const { view, reading, progress, song, failure, readSong } = scores;
+  const { data } = ratingData;
   const [opened, setOpened] = useState<string | null>(null);
   const formats = useMemo(
     () => ({
