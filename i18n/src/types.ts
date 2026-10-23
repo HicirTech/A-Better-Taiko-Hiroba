@@ -344,6 +344,7 @@ export interface Messages {
   "failure.timedOut": string;
   "failure.cancelled": string;
   "failure.siteError": string;
+  "failure.siteErrorInMaintenance": string;
   "failure.unexpectedPage": string;
   "failure.maintenance": string;
   "failure.notRefreshed": string;

@@ -5,7 +5,7 @@ import { type ReactNode, useMemo, useState } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
 import { useBackCloses } from "../navigation/back-closers";
-import { FAILURE_MESSAGE } from "../read-failure-message";
+import { failureMessageOf } from "../read-failure-message";
 import type { TitleList } from "./title-editor-state";
 import { currentOptions, filterTitles } from "./title-options";
 
@@ -71,7 +71,7 @@ export function TitlePicker({ worn, picked, list, busy, onOpen, onPick, i18n }: 
       filterOptions={(_all, { inputValue }) => [...filterTitles(listed, inputValue)]}
       noOptionsText={
         list.name === "failed"
-          ? t(FAILURE_MESSAGE[list.failure.kind])
+          ? t(failureMessageOf(list.failure.kind, new Date()))
           : t(listed.length === 0 ? "title.none" : "title.noMatch")
       }
       openText={t("title.open")}

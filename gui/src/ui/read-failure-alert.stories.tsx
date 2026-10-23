@@ -31,8 +31,13 @@ type Story = StoryObj<typeof meta>;
 /** A page of Hiroba that came back as something else, in the place of what it would show. */
 export const HirobaPage: Story = {};
 
-/** Hiroba closed, as during its daily maintenance: a refresh later may bring it. */
-export const HirobaClosed: Story = { args: { message: "failure.siteError", code: "status=503" } };
+/** Hiroba's error in its daily maintenance hours: a refresh later may bring it. */
+export const HirobaClosed: Story = {
+  args: { message: "failure.siteErrorInMaintenance", code: null },
+};
+
+/** Hiroba's error at any other time. */
+export const HirobaError: Story = { args: { message: "failure.siteError", code: null } };
 
 /** A third party's data, here OurTaiko's for the rating. */
 export const ThirdParty: Story = { args: { message: "rating.dataFailed", code: "unreachable" } };

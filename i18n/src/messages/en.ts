@@ -292,8 +292,9 @@ export const en: Messages = {
   "failure.unreachable": "Hiroba could not be reached. Check your connection and try again.",
   "failure.timedOut": "Hiroba took too long to answer. Please try again.",
   "failure.cancelled": "The request was cancelled.",
-  "failure.siteError":
-    "Hiroba answered with an error. It is closed for maintenance every day from 05:00 to 07:00 JST.",
+  "failure.siteError": "Hiroba answered with an error. It may be having trouble for now.",
+  "failure.siteErrorInMaintenance":
+    "Hiroba is down for its daily maintenance, from 05:00 to 07:00 JST.",
   "failure.unexpectedPage": "Hiroba answered with a page this app did not expect.",
   "failure.maintenance":
     "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. It was not asked to refresh.",

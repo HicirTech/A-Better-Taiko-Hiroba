@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import { useTouchFirst } from "../navigation/use-touch-first";
-import { FAILURE_MESSAGE } from "../read-failure-message";
+import { failureMessageOf } from "../read-failure-message";
 import type { FavoriteSongState } from "../session-port";
 import { LargeModal } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
@@ -163,7 +163,7 @@ function PickerBody({
       <Box sx={{ p: 2 }}>
         <ReadFailureAlert
           id="song-picker-offered-failed"
-          message={`${t("picker.offeredFailed")} ${t(FAILURE_MESSAGE[kind])}`}
+          message={`${t("picker.offeredFailed")} ${t(failureMessageOf(kind, new Date()))}`}
           code={detail ?? null}
           i18n={i18n}
         />
