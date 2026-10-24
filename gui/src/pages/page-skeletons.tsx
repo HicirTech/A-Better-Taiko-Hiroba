@@ -10,7 +10,6 @@ import { SearchFieldSkeleton } from "../ui/search-field";
 import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
 import { SectionTitleSkeleton } from "../ui/section-title";
 import { SYNC_BAR_PAGE, SyncBarSkeleton } from "../ui/sync-bar";
-import { useTouchFirst } from "../ui/use-touch-first";
 import type { SkeletonProps } from "./page";
 
 // Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
@@ -129,9 +128,8 @@ export function NameTitleSkeleton() {
   );
 }
 
-export function FavoritesSkeleton() {
+export function FavoritesSkeleton({ touchFirst }: SkeletonProps) {
   // A touch screen opens the sets by a swipe, so it has no button for them.
-  const touchFirst = useTouchFirst();
   return (
     <Box sx={{ ...SYNC_BAR_PAGE, ...COLUMN }}>
       <Stack spacing={2} sx={{ pb: 2 }}>
