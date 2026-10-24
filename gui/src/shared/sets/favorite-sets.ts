@@ -3,6 +3,10 @@ import { FOLDER_SLOT_COUNT, type FolderState } from "@abth/core";
 import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
 
 const KEY = "abth.favoriteSets";
+/** Where sets that do not read are kept before others are kept over them. */
+const UNREADABLE_KEY = "abth.favoriteSets.unreadable";
+/** The shape the sets are kept in, which a later shape would change. */
+const VERSION = 1;
 const SONG_NO = /^\d{1,5}$/;
 
 export const SET_NAME_MAX_LENGTH = 40;
@@ -39,43 +43,66 @@ function cleanSet(value: unknown): FavoriteSet | null {
   return { id, name: cleanName(name), songs: cleanSongs(songs) };
 }
 
-export function loadSets(storage: Storage | undefined = pageStorage()): readonly FavoriteSet[] {
+type KeptSets =
+  | { readonly kind: "none" }
+  | { readonly kind: "sets"; readonly sets: readonly unknown[] }
+  | { readonly kind: "later" }
+  | { readonly kind: "unreadable"; readonly text: string };
+
+function keptSetsIn(storage: Storage | undefined): KeptSets {
   const text = keptSetting(KEY, (value): value is string => typeof value === "string", storage);
   if (text === null) {
-    return [];
+    return { kind: "none" };
   }
 
   try {
     const kept: unknown = JSON.parse(text);
-    if (typeof kept !== "object" || kept === null) {
-      return [];
-    }
-
-    const { v, sets } = kept as Record<string, unknown>;
-    if (v !== 1 || !Array.isArray(sets)) {
-      return [];
-    }
-
-    const ids = new Set<string>();
-    return sets.flatMap((one) => {
-      const set = cleanSet(one);
-      if (set === null || ids.has(set.id)) {
-        return [];
+    if (typeof kept === "object" && kept !== null) {
+      const { v, sets } = kept as Record<string, unknown>;
+      if (typeof v === "number" && v > VERSION) {
+        return { kind: "later" };
       }
-
-      ids.add(set.id);
-      return [set];
-    });
+      if (v === VERSION && Array.isArray(sets)) {
+        return { kind: "sets", sets };
+      }
+    }
   } catch {
-    return [];
+    // Not JSON: kept aside as it is.
   }
+  return { kind: "unreadable", text };
 }
 
+export function loadSets(storage: Storage | undefined = pageStorage()): readonly FavoriteSet[] {
+  const kept = keptSetsIn(storage);
+  if (kept.kind !== "sets") {
+    return [];
+  }
+
+  const ids = new Set<string>();
+  return kept.sets.flatMap((one) => {
+    const set = cleanSet(one);
+    if (set === null || ids.has(set.id)) {
+      return [];
+    }
+
+    ids.add(set.id);
+    return [set];
+  });
+}
+
+/** Keeps the sets, unless a later version keeps its own there; ones that did not read go aside. */
 export function keepSets(
   sets: readonly FavoriteSet[],
   storage: Storage | undefined = pageStorage(),
 ): void {
-  keepSetting(KEY, JSON.stringify({ v: 1, sets }), storage);
+  const kept = keptSetsIn(storage);
+  if (kept.kind === "later") {
+    return;
+  }
+  if (kept.kind === "unreadable") {
+    keepSetting(UNREADABLE_KEY, kept.text, storage);
+  }
+  keepSetting(KEY, JSON.stringify({ v: VERSION, sets }), storage);
 }
 
 /** The sets with a new one at the end, and the new one. */
