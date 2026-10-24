@@ -5,7 +5,7 @@ import type { FavoriteSongState } from "../shared/session-port";
 import { toggledSongs } from "../shared/sets/favorite-sets";
 import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
-import { modalLookOf } from "../story-kit/devices";
+import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";
 import { STORY_PICKABLE } from "../story-kit/favorites";
 import { storyCatalogue } from "../story-kit/songs";
@@ -35,6 +35,7 @@ const pickerOf = (
     catalogue={catalogue}
     pickable={pickable}
     shownDifficulty={DEFAULT_SHOWN}
+    touchFirst={touchOf(globals)}
     modalLook={modalLookOf(globals)}
     i18n={i18nOf(globals)}
     onClose={args.onClose}

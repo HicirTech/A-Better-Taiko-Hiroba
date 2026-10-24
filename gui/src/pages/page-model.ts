@@ -227,6 +227,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     readLabel: "favorites.reading",
     namesSongs: true,
     needsSongs: true,
+    opens: ({ keptSets }) => [keptSets.reload],
     firstRead: ({ favorites, writing }) => dueFirst(favorites, writing),
     waits: ({ favorites }) => readsFirst(favorites),
     reading: ({ favorites }) => favorites.reading,

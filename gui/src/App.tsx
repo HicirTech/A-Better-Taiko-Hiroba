@@ -1,6 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { useMediaQuery } from "@mui/material";
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useContext, useMemo } from "react";
 
 import { PageArea } from "./app/page-area";
 import { useKeptChoice } from "./app/use-kept-choice";
@@ -24,6 +24,8 @@ import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogu
 import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
+import { MenuOpenContext } from "./ui/menu-open";
+import { PipelinesShownContext } from "./ui/pipelines-shown";
 import { PullToRead } from "./ui/pull-to-read";
 import { useWideWindow } from "./ui/use-wide-window";
 import { UpdateDialog } from "./updates/update-dialog";
@@ -43,7 +45,9 @@ export interface AppProps {
 export function App({ port, link, i18n, page, onNavigate, language, toast }: AppProps) {
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const wide = useWideWindow();
-  const modalLook = useModalLook();
+  const menuOpen = useContext(MenuOpenContext);
+  const pipelinesShown = useContext(PipelinesShownContext);
+  const modalLook = useModalLook(pipelinesShown);
   const [shownDifficulty, onShownDifficulty] = useKeptChoice(
     keptShownDifficulty,
     keepShownDifficulty,
@@ -65,6 +69,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     touchFirst,
     wide,
     modalLook,
+    menuOpen,
+    pipelinesShown,
     shownDifficulty,
     onShownDifficulty,
     chartSource,

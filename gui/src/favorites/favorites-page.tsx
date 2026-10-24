@@ -11,7 +11,7 @@ import {
   sameSongs,
   toggledSongs,
 } from "../shared/sets/favorite-sets";
-import { useFavoriteSets } from "../shared/sets/use-favorite-sets";
+import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { rememberedSongs, resolveSong } from "../shared/song-catalogue/song-look";
@@ -27,7 +27,6 @@ import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { CARD_GAP } from "../ui/section-card";
 import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
-import { useTouchFirst } from "../ui/use-touch-first";
 import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
@@ -61,6 +60,14 @@ export interface FavoritesPageProps {
   readonly pickable: PickableState;
   /** As a picker opens: reads the list when it is stale. */
   readonly onPickerOpen: () => void;
+  /** The sets kept on this device, which the drawer lists. */
+  readonly keptSets: FavoriteSets;
+  /** A touch screen: swipes open the sets, and a long press a song's menu. */
+  readonly touchFirst: boolean;
+  /** The navigation's menu is open, which the sets' swipe leaves alone. */
+  readonly menuOpen: boolean;
+  /** The pipelines page lies over the page, which the sets' swipe leaves alone. */
+  readonly pipelinesShown: boolean;
   /** The difficulty whose level the songs show in front of the others. */
   readonly shownDifficulty: ShownDifficulty;
   /** Where a song's details take their chart pictures from. */
@@ -77,6 +84,10 @@ export function FavoritesPage({
   lane,
   pickable,
   onPickerOpen,
+  keptSets,
+  touchFirst,
+  menuOpen,
+  pipelinesShown,
   shownDifficulty,
   chartSource,
   modalLook,
@@ -85,7 +96,6 @@ export function FavoritesPage({
   const { t, locale } = i18n;
   const { step, pickSong } = favorites;
   const shown = shownFavoritesOf(step);
-  const keptSets = useFavoriteSets();
   const { sets } = keptSets;
   // The folder on Hiroba is shown until a set is picked from the drawer.
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -103,11 +113,12 @@ export function FavoritesPage({
   const [openSongNo, setOpenSongNo] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
-  const touchFirst = useTouchFirst();
   // A song's details stand over the page, so the sets' swipe waits until they shut.
   useSetsSwipe({
     active: touchFirst && openSongNo === null,
     open: drawerOpen,
+    menuOpen,
+    covered: pipelinesShown,
     onOpenChange: setDrawerOpen,
   });
 
@@ -339,6 +350,7 @@ export function FavoritesPage({
         catalogue={catalogue}
         pickable={pickable}
         shownDifficulty={shownDifficulty}
+        touchFirst={touchFirst}
         modalLook={modalLook}
         i18n={i18n}
         onClose={() => setPicking(null)}
@@ -359,6 +371,7 @@ export function FavoritesPage({
           catalogue={catalogue}
           pickable={pickable}
           shownDifficulty={shownDifficulty}
+          touchFirst={touchFirst}
           modalLook={modalLook}
           i18n={i18n}
           onClose={() => setPicking(null)}

@@ -80,7 +80,7 @@ describe("PAGE_MODELS", () => {
     ["knowYourself", ["scores.load", "songList.readIfFailed", "sets.reload"]],
     ["costume", []],
     ["nameTitle", []],
-    ["favorites", []],
+    ["favorites", ["sets.reload"]],
     ["settings", []],
   ])("opens %s with the reads it shows: %p", (page, reads) => {
     const { state, calls } = pageState();

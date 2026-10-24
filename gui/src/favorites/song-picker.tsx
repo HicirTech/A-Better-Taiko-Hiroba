@@ -16,7 +16,6 @@ import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SearchField } from "../ui/search-field";
 import { StatusNote } from "../ui/status-note";
-import { useTouchFirst } from "../ui/use-touch-first";
 import type { PickableState } from "./pickable-songs";
 import { matchesCharts, matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
 import { SongFilters } from "./song-filters";
@@ -41,6 +40,8 @@ export interface SongPickerProps {
   readonly pickable: PickableState;
   /** The difficulty whose level the songs show in front, where the filter names none. */
   readonly shownDifficulty: ShownDifficulty;
+  /** A touch screen: Back closes it, and its search waits for a tap before a keyboard comes up. */
+  readonly touchFirst: boolean;
   readonly modalLook: ModalLook;
   readonly i18n: Translator;
   readonly onClose: () => void;
@@ -63,13 +64,13 @@ function PickerBody({
   catalogue,
   pickable,
   shownDifficulty,
+  touchFirst,
   modalLook,
   i18n,
   onClose,
   onExited,
 }: SongPickerProps & { readonly onExited: () => void }) {
   const { t, locale } = i18n;
-  const touchFirst = useTouchFirst();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SongFilter>(NO_FILTER);
   const shown = filter.difficulty === null ? shownDifficulty : shownFor(filter.difficulty);

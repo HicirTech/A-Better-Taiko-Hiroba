@@ -35,6 +35,10 @@ export interface PageData extends PageState {
   /** The window is wide enough for the side panel. */
   readonly wide: boolean;
   readonly modalLook: ModalLook;
+  /** The navigation's menu is open over the page. */
+  readonly menuOpen: boolean;
+  /** The pipelines page lies over the page. */
+  readonly pipelinesShown: boolean;
   /** The difficulty whose level songs show in front, as Settings chose it. */
   readonly shownDifficulty: ShownDifficulty;
   readonly onShownDifficulty: (next: ShownDifficulty) => void;
