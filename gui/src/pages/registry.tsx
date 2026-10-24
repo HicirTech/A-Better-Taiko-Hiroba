@@ -156,11 +156,13 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     ...PAGE_MODELS.costume,
     icon: <CheckroomIcon />,
     skeleton: CostumePageSkeleton,
+    wider: true,
     draw: (data) => (
       <CostumePage
         editor={data.editor}
         lane={data.lane}
         touchFirst={data.touchFirst}
+        wide={data.wide}
         modalLook={data.modalLook}
         i18n={data.i18n}
       />

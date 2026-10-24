@@ -10,6 +10,7 @@ const PURE: readonly string[] = [
   "hiroba-session",
   "history",
   "know-yourself",
+  "my-page",
   "name-title",
   "pictures",
   "pipelines-page",

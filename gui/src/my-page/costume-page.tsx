@@ -8,8 +8,6 @@ import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
 import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { BAR_TEXT_BUTTON, SYNC_BAR_PAGE, SyncBar, SyncBarSkeleton } from "../ui/sync-bar";
-import { useWideWindow } from "../ui/use-wide-window";
-import { useWiderFrame } from "../ui/wider-frame";
 import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { shownEditorOf } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
@@ -35,14 +33,14 @@ export interface CostumePageProps {
   readonly editor: CostumeEditor;
   readonly lane: PictureLane;
   readonly touchFirst: boolean;
+  /** The window is wide enough for the picture and the tiles beside each other. */
+  readonly wide: boolean;
   readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }
 
-export function CostumePage({ editor, lane, touchFirst, modalLook, i18n }: CostumePageProps) {
+export function CostumePage({ editor, lane, touchFirst, wide, modalLook, i18n }: CostumePageProps) {
   const { step } = editor;
-  const wide = useWideWindow();
-  useWiderFrame();
   const [part, setPart] = useState<CostumePart>(COLOUR_PARTS[0]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const page = useRef<HTMLDivElement>(null);
@@ -153,9 +151,7 @@ function CostumeBar({
 }
 
 /** The Costume page's shape while its first read runs, as wide or narrow as the window. */
-export function CostumePageSkeleton() {
-  const wide = useWideWindow();
-  useWiderFrame();
+export function CostumePageSkeleton({ wide }: { readonly wide: boolean }) {
   return (
     <Box sx={pageOf(wide)}>
       {wide ? <WideBodySkeleton /> : <NarrowBodySkeleton />}

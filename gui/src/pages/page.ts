@@ -74,6 +74,8 @@ export interface SkeletonProps {
 export interface PageEntry extends PageModel, NavEntry {
   /** Its shape in grey while it waits; none for a page that never waits. */
   readonly skeleton: ComponentType<SkeletonProps> | null;
+  /** Drawn in the frame's wider width, page and skeleton, as the costume's columns need. */
+  readonly wider?: true;
   /** How far its read has come, for the skeleton's bar. */
   progress?(data: PageData): SkeletonProgress | null;
   /** The question before `readsEvery`, open while `open`; without it the hold reads nothing. */

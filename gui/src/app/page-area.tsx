@@ -6,6 +6,7 @@ import type { PageData, PageEntry } from "../pages/page";
 import { FADES_IN } from "../ui/page-read";
 import { PageSkeleton } from "../ui/page-skeleton";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { useWiderFrame } from "../ui/wider-frame";
 import { SignInCard } from "./sign-in-card";
 import type { PageShown } from "./use-page-shown";
 
@@ -25,6 +26,11 @@ export function PageArea({
 }) {
   const { screen } = data.session;
   const Shape = entry.skeleton;
+  const drawn =
+    (shown.skeleton && Shape !== null) ||
+    shown.shown ||
+    (shown.failed && entry.drawsFailure === true);
+  useWiderFrame(drawn && entry.wider === true);
   return (
     <Stack spacing={3}>
       {!shown.skeleton && (screen.name === "signedOut" || screen.name === "signingIn") && (

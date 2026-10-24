@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { modalLookOf, onDevice, touchOf } from "../story-kit/devices";
+import { modalLookOf, onDevice, touchOf, wideOf } from "../story-kit/devices";
 import { WithCostumeEditor } from "../story-kit/editors";
 import { i18nOf } from "../story-kit/env";
 import { STORY_LANE } from "../story-kit/story-pictures";
@@ -17,6 +17,7 @@ const meta = {
           editor={editor}
           lane={STORY_LANE}
           touchFirst={touchOf(globals)}
+          wide={wideOf(globals)}
           modalLook={modalLookOf(globals)}
           i18n={i18nOf(globals)}
         />
