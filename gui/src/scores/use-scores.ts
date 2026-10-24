@@ -3,9 +3,9 @@ import type { MessageKey } from "@abth/i18n";
 import { useCallback, useState } from "react";
 
 import { afterRefresh } from "../read-again/after-refresh";
-import { hirobaSession } from "../read-failure-message";
-import type { ReadStatus } from "../reads/read-run";
-import { useReadRun } from "../reads/use-read-run";
+import { hirobaSession } from "../shared/read-failure-message";
+import type { ReadStatus } from "../shared/reads/read-run";
+import { useReadRun } from "../shared/reads/use-read-run";
 import type {
   HirobaSessionPort,
   PlayedChart,
@@ -14,8 +14,8 @@ import type {
   ScoresRead,
   ScoresView,
   ScoreView,
-} from "../session-port";
-import { useHeldCopy } from "../use-held-copy";
+} from "../shared/session-port";
+import { useHeldCopy } from "../shared/use-held-copy";
 
 /** The song a read of one song is for, named as its reading text names it. */
 export type ChosenSong = Pick<ScoreView, "songNo" | "songTitle">;

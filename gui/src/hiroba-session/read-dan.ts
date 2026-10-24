@@ -6,7 +6,7 @@ import {
   type TransportResponse,
 } from "@abth/core";
 
-import { type DanNumber, type DanView, isWhole, type PictureView } from "../session-port";
+import { type DanNumber, type DanView, isWhole, type PictureView } from "../shared/session-port";
 import { checkPng, describeAnswer, pngDataUrl } from "./png-answer";
 import type { HirobaEndpoints } from "./types";
 

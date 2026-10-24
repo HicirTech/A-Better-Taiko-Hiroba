@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import type { IconWant } from "../session-port";
+import type { IconWant } from "../shared/session-port";
 import { touchOf } from "../story-kit/devices";
 import { i18nOf, STORY_TOAST } from "../story-kit/env";
 import { STORY_LANE } from "../story-kit/story-pictures";

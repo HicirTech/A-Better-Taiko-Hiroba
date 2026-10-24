@@ -5,7 +5,7 @@ import type { Ref } from "react";
 import { HIROBA_LANG } from "../language/show-language";
 import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
-import type { PictureView, ProfileView } from "../session-port";
+import type { PictureView, ProfileView } from "../shared/session-port";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, ONE_LINE, OUTLINED } from "./hiroba-px";
 import { FOCUS_RING, type OpenAction, OpenButton } from "./open-button";

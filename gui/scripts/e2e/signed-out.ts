@@ -1,4 +1,4 @@
-import { BRIDGE_CHANNELS } from "../../src/session-port";
+import { BRIDGE_CHANNELS } from "../../src/shared/session-port";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 

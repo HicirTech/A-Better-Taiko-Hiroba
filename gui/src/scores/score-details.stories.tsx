@@ -5,7 +5,7 @@ import { fn } from "storybook/test";
 
 import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import type { ScoreView } from "../session-port";
+import type { ScoreView } from "../shared/session-port";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { storyPlay } from "../story-kit/plays";
 import { STORY_SCORES } from "../story-kit/scores";

@@ -14,7 +14,7 @@ import {
 import { alpha } from "@mui/material/styles";
 import { useId, useState } from "react";
 
-import type { EndedGroup, GroupKind, GroupNow, PipelineView } from "../pipelines";
+import type { EndedGroup, GroupKind, GroupNow, PipelineView } from "../shared/pipelines";
 import { BlockIcon, CheckIcon, CloseIcon } from "../ui/icons";
 import { SectionCard } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";

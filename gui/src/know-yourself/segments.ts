@@ -2,7 +2,7 @@ import type { CrownState } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 
 import { CROWN_COLOUR, RANK_COLOUR, UNCLEARED_COLOUR } from "../my-page/panel-colours";
-import type { IconWant } from "../session-port";
+import type { IconWant } from "../shared/session-port";
 import { CLEAR_SEGMENTS, RANK_SEGMENTS } from "./ladder";
 
 /** A part of a share bar: its name, its colour and its icon in the legend. */

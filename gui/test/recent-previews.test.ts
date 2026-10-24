@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { err, ok, type Result } from "@abth/core";
 
 import { createRecentPreviews } from "../src/hiroba-session/recent-previews";
-import type { CostumePreviewFailure, CostumeSet } from "../src/session-port";
+import type { CostumePreviewFailure, CostumeSet } from "../src/shared/session-port";
 import { pictureOf, withFace } from "./history-fixtures";
 
 type Answer = Result<string, CostumePreviewFailure>;

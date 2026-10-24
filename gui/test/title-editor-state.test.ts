@@ -19,7 +19,7 @@ import type {
   TitleEditorView,
   TitleState,
   WriteOutcomeView,
-} from "../src/session-port";
+} from "../src/shared/session-port";
 
 const A: TitleOption = { id: 101, label: "サンプルの称号" };
 const B: TitleOption = { id: 102, label: "別のサンプル称号" };

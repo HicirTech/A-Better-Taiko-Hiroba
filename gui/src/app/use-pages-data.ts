@@ -14,7 +14,7 @@ import { PAGE_REGISTRY } from "../pages/registry";
 import type { PictureLane } from "../pictures/picture-lane";
 import { useRatingData } from "../rating";
 import { useScores } from "../scores/use-scores";
-import type { HirobaSessionPort } from "../session-port";
+import type { HirobaSessionPort } from "../shared/session-port";
 import type { Session } from "./use-session";
 
 /** The data the pages draw from, as the window holds it. */

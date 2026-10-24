@@ -6,7 +6,7 @@ import {
   officialNames,
   parseChineseNamesBatch,
   readChineseNames,
-} from "../src/song-catalogue";
+} from "../src/shared/song-catalogue";
 
 const songbox = (official: string) =>
   `{{Songbox\n|released = [[2004年]]\n|id = 10tai\n|official = ${official}\n|default = Tentai Kansoku\n|genre = POPS\n}}\n'''本文'''`;

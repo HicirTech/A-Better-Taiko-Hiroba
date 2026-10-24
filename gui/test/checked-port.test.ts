@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { checkedPort, type HirobaSessionPort, PORT_ARGUMENTS } from "../src/session-port";
+import { checkedPort, type HirobaSessionPort, PORT_ARGUMENTS } from "../src/shared/session-port";
 
 const SET = {
   colorBody: 12,

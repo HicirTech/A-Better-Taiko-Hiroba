@@ -1,4 +1,4 @@
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
+import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
 import { isVersion } from "./update-feed";
 
 const CHECKED_KEY = "abth.update.checkedAt";

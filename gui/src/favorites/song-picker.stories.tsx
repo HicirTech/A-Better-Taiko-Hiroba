@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
 
-import type { FavoriteSongState } from "../session-port";
+import type { FavoriteSongState } from "../shared/session-port";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PICKABLE } from "../story-kit/favorites";
 import { storyCatalogue } from "../story-kit/songs";

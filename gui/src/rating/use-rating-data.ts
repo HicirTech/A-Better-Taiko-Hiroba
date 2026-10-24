@@ -1,10 +1,10 @@
 import { err, type OurTaikoV1Data, ok, type RatingSystem } from "@abth/core";
 import { useCallback, useRef, useState } from "react";
 
-import type { ReadStatus } from "../reads/read-run";
-import { useReadRun } from "../reads/use-read-run";
-import type { HirobaSessionPort } from "../session-port";
-import type { SongCatalogueFailure } from "../song-catalogue";
+import type { ReadStatus } from "../shared/reads/read-run";
+import { useReadRun } from "../shared/reads/use-read-run";
+import type { HirobaSessionPort } from "../shared/session-port";
+import type { SongCatalogueFailure } from "../shared/song-catalogue";
 import { keepRatingData, loadRatingData } from "./rating-data-cache";
 import { ratingDataOf } from "./read-rating-data";
 

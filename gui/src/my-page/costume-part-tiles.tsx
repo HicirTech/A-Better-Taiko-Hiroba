@@ -4,7 +4,7 @@ import { useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
-import type { CostumeEditorView, CostumeSet } from "../session-port";
+import type { CostumeEditorView, CostumeSet } from "../shared/session-port";
 import { HELD_STILL } from "../ui/editor-parts";
 import { SubsectionTitle, SubsectionTitleSkeleton } from "../ui/section-title";
 import { ItemPicture } from "./costume-item-grid";

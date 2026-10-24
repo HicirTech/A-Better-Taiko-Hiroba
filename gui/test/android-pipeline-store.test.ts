@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
-
-import type { PipelineHistory } from "../src/pipelines";
 import { createIndexedDbPipelineStores } from "../src/platform/android-pipeline-store";
+import type { PipelineHistory } from "../src/shared/pipelines";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const HISTORY: PipelineHistory = {

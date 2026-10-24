@@ -5,7 +5,7 @@ import {
   type WriteOutcome,
 } from "@abth/core";
 
-import type { TitleChange } from "../session-port";
+import type { TitleChange } from "../shared/session-port";
 import type { HirobaEndpoints, WriteOptions } from "./types";
 
 /** One title write as the core runs it; the outcome crosses as it is, never with the token. */

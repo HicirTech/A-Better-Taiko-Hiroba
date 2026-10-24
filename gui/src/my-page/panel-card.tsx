@@ -3,7 +3,7 @@ import { Stack } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
-import type { ProfileView } from "../session-port";
+import type { ProfileView } from "../shared/session-port";
 import { CROWN_COLOUR, RANK_COLOUR, RANKS_WORST_FIRST } from "./panel-colours";
 import { ShareBlock, type ShareItem } from "./share-block";
 

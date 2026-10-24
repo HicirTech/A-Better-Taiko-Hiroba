@@ -11,7 +11,7 @@ import { PLAY_ROW_PX, PlayRow } from "../history/play-row";
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { ScoresProgress, ScoresStop, ScoreView } from "../session-port";
+import type { ScoresProgress, ScoresStop, ScoreView } from "../shared/session-port";
 import type { SkeletonProgress } from "../ui/page-skeleton";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";

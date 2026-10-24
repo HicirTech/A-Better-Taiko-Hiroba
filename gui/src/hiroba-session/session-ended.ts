@@ -1,4 +1,4 @@
-import type { ReadFailure } from "../session-port";
+import type { ReadFailure } from "../shared/session-port";
 
 /** A read that found the login page, or a card still to choose: the session is over. */
 export function sessionEnded(failure: ReadFailure): boolean {

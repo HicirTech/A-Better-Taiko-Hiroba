@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 
-import type { ProfileView } from "../session-port";
+import type { ProfileView } from "../shared/session-port";
 import { WithNameAndTitle } from "../story-kit/editors";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";

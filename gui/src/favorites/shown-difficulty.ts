@@ -1,7 +1,7 @@
 import { createContext } from "react";
 
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
-import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
+import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 
 /** The difficulty whose level a song shows in front of the others; Extreme brings its inner chart. */
 export type ShownDifficulty = Exclude<Difficulty, "ura">;

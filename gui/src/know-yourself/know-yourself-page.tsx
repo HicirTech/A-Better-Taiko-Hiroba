@@ -18,7 +18,7 @@ import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
 import { listedOf } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
-import type { ListedChartsView, ShownSong } from "../session-port";
+import type { ListedChartsView, ShownSong } from "../shared/session-port";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { CARD_GAP } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";

@@ -2,12 +2,12 @@ import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport } from "@abth/core";
 
 import { createMemoryPictureStore } from "../src/hiroba-session";
-import type { Pipeline } from "../src/pipelines";
+import type { Pipeline } from "../src/shared/pipelines";
 import {
   createChartDensityReader,
   createChartTjaReader,
   createEseChartFiles,
-} from "../src/song-catalogue";
+} from "../src/shared/song-catalogue";
 
 const MAPPING = "https://cdn.ourtaiko.test/api/ese_mapping";
 const CHARTS = "https://ese.test/ESE/ESE/raw/branch/master/";

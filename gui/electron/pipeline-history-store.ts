@@ -1,6 +1,6 @@
 import * as nodeFs from "node:fs";
 
-import { type PipelineHistoryStore, readPipelineHistory } from "../src/pipelines";
+import { type PipelineHistoryStore, readPipelineHistory } from "../src/shared/pipelines";
 import type { HistoryFiles } from "./costume-history-store";
 import { replaceFile } from "./replace-file";
 

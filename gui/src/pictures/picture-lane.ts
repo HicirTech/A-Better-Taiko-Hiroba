@@ -1,6 +1,6 @@
 import type { Result } from "@abth/core";
 
-import type { PictureFailure, PictureView, PictureWant } from "../session-port";
+import type { PictureFailure, PictureView, PictureWant } from "../shared/session-port";
 
 export type PictureAnswer = { readonly view: PictureView } | { readonly failure: string };
 

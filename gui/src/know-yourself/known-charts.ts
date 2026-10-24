@@ -2,8 +2,8 @@ import { CROWN_ORDER, type CrownState, type Level, type ScoreRank } from "@abth/
 
 import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { type ShownDifficulty, shownFor } from "../favorites/shown-difficulty";
-import type { ChartHits, ListedChartsView } from "../session-port";
-import type { CatalogueSong, Difficulty, SongBpm } from "../song-catalogue/types";
+import type { ChartHits, ListedChartsView } from "../shared/session-port";
+import type { CatalogueSong, Difficulty, SongBpm } from "../shared/song-catalogue/types";
 
 /** A chart the lists name, with what taiko.wiki's song list says of it. */
 export interface KnownChart {

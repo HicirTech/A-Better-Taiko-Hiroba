@@ -4,16 +4,16 @@ import { useCallback, useReducer, useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import { afterRefresh } from "../read-again/after-refresh";
-import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import type { ReadStatus } from "../reads/read-run";
-import { useReadRun } from "../reads/use-read-run";
+import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
+import type { ReadStatus } from "../shared/reads/read-run";
+import { useReadRun } from "../shared/reads/use-read-run";
 import {
   type CostumeHistoryEntry,
   changedTheCostume,
   type HirobaSessionPort,
   type ReadFailure,
   type WriteOutcomeView,
-} from "../session-port";
+} from "../shared/session-port";
 import {
   canReadEditorAgain,
   type EditorStep,

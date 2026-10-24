@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { HirobaPicture } from "../pictures/hiroba-picture";
-import type { CostumeSet, HirobaSessionPort } from "../session-port";
+import type { CostumeSet, HirobaSessionPort } from "../shared/session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import {
   createPreviewScheduler,

@@ -1,6 +1,11 @@
 import { draftCostumeChange, type Result, sameCostume } from "@abth/core";
 
-import type { CostumeEditorView, CostumeSet, ReadFailure, WriteOutcomeView } from "../session-port";
+import type {
+  CostumeEditorView,
+  CostumeSet,
+  ReadFailure,
+  WriteOutcomeView,
+} from "../shared/session-port";
 import { type ColourPart, type SlotPart, slotOf } from "./costume-parts";
 import { endsTheEdit, type Noticed, noticeOf, refreshed } from "./write-ending";
 

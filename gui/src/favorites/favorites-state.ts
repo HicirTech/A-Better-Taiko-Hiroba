@@ -7,7 +7,7 @@ import type {
   FolderState,
   ReadFailure,
   WriteOutcomeView,
-} from "../session-port";
+} from "../shared/session-port";
 
 /** The 大好きな曲 picked and not yet saved; none while nothing is picked. */
 export type SongDraft = FavoriteSongState | null;

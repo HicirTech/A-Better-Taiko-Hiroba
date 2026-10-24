@@ -1,4 +1,4 @@
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
+import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
 
 const KEY = "abth.songSearches";
 export const RECENT_SEARCHES = 10;

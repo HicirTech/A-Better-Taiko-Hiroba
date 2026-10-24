@@ -7,7 +7,7 @@ import {
   type TransportResponse,
 } from "@abth/core";
 
-import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
+import { type GroupAsked, type Pipeline, resultFailure } from "../shared/pipelines";
 import {
   type CostumeSlot,
   type CourseIconWant,
@@ -17,7 +17,7 @@ import {
   type PictureFailure,
   type PictureView,
   type PictureWant,
-} from "../session-port";
+} from "../shared/session-port";
 import {
   courseIconPath,
   crownIconPath,

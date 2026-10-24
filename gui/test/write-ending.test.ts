@@ -9,7 +9,7 @@ import {
   sendHeld,
   sessionNoticeOf,
 } from "../src/my-page/write-ending";
-import type { WriteOutcomeView } from "../src/session-port";
+import type { WriteOutcomeView } from "../src/shared/session-port";
 
 interface Shown {
   readonly state: { readonly title: string };

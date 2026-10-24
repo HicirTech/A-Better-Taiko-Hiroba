@@ -6,7 +6,7 @@ import {
   readSongCatalogue,
   SONG_CATALOGUE_URL,
   type SongCatalogueFailure,
-} from "../src/song-catalogue";
+} from "../src/shared/song-catalogue";
 
 const ANSWER = JSON.stringify([
   { songNo: "1001", title: "サンプル曲", artists: [], genre: ["pops"], isDeleted: 0, courses: {} },

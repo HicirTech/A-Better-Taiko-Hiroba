@@ -7,8 +7,8 @@ import {
   type PictureKey,
   type PictureStore,
 } from "../src/hiroba-session";
-import { createChartDensityReader, createEseChartFiles } from "../src/song-catalogue";
-import { mappingOf } from "../src/song-catalogue/ese-chart-files";
+import { createChartDensityReader, createEseChartFiles } from "../src/shared/song-catalogue";
+import { mappingOf } from "../src/shared/song-catalogue/ese-chart-files";
 
 const MAPPING = "https://cdn.ourtaiko.test/api/ese_mapping";
 const CHARTS = "https://ese.test/ESE/ESE/raw/branch/master/";

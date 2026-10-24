@@ -7,7 +7,7 @@ import {
   type Transport,
 } from "@abth/core";
 
-import type { FavoritesView, ReadFailure } from "../session-port";
+import type { FavoritesView, ReadFailure } from "../shared/session-port";
 import type { HirobaEndpoints } from "./types";
 
 /** Reads the folder's editor, then the 大好きな曲's, for the interface; the form tokens stay in the

@@ -21,7 +21,7 @@ import {
 } from "../src/hiroba-session";
 import { MAX_COSTUME_HISTORY } from "../src/hiroba-session/costume-history";
 import { createIndexedDbHistoryStore } from "../src/platform/android-history-store";
-import type { CostumeSet, WriteKind } from "../src/session-port";
+import type { CostumeSet, WriteKind } from "../src/shared/session-port";
 import { costumeSetOf, START_SET } from "./hiroba-stand-in";
 import { pictureOfSet } from "./history-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";

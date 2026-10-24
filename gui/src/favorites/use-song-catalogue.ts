@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import type { ReadStatus } from "../reads/read-run";
-import { useReadRun } from "../reads/use-read-run";
-import type { HirobaSessionPort } from "../session-port";
+import type { ReadStatus } from "../shared/reads/read-run";
+import { useReadRun } from "../shared/reads/use-read-run";
+import type { HirobaSessionPort } from "../shared/session-port";
 import type {
   CatalogueSong,
   ChineseNamesRead,
   SongCatalogueFailure,
-} from "../song-catalogue/types";
+} from "../shared/song-catalogue/types";
 import {
   type KeptCatalogue,
   keepCatalogue,

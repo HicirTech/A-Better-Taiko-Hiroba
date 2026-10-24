@@ -3,7 +3,7 @@ import { Box, Skeleton } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
-import type { IconWant } from "../session-port";
+import type { IconWant } from "../shared/session-port";
 import { SectionTitle, SectionTitleSkeleton } from "../ui/section-title";
 import { LegendItem } from "./legend-item";
 import { sharesOf } from "./shares";

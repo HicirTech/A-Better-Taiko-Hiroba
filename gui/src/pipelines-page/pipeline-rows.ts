@@ -1,4 +1,4 @@
-import type { EndedGroup, GroupNow, PipelineView } from "../pipelines";
+import type { EndedGroup, GroupNow, PipelineView } from "../shared/pipelines";
 
 /** The blocks for the groups in a pipeline: the running ones, then those waiting. */
 export const BLOCKS = 10;

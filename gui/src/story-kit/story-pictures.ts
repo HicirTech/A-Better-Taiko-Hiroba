@@ -19,9 +19,9 @@ import {
   type PictureLaneOptions,
   wantKey,
 } from "../pictures/picture-lane";
-import { IO_READ_CONSUMERS } from "../pipelines";
-import type { CrownKind, PictureView, PictureWant } from "../session-port";
-import { DIFFICULTIES } from "../song-catalogue/types";
+import { IO_READ_CONSUMERS } from "../shared/pipelines";
+import type { CrownKind, PictureView, PictureWant } from "../shared/session-port";
+import { DIFFICULTIES } from "../shared/song-catalogue/types";
 import { packView } from "./pack";
 import { pictureOf } from "./picture-of";
 import { STORY_PROFILE, STORY_SET } from "./profile";

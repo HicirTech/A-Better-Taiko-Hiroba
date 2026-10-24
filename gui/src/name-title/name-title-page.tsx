@@ -6,7 +6,7 @@ import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { TitlePlate } from "../my-page/title-plate";
 import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
-import type { PictureWant, ProfileView } from "../session-port";
+import type { PictureWant, ProfileView } from "../shared/session-port";
 import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
 import { judgeName } from "./name-editor-state";
 import { NameSection } from "./name-section";

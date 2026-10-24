@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import type { ProfileView } from "../session-port";
+import type { ProfileView } from "../shared/session-port";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";
 import { STORY_LANE, WAITING_LANE } from "../story-kit/story-pictures";

@@ -9,7 +9,7 @@ import {
   ESE_CHARTS_URL,
   ESE_MAPPING_URL,
   SONG_CATALOGUE_URL,
-} from "../src/song-catalogue";
+} from "../src/shared/song-catalogue";
 import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "./mock-ese";
 
 const root = join(import.meta.dir, "..");

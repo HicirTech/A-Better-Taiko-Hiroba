@@ -18,7 +18,7 @@ import {
   HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
-} from "../src/pipelines";
+} from "../src/shared/pipelines";
 import {
   BRIDGE_CHANNELS,
   type HirobaSessionPort,
@@ -27,7 +27,7 @@ import {
   type PortImplementation,
   type VerbQueueing,
   type WriteOutcomeView,
-} from "../src/session-port";
+} from "../src/shared/session-port";
 
 type Verb = keyof HirobaSessionPort;
 const VERBS = Object.keys(PORT_QUEUEING) as Verb[];

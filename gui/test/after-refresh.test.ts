@@ -3,7 +3,7 @@ import { err, ok, type Result, type Transport } from "@abth/core";
 
 import { createSessionWrites } from "../src/hiroba-session";
 import { afterRefresh } from "../src/read-again/after-refresh";
-import type { ReadFailure } from "../src/session-port";
+import type { ReadFailure } from "../src/shared/session-port";
 
 const ORIGIN = "https://hiroba.test";
 const ENDPOINTS = {

@@ -1,6 +1,6 @@
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { Difficulty } from "../song-catalogue/types";
+import type { Difficulty } from "../shared/song-catalogue/types";
 
 export const COURSE_ICON_PX = 24;
 

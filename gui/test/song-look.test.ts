@@ -7,7 +7,7 @@ import {
   rememberedSongs,
   resolveSong,
 } from "../src/favorites/song-look";
-import type { FavoritesView, ShownSong } from "../src/session-port";
+import type { FavoritesView, ShownSong } from "../src/shared/session-port";
 import { song } from "./song-fixtures";
 
 const ALPHA = song({

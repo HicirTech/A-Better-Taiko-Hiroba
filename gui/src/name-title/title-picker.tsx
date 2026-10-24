@@ -5,7 +5,7 @@ import { type ReactNode, useMemo, useState } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
 import { useBackCloses } from "../navigation/back-closers";
-import { failureMessageOf } from "../read-failure-message";
+import { failureMessageOf } from "../shared/read-failure-message";
 import type { TitleList } from "./title-editor-state";
 import { currentOptions, filterTitles } from "./title-options";
 

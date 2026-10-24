@@ -5,7 +5,7 @@ import type { Ref } from "react";
 
 import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
-import type { CrownKind, PictureView, PictureWant, ProfileView } from "../session-port";
+import type { CrownKind, PictureView, PictureWant, ProfileView } from "../shared/session-port";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, OUTLINED } from "./hiroba-px";
 import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";

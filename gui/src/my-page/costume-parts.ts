@@ -1,6 +1,6 @@
 import type { MessageKey, Translator } from "@abth/i18n";
 
-import type { CostumeEditorView, CostumeSet, CostumeSlot } from "../session-port";
+import type { CostumeEditorView, CostumeSet, CostumeSlot } from "../shared/session-port";
 
 /** The three colours, in the order the site's tabs give them: かお, どう, てあし. */
 export const COLOUR_PARTS = ["colorFace", "colorBody", "colorLimb"] as const;

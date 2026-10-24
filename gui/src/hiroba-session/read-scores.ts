@@ -30,7 +30,7 @@ import {
   withBaseline,
 } from "@abth/core";
 
-import { type Pipeline, resultFailure, SCORE_READ_CONSUMERS } from "../pipelines";
+import { type Pipeline, resultFailure, SCORE_READ_CONSUMERS } from "../shared/pipelines";
 import type {
   ListedChartsView,
   PlayedChart,
@@ -40,7 +40,7 @@ import type {
   ScoresRead,
   ScoresView,
   ScoreView,
-} from "../session-port";
+} from "../shared/session-port";
 import { listedChartsOf } from "./listed-charts";
 import type { ScoreChangesStore } from "./score-changes-store";
 import type { ScoresStore } from "./scores-store";

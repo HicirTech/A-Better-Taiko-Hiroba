@@ -7,7 +7,7 @@ import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { HirobaSessionPort } from "../session-port";
+import type { HirobaSessionPort } from "../shared/session-port";
 import { SongDetails } from "../songs/song-details";
 import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
 import { ListIcon } from "../ui/icons";

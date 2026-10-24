@@ -1,6 +1,6 @@
 import type { RecentPlay } from "@abth/core";
 
-import type { PlayedChart, ScoresView, ScoreView } from "../session-port";
+import type { PlayedChart, ScoresView, ScoreView } from "../shared/session-port";
 import { playedSong, type SongsByTitle } from "./played-song";
 
 /** A recent play's chart: its kept details, its song with the chart not read yet, or no song. */

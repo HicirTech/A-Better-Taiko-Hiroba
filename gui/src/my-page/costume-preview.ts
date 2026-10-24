@@ -1,6 +1,6 @@
 import type { Result } from "@abth/core";
 
-import type { CostumePreviewFailure, CostumeSet } from "../session-port";
+import type { CostumePreviewFailure, CostumeSet } from "../shared/session-port";
 import { COSTUME_PARTS } from "./costume-parts";
 
 export interface PreviewState {

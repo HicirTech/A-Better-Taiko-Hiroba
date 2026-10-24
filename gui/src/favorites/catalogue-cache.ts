@@ -1,5 +1,9 @@
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
-import { type CatalogueSong, DIFFICULTIES, type SongCatalogueRead } from "../song-catalogue/types";
+import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
+import {
+  type CatalogueSong,
+  DIFFICULTIES,
+  type SongCatalogueRead,
+} from "../shared/song-catalogue/types";
 
 const KEY = "abth.songCatalogue";
 const DAY_MS = 24 * 60 * 60 * 1000;

@@ -12,7 +12,7 @@ import {
   chartOriginFor,
   ESE_CHARTS_URL,
   ESE_MAPPING_URL,
-} from "../src/song-catalogue";
+} from "../src/shared/song-catalogue";
 import { feedUrlFor } from "../src/updates";
 
 export type Environment = Readonly<Record<string, string | undefined>>;

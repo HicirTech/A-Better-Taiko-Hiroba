@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Box, ButtonBase, Skeleton } from "@mui/material";
 
-import type { CostumeEditorView } from "../session-port";
+import type { CostumeEditorView } from "../shared/session-port";
 import type { ColourPart } from "./costume-parts";
 import { pickRing } from "./pick-ring";
 import { CLEAR_OF_STUCK } from "./stuck-clearance";

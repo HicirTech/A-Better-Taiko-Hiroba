@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
 
-import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 import { i18nOf } from "../story-kit/env";
 import { press } from "../story-kit/steps";
 import { MultiFilterChip } from "./filter-chip";

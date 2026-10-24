@@ -2,7 +2,7 @@ import { sameCostume } from "@abth/core";
 
 import { myDonPng } from "../../scripts/mock-pictures";
 import type { PreviewState } from "../my-page/costume-preview";
-import type { CostumeEditorView, CostumeHistoryEntry, CostumeSet } from "../session-port";
+import type { CostumeEditorView, CostumeHistoryEntry, CostumeSet } from "../shared/session-port";
 import { packData, packKeys, packView } from "./pack";
 import { pictureOf } from "./picture-of";
 import { STORY_SET } from "./profile";

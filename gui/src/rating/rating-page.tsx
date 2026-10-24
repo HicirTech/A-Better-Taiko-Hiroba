@@ -10,7 +10,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
 import { listedOf } from "../scores/scores-page";
 import type { ScoresState } from "../scores/use-scores";
-import type { ScoreView } from "../session-port";
+import type { ScoreView } from "../shared/session-port";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
 import { SectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";

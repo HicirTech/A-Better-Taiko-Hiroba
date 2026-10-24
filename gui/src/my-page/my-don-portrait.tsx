@@ -4,7 +4,7 @@ import type { Ref } from "react";
 
 import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
-import type { PictureWant } from "../session-port";
+import type { PictureWant } from "../shared/session-port";
 import { HIROBA_BLOCK, hirobaPx } from "./hiroba-px";
 import { FOCUS_RING, type OpenAction, OpenButton } from "./open-button";
 

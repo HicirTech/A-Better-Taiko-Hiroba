@@ -1,7 +1,12 @@
 import { type Result, sameTitle, type TitleOption } from "@abth/core";
 
 import { endsTheEdit, type Noticed, noticeOf } from "../my-page/write-ending";
-import type { ReadFailure, TitleEditorView, TitleState, WriteOutcomeView } from "../session-port";
+import type {
+  ReadFailure,
+  TitleEditorView,
+  TitleState,
+  WriteOutcomeView,
+} from "../shared/session-port";
 
 type TitleOutcome = WriteOutcomeView<TitleState>;
 

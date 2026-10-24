@@ -5,7 +5,7 @@ import {
   type WriteOutcome,
 } from "@abth/core";
 
-import type { NameChange } from "../session-port";
+import type { NameChange } from "../shared/session-port";
 import type { HirobaEndpoints, WriteOptions } from "./types";
 
 /** One rename as the core runs it; the outcome crosses as it is, never with the token. */

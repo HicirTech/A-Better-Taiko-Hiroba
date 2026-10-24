@@ -1,5 +1,5 @@
-import { keepSetting, pageStorage } from "../kept-settings";
-import type { CatalogueSong, ChineseNamesPage, ChineseNamesRead } from "../song-catalogue";
+import { keepSetting, pageStorage } from "../shared/kept-settings";
+import type { CatalogueSong, ChineseNamesPage, ChineseNamesRead } from "../shared/song-catalogue";
 
 const KEY = "abth.chineseNames";
 const VERSION = 1;

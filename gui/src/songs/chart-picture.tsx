@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { ButtonBase, Skeleton } from "@mui/material";
 import { useEffect, useState } from "react";
 
-import type { HirobaSessionPort, PictureView } from "../session-port";
+import type { HirobaSessionPort, PictureView } from "../shared/session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import type { ShownChart } from "./chart-viewer";
 

@@ -3,7 +3,7 @@ import { err, ok, type Transport, type TransportFailure, type TransportRequest }
 import { keepRatingData, loadRatingData } from "../src/rating/rating-data-cache";
 import { RATING_DATA_URL } from "../src/rating/rating-links";
 import { ratingDataOf, readRatingData } from "../src/rating/read-rating-data";
-import type { SongCatalogueFailure } from "../src/song-catalogue";
+import type { SongCatalogueFailure } from "../src/shared/song-catalogue";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 const CHART = {

@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
 
-import type { WriteKind, WriteSets } from "../session-port";
+import type { WriteKind, WriteSets } from "../shared/session-port";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SET } from "../story-kit/profile";
 import type { Noticed } from "./write-ending";

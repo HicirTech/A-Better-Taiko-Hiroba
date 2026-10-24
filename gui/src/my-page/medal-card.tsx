@@ -7,7 +7,7 @@ import { HIROBA_LANG } from "../language/show-language";
 import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
-import type { PictureWant, ProfileView } from "../session-port";
+import type { PictureWant, ProfileView } from "../shared/session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SectionTitle, SectionTitleSkeleton } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";

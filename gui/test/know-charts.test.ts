@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { isCleared, isTried, knownCharts, shownAt } from "../src/know-yourself/known-charts";
-import type { ListedChart, ListedChartsView } from "../src/session-port";
-import type { CatalogueSong } from "../src/song-catalogue/types";
+import type { ListedChart, ListedChartsView } from "../src/shared/session-port";
+import type { CatalogueSong } from "../src/shared/song-catalogue/types";
 import { known } from "./known-fixtures";
 import { chart, song } from "./song-fixtures";
 

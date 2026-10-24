@@ -1,7 +1,7 @@
 import { Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import type { ReadFailure } from "../session-port";
+import type { ReadFailure } from "../shared/session-port";
 import { i18nOf } from "../story-kit/env";
 import { LoadFailed } from "./read-failure-alert";
 

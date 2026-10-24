@@ -19,7 +19,7 @@ import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import { useBackLeaves } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { HirobaSessionPort } from "../session-port";
+import type { HirobaSessionPort } from "../shared/session-port";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
 import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";

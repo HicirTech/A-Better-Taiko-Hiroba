@@ -7,7 +7,7 @@ import {
   createRecentPlaysReader,
   RECENT_PLAYS_PAGE_OPERATION,
 } from "../src/hiroba-session";
-import { createPipeline, type EndedGroup, HISTORY_READ_CONSUMERS } from "../src/pipelines";
+import { createPipeline, type EndedGroup, HISTORY_READ_CONSUMERS } from "../src/shared/pipelines";
 
 const ORIGIN = "https://hiroba.test";
 const ENDPOINTS = {

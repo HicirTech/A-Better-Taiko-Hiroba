@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { useState } from "react";
 
 import { HIROBA_LANG } from "../language/show-language";
-import type { WriteKind, WriteSets } from "../session-port";
+import type { WriteKind, WriteSets } from "../shared/session-port";
 import { OperationSnackbar } from "../ui/operation-snackbar";
 import { type OutcomeWords, outcomeWords } from "./outcome-words";
 import type { Noticed } from "./write-ending";

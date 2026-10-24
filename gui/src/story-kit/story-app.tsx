@@ -8,7 +8,7 @@ import type { Page } from "../navigation/pages";
 import { useShownPage } from "../navigation/use-shown-page";
 import { PAGE_REGISTRY } from "../pages/registry";
 import { PipelinesPage } from "../pipelines-page/pipelines-page";
-import type { HirobaSessionPort } from "../session-port";
+import type { HirobaSessionPort } from "../shared/session-port";
 import { touchOf } from "./devices";
 import { i18nOf, localeOf, STORY_BACK, STORY_LINK, STORY_TOAST, type StoryGlobals } from "./env";
 import { press } from "./steps";

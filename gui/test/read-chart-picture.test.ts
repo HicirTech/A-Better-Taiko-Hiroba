@@ -11,12 +11,12 @@ import {
   type PictureKey,
   type PictureStore,
 } from "../src/hiroba-session";
-import type { Pipeline } from "../src/pipelines";
+import type { Pipeline } from "../src/shared/pipelines";
 import {
   CHART_PICTURE_MAX_BYTES,
   type ChartPictureRead,
   createChartPictureReader,
-} from "../src/song-catalogue";
+} from "../src/shared/song-catalogue";
 import { FFMPEG_JPEG, FFMPEG_LOSSY, gif, png } from "./picture-fixtures";
 
 const FILE = "https://file.taiko.wiki/fumen/670/oni";

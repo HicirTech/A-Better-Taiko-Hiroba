@@ -6,7 +6,7 @@ import {
   type PreviewState,
   type PreviewTimers,
 } from "../src/my-page/costume-preview";
-import type { CostumePreviewFailure, CostumeSet } from "../src/session-port";
+import type { CostumePreviewFailure, CostumeSet } from "../src/shared/session-port";
 
 const START: CostumeSet = {
   colorBody: 12,

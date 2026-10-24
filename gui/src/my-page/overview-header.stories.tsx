@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 
 import type { PictureLane } from "../pictures/picture-lane";
-import type { ProfileView } from "../session-port";
+import type { ProfileView } from "../shared/session-port";
 import { touchOf } from "../story-kit/devices";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";

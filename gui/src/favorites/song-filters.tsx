@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Box, type Theme } from "@mui/material";
 
-import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../song-catalogue/types";
+import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../shared/song-catalogue/types";
 import { FilterChip } from "./filter-chip";
 import {
   DIFFICULTY_COLOUR,

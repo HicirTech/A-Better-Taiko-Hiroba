@@ -35,6 +35,8 @@ import {
   systemBrowserEntryUrl,
   viewOfPipelines,
 } from "../hiroba-session";
+import { RATING_DATA_URL } from "../rating/rating-links";
+import { readRatingData } from "../rating/read-rating-data";
 import {
   createMemoryPipelineStore,
   createPipeline,
@@ -43,15 +45,13 @@ import {
   HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
-} from "../pipelines";
-import { RATING_DATA_URL } from "../rating/rating-links";
-import { readRatingData } from "../rating/read-rating-data";
+} from "../shared/pipelines";
 import {
   type CostumeSet,
   checkedPort,
   type HirobaSessionPort,
   type SignInOutcome,
-} from "../session-port";
+} from "../shared/session-port";
 import {
   CHINESE_NAMES_URL,
   catalogueUrlFor,
@@ -65,7 +65,7 @@ import {
   ESE_MAPPING_URL,
   readChineseNames,
   readSongCatalogue,
-} from "../song-catalogue";
+} from "../shared/song-catalogue";
 import { feedUrlFor, readUpdateFeed } from "../updates";
 import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";

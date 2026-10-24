@@ -7,7 +7,6 @@ import {
   SCORE_DETAIL_OPERATION,
   SCORE_LIST_OPERATION,
 } from "../src/hiroba-session";
-import type { EndedGroup, GroupNow, PipelineView } from "../src/pipelines";
 import {
   groupName,
   OPERATION_NAMES,
@@ -22,12 +21,13 @@ import {
   type Picked,
   pickedNow,
 } from "../src/pipelines-page/pipeline-rows";
-import { PORT_QUEUEING } from "../src/session-port";
+import type { EndedGroup, GroupNow, PipelineView } from "../src/shared/pipelines";
+import { PORT_QUEUEING } from "../src/shared/session-port";
 import {
   CHART_DENSITY_OPERATION,
   CHART_PICTURE_OPERATION,
   CHART_TJA_OPERATION,
-} from "../src/song-catalogue";
+} from "../src/shared/song-catalogue";
 
 const now = (id: number, overrides: Partial<GroupNow> = {}): GroupNow => ({
   id,

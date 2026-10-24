@@ -1,7 +1,7 @@
 import type { Locale } from "@abth/i18n";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import type { CatalogueSong } from "../song-catalogue/types";
+import type { CatalogueSong } from "../shared/song-catalogue/types";
 import { foldHan } from "./han-fold";
 
 export type NamedSong = Pick<CatalogueSong, "title" | "titleEn" | "titleZh" | "romaji"> & {

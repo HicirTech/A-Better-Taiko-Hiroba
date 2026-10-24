@@ -1,5 +1,5 @@
-import { forgetSetting, keepSetting, keptSetting, pageStorage } from "../kept-settings";
-import type { PickableSongs, ReadFailure } from "../session-port";
+import { forgetSetting, keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
+import type { PickableSongs, ReadFailure } from "../shared/session-port";
 
 const KEY = "abth.pickableSongs";
 const VERSION = 1;

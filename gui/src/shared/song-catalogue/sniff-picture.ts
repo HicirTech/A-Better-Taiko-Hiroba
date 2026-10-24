@@ -1,4 +1,4 @@
-import { pngSize } from "../hiroba-session/png-answer";
+import { pngSize } from "../../hiroba-session/png-answer";
 
 export type PictureFormat = "png" | "jpeg" | "webp" | "gif";
 

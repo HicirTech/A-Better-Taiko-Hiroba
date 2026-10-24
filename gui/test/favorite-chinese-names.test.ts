@@ -6,7 +6,7 @@ import {
   loadChineseNames,
   titleKey,
 } from "../src/favorites/chinese-names";
-import type { CatalogueSong } from "../src/song-catalogue";
+import type { CatalogueSong } from "../src/shared/song-catalogue";
 
 const song = (songNo: string, title: string): CatalogueSong => ({
   songNo,

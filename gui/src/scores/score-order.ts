@@ -2,8 +2,8 @@ import { CROWN_ORDER, type Genre } from "@abth/core";
 
 import { GENRE_ORDER, LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { type ShownDifficulty, shownFor } from "../favorites/shown-difficulty";
-import type { ScoreView } from "../session-port";
-import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import type { ScoreView } from "../shared/session-port";
+import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 
 /** What the scores page sorts by; with none chosen it lists the songs by name. */
 export const SCORE_SORTS = [

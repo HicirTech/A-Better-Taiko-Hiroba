@@ -13,7 +13,7 @@ import {
   slotOf,
   tileName,
 } from "../src/my-page/costume-parts";
-import type { CostumeEditorView, CostumeSet, CostumeSlot } from "../src/session-port";
+import type { CostumeEditorView, CostumeSet, CostumeSlot } from "../src/shared/session-port";
 
 const WEARING: CostumeSet = {
   colorBody: 12,

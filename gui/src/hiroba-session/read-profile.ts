@@ -10,7 +10,7 @@ import {
   type TransportResponse,
 } from "@abth/core";
 
-import type { DanView, ProfileView, ReadFailure, ReadFailureKind } from "../session-port";
+import type { DanView, ProfileView, ReadFailure, ReadFailureKind } from "../shared/session-port";
 import { myPageUrl } from "./endpoints";
 import { type PictureSources, pictureSourcesOf } from "./picture-sources";
 import { readDan } from "./read-dan";

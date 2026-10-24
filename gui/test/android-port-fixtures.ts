@@ -1,7 +1,7 @@
 import { expect } from "bun:test";
 
 import { escapeHtml, type ProfileEditor } from "../scripts/mock-profile";
-import type { HirobaSessionPort } from "../src/session-port";
+import type { HirobaSessionPort } from "../src/shared/session-port";
 import { native, nativeBase64 } from "./capacitor-fakes";
 
 export const HIROBA = "https://donderhiroba.jp";

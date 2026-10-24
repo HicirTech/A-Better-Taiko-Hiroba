@@ -1,7 +1,11 @@
 import { err, ok, type Result } from "@abth/core";
 
-import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../hiroba-session/picture-store";
-import { base64Of } from "../hiroba-session/png-answer";
+import {
+  PICTURE_EPOCH,
+  type PictureKey,
+  type PictureStore,
+} from "../../hiroba-session/picture-store";
+import { base64Of } from "../../hiroba-session/png-answer";
 import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
 import type { PictureFailure, PictureView } from "../session-port/types";
 import { isChartPictureAddress } from "./catalogue-links";

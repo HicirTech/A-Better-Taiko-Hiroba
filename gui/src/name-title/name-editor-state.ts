@@ -1,7 +1,7 @@
 import { checkNameTarget, isErr, NAME_FORM_MAX_LENGTH } from "@abth/core";
 
 import { endsTheEdit, type Noticed, noticeOf, seenAfter } from "../my-page/write-ending";
-import type { NameState, RenameState, WriteOutcomeView } from "../session-port";
+import type { NameState, RenameState, WriteOutcomeView } from "../shared/session-port";
 
 type NameOutcome = WriteOutcomeView<NameState>;
 

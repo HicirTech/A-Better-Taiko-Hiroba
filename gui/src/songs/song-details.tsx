@@ -17,8 +17,12 @@ import { HIROBA_LANG } from "../language/hiroba-lang";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import { PullToRead } from "../read-again/pull-to-read";
-import type { HirobaSessionPort } from "../session-port";
-import { type ChartFileFailure, DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import type { HirobaSessionPort } from "../shared/session-port";
+import {
+  type ChartFileFailure,
+  DIFFICULTIES,
+  type Difficulty,
+} from "../shared/song-catalogue/types";
 import { LargeModal } from "../ui/large-modal";
 import { ReadAgainButton } from "../ui/read-again-button";
 import { StatusNote } from "../ui/status-note";

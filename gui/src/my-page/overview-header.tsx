@@ -5,7 +5,7 @@ import { useRef } from "react";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { useDrawnTop } from "../pictures/use-drawn-top";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
-import type { PictureView, PictureWant, ProfileView } from "../session-port";
+import type { PictureView, PictureWant, ProfileView } from "../shared/session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
 import { MY_DON, MyDonPortrait } from "./my-don-portrait";

@@ -11,8 +11,8 @@ import {
 } from "react";
 
 import { useTouchFirst } from "../navigation/use-touch-first";
-import { failureMessageOf } from "../read-failure-message";
-import type { FavoriteSongState } from "../session-port";
+import { failureMessageOf } from "../shared/read-failure-message";
+import type { FavoriteSongState } from "../shared/session-port";
 import { LargeModal } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";

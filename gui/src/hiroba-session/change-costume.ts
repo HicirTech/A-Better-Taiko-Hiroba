@@ -5,7 +5,7 @@ import {
   type WriteOutcome,
 } from "@abth/core";
 
-import type { CostumeChange } from "../session-port";
+import type { CostumeChange } from "../shared/session-port";
 import type { HirobaEndpoints, WriteOptions } from "./types";
 
 /** One costume write as the core runs it; the outcome crosses as it is, never with the token. */

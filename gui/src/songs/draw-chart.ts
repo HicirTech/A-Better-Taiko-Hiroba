@@ -1,4 +1,4 @@
-import type { Difficulty } from "../song-catalogue/types";
+import type { Difficulty } from "../shared/song-catalogue/types";
 import { createChartView } from "../vendor/tja-renderer";
 import { courseOf } from "./chart-course";
 

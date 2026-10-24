@@ -4,8 +4,8 @@ import { FormHelperText, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 
 import { DIFFICULTY_LABEL } from "../favorites/genre-look";
-import type { HirobaSessionPort } from "../session-port";
-import type { ChartFileFailure, Difficulty } from "../song-catalogue/types";
+import type { HirobaSessionPort } from "../shared/session-port";
+import type { ChartFileFailure, Difficulty } from "../shared/song-catalogue/types";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
 import { ChartPicture, PictureButton, PictureLoading } from "./chart-picture";

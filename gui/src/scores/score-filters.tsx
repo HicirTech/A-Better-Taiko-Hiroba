@@ -10,7 +10,7 @@ import {
   GENRE_LABEL,
   GENRE_ORDER,
 } from "../favorites/genre-look";
-import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../song-catalogue/types";
+import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../shared/song-catalogue/types";
 import { SCORE_SORTS, type ScoreFilter, type ScoreSort } from "./score-order";
 
 const LEVELS = Array.from({ length: MAX_LEVEL - MIN_LEVEL + 1 }, (_, index) => MIN_LEVEL + index);

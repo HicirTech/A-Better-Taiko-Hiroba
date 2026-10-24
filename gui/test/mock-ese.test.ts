@@ -11,7 +11,7 @@ import {
   PLAIN_CHART,
 } from "../scripts/mock-ese";
 import { WIKI_SONGS } from "../scripts/mock-song-catalogue";
-import { mappingOf } from "../src/song-catalogue/ese-chart-files";
+import { mappingOf } from "../src/shared/song-catalogue/ese-chart-files";
 
 const chartOf = (songNo: string) => {
   const address = mappingOf(JSON.stringify(ESE_MAPPING))?.get(songNo) ?? "";

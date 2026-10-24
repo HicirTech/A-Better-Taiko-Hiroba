@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { err, ok, type Result } from "@abth/core";
 
 import { createPictureLane, type LaneTimers } from "../src/pictures/picture-lane";
-import { IO_READ_CONSUMERS } from "../src/pipelines";
-import type { PictureFailure, PictureView, PictureWant } from "../src/session-port";
+import { IO_READ_CONSUMERS } from "../src/shared/pipelines";
+import type { PictureFailure, PictureView, PictureWant } from "../src/shared/session-port";
 
 const item = (id: number, slot: 1 | 2 | 3 | 4 | 5 = 1): PictureWant => ({
   kind: "costumeItem",

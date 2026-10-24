@@ -1,6 +1,6 @@
 import { err, isErr, ok, type Result, type Transport, type TransportResponse } from "@abth/core";
 
-import type { CostumePreviewFailure, CostumeSet } from "../session-port";
+import type { CostumePreviewFailure, CostumeSet } from "../shared/session-port";
 import { checkPng, describeAnswer, pngDataUrl } from "./png-answer";
 import type { HirobaEndpoints } from "./types";
 

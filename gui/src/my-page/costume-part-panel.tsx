@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
-import type { CostumeEditorView, CostumeSet } from "../session-port";
+import type { CostumeEditorView, CostumeSet } from "../shared/session-port";
 import { HELD_STILL } from "../ui/editor-parts";
 import { SectionTitle } from "../ui/section-title";
 import { CostumeItemGrid, ThumbnailsUnavailable } from "./costume-item-grid";

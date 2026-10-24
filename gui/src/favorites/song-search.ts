@@ -1,6 +1,6 @@
 import type { Locale } from "@abth/i18n";
 
-import type { CatalogueSong } from "../song-catalogue/types";
+import type { CatalogueSong } from "../shared/song-catalogue/types";
 import { foldHan } from "./han-fold";
 import { type NamedSong, shownName } from "./song-names";
 import { newestFirst } from "./song-order";

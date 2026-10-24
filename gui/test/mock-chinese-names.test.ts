@@ -4,7 +4,7 @@ import { ok, type Transport } from "@abth/core";
 import { chineseNamesBatch } from "../scripts/mock-chinese-names";
 import { WIKI_SONGS } from "../scripts/mock-song-catalogue";
 import { chineseNamesBySong } from "../src/favorites/chinese-names";
-import { CHINESE_NAMES_URL, parseWikiSongs, readChineseNames } from "../src/song-catalogue";
+import { CHINESE_NAMES_URL, parseWikiSongs, readChineseNames } from "../src/shared/song-catalogue";
 
 const standIn: Transport = {
   send: async (request) =>

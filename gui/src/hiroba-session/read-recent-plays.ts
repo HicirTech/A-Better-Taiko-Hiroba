@@ -15,8 +15,8 @@ import {
   HISTORY_READ_CONSUMERS,
   type Pipeline,
   resultFailure,
-} from "../pipelines";
-import type { RecentPlaysFailure } from "../session-port";
+} from "../shared/pipelines";
+import type { RecentPlaysFailure } from "../shared/session-port";
 import type { RecentPlaysStore } from "./recent-plays-store";
 import { sessionEnded } from "./session-ended";
 import type { HirobaEndpoints } from "./types";

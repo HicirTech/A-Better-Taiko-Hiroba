@@ -4,7 +4,7 @@ import { action } from "storybook/actions";
 import { wikiSongsSince } from "../../scripts/mock-song-catalogue";
 import { lookOfCatalogue, type SongLook } from "../favorites/song-look";
 import type { ListedSong, SongCatalogue } from "../favorites/use-song-catalogue";
-import { parseWikiSongs } from "../song-catalogue";
+import { parseWikiSongs } from "../shared/song-catalogue";
 import { packData } from "./pack";
 
 // Never asked for: a story's chart pictures come from the stand-in, not from these addresses.

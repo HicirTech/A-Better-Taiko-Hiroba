@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 import { type PointerEvent, useRef, useState, type WheelEvent } from "react";
 
-import type { PictureView } from "../session-port";
+import type { PictureView } from "../shared/session-port";
 import { LargeModal } from "../ui/large-modal";
 import { distanceOf, FITTED, midpointOf, type Point, type ZoomView, zoomedView } from "./zoom";
 

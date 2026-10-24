@@ -4,16 +4,16 @@ import { useCallback, useReducer, useRef } from "react";
 
 import { noticeOf, seenAfter, sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
-import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import type { ReadStatus } from "../reads/read-run";
-import { useReadRun } from "../reads/use-read-run";
+import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
+import type { ReadStatus } from "../shared/reads/read-run";
+import { useReadRun } from "../shared/reads/use-read-run";
 import type {
   HirobaSessionPort,
   ProfileView,
   ReadFailure,
   TitleState,
   WriteOutcomeView,
-} from "../session-port";
+} from "../shared/session-port";
 import {
   changesTitle,
   IDLE,

@@ -1,7 +1,7 @@
 import type { MessageKey } from "@abth/i18n";
 
 import type { PictureLane } from "../pictures/picture-lane";
-import type { WriteOutcomeView } from "../session-port";
+import type { WriteOutcomeView } from "../shared/session-port";
 
 /** The set as the write last saw it; null for an ending that says nothing of it. */
 export function seenAfter<S>(outcome: WriteOutcomeView<S>): S | null {

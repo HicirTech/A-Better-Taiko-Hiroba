@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL } from "../favorites/genre-look";
 import { LEVEL_BADGES_LOOK } from "../favorites/level-badges";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { Difficulty } from "../song-catalogue/types";
+import type { Difficulty } from "../shared/song-catalogue/types";
 import { CourseIcon } from "./course-icon";
 
 /** The side of a row's marks: a chart's difficulty icon, and a play's crown, rank and options. */

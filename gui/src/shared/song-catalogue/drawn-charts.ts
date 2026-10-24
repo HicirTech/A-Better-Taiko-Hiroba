@@ -1,4 +1,8 @@
-import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../hiroba-session/picture-store";
+import {
+  PICTURE_EPOCH,
+  type PictureKey,
+  type PictureStore,
+} from "../../hiroba-session/picture-store";
 import type { PictureView } from "../session-port/types";
 import { viewOf } from "./read-chart-picture";
 import { sniffPicture } from "./sniff-picture";

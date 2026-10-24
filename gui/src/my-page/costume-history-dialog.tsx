@@ -2,7 +2,7 @@ import { sameCostume } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, ButtonBase, Typography } from "@mui/material";
 
-import type { CostumeHistoryEntry, CostumeSet } from "../session-port";
+import type { CostumeHistoryEntry, CostumeSet } from "../shared/session-port";
 import { LargeModal } from "../ui/large-modal";
 import { keyOf } from "./costume-preview";
 import { pickRing } from "./pick-ring";

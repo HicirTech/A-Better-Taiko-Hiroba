@@ -2,8 +2,8 @@ import type { Translator } from "@abth/i18n";
 import { Alert, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { failureMessageOf } from "../read-failure-message";
-import type { ReadFailure } from "../session-port";
+import { failureMessageOf } from "../shared/read-failure-message";
+import type { ReadFailure } from "../shared/session-port";
 
 /** What a read could not bring, where it would be drawn; it offers no retry. */
 export function ReadFailureAlert({

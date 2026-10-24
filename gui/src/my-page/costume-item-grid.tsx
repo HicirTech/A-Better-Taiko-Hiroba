@@ -4,7 +4,7 @@ import { type ReactNode, useRef, useSyncExternalStore } from "react";
 
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
-import type { PictureWant } from "../session-port";
+import type { PictureWant } from "../shared/session-port";
 import { BlockIcon } from "../ui/icons";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";

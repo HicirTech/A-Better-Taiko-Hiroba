@@ -6,18 +6,8 @@ const SRC = join(import.meta.dir, "../src");
 
 /** The GUI's layers, lowest first: a folder imports only from the layers below its own. */
 const LAYERS: readonly (readonly string[])[] = [
-  // Shared logic; its folders go into `shared/`, so for now they may import one another.
-  [
-    "shared",
-    "session-port",
-    "song-catalogue",
-    "reads",
-    "pipelines",
-    "vendor",
-    "kept-settings.ts",
-    "read-failure-message.ts",
-    "use-held-copy.ts",
-  ],
+  ["vendor"],
+  ["shared"],
   ["hiroba-session"],
   ["platform"],
   ["theme"],
@@ -85,13 +75,13 @@ const BREAKS: Readonly<Record<string, number>> = {
   "scores -> language": 1,
   "scores -> navigation": 2,
   "scores -> read-again": 3,
-  "session-port -> rating": 1,
-  "session-port -> updates": 1,
   "settings -> favorites": 2,
   "settings -> songs": 1,
   "settings -> updates": 2,
-  "song-catalogue -> favorites": 1,
-  "song-catalogue -> hiroba-session": 5,
+  "shared -> favorites": 1,
+  "shared -> hiroba-session": 5,
+  "shared -> rating": 1,
+  "shared -> updates": 1,
   "songs -> favorites": 19,
   "songs -> language": 1,
   "songs -> my-page": 1,
@@ -150,7 +140,7 @@ function breaks(): Record<string, number> {
     for (const specifier of imports) {
       const to = unitOf(resolved(path, specifier));
       const [own, other] = [layerOf(from), layerOf(to)];
-      if (from === to || other < own || (own === 0 && other === 0)) {
+      if (from === to || other < own) {
         continue;
       }
       const key = `${from} -> ${to}`;

@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import { PLAY_OPTION_CODES, SCORE_RANK_NAMES } from "@abth/core";
 
-import { KEPT_GROUPS } from "../src/pipelines";
-import { PORT_ARGUMENTS } from "../src/session-port";
-import { CHART_PICTURE_MAX_BYTES } from "../src/song-catalogue";
+import { KEPT_GROUPS } from "../src/shared/pipelines";
+import { PORT_ARGUMENTS } from "../src/shared/session-port";
+import { CHART_PICTURE_MAX_BYTES } from "../src/shared/song-catalogue";
 
 const PLAYED = { level: 4, title: "サンプル曲", genre: 2 };
 const SET = {

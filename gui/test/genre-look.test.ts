@@ -8,7 +8,7 @@ import {
   GENRE_LABEL,
   GENRE_ORDER,
 } from "../src/favorites/genre-look";
-import { DIFFICULTIES } from "../src/song-catalogue/types";
+import { DIFFICULTIES } from "../src/shared/song-catalogue/types";
 
 describe("GENRE_ORDER", () => {
   test("lists the eight genres in the game's order, each once", () => {

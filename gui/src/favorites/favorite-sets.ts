@@ -1,6 +1,6 @@
 import { FOLDER_SLOT_COUNT, type FolderState } from "@abth/core";
 
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
+import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
 
 const KEY = "abth.favoriteSets";
 const SONG_NO = /^\d{1,5}$/;
