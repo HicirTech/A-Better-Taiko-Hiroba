@@ -68,6 +68,7 @@ export function useTitleEditor({
   const generation = useRef(0);
   const writing = useRef(false);
   const [reads, status] = useReadRun<ReadFailure>({
+    callFailed: { kind: "callFailed" },
     endsTheSession: (failure) => SESSION_GONE.has(failure.kind),
     onSessionEnded: (failure) => {
       forget();

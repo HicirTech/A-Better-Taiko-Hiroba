@@ -36,14 +36,15 @@ export interface SongCatalogue {
 }
 
 const NONE: readonly CatalogueSong[] = [];
+const FETCHES = { callFailed: { code: "callFailed" } } as const;
 
 /** The song list kept on the device, read again from taiko.wiki when it is a day old, with the
  * Chinese wiki's names, read again when they are a month old. */
 export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): SongCatalogue {
   const [kept, setKept] = useState<KeptCatalogue | null>(null);
   const [names, setNames] = useState<ChineseNamesRead | null>(null);
-  const [reads, status] = useReadRun<SongCatalogueFailure>();
-  const [nameReads] = useReadRun<SongCatalogueFailure>();
+  const [reads, status] = useReadRun<SongCatalogueFailure>(FETCHES);
+  const [nameReads] = useReadRun<SongCatalogueFailure>(FETCHES);
   const started = useRef(false);
   // The list kept, for the callbacks that must not change with it.
   const keptNow = useRef<KeptCatalogue | null>(null);

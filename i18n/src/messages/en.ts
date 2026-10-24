@@ -304,6 +304,7 @@ export const en: Messages = {
   "failure.maintenance":
     "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. It was not asked to refresh.",
   "failure.notRefreshed": "Hiroba could not refresh your play data, so nothing more was read.",
+  "failure.callFailed": "Something went wrong in the app while reading this.",
   "failure.mayClear": "Refreshing or trying again may fix this.",
   "failure.code": "Code for a report: {code}",
   "crash.page":

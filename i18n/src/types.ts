@@ -353,6 +353,7 @@ export interface Messages {
   "failure.unexpectedPage": string;
   "failure.maintenance": string;
   "failure.notRefreshed": string;
+  "failure.callFailed": string;
   "failure.mayClear": string;
   /** Param: {code}, codes for a report (path, status, parser verdict); never page text. */
   "failure.code": string;

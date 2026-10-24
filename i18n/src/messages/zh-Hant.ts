@@ -290,6 +290,7 @@ export const zhHant: Messages = {
   "failure.unexpectedPage": "廣場回傳了本應用程式預料之外的頁面。",
   "failure.maintenance": "廣場每天日本時間 05:00 至 07:00 維護。沒有請它重新整理。",
   "failure.notRefreshed": "廣場沒能重新整理你的遊玩資料，所以沒有繼續讀取。",
+  "failure.callFailed": "讀取時應用程式出錯了。",
   "failure.mayClear": "重新整理或重試可能會解決這個問題。",
   "failure.code": "回報代碼：{code}",
   "crash.page": "這個頁面出錯了，開啟其他頁面或重新啟動應用程式後可能恢復。",

@@ -290,6 +290,7 @@ export const zhHans: Messages = {
   "failure.unexpectedPage": "广场返回了本应用预料之外的页面。",
   "failure.maintenance": "广场每天日本时间 05:00 至 07:00 维护。没有请它刷新。",
   "failure.notRefreshed": "广场没能刷新你的游玩数据，所以没有继续读取。",
+  "failure.callFailed": "读取时应用出错了。",
   "failure.mayClear": "刷新或重试可能会解决这个问题。",
   "failure.code": "报告代码：{code}",
   "crash.page": "这个页面出错了，打开别的页面或重启应用后可能恢复。",

@@ -1,4 +1,6 @@
-import type { Result } from "@abth/core";
+import { err, type Result } from "@abth/core";
+
+import { settled } from "../settled";
 
 /** Where a read of one kind of data stands: every kind of data says it the same way. */
 export type ReadPhase = "unread" | "reading" | "read" | "failed";
@@ -12,6 +14,8 @@ export interface ReadStatus<F, P> {
 }
 
 export interface ReadRunOptions<F> {
+  /** The failure a read ends with when its call, or keeping what it brought, threw instead. */
+  readonly callFailed: F;
   /** Whether a failure ended the session: its read is let go, and `onSessionEnded` is told. */
   readonly endsTheSession?: (failure: F) => boolean;
   readonly onSessionEnded?: (failure: F) => void;
@@ -47,8 +51,9 @@ const timer = (ms: number, tick: () => void) => {
   return () => clearInterval(id);
 };
 
-export function createReadRun<F, P = never>(options: ReadRunOptions<F> = {}): ReadRun<F, P> {
+export function createReadRun<F, P = never>(options: ReadRunOptions<F>): ReadRun<F, P> {
   const every = options.every ?? timer;
+  const failedCall = () => err(options.callFailed);
   const listeners = new Set<() => void>();
   let status: ReadStatus<F, P> = UNREAD;
   let session = 0;
@@ -105,7 +110,7 @@ export function createReadRun<F, P = never>(options: ReadRunOptions<F> = {}): Re
       progressOf = progress ?? null;
       askWhileHeard();
       try {
-        const result = await ask();
+        const result = await settled(ask, failedCall);
         if (mine !== session) {
           return null;
         }
@@ -114,17 +119,20 @@ export function createReadRun<F, P = never>(options: ReadRunOptions<F> = {}): Re
           options.onSessionEnded?.(result.error);
           return null;
         }
-        await keep?.(result);
+        const ended = await settled(async () => {
+          await keep?.(result);
+          return result;
+        }, failedCall);
         if (mine !== session) {
           return null;
         }
-        readOnce ||= result.ok;
+        readOnce ||= ended.ok;
         put(
-          result.ok
+          ended.ok
             ? { phase: "read", failure: null, progress: null }
-            : { phase: "failed", failure: result.error, progress: null },
+            : { phase: "failed", failure: ended.error, progress: null },
         );
-        return result;
+        return ended;
       } finally {
         if (running === mine) {
           running = null;
