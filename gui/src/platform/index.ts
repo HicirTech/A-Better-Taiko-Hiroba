@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 
-import type { HirobaSessionPort } from "../shared/session-port";
+import { type HirobaSessionPort, settledPort } from "../shared/session-port";
 import { desktopLink } from "./desktop-link";
 import type { SystemBack } from "./system-back";
 import type { SystemLink } from "./system-link";
@@ -36,7 +36,7 @@ export async function connectPlatform({
   readonly closeLabel: () => string;
 }): Promise<Platform | null> {
   if (window.abth !== undefined) {
-    return { shell: "desktop", port: window.abth, link: desktopLink };
+    return { shell: "desktop", port: settledPort(window.abth), link: desktopLink };
   }
   if (Capacitor.getPlatform() === "android") {
     const [{ createAndroidPort }, { androidBack }, { androidLink }, { androidToast }] =
@@ -46,7 +46,7 @@ export async function connectPlatform({
         import("./android-link"),
         import("./android-toast"),
       ]);
-    const port = await createAndroidPort({ closeLabel, indexedDb: indexedDB });
+    const port = settledPort(await createAndroidPort({ closeLabel, indexedDb: indexedDB }));
     return { shell: "android", port, link: androidLink, back: androidBack, toast: androidToast };
   }
   return null;

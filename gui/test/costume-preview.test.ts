@@ -24,7 +24,7 @@ const picture = (set: CostumeSet) => `data:image/png;base64,face${set.colorFace}
 type Answer = Result<string, CostumePreviewFailure>;
 
 function harness() {
-  const asked: { set: CostumeSet; answer: (value: Answer | "throw") => Promise<void> }[] = [];
+  const asked: { set: CostumeSet; answer: (value: Answer) => Promise<void> }[] = [];
   const pending = new Map<number, () => void>();
   let nextTimer = 1;
   const timers: PreviewTimers = {
@@ -40,15 +40,11 @@ function harness() {
   const states: PreviewState[] = [];
   const scheduler = createPreviewScheduler({
     load: (set) =>
-      new Promise<Answer>((resolve, reject) => {
+      new Promise<Answer>((resolve) => {
         asked.push({
           set,
           answer: async (value) => {
-            if (value === "throw") {
-              reject(new Error("refused"));
-            } else {
-              resolve(value);
-            }
+            resolve(value);
             // Let the scheduler's handlers run.
             await Bun.sleep(0);
           },
@@ -161,10 +157,6 @@ describe("createPreviewScheduler", () => {
     scheduler.stop();
     scheduler.start();
     expect(asked).toHaveLength(2);
-    scheduler.want(face(2));
-    pauseEnds();
-    await asked[2]?.answer("throw");
-    expect(last()?.failure).toBe("preview=callFailed");
   });
 
   test("stopped and started again at once, as StrictMode does, the first set is asked once", async () => {

@@ -399,28 +399,6 @@ describe("createPictureLane", () => {
     expect(port.asked).toEqual(["1/4", "1/4"]);
   });
 
-  test("a call that throws is a failure with a code, and the lane goes on", async () => {
-    const { timers, advance } = manualTimers();
-    let calls = 0;
-    const lane = createPictureLane({
-      load: async () => {
-        calls += 1;
-        if (calls === 1) {
-          throw new Error("Refused abth:read-picture: arguments it does not take");
-        }
-        return ok(view(14));
-      },
-      timers,
-      atOnce: 1,
-    });
-    lane.ask(item(4), { order: 0 });
-    lane.ask(item(14), { order: 1 });
-    await advance(150);
-    await Bun.sleep(0);
-    expect(lane.peek(item(4))).toEqual({ failure: "costumeItem=callFailed" });
-    expect(lane.peek(item(14))).toEqual({ view: view(14) });
-  });
-
   test("forgotten, it keeps nothing, sends nothing asked for before, and drops what lands", async () => {
     const { lane, port, advance } = setUp();
     lane.ask(item(4), { order: 0 });
