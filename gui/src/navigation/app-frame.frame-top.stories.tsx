@@ -2,6 +2,7 @@ import { Paper, Skeleton, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 
+import { PAGE_REGISTRY } from "../pages/registry";
 import { i18nOf } from "../story-kit/env";
 import { AppFrame, FrameTop } from "./app-frame";
 
@@ -10,7 +11,12 @@ const meta = {
   tags: ["navigation"],
   parameters: { layout: "fullscreen" },
   render: (_args, { globals }) => (
-    <AppFrame page="overview" onNavigate={action("navigate")} i18n={i18nOf(globals)}>
+    <AppFrame
+      page="overview"
+      onNavigate={action("navigate")}
+      i18n={i18nOf(globals)}
+      pages={PAGE_REGISTRY}
+    >
       <FrameTop>
         <Paper sx={{ height: 48, borderRadius: 6 }} />
       </FrameTop>

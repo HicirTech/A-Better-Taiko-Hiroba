@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { action } from "storybook/actions";
 
+import { PAGE_REGISTRY } from "../pages/registry";
 import { ReadAgainFoot } from "../read-again/read-again-foot";
 import { onDevice, touchOf } from "../story-kit/devices";
 import { i18nOf, STORY_BACK } from "../story-kit/env";
@@ -23,6 +24,7 @@ function FrameOverAPage({ i18n, android }: { i18n: Translator; android: boolean 
         action("navigate")(next);
       }}
       i18n={i18n}
+      pages={PAGE_REGISTRY}
       {...(android ? { back: STORY_BACK } : {})}
       pipelines={<Skeleton variant="rounded" height={240} />}
     >
