@@ -8,7 +8,7 @@ import {
   type PipelineHistory,
   type PipelineHistoryStore,
   readPipelineHistory,
-} from "../src/pipelines";
+} from "../src/shared/pipelines";
 
 const group = (overrides: Partial<EndedGroup> = {}): EndedGroup =>
   ({

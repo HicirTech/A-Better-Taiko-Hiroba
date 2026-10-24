@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { type SniffedPicture, sniffPicture } from "../src/song-catalogue/sniff-picture";
+import { type SniffedPicture, sniffPicture } from "../src/shared/song-catalogue/sniff-picture";
 import {
   extended,
   FFMPEG_JPEG,

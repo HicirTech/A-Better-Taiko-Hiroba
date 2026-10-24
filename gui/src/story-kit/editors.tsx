@@ -4,7 +4,7 @@ import { action } from "storybook/actions";
 import { type CostumeEditor, useCostumeEditor } from "../my-page/use-costume-editor";
 import { type NameEditor, useNameEditor } from "../name-title/use-name-editor";
 import { type TitleEditor, useTitleEditor } from "../name-title/use-title-editor";
-import type { HirobaSessionPort } from "../session-port";
+import type { HirobaSessionPort } from "../shared/session-port";
 import { STORY_PROFILE } from "./profile";
 import { STORY_LANE } from "./story-pictures";
 import { createStoryPort } from "./story-port";

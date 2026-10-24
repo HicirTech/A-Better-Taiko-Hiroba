@@ -1,21 +1,23 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Chip, Menu, MenuItem, Stack } from "@mui/material";
 import { useId, useState } from "react";
-
-import { useBackCloses } from "../navigation/back-closers";
+import type { FavoriteSet } from "../shared/sets/favorite-sets";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
+import type { SongLook } from "../shared/song-catalogue/song-look";
+import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
+import { useBackCloses } from "../ui/back-closers";
 import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
 import { CARD_ROWS, SectionCard } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { StatusNote } from "../ui/status-note";
-import type { FavoriteSet } from "./favorite-sets";
 import type { ShownFavorites } from "./favorites-state";
-import type { SongLook } from "./song-look";
-import { type DetailsOpener, SongLookRow } from "./song-look-row";
 
 export interface FolderCardProps {
   readonly shown: ShownFavorites;
   readonly look: (songNo: string) => SongLook;
+  /** The difficulty whose level the songs show in front of the others. */
+  readonly shownDifficulty: ShownDifficulty;
   readonly i18n: Translator;
   readonly openDetails: DetailsOpener;
   /** The kept sets, to save the folder into one of them. */
@@ -30,6 +32,7 @@ export interface FolderCardProps {
 export function FolderCard({
   shown,
   look,
+  shownDifficulty,
   i18n,
   openDetails,
   sets,
@@ -105,6 +108,7 @@ export function FolderCard({
                 key={slot}
                 id={`favorite-folder-slot-${slot}`}
                 look={look(songNo)}
+                shownDifficulty={shownDifficulty}
                 i18n={i18n}
                 scrolling
                 onOpen={openDetails(songNo)}

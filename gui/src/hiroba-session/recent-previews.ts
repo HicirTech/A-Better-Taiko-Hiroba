@@ -1,6 +1,6 @@
 import { ok, sameCostume } from "@abth/core";
 
-import type { CostumeSet, HirobaSessionPort } from "../session-port";
+import type { CostumeSet, HirobaSessionPort } from "../shared/session-port";
 
 /** Enough for the sets one editing session tries before a save. */
 const MAX_RECENT_PREVIEWS = 16;

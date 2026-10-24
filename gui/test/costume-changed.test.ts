@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { changedTheCostume, type WriteOutcomeView } from "../src/session-port";
+import { changedTheCostume, type WriteOutcomeView } from "../src/shared/session-port";
 
 const SAVE = { answer: "json", code: 0, message: null, report: "report" } as const;
 const SET = {

@@ -1,8 +1,8 @@
 import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
-
-import { type Choice, ChoiceDialog } from "../favorites/choice-dialog";
-import { type FavoriteSet, refusedSong, SET_SONG_LIMIT } from "../favorites/favorite-sets";
+import { type FavoriteSet, refusedSong, SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
+import { type Choice, ChoiceDialog } from "../ui/choice-dialog";
+import type { ModalLook } from "../ui/large-modal";
 import { StatusNote } from "../ui/status-note";
 
 /** A song the dialog names: in the player's language, with what tells it from a same-titled one. */
@@ -22,6 +22,8 @@ export interface AddToSetDialogProps {
   /** The songs that share the play's title. */
   readonly candidates: readonly NamedSong[];
   readonly sets: readonly FavoriteSet[];
+  readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   /** Picks the song among those sharing the title; null asks which one again. */
   readonly onChooseSong: (songNo: string | null) => void;
@@ -36,6 +38,8 @@ export function AddToSetDialog({
   songNo,
   candidates,
   sets,
+  touchFirst,
+  modalLook,
   i18n,
   onChooseSong,
   onAdd,
@@ -87,6 +91,8 @@ export function AddToSetDialog({
           <StatusNote id="history-add-unknown">{t("history.unknownSong")}</StatusNote>
         </Box>
       }
+      touchFirst={touchFirst}
+      modalLook={modalLook}
       i18n={i18n}
       onClose={onClose}
       onBack={songNo !== null && candidates.length > 0 ? () => onChooseSong(null) : undefined}

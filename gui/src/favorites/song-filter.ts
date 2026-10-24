@@ -1,6 +1,6 @@
 import type { Genre } from "@abth/core";
 
-import { type CatalogueSong, DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import { type CatalogueSong, DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 
 /** What the picker narrows its songs to; null leaves that part open. */
 export interface SongFilter {

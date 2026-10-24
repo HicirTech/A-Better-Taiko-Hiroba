@@ -27,6 +27,7 @@ import {
   sessionEnded,
   viewOfPipelines,
 } from "../src/hiroba-session";
+import { WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
 import {
   createPipeline,
   createPipelineLog,
@@ -34,16 +35,15 @@ import {
   HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
-} from "../src/pipelines";
-import { WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
-import { readRatingData } from "../src/rating/read-rating-data";
+} from "../src/shared/pipelines";
+import { readRatingData } from "../src/shared/rating-data/read-rating-data";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
   type SignInOutcome,
-} from "../src/session-port";
+} from "../src/shared/session-port";
 import {
   createChartDensityReader,
   createChartPictureReader,
@@ -52,8 +52,8 @@ import {
   createEseChartFiles,
   readChineseNames,
   readSongCatalogue,
-} from "../src/song-catalogue";
-import { openableUrlOf, readUpdateFeed } from "../src/updates";
+} from "../src/shared/song-catalogue";
+import { openableUrlOf, readUpdateFeed } from "../src/shared/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";

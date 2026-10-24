@@ -3,7 +3,7 @@ import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useState } from "react";
 
-import type { SongDensityRead } from "../song-catalogue/types";
+import type { SongDensityRead } from "../shared/song-catalogue/types";
 import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SubsectionTitle } from "../ui/section-title";

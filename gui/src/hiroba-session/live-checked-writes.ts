@@ -1,4 +1,4 @@
-import type { WriteKind } from "../session-port";
+import type { WriteKind } from "../shared/session-port";
 
 export type WritePlatform = "desktop" | "android";
 

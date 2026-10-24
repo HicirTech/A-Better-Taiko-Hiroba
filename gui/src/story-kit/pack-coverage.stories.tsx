@@ -1,12 +1,11 @@
 import { LABEL_TEMPLATES, PLAY_OPTION_CODES } from "@abth/core";
 import { Box, Stack, Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import { itemsOf, SLOT_PARTS, slotOf } from "../my-page/costume-parts";
-import { CROWN_COLOUR, RANKS_WORST_FIRST } from "../my-page/panel-colours";
 import { wantKey } from "../pictures/picture-lane";
-import type { CrownKind, PictureView, PictureWant } from "../session-port";
-import { DIFFICULTIES } from "../song-catalogue/types";
+import { itemsOf, SLOT_PARTS, slotOf } from "../shared/costume-parts";
+import { CROWN_COLOUR, RANKS_WORST_FIRST } from "../shared/panel-colours";
+import type { CrownKind, PictureView, PictureWant } from "../shared/session-port";
+import { DIFFICULTIES } from "../shared/song-catalogue/types";
 import { STORY_EDITOR } from "./costume";
 import { PACK_DATA, PACK_LABEL, type PackData, packData, packKeys, packView } from "./pack";
 import { PAGE_PLAYS } from "./plays";

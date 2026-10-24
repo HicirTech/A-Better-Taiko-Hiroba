@@ -1,8 +1,8 @@
-// Writes src/favorites/han-fold-table.ts from OpenCC's character tables: run it by hand to update.
+// Writes src/shared/song-catalogue/han-fold-table.ts from OpenCC's character tables, run by hand.
 import { join } from "node:path";
 
 const OPENCC_COMMIT = "3ac34aa439a9908dd49fa92b5174b46314787ac2";
-const OUT = join(import.meta.dir, "..", "src", "favorites", "han-fold-table.ts");
+const OUT = join(import.meta.dir, "..", "src", "shared", "song-catalogue", "han-fold-table.ts");
 
 async function table(name: string): Promise<Map<string, string>> {
   const url = `https://raw.githubusercontent.com/BYVoid/OpenCC/${OPENCC_COMMIT}/data/dictionary/${name}.txt`;

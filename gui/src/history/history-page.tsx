@@ -2,28 +2,29 @@ import { type Genre, type RecentPlay, recentPlayKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-import { newSetName } from "../favorites/favorite-sets";
-import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import { SetNameDialog } from "../favorites/set-name-dialog";
-import { nameLanguage, shownName } from "../favorites/song-names";
-import { useFavoriteSets } from "../favorites/use-favorite-sets";
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { HIROBA_LANG } from "../language/hiroba-lang";
-import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { type PlayNotice, ScoreDetails } from "../scores/score-details";
-import { listedOf, ScoresReading } from "../scores/scores-page";
-import type { ScoresState } from "../scores/use-scores";
+import { HIROBA_LANG } from "../shared/language/hiroba-lang";
+import { listedOf } from "../shared/scores/score-order";
+import type { ScoresState } from "../shared/scores/use-scores";
+import { newSetName } from "../shared/sets/favorite-sets";
+import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
+import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
+import { nameLanguage, shownName } from "../shared/song-catalogue/song-names";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { PLAY_ROW_PX, PlayRow } from "../songs/play-row";
+import { type PlayNotice, ScoreDetails } from "../songs/score-details";
+import { ScoresReading } from "../songs/scores-reading";
+import { SetNameDialog } from "../songs/set-name-dialog";
+import { PAGE_HEIGHT } from "../ui/frame-top";
 import type { ItemAction, Point } from "../ui/item-actions";
 import { ItemMenu, useItemMenu, useItemPress } from "../ui/item-menu";
+import type { ModalLook } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
 import { StatusNote } from "../ui/status-note";
 import { AddToSetDialog, type NamedSong } from "./add-to-set-dialog";
 import { type PlacedPlay, placePlay, playedChart } from "./placed-play";
-import { PLAY_ROW_PX, PlayRow } from "./play-row";
 import { playedSong, songsByTitle } from "./played-song";
 import type { RecentPlaysState } from "./use-recent-plays";
 
@@ -33,7 +34,9 @@ export function HistoryPage({
   scores,
   catalogue,
   lane,
+  keptSets,
   touchFirst,
+  modalLook,
   i18n,
 }: {
   readonly history: RecentPlaysState;
@@ -42,8 +45,11 @@ export function HistoryPage({
   /** taiko.wiki's song list: a play it finds the song of is named in the player's language. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
+  /** The sets kept on this device, which a play's song can go into. */
+  readonly keptSets: FavoriteSets;
   /** Whether a pull reads again here, or Read again does, and a long press opens a play's menu. */
   readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }) {
   const { plays, reading, failure } = history;
@@ -66,7 +72,6 @@ export function HistoryPage({
     return { text, lang: nameLanguage(song, text) };
   };
 
-  const kept = useFavoriteSets();
   // The play whose song is being added to a set.
   const [adding, setAdding] = useState<RecentPlay | null>(null);
   const playActions = (play: RecentPlay): readonly ItemAction[] => [
@@ -185,6 +190,8 @@ export function HistoryPage({
         lane={lane}
         reading={scoresReading}
         readingSong={song !== null && song.songNo === placedSong}
+        touchFirst={touchFirst}
+        modalLook={modalLook}
         i18n={i18n}
         onReadSong={(score) => void readSong(score)}
         onClose={close}
@@ -203,11 +210,13 @@ export function HistoryPage({
           name={nameOf(adding)}
           songNo={found.outcome === "resolved" ? found.songNo : chosen}
           candidates={found.outcome === "ambiguous" ? found.candidates.map(namedSong) : []}
-          sets={kept.sets}
+          sets={keptSets.sets}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
           i18n={i18n}
           onChooseSong={setChosen}
           onAdd={(set, songNo) => {
-            kept.replaceSongs(set.id, [...set.songs, songNo]);
+            keptSets.replaceSongs(set.id, [...set.songs, songNo]);
             shut();
           }}
           onNewSet={setNaming}
@@ -217,11 +226,11 @@ export function HistoryPage({
       {naming !== null && (
         <SetNameDialog
           title={i18n.t("favorites.newSet")}
-          initial={newSetName(kept.sets, (number) => i18n.t("favorites.setName", { number }))}
+          initial={newSetName(keptSets.sets, (number) => i18n.t("favorites.setName", { number }))}
           i18n={i18n}
           onCancel={() => setNaming(null)}
           onSave={(name) => {
-            kept.add(name, [naming]);
+            keptSets.add(name, [naming]);
             setNaming(null);
             shut();
           }}

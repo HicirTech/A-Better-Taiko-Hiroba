@@ -2,14 +2,14 @@ import { useState } from "react";
 import { action } from "storybook/actions";
 
 import { App } from "../App";
-import { LanguageSetting } from "../language/language-setting";
 import { AppFrame } from "../navigation/app-frame";
 import type { Page } from "../navigation/pages";
 import { useShownPage } from "../navigation/use-shown-page";
 import { PAGE_REGISTRY } from "../pages/registry";
 import { PipelinesPage } from "../pipelines-page/pipelines-page";
-import type { HirobaSessionPort } from "../session-port";
-import { touchOf } from "./devices";
+import { LanguageSetting } from "../settings/language-setting";
+import type { HirobaSessionPort } from "../shared/session-port";
+import { touchOf, wideOf } from "./devices";
 import { i18nOf, localeOf, STORY_BACK, STORY_LINK, STORY_TOAST, type StoryGlobals } from "./env";
 import { press } from "./steps";
 import { createStoryPort } from "./story-port";
@@ -49,6 +49,8 @@ export function StoryApp({
       page={page}
       onNavigate={navigate}
       i18n={i18n}
+      wide={wideOf(globals)}
+      touchFirst={touchOf(globals)}
       pages={PAGE_REGISTRY}
       {...(android ? { back: STORY_BACK } : {})}
       pipelines={<PipelinesPage port={port} i18n={i18n} />}

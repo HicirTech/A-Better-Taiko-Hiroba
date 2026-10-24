@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useFavorites } from "../favorites/use-favorites";
 import { usePickableSongs } from "../favorites/use-pickable-songs";
-import { useSongCatalogue } from "../favorites/use-song-catalogue";
 import { useRecentPlays } from "../history/use-recent-plays";
 import { useListedCharts } from "../know-yourself/use-listed-charts";
 import { useCostumeEditor } from "../my-page/use-costume-editor";
@@ -13,8 +12,11 @@ import type { PageData } from "../pages/page";
 import { PAGE_REGISTRY } from "../pages/registry";
 import type { PictureLane } from "../pictures/picture-lane";
 import { useRatingData } from "../rating";
-import { useScores } from "../scores/use-scores";
-import type { HirobaSessionPort } from "../session-port";
+import { useScores } from "../shared/scores/use-scores";
+import type { HirobaSessionPort } from "../shared/session-port";
+import { useFavoriteSets } from "../shared/sets/use-favorite-sets";
+import { useSongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { useKeptSearches } from "../song-search/use-kept-searches";
 import type { Session } from "./use-session";
 
 /** The data the pages draw from, as the window holds it. */
@@ -31,6 +33,8 @@ export type PagesData = Pick<
   | "titleEditor"
   | "nameEditor"
   | "favorites"
+  | "keptSets"
+  | "keptSearches"
   | "wantSongs"
 >;
 
@@ -84,6 +88,8 @@ export function usePagesData({
   });
   const { forget: forgetNameEditor } = nameEditor;
   const favorites = useFavorites({ port, lane, onSessionGone: sessionGone });
+  const keptSets = useFavoriteSets();
+  const keptSearches = useKeptSearches();
   const { forget: forgetFavorites } = favorites;
   // Read once someone opens a page that shows it or the song search, and kept from then on.
   const [songsWanted, setSongsWanted] = useState(false);
@@ -139,6 +145,8 @@ export function usePagesData({
     titleEditor,
     nameEditor,
     favorites,
+    keptSets,
+    keptSearches,
     wantSongs,
   };
 }

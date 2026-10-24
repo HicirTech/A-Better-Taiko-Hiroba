@@ -1,10 +1,10 @@
 import type { MessageKey } from "@abth/i18n";
 import { useCallback, useMemo, useRef, useState } from "react";
 
-import { hirobaSession } from "../read-failure-message";
-import type { ReadStatus } from "../reads/read-run";
-import { useReadRun } from "../reads/use-read-run";
-import type { HirobaSessionPort, ReadFailure } from "../session-port";
+import { hirobaSession } from "../shared/read-failure-message";
+import type { ReadStatus } from "../shared/reads/read-run";
+import { useReadRun } from "../shared/reads/use-read-run";
+import type { HirobaSessionPort, ReadFailure } from "../shared/session-port";
 import {
   forgetPickable,
   keepPickable,

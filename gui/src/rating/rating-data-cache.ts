@@ -1,7 +1,7 @@
 import type { RatingSystem } from "@abth/core";
 
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
-import type { RatingDataRead } from "./read-rating-data";
+import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
+import type { RatingDataRead } from "../shared/rating-data/read-rating-data";
 
 const VERSION = 1;
 

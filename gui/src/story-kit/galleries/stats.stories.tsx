@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import * as ShareRows from "../../know-yourself/share-rows.stories";
-import * as LegendItem from "../../my-page/legend-item.stories";
-import * as ShareBar from "../../my-page/share-block.share-bar.stories";
-import * as ShareLegend from "../../my-page/share-block.share-legend.stories";
-import * as ShareBlock from "../../my-page/share-block.stories";
+import * as LegendItem from "../../profile/legend-item.stories";
+import * as ShareBar from "../../profile/share-block.share-bar.stories";
+import * as ShareLegend from "../../profile/share-block.share-legend.stories";
+import * as ShareBlock from "../../profile/share-block.stories";
 import * as RatingRadar from "../../rating/rating-radar.stories";
 import * as ChartDensitySection from "../../songs/chart-density.stories";
 import * as DensityLine from "../../songs/density-line.stories";

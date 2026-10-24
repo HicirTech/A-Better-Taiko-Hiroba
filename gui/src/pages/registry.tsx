@@ -7,8 +7,10 @@ import { NameTitlePage } from "../name-title/name-title-page";
 import type { Page } from "../navigation/pages";
 import { RatingPage } from "../rating";
 import { ReadEveryDialog } from "../scores/read-every-dialog";
-import { ScoresPage, scoresReadingProgress } from "../scores/scores-page";
+import { ScoresPage } from "../scores/scores-page";
 import { SettingsPage } from "../settings/settings-page";
+import { RELEASES_URL, REPOSITORY_URL } from "../shared/updates";
+import { scoresReadingProgress } from "../songs/scores-reading";
 import {
   CheckroomIcon,
   EditIcon,
@@ -20,7 +22,6 @@ import {
   PsychologyIcon,
   SettingsIcon,
 } from "../ui/icons";
-import { RELEASES_URL, REPOSITORY_URL } from "../updates";
 import { MyPageFailure } from "./my-page-failure";
 import { OverviewPage } from "./overview-page";
 import type { PageData, PageEntry } from "./page";
@@ -80,8 +81,10 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         history={data.history}
         scores={data.scores}
         catalogue={data.catalogue}
+        keptSets={data.keptSets}
         lane={data.lane}
         touchFirst={data.touchFirst}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -104,7 +107,10 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         scores={data.scores}
         catalogue={data.catalogue}
         lane={data.lane}
+        shownDifficulty={data.shownDifficulty}
         touchFirst={data.touchFirst}
+        wide={data.wide}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -121,6 +127,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         catalogue={data.catalogue}
         lane={data.lane}
         touchFirst={data.touchFirst}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -136,8 +143,11 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         listed={data.listed}
         catalogue={data.catalogue}
         lane={data.lane}
+        keptSets={data.keptSets}
+        shownDifficulty={data.shownDifficulty}
         touchFirst={data.touchFirst}
         toast={data.touchFirst ? data.toast : undefined}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -146,7 +156,17 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     ...PAGE_MODELS.costume,
     icon: <CheckroomIcon />,
     skeleton: CostumePageSkeleton,
-    draw: (data) => <CostumePage editor={data.editor} lane={data.lane} i18n={data.i18n} />,
+    wider: true,
+    draw: (data) => (
+      <CostumePage
+        editor={data.editor}
+        lane={data.lane}
+        touchFirst={data.touchFirst}
+        wide={data.wide}
+        modalLook={data.modalLook}
+        i18n={data.i18n}
+      />
+    ),
   },
   nameTitle: {
     ...PAGE_MODELS.nameTitle,
@@ -183,6 +203,13 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         lane={data.lane}
         pickable={data.pickable.pickable}
         onPickerOpen={data.pickable.readIfStale}
+        keptSets={data.keptSets}
+        touchFirst={data.touchFirst}
+        menuOpen={data.menuOpen}
+        pipelinesShown={data.pipelinesShown}
+        shownDifficulty={data.shownDifficulty}
+        chartSource={data.chartSource}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -196,6 +223,10 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         i18n={data.i18n}
         language={data.language}
         account={accountOf(data)}
+        shownDifficulty={data.shownDifficulty}
+        onShownDifficulty={data.onShownDifficulty}
+        chartSource={data.chartSource}
+        onChartSource={data.onChartSource}
         updates={{
           version: data.version,
           check: data.updates.manual,

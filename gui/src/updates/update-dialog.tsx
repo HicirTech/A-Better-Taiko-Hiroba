@@ -1,8 +1,7 @@
 import type { Translator } from "@abth/i18n";
-
+import { notesFor } from "../shared/updates/update-feed";
+import type { UpdateOffer } from "../shared/updates/use-update-reminder";
 import { SimpleDialog } from "../ui/simple-dialog";
-import { notesFor } from "./update-feed";
-import type { UpdateOffer } from "./use-update-reminder";
 
 export interface UpdateDialogProps {
   readonly offer: UpdateOffer | null;

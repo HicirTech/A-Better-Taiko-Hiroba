@@ -28,7 +28,7 @@ import {
   HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
-} from "../src/pipelines";
+} from "../src/shared/pipelines";
 
 const ORIGIN = "https://hiroba.test";
 const ENDPOINTS = {

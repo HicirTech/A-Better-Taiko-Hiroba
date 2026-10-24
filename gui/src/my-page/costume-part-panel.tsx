@@ -2,12 +2,6 @@ import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
-import type { CostumeEditorView, CostumeSet } from "../session-port";
-import { HELD_STILL } from "../ui/editor-parts";
-import { SectionTitle } from "../ui/section-title";
-import { CostumeItemGrid, ThumbnailsUnavailable } from "./costume-item-grid";
-import { Palette } from "./costume-palette";
-import { PARTS_PANEL_ID, partTabId } from "./costume-part-tiles";
 import {
   type ColourPart,
   type CostumePart,
@@ -15,7 +9,13 @@ import {
   itemsOf,
   PART_LABEL,
   type SlotPart,
-} from "./costume-parts";
+} from "../shared/costume-parts";
+import type { CostumeEditorView, CostumeSet } from "../shared/session-port";
+import { HELD_STILL } from "../ui/editor-parts";
+import { SectionTitle } from "../ui/section-title";
+import { CostumeItemGrid, ThumbnailsUnavailable } from "./costume-item-grid";
+import { Palette } from "./costume-palette";
+import { PARTS_PANEL_ID, partTabId } from "./costume-part-tiles";
 
 export interface PartHeadProps {
   readonly view: CostumeEditorView;

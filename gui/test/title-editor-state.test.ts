@@ -1,7 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import { err, ok, type SaveReading, type TitleOption } from "@abth/core";
-
-import type { Noticed } from "../src/my-page/write-ending";
 import {
   canSaveTitle,
   changesTitle,
@@ -19,7 +17,8 @@ import type {
   TitleEditorView,
   TitleState,
   WriteOutcomeView,
-} from "../src/session-port";
+} from "../src/shared/session-port";
+import type { Noticed } from "../src/shared/writes/write-ending";
 
 const A: TitleOption = { id: 101, label: "サンプルの称号" };
 const B: TitleOption = { id: 102, label: "別のサンプル称号" };

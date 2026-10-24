@@ -1,5 +1,5 @@
-import type { ShownDifficulty } from "../favorites/shown-difficulty";
-import { DIFFICULTIES, type Difficulty, type SongBpm } from "../song-catalogue/types";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
+import { DIFFICULTIES, type Difficulty, type SongBpm } from "../shared/song-catalogue/types";
 
 /** "154", "120–240", or "≈168" for a tempo that wobbles: the numbers as taiko.wiki gives them. */
 export function bpmText({ min, max, wobbles }: SongBpm): string {

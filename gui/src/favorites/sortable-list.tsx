@@ -21,10 +21,9 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Box, type SxProps, type Theme } from "@mui/material";
 import { type ReactNode, useRef } from "react";
-
-import { LONG_PRESS_MS } from "../my-page/use-long-press";
-import { holdGestures } from "../navigation/gesture-hold";
+import { holdGestures } from "../ui/gesture-hold";
 import { DragIndicatorIcon } from "../ui/icons";
+import { LONG_PRESS_MS } from "../ui/use-long-press";
 
 const VERTICAL: Modifier = ({ transform }) => ({ ...transform, x: 0 });
 // A finger held still this long picks a row up; one that moves sooner scrolls the page.

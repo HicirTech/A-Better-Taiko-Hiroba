@@ -6,8 +6,16 @@ import {
   type Result,
   type TransportResponse,
 } from "@abth/core";
-
-import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
+import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../shared/picture-store";
+import { type GroupAsked, type Pipeline, resultFailure } from "../shared/pipelines";
+import {
+  type AskedPlace,
+  checkPng,
+  describeAnswer,
+  type PngRefusal,
+  type PngRules,
+  pngDataUrl,
+} from "../shared/png-answer";
 import {
   type CostumeSlot,
   type CourseIconWant,
@@ -17,7 +25,7 @@ import {
   type PictureFailure,
   type PictureView,
   type PictureWant,
-} from "../session-port";
+} from "../shared/session-port";
 import {
   courseIconPath,
   crownIconPath,
@@ -33,15 +41,6 @@ import {
   scorePanelPath,
   TITLE_PLATE_PATH,
 } from "./picture-sources";
-import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "./picture-store";
-import {
-  type AskedPlace,
-  checkPng,
-  describeAnswer,
-  type PngRefusal,
-  type PngRules,
-  pngDataUrl,
-} from "./png-answer";
 import type { HirobaEndpoints } from "./types";
 
 const ITEM_PATH = "/imgsrc_kisekae.php";

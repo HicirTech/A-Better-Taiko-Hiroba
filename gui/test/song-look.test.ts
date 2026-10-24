@@ -1,13 +1,12 @@
 import { describe, expect, test } from "bun:test";
-
+import type { FavoritesView, ShownSong } from "../src/shared/session-port";
 import {
   levelsOfEntry,
   lookOfCatalogue,
   lookOfShown,
   rememberedSongs,
   resolveSong,
-} from "../src/favorites/song-look";
-import type { FavoritesView, ShownSong } from "../src/session-port";
+} from "../src/shared/song-catalogue/song-look";
 import { song } from "./song-fixtures";
 
 const ALPHA = song({

@@ -1,4 +1,4 @@
-import type { CostumeHistoryEntry, CostumeSet } from "../src/session-port";
+import type { CostumeHistoryEntry, CostumeSet } from "../src/shared/session-port";
 
 /** A set that is nobody's, with every value different from its neighbours'. */
 export const SET: CostumeSet = {

@@ -5,15 +5,15 @@ import {
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
 } from "../src/hiroba-session";
-import { RATING_DATA_URL } from "../src/rating/rating-links";
+import { RATING_DATA_URL } from "../src/shared/rating-data/rating-links";
 import {
   CHINESE_NAMES_URL,
   catalogueUrlFor,
   chartOriginFor,
   ESE_CHARTS_URL,
   ESE_MAPPING_URL,
-} from "../src/song-catalogue";
-import { feedUrlFor } from "../src/updates";
+} from "../src/shared/song-catalogue";
+import { feedUrlFor } from "../src/shared/updates";
 
 export type Environment = Readonly<Record<string, string | undefined>>;
 

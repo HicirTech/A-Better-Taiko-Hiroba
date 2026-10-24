@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
-import { UPDATE_FEED_URL } from "../src/updates";
+import { UPDATE_FEED_URL } from "../src/shared/updates";
 import { CLOSE_LABEL, memoryFlag } from "./android-port-fixtures";
 import { native, nativeBase64 } from "./capacitor-fakes";
 

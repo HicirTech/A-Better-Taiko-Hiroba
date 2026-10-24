@@ -4,7 +4,7 @@ import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 
-import { PlayRow } from "../history/play-row";
+import { PlayRow } from "../songs/play-row";
 import { touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PLAYS, storyPlay } from "../story-kit/plays";

@@ -1,6 +1,6 @@
 import { type RecentPlay, resolveSongTitle, type Song, type SongResolution } from "@abth/core";
 
-import type { CatalogueSong } from "../song-catalogue/types";
+import type { CatalogueSong } from "../shared/song-catalogue/types";
 
 // taiko.wiki tells a cover Hiroba titles as its original by a bracketed end: 濃紅(にじさんじ).
 const BRACKETED_END = /\s*[(（][^()（）]*[)）]\s*$/;

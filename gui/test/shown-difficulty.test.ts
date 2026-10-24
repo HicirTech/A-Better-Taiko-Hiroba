@@ -6,8 +6,8 @@ import {
   type ShownDifficulty,
   shownFor,
   stackOf,
-} from "../src/favorites/shown-difficulty";
-import type { Difficulty } from "../src/song-catalogue/types";
+} from "../src/shared/song-catalogue/shown-difficulty";
+import type { Difficulty } from "../src/shared/song-catalogue/types";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 const WITH_INNER = { easy: 3, normal: 5, hard: 7, oni: 9, ura: 10 } as const;

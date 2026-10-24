@@ -1,7 +1,5 @@
 import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
-
-import type { Noticed } from "../src/my-page/write-ending";
 import {
   IDLE,
   isWritingName,
@@ -12,7 +10,8 @@ import {
   reduceName,
   type WornName,
 } from "../src/name-title/name-editor-state";
-import type { NameState, WriteOutcomeView } from "../src/session-port";
+import type { NameState, WriteOutcomeView } from "../src/shared/session-port";
+import type { Noticed } from "../src/shared/writes/write-ending";
 
 const WORN: WornName = { nickname: "サンプルどん", rename: "open" };
 const OLD: NameState = { nickname: WORN.nickname };

@@ -1,23 +1,29 @@
 import { useContext } from "react";
 
-import { BackClosersContext } from "../navigation/back-closers";
-import { MenuOpenContext } from "../navigation/menu-open";
-import { PipelinesShownContext } from "../navigation/pipelines-shown";
-import { inTextField, useSwipe } from "../navigation/use-swipe";
-import { pointOf } from "../read-again/pull-gesture";
+import { BackClosersContext } from "../ui/back-closers";
+import { pointOf } from "../ui/pull-gesture";
+import { inTextField, useSwipe } from "../ui/use-swipe";
 import { setsSwipeStarted } from "./sets-swipe";
 
 export interface SetsSwipeProps {
   /** Whether the screen is touch-first: only there does a swipe open or close the drawer. */
   readonly active: boolean;
   readonly open: boolean;
+  /** The navigation's menu is open: its own swipe has the touch. */
+  readonly menuOpen: boolean;
+  /** The pipelines page lies over the page: its swipe has the touch. */
+  readonly covered: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }
 
-export function useSetsSwipe({ active, open, onOpenChange }: SetsSwipeProps): void {
+export function useSetsSwipe({
+  active,
+  open,
+  menuOpen,
+  covered,
+  onOpenChange,
+}: SetsSwipeProps): void {
   const closers = useContext(BackClosersContext);
-  const menuOpen = useContext(MenuOpenContext);
-  const covered = useContext(PipelinesShownContext);
   useSwipe({
     active,
     begin: (event) => {

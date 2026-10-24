@@ -9,7 +9,7 @@ import type {
   ProfileView,
   ScoresView,
   TitleEditorView,
-} from "../session-port";
+} from "../shared/session-port";
 import { pictureOf } from "./picture-of";
 
 // Each read once, as the stories load: a pack picture that is no PNG stops them all.

@@ -5,7 +5,7 @@ import {
   pickedLocale,
   rememberLocale,
   startingLocale,
-} from "../src/language/locale-choice";
+} from "../src/shared/language/locale-choice";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("startingLocale", () => {

@@ -1,8 +1,7 @@
 import { Box, Skeleton, Stack, Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import { PAGE_HEIGHT } from "../navigation/app-frame";
 import { i18nOf } from "../story-kit/env";
+import { PAGE_HEIGHT } from "./frame-top";
 import { SectionCard } from "./section-card";
 import { StatusNote } from "./status-note";
 

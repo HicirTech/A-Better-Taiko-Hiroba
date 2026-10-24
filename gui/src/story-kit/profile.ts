@@ -1,5 +1,5 @@
 import { danLabelPng } from "../../scripts/mock-dan-label";
-import type { CostumeSet, PictureView, ProfileView } from "../session-port";
+import type { CostumeSet, PictureView, ProfileView } from "../shared/session-port";
 import { packData, packView } from "./pack";
 import { pictureOf } from "./picture-of";
 

@@ -2,11 +2,10 @@ import { chartKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import { useState } from "react";
-
-import { SET_SONG_LIMIT } from "../favorites/favorite-sets";
-import type { SongLook } from "../favorites/song-look";
-import { HIROBA_LANG } from "../language/hiroba-lang";
 import type { PictureLane } from "../pictures/picture-lane";
+import { HIROBA_LANG } from "../shared/language/hiroba-lang";
+import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
+import type { SongLook } from "../shared/song-catalogue/song-look";
 import { ChartMarks } from "../songs/chart-level";
 import { RowCheckbox, SongRow } from "../songs/song-row";
 import { RowList } from "../ui/row-list";

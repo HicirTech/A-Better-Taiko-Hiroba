@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { err, type Genre, ok } from "@abth/core";
 
-import { type CatalogueSong, MAX_CATALOGUE_LENGTH, parseWikiSongs } from "../src/song-catalogue";
+import {
+  type CatalogueSong,
+  MAX_CATALOGUE_LENGTH,
+  parseWikiSongs,
+} from "../src/shared/song-catalogue";
 
 const wikiEntry = (fields: Record<string, unknown> = {}) => ({
   songNo: "1001",

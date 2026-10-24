@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Result } from "@abth/core";
 
-import { createReadRun } from "../src/reads/read-run";
+import { createReadRun } from "../src/shared/reads/read-run";
 
 interface Failure {
   readonly kind: string;

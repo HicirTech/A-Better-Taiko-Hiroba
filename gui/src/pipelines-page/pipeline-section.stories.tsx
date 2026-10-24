@@ -4,7 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useState } from "react";
 import { fn } from "storybook/test";
 
-import type { PipelinesView } from "../session-port";
+import type { PipelinesView } from "../shared/session-port";
 import { i18nOf } from "../story-kit/env";
 import { createStoryPort } from "../story-kit/story-port";
 import { PipelineSection } from "./pipeline-section";

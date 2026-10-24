@@ -3,16 +3,26 @@ import { Alert } from "@mui/material";
 import { useLayoutEffect, useMemo, useState } from "react";
 
 import { App } from "./App";
-import { LanguageSetting } from "./language/language-setting";
-import { forgetLocale, pickedLocale, rememberLocale, systemLocale } from "./language/locale-choice";
-import { showLanguage } from "./language/show-language";
+import { useKeptChoice } from "./app/use-kept-choice";
 import { AppFrame } from "./navigation/app-frame";
 import { keepPage, keptPage } from "./navigation/pages";
 import { useShownPage } from "./navigation/use-shown-page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { PipelinesPage } from "./pipelines-page/pipelines-page";
 import type { Platform } from "./platform";
+import { LanguageSetting } from "./settings/language-setting";
 import { SettingsPage } from "./settings/settings-page";
+import {
+  forgetLocale,
+  pickedLocale,
+  rememberLocale,
+  systemLocale,
+} from "./shared/language/locale-choice";
+import { showLanguage } from "./shared/language/show-language";
+import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
+import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
+import { useTouchFirst } from "./ui/use-touch-first";
+import { useWideWindow } from "./ui/use-wide-window";
 
 export function Shell({
   platform,
@@ -31,6 +41,14 @@ export function Shell({
     onShown(i18n);
   }, [i18n, onShown]);
   const [page, navigate] = useShownPage(keptPage, keepPage);
+  const wide = useWideWindow();
+  const touchFirst = useTouchFirst();
+  // Settings' two choices, for the page drawn here where no app runs.
+  const [shownDifficulty, onShownDifficulty] = useKeptChoice(
+    keptShownDifficulty,
+    keepShownDifficulty,
+  );
+  const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
   const pick = (next: Locale | null) => {
     if (next === null) {
       forgetLocale();
@@ -45,6 +63,8 @@ export function Shell({
       page={page}
       onNavigate={navigate}
       i18n={i18n}
+      wide={wide}
+      touchFirst={touchFirst}
       pages={PAGE_REGISTRY}
       {...(platform?.shell === "android" ? { back: platform.back } : {})}
       {...(platform !== null
@@ -62,7 +82,15 @@ export function Shell({
           {...(platform.shell === "android" ? { toast: platform.toast } : {})}
         />
       ) : page === "settings" ? (
-        <SettingsPage i18n={i18n} language={language} account={{ kind: "signedOut" }} />
+        <SettingsPage
+          i18n={i18n}
+          language={language}
+          account={{ kind: "signedOut" }}
+          shownDifficulty={shownDifficulty}
+          onShownDifficulty={onShownDifficulty}
+          chartSource={chartSource}
+          onChartSource={onChartSource}
+        />
       ) : (
         <Alert severity="info">{i18n.t("platform.unsupported")}</Alert>
       )}

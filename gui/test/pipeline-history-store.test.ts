@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 import { createPipelineHistoryStore } from "../electron/pipeline-history-store";
-import type { PipelineHistory } from "../src/pipelines";
+import type { PipelineHistory } from "../src/shared/pipelines";
 
 const HISTORY: PipelineHistory = {
   ended: [

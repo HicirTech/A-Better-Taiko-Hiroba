@@ -4,12 +4,12 @@ import { useState } from "react";
 import { fn } from "storybook/test";
 
 import type { PictureLane } from "../pictures/picture-lane";
+import { itemsOf } from "../shared/costume-parts";
 import { STORY_EDITOR } from "../story-kit/costume";
 import { i18nOf } from "../story-kit/env";
 import { FAILING_LANE, STORY_LANE, WAITING_LANE } from "../story-kit/story-pictures";
 import { WideWindow } from "../story-kit/wide-window";
 import { CostumeItemGrid } from "./costume-item-grid";
-import { itemsOf } from "./costume-parts";
 
 interface Args {
   readonly onPick: (id: number) => void;

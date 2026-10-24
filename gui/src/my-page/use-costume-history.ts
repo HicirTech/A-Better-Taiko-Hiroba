@@ -1,6 +1,6 @@
 import { type RefObject, useCallback, useState } from "react";
 
-import type { CostumeHistoryEntry, HirobaSessionPort } from "../session-port";
+import type { CostumeHistoryEntry, HirobaSessionPort } from "../shared/session-port";
 
 // Asked of the platform, never of Hiroba. An answer that comes after the session ended is dropped,
 // so one player's history is never shown to the next.

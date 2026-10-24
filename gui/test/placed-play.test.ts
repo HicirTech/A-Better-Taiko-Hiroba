@@ -3,7 +3,7 @@ import type { Genre, Level, RecentPlay, ScoreRecord } from "@abth/core";
 
 import { placePlay, playedChart } from "../src/history/placed-play";
 import { songsByTitle } from "../src/history/played-song";
-import type { ScoresView, ScoreView } from "../src/session-port";
+import type { ScoresView, ScoreView } from "../src/shared/session-port";
 import { song } from "./song-fixtures";
 
 const NAMCO = 6;

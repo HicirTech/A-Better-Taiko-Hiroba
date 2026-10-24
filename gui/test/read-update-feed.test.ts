@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport, type TransportFailure, type TransportRequest } from "@abth/core";
 
 import { createUpdateFeedTransport } from "../electron/update-feed-transport";
-import { readUpdateFeed, UPDATE_FEED_URL, type UpdateFeedFailure } from "../src/updates";
+import { readUpdateFeed, UPDATE_FEED_URL, type UpdateFeedFailure } from "../src/shared/updates";
 
 const FEED = { version: "0.2.0", notes: { en: ["Fixed a thing"], "zh-Hans": ["修复了一个问题"] } };
 const UA = "Mozilla/5.0 (test) Chrome/152.0.0.0 Safari/537.36";

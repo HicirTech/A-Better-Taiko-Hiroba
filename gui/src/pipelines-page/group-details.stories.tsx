@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect, useState } from "react";
 
-import type { PipelinesView } from "../session-port";
+import type { PipelinesView } from "../shared/session-port";
 import { i18nOf } from "../story-kit/env";
 import { createStoryPort } from "../story-kit/story-port";
 import { GroupDetails } from "./group-details";

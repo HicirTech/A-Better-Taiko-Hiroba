@@ -1,14 +1,13 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import * as LevelBadges from "../../favorites/level-badges.stories";
-import * as PickerList from "../../favorites/picker-list.stories";
-import * as ScrollingText from "../../favorites/scrolling-text.stories";
-import * as SongLookRow from "../../favorites/song-look-row.stories";
 import * as SortableList from "../../favorites/sortable-list.stories";
-import * as PlayRow from "../../history/play-row.stories";
 import * as ChartList from "../../know-yourself/chart-list.stories";
+import * as LevelBadges from "../../songs/level-badges.stories";
+import * as PickerList from "../../songs/picker-list.stories";
+import * as PlayRow from "../../songs/play-row.stories";
+import * as SongLookRow from "../../songs/song-look-row.stories";
 import * as SharedRow from "../../songs/song-row.stories";
 import * as RowList from "../../ui/row-list.stories";
+import * as ScrollingText from "../../ui/scrolling-text.stories";
 import { Gallery } from "../gallery";
 
 const meta = {

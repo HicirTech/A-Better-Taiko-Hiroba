@@ -1,13 +1,8 @@
 import type { MessageKey, Translator } from "@abth/i18n";
 import { List, ListItem, ListItemText, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { useId, useState } from "react";
+import { useId } from "react";
 
-import {
-  CHART_SOURCES,
-  type ChartSource,
-  keepChartSource,
-  keptChartSource,
-} from "../songs/chart-source";
+import { CHART_SOURCES, type ChartSource } from "../shared/song-catalogue/chart-source";
 import { MusicNoteIcon } from "../ui/icons";
 import { SettingsSection } from "./settings-section";
 
@@ -28,19 +23,25 @@ const SOURCE_LABEL: Readonly<Record<ChartSource, MessageKey>> = {
 };
 
 /** Which chart pictures a song's details show, and where the song data comes from, as asked. */
-export function SongDataSection({ i18n }: { readonly i18n: Translator }) {
+export function SongDataSection({
+  source,
+  i18n,
+  onSource,
+}: {
+  readonly source: ChartSource;
+  readonly i18n: Translator;
+  readonly onSource: (next: ChartSource) => void;
+}) {
   const { t } = i18n;
   const headingId = useId();
   const labelId = useId();
-  const [source, setSource] = useState(keptChartSource);
   const choose = (next: ChartSource | null) => {
     // A second press on the chosen one would leave none.
     if (next === null) {
       return;
     }
 
-    keepChartSource(next);
-    setSource(next);
+    onSource(next);
   };
   return (
     <SettingsSection

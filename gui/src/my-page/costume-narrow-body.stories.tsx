@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import { onDevice } from "../story-kit/devices";
+import { modalLookOf, onDevice, touchOf, wideOf } from "../story-kit/devices";
 import { WithCostumeEditor } from "../story-kit/editors";
 import { i18nOf } from "../story-kit/env";
 import { STORY_LANE } from "../story-kit/story-pictures";
@@ -13,7 +12,16 @@ const meta = {
   globals: onDevice("phone"),
   render: (_args, { globals }) => (
     <WithCostumeEditor>
-      {(editor) => <CostumePage editor={editor} lane={STORY_LANE} i18n={i18nOf(globals)} />}
+      {(editor) => (
+        <CostumePage
+          editor={editor}
+          lane={STORY_LANE}
+          touchFirst={touchOf(globals)}
+          wide={wideOf(globals)}
+          modalLook={modalLookOf(globals)}
+          i18n={i18nOf(globals)}
+        />
+      )}
     </WithCostumeEditor>
   ),
 } satisfies Meta;

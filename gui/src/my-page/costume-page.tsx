@@ -1,23 +1,20 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button } from "@mui/material";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-
-import { useWideWindow } from "../navigation/use-wide-window";
-import { useWiderFrame } from "../navigation/wider-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import { COLOUR_PARTS, type CostumePart, changedParts } from "../shared/costume-parts";
 import { useFocusKept } from "../ui/editor-parts";
+import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
+import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { BAR_TEXT_BUTTON, SYNC_BAR_PAGE, SyncBar, SyncBarSkeleton } from "../ui/sync-bar";
+import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { shownEditorOf } from "./costume-editor-state";
 import { CostumeHistoryDialog } from "./costume-history-dialog";
 import { NarrowBody, NarrowBodySkeleton } from "./costume-narrow-body";
-import { COLOUR_PARTS, type CostumePart, changedParts } from "./costume-parts";
 import { WideBody, WideBodySkeleton } from "./costume-wide-body";
 import type { CostumeEditor } from "./use-costume-editor";
-import { WriteOutcomeSnackbar } from "./write-outcome";
 
-// MUI's sm width: a narrow window's column need not stretch across it.
-export const COLUMN_MAX_WIDTH_PX = 600;
 const pageOf = (wide: boolean) =>
   ({
     ...SYNC_BAR_PAGE,
@@ -35,13 +32,15 @@ const pageOf = (wide: boolean) =>
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
   readonly lane: PictureLane;
+  readonly touchFirst: boolean;
+  /** The window is wide enough for the picture and the tiles beside each other. */
+  readonly wide: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }
 
-export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
+export function CostumePage({ editor, lane, touchFirst, wide, modalLook, i18n }: CostumePageProps) {
   const { step } = editor;
-  const wide = useWideWindow();
-  useWiderFrame();
   const [part, setPart] = useState<CostumePart>(COLOUR_PARTS[0]);
   const [historyOpen, setHistoryOpen] = useState(false);
   const page = useRef<HTMLDivElement>(null);
@@ -86,6 +85,8 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
           open={historyOpen}
           entries={editor.history}
           worn={step.editor.state}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
           i18n={i18n}
           onPick={(entry) => {
             editor.pickHistory(entry);
@@ -150,9 +151,7 @@ function CostumeBar({
 }
 
 /** The Costume page's shape while its first read runs, as wide or narrow as the window. */
-export function CostumePageSkeleton() {
-  const wide = useWideWindow();
-  useWiderFrame();
+export function CostumePageSkeleton({ wide }: { readonly wide: boolean }) {
   return (
     <Box sx={pageOf(wide)}>
       {wide ? <WideBodySkeleton /> : <NarrowBodySkeleton />}

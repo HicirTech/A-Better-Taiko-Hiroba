@@ -1,6 +1,6 @@
 import { type RefObject, useEffect, useRef, useSyncExternalStore } from "react";
 
-import type { PictureWant } from "../session-port";
+import type { PictureWant } from "../shared/session-port";
 import { type PictureAnswer, type PictureLane, wantKey } from "./picture-lane";
 
 export interface UsePictureOptions {

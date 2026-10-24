@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { PictureView } from "../session-port";
+import type { PictureView } from "../shared/session-port";
 import { firstDrawnRow } from "./first-drawn-row";
 
 /** How far down `picture` its first drawn row between the columns `from` and `to` (fractions of

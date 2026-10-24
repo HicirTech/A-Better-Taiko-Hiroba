@@ -14,7 +14,7 @@ import {
   OWNED_TITLES,
   REFUSED_NAME,
 } from "../scripts/mock-profile";
-import type { HirobaSessionPort, VerbsQueued } from "../src/session-port";
+import type { HirobaSessionPort, VerbsQueued } from "../src/shared/session-port";
 import {
   CLOSE_LABEL,
   HIROBA,

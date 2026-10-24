@@ -1,7 +1,7 @@
 import type { MedalProgress, PlayOptionCode, Profile, ScoreRank } from "@abth/core";
 
-import { type CrownKind, isWhole } from "../session-port";
-import type { Difficulty } from "../song-catalogue/types";
+import { type CrownKind, isWhole } from "../shared/session-port";
+import type { Difficulty } from "../shared/song-catalogue/types";
 import type { HirobaEndpoints } from "./types";
 
 export const TITLE_PLATE_PATH = "/imgsrc_titleplate.php";

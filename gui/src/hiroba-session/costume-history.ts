@@ -1,7 +1,6 @@
 import { sameCostume } from "@abth/core";
-
-import { type CostumeHistoryEntry, type CostumeSet, isCostumeSet } from "../session-port";
-import { isPngDataUrl } from "./png-answer";
+import { isPngDataUrl } from "../shared/png-answer";
+import { type CostumeHistoryEntry, type CostumeSet, isCostumeSet } from "../shared/session-port";
 import { MAX_PREVIEW_BYTES } from "./preview-costume";
 
 /** The most sets one player's history keeps; the oldest drops off. */

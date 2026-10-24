@@ -1,10 +1,9 @@
 import { err } from "@abth/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import { keepSets } from "../shared/sets/favorite-sets";
 import { STORY_SETS } from "../story-kit/sets";
 import { appOn } from "../story-kit/story-app";
 import { neverAnswers } from "../story-kit/story-port";
-import { keepSets } from "./favorite-sets";
 
 const meta = {
   title: "Pages/Favourites/FavoritesPage",

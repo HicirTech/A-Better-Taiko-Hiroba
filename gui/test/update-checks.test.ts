@@ -1,20 +1,20 @@
 import { describe, expect, test } from "bun:test";
 import { err, ok } from "@abth/core";
 
-import type { UpdateFeed, UpdateFeedFailure } from "../src/updates";
+import type { UpdateFeed, UpdateFeedFailure } from "../src/shared/updates";
 import {
   automaticUpdateOffer,
   CHECK_INTERVAL_MS,
   checkIsDue,
   isWorthShowing,
   manualUpdateCheck,
-} from "../src/updates/update-checks";
+} from "../src/shared/updates/update-checks";
 import {
   keepShownVersion,
   keepUpdateCheck,
   lastShownVersion,
   lastUpdateCheck,
-} from "../src/updates/update-memory";
+} from "../src/shared/updates/update-memory";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 const NOW = Date.parse("2026-10-04T10:00:00Z");

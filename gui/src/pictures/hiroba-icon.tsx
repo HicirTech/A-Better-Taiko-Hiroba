@@ -1,7 +1,7 @@
 import { Skeleton } from "@mui/material";
 import { useRef } from "react";
 
-import type { PictureWant } from "../session-port";
+import type { PictureWant } from "../shared/session-port";
 import { type PictureLane, viewOf } from "./picture-lane";
 import { IN_THE_WINDOW, usePicture } from "./use-picture";
 

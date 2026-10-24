@@ -2,15 +2,15 @@ import { type ChartRating, chartKey, type RatingFigure, rateOurTaikoV1 } from "@
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Stack, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
-
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
-import { PlayRow } from "../history/play-row";
-import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
-import { ScoreDetails } from "../scores/score-details";
-import { listedOf } from "../scores/scores-page";
-import type { ScoresState } from "../scores/use-scores";
-import type { ScoreView } from "../session-port";
+import { listedOf } from "../shared/scores/score-order";
+import type { ScoresState } from "../shared/scores/use-scores";
+import type { ScoreView } from "../shared/session-port";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { PlayRow } from "../songs/play-row";
+import { ScoreDetails } from "../songs/score-details";
+import { PAGE_HEIGHT } from "../ui/frame-top";
+import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
 import { SectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
@@ -54,6 +54,7 @@ export function RatingPage({
   catalogue,
   lane,
   touchFirst,
+  modalLook,
   i18n,
 }: {
   readonly scores: ScoresState;
@@ -63,6 +64,7 @@ export function RatingPage({
   readonly lane: PictureLane;
   /** A touch screen: a pull reads. */
   readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }) {
   const { t, locale } = i18n;
@@ -171,6 +173,8 @@ export function RatingPage({
         lane={lane}
         reading={reading}
         readingSong={song !== null && song.songNo === openedScore?.songNo}
+        touchFirst={touchFirst}
+        modalLook={modalLook}
         i18n={i18n}
         onReadSong={(score) => void readSong(score)}
         onClose={() => setOpened(null)}

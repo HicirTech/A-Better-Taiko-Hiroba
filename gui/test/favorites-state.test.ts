@@ -17,7 +17,7 @@ import type {
   FolderState,
   ReadFailure,
   WriteOutcomeView,
-} from "../src/session-port";
+} from "../src/shared/session-port";
 
 const SAVE: SaveReading = { answer: "json", code: 0, message: null, report: "report" };
 const song = (songNo: string | null, ura = false): FavoriteSongState => ({ songNo, ura });

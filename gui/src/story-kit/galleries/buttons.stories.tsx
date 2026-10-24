@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import * as OpenButton from "../../my-page/open-button.stories";
 import * as ReadAgainFoot from "../../read-again/read-again-foot.stories";
 import * as PictureButton from "../../songs/chart-picture.picture-button.stories";
+import * as OpenButton from "../../ui/open-button.stories";
 import * as ReadAgainButton from "../../ui/read-again-button.stories";
 import * as SyncBar from "../../ui/sync-bar.stories";
 import { Gallery } from "../gallery";

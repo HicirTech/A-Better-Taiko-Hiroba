@@ -1,6 +1,7 @@
 /** Recent plays: read only when asked, after Hiroba's refresh, in a pipeline of their own. */
-import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
-import { LONG_HOLD_MS } from "../../src/read-again/pull-gesture";
+
+import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
+import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
 import { mockTitle } from "../mock-history";
 import { en, HIROBA } from "./config";
 import type { Ctx } from "./context";

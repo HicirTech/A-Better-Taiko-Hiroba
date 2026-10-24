@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import { scoresReadingText } from "../scores/scores-page";
+import { scoresReadingText } from "../songs/scores-reading";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";
 import { ReadAgainFoot, type ReadAgainFootProps } from "./read-again-foot";

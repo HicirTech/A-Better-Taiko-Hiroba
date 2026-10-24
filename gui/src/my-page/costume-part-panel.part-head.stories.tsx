@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import type { CostumePart } from "../shared/costume-parts";
 import { STORY_EDITOR } from "../story-kit/costume";
 import { i18nOf } from "../story-kit/env";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { PartHead } from "./costume-part-panel";
-import type { CostumePart } from "./costume-parts";
 
 interface Args {
   readonly part: CostumePart;

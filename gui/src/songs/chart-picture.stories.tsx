@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import type { HirobaSessionPort } from "../session-port";
+import type { HirobaSessionPort } from "../shared/session-port";
 import { i18nOf } from "../story-kit/env";
 import { neverAnswers, STORY_CHART_PORT } from "../story-kit/story-port";
 import { ChartPicture } from "./chart-picture";

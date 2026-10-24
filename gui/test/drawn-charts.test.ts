@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { createMemoryPictureStore, PICTURE_EPOCH } from "../src/hiroba-session";
-import { CHART_PICTURE_MAX_BYTES, createDrawnCharts } from "../src/song-catalogue";
+import { CHART_PICTURE_MAX_BYTES, createDrawnCharts } from "../src/shared/song-catalogue";
 import { FFMPEG_JPEG, png } from "./picture-fixtures";
 
 const DRAWN = png(816, 1191);

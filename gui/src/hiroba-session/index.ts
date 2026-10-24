@@ -1,5 +1,14 @@
 // The Hiroba session as both shells see it. Nothing here holds or sees the session cookie.
 
+export {
+  createMemoryPictureStore,
+  PICTURE_EPOCH,
+  PICTURE_STORE_CAPS,
+  type PictureKey,
+  type PictureStore,
+  type PictureStoreCaps,
+  pictureKeyPath,
+} from "../shared/picture-store";
 export { changeCostume } from "./change-costume";
 export { changeName } from "./change-name";
 export { changeTitle } from "./change-title";
@@ -32,15 +41,6 @@ export {
   type ScorePanelSource,
   type TitlePlateSource,
 } from "./picture-sources";
-export {
-  createMemoryPictureStore,
-  PICTURE_EPOCH,
-  PICTURE_STORE_CAPS,
-  type PictureKey,
-  type PictureStore,
-  type PictureStoreCaps,
-  pictureKeyPath,
-} from "./picture-store";
 export { previewCostume, previewUrl } from "./preview-costume";
 export {
   keepHirobaEnded,

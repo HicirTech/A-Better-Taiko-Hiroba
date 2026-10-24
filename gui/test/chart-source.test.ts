@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { keepChartSource, keptChartSource } from "../src/songs/chart-source";
+import { keepChartSource, keptChartSource } from "../src/shared/song-catalogue/chart-source";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("keptChartSource", () => {

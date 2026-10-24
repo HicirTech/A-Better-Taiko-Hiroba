@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { mockPlay } from "../scripts/mock-history";
 import { ratingDataAnswer } from "../scripts/mock-rating-data";
-import { ratingDataOf } from "../src/rating/read-rating-data";
+import { ratingDataOf } from "../src/shared/rating-data/read-rating-data";
 
 describe("the stand-in's rating data", () => {
   test("measures each song's Extreme or Ura chart, at the level the stand-in plays it", () => {

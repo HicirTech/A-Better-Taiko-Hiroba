@@ -2,6 +2,8 @@ import type { Translator } from "@abth/i18n";
 import { Button, List, ListItem, ListItemText, Stack } from "@mui/material";
 import { type ReactNode, useId } from "react";
 
+import type { ChartSource } from "../shared/song-catalogue/chart-source";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { AccountCircleIcon } from "../ui/icons";
 import { CARD_GAP } from "../ui/section-card";
 import { GitHubSection } from "./github-section";
@@ -27,6 +29,12 @@ export interface SettingsPageProps {
   /** The language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
   readonly account: AccountState;
+  /** The difficulty whose level songs show in front. */
+  readonly shownDifficulty: ShownDifficulty;
+  readonly onShownDifficulty: (next: ShownDifficulty) => void;
+  /** Where a song's details take their chart pictures from. */
+  readonly chartSource: ChartSource;
+  readonly onChartSource: (next: ChartSource) => void;
   /** The updates section; left out where there is no port to ask. */
   readonly updates?: Omit<UpdatesSectionProps, "i18n">;
   /** Opens the repository's page; the section is left out where nothing can open it. */
@@ -37,6 +45,10 @@ export function SettingsPage({
   i18n,
   language,
   account,
+  shownDifficulty,
+  onShownDifficulty,
+  chartSource,
+  onChartSource,
   updates,
   onOpenRepository,
 }: SettingsPageProps) {
@@ -84,8 +96,8 @@ export function SettingsPage({
         </List>
       </SettingsSection>
       {updates !== undefined && <UpdatesSection i18n={i18n} {...updates} />}
-      <SongLevelsSection i18n={i18n} />
-      <SongDataSection i18n={i18n} />
+      <SongLevelsSection shown={shownDifficulty} i18n={i18n} onShown={onShownDifficulty} />
+      <SongDataSection source={chartSource} i18n={i18n} onSource={onChartSource} />
       {onOpenRepository !== undefined && <GitHubSection i18n={i18n} onOpen={onOpenRepository} />}
     </Stack>
   );

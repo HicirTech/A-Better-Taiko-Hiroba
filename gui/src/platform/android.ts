@@ -43,15 +43,15 @@ import {
   HISTORY_READ_CONSUMERS,
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
-} from "../pipelines";
-import { RATING_DATA_URL } from "../rating/rating-links";
-import { readRatingData } from "../rating/read-rating-data";
+} from "../shared/pipelines";
+import { RATING_DATA_URL } from "../shared/rating-data/rating-links";
+import { readRatingData } from "../shared/rating-data/read-rating-data";
 import {
   type CostumeSet,
   checkedPort,
   type HirobaSessionPort,
   type SignInOutcome,
-} from "../session-port";
+} from "../shared/session-port";
 import {
   CHINESE_NAMES_URL,
   catalogueUrlFor,
@@ -65,8 +65,8 @@ import {
   ESE_MAPPING_URL,
   readChineseNames,
   readSongCatalogue,
-} from "../song-catalogue";
-import { feedUrlFor, readUpdateFeed } from "../updates";
+} from "../shared/song-catalogue";
+import { feedUrlFor, readUpdateFeed } from "../shared/updates";
 import { createIndexedDbHistoryStore } from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
 import {

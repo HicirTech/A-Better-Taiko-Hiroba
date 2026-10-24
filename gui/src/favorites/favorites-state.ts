@@ -1,13 +1,12 @@
 import { type Result, sameFavoriteSong } from "@abth/core";
-
-import { endsTheEdit, type Noticed, noticeOf, refreshed } from "../my-page/write-ending";
 import type {
   FavoriteSongState,
   FavoritesView,
   FolderState,
   ReadFailure,
   WriteOutcomeView,
-} from "../session-port";
+} from "../shared/session-port";
+import { endsTheEdit, type Noticed, noticeOf, refreshed } from "../shared/writes/write-ending";
 
 /** The 大好きな曲 picked and not yet saved; none while nothing is picked. */
 export type SongDraft = FavoriteSongState | null;

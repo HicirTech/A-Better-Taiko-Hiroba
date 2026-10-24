@@ -1,10 +1,10 @@
 import { Stack } from "@mui/material";
 
 import { MedalCard } from "../my-page/medal-card";
-import type { OpenAction } from "../my-page/open-button";
 import { OverviewHeader } from "../my-page/overview-header";
 import { PanelCard } from "../my-page/panel-card";
-import { SongSearch } from "../songs/song-search";
+import { SongSearch } from "../song-search/song-search";
+import type { OpenAction } from "../ui/open-button";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { MyPageFailure } from "./my-page-failure";
 import type { PageData } from "./page";
@@ -19,7 +19,19 @@ export function OverviewPage({ data }: { readonly data: PageData }) {
   const portrait: OpenAction = { open: () => navigate("costume"), byLongPress: touchFirst };
   const namePlate: OpenAction = { open: () => navigate("nameTitle"), byLongPress: touchFirst };
   return (
-    <SongSearch catalogue={catalogue} port={port} lane={lane} i18n={i18n} onOpen={data.wantSongs}>
+    <SongSearch
+      catalogue={catalogue}
+      port={port}
+      lane={lane}
+      touchFirst={touchFirst}
+      wide={data.wide}
+      modalLook={data.modalLook}
+      shownDifficulty={data.shownDifficulty}
+      chartSource={data.chartSource}
+      keptSearches={data.keptSearches}
+      i18n={i18n}
+      onOpen={data.wantSongs}
+    >
       {(searching) => (
         <Stack spacing={OVERVIEW_SPACING} sx={searching ? HIDDEN : undefined}>
           {screen.name === "profile" ? (

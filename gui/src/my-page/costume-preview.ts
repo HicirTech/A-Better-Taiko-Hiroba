@@ -1,7 +1,6 @@
 import type { Result } from "@abth/core";
-
-import type { CostumePreviewFailure, CostumeSet } from "../session-port";
-import { COSTUME_PARTS } from "./costume-parts";
+import { COSTUME_PARTS } from "../shared/costume-parts";
+import type { CostumePreviewFailure, CostumeSet } from "../shared/session-port";
 
 export interface PreviewState {
   /** The last picture that came, as a data: URL. */

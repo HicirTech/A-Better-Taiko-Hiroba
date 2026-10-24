@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import { native } from "./capacitor-fakes";
 
 const { androidToast } = await import("../src/platform/android-toast");
-const { nameByLongPress } = await import("../src/my-page/name-by-long-press");
+const { nameByLongPress } = await import("../src/ui/name-by-long-press");
 
 describe("nameByLongPress", () => {
   beforeEach(() => native.reset());

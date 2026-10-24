@@ -1,4 +1,4 @@
-import { BELOW_TOP_BAND, WHEN_TALL } from "../navigation/app-frame";
+import { BELOW_TOP_BAND, WHEN_TALL } from "../ui/frame-top";
 import { publishHeightOf } from "../ui/publish-height";
 import { SYNC_BAR_HEIGHT } from "../ui/sync-bar";
 import { RING_ROOM_PX } from "./pick-ring";

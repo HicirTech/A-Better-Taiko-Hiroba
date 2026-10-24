@@ -1,19 +1,8 @@
 import type { Translator } from "@abth/i18n";
 import { Box, IconButton, Stack, Typography } from "@mui/material";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
-
-import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
-import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
-import { useBackLeaves } from "../navigation/back-closers";
-import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { HirobaSessionPort } from "../session-port";
-import { SongDetails } from "../songs/song-details";
-import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
-import { ListIcon } from "../ui/icons";
-import { LoadFailed } from "../ui/read-failure-alert";
-import { CARD_GAP } from "../ui/section-card";
-import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
+import type { HirobaSessionPort } from "../shared/session-port";
 import {
   filledSlots,
   moved,
@@ -21,22 +10,33 @@ import {
   SET_SONG_LIMIT,
   sameSongs,
   toggledSongs,
-} from "./favorite-sets";
+} from "../shared/sets/favorite-sets";
+import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
+import type { ChartSource } from "../shared/song-catalogue/chart-source";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
+import { rememberedSongs, resolveSong } from "../shared/song-catalogue/song-look";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { SetNameDialog } from "../songs/set-name-dialog";
+import { SongDetails } from "../songs/song-details";
+import type { DetailsOpener } from "../songs/song-look-row";
+import { useBackLeaves } from "../ui/back-closers";
+import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
+import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
+import { ListIcon } from "../ui/icons";
+import type { ModalLook } from "../ui/large-modal";
+import { LoadFailed } from "../ui/read-failure-alert";
+import { CARD_GAP } from "../ui/section-card";
+import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
+import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
 import type { PickableState } from "./pickable-songs";
-import { SetNameDialog } from "./set-name-dialog";
 import { SetView } from "./set-view";
 import { SetsDrawer } from "./sets-drawer";
-import { keptShownDifficulty, ShownDifficultyContext } from "./shown-difficulty";
 import { SongCard } from "./song-card";
-import { rememberedSongs, resolveSong } from "./song-look";
-import type { DetailsOpener } from "./song-look-row";
 import { SongPicker } from "./song-picker";
-import { useFavoriteSets } from "./use-favorite-sets";
 import type { FavoritesEditor } from "./use-favorites";
 import { useSetsSwipe } from "./use-sets-swipe";
-import type { SongCatalogue } from "./use-song-catalogue";
 
 const NO_SONGS: readonly string[] = [];
 
@@ -60,32 +60,42 @@ export interface FavoritesPageProps {
   readonly pickable: PickableState;
   /** As a picker opens: reads the list when it is stale. */
   readonly onPickerOpen: () => void;
+  /** The sets kept on this device, which the drawer lists. */
+  readonly keptSets: FavoriteSets;
+  /** A touch screen: swipes open the sets, and a long press a song's menu. */
+  readonly touchFirst: boolean;
+  /** The navigation's menu is open, which the sets' swipe leaves alone. */
+  readonly menuOpen: boolean;
+  /** The pipelines page lies over the page, which the sets' swipe leaves alone. */
+  readonly pipelinesShown: boolean;
+  /** The difficulty whose level the songs show in front of the others. */
+  readonly shownDifficulty: ShownDifficulty;
+  /** Where a song's details take their chart pictures from. */
+  readonly chartSource: ChartSource;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }
 
-/** The page, with the difficulty whose levels the songs show first, as kept when it opened. */
-export function FavoritesPage(props: FavoritesPageProps) {
-  const [shownDifficulty] = useState(keptShownDifficulty);
-  return (
-    <ShownDifficultyContext value={shownDifficulty}>
-      <FavoritesBody {...props} />
-    </ShownDifficultyContext>
-  );
-}
-
-function FavoritesBody({
+/** The page: Hiroba's お気に入り and 大好きな曲, and the sets kept on the device. */
+export function FavoritesPage({
   favorites,
   catalogue,
   port,
   lane,
   pickable,
   onPickerOpen,
+  keptSets,
+  touchFirst,
+  menuOpen,
+  pipelinesShown,
+  shownDifficulty,
+  chartSource,
+  modalLook,
   i18n,
 }: FavoritesPageProps) {
   const { t, locale } = i18n;
   const { step, pickSong } = favorites;
   const shown = shownFavoritesOf(step);
-  const keptSets = useFavoriteSets();
   const { sets } = keptSets;
   // The folder on Hiroba is shown until a set is picked from the drawer.
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -103,11 +113,12 @@ function FavoritesBody({
   const [openSongNo, setOpenSongNo] = useState<string | null>(null);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
-  const touchFirst = useTouchFirst();
   // A song's details stand over the page, so the sets' swipe waits until they shut.
   useSetsSwipe({
     active: touchFirst && openSongNo === null,
     open: drawerOpen,
+    menuOpen,
+    covered: pipelinesShown,
     onOpenChange: setDrawerOpen,
   });
 
@@ -231,6 +242,7 @@ function FavoritesBody({
             key={set.id}
             songs={editedSongs}
             look={look}
+            shownDifficulty={shownDifficulty}
             i18n={i18n}
             openDetails={openDetails}
             editing={editing}
@@ -257,6 +269,7 @@ function FavoritesBody({
               <SongCard
                 shown={shown}
                 look={look}
+                shownDifficulty={shownDifficulty}
                 i18n={i18n}
                 openDetails={openDetails}
                 onChange={() => openPicker("song")}
@@ -264,6 +277,7 @@ function FavoritesBody({
               <FolderCard
                 shown={shown}
                 look={look}
+                shownDifficulty={shownDifficulty}
                 i18n={i18n}
                 openDetails={openDetails}
                 sets={sets}
@@ -335,6 +349,9 @@ function FavoritesBody({
         choice={songChoice}
         catalogue={catalogue}
         pickable={pickable}
+        shownDifficulty={shownDifficulty}
+        touchFirst={touchFirst}
+        modalLook={modalLook}
         i18n={i18n}
         onClose={() => setPicking(null)}
       />
@@ -353,6 +370,9 @@ function FavoritesBody({
           choice={setChoice}
           catalogue={catalogue}
           pickable={pickable}
+          shownDifficulty={shownDifficulty}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
           i18n={i18n}
           onClose={() => setPicking(null)}
         />
@@ -361,6 +381,10 @@ function FavoritesBody({
         song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
         port={port}
         lane={lane}
+        modalLook={modalLook}
+        touchFirst={touchFirst}
+        chartSource={chartSource}
+        shownDifficulty={shownDifficulty}
         i18n={i18n}
         onClose={() => setOpenSongNo(null)}
       />

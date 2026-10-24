@@ -1,9 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { createTranslator } from "@abth/i18n";
-
-import { invalidFieldText, outcomeWords } from "../src/my-page/outcome-words";
-import type { Noticed } from "../src/my-page/write-ending";
-import type { WriteKind, WriteSets } from "../src/session-port";
+import type { WriteKind, WriteSets } from "../src/shared/session-port";
+import { invalidFieldText, outcomeWords } from "../src/shared/writes/outcome-words";
+import type { Noticed } from "../src/shared/writes/write-ending";
 import { START_SET } from "./hiroba-stand-in";
 
 const i18n = createTranslator("en");

@@ -3,13 +3,13 @@ import { watch } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
 import { createServer } from "vite";
-import { RATING_DATA_URL } from "../src/rating/rating-links";
+import { RATING_DATA_URL } from "../src/shared/rating-data/rating-links";
 import {
   CHINESE_NAMES_URL,
   ESE_CHARTS_URL,
   ESE_MAPPING_URL,
   SONG_CATALOGUE_URL,
-} from "../src/song-catalogue";
+} from "../src/shared/song-catalogue";
 import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "./mock-ese";
 
 const root = join(import.meta.dir, "..");

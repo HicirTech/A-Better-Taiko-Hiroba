@@ -1,5 +1,5 @@
 /** Scores: read only when asked, every list and played chart first, then what recent plays name. */
-import { LONG_HOLD_MS } from "../../src/read-again/pull-gesture";
+import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
 import { en, HIROBA, TOP_BAND_PX } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";

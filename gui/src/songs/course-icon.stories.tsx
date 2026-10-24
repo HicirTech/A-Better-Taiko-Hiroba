@@ -1,8 +1,8 @@
 import { Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { DIFFICULTY_LABEL } from "../favorites/genre-look";
-import { DIFFICULTIES } from "../song-catalogue/types";
+import { DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
+import { DIFFICULTIES } from "../shared/song-catalogue/types";
 import { i18nOf } from "../story-kit/env";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { CourseIcon } from "./course-icon";

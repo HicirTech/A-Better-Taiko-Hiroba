@@ -1,10 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box, ButtonBase, Typography } from "@mui/material";
 import { Fragment, type ReactNode } from "react";
-
-import { ShareBar, ShareLegend } from "../my-page/share-block";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
+import { ShareBar, ShareLegend } from "../profile/share-block";
 import { ArrowDropDownIcon } from "../ui/icons";
 import type { Segment } from "./segments";
 

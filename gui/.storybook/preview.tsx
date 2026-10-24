@@ -4,9 +4,8 @@ import { LOCALE_NAMES, LOCALES } from "@abth/i18n";
 import { CssBaseline, type Theme, ThemeProvider, useColorScheme } from "@mui/material";
 import type { Preview } from "@storybook/react-vite";
 import { type ReactNode, useEffect, useMemo } from "react";
-
-import { forgetSetting, pageStorage } from "../src/kept-settings";
-import { systemLocale } from "../src/language/locale-choice";
+import { forgetSetting, pageStorage } from "../src/shared/kept-settings";
+import { systemLocale } from "../src/shared/language/locale-choice";
 import { DEVICES, deviceOf, isTouchScreen } from "../src/story-kit/devices";
 import { appTheme } from "../src/theme/app-theme";
 

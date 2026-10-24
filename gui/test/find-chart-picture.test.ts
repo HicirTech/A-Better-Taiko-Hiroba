@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Result } from "@abth/core";
 
-import type { HirobaSessionPort, PictureView } from "../src/session-port";
-import type { ChartFileFailure, Difficulty } from "../src/song-catalogue/types";
+import type { HirobaSessionPort, PictureView } from "../src/shared/session-port";
+import type { ChartFileFailure, Difficulty } from "../src/shared/song-catalogue/types";
 import { type ChartFinding, findChartPicture, reloadCharts } from "../src/songs/find-chart-picture";
 import { png } from "./picture-fixtures";
 

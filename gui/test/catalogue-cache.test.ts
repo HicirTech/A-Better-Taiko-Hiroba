@@ -6,8 +6,8 @@ import {
   loadCatalogue,
   mergeCatalogue,
   nextCatalogueRead,
-} from "../src/favorites/catalogue-cache";
-import type { CatalogueSong } from "../src/song-catalogue/types";
+} from "../src/shared/song-catalogue/catalogue-cache";
+import type { CatalogueSong } from "../src/shared/song-catalogue/types";
 import { song } from "./song-fixtures";
 import { memoryStorage, refusing } from "./storage-fakes";
 

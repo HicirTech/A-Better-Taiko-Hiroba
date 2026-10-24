@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { createTranslator, LOCALES } from "@abth/i18n";
 
-import { FAILURE_MESSAGE, failureMessageOf } from "../src/read-failure-message";
-import type { ReadFailureKind } from "../src/session-port";
+import { FAILURE_MESSAGE, failureMessageOf } from "../src/shared/read-failure-message";
+import type { ReadFailureKind } from "../src/shared/session-port";
 
 const jst = (time: string) => new Date(`2026-10-23T${time}+09:00`);
 

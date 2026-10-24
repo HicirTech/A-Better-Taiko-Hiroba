@@ -1,7 +1,7 @@
 import { courseLevel } from "@abth/core";
 
-import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import type { Difficulty } from "../song-catalogue/types";
+import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
+import type { Difficulty } from "../shared/song-catalogue/types";
 import { type CourseSpecifier, getChartInfo } from "../vendor/tja-renderer";
 
 const difficultyOf = (course: string): Difficulty | undefined => {

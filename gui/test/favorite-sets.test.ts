@@ -17,7 +17,7 @@ import {
   sameSongs,
   setSongs,
   toggledSongs,
-} from "../src/favorites/favorite-sets";
+} from "../src/shared/sets/favorite-sets";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 const set = (id: string, songs: string[] = [], name = `Set ${id}`): FavoriteSet => ({

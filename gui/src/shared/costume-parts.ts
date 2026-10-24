@@ -1,0 +1,57 @@
+import type { MessageKey, Translator } from "@abth/i18n";
+
+import type { CostumeEditorView, CostumeSet, CostumeSlot } from "./session-port";
+
+/** The three colours, in the order the site's tabs give them: かお, どう, てあし. */
+export const COLOUR_PARTS = ["colorFace", "colorBody", "colorLimb"] as const;
+/** The five slots, きぐるみ first: slot N is SLOT_PARTS[N - 1]. */
+export const SLOT_PARTS = ["costume1", "costume2", "costume3", "costume4", "costume5"] as const;
+export const COSTUME_PARTS = [...COLOUR_PARTS, ...SLOT_PARTS] as const;
+
+export type ColourPart = (typeof COLOUR_PARTS)[number];
+export type SlotPart = (typeof SLOT_PARTS)[number];
+export type CostumePart = keyof CostumeSet;
+
+/** The slots as the tiles show them: the きぐるみ, often empty, comes last. */
+export const SLOT_TILE_ORDER: readonly SlotPart[] = [...SLOT_PARTS.slice(1), SLOT_PARTS[0]];
+
+export const PART_LABEL = {
+  colorFace: "costume.part.colorFace",
+  colorBody: "costume.part.colorBody",
+  colorLimb: "costume.part.colorLimb",
+  costume1: "costume.part.costume1",
+  costume2: "costume.part.costume2",
+  costume3: "costume.part.costume3",
+  costume4: "costume.part.costume4",
+  costume5: "costume.part.costume5",
+} as const satisfies Record<CostumePart, MessageKey>;
+
+export function isCostumePart(field: string): field is CostumePart {
+  return Object.hasOwn(PART_LABEL, field);
+}
+
+export function isSlotPart(part: CostumePart): part is SlotPart {
+  return (SLOT_PARTS as readonly CostumePart[]).includes(part);
+}
+
+/** The slot a piece is in, as Hiroba numbers it: 1 for the きぐるみ to 5 for the ぷちキャラ. */
+export function slotOf(part: SlotPart): CostumeSlot {
+  return (SLOT_PARTS.indexOf(part) + 1) as CostumeSlot;
+}
+
+/** A slot's items: the owned ones in the page's order, and the one worn if the list lacks it. */
+export function itemsOf(editor: CostumeEditorView, part: SlotPart): number[] {
+  const owned = editor.slots[SLOT_PARTS.indexOf(part)] ?? [];
+  const worn = editor.state[part];
+  return [...owned, ...(worn !== 0 && !owned.includes(worn) ? [worn] : [])];
+}
+
+/** A tile's accessible name: the part, then its pick; an empty slot is the part alone. */
+export function tileName(part: CostumePart, pick: number, { t }: Translator): string {
+  const name = t(PART_LABEL[part]);
+  return isSlotPart(part) && pick === 0 ? name : t("costume.item.label", { part: name, id: pick });
+}
+
+export function changedParts(from: CostumeSet, to: CostumeSet): CostumePart[] {
+  return COSTUME_PARTS.filter((part) => from[part] !== to[part]);
+}

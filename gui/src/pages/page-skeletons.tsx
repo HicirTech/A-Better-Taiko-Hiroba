@@ -1,18 +1,16 @@
 import { Box, Skeleton, Stack } from "@mui/material";
-
-import { SongLookRowSkeleton } from "../favorites/song-look-row";
-import { PlayRowsSkeleton } from "../history/play-row";
-import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { MedalCardSkeleton } from "../my-page/medal-card";
 import { OverviewHeaderSkeleton } from "../my-page/overview-header";
-import { ShareBlockSkeleton } from "../my-page/share-block";
-import { TitlePlateSkeleton } from "../my-page/title-plate";
-import { FrameTop } from "../navigation/app-frame";
-import { useTouchFirst } from "../navigation/use-touch-first";
+import { ShareBlockSkeleton } from "../profile/share-block";
+import { TitlePlateSkeleton } from "../profile/title-plate";
+import { PlayRowsSkeleton } from "../songs/play-row";
+import { SongLookRowSkeleton } from "../songs/song-look-row";
+import { COLUMN_MAX_WIDTH_PX, FrameTop } from "../ui/frame-top";
 import { SearchFieldSkeleton } from "../ui/search-field";
 import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
 import { SectionTitleSkeleton } from "../ui/section-title";
 import { SYNC_BAR_PAGE, SyncBarSkeleton } from "../ui/sync-bar";
+import type { SkeletonProps } from "./page";
 
 // Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
 const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" } as const;
@@ -21,18 +19,18 @@ const HEADING = { fontSize: "1rem", lineHeight: 1.75 } as const;
 const KNOW_CARDS = [...Array(6).keys()];
 const FOLDER_ROWS = [...Array(8).keys()];
 
-function SearchBand() {
+function SearchBand({ touchFirst, wide }: SkeletonProps) {
   return (
-    <FrameTop>
+    <FrameTop wide={wide} touchFirst={touchFirst}>
       <SearchFieldSkeleton />
     </FrameTop>
   );
 }
 
-export function OverviewSkeleton() {
+export function OverviewSkeleton(screen: SkeletonProps) {
   return (
     <>
-      <SearchBand />
+      <SearchBand {...screen} />
       <Stack spacing={3}>
         <Stack sx={{ alignItems: "center" }}>
           <OverviewHeaderSkeleton />
@@ -51,10 +49,10 @@ export function HistorySkeleton() {
   return <PlayRowsSkeleton />;
 }
 
-export function ScoresSkeleton() {
+export function ScoresSkeleton(screen: SkeletonProps) {
   return (
     <>
-      <SearchBand />
+      <SearchBand {...screen} />
       <Stack spacing={2}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
           {[80, 170, 72, 64].map((width) => (
@@ -130,9 +128,8 @@ export function NameTitleSkeleton() {
   );
 }
 
-export function FavoritesSkeleton() {
+export function FavoritesSkeleton({ touchFirst }: SkeletonProps) {
   // A touch screen opens the sets by a swipe, so it has no button for them.
-  const touchFirst = useTouchFirst();
   return (
     <Box sx={{ ...SYNC_BAR_PAGE, ...COLUMN }}>
       <Stack spacing={2} sx={{ pb: 2 }}>

@@ -857,7 +857,7 @@ under hashed names, but apart: in `charts` beside `pictures` on the desktop, and
 `abth-charts` on Android.
 
 Nothing in the app deletes a picture but a new `PICTURE_EPOCH` in
-`src/hiroba-session/picture-store.ts`: the next launch clears whatever an older one kept. To clear
+`src/shared/picture-store.ts`: the next launch clears whatever an older one kept. To clear
 them by hand, delete the `pictures` folder, or clear the Android app's data.
 
 ## Signing in for real

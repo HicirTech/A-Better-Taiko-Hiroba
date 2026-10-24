@@ -1,7 +1,5 @@
 import { Menu, MenuItem } from "@mui/material";
 import { type MouseEvent, useState } from "react";
-
-import { type LongPressHandlers, useLongPressLetGo } from "../my-page/use-long-press";
 import {
   type ItemAction,
   type OpenedItem,
@@ -10,6 +8,7 @@ import {
   runsAtOnce,
 } from "./item-actions";
 import { SimpleDialog } from "./simple-dialog";
+import { type LongPressHandlers, useLongPressLetGo } from "./use-long-press";
 
 const DESTRUCTIVE = { color: "error.main" } as const;
 

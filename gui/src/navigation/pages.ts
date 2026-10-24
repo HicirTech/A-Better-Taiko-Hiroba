@@ -1,4 +1,4 @@
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
+import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
 
 /** The window's pages, in the order the navigation lists them. */
 export const PAGES = [

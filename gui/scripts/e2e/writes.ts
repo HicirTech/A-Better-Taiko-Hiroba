@@ -1,4 +1,4 @@
-import type { VerbsQueued } from "../../src/session-port";
+import type { VerbsQueued } from "../../src/shared/session-port";
 import { INITIAL_PROFILE } from "../mock-profile";
 import { DAN_LABEL, HIROBA } from "./config";
 import type { Ctx } from "./context";

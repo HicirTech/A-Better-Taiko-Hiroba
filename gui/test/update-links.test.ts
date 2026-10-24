@@ -7,7 +7,7 @@ import {
   REPOSITORY_URL,
   releaseUrl,
   UPDATE_FEED_URL,
-} from "../src/updates";
+} from "../src/shared/updates";
 
 describe("the feed's address", () => {
   test("is the latest release's update.json", () => {

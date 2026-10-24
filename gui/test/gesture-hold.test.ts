@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { gesturesHeld, holdGestures } from "../src/navigation/gesture-hold";
+import { gesturesHeld, holdGestures } from "../src/ui/gesture-hold";
 
 describe("holdGestures", () => {
   test("holds until every hold is let go, and letting go twice counts once", () => {

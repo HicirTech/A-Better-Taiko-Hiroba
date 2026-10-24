@@ -3,16 +3,20 @@ import { type ChartDensity, err, ok, tjaDensities } from "@abth/core";
 import { MISSING_CHART, standInTja } from "../../scripts/mock-ese";
 import { chartPicturePng } from "../../scripts/mock-pictures";
 import { CHART_PICTURE_PATHS, WIKI_SONGS, type WikiSong } from "../../scripts/mock-song-catalogue";
-import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import type { PipelineView } from "../pipelines/pipeline-view";
+import type { PipelineView } from "../shared/pipelines/pipeline-view";
 import type {
   HirobaSessionPort,
   PictureView,
   PipelinesView,
   TitleEditorView,
   WriteOutcomeView,
-} from "../session-port";
-import { DIFFICULTIES, type Difficulty, type SongDensityRead } from "../song-catalogue/types";
+} from "../shared/session-port";
+import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
+import {
+  DIFFICULTIES,
+  type Difficulty,
+  type SongDensityRead,
+} from "../shared/song-catalogue/types";
 import { portraitOf, STORY_EDITOR, STORY_HISTORY } from "./costume";
 import { STORY_PICKABLE, storyFavorites } from "./favorites";
 import { packData, packView } from "./pack";

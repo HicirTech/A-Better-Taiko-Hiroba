@@ -8,14 +8,14 @@ import {
   type PipelineLog,
   resultFailure,
   viewOfPipeline,
-} from "../pipelines";
+} from "../shared/pipelines";
 import {
   type HirobaSessionPort,
   type PipelinesView,
   PORT_QUEUEING,
   type PortImplementation,
   type WriteOutcomeView,
-} from "../session-port";
+} from "../shared/session-port";
 import { PICTURE_OPERATION } from "./read-picture";
 import { BUSY_OUTCOME } from "./session-writes";
 

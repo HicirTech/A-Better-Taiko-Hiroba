@@ -5,9 +5,8 @@ import {
   type Transport,
   type TransportResponse,
 } from "@abth/core";
-
-import { type DanNumber, type DanView, isWhole, type PictureView } from "../session-port";
-import { checkPng, describeAnswer, pngDataUrl } from "./png-answer";
+import { checkPng, describeAnswer, pngDataUrl } from "../shared/png-answer";
+import { type DanNumber, type DanView, isWhole, type PictureView } from "../shared/session-port";
 import type { HirobaEndpoints } from "./types";
 
 const LABEL_PATH = "/imgsrc_danlabel.php";

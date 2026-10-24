@@ -2,17 +2,16 @@ import type { MedalProgress } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { useRef } from "react";
-
-import { HIROBA_LANG } from "../language/show-language";
 import { HirobaPicture } from "../pictures/hiroba-picture";
+import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "../pictures/hiroba-px";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
-import type { PictureWant, ProfileView } from "../session-port";
+import { HIROBA_LANG } from "../shared/language/show-language";
+import type { PictureWant, ProfileView } from "../shared/session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SectionTitle, SectionTitleSkeleton } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
-import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
 
 // Hiroba's どんメダル block: a picture across the 290-pixel area, in a block 52 high at least, with
 // its words lifted onto the picture from the line below it, by these offsets.

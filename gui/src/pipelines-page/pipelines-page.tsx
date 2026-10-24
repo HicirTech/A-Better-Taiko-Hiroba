@@ -2,8 +2,8 @@ import type { Translator } from "@abth/i18n";
 import { Stack } from "@mui/material";
 import { useState } from "react";
 
-import { KEPT_GROUPS } from "../pipelines";
-import type { HirobaSessionPort } from "../session-port";
+import { KEPT_GROUPS } from "../shared/pipelines";
+import type { HirobaSessionPort } from "../shared/session-port";
 import { CARD_GAP } from "../ui/section-card";
 import { ENDED_CELLS } from "./pipeline-rows";
 import { PipelineSection } from "./pipeline-section";

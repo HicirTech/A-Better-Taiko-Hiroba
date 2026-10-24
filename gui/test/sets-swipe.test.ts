@@ -1,12 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { type SetsSwipeContext, setsSwipeStarted } from "../src/favorites/sets-swipe";
-import {
-  OPENING_AREA_SHARE,
-  SWIPE_DISTANCE_PX,
-  swipeReached,
-} from "../src/navigation/swipe-gesture";
-import type { TouchPoint } from "../src/read-again/pull-gesture";
+import type { TouchPoint } from "../src/ui/pull-gesture";
+import { OPENING_AREA_SHARE, SWIPE_DISTANCE_PX, swipeReached } from "../src/ui/swipe-gesture";
 
 const WINDOW_WIDTH_PX = 360;
 const OPENING_LIMIT_PX = WINDOW_WIDTH_PX - WINDOW_WIDTH_PX * OPENING_AREA_SHARE;

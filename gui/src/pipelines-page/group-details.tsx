@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 
-import type { EndedGroup, GroupNow, PipelineView, SentRequest } from "../pipelines";
+import type { EndedGroup, GroupNow, PipelineView, SentRequest } from "../shared/pipelines";
 import { groupName } from "./operation-names";
 import type { Picked } from "./pipeline-rows";
 

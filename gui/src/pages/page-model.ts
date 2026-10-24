@@ -1,14 +1,14 @@
 import type { MessageKey, TranslateParams } from "@abth/i18n";
 
 import type { PickableReading } from "../favorites/use-pickable-songs";
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import type { RecentPlaysState } from "../history/use-recent-plays";
 import type { NameEditor } from "../name-title/use-name-editor";
 import type { TitleEditor } from "../name-title/use-title-editor";
 import type { Page } from "../navigation/pages";
 import type { RatingDataState } from "../rating/use-rating-data";
-import type { ScoresState } from "../scores/use-scores";
-import type { ListedChartsView, ProfileView, ReadFailureKind } from "../session-port";
+import type { ScoresState } from "../shared/scores/use-scores";
+import type { ListedChartsView, ProfileView, ReadFailureKind } from "../shared/session-port";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 
 /** Where the window stands with the player's session. */
 export type Screen =
@@ -60,6 +60,10 @@ export interface PageState {
   readonly titleEditor: Pick<TitleEditor, "dropEdits" | "forgetList">;
   readonly nameEditor: Pick<NameEditor, "dropEdits">;
   readonly favorites: EditorReads;
+  /** The sets kept on this device, read again as a page that shows them opens. */
+  readonly keptSets: { readonly reload: () => void };
+  /** The searches kept on this device, read again as the Overview opens. */
+  readonly keptSearches: { readonly reload: () => void };
 }
 
 /** All of a page's data read again from nothing, asked for by a six-second hold. */
@@ -131,6 +135,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     namesSongs: true,
     needsSongs: false,
     drawsFailure: true,
+    opens: ({ keptSearches }) => [keptSearches.reload],
     waits: () => false,
     reading: ({ session }) => session.myPageInView,
     readAgain: readMyPage,
@@ -139,7 +144,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     label: "nav.history",
     namesSongs: true,
     needsSongs: true,
-    opens: ({ history, scores }) => [history.load, scores.load],
+    opens: ({ history, scores, keptSets }) => [history.load, scores.load, keptSets.reload],
     waits: ({ history }) => history.plays === null,
     reading: ({ history }) => history.reading,
     readAgain: ({ history, scores }) => void history.read().then(scores.markStale),
@@ -183,7 +188,11 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     namesSongs: true,
     needsSongs: true,
     // A song list that could not be read is read again as the page opens.
-    opens: ({ scores, catalogue }) => [scores.load, catalogue.readIfFailed],
+    opens: ({ scores, catalogue, keptSets }) => [
+      scores.load,
+      catalogue.readIfFailed,
+      keptSets.reload,
+    ],
     waits: ({ scores, listed, catalogue }) =>
       scores.view === null || listed === null || catalogue.state === "loading",
     reading: scoresRead,
@@ -221,6 +230,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     readLabel: "favorites.reading",
     namesSongs: true,
     needsSongs: true,
+    opens: ({ keptSets }) => [keptSets.reload],
     firstRead: ({ favorites, writing }) => dueFirst(favorites, writing),
     waits: ({ favorites }) => readsFirst(favorites),
     reading: ({ favorites }) => favorites.reading,

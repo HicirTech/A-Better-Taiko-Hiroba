@@ -1,4 +1,4 @@
-import type { CostumeHistoryEntry } from "../session-port";
+import type { CostumeHistoryEntry } from "../shared/session-port";
 
 /** Each player's costume history, kept on the device. Per taiko number, since one device can hold
  * more than one card. */

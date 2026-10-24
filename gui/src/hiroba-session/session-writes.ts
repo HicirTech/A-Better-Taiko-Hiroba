@@ -22,7 +22,7 @@ import {
   type WriteKind,
   type WriteOutcomeView,
   type WriteSets,
-} from "../session-port";
+} from "../shared/session-port";
 import { changeCostume } from "./change-costume";
 import { changeFavoriteSong } from "./change-favorite-song";
 import { changeFolder } from "./change-folder";

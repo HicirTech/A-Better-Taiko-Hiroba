@@ -26,7 +26,7 @@ import {
   type PictureStore,
   pictureKeyPath,
 } from "../src/hiroba-session";
-import type { Pipeline } from "../src/pipelines";
+import type { Pipeline } from "../src/shared/pipelines";
 
 const ORIGIN = "https://hiroba.test";
 const IMG_ORIGIN = "https://img.test";

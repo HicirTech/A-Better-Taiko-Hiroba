@@ -1,6 +1,6 @@
 import type { ScoreBook } from "@abth/core";
 
-import type { ListedChart, ListedChartsView } from "../session-port";
+import type { ListedChart, ListedChartsView } from "../shared/session-port";
 
 /** Every chart the lists name, in song number order; one whose song left the lists is not. */
 export function listedChartsOf(book: ScoreBook): ListedChartsView {

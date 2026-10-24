@@ -1,8 +1,11 @@
 import type { Genre, Level } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-
-import { DIFFICULTY_LABEL, GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import type { PictureWant } from "../session-port";
+import type { PictureWant } from "../shared/session-port";
+import {
+  DIFFICULTY_LABEL,
+  GENRE_LABEL,
+  LEVEL_DIFFICULTY,
+} from "../shared/song-catalogue/genre-look";
 
 /** Each operation's name on the pipelines page, by the name its group runs as. */
 export const OPERATION_NAMES: Readonly<Record<string, MessageKey>> = {

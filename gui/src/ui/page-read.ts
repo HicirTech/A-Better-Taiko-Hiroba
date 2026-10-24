@@ -1,7 +1,7 @@
 import { keyframes } from "@emotion/react";
 import { useEffect, useState } from "react";
 
-import { FADE_MS, moveWindow } from "../navigation/window-move";
+import { FADE_MS, moveWindow } from "./window-move";
 
 /** How long a read may run before its page shows a skeleton: a quicker one shows none. */
 export const SKELETON_AFTER_MS = 400;

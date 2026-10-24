@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 
-import type { HirobaSessionPort } from "../session-port";
+import type { HirobaSessionPort } from "../shared/session-port";
 import { desktopLink } from "./desktop-link";
 import type { SystemBack } from "./system-back";
 import type { SystemLink } from "./system-link";

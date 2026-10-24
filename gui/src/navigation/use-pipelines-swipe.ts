@@ -1,9 +1,8 @@
 import { useContext } from "react";
-
-import { pointOf } from "../read-again/pull-gesture";
-import { BackClosersContext } from "./back-closers";
-import { pipelinesSwipeStarted, type SwipeDirection } from "./swipe-gesture";
-import { inTextField, useSwipe } from "./use-swipe";
+import { BackClosersContext } from "../ui/back-closers";
+import { pointOf } from "../ui/pull-gesture";
+import { pipelinesSwipeStarted, type SwipeDirection } from "../ui/swipe-gesture";
+import { inTextField, useSwipe } from "../ui/use-swipe";
 
 export interface PipelinesSwipeProps {
   /** Whether the screen is touch-first and has a pipelines page to go to. */

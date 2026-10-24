@@ -1,12 +1,11 @@
 import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 import type { ReactNode } from "react";
-
-import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL } from "../favorites/genre-look";
-import { LEVEL_BADGES_LOOK } from "../favorites/level-badges";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { Difficulty } from "../song-catalogue/types";
+import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
+import type { Difficulty } from "../shared/song-catalogue/types";
 import { CourseIcon } from "./course-icon";
+import { LEVEL_BADGES_LOOK } from "./level-badges";
 
 /** The side of a row's marks: a chart's difficulty icon, and a play's crown, rank and options. */
 export const CHART_MARK_PX = 20;

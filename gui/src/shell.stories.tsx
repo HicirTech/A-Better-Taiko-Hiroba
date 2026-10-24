@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { action } from "storybook/actions";
 
-import { rememberLocale } from "./language/locale-choice";
+import { rememberLocale } from "./shared/language/locale-choice";
 import { Shell } from "./shell";
 import { localeOf, STORY_LINK, type StoryGlobals } from "./story-kit/env";
 import { createStoryPort } from "./story-kit/story-port";

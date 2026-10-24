@@ -3,11 +3,10 @@ import { Box, Paper } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
-
+import { moved } from "../shared/sets/favorite-sets";
 import { touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SETS } from "../story-kit/sets";
-import { moved } from "./favorite-sets";
 import { type SortableItem, SortableList } from "./sortable-list";
 
 interface Args {

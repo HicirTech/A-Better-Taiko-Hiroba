@@ -2,10 +2,9 @@ import { spaced, type TitleOption } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Autocomplete, Box, Chip, TextField, Typography } from "@mui/material";
 import { type ReactNode, useMemo, useState } from "react";
-
-import { HIROBA_LANG } from "../language/show-language";
-import { useBackCloses } from "../navigation/back-closers";
-import { failureMessageOf } from "../read-failure-message";
+import { HIROBA_LANG } from "../shared/language/show-language";
+import { failureMessageOf } from "../shared/read-failure-message";
+import { useBackCloses } from "../ui/back-closers";
 import type { TitleList } from "./title-editor-state";
 import { currentOptions, filterTitles } from "./title-options";
 

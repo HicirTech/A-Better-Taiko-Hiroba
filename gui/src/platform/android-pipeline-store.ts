@@ -1,4 +1,4 @@
-import { type PipelineHistoryStore, readPipelineHistory } from "../pipelines";
+import { type PipelineHistoryStore, readPipelineHistory } from "../shared/pipelines";
 import { completed, type DatabaseFactory, lazyDatabase, succeeded } from "./android-indexeddb";
 
 const DATABASE = "abth-pipelines";

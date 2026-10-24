@@ -1,4 +1,4 @@
-import { type FavoriteSet, SET_SONG_LIMIT } from "../favorites/favorite-sets";
+import { type FavoriteSet, SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import { STORY_SONGS } from "./songs";
 
 const songNos = STORY_SONGS.map((song) => song.songNo);

@@ -1,8 +1,7 @@
 import { useCallback, useRef, useState } from "react";
-
+import { moveWindow } from "../ui/window-move";
 import { pageMove } from "./page-move";
 import type { Page } from "./pages";
-import { moveWindow } from "./window-move";
 
 const KEEP_NOTHING = () => {};
 

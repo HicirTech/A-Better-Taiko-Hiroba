@@ -8,7 +8,7 @@ import {
   type ScoreFilter,
   sortScores,
   startingFilter,
-} from "../src/scores/score-order";
+} from "../src/shared/scores/score-order";
 
 const NAMES = new Intl.Collator("ja");
 const OPEN: ScoreFilter = { genres: [], difficulties: [], stars: [] };

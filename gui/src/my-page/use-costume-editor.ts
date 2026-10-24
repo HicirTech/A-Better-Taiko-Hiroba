@@ -3,17 +3,19 @@ import type { MessageKey } from "@abth/i18n";
 import { useCallback, useReducer, useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
-import { afterRefresh } from "../read-again/after-refresh";
-import { FAILURE_MESSAGE, SESSION_GONE } from "../read-failure-message";
-import type { ReadStatus } from "../reads/read-run";
-import { useReadRun } from "../reads/use-read-run";
+import type { ColourPart, SlotPart } from "../shared/costume-parts";
+import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
+import { afterRefresh } from "../shared/reads/after-refresh";
+import type { ReadStatus } from "../shared/reads/read-run";
+import { useReadRun } from "../shared/reads/use-read-run";
 import {
   type CostumeHistoryEntry,
   changedTheCostume,
   type HirobaSessionPort,
   type ReadFailure,
   type WriteOutcomeView,
-} from "../session-port";
+} from "../shared/session-port";
+import { sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   canReadEditorAgain,
   type EditorStep,
@@ -22,11 +24,9 @@ import {
   reduceEditor,
   UNREAD,
 } from "./costume-editor-state";
-import type { ColourPart, SlotPart } from "./costume-parts";
 import type { PreviewState } from "./costume-preview";
 import { useCostumePreview } from "./costume-preview-box";
 import { useCostumeHistory } from "./use-costume-history";
-import { sendHeld, sessionNoticeOf } from "./write-ending";
 
 export interface CostumeEditorOptions {
   readonly port: HirobaSessionPort;

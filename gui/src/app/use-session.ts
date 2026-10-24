@@ -6,10 +6,15 @@ import type { Page } from "../navigation/pages";
 import type { SessionView } from "../pages/page";
 import type { Screen } from "../pages/page-model";
 import type { PictureLane } from "../pictures/picture-lane";
-import { afterRefresh } from "../read-again/after-refresh";
-import { hirobaSession } from "../read-failure-message";
-import { useReadRun } from "../reads/use-read-run";
-import type { HirobaSessionPort, ProfileView, ReadFailure, SignInOutcome } from "../session-port";
+import { hirobaSession } from "../shared/read-failure-message";
+import { afterRefresh } from "../shared/reads/after-refresh";
+import { useReadRun } from "../shared/reads/use-read-run";
+import type {
+  HirobaSessionPort,
+  ProfileView,
+  ReadFailure,
+  SignInOutcome,
+} from "../shared/session-port";
 
 const FIXED_ART = ["scorePanel", "rankIcon", "crownIcon"] as const;
 

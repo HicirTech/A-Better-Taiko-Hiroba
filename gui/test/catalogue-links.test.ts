@@ -1,6 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { CHART_PICTURE_HOSTS, chartOriginFor, isChartPictureAddress } from "../src/song-catalogue";
+import {
+  CHART_PICTURE_HOSTS,
+  chartOriginFor,
+  isChartPictureAddress,
+} from "../src/shared/song-catalogue";
 
 const STAND_IN = "http://hiroba.test:8807";
 

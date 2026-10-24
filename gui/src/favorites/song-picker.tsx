@@ -1,34 +1,24 @@
 import type { Translator } from "@abth/i18n";
 import { Box, FormHelperText } from "@mui/material";
-import {
-  type ReactNode,
-  useCallback,
-  useContext,
-  useDeferredValue,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-
-import { useTouchFirst } from "../navigation/use-touch-first";
-import { failureMessageOf } from "../read-failure-message";
-import type { FavoriteSongState } from "../session-port";
-import { LargeModal } from "../ui/large-modal";
+import { type ReactNode, useCallback, useDeferredValue, useMemo, useRef, useState } from "react";
+import { failureMessageOf } from "../shared/read-failure-message";
+import type { FavoriteSongState } from "../shared/session-port";
+import { type ShownDifficulty, shownFor } from "../shared/song-catalogue/shown-difficulty";
+import { levelsOfEntry, lookOfCatalogue } from "../shared/song-catalogue/song-look";
+import { nameLanguage } from "../shared/song-catalogue/song-names";
+import { newestFirst } from "../shared/song-catalogue/song-order";
+import { searchSongs } from "../shared/song-catalogue/song-search";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { type PickerEntry, PickerList } from "../songs/picker-list";
+import { SongListFailed } from "../songs/song-list-failed";
+import { LargeModal, type ModalLook } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SearchField } from "../ui/search-field";
 import { StatusNote } from "../ui/status-note";
 import type { PickableState } from "./pickable-songs";
-import { type PickerEntry, PickerList } from "./picker-list";
-import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
 import { matchesCharts, matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
 import { SongFilters } from "./song-filters";
-import { SongListFailed } from "./song-list-failed";
-import { levelsOfEntry, lookOfCatalogue } from "./song-look";
-import { nameLanguage } from "./song-names";
-import { newestFirst } from "./song-order";
-import { searchSongs } from "./song-search";
-import type { SongCatalogue } from "./use-song-catalogue";
 
 const LIMIT_NOTE_ID = "song-picker-limit";
 
@@ -48,6 +38,11 @@ export interface SongPickerProps {
   readonly catalogue: SongCatalogue;
   /** Only the songs Hiroba's own picker offers are listed; a choice of one lists 裏 entries too. */
   readonly pickable: PickableState;
+  /** The difficulty whose level the songs show in front, where the filter names none. */
+  readonly shownDifficulty: ShownDifficulty;
+  /** A touch screen: Back closes it, and its search waits for a tap before a keyboard comes up. */
+  readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   readonly onClose: () => void;
 }
@@ -68,16 +63,17 @@ function PickerBody({
   choice,
   catalogue,
   pickable,
+  shownDifficulty,
+  touchFirst,
+  modalLook,
   i18n,
   onClose,
   onExited,
 }: SongPickerProps & { readonly onExited: () => void }) {
   const { t, locale } = i18n;
-  const touchFirst = useTouchFirst();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SongFilter>(NO_FILTER);
-  const kept = useContext(ShownDifficultyContext);
-  const shown = filter.difficulty === null ? kept : shownFor(filter.difficulty);
+  const shown = filter.difficulty === null ? shownDifficulty : shownFor(filter.difficulty);
   const deferred = useDeferredValue(query);
   const scroller = useRef<HTMLDivElement>(null);
   const rewind = () => scroller.current?.scrollTo({ top: 0 });
@@ -187,6 +183,7 @@ function PickerBody({
     content = (
       <PickerList
         entries={entries}
+        shownDifficulty={shown}
         i18n={i18n}
         many={many}
         onActivate={activate}
@@ -225,11 +222,13 @@ function PickerBody({
       fills
       flush
       contentRef={scroller}
+      touchFirst={touchFirst}
+      modalLook={modalLook}
       i18n={i18n}
       onExited={onExited}
       onClose={onClose}
     >
-      <ShownDifficultyContext value={shown}>{content}</ShownDifficultyContext>
+      {content}
     </LargeModal>
   );
 }

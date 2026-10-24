@@ -6,7 +6,7 @@ import {
   type EndedGroup,
   type GroupAsked,
   IO_READ_CONSUMERS,
-} from "../src/pipelines";
+} from "../src/shared/pipelines";
 
 const HIROBA = "https://donderhiroba.jp";
 

@@ -1,8 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Alert } from "@mui/material";
-
-import type { CostumeEditorView, CostumeSet } from "../session-port";
-import { SLOT_PARTS } from "./costume-parts";
+import { SLOT_PARTS } from "../shared/costume-parts";
+import type { CostumeEditorView, CostumeSet } from "../shared/session-port";
 
 export function KigurumiInfo({
   editor,

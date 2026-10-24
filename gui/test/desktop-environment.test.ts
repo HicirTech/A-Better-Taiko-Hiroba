@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { desktopEnvironment } from "../electron/desktop-environment";
 import { endpointsFromOverrides, HIROBA_ENDPOINTS } from "../src/hiroba-session";
-import { UPDATE_FEED_URL } from "../src/updates";
+import { UPDATE_FEED_URL } from "../src/shared/updates";
 
 const DEVELOPMENT = {
   ABTH_DEV_SERVER_URL: "http://localhost:5173",

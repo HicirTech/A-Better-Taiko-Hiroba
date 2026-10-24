@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { HirobaSessionPort, ListedChartsView, ScoresView } from "../session-port";
+import type { HirobaSessionPort, ListedChartsView, ScoresView } from "../shared/session-port";
 
 /** Every chart the lists name, asked again whenever the kept scores change. */
 export function useListedCharts(

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createBackClosers } from "../src/navigation/back-closers";
+import { createBackClosers } from "../src/ui/back-closers";
 
 describe("the overlays that take Back", () => {
   test("none is open before one is added, and closing then does nothing", () => {

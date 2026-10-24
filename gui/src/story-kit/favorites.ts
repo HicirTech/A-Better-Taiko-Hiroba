@@ -1,7 +1,7 @@
-import { SET_SONG_LIMIT } from "../favorites/favorite-sets";
 import type { ShownFavorites } from "../favorites/favorites-state";
 import type { PickableState } from "../favorites/pickable-songs";
-import type { FavoritesView, ShownSong } from "../session-port";
+import type { FavoritesView, ShownSong } from "../shared/session-port";
+import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import { STORY_SONGS, storySong } from "./songs";
 
 /** The お気に入り folder's songs, in slot order. */

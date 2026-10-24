@@ -1,6 +1,6 @@
 import type { CrownState, ScoreRank } from "@abth/core";
 
-import { RANKS_WORST_FIRST } from "../my-page/panel-colours";
+import { RANKS_WORST_FIRST } from "../shared/panel-colours";
 import type { ChartGroup } from "./groups";
 import { isCleared, isTried, type KnownChart } from "./known-charts";
 

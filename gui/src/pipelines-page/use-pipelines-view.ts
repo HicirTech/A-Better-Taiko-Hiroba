@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { HirobaSessionPort, PipelinesView } from "../session-port";
+import type { HirobaSessionPort, PipelinesView } from "../shared/session-port";
 
 /** How long the page waits after one read of the pipelines before the next. */
 export const READ_AGAIN_MS = 250;

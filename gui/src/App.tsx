@@ -1,27 +1,33 @@
 import type { Translator } from "@abth/i18n";
 import { useMediaQuery } from "@mui/material";
-import { type ReactNode, useMemo } from "react";
-
+import { type ReactNode, useContext, useMemo } from "react";
+import { NavFoot } from "./app/nav-foot";
 import { PageArea } from "./app/page-area";
+import { useKeptChoice } from "./app/use-kept-choice";
+import { useModalLook } from "./app/use-modal-look";
 import { usePageShown } from "./app/use-page-shown";
 import { usePageVisits } from "./app/use-page-visits";
 import { usePagesData } from "./app/use-pages-data";
 import { useReadAgain } from "./app/use-read-again";
 import { useSession } from "./app/use-session";
-import { NavFoot } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import type { PageData } from "./pages/page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { createPictureLane } from "./pictures/picture-lane";
-import { IO_READ_CONSUMERS } from "./pipelines";
 import type { SystemLink, SystemToast } from "./platform";
-import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
-import type { HirobaSessionPort } from "./session-port";
-import { releaseUrl } from "./updates";
-import { APP_VERSION } from "./updates/app-version";
+import { IO_READ_CONSUMERS } from "./shared/pipelines";
+import type { HirobaSessionPort } from "./shared/session-port";
+import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
+import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
+import { releaseUrl } from "./shared/updates";
+import { APP_VERSION } from "./shared/updates/app-version";
+import { useUpdateReminder } from "./shared/updates/use-update-reminder";
+import { MenuOpenContext } from "./ui/menu-open";
+import { PipelinesShownContext } from "./ui/pipelines-shown";
+import { PullToRead } from "./ui/pull-to-read";
+import { useWideWindow } from "./ui/use-wide-window";
 import { UpdateDialog } from "./updates/update-dialog";
-import { useUpdateReminder } from "./updates/use-update-reminder";
 
 export interface AppProps {
   readonly port: HirobaSessionPort;
@@ -37,6 +43,15 @@ export interface AppProps {
 
 export function App({ port, link, i18n, page, onNavigate, language, toast }: AppProps) {
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
+  const wide = useWideWindow();
+  const menuOpen = useContext(MenuOpenContext);
+  const pipelinesShown = useContext(PipelinesShownContext);
+  const modalLook = useModalLook(pipelinesShown);
+  const [shownDifficulty, onShownDifficulty] = useKeptChoice(
+    keptShownDifficulty,
+    keepShownDifficulty,
+  );
+  const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
   const updates = useUpdateReminder(port, APP_VERSION);
   // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
   const lane = useMemo(
@@ -51,6 +66,14 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     i18n,
     lane,
     touchFirst,
+    wide,
+    modalLook,
+    menuOpen,
+    pipelinesShown,
+    shownDifficulty,
+    onShownDifficulty,
+    chartSource,
+    onChartSource,
     toast,
     language,
     navigate: onNavigate,
