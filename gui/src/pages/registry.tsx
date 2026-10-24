@@ -81,6 +81,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         history={data.history}
         scores={data.scores}
         catalogue={data.catalogue}
+        keptSets={data.keptSets}
         lane={data.lane}
         touchFirst={data.touchFirst}
         modalLook={data.modalLook}

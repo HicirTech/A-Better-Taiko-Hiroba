@@ -14,6 +14,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { useRatingData } from "../rating";
 import { useScores } from "../shared/scores/use-scores";
 import type { HirobaSessionPort } from "../shared/session-port";
+import { useFavoriteSets } from "../shared/sets/use-favorite-sets";
 import { useSongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import type { Session } from "./use-session";
 
@@ -31,6 +32,7 @@ export type PagesData = Pick<
   | "titleEditor"
   | "nameEditor"
   | "favorites"
+  | "keptSets"
   | "wantSongs"
 >;
 
@@ -84,6 +86,7 @@ export function usePagesData({
   });
   const { forget: forgetNameEditor } = nameEditor;
   const favorites = useFavorites({ port, lane, onSessionGone: sessionGone });
+  const keptSets = useFavoriteSets();
   const { forget: forgetFavorites } = favorites;
   // Read once someone opens a page that shows it or the song search, and kept from then on.
   const [songsWanted, setSongsWanted] = useState(false);
@@ -139,6 +142,7 @@ export function usePagesData({
     titleEditor,
     nameEditor,
     favorites,
+    keptSets,
     wantSongs,
   };
 }

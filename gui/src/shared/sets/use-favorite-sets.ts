@@ -21,6 +21,8 @@ export interface FavoriteSets {
   /** Puts the set at `from` in place `to` among the sets. */
   moveSet(from: number, to: number): void;
   remove(id: string): void;
+  /** Reads the sets again from the device, as a page that shows them opens. */
+  reload(): void;
 }
 
 /** The player's sets, kept on this device at once with every change. */
@@ -55,5 +57,10 @@ export function useFavoriteSets(): FavoriteSets {
     [commit],
   );
   const remove = useCallback((id: string) => commit(removeSet(latest.current, id)), [commit]);
-  return { sets, add, rename, replaceSongs, moveSet, remove };
+  const reload = useCallback(() => {
+    const kept = loadSets();
+    latest.current = kept;
+    setSets(kept);
+  }, []);
+  return { sets, add, rename, replaceSongs, moveSet, remove, reload };
 }

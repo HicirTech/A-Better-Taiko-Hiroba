@@ -60,6 +60,8 @@ export interface PageState {
   readonly titleEditor: Pick<TitleEditor, "dropEdits" | "forgetList">;
   readonly nameEditor: Pick<NameEditor, "dropEdits">;
   readonly favorites: EditorReads;
+  /** The sets kept on this device, read again as a page that shows them opens. */
+  readonly keptSets: { readonly reload: () => void };
 }
 
 /** All of a page's data read again from nothing, asked for by a six-second hold. */
@@ -139,7 +141,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     label: "nav.history",
     namesSongs: true,
     needsSongs: true,
-    opens: ({ history, scores }) => [history.load, scores.load],
+    opens: ({ history, scores, keptSets }) => [history.load, scores.load, keptSets.reload],
     waits: ({ history }) => history.plays === null,
     reading: ({ history }) => history.reading,
     readAgain: ({ history, scores }) => void history.read().then(scores.markStale),

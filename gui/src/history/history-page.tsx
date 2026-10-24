@@ -7,7 +7,7 @@ import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import { listedOf } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
 import { newSetName } from "../shared/sets/favorite-sets";
-import { useFavoriteSets } from "../shared/sets/use-favorite-sets";
+import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
 import { nameLanguage, shownName } from "../shared/song-catalogue/song-names";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
@@ -34,6 +34,7 @@ export function HistoryPage({
   scores,
   catalogue,
   lane,
+  keptSets,
   touchFirst,
   modalLook,
   i18n,
@@ -44,6 +45,8 @@ export function HistoryPage({
   /** taiko.wiki's song list: a play it finds the song of is named in the player's language. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
+  /** The sets kept on this device, which a play's song can go into. */
+  readonly keptSets: FavoriteSets;
   /** Whether a pull reads again here, or Read again does, and a long press opens a play's menu. */
   readonly touchFirst: boolean;
   readonly modalLook: ModalLook;
@@ -69,7 +72,6 @@ export function HistoryPage({
     return { text, lang: nameLanguage(song, text) };
   };
 
-  const kept = useFavoriteSets();
   // The play whose song is being added to a set.
   const [adding, setAdding] = useState<RecentPlay | null>(null);
   const playActions = (play: RecentPlay): readonly ItemAction[] => [
@@ -208,13 +210,13 @@ export function HistoryPage({
           name={nameOf(adding)}
           songNo={found.outcome === "resolved" ? found.songNo : chosen}
           candidates={found.outcome === "ambiguous" ? found.candidates.map(namedSong) : []}
-          sets={kept.sets}
+          sets={keptSets.sets}
           touchFirst={touchFirst}
           modalLook={modalLook}
           i18n={i18n}
           onChooseSong={setChosen}
           onAdd={(set, songNo) => {
-            kept.replaceSongs(set.id, [...set.songs, songNo]);
+            keptSets.replaceSongs(set.id, [...set.songs, songNo]);
             shut();
           }}
           onNewSet={setNaming}
@@ -224,11 +226,11 @@ export function HistoryPage({
       {naming !== null && (
         <SetNameDialog
           title={i18n.t("favorites.newSet")}
-          initial={newSetName(kept.sets, (number) => i18n.t("favorites.setName", { number }))}
+          initial={newSetName(keptSets.sets, (number) => i18n.t("favorites.setName", { number }))}
           i18n={i18n}
           onCancel={() => setNaming(null)}
           onSave={(name) => {
-            kept.add(name, [naming]);
+            keptSets.add(name, [naming]);
             setNaming(null);
             shut();
           }}

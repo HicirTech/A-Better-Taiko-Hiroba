@@ -38,6 +38,7 @@ function pageState(overrides: Record<string, unknown> = {}) {
       step: { name: "ready" },
       dropEdits: call("favorites.drop"),
     },
+    keptSets: { reload: call("sets.reload") },
     titleEditor: { dropEdits: call("title.drop"), forgetList: call("titles.forget") },
     nameEditor: { dropEdits: call("name.drop") },
     pickable: { markStale: call("pickable.markStale") },
@@ -73,7 +74,7 @@ describe("PAGE_MODELS", () => {
   type OpensCase = [page: Page, reads: readonly string[]];
   test.each<OpensCase>([
     ["overview", []],
-    ["history", ["plays.load", "scores.load"]],
+    ["history", ["plays.load", "scores.load", "sets.reload"]],
     ["scores", ["scores.load"]],
     ["rating", ["scores.load", "ratingData.load"]],
     ["knowYourself", ["scores.load", "songList.readIfFailed"]],

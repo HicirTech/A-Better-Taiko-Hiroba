@@ -11,6 +11,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemLink, SystemToast } from "../platform";
 import type { ReadStatus } from "../shared/reads/read-run";
 import type { HirobaSessionPort, ReadFailure } from "../shared/session-port";
+import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { UpdateReminder } from "../shared/updates/use-update-reminder";
@@ -52,6 +53,7 @@ export interface PageData extends PageState {
   readonly titleEditor: TitleEditor;
   readonly nameEditor: NameEditor;
   readonly favorites: FavoritesEditor;
+  readonly keptSets: FavoriteSets;
   /** The song search opened: the song list is read from then on. */
   readonly wantSongs: () => void;
 }

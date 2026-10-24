@@ -7,6 +7,7 @@ const SRC = join(import.meta.dir, "../src");
 /** The folders whose components draw only from their props: the list only grows. */
 const PURE: readonly string[] = [
   "hiroba-session",
+  "history",
   "name-title",
   "pictures",
   "pipelines-page",
