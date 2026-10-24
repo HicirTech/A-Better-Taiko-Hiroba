@@ -1,6 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Fragment, type ReactNode, type RefObject } from "react";
 import { DIFFICULTY_COLOUR } from "../shared/song-catalogue/genre-look";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { type Marked, segmentsOf } from "../shared/song-catalogue/song-search";
 import { RowList } from "../ui/row-list";
@@ -71,6 +72,7 @@ const rowKey = (entry: PickerEntry) => `${entry.look.songNo}${entry.ura === true
 /** The songs, one tap or one check box each; at the limit the rows not checked are shut. */
 export function PickerList({
   entries,
+  shownDifficulty,
   i18n,
   many,
   onActivate,
@@ -79,6 +81,8 @@ export function PickerList({
   scroller,
 }: {
   entries: readonly PickerEntry[];
+  /** The difficulty whose level shows in front of the others. */
+  shownDifficulty: ShownDifficulty;
   i18n: Translator;
   many: PickedSongs | null;
   onActivate: (songNo: string, ura: boolean) => void;
@@ -112,7 +116,9 @@ export function PickerList({
             lang={look.lang}
             lines={artistsLine(entry.look, entry.detail)}
             end={
-              look.levels === null ? undefined : <LevelBadges levels={look.levels} i18n={i18n} />
+              look.levels === null ? undefined : (
+                <LevelBadges levels={look.levels} shownDifficulty={shownDifficulty} i18n={i18n} />
+              )
             }
             {...(many === null
               ? { onPress: activate }

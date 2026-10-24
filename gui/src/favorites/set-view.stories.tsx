@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 import { fn } from "storybook/test";
+import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 
 import { touchOf } from "../story-kit/devices";
 import { i18nOf, localeOf } from "../story-kit/env";
@@ -9,7 +10,7 @@ import { STORY_SETS } from "../story-kit/sets";
 import { lookOf } from "../story-kit/songs";
 import { SetView, type SetViewProps } from "./set-view";
 
-type Args = Omit<SetViewProps, "look" | "i18n" | "openDetails" | "byLongPress">;
+type Args = Omit<SetViewProps, "look" | "shownDifficulty" | "i18n" | "openDetails" | "byLongPress">;
 
 const meta = {
   title: "Cards and sections/SetView",
@@ -19,6 +20,7 @@ const meta = {
       <SetView
         {...args}
         look={(songNo) => lookOf(songNo, localeOf(globals))}
+        shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
         openDetails={() => action("open details")}
         byLongPress={touchOf(globals)}

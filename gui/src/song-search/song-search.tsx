@@ -11,10 +11,8 @@ import {
 import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../shared/session-port";
-import {
-  keptShownDifficulty,
-  ShownDifficultyContext,
-} from "../shared/song-catalogue/shown-difficulty";
+import type { ChartSource } from "../shared/song-catalogue/chart-source";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { searchSongs } from "../shared/song-catalogue/song-search";
@@ -51,6 +49,10 @@ export interface SongSearchProps {
   /** The window is wide enough for the side panel. */
   readonly wide: boolean;
   readonly modalLook: ModalLook;
+  /** The difficulty whose level the songs show in front of the others. */
+  readonly shownDifficulty: ShownDifficulty;
+  /** Where a song's details take their chart pictures from. */
+  readonly chartSource: ChartSource;
   readonly i18n: Translator;
   /** The first time the search opens, so the song list is read only once someone looks. */
   readonly onOpen: () => void;
@@ -66,6 +68,8 @@ export function SongSearch({
   touchFirst,
   wide,
   modalLook,
+  shownDifficulty,
+  chartSource,
   i18n,
   onOpen,
   children,
@@ -75,7 +79,6 @@ export function SongSearch({
   const [query, setQuery] = useState("");
   const [recent, setRecent] = useState(keptSearches);
   const [openSongNo, setOpenSongNo] = useState<string | null>(null);
-  const [shownDifficulty] = useState(keptShownDifficulty);
   const input = useRef<HTMLInputElement>(null);
   const deferred = useDeferredValue(query);
 
@@ -157,6 +160,7 @@ export function SongSearch({
       <PickerList
         idPrefix="song-search"
         entries={entries}
+        shownDifficulty={shownDifficulty}
         i18n={i18n}
         many={null}
         onActivate={open}
@@ -183,25 +187,26 @@ export function SongSearch({
           hint={recent.length === 0 ? t("picker.searchHint") : undefined}
         />
       </FrameTop>
-      {active && panel !== null && (
-        <ShownDifficultyContext value={shownDifficulty}>
-          {framed ? (
-            <SectionCard id="song-search-panel" flush sx={{ py: 1 }}>
-              {panel}
-            </SectionCard>
-          ) : (
-            <Box id="song-search-panel" sx={searched ? FILLS_THE_PAGE : undefined}>
-              {panel}
-            </Box>
-          )}
-        </ShownDifficultyContext>
-      )}
+      {active &&
+        panel !== null &&
+        (framed ? (
+          <SectionCard id="song-search-panel" flush sx={{ py: 1 }}>
+            {panel}
+          </SectionCard>
+        ) : (
+          <Box id="song-search-panel" sx={searched ? FILLS_THE_PAGE : undefined}>
+            {panel}
+          </Box>
+        ))}
       {children(active)}
       <SongDetails
         song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
         port={port}
         lane={lane}
         modalLook={modalLook}
+        touchFirst={touchFirst}
+        chartSource={chartSource}
+        shownDifficulty={shownDifficulty}
         i18n={i18n}
         onClose={() => setOpenSongNo(null)}
       />

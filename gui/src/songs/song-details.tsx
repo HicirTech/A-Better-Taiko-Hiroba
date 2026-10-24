@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import type { HirobaSessionPort } from "../shared/session-port";
-import { keptChartSource } from "../shared/song-catalogue/chart-source";
+import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import {
   DIFFICULTY_COLOUR,
   DIFFICULTY_LABEL,
@@ -13,7 +13,7 @@ import {
   GENRE_COLOUR,
   GENRE_LABEL,
 } from "../shared/song-catalogue/genre-look";
-import { keptShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { nameLanguage, shownName } from "../shared/song-catalogue/song-names";
 import {
   type ChartFileFailure,
@@ -25,7 +25,6 @@ import { LargeModal, type ModalLook } from "../ui/large-modal";
 import { PullToRead } from "../ui/pull-to-read";
 import { ReadAgainButton } from "../ui/read-again-button";
 import { StatusNote } from "../ui/status-note";
-import { useTouchFirst } from "../ui/use-touch-first";
 import { ChartDensitySection, type DensityState, masterOf } from "./chart-density";
 import { ChartPictures } from "./chart-pictures";
 import { ChartViewer, type ShownChart } from "./chart-viewer";
@@ -64,12 +63,28 @@ export interface SongDetailsProps {
   >;
   /** Where the charts' difficulty icons, Hiroba's own, are read. */
   readonly lane: PictureLane;
+  /** A touch screen: a pull reads the chart again, where a computer has the button. */
+  readonly touchFirst: boolean;
   readonly modalLook: ModalLook;
+  /** Where its chart pictures come from, as Settings chose it when it opened. */
+  readonly chartSource: ChartSource;
+  /** The difficulty it opens on, where the song has a chart of it. */
+  readonly shownDifficulty: ShownDifficulty;
   readonly i18n: Translator;
   readonly onClose: () => void;
 }
 
-export function SongDetails({ song, port, lane, modalLook, i18n, onClose }: SongDetailsProps) {
+export function SongDetails({
+  song,
+  port,
+  lane,
+  touchFirst,
+  modalLook,
+  chartSource,
+  shownDifficulty,
+  i18n,
+  onClose,
+}: SongDetailsProps) {
   // Kept while the modal slides away, so it does not go blank on its way, then dropped, so the
   // song opens afresh; stepping aside for the pipelines page keeps it.
   const [last, setLast] = useState(song);
@@ -83,7 +98,10 @@ export function SongDetails({ song, port, lane, modalLook, i18n, onClose }: Song
       song={last}
       port={port}
       lane={lane}
+      touchFirst={touchFirst}
       modalLook={modalLook}
+      chartSource={chartSource}
+      shownDifficulty={shownDifficulty}
       i18n={i18n}
       onClose={onClose}
       onExited={() => {
@@ -114,14 +132,15 @@ function DetailsBody({
   song,
   port,
   lane,
+  touchFirst,
   modalLook,
+  chartSource,
+  shownDifficulty,
   i18n,
   onClose,
   onExited,
 }: Omit<SongDetailsProps, "song"> & { open: boolean; song: ListedSong; onExited: () => void }) {
   const { t, locale } = i18n;
-  // A touch screen's pull reads the chart again, where a computer has the button.
-  const touchFirst = useTouchFirst();
   const content = useRef<HTMLDivElement>(null);
   const [density, setDensity] = useState<DensityState>({
     reading: true,
@@ -143,7 +162,7 @@ function DetailsBody({
   useEffect(() => {
     void readDensity(false);
   }, [readDensity]);
-  const [source] = useState(keptChartSource);
+  const [source] = useState(chartSource);
   // The song's chart file, held for the dialog's life alone: a failed read is not held.
   const tjaRead = useRef<Promise<Result<string, ChartFileFailure>> | null>(null);
   const readTja = useCallback(() => {
@@ -162,7 +181,7 @@ function DetailsBody({
   const [reloading, setReloading] = useState(false);
   const busy = density.reading || reloading;
   const readLabel = t("details.readDensity");
-  const [chart, setChart] = useState(() => openingChart(song.levels, keptShownDifficulty()));
+  const [chart, setChart] = useState(() => openingChart(song.levels, shownDifficulty));
   const [viewing, setViewing] = useState<ShownChart | null>(null);
   const name = shownName(song, locale);
   const charted = DIFFICULTIES.flatMap((difficulty) => {

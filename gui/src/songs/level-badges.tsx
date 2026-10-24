@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { useContext, useState } from "react";
+import { useState } from "react";
 
 import {
   DIFFICULTY_COLOUR,
@@ -8,7 +8,7 @@ import {
 } from "../shared/song-catalogue/genre-look";
 import {
   type Chart,
-  ShownDifficultyContext,
+  type ShownDifficulty,
   stackOf,
 } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
@@ -62,13 +62,15 @@ export const LEVEL_BADGES_LOOK = {
 /** A badge per chart: the shown difficulty's in front, the rest stacked until clicked open. */
 export function LevelBadges({
   levels,
+  shownDifficulty,
   i18n,
 }: {
   levels: NonNullable<SongLook["levels"]>;
+  shownDifficulty: ShownDifficulty;
   i18n: Translator;
 }) {
   const { t } = i18n;
-  const shown = useContext(ShownDifficultyContext);
+  const shown = shownDifficulty;
   const [open, setOpen] = useState(false);
   const { before, front, after } = stackOf(levels, shown);
   const badge = ({ difficulty, level }: Chart, place: Place, layer: number) => {

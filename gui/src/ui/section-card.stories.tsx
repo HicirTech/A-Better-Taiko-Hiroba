@@ -1,6 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, List, ListItemButton, ListItemText, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 
 import { SongLookRow } from "../songs/song-look-row";
 import { i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
@@ -23,6 +24,7 @@ function SongParts({ globals }: { readonly globals: StoryGlobals }) {
             id="story-card-song"
             component="div"
             look={lookOf("1001", localeOf(globals))}
+            shownDifficulty={DEFAULT_SHOWN}
             i18n={i18n}
           />
         </Box>
@@ -55,6 +57,7 @@ function FolderParts({ globals }: { readonly globals: StoryGlobals }) {
             key={songNo}
             id={`story-card-folder-${songNo}`}
             look={lookOf(songNo, localeOf(globals))}
+            shownDifficulty={DEFAULT_SHOWN}
             i18n={i18n}
           />
         ))}

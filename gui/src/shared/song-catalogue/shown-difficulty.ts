@@ -1,5 +1,3 @@
-import { createContext } from "react";
-
 import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
 import { DIFFICULTIES, type Difficulty } from "./types";
 
@@ -71,5 +69,3 @@ export function stackOf(
   const first = charted.indexOf(head);
   return { before: charted.slice(0, first), front, after: charted.slice(first + front.length) };
 }
-
-export const ShownDifficultyContext = createContext<ShownDifficulty>(DEFAULT_SHOWN);

@@ -4,6 +4,8 @@ import { action } from "storybook/actions";
 import { userEvent, within } from "storybook/test";
 import { AppFrame } from "../navigation/app-frame";
 import { PAGE_REGISTRY } from "../pages/registry";
+import { DEFAULT_CHART_SOURCE } from "../shared/song-catalogue/chart-source";
+import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { modalLookOf, touchOf, wideOf } from "../story-kit/devices";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";
@@ -25,6 +27,8 @@ const search = (catalogue: SongCatalogue, globals: StoryGlobals) => {
         touchFirst={touchOf(globals)}
         wide={wideOf(globals)}
         modalLook={modalLookOf(globals)}
+        shownDifficulty={DEFAULT_SHOWN}
+        chartSource={DEFAULT_CHART_SOURCE}
         i18n={i18n}
         onOpen={action("open the search")}
       >

@@ -11,7 +11,6 @@ import { PullToRead } from "../ui/pull-to-read";
 import { ReadAgainButton } from "../ui/read-again-button";
 import { SubsectionTitle } from "../ui/section-title";
 import { SHUT_LOOK } from "../ui/shut-look";
-import { useTouchFirst } from "../ui/use-touch-first";
 import { CROWN_KEY, CROWN_RATIO } from "./play-marks";
 import { PlayRow } from "./play-row";
 
@@ -50,6 +49,7 @@ export function ScoreDetails({
   lane,
   reading,
   readingSong,
+  touchFirst,
   modalLook,
   i18n,
   onReadSong,
@@ -60,6 +60,8 @@ export function ScoreDetails({
   /** What the dialog shows of a recent play while its chart has no details to show. */
   readonly notice?: PlayNotice | null;
   readonly lane: PictureLane;
+  /** A touch screen: a pull reads the song again, where a computer has the button. */
+  readonly touchFirst: boolean;
   readonly modalLook: ModalLook;
   /** A read is running, so the song's read again waits. */
   readonly reading: boolean;
@@ -82,6 +84,7 @@ export function ScoreDetails({
       lane={lane}
       reading={reading}
       readingSong={readingSong}
+      touchFirst={touchFirst}
       modalLook={modalLook}
       i18n={i18n}
       onReadSong={onReadSong}
@@ -96,6 +99,7 @@ function DetailsBody({
   lane,
   reading,
   readingSong,
+  touchFirst,
   modalLook,
   i18n,
   onReadSong,
@@ -105,8 +109,6 @@ function DetailsBody({
   readonly shown: ListedScore | PlayNotice;
 }) {
   const { t } = i18n;
-  // A touch screen's pull reads it again, where a computer has the button.
-  const touchFirst = useTouchFirst();
   const content = useRef<HTMLDivElement>(null);
   const readLabel = t("scores.readSong");
   const { play, name, readSong } =

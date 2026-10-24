@@ -3,6 +3,7 @@ import { Skeleton } from "@mui/material";
 import type { ReactNode } from "react";
 
 import { HIROBA_LANG } from "../shared/language/hiroba-lang";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { LEVEL_BADGE_PX, LevelBadges } from "./level-badges";
 import { SongRow, SongRowSkeleton } from "./song-row";
@@ -29,6 +30,7 @@ export function SongLookRow({
   id,
   component = "li",
   look,
+  shownDifficulty,
   i18n,
   detail,
   scrolling = false,
@@ -40,6 +42,8 @@ export function SongLookRow({
   readonly id?: string;
   readonly component?: "li" | "div";
   readonly look: SongLook;
+  /** The difficulty whose level shows in front of the others. */
+  readonly shownDifficulty: ShownDifficulty;
   readonly i18n: Translator;
   /** Before the artists on the second line: such as the song's tempo, or its inner chart. */
   readonly detail?: string | undefined;
@@ -68,7 +72,9 @@ export function SongLookRow({
       end={
         levels === null && end === undefined ? undefined : (
           <>
-            {levels !== null && <LevelBadges levels={levels} i18n={i18n} />}
+            {levels !== null && (
+              <LevelBadges levels={levels} shownDifficulty={shownDifficulty} i18n={i18n} />
+            )}
             {end}
           </>
         )

@@ -1,9 +1,6 @@
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import {
-  type ShownDifficulty,
-  ShownDifficultyContext,
-} from "../shared/song-catalogue/shown-difficulty";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { i18nOf } from "../story-kit/env";
 import { storySong } from "../story-kit/songs";
 import { LEVEL_BADGES_LOOK, LevelBadges } from "./level-badges";
@@ -19,11 +16,13 @@ const meta = {
   title: "Rows and lists/LevelBadges",
   tags: ["songs"],
   render: ({ songNo, shown }, { globals }) => (
-    <ShownDifficultyContext value={shown}>
-      <Box sx={LEVEL_BADGES_LOOK}>
-        <LevelBadges levels={storySong(songNo).levels} i18n={i18nOf(globals)} />
-      </Box>
-    </ShownDifficultyContext>
+    <Box sx={LEVEL_BADGES_LOOK}>
+      <LevelBadges
+        levels={storySong(songNo).levels}
+        shownDifficulty={shown}
+        i18n={i18nOf(globals)}
+      />
+    </Box>
   ),
   args: { songNo: "1005", shown: "oni" },
   argTypes: { shown: { control: "inline-radio", options: ["easy", "normal", "hard", "oni"] } },

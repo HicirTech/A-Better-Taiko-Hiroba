@@ -198,6 +198,7 @@ export function KnowYourselfPage({
         lane={lane}
         reading={reading}
         readingSong={song !== null && song.songNo === openedScore?.songNo}
+        touchFirst={touchFirst}
         modalLook={modalLook}
         i18n={i18n}
         onReadSong={(score) => void readSong(score)}

@@ -1,5 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Stack } from "@mui/material";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
 import { SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
@@ -10,13 +11,22 @@ import type { ShownFavorites } from "./favorites-state";
 export interface SongCardProps {
   readonly shown: ShownFavorites;
   readonly look: (songNo: string) => SongLook;
+  /** The difficulty whose level the songs show in front of the others. */
+  readonly shownDifficulty: ShownDifficulty;
   readonly i18n: Translator;
   readonly openDetails: DetailsOpener;
   readonly onChange: () => void;
 }
 
 /** The 大好きな曲, or the one picked to replace it; the page's sync bar sends the pick. */
-export function SongCard({ shown, look, i18n, openDetails, onChange }: SongCardProps) {
+export function SongCard({
+  shown,
+  look,
+  shownDifficulty,
+  i18n,
+  openDetails,
+  onChange,
+}: SongCardProps) {
   const { t } = i18n;
   const { view, draft, shut } = shown;
   const { songNo, ura } = draft ?? view.song.state;
@@ -32,6 +42,7 @@ export function SongCard({ shown, look, i18n, openDetails, onChange }: SongCardP
               id="favorite-song-row"
               component="div"
               look={look(songNo)}
+              shownDifficulty={shownDifficulty}
               i18n={i18n}
               detail={ura ? t("favorites.ura") : undefined}
               scrolling

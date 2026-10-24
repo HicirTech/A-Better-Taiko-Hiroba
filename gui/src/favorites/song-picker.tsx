@@ -1,17 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box, FormHelperText } from "@mui/material";
-import {
-  type ReactNode,
-  useCallback,
-  useContext,
-  useDeferredValue,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useCallback, useDeferredValue, useMemo, useRef, useState } from "react";
 import { failureMessageOf } from "../shared/read-failure-message";
 import type { FavoriteSongState } from "../shared/session-port";
-import { ShownDifficultyContext, shownFor } from "../shared/song-catalogue/shown-difficulty";
+import { type ShownDifficulty, shownFor } from "../shared/song-catalogue/shown-difficulty";
 import { levelsOfEntry, lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { newestFirst } from "../shared/song-catalogue/song-order";
@@ -47,6 +39,8 @@ export interface SongPickerProps {
   readonly catalogue: SongCatalogue;
   /** Only the songs Hiroba's own picker offers are listed; a choice of one lists 裏 entries too. */
   readonly pickable: PickableState;
+  /** The difficulty whose level the songs show in front, where the filter names none. */
+  readonly shownDifficulty: ShownDifficulty;
   readonly modalLook: ModalLook;
   readonly i18n: Translator;
   readonly onClose: () => void;
@@ -68,6 +62,7 @@ function PickerBody({
   choice,
   catalogue,
   pickable,
+  shownDifficulty,
   modalLook,
   i18n,
   onClose,
@@ -77,8 +72,7 @@ function PickerBody({
   const touchFirst = useTouchFirst();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SongFilter>(NO_FILTER);
-  const kept = useContext(ShownDifficultyContext);
-  const shown = filter.difficulty === null ? kept : shownFor(filter.difficulty);
+  const shown = filter.difficulty === null ? shownDifficulty : shownFor(filter.difficulty);
   const deferred = useDeferredValue(query);
   const scroller = useRef<HTMLDivElement>(null);
   const rewind = () => scroller.current?.scrollTo({ top: 0 });
@@ -188,6 +182,7 @@ function PickerBody({
     content = (
       <PickerList
         entries={entries}
+        shownDifficulty={shown}
         i18n={i18n}
         many={many}
         onActivate={activate}
@@ -232,7 +227,7 @@ function PickerBody({
       onExited={onExited}
       onClose={onClose}
     >
-      <ShownDifficultyContext value={shown}>{content}</ShownDifficultyContext>
+      {content}
     </LargeModal>
   );
 }

@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 import { fn } from "storybook/test";
+import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 
 import { i18nOf, localeOf } from "../story-kit/env";
 import { FOLDER_SONGS, shownFavorites, storyFavorites } from "../story-kit/favorites";
@@ -20,6 +21,7 @@ const meta = {
       <FolderCard
         {...args}
         look={(songNo) => lookOf(songNo, localeOf(globals))}
+        shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
         openDetails={() => action("open details")}
       />

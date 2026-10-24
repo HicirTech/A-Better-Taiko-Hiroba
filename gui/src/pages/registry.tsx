@@ -197,6 +197,8 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         lane={data.lane}
         pickable={data.pickable.pickable}
         onPickerOpen={data.pickable.readIfStale}
+        shownDifficulty={data.shownDifficulty}
+        chartSource={data.chartSource}
         modalLook={data.modalLook}
         i18n={data.i18n}
       />

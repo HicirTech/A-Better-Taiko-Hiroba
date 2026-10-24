@@ -2,6 +2,7 @@ import type { Locale } from "@abth/i18n";
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
+import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 import { levelsOfEntry, lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { searchSongs } from "../shared/song-catalogue/song-search";
@@ -28,6 +29,7 @@ const meta = {
       <PickerList
         {...args}
         entries={plainEntries(localeOf(globals))}
+        shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
         many={null}
       />
@@ -54,6 +56,7 @@ export const CheckMany: Story = {
       <PickerList
         {...args}
         entries={plainEntries(localeOf(globals))}
+        shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
         many={pickedOf(["1002", "1005"], 30)}
       />
@@ -68,6 +71,7 @@ export const AtTheLimit: Story = {
       <PickerList
         {...args}
         entries={plainEntries(localeOf(globals))}
+        shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
         many={pickedOf(["1001", "1002", "1005"], 3)}
       />
@@ -86,7 +90,13 @@ export const SearchMarked: Story = {
     }));
     return (
       <Box sx={{ maxWidth: 640 }}>
-        <PickerList {...args} entries={entries} i18n={i18nOf(globals)} many={null} />
+        <PickerList
+          {...args}
+          entries={entries}
+          shownDifficulty={DEFAULT_SHOWN}
+          i18n={i18nOf(globals)}
+          many={null}
+        />
       </Box>
     );
   },
@@ -109,7 +119,13 @@ export const InnerChartRows: Story = {
       });
     return (
       <Box sx={{ maxWidth: 640 }}>
-        <PickerList {...args} entries={entries} i18n={i18nOf(globals)} many={null} />
+        <PickerList
+          {...args}
+          entries={entries}
+          shownDifficulty={DEFAULT_SHOWN}
+          i18n={i18nOf(globals)}
+          many={null}
+        />
       </Box>
     );
   },
@@ -135,6 +151,7 @@ export const ThousandsOfSongs: Story = {
         <PickerList
           {...args}
           entries={entries}
+          shownDifficulty={DEFAULT_SHOWN}
           i18n={i18nOf(globals)}
           many={pickedOf(["90001"], 30)}
         />

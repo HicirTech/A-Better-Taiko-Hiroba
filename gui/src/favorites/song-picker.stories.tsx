@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
-
 import type { FavoriteSongState } from "../shared/session-port";
 import { toggledSongs } from "../shared/sets/favorite-sets";
+import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { modalLookOf } from "../story-kit/devices";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";
@@ -34,6 +34,7 @@ const pickerOf = (
     choice={choice}
     catalogue={catalogue}
     pickable={pickable}
+    shownDifficulty={DEFAULT_SHOWN}
     modalLook={modalLookOf(globals)}
     i18n={i18nOf(globals)}
     onClose={args.onClose}

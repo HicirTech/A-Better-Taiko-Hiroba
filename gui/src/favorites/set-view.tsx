@@ -1,5 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, IconButton, Stack } from "@mui/material";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
 import { CloseIcon } from "../ui/icons";
@@ -13,6 +14,8 @@ export interface SetViewProps {
   /** The songs as shown: the set's own, or, while it is edited, the edits. */
   readonly songs: readonly string[];
   readonly look: (songNo: string) => SongLook;
+  /** The difficulty whose level the songs show in front of the others. */
+  readonly shownDifficulty: ShownDifficulty;
   readonly i18n: Translator;
   /** Opens a song's details while the set is only shown, not edited. */
   readonly openDetails: DetailsOpener;
@@ -34,6 +37,7 @@ export interface SetViewProps {
 export function SetView({
   songs: songNos,
   look,
+  shownDifficulty,
   i18n,
   openDetails,
   editing,
@@ -91,6 +95,7 @@ export function SetView({
                   id={`favorite-set-song-${songNo}`}
                   component="div"
                   look={shown}
+                  shownDifficulty={shownDifficulty}
                   i18n={i18n}
                   scrolling
                   start={handle}
@@ -117,6 +122,7 @@ export function SetView({
                 id={`favorite-set-song-${songNo}`}
                 data-key={songNo}
                 look={look(songNo)}
+                shownDifficulty={shownDifficulty}
                 i18n={i18n}
                 scrolling
                 onOpen={openDetails(songNo)}

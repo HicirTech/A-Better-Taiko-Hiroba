@@ -4,6 +4,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { action } from "storybook/actions";
 import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
+import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
 import { STORY_PLAYS } from "../story-kit/plays";
@@ -30,7 +31,9 @@ const RATED = [
 const lookIn = (globals: StoryGlobals) => (songNo: string) => lookOf(songNo, localeOf(globals));
 
 const levelsOf = ({ levels }: SongLook, i18n: Translator) =>
-  levels === null ? undefined : <LevelBadges levels={levels} i18n={i18n} />;
+  levels === null ? undefined : (
+    <LevelBadges levels={levels} shownDifficulty={DEFAULT_SHOWN} i18n={i18n} />
+  );
 
 function TickedRow({ look, i18n }: { readonly look: SongLook; readonly i18n: Translator }) {
   const [checked, setChecked] = useState(look.songNo === "1005");
@@ -227,6 +230,7 @@ export const InACard: Story = {
           <SongLookRow
             key={songNo}
             look={lookIn(globals)(songNo)}
+            shownDifficulty={DEFAULT_SHOWN}
             i18n={i18nOf(globals)}
             scrolling
             onOpen={action("open the song's details")}

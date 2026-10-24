@@ -1,6 +1,7 @@
 import { Box, IconButton } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
+import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 import { lookOfShown } from "../shared/song-catalogue/song-look";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { lookOf, storySong } from "../story-kit/songs";
@@ -24,6 +25,7 @@ const meta = {
       <SongLookRow
         component="div"
         look={lookOf(songNo, localeOf(globals))}
+        shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
         scrolling={scrolling}
       />
@@ -51,6 +53,7 @@ export const WithTempo: Story = {
         <SongLookRow
           component="div"
           look={lookOf(songNo, i18n.locale)}
+          shownDifficulty={DEFAULT_SHOWN}
           i18n={i18n}
           detail={bpm === null ? undefined : i18n.t("song.bpm", { bpm: bpmText(bpm) })}
         />
@@ -66,6 +69,7 @@ export const OpensDetails: Story = {
       <SongLookRow
         component="div"
         look={lookOf(songNo, localeOf(globals))}
+        shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
         onOpen={action("open details")}
       />
@@ -83,6 +87,7 @@ export const NotInTheSongList: Story = {
       <SongLookRow
         component="div"
         look={lookOfShown({ songNo: "1999", title: "曲リストにない曲", genre: 6 })}
+        shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
       />
     </Box>
@@ -100,6 +105,7 @@ export const WithHandleAndRemove: Story = {
         <SongLookRow
           component="div"
           look={look}
+          shownDifficulty={DEFAULT_SHOWN}
           i18n={i18n}
           scrolling
           start={

@@ -26,6 +26,8 @@ export function OverviewPage({ data }: { readonly data: PageData }) {
       touchFirst={touchFirst}
       wide={data.wide}
       modalLook={data.modalLook}
+      shownDifficulty={data.shownDifficulty}
+      chartSource={data.chartSource}
       i18n={i18n}
       onOpen={data.wantSongs}
     >
