@@ -4,30 +4,9 @@ import { dirname, join, normalize, relative, sep } from "node:path";
 
 const SRC = join(import.meta.dir, "../src");
 
-/** The folders whose components draw only from their props: the list only grows. */
-const PURE: readonly string[] = [
-  "favorites",
-  "hiroba-session",
-  "history",
-  "know-yourself",
-  "my-page",
-  "name-title",
-  "navigation",
-  "pages",
-  "pictures",
-  "pipelines-page",
-  "platform",
-  "profile",
-  "rating",
-  "read-again",
-  "scores",
-  "settings",
-  "song-search",
-  "songs",
-  "theme",
-  "ui",
-  "updates",
-];
+// The window's assembly may reach for anything, the kit serves the stories, and vendored code is
+// not ours.
+const NOT_CHECKED = ["app", "story-kit", "vendor"];
 
 // Android Back's own contexts: a popup closes on Back wherever it is drawn.
 const BACK_CONTEXTS = ["BackClosersContext", "BackModesContext"];
@@ -97,8 +76,12 @@ function componentsIn(folder: string): string[] {
   return found;
 }
 
-describe("the pure folders' components", () => {
-  test.each([...PURE])("in %s draw only from their props", (folder) => {
+const FOLDERS = readdirSync(SRC)
+  .filter((name) => statSync(join(SRC, name)).isDirectory() && !NOT_CHECKED.includes(name))
+  .sort();
+
+describe("the GUI's components", () => {
+  test.each(FOLDERS)("in %s draw only from their props", (folder) => {
     const reaching = componentsIn(folder)
       .map((path) => ({ file: relative(SRC, path), reaches: reachesThrough(path, new Set()) }))
       .filter(({ reaches }) => reaches.length > 0);
