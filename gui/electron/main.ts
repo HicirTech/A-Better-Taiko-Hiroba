@@ -264,7 +264,6 @@ app.whenReady().then(async () => {
     }
     return { action: "deny" };
   });
-  mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
   const writes = createSessionWrites({
     endpoints,
@@ -400,6 +399,12 @@ app.whenReady().then(async () => {
     const url = event.senderFrame?.url;
     return url !== undefined && originOf(url) === expectedOrigin;
   };
+  // The window stays on the app's own page, which it may load again as a crash's note offers.
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (originOf(url) !== expectedOrigin || new URL(url).pathname !== "/") {
+      event.preventDefault();
+    }
+  });
   for (const [method, channel] of Object.entries(BRIDGE_CHANNELS)) {
     const verb = method as keyof HirobaSessionPort;
     ipcMain.handle(channel, (event, ...args: unknown[]) => {
