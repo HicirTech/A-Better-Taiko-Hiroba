@@ -1,8 +1,10 @@
 import { join } from "node:path";
 import { err, ok, type Transport } from "@abth/core";
+import { createTranslator, detectLocale } from "@abth/i18n";
 import {
   app,
   BrowserWindow,
+  dialog,
   type IpcMainInvokeEvent,
   ipcMain,
   Menu,
@@ -28,6 +30,7 @@ import {
   viewOfPipelines,
 } from "../src/hiroba-session";
 import { WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
+import { crashCodeOf } from "../src/shared/crash-code";
 import {
   createPipeline,
   createPipelineLog,
@@ -217,7 +220,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
 
-app.whenReady().then(async () => {
+const started = app.whenReady().then(async () => {
   if (app.isPackaged) {
     // On macOS copy, paste and quit go through the menu bar: keep its app and Edit menus.
     Menu.setApplicationMenu(
@@ -420,6 +423,13 @@ app.whenReady().then(async () => {
   }
 
   await mainWindow.loadURL(devServerUrl ?? `${APP_ORIGIN}/`);
+});
+// A start that failed leaves no window, or a blank one: the system's box says so, in its language.
+started.catch((error: unknown) => {
+  const { t } = createTranslator(detectLocale(app.getPreferredSystemLanguages()));
+  const code = t("failure.code", { code: crashCodeOf("start", error) });
+  dialog.showErrorBox(app.getName(), `${t("crash.start")}\n\n${code}`);
+  app.exit(1);
 });
 
 app.on("window-all-closed", () => app.quit());

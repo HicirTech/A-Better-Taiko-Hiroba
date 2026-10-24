@@ -348,7 +348,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "加滿",
     "各況半住率低勾些差適範圍擅夠",
     "故障",
-    "恢復",
+    "恢復安",
   ].join(""),
 );
 

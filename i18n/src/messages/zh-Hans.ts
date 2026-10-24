@@ -296,6 +296,7 @@ export const zhHans: Messages = {
   "crash.page": "这个页面出错了，打开别的页面或重启应用后可能恢复。",
   "crash.window": "应用出错了，重新载入后可能恢复。",
   "crash.reload": "重新载入",
+  "crash.start": "应用无法启动，重新安装后可能恢复。",
   "platform.unsupported": "此版本只能在桌面版或 Android 版应用中运行。",
   "plate.open": "打开昵称与称号页面",
   "plate.openByLongPress": "长按你的名牌即可打开昵称与称号页面。",

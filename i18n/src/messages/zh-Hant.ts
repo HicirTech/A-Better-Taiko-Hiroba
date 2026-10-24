@@ -296,6 +296,7 @@ export const zhHant: Messages = {
   "crash.page": "這個頁面出錯了，開啟其他頁面或重新啟動應用程式後可能恢復。",
   "crash.window": "應用程式出錯了，重新載入後可能恢復。",
   "crash.reload": "重新載入",
+  "crash.start": "應用程式無法啟動，重新安裝後可能恢復。",
   "platform.unsupported": "此版本只能在桌面版或 Android 版應用程式中執行。",
   "plate.open": "開啟暱稱與稱號頁面",
   "plate.openByLongPress": "長按你的名牌即可開啟暱稱與稱號頁面。",

@@ -360,6 +360,7 @@ export interface Messages {
   "crash.page": string;
   "crash.window": string;
   "crash.reload": string;
+  "crash.start": string;
   "platform.unsupported": string;
   /** The name plate on the Overview: its accessible name, and what a long-press on it opens. */
   "plate.open": string;
