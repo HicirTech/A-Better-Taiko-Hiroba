@@ -2,7 +2,7 @@ import { Box, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
 // Short enough to read as one centred block, wide enough for the longest note on one or two lines.
-const WORDS_MAX_PX = 480;
+export const WORDS_MAX_PX = 480;
 
 const IN_PLACE = { display: "flex", justifyContent: "center", py: 2 } as const;
 const FILLS = {

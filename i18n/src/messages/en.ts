@@ -306,6 +306,10 @@ export const en: Messages = {
   "failure.notRefreshed": "Hiroba could not refresh your play data, so nothing more was read.",
   "failure.mayClear": "Refreshing or trying again may fix this.",
   "failure.code": "Code for a report: {code}",
+  "crash.page":
+    "Something went wrong on this page. Opening another page or restarting the app may fix this.",
+  "crash.window": "Something went wrong in the app. Reloading it may fix this.",
+  "crash.reload": "Reload",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
   "plate.open": "Open the Nickname & title page",
   "plate.openByLongPress": "Long-press your name plate to open the Nickname & title page.",
