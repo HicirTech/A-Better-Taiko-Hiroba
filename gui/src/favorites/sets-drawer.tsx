@@ -10,9 +10,8 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
-
-import { useBackCloses } from "../navigation/back-closers";
 import { type FavoriteSet, sameSongs } from "../shared/sets/favorite-sets";
+import { useBackCloses } from "../ui/back-closers";
 import { AddIcon, CheckIcon } from "../ui/icons";
 import { type ItemAction, pointerOf } from "../ui/item-actions";
 import { ItemMenu, useItemMenu } from "../ui/item-menu";

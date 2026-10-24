@@ -12,7 +12,7 @@ interface Args {
 
 const meta = {
   title: "Buttons/OpenButton",
-  tags: ["my-page"],
+  tags: ["ui"],
   render: ({ open }, { globals }) => {
     const { t } = i18nOf(globals);
     return (

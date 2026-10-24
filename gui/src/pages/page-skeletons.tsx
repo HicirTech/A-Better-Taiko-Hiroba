@@ -2,17 +2,16 @@ import { Box, Skeleton, Stack } from "@mui/material";
 
 import { SongLookRowSkeleton } from "../favorites/song-look-row";
 import { PlayRowsSkeleton } from "../history/play-row";
-import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
 import { MedalCardSkeleton } from "../my-page/medal-card";
 import { OverviewHeaderSkeleton } from "../my-page/overview-header";
 import { ShareBlockSkeleton } from "../my-page/share-block";
 import { TitlePlateSkeleton } from "../my-page/title-plate";
-import { FrameTop } from "../navigation/app-frame";
-import { useTouchFirst } from "../navigation/use-touch-first";
+import { COLUMN_MAX_WIDTH_PX, FrameTop } from "../ui/frame-top";
 import { SearchFieldSkeleton } from "../ui/search-field";
 import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
 import { SectionTitleSkeleton } from "../ui/section-title";
 import { SYNC_BAR_PAGE, SyncBarSkeleton } from "../ui/sync-bar";
+import { useTouchFirst } from "../ui/use-touch-first";
 
 // Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
 const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" } as const;

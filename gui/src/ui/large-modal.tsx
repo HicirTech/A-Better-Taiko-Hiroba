@@ -12,12 +12,12 @@ import {
 } from "@mui/material";
 import { type ReactNode, type RefObject, useContext } from "react";
 
-import { useBackCloses, useBackLeaves } from "../navigation/back-closers";
-import { PipelinesShownContext } from "../navigation/pipelines-shown";
-import { useTouchFirst } from "../navigation/use-touch-first";
-import { REDUCED_MOTION } from "../navigation/window-move";
+import { useBackCloses, useBackLeaves } from "./back-closers";
 import { CloseIcon } from "./icons";
+import { PipelinesShownContext } from "./pipelines-shown";
+import { useTouchFirst } from "./use-touch-first";
 import { VISUALLY_HIDDEN } from "./visually-hidden";
+import { REDUCED_MOTION } from "./window-move";
 
 /** The panel's width on a computer; on a phone it takes the whole window. */
 const WIDTH_PX = 900;

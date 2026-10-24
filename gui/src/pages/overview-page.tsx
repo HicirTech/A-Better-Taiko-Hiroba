@@ -1,10 +1,10 @@
 import { Stack } from "@mui/material";
 
 import { MedalCard } from "../my-page/medal-card";
-import type { OpenAction } from "../my-page/open-button";
 import { OverviewHeader } from "../my-page/overview-header";
 import { PanelCard } from "../my-page/panel-card";
 import { SongSearch } from "../songs/song-search";
+import type { OpenAction } from "../ui/open-button";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { MyPageFailure } from "./my-page-failure";
 import type { PageData } from "./page";

@@ -2,7 +2,6 @@ import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 import { useDeferredValue, useMemo, useState } from "react";
 import { PLAY_ROW_PX, PlayRow } from "../history/play-row";
-import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import {
   type ListedScore,
@@ -24,6 +23,7 @@ import {
 import { keptShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { fold } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import type { SkeletonProgress } from "../ui/page-skeleton";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";

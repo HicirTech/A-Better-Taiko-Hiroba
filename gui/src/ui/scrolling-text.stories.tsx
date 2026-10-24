@@ -11,7 +11,7 @@ interface Args {
 
 const meta = {
   title: "Rows and lists/ScrollingText",
-  tags: ["favorites"],
+  tags: ["ui"],
   render: ({ text, widthPx }) => (
     <Box sx={{ width: widthPx, border: 1, borderColor: "divider", p: 1 }}>
       <ScrollingText lang="ja">{text}</ScrollingText>

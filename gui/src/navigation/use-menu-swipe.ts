@@ -1,9 +1,8 @@
 import { useContext } from "react";
-
-import { pointOf } from "../read-again/pull-gesture";
-import { BackClosersContext } from "./back-closers";
-import { swipeStarted } from "./swipe-gesture";
-import { inTextField, useSwipe } from "./use-swipe";
+import { BackClosersContext } from "../ui/back-closers";
+import { pointOf } from "../ui/pull-gesture";
+import { swipeStarted } from "../ui/swipe-gesture";
+import { inTextField, useSwipe } from "../ui/use-swipe";
 
 export interface MenuSwipeProps {
   /** Whether the screen is touch-first: only there does a swipe open or close the menu. */

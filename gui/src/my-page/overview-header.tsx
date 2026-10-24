@@ -1,15 +1,14 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Stack } from "@mui/material";
 import { useRef } from "react";
-
+import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "../pictures/hiroba-px";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { useDrawnTop } from "../pictures/use-drawn-top";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { PictureView, PictureWant, ProfileView } from "../shared/session-port";
+import type { OpenAction } from "../ui/open-button";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
-import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "./hiroba-px";
 import { MY_DON, MyDonPortrait } from "./my-don-portrait";
-import type { OpenAction } from "./open-button";
 import { panelHeightRatio, ScorePanel, scorePanelWant } from "./score-panel";
 import { plateBandTop, plateHeightRatio, TitlePlate, TitlePlateSkeleton } from "./title-plate";
 

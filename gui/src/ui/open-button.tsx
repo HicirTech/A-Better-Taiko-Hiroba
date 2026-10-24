@@ -1,9 +1,9 @@
 import { Box, ButtonBase, type ButtonBaseProps, Tooltip } from "@mui/material";
 import { type MouseEvent, type ReactNode, type TouchEvent, useRef, useState } from "react";
 
-import { movedPastSlop, pointOf, type TouchPoint } from "../read-again/pull-gesture";
-import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
+import { movedPastSlop, pointOf, type TouchPoint } from "./pull-gesture";
 import { useLongPress } from "./use-long-press";
+import { VISUALLY_HIDDEN } from "./visually-hidden";
 
 /** What a press on a button that opens a page does: `open` it, on a click or key, or on touch-first
  * screens (`pointer: coarse`) a long-press. */

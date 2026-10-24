@@ -8,7 +8,7 @@ import {
   TextField,
 } from "@mui/material";
 
-import { useBackCloses } from "../navigation/back-closers";
+import { useBackCloses } from "./back-closers";
 
 const POINTS = { m: 0, pl: 3 } as const;
 

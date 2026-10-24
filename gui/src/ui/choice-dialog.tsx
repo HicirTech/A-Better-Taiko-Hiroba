@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { List, ListItemButton, ListItemText, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { LargeModal } from "../ui/large-modal";
+import { LargeModal } from "./large-modal";
 
 // The choice's name greyed, but the reason it cannot be made left readable.
 const REFUSED = {

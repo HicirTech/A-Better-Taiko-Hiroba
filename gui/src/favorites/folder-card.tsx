@@ -1,10 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Chip, Menu, MenuItem, Stack } from "@mui/material";
 import { useId, useState } from "react";
-
-import { useBackCloses } from "../navigation/back-closers";
 import type { FavoriteSet } from "../shared/sets/favorite-sets";
 import type { SongLook } from "../shared/song-catalogue/song-look";
+import { useBackCloses } from "../ui/back-closers";
 import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
 import { CARD_ROWS, SectionCard } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";

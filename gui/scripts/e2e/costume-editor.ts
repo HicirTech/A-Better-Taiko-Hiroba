@@ -1,4 +1,4 @@
-import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
+import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
 import { COSTUME_FIELDS } from "../mock-costume";
 import { HIROBA, PHONE } from "./config";
 import type { Ctx } from "./context";

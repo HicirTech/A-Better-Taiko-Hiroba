@@ -1,10 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Stack } from "@mui/material";
 import { useRef } from "react";
-
-import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
 import { useFocusKept } from "../ui/editor-parts";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { TitlePicker } from "./title-picker";
 import type { TitleEditor } from "./use-title-editor";
 

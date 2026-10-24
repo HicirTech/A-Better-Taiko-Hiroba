@@ -9,7 +9,7 @@ import {
   GENRE_ORDER,
 } from "../shared/song-catalogue/genre-look";
 import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../shared/song-catalogue/types";
-import { FilterChip } from "./filter-chip";
+import { FilterChip } from "../ui/filter-chip";
 import type { SongFilter } from "./song-filter";
 
 const LEVELS = Array.from({ length: MAX_LEVEL - MIN_LEVEL + 1 }, (_, index) => MIN_LEVEL + index);

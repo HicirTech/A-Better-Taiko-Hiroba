@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import * as MultiFilterChip from "../../favorites/filter-chip.multi-filter-chip.stories";
-import * as FilterChip from "../../favorites/filter-chip.stories";
 import * as SongFilters from "../../favorites/song-filters.stories";
 import * as ScoreFilters from "../../scores/score-filters.stories";
+import * as MultiFilterChip from "../../ui/filter-chip.multi-filter-chip.stories";
+import * as FilterChip from "../../ui/filter-chip.stories";
 import { Gallery } from "../gallery";
 
 const meta = {

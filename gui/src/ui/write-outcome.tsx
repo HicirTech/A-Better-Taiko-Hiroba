@@ -5,7 +5,7 @@ import { HIROBA_LANG } from "../shared/language/show-language";
 import type { WriteKind, WriteSets } from "../shared/session-port";
 import { type OutcomeWords, outcomeWords } from "../shared/writes/outcome-words";
 import type { Noticed } from "../shared/writes/write-ending";
-import { OperationSnackbar } from "../ui/operation-snackbar";
+import { OperationSnackbar } from "./operation-snackbar";
 
 /** How a write ended, said at the window's foot; `onClosed` lets the page drop the notice. */
 export function WriteOutcomeSnackbar<K extends WriteKind>({

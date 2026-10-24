@@ -14,13 +14,13 @@ import type { PageData } from "./pages/page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { createPictureLane } from "./pictures/picture-lane";
 import type { SystemLink, SystemToast } from "./platform";
-import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
 import type { HirobaSessionPort } from "./shared/session-port";
 import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
+import { PullToRead } from "./ui/pull-to-read";
 import { UpdateDialog } from "./updates/update-dialog";
 
 export interface AppProps {

@@ -2,7 +2,8 @@ import { keyframes } from "@emotion/react";
 import { GlobalStyles } from "@mui/material";
 import { flushSync } from "react-dom";
 
-import type { WindowMove } from "./page-move";
+/** How the window goes to what it shows next; `reveal` hands a page's skeleton over to the page. */
+export type WindowMove = "down" | "up" | "pipelinesIn" | "pipelinesOut" | "reveal";
 
 /** The pipelines page's slide as MUI drew it: its time and ease for entering the screen. */
 export const MOVE_TIMING = "225ms cubic-bezier(0, 0, 0.2, 1)";

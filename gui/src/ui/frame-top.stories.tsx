@@ -1,14 +1,14 @@
 import { Paper, Skeleton, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
-
+import { AppFrame } from "../navigation/app-frame";
 import { PAGE_REGISTRY } from "../pages/registry";
 import { i18nOf } from "../story-kit/env";
-import { AppFrame, FrameTop } from "./app-frame";
+import { FrameTop } from "./frame-top";
 
 const meta = {
   title: "Navigation/FrameTop",
-  tags: ["navigation"],
+  tags: ["ui"],
   parameters: { layout: "fullscreen" },
   render: (_args, { globals }) => (
     <AppFrame

@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, Button, Paper, Skeleton } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { PAGE_BOTTOM_PX, PAGE_HEIGHT } from "../navigation/app-frame";
+import { PAGE_BOTTOM_PX, PAGE_HEIGHT } from "./frame-top";
 import { ProgressBar } from "./progress-bar";
 import { publishHeightOf } from "./publish-height";
 

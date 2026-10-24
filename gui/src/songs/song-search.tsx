@@ -11,8 +11,6 @@ import {
 import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
 import { type PickerEntry, PickerList } from "../favorites/picker-list";
 import { SongListFailed } from "../favorites/song-list-failed";
-import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
-import { useBackLeaves } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../shared/session-port";
 import {
@@ -23,6 +21,8 @@ import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { searchSongs } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { useBackLeaves } from "../ui/back-closers";
+import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
 import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";

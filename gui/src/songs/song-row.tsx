@@ -2,10 +2,10 @@ import type { Genre } from "@abth/core";
 import { Box, Checkbox, Skeleton, type SxProps, type Theme } from "@mui/material";
 import type { MouseEvent, ReactNode } from "react";
 import { LEVEL_BADGES_LOOK } from "../favorites/level-badges";
-import { ScrollingText } from "../favorites/scrolling-text";
-import type { LongPressHandlers } from "../my-page/use-long-press";
 import { GENRE_COLOUR } from "../shared/song-catalogue/genre-look";
 import type { RowPlace } from "../ui/row-list";
+import { ScrollingText } from "../ui/scrolling-text";
+import type { LongPressHandlers } from "../ui/use-long-press";
 
 const ONE_LINE = { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } as const;
 const NO_GENRE = { backgroundColor: "currentColor", opacity: 0.25 } as const;

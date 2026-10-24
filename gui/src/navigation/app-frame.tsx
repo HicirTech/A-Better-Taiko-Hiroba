@@ -26,21 +26,22 @@ import {
 import { createPortal } from "react-dom";
 
 import type { SystemBack } from "../platform";
+import { BackClosersContext, BackModesContext, createBackClosers } from "../ui/back-closers";
+import { MENU_INSET_PX, PAGE_BOTTOM_PX, SAFE_TOP, TOP_BAND_PX } from "../ui/frame-top";
 import { ArrowBackIcon, ArrowForwardIcon, MenuIcon } from "../ui/icons";
+import { MenuOpenContext } from "../ui/menu-open";
+import { PipelinesShownContext } from "../ui/pipelines-shown";
+import type { SwipeDirection } from "../ui/swipe-gesture";
+import { useTouchFirst } from "../ui/use-touch-first";
+import { useWideWindow } from "../ui/use-wide-window";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
+import { WiderFrameContext } from "../ui/wider-frame";
+import { MOVE_TIMING, moveWindow, STILL, WindowMoveStyles } from "../ui/window-move";
 import { backAction } from "./back-action";
-import { BackClosersContext, BackModesContext, createBackClosers } from "./back-closers";
 import { FrameNavigationContext } from "./frame-navigation";
-import { MenuOpenContext } from "./menu-open";
 import { PAGES, type Page } from "./pages";
-import { PipelinesShownContext } from "./pipelines-shown";
-import type { SwipeDirection } from "./swipe-gesture";
 import { useMenuSwipe } from "./use-menu-swipe";
 import { usePipelinesSwipe } from "./use-pipelines-swipe";
-import { useTouchFirst } from "./use-touch-first";
-import { useWideWindow } from "./use-wide-window";
-import { WiderFrameContext } from "./wider-frame";
-import { MOVE_TIMING, moveWindow, STILL, WindowMoveStyles } from "./window-move";
 
 /** How the navigation lists a page: its name and its icon. */
 export interface NavEntry {
@@ -49,14 +50,6 @@ export interface NavEntry {
 }
 
 const PANEL_WIDTH_PX = 240;
-const MENU_INSET_PX = 8;
-// The band the floating buttons sit in; fixed so every page starts at the same height.
-const TOP_BAND_PX = 64;
-export const PAGE_BOTTOM_PX = 32;
-const SAFE_TOP = "env(safe-area-inset-top, 0px)";
-export const BELOW_TOP_BAND = `calc(${TOP_BAND_PX}px + ${SAFE_TOP})`;
-/** The window's room for a page: below the top band and above the frame's bottom room. */
-export const PAGE_HEIGHT = `calc(100vh - ${TOP_BAND_PX + PAGE_BOTTOM_PX}px)`;
 
 interface NavigationProps {
   readonly page: Page;
@@ -234,36 +227,6 @@ export function AppFrame({
     </BackClosersContext>
   );
 }
-
-/** Room beside a band button: a small button and the gap after it. */
-const BAND_BUTTON_ROOM_PX = 48;
-
-/** A page's bar across the top band, clear of the menu button. */
-export function FrameTop({ children }: { children: ReactNode }) {
-  const wide = useWideWindow();
-  const touchFirst = useTouchFirst();
-  // A touch screen draws no menu button: its swipe stands in for it.
-  const room = wide || touchFirst ? 0 : BAND_BUTTON_ROOM_PX;
-  return (
-    <Box sx={{ position: "sticky", top: BELOW_TOP_BAND, zIndex: "appBar", height: 0 }}>
-      <Box
-        sx={{
-          transform: `translateY(${MENU_INSET_PX - TOP_BAND_PX}px)`,
-          ml: `${room}px`,
-        }}
-      >
-        {children}
-      </Box>
-    </Box>
-  );
-}
-
-/** Below this height a block that stays in view would crowd the page, so it scrolls with it. */
-const TALL_WINDOW_PX = 640;
-export const WHEN_TALL = `@media (min-height: ${TALL_WINDOW_PX}px)`;
-export const STAYS_IN_VIEW = {
-  [WHEN_TALL]: { position: "sticky", top: BELOW_TOP_BAND },
-} as const;
 
 /** A page row's shape: flush with the panel's left edge, round at the right. */
 const ROW_SHAPE = { mr: 1.5, borderRadius: "0 999px 999px 0" } as const;

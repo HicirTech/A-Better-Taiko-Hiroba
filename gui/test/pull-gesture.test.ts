@@ -13,7 +13,7 @@ import {
   pullMoved,
   pullReleased,
   pullStarted,
-} from "../src/read-again/pull-gesture";
+} from "../src/ui/pull-gesture";
 
 const START = { x: 200, y: 300 };
 

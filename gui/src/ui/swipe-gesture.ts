@@ -1,4 +1,4 @@
-import type { TouchPoint } from "../read-again/pull-gesture";
+import type { TouchPoint } from "./pull-gesture";
 
 export const SWIPE_DISTANCE_PX = 56;
 // Horizontal over vertical travel: a flatter drag is the page being scrolled.

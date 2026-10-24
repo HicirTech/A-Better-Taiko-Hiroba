@@ -1,6 +1,6 @@
 import { useContext, useEffect, useEffectEvent } from "react";
 
-import { BackClosersContext } from "../navigation/back-closers";
+import { BackClosersContext } from "../ui/back-closers";
 
 const isRefresh = (event: KeyboardEvent): boolean =>
   event.key === "F5" ||

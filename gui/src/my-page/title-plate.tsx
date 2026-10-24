@@ -2,12 +2,12 @@ import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Typography } from "@mui/material";
 import type { Ref } from "react";
 import { HirobaPicture } from "../pictures/hiroba-picture";
+import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, ONE_LINE, OUTLINED } from "../pictures/hiroba-px";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
 import { HIROBA_LANG } from "../shared/language/show-language";
 import type { PictureView, ProfileView } from "../shared/session-port";
+import { FOCUS_RING, type OpenAction, OpenButton } from "../ui/open-button";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
-import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, ONE_LINE, OUTLINED } from "./hiroba-px";
-import { FOCUS_RING, type OpenAction, OpenButton } from "./open-button";
 
 // Hiroba's #mydon_area: the plate is 290 pixels wide.
 const PLATE_WIDTH = 290;

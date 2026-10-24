@@ -1,5 +1,5 @@
 /** The Overview's song search: its bar, the searches kept, a song's details and chart pictures. */
-import { LONG_HOLD_MS } from "../../src/read-again/pull-gesture";
+import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
 import {
   BRANCHED_CHART,
   MISCOUNTED_CHART,

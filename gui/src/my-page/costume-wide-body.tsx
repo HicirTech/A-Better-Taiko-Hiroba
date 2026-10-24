@@ -1,10 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Stack } from "@mui/material";
 import type { ReactNode } from "react";
-
-import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CostumePart } from "../shared/costume-parts";
+import { STAYS_IN_VIEW } from "../ui/frame-top";
 import { SectionTitleSkeleton } from "../ui/section-title";
 import { previewSetOf, shownEditorOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";

@@ -1,8 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
-
-import { type Choice, ChoiceDialog } from "../favorites/choice-dialog";
 import { type FavoriteSet, refusedSong, SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
+import { type Choice, ChoiceDialog } from "../ui/choice-dialog";
 import { StatusNote } from "../ui/status-note";
 
 /** A song the dialog names: in the player's language, with what tells it from a same-titled one. */

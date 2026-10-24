@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 
-import { pageMove, type WindowMove } from "../src/navigation/page-move";
+import { type PageMove, pageMove } from "../src/navigation/page-move";
 import type { Page } from "../src/navigation/pages";
 
-test.each<[from: Page, to: Page, move: WindowMove]>([
+test.each<[from: Page, to: Page, move: PageMove]>([
   ["overview", "scores", "down"],
   ["scores", "settings", "down"],
   ["settings", "overview", "up"],

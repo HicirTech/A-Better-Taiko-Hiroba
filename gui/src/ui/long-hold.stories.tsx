@@ -11,7 +11,7 @@ function Holding({ size }: { size: number }) {
 
 const meta = {
   title: "Status/HoldRing",
-  tags: ["read-again"],
+  tags: ["ui"],
   render: () => <Holding size={36} />,
 } satisfies Meta;
 

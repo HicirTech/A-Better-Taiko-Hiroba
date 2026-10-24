@@ -1,11 +1,6 @@
 import type { Translator } from "@abth/i18n";
 import { Box, IconButton, Stack, Typography } from "@mui/material";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
-
-import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
-import { WriteOutcomeSnackbar } from "../my-page/write-outcome";
-import { useBackLeaves } from "../navigation/back-closers";
-import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../shared/session-port";
 import {
@@ -24,11 +19,15 @@ import {
 import { rememberedSongs, resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SongDetails } from "../songs/song-details";
+import { useBackLeaves } from "../ui/back-closers";
 import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
+import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
 import { ListIcon } from "../ui/icons";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { CARD_GAP } from "../ui/section-card";
 import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
+import { useTouchFirst } from "../ui/use-touch-first";
+import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
 import type { PickableState } from "./pickable-songs";

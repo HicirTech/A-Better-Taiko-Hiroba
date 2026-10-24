@@ -1,4 +1,4 @@
-import type { TouchPoint } from "../read-again/pull-gesture";
+import type { TouchPoint } from "../ui/pull-gesture";
 
 const STEPS = 8;
 // A finger lifts before it can tap again: a sortable list eats clicks for 50 ms after a lift.

@@ -72,7 +72,7 @@ function StarsChip({ i18n, first, onChoose }: Args & { i18n: Translator; first: 
 
 const meta = {
   title: "Chips and filters/FilterChip",
-  tags: ["favorites"],
+  tags: ["ui"],
   render: (args, { globals }) => <ChartChip {...args} i18n={i18nOf(globals)} first={null} />,
   args: { onChoose: fn() },
 } satisfies Meta<Args>;

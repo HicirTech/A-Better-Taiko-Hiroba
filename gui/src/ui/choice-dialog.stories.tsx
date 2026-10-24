@@ -11,7 +11,7 @@ type Args = Omit<ComponentProps<typeof ChoiceDialog>, "title" | "choices" | "i18
 
 const meta = {
   title: "Dialogs/ChoiceDialog",
-  tags: ["favorites"],
+  tags: ["ui"],
   parameters: { layout: "fullscreen" },
   render: (args, { globals }) => {
     const i18n = i18nOf(globals);

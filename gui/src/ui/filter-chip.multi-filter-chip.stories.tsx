@@ -43,7 +43,7 @@ function ChartsChip({
 
 const meta = {
   title: "Chips and filters/MultiFilterChip",
-  tags: ["favorites"],
+  tags: ["ui"],
   render: (args, { globals }) => <ChartsChip {...args} i18n={i18nOf(globals)} first={[]} />,
   args: { onChoose: fn() },
 } satisfies Meta<Args>;

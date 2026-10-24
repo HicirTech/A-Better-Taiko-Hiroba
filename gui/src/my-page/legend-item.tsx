@@ -5,9 +5,9 @@ import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import type { SystemToast } from "../platform";
 import type { IconWant } from "../shared/session-port";
+import { nameByLongPress } from "../ui/name-by-long-press";
+import { useLongPress } from "../ui/use-long-press";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
-import { nameByLongPress } from "./name-by-long-press";
-import { useLongPress } from "./use-long-press";
 
 const ICON_HEIGHT_PX = 24;
 const DOT_PX = 8;

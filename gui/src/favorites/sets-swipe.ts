@@ -1,5 +1,5 @@
-import { OPENING_AREA_SHARE, type Swipe } from "../navigation/swipe-gesture";
-import type { TouchPoint } from "../read-again/pull-gesture";
+import type { TouchPoint } from "../ui/pull-gesture";
+import { OPENING_AREA_SHARE, type Swipe } from "../ui/swipe-gesture";
 
 export interface SetsSwipeContext {
   /** Fingers on the screen: two or more are a zoom, never a swipe. */

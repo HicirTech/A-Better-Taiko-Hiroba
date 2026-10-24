@@ -9,8 +9,6 @@ import {
   useRef,
   useState,
 } from "react";
-
-import { useTouchFirst } from "../navigation/use-touch-first";
 import { failureMessageOf } from "../shared/read-failure-message";
 import type { FavoriteSongState } from "../shared/session-port";
 import { ShownDifficultyContext, shownFor } from "../shared/song-catalogue/shown-difficulty";
@@ -24,6 +22,7 @@ import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SearchField } from "../ui/search-field";
 import { StatusNote } from "../ui/status-note";
+import { useTouchFirst } from "../ui/use-touch-first";
 import type { PickableState } from "./pickable-songs";
 import { type PickerEntry, PickerList } from "./picker-list";
 import { matchesCharts, matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";

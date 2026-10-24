@@ -2,8 +2,8 @@ import type { Translator } from "@abth/i18n";
 import { Box, Checkbox, Chip, ListItemIcon, Menu, MenuItem, type Theme } from "@mui/material";
 import { type ReactNode, useState } from "react";
 
-import { useBackCloses } from "../navigation/back-closers";
-import { ArrowDropDownIcon } from "../ui/icons";
+import { useBackCloses } from "./back-closers";
+import { ArrowDropDownIcon } from "./icons";
 
 /** The colour a choice is known by, and the text that reads on it. */
 export interface FilterFill {

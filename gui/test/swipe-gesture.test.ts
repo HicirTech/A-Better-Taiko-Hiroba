@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-
+import type { TouchPoint } from "../src/ui/pull-gesture";
 import {
   OPENING_AREA_SHARE,
   type PipelinesSwipeContext,
@@ -11,8 +11,7 @@ import {
   type SwipeDirection,
   swipeReached,
   swipeStarted,
-} from "../src/navigation/swipe-gesture";
-import type { TouchPoint } from "../src/read-again/pull-gesture";
+} from "../src/ui/swipe-gesture";
 
 const WINDOW_WIDTH_PX = 360;
 const OPENING_LIMIT_PX = WINDOW_WIDTH_PX * OPENING_AREA_SHARE;

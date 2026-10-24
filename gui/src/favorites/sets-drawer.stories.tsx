@@ -1,13 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
-import { LONG_PRESS_MS } from "../my-page/use-long-press";
 import { touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { FOLDER_SONGS } from "../story-kit/favorites";
 import { STORY_SETS } from "../story-kit/sets";
 import { found, press, rightClick } from "../story-kit/steps";
 import { touchHold } from "../story-kit/touch";
+import { LONG_PRESS_MS } from "../ui/use-long-press";
 import { SetsDrawer, type SetsDrawerProps } from "./sets-drawer";
 
 type Args = Omit<SetsDrawerProps, "i18n" | "byLongPress">;

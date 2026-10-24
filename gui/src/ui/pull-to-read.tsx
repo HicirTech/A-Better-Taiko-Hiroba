@@ -1,7 +1,7 @@
 import { Box, CircularProgress, Paper } from "@mui/material";
 import { type RefObject, useEffect, useEffectEvent, useRef, useState } from "react";
 
-import { gesturesHeld } from "../navigation/gesture-hold";
+import { gesturesHeld } from "./gesture-hold";
 import { HoldRing } from "./long-hold";
 import {
   LONG_HOLD_MS,

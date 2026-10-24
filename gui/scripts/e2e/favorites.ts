@@ -1,5 +1,5 @@
 /** The Favourites page: its two cards, the sets drawer, the song picker, its filters and search. */
-import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
+import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
 import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
 import { HIROBA, PHONE_TALL } from "./config";
 import type { Ctx } from "./context";

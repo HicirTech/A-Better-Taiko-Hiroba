@@ -5,16 +5,16 @@ import { type ReactNode, useRef, useState } from "react";
 
 import { CROWN_KEY, CROWN_RATIO } from "../history/play-marks";
 import { PlayRow } from "../history/play-row";
-import { useTouchFirst } from "../navigation/use-touch-first";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
-import { PullToRead } from "../read-again/pull-to-read";
-import { SHUT_LOOK } from "../read-again/shut-look";
 import type { ListedScore } from "../shared/scores/score-order";
 import type { ScoreView } from "../shared/session-port";
 import { LargeModal } from "../ui/large-modal";
+import { PullToRead } from "../ui/pull-to-read";
 import { ReadAgainButton } from "../ui/read-again-button";
 import { SubsectionTitle } from "../ui/section-title";
+import { SHUT_LOOK } from "../ui/shut-look";
+import { useTouchFirst } from "../ui/use-touch-first";
 
 const TITLE_ID = "score-details-title";
 const SECTION_MARK_PX = 18;

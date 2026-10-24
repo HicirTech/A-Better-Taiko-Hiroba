@@ -27,7 +27,7 @@ const pulledBy =
 
 const meta = {
   title: "Status/PullToRead",
-  tags: ["read-again"],
+  tags: ["ui"],
   parameters: { layout: "fullscreen" },
   globals: onDevice("phone"),
   render: (args) => (

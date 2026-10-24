@@ -48,7 +48,7 @@ const refused = (code: number, message: string | null): AnyOutcome => ({
 
 const meta = {
   title: "Status/WriteOutcomeSnackbar",
-  tags: ["my-page"],
+  tags: ["ui"],
   parameters: { layout: "fullscreen" },
   render: (args, { globals }) => <SaidAgain {...args} i18n={i18nOf(globals)} />,
   args: { kind: "costume", outcome: { kind: "maintenance" }, onClosed: fn() },

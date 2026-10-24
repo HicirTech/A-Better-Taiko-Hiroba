@@ -1,4 +1,4 @@
-import { LONG_PRESS_MS } from "../../src/my-page/use-long-press";
+import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
 import {
   COOLDOWN_MESSAGE,
   FILTER_MESSAGE,

@@ -1,7 +1,6 @@
 import { useEffect, useEffectEvent } from "react";
-
-import { pointOf } from "../read-again/pull-gesture";
 import { gesturesHeld } from "./gesture-hold";
+import { pointOf } from "./pull-gesture";
 import { type Swipe, swipeReached } from "./swipe-gesture";
 
 const TEXT_FIELDS = "input, textarea";

@@ -1,7 +1,6 @@
 import { CircularProgress, IconButton, Tooltip } from "@mui/material";
-
-import { HoldRing, usePressHold } from "../read-again/long-hold";
 import { RefreshIcon } from "./icons";
+import { HoldRing, usePressHold } from "./long-hold";
 
 // The arrow is MUI's own icon size; the spinner, a little smaller, stands in the arrow's room.
 const ARROW_PX = 24;

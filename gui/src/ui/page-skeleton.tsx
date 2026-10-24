@@ -1,7 +1,7 @@
 import { Box, LinearProgress, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { PAGE_HEIGHT } from "../navigation/app-frame";
+import { PAGE_HEIGHT } from "./frame-top";
 import { BAR, type Done, fillOf } from "./progress-bar";
 
 /** What a read says of itself on the skeleton's bar: its words, and how far it has come. */

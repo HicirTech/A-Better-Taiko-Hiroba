@@ -5,7 +5,7 @@ import {
   SWALLOW_MAX_MS,
   type SwallowTimers,
   swallowTouchClick,
-} from "../src/my-page/swallow-touch-click";
+} from "../src/ui/swallow-touch-click";
 
 const pointerEvent = (type: string, pointerType: string) =>
   Object.assign(new Event(type, { cancelable: true }), { pointerType });
