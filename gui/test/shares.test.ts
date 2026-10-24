@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { sharesOf } from "../src/my-page/shares";
+import { sharesOf } from "../src/profile/shares";
 
 const counts = (...values: number[]) => values.map((count) => ({ count }));
 const percents = (values: number[], locale = "en") =>

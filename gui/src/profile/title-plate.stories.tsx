@@ -19,7 +19,7 @@ interface Args {
 
 const meta = {
   title: "Pictures/TitlePlate",
-  tags: ["my-page"],
+  tags: ["profile"],
   render: ({ profile, answer, opens }, { globals }) => (
     <Box sx={{ width: 420 }}>
       <TitlePlate

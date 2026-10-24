@@ -7,7 +7,7 @@ import { CostumePreviewBox, PreviewFailure } from "../my-page/costume-preview-bo
 import { MedalCard } from "../my-page/medal-card";
 import { MY_DON, MyDonPortrait } from "../my-page/my-don-portrait";
 import { ScorePanel } from "../my-page/score-panel";
-import { TitlePlate } from "../my-page/title-plate";
+import { TitlePlate } from "../profile/title-plate";
 import { previewOf } from "../story-kit/costume";
 import { touchOf } from "../story-kit/devices";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";

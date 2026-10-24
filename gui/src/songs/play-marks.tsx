@@ -4,8 +4,8 @@ import type { MessageKey, Translator } from "@abth/i18n";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CrownKind } from "../shared/session-port";
-import { CHART_MARK_PX } from "../songs/chart-level";
 import { SupportIcon } from "../ui/icons";
+import { CHART_MARK_PX } from "./chart-level";
 
 export const CROWN_KEY = {
   silver: "crowns.silver",

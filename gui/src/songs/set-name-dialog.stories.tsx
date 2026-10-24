@@ -9,7 +9,7 @@ type Args = Pick<SetNameDialogProps, "onCancel" | "onSave">;
 
 const meta = {
   title: "Dialogs/SetNameDialog",
-  tags: ["favorites"],
+  tags: ["songs"],
   parameters: { layout: "fullscreen" },
   render: (args, { globals }) => {
     const i18n = i18nOf(globals);

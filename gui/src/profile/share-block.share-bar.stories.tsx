@@ -7,7 +7,7 @@ import { ShareBar } from "./share-block";
 
 const meta = {
   title: "Stats/ShareBar",
-  tags: ["my-page"],
+  tags: ["profile"],
   render: (_args, { globals }) => {
     const i18n = i18nOf(globals);
     return (

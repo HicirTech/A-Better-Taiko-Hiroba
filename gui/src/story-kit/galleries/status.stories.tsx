@@ -1,12 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import * as SongListFailed from "../../favorites/song-list-failed.stories";
 import * as ThumbnailsUnavailable from "../../my-page/costume-item-grid.thumbnails-unavailable.stories";
 import * as CostumeNotes from "../../my-page/costume-notes.stories";
 import * as PreviewFailure from "../../my-page/costume-preview-box.preview-failure.stories";
 import * as KigurumiInfo from "../../my-page/kigurumi-info.stories";
 import * as PictureLoading from "../../songs/chart-picture.picture-loading.stories";
 import * as ChartPicture from "../../songs/chart-picture.stories";
+import * as SongListFailed from "../../songs/song-list-failed.stories";
 import * as HoldRing from "../../ui/long-hold.stories";
 import * as OperationSnackbar from "../../ui/operation-snackbar.stories";
 import * as ProgressBar from "../../ui/progress-bar.stories";

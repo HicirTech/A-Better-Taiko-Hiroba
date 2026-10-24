@@ -11,12 +11,12 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import { type FavoriteSet, sameSongs } from "../shared/sets/favorite-sets";
+import { SetNameDialog } from "../songs/set-name-dialog";
 import { useBackCloses } from "../ui/back-closers";
 import { AddIcon, CheckIcon } from "../ui/icons";
 import { type ItemAction, pointerOf } from "../ui/item-actions";
 import { ItemMenu, useItemMenu } from "../ui/item-menu";
 import { SimpleDialog } from "../ui/simple-dialog";
-import { SetNameDialog } from "./set-name-dialog";
 import { SortableList } from "./sortable-list";
 
 const DRAWER_WIDTH_PX = 280;

@@ -5,7 +5,7 @@ import {
   keptSearches,
   RECENT_SEARCHES,
   rememberSearch,
-} from "../src/songs/search-history";
+} from "../src/song-search/search-history";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("rememberSearch", () => {

@@ -6,7 +6,7 @@ import { SongListFailed } from "./song-list-failed";
 
 const meta = {
   title: "Status/SongListFailed",
-  tags: ["favorites"],
+  tags: ["songs"],
   render: (_args, { globals }) => (
     <SongListFailed id="story-songs" catalogue={storyCatalogue("failed")} i18n={i18nOf(globals)} />
   ),

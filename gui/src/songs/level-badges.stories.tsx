@@ -17,7 +17,7 @@ interface Args {
 
 const meta = {
   title: "Rows and lists/LevelBadges",
-  tags: ["favorites"],
+  tags: ["songs"],
   render: ({ songNo, shown }, { globals }) => (
     <ShownDifficultyContext value={shown}>
       <Box sx={LEVEL_BADGES_LOOK}>

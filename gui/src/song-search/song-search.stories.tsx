@@ -51,7 +51,7 @@ const typed =
 
 const meta = {
   title: "Fields/SongSearch",
-  tags: ["songs"],
+  tags: ["song-search"],
   parameters: { layout: "fullscreen" },
   render: (_args, { globals }) => search(storyCatalogue(), globals),
 } satisfies Meta;

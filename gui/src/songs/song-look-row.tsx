@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 
 import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import type { SongLook } from "../shared/song-catalogue/song-look";
-import { SongRow, SongRowSkeleton } from "../songs/song-row";
 import { LEVEL_BADGE_PX, LevelBadges } from "./level-badges";
+import { SongRow, SongRowSkeleton } from "./song-row";
 
 /** The way to a song's details, for a row's `onOpen`; undefined for a song without any. */
 export type DetailsOpener = (songNo: string) => (() => void) | undefined;

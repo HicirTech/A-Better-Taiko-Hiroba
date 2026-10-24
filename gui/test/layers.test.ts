@@ -12,6 +12,7 @@ const LAYERS: readonly (readonly string[])[] = [
   ["platform"],
   ["theme"],
   ["ui", "pictures"],
+  ["songs", "profile"],
   [
     "favorites",
     "history",
@@ -24,7 +25,7 @@ const LAYERS: readonly (readonly string[])[] = [
     "read-again",
     "scores",
     "settings",
-    "songs",
+    "song-search",
     "updates",
   ],
   ["pages"],
@@ -33,23 +34,6 @@ const LAYERS: readonly (readonly string[])[] = [
   ["shell.tsx"],
   ["main.tsx"],
 ];
-
-/** Today's imports that break the layers, by folder and folder: the list only shrinks. */
-const BREAKS: Readonly<Record<string, number>> = {
-  "favorites -> songs": 3,
-  "history -> favorites": 2,
-  "history -> scores": 2,
-  "history -> songs": 3,
-  "know-yourself -> favorites": 2,
-  "know-yourself -> my-page": 1,
-  "know-yourself -> scores": 1,
-  "know-yourself -> songs": 2,
-  "name-title -> my-page": 1,
-  "rating -> history": 1,
-  "rating -> scores": 1,
-  "scores -> history": 3,
-  "songs -> favorites": 4,
-};
 
 // Stories, and the kit that serves them, stand above every layer.
 const ABOVE_THE_LAYERS = ["story-kit", "vite-env.d.ts"];
@@ -119,7 +103,7 @@ describe("the GUI's layers", () => {
     expect(unplaced).toEqual([]);
   });
 
-  test("hold no import that breaks them beyond those listed, and list none mended", () => {
-    expect(breaks()).toEqual(BREAKS);
+  test("hold no import that breaks them", () => {
+    expect(breaks()).toEqual({});
   });
 });

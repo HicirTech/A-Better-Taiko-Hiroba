@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import type { ShareItem } from "../my-page/share-block";
+import type { ShareItem } from "../profile/share-block";
 import { CROWN_COLOUR, RANK_COLOUR, RANKS_WORST_FIRST } from "../shared/panel-colours";
 import { STORY_PROFILE } from "./profile";
 

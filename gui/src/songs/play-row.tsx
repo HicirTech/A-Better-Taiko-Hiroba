@@ -2,14 +2,14 @@ import type { Genre, RecentPlay } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Stack, type SxProps, type Theme } from "@mui/material";
 import type { ReactNode } from "react";
-import { LEVEL_BADGE_PX } from "../favorites/level-badges";
 import type { PictureLane } from "../pictures/picture-lane";
 import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
-import { CHART_MARK_PX, ChartMarks } from "../songs/chart-level";
-import { type RowHandlers, SongRow, SongRowSkeleton } from "../songs/song-row";
 import type { RowPlace } from "../ui/row-list";
+import { CHART_MARK_PX, ChartMarks } from "./chart-level";
+import { LEVEL_BADGE_PX } from "./level-badges";
 import { PLAY_MARKS_SKELETON, PlayMarks } from "./play-marks";
+import { type RowHandlers, SongRow, SongRowSkeleton } from "./song-row";
 
 /** About how tall a play's row draws, before a list measures it. */
 export const PLAY_ROW_PX = 75;

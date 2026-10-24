@@ -2,7 +2,7 @@ import { type ReactNode, useRef, useState } from "react";
 
 import type { PageData, PageEntry } from "../pages/page";
 import { useReadAgainKeys } from "../read-again/use-read-again-keys";
-import { scoresReadingText } from "../scores/scores-page";
+import { scoresReadingText } from "../songs/scores-reading";
 
 /** Read again on the page shown: the button's state, its read, and a hold's question. */
 export interface ReadAgain {

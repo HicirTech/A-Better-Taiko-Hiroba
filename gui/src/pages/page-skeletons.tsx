@@ -1,11 +1,10 @@
 import { Box, Skeleton, Stack } from "@mui/material";
-
-import { SongLookRowSkeleton } from "../favorites/song-look-row";
-import { PlayRowsSkeleton } from "../history/play-row";
 import { MedalCardSkeleton } from "../my-page/medal-card";
 import { OverviewHeaderSkeleton } from "../my-page/overview-header";
-import { ShareBlockSkeleton } from "../my-page/share-block";
-import { TitlePlateSkeleton } from "../my-page/title-plate";
+import { ShareBlockSkeleton } from "../profile/share-block";
+import { TitlePlateSkeleton } from "../profile/title-plate";
+import { PlayRowsSkeleton } from "../songs/play-row";
+import { SongLookRowSkeleton } from "../songs/song-look-row";
 import { COLUMN_MAX_WIDTH_PX, FrameTop } from "../ui/frame-top";
 import { SearchFieldSkeleton } from "../ui/search-field";
 import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";

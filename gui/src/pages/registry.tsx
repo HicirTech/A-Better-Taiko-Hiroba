@@ -7,9 +7,10 @@ import { NameTitlePage } from "../name-title/name-title-page";
 import type { Page } from "../navigation/pages";
 import { RatingPage } from "../rating";
 import { ReadEveryDialog } from "../scores/read-every-dialog";
-import { ScoresPage, scoresReadingProgress } from "../scores/scores-page";
+import { ScoresPage } from "../scores/scores-page";
 import { SettingsPage } from "../settings/settings-page";
 import { RELEASES_URL, REPOSITORY_URL } from "../shared/updates";
+import { scoresReadingProgress } from "../songs/scores-reading";
 import {
   CheckroomIcon,
   EditIcon,

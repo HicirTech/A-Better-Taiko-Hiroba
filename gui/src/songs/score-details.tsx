@@ -2,9 +2,6 @@ import type { Genre, RecentPlay } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Stack, Typography } from "@mui/material";
 import { type ReactNode, useRef, useState } from "react";
-
-import { CROWN_KEY, CROWN_RATIO } from "../history/play-marks";
-import { PlayRow } from "../history/play-row";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ListedScore } from "../shared/scores/score-order";
@@ -15,6 +12,8 @@ import { ReadAgainButton } from "../ui/read-again-button";
 import { SubsectionTitle } from "../ui/section-title";
 import { SHUT_LOOK } from "../ui/shut-look";
 import { useTouchFirst } from "../ui/use-touch-first";
+import { CROWN_KEY, CROWN_RATIO } from "./play-marks";
+import { PlayRow } from "./play-row";
 
 const TITLE_ID = "score-details-title";
 const SECTION_MARK_PX = 18;

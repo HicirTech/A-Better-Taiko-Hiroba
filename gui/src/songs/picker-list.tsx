@@ -3,10 +3,10 @@ import { Fragment, type ReactNode, type RefObject } from "react";
 import { DIFFICULTY_COLOUR } from "../shared/song-catalogue/genre-look";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { type Marked, segmentsOf } from "../shared/song-catalogue/song-search";
-import { SongRow } from "../songs/song-row";
 import { RowList } from "../ui/row-list";
 import { LevelBadges } from "./level-badges";
 import { artistsLine } from "./song-look-row";
+import { SongRow } from "./song-row";
 
 /** A song in the list, and the names a search marked in it. */
 export interface PickerEntry {

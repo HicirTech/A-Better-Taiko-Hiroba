@@ -3,6 +3,7 @@ import { Box, Button, Chip, Menu, MenuItem, Stack } from "@mui/material";
 import { useId, useState } from "react";
 import type { FavoriteSet } from "../shared/sets/favorite-sets";
 import type { SongLook } from "../shared/song-catalogue/song-look";
+import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
 import { useBackCloses } from "../ui/back-closers";
 import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
 import { CARD_ROWS, SectionCard } from "../ui/section-card";
@@ -10,7 +11,6 @@ import { SectionTitle } from "../ui/section-title";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { StatusNote } from "../ui/status-note";
 import type { ShownFavorites } from "./favorites-state";
-import { type DetailsOpener, SongLookRow } from "./song-look-row";
 
 export interface FolderCardProps {
   readonly shown: ShownFavorites;

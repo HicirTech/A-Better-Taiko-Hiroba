@@ -24,7 +24,7 @@ const legend = (lane: PictureLane, globals: StoryGlobals) => {
 
 const meta = {
   title: "Stats/ShareLegend",
-  tags: ["my-page"],
+  tags: ["profile"],
   render: (_args, { globals }) => legend(STORY_LANE, globals),
 } satisfies Meta;
 

@@ -13,7 +13,7 @@ interface Args {
 
 const meta = {
   title: "Stats/LegendItem",
-  tags: ["my-page"],
+  tags: ["profile"],
   render: ({ icon }, { globals }) => {
     const i18n = i18nOf(globals);
     return (

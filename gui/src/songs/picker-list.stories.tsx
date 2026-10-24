@@ -22,7 +22,7 @@ interface Args {
 
 const meta = {
   title: "Rows and lists/PickerList",
-  tags: ["favorites"],
+  tags: ["songs"],
   render: (args, { globals }) => (
     <Box sx={{ maxWidth: 640 }}>
       <PickerList

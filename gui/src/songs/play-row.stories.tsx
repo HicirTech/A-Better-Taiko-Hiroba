@@ -45,7 +45,7 @@ const rows = (i18n: Translator, lane: PictureLane, plays: readonly RecentPlay[])
 
 const meta = {
   title: "Rows and lists/PlayRow",
-  tags: ["history"],
+  tags: ["songs"],
   render: (_args, { globals }) => rows(i18nOf(globals), STORY_LANE, STORY_PLAYS),
 } satisfies Meta;
 

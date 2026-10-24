@@ -9,8 +9,6 @@ import {
   ListItemText,
 } from "@mui/material";
 import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
-import { type PickerEntry, PickerList } from "../favorites/picker-list";
-import { SongListFailed } from "../favorites/song-list-failed";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../shared/session-port";
 import {
@@ -21,6 +19,10 @@ import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { searchSongs } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { type PickerEntry, PickerList } from "../songs/picker-list";
+import { SongDetails } from "../songs/song-details";
+import { bpmText } from "../songs/song-facts";
+import { SongListFailed } from "../songs/song-list-failed";
 import { useBackLeaves } from "../ui/back-closers";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
@@ -29,8 +31,6 @@ import { SearchField } from "../ui/search-field";
 import { SectionCard } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
 import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
-import { SongDetails } from "./song-details";
-import { bpmText } from "./song-facts";
 
 // A search with nothing found fills the window's page, so its words stand in the middle of it.
 const FILLS_THE_PAGE = {

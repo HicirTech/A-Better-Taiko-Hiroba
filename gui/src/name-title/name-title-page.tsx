@@ -1,9 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Stack } from "@mui/material";
 import { useRef, useState } from "react";
-import { TitlePlate } from "../my-page/title-plate";
 import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
+import { TitlePlate } from "../profile/title-plate";
 import type { PictureWant, ProfileView } from "../shared/session-port";
 import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
 import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";

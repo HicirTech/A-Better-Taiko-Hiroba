@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, Button, List, ListItemButton, ListItemText, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { SongLookRow } from "../favorites/song-look-row";
+import { SongLookRow } from "../songs/song-look-row";
 import { i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
 import { FOLDER_SONGS } from "../story-kit/favorites";
 import { lookOf } from "../story-kit/songs";

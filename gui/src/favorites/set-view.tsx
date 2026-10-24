@@ -1,10 +1,10 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, IconButton, Stack } from "@mui/material";
 import type { SongLook } from "../shared/song-catalogue/song-look";
+import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
 import { CloseIcon } from "../ui/icons";
 import { CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
-import { type DetailsOpener, SongLookRow } from "./song-look-row";
 import { SortableList } from "./sortable-list";
 
 const SORTED_ROWS = { gap: 0, ...TO_THE_CARD_SIDES } as const;

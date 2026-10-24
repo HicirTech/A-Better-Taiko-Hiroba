@@ -26,7 +26,7 @@ const UNREAD_PLAY = storyPlay("1009");
 
 const meta = {
   title: "Dialogs/ScoreDetails",
-  tags: ["scores"],
+  tags: ["songs"],
   parameters: { layout: "fullscreen" },
   render: (args, { globals }) => (
     <ScoreDetails
