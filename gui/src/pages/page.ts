@@ -11,6 +11,8 @@ import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemLink, SystemToast } from "../platform";
 import type { ReadStatus } from "../shared/reads/read-run";
 import type { HirobaSessionPort, ReadFailure } from "../shared/session-port";
+import type { ChartSource } from "../shared/song-catalogue/chart-source";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { UpdateReminder } from "../shared/updates/use-update-reminder";
 import type { ModalLook } from "../ui/large-modal";
 import type { SkeletonProgress } from "../ui/page-skeleton";
@@ -32,6 +34,12 @@ export interface PageData extends PageState {
   /** The window is wide enough for the side panel. */
   readonly wide: boolean;
   readonly modalLook: ModalLook;
+  /** The difficulty whose level songs show in front, as Settings chose it. */
+  readonly shownDifficulty: ShownDifficulty;
+  readonly onShownDifficulty: (next: ShownDifficulty) => void;
+  /** Where a song's details take their chart pictures from, as Settings chose it. */
+  readonly chartSource: ChartSource;
+  readonly onChartSource: (next: ChartSource) => void;
   /** The shell's Toast, where it has one. */
   readonly toast: SystemToast | undefined;
   /** Settings' language section, drawn by the window that holds the language. */

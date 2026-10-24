@@ -3,6 +3,7 @@ import { useMediaQuery } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
 import { PageArea } from "./app/page-area";
+import { useKeptChoice } from "./app/use-kept-choice";
 import { useModalLook } from "./app/use-modal-look";
 import { usePageShown } from "./app/use-page-shown";
 import { usePageVisits } from "./app/use-page-visits";
@@ -18,6 +19,8 @@ import type { SystemLink, SystemToast } from "./platform";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
 import type { HirobaSessionPort } from "./shared/session-port";
+import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
+import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
 import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
@@ -41,6 +44,11 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const wide = useWideWindow();
   const modalLook = useModalLook();
+  const [shownDifficulty, onShownDifficulty] = useKeptChoice(
+    keptShownDifficulty,
+    keepShownDifficulty,
+  );
+  const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
   const updates = useUpdateReminder(port, APP_VERSION);
   // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
   const lane = useMemo(
@@ -57,6 +65,10 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     touchFirst,
     wide,
     modalLook,
+    shownDifficulty,
+    onShownDifficulty,
+    chartSource,
+    onChartSource,
     toast,
     language,
     navigate: onNavigate,

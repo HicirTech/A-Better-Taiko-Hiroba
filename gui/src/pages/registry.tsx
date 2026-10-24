@@ -211,6 +211,10 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         i18n={data.i18n}
         language={data.language}
         account={accountOf(data)}
+        shownDifficulty={data.shownDifficulty}
+        onShownDifficulty={data.onShownDifficulty}
+        chartSource={data.chartSource}
+        onChartSource={data.onChartSource}
         updates={{
           version: data.version,
           check: data.updates.manual,

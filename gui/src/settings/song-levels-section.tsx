@@ -1,11 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { List, ListItem, ListItemText, ToggleButton, ToggleButtonGroup } from "@mui/material";
-import { useId, useState } from "react";
+import { useId } from "react";
 
 import { DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
 import {
-  keepShownDifficulty,
-  keptShownDifficulty,
   SHOWN_DIFFICULTIES,
   type ShownDifficulty,
 } from "../shared/song-catalogue/shown-difficulty";
@@ -13,19 +11,25 @@ import { StarIcon } from "../ui/icons";
 import { SettingsSection } from "./settings-section";
 
 /** The difficulty whose level a song shows in front, its other levels stacked behind it. */
-export function SongLevelsSection({ i18n }: { readonly i18n: Translator }) {
+export function SongLevelsSection({
+  shown,
+  i18n,
+  onShown,
+}: {
+  readonly shown: ShownDifficulty;
+  readonly i18n: Translator;
+  readonly onShown: (next: ShownDifficulty) => void;
+}) {
   const { t } = i18n;
   const headingId = useId();
   const labelId = useId();
-  const [shown, setShown] = useState(keptShownDifficulty);
   const choose = (next: ShownDifficulty | null) => {
     // A second press on the chosen one would leave none.
     if (next === null) {
       return;
     }
 
-    keepShownDifficulty(next);
-    setShown(next);
+    onShown(next);
   };
   return (
     <SettingsSection

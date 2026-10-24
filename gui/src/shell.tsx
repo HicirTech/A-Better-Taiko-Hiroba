@@ -3,6 +3,7 @@ import { Alert } from "@mui/material";
 import { useLayoutEffect, useMemo, useState } from "react";
 
 import { App } from "./App";
+import { useKeptChoice } from "./app/use-kept-choice";
 import { AppFrame } from "./navigation/app-frame";
 import { keepPage, keptPage } from "./navigation/pages";
 import { useShownPage } from "./navigation/use-shown-page";
@@ -18,6 +19,8 @@ import {
   systemLocale,
 } from "./shared/language/locale-choice";
 import { showLanguage } from "./shared/language/show-language";
+import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
+import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
 
 export function Shell({
   platform,
@@ -36,6 +39,12 @@ export function Shell({
     onShown(i18n);
   }, [i18n, onShown]);
   const [page, navigate] = useShownPage(keptPage, keepPage);
+  // Settings' two choices, for the page drawn here where no app runs.
+  const [shownDifficulty, onShownDifficulty] = useKeptChoice(
+    keptShownDifficulty,
+    keepShownDifficulty,
+  );
+  const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
   const pick = (next: Locale | null) => {
     if (next === null) {
       forgetLocale();
@@ -67,7 +76,15 @@ export function Shell({
           {...(platform.shell === "android" ? { toast: platform.toast } : {})}
         />
       ) : page === "settings" ? (
-        <SettingsPage i18n={i18n} language={language} account={{ kind: "signedOut" }} />
+        <SettingsPage
+          i18n={i18n}
+          language={language}
+          account={{ kind: "signedOut" }}
+          shownDifficulty={shownDifficulty}
+          onShownDifficulty={onShownDifficulty}
+          chartSource={chartSource}
+          onChartSource={onChartSource}
+        />
       ) : (
         <Alert severity="info">{i18n.t("platform.unsupported")}</Alert>
       )}
