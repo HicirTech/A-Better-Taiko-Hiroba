@@ -10,7 +10,7 @@ import {
   type PngRules,
   pngDataUrl,
   pngSize,
-} from "../src/hiroba-session/png-answer";
+} from "../src/shared/png-answer";
 
 const ORIGIN = "https://hiroba.test";
 const PATH = "/imgsrc_kisekae.php";

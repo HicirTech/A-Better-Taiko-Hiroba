@@ -1,7 +1,7 @@
 import type { Genre, Level } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
 
-import type { Difficulty } from "../shared/song-catalogue/types";
+import type { Difficulty } from "./types";
 
 /** The game's order: pops, kids, anime, vocaloid, game, variety, classic, namco. */
 export const GENRE_ORDER = [1, 3, 2, 4, 5, 7, 8, 6] as const satisfies readonly Genre[];

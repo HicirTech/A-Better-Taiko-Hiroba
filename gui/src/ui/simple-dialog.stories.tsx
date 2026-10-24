@@ -3,12 +3,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
 
-import { newSetName, SET_NAME_MAX_LENGTH } from "../favorites/favorite-sets";
+import { newSetName, SET_NAME_MAX_LENGTH } from "../shared/sets/favorite-sets";
+import { notesFor } from "../shared/updates/update-feed";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SCORES } from "../story-kit/scores";
 import { STORY_SETS } from "../story-kit/sets";
 import * as UpdateDialogStories from "../updates/update-dialog.stories";
-import { notesFor } from "../updates/update-feed";
 import { SimpleDialog } from "./simple-dialog";
 
 interface Args {

@@ -27,9 +27,8 @@ import type {
   TitleTarget,
   WriteOutcome,
 } from "@abth/core";
-import type { RatingDataRead } from "../../rating/read-rating-data";
-import type { UpdateFeed, UpdateFeedFailure } from "../../updates/update-feed";
 import type { PipelineView } from "../pipelines/pipeline-view";
+import type { RatingDataRead } from "../rating-data/read-rating-data";
 import type {
   ChartFileFailure,
   ChartPictureRead,
@@ -39,6 +38,7 @@ import type {
   SongCatalogueRead,
   SongDensityRead,
 } from "../song-catalogue/types";
+import type { UpdateFeed, UpdateFeedFailure } from "../updates/update-feed";
 
 export type {
   ChineseNamesRead,

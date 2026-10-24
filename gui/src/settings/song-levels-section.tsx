@@ -2,13 +2,13 @@ import type { Translator } from "@abth/i18n";
 import { List, ListItem, ListItemText, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useId, useState } from "react";
 
-import { DIFFICULTY_LABEL } from "../favorites/genre-look";
+import { DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
 import {
   keepShownDifficulty,
   keptShownDifficulty,
   SHOWN_DIFFICULTIES,
   type ShownDifficulty,
-} from "../favorites/shown-difficulty";
+} from "../shared/song-catalogue/shown-difficulty";
 import { StarIcon } from "../ui/icons";
 import { SettingsSection } from "./settings-section";
 

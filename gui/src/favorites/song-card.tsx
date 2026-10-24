@@ -1,11 +1,10 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Stack } from "@mui/material";
-
+import type { SongLook } from "../shared/song-catalogue/song-look";
 import { SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import type { ShownFavorites } from "./favorites-state";
-import type { SongLook } from "./song-look";
 import { type DetailsOpener, SongLookRow } from "./song-look-row";
 
 export interface SongCardProps {

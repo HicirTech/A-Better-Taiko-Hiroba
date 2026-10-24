@@ -1,9 +1,8 @@
 import type { Translator } from "@abth/i18n";
 import { List, ListItem, ListItemButton, ListItemText } from "@mui/material";
 import { useId } from "react";
-
+import { REPOSITORY_NAME } from "../shared/updates";
 import { GitHubIcon, OpenInNewIcon } from "../ui/icons";
-import { REPOSITORY_NAME } from "../updates";
 import { SettingsSection } from "./settings-section";
 
 /** The project's repository on GitHub, opened in the system's browser. */

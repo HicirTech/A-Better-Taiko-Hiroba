@@ -1,11 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
+import { keepChartSource } from "../shared/song-catalogue/chart-source";
 import { i18nOf } from "../story-kit/env";
 import { storySong } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { STORY_CHART_PORT } from "../story-kit/story-port";
-import { keepChartSource } from "./chart-source";
 import { SongDetails } from "./song-details";
 
 interface Args {

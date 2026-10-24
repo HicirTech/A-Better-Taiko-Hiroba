@@ -1,10 +1,12 @@
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import {
+  type ShownDifficulty,
+  ShownDifficultyContext,
+} from "../shared/song-catalogue/shown-difficulty";
 import { i18nOf } from "../story-kit/env";
 import { storySong } from "../story-kit/songs";
 import { LEVEL_BADGES_LOOK, LevelBadges } from "./level-badges";
-import { type ShownDifficulty, ShownDifficultyContext } from "./shown-difficulty";
 
 interface Args {
   /** The stand-in song whose levels show. */

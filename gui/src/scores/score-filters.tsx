@@ -2,6 +2,7 @@ import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, type Theme } from "@mui/material";
 
 import { FilterChip, MultiFilterChip } from "../favorites/filter-chip";
+import { SCORE_SORTS, type ScoreFilter, type ScoreSort } from "../shared/scores/score-order";
 import {
   DIFFICULTY_COLOUR,
   DIFFICULTY_LABEL,
@@ -9,9 +10,8 @@ import {
   GENRE_COLOUR,
   GENRE_LABEL,
   GENRE_ORDER,
-} from "../favorites/genre-look";
+} from "../shared/song-catalogue/genre-look";
 import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../shared/song-catalogue/types";
-import { SCORE_SORTS, type ScoreFilter, type ScoreSort } from "./score-order";
 
 const LEVELS = Array.from({ length: MAX_LEVEL - MIN_LEVEL + 1 }, (_, index) => MIN_LEVEL + index);
 const ROW = { display: "flex", flexWrap: "wrap", gap: 1 } as const;

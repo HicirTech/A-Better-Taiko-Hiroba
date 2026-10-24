@@ -1,8 +1,5 @@
 import type { Translator } from "@abth/i18n";
 import { Box, type Theme } from "@mui/material";
-
-import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../shared/song-catalogue/types";
-import { FilterChip } from "./filter-chip";
 import {
   DIFFICULTY_COLOUR,
   DIFFICULTY_LABEL,
@@ -10,7 +7,9 @@ import {
   GENRE_COLOUR,
   GENRE_LABEL,
   GENRE_ORDER,
-} from "./genre-look";
+} from "../shared/song-catalogue/genre-look";
+import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../shared/song-catalogue/types";
+import { FilterChip } from "./filter-chip";
 import type { SongFilter } from "./song-filter";
 
 const LEVELS = Array.from({ length: MAX_LEVEL - MIN_LEVEL + 1 }, (_, index) => MIN_LEVEL + index);

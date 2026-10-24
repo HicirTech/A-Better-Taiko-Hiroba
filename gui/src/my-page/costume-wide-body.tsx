@@ -4,13 +4,13 @@ import type { ReactNode } from "react";
 
 import { STAYS_IN_VIEW } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import type { CostumePart } from "../shared/costume-parts";
 import { SectionTitleSkeleton } from "../ui/section-title";
 import { previewSetOf, shownEditorOf, showsEditor } from "./costume-editor-state";
 import { CostumeNotes } from "./costume-notes";
 import { PaletteSkeleton } from "./costume-palette";
 import { PartHead, PartPanel } from "./costume-part-panel";
 import { PartTiles, PartTilesSkeleton } from "./costume-part-tiles";
-import type { CostumePart } from "./costume-parts";
 import { CostumePreviewBox } from "./costume-preview-box";
 import type { CostumeEditor } from "./use-costume-editor";
 

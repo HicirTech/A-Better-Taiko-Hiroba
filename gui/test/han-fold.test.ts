@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { foldHan } from "../src/favorites/han-fold";
-import { HAN_FOLDED_FROM, HAN_FOLDED_TO } from "../src/favorites/han-fold-table";
+import { foldHan } from "../src/shared/song-catalogue/han-fold";
+import { HAN_FOLDED_FROM, HAN_FOLDED_TO } from "../src/shared/song-catalogue/han-fold-table";
 
 describe("foldHan", () => {
   test.each([

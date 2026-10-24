@@ -1,12 +1,11 @@
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
+import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import { i18nOf } from "../story-kit/env";
 import { storySong } from "../story-kit/songs";
 import { STORY_CHART_PORT } from "../story-kit/story-port";
 import { ChartPictures } from "./chart-pictures";
-import type { ChartSource } from "./chart-source";
 import type { ShownChart } from "./chart-viewer";
 
 interface Args {

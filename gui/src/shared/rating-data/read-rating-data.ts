@@ -7,7 +7,7 @@ import {
   type Transport,
 } from "@abth/core";
 
-import type { SongCatalogueFailure } from "../shared/song-catalogue";
+import type { SongCatalogueFailure } from "../song-catalogue";
 
 // Some 400 kilobytes.
 const RATING_DATA_TIMEOUT_MS = 30_000;

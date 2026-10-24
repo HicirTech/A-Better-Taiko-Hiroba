@@ -12,13 +12,13 @@ import {
   showsEditor,
   UNREAD,
 } from "../src/my-page/costume-editor-state";
-import type { Noticed } from "../src/my-page/write-ending";
 import type {
   CostumeEditorView,
   CostumeSet,
   ReadFailure,
   WriteOutcomeView,
 } from "../src/shared/session-port";
+import type { Noticed } from "../src/shared/writes/write-ending";
 
 /** A set that is nobody's, with every value different from its neighbours'. */
 const BASE: CostumeSet = {

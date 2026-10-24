@@ -2,14 +2,13 @@ import type { Result } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { FormHelperText, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
-
-import { DIFFICULTY_LABEL } from "../favorites/genre-look";
 import type { HirobaSessionPort } from "../shared/session-port";
+import type { ChartSource } from "../shared/song-catalogue/chart-source";
+import { DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
 import type { ChartFileFailure, Difficulty } from "../shared/song-catalogue/types";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
 import { ChartPicture, PictureButton, PictureLoading } from "./chart-picture";
-import type { ChartSource } from "./chart-source";
 import type { ShownChart } from "./chart-viewer";
 import { drawChart } from "./draw-chart";
 import { type ChartShown, findChartPicture } from "./find-chart-picture";

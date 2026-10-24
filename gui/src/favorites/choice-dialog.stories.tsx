@@ -3,10 +3,9 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 import { action } from "storybook/actions";
 import { fn } from "storybook/test";
-
+import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import { i18nOf } from "../story-kit/env";
 import { ChoiceDialog } from "./choice-dialog";
-import { SET_SONG_LIMIT } from "./favorite-sets";
 
 type Args = Omit<ComponentProps<typeof ChoiceDialog>, "title" | "choices" | "i18n">;
 

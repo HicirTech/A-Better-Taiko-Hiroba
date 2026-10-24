@@ -4,10 +4,6 @@ import { useRef } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
-import type { CostumeEditorView, CostumeSet } from "../shared/session-port";
-import { HELD_STILL } from "../ui/editor-parts";
-import { SubsectionTitle, SubsectionTitleSkeleton } from "../ui/section-title";
-import { ItemPicture } from "./costume-item-grid";
 import {
   COLOUR_PARTS,
   type CostumePart,
@@ -18,7 +14,11 @@ import {
   type SlotPart,
   slotOf,
   tileName,
-} from "./costume-parts";
+} from "../shared/costume-parts";
+import type { CostumeEditorView, CostumeSet } from "../shared/session-port";
+import { HELD_STILL } from "../ui/editor-parts";
+import { SubsectionTitle, SubsectionTitleSkeleton } from "../ui/section-title";
+import { ItemPicture } from "./costume-item-grid";
 import { pickRing, RING_ROOM_PX } from "./pick-ring";
 
 export const PARTS_PANEL_ID = "costume-grid";

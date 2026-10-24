@@ -10,11 +10,11 @@ import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import { PullToRead } from "../read-again/pull-to-read";
 import { SHUT_LOOK } from "../read-again/shut-look";
+import type { ListedScore } from "../shared/scores/score-order";
 import type { ScoreView } from "../shared/session-port";
 import { LargeModal } from "../ui/large-modal";
 import { ReadAgainButton } from "../ui/read-again-button";
 import { SubsectionTitle } from "../ui/section-title";
-import type { ListedScore } from "./score-order";
 
 const TITLE_ID = "score-details-title";
 const SECTION_MARK_PX = 18;

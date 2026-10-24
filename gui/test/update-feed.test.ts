@@ -7,7 +7,7 @@ import {
   notesFor,
   parseUpdateFeed,
   type UpdateNotes,
-} from "../src/updates";
+} from "../src/shared/updates";
 
 const feedWith = (fields: Record<string, unknown>) =>
   JSON.stringify({ version: "1.2.3", notes: { en: ["Fixed a thing"] }, ...fields });

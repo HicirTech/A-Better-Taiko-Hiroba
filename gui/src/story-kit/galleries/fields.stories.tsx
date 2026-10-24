@@ -1,10 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import * as LanguageSetting from "../../language/language-setting.stories";
 import * as CostumeItemGrid from "../../my-page/costume-item-grid.stories";
 import * as Palette from "../../my-page/costume-palette.stories";
 import * as PartPanel from "../../my-page/costume-part-panel.stories";
 import * as TitlePicker from "../../name-title/title-picker.stories";
+import * as LanguageSetting from "../../settings/language-setting.stories";
 import * as SearchField from "../../ui/search-field.stories";
 import { Gallery } from "../gallery";
 

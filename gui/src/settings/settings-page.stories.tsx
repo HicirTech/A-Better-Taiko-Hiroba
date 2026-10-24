@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
-
-import { LanguageSetting } from "../language/language-setting";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";
+import { LanguageSetting } from "./language-setting";
 import { type AccountState, SettingsPage } from "./settings-page";
 
 interface Args {

@@ -1,7 +1,7 @@
 import { err } from "@abth/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
-import { keepSets } from "../favorites/favorite-sets";
+import { keepSets } from "../shared/sets/favorite-sets";
 import { STORY_SETS } from "../story-kit/sets";
 import { appOn, readAgain } from "../story-kit/story-app";
 import { neverAnswers } from "../story-kit/story-port";

@@ -5,7 +5,7 @@ import { encode } from "fast-png";
 import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "../scripts/mock-dan-label";
 import { danPlatePng } from "../scripts/mock-dan-plate";
 import { readOwnProfile } from "../src/hiroba-session";
-import { pngDataUrl } from "../src/hiroba-session/png-answer";
+import { pngDataUrl } from "../src/shared/png-answer";
 
 const ENDPOINTS = {
   hirobaOrigin: "https://hiroba.test",

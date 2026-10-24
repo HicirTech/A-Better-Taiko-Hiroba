@@ -4,13 +4,13 @@ import { useState } from "react";
 import { fn } from "storybook/test";
 
 import type { FavoriteSongState } from "../shared/session-port";
+import { toggledSongs } from "../shared/sets/favorite-sets";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PICKABLE } from "../story-kit/favorites";
 import { storyCatalogue } from "../story-kit/songs";
-import { toggledSongs } from "./favorite-sets";
 import type { PickableState } from "./pickable-songs";
 import { SongPicker, type SongPickerProps } from "./song-picker";
-import type { SongCatalogue } from "./use-song-catalogue";
 
 interface Args {
   readonly onPick: (song: FavoriteSongState) => void;

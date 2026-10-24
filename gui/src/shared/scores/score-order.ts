@@ -1,9 +1,14 @@
 import { CROWN_ORDER, type Genre } from "@abth/core";
+import type { Translator } from "@abth/i18n";
 
-import { GENRE_ORDER, LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import { type ShownDifficulty, shownFor } from "../favorites/shown-difficulty";
-import type { ScoreView } from "../shared/session-port";
-import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
+import { HIROBA_LANG } from "../language/hiroba-lang";
+import type { ScoreView } from "../session-port";
+import { GENRE_ORDER, LEVEL_DIFFICULTY } from "../song-catalogue/genre-look";
+import { type ShownDifficulty, shownFor } from "../song-catalogue/shown-difficulty";
+import { nameLanguage, shownName } from "../song-catalogue/song-names";
+import { fold, searchedNames } from "../song-catalogue/song-search";
+import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
+import type { SongCatalogue } from "../song-catalogue/use-song-catalogue";
 
 /** What the scores page sorts by; with none chosen it lists the songs by name. */
 export const SCORE_SORTS = [
@@ -29,6 +34,21 @@ export interface ListedScore {
   readonly stars: number | null;
   /** taiko.wiki's genres for the song; none where its list lacks it. */
   readonly genres: readonly Genre[];
+}
+
+/** A chart's score as the page lists it, its song named as the player's language names it. */
+export function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Translator["locale"]) {
+  const song = catalogue.songs.get(score.songNo);
+  const name = song === undefined ? score.songTitle : shownName(song, locale);
+  const names = song === undefined ? [] : searchedNames(song);
+  return {
+    score,
+    name,
+    nameLang: song === undefined ? HIROBA_LANG : nameLanguage(song, name),
+    searched: [score.songTitle, ...names].map(fold),
+    stars: song?.levels[LEVEL_DIFFICULTY[score.level]] ?? null,
+    genres: song?.genres ?? [],
+  } satisfies ListedScore;
 }
 
 /** What the page narrows its charts to: any of the chosen of each part, and none leaves it open. */

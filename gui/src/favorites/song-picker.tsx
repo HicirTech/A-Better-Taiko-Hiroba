@@ -13,6 +13,12 @@ import {
 import { useTouchFirst } from "../navigation/use-touch-first";
 import { failureMessageOf } from "../shared/read-failure-message";
 import type { FavoriteSongState } from "../shared/session-port";
+import { ShownDifficultyContext, shownFor } from "../shared/song-catalogue/shown-difficulty";
+import { levelsOfEntry, lookOfCatalogue } from "../shared/song-catalogue/song-look";
+import { nameLanguage } from "../shared/song-catalogue/song-names";
+import { newestFirst } from "../shared/song-catalogue/song-order";
+import { searchSongs } from "../shared/song-catalogue/song-search";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { LargeModal } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
@@ -20,15 +26,9 @@ import { SearchField } from "../ui/search-field";
 import { StatusNote } from "../ui/status-note";
 import type { PickableState } from "./pickable-songs";
 import { type PickerEntry, PickerList } from "./picker-list";
-import { ShownDifficultyContext, shownFor } from "./shown-difficulty";
 import { matchesCharts, matchesFilter, NO_FILTER, type SongFilter } from "./song-filter";
 import { SongFilters } from "./song-filters";
 import { SongListFailed } from "./song-list-failed";
-import { levelsOfEntry, lookOfCatalogue } from "./song-look";
-import { nameLanguage } from "./song-names";
-import { newestFirst } from "./song-order";
-import { searchSongs } from "./song-search";
-import type { SongCatalogue } from "./use-song-catalogue";
 
 const LIMIT_NOTE_ID = "song-picker-limit";
 

@@ -7,7 +7,7 @@ import {
   type ChartSource,
   keepChartSource,
   keptChartSource,
-} from "../songs/chart-source";
+} from "../shared/song-catalogue/chart-source";
 import { MusicNoteIcon } from "../ui/icons";
 import { SettingsSection } from "./settings-section";
 

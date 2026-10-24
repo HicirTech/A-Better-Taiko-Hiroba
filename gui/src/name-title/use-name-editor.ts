@@ -1,7 +1,5 @@
 import type { MessageKey } from "@abth/i18n";
 import { useCallback, useReducer, useRef } from "react";
-
-import { noticeOf, sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
 import type {
   HirobaSessionPort,
@@ -9,6 +7,7 @@ import type {
   ProfileView,
   WriteOutcomeView,
 } from "../shared/session-port";
+import { noticeOf, sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   IDLE,
   isWritingName,

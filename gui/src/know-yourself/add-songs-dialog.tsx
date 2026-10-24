@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
 
 import { type Choice, ChoiceDialog } from "../favorites/choice-dialog";
-import { addableSongs, type FavoriteSet, SET_SONG_LIMIT } from "../favorites/favorite-sets";
+import { addableSongs, type FavoriteSet, SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 
 /** Asks which set on this device takes the songs, or a new one; each takes what it has room for. */
 export function AddSongsDialog({

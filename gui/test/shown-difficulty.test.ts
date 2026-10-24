@@ -6,7 +6,7 @@ import {
   type ShownDifficulty,
   shownFor,
   stackOf,
-} from "../src/favorites/shown-difficulty";
+} from "../src/shared/song-catalogue/shown-difficulty";
 import type { Difficulty } from "../src/shared/song-catalogue/types";
 import { memoryStorage, refusing } from "./storage-fakes";
 

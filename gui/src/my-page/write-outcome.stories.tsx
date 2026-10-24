@@ -4,9 +4,9 @@ import { useState } from "react";
 import { fn } from "storybook/test";
 
 import type { WriteKind, WriteSets } from "../shared/session-port";
+import type { Noticed } from "../shared/writes/write-ending";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SET } from "../story-kit/profile";
-import type { Noticed } from "./write-ending";
 import { WriteOutcomeSnackbar } from "./write-outcome";
 
 const PLANNED = { ...STORY_SET, colorBody: 30, costume2: 59 };

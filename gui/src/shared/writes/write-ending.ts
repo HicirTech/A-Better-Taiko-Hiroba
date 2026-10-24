@@ -1,7 +1,12 @@
 import type { MessageKey } from "@abth/i18n";
 
-import type { PictureLane } from "../pictures/picture-lane";
-import type { WriteOutcomeView } from "../shared/session-port";
+import type { WriteOutcomeView } from "../session-port";
+
+/** The picture lane, by the two calls a write makes of it: shared code stands below `pictures/`. */
+interface HeldLane {
+  hold(): void;
+  release(): void;
+}
 
 /** The set as the write last saw it; null for an ending that says nothing of it. */
 export function seenAfter<S>(outcome: WriteOutcomeView<S>): S | null {
@@ -43,7 +48,7 @@ export function noticeOf<S>(outcome: WriteOutcomeView<S>): Noticed<S> | null {
 }
 
 export async function sendHeld<S>(
-  lane: Pick<PictureLane, "hold" | "release">,
+  lane: HeldLane,
   send: () => Promise<WriteOutcomeView<S>>,
 ): Promise<WriteOutcomeView<S>> {
   lane.hold();

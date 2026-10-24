@@ -1,9 +1,8 @@
 import { isLocale, LOCALE_NAMES, LOCALES, type Locale, type Translator } from "@abth/i18n";
 import { FormControlLabel, List, ListItem, Radio, RadioGroup } from "@mui/material";
 import { useId } from "react";
-
-import { SettingsSection } from "../settings/settings-section";
 import { TranslateIcon } from "../ui/icons";
+import { SettingsSection } from "./settings-section";
 
 const SYSTEM_CHOICE = "system";
 

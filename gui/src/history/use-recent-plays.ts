@@ -1,9 +1,8 @@
 import type { RecentPlay, RecentPlaysReading, Result } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
 import { useCallback } from "react";
-
-import { afterRefresh } from "../read-again/after-refresh";
 import { hirobaSession } from "../shared/read-failure-message";
+import { afterRefresh } from "../shared/reads/after-refresh";
 import type { ReadStatus } from "../shared/reads/read-run";
 import { useReadRun } from "../shared/reads/use-read-run";
 import type { HirobaSessionPort, RecentPlaysFailure } from "../shared/session-port";

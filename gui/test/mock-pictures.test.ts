@@ -15,7 +15,7 @@ import {
   titlePlatePng,
 } from "../scripts/mock-pictures";
 import { CHART_PICTURE_PATHS } from "../scripts/mock-song-catalogue";
-import { checkPng, type PngRules } from "../src/hiroba-session/png-answer";
+import { checkPng, type PngRules } from "../src/shared/png-answer";
 import { sniffPicture } from "../src/shared/song-catalogue/sniff-picture";
 
 const sizeUnder = (body: Uint8Array, rules: PngRules) => {

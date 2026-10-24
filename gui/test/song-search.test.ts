@@ -8,7 +8,7 @@ import {
   searchedNames,
   searchSongs,
   segmentsOf,
-} from "../src/favorites/song-search";
+} from "../src/shared/song-catalogue/song-search";
 import type { CatalogueSong } from "../src/shared/song-catalogue/types";
 import { song } from "./song-fixtures";
 

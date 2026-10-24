@@ -1,7 +1,7 @@
 import type { CrownState } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 
-import { CROWN_COLOUR, RANK_COLOUR, UNCLEARED_COLOUR } from "../my-page/panel-colours";
+import { CROWN_COLOUR, RANK_COLOUR, UNCLEARED_COLOUR } from "../shared/panel-colours";
 import type { IconWant } from "../shared/session-port";
 import { CLEAR_SEGMENTS, RANK_SEGMENTS } from "./ladder";
 

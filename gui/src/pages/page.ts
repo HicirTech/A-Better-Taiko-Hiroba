@@ -11,8 +11,8 @@ import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemLink, SystemToast } from "../platform";
 import type { ReadStatus } from "../shared/reads/read-run";
 import type { HirobaSessionPort, ReadFailure } from "../shared/session-port";
+import type { UpdateReminder } from "../shared/updates/use-update-reminder";
 import type { SkeletonProgress } from "../ui/page-skeleton";
-import type { UpdateReminder } from "../updates/use-update-reminder";
 import type { PageModel, PageState, SessionReads } from "./page-model";
 
 /** The session as a page sees it: the screen, the read of my page, and the way out. */

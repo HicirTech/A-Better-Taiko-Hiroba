@@ -1,8 +1,6 @@
 import type { TitleOption } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
 import { useCallback, useReducer, useRef } from "react";
-
-import { noticeOf, seenAfter, sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
 import type { ReadStatus } from "../shared/reads/read-run";
@@ -14,6 +12,7 @@ import type {
   TitleState,
   WriteOutcomeView,
 } from "../shared/session-port";
+import { noticeOf, seenAfter, sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   changesTitle,
   IDLE,

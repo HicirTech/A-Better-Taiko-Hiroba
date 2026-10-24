@@ -1,10 +1,8 @@
 import type { MessageKey } from "@abth/i18n";
 import { useCallback, useReducer, useRef } from "react";
-
-import { sendHeld, sessionNoticeOf } from "../my-page/write-ending";
 import type { PictureLane } from "../pictures/picture-lane";
-import { afterRefresh } from "../read-again/after-refresh";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
+import { afterRefresh } from "../shared/reads/after-refresh";
 import type { ReadStatus } from "../shared/reads/read-run";
 import { useReadRun } from "../shared/reads/use-read-run";
 import type {
@@ -13,6 +11,7 @@ import type {
   ReadFailure,
   WriteOutcomeView,
 } from "../shared/session-port";
+import { sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   canReadFavoritesAgain,
   type FavoritesAction,

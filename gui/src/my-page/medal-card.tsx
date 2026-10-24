@@ -2,11 +2,10 @@ import type { MedalProgress } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { useRef } from "react";
-
-import { HIROBA_LANG } from "../language/show-language";
 import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
+import { HIROBA_LANG } from "../shared/language/show-language";
 import type { PictureWant, ProfileView } from "../shared/session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SectionTitle, SectionTitleSkeleton } from "../ui/section-title";

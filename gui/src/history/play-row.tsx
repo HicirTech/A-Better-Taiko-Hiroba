@@ -2,11 +2,10 @@ import type { Genre, RecentPlay } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Stack, type SxProps, type Theme } from "@mui/material";
 import type { ReactNode } from "react";
-
-import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { LEVEL_BADGE_PX } from "../favorites/level-badges";
-import { HIROBA_LANG } from "../language/hiroba-lang";
 import type { PictureLane } from "../pictures/picture-lane";
+import { HIROBA_LANG } from "../shared/language/hiroba-lang";
+import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
 import { CHART_MARK_PX, ChartMarks } from "../songs/chart-level";
 import { type RowHandlers, SongRow, SongRowSkeleton } from "../songs/song-row";
 import type { RowPlace } from "../ui/row-list";

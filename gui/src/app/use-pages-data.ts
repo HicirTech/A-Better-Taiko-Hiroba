@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useFavorites } from "../favorites/use-favorites";
 import { usePickableSongs } from "../favorites/use-pickable-songs";
-import { useSongCatalogue } from "../favorites/use-song-catalogue";
 import { useRecentPlays } from "../history/use-recent-plays";
 import { useListedCharts } from "../know-yourself/use-listed-charts";
 import { useCostumeEditor } from "../my-page/use-costume-editor";
@@ -13,8 +12,9 @@ import type { PageData } from "../pages/page";
 import { PAGE_REGISTRY } from "../pages/registry";
 import type { PictureLane } from "../pictures/picture-lane";
 import { useRatingData } from "../rating";
-import { useScores } from "../scores/use-scores";
+import { useScores } from "../shared/scores/use-scores";
 import type { HirobaSessionPort } from "../shared/session-port";
+import { useSongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import type { Session } from "./use-session";
 
 /** The data the pages draw from, as the window holds it. */

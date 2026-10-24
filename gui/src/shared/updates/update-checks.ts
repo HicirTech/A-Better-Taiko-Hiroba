@@ -1,6 +1,6 @@
 import type { Result } from "@abth/core";
 
-import { pageStorage } from "../shared/kept-settings";
+import { pageStorage } from "../kept-settings";
 import { isNewer, type UpdateFeed, type UpdateFeedFailure } from "./update-feed";
 import {
   keepShownVersion,

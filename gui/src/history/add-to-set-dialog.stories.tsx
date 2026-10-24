@@ -2,8 +2,8 @@ import type { Translator } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import { GENRE_LABEL } from "../favorites/genre-look";
-import { nameLanguage, shownName } from "../favorites/song-names";
+import { GENRE_LABEL } from "../shared/song-catalogue/genre-look";
+import { nameLanguage, shownName } from "../shared/song-catalogue/song-names";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SETS } from "../story-kit/sets";
 import { storySong } from "../story-kit/songs";

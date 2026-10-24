@@ -1,12 +1,11 @@
 import { describe, expect, test } from "bun:test";
-
+import type { CatalogueSong } from "../src/shared/song-catalogue";
 import {
   chineseNamesBySong,
   keepChineseNames,
   loadChineseNames,
   titleKey,
-} from "../src/favorites/chinese-names";
-import type { CatalogueSong } from "../src/shared/song-catalogue";
+} from "../src/shared/song-catalogue/kept-chinese-names";
 
 const song = (songNo: string, title: string): CatalogueSong => ({
   songNo,

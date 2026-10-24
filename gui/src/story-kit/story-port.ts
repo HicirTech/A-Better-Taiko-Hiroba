@@ -3,7 +3,6 @@ import { type ChartDensity, err, ok, tjaDensities } from "@abth/core";
 import { MISSING_CHART, standInTja } from "../../scripts/mock-ese";
 import { chartPicturePng } from "../../scripts/mock-pictures";
 import { CHART_PICTURE_PATHS, WIKI_SONGS, type WikiSong } from "../../scripts/mock-song-catalogue";
-import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import type { PipelineView } from "../shared/pipelines/pipeline-view";
 import type {
   HirobaSessionPort,
@@ -12,6 +11,7 @@ import type {
   TitleEditorView,
   WriteOutcomeView,
 } from "../shared/session-port";
+import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
 import {
   DIFFICULTIES,
   type Difficulty,

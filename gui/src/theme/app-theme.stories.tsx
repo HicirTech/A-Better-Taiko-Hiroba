@@ -1,8 +1,7 @@
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import { DIFFICULTY_COLOUR, GENRE_COLOUR } from "../favorites/genre-look";
-import { CROWN_COLOUR, RANK_COLOUR, UNCLEARED_COLOUR } from "../my-page/panel-colours";
+import { CROWN_COLOUR, RANK_COLOUR, UNCLEARED_COLOUR } from "../shared/panel-colours";
+import { DIFFICULTY_COLOUR, GENRE_COLOUR } from "../shared/song-catalogue/genre-look";
 
 /** Colours in rows of swatches, each under the name the code gives it. */
 function Swatches({

@@ -9,6 +9,7 @@ import { RatingPage } from "../rating";
 import { ReadEveryDialog } from "../scores/read-every-dialog";
 import { ScoresPage, scoresReadingProgress } from "../scores/scores-page";
 import { SettingsPage } from "../settings/settings-page";
+import { RELEASES_URL, REPOSITORY_URL } from "../shared/updates";
 import {
   CheckroomIcon,
   EditIcon,
@@ -20,7 +21,6 @@ import {
   PsychologyIcon,
   SettingsIcon,
 } from "../ui/icons";
-import { RELEASES_URL, REPOSITORY_URL } from "../updates";
 import { MyPageFailure } from "./my-page-failure";
 import { OverviewPage } from "./overview-page";
 import type { PageData, PageEntry } from "./page";

@@ -1,9 +1,8 @@
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Button, List, ListItem, ListItemText } from "@mui/material";
 import { useId } from "react";
-
+import type { ManualCheck } from "../shared/updates/use-update-reminder";
 import { FileDownloadIcon } from "../ui/icons";
-import type { ManualCheck } from "../updates/use-update-reminder";
 import { SettingsSection } from "./settings-section";
 
 export interface UpdatesSectionProps {

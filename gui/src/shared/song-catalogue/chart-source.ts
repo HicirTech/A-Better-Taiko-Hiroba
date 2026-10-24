@@ -1,4 +1,4 @@
-import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
+import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
 
 /** Where a song's details take its chart pictures: drawn from TJA, or taiko.wiki's. */
 export const CHART_SOURCES = ["tja", "wiki"] as const;

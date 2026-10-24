@@ -18,10 +18,10 @@ import { PullToRead } from "./read-again/pull-to-read";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
 import type { HirobaSessionPort } from "./shared/session-port";
-import { releaseUrl } from "./updates";
-import { APP_VERSION } from "./updates/app-version";
+import { releaseUrl } from "./shared/updates";
+import { APP_VERSION } from "./shared/updates/app-version";
+import { useUpdateReminder } from "./shared/updates/use-update-reminder";
 import { UpdateDialog } from "./updates/update-dialog";
-import { useUpdateReminder } from "./updates/use-update-reminder";
 
 export interface AppProps {
   readonly port: HirobaSessionPort;

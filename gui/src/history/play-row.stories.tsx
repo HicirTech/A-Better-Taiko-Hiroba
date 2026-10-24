@@ -3,9 +3,8 @@ import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
-
-import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import type { PictureLane } from "../pictures/picture-lane";
+import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PLAYS, storyPlay } from "../story-kit/plays";
 import { lookOf, STORY_SONGS } from "../story-kit/songs";

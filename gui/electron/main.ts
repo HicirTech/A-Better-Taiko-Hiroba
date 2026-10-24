@@ -28,7 +28,6 @@ import {
   viewOfPipelines,
 } from "../src/hiroba-session";
 import { WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
-import { readRatingData } from "../src/rating/read-rating-data";
 import {
   createPipeline,
   createPipelineLog,
@@ -37,6 +36,7 @@ import {
   IO_READ_CONSUMERS,
   SCORE_READ_CONSUMERS,
 } from "../src/shared/pipelines";
+import { readRatingData } from "../src/shared/rating-data/read-rating-data";
 import {
   BRIDGE_CHANNELS,
   type CostumeSet,
@@ -53,7 +53,7 @@ import {
   readChineseNames,
   readSongCatalogue,
 } from "../src/shared/song-catalogue";
-import { openableUrlOf, readUpdateFeed } from "../src/updates";
+import { openableUrlOf, readUpdateFeed } from "../src/shared/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";

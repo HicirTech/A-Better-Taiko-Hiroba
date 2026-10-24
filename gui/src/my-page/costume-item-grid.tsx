@@ -4,10 +4,10 @@ import { type ReactNode, useRef, useSyncExternalStore } from "react";
 
 import type { PictureAnswer, PictureLane } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
+import { PART_LABEL, type SlotPart, slotOf } from "../shared/costume-parts";
 import type { PictureWant } from "../shared/session-port";
 import { BlockIcon } from "../ui/icons";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
-import { PART_LABEL, type SlotPart, slotOf } from "./costume-parts";
 import { pickRing } from "./pick-ring";
 import { CLEAR_OF_STUCK } from "./stuck-clearance";
 

@@ -2,12 +2,11 @@ import type { Translator } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
-
+import type { CostumePart } from "../shared/costume-parts";
 import { STORY_EDITOR } from "../story-kit/costume";
 import { i18nOf } from "../story-kit/env";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { PartTiles } from "./costume-part-tiles";
-import type { CostumePart } from "./costume-parts";
 
 interface Args {
   readonly wide: boolean;

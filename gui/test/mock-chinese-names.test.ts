@@ -3,8 +3,8 @@ import { ok, type Transport } from "@abth/core";
 
 import { chineseNamesBatch } from "../scripts/mock-chinese-names";
 import { WIKI_SONGS } from "../scripts/mock-song-catalogue";
-import { chineseNamesBySong } from "../src/favorites/chinese-names";
 import { CHINESE_NAMES_URL, parseWikiSongs, readChineseNames } from "../src/shared/song-catalogue";
+import { chineseNamesBySong } from "../src/shared/song-catalogue/kept-chinese-names";
 
 const standIn: Transport = {
   send: async (request) =>

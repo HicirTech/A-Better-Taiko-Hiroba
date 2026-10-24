@@ -1,4 +1,4 @@
-import { pngDataUrl, pngSize } from "../hiroba-session/png-answer";
+import { pngDataUrl, pngSize } from "../shared/png-answer";
 import type { PictureView } from "../shared/session-port";
 
 /** A PNG as a picture crosses to the window; `name` says which picture was no PNG. */

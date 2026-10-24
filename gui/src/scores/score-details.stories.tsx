@@ -2,17 +2,16 @@ import { Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 import { fn } from "storybook/test";
-
-import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import { HIROBA_LANG } from "../language/hiroba-lang";
+import { HIROBA_LANG } from "../shared/language/hiroba-lang";
+import { listedOf } from "../shared/scores/score-order";
 import type { ScoreView } from "../shared/session-port";
+import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { storyPlay } from "../story-kit/plays";
 import { STORY_SCORES } from "../story-kit/scores";
 import { storyCatalogue, storySong } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { ScoreDetails } from "./score-details";
-import { listedOf } from "./scores-page";
 
 interface Args {
   readonly reading: boolean;

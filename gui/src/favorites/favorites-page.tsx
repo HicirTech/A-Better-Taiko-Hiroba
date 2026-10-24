@@ -8,12 +8,6 @@ import { useBackLeaves } from "../navigation/back-closers";
 import { useTouchFirst } from "../navigation/use-touch-first";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../shared/session-port";
-import { SongDetails } from "../songs/song-details";
-import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
-import { ListIcon } from "../ui/icons";
-import { LoadFailed } from "../ui/read-failure-alert";
-import { CARD_GAP } from "../ui/section-card";
-import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
 import {
   filledSlots,
   moved,
@@ -21,22 +15,31 @@ import {
   SET_SONG_LIMIT,
   sameSongs,
   toggledSongs,
-} from "./favorite-sets";
+} from "../shared/sets/favorite-sets";
+import { useFavoriteSets } from "../shared/sets/use-favorite-sets";
+import {
+  keptShownDifficulty,
+  ShownDifficultyContext,
+} from "../shared/song-catalogue/shown-difficulty";
+import { rememberedSongs, resolveSong } from "../shared/song-catalogue/song-look";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { SongDetails } from "../songs/song-details";
+import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
+import { ListIcon } from "../ui/icons";
+import { LoadFailed } from "../ui/read-failure-alert";
+import { CARD_GAP } from "../ui/section-card";
+import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
 import { shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
 import type { PickableState } from "./pickable-songs";
 import { SetNameDialog } from "./set-name-dialog";
 import { SetView } from "./set-view";
 import { SetsDrawer } from "./sets-drawer";
-import { keptShownDifficulty, ShownDifficultyContext } from "./shown-difficulty";
 import { SongCard } from "./song-card";
-import { rememberedSongs, resolveSong } from "./song-look";
 import type { DetailsOpener } from "./song-look-row";
 import { SongPicker } from "./song-picker";
-import { useFavoriteSets } from "./use-favorite-sets";
 import type { FavoritesEditor } from "./use-favorites";
 import { useSetsSwipe } from "./use-sets-swipe";
-import type { SongCatalogue } from "./use-song-catalogue";
 
 const NO_SONGS: readonly string[] = [];
 

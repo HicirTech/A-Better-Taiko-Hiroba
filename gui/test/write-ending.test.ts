@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
+import type { WriteOutcomeView } from "../src/shared/session-port";
 import {
   endsTheEdit,
   type Noticed,
@@ -8,8 +9,7 @@ import {
   seenAfter,
   sendHeld,
   sessionNoticeOf,
-} from "../src/my-page/write-ending";
-import type { WriteOutcomeView } from "../src/shared/session-port";
+} from "../src/shared/writes/write-ending";
 
 interface Shown {
   readonly state: { readonly title: string };

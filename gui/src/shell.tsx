@@ -3,16 +3,21 @@ import { Alert } from "@mui/material";
 import { useLayoutEffect, useMemo, useState } from "react";
 
 import { App } from "./App";
-import { LanguageSetting } from "./language/language-setting";
-import { forgetLocale, pickedLocale, rememberLocale, systemLocale } from "./language/locale-choice";
-import { showLanguage } from "./language/show-language";
 import { AppFrame } from "./navigation/app-frame";
 import { keepPage, keptPage } from "./navigation/pages";
 import { useShownPage } from "./navigation/use-shown-page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { PipelinesPage } from "./pipelines-page/pipelines-page";
 import type { Platform } from "./platform";
+import { LanguageSetting } from "./settings/language-setting";
 import { SettingsPage } from "./settings/settings-page";
+import {
+  forgetLocale,
+  pickedLocale,
+  rememberLocale,
+  systemLocale,
+} from "./shared/language/locale-choice";
+import { showLanguage } from "./shared/language/show-language";
 
 export function Shell({
   platform,

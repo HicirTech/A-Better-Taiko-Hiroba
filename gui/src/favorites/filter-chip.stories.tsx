@@ -2,12 +2,15 @@ import type { Translator } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
-
+import {
+  DIFFICULTY_COLOUR,
+  DIFFICULTY_LABEL,
+  DIFFICULTY_TEXT,
+} from "../shared/song-catalogue/genre-look";
 import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 import { i18nOf } from "../story-kit/env";
 import { press } from "../story-kit/steps";
 import { FilterChip, type FilterOption } from "./filter-chip";
-import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL, DIFFICULTY_TEXT } from "./genre-look";
 
 const charts = ({ t }: Translator): readonly FilterOption<Difficulty>[] =>
   DIFFICULTIES.map((chart) => ({

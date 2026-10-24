@@ -6,15 +6,10 @@ import {
   type Result,
   tjaDensities,
 } from "@abth/core";
-
-import { LEVEL_DIFFICULTY } from "../../favorites/genre-look";
-import {
-  PICTURE_EPOCH,
-  type PictureKey,
-  type PictureStore,
-} from "../../hiroba-session/picture-store";
+import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../picture-store";
 import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
 import type { EseChartFiles } from "./ese-chart-files";
+import { LEVEL_DIFFICULTY } from "./genre-look";
 import {
   type ChartFileFailure,
   type Difficulty,

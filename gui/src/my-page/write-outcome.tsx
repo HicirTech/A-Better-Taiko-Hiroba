@@ -1,11 +1,11 @@
 import type { Translator } from "@abth/i18n";
 import { useState } from "react";
 
-import { HIROBA_LANG } from "../language/show-language";
+import { HIROBA_LANG } from "../shared/language/show-language";
 import type { WriteKind, WriteSets } from "../shared/session-port";
+import { type OutcomeWords, outcomeWords } from "../shared/writes/outcome-words";
+import type { Noticed } from "../shared/writes/write-ending";
 import { OperationSnackbar } from "../ui/operation-snackbar";
-import { type OutcomeWords, outcomeWords } from "./outcome-words";
-import type { Noticed } from "./write-ending";
 
 /** How a write ended, said at the window's foot; `onClosed` lets the page drop the notice. */
 export function WriteOutcomeSnackbar<K extends WriteKind>({

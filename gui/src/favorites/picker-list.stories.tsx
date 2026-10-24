@@ -2,13 +2,12 @@ import type { Locale } from "@abth/i18n";
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
+import { levelsOfEntry, lookOfCatalogue } from "../shared/song-catalogue/song-look";
+import { nameLanguage } from "../shared/song-catalogue/song-names";
+import { searchSongs } from "../shared/song-catalogue/song-search";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { STORY_SONGS } from "../story-kit/songs";
 import { type PickedSongs, type PickerEntry, PickerList } from "./picker-list";
-import { levelsOfEntry, lookOfCatalogue } from "./song-look";
-import { nameLanguage } from "./song-names";
-import { searchSongs } from "./song-search";
 
 const plainEntries = (locale: Locale, count = 12): readonly PickerEntry[] =>
   STORY_SONGS.slice(0, count).map((song) => ({

@@ -1,7 +1,6 @@
 import type { Translator } from "@abth/i18n";
-
-import { CROWN_COLOUR, RANK_COLOUR, RANKS_WORST_FIRST } from "../my-page/panel-colours";
 import type { ShareItem } from "../my-page/share-block";
+import { CROWN_COLOUR, RANK_COLOUR, RANKS_WORST_FIRST } from "../shared/panel-colours";
 import { STORY_PROFILE } from "./profile";
 
 /** The made-up player's score ranks as the Overview's legend lists them. */

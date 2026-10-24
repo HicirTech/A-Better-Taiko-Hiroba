@@ -1,10 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Typography } from "@mui/material";
 import type { Ref } from "react";
-
-import { HIROBA_LANG } from "../language/show-language";
 import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
+import { HIROBA_LANG } from "../shared/language/show-language";
 import type { PictureView, ProfileView } from "../shared/session-port";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, ONE_LINE, OUTLINED } from "./hiroba-px";

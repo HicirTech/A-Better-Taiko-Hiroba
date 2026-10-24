@@ -1,17 +1,29 @@
 import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 import { useDeferredValue, useMemo, useState } from "react";
-
-import { DIFFICULTY_LABEL, GENRE_LABEL, LEVEL_DIFFICULTY } from "../favorites/genre-look";
-import { keptShownDifficulty } from "../favorites/shown-difficulty";
-import { nameLanguage, shownName } from "../favorites/song-names";
-import { fold, searchedNames } from "../favorites/song-search";
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { PLAY_ROW_PX, PlayRow } from "../history/play-row";
-import { HIROBA_LANG } from "../language/hiroba-lang";
 import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
+import {
+  type ListedScore,
+  listedOf,
+  matchesScore,
+  matchesSearch,
+  type ScoreFilter,
+  type ScoreSort,
+  sortScores,
+  startingFilter,
+} from "../shared/scores/score-order";
+import type { ChosenSong, ScoresState } from "../shared/scores/use-scores";
 import type { ScoresProgress, ScoresStop, ScoreView } from "../shared/session-port";
+import {
+  DIFFICULTY_LABEL,
+  GENRE_LABEL,
+  LEVEL_DIFFICULTY,
+} from "../shared/song-catalogue/genre-look";
+import { keptShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
+import { fold } from "../shared/song-catalogue/song-search";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import type { SkeletonProgress } from "../ui/page-skeleton";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
@@ -20,34 +32,9 @@ import { SearchField } from "../ui/search-field";
 import { StatusNote } from "../ui/status-note";
 import { ScoreDetails } from "./score-details";
 import { ScoreFilters } from "./score-filters";
-import {
-  type ListedScore,
-  matchesScore,
-  matchesSearch,
-  type ScoreFilter,
-  type ScoreSort,
-  sortScores,
-  startingFilter,
-} from "./score-order";
-import type { ChosenSong, ScoresState } from "./use-scores";
 
 const chartOf = ({ songNo, level }: ScoreView) => `${songNo}/${level}`;
 const listedChart = (listed: ListedScore) => chartOf(listed.score);
-
-/** A chart's score as the page lists it, its song named as the player's language names it. */
-export function listedOf(score: ScoreView, catalogue: SongCatalogue, locale: Translator["locale"]) {
-  const song = catalogue.songs.get(score.songNo);
-  const name = song === undefined ? score.songTitle : shownName(song, locale);
-  const names = song === undefined ? [] : searchedNames(song);
-  return {
-    score,
-    name,
-    nameLang: song === undefined ? HIROBA_LANG : nameLanguage(song, name),
-    searched: [score.songTitle, ...names].map(fold),
-    stars: song?.levels[LEVEL_DIFFICULTY[score.level]] ?? null,
-    genres: song?.genres ?? [],
-  } satisfies ListedScore;
-}
 
 /** The scores page: every played chart's newest reading, searched, narrowed and sorted. */
 export function ScoresPage({

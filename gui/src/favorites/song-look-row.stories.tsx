@@ -1,12 +1,11 @@
 import { Box, IconButton } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
-
+import { lookOfShown } from "../shared/song-catalogue/song-look";
 import { bpmText } from "../songs/song-facts";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { lookOf, storySong } from "../story-kit/songs";
 import { CloseIcon, DragIndicatorIcon } from "../ui/icons";
-import { lookOfShown } from "./song-look";
 import { SongLookRow } from "./song-look-row";
 
 interface Args {

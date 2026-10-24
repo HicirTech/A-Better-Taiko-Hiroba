@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { HirobaSessionPort } from "../shared/session-port";
+import type { HirobaSessionPort } from "../session-port";
 import { automaticUpdateOffer, manualUpdateCheck } from "./update-checks";
 import type { UpdateFeed } from "./update-feed";
 

@@ -1,6 +1,6 @@
 import { detectLocale, isLocale, type Locale } from "@abth/i18n";
 
-import { forgetSetting, keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
+import { forgetSetting, keepSetting, keptSetting, pageStorage } from "../kept-settings";
 
 const LOCALE_KEY = "abth.locale";
 

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { err, ok, type Result, type Transport } from "@abth/core";
 
 import { createSessionWrites } from "../src/hiroba-session";
-import { afterRefresh } from "../src/read-again/after-refresh";
+import { afterRefresh } from "../src/shared/reads/after-refresh";
 import type { ReadFailure } from "../src/shared/session-port";
 
 const ORIGIN = "https://hiroba.test";

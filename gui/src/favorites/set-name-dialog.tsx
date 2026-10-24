@@ -1,8 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { useState } from "react";
-
+import { SET_NAME_MAX_LENGTH } from "../shared/sets/favorite-sets";
 import { SimpleDialog } from "../ui/simple-dialog";
-import { SET_NAME_MAX_LENGTH } from "./favorite-sets";
 
 export interface SetNameDialogProps {
   readonly title: string;

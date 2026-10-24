@@ -37,7 +37,7 @@ function Choices({
 
 const meta = {
   title: "Fields/LanguageSetting",
-  tags: ["language"],
+  tags: ["settings"],
   render: (args, { globals }) => (
     <Choices args={args} i18n={i18nOf(globals)} system={localeOf(globals)} first={null} />
   ),

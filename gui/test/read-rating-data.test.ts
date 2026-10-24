@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { err, ok, type Transport, type TransportFailure, type TransportRequest } from "@abth/core";
 import { keepRatingData, loadRatingData } from "../src/rating/rating-data-cache";
-import { RATING_DATA_URL } from "../src/rating/rating-links";
-import { ratingDataOf, readRatingData } from "../src/rating/read-rating-data";
+import { RATING_DATA_URL } from "../src/shared/rating-data/rating-links";
+import { ratingDataOf, readRatingData } from "../src/shared/rating-data/read-rating-data";
 import type { SongCatalogueFailure } from "../src/shared/song-catalogue";
 import { memoryStorage, refusing } from "./storage-fakes";
 

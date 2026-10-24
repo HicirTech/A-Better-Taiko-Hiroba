@@ -2,12 +2,12 @@ import { useState } from "react";
 import { action } from "storybook/actions";
 
 import { App } from "../App";
-import { LanguageSetting } from "../language/language-setting";
 import { AppFrame } from "../navigation/app-frame";
 import type { Page } from "../navigation/pages";
 import { useShownPage } from "../navigation/use-shown-page";
 import { PAGE_REGISTRY } from "../pages/registry";
 import { PipelinesPage } from "../pipelines-page/pipelines-page";
+import { LanguageSetting } from "../settings/language-setting";
 import type { HirobaSessionPort } from "../shared/session-port";
 import { touchOf } from "./devices";
 import { i18nOf, localeOf, STORY_BACK, STORY_LINK, STORY_TOAST, type StoryGlobals } from "./env";

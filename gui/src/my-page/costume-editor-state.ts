@@ -1,13 +1,12 @@
 import { draftCostumeChange, type Result, sameCostume } from "@abth/core";
-
+import { type ColourPart, type SlotPart, slotOf } from "../shared/costume-parts";
 import type {
   CostumeEditorView,
   CostumeSet,
   ReadFailure,
   WriteOutcomeView,
 } from "../shared/session-port";
-import { type ColourPart, type SlotPart, slotOf } from "./costume-parts";
-import { endsTheEdit, type Noticed, noticeOf, refreshed } from "./write-ending";
+import { endsTheEdit, type Noticed, noticeOf, refreshed } from "../shared/writes/write-ending";
 
 export interface HeldEditor {
   readonly editor: CostumeEditorView;

@@ -2,10 +2,9 @@ import type { Translator } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
-
+import { type ScoreFilter, type ScoreSort, startingFilter } from "../shared/scores/score-order";
 import { i18nOf } from "../story-kit/env";
 import { ScoreFilters } from "./score-filters";
-import { type ScoreFilter, type ScoreSort, startingFilter } from "./score-order";
 
 interface Args {
   readonly onFilter: (part: Partial<ScoreFilter>) => void;

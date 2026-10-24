@@ -3,7 +3,7 @@ import { watch } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
 import { createServer } from "vite";
-import { RATING_DATA_URL } from "../src/rating/rating-links";
+import { RATING_DATA_URL } from "../src/shared/rating-data/rating-links";
 import {
   CHINESE_NAMES_URL,
   ESE_CHARTS_URL,

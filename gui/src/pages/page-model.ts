@@ -1,14 +1,14 @@
 import type { MessageKey, TranslateParams } from "@abth/i18n";
 
 import type { PickableReading } from "../favorites/use-pickable-songs";
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import type { RecentPlaysState } from "../history/use-recent-plays";
 import type { NameEditor } from "../name-title/use-name-editor";
 import type { TitleEditor } from "../name-title/use-title-editor";
 import type { Page } from "../navigation/pages";
 import type { RatingDataState } from "../rating/use-rating-data";
-import type { ScoresState } from "../scores/use-scores";
+import type { ScoresState } from "../shared/scores/use-scores";
 import type { ListedChartsView, ProfileView, ReadFailureKind } from "../shared/session-port";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 
 /** Where the window stands with the player's session. */
 export type Screen =

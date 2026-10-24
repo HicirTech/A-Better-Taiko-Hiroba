@@ -1,13 +1,12 @@
 import type { Translator } from "@abth/i18n";
 import { Fragment, type ReactNode, type RefObject } from "react";
-
+import { DIFFICULTY_COLOUR } from "../shared/song-catalogue/genre-look";
+import type { SongLook } from "../shared/song-catalogue/song-look";
+import { type Marked, segmentsOf } from "../shared/song-catalogue/song-search";
 import { SongRow } from "../songs/song-row";
 import { RowList } from "../ui/row-list";
-import { DIFFICULTY_COLOUR } from "./genre-look";
 import { LevelBadges } from "./level-badges";
-import type { SongLook } from "./song-look";
 import { artistsLine } from "./song-look-row";
-import { type Marked, segmentsOf } from "./song-search";
 
 /** A song in the list, and the names a search marked in it. */
 export interface PickerEntry {

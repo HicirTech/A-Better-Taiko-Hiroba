@@ -5,10 +5,10 @@ import type { Ref } from "react";
 
 import { HirobaPicture } from "../pictures/hiroba-picture";
 import { type PictureAnswer, viewOf } from "../pictures/picture-lane";
+import { CROWN_COLOUR, RANK_COLOUR } from "../shared/panel-colours";
 import type { CrownKind, PictureView, PictureWant, ProfileView } from "../shared/session-port";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE, OUTLINED } from "./hiroba-px";
-import { CROWN_COLOUR, RANK_COLOUR } from "./panel-colours";
 
 // Hiroba's .total_score: 280 wide, #mydon_area's 290 less its margins.
 const PANEL_WIDTH = 280;

@@ -3,12 +3,11 @@ import { Box, IconButton } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { action } from "storybook/actions";
-
-import { LEVEL_DIFFICULTY } from "../favorites/genre-look";
 import { LevelBadges } from "../favorites/level-badges";
-import type { SongLook } from "../favorites/song-look";
 import { artistsLine, SongLookRow } from "../favorites/song-look-row";
 import { PlayMarks } from "../history/play-marks";
+import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
+import type { SongLook } from "../shared/song-catalogue/song-look";
 import { i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
 import { STORY_PLAYS } from "../story-kit/plays";
 import { lookOf } from "../story-kit/songs";

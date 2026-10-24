@@ -1,8 +1,7 @@
 import { NAME_FIELDS, TITLE_FIELDS } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-
-import type { WriteKind, WriteSets } from "../shared/session-port";
-import { isCostumePart, PART_LABEL } from "./costume-parts";
+import { isCostumePart, PART_LABEL } from "../costume-parts";
+import type { WriteKind, WriteSets } from "../session-port";
 import type { Noticed } from "./write-ending";
 
 // Hiroba's own words, never translated: what its pages say for refusal codes that come without

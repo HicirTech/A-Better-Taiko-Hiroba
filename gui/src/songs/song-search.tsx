@@ -10,16 +10,19 @@ import {
 } from "@mui/material";
 import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
 import { type PickerEntry, PickerList } from "../favorites/picker-list";
-import { keptShownDifficulty, ShownDifficultyContext } from "../favorites/shown-difficulty";
 import { SongListFailed } from "../favorites/song-list-failed";
-import { lookOfCatalogue } from "../favorites/song-look";
-import { nameLanguage } from "../favorites/song-names";
-import { searchSongs } from "../favorites/song-search";
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { FrameTop, PAGE_HEIGHT } from "../navigation/app-frame";
 import { useBackLeaves } from "../navigation/back-closers";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../shared/session-port";
+import {
+  keptShownDifficulty,
+  ShownDifficultyContext,
+} from "../shared/song-catalogue/shown-difficulty";
+import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
+import { nameLanguage } from "../shared/song-catalogue/song-names";
+import { searchSongs } from "../shared/song-catalogue/song-search";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
 import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";

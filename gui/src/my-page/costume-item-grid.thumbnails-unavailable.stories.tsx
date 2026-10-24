@@ -1,12 +1,11 @@
 import type { Translator } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
-
+import { itemsOf, slotOf } from "../shared/costume-parts";
 import { STORY_EDITOR } from "../story-kit/costume";
 import { i18nOf } from "../story-kit/env";
 import { FAILING_LANE } from "../story-kit/story-pictures";
 import { ThumbnailsUnavailable } from "./costume-item-grid";
-import { itemsOf, slotOf } from "./costume-parts";
 
 const ITEMS = itemsOf(STORY_EDITOR, "costume3");
 

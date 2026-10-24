@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
-import type { FavoriteSet } from "../favorites/favorite-sets";
+import type { FavoriteSet } from "../shared/sets/favorite-sets";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SETS } from "../story-kit/sets";
 import { AddSongsDialog } from "./add-songs-dialog";

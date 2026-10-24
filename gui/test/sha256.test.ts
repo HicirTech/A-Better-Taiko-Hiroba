@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
 
-import { sha256Hex } from "../src/hiroba-session/sha256";
+import { sha256Hex } from "../src/shared/sha256";
 
 type KnownCase = [text: string, hex: string];
 

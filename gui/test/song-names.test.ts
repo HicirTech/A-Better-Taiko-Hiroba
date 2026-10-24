@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { LOCALES, type Locale } from "@abth/i18n";
 
-import { nameLanguage, numberedSong, shownName } from "../src/favorites/song-names";
+import { nameLanguage, numberedSong, shownName } from "../src/shared/song-catalogue/song-names";
 import { song } from "./song-fixtures";
 
 const NAMED = song({

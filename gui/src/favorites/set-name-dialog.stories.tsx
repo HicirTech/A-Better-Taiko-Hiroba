@@ -1,9 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
+import { newSetName } from "../shared/sets/favorite-sets";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SETS } from "../story-kit/sets";
-import { newSetName } from "./favorite-sets";
 import { SetNameDialog, type SetNameDialogProps } from "./set-name-dialog";
 
 type Args = Pick<SetNameDialogProps, "onCancel" | "onSave">;

@@ -2,10 +2,9 @@ import { Skeleton, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 import { userEvent, within } from "storybook/test";
-
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { AppFrame } from "../navigation/app-frame";
 import { PAGE_REGISTRY } from "../pages/registry";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";
 import { storyCatalogue } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";

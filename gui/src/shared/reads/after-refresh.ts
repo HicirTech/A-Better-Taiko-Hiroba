@@ -1,6 +1,6 @@
 import type { Result } from "@abth/core";
 
-import type { HirobaSessionPort, ReadFailure } from "../shared/session-port";
+import type { HirobaSessionPort, ReadFailure } from "../session-port";
 
 /** A read again: Hiroba refreshes its copy first, and a failed refresh is the read's failure. */
 export async function afterRefresh<T>(

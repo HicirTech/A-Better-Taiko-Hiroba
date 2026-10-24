@@ -2,15 +2,14 @@ import { type ChartRating, chartKey, type RatingFigure, rateOurTaikoV1 } from "@
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Stack, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
-
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { PlayRow } from "../history/play-row";
 import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf } from "../scores/scores-page";
-import type { ScoresState } from "../scores/use-scores";
+import { listedOf } from "../shared/scores/score-order";
+import type { ScoresState } from "../shared/scores/use-scores";
 import type { ScoreView } from "../shared/session-port";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
 import { SectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";

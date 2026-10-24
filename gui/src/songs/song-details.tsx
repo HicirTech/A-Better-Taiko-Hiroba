@@ -2,33 +2,32 @@ import type { Result } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Chip, Stack, ToggleButton, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
-
+import { useTouchFirst } from "../navigation/use-touch-first";
+import type { PictureLane } from "../pictures/picture-lane";
+import { PullToRead } from "../read-again/pull-to-read";
+import { HIROBA_LANG } from "../shared/language/hiroba-lang";
+import type { HirobaSessionPort } from "../shared/session-port";
+import { keptChartSource } from "../shared/song-catalogue/chart-source";
 import {
   DIFFICULTY_COLOUR,
   DIFFICULTY_LABEL,
   DIFFICULTY_TEXT,
   GENRE_COLOUR,
   GENRE_LABEL,
-} from "../favorites/genre-look";
-import { keptShownDifficulty } from "../favorites/shown-difficulty";
-import { nameLanguage, shownName } from "../favorites/song-names";
-import type { ListedSong } from "../favorites/use-song-catalogue";
-import { HIROBA_LANG } from "../language/hiroba-lang";
-import { useTouchFirst } from "../navigation/use-touch-first";
-import type { PictureLane } from "../pictures/picture-lane";
-import { PullToRead } from "../read-again/pull-to-read";
-import type { HirobaSessionPort } from "../shared/session-port";
+} from "../shared/song-catalogue/genre-look";
+import { keptShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
+import { nameLanguage, shownName } from "../shared/song-catalogue/song-names";
 import {
   type ChartFileFailure,
   DIFFICULTIES,
   type Difficulty,
 } from "../shared/song-catalogue/types";
+import type { ListedSong } from "../shared/song-catalogue/use-song-catalogue";
 import { LargeModal } from "../ui/large-modal";
 import { ReadAgainButton } from "../ui/read-again-button";
 import { StatusNote } from "../ui/status-note";
 import { ChartDensitySection, type DensityState, masterOf } from "./chart-density";
 import { ChartPictures } from "./chart-pictures";
-import { keptChartSource } from "./chart-source";
 import { ChartViewer, type ShownChart } from "./chart-viewer";
 import { CourseIcon } from "./course-icon";
 import { drawChart } from "./draw-chart";

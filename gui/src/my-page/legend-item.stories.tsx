@@ -1,12 +1,11 @@
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import { RANK_COLOUR } from "../shared/panel-colours";
 import type { IconWant } from "../shared/session-port";
 import { touchOf } from "../story-kit/devices";
 import { i18nOf, STORY_TOAST } from "../story-kit/env";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { LegendItem } from "./legend-item";
-import { RANK_COLOUR } from "./panel-colours";
 
 interface Args {
   readonly icon: IconWant | null;

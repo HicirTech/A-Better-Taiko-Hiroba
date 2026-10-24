@@ -1,9 +1,17 @@
 import type { Translator } from "@abth/i18n";
 import { useContext, useState } from "react";
 
-import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL, DIFFICULTY_TEXT } from "./genre-look";
-import { type Chart, ShownDifficultyContext, stackOf } from "./shown-difficulty";
-import type { SongLook } from "./song-look";
+import {
+  DIFFICULTY_COLOUR,
+  DIFFICULTY_LABEL,
+  DIFFICULTY_TEXT,
+} from "../shared/song-catalogue/genre-look";
+import {
+  type Chart,
+  ShownDifficultyContext,
+  stackOf,
+} from "../shared/song-catalogue/shown-difficulty";
+import type { SongLook } from "../shared/song-catalogue/song-look";
 
 export const LEVEL_BADGE_PX = 20;
 const GAP_PX = 2;

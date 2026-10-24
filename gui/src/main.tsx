@@ -4,10 +4,9 @@ import { createTranslator, type Translator } from "@abth/i18n";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-
-import { startingLocale } from "./language/locale-choice";
-import { showLanguage } from "./language/show-language";
 import { connectPlatform } from "./platform";
+import { startingLocale } from "./shared/language/locale-choice";
+import { showLanguage } from "./shared/language/show-language";
 import { Shell } from "./shell";
 import { appTheme } from "./theme/app-theme";
 

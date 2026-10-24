@@ -1,10 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 import type { ReactNode } from "react";
-
-import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL } from "../favorites/genre-look";
 import { LEVEL_BADGES_LOOK } from "../favorites/level-badges";
 import type { PictureLane } from "../pictures/picture-lane";
+import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
 import type { Difficulty } from "../shared/song-catalogue/types";
 import { CourseIcon } from "./course-icon";
 

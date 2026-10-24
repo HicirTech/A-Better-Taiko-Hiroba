@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import pkg from "../package.json";
-import { parseUpdateFeed } from "../src/updates";
+import { parseUpdateFeed } from "../src/shared/updates";
 
 /** What is wrong with the feed, one sentence each; none when it is valid and states the version. */
 export function updateFeedProblems(feedText: string, packageVersion: string): string[] {

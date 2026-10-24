@@ -2,23 +2,26 @@ import { chartKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Stack } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
-
-import { newSetName, SET_SONG_LIMIT } from "../favorites/favorite-sets";
 import { FilterChip } from "../favorites/filter-chip";
-import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL, DIFFICULTY_TEXT } from "../favorites/genre-look";
 import { SetNameDialog } from "../favorites/set-name-dialog";
-import { keptShownDifficulty, SHOWN_DIFFICULTIES } from "../favorites/shown-difficulty";
 import { SongListFailed } from "../favorites/song-list-failed";
-import { resolveSong } from "../favorites/song-look";
-import { useFavoriteSets } from "../favorites/use-favorite-sets";
-import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { PAGE_HEIGHT } from "../navigation/app-frame";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
 import { ScoreDetails } from "../scores/score-details";
-import { listedOf } from "../scores/scores-page";
-import type { ScoresState } from "../scores/use-scores";
+import { listedOf } from "../shared/scores/score-order";
+import type { ScoresState } from "../shared/scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../shared/session-port";
+import { newSetName, SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
+import { useFavoriteSets } from "../shared/sets/use-favorite-sets";
+import {
+  DIFFICULTY_COLOUR,
+  DIFFICULTY_LABEL,
+  DIFFICULTY_TEXT,
+} from "../shared/song-catalogue/genre-look";
+import { keptShownDifficulty, SHOWN_DIFFICULTIES } from "../shared/song-catalogue/shown-difficulty";
+import { resolveSong } from "../shared/song-catalogue/song-look";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { CARD_GAP } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";

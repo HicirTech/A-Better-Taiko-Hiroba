@@ -1,8 +1,8 @@
 import type { Locale } from "@abth/i18n";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
-import type { CatalogueSong } from "../shared/song-catalogue/types";
 import { foldHan } from "./han-fold";
+import type { CatalogueSong } from "./types";
 
 export type NamedSong = Pick<CatalogueSong, "title" | "titleEn" | "titleZh" | "romaji"> & {
   /** The Chinese wiki's official names, once the window has matched them to the song. */
