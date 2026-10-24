@@ -22,3 +22,6 @@ type Story = StoryObj<typeof meta>;
 
 /** Something outside every page threw: the frame, the navigation or the app itself. */
 export const OutsideAPage: Story = {};
+
+/** The desktop's page process ended, here out of memory, and the window was loaded again. */
+export const PageProcessGone: Story = { args: { code: "renderer=oom" } };

@@ -39,6 +39,7 @@ import {
   titleKeys,
 } from "./name-title";
 import { overview, overviewKeys } from "./overview";
+import { pageGone, pageGoneKeys } from "./page-gone";
 import {
   medalPlate,
   medalPlateKeys,
@@ -88,6 +89,7 @@ import {
 export const SECTIONS: readonly Section[] = [
   { name: "language", phase: "none", lane: "names", keys: languageKeys, run: language },
   { name: "updates", phase: "none", lane: "names", keys: updatesKeys, run: updates },
+  { name: "page-gone", phase: "none", lane: "names", keys: pageGoneKeys, run: pageGone },
   { name: "signed-out", phase: "signedOut", lane: "names", keys: signedOutKeys, run: signedOut },
   { name: "overview", phase: "signedIn", lane: "profile", keys: overviewKeys, run: overview },
   { name: "settings", phase: "signedIn", lane: "profile", keys: settingsKeys, run: settings },

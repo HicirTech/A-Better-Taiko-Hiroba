@@ -29,7 +29,7 @@ import {
   sessionEnded,
   viewOfPipelines,
 } from "../src/hiroba-session";
-import { WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
+import { PAGE_GONE_FRAGMENT, WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
 import { crashCodeOf } from "../src/shared/crash-code";
 import {
   createPipeline,
@@ -398,6 +398,7 @@ const started = app.whenReady().then(async () => {
     return `${url.protocol}//${url.host}`;
   };
   const expectedOrigin = originOf(devServerUrl ?? APP_ORIGIN);
+  const home = devServerUrl ?? `${APP_ORIGIN}/`;
   const trusted = (event: IpcMainInvokeEvent) => {
     const url = event.senderFrame?.url;
     return url !== undefined && originOf(url) === expectedOrigin;
@@ -407,6 +408,16 @@ const started = app.whenReady().then(async () => {
     if (originOf(url) !== expectedOrigin || new URL(url).pathname !== "/") {
       event.preventDefault();
     }
+  });
+  // A page process that ended leaves the window blank: its note stands in, reloading when asked.
+  mainWindow.webContents.on("render-process-gone", (_event, { reason }) => {
+    if (reason === "clean-exit" || mainWindow.isDestroyed()) {
+      return;
+    }
+    const note = new URL(home);
+    note.hash = `${PAGE_GONE_FRAGMENT}${reason}`;
+    // A note that will not load either must not become an unhandled rejection in this process.
+    mainWindow.loadURL(note.href).catch(() => undefined);
   });
   for (const [method, channel] of Object.entries(BRIDGE_CHANNELS)) {
     const verb = method as keyof HirobaSessionPort;
@@ -422,7 +433,7 @@ const started = app.whenReady().then(async () => {
     });
   }
 
-  await mainWindow.loadURL(devServerUrl ?? `${APP_ORIGIN}/`);
+  await mainWindow.loadURL(home);
 });
 // A start that failed leaves no window, or a blank one: the system's box says so, in its language.
 started.catch((error: unknown) => {

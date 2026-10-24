@@ -5,6 +5,7 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import { type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { connectPlatform } from "./platform";
+import { pageGoneReasonOf } from "./platform/desktop-window";
 import { crashCodeOf } from "./shared/crash-code";
 import { startingLocale } from "./shared/language/locale-choice";
 import { showLanguage } from "./shared/language/show-language";
@@ -29,8 +30,12 @@ if (container === null) {
 const reload = () => window.location.replace("/");
 const crashed = (code: string) => <WindowCrash code={code} onReload={reload} i18n={shown} />;
 
-/** The shell, or the whole window's note when the platform could not be connected. */
+/** The shell, or the whole window's note when the platform or the page's process failed. */
 async function windowContent(): Promise<ReactNode> {
+  const gone = pageGoneReasonOf(window.location.hash);
+  if (gone !== null) {
+    return crashed(`renderer=${gone}`);
+  }
   try {
     const platform = await connectPlatform({ closeLabel: () => shown.t("signIn.closeBrowser") });
     return (
