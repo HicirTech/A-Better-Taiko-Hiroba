@@ -76,7 +76,7 @@ export interface ChineseNamesRead {
 
 /** Codes, not sentences. */
 export interface SongCatalogueFailure {
-  readonly code: "notConfigured" | "unreachable" | "timedOut" | "badAnswer";
+  readonly code: "notConfigured" | "unreachable" | "timedOut" | "badAnswer" | "callFailed";
 }
 
 /** A song's note density for each chart its TJA holds. */

@@ -22,6 +22,7 @@ export const PICTURE_DWELL_MS = 150;
 export const PICTURE_TOGETHER_MS = 16;
 
 export interface PictureLaneOptions {
+  /** Never rejects: the platform's port answers a call that failed with a failure. */
   readonly load: (want: PictureWant) => Promise<Result<PictureView, PictureFailure>>;
   /** The most pictures on their way at once. */
   readonly atOnce: number;
@@ -157,8 +158,6 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
       .load(want)
       .then(
         (read): PictureAnswer => (read.ok ? { view: read.value } : { failure: read.error.code }),
-        // The call itself failed, as a bridge that refused it does.
-        (): PictureAnswer => ({ failure: `${want.kind}=callFailed` }),
       )
       .then((answer) => {
         sending.delete(key);

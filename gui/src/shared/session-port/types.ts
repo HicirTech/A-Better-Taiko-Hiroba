@@ -147,7 +147,9 @@ export type ReadFailureKind =
   /** Hiroba's daily maintenance: it was not asked to refresh. */
   | "maintenance"
   /** Hiroba did not refresh its copy of the player's data. */
-  | "notRefreshed";
+  | "notRefreshed"
+  /** The app's own call failed, before Hiroba's answer could be read. */
+  | "callFailed";
 
 export interface ReadFailure {
   readonly kind: ReadFailureKind;

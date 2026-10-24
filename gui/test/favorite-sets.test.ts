@@ -45,6 +45,32 @@ describe("keepSets and loadSets", () => {
     });
   });
 
+  test.each([
+    ["text that is not JSON", "{"],
+    ["something that is no object", "3"],
+    ["sets that are no list", JSON.stringify({ v: 1, sets: {} })],
+    ["sets of no version", JSON.stringify({ sets: [set("a")] })],
+  ])("keep %s aside before keeping others over them", (_label, text) => {
+    const storage = memoryStorage();
+    storage.setItem("abth.favoriteSets", text);
+
+    keepSets([set("b")], storage);
+
+    expect(storage.getItem("abth.favoriteSets.unreadable")).toBe(text);
+    expect(loadSets(storage)).toEqual([set("b")]);
+  });
+
+  test("never keep sets over the sets a later version kept", () => {
+    const storage = memoryStorage();
+    const later = JSON.stringify({ v: 2, sets: [set("a")] });
+    storage.setItem("abth.favoriteSets", later);
+
+    keepSets([set("b")], storage);
+
+    expect(storage.getItem("abth.favoriteSets")).toBe(later);
+    expect(storage.getItem("abth.favoriteSets.unreadable")).toBeNull();
+  });
+
   test("find no sets where none were kept", () => {
     expect(loadSets(memoryStorage())).toEqual([]);
   });

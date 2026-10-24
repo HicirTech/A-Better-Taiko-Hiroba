@@ -304,8 +304,14 @@ export const en: Messages = {
   "failure.maintenance":
     "Hiroba is closed for maintenance every day from 05:00 to 07:00 JST. It was not asked to refresh.",
   "failure.notRefreshed": "Hiroba could not refresh your play data, so nothing more was read.",
+  "failure.callFailed": "Something went wrong in the app while reading this.",
   "failure.mayClear": "Refreshing or trying again may fix this.",
   "failure.code": "Code for a report: {code}",
+  "crash.page":
+    "Something went wrong on this page. Opening another page or restarting the app may fix this.",
+  "crash.window": "Something went wrong in the app. Reloading it may fix this.",
+  "crash.reload": "Reload",
+  "crash.start": "The app could not start. Installing it again may fix this.",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
   "plate.open": "Open the Nickname & title page",
   "plate.openByLongPress": "Long-press your name plate to open the Nickname & title page.",

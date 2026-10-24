@@ -22,6 +22,7 @@ export interface PreviewTimers {
 }
 
 export interface PreviewSchedulerOptions {
+  /** Never rejects: the platform's port answers a call that failed with a failure. */
   readonly load: (set: CostumeSet) => Promise<Result<string, CostumePreviewFailure>>;
   /** Called on every change while started, and on reset. */
   readonly onState: (state: PreviewState) => void;
@@ -99,11 +100,7 @@ export function createPreviewScheduler(options: PreviewSchedulerOptions): Previe
     show({ ...state, loading: true, failure: null });
     options
       .load(set)
-      .then(
-        (answer) => (answer.ok ? { image: answer.value } : { failure: answer.error.code }),
-        // The call itself failed, as a bridge that refused it does.
-        () => ({ failure: "preview=callFailed" }),
-      )
+      .then((answer) => (answer.ok ? { image: answer.value } : { failure: answer.error.code }))
       .then((answer) => {
         if (asked !== generation) {
           return;

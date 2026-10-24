@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-import { BRIDGE_CHANNELS, type HirobaSessionPort } from "../src/shared/session-port";
+// Not the index: a sandboxed preload can load no module but electron's, and the index loads core.
+import { BRIDGE_CHANNELS } from "../src/shared/session-port/bridge-channels";
+import type { HirobaSessionPort } from "../src/shared/session-port/types";
 
 // The port's verbs and nothing else: no ipcRenderer, no generic invoke(channel), no cookie.
 const port: HirobaSessionPort = {

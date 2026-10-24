@@ -12,7 +12,7 @@ export interface UpdateFeed {
 
 /** Why the feed did not come: no address, no answer, none in time, or an answer that is no feed. */
 export interface UpdateFeedFailure {
-  readonly code: "notConfigured" | "unreachable" | "timedOut" | "badAnswer";
+  readonly code: "notConfigured" | "unreachable" | "timedOut" | "badAnswer" | "callFailed";
 }
 
 /** More than any feed needs: a version and a few lines of notes. */

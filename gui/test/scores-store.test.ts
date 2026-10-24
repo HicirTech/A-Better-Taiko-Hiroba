@@ -7,9 +7,9 @@ import {
   type ScoreChange,
   type ScoreChangeLog,
 } from "@abth/core";
-
+import type { StoreFiles } from "../electron/replace-file";
 import { createScoreChangesStore } from "../electron/score-changes-store";
-import { createScoresStore, type ScoresFiles } from "../electron/scores-store";
+import { createScoresStore } from "../electron/scores-store";
 import {
   createMemoryScoreChangesStore,
   readStoredScoreBook,
@@ -123,7 +123,7 @@ function fakeFiles() {
     readFileSync: (path: string) => {
       const text = disk.get(path);
       if (text === undefined) {
-        throw new Error(`ENOENT ${path}`);
+        throw Object.assign(new Error(`ENOENT ${path}`), { code: "ENOENT" });
       }
       return text;
     },
@@ -134,7 +134,7 @@ function fakeFiles() {
       disk.set(to, disk.get(from) ?? "");
       disk.delete(from);
     },
-  } as unknown as ScoresFiles;
+  } as unknown as StoreFiles;
   return { files, disk };
 }
 

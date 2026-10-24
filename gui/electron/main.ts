@@ -1,8 +1,10 @@
 import { join } from "node:path";
 import { err, ok, type Transport } from "@abth/core";
+import { createTranslator, detectLocale } from "@abth/i18n";
 import {
   app,
   BrowserWindow,
+  dialog,
   type IpcMainInvokeEvent,
   ipcMain,
   Menu,
@@ -27,7 +29,8 @@ import {
   sessionEnded,
   viewOfPipelines,
 } from "../src/hiroba-session";
-import { WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
+import { PAGE_GONE_FRAGMENT, WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
+import { crashCodeOf } from "../src/shared/crash-code";
 import {
   createPipeline,
   createPipelineLog,
@@ -217,7 +220,7 @@ if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
 
-app.whenReady().then(async () => {
+const started = app.whenReady().then(async () => {
   if (app.isPackaged) {
     // On macOS copy, paste and quit go through the menu bar: keep its app and Edit menus.
     Menu.setApplicationMenu(
@@ -264,7 +267,6 @@ app.whenReady().then(async () => {
     }
     return { action: "deny" };
   });
-  mainWindow.webContents.on("will-navigate", (event) => event.preventDefault());
 
   const writes = createSessionWrites({
     endpoints,
@@ -396,10 +398,27 @@ app.whenReady().then(async () => {
     return `${url.protocol}//${url.host}`;
   };
   const expectedOrigin = originOf(devServerUrl ?? APP_ORIGIN);
+  const home = devServerUrl ?? `${APP_ORIGIN}/`;
   const trusted = (event: IpcMainInvokeEvent) => {
     const url = event.senderFrame?.url;
     return url !== undefined && originOf(url) === expectedOrigin;
   };
+  // The window stays on the app's own page, which it may load again as a crash's note offers.
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (originOf(url) !== expectedOrigin || new URL(url).pathname !== "/") {
+      event.preventDefault();
+    }
+  });
+  // A page process that ended leaves the window blank: its note stands in, reloading when asked.
+  mainWindow.webContents.on("render-process-gone", (_event, { reason }) => {
+    if (reason === "clean-exit" || mainWindow.isDestroyed()) {
+      return;
+    }
+    const note = new URL(home);
+    note.hash = `${PAGE_GONE_FRAGMENT}${reason}`;
+    // A note that will not load either must not become an unhandled rejection in this process.
+    mainWindow.loadURL(note.href).catch(() => undefined);
+  });
   for (const [method, channel] of Object.entries(BRIDGE_CHANNELS)) {
     const verb = method as keyof HirobaSessionPort;
     ipcMain.handle(channel, (event, ...args: unknown[]) => {
@@ -414,7 +433,14 @@ app.whenReady().then(async () => {
     });
   }
 
-  await mainWindow.loadURL(devServerUrl ?? `${APP_ORIGIN}/`);
+  await mainWindow.loadURL(home);
+});
+// A start that failed leaves no window, or a blank one: the system's box says so, in its language.
+started.catch((error: unknown) => {
+  const { t } = createTranslator(detectLocale(app.getPreferredSystemLanguages()));
+  const code = t("failure.code", { code: crashCodeOf("start", error) });
+  dialog.showErrorBox(app.getName(), `${t("crash.start")}\n\n${code}`);
+  app.exit(1);
 });
 
 app.on("window-all-closed", () => app.quit());

@@ -3,7 +3,8 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { basename, join } from "node:path";
 
-import { createCostumeHistoryStore, type HistoryFiles } from "../electron/costume-history-store";
+import { createCostumeHistoryStore } from "../electron/costume-history-store";
+import type { StoreFiles } from "../electron/replace-file";
 import { entryOf, pictureOf, SET } from "./history-fixtures";
 
 const PLAYER = "000000000000";
@@ -23,7 +24,7 @@ function fakeFiles(contents: Record<string, string> = {}) {
     readFileSync: (path: string) => {
       const text = disk.get(path);
       if (text === undefined) {
-        throw new Error(`ENOENT ${path}`);
+        throw Object.assign(new Error(`ENOENT ${path}`), { code: "ENOENT" });
       }
       return text;
     },
@@ -39,7 +40,7 @@ function fakeFiles(contents: Record<string, string> = {}) {
       disk.set(to, disk.get(from) ?? "");
       disk.delete(from);
     },
-  } as unknown as HistoryFiles;
+  } as unknown as StoreFiles;
   return { files, disk, calls, refuse };
 }
 

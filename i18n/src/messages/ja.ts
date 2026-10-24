@@ -303,8 +303,14 @@ export const ja: Messages = {
   "failure.maintenance":
     "ひろばは毎日 05:00〜07:00（日本時間）がメンテナンスです。更新は頼んでいません。",
   "failure.notRefreshed": "ひろばがプレイデータを更新できなかったため、読み込みを止めました。",
+  "failure.callFailed": "読み込み中にアプリで問題が発生しました。",
   "failure.mayClear": "更新するか、もう一度試すと直るかもしれません。",
   "failure.code": "報告用コード：{code}",
+  "crash.page":
+    "このページで問題が発生しました。別のページを開くか、アプリを再起動すると直るかもしれません。",
+  "crash.window": "アプリで問題が発生しました。読み込み直すと直るかもしれません。",
+  "crash.reload": "読み込み直す",
+  "crash.start": "アプリを起動できませんでした。インストールし直すと直るかもしれません。",
   "platform.unsupported": "このビルドは、デスクトップ版か Android 版のアプリの中でしか動きません。",
   "plate.open": "ドンだーネームと称号のページを開く",
   "plate.openByLongPress": "ネームプレートを長押しすると、ドンだーネームと称号のページを開けます。",

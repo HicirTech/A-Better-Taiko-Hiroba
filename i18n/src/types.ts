@@ -353,9 +353,14 @@ export interface Messages {
   "failure.unexpectedPage": string;
   "failure.maintenance": string;
   "failure.notRefreshed": string;
+  "failure.callFailed": string;
   "failure.mayClear": string;
   /** Param: {code}, codes for a report (path, status, parser verdict); never page text. */
   "failure.code": string;
+  "crash.page": string;
+  "crash.window": string;
+  "crash.reload": string;
+  "crash.start": string;
   "platform.unsupported": string;
   /** The name plate on the Overview: its accessible name, and what a long-press on it opens. */
   "plate.open": string;

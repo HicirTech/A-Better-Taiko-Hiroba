@@ -14,6 +14,7 @@ export const FAILURE_MESSAGE = {
   unexpectedPage: "failure.unexpectedPage",
   maintenance: "failure.maintenance",
   notRefreshed: "failure.notRefreshed",
+  callFailed: "failure.callFailed",
 } as const satisfies Record<ReadFailureKind, MessageKey>;
 
 /** The words for a failed read; in Hiroba's daily maintenance hours its error says so. */
@@ -33,6 +34,7 @@ export const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
 /** A read of Hiroba's options: a failure that ended the session sends the window to sign in. */
 export function hirobaSession(onSessionGone: (notice: MessageKey) => void) {
   return {
+    callFailed: { kind: "callFailed" } as const,
     endsTheSession: (failure: { readonly kind: ReadFailureKind }) => SESSION_GONE.has(failure.kind),
     onSessionEnded: (failure: { readonly kind: ReadFailureKind }) =>
       onSessionGone(FAILURE_MESSAGE[failure.kind]),

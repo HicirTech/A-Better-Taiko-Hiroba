@@ -35,9 +35,11 @@ function handTimer() {
 
 const settled = () => new Promise((done) => setTimeout(done, 0));
 
+const CALLS = { callFailed: { kind: "callFailed" } } as const;
+
 describe("createReadRun", () => {
   test("says reading while a read runs, then read, or failed with its failure", async () => {
-    const run = createReadRun<Failure>();
+    const run = createReadRun<Failure>(CALLS);
     expect(run.status().phase).toBe("unread");
     const first = later<string>();
     const reading = run.run(first.ask);
@@ -54,8 +56,42 @@ describe("createReadRun", () => {
     });
   });
 
+  test("ends a read whose call throws as failed with the call's failure, kept as any", async () => {
+    const run = createReadRun<Failure>(CALLS);
+    const kept: Result<string, Failure>[] = [];
+
+    const ended = await run.run<string>(() => Promise.reject(new Error("refused")), {
+      keep: (result) => {
+        kept.push(result);
+      },
+    });
+
+    expect(ended).toEqual(err({ kind: "callFailed" }));
+    expect(kept).toEqual([err({ kind: "callFailed" })]);
+    expect(run.status()).toEqual({
+      phase: "failed",
+      failure: { kind: "callFailed" },
+      progress: null,
+    });
+    expect(await run.run(() => Promise.resolve(ok("again")))).toEqual(ok("again"));
+  });
+
+  test("ends a read as failed when keeping what it brought throws", async () => {
+    const run = createReadRun<Failure>(CALLS);
+
+    const ended = await run.run(() => Promise.resolve(ok("plays")), {
+      keep: () => {
+        throw new TypeError("a bug in keeping");
+      },
+    });
+
+    expect(ended).toEqual(err({ kind: "callFailed" }));
+    expect(run.status().phase).toBe("failed");
+    expect(await run.run(() => Promise.resolve(ok("again")))).toEqual(ok("again"));
+  });
+
   test("runs one read at a time: an ask while one runs is turned away", async () => {
-    const run = createReadRun<Failure>();
+    const run = createReadRun<Failure>(CALLS);
     const first = later<string>();
     const reading = run.run(first.ask);
     let asked = false;
@@ -72,7 +108,7 @@ describe("createReadRun", () => {
   });
 
   test("lets go of a read its session outlived, and the next session reads at once", async () => {
-    const run = createReadRun<Failure>();
+    const run = createReadRun<Failure>(CALLS);
     const old = later<string>();
     const oldRead = run.run(old.ask);
     run.forget();
@@ -90,6 +126,7 @@ describe("createReadRun", () => {
   test("tells of a failure that ended the session instead of keeping it", async () => {
     const ended: Failure[] = [];
     const run = createReadRun<Failure>({
+      ...CALLS,
       endsTheSession: (failure) => failure.kind === "loggedOut",
       onSessionEnded: (failure) => ended.push(failure),
     });
@@ -100,7 +137,7 @@ describe("createReadRun", () => {
 
   test("asks how far the read has come while it runs, and no longer after", async () => {
     const timer = handTimer();
-    const run = createReadRun<Failure, number>({ every: timer.every });
+    const run = createReadRun<Failure, number>({ ...CALLS, every: timer.every });
     run.subscribe(() => {});
     const walk = later<string>();
     let page = 0;
@@ -119,7 +156,7 @@ describe("createReadRun", () => {
 
   test("asks how far the read has come only while someone listens", () => {
     const timer = handTimer();
-    const run = createReadRun<Failure, number>({ every: timer.every });
+    const run = createReadRun<Failure, number>({ ...CALLS, every: timer.every });
     void run.run(later<string>().ask, { progress: () => Promise.resolve(1) });
     expect(timer.running()).toBe(0);
     const stopListening = run.subscribe(() => {});
@@ -130,7 +167,7 @@ describe("createReadRun", () => {
 
   test("stops asking how far a read has come once its session ends", async () => {
     const timer = handTimer();
-    const run = createReadRun<Failure, number>({ every: timer.every });
+    const run = createReadRun<Failure, number>({ ...CALLS, every: timer.every });
     run.subscribe(() => {});
     let answer: (page: number) => void = () => {};
     const progress = () =>
@@ -147,7 +184,7 @@ describe("createReadRun", () => {
   });
 
   test("keeps what the read brought before it says the read ended", async () => {
-    const run = createReadRun<Failure>();
+    const run = createReadRun<Failure>(CALLS);
     const seen: string[] = [];
     await run.run(() => Promise.resolve(ok("plays")), {
       keep: async (result) => {
@@ -160,7 +197,7 @@ describe("createReadRun", () => {
   });
 
   test("settles a failure: read again where the session read once, else unread", async () => {
-    const run = createReadRun<Failure>();
+    const run = createReadRun<Failure>(CALLS);
     await run.run(() => Promise.resolve(err({ kind: "unreachable" })));
     run.settle();
     expect(run.status().phase).toBe("unread");

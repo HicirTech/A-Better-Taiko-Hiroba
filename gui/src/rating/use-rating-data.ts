@@ -27,7 +27,7 @@ export interface RatingDataState {
 /** The rating data the page computes with: kept on the device, read again on each refresh. */
 export function useRatingData(port: Pick<HirobaSessionPort, "readRatingData">): RatingDataState {
   const [data, setData] = useState<OurTaikoV1Data | null>(null);
-  const [reads, status] = useReadRun<RatingDataFailure>();
+  const [reads, status] = useReadRun<RatingDataFailure>({ callFailed: "callFailed" });
   // The data held is the device's copy: a read that keeps new data holds it too.
   const held = useRef<OurTaikoV1Data | null>(null);
 

@@ -1,8 +1,10 @@
 import { Box, Stack } from "@mui/material";
-import { Fragment } from "react";
 
-import type { Page } from "../navigation/pages";
+import { keepPage, type Page } from "../navigation/pages";
 import type { PageData, PageEntry } from "../pages/page";
+import { crashCodeOf } from "../shared/crash-code";
+import { ErrorBoundary } from "../ui/error-boundary";
+import { PageCrash } from "../ui/page-crash";
 import { FADES_IN } from "../ui/page-read";
 import { PageSkeleton } from "../ui/page-skeleton";
 import { LoadFailed } from "../ui/read-failure-alert";
@@ -55,7 +57,14 @@ export function PageArea({
         sx={{ display: "contents", "& > *": shown.fades ? FADES_IN : {} }}
       >
         {(shown.shown || (shown.failed && entry.drawsFailure === true)) && (
-          <Fragment key={page}>{entry.draw(data)}</Fragment>
+          <ErrorBoundary
+            key={page}
+            fallback={(error) => <PageCrash code={crashCodeOf(page, error)} i18n={data.i18n} />}
+            // A page that always throws must not greet every launch.
+            onError={() => keepPage("overview")}
+          >
+            {entry.draw(data)}
+          </ErrorBoundary>
         )}
       </Box>
 

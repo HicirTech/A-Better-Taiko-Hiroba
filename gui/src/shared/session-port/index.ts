@@ -21,6 +21,7 @@ export {
   type VerbQueueing,
   type VerbsQueued,
 } from "./queueing";
+export { FAILED_CALL_ANSWERS, settledPort } from "./settled-port";
 export type {
   ChartHits,
   ChineseNamesRead,

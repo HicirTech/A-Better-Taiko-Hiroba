@@ -22,16 +22,29 @@ export interface ScoresStore {
 const FIDELITIES = new Set<ScoreFidelity>(["list", "detail", "recent"]);
 const SONG_NO = /^\d{1,5}$/;
 
+interface StoredBook {
+  readonly songs: readonly unknown[];
+  readonly scores: Record<string, unknown>;
+  readonly stale: readonly unknown[];
+  readonly unlisted: readonly unknown[];
+  readonly full: boolean;
+}
+
+/** Whether a kept book has a book's shape, whatever its parts hold. */
+export function isStoredScoreBook(stored: unknown): stored is StoredBook {
+  return (
+    isObject(stored) &&
+    Array.isArray(stored.songs) &&
+    isObject(stored.scores) &&
+    Array.isArray(stored.stale) &&
+    Array.isArray(stored.unlisted) &&
+    typeof stored.full === "boolean"
+  );
+}
+
 /** A kept book's well-formed parts. A broken book reads as one never read, not a crash. */
 export function readStoredScoreBook(stored: unknown): ScoreBook {
-  if (
-    !isObject(stored) ||
-    !Array.isArray(stored.songs) ||
-    !isObject(stored.scores) ||
-    !Array.isArray(stored.stale) ||
-    !Array.isArray(stored.unlisted) ||
-    typeof stored.full !== "boolean"
-  ) {
+  if (!isStoredScoreBook(stored)) {
     return EMPTY_SCORE_BOOK;
   }
   const scores = Object.fromEntries(

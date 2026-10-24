@@ -35,6 +35,7 @@ export const USER_DATA = userDataOf(LANE);
 /** Its own folder: a language picked there must not reach the runs that read English. */
 export const LANGUAGE_USER_DATA = userDataOf(LANE, "e2e-user-data-language");
 export const UPDATES_USER_DATA = userDataOf(LANE, "e2e-user-data-updates");
+export const PAGE_GONE_USER_DATA = userDataOf(LANE, "e2e-user-data-page-gone");
 export const UPDATE_FEED = "/__update-feed/update.json";
 /** MUI's md: from this width the app frame shows its side panel. */
 export const MD_WIDTH_PX = 900;
