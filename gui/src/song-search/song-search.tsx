@@ -29,7 +29,7 @@ import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";
 import { SectionCard } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
-import { forgetSearch, keptSearches, rememberSearch } from "./search-history";
+import type { KeptSearches } from "./use-kept-searches";
 
 // A search with nothing found fills the window's page, so its words stand in the middle of it.
 const FILLS_THE_PAGE = {
@@ -53,6 +53,8 @@ export interface SongSearchProps {
   readonly shownDifficulty: ShownDifficulty;
   /** Where a song's details take their chart pictures from. */
   readonly chartSource: ChartSource;
+  /** The searches kept on this device, offered before a query is typed. */
+  readonly keptSearches: KeptSearches;
   readonly i18n: Translator;
   /** The first time the search opens, so the song list is read only once someone looks. */
   readonly onOpen: () => void;
@@ -70,6 +72,7 @@ export function SongSearch({
   modalLook,
   shownDifficulty,
   chartSource,
+  keptSearches,
   i18n,
   onOpen,
   children,
@@ -77,7 +80,7 @@ export function SongSearch({
   const { t, locale } = i18n;
   const [active, setActive] = useState(false);
   const [query, setQuery] = useState("");
-  const [recent, setRecent] = useState(keptSearches);
+  const recent = keptSearches.searches;
   const [openSongNo, setOpenSongNo] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const deferred = useDeferredValue(query);
@@ -96,7 +99,7 @@ export function SongSearch({
   };
   useBackLeaves(active, leave);
   const open = (songNo: string) => {
-    setRecent(rememberSearch(query));
+    keptSearches.remember(query);
     setOpenSongNo(songNo);
   };
 
@@ -133,7 +136,7 @@ export function SongSearch({
                 <IconButton
                   edge="end"
                   aria-label={t("search.forget", { query: one })}
-                  onClick={() => setRecent(forgetSearch(one))}
+                  onClick={() => keptSearches.forget(one)}
                 >
                   <CloseIcon fontSize="small" />
                 </IconButton>
@@ -183,7 +186,7 @@ export function SongSearch({
           }}
           onFocus={activate}
           onLeave={active ? leave : undefined}
-          onSubmit={() => setRecent(rememberSearch(query))}
+          onSubmit={() => keptSearches.remember(query)}
           hint={recent.length === 0 ? t("picker.searchHint") : undefined}
         />
       </FrameTop>

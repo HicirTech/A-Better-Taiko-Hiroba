@@ -23,21 +23,24 @@ export function keptSearches(storage: Storage | undefined = pageStorage()): read
   }
 }
 
+/** The searches with `query` as the latest, once, the oldest dropped beyond RECENT_SEARCHES. */
+export function withSearch(searches: readonly string[], query: string): readonly string[] {
+  const latest = query.trim().slice(0, MAX_QUERY_LENGTH);
+  return latest === ""
+    ? searches
+    : [latest, ...searches.filter((one) => one !== latest)].slice(0, RECENT_SEARCHES);
+}
+
 /** Keeps `query` as the latest search, once, and drops the oldest beyond RECENT_SEARCHES. */
 export function rememberSearch(
   query: string,
   storage: Storage | undefined = pageStorage(),
 ): readonly string[] {
-  const latest = query.trim().slice(0, MAX_QUERY_LENGTH);
-  if (latest === "") {
-    return keptSearches(storage);
+  const kept = keptSearches(storage);
+  const searches = withSearch(kept, query);
+  if (searches !== kept) {
+    keepSetting(KEY, JSON.stringify(searches), storage);
   }
-
-  const searches = [latest, ...keptSearches(storage).filter((one) => one !== latest)].slice(
-    0,
-    RECENT_SEARCHES,
-  );
-  keepSetting(KEY, JSON.stringify(searches), storage);
   return searches;
 }
 

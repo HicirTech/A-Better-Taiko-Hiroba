@@ -62,6 +62,8 @@ export interface PageState {
   readonly favorites: EditorReads;
   /** The sets kept on this device, read again as a page that shows them opens. */
   readonly keptSets: { readonly reload: () => void };
+  /** The searches kept on this device, read again as the Overview opens. */
+  readonly keptSearches: { readonly reload: () => void };
 }
 
 /** All of a page's data read again from nothing, asked for by a six-second hold. */
@@ -133,6 +135,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     namesSongs: true,
     needsSongs: false,
     drawsFailure: true,
+    opens: ({ keptSearches }) => [keptSearches.reload],
     waits: () => false,
     reading: ({ session }) => session.myPageInView,
     readAgain: readMyPage,

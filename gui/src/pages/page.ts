@@ -15,6 +15,7 @@ import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { UpdateReminder } from "../shared/updates/use-update-reminder";
+import type { KeptSearches } from "../song-search/use-kept-searches";
 import type { ModalLook } from "../ui/large-modal";
 import type { SkeletonProgress } from "../ui/page-skeleton";
 import type { PageModel, PageState, SessionReads } from "./page-model";
@@ -58,6 +59,7 @@ export interface PageData extends PageState {
   readonly nameEditor: NameEditor;
   readonly favorites: FavoritesEditor;
   readonly keptSets: FavoriteSets;
+  readonly keptSearches: KeptSearches;
   /** The song search opened: the song list is read from then on. */
   readonly wantSongs: () => void;
 }

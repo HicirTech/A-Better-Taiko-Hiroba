@@ -1,5 +1,6 @@
 import { Skeleton, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { type ReactNode, useState } from "react";
 import { action } from "storybook/actions";
 import { userEvent, within } from "storybook/test";
 import { AppFrame } from "../navigation/app-frame";
@@ -12,35 +13,58 @@ import { i18nOf, type StoryGlobals } from "../story-kit/env";
 import { storyCatalogue } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { STORY_CHART_PORT } from "../story-kit/story-port";
-import { rememberSearch } from "./search-history";
+import { withSearch } from "./search-history";
 import { SongSearch } from "./song-search";
+import type { KeptSearches as Searches } from "./use-kept-searches";
+
+/** The searches as the window would keep them, from `first` on. */
+function HeldSearches({
+  first,
+  children,
+}: {
+  readonly first: readonly string[];
+  readonly children: (kept: Searches) => ReactNode;
+}) {
+  const [searches, setSearches] = useState(first);
+  return children({
+    searches,
+    remember: (query) => setSearches((now) => withSearch(now, query)),
+    forget: (query) => setSearches((now) => now.filter((one) => one !== query)),
+    reload: () => undefined,
+  });
+}
 
 /** The Overview's search, in the window's top band, over a page that stands in for the Overview. */
-const search = (catalogue: SongCatalogue, globals: StoryGlobals) => {
+const search = (catalogue: SongCatalogue, globals: StoryGlobals, first: readonly string[] = []) => {
   const i18n = i18nOf(globals);
   return (
     <AppFrame page="overview" onNavigate={action("navigate")} i18n={i18n} pages={PAGE_REGISTRY}>
-      <SongSearch
-        catalogue={catalogue}
-        port={STORY_CHART_PORT}
-        lane={STORY_LANE}
-        touchFirst={touchOf(globals)}
-        wide={wideOf(globals)}
-        modalLook={modalLookOf(globals)}
-        shownDifficulty={DEFAULT_SHOWN}
-        chartSource={DEFAULT_CHART_SOURCE}
-        i18n={i18n}
-        onOpen={action("open the search")}
-      >
-        {(searching) =>
-          !searching && (
-            <Stack spacing={2}>
-              <Skeleton variant="rounded" height={160} />
-              <Skeleton variant="rounded" height={80} />
-            </Stack>
-          )
-        }
-      </SongSearch>
+      <HeldSearches first={first}>
+        {(kept) => (
+          <SongSearch
+            catalogue={catalogue}
+            port={STORY_CHART_PORT}
+            lane={STORY_LANE}
+            touchFirst={touchOf(globals)}
+            wide={wideOf(globals)}
+            modalLook={modalLookOf(globals)}
+            shownDifficulty={DEFAULT_SHOWN}
+            chartSource={DEFAULT_CHART_SOURCE}
+            keptSearches={kept}
+            i18n={i18n}
+            onOpen={action("open the search")}
+          >
+            {(searching) =>
+              !searching && (
+                <Stack spacing={2}>
+                  <Skeleton variant="rounded" height={160} />
+                  <Skeleton variant="rounded" height={80} />
+                </Stack>
+              )
+            }
+          </SongSearch>
+        )}
+      </HeldSearches>
     </AppFrame>
   );
 };
@@ -77,10 +101,7 @@ export const NothingFound: Story = { play: typed("zzz") };
 
 /** Opened before typing: the searches kept from before, each with a × that forgets it. */
 export const KeptSearches: Story = {
-  beforeEach: () => {
-    rememberSearch("スケッチ");
-    rememberSearch("wings");
-  },
+  render: (_args, { globals }) => search(storyCatalogue(), globals, ["wings", "スケッチ"]),
   play: async ({ canvasElement }) => {
     await userEvent.click(await fieldIn(canvasElement));
   },
