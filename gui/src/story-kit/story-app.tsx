@@ -9,7 +9,7 @@ import { PAGE_REGISTRY } from "../pages/registry";
 import { PipelinesPage } from "../pipelines-page/pipelines-page";
 import { LanguageSetting } from "../settings/language-setting";
 import type { HirobaSessionPort } from "../shared/session-port";
-import { touchOf } from "./devices";
+import { touchOf, wideOf } from "./devices";
 import { i18nOf, localeOf, STORY_BACK, STORY_LINK, STORY_TOAST, type StoryGlobals } from "./env";
 import { press } from "./steps";
 import { createStoryPort } from "./story-port";
@@ -49,6 +49,8 @@ export function StoryApp({
       page={page}
       onNavigate={navigate}
       i18n={i18n}
+      wide={wideOf(globals)}
+      touchFirst={touchOf(globals)}
       pages={PAGE_REGISTRY}
       {...(android ? { back: STORY_BACK } : {})}
       pipelines={<PipelinesPage port={port} i18n={i18n} />}

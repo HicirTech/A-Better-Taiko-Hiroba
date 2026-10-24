@@ -16,6 +16,8 @@ const meta = {
       page="overview"
       onNavigate={action("navigate")}
       i18n={i18nOf(globals)}
+      wide={wideOf(globals)}
+      touchFirst={touchOf(globals)}
       pages={PAGE_REGISTRY}
     >
       <FrameTop wide={wideOf(globals)} touchFirst={touchOf(globals)}>

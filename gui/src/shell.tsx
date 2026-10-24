@@ -21,6 +21,8 @@ import {
 import { showLanguage } from "./shared/language/show-language";
 import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
 import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
+import { useTouchFirst } from "./ui/use-touch-first";
+import { useWideWindow } from "./ui/use-wide-window";
 
 export function Shell({
   platform,
@@ -39,6 +41,8 @@ export function Shell({
     onShown(i18n);
   }, [i18n, onShown]);
   const [page, navigate] = useShownPage(keptPage, keepPage);
+  const wide = useWideWindow();
+  const touchFirst = useTouchFirst();
   // Settings' two choices, for the page drawn here where no app runs.
   const [shownDifficulty, onShownDifficulty] = useKeptChoice(
     keptShownDifficulty,
@@ -59,6 +63,8 @@ export function Shell({
       page={page}
       onNavigate={navigate}
       i18n={i18n}
+      wide={wide}
+      touchFirst={touchFirst}
       pages={PAGE_REGISTRY}
       {...(platform?.shell === "android" ? { back: platform.back } : {})}
       {...(platform !== null

@@ -38,7 +38,14 @@ function HeldSearches({
 const search = (catalogue: SongCatalogue, globals: StoryGlobals, first: readonly string[] = []) => {
   const i18n = i18nOf(globals);
   return (
-    <AppFrame page="overview" onNavigate={action("navigate")} i18n={i18n} pages={PAGE_REGISTRY}>
+    <AppFrame
+      page="overview"
+      onNavigate={action("navigate")}
+      i18n={i18n}
+      pages={PAGE_REGISTRY}
+      wide={wideOf(globals)}
+      touchFirst={touchOf(globals)}
+    >
       <HeldSearches first={first}>
         {(kept) => (
           <SongSearch

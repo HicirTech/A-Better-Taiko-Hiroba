@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { useMediaQuery } from "@mui/material";
 import { type ReactNode, useContext, useMemo } from "react";
-
+import { NavFoot } from "./app/nav-foot";
 import { PageArea } from "./app/page-area";
 import { useKeptChoice } from "./app/use-kept-choice";
 import { useModalLook } from "./app/use-modal-look";
@@ -10,7 +10,6 @@ import { usePageVisits } from "./app/use-page-visits";
 import { usePagesData } from "./app/use-pages-data";
 import { useReadAgain } from "./app/use-read-again";
 import { useSession } from "./app/use-session";
-import { NavFoot } from "./navigation/app-frame";
 import type { Page } from "./navigation/pages";
 import type { PageData } from "./pages/page";
 import { PAGE_REGISTRY } from "./pages/registry";

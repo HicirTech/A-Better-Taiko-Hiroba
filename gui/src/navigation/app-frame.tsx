@@ -15,7 +15,6 @@ import { alpha } from "@mui/material/styles";
 import {
   createContext,
   type ReactNode,
-  useContext,
   useEffect,
   useEffectEvent,
   useId,
@@ -23,7 +22,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { createPortal } from "react-dom";
 
 import type { SystemBack } from "../platform";
 import { BackClosersContext, BackModesContext, createBackClosers } from "../ui/back-closers";
@@ -32,8 +30,6 @@ import { ArrowBackIcon, ArrowForwardIcon, MenuIcon } from "../ui/icons";
 import { MenuOpenContext } from "../ui/menu-open";
 import { PipelinesShownContext } from "../ui/pipelines-shown";
 import type { SwipeDirection } from "../ui/swipe-gesture";
-import { useTouchFirst } from "../ui/use-touch-first";
-import { useWideWindow } from "../ui/use-wide-window";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { WiderFrameContext } from "../ui/wider-frame";
 import { MOVE_TIMING, moveWindow, STILL, WindowMoveStyles } from "../ui/window-move";
@@ -67,30 +63,29 @@ interface PipelinesToggle {
 
 /** Where the navigation's foot is drawn, while there is one to draw it in. */
 type FootRef = (foot: HTMLElement | null) => void;
-const NavFootContext = createContext<HTMLElement | null>(null);
-
-/** Drawn at the foot of the navigation, such as the way to read again; nowhere while it is shut. */
-export function NavFoot({ children }: { children: ReactNode }) {
-  const foot = useContext(NavFootContext);
-  return foot === null ? null : createPortal(children, foot);
-}
+/** The navigation's foot, where the window's root draws; none while it is shut. */
+export const NavFootContext = createContext<HTMLElement | null>(null);
 
 export function AppFrame({
   page,
   onNavigate,
   i18n,
   pages,
+  wide,
+  touchFirst,
   back,
   pipelines,
   children,
 }: NavigationProps & {
+  /** Wide enough for the side panel, which stays open beside the page. */
+  wide: boolean;
+  /** A touch screen: swipes open the menu and the pipelines page. */
+  touchFirst: boolean;
   back?: SystemBack;
   /** The page one level past the menu; without it there is no way there. */
   pipelines?: ReactNode;
   children: ReactNode;
 }) {
-  const wide = useWideWindow();
-  const touchFirst = useTouchFirst();
   const [wider, setWider] = useState(false);
   const [navigation, setNavigation] = useState(true);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
@@ -184,6 +179,7 @@ export function AppFrame({
                 onNavigate={navigate}
                 i18n={i18n}
                 pages={pages}
+                touchFirst={touchFirst}
                 footRef={setFoot}
                 toggle={toggle}
               />
@@ -193,6 +189,7 @@ export function AppFrame({
                 onNavigate={navigate}
                 i18n={i18n}
                 pages={pages}
+                touchFirst={touchFirst}
                 footRef={setFoot}
                 toggle={toggle}
                 open={menuOpen}
@@ -310,13 +307,14 @@ function PageList({
 function Foot({
   footRef,
   toggle,
+  touchFirst,
   i18n,
 }: {
   readonly footRef: FootRef;
   readonly toggle: PipelinesToggle | undefined;
+  readonly touchFirst: boolean;
   readonly i18n: Translator;
 }) {
-  const touchFirst = useTouchFirst();
   const label = i18n.t("nav.pipelines");
   return (
     <Box
@@ -353,10 +351,12 @@ function Foot({
 
 function SidePanel({
   footRef,
+  touchFirst,
   ...props
 }: NavigationProps & {
   readonly footRef: FootRef;
   readonly toggle: PipelinesToggle | undefined;
+  readonly touchFirst: boolean;
 }) {
   return (
     <Box sx={{ width: PANEL_WIDTH_PX, flexShrink: 0 }}>
@@ -373,7 +373,7 @@ function SidePanel({
         <Box component="nav">
           <PageList {...props} />
         </Box>
-        <Foot footRef={footRef} toggle={props.toggle} i18n={props.i18n} />
+        <Foot footRef={footRef} toggle={props.toggle} touchFirst={touchFirst} i18n={props.i18n} />
       </Drawer>
     </Box>
   );
@@ -391,17 +391,18 @@ function MenuDrawer({
   pages,
   footRef,
   toggle,
+  touchFirst,
   open,
   onOpenChange: setOpen,
 }: NavigationProps & {
   readonly footRef: FootRef;
   readonly toggle: PipelinesToggle | undefined;
+  readonly touchFirst: boolean;
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
 }) {
   const drawerId = useId();
   const label = i18n.t("nav.menu");
-  const touchFirst = useTouchFirst();
   // On the pipelines page a swipe is the pipelines' own: left goes back to this menu.
   useMenuSwipe({ active: touchFirst && toggle?.shown !== true, open, onOpenChange: setOpen });
   const pick = (next: Page) => {
@@ -447,7 +448,7 @@ function MenuDrawer({
         <Box component="nav" aria-label={label}>
           <PageList page={page} onNavigate={pick} i18n={i18n} pages={pages} toggle={toggle} />
         </Box>
-        <Foot footRef={footRef} toggle={toggle} i18n={i18n} />
+        <Foot footRef={footRef} toggle={toggle} touchFirst={touchFirst} i18n={i18n} />
       </Drawer>
     </>
   );

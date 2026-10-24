@@ -12,6 +12,7 @@ const PURE: readonly string[] = [
   "know-yourself",
   "my-page",
   "name-title",
+  "navigation",
   "pages",
   "pictures",
   "pipelines-page",

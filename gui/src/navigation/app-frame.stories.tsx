@@ -3,18 +3,26 @@ import { Skeleton, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { action } from "storybook/actions";
-
+import { NavFoot } from "../app/nav-foot";
 import { PAGE_REGISTRY } from "../pages/registry";
 import { ReadAgainFoot } from "../read-again/read-again-foot";
-import { onDevice, touchOf } from "../story-kit/devices";
+import { onDevice, touchOf, wideOf } from "../story-kit/devices";
 import { i18nOf, STORY_BACK } from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";
 import { touchDrag } from "../story-kit/touch";
-import { AppFrame, NavFoot } from "./app-frame";
+import { AppFrame } from "./app-frame";
 import type { Page } from "./pages";
 
 /** The frame over a page that stands in for any, with Read again at the navigation's foot. */
-function FrameOverAPage({ i18n, android }: { i18n: Translator; android: boolean }) {
+function FrameOverAPage({
+  i18n,
+  android,
+  wide,
+}: {
+  i18n: Translator;
+  android: boolean;
+  wide: boolean;
+}) {
   const [page, setPage] = useState<Page>("overview");
   return (
     <AppFrame
@@ -24,6 +32,8 @@ function FrameOverAPage({ i18n, android }: { i18n: Translator; android: boolean 
         action("navigate")(next);
       }}
       i18n={i18n}
+      wide={wide}
+      touchFirst={android}
       pages={PAGE_REGISTRY}
       {...(android ? { back: STORY_BACK } : {})}
       pipelines={<Skeleton variant="rounded" height={240} />}
@@ -51,7 +61,7 @@ const meta = {
   tags: ["navigation"],
   parameters: { layout: "fullscreen" },
   render: (_args, { globals }) => (
-    <FrameOverAPage i18n={i18nOf(globals)} android={touchOf(globals)} />
+    <FrameOverAPage i18n={i18nOf(globals)} android={touchOf(globals)} wide={wideOf(globals)} />
   ),
 } satisfies Meta;
 
