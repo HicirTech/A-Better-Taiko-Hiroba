@@ -77,7 +77,7 @@ describe("PAGE_MODELS", () => {
     ["history", ["plays.load", "scores.load", "sets.reload"]],
     ["scores", ["scores.load"]],
     ["rating", ["scores.load", "ratingData.load"]],
-    ["knowYourself", ["scores.load", "songList.readIfFailed"]],
+    ["knowYourself", ["scores.load", "songList.readIfFailed", "sets.reload"]],
     ["costume", []],
     ["nameTitle", []],
     ["favorites", []],

@@ -8,13 +8,16 @@ import { listedOf } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../shared/session-port";
 import { newSetName, SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
-import { useFavoriteSets } from "../shared/sets/use-favorite-sets";
+import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import {
   DIFFICULTY_COLOUR,
   DIFFICULTY_LABEL,
   DIFFICULTY_TEXT,
 } from "../shared/song-catalogue/genre-look";
-import { keptShownDifficulty, SHOWN_DIFFICULTIES } from "../shared/song-catalogue/shown-difficulty";
+import {
+  SHOWN_DIFFICULTIES,
+  type ShownDifficulty,
+} from "../shared/song-catalogue/shown-difficulty";
 import { resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { ScoreDetails } from "../songs/score-details";
@@ -42,6 +45,8 @@ export function KnowYourselfPage({
   listed,
   catalogue,
   lane,
+  keptSets,
+  shownDifficulty,
   touchFirst,
   modalLook,
   toast,
@@ -53,6 +58,10 @@ export function KnowYourselfPage({
   /** taiko.wiki's song list: each chart's stars, notes and tempo, and the names. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
+  /** The sets kept on this device, which a row's songs can go into. */
+  readonly keptSets: FavoriteSets;
+  /** The difficulty the page starts on, as Settings chose it. */
+  readonly shownDifficulty: ShownDifficulty;
   /** A touch screen: a pull reads. */
   readonly touchFirst: boolean;
   readonly modalLook: ModalLook;
@@ -62,8 +71,7 @@ export function KnowYourselfPage({
 }) {
   const { t, number, locale } = i18n;
   const { view, reading, song, failure, readSong } = scores;
-  const kept = useFavoriteSets();
-  const [shown, setShown] = useState(keptShownDifficulty);
+  const [shown, setShown] = useState(shownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);
   const [details, setDetails] = useState<string | null>(null);
   const [adding, setAdding] = useState<readonly string[] | null>(null);
@@ -207,12 +215,12 @@ export function KnowYourselfPage({
       {adding !== null && (
         <AddSongsDialog
           songs={adding}
-          sets={kept.sets}
+          sets={keptSets.sets}
           touchFirst={touchFirst}
           modalLook={modalLook}
           i18n={i18n}
           onAdd={(set, added) => {
-            kept.replaceSongs(set.id, [...set.songs, ...added]);
+            keptSets.replaceSongs(set.id, [...set.songs, ...added]);
             setAdding(null);
           }}
           onNewSet={() => setNaming(adding.slice(0, SET_SONG_LIMIT))}
@@ -222,11 +230,11 @@ export function KnowYourselfPage({
       {naming !== null && (
         <SetNameDialog
           title={t("favorites.newSet")}
-          initial={newSetName(kept.sets, (count) => t("favorites.setName", { number: count }))}
+          initial={newSetName(keptSets.sets, (count) => t("favorites.setName", { number: count }))}
           i18n={i18n}
           onCancel={() => setNaming(null)}
           onSave={(name) => {
-            kept.add(name, naming);
+            keptSets.add(name, naming);
             setNaming(null);
             setAdding(null);
           }}

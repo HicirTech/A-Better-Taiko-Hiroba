@@ -8,6 +8,7 @@ const SRC = join(import.meta.dir, "../src");
 const PURE: readonly string[] = [
   "hiroba-session",
   "history",
+  "know-yourself",
   "name-title",
   "pictures",
   "pipelines-page",

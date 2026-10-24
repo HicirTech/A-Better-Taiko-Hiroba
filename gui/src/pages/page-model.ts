@@ -185,7 +185,11 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     namesSongs: true,
     needsSongs: true,
     // A song list that could not be read is read again as the page opens.
-    opens: ({ scores, catalogue }) => [scores.load, catalogue.readIfFailed],
+    opens: ({ scores, catalogue, keptSets }) => [
+      scores.load,
+      catalogue.readIfFailed,
+      keptSets.reload,
+    ],
     waits: ({ scores, listed, catalogue }) =>
       scores.view === null || listed === null || catalogue.state === "loading",
     reading: scoresRead,
