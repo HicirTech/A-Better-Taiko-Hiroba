@@ -1,54 +1,21 @@
 import * as nodeFs from "node:fs";
 
 import { type CostumeHistoryStore, readCostumeHistory } from "../src/hiroba-session";
-import { replaceFile } from "./replace-file";
-
-interface StoredHistory {
-  readonly version: 1;
-  /** By taiko number. */
-  readonly players: Record<string, unknown>;
-}
-
-/** The file operations the store makes: node's own, unless a test hands in its own. */
-export type HistoryFiles = Pick<
-  typeof nodeFs,
-  "mkdirSync" | "readFileSync" | "renameSync" | "writeFileSync"
->;
+import { createPlayersFile } from "./players-file";
+import type { StoreFiles } from "./replace-file";
 
 /** The desktop's costume history: one file, replaced whole at each save. */
 export function createCostumeHistoryStore(
   path: string,
-  files: HistoryFiles = nodeFs,
+  files: StoreFiles = nodeFs,
 ): CostumeHistoryStore {
-  const read = (): Record<string, unknown> => {
-    try {
-      const stored = JSON.parse(files.readFileSync(path, "utf8")) as {
-        version?: unknown;
-        players?: unknown;
-      };
-      return stored.version === 1 && isObject(stored.players) ? stored.players : {};
-    } catch {
-      return {};
-    }
-  };
+  const kept = createPlayersFile(path, Array.isArray, files);
   return {
     async load(taikoNo) {
-      const players = read();
-      return readCostumeHistory(Object.hasOwn(players, taikoNo) ? players[taikoNo] : undefined);
+      return readCostumeHistory(kept.load(taikoNo));
     },
     async save(taikoNo, entries) {
-      const players = { ...read() };
-      if (entries.length === 0) {
-        delete players[taikoNo];
-      } else {
-        players[taikoNo] = entries;
-      }
-      const stored: StoredHistory = { version: 1, players };
-      replaceFile(path, JSON.stringify(stored), files);
+      kept.save(taikoNo, entries.length === 0 ? undefined : entries);
     },
   };
-}
-
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

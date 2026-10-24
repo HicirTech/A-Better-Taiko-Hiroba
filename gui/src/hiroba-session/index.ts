@@ -87,7 +87,7 @@ export {
   readStoredScoreChanges,
 } from "./score-changes-store";
 export type { ScoresStore } from "./scores-store";
-export { createMemoryScoresStore, readStoredScoreBook } from "./scores-store";
+export { createMemoryScoresStore, isStoredScoreBook, readStoredScoreBook } from "./scores-store";
 export { sessionEnded } from "./session-ended";
 export {
   BUSY_OUTCOME,
