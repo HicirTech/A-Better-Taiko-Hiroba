@@ -17,6 +17,7 @@ const PURE: readonly string[] = [
   "profile",
   "rating",
   "read-again",
+  "scores",
   "settings",
   "songs",
   "theme",

@@ -19,7 +19,7 @@ import {
   GENRE_LABEL,
   LEVEL_DIFFICULTY,
 } from "../shared/song-catalogue/genre-look";
-import { keptShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
+import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { fold } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { PLAY_ROW_PX, PlayRow } from "../songs/play-row";
@@ -40,6 +40,7 @@ export function ScoresPage({
   scores,
   catalogue,
   lane,
+  shownDifficulty,
   touchFirst,
   wide,
   modalLook,
@@ -49,6 +50,8 @@ export function ScoresPage({
   /** taiko.wiki's song list: the names in the player's language, and each chart's stars. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
+  /** The difficulty the filter starts on, as Settings chose it. */
+  readonly shownDifficulty: ShownDifficulty;
   /** A touch screen: a pull reads. */
   readonly touchFirst: boolean;
   /** The window is wide enough for the side panel. */
@@ -60,7 +63,7 @@ export function ScoresPage({
   const { view, reading, song, failure, readSong } = scores;
   const [query, setQuery] = useState("");
   const deferred = useDeferredValue(query);
-  const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(keptShownDifficulty()));
+  const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(shownDifficulty));
   const [sort, setSort] = useState<ScoreSort | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
 
