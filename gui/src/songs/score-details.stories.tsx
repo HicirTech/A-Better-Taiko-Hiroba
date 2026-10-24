@@ -6,6 +6,7 @@ import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import { listedOf } from "../shared/scores/score-order";
 import type { ScoreView } from "../shared/session-port";
 import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
+import { modalLookOf } from "../story-kit/devices";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { storyPlay } from "../story-kit/plays";
 import { STORY_SCORES } from "../story-kit/scores";
@@ -35,6 +36,7 @@ const meta = {
         BRANCHED === undefined ? null : listedOf(BRANCHED, storyCatalogue(), localeOf(globals))
       }
       lane={STORY_LANE}
+      modalLook={modalLookOf(globals)}
       i18n={i18nOf(globals)}
     />
   ),
@@ -64,6 +66,7 @@ export const PlayWithoutDetails: Story = {
         onRead: action("read the song"),
       }}
       lane={STORY_LANE}
+      modalLook={modalLookOf(globals)}
       i18n={i18nOf(globals)}
     />
   ),

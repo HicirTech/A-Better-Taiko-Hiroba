@@ -1,23 +1,20 @@
 import type { Translator } from "@abth/i18n";
-import {
-  Box,
-  Divider,
-  IconButton,
-  Modal,
-  Paper,
-  Slide,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import { type ReactNode, type RefObject, useContext } from "react";
+import { Box, Divider, IconButton, Modal, Paper, Slide, Typography, useTheme } from "@mui/material";
+import type { ReactNode, RefObject } from "react";
 
 import { useBackCloses, useBackLeaves } from "./back-closers";
 import { CloseIcon } from "./icons";
-import { PipelinesShownContext } from "./pipelines-shown";
-import { useTouchFirst } from "./use-touch-first";
 import { VISUALLY_HIDDEN } from "./visually-hidden";
-import { REDUCED_MOTION } from "./window-move";
+
+/** How a large modal is drawn here, as the window and the frame say. */
+export interface ModalLook {
+  /** As narrow as a phone: the modal takes the whole window. */
+  readonly phone: boolean;
+  /** The system asks for less motion: the modal comes and goes at once. */
+  readonly reducedMotion: boolean;
+  /** The pipelines page lies over the page: a modal that stands for a page steps aside. */
+  readonly covered: boolean;
+}
 
 /** The panel's width on a computer; on a phone it takes the whole window. */
 const WIDTH_PX = 900;
@@ -43,6 +40,8 @@ export function LargeModal({
   picture = false,
   pageLike = false,
   contentRef,
+  touchFirst,
+  modalLook,
   i18n,
   onExited,
   onClose,
@@ -69,6 +68,9 @@ export function LargeModal({
   readonly pageLike?: boolean | undefined;
   /** The part that scrolls, which a pull to read again listens on. */
   readonly contentRef?: RefObject<HTMLDivElement | null> | undefined;
+  /** A touch screen: Back closes it, so it draws no close button. */
+  readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   /** Called once it has slid away. */
   readonly onExited?: (() => void) | undefined;
@@ -78,10 +80,7 @@ export function LargeModal({
   readonly children: ReactNode;
 }) {
   const theme = useTheme();
-  const phone = useMediaQuery(theme.breakpoints.down("sm"), { noSsr: true });
-  const reduced = useMediaQuery(REDUCED_MOTION, { noSsr: true });
-  const touchFirst = useTouchFirst();
-  const covered = useContext(PipelinesShownContext);
+  const { phone, reducedMotion, covered } = modalLook;
   const back = onBack ?? onClose;
   useBackCloses(open && !pageLike, back);
   useBackLeaves(open && pageLike, onClose);
@@ -114,7 +113,7 @@ export function LargeModal({
         direction="up"
         appear
         timeout={
-          reduced
+          reducedMotion
             ? 0
             : {
                 enter: theme.transitions.duration.enteringScreen,

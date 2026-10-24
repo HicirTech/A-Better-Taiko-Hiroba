@@ -26,6 +26,7 @@ import { SongListFailed } from "../songs/song-list-failed";
 import { useBackLeaves } from "../ui/back-closers";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
+import type { ModalLook } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
 import { SearchField } from "../ui/search-field";
 import { SectionCard } from "../ui/section-card";
@@ -46,6 +47,10 @@ export interface SongSearchProps {
     "readChartPicture" | "readChartDensity" | "readChartTja" | "readDrawnChart" | "keepDrawnChart"
   >;
   readonly lane: PictureLane;
+  readonly touchFirst: boolean;
+  /** The window is wide enough for the side panel. */
+  readonly wide: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   /** The first time the search opens, so the song list is read only once someone looks. */
   readonly onOpen: () => void;
@@ -54,7 +59,17 @@ export interface SongSearchProps {
 }
 
 /** The songs searched for by name, the searches made before, and a song's details. */
-export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: SongSearchProps) {
+export function SongSearch({
+  catalogue,
+  port,
+  lane,
+  touchFirst,
+  wide,
+  modalLook,
+  i18n,
+  onOpen,
+  children,
+}: SongSearchProps) {
   const { t, locale } = i18n;
   const [active, setActive] = useState(false);
   const [query, setQuery] = useState("");
@@ -151,7 +166,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
 
   return (
     <>
-      <FrameTop>
+      <FrameTop wide={wide} touchFirst={touchFirst}>
         <SearchField
           id="song-search"
           query={query}
@@ -186,6 +201,7 @@ export function SongSearch({ catalogue, port, lane, i18n, onOpen, children }: So
         song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
         port={port}
         lane={lane}
+        modalLook={modalLook}
         i18n={i18n}
         onClose={() => setOpenSongNo(null)}
       />

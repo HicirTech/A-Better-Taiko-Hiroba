@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
 import { chartPicturePng } from "../../scripts/mock-pictures";
+import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { pictureOf } from "../story-kit/picture-of";
 import { ChartViewer } from "./chart-viewer";
@@ -21,6 +21,8 @@ const meta = {
       <ChartViewer
         {...args}
         chart={{ picture: pictureOf(chartPicturePng(4)), label }}
+        touchFirst={touchOf(globals)}
+        modalLook={modalLookOf(globals)}
         i18n={i18n}
       />
     );

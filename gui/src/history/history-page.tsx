@@ -18,6 +18,7 @@ import { SetNameDialog } from "../songs/set-name-dialog";
 import { PAGE_HEIGHT } from "../ui/frame-top";
 import type { ItemAction, Point } from "../ui/item-actions";
 import { ItemMenu, useItemMenu, useItemPress } from "../ui/item-menu";
+import type { ModalLook } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
@@ -34,6 +35,7 @@ export function HistoryPage({
   catalogue,
   lane,
   touchFirst,
+  modalLook,
   i18n,
 }: {
   readonly history: RecentPlaysState;
@@ -44,6 +46,7 @@ export function HistoryPage({
   readonly lane: PictureLane;
   /** Whether a pull reads again here, or Read again does, and a long press opens a play's menu. */
   readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }) {
   const { plays, reading, failure } = history;
@@ -185,6 +188,7 @@ export function HistoryPage({
         lane={lane}
         reading={scoresReading}
         readingSong={song !== null && song.songNo === placedSong}
+        modalLook={modalLook}
         i18n={i18n}
         onReadSong={(score) => void readSong(score)}
         onClose={close}
@@ -204,6 +208,8 @@ export function HistoryPage({
           songNo={found.outcome === "resolved" ? found.songNo : chosen}
           candidates={found.outcome === "ambiguous" ? found.candidates.map(namedSong) : []}
           sets={kept.sets}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
           i18n={i18n}
           onChooseSong={setChosen}
           onAdd={(set, songNo) => {

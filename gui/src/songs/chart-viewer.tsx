@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { type PointerEvent, useRef, useState, type WheelEvent } from "react";
 
 import type { PictureView } from "../shared/session-port";
-import { LargeModal } from "../ui/large-modal";
+import { LargeModal, type ModalLook } from "../ui/large-modal";
 import { distanceOf, FITTED, midpointOf, type Point, type ZoomView, zoomedView } from "./zoom";
 
 const DOUBLE_CLICK_ZOOM = 2.5;
@@ -29,10 +29,14 @@ export interface ShownChart {
 /** A chart picture on the whole screen, zoomed by two fingers, the wheel or a double click. */
 export function ChartViewer({
   chart,
+  touchFirst,
+  modalLook,
   i18n,
   onClose,
 }: {
   chart: ShownChart | null;
+  touchFirst: boolean;
+  modalLook: ModalLook;
   i18n: Translator;
   onClose: () => void;
 }) {
@@ -47,6 +51,8 @@ export function ChartViewer({
       open={chart !== null}
       title={last?.label ?? ""}
       picture
+      touchFirst={touchFirst}
+      modalLook={modalLook}
       i18n={i18n}
       onClose={onClose}
     >

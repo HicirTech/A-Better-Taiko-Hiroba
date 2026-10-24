@@ -1,9 +1,6 @@
 import { Box } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { useTouchFirst } from "./use-touch-first";
-import { useWideWindow } from "./use-wide-window";
-
 export const MENU_INSET_PX = 8;
 // The band the floating buttons sit in; fixed so every page starts at the same height.
 export const TOP_BAND_PX = 64;
@@ -19,9 +16,16 @@ export const COLUMN_MAX_WIDTH_PX = 600;
 const BAND_BUTTON_ROOM_PX = 48;
 
 /** A page's bar across the top band, clear of the menu button. */
-export function FrameTop({ children }: { children: ReactNode }) {
-  const wide = useWideWindow();
-  const touchFirst = useTouchFirst();
+export function FrameTop({
+  wide,
+  touchFirst,
+  children,
+}: {
+  /** Wide enough for the side panel, which leaves no menu button in the band. */
+  readonly wide: boolean;
+  readonly touchFirst: boolean;
+  readonly children: ReactNode;
+}) {
   // A touch screen draws no menu button: its swipe stands in for it.
   const room = wide || touchFirst ? 0 : BAND_BUTTON_ROOM_PX;
   return (

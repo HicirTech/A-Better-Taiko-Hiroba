@@ -1,18 +1,25 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
 import { STORY_HISTORY } from "../story-kit/costume";
+import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SET } from "../story-kit/profile";
 import { CostumeHistoryDialog, type CostumeHistoryDialogProps } from "./costume-history-dialog";
 
-type Args = Omit<CostumeHistoryDialogProps, "i18n">;
+type Args = Omit<CostumeHistoryDialogProps, "touchFirst" | "modalLook" | "i18n">;
 
 const meta = {
   title: "Dialogs/CostumeHistoryDialog",
   tags: ["my-page"],
   parameters: { layout: "fullscreen" },
-  render: (args, { globals }) => <CostumeHistoryDialog {...args} i18n={i18nOf(globals)} />,
+  render: (args, { globals }) => (
+    <CostumeHistoryDialog
+      {...args}
+      touchFirst={touchOf(globals)}
+      modalLook={modalLookOf(globals)}
+      i18n={i18nOf(globals)}
+    />
+  ),
   args: { open: true, entries: STORY_HISTORY, worn: STORY_SET, onPick: fn(), onClose: fn() },
 } satisfies Meta<Args>;
 

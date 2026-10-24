@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
 import type { FavoriteSet } from "../shared/sets/favorite-sets";
+import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SETS } from "../story-kit/sets";
 import { AddSongsDialog } from "./add-songs-dialog";
@@ -18,7 +18,13 @@ const meta = {
   tags: ["know-yourself"],
   parameters: { layout: "fullscreen" },
   render: (args, { globals }) => (
-    <AddSongsDialog {...args} sets={STORY_SETS} i18n={i18nOf(globals)} />
+    <AddSongsDialog
+      {...args}
+      sets={STORY_SETS}
+      touchFirst={touchOf(globals)}
+      modalLook={modalLookOf(globals)}
+      i18n={i18nOf(globals)}
+    />
   ),
   args: {
     songs: ["1001", "1010", "1020", "1021", "1022"],

@@ -11,6 +11,7 @@ import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/secti
 import { SectionTitleSkeleton } from "../ui/section-title";
 import { SYNC_BAR_PAGE, SyncBarSkeleton } from "../ui/sync-bar";
 import { useTouchFirst } from "../ui/use-touch-first";
+import type { SkeletonProps } from "./page";
 
 // Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
 const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" } as const;
@@ -19,18 +20,18 @@ const HEADING = { fontSize: "1rem", lineHeight: 1.75 } as const;
 const KNOW_CARDS = [...Array(6).keys()];
 const FOLDER_ROWS = [...Array(8).keys()];
 
-function SearchBand() {
+function SearchBand({ touchFirst, wide }: SkeletonProps) {
   return (
-    <FrameTop>
+    <FrameTop wide={wide} touchFirst={touchFirst}>
       <SearchFieldSkeleton />
     </FrameTop>
   );
 }
 
-export function OverviewSkeleton() {
+export function OverviewSkeleton(screen: SkeletonProps) {
   return (
     <>
-      <SearchBand />
+      <SearchBand {...screen} />
       <Stack spacing={3}>
         <Stack sx={{ alignItems: "center" }}>
           <OverviewHeaderSkeleton />
@@ -49,10 +50,10 @@ export function HistorySkeleton() {
   return <PlayRowsSkeleton />;
 }
 
-export function ScoresSkeleton() {
+export function ScoresSkeleton(screen: SkeletonProps) {
   return (
     <>
-      <SearchBand />
+      <SearchBand {...screen} />
       <Stack spacing={2}>
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
           {[80, 170, 72, 64].map((width) => (

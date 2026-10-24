@@ -21,7 +21,7 @@ import {
   type Difficulty,
 } from "../shared/song-catalogue/types";
 import type { ListedSong } from "../shared/song-catalogue/use-song-catalogue";
-import { LargeModal } from "../ui/large-modal";
+import { LargeModal, type ModalLook } from "../ui/large-modal";
 import { PullToRead } from "../ui/pull-to-read";
 import { ReadAgainButton } from "../ui/read-again-button";
 import { StatusNote } from "../ui/status-note";
@@ -64,11 +64,12 @@ export interface SongDetailsProps {
   >;
   /** Where the charts' difficulty icons, Hiroba's own, are read. */
   readonly lane: PictureLane;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   readonly onClose: () => void;
 }
 
-export function SongDetails({ song, port, lane, i18n, onClose }: SongDetailsProps) {
+export function SongDetails({ song, port, lane, modalLook, i18n, onClose }: SongDetailsProps) {
   // Kept while the modal slides away, so it does not go blank on its way, then dropped, so the
   // song opens afresh; stepping aside for the pipelines page keeps it.
   const [last, setLast] = useState(song);
@@ -82,6 +83,7 @@ export function SongDetails({ song, port, lane, i18n, onClose }: SongDetailsProp
       song={last}
       port={port}
       lane={lane}
+      modalLook={modalLook}
       i18n={i18n}
       onClose={onClose}
       onExited={() => {
@@ -112,6 +114,7 @@ function DetailsBody({
   song,
   port,
   lane,
+  modalLook,
   i18n,
   onClose,
   onExited,
@@ -212,6 +215,8 @@ function DetailsBody({
         }
         pageLike
         contentRef={content}
+        touchFirst={touchFirst}
+        modalLook={modalLook}
         i18n={i18n}
         onExited={onExited}
         onClose={onClose}
@@ -318,7 +323,13 @@ function DetailsBody({
           )}
         </Stack>
       </LargeModal>
-      <ChartViewer chart={viewing} i18n={i18n} onClose={() => setViewing(null)} />
+      <ChartViewer
+        chart={viewing}
+        touchFirst={touchFirst}
+        modalLook={modalLook}
+        i18n={i18n}
+        onClose={() => setViewing(null)}
+      />
     </>
   );
 }

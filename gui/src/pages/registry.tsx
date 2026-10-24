@@ -83,6 +83,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         catalogue={data.catalogue}
         lane={data.lane}
         touchFirst={data.touchFirst}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -106,6 +107,8 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         catalogue={data.catalogue}
         lane={data.lane}
         touchFirst={data.touchFirst}
+        wide={data.wide}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -122,6 +125,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         catalogue={data.catalogue}
         lane={data.lane}
         touchFirst={data.touchFirst}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -139,6 +143,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         lane={data.lane}
         touchFirst={data.touchFirst}
         toast={data.touchFirst ? data.toast : undefined}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),
@@ -147,7 +152,15 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     ...PAGE_MODELS.costume,
     icon: <CheckroomIcon />,
     skeleton: CostumePageSkeleton,
-    draw: (data) => <CostumePage editor={data.editor} lane={data.lane} i18n={data.i18n} />,
+    draw: (data) => (
+      <CostumePage
+        editor={data.editor}
+        lane={data.lane}
+        touchFirst={data.touchFirst}
+        modalLook={data.modalLook}
+        i18n={data.i18n}
+      />
+    ),
   },
   nameTitle: {
     ...PAGE_MODELS.nameTitle,
@@ -184,6 +197,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         lane={data.lane}
         pickable={data.pickable.pickable}
         onPickerOpen={data.pickable.readIfStale}
+        modalLook={data.modalLook}
         i18n={data.i18n}
       />
     ),

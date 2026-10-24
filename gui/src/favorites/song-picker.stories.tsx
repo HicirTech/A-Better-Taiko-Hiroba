@@ -1,4 +1,3 @@
-import type { Translator } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
@@ -6,7 +5,8 @@ import { fn } from "storybook/test";
 import type { FavoriteSongState } from "../shared/session-port";
 import { toggledSongs } from "../shared/sets/favorite-sets";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
-import { i18nOf } from "../story-kit/env";
+import { modalLookOf } from "../story-kit/devices";
+import { i18nOf, type StoryGlobals } from "../story-kit/env";
 import { STORY_PICKABLE } from "../story-kit/favorites";
 import { storyCatalogue } from "../story-kit/songs";
 import type { PickableState } from "./pickable-songs";
@@ -25,7 +25,7 @@ interface Shown {
 
 const pickerOf = (
   args: Args,
-  i18n: Translator,
+  globals: StoryGlobals,
   choice: SongPickerProps["choice"],
   { catalogue = storyCatalogue(), pickable = STORY_PICKABLE }: Shown = {},
 ) => (
@@ -34,24 +34,25 @@ const pickerOf = (
     choice={choice}
     catalogue={catalogue}
     pickable={pickable}
-    i18n={i18n}
+    modalLook={modalLookOf(globals)}
+    i18n={i18nOf(globals)}
     onClose={args.onClose}
   />
 );
 
 function ManyPicker({
   args,
-  i18n,
+  globals,
   first,
   limit,
 }: {
   args: Args;
-  i18n: Translator;
+  globals: StoryGlobals;
   first: readonly string[];
   limit: number;
 }) {
   const [picked, setPicked] = useState(first);
-  return pickerOf(args, i18n, {
+  return pickerOf(args, globals, {
     kind: "many",
     picked,
     limit,
@@ -66,8 +67,7 @@ const meta = {
   title: "Dialogs/SongPicker",
   tags: ["favorites"],
   parameters: { layout: "fullscreen" },
-  render: (args, { globals }) =>
-    pickerOf(args, i18nOf(globals), { kind: "one", onPick: args.onPick }),
+  render: (args, { globals }) => pickerOf(args, globals, { kind: "one", onPick: args.onPick }),
   args: { onPick: fn(), onToggle: fn(), onClose: fn() },
 } satisfies Meta<Args>;
 
@@ -80,14 +80,14 @@ export const PickOne: Story = {};
 /** A set's songs: check boxes, and Done. */
 export const CheckMany: Story = {
   render: (args, { globals }) => (
-    <ManyPicker args={args} i18n={i18nOf(globals)} first={["1001", "1005"]} limit={30} />
+    <ManyPicker args={args} globals={globals} first={["1001", "1005"]} limit={30} />
   ),
 };
 
 /** At the set's limit the rest are shut, and a line says why. */
 export const AtTheLimit: Story = {
   render: (args, { globals }) => (
-    <ManyPicker args={args} i18n={i18nOf(globals)} first={["1001", "1002", "1004"]} limit={3} />
+    <ManyPicker args={args} globals={globals} first={["1001", "1002", "1004"]} limit={3} />
   ),
 };
 
@@ -95,7 +95,7 @@ export const SongListLoading: Story = {
   render: (args, { globals }) =>
     pickerOf(
       args,
-      i18nOf(globals),
+      globals,
       { kind: "one", onPick: args.onPick },
       { catalogue: storyCatalogue("loading") },
     ),
@@ -105,7 +105,7 @@ export const SongListFailed: Story = {
   render: (args, { globals }) =>
     pickerOf(
       args,
-      i18nOf(globals),
+      globals,
       { kind: "one", onPick: args.onPick },
       { catalogue: storyCatalogue("failed") },
     ),
@@ -116,7 +116,7 @@ export const OfferedSongsReading: Story = {
   render: (args, { globals }) =>
     pickerOf(
       args,
-      i18nOf(globals),
+      globals,
       { kind: "one", onPick: args.onPick },
       { pickable: { offered: null, status: { kind: "reading" } } },
     ),
@@ -126,7 +126,7 @@ export const OfferedSongsFailed: Story = {
   render: (args, { globals }) =>
     pickerOf(
       args,
-      i18nOf(globals),
+      globals,
       { kind: "one", onPick: args.onPick },
       {
         pickable: {

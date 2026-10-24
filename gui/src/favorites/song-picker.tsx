@@ -19,7 +19,7 @@ import { searchSongs } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { type PickerEntry, PickerList } from "../songs/picker-list";
 import { SongListFailed } from "../songs/song-list-failed";
-import { LargeModal } from "../ui/large-modal";
+import { LargeModal, type ModalLook } from "../ui/large-modal";
 import { ProgressBar } from "../ui/progress-bar";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SearchField } from "../ui/search-field";
@@ -47,6 +47,7 @@ export interface SongPickerProps {
   readonly catalogue: SongCatalogue;
   /** Only the songs Hiroba's own picker offers are listed; a choice of one lists 裏 entries too. */
   readonly pickable: PickableState;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   readonly onClose: () => void;
 }
@@ -67,6 +68,7 @@ function PickerBody({
   choice,
   catalogue,
   pickable,
+  modalLook,
   i18n,
   onClose,
   onExited,
@@ -224,6 +226,8 @@ function PickerBody({
       fills
       flush
       contentRef={scroller}
+      touchFirst={touchFirst}
+      modalLook={modalLook}
       i18n={i18n}
       onExited={onExited}
       onClose={onClose}

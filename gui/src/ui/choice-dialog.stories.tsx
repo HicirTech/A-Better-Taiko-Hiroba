@@ -4,10 +4,14 @@ import type { ComponentProps } from "react";
 import { action } from "storybook/actions";
 import { fn } from "storybook/test";
 import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
+import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { ChoiceDialog } from "./choice-dialog";
 
-type Args = Omit<ComponentProps<typeof ChoiceDialog>, "title" | "choices" | "i18n">;
+type Args = Omit<
+  ComponentProps<typeof ChoiceDialog>,
+  "title" | "choices" | "touchFirst" | "modalLook" | "i18n"
+>;
 
 const meta = {
   title: "Dialogs/ChoiceDialog",
@@ -19,6 +23,8 @@ const meta = {
     return (
       <ChoiceDialog
         {...args}
+        touchFirst={touchOf(globals)}
+        modalLook={modalLookOf(globals)}
         i18n={i18n}
         title={t("history.addToSet")}
         choices={[
@@ -60,6 +66,8 @@ export const Empty: Story = {
     return (
       <ChoiceDialog
         {...args}
+        touchFirst={touchOf(globals)}
+        modalLook={modalLookOf(globals)}
         i18n={i18n}
         title={i18n.t("history.addToSet")}
         choices={[]}

@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { action } from "storybook/actions";
 import { AppFrame } from "../navigation/app-frame";
 import { PAGE_REGISTRY } from "../pages/registry";
+import { touchOf, wideOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { FrameTop } from "./frame-top";
 
@@ -17,7 +18,7 @@ const meta = {
       i18n={i18nOf(globals)}
       pages={PAGE_REGISTRY}
     >
-      <FrameTop>
+      <FrameTop wide={wideOf(globals)} touchFirst={touchOf(globals)}>
         <Paper sx={{ height: 48, borderRadius: 6 }} />
       </FrameTop>
       <Stack spacing={2}>

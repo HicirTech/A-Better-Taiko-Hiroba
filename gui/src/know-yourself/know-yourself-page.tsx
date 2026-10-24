@@ -22,6 +22,7 @@ import { SetNameDialog } from "../songs/set-name-dialog";
 import { SongListFailed } from "../songs/song-list-failed";
 import { FilterChip } from "../ui/filter-chip";
 import { PAGE_HEIGHT } from "../ui/frame-top";
+import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { CARD_GAP } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
@@ -42,6 +43,7 @@ export function KnowYourselfPage({
   catalogue,
   lane,
   touchFirst,
+  modalLook,
   toast,
   i18n,
 }: {
@@ -53,6 +55,7 @@ export function KnowYourselfPage({
   readonly lane: PictureLane;
   /** A touch screen: a pull reads. */
   readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   /** Where a long-press names a legend's item, on a touch screen. */
   readonly toast: SystemToast | undefined;
   readonly i18n: Translator;
@@ -195,6 +198,7 @@ export function KnowYourselfPage({
         lane={lane}
         reading={reading}
         readingSong={song !== null && song.songNo === openedScore?.songNo}
+        modalLook={modalLook}
         i18n={i18n}
         onReadSong={(score) => void readSong(score)}
         onClose={() => setDetails(null)}
@@ -203,6 +207,8 @@ export function KnowYourselfPage({
         <AddSongsDialog
           songs={adding}
           sets={kept.sets}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
           i18n={i18n}
           onAdd={(set, added) => {
             kept.replaceSongs(set.id, [...set.songs, ...added]);

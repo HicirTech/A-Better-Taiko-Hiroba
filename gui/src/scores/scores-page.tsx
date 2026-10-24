@@ -25,6 +25,7 @@ import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue"
 import { PLAY_ROW_PX, PlayRow } from "../songs/play-row";
 import { ScoreDetails } from "../songs/score-details";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
+import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
 import { SearchField } from "../ui/search-field";
@@ -40,6 +41,8 @@ export function ScoresPage({
   catalogue,
   lane,
   touchFirst,
+  wide,
+  modalLook,
   i18n,
 }: {
   readonly scores: ScoresState;
@@ -48,6 +51,9 @@ export function ScoresPage({
   readonly lane: PictureLane;
   /** A touch screen: a pull reads. */
   readonly touchFirst: boolean;
+  /** The window is wide enough for the side panel. */
+  readonly wide: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }) {
   const { t, number, locale } = i18n;
@@ -79,7 +85,7 @@ export function ScoresPage({
   return (
     <>
       {rows.length > 0 && (
-        <FrameTop>
+        <FrameTop wide={wide} touchFirst={touchFirst}>
           <SearchField
             id="scores-search"
             query={query}
@@ -143,6 +149,7 @@ export function ScoresPage({
           lane={lane}
           reading={reading}
           readingSong={song !== null && song.songNo === openedScore?.score.songNo}
+          modalLook={modalLook}
           i18n={i18n}
           onReadSong={(score) => void readSong(score)}
           onClose={() => setOpened(null)}

@@ -2,7 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { List, ListItemButton, ListItemText, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
-import { LargeModal } from "./large-modal";
+import { LargeModal, type ModalLook } from "./large-modal";
 
 // The choice's name greyed, but the reason it cannot be made left readable.
 const REFUSED = {
@@ -27,6 +27,8 @@ export function ChoiceDialog({
   subtitle,
   choices,
   empty,
+  touchFirst,
+  modalLook,
   i18n,
   onClose,
   onBack,
@@ -38,6 +40,8 @@ export function ChoiceDialog({
   readonly choices: readonly Choice[];
   /** What stands in for the choices when there are none. */
   readonly empty?: ReactNode;
+  readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   readonly onClose: () => void;
   /** Where the choice follows an earlier question: Back and Esc go back to it, a click out closes. */
@@ -56,6 +60,8 @@ export function ChoiceDialog({
         )
       }
       flush
+      touchFirst={touchFirst}
+      modalLook={modalLook}
       i18n={i18n}
       onClose={onClose}
       onBack={onBack}

@@ -3,8 +3,8 @@ import { Box, IconButton, List, ListItemButton, ListItemText, Typography } from 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { fn } from "storybook/test";
-
 import { chartPicturePng } from "../../scripts/mock-pictures";
+import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { pictureOf } from "../story-kit/picture-of";
 import { STORY_SONGS } from "../story-kit/songs";
@@ -22,7 +22,15 @@ const LINES = [
   "It slides in from below, as a page does, and back down when it closes.",
 ];
 
-function SearchedList({ args, i18n }: { readonly args: Args; readonly i18n: Translator }) {
+function SearchedList({
+  args,
+  globals,
+  i18n,
+}: {
+  readonly args: Args;
+  readonly globals: { readonly viewport?: unknown };
+  readonly i18n: Translator;
+}) {
   const [query, setQuery] = useState("");
   const songs = STORY_SONGS.filter((song) => song.title.includes(query.trim()));
   return (
@@ -41,6 +49,8 @@ function SearchedList({ args, i18n }: { readonly args: Args; readonly i18n: Tran
       }
       fills
       flush
+      touchFirst={touchOf(globals)}
+      modalLook={modalLookOf(globals)}
       i18n={i18n}
       onClose={args.onClose}
     >
@@ -64,6 +74,8 @@ const meta = {
       id="story-words"
       open
       title={i18nOf(globals).t("costume.history.title")}
+      touchFirst={touchOf(globals)}
+      modalLook={modalLookOf(globals)}
       i18n={i18nOf(globals)}
       onClose={args.onClose}
     >
@@ -98,6 +110,8 @@ export const WithAnAction: Story = {
             <RefreshIcon />
           </IconButton>
         }
+        touchFirst={touchOf(globals)}
+        modalLook={modalLookOf(globals)}
         i18n={i18n}
         onClose={args.onClose}
       >
@@ -109,7 +123,9 @@ export const WithAnAction: Story = {
 
 /** A search above a list that runs to the edges, as tall as the window so it does not jump. */
 export const AHeadAndAList: Story = {
-  render: (args, { globals }) => <SearchedList args={args} i18n={i18nOf(globals)} />,
+  render: (args, { globals }) => (
+    <SearchedList args={args} globals={globals} i18n={i18nOf(globals)} />
+  ),
 };
 
 /** A picture on the whole screen: black, with only the close button over it. */
@@ -123,6 +139,8 @@ export const APicture: Story = {
         open
         title={i18n.t("details.drawnPicture", { difficulty: i18n.t("difficulty.oni") })}
         picture
+        touchFirst={touchOf(globals)}
+        modalLook={modalLookOf(globals)}
         i18n={i18n}
         onClose={args.onClose}
       >

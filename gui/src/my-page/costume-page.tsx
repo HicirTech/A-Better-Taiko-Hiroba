@@ -5,6 +5,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { COLOUR_PARTS, type CostumePart, changedParts } from "../shared/costume-parts";
 import { useFocusKept } from "../ui/editor-parts";
 import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
+import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { BAR_TEXT_BUTTON, SYNC_BAR_PAGE, SyncBar, SyncBarSkeleton } from "../ui/sync-bar";
 import { useWideWindow } from "../ui/use-wide-window";
@@ -33,10 +34,12 @@ const pageOf = (wide: boolean) =>
 export interface CostumePageProps {
   readonly editor: CostumeEditor;
   readonly lane: PictureLane;
+  readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }
 
-export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
+export function CostumePage({ editor, lane, touchFirst, modalLook, i18n }: CostumePageProps) {
   const { step } = editor;
   const wide = useWideWindow();
   useWiderFrame();
@@ -84,6 +87,8 @@ export function CostumePage({ editor, lane, i18n }: CostumePageProps) {
           open={historyOpen}
           entries={editor.history}
           worn={step.editor.state}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
           i18n={i18n}
           onPick={(entry) => {
             editor.pickHistory(entry);

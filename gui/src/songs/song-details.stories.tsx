@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 import { keepChartSource } from "../shared/song-catalogue/chart-source";
+import { modalLookOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { storySong } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";
@@ -22,6 +23,7 @@ const meta = {
       song={storySong(songNo)}
       port={STORY_CHART_PORT}
       lane={STORY_LANE}
+      modalLook={modalLookOf(globals)}
       i18n={i18nOf(globals)}
       onClose={onClose}
     />

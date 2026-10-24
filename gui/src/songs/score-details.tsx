@@ -6,7 +6,7 @@ import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ListedScore } from "../shared/scores/score-order";
 import type { ScoreView } from "../shared/session-port";
-import { LargeModal } from "../ui/large-modal";
+import { LargeModal, type ModalLook } from "../ui/large-modal";
 import { PullToRead } from "../ui/pull-to-read";
 import { ReadAgainButton } from "../ui/read-again-button";
 import { SubsectionTitle } from "../ui/section-title";
@@ -50,6 +50,7 @@ export function ScoreDetails({
   lane,
   reading,
   readingSong,
+  modalLook,
   i18n,
   onReadSong,
   onClose,
@@ -59,6 +60,7 @@ export function ScoreDetails({
   /** What the dialog shows of a recent play while its chart has no details to show. */
   readonly notice?: PlayNotice | null;
   readonly lane: PictureLane;
+  readonly modalLook: ModalLook;
   /** A read is running, so the song's read again waits. */
   readonly reading: boolean;
   /** The running read is this song's own. */
@@ -80,6 +82,7 @@ export function ScoreDetails({
       lane={lane}
       reading={reading}
       readingSong={readingSong}
+      modalLook={modalLook}
       i18n={i18n}
       onReadSong={onReadSong}
       onClose={onClose}
@@ -93,6 +96,7 @@ function DetailsBody({
   lane,
   reading,
   readingSong,
+  modalLook,
   i18n,
   onReadSong,
   onClose,
@@ -144,6 +148,8 @@ function DetailsBody({
       }
       pageLike
       contentRef={content}
+      touchFirst={touchFirst}
+      modalLook={modalLook}
       i18n={i18n}
       onClose={onClose}
     >

@@ -1,15 +1,15 @@
 import type { Translator } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
-
 import { GENRE_LABEL } from "../shared/song-catalogue/genre-look";
 import { nameLanguage, shownName } from "../shared/song-catalogue/song-names";
+import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { STORY_SETS } from "../story-kit/sets";
 import { storySong } from "../story-kit/songs";
 import { AddToSetDialog, type AddToSetDialogProps, type NamedSong } from "./add-to-set-dialog";
 
-type Args = Omit<AddToSetDialogProps, "i18n" | "candidates">;
+type Args = Omit<AddToSetDialogProps, "touchFirst" | "modalLook" | "i18n" | "candidates">;
 
 /** A song as the dialog names it: its genres and artists tell it from one with its title. */
 const namedSong = (songNo: string, i18n: Translator): NamedSong => {
@@ -30,7 +30,13 @@ const meta = {
   tags: ["history"],
   parameters: { layout: "fullscreen" },
   render: (args, { globals }) => (
-    <AddToSetDialog {...args} candidates={[]} i18n={i18nOf(globals)} />
+    <AddToSetDialog
+      {...args}
+      candidates={[]}
+      touchFirst={touchOf(globals)}
+      modalLook={modalLookOf(globals)}
+      i18n={i18nOf(globals)}
+    />
   ),
   args: {
     name: { text: "夜明けのスケッチ", lang: "ja" },
@@ -58,6 +64,8 @@ export const WhichSong: Story = {
       <AddToSetDialog
         {...args}
         candidates={[namedSong("1014", i18n), namedSong("1031", i18n)]}
+        touchFirst={touchOf(globals)}
+        modalLook={modalLookOf(globals)}
         i18n={i18n}
       />
     );

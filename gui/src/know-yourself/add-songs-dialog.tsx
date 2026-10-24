@@ -1,11 +1,14 @@
 import type { Translator } from "@abth/i18n";
 import { addableSongs, type FavoriteSet, SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import { type Choice, ChoiceDialog } from "../ui/choice-dialog";
+import type { ModalLook } from "../ui/large-modal";
 
 /** Asks which set on this device takes the songs, or a new one; each takes what it has room for. */
 export function AddSongsDialog({
   songs,
   sets,
+  touchFirst,
+  modalLook,
   i18n,
   onAdd,
   onNewSet,
@@ -13,6 +16,8 @@ export function AddSongsDialog({
 }: {
   readonly songs: readonly string[];
   readonly sets: readonly FavoriteSet[];
+  readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   readonly onAdd: (set: FavoriteSet, added: readonly string[]) => void;
   readonly onNewSet: () => void;
@@ -50,6 +55,8 @@ export function AddSongsDialog({
       title={t("history.addToSet")}
       subtitle={null}
       choices={choices}
+      touchFirst={touchFirst}
+      modalLook={modalLook}
       i18n={i18n}
       onClose={onClose}
     />

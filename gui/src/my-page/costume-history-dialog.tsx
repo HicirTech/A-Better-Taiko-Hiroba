@@ -3,7 +3,7 @@ import type { Translator } from "@abth/i18n";
 import { Box, ButtonBase, Typography } from "@mui/material";
 
 import type { CostumeHistoryEntry, CostumeSet } from "../shared/session-port";
-import { LargeModal } from "../ui/large-modal";
+import { LargeModal, type ModalLook } from "../ui/large-modal";
 import { keyOf } from "./costume-preview";
 import { pickRing } from "./pick-ring";
 
@@ -14,6 +14,8 @@ export interface CostumeHistoryDialogProps {
   readonly entries: readonly CostumeHistoryEntry[];
   /** The set Hiroba shows now, marked in the list. */
   readonly worn: CostumeSet;
+  readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
   readonly onPick: (entry: CostumeHistoryEntry) => void;
   readonly onClose: () => void;
@@ -24,6 +26,8 @@ export function CostumeHistoryDialog({
   open,
   entries,
   worn,
+  touchFirst,
+  modalLook,
   i18n,
   onPick,
   onClose,
@@ -34,6 +38,8 @@ export function CostumeHistoryDialog({
       id="costume-history-dialog"
       open={open}
       title={t("costume.history.title")}
+      touchFirst={touchFirst}
+      modalLook={modalLook}
       i18n={i18n}
       onClose={onClose}
     >

@@ -25,6 +25,7 @@ import { useBackLeaves } from "../ui/back-closers";
 import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
 import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
 import { ListIcon } from "../ui/icons";
+import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { CARD_GAP } from "../ui/section-card";
 import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
@@ -62,6 +63,7 @@ export interface FavoritesPageProps {
   readonly pickable: PickableState;
   /** As a picker opens: reads the list when it is stale. */
   readonly onPickerOpen: () => void;
+  readonly modalLook: ModalLook;
   readonly i18n: Translator;
 }
 
@@ -82,6 +84,7 @@ function FavoritesBody({
   lane,
   pickable,
   onPickerOpen,
+  modalLook,
   i18n,
 }: FavoritesPageProps) {
   const { t, locale } = i18n;
@@ -337,6 +340,7 @@ function FavoritesBody({
         choice={songChoice}
         catalogue={catalogue}
         pickable={pickable}
+        modalLook={modalLook}
         i18n={i18n}
         onClose={() => setPicking(null)}
       />
@@ -355,6 +359,7 @@ function FavoritesBody({
           choice={setChoice}
           catalogue={catalogue}
           pickable={pickable}
+          modalLook={modalLook}
           i18n={i18n}
           onClose={() => setPicking(null)}
         />
@@ -363,6 +368,7 @@ function FavoritesBody({
         song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
         port={port}
         lane={lane}
+        modalLook={modalLook}
         i18n={i18n}
         onClose={() => setOpenSongNo(null)}
       />

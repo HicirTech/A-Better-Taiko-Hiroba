@@ -5,6 +5,7 @@ import { userEvent, within } from "storybook/test";
 import { AppFrame } from "../navigation/app-frame";
 import { PAGE_REGISTRY } from "../pages/registry";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { modalLookOf, touchOf, wideOf } from "../story-kit/devices";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";
 import { storyCatalogue } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";
@@ -21,6 +22,9 @@ const search = (catalogue: SongCatalogue, globals: StoryGlobals) => {
         catalogue={catalogue}
         port={STORY_CHART_PORT}
         lane={STORY_LANE}
+        touchFirst={touchOf(globals)}
+        wide={wideOf(globals)}
+        modalLook={modalLookOf(globals)}
         i18n={i18n}
         onOpen={action("open the search")}
       >

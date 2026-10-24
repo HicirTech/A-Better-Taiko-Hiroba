@@ -19,7 +19,16 @@ export function OverviewPage({ data }: { readonly data: PageData }) {
   const portrait: OpenAction = { open: () => navigate("costume"), byLongPress: touchFirst };
   const namePlate: OpenAction = { open: () => navigate("nameTitle"), byLongPress: touchFirst };
   return (
-    <SongSearch catalogue={catalogue} port={port} lane={lane} i18n={i18n} onOpen={data.wantSongs}>
+    <SongSearch
+      catalogue={catalogue}
+      port={port}
+      lane={lane}
+      touchFirst={touchFirst}
+      wide={data.wide}
+      modalLook={data.modalLook}
+      i18n={i18n}
+      onOpen={data.wantSongs}
+    >
       {(searching) => (
         <Stack spacing={OVERVIEW_SPACING} sx={searching ? HIDDEN : undefined}>
           {screen.name === "profile" ? (

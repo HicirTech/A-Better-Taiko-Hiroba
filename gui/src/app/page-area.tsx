@@ -38,7 +38,7 @@ export function PageArea({
 
       {shown.skeleton && Shape !== null && (
         <PageSkeleton page={page} label={data.i18n.t(shown.label)} progress={shown.progress}>
-          <Shape />
+          <Shape touchFirst={data.touchFirst} wide={data.wide} />
         </PageSkeleton>
       )}
 

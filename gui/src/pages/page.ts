@@ -12,6 +12,7 @@ import type { SystemLink, SystemToast } from "../platform";
 import type { ReadStatus } from "../shared/reads/read-run";
 import type { HirobaSessionPort, ReadFailure } from "../shared/session-port";
 import type { UpdateReminder } from "../shared/updates/use-update-reminder";
+import type { ModalLook } from "../ui/large-modal";
 import type { SkeletonProgress } from "../ui/page-skeleton";
 import type { PageModel, PageState, SessionReads } from "./page-model";
 
@@ -28,6 +29,9 @@ export interface PageData extends PageState {
   readonly i18n: Translator;
   readonly lane: PictureLane;
   readonly touchFirst: boolean;
+  /** The window is wide enough for the side panel. */
+  readonly wide: boolean;
+  readonly modalLook: ModalLook;
   /** The shell's Toast, where it has one. */
   readonly toast: SystemToast | undefined;
   /** Settings' language section, drawn by the window that holds the language. */
@@ -45,9 +49,15 @@ export interface PageData extends PageState {
 }
 
 /** A page of the window: what it reads, and how the navigation lists it and the window draws it. */
+/** What a page's skeleton is drawn by: the screen it stands on. */
+export interface SkeletonProps {
+  readonly touchFirst: boolean;
+  readonly wide: boolean;
+}
+
 export interface PageEntry extends PageModel, NavEntry {
   /** Its shape in grey while it waits; none for a page that never waits. */
-  readonly skeleton: ComponentType | null;
+  readonly skeleton: ComponentType<SkeletonProps> | null;
   /** How far its read has come, for the skeleton's bar. */
   progress?(data: PageData): SkeletonProgress | null;
   /** The question before `readsEvery`, open while `open`; without it the hold reads nothing. */

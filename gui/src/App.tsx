@@ -3,6 +3,7 @@ import { useMediaQuery } from "@mui/material";
 import { type ReactNode, useMemo } from "react";
 
 import { PageArea } from "./app/page-area";
+import { useModalLook } from "./app/use-modal-look";
 import { usePageShown } from "./app/use-page-shown";
 import { usePageVisits } from "./app/use-page-visits";
 import { usePagesData } from "./app/use-pages-data";
@@ -21,6 +22,7 @@ import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
 import { PullToRead } from "./ui/pull-to-read";
+import { useWideWindow } from "./ui/use-wide-window";
 import { UpdateDialog } from "./updates/update-dialog";
 
 export interface AppProps {
@@ -37,6 +39,8 @@ export interface AppProps {
 
 export function App({ port, link, i18n, page, onNavigate, language, toast }: AppProps) {
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
+  const wide = useWideWindow();
+  const modalLook = useModalLook();
   const updates = useUpdateReminder(port, APP_VERSION);
   // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
   const lane = useMemo(
@@ -51,6 +55,8 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     i18n,
     lane,
     touchFirst,
+    wide,
+    modalLook,
     toast,
     language,
     navigate: onNavigate,
