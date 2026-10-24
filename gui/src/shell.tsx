@@ -9,6 +9,7 @@ import { showLanguage } from "./language/show-language";
 import { AppFrame } from "./navigation/app-frame";
 import { keepPage, keptPage } from "./navigation/pages";
 import { useShownPage } from "./navigation/use-shown-page";
+import { PAGE_REGISTRY } from "./pages/registry";
 import { PipelinesPage } from "./pipelines-page/pipelines-page";
 import type { Platform } from "./platform";
 import { SettingsPage } from "./settings/settings-page";
@@ -44,6 +45,7 @@ export function Shell({
       page={page}
       onNavigate={navigate}
       i18n={i18n}
+      pages={PAGE_REGISTRY}
       {...(platform?.shell === "android" ? { back: platform.back } : {})}
       {...(platform !== null
         ? { pipelines: <PipelinesPage port={platform.port} i18n={i18n} /> }

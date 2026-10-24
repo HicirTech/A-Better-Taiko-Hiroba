@@ -6,6 +6,7 @@ import { LanguageSetting } from "../language/language-setting";
 import { AppFrame } from "../navigation/app-frame";
 import type { Page } from "../navigation/pages";
 import { useShownPage } from "../navigation/use-shown-page";
+import { PAGE_REGISTRY } from "../pages/registry";
 import { PipelinesPage } from "../pipelines-page/pipelines-page";
 import type { HirobaSessionPort } from "../session-port";
 import { touchOf } from "./devices";
@@ -48,6 +49,7 @@ export function StoryApp({
       page={page}
       onNavigate={navigate}
       i18n={i18n}
+      pages={PAGE_REGISTRY}
       {...(android ? { back: STORY_BACK } : {})}
       pipelines={<PipelinesPage port={port} i18n={i18n} />}
     >

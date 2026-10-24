@@ -1,20 +1,18 @@
 import { Box, Skeleton, Stack } from "@mui/material";
-import type { ComponentType } from "react";
 
-import { SongLookRowSkeleton } from "./favorites/song-look-row";
-import { PlayRowsSkeleton } from "./history/play-row";
-import { COLUMN_MAX_WIDTH_PX, CostumePageSkeleton } from "./my-page/costume-page";
-import { MedalCardSkeleton } from "./my-page/medal-card";
-import { OverviewHeaderSkeleton } from "./my-page/overview-header";
-import { ShareBlockSkeleton } from "./my-page/share-block";
-import { TitlePlateSkeleton } from "./my-page/title-plate";
-import { FrameTop } from "./navigation/app-frame";
-import type { Page } from "./navigation/pages";
-import { useTouchFirst } from "./navigation/use-touch-first";
-import { SearchFieldSkeleton } from "./ui/search-field";
-import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "./ui/section-card";
-import { SectionTitleSkeleton } from "./ui/section-title";
-import { SYNC_BAR_PAGE, SyncBarSkeleton } from "./ui/sync-bar";
+import { SongLookRowSkeleton } from "../favorites/song-look-row";
+import { PlayRowsSkeleton } from "../history/play-row";
+import { COLUMN_MAX_WIDTH_PX } from "../my-page/costume-page";
+import { MedalCardSkeleton } from "../my-page/medal-card";
+import { OverviewHeaderSkeleton } from "../my-page/overview-header";
+import { ShareBlockSkeleton } from "../my-page/share-block";
+import { TitlePlateSkeleton } from "../my-page/title-plate";
+import { FrameTop } from "../navigation/app-frame";
+import { useTouchFirst } from "../navigation/use-touch-first";
+import { SearchFieldSkeleton } from "../ui/search-field";
+import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
+import { SectionTitleSkeleton } from "../ui/section-title";
+import { SYNC_BAR_PAGE, SyncBarSkeleton } from "../ui/sync-bar";
 
 // Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
 const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" } as const;
@@ -31,7 +29,7 @@ function SearchBand() {
   );
 }
 
-function OverviewSkeleton() {
+export function OverviewSkeleton() {
   return (
     <>
       <SearchBand />
@@ -49,11 +47,11 @@ function OverviewSkeleton() {
   );
 }
 
-function HistorySkeleton() {
+export function HistorySkeleton() {
   return <PlayRowsSkeleton />;
 }
 
-function ScoresSkeleton() {
+export function ScoresSkeleton() {
   return (
     <>
       <SearchBand />
@@ -75,7 +73,7 @@ function ScoresSkeleton() {
   );
 }
 
-function RatingSkeleton() {
+export function RatingSkeleton() {
   return (
     <Stack spacing={2}>
       <Stack
@@ -98,7 +96,7 @@ function RatingSkeleton() {
   );
 }
 
-function KnowYourselfSkeleton() {
+export function KnowYourselfSkeleton() {
   return (
     <Stack spacing={3}>
       <Skeleton variant="rounded" width={96} height={32} sx={{ borderRadius: 4 }} />
@@ -114,7 +112,7 @@ function KnowYourselfSkeleton() {
   );
 }
 
-function NameTitleSkeleton() {
+export function NameTitleSkeleton() {
   return (
     <Box sx={{ ...SYNC_BAR_PAGE, ...COLUMN }}>
       <Stack spacing={3} sx={{ pb: 3 }}>
@@ -132,7 +130,7 @@ function NameTitleSkeleton() {
   );
 }
 
-function FavoritesSkeleton() {
+export function FavoritesSkeleton() {
   // A touch screen opens the sets by a swipe, so it has no button for them.
   const touchFirst = useTouchFirst();
   return (
@@ -172,15 +170,3 @@ function FavoritesSkeleton() {
     </Box>
   );
 }
-
-/** Each page's shape while its first read runs; Settings reads nothing first. */
-export const PAGE_SKELETONS: Readonly<Record<Exclude<Page, "settings">, ComponentType>> = {
-  overview: OverviewSkeleton,
-  history: HistorySkeleton,
-  scores: ScoresSkeleton,
-  rating: RatingSkeleton,
-  knowYourself: KnowYourselfSkeleton,
-  costume: CostumePageSkeleton,
-  nameTitle: NameTitleSkeleton,
-  favorites: FavoritesSkeleton,
-};

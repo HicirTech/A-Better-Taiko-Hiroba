@@ -5,6 +5,7 @@ import { userEvent, within } from "storybook/test";
 
 import type { SongCatalogue } from "../favorites/use-song-catalogue";
 import { AppFrame } from "../navigation/app-frame";
+import { PAGE_REGISTRY } from "../pages/registry";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";
 import { storyCatalogue } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";
@@ -16,7 +17,7 @@ import { SongSearch } from "./song-search";
 const search = (catalogue: SongCatalogue, globals: StoryGlobals) => {
   const i18n = i18nOf(globals);
   return (
-    <AppFrame page="overview" onNavigate={action("navigate")} i18n={i18n}>
+    <AppFrame page="overview" onNavigate={action("navigate")} i18n={i18n} pages={PAGE_REGISTRY}>
       <SongSearch
         catalogue={catalogue}
         port={STORY_CHART_PORT}

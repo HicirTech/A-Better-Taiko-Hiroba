@@ -26,20 +26,7 @@ import {
 import { createPortal } from "react-dom";
 
 import type { SystemBack } from "../platform";
-import {
-  ArrowBackIcon,
-  ArrowForwardIcon,
-  CheckroomIcon,
-  EditIcon,
-  EmojiEventsIcon,
-  FavoriteIcon,
-  HistoryIcon,
-  HomeIcon,
-  LeaderboardIcon,
-  MenuIcon,
-  PsychologyIcon,
-  SettingsIcon,
-} from "../ui/icons";
+import { ArrowBackIcon, ArrowForwardIcon, MenuIcon } from "../ui/icons";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { backAction } from "./back-action";
 import { BackClosersContext, BackModesContext, createBackClosers } from "./back-closers";
@@ -55,18 +42,11 @@ import { useWideWindow } from "./use-wide-window";
 import { WiderFrameContext } from "./wider-frame";
 import { MOVE_TIMING, moveWindow, STILL, WindowMoveStyles } from "./window-move";
 
-const PAGE_ENTRY: Readonly<Record<Page, { readonly label: MessageKey; readonly icon: ReactNode }>> =
-  {
-    overview: { label: "nav.overview", icon: <HomeIcon /> },
-    history: { label: "nav.history", icon: <HistoryIcon /> },
-    scores: { label: "nav.scores", icon: <EmojiEventsIcon /> },
-    rating: { label: "nav.rating", icon: <LeaderboardIcon /> },
-    knowYourself: { label: "nav.knowYourself", icon: <PsychologyIcon /> },
-    costume: { label: "nav.costume", icon: <CheckroomIcon /> },
-    nameTitle: { label: "nav.nameTitle", icon: <EditIcon /> },
-    favorites: { label: "nav.favorites", icon: <FavoriteIcon /> },
-    settings: { label: "nav.settings", icon: <SettingsIcon /> },
-  };
+/** How the navigation lists a page: its name and its icon. */
+export interface NavEntry {
+  readonly label: MessageKey;
+  readonly icon: ReactNode;
+}
 
 const PANEL_WIDTH_PX = 240;
 const MENU_INSET_PX = 8;
@@ -82,6 +62,8 @@ interface NavigationProps {
   readonly page: Page;
   readonly onNavigate: (page: Page) => void;
   readonly i18n: Translator;
+  /** Every page, as the navigation lists it. */
+  readonly pages: Readonly<Record<Page, NavEntry>>;
 }
 
 /** The way to the pipelines page from the pages' list, where there is one. */
@@ -104,6 +86,7 @@ export function AppFrame({
   page,
   onNavigate,
   i18n,
+  pages,
   back,
   pipelines,
   children,
@@ -207,6 +190,7 @@ export function AppFrame({
                 page={page}
                 onNavigate={navigate}
                 i18n={i18n}
+                pages={pages}
                 footRef={setFoot}
                 toggle={toggle}
               />
@@ -215,6 +199,7 @@ export function AppFrame({
                 page={page}
                 onNavigate={navigate}
                 i18n={i18n}
+                pages={pages}
                 footRef={setFoot}
                 toggle={toggle}
                 open={menuOpen}
@@ -227,7 +212,7 @@ export function AppFrame({
               sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
             >
               <Typography component="h1" sx={VISUALLY_HIDDEN}>
-                {i18n.t(pipelinesShown ? "nav.pipelines" : PAGE_ENTRY[page].label)}
+                {i18n.t(pipelinesShown ? "nav.pipelines" : pages[page].label)}
               </Typography>
               {/* Kept, only hidden, under the pipelines page: going back reads nothing again. */}
               <Box hidden={pipelinesShown}>
@@ -293,6 +278,7 @@ function PageList({
   page,
   onNavigate,
   i18n,
+  pages,
   toggle,
 }: NavigationProps & { readonly toggle: PipelinesToggle | undefined }) {
   const list = useRef<HTMLUListElement>(null);
@@ -344,9 +330,9 @@ function PageList({
                 "&.Mui-selected, &.Mui-selected:hover": { bgcolor: "transparent" },
               }}
             >
-              <ListItemIcon>{PAGE_ENTRY[each].icon}</ListItemIcon>
+              <ListItemIcon>{pages[each].icon}</ListItemIcon>
               <ListItemText
-                primary={i18n.t(PAGE_ENTRY[each].label)}
+                primary={i18n.t(pages[each].label)}
                 slotProps={{ primary: { sx: { fontWeight: current ? 600 : undefined } } }}
               />
             </ListItemButton>
@@ -439,6 +425,7 @@ function MenuDrawer({
   page,
   onNavigate,
   i18n,
+  pages,
   footRef,
   toggle,
   open,
@@ -495,7 +482,7 @@ function MenuDrawer({
         }}
       >
         <Box component="nav" aria-label={label}>
-          <PageList page={page} onNavigate={pick} i18n={i18n} toggle={toggle} />
+          <PageList page={page} onNavigate={pick} i18n={i18n} pages={pages} toggle={toggle} />
         </Box>
         <Foot footRef={footRef} toggle={toggle} i18n={i18n} />
       </Drawer>
