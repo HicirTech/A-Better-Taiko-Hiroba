@@ -23,30 +23,47 @@ const HIROBA_LOOK = [
 // An element's id, such as "#add-songs", is no colour.
 const COLOUR =
   /(?<![\w&])#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})(?![\w-])|\b(?:rgba?|hsla?)\(/gi;
-const FONT =
-  /\b(?:fontSize|fontWeight|fontFamily|font)(:\s*|=\{?\s*)("[^"]*"|'[^']*'|`[^`]*`|\d[\d.]*)/g;
-const CORNER = /\bborder\w*Radius:\s*("[^"]*"|'[^']*'|`[^`]*`)/g;
-// A theme's own keys, such as "fontWeightBold".
+// A quoted or template literal is read whole, so a `,` or `}` inside it ends no value.
+const QUOTED = String.raw`"[^"]*"|'[^']*'|\x60[^\x60]*\x60`;
+const TO_ITS_END = String.raw`(?:${QUOTED}|[^,}\n"'\x60])*`;
+const IN_BRACES = String.raw`\{(?:${QUOTED}|[^}"'\x60])*\}`;
+// A setting's whole value: an attribute's string or braces, or an object's value up to its end.
+const FONT = new RegExp(
+  String.raw`\b(?:fontSize|fontWeight|fontFamily|font)(:|=)\s*("[^"]*"|${IN_BRACES}|${TO_ITS_END})`,
+  "g",
+);
+const CORNER = new RegExp(String.raw`\bborder\w*Radius:\s*(${TO_ITS_END})`, "g");
+const LITERAL = new RegExp(String.raw`${QUOTED}|(?<![\w.$])\d+(?:\.\d+)?(?!\w)`, "g");
+// What a value may name of the theme: its keys, such as "fontWeightBold", and its text styles.
 const THEME_KEY = /^font(?:Weight|Family)[A-Z]\w*$/;
+const TEXT_STYLES = [
+  ...["h1", "h2", "h3", "h4", "h5", "h6", "subtitle1", "subtitle2", "body1", "body2"],
+  ...["caption", "overline", "button", "rowLine", "badge", "figure"],
+];
 const ICON_SIZES = ["small", "medium", "large"];
 // A circle or a pill is a shape, not a corner.
 const SHAPE = /^(?:50%|inherit|(?:0|999px)(?: (?:0|999px)){0,3})$/;
 
 const unquoted = (value: string) => value.replace(/^["'`]|["'`]$/g, "");
+const literalsIn = (value: string) => [...value.matchAll(LITERAL)].map(([literal]) => literal);
 
 /** Every colour, font setting and corner the text writes in place. */
 function writtenInPlace(text: string): string[] {
   const found = [...text.matchAll(COLOUR)].map(([whole]) => whole);
   for (const [whole, way = "", value = ""] of text.matchAll(FONT)) {
-    const words = unquoted(value);
-    const iconSize = way.startsWith("=") && ICON_SIZES.includes(words);
-    if (!THEME_KEY.test(words) && !iconSize && words !== "inherit") {
-      found.push(whole);
+    const named = (words: string) =>
+      THEME_KEY.test(words) ||
+      TEXT_STYLES.includes(words) ||
+      words === "inherit" ||
+      (way === "=" && ICON_SIZES.includes(words));
+    if (!literalsIn(value).every((literal) => named(unquoted(literal)))) {
+      found.push(whole.trim());
     }
   }
   for (const [whole, value = ""] of text.matchAll(CORNER)) {
-    if (!SHAPE.test(unquoted(value))) {
-      found.push(whole);
+    const words = literalsIn(value).filter((literal) => /^["'`]/.test(literal));
+    if (!words.every((literal) => SHAPE.test(unquoted(literal)))) {
+      found.push(whole.trim());
     }
   }
   return found;
@@ -86,6 +103,8 @@ describe("the GUI's colours, fonts and corners", () => {
       'fontFamily: "monospace", borderRadius: "4px", borderRadius: `2px` }';
 
     expect(writtenInPlace(sx)).toHaveLength(7);
+    expect(writtenInPlace("{ fontWeight: current ? 600 : undefined }")).toHaveLength(1);
+    expect(writtenInPlace(`{ borderRadius: \`\${BAR_PX / 2}px\`, px: 0.5 }`)).toHaveLength(1);
     expect(writtenInPlace("<text fontSize={12} fontWeight={600}>")).toHaveLength(2);
   });
 
@@ -96,6 +115,11 @@ describe("the GUI's colours, fonts and corners", () => {
       'borderRadius: "50%", borderRadius: "0 999px 999px 0", "& #add-songs": {} }';
 
     expect(writtenInPlace(sx)).toEqual([]);
-    expect(writtenInPlace('<CheckIcon fontSize="small" />')).toEqual([]);
+    expect(
+      writtenInPlace('{ fontWeight: on ? "fontWeightBold" : undefined, fontSize: MARK_PX }'),
+    ).toEqual([]);
+    expect(
+      writtenInPlace('<CheckIcon fontSize="small" /><text fontSize={typography.caption.fontSize}>'),
+    ).toEqual([]);
   });
 });
