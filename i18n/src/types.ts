@@ -142,6 +142,8 @@ export interface Messages {
   "rating.dataFailed": string;
   "rating.noneRated": string;
   /** The Overview's and Rating's button that makes the page a picture to share. */
+  "snapshot.button": string;
+  /** The picture's ways out, as its menu lists them: the system's share sheet, a copy, a file. */
   "snapshot.share": string;
   "snapshot.copy": string;
   "snapshot.save": string;

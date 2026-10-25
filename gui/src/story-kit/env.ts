@@ -71,7 +71,10 @@ function handed(way: PictureWay, png: Uint8Array, name: string): Promise<"done">
 /** The desktop's ways out for a picture: the clipboard, or a file. */
 export const STORY_COPY_OR_SAVE: SystemShare = { ways: ["copy", "save"], hand: handed };
 
-/** Android's way out for a picture: the system's share sheet. */
+/** Android's ways out for a picture: the system's share sheet, or a file in Documents. */
+export const STORY_SHARE_OR_SAVE: SystemShare = { ways: ["share", "save"], hand: handed };
+
+/** Android 10's and older: the system's share sheet alone. */
 export const STORY_SHEET: SystemShare = { ways: ["share"], hand: handed };
 
 /** Android's Back, which no story presses. */

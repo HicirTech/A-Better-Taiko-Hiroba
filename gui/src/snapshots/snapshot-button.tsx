@@ -85,8 +85,8 @@ export function SnapshotButton({ id, shows, share, lane, i18n, snapshot }: Snaps
     <>
       <IconButton
         id={id}
-        aria-label={t(busy ? "snapshot.making" : "snapshot.share")}
-        title={t("snapshot.share")}
+        aria-label={t(busy ? "snapshot.making" : "snapshot.button")}
+        title={t("snapshot.button")}
         aria-haspopup={only === undefined ? "menu" : undefined}
         aria-controls={menu === null ? undefined : `${id}-menu`}
         aria-expanded={menu === null ? undefined : true}

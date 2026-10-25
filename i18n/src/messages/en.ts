@@ -115,7 +115,8 @@ export const en: Messages = {
   "rating.dataFailed": "The rating data could not be read.",
   "rating.noneRated":
     "No Extreme or Extreme (Ura) chart is rated yet: a chart needs at least 75% accuracy to count.",
-  "snapshot.share": "Share as a picture",
+  "snapshot.button": "Share as a picture",
+  "snapshot.share": "Share picture",
   "snapshot.copy": "Copy picture",
   "snapshot.save": "Save picture",
   "snapshot.making": "Making the picture…",

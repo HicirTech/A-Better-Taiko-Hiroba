@@ -18,7 +18,7 @@ import {
   STORY_BACK,
   STORY_COPY_OR_SAVE,
   STORY_LINK,
-  STORY_SHEET,
+  STORY_SHARE_OR_SAVE,
   STORY_TOAST,
   type StoryGlobals,
 } from "./env";
@@ -69,7 +69,7 @@ export function StoryApp({
       <App
         port={port}
         link={STORY_LINK}
-        share={android ? STORY_SHEET : STORY_COPY_OR_SAVE}
+        share={android ? STORY_SHARE_OR_SAVE : STORY_COPY_OR_SAVE}
         i18n={i18n}
         page={page}
         onNavigate={navigate}

@@ -75,7 +75,7 @@ export async function connectPlatform({
       shell: "android",
       port,
       link: androidLink,
-      share: androidShare,
+      share: await androidShare(),
       back: androidBack,
       toast: androidToast,
     };

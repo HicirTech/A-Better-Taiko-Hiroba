@@ -2,7 +2,13 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { ProfileSnapshot } from "../my-page/profile-snapshot";
 import type { SystemShare } from "../platform";
-import { i18nOf, STORY_COPY_OR_SAVE, STORY_SHEET, type StoryGlobals } from "../story-kit/env";
+import {
+  i18nOf,
+  STORY_COPY_OR_SAVE,
+  STORY_SHARE_OR_SAVE,
+  STORY_SHEET,
+  type StoryGlobals,
+} from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";
 import { press } from "../story-kit/steps";
 import { STORY_LANE } from "../story-kit/story-pictures";
@@ -42,8 +48,14 @@ export const CopyOrSave: Story = {};
 
 export const MenuOpen: Story = { play: () => press("#story-share") };
 
-/** Android's: the system's share sheet, at once. */
-export const ShareSheet: Story = {
+/** Android's: a menu of the system's share sheet and a file in Documents. */
+export const ShareOrSave: Story = {
+  render: (_args, { globals }) => button(STORY_SHARE_OR_SAVE, globals),
+};
+
+/** Android 10's and older, where a file would need a permission the app does not ask: the share
+ * sheet, at once. */
+export const ShareSheetAlone: Story = {
   render: (_args, { globals }) => button(STORY_SHEET, globals),
 };
 
