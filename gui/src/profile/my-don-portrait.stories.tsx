@@ -14,7 +14,7 @@ interface Args {
 
 const meta = {
   title: "Pictures/MyDonPortrait",
-  tags: ["my-page"],
+  tags: ["profile"],
   render: ({ answer }, { globals }) => (
     <Box sx={{ width: 200 }}>
       <MyDonPortrait

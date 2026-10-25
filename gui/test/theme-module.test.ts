@@ -15,7 +15,7 @@ const HIROBA_LOOK = [
   "profile/title-plate.tsx",
   "my-page/score-panel.tsx",
   "my-page/medal-card.tsx",
-  "my-page/my-don-portrait.tsx",
+  "profile/my-don-portrait.tsx",
   "my-page/costume-item-grid.tsx",
   "my-page/costume-part-tiles.tsx",
 ];
