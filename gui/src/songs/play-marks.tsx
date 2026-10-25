@@ -5,7 +5,7 @@ import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { CrownKind } from "../shared/session-port";
 import { SupportIcon } from "../ui/icons";
-import { CHART_MARK_PX } from "./chart-level";
+import { CHART_MARK_PX, RANK_MARK_PX } from "./chart-level";
 
 export const CROWN_KEY = {
   silver: "crowns.silver",
@@ -26,7 +26,6 @@ const RANK_KEY = {
 // The art's proportions: a crown is taller than wide, a rank wider than tall, an option square.
 export const CROWN_RATIO = 52 / 59;
 const CROWN_WIDTH_PX = Math.round(CHART_MARK_PX * CROWN_RATIO);
-const RANK_WIDTH_PX = Math.round((CHART_MARK_PX * 128) / 96);
 
 /** A play's marks as Hiroba's icons: its crown, its rank and its options. */
 export function PlayMarks({
@@ -63,9 +62,10 @@ export function PlayMarks({
       {play.scoreRank !== null && (
         <HirobaIcon
           want={{ kind: "rankIcon", rank: play.scoreRank }}
-          width={RANK_WIDTH_PX}
+          width={RANK_MARK_PX}
           height={CHART_MARK_PX}
           label={t(RANK_KEY[play.scoreRank])}
+          className="rank-mark"
           lane={lane}
           order={order}
         />
@@ -94,4 +94,4 @@ export function PlayMarks({
 }
 
 /** A play's marks' shape while a page's first read runs: a crown's and a rank's. */
-export const PLAY_MARKS_SKELETON = [CROWN_WIDTH_PX, RANK_WIDTH_PX] as const;
+export const PLAY_MARKS_SKELETON = [CROWN_WIDTH_PX, RANK_MARK_PX] as const;
