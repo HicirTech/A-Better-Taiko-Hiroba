@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import * as SortableList from "../../favorites/sortable-list.stories";
 import * as ChartList from "../../know-yourself/chart-list.stories";
+import * as ChartMarks from "../../songs/chart-level.stories";
 import * as LevelBadges from "../../songs/level-badges.stories";
 import * as PickerList from "../../songs/picker-list.stories";
+import * as PlayMarks from "../../songs/play-marks.stories";
 import * as PlayRow from "../../songs/play-row.stories";
 import * as SongLookRow from "../../songs/song-look-row.stories";
 import * as SharedRow from "../../songs/song-row.stories";
@@ -28,6 +30,8 @@ const meta = {
         { name: "ChartList", meta: ChartList.default, story: ChartList.NotCleared },
         { name: "SortableList", meta: SortableList.default, story: SortableList.Sets },
         { name: "LevelBadges", meta: LevelBadges.default, story: LevelBadges.ExtremeInFront },
+        { name: "ChartMarks", meta: ChartMarks.default, story: ChartMarks.WithAPlaysMarks },
+        { name: "PlayMarks", meta: PlayMarks.default, story: PlayMarks.EveryCrown },
         { name: "ScrollingText", meta: ScrollingText.default, story: ScrollingText.TooLong },
       ]}
     />
