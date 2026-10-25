@@ -7,6 +7,9 @@ import { ShareBlock, type ShareItem } from "../profile/share-block";
 import { CROWN_COLOUR, RANK_COLOUR, RANKS_WORST_FIRST } from "../shared/panel-colours";
 import type { ProfileView } from "../shared/session-port";
 
+/** The first of the Miyabi ranks, on Hiroba's scale of score ranks. */
+const MIYABI = 5;
+
 export function PanelCard({
   crowns,
   ranks,
@@ -27,6 +30,8 @@ export function PanelCard({
     count: ranks[rank],
     colour: RANK_COLOUR[rank],
     icon: { kind: "rankIcon", rank },
+    // In two lines, Miyabi's three and Kiwami first, then Iki's three.
+    line: rank >= MIYABI ? 1 : 2,
   }));
   const crownItems: ShareItem[] = (["silver", "gold", "donderful"] as const).map((crown) => ({
     id: `crowns-${crown}`,
