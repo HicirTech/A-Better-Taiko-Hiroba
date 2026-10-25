@@ -36,6 +36,8 @@ export interface AskOptions {
 }
 
 export interface PictureLane {
+  /** Its pictures are drawn off the window, as a snapshot's are: each is asked for at once. */
+  readonly offTheWindow?: boolean;
   peek(want: PictureWant): PictureAnswer | undefined;
   /** True when the lane has an answer for `want` that no renewal has made stale. */
   settled(want: PictureWant): boolean;

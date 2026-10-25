@@ -116,6 +116,14 @@ export const ja: Messages = {
   "rating.dataFailed": "レーティングのデータを読み込めませんでした。",
   "rating.noneRated":
     "レーティングの対象になる「おに」「おに裏」の譜面がまだありません。精度 75% から対象になります。",
+  "snapshot.button": "画像で共有",
+  "snapshot.share": "画像を共有",
+  "snapshot.copy": "画像をコピー",
+  "snapshot.save": "画像を保存",
+  "snapshot.making": "画像を作成中…",
+  "snapshot.copied": "画像をコピーしました。",
+  "snapshot.saved": "画像を保存しました。",
+  "snapshot.failed": "画像を作成できませんでした。もう一度お試しください。",
   "scores.readSong": "この曲のスコアを読み込み直す",
   "scores.readEvery.title": "すべてのスコアを読み込み直しますか？",
   "scores.readEvery.body":

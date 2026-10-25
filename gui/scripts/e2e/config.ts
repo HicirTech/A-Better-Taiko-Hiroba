@@ -38,6 +38,8 @@ export const LANGUAGE_USER_DATA = userDataOf(LANE, "e2e-user-data-language");
 export const APPEARANCE_USER_DATA = userDataOf(LANE, "e2e-user-data-appearance");
 export const UPDATES_USER_DATA = userDataOf(LANE, "e2e-user-data-updates");
 export const PAGE_GONE_USER_DATA = userDataOf(LANE, "e2e-user-data-page-gone");
+/** Where the app saves a picture of a page, in place of asking where in the save box. */
+export const PICTURES = userDataOf(LANE, "e2e-pictures");
 export const UPDATE_FEED = "/__update-feed/update.json";
 /** MUI's md: from this width the app frame shows its side panel. */
 export const MD_WIDTH_PX = 900;

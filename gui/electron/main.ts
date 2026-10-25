@@ -63,6 +63,7 @@ import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environme
 import { createHirobaTransport } from "./hiroba-transport";
 import { OFF_SCREEN_OPTIONS, showOffScreen } from "./off-screen";
 import { createDiskPictureStore } from "./picture-disk-store";
+import { handlePicturesOut } from "./pictures-out";
 import { createPipelineHistoryStore } from "./pipeline-history-store";
 import { createRecentPlaysStore } from "./recent-plays-store";
 import { saveReads } from "./save-reads";
@@ -428,6 +429,7 @@ const started = app.whenReady().then(async () => {
       return (port[verb] as (...values: unknown[]) => Promise<unknown>)(...args);
     });
   }
+  handlePicturesOut({ window: mainWindow, trusted, folder: environment.picturesFolder });
 
   await mainWindow.loadURL(home);
 });

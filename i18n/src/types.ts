@@ -141,6 +141,17 @@ export interface Messages {
   "rating.readingData": string;
   "rating.dataFailed": string;
   "rating.noneRated": string;
+  /** The Overview's and Rating's button that makes the page a picture to share. */
+  "snapshot.button": string;
+  /** The picture's ways out, as its menu lists them: the system's share sheet, a copy, a file. */
+  "snapshot.share": string;
+  "snapshot.copy": string;
+  "snapshot.save": string;
+  /** The button's name while the picture is made. */
+  "snapshot.making": string;
+  "snapshot.copied": string;
+  "snapshot.saved": string;
+  "snapshot.failed": string;
   /** A song's action: read its charts again. */
   "scores.readSong": string;
   /** Asks before a read of every score, after a long hold on the page's read again. */

@@ -144,10 +144,16 @@ export async function songSearch(ctx: Ctx) {
     await touchEmulated(true);
     try {
       const across = await boxOf("#song-search");
+      const share = await boxOf("#overview-share");
       // The window's own scroll bar takes from its width on the desktop, as a phone's does not.
       const width = await page.evaluate<number>("document.documentElement.clientWidth");
+      // The bar runs from the left to the share, which ends the band at the right.
       return (
-        across.left <= EDGE_PX && across.right >= width - EDGE_PX && across.bottom <= TOP_BAND_PX
+        across.left <= EDGE_PX &&
+        share.right >= width - EDGE_PX &&
+        across.right <= share.left &&
+        share.left - across.right <= EDGE_PX &&
+        Math.max(across.bottom, share.bottom) <= TOP_BAND_PX
       );
     } finally {
       await touchEmulated(false);

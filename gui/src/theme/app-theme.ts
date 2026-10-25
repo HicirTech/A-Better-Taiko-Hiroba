@@ -100,6 +100,12 @@ export function createAppTheme(tokens: ThemeTokens): Theme {
 
 export const appTheme = createAppTheme(DEFAULT_TOKENS);
 
+/** A snapshot's theme: the default theme in light, whatever the app's theme and mode. */
+export const SNAPSHOT_THEME = createTheme({
+  palette: { ...DEFAULT_TOKENS.light, mode: "light" },
+  ...shapeAndType(DEFAULT_TOKENS),
+});
+
 /** Each theme a player may choose, made once. */
 export const APP_THEMES: Readonly<Record<ThemeName, Theme>> = {
   default: appTheme,

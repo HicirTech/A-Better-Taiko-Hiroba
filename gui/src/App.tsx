@@ -14,7 +14,7 @@ import type { Page } from "./navigation/pages";
 import type { PageData } from "./pages/page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { createPictureLane } from "./pictures/picture-lane";
-import type { SystemLink, SystemToast } from "./platform";
+import type { SystemLink, SystemShare, SystemToast } from "./platform";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
 import { keepStartingSort, keptStartingSort } from "./shared/scores/starting-sort";
@@ -42,9 +42,21 @@ export interface AppProps {
   readonly appearance: ReactNode;
   /** The shell's Toast, where it has one: a long-press names a legend's item by it. */
   readonly toast?: SystemToast;
+  /** The shell's ways out for a picture the app made of a page. */
+  readonly share: SystemShare;
 }
 
-export function App({ port, link, i18n, page, onNavigate, language, appearance, toast }: AppProps) {
+export function App({
+  port,
+  link,
+  i18n,
+  page,
+  onNavigate,
+  language,
+  appearance,
+  toast,
+  share,
+}: AppProps) {
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const wide = useWideWindow();
   const menuOpen = useContext(MenuOpenContext);
@@ -81,6 +93,7 @@ export function App({ port, link, i18n, page, onNavigate, language, appearance, 
     chartSource,
     onChartSource,
     toast,
+    share,
     language,
     appearance,
     navigate: onNavigate,

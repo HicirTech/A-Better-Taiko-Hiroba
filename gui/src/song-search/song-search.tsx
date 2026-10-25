@@ -58,6 +58,8 @@ export interface SongSearchProps {
   readonly i18n: Translator;
   /** The first time the search opens, so the song list is read only once someone looks. */
   readonly onOpen: () => void;
+  /** At the band's right, after the search field: the page's own button. */
+  readonly end?: ReactNode;
   /** The page under the search, told whether the search stands in for it. */
   readonly children: (searching: boolean) => ReactNode;
 }
@@ -75,6 +77,7 @@ export function SongSearch({
   keptSearches,
   i18n,
   onOpen,
+  end,
   children,
 }: SongSearchProps) {
   const { t, locale } = i18n;
@@ -173,7 +176,7 @@ export function SongSearch({
 
   return (
     <>
-      <FrameTop wide={wide} touchFirst={touchFirst}>
+      <FrameTop wide={wide} touchFirst={touchFirst} end={end}>
         <SearchField
           id="song-search"
           query={query}

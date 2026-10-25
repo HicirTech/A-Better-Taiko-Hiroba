@@ -5,10 +5,12 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
 import type { Difficulty } from "../shared/song-catalogue/types";
 import { CourseIcon } from "./course-icon";
-import { LEVEL_BADGES_LOOK } from "./level-badges";
+import { LEVEL_BADGE_PX, LEVEL_BADGES_LOOK } from "./level-badges";
 
 /** The side of a row's marks: a chart's difficulty icon, and a play's crown, rank and options. */
 export const CHART_MARK_PX = 20;
+/** A rank's mark: as much wider than tall as Hiroba's rank art. */
+export const RANK_MARK_PX = Math.round((CHART_MARK_PX * 128) / 96);
 
 const MARKS = {
   display: "flex",
@@ -17,6 +19,10 @@ const MARKS = {
   gap: "2px",
   flexShrink: 0,
   "& .chart-marks-line": { display: "flex", alignItems: "flex-start", gap: 0.5 },
+  // The badge under the middle of the mark over it: a rank is wider than the badge.
+  "&:has(> .chart-marks-line > .rank-mark:last-child) > .level-badge": {
+    mr: `${(RANK_MARK_PX - LEVEL_BADGE_PX) / 2}px`,
+  },
   ...LEVEL_BADGES_LOOK,
 } as const;
 

@@ -5,6 +5,7 @@ import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "../pictures/hiroba-px";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { useDrawnTop } from "../pictures/use-drawn-top";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
+import { MY_DON, MyDonPortrait } from "../profile/my-don-portrait";
 import {
   plateBandTop,
   plateHeightRatio,
@@ -14,7 +15,6 @@ import {
 import type { PictureView, PictureWant, ProfileView } from "../shared/session-port";
 import type { OpenAction } from "../ui/open-button";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
-import { MY_DON, MyDonPortrait } from "./my-don-portrait";
 import { panelHeightRatio, ScorePanel, scorePanelWant } from "./score-panel";
 
 // Hiroba's header, #mydon_area: 290 pixels wide.

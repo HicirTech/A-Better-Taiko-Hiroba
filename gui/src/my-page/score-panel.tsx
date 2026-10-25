@@ -73,9 +73,18 @@ export interface ScorePanelProps {
   readonly i18n: Translator;
   /** The panel; its art is asked for once it is on screen. */
   readonly ref: Ref<HTMLDivElement>;
+  /** The page's own `score-panel` unless a snapshot draws one too. */
+  readonly id?: string;
 }
 
-export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps) {
+export function ScorePanel({
+  panel,
+  crowns,
+  answer,
+  i18n,
+  ref,
+  id = "score-panel",
+}: ScorePanelProps) {
   const { t, number } = i18n;
   const art = viewOf(answer);
   const asking = scorePanelWant(panel.countLevel) !== null && answer === undefined;
@@ -84,20 +93,20 @@ export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps
     <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
       <HirobaPicture
         ref={ref}
-        id="score-panel"
+        id={id}
         role="group"
         aria-label={t("panel.art")}
         src={art?.src ?? null}
         onItsWay={asking}
-        standIn={<PanelStandIn counts={counts} />}
+        standIn={<PanelStandIn id={`${id}-stand-in`} counts={counts} />}
         wordsColour={ON_RANKS}
         sx={{ width: 1, aspectRatio: 1 / panelHeightRatio(art) }}
         i18n={i18n}
       >
         <Box component="dl" sx={{ m: 0 }}>
-          {counts.map(({ id, name, count, spot: [column, row], tone }) => (
+          {counts.map(({ id: countId, name, count, spot: [column, row], tone }) => (
             <Box
-              key={id}
+              key={countId}
               sx={{
                 position: "absolute",
                 left: hp(COLUMN_LEFT[column]),
@@ -113,7 +122,7 @@ export function ScorePanel({ panel, crowns, answer, i18n, ref }: ScorePanelProps
               <Box component="dt" sx={VISUALLY_HIDDEN}>
                 {name}
               </Box>
-              <Box component="dd" id={`score-panel-${id}`} sx={{ m: 0 }}>
+              <Box component="dd" id={`${id}-${countId}`} sx={{ m: 0 }}>
                 {number(count)}
               </Box>
             </Box>
@@ -153,10 +162,10 @@ function countsOf(
   });
 }
 
-function PanelStandIn({ counts }: { counts: readonly PanelCount[] }) {
+function PanelStandIn({ id, counts }: { id: string; counts: readonly PanelCount[] }) {
   return (
     <Box
-      id="score-panel-stand-in"
+      id={id}
       aria-hidden
       sx={{
         position: "absolute",

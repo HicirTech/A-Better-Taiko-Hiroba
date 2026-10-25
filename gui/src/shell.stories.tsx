@@ -4,7 +4,13 @@ import { action } from "storybook/actions";
 
 import { rememberLocale } from "./shared/language/locale-choice";
 import { Shell } from "./shell";
-import { appearanceOf, localeOf, STORY_LINK, type StoryGlobals } from "./story-kit/env";
+import {
+  appearanceOf,
+  localeOf,
+  STORY_COPY_OR_SAVE,
+  STORY_LINK,
+  type StoryGlobals,
+} from "./story-kit/env";
 import { createStoryPort } from "./story-kit/story-port";
 
 /** The shell on the desktop's platform, with a story port in place of the window's bridge. */
@@ -12,7 +18,7 @@ function OnTheDesktop({ globals }: { readonly globals: StoryGlobals }) {
   const [port] = useState(createStoryPort);
   return (
     <Shell
-      platform={{ shell: "desktop", port, link: STORY_LINK }}
+      platform={{ shell: "desktop", port, link: STORY_LINK, share: STORY_COPY_OR_SAVE }}
       onShown={action("shown in a language")}
       appearance={appearanceOf(globals)}
     />

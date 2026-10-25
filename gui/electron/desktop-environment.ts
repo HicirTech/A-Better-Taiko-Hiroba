@@ -42,6 +42,8 @@ export interface DesktopEnvironment {
   readonly eseChartsUrl: string | undefined;
   /** Windows open off every display, out of the taskbar and unfocused, for runs nobody watches. */
   readonly offScreen: boolean;
+  /** Where a saved picture goes without the save box asking; undefined asks the player where. */
+  readonly picturesFolder: string | undefined;
 }
 
 /** Only a development run takes anything from the environment: a packaged build uses real sites,
@@ -70,6 +72,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
       eseMappingUrl,
       eseChartsUrl,
       offScreen: false,
+      picturesFolder: undefined,
     };
   }
   const fixed = Date.parse(env.ABTH_DEV_NOW ?? "");
@@ -91,5 +94,6 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
     eseMappingUrl,
     eseChartsUrl,
     offScreen: env.ABTH_DEV_OFF_SCREEN === "1",
+    picturesFolder: env.ABTH_DEV_PICTURES_FOLDER || undefined,
   };
 }

@@ -2,6 +2,7 @@
 import { en, RATING_DATA } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
+import { savedPicture, savedWhole } from "./snapshots";
 import { hitsOn, refreshHits } from "./stand-in";
 
 export const ratingKeys = [
@@ -11,6 +12,8 @@ export const ratingKeys = [
   "ratingRadarShowsTheSixSkills",
   "ratingRowOpensItsScoreDetails",
   "ratingReadAgainReadsTheDataAgain",
+  "ratingShareSavesThePicture",
+  "ratingSharePicture",
 ] as const;
 
 const COUNTED = 20;
@@ -85,5 +88,9 @@ export async function rating(ctx: Ctx) {
   );
   results.ratingReadAgainReadsTheDataAgain =
     (await refreshHits()) > refreshes && (await exists("#rating-total"));
+
+  const picture = await savedPicture(ctx, "rating-share", "abth-rating");
+  results.ratingSharePicture = picture;
+  results.ratingShareSavesThePicture = savedWhole(picture);
   await goTo("overview");
 }

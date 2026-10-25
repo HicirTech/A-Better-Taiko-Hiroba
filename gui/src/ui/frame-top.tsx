@@ -14,29 +14,51 @@ export const COLUMN_MAX_WIDTH_PX = 600;
 
 /** Room beside a band button: a small button and the gap after it. */
 const BAND_BUTTON_ROOM_PX = 48;
+const WITH_END = { display: "flex", alignItems: "center", gap: 1 } as const;
+const STAYS_IN_THE_BAND = {
+  position: "sticky",
+  top: BELOW_TOP_BAND,
+  zIndex: "appBar",
+  height: 0,
+} as const;
+const AT_THE_TOP = { position: "relative", zIndex: "appBar", height: 0 } as const;
 
-/** A page's bar across the top band, clear of the menu button. */
+/** A page's bar across the top band, clear of the menu button; its end at the band's right. */
 export function FrameTop({
   wide,
   touchFirst,
+  stays = true,
+  end,
   children,
 }: {
   /** Wide enough for the side panel, which leaves no menu button in the band. */
   readonly wide: boolean;
   readonly touchFirst: boolean;
-  readonly children: ReactNode;
+  /** Stays in the band as the page scrolls; false leaves it at the page's top. */
+  readonly stays?: boolean;
+  /** At the right, after the bar: a page's own button, such as its share. */
+  readonly end?: ReactNode;
+  readonly children?: ReactNode;
 }) {
   // A touch screen draws no menu button: its swipe stands in for it.
   const room = wide || touchFirst ? 0 : BAND_BUTTON_ROOM_PX;
   return (
-    <Box sx={{ position: "sticky", top: BELOW_TOP_BAND, zIndex: "appBar", height: 0 }}>
+    <Box sx={stays ? STAYS_IN_THE_BAND : AT_THE_TOP}>
       <Box
         sx={{
           transform: `translateY(${MENU_INSET_PX - TOP_BAND_PX}px)`,
           ml: `${room}px`,
+          ...(end === undefined ? {} : WITH_END),
         }}
       >
-        {children}
+        {end === undefined ? (
+          children
+        ) : (
+          <>
+            <Box sx={{ flex: 1, minWidth: 0 }}>{children}</Box>
+            {end}
+          </>
+        )}
       </Box>
     </Box>
   );

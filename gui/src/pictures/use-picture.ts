@@ -10,7 +10,8 @@ export interface UsePictureOptions {
 
 export const IN_THE_WINDOW = { rootMargin: "0px" } as const;
 
-/** `want` from `lane`, asked for only while `target` is on screen; undefined until it comes. */
+/** `want` from `lane`, asked for only while `target` is on screen, or at once on a lane drawn off
+ * the window; undefined until it comes. */
 export function usePicture(
   lane: PictureLane,
   want: PictureWant | null,
@@ -32,7 +33,7 @@ export function usePicture(
       return;
     }
     let takeBack: (() => void) | null = null;
-    if (typeof IntersectionObserver === "undefined") {
+    if (lane.offTheWindow === true || typeof IntersectionObserver === "undefined") {
       takeBack = lane.ask(picture, { order });
       return takeBack;
     }

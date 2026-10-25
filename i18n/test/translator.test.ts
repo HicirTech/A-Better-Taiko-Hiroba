@@ -350,6 +350,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "恢復安",
     "觀配淺深",
     "着戶狀態地址剔效絡",
+    "享生",
   ].join(""),
 );
 

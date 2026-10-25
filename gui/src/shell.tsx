@@ -83,6 +83,7 @@ export function Shell({
         <App
           port={platform.port}
           link={platform.link}
+          share={platform.share}
           i18n={i18n}
           page={page}
           onNavigate={navigate}
