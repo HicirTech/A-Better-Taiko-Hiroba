@@ -5,6 +5,7 @@ import { ShareBlockSkeleton } from "../profile/share-block";
 import { TitlePlateSkeleton } from "../profile/title-plate";
 import { PlayRowsSkeleton } from "../songs/play-row";
 import { SongLookRowSkeleton } from "../songs/song-look-row";
+import { textSize } from "../theme/app-theme";
 import { COLUMN_MAX_WIDTH_PX, FrameTop } from "../ui/frame-top";
 import { SearchFieldSkeleton } from "../ui/search-field";
 import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
@@ -15,7 +16,7 @@ import type { SkeletonProps } from "./page";
 // Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
 const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" } as const;
 const FIELD_PX = 56;
-const HEADING = { fontSize: "1rem", lineHeight: 1.75 } as const;
+const HEADING = { typography: "subtitle1" } as const;
 const KNOW_CARDS = [...Array(6).keys()];
 const FOLDER_ROWS = [...Array(8).keys()];
 
@@ -102,7 +103,7 @@ export function KnowYourselfSkeleton() {
         {KNOW_CARDS.map((key) => (
           <SectionCard key={key}>
             <Skeleton width={120} sx={HEADING} />
-            <Skeleton width="70%" sx={{ fontSize: "0.875rem" }} />
+            <Skeleton width="70%" sx={{ fontSize: textSize("body2") }} />
           </SectionCard>
         ))}
       </Stack>
@@ -120,7 +121,7 @@ export function NameTitleSkeleton() {
         <Skeleton variant="rounded" height={FIELD_PX} />
         <Stack spacing={1}>
           <Skeleton variant="rounded" height={FIELD_PX} />
-          <Skeleton width="70%" sx={{ fontSize: "0.75rem" }} />
+          <Skeleton width="70%" sx={{ fontSize: textSize("caption") }} />
         </Stack>
       </Stack>
       <SyncBarSkeleton />
@@ -134,7 +135,7 @@ export function FavoritesSkeleton({ touchFirst }: SkeletonProps) {
     <Box sx={{ ...SYNC_BAR_PAGE, ...COLUMN }}>
       <Stack spacing={2} sx={{ pb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, minHeight: 40 }}>
-          <Skeleton width={180} sx={{ fontSize: "1.25rem" }} />
+          <Skeleton width={180} sx={{ fontSize: textSize("h6") }} />
           <Box sx={{ flexGrow: 1 }} />
           {!touchFirst && <Skeleton variant="circular" width={40} height={40} />}
         </Box>

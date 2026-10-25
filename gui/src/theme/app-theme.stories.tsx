@@ -28,13 +28,13 @@ function Swatches({
                 background: colour,
               }}
             />
-            <Typography variant="caption" sx={{ display: "block", fontFamily: "monospace" }}>
+            <Typography variant="caption" sx={{ display: "block", fontFamily: "fontFamilyMono" }}>
               {name}
             </Typography>
             <Typography
               variant="caption"
               color="text.secondary"
-              sx={{ display: "block", fontFamily: "monospace", wordBreak: "break-all" }}
+              sx={{ display: "block", fontFamily: "fontFamilyMono", wordBreak: "break-all" }}
             >
               {colour}
             </Typography>
@@ -76,7 +76,19 @@ function Colours() {
   );
 }
 
-const TYPE_VARIANTS = ["h6", "subtitle1", "subtitle2", "body1", "body2", "caption"] as const;
+const TYPE_VARIANTS = [
+  "h3",
+  "h6",
+  "subtitle1",
+  "subtitle2",
+  "body1",
+  "body2",
+  "caption",
+  "figure",
+  "rowLine",
+  "badge",
+] as const;
+const SAMPLE = "太鼓の達人 Taiko no Tatsujin 太鼓达人 1234567890";
 
 const meta = {
   title: "Foundations/Theme",
@@ -90,15 +102,18 @@ type Story = StoryObj<typeof meta>;
 /** The theme's palette and the colours the code keeps for the game's own data. */
 export const Palette: Story = {};
 
-/** The type variants the pages use, in the theme's font. */
+/** The type variants the pages use, in the theme's font, and the font for codes. */
 export const Type: Story = {
   render: () => (
     <Stack spacing={1.5}>
       {TYPE_VARIANTS.map((variant) => (
         <Typography key={variant} variant={variant}>
-          {variant}: 太鼓の達人 Taiko no Tatsujin 太鼓达人 1234567890
+          {variant}: {SAMPLE}
         </Typography>
       ))}
+      <Typography variant="body2" sx={{ fontFamily: "fontFamilyMono" }}>
+        fontFamilyMono: {SAMPLE}
+      </Typography>
     </Stack>
   ),
 };

@@ -55,7 +55,7 @@ const ROW = {
   },
   "& label.song-open:has(input:disabled)": { cursor: "default" },
   "& .song-bars": { display: "flex", alignSelf: "stretch", gap: "2px", flexShrink: 0 },
-  "& .song-bar": { width: 4, borderRadius: "2px" },
+  "& .song-bar": { width: 4, borderRadius: 0.5 },
   "& .song-text": { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 0.25 },
   // A chart's marks end the name's line and the next; the lines after those run on under them.
   "& .song-text-marked": {
@@ -67,7 +67,7 @@ const ROW = {
   },
   "& .song-text-marked > .song-line ~ .song-line": { gridColumn: "1 / -1" },
   "& .song-name": { ...ONE_LINE, lineHeight: 1.4 },
-  "& .song-line": { ...ONE_LINE, color: "text.secondary", fontSize: "0.8125rem", lineHeight: 1.4 },
+  "& .song-line": { ...ONE_LINE, typography: "rowLine", color: "text.secondary" },
   "& .song-end": { display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 },
   // The name's line is 22.4 px and a mark 20: a pixel down sets their middles together.
   "& .song-marks": { display: "flex", gridColumn: 2, gridRow: "1 / span 2", mt: "1px" },

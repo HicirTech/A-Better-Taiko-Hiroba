@@ -6,10 +6,9 @@ import { VISUALLY_HIDDEN } from "./visually-hidden";
 const HEADING = { 2: "h2", 3: "h3", 4: "h4" } as const;
 // The gap to what a title titles, the same under every title.
 const OVER_ITS_CONTENT = { mb: 1 } as const;
-const WORDS = { fontWeight: 500, minWidth: 0 } as const;
-// A title's line as subtitle1 and subtitle2 draw it, with the gap under every title.
-const SECTION_LINE = { fontSize: "1rem", lineHeight: 1.75, ...OVER_ITS_CONTENT } as const;
-const SUBSECTION_LINE = { fontSize: "0.875rem", lineHeight: 1.57, ...OVER_ITS_CONTENT } as const;
+const WORDS = { fontWeight: "fontWeightMedium", minWidth: 0 } as const;
+const SECTION_LINE = { typography: "subtitle1", ...OVER_ITS_CONTENT } as const;
+const SUBSECTION_LINE = { typography: "subtitle2", ...OVER_ITS_CONTENT } as const;
 const WITH_START = { ...WORDS, display: "flex", alignItems: "center", gap: 1.5 } as const;
 // What follows a title shares its row, and wraps under it when the row is too narrow.
 const ROW = {

@@ -41,7 +41,7 @@ export function ReadFailureAlert({
           sx={{
             display: "block",
             mt: 1,
-            fontFamily: "monospace",
+            fontFamily: "fontFamilyMono",
             userSelect: "text",
             wordBreak: "break-all",
           }}

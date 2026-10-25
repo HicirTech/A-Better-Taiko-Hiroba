@@ -30,7 +30,7 @@ const chosenChip = ({ colour, text }: FilterFill) =>
   ({
     bgcolor: colour,
     color: text,
-    fontWeight: 700,
+    fontWeight: "fontWeightBold",
     "&:hover, &.Mui-focusVisible": { bgcolor: colour, filter: "brightness(1.12)" },
     "& .MuiChip-deleteIcon, & .MuiChip-deleteIcon:hover": { color: "inherit" },
   }) as const;

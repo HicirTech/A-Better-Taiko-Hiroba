@@ -46,7 +46,7 @@ const chartButton = (difficulty: Difficulty) => {
     px: 0.5,
     py: 0.5,
     textTransform: "none",
-    fontWeight: 600,
+    fontWeight: "fontWeightBold",
     color: "text.primary",
     borderColor: colour,
     bgcolor: `color-mix(in srgb, ${colour} 18%, transparent)`,
@@ -267,7 +267,11 @@ function DetailsBody({
               <LabelChip key={genre} label={t(GENRE_LABEL[genre])} fill={GENRE_COLOUR[genre]} />
             ))}
             {song.bpm !== null && (
-              <Typography id="song-details-bpm" variant="body2" sx={{ fontWeight: 600 }}>
+              <Typography
+                id="song-details-bpm"
+                variant="body2"
+                sx={{ fontWeight: "fontWeightBold" }}
+              >
                 {t("song.bpm", { bpm: bpmText(song.bpm) })}
               </Typography>
             )}
