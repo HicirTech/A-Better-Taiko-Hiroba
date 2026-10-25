@@ -1,37 +1,41 @@
 {
-  "version": "0.5.11",
+  "version": "0.6.0",
   "notes": {
     "en": [
-      "Urgent fix: when the Rating page cannot read OurTaiko's rating data, it no longer asks OurTaiko again and again, and says the read failed",
-      "Know yourself likewise reads taiko.wiki's song list once when it cannot be read, and again only when the page is opened again",
-      "While a page reads its own data, the first time or again, it cannot be used; after a moment it shows its outline in grey, with a bar in the middle of the window that counts how far the read has come where it can",
-      "When Read again fails, the page keeps what it showed, with the failure above it; Costume and Favourites can still be edited and synced to Hiroba then",
-      "On Recent plays, a pull held six seconds, or Read again held as long on a computer, asks first, then reads every recent play again from the first page",
-      "On a page that names songs, Read again also reads taiko.wiki's song list again when the one kept is a day old"
+      "Recent plays is now part of Scores: Scores comes right after the Overview and opens sorted by recent play, or by the sort chosen in Settings' new Scores section, and a score's right-click or long press adds its song to a set",
+      "Share your profile or your rating as a picture from the button at the top right of the Overview and Rating: copy or save it on a computer; on Android, share it, or save it from Android 11 on",
+      "Settings has a new Appearance section: the default colours or Hiroba's, light, dark or as your system is",
+      "With the search open on the Overview, a pull held six seconds, or Read again held as long on a computer, reads taiko.wiki's song list again, so a newly added song can be found",
+      "On a phone, Scores' filters are icons in one row that scrolls sideways, and the Overview's score ranks line up in two rows; a chart's level on its row no longer has the difficulty's icon beside it",
+      "Buttons, menus, dialogs and rows look and behave the same on every page, and the wording is clearer in all four languages, with Traditional Chinese as used in Hong Kong",
+      "When a page goes wrong it says so with a code while the menu stays usable; a read or write that fails ends with its error, never leaving the app waiting; and data on the device that cannot be read is kept aside, never written over"
     ],
     "ja": [
-      "緊急修正：レーティングのページが OurTaiko のレーティングデータを読み込めないとき、OurTaiko に何度も読み込みに行かなくなり、読み込めなかったことを表示します",
-      "自分を知るのページも同じく、taiko.wiki の曲リストを読み込めないときは一度だけ読み込み、ページを開き直したときにだけ読み込み直します",
-      "ページが自分のデータを読み込んでいる間は、初めてでも読み込み直しでも操作できなくなり、少しするとページの形をグレーで表示します。画面の中央のバーは、わかる場合は読み込みの進み具合を示します",
-      "読み込み直しに失敗したときは、それまでの表示を残したまま上にエラーを表示します。きせかえとお気に入りはそのまま編集でき、ひろばに同期することもできます",
-      "あそんだ曲では、下に引いたまま 6 秒待つか、パソコンで「再読み込み」を 6 秒押し続けると、確認してから最初のページからすべてのあそんだ曲を読み込み直します",
-      "曲名を表示するページでは、保存している taiko.wiki の曲リストが 1 日以上前のものなら、「再読み込み」でそれも読み込み直します"
+      "あそんだ曲はスコアデータに統合されました。スコアデータは概要のすぐ後に並び、最近あそんだ順か、設定に新しくできた「スコアデータ」で選んだ並び順で開きます。スコアの行を右クリックか長押しすると、その曲をセットに追加できます",
+      "概要とレーティングの右上のボタンから、プロフィールやレーティングを画像で共有できます。パソコンではコピーか保存、Android では共有、Android 11 以降は保存もできます",
+      "設定に「外観」を追加しました。標準の色かひろばの色を、ライト、ダーク、またはシステムに合わせて使えます",
+      "概要で検索を開いているとき、下に引いたまま 6 秒待つか、パソコンで「再読み込み」を 6 秒押し続けると、taiko.wiki の曲リストを読み込み直し、新しく追加された曲も見つかります",
+      "スマートフォンでは、スコアデータの絞り込みが横にスクロールできる 1 行のアイコンになり、概要のスコアランクは 2 行にそろって並びます。行にある譜面のレベルの横には、難易度のアイコンを表示しなくなりました",
+      "ボタン、メニュー、ダイアログ、行の見た目と動きがどのページでも同じになり、4 つの言語すべてで言葉づかいを見直しました。繁体字中国語は香港の用法になりました",
+      "ページで問題が起きたときは、メニューを使えるまま、コード付きでそのことを表示します。読み込みや書き込みが失敗したときはエラーで終わり、アプリが待ち続けることはありません。読めない端末のデータは上書きせず、別に残します"
     ],
     "zh-Hans": [
-      "紧急修复：Rating 页面读不到 OurTaiko 的 Rating 数据时，不会再一遍又一遍地向 OurTaiko 请求，而是提示读取失败",
-      "自我认知页面同样如此：读不到 taiko.wiki 的歌单时只读一次，重新打开页面时才再读",
-      "页面读取自己的数据时（无论是第一次还是重新读取）暂时不能操作，稍等片刻会显示灰色的页面轮廓，窗口正中的进度条在能知道进度时会显示读到哪里",
-      "重新读取失败时，页面保留原来的内容，并在上方显示报错；换装和收藏这时仍可编辑，也能同步到广场",
-      "在近期游玩页面，下拉后按住 6 秒，或在电脑上按住「重新读取」6 秒，确认后会从第一页起重新读取全部近期游玩",
-      "在显示歌名的页面，如果保存的 taiko.wiki 歌单已超过一天，「重新读取」时也会顺带重新读取歌单"
+      "近期游玩并入了成绩：成绩排在概览之后，打开时按最近游玩排序，也可以在设置新增的「成绩」一节里换一种默认排序；在成绩的行上右键或长按，可以把这首歌加入套装",
+      "用概览和 Rating 页面右上角的按钮，可以把个人资料或 Rating 以图片分享：电脑上复制或保存；Android 上分享，Android 11 起也能保存",
+      "设置新增「外观」：可以用默认配色或广场配色，浅色、深色或跟随系统",
+      "在概览打开搜索栏时，下拉并按住 6 秒，或在电脑上按住「重新读取」6 秒，会重新读取 taiko.wiki 的歌曲列表，新加入的歌也能找到",
+      "在手机上，成绩的筛选变成一行可以横向滑动的图标，概览的成绩排名对齐排成两行；行里谱面等级的旁边不再显示难度图标",
+      "按钮、菜单、对话框和列表行在每个页面上外观和操作都一致；四种语言的措辞都重新校对过，繁体中文改为香港用法",
+      "页面出错时会显示错误码，菜单照样能用；读取或写入失败时会报错结束，不会让应用一直等下去；设备上读不出的数据会先另存，不会被覆盖"
     ],
     "zh-Hant": [
-      "緊急修復：Rating 頁面讀不到 OurTaiko 的 Rating 資料時，不會再一遍又一遍地向 OurTaiko 請求，而是提示讀取失敗",
-      "自我認知頁面同樣如此：讀不到 taiko.wiki 的歌單時只讀一次，重新打開頁面時才再讀",
-      "頁面讀取自己的資料時（無論是第一次還是重新讀取）暫時不能操作，稍等片刻會顯示灰色的頁面輪廓，視窗正中的進度條在能知道進度時會顯示讀到哪裡",
-      "重新讀取失敗時，頁面保留原來的內容，並在上方顯示錯誤；換裝和收藏這時仍可編輯，也能同步到廣場",
-      "在近期遊玩頁面，下拉後按住 6 秒，或在電腦上按住「重新讀取」6 秒，確認後會從第一頁起重新讀取全部近期遊玩",
-      "在顯示歌名的頁面，如果儲存的 taiko.wiki 歌單已超過一天，「重新讀取」時也會順帶重新讀取歌單"
+      "近期遊玩併入了成績：成績排在概覽之後，開啟時按最近遊玩排序，也可以在設定新增的「成績」一節裏換一種預設排序；在成績的行上按右鍵或長按，可以把這首歌加入套裝",
+      "用概覽和 Rating 頁面右上角的按鈕，可以把個人資料或 Rating 以圖片分享：電腦上複製或儲存；Android 上分享，Android 11 起也能儲存",
+      "設定新增「外觀」：可以用預設配色或廣場配色，淺色、深色或跟隨系統",
+      "在概覽開啟搜尋欄時，下拉並按住 6 秒，或在電腦上按住「重新讀取」6 秒，會重新讀取 taiko.wiki 的歌曲列表，新加入的歌也找得到",
+      "在手機上，成績的篩選變成一行可以橫向滑動的圖示，概覽的成績排名對齊排成兩行；行裏譜面等級的旁邊不再顯示難度圖示",
+      "按鈕、選單、對話框和列表行在每個頁面上外觀和操作都一致；四種語言的用字都重新校對過，繁體中文改為香港用法",
+      "頁面出錯時會顯示錯誤碼，選單照樣用得到；讀取或寫入失敗時會報錯結束，不會令應用程式一直等下去；裝置上讀不出的資料會先另存，不會被覆蓋"
     ]
   }
 }
