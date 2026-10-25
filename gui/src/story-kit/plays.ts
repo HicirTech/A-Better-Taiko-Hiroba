@@ -1,6 +1,5 @@
 import type { CrownState, Level, RecentPlay, ScoreRank, ScoreRecord } from "@abth/core";
 
-import { packData } from "./pack";
 import { storySong } from "./songs";
 
 /** A made-up record of a cleared Extreme play; every field can be changed. */
@@ -73,6 +72,3 @@ export const STORY_PLAYS: readonly RecentPlay[] = [
   }),
   storyPlay("1009", { crown: "gold", scoreRank: 7, record: { options: { ...PLAIN, speed: 3.5 } } }),
 ];
-
-/** The recent plays a whole page reads: the resource pack's, else the made-up ones. */
-export const PAGE_PLAYS: readonly RecentPlay[] = packData("recentPlays") ?? STORY_PLAYS;

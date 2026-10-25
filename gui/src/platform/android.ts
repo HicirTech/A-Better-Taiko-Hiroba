@@ -460,13 +460,6 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     refreshHiroba: flushed(writes.refreshHiroba),
 
-    recentPlays: recentPlays.recentPlays,
-
-    readRecentPlays: flushed(recentPlays.readRecentPlays),
-    readEveryRecentPlay: flushed(recentPlays.readEveryRecentPlay),
-
-    recentPlaysProgress: recentPlays.recentPlaysProgress,
-
     scores: scores.scores,
     listedCharts: scores.listedCharts,
 

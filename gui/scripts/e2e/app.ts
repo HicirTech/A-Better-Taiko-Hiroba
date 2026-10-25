@@ -91,7 +91,6 @@ export async function launch({
   const goTo = async (
     to:
       | "overview"
-      | "history"
       | "scores"
       | "rating"
       | "knowYourself"

@@ -45,7 +45,6 @@ export function LargeModal({
   i18n,
   onExited,
   onClose,
-  onBack,
   children,
 }: {
   readonly id: string;
@@ -75,14 +74,11 @@ export function LargeModal({
   /** Called once it has slid away. */
   readonly onExited?: (() => void) | undefined;
   readonly onClose: () => void;
-  /** Where it follows an earlier question: Esc and Back go back to it; the × and a click out close. */
-  readonly onBack?: (() => void) | undefined;
   readonly children: ReactNode;
 }) {
   const theme = useTheme();
   const { phone, reducedMotion, covered } = modalLook;
-  const back = onBack ?? onClose;
-  useBackCloses(open && !pageLike, back);
+  useBackCloses(open && !pageLike, onClose);
   useBackLeaves(open && pageLike, onClose);
   const shown = open && !(pageLike && covered);
   const whole = picture || phone;
@@ -101,13 +97,7 @@ export function LargeModal({
     ? { width: 1, height: 1 }
     : { width: `min(${WIDTH_PX}px, ${ROOM})`, maxHeight: `calc(${ROOM})` };
   return (
-    <Modal
-      id={id}
-      open={shown}
-      onClose={(_event, reason) => (reason === "escapeKeyDown" ? back() : onClose())}
-      closeAfterTransition
-      sx={CENTRED}
-    >
+    <Modal id={id} open={shown} onClose={() => onClose()} closeAfterTransition sx={CENTRED}>
       <Slide
         in={shown}
         direction="up"

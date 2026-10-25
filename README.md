@@ -12,9 +12,8 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 ## What it does
 
 - [x] Sign in with your Bandai Namco ID and stay signed in
-- [x] Show every chart you played: crowns, ranks, scores, hit counts, play options
+- [x] Show every chart you played, the most recent first: crowns, ranks, scores, hit counts, play options; each opens its scores in full, or adds its song to a set
 - [x] Show your profile, My Don, title, dan rank, score counts and favourite songs
-- [x] Show your recent plays, each opening its chart's scores in full, or adding its song to a set
 - [x] Work out your rating and skills from your scores, and show the charts it counts
 - [x] See where you stand: clears by star level, by hits per second and by BPM, and the charts closest to their next crown; add the charts to work on to a set
 - [x] Change your title

@@ -191,7 +191,7 @@ describe("createAndroidPort", () => {
     expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
   });
 
-  test("reads recent plays in a pipeline of their own, and keeps them through a sign-out", async () => {
+  test("walks recent plays for the scores in a pipeline of their own, kept through a sign-out", async () => {
     const plays = Array.from({ length: 7 }, (_, index) => mockPlay(7 - index));
     native.httpAnswer = async () => {
       const url = native.httpRequests.at(-1)?.url ?? "";
@@ -208,15 +208,17 @@ describe("createAndroidPort", () => {
     });
     await port.readProfile();
 
-    const read = await port.readRecentPlays();
-    const view = await port.readPipelines(12);
+    await port.readScores();
+    const first = await port.readPipelines(12);
     await signOutAndIn(port);
     await port.readProfile();
+    await port.readScores();
+    const second = await port.readPipelines(12);
 
-    expect(read.ok && read.value.plays).toHaveLength(7);
-    expect(view.history.ended.map((group) => group.subject).sort()).toEqual(["1", "2", "3", "4"]);
-    expect(view.io.ended.map((group) => group.operation)).toEqual(["readProfile"]);
-    expect(await port.recentPlays()).toHaveLength(7);
+    const pages = (view: typeof first) => view.history.ended.map((group) => group.subject).sort();
+    expect(pages(first)).toEqual(["1", "2", "3", "4"]);
+    // The second walk stops on its first page, at the plays the first walk kept.
+    expect(pages(second)).toEqual(["1", "1", "2", "3", "4"]);
   });
 });
 

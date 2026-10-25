@@ -4,10 +4,9 @@ import { isPage, keepPage, keptPage, PAGES } from "../src/navigation/pages";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("PAGES", () => {
-  test("lists Know yourself after Rating, then Costume and Nickname & title before Favourites", () => {
+  test("lists Scores after the Overview, Know yourself after Rating, then Costume and Nickname & title before Favourites", () => {
     expect([...PAGES]).toEqual([
       "overview",
-      "history",
       "scores",
       "rating",
       "knowYourself",
@@ -42,6 +41,12 @@ describe("keptPage", () => {
     expect(keptPage(storage)).toBe("overview");
   });
 
+  test("opens on Scores where Recent plays, now part of it, was kept", () => {
+    const storage = memoryStorage();
+    storage.setItem("abth.page", "history");
+    expect(keptPage(storage)).toBe("scores");
+  });
+
   test("works on without a store, or with one that refuses", () => {
     expect(keptPage(undefined)).toBe("overview");
     expect(keptPage(refusing)).toBe("overview");
@@ -50,11 +55,10 @@ describe("keptPage", () => {
 });
 
 describe("isPage", () => {
-  test("accepts the nine pages and nothing else", () => {
+  test("accepts the eight pages and nothing else", () => {
     expect(
       [
         "overview",
-        "history",
         "scores",
         "rating",
         "knowYourself",
@@ -65,7 +69,9 @@ describe("isPage", () => {
       ].every(isPage),
     ).toBe(true);
     expect(
-      [null, "", "Overview", "Costume", "favourites", "name-title", "nametitle"].some(isPage),
+      [null, "", "Overview", "Costume", "favourites", "name-title", "nametitle", "history"].some(
+        isPage,
+      ),
     ).toBe(false);
   });
 });

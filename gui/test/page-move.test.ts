@@ -7,7 +7,7 @@ test.each<[from: Page, to: Page, move: PageMove]>([
   ["overview", "scores", "down"],
   ["scores", "settings", "down"],
   ["settings", "overview", "up"],
-  ["favorites", "history", "up"],
+  ["favorites", "rating", "up"],
 ])("from %s to %s the window moves %s", (from, to, move) => {
   expect(pageMove(from, to)).toBe(move);
 });

@@ -3,23 +3,29 @@ import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
 import { en, HIROBA, TOP_BAND_PX } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
-import { hitsOn, refreshHits } from "./stand-in";
+import { hitsOn, myPageHits, READ_AGAIN_MY_PAGE_READS, refreshHits } from "./stand-in";
 
 const SCORE_LIST = "/score_list.php";
 const SCORE_DETAIL = "/score_detail.php";
+const HISTORY_PAGE = "/history_recent_score.php";
 
 export const scoresKeys = [
   "scoresReadOnlyWhenAsked",
   "scoresStartAtTheShownDifficulty",
+  "scoresOpenSortedByRecentPlay",
   "firstReadTakesEveryScore",
   "laterReadDetailsWhatWasPlayed",
-  "recentPlaysWalkMarksScores",
   "songReadAgainFromItsDetails",
   "stoppedReadNamesItsChart",
   "readFindingNothingNewSaysSo",
   "everyScoreReadAfterALongHold",
+  "walkedPageInTheFoot",
+  "walkedPageOnTheSkeleton",
+  "hirobaReadsBesideAWalk",
+  "recentPlaysKeptAfterSignOut",
   "difficultyFilterTakesSeveral",
   "scoresSortedByScore",
+  "settingsSortOpensScoresOnIt",
   "scoresSearchInTheTopBand",
   "scoresSearchedByAnyName",
   "scoreDetailsHeadedLikeTheirRow",
@@ -34,7 +40,8 @@ const PHONE = { width: 390, height: 844 } as const;
 
 const control = async <T>(path: string, params = ""): Promise<T> =>
   (await (await fetch(`${HIROBA}/${path}?${params}`)).json()) as T;
-const history = (params = "") => control<{ readonly shown: number }>("__history", params);
+const history = (params = "") =>
+  control<{ readonly shown: number; readonly asked: readonly number[] }>("__history", params);
 const detailsAsked = async (params = "") =>
   (await control<{ readonly asked: readonly string[] }>("__scores", params)).asked;
 /** The charts whose details were asked since the last take. */
@@ -67,8 +74,8 @@ interface RowLook {
 }
 
 export async function scores(ctx: Ctx) {
-  const { results } = ctx;
-  const { click, goTo, page, textOf } = ctx.app;
+  const { results, tokens } = ctx;
+  const { click, goTo, page, textOf, until } = ctx.app;
   const {
     atSize,
     attribute,
@@ -140,8 +147,9 @@ export async function scores(ctx: Ctx) {
     (await hitsOn(SCORE_LIST)) === 0 &&
     (await hitsOn(SCORE_DETAIL)) === 0;
 
-  // Every chart Hiroba shows was played once: the first read details each of them.
-  const { shown } = await history();
+  // Hiroba shows 38 plays, each of its own chart, enough for Rating and Know yourself after this:
+  // the first read details each of them.
+  const { shown } = await history("shown=38");
   await readAgain();
   const firstAsked = await takeAsked();
   const played = Array.from({ length: shown }, (_, index) => index + 1);
@@ -154,6 +162,15 @@ export async function scores(ctx: Ctx) {
   results.scoresStartAtTheShownDifficulty =
     (await difficultyChip()) === difficultyNamed(en.t("difficulty.oni"), en.t("difficulty.ura")) &&
     same(sorted((await shownRows()).map((row) => row.chart)), sorted(extreme));
+  // Recent plays first, as Settings starts: the stand-in's newest play is its last song.
+  const songOf = (charted: string) => Number(charted.split("/")[0]);
+  const newestFirst = [...extreme].sort((left, right) => songOf(right) - songOf(left));
+  results.scoresOpenSortedByRecentPlay =
+    (await textOf("#scores-sort")) === en.t("scores.sort.recent") &&
+    same(
+      (await shownRows()).map((row) => row.chart),
+      newestFirst,
+    );
   await mousePress("#scores-difficulty .MuiChip-deleteIcon", "left");
   await rowsAre(shown);
   results.firstReadTakesEveryScore =
@@ -170,19 +187,6 @@ export async function scores(ctx: Ctx) {
     same(sorted(laterAsked), sorted([chart(5), chart(shown + 1)])) &&
     (await hitsOn(SCORE_LIST)) === 8 &&
     (await textOf(`${await rowOf(chart(5))} .song-line`)) === "801,005 · Max combo 120";
-
-  // A walk on the recent plays page marks the replay for the scores, which say so.
-  await history("replay=7");
-  await goTo("history");
-  await readAgain();
-  await goTo("scores");
-  const unread = await waitFor(
-    "the unread line",
-    async () => (await textOf("#scores-unread")) ?? undefined,
-  );
-  await readAgain();
-  results.recentPlaysWalkMarksScores =
-    unread === en.t("scores.unread", { count: "1" }) && same(await takeAsked(), [chart(7)]);
 
   // The refresh in a chart's details reads its song again: each of the song's charts.
   await click(`${await rowOf(chart(4))} .song-open`);
@@ -249,6 +253,47 @@ export async function scores(ctx: Ctx) {
     same(sorted(await takeAsked()), sorted(everyPlayed)) &&
     (await hitsOn(SCORE_LIST)) === listsBefore + 8;
 
+  // A read held at its walk's first page: the foot and the skeleton name the page, and Hiroba's
+  // other reads go on beside it.
+  await history("replay=3&hold=1&forget=1");
+  await click("#read-again");
+  await waitFor("the held page", async () => (await history()).asked.includes(1) || undefined);
+  // The progress is asked for five times a second.
+  await Bun.sleep(500);
+  const footWhileWalking = await textOf("#nav-last-updated");
+  const skeletonWhileWalking = await textOf(
+    '#page-skeleton[data-page="scores"] #page-skeleton-words',
+  );
+  await goTo("overview");
+  const myPageBefore = await myPageHits();
+  await click("#read-again");
+  await waitFor("my page read beside the walk", async () =>
+    (await myPageHits()) === myPageBefore + READ_AGAIN_MY_PAGE_READS &&
+    same(await fabState(), { shut: false, spinning: false })
+      ? true
+      : undefined,
+  );
+  const stillHeld = (await history()).asked.length === 1;
+  await history("hold=0");
+  await goTo("scores");
+  await settled();
+  const walkingWords = en.t("scores.readingPlays", { page: "1" });
+  results.walkedPageInTheFoot = footWhileWalking === walkingWords;
+  results.walkedPageOnTheSkeleton = skeletonWhileWalking === walkingWords;
+  results.hirobaReadsBesideAWalk = stillHeld;
+
+  // A sign-out keeps the plays: signed in again, the next read's walk stops on its first page.
+  await goTo("settings");
+  await click("#sign-out");
+  await until("Sign in to Hiroba");
+  await click("#sign-in");
+  await until("サンプルどん");
+  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
+  await goTo("scores");
+  const pagesBeforeTheRead = await hitsOn(HISTORY_PAGE);
+  await readAgain();
+  results.recentPlaysKeptAfterSignOut = (await hitsOn(HISTORY_PAGE)) === pagesBeforeTheRead + 1;
+
   // The page starts at Settings' difficulty again each time it opens: let every chart show.
   await mousePress("#scores-difficulty .MuiChip-deleteIcon", "left");
   await rowsAre(shown + 2);
@@ -284,6 +329,30 @@ export async function scores(ctx: Ctx) {
   results.scoresSortedByScore =
     byScore.length === shown + 2 &&
     byScore.every((score, at) => at === 0 || (byScore[at - 1] ?? 0) >= score);
+
+  // Settings' default sort opens the page on it, as each visit starts afresh.
+  const startOn = async (choice: string) => {
+    await goTo("settings");
+    // The list opens on a press, as a mouse's does, not on a click.
+    await mousePress("#starting-sort", "left");
+    await waitFor(
+      "the sorts' list",
+      async () => (await exists(`#starting-sort-${choice}`)) || undefined,
+    );
+    await click(`#starting-sort-${choice}`);
+    await Bun.sleep(500);
+    await goTo("scores");
+    await mousePress("#scores-difficulty .MuiChip-deleteIcon", "left");
+    await rowsAre(shown + 2);
+  };
+  await startOn("score");
+  const openedByScore = (await shownRows()).map((row) =>
+    Number(row.facts.split(" · ")[0]?.replace(/,/g, "")),
+  );
+  results.settingsSortOpensScoresOnIt =
+    (await textOf("#scores-sort")) === en.t("scores.sort.score") &&
+    openedByScore.every((score, at) => at === 0 || (openedByScore[at - 1] ?? 0) >= score);
+  await startOn("recent");
 
   // The search sits in the top band, and stays there as the list scrolls under it.
   const searchInTheBand = async () => {

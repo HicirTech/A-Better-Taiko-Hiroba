@@ -21,7 +21,7 @@ export interface ReadAgain {
 
 /** Read again by the button, its keys or a pull: what the page shown reads, once at a time. */
 export function useReadAgain(entry: PageEntry, data: PageData): ReadAgain {
-  const { session, writing, catalogue, scores, history, i18n } = data;
+  const { session, writing, catalogue, scores, i18n } = data;
   const { screen } = session;
   const profileShown = screen.name === "profile";
   const signedIn = profileShown || screen.name === "readFailed";
@@ -58,11 +58,7 @@ export function useReadAgain(entry: PageEntry, data: PageData): ReadAgain {
     signedIn,
     canRead,
     reading: myPageReading || (following?.reading ?? false),
-    progress: scores.reading
-      ? scoresReadingText(i18n, scores.progress, scores.song)
-      : history.page === null
-        ? null
-        : i18n.t("history.readingPage", { page: history.page }),
+    progress: scores.reading ? scoresReadingText(i18n, scores.progress, scores.song) : null,
     read,
     askEvery: ask !== undefined && every?.can(data) === true ? () => setAsking(true) : undefined,
     question:

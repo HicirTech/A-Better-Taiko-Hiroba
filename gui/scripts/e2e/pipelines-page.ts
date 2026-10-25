@@ -88,7 +88,7 @@ export async function pipelinesPage(ctx: Ctx) {
       "External sources",
     ]);
 
-  // The recent plays read before: each page a group, named by its page, the failed one with it.
+  // The recent plays the scores' reads walked: each page a group, named by its page.
   const walked = await page.evaluate<(string | null)[]>(
     `[...document.querySelectorAll(${JSON.stringify(`#pipeline-history ${ENDED_ROW}`)})].map((cell) => cell.getAttribute("aria-label"))`,
   );

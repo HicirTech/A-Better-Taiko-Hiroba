@@ -17,7 +17,6 @@ export interface Messages {
   /** Param: {name}, the system's language in its own words (LOCALE_NAMES). */
   "language.system": string;
   "nav.overview": string;
-  "nav.history": string;
   "nav.scores": string;
   "nav.rating": string;
   "nav.knowYourself": string;
@@ -89,18 +88,8 @@ export interface Messages {
   "pipelines.picture.courseIcon": string;
   "pipelines.picture.optionIcon": string;
   "pipelines.picture.costumeItem": string;
-  /** Param: {page}. In the navigation's foot while recent plays are read. */
-  "history.readingPage": string;
   /** Param: {page}. Under a walk's failure: the page whose request failed. */
   "history.failedPage": string;
-  /** On the recent plays page with nothing kept yet: how to read them, on a touch screen or not. */
-  "history.emptyPull": string;
-  "history.emptyReadAgain": string;
-  /** Asks before a walk of every recent play, after a long hold on the page's read again. */
-  "history.readEvery.title": string;
-  "history.readEvery.body": string;
-  "history.readEvery.cancel": string;
-  "history.readEvery.confirm": string;
   /** 良, 可, 不可, 連打 and the longest combo: a row's hit counts, in taiko.wiki's words. */
   "history.good": string;
   "history.ok": string;
@@ -115,11 +104,7 @@ export interface Messages {
   "history.kimagure": string;
   "history.detarame": string;
   "history.support": string;
-  "history.noScore": string;
-  "history.sharedTitle": string;
-  "history.unknownSong": string;
   "history.addToSet": string;
-  "history.whichSong": string;
   "history.setHolds": string;
   "history.setFull": string;
   /** Param: {page}. While a read of scores walks recent plays. */
@@ -222,6 +207,9 @@ export interface Messages {
   "settings.songLevels": string;
   "settings.shownDifficulty": string;
   "settings.shownDifficultyHint": string;
+  "settings.scores": string;
+  "settings.startingSort": string;
+  "settings.startingSortHint": string;
   "settings.appearance": string;
   "settings.theme": string;
   "settings.theme.default": string;

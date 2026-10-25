@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { action } from "storybook/actions";
+import type { SortChoice } from "../shared/scores/score-order";
+import { DEFAULT_STARTING_SORT } from "../shared/scores/starting-sort";
 import { DEFAULT_CHART_SOURCE } from "../shared/song-catalogue/chart-source";
 import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 import { appearanceOf, i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
@@ -13,10 +15,11 @@ interface Args {
   readonly account: AccountState;
 }
 
-// The page as Settings holds it: its two choices change as they are made.
+// The page as Settings holds it: its choices change as they are made.
 function Page({ account, globals }: Args & { readonly globals: StoryGlobals }) {
   const i18n = i18nOf(globals);
   const [shown, setShown] = useState(DEFAULT_SHOWN);
+  const [sort, setSort] = useState<SortChoice>(DEFAULT_STARTING_SORT);
   const [source, setSource] = useState(DEFAULT_CHART_SOURCE);
   return (
     <SettingsPage
@@ -33,6 +36,8 @@ function Page({ account, globals }: Args & { readonly globals: StoryGlobals }) {
       account={account}
       shownDifficulty={shown}
       onShownDifficulty={setShown}
+      startingSort={sort}
+      onStartingSort={setSort}
       chartSource={source}
       onChartSource={setSource}
       updates={{
