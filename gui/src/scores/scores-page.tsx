@@ -9,6 +9,8 @@ import {
   matchesSearch,
   type ScoreFilter,
   type ScoreSort,
+  type SortChoice,
+  sortOf,
   sortScores,
   startingFilter,
 } from "../shared/scores/score-order";
@@ -41,6 +43,7 @@ export function ScoresPage({
   catalogue,
   lane,
   shownDifficulty,
+  startingSort,
   touchFirst,
   wide,
   modalLook,
@@ -52,6 +55,8 @@ export function ScoresPage({
   readonly lane: PictureLane;
   /** The difficulty the filter starts on, as Settings chose it. */
   readonly shownDifficulty: ShownDifficulty;
+  /** The sort the page starts on, as Settings chose it. */
+  readonly startingSort: SortChoice;
   /** A touch screen: a pull reads. */
   readonly touchFirst: boolean;
   /** The window is wide enough for the side panel. */
@@ -64,7 +69,7 @@ export function ScoresPage({
   const [query, setQuery] = useState("");
   const deferred = useDeferredValue(query);
   const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(shownDifficulty));
-  const [sort, setSort] = useState<ScoreSort | null>(null);
+  const [sort, setSort] = useState<ScoreSort | null>(() => sortOf(startingSort));
   const [opened, setOpened] = useState<string | null>(null);
 
   const rows = view?.scores ?? [];

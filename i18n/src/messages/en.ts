@@ -190,6 +190,9 @@ export const en: Messages = {
   "settings.shownDifficulty": "Difficulty shown first",
   "settings.shownDifficultyHint":
     "Its star level shows in front, with the Ura chart beside Extreme; the other levels stack behind it and spread out on a click.",
+  "settings.scores": "Scores",
+  "settings.startingSort": "Default sort",
+  "settings.startingSortHint": "Scores opens in this order.",
   "settings.appearance": "Appearance",
   "settings.theme": "Theme",
   "settings.theme.default": "Default",

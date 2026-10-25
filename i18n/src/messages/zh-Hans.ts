@@ -181,6 +181,9 @@ export const zhHans: Messages = {
   "settings.shownDifficulty": "默认显示的难度",
   "settings.shownDifficultyHint":
     "这个难度的星级显示在最前面，魔王会同时显示里谱面；其他星级叠在后面，点一下就横向展开。",
+  "settings.scores": "成绩",
+  "settings.startingSort": "默认排序",
+  "settings.startingSortHint": "打开成绩页时按这个排序。",
   "settings.appearance": "外观",
   "settings.theme": "主题",
   "settings.theme.default": "默认",

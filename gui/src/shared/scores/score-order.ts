@@ -1,5 +1,5 @@
 import { CROWN_ORDER, type Genre } from "@abth/core";
-import type { Translator } from "@abth/i18n";
+import type { MessageKey, Translator } from "@abth/i18n";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import type { ScoreView } from "../session-port";
@@ -22,6 +22,25 @@ export const SCORE_SORTS = [
   "recent",
 ] as const;
 export type ScoreSort = (typeof SCORE_SORTS)[number];
+
+/** A sort as Settings offers it to start with: each of the page's sorts, or by name. */
+export type SortChoice = ScoreSort | "name";
+export const SORT_CHOICES = ["name", ...SCORE_SORTS] as const satisfies readonly SortChoice[];
+
+export const SORT_LABEL = {
+  name: "scores.sort.name",
+  score: "scores.sort.score",
+  rank: "scores.sort.rank",
+  genre: "picker.genre",
+  crown: "scores.sort.crown",
+  plays: "scores.plays",
+  fullCombos: "scores.fullCombos",
+  clears: "scores.clears",
+  recent: "scores.sort.recent",
+} as const satisfies Record<SortChoice, MessageKey>;
+
+/** The page's sort for a choice: by name is no sort chosen. */
+export const sortOf = (choice: SortChoice): ScoreSort | null => (choice === "name" ? null : choice);
 
 /** A chart's score as the page lists it: the song's name in the player's language, and more. */
 export interface ListedScore {

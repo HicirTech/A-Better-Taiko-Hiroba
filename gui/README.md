@@ -23,8 +23,8 @@ whole with no scrollbar, unless the screen has less room. On a wide window a sid
 **Know yourself** (where you stand, from your scores, see [Know yourself](#know-yourself)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
-**Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the appearance, the difficulty whose level songs show first, and
-signing out). On a narrow one, a menu button
+**Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the appearance, the difficulty whose level songs show first, the sort Scores opens
+on, and signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back goes one level back: it closes the drawer or the dialog on top (the Costume page's History, say), and a dialog opened from a drawer, a menu or another dialog goes back to it; it goes from
 Costume, Nickname & title, Favourites, Recent plays, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
 the app as before.
@@ -258,8 +258,8 @@ from there next time. A row looks as one of Recent plays does, the song named in
 language from taiko.wiki's list. A search over every name of a song, in the top band as the
 Overview's is and staying there as the list scrolls, chips that each tick any
 number of genres, difficulties (Settings' one at first, Extreme with its Ura charts) and star
-levels, and a sort chip (score, rank, genre, crown, plays, full combos, clears, or recent plays, a
-chart they no longer show last; by name with none) work together, ties going by song number. A
+levels, and a sort chip (recent plays first, a chart they no longer show last, unless Settings chose
+another sort to open on; score, rank, genre, crown, plays, full combos, clears; by name with none) work together, ties going by song number. A
 click on a row opens the chart in full, as Hiroba's own detail page has it, headed as its row is
 but for the hits, listed below with the Japan place, the four play counts and, where the chart has
 them, each section's hits and score with its crown over it (a section not cleared has none); a pull

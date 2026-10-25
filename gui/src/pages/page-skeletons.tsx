@@ -18,6 +18,8 @@ const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" } as const;
 const FIELD_PX = 56;
 const HEADING = { typography: "subtitle1" } as const;
 const KNOW_CARDS = [...Array(6).keys()];
+/** Scores' chips as a visit opens: the difficulty's icons, the stars, the sort's words, genre. */
+const SCORE_CHIPS_PX = [89, 58, 140, 73];
 const FOLDER_ROWS = [...Array(8).keys()];
 
 function SearchBand({ touchFirst, wide }: SkeletonProps) {
@@ -55,8 +57,8 @@ export function ScoresSkeleton(screen: SkeletonProps) {
     <>
       <SearchBand {...screen} />
       <Stack spacing={2}>
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-          {[80, 170, 72, 64].map((width) => (
+        <Box sx={{ display: "flex", gap: 1, overflow: "hidden", "& > *": { flexShrink: 0 } }}>
+          {SCORE_CHIPS_PX.map((width) => (
             <Skeleton
               key={width}
               variant="rounded"

@@ -10,6 +10,7 @@ import type { Page } from "../navigation/pages";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemLink, SystemToast } from "../platform";
 import type { ReadStatus } from "../shared/reads/read-run";
+import type { SortChoice } from "../shared/scores/score-order";
 import type { HirobaSessionPort, ReadFailure } from "../shared/session-port";
 import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
@@ -43,6 +44,9 @@ export interface PageData extends PageState {
   /** The difficulty whose level songs show in front, as Settings chose it. */
   readonly shownDifficulty: ShownDifficulty;
   readonly onShownDifficulty: (next: ShownDifficulty) => void;
+  /** What Scores is sorted by as it opens, as Settings chose it. */
+  readonly startingSort: SortChoice;
+  readonly onStartingSort: (next: SortChoice) => void;
   /** Where a song's details take their chart pictures from, as Settings chose it. */
   readonly chartSource: ChartSource;
   readonly onChartSource: (next: ChartSource) => void;

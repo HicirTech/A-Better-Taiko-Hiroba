@@ -17,6 +17,7 @@ import { createPictureLane } from "./pictures/picture-lane";
 import type { SystemLink, SystemToast } from "./platform";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
+import { keepStartingSort, keptStartingSort } from "./shared/scores/starting-sort";
 import type { HirobaSessionPort } from "./shared/session-port";
 import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
 import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
@@ -53,6 +54,7 @@ export function App({ port, link, i18n, page, onNavigate, language, appearance, 
     keptShownDifficulty,
     keepShownDifficulty,
   );
+  const [startingSort, onStartingSort] = useKeptChoice(keptStartingSort, keepStartingSort);
   const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
   const updates = useUpdateReminder(port, APP_VERSION);
   // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
@@ -74,6 +76,8 @@ export function App({ port, link, i18n, page, onNavigate, language, appearance, 
     pipelinesShown,
     shownDifficulty,
     onShownDifficulty,
+    startingSort,
+    onStartingSort,
     chartSource,
     onChartSource,
     toast,

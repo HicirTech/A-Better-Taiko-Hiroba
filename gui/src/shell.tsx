@@ -19,6 +19,7 @@ import {
   systemLocale,
 } from "./shared/language/locale-choice";
 import { showLanguage } from "./shared/language/show-language";
+import { keepStartingSort, keptStartingSort } from "./shared/scores/starting-sort";
 import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
 import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
 import type { AppearanceChoice } from "./theme/appearance";
@@ -48,11 +49,12 @@ export function Shell({
   const [page, navigate] = useShownPage(keptPage, keepPage);
   const wide = useWideWindow();
   const touchFirst = useTouchFirst();
-  // Settings' two choices, for the page drawn here where no app runs.
+  // Settings' choices, for the page drawn here where no app runs.
   const [shownDifficulty, onShownDifficulty] = useKeptChoice(
     keptShownDifficulty,
     keepShownDifficulty,
   );
+  const [startingSort, onStartingSort] = useKeptChoice(keptStartingSort, keepStartingSort);
   const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
   const pick = (next: Locale | null) => {
     if (next === null) {
@@ -96,6 +98,8 @@ export function Shell({
           account={{ kind: "signedOut" }}
           shownDifficulty={shownDifficulty}
           onShownDifficulty={onShownDifficulty}
+          startingSort={startingSort}
+          onStartingSort={onStartingSort}
           chartSource={chartSource}
           onChartSource={onChartSource}
         />

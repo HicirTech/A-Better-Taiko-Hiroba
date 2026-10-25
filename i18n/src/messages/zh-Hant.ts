@@ -181,6 +181,9 @@ export const zhHant: Messages = {
   "settings.shownDifficulty": "預設顯示的難度",
   "settings.shownDifficultyHint":
     "這個難度的星級顯示在最前面，魔王會同時顯示裏譜面；其他星級疊在後面，點一下就橫向展開。",
+  "settings.scores": "成績",
+  "settings.startingSort": "預設排序",
+  "settings.startingSortHint": "打開成績頁時按這個排序。",
   "settings.appearance": "外觀",
   "settings.theme": "主題",
   "settings.theme.default": "預設",

@@ -11,6 +11,7 @@ const SCORE_DETAIL = "/score_detail.php";
 export const scoresKeys = [
   "scoresReadOnlyWhenAsked",
   "scoresStartAtTheShownDifficulty",
+  "scoresOpenSortedByRecentPlay",
   "firstReadTakesEveryScore",
   "laterReadDetailsWhatWasPlayed",
   "recentPlaysWalkMarksScores",
@@ -20,6 +21,7 @@ export const scoresKeys = [
   "everyScoreReadAfterALongHold",
   "difficultyFilterTakesSeveral",
   "scoresSortedByScore",
+  "settingsSortOpensScoresOnIt",
   "scoresSearchInTheTopBand",
   "scoresSearchedByAnyName",
   "scoreDetailsHeadedLikeTheirRow",
@@ -154,6 +156,15 @@ export async function scores(ctx: Ctx) {
   results.scoresStartAtTheShownDifficulty =
     (await difficultyChip()) === difficultyNamed(en.t("difficulty.oni"), en.t("difficulty.ura")) &&
     same(sorted((await shownRows()).map((row) => row.chart)), sorted(extreme));
+  // Recent plays first, as Settings starts: the stand-in's newest play is its last song.
+  const songOf = (charted: string) => Number(charted.split("/")[0]);
+  const newestFirst = [...extreme].sort((left, right) => songOf(right) - songOf(left));
+  results.scoresOpenSortedByRecentPlay =
+    (await textOf("#scores-sort")) === en.t("scores.sort.recent") &&
+    same(
+      (await shownRows()).map((row) => row.chart),
+      newestFirst,
+    );
   await mousePress("#scores-difficulty .MuiChip-deleteIcon", "left");
   await rowsAre(shown);
   results.firstReadTakesEveryScore =
@@ -284,6 +295,30 @@ export async function scores(ctx: Ctx) {
   results.scoresSortedByScore =
     byScore.length === shown + 2 &&
     byScore.every((score, at) => at === 0 || (byScore[at - 1] ?? 0) >= score);
+
+  // Settings' default sort opens the page on it, as each visit starts afresh.
+  const startOn = async (choice: string) => {
+    await goTo("settings");
+    // The list opens on a press, as a mouse's does, not on a click.
+    await mousePress("#starting-sort", "left");
+    await waitFor(
+      "the sorts' list",
+      async () => (await exists(`#starting-sort-${choice}`)) || undefined,
+    );
+    await click(`#starting-sort-${choice}`);
+    await Bun.sleep(500);
+    await goTo("scores");
+    await mousePress("#scores-difficulty .MuiChip-deleteIcon", "left");
+    await rowsAre(shown + 2);
+  };
+  await startOn("score");
+  const openedByScore = (await shownRows()).map((row) =>
+    Number(row.facts.split(" · ")[0]?.replace(/,/g, "")),
+  );
+  results.settingsSortOpensScoresOnIt =
+    (await textOf("#scores-sort")) === en.t("scores.sort.score") &&
+    openedByScore.every((score, at) => at === 0 || (openedByScore[at - 1] ?? 0) >= score);
+  await startOn("recent");
 
   // The search sits in the top band, and stays there as the list scrolls under it.
   const searchInTheBand = async () => {

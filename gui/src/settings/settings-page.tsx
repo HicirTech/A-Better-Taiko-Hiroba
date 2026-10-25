@@ -2,11 +2,13 @@ import type { Translator } from "@abth/i18n";
 import { Button, List, ListItem, ListItemText, Stack } from "@mui/material";
 import { type ReactNode, useId } from "react";
 
+import type { SortChoice } from "../shared/scores/score-order";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { AccountCircleIcon } from "../ui/icons";
 import { CARD_GAP } from "../ui/section-card";
 import { GitHubSection } from "./github-section";
+import { ScoresSection } from "./scores-section";
 import { SettingsSection } from "./settings-section";
 import { SongDataSection } from "./song-data-section";
 import { SongLevelsSection } from "./song-levels-section";
@@ -34,6 +36,9 @@ export interface SettingsPageProps {
   /** The difficulty whose level songs show in front. */
   readonly shownDifficulty: ShownDifficulty;
   readonly onShownDifficulty: (next: ShownDifficulty) => void;
+  /** What Scores is sorted by as it opens. */
+  readonly startingSort: SortChoice;
+  readonly onStartingSort: (next: SortChoice) => void;
   /** Where a song's details take their chart pictures from. */
   readonly chartSource: ChartSource;
   readonly onChartSource: (next: ChartSource) => void;
@@ -50,6 +55,8 @@ export function SettingsPage({
   account,
   shownDifficulty,
   onShownDifficulty,
+  startingSort,
+  onStartingSort,
   chartSource,
   onChartSource,
   updates,
@@ -101,6 +108,7 @@ export function SettingsPage({
       </SettingsSection>
       {updates !== undefined && <UpdatesSection i18n={i18n} {...updates} />}
       <SongLevelsSection shown={shownDifficulty} i18n={i18n} onShown={onShownDifficulty} />
+      <ScoresSection startingSort={startingSort} i18n={i18n} onStartingSort={onStartingSort} />
       <SongDataSection source={chartSource} i18n={i18n} onSource={onChartSource} />
       {onOpenRepository !== undefined && <GitHubSection i18n={i18n} onOpen={onOpenRepository} />}
     </Stack>

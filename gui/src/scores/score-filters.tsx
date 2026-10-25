@@ -1,7 +1,12 @@
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { Translator } from "@abth/i18n";
 import { Box, type Theme } from "@mui/material";
 import type { PictureLane } from "../pictures/picture-lane";
-import { SCORE_SORTS, type ScoreFilter, type ScoreSort } from "../shared/scores/score-order";
+import {
+  SCORE_SORTS,
+  type ScoreFilter,
+  type ScoreSort,
+  SORT_LABEL,
+} from "../shared/scores/score-order";
 import {
   DIFFICULTY_COLOUR,
   DIFFICULTY_LABEL,
@@ -25,17 +30,6 @@ const ROW = {
   scrollbarWidth: "none",
   "& > *": { flexShrink: 0 },
 } as const;
-
-const SORT_LABEL = {
-  score: "scores.sort.score",
-  rank: "scores.sort.rank",
-  genre: "picker.genre",
-  crown: "scores.sort.crown",
-  plays: "scores.plays",
-  fullCombos: "scores.fullCombos",
-  clears: "scores.clears",
-  recent: "scores.sort.recent",
-} as const satisfies Record<ScoreSort, MessageKey>;
 
 /** The genres, difficulties and stars the scores are narrowed to, and what they are sorted by. */
 export function ScoreFilters({
@@ -99,7 +93,7 @@ export function ScoreFilters({
         options={sorts}
         chosen={sort}
         i18n={i18n}
-        allLabel={t("scores.sort.name")}
+        allLabel={t(SORT_LABEL.name)}
         onChoose={onSort}
       />
       {/* Last, as it keeps its words: on a phone the chips used most stay in view. */}

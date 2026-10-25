@@ -222,6 +222,9 @@ export interface Messages {
   "settings.songLevels": string;
   "settings.shownDifficulty": string;
   "settings.shownDifficultyHint": string;
+  "settings.scores": string;
+  "settings.startingSort": string;
+  "settings.startingSortHint": string;
   "settings.appearance": string;
   "settings.theme": string;
   "settings.theme.default": string;

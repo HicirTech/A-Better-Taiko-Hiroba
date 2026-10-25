@@ -189,6 +189,9 @@ export const ja: Messages = {
   "settings.shownDifficulty": "手前に表示する難易度",
   "settings.shownDifficultyHint":
     "その難易度の星を手前に、おには裏譜面も並べて表示します。ほかの星は後ろに重なり、クリックで横に広がります。",
+  "settings.scores": "スコアデータ",
+  "settings.startingSort": "最初の並び順",
+  "settings.startingSortHint": "スコアデータを開いたときの並び順です。",
   "settings.appearance": "外観",
   "settings.theme": "テーマ",
   "settings.theme.default": "標準",
