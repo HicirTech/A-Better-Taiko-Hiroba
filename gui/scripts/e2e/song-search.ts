@@ -134,6 +134,12 @@ export async function songSearch(ctx: Ctx) {
   const bar = await boxOf("#song-search");
   results.searchBarInTheTopBand =
     bar.top >= 0 && bar.bottom <= TOP_BAND_PX && !(await exists("#song-search-panel"));
+  const fieldLeft = () =>
+    page.evaluate<number>(
+      `document.querySelector("#song-search-input").getBoundingClientRect().left`,
+    );
+  // Read at rest, before the phone's size below, which the page can still be leaving just after.
+  const leftAtRest = await fieldLeft();
   results.searchBarAcrossAPhone = await atSize(PHONE_TALL.width, PHONE_TALL.height, async () => {
     await touchEmulated(true);
     try {
@@ -148,11 +154,6 @@ export async function songSearch(ctx: Ctx) {
     }
   });
 
-  const fieldLeft = () =>
-    page.evaluate<number>(
-      `document.querySelector("#song-search-input").getBoundingClientRect().left`,
-    );
-  const leftAtRest = await fieldLeft();
   await search("signal");
   await shown("#song-search-row-1019");
   const leftSearching = await fieldLeft();

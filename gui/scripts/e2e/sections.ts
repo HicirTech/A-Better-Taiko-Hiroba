@@ -72,7 +72,14 @@ import {
   signedOutReopen,
   signedOutReopenKeys,
 } from "./session";
-import { language, languageKeys, settings, settingsKeys } from "./settings";
+import {
+  appearance,
+  appearanceKeys,
+  language,
+  languageKeys,
+  settings,
+  settingsKeys,
+} from "./settings";
 import { signedOut, signedOutKeys } from "./signed-out";
 import { songSearch, songSearchKeys } from "./song-search";
 import { updates, updatesKeys } from "./updates";
@@ -88,6 +95,7 @@ import {
 /** Every section in the order they run: in a serial run all of them, in a lane its own. */
 export const SECTIONS: readonly Section[] = [
   { name: "language", phase: "none", lane: "names", keys: languageKeys, run: language },
+  { name: "appearance", phase: "none", lane: "names", keys: appearanceKeys, run: appearance },
   { name: "updates", phase: "none", lane: "names", keys: updatesKeys, run: updates },
   { name: "page-gone", phase: "none", lane: "names", keys: pageGoneKeys, run: pageGone },
   { name: "signed-out", phase: "signedOut", lane: "names", keys: signedOutKeys, run: signedOut },

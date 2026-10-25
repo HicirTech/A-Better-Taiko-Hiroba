@@ -222,6 +222,14 @@ export interface Messages {
   "settings.songLevels": string;
   "settings.shownDifficulty": string;
   "settings.shownDifficultyHint": string;
+  "settings.appearance": string;
+  "settings.theme": string;
+  "settings.theme.default": string;
+  "settings.theme.hiroba": string;
+  "settings.mode": string;
+  "settings.mode.system": string;
+  "settings.mode.light": string;
+  "settings.mode.dark": string;
   "signIn.intro": string;
   "signIn.action": string;
   "signIn.inProgress": string;

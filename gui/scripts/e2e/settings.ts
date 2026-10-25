@@ -1,6 +1,6 @@
 import { rmSync } from "node:fs";
 import { launch, stop } from "./app";
-import { en, ja, LANGUAGE_USER_DATA, NOON_JST, zhHant } from "./config";
+import { APPEARANCE_USER_DATA, en, ja, LANGUAGE_USER_DATA, NOON_JST, zhHant } from "./config";
 import type { Ctx } from "./context";
 import { same, waitFor } from "./harness";
 import { platesAsked, readHits } from "./stand-in";
@@ -135,6 +135,83 @@ export async function language(ctx: Ctx) {
   }
 }
 
+export const appearanceKeys = [
+  "appearanceStartsAsInstalled",
+  "hirobasColoursTakeHold",
+  "darkModeTakesHold",
+  "appearanceKeptAcrossLaunches",
+  "defaultAppearanceComesBack",
+] as const;
+
+// Hiroba's colours: its yellow page and red panel in light, its night purple and dark red in dark.
+const HIROBA_LIGHT = { page: "rgb(255, 204, 0)", panel: "rgb(154, 18, 0)" };
+const HIROBA_DARK = { page: "rgb(21, 8, 38)", panel: "rgb(77, 9, 0)" };
+
+export async function appearance(ctx: Ctx) {
+  const { results } = ctx;
+  const lookOf = (app: Awaited<ReturnType<typeof launch>>) =>
+    app.page.evaluate<Record<string, string | null>>(
+      `(() => { const pressed = (id) => document.getElementById(id)?.getAttribute("aria-pressed") === "true"; const panel = document.querySelector(".MuiDrawer-paper"); return { theme: ["default", "hiroba"].find((name) => pressed("theme-" + name)) ?? null, mode: ["system", "light", "dark"].find((mode) => pressed("theme-mode-" + mode)) ?? null, page: getComputedStyle(document.body).backgroundColor, panel: panel === null ? null : getComputedStyle(panel).backgroundColor }; })()`,
+    );
+  const choose = async (app: Awaited<ReturnType<typeof launch>>, id: string, page: string) => {
+    await app.click(`#${id}`);
+    await waitFor(
+      `the page in ${page}`,
+      async () => (await lookOf(app)).page === page || undefined,
+    );
+  };
+  rmSync(APPEARANCE_USER_DATA, { recursive: true, force: true });
+  let app = await launch({ now: NOON_JST, userData: APPEARANCE_USER_DATA });
+
+  try {
+    await app.until(en.t("signIn.action"));
+    // Settings opens only after a sign-in; the launches below keep its session.
+    await app.click("#sign-in");
+    await app.until("サンプルどん");
+    await app.goTo("settings");
+    const installed = await lookOf(app);
+    results.appearanceStartsAsInstalled =
+      installed.theme === "default" && installed.mode === "system";
+    await choose(app, "theme-mode-light", "rgb(255, 255, 255)");
+    await choose(app, "theme-hiroba", HIROBA_LIGHT.page);
+    results.hirobasColoursTakeHold = same(await lookOf(app), {
+      theme: "hiroba",
+      mode: "light",
+      ...HIROBA_LIGHT,
+    });
+    await choose(app, "theme-mode-dark", HIROBA_DARK.page);
+    results.darkModeTakesHold = same(await lookOf(app), {
+      theme: "hiroba",
+      mode: "dark",
+      ...HIROBA_DARK,
+    });
+    await stop(app);
+    app = await launch({ now: NOON_JST, userData: APPEARANCE_USER_DATA });
+    await waitFor("settings page", async () => (await app.textOf("#appearance")) ?? undefined);
+    results.appearanceKeptAcrossLaunches = same(await lookOf(app), {
+      theme: "hiroba",
+      mode: "dark",
+      ...HIROBA_DARK,
+    });
+    const systemPage = (await app.page.evaluate<boolean>(
+      `matchMedia("(prefers-color-scheme: dark)").matches`,
+    ))
+      ? "rgb(18, 18, 18)"
+      : "rgb(255, 255, 255)";
+    await choose(app, "theme-default", "rgb(18, 18, 18)");
+    await choose(app, "theme-mode-system", systemPage);
+    await stop(app);
+    app = await launch({ now: NOON_JST, userData: APPEARANCE_USER_DATA });
+    await waitFor("settings page", async () => (await app.textOf("#appearance")) ?? undefined);
+    const back = await lookOf(app);
+    results.defaultAppearanceComesBack =
+      back.theme === "default" && back.mode === "system" && back.page === systemPage;
+  } finally {
+    await stop(app);
+    rmSync(APPEARANCE_USER_DATA, { recursive: true, force: true });
+  }
+}
+
 export const settingsKeys = [
   "settingsLaidOutLikeGmail",
   "githubOpensTheRepository",
@@ -155,6 +232,7 @@ export async function settings(ctx: Ctx) {
   results.settingsLaidOutLikeGmail = same(settingsLayout, {
     sections: [
       ["language-setting", "H2", true, 1],
+      ["appearance", "H2", true, 1],
       ["account", "H2", true, 1],
       ["updates", "H2", true, 1],
       ["song-levels", "H2", true, 1],

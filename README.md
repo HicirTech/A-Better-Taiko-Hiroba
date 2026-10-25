@@ -41,6 +41,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [ ] Run as a web app — later
 - [ ] Drive the same core from a script, through a programmatic API
 - [x] Speak English, Japanese, Simplified Chinese and Traditional Chinese
+- [x] Wear the default colours or Hiroba's own, light, dark or as your system is
 - [x] Tell you when a newer version is out
 - [ ] Upload your scores to Kinoko
 

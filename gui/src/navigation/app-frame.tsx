@@ -9,6 +9,7 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
+  type Theme,
   Typography,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
@@ -24,6 +25,7 @@ import {
 } from "react";
 
 import type { SystemBack } from "../platform";
+import { NavigationLook } from "../theme/navigation-look";
 import { BackClosersContext, BackModesContext, createBackClosers } from "../ui/back-closers";
 import { MENU_INSET_PX, PAGE_BOTTOM_PX, SAFE_TOP, TOP_BAND_PX } from "../ui/frame-top";
 import { ArrowBackIcon, ArrowForwardIcon, MenuIcon } from "../ui/icons";
@@ -228,6 +230,14 @@ export function AppFrame({
 /** A page row's shape: flush with the panel's left edge, round at the right. */
 const ROW_SHAPE = { mr: 1.5, borderRadius: "0 999px 999px 0" } as const;
 
+/** A row's hover fades as MUI's does; its words change colour as the highlight travels to it. */
+const rowChange = (theme: Theme) => {
+  const hover = theme.transitions.create("background-color", {
+    duration: theme.transitions.duration.shortest,
+  });
+  return `${hover}, color ${MOVE_TIMING}`;
+};
+
 /** Where the current page's row lies in the list. */
 interface RowPlace {
   readonly top: number;
@@ -287,6 +297,8 @@ function PageList({
               onClick={() => onNavigate(each)}
               sx={{
                 ...ROW_SHAPE,
+                transition: rowChange,
+                "@media (prefers-reduced-motion: reduce)": { transition: "none" },
                 "&.Mui-selected, &.Mui-selected:hover": { bgcolor: "transparent" },
               }}
             >
@@ -362,21 +374,23 @@ function SidePanel({
 }) {
   return (
     <Box sx={{ width: PANEL_WIDTH_PX, flexShrink: 0 }}>
-      <Drawer
-        variant="permanent"
-        sx={{
-          "& .MuiDrawer-paper": {
-            width: PANEL_WIDTH_PX,
-            boxSizing: "border-box",
-            viewTransitionName: STILL.nav,
-          },
-        }}
-      >
-        <Box component="nav">
-          <PageList {...props} />
-        </Box>
-        <Foot footRef={footRef} toggle={props.toggle} touchFirst={touchFirst} i18n={props.i18n} />
-      </Drawer>
+      <NavigationLook>
+        <Drawer
+          variant="permanent"
+          sx={{
+            "& .MuiDrawer-paper": {
+              width: PANEL_WIDTH_PX,
+              boxSizing: "border-box",
+              viewTransitionName: STILL.nav,
+            },
+          }}
+        >
+          <Box component="nav">
+            <PageList {...props} />
+          </Box>
+          <Foot footRef={footRef} toggle={props.toggle} touchFirst={touchFirst} i18n={props.i18n} />
+        </Drawer>
+      </NavigationLook>
     </Box>
   );
 }
@@ -436,22 +450,24 @@ function MenuDrawer({
           <MenuIcon />
         </IconButton>
       </Paper>
-      <Drawer
-        variant="temporary"
-        open={open}
-        onClose={() => setOpen(false)}
-        // Over a dialog that lets the menu's swipe through, such as a song's details.
-        sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
-        slotProps={{
-          paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX, viewTransitionName: STILL.nav } },
-          backdrop: { sx: { viewTransitionName: STILL.scrim } },
-        }}
-      >
-        <Box component="nav" aria-label={label}>
-          <PageList page={page} onNavigate={pick} i18n={i18n} pages={pages} toggle={toggle} />
-        </Box>
-        <Foot footRef={footRef} toggle={toggle} touchFirst={touchFirst} i18n={i18n} />
-      </Drawer>
+      <NavigationLook>
+        <Drawer
+          variant="temporary"
+          open={open}
+          onClose={() => setOpen(false)}
+          // Over a dialog that lets the menu's swipe through, such as a song's details.
+          sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
+          slotProps={{
+            paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX, viewTransitionName: STILL.nav } },
+            backdrop: { sx: { viewTransitionName: STILL.scrim } },
+          }}
+        >
+          <Box component="nav" aria-label={label}>
+            <PageList page={page} onNavigate={pick} i18n={i18n} pages={pages} toggle={toggle} />
+          </Box>
+          <Foot footRef={footRef} toggle={toggle} touchFirst={touchFirst} i18n={i18n} />
+        </Drawer>
+      </NavigationLook>
     </>
   );
 }

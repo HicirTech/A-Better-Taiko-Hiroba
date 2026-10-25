@@ -34,6 +34,8 @@ export const userDataOf = (lane: number, name = "e2e-user-data") =>
 export const USER_DATA = userDataOf(LANE);
 /** Its own folder: a language picked there must not reach the runs that read English. */
 export const LANGUAGE_USER_DATA = userDataOf(LANE, "e2e-user-data-language");
+/** Its own folder too: a theme chosen there must not reach the runs that read colours. */
+export const APPEARANCE_USER_DATA = userDataOf(LANE, "e2e-user-data-appearance");
 export const UPDATES_USER_DATA = userDataOf(LANE, "e2e-user-data-updates");
 export const PAGE_GONE_USER_DATA = userDataOf(LANE, "e2e-user-data-page-gone");
 export const UPDATE_FEED = "/__update-feed/update.json";

@@ -7,10 +7,19 @@ import type { Page } from "../navigation/pages";
 import { useShownPage } from "../navigation/use-shown-page";
 import { PAGE_REGISTRY } from "../pages/registry";
 import { PipelinesPage } from "../pipelines-page/pipelines-page";
+import { AppearanceSection } from "../settings/appearance-section";
 import { LanguageSetting } from "../settings/language-setting";
 import type { HirobaSessionPort } from "../shared/session-port";
 import { touchOf, wideOf } from "./devices";
-import { i18nOf, localeOf, STORY_BACK, STORY_LINK, STORY_TOAST, type StoryGlobals } from "./env";
+import {
+  appearanceOf,
+  i18nOf,
+  localeOf,
+  STORY_BACK,
+  STORY_LINK,
+  STORY_TOAST,
+  type StoryGlobals,
+} from "./env";
 import { press } from "./steps";
 import { createStoryPort } from "./story-port";
 
@@ -69,6 +78,7 @@ export function StoryApp({
             i18n={i18n}
           />
         }
+        appearance={<AppearanceSection {...appearanceOf(globals)} i18n={i18n} />}
         {...(android ? { toast: STORY_TOAST } : {})}
       />
     </AppFrame>

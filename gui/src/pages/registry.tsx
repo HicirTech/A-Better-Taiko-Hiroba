@@ -222,6 +222,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
       <SettingsPage
         i18n={data.i18n}
         language={data.language}
+        appearance={data.appearance}
         account={accountOf(data)}
         shownDifficulty={data.shownDifficulty}
         onShownDifficulty={data.onShownDifficulty}

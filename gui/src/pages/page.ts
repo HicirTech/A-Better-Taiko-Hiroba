@@ -50,6 +50,8 @@ export interface PageData extends PageState {
   readonly toast: SystemToast | undefined;
   /** Settings' language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
+  /** Settings' appearance section, drawn by the window that holds the theme. */
+  readonly appearance: ReactNode;
   readonly navigate: (page: Page) => void;
   readonly version: string;
   readonly updates: UpdateReminder;

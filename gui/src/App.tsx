@@ -37,11 +37,13 @@ export interface AppProps {
   readonly onNavigate: (page: Page) => void;
   /** Settings' language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
+  /** Settings' appearance section, drawn by the window that holds the theme. */
+  readonly appearance: ReactNode;
   /** The shell's Toast, where it has one: a long-press names a legend's item by it. */
   readonly toast?: SystemToast;
 }
 
-export function App({ port, link, i18n, page, onNavigate, language, toast }: AppProps) {
+export function App({ port, link, i18n, page, onNavigate, language, appearance, toast }: AppProps) {
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const wide = useWideWindow();
   const menuOpen = useContext(MenuOpenContext);
@@ -76,6 +78,7 @@ export function App({ port, link, i18n, page, onNavigate, language, toast }: App
     onChartSource,
     toast,
     language,
+    appearance,
     navigate: onNavigate,
     version: APP_VERSION,
     updates,

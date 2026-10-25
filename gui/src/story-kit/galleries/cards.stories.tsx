@@ -15,6 +15,7 @@ import * as NameSection from "../../name-title/name-section.stories";
 import * as TitleSection from "../../name-title/title-section.stories";
 import * as GroupDetails from "../../pipelines-page/group-details.stories";
 import * as PipelineSection from "../../pipelines-page/pipeline-section.stories";
+import * as AppearanceSection from "../../settings/appearance-section.stories";
 import * as GitHubSection from "../../settings/github-section.stories";
 import * as SettingsSection from "../../settings/settings-section.stories";
 import * as SongDataSection from "../../settings/song-data-section.stories";
@@ -63,6 +64,11 @@ const meta = {
         { name: "TitleSection", meta: TitleSection.default, story: TitleSection.Title },
         { name: "NameSection", meta: NameSection.default, story: NameSection.Nickname },
         { name: "SettingsSection", meta: SettingsSection.default, story: SettingsSection.Section },
+        {
+          name: "AppearanceSection",
+          meta: AppearanceSection.default,
+          story: AppearanceSection.AsInstalled,
+        },
         { name: "UpdatesSection", meta: UpdatesSection.default, story: UpdatesSection.Idle },
         {
           name: "SongLevelsSection",
