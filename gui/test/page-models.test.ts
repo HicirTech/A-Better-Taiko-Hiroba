@@ -29,7 +29,11 @@ function pageState(overrides: Record<string, unknown> = {}) {
     },
     scores: { ...reads("scores"), view: { scores: [] }, song: null, progress: null },
     ratingData: { ...reads("ratingData"), data: null, failure: null },
-    catalogue: { state: "ready", readIfFailed: call("songList.readIfFailed") },
+    catalogue: {
+      state: "ready",
+      readIfFailed: call("songList.readIfFailed"),
+      readWhole: call("songList.readWhole", Promise.resolve()),
+    },
     listed: { charts: [] },
     editor: { ...reads("costume"), step: { name: "editing" }, dropEdits: call("costume.drop") },
     favorites: {
@@ -39,6 +43,7 @@ function pageState(overrides: Record<string, unknown> = {}) {
     },
     keptSets: { reload: call("sets.reload") },
     keptSearches: { reload: call("searches.reload") },
+    songSearchOpen: false,
     titleEditor: { dropEdits: call("title.drop"), forgetList: call("titles.forget") },
     nameEditor: { dropEdits: call("name.drop") },
     pickable: { markStale: call("pickable.markStale") },
@@ -149,6 +154,15 @@ describe("PAGE_MODELS", () => {
 
     expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(kept))).toEqual(["scores"]);
     expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(none))).toEqual([]);
+  });
+
+  test("reads taiko.wiki's whole song list again only while the song search stands open", async () => {
+    const { state, calls } = pageState({ songSearchOpen: true });
+    const every = PAGE_MODELS.overview.readsEvery;
+
+    expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(state))).toEqual(["overview"]);
+    await every?.read(state);
+    expect(calls).toEqual(["songList.readWhole"]);
   });
 });
 

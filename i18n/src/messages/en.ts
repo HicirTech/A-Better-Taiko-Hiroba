@@ -454,6 +454,12 @@ export const en: Messages = {
   "search.leave": "Close the search",
   "search.clear": "Clear",
   "search.forget": "Remove “{query}”",
+  "search.readingList": "Reading taiko.wiki's song list again…",
+  "search.listRead": "taiko.wiki's song list was read again.",
+  "search.newSongPull":
+    "A new song? Pull down and hold for {seconds} seconds to read taiko.wiki's song list again.",
+  "search.newSongHold":
+    "A new song? Hold “{button}” for {seconds} seconds to read taiko.wiki's song list again.",
   "details.charts": "Charts",
   "details.maxCombo": "Max combo: {count}",
   "details.branched": "Branched chart",

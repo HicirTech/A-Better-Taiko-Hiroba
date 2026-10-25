@@ -351,6 +351,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "觀配淺深",
     "着戶狀態地址剔效絡",
     "享生",
+    "嗎",
   ].join(""),
 );
 

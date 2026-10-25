@@ -21,6 +21,12 @@ import type { CatalogueSong, ChineseNamesRead, SongCatalogueFailure } from "./ty
 /** A song with the Chinese wiki's names for it, none until they are read. */
 export type ListedSong = CatalogueSong & { readonly chineseNames: readonly string[] };
 
+/** How a read of the whole list ended: when, and its failure if it failed. */
+export interface WholeRead {
+  readonly at: number;
+  readonly failure: SongCatalogueFailure["code"] | null;
+}
+
 export interface SongCatalogue {
   readonly songs: ReadonlyMap<string, ListedSong>;
   readonly list: readonly ListedSong[];
@@ -33,6 +39,10 @@ export interface SongCatalogue {
   readIfFailed(): void;
   /** Reads the list again if the one kept is a day old, as Read again does on a page of songs. */
   readIfStale(): void;
+  /** Reads the whole list again, whatever the kept one's age: a new song may be missing from it. */
+  readWhole(): Promise<void>;
+  /** How the last read of the whole list ended, once one has. */
+  readonly wholeRead: WholeRead | null;
 }
 
 const NONE: readonly CatalogueSong[] = [];
@@ -43,6 +53,7 @@ const FETCHES = { callFailed: { code: "callFailed" } } as const;
 export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): SongCatalogue {
   const [kept, setKept] = useState<KeptCatalogue | null>(null);
   const [names, setNames] = useState<ChineseNamesRead | null>(null);
+  const [wholeRead, setWholeRead] = useState<WholeRead | null>(null);
   const [reads, status] = useReadRun<SongCatalogueFailure>(FETCHES);
   const [nameReads] = useReadRun<SongCatalogueFailure>(FETCHES);
   const started = useRef(false);
@@ -113,6 +124,24 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
     }
   }, [refresh]);
 
+  const readWhole = useCallback(async () => {
+    const read = await reads.run(() => port.readSongCatalogue(null), {
+      keep: (result) => {
+        if (result.ok) {
+          // The whole list stands for itself: a song it lacks has left taiko.wiki.
+          const whole = mergeCatalogue(null, result.value);
+          keepCatalogue(whole);
+          keptNow.current = whole;
+          setKept(whole);
+        }
+      },
+    });
+    // A read already running turns this one away, and tells for itself how it ends.
+    if (read !== null) {
+      setWholeRead({ at: Date.now(), failure: read.ok ? null : read.error.code });
+    }
+  }, [reads, port]);
+
   const known = kept?.songs ?? NONE;
   const list = useMemo(() => {
     const named = chineseNamesBySong(known, names?.pages ?? []);
@@ -127,5 +156,7 @@ export function useSongCatalogue(port: HirobaSessionPort, needed: boolean): Song
     failure: kept === null ? (status.failure?.code ?? null) : null,
     readIfFailed,
     readIfStale,
+    readWhole,
+    wholeRead,
   };
 }

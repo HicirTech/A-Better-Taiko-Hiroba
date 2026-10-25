@@ -118,7 +118,7 @@ export function App({
             fetchedAt={screen.name === "profile" ? screen.profile.fetchedAt : null}
             progress={again.progress}
             onRead={again.read}
-            onHeld={again.askEvery}
+            onHeld={again.readEvery}
             i18n={i18n}
           />
         </NavFoot>
@@ -128,7 +128,7 @@ export function App({
           active={touchFirst}
           canRead={again.canRead}
           onRead={again.read}
-          onHeld={again.askEvery}
+          onHeld={again.readEvery}
         />
       )}
       {again.question}

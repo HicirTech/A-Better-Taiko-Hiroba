@@ -13,8 +13,9 @@ export interface ReadAgain {
   /** How far a long read has come, said at the navigation's foot. */
   readonly progress: string | null;
   readonly read: () => Promise<void>;
-  /** Asks to read all of the page's data again, where the page can and keeps some. */
-  readonly askEvery: (() => void) | undefined;
+  /** A long hold's read of all of the page's data, asked about first where the page asks; none
+   * where the page has nothing to read so. */
+  readonly readEvery: (() => void) | undefined;
   /** That read's question, while the page has one. */
   readonly question: ReactNode;
 }
@@ -47,7 +48,7 @@ export function useReadAgain(entry: PageEntry, data: PageData): ReadAgain {
     }
   };
   useReadAgainKeys(signedIn, read);
-  // Reading all of a page's data again takes minutes, so the page asks for it by a long hold.
+  // All of a page's data is read again by a long hold; Scores' takes minutes, so it asks first.
   const every = profileShown ? (entry.readsEvery ?? null) : null;
   const ask = every === null ? undefined : entry.askEvery;
   const [asking, setAsking] = useState(false);
@@ -60,7 +61,12 @@ export function useReadAgain(entry: PageEntry, data: PageData): ReadAgain {
     reading: myPageReading || (following?.reading ?? false),
     progress: scores.reading ? scoresReadingText(i18n, scores.progress, scores.song) : null,
     read,
-    askEvery: ask !== undefined && every?.can(data) === true ? () => setAsking(true) : undefined,
+    readEvery:
+      every === null || !every.can(data)
+        ? undefined
+        : ask === undefined
+          ? () => void every.read(data)
+          : () => setAsking(true),
     question:
       every === null || ask === undefined
         ? null
