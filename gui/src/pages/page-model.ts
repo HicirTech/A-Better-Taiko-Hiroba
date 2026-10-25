@@ -1,7 +1,6 @@
 import type { MessageKey, TranslateParams } from "@abth/i18n";
 
 import type { PickableReading } from "../favorites/use-pickable-songs";
-import type { RecentPlaysState } from "../history/use-recent-plays";
 import type { NameEditor } from "../name-title/use-name-editor";
 import type { TitleEditor } from "../name-title/use-title-editor";
 import type { Page } from "../navigation/pages";
@@ -50,7 +49,6 @@ export interface PageState {
   readonly session: SessionReads;
   /** A write to Hiroba runs, from any editor. */
   readonly writing: boolean;
-  readonly history: RecentPlaysState;
   readonly scores: ScoresState;
   readonly listed: ListedChartsView | null;
   readonly ratingData: RatingDataState;
@@ -111,21 +109,15 @@ const dueFirst = (editor: EditorReads, writing: boolean) =>
 /** A whole read of the scores runs: it holds the pages showing them; one song's does not. */
 export const scoresRead = ({ scores }: PageState): boolean =>
   scores.reading && scores.song === null;
-// A read of the scores walks the plays, and a walk notes its plays in the scores. Neither is
-// waited for: either can run for minutes, and Read again on another page must not wait.
-const readScores = (state: PageState) => void state.scores.read().then(state.history.markStale);
+// Not waited for: a read of the scores can run for minutes, and Read again on another page
+// must not wait.
+const readScores = (state: PageState) => void state.scores.read();
 const readMyPage = (state: PageState) => state.session.read(false, true);
-
-/** Every recent play read again from the first page, in place of those kept. */
-const EVERY_PLAY: EveryRead = {
-  can: ({ history }) => (history.plays?.length ?? 0) > 0,
-  read: ({ history, scores }) => history.readEvery().then(scores.markStale),
-};
 
 /** Every score read again, its details too. */
 const EVERY_SCORE: EveryRead = {
   can: ({ scores }) => (scores.view?.scores.length ?? 0) > 0,
-  read: ({ scores, history }) => scores.readEvery().then(history.markStale),
+  read: ({ scores }) => scores.readEvery(),
 };
 
 /** What each page reads, and when. */
@@ -140,22 +132,11 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     reading: ({ session }) => session.myPageInView,
     readAgain: readMyPage,
   },
-  history: {
-    label: "nav.history",
-    namesSongs: true,
-    needsSongs: true,
-    opens: ({ history, scores, keptSets }) => [history.load, scores.load, keptSets.reload],
-    waits: ({ history }) => history.plays === null,
-    reading: ({ history }) => history.reading,
-    readAgain: ({ history, scores }) => void history.read().then(scores.markStale),
-    follows: ({ history }) => history,
-    readsEvery: EVERY_PLAY,
-  },
   scores: {
     label: "nav.scores",
     namesSongs: true,
     needsSongs: true,
-    opens: ({ scores }) => [scores.load],
+    opens: ({ scores, keptSets }) => [scores.load, keptSets.reload],
     waits: ({ scores }) => scores.view === null,
     reading: scoresRead,
     readAgain: readScores,

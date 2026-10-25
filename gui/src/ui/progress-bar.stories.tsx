@@ -72,7 +72,7 @@ export const WithATotal: Story = {
 /** A read that only counts its pages: the bar moves back and forth. */
 export const WithoutATotal: Story = {
   render: (_args, { globals }) => (
-    <ProgressBar label={i18nOf(globals).t("history.readingPage", { page: 2 })} />
+    <ProgressBar label={i18nOf(globals).t("scores.readingPlays", { page: 2 })} />
   ),
 };
 

@@ -15,10 +15,9 @@ tooltip); the season's どんメダル on Hiroba's own plate, and your favourite
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
 The window has no header. On the desktop it opens as tall as the Overview, so the Overview shows
-whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its nine pages:
+whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its eight pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
-**Recent plays** (the あそんだ曲 feed, see [Recent plays](#recent-plays)),
-**Scores** (every chart you played, see [Scores](#scores)),
+**Scores** (every chart you played, the most recent first, see [Scores](#scores)),
 **Rating** (your rating and skills, worked out from your scores, see [Rating](#rating)),
 **Know yourself** (where you stand, from your scores, see [Know yourself](#know-yourself)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
@@ -26,22 +25,22 @@ whole with no scrollbar, unless the screen has less room. On a wide window a sid
 **Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the appearance, the difficulty whose level songs show first, the sort Scores opens
 on, and signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back goes one level back: it closes the drawer or the dialog on top (the Costume page's History, say), and a dialog opened from a drawer, a menu or another dialog goes back to it; it goes from
-Costume, Nickname & title, Favourites, Recent plays, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
+Costume, Nickname & title, Favourites, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
 the app as before.
 A page lower in the list slides in from below and one higher up from above, as the list's highlight
-slides to its row; picking the page already shown does nothing. Recent plays, Scores, Rating and Know
+slides to its row; picking the page already shown does nothing. Scores, Rating and Know
 yourself show at once what they showed before, and what the device keeps for them is brought in while
 the window is idle once the Overview is read. A page whose own data is being read, the first time or again (my page, the Costume page's and
-Favourites' editors, the plays, the scores, the rating data or the song list), cannot be used
+Favourites' editors, the scores, the rating data or the song list), cannot be used
 meanwhile, and past 0.4 seconds shows its own shape in grey with a short bar in the middle of the
-window, which names and fills the read's progress where the read can tell (the page of recent plays it
-has reached, the lists and charts of a read of the scores); the page comes back at its top over that
+window, which names and fills the read's progress where the read can tell (the page of recent plays a
+read of the scores has reached, then its lists and charts); the page comes back at its top over that
 shape once the read ends, and a quicker read leaves it as it was; a page moved to while it waits
 slides in with that shape. A read again that fails on a page that had content shows that content with
 the failure over it, and Costume and Favourites can still be edited and synced then. Where there is nothing to show, grey
 words say why, and how to fill it: in the middle of the window when a page, or a search, has nothing at
 all, and in its place in a card, a song's details or a dialog; what a read found, such as charts still
-unread, is said in the same words over the list. The lists of Recent plays and Scores, the song
+unread, is said in the same words over the list. The list of Scores, the song
 picker, the song search's results and Know yourself's charts draw only the rows near the window, so
 thousands of them open and scroll as quickly as a few. A question
 or a name to type opens in one small dialog; a deeper task (a song's or a chart's details, the song
@@ -216,50 +215,32 @@ nickname that was asked for, taken or refused, so the folder holds those too, be
 carry your nickname, taiko number and title already: keep the folder to yourself, and delete it
 when you are done.
 
-### Recent plays
-
-The page of `history_recent_score.php`, second in the navigation, between the Overview and Scores.
-It shows the walk stored on the device, newest first, and has no button of its own: it reads again
-only when you ask, by a pull on a touch screen, or Read again and its keys, and says so while it has
-nothing yet. Each read first asks Hiroba to refresh, then walks the feed: page 1 alone, then up to
-three pages at once, in the play history's pipeline. The first read walks up to 200 pages, five
-charts a page, and a later read stops at the first chart whose record is already stored. A page that
-fails ends the read with nothing of it kept, and the notice names the page; the page's skeleton and
-the navigation's foot name the page being read. A pull held six seconds, or Read again held down as
-long on a computer, asks first, then walks every page again from the first, past the charts stored,
-and keeps that walk in their place. A row is a bar for each of the song's genres, the song, the score with
-the longest combo and the 良/可/不可/連打 hits; at its end Hiroba's icons of the difficulty, the crown,
-the rank and the play options (the support chart, whose picture has not been seen, as a lifebuoy),
-with the chart's star level under them, where taiko.wiki's list has the song. The play counts
-the feed also carries are kept for a page of a chart's details. The rows have no date and no song
-number, and stay on the device after a sign-out. A play's title and genre find its song in the
-score lists, else in taiko.wiki's list, a cover the wiki marks with a bracketed end counting as its
-original's title; the song is named in the player's language where taiko.wiki has it, and keeps
-Hiroba's title otherwise. A click anywhere on a row opens its chart in full, as Scores does; a chart never
-read in full is read there, after Hiroba's refresh, and a play whose song the app cannot tell (a
-title two songs share, or one no list nor taiko.wiki has yet) says why. A right-click on a row opens
-its menu, and a long press let go in place on a touch screen goes straight to what it offers: the
-song added to the end of a set kept on the device, or to a new one. A set that holds the song
-already, or is full, says so and cannot be chosen, a title several songs share asks which song
-first, and nothing is sent to Hiroba.
-
 ### Scores
 
-Every chart you played, read from Hiroba's score lists and detail pages, third in the navigation,
-between Recent plays and Rating. As Recent plays does, it reads only when you ask, by a pull on a
-touch screen, or Read again and its keys, and each read first asks Hiroba to refresh. The first read
-takes the eight score lists, in Hiroba's own pipeline since a list carries a form token, then the
-details of every chart they show played, five at once in a pipeline of their own; it takes a few
-minutes, and the page says how far it has come. A later read walks recent plays and reads again the
-details of each chart played since; a walk on the Recent plays page marks those charts too, and the
-page counts them until it reads them; a read that finds none says that nothing changed, since the
-scores follow recent plays. A title the lists do not carry yet reads its genre's list again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
-from there next time. A row looks as one of Recent plays does, the song named in the player's
-language from taiko.wiki's list. A search over every name of a song, in the top band as the
-Overview's is and staying there as the list scrolls, chips that each tick any
-number of genres, difficulties (Settings' one at first, Extreme with its Ura charts) and star
-levels, and a sort chip (recent plays first, a chart they no longer show last, unless Settings chose
-another sort to open on; score, rank, genre, crown, plays, full combos, clears; by name with none) work together, ties going by song number. A
+Every chart you played, read from Hiroba's score lists and detail pages, second in the navigation,
+between the Overview and Rating. It reads only when you ask, by a pull on a touch screen, or Read
+again and its keys, and each read first asks Hiroba to refresh, then walks the recent plays of
+`history_recent_score.php`: page 1 alone, then up to three pages at once, in the play history's
+pipeline, up to 200 pages of five charts the first time, and later only down to the first chart
+whose record is already stored. The walk is kept on the device, after a sign-out too, and the page's
+skeleton and the navigation's foot name the page it has reached. The first read takes the eight
+score lists, in Hiroba's own pipeline since a list carries a form token, then the details of every
+chart they show played, five at once in a pipeline of their own; it takes a few minutes, and the
+page says how far it has come. A later read reads again the details of each chart the walk found
+played since; a read that finds none says that nothing changed, since the scores follow recent
+plays. A title the lists do not carry yet reads its genre's list again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
+from there next time. A row is a bar for each of the song's genres, the song named in the player's
+language from taiko.wiki's list, the score with the longest combo and the 良/可/不可/連打 hits; at
+its end Hiroba's icons of the difficulty, the crown, the rank and the play options (the support
+chart, whose picture has not been seen, as a lifebuoy), with the chart's star level under them. A
+search over every name of a song, in the top band as the Overview's is and staying there as the list
+scrolls, chips that each tick any number of difficulties (Settings' one at first, Extreme with its
+Ura charts), star levels and genres, and a sort chip (recent plays first, a chart they no longer
+show last, unless Settings chose another sort to open on; score, rank, genre, crown, plays, full
+combos, clears; by name with none) work together, ties going by song number. A right-click on a row
+opens its menu, and a long press let go in place on a touch screen goes straight to what it offers:
+the song added to a new set, or to the end of a set kept on the device; a set that holds the song
+already, or is full, says so and cannot be chosen, and nothing is sent to Hiroba. A
 click on a row opens the chart in full, as Hiroba's own detail page has it, headed as its row is
 but for the hits, listed below with the Japan place, the four play counts and, where the chart has
 them, each section's hits and score with its crown over it (a section not cleared has none); a pull
@@ -274,7 +255,7 @@ shows it yet.
 ### Rating
 
 Your rating, worked out on the device from the kept scores as OurTaikoWiki's first rating does,
-fourth in the navigation, between Scores and Know yourself. Each Oni or Ura chart played with 75% accuracy
+third in the navigation, between Scores and Know yourself. Each Oni or Ura chart played with 75% accuracy
 or more is rated from its constant and its accuracy, and the rating comes from the best twenty. The
 page shows it above a radar of six skills, then the twenty charts it counts and the next twenty; a
 click on one opens its details, as on Scores. The constants are OurTaiko's published list, read the
@@ -307,7 +288,7 @@ the nearest thirty songs, go to a set on the device.
 
 ### The Costume page
 
-The page of the きせかえ editor, sixth in the navigation, between Know yourself and Nickname & title. The
+The page of the きせかえ editor, fifth in the navigation, between Know yourself and Nickname & title. The
 My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
 on a touch-first screen (`pointer: coarse`) a long-press of 0.7 seconds, held still, so a
 tap, a scroll or a pull begun on it goes nowhere; a pointer on it shows its name, and where a
@@ -371,7 +352,7 @@ Shift+Tab is scrolled clear of the tiles above it and the bar below.
 
 ### The Nickname & title page
 
-The page that changes your title (称号) and your nickname (ドンだーネーム): seventh in the navigation,
+The page that changes your title (称号) and your nickname (ドンだーネーム): sixth in the navigation,
 between Costume and Favourites, with a pencil beside its name. The name plate on the Overview is the
 way to it, as the portrait is to Costume: a click, Enter or Space, and on a touch-first screen a
 long-press. It opens on Hiroba's title plate as the Overview draws it, so the result is seen at

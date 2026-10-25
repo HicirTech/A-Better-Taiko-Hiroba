@@ -27,7 +27,6 @@ function pageState(overrides: Record<string, unknown> = {}) {
       myPageInView: false,
       read: call("myPage.read", Promise.resolve(true)),
     },
-    history: { ...reads("plays"), plays: [], page: null },
     scores: { ...reads("scores"), view: { scores: [] }, song: null, progress: null },
     ratingData: { ...reads("ratingData"), data: null, failure: null },
     catalogue: { state: "ready", readIfFailed: call("songList.readIfFailed") },
@@ -57,26 +56,18 @@ describe("PAGE_MODELS", () => {
 
   test("reads a day-old song list again on Read again only where a page names songs", () => {
     const naming = PAGES.filter((page) => PAGE_MODELS[page].namesSongs);
-    expect(naming).toEqual([
-      "overview",
-      "history",
-      "scores",
-      "rating",
-      "knowYourself",
-      "favorites",
-    ]);
+    expect(naming).toEqual(["overview", "scores", "rating", "knowYourself", "favorites"]);
   });
 
   test("reads the song list once a page that shows it opens", () => {
     const showing = PAGES.filter((page) => PAGE_MODELS[page].needsSongs);
-    expect(showing).toEqual(["history", "scores", "rating", "knowYourself", "favorites"]);
+    expect(showing).toEqual(["scores", "rating", "knowYourself", "favorites"]);
   });
 
   type OpensCase = [page: Page, reads: readonly string[]];
   test.each<OpensCase>([
     ["overview", ["searches.reload"]],
-    ["history", ["plays.load", "scores.load", "sets.reload"]],
-    ["scores", ["scores.load"]],
+    ["scores", ["scores.load", "sets.reload"]],
     ["rating", ["scores.load", "ratingData.load"]],
     ["knowYourself", ["scores.load", "songList.readIfFailed", "sets.reload"]],
     ["costume", []],
@@ -115,10 +106,9 @@ describe("PAGE_MODELS", () => {
   type ReadAgainCase = [page: Page, reads: readonly string[]];
   test.each<ReadAgainCase>([
     ["overview", ["myPage.read"]],
-    ["history", ["plays.read", "scores.markStale"]],
-    ["scores", ["scores.read", "plays.markStale"]],
-    ["rating", ["scores.read", "ratingData.read", "plays.markStale"]],
-    ["knowYourself", ["scores.read", "plays.markStale"]],
+    ["scores", ["scores.read"]],
+    ["rating", ["scores.read", "ratingData.read"]],
+    ["knowYourself", ["scores.read"]],
     ["costume", ["costume.read"]],
     ["nameTitle", ["myPage.read", "titles.forget"]],
     ["favorites", ["pickable.markStale", "favorites.read"]],
@@ -153,17 +143,11 @@ describe("PAGE_MODELS", () => {
     expect(calls).toEqual(["costume.drop", "title.drop", "name.drop", "favorites.drop"]);
   });
 
-  test("asks before reading every score or play again only where some are kept", () => {
-    const kept = pageState({
-      scores: { view: { scores: [{}] } },
-      history: { plays: [{}] },
-    }).state;
+  test("asks before reading every score again only where some are kept", () => {
+    const kept = pageState({ scores: { view: { scores: [{}] } } }).state;
     const none = pageState().state;
 
-    expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(kept))).toEqual([
-      "history",
-      "scores",
-    ]);
+    expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(kept))).toEqual(["scores"]);
     expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(none))).toEqual([]);
   });
 });

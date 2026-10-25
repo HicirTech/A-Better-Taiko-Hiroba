@@ -48,10 +48,6 @@ export function OverviewSkeleton(screen: SkeletonProps) {
   );
 }
 
-export function HistorySkeleton() {
-  return <PlayRowsSkeleton />;
-}
-
 export function ScoresSkeleton(screen: SkeletonProps) {
   return (
     <>

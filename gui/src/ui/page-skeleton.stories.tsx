@@ -39,9 +39,6 @@ export const ScoresAfterAWait = readSlowly("scores");
 /** The Overview's shape: the search, the portrait, plate and panel, the shares and the medal. */
 export const Overview = reading("overview");
 
-/** Recent plays: a window of play rows. */
-export const RecentPlays = reading("history");
-
 /** Scores: the search, the filter chips and the rows. */
 export const Scores = reading("scores");
 
@@ -78,13 +75,13 @@ export const ScoresReadAgain: Story = {
   play: () => readAgain("#scores-page"),
 };
 
-/** Recent plays read again, the walk never ending: its skeleton says the page it has reached. */
-export const RecentPlaysReadAgain: Story = {
-  render: appOn("history", {
-    readRecentPlays: neverAnswers,
-    recentPlaysProgress: () => Promise.resolve(3),
+/** Scores read again, still walking the recent plays: its skeleton says the page reached. */
+export const ScoresReadAgainWalkingPlays: Story = {
+  render: appOn("scores", {
+    readScores: neverAnswers,
+    scoresProgress: () => Promise.resolve({ step: "recentPlays", page: 3 }),
   }),
-  play: () => readAgain("#history-page"),
+  play: () => readAgain("#scores-page"),
 };
 
 /** The Overview read again, the refresh refused: my page as read before, the failure over it. */

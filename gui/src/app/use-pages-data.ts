@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useFavorites } from "../favorites/use-favorites";
 import { usePickableSongs } from "../favorites/use-pickable-songs";
-import { useRecentPlays } from "../history/use-recent-plays";
 import { useListedCharts } from "../know-yourself/use-listed-charts";
 import { useCostumeEditor } from "../my-page/use-costume-editor";
 import { useNameEditor } from "../name-title/use-name-editor";
@@ -23,7 +22,6 @@ import type { Session } from "./use-session";
 export type PagesData = Pick<
   PageData,
   | "writing"
-  | "history"
   | "scores"
   | "listed"
   | "ratingData"
@@ -54,8 +52,6 @@ export function usePagesData({
   const profileShown = screen.name === "profile";
   const pickable = usePickableSongs(port, sessionGone);
   const { forget: forgetPickable } = pickable;
-  const history = useRecentPlays(port, sessionGone);
-  const { load: loadPlays, forget: forgetPlays } = history;
   const scores = useScores(port, sessionGone);
   const { load: loadScores, forget: forgetScores } = scores;
   const listed = useListedCharts(port, scores.view);
@@ -109,7 +105,6 @@ export function usePagesData({
       forgetFavorites();
       forgetPickable();
       forgetScores();
-      forgetPlays();
     }
   }, [
     noSession,
@@ -119,23 +114,18 @@ export function usePagesData({
     forgetFavorites,
     forgetPickable,
     forgetScores,
-    forgetPlays,
   ]);
   // What the device keeps comes in while the window is idle, so no page waits for it later.
   useEffect(() => {
     if (!profileShown) {
       return;
     }
-    const idle = requestIdleCallback(() => {
-      loadScores();
-      loadPlays();
-    });
+    const idle = requestIdleCallback(() => loadScores());
     return () => cancelIdleCallback(idle);
-  }, [profileShown, loadScores, loadPlays]);
+  }, [profileShown, loadScores]);
 
   return {
     writing,
-    history,
     scores,
     listed,
     ratingData,

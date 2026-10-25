@@ -1,6 +1,4 @@
 import { FavoritesPage } from "../favorites/favorites-page";
-import { HistoryPage } from "../history/history-page";
-import { ReadEveryPlayDialog } from "../history/read-every-play-dialog";
 import { KnowYourselfPage } from "../know-yourself";
 import { CostumePage, CostumePageSkeleton } from "../my-page/costume-page";
 import { NameTitlePage } from "../name-title/name-title-page";
@@ -16,7 +14,6 @@ import {
   EditIcon,
   EmojiEventsIcon,
   FavoriteIcon,
-  HistoryIcon,
   HomeIcon,
   LeaderboardIcon,
   PsychologyIcon,
@@ -28,7 +25,6 @@ import type { PageData, PageEntry } from "./page";
 import { PAGE_MODELS, scoresRead } from "./page-model";
 import {
   FavoritesSkeleton,
-  HistorySkeleton,
   KnowYourselfSkeleton,
   NameTitleSkeleton,
   OverviewSkeleton,
@@ -65,30 +61,6 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     skeleton: OverviewSkeleton,
     draw: (data) => <OverviewPage data={data} />,
   },
-  history: {
-    ...PAGE_MODELS.history,
-    icon: <HistoryIcon />,
-    skeleton: HistorySkeleton,
-    progress: ({ history, i18n }) =>
-      history.reading
-        ? { words: i18n.t("history.readingPage", { page: history.page ?? 1 }), done: null }
-        : null,
-    askEvery: ({ i18n }, open, onAnswer) => (
-      <ReadEveryPlayDialog open={open} i18n={i18n} onAnswer={onAnswer} />
-    ),
-    draw: (data) => (
-      <HistoryPage
-        history={data.history}
-        scores={data.scores}
-        catalogue={data.catalogue}
-        keptSets={data.keptSets}
-        lane={data.lane}
-        touchFirst={data.touchFirst}
-        modalLook={data.modalLook}
-        i18n={data.i18n}
-      />
-    ),
-  },
   scores: {
     ...PAGE_MODELS.scores,
     icon: <EmojiEventsIcon />,
@@ -107,6 +79,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         scores={data.scores}
         catalogue={data.catalogue}
         lane={data.lane}
+        keptSets={data.keptSets}
         shownDifficulty={data.shownDifficulty}
         startingSort={data.startingSort}
         touchFirst={data.touchFirst}

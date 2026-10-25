@@ -1,4 +1,3 @@
-import { Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import type { ComponentProps } from "react";
 import { action } from "storybook/actions";
@@ -77,28 +76,6 @@ export const SetsForTheFolder: Story = {
           secondary: null,
           onChoose: action("choose"),
         }))}
-      />
-    );
-  },
-};
-
-/** No choice to make: what stands in for them shows instead. */
-export const Empty: Story = {
-  render: (args, { globals }) => {
-    const i18n = i18nOf(globals);
-    return (
-      <ChoiceDialog
-        {...args}
-        touchFirst={touchOf(globals)}
-        modalLook={modalLookOf(globals)}
-        i18n={i18n}
-        title={i18n.t("history.addToSet")}
-        choices={[]}
-        empty={
-          <Typography color="text.secondary" sx={{ px: 3, pt: 1, pb: 3 }}>
-            {i18n.t("history.unknownSong")}
-          </Typography>
-        }
       />
     );
   },

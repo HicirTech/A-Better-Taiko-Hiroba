@@ -53,14 +53,7 @@ import {
 import { pipelinesPage, pipelinesPageKeys } from "./pipelines-page";
 import { rating, ratingKeys } from "./rating";
 import { profileVariants, profileVariantsKeys, readAgain, readAgainKeys } from "./read-again";
-import {
-  recentPlayDetails,
-  recentPlayDetailsKeys,
-  recentPlaySets,
-  recentPlaySetsKeys,
-  recentPlays,
-  recentPlaysKeys,
-} from "./recent-plays";
+import { scoreSets, scoreSetsKeys } from "./score-sets";
 import { scores, scoresKeys } from "./scores";
 import {
   portraitRequests,
@@ -215,13 +208,6 @@ export const SECTIONS: readonly Section[] = [
   },
   { name: "favorites", phase: "signedIn", lane: "names", keys: favoritesKeys, run: favorites },
   { name: "song-search", phase: "signedIn", lane: "songs", keys: songSearchKeys, run: songSearch },
-  {
-    name: "recent-plays",
-    phase: "signedIn",
-    lane: "songs",
-    keys: recentPlaysKeys,
-    run: recentPlays,
-  },
   { name: "scores", phase: "signedIn", lane: "songs", keys: scoresKeys, run: scores },
   {
     name: "pipelines-page",
@@ -231,20 +217,7 @@ export const SECTIONS: readonly Section[] = [
     run: pipelinesPage,
   },
   { name: "rating", phase: "signedIn", lane: "songs", keys: ratingKeys, run: rating },
-  {
-    name: "recent-play-details",
-    phase: "signedIn",
-    lane: "songs",
-    keys: recentPlayDetailsKeys,
-    run: recentPlayDetails,
-  },
-  {
-    name: "recent-play-sets",
-    phase: "signedIn",
-    lane: "songs",
-    keys: recentPlaySetsKeys,
-    run: recentPlaySets,
-  },
+  { name: "score-sets", phase: "signedIn", lane: "songs", keys: scoreSetsKeys, run: scoreSets },
   {
     name: "know-yourself",
     phase: "signedIn",

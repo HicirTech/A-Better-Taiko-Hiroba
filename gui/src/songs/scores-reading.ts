@@ -3,7 +3,6 @@ import type { Translator } from "@abth/i18n";
 import type { ChosenSong } from "../shared/scores/use-scores";
 import type { ScoresProgress } from "../shared/session-port";
 import type { SkeletonProgress } from "../ui/page-skeleton";
-import { ProgressBar } from "../ui/progress-bar";
 
 /** What a read of scores is doing: the walk's page, the lists or charts so far, or one song. */
 export function scoresReadingText(
@@ -29,20 +28,4 @@ export function scoresReadingProgress(
 ): SkeletonProgress {
   const counted = song === null && progress !== null && progress.step !== "recentPlays";
   return { words: scoresReadingText(i18n, progress, song), done: counted ? progress : null };
-}
-
-/** A read of scores as a progress bar: it fills once the read knows its lists or charts. */
-export function ScoresReading({
-  id,
-  i18n,
-  progress,
-  song,
-}: {
-  readonly id?: string | undefined;
-  readonly i18n: Translator;
-  readonly progress: ScoresProgress | null;
-  readonly song: ChosenSong | null;
-}) {
-  const { words, done } = scoresReadingProgress(i18n, progress, song);
-  return <ProgressBar id={id} label={words} progress={done} />;
 }

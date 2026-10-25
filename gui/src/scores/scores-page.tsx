@@ -16,6 +16,8 @@ import {
 } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
 import type { ScoresStop, ScoreView } from "../shared/session-port";
+import { newSetName } from "../shared/sets/favorite-sets";
+import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import {
   DIFFICULTY_LABEL,
   GENRE_LABEL,
@@ -26,12 +28,16 @@ import { fold } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { PLAY_ROW_PX, PlayRow } from "../songs/play-row";
 import { ScoreDetails } from "../songs/score-details";
+import { SetNameDialog } from "../songs/set-name-dialog";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
+import type { ItemAction, Point } from "../ui/item-actions";
+import { ItemMenu, useItemMenu, useItemPress } from "../ui/item-menu";
 import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { RowList, type RowPlace } from "../ui/row-list";
 import { SearchField } from "../ui/search-field";
 import { StatusNote } from "../ui/status-note";
+import { AddToSetDialog } from "./add-to-set-dialog";
 import { ScoreFilters } from "./score-filters";
 
 const chartOf = ({ songNo, level }: ScoreView) => `${songNo}/${level}`;
@@ -42,6 +48,7 @@ export function ScoresPage({
   scores,
   catalogue,
   lane,
+  keptSets,
   shownDifficulty,
   startingSort,
   touchFirst,
@@ -53,11 +60,13 @@ export function ScoresPage({
   /** taiko.wiki's song list: the names in the player's language, and each chart's stars. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
+  /** The sets kept on this device, which a chart's song can go into. */
+  readonly keptSets: FavoriteSets;
   /** The difficulty the filter starts on, as Settings chose it. */
   readonly shownDifficulty: ShownDifficulty;
   /** The sort the page starts on, as Settings chose it. */
   readonly startingSort: SortChoice;
-  /** A touch screen: a pull reads. */
+  /** A touch screen: a pull reads, and a long press opens a chart's menu. */
   readonly touchFirst: boolean;
   /** The window is wide enough for the side panel. */
   readonly wide: boolean;
@@ -71,6 +80,14 @@ export function ScoresPage({
   const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(shownDifficulty));
   const [sort, setSort] = useState<ScoreSort | null>(() => sortOf(startingSort));
   const [opened, setOpened] = useState<string | null>(null);
+  // The chart whose song is being added to a set.
+  const [adding, setAdding] = useState<ListedScore | null>(null);
+  // The song a new set starts with, while its name is asked.
+  const [naming, setNaming] = useState<string | null>(null);
+  const rowActions = (one: ListedScore): readonly ItemAction[] => [
+    { key: "add", label: t("history.addToSet"), chooses: true, onPick: () => setAdding(one) },
+  ];
+  const menu = useItemMenu(rowActions);
 
   const rows = view?.scores ?? [];
   const listed = useMemo(
@@ -148,8 +165,10 @@ export function ScoresPage({
               lane={lane}
               order={index}
               place={place}
+              touchFirst={touchFirst}
               i18n={i18n}
               onOpen={() => setOpened(listedChart(one))}
+              onMenu={(at) => menu.open(one, at)}
             />
           )}
         </RowList>
@@ -164,28 +183,74 @@ export function ScoresPage({
           onReadSong={(score) => void readSong(score)}
           onClose={() => setOpened(null)}
         />
+        <ItemMenu
+          id="scores-row-menu"
+          dialogId="scores-row-actions"
+          opened={menu.opened}
+          nameOf={(one) => one.name}
+          actionsOf={rowActions}
+          cancel={t("favorites.delete.cancel")}
+          onClose={menu.close}
+        />
+        {adding !== null && (
+          <AddToSetDialog
+            name={{ text: adding.name, lang: adding.nameLang }}
+            songNo={adding.score.songNo}
+            sets={keptSets.sets}
+            touchFirst={touchFirst}
+            modalLook={modalLook}
+            i18n={i18n}
+            onAdd={(set) => {
+              keptSets.replaceSongs(set.id, [...set.songs, adding.score.songNo]);
+              setAdding(null);
+            }}
+            onNewSet={() => setNaming(adding.score.songNo)}
+            onClose={() => setAdding(null)}
+          />
+        )}
+        {naming !== null && (
+          <SetNameDialog
+            title={t("favorites.newSet")}
+            initial={newSetName(keptSets.sets, (count) =>
+              t("favorites.setName", { number: count }),
+            )}
+            i18n={i18n}
+            onCancel={() => setNaming(null)}
+            onSave={(name) => {
+              keptSets.add(name, [naming]);
+              setNaming(null);
+              setAdding(null);
+            }}
+          />
+        )}
       </Stack>
     </>
   );
 }
 
-/** A chart's row: a click, Enter or Space opens its details. */
+/** A chart's row: a press opens its details; a right-click or a long press, its menu. */
 function ScoreRow({
   listed,
   lane,
   order,
   place,
+  touchFirst,
   i18n,
   onOpen,
+  onMenu,
 }: {
   readonly listed: ListedScore;
   readonly lane: PictureLane;
   readonly order: number;
   readonly place: RowPlace;
+  readonly touchFirst: boolean;
   readonly i18n: Translator;
   readonly onOpen: () => void;
+  /** Where the right-click landed; none for a long press. */
+  readonly onMenu: (at: Point | null) => void;
 }) {
   const { score } = listed;
+  const { handlers, held } = useItemPress(touchFirst, onMenu);
   return (
     <PlayRow
       play={score}
@@ -196,6 +261,8 @@ function ScoreRow({
       order={order}
       i18n={i18n}
       onOpen={onOpen}
+      handlers={handlers}
+      held={held}
       place={place}
       data-song-no={score.songNo}
       data-level={score.level}
