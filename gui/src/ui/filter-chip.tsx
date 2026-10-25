@@ -166,6 +166,35 @@ export function FilterChip<T extends string | number>({
   );
 }
 
+/** A filter's choices as chips side by side, one at most chosen, each switched by a click. */
+export function FilterToggles<T extends string | number>({
+  id,
+  options,
+  chosen,
+  onChoose,
+}: {
+  id: string;
+  options: readonly FilterOption<T>[];
+  chosen: T | null;
+  onChoose: (value: T | null) => void;
+}) {
+  return options.map((option) => {
+    const on = option.value === chosen;
+    return (
+      <Chip
+        key={option.value}
+        id={`${id}-${option.value}`}
+        label={option.label}
+        variant={on ? "filled" : "outlined"}
+        aria-pressed={on}
+        onClick={() => onChoose(on ? null : option.value)}
+        onDelete={on ? () => onChoose(null) : undefined}
+        sx={on ? chosenChip(option.fill ?? THEME_FILL) : undefined}
+      />
+    );
+  });
+}
+
 /** A filter's chip whose menu ticks any number of choices; with none ticked it leaves all in. */
 export function MultiFilterChip<T extends string | number>({
   id,

@@ -1,5 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Chip, Menu, MenuItem, Stack } from "@mui/material";
+import { Box, Button, Menu, MenuItem, Stack } from "@mui/material";
 import { useId, useState } from "react";
 import type { FavoriteSet } from "../shared/sets/favorite-sets";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
@@ -7,6 +7,7 @@ import type { SongLook } from "../shared/song-catalogue/song-look";
 import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
 import { useBackCloses } from "../ui/back-closers";
 import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
+import { LabelChip } from "../ui/label-chip";
 import { CARD_ROWS, SectionCard } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";
 import { SimpleDialog } from "../ui/simple-dialog";
@@ -56,13 +57,10 @@ export function FolderCard({
         level={3}
         end={
           inUse !== null ? (
-            <Chip
+            <LabelChip
               id="favorite-folder-set"
               icon={<CheckIcon fontSize="small" />}
               label={t("favorites.inUse", { name: inUse.name })}
-              color="primary"
-              variant="outlined"
-              size="small"
             />
           ) : (
             songs.length > 0 && (

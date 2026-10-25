@@ -1,6 +1,6 @@
 import type { Result } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, Chip, Stack, ToggleButton, Typography } from "@mui/material";
+import { Box, Stack, ToggleButton, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { HIROBA_LANG } from "../shared/language/hiroba-lang";
@@ -21,6 +21,7 @@ import {
   type Difficulty,
 } from "../shared/song-catalogue/types";
 import type { ListedSong } from "../shared/song-catalogue/use-song-catalogue";
+import { LabelChip } from "../ui/label-chip";
 import { LargeModal, type ModalLook } from "../ui/large-modal";
 import { PullToRead } from "../ui/pull-to-read";
 import { ReadAgainButton } from "../ui/read-again-button";
@@ -263,15 +264,7 @@ function DetailsBody({
           </Box>
           <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
             {song.genres.map((genre) => (
-              <Chip
-                key={genre}
-                size="small"
-                label={t(GENRE_LABEL[genre])}
-                sx={{
-                  bgcolor: GENRE_COLOUR[genre],
-                  color: (theme) => theme.palette.getContrastText(GENRE_COLOUR[genre]),
-                }}
-              />
+              <LabelChip key={genre} label={t(GENRE_LABEL[genre])} fill={GENRE_COLOUR[genre]} />
             ))}
             {song.bpm !== null && (
               <Typography id="song-details-bpm" variant="body2" sx={{ fontWeight: 600 }}>
