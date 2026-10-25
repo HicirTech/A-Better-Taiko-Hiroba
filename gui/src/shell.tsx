@@ -9,6 +9,7 @@ import { useShownPage } from "./navigation/use-shown-page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { PipelinesPage } from "./pipelines-page/pipelines-page";
 import type { Platform } from "./platform";
+import { AppearanceSection } from "./settings/appearance-section";
 import { LanguageSetting } from "./settings/language-setting";
 import { SettingsPage } from "./settings/settings-page";
 import {
@@ -20,6 +21,7 @@ import {
 import { showLanguage } from "./shared/language/show-language";
 import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
 import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
+import type { AppearanceChoice } from "./theme/appearance";
 import { NoteAlert } from "./ui/note-alert";
 import { useTouchFirst } from "./ui/use-touch-first";
 import { useWideWindow } from "./ui/use-wide-window";
@@ -27,10 +29,13 @@ import { useWideWindow } from "./ui/use-wide-window";
 export function Shell({
   platform,
   onShown,
+  appearance,
 }: {
   platform: Platform | null;
   /** Called with each language the window is shown in, the first included. */
   onShown: (i18n: Translator) => void;
+  /** The theme and the mode, held where the window takes its theme. */
+  appearance: AppearanceChoice;
 }) {
   const [picked, setPicked] = useState(pickedLocale);
   const [system] = useState(systemLocale);
@@ -58,6 +63,7 @@ export function Shell({
     setPicked(next);
   };
   const language = <LanguageSetting picked={picked} system={system} onPick={pick} i18n={i18n} />;
+  const appearanceSection = <AppearanceSection {...appearance} i18n={i18n} />;
   return (
     <AppFrame
       page={page}
@@ -79,12 +85,14 @@ export function Shell({
           page={page}
           onNavigate={navigate}
           language={language}
+          appearance={appearanceSection}
           {...(platform.shell === "android" ? { toast: platform.toast } : {})}
         />
       ) : page === "settings" ? (
         <SettingsPage
           i18n={i18n}
           language={language}
+          appearance={appearanceSection}
           account={{ kind: "signedOut" }}
           shownDifficulty={shownDifficulty}
           onShownDifficulty={onShownDifficulty}

@@ -190,6 +190,14 @@ export const en: Messages = {
   "settings.shownDifficulty": "Difficulty shown first",
   "settings.shownDifficultyHint":
     "Its star level shows in front, with the Ura chart beside Extreme; the other levels stack behind it and spread out on a click.",
+  "settings.appearance": "Appearance",
+  "settings.theme": "Theme",
+  "settings.theme.default": "Default",
+  "settings.theme.hiroba": "Hiroba's colours",
+  "settings.mode": "Light or dark",
+  "settings.mode.system": "System default",
+  "settings.mode.light": "Light",
+  "settings.mode.dark": "Dark",
   "signIn.intro":
     "Sign in with your Bandai Namco ID to read your Donder Hiroba profile. The sign-in page is Hiroba's own; this app never sees your password.",
   "signIn.action": "Sign in to Hiroba",

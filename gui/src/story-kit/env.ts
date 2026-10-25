@@ -8,12 +8,29 @@ import {
 import { action } from "storybook/actions";
 
 import type { SystemBack, SystemLink, SystemToast } from "../platform";
+import {
+  type AppearanceChoice,
+  DEFAULT_THEME_MODE,
+  DEFAULT_THEME_NAME,
+  THEME_MODES,
+  THEME_NAMES,
+} from "../theme/appearance";
 
 /** The globals a story's render is given, as far as the story kit reads them. */
 export interface StoryGlobals {
   readonly locale?: unknown;
   readonly viewport?: unknown;
+  readonly theme?: unknown;
+  readonly mode?: unknown;
 }
+
+/** The theme and the mode the toolbar shows the stories in; Settings' choices go to Actions. */
+export const appearanceOf = ({ theme, mode }: StoryGlobals): AppearanceChoice => ({
+  theme: THEME_NAMES.find((name) => name === theme) ?? DEFAULT_THEME_NAME,
+  mode: THEME_MODES.find((one) => one === mode) ?? DEFAULT_THEME_MODE,
+  onTheme: action("choose a theme"),
+  onMode: action("choose light or dark"),
+});
 
 /** The language the toolbar shows the stories in. */
 export const localeOf = ({ locale }: StoryGlobals): Locale =>

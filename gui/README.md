@@ -23,7 +23,7 @@ whole with no scrollbar, unless the screen has less room. On a wide window a sid
 **Know yourself** (where you stand, from your scores, see [Know yourself](#know-yourself)),
 **Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
 **Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
-**Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the difficulty whose level songs show first, and
+**Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the appearance, the difficulty whose level songs show first, and
 signing out). On a narrow one, a menu button
 at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back goes one level back: it closes the drawer or the dialog on top (the Costume page's History, say), and a dialog opened from a drawer, a menu or another dialog goes back to it; it goes from
 Costume, Nickname & title, Favourites, Recent plays, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
@@ -54,14 +54,16 @@ list, beside the last update, opens it, and → or any page of the list goes bac
 that button is drawn only when the keyboard's focus is on it. The pipelines page slides in from the left
 and back out the same way. Where the system asks for reduced motion, nothing slides.
 Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
-The app is light or dark as the system is (Windows' app mode, Android's dark theme), and the
-page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
+The app wears MUI's blue and white or Hiroba's own colours (its yellow page, its red title bar as
+the panel), light, dark or as the system is (Windows' app mode, Android's dark theme), as Settings
+choose; the page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
 The app opens on the page last shown on the device. Signed out, the window holds the sign-in card
 alone, on the Overview: a sign-out, or a session Hiroba ends, goes back to it, and Settings opens
 again after the next sign-in.
 Settings is laid out as Gmail's settings are: sections with headings, each with its icon, and
 each setting one row with its name, a line on it where one helps, and its control. **Language**
-lists its choices with radio buttons; **Account** says who is signed in, by the nickname your page
+lists its choices with radio buttons; **Appearance** chooses the theme and light or dark with toggle
+buttons, both kept on the device; **Account** says who is signed in, by the nickname your page
 gives, with the note on staying signed in and **Sign out** beside it. While a read runs it says
 **Signed in**, and **Sign out** is shut until the read ends. **Updates** gives the version of the
 build and a **Check for updates** button; once a day, when the app opens, it also reads `update.json`

@@ -3,8 +3,9 @@ import { useState } from "react";
 import { action } from "storybook/actions";
 import { DEFAULT_CHART_SOURCE } from "../shared/song-catalogue/chart-source";
 import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
-import { i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
+import { appearanceOf, i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";
+import { AppearanceSection } from "./appearance-section";
 import { LanguageSetting } from "./language-setting";
 import { type AccountState, SettingsPage } from "./settings-page";
 
@@ -28,6 +29,7 @@ function Page({ account, globals }: Args & { readonly globals: StoryGlobals }) {
           i18n={i18n}
         />
       }
+      appearance={<AppearanceSection {...appearanceOf(globals)} i18n={i18n} />}
       account={account}
       shownDifficulty={shown}
       onShownDifficulty={setShown}

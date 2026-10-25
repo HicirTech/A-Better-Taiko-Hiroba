@@ -181,6 +181,14 @@ export const zhHans: Messages = {
   "settings.shownDifficulty": "默认显示的难度",
   "settings.shownDifficultyHint":
     "这个难度的星级显示在最前面，魔王会同时显示里谱面；其他星级叠在后面，点一下就横向展开。",
+  "settings.appearance": "外观",
+  "settings.theme": "主题",
+  "settings.theme.default": "默认",
+  "settings.theme.hiroba": "广场配色",
+  "settings.mode": "浅色或深色",
+  "settings.mode.system": "跟随系统",
+  "settings.mode.light": "浅色",
+  "settings.mode.dark": "深色",
   "signIn.intro":
     "使用万代南梦宫 ID 登录，即可读取你在鼓众广场的个人资料。登录页面由广场官方提供，本应用不会接触你的密码。",
   "signIn.action": "登录广场",

@@ -181,6 +181,14 @@ export const zhHant: Messages = {
   "settings.shownDifficulty": "預設顯示的難度",
   "settings.shownDifficultyHint":
     "這個難度的星級顯示在最前面，魔鬼會同時顯示裏譜面；其他星級疊在後面，點一下就橫向展開。",
+  "settings.appearance": "外觀",
+  "settings.theme": "主題",
+  "settings.theme.default": "預設",
+  "settings.theme.hiroba": "廣場配色",
+  "settings.mode": "淺色或深色",
+  "settings.mode.system": "跟隨系統",
+  "settings.mode.light": "淺色",
+  "settings.mode.dark": "深色",
   "signIn.intro":
     "使用萬代南夢宮 ID 登入，即可讀取你在鼓眾廣場的個人資料。登入頁面由廣場官方提供，本應用程式不會接觸你的密碼。",
   "signIn.action": "登入廣場",

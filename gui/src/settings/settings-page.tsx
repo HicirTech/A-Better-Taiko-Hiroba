@@ -28,6 +28,8 @@ export interface SettingsPageProps {
   readonly i18n: Translator;
   /** The language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
+  /** The appearance section, drawn by the window that holds the theme. */
+  readonly appearance: ReactNode;
   readonly account: AccountState;
   /** The difficulty whose level songs show in front. */
   readonly shownDifficulty: ShownDifficulty;
@@ -44,6 +46,7 @@ export interface SettingsPageProps {
 export function SettingsPage({
   i18n,
   language,
+  appearance,
   account,
   shownDifficulty,
   onShownDifficulty,
@@ -71,6 +74,7 @@ export function SettingsPage({
   return (
     <Stack spacing={CARD_GAP}>
       {language}
+      {appearance}
       <SettingsSection
         id="account"
         headingId={headingId}

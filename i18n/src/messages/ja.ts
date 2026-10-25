@@ -188,6 +188,14 @@ export const ja: Messages = {
   "settings.shownDifficulty": "手前に表示するむずかしさ",
   "settings.shownDifficultyHint":
     "その難易度の星を手前に、おには裏譜面も並べて表示します。ほかの星は後ろに重なり、クリックで横に広がります。",
+  "settings.appearance": "外観",
+  "settings.theme": "テーマ",
+  "settings.theme.default": "標準",
+  "settings.theme.hiroba": "広場の色",
+  "settings.mode": "ライト・ダーク",
+  "settings.mode.system": "システム",
+  "settings.mode.light": "ライト",
+  "settings.mode.dark": "ダーク",
   "signIn.intro":
     "バンダイナムコIDでログインすると、ドンだーひろばのプロフィールを読み込めます。ログイン画面はひろば公式のもので、このアプリがパスワードを見ることはありません。",
   "signIn.action": "ドンだーひろばにログイン",
