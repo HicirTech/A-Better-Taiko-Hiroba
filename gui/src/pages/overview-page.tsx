@@ -33,6 +33,7 @@ export function OverviewPage({ data }: { readonly data: PageData }) {
       keptSearches={data.keptSearches}
       i18n={i18n}
       onOpen={data.wantSongs}
+      onOpenChange={data.onSongSearchOpen}
       end={
         screen.name === "profile" ? (
           <SnapshotButton

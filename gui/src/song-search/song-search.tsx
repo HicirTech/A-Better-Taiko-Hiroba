@@ -8,7 +8,7 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import { type ReactNode, useDeferredValue, useMemo, useRef, useState } from "react";
+import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../shared/session-port";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
@@ -16,7 +16,7 @@ import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty"
 import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { searchSongs } from "../shared/song-catalogue/song-search";
-import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import type { SongCatalogue, WholeRead } from "../shared/song-catalogue/use-song-catalogue";
 import { type PickerEntry, PickerList } from "../songs/picker-list";
 import { SongDetails } from "../songs/song-details";
 import { bpmText } from "../songs/song-facts";
@@ -25,7 +25,9 @@ import { useBackLeaves } from "../ui/back-closers";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
 import type { ModalLook } from "../ui/large-modal";
+import { OperationSnackbar } from "../ui/operation-snackbar";
 import { ProgressBar } from "../ui/progress-bar";
+import { LONG_HOLD_MS } from "../ui/pull-gesture";
 import { SearchField } from "../ui/search-field";
 import { SectionCard } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
@@ -58,6 +60,8 @@ export interface SongSearchProps {
   readonly i18n: Translator;
   /** The first time the search opens, so the song list is read only once someone looks. */
   readonly onOpen: () => void;
+  /** Whether the search stands open, as it opens and closes: a long hold then reads the list. */
+  readonly onOpenChange?: ((open: boolean) => void) | undefined;
   /** At the band's right, after the search field: the page's own button. */
   readonly end?: ReactNode;
   /** The page under the search, told whether the search stands in for it. */
@@ -77,6 +81,7 @@ export function SongSearch({
   keptSearches,
   i18n,
   onOpen,
+  onOpenChange,
   end,
   children,
 }: SongSearchProps) {
@@ -101,6 +106,21 @@ export function SongSearch({
     input.current?.blur();
   };
   useBackLeaves(active, leave);
+  useEffect(() => {
+    onOpenChange?.(active);
+    return () => onOpenChange?.(false);
+  }, [active, onOpenChange]);
+  // Each read of the whole list asked for is said at the window's foot as it ends.
+  const [heard, setHeard] = useState<WholeRead | null>(catalogue.wholeRead);
+  const [said, setSaid] = useState<{ readonly read: WholeRead; readonly open: boolean } | null>(
+    null,
+  );
+  if (catalogue.wholeRead !== heard) {
+    setHeard(catalogue.wholeRead);
+    if (catalogue.wholeRead !== null) {
+      setSaid({ read: catalogue.wholeRead, open: true });
+    }
+  }
   const open = (songNo: string) => {
     keptSearches.remember(query);
     setOpenSongNo(songNo);
@@ -120,6 +140,9 @@ export function SongSearch({
   );
 
   const searched = catalogue.state === "ready" && query.trim() !== "";
+  // The kept list stays in use while it is read again, so the bar stands over it.
+  const rereading = catalogue.state === "ready" && catalogue.status.phase === "reading";
+  const seconds = LONG_HOLD_MS / 1000;
   // Only the songs found come in a frame; the searches kept and the notes stand as they are.
   const framed = searched && entries.length > 0;
   let panel: ReactNode;
@@ -159,6 +182,11 @@ export function SongSearch({
     panel = (
       <StatusNote id="song-search-none" fill>
         {t("picker.none")}
+        <Box component="span" id="song-search-new-song" sx={{ display: "block", mt: 1 }}>
+          {touchFirst
+            ? t("search.newSongPull", { seconds })
+            : t("search.newSongHold", { button: t("profile.readAgain"), seconds })}
+        </Box>
       </StatusNote>
     );
   } else {
@@ -193,6 +221,11 @@ export function SongSearch({
           hint={recent.length === 0 ? t("picker.searchHint") : undefined}
         />
       </FrameTop>
+      {active && rereading && (
+        <Box sx={{ mb: 2 }}>
+          <ProgressBar id="song-search-reading" label={t("search.readingList")} />
+        </Box>
+      )}
       {active &&
         panel !== null &&
         (framed ? (
@@ -216,6 +249,20 @@ export function SongSearch({
         i18n={i18n}
         onClose={() => setOpenSongNo(null)}
       />
+      {said !== null && (
+        <OperationSnackbar
+          id="song-search-list-read"
+          open={said.open}
+          outcome={said.read.failure === null ? "read" : "failed"}
+          message={
+            said.read.failure === null
+              ? t("search.listRead")
+              : `${t("picker.failed")} ${t("failure.code", { code: said.read.failure })}`
+          }
+          onClose={() => setSaid({ ...said, open: false })}
+          onExited={() => setSaid(null)}
+        />
+      )}
     </>
   );
 }

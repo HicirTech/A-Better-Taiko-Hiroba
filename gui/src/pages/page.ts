@@ -70,6 +70,8 @@ export interface PageData extends PageState {
   readonly keptSearches: KeptSearches;
   /** The song search opened: the song list is read from then on. */
   readonly wantSongs: () => void;
+  /** The song search opened or closed. */
+  readonly onSongSearchOpen: (open: boolean) => void;
 }
 
 /** A page of the window: what it reads, and how the navigation lists it and the window draws it. */
@@ -86,7 +88,7 @@ export interface PageEntry extends PageModel, NavEntry {
   readonly wider?: true;
   /** How far its read has come, for the skeleton's bar. */
   progress?(data: PageData): SkeletonProgress | null;
-  /** The question before `readsEvery`, open while `open`; without it the hold reads nothing. */
+  /** The question before `readsEvery`, open while `open`; without it the hold reads at once. */
   askEvery?(data: PageData, open: boolean, onAnswer: (confirmed: boolean) => void): ReactNode;
   draw(data: PageData): ReactNode;
 }

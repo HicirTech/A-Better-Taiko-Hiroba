@@ -453,6 +453,12 @@ export const ja: Messages = {
   "search.leave": "検索を閉じる",
   "search.clear": "クリア",
   "search.forget": "「{query}」を削除",
+  "search.readingList": "taiko.wiki の曲リストを再読み込み中…",
+  "search.listRead": "taiko.wiki の曲リストを再読み込みしました。",
+  "search.newSongPull":
+    "新曲ですか？下に引いたまま {seconds} 秒待つと、taiko.wiki の曲リストを再読み込みします。",
+  "search.newSongHold":
+    "新曲ですか？「{button}」を {seconds} 秒長押しすると、taiko.wiki の曲リストを再読み込みします。",
   "details.charts": "譜面",
   "details.maxCombo": "最大コンボ数：{count}",
   "details.branched": "譜面分岐あり",

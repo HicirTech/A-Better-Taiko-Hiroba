@@ -34,6 +34,8 @@ export type PagesData = Pick<
   | "keptSets"
   | "keptSearches"
   | "wantSongs"
+  | "songSearchOpen"
+  | "onSongSearchOpen"
 >;
 
 /** Every kind of data the pages show: held across pages, dropped as the session ends. */
@@ -90,6 +92,7 @@ export function usePagesData({
   // Read once someone opens a page that shows it or the song search, and kept from then on.
   const [songsWanted, setSongsWanted] = useState(false);
   const wantSongs = useCallback(() => setSongsWanted(true), []);
+  const [songSearchOpen, onSongSearchOpen] = useState(false);
   const catalogue = useSongCatalogue(
     port,
     (profileShown && PAGE_REGISTRY[page].needsSongs) || songsWanted,
@@ -138,5 +141,7 @@ export function usePagesData({
     keptSets,
     keptSearches,
     wantSongs,
+    songSearchOpen,
+    onSongSearchOpen,
   };
 }

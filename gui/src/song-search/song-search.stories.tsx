@@ -1,13 +1,14 @@
 import { Skeleton, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { action } from "storybook/actions";
 import { userEvent, within } from "storybook/test";
 import { AppFrame } from "../navigation/app-frame";
 import { PAGE_REGISTRY } from "../pages/registry";
 import { DEFAULT_CHART_SOURCE } from "../shared/song-catalogue/chart-source";
 import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
-import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import type { SongCatalogueFailure } from "../shared/song-catalogue/types";
+import type { SongCatalogue, WholeRead } from "../shared/song-catalogue/use-song-catalogue";
 import { modalLookOf, touchOf, wideOf } from "../story-kit/devices";
 import { i18nOf, type StoryGlobals } from "../story-kit/env";
 import { storyCatalogue } from "../story-kit/songs";
@@ -32,6 +33,19 @@ function HeldSearches({
     forget: (query) => setSearches((now) => now.filter((one) => one !== query)),
     reload: () => undefined,
   });
+}
+
+/** The song list, a read of the whole of it ending as the story opens, failed or not. */
+function EndingWholeRead({
+  failure,
+  children,
+}: {
+  readonly failure: SongCatalogueFailure["code"] | null;
+  readonly children: (catalogue: SongCatalogue) => ReactNode;
+}) {
+  const [wholeRead, setWholeRead] = useState<WholeRead | null>(null);
+  useEffect(() => setWholeRead({ at: Date.now(), failure }), [failure]);
+  return children({ ...storyCatalogue(), wholeRead });
 }
 
 /** The Overview's search, in the window's top band, over a page that stands in for the Overview. */
@@ -123,4 +137,29 @@ export const SongListLoading: Story = {
 export const SongListFailed: Story = {
   render: (_args, { globals }) => search(storyCatalogue("failed"), globals),
   play: typed("sun"),
+};
+
+/** taiko.wiki's whole song list read again by a long hold: the bar over the songs kept. */
+export const ReadingTheListAgain: Story = {
+  render: (_args, { globals }) =>
+    search(
+      { ...storyCatalogue(), status: { phase: "reading", failure: null, progress: null } },
+      globals,
+    ),
+  play: typed("sun"),
+};
+
+/** That read's end, said at the window's foot. */
+export const ListReadAgain: Story = {
+  render: (_args, { globals }) => (
+    <EndingWholeRead failure={null}>{(catalogue) => search(catalogue, globals)}</EndingWholeRead>
+  ),
+};
+
+export const ListReadAgainFailed: Story = {
+  render: (_args, { globals }) => (
+    <EndingWholeRead failure="unreachable">
+      {(catalogue) => search(catalogue, globals)}
+    </EndingWholeRead>
+  ),
 };

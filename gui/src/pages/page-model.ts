@@ -62,11 +62,13 @@ export interface PageState {
   readonly keptSets: { readonly reload: () => void };
   /** The searches kept on this device, read again as the Overview opens. */
   readonly keptSearches: { readonly reload: () => void };
+  /** The Overview's song search stands open. */
+  readonly songSearchOpen: boolean;
 }
 
 /** All of a page's data read again from nothing, asked for by a six-second hold. */
 export interface EveryRead {
-  /** Whether a copy is kept to clear: where none is, the hold asks nothing. */
+  /** Whether there is anything to read again: where not, the hold does nothing. */
   can(state: PageState): boolean;
   read(state: PageState): Promise<unknown>;
 }
@@ -120,6 +122,12 @@ const EVERY_SCORE: EveryRead = {
   read: ({ scores }) => scores.readEvery(),
 };
 
+/** taiko.wiki's whole song list read again, while the Overview's song search stands open. */
+const SONG_LIST: EveryRead = {
+  can: ({ songSearchOpen }) => songSearchOpen,
+  read: ({ catalogue }) => catalogue.readWhole(),
+};
+
 /** What each page reads, and when. */
 export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
   overview: {
@@ -131,6 +139,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     waits: () => false,
     reading: ({ session }) => session.myPageInView,
     readAgain: readMyPage,
+    readsEvery: SONG_LIST,
   },
   scores: {
     label: "nav.scores",

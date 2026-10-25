@@ -526,6 +526,13 @@ export interface Messages {
   "search.clear": string;
   /** Param: {query}, a search kept on the device. */
   "search.forget": string;
+  /** While the song search reads taiko.wiki's whole song list again. */
+  "search.readingList": string;
+  "search.listRead": string;
+  /** Under "nothing found" on a touch screen. Param: {seconds}, the long hold's. */
+  "search.newSongPull": string;
+  /** Under "nothing found" on a computer. Params: {button}, Read again's name; {seconds}. */
+  "search.newSongHold": string;
   "details.charts": string;
   /** Param: {count}, the chart's most notes in a row. */
   "details.maxCombo": string;
