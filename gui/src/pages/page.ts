@@ -8,7 +8,7 @@ import type { TitleEditor } from "../name-title/use-title-editor";
 import type { NavEntry } from "../navigation/app-frame";
 import type { Page } from "../navigation/pages";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { SystemLink, SystemToast } from "../platform";
+import type { SystemLink, SystemShare, SystemToast } from "../platform";
 import type { ReadStatus } from "../shared/reads/read-run";
 import type { SortChoice } from "../shared/scores/score-order";
 import type { HirobaSessionPort, ReadFailure } from "../shared/session-port";
@@ -52,6 +52,8 @@ export interface PageData extends PageState {
   readonly onChartSource: (next: ChartSource) => void;
   /** The shell's Toast, where it has one. */
   readonly toast: SystemToast | undefined;
+  /** The shell's ways out for a picture the app made of a page. */
+  readonly share: SystemShare;
   /** Settings' language section, drawn by the window that holds the language. */
   readonly language: ReactNode;
   /** Settings' appearance section, drawn by the window that holds the theme. */

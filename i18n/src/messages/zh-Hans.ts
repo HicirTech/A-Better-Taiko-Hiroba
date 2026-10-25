@@ -112,6 +112,13 @@ export const zhHans: Messages = {
   "rating.readingData": "正在读取 Rating 数据…",
   "rating.dataFailed": "无法读取 Rating 数据。",
   "rating.noneRated": "还没有计入 Rating 的魔王或魔王(里)谱面：精度达到 75% 才计入。",
+  "snapshot.share": "以图片分享",
+  "snapshot.copy": "复制图片",
+  "snapshot.save": "保存图片",
+  "snapshot.making": "正在生成图片…",
+  "snapshot.copied": "已复制图片。",
+  "snapshot.saved": "已保存图片。",
+  "snapshot.failed": "无法生成图片。请重试。",
   "scores.readSong": "重新读取这首歌的成绩",
   "scores.readEvery.title": "重新读取全部成绩？",
   "scores.readEvery.body":

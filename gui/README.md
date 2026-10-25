@@ -204,8 +204,10 @@ so an item the Costume page cannot read does not stop it. `LIVE_CHECKED_WRITES` 
 lists, for each platform, the kinds that have. That list decides those two reads and nothing else:
 it opens nothing and shuts nothing.
 
-Two variables are read by the desktop app alone. `ABTH_DEV_NOW` (an ISO time) fixes the clock the
-maintenance check uses, for tests, and only an unpackaged run takes it. `ABTH_DEBUG_SAVE_READS=1`
+Three variables are read by the desktop app alone. `ABTH_DEV_NOW` (an ISO time) fixes the clock the
+maintenance check uses, for tests, and only an unpackaged run takes it. `ABTH_DEV_PICTURES_FOLDER`
+(a folder) is where Save picture puts a page's picture without the save box asking, as the
+end-to-end run sets it; only an unpackaged run takes it too. `ABTH_DEBUG_SAVE_READS=1`
 is taken by a packaged build too, so the installer's or the portable zip's app keeps each page a
 read brings back in the data folder's `debug` folder, named after the page, with every form token
 replaced by `<tckt>`, once it is started with the variable set. Every answer is also kept in

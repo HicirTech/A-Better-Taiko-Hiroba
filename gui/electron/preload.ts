@@ -1,10 +1,12 @@
 import { contextBridge, ipcRenderer } from "electron";
 
+import type { DesktopPictures } from "../src/platform/desktop-share";
 // Not the index: a sandboxed preload can load no module but electron's, and the index loads core.
-import { BRIDGE_CHANNELS } from "../src/shared/session-port/bridge-channels";
+import { BRIDGE_CHANNELS, PICTURE_CHANNELS } from "../src/shared/session-port/bridge-channels";
 import type { HirobaSessionPort } from "../src/shared/session-port/types";
 
-// The port's verbs and nothing else: no ipcRenderer, no generic invoke(channel), no cookie.
+// The port's verbs, a picture's ways out, and nothing else: no ipcRenderer, no generic
+// invoke(channel), no cookie.
 const port: HirobaSessionPort = {
   isSignedIn: () => ipcRenderer.invoke(BRIDGE_CHANNELS.isSignedIn),
   signIn: () => ipcRenderer.invoke(BRIDGE_CHANNELS.signIn),
@@ -50,4 +52,10 @@ const port: HirobaSessionPort = {
   readPipelines: (history) => ipcRenderer.invoke(BRIDGE_CHANNELS.readPipelines, history),
 };
 
+const pictures: DesktopPictures = {
+  copy: (png) => ipcRenderer.invoke(PICTURE_CHANNELS.copy, png),
+  save: (png, name) => ipcRenderer.invoke(PICTURE_CHANNELS.save, png, name),
+};
+
 contextBridge.exposeInMainWorld("abth", port);
+contextBridge.exposeInMainWorld("abthPictures", pictures);

@@ -3,6 +3,8 @@ import { Stack } from "@mui/material";
 import { MedalCard } from "../my-page/medal-card";
 import { OverviewHeader } from "../my-page/overview-header";
 import { PanelCard } from "../my-page/panel-card";
+import { ProfileSnapshot } from "../my-page/profile-snapshot";
+import { SnapshotButton } from "../snapshots/snapshot-button";
 import { SongSearch } from "../song-search/song-search";
 import type { OpenAction } from "../ui/open-button";
 import { LoadFailed } from "../ui/read-failure-alert";
@@ -31,6 +33,20 @@ export function OverviewPage({ data }: { readonly data: PageData }) {
       keptSearches={data.keptSearches}
       i18n={i18n}
       onOpen={data.wantSongs}
+      end={
+        screen.name === "profile" ? (
+          <SnapshotButton
+            id="overview-share"
+            shows="abth-profile"
+            share={data.share}
+            lane={lane}
+            i18n={i18n}
+            snapshot={(snapshotLane) => (
+              <ProfileSnapshot profile={screen.profile} lane={snapshotLane} i18n={i18n} />
+            )}
+          />
+        ) : undefined
+      }
     >
       {(searching) => (
         <Stack spacing={OVERVIEW_SPACING} sx={searching ? HIDDEN : undefined}>

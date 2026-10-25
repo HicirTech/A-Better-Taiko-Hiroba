@@ -10,6 +10,7 @@ import {
   waitForSeen,
   withoutPictureBytes,
 } from "./harness";
+import { savedPicture, savedWhole } from "./snapshots";
 import { hitsOn, ICON_PATHS, iconHits, myDonsSettled, myPageHits, platesSettled } from "./stand-in";
 
 export type Share = readonly [name: string, percent: string, count: number];
@@ -164,6 +165,8 @@ export const overviewKeys = [
   "myDonAlignedWithTheColumn",
   "scorePanelMissingStandsIn",
   "headerAddressesKeptOutOfDom",
+  "overviewShareSavesThePicture",
+  "overviewSharePicture",
 ] as const;
 
 export async function overview(ctx: Ctx) {
@@ -311,4 +314,8 @@ export async function overview(ctx: Ctx) {
     !tokens.some((token) => withPlate.includes(token));
   const platesAtSignIn = await platesSettled();
   state.platesAtSignIn = platesAtSignIn;
+
+  const picture = await savedPicture(ctx, "overview-share", "abth-profile");
+  results.overviewSharePicture = picture;
+  results.overviewShareSavesThePicture = savedWhole(picture);
 }

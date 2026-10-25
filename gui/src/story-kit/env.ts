@@ -7,7 +7,7 @@ import {
 } from "@abth/i18n";
 import { action } from "storybook/actions";
 
-import type { SystemBack, SystemLink, SystemToast } from "../platform";
+import type { PictureWay, SystemBack, SystemLink, SystemShare, SystemToast } from "../platform";
 import {
   type AppearanceChoice,
   DEFAULT_THEME_MODE,
@@ -54,6 +54,25 @@ export function i18nOf(globals: StoryGlobals): Translator {
 export const STORY_TOAST: SystemToast = { show: action("toast") };
 
 export const STORY_LINK: SystemLink = { open: action("open in the browser") };
+
+/** A picture handed out, named in the Actions panel; one to save downloads, to look at. */
+function handed(way: PictureWay, png: Uint8Array, name: string): Promise<"done"> {
+  action(`${way} the picture`)(name, `${png.byteLength} bytes`);
+  if (way === "save") {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([new Uint8Array(png)], { type: "image/png" }));
+    link.download = name;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+  return Promise.resolve("done");
+}
+
+/** The desktop's ways out for a picture: the clipboard, or a file. */
+export const STORY_COPY_OR_SAVE: SystemShare = { ways: ["copy", "save"], hand: handed };
+
+/** Android's way out for a picture: the system's share sheet. */
+export const STORY_SHEET: SystemShare = { ways: ["share"], hand: handed };
 
 /** Android's Back, which no story presses. */
 export const STORY_BACK: SystemBack = { listen: () => () => {}, leave: action("leave the app") };

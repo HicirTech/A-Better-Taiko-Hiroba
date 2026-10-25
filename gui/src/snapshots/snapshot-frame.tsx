@@ -3,9 +3,7 @@ import { AppBar, Box, Stack, ThemeProvider, Toolbar, Typography } from "@mui/mat
 import type { ReactNode } from "react";
 
 import { SNAPSHOT_THEME } from "../theme/app-theme";
-
-/** A snapshot's width, the same from a phone or a computer. */
-export const SNAPSHOT_WIDTH_PX = 1080;
+import { SNAPSHOT_WIDTH_PX } from "./snapshot-png";
 
 const FRAME = {
   width: SNAPSHOT_WIDTH_PX,

@@ -4,15 +4,16 @@ import { app, net, protocol } from "electron";
 
 export const APP_ORIGIN = "app://gui";
 
-// MUI injects <style> elements, hence 'unsafe-inline' for styles only. The page fetches nothing:
-// every request to Hiroba goes through the main process.
+// MUI injects <style> elements, hence 'unsafe-inline' for styles only. The page fetches only its
+// own files, the fonts a snapshot takes into its picture: every request to Hiroba goes through
+// the main process.
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self' data:",
-  "connect-src 'none'",
+  "connect-src 'self'",
   "object-src 'none'",
   "base-uri 'none'",
   "form-action 'none'",

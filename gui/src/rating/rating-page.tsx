@@ -3,17 +3,21 @@ import type { MessageKey, Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
+import type { SystemShare } from "../platform";
 import { listedOf } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
+import type { ProfileView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { SnapshotButton } from "../snapshots/snapshot-button";
 import { ScoreDetails } from "../songs/score-details";
-import { PAGE_HEIGHT } from "../ui/frame-top";
+import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
 import { RatedList } from "./rated-list";
 import { COUNTED, ratingAndSkills, ratingFormats } from "./rating-figures";
 import { RatingRadar } from "./rating-radar";
+import { RatingSnapshot } from "./rating-snapshot";
 import type { RatingDataState } from "./use-rating-data";
 
 /** The player's rating and skills from the kept scores, and the charts behind them. */
@@ -22,6 +26,9 @@ export function RatingPage({
   ratingData,
   catalogue,
   lane,
+  profile,
+  share,
+  wide,
   touchFirst,
   modalLook,
   i18n,
@@ -31,6 +38,11 @@ export function RatingPage({
   /** taiko.wiki's song list: the names in the player's language. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
+  /** The player my page was read for: a picture to share stands on their plate. */
+  readonly profile: ProfileView | null;
+  readonly share: SystemShare;
+  /** The window is wide enough for the side panel. */
+  readonly wide: boolean;
   /** A touch screen: a pull reads. */
   readonly touchFirst: boolean;
   readonly modalLook: ModalLook;
@@ -54,6 +66,11 @@ export function RatingPage({
   const charts = rated?.charts ?? [];
   const openedScore = opened === null ? undefined : scoreOf.get(opened);
   const settled = view !== null && !reading && failure === null;
+  // ISO times, so the newest is the greatest.
+  const readAt = (view?.scores ?? []).reduce(
+    (newest, score) => (score.fetchedAt > newest ? score.fetchedAt : newest),
+    "",
+  );
   const list = (id: string, heading: MessageKey, shown: readonly ChartRating[]) => (
     <RatedList
       id={id}
@@ -70,57 +87,89 @@ export function RatingPage({
   );
 
   return (
-    <Stack spacing={2} id="rating-page" sx={{ minHeight: PAGE_HEIGHT }}>
-      {failure !== null && <LoadFailed id="rating-scores-failure" failure={failure} i18n={i18n} />}
-      {ratingData.failure !== null && (
-        <ReadFailureAlert
-          id="rating-data-failure"
-          message={t("rating.dataFailed")}
-          code={ratingData.failure}
-          i18n={i18n}
+    <>
+      {rated !== null && data !== null && profile !== null && charts.length > 0 && (
+        <FrameTop
+          wide={wide}
+          touchFirst={touchFirst}
+          stays={false}
+          end={
+            <SnapshotButton
+              id="rating-share"
+              shows="abth-rating"
+              share={share}
+              lane={lane}
+              i18n={i18n}
+              snapshot={(snapshotLane) => (
+                <RatingSnapshot
+                  profile={profile}
+                  rated={rated}
+                  scoreOf={scoreOf}
+                  data={data}
+                  catalogue={catalogue}
+                  lane={snapshotLane}
+                  readAt={readAt}
+                  i18n={i18n}
+                />
+              )}
+            />
+          }
         />
       )}
-      {settled && view.scores.length === 0 && (
-        <StatusNote id="rating-empty" fill>
-          {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
-        </StatusNote>
-      )}
-      {rated !== null && view !== null && view.scores.length > 0 && charts.length === 0 && (
-        <StatusNote id="rating-none" fill>
-          {t("rating.noneRated")}
-        </StatusNote>
-      )}
-      {total !== null && charts.length > 0 && (
-        <Stack
-          id="rating-summary"
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{ alignItems: "center", justifyContent: "center" }}
-        >
-          <Typography
-            id="rating-total"
-            component="p"
-            variant="h3"
-            sx={{ fontWeight: "fontWeightBold", textAlign: "center", minWidth: 140 }}
+      <Stack spacing={2} id="rating-page" sx={{ minHeight: PAGE_HEIGHT }}>
+        {failure !== null && (
+          <LoadFailed id="rating-scores-failure" failure={failure} i18n={i18n} />
+        )}
+        {ratingData.failure !== null && (
+          <ReadFailureAlert
+            id="rating-data-failure"
+            message={t("rating.dataFailed")}
+            code={ratingData.failure}
+            i18n={i18n}
+          />
+        )}
+        {settled && view.scores.length === 0 && (
+          <StatusNote id="rating-empty" fill>
+            {t(touchFirst ? "scores.emptyPull" : "scores.emptyReadAgain")}
+          </StatusNote>
+        )}
+        {rated !== null && view !== null && view.scores.length > 0 && charts.length === 0 && (
+          <StatusNote id="rating-none" fill>
+            {t("rating.noneRated")}
+          </StatusNote>
+        )}
+        {total !== null && charts.length > 0 && (
+          <Stack
+            id="rating-summary"
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ alignItems: "center", justifyContent: "center" }}
           >
-            {formats.figure.format(total)}
-          </Typography>
-          <RatingRadar figures={skills} format={(value) => formats.figure.format(value)} />
-        </Stack>
-      )}
-      {list("rating-best", "rating.best", charts.slice(0, COUNTED))}
-      {list("rating-next", "rating.next", charts.slice(COUNTED, COUNTED * 2))}
-      <ScoreDetails
-        listed={openedScore === undefined ? null : listedOf(openedScore, catalogue, locale)}
-        lane={lane}
-        reading={reading}
-        readingSong={song !== null && song.songNo === openedScore?.songNo}
-        touchFirst={touchFirst}
-        modalLook={modalLook}
-        i18n={i18n}
-        onReadSong={(score) => void readSong(score)}
-        onClose={() => setOpened(null)}
-      />
-    </Stack>
+            <Typography
+              id="rating-total"
+              component="p"
+              variant="h3"
+              sx={{ fontWeight: "fontWeightBold", textAlign: "center", minWidth: 140 }}
+            >
+              {formats.figure.format(total)}
+            </Typography>
+            <RatingRadar figures={skills} format={(value) => formats.figure.format(value)} />
+          </Stack>
+        )}
+        {list("rating-best", "rating.best", charts.slice(0, COUNTED))}
+        {list("rating-next", "rating.next", charts.slice(COUNTED, COUNTED * 2))}
+        <ScoreDetails
+          listed={openedScore === undefined ? null : listedOf(openedScore, catalogue, locale)}
+          lane={lane}
+          reading={reading}
+          readingSong={song !== null && song.songNo === openedScore?.songNo}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
+          i18n={i18n}
+          onReadSong={(score) => void readSong(score)}
+          onClose={() => setOpened(null)}
+        />
+      </Stack>
+    </>
   );
 }

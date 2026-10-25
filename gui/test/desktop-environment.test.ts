@@ -14,6 +14,7 @@ const DEVELOPMENT = {
   ABTH_DEV_UPDATE_FEED: "http://feed.test:8809/update.json",
   ABTH_DEV_CHART_ORIGIN: "http://hiroba.test:8807",
   ABTH_DEV_OFF_SCREEN: "1",
+  ABTH_DEV_PICTURES_FOLDER: "C:/dev-pictures",
 };
 
 describe("desktopEnvironment", () => {
@@ -25,6 +26,7 @@ describe("desktopEnvironment", () => {
     expect(environment.userData).toBeUndefined();
     expect(environment.chartOrigin).toBeUndefined();
     expect(environment.offScreen).toBe(false);
+    expect(environment.picturesFolder).toBeUndefined();
     expect(Math.abs(environment.now().getTime() - Date.now())).toBeLessThan(5_000);
   });
 
@@ -46,6 +48,7 @@ describe("desktopEnvironment", () => {
     expect(environment.updateFeedUrl).toBe("http://feed.test:8809/update.json");
     expect(environment.chartOrigin).toBe("http://hiroba.test:8807");
     expect(environment.offScreen).toBe(true);
+    expect(environment.picturesFolder).toBe("C:/dev-pictures");
   });
 
   test("a development run opens its windows on screen unless the variable is exactly 1", () => {

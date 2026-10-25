@@ -100,6 +100,9 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         ratingData={data.ratingData}
         catalogue={data.catalogue}
         lane={data.lane}
+        profile={data.session.screen.name === "profile" ? data.session.screen.profile : null}
+        share={data.share}
+        wide={data.wide}
         touchFirst={data.touchFirst}
         modalLook={data.modalLook}
         i18n={data.i18n}

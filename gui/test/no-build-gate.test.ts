@@ -63,6 +63,7 @@ const LOOKS_AT_THE_BUILD: Readonly<Record<string, readonly string[]>> = {
     "env.ABTH_DEV_IMG_ORIGIN",
     "env.ABTH_DEV_NOW",
     "env.ABTH_DEV_OFF_SCREEN",
+    "env.ABTH_DEV_PICTURES_FOLDER",
     "env.ABTH_DEV_RATING_DATA",
     "env.ABTH_DEV_REFUSING_HOST",
     "env.ABTH_DEV_SERVER_URL",
