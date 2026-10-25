@@ -62,18 +62,24 @@ export function MyDonPortrait({ answer, action, i18n, ref }: MyDonPortraitProps)
           borderRadius: hp(HIROBA_TILE_RADIUS_PX),
         }}
       >
-        <MyDonTile ref={ref} answer={answer} i18n={i18n} />
+        <MyDonTile id="my-don" ref={ref} answer={answer} i18n={i18n} />
       </OpenButton>
     </Box>
   );
 }
 
-function MyDonTile({ answer, i18n, ref }: Pick<MyDonPortraitProps, "answer" | "i18n" | "ref">) {
+/** My Don on Hiroba's pale tile, a picture alone, as a snapshot draws it in a Hiroba block. */
+export function MyDonTile({
+  id,
+  answer,
+  i18n,
+  ref,
+}: Pick<MyDonPortraitProps, "answer" | "i18n" | "ref"> & { readonly id: string }) {
   return (
     <HirobaPicture
       ref={ref}
       component="span"
-      id="my-don"
+      id={id}
       src={viewOf(answer)?.src ?? null}
       onItsWay={answer === undefined}
       alt={i18n.t("profile.myDonAlt")}

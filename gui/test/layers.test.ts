@@ -12,7 +12,7 @@ const LAYERS: readonly (readonly string[])[] = [
   ["platform"],
   ["theme"],
   ["ui", "pictures"],
-  ["songs", "profile"],
+  ["songs", "profile", "snapshots"],
   [
     "favorites",
     "know-yourself",

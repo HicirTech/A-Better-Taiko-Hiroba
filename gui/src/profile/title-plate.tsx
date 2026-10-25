@@ -17,7 +17,10 @@ const RESERVED_RATIO = 150 / 556;
 // The band the title and the name row are drawn on: the plate's bottom rows. Above it, the plate
 // keeps room for its decorations, empty on most plates.
 const BAND_ROWS = 47;
-const MAX_WIDTH = PLATE_WIDTH * MAX_BLOCK_SCALE;
+/** The plate at its largest, as a computer shows it. */
+export const PLATE_MAX_PX = PLATE_WIDTH * MAX_BLOCK_SCALE;
+/** The band's height when the plate is at its largest. */
+export const PLATE_BAND_MAX_PX = BAND_ROWS * MAX_BLOCK_SCALE;
 // Hiroba's colours, sampled from its plate; the same in either theme.
 const ON_PLATE = "#000";
 const BAND = "#fff1c2";
@@ -32,6 +35,8 @@ export interface TitlePlateProps {
   readonly ref: Ref<HTMLDivElement>;
   /** Makes the plate a button that opens a page; none leaves it a picture. */
   readonly action?: OpenAction;
+  /** The page's own `title-plate` unless a snapshot draws one too. */
+  readonly id?: string;
 }
 
 /** The plate's height over its width: the picture's own, or the proportions reserved for it. */
@@ -42,17 +47,24 @@ export const plateHeightRatio = (plate: PictureView | null): number =>
 export const plateBandTop = (plate: PictureView | null): number =>
   Math.max(0, 1 - BAND_ROWS / (PLATE_WIDTH * plateHeightRatio(plate)));
 
-export function TitlePlate({ profile, answer, i18n, ref, action }: TitlePlateProps) {
+export function TitlePlate({
+  profile,
+  answer,
+  i18n,
+  ref,
+  action,
+  id = "title-plate",
+}: TitlePlateProps) {
   const { t } = i18n;
   const plate = viewOf(answer);
   return (
-    <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
+    <Box sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: PLATE_MAX_PX }}>
       <HirobaPicture
         ref={ref}
-        id="title-plate"
+        id={id}
         src={plate?.src ?? null}
         onItsWay={answer === undefined}
-        standIn={<PlateStandIn />}
+        standIn={<PlateStandIn id={`${id}-stand-in`} />}
         wordsColour={ON_PLATE}
         sx={{ width: 1, color: ON_PLATE, aspectRatio: 1 / plateHeightRatio(plate) }}
         i18n={i18n}
@@ -73,11 +85,11 @@ export function TitlePlate({ profile, answer, i18n, ref, action }: TitlePlatePro
   );
 }
 
-function PlateStandIn() {
+function PlateStandIn({ id }: { id: string }) {
   const box = { position: "absolute", bottom: hp(1), height: hp(23), borderRadius: hp(3) } as const;
   return (
     <Box
-      id="title-plate-stand-in"
+      id={id}
       aria-hidden
       sx={{
         position: "absolute",
@@ -219,7 +231,7 @@ function DanLabel({ picture }: { picture: PictureView }) {
 /** The plate's shape while the page's first read runs: its band, in the room kept for it. */
 export function TitlePlateSkeleton() {
   return (
-    <Box aria-hidden sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: MAX_WIDTH }}>
+    <Box aria-hidden sx={{ ...HIROBA_BLOCK, width: 1, maxWidth: PLATE_MAX_PX }}>
       <Box sx={{ position: "relative", width: 1, aspectRatio: 1 / plateHeightRatio(null) }}>
         <Skeleton
           variant="rounded"
