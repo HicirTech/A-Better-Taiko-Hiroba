@@ -407,14 +407,6 @@ export interface HirobaSessionPort {
   /** The songs Hiroba's own 大好きな曲 picker offers: its editor, the handoff that opens the picker,
    * then a GET for each of the eight genres. Its form token stays with the platform. */
   readSongPicker(): Promise<Result<PickableSongs, ReadFailure>>;
-  /** The stored recent-plays walk, newest first. Asks Hiroba nothing. */
-  recentPlays(): Promise<readonly RecentPlay[]>;
-  /** Walks `history_recent_score.php` in the play history pipeline, then stores the rows. */
-  readRecentPlays(): Promise<Result<RecentPlaysReading, RecentPlaysFailure>>;
-  /** As `readRecentPlays`, but walks every page past the plays stored, which the walk replaces. */
-  readEveryRecentPlay(): Promise<Result<RecentPlaysReading, RecentPlaysFailure>>;
-  /** The page a recent-plays walk has started asking for, or null when none is running. */
-  recentPlaysProgress(): Promise<number | null>;
   /** The kept scores. Asks Hiroba nothing. */
   scores(): Promise<ScoresView>;
   /** Every chart the lists name, played or not. Asks Hiroba nothing. */

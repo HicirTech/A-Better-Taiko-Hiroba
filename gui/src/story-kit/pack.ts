@@ -1,5 +1,4 @@
 import pack from "virtual:abth-story-pack";
-import type { RecentPlay } from "@abth/core";
 
 import type {
   CostumeEditorView,
@@ -40,7 +39,6 @@ export interface PackData {
   readonly costumeEditor: CostumeEditorView;
   readonly titleEditor: TitleEditorView;
   readonly favorites: FavoritesView;
-  readonly recentPlays: readonly RecentPlay[];
   readonly scores: ScoresView;
   readonly listedCharts: ListedChartsView;
 }
@@ -53,7 +51,6 @@ export const PACK_DATA: Readonly<Record<keyof PackData, "text" | "json">> = {
   costumeEditor: "json",
   titleEditor: "json",
   favorites: "json",
-  recentPlays: "json",
   scores: "json",
   listedCharts: "json",
 };

@@ -8,7 +8,6 @@ import type { CrownKind, PictureView, PictureWant } from "../shared/session-port
 import { DIFFICULTIES } from "../shared/song-catalogue/types";
 import { STORY_EDITOR } from "./costume";
 import { PACK_DATA, PACK_LABEL, type PackData, packData, packKeys, packView } from "./pack";
-import { PAGE_PLAYS } from "./plays";
 import { danLabelView } from "./profile";
 import { PAGE_LISTED, PAGE_SCORES } from "./scores";
 import { PAGE_SONGS } from "./songs";
@@ -100,7 +99,6 @@ const DATA_SHOWN: Readonly<Record<keyof PackData, string>> = {
   costumeEditor: `${STORY_EDITOR.palette.length} colours and ${STORY_EDITOR.slots.flat().length} items: Costume`,
   titleEditor: `${(packData("titleEditor") ?? STORY_TITLES).options.length} titles: Nickname & title`,
   favorites: "the お気に入り folder and 大好きな曲: Favourites",
-  recentPlays: `${PAGE_PLAYS.length} plays: Recent plays, Know yourself`,
   scores: `${PAGE_SCORES.scores.length} scores: Scores, Rating, Know yourself`,
   listedCharts: `${PAGE_LISTED.charts.length} charts: Scores, Know yourself`,
 };

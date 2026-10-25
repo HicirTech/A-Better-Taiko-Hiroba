@@ -21,7 +21,6 @@ import { portraitOf, STORY_EDITOR, STORY_HISTORY } from "./costume";
 import { STORY_PICKABLE, storyFavorites } from "./favorites";
 import { packData, packView } from "./pack";
 import { pictureOf } from "./picture-of";
-import { PAGE_PLAYS } from "./plays";
 import { PAGE_PROFILE, STORY_PROFILE } from "./profile";
 import { PAGE_LISTED, PAGE_RATING_DATA, PAGE_SCORES } from "./scores";
 import { PAGE_SONGS } from "./songs";
@@ -256,12 +255,6 @@ export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): Hirob
           ura: [...(STORY_PICKABLE.offered?.ura ?? [])],
         }),
       ),
-    recentPlays: () => Promise.resolve(PAGE_PLAYS),
-    readRecentPlays: () =>
-      later(ok({ plays: PAGE_PLAYS, fresh: [], pagesFetched: 1, stop: "known" })),
-    readEveryRecentPlay: () =>
-      later(ok({ plays: PAGE_PLAYS, fresh: [], pagesFetched: 10, stop: "short" })),
-    recentPlaysProgress: () => Promise.resolve(null),
     scores: () => Promise.resolve(PAGE_SCORES),
     listedCharts: () => Promise.resolve(PAGE_LISTED),
     readScores: () => later(ok({ ...PAGE_SCORES, detailed: 0 })),
