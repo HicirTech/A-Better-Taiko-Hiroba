@@ -76,14 +76,6 @@ export function ScoreFilters({
   return (
     <Box sx={ROW}>
       <MultiFilterChip
-        id="scores-genre"
-        name={t("picker.genre")}
-        options={genres}
-        chosen={filter.genres}
-        i18n={i18n}
-        onChoose={(chosen) => onFilter({ genres: chosen })}
-      />
-      <MultiFilterChip
         id="scores-difficulty"
         name={t("picker.difficulty")}
         options={difficulties}
@@ -109,6 +101,15 @@ export function ScoreFilters({
         i18n={i18n}
         allLabel={t("scores.sort.name")}
         onChoose={onSort}
+      />
+      {/* Last, as it keeps its words: on a phone the chips used most stay in view. */}
+      <MultiFilterChip
+        id="scores-genre"
+        name={t("picker.genre")}
+        options={genres}
+        chosen={filter.genres}
+        i18n={i18n}
+        onChoose={(chosen) => onFilter({ genres: chosen })}
       />
     </Box>
   );
