@@ -1,8 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import * as SongFilters from "../../favorites/song-filters.stories";
 import * as ScoreFilters from "../../scores/score-filters.stories";
+import * as FilterToggles from "../../ui/filter-chip.filter-toggles.stories";
 import * as MultiFilterChip from "../../ui/filter-chip.multi-filter-chip.stories";
 import * as FilterChip from "../../ui/filter-chip.stories";
+import * as LabelChip from "../../ui/label-chip.stories";
 import { Gallery } from "../gallery";
 
 const meta = {
@@ -29,6 +31,9 @@ const meta = {
           meta: MultiFilterChip.default,
           story: MultiFilterChip.SeveralTicked,
         },
+        { name: "FilterToggles", meta: FilterToggles.default, story: FilterToggles.OneChosen },
+        { name: "LabelChip", meta: LabelChip.default, story: LabelChip.InTheThemesColour },
+        { name: "LabelChip, genres", meta: LabelChip.default, story: LabelChip.Genres },
         { name: "SongFilters", meta: SongFilters.default, story: SongFilters.AllChosen },
         { name: "ScoreFilters", meta: ScoreFilters.default, story: ScoreFilters.AsAVisitStarts },
       ]}

@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
-import { Alert } from "@mui/material";
 import { SLOT_PARTS } from "../shared/costume-parts";
 import type { CostumeEditorView, CostumeSet } from "../shared/session-port";
+import { NoteAlert } from "../ui/note-alert";
 
 export function KigurumiInfo({
   editor,
@@ -16,9 +16,5 @@ export function KigurumiInfo({
     return null;
   }
 
-  return (
-    <Alert id="kigurumi-warning" severity="info">
-      {i18n.t("costume.kigurumiWarning")}
-    </Alert>
-  );
+  return <NoteAlert id="kigurumi-warning">{i18n.t("costume.kigurumiWarning")}</NoteAlert>;
 }

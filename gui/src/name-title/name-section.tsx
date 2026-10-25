@@ -1,11 +1,12 @@
 import { NAME_FIELDS, NAME_FORM_MAX_LENGTH } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Alert, Box, Stack, TextField } from "@mui/material";
+import { Box, Stack, TextField } from "@mui/material";
 import { type KeyboardEvent, useRef } from "react";
 import { HIROBA_LANG } from "../shared/language/show-language";
 import type { ProfileView } from "../shared/session-port";
 import { invalidFieldText } from "../shared/writes/outcome-words";
 import { useFocusKept } from "../ui/editor-parts";
+import { NoteAlert } from "../ui/note-alert";
 import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { judgeName, type WornName } from "./name-editor-state";
 import type { NameEditor } from "./use-name-editor";
@@ -66,9 +67,9 @@ export function NameSection({
       sx={{ outline: "none" }}
     >
       {closed && (
-        <Alert id="name-closed" severity="warning">
+        <NoteAlert id="name-closed" warns>
           {t("name.closed")}
-        </Alert>
+        </NoteAlert>
       )}
       <TextField
         id="name-input"

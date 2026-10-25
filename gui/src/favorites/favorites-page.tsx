@@ -288,6 +288,8 @@ export function FavoritesPage({
                 onSaveToSet={(id) =>
                   keptSets.replaceSongs(id, filledSlots(shown.view.folder.state))
                 }
+                touchFirst={touchFirst}
+                modalLook={modalLook}
               />
             </Stack>
           </>

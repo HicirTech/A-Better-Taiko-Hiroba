@@ -1,6 +1,6 @@
 import { chartKey } from "@abth/core";
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Chip, Stack, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { HIROBA_LANG } from "../shared/language/hiroba-lang";
@@ -8,6 +8,7 @@ import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { ChartMarks } from "../songs/chart-level";
 import { RowCheckbox, SongRow } from "../songs/song-row";
+import { FilterToggles } from "../ui/filter-chip";
 import { RowList } from "../ui/row-list";
 import { type GapKind, gapKindOf, songsOf } from "./gaps";
 import type { KnownChart } from "./known-charts";
@@ -61,19 +62,18 @@ export function ChartList({
   return (
     <Stack id={id} spacing={1}>
       <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
-        {narrows &&
-          GAP_KINDS.map((each) => (
-            <Chip
-              key={each}
-              id={`${id}-${each}`}
-              label={t(GAP_LABEL[each])}
-              variant={kind === each ? "filled" : "outlined"}
-              color={kind === each ? "primary" : "default"}
-              aria-pressed={kind === each}
-              onClick={() => setKind(kind === each ? null : each)}
-              onDelete={kind === each ? () => setKind(null) : undefined}
-            />
-          ))}
+        {narrows && (
+          <FilterToggles
+            id={id}
+            options={GAP_KINDS.map((each) => ({
+              value: each,
+              label: t(GAP_LABEL[each]),
+              fill: null,
+            }))}
+            chosen={kind}
+            onChoose={setKind}
+          />
+        )}
         <Button
           id={`${id}-add-ticked`}
           size="small"

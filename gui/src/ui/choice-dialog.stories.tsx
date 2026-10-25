@@ -59,6 +59,29 @@ export const WithSubtitle: Story = {};
 
 export const WithoutSubtitle: Story = { args: { subtitle: null } };
 
+/** Saving the folder into a set: any set takes it, and the next question asks to replace it. */
+export const SetsForTheFolder: Story = {
+  render: (args, { globals }) => {
+    const i18n = i18nOf(globals);
+    return (
+      <ChoiceDialog
+        {...args}
+        subtitle={null}
+        touchFirst={touchOf(globals)}
+        modalLook={modalLookOf(globals)}
+        i18n={i18n}
+        title={i18n.t("favorites.saveToSet")}
+        choices={["練習用", "Party picks", "Set 3"].map((name, index) => ({
+          id: `story-folder-set-${index}`,
+          primary: name,
+          secondary: null,
+          onChoose: action("choose"),
+        }))}
+      />
+    );
+  },
+};
+
 /** No choice to make: what stands in for them shows instead. */
 export const Empty: Story = {
   render: (args, { globals }) => {
