@@ -477,7 +477,6 @@ export interface Messages {
   /** Marks a set whose songs are the folder's, in the order of its slots. */
   "favorites.set.sameAsFolder": string;
   "favorites.setEmpty": string;
-  "favorites.saveAsSet": string;
   "favorites.saveToSet": string;
   "favorites.saveSet": string;
   "favorites.current": string;

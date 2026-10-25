@@ -45,7 +45,7 @@ function FolderParts({ globals }: { readonly globals: StoryGlobals }) {
         level={3}
         end={
           <Button variant="outlined" size="small">
-            {i18n.t("favorites.saveAsSet")}
+            {i18n.t("favorites.saveToSet")}
           </Button>
         }
       >

@@ -25,6 +25,17 @@ const LEGEND = {
   mt: 1,
   p: 0,
 } as const;
+/** Room for the seven score ranks side by side, which take 620 px. */
+const ONE_LINE_PX = 640;
+const LINES_ROOM = { containerType: "inline-size" } as const;
+/** The items in their lines, their icons in columns, where one line has no room for them. */
+const linedLegend = (columns: number) =>
+  ({
+    ...LEGEND,
+    display: "grid",
+    gridTemplateColumns: `repeat(${columns}, max-content)`,
+    [`@container (min-width: ${ONE_LINE_PX}px)`]: { display: "flex" },
+  }) as const;
 
 export interface ShareItem {
   /** The id of its count, the text for screen readers: rank-8, crowns-silver. */
@@ -35,6 +46,23 @@ export interface ShareItem {
   readonly colour: string;
   /** Its icon in the legend, which the dot stands in for until it comes; none keeps the dot. */
   readonly icon?: IconWant;
+  /** Its line, 1 the first, where the legend has no room for one line. */
+  readonly line?: number;
+}
+
+/** Each item's place in its line, where the items name their lines. */
+function placesOf(
+  items: readonly ShareItem[],
+): readonly ({ row: number; column: number } | null)[] {
+  const taken = new Map<number, number>();
+  return items.map((item) => {
+    if (item.line === undefined) {
+      return null;
+    }
+    const column = (taken.get(item.line) ?? 0) + 1;
+    taken.set(item.line, column);
+    return { row: item.line, column };
+  });
 }
 
 const countsOf = (i18n: Translator, count: number, total: number) => ({
@@ -90,8 +118,10 @@ export function ShareLegend({
   i18n: Translator;
 }) {
   const { total, rows } = sharesOf(items, i18n.locale);
-  return (
-    <Box component="ul" sx={LEGEND}>
+  const places = placesOf(items);
+  const columns = Math.max(0, ...places.map((place) => place?.column ?? 0));
+  const legend = (
+    <Box component="ul" sx={columns === 0 ? LEGEND : linedLegend(columns)}>
       {rows.map((row, order) => (
         <LegendItem
           key={row.id}
@@ -102,12 +132,14 @@ export function ShareLegend({
           icon={row.icon ?? null}
           count={i18n.t("panel.countOf", countsOf(i18n, row.count, total))}
           order={order}
+          place={places[order] ?? null}
           lane={lane}
           toast={toast}
         />
       ))}
     </Box>
   );
+  return columns === 0 ? legend : <Box sx={LINES_ROOM}>{legend}</Box>;
 }
 
 export function ShareBlock({

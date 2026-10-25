@@ -28,6 +28,8 @@ export interface LegendItemProps {
   readonly count: string;
   /** Among the legend's items, left to right: the lane asks for the earlier icons first. */
   readonly order: number;
+  /** Its line and column where the legend lines its items up; none in a legend of one line. */
+  readonly place: { readonly row: number; readonly column: number } | null;
   readonly lane: PictureLane;
   /** Where a long-press names the item by the shell's Toast, in place of the hover's tooltip. */
   readonly toast: SystemToast | undefined;
@@ -42,6 +44,7 @@ export function LegendItem({
   icon,
   count,
   order,
+  place,
   lane,
   toast,
 }: LegendItemProps) {
@@ -61,6 +64,7 @@ export function LegendItem({
         gap: 1,
         position: "relative",
         borderRadius: 1,
+        ...(place !== null && { gridRow: place.row, gridColumn: place.column }),
         // A long-press names the item: never a selection of its text.
         ...(held !== null && { userSelect: "none" }),
         "&:focus-visible": {

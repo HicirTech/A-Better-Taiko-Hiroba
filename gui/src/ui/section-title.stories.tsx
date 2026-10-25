@@ -46,7 +46,7 @@ export const WithThingsAtItsEnd: Story = {
           level={3}
           end={
             <Button variant="outlined" size="small">
-              {t("favorites.saveAsSet")}
+              {t("favorites.saveToSet")}
             </Button>
           }
         >

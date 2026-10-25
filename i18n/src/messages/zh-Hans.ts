@@ -390,7 +390,6 @@ export const zhHans: Messages = {
   "favorites.set.nameLabel": "套装名称",
   "favorites.set.sameAsFolder": "与广场的收藏夹相同",
   "favorites.setEmpty": "这个套装还没有歌曲。",
-  "favorites.saveAsSet": "保存为套装",
   "favorites.saveToSet": "存入套装",
   "favorites.saveSet": "保存",
   "favorites.current": "当前收藏",

@@ -147,9 +147,12 @@ export async function scores(ctx: Ctx) {
   const played = Array.from({ length: shown }, (_, index) => index + 1);
   const extreme = played.filter((n) => levelOf(n) >= 4).map(chart);
   await rowsAre(extreme.length);
+  // The chip shows the difficulties' icons, and names them in words for screen readers.
+  const difficultyChip = () => attribute("#scores-difficulty", "aria-label");
+  const difficultyNamed = (...names: string[]) =>
+    `${en.t("picker.difficulty")}: ${names.join(" · ")}`;
   results.scoresStartAtTheShownDifficulty =
-    (await textOf("#scores-difficulty")) ===
-      `${en.t("difficulty.oni")} · ${en.t("difficulty.ura")}` &&
+    (await difficultyChip()) === difficultyNamed(en.t("difficulty.oni"), en.t("difficulty.ura")) &&
     same(sorted((await shownRows()).map((row) => row.chart)), sorted(extreme));
   await mousePress("#scores-difficulty .MuiChip-deleteIcon", "left");
   await rowsAre(shown);
@@ -268,8 +271,8 @@ export async function scores(ctx: Ctx) {
   results.difficultyFilterTakesSeveral =
     menuStayed &&
     same(sorted((await shownRows()).map((row) => row.chart)), sorted(easyOrNormal)) &&
-    (await textOf("#scores-difficulty")) ===
-      `${en.t("difficulty.easy")} · ${en.t("difficulty.normal")}`;
+    (await difficultyChip()) ===
+      difficultyNamed(en.t("difficulty.easy"), en.t("difficulty.normal"));
   await mousePress("#scores-difficulty .MuiChip-deleteIcon", "left");
   await rowsAre(shown + 2);
 

@@ -125,6 +125,7 @@ export function ScoresPage({
           <ScoreFilters
             filter={filter}
             sort={sort}
+            lane={lane}
             i18n={i18n}
             onFilter={(part) => setFilter((now) => ({ ...now, ...part }))}
             onSort={setSort}

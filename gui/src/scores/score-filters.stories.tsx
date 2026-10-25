@@ -4,6 +4,7 @@ import { useState } from "react";
 import { fn } from "storybook/test";
 import { type ScoreFilter, type ScoreSort, startingFilter } from "../shared/scores/score-order";
 import { i18nOf } from "../story-kit/env";
+import { STORY_LANE } from "../story-kit/story-pictures";
 import { ScoreFilters } from "./score-filters";
 
 interface Args {
@@ -18,6 +19,7 @@ function Filters({ args, i18n }: { args: Args; i18n: Translator }) {
     <ScoreFilters
       filter={filter}
       sort={sort}
+      lane={STORY_LANE}
       i18n={i18n}
       onFilter={(part) => {
         setFilter((now) => ({ ...now, ...part }));

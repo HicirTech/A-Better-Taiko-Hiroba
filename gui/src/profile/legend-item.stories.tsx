@@ -26,6 +26,7 @@ const meta = {
           icon={icon}
           count={i18n.t("panel.countOf", { count: "3", total: "240" })}
           order={0}
+          place={null}
           lane={STORY_LANE}
           toast={touchOf(globals) ? STORY_TOAST : undefined}
         />

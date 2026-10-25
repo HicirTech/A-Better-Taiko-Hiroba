@@ -67,29 +67,16 @@ export function FolderCard({
             />
           ) : (
             songs.length > 0 && (
-              <>
-                <Button
-                  id="favorite-folder-save-as-set"
-                  variant="outlined"
-                  size="small"
-                  disabled={shut}
-                  onClick={onSaveAsSet}
-                >
-                  {t("favorites.saveAsSet")}
-                </Button>
-                {sets.length > 0 && (
-                  <Button
-                    id="favorite-folder-save-to-set"
-                    variant="outlined"
-                    size="small"
-                    disabled={shut}
-                    aria-haspopup="dialog"
-                    onClick={() => setChoosing(true)}
-                  >
-                    {t("favorites.saveToSet")}
-                  </Button>
-                )}
-              </>
+              <Button
+                id="favorite-folder-save-to-set"
+                variant="outlined"
+                size="small"
+                disabled={shut}
+                aria-haspopup="dialog"
+                onClick={() => setChoosing(true)}
+              >
+                {t("favorites.saveToSet")}
+              </Button>
             )
           )
         }
@@ -120,12 +107,21 @@ export function FolderCard({
           id="favorite-folder-sets"
           title={t("favorites.saveToSet")}
           subtitle={null}
-          choices={sets.map((set, index) => ({
-            id: `favorite-folder-save-to-set-${index}`,
-            primary: set.name,
-            secondary: null,
-            onChoose: () => setReplacing(set),
-          }))}
+          // A new set's name is asked over this list: its Cancel comes back here.
+          choices={[
+            {
+              id: "favorite-folder-save-as-set",
+              primary: t("favorites.newSet"),
+              secondary: null,
+              onChoose: onSaveAsSet,
+            },
+            ...sets.map((set, index) => ({
+              id: `favorite-folder-save-to-set-${index}`,
+              primary: set.name,
+              secondary: null,
+              onChoose: () => setReplacing(set),
+            })),
+          ]}
           touchFirst={touchFirst}
           modalLook={modalLook}
           i18n={i18n}

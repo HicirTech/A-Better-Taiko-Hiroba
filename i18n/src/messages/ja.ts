@@ -409,7 +409,6 @@ export const ja: Messages = {
   "favorites.set.nameLabel": "セット名",
   "favorites.set.sameAsFolder": "ひろばのフォルダと同じ",
   "favorites.setEmpty": "このセットにはまだ曲がありません。",
-  "favorites.saveAsSet": "セットとして保存",
   "favorites.saveToSet": "セットに保存",
   "favorites.saveSet": "保存",
   "favorites.current": "現在のお気に入り",
