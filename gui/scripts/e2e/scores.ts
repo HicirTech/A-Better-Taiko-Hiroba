@@ -292,6 +292,10 @@ export async function scores(ctx: Ctx) {
   await goTo("scores");
   const pagesBeforeTheRead = await hitsOn(HISTORY_PAGE);
   await readAgain();
+  // Its note comes over the chips once the read has ended: pressed sooner, a chip moves away.
+  await waitFor("the note that nothing is new", async () =>
+    (await exists("#scores-nothing-new")) ? true : undefined,
+  );
   results.recentPlaysKeptAfterSignOut = (await hitsOn(HISTORY_PAGE)) === pagesBeforeTheRead + 1;
 
   // The page starts at Settings' difficulty again each time it opens: let every chart show.
