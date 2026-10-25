@@ -39,7 +39,7 @@ export function GroupDetails({
           key={line}
           variant={index === 0 ? "body2" : "caption"}
           component="p"
-          sx={index === 0 ? { fontWeight: 500 } : { color: "text.secondary" }}
+          sx={index === 0 ? { fontWeight: "fontWeightMedium" } : { color: "text.secondary" }}
         >
           {line}
         </Typography>

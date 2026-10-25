@@ -6,7 +6,7 @@ import { SectionCard } from "../ui/section-card";
 
 const WORDS = { display: "block", flex: 1, minWidth: 0, textAlign: "left" } as const;
 const HEAD = { display: "flex", alignItems: "center", gap: 1, width: 1, px: 1, py: 1 } as const;
-const TITLE = { display: "block", fontWeight: 500 } as const;
+const TITLE = { display: "block", fontWeight: "fontWeightMedium" } as const;
 const OPENER = {
   ...HEAD,
   borderRadius: "inherit",

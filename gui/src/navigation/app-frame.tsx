@@ -293,7 +293,9 @@ function PageList({
               <ListItemIcon>{pages[each].icon}</ListItemIcon>
               <ListItemText
                 primary={i18n.t(pages[each].label)}
-                slotProps={{ primary: { sx: { fontWeight: current ? 600 : undefined } } }}
+                slotProps={{
+                  primary: { sx: { fontWeight: current ? "fontWeightBold" : undefined } },
+                }}
               />
             </ListItemButton>
           );

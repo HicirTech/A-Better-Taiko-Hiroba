@@ -32,7 +32,7 @@ export function RatingRadar({
   readonly figures: readonly RadarFigure[];
   readonly format: (value: number) => string;
 }) {
-  const { palette } = useTheme();
+  const { palette, typography } = useTheme();
   const { low, high } = radarScale(figures.map((figure) => figure.value));
   const at = (index: number, radius: number) => {
     const angle = -Math.PI / 2 + (index * 2 * Math.PI) / figures.length;
@@ -91,15 +91,15 @@ export function RatingRadar({
             x={x}
             y={y - LINE_HEIGHT / 2}
             textAnchor={anchor}
-            fontSize={12}
+            fontSize={typography.caption.fontSize}
             fill={palette.text.secondary}
           >
             <tspan x={x}>{figure.name}</tspan>
             <tspan
               x={x}
               dy={LINE_HEIGHT}
-              fontSize={13}
-              fontWeight={600}
+              fontSize={typography.rowLine.fontSize}
+              fontWeight={typography.fontWeightBold}
               fill={palette.text.primary}
             >
               {format(figure.value)}

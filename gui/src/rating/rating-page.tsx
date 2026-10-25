@@ -9,6 +9,7 @@ import type { ScoreView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { PlayRow } from "../songs/play-row";
 import { ScoreDetails } from "../songs/score-details";
+import { textSize } from "../theme/app-theme";
 import { PAGE_HEIGHT } from "../ui/frame-top";
 import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
@@ -28,8 +29,8 @@ const LEAD = {
   flexDirection: "column",
   alignItems: "flex-end",
   justifyContent: "center",
-  "& .rating-value": { fontWeight: 700, fontSize: "1.125rem", lineHeight: 1.3 },
-  "& .rating-meta": { color: "text.secondary", fontSize: "0.75rem", lineHeight: 1.35 },
+  "& .rating-value": { typography: "figure" },
+  "& .rating-meta": { color: "text.secondary", fontSize: textSize("caption"), lineHeight: 1.35 },
 } as const;
 
 const FIGURE_LABEL: Readonly<Record<RatingFigure, MessageKey>> = {
@@ -159,7 +160,7 @@ export function RatingPage({
             id="rating-total"
             component="p"
             variant="h3"
-            sx={{ fontWeight: 700, textAlign: "center", minWidth: 140 }}
+            sx={{ fontWeight: "fontWeightBold", textAlign: "center", minWidth: 140 }}
           >
             {formats.figure.format(total.value)}
           </Typography>

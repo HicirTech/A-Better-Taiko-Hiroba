@@ -1,9 +1,11 @@
 import type { NoteDensity } from "@abth/core";
 import { Box, useTheme } from "@mui/material";
 
+import { textSize } from "../theme/app-theme";
+
 const HEIGHT = 120;
 
-const AXIS = { color: "text.secondary", fontSize: "0.75rem", lineHeight: 1 } as const;
+const AXIS = { color: "text.secondary", fontSize: textSize("caption"), lineHeight: 1 } as const;
 
 /** "2:05" for 125 seconds. */
 export function clockText(seconds: number): string {
