@@ -1,5 +1,4 @@
 import { createTranslator, type Locale, type Translator } from "@abth/i18n";
-import { Alert } from "@mui/material";
 import { useLayoutEffect, useMemo, useState } from "react";
 
 import { App } from "./App";
@@ -21,6 +20,7 @@ import {
 import { showLanguage } from "./shared/language/show-language";
 import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
 import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
+import { NoteAlert } from "./ui/note-alert";
 import { useTouchFirst } from "./ui/use-touch-first";
 import { useWideWindow } from "./ui/use-wide-window";
 
@@ -92,7 +92,7 @@ export function Shell({
           onChartSource={onChartSource}
         />
       ) : (
-        <Alert severity="info">{i18n.t("platform.unsupported")}</Alert>
+        <NoteAlert>{i18n.t("platform.unsupported")}</NoteAlert>
       )}
     </AppFrame>
   );

@@ -1,7 +1,8 @@
 import type { Translator } from "@abth/i18n";
-import { Alert, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { Button, CircularProgress, Stack, Typography } from "@mui/material";
 
 import type { Screen } from "../pages/page-model";
+import { NoteAlert } from "../ui/note-alert";
 import { SectionCard } from "../ui/section-card";
 
 /** The card before a session: Hiroba's sign-in, and why the last one ended; or its progress. */
@@ -23,7 +24,7 @@ export function SignInCard({
         {screen.name === "signedOut" ? (
           <>
             {screen.notice !== null && (
-              <Alert severity="info">{t(screen.notice, screen.noticeParams)}</Alert>
+              <NoteAlert>{t(screen.notice, screen.noticeParams)}</NoteAlert>
             )}
             <Typography>{t("signIn.intro")}</Typography>
             <Button id="sign-in" variant="contained" onClick={onSignIn}>

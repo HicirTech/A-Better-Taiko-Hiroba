@@ -8,6 +8,7 @@ import * as ChartPicture from "../../songs/chart-picture.stories";
 import * as ScoresReading from "../../songs/scores-reading.stories";
 import * as SongListFailed from "../../songs/song-list-failed.stories";
 import * as HoldRing from "../../ui/long-hold.stories";
+import * as NoteAlert from "../../ui/note-alert.stories";
 import * as OperationSnackbar from "../../ui/operation-snackbar.stories";
 import * as PageCrash from "../../ui/page-crash.stories";
 import * as ProgressBar from "../../ui/progress-bar.stories";
@@ -52,6 +53,8 @@ const meta = {
         { name: "HoldRing", meta: HoldRing.default, story: HoldRing.Filling },
         { name: "PictureLoading", meta: PictureLoading.default, story: PictureLoading.Loading },
         { name: "LoadFailed", meta: LoadFailed.default, story: LoadFailed.WithCodes },
+        { name: "NoteAlert", meta: NoteAlert.default, story: NoteAlert.Informing },
+        { name: "NoteAlert, warning", meta: NoteAlert.default, story: NoteAlert.Warning },
         { name: "PageCrash", meta: PageCrash.default, story: PageCrash.InPlace },
         { name: "SongListFailed", meta: SongListFailed.default, story: SongListFailed.Failed },
         { name: "ChartPicture", meta: ChartPicture.default, story: ChartPicture.Failed },
