@@ -1,17 +1,20 @@
 import "../src/theme/fonts";
 
 import { LOCALE_NAMES, LOCALES } from "@abth/i18n";
-import { CssBaseline, type Theme, ThemeProvider, useColorScheme } from "@mui/material";
+import { CssBaseline, type Theme, ThemeProvider } from "@mui/material";
 import type { Preview } from "@storybook/react-vite";
-import { type ReactNode, useEffect, useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { forgetSetting, pageStorage } from "../src/shared/kept-settings";
 import { systemLocale } from "../src/shared/language/locale-choice";
 import { DEVICES, deviceOf, isTouchScreen } from "../src/story-kit/devices";
-import { appTheme } from "../src/theme/app-theme";
+import { APP_THEMES } from "../src/theme/app-theme";
+import { THEME_MODES, THEME_NAMES, type ThemeMode, type ThemeName } from "../src/theme/appearance";
+import { FollowMode } from "../src/theme/follow-mode";
 
-const MODES = ["system", "light", "dark"] as const;
-type Mode = (typeof MODES)[number];
-const modeOf = (value: unknown): Mode => MODES.find((mode) => mode === value) ?? "system";
+const themeNameOf = (value: unknown): ThemeName =>
+  THEME_NAMES.find((name) => name === value) ?? "default";
+const modeOf = (value: unknown): ThemeMode =>
+  THEME_MODES.find((mode) => mode === value) ?? "system";
 
 const POINTER_QUERY = "(pointer: coarse)";
 // Every key the app keeps in the page's storage starts so.
@@ -29,10 +32,10 @@ const fixedAnswer = (media: string, matches: boolean): MediaQueryList => ({
 });
 
 /** The app tells a touch screen by `(pointer: coarse)`: an Android device answers yes, a PC no. */
-const themeFor = (touch: boolean): Theme => ({
-  ...appTheme,
+const themeFor = (base: Theme, touch: boolean): Theme => ({
+  ...base,
   components: {
-    ...appTheme.components,
+    ...base.components,
     MuiUseMediaQuery: {
       defaultProps: {
         matchMedia: (query) =>
@@ -42,12 +45,6 @@ const themeFor = (touch: boolean): Theme => ({
   },
 });
 
-function FollowMode({ mode }: { readonly mode: Mode }) {
-  const { setMode } = useColorScheme();
-  useEffect(() => setMode(mode), [mode, setMode]);
-  return null;
-}
-
 function StoryFrame({
   globals,
   children,
@@ -56,7 +53,8 @@ function StoryFrame({
   readonly children: ReactNode;
 }) {
   const touch = isTouchScreen(deviceOf(globals));
-  const theme = useMemo(() => themeFor(touch), [touch]);
+  const name = themeNameOf(globals.theme);
+  const theme = useMemo(() => themeFor(APP_THEMES[name], touch), [name, touch]);
   const mode = modeOf(globals.mode);
   return (
     <ThemeProvider theme={theme} defaultMode={mode} storageManager={null}>
@@ -96,6 +94,18 @@ const preview: Preview = {
         dynamicTitle: true,
       },
     },
+    theme: {
+      description: "The theme chosen in Settings",
+      toolbar: {
+        title: "Theme",
+        icon: "paintbrush",
+        items: [
+          { value: "default", title: "Default" },
+          { value: "hiroba", title: "Hiroba's colours" },
+        ],
+        dynamicTitle: true,
+      },
+    },
     mode: {
       description: "Light or dark, or as the system is",
       toolbar: {
@@ -112,6 +122,7 @@ const preview: Preview = {
   },
   initialGlobals: {
     locale: systemLocale(),
+    theme: "default",
     mode: "system",
     viewport: { value: "pc", isRotated: false },
   },
