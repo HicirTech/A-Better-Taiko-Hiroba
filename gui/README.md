@@ -433,10 +433,10 @@ The Overview's top band holds a search field, as Gmail's does, across the whole 
 ### The pipelines page
 
 What the four pipelines run, have waiting and ended, read again four times a second while the page
-is shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures**, **Play history**,
+is shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures**, **Recent plays**,
 **Scores** and **External sources** each have a section: Hiroba's pictures run in its pipeline, beside its other
 reads, and are shown apart, each by what it shows (My Don, a plate, the score panel, an icon or a
-costume thumbnail); Play history lists each page of recent plays it read by its number; Scores
+costume thumbnail); Recent plays lists each page it read by its number; Scores
 lists each chart's details it read by song number and difficulty, and Hiroba interaction each score
 list by its genre; External
 sources lists its chart pictures as it does its other groups. A section's first row has a

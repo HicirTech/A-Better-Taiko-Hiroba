@@ -182,7 +182,7 @@ export async function sessionExpiry(ctx: Ctx) {
   // stand-in's entry page is http, so no browser opens here.
   await fetch(`${HIROBA}/__refuser?on=1`);
   await click("#sign-in");
-  await until(`${REFUSING_HOST} does not sign in inside an app`);
+  await until(`${REFUSING_HOST} does not allow signing in inside an app`);
   await fetch(`${HIROBA}/__refuser?on=0`);
   results.refuserEndsTheAttempt = true;
 

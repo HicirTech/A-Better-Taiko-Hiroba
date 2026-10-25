@@ -83,7 +83,7 @@ export async function pipelinesPage(ctx: Ctx) {
     same(headings, [
       "Hiroba interaction",
       "Hiroba pictures",
-      "Play history",
+      "Recent plays",
       "Scores",
       "External sources",
     ]);
