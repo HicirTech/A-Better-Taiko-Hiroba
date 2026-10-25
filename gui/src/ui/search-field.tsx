@@ -12,7 +12,7 @@ const BAR = {
   alignItems: "center",
   height: BAR_PX,
   px: 0.5,
-  borderRadius: `${BAR_PX / 2}px`,
+  borderRadius: "999px",
   bgcolor: "background.paper",
 } as const;
 const MARK = {
