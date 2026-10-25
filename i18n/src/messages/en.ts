@@ -409,7 +409,6 @@ export const en: Messages = {
   "favorites.set.nameLabel": "Set name",
   "favorites.set.sameAsFolder": "Same as the folder on Hiroba",
   "favorites.setEmpty": "No songs in this set yet.",
-  "favorites.saveAsSet": "Save as a set",
   "favorites.saveToSet": "Save to a set",
   "favorites.saveSet": "Save",
   "favorites.current": "Current favourites",

@@ -390,7 +390,6 @@ export const zhHant: Messages = {
   "favorites.set.nameLabel": "套裝名稱",
   "favorites.set.sameAsFolder": "與廣場的收藏資料夾相同",
   "favorites.setEmpty": "這個套裝還沒有歌曲。",
-  "favorites.saveAsSet": "儲存為套裝",
   "favorites.saveToSet": "存入套裝",
   "favorites.saveSet": "儲存",
   "favorites.current": "目前收藏",
