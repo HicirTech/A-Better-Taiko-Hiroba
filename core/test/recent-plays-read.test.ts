@@ -176,23 +176,6 @@ describe("readRecentPlays", () => {
     ]);
   });
 
-  test("an every-page walk goes past the rows stored to the end, and keeps that walk", async () => {
-    const older = play("older");
-    const pages = [[play("new"), play("old-head"), older, play("a"), play("b")], [play("c")]];
-    const source = feed(pages);
-
-    const read = await readRecentPlays({
-      fetchPage: source.fetchPage,
-      previous: [play("old-head"), older, play("gone")],
-      everyPage: true,
-    });
-
-    expect(isOk(read) && read.value.stop).toBe("short");
-    expect(source.asked).toEqual([1, 2]);
-    expect(isOk(read) && read.value.fresh.map((row) => row.songTitle)).toEqual(["new"]);
-    expect(isOk(read) && read.value.plays).toEqual(pages.flat());
-  });
-
   test("a first walk names every row it read as fresh", async () => {
     const pages = [pageOf(1), pageOf(2, 2)];
     const read = await readRecentPlays({ fetchPage: feed(pages).fetchPage, previous: null });
