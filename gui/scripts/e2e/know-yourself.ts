@@ -74,7 +74,8 @@ export async function knowYourself(ctx: Ctx) {
   await click("#shown-difficulty-hard");
   await goTo("scores");
   await shown("#scores-difficulty");
-  const scoresChip = await textOf("#scores-difficulty");
+  // Scores' chip shows the difficulty's icon and names it in words for screen readers.
+  const scoresChip = await attribute("#scores-difficulty", "aria-label");
   await resetLog();
   await goTo("knowYourself");
   await shown("#know-crowns");
@@ -82,7 +83,8 @@ export async function knowYourself(ctx: Ctx) {
   await goTo("settings");
   await click("#shown-difficulty-oni");
   results.pagesStartOnTheSettingsDifficulty =
-    scoresChip === en.t("difficulty.hard") && knowChip === en.t("difficulty.hard");
+    scoresChip === `${en.t("picker.difficulty")}: ${en.t("difficulty.hard")}` &&
+    knowChip === en.t("difficulty.hard");
 
   await goTo("knowYourself");
   await shown("#know-crowns");

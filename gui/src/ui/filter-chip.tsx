@@ -16,6 +16,8 @@ export interface FilterOption<T> {
   readonly value: T;
   readonly label: string;
   readonly fill: FilterFill | null;
+  /** Its picture, which the chip shows in place of its label once it is chosen. */
+  readonly mark?: ReactNode;
 }
 
 const THEME_FILL: FilterFill = { colour: "primary.main", text: "primary.contrastText" };
@@ -24,6 +26,12 @@ const FROM_TOP = { vertical: "top", horizontal: "left" } as const;
 
 const ARROWED_CHIP = {
   "& .MuiChip-label": { display: "inline-flex", alignItems: "center", pr: 0.75 },
+} as const;
+const MARKS = { display: "inline-flex", alignItems: "center", gap: 0.5 } as const;
+const MARK = { display: "inline-flex" } as const;
+// Pictures stand in the chip's middle, not on its words' baseline.
+const PICTURED_CHIP = {
+  "& .MuiChip-label": { display: "inline-flex", alignItems: "center" },
 } as const;
 
 const chosenChip = ({ colour, text }: FilterFill) =>
@@ -44,19 +52,36 @@ const checkOf = (fill: FilterFill | null) =>
 /** What a chip says once something is chosen, and the colour it takes. */
 interface ChipChoice {
   readonly label: string;
+  /** The choices' pictures, shown in place of the label. */
+  readonly marks: ReactNode | null;
   readonly fill: FilterFill;
 }
+
+/** The choices' pictures side by side, where every one chosen has a picture. */
+const marksOf = <T,>(picked: readonly FilterOption<T>[]): ReactNode | null =>
+  picked.length > 0 && picked.every((option) => option.mark !== undefined) ? (
+    <Box component="span" sx={MARKS}>
+      {picked.map((option) => (
+        <Box component="span" key={String(option.value)} sx={MARK}>
+          {option.mark}
+        </Box>
+      ))}
+    </Box>
+  ) : null;
 
 /** A filter's chip: its name until a choice is made, then the choice; it opens its own menu. */
 function MenuChip({
   id,
   name,
+  icon,
   choice,
   onClear,
   items,
 }: {
   id: string;
   name: string;
+  /** Shown in place of the name while nothing is chosen. */
+  icon: ReactNode | undefined;
   choice: ChipChoice | null;
   /** None for a chip that always holds a choice: it keeps its arrow and has no ×. */
   onClear: (() => void) | null;
@@ -68,6 +93,9 @@ function MenuChip({
   useBackCloses(anchor !== null, close);
   const menuId = `${id}-menu`;
   const arrowed = choice === null || onClear === null;
+  const shown = choice === null ? (icon ?? name) : (choice.marks ?? choice.label);
+  // Pictures in place of words: the chip is named in words for screen readers.
+  const pictured = choice === null ? icon !== undefined : choice.marks !== null;
   return (
     <>
       <Chip
@@ -76,13 +104,14 @@ function MenuChip({
         label={
           arrowed ? (
             <>
-              {choice?.label ?? name}
+              {shown}
               <ArrowDropDownIcon fontSize="small" />
             </>
           ) : (
-            choice.label
+            shown
           )
         }
+        {...(pictured && { "aria-label": choice === null ? name : `${name}: ${choice.label}` })}
         onClick={(event) => setAnchor(event.currentTarget)}
         onDelete={choice === null || onClear === null ? undefined : onClear}
         aria-haspopup="menu"
@@ -90,6 +119,7 @@ function MenuChip({
         aria-controls={anchor !== null ? menuId : undefined}
         sx={{
           ...(choice !== null && chosenChip(choice.fill)),
+          ...(pictured && PICTURED_CHIP),
           ...(arrowed && ARROWED_CHIP),
         }}
       />
@@ -112,6 +142,7 @@ function MenuChip({
 export function FilterChip<T extends string | number>({
   id,
   name,
+  icon,
   options,
   chosen,
   i18n,
@@ -121,6 +152,8 @@ export function FilterChip<T extends string | number>({
 }: {
   id: string;
   name: string;
+  /** The filter's picture, shown in place of its name while nothing is chosen. */
+  icon?: ReactNode;
   options: readonly FilterOption<T>[];
   chosen: T | null;
   i18n: Translator;
@@ -156,7 +189,12 @@ export function FilterChip<T extends string | number>({
     <MenuChip
       id={id}
       name={name}
-      choice={picked === null ? null : { label: picked.label, fill: picked.fill ?? THEME_FILL }}
+      icon={icon}
+      choice={
+        picked === null
+          ? null
+          : { label: picked.label, marks: marksOf([picked]), fill: picked.fill ?? THEME_FILL }
+      }
       onClear={required ? null : () => onChoose(null)}
       items={(close) => [
         ...(required ? [] : [item(null, allLabel ?? i18n.t("picker.all"), null, close)]),
@@ -199,6 +237,7 @@ export function FilterToggles<T extends string | number>({
 export function MultiFilterChip<T extends string | number>({
   id,
   name,
+  icon,
   options,
   chosen,
   i18n,
@@ -206,6 +245,8 @@ export function MultiFilterChip<T extends string | number>({
 }: {
   id: string;
   name: string;
+  /** The filter's picture, shown in place of its name while nothing is ticked. */
+  icon?: ReactNode;
   options: readonly FilterOption<T>[];
   chosen: readonly T[];
   i18n: Translator;
@@ -218,6 +259,7 @@ export function MultiFilterChip<T extends string | number>({
       ? null
       : {
           label: picked.map((option) => option.label).join(" · "),
+          marks: marksOf(picked),
           // Several choices have no one colour between them: the chip takes the theme's.
           fill: (picked.length === 1 ? picked[0]?.fill : null) ?? THEME_FILL,
         };
@@ -257,6 +299,7 @@ export function MultiFilterChip<T extends string | number>({
     <MenuChip
       id={id}
       name={name}
+      icon={icon}
       choice={choice}
       onClear={() => onChoose([])}
       items={() => [
