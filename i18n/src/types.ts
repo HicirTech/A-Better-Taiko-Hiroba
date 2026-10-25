@@ -349,7 +349,6 @@ export interface Messages {
   "medal.complete": string;
   "medal.none": string;
   "medal.unrecognised": string;
-  /** Param: {code}, which part of the plate did not read, such as medal=noCountNoComplete. */
   "failure.notSignedIn": string;
   "failure.loggedOut": string;
   "failure.cardSelectUnfinished": string;
@@ -415,7 +414,6 @@ export interface Messages {
   "title.open": string;
   "title.close": string;
   "title.clear": string;
-  /** Param: {count}, how many titles the account may choose from. */
   "title.noMatch": string;
   "title.none": string;
   "title.current": string;
