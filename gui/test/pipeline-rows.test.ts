@@ -132,15 +132,15 @@ describe("operationName", () => {
   });
 
   test("names an operation in the language shown, and one it has no name for by its own name", () => {
-    expect(operationName(createTranslator("zh-Hans"), "changeCostume")).toBe("换装保存");
+    expect(operationName(createTranslator("zh-Hans"), "changeCostume")).toBe("换装同步");
     expect(operationName(createTranslator("en"), "somethingNew")).toBe("somethingNew");
   });
 
   test("names a picture by what it shows, and any other group by its operation", () => {
     const zh = createTranslator("zh-Hans");
-    expect(groupName(zh, { operation: PICTURE_OPERATION, subject: "myDon" })).toBe("小咚");
+    expect(groupName(zh, { operation: PICTURE_OPERATION, subject: "myDon" })).toBe("我的小咚");
     expect(groupName(zh, { operation: PICTURE_OPERATION, subject: "somethingNew" })).toBe("图片");
-    expect(groupName(zh, { operation: "changeCostume" })).toBe("换装保存");
+    expect(groupName(zh, { operation: "changeCostume" })).toBe("换装同步");
   });
 
   test("names each page of the recent plays walk with its page", () => {

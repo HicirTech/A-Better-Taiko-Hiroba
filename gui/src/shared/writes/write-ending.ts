@@ -55,7 +55,7 @@ export async function sendHeld<S>(
   try {
     return await send();
   } catch {
-    // The call itself failed (a bridge refused it): the page must not stay on "Saving…".
+    // The call itself failed (a bridge refused it): the page must not stay on "Syncing…".
     return { kind: "interrupted" };
   } finally {
     lane.release();
