@@ -1,13 +1,14 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, Menu, MenuItem, Stack } from "@mui/material";
-import { useId, useState } from "react";
+import { Box, Button, Stack } from "@mui/material";
+import { useState } from "react";
 import type { FavoriteSet } from "../shared/sets/favorite-sets";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
-import { useBackCloses } from "../ui/back-closers";
-import { ArrowDropDownIcon, CheckIcon } from "../ui/icons";
+import { ChoiceDialog } from "../ui/choice-dialog";
+import { CheckIcon } from "../ui/icons";
 import { LabelChip } from "../ui/label-chip";
+import type { ModalLook } from "../ui/large-modal";
 import { CARD_ROWS, SectionCard } from "../ui/section-card";
 import { SectionTitle } from "../ui/section-title";
 import { SimpleDialog } from "../ui/simple-dialog";
@@ -27,6 +28,8 @@ export interface FolderCardProps {
   readonly inUse: FavoriteSet | null;
   readonly onSaveAsSet: () => void;
   readonly onSaveToSet: (id: string) => void;
+  readonly touchFirst: boolean;
+  readonly modalLook: ModalLook;
 }
 
 /** The songs in the お気に入り folder in slot order, under the set it is or the ways to keep it. */
@@ -40,17 +43,17 @@ export function FolderCard({
   inUse,
   onSaveAsSet,
   onSaveToSet,
+  touchFirst,
+  modalLook,
 }: FolderCardProps) {
   const { t } = i18n;
   const { view, shut } = shown;
   const songs = view.folder.state.slots.flatMap((songNo, index) =>
     songNo === null ? [] : [{ slot: index + 1, songNo }],
   );
-  const menuId = useId();
-  const [menuAt, setMenuAt] = useState<HTMLElement | null>(null);
+  const [choosing, setChoosing] = useState(false);
   const [replacing, setReplacing] = useState<FavoriteSet | null>(null);
   const stopReplacing = () => setReplacing(null);
-  useBackCloses(menuAt !== null, () => setMenuAt(null));
   return (
     <SectionCard id="favorite-folder-card">
       <SectionTitle
@@ -80,11 +83,8 @@ export function FolderCard({
                     variant="outlined"
                     size="small"
                     disabled={shut}
-                    endIcon={<ArrowDropDownIcon fontSize="small" />}
-                    aria-haspopup="menu"
-                    aria-controls={menuAt === null ? undefined : menuId}
-                    aria-expanded={menuAt !== null}
-                    onClick={(event) => setMenuAt(event.currentTarget)}
+                    aria-haspopup="dialog"
+                    onClick={() => setChoosing(true)}
                   >
                     {t("favorites.saveToSet")}
                   </Button>
@@ -115,17 +115,23 @@ export function FolderCard({
           </Box>
         )}
       </Stack>
-      <Menu id={menuId} anchorEl={menuAt} open={menuAt !== null} onClose={() => setMenuAt(null)}>
-        {sets.map((set, index) => (
-          <MenuItem
-            key={set.id}
-            id={`favorite-folder-save-to-set-${index}`}
-            onClick={() => setReplacing(set)}
-          >
-            {set.name}
-          </MenuItem>
-        ))}
-      </Menu>
+      {choosing && (
+        <ChoiceDialog
+          id="favorite-folder-sets"
+          title={t("favorites.saveToSet")}
+          subtitle={null}
+          choices={sets.map((set, index) => ({
+            id: `favorite-folder-save-to-set-${index}`,
+            primary: set.name,
+            secondary: null,
+            onChoose: () => setReplacing(set),
+          }))}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
+          i18n={i18n}
+          onClose={() => setChoosing(false)}
+        />
+      )}
       <SimpleDialog
         id="favorite-folder-replace-dialog"
         open={replacing !== null}
@@ -142,7 +148,7 @@ export function FolderCard({
                 onSaveToSet(replacing.id);
               }
               stopReplacing();
-              setMenuAt(null);
+              setChoosing(false);
             },
           },
         ]}

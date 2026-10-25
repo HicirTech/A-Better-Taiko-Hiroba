@@ -4,6 +4,7 @@ import { action } from "storybook/actions";
 import { fn } from "storybook/test";
 import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 
+import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf, localeOf } from "../story-kit/env";
 import { FOLDER_SONGS, shownFavorites, storyFavorites } from "../story-kit/favorites";
 import { STORY_SETS } from "../story-kit/sets";
@@ -24,6 +25,8 @@ const meta = {
         shownDifficulty={DEFAULT_SHOWN}
         i18n={i18nOf(globals)}
         openDetails={() => action("open details")}
+        touchFirst={touchOf(globals)}
+        modalLook={modalLookOf(globals)}
       />
     </Box>
   ),
@@ -51,8 +54,8 @@ export const Empty: Story = { args: { shown: shownFavorites({ view: storyFavorit
 
 export const Saving: Story = { args: { shown: shownFavorites({ shut: true, saving: "folder" }) } };
 
-/** Save to a set: the sets kept, in a menu under the button. */
-export const SaveToASetMenu: Story = { play: () => press("#favorite-folder-save-to-set") };
+/** Save to a set: the sets kept, in the dialog that asks which. */
+export const SaveToASet: Story = { play: () => press("#favorite-folder-save-to-set") };
 
 /** Saving the folder into a set asks before it replaces the set's songs. */
 export const ReplacingASet: Story = {
