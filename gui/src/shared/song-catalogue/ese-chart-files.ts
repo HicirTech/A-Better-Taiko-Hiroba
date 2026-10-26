@@ -1,4 +1,4 @@
-import { err, ok, type Result, type Transport } from "@abth/core";
+import { err, eseChartPath, ok, type Result, type Transport } from "@abth/core";
 
 import type { ChartFileFailure } from "./types";
 
@@ -6,7 +6,6 @@ import type { ChartFileFailure } from "./types";
 const CHART_MAX_BYTES = 512 * 1024;
 const MAPPING_MAX_BYTES = 4 * 1024 * 1024;
 const TIMEOUT_MS = 30_000;
-const MAX_PATH_LENGTH = 300;
 const SONG_NO = /^\d{1,5}$/;
 
 export interface EseChartFilesOptions {
@@ -90,19 +89,10 @@ export function mappingOf(text: string): ReadonlyMap<string, string> | null {
   }
   const mapping = new Map<string, string>();
   for (const [songNo, path] of Object.entries(answer)) {
-    const address = typeof path === "string" && SONG_NO.test(songNo) ? chartAddress(path) : null;
+    const address = typeof path === "string" && SONG_NO.test(songNo) ? eseChartPath(path) : null;
     if (address !== null) {
       mapping.set(songNo, address);
     }
   }
   return mapping.size > 0 ? mapping : null;
-}
-
-/** A TJA's path in ESE as part of an address, or null for one that could step out of it. */
-function chartAddress(path: string): string | null {
-  const parts = path.trim().split(/[\\/]/);
-  const steps = parts.some((part) => part === "" || part === "." || part === "..");
-  return path.length > MAX_PATH_LENGTH || steps || !/\.tja$/i.test(path)
-    ? null
-    : parts.map(encodeURIComponent).join("/");
 }
