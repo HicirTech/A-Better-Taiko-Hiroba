@@ -7,12 +7,16 @@ const [pageFolder, workFile, pngFolder] = process.argv.slice(2);
 /** A song whose charts take longer is left out, so no chart can hold up the build. */
 const SONG_TIMEOUT_MS = 60_000;
 
+// A runner has no GPU: the page is drawn in software, off any screen, so it still gets frames.
+app.disableHardwareAcceleration();
+
 async function drawingWindow() {
   const window = new BrowserWindow({
     show: false,
     width: 1200,
     height: 900,
-    webPreferences: { backgroundThrottling: false },
+    // toBlob encodes in the idle time after a frame; a window that is never shown gets none.
+    webPreferences: { offscreen: true, backgroundThrottling: false },
   });
   await window.loadFile(path.join(pageFolder, "page.html"));
   return window;
