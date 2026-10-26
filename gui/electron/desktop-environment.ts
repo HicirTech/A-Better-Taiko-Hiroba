@@ -7,6 +7,7 @@ import {
 } from "../src/hiroba-session";
 import { RATING_DATA_URL } from "../src/shared/rating-data/rating-links";
 import {
+  ABTH_CDN_URL,
   CHINESE_NAMES_URL,
   catalogueUrlFor,
   chartOriginFor,
@@ -40,6 +41,8 @@ export interface DesktopEnvironment {
   readonly eseMappingUrl: string | undefined;
   /** Where the chart files are read; undefined when this run reads none. */
   readonly eseChartsUrl: string | undefined;
+  /** Where ABTH CDN's drawings and note counts are read; undefined when this run reads none. */
+  readonly cdnUrl: string | undefined;
   /** Windows open off every display, out of the taskbar and unfocused, for runs nobody watches. */
   readonly offScreen: boolean;
   /** Where a saved picture goes without the save box asking; undefined asks the player where. */
@@ -58,6 +61,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
   const chartOrigin = chartOriginFor(!packaged, env.ABTH_DEV_CHART_ORIGIN);
   const eseMappingUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_ESE_MAPPING, ESE_MAPPING_URL);
   const eseChartsUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_ESE_CHARTS, ESE_CHARTS_URL);
+  const cdnUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_ABTH_CDN, ABTH_CDN_URL);
   if (packaged) {
     return {
       devServerUrl: undefined,
@@ -71,6 +75,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
       chartOrigin,
       eseMappingUrl,
       eseChartsUrl,
+      cdnUrl,
       offScreen: false,
       picturesFolder: undefined,
     };
@@ -93,6 +98,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
     chartOrigin,
     eseMappingUrl,
     eseChartsUrl,
+    cdnUrl,
     offScreen: env.ABTH_DEV_OFF_SCREEN === "1",
     picturesFolder: env.ABTH_DEV_PICTURES_FOLDER || undefined,
   };

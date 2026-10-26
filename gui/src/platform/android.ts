@@ -53,8 +53,10 @@ import {
   type SignInOutcome,
 } from "../shared/session-port";
 import {
+  ABTH_CDN_URL,
   CHINESE_NAMES_URL,
   catalogueUrlFor,
+  cdnChartReader,
   chartOriginFor,
   createChartDensityReader,
   createChartPictureReader,
@@ -129,6 +131,12 @@ const eseChartsUrl = catalogueUrlFor(
   Boolean(import.meta.env.DEV),
   import.meta.env.VITE_ABTH_DEV_ESE_CHARTS,
   ESE_CHARTS_URL,
+);
+
+const cdnUrl = catalogueUrlFor(
+  Boolean(import.meta.env.DEV),
+  import.meta.env.VITE_ABTH_DEV_ABTH_CDN,
+  ABTH_CDN_URL,
 );
 
 export interface AndroidPortOptions {
@@ -252,6 +260,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         ? createMemoryPictureStore()
         : createIndexedDbPictureStore(options.indexedDb, CHART_DENSITY_DATABASE),
     pipeline: pipelines.external,
+    cdnUrl,
     files: chartFiles,
   });
   const chartTja = createChartTjaReader({ pipeline: pipelines.external, files: chartFiles });
@@ -477,6 +486,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readRatingData: (site, system) => readRatingData(site, ratingDataUrls[system]),
 
     readChartPicture: chartPictures,
+
+    readCdnChart: cdnChartReader(cdnUrl, chartPictures),
 
     readChartDensity: chartDensities,
 

@@ -13,11 +13,13 @@ const SOURCES: readonly { id: string; name: MessageKey; gives: MessageKey }[] = 
   { id: "chart-wiki", name: "settings.chartWiki", gives: "settings.chartWikiGives" },
   { id: "ourtaiko", name: "settings.ourTaiko", gives: "settings.ourTaikoGives" },
   { id: "fumendb", name: "settings.fumenDb", gives: "settings.fumenDbGives" },
+  { id: "abth-cdn", name: "settings.abthCdn", gives: "settings.abthCdnGives" },
   { id: "ese", name: "settings.ese", gives: "settings.eseGives" },
   { id: "tja-renderer", name: "settings.tjaRenderer", gives: "settings.tjaRendererGives" },
 ];
 
 const SOURCE_LABEL: Readonly<Record<ChartSource, MessageKey>> = {
+  cdn: "settings.chartSource.cdn",
   tja: "settings.chartSource.tja",
   wiki: "settings.chartSource.wiki",
 };

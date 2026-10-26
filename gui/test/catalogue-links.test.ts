@@ -9,10 +9,11 @@ import {
 const STAND_IN = "http://hiroba.test:8807";
 
 describe("isChartPictureAddress", () => {
-  test("holds exactly the three hosts the song list links", () => {
+  test("holds exactly the three hosts the song list links, and ABTH CDN's", () => {
     expect([...CHART_PICTURE_HOSTS].sort()).toEqual([
       "cdn.wikiwiki.jp",
       "file.taiko.wiki",
+      "hicirtech.github.io",
       "i.imgur.com",
     ]);
   });
@@ -23,6 +24,7 @@ describe("isChartPictureAddress", () => {
     "https://cdn.wikiwiki.jp/to/w/taiko-fumen/%E3%81%82.png?rev=1&t=2",
     "https://i.imgur.com/abc123.png",
     "https://FILE.TAIKO.WIKI:443/fumen/670/oni",
+    "https://hicirtech.github.io/abth-cdn/charts/1001/oni.webp",
   ])("takes %s", (address) => {
     expect(isChartPictureAddress(address, undefined)).toBe(true);
   });

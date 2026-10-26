@@ -3,7 +3,12 @@ import { err, ok, type Result } from "@abth/core";
 
 import type { HirobaSessionPort, PictureView } from "../src/shared/session-port";
 import type { ChartFileFailure, Difficulty } from "../src/shared/song-catalogue/types";
-import { type ChartFinding, findChartPicture, reloadCharts } from "../src/songs/find-chart-picture";
+import {
+  type ChartFinding,
+  findCdnPicture,
+  findChartPicture,
+  reloadCharts,
+} from "../src/songs/find-chart-picture";
 import { png } from "./picture-fixtures";
 
 const WIKI = "https://file.taiko.wiki/fumen/1001/oni";
@@ -16,14 +21,30 @@ const KEPT_DRAWING: PictureView = {
   height: 200,
 };
 const WIKI_VIEW: PictureView = { src: "data:image/png;base64,d2lraQ==", width: 816, height: 400 };
+const CDN_VIEW: PictureView = { src: "data:image/webp;base64,Y2Ru", width: 816, height: 240 };
 
-type ChartPort = Pick<HirobaSessionPort, "readChartPicture" | "readDrawnChart" | "keepDrawnChart">;
+type ChartPort = Pick<
+  HirobaSessionPort,
+  "readChartPicture" | "readCdnChart" | "readDrawnChart" | "keepDrawnChart"
+>;
 
 /** The port's chart verbs over what it holds, recording what it is asked. */
-function fakePort(held: { drawn?: PictureView; wikiKept?: boolean } = {}) {
+function fakePort(
+  held: {
+    drawn?: PictureView;
+    wikiKept?: boolean;
+    /** The failure ABTH CDN answers for a chart; the others it has. */
+    cdnFails?: Partial<Record<Difficulty, string>>;
+  } = {},
+) {
   const asked: string[] = [];
   const kept: { songNo: string; difficulty: Difficulty; png: Uint8Array }[] = [];
   const port: ChartPort = {
+    async readCdnChart(songNo, difficulty, read) {
+      asked.push(`cdn ${read} ${songNo} ${difficulty}`);
+      const code = held.cdnFails?.[difficulty];
+      return code === undefined ? ok(CDN_VIEW) : err({ code });
+    },
     async readDrawnChart(songNo, difficulty) {
       asked.push(`drawn ${songNo} ${difficulty}`);
       return held.drawn ?? null;
@@ -76,7 +97,7 @@ describe("findChartPicture", () => {
   test("shows taiko.wiki's pictures already kept until the chart is drawn, reading no file", async () => {
     const { port, asked } = fakePort({ wikiKept: true });
     const { chart, reads } = finding(port);
-    expect(await findChartPicture(chart)).toEqual({ kind: "wiki", noTja: false });
+    expect(await findChartPicture(chart)).toEqual({ kind: "wiki", lacking: null });
     expect(asked).toEqual(["drawn 1001 oni", `picture kept ${WIKI}`]);
     expect(reads).toEqual({ tja: 0, draws: 0 });
   });
@@ -106,7 +127,7 @@ describe("findChartPicture", () => {
   ])("falls back to taiko.wiki's pictures, and says so, for %s", async (_why, code) => {
     const { port, kept } = fakePort();
     const { chart, reads } = finding(port, err({ code }));
-    expect(await findChartPicture(chart)).toEqual({ kind: "wiki", noTja: true });
+    expect(await findChartPicture(chart)).toEqual({ kind: "wiki", lacking: "tja" });
     expect(kept).toEqual([]);
     expect(reads.draws).toBe(0);
   });
@@ -114,7 +135,7 @@ describe("findChartPicture", () => {
   test("falls back to taiko.wiki's pictures for a chart the file cannot draw", async () => {
     const { port, kept } = fakePort();
     const { chart } = finding(port, ok(TJA), null);
-    expect(await findChartPicture(chart)).toEqual({ kind: "wiki", noTja: true });
+    expect(await findChartPicture(chart)).toEqual({ kind: "wiki", lacking: "tja" });
     expect(kept).toEqual([]);
   });
 
@@ -123,6 +144,27 @@ describe("findChartPicture", () => {
     const { chart } = finding(port, err({ code: "unreachable" }));
     expect(await findChartPicture(chart)).toEqual({ kind: "failed", code: "unreachable" });
   });
+});
+
+describe("findCdnPicture", () => {
+  test("shows ABTH CDN's drawing, kept or read now", async () => {
+    const { port, asked } = fakePort();
+    expect(await findCdnPicture(port, "1001", "oni")).toEqual({ kind: "drawn", picture: CDN_VIEW });
+    expect(asked).toEqual(["cdn any 1001 oni"]);
+  });
+
+  test("falls back to taiko.wiki's pictures, and says so, for a chart ABTH CDN has not", async () => {
+    const { port } = fakePort({ cdnFails: { oni: "chart=status-404" } });
+    expect(await findCdnPicture(port, "1001", "oni")).toEqual({ kind: "wiki", lacking: "cdn" });
+  });
+
+  test.each(["chart=unreachable", "chart=timedOut", "chart=status-503", "chart=notConfigured"])(
+    "falls back to taiko.wiki's pictures, saying nothing, for a drawing read as %s",
+    async (code) => {
+      const { port } = fakePort({ cdnFails: { oni: code } });
+      expect(await findCdnPicture(port, "1001", "oni")).toEqual({ kind: "wiki", lacking: null });
+    },
+  );
 });
 
 describe("reloadCharts", () => {
@@ -179,5 +221,42 @@ describe("reloadCharts", () => {
     });
     expect(kept.map(({ difficulty }) => difficulty)).toEqual(["oni"]);
     expect(asked).toEqual(["picture again https://file.taiko.wiki/fumen/1001/hard"]);
+  });
+
+  test("reads ABTH CDN's drawings anew, reading no chart file and no taiko.wiki picture", async () => {
+    const { port, asked, kept } = fakePort();
+    let fresh = 0;
+    await reloadCharts({
+      songNo: "1001",
+      charts,
+      source: "cdn",
+      port,
+      tja: async () => {
+        fresh += 1;
+        return ok(TJA);
+      },
+      draw: async () => DRAWN,
+    });
+    expect(asked).toEqual(["cdn again 1001 hard", "cdn again 1001 oni"]);
+    expect(fresh).toBe(0);
+    expect(kept).toEqual([]);
+  });
+
+  test("reads anew the taiko.wiki pictures of a chart ABTH CDN has not", async () => {
+    const { port, asked, kept } = fakePort({ cdnFails: { hard: "chart=status-404" } });
+    await reloadCharts({
+      songNo: "1001",
+      charts,
+      source: "cdn",
+      port,
+      tja: async () => ok(TJA),
+      draw: async () => DRAWN,
+    });
+    expect(asked).toEqual([
+      "cdn again 1001 hard",
+      "picture again https://file.taiko.wiki/fumen/1001/hard",
+      "cdn again 1001 oni",
+    ]);
+    expect(kept).toEqual([]);
   });
 });

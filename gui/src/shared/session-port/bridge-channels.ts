@@ -29,6 +29,7 @@ export const BRIDGE_CHANNELS = {
   readChineseNames: "abth:read-chinese-names",
   readRatingData: "abth:read-rating-data",
   readChartPicture: "abth:read-chart-picture",
+  readCdnChart: "abth:read-cdn-chart",
   readChartDensity: "abth:read-chart-density",
   readChartTja: "abth:read-chart-tja",
   readDrawnChart: "abth:read-drawn-chart",

@@ -9,5 +9,7 @@
     ".storybook/main.ts",
     "scripts/**/*.ts",
     "test/**/*.ts"
-  ]
+  ],
+  // The page ABTH CDN draws in runs in a browser: gui/tsconfig.json checks it.
+  "exclude": ["scripts/abth-cdn/draw-page.ts"]
 }

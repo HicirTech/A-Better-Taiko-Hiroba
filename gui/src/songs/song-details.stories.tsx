@@ -54,3 +54,9 @@ export const NotesDiffer: Story = { args: { songNo: "1006" } };
 
 /** Settings ask for taiko.wiki's pictures in place of drawn ones. */
 export const TaikoWikiPictures: Story = { args: { chartSource: "wiki" } };
+
+/** Settings ask for charts drawn on the device from ESE's TJA. */
+export const DrawnOnTheDevice: Story = { args: { chartSource: "tja" } };
+
+/** Drawn on the device, with no chart file: taiko.wiki's pictures, with TJA Renderer's note. */
+export const NoChartFileOnTheDevice: Story = { args: { songNo: "1003", chartSource: "tja" } };

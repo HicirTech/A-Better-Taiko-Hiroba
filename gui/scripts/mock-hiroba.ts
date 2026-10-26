@@ -1,4 +1,5 @@
 /** Stand-in for Hiroba and the Bandai Namco ID host, so sign-in runs without the real sites. */
+import { ABTH_CDN_PATH, abthCdnFile } from "./mock-abth-cdn";
 import { chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "./mock-dan-label";
@@ -316,6 +317,9 @@ Bun.serve({
       return tja === null
         ? new Response("Not found", { status: 404 })
         : new Response(tja, { headers: { "content-type": "text/plain; charset=utf-8" } });
+    }
+    if (pathname.startsWith(ABTH_CDN_PATH)) {
+      return abthCdnFile(pathname) ?? new Response("Not found", { status: 404 });
     }
     const icon = ICON_PATH.exec(pathname);
     if (icon !== null) {

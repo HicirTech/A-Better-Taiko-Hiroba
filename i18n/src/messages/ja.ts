@@ -157,7 +157,8 @@ export const ja: Messages = {
   "settings.songData": "曲のデータ",
   "settings.chartSource": "譜面の画像",
   "settings.chartSourceHint":
-    "TJA Renderer は ESE の TJA ファイルから譜面を描きます。taiko.wiki は編集者がリンクした画像を表示します。",
+    "ABTH CDN は TJA Renderer があらかじめ描いて GitHub に置いた ESE の譜面を表示するので、ESE の応答が遅いときも表示できます。TJA Renderer は ESE の TJA ファイルからその場で譜面を描きます。taiko.wiki は編集者がリンクした画像を表示します。",
+  "settings.chartSource.cdn": "ABTH CDN",
   "settings.chartSource.tja": "TJA Renderer",
   "settings.chartSource.wiki": "taiko.wiki",
   "settings.taikoWiki": "taiko.wiki",
@@ -172,6 +173,9 @@ export const ja: Messages = {
     "レーティングの計算式（MIT）、配信している定数、曲と ESE の譜面の対応表",
   "settings.fumenDb": "太鼓の達人 譜面とかデータベース（fumen-database.com）",
   "settings.fumenDbGives": "レーティングに使う譜面の定数と測定値（OurTaiko 経由）",
+  "settings.abthCdn": "ABTH CDN（hicirtech.github.io/abth-cdn）",
+  "settings.abthCdnGives":
+    "あらかじめ描いた ESE の譜面の画像と密度の数値（1 時間ごとに更新を確認し、譜面ファイルは保存しない）",
   "settings.ese": "TJADB の ESE（ese.tjadataba.se）",
   "settings.eseGives":
     "各曲の譜面ファイル（密度の算出と描画に使い、保存するのは数値と描いた画像だけ）",
@@ -479,5 +483,6 @@ export const ja: Messages = {
   "details.picture": "{difficulty}の譜面（{n}/{count}）",
   "details.drawnPicture": "{difficulty}の譜面（TJA ファイルから描画）",
   "details.noTja": "TJA Renderer ではこの譜面を描けないため、taiko.wiki の画像を表示しています。",
+  "details.noCdn": "ABTH CDN にはこの譜面の画像がないため、taiko.wiki の画像を表示しています。",
   "details.chartDiffers": "この譜面はゲームの譜面と異なります。",
 };

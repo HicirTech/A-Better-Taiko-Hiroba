@@ -4,9 +4,10 @@ import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../picture-st
 import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
 import { base64Of } from "../png-answer";
 import type { PictureFailure, PictureView } from "../session-port/types";
+import { cdnChartPath } from "./abth-cdn";
 import { isChartPictureAddress } from "./catalogue-links";
 import { sniffPicture } from "./sniff-picture";
-import { CHART_PICTURE_MAX_BYTES, type ChartPictureRead } from "./types";
+import { CHART_PICTURE_MAX_BYTES, type ChartPictureRead, type Difficulty } from "./types";
 
 const CHART_PICTURE_TIMEOUT_MS = 30_000;
 
@@ -108,4 +109,16 @@ export function createChartPictureReader(options: ChartPictureReaderOptions): Ch
     inFlight.set(asked, reading);
     return reading;
   };
+}
+
+/** ABTH CDN's drawing of a chart, read as a chart picture from `cdnUrl`; none without one. */
+export function cdnChartReader(cdnUrl: string | undefined, pictures: ChartPictureReader) {
+  return (
+    songNo: string,
+    difficulty: Difficulty,
+    how: ChartPictureRead,
+  ): Promise<Result<PictureView, PictureFailure>> =>
+    cdnUrl === undefined
+      ? Promise.resolve(failed("notConfigured"))
+      : pictures(`${cdnUrl}${cdnChartPath(songNo, difficulty)}`, how);
 }

@@ -4,20 +4,20 @@ import { keepChartSource, keptChartSource } from "../src/shared/song-catalogue/c
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("keptChartSource", () => {
-  test("draws the charts from TJA until taiko.wiki is picked", () => {
-    expect(keptChartSource(memoryStorage())).toBe("tja");
+  test("takes ABTH CDN's drawings until another source is picked", () => {
+    expect(keptChartSource(memoryStorage())).toBe("cdn");
   });
 
-  test("keeps the source picked on this device", () => {
+  test.each(["tja", "wiki"] as const)("keeps %p once picked on this device", (source) => {
     const storage = memoryStorage();
-    keepChartSource("wiki", storage);
-    expect(keptChartSource(storage)).toBe("wiki");
+    keepChartSource(source, storage);
+    expect(keptChartSource(storage)).toBe(source);
   });
 
-  test("falls back to TJA for a store that refuses or holds something else", () => {
+  test("falls back to ABTH CDN for a store that refuses or holds something else", () => {
     const storage = memoryStorage();
     storage.setItem("abth.chartSource", "wikiwiki");
-    expect(keptChartSource(storage)).toBe("tja");
-    expect(keptChartSource(refusing)).toBe("tja");
+    expect(keptChartSource(storage)).toBe("cdn");
+    expect(keptChartSource(refusing)).toBe("cdn");
   });
 });

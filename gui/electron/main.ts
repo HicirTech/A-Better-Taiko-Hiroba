@@ -48,6 +48,7 @@ import {
   type SignInOutcome,
 } from "../src/shared/session-port";
 import {
+  cdnChartReader,
   createChartDensityReader,
   createChartPictureReader,
   createChartTjaReader,
@@ -201,6 +202,7 @@ const chartFiles = createEseChartFiles({
 const chartDensities = createChartDensityReader({
   store: createDiskPictureStore(join(app.getPath("userData"), "densities")),
   pipeline: pipelines.external,
+  cdnUrl: environment.cdnUrl,
   files: chartFiles,
 });
 const chartTja = createChartTjaReader({ pipeline: pipelines.external, files: chartFiles });
@@ -382,6 +384,7 @@ const started = app.whenReady().then(async () => {
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),
     readRatingData: (site, system) => readRatingData(site, environment.ratingDataUrls[system]),
     readChartPicture: chartPictures,
+    readCdnChart: cdnChartReader(environment.cdnUrl, chartPictures),
     readChartDensity: chartDensities,
     readChartTja: chartTja,
     readDrawnChart: drawnCharts.read,

@@ -1,3 +1,5 @@
+import { ABTH_CDN_URL } from "./abth-cdn";
+
 /** taiko.wiki's public list of every song. */
 export const SONG_CATALOGUE_URL = "https://taiko.wiki/api/v1/song/all";
 
@@ -7,14 +9,14 @@ export const CHINESE_NAMES_URL = "https://taiko.fandom.com/zh/api.php";
 /** OurTaiko's map from Hiroba's song numbers to the chart files in ESE. */
 export const ESE_MAPPING_URL = "https://cdn.ourtaiko.org/api/ese_mapping";
 
-/** Where ESE, the TJADB community's charts of every official song, serves its files. */
-export const ESE_CHARTS_URL = "https://ese.tjadataba.se/ESE/ESE/raw/branch/master/";
+export { ESE_CHARTS_URL } from "@abth/core";
 
-/** The hosts taiko.wiki's chart pictures sit on. */
+/** The hosts taiko.wiki's chart pictures and ABTH CDN's drawings sit on. */
 export const CHART_PICTURE_HOSTS: readonly string[] = [
   "file.taiko.wiki",
   "cdn.wikiwiki.jp",
   "i.imgur.com",
+  new URL(ABTH_CDN_URL).host,
 ];
 
 /** A development run reads only the stand-in it is given, so it never reaches the real site. */

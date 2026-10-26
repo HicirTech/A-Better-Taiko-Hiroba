@@ -1,9 +1,9 @@
 import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
 
-/** Where a song's details take its chart pictures: drawn from TJA, or taiko.wiki's. */
-export const CHART_SOURCES = ["tja", "wiki"] as const;
+/** Where a song's details take chart pictures: ABTH CDN's, drawn here from TJA, or taiko.wiki's. */
+export const CHART_SOURCES = ["cdn", "tja", "wiki"] as const;
 export type ChartSource = (typeof CHART_SOURCES)[number];
-export const DEFAULT_CHART_SOURCE: ChartSource = "tja";
+export const DEFAULT_CHART_SOURCE: ChartSource = "cdn";
 
 const KEY = "abth.chartSource";
 

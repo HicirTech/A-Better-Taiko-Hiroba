@@ -53,7 +53,12 @@ export interface FavoritesPageProps {
   /** A song's details read its charts' pictures here, and Hiroba's difficulty icons from `lane`. */
   readonly port: Pick<
     HirobaSessionPort,
-    "readChartPicture" | "readChartDensity" | "readChartTja" | "readDrawnChart" | "keepDrawnChart"
+    | "readChartPicture"
+    | "readCdnChart"
+    | "readChartDensity"
+    | "readChartTja"
+    | "readDrawnChart"
+    | "keepDrawnChart"
   >;
   readonly lane: PictureLane;
   /** The songs Hiroba's own picker offers: neither picker lists any other. */

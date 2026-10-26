@@ -58,6 +58,7 @@ describe("createChartTjaReader", () => {
     const densities = createChartDensityReader({
       store: createMemoryPictureStore(),
       pipeline,
+      cdnUrl: undefined,
       files,
     });
     await densities("1001", false);

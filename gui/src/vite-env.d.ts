@@ -26,4 +26,6 @@ interface ImportMetaEnv {
   readonly VITE_ABTH_DEV_ESE_MAPPING?: string;
   /** Where a stand-in serves chart files, ending in a slash. */
   readonly VITE_ABTH_DEV_ESE_CHARTS?: string;
+  /** Where a stand-in serves ABTH CDN's drawings and note counts, ending in a slash. */
+  readonly VITE_ABTH_DEV_ABTH_CDN?: string;
 }

@@ -12,6 +12,8 @@ import { mappingOf } from "../src/shared/song-catalogue/ese-chart-files";
 
 const MAPPING = "https://cdn.ourtaiko.test/api/ese_mapping";
 const CHARTS = "https://ese.test/ESE/ESE/raw/branch/master/";
+const CDN = "https://abth-cdn.test/";
+const PUBLISHED = `${CDN}densities/1001.json`;
 const PATH = "01 Pop\\Sample Song\\Sample Song.tja";
 const CHART = `${CHARTS}01%20Pop/Sample%20Song/Sample%20Song.tja`;
 // Hand-written: no chart from a TJA collection is kept in this repository.
@@ -28,6 +30,8 @@ function setUp(
   options: {
     mapping?: string;
     chart?: (url: string) => Answer;
+    /** ABTH CDN's answers; without them, a run given no CDN. */
+    cdn?: (url: string) => Answer;
     store?: PictureStore;
     addresses?: boolean;
   } = {},
@@ -36,6 +40,9 @@ function setUp(
   const transport: Transport = {
     async send({ url }) {
       sent.push(url);
+      if (url.startsWith(CDN) && options.cdn !== undefined) {
+        return options.cdn(url);
+      }
       return url === MAPPING
         ? text(options.mapping ?? JSON.stringify({ "1001": PATH }), url)
         : (options.chart ?? ((asked) => text(TJA, asked)))(url);
@@ -45,6 +52,7 @@ function setUp(
   const reader = createChartDensityReader({
     store,
     pipeline: { read: (_asked, group) => group(transport) },
+    cdnUrl: options.cdn === undefined ? undefined : CDN,
     files: createEseChartFiles({
       mappingUrl: options.addresses === false ? undefined : MAPPING,
       chartsUrl: options.addresses === false ? undefined : CHARTS,
@@ -129,6 +137,31 @@ describe("createChartDensityReader", () => {
     const { reader, sent } = setUp({ addresses: false });
     expect(await reader("1001", false)).toEqual(err({ code: "notConfigured" }));
     expect(sent).toEqual([]);
+  });
+
+  test("reads a song's numbers from ABTH CDN first, asking ESE nothing, and keeps them", async () => {
+    const published = JSON.stringify({ v: 1, densities: { oni: ONI, easy: EASY } });
+    const { reader, sent } = setUp({ cdn: (url) => text(published, url) });
+    expect(await reader("1001", false)).toEqual(ok({ oni: ONI, easy: EASY }));
+    expect(await reader("1001", false)).toEqual(ok({ oni: ONI, easy: EASY }));
+    expect(sent).toEqual([PUBLISHED]);
+  });
+
+  test.each<[why: string, cdn: (url: string) => Answer]>([
+    ["has no numbers for", (url) => text("Not found", url, 404)],
+    ["cannot be reached for", (url) => err({ kind: "unreachable", url })],
+    ["publishes a shape it cannot read for", (url) => text(JSON.stringify({ v: 0 }), url)],
+    ["publishes too much for", (url) => text("1".repeat(1024 * 1024 + 1), url)],
+  ])("reads ESE's chart when ABTH CDN %s the song", async (_why, cdn) => {
+    const { reader, sent } = setUp({ cdn });
+    expect(await reader("1001", false)).toEqual(ok({ oni: ONI, easy: EASY }));
+    expect(sent).toEqual([PUBLISHED, MAPPING, CHART]);
+  });
+
+  test("finds no chart when ABTH CDN has none and the run reads no ESE", async () => {
+    const { reader, sent } = setUp({ cdn: (url) => text("", url, 404), addresses: false });
+    expect(await reader("1001", false)).toEqual(err({ code: "noChart" }));
+    expect(sent).toEqual([PUBLISHED]);
   });
 });
 

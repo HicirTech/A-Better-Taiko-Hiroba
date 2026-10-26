@@ -46,6 +46,7 @@ export const FAILED_CALL_ANSWERS: FailedCallAnswers = {
   readChineseNames: () => FETCH_FAILED,
   readRatingData: () => FETCH_FAILED,
   readChartPicture: () => err({ code: "chart=callFailed" }),
+  readCdnChart: () => err({ code: "chart=callFailed" }),
   readChartDensity: () => FETCH_FAILED,
   readChartTja: () => FETCH_FAILED,
   readDrawnChart: () => null,
