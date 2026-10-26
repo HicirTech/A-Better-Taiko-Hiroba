@@ -71,10 +71,7 @@ export function createChartDensityReader(options: ChartDensityReaderOptions): Ch
       if (Object.keys(densities).length === 0) {
         return err({ code: "badAnswer" });
       }
-      await store.put(
-        key,
-        new TextEncoder().encode(JSON.stringify({ v: KEPT_VERSION, densities })),
-      );
+      await store.put(key, new TextEncoder().encode(densityFile(densities)));
       return ok(densities);
     });
   };
@@ -90,7 +87,12 @@ export function createChartDensityReader(options: ChartDensityReaderOptions): Ch
   };
 }
 
-function densitiesByDifficulty(text: string): SongDensityRead {
+/** A song's numbers as the apps keep them and ABTH CDN publishes them. */
+export const densityFile = (densities: SongDensityRead): string =>
+  JSON.stringify({ v: KEPT_VERSION, densities });
+
+/** Every single-player chart's note density in a TJA's text, by difficulty. */
+export function densitiesByDifficulty(text: string): SongDensityRead {
   const densities: Partial<Record<Difficulty, ChartDensity>> = {};
   for (const [level, density] of tjaDensities(text)) {
     densities[LEVEL_DIFFICULTY[level]] = density;
@@ -99,7 +101,7 @@ function densitiesByDifficulty(text: string): SongDensityRead {
 }
 
 /** The numbers kept for a song, or null for nothing kept, or a shape kept before KEPT_VERSION. */
-function keptDensities(bytes: Uint8Array | null): SongDensityRead | null {
+export function keptDensities(bytes: Uint8Array | null): SongDensityRead | null {
   if (bytes === null) {
     return null;
   }
