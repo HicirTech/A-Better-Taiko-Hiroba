@@ -92,6 +92,9 @@ try {
       scratch,
       join(scratch, "work.json"),
       pngs,
+      // A runner's chrome-sandbox is no SUID binary, and the page runs only this bundle; Chromium
+      // reads the switch before draw-window.cjs runs, so it goes on the command line.
+      "--no-sandbox",
     ],
     { stdout: "inherit", stderr: "inherit" },
   );

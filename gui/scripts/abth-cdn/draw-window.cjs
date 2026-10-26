@@ -1,14 +1,9 @@
-// Draws ABTH CDN's charts in a hidden window: build.ts hands it a folder with the drawing page and
-// a work list of chart files to read where they lie, and takes the PNGs it writes.
-// Usage: electron draw-window.cjs <page folder> <work.json> <png folder>
+// ABTH CDN's drawing window: draws each chart of build.ts's work list into a PNG, read in place.
 const { app, BrowserWindow } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 
 const [pageFolder, workFile, pngFolder] = process.argv.slice(2);
-
-// A CI runner gives Chromium's sandbox no room, and the page runs only build.ts's own bundle.
-app.commandLine.appendSwitch("no-sandbox");
 
 app.whenReady().then(async () => {
   const window = new BrowserWindow({
