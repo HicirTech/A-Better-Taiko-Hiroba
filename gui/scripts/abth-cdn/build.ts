@@ -104,20 +104,24 @@ try {
 
   let charts = 0;
   const skipped: string[] = [];
-  for (const name of readdirSync(pngs).sort()) {
+  const drawings = readdirSync(pngs).sort();
+  for (const [at, name] of drawings.entries()) {
     const [songNo = "", difficulty = ""] = name.replace(/\.png$/, "").split("-");
     if (!isDifficulty(difficulty)) {
       continue;
     }
+    const place = `${at + 1} of ${drawings.length}`;
     const webp = await webpOf(readFileSync(join(pngs, name)));
     if (webp === null) {
       skipped.push(`${songNo}/${difficulty}`);
+      console.log(`left out ${songNo}/${difficulty}, ${place}: no WebP can hold it`);
       continue;
     }
     const target = join(out, cdnChartPath(songNo, difficulty));
     mkdirSync(join(target, ".."), { recursive: true });
     writeFileSync(target, webp);
     charts += 1;
+    console.log(`kept ${songNo}/${difficulty}.webp, ${place}`);
   }
   console.log(`kept ${charts} drawings as WebP, left out ${skipped.length}`);
 

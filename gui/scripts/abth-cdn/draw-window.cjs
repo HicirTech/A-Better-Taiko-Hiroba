@@ -16,7 +16,8 @@ app.whenReady().then(async () => {
   const { difficulties, songs } = JSON.parse(fs.readFileSync(workFile, "utf8"));
   fs.mkdirSync(pngFolder, { recursive: true });
   let drawn = 0;
-  for (const { songNo, file } of songs) {
+  for (const [at, { songNo, file }] of songs.entries()) {
+    const place = `song ${at + 1} of ${songs.length}`;
     // Read as the apps read it, into memory only.
     const tja = new TextDecoder("utf-8").decode(fs.readFileSync(file));
     const pngs = await window.webContents.executeJavaScript(`drawAll(${JSON.stringify(tja)})`);
@@ -25,6 +26,7 @@ app.whenReady().then(async () => {
         const name = `${songNo}-${difficulties[index]}.png`;
         fs.writeFileSync(path.join(pngFolder, name), Buffer.from(png, "base64"));
         drawn += 1;
+        process.stdout.write(`drew ${songNo}/${difficulties[index]}, ${place}\n`);
       }
     });
   }
