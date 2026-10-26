@@ -58,8 +58,11 @@ console.log(`${work.length} songs in OurTaiko's map, ${found.length} with a char
 rmSync(out, { recursive: true, force: true });
 mkdirSync(join(out, "densities"), { recursive: true });
 let densities = 0;
+/** Each song's charts, as its notes were counted: a song the window leaves out names them. */
+const courses = new Map<string, readonly string[]>();
 for (const { songNo, file } of found) {
   const counted = densitiesByDifficulty(new TextDecoder("utf-8").decode(readFileSync(file)));
+  courses.set(songNo, Object.keys(counted));
   if (Object.keys(counted).length > 0) {
     writeFileSync(join(out, cdnDensityPath(songNo)), densityFile(counted));
     densities += 1;
@@ -103,7 +106,12 @@ try {
   }
 
   let charts = 0;
-  const skipped: string[] = [];
+  const leftOut: readonly string[] = JSON.parse(
+    readFileSync(join(scratch, "left-out.json"), "utf8"),
+  );
+  const skipped = leftOut.flatMap((songNo) =>
+    (courses.get(songNo) ?? []).map((difficulty) => `${songNo}/${difficulty}`),
+  );
   const drawings = readdirSync(pngs).sort();
   for (const [at, name] of drawings.entries()) {
     const [songNo = "", difficulty = ""] = name.replace(/\.png$/, "").split("-");
