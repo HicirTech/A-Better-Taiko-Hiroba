@@ -73,6 +73,7 @@ const CASES: VerbCase[] = [
     ["https://file.taiko.wiki/fumen/670/oni", "any"],
     ["file:///etc/passwd", "any"],
   ],
+  ["readCdnChart", ["1001", "oni", "any"], ["../1001", "oni", "any"]],
   ["readChartDensity", ["1001", false], ["1001/../oni.tja", false]],
   ["readChartTja", ["1001"], ["1001/../oni.tja"]],
   ["readDrawnChart", ["1001", "oni"], ["1001", "inner"]],

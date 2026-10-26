@@ -1,6 +1,7 @@
 /** Starts the desktop app under test, and closes it. */
 
 import electronPath from "electron";
+import { ABTH_CDN_PATH } from "../mock-abth-cdn";
 import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "../mock-ese";
 import {
   CDP_PORT,
@@ -54,6 +55,7 @@ export async function launch({
       ABTH_DEV_RATING_DATA: `${HIROBA}${RATING_DATA}`,
       ABTH_DEV_ESE_MAPPING: `${HIROBA}${ESE_MAPPING_PATH}`,
       ABTH_DEV_ESE_CHARTS: `${HIROBA}${ESE_CHARTS_PATH}`,
+      ABTH_DEV_ABTH_CDN: `${HIROBA}${ABTH_CDN_PATH}`,
       ABTH_DEV_CHINESE_NAMES: `${HIROBA}/__chinese-names`,
       ABTH_DEV_CHART_ORIGIN: HIROBA,
       ABTH_DEV_PICTURES_FOLDER: PICTURES,

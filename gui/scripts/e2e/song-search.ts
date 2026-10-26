@@ -1,5 +1,8 @@
 /** The Overview's song search: its bar, the searches kept, a song's details and chart pictures. */
+import { cdnChartPath, cdnDensityPath } from "../../src/shared/song-catalogue/abth-cdn";
+import type { ChartSource } from "../../src/shared/song-catalogue/chart-source";
 import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
+import { ABTH_CDN_PATH, CDN_DRAWING_HEIGHT } from "../mock-abth-cdn";
 import {
   BRANCHED_CHART,
   MISCOUNTED_CHART,
@@ -40,25 +43,30 @@ export const songSearchKeys = [
   "keptSearchesUnframed",
   "searchAgainFromTheKeptOne",
   "searchForgotten",
-  "chartSourceDefaultsToTja",
+  "chartSourceDefaultsToCdn",
   "detailsOpenOnTheInnerChart",
   "detailsChartsShowTheirIcons",
   "chartPictureOpensFullScreen",
   "detailsOpenOnTheShownDifficulty",
   "densityDrawnForAMappedChart",
   "densityBranchesChosen",
+  "densityReadFromTheCdn",
   "densityKeptAndReadAgain",
   "densityNotDrawnWhenTheNotesDiffer",
   "densityNotDrawnWithoutAChart",
+  "densityAsksEseWhereTheCdnHasNone",
   "keptWikiPictureStaysUnderTja",
   "longHoldRedrawsTheSong",
-  "longHoldReadsTheChartFileTwice",
+  "longHoldReadsTheNumbersAndTheChartFile",
   "longHoldLeavesTaikoWikiPictures",
   "longHoldPresses",
   "chartDrawnFromTheTja",
   "drawnChartKept",
   "noTjaFallsBackWithANotice",
   "differingChartDrawnWithANote",
+  "cdnDrawingShown",
+  "cdnDrawingKept",
+  "cdnLackingFallsBackWithANotice",
   "detailsShowTheChartPictures",
   "chartPictureAskedOnce",
   "fiveChartsInOneRowOnAPhone",
@@ -117,7 +125,7 @@ export async function songSearch(ctx: Ctx) {
     await goTo("overview");
     await shown("#song-search-input");
   };
-  const chooseChartSource = async (source: "tja" | "wiki") => {
+  const chooseChartSource = async (source: ChartSource) => {
     await goTo("settings");
     await shown(`#chart-source-${source}`);
     await click(`#chart-source-${source}`);
@@ -212,11 +220,11 @@ export async function songSearch(ctx: Ctx) {
   await gone("#song-search-recent");
   results.searchForgotten = !(await exists("#song-search-panel"));
 
-  // taiko.wiki's pictures first, as before the app drew any: a new install draws from TJA.
+  // taiko.wiki's pictures first, as before the app drew any: a new install takes ABTH CDN's.
   await goTo("settings");
-  await shown("#chart-source-tja");
-  results.chartSourceDefaultsToTja =
-    (await attribute("#chart-source-tja", "aria-pressed")) === "true";
+  await shown("#chart-source-cdn");
+  results.chartSourceDefaultsToCdn =
+    (await attribute("#chart-source-cdn", "aria-pressed")) === "true";
   await chooseChartSource("wiki");
 
   await openSong("約束", "1005");
@@ -269,6 +277,7 @@ export async function songSearch(ctx: Ctx) {
 
   const peak = () => textOf("#song-density-peak");
   const chartHits = () => hitsOn(encodeURIComponent(servedChartPath(BRANCHED_CHART)));
+  const publishedHits = () => hitsOn(`${ABTH_CDN_PATH}${cdnDensityPath(BRANCHED_CHART)}`);
   await openSong("約束", BRANCHED_CHART);
   await click("#song-details-chart-oni");
   await shown("#song-density-branches");
@@ -279,11 +288,12 @@ export async function songSearch(ctx: Ctx) {
     masterFirst &&
     (await soon("the normal branch's line", async () => (await peak()) !== masterPeak)) &&
     (await attribute("#song-density-branch-normal", "aria-pressed")) === "true";
-  // Read as the song first opened above; every opening since used the numbers kept.
-  const readOnce = (await chartHits()) === 1;
+  // Read from ABTH CDN as the song first opened above; every opening since used the numbers kept.
+  const readOnce = (await publishedHits()) === 1;
+  results.densityReadFromTheCdn = readOnce && (await chartHits()) === 0;
   await click("#song-details-read-chart");
   results.densityKeptAndReadAgain =
-    readOnce && (await soon("the chart read again", async () => (await chartHits()) === 2));
+    readOnce && (await soon("the numbers read again", async () => (await publishedHits()) === 2));
   await waitFor("the chart read", async () =>
     (await attribute("#song-details-read-chart", "disabled")) === null ? true : undefined,
   );
@@ -296,6 +306,8 @@ export async function songSearch(ctx: Ctx) {
   await openSong("白い季節", MISSING_CHART);
   await shown("#song-density-none");
   results.densityNotDrawnWithoutAChart = !(await exists("#song-density-line"));
+  results.densityAsksEseWhereTheCdnHasNone =
+    (await hitsOn(encodeURIComponent(servedChartPath(MISSING_CHART)))) === 1;
   await closeSong();
 
   // Drawn from TJA again: the taiko.wiki pictures read above stay until a long hold.
@@ -331,10 +343,12 @@ export async function songSearch(ctx: Ctx) {
   // A press cut short from outside the window reloads nothing: it is pressed once more.
   const presses: LongHold[] = [];
   let chartBefore = 0;
+  let publishedBefore = 0;
   let innerBefore = 0;
   while (presses.length < 2 && presses.at(-1)?.took !== true) {
     await readButtonReady("the read button ready");
     chartBefore = await chartHits();
+    publishedBefore = await publishedHits();
     innerBefore = await hitsOn(INNER_PICTURE);
     presses.push(await holdToReload());
   }
@@ -345,8 +359,9 @@ export async function songSearch(ctx: Ctx) {
   await readButtonReady("the song reloaded");
   results.longHoldPresses = presses;
   results.longHoldRedrawsTheSong = redrawn;
-  // The density read again, and the chart file once more for the drawing.
-  results.longHoldReadsTheChartFileTwice = (await chartHits()) === chartBefore + 2;
+  // The numbers read again from ABTH CDN, and the chart file once more for the drawing.
+  results.longHoldReadsTheNumbersAndTheChartFile =
+    (await chartHits()) === chartBefore + 1 && (await publishedHits()) === publishedBefore + 1;
   results.longHoldLeavesTaikoWikiPictures = (await hitsOn(INNER_PICTURE)) === innerBefore;
   await closeSong();
 
@@ -374,6 +389,27 @@ export async function songSearch(ctx: Ctx) {
   results.differingChartDrawnWithANote = await soon("the line under the drawing", () =>
     exists("#song-details-chart-differs"),
   );
+  await closeSong();
+
+  // ABTH CDN once more, as a new install has it: its drawing, asking ESE for no chart file.
+  await chooseChartSource("cdn");
+  const cdnHits = () => hitsOn(`${ABTH_CDN_PATH}${cdnChartPath(PLAIN_CHART, "oni")}`);
+  const plainBefore = await plainHits();
+  await openSong("夜明け", PLAIN_CHART);
+  results.cdnDrawingShown = await soon("ABTH CDN's drawing", () =>
+    page.evaluate<boolean>(
+      `[...document.querySelectorAll("#song-details-pictures img.drawn-chart")].some((img) => img.complete && img.naturalHeight === ${CDN_DRAWING_HEIGHT})`,
+    ),
+  );
+  await closeSong();
+  await openSong("夜明け", PLAIN_CHART);
+  await chartDrawn();
+  results.cdnDrawingKept = (await cdnHits()) === 1 && (await plainHits()) === plainBefore;
+  await closeSong();
+  await openSong("白い季節", MISSING_CHART);
+  await shown("#song-details-no-cdn");
+  results.cdnLackingFallsBackWithANotice =
+    (await exists("#song-details-no-picture")) && !(await exists("#song-details-no-tja"));
   await closeSong();
 
   results.fiveChartsInOneRowOnAPhone = await atSize(

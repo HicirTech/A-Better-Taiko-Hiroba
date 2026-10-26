@@ -60,7 +60,12 @@ export interface SongDetailsProps {
   readonly song: ListedSong | null;
   readonly port: Pick<
     HirobaSessionPort,
-    "readChartPicture" | "readChartDensity" | "readChartTja" | "readDrawnChart" | "keepDrawnChart"
+    | "readChartPicture"
+    | "readCdnChart"
+    | "readChartDensity"
+    | "readChartTja"
+    | "readDrawnChart"
+    | "keepDrawnChart"
   >;
   /** Where the charts' difficulty icons, Hiroba's own, are read. */
   readonly lane: PictureLane;

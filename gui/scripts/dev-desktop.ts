@@ -5,11 +5,13 @@ import electronPath from "electron";
 import { createServer } from "vite";
 import { RATING_DATA_URL } from "../src/shared/rating-data/rating-links";
 import {
+  ABTH_CDN_URL,
   CHINESE_NAMES_URL,
   ESE_CHARTS_URL,
   ESE_MAPPING_URL,
   SONG_CATALOGUE_URL,
 } from "../src/shared/song-catalogue";
+import { ABTH_CDN_PATH } from "./mock-abth-cdn";
 import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "./mock-ese";
 
 const root = join(import.meta.dir, "..");
@@ -41,6 +43,7 @@ const songCatalogueEnv = {
   ABTH_DEV_RATING_DATA: real ? RATING_DATA_URL.ourtaikoV1 : `${HIROBA_ORIGIN}/__rating-data`,
   ABTH_DEV_ESE_MAPPING: real ? ESE_MAPPING_URL : `${HIROBA_ORIGIN}${ESE_MAPPING_PATH}`,
   ABTH_DEV_ESE_CHARTS: real ? ESE_CHARTS_URL : `${HIROBA_ORIGIN}${ESE_CHARTS_PATH}`,
+  ABTH_DEV_ABTH_CDN: real ? ABTH_CDN_URL : `${HIROBA_ORIGIN}${ABTH_CDN_PATH}`,
 };
 
 const vite = await createServer({ configFile: join(root, "vite.config.ts"), root });

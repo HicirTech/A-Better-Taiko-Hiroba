@@ -13,10 +13,12 @@ import type {
 } from "../shared/session-port";
 import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
 import {
+  type ChartPictureRead,
   DIFFICULTIES,
   type Difficulty,
   type SongDensityRead,
 } from "../shared/song-catalogue/types";
+import { drawChart } from "../songs/draw-chart";
 import { portraitOf, STORY_EDITOR, STORY_HISTORY } from "./costume";
 import { STORY_PICKABLE, storyFavorites } from "./favorites";
 import { packData, packView } from "./pack";
@@ -169,10 +171,16 @@ function pipelinesAt(now: number): PipelinesView {
 
 /** The charts the page drew and kept, as a device keeps them until a song is read again. */
 const drawn = new Map<string, PictureView>();
+/** The chart pictures read, each kept from then on, as a device keeps them. */
+const keptPictures = new Set<string>();
 
 /** The pictures and charts a song's details read: the stand-in's, with no session and no site. */
 export const STORY_CHART_PORT = {
-  readChartPicture: (url: string) => {
+  readChartPicture: (url: string, read: ChartPictureRead) => {
+    if (read === "kept" && !keptPictures.has(url)) {
+      return later(err({ code: "chart=notKept" }));
+    }
+    keptPictures.add(url);
     const at = CHART_PICTURE_PATHS.indexOf(new URL(url).pathname);
     if (at >= 0) {
       return later(ok(pictureOf(chartPicturePng(at))));
@@ -204,6 +212,15 @@ export const STORY_CHART_PORT = {
         : ok(standInTja(song)),
     );
   },
+  // ABTH CDN's drawings are TJA Renderer's, made ahead: here made of the stand-in's TJA.
+  readCdnChart: async (songNo: string, difficulty: Difficulty) => {
+    const song = wikiSong(songNo);
+    const png =
+      song === undefined || songNo === MISSING_CHART
+        ? null
+        : await drawChart(standInTja(song), difficulty);
+    return later(png === null ? err({ code: "chart=status-404" }) : ok(pictureOf(png)));
+  },
   readDrawnChart: (songNo: string, difficulty: Difficulty): Promise<PictureView | null> =>
     Promise.resolve(drawn.get(`${songNo}/${difficulty}`) ?? null),
   keepDrawnChart: (songNo: string, difficulty: Difficulty, png: Uint8Array) => {
@@ -212,7 +229,12 @@ export const STORY_CHART_PORT = {
   },
 } satisfies Pick<
   HirobaSessionPort,
-  "readChartPicture" | "readChartDensity" | "readChartTja" | "readDrawnChart" | "keepDrawnChart"
+  | "readChartPicture"
+  | "readCdnChart"
+  | "readChartDensity"
+  | "readChartTja"
+  | "readDrawnChart"
+  | "keepDrawnChart"
 >;
 
 /** A port answering every verb from story data, taking every write; `changes` replace verbs. */

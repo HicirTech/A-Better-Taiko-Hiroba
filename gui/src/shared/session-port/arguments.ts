@@ -321,6 +321,13 @@ const isSongChart = (songNo: unknown, difficulty: unknown) =>
 
 const songChart: ArgumentCheck = (args) => args.length === 2 && isSongChart(args[0], args[1]);
 
+// The song and difficulty go into ABTH CDN's address; it is read as any chart picture is.
+const cdnChart: ArgumentCheck = (args) =>
+  args.length === 3 &&
+  isSongChart(args[0], args[1]) &&
+  typeof args[2] === "string" &&
+  Object.hasOwn(CHART_PICTURE_READ, args[2]);
+
 // The bytes are the page's: the platform keeps only a PNG among them.
 const drawnChart: ArgumentCheck = (args) =>
   args.length === 3 &&
@@ -360,6 +367,7 @@ export const PORT_ARGUMENTS = {
   readChineseNames: none,
   readRatingData: ratingSystem,
   readChartPicture: chartUrl,
+  readCdnChart: cdnChart,
   readChartDensity: songNoAndAgain,
   readChartTja: oneSongNo,
   readDrawnChart: songChart,

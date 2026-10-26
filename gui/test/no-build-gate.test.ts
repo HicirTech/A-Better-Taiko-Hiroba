@@ -54,6 +54,7 @@ const LOOKS_AT_THE_BUILD: Readonly<Record<string, readonly string[]>> = {
     "process.env.ABTH_DEBUG_SAVE_READS",
   ],
   "electron/desktop-environment.ts": [
+    "env.ABTH_DEV_ABTH_CDN",
     "env.ABTH_DEV_CHART_ORIGIN",
     "env.ABTH_DEV_CHINESE_NAMES",
     "env.ABTH_DEV_ESE_CHARTS",
@@ -83,6 +84,8 @@ const LOOKS_AT_THE_BUILD: Readonly<Record<string, readonly string[]>> = {
     "import.meta.env.DEV",
     "import.meta.env.DEV",
     "import.meta.env.DEV",
+    "import.meta.env.DEV",
+    "import.meta.env.VITE_ABTH_DEV_ABTH_CDN",
     "import.meta.env.VITE_ABTH_DEV_CHART_ORIGIN",
     "import.meta.env.VITE_ABTH_DEV_CHINESE_NAMES",
     "import.meta.env.VITE_ABTH_DEV_ESE_CHARTS",

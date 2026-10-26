@@ -1,3 +1,5 @@
+import { ABTH_CDN_URL } from "./abth-cdn";
+
 /** taiko.wiki's public list of every song. */
 export const SONG_CATALOGUE_URL = "https://taiko.wiki/api/v1/song/all";
 
@@ -9,11 +11,12 @@ export const ESE_MAPPING_URL = "https://cdn.ourtaiko.org/api/ese_mapping";
 
 export { ESE_CHARTS_URL } from "@abth/core";
 
-/** The hosts taiko.wiki's chart pictures sit on. */
+/** The hosts taiko.wiki's chart pictures and ABTH CDN's drawings sit on. */
 export const CHART_PICTURE_HOSTS: readonly string[] = [
   "file.taiko.wiki",
   "cdn.wikiwiki.jp",
   "i.imgur.com",
+  new URL(ABTH_CDN_URL).host,
 ];
 
 /** A development run reads only the stand-in it is given, so it never reaches the real site. */

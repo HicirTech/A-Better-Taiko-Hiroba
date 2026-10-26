@@ -156,7 +156,8 @@ export const en: Messages = {
   "settings.songData": "Song data",
   "settings.chartSource": "Chart pictures",
   "settings.chartSourceHint":
-    "TJA Renderer draws each chart from its TJA file in ESE; taiko.wiki shows the pictures its editors link.",
+    "ABTH CDN shows ESE's charts as TJA Renderer drew them ahead of time, kept on GitHub, so they come even while ESE is slow; TJA Renderer draws each chart here from its TJA file in ESE; taiko.wiki shows the pictures its editors link.",
+  "settings.chartSource.cdn": "ABTH CDN",
   "settings.chartSource.tja": "TJA Renderer",
   "settings.chartSource.wiki": "taiko.wiki",
   "settings.taikoWiki": "taiko.wiki",
@@ -172,6 +173,9 @@ export const en: Messages = {
   "settings.fumenDb": "Taiko no Tatsujin Fumen Database (fumen-database.com)",
   "settings.fumenDbGives":
     "The chart constants and measurements behind the rating, through OurTaiko",
+  "settings.abthCdn": "ABTH CDN (hicirtech.github.io/abth-cdn)",
+  "settings.abthCdnGives":
+    "ESE's charts drawn ahead of time, and their note counts, checked for changes every hour; no chart file is kept",
   "settings.ese": "ESE by TJADB (ese.tjadataba.se)",
   "settings.eseGives":
     "Each song's chart file, read for its note density and drawn pictures; only the counts and the pictures are kept",
@@ -480,5 +484,6 @@ export const en: Messages = {
   "details.picture": "{difficulty} chart, picture {n} of {count}",
   "details.drawnPicture": "{difficulty} chart, drawn from its TJA file",
   "details.noTja": "TJA Renderer cannot draw this chart, so taiko.wiki's pictures are shown.",
+  "details.noCdn": "ABTH CDN has no drawing of this chart, so taiko.wiki's pictures are shown.",
   "details.chartDiffers": "This chart differs from the game's.",
 };

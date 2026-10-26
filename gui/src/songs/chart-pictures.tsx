@@ -1,5 +1,5 @@
 import type { Result } from "@abth/core";
-import type { Translator } from "@abth/i18n";
+import type { MessageKey, Translator } from "@abth/i18n";
 import { FormHelperText, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import type { HirobaSessionPort } from "../shared/session-port";
@@ -11,9 +11,16 @@ import { StatusNote } from "../ui/status-note";
 import { ChartPicture, PictureButton, PictureLoading } from "./chart-picture";
 import type { ShownChart } from "./chart-viewer";
 import { drawChart } from "./draw-chart";
-import { type ChartShown, findChartPicture } from "./find-chart-picture";
+import { type ChartShown, findCdnPicture, findChartPicture } from "./find-chart-picture";
 
-const WIKI: ChartShown = { kind: "wiki", noTja: false };
+const WIKI: ChartShown = { kind: "wiki", lacking: null };
+
+/** Why taiko.wiki's pictures stand in, by the source that had no drawing. */
+const LACKING: Readonly<Record<"tja" | "cdn", { readonly id: string; readonly note: MessageKey }>> =
+  {
+    tja: { id: "song-details-no-tja", note: "details.noTja" },
+    cdn: { id: "song-details-no-cdn", note: "details.noCdn" },
+  };
 
 interface ChartPicturesProps {
   readonly songNo: string;
@@ -27,12 +34,15 @@ interface ChartPicturesProps {
   readonly tja: () => Promise<Result<string, ChartFileFailure>>;
   /** Bumped by a reload of the whole song, so the pictures kept are taken anew. */
   readonly generation: number;
-  readonly port: Pick<HirobaSessionPort, "readChartPicture" | "readDrawnChart" | "keepDrawnChart">;
+  readonly port: Pick<
+    HirobaSessionPort,
+    "readChartPicture" | "readCdnChart" | "readDrawnChart" | "keepDrawnChart"
+  >;
   readonly i18n: Translator;
   readonly onOpen: (chart: ShownChart) => void;
 }
 
-/** A chart's pictures, drawn from its TJA or taiko.wiki's, as Settings choose. */
+/** A chart's pictures, ABTH CDN's, drawn from its TJA, or taiko.wiki's, as Settings choose. */
 export function ChartPictures(props: ChartPicturesProps) {
   const { songNo, difficulty, images, source, differs, tja, generation, port, i18n, onOpen } =
     props;
@@ -47,13 +57,15 @@ export function ChartPictures(props: ChartPicturesProps) {
     }
 
     let current = true;
-    void findChartPicture({ songNo, difficulty, images, port, tja, draw: drawChart }).then(
-      (next) => {
-        if (current) {
-          setShown(next);
-        }
-      },
-    );
+    const finding =
+      source === "cdn"
+        ? findCdnPicture(port, songNo, difficulty)
+        : findChartPicture({ songNo, difficulty, images, port, tja, draw: drawChart });
+    void finding.then((next) => {
+      if (current) {
+        setShown(next);
+      }
+    });
     return () => {
       current = false;
     };
@@ -88,9 +100,9 @@ export function ChartPictures(props: ChartPicturesProps) {
 
   return (
     <Stack spacing={1}>
-      {shown.noTja && (
-        <FormHelperText id="song-details-no-tja" sx={{ m: 0 }}>
-          {t("details.noTja")}
+      {shown.lacking !== null && (
+        <FormHelperText id={LACKING[shown.lacking].id} sx={{ m: 0 }}>
+          {t(LACKING[shown.lacking].note)}
         </FormHelperText>
       )}
       {images.length > 0 ? (

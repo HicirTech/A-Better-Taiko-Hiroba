@@ -153,7 +153,8 @@ export const zhHans: Messages = {
   "settings.songData": "歌曲资料",
   "settings.chartSource": "谱面图",
   "settings.chartSourceHint":
-    "TJA Renderer 用 ESE 的 TJA 文件画出谱面；taiko.wiki 显示编辑者链接的图片。",
+    "ABTH CDN 显示 TJA Renderer 事先画好、放在 GitHub 上的 ESE 谱面，ESE 响应慢时也能显示；TJA Renderer 用 ESE 的 TJA 文件当场画出谱面；taiko.wiki 显示编辑者链接的图片。",
+  "settings.chartSource.cdn": "ABTH CDN",
   "settings.chartSource.tja": "TJA Renderer",
   "settings.chartSource.wiki": "taiko.wiki",
   "settings.taikoWiki": "taiko.wiki",
@@ -166,6 +167,8 @@ export const zhHans: Messages = {
   "settings.ourTaikoGives": "Rating 的计算公式（MIT）、它发布的定数，以及歌曲与 ESE 谱面的对应表",
   "settings.fumenDb": "太鼓达人谱面数据库（fumen-database.com）",
   "settings.fumenDbGives": "Rating 用的谱面定数和测量值（经 OurTaiko）",
+  "settings.abthCdn": "ABTH CDN（hicirtech.github.io/abth-cdn）",
+  "settings.abthCdnGives": "事先画好的 ESE 谱面图和烈度数值，每小时检查一次更新；不保存谱面文件",
   "settings.ese": "TJADB 的 ESE（ese.tjadataba.se）",
   "settings.eseGives": "每首歌的谱面文件，用来读取烈度和绘制谱面图；只保存数值和画好的图",
   "settings.tjaRenderer": "TJA Renderer（github.com/jack9966qk/TJARenderer）",
@@ -459,5 +462,6 @@ export const zhHans: Messages = {
   "details.picture": "{difficulty}谱面（{n}/{count}）",
   "details.drawnPicture": "{difficulty}谱面（由 TJA 文件绘制）",
   "details.noTja": "这个谱面无法用 TJA Renderer 绘制，已切换回 taiko.wiki 的图。",
+  "details.noCdn": "ABTH CDN 没有这个谱面的图，已切换回 taiko.wiki 的图。",
   "details.chartDiffers": "这个谱面与游戏中的谱面不同。",
 };

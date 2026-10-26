@@ -8,14 +8,17 @@ import type { ChartFileFailure, Difficulty } from "../shared/song-catalogue/type
 /** What a song's details show for a chart. */
 export type ChartShown =
   | { readonly kind: "drawn"; readonly picture: PictureView }
-  /** taiko.wiki's pictures; `noTja` where there was no chart file to draw from. */
-  | { readonly kind: "wiki"; readonly noTja: boolean }
+  /** taiko.wiki's pictures; `lacking` names the source that had no drawing of the chart. */
+  | { readonly kind: "wiki"; readonly lacking: "tja" | "cdn" | null }
   | { readonly kind: "failed"; readonly code: string };
 
 /** The failures that mean the song has no chart file, rather than one not read this time. */
 const NO_TJA: ReadonlySet<ChartFileFailure["code"]> = new Set(["noChart", "notConfigured"]);
 
-type ChartPort = Pick<HirobaSessionPort, "readChartPicture" | "readDrawnChart" | "keepDrawnChart">;
+type ChartPort = Pick<
+  HirobaSessionPort,
+  "readChartPicture" | "readCdnChart" | "readDrawnChart" | "keepDrawnChart"
+>;
 
 /** Draws a chart of a TJA as a PNG, or answers null for one it cannot draw. */
 export type DrawChart = (tja: string, difficulty: Difficulty) => Promise<Uint8Array | null>;
@@ -41,24 +44,38 @@ export async function findChartPicture(finding: ChartFinding): Promise<ChartShow
 
   const [first] = images;
   if (first !== undefined && (await port.readChartPicture(first, "kept")).ok) {
-    return { kind: "wiki", noTja: false };
+    return { kind: "wiki", lacking: null };
   }
 
   return drawNow(finding);
+}
+
+/** ABTH CDN's drawing of the chart, kept or read now, else taiko.wiki's pictures. */
+export async function findCdnPicture(
+  port: Pick<HirobaSessionPort, "readCdnChart">,
+  songNo: string,
+  difficulty: Difficulty,
+): Promise<ChartShown> {
+  const drawing = await port.readCdnChart(songNo, difficulty, "any");
+  if (drawing.ok) {
+    return { kind: "drawn", picture: drawing.value };
+  }
+  // A 404 is a chart ESE lacks too; a drawing that only failed to come this time gets no note.
+  return { kind: "wiki", lacking: drawing.error.code === "chart=status-404" ? "cdn" : null };
 }
 
 async function drawNow(finding: ChartFinding): Promise<ChartShown> {
   const tja = await finding.tja();
   if (!tja.ok) {
     return NO_TJA.has(tja.error.code)
-      ? { kind: "wiki", noTja: true }
+      ? { kind: "wiki", lacking: "tja" }
       : { kind: "failed", code: tja.error.code };
   }
 
   const png = await finding.draw(tja.value, finding.difficulty);
   const view = png === null ? null : viewOf(png);
   if (png === null || view === null || !view.ok) {
-    return { kind: "wiki", noTja: true };
+    return { kind: "wiki", lacking: "tja" };
   }
 
   await finding.port.keepDrawnChart(finding.songNo, finding.difficulty, png);
@@ -79,11 +96,14 @@ export interface SongReload {
   readonly draw: DrawChart;
 }
 
-/** Every chart of a song drawn anew from its TJA and kept, or its taiko.wiki pictures read anew. */
+/** Each chart of a song read anew from its source, or taiko.wiki's pictures where none is drawn. */
 export async function reloadCharts(reload: SongReload): Promise<void> {
   const { songNo, charts, port } = reload;
   const tja = reload.source === "tja" ? await reload.tja() : null;
   for (const { difficulty, images } of charts) {
+    if (reload.source === "cdn" && (await port.readCdnChart(songNo, difficulty, "again")).ok) {
+      continue;
+    }
     const png = tja?.ok ? await reload.draw(tja.value, difficulty) : null;
     if (png !== null) {
       await port.keepDrawnChart(songNo, difficulty, png);

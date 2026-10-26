@@ -435,7 +435,13 @@ export interface HirobaSessionPort {
     url: string,
     read: ChartPictureRead,
   ): Promise<Result<PictureView, PictureFailure>>;
-  /** A song's note density from its ESE chart, kept on the device; `again` reads the chart anew. */
+  /** ABTH CDN's drawing of a song's chart, read and kept as any chart picture is. */
+  readCdnChart(
+    songNo: string,
+    difficulty: Difficulty,
+    read: ChartPictureRead,
+  ): Promise<Result<PictureView, PictureFailure>>;
+  /** A song's note density from ABTH CDN, else its ESE chart, kept; `again` reads it anew. */
   readChartDensity(
     songNo: string,
     again: boolean,

@@ -44,7 +44,12 @@ export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
   readonly port: Pick<
     HirobaSessionPort,
-    "readChartPicture" | "readChartDensity" | "readChartTja" | "readDrawnChart" | "keepDrawnChart"
+    | "readChartPicture"
+    | "readCdnChart"
+    | "readChartDensity"
+    | "readChartTja"
+    | "readDrawnChart"
+    | "keepDrawnChart"
   >;
   readonly lane: PictureLane;
   readonly touchFirst: boolean;

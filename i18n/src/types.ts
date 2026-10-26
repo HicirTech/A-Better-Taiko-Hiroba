@@ -197,6 +197,7 @@ export interface Messages {
   "settings.songData": string;
   "settings.chartSource": string;
   "settings.chartSourceHint": string;
+  "settings.chartSource.cdn": string;
   "settings.chartSource.tja": string;
   "settings.chartSource.wiki": string;
   "settings.taikoWiki": string;
@@ -209,6 +210,8 @@ export interface Messages {
   "settings.ourTaikoGives": string;
   "settings.fumenDb": string;
   "settings.fumenDbGives": string;
+  "settings.abthCdn": string;
+  "settings.abthCdnGives": string;
   "settings.ese": string;
   "settings.eseGives": string;
   "settings.tjaRenderer": string;
@@ -559,6 +562,7 @@ export interface Messages {
   "details.picture": string;
   "details.drawnPicture": string;
   "details.noTja": string;
+  "details.noCdn": string;
   "details.chartDiffers": string;
 }
 

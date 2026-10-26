@@ -31,6 +31,7 @@ describe("PORT_ARGUMENTS", () => {
       readSongCatalogue: _catalogue,
       readRatingData: _ratingData,
       readChartPicture: _chartPicture,
+      readCdnChart: _cdnChart,
       readChartDensity: _chartDensity,
       readChartTja: _chartTja,
       readDrawnChart: _drawnChart,
@@ -121,6 +122,19 @@ describe("PORT_ARGUMENTS", () => {
     ["an address too long", [`https://file.taiko.wiki/${"a".repeat(2048)}`, "any"]],
   ])("readChartPicture refuses %s", (_why, args) => {
     expect(PORT_ARGUMENTS.readChartPicture(args)).toBe(false);
+  });
+
+  test("readCdnChart takes a song number, one of its difficulties and how to read it", () => {
+    const check = PORT_ARGUMENTS.readCdnChart;
+    expect(check(["1001", "oni", "any"])).toBe(true);
+    expect(check(["1001", "ura", "again"])).toBe(true);
+    expect(check(["1001", "oni"])).toBe(false);
+    expect(check(["1001", "oni", "fresh"])).toBe(false);
+    expect(check(["1001", "inner", "any"])).toBe(false);
+    expect(check(["1001/..", "oni", "any"])).toBe(false);
+    expect(check(["https://hicirtech.github.io/abth-cdn/charts/1001/oni.webp", "oni", "any"])).toBe(
+      false,
+    );
   });
 
   test("readChartDensity takes one song number and whether to read its chart again", () => {
