@@ -8,6 +8,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import { MY_DON, MyDonTile } from "../profile/my-don-portrait";
 import { PLATE_BAND_MAX_PX, TitlePlate } from "../profile/title-plate";
+import { RATING_SYSTEM_NAME } from "../shared/rating-data/rating-systems";
 import type { PictureWant, ProfileView, ScoreView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotFrame } from "../snapshots/snapshot-frame";
@@ -83,7 +84,12 @@ export function RatingSnapshot({
   );
 
   return (
-    <SnapshotFrame id="rating-snapshot" readAt={readAt} i18n={i18n}>
+    <SnapshotFrame
+      id="rating-snapshot"
+      title={t(RATING_SYSTEM_NAME[rated.system])}
+      readAt={readAt}
+      i18n={i18n}
+    >
       <Box sx={HEAD}>
         <Box sx={{ ...CENTRED, gridArea: "plate" }}>
           <TitlePlate

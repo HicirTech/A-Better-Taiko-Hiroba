@@ -29,7 +29,7 @@ export interface SavedPicture {
   readonly outcome: string | null;
 }
 
-/** The rows the bar's white words take at its right, over the rows its blue reaches the edge. */
+/** The rows the bar's white words take in its right quarter, clear of a title in its middle. */
 async function heightOfBarWords(png: Buffer): Promise<number> {
   const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
   const at = (x: number, y: number) => (y * info.width + x) * info.channels;
@@ -38,7 +38,7 @@ async function heightOfBarWords(png: Buffer): Promise<number> {
   let first = -1;
   let last = -1;
   for (let y = 0; y < info.height && blue(at(info.width - 1, y)); y++) {
-    for (let x = info.width / 2; x < info.width; x++) {
+    for (let x = (info.width * 3) / 4; x < info.width; x++) {
       if (white(at(x, y))) {
         first = first < 0 ? y : first;
         last = y;

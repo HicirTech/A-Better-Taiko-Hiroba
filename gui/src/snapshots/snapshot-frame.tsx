@@ -12,16 +12,20 @@ const FRAME = {
   // Colours that follow the scheme, such as Hard's, take their light ones in either mode.
   colorScheme: "light",
 } as const;
-const BAR = { justifyContent: "space-between", gap: 2 } as const;
+// Two equal sides keep the title in the bar's middle, whatever the words beside it.
+const BAR = { display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 2 } as const;
 
-/** A page as a picture to share: a bar with the app's name and when, over what it shows. */
+/** A page as a picture to share: a bar with the app's name, a title and when, over the page. */
 export function SnapshotFrame({
   id,
+  title,
   readAt,
   i18n,
   children,
 }: {
   readonly id: string;
+  /** What the picture shows, in the bar's middle; none leaves the middle empty. */
+  readonly title?: string;
   /** When what it shows was read. */
   readonly readAt: Date | number | string;
   readonly i18n: Translator;
@@ -37,7 +41,12 @@ export function SnapshotFrame({
             <Typography component="p" variant="h6">
               {t("app.title")}
             </Typography>
-            <Typography component="p" variant="body2">
+            {title !== undefined && (
+              <Typography id={`${id}-title`} component="p" variant="body2" sx={{ gridColumn: 2 }}>
+                {title}
+              </Typography>
+            )}
+            <Typography component="p" variant="body2" sx={{ gridColumn: 3, justifySelf: "end" }}>
               {t("profile.fetchedAt", { time: dateTime(readAt) })}
             </Typography>
           </Toolbar>
