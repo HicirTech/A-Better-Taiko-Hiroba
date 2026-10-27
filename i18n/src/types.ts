@@ -129,6 +129,7 @@ export interface Messages {
   "rating.figure.power": string;
   "rating.figure.stamina": string;
   "rating.figure.speed": string;
+  "rating.figure.burst": string;
   "rating.figure.accuracy": string;
   "rating.figure.rhythm": string;
   "rating.figure.complex": string;

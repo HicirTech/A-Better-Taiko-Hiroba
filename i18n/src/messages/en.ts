@@ -104,6 +104,7 @@ export const en: Messages = {
   "rating.figure.power": "Power",
   "rating.figure.stamina": "Stamina",
   "rating.figure.speed": "Speed",
+  "rating.figure.burst": "Burst",
   "rating.figure.accuracy": "Accuracy",
   "rating.figure.rhythm": "Rhythm",
   "rating.figure.complex": "Complexity",

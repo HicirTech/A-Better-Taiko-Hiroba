@@ -102,6 +102,7 @@ export const zhHans: Messages = {
   "rating.figure.power": "大歌力",
   "rating.figure.stamina": "体力",
   "rating.figure.speed": "手速",
+  "rating.figure.burst": "爆发",
   "rating.figure.accuracy": "精度",
   "rating.figure.rhythm": "节奏",
   "rating.figure.complex": "复合",

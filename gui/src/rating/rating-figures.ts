@@ -11,6 +11,7 @@ const FIGURE_LABEL: Readonly<Record<RatingFigure, MessageKey>> = {
   power: "rating.figure.power",
   stamina: "rating.figure.stamina",
   speed: "rating.figure.speed",
+  burst: "rating.figure.burst",
   accuracy: "rating.figure.accuracy",
   rhythm: "rating.figure.rhythm",
   complex: "rating.figure.complex",

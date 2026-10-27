@@ -166,6 +166,7 @@ function rateChart(score: RatedScore, chart: OurTaikoV1Chart): ChartRating | nul
     songNo: score.songNo,
     level: score.level,
     accuracy,
+    constant: chart.constant,
     figures: { ...Object.fromEntries(skills), rating },
   };
 }

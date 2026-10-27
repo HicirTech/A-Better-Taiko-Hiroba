@@ -296,7 +296,7 @@ const historyLimit: ArgumentCheck = (args) =>
   args[0] >= 0 &&
   args[0] <= KEPT_GROUPS;
 
-const RATING_SYSTEM: Readonly<Record<RatingSystem, true>> = { ourtaikoV1: true };
+const RATING_SYSTEM: Readonly<Record<RatingSystem, true>> = { ourtaikoV1: true, ourtaikoV2: true };
 
 const ratingSystem: ArgumentCheck = (args) =>
   args.length === 1 && typeof args[0] === "string" && Object.hasOwn(RATING_SYSTEM, args[0]);

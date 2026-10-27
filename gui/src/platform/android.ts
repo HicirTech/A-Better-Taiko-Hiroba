@@ -114,6 +114,11 @@ const ratingDataUrls = {
     import.meta.env.VITE_ABTH_DEV_RATING_DATA,
     RATING_DATA_URL.ourtaikoV1,
   ),
+  ourtaikoV2: catalogueUrlFor(
+    Boolean(import.meta.env.DEV),
+    import.meta.env.VITE_ABTH_DEV_RATING_DATA_V2,
+    RATING_DATA_URL.ourtaikoV2,
+  ),
 };
 
 const chartOrigin = chartOriginFor(

@@ -105,6 +105,7 @@ export const ja: Messages = {
   "rating.figure.power": "地力",
   "rating.figure.stamina": "体力",
   "rating.figure.speed": "速さ",
+  "rating.figure.burst": "瞬発力",
   "rating.figure.accuracy": "精度",
   "rating.figure.rhythm": "リズム",
   "rating.figure.complex": "複合",

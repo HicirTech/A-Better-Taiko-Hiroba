@@ -102,6 +102,7 @@ export const zhHant: Messages = {
   "rating.figure.power": "大歌力",
   "rating.figure.stamina": "體力",
   "rating.figure.speed": "手速",
+  "rating.figure.burst": "爆發",
   "rating.figure.accuracy": "精度",
   "rating.figure.rhythm": "節奏",
   "rating.figure.complex": "複合",
