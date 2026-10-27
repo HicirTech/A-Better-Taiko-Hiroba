@@ -1,4 +1,4 @@
-import { type ChartRating, chartKey, type OurTaikoV1Data } from "@abth/core";
+import { type ChartRating, chartKey } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 
@@ -9,7 +9,7 @@ import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue"
 import { PlayRow } from "../songs/play-row";
 import { textSize } from "../theme/app-theme";
 import { SectionTitle } from "../ui/section-title";
-import { constantOf, type RatingFormats } from "./rating-figures";
+import type { RatingFormats } from "./rating-figures";
 
 const LIST = { listStyle: "none", m: 0, p: 0 } as const;
 const ONE_COLUMN = { ...LIST, display: "flex", flexDirection: "column" } as const;
@@ -19,9 +19,10 @@ const TWO_COLUMNS = {
   gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
   columnGap: 2,
 } as const;
+// As wide as V2's widest constant line, "Const. 15.50", so a row reads the same in either rating.
 const LEAD = {
   flexShrink: 0,
-  width: 64,
+  width: 72,
   display: "flex",
   flexDirection: "column",
   alignItems: "flex-end",
@@ -36,7 +37,6 @@ export interface RatedListProps {
   readonly charts: readonly ChartRating[];
   /** Each kept score by its chart's key. */
   readonly scoreOf: ReadonlyMap<string, ScoreView>;
-  readonly data: OurTaikoV1Data | null;
   /** taiko.wiki's song list: the names in the player's language. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
@@ -54,7 +54,6 @@ export function RatedList({
   heading,
   charts,
   scoreOf,
-  data,
   catalogue,
   lane,
   formats,
@@ -77,7 +76,6 @@ export function RatedList({
                   key={chartKey(chart)}
                   chart={chart}
                   score={score}
-                  constant={constantOf(data, chart)}
                   catalogue={catalogue}
                   lane={lane}
                   order={index}
@@ -98,7 +96,6 @@ export function RatedList({
 function RatedRow({
   chart,
   score,
-  constant,
   catalogue,
   lane,
   order,
@@ -108,7 +105,6 @@ function RatedRow({
 }: {
   readonly chart: ChartRating;
   readonly score: ScoreView;
-  readonly constant: number | null;
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
   readonly order: number;
@@ -133,11 +129,9 @@ function RatedRow({
       lead={
         <Box component="span" className="rating-lead" sx={LEAD}>
           <span className="rating-value">{formats.figure.format(chart.figures.rating)}</span>
-          {constant !== null && (
-            <span className="rating-meta">
-              {t("rating.constant", { value: formats.constant.format(constant) })}
-            </span>
-          )}
+          <span className="rating-meta">
+            {t("rating.constant", { value: formats.constant.format(chart.constant) })}
+          </span>
           <span className="rating-meta">
             {t("rating.accuracy", { value: formats.figure.format(chart.accuracy * 100) })}
           </span>

@@ -117,6 +117,13 @@ export const ja: Messages = {
   "rating.dataFailed": "レーティングのデータを読み込めませんでした。",
   "rating.noneRated":
     "レーティングの対象になる「おに」「おに裏」の譜面がまだありません。精度 75% から対象になります。",
+  "rating.noneRatedV2":
+    "レーティングの対象になる「むずかしい」「おに」「おに裏」の譜面がまだありません。精度 75% から対象になります。",
+  "rating.switch": "レーティングの版",
+  "rating.system.ourtaikoV1": "OurTaiko V1",
+  "rating.system.ourtaikoV2": "OurTaiko V2",
+  "rating.systemShort.ourtaikoV1": "V1",
+  "rating.systemShort.ourtaikoV2": "V2",
   "snapshot.button": "画像で共有",
   "snapshot.share": "画像を共有",
   "snapshot.copy": "画像をコピー",
@@ -171,9 +178,9 @@ export const ja: Messages = {
   "settings.chartWikiGives": "譜面の画像",
   "settings.ourTaiko": "OurTaiko（ourtaiko.org）",
   "settings.ourTaikoGives":
-    "レーティングの計算式（MIT）、配信している定数、曲と ESE の譜面の対応表",
+    "2 つのレーティングの計算式（MIT）、配信している定数、曲と ESE の譜面の対応表",
   "settings.fumenDb": "太鼓の達人 譜面とかデータベース（fumen-database.com）",
-  "settings.fumenDbGives": "レーティングに使う譜面の定数と測定値（OurTaiko 経由）",
+  "settings.fumenDbGives": "V1 レーティングに使う譜面の定数と測定値（OurTaiko 経由）",
   "settings.abthCdn": "ABTH CDN（hicirtech.github.io/abth-cdn）",
   "settings.abthCdnGives":
     "あらかじめ描いた ESE の譜面の画像と密度の数値（1 時間ごとに更新を確認し、譜面ファイルは保存しない）",
@@ -191,6 +198,10 @@ export const ja: Messages = {
   "settings.scores": "スコアデータ",
   "settings.startingSort": "最初の並び順",
   "settings.startingSortHint": "スコアデータを開いたときの並び順です。",
+  "settings.rating": "レーティング",
+  "settings.startingRating": "最初のレーティング",
+  "settings.startingRatingHint":
+    "レーティングを開いたときの版です。ページ上部の切り替えで、離れるまでもう一方を表示できます。",
   "settings.appearance": "外観",
   "settings.theme": "テーマ",
   "settings.theme.default": "標準",

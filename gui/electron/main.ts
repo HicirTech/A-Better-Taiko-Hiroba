@@ -382,7 +382,8 @@ const started = app.whenReady().then(async () => {
     readSongCatalogue: (site, since) =>
       readSongCatalogue(site, environment.songCatalogueUrl, since),
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),
-    readRatingData: (site, system) => readRatingData(site, environment.ratingDataUrls[system]),
+    readRatingData: (site, system) =>
+      readRatingData(site, system, environment.ratingDataUrls[system]),
     readChartPicture: chartPictures,
     readCdnChart: cdnChartReader(environment.cdnUrl, chartPictures),
     readChartDensity: chartDensities,

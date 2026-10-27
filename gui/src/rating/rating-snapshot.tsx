@@ -1,4 +1,4 @@
-import type { ChartRating, OurTaikoV1Data, PlayerRating } from "@abth/core";
+import type { ChartRating, PlayerRating } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 import { useMemo, useRef } from "react";
@@ -43,7 +43,6 @@ export interface RatingSnapshotProps {
   readonly rated: PlayerRating;
   /** Each kept score by its chart's key. */
   readonly scoreOf: ReadonlyMap<string, ScoreView>;
-  readonly data: OurTaikoV1Data;
   /** taiko.wiki's song list: the names in the player's language. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
@@ -57,7 +56,6 @@ export function RatingSnapshot({
   profile,
   rated,
   scoreOf,
-  data,
   catalogue,
   lane,
   readAt,
@@ -68,7 +66,7 @@ export function RatingSnapshot({
   const portraitBox = useRef<HTMLSpanElement>(null);
   const plate = usePicture(lane, PLATE, plateBox, { ...IN_THE_WINDOW, order: 0 });
   const myDon = usePicture(lane, MY_DON, portraitBox, { ...IN_THE_WINDOW, order: 1 });
-  const formats = useMemo(() => ratingFormats(locale), [locale]);
+  const formats = useMemo(() => ratingFormats(locale, rated.system), [locale, rated.system]);
   const { total, skills } = ratingAndSkills(rated, t);
   const list = (id: string, heading: MessageKey, shown: readonly ChartRating[]) => (
     <RatedList
@@ -76,7 +74,6 @@ export function RatingSnapshot({
       heading={heading}
       charts={shown}
       scoreOf={scoreOf}
-      data={data}
       catalogue={catalogue}
       lane={lane}
       formats={formats}

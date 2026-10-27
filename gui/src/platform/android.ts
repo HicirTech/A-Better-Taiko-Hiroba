@@ -488,7 +488,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
 
     readChineseNames: (site) => readChineseNames(site, chineseNamesUrl),
 
-    readRatingData: (site, system) => readRatingData(site, ratingDataUrls[system]),
+    readRatingData: (site, system) => readRatingData(site, system, ratingDataUrls[system]),
 
     readChartPicture: chartPictures,
 

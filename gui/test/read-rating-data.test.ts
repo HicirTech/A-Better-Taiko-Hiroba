@@ -19,6 +19,21 @@ const CHART = {
   hsChange: 38.33,
 };
 const ANSWER = JSON.stringify([{ id: 817, title: "a", constants: { oni: CHART } }]);
+const V2_ANSWER = JSON.stringify({
+  "817": {
+    hard: {
+      sub_constant_1: 3.1,
+      main_constant: 3.2,
+      sub_constant_2: 2,
+      stamina: 2.7,
+      handspeed: 4.6,
+      burst: 4,
+      complex: 0.7,
+      rhythm: 1.1,
+      totalNotes: 501,
+    },
+  },
+});
 const FEED = RATING_DATA_URL.ourtaikoV1;
 const SENT_AT = 1_780_000_000_000;
 
@@ -36,7 +51,7 @@ function answering(status: number, body: string) {
 describe("readRatingData", () => {
   test("sends nothing and says so when there is no address", async () => {
     const { asked, transport } = answering(200, ANSWER);
-    expect(await readRatingData(transport, undefined, () => SENT_AT)).toEqual(
+    expect(await readRatingData(transport, "ourtaikoV1", undefined, () => SENT_AT)).toEqual(
       err({ code: "notConfigured" }),
     );
     expect(asked).toEqual([]);
@@ -44,11 +59,23 @@ describe("readRatingData", () => {
 
   test("reads the data with one GET, under a timeout, and keeps its text", async () => {
     const { asked, transport } = answering(200, ANSWER);
-    expect(await readRatingData(transport, FEED, () => SENT_AT)).toEqual(
+    expect(await readRatingData(transport, "ourtaikoV1", FEED, () => SENT_AT)).toEqual(
       ok({ text: ANSWER, sentAt: SENT_AT }),
     );
     expect(asked.map(({ request }) => request)).toEqual([{ method: "GET", url: FEED }]);
     expect(asked[0]?.signal?.aborted).toBe(false);
+  });
+
+  test("takes an answer only in the shape of the system it reads", async () => {
+    const v2 = answering(200, V2_ANSWER).transport;
+    expect(
+      await readRatingData(v2, "ourtaikoV2", RATING_DATA_URL.ourtaikoV2, () => SENT_AT),
+    ).toEqual(ok({ text: V2_ANSWER, sentAt: SENT_AT }));
+    expect(await readRatingData(v2, "ourtaikoV1", FEED)).toEqual(err({ code: "badAnswer" }));
+    const v1 = answering(200, ANSWER).transport;
+    expect(await readRatingData(v1, "ourtaikoV2", RATING_DATA_URL.ourtaikoV2)).toEqual(
+      err({ code: "badAnswer" }),
+    );
   });
 
   type FailureCase = [kind: TransportFailure["kind"], code: SongCatalogueFailure["code"]];
@@ -58,27 +85,30 @@ describe("readRatingData", () => {
     ["cancelled", "timedOut"],
   ])("answers %s as the code %s", async (kind, code) => {
     const transport: Transport = { send: async (request) => err({ kind, url: request.url }) };
-    expect(await readRatingData(transport, FEED)).toEqual(err({ code }));
+    expect(await readRatingData(transport, "ourtaikoV1", FEED)).toEqual(err({ code }));
   });
 
   test.each([404, 500, 304])("answers badAnswer to the status %d", async (status) => {
     const { transport } = answering(status, ANSWER);
-    expect(await readRatingData(transport, FEED)).toEqual(err({ code: "badAnswer" }));
+    expect(await readRatingData(transport, "ourtaikoV1", FEED)).toEqual(err({ code: "badAnswer" }));
   });
 
   test.each(["<html>Not found</html>", "{}", "[]", "", '[{"id":1,"constants":{}}]'])(
     "answers badAnswer to %p, which holds no song",
     async (body) => {
       const { transport } = answering(200, body);
-      expect(await readRatingData(transport, FEED)).toEqual(err({ code: "badAnswer" }));
+      expect(await readRatingData(transport, "ourtaikoV1", FEED)).toEqual(
+        err({ code: "badAnswer" }),
+      );
     },
   );
 });
 
 describe("ratingDataOf", () => {
   test("reads the songs in the text, or nothing from text that holds none", () => {
-    expect(ratingDataOf(ANSWER)?.get("817")?.get(4)?.notes).toBe(765);
-    expect(ratingDataOf("not json")).toBeNull();
+    expect(ratingDataOf("ourtaikoV1", ANSWER)?.songs.get("817")?.get(4)?.notes).toBe(765);
+    expect(ratingDataOf("ourtaikoV2", V2_ANSWER)?.songs.get("817")?.get(3)?.notes).toBe(501);
+    expect(ratingDataOf("ourtaikoV1", "not json")).toBeNull();
   });
 });
 

@@ -116,6 +116,13 @@ export const en: Messages = {
   "rating.dataFailed": "The rating data could not be read.",
   "rating.noneRated":
     "No Extreme or Extreme (Ura) chart is rated yet: a chart needs at least 75% accuracy to count.",
+  "rating.noneRatedV2":
+    "No Hard, Extreme or Extreme (Ura) chart is rated yet: a chart needs at least 75% accuracy to count.",
+  "rating.switch": "Rating version",
+  "rating.system.ourtaikoV1": "OurTaiko V1",
+  "rating.system.ourtaikoV2": "OurTaiko V2",
+  "rating.systemShort.ourtaikoV1": "V1",
+  "rating.systemShort.ourtaikoV2": "V2",
   "snapshot.button": "Share as a picture",
   "snapshot.share": "Share picture",
   "snapshot.copy": "Copy picture",
@@ -170,10 +177,10 @@ export const en: Messages = {
   "settings.chartWikiGives": "Chart pictures",
   "settings.ourTaiko": "OurTaiko (ourtaiko.org)",
   "settings.ourTaikoGives":
-    "The rating's formulas (MIT), the constants it publishes, and the map from songs to ESE's charts",
+    "Both ratings' formulas (MIT), the constants it publishes, and the map from songs to ESE's charts",
   "settings.fumenDb": "Taiko no Tatsujin Fumen Database (fumen-database.com)",
   "settings.fumenDbGives":
-    "The chart constants and measurements behind the rating, through OurTaiko",
+    "The chart constants and measurements behind the V1 rating, through OurTaiko",
   "settings.abthCdn": "ABTH CDN (hicirtech.github.io/abth-cdn)",
   "settings.abthCdnGives":
     "ESE's charts drawn ahead of time, and their note counts, checked for changes every hour; no chart file is kept",
@@ -191,6 +198,10 @@ export const en: Messages = {
   "settings.scores": "Scores",
   "settings.startingSort": "Default sort",
   "settings.startingSortHint": "Scores opens in this order.",
+  "settings.rating": "Rating",
+  "settings.startingRating": "Default rating",
+  "settings.startingRatingHint":
+    "Rating opens on this one; the switch at the page's top shows the other until you leave it.",
   "settings.appearance": "Appearance",
   "settings.theme": "Theme",
   "settings.theme.default": "Default",

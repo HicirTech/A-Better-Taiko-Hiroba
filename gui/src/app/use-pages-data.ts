@@ -1,3 +1,4 @@
+import type { RatingSystem } from "@abth/core";
 import { useCallback, useEffect, useState } from "react";
 
 import { useFavorites } from "../favorites/use-favorites";
@@ -44,11 +45,14 @@ export function usePagesData({
   lane,
   page,
   session,
+  startingRating,
 }: {
   readonly port: HirobaSessionPort;
   readonly lane: PictureLane;
   readonly page: Page;
   readonly session: Session;
+  /** The rating Rating opens on, as Settings chose it. */
+  readonly startingRating: RatingSystem;
 }): PagesData {
   const { screen, sessionGone, noSession } = session;
   const profileShown = screen.name === "profile";
@@ -57,7 +61,7 @@ export function usePagesData({
   const scores = useScores(port, sessionGone);
   const { load: loadScores, forget: forgetScores } = scores;
   const listed = useListedCharts(port, scores.view);
-  const ratingData = useRatingData(port);
+  const ratingData = useRatingData(port, startingRating);
   // The editors live here so what they read from Hiroba is kept across pages; their edits are not.
   // The costume's preview is read while its page shows it.
   const editor = useCostumeEditor({

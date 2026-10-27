@@ -142,6 +142,13 @@ export interface Messages {
   "rating.readingData": string;
   "rating.dataFailed": string;
   "rating.noneRated": string;
+  "rating.noneRatedV2": string;
+  /** Rating's switch between the two versions, as screen readers name it. */
+  "rating.switch": string;
+  "rating.system.ourtaikoV1": string;
+  "rating.system.ourtaikoV2": string;
+  "rating.systemShort.ourtaikoV1": string;
+  "rating.systemShort.ourtaikoV2": string;
   /** The Overview's and Rating's button that makes the page a picture to share. */
   "snapshot.button": string;
   /** The picture's ways out, as its menu lists them: the system's share sheet, a copy, a file. */
@@ -225,6 +232,9 @@ export interface Messages {
   "settings.scores": string;
   "settings.startingSort": string;
   "settings.startingSortHint": string;
+  "settings.rating": string;
+  "settings.startingRating": string;
+  "settings.startingRatingHint": string;
   "settings.appearance": string;
   "settings.theme": string;
   "settings.theme.default": string;

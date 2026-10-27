@@ -1,4 +1,4 @@
-import type { CrownState, Level, ScoreRank, Song } from "@abth/core";
+import type { CrownState, Level, RatingSystem, ScoreRank, Song } from "@abth/core";
 
 import type { ListedChart, ListedChartsView, ScoresView, ScoreView } from "../shared/session-port";
 import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
@@ -121,7 +121,47 @@ export const STORY_RATING_DATA = JSON.stringify(
   }),
 );
 
+const V2_KEY: Readonly<Partial<Record<Level, string>>> = { 3: "hard", 4: "oni", 5: "edit" };
+/** A made-up main constant by level, before each chart's own share: Hard's lowest. */
+const V2_MAIN: Readonly<Partial<Record<Level, number>>> = { 3: 4, 4: 9, 5: 10 };
+// The scale's ends: V2's data measures every chart between them.
+const onTheScale = (value: number) => Math.min(Math.max(value, 0), 15.5);
+
+/** OurTaiko's V2 data made up for each Hard, Extreme and inner chart `scores` holds. */
+function madeUpV2(scores: readonly ScoreView[]): string {
+  const songs = new Map<string, Readonly<Record<string, unknown>>>();
+  scores.forEach(({ songNo, level, record }, at) => {
+    const key = V2_KEY[level];
+    const base = V2_MAIN[level];
+    if (key === undefined || base === undefined) {
+      return;
+    }
+    const main = base + (at % 9) / 10;
+    const chart = {
+      sub_constant_1: onTheScale(main - 1),
+      main_constant: onTheScale(main),
+      sub_constant_2: onTheScale(main + 0.8),
+      stamina: onTheScale(main - 1.5 + (at % 5) / 5),
+      handspeed: onTheScale(main - 0.5 + (at % 7) / 7),
+      burst: onTheScale(main + (at % 4) / 4),
+      complex: onTheScale(main - 2 + (at % 6) / 6),
+      rhythm: onTheScale(main - 1 + (at % 8) / 8),
+      // As many notes as the play met, so each play is rated by its own hits.
+      totalNotes: record === null ? 600 : record.good + record.ok + record.bad,
+    };
+    songs.set(songNo, { ...songs.get(songNo), [key]: chart });
+  });
+  return JSON.stringify(Object.fromEntries(songs));
+}
+
+/** OurTaiko's V2 data for the made-up player's Hard, Extreme and inner charts, in its own shape. */
+export const STORY_RATING_DATA_V2 = madeUpV2(STORY_SCORES.scores);
+
 /** The scores, listed charts and OurTaiko data a whole page reads: the pack's, else made up. */
 export const PAGE_SCORES: ScoresView = packData("scores") ?? STORY_SCORES;
 export const PAGE_LISTED: ListedChartsView = packData("listedCharts") ?? STORY_LISTED;
-export const PAGE_RATING_DATA: string = packData("ratingData") ?? STORY_RATING_DATA;
+export const PAGE_RATING_DATA: Readonly<Record<RatingSystem, string>> = {
+  ourtaikoV1: packData("ratingData") ?? STORY_RATING_DATA,
+  // Made up for the scores shown, the pack's too, where the pack holds no V2 data.
+  ourtaikoV2: packData("ratingDataV2") ?? madeUpV2(PAGE_SCORES.scores),
+};

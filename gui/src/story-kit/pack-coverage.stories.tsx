@@ -95,6 +95,7 @@ const GROUPS: readonly Group[] = [
 const DATA_SHOWN: Readonly<Record<keyof PackData, string>> = {
   songCatalogue: `${PAGE_SONGS.length} songs: search, pickers, song details`,
   ratingData: "OurTaiko's chart constants: Rating",
+  ratingDataV2: "OurTaiko's V2 constants: Rating under V2",
   profile: "the player's counts, title and medal: the Overview",
   costumeEditor: `${STORY_EDITOR.palette.length} colours and ${STORY_EDITOR.slots.flat().length} items: Costume`,
   titleEditor: `${(packData("titleEditor") ?? STORY_TITLES).options.length} titles: Nickname & title`,

@@ -1,24 +1,34 @@
-import { type ChartRating, chartKey, rateOurTaikoV1 } from "@abth/core";
+import { type ChartRating, chartKey, ratePlayer } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
-import { Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemShare } from "../platform";
+import { RATING_SYSTEMS } from "../shared/rating-data/rating-systems";
 import { listedOf } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
 import type { ProfileView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotButton } from "../snapshots/snapshot-button";
 import { ScoreDetails } from "../songs/score-details";
+import { ChoiceToggles } from "../ui/choice-toggles";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
 import { RatedList } from "./rated-list";
-import { COUNTED, ratingAndSkills, ratingFormats } from "./rating-figures";
+import {
+  COUNTED,
+  NONE_RATED,
+  RATING_SYSTEM_SHORT,
+  ratingAndSkills,
+  ratingFormats,
+} from "./rating-figures";
 import { RatingRadar } from "./rating-radar";
 import { RatingSnapshot } from "./rating-snapshot";
 import type { RatingDataState } from "./use-rating-data";
+
+const AT_THE_END = { display: "flex", justifyContent: "flex-end" } as const;
 
 /** The player's rating and skills from the kept scores, and the charts behind them. */
 export function RatingPage({
@@ -50,11 +60,11 @@ export function RatingPage({
 }) {
   const { t, locale } = i18n;
   const { view, reading, song, failure, readSong } = scores;
-  const { data } = ratingData;
+  const { data, system } = ratingData;
   const [opened, setOpened] = useState<string | null>(null);
-  const formats = useMemo(() => ratingFormats(locale), [locale]);
+  const formats = useMemo(() => ratingFormats(locale, system), [locale, system]);
   const rated = useMemo(
-    () => (view === null || data === null ? null : rateOurTaikoV1(view.scores, data)),
+    () => (view === null || data === null ? null : ratePlayer(view.scores, data)),
     [view, data],
   );
   const scoreOf = useMemo(
@@ -77,7 +87,6 @@ export function RatingPage({
       heading={heading}
       charts={shown}
       scoreOf={scoreOf}
-      data={data}
       catalogue={catalogue}
       lane={lane}
       formats={formats}
@@ -88,12 +97,13 @@ export function RatingPage({
 
   return (
     <>
-      {rated !== null && data !== null && profile !== null && charts.length > 0 && (
-        <FrameTop
-          wide={wide}
-          touchFirst={touchFirst}
-          stays={false}
-          end={
+      <FrameTop
+        wide={wide}
+        touchFirst={touchFirst}
+        stays={false}
+        // The share's room stays while there is nothing to share, so the switch keeps its place.
+        end={
+          rated !== null && profile !== null && charts.length > 0 ? (
             <SnapshotButton
               id="rating-share"
               shows="abth-rating"
@@ -105,7 +115,6 @@ export function RatingPage({
                   profile={profile}
                   rated={rated}
                   scoreOf={scoreOf}
-                  data={data}
                   catalogue={catalogue}
                   lane={snapshotLane}
                   readAt={readAt}
@@ -113,9 +122,22 @@ export function RatingPage({
                 />
               )}
             />
-          }
-        />
-      )}
+          ) : null
+        }
+      >
+        <Box sx={AT_THE_END}>
+          <ChoiceToggles
+            id="rating-system"
+            aria-label={t("rating.switch")}
+            choices={RATING_SYSTEMS.map((one) => ({
+              value: one,
+              label: t(RATING_SYSTEM_SHORT[one]),
+            }))}
+            chosen={system}
+            onChoose={ratingData.show}
+          />
+        </Box>
+      </FrameTop>
       <Stack spacing={2} id="rating-page" sx={{ minHeight: PAGE_HEIGHT }}>
         {failure !== null && (
           <LoadFailed id="rating-scores-failure" failure={failure} i18n={i18n} />
@@ -135,7 +157,7 @@ export function RatingPage({
         )}
         {rated !== null && view !== null && view.scores.length > 0 && charts.length === 0 && (
           <StatusNote id="rating-none" fill>
-            {t("rating.noneRated")}
+            {t(NONE_RATED[system])}
           </StatusNote>
         )}
         {total !== null && charts.length > 0 && (
