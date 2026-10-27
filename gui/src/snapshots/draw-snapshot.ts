@@ -1,17 +1,28 @@
-import { toBlob } from "html-to-image";
+import { toCanvas } from "html-to-image";
 
 import { base64Of } from "../shared/png-answer";
 import { inlinedFontFace } from "./font-faces";
-import { SNAPSHOT_PIXEL_RATIO } from "./snapshot-png";
+import { SNAPSHOT_PIXEL_RATIO, SNAPSHOT_WEBP_QUALITY } from "./snapshot-picture";
 
-/** `node` drawn as a PNG, `SNAPSHOT_PIXEL_RATIO` times its size, fonts and pictures in it. */
-export async function pngOf(node: HTMLElement): Promise<Uint8Array> {
-  const blob = await toBlob(node, {
+/** `node` drawn and encoded once as `type`, fonts and pictures in it. */
+export async function pictureOf(
+  node: HTMLElement,
+  type: "image/png" | "image/webp",
+): Promise<Uint8Array> {
+  const canvas = await toCanvas(node, {
     pixelRatio: SNAPSHOT_PIXEL_RATIO,
     fontEmbedCSS: await pageFonts(),
   });
+  // Encoded here: html-to-image's toBlob drops the type it is given.
+  const blob = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, type, SNAPSHOT_WEBP_QUALITY),
+  );
   if (blob === null) {
     throw new Error("snapshot=noBlob");
+  }
+  // A browser that cannot encode the type gives a PNG, which the file's name would misname.
+  if (blob.type !== type) {
+    throw new Error(`snapshot=encodedAs-${blob.type}`);
   }
   return new Uint8Array(await blob.arrayBuffer());
 }

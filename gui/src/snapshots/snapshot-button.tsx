@@ -7,9 +7,9 @@ import type { PictureLane } from "../pictures/picture-lane";
 import type { PictureWay, SystemShare } from "../platform";
 import { ShareIcon } from "../ui/icons";
 import { OperationSnackbar } from "../ui/operation-snackbar";
-import { pngOf } from "./draw-snapshot";
+import { pictureOf } from "./draw-snapshot";
 import { snapshotLane } from "./snapshot-lane";
-import { snapshotName } from "./snapshot-png";
+import { SNAPSHOT_TYPE, snapshotName } from "./snapshot-picture";
 
 /** How long a snapshot waits for its pictures before it is taken with those that came. */
 const PICTURES_WAIT_MS = 10_000;
@@ -63,15 +63,15 @@ export function SnapshotButton({ id, shows, share, lane, i18n, snapshot }: Snaps
   const [only] = share.ways.length === 1 ? share.ways : [];
   const failed: Said = { outcome: "failed", message: "snapshot.failed", open: true };
 
-  const hand = (way: PictureWay, png: Uint8Array | null) => {
+  const hand = (way: PictureWay, picture: Uint8Array | null) => {
     setTaking(null);
-    if (png === null) {
+    if (picture === null) {
       setSaid(failed);
       return;
     }
     setHanding(true);
     share
-      .hand(way, png, snapshotName(shows, new Date()))
+      .hand(way, picture, snapshotName(shows, new Date()))
       .then((ended) => {
         const done = DONE[way];
         setSaid(
@@ -111,7 +111,12 @@ export function SnapshotButton({ id, shows, share, lane, i18n, snapshot }: Snaps
         ))}
       </Menu>
       {taking !== null && (
-        <SnapshotTaker lane={lane} snapshot={snapshot} onTaken={(png) => hand(taking, png)} />
+        <SnapshotTaker
+          way={taking}
+          lane={lane}
+          snapshot={snapshot}
+          onTaken={(picture) => hand(taking, picture)}
+        />
       )}
       {said !== null && (
         // At the window's foot as a write's outcome is, wherever the button stands: a band moves
@@ -133,14 +138,17 @@ export function SnapshotButton({ id, shows, share, lane, i18n, snapshot }: Snaps
 
 /** The snapshot drawn off the window, its pictures asked for at once, taken once they are in. */
 function SnapshotTaker({
+  way,
   lane,
   snapshot,
   onTaken,
 }: {
+  /** Where the picture goes, which sets the format it is encoded in. */
+  readonly way: PictureWay;
   readonly lane: PictureLane;
   readonly snapshot: (lane: PictureLane) => ReactNode;
   /** The picture's bytes, or null where it could not be made. */
-  readonly onTaken: (png: Uint8Array | null) => void;
+  readonly onTaken: (picture: Uint8Array | null) => void;
 }) {
   const [drawnOff] = useState(() => snapshotLane(lane));
   const box = useRef<HTMLDivElement>(null);
@@ -153,12 +161,12 @@ function SnapshotTaker({
       .then(drawn)
       .then(() => {
         const node = box.current?.firstElementChild;
-        return gone || !(node instanceof HTMLElement) ? null : pngOf(node);
+        return gone || !(node instanceof HTMLElement) ? null : pictureOf(node, SNAPSHOT_TYPE[way]);
       })
       .then(
-        (png) => {
+        (picture) => {
           if (!gone) {
-            taken(png);
+            taken(picture);
           }
         },
         () => {
@@ -170,7 +178,7 @@ function SnapshotTaker({
     return () => {
       gone = true;
     };
-  }, [drawnOff]);
+  }, [drawnOff, way]);
   return createPortal(
     <Box ref={box} aria-hidden sx={OFF_THE_WINDOW}>
       {snapshot(drawnOff.lane)}

@@ -4,17 +4,17 @@ import type { SystemShare } from "./system-share";
 export interface DesktopPictures {
   copy(png: Uint8Array): Promise<void>;
   /** Asks the player where; cancelled when they choose nowhere. */
-  save(png: Uint8Array, name: string): Promise<"saved" | "cancelled">;
+  save(webp: Uint8Array, name: string): Promise<"saved" | "cancelled">;
 }
 
 /** The desktop's: the clipboard, or a file where the player picks, through the main process. */
 export const desktopShare = (pictures: DesktopPictures): SystemShare => ({
   ways: ["copy", "save"],
-  hand: async (way, png, name) => {
+  hand: async (way, picture, name) => {
     if (way === "save") {
-      return (await pictures.save(png, name)) === "saved" ? "done" : "dismissed";
+      return (await pictures.save(picture, name)) === "saved" ? "done" : "dismissed";
     }
-    await pictures.copy(png);
+    await pictures.copy(picture);
     return "done";
   },
 });

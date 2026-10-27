@@ -3,28 +3,29 @@ import { mkdirSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import sharp from "sharp";
 
-import { SNAPSHOT_PIXEL_RATIO, SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-png";
+import { sniffPicture } from "../../src/shared/song-catalogue/sniff-picture";
+import { SNAPSHOT_PIXEL_RATIO, SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
 import { en, PICTURES } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, waitFor } from "./harness";
 
-// A PNG's header: its width and height stand at these bytes.
-const WIDTH_AT = 16;
-const HEIGHT_AT = 20;
 // A picture with every picture in it takes a few seconds on a computer.
 const SAVED_MS = 60_000;
 /** The bar's words on one line: body2's, 14 px on a 20 px line, in the picture's pixels. */
 const ONE_LINE_PX = 20 * SNAPSHOT_PIXEL_RATIO;
-/** `abth-rating-2026-10-26-235930.png`: what it shows, the day and the second. */
-const NAMED_TO_THE_SECOND = /^abth-[a-z]+-\d{4}-\d{2}-\d{2}-\d{6}\.png$/;
+/** `abth-rating-2026-10-26-235930.webp`: what it shows, the day and the second. */
+const NAMED_TO_THE_SECOND = /^abth-[a-z]+-\d{4}-\d{2}-\d{2}-\d{6}\.webp$/;
 
 export interface SavedPicture {
   /** The share's menu, as the player reads it. */
   readonly ways: readonly string[];
   /** The file the app saved, or none. */
   readonly name: string | null;
+  /** What its bytes say it is. */
+  readonly format: string | null;
   readonly width: number;
   readonly height: number;
+  readonly bytes: number;
   /** How tall the words at the bar's right stand: one line, or more where they wrapped. */
   readonly barWordsHeight: number;
   /** How the note at the window's foot said it ended. */
@@ -32,8 +33,8 @@ export interface SavedPicture {
 }
 
 /** The rows the bar's white words take in its right quarter, clear of a title in its middle. */
-async function heightOfBarWords(png: Buffer): Promise<number> {
-  const { data, info } = await sharp(png).raw().toBuffer({ resolveWithObject: true });
+async function heightOfBarWords(picture: Buffer): Promise<number> {
+  const { data, info } = await sharp(picture).raw().toBuffer({ resolveWithObject: true });
   const at = (x: number, y: number) => (y * info.width + x) * info.channels;
   const blue = (i: number) => (data[i + 2] ?? 0) - (data[i] ?? 0) > 60;
   const white = (i: number) => [0, 1, 2].every((channel) => (data[i + channel] ?? 0) > 200);
@@ -75,24 +76,32 @@ export async function savedPicture(ctx: Ctx, button: string, shows: string): Pro
   await waitFor("the note gone", async () =>
     (await exists(`#${button}-outcome`)) ? undefined : true,
   );
-  const png = name === null ? null : readFileSync(join(PICTURES, name));
+  const file = name === null ? null : readFileSync(join(PICTURES, name));
+  const sniffed = file === null ? null : sniffPicture(file);
   return {
     ways,
     name,
-    width: png?.readUInt32BE(WIDTH_AT) ?? 0,
-    height: png?.readUInt32BE(HEIGHT_AT) ?? 0,
-    barWordsHeight: png === null ? 0 : await heightOfBarWords(png),
+    format: sniffed?.format ?? null,
+    width: sniffed?.width ?? 0,
+    height: sniffed?.height ?? 0,
+    bytes: file?.byteLength ?? 0,
+    barWordsHeight: file === null ? 0 : await heightOfBarWords(file),
     outcome,
   };
 }
 
-/** Saved whole by both desktop ways: the card's width, named to the second, its bar one line. */
-export const savedWhole = ({ ways, name, width, height, barWordsHeight, outcome }: SavedPicture) =>
-  ways.join("|") === [en.t("snapshot.copy"), en.t("snapshot.save")].join("|") &&
-  name !== null &&
-  NAMED_TO_THE_SECOND.test(name) &&
-  width === SNAPSHOT_WIDTH_PX * SNAPSHOT_PIXEL_RATIO &&
-  height > width / 2 &&
-  barWordsHeight > 0 &&
-  barWordsHeight <= ONE_LINE_PX &&
-  outcome === "save";
+/** Saved whole by both desktop ways: a WebP the card's width, named to the second, one-line bar. */
+export const savedWhole = (picture: SavedPicture) => {
+  const { ways, name, format, width, height, barWordsHeight, outcome } = picture;
+  return (
+    ways.join("|") === [en.t("snapshot.copy"), en.t("snapshot.save")].join("|") &&
+    name !== null &&
+    NAMED_TO_THE_SECOND.test(name) &&
+    format === "webp" &&
+    width === SNAPSHOT_WIDTH_PX * SNAPSHOT_PIXEL_RATIO &&
+    height > width / 2 &&
+    barWordsHeight > 0 &&
+    barWordsHeight <= ONE_LINE_PX &&
+    outcome === "save"
+  );
+};

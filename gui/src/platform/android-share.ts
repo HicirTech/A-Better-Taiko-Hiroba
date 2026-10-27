@@ -17,28 +17,28 @@ export async function androidShare(): Promise<SystemShare> {
   const { publicStorage } = await Filesystem.checkPermissions();
   return {
     ways: publicStorage === "granted" ? ["share", "save"] : ["share"],
-    hand: (way, png, name) => (way === "save" ? saved(png, name) : shared(png, name)),
+    hand: (way, picture, name) => (way === "save" ? saved(picture, name) : shared(picture, name)),
   };
 }
 
 /** The plugin has the gallery take the file in once it is written. */
-async function saved(png: Uint8Array, name: string): Promise<"done"> {
+async function saved(picture: Uint8Array, name: string): Promise<"done"> {
   await Filesystem.writeFile({
     path: `${SAVED}/${name}`,
-    data: base64Of(png),
+    data: base64Of(picture),
     directory: Directory.Documents,
     recursive: true,
   });
   return "done";
 }
 
-async function shared(png: Uint8Array, name: string): Promise<"done" | "dismissed"> {
+async function shared(picture: Uint8Array, name: string): Promise<"done" | "dismissed"> {
   await Filesystem.rmdir({ path: CACHED, directory: Directory.Cache, recursive: true }).catch(
     () => undefined,
   );
   const { uri } = await Filesystem.writeFile({
     path: `${CACHED}/${name}`,
-    data: base64Of(png),
+    data: base64Of(picture),
     directory: Directory.Cache,
     recursive: true,
   });

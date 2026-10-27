@@ -3,7 +3,7 @@ import { AppBar, Box, Stack, ThemeProvider, Toolbar, Typography } from "@mui/mat
 import type { ReactNode } from "react";
 
 import { SNAPSHOT_THEME } from "../theme/app-theme";
-import { SNAPSHOT_WIDTH_PX } from "./snapshot-png";
+import { SNAPSHOT_WIDTH_PX } from "./snapshot-picture";
 
 const FRAME = {
   width: SNAPSHOT_WIDTH_PX,
