@@ -7,8 +7,9 @@ import type { PictureLane } from "../pictures/picture-lane";
 import type { PictureWay, SystemShare } from "../platform";
 import { ShareIcon } from "../ui/icons";
 import { OperationSnackbar } from "../ui/operation-snackbar";
+import { pngOf } from "./draw-snapshot";
 import { snapshotLane } from "./snapshot-lane";
-import { pngOf, snapshotName } from "./snapshot-png";
+import { snapshotName } from "./snapshot-png";
 
 /** How long a snapshot waits for its pictures before it is taken with those that came. */
 const PICTURES_WAIT_MS = 10_000;
