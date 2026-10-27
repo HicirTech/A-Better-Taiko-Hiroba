@@ -35,6 +35,7 @@ export const songSearchKeys = [
   "searchBarAcrossAPhone",
   "searchFieldKeepsItsPlace",
   "searchFieldLefts",
+  "searchTakesTheShareButtonsPlace",
   "searchShowsTheTempo",
   "notFoundUnframed",
   "notFoundTellsTheLongHold",
@@ -73,6 +74,7 @@ export const songSearchKeys = [
   "detailsCloseOnlyWithAPointer",
   "menuSwipesOverTheDetails",
   "searchLeftByItsArrow",
+  "shareBackOnceTheSearchIsLeft",
   "portraitCloseToItsPlateOnAPhone",
 ] as const;
 
@@ -85,6 +87,11 @@ export async function songSearch(ctx: Ctx) {
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
     waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  // A button slid out of the band keeps its box: only its visibility says it is gone.
+  const seen = (selector: string) =>
+    page.evaluate<boolean>(
+      `document.querySelector(${JSON.stringify(selector)})?.checkVisibility({ visibilityProperty: true }) ?? false`,
+    );
   const search = (query: string) =>
     page.evaluate(
       `(() => { const input = document.querySelector("#song-search-input"); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(query)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
@@ -144,6 +151,7 @@ export async function songSearch(ctx: Ctx) {
   await goTo("overview");
   await shown("#song-search");
   const bar = await boxOf("#song-search");
+  const shareAtRest = await boxOf("#overview-share");
   results.searchBarInTheTopBand =
     bar.top >= 0 && bar.bottom <= TOP_BAND_PX && !(await exists("#song-search-panel"));
   const fieldLeft = () =>
@@ -178,6 +186,12 @@ export async function songSearch(ctx: Ctx) {
   results.searchFieldKeepsItsPlace = leftSearching === leftAtRest;
   // Both places, so a run that finds the field moved shows by how much.
   results.searchFieldLefts = [leftAtRest, leftSearching];
+  results.searchTakesTheShareButtonsPlace = await soon(
+    "the search across the share button's room",
+    async () =>
+      !(await seen("#overview-share")) &&
+      Math.abs((await boxOf("#song-search")).right - shareAtRest.right) <= 1,
+  );
   results.searchShowsTheTempo =
     (await textOf("#song-search-row-1019"))?.includes("BPM 85.85–257.5") === true;
   const framedWithSongs = await exists("#song-search-panel.MuiPaper-root");
@@ -481,6 +495,12 @@ export async function songSearch(ctx: Ctx) {
       `(document.querySelector("#profile")?.getClientRects().length ?? 0) > 0`,
     )) &&
     (await page.evaluate<string>(`document.querySelector("#song-search-input").value`)) === "";
+  results.shareBackOnceTheSearchIsLeft = await soon(
+    "the share button back in its room",
+    async () =>
+      (await seen("#overview-share")) &&
+      Math.abs((await boxOf("#overview-share")).right - shareAtRest.right) <= 1,
+  );
 
   results.portraitCloseToItsPlateOnAPhone = await atSize(PHONE_TALL.width, PHONE_TALL.height, () =>
     soon("the plate's empty top under the portrait", async () => {

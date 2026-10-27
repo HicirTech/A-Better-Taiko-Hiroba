@@ -67,7 +67,7 @@ export interface SongSearchProps {
   readonly onOpen: () => void;
   /** Whether the search stands open, as it opens and closes: a long hold then reads the list. */
   readonly onOpenChange?: ((open: boolean) => void) | undefined;
-  /** At the band's right, after the search field: the page's own button. */
+  /** At the band's right, after the field: the page's own button, slid aside while searching. */
   readonly end?: ReactNode;
   /** The page under the search, told whether the search stands in for it. */
   readonly children: (searching: boolean) => ReactNode;
@@ -209,7 +209,8 @@ export function SongSearch({
 
   return (
     <>
-      <FrameTop wide={wide} touchFirst={touchFirst} end={end}>
+      {/* Still mounted while slid aside, so a note the button put at the foot stays. */}
+      <FrameTop wide={wide} touchFirst={touchFirst} end={end} endShown={!active}>
         <SearchField
           id="song-search"
           query={query}

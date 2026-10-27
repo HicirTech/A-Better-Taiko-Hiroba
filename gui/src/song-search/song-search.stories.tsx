@@ -3,14 +3,17 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { type ReactNode, useEffect, useState } from "react";
 import { action } from "storybook/actions";
 import { userEvent, within } from "storybook/test";
+import { ProfileSnapshot } from "../my-page/profile-snapshot";
 import { AppFrame } from "../navigation/app-frame";
 import { PAGE_REGISTRY } from "../pages/registry";
 import { DEFAULT_CHART_SOURCE } from "../shared/song-catalogue/chart-source";
 import { DEFAULT_SHOWN } from "../shared/song-catalogue/shown-difficulty";
 import type { SongCatalogueFailure } from "../shared/song-catalogue/types";
 import type { SongCatalogue, WholeRead } from "../shared/song-catalogue/use-song-catalogue";
+import { SnapshotButton } from "../snapshots/snapshot-button";
 import { modalLookOf, touchOf, wideOf } from "../story-kit/devices";
-import { i18nOf, type StoryGlobals } from "../story-kit/env";
+import { i18nOf, STORY_COPY_OR_SAVE, type StoryGlobals } from "../story-kit/env";
+import { STORY_PROFILE } from "../story-kit/profile";
 import { storyCatalogue } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { STORY_CHART_PORT } from "../story-kit/story-port";
@@ -48,8 +51,28 @@ function EndingWholeRead({
   return children({ ...storyCatalogue(), wholeRead });
 }
 
+/** The Overview's share button, at the band's end. */
+const shareButton = (globals: StoryGlobals) => {
+  const i18n = i18nOf(globals);
+  return (
+    <SnapshotButton
+      id="overview-share"
+      shows="abth-profile"
+      share={STORY_COPY_OR_SAVE}
+      lane={STORY_LANE}
+      i18n={i18n}
+      snapshot={(lane) => <ProfileSnapshot profile={STORY_PROFILE} lane={lane} i18n={i18n} />}
+    />
+  );
+};
+
 /** The Overview's search, in the window's top band, over a page that stands in for the Overview. */
-const search = (catalogue: SongCatalogue, globals: StoryGlobals, first: readonly string[] = []) => {
+const search = (
+  catalogue: SongCatalogue,
+  globals: StoryGlobals,
+  first: readonly string[] = [],
+  end?: ReactNode,
+) => {
   const i18n = i18nOf(globals);
   return (
     <AppFrame
@@ -74,6 +97,7 @@ const search = (catalogue: SongCatalogue, globals: StoryGlobals, first: readonly
             keptSearches={kept}
             i18n={i18n}
             onOpen={action("open the search")}
+            end={end}
           >
             {(searching) =>
               !searching && (
@@ -119,6 +143,17 @@ export const NotSearching: Story = {};
 export const Found: Story = { play: typed("sun") };
 
 export const NothingFound: Story = { play: typed("zzz") };
+
+/** The Overview's share button at the band's end, beside the bar. */
+export const BesideTheShareButton: Story = {
+  render: (_args, { globals }) => search(storyCatalogue(), globals, [], shareButton(globals)),
+};
+
+/** Searching: the share button is hidden, and the bar takes the whole band. */
+export const SearchingBesideTheShareButton: Story = {
+  render: (_args, { globals }) => search(storyCatalogue(), globals, [], shareButton(globals)),
+  play: typed("sun"),
+};
 
 /** Opened before typing: the searches kept from before, each with a × that forgets it. */
 export const KeptSearches: Story = {
