@@ -1,4 +1,5 @@
 import { Box, Skeleton, Stack } from "@mui/material";
+import type { ReactNode } from "react";
 import { MedalCardSkeleton } from "../my-page/medal-card";
 import { OverviewHeaderSkeleton } from "../my-page/overview-header";
 import { ShareBlockSkeleton } from "../profile/share-block";
@@ -22,9 +23,9 @@ const KNOW_CARDS = [...Array(6).keys()];
 const SCORE_CHIPS_PX = [89, 58, 140, 73];
 const FOLDER_ROWS = [...Array(8).keys()];
 
-function SearchBand({ touchFirst, wide }: SkeletonProps) {
+function SearchBand({ touchFirst, wide, end }: SkeletonProps & { readonly end?: ReactNode }) {
   return (
-    <FrameTop wide={wide} touchFirst={touchFirst}>
+    <FrameTop wide={wide} touchFirst={touchFirst} end={end}>
       <SearchFieldSkeleton />
     </FrameTop>
   );
@@ -33,7 +34,8 @@ function SearchBand({ touchFirst, wide }: SkeletonProps) {
 export function OverviewSkeleton(screen: SkeletonProps) {
   return (
     <>
-      <SearchBand {...screen} />
+      {/* The share button's place, so the field is as wide as the page's. */}
+      <SearchBand {...screen} end={<Skeleton variant="circular" width={40} height={40} />} />
       <Stack spacing={3}>
         <Stack sx={{ alignItems: "center" }}>
           <OverviewHeaderSkeleton />

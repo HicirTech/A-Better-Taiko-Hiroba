@@ -29,6 +29,7 @@ export const readAgainKeys = [
   "readAgainAtTheNavFoot",
   "readAgainShutWhileReading",
   "readAgainShutsThenShowsItsSkeleton",
+  "skeletonFieldAsWideAsThePages",
   "settingsSignedInWhileReading",
   "readAgainByF5",
   "readAgainRefreshesHirobaFirst",
@@ -96,6 +97,7 @@ export async function readAgain(ctx: Ctx) {
     "the skeleton of the page read again",
     async () => (await exists('#page-skeleton[data-page="overview"]')) || undefined,
   );
+  const skeletonField = await boxOf('#page-skeleton[data-page="overview"] .MuiSkeleton-rounded');
   await click("#read-again");
   await Bun.sleep(300);
   const readsWhileHeld = await myPageHits();
@@ -110,6 +112,10 @@ export async function readAgain(ctx: Ctx) {
     same(await fabState(), { shut: false, spinning: false }) ? true : undefined,
   );
   await waitFor("the page back", async () => (await exists("#profile")) || undefined);
+  const pageField = await boxOf("#song-search");
+  results.skeletonFieldAsWideAsThePages =
+    Math.abs(skeletonField.left - pageField.left) <= 1 &&
+    Math.abs(skeletonField.right - pageField.right) <= 1;
   results.readAgainShutsThenShowsItsSkeleton =
     pageAtOnce.kept &&
     skeletonWhileReading &&

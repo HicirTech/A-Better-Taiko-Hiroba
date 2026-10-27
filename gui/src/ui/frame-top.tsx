@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, type Theme } from "@mui/material";
 import type { ReactNode } from "react";
 
 export const MENU_INSET_PX = 8;
@@ -14,7 +14,21 @@ export const COLUMN_MAX_WIDTH_PX = 600;
 
 /** Room beside a band button: a small button and the gap after it. */
 const BAND_BUTTON_ROOM_PX = 48;
-const WITH_END = { display: "flex", alignItems: "center", gap: 1 } as const;
+const WITH_END = { display: "flex", alignItems: "center" } as const;
+const slide = (theme: Theme) =>
+  theme.transitions.create(["width", "opacity", "visibility"], {
+    duration: theme.transitions.duration.shorter,
+  });
+// The end's room holds its gap too, so the bar takes all of it as the room slides shut.
+const END_ROOM = {
+  display: "flex",
+  flexShrink: 0,
+  overflow: "hidden",
+  "@media (prefers-reduced-motion: no-preference)": { transition: slide },
+} as const;
+const END_SHOWN = { ...END_ROOM, width: BAND_BUTTON_ROOM_PX, opacity: 1, visibility: "visible" };
+const END_ASIDE = { ...END_ROOM, width: 0, opacity: 0, visibility: "hidden" };
+const END_IN_ITS_ROOM = { display: "flex", flexShrink: 0, pl: 1 } as const;
 const STAYS_IN_THE_BAND = {
   position: "sticky",
   top: BELOW_TOP_BAND,
@@ -29,6 +43,7 @@ export function FrameTop({
   touchFirst,
   stays = true,
   end,
+  endShown = true,
   children,
 }: {
   /** Wide enough for the side panel, which leaves no menu button in the band. */
@@ -38,6 +53,8 @@ export function FrameTop({
   readonly stays?: boolean;
   /** At the right, after the bar: a page's own button, such as its share. */
   readonly end?: ReactNode;
+  /** False slides the end out, still mounted, and the bar across the room it leaves. */
+  readonly endShown?: boolean;
   readonly children?: ReactNode;
 }) {
   // A touch screen draws no menu button: its swipe stands in for it.
@@ -56,7 +73,9 @@ export function FrameTop({
         ) : (
           <>
             <Box sx={{ flex: 1, minWidth: 0 }}>{children}</Box>
-            {end}
+            <Box sx={endShown ? END_SHOWN : END_ASIDE}>
+              <Box sx={END_IN_ITS_ROOM}>{end}</Box>
+            </Box>
           </>
         )}
       </Box>
