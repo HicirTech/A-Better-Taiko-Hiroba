@@ -84,7 +84,7 @@ export async function savedPicture(ctx: Ctx, button: string, shows: string): Pro
   };
 }
 
-/** Saved whole by the desktop's two ways: the card's width twice over, its bar on one line. */
+/** Saved whole by the desktop's two ways: the card's width, its bar on one line. */
 export const savedWhole = ({ ways, name, width, height, barWordsHeight, outcome }: SavedPicture) =>
   ways.join("|") === [en.t("snapshot.copy"), en.t("snapshot.save")].join("|") &&
   name !== null &&
