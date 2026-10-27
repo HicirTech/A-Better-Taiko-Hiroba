@@ -1,3 +1,4 @@
+import { SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
 import { TITLE_PLATE } from "../mock-pictures";
 import type { App } from "./app";
 import { PANEL_ART, REPORT_CODE } from "./config";
@@ -317,5 +318,5 @@ export async function overview(ctx: Ctx) {
 
   const picture = await savedPicture(ctx, "overview-share", "abth-profile");
   results.overviewSharePicture = picture;
-  results.overviewShareSavesThePicture = savedWhole(picture);
+  results.overviewShareSavesThePicture = savedWhole(picture, SNAPSHOT_WIDTH_PX);
 }

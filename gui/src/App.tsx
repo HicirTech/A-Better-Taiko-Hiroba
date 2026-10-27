@@ -17,6 +17,7 @@ import { createPictureLane } from "./pictures/picture-lane";
 import type { SystemLink, SystemShare, SystemToast } from "./platform";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
+import { keepStartingRating, keptStartingRating } from "./shared/rating-data/starting-rating";
 import { keepStartingSort, keptStartingSort } from "./shared/scores/starting-sort";
 import type { HirobaSessionPort } from "./shared/session-port";
 import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
@@ -67,6 +68,7 @@ export function App({
     keepShownDifficulty,
   );
   const [startingSort, onStartingSort] = useKeptChoice(keptStartingSort, keepStartingSort);
+  const [startingRating, onStartingRating] = useKeptChoice(keptStartingRating, keepStartingRating);
   const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
   const updates = useUpdateReminder(port, APP_VERSION);
   // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
@@ -75,7 +77,7 @@ export function App({
     [port],
   );
   const session = useSession({ port, lane, page, onNavigate });
-  const pagesData = usePagesData({ port, lane, page, session });
+  const pagesData = usePagesData({ port, lane, page, session, startingRating });
   const data: PageData = {
     port,
     link,
@@ -90,6 +92,8 @@ export function App({
     onShownDifficulty,
     startingSort,
     onStartingSort,
+    startingRating,
+    onStartingRating,
     chartSource,
     onChartSource,
     toast,

@@ -22,6 +22,8 @@ const KNOW_CARDS = [...Array(6).keys()];
 /** Scores' chips as a visit opens: the difficulty's icons, the stars, the sort's words, genre. */
 const SCORE_CHIPS_PX = [89, 58, 140, 73];
 const FOLDER_ROWS = [...Array(8).keys()];
+/** Rating's V1 | V2 switch, as its band draws it. */
+const RATING_SWITCH = { width: 84, height: 38 } as const;
 
 function SearchBand({ touchFirst, wide, end }: SkeletonProps & { readonly end?: ReactNode }) {
   return (
@@ -72,26 +74,39 @@ export function ScoresSkeleton(screen: SkeletonProps) {
   );
 }
 
-export function RatingSkeleton() {
+export function RatingSkeleton({ touchFirst, wide }: SkeletonProps) {
   return (
-    <Stack spacing={2}>
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        sx={{ alignItems: "center", justifyContent: "center" }}
+    <>
+      {/* The switch's place and the share's, as the page's band keeps them. */}
+      <FrameTop
+        wide={wide}
+        touchFirst={touchFirst}
+        stays={false}
+        end={<Skeleton variant="circular" width={40} height={40} />}
       >
-        <Skeleton width={140} height={64} />
-        <Box sx={{ display: "grid", placeItems: "center", width: 300, maxWidth: 1, height: 250 }}>
-          <Skeleton variant="circular" width={200} height={200} />
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Skeleton variant="rounded" {...RATING_SWITCH} />
+        </Box>
+      </FrameTop>
+      <Stack spacing={2}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{ alignItems: "center", justifyContent: "center" }}
+        >
+          <Skeleton width={140} height={64} />
+          <Box sx={{ display: "grid", placeItems: "center", width: 300, maxWidth: 1, height: 250 }}>
+            <Skeleton variant="circular" width={200} height={200} />
+          </Box>
+        </Stack>
+        <Box>
+          <Box sx={{ px: 1 }}>
+            <SectionTitleSkeleton width={150} />
+          </Box>
+          <PlayRowsSkeleton />
         </Box>
       </Stack>
-      <Box>
-        <Box sx={{ px: 1 }}>
-          <SectionTitleSkeleton width={150} />
-        </Box>
-        <PlayRowsSkeleton />
-      </Box>
-    </Stack>
+    </>
   );
 }
 

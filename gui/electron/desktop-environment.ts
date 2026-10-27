@@ -57,6 +57,7 @@ export function desktopEnvironment(packaged: boolean, env: Environment): Desktop
   const chineseNamesUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_CHINESE_NAMES, CHINESE_NAMES_URL);
   const ratingDataUrls = {
     ourtaikoV1: catalogueUrlFor(!packaged, env.ABTH_DEV_RATING_DATA, RATING_DATA_URL.ourtaikoV1),
+    ourtaikoV2: catalogueUrlFor(!packaged, env.ABTH_DEV_RATING_DATA_V2, RATING_DATA_URL.ourtaikoV2),
   };
   const chartOrigin = chartOriginFor(!packaged, env.ABTH_DEV_CHART_ORIGIN);
   const eseMappingUrl = catalogueUrlFor(!packaged, env.ABTH_DEV_ESE_MAPPING, ESE_MAPPING_URL);

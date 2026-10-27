@@ -285,7 +285,7 @@ export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): Hirob
     scoresProgress: () => Promise.resolve(null),
     readSongCatalogue: () => later(ok({ songs: PAGE_SONGS, removed: [], sentAt: Date.now() })),
     readChineseNames: () => later(ok({ pages: [], sentAt: Date.now() })),
-    readRatingData: () => later(ok({ text: PAGE_RATING_DATA, sentAt: Date.now() })),
+    readRatingData: (system) => later(ok({ text: PAGE_RATING_DATA[system], sentAt: Date.now() })),
     ...STORY_CHART_PORT,
     readPipelines: () => Promise.resolve(pipelinesAt(Date.now())),
     ...changes,

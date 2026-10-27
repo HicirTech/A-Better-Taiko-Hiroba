@@ -1,6 +1,8 @@
+import type { RatingSystem } from "@abth/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
 import { action } from "storybook/actions";
+import { DEFAULT_STARTING_RATING } from "../shared/rating-data/starting-rating";
 import type { SortChoice } from "../shared/scores/score-order";
 import { DEFAULT_STARTING_SORT } from "../shared/scores/starting-sort";
 import { DEFAULT_CHART_SOURCE } from "../shared/song-catalogue/chart-source";
@@ -20,6 +22,7 @@ function Page({ account, globals }: Args & { readonly globals: StoryGlobals }) {
   const i18n = i18nOf(globals);
   const [shown, setShown] = useState(DEFAULT_SHOWN);
   const [sort, setSort] = useState<SortChoice>(DEFAULT_STARTING_SORT);
+  const [rating, setRating] = useState<RatingSystem>(DEFAULT_STARTING_RATING);
   const [source, setSource] = useState(DEFAULT_CHART_SOURCE);
   return (
     <SettingsPage
@@ -38,6 +41,8 @@ function Page({ account, globals }: Args & { readonly globals: StoryGlobals }) {
       onShownDifficulty={setShown}
       startingSort={sort}
       onStartingSort={setSort}
+      startingRating={rating}
+      onStartingRating={setRating}
       chartSource={source}
       onChartSource={setSource}
       updates={{

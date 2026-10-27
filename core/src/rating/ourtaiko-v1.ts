@@ -1,6 +1,14 @@
 // OurTaikoWiki's rating V1 (MIT, ourtaiko.org; see ourtaiko-license.txt), its formulas unchanged.
 import type { Level } from "../hiroba-models";
-import { donderfulCountsAsPerfect, isLeftOut, withoutSameCharts } from "./ourtaiko-lists";
+import {
+  bestOf,
+  blend,
+  curvedAccuracy,
+  ratedCharts,
+  ratedPlay,
+  SCALE_TOP,
+  weightedAverage,
+} from "./ourtaiko-formulas";
 import type { ChartRating, PlayerFigure, PlayerRating, RatedScore, RatingFigure } from "./types";
 
 /** One Oni or Ura chart's measurements in OurTaiko's V1 data. */
@@ -17,7 +25,7 @@ export interface OurTaikoV1Chart {
 /** V1's data by song number, then by level: 4 for Oni, 5 for Ura. */
 export type OurTaikoV1Data = ReadonlyMap<string, ReadonlyMap<Level, OurTaikoV1Chart>>;
 
-export const OURTAIKO_V1_FIGURES: readonly RatingFigure[] = [
+export const OURTAIKO_V1_FIGURES = [
   "rating",
   "power",
   "stamina",
@@ -25,12 +33,10 @@ export const OURTAIKO_V1_FIGURES: readonly RatingFigure[] = [
   "accuracy",
   "rhythm",
   "complex",
-];
+] as const satisfies readonly RatingFigure[];
 
-/** Where every figure of a perfect play sits. */
-const SCALE_TOP = 15.5;
-const COUNTED = 20;
-const LOWEST_ACCURACY = 0.75;
+type V1Figure = (typeof OURTAIKO_V1_FIGURES)[number];
+
 // As published: a constant the table lacks gets its lowest x.
 const LOWEST_X = 0.05;
 
@@ -116,7 +122,7 @@ interface FullScale {
   readonly threshold: number;
 }
 
-const FULL: Readonly<Record<RatingFigure, FullScale>> = {
+const FULL: Readonly<Record<V1Figure, FullScale>> = {
   rating: { middle: 15.27045948521676, average: 15.29963809348486, threshold: 14.58 },
   power: { middle: 15.260226313838062, average: 15.290645757225318, threshold: 14.54 },
   stamina: { middle: 14.680215140150393, average: 14.915699776343342, threshold: 13.36 },
@@ -128,14 +134,7 @@ const FULL: Readonly<Record<RatingFigure, FullScale>> = {
 
 /** The player's OurTaiko V1 rating, from every played Oni and Ura chart the data has. */
 export function rateOurTaikoV1(scores: readonly RatedScore[], data: OurTaikoV1Data): PlayerRating {
-  const rated = scores.flatMap((score) => {
-    const chart = data.get(score.songNo)?.get(score.level);
-    const rating = chart === undefined || isLeftOut(score) ? null : rateChart(score, chart);
-    return rating === null ? [] : [rating];
-  });
-  const charts = withoutSameCharts(rated, (chart) => chart.figures.rating).sort(
-    (a, b) => b.figures.rating - a.figures.rating,
-  );
+  const charts = ratedCharts(scores, data, rateChart);
   return {
     system: "ourtaikoV1",
     figures: OURTAIKO_V1_FIGURES.map((figure) => playerFigure(figure, charts)),
@@ -144,20 +143,12 @@ export function rateOurTaikoV1(scores: readonly RatedScore[], data: OurTaikoV1Da
 }
 
 function rateChart(score: RatedScore, chart: OurTaikoV1Chart): ChartRating | null {
-  const { record } = score;
-  if (record === null) {
-    return null;
-  }
-  const donderful = score.crown === "donderful" || (record.donderfulComboCount ?? 0) > 0;
-  const perfect = donderful && donderfulCountsAsPerfect(score);
-  if (!perfect && record.good + record.ok + record.bad > chart.notes) {
-    return null;
-  }
-  const accuracy = perfect ? 1 : (record.good + record.ok / 2) / chart.notes;
-  if (accuracy < LOWEST_ACCURACY || accuracy > 1) {
+  const play = ratedPlay(score, chart.notes);
+  if (play === null) {
     return null;
   }
 
+  const { accuracy } = play;
   const x = X_OF_CONSTANT.get(chart.constant) ?? LOWEST_X;
   const y = curvedAccuracy(accuracy);
   const rating = blend(x, y);
@@ -175,41 +166,9 @@ function rateChart(score: RatedScore, chart: OurTaikoV1Chart): ChartRating | nul
     songNo: score.songNo,
     level: score.level,
     accuracy,
+    constant: chart.constant,
     figures: { ...Object.fromEntries(skills), rating },
   };
-}
-
-/** The accuracy on the rating's scale: 0 at 75 %, then a power, a line and an exponential piece. */
-function curvedAccuracy(accuracy: number): number {
-  const low = (value: number) => 16730 * (value - 0.75) ** 3.805;
-  const middle = (value: number) => 56.4468 * value - 45.7187;
-  // biome-ignore lint/suspicious/noApproximativeNumericConstant: the published base is 2.718.
-  const high = (value: number) => 0.2246 * 2.718 ** (120 * (value - 0.972)) + 9.02;
-  const lowEnd = 0.8278;
-  const middleEnd = 0.9793;
-  if (accuracy <= LOWEST_ACCURACY) {
-    return 0;
-  }
-  if (accuracy <= lowEnd) {
-    return low(accuracy);
-  }
-  if (accuracy <= middleEnd) {
-    return middle(accuracy);
-  }
-  return (
-    high(middleEnd) +
-    ((high(accuracy) - high(middleEnd)) / (high(1) - high(middleEnd))) *
-      (SCALE_TOP - high(middleEnd))
-  );
-}
-
-/** A weighted power mean of the chart's x and the curved accuracy y. */
-function blend(x: number, y: number): number {
-  const termP = 150 ** 2 - (x - y) ** 2 / 2;
-  const p = termP < 0 ? 150 : 150 - Math.sqrt(termP);
-  const termW = 25 - (x - 15.5) ** 2 / 25 - (y - 23) ** 2 / 69;
-  const w = termW < 0 ? 0.5 : Math.max(Math.sqrt(termW) - 4, 0.5);
-  return p === 0 ? x ** w * y ** (1 - w) : (w * x ** p + (1 - w) * y ** p) ** (1 / p);
 }
 
 function staminaOf({ averageDensity: average, instantDensity: instant }: OurTaikoV1Chart): number {
@@ -228,12 +187,8 @@ function rhythmOf({ separation, tempoChange }: OurTaikoV1Chart): number {
   return separation + (separation / 100) * (tempoChange / 100) * (100 - separation);
 }
 
-function playerFigure(figure: RatingFigure, charts: readonly ChartRating[]): PlayerFigure {
-  const best = charts
-    .map((chart) => chart.figures[figure])
-    .filter((value): value is number => value !== undefined)
-    .sort((a, b) => b - a)
-    .slice(0, COUNTED);
+function playerFigure(figure: V1Figure, charts: readonly ChartRating[]): PlayerFigure {
+  const best = bestOf(charts.map((chart) => chart.figures[figure]));
   const middle = median(best);
   const average = weightedAverage(best, TOP_WEIGHTS);
   const full = FULL[figure];
@@ -254,15 +209,4 @@ function median(values: readonly number[]): number {
   return values.length % 2 === 1
     ? (values[half] ?? 0)
     : ((values[half - 1] ?? 0) + (values[half] ?? 0)) / 2;
-}
-
-function weightedAverage(values: readonly number[], weights: readonly number[]): number {
-  let sum = 0;
-  let weightSum = 0;
-  values.slice(0, weights.length).forEach((value, index) => {
-    const weight = weights[index] ?? 0;
-    sum += value * weight;
-    weightSum += weight;
-  });
-  return weightSum === 0 ? 0 : sum / weightSum;
 }

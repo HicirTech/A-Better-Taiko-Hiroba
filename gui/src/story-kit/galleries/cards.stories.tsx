@@ -17,6 +17,7 @@ import * as GroupDetails from "../../pipelines-page/group-details.stories";
 import * as PipelineSection from "../../pipelines-page/pipeline-section.stories";
 import * as AppearanceSection from "../../settings/appearance-section.stories";
 import * as GitHubSection from "../../settings/github-section.stories";
+import * as RatingSection from "../../settings/rating-section.stories";
 import * as ScoresSection from "../../settings/scores-section.stories";
 import * as SettingsSection from "../../settings/settings-section.stories";
 import * as SongDataSection from "../../settings/song-data-section.stories";
@@ -77,6 +78,7 @@ const meta = {
           story: SongLevelsSection.ShownFirst,
         },
         { name: "ScoresSection", meta: ScoresSection.default, story: ScoresSection.DefaultSort },
+        { name: "RatingSection", meta: RatingSection.default, story: RatingSection.DefaultRating },
         { name: "SongDataSection", meta: SongDataSection.default, story: SongDataSection.Sources },
         { name: "GitHubSection", meta: GitHubSection.default, story: GitHubSection.Repository },
         { name: "PipelineSection", meta: PipelineSection.default, story: PipelineSection.Cells },

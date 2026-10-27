@@ -1,6 +1,7 @@
 import { ListItem, ListItemText, MenuItem, Select } from "@mui/material";
 import { useId } from "react";
-import type { Choice } from "./choice-row";
+
+import type { Choice } from "../ui/choice-toggles";
 
 /** A setting's row: its name and hint, and a list dropping down its choices, one always chosen. */
 export function SelectRow<T extends string>({

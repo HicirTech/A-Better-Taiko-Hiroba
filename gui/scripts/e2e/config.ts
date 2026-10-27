@@ -23,8 +23,9 @@ export const REFUSING_HOST = `refuses.127.0.0.1.sslip.io:${IDP_PORT}`;
 export const OFFSITE_HOST = `offsite.127.0.0.1.sslip.io:${IDP_PORT}`;
 export const IDP_MARKER = "abth-mock-idp-marker";
 export const MY_PAGE = "/mypage_top.php";
-/** The stand-in's rating data. */
+/** The stand-in's rating data, V1's and V2's. */
 export const RATING_DATA = "/__rating-data";
+export const RATING_DATA_V2 = "/__rating-data-v2";
 export const DAN_LABEL = "/imgsrc_danlabel.php";
 export const MEDAL_PLATE = "/imgsrc_tokenplate.php";
 export const PANEL_ART = "/image/sp/640/total_score_image_5.png";

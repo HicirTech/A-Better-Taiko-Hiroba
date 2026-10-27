@@ -1,4 +1,4 @@
-import type { ChartRating, OurTaikoV1Data, PlayerRating } from "@abth/core";
+import type { ChartRating, PlayerRating } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 import { useMemo, useRef } from "react";
@@ -8,9 +8,11 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import { MY_DON, MyDonTile } from "../profile/my-don-portrait";
 import { PLATE_BAND_MAX_PX, TitlePlate } from "../profile/title-plate";
+import { RATING_SYSTEM_NAME } from "../shared/rating-data/rating-systems";
 import type { PictureWant, ProfileView, ScoreView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotFrame } from "../snapshots/snapshot-frame";
+import { RATING_SNAPSHOT_WIDTH_PX } from "../snapshots/snapshot-picture";
 import { RatedList } from "./rated-list";
 import { COUNTED, ratingAndSkills, ratingFormats } from "./rating-figures";
 import { RatingRadar } from "./rating-radar";
@@ -43,7 +45,6 @@ export interface RatingSnapshotProps {
   readonly rated: PlayerRating;
   /** Each kept score by its chart's key. */
   readonly scoreOf: ReadonlyMap<string, ScoreView>;
-  readonly data: OurTaikoV1Data;
   /** taiko.wiki's song list: the names in the player's language. */
   readonly catalogue: SongCatalogue;
   readonly lane: PictureLane;
@@ -57,7 +58,6 @@ export function RatingSnapshot({
   profile,
   rated,
   scoreOf,
-  data,
   catalogue,
   lane,
   readAt,
@@ -68,7 +68,7 @@ export function RatingSnapshot({
   const portraitBox = useRef<HTMLSpanElement>(null);
   const plate = usePicture(lane, PLATE, plateBox, { ...IN_THE_WINDOW, order: 0 });
   const myDon = usePicture(lane, MY_DON, portraitBox, { ...IN_THE_WINDOW, order: 1 });
-  const formats = useMemo(() => ratingFormats(locale), [locale]);
+  const formats = useMemo(() => ratingFormats(locale, rated.system), [locale, rated.system]);
   const { total, skills } = ratingAndSkills(rated, t);
   const list = (id: string, heading: MessageKey, shown: readonly ChartRating[]) => (
     <RatedList
@@ -76,17 +76,22 @@ export function RatingSnapshot({
       heading={heading}
       charts={shown}
       scoreOf={scoreOf}
-      data={data}
       catalogue={catalogue}
       lane={lane}
       formats={formats}
       i18n={i18n}
-      columns={2}
+      columns={4}
     />
   );
 
   return (
-    <SnapshotFrame id="rating-snapshot" readAt={readAt} i18n={i18n}>
+    <SnapshotFrame
+      id="rating-snapshot"
+      title={t(RATING_SYSTEM_NAME[rated.system])}
+      width={RATING_SNAPSHOT_WIDTH_PX}
+      readAt={readAt}
+      i18n={i18n}
+    >
       <Box sx={HEAD}>
         <Box sx={{ ...CENTRED, gridArea: "plate" }}>
           <TitlePlate

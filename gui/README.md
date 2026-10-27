@@ -256,13 +256,17 @@ shows it yet.
 
 ### Rating
 
-Your rating, worked out on the device from the kept scores as OurTaikoWiki's first rating does,
-third in the navigation, between Scores and Know yourself. Each Oni or Ura chart played with 75% accuracy
-or more is rated from its constant and its accuracy, and the rating comes from the best twenty. The
-page shows it above a radar of six skills, then the twenty charts it counts and the next twenty; a
-click on one opens its details, as on Scores. The constants are OurTaiko's published list, read the
-first time the page opens and again with each Read again or pull, which reads the scores too, and
-kept on the device; Settings names OurTaiko with the song data's other sources.
+Your rating, worked out on the device from the kept scores as OurTaikoWiki's first or second rating
+does, third in the navigation, between Scores and Know yourself. Settings chooses the one the page
+opens on, the first until changed, and a switch in the page's band shows the other until the page is
+left. The first rates each Oni or Ura chart played with 75% accuracy or more from its constant and
+its accuracy; the second rates Hard charts too, from three constants, and counts Bad hits against
+complexity. Either takes the rating from the best twenty. The page shows it above a radar of its six
+skills, then the twenty charts it counts and the next twenty; a click on one opens its details, as on
+Scores, and a picture of the page lists them four to a line and names its rating in the middle of
+its bar. Each rating's constants are OurTaiko's published list, read the first time that rating is
+shown and again with each Read again or pull while it is, which reads the scores too, and kept on
+the device; Settings names OurTaiko with the song data's other sources.
 
 ### Know yourself
 

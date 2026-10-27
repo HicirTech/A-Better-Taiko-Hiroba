@@ -19,6 +19,7 @@ import {
   systemLocale,
 } from "./shared/language/locale-choice";
 import { showLanguage } from "./shared/language/show-language";
+import { keepStartingRating, keptStartingRating } from "./shared/rating-data/starting-rating";
 import { keepStartingSort, keptStartingSort } from "./shared/scores/starting-sort";
 import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
 import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
@@ -55,6 +56,7 @@ export function Shell({
     keepShownDifficulty,
   );
   const [startingSort, onStartingSort] = useKeptChoice(keptStartingSort, keepStartingSort);
+  const [startingRating, onStartingRating] = useKeptChoice(keptStartingRating, keepStartingRating);
   const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
   const pick = (next: Locale | null) => {
     if (next === null) {
@@ -101,6 +103,8 @@ export function Shell({
           onShownDifficulty={onShownDifficulty}
           startingSort={startingSort}
           onStartingSort={onStartingSort}
+          startingRating={startingRating}
+          onStartingRating={onStartingRating}
           chartSource={chartSource}
           onChartSource={onChartSource}
         />

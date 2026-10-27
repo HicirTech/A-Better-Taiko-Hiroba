@@ -1,7 +1,7 @@
 import type { Level } from "../hiroba-models";
+import { isMeasure, isObject, songNoOf } from "./ourtaiko-feed";
 import type { OurTaikoV1Chart, OurTaikoV1Data } from "./ourtaiko-v1";
 
-const SONG_NO = /^[1-9]\d{0,4}$/;
 const LEVEL_OF_KEY: readonly (readonly [string, Level])[] = [
   ["oni", 4],
   ["ura", 5],
@@ -30,17 +30,6 @@ export function parseOurTaikoV1Data(answer: unknown): OurTaikoV1Data | null {
     }
   }
   return songs;
-}
-
-const isObject = (value: unknown): value is Readonly<Record<string, unknown>> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
-
-const isMeasure = (value: unknown): value is number =>
-  typeof value === "number" && Number.isFinite(value) && value >= 0;
-
-function songNoOf(id: unknown): string | null {
-  const text = typeof id === "number" ? String(id) : id;
-  return typeof text === "string" && SONG_NO.test(text) ? text : null;
 }
 
 function chartOf(value: unknown): OurTaikoV1Chart | null {

@@ -1,7 +1,7 @@
 import type { Chart, Score } from "../hiroba-models";
 
 /** A rating system the app computes: its own data and its own formula, never mixed. */
-export type RatingSystem = "ourtaikoV1";
+export type RatingSystem = "ourtaikoV1" | "ourtaikoV2";
 
 /** What a rating takes from a played chart: a kept score, or a view of one. */
 export type RatedScore = Pick<Score, "songNo" | "level" | "crown" | "record">;
@@ -12,6 +12,7 @@ export type RatingFigure =
   | "power"
   | "stamina"
   | "speed"
+  | "burst"
   | "accuracy"
   | "rhythm"
   | "complex";
@@ -25,6 +26,8 @@ export type ChartFigures = Readonly<Partial<Record<RatingFigure, number>>> & {
 export interface ChartRating extends Chart {
   /** From 0 to 1. */
   readonly accuracy: number;
+  /** The chart's constant in the system's data; V2's is the one at 95 %. */
+  readonly constant: number;
   readonly figures: ChartFigures;
 }
 

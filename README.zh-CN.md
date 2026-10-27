@@ -14,7 +14,7 @@
 * [x] 用万代南梦宫 ID 登录，并保持登录状态
 * [x] 查看所有玩过的谱面，最近玩的排在前面：王冠、评价、分数、打击数、游玩选项；点开即看完整成绩，也能把歌曲加入套装
 * [x] 查看自己的资料、小咚、称号、段位、成绩统计和收藏曲目
-* [x] 根据成绩算出你的 Rating 和各项能力，并列出计入的谱面
+* [x] 根据成绩按 OurTaiko 的第一版或第二版算出你的 Rating 和各项能力，并列出计入的谱面
 * [x] 把资料或 Rating 做成图片分享：电脑上可以复制或保存；安卓上可以分享，安卓 11 起也能保存
 * [x] 了解自己的水平：按星级、打/秒和 BPM 看通关情况，列出离下一个王冠最近的谱面，并把想攻克的谱面加入套装
 * [x] 更换称号
@@ -51,7 +51,7 @@
 
 鼓众广场是南梦宫的服务, 为了不被南梦宫ban, App 对它很克制: 同时最多 5 个读取、写入一次一个, 请求失败不会自动重试, 每张图只拿一次就存在本机, 登出后立刻停下
 
-**歌曲资料来自社区。** 作者、星级、BPM 和其他语言的歌名来自 [taiko.wiki](https://taiko.wiki/) 和中文的 [太鼓之達人維基](https://taiko.fandom.com/zh/)（其歌名按 CC BY-SA 使用）。谱面图由 [TJA Renderer](https://github.com/jack9966qk/TJARenderer)（MIT）画出：默认用本项目放在 GitHub Pages 上的 [ABTH CDN](https://hicirtech.github.io/abth-cdn/) 预先画好、压缩过的图；也可以在设备上现画，或者在设置里改用 taiko.wiki 链接的图片，它们存放在它自己的服务器、[太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) 和 Imgur 上。Rating 按 [OurTaikoWiki](https://github.com/OurTaiko/OurTaikoWiki) 的第一版 Rating 计算（MIT），用的是 [FumenDB](https://fumen-database.com/) 测量、OurTaiko 公开的谱面定数和测量值。谱面的烈度和画出的谱面图来自 TJADB 社区的谱面文件 [ESE](https://ese.tjadataba.se/ESE/ESE)，按 OurTaiko 的对应表对上歌曲：ABTH CDN 随 ESE 的更新画图并算出数字，ABTH CDN 答不上来、或要在设备上现画时，App 才直接读取 ESE。两者都只保存算出的数字和画好的图，从不保存谱面。App 只读取它们公开的内容，不会向它们发送你的任何数据。
+**歌曲资料来自社区。** 作者、星级、BPM 和其他语言的歌名来自 [taiko.wiki](https://taiko.wiki/) 和中文的 [太鼓之達人維基](https://taiko.fandom.com/zh/)（其歌名按 CC BY-SA 使用）。谱面图由 [TJA Renderer](https://github.com/jack9966qk/TJARenderer)（MIT）画出：默认用本项目放在 GitHub Pages 上的 [ABTH CDN](https://hicirtech.github.io/abth-cdn/) 预先画好、压缩过的图；也可以在设备上现画，或者在设置里改用 taiko.wiki 链接的图片，它们存放在它自己的服务器、[太鼓の達人 譜面とかWiki](https://wikiwiki.jp/taiko-fumen/) 和 Imgur 上。Rating 按 [OurTaikoWiki](https://github.com/OurTaiko/OurTaikoWiki) 的第一版或第二版 Rating 计算（MIT）：第一版用 [FumenDB](https://fumen-database.com/) 测量、OurTaiko 公开的谱面定数和测量值，第二版用 OurTaiko 自己的定数。谱面的烈度和画出的谱面图来自 TJADB 社区的谱面文件 [ESE](https://ese.tjadataba.se/ESE/ESE)，按 OurTaiko 的对应表对上歌曲：ABTH CDN 随 ESE 的更新画图并算出数字，ABTH CDN 答不上来、或要在设备上现画时，App 才直接读取 ESE。两者都只保存算出的数字和画好的图，从不保存谱面。App 只读取它们公开的内容，不会向它们发送你的任何数据。
 
 这套工具会以你的身份登录，并操作你真实的太鼓资料: 数据无价, 谨慎操作
 

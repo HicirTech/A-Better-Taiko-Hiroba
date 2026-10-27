@@ -48,15 +48,19 @@ describe("readStoryPack", () => {
   });
 
   test("reads each listed data file by name, as its text", () => {
-    const pack = readStoryPack(packFolder({}, { data: { recentPlays: "data/plays.json" } }));
-    expect(pack.data).toEqual({ recentPlays: PLAYS });
+    const pack = readStoryPack(
+      packFolder({}, { data: { recentPlays: "data/plays.json", ratingDataV2: "data/plays.json" } }),
+    );
+    expect(pack.data).toEqual({ recentPlays: PLAYS, ratingDataV2: PLAYS });
   });
 
   test("refuses a data file that is no JSON, or a name that is no data name", () => {
     const broken = packFolder({}, { data: { recentPlays: "data/broken.json" } });
     expect(() => readStoryPack(broken)).toThrow("recentPlays is no JSON");
-    const named = packFolder({}, { data: { "recent-plays": "data/plays.json" } });
-    expect(() => readStoryPack(named)).toThrow("no data name");
+    for (const name of ["recent-plays", "2ratingData"]) {
+      const named = packFolder({}, { data: { [name]: "data/plays.json" } });
+      expect(() => readStoryPack(named)).toThrow("no data name");
+    }
   });
 
   test.each(["../plays.json", "data/plays.png", "data\\plays.json"])(

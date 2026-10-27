@@ -35,6 +35,8 @@ export interface PackData {
   readonly songCatalogue: string;
   /** OurTaiko's V1 data, as `readRatingData` reads it. */
   readonly ratingData: string;
+  /** OurTaiko's V2 data, likewise. */
+  readonly ratingDataV2: string;
   readonly profile: Omit<ProfileView, "dan">;
   readonly costumeEditor: CostumeEditorView;
   readonly titleEditor: TitleEditorView;
@@ -47,6 +49,7 @@ export interface PackData {
 export const PACK_DATA: Readonly<Record<keyof PackData, "text" | "json">> = {
   songCatalogue: "text",
   ratingData: "text",
+  ratingDataV2: "text",
   profile: "json",
   costumeEditor: "json",
   titleEditor: "json",

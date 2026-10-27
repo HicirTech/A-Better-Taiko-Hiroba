@@ -1,4 +1,4 @@
-import type { ChartRating, OurTaikoV1Data, PlayerRating, RatingFigure } from "@abth/core";
+import type { PlayerRating, RatingFigure, RatingSystem } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 
 import type { RadarFigure } from "./rating-radar";
@@ -11,21 +11,46 @@ const FIGURE_LABEL: Readonly<Record<RatingFigure, MessageKey>> = {
   power: "rating.figure.power",
   stamina: "rating.figure.stamina",
   speed: "rating.figure.speed",
+  burst: "rating.figure.burst",
   accuracy: "rating.figure.accuracy",
   rhythm: "rating.figure.rhythm",
   complex: "rating.figure.complex",
 };
 
-/** How the rating's figures are written: a figure to two places, a constant to one. */
+/** Each rating's short name, as its switch on Rating writes it. */
+export const RATING_SYSTEM_SHORT: Readonly<Record<RatingSystem, MessageKey>> = {
+  ourtaikoV1: "rating.systemShort.ourtaikoV1",
+  ourtaikoV2: "rating.systemShort.ourtaikoV2",
+};
+
+/** What a rating says when no chart is rated yet: the difficulties it rates. */
+export const NONE_RATED: Readonly<Record<RatingSystem, MessageKey>> = {
+  ourtaikoV1: "rating.noneRated",
+  ourtaikoV2: "rating.noneRatedV2",
+};
+
+// V1's constants go in steps of 0.1; V2's are measured, and OurTaiko writes them to two places.
+const CONSTANT_PLACES: Readonly<Record<RatingSystem, number>> = { ourtaikoV1: 1, ourtaikoV2: 2 };
+
+/** How the rating's figures are written: a figure to two places, a constant as its rating's are. */
 export interface RatingFormats {
   readonly figure: Intl.NumberFormat;
   readonly constant: Intl.NumberFormat;
 }
 
-export const ratingFormats = (locale: Translator["locale"]): RatingFormats => ({
-  figure: new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
-  constant: new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }),
-});
+export const ratingFormats = (
+  locale: Translator["locale"],
+  system: RatingSystem,
+): RatingFormats => {
+  const places = CONSTANT_PLACES[system];
+  return {
+    figure: new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    constant: new Intl.NumberFormat(locale, {
+      minimumFractionDigits: places,
+      maximumFractionDigits: places,
+    }),
+  };
+};
 
 /** The player's rating, and their skills named for the radar. */
 export function ratingAndSkills(
@@ -40,7 +65,3 @@ export function ratingAndSkills(
       .map((figure) => ({ name: t(FIGURE_LABEL[figure.figure]), value: figure.value })),
   };
 }
-
-/** A chart's constant in the system's data; null where the data lacks it. */
-export const constantOf = (data: OurTaikoV1Data | null, chart: ChartRating): number | null =>
-  data?.get(chart.songNo)?.get(chart.level)?.constant ?? null;

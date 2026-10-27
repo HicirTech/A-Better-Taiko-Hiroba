@@ -1,3 +1,4 @@
+import type { RatingSystem } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import type { ComponentType, ReactNode } from "react";
 
@@ -47,6 +48,9 @@ export interface PageData extends PageState {
   /** What Scores is sorted by as it opens, as Settings chose it. */
   readonly startingSort: SortChoice;
   readonly onStartingSort: (next: SortChoice) => void;
+  /** The rating Rating opens on, as Settings chose it. */
+  readonly startingRating: RatingSystem;
+  readonly onStartingRating: (next: RatingSystem) => void;
   /** Where a song's details take their chart pictures from, as Settings chose it. */
   readonly chartSource: ChartSource;
   readonly onChartSource: (next: ChartSource) => void;

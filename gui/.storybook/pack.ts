@@ -17,8 +17,8 @@ const MAX_PICTURE_BYTES = 1024 * 1024;
 const MAX_DATA_BYTES = 16 * 1024 * 1024;
 // A picture lane's key, such as `rankIcon/5` or `costumeItem/costume2/21`, or `danLabel/<board>`.
 const PICTURE_KEY = /^[A-Za-z]+(?:\/[\w-]+)*$/;
-// A data file's name, such as `recentPlays`.
-const DATA_NAME = /^[A-Za-z]+$/;
+// A data file's name, such as `recentPlays` or `ratingDataV2`.
+const DATA_NAME = /^[A-Za-z][A-Za-z\d]*$/;
 // Plain names below the pack's folder: no drive, root, backslash, `.` or `..`.
 const PICTURE_PATH = /^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*\.png$/;
 const DATA_PATH = /^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*\.json$/;

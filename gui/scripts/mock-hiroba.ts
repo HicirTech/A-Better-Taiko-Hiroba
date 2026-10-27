@@ -20,7 +20,7 @@ import {
   titlePlatePng,
 } from "./mock-pictures";
 import { createProfileEditor, escapeHtml } from "./mock-profile";
-import { ratingDataAnswer } from "./mock-rating-data";
+import { ratingDataAnswer, ratingDataV2Answer } from "./mock-rating-data";
 import { createScorePages } from "./mock-scores";
 import { CHART_PICTURE_PATHS, wikiSongsSince } from "./mock-song-catalogue";
 
@@ -587,6 +587,8 @@ Bun.serve({
         return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
       case "/__rating-data":
         return Response.json(ratingDataAnswer());
+      case "/__rating-data-v2":
+        return Response.json(ratingDataV2Answer());
       case "/__chinese-names":
         return Response.json(chineseNamesBatch(searchParams.get("gcmcontinue")));
       case "/__last-token":

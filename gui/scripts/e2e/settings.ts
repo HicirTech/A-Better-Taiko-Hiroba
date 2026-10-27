@@ -237,6 +237,7 @@ export async function settings(ctx: Ctx) {
       ["updates", "H2", true, 1],
       ["song-levels", "H2", true, 1],
       ["scores-settings", "H2", true, 1],
+      ["rating-settings", "H2", true, 1],
       ["song-data", "H2", true, 1],
       ["github", "H2", true, 1],
     ],

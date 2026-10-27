@@ -50,8 +50,9 @@ describe("PORT_ARGUMENTS", () => {
   test("readRatingData takes one rating system the app knows, and nothing else", () => {
     const check = PORT_ARGUMENTS.readRatingData;
     expect(check(["ourtaikoV1"])).toBe(true);
+    expect(check(["ourtaikoV2"])).toBe(true);
     expect(check([])).toBe(false);
-    expect(check(["ourtaikoV2"])).toBe(false);
+    expect(check(["ourtaikoV3"])).toBe(false);
     expect(check(["toString"])).toBe(false);
     expect(check(["ourtaikoV1", "ourtaikoV1"])).toBe(false);
     expect(check([{ system: "ourtaikoV1" }])).toBe(false);

@@ -1,3 +1,4 @@
+import type { RatingSystem } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Button, List, ListItem, ListItemText, Stack } from "@mui/material";
 import { type ReactNode, useId } from "react";
@@ -8,6 +9,7 @@ import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty"
 import { AccountCircleIcon } from "../ui/icons";
 import { CARD_GAP } from "../ui/section-card";
 import { GitHubSection } from "./github-section";
+import { RatingSection } from "./rating-section";
 import { ScoresSection } from "./scores-section";
 import { SettingsSection } from "./settings-section";
 import { SongDataSection } from "./song-data-section";
@@ -39,6 +41,9 @@ export interface SettingsPageProps {
   /** What Scores is sorted by as it opens. */
   readonly startingSort: SortChoice;
   readonly onStartingSort: (next: SortChoice) => void;
+  /** The rating Rating opens on. */
+  readonly startingRating: RatingSystem;
+  readonly onStartingRating: (next: RatingSystem) => void;
   /** Where a song's details take their chart pictures from. */
   readonly chartSource: ChartSource;
   readonly onChartSource: (next: ChartSource) => void;
@@ -57,6 +62,8 @@ export function SettingsPage({
   onShownDifficulty,
   startingSort,
   onStartingSort,
+  startingRating,
+  onStartingRating,
   chartSource,
   onChartSource,
   updates,
@@ -109,6 +116,11 @@ export function SettingsPage({
       {updates !== undefined && <UpdatesSection i18n={i18n} {...updates} />}
       <SongLevelsSection shown={shownDifficulty} i18n={i18n} onShown={onShownDifficulty} />
       <ScoresSection startingSort={startingSort} i18n={i18n} onStartingSort={onStartingSort} />
+      <RatingSection
+        startingRating={startingRating}
+        i18n={i18n}
+        onStartingRating={onStartingRating}
+      />
       <SongDataSection source={chartSource} i18n={i18n} onSource={onChartSource} />
       {onOpenRepository !== undefined && <GitHubSection i18n={i18n} onOpen={onOpenRepository} />}
     </Stack>

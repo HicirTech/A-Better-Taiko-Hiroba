@@ -4,6 +4,6 @@ export type PictureWay = "share" | "copy" | "save";
 /** The shell's ways out for a picture the app made, in the order a menu lists them. */
 export interface SystemShare {
   readonly ways: readonly PictureWay[];
-  /** Hands `png` out by `way`, named `name` where it becomes a file: done, or turned down. */
-  hand(way: PictureWay, png: Uint8Array, name: string): Promise<"done" | "dismissed">;
+  /** Hands `picture` out by `way`, named `name` where it becomes a file: done, or turned down. */
+  hand(way: PictureWay, picture: Uint8Array, name: string): Promise<"done" | "dismissed">;
 }

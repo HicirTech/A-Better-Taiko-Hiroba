@@ -3,25 +3,31 @@ import { AppBar, Box, Stack, ThemeProvider, Toolbar, Typography } from "@mui/mat
 import type { ReactNode } from "react";
 
 import { SNAPSHOT_THEME } from "../theme/app-theme";
-import { SNAPSHOT_WIDTH_PX } from "./snapshot-png";
+import { SNAPSHOT_WIDTH_PX } from "./snapshot-picture";
 
 const FRAME = {
-  width: SNAPSHOT_WIDTH_PX,
   bgcolor: "background.default",
   color: "text.primary",
   // Colours that follow the scheme, such as Hard's, take their light ones in either mode.
   colorScheme: "light",
 } as const;
-const BAR = { justifyContent: "space-between", gap: 2 } as const;
+// Two equal sides keep the title in the bar's middle, whatever the words beside it.
+const BAR = { display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 2 } as const;
 
-/** A page as a picture to share: a bar with the app's name and when, over what it shows. */
+/** A page as a picture to share: a bar with the app's name, a title and when, over the page. */
 export function SnapshotFrame({
   id,
+  title,
+  width = SNAPSHOT_WIDTH_PX,
   readAt,
   i18n,
   children,
 }: {
   readonly id: string;
+  /** What the picture shows, in the bar's middle; none leaves the middle empty. */
+  readonly title?: string;
+  /** In CSS pixels; a snapshot's own by default. */
+  readonly width?: number;
   /** When what it shows was read. */
   readonly readAt: Date | number | string;
   readonly i18n: Translator;
@@ -30,14 +36,19 @@ export function SnapshotFrame({
   const { t, dateTime } = i18n;
   return (
     <ThemeProvider theme={SNAPSHOT_THEME}>
-      <Box id={id} sx={FRAME}>
+      <Box id={id} sx={{ ...FRAME, width }}>
         <AppBar component="header" position="static" elevation={0}>
           {/* Dense: the regular bar's height follows the window, and a snapshot never does. */}
           <Toolbar variant="dense" sx={BAR}>
             <Typography component="p" variant="h6">
               {t("app.title")}
             </Typography>
-            <Typography component="p" variant="body2">
+            {title !== undefined && (
+              <Typography id={`${id}-title`} component="p" variant="body2" sx={{ gridColumn: 2 }}>
+                {title}
+              </Typography>
+            )}
+            <Typography component="p" variant="body2" sx={{ gridColumn: 3, justifySelf: "end" }}>
               {t("profile.fetchedAt", { time: dateTime(readAt) })}
             </Typography>
           </Toolbar>

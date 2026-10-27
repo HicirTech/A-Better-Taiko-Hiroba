@@ -56,7 +56,7 @@ const port: HirobaSessionPort = {
 
 const pictures: DesktopPictures = {
   copy: (png) => ipcRenderer.invoke(PICTURE_CHANNELS.copy, png),
-  save: (png, name) => ipcRenderer.invoke(PICTURE_CHANNELS.save, png, name),
+  save: (webp, name) => ipcRenderer.invoke(PICTURE_CHANNELS.save, webp, name),
 };
 
 contextBridge.exposeInMainWorld("abth", port);

@@ -87,6 +87,11 @@ export function createAppTheme(tokens: ThemeTokens): Theme {
           },
         },
       },
+      MuiPopover: {
+        // A menu leaves the scrollbar in place: the lock pads for it in whole pixels, a third of
+        // one short at 150 %, and the page moved.
+        defaultProps: { disableScrollLock: true },
+      },
     },
   });
   if (tokens.navigation !== undefined) {
