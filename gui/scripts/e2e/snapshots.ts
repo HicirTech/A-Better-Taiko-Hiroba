@@ -15,6 +15,8 @@ const HEIGHT_AT = 20;
 const SAVED_MS = 60_000;
 /** The bar's words on one line: body2's, 14 px on a 20 px line, in the picture's pixels. */
 const ONE_LINE_PX = 20 * SNAPSHOT_PIXEL_RATIO;
+/** `abth-rating-2026-10-26-235930.png`: what it shows, the day and the second. */
+const NAMED_TO_THE_SECOND = /^abth-[a-z]+-\d{4}-\d{2}-\d{2}-\d{6}\.png$/;
 
 export interface SavedPicture {
   /** The share's menu, as the player reads it. */
@@ -84,11 +86,11 @@ export async function savedPicture(ctx: Ctx, button: string, shows: string): Pro
   };
 }
 
-/** Saved whole by the desktop's two ways: the card's width, its bar on one line. */
+/** Saved whole by both desktop ways: the card's width, named to the second, its bar one line. */
 export const savedWhole = ({ ways, name, width, height, barWordsHeight, outcome }: SavedPicture) =>
   ways.join("|") === [en.t("snapshot.copy"), en.t("snapshot.save")].join("|") &&
   name !== null &&
-  name.endsWith(".png") &&
+  NAMED_TO_THE_SECOND.test(name) &&
   width === SNAPSHOT_WIDTH_PX * SNAPSHOT_PIXEL_RATIO &&
   height > width / 2 &&
   barWordsHeight > 0 &&
