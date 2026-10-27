@@ -1,4 +1,5 @@
 /** Rating: from the kept scores and the rating data, which every refresh reads again. */
+import { RATING_SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
 import { en, RATING_DATA, RATING_DATA_V2 } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
@@ -120,7 +121,7 @@ export async function rating(ctx: Ctx) {
 
   const picture = await savedPicture(ctx, "rating-share", "abth-rating");
   results.ratingSharePicture = picture;
-  results.ratingShareSavesThePicture = savedWhole(picture);
+  results.ratingShareSavesThePicture = savedWhole(picture, RATING_SNAPSHOT_WIDTH_PX);
 
   // The switch shows V2 for the visit, its data read the first time it is shown.
   const v2Reads = await hitsOn(RATING_DATA_V2);
@@ -153,7 +154,7 @@ export async function rating(ctx: Ctx) {
 
   const v2Picture = await savedPicture(ctx, "rating-share", "abth-rating");
   results.ratingV2SharePicture = v2Picture;
-  results.ratingV2ShareSavesThePicture = savedWhole(v2Picture);
+  results.ratingV2ShareSavesThePicture = savedWhole(v2Picture, RATING_SNAPSHOT_WIDTH_PX);
 
   // Leaving the page drops the switch: Rating opens on Settings' default again.
   await goTo("overview");

@@ -263,10 +263,10 @@ left. The first rates each Oni or Ura chart played with 75% accuracy or more fro
 its accuracy; the second rates Hard charts too, from three constants, and counts Bad hits against
 complexity. Either takes the rating from the best twenty. The page shows it above a radar of its six
 skills, then the twenty charts it counts and the next twenty; a click on one opens its details, as on
-Scores, and a picture of the page names its rating in the middle of its bar. Each rating's constants
-are OurTaiko's published list, read the first time that rating is shown and again with each Read
-again or pull while it is, which reads the scores too, and kept on the device; Settings names
-OurTaiko with the song data's other sources.
+Scores, and a picture of the page lists them four to a line and names its rating in the middle of
+its bar. Each rating's constants are OurTaiko's published list, read the first time that rating is
+shown and again with each Read again or pull while it is, which reads the scores too, and kept on
+the device; Settings names OurTaiko with the song data's other sources.
 
 ### Know yourself
 

@@ -2,7 +2,9 @@ import type { PictureWay } from "../platform/system-share";
 
 /** A snapshot's width, the same from a phone or a computer. */
 export const SNAPSHOT_WIDTH_PX = 1080;
-/** Pixels to each CSS pixel: one, as chat apps such as WeChat shrink a picture to 1080 anyway. */
+/** Rating's: four charts to a line under its head, about 4:3, as a chat app shrinks a tall one. */
+export const RATING_SNAPSHOT_WIDTH_PX = 1824;
+/** Pixels to each CSS pixel: one, as a chat app shrinks a picture to its view anyway. */
 export const SNAPSHOT_PIXEL_RATIO = 1;
 // A file goes out as a WebP, which Discord and WeChat take; the clipboard holds a PNG alone.
 // Either is encoded once, from the drawn card.

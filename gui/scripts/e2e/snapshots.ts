@@ -4,7 +4,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 
 import { sniffPicture } from "../../src/shared/song-catalogue/sniff-picture";
-import { SNAPSHOT_PIXEL_RATIO, SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
+import { SNAPSHOT_PIXEL_RATIO } from "../../src/snapshots/snapshot-picture";
 import { en, PICTURES } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, waitFor } from "./harness";
@@ -90,16 +90,17 @@ export async function savedPicture(ctx: Ctx, button: string, shows: string): Pro
   };
 }
 
-/** Saved whole by both desktop ways: a WebP the card's width, named to the second, one-line bar. */
-export const savedWhole = (picture: SavedPicture) => {
+/** Saved whole by both desktop ways: a WebP `cardWidth` wide, named to the second, one-line bar. */
+export const savedWhole = (picture: SavedPicture, cardWidth: number) => {
   const { ways, name, format, width, height, barWordsHeight, outcome } = picture;
   return (
     ways.join("|") === [en.t("snapshot.copy"), en.t("snapshot.save")].join("|") &&
     name !== null &&
     NAMED_TO_THE_SECOND.test(name) &&
     format === "webp" &&
-    width === SNAPSHOT_WIDTH_PX * SNAPSHOT_PIXEL_RATIO &&
-    height > width / 2 &&
+    width === cardWidth * SNAPSHOT_PIXEL_RATIO &&
+    // More than the bar, in a tall card or a wide one.
+    height > width / 3 &&
     barWordsHeight > 0 &&
     barWordsHeight <= ONE_LINE_PX &&
     outcome === "save"

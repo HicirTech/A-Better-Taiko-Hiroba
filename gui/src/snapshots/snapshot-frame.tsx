@@ -6,7 +6,6 @@ import { SNAPSHOT_THEME } from "../theme/app-theme";
 import { SNAPSHOT_WIDTH_PX } from "./snapshot-picture";
 
 const FRAME = {
-  width: SNAPSHOT_WIDTH_PX,
   bgcolor: "background.default",
   color: "text.primary",
   // Colours that follow the scheme, such as Hard's, take their light ones in either mode.
@@ -19,6 +18,7 @@ const BAR = { display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 2 } as 
 export function SnapshotFrame({
   id,
   title,
+  width = SNAPSHOT_WIDTH_PX,
   readAt,
   i18n,
   children,
@@ -26,6 +26,8 @@ export function SnapshotFrame({
   readonly id: string;
   /** What the picture shows, in the bar's middle; none leaves the middle empty. */
   readonly title?: string;
+  /** In CSS pixels; a snapshot's own by default. */
+  readonly width?: number;
   /** When what it shows was read. */
   readonly readAt: Date | number | string;
   readonly i18n: Translator;
@@ -34,7 +36,7 @@ export function SnapshotFrame({
   const { t, dateTime } = i18n;
   return (
     <ThemeProvider theme={SNAPSHOT_THEME}>
-      <Box id={id} sx={FRAME}>
+      <Box id={id} sx={{ ...FRAME, width }}>
         <AppBar component="header" position="static" elevation={0}>
           {/* Dense: the regular bar's height follows the window, and a snapshot never does. */}
           <Toolbar variant="dense" sx={BAR}>

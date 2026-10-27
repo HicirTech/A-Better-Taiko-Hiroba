@@ -13,10 +13,10 @@ import type { RatingFormats } from "./rating-figures";
 
 const LIST = { listStyle: "none", m: 0, p: 0 } as const;
 const ONE_COLUMN = { ...LIST, display: "flex", flexDirection: "column" } as const;
-const TWO_COLUMNS = {
+const FOUR_COLUMNS = {
   ...LIST,
   display: "grid",
-  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
   columnGap: 2,
 } as const;
 // As wide as V2's widest constant line, "Const. 15.50", so a row reads the same in either rating.
@@ -42,8 +42,8 @@ export interface RatedListProps {
   readonly lane: PictureLane;
   readonly formats: RatingFormats;
   readonly i18n: Translator;
-  /** Two side by side, as a snapshot's width allows; a page lists one under another. */
-  readonly columns?: 1 | 2;
+  /** Four side by side, as Rating's snapshot is wide; a page lists one under another. */
+  readonly columns?: 1 | 4;
   /** What a press on a chart's row opens; none leaves the rows to be read. */
   readonly onOpen?: ((chart: ChartRating) => void) | undefined;
 }
@@ -67,7 +67,7 @@ export function RatedList({
         <Box sx={{ px: 1 }}>
           <SectionTitle id={`${id}-heading`}>{i18n.t(heading)}</SectionTitle>
         </Box>
-        <Box component="ul" id={id} sx={columns === 2 ? TWO_COLUMNS : ONE_COLUMN}>
+        <Box component="ul" id={id} sx={columns === 4 ? FOUR_COLUMNS : ONE_COLUMN}>
           {charts.map((chart, index) => {
             const score = scoreOf.get(chartKey(chart));
             return (

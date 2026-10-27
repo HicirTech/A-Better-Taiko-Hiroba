@@ -12,6 +12,7 @@ import { RATING_SYSTEM_NAME } from "../shared/rating-data/rating-systems";
 import type { PictureWant, ProfileView, ScoreView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotFrame } from "../snapshots/snapshot-frame";
+import { RATING_SNAPSHOT_WIDTH_PX } from "../snapshots/snapshot-picture";
 import { RatedList } from "./rated-list";
 import { COUNTED, ratingAndSkills, ratingFormats } from "./rating-figures";
 import { RatingRadar } from "./rating-radar";
@@ -79,7 +80,7 @@ export function RatingSnapshot({
       lane={lane}
       formats={formats}
       i18n={i18n}
-      columns={2}
+      columns={4}
     />
   );
 
@@ -87,6 +88,7 @@ export function RatingSnapshot({
     <SnapshotFrame
       id="rating-snapshot"
       title={t(RATING_SYSTEM_NAME[rated.system])}
+      width={RATING_SNAPSHOT_WIDTH_PX}
       readAt={readAt}
       i18n={i18n}
     >
