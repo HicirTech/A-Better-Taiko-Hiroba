@@ -13,7 +13,6 @@ export { changeCostume } from "./change-costume";
 export { changeName } from "./change-name";
 export { changeTitle } from "./change-title";
 export { readCostumeHistory } from "./costume-history";
-export type { CostumeHistoryStore } from "./costume-history-store";
 export {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
@@ -29,6 +28,7 @@ export {
   POST_FOLLOWED_AS_GET,
   resolveRedirect,
 } from "./form-post";
+export type { CostumeHistoryStore, HistoryStore } from "./history-store";
 export { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 export { openCostumeEditor } from "./open-costume-editor";
 export { openTitleEditor } from "./open-title-editor";

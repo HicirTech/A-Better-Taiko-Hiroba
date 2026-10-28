@@ -11,7 +11,7 @@ import {
   type CostumeChange,
   type CostumeHistoryEntry,
   type CostumeSet,
-  changedTheCostume,
+  changedOnHiroba,
   type FavoriteSongChange,
   type FolderChange,
   type HirobaSessionPort,
@@ -29,7 +29,7 @@ import { changeFolder } from "./change-folder";
 import { changeName } from "./change-name";
 import { changeTitle } from "./change-title";
 import { mergeCostumeHistory } from "./costume-history";
-import type { CostumeHistoryStore } from "./costume-history-store";
+import type { CostumeHistoryStore, HistoryStore } from "./history-store";
 import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
 import { openFavorites } from "./open-favorites";
@@ -114,11 +114,24 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     }
   };
 
+  /** The signed-in player's entries of one history; none where it cannot be read. */
+  const historyOf = async <Entry>(store: HistoryStore<Entry>): Promise<readonly Entry[]> => {
+    const taikoNo = options.owner();
+    if (!options.signedIn() || taikoNo === null) {
+      return [];
+    }
+    try {
+      return await store.load(taikoNo);
+    } catch {
+      return [];
+    }
+  };
+
   const costume: WriteKindDefinition<"costume", CostumeChange> = {
     kind: "costume",
     run: changeCostume,
     ended: async (outcome, taikoNo) => {
-      if (!changedTheCostume(outcome)) {
+      if (!changedOnHiroba(outcome)) {
         return;
       }
       options.costumeChanged(outcome.after);
@@ -262,16 +275,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       }
     },
 
-    async costumeHistory() {
-      const taikoNo = options.owner();
-      if (!options.signedIn() || taikoNo === null) {
-        return [];
-      }
-      try {
-        return await historyStore.load(taikoNo);
-      } catch {
-        return [];
-      }
-    },
+    costumeHistory: () => historyOf(historyStore),
   };
 }

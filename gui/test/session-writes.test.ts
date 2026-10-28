@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ok, type Transport } from "@abth/core";
 
-import { createCostumeHistoryStore } from "../electron/costume-history-store";
+import { createCostumeHistoryStore } from "../electron/history-store";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import {
   createProfileEditor,

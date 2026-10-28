@@ -59,9 +59,9 @@ import {
 } from "../src/shared/song-catalogue";
 import { openableUrlOf, readUpdateFeed } from "../src/shared/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
-import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
+import { createCostumeHistoryStore } from "./history-store";
 import { OFF_SCREEN_OPTIONS, showOffScreen } from "./off-screen";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { handlePicturesOut } from "./pictures-out";

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { changedTheCostume, type WriteOutcomeView } from "../src/shared/session-port";
+import { changedOnHiroba, type WriteOutcomeView } from "../src/shared/session-port";
 
 const SAVE = { answer: "json", code: 0, message: null, report: "report" } as const;
 const SET = {
@@ -14,7 +14,7 @@ const SET = {
   costume5: 140,
 };
 
-describe("changedTheCostume", () => {
+describe("changedOnHiroba", () => {
   const OUTCOMES: Record<WriteOutcomeView["kind"], WriteOutcomeView> = {
     applied: { kind: "applied", before: SET, after: SET, save: SAVE, cross: "unchanged" },
     appliedNotSynced: {
@@ -61,9 +61,9 @@ describe("changedTheCostume", () => {
     busy: { kind: "busy" },
   };
 
-  test("is true for an outcome that left the costume as written, and for no other", () => {
+  test("is true for an outcome that left Hiroba as written, and for no other", () => {
     const changed = Object.values(OUTCOMES)
-      .filter((outcome) => changedTheCostume(outcome))
+      .filter((outcome) => changedOnHiroba(outcome))
       .map(({ kind }) => kind);
 
     expect(changed).toEqual(["applied", "appliedNotSynced"]);
