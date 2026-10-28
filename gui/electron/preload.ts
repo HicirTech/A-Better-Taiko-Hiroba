@@ -30,6 +30,7 @@ const port: HirobaSessionPort = {
   openFavorites: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openFavorites),
   changeFolder: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFolder, change),
   changeFavoriteSong: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeFavoriteSong, change),
+  folderHistory: () => ipcRenderer.invoke(BRIDGE_CHANNELS.folderHistory),
   readSongPicker: () => ipcRenderer.invoke(BRIDGE_CHANNELS.readSongPicker),
   scores: () => ipcRenderer.invoke(BRIDGE_CHANNELS.scores),
   listedCharts: () => ipcRenderer.invoke(BRIDGE_CHANNELS.listedCharts),

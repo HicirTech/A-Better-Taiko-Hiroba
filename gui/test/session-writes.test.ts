@@ -193,6 +193,7 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     ...(options.liveChecked && { liveChecked: options.liveChecked }),
     now: NOON_JST,
     historyStore: failingHistory(STORES[storeName](), historyFaults),
+    folderHistoryStore: { load: async () => [], save: async () => undefined },
     recentPreview: options.recentPreview ?? (() => null),
     signedIn: () => signedIn,
     endSession: () => {

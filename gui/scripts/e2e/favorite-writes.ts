@@ -24,6 +24,7 @@ export const favoriteWritesKeys = [
   "folderWriteEmptiesTheSlotsLeftOver",
   "folderStagedAgainWhenInitStagesNothing",
   "folderNotSavedWhenEmptiesAreIgnored",
+  "folderHistoryKeepsEachFolderOnce",
   "favoriteSongSetAndCleared",
   "songCatalogueRead",
   "chineseNamesRead",
@@ -83,6 +84,14 @@ export async function favoriteWrites(ctx: Ctx) {
     unstaged.kind === "notStaged" &&
     same((await favoritesNow()).folder, slotsOf(START_FOLDER)) &&
     !(await requestLog()).includes(FOLDER_SAVE);
+
+  // The folder with 1002 added was synced twice: it is listed once, first, at its later time.
+  const kept = await call<{ songs: string[] }[]>("window.abth.folderHistory()");
+  const folders = kept.map(({ songs }) => songs.join(","));
+  results.folderHistoryKeepsEachFolderOnce =
+    new Set(folders).size === folders.length &&
+    same(folders.slice(0, 2), [[...START_FOLDER, "1002"].join(","), "1002,1001"]) &&
+    folders.indexOf(START_FOLDER.join(",")) > 1;
 
   await favoritesNow("?reset=1");
   await resetLog();

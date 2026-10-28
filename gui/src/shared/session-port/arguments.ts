@@ -2,6 +2,7 @@ import type { Genre, Level, RatingSystem, ScoreRank } from "@abth/core";
 
 // Not the index: the preload must not load the pipelines, and the core with them.
 import { KEPT_GROUPS } from "../pipelines/kept-groups";
+import { isSetName } from "../sets/favorite-sets";
 import {
   CHART_PICTURE_MAX_BYTES,
   type ChartPictureRead,
@@ -128,6 +129,13 @@ export function isFavoriteSongState(value: unknown): value is FavoriteSongState 
 }
 
 /** The songs a folder write puts in order: at most 30, none twice. */
+function isFolderNames(value: unknown): boolean {
+  const isName = (name: unknown) => name === null || isSetName(name);
+  return (
+    hasExactly(value, ["expected", "target"]) && isName(value.expected) && isName(value.target)
+  );
+}
+
 function isFolderTarget(value: unknown): value is readonly string[] {
   return (
     Array.isArray(value) &&
@@ -229,7 +237,8 @@ const nameChange: ArgumentCheck = (args) =>
 
 const folderChange: ArgumentCheck = (args) =>
   args.length === 1 &&
-  hasExactly(args[0], ["expected", "target"]) &&
+  (hasExactly(args[0], ["expected", "target"]) ||
+    (hasExactly(args[0], ["expected", "target", "names"]) && isFolderNames(args[0].names))) &&
   isFolderState(args[0].expected) &&
   isFolderTarget(args[0].target);
 
@@ -356,6 +365,7 @@ export const PORT_ARGUMENTS = {
   openFavorites: none,
   changeFolder: folderChange,
   changeFavoriteSong: favoriteSongChange,
+  folderHistory: none,
   readSongPicker: none,
   scores: none,
   listedCharts: none,

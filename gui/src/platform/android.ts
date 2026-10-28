@@ -8,7 +8,6 @@ import {
 
 import {
   ANDROID_PICTURE_LIMITS,
-  type CostumeHistoryStore,
   createMemoryPictureStore,
   createMemoryRecentPlaysStore,
   createMemoryScoreChangesStore,
@@ -21,6 +20,7 @@ import {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
+  type HistoryStore,
   idpOrigin,
   keepHirobaEnded,
   loginPageUrl,
@@ -69,7 +69,10 @@ import {
   readSongCatalogue,
 } from "../shared/song-catalogue";
 import { feedUrlFor, readUpdateFeed } from "../shared/updates";
-import { createIndexedDbHistoryStore } from "./android-history-store";
+import {
+  createIndexedDbFolderHistoryStore,
+  createIndexedDbHistoryStore,
+} from "./android-history-store";
 import type { DatabaseFactory } from "./android-indexeddb";
 import {
   CHART_DENSITY_DATABASE,
@@ -156,10 +159,10 @@ export interface AndroidPortOptions {
   readonly now?: () => Date;
 }
 
-/** Refuses every call, so the history is simply empty. */
-const NO_HISTORY_STORE: CostumeHistoryStore = {
-  load: () => Promise.reject(new Error("There is nowhere to keep a costume history")),
-  save: () => Promise.reject(new Error("There is nowhere to keep a costume history")),
+/** Refuses every call, so a history is simply empty. */
+const NO_HISTORY_STORE: HistoryStore<never> = {
+  load: () => Promise.reject(new Error("There is nowhere to keep a history")),
+  save: () => Promise.reject(new Error("There is nowhere to keep a history")),
 };
 
 export interface SignedInFlag {
@@ -296,6 +299,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     now: options.now ?? (() => new Date()),
     historyStore:
       indexedDb === undefined ? NO_HISTORY_STORE : createIndexedDbHistoryStore(indexedDb),
+    folderHistoryStore:
+      indexedDb === undefined ? NO_HISTORY_STORE : createIndexedDbFolderHistoryStore(indexedDb),
     recentPreview: previews.pictureOf,
     signedIn: () => signedIn,
     endSession: forget,
@@ -469,6 +474,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     changeFolder: flushed(writes.changeFolder),
 
     changeFavoriteSong: flushed(writes.changeFavoriteSong),
+    folderHistory: writes.folderHistory,
 
     readSongPicker: flushed(writes.readSongPicker),
 

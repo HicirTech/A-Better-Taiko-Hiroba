@@ -2,8 +2,10 @@ import * as nodeFs from "node:fs";
 
 import {
   type CostumeHistoryStore,
+  type FolderHistoryStore,
   type HistoryStore,
   readCostumeHistory,
+  readFolderHistory,
 } from "../src/hiroba-session";
 import { createPlayersFile } from "./players-file";
 import type { StoreFiles } from "./replace-file";
@@ -14,6 +16,14 @@ export function createCostumeHistoryStore(
   files: StoreFiles = nodeFs,
 ): CostumeHistoryStore {
   return historyFile(path, readCostumeHistory, files);
+}
+
+/** The desktop's folder history, kept as the costume's is. */
+export function createFolderHistoryStore(
+  path: string,
+  files: StoreFiles = nodeFs,
+): FolderHistoryStore {
+  return historyFile(path, readFolderHistory, files);
 }
 
 function historyFile<Entry>(

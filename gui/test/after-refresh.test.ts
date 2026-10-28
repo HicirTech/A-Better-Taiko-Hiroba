@@ -44,6 +44,7 @@ function refreshing(transport: Transport, signedIn = true) {
     platform: "desktop",
     now: NOON_JST,
     historyStore: { load: async () => [], save: async () => undefined },
+    folderHistoryStore: { load: async () => [], save: async () => undefined },
     recentPreview: () => null,
     signedIn: () => signedIn,
     endSession: () => undefined,

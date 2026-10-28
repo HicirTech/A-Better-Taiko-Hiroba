@@ -41,6 +41,8 @@ export type {
   FavoritesView,
   FolderChange,
   FolderEditorView,
+  FolderHistoryEntry,
+  FolderNames,
   FolderState,
   HirobaSessionPort,
   IconWant,

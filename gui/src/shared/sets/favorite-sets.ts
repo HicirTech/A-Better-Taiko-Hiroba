@@ -22,6 +22,11 @@ export interface FavoriteSet {
 
 const cleanName = (name: string): string => name.trim().slice(0, SET_NAME_MAX_LENGTH);
 
+/** A name a set can carry: words, no longer than a set's name may be. */
+export function isSetName(value: unknown): value is string {
+  return typeof value === "string" && value.trim() !== "" && value.length <= SET_NAME_MAX_LENGTH;
+}
+
 /** The valid song numbers, each once, in order, as many as a set holds. */
 function cleanSongs(songs: readonly unknown[]): string[] {
   const valid = songs.filter(

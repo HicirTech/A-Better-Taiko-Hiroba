@@ -270,6 +270,7 @@ export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): Hirob
         }),
       ),
     changeFavoriteSong: ({ expected, target }) => later(applied(expected, target)),
+    folderHistory: () => Promise.resolve([]),
     readSongPicker: () =>
       later(
         ok({

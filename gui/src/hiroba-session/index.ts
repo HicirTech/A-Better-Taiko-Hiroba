@@ -22,13 +22,14 @@ export {
   SESSION_COOKIE_NAME,
   systemBrowserEntryUrl,
 } from "./endpoints";
+export { readFolderHistory } from "./folder-history";
 export {
   encodeForm,
   FORM_CONTENT_TYPE,
   POST_FOLLOWED_AS_GET,
   resolveRedirect,
 } from "./form-post";
-export type { CostumeHistoryStore, HistoryStore } from "./history-store";
+export type { CostumeHistoryStore, FolderHistoryStore, HistoryStore } from "./history-store";
 export { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 export { openCostumeEditor } from "./open-costume-editor";
 export { openTitleEditor } from "./open-title-editor";

@@ -1,4 +1,10 @@
-import { type CostumeHistoryStore, type HistoryStore, readCostumeHistory } from "../hiroba-session";
+import {
+  type CostumeHistoryStore,
+  type FolderHistoryStore,
+  type HistoryStore,
+  readCostumeHistory,
+  readFolderHistory,
+} from "../hiroba-session";
 import { type DatabaseFactory, lazyDatabase } from "./android-indexeddb";
 import { keptRecords } from "./kept-record";
 
@@ -10,6 +16,11 @@ const HISTORIES = "histories";
  * bump clears. */
 export function createIndexedDbHistoryStore(factory: DatabaseFactory): CostumeHistoryStore {
   return historyDatabase(factory, "abth-costume-history", readCostumeHistory);
+}
+
+/** Android's folder history, in a database of its own as the costume's is. */
+export function createIndexedDbFolderHistoryStore(factory: DatabaseFactory): FolderHistoryStore {
+  return historyDatabase(factory, "abth-folder-history", readFolderHistory);
 }
 
 function historyDatabase<Entry>(

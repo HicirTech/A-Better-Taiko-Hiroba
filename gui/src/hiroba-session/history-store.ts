@@ -1,4 +1,4 @@
-import type { CostumeHistoryEntry } from "../shared/session-port";
+import type { CostumeHistoryEntry, FolderHistoryEntry } from "../shared/session-port";
 
 /** Each player's history of one kind, kept on the device. Per taiko number, since one device can
  * hold more than one card. */
@@ -11,3 +11,4 @@ export interface HistoryStore<Entry> {
 }
 
 export type CostumeHistoryStore = HistoryStore<CostumeHistoryEntry>;
+export type FolderHistoryStore = HistoryStore<FolderHistoryEntry>;
