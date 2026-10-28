@@ -187,6 +187,14 @@ export function sameSongs(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((song, index) => song === b[index]);
 }
 
+/** The set whose songs, in their order, these are; none for no songs. */
+export function setWithSongs(
+  sets: readonly FavoriteSet[],
+  songs: readonly string[],
+): FavoriteSet | null {
+  return songs.length === 0 ? null : (sets.find((one) => sameSongs(one.songs, songs)) ?? null);
+}
+
 /** The folder's songs in the order of its slots, the empty slots left out. */
 export function filledSlots({ slots }: FolderState): string[] {
   return slots.filter((songNo): songNo is string => songNo !== null);

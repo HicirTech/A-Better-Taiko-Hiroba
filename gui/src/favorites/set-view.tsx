@@ -115,22 +115,46 @@ export function SetView({
             }}
           />
         ) : (
-          <Box component="ul" id="favorite-set-songs" sx={CARD_ROWS}>
-            {songNos.map((songNo) => (
-              <SongLookRow
-                key={songNo}
-                id={`favorite-set-song-${songNo}`}
-                data-key={songNo}
-                look={look(songNo)}
-                shownDifficulty={shownDifficulty}
-                i18n={i18n}
-                scrolling
-                onOpen={openDetails(songNo)}
-              />
-            ))}
-          </Box>
+          <SetSongs
+            id="favorite-set"
+            songs={songNos}
+            look={look}
+            shownDifficulty={shownDifficulty}
+            i18n={i18n}
+            openDetails={openDetails}
+          />
         )}
       </Stack>
     </SectionCard>
+  );
+}
+
+/** Songs as a set shows them while it is not edited, a press on one opening its details. */
+export function SetSongs({
+  id,
+  songs,
+  look,
+  shownDifficulty,
+  i18n,
+  openDetails,
+}: Pick<SetViewProps, "songs" | "look" | "shownDifficulty" | "i18n" | "openDetails"> & {
+  /** Gives `<id>-songs` to the list and `<id>-song-<song number>` to each row. */
+  readonly id: string;
+}) {
+  return (
+    <Box component="ul" id={`${id}-songs`} sx={CARD_ROWS}>
+      {songs.map((songNo) => (
+        <SongLookRow
+          key={songNo}
+          id={`${id}-song-${songNo}`}
+          data-key={songNo}
+          look={look(songNo)}
+          shownDifficulty={shownDifficulty}
+          i18n={i18n}
+          scrolling
+          onOpen={openDetails(songNo)}
+        />
+      ))}
+    </Box>
   );
 }

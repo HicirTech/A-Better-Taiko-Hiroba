@@ -411,6 +411,13 @@ export const zhHant: Messages = {
   "favorites.rename": "重新命名",
   "favorites.rename.title": "重新命名套裝",
   "favorites.inUse": "使用中：{name}",
+  "favorites.history": "歷史記錄",
+  "favorites.history.title": "收藏歷史記錄",
+  "favorites.history.songs": "{count} 首",
+  "favorites.history.current": "目前",
+  "favorites.history.putBack": "恢復為目前收藏",
+  "favorites.history.saveAsSet": "存成套裝",
+  "favorites.history.none": "還沒有記錄。每次同步到廣場後，當時的收藏資料夾會記在這裏。",
   "favorites.replace.title": "替換 {name} 中的歌曲？",
   "favorites.replace.body":
     "{name} 中的歌曲將換成收藏資料夾中的歌曲與順序，廣場的收藏資料夾不受影響。",

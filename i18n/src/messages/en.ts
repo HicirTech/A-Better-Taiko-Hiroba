@@ -429,6 +429,13 @@ export const en: Messages = {
   "favorites.rename": "Rename",
   "favorites.rename.title": "Rename the set",
   "favorites.inUse": "In use: {name}",
+  "favorites.history": "History",
+  "favorites.history.title": "Favourites history",
+  "favorites.history.songs": "Songs: {count}",
+  "favorites.history.current": "Current",
+  "favorites.history.putBack": "Put back",
+  "favorites.history.saveAsSet": "Save as a set",
+  "favorites.history.none": "Nothing is kept yet. Each sync to Hiroba keeps the folder here.",
   "favorites.replace.title": "Replace the songs in {name}?",
   "favorites.replace.body":
     "{name} will hold the folder's songs, in the folder's order, instead of its current songs. The folder on Hiroba stays as it is.",

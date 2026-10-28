@@ -1,14 +1,15 @@
 import type { Translator } from "@abth/i18n";
-import { Box, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
 import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { HirobaSessionPort } from "../shared/session-port";
+import type { FolderHistoryEntry, HirobaSessionPort } from "../shared/session-port";
 import {
   filledSlots,
   moved,
   newSetName,
   SET_SONG_LIMIT,
   sameSongs,
+  setWithSongs,
   toggledSongs,
 } from "../shared/sets/favorite-sets";
 import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
@@ -25,13 +26,14 @@ import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
 import { ListIcon } from "../ui/icons";
 import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed } from "../ui/read-failure-alert";
-import { CARD_GAP } from "../ui/section-card";
-import { SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
+import { CARD_GAP, SectionCard } from "../ui/section-card";
+import { BAR_TEXT_BUTTON, SYNC_BAR_PAGE, SyncBar } from "../ui/sync-bar";
 import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
+import { FolderHistoryDialog } from "./folder-history-dialog";
 import type { PickableState } from "./pickable-songs";
-import { SetView } from "./set-view";
+import { SetSongs, SetView } from "./set-view";
 import { SetsDrawer } from "./sets-drawer";
 import { SongCard } from "./song-card";
 import { SongPicker } from "./song-picker";
@@ -45,6 +47,8 @@ const NO_SONGS: readonly string[] = [];
 interface Naming {
   readonly songs: readonly string[];
   readonly editing: boolean;
+  /** The name the dialog starts with, where the songs were a set; a new set's otherwise. */
+  readonly name?: string;
 }
 
 export interface FavoritesPageProps {
@@ -98,7 +102,7 @@ export function FavoritesPage({
   modalLook,
   i18n,
 }: FavoritesPageProps) {
-  const { t, locale } = i18n;
+  const { t, locale, dateTime } = i18n;
   const { step, pickSong } = favorites;
   const shown = shownFavoritesOf(step);
   const { sets } = keptSets;
@@ -109,6 +113,9 @@ export function FavoritesPage({
   const [draft, setDraft] = useState<readonly string[] | null>(null);
   const [naming, setNaming] = useState<Naming | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  // A kept folder put back is shown as a set is, until the bar's Sync writes it or Back leaves it.
+  const [putBack, setPutBack] = useState<FolderHistoryEntry | null>(null);
   const [picking, setPicking] = useState<"song" | "set" | null>(null);
   const openPicker = (picker: "song" | "set") => {
     onPickerOpen();
@@ -130,10 +137,7 @@ export function FavoritesPage({
   const set = sets.find((one) => one.id === selectedId) ?? null;
   const setId = set?.id ?? null;
   const folderSongs = shown === null ? null : filledSlots(shown.view.folder.state);
-  const inUse =
-    folderSongs === null || folderSongs.length === 0
-      ? null
-      : (sets.find((one) => sameSongs(one.songs, folderSongs)) ?? null);
+  const inUse = folderSongs === null ? null : setWithSongs(sets, folderSongs);
   const view = shown?.view ?? null;
   const remembered = useMemo(() => rememberedSongs(view), [view]);
   const look = useCallback(
@@ -171,6 +175,7 @@ export function FavoritesPage({
     setSelectedId(id);
     setDraft(null);
     setEditing(editingIt);
+    setPutBack(null);
   };
   const leaveEditing = () => {
     setDraft(null);
@@ -178,6 +183,7 @@ export function FavoritesPage({
   };
   // A set shown from the drawer is a level of its own: Back goes to the current favourites.
   useBackLeaves(set !== null, () => showSet(null));
+  useBackLeaves(putBack !== null, () => setPutBack(null));
   useBackLeaves(editing, leaveEditing);
   const named = (name: string) => {
     if (naming !== null) {
@@ -185,6 +191,7 @@ export function FavoritesPage({
     }
     setNaming(null);
     setDrawerOpen(false);
+    setHistoryOpen(false);
   };
 
   // Focus leaves the button a write shuts, so it is not dropped to the window's top.
@@ -194,7 +201,10 @@ export function FavoritesPage({
   };
   const apply = async (songs: readonly string[]) => {
     page.current?.focus({ preventScroll: true });
-    await favorites.applySet(songs);
+    await favorites.applySet(songs, {
+      expected: inUse?.name ?? null,
+      target: setWithSongs(sets, songs)?.name ?? null,
+    });
     showSet(null);
   };
   const setsLabel = t("favorites.sets");
@@ -206,6 +216,12 @@ export function FavoritesPage({
     !shown.shut &&
     set.songs.length > 0 &&
     !sameSongs(set.songs, folderSongs ?? NO_SONGS);
+  const canPutBack =
+    putBack !== null &&
+    shown !== null &&
+    !shown.shut &&
+    putBack.songs.length > 0 &&
+    !sameSongs(putBack.songs, folderSongs ?? NO_SONGS);
   const songPicked = shown !== null && !shown.shut && shown.draft !== null;
   return (
     <Box
@@ -225,7 +241,11 @@ export function FavoritesPage({
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
             <Typography id="favorites-name" variant="h6" component="h2" noWrap>
-              {set === null ? t("favorites.current") : set.name}
+              {set !== null
+                ? set.name
+                : putBack !== null
+                  ? (putBack.setName ?? dateTime(putBack.keptAt))
+                  : t("favorites.current")}
             </Typography>
           </Box>
           {/* A touch screen opens the drawer by a swipe from the right edge instead. */}
@@ -265,6 +285,17 @@ export function FavoritesPage({
               leaveEditing();
             }}
           />
+        ) : putBack !== null && shown !== null ? (
+          <SectionCard id="favorite-kept-view">
+            <SetSongs
+              id="favorite-kept"
+              songs={putBack.songs}
+              look={look}
+              shownDifficulty={shownDifficulty}
+              i18n={i18n}
+              openDetails={openDetails}
+            />
+          </SectionCard>
         ) : shown === null ? (
           failureOf(favorites, i18n)
         ) : (
@@ -303,12 +334,55 @@ export function FavoritesPage({
       {(set !== null || shown !== null) && (
         <SyncBar
           id="favorites"
-          canSync={set !== null ? canApply : songPicked}
-          onSync={set !== null ? () => void apply(set.songs) : saveSong}
-          onReset={set !== null ? undefined : favorites.resetSong}
+          canSync={set !== null ? canApply : putBack !== null ? canPutBack : songPicked}
+          onSync={
+            set !== null
+              ? () => void apply(set.songs)
+              : putBack !== null
+                ? () => void apply(putBack.songs)
+                : saveSong
+          }
+          onReset={set !== null || putBack !== null ? undefined : favorites.resetSong}
           canReset={songPicked}
           saving={shown !== null && shown.saving !== null}
+          start={
+            set === null &&
+            putBack === null && (
+              <Button
+                id="favorites-history"
+                disabled={shown === null || shown.shut || favorites.history.length === 0}
+                onClick={() => setHistoryOpen(true)}
+                sx={BAR_TEXT_BUTTON}
+              >
+                {t("favorites.history")}
+              </Button>
+            )
+          }
           i18n={i18n}
+        />
+      )}
+      {shown !== null && (
+        <FolderHistoryDialog
+          open={historyOpen}
+          entries={favorites.history}
+          current={folderSongs ?? NO_SONGS}
+          look={look}
+          shownDifficulty={shownDifficulty}
+          touchFirst={touchFirst}
+          modalLook={modalLook}
+          i18n={i18n}
+          onPutBack={(entry) => {
+            setPutBack(entry);
+            setHistoryOpen(false);
+          }}
+          onSaveAsSet={(entry) =>
+            setNaming({
+              songs: entry.songs,
+              editing: false,
+              ...(entry.setName !== null && { name: entry.setName }),
+            })
+          }
+          onClose={() => setHistoryOpen(false)}
         />
       )}
       {shown?.notice?.write === "favoriteSong" && (
@@ -365,7 +439,7 @@ export function FavoritesPage({
       {naming !== null && (
         <SetNameDialog
           title={t("favorites.newSet")}
-          initial={newSetName(sets, (number) => t("favorites.setName", { number }))}
+          initial={naming.name ?? newSetName(sets, (number) => t("favorites.setName", { number }))}
           i18n={i18n}
           onCancel={() => setNaming(null)}
           onSave={named}

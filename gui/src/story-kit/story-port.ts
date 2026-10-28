@@ -11,6 +11,7 @@ import type {
   TitleEditorView,
   WriteOutcomeView,
 } from "../shared/session-port";
+import { filledSlots } from "../shared/sets/favorite-sets";
 import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
 import {
   type ChartPictureRead,
@@ -20,7 +21,7 @@ import {
 } from "../shared/song-catalogue/types";
 import { drawChart } from "../songs/draw-chart";
 import { portraitOf, STORY_EDITOR, STORY_HISTORY } from "./costume";
-import { STORY_PICKABLE, storyFavorites } from "./favorites";
+import { STORY_PICKABLE, storyFavorites, storyFolderHistory } from "./favorites";
 import { packData, packView } from "./pack";
 import { pictureOf } from "./picture-of";
 import { PAGE_PROFILE, STORY_PROFILE } from "./profile";
@@ -270,7 +271,10 @@ export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): Hirob
         }),
       ),
     changeFavoriteSong: ({ expected, target }) => later(applied(expected, target)),
-    folderHistory: () => Promise.resolve([]),
+    folderHistory: () =>
+      later(
+        storyFolderHistory(filledSlots((packData("favorites") ?? storyFavorites()).folder.state)),
+      ),
     readSongPicker: () =>
       later(
         ok({
