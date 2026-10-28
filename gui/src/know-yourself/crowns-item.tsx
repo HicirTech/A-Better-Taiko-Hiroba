@@ -1,7 +1,6 @@
 import { useMemo } from "react";
-
+import { FoldCard } from "../ui/fold-card";
 import { byStars, type GroupKey, groupId } from "./groups";
-import { KnowItem } from "./know-item";
 import type { KnownChart } from "./known-charts";
 import { clearCounts, wallOf } from "./ladder";
 import type { PageParts } from "./page-parts";
@@ -23,7 +22,7 @@ export function CrownsItem({
   const labelOf = (key: GroupKey) =>
     key.kind === "stars" ? t("picker.level", { level: key.stars }) : t("know.unknown");
   return (
-    <KnowItem
+    <FoldCard
       id="know-crowns"
       title={t("know.ladder")}
       summary={wall === null ? t("know.noWall") : t("know.wall", { stars: wall })}

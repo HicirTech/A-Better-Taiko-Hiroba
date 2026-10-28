@@ -1,8 +1,8 @@
 import { Box, ButtonBase, Collapse, Typography } from "@mui/material";
 import { type ReactNode, useState } from "react";
 
-import { ArrowDropDownIcon } from "../ui/icons";
-import { SectionCard } from "../ui/section-card";
+import { ArrowDropDownIcon } from "./icons";
+import { SectionCard } from "./section-card";
 
 const WORDS = { display: "block", flex: 1, minWidth: 0, textAlign: "left" } as const;
 const HEAD = { display: "flex", alignItems: "center", gap: 1, width: 1, px: 1, py: 1 } as const;
@@ -15,19 +15,25 @@ const OPENER = {
   "&[aria-expanded='true'] > .MuiSvgIcon-root": { transform: "rotate(180deg)" },
 } as const;
 
-/** A part of the page: its name and what it finds, with its details folded until it is opened. */
-export function KnowItem({
+/** A card of a title and one sentence, with its details folded until it is opened. */
+export function FoldCard({
   id,
   title,
   summary,
   details,
+  level = 2,
+  end,
 }: {
   readonly id: string;
   readonly title: string;
-  /** What the part finds, in one sentence. */
+  /** What the card holds, in one sentence. */
   readonly summary: string;
-  /** None for a part with nothing more to show. */
+  /** None for a card with nothing more to show. */
   readonly details: (() => ReactNode) | null;
+  /** The title's heading level: 2 on a page, 3 in a dialog. */
+  readonly level?: 2 | 3;
+  /** Beside the words, before the fold's arrow: a mark such as a chip. */
+  readonly end?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const titleId = `${id}-title`;
@@ -35,7 +41,12 @@ export function KnowItem({
   // The heading holds the title alone: inside the fold's button, the title alone names the button.
   const words = (inButton: boolean) => (
     <Box component={inButton ? "span" : "div"} sx={WORDS}>
-      <Typography id={titleId} component={inButton ? "span" : "h2"} variant="subtitle1" sx={TITLE}>
+      <Typography
+        id={titleId}
+        component={inButton ? "span" : `h${level}`}
+        variant="subtitle1"
+        sx={TITLE}
+      >
         {title}
       </Typography>
       <Typography
@@ -52,9 +63,12 @@ export function KnowItem({
   return (
     <SectionCard id={id} component="section" flush>
       {details === null ? (
-        <Box sx={HEAD}>{words(false)}</Box>
+        <Box sx={HEAD}>
+          {words(false)}
+          {end}
+        </Box>
       ) : (
-        <Typography component="h2" sx={{ m: 0 }}>
+        <Typography component={`h${level}`} sx={{ m: 0 }}>
           <ButtonBase
             id={`${id}-header`}
             aria-expanded={open}
@@ -65,6 +79,7 @@ export function KnowItem({
             sx={OPENER}
           >
             {words(true)}
+            {end}
             <ArrowDropDownIcon fontSize="small" />
           </ButtonBase>
         </Typography>

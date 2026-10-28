@@ -2,16 +2,16 @@ import { Box, Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { i18nOf } from "../story-kit/env";
-import { KnowItem } from "./know-item";
+import { FoldCard } from "./fold-card";
 
 const meta = {
-  title: "Cards and sections/KnowItem",
-  tags: ["know-yourself"],
+  title: "Cards and sections/FoldCard",
+  tags: ["ui"],
   render: (_args, { globals }) => {
     const { t } = i18nOf(globals);
     return (
       <Box sx={{ maxWidth: 720 }}>
-        <KnowItem
+        <FoldCard
           id="story-know"
           title={t("know.ladder")}
           summary={t("know.wall", { stars: 8 })}
@@ -34,7 +34,7 @@ export const NothingBehind: Story = {
     const { t } = i18nOf(globals);
     return (
       <Box sx={{ maxWidth: 720 }}>
-        <KnowItem
+        <FoldCard
           id="story-know"
           title={t("know.ladder")}
           summary={t("know.noWall")}
