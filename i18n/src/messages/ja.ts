@@ -429,6 +429,14 @@ export const ja: Messages = {
   "favorites.rename": "名前を変更",
   "favorites.rename.title": "セットの名前を変更",
   "favorites.inUse": "使用中：{name}",
+  "favorites.history": "履歴",
+  "favorites.history.title": "お気に入りの履歴",
+  "favorites.history.songs": "{count} 曲",
+  "favorites.history.current": "現在",
+  "favorites.history.putBack": "これに戻す",
+  "favorites.history.saveAsSet": "セットとして保存",
+  "favorites.history.none":
+    "まだ記録はありません。ひろばに同期するたびに、そのときのフォルダがここに残ります。",
   "favorites.replace.title": "{name}の曲を置き換えますか？",
   "favorites.replace.body":
     "{name}の曲を、フォルダの曲とその順番に置き換えます。ひろばのフォルダは変わりません。",

@@ -153,6 +153,23 @@ export function standIn({ editor, profile, favorites, session, myPage }: StandIn
         const shown = favorites.pickerPage(session, Number(url.searchParams.get("genre") ?? "1"));
         return shown === null ? redirectTo("/index.php") : html(shown);
       }
+      case "/ajax/myfavorite_song.php":
+      case "/ajax/mypage_song.php": {
+        if (asked.method !== "POST" || favorites === undefined) {
+          return new Response("not found", { status: 404 });
+        }
+        const form = new URLSearchParams(String(asked.data));
+        favorites.record(url.pathname, request, form, session);
+        if (request.headers.get("x-requested-with") !== "XMLHttpRequest") {
+          return html(ERROR_SHELL_BODY);
+        }
+        if (!signedIn) {
+          return redirectTo("/login.php");
+        }
+        return url.pathname === "/ajax/myfavorite_song.php"
+          ? favorites.saveFolder(session, form)
+          : favorites.saveFavoriteSong(session, form);
+      }
       case "/imgsrc_mydon.php":
         return editor.preview(url.search, signedIn);
       case "/imgsrc_kisekae.php":

@@ -35,6 +35,7 @@ export const FAILED_CALL_ANSWERS: FailedCallAnswers = {
   openFavorites: () => READ_FAILED,
   changeFolder: () => INTERRUPTED,
   changeFavoriteSong: () => INTERRUPTED,
+  folderHistory: () => [],
   readSongPicker: () => READ_FAILED,
   scores: () => ({ scores: [], unread: 0, songs: [] }),
   listedCharts: () => ({ charts: [], songs: [] }),

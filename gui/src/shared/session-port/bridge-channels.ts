@@ -18,6 +18,7 @@ export const BRIDGE_CHANNELS = {
   openFavorites: "abth:open-favorites",
   changeFolder: "abth:change-folder",
   changeFavoriteSong: "abth:change-favorite-song",
+  folderHistory: "abth:folder-history",
   readSongPicker: "abth:read-song-picker",
   scores: "abth:scores",
   listedCharts: "abth:listed-charts",

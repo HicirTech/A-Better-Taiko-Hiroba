@@ -1,11 +1,10 @@
 import type { Translator } from "@abth/i18n";
 import { Box, FormHelperText } from "@mui/material";
 import { useMemo } from "react";
-
+import { FoldCard } from "../ui/fold-card";
 import { EmojiEventsIcon } from "../ui/icons";
 import { gatheringGroups, goodScores } from "./good-scores";
 import { byBpm, byHitsPerSecond, type GroupKey, groupId } from "./groups";
-import { KnowItem } from "./know-item";
 import type { KnownChart } from "./known-charts";
 import { clearCounts } from "./ladder";
 import type { PageParts } from "./page-parts";
@@ -91,7 +90,7 @@ export function BandItem({
         : t("know.best.none");
   const id = view === "perSecond" ? "know-per-second" : "know-bpm";
   return (
-    <KnowItem
+    <FoldCard
       id={id}
       title={t(view === "perSecond" ? "know.perSecond" : "know.bpm")}
       summary={summary}

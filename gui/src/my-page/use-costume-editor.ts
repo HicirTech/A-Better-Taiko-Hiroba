@@ -10,11 +10,12 @@ import type { ReadStatus } from "../shared/reads/read-run";
 import { useReadRun } from "../shared/reads/use-read-run";
 import {
   type CostumeHistoryEntry,
-  changedTheCostume,
+  changedOnHiroba,
   type HirobaSessionPort,
   type ReadFailure,
   type WriteOutcomeView,
 } from "../shared/session-port";
+import { useKeptHistory } from "../shared/use-kept-history";
 import { sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   canReadEditorAgain,
@@ -26,7 +27,6 @@ import {
 } from "./costume-editor-state";
 import type { PreviewState } from "./costume-preview";
 import { useCostumePreview } from "./costume-preview-box";
-import { useCostumeHistory } from "./use-costume-history";
 
 export interface CostumeEditorOptions {
   readonly port: HirobaSessionPort;
@@ -76,7 +76,8 @@ export function useCostumeEditor({
     keep: keepPreview,
   } = useCostumePreview(port, previewSetOf(step), shown);
   const sessionGeneration = useRef(0);
-  const { history, refreshHistory, clearHistory } = useCostumeHistory(port, sessionGeneration);
+  const readHistory = useCallback(() => port.costumeHistory(), [port]);
+  const { history, refreshHistory, clearHistory } = useKeptHistory(readHistory, sessionGeneration);
   const writing = useRef(false);
   const [reads, status] = useReadRun<ReadFailure>({
     callFailed: { kind: "callFailed" },
@@ -131,7 +132,7 @@ export function useCostumeEditor({
       return;
     }
 
-    if (changedTheCostume(outcome)) {
+    if (changedOnHiroba(outcome)) {
       lane.renew("myDon");
     }
     void refreshHistory();

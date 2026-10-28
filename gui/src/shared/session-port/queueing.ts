@@ -25,6 +25,7 @@ export const PORT_QUEUEING = {
   openFavorites: "read",
   changeFolder: "write",
   changeFavoriteSong: "write",
+  folderHistory: "unqueued",
   readSongPicker: "exclusive",
   scores: "unqueued",
   listedCharts: "unqueued",

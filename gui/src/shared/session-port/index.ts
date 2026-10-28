@@ -12,8 +12,8 @@ export {
   PORT_ARGUMENTS,
 } from "./arguments";
 export { BRIDGE_CHANNELS } from "./bridge-channels";
+export { changedOnHiroba } from "./changed-on-hiroba";
 export { checkedPort } from "./checked-port";
-export { changedTheCostume } from "./costume-changed";
 export {
   PORT_QUEUEING,
   type PortImplementation,
@@ -41,6 +41,8 @@ export type {
   FavoritesView,
   FolderChange,
   FolderEditorView,
+  FolderHistoryEntry,
+  FolderNames,
   FolderState,
   HirobaSessionPort,
   IconWant,

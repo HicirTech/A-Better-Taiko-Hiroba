@@ -11,9 +11,11 @@ import {
   type CostumeChange,
   type CostumeHistoryEntry,
   type CostumeSet,
-  changedTheCostume,
+  changedOnHiroba,
   type FavoriteSongChange,
   type FolderChange,
+  type FolderNames,
+  type FolderState,
   type HirobaSessionPort,
   type NameChange,
   type ReadFailure,
@@ -23,13 +25,15 @@ import {
   type WriteOutcomeView,
   type WriteSets,
 } from "../shared/session-port";
+import { filledSlots } from "../shared/sets/favorite-sets";
 import { changeCostume } from "./change-costume";
 import { changeFavoriteSong } from "./change-favorite-song";
 import { changeFolder } from "./change-folder";
 import { changeName } from "./change-name";
 import { changeTitle } from "./change-title";
 import { mergeCostumeHistory } from "./costume-history";
-import type { CostumeHistoryStore } from "./costume-history-store";
+import { mergeFolderHistory } from "./folder-history";
+import type { CostumeHistoryStore, FolderHistoryStore, HistoryStore } from "./history-store";
 import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
 import { openFavorites } from "./open-favorites";
@@ -46,6 +50,7 @@ export interface SessionWritesOptions {
   readonly liveChecked?: readonly WriteKind[];
   readonly now: () => Date;
   readonly historyStore: CostumeHistoryStore;
+  readonly folderHistoryStore: FolderHistoryStore;
   /** The picture of exactly this set that this session holds, or null. */
   readonly recentPreview: (set: CostumeSet) => string | null;
   readonly signedIn: () => boolean;
@@ -72,7 +77,9 @@ type QueuedWrites = {
 };
 
 /** The port's write verbs, the same on every shell; a queued one takes its group's transport. */
-export interface SessionWrites extends QueuedWrites, Pick<HirobaSessionPort, "costumeHistory"> {
+export interface SessionWrites
+  extends QueuedWrites,
+    Pick<HirobaSessionPort, "costumeHistory" | "folderHistory"> {
   /** A preview came: a history entry of that set with no picture takes it. */
   previewKept(set: CostumeSet, picture: string): Promise<void>;
 }
@@ -92,13 +99,14 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
   readonly ended: (
     outcome: WriteOutcomeView<WriteSets[K]>,
     taikoNo: string | null,
+    input: Input,
   ) => void | Promise<void>;
 }
 
 /** A shell's writes. A kind not yet live-checked from this platform also reads another page before
  * and after. Nothing here queues (the shell does). */
 export function createSessionWrites(options: SessionWritesOptions): SessionWrites {
-  const { historyStore } = options;
+  const { historyStore, folderHistoryStore } = options;
   const liveChecked = options.liveChecked ?? LIVE_CHECKED_WRITES[options.platform];
 
   /** Puts the set a change moved to, then the one it moved from, first in the player's history. */
@@ -114,11 +122,41 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     }
   };
 
+  /** Puts the folder a write saved first in the player's history, then the one it replaced. */
+  const rememberFolders = async (
+    taikoNo: string,
+    { before, after }: { readonly before: FolderState; readonly after: FolderState },
+    names: FolderNames | undefined,
+  ) => {
+    try {
+      const keptAt = options.now().getTime();
+      const saved = { songs: filledSlots(after), keptAt, setName: names?.target ?? null };
+      const replaced = { songs: filledSlots(before), setName: names?.expected ?? null };
+      const kept = await folderHistoryStore.load(taikoNo);
+      await folderHistoryStore.save(taikoNo, mergeFolderHistory(kept, saved, replaced));
+    } catch {
+      // The history is a convenience: it stays as it was, and the write's outcome with it.
+    }
+  };
+
+  /** The signed-in player's entries of one history; none where it cannot be read. */
+  const historyOf = async <Entry>(store: HistoryStore<Entry>): Promise<readonly Entry[]> => {
+    const taikoNo = options.owner();
+    if (!options.signedIn() || taikoNo === null) {
+      return [];
+    }
+    try {
+      return await store.load(taikoNo);
+    } catch {
+      return [];
+    }
+  };
+
   const costume: WriteKindDefinition<"costume", CostumeChange> = {
     kind: "costume",
     run: changeCostume,
     ended: async (outcome, taikoNo) => {
-      if (!changedTheCostume(outcome)) {
+      if (!changedOnHiroba(outcome)) {
         return;
       }
       options.costumeChanged(outcome.after);
@@ -143,7 +181,11 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   const folder: WriteKindDefinition<"folder", FolderChange> = {
     kind: "folder",
     run: changeFolder,
-    ended: () => undefined,
+    ended: async (outcome, taikoNo, change) => {
+      if (changedOnHiroba(outcome) && taikoNo !== null) {
+        await rememberFolders(taikoNo, outcome, change.names);
+      }
+    },
   };
 
   const favoriteSong: WriteKindDefinition<"favoriteSong", FavoriteSongChange> = {
@@ -172,7 +214,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     if (outcome.kind === "sessionGone") {
       await options.endSession();
     }
-    await definition.ended(outcome, taikoNo);
+    await definition.ended(outcome, taikoNo, input);
     return outcome;
   }
 
@@ -262,16 +304,8 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
       }
     },
 
-    async costumeHistory() {
-      const taikoNo = options.owner();
-      if (!options.signedIn() || taikoNo === null) {
-        return [];
-      }
-      try {
-        return await historyStore.load(taikoNo);
-      } catch {
-        return [];
-      }
-    },
+    costumeHistory: () => historyOf(historyStore),
+
+    folderHistory: () => historyOf(folderHistoryStore),
   };
 }

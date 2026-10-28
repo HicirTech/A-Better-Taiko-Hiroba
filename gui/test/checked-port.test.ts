@@ -46,6 +46,7 @@ const CASES: VerbCase[] = [
     [{ expected: NAME, target: { nickname: "" } }],
   ],
   ["costumeHistory", [], [{}]],
+  ["folderHistory", [], [{}]],
   ["readUpdateFeed", [], [{ url: "https://example.test/update.json" }]],
   ["openFavorites", [], [{ init: 1 }]],
   [
@@ -120,6 +121,26 @@ describe("checkedPort", () => {
       expect(calls).toEqual([]);
     },
   );
+
+  test("takes a folder change naming the sets of its folders, and refuses names no set could carry", async () => {
+    const { calls, port } = recordingPort();
+    const checked = checkedPort(port);
+    const change = (names: unknown) =>
+      checked.changeFolder({ expected: FOLDER, target: ["365"], names } as never);
+
+    expect<unknown>(await change({ expected: "練習用", target: null })).toBe(
+      "answer to changeFolder",
+    );
+    for (const refused of [
+      { expected: "", target: null },
+      { expected: null, target: "x".repeat(41) },
+      { expected: null },
+      null,
+    ]) {
+      await expect(change(refused)).rejects.toThrow("Refused changeFolder");
+    }
+    expect(calls).toHaveLength(1);
+  });
 
   test("rejects a call with an argument too many, even to a verb that takes none", async () => {
     const { calls, port } = recordingPort();

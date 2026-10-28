@@ -64,6 +64,9 @@ export const favoritesKeys = [
   "setsMovedByTheirHandle",
   "setRenamedFromItsMenu",
   "setDeletedFromItsMenu",
+  "folderHistoryNamesTheSetSynced",
+  "keptFolderPutBackThenSynced",
+  "keptFolderSavedAsASet",
   "favoriteSongPickedThenSaved",
   "pickerListLeftAloneByAReadAgain",
   "pickerListReadAsAPickerOpens",
@@ -545,6 +548,51 @@ export async function favorites(ctx: Ctx) {
   await click("#favorite-set-delete-confirm");
   await gone("#favorite-set-delete-dialog");
   results.setDeletedFromItsMenu = same(await setNames(), ["Practice"]);
+  await click("#favorites-item-folder");
+  await gone("#favorites-drawer");
+
+  // The history keeps Set 1, synced above, under the name it had then, since renamed Practice.
+  const keptFolders = () => page.evaluate<{ songs: string[] }[]>("window.abth.folderHistory()");
+  const folderNow = async () =>
+    (await favoritesNow()).folder.filter((songNo): songNo is string => songNo !== null);
+  await click("#favorites-history");
+  await shown("#favorite-history-entry-1-header");
+  results.folderHistoryNamesTheSetSynced =
+    (await textOf("#favorite-history-entry-0-title")) === "Set 1" &&
+    (await exists("#favorite-history-entry-0-header #favorite-history-current"));
+  const putBack = (await keptFolders())[1]?.songs ?? [];
+  await click("#favorite-history-entry-1-header");
+  await shown("#favorite-history-put-back-1");
+  await click("#favorite-history-put-back-1");
+  await shown("#favorite-kept-view");
+  await gone("#favorite-history-dialog");
+  const keptRows = await page.evaluate<number>(
+    `document.querySelectorAll("#favorite-kept-songs > li").length`,
+  );
+  await syncLit();
+  await click("#favorites-save");
+  await shown("#favorite-folder-list");
+  await stepIs("ready");
+  results.keptFolderPutBackThenSynced =
+    putBack.length > 0 &&
+    keptRows === putBack.length &&
+    same(await folderNow(), putBack) &&
+    (await textOf("#favorites-name")) === "Current favourites";
+
+  await click("#favorites-history");
+  await shown("#favorite-history-entry-1-header");
+  await click("#favorite-history-entry-1-header");
+  await shown("#favorite-history-save-set-1");
+  await click("#favorite-history-save-set-1");
+  await shown("#favorite-set-name");
+  const nameAsked = await page.evaluate<string>(
+    `document.querySelector("#favorite-set-name").value`,
+  );
+  await nameAndSave();
+  await gone("#favorite-history-dialog");
+  results.keptFolderSavedAsASet =
+    nameAsked === "Set 1" && (await textOf("#favorites-name")) === "Set 1";
+  await openDrawer();
   await click("#favorites-item-folder");
   await gone("#favorites-drawer");
 

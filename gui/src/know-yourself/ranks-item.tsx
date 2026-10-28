@@ -1,7 +1,6 @@
 import { useMemo } from "react";
-
+import { FoldCard } from "../ui/fold-card";
 import { byStars, groupId } from "./groups";
-import { KnowItem } from "./know-item";
 import { isTried, type KnownChart } from "./known-charts";
 import { middleRank, rankCounts } from "./ladder";
 import type { PageParts } from "./page-parts";
@@ -30,7 +29,7 @@ export function RanksItem({
         ? t("know.ranks.middleNone")
         : t("know.ranks.middle", { rank: t(`scoreRank.${middle}`) });
   return (
-    <KnowItem
+    <FoldCard
       id="know-ranks"
       title={t("panel.ranks")}
       summary={summary}

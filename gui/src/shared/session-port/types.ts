@@ -331,6 +331,14 @@ export interface FolderChange {
   readonly expected: FolderState;
   /** At most 30 song numbers, none twice. */
   readonly target: readonly string[];
+  /** For the folder's history: the sets whose songs the two folders are, by name. */
+  readonly names?: FolderNames;
+}
+
+/** The names of the sets whose songs, in their order, a folder write found and left; null for none. */
+export interface FolderNames {
+  readonly expected: string | null;
+  readonly target: string | null;
 }
 
 /** A 大好きな曲 write: the song as its editor showed it, and the song wanted, or none. */
@@ -353,6 +361,15 @@ export type WriteOutcomeView<S = CostumeSet> =
 export interface CostumeHistoryEntry {
   readonly set: CostumeSet;
   readonly picture: string | null;
+}
+
+/** A お気に入り folder the player had, its songs in slot order, and when this device kept it. */
+export interface FolderHistoryEntry {
+  readonly songs: readonly string[];
+  /** In milliseconds since the epoch. */
+  readonly keptAt: number;
+  /** The set whose songs these were when kept, by the name it had then; null for none. */
+  readonly setName: string | null;
 }
 
 export interface ReadProfileOptions {
@@ -404,6 +421,8 @@ export interface HirobaSessionPort {
   changeFolder(change: FolderChange): Promise<WriteOutcomeView<FolderState>>;
   /** One 大好きな曲 write: its editor, one save, then the song read back. Never retried. */
   changeFavoriteSong(change: FavoriteSongChange): Promise<WriteOutcomeView<FavoriteSongState>>;
+  /** The signed-in player's folders kept before, newest first. Asks Hiroba nothing. */
+  folderHistory(): Promise<readonly FolderHistoryEntry[]>;
   /** The songs Hiroba's own 大好きな曲 picker offers: its editor, the handoff that opens the picker,
    * then a GET for each of the eight genres. Its form token stays with the platform. */
   readSongPicker(): Promise<Result<PickableSongs, ReadFailure>>;

@@ -14,7 +14,7 @@ import {
   OWNED_TITLES,
   REFUSED_NAME,
 } from "../scripts/mock-profile";
-import type { HirobaSessionPort, VerbsQueued } from "../src/shared/session-port";
+import type { FolderNames, HirobaSessionPort, VerbsQueued } from "../src/shared/session-port";
 import {
   CLOSE_LABEL,
   HIROBA,
@@ -251,6 +251,93 @@ describe("createAndroidPort's costume writes", () => {
     expect(await port.changeCostume(CHANGE)).toEqual({ kind: "notSignedIn" });
     expect(await port.openCostumeEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
     expect(world.sent()).toEqual([]);
+  });
+});
+
+describe("createAndroidPort's folder history", () => {
+  beforeEach(() => native.reset());
+
+  /** The stand-in's folder at the start. */
+  const START_FOLDER = ["1001", "1008", "1014", "1020", "1031", "1026"];
+  const FEWER = ["1001", "1008"];
+
+  const syncFolder = async (
+    port: Awaited<ReturnType<typeof signedInPort>>,
+    target: string[],
+    names?: FolderNames,
+  ) => {
+    const opened = await port.openFavorites();
+    if (!opened.ok) {
+      throw new Error("The favourites did not open");
+    }
+    return port.changeFolder({
+      expected: opened.value.folder.state,
+      target,
+      ...(names && { names }),
+    });
+  };
+
+  test("keeps the folder a sync saved and the one before it, at the sync's time, across launches", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+
+    expect((await syncFolder(port, FEWER)).kind).toBe("applied");
+
+    const keptAt = NOON_JST().getTime();
+    const history = await port.folderHistory();
+    expect(history).toEqual([
+      { songs: FEWER, keptAt, setName: null },
+      { songs: START_FOLDER, keptAt, setName: null },
+    ]);
+    const relaunched = await world.launch();
+    await relaunched.readProfile();
+    expect(await relaunched.folderHistory()).toEqual(history);
+  });
+
+  test("lists a folder synced again once, at the front at its new time", async () => {
+    let now = NOON_JST().getTime();
+    const world = setUp({ now: () => new Date(now) });
+    const port = await signedInPort(world);
+    await syncFolder(port, FEWER);
+    now += 60_000;
+
+    expect((await syncFolder(port, START_FOLDER)).kind).toBe("applied");
+
+    expect(await port.folderHistory()).toEqual([
+      { songs: START_FOLDER, keptAt: now, setName: null },
+      { songs: FEWER, keptAt: now - 60_000, setName: null },
+    ]);
+  });
+
+  test("keeps the names of the sets the two folders were, as the sync gives them", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+
+    await syncFolder(port, FEWER, { expected: "Practice", target: "Party" });
+
+    const keptAt = NOON_JST().getTime();
+    expect(await port.folderHistory()).toEqual([
+      { songs: FEWER, keptAt, setName: "Party" },
+      { songs: START_FOLDER, keptAt, setName: "Practice" },
+    ]);
+  });
+
+  test("keeps nothing for a sync that changes nothing", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+
+    expect((await syncFolder(port, START_FOLDER)).kind).toBe("nothingToChange");
+
+    expect(await port.folderHistory()).toEqual([]);
+  });
+
+  test("is empty when the page has no IndexedDB, and the sync lands all the same", async () => {
+    const world = setUp({ indexedDb: null });
+    const port = await signedInPort(world);
+
+    expect((await syncFolder(port, FEWER)).kind).toBe("applied");
+
+    expect(await port.folderHistory()).toEqual([]);
   });
 });
 

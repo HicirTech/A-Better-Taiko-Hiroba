@@ -495,6 +495,13 @@ export interface Messages {
   "favorites.rename": string;
   "favorites.rename.title": string;
   "favorites.inUse": string;
+  "favorites.history": string;
+  "favorites.history.title": string;
+  "favorites.history.songs": string;
+  "favorites.history.current": string;
+  "favorites.history.putBack": string;
+  "favorites.history.saveAsSet": string;
+  "favorites.history.none": string;
   "favorites.replace.title": string;
   "favorites.replace.body": string;
   "favorites.replace.confirm": string;

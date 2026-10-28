@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import * as FolderHistoryDialog from "../../favorites/folder-history-dialog.stories";
 import * as SongPicker from "../../favorites/song-picker.stories";
 import * as AddSongsDialog from "../../know-yourself/add-songs-dialog.stories";
 import * as CostumeHistoryDialog from "../../my-page/costume-history-dialog.stories";
@@ -40,6 +41,11 @@ const meta = {
           name: "CostumeHistoryDialog",
           meta: CostumeHistoryDialog.default,
           story: CostumeHistoryDialog.Sets,
+        },
+        {
+          name: "FolderHistoryDialog",
+          meta: FolderHistoryDialog.default,
+          story: FolderHistoryDialog.Folders,
         },
         { name: "SongPicker", meta: SongPicker.default, story: SongPicker.PickOne },
         { name: "ScoreDetails", meta: ScoreDetails.default, story: ScoreDetails.Chart },

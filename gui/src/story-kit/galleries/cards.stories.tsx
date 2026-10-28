@@ -5,7 +5,6 @@ import * as SetView from "../../favorites/set-view.stories";
 import * as SongCard from "../../favorites/song-card.stories";
 import * as BandItem from "../../know-yourself/band-item.stories";
 import * as CrownsItem from "../../know-yourself/crowns-item.stories";
-import * as KnowItem from "../../know-yourself/know-item.stories";
 import * as NearMissItem from "../../know-yourself/near-miss-item.stories";
 import * as RanksItem from "../../know-yourself/ranks-item.stories";
 import * as PartHead from "../../my-page/costume-part-panel.part-head.stories";
@@ -23,6 +22,7 @@ import * as SettingsSection from "../../settings/settings-section.stories";
 import * as SongDataSection from "../../settings/song-data-section.stories";
 import * as SongLevelsSection from "../../settings/song-levels-section.stories";
 import * as UpdatesSection from "../../settings/updates-section.stories";
+import * as FoldCard from "../../ui/fold-card.stories";
 import * as SectionCard from "../../ui/section-card.stories";
 import * as SectionTitle from "../../ui/section-title.stories";
 import * as SubsectionTitle from "../../ui/section-title.subsection-title.stories";
@@ -57,7 +57,7 @@ const meta = {
         { name: "SongCard", meta: SongCard.default, story: SongCard.Picked },
         { name: "FolderCard", meta: FolderCard.default, story: FolderCard.NotASet },
         { name: "SetView", meta: SetView.default, story: SetView.Shown },
-        { name: "KnowItem", meta: KnowItem.default, story: KnowItem.Folded },
+        { name: "FoldCard", meta: FoldCard.default, story: FoldCard.Folded },
         { name: "CrownsItem", meta: CrownsItem.default, story: CrownsItem.ClearLadder },
         { name: "RanksItem", meta: RanksItem.default, story: RanksItem.ScoreRanks },
         { name: "BandItem", meta: BandItem.default, story: BandItem.HitsPerSecond },

@@ -59,9 +59,9 @@ import {
 } from "../src/shared/song-catalogue";
 import { openableUrlOf, readUpdateFeed } from "../src/shared/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
-import { createCostumeHistoryStore } from "./costume-history-store";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
+import { createCostumeHistoryStore, createFolderHistoryStore } from "./history-store";
 import { OFF_SCREEN_OPTIONS, showOffScreen } from "./off-screen";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { handlePicturesOut } from "./pictures-out";
@@ -276,6 +276,9 @@ const started = app.whenReady().then(async () => {
     platform: "desktop",
     now: environment.now,
     historyStore: createCostumeHistoryStore(join(app.getPath("userData"), "costume-history.json")),
+    folderHistoryStore: createFolderHistoryStore(
+      join(app.getPath("userData"), "folder-history.json"),
+    ),
     recentPreview: previews.pictureOf,
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
@@ -371,6 +374,7 @@ const started = app.whenReady().then(async () => {
     openFavorites: writes.openFavorites,
     changeFolder: writes.changeFolder,
     changeFavoriteSong: writes.changeFavoriteSong,
+    folderHistory: writes.folderHistory,
     readSongPicker: writes.readSongPicker,
     refreshHiroba: writes.refreshHiroba,
     scores: scores.scores,

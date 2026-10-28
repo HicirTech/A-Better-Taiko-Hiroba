@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ok, type Transport } from "@abth/core";
 
-import { createCostumeHistoryStore } from "../electron/costume-history-store";
+import { createCostumeHistoryStore } from "../electron/history-store";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import {
   createProfileEditor,
@@ -193,6 +193,7 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
     ...(options.liveChecked && { liveChecked: options.liveChecked }),
     now: NOON_JST,
     historyStore: failingHistory(STORES[storeName](), historyFaults),
+    folderHistoryStore: { load: async () => [], save: async () => undefined },
     recentPreview: options.recentPreview ?? (() => null),
     signedIn: () => signedIn,
     endSession: () => {

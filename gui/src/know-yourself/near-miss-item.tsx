@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 
-import { KnowItem } from "./know-item";
+import { FoldCard } from "../ui/fold-card";
 import type { KnownChart } from "./known-charts";
 import { nearMisses } from "./near-misses";
 import type { PageParts } from "./page-parts";
@@ -41,7 +41,7 @@ export function NearMissItem({
   const wording = WORDING[crown];
   const left = new Map(misses.map((miss) => [miss.chart, miss.left]));
   return (
-    <KnowItem
+    <FoldCard
       id={wording.id}
       title={t(wording.title)}
       summary={

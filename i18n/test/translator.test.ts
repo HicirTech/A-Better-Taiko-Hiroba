@@ -353,6 +353,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "享生",
     "嗎",
     "爆兩頂另離",
+    "當",
   ].join(""),
 );
 

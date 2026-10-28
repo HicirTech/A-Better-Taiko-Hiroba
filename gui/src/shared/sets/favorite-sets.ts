@@ -22,6 +22,11 @@ export interface FavoriteSet {
 
 const cleanName = (name: string): string => name.trim().slice(0, SET_NAME_MAX_LENGTH);
 
+/** A name a set can carry: words, no longer than a set's name may be. */
+export function isSetName(value: unknown): value is string {
+  return typeof value === "string" && value.trim() !== "" && value.length <= SET_NAME_MAX_LENGTH;
+}
+
 /** The valid song numbers, each once, in order, as many as a set holds. */
 function cleanSongs(songs: readonly unknown[]): string[] {
   const valid = songs.filter(
@@ -180,6 +185,14 @@ export function addableSongs(held: readonly string[], songs: readonly string[]):
 
 export function sameSongs(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((song, index) => song === b[index]);
+}
+
+/** The set whose songs, in their order, these are; none for no songs. */
+export function setWithSongs(
+  sets: readonly FavoriteSet[],
+  songs: readonly string[],
+): FavoriteSet | null {
+  return songs.length === 0 ? null : (sets.find((one) => sameSongs(one.songs, songs)) ?? null);
 }
 
 /** The folder's songs in the order of its slots, the empty slots left out. */
