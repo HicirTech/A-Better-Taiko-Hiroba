@@ -446,6 +446,18 @@ export const en: Messages = {
   "gift.scanHint": "Scan it in A Better Taiko Hiroba to accept the gift",
   "gift.mystery": "A mystery gift",
   "gift.mysterySongs": "Songs: {count}. They show once the gift is accepted.",
+  "gift.untitled": "A gift",
+  "gift.offer":
+    "{giver} gave you these songs on {time}. Accepting syncs them to your favourites folder on Hiroba; the songs in it now stay in its history.",
+  "gift.offerMystery":
+    "{giver} gave you a mystery gift on {time}: its songs show once you accept it. Accepting syncs them to your favourites folder on Hiroba; the songs in it now stay in its history.",
+  "gift.accept": "Accept",
+  "gift.accepted": "Gift accepted. Its songs are in your favourites folder on Hiroba.",
+  "gift.from": "A gift from {giver}",
+  "gift.notOffered":
+    "Not accepted: Hiroba does not let you pick {songs} yet. Your favourites folder is as it was.",
+  "gift.notOfferedMystery":
+    "Not accepted: Hiroba does not let you pick some of its songs yet. Your favourites folder is as it was.",
   "gift.make": "Make a gift",
   "gift.new": "New gift",
   "gift.empty": "No songs yet. A gift holds up to {count}.",
@@ -454,6 +466,12 @@ export const en: Messages = {
   "gift.shown": "Show the songs",
   "gift.shownLabel": "Songs on the picture",
   "gift.preview": "Preview",
+  "scan.button": "Scan a QR code",
+  "scan.hint": "Point the camera at a QR code, or choose a picture of one.",
+  "scan.pick": "Choose a picture",
+  "scan.noCamera": "The camera cannot be used. Choose a picture instead.",
+  "scan.noCode": "No QR code was found in the picture.",
+  "scan.unknown": "This QR code is not one A Better Taiko Hiroba knows.",
   "sort.handle": "Move {name}",
   "sort.instructions":
     "To move an item, press Space or Enter to pick it up, the up and down arrow keys to move it, and Space or Enter again to put it down. Escape puts it back.",

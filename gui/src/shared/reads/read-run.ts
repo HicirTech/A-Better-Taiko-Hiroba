@@ -156,3 +156,21 @@ export function createReadRun<F, P = never>(options: ReadRunOptions<F>): ReadRun
     },
   };
 }
+
+/** Settles once `run` has no read on its way, such as a page's first, so the next can start. */
+export function readsIdle<F, P>(run: ReadRun<F, P>): Promise<void> {
+  return new Promise((resolve) => {
+    const idle = () => run.status().phase !== "reading";
+    if (idle()) {
+      resolve();
+      return;
+    }
+
+    const stop = run.subscribe(() => {
+      if (idle()) {
+        stop();
+        resolve();
+      }
+    });
+  });
+}

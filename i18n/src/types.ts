@@ -517,6 +517,21 @@ export interface Messages {
   "gift.mystery": string;
   /** Param: {count}, the songs a mystery gift holds. */
   "gift.mysterySongs": string;
+  /** A received gift's title where its giver gave none. */
+  "gift.untitled": string;
+  /** Params: {giver}, the giver's nickname; {time}, when the gift was made. */
+  "gift.offer": string;
+  /** Params: {giver}; {time}. The same for a mystery gift, whose songs show once it is accepted. */
+  "gift.offerMystery": string;
+  "gift.accept": string;
+  /** The gift's songs are in the folder on Hiroba now. */
+  "gift.accepted": string;
+  /** Param: {giver}. The folder history's name for a gift that has no title. */
+  "gift.from": string;
+  /** Param: {songs}, the gift's songs the player's own picker on Hiroba does not offer yet. */
+  "gift.notOffered": string;
+  /** The same for a mystery gift, whose songs stay unnamed. */
+  "gift.notOfferedMystery": string;
   /** The Favourites page's button that starts a gift, and the page's name while one is made. */
   "gift.make": string;
   "gift.new": string;
@@ -529,6 +544,13 @@ export interface Messages {
   "gift.shownLabel": string;
   /** Over the gift's picture as it will be shared. */
   "gift.preview": string;
+  /** The navigation's button that reads a QR code, and the window it opens on a phone. */
+  "scan.button": string;
+  "scan.hint": string;
+  "scan.pick": string;
+  "scan.noCamera": string;
+  "scan.noCode": string;
+  "scan.unknown": string;
   "sort.handle": string;
   "sort.instructions": string;
   "sort.picked": string;

@@ -28,7 +28,7 @@ import type { SystemBack } from "../platform";
 import { NavigationLook } from "../theme/navigation-look";
 import { BackClosersContext, BackModesContext, createBackClosers } from "../ui/back-closers";
 import { MENU_INSET_PX, PAGE_BOTTOM_PX, SAFE_TOP, TOP_BAND_PX } from "../ui/frame-top";
-import { ArrowBackIcon, ArrowForwardIcon, MenuIcon } from "../ui/icons";
+import { ArrowBackIcon, ArrowForwardIcon, MenuIcon, QrCodeScannerIcon } from "../ui/icons";
 import { MenuOpenContext } from "../ui/menu-open";
 import { PipelinesShownContext } from "../ui/pipelines-shown";
 import type { SwipeDirection } from "../ui/swipe-gesture";
@@ -55,6 +55,8 @@ interface NavigationProps {
   readonly i18n: Translator;
   /** Every page, as the navigation lists it. */
   readonly pages: Readonly<Record<Page, NavEntry>>;
+  /** Opens the scanner from beside the app's name; none leaves the panel without it. */
+  readonly onScan?: (() => void) | undefined;
 }
 
 /** The way to the pipelines page from the pages' list, where there is one. */
@@ -73,6 +75,7 @@ export function AppFrame({
   onNavigate,
   i18n,
   pages,
+  onScan,
   wide,
   touchFirst,
   back,
@@ -181,6 +184,7 @@ export function AppFrame({
                 onNavigate={navigate}
                 i18n={i18n}
                 pages={pages}
+                onScan={onScan}
                 touchFirst={touchFirst}
                 footRef={setFoot}
                 toggle={toggle}
@@ -191,6 +195,7 @@ export function AppFrame({
                 onNavigate={navigate}
                 i18n={i18n}
                 pages={pages}
+                onScan={onScan}
                 touchFirst={touchFirst}
                 footRef={setFoot}
                 toggle={toggle}
@@ -249,8 +254,10 @@ function PageList({
   onNavigate,
   i18n,
   pages,
+  onScan,
   toggle,
 }: NavigationProps & { readonly toggle: PipelinesToggle | undefined }) {
+  const scanLabel = i18n.t("scan.button");
   const list = useRef<HTMLUListElement>(null);
   const [place, setPlace] = useState<RowPlace | null>(null);
   // Measured after every render: a label in another language can take two lines.
@@ -261,10 +268,38 @@ function PageList({
   });
   return (
     <>
-      <Box sx={{ px: 3, pt: 2.5, pb: 1.5 }}>
-        <Typography component="p" variant="subtitle2" color="text.secondary" noWrap>
+      <Box
+        sx={{
+          pl: 3,
+          pr: onScan === undefined ? 3 : 1.5,
+          pt: 2.5,
+          pb: 1.5,
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+        }}
+      >
+        <Typography
+          component="p"
+          variant="subtitle2"
+          color="text.secondary"
+          noWrap
+          sx={{ flexGrow: 1, minWidth: 0 }}
+        >
           {i18n.t("app.title")}
         </Typography>
+        {onScan !== undefined && (
+          // Its own row's height: the button reaches into the room over and under the words.
+          <IconButton
+            id="scan"
+            aria-label={scanLabel}
+            title={scanLabel}
+            onClick={onScan}
+            sx={{ my: -1 }}
+          >
+            <QrCodeScannerIcon />
+          </IconButton>
+        )}
       </Box>
       <List ref={list} disablePadding>
         {place !== null && (
@@ -405,6 +440,7 @@ function MenuDrawer({
   onNavigate,
   i18n,
   pages,
+  onScan,
   footRef,
   toggle,
   touchFirst,
@@ -425,6 +461,14 @@ function MenuDrawer({
     setOpen(false);
     onNavigate(next);
   };
+  // The scanner opens over the page, where the menu would stand above it.
+  const scan =
+    onScan === undefined
+      ? undefined
+      : () => {
+          setOpen(false);
+          onScan();
+        };
   return (
     <>
       <Paper
@@ -463,7 +507,14 @@ function MenuDrawer({
           }}
         >
           <Box component="nav" aria-label={label}>
-            <PageList page={page} onNavigate={pick} i18n={i18n} pages={pages} toggle={toggle} />
+            <PageList
+              page={page}
+              onNavigate={pick}
+              i18n={i18n}
+              pages={pages}
+              onScan={scan}
+              toggle={toggle}
+            />
           </Box>
           <Foot footRef={footRef} toggle={toggle} touchFirst={touchFirst} i18n={i18n} />
         </Drawer>

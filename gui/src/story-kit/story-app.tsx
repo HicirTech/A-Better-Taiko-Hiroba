@@ -10,6 +10,7 @@ import { PipelinesPage } from "../pipelines-page/pipelines-page";
 import { AppearanceSection } from "../settings/appearance-section";
 import { LanguageSetting } from "../settings/language-setting";
 import type { HirobaSessionPort } from "../shared/session-port";
+import { STORY_CAMERA } from "./camera";
 import { touchOf, wideOf } from "./devices";
 import {
   appearanceOf,
@@ -39,7 +40,7 @@ export const appOn =
     <StoryApp changes={changes} first={first} globals={globals} />
   );
 
-/** The whole window as the shell draws it, on a story port; Android gets Back and Toast. */
+/** The whole window as the shell draws it, on a story port; Android gets Back, Toast and camera. */
 export function StoryApp({
   changes,
   first,
@@ -55,6 +56,8 @@ export function StoryApp({
   const i18n = i18nOf(globals);
   const android = touchOf(globals);
   const [page, navigate] = useShownPage(() => first);
+  const [signedIn, setSignedIn] = useState(false);
+  const [scanning, setScanning] = useState(false);
   return (
     <AppFrame
       page={page}
@@ -63,6 +66,7 @@ export function StoryApp({
       wide={wideOf(globals)}
       touchFirst={touchOf(globals)}
       pages={PAGE_REGISTRY}
+      onScan={signedIn ? () => setScanning(true) : undefined}
       {...(android ? { back: STORY_BACK } : {})}
       pipelines={<PipelinesPage port={port} i18n={i18n} />}
     >
@@ -82,7 +86,10 @@ export function StoryApp({
           />
         }
         appearance={<AppearanceSection {...appearanceOf(globals)} i18n={i18n} />}
-        {...(android ? { toast: STORY_TOAST } : {})}
+        scanning={scanning}
+        onScanned={() => setScanning(false)}
+        onSignedIn={setSignedIn}
+        {...(android ? { toast: STORY_TOAST, camera: STORY_CAMERA } : {})}
       />
     </AppFrame>
   );

@@ -3,12 +3,13 @@ import { useCallback, useReducer, useRef } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
 import { afterRefresh } from "../shared/reads/after-refresh";
-import type { ReadStatus } from "../shared/reads/read-run";
+import { type ReadStatus, readsIdle } from "../shared/reads/read-run";
 import { useReadRun } from "../shared/reads/use-read-run";
 import type {
   FavoriteSongState,
   FolderHistoryEntry,
   FolderNames,
+  FolderState,
   HirobaSessionPort,
   ReadFailure,
   WriteOutcomeView,
@@ -51,6 +52,11 @@ export interface FavoritesEditor {
   readonly history: readonly FolderHistoryEntry[];
   /** Writes the folder with these songs in its first slots and the rest empty; `names` are kept. */
   applySet(songs: readonly string[], names: FolderNames): Promise<void>;
+  /** The same from any page, reading the folder again first; how the write ended. */
+  replaceFolder(
+    songs: readonly string[],
+    names: (replaced: FolderState) => FolderNames,
+  ): Promise<WriteOutcomeView<FolderState> | null>;
   /** Drops the draft and the last write's notice when the page is left; what was read stays. */
   dropEdits(): void;
   /** Drops the last write's notice once the window has said it. */
@@ -109,14 +115,14 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     kind: SavingWrite,
     send: () => Promise<WriteOutcomeView<S>>,
     ended: (outcome: WriteOutcomeView<S>) => FavoritesAction,
-  ) => {
+  ): Promise<WriteOutcomeView<S> | null> => {
     writing.current = true;
     const mine = generation.current;
     dispatch({ type: "saveStarted", write: kind });
     const outcome = await sendHeld(lane, send);
     writing.current = false;
     if (mine !== generation.current) {
-      return;
+      return null;
     }
 
     dispatch(ended(outcome));
@@ -125,6 +131,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
       forget();
       onSessionGone(gone);
     }
+    return outcome;
   };
 
   const saveSong = async () => {
@@ -154,6 +161,34 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     void refreshHistory();
   };
 
+  const replaceFolder = async (
+    songs: readonly string[],
+    names: (replaced: FolderState) => FolderNames,
+  ) => {
+    if (writing.current) {
+      return null;
+    }
+
+    // Read now, whatever was read before: the folder is replaced as it stands on Hiroba, and a read
+    // on its way, such as the Favourites page's first, ends before this one starts.
+    await readsIdle(reads);
+    dispatch({ type: "readStarted" });
+    const read = await reads.run(() => port.openFavorites(), {
+      keep: (result) => dispatch({ type: "readEnded", result }),
+    });
+    if (read === null || !read.ok) {
+      return null;
+    }
+    const expected = read.value.folder.state;
+    const outcome = await write(
+      "folder",
+      () => port.changeFolder({ expected, target: songs, names: names(expected) }),
+      (ended) => ({ type: "folderWritten", outcome: ended }),
+    );
+    void refreshHistory();
+    return outcome;
+  };
+
   return {
     step,
     status,
@@ -167,6 +202,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     resetSong: () => dispatch({ type: "draftDropped" }),
     history,
     applySet,
+    replaceFolder,
     dropEdits,
     closeNotice: () => dispatch({ type: "noticeClosed" }),
   };

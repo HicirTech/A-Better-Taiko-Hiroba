@@ -22,6 +22,7 @@ const LAYERS: readonly (readonly string[])[] = [
     "pipelines-page",
     "rating",
     "read-again",
+    "scan",
     "scores",
     "settings",
     "song-search",

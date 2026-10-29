@@ -48,6 +48,8 @@ export function Shell({
     onShown(i18n);
   }, [i18n, onShown]);
   const [page, navigate] = useShownPage(keptPage, keepPage);
+  const [signedIn, setSignedIn] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const wide = useWideWindow();
   const touchFirst = useTouchFirst();
   // Settings' choices, for the page drawn here where no app runs.
@@ -76,6 +78,7 @@ export function Shell({
       wide={wide}
       touchFirst={touchFirst}
       pages={PAGE_REGISTRY}
+      onScan={signedIn ? () => setScanning(true) : undefined}
       {...(platform?.shell === "android" ? { back: platform.back } : {})}
       {...(platform !== null
         ? { pipelines: <PipelinesPage port={platform.port} i18n={i18n} /> }
@@ -91,7 +94,12 @@ export function Shell({
           onNavigate={navigate}
           language={language}
           appearance={appearanceSection}
-          {...(platform.shell === "android" ? { toast: platform.toast } : {})}
+          scanning={scanning}
+          onScanned={() => setScanning(false)}
+          onSignedIn={setSignedIn}
+          {...(platform.shell === "android"
+            ? { toast: platform.toast, camera: platform.camera }
+            : {})}
         />
       ) : page === "settings" ? (
         <SettingsPage
