@@ -1,14 +1,12 @@
 import type { Translator } from "@abth/i18n";
-import { Box, Button, IconButton, Stack } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
-import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
-import { CloseIcon } from "../ui/icons";
-import { CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
+import { SetSongs } from "../songs/set-songs";
+import type { DetailsOpener } from "../songs/song-look-row";
+import { SectionCard } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
-import { SortableList } from "./sortable-list";
-
-const SORTED_ROWS = { gap: 0, ...TO_THE_CARD_SIDES } as const;
+import { EditedSongs } from "./edited-songs";
 
 export interface SetViewProps {
   /** The songs as shown: the set's own, or, while it is edited, the edits. */
@@ -35,7 +33,7 @@ export interface SetViewProps {
 
 /** A set: shown with Edit, edited with Add songs, Reset and Save; the page's bar syncs it. */
 export function SetView({
-  songs: songNos,
+  songs,
   look,
   shownDifficulty,
   i18n,
@@ -51,7 +49,6 @@ export function SetView({
   onSave,
 }: SetViewProps) {
   const { t } = i18n;
-  const songs = songNos.map((songNo) => ({ key: songNo, name: look(songNo).name }));
   return (
     <SectionCard id="favorite-set-view" data-editing={editing}>
       <Stack spacing={1.5} useFlexGap>
@@ -80,44 +77,20 @@ export function SetView({
         {songs.length === 0 ? (
           <StatusNote id="favorite-set-empty">{t("favorites.setEmpty")}</StatusNote>
         ) : editing ? (
-          <SortableList
-            id="favorite-set-songs"
-            items={songs}
-            byLongPress={byLongPress}
+          <EditedSongs
+            id="favorite-set"
+            songs={songs}
+            look={look}
+            shownDifficulty={shownDifficulty}
             i18n={i18n}
+            byLongPress={byLongPress}
+            onRemove={onRemoveSong}
             onMove={onMoveSong}
-            sx={SORTED_ROWS}
-            renderItem={(songNo, handle) => {
-              const shown = look(songNo);
-              const label = t("favorites.removeSong", { name: shown.name });
-              return (
-                <SongLookRow
-                  id={`favorite-set-song-${songNo}`}
-                  component="div"
-                  look={shown}
-                  shownDifficulty={shownDifficulty}
-                  i18n={i18n}
-                  scrolling
-                  start={handle}
-                  end={
-                    <IconButton
-                      size="small"
-                      aria-label={label}
-                      title={label}
-                      data-song-no={songNo}
-                      onClick={() => onRemoveSong(songNo)}
-                    >
-                      <CloseIcon fontSize="small" />
-                    </IconButton>
-                  }
-                />
-              );
-            }}
           />
         ) : (
           <SetSongs
             id="favorite-set"
-            songs={songNos}
+            songs={songs}
             look={look}
             shownDifficulty={shownDifficulty}
             i18n={i18n}
@@ -126,35 +99,5 @@ export function SetView({
         )}
       </Stack>
     </SectionCard>
-  );
-}
-
-/** Songs as a set shows them while it is not edited, a press on one opening its details. */
-export function SetSongs({
-  id,
-  songs,
-  look,
-  shownDifficulty,
-  i18n,
-  openDetails,
-}: Pick<SetViewProps, "songs" | "look" | "shownDifficulty" | "i18n" | "openDetails"> & {
-  /** Gives `<id>-songs` to the list and `<id>-song-<song number>` to each row. */
-  readonly id: string;
-}) {
-  return (
-    <Box component="ul" id={`${id}-songs`} sx={CARD_ROWS}>
-      {songs.map((songNo) => (
-        <SongLookRow
-          key={songNo}
-          id={`${id}-song-${songNo}`}
-          data-key={songNo}
-          look={look(songNo)}
-          shownDifficulty={shownDifficulty}
-          i18n={i18n}
-          scrolling
-          onOpen={openDetails(songNo)}
-        />
-      ))}
-    </Box>
   );
 }

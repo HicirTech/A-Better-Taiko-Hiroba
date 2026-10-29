@@ -18,6 +18,7 @@ import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty"
 import { rememberedSongs, resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SetNameDialog } from "../songs/set-name-dialog";
+import { SetSongs } from "../songs/set-songs";
 import { SongDetails } from "../songs/song-details";
 import type { DetailsOpener } from "../songs/song-look-row";
 import { useBackLeaves } from "../ui/back-closers";
@@ -33,7 +34,7 @@ import { shownFavoritesOf } from "./favorites-state";
 import { FolderCard } from "./folder-card";
 import { FolderHistoryDialog } from "./folder-history-dialog";
 import type { PickableState } from "./pickable-songs";
-import { SetSongs, SetView } from "./set-view";
+import { SetView } from "./set-view";
 import { SetsDrawer } from "./sets-drawer";
 import { SongCard } from "./song-card";
 import { SongPicker } from "./song-picker";
