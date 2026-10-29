@@ -34,6 +34,7 @@ export function ProfileSnapshot({
   readonly lane: PictureLane;
   readonly i18n: Translator;
 }) {
+  const { t, dateTime } = i18n;
   const plateBox = useRef<HTMLDivElement>(null);
   const portraitBox = useRef<HTMLSpanElement>(null);
   const panelBox = useRef<HTMLDivElement>(null);
@@ -44,7 +45,11 @@ export function ProfileSnapshot({
     order: 2,
   });
   return (
-    <SnapshotFrame id="profile-snapshot" readAt={profile.fetchedAt} i18n={i18n}>
+    <SnapshotFrame
+      id="profile-snapshot"
+      when={t("profile.fetchedAt", { time: dateTime(profile.fetchedAt) })}
+      i18n={i18n}
+    >
       <Box sx={HEAD}>
         <Box sx={HIROBA_BLOCK}>
           <MyDonTile id="profile-snapshot-my-don" ref={portraitBox} answer={myDon} i18n={i18n} />

@@ -63,7 +63,7 @@ export function RatingSnapshot({
   readAt,
   i18n,
 }: RatingSnapshotProps) {
-  const { t, locale } = i18n;
+  const { t, locale, dateTime } = i18n;
   const plateBox = useRef<HTMLDivElement>(null);
   const portraitBox = useRef<HTMLSpanElement>(null);
   const plate = usePicture(lane, PLATE, plateBox, { ...IN_THE_WINDOW, order: 0 });
@@ -89,7 +89,7 @@ export function RatingSnapshot({
       id="rating-snapshot"
       title={t(RATING_SYSTEM_NAME[rated.system])}
       width={RATING_SNAPSHOT_WIDTH_PX}
-      readAt={readAt}
+      when={t("profile.fetchedAt", { time: dateTime(readAt) })}
       i18n={i18n}
     >
       <Box sx={HEAD}>
