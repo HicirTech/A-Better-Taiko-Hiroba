@@ -44,6 +44,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [x] Speak English, Japanese, Simplified Chinese and Traditional Chinese
 - [x] Wear the default colours or Hiroba's own, light, dark or as your system is
 - [x] Tell you when a newer version is out
+- [x] Show each page's tips the first time it opens: bubbles that point at what nothing on screen shows, each told once on a device, and after an update only what it brought
 - [ ] Upload your scores to Kinoko
 
 ## Honest notes
