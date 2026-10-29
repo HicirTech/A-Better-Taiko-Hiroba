@@ -270,6 +270,53 @@ export const ja: Messages = {
   "pictures.readAgain.done": "ひろばの画像を読み込み直しました。",
   "pictures.readAgain.failed":
     "読み込み直せなかった画像があります。元の画像のままです。もう一度お試しください。",
+  "tips.label": "ヒント",
+  "tips.step": "{step} / {count}",
+  "tips.next": "次へ",
+  "tips.done": "わかった",
+  "tips.skip": "ヒントをスキップ",
+  "tips.app.menuSwipe":
+    "画面の左側から右へスワイプするとメニューが開きます。メニューを開いたまま、もう一度右へスワイプすると「パイプライン」ページが開きます。",
+  "tips.app.readAgainKeys": "F5 か Ctrl+R（Mac では ⌘R）でページを読み込み直します。",
+  "tips.app.scan": "アプリ名の右のボタンで、ギフトのQRコードを読み取ります。",
+  "tips.overview.portrait.touch":
+    "マイどんを長押しするときせかえ、ネームプレートを長押しするとドンだーネームと称号のページが開きます。",
+  "tips.overview.portrait.mouse":
+    "マイどんをクリックするときせかえ、ネームプレートをクリックするとドンだーネームと称号のページが開きます。",
+  "tips.overview.readAgain.touch":
+    "下に引くと読み込み直します。引いたまま6秒待つと、このページの画像をひろばから読み込み直します。",
+  "tips.overview.readAgain.mouse":
+    "この矢印をクリックすると読み込み直します。6秒長押しすると、このページの画像をひろばから読み込み直します。",
+  "tips.overview.songSearch":
+    "曲検索を開いているときは、同じ6秒の操作で taiko.wiki の曲リストを読み込み直します。追加されたばかりの曲もこれで見つかります。",
+  "tips.overview.share": "このボタンで、プロフィールを画像にして共有できます。",
+  "tips.scores.readEvery.touch": "下に引いたまま6秒待つと、すべてのスコアを読み込み直します。",
+  "tips.scores.readEvery.mouse": "この矢印を6秒長押しすると、すべてのスコアを読み込み直します。",
+  "tips.scores.row.touch": "行を長押しすると、その曲をセットに追加できます。",
+  "tips.scores.row.mouse": "行を右クリックすると、その曲をセットに追加できます。",
+  "tips.scores.filters": "絞り込みの列は左右にスライドできます。",
+  "tips.rating.system": "ここで OurTaiko V1 と V2 を切り替えます。",
+  "tips.rating.share": "このボタンで、レーティングを画像にして共有できます。",
+  "tips.knowYourself.cards":
+    "カードを開くと、まだクリアしていない譜面が並びます。その曲をセットに追加することもできます。",
+  "tips.costume.readAgain.touch":
+    "下に引いたまま6秒待つと、アイテムの画像をひろばから読み込み直します。",
+  "tips.costume.readAgain.mouse":
+    "この矢印を6秒長押しすると、アイテムの画像をひろばから読み込み直します。",
+  "tips.costume.history": "これまでのきせかえは、ここに残っています。",
+  "tips.nameTitle.readAgain.touch":
+    "下に引いたまま6秒待つと、ネームプレートをひろばから読み込み直します。",
+  "tips.nameTitle.readAgain.mouse":
+    "この矢印を6秒長押しすると、ネームプレートをひろばから読み込み直します。",
+  "tips.favorites.setsDrawer": "画面の右端から左へスワイプすると、セットが開きます。",
+  "tips.favorites.setMenu.touch": "セットの一覧で長押しすると、名前の変更や削除ができます。",
+  "tips.favorites.setMenu.mouse": "セットの一覧で右クリックすると、名前の変更や削除ができます。",
+  "tips.favorites.reorder.touch":
+    "セットの編集中は、曲を長押ししてドラッグすると並べ替えられます。",
+  "tips.favorites.reorder.mouse":
+    "セットの編集中は、曲のハンドルをドラッグすると並べ替えられます。",
+  "tips.favorites.history": "これまでに同期したフォルダは、ここに残っています。",
+  "tips.favorites.gift": "このボタンで、ほかのプレイヤーに贈る曲のギフトを作ります。",
   "scoreRank.2": "白粋",
   "scoreRank.3": "銅粋",
   "scoreRank.4": "銀粋",

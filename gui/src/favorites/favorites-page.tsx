@@ -1,6 +1,14 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
-import { type ReactNode, useCallback, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemShare } from "../platform";
 import { GIFT_SONG_LIMIT } from "../shared/gifts/gift-code";
@@ -59,6 +67,8 @@ interface Naming {
 
 export interface FavoritesPageProps {
   readonly favorites: FavoritesEditor;
+  /** What a tip told now opens: the sets drawer, or the first set being edited. */
+  readonly tipScene?: "sets" | "editedSet" | null;
   readonly catalogue: SongCatalogue;
   /** A song's details read its charts' pictures here, and Hiroba's difficulty icons from `lane`. */
   readonly port: Pick<
@@ -98,6 +108,7 @@ export interface FavoritesPageProps {
 /** The page: Hiroba's お気に入り and 大好きな曲, and the sets kept on the device. */
 export function FavoritesPage({
   favorites,
+  tipScene = null,
   catalogue,
   port,
   lane,
@@ -228,6 +239,17 @@ export function FavoritesPage({
   useBackLeaves(putBack !== null, () => setPutBack(null));
   useBackLeaves(gift !== null, () => setGift(null));
   useBackLeaves(editing, leaveEditing);
+  // A tip shows what it tells, then leaves the page as it opened: the folder, the drawer shut.
+  const showFor = useEffectEvent((scene: "sets" | "editedSet" | null) => {
+    const first = sets[0];
+    setDrawerOpen(scene === "sets");
+    if (scene === "editedSet" && first !== undefined) {
+      showSet(first.id, true);
+    } else if (scene === null) {
+      showSet(null);
+    }
+  });
+  useEffect(() => showFor(tipScene), [tipScene]);
   const named = (name: string) => {
     if (naming !== null) {
       showSet(keptSets.add(name, naming.songs), naming.editing);

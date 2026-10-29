@@ -11,9 +11,12 @@ import { ShareRows } from "./share-rows";
 export function CrownsItem({
   charts,
   parts,
+  opened = false,
 }: {
   readonly charts: readonly KnownChart[];
   readonly parts: PageParts;
+  /** Held open, as the tip on the page's cards does. */
+  readonly opened?: boolean;
 }) {
   const { i18n, lane, toast, openedIn, toggleIn, gapList } = parts;
   const { t } = i18n;
@@ -24,6 +27,7 @@ export function CrownsItem({
   return (
     <FoldCard
       id="know-crowns"
+      opened={opened}
       title={t("know.ladder")}
       summary={wall === null ? t("know.noWall") : t("know.wall", { stars: wall })}
       details={() => (

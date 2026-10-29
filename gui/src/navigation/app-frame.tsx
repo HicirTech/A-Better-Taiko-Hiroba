@@ -29,7 +29,7 @@ import { NavigationLook } from "../theme/navigation-look";
 import { BackClosersContext, BackModesContext, createBackClosers } from "../ui/back-closers";
 import { MENU_INSET_PX, PAGE_BOTTOM_PX, SAFE_TOP, TOP_BAND_PX } from "../ui/frame-top";
 import { ArrowBackIcon, ArrowForwardIcon, MenuIcon, QrCodeScannerIcon } from "../ui/icons";
-import { MenuOpenContext } from "../ui/menu-open";
+import { MenuOpenContext, MenuOpenerContext } from "../ui/menu-open";
 import { PipelinesShownContext } from "../ui/pipelines-shown";
 import type { SwipeDirection } from "../ui/swipe-gesture";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
@@ -175,58 +175,60 @@ export function AppFrame({
   return (
     <BackClosersContext value={closers}>
       <MenuOpenContext value={menuOpen}>
-        <WindowMoveStyles />
-        <Box sx={{ display: "flex", minHeight: "100vh" }}>
-          {navigation &&
-            (wide ? (
-              <SidePanel
-                page={page}
-                onNavigate={navigate}
-                i18n={i18n}
-                pages={pages}
-                onScan={onScan}
-                touchFirst={touchFirst}
-                footRef={setFoot}
-                toggle={toggle}
-              />
-            ) : (
-              <MenuDrawer
-                page={page}
-                onNavigate={navigate}
-                i18n={i18n}
-                pages={pages}
-                onScan={onScan}
-                touchFirst={touchFirst}
-                footRef={setFoot}
-                toggle={toggle}
-                open={menuOpen}
-                onOpenChange={setMenuOpen}
-              />
-            ))}
-          <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Container
-              maxWidth={wider ? "lg" : "md"}
-              sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
-            >
-              <Typography component="h1" sx={VISUALLY_HIDDEN}>
-                {i18n.t(pipelinesShown ? "nav.pipelines" : pages[page].label)}
-              </Typography>
-              {/* Kept, only hidden, under the pipelines page: going back reads nothing again. */}
-              <Box hidden={pipelinesShown}>
-                <WiderFrameContext value={setWider}>
-                  <FrameNavigationContext value={setNavigation}>
-                    <NavFootContext value={foot}>
-                      <PipelinesShownContext value={pipelinesShown}>
-                        <BackModesContext value={modes}>{children}</BackModesContext>
-                      </PipelinesShownContext>
-                    </NavFootContext>
-                  </FrameNavigationContext>
-                </WiderFrameContext>
-              </Box>
-              {pipelines !== undefined && pipelinesShown && <Box>{pipelines}</Box>}
-            </Container>
+        <MenuOpenerContext value={setMenuOpen}>
+          <WindowMoveStyles />
+          <Box sx={{ display: "flex", minHeight: "100vh" }}>
+            {navigation &&
+              (wide ? (
+                <SidePanel
+                  page={page}
+                  onNavigate={navigate}
+                  i18n={i18n}
+                  pages={pages}
+                  onScan={onScan}
+                  touchFirst={touchFirst}
+                  footRef={setFoot}
+                  toggle={toggle}
+                />
+              ) : (
+                <MenuDrawer
+                  page={page}
+                  onNavigate={navigate}
+                  i18n={i18n}
+                  pages={pages}
+                  onScan={onScan}
+                  touchFirst={touchFirst}
+                  footRef={setFoot}
+                  toggle={toggle}
+                  open={menuOpen}
+                  onOpenChange={setMenuOpen}
+                />
+              ))}
+            <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
+              <Container
+                maxWidth={wider ? "lg" : "md"}
+                sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
+              >
+                <Typography component="h1" sx={VISUALLY_HIDDEN}>
+                  {i18n.t(pipelinesShown ? "nav.pipelines" : pages[page].label)}
+                </Typography>
+                {/* Kept, only hidden, under the pipelines page: going back reads nothing again. */}
+                <Box hidden={pipelinesShown}>
+                  <WiderFrameContext value={setWider}>
+                    <FrameNavigationContext value={setNavigation}>
+                      <NavFootContext value={foot}>
+                        <PipelinesShownContext value={pipelinesShown}>
+                          <BackModesContext value={modes}>{children}</BackModesContext>
+                        </PipelinesShownContext>
+                      </NavFootContext>
+                    </FrameNavigationContext>
+                  </WiderFrameContext>
+                </Box>
+                {pipelines !== undefined && pipelinesShown && <Box>{pipelines}</Box>}
+              </Container>
+            </Box>
           </Box>
-        </Box>
+        </MenuOpenerContext>
       </MenuOpenContext>
     </BackClosersContext>
   );

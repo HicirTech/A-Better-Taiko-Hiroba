@@ -42,6 +42,7 @@ import { RanksItem } from "./ranks-item";
 /** Where the player stands, from the kept scores and taiko.wiki's list; asks Hiroba nothing. */
 export function KnowYourselfPage({
   scores,
+  cardOpened = false,
   listed,
   catalogue,
   lane,
@@ -53,6 +54,8 @@ export function KnowYourselfPage({
   i18n,
 }: {
   readonly scores: ScoresState;
+  /** The first card held open while the tip on the cards tells of them. */
+  readonly cardOpened?: boolean;
   /** Every chart the lists name, held by the window across visits. */
   readonly listed: ListedChartsView | null;
   /** taiko.wiki's song list: each chart's stars, notes and tempo, and the names. */
@@ -192,7 +195,7 @@ export function KnowYourselfPage({
             />
           </Box>
           <Stack spacing={CARD_GAP}>
-            <CrownsItem charts={here} parts={parts} />
+            <CrownsItem charts={here} parts={parts} opened={cardOpened} />
             <RanksItem charts={here} parts={parts} />
             <BandItem view="perSecond" charts={here} parts={parts} />
             <BandItem view="bpm" charts={here} parts={parts} />

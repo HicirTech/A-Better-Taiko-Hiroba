@@ -23,6 +23,7 @@ export function FoldCard({
   details,
   level = 2,
   end,
+  opened = false,
 }: {
   readonly id: string;
   readonly title: string;
@@ -34,8 +35,11 @@ export function FoldCard({
   readonly level?: 2 | 3;
   /** Beside the words, before the fold's arrow: a mark such as a chip. */
   readonly end?: ReactNode;
+  /** Held open from outside, as a tip that tells of the card does. */
+  readonly opened?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [unfolded, setOpen] = useState(false);
+  const open = unfolded || opened;
   const titleId = `${id}-title`;
   const summaryId = `${id}-summary`;
   // The heading holds the title alone: inside the fold's button, the title alone names the button.
