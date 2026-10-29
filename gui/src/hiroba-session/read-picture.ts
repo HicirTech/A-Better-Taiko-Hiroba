@@ -112,7 +112,7 @@ export interface PictureReaderOptions {
 
 export interface PictureReader {
   /** Checks `want` again (Android has no process boundary); from the store, or one shared GET. */
-  read(want: unknown): Promise<Result<PictureView, PictureFailure>>;
+  read(want: unknown, again?: boolean): Promise<Result<PictureView, PictureFailure>>;
   /** After a good read of my page: keeps the bare plates fetched this session as `owner`'s. */
   confirm(owner: string): Promise<void>;
   /** A read of my page is going out. After the session's first, the My Don portrait is fetched
@@ -404,9 +404,19 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     return before === null ? failure : ok(before);
   };
 
+  // Read again, a picture that does not come is a failure still, the one kept shown in its place.
+  const keptBeside = async (
+    request: PictureRequest,
+    failure: Result<never, PictureFailure>,
+  ): Promise<Result<PictureView, PictureFailure>> => {
+    const before = await kept(request);
+    return before === null || failure.ok ? failure : err({ ...failure.error, kept: before });
+  };
+
   const fetchPicture = async (
     want: PictureWant,
     since: number,
+    again: boolean,
   ): Promise<Result<PictureView, PictureFailure>> => {
     const gap = Math.max(0, lastFetchEnded + limits.minGapMs - clock.now());
     await clock.sleep(gap + random() * limits.jitterMs);
@@ -425,7 +435,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return failed(want.kind, request);
       }
       const stale = isStale(request);
-      const view = stale ? null : await kept(request);
+      const view = stale || again ? null : await kept(request);
       if (view !== null) {
         budgetUsed -= 1;
         return ok(view);
@@ -436,7 +446,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         if (stale && since === generation) {
           myDonKeptAsOf = Math.max(myDonKeptAsOf, asOf);
         }
-        return orKept(stale, request, failure);
+        return again ? keptBeside(request, failure) : orKept(stale, request, failure);
       };
       const signal = limits.timeoutMs === null ? undefined : AbortSignal.timeout(limits.timeoutMs);
       const sent = await transport.send(
@@ -474,7 +484,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   };
 
   return {
-    async read(want) {
+    async read(want, again = false) {
       if (!isPictureWant(want)) {
         return err({ code: "picture=refused" });
       }
@@ -487,20 +497,22 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return failed(want.kind, request);
       }
       const stale = isStale(request);
-      const view = stale ? null : await kept(request);
+      const view = stale || again ? null : await kept(request);
       if (view !== null) {
         return ok(view);
       }
-      const id = idOf(request.key);
+      // A fetch on its way may still answer from the store: one read again shares only its own.
+      const id = `${again ? "again|" : ""}${idOf(request.key)}`;
       const onItsWay = inFlight.get(id);
       if (onItsWay !== undefined) {
         return onItsWay;
       }
       if (budgetUsed >= limits.budget) {
-        return orKept(stale, request, failed(want.kind, "budgetSpent"));
+        const spent = failed(want.kind, "budgetSpent");
+        return again ? keptBeside(request, spent) : orKept(stale, request, spent);
       }
       budgetUsed += 1;
-      const fetching = fetchPicture(want, generation).finally(() => {
+      const fetching = fetchPicture(want, generation, again).finally(() => {
         if (inFlight.get(id) === fetching) {
           inFlight.delete(id);
         }

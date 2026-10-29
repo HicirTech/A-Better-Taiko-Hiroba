@@ -253,6 +253,13 @@ export const zhHant: Messages = {
   "dan.19": "達人",
   "profile.myDonAlt": "你的小咚，由廣場繪製",
   "pictures.loading": "正在載入廣場的圖片…",
+  "pictures.readAgain.title": "重新讀取圖片？",
+  "pictures.readAgain.body":
+    "廣場的圖片會一直留在這部裝置上。這會從廣場重新讀取本頁的圖片，讀不到的圖片保持原樣。",
+  "pictures.readAgain.cancel": "取消",
+  "pictures.readAgain.confirm": "重新讀取",
+  "pictures.readAgain.done": "已重新讀取廣場的圖片。",
+  "pictures.readAgain.failed": "有些圖片未能重新讀取，保持原樣，請重試。",
   "scoreRank.2": "白粹",
   "scoreRank.3": "銅粹",
   "scoreRank.4": "銀粹",

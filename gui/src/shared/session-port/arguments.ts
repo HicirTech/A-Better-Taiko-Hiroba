@@ -206,7 +206,9 @@ export function isPictureWant(value: unknown): value is PictureWant {
   );
 }
 
-const pictureWant: ArgumentCheck = (args) => args.length === 1 && isPictureWant(args[0]);
+const pictureWant: ArgumentCheck = (args) =>
+  (args.length === 1 || (args.length === 2 && typeof args[1] === "boolean")) &&
+  isPictureWant(args[0]);
 
 const profileRead: ArgumentCheck = (args) =>
   args.length === 0 ||

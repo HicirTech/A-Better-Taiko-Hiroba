@@ -261,6 +261,14 @@ export const en: Messages = {
   "dan.19": "Tatsujin",
   "profile.myDonAlt": "Your My Don, as Hiroba draws it",
   "pictures.loading": "Loading Hiroba's picture…",
+  "pictures.readAgain.title": "Read the pictures again?",
+  "pictures.readAgain.body":
+    "Hiroba's pictures are kept on this device for good. This reads the pictures on this page from Hiroba again; any that cannot be read stay as they are.",
+  "pictures.readAgain.cancel": "Cancel",
+  "pictures.readAgain.confirm": "Read again",
+  "pictures.readAgain.done": "Hiroba's pictures were read again.",
+  "pictures.readAgain.failed":
+    "Some pictures could not be read again and stay as they were. Please try again.",
   "scoreRank.2": "White Iki",
   "scoreRank.3": "Bronze Iki",
   "scoreRank.4": "Silver Iki",

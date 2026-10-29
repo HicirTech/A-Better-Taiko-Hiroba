@@ -4,6 +4,7 @@ import { CostumePage, CostumePageSkeleton } from "../my-page/costume-page";
 import { NameTitlePage } from "../name-title/name-title-page";
 import type { Page } from "../navigation/pages";
 import { RatingPage } from "../rating";
+import { ReadPicturesDialog } from "../read-again/read-pictures-dialog";
 import { ReadEveryDialog } from "../scores/read-every-dialog";
 import { ScoresPage } from "../scores/scores-page";
 import { SettingsPage } from "../settings/settings-page";
@@ -35,6 +36,10 @@ import {
 const scoresProgress = (data: PageData) =>
   scoresRead(data) ? scoresReadingProgress(data.i18n, data.scores.progress, null) : null;
 
+const askPictures = ({ i18n }: PageData, open: boolean, onAnswer: (confirmed: boolean) => void) => (
+  <ReadPicturesDialog open={open} i18n={i18n} onAnswer={onAnswer} />
+);
+
 /** Settings' account section: signed in, signed out, or a read or a write under way. */
 function accountOf({ session, writing }: PageData) {
   const { screen, myPage } = session;
@@ -59,6 +64,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     ...PAGE_MODELS.overview,
     icon: <HomeIcon />,
     skeleton: OverviewSkeleton,
+    askEvery: askPictures,
     draw: (data) => <OverviewPage data={data} />,
   },
   scores: {
@@ -134,6 +140,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     icon: <CheckroomIcon />,
     skeleton: CostumePageSkeleton,
     wider: true,
+    askEvery: askPictures,
     draw: (data) => (
       <CostumePage
         editor={data.editor}
@@ -149,6 +156,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     ...PAGE_MODELS.nameTitle,
     icon: <EditIcon />,
     skeleton: NameTitleSkeleton,
+    askEvery: askPictures,
     draw: (data) => {
       const { screen } = data.session;
       return (

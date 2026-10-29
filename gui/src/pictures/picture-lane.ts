@@ -21,9 +21,20 @@ export const PICTURE_DWELL_MS = 150;
 /** Dwells ending within this of the first end with it, so pictures go in screen order. */
 export const PICTURE_TOGETHER_MS = 16;
 
+/** Time the pictures on screen take to ask again, once a read again has dropped them. */
+const ASKED_AGAIN_WITHIN_MS = 300;
+
+/** How a read again ended: whether a picture on screen kept the old one, Hiroba's not coming. */
+export interface ReadAgainEnded {
+  readonly failed: boolean;
+}
+
 export interface PictureLaneOptions {
-  /** Never rejects: the platform's port answers a call that failed with a failure. */
-  readonly load: (want: PictureWant) => Promise<Result<PictureView, PictureFailure>>;
+  /** Never rejects: a call that failed answers a failure. `again` asks Hiroba, not the device. */
+  readonly load: (
+    want: PictureWant,
+    again: boolean,
+  ) => Promise<Result<PictureView, PictureFailure>>;
   /** The most pictures on their way at once. */
   readonly atOnce: number;
   readonly dwellMs?: number;
@@ -49,6 +60,10 @@ export interface PictureLane {
   forgetFailures(kind?: PictureWant["kind"]): void;
   /** Marks pictures of `kind` as possibly changed: asked for again, the old one shown meanwhile. */
   renew(kind: PictureWant["kind"]): void;
+  /** Drops pictures of `kinds`, each then asked of Hiroba once more, not the device, as shown. */
+  readAgain(kinds: readonly PictureWant["kind"][]): void;
+  /** How the last read again ended, once the pictures on screen had come; a new one each time. */
+  readAgainEnded(): ReadAgainEnded | null;
   forget(): void;
   /** Calls `listener`, and changes `version`, whenever what `peek` answers may have changed. */
   subscribe(listener: () => void): () => void;
@@ -104,6 +119,23 @@ interface Waiter {
   timer: unknown;
 }
 
+/** A read again under way: its kinds, its pictures on their way, and whether one did not come. */
+interface ReadAgainRound {
+  readonly kinds: Set<PictureWant["kind"]>;
+  sent: number;
+  failed: boolean;
+  /** The pictures on screen have had the time to ask again. */
+  asked: boolean;
+  timer: unknown;
+}
+
+const answerOf = (read: Result<PictureView, PictureFailure>): PictureAnswer => {
+  if (read.ok) {
+    return { view: read.value };
+  }
+  return read.error.kept === undefined ? { failure: read.error.code } : { view: read.error.kept };
+};
+
 /** Loads Hiroba's pictures, `atOnce` at most, only for what has stayed on screen for the dwell. */
 export function createPictureLane(options: PictureLaneOptions): PictureLane {
   const dwellMs = options.dwellMs ?? PICTURE_DWELL_MS;
@@ -114,6 +146,11 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
   const listeners = new Set<() => void>();
   // The keys of the pictures on their way: each is asked for once, however many wait for it.
   const sending = new Set<string>();
+  // The kinds read again from Hiroba, and those of their pictures that came so since.
+  const kindsAgain = new Set<PictureWant["kind"]>();
+  const cameAgain = new Set<string>();
+  let round: ReadAgainRound | null = null;
+  let ended: ReadAgainEnded | null = null;
   let held = 0;
   let seq = 0;
   let changes = 0;
@@ -153,29 +190,54 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
     }
   };
 
+  const dueAgain = (want: PictureWant, key: string) =>
+    kindsAgain.has(want.kind) && !cameAgain.has(key);
+
+  // A read again ends once nothing of its kinds waits to be read so, or is on its way.
+  const endRound = () => {
+    const current = round;
+    const waiting = (waiter: Waiter) =>
+      current?.kinds.has(waiter.want.kind) === true && dueAgain(waiter.want, waiter.key);
+    if (current === null || !current.asked || current.sent > 0 || [...waiters].some(waiting)) {
+      return;
+    }
+    round = null;
+    ended = { failed: current.failed };
+    changed();
+  };
+
   const send = ({ want, key }: Waiter) => {
     sending.add(key);
     const asked = generation;
-    options
-      .load(want)
-      .then(
-        (read): PictureAnswer => (read.ok ? { view: read.value } : { failure: read.error.code }),
-      )
-      .then((answer) => {
-        sending.delete(key);
-        if (asked === generation) {
-          answers.set(key, answer);
-          stale.delete(key);
-          for (const waiter of [...waiters]) {
-            if (waiter.key === key) {
-              timers.clear(waiter.timer);
-              waiters.delete(waiter);
-            }
-          }
-          changed();
+    const again = dueAgain(want, key);
+    const inRound = again && round?.kinds.has(want.kind) === true ? round : null;
+    if (inRound !== null) {
+      inRound.sent += 1;
+    }
+    options.load(want, again).then((read) => {
+      sending.delete(key);
+      if (inRound !== null) {
+        inRound.sent -= 1;
+        inRound.failed ||= !read.ok;
+      }
+      // Sent before its kind was read again: the device's copy, so Hiroba is asked once more.
+      if (asked === generation && (again || !dueAgain(want, key))) {
+        if (again) {
+          cameAgain.add(key);
         }
-        pump();
-      });
+        answers.set(key, answerOf(read));
+        stale.delete(key);
+        for (const waiter of [...waiters]) {
+          if (waiter.key === key) {
+            timers.clear(waiter.timer);
+            waiters.delete(waiter);
+          }
+        }
+        changed();
+      }
+      pump();
+      endRound();
+    });
   };
 
   return {
@@ -209,6 +271,7 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
       return () => {
         if (waiters.delete(waiter)) {
           timers.clear(waiter.timer);
+          endRound();
         }
       };
     },
@@ -247,6 +310,46 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
         changed();
       }
     },
+    readAgain(kinds) {
+      const ofKinds = (key: string) => kinds.some((kind) => isOfKind(key, kind));
+      for (const kind of kinds) {
+        kindsAgain.add(kind);
+      }
+      for (const key of [...cameAgain]) {
+        if (ofKinds(key)) {
+          cameAgain.delete(key);
+        }
+      }
+      for (const key of [...answers.keys()]) {
+        if (ofKinds(key)) {
+          answers.delete(key);
+          stale.delete(key);
+        }
+      }
+      // One under way takes these kinds in, its pictures on their way still its own.
+      const current: ReadAgainRound = round ?? {
+        kinds: new Set(),
+        sent: 0,
+        failed: false,
+        asked: false,
+        timer: null,
+      };
+      for (const kind of kinds) {
+        current.kinds.add(kind);
+      }
+      timers.clear(current.timer);
+      current.asked = false;
+      current.timer = timers.set(() => {
+        current.timer = null;
+        current.asked = true;
+        endRound();
+      }, ASKED_AGAIN_WITHIN_MS);
+      round = current;
+      changed();
+    },
+    readAgainEnded() {
+      return ended;
+    },
     forget() {
       generation += 1;
       for (const waiter of waiters) {
@@ -255,6 +358,11 @@ export function createPictureLane(options: PictureLaneOptions): PictureLane {
       waiters.clear();
       answers.clear();
       stale.clear();
+      kindsAgain.clear();
+      cameAgain.clear();
+      timers.clear(round?.timer);
+      round = null;
+      ended = null;
       changed();
     },
     subscribe(listener) {

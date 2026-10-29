@@ -3,6 +3,7 @@ import * as FolderHistoryDialog from "../../favorites/folder-history-dialog.stor
 import * as SongPicker from "../../favorites/song-picker.stories";
 import * as AddSongsDialog from "../../know-yourself/add-songs-dialog.stories";
 import * as CostumeHistoryDialog from "../../my-page/costume-history-dialog.stories";
+import * as ReadPicturesDialog from "../../read-again/read-pictures-dialog.stories";
 import * as AddToSetDialog from "../../scores/add-to-set-dialog.stories";
 import * as ReadEveryDialog from "../../scores/read-every-dialog.stories";
 import * as ChartViewer from "../../songs/chart-viewer.stories";
@@ -37,6 +38,11 @@ const meta = {
         { name: "SetNameDialog", meta: SetNameDialog.default, story: SetNameDialog.NewSet },
         { name: "UpdateDialog", meta: UpdateDialog.default, story: UpdateDialog.NewVersion },
         { name: "ReadEveryDialog", meta: ReadEveryDialog.default, story: ReadEveryDialog.Asking },
+        {
+          name: "ReadPicturesDialog",
+          meta: ReadPicturesDialog.default,
+          story: ReadPicturesDialog.Asking,
+        },
         {
           name: "CostumeHistoryDialog",
           meta: CostumeHistoryDialog.default,

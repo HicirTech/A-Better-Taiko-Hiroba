@@ -82,7 +82,11 @@ and letting go once its ring is full reads again (a page that has scrolled is th
 back, and pulls nothing). On the Costume and Favourites pages
 the same button, keys and pull read the page's editors again instead of your page; on the
 Nickname & title page they read your page and then the list of titles. On a page that names songs
-they also read taiko.wiki's song list again when the one kept is a day old.
+they also read taiko.wiki's song list again when the one kept is a day old. On the Overview (its
+song search shut), the Costume page and the Nickname & title page, a pull held six seconds, or Read
+again held as long on a computer, asks first, then reads the page's pictures from Hiroba again in
+place of the ones kept, each as it comes into view; a picture that does not come stays as it was,
+and a note at the window's foot says how the pictures on screen came.
 Each of them first asks Hiroba to refresh its copy of your play from the game server, as the ↻ on
 Hiroba's own pages does: my page is read for a fresh form token and the ↻'s post sent once, alone in
 the queue, and a refresh Hiroba refuses stops the read there, with the reason. The read after a

@@ -393,6 +393,16 @@ describe("PORT_ARGUMENTS.readPicture", () => {
     }
   });
 
+  test("takes whether to read the picture again from Hiroba, as a second argument or none", () => {
+    const check = PORT_ARGUMENTS.readPicture;
+    expect(check([{ kind: "myDon" }, true])).toBe(true);
+    expect(check([{ kind: "myDon" }, false])).toBe(true);
+    expect(check([{ kind: "myDon" }, "true"])).toBe(false);
+    expect(check([{ kind: "myDon" }, undefined])).toBe(false);
+    expect(check([{ kind: "myDon" }, true, true])).toBe(false);
+    expect(check([{ kind: "myDon", url: "https://example.test/" }, true])).toBe(false);
+  });
+
   test("refuses a URL, another key, a number out of range or not whole, and any other shape", () => {
     const check = PORT_ARGUMENTS.readPicture;
     const item = { kind: "costumeItem", slot: 1, id: 36 };
