@@ -50,10 +50,20 @@ export interface SnapshotButtonProps {
   readonly i18n: Translator;
   /** The page as a picture, its pictures asked for through `lane`. */
   readonly snapshot: (lane: PictureLane) => ReactNode;
+  /** Shut while there is nothing to make a picture of, such as a gift with no songs. */
+  readonly disabled?: boolean;
 }
 
 /** A page made a picture to share: by the system's share sheet, or a menu of the ways out. */
-export function SnapshotButton({ id, shows, share, lane, i18n, snapshot }: SnapshotButtonProps) {
+export function SnapshotButton({
+  id,
+  shows,
+  share,
+  lane,
+  i18n,
+  snapshot,
+  disabled = false,
+}: SnapshotButtonProps) {
   const { t } = i18n;
   const [menu, setMenu] = useState<HTMLElement | null>(null);
   const [taking, setTaking] = useState<PictureWay | null>(null);
@@ -91,7 +101,7 @@ export function SnapshotButton({ id, shows, share, lane, i18n, snapshot }: Snaps
         aria-haspopup={only === undefined ? "menu" : undefined}
         aria-controls={menu === null ? undefined : `${id}-menu`}
         aria-expanded={menu === null ? undefined : true}
-        disabled={busy}
+        disabled={busy || disabled}
         onClick={(event) => (only === undefined ? setMenu(event.currentTarget) : setTaking(only))}
       >
         {busy ? <CircularProgress size={20} /> : <ShareIcon />}

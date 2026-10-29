@@ -505,6 +505,30 @@ export interface Messages {
   "favorites.replace.title": string;
   "favorites.replace.body": string;
   "favorites.replace.confirm": string;
+  /** A gift's picture: what it is, in its bar's middle. */
+  "gift.picture": string;
+  /** Param: {time}, when the gift was made; at the picture's bar's right. */
+  "gift.givenAt": string;
+  /** The gift's QR code, for screen readers. */
+  "gift.code": string;
+  /** Under the code: what reads it. */
+  "gift.scanHint": string;
+  /** A gift whose songs stay hidden until it is accepted. */
+  "gift.mystery": string;
+  /** Param: {count}, the songs a mystery gift holds. */
+  "gift.mysterySongs": string;
+  /** The Favourites page's button that starts a gift, and the page's name while one is made. */
+  "gift.make": string;
+  "gift.new": string;
+  /** Param: {count}, the most songs a gift holds. */
+  "gift.empty": string;
+  "gift.titleLabel": string;
+  "gift.titleHint": string;
+  /** The choice between showing the songs and a mystery gift, and its name. */
+  "gift.shown": string;
+  "gift.shownLabel": string;
+  /** Over the gift's picture as it will be shared. */
+  "gift.preview": string;
   "sort.handle": string;
   "sort.instructions": string;
   "sort.picked": string;
