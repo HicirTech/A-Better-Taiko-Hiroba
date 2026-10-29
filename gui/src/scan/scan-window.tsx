@@ -1,16 +1,17 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { useCallback, useEffect, useEffectEvent, useRef } from "react";
+import { type MouseEvent, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 
+import { type FramePoint, framePointOf } from "../platform/frame-point";
 import { qrTextIn } from "../shared/gifts/qr-codes";
 import { PhotoLibraryIcon } from "../ui/icons";
 import { LargeModal, type ModalLook } from "../ui/large-modal";
 
 /** How often the camera's view is read for a code. */
 const LOOK_EVERY_MS = 200;
-/** The view's longer side as it is read: a code fills enough of it, and a phone keeps up. */
-const LOOK_PX = 800;
+/** The view's longer side as it is read: most of a 1080p view's detail, and a phone keeps up. */
+const LOOK_PX = 1280;
 const GUIDE = "min(70vw, 70vh, 320px)";
 const OVER_THE_VIEW = { color: "common.white", textAlign: "center" } as const;
 // A swipe moves nothing here: it would scroll the page under the window, its scrollbar showing.
@@ -20,12 +21,21 @@ const VIEW = {
   touchAction: "none",
   overscrollBehavior: "none",
 } as const;
+const RING_PX = 64;
+/** How long the ring stays where a tap asked the camera to focus. */
+const RING_MS = 900;
 
 /** What the camera does while the scanner is open. */
 export type CameraState =
   | { readonly kind: "starting" }
   | { readonly kind: "on"; readonly stream: MediaStream }
   | { readonly kind: "off" };
+
+interface Ring {
+  readonly x: number;
+  readonly y: number;
+  readonly key: number;
+}
 
 export interface ScanWindowProps {
   readonly open: boolean;
@@ -37,6 +47,8 @@ export interface ScanWindowProps {
   readonly i18n: Translator;
   /** A code the camera saw, as its text. */
   readonly onText: (text: string) => void;
+  /** A tap on the view: the point on the camera's frame to focus on. */
+  readonly onFocusAt: (point: FramePoint) => void;
   readonly onPicture: (picture: File) => void;
   readonly onClose: () => void;
 }
@@ -50,6 +62,7 @@ export function ScanWindow({
   modalLook,
   i18n,
   onText,
+  onFocusAt,
   onPicture,
   onClose,
 }: ScanWindowProps) {
@@ -57,6 +70,26 @@ export function ScanWindow({
   const input = useRef<HTMLInputElement>(null);
   const stream = camera.kind === "on" ? camera.stream : null;
   const video = useCodesInView(stream, onText);
+  const [ring, setRing] = useState<Ring | null>(null);
+  useEffect(() => {
+    if (ring === null) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setRing(null), RING_MS);
+    return () => window.clearTimeout(timer);
+  }, [ring]);
+  const tapped = (event: MouseEvent<HTMLVideoElement>) => {
+    const { videoWidth: width, videoHeight: height } = event.currentTarget;
+    const box = event.currentTarget.getBoundingClientRect();
+    if (width === 0 || height === 0) {
+      return;
+    }
+
+    const at = { x: event.clientX - box.left, y: event.clientY - box.top };
+    setRing((now) => ({ ...at, key: (now?.key ?? 0) + 1 }));
+    onFocusAt(framePointOf(at, box, { width, height }));
+  };
   return (
     <LargeModal
       id="scan-window"
@@ -76,6 +109,7 @@ export function ScanWindow({
             autoPlay
             muted
             playsInline
+            onClick={tapped}
             sx={{ position: "absolute", inset: 0, width: 1, height: 1, objectFit: "cover" }}
           />
         )}
@@ -93,7 +127,27 @@ export function ScanWindow({
               borderColor: "common.white",
               borderRadius: 2,
               boxShadow: `0 0 0 100vmax ${alpha(theme.palette.common.black, 0.45)}`,
+              pointerEvents: "none",
             })}
+          />
+        )}
+        {ring !== null && (
+          <Box
+            key={ring.key}
+            id="scan-window-focus"
+            aria-hidden
+            sx={{
+              position: "absolute",
+              left: ring.x,
+              top: ring.y,
+              width: RING_PX,
+              height: RING_PX,
+              transform: "translate(-50%, -50%)",
+              border: 2,
+              borderColor: "common.white",
+              borderRadius: "50%",
+              pointerEvents: "none",
+            }}
           />
         )}
         {camera.kind === "starting" && (

@@ -47,6 +47,7 @@ function Window({
       modalLook={modalLookOf(globals)}
       i18n={i18nOf(globals)}
       onText={action("text")}
+      onFocusAt={action("focus at")}
       onPicture={action("picture")}
       onClose={action("close")}
     />

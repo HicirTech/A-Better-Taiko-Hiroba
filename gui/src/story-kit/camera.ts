@@ -38,6 +38,7 @@ export function cameraSeeing(text: string): SystemCamera {
       context.fill(new Path2D(path));
       return canvas.captureStream(5);
     },
+    focusAt: () => Promise.resolve(),
   };
 }
 

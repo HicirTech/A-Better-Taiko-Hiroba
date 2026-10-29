@@ -2,6 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import type { SystemCamera } from "../platform";
+import { stopStream } from "../platform/system-camera";
 import { type Gift, scannedCodeOf } from "../shared/gifts/gift-code";
 import type { FolderState, WriteOutcomeView } from "../shared/session-port";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
@@ -155,14 +156,14 @@ export function ScanFlow({
     void camera.open().then((opened) => {
       stream = opened;
       if (gone) {
-        stopped(opened);
+        stopStream(opened);
       } else {
         setView(opened === null ? { kind: "off" } : { kind: "on", stream: opened });
       }
     });
     return () => {
       gone = true;
-      stopped(stream);
+      stopStream(stream);
     };
   }, [inTheWindow, camera]);
 
@@ -194,6 +195,11 @@ export function ScanFlow({
           modalLook={modalLook}
           i18n={i18n}
           onText={readInTheWindow}
+          onFocusAt={(point) => {
+            if (view.kind === "on") {
+              void camera.focusAt(view.stream, point);
+            }
+          }}
           onPicture={(picture) => void qrTextOfPicture(picture).then(readInTheWindow)}
           onClose={onScanned}
         />
@@ -231,10 +237,4 @@ export function ScanFlow({
       )}
     </>
   );
-}
-
-function stopped(stream: MediaStream | null) {
-  for (const track of stream?.getTracks() ?? []) {
-    track.stop();
-  }
 }
