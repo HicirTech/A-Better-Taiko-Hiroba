@@ -355,6 +355,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "爆兩頂另離",
     "當",
     "禮物贈掃神秘揭曉份描標準識",
+    "樣",
   ].join(""),
 );
 

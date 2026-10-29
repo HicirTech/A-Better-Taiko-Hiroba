@@ -262,6 +262,11 @@ export const ja: Messages = {
   "dan.19": "達人",
   "profile.myDonAlt": "あなたのマイどん（ひろばの画像）",
   "pictures.loading": "ひろばの画像を読み込み中…",
+  "pictures.readAgain.title": "画像を読み込み直しますか？",
+  "pictures.readAgain.body":
+    "ひろばの画像はこの端末にずっと残ります。このページの画像をひろばから読み込み直します。読み込めなかった画像はそのまま残ります。",
+  "pictures.readAgain.cancel": "キャンセル",
+  "pictures.readAgain.confirm": "読み込み直す",
   "scoreRank.2": "白粋",
   "scoreRank.3": "銅粋",
   "scoreRank.4": "銀粋",

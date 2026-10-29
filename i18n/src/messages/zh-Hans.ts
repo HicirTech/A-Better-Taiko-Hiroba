@@ -253,6 +253,11 @@ export const zhHans: Messages = {
   "dan.19": "达人",
   "profile.myDonAlt": "你的小咚，由广场绘制",
   "pictures.loading": "正在加载广场的图片…",
+  "pictures.readAgain.title": "重新读取图片？",
+  "pictures.readAgain.body":
+    "广场的图片会一直留在本设备上。这会从广场重新读取本页的图片，读不到的图片保持原样。",
+  "pictures.readAgain.cancel": "取消",
+  "pictures.readAgain.confirm": "重新读取",
   "scoreRank.2": "白粹",
   "scoreRank.3": "铜粹",
   "scoreRank.4": "银粹",

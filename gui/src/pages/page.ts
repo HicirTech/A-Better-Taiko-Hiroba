@@ -92,7 +92,7 @@ export interface PageEntry extends PageModel, NavEntry {
   readonly wider?: true;
   /** How far its read has come, for the skeleton's bar. */
   progress?(data: PageData): SkeletonProgress | null;
-  /** The question before `readsEvery`, open while `open`; without it the hold reads at once. */
+  /** The question before a `readsEvery` that asks, open while `open`. */
   askEvery?(data: PageData, open: boolean, onAnswer: (confirmed: boolean) => void): ReactNode;
   draw(data: PageData): ReactNode;
 }

@@ -47,6 +47,9 @@ function pageState(overrides: Record<string, unknown> = {}) {
     titleEditor: { dropEdits: call("title.drop"), forgetList: call("titles.forget") },
     nameEditor: { dropEdits: call("name.drop") },
     pickable: { markStale: call("pickable.markStale") },
+    lane: {
+      readAgain: (kinds: readonly string[]) => calls.push(`pictures.readAgain ${kinds.join(" ")}`),
+    },
     ...overrides,
   } as unknown as PageState;
   return { state, calls };
@@ -152,17 +155,46 @@ describe("PAGE_MODELS", () => {
     const kept = pageState({ scores: { view: { scores: [{}] } } }).state;
     const none = pageState().state;
 
-    expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(kept))).toEqual(["scores"]);
-    expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(none))).toEqual([]);
+    expect(PAGE_MODELS.scores.readsEvery?.(kept)).toMatchObject({ asks: true });
+    expect(PAGE_MODELS.scores.readsEvery?.(kept).can(kept)).toBe(true);
+    expect(PAGE_MODELS.scores.readsEvery?.(none).can(none)).toBe(false);
   });
 
-  test("reads taiko.wiki's whole song list again only while the song search stands open", async () => {
+  test("reads taiko.wiki's whole song list again at once while the song search stands open", async () => {
     const { state, calls } = pageState({ songSearchOpen: true });
-    const every = PAGE_MODELS.overview.readsEvery;
+    const every = PAGE_MODELS.overview.readsEvery?.(state);
 
-    expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.can(state))).toEqual(["overview"]);
+    expect(every?.asks).toBe(false);
+    expect(every?.can(state)).toBe(true);
     await every?.read(state);
     expect(calls).toEqual(["songList.readWhole"]);
+  });
+
+  type PicturesCase = [page: Page, kinds: string];
+
+  test.each<PicturesCase>([
+    ["overview", "myDon titlePlate scorePanel medalPlate rankIcon crownIcon"],
+    ["costume", "costumeItem"],
+    ["nameTitle", "titlePlate"],
+  ])("asks, then reads the %s page's pictures again from Hiroba: %s", async (page, kinds) => {
+    const { state, calls } = pageState();
+    const every = PAGE_MODELS[page].readsEvery?.(state);
+
+    expect(every?.asks).toBe(true);
+    expect(every?.can(state)).toBe(true);
+    await every?.read(state);
+    expect(calls).toEqual([`pictures.readAgain ${kinds}`]);
+  });
+
+  test("reads nothing again by a long hold on the other pages", () => {
+    const { state } = pageState();
+
+    expect(PAGES.filter((page) => PAGE_MODELS[page].readsEvery?.(state) === undefined)).toEqual([
+      "rating",
+      "knowYourself",
+      "favorites",
+      "settings",
+    ]);
   });
 });
 

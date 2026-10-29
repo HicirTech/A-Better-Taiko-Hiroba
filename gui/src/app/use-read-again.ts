@@ -48,9 +48,9 @@ export function useReadAgain(entry: PageEntry, data: PageData): ReadAgain {
     }
   };
   useReadAgainKeys(signedIn, read);
-  // All of a page's data is read again by a long hold; Scores' takes minutes, so it asks first.
-  const every = profileShown ? (entry.readsEvery ?? null) : null;
-  const ask = every === null ? undefined : entry.askEvery;
+  // All of a page's data is read again by a long hold, asked about first where that read asks.
+  const every = profileShown ? (entry.readsEvery?.(data) ?? null) : null;
+  const ask = every?.asks === true ? entry.askEvery : undefined;
   const [asking, setAsking] = useState(false);
   if (asking && ask === undefined) {
     setAsking(false);

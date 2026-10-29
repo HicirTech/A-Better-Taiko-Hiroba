@@ -6,7 +6,12 @@ import type { TitleEditor } from "../name-title/use-title-editor";
 import type { Page } from "../navigation/pages";
 import type { RatingDataState } from "../rating/use-rating-data";
 import type { ScoresState } from "../shared/scores/use-scores";
-import type { ListedChartsView, ProfileView, ReadFailureKind } from "../shared/session-port";
+import type {
+  ListedChartsView,
+  PictureWant,
+  ProfileView,
+  ReadFailureKind,
+} from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 
 /** Where the window stands with the player's session. */
@@ -64,12 +69,16 @@ export interface PageState {
   readonly keptSearches: { readonly reload: () => void };
   /** The Overview's song search stands open. */
   readonly songSearchOpen: boolean;
+  /** Hiroba's pictures as the window asks for them. */
+  readonly lane: { readonly readAgain: (kinds: readonly PictureWant["kind"][]) => void };
 }
 
 /** All of a page's data read again from nothing, asked for by a six-second hold. */
 export interface EveryRead {
   /** Whether there is anything to read again: where not, the hold does nothing. */
   can(state: PageState): boolean;
+  /** The page's question comes first: the read is long, or replaces what the device keeps. */
+  readonly asks: boolean;
   read(state: PageState): Promise<unknown>;
 }
 
@@ -99,7 +108,8 @@ export interface PageModel {
   follows?(state: PageState): ReadFollowed;
   /** The edits dropped as another page opens; what was read is kept. */
   leaves?(state: PageState): readonly (() => void)[];
-  readonly readsEvery?: EveryRead;
+  /** What a six-second hold reads again on the page as it stands. */
+  readsEvery?(state: PageState): EveryRead;
 }
 
 /** An editor read for the first time: nothing of Hiroba's held to show meanwhile. */
@@ -119,14 +129,35 @@ const readMyPage = (state: PageState) => state.session.read(false, true);
 /** Every score read again, its details too. */
 const EVERY_SCORE: EveryRead = {
   can: ({ scores }) => (scores.view?.scores.length ?? 0) > 0,
+  asks: true,
   read: ({ scores }) => scores.readEvery(),
 };
 
 /** taiko.wiki's whole song list read again, while the Overview's song search stands open. */
 const SONG_LIST: EveryRead = {
-  can: ({ songSearchOpen }) => songSearchOpen,
+  can: () => true,
+  asks: false,
   read: ({ catalogue }) => catalogue.readWhole(),
 };
+
+/** Hiroba's pictures of `kinds` read again from Hiroba, in place of those the device keeps. */
+const picturesOf = (kinds: readonly PictureWant["kind"][]): EveryRead => ({
+  can: () => true,
+  asks: true,
+  read: async ({ lane }) => lane.readAgain(kinds),
+});
+
+/** What the Overview draws of Hiroba's pictures. */
+const MY_PAGE_PICTURES = picturesOf([
+  "myDon",
+  "titlePlate",
+  "scorePanel",
+  "medalPlate",
+  "rankIcon",
+  "crownIcon",
+]);
+const COSTUME_PICTURES = picturesOf(["costumeItem"]);
+const TITLE_PLATE = picturesOf(["titlePlate"]);
 
 /** What each page reads, and when. */
 export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
@@ -139,7 +170,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     waits: () => false,
     reading: ({ session }) => session.myPageInView,
     readAgain: readMyPage,
-    readsEvery: SONG_LIST,
+    readsEvery: ({ songSearchOpen }) => (songSearchOpen ? SONG_LIST : MY_PAGE_PICTURES),
   },
   scores: {
     label: "nav.scores",
@@ -150,7 +181,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     reading: scoresRead,
     readAgain: readScores,
     follows: ({ scores }) => scores,
-    readsEvery: EVERY_SCORE,
+    readsEvery: () => EVERY_SCORE,
   },
   rating: {
     label: "nav.rating",
@@ -200,6 +231,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
     readAgain: ({ editor }) => editor.read(true),
     follows: ({ editor }) => editor,
     leaves: ({ editor }) => [editor.dropEdits],
+    readsEvery: () => COSTUME_PICTURES,
   },
   nameTitle: {
     label: "nav.nameTitle",
@@ -214,6 +246,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
       }
     },
     leaves: ({ titleEditor, nameEditor }) => [titleEditor.dropEdits, nameEditor.dropEdits],
+    readsEvery: () => TITLE_PLATE,
   },
   favorites: {
     label: "nav.favorites",
