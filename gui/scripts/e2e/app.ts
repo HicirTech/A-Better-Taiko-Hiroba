@@ -1,6 +1,8 @@
 /** Starts the desktop app under test, and closes it. */
 
 import electronPath from "electron";
+import { TIPS } from "../../src/pages/page-tips";
+import { SEEN_TIPS_KEY } from "../../src/shared/tips/seen-tips";
 import { ABTH_CDN_PATH } from "../mock-abth-cdn";
 import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "../mock-ese";
 import {
@@ -77,6 +79,11 @@ export async function launch({
   });
   const page = await connect(target.webSocketDebuggerUrl);
   await holdOwnSize(page);
+  // A fresh install tells each page's tips over it: they are seen here, and the tips section
+  // asks for them.
+  await page.evaluate(
+    `localStorage.setItem(${JSON.stringify(SEEN_TIPS_KEY)}, ${JSON.stringify(JSON.stringify(TIPS.map(({ id }) => id)))})`,
+  );
   const text = () => page.evaluate<string>("document.body.textContent");
   const textOf = (selector: string) =>
     page.evaluate<string | null>(

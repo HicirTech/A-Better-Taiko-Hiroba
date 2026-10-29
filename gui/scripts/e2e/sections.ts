@@ -77,6 +77,7 @@ import {
 } from "./settings";
 import { signedOut, signedOutKeys } from "./signed-out";
 import { songSearch, songSearchKeys } from "./song-search";
+import { tips, tipsKeys } from "./tips";
 import { updates, updatesKeys } from "./updates";
 import {
   bridgeWrites,
@@ -235,6 +236,7 @@ export const SECTIONS: readonly Section[] = [
     keys: knowYourselfKeys,
     run: knowYourself,
   },
+  { name: "tips", phase: "signedIn", lane: "songs", keys: tipsKeys, run: tips },
   {
     name: "session-expiry",
     phase: "signedIn",
