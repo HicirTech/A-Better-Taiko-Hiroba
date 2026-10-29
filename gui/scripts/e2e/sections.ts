@@ -26,6 +26,7 @@ import {
 import { dataFolder, dataFolderKeys } from "./data-folder";
 import { favoriteWrites, favoriteWritesKeys } from "./favorite-writes";
 import { favorites, favoritesKeys } from "./favorites";
+import { gifts, giftsKeys } from "./gifts";
 import { knowYourself, knowYourselfKeys } from "./know-yourself";
 import { menuSwipe, menuSwipeKeys } from "./menu-swipe";
 import {
@@ -207,6 +208,7 @@ export const SECTIONS: readonly Section[] = [
     run: favoriteWrites,
   },
   { name: "favorites", phase: "signedIn", lane: "names", keys: favoritesKeys, run: favorites },
+  { name: "gifts", phase: "signedIn", lane: "names", keys: giftsKeys, run: gifts },
   { name: "song-search", phase: "signedIn", lane: "songs", keys: songSearchKeys, run: songSearch },
   { name: "scores", phase: "signedIn", lane: "songs", keys: scoresKeys, run: scores },
   {
