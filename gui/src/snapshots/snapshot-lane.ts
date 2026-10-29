@@ -25,6 +25,8 @@ export function snapshotLane(lane: PictureLane): SnapshotLane {
       release: () => lane.release(),
       forgetFailures: (kind) => lane.forgetFailures(kind),
       renew: (kind) => lane.renew(kind),
+      readAgain: (kinds) => lane.readAgain(kinds),
+      readAgainEnded: () => lane.readAgainEnded(),
       forget: () => lane.forget(),
       subscribe: (listener) => lane.subscribe(listener),
       version: () => lane.version(),

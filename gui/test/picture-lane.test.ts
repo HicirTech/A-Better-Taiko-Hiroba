@@ -73,8 +73,8 @@ function heldPort() {
         return want.kind;
     }
   };
-  const load = (want: PictureWant) => {
-    asked.push(nameOf(want));
+  const load = (want: PictureWant, again: boolean) => {
+    asked.push(again ? `${nameOf(want)} again` : nameOf(want));
     return new Promise<Result<PictureView, PictureFailure>>((resolve) => answers.push(resolve));
   };
   const answer = async (result: Result<PictureView, PictureFailure>) => {
@@ -321,6 +321,112 @@ describe("createPictureLane", () => {
     expect(lane.settled(item(4))).toBe(true);
     await advance(1000);
     expect(port.asked).toEqual(["titlePlate", "1/4"]);
+  });
+
+  test("read again, drops its kinds' pictures and asks Hiroba for each once, other kinds left be", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(PLATE, { order: 0 });
+    lane.ask(item(4), { order: 1 });
+    await advance(150);
+    await port.answer(ok(view(1)));
+    await port.answer(ok(view(4)));
+    lane.readAgain(["titlePlate"]);
+    expect(lane.peek(PLATE)).toBeUndefined();
+    expect(lane.settled(item(4))).toBe(true);
+    lane.ask(PLATE, { order: 0 });
+    await advance(150);
+    await port.answer(ok(view(2)));
+    expect(lane.peek(PLATE)).toEqual({ view: view(2) });
+    lane.renew("titlePlate");
+    lane.ask(PLATE, { order: 0 });
+    await advance(150);
+    expect(port.asked).toEqual(["titlePlate", "1/4", "titlePlate again", "titlePlate"]);
+  });
+
+  test("read again, asks Hiroba once for a picture of its kind first shown after it", async () => {
+    const { lane, port, advance } = setUp();
+    lane.readAgain(["costumeItem"]);
+    lane.ask(item(7), { order: 0 });
+    await advance(150);
+    await port.answer(err({ code: "costumeItem=timedOut" }));
+    lane.forgetFailures("costumeItem");
+    lane.ask(item(7), { order: 0 });
+    await advance(150);
+    expect(port.asked).toEqual(["1/7 again", "1/7"]);
+  });
+
+  test("read again while a picture is on its way, asks Hiroba once more as the device's answer lands", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(MY_DON, { order: 0 });
+    await advance(150);
+    lane.readAgain(["myDon"]);
+    await port.answer(ok(view(1)));
+    expect(lane.peek(MY_DON)).toBeUndefined();
+    await port.answer(ok(view(2)));
+    expect(lane.peek(MY_DON)).toEqual({ view: view(2) });
+    expect(port.asked).toEqual(["myDon", "myDon again"]);
+  });
+
+  test("read again, ends once the pictures on screen have come, none failing", async () => {
+    const { lane, port, advance } = setUp();
+    lane.ask(PLATE, { order: 0 });
+    await advance(150);
+    await port.answer(ok(view(1)));
+    lane.readAgain(["titlePlate"]);
+    lane.ask(PLATE, { order: 0 });
+    await advance(150);
+    await port.answer(ok(view(2)));
+    expect(lane.readAgainEnded()).toBeNull();
+    await advance(150);
+    expect(lane.readAgainEnded()).toEqual({ failed: false });
+  });
+
+  test("read again, ends failed where Hiroba's picture did not come, the one kept shown", async () => {
+    const { lane, port, advance } = setUp();
+    lane.readAgain(["medalPlate"]);
+    lane.ask(MEDAL, { order: 0 });
+    await advance(300);
+    await port.answer(err({ code: "medalPlate=timedOut", kept: view(1) }));
+    expect(lane.peek(MEDAL)).toEqual({ view: view(1) });
+    expect(lane.readAgainEnded()).toEqual({ failed: true });
+  });
+
+  test("read again, waits for a picture of its kinds still waiting its turn", async () => {
+    const { lane, port, advance } = setUp();
+    lane.hold();
+    lane.readAgain(["myDon"]);
+    lane.ask(MY_DON, { order: 0 });
+    await advance(1000);
+    expect(lane.readAgainEnded()).toBeNull();
+    lane.release();
+    await Bun.sleep(0);
+    await port.answer(ok(view(3)));
+    expect(lane.readAgainEnded()).toEqual({ failed: false });
+    expect(port.asked).toEqual(["myDon again"]);
+  });
+
+  test("read again, a new ending each time, and none once forgotten", async () => {
+    const { lane, advance } = setUp();
+    lane.readAgain(["scorePanel"]);
+    await advance(300);
+    const first = lane.readAgainEnded();
+    lane.readAgain(["scorePanel"]);
+    await advance(300);
+    expect(lane.readAgainEnded()).toEqual({ failed: false });
+    expect(lane.readAgainEnded()).not.toBe(first);
+    lane.readAgain(["scorePanel"]);
+    lane.forget();
+    await advance(300);
+    expect(lane.readAgainEnded()).toBeNull();
+  });
+
+  test("forgotten, reads nothing again from Hiroba that was to be read again", async () => {
+    const { lane, port, advance } = setUp();
+    lane.readAgain(["medalPlate"]);
+    lane.forget();
+    lane.ask(MEDAL, { order: 0 });
+    await advance(150);
+    expect(port.asked).toEqual(["medalPlate"]);
   });
 
   test("asks nothing for a picture that leaves the screen before the dwell", async () => {

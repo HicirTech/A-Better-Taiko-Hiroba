@@ -24,6 +24,8 @@ function handLane() {
     release: () => undefined,
     forgetFailures: () => undefined,
     renew: () => undefined,
+    readAgain: () => undefined,
+    readAgainEnded: () => null,
     forget: () => undefined,
     subscribe: (listener) => {
       listeners.add(listener);

@@ -85,7 +85,11 @@ export function App({
   const updates = useUpdateReminder(port, APP_VERSION);
   // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
   const lane = useMemo(
-    () => createPictureLane({ load: (want) => port.readPicture(want), atOnce: IO_READ_CONSUMERS }),
+    () =>
+      createPictureLane({
+        load: (want, again) => port.readPicture(want, again),
+        atOnce: IO_READ_CONSUMERS,
+      }),
     [port],
   );
   const session = useSession({ port, lane, page, onNavigate });
