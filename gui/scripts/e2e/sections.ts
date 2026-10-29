@@ -51,6 +51,7 @@ import {
   titlePlate,
   titlePlateKeys,
 } from "./pictures";
+import { picturesAgain, picturesAgainKeys } from "./pictures-again";
 import { pipelinesPage, pipelinesPageKeys } from "./pipelines-page";
 import { rating, ratingKeys } from "./rating";
 import { profileVariants, profileVariantsKeys, readAgain, readAgainKeys } from "./read-again";
@@ -132,6 +133,13 @@ export const SECTIONS: readonly Section[] = [
     lane: "profile",
     keys: medalPlateKeys,
     run: medalPlate,
+  },
+  {
+    name: "pictures-again",
+    phase: "signedIn",
+    lane: "profile",
+    keys: picturesAgainKeys,
+    run: picturesAgain,
   },
   {
     name: "portrait-preview",

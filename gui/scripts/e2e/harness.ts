@@ -216,7 +216,7 @@ export function pageHelpers(page: Page) {
       `(() => { const fab = document.querySelector("#read-again"); return { shut: fab.disabled, spinning: fab.querySelector(".MuiCircularProgress-root") !== null }; })()`,
     );
 
-  const swipe = async (from: Point, to: Point, whileDown?: () => Promise<unknown>) => {
+  const swipe = async <T>(from: Point, to: Point, whileDown?: () => Promise<T>) => {
     const STEPS = 12;
     await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [from] });
     for (let step = 1; step <= STEPS; step++) {
@@ -231,9 +231,10 @@ export function pageHelpers(page: Page) {
     return seen;
   };
 
+  // `holds`: past the point, the orange ring of a page that reads more by a long hold.
   const pullIndicator = () =>
-    page.evaluate<{ shown: boolean; ring: string | null }>(
-      `(() => { const indicator = document.querySelector("#pull-indicator"); return { shown: indicator !== null && getComputedStyle(indicator).opacity === "1", ring: indicator?.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow") ?? null }; })()`,
+    page.evaluate<{ shown: boolean; ring: string | null; holds: boolean }>(
+      `(() => { const indicator = document.querySelector("#pull-indicator"); return { shown: indicator !== null && getComputedStyle(indicator).opacity === "1", ring: indicator?.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow") ?? null, holds: indicator !== null && indicator.querySelector(".MuiCircularProgress-colorWarning") !== null }; })()`,
     );
   const touchEmulated = async (enabled: boolean) => {
     await page.send("Emulation.setTouchEmulationEnabled", { enabled, maxTouchPoints: 5 });

@@ -225,9 +225,11 @@ export async function readAgain(ctx: Ctx) {
   const ringAtFullPull = await swipe(pullFrom, pulledBy(0, 200), pullIndicator);
   await Bun.sleep(500);
   await until("Last updated");
+  // The Overview reads its pictures again by a hold, so past the point the hold's ring shows.
   results.pullPastThePointReads =
     readsByShortPull === 0 &&
-    same(ringAtFullPull, { shown: true, ring: "100" }) &&
+    ringAtFullPull?.shown === true &&
+    ringAtFullPull.holds &&
     (await myPageHits()) === readsBeforePull + READ_AGAIN_MY_PAGE_READS &&
     !(await pullIndicator()).shown;
   const readsByUpwardSwipe = await readsBySwipe(pulledBy(0, 200), pullFrom);
