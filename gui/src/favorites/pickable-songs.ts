@@ -22,6 +22,11 @@ export interface PickableState {
   readonly status: PickableStatus;
 }
 
+/** Every song taiko.wiki lists, as a gift's picker offers them: the receiver's Hiroba decides. */
+export function everySong(songNos: Iterable<string>): PickableState {
+  return { offered: { songs: new Set(songNos), ura: new Set() }, status: { kind: "current" } };
+}
+
 export function offeredOf(read: PickableSongs): OfferedSongs {
   return { songs: new Set(read.songs), ura: new Set(read.ura) };
 }

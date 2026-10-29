@@ -441,6 +441,38 @@ export const ja: Messages = {
   "favorites.replace.body":
     "{name}の曲を、フォルダの曲とその順番に置き換えます。ひろばのフォルダは変わりません。",
   "favorites.replace.confirm": "置き換える",
+  "gift.picture": "ギフト",
+  "gift.givenAt": "贈った日時：{time}",
+  "gift.code": "ギフトのQRコード",
+  "gift.scanHint": "A Better Taiko Hiroba で読み取ると受け取れます",
+  "gift.mystery": "ひみつのギフト",
+  "gift.mysterySongs": "{count} 曲。受け取ると曲が分かります。",
+  "gift.untitled": "ギフト",
+  "gift.offer":
+    "{giver} から {time} に贈られた曲です。受け取ると、ひろばのお気に入りフォルダに同期され、今の曲は履歴に残ります。",
+  "gift.offerMystery":
+    "{giver} から {time} に贈られたひみつのギフトです。曲は受け取ると分かります。受け取ると、ひろばのお気に入りフォルダに同期され、今の曲は履歴に残ります。",
+  "gift.accept": "受け取る",
+  "gift.accepted": "ギフトを受け取りました。曲はひろばのお気に入りフォルダに入りました。",
+  "gift.from": "{giver} からのギフト",
+  "gift.notOffered":
+    "受け取れませんでした。{songs} はまだひろばで選べません。お気に入りフォルダは変わっていません。",
+  "gift.notOfferedMystery":
+    "受け取れませんでした。まだひろばで選べない曲が入っています。お気に入りフォルダは変わっていません。",
+  "gift.make": "ギフトを作る",
+  "gift.new": "新しいギフト",
+  "gift.empty": "まだ曲がありません。ギフトには {count} 曲まで入れられます。",
+  "gift.titleLabel": "タイトル",
+  "gift.titleHint": "画像と、受け取る人に表示されます",
+  "gift.shown": "曲を見せる",
+  "gift.shownLabel": "画像の曲",
+  "gift.preview": "プレビュー",
+  "scan.button": "QRコードを読み取る",
+  "scan.hint": "カメラをQRコードに向けるか、QRコードの画像を選んでください。",
+  "scan.pick": "画像を選ぶ",
+  "scan.noCamera": "カメラを使えません。画像を選んでください。",
+  "scan.noCode": "画像にQRコードが見つかりませんでした。",
+  "scan.unknown": "A Better Taiko Hiroba では使えないQRコードです。",
   "sort.handle": "{name}を移動",
   "sort.instructions":
     "項目を動かすには、スペースかEnterで持ち上げ、上下の矢印キーで動かし、もう一度スペースかEnterで置きます。Escで元に戻します。",

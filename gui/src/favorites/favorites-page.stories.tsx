@@ -33,6 +33,14 @@ export const KeptFolderPutBack: Story = {
   },
 };
 
+/** A gift being made in the page's place: no songs yet, so its share waits; Back leaves it. */
+export const MakingAGift: Story = {
+  play: async () => {
+    await found("#favorites-gift", 10_000);
+    await press("#favorites-gift");
+  },
+};
+
 export const Reading: Story = { render: appOn("favorites", { openFavorites: neverAnswers }) };
 
 export const ReadFailed: Story = {

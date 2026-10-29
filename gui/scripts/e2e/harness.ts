@@ -108,24 +108,25 @@ export async function connect(url: string) {
   const socket = new WebSocket(url);
   await new Promise((resolve) => socket.addEventListener("open", resolve, { once: true }));
   let nextId = 1;
-  const waiting = new Map<number, (value: unknown) => void>();
+  const waiting = new Map<number, (result: unknown) => void>();
   socket.addEventListener("message", (event) => {
-    const message = JSON.parse(String(event.data)) as {
-      id?: number;
-      result?: { result?: { value?: unknown } };
-    };
+    const message = JSON.parse(String(event.data)) as { id?: number; result?: unknown };
     if (message.id !== undefined) {
-      waiting.get(message.id)?.(message.result?.result?.value);
+      waiting.get(message.id)?.(message.result);
       waiting.delete(message.id);
     }
   });
-  const send = <T = unknown>(method: string, params: Record<string, unknown>): Promise<T> => {
+  /** A command's whole answer, such as a `Runtime.evaluate` that names an element. */
+  const call = <T = unknown>(method: string, params: Record<string, unknown>): Promise<T> => {
     const id = nextId++;
     socket.send(JSON.stringify({ id, method, params }));
-    return new Promise((resolve) => waiting.set(id, resolve as (value: unknown) => void));
+    return new Promise((resolve) => waiting.set(id, resolve as (result: unknown) => void));
   };
+  const send = async <T = unknown>(method: string, params: Record<string, unknown>) =>
+    (await call<{ result?: { value?: unknown } } | undefined>(method, params))?.result?.value as T;
   return {
     send,
+    call,
     evaluate<T = unknown>(expression: string): Promise<T> {
       return send<T>("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true });
     },

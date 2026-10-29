@@ -1,8 +1,9 @@
 import type { Translator } from "@abth/i18n";
 import { useMediaQuery } from "@mui/material";
-import { type ReactNode, useContext, useMemo } from "react";
+import { type ReactNode, useContext, useEffect, useMemo } from "react";
 import { NavFoot } from "./app/nav-foot";
 import { PageArea } from "./app/page-area";
+import { ScanGifts } from "./app/scan-gifts";
 import { useKeptChoice } from "./app/use-kept-choice";
 import { useModalLook } from "./app/use-modal-look";
 import { usePageShown } from "./app/use-page-shown";
@@ -14,7 +15,7 @@ import type { Page } from "./navigation/pages";
 import type { PageData } from "./pages/page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { createPictureLane } from "./pictures/picture-lane";
-import type { SystemLink, SystemShare, SystemToast } from "./platform";
+import type { SystemCamera, SystemLink, SystemShare, SystemToast } from "./platform";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
 import { keepStartingRating, keptStartingRating } from "./shared/rating-data/starting-rating";
@@ -45,6 +46,13 @@ export interface AppProps {
   readonly toast?: SystemToast;
   /** The shell's ways out for a picture the app made of a page. */
   readonly share: SystemShare;
+  /** The phone's camera, where the shell has one: a scan reads its view. */
+  readonly camera?: SystemCamera;
+  /** The navigation's scan button was pressed, until the scan says it has read. */
+  readonly scanning: boolean;
+  readonly onScanned: () => void;
+  /** Whether a player is signed in, who alone can scan: a gift is accepted on Hiroba. */
+  readonly onSignedIn: (signedIn: boolean) => void;
 }
 
 export function App({
@@ -57,6 +65,10 @@ export function App({
   appearance,
   toast,
   share,
+  camera,
+  scanning,
+  onScanned,
+  onSignedIn,
 }: AppProps) {
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const wide = useWideWindow();
@@ -112,8 +124,13 @@ export function App({
   const again = useReadAgain(entry, data);
   const { screen } = session;
   const withFoot = again.signedIn || screen.name === "reading";
+  const { signedIn } = again;
+  useEffect(() => onSignedIn(signedIn), [signedIn, onSignedIn]);
   return (
     <>
+      {signedIn && (
+        <ScanGifts data={data} camera={camera ?? null} scanning={scanning} onScanned={onScanned} />
+      )}
       {withFoot && (
         <NavFoot>
           <ReadAgainFoot

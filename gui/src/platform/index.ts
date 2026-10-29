@@ -4,11 +4,13 @@ import { type HirobaSessionPort, settledPort } from "../shared/session-port";
 import { desktopLink } from "./desktop-link";
 import { type DesktopPictures, desktopShare } from "./desktop-share";
 import type { SystemBack } from "./system-back";
+import type { SystemCamera } from "./system-camera";
 import type { SystemLink } from "./system-link";
 import type { SystemShare } from "./system-share";
 import type { SystemToast } from "./system-toast";
 
 export type { SystemBack } from "./system-back";
+export type { SystemCamera } from "./system-camera";
 export type { SystemLink } from "./system-link";
 export type { PictureWay, SystemShare } from "./system-share";
 export type { SystemToast } from "./system-toast";
@@ -22,7 +24,7 @@ declare global {
   }
 }
 
-/** Which shell the bundle runs in, with its port, link and share, and Android's Back and Toast. */
+/** Which shell the bundle runs in: port, link and share, and Android's Back, Toast and camera. */
 export type Platform =
   | {
       readonly shell: "desktop";
@@ -37,6 +39,7 @@ export type Platform =
       readonly share: SystemShare;
       readonly back: SystemBack;
       readonly toast: SystemToast;
+      readonly camera: SystemCamera;
     };
 
 /** Picks the platform layer; one bundle ships in both shells. Android's modules load only there,
@@ -60,12 +63,14 @@ export async function connectPlatform({
     const [
       { createAndroidPort },
       { androidBack },
+      { androidCamera },
       { androidLink },
       { androidShare },
       { androidToast },
     ] = await Promise.all([
       import("./android"),
       import("./android-back"),
+      import("./android-camera"),
       import("./android-link"),
       import("./android-share"),
       import("./android-toast"),
@@ -78,6 +83,7 @@ export async function connectPlatform({
       share: await androidShare(),
       back: androidBack,
       toast: androidToast,
+      camera: androidCamera,
     };
   }
   return null;

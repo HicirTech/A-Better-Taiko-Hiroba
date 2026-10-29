@@ -1,6 +1,8 @@
 import { err, ok } from "@abth/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
+import { onDevice, touchOf } from "./story-kit/devices";
+import { found, press } from "./story-kit/steps";
 import { appOn } from "./story-kit/story-app";
 import { neverAnswers } from "./story-kit/story-port";
 
@@ -49,4 +51,17 @@ export const UpdateOffered: Story = {
         }),
       ),
   }),
+};
+
+/** The navigation's scan on a phone: the camera sees a mystery gift, offered to be accepted. */
+export const ScanningAGift: Story = {
+  globals: onDevice("phone"),
+  play: async ({ globals }) => {
+    // A computer's scan opens the system's picture chooser, which a story cannot answer.
+    if (touchOf(globals)) {
+      await found("#nav-menu", 10_000);
+      await press("#nav-menu");
+      await press("#scan");
+    }
+  },
 };

@@ -35,6 +35,7 @@ function FrameOverAPage({
       wide={wide}
       touchFirst={android}
       pages={PAGE_REGISTRY}
+      onScan={action("scan")}
       {...(android ? { back: STORY_BACK } : {})}
       pipelines={<Skeleton variant="rounded" height={240} />}
     >

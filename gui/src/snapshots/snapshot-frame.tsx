@@ -19,7 +19,7 @@ export function SnapshotFrame({
   id,
   title,
   width = SNAPSHOT_WIDTH_PX,
-  readAt,
+  when,
   i18n,
   children,
 }: {
@@ -28,12 +28,12 @@ export function SnapshotFrame({
   readonly title?: string;
   /** In CSS pixels; a snapshot's own by default. */
   readonly width?: number;
-  /** When what it shows was read. */
-  readonly readAt: Date | number | string;
+  /** When what it shows was read or made, in words, at the bar's right. */
+  readonly when: string;
   readonly i18n: Translator;
   readonly children: ReactNode;
 }) {
-  const { t, dateTime } = i18n;
+  const { t } = i18n;
   return (
     <ThemeProvider theme={SNAPSHOT_THEME}>
       <Box id={id} sx={{ ...FRAME, width }}>
@@ -49,7 +49,7 @@ export function SnapshotFrame({
               </Typography>
             )}
             <Typography component="p" variant="body2" sx={{ gridColumn: 3, justifySelf: "end" }}>
-              {t("profile.fetchedAt", { time: dateTime(readAt) })}
+              {when}
             </Typography>
           </Toolbar>
         </AppBar>

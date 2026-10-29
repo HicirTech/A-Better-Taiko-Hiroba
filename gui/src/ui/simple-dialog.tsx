@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -7,8 +8,10 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
+import type { ReactNode } from "react";
 
 import { useBackCloses } from "./back-closers";
+import { ProgressBar } from "./progress-bar";
 
 const POINTS = { m: 0, pl: 3 } as const;
 
@@ -53,7 +56,9 @@ export function SimpleDialog({
   field,
   cancel,
   actions,
+  busy,
   onClose,
+  children,
 }: {
   readonly id: string;
   readonly open: boolean;
@@ -64,7 +69,11 @@ export function SimpleDialog({
   /** The way out, which Esc, Back and a click outside take too. */
   readonly cancel: { readonly id: string; readonly label: string };
   readonly actions: readonly DialogButton[];
+  /** What runs after an action, said over a bar in the buttons' place until it ends. */
+  readonly busy?: string | undefined;
   readonly onClose: () => void;
+  /** What the message speaks of, under it, such as a gift's songs. */
+  readonly children?: ReactNode;
 }) {
   useBackCloses(open, onClose);
   const titleId = `${id}-title`;
@@ -84,7 +93,7 @@ export function SimpleDialog({
       maxWidth="xs"
     >
       <DialogTitle id={titleId}>{title}</DialogTitle>
-      {(message !== undefined || field !== undefined) && (
+      {(message !== undefined || field !== undefined || children !== undefined) && (
         <DialogContent>
           {typeof message === "string" && (
             <DialogContentText id={messageId}>{message}</DialogContentText>
@@ -97,6 +106,7 @@ export function SimpleDialog({
               ))}
             </DialogContentText>
           )}
+          {children}
           {field !== undefined && (
             <TextField
               id={field.id}
@@ -118,20 +128,28 @@ export function SimpleDialog({
         </DialogContent>
       )}
       <DialogActions>
-        <Button id={cancel.id} onClick={onClose}>
-          {cancel.label}
-        </Button>
-        {actions.map((action) => (
-          <Button
-            key={action.id}
-            id={action.id}
-            color={action.destructive === true ? "error" : "primary"}
-            disabled={action.disabled === true}
-            onClick={action.onClick}
-          >
-            {action.label}
-          </Button>
-        ))}
+        {busy !== undefined ? (
+          <Box sx={{ flexGrow: 1, py: 0.5 }}>
+            <ProgressBar id={`${id}-busy`} label={busy} />
+          </Box>
+        ) : (
+          <>
+            <Button id={cancel.id} onClick={onClose}>
+              {cancel.label}
+            </Button>
+            {actions.map((action) => (
+              <Button
+                key={action.id}
+                id={action.id}
+                color={action.destructive === true ? "error" : "primary"}
+                disabled={action.disabled === true}
+                onClick={action.onClick}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );

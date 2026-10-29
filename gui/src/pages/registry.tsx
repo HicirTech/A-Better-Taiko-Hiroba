@@ -187,6 +187,8 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
         shownDifficulty={data.shownDifficulty}
         chartSource={data.chartSource}
         modalLook={data.modalLook}
+        profile={data.session.screen.name === "profile" ? data.session.screen.profile : null}
+        share={data.share}
         i18n={data.i18n}
       />
     ),
