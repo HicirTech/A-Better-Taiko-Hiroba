@@ -316,6 +316,52 @@ describe("createPictureReader, an item's thumbnail", () => {
   });
 });
 
+describe("createPictureReader, a picture read again", () => {
+  const KEY = { scope: "shared", player: null, name: "v1/item/1/36" } as const;
+  const GIF_ANSWER: Answer = ok({ status: 200, url: THUMB_URL, headers: {}, body: NO_LABEL_GIF });
+
+  test("asks Hiroba though the picture is kept, and keeps the new one in its place", async () => {
+    let body = thumbnailPng(1, 36);
+    const { reader, sent, store } = setUp({ answer: async (request) => png(request.url, body) });
+    await reader.read(WANT);
+    body = thumbnailPng(1, 4);
+    const renewed = await reader.read(WANT, true);
+    expect(sent).toHaveLength(2);
+    expect(renewed.ok && decode(renewed.value.src)).toEqual(thumbnailPng(1, 4));
+    expect(await store.get(KEY)).toEqual(thumbnailPng(1, 4));
+    expect(await reader.read(WANT)).toEqual(renewed);
+    expect(sent).toHaveLength(2);
+  });
+
+  test("fails where Hiroba's does not come, the picture kept beside the failure, and keeps it", async () => {
+    let answer = png();
+    const { reader, sent, store } = setUp({ answer: async () => answer });
+    const first = await reader.read(WANT);
+    answer = GIF_ANSWER;
+    const read = await reader.read(WANT, true);
+    expect(!read.ok && read.error.code.startsWith("costumeItem=")).toBe(true);
+    expect(!read.ok && read.error.kept).toEqual(first.ok && first.value);
+    expect(sent).toHaveLength(2);
+    expect(await store.get(KEY)).toEqual(thumbnailPng(1, 36));
+  });
+
+  test("past the run's budget, fails unsent, the picture kept beside the failure", async () => {
+    const { reader, sent } = setUp({ limits: { ...LIMITS, budget: 1 } });
+    const first = await reader.read(WANT);
+    const read = await reader.read(WANT, true);
+    expect(!read.ok && read.error.code).toBe("costumeItem=budgetSpent");
+    expect(!read.ok && read.error.kept).toEqual(first.ok && first.value);
+    expect(sent).toHaveLength(1);
+  });
+
+  test("with nothing kept, a picture that does not come is a failure alone", async () => {
+    const { reader } = setUp({ answer: async () => GIF_ANSWER });
+    const read = await reader.read(WANT, true);
+    expect(!read.ok && "kept" in read.error).toBe(false);
+    expect(read.ok).toBe(false);
+  });
+});
+
 describe("createPictureReader, the title plate", () => {
   const PLATE = { kind: "titlePlate" } as const;
   const PLATE_URL = `${ORIGIN}/imgsrc_titleplate.php`;

@@ -456,7 +456,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     // Its failure forgets nothing: the next page read says whether the session is over.
     previewCostume: (hiroba, set) => servedPreview(hiroba)(set),
 
-    readPicture: (want) => pictures.read(want),
+    readPicture: (want, again) => pictures.read(want, again),
 
     changeCostume: flushed(writes.changeCostume),
 

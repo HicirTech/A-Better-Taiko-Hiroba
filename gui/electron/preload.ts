@@ -21,7 +21,10 @@ const port: HirobaSessionPort = {
   openCostumeEditor: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openCostumeEditor),
   openTitleEditor: () => ipcRenderer.invoke(BRIDGE_CHANNELS.openTitleEditor),
   previewCostume: (set) => ipcRenderer.invoke(BRIDGE_CHANNELS.previewCostume, set),
-  readPicture: (want) => ipcRenderer.invoke(BRIDGE_CHANNELS.readPicture, want),
+  readPicture: (want, again) =>
+    again === undefined
+      ? ipcRenderer.invoke(BRIDGE_CHANNELS.readPicture, want)
+      : ipcRenderer.invoke(BRIDGE_CHANNELS.readPicture, want, again),
   changeCostume: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeCostume, change),
   changeTitle: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeTitle, change),
   changeName: (change) => ipcRenderer.invoke(BRIDGE_CHANNELS.changeName, change),

@@ -285,6 +285,8 @@ export interface PictureView {
  * came back. Never a host, a URL, a query or a cookie. */
 export interface PictureFailure {
   readonly code: string;
+  /** Read again: the picture kept, to show where Hiroba's did not come. */
+  readonly kept?: PictureView;
 }
 
 /** The set each kind of write changes: all the state it is made against. */
@@ -400,9 +402,9 @@ export interface HirobaSessionPort {
   /** Hiroba's picture of `set`, as its editor shows one after every pick: one GET, never retried,
    * as a `data:image/png` URL. Changes nothing, allowed whenever signed in; the caller paces it. */
   previewCostume(set: CostumeSet): Promise<Result<string, CostumePreviewFailure>>;
-  /** One of Hiroba's pictures, as `want` names it: from the store, or one pipelined GET, never
-   * retried. Refused unsent when the platform's state allows no request. Rate is the caller's. */
-  readPicture(want: PictureWant): Promise<Result<PictureView, PictureFailure>>;
+  /** One of Hiroba's pictures as `want` names it: kept, or one pipelined GET, never retried; with
+   * `again` the GET goes first. Refused unsent where no request may go. Rate is the caller's. */
+  readPicture(want: PictureWant, again?: boolean): Promise<Result<PictureView, PictureFailure>>;
   /** One costume write: the editor, the pre-check, one save and the read-back. Never retried. */
   changeCostume(change: CostumeChange): Promise<WriteOutcomeView>;
   /** One title write: title page, pre-check, one save, then my page read back. Never retried. */

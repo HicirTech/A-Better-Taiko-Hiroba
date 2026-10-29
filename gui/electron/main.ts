@@ -365,7 +365,7 @@ const started = app.whenReady().then(async () => {
     openTitleEditor: writes.openTitleEditor,
     // Its failure leaves the session be: the next page read says whether it is over.
     previewCostume: (hiroba, set) => servedPreview(hiroba)(set),
-    readPicture: (want) => pictures.read(want),
+    readPicture: (want, again) => pictures.read(want, again),
     changeCostume: writes.changeCostume,
     changeTitle: writes.changeTitle,
     changeName: writes.changeName,
