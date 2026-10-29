@@ -13,6 +13,13 @@ const LOOK_EVERY_MS = 200;
 const LOOK_PX = 800;
 const GUIDE = "min(70vw, 70vh, 320px)";
 const OVER_THE_VIEW = { color: "common.white", textAlign: "center" } as const;
+// A swipe moves nothing here: it would scroll the page under the window, its scrollbar showing.
+const VIEW = {
+  position: "absolute",
+  inset: 0,
+  touchAction: "none",
+  overscrollBehavior: "none",
+} as const;
 
 /** What the camera does while the scanner is open. */
 export type CameraState =
@@ -61,92 +68,94 @@ export function ScanWindow({
       i18n={i18n}
       onClose={onClose}
     >
-      {stream !== null && (
-        <Box
-          component="video"
-          ref={video}
-          autoPlay
-          muted
-          playsInline
-          sx={{ position: "absolute", inset: 0, width: 1, height: 1, objectFit: "cover" }}
-        />
-      )}
-      {stream !== null && (
-        <Box
-          aria-hidden
-          sx={(theme) => ({
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            width: GUIDE,
-            height: GUIDE,
-            transform: "translate(-50%, -50%)",
-            border: 2,
-            borderColor: "common.white",
-            borderRadius: 2,
-            boxShadow: `0 0 0 100vmax ${alpha(theme.palette.common.black, 0.45)}`,
-          })}
-        />
-      )}
-      {camera.kind === "starting" && (
-        <Box sx={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
-          <CircularProgress aria-label={t("scan.button")} sx={{ color: "common.white" }} />
-        </Box>
-      )}
-      <Stack
-        spacing={1.5}
-        sx={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          px: 2,
-          pt: 2,
-          pb: "calc(24px + env(safe-area-inset-bottom, 0px))",
-          alignItems: "center",
-        }}
-      >
-        {note !== null && (
-          <Typography
-            id="scan-window-note"
-            role="status"
-            variant="body2"
-            sx={(theme) => ({
-              ...OVER_THE_VIEW,
-              px: 1.5,
-              py: 0.75,
-              borderRadius: 1,
-              bgcolor: alpha(theme.palette.common.black, 0.7),
-            })}
-          >
-            {note}
-          </Typography>
+      <Box id="scan-window-view" sx={VIEW}>
+        {stream !== null && (
+          <Box
+            component="video"
+            ref={video}
+            autoPlay
+            muted
+            playsInline
+            sx={{ position: "absolute", inset: 0, width: 1, height: 1, objectFit: "cover" }}
+          />
         )}
-        <Typography id="scan-window-hint" variant="body2" sx={OVER_THE_VIEW}>
-          {t(camera.kind === "off" ? "scan.noCamera" : "scan.hint")}
-        </Typography>
-        <Button
-          id="scan-pick"
-          variant="contained"
-          startIcon={<PhotoLibraryIcon />}
-          onClick={() => input.current?.click()}
-        >
-          {t("scan.pick")}
-        </Button>
-        <input
-          ref={input}
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={(event) => {
-            const [picture] = event.currentTarget.files ?? [];
-            event.currentTarget.value = "";
-            if (picture !== undefined) {
-              onPicture(picture);
-            }
+        {stream !== null && (
+          <Box
+            aria-hidden
+            sx={(theme) => ({
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              width: GUIDE,
+              height: GUIDE,
+              transform: "translate(-50%, -50%)",
+              border: 2,
+              borderColor: "common.white",
+              borderRadius: 2,
+              boxShadow: `0 0 0 100vmax ${alpha(theme.palette.common.black, 0.45)}`,
+            })}
+          />
+        )}
+        {camera.kind === "starting" && (
+          <Box sx={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
+            <CircularProgress aria-label={t("scan.button")} sx={{ color: "common.white" }} />
+          </Box>
+        )}
+        <Stack
+          spacing={1.5}
+          sx={{
+            position: "absolute",
+            left: 0,
+            right: 0,
+            bottom: 0,
+            px: 2,
+            pt: 2,
+            pb: "calc(24px + env(safe-area-inset-bottom, 0px))",
+            alignItems: "center",
           }}
-        />
-      </Stack>
+        >
+          {note !== null && (
+            <Typography
+              id="scan-window-note"
+              role="status"
+              variant="body2"
+              sx={(theme) => ({
+                ...OVER_THE_VIEW,
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 1,
+                bgcolor: alpha(theme.palette.common.black, 0.7),
+              })}
+            >
+              {note}
+            </Typography>
+          )}
+          <Typography id="scan-window-hint" variant="body2" sx={OVER_THE_VIEW}>
+            {t(camera.kind === "off" ? "scan.noCamera" : "scan.hint")}
+          </Typography>
+          <Button
+            id="scan-pick"
+            variant="contained"
+            startIcon={<PhotoLibraryIcon />}
+            onClick={() => input.current?.click()}
+          >
+            {t("scan.pick")}
+          </Button>
+          <input
+            ref={input}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(event) => {
+              const [picture] = event.currentTarget.files ?? [];
+              event.currentTarget.value = "";
+              if (picture !== undefined) {
+                onPicture(picture);
+              }
+            }}
+          />
+        </Stack>
+      </Box>
     </LargeModal>
   );
 }
