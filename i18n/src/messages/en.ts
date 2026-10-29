@@ -269,6 +269,53 @@ export const en: Messages = {
   "pictures.readAgain.done": "Hiroba's pictures were read again.",
   "pictures.readAgain.failed":
     "Some pictures could not be read again and stay as they were. Please try again.",
+  "tips.label": "Tip",
+  "tips.step": "{step} of {count}",
+  "tips.next": "Next",
+  "tips.done": "Got it",
+  "tips.skip": "Skip the tips",
+  "tips.app.menuSwipe":
+    "Swipe right from the screen's left side to open the menu; with the menu open, swipe right again for the Pipelines page.",
+  "tips.app.readAgainKeys": "F5 or Ctrl+R (⌘R on a Mac) reads the page again.",
+  "tips.app.scan": "The button beside the app's name scans a gift's QR code.",
+  "tips.overview.portrait.touch":
+    "Long-press your My Don to open the Costume page, and your name plate to open the Nickname & title page.",
+  "tips.overview.portrait.mouse":
+    "Click your My Don to open the Costume page, and your name plate to open the Nickname & title page.",
+  "tips.overview.readAgain.touch":
+    "Pull down to read your page again; past the point, hold six seconds to read this page's pictures from Hiroba again.",
+  "tips.overview.readAgain.mouse":
+    "Click this arrow to read your page again; hold it six seconds to read this page's pictures from Hiroba again.",
+  "tips.overview.songSearch":
+    "With the song search open, the same six-second hold reads taiko.wiki's song list again, for a song just added.",
+  "tips.overview.share": "This button shares your profile as a picture.",
+  "tips.scores.readEvery.touch": "Pull down and hold six seconds to read every score again.",
+  "tips.scores.readEvery.mouse": "Hold this arrow six seconds to read every score again.",
+  "tips.scores.row.touch": "Long-press a row to add its song to a set.",
+  "tips.scores.row.mouse": "Right-click a row to add its song to a set.",
+  "tips.scores.filters": "This row of filters slides sideways for the rest.",
+  "tips.rating.system": "Switch between OurTaiko V1 and V2 here.",
+  "tips.rating.share": "This button shares your rating as a picture.",
+  "tips.knowYourself.cards":
+    "Open a card for the charts you have not cleared yet, and add their songs to a set.",
+  "tips.costume.readAgain.touch":
+    "Pull down and hold six seconds to read the items' pictures from Hiroba again.",
+  "tips.costume.readAgain.mouse":
+    "Hold this arrow six seconds to read the items' pictures from Hiroba again.",
+  "tips.costume.history": "The costumes you wore before are kept here.",
+  "tips.nameTitle.readAgain.touch":
+    "Pull down and hold six seconds to read your name plate from Hiroba again.",
+  "tips.nameTitle.readAgain.mouse":
+    "Hold this arrow six seconds to read your name plate from Hiroba again.",
+  "tips.favorites.setsDrawer": "Swipe left from the screen's right edge to open your sets.",
+  "tips.favorites.setMenu.touch": "In your sets, long-press one to rename or delete it.",
+  "tips.favorites.setMenu.mouse": "In your sets, right-click one to rename or delete it.",
+  "tips.favorites.reorder.touch":
+    "While a set is being edited, long-press a song and drag it to move it.",
+  "tips.favorites.reorder.mouse":
+    "While a set is being edited, drag a song by its handle to move it.",
+  "tips.favorites.history": "The folders you synced before are kept here.",
+  "tips.favorites.gift": "This button makes a gift of songs for another player.",
   "scoreRank.2": "White Iki",
   "scoreRank.3": "Bronze Iki",
   "scoreRank.4": "Silver Iki",
