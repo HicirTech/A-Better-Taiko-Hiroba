@@ -4,6 +4,8 @@ import type { PictureWay } from "../platform/system-share";
 export const SNAPSHOT_WIDTH_PX = 1080;
 /** Rating's: four charts to a line under its head, about 4:3, as a chat app shrinks a tall one. */
 export const RATING_SNAPSHOT_WIDTH_PX = 1824;
+/** A gift's QR code in its picture: seven pixels a module at the longest, read once compressed. */
+export const GIFT_CODE_PX = 560;
 /** Pixels to each CSS pixel: one, as a chat app shrinks a picture to its view anyway. */
 export const SNAPSHOT_PIXEL_RATIO = 1;
 // A file goes out as a WebP, which Discord and WeChat take; the clipboard holds a PNG alone.
