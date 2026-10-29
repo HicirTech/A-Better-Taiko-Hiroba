@@ -21,6 +21,7 @@ import type { KeptSearches } from "../song-search/use-kept-searches";
 import type { ModalLook } from "../ui/large-modal";
 import type { SkeletonProgress } from "../ui/page-skeleton";
 import type { PageModel, PageState, SessionReads } from "./page-model";
+import type { TipScene } from "./page-tips";
 
 /** The session as a page sees it: the screen, the read of my page, and the way out. */
 export interface SessionView extends SessionReads {
@@ -42,6 +43,8 @@ export interface PageData extends PageState {
   readonly menuOpen: boolean;
   /** The pipelines page lies over the page. */
   readonly pipelinesShown: boolean;
+  /** What a tip told now opens on the page, as Favourites' sets drawer. */
+  readonly tipScene: TipScene | null;
   /** The difficulty whose level songs show in front, as Settings chose it. */
   readonly shownDifficulty: ShownDifficulty;
   readonly onShownDifficulty: (next: ShownDifficulty) => void;

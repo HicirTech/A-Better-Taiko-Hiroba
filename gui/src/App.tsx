@@ -1,18 +1,20 @@
 import type { Translator } from "@abth/i18n";
 import { useMediaQuery } from "@mui/material";
-import { type ReactNode, useContext, useEffect, useMemo } from "react";
+import { type ReactNode, useContext, useEffect, useMemo, useState } from "react";
 import { NavFoot } from "./app/nav-foot";
 import { PageArea } from "./app/page-area";
 import { ScanGifts } from "./app/scan-gifts";
 import { useKeptChoice } from "./app/use-kept-choice";
 import { useModalLook } from "./app/use-modal-look";
 import { usePageShown } from "./app/use-page-shown";
+import { usePageTips } from "./app/use-page-tips";
 import { usePageVisits } from "./app/use-page-visits";
 import { usePagesData } from "./app/use-pages-data";
 import { useReadAgain } from "./app/use-read-again";
 import { useSession } from "./app/use-session";
 import type { Page } from "./navigation/pages";
 import type { PageData } from "./pages/page";
+import { TIP_SCENES, type TipScene } from "./pages/page-tips";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { createPictureLane } from "./pictures/picture-lane";
 import type { SystemCamera, SystemLink, SystemShare, SystemToast } from "./platform";
@@ -27,9 +29,10 @@ import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogu
 import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
-import { MenuOpenContext } from "./ui/menu-open";
+import { MenuOpenContext, MenuOpenerContext } from "./ui/menu-open";
 import { PipelinesShownContext } from "./ui/pipelines-shown";
 import { PullToRead } from "./ui/pull-to-read";
+import { TipTour } from "./ui/tip-tour";
 import { useWideWindow } from "./ui/use-wide-window";
 import { UpdateDialog } from "./updates/update-dialog";
 
@@ -74,8 +77,10 @@ export function App({
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const wide = useWideWindow();
   const menuOpen = useContext(MenuOpenContext);
+  const openMenu = useContext(MenuOpenerContext);
   const pipelinesShown = useContext(PipelinesShownContext);
   const modalLook = useModalLook(pipelinesShown);
+  const [tipScene, setTipScene] = useState<TipScene | null>(null);
   const [shownDifficulty, onShownDifficulty] = useKeptChoice(
     keptShownDifficulty,
     keepShownDifficulty,
@@ -105,6 +110,7 @@ export function App({
     modalLook,
     menuOpen,
     pipelinesShown,
+    tipScene,
     shownDifficulty,
     onShownDifficulty,
     startingSort,
@@ -126,6 +132,7 @@ export function App({
   const entry = PAGE_REGISTRY[page];
   usePageVisits(page, data, session.settle);
   const shown = usePageShown(page, entry, data);
+  const tips = usePageTips(page, data, shown.shown);
   const again = useReadAgain(entry, data);
   const { screen } = session;
   const withFoot = again.signedIn || screen.name === "reading";
@@ -159,6 +166,17 @@ export function App({
       )}
       {again.question}
       <PicturesReadNote lane={lane} i18n={i18n} />
+      <TipTour
+        key={page}
+        steps={tips.steps}
+        i18n={i18n}
+        onSeen={tips.onSeen}
+        onScene={(scene) => {
+          const shown = TIP_SCENES.find((one) => one === scene) ?? null;
+          openMenu(shown === "menu");
+          setTipScene(shown);
+        }}
+      />
       {entry.standsAlone === true ? (
         entry.draw(data)
       ) : (

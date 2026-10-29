@@ -4,8 +4,10 @@ import { LOCALE_NAMES, LOCALES } from "@abth/i18n";
 import { CssBaseline, type Theme, ThemeProvider } from "@mui/material";
 import type { Preview } from "@storybook/react-vite";
 import { type ReactNode, useMemo } from "react";
+import { TIPS } from "../src/pages/page-tips";
 import { forgetSetting, pageStorage } from "../src/shared/kept-settings";
 import { systemLocale } from "../src/shared/language/locale-choice";
+import { keepSeenTips } from "../src/shared/tips/seen-tips";
 import { DEVICES, deviceOf, isTouchScreen } from "../src/story-kit/devices";
 import { APP_THEMES } from "../src/theme/app-theme";
 import { THEME_MODES, THEME_NAMES, type ThemeMode, type ThemeName } from "../src/theme/appearance";
@@ -65,7 +67,7 @@ function StoryFrame({
   );
 }
 
-/** Forgets what earlier stories kept, so each starts as a fresh install does. */
+/** Forgets what earlier stories kept, as a fresh install does, but with every tip seen. */
 function forgetKept() {
   const storage = pageStorage();
   for (const key of Object.keys(storage ?? {})) {
@@ -73,6 +75,10 @@ function forgetKept() {
       forgetSetting(key, storage);
     }
   }
+  keepSeenTips(
+    TIPS.map(({ id }) => id),
+    storage,
+  );
 }
 
 const preview: Preview = {

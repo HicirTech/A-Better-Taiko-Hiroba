@@ -123,6 +123,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     draw: (data) => (
       <KnowYourselfPage
         scores={data.scores}
+        cardOpened={data.tipScene === "knowItem"}
         listed={data.listed}
         catalogue={data.catalogue}
         lane={data.lane}
@@ -183,6 +184,7 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
     draw: (data) => (
       <FavoritesPage
         favorites={data.favorites}
+        tipScene={data.tipScene === "sets" || data.tipScene === "editedSet" ? data.tipScene : null}
         catalogue={data.catalogue}
         port={data.port}
         lane={data.lane}
