@@ -25,6 +25,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [ ] Change your game settings
 - [x] Change your favourite song and your favourites folder
 - [x] Keep sets of favourite songs on your device, and swap the whole folder for one in a single save
+- [x] Give up to four songs as a gift: a picture with a QR code, its songs shown or kept a mystery; scan one from a picture, or with the camera on Android, and accept it into your favourites folder
 - [x] Find songs by genre, difficulty and stars, and by part of a name in Japanese, English or Chinese, with the artists and each chart's star level
 - [x] Look up any song from the Overview, or open one from your favourites: its tempo, each chart's level and max combo, and pictures of its notes that open full screen and zoom
 - [x] See how many notes a chart asks for each second, as a line over the song, branch by branch
