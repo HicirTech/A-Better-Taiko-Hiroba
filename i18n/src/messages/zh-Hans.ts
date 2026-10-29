@@ -258,6 +258,8 @@ export const zhHans: Messages = {
     "广场的图片会一直留在本设备上。这会从广场重新读取本页的图片，读不到的图片保持原样。",
   "pictures.readAgain.cancel": "取消",
   "pictures.readAgain.confirm": "重新读取",
+  "pictures.readAgain.done": "已重新读取广场的图片。",
+  "pictures.readAgain.failed": "有些图片没能重新读取，保持原样，请重试。",
   "scoreRank.2": "白粹",
   "scoreRank.3": "铜粹",
   "scoreRank.4": "银粹",

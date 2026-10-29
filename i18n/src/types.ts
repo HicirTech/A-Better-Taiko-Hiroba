@@ -302,6 +302,8 @@ export interface Messages {
   "pictures.readAgain.body": string;
   "pictures.readAgain.cancel": string;
   "pictures.readAgain.confirm": string;
+  "pictures.readAgain.done": string;
+  "pictures.readAgain.failed": string;
   /** Score ranks by Hiroba's rank image number (best_score_rank_N, 2 to 8); no page names them. */
   // 日本語 is core's SCORE_RANK_NAMES, held by a test; English romanises colour and tier; pink is 粉.
   "scoreRank.2": string;

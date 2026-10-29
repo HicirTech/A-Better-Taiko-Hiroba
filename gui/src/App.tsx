@@ -16,6 +16,7 @@ import type { PageData } from "./pages/page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import { createPictureLane } from "./pictures/picture-lane";
 import type { SystemCamera, SystemLink, SystemShare, SystemToast } from "./platform";
+import { PicturesReadNote } from "./read-again/pictures-read-note";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
 import { keepStartingRating, keptStartingRating } from "./shared/rating-data/starting-rating";
@@ -157,6 +158,7 @@ export function App({
         />
       )}
       {again.question}
+      <PicturesReadNote lane={lane} i18n={i18n} />
       {entry.standsAlone === true ? (
         entry.draw(data)
       ) : (

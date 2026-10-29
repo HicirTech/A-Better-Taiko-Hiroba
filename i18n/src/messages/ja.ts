@@ -267,6 +267,9 @@ export const ja: Messages = {
     "ひろばの画像はこの端末にずっと残ります。このページの画像をひろばから読み込み直します。読み込めなかった画像はそのまま残ります。",
   "pictures.readAgain.cancel": "キャンセル",
   "pictures.readAgain.confirm": "読み込み直す",
+  "pictures.readAgain.done": "ひろばの画像を読み込み直しました。",
+  "pictures.readAgain.failed":
+    "読み込み直せなかった画像があります。元の画像のままです。もう一度お試しください。",
   "scoreRank.2": "白粋",
   "scoreRank.3": "銅粋",
   "scoreRank.4": "銀粋",
