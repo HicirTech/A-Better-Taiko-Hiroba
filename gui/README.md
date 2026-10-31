@@ -14,7 +14,9 @@ on hover or keyboard focus, and on Android as a Toast on a long-press; its count
 tooltip); the season's どんメダル on Hiroba's own plate, and your favourite songs. It can also change your costume (きせかえ), your title (称号) and your nickname
 (ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
 
-The window has no header. On the desktop it opens as tall as the Overview, so the Overview shows
+The window has no header. It opens under a cover of its own, the app's picture, until its
+first screen is drawn, and on Android the cover shows again when the app comes back after more than
+five minutes away. On the desktop it opens as tall as the Overview, so the Overview shows
 whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its eight pages:
 **Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
 **Scores** (every chart you played, the most recent first, see [Scores](#scores)),
