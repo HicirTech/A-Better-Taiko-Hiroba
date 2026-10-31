@@ -3,6 +3,8 @@ import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 
 export const signedOutKeys = [
+  "launchCoverShowsThenLeaves",
+  "launchCoverHidesThePageScrollbar",
   "noNavigationSignedOut",
   "schemeFollowsSystem",
   "surface",
@@ -11,8 +13,16 @@ export const signedOutKeys = [
 
 export async function signedOut(ctx: Ctx) {
   const { results } = ctx;
-  const { page, textOf } = ctx.app;
+  const { page, textOf, cover } = ctx.app;
   const { atSize, exists, swipe, touchEmulated } = pageHelpers(page);
+
+  // The lane's app has just started: its cover showed the app's picture with no words, then went.
+  results.launchCoverShowsThenLeaves =
+    cover?.words === "" && cover.picture && !(await exists("#launch-cover"));
+  // The page keeps its scrollbar's room, but not beside the cover, which cannot reach over it.
+  results.launchCoverHidesThePageScrollbar =
+    cover?.scrollbar === false &&
+    (await page.evaluate<boolean>("innerWidth > document.documentElement.clientWidth"));
 
   // Before a sign-in the window holds the sign-in card alone: no pages to go to, and no menu.
   const onlyTheSignIn = async () =>
