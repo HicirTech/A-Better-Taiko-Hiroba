@@ -57,6 +57,10 @@ export interface AppProps {
   readonly onScanned: () => void;
   /** Whether a player is signed in, who alone can scan: a gift is accepted on Hiroba. */
   readonly onSignedIn: (signedIn: boolean) => void;
+  /** The launch cover stands over the window: a page's tips wait for it to go. */
+  readonly covered?: boolean;
+  /** The window's first screen is drawn: a page, its skeleton, the sign-in or a failure. */
+  readonly onDrawn?: () => void;
 }
 
 export function App({
@@ -73,6 +77,8 @@ export function App({
   scanning,
   onScanned,
   onSignedIn,
+  covered = false,
+  onDrawn,
 }: AppProps) {
   const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
   const wide = useWideWindow();
@@ -132,9 +138,14 @@ export function App({
   const entry = PAGE_REGISTRY[page];
   usePageVisits(page, data, session.settle);
   const shown = usePageShown(page, entry, data);
-  const tips = usePageTips(page, data, shown.shown);
+  const tips = usePageTips(page, data, shown.shown && !covered);
   const again = useReadAgain(entry, data);
   const { screen } = session;
+  useEffect(() => {
+    if (shown.drawn) {
+      onDrawn?.();
+    }
+  }, [shown.drawn, onDrawn]);
   const withFoot = again.signedIn || screen.name === "reading";
   const { signedIn } = again;
   useEffect(() => onSignedIn(signedIn), [signedIn, onSignedIn]);
