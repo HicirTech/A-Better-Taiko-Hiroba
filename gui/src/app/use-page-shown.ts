@@ -16,6 +16,8 @@ export interface PageShown {
   readonly shown: boolean;
   /** My page could not be read, and no skeleton stands in the way of saying so. */
   readonly failed: boolean;
+  /** Something stands in the page's place: the page, its skeleton, the sign-in or a failure. */
+  readonly drawn: boolean;
   /** What the skeleton says is read. */
   readonly label: MessageKey;
   readonly progress: SkeletonProgress | null;
@@ -38,13 +40,17 @@ export function usePageShown(page: Page, entry: PageEntry, data: PageData): Page
     }
   }, [read.skeleton]);
   const myPageWaits = screen.name === "checking" || screen.name === "reading" || myPageInView;
+  // The skeleton stands alone until the page, or what came in its place, takes over from it.
+  const shown = screen.name === "profile" && !read.skeleton && (!waits || holds);
+  const failed = screen.name === "readFailed" && !read.skeleton;
+  const signIn = screen.name === "signedOut" || screen.name === "signingIn";
   return {
     waits,
     skeleton: read.skeleton,
     fades: read.fades,
-    // The skeleton stands alone until the page, or what came in its place, takes over from it.
-    shown: screen.name === "profile" && !read.skeleton && (!waits || holds),
-    failed: screen.name === "readFailed" && !read.skeleton,
+    shown,
+    failed,
+    drawn: entry.standsAlone === true || read.skeleton || shown || failed || signIn,
     label: myPageWaits ? "profile.reading" : (entry.readLabel ?? entry.label),
     progress: entry.progress?.(data) ?? null,
   };

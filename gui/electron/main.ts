@@ -249,6 +249,8 @@ const started = app.whenReady().then(async () => {
       : Math.min(WINDOW_CONTENT_PX.height, room),
     // A packaged app has no menu; a development one keeps its shortcuts, its bar shown by Alt.
     autoHideMenuBar: true,
+    // Shown once the page has drawn its launch cover, so no blank window comes first.
+    show: false,
     ...(environment.offScreen ? OFF_SCREEN_OPTIONS : {}),
     webPreferences: {
       preload: join(app.getAppPath(), "out", "electron", "preload.cjs"),
@@ -259,6 +261,8 @@ const started = app.whenReady().then(async () => {
   });
   if (environment.offScreen) {
     showOffScreen(mainWindow);
+  } else {
+    mainWindow.once("ready-to-show", () => mainWindow.show());
   }
   // No window opens; a link to the repository's page or to its releases opens in the system's
   // browser, and no other does.

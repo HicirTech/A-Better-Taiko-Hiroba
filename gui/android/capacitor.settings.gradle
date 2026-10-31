@@ -14,5 +14,8 @@ project(':capacitor-inappbrowser').projectDir = new File('../../node_modules/@ca
 include ':capacitor-share'
 project(':capacitor-share').projectDir = new File('../../node_modules/@capacitor/share/android')
 
+include ':capacitor-splash-screen'
+project(':capacitor-splash-screen').projectDir = new File('../../node_modules/@capacitor/splash-screen/android')
+
 include ':capacitor-toast'
 project(':capacitor-toast').projectDir = new File('../../node_modules/@capacitor/toast/android')

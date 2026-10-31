@@ -26,6 +26,37 @@ export function showWindows(): void {
   windowsShown = true;
 }
 
+/** What the launch cover showed while it stood. */
+export interface CoverSeen {
+  readonly words: string;
+  /** Its picture had come. */
+  readonly picture: boolean;
+  /** The page's scrollbar stood beside it before it began to go. */
+  readonly scrollbar: boolean;
+}
+
+/** Waits until the window's frame stands with no launch cover over it; returns what it showed. */
+async function coverGone(page: {
+  evaluate<V>(expression: string): Promise<V>;
+}): Promise<CoverSeen | null> {
+  let seen: CoverSeen | null = null;
+  await waitFor("the launch cover to go", async () => {
+    const now = await page.evaluate<{ frame: boolean; cover: CoverSeen | null }>(
+      `(() => { const cover = document.querySelector("#launch-cover"); const img = cover?.querySelector("img"); return { frame: document.querySelector("main") !== null, cover: cover === null ? null : { words: cover.textContent, picture: img != null && img.complete && img.naturalWidth > 0, scrollbar: getComputedStyle(cover).pointerEvents !== "none" && innerWidth > document.documentElement.clientWidth } }; })()`,
+    );
+    if (now.cover !== null) {
+      seen = {
+        words: now.cover.words,
+        picture: (seen?.picture ?? false) || now.cover.picture,
+        scrollbar: (seen?.scrollbar ?? false) || now.cover.scrollbar,
+      };
+      return undefined;
+    }
+    return now.frame || undefined;
+  });
+  return seen;
+}
+
 export async function launch({
   now,
   lang = "en-US",
@@ -90,6 +121,8 @@ export async function launch({
         `(() => { localStorage.setItem(${seenKey}, ${allSeen}); return localStorage.getItem(${seenKey}) === ${allSeen}; })()`,
       )) || undefined,
   );
+  // The launch cover stands over the window at first: nothing is used until it has gone.
+  const cover = await coverGone(page);
   const text = () => page.evaluate<string>("document.body.textContent");
   const textOf = (selector: string) =>
     page.evaluate<string | null>(
@@ -128,7 +161,7 @@ export async function launch({
       },
     );
   };
-  return { proc, page, text, textOf, click, clickButton, until, currentPage, goTo };
+  return { proc, page, cover, text, textOf, click, clickButton, until, currentPage, goTo };
 }
 
 /** Closes through the browser's own close so the app saves its state; kills it after 10 s. */
