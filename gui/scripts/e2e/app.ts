@@ -80,9 +80,15 @@ export async function launch({
   const page = await connect(target.webSocketDebuggerUrl);
   await holdOwnSize(page);
   // A fresh install tells each page's tips over it: they are seen here, and the tips section
-  // asks for them.
-  await page.evaluate(
-    `localStorage.setItem(${JSON.stringify(SEEN_TIPS_KEY)}, ${JSON.stringify(JSON.stringify(TIPS.map(({ id }) => id)))})`,
+  // asks for them. Set until it reads back: one that lands before the page has loaded is lost.
+  const seenKey = JSON.stringify(SEEN_TIPS_KEY);
+  const allSeen = JSON.stringify(JSON.stringify(TIPS.map(({ id }) => id)));
+  await waitFor(
+    "every tip marked seen",
+    async () =>
+      (await page.evaluate<boolean>(
+        `(() => { localStorage.setItem(${seenKey}, ${allSeen}); return localStorage.getItem(${seenKey}) === ${allSeen}; })()`,
+      )) || undefined,
   );
   const text = () => page.evaluate<string>("document.body.textContent");
   const textOf = (selector: string) =>
