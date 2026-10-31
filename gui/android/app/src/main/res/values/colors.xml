@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The default theme's light background, so the launch screen gives way to the cover unseen. -->
+    <color name="launch_background">#FFFFFF</color>
+</resources>
