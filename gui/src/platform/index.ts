@@ -5,12 +5,14 @@ import { desktopLink } from "./desktop-link";
 import { type DesktopPictures, desktopShare } from "./desktop-share";
 import type { SystemBack } from "./system-back";
 import type { SystemCamera } from "./system-camera";
+import type { SystemLaunch } from "./system-launch";
 import type { SystemLink } from "./system-link";
 import type { SystemShare } from "./system-share";
 import type { SystemToast } from "./system-toast";
 
 export type { SystemBack } from "./system-back";
 export type { SystemCamera } from "./system-camera";
+export type { SystemLaunch } from "./system-launch";
 export type { SystemLink } from "./system-link";
 export type { PictureWay, SystemShare } from "./system-share";
 export type { SystemToast } from "./system-toast";
@@ -24,7 +26,7 @@ declare global {
   }
 }
 
-/** Which shell the bundle runs in: port, link and share, and Android's Back, Toast and camera. */
+/** Which shell the bundle runs in: port, link, share; Android's Back, Toast, camera, launch. */
 export type Platform =
   | {
       readonly shell: "desktop";
@@ -40,6 +42,7 @@ export type Platform =
       readonly back: SystemBack;
       readonly toast: SystemToast;
       readonly camera: SystemCamera;
+      readonly launch: SystemLaunch;
     };
 
 /** Picks the platform layer; one bundle ships in both shells. Android's modules load only there,
@@ -64,6 +67,7 @@ export async function connectPlatform({
       { createAndroidPort },
       { androidBack },
       { androidCamera },
+      { androidLaunch },
       { androidLink },
       { androidShare },
       { androidToast },
@@ -71,6 +75,7 @@ export async function connectPlatform({
       import("./android"),
       import("./android-back"),
       import("./android-camera"),
+      import("./android-launch"),
       import("./android-link"),
       import("./android-share"),
       import("./android-toast"),
@@ -84,6 +89,7 @@ export async function connectPlatform({
       back: androidBack,
       toast: androidToast,
       camera: androidCamera,
+      launch: androidLaunch,
     };
   }
   return null;

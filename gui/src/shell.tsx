@@ -52,7 +52,7 @@ export function Shell({
   const [page, navigate] = useShownPage(keptPage, keepPage);
   const [signedIn, setSignedIn] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const cover = useLaunchCover();
+  const cover = useLaunchCover(platform?.shell === "android" ? platform.launch : null);
   const { drawn } = cover;
   // With no app, the window's first screen is the page drawn here at once.
   useEffect(() => {

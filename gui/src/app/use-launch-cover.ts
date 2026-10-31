@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
+import type { SystemLaunch } from "../platform";
 import { coverGoesAt } from "./launch-cover-times";
 
 /** A cover standing: since when, and since when the screen beneath is drawn. */
@@ -15,7 +16,7 @@ export interface LaunchCoverShown {
 }
 
 /** The launch cover: from the window's start to its first screen. */
-export function useLaunchCover(): LaunchCoverShown {
+export function useLaunchCover(launch: SystemLaunch | null): LaunchCoverShown {
   const [standing, setStanding] = useState<Standing | null>(() => ({
     shownAt: performance.now(),
     drawnAt: null,
@@ -28,6 +29,8 @@ export function useLaunchCover(): LaunchCoverShown {
     const gone = setTimeout(() => setStanding(null), goesIn);
     return () => clearTimeout(gone);
   }, [standing]);
+  // The cover is drawn with the window, so the system's launch screen gives way to it.
+  useEffect(() => launch?.covered(), [launch]);
   const drawn = useCallback(
     () =>
       setStanding((now) =>

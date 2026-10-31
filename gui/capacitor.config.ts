@@ -9,6 +9,8 @@ const config: CapacitorConfig = {
   plugins: {
     // Left off: patching fetch would hide the final URL a lost session is recognised by.
     CapacitorHttp: { enabled: false },
+    // Held until the app draws its own cover, or for this long if the app never says so.
+    SplashScreen: { launchShowDuration: 3_000 },
   },
 };
 
