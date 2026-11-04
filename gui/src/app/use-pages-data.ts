@@ -93,7 +93,7 @@ export function usePagesData({
   const keptSets = useFavoriteSets();
   const keptSearches = useKeptSearches();
   const { forget: forgetFavorites } = favorites;
-  // Read once someone opens a page that shows it or the song search, and kept from then on.
+  // Read once a page that shows it, the song search or a scan opens, and kept from then on.
   const [songsWanted, setSongsWanted] = useState(false);
   const wantSongs = useCallback(() => setSongsWanted(true), []);
   const [songSearchOpen, onSongSearchOpen] = useState(false);

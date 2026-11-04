@@ -1,4 +1,5 @@
 import type { Translator } from "@abth/i18n";
+import { useEffect } from "react";
 
 import type { FavoritesEditor } from "../favorites/use-favorites";
 import type { PickableReading } from "../favorites/use-pickable-songs";
@@ -24,7 +25,15 @@ export function ScanGifts({
   readonly scanning: boolean;
   readonly onScanned: () => void;
 }) {
-  const { catalogue, i18n } = data;
+  const { catalogue, i18n, wantSongs } = data;
+  const { readIfFailed } = catalogue;
+  // A gift names its songs from the song list, which the Overview does not ask for by itself.
+  useEffect(() => {
+    if (scanning) {
+      wantSongs();
+      readIfFailed();
+    }
+  }, [scanning, wantSongs, readIfFailed]);
   return (
     <ScanFlow
       scanning={scanning}
