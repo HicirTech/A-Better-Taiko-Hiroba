@@ -5,9 +5,11 @@ import sharp from "sharp";
 
 import { giftCode, scannedCodeOf } from "../../src/shared/gifts/gift-code";
 import { qrCodePath, qrTextIn } from "../../src/shared/gifts/qr-codes";
+import { numberedSong } from "../../src/shared/song-catalogue/song-names";
 import { SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
 import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
-import { en, HIROBA, LANE, PICTURES, userDataOf } from "./config";
+import { launch, stop } from "./app";
+import { en, HIROBA, LANE, NOON_JST, PICTURES, userDataOf } from "./config";
 import type { Ctx } from "./context";
 import { type Page, pageHelpers, same, waitFor } from "./harness";
 import { savedPicture, savedWhole } from "./snapshots";
@@ -36,6 +38,7 @@ export const giftsKeys = [
   "scanWithoutACodeSaysSo",
   "scanOfAnotherCodeSaysSo",
   "giftOfASongNotOfferedIsRefused",
+  "giftNamesItsSongsInANewWindow",
 ] as const;
 
 const favoritesNow = async () =>
@@ -201,4 +204,34 @@ export async function gifts(ctx: Ctx) {
     (await textOf("#scan-outcome"))?.startsWith("Not accepted: Hiroba does not let you pick") ===
       true &&
     same(await folderNow(), folderBefore);
+
+  // A window just opened on the Overview has read no song list: the press of Scan asks for it.
+  await stop(ctx.app);
+  const opened = await launch({ now: NOON_JST });
+  ctx.app = opened;
+  await opened.until("サンプルどん");
+  const inOpened = pageHelpers(opened.page);
+  const shownGift = join(SCANNED, "shown.png");
+  writeFileSync(
+    shownGift,
+    await codePicture(giftCode({ ...lockedGift, songs: GIFT_SONGS, madeAt: Date.now() })),
+  );
+  await opened.page.call("Page.setInterceptFileChooserDialog", { enabled: true });
+  await opened.click("#scan");
+  await pictureInto(opened.page, "#scan-picture", shownGift);
+  await waitFor(
+    "the gift offered in the new window",
+    async () => (await inOpened.exists("#gift-dialog [role='dialog']")) || undefined,
+  );
+  results.giftNamesItsSongsInANewWindow = await waitFor(
+    "the gift's songs named",
+    async () => {
+      const songs = await opened.textOf("#gift-dialog-songs");
+      return (
+        (songs !== null && !GIFT_SONGS.some((no) => songs.includes(numberedSong(no)))) || undefined
+      );
+    },
+    5_000,
+  ).catch(() => false);
+  await opened.click("#gift-dialog-cancel");
 }
