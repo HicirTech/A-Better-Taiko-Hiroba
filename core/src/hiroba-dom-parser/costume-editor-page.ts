@@ -121,7 +121,7 @@ function readNumber(scope: HTMLElement, marker: string): Result<number, ParseFai
     : err({ kind: "unreadableValue", page: PAGE, marker, raw });
 }
 
-/** One slot's owned ids in page order, each checked against its slot: an id can sit in several. */
+/** One slot's ids in page order, a thumbnail checked against its slot: an id can sit in several. */
 function readSlot(root: HTMLElement, tab: string, slot: number): Result<number[], ParseFailure> {
   const marker = `#tab-cos-${tab}`;
   const container = requireMarker(root, marker, PAGE);
@@ -132,31 +132,40 @@ function readSlot(root: HTMLElement, tab: string, slot: number): Result<number[]
   const ids: number[] = [];
   for (const [index, anchor] of anchors.entries()) {
     const name = anchor.getAttribute("name") ?? "";
-    const source = anchor.querySelector("img")?.getAttribute("srctmp") ?? "";
-    const cos = source.match(THUMBNAIL_COS)?.[1];
-    const type = source.match(THUMBNAIL_TYPE)?.[1];
-    if (!/^\d+$/.test(name) || cos !== name || type !== String(slot)) {
+    const source = thumbnailOf(anchor)?.getAttribute("srctmp");
+    // Hiroba's own script goes by the name alone, so a picture with no thumbnail is an item too.
+    const agrees =
+      source === undefined ||
+      (source.match(THUMBNAIL_COS)?.[1] === name &&
+        source.match(THUMBNAIL_TYPE)?.[1] === String(slot));
+    if (!/^\d+$/.test(name) || !agrees) {
       // A report carries the marker but never `raw`, so the marker says which part broke.
       const shape = itemShape(anchor, name, slot);
       return err({
         kind: "unreadableValue",
         page: PAGE,
         marker: `${marker} a[name] (${index + 1} of ${anchors.length}: ${shape})`,
-        raw: `${name} ${source}`,
+        raw: `${name} ${source ?? ""}`,
       });
     }
+    // That script takes a name of 0 for no item.
     const id = Number(name);
-    if (!ids.includes(id)) {
+    if (id > 0 && !ids.includes(id)) {
       ids.push(id);
     }
   }
   return ok(ids);
 }
 
+/** The image whose `srctmp` the page's script swaps in as the tab opens, if the item has one. */
+function thumbnailOf(anchor: HTMLElement): HTMLElement | undefined {
+  return anchor.querySelectorAll("img").find((image) => image.hasAttribute("srctmp"));
+}
+
 /** The item's parts as fixed codes: a report may carry these, never the page's own text. */
 function itemShape(anchor: HTMLElement, name: string, slot: number): string {
   const images = anchor.querySelectorAll("img");
-  const thumbnail = images.find((image) => image.hasAttribute("srctmp"));
+  const thumbnail = thumbnailOf(anchor);
   const source = thumbnail?.getAttribute("srctmp") ?? "";
   const cos = source.match(THUMBNAIL_COS)?.[1];
   const type = source.match(THUMBNAIL_TYPE)?.[1];
