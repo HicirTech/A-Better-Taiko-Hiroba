@@ -115,28 +115,41 @@ describe("parseCostumeEditorPage", () => {
     );
   });
 
-  type ShapeCase = [label: string, shown: string, shape: string];
   const LOADER = `<img src="image/sp/640/ajax-loader_640.gif"`;
-  test.each<ShapeCase>([
+  type NamedCase = [label: string, shown: string];
+  test.each<NamedCase>([
+    ["a picture with no thumbnail", `<li><a name="36"><img src="image/sp/640/other.png"></a></li>`],
     [
-      "a picture before the thumbnail",
+      "a picture before its thumbnail",
       `<li><a name="36"><img src="image/sp/640/new.png">${LOADER} srctmp="imgsrc_kisekae.php?cos=36&type=1"></a></li>`,
-      "name=num img=2 src=other srctmp=later cos=same type=same",
-    ],
-    [
-      "a picture with no thumbnail",
-      `<li><a name="36"><img src="image/sp/640/cos_icon_non_640.png"></a></li>`,
-      "name=num img=1 src=other srctmp=none cos=none type=none",
     ],
     [
       "a thumbnail already in src",
       `<li><a name="36"><img src="imgsrc_kisekae.php?cos=36&type=1"></a></li>`,
-      "name=num img=1 src=item srctmp=none cos=none type=none",
     ],
+    ["no picture", `<li><a name="36"></a></li>`],
+  ])("takes an item with %s by its name, as Hiroba's own script does", (_label, shown) => {
+    const result = parseCostumeEditorPage(EDITOR_EXCERPT.replace(item(36, 1), shown));
+    expect(isOk(result) && result.value.slots[0]).toEqual([4, 36]);
+  });
+
+  test("leaves out an anchor named 0, which Hiroba's own script takes for no item", () => {
+    const named0 = `<li><a name="0"><img src="image/sp/640/other.png"></a></li>`;
+    const result = parseCostumeEditorPage(EDITOR_EXCERPT.replace(item(36, 1), named0));
+    expect(isOk(result) && result.value.slots[0]).toEqual([4]);
+  });
+
+  type ShapeCase = [label: string, shown: string, shape: string];
+  test.each<ShapeCase>([
     [
       "a thumbnail of another id",
       `<li><a name="36">${LOADER} srctmp="imgsrc_kisekae.php?cos=37&type=1"></a></li>`,
       "name=num img=1 src=loader srctmp=first cos=other type=same",
+    ],
+    [
+      "a picture before a thumbnail of another id",
+      `<li><a name="36"><img src="image/sp/640/new.png">${LOADER} srctmp="imgsrc_kisekae.php?cos=37&type=1"></a></li>`,
+      "name=num img=2 src=other srctmp=later cos=other type=same",
     ],
     [
       "an empty name",
@@ -144,9 +157,9 @@ describe("parseCostumeEditorPage", () => {
       "name=empty img=1 src=loader srctmp=first cos=other type=same",
     ],
     [
-      "no picture",
-      `<li><a name="36"></a></li>`,
-      "name=num img=0 src=none srctmp=none cos=none type=none",
+      "a name that is no number",
+      `<li><a name="new"><img src="image/sp/640/other.png"></a></li>`,
+      "name=other img=1 src=other srctmp=none cos=none type=none",
     ],
   ])("names the parts of %s, and where the item sits, in codes", (_label, shown, shape) => {
     const result = parseCostumeEditorPage(EDITOR_EXCERPT.replace(item(36, 1), shown));

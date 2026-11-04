@@ -102,7 +102,7 @@ describe("changeTitle's requests", () => {
           .decode(sent.value.body)
           .replace(
             `<a name="36"><img srctmp="imgsrc_kisekae.php?cos=36&type=1">`,
-            `<a name="36"><img src="image/sp/640/cos_icon_non_640.png">`,
+            `<a name="36"><img srctmp="imgsrc_kisekae.php?cos=37&type=1">`,
           );
         return ok({ ...sent.value, body: new TextEncoder().encode(page) });
       },
