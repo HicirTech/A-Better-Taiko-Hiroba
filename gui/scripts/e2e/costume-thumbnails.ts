@@ -1,3 +1,4 @@
+import { NO_THUMBNAIL_ITEM } from "../mock-costume";
 import { HIROBA, PHONE_SHORT, TOP_BAND_PX } from "./config";
 import type { Ctx } from "./context";
 import { at, costumeHelpers, near } from "./costume-helpers";
@@ -29,6 +30,7 @@ export const thumbnailsKeys = [
   "failedThumbnailsAskedAgainOnReopen",
   "thumbnailNotOfferedRefusedUnsent",
   "pictureShapesRefused",
+  "itemWithNoThumbnailShown",
 ] as const;
 
 export async function thumbnails(ctx: Ctx) {
@@ -79,6 +81,12 @@ export async function thumbnails(ctx: Ctx) {
     (await page.evaluate<number>(
       `document.querySelectorAll("#costume-items-costume1 img").length`,
     )) === seen.length;
+  results.itemWithNoThumbnailShown =
+    (
+      await page.evaluate<string | null>(
+        `document.querySelector("#item-costume1-${NO_THUMBNAIL_ITEM} img")?.getAttribute("src") ?? null`,
+      )
+    )?.startsWith("data:image/png;base64,") === true;
   results.thumbnailsOnlyWhenSeen = await askedOnlyWhatIsOnShow(seen, ownedIn(1), false);
   await touchEmulated(true);
   await page.evaluate("window.scrollTo(0, 0)");

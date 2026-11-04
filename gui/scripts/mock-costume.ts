@@ -39,6 +39,9 @@ export const OWNED: Readonly<Record<1 | 2 | 3 | 4 | 5, readonly number[]>> = {
   5: [126, 140, 143],
 };
 
+/** An きぐるみ shown with a picture of its own and no thumbnail, as a player's page has been. */
+export const NO_THUMBNAIL_ITEM = 56;
+
 /** Enough more items for a slot as long as real ones (38 to 76): a default window scrolls. */
 const MANY_MORE = Array.from({ length: 40 }, (_, at) => 200 + at);
 /** Long slots with no thumbnail asked for yet: one for each view that needs a fresh one. */
@@ -224,9 +227,10 @@ export function createCostumeEditor() {
       const slotTabs = SLOT_TABS.map((tab, index) => {
         const slot = (index + 1) as 1 | 2 | 3 | 4 | 5;
         const items = ownedIn(slot)
-          .map(
-            (id) =>
-              `<li><a name="${id}"><img src="image/sp/640/ajax-loader_640.gif" srctmp="imgsrc_kisekae.php?cos=${id}&type=${slot}"></a></li>`,
+          .map((id) =>
+            slot === 1 && id === NO_THUMBNAIL_ITEM
+              ? `<li><a name="${id}"><img src="image/sp/640/cos_icon_non_640.png"></a></li>`
+              : `<li><a name="${id}"><img src="image/sp/640/ajax-loader_640.gif" srctmp="imgsrc_kisekae.php?cos=${id}&type=${slot}"></a></li>`,
           )
           .join("\n");
         return `<div id="tab-cos-${tab}"><div class="costumeThumbArea"><ul>\n${items}\n</ul></div>
