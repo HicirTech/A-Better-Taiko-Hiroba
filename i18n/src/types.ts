@@ -134,6 +134,7 @@ export interface Messages {
   "rating.figure.rhythm": string;
   "rating.figure.complex": string;
   "rating.best": string;
+  "rating.overTime": string;
   "rating.next": string;
   /** Param: {value}, the chart's constant in its system. */
   "rating.constant": string;

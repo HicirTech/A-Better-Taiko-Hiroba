@@ -107,6 +107,7 @@ export const zhHans: Messages = {
   "rating.figure.rhythm": "节奏",
   "rating.figure.complex": "复合",
   "rating.best": "计入的 20 首",
+  "rating.overTime": "Rating 变化",
   "rating.next": "候补 20 首",
   "rating.constant": "定数 {value}",
   "rating.accuracy": "{value}%",

@@ -110,6 +110,7 @@ export const ja: Messages = {
   "rating.figure.rhythm": "リズム",
   "rating.figure.complex": "複合",
   "rating.best": "対象の 20 曲",
+  "rating.overTime": "レーティングの推移",
   "rating.next": "次の 20 曲",
   "rating.constant": "定数 {value}",
   "rating.accuracy": "{value}%",

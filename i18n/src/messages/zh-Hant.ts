@@ -107,6 +107,7 @@ export const zhHant: Messages = {
   "rating.figure.rhythm": "節奏",
   "rating.figure.complex": "複合",
   "rating.best": "計入的 20 首",
+  "rating.overTime": "Rating 變化",
   "rating.next": "候補 20 首",
   "rating.constant": "定數 {value}",
   "rating.accuracy": "{value}%",

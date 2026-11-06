@@ -61,7 +61,7 @@ export function usePagesData({
   const scores = useScores(port, sessionGone);
   const { load: loadScores, forget: forgetScores } = scores;
   const listed = useListedCharts(port, scores.view);
-  const ratingData = useRatingData(port, startingRating);
+  const ratingData = useRatingData(port, startingRating, scores);
   // The editors live here so what they read from Hiroba is kept across pages; their edits are not.
   // The costume's preview is read while its page shows it.
   const editor = useCostumeEditor({

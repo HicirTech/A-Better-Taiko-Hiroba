@@ -1,4 +1,4 @@
-import { type ChartRating, chartKey, ratePlayer } from "@abth/core";
+import { type ChartRating, COUNTED, chartKey, ratePlayer } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Stack, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
@@ -17,13 +17,8 @@ import type { ModalLook } from "../ui/large-modal";
 import { LoadFailed, ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
 import { RatedList } from "./rated-list";
-import {
-  COUNTED,
-  NONE_RATED,
-  RATING_SYSTEM_SHORT,
-  ratingAndSkills,
-  ratingFormats,
-} from "./rating-figures";
+import { NONE_RATED, RATING_SYSTEM_SHORT, ratingAndSkills, ratingFormats } from "./rating-figures";
+import { RatingOverTime } from "./rating-over-time";
 import { RatingRadar } from "./rating-radar";
 import { RatingSnapshot } from "./rating-snapshot";
 import type { RatingDataState } from "./use-rating-data";
@@ -177,6 +172,15 @@ export function RatingPage({
             </Typography>
             <RatingRadar figures={skills} format={(value) => formats.figure.format(value)} />
           </Stack>
+        )}
+        {view !== null && data !== null && charts.length > 0 && (
+          <RatingOverTime
+            kept={ratingData.history}
+            view={view}
+            data={data}
+            formats={formats}
+            i18n={i18n}
+          />
         )}
         {list("rating-best", "rating.best", charts.slice(0, COUNTED))}
         {list("rating-next", "rating.next", charts.slice(COUNTED, COUNTED * 2))}

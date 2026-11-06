@@ -109,6 +109,7 @@ export const en: Messages = {
   "rating.figure.rhythm": "Rhythm",
   "rating.figure.complex": "Complexity",
   "rating.best": "The 20 that count",
+  "rating.overTime": "Rating over time",
   "rating.next": "The next 20",
   "rating.constant": "Const. {value}",
   "rating.accuracy": "{value}%",

@@ -1,4 +1,4 @@
-import type { ChartRating, PlayerRating } from "@abth/core";
+import { type ChartRating, COUNTED, type PlayerRating } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 import { useMemo, useRef } from "react";
@@ -14,7 +14,7 @@ import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue"
 import { SnapshotFrame } from "../snapshots/snapshot-frame";
 import { RATING_SNAPSHOT_WIDTH_PX } from "../snapshots/snapshot-picture";
 import { RatedList } from "./rated-list";
-import { COUNTED, ratingAndSkills, ratingFormats } from "./rating-figures";
+import { ratingAndSkills, ratingFormats } from "./rating-figures";
 import { RatingRadar } from "./rating-radar";
 
 const PLATE: PictureWant = { kind: "titlePlate" };
