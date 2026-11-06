@@ -62,6 +62,9 @@ const BOOK: ScoreBook = {
   full: false,
 };
 
+const NO_HITS = { good: null, ok: null, bad: null, drumroll: null, maxCombo: null } as const;
+const HITS = { good: 900, ok: 12, bad: 0, drumroll: 30, maxCombo: 912 } as const;
+
 /** 1178's Ura, first cleared, then played again for a better score. */
 const CHANGES: readonly ScoreChange[] = [
   {
@@ -75,6 +78,7 @@ const CHANGES: readonly ScoreChange[] = [
       clearCount: null,
       fullComboCount: null,
       donderfulComboCount: null,
+      ...NO_HITS,
       fetchedAt: "2026-10-09T12:00:00.000Z",
     },
     to: {
@@ -85,6 +89,7 @@ const CHANGES: readonly ScoreChange[] = [
       clearCount: 3,
       fullComboCount: 0,
       donderfulComboCount: 0,
+      ...HITS,
       fetchedAt: "2026-10-10T12:00:00.000Z",
     },
   },
@@ -99,6 +104,7 @@ const CHANGES: readonly ScoreChange[] = [
       clearCount: 3,
       fullComboCount: 0,
       donderfulComboCount: 0,
+      ...NO_HITS,
       fetchedAt: "2026-10-10T12:00:00.000Z",
     },
     to: {
@@ -109,6 +115,7 @@ const CHANGES: readonly ScoreChange[] = [
       clearCount: 4,
       fullComboCount: 2,
       donderfulComboCount: 0,
+      ...HITS,
       fetchedAt: "2026-10-11T12:00:00.000Z",
     },
   },
@@ -180,6 +187,15 @@ describe("readStoredScoreChanges", () => {
     expect(readStoredScoreChanges(stored)).toBeNull();
   });
 
+  test("reads a row kept before hits were logged, with none", () => {
+    const { good, ok, bad, drumroll, maxCombo, ...before } = CHANGES[1]?.to ?? {};
+    const read = readStoredScoreChanges({
+      baselined: true,
+      changes: [{ ...CHANGES[1], from: before, to: before }],
+    });
+    expect(read?.changes[0]?.to).toEqual({ ...before, ...NO_HITS } as never);
+  });
+
   test("drops a row with a broken reading, and keeps the others", () => {
     const broken = { ...CHANGES[1], to: { ...CHANGES[1]?.to, stageCount: -1 } };
     const read = readStoredScoreChanges({ baselined: true, changes: [CHANGES[0], broken] });
@@ -223,7 +239,7 @@ describe("the score stores", () => {
     const indexedDb = createFakeIndexedDb();
     const stores = [
       () => createMemoryScoreChangesStore(),
-      () => createScoreChangesStore("score-changes.json", files),
+      () => createScoreChangesStore("score-changes-2.json", "score-changes.json", files),
       () => createIndexedDbScoreChangesStore(indexedDb.factory),
     ];
     const memory = createMemoryScoreChangesStore();
@@ -237,5 +253,20 @@ describe("the score stores", () => {
       expect(await again.load(OTHER)).toEqual({ baselined: false, changes: [] });
     }
     expect([...indexedDb.tables.keys()]).toEqual(["changes"]);
+  });
+
+  test("a log from a build that kept no hits reads until a save, and stays as it was", async () => {
+    const { files } = fakeFiles();
+    const earlier = { baselined: true, changes: [CHANGES[0]] };
+    files.writeFileSync(
+      "score-changes.json",
+      JSON.stringify({ version: 1, players: { [PLAYER]: earlier } }),
+    );
+    const store = createScoreChangesStore("score-changes-2.json", "score-changes.json", files);
+    expect((await store.load(PLAYER))?.changes).toHaveLength(1);
+    await store.save(PLAYER, LOG);
+    expect((await store.load(PLAYER))?.changes).toEqual(CHANGES);
+    const left = JSON.parse(files.readFileSync("score-changes.json", "utf8"));
+    expect(left.players[PLAYER].changes).toHaveLength(1);
   });
 });

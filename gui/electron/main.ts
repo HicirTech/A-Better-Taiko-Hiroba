@@ -306,7 +306,10 @@ const started = app.whenReady().then(async () => {
     io: pipelines.io,
     pipeline: pipelines.scores,
     store: createScoresStore(join(app.getPath("userData"), "scores.json")),
-    changes: createScoreChangesStore(join(app.getPath("userData"), "score-changes.json")),
+    changes: createScoreChangesStore(
+      join(app.getPath("userData"), "score-changes-2.json"),
+      join(app.getPath("userData"), "score-changes.json"),
+    ),
     owner: () => owner,
     endSession: () => setSession(null),
     walk: recentPlays.readRecentPlays,

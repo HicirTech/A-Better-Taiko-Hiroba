@@ -89,7 +89,7 @@ export async function dataFolder(ctx: Ctx) {
     });
 
   // The scores section replays song 5 after its first read: the log on disk keeps that change.
-  const players = inEachFolder("score-changes.json").flatMap((file) =>
+  const players = inEachFolder("score-changes-2.json").flatMap((file) =>
     Object.values(
       (
         JSON.parse(readFileSync(file, "utf8")) as {

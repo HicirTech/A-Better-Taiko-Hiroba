@@ -19,6 +19,12 @@ export interface ChartReading {
   readonly clearCount: number | null;
   readonly fullComboCount: number | null;
   readonly donderfulComboCount: number | null;
+  /** The hits behind the high score; null too in a row kept before they were logged. */
+  readonly good: number | null;
+  readonly ok: number | null;
+  readonly bad: number | null;
+  readonly drumroll: number | null;
+  readonly maxCombo: number | null;
   /** When the app read it; null where the book held no reading of the chart. */
   readonly fetchedAt: string | null;
 }
@@ -56,6 +62,11 @@ function readingOf(score: Score | undefined): ChartReading {
     clearCount: record?.clearCount ?? null,
     fullComboCount: record?.fullComboCount ?? null,
     donderfulComboCount: record?.donderfulComboCount ?? null,
+    good: record?.good ?? null,
+    ok: record?.ok ?? null,
+    bad: record?.bad ?? null,
+    drumroll: record?.drumroll ?? null,
+    maxCombo: record?.maxCombo ?? null,
     fetchedAt: score?.fetchedAt ?? null,
   };
 }

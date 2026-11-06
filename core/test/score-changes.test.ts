@@ -38,6 +38,11 @@ const reading = (crown: CrownState): ChartReading => ({
   clearCount: null,
   fullComboCount: null,
   donderfulComboCount: null,
+  good: null,
+  ok: null,
+  bad: null,
+  drumroll: null,
+  maxCombo: null,
   fetchedAt: null,
 });
 const detailed = (crown: CrownState): ChartReading => ({ ...reading(crown), highScore: 900000 });
@@ -64,6 +69,11 @@ describe("changeOf", () => {
         clearCount: 2,
         fullComboCount: 0,
         donderfulComboCount: 0,
+        good: 400,
+        ok: 20,
+        bad: 1,
+        drumroll: 9,
+        maxCombo: 300,
         fetchedAt: LATER,
       },
     });

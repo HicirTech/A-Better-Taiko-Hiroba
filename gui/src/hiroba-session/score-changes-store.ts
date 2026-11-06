@@ -22,6 +22,8 @@ const NUMBERS = [
   "fullComboCount",
   "donderfulComboCount",
 ] as const;
+/** Absent from a row kept before they were logged. */
+const HITS = ["good", "ok", "bad", "drumroll", "maxCombo"] as const;
 
 /** A kept log's well-formed rows, capped; what does not read as a log at all is none. */
 export function readStoredScoreChanges(stored: unknown): ScoreChangeLog | null {
@@ -64,11 +66,13 @@ function readingOf(value: unknown): ChartReading | null {
     !CROWNS.has(value.crown as CrownState) ||
     !isRank(value.scoreRank) ||
     (value.fetchedAt !== null && typeof value.fetchedAt !== "string") ||
-    !NUMBERS.every((name) => value[name] === null || isWholeNumber(value[name]))
+    !NUMBERS.every((name) => value[name] === null || isWholeNumber(value[name])) ||
+    !HITS.every((name) => (value[name] ?? null) === null || isWholeNumber(value[name]))
   ) {
     return null;
   }
-  const number = (name: (typeof NUMBERS)[number]) => value[name] as number | null;
+  const number = (name: (typeof NUMBERS)[number] | (typeof HITS)[number]) =>
+    (value[name] ?? null) as number | null;
   return {
     crown: value.crown as CrownState,
     scoreRank: value.scoreRank,
@@ -77,6 +81,11 @@ function readingOf(value: unknown): ChartReading | null {
     clearCount: number("clearCount"),
     fullComboCount: number("fullComboCount"),
     donderfulComboCount: number("donderfulComboCount"),
+    good: number("good"),
+    ok: number("ok"),
+    bad: number("bad"),
+    drumroll: number("drumroll"),
+    maxCombo: number("maxCombo"),
     fetchedAt: value.fetchedAt as string | null,
   };
 }
