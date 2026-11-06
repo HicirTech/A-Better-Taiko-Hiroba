@@ -83,11 +83,16 @@ export function changeOf(kept: Score | undefined, score: Score): ScoreChange | n
     : null;
 }
 
-/** A chart's first clear, full combo or donderful: rows the cap never takes. */
-export function isMilestone({ from, to }: ScoreChange): boolean {
+/** A chart's crown before a change. */
+export function crownBefore({ from }: ScoreChange): CrownState {
   // A list read in the same read may show the new crown already: a reading without details is none.
-  const was = from.highScore === null ? CROWN_ORDER.none : CROWN_ORDER[from.crown];
-  return CROWN_ORDER[to.crown] > was && CROWN_ORDER[to.crown] >= CROWN_ORDER.silver;
+  return from.highScore === null ? "none" : from.crown;
+}
+
+/** A chart's first clear, full combo or donderful: rows the cap never takes. */
+export function isMilestone(change: ScoreChange): boolean {
+  const reached = CROWN_ORDER[change.to.crown];
+  return reached > CROWN_ORDER[crownBefore(change)] && reached >= CROWN_ORDER.silver;
 }
 
 /** At most `max` rows besides the milestones: the oldest other rows go first. */
