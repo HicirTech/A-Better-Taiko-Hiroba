@@ -18,11 +18,22 @@ export const knowYourselfKeys = [
   "bpmBandsAWobblingTempoByItsNumber",
   "nearMissSummaryCountsItsList",
   "nearMissOpensItsScoreDetails",
+  "overTimeCardsWaitForAnotherDay",
 ] as const;
 
 const SETS_KEY = "abth.favoriteSets";
 const SET_SONG_LIMIT = 30;
-const PARTS = ["crowns", "ranks", "per-second", "bpm", "full-combo", "donderful"] as const;
+const PARTS = [
+  "crowns",
+  "ranks",
+  "per-second",
+  "bpm",
+  "full-combo",
+  "donderful",
+  "plays",
+  "crowns-over-time",
+  "ranks-over-time",
+] as const;
 // The stand-in's song 1010 wobbles about 168; 1005 runs from 120 to 240.
 const WOBBLING_BAND = "#know-bpm-rows-band-160";
 const CHANGING_ROW = "#know-bpm-rows-changing";
@@ -185,6 +196,15 @@ export async function knowYourself(ctx: Ctx) {
   await press("Escape");
   await gone("#score-details");
   results.nearMissOpensItsScoreDetails = opened === true;
+
+  // Every read of this run falls on one day: a point a day leaves nothing to draw yet.
+  await unfold("plays");
+  await unfold("crowns-over-time");
+  await unfold("ranks-over-time");
+  results.overTimeCardsWaitForAnotherDay =
+    (await exists("#know-plays-one-read")) &&
+    (await exists("#know-crowns-over-time-one-read")) &&
+    (await exists("#know-ranks-over-time-one-read"));
 
   results.knowYourselfAsksHirobaNothing = (await requestLog()).filter(isHirobaPage).length === 0;
 

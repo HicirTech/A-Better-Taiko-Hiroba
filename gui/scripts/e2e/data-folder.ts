@@ -24,6 +24,7 @@ export const dataFolderKeys = [
   "picturesFiledUnderHashes",
   "medalIdsKeptOffDisk",
   "scoreChangesKept",
+  "ratingKeptForEachVersion",
 ] as const;
 
 interface KeptChange {
@@ -105,5 +106,21 @@ export async function dataFolder(ctx: Ctx) {
         ({ songNo, level, from, to }) =>
           songNo === "1005" && level === 1 && from.highScore === 800005 && to.highScore === 801005,
       ),
+  );
+  const kept = inEachFolder("rating-history.json").flatMap((file) =>
+    Object.values(
+      (
+        JSON.parse(readFileSync(file, "utf8")) as {
+          players?: Record<string, Record<string, { figures?: unknown[]; charts?: unknown[] }[]>>;
+        }
+      ).players ?? {},
+    ),
+  );
+  results.ratingKeptForEachVersion = kept.some((ratings) =>
+    ["ourtaikoV1", "ourtaikoV2"].every((system) =>
+      (ratings[system] ?? []).some(
+        ({ figures, charts }) => (figures?.length ?? 0) > 1 && (charts?.length ?? 0) > 0,
+      ),
+    ),
   );
 }
