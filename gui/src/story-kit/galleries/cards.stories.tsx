@@ -9,6 +9,7 @@ import * as CrownsOverTimeItem from "../../know-yourself/crowns-over-time-item.s
 import * as NearMissItem from "../../know-yourself/near-miss-item.stories";
 import * as PlaysItem from "../../know-yourself/plays-item.stories";
 import * as RanksItem from "../../know-yourself/ranks-item.stories";
+import * as RanksOverTimeItem from "../../know-yourself/ranks-over-time-item.stories";
 import * as PartHead from "../../my-page/costume-part-panel.part-head.stories";
 import * as OverviewHeader from "../../my-page/overview-header.stories";
 import * as PanelCard from "../../my-page/panel-card.stories";
@@ -66,6 +67,11 @@ const meta = {
           name: "CrownsOverTimeItem",
           meta: CrownsOverTimeItem.default,
           story: CrownsOverTimeItem.CrownsOverTime,
+        },
+        {
+          name: "RanksOverTimeItem",
+          meta: RanksOverTimeItem.default,
+          story: RanksOverTimeItem.RanksOverTime,
         },
         { name: "RanksItem", meta: RanksItem.default, story: RanksItem.ScoreRanks },
         { name: "BandItem", meta: BandItem.default, story: BandItem.HitsPerSecond },

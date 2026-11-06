@@ -40,6 +40,7 @@ import { NearMissItem } from "./near-miss-item";
 import type { PageParts } from "./page-parts";
 import { PlaysItem } from "./plays-item";
 import { RanksItem } from "./ranks-item";
+import { RanksOverTimeItem } from "./ranks-over-time-item";
 
 /** Where the player stands, from the kept scores and taiko.wiki's list; asks Hiroba nothing. */
 export function KnowYourselfPage({
@@ -206,6 +207,7 @@ export function KnowYourselfPage({
             <NearMissItem crown="donderful" charts={here} parts={parts} />
             <PlaysItem charts={here} scoreOf={scoreOf} changes={changes} parts={parts} />
             <CrownsOverTimeItem charts={here} changes={changes} parts={parts} />
+            <RanksOverTimeItem charts={here} changes={changes} parts={parts} />
           </Stack>
         </>
       )}

@@ -370,6 +370,9 @@ export interface Messages {
   "know.crownsNoChange": string;
   "know.crownsSince": string;
   "know.showNever": string;
+  "know.ranksOverTime": string;
+  "know.ranksNoChange": string;
+  "know.ranksSince": string;
   "know.noRank": string;
   "know.unknown": string;
   /** Param: {stars}, a star level. */
