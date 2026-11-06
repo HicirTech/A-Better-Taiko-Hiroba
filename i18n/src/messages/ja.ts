@@ -153,6 +153,7 @@ export const ja: Messages = {
   "scores.fullCombos": "フルコンボ回数",
   "scores.donderfuls": "ドンダフルコンボ回数",
   "scores.sections": "区間毎詳細成績",
+  "scores.overTime": "ハイスコアの推移",
   "scores.section": "区間{number}",
   "scores.readAt": "{time} に読み込み",
   "settings.language": "言語",

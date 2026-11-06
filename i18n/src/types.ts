@@ -190,6 +190,7 @@ export interface Messages {
   "scores.donderfuls": string;
   /** 区間毎詳細成績, and one section of it. Param: {number}, from 1. */
   "scores.sections": string;
+  "scores.overTime": string;
   "scores.section": string;
   /** Param: {time}, when the chart's details were read. */
   "scores.readAt": string;

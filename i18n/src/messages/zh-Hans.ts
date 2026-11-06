@@ -148,6 +148,7 @@ export const zhHans: Messages = {
   "scores.fullCombos": "全连段次数",
   "scores.donderfuls": "全良次数",
   "scores.sections": "区间成绩",
+  "scores.overTime": "最高分变化",
   "scores.section": "区间 {number}",
   "scores.readAt": "读取于 {time}",
   "settings.language": "语言",

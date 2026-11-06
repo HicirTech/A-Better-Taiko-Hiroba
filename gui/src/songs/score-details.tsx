@@ -12,6 +12,7 @@ import { SubsectionTitle } from "../ui/section-title";
 import { SHUT_LOOK } from "../ui/shut-look";
 import { CROWN_KEY, CROWN_RATIO } from "./play-marks";
 import { PlayRow } from "./play-row";
+import { ScoreOverTime } from "./score-over-time";
 
 const TITLE_ID = "score-details-title";
 const SECTION_MARK_PX = 18;
@@ -180,6 +181,8 @@ function ChartFacts({
         {fact("score-details-full-combos", t("scores.fullCombos"), record.fullComboCount)}
         {fact("score-details-donderfuls", t("scores.donderfuls"), record.donderfulComboCount)}
       </Box>
+
+      <ScoreOverTime score={score} lane={lane} i18n={i18n} />
 
       {score.sections.length > 0 && (
         <Box>

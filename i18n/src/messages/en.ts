@@ -152,6 +152,7 @@ export const en: Messages = {
   "scores.fullCombos": "Full Combos",
   "scores.donderfuls": "Donderful Combos",
   "scores.sections": "By section",
+  "scores.overTime": "High score over time",
   "scores.section": "Section {number}",
   "scores.readAt": "Read on {time}",
   "settings.language": "Language",

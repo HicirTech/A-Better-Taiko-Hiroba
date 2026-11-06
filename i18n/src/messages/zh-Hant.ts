@@ -148,6 +148,7 @@ export const zhHant: Messages = {
   "scores.fullCombos": "全連段次數",
   "scores.donderfuls": "全良次數",
   "scores.sections": "區間成績",
+  "scores.overTime": "最高分變化",
   "scores.section": "區間 {number}",
   "scores.readAt": "讀取於 {time}",
   "settings.language": "語言",
