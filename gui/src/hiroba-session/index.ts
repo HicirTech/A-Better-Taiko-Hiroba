@@ -51,6 +51,13 @@ export {
   viewOfPipelines,
   writeFailure,
 } from "./queue-port";
+export type { RatingHistory, RatingHistoryStore } from "./rating-history-store";
+export {
+  createMemoryRatingHistoryStore,
+  createRatingHistory,
+  NO_RATING_HISTORY,
+  readStoredRatingHistory,
+} from "./rating-history-store";
 export {
   ANDROID_PICTURE_LIMITS,
   createPictureReader,

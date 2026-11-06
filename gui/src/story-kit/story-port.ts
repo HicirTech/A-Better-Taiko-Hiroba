@@ -1,4 +1,12 @@
-import { type ChartDensity, err, ok, tjaDensities } from "@abth/core";
+import {
+  type ChartDensity,
+  err,
+  ok,
+  type RatingSnapshot,
+  type RatingSystem,
+  tjaDensities,
+  withSnapshot,
+} from "@abth/core";
 
 import { MISSING_CHART, standInTja } from "../../scripts/mock-ese";
 import { chartPicturePng } from "../../scripts/mock-pictures";
@@ -241,6 +249,10 @@ export const STORY_CHART_PORT = {
 /** A port answering every verb from story data, taking every write; `changes` replace verbs. */
 export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): HirobaSessionPort {
   let signedIn = true;
+  const ratings: Record<RatingSystem, readonly RatingSnapshot[]> = {
+    ourtaikoV1: [],
+    ourtaikoV2: [],
+  };
   const port: HirobaSessionPort = {
     isSignedIn: () => Promise.resolve(signedIn),
     signIn: () => {
@@ -291,6 +303,11 @@ export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): Hirob
     readSongCatalogue: () => later(ok({ songs: PAGE_SONGS, removed: [], sentAt: Date.now() })),
     readChineseNames: () => later(ok({ pages: [], sentAt: Date.now() })),
     readRatingData: (system) => later(ok({ text: PAGE_RATING_DATA[system], sentAt: Date.now() })),
+    ratingHistory: (system) => Promise.resolve(ratings[system]),
+    keepRating: (system, snapshot) => {
+      ratings[system] = withSnapshot(ratings[system], snapshot);
+      return Promise.resolve(ratings[system]);
+    },
     ...STORY_CHART_PORT,
     readPipelines: () => Promise.resolve(pipelinesAt(Date.now())),
     ...changes,
