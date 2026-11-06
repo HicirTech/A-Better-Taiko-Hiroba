@@ -6,7 +6,7 @@ import type { ChartRating, RatedScore } from "./types";
 /** Where every figure of a perfect play sits. */
 export const SCALE_TOP = 15.5;
 /** The best charts a player's figure is taken from. */
-const COUNTED = 20;
+export const COUNTED = 20;
 const LOWEST_ACCURACY = 0.75;
 
 /** How a play went, as the ratings count it. */

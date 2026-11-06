@@ -1,3 +1,4 @@
+export { COUNTED } from "./ourtaiko-formulas";
 export {
   OURTAIKO_V1_FIGURES,
   type OurTaikoV1Chart,
@@ -13,6 +14,14 @@ export {
 } from "./ourtaiko-v2";
 export { parseOurTaikoV2Data } from "./ourtaiko-v2-data";
 export { parseRatingData, type RatingData, ratePlayer } from "./rating-data";
+export {
+  MAX_RATING_SNAPSHOTS,
+  type PastRating,
+  pastRatings,
+  type RatingSnapshot,
+  snapshotOf,
+  withSnapshot,
+} from "./rating-history";
 export type {
   ChartFigures,
   ChartRating,
