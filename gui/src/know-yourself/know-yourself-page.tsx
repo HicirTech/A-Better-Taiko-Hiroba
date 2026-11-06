@@ -37,6 +37,7 @@ import { anchorOf, gapKindOf, gapsOf, nearestFirst } from "./gaps";
 import { type KnownChart, knownCharts, shownAt } from "./known-charts";
 import { NearMissItem } from "./near-miss-item";
 import type { PageParts } from "./page-parts";
+import { PlaysItem } from "./plays-item";
 import { RanksItem } from "./ranks-item";
 
 /** Where the player stands, from the kept scores and taiko.wiki's list; asks Hiroba nothing. */
@@ -91,6 +92,7 @@ export function KnowYourselfPage({
     () => new Map((view?.scores ?? []).map((score) => [chartKey(score), score])),
     [view],
   );
+  const changes = useMemo(() => (view?.scores ?? []).flatMap((one) => one.changes), [view]);
   const remembered = useMemo(
     () =>
       new Map<string, ShownSong>(
@@ -201,6 +203,7 @@ export function KnowYourselfPage({
             <BandItem view="bpm" charts={here} parts={parts} />
             <NearMissItem crown="fullCombo" charts={here} parts={parts} />
             <NearMissItem crown="donderful" charts={here} parts={parts} />
+            <PlaysItem charts={here} scoreOf={scoreOf} changes={changes} parts={parts} />
           </Stack>
         </>
       )}
