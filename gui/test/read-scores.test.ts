@@ -363,6 +363,24 @@ describe("the log of what reads of scores change", () => {
     ]);
   });
 
+  test("the kept scores carry each chart's own changes, oldest first, with their hits", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores } = readersOver(hiroba.transport);
+    await scores.readScores();
+
+    hiroba.play({ replay: "3" });
+    await scores.readScores();
+    hiroba.play({ replay: "3" });
+    await scores.readScores();
+
+    const { scores: kept } = await scores.scores();
+    const moved = kept.filter(({ changes }) => changes.length > 0);
+    expect(moved.map(({ songNo, level }) => `${songNo}/${level}`)).toEqual(["1003/4"]);
+    const [first, second] = moved[0]?.changes ?? [];
+    expect(first?.to).toEqual(second?.from as never);
+    expect(second?.to.good).toBe(moved[0]?.record.good as number);
+  });
+
   test("a first clear stays a milestone though a list read in the same read showed it first", async () => {
     const hiroba = hirobaWith(12);
     const { scores, log } = readersOver(hiroba.transport);

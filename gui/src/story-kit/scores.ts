@@ -1,4 +1,12 @@
-import type { CrownState, Level, RatingSystem, ScoreRank, Song } from "@abth/core";
+import type {
+  ChartReading,
+  CrownState,
+  Level,
+  RatingSystem,
+  ScoreChange,
+  ScoreRank,
+  Song,
+} from "@abth/core";
 
 import type { ListedChart, ListedChartsView, ScoresView, ScoreView } from "../shared/session-port";
 import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
@@ -9,6 +17,9 @@ import { STORY_SONGS } from "./songs";
 const CROWNS: readonly CrownState[] = ["donderful", "gold", "silver", "silver", "played"];
 const RANKS: readonly (ScoreRank | null)[] = [8, 7, 6, 5, 3];
 const READ_AT = "2026-10-16T21:04:00.000Z";
+const DAY_MS = 24 * 60 * 60 * 1000;
+const daysBefore = (time: string, days: number) =>
+  new Date(Date.parse(time) - days * DAY_MS).toISOString();
 
 const levelOf = (difficulty: Difficulty): Level => (DIFFICULTIES.indexOf(difficulty) + 1) as Level;
 
@@ -23,6 +34,47 @@ const playedCharts = STORY_SONGS.flatMap((song, at) =>
   ).map((difficulty, played) => ({ song, difficulty, turn: at + played })),
 );
 
+/** How a chart got where it stands: every third moved twice, every sixth before hits were logged. */
+function madeUpChanges(score: Omit<ScoreView, "changes">, turn: number): readonly ScoreChange[] {
+  const { songNo, level, crown, scoreRank, record, fetchedAt } = score;
+  if (turn % 3 !== 0) {
+    return [];
+  }
+  const now: ChartReading = {
+    crown,
+    scoreRank,
+    highScore: record.highScore,
+    stageCount: record.stageCount,
+    clearCount: record.clearCount,
+    fullComboCount: record.fullComboCount,
+    donderfulComboCount: record.donderfulComboCount,
+    good: record.good,
+    ok: record.ok,
+    bad: record.bad,
+    drumroll: record.drumroll,
+    maxCombo: record.maxCombo,
+    fetchedAt,
+  };
+  const before = (lost: number, plays: number, at: string): ChartReading => ({
+    ...now,
+    crown: crown === "played" ? "played" : "silver",
+    scoreRank: lost > 40_000 ? 5 : 6,
+    highScore: record.highScore - lost,
+    stageCount: Math.max((record.stageCount ?? 0) - plays, 1),
+    fullComboCount: 0,
+    donderfulComboCount: 0,
+    good: turn % 6 === 0 ? null : record.good - Math.round(lost / 1000),
+    ok: turn % 6 === 0 ? null : record.ok + Math.round(lost / 1000),
+    fetchedAt: at,
+  });
+  const first = before(60_000, 6, daysBefore(fetchedAt, 26));
+  const second = before(25_000, 3, daysBefore(fetchedAt, 14));
+  return [
+    { songNo, level, from: first, to: second },
+    { songNo, level, from: second, to: now },
+  ];
+}
+
 function scoreOf({ song, difficulty, turn }: (typeof playedCharts)[number]): ScoreView {
   const crown = CROWNS[turn % CROWNS.length] ?? "played";
   const rank = RANKS[turn % RANKS.length] ?? null;
@@ -36,7 +88,7 @@ function scoreOf({ song, difficulty, turn }: (typeof playedCharts)[number]): Sco
     bad,
     maxCombo: crown === "silver" ? Math.floor(maxCombo * 0.7) : maxCombo - bad,
   });
-  return {
+  const score = {
     songTitle: song.title,
     genre: song.genres[0] ?? null,
     level: levelOf(difficulty),
@@ -50,6 +102,7 @@ function scoreOf({ song, difficulty, turn }: (typeof playedCharts)[number]): Sco
     recent: turn < 7 ? turn : null,
     fetchedAt: READ_AT,
   };
+  return { ...score, changes: madeUpChanges(score, turn) };
 }
 
 const songsOfLists: readonly Song[] = STORY_SONGS.map(({ songNo, title, genres }) => ({
@@ -158,7 +211,18 @@ function madeUpV2(scores: readonly ScoreView[]): string {
 export const STORY_RATING_DATA_V2 = madeUpV2(STORY_SCORES.scores);
 
 /** The scores, listed charts and OurTaiko data a whole page reads: the pack's, else made up. */
-export const PAGE_SCORES: ScoresView = packData("scores") ?? STORY_SCORES;
+const packScores = packData("scores");
+export const PAGE_SCORES: ScoresView =
+  packScores === null
+    ? STORY_SCORES
+    : {
+        ...packScores,
+        // A pack holds no log: a chart's way there is made up, so its line draws.
+        scores: packScores.scores.map((score, at) => ({
+          ...score,
+          changes: madeUpChanges(score, at),
+        })),
+      };
 export const PAGE_LISTED: ListedChartsView = packData("listedCharts") ?? STORY_LISTED;
 export const PAGE_RATING_DATA: Readonly<Record<RatingSystem, string>> = {
   ourtaikoV1: packData("ratingData") ?? STORY_RATING_DATA,

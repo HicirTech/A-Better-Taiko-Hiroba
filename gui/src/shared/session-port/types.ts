@@ -18,6 +18,7 @@ import type {
   RecentPlaysReading,
   RenameState,
   Result,
+  ScoreChange,
   ScoreRank,
   ScoreRecord,
   ScoreSection,
@@ -176,6 +177,8 @@ export interface ScoreView extends RecentPlay {
   readonly recent: number | null;
   /** When its details were read. */
   readonly fetchedAt: string;
+  /** What reads of scores changed in the chart, oldest first. */
+  readonly changes: readonly ScoreChange[];
 }
 
 /** The kept scores: each played chart with its details, and the charts a read has yet to detail. */
