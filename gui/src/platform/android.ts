@@ -9,10 +9,12 @@ import {
 import {
   ANDROID_PICTURE_LIMITS,
   createMemoryPictureStore,
+  createMemoryRatingHistoryStore,
   createMemoryRecentPlaysStore,
   createMemoryScoreChangesStore,
   createMemoryScoresStore,
   createPictureReader,
+  createRatingHistory,
   createRecentPlaysReader,
   createRecentPreviews,
   createScoresReader,
@@ -81,6 +83,7 @@ import {
   DRAWN_CHART_DATABASE,
 } from "./android-picture-store";
 import { createIndexedDbPipelineStores } from "./android-pipeline-store";
+import { createIndexedDbRatingHistoryStore } from "./android-rating-history-store";
 import { createIndexedDbRecentPlaysStore } from "./android-recent-plays-store";
 import { createIndexedDbScoreChangesStore } from "./android-score-changes-store";
 import { createIndexedDbScoresStore } from "./android-scores-store";
@@ -338,6 +341,14 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     recentPlays: recentPlays.recentPlays,
   });
 
+  const ratings = createRatingHistory({
+    store:
+      indexedDb === undefined
+        ? createMemoryRatingHistoryStore()
+        : createIndexedDbRatingHistoryStore(indexedDb),
+    owner: () => owner,
+  });
+
   const port = queuePort(pipelines, {
     async isSignedIn() {
       return signedIn;
@@ -489,6 +500,8 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
     readSongScores: flushed(scores.readSongScores),
 
     scoresProgress: scores.scoresProgress,
+    ratingHistory: ratings.ratingHistory,
+    keepRating: ratings.keepRating,
 
     readSongCatalogue: (site, since) => readSongCatalogue(site, songCatalogueUrl, since),
 

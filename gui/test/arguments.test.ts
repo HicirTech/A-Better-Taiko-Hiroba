@@ -30,6 +30,8 @@ describe("PORT_ARGUMENTS", () => {
       changeFavoriteSong: _changeFavoriteSong,
       readSongCatalogue: _catalogue,
       readRatingData: _ratingData,
+      ratingHistory: _ratingHistory,
+      keepRating: _keepRating,
       readChartPicture: _chartPicture,
       readCdnChart: _cdnChart,
       readChartDensity: _chartDensity,

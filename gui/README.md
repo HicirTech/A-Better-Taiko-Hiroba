@@ -275,9 +275,15 @@ its accuracy; the second rates Hard charts too, from three constants, and counts
 complexity. Either takes the rating from the best twenty. The page shows it above a radar of its six
 skills, then the twenty charts it counts and the next twenty; a click on one opens its details, as on
 Scores, and a picture of the page lists them four to a line and names its rating in the middle of
-its bar. Each rating's constants are OurTaiko's published list, read the first time that rating is
-shown and again with each Read again or pull while it is, which reads the scores too, and kept on
-the device; Settings names OurTaiko with the song data's other sources.
+its bar. Each rating's constants are OurTaiko's published list, read as the page first opens and
+again with each Read again or pull while that rating is shown, which reads the scores too, and kept
+on the device; Settings names OurTaiko with the song data's other sources.
+
+Each change of a rating is kept on the device, the newest hundred of each version with its figures
+and its forty charts, and the page draws the rating over time; a press on a point tells its date and
+skills. A date is when the app read your scores, not when you played. Days before the first one kept
+are worked out from the log of score changes by today's constants, and drawn dashed where a chart's
+old hits were not logged.
 
 ### Know yourself
 
@@ -302,6 +308,11 @@ page is six parts, each folded at first under one sentence of what it finds:
 A row of the clear ladder, Hits/s or BPM opens its charts not yet cleared, the nearest to the
 player's level first, which chips narrow to those never played or those played; some of them, or
 the nearest thirty songs, go to a set on the device.
+
+Three more parts draw the log of what each read of scores changed, a point for each day it changed
+something: **Plays over time**, a line of the total plays; **Crowns over time**, the crowns stacked,
+with the charts never played left out unless asked for; and **Score ranks over time**, each rank's
+share of the charts played.
 
 ### The Costume page
 

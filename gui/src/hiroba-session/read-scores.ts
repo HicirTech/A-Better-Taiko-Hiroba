@@ -24,6 +24,7 @@ import {
   recentOrder,
   type Score,
   type ScoreBook,
+  type ScoreChange,
   type ScoreChangeLog,
   songCharts,
   startingLog,
@@ -237,14 +238,14 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
   };
 
   const viewNow = async (taikoNo: string) =>
-    viewOf(await books.of(taikoNo), await options.recentPlays());
+    viewOf(await books.of(taikoNo), await options.recentPlays(), await books.logOf(taikoNo));
   const readOf = async (taikoNo: string, charts: readonly Chart[]) =>
     ok({ ...(await viewNow(taikoNo)), detailed: charts.length });
 
   return {
     async scores() {
       const taikoNo = owner();
-      return taikoNo === null ? viewOf(EMPTY_SCORE_BOOK, []) : viewNow(taikoNo);
+      return taikoNo === null ? viewOf(EMPTY_SCORE_BOOK, [], null) : viewNow(taikoNo);
     },
     async listedCharts() {
       const taikoNo = owner();
@@ -343,6 +344,7 @@ function createBooks(store: ScoresStore, changes: ScoreChangesStore) {
   };
   return {
     of: async (taikoNo: string): Promise<ScoreBook> => (await held(taikoNo)).book,
+    logOf: async (taikoNo: string): Promise<ScoreChangeLog> => (await held(taikoNo)).log,
     // Takes the book only once loaded, so two changes in flight both land.
     async change(taikoNo: string, how: (book: ScoreBook) => ScoreBook): Promise<void> {
       const one = await held(taikoNo);
@@ -368,9 +370,18 @@ function createBooks(store: ScoresStore, changes: ScoreChangesStore) {
 }
 
 /** The played charts with details, in song number order: the page sorts them its own way. */
-function viewOf(book: ScoreBook, plays: readonly RecentPlay[]): ScoresView {
+function viewOf(
+  book: ScoreBook,
+  plays: readonly RecentPlay[],
+  log: ScoreChangeLog | null,
+): ScoresView {
   const songs = new Map(book.songs.map((song) => [song.songNo, song]));
   const recent = recentOrder(book, plays);
+  const rows = new Map<string, ScoreChange[]>();
+  for (const change of log?.changes ?? []) {
+    const key = chartKey(change);
+    rows.set(key, [...(rows.get(key) ?? []), change]);
+  }
   const scores = Object.entries(book.scores).flatMap(([key, score]): ScoreView[] => {
     const song = songs.get(score.songNo);
     if (score.record === null || song === undefined) {
@@ -391,6 +402,7 @@ function viewOf(book: ScoreBook, plays: readonly RecentPlay[]): ScoresView {
         sections: score.sections ?? [],
         recent: recent.get(key) ?? null,
         fetchedAt,
+        changes: rows.get(key) ?? [],
       },
     ];
   });

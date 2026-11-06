@@ -16,9 +16,18 @@ export type { ChartReading, ScoreChange, ScoreChangeLog } from "./changes";
 export {
   capChanges,
   changeOf,
+  crownBefore,
   isMilestone,
   logDetail,
   MAX_SCORE_CHANGES,
   startingLog,
   withBaseline,
 } from "./changes";
+export type { DatedReading, DayOf, DayPoint, TriedRank } from "./history";
+export {
+  chartReadings,
+  crownsOverTime,
+  pastDays,
+  playsOverTime,
+  ranksOverTime,
+} from "./history";

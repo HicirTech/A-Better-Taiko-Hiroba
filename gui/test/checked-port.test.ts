@@ -69,6 +69,12 @@ const CASES: VerbCase[] = [
   ["readSongCatalogue", [null], ["0&genre=1"]],
   ["readChineseNames", [], [{ gcmlimit: "max" }]],
   ["readRatingData", ["ourtaikoV1"], ["https://example.test/feed"]],
+  ["ratingHistory", ["ourtaikoV2"], ["ourtaikoV3"]],
+  [
+    "keepRating",
+    ["ourtaikoV1", { at: "2026-10-28T00:00:00.000Z", figures: [], charts: [] }],
+    ["ourtaikoV1", { at: 0, figures: [], charts: [] }],
+  ],
   [
     "readChartPicture",
     ["https://file.taiko.wiki/fumen/670/oni", "any"],

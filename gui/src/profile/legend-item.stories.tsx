@@ -21,7 +21,7 @@ const meta = {
         <LegendItem
           id="story-rank-8"
           name={i18n.t("scoreRank.8")}
-          percent="1.2%"
+          figure="1.2%"
           colour={RANK_COLOUR[8]}
           icon={icon}
           count={i18n.t("panel.countOf", { count: "3", total: "240" })}

@@ -48,6 +48,12 @@ describe("the translator's formats", () => {
     expect(text).toEndWith("PM");
   });
 
+  test("writes a date with no time of day, and a dash for no date", () => {
+    const { date } = createTranslator("en");
+    expect(date(new Date(2026, 9, 3, 16, 7, 54))).toBe("Oct 3");
+    expect(date("no time")).toBe("—");
+  });
+
   test.each([...LOCALES])("spells the month as %s writes its short name", (locale) => {
     const at = new Date(2026, 9, 3, 16, 17, 54);
     const month = new Intl.DateTimeFormat(locale, { month: "short" }).format(at);

@@ -20,6 +20,8 @@ export interface Translator {
   number(value: number): string;
   /** A date and time of day as the locale writes them, in the device's zone; a dash for none. */
   dateTime(value: Date | number | string): string;
+  /** A date as the locale writes it, in the device's zone; a dash for none. */
+  date(value: Date | number | string): string;
   /** A time of day to the second, as the locale writes it, in the device's zone; a dash for none. */
   time(value: Date | number | string): string;
 }
@@ -43,6 +45,9 @@ const DATE_TIME: Intl.DateTimeFormatOptions = {
   minute: "2-digit",
 };
 
+/** For a chart's axis: the month as a short name and the day. */
+const DATE: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+
 /** For things seconds apart: the time of day to the second, with no date. */
 const TIME: Intl.DateTimeFormatOptions = { hour: "numeric", minute: "2-digit", second: "2-digit" };
 
@@ -53,6 +58,7 @@ export function createTranslator(locale: Locale = DEFAULT_LOCALE): Translator {
   const table = CATALOG[locale];
   const numbers = new Intl.NumberFormat(locale);
   const dates = new Intl.DateTimeFormat(locale, DATE_TIME);
+  const days = new Intl.DateTimeFormat(locale, DATE);
   const times = new Intl.DateTimeFormat(locale, TIME);
   const formatted = (format: Intl.DateTimeFormat) => (value: Date | number | string) => {
     const date = new Date(value);
@@ -63,6 +69,7 @@ export function createTranslator(locale: Locale = DEFAULT_LOCALE): Translator {
     t: (key, params) => interpolate(table[key], params),
     number: (value) => numbers.format(value),
     dateTime: formatted(dates),
+    date: formatted(days),
     time: formatted(times),
   };
 }

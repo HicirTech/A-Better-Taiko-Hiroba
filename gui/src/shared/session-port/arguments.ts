@@ -312,6 +312,14 @@ const RATING_SYSTEM: Readonly<Record<RatingSystem, true>> = { ourtaikoV1: true, 
 const ratingSystem: ArgumentCheck = (args) =>
   args.length === 1 && typeof args[0] === "string" && Object.hasOwn(RATING_SYSTEM, args[0]);
 
+const isSnapshot = (value: unknown): boolean => {
+  const { at, figures, charts } = (value ?? {}) as Partial<Record<string, unknown>>;
+  return typeof at === "string" && Array.isArray(figures) && Array.isArray(charts);
+};
+
+const ratingKept: ArgumentCheck = (args) =>
+  args.length === 2 && ratingSystem(args.slice(0, 1)) && isSnapshot(args[1]);
+
 const CHART_PICTURE_READ: Readonly<Record<ChartPictureRead, true>> = {
   kept: true,
   any: true,
@@ -378,6 +386,8 @@ export const PORT_ARGUMENTS = {
   readSongCatalogue: catalogueSince,
   readChineseNames: none,
   readRatingData: ratingSystem,
+  ratingHistory: ratingSystem,
+  keepRating: ratingKept,
   readChartPicture: chartUrl,
   readCdnChart: cdnChart,
   readChartDensity: songNoAndAgain,

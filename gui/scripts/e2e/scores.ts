@@ -15,6 +15,9 @@ export const scoresKeys = [
   "scoresOpenSortedByRecentPlay",
   "firstReadTakesEveryScore",
   "laterReadDetailsWhatWasPlayed",
+  "scoreLineAfterASecondRead",
+  "scoreLinePointTellsItsReading",
+  "noScoreLineWithOneReading",
   "songReadAgainFromItsDetails",
   "stoppedReadNamesItsChart",
   "readFindingNothingNewSaysSo",
@@ -188,9 +191,25 @@ export async function scores(ctx: Ctx) {
     (await hitsOn(SCORE_LIST)) === 8 &&
     (await textOf(`${await rowOf(chart(5))} .song-line`)) === "801,005 · Max combo 120";
 
+  // The read moved the replayed chart: its details draw its high score over time.
+  await click(`${await rowOf(chart(5))} .song-open`);
+  await detailsOpened();
+  const dots = await page.evaluate<number>(
+    `document.querySelectorAll("#score-details-line svg circle").length`,
+  );
+  results.scoreLineAfterASecondRead =
+    dots === 2 && ((await textOf("#score-details-line-readout")) ?? "").includes("801,005");
+  // A script's click lands at the window's edge, nearest the oldest point.
+  await click("#score-details-line [role=group]");
+  results.scoreLinePointTellsItsReading = (
+    (await textOf("#score-details-line-readout")) ?? ""
+  ).includes("800,005");
+  await detailsShut();
+
   // The refresh in a chart's details reads its song again: each of the song's charts.
   await click(`${await rowOf(chart(4))} .song-open`);
   await detailsOpened();
+  results.noScoreLineWithOneReading = !(await exists("#score-details-over-time"));
   await readAfter(() => click("#score-details-read-song"));
   results.songReadAgainFromItsDetails = same(sorted(await takeAsked()), SONG_1004);
   await detailsShut();

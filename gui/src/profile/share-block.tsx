@@ -25,6 +25,7 @@ const LEGEND = {
   mt: 1,
   p: 0,
 } as const;
+const AT_TOPS = { position: "relative", height: 1, listStyle: "none", m: 0, p: 0 } as const;
 /** Room for the seven score ranks side by side, which take 620 px. */
 const ONE_LINE_PX = 640;
 const LINES_ROOM = { containerType: "inline-size" } as const;
@@ -105,14 +106,20 @@ export function ShareBar({
   );
 }
 
-/** The items' icons and percents, each named by its tooltip, or by a long-press's Toast. */
+/** The items' icons and figures, each named by its tooltip, or by a long-press's Toast. */
 export function ShareLegend({
   items,
+  shows = "percent",
+  tops,
   lane,
   toast,
   i18n,
 }: {
   items: readonly ShareItem[];
+  /** What each item shows beside its icon. */
+  shows?: "percent" | "count";
+  /** Each item centred at its height, in a column as tall as its parent, beside a chart. */
+  tops?: readonly number[];
   lane: PictureLane;
   toast: SystemToast | undefined;
   i18n: Translator;
@@ -121,18 +128,22 @@ export function ShareLegend({
   const places = placesOf(items);
   const columns = Math.max(0, ...places.map((place) => place?.column ?? 0));
   const legend = (
-    <Box component="ul" sx={columns === 0 ? LEGEND : linedLegend(columns)}>
+    <Box
+      component="ul"
+      sx={tops !== undefined ? AT_TOPS : columns === 0 ? LEGEND : linedLegend(columns)}
+    >
       {rows.map((row, order) => (
         <LegendItem
           key={row.id}
           id={row.id}
           name={row.name}
-          percent={row.percent}
+          figure={shows === "count" ? i18n.number(row.count) : row.percent}
           colour={row.colour}
           icon={row.icon ?? null}
           count={i18n.t("panel.countOf", countsOf(i18n, row.count, total))}
           order={order}
           place={places[order] ?? null}
+          {...(tops?.[order] !== undefined && { top: tops[order] })}
           lane={lane}
           toast={toast}
         />

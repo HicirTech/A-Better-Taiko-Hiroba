@@ -36,6 +36,8 @@ export const PORT_QUEUEING = {
   readSongCatalogue: "external",
   readChineseNames: "external",
   readRatingData: "external",
+  ratingHistory: "unqueued",
+  keepRating: "unqueued",
   readChartPicture: "unqueued",
   readCdnChart: "unqueued",
   readChartDensity: "unqueued",

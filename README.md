@@ -17,6 +17,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [x] Work out your rating and skills from your scores, by OurTaiko's first or second rating, and show the charts it counts
 - [x] Share your profile or your rating as a picture: copy or save it on a computer; on Android, share it, or save it from Android 11 on
 - [x] See where you stand: clears by star level, by hits per second and by BPM, and the charts closest to their next crown; add the charts to work on to a set
+- [x] See how things change as you read your scores: a chart's high score, your plays, crowns and score ranks, and your rating by both versions
 - [x] Change your title
 - [ ] Build your title part by part
 - [x] Change your nickname

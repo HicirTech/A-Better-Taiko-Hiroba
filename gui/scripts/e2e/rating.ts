@@ -8,6 +8,7 @@ import { hitsOn, refreshHits } from "./stand-in";
 
 export const ratingKeys = [
   "ratingDataReadAsThePageFirstOpens",
+  "ratingV2DataReadAsThePageFirstOpens",
   "ratingOpensOnV1",
   "ratingIsTheMedianOfTheBest",
   "ratingListsTheBestThenTheNext",
@@ -16,7 +17,7 @@ export const ratingKeys = [
   "ratingReadAgainReadsTheDataAgain",
   "ratingShareSavesThePicture",
   "ratingSharePicture",
-  "ratingV2ReadAsItIsShown",
+  "ratingV2NotReadAgainAsItIsShown",
   "ratingV2RadarShowsItsSixSkills",
   "ratingV2IsThePeakWeightedBest",
   "ratingV2RatesHardCharts",
@@ -82,9 +83,15 @@ export async function rating(ctx: Ctx) {
 
   // The scores section read every played chart; the data is read as the page first opens.
   const dataReads = await hitsOn(RATING_DATA);
+  const v2Reads = await hitsOn(RATING_DATA_V2);
   await goTo("rating");
   const total = Number(await totalShown());
   results.ratingDataReadAsThePageFirstOpens = (await hitsOn(RATING_DATA)) === dataReads + 1;
+  // Both versions keep their ratings once their data is on the device.
+  results.ratingV2DataReadAsThePageFirstOpens =
+    (await waitFor("V2's data read", async () =>
+      (await hitsOn(RATING_DATA_V2)) === v2Reads + 1 ? true : undefined,
+    )) === true;
   results.ratingOpensOnV1 = (await shows("ourtaikoV1")) && !(await shows("ourtaikoV2"));
 
   const best = await values("rating-best");
@@ -123,14 +130,13 @@ export async function rating(ctx: Ctx) {
   results.ratingSharePicture = picture;
   results.ratingShareSavesThePicture = savedWhole(picture, RATING_SNAPSHOT_WIDTH_PX);
 
-  // The switch shows V2 for the visit, its data read the first time it is shown.
-  const v2Reads = await hitsOn(RATING_DATA_V2);
+  // The switch shows V2 for the visit, from the data read as the page opened.
   await click("#rating-system-ourtaikoV2");
   await waitFor("V2's radar", async () =>
     same(await radarNames(), skillNames(V2_SKILLS)) ? true : undefined,
   );
   await settled();
-  results.ratingV2ReadAsItIsShown = (await hitsOn(RATING_DATA_V2)) === v2Reads + 1;
+  results.ratingV2NotReadAgainAsItIsShown = (await hitsOn(RATING_DATA_V2)) === v2Reads + 1;
   results.ratingV2RadarShowsItsSixSkills =
     same(await radarNames(), skillNames(V2_SKILLS)) &&
     (await shows("ourtaikoV2")) &&

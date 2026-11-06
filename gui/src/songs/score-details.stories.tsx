@@ -17,6 +17,10 @@ interface Args {
 }
 
 const BRANCHED = STORY_SCORES.scores.find((score) => score.songNo === "1005");
+/** A chart reads of scores have moved twice, its hits logged. */
+const MOVED = STORY_SCORES.scores.find(
+  ({ changes }) => changes[0]?.from.good !== null && changes.length > 1,
+);
 
 const meta = {
   title: "Dialogs/ScoreDetails",
@@ -44,3 +48,17 @@ type Story = StoryObj<typeof meta>;
 export const Chart: Story = {};
 
 export const ReadingTheSong: Story = { args: { reading: true, readingSong: true } };
+
+/** Its high score over time, a point chosen telling its date, marks and hits. */
+export const ItsScoreOverTime: Story = {
+  render: (args, { globals }) => (
+    <ScoreDetails
+      {...args}
+      listed={MOVED === undefined ? null : listedOf(MOVED, storyCatalogue(), localeOf(globals))}
+      lane={STORY_LANE}
+      touchFirst={touchOf(globals)}
+      modalLook={modalLookOf(globals)}
+      i18n={i18nOf(globals)}
+    />
+  ),
+};

@@ -5,8 +5,11 @@ import * as SetView from "../../favorites/set-view.stories";
 import * as SongCard from "../../favorites/song-card.stories";
 import * as BandItem from "../../know-yourself/band-item.stories";
 import * as CrownsItem from "../../know-yourself/crowns-item.stories";
+import * as CrownsOverTimeItem from "../../know-yourself/crowns-over-time-item.stories";
 import * as NearMissItem from "../../know-yourself/near-miss-item.stories";
+import * as PlaysItem from "../../know-yourself/plays-item.stories";
 import * as RanksItem from "../../know-yourself/ranks-item.stories";
+import * as RanksOverTimeItem from "../../know-yourself/ranks-over-time-item.stories";
 import * as PartHead from "../../my-page/costume-part-panel.part-head.stories";
 import * as OverviewHeader from "../../my-page/overview-header.stories";
 import * as PanelCard from "../../my-page/panel-card.stories";
@@ -59,6 +62,17 @@ const meta = {
         { name: "SetView", meta: SetView.default, story: SetView.Shown },
         { name: "FoldCard", meta: FoldCard.default, story: FoldCard.Folded },
         { name: "CrownsItem", meta: CrownsItem.default, story: CrownsItem.ClearLadder },
+        { name: "PlaysItem", meta: PlaysItem.default, story: PlaysItem.PlaysOverTime },
+        {
+          name: "CrownsOverTimeItem",
+          meta: CrownsOverTimeItem.default,
+          story: CrownsOverTimeItem.CrownsOverTime,
+        },
+        {
+          name: "RanksOverTimeItem",
+          meta: RanksOverTimeItem.default,
+          story: RanksOverTimeItem.RanksOverTime,
+        },
         { name: "RanksItem", meta: RanksItem.default, story: RanksItem.ScoreRanks },
         { name: "BandItem", meta: BandItem.default, story: BandItem.HitsPerSecond },
         { name: "NearMissItem", meta: NearMissItem.default, story: NearMissItem.NearAFullCombo },

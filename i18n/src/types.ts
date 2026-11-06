@@ -134,6 +134,7 @@ export interface Messages {
   "rating.figure.rhythm": string;
   "rating.figure.complex": string;
   "rating.best": string;
+  "rating.overTime": string;
   "rating.next": string;
   /** Param: {value}, the chart's constant in its system. */
   "rating.constant": string;
@@ -190,6 +191,8 @@ export interface Messages {
   "scores.donderfuls": string;
   /** 区間毎詳細成績, and one section of it. Param: {number}, from 1. */
   "scores.sections": string;
+  "scores.overTime": string;
+  "chart.oneRead": string;
   "scores.section": string;
   /** Param: {time}, when the chart's details were read. */
   "scores.readAt": string;
@@ -361,6 +364,16 @@ export interface Messages {
   "know.ladder": string;
   "know.never": string;
   "know.tried": string;
+  "know.plays": string;
+  "know.playsSoFar": string;
+  "know.playsSince": string;
+  "know.crownsOverTime": string;
+  "know.crownsNoChange": string;
+  "know.crownsSince": string;
+  "know.showNever": string;
+  "know.ranksOverTime": string;
+  "know.ranksNoChange": string;
+  "know.ranksSince": string;
   "know.noRank": string;
   "know.unknown": string;
   /** Param: {stars}, a star level. */

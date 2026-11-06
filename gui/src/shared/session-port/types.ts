@@ -12,11 +12,13 @@ import type {
   NameState,
   PickableSongs,
   PlayOptionCode,
+  RatingSnapshot,
   RatingSystem,
   RecentPlay,
   RecentPlaysReading,
   RenameState,
   Result,
+  ScoreChange,
   ScoreRank,
   ScoreRecord,
   ScoreSection,
@@ -175,6 +177,8 @@ export interface ScoreView extends RecentPlay {
   readonly recent: number | null;
   /** When its details were read. */
   readonly fetchedAt: string;
+  /** What reads of scores changed in the chart, oldest first. */
+  readonly changes: readonly ScoreChange[];
 }
 
 /** The kept scores: each played chart with its details, and the charts a read has yet to detail. */
@@ -451,6 +455,10 @@ export interface HirobaSessionPort {
   readChineseNames(): Promise<Result<ChineseNamesRead, SongCatalogueFailure>>;
   /** A rating system's data: one GET that carries no session, in the pipeline for other sites. */
   readRatingData(system: RatingSystem): Promise<Result<RatingDataRead, SongCatalogueFailure>>;
+  /** A rating system's kept ratings for the player signed in, oldest first. */
+  ratingHistory(system: RatingSystem): Promise<readonly RatingSnapshot[]>;
+  /** Keeps a rating unless it says what the last kept says, and answers those kept. */
+  keepRating(system: RatingSystem, snapshot: RatingSnapshot): Promise<readonly RatingSnapshot[]>;
   /** A picture of a chart's notes, from a chart host the song list links, kept on the device. */
   readChartPicture(
     url: string,

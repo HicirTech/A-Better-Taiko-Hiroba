@@ -3,9 +3,6 @@ import type { MessageKey, Translator } from "@abth/i18n";
 
 import type { RadarFigure } from "./rating-radar";
 
-/** The charts the rating counts, and as many after them that could join. */
-export const COUNTED = 20;
-
 const FIGURE_LABEL: Readonly<Record<RatingFigure, MessageKey>> = {
   rating: "rating.figure.rating",
   power: "rating.figure.power",
@@ -54,7 +51,7 @@ export const ratingFormats = (
 
 /** The player's rating, and their skills named for the radar. */
 export function ratingAndSkills(
-  rated: PlayerRating | null,
+  rated: Pick<PlayerRating, "figures"> | null,
   t: Translator["t"],
 ): { readonly total: number | null; readonly skills: readonly RadarFigure[] } {
   const figures = rated?.figures ?? [];

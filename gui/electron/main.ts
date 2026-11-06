@@ -15,6 +15,7 @@ import {
 
 import {
   createPictureReader,
+  createRatingHistory,
   createRecentPlaysReader,
   createRecentPreviews,
   createScoresReader,
@@ -66,6 +67,7 @@ import { OFF_SCREEN_OPTIONS, showOffScreen } from "./off-screen";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { handlePicturesOut } from "./pictures-out";
 import { createPipelineHistoryStore } from "./pipeline-history-store";
+import { createRatingHistoryStore } from "./rating-history-store";
 import { createRecentPlaysStore } from "./recent-plays-store";
 import { saveReads } from "./save-reads";
 import { createScoreChangesStore } from "./score-changes-store";
@@ -306,12 +308,20 @@ const started = app.whenReady().then(async () => {
     io: pipelines.io,
     pipeline: pipelines.scores,
     store: createScoresStore(join(app.getPath("userData"), "scores.json")),
-    changes: createScoreChangesStore(join(app.getPath("userData"), "score-changes.json")),
+    changes: createScoreChangesStore(
+      join(app.getPath("userData"), "score-changes-2.json"),
+      join(app.getPath("userData"), "score-changes.json"),
+    ),
     owner: () => owner,
     endSession: () => setSession(null),
     walk: recentPlays.readRecentPlays,
     walkProgress: recentPlays.recentPlaysProgress,
     recentPlays: recentPlays.recentPlays,
+  });
+
+  const ratings = createRatingHistory({
+    store: createRatingHistoryStore(join(app.getPath("userData"), "rating-history.json")),
+    owner: () => owner,
   });
 
   const port = queuePort(pipelines, {
@@ -387,6 +397,8 @@ const started = app.whenReady().then(async () => {
     readEveryScore: scores.readEveryScore,
     readSongScores: scores.readSongScores,
     scoresProgress: scores.scoresProgress,
+    ratingHistory: ratings.ratingHistory,
+    keepRating: ratings.keepRating,
     readSongCatalogue: (site, since) =>
       readSongCatalogue(site, environment.songCatalogueUrl, since),
     readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),

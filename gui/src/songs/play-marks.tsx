@@ -1,4 +1,4 @@
-import { playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
+import { type CrownState, playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 
 import { HirobaIcon } from "../pictures/hiroba-icon";
@@ -27,6 +27,48 @@ const RANK_KEY = {
 export const CROWN_RATIO = 52 / 59;
 const CROWN_WIDTH_PX = Math.round(CHART_MARK_PX * CROWN_RATIO);
 
+/** A chart's crown and rank as Hiroba's icons. */
+export function CrownAndRank({
+  crown,
+  scoreRank,
+  lane,
+  order,
+  i18n,
+}: {
+  readonly crown: CrownState;
+  readonly scoreRank: ScoreRank | null;
+  readonly lane: PictureLane;
+  readonly order: number;
+  readonly i18n: Translator;
+}) {
+  const { t } = i18n;
+  return (
+    <>
+      {crown !== "none" && crown !== "played" && (
+        <HirobaIcon
+          want={{ kind: "crownIcon", crown }}
+          width={CROWN_WIDTH_PX}
+          height={CHART_MARK_PX}
+          label={t(CROWN_KEY[crown])}
+          lane={lane}
+          order={order}
+        />
+      )}
+      {scoreRank !== null && (
+        <HirobaIcon
+          want={{ kind: "rankIcon", rank: scoreRank }}
+          width={RANK_MARK_PX}
+          height={CHART_MARK_PX}
+          label={t(RANK_KEY[scoreRank])}
+          className="rank-mark"
+          lane={lane}
+          order={order}
+        />
+      )}
+    </>
+  );
+}
+
 /** A play's marks as Hiroba's icons: its crown, its rank and its options. */
 export function PlayMarks({
   play,
@@ -49,27 +91,13 @@ export function PlayMarks({
   } as const;
   return (
     <>
-      {play.crown !== "none" && play.crown !== "played" && (
-        <HirobaIcon
-          want={{ kind: "crownIcon", crown: play.crown }}
-          width={CROWN_WIDTH_PX}
-          height={CHART_MARK_PX}
-          label={t(CROWN_KEY[play.crown])}
-          lane={lane}
-          order={order}
-        />
-      )}
-      {play.scoreRank !== null && (
-        <HirobaIcon
-          want={{ kind: "rankIcon", rank: play.scoreRank }}
-          width={RANK_MARK_PX}
-          height={CHART_MARK_PX}
-          label={t(RANK_KEY[play.scoreRank])}
-          className="rank-mark"
-          lane={lane}
-          order={order}
-        />
-      )}
+      <CrownAndRank
+        crown={play.crown}
+        scoreRank={play.scoreRank}
+        lane={lane}
+        order={order}
+        i18n={i18n}
+      />
       {playOptionIcons(options).map(({ option, code }) => (
         <HirobaIcon
           key={code}

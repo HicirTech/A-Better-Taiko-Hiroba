@@ -29,6 +29,8 @@ export const BRIDGE_CHANNELS = {
   readSongCatalogue: "abth:read-song-catalogue",
   readChineseNames: "abth:read-chinese-names",
   readRatingData: "abth:read-rating-data",
+  ratingHistory: "abth:rating-history",
+  keepRating: "abth:keep-rating",
   readChartPicture: "abth:read-chart-picture",
   readCdnChart: "abth:read-cdn-chart",
   readChartDensity: "abth:read-chart-density",
