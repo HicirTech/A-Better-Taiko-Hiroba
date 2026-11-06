@@ -5,6 +5,7 @@ import * as SetView from "../../favorites/set-view.stories";
 import * as SongCard from "../../favorites/song-card.stories";
 import * as BandItem from "../../know-yourself/band-item.stories";
 import * as CrownsItem from "../../know-yourself/crowns-item.stories";
+import * as CrownsOverTimeItem from "../../know-yourself/crowns-over-time-item.stories";
 import * as NearMissItem from "../../know-yourself/near-miss-item.stories";
 import * as PlaysItem from "../../know-yourself/plays-item.stories";
 import * as RanksItem from "../../know-yourself/ranks-item.stories";
@@ -61,6 +62,11 @@ const meta = {
         { name: "FoldCard", meta: FoldCard.default, story: FoldCard.Folded },
         { name: "CrownsItem", meta: CrownsItem.default, story: CrownsItem.ClearLadder },
         { name: "PlaysItem", meta: PlaysItem.default, story: PlaysItem.PlaysOverTime },
+        {
+          name: "CrownsOverTimeItem",
+          meta: CrownsOverTimeItem.default,
+          story: CrownsOverTimeItem.CrownsOverTime,
+        },
         { name: "RanksItem", meta: RanksItem.default, story: RanksItem.ScoreRanks },
         { name: "BandItem", meta: BandItem.default, story: BandItem.HitsPerSecond },
         { name: "NearMissItem", meta: NearMissItem.default, story: NearMissItem.NearAFullCombo },

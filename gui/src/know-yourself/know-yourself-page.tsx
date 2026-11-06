@@ -33,6 +33,7 @@ import { AddSongsDialog } from "./add-songs-dialog";
 import { BandItem } from "./band-item";
 import { ChartList } from "./chart-list";
 import { CrownsItem } from "./crowns-item";
+import { CrownsOverTimeItem } from "./crowns-over-time-item";
 import { anchorOf, gapKindOf, gapsOf, nearestFirst } from "./gaps";
 import { type KnownChart, knownCharts, shownAt } from "./known-charts";
 import { NearMissItem } from "./near-miss-item";
@@ -204,6 +205,7 @@ export function KnowYourselfPage({
             <NearMissItem crown="fullCombo" charts={here} parts={parts} />
             <NearMissItem crown="donderful" charts={here} parts={parts} />
             <PlaysItem charts={here} scoreOf={scoreOf} changes={changes} parts={parts} />
+            <CrownsOverTimeItem charts={here} changes={changes} parts={parts} />
           </Stack>
         </>
       )}

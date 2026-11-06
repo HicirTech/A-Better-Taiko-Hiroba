@@ -366,6 +366,10 @@ export interface Messages {
   "know.plays": string;
   "know.playsSoFar": string;
   "know.playsSince": string;
+  "know.crownsOverTime": string;
+  "know.crownsNoChange": string;
+  "know.crownsSince": string;
+  "know.showNever": string;
   "know.noRank": string;
   "know.unknown": string;
   /** Param: {stars}, a star level. */

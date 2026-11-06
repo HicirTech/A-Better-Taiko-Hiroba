@@ -11,6 +11,8 @@ import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 
 const ICON_HEIGHT_PX = 24;
 const DOT_PX = 8;
+/** A rank icon's width, as items in a column keep their figures in line. */
+const COLUMN_ICON_PX = 32;
 const NOTHING = () => undefined;
 // The art's proportions, kept until the picture gives its own: a rank's icon is wider than tall.
 const RESERVED_RATIO = { rankIcon: 128 / 96, crownIcon: 52 / 59 } as const;
@@ -19,7 +21,8 @@ export interface LegendItemProps {
   /** The id of its count, the text for screen readers: rank-8, crowns-silver. */
   readonly id: string;
   readonly name: string;
-  readonly percent: string;
+  /** What it shows beside its icon: its percent, or its count. */
+  readonly figure: string;
   /** The dot that stands in until the icon comes. */
   readonly colour: string;
   /** None where the dot is all the item has. */
@@ -30,21 +33,24 @@ export interface LegendItemProps {
   readonly order: number;
   /** Its line and column where the legend lines its items up; none in a legend of one line. */
   readonly place: { readonly row: number; readonly column: number } | null;
+  /** Centred at this height in its list, where a chart beside it says where each item stands. */
+  readonly top?: number;
   readonly lane: PictureLane;
   /** Where a long-press names the item by the shell's Toast, in place of the hover's tooltip. */
   readonly toast: SystemToast | undefined;
 }
 
-/** A share legend's item: its icon and percent, named for screen readers and as helper text. */
+/** A share legend's item: its icon and figure, named for screen readers and as helper text. */
 export function LegendItem({
   id,
   name,
-  percent,
+  figure,
   colour,
   icon,
   count,
   order,
   place,
+  top,
   lane,
   toast,
 }: LegendItemProps) {
@@ -56,7 +62,7 @@ export function LegendItem({
     <Box
       component="li"
       tabIndex={0}
-      aria-label={`${name} ${percent}`}
+      aria-label={`${name} ${figure}`}
       {...(held === null ? {} : longPress)}
       sx={{
         display: "flex",
@@ -65,6 +71,13 @@ export function LegendItem({
         position: "relative",
         borderRadius: 1,
         ...(place !== null && { gridRow: place.row, gridColumn: place.column }),
+        ...(top !== undefined && {
+          position: "absolute",
+          left: 0,
+          top,
+          transform: "translateY(-50%)",
+          whiteSpace: "nowrap",
+        }),
         // A long-press names the item: never a selection of its text.
         ...(held !== null && { userSelect: "none" }),
         "&:focus-visible": {
@@ -84,12 +97,16 @@ export function LegendItem({
           justifyContent: "center",
           flexShrink: 0,
           height: ICON_HEIGHT_PX,
-          aspectRatio:
-            picture !== null
-              ? picture.width / picture.height
-              : icon === null
-                ? undefined
-                : RESERVED_RATIO[icon.kind],
+          ...(top !== undefined
+            ? { width: COLUMN_ICON_PX }
+            : {
+                aspectRatio:
+                  picture !== null
+                    ? picture.width / picture.height
+                    : icon === null
+                      ? undefined
+                      : RESERVED_RATIO[icon.kind],
+              }),
         }}
       >
         {picture === null ? (
@@ -114,7 +131,7 @@ export function LegendItem({
         )}
       </Box>
       <Typography id={`${id}-percent`} component="span" variant="body2">
-        {percent}
+        {figure}
       </Typography>{" "}
       <Box component="span" id={id} sx={VISUALLY_HIDDEN}>
         {count}
