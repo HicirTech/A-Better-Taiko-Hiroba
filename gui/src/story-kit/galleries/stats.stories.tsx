@@ -8,6 +8,7 @@ import * as ShareBlock from "../../profile/share-block.stories";
 import * as RatingRadar from "../../rating/rating-radar.stories";
 import * as ChartDensitySection from "../../songs/chart-density.stories";
 import * as DensityLine from "../../songs/density-line.stories";
+import * as TimeChart from "../../ui/time-chart.stories";
 import { Gallery } from "../gallery";
 
 const meta = {
@@ -25,6 +26,8 @@ const meta = {
         { name: "ShareRows", meta: ShareRows.default, story: ShareRows.ByStarLevel },
         { name: "RatingRadar", meta: RatingRadar.default, story: RatingRadar.Skills },
         { name: "DensityLine", meta: DensityLine.default, story: DensityLine.Line },
+        { name: "LineChart", meta: TimeChart.default, story: TimeChart.ScoreOverTime },
+        { name: "AreaChart", meta: TimeChart.default, story: TimeChart.CrownsOverTime },
         {
           name: "ChartDensitySection",
           meta: ChartDensitySection.default,
