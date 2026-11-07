@@ -1,4 +1,4 @@
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { Translator } from "@abth/i18n";
 import {
   Box,
   Container,
@@ -44,15 +44,10 @@ import { WiderFrameContext } from "../ui/wider-frame";
 import { MOVE_TIMING, moveWindow, STILL, WindowMoveStyles } from "../ui/window-move";
 import { backAction } from "./back-action";
 import { FrameNavigationContext } from "./frame-navigation";
+import type { NavEntry } from "./nav-entry";
 import { PAGES, type Page } from "./pages";
 import { useMenuSwipe } from "./use-menu-swipe";
 import { usePipelinesSwipe } from "./use-pipelines-swipe";
-
-/** How the navigation lists a page: its name and its icon. */
-export interface NavEntry {
-  readonly label: MessageKey;
-  readonly icon: ReactNode;
-}
 
 const PANEL_WIDTH_PX = 240;
 

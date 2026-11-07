@@ -6,7 +6,7 @@ import type { FavoritesEditor } from "../favorites/use-favorites";
 import type { CostumeEditor } from "../my-page/use-costume-editor";
 import type { NameEditor } from "../name-title/use-name-editor";
 import type { TitleEditor } from "../name-title/use-title-editor";
-import type { NavEntry } from "../navigation/app-frame";
+import type { NavEntry } from "../navigation/nav-entry";
 import type { Page } from "../navigation/pages";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemLink, SystemShare, SystemToast } from "../platform";
