@@ -1,5 +1,6 @@
+import { isSongNo } from "../guards";
 import { type FavoriteSongEditorReading, parseFavoriteSongEditorPage } from "../hiroba-dom-parser";
-import { type FavoriteSongState, isSongNo, type ShownSong } from "../hiroba-models";
+import type { FavoriteSongState, ShownSong } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { readHirobaPage } from "./read-page";
 import { runWrite } from "./run-write";

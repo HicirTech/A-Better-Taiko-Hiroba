@@ -1,5 +1,6 @@
+import { isRecord } from "../guards";
 import type { Level } from "../hiroba-models";
-import { isMeasure, isObject, songNoOf } from "./ourtaiko-feed";
+import { isMeasure, songNoOf } from "./ourtaiko-feed";
 import type { OurTaikoV1Chart, OurTaikoV1Data } from "./ourtaiko-v1";
 
 const LEVEL_OF_KEY: readonly (readonly [string, Level])[] = [
@@ -14,9 +15,9 @@ export function parseOurTaikoV1Data(answer: unknown): OurTaikoV1Data | null {
   }
   const songs = new Map<string, ReadonlyMap<Level, OurTaikoV1Chart>>();
   for (const entry of answer) {
-    const songNo = isObject(entry) ? songNoOf(entry.id) : null;
-    const constants = isObject(entry) ? entry.constants : undefined;
-    if (songNo === null || !isObject(constants)) {
+    const songNo = isRecord(entry) ? songNoOf(entry.id) : null;
+    const constants = isRecord(entry) ? entry.constants : undefined;
+    if (songNo === null || !isRecord(constants)) {
       continue;
     }
     const charts = new Map(
@@ -33,7 +34,7 @@ export function parseOurTaikoV1Data(answer: unknown): OurTaikoV1Data | null {
 }
 
 function chartOf(value: unknown): OurTaikoV1Chart | null {
-  if (!isObject(value)) {
+  if (!isRecord(value)) {
     return null;
   }
   const { constant, totalNotes, composite, avgDensity, instDensity, separation, bpmChange } = value;

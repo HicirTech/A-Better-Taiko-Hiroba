@@ -1,3 +1,4 @@
+import { isRecord } from "../guards";
 import { parsePage } from "../hiroba-dom-parser";
 import type { Transport, TransportPost, TransportResponse } from "../http-transport";
 import { isErr } from "../operation-results";
@@ -103,9 +104,7 @@ export function readSaveMessage(value: unknown): string | null {
 }
 
 function memberOf(value: unknown, name: string): unknown {
-  return typeof value === "object" && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)[name]
-    : undefined;
+  return isRecord(value) ? value[name] : undefined;
 }
 
 function mediaTypeOf(response: TransportResponse): string {
