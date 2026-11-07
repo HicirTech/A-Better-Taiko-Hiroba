@@ -7,9 +7,9 @@ import type { PictureLane } from "../pictures/picture-lane";
 import type { PictureWay, SystemShare } from "../platform";
 import { ShareIcon } from "../ui/icons";
 import { OperationSnackbar } from "../ui/operation-snackbar";
-import { pictureOf } from "./draw-snapshot";
+import { canvasWritesWebp, pictureOf } from "./draw-snapshot";
 import { snapshotLane } from "./snapshot-lane";
-import { SNAPSHOT_TYPE, snapshotName } from "./snapshot-picture";
+import { pictureTypeFor, snapshotName } from "./snapshot-picture";
 
 /** How long a snapshot waits for its pictures before it is taken with those that came. */
 const PICTURES_WAIT_MS = 10_000;
@@ -81,7 +81,7 @@ export function SnapshotButton({
     }
     setHanding(true);
     share
-      .hand(way, picture, snapshotName(shows, new Date()))
+      .hand(way, picture, snapshotName(shows, new Date(), pictureTypeFor(way, canvasWritesWebp())))
       .then((ended) => {
         const done = DONE[way];
         setSaid(
@@ -171,7 +171,9 @@ function SnapshotTaker({
       .then(drawn)
       .then(() => {
         const node = box.current?.firstElementChild;
-        return gone || !(node instanceof HTMLElement) ? null : pictureOf(node, SNAPSHOT_TYPE[way]);
+        return gone || !(node instanceof HTMLElement)
+          ? null
+          : pictureOf(node, pictureTypeFor(way, canvasWritesWebp()));
       })
       .then(
         (picture) => {
