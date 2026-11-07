@@ -41,7 +41,8 @@ export const DEFAULT_TOKENS: ThemeTokens = {
     "zh-Hant": '"Microsoft JhengHei UI", "PingFang HK"',
   },
   fontFamily: `"Roboto", "Helvetica", "Arial", var(${SYSTEM_FONTS}), sans-serif`,
-  fontFamilyMono: "monospace",
+  // Named first: bare `monospace` takes a CJK font on a Japanese or Chinese page, not always fixed.
+  fontFamilyMono: `"Consolas", "Menlo", var(${SYSTEM_FONTS}), monospace`,
   rowLine: { fontSize: "0.8125rem", lineHeight: 1.4 },
   badge: { fontSize: "0.6875rem", fontWeight: 700 },
   figure: { fontSize: "1.125rem", fontWeight: 700, lineHeight: 1.3 },

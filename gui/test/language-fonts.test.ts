@@ -36,4 +36,9 @@ describe("a language's system fonts", () => {
     expect(appTheme.typography.body2.fontFamily).toEndWith(`, ${HELD}, sans-serif`);
     expect(SNAPSHOT_THEME.typography.fontFamily).toBe(appTheme.typography.fontFamily);
   });
+
+  test("stand after the fixed-width fonts in a code", () => {
+    expect(appTheme.typography.fontFamilyMono).toStartWith('"Consolas", ');
+    expect(appTheme.typography.fontFamilyMono).toEndWith(`, ${HELD}, monospace`);
+  });
 });
