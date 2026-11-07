@@ -264,8 +264,9 @@ the point for six seconds, or Read again held down as long on a computer, asks f
 every list and every played chart again, as the first read does. The scores stay on the device,
 each player's apart, after a sign-out too. From the end of a player's first full read on, each read
 also keeps a log of the charts it changed, their crown, rank, high score and play counts before and
-after: at most 5000 rows, never dropping a chart's first clear, full combo or donderful. Nothing
-shows it yet.
+after: at most 5000 rows, never dropping a chart's first clear, full combo or donderful. A chart's
+details draw its high score over time from it, Know yourself the player's plays, crowns and score
+ranks, and Rating the days before the first rating it kept.
 
 ### Rating
 
