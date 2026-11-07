@@ -3,6 +3,7 @@ import { Box, Divider, IconButton, Modal, Paper, Slide, Typography, useTheme } f
 import type { ReactNode, RefObject } from "react";
 
 import { useBackCloses, useBackLeaves } from "./back-closers";
+import { SAFE_TOP } from "./frame-top";
 import { CloseIcon } from "./icons";
 import { VISUALLY_HIDDEN } from "./visually-hidden";
 
@@ -127,6 +128,7 @@ export function LargeModal({
             outline: "none",
             ...size,
             ...(fills && !whole ? { height: `calc(${ROOM})` } : {}),
+            ...(phone && !picture ? { pt: SAFE_TOP } : {}),
             // The dark theme lightens a raised panel; a picture's stays black.
             ...(picture
               ? { position: "relative", bgcolor: "common.black", backgroundImage: "none" }

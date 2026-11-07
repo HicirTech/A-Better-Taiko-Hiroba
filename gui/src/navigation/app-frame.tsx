@@ -27,7 +27,7 @@ import {
 import type { SystemBack } from "../platform";
 import { NavigationLook } from "../theme/navigation-look";
 import { BackClosersContext, BackModesContext, createBackClosers } from "../ui/back-closers";
-import { MENU_INSET_PX, PAGE_BOTTOM_PX, SAFE_TOP, TOP_BAND_PX } from "../ui/frame-top";
+import { BELOW_TOP_BAND, MENU_INSET_PX, PAGE_BOTTOM_PX, SAFE_TOP } from "../ui/frame-top";
 import { ArrowBackIcon, ArrowForwardIcon, MenuIcon, QrCodeScannerIcon } from "../ui/icons";
 import { MenuOpenContext, MenuOpenerContext } from "../ui/menu-open";
 import { PipelinesShownContext } from "../ui/pipelines-shown";
@@ -177,6 +177,7 @@ export function AppFrame({
       <MenuOpenContext value={menuOpen}>
         <MenuOpenerContext value={setMenuOpen}>
           <WindowMoveStyles />
+          <Box aria-hidden sx={STATUS_BAR_ROOM} />
           <Box sx={{ display: "flex", minHeight: "100vh" }}>
             {navigation &&
               (wide ? (
@@ -207,7 +208,7 @@ export function AppFrame({
             <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
               <Container
                 maxWidth={wider ? "lg" : "md"}
-                sx={{ pt: `${TOP_BAND_PX}px`, pb: `${PAGE_BOTTOM_PX}px` }}
+                sx={{ pt: BELOW_TOP_BAND, pb: `${PAGE_BOTTOM_PX}px` }}
               >
                 <Typography component="h1" sx={VISUALLY_HIDDEN}>
                   {i18n.t(pipelinesShown ? "nav.pipelines" : pages[page].label)}
@@ -353,6 +354,17 @@ function PageList({
     </>
   );
 }
+
+// Where the system draws over the page, as iOS does, the page scrolls away beneath its words.
+const STATUS_BAR_ROOM = {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  height: SAFE_TOP,
+  bgcolor: "background.default",
+  zIndex: "appBar",
+} as const;
 
 /** The navigation's foot: the way to the pipelines page, then what the app puts there. */
 function Foot({
@@ -504,7 +516,10 @@ function MenuDrawer({
           // Over a dialog that lets the menu's swipe through, such as a song's details.
           sx={{ zIndex: (theme) => theme.zIndex.modal + 1 }}
           slotProps={{
-            paper: { id: drawerId, sx: { width: PANEL_WIDTH_PX, viewTransitionName: STILL.nav } },
+            paper: {
+              id: drawerId,
+              sx: { width: PANEL_WIDTH_PX, pt: SAFE_TOP, viewTransitionName: STILL.nav },
+            },
             backdrop: { sx: { viewTransitionName: STILL.scrim } },
           }}
         >
