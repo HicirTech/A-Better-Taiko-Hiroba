@@ -57,7 +57,6 @@ import { useSetsSwipe } from "./use-sets-swipe";
 const NO_SONGS: readonly string[] = [];
 
 /** What the name dialog asks for: a new set, opened for editing or not, or a set's new name. */
-/** A new set whose name is asked: its songs, and whether it opens in edit mode. */
 interface Naming {
   readonly songs: readonly string[];
   readonly editing: boolean;

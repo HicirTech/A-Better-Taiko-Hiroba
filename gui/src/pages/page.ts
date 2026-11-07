@@ -81,13 +81,13 @@ export interface PageData extends PageState {
   readonly onSongSearchOpen: (open: boolean) => void;
 }
 
-/** A page of the window: what it reads, and how the navigation lists it and the window draws it. */
 /** What a page's skeleton is drawn by: the screen it stands on. */
 export interface SkeletonProps {
   readonly touchFirst: boolean;
   readonly wide: boolean;
 }
 
+/** A page of the window: what it reads, and how the navigation lists it and the window draws it. */
 export interface PageEntry extends PageModel, NavEntry {
   /** Its shape in grey while it waits; none for a page that never waits. */
   readonly skeleton: ComponentType<SkeletonProps> | null;
