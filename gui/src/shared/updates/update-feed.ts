@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "@abth/core";
+import { err, isRecord, ok, type Result } from "@abth/core";
 import { LOCALES, type Locale } from "@abth/i18n";
 
 /** What changed in a release, in each language the feed carries. */
@@ -57,9 +57,6 @@ export function notesFor(feed: UpdateFeed, locale: Locale): readonly string[] {
     []
   );
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isLine = (value: unknown): value is string =>
   typeof value === "string" && value.trim() !== "";

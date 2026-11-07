@@ -401,12 +401,14 @@ describe("the zh-Hant catalog", () => {
 
   test("uses the Han characters a person has reviewed as Traditional, all of them and no other", () => {
     const used = new Set(keys.flatMap((key) => hanOf(ownWords(key))));
+    const unreviewed = keys.flatMap((key) => outsideTraditional(ownWords(key)));
     expect({
       unreviewed: keys.flatMap((key) =>
         outsideTraditional(ownWords(key)).map((char) => `${char} in ${key}`),
       ),
-      unused: [...TRADITIONAL].filter((char) => !used.has(char)),
-    }).toEqual({ unreviewed: [], unused: [] });
+      toAddOnceReviewed: [...new Set(unreviewed)].join(""),
+      toRemove: [...TRADITIONAL].filter((char) => !used.has(char)).join(""),
+    }).toEqual({ unreviewed: [], toAddOnceReviewed: "", toRemove: "" });
   });
 
   test("has reviewed Han characters only, none of them known to be Simplified or Japanese only", () => {

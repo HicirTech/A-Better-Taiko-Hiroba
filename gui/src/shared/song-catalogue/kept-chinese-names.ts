@@ -1,3 +1,4 @@
+import { isObject } from "@abth/core";
 import { keepSetting, pageStorage } from "../kept-settings";
 import type { CatalogueSong, ChineseNamesPage, ChineseNamesRead } from ".";
 
@@ -27,10 +28,10 @@ export function keepChineseNames(
 function isKept(
   value: unknown,
 ): value is { readonly sentAt: number; readonly pages: ChineseNamesPage[] } {
-  if (typeof value !== "object" || value === null) {
+  if (!isObject(value)) {
     return false;
   }
-  const { v, sentAt, pages } = value as Record<string, unknown>;
+  const { v, sentAt, pages } = value;
   return (
     v === VERSION &&
     typeof sentAt === "number" &&

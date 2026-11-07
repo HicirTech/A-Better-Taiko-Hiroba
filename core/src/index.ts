@@ -1,5 +1,6 @@
 // This package runs in any JavaScript runtime (desktop, mobile, browser, server): no Bun, Node or
 // DOM globals and no `node:` imports. The GUI's typecheck catches most; `fetch` slips through it.
+export * from "./guards";
 export * from "./hiroba-dan-images";
 export * from "./hiroba-dom-parser";
 export * from "./hiroba-models";

@@ -3,30 +3,12 @@ import { describe, expect, test } from "bun:test";
 import { PAGES } from "../src/navigation/pages";
 import { dueTips, TIPS } from "../src/pages/page-tips";
 import { keepSeenTips, keptSeenTips, SEEN_TIPS_KEY } from "../src/shared/tips/seen-tips";
+import { memoryStorage } from "./storage-fakes";
 
 const idsOf = (tips: readonly { readonly id: string }[]) => tips.map(({ id }) => id);
 const PHONE = { touchFirst: true, wide: false };
 const TABLET = { touchFirst: true, wide: true };
 const COMPUTER = { touchFirst: false, wide: true };
-
-/** A store as the page's: strings by key. */
-function storage(): Storage {
-  const kept = new Map<string, string>();
-  return {
-    get length() {
-      return kept.size;
-    },
-    clear: () => kept.clear(),
-    getItem: (key) => kept.get(key) ?? null,
-    key: (index) => [...kept.keys()][index] ?? null,
-    removeItem: (key) => {
-      kept.delete(key);
-    },
-    setItem: (key, value) => {
-      kept.set(key, value);
-    },
-  };
-}
 
 describe("TIPS", () => {
   test("names each tip once, each told on some screen, on a page the navigation lists or the whole app", () => {
@@ -100,14 +82,14 @@ describe("dueTips", () => {
 
 describe("the tips seen on this device", () => {
   test("are kept once each, added to what was kept", () => {
-    const store = storage();
+    const store = memoryStorage();
     keepSeenTips(["app.scan", "overview.share"], store);
     keepSeenTips([...keptSeenTips(store), "overview.share", "rating.share"], store);
     expect([...keptSeenTips(store)]).toEqual(["app.scan", "overview.share", "rating.share"]);
   });
 
   test("read as none where nothing, or nothing readable, is kept", () => {
-    const store = storage();
+    const store = memoryStorage();
     expect(keptSeenTips(store).size).toBe(0);
     store.setItem(SEEN_TIPS_KEY, "{not json");
     expect(keptSeenTips(store).size).toBe(0);

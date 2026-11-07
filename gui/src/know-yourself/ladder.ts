@@ -5,7 +5,7 @@ import type { ChartGroup } from "./groups";
 import { isCleared, isTried, type KnownChart } from "./known-charts";
 
 /** The tried charts a star level needs before it can be the wall. */
-export const WALL_MIN_TRIED = 5;
+const WALL_MIN_TRIED = 5;
 
 /** Each chart's best crown, from never played to donderful. */
 export const CLEAR_SEGMENTS: readonly CrownState[] = [

@@ -1,4 +1,4 @@
-import { err, type Genre, ok, type Result } from "@abth/core";
+import { err, type Genre, isRecord, isSongNo, ok, type Result } from "@abth/core";
 
 import {
   type CatalogueSong,
@@ -11,9 +11,6 @@ import {
 } from "./types";
 
 export const MAX_CATALOGUE_LENGTH = 16 * 1024 * 1024;
-
-/** Hiroba's song numbers; a console-only song has one such as `ns2_…`, which Hiroba does not know. */
-const HIROBA_SONG_NO = /^\d{1,5}$/;
 // The limits sit far above what taiko.wiki lists, and are still limits.
 const MAX_CHART_IMAGES = 16;
 const MAX_URL_LENGTH = 2048;
@@ -32,9 +29,6 @@ const GENRE_OF_WIKI_NAME: ReadonlyMap<string, Genre> = new Map<string, Genre>([
 const BAD_ANSWER = { code: "badAnswer" } as const;
 
 type WikiEntry = Readonly<Record<string, unknown>>;
-
-const isEntry = (value: unknown): value is WikiEntry =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const isLevel = (value: unknown): value is number =>
   typeof value === "number" && Number.isInteger(value) && value >= MIN_LEVEL && value <= MAX_LEVEL;
@@ -68,8 +62,8 @@ function genresOf(names: unknown): Genre[] {
 
 /** A course the song has: one with a star level. */
 function courseOf(courses: unknown, difficulty: Difficulty): WikiEntry | null {
-  const course = isEntry(courses) ? courses[difficulty] : null;
-  return isEntry(course) && isLevel(course.level) ? course : null;
+  const course = isRecord(courses) ? courses[difficulty] : null;
+  return isRecord(course) && isLevel(course.level) ? course : null;
 }
 
 function levelsOf(courses: unknown): Record<Difficulty, number | null> {
@@ -135,7 +129,7 @@ const isTempo = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value > 0;
 
 function bpmOf(value: unknown, wobbles: unknown): SongBpm | null {
-  if (!isEntry(value) || !isTempo(value.min) || !isTempo(value.max) || value.min > value.max) {
+  if (!isRecord(value) || !isTempo(value.min) || !isTempo(value.max) || value.min > value.max) {
     return null;
   }
 
@@ -180,11 +174,12 @@ export function parseWikiSongs(
   const songs: CatalogueSong[] = [];
   const removed: string[] = [];
   for (const entry of entries) {
-    if (!isEntry(entry)) {
+    if (!isRecord(entry)) {
       continue;
     }
     const { songNo } = entry;
-    if (typeof songNo !== "string" || !HIROBA_SONG_NO.test(songNo)) {
+    // A console-only song has a number such as `ns2_…`, which Hiroba does not know.
+    if (!isSongNo(songNo)) {
       continue;
     }
     if (entry.isDeleted === 1) {

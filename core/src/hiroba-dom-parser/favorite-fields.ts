@@ -1,6 +1,7 @@
 import type { HTMLElement } from "node-html-parser";
 
-import { FormToken, isSongNo, type ShownSong } from "../hiroba-models";
+import { isSongNo } from "../guards";
+import { FormToken, type ShownSong } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { readSongNameGenre } from "./element-readers";
 import { requireMarker } from "./parser";

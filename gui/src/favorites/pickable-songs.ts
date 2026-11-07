@@ -1,9 +1,9 @@
+import { isObject, isSongNo } from "@abth/core";
 import { forgetSetting, keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
 import type { PickableSongs, ReadFailure } from "../shared/session-port";
 
 const KEY = "abth.pickableSongs";
 const VERSION = 1;
-const SONG_NO = /^\d{1,5}$/;
 
 /** The songs the pickers list, by number, and those with a 裏 entry. */
 export interface OfferedSongs {
@@ -32,7 +32,7 @@ export function offeredOf(read: PickableSongs): OfferedSongs {
 }
 
 const isSongNos = (value: unknown): value is string[] =>
-  Array.isArray(value) && value.every((one) => typeof one === "string" && SONG_NO.test(one));
+  Array.isArray(value) && value.every(isSongNo);
 
 /** The list kept on the device, from the last read; one of another shape is none. */
 export function loadPickable(storage: Storage | undefined = pageStorage()): OfferedSongs | null {
@@ -43,8 +43,7 @@ export function loadPickable(storage: Storage | undefined = pageStorage()): Offe
   try {
     const kept: unknown = JSON.parse(text);
     if (
-      typeof kept === "object" &&
-      kept !== null &&
+      isObject(kept) &&
       "v" in kept &&
       kept.v === VERSION &&
       "songs" in kept &&

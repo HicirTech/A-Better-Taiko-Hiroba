@@ -16,10 +16,10 @@ export interface LaneTimers {
 }
 
 /** A fling past a picture asks nothing: it must stay on screen this long first. */
-export const PICTURE_DWELL_MS = 150;
+const PICTURE_DWELL_MS = 150;
 
 /** Dwells ending within this of the first end with it, so pictures go in screen order. */
-export const PICTURE_TOGETHER_MS = 16;
+const PICTURE_TOGETHER_MS = 16;
 
 /** Time the pictures on screen take to ask again, once a read again has dropped them. */
 const ASKED_AGAIN_WITHIN_MS = 300;

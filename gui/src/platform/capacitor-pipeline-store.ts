@@ -1,3 +1,4 @@
+import { isObject } from "@abth/core";
 import { type PipelineHistoryStore, readPipelineHistory } from "../shared/pipelines";
 import { completed, type DatabaseFactory, lazyDatabase, succeeded } from "./capacitor-indexeddb";
 
@@ -31,10 +32,5 @@ export function createIndexedDbPipelineStores(
 
 /** A record as this store keeps one: another version's, or no object at all, reads as none. */
 function isStored(value: unknown): value is { readonly history: unknown } {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    (value as { v?: unknown }).v === RECORD_VERSION &&
-    "history" in value
-  );
+  return isObject(value) && value.v === RECORD_VERSION && "history" in value;
 }

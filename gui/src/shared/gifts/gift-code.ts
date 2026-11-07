@@ -1,4 +1,4 @@
-import { isSongNo, NAME_FORM_MAX_LENGTH } from "@abth/core";
+import { isRecord, isSongNo, NAME_FORM_MAX_LENGTH } from "@abth/core";
 
 /** The most songs a gift holds: a play's songs. */
 export const GIFT_SONG_LIMIT = 4;
@@ -53,11 +53,11 @@ export function scannedCodeOf(text: string): ScannedCode {
 }
 
 function giftOf(value: unknown): Gift | null {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+  if (!isRecord(value)) {
     return null;
   }
 
-  const { abth, v, s, g, n, t, h } = value as Record<string, unknown>;
+  const { abth, v, s, g, n, t, h } = value;
   if (abth !== GIFT || v !== VERSION || !Array.isArray(s) || !s.every(Number.isSafeInteger)) {
     return null;
   }

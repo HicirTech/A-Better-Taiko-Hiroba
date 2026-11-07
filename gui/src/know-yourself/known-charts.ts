@@ -19,7 +19,7 @@ export interface KnownChart {
 }
 
 // Hiroba marks a double-play song only in its title: such songs count for neither shares nor sets.
-export const isDoublePlay = (title: string): boolean => title.startsWith("【双打】");
+const isDoublePlay = (title: string): boolean => title.startsWith("【双打】");
 
 /** The charts of the lists, but those of double-play songs, joined to taiko.wiki by song number. */
 export function knownCharts(

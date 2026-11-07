@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "@abth/core";
+import { err, isRecord, ok, type Result } from "@abth/core";
 
 import type { ChineseNamesPage } from "./types";
 
@@ -34,9 +34,6 @@ export function officialNames(wikitext: string): string[] {
     );
   return [...new Set(names.filter((name) => name !== ""))];
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 /** A batch as MediaWiki answers `generator=categorymembers` with each page's wikitext. */
 export function parseChineseNamesBatch(

@@ -1,5 +1,6 @@
+import { isSongNo } from "../guards";
 import { type FolderEditorReading, parseFolderEditorPage } from "../hiroba-dom-parser";
-import { FOLDER_SLOT_COUNT, type FolderState, isSongNo, type ShownSong } from "../hiroba-models";
+import { FOLDER_SLOT_COUNT, type FolderState, type ShownSong } from "../hiroba-models";
 import { err, isErr, ok, type Result } from "../operation-results";
 import { readHirobaPage } from "./read-page";
 import { runWrite } from "./run-write";
