@@ -100,3 +100,33 @@ jobs:
       # The runner's own Android SDK (ANDROID_HOME) has what the project builds against.
       - name: Build debug APK
         run: bun run android:apk
+
+  ios:
+    name: iOS app, unsigned
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # Same pin as the Checks job.
+          bun-version: 1.4.2
+
+      - name: Cache dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      # Capacitor's CLI runs on Node 22.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Build for a device
+        run: bun run ios:build
