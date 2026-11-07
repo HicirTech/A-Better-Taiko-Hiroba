@@ -7,7 +7,26 @@ A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-dat
 
 ## Download
 
-Get the latest version from the [Releases page](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest): an installer or a portable zip for Windows, a disk image for macOS (Apple silicon or Intel), an APK for Android, and an IPA for iOS. The IPA is unsigned: install it by signing it with your own Apple account, with a tool such as AltStore or Sideloadly; with a free account, sign it again every seven days. The app tells you when a newer version is out.
+Get the latest version from the [Releases page](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest): an installer or a portable zip for Windows, a disk image for macOS (Apple silicon or Intel), an APK for Android, and an IPA for iOS ([installing it](#installing-on-ios)). The app tells you when a newer version is out.
+
+### Installing on iOS
+
+The app is not on the App Store. Its IPA is unsigned: you sign it with your own Apple account as you install it, and a free account is enough. It needs iOS 17.5 or later.
+
+With [Sideloadly](https://sideloadly.io/), on a Windows PC or a Mac:
+
+1. Download `ABTH-<version>.ipa` from the [Releases page](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest).
+2. Install Sideloadly. On Windows it also needs iTunes and iCloud from Apple's website, not the Microsoft Store versions.
+3. Connect the iPhone or iPad with a cable, unlock it and tap **Trust**.
+4. In Sideloadly, enter your Apple ID, drag the IPA in and press **Start**. Type your password and, if asked, the code Apple sends you.
+5. On iOS 16 or later, turn on Developer Mode: **Settings > Privacy & Security > Developer Mode**. The device restarts and asks you to confirm.
+6. If iOS says the developer is not trusted: **Settings > General > VPN & Device Management**, tap your Apple ID, then **Trust**.
+
+A free Apple account has two limits: the app stops opening 7 days after it was signed, until it is signed again, and only 3 apps signed this way can be installed at once. Sideloadly's automatic refresh signs it again before then, while the computer is on and on the same Wi-Fi as the device. [AltStore](https://faq.altstore.io/) and [SideStore](https://docs.sidestore.io/) can sign it again from the phone once they are set up; their own guides say how. A paid developer account, or any other signing tool, works too.
+
+To update, sign the new IPA the same way, with the same Apple ID, and install it over the old app: deleting the app first deletes everything it keeps on the device.
+
+Download the IPA only from this project's Releases page.
 
 ## What it does
 

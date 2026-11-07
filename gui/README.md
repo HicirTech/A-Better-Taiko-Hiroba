@@ -666,9 +666,8 @@ On a Mac with Xcode 26 or later:
 
 The debug build has its own id and name, and may reach the stand-in's `sslip.io` hosts over plain HTTP.
 
-No one signs the IPA: whoever installs it signs it with their own Apple account, with a tool such as
-AltStore or Sideloadly. An app signed with a free account runs for seven days, then has to be signed
-again.
+No one signs the IPA: whoever installs it signs it with their own Apple account, as [Installing on
+iOS](../README.md#installing-on-ios) says.
 
 iOS has no Back, so the app draws one at the top left wherever Android's Back would go somewhere: on
 every page but the Overview, in a page's modes, and over the pipelines page. A large modal draws its
