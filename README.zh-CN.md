@@ -3,11 +3,36 @@
 
 [English](README.md)
 
-一套面向鼓众广场（日服）的客户端工具。目前支持桌面端、安卓端以及之后的命令行查看自己的太鼓游玩成绩、修改资料、显示小咚、切换收藏曲目、管理广场上的各项设定等。本工具设计上是完全在设备上运行，并直接与广场通信: 任何你的鼓众数据都不经过我们的任何服务器(因为我根本就没搭服务器)
+一套面向鼓众广场（日服）的客户端工具。目前支持桌面端、安卓端、iOS 端以及之后的命令行查看自己的太鼓游玩成绩、修改资料、显示小咚、切换收藏曲目、管理广场上的各项设定等。本工具设计上是完全在设备上运行，并直接与广场通信: 任何你的鼓众数据都不经过我们的任何服务器(因为我根本就没搭服务器)
 
 ## 下载
 
-在 [Releases 页面](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest)下载最新版本：Windows 有安装包和免安装的 zip，macOS 有磁盘映像（dmg，Apple 芯片和 Intel 各一个），安卓是 APK。有新版本时，App 会提醒你。
+在 [Releases 页面](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest)下载最新版本：Windows 有安装包和免安装的 zip，macOS 有磁盘映像（dmg，Apple 芯片和 Intel 各一个），安卓是 APK，iOS 是 IPA（安装方法见[下文](#在-ios-上安装)）。有新版本时，App 会提醒你。
+
+### 在 iOS 上安装
+
+App 没有上架 App Store。IPA 没有签名，安装时要用你自己的 Apple 账号签名，免费账号就够。系统要 iOS 17.5 或更新。
+
+在 Windows 电脑或 Mac 上用 [Sideloadly](https://sideloadly.io/) 安装：
+
+1. 在 [Releases 页面](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest)下载 `ABTH-<版本>.ipa`。
+2. 安装 Sideloadly。Windows 上还要装 Apple 官网版的 iTunes 和 iCloud，Microsoft Store 版不行。
+3. 用数据线连接 iPhone 或 iPad，解锁后点「信任」。
+4. 在 Sideloadly 里填上你的 Apple ID，把 IPA 拖进去，点 **Start**；按提示输入密码，以及 Apple 发来的验证码。
+5. iOS 16 及以上要打开开发者模式：「设置 > 隐私与安全性 > 开发者模式」，设备重启后确认开启。
+6. 如果提示开发者不受信任：「设置 > 通用 > VPN与设备管理」，点你的 Apple ID，再点「信任」。
+
+免费账号有两个限制：签名 7 天后 App 就打不开，要重新签名；同时最多只能装 3 个这样签名的 App。Sideloadly 的自动续签会在到期前重新签名，前提是电脑开着、和设备连着同一个 Wi-Fi。[AltStore](https://faq.altstore.io/) 和 [SideStore](https://docs.sidestore.io/) 设置好后可以直接在手机上续签，做法见它们自己的指南。付费开发者账号或其他签名工具也可以。
+
+在 AltStore 或 SideStore 里也可以添加本项目的源：打开 **Sources**，点 **+**，粘贴下面的地址。之后 App 会出现在源里，每个新版本都会作为更新出现。
+
+```
+https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest/download/altstore.json
+```
+
+更新时，用同一个 Apple 账号、同样的方式给新的 IPA 签名，直接覆盖安装：先删掉 App，会把它存在设备上的数据一起删掉。
+
+只从本项目的 Releases 页面下载 IPA。
 
 ## 它能做什么
 
@@ -39,7 +64,7 @@
 * [x] 作为桌面端应用运行（Windows）
 * [x] 作为桌面端应用运行（macOS）
 * [x] 作为安卓端应用运行
-* [ ] 作为 iOS 端应用运行——后期
+* [x] 作为 iOS 端应用运行（未签名的 IPA，需自行签名安装）
 * [ ] 作为 Web 端应用运行——后期
 * [ ] 通过脚本驱动同一个核心，提供可编程 API
 * [x] 界面支持英文、日文、简体中文和繁体中文

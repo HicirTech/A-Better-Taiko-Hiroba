@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { type DesktopPictures, desktopShare } from "../src/platform/desktop-share";
-import { snapshotName } from "../src/snapshots/snapshot-picture";
+import { pictureTypeFor, snapshotName } from "../src/snapshots/snapshot-picture";
 
 const PNG = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const WEBP = Uint8Array.from([0x52, 0x49, 0x46, 0x46, 0x00, 0x00, 0x00, 0x00]);
@@ -21,6 +21,15 @@ function preload(saved: "saved" | "cancelled") {
   };
   return { pictures, handed };
 }
+
+test("a canvas that writes no WebP makes a PNG, and the file is named for it", () => {
+  expect(pictureTypeFor("share", true)).toBe("image/webp");
+  expect(pictureTypeFor("share", false)).toBe("image/png");
+  expect(pictureTypeFor("copy", true)).toBe("image/png");
+  expect(snapshotName("abth-rating", new Date(2026, 9, 26, 23, 59, 30), "image/png")).toBe(
+    "abth-rating-2026-10-26-235930.png",
+  );
+});
 
 test("a snapshot's file is named for what it shows and the second it was made", () => {
   expect(snapshotName("abth-rating", new Date(2026, 9, 26, 23, 59, 30))).toBe(

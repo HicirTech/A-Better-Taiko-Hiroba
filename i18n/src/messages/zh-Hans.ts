@@ -12,6 +12,7 @@ export const zhHans: Messages = {
   "nav.favorites": "收藏",
   "nav.settings": "设置",
   "nav.menu": "菜单",
+  "nav.back": "返回",
   "nav.pipelines": "管线",
   "pipelines.io": "广场交互",
   "pipelines.external": "外部数据源",

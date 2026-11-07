@@ -96,6 +96,11 @@ export function createAppTheme(tokens: ThemeTokens): Theme {
             overscrollBehaviorY: "none",
           },
           ...fontsByLanguageMark(tokens),
+          // Only iOS knows this property. A long press there would select text or offer a picture.
+          "@supports (-webkit-touch-callout: none)": {
+            body: { WebkitTouchCallout: "none", WebkitUserSelect: "none" },
+            "input, textarea": { WebkitUserSelect: "text" },
+          },
         },
       },
       MuiPopover: {

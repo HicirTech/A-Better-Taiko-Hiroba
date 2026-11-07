@@ -8,7 +8,15 @@ import {
   ListItemIcon,
   ListItemText,
 } from "@mui/material";
-import { type ReactNode, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useContext,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { HirobaSessionPort } from "../shared/session-port";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
@@ -21,7 +29,7 @@ import { type PickerEntry, PickerList } from "../songs/picker-list";
 import { SongDetails } from "../songs/song-details";
 import { bpmText } from "../songs/song-facts";
 import { SongListFailed } from "../songs/song-list-failed";
-import { useBackLeaves } from "../ui/back-closers";
+import { OnScreenBackContext, useBackLeaves } from "../ui/back-closers";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
 import type { ModalLook } from "../ui/large-modal";
@@ -92,6 +100,7 @@ export function SongSearch({
 }: SongSearchProps) {
   const { t, locale } = i18n;
   const [active, setActive] = useState(false);
+  const { shown: backShown } = useContext(OnScreenBackContext);
   const [query, setQuery] = useState("");
   const recent = keptSearches.searches;
   const [openSongNo, setOpenSongNo] = useState<string | null>(null);
@@ -222,7 +231,7 @@ export function SongSearch({
             setQuery(next);
           }}
           onFocus={activate}
-          onLeave={active ? leave : undefined}
+          onLeave={active && !backShown ? leave : undefined}
           onSubmit={() => keptSearches.remember(query)}
           hint={recent.length === 0 ? t("picker.searchHint") : undefined}
         />

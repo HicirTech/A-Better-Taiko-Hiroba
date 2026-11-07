@@ -653,6 +653,30 @@ On Windows, the `NoDefaultCurrentDirectoryInExePath` setting stops `cmd.exe` fin
 the current folder, which is how Capacitor starts Gradle. `scripts/android.ts` removes it from every
 command it starts, so use the scripts rather than a bare `bunx cap run`.
 
+## iOS
+
+On a Mac with Xcode 26 or later:
+
+| Script | What it does |
+|---|---|
+| `bun run ios:build` | Web build, `cap sync`, an unsigned build for a device. CI runs this. |
+| `bun run ios:ipa` | Web build, `cap sync`, an unsigned release build for a device, packed as `release/ABTH-<version>.ipa`. The release workflow runs this. |
+| `bun run ios:source` | Writes `release/altstore.json`, the AltStore and SideStore source that lists this version's IPA. The release workflow runs this after `ios:ipa`. |
+| `bun run ios:run -- <simulator id>` | Web build, `cap sync`, then builds, installs and starts it on that simulator. |
+| `bun run ios:live -- <simulator id> [host]` | Vite's dev server on this Mac, and the debug app loading it with live reload. It runs only against the stand-in, like `android:live`. |
+
+The debug build has its own id and name, and may reach the stand-in's `sslip.io` hosts over plain HTTP.
+
+No one signs the IPA: whoever installs it signs it with their own Apple account, as [Installing on
+iOS](../README.md#installing-on-ios) says.
+
+iOS has no Back, so the app draws one at the top left wherever Android's Back would go somewhere: on
+every page but the Overview, in a page's modes, and over the pipelines page. A large modal draws its
+arrow beside its title.
+
+A picture to share goes out as a PNG on iOS, whose canvas writes no WebP, and the share sheet saves it
+to Photos.
+
 ### Costume writes on Android
 
 A write on Android, of any kind, is the desktop's own, over Capacitor's HTTP client. A post is one native call,
@@ -702,9 +726,10 @@ answers this machine alone, and a build refuses to start while a pack is named.
 ## Releases
 
 Two workflows run on GitHub Actions. `.github/workflows/ci.yml` runs on a pull request to `main`, on
-a push to `main`, and when started by hand. It has two jobs side by side: **Checks** (format, lint,
-typecheck, the tests, the update feed and the GUI bundle) and **Android debug APK**
-(`bun run android:apk`, on the runner's Android SDK, with JDK 21 and Node 22).
+a push to `main`, and when started by hand. It has three jobs side by side: **Checks** (format, lint,
+typecheck, the tests, the update feed and the GUI bundle), **Android debug APK**
+(`bun run android:apk`, on the runner's Android SDK, with JDK 21 and Node 22) and **iOS app,
+unsigned** (`bun run ios:build`, on macOS 26 with Node 22).
 `.github/workflows/release.yml` builds and publishes a release; [Making a
 release](#making-a-release) says what is done by hand.
 
@@ -719,6 +744,7 @@ Android updates an app only to a higher code, so minor and patch stop at 99 (one
 into the next place, and a later version could get a lower or an equal code), and the code stops at
 Android's own limit, 2100000000. A version has no `v`, no pre-release part and no build part. The
 Gradle script refuses a version that breaks these rules, so the Android build fails on one.
+`scripts/ios.ts` gives the IPA the same text as its version and its build number.
 
 ### Making a release
 
@@ -750,10 +776,11 @@ the run before anything is built. `bun run check:update-feed` makes the same che
 as a **dry run**, which builds the same files, keeps them and creates no release: when started by
 hand (**Run workflow** in the Actions tab), and on a pull request to `main` that touches what a
 release is made of, which is the workflow itself, `gui/package.json` (which also holds
-electron-builder's configuration, under `build`), `gui/update.json` and `gui/android/**`.
+electron-builder's configuration, under `build`), `gui/update.json`, `gui/android/**` and
+`gui/ios/**`.
 
 A **Version** job reads the version first, checks `gui/update.json` against it, and on a tag run
-stops the run unless the tag is `v` and that version. Then three jobs run side by side, none
+stops the run unless the tag is `v` and that version. Then four jobs run side by side, none
 waiting on another:
 
 | Job | Runs on | Makes |
@@ -761,11 +788,12 @@ waiting on another:
 | **Android release APK** | Ubuntu 26.04, JDK 21 | `ABTH-<version>.apk`, signed with the release key from [the signing secrets](#setting-up-the-signing-secrets). |
 | **Windows installer and zip** | windows-latest | `ABTH-<version>-setup.exe`, the NSIS installer, and `ABTH-<version>-portable.zip`, the build that needs no install ([Desktop](#desktop) says how to run it). Both are x64 and not code-signed. |
 | **macOS disk images** | macos-latest | `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel Macs. Each app is signed ad hoc, with no Apple certificate, and is not notarized ([Desktop](#desktop) says how to open it). |
+| **iOS IPA, unsigned** | macos-26 | `ABTH-<version>.ipa`, a release build for a device that no one signs ([iOS](#ios) says how to install it), and `altstore.json`, the source AltStore and SideStore read it from. |
 
-Each uploads its files as an artifact of the run (**android**, **windows** and **mac**, kept for 14
-days). On a tag, a **Release** job then runs after all three. It downloads the artifacts and runs
-`gh release create v<version> --title "A Better Taiko Hiroba <version>" --generate-notes` with the
-five files and `gui/update.json` (the release's asset `update.json`, which the app reads), as
+Each uploads its files as an artifact of the run (**android**, **windows**, **mac** and **ios**, kept
+for 14 days). On a tag, a **Release** job then runs after all four. It downloads the artifacts and
+runs `gh release create v<version> --title "A Better Taiko Hiroba <version>" --generate-notes` with
+the seven files and `gui/update.json` (the release's asset `update.json`, which the app reads), as
 `GITHUB_TOKEN` with `contents: write`; the notes list the pull requests merged since the last
 release. **The release is published, not a draft**: its files are public as soon as that
 job ends. A dry run never reaches that job.

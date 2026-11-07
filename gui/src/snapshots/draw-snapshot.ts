@@ -2,17 +2,21 @@ import { toCanvas } from "html-to-image";
 
 import { base64Of } from "../shared/png-answer";
 import { inlinedFontFace } from "./font-faces";
-import { SNAPSHOT_PIXEL_RATIO, SNAPSHOT_WEBP_QUALITY } from "./snapshot-picture";
+import { type PictureType, SNAPSHOT_PIXEL_RATIO, SNAPSHOT_WEBP_QUALITY } from "./snapshot-picture";
+
+/** Whether this browser's canvas writes a WebP, which Safari's does not. */
+export function canvasWritesWebp(): boolean {
+  return document.createElement("canvas").toDataURL("image/webp").startsWith("data:image/webp");
+}
 
 /** `node` drawn and encoded once as `type`, fonts and pictures in it. */
-export async function pictureOf(
-  node: HTMLElement,
-  type: "image/png" | "image/webp",
-): Promise<Uint8Array> {
-  const canvas = await toCanvas(node, {
-    pixelRatio: SNAPSHOT_PIXEL_RATIO,
-    fontEmbedCSS: await pageFonts(),
-  });
+export async function pictureOf(node: HTMLElement, type: PictureType): Promise<Uint8Array> {
+  const options = { pixelRatio: SNAPSHOT_PIXEL_RATIO, fontEmbedCSS: await pageFonts() };
+  // Safari draws a page's pictures only once it has met them: its first drawing goes without.
+  if (!canvasWritesWebp()) {
+    await toCanvas(node, options);
+  }
+  const canvas = await toCanvas(node, options);
   // Encoded here: html-to-image's toBlob drops the type it is given.
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, type, SNAPSHOT_WEBP_QUALITY),

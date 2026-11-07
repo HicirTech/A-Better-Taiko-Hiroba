@@ -3,6 +3,25 @@ import { describe, expect, test } from "bun:test";
 import { createBackClosers } from "../src/ui/back-closers";
 
 describe("the overlays that take Back", () => {
+  test("tells a listener as one opens and shuts, until it stops listening", () => {
+    const closers = createBackClosers();
+    let told = 0;
+    const stop = closers.subscribe(() => {
+      told += 1;
+    });
+
+    const shut = closers.add(() => undefined);
+    expect(told).toBe(1);
+    shut();
+    expect(told).toBe(2);
+    shut();
+    expect(told).toBe(2);
+
+    stop();
+    closers.add(() => undefined);
+    expect(told).toBe(2);
+  });
+
   test("none is open before one is added, and closing then does nothing", () => {
     const closers = createBackClosers();
 

@@ -5,9 +5,10 @@ import { useState } from "react";
 import { action } from "storybook/actions";
 import { NavFoot } from "../app/nav-foot";
 import { PAGE_REGISTRY } from "../pages/registry";
+import type { SystemBack } from "../platform";
 import { ReadAgainFoot } from "../read-again/read-again-foot";
 import { onDevice, touchOf, wideOf } from "../story-kit/devices";
-import { i18nOf, STORY_BACK } from "../story-kit/env";
+import { i18nOf, STORY_BACK, STORY_ON_SCREEN_BACK } from "../story-kit/env";
 import { STORY_PROFILE } from "../story-kit/profile";
 import { touchDrag } from "../story-kit/touch";
 import { AppFrame } from "./app-frame";
@@ -18,12 +19,16 @@ function FrameOverAPage({
   i18n,
   android,
   wide,
+  back = STORY_BACK,
+  startsOn = "overview",
 }: {
   i18n: Translator;
   android: boolean;
   wide: boolean;
+  back?: SystemBack;
+  startsOn?: Page;
 }) {
-  const [page, setPage] = useState<Page>("overview");
+  const [page, setPage] = useState<Page>(startsOn);
   return (
     <AppFrame
       page={page}
@@ -36,7 +41,7 @@ function FrameOverAPage({
       touchFirst={android}
       pages={PAGE_REGISTRY}
       onScan={action("scan")}
-      {...(android ? { back: STORY_BACK } : {})}
+      {...(android ? { back } : {})}
       pipelines={<Skeleton variant="rounded" height={240} />}
     >
       <NavFoot>
@@ -68,6 +73,19 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+/** iOS has no Back of its own: the frame draws one wherever there is somewhere to go back to. */
+export const WithAnOnScreenBack: Story = {
+  render: (_args, { globals }) => (
+    <FrameOverAPage
+      i18n={i18nOf(globals)}
+      android={touchOf(globals)}
+      wide={wideOf(globals)}
+      back={STORY_ON_SCREEN_BACK}
+      startsOn="scores"
+    />
+  ),
+};
 
 /** The frame: a side panel or a menu of pages, and the pipelines page past it. */
 export const Frame: Story = {};

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 
 import { native } from "./capacitor-fakes";
 
-const { androidToast } = await import("../src/platform/android-toast");
+const { capacitorToast } = await import("../src/platform/capacitor-toast");
 const { nameByLongPress } = await import("../src/ui/name-by-long-press");
 
 describe("nameByLongPress", () => {
@@ -23,7 +23,7 @@ describe("nameByLongPress", () => {
   });
 
   test("on Android, asks Capacitor's Toast plugin for the name alone, for the short time", () => {
-    nameByLongPress("Full Combo", androidToast)?.();
+    nameByLongPress("Full Combo", capacitorToast)?.();
 
     expect(native.toasts).toEqual([{ text: "Full Combo", duration: "short" }]);
   });
@@ -31,7 +31,7 @@ describe("nameByLongPress", () => {
   test("names each item by its own words, once for each hold", () => {
     const names = ["White Iki", "Donderful Combo", "White Iki"];
     for (const name of names) {
-      nameByLongPress(name, androidToast)?.();
+      nameByLongPress(name, capacitorToast)?.();
     }
 
     expect(native.toasts.map(({ text }) => text)).toEqual(names);

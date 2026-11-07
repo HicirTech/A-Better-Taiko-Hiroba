@@ -126,6 +126,9 @@ mock.module("@capacitor/inappbrowser", () => ({
     pauseMedia: true,
     isIsolated: true,
   },
+  DefaultiOSWebViewOptions: {
+    allowsBackForwardNavigationGestures: true,
+  },
   InAppBrowser: {
     addListener: async (event: string, listener: Listener) => {
       native.listeners.set(event, listener);

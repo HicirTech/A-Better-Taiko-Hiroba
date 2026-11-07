@@ -26,7 +26,10 @@ declare global {
   }
 }
 
-/** Which shell the bundle runs in: port, link, share; Android's Back, Toast, camera, launch. */
+const IOS_VIEWPORT =
+  "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
+
+/** Which shell the bundle runs in: port, link, share; Capacitor's Back, Toast, camera, launch. */
 export type Platform =
   | {
       readonly shell: "desktop";
@@ -35,7 +38,7 @@ export type Platform =
       readonly share: SystemShare;
     }
   | {
-      readonly shell: "android";
+      readonly shell: "capacitor";
       readonly port: HirobaSessionPort;
       readonly link: SystemLink;
       readonly share: SystemShare;
@@ -45,7 +48,7 @@ export type Platform =
       readonly launch: SystemLaunch;
     };
 
-/** Picks the platform layer; one bundle ships in both shells. Android's modules load only there,
+/** Picks the platform layer; one bundle ships in all shells. Capacitor's modules load only there,
  * so the desktop never loads the in-app browser code. `closeLabel` is asked each time it opens. */
 export async function connectPlatform({
   closeLabel,
@@ -62,34 +65,39 @@ export async function connectPlatform({
       share: desktopShare(abthPictures),
     };
   }
-  if (Capacitor.getPlatform() === "android") {
+  const os = Capacitor.getPlatform();
+  if (os === "ios") {
+    // iOS draws under its notch and home bar only when told to, and only then says their insets.
+    document.querySelector('meta[name="viewport"]')?.setAttribute("content", IOS_VIEWPORT);
+  }
+  if (os === "android" || os === "ios") {
     const [
-      { createAndroidPort },
-      { androidBack },
-      { androidCamera },
-      { androidLaunch },
-      { androidLink },
-      { androidShare },
-      { androidToast },
+      { createCapacitorPort },
+      { capacitorBack, onScreenBack },
+      { capacitorCamera },
+      { capacitorLaunch },
+      { capacitorLink },
+      { capacitorShare },
+      { capacitorToast },
     ] = await Promise.all([
-      import("./android"),
-      import("./android-back"),
-      import("./android-camera"),
-      import("./android-launch"),
-      import("./android-link"),
-      import("./android-share"),
-      import("./android-toast"),
+      import("./capacitor"),
+      import("./capacitor-back"),
+      import("./capacitor-camera"),
+      import("./capacitor-launch"),
+      import("./capacitor-link"),
+      import("./capacitor-share"),
+      import("./capacitor-toast"),
     ]);
-    const port = settledPort(await createAndroidPort({ closeLabel, indexedDb: indexedDB }));
+    const port = settledPort(await createCapacitorPort({ os, closeLabel, indexedDb: indexedDB }));
     return {
-      shell: "android",
+      shell: "capacitor",
       port,
-      link: androidLink,
-      share: await androidShare(),
-      back: androidBack,
-      toast: androidToast,
-      camera: androidCamera,
-      launch: androidLaunch,
+      link: capacitorLink,
+      share: await capacitorShare(os),
+      back: os === "ios" ? onScreenBack : capacitorBack,
+      toast: capacitorToast,
+      camera: capacitorCamera,
+      launch: capacitorLaunch,
     };
   }
   return null;

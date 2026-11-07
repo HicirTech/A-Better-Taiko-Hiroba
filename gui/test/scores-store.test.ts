@@ -15,8 +15,8 @@ import {
   readStoredScoreBook,
   readStoredScoreChanges,
 } from "../src/hiroba-session";
-import { createIndexedDbScoreChangesStore } from "../src/platform/android-score-changes-store";
-import { createIndexedDbScoresStore } from "../src/platform/android-scores-store";
+import { createIndexedDbScoreChangesStore } from "../src/platform/capacitor-score-changes-store";
+import { createIndexedDbScoresStore } from "../src/platform/capacitor-scores-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const PLAYER = "000000000000";

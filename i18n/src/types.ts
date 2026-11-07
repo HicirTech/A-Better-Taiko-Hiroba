@@ -25,6 +25,7 @@ export interface Messages {
   "nav.favorites": string;
   "nav.settings": string;
   "nav.menu": string;
+  "nav.back": string;
   "nav.pipelines": string;
   "pipelines.io": string;
   "pipelines.external": string;

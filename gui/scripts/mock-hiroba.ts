@@ -70,8 +70,8 @@ const history = createPlayHistory();
 const scores = createScorePages(history);
 /** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
 const IDP_MARKER = "abth-mock-idp-marker";
-/** What Hiroba accepts, roughly: a string with all three of a real browser's product tokens. */
-const COMPLETE_BROWSER = /AppleWebKit\/[\d.]+.*Chrome\/[\d.]+.*Safari\/[\d.]+/;
+/** What Hiroba accepts, roughly: all three of a real browser's product tokens, Chrome's or Safari's. */
+const COMPLETE_BROWSER = /AppleWebKit\/[\d.]+.*(Chrome|Version)\/[\d.]+.*Safari\/[\d.]+/;
 const ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789";
 const newToken = () =>
   Array.from(crypto.getRandomValues(new Uint8Array(26)), (b) => ALPHABET[b % 36]).join("");

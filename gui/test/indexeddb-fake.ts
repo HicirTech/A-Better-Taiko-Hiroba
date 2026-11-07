@@ -5,7 +5,7 @@ import type {
   DatabaseHandler,
   DatabaseTable,
   DatabaseTransaction,
-} from "../src/platform/android-indexeddb";
+} from "../src/platform/capacitor-indexeddb";
 
 interface FakeRequest {
   result: unknown;

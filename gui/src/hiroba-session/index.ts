@@ -59,7 +59,7 @@ export {
   readStoredRatingHistory,
 } from "./rating-history-store";
 export {
-  ANDROID_PICTURE_LIMITS,
+  CAPACITOR_PICTURE_LIMITS,
   createPictureReader,
   DESKTOP_PICTURE_LIMITS,
   offeredOf,

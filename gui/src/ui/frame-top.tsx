@@ -1,5 +1,7 @@
 import { Box, type Theme } from "@mui/material";
-import type { ReactNode } from "react";
+import { type ReactNode, useContext } from "react";
+
+import { OnScreenBackContext } from "./back-closers";
 
 export const MENU_INSET_PX = 8;
 // The band the floating buttons sit in; fixed so every page starts at the same height.
@@ -57,8 +59,9 @@ export function FrameTop({
   readonly endShown?: boolean;
   readonly children?: ReactNode;
 }) {
+  const { shown: backShown } = useContext(OnScreenBackContext);
   // A touch screen draws no menu button: its swipe stands in for it.
-  const room = wide || touchFirst ? 0 : BAND_BUTTON_ROOM_PX;
+  const room = backShown || !(wide || touchFirst) ? BAND_BUTTON_ROOM_PX : 0;
   return (
     <Box sx={stays ? STAYS_IN_THE_BAND : AT_THE_TOP}>
       <Box
