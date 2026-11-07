@@ -653,6 +653,25 @@ On Windows, the `NoDefaultCurrentDirectoryInExePath` setting stops `cmd.exe` fin
 the current folder, which is how Capacitor starts Gradle. `scripts/android.ts` removes it from every
 command it starts, so use the scripts rather than a bare `bunx cap run`.
 
+## iOS
+
+On a Mac with Xcode 26 or later:
+
+| Script | What it does |
+|---|---|
+| `bun run ios:build` | Web build, `cap sync`, an unsigned build for a device. CI runs this. |
+| `bun run ios:run -- <simulator id>` | Web build, `cap sync`, then builds, installs and starts it on that simulator. |
+| `bun run ios:live -- <simulator id> [host]` | Vite's dev server on this Mac, and the debug app loading it with live reload. It runs only against the stand-in, like `android:live`. |
+
+The debug build has its own id and name, and may reach the stand-in's `sslip.io` hosts over plain HTTP.
+
+iOS has no Back, so the app draws one at the top left wherever Android's Back would go somewhere: on
+every page but the Overview, in a page's modes, and over the pipelines page. A large modal draws its
+arrow beside its title.
+
+A picture to share goes out as a PNG on iOS, whose canvas writes no WebP, and the share sheet saves it
+to Photos.
+
 ### Costume writes on Android
 
 A write on Android, of any kind, is the desktop's own, over Capacitor's HTTP client. A post is one native call,
