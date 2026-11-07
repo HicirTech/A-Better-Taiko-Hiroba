@@ -315,15 +315,21 @@ jobs:
       - name: Build the IPA
         run: bun run ios:ipa
 
-      - name: Check the name
+      - name: Write the AltStore source
+        run: bun run ios:source
+
+      - name: Check the names
         run: |
           ls -l gui/release
           test -f "gui/release/ABTH-$VERSION.ipa"
+          test -f gui/release/altstore.json
 
       - uses: actions/upload-artifact@v7
         with:
           name: ios
-          path: gui/release/ABTH-${{ needs.version.outputs.version }}.ipa
+          path: |
+            gui/release/ABTH-${{ needs.version.outputs.version }}.ipa
+            gui/release/altstore.json
           if-no-files-found: error
           retention-days: 14
           # The file is compressed already.
@@ -363,4 +369,5 @@ jobs:
             "dist/ABTH-$VERSION-mac-arm64.dmg" \
             "dist/ABTH-$VERSION-mac-x64.dmg" \
             "dist/ABTH-$VERSION.ipa" \
+            dist/altstore.json \
             gui/update.json
