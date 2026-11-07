@@ -9,12 +9,13 @@ on:
     tags: ["v*.*.*"]
   pull_request:
     branches: [main]
-    # What a release is made of: workflow, version and builder config, update feed, Android project.
+    # What a release is made of: workflow, version and builder config, update feed, Android and iOS projects.
     paths:
       - .github/workflows/release.yml
       - gui/package.json
       - gui/update.json
       - gui/android/**
+      - gui/ios/**
   workflow_dispatch:
 
 # Cancel a superseded dry run; a release is never cancelled half-way.
@@ -280,11 +281,59 @@ jobs:
           # The files are compressed already.
           compression-level: 0
 
+  ios:
+    name: iOS IPA, unsigned
+    needs: version
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          # The same pin as in ci.yml: keep them in step.
+          bun-version: 1.4.2
+
+      - name: Cache dependencies
+        uses: actions/cache@v6
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: bun-${{ runner.os }}-
+
+      # Capacitor's CLI runs on Node 22.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # No Apple account signs it: whoever installs it signs it with their own.
+      - name: Build the IPA
+        run: bun run ios:ipa
+
+      - name: Check the name
+        run: |
+          ls -l gui/release
+          test -f "gui/release/ABTH-$VERSION.ipa"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ios
+          path: gui/release/ABTH-${{ needs.version.outputs.version }}.ipa
+          if-no-files-found: error
+          retention-days: 14
+          # The file is compressed already.
+          compression-level: 0
+
   # Only a tag run publishes, as a published release, not a draft; a dry run stops at its artifacts.
   release:
     name: Release
     if: needs.version.outputs.publish == 'true'
-    needs: [version, android, windows, mac]
+    needs: [version, android, windows, mac, ios]
     runs-on: ubuntu-26.04
     permissions:
       contents: write
@@ -313,4 +362,5 @@ jobs:
             "dist/ABTH-$VERSION-portable.zip" \
             "dist/ABTH-$VERSION-mac-arm64.dmg" \
             "dist/ABTH-$VERSION-mac-x64.dmg" \
+            "dist/ABTH-$VERSION.ipa" \
             gui/update.json
