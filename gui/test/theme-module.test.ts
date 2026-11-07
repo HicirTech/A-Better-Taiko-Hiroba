@@ -83,6 +83,10 @@ function sourcesIn(at: string): string[] {
 
 const inPlaceIn = (file: string) => writtenInPlace(readFileSync(join(SRC, file), "utf8"));
 
+// MUI's Typography draws a palette's name, such as "textSecondary", and drops a path silently.
+const COLOUR_PATH = /\bcolor=(?:"[a-z]+\.\w+"|\{[^}\n]*"[a-z]+\.\w+"[^}\n]*\})/g;
+const colourPathsIn = (text: string) => [...text.matchAll(COLOUR_PATH)].map(([whole]) => whole);
+
 describe("the GUI's colours, fonts and corners", () => {
   test("come from the theme in every file but Hiroba's own look", () => {
     const inPlace = sourcesIn(SRC)
@@ -95,6 +99,23 @@ describe("the GUI's colours, fonts and corners", () => {
 
   test("are written in place in each file listed as Hiroba's own look", () => {
     expect(HIROBA_LOOK.filter((file) => inPlaceIn(file).length === 0)).toEqual([]);
+  });
+
+  test("named in a color prop are a palette's, never its path, in stories and the kit too", () => {
+    const sources = readdirSync(SRC, { recursive: true, encoding: "utf8" }).filter((file) =>
+      file.endsWith(".tsx"),
+    );
+    const paths = sources.flatMap((file) => colourPathsIn(readFileSync(join(SRC, file), "utf8")));
+
+    expect(paths).toEqual([]);
+  });
+
+  test("named by a path in a color prop are found", () => {
+    expect(colourPathsIn('<Typography color="text.secondary">')).toHaveLength(1);
+    expect(colourPathsIn('color={on ? "success.main" : "warning.main"}')).toHaveLength(1);
+    expect(
+      colourPathsIn('<Typography color="textSecondary" sx={{ color: "text.secondary" }}>'),
+    ).toEqual([]);
   });
 
   test("written in place are found", () => {

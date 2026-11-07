@@ -161,7 +161,7 @@ function ChartFacts({
   );
   return (
     <Stack spacing={2.5} inert={readingSong} sx={SHUT_LOOK(readingSong)}>
-      <Typography id="score-details-ranking" color="text.secondary">
+      <Typography id="score-details-ranking" color="textSecondary">
         {t("scores.ranking")} ·{" "}
         {score.ranking === null
           ? t("scores.noPlace")
@@ -212,7 +212,7 @@ function ChartFacts({
                   </Box>
                 </Box>
                 <Box sx={{ ...ROW, alignItems: "baseline" }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="textSecondary">
                     {[
                       `${t("history.good")} ${number(section.good)}`,
                       `${t("history.ok")} ${number(section.ok)}`,
@@ -230,7 +230,7 @@ function ChartFacts({
         </Box>
       )}
 
-      <Typography id="score-details-read-at" variant="body2" color="text.secondary">
+      <Typography id="score-details-read-at" variant="body2" color="textSecondary">
         {t("scores.readAt", { time: dateTime(score.fetchedAt) })}
       </Typography>
     </Stack>

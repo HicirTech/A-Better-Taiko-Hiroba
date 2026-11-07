@@ -63,7 +63,7 @@ export function PageSkeleton({
             <Typography
               id="page-skeleton-words"
               variant="body2"
-              color="text.secondary"
+              color="textSecondary"
               sx={WORDS_OVER_THE_BAR}
             >
               {progress.words}

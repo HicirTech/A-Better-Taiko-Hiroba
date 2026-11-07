@@ -257,7 +257,7 @@ function DetailsBody({
         <Stack spacing={2}>
           <Box>
             {otherNames(song, name).map(({ text, lang }) => (
-              <Typography key={text} lang={lang} variant="body2" color="text.secondary">
+              <Typography key={text} lang={lang} variant="body2" color="textSecondary">
                 {text}
               </Typography>
             ))}
@@ -303,7 +303,7 @@ function DetailsBody({
             ))}
           </Box>
           {facts !== null && (
-            <Typography id="song-details-facts" variant="body2" color="text.secondary">
+            <Typography id="song-details-facts" variant="body2" color="textSecondary">
               {[
                 facts.maxCombo !== null && t("details.maxCombo", { count: facts.maxCombo }),
                 facts.maxCombo !== null &&

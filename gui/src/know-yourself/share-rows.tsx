@@ -123,7 +123,7 @@ export function ShareRows({
               <Typography
                 id={`${rowId}-total`}
                 variant="body2"
-                color="text.secondary"
+                color="textSecondary"
                 sx={{ textAlign: "end" }}
               >
                 {number(total)}

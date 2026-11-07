@@ -28,7 +28,7 @@ export function StatusNote({
     <Box id={id} sx={fill ? FILLS : IN_PLACE}>
       <Typography
         variant="body2"
-        color="text.secondary"
+        color="textSecondary"
         sx={{ maxWidth: WORDS_MAX_PX, textAlign: "center" }}
       >
         {children}

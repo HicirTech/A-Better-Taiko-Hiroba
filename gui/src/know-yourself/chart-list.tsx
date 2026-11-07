@@ -126,7 +126,7 @@ export function ChartList({
                   <Typography
                     component="span"
                     variant="body2"
-                    color="text.secondary"
+                    color="textSecondary"
                     noWrap
                     className="chart-note"
                   >

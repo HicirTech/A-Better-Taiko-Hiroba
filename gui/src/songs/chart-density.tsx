@@ -53,7 +53,7 @@ export function ChartDensitySection({
         end={
           <>
             {peak !== null && (
-              <Typography id="song-density-peak" variant="body2" color="text.secondary">
+              <Typography id="song-density-peak" variant="body2" color="textSecondary">
                 {t("details.densityPeak", { value: peak.count })}
               </Typography>
             )}

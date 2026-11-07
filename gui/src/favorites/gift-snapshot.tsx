@@ -90,7 +90,7 @@ export function GiftSnapshot({
           sizePx={GIFT_CODE_PX}
           label={t("gift.code")}
         />
-        <Typography component="p" variant="body2" color="text.secondary">
+        <Typography component="p" variant="body2" color="textSecondary">
           {t("gift.scanHint")}
         </Typography>
       </Stack>
@@ -113,7 +113,7 @@ export function GiftSnapshot({
               {t("gift.mystery")}
             </Typography>
           </Stack>
-          <Typography component="p" variant="body2" color="text.secondary">
+          <Typography component="p" variant="body2" color="textSecondary">
             {t("gift.mysterySongs", { count: number(gift.songs.length) })}
           </Typography>
         </Stack>

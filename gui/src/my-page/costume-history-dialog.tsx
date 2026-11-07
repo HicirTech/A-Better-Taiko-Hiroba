@@ -102,7 +102,7 @@ function HistoryTile({
       }}
     >
       {entry.picture === null ? (
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="textSecondary">
           {position}
         </Typography>
       ) : (

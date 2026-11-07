@@ -33,7 +33,7 @@ function Swatches({
             </Typography>
             <Typography
               variant="caption"
-              color="text.secondary"
+              color="textSecondary"
               sx={{ display: "block", fontFamily: "fontFamilyMono", wordBreak: "break-all" }}
             >
               {colour}

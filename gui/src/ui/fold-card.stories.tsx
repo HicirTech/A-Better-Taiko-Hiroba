@@ -15,7 +15,7 @@ const meta = {
           id="story-know"
           title={t("know.ladder")}
           summary={t("know.wall", { stars: 8 })}
-          details={() => <Typography color="text.secondary">{t("know.noWall")}</Typography>}
+          details={() => <Typography color="textSecondary">{t("know.noWall")}</Typography>}
         />
       </Box>
     );
