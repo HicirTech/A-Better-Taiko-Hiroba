@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, setSystemTime, test } from "bun:test";
 import { err, type TransportPost } from "@abth/core";
 
 import { ERROR_SHELL_BODY } from "../scripts/mock-costume";
@@ -133,6 +133,46 @@ describe("createCapacitorTransport", () => {
     expect(
       await kindAfter(nativeError("UnknownHostException", "Unable to resolve host timeout.test")),
     ).toEqual({ kind: "unreachable", url: URL_ });
+  });
+});
+
+describe("createCapacitorTransport on iOS", () => {
+  beforeEach(() => native.reset());
+  afterEach(() => setSystemTime());
+
+  const ios = () => createCapacitorTransport(UA, "ios");
+  const get = { method: "GET", url: URL_ } as const;
+
+  test("reads an answer of status 400 and up as base64 of the exact bytes", async () => {
+    native.httpAnswer = async () => ({
+      status: 500,
+      url: URL_,
+      headers: { "content-type": "text/html" },
+      data: btoa("\xE3\x81\x82"),
+    });
+    const sent = await ios().send(get);
+    expect(sent.ok && [...sent.value.body]).toEqual([0xe3, 0x81, 0x82]);
+  });
+
+  test("still reads a JSON answer, which Capacitor parses, as JSON", async () => {
+    native.httpAnswer = answer(400, { "content-type": "application/json" }, { result: false });
+    const sent = await ios().send(get);
+    expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe('{"result":false}');
+  });
+
+  test("tells a timeout from other failures by the time taken, as its words are localised", async () => {
+    const started = new Date("2026-11-07T00:00:00Z");
+    const kindAfter = async (takenMs: number) => {
+      setSystemTime(started);
+      native.httpAnswer = async () => {
+        setSystemTime(new Date(started.getTime() + takenMs));
+        throw nativeError("NSURLErrorDomain", "リクエストはタイムアウトしました。");
+      };
+      const sent = await ios().send(get);
+      return sent.ok ? "ok" : sent.error.kind;
+    };
+    expect(await kindAfter(TIMEOUT_MS)).toBe("timedOut");
+    expect(await kindAfter(TIMEOUT_MS - 1)).toBe("unreachable");
   });
 });
 

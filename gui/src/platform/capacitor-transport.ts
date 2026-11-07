@@ -7,17 +7,22 @@ import {
   POST_FOLLOWED_AS_GET,
   resolveRedirect,
 } from "../hiroba-session";
+import type { MobileOs } from "./system-os";
 
 const TIMEOUT_MS = 20_000;
 /** The session, browser identity and body type are this transport's own; a caller's Cookie header
  * would be a second one beside the stored cookie, not a replacement. */
 const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent", "content-type"]);
 
-/** Android's Transport: Capacitor's native HTTP client, which takes cookies from the WebView's own
- * cookie store, so no TypeScript ever holds the session's value. */
-export function createCapacitorTransport(userAgent: string = navigator.userAgent): Transport {
+/** Capacitor's native HTTP client, with the native cookie store: no TypeScript holds the session. */
+export function createCapacitorTransport(
+  userAgent: string = navigator.userAgent,
+  os: MobileOs = "android",
+): Transport {
+  const respond = respondOn(os);
   return {
     async send(request, signal) {
+      const startedAt = Date.now();
       const failure = (kind: TransportFailure["kind"]) => err({ kind, url: request.url });
       const answered = (answer: HttpResponse | "cancelled") =>
         answer === "cancelled" ? failure("cancelled") : ok(respond(answer));
@@ -60,7 +65,7 @@ export function createCapacitorTransport(userAgent: string = navigator.userAgent
         const next = resolveRedirect(location, request.url);
         return next === null ? failure("unreachable") : answered(await get(next));
       } catch (error) {
-        return failure(isTimeout(error) ? "timedOut" : "unreachable");
+        return failure(isTimeout(error, startedAt) ? "timedOut" : "unreachable");
       }
     },
   };
@@ -84,29 +89,34 @@ function nativeCall(
 }
 
 /** What the core reads of an answer: header names lower-cased, and no `set-cookie` at all. */
-function respond(answer: HttpResponse): TransportResponse {
-  const headers: Record<string, string> = {};
-  for (const [name, value] of Object.entries(answer.headers)) {
-    const lower = name.toLowerCase();
-    if (lower !== "set-cookie") {
-      headers[lower] = value;
+const respondOn =
+  (os: MobileOs) =>
+  (answer: HttpResponse): TransportResponse => {
+    const headers: Record<string, string> = {};
+    for (const [name, value] of Object.entries(answer.headers)) {
+      const lower = name.toLowerCase();
+      if (lower !== "set-cookie") {
+        headers[lower] = value;
+      }
     }
-  }
-  return {
-    status: answer.status,
-    url: answer.url,
-    headers,
-    body: bodyBytes(answer.data, answer.status, headers["content-type"]),
+    return {
+      status: answer.status,
+      url: answer.url,
+      headers,
+      body: bodyBytes(answer.data, answer.status, os, headers["content-type"]),
+    };
   };
-}
 
-// Capacitor 8.5 answers base64 of the exact bytes, but a parsed value for a JSON content type and
-// line-joined text for status 400 and up: those two are re-encoded as UTF-8, and are not exact.
-function bodyBytes(data: unknown, status: number, contentType = ""): Uint8Array {
+// Capacitor 8.5 answers base64 of the exact bytes, but a parsed value for a JSON content type and,
+// on Android, line-joined text for status 400 and up: those are re-encoded as UTF-8, not exact.
+function bodyBytes(data: unknown, status: number, os: MobileOs, contentType = ""): Uint8Array {
   if (typeof data !== "string") {
     return new TextEncoder().encode(JSON.stringify(data));
   }
-  if (status >= 400 || contentType.toLowerCase().includes("application/json")) {
+  if (
+    (os === "android" && status >= 400) ||
+    contentType.toLowerCase().includes("application/json")
+  ) {
     return new TextEncoder().encode(data);
   }
   const binary = atob(data.replace(/\s+/g, ""));
@@ -123,12 +133,15 @@ function abortion(signal: AbortSignal | undefined): Promise<"cancelled"> {
   });
 }
 
-// Capacitor rejects with the Java exception's class name as `code`; connect and read timeouts are
-// both a SocketTimeoutException.
-function isTimeout(error: unknown): boolean {
+// Android rejects with the Java exception's class name, a SocketTimeoutException for both timeouts.
+// iOS gives only URLSession's error domain and words in the device's language: the time tells.
+function isTimeout(error: unknown, startedAt: number): boolean {
+  if (typeof error !== "object" || error === null) {
+    return false;
+  }
+  const { code } = error as { code?: unknown };
   return (
-    typeof error === "object" &&
-    error !== null &&
-    (error as { code?: unknown }).code === "SocketTimeoutException"
+    code === "SocketTimeoutException" ||
+    (code === "NSURLErrorDomain" && Date.now() - startedAt >= TIMEOUT_MS)
   );
 }

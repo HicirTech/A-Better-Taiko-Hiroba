@@ -2,6 +2,7 @@ import { err, ok, type Transport } from "@abth/core";
 import { CapacitorCookies } from "@capacitor/core";
 import {
   DefaultAndroidWebViewOptions,
+  DefaultiOSWebViewOptions,
   DefaultWebViewOptions,
   InAppBrowser,
 } from "@capacitor/inappbrowser";
@@ -88,6 +89,8 @@ import { createIndexedDbRecentPlaysStore } from "./capacitor-recent-plays-store"
 import { createIndexedDbScoreChangesStore } from "./capacitor-score-changes-store";
 import { createIndexedDbScoresStore } from "./capacitor-scores-store";
 import { createCapacitorTransport } from "./capacitor-transport";
+import { safariUserAgent } from "./safari-user-agent";
+import type { MobileOs } from "./system-os";
 
 const endpoints: HirobaEndpoints = import.meta.env.DEV
   ? endpointsFromOverrides(
@@ -151,6 +154,8 @@ const cdnUrl = catalogueUrlFor(
 );
 
 export interface CapacitorPortOptions {
+  /** Android unless said otherwise. */
+  readonly os?: MobileOs;
   /** Asked each time the browser opens, so it follows a language picked since. */
   readonly closeLabel: () => string;
   /** Remembers a finished sign-in: CapacitorCookies.getCookies cannot see the session cookie. */
@@ -196,11 +201,13 @@ const localStorageFlag: SignedInFlag = {
   },
 };
 
-/** The Android port. Its session is the WebView's cookie store, which this code cannot read. */
+/** Capacitor's port. Its session is the native cookie store, which this code cannot read. */
 export async function createCapacitorPort(
   options: CapacitorPortOptions,
 ): Promise<HirobaSessionPort> {
-  const transport = createCapacitorTransport();
+  const os = options.os ?? "android";
+  const userAgent = os === "ios" ? safariUserAgent(navigator.userAgent) : navigator.userAgent;
+  const transport = createCapacitorTransport(userAgent, os);
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
   const pipelineStore =
@@ -300,7 +307,7 @@ export async function createCapacitorPort(
   const { indexedDb } = options;
   const writes = createSessionWrites({
     endpoints,
-    platform: "android",
+    platform: os,
     now: options.now ?? (() => new Date()),
     historyStore:
       indexedDb === undefined ? NO_HISTORY_STORE : createIndexedDbHistoryStore(indexedDb),
@@ -388,12 +395,18 @@ export async function createCapacitorPort(
             showURL: true,
             showNavigationButtons: false,
             closeButtonText: options.closeLabel(),
+            ...(os === "ios" ? { customWebViewUserAgent: userAgent } : {}),
             android: {
               ...DefaultAndroidWebViewOptions,
               // Isolated (the default) means a cookie store the app can neither use nor clear.
               isIsolated: false,
               // Back would step off the card-select page, which ends the card session.
               hardwareBack: false,
+            },
+            iOS: {
+              ...DefaultiOSWebViewOptions,
+              // A swipe back would step off the card-select page, as Android's Back would.
+              allowsBackForwardNavigationGestures: false,
             },
           },
         });

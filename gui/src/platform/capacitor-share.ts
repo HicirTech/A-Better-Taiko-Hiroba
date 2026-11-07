@@ -2,6 +2,7 @@ import { Directory, Filesystem } from "@capacitor/filesystem";
 import { Share } from "@capacitor/share";
 
 import { base64Of } from "../shared/png-answer";
+import type { MobileOs } from "./system-os";
 import type { SystemShare } from "./system-share";
 
 // In the app's cache, emptied (where there is one) before each picture: it keeps the last alone.
@@ -11,12 +12,13 @@ const SAVED = "A Better Taiko Hiroba";
 // What Capacitor's Share plugin rejects with when the sheet closes without a choice.
 const SHEET_CLOSED = "Share canceled";
 
-/** Android's: the system's share sheet, and a file in the shared Documents where the system lets
- * the app keep one without asking, as from Android 11 on (the plugin says granted there). */
-export async function capacitorShare(): Promise<SystemShare> {
-  const { publicStorage } = await Filesystem.checkPermissions();
+/** The system's share sheet, and a file in Android's shared Documents where it asks no permission. */
+export async function capacitorShare(os: MobileOs): Promise<SystemShare> {
+  // From Android 11 on the plugin says granted. iOS's Documents show nowhere, and its sheet saves.
+  const saves =
+    os === "android" && (await Filesystem.checkPermissions()).publicStorage === "granted";
   return {
-    ways: publicStorage === "granted" ? ["share", "save"] : ["share"],
+    ways: saves ? ["share", "save"] : ["share"],
     hand: (way, picture, name) => (way === "save" ? saved(picture, name) : shared(picture, name)),
   };
 }

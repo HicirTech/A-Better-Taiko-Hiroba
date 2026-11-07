@@ -26,7 +26,10 @@ declare global {
   }
 }
 
-/** Which shell the bundle runs in: port, link, share; Android's Back, Toast, camera, launch. */
+const IOS_VIEWPORT =
+  "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
+
+/** Which shell the bundle runs in: port, link, share; Capacitor's Back, Toast, camera, launch. */
 export type Platform =
   | {
       readonly shell: "desktop";
@@ -35,7 +38,7 @@ export type Platform =
       readonly share: SystemShare;
     }
   | {
-      readonly shell: "android";
+      readonly shell: "capacitor";
       readonly port: HirobaSessionPort;
       readonly link: SystemLink;
       readonly share: SystemShare;
@@ -45,7 +48,7 @@ export type Platform =
       readonly launch: SystemLaunch;
     };
 
-/** Picks the platform layer; one bundle ships in both shells. Android's modules load only there,
+/** Picks the platform layer; one bundle ships in all shells. Capacitor's modules load only there,
  * so the desktop never loads the in-app browser code. `closeLabel` is asked each time it opens. */
 export async function connectPlatform({
   closeLabel,
@@ -62,7 +65,12 @@ export async function connectPlatform({
       share: desktopShare(abthPictures),
     };
   }
-  if (Capacitor.getPlatform() === "android") {
+  const os = Capacitor.getPlatform();
+  if (os === "ios") {
+    // iOS draws under its notch and home bar only when told to, and only then says their insets.
+    document.querySelector('meta[name="viewport"]')?.setAttribute("content", IOS_VIEWPORT);
+  }
+  if (os === "android" || os === "ios") {
     const [
       { createCapacitorPort },
       { capacitorBack },
@@ -80,12 +88,12 @@ export async function connectPlatform({
       import("./capacitor-share"),
       import("./capacitor-toast"),
     ]);
-    const port = settledPort(await createCapacitorPort({ closeLabel, indexedDb: indexedDB }));
+    const port = settledPort(await createCapacitorPort({ os, closeLabel, indexedDb: indexedDB }));
     return {
-      shell: "android",
+      shell: "capacitor",
       port,
       link: capacitorLink,
-      share: await capacitorShare(),
+      share: await capacitorShare(os),
       back: capacitorBack,
       toast: capacitorToast,
       camera: capacitorCamera,
