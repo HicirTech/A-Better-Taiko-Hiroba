@@ -1,13 +1,16 @@
 import UIKit
 import Capacitor
+import WebKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
+    // A cookie store holds its observers weakly, and Capacitor keeps no reference to its own.
+    private let cookieObserver = CapacitorWKCookieObserver()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+        WKWebsiteDataStore.default().httpCookieStore.add(cookieObserver)
         return true
     }
 
