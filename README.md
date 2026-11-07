@@ -3,11 +3,11 @@
 
 [中文](README.zh-CN.md)
 
-A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses and changes your own play data — scores, profile, My Don, favourite songs, settings — from a desktop app, an Android app and, later, the command line, with an interface that stays out of your way. It runs on your own device and talks to Hiroba directly; none of your data passes through a server of ours.
+A client-side toolkit for Donder Hiroba (donderhiroba.jp), the Japanese play-data site for Taiko no Tatsujin. It browses and changes your own play data — scores, profile, My Don, favourite songs, settings — from a desktop app, an Android or iOS app and, later, the command line, with an interface that stays out of your way. It runs on your own device and talks to Hiroba directly; none of your data passes through a server of ours.
 
 ## Download
 
-Get the latest version from the [Releases page](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest): an installer or a portable zip for Windows, a disk image for macOS (Apple silicon or Intel), and an APK for Android. The app tells you when a newer version is out.
+Get the latest version from the [Releases page](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest): an installer or a portable zip for Windows, a disk image for macOS (Apple silicon or Intel), an APK for Android, and an IPA for iOS. The IPA is unsigned: install it by signing it with your own Apple account, with a tool such as AltStore or Sideloadly; with a free account, sign it again every seven days. The app tells you when a newer version is out.
 
 ## What it does
 
@@ -39,7 +39,7 @@ Get the latest version from the [Releases page](https://github.com/HicirTech/A-B
 - [x] Run as a desktop app, on Windows
 - [x] Run as a desktop app, on macOS
 - [x] Run as an Android app
-- [ ] Run as an iOS app — later
+- [x] Run as an iOS app, from an unsigned IPA you sign yourself
 - [ ] Run as a web app — later
 - [ ] Drive the same core from a script, through a programmatic API
 - [x] Speak English, Japanese, Simplified Chinese and Traditional Chinese

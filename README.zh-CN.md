@@ -3,11 +3,11 @@
 
 [English](README.md)
 
-一套面向鼓众广场（日服）的客户端工具。目前支持桌面端、安卓端以及之后的命令行查看自己的太鼓游玩成绩、修改资料、显示小咚、切换收藏曲目、管理广场上的各项设定等。本工具设计上是完全在设备上运行，并直接与广场通信: 任何你的鼓众数据都不经过我们的任何服务器(因为我根本就没搭服务器)
+一套面向鼓众广场（日服）的客户端工具。目前支持桌面端、安卓端、iOS 端以及之后的命令行查看自己的太鼓游玩成绩、修改资料、显示小咚、切换收藏曲目、管理广场上的各项设定等。本工具设计上是完全在设备上运行，并直接与广场通信: 任何你的鼓众数据都不经过我们的任何服务器(因为我根本就没搭服务器)
 
 ## 下载
 
-在 [Releases 页面](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest)下载最新版本：Windows 有安装包和免安装的 zip，macOS 有磁盘映像（dmg，Apple 芯片和 Intel 各一个），安卓是 APK。有新版本时，App 会提醒你。
+在 [Releases 页面](https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest)下载最新版本：Windows 有安装包和免安装的 zip，macOS 有磁盘映像（dmg，Apple 芯片和 Intel 各一个），安卓是 APK，iOS 是 IPA。IPA 没有签名：要用你自己的 Apple 账号，借助 AltStore 或 Sideloadly 这类工具签名后安装；免费账号每 7 天要重新签一次。有新版本时，App 会提醒你。
 
 ## 它能做什么
 
@@ -39,7 +39,7 @@
 * [x] 作为桌面端应用运行（Windows）
 * [x] 作为桌面端应用运行（macOS）
 * [x] 作为安卓端应用运行
-* [ ] 作为 iOS 端应用运行——后期
+* [x] 作为 iOS 端应用运行（未签名的 IPA，需自行签名安装）
 * [ ] 作为 Web 端应用运行——后期
 * [ ] 通过脚本驱动同一个核心，提供可编程 API
 * [x] 界面支持英文、日文、简体中文和繁体中文
