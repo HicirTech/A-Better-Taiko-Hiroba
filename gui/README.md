@@ -114,13 +114,15 @@ named in itself, changes the language at once, asking Hiroba nothing, and keeps 
 localStorage) for the next launch, a pick of the language already shown included. Its **System
 default** forgets the pick, so the app follows the system's language again, at once and at each
 launch. Counts, percents and times follow the language through `Intl`, and the page's `lang`
-names it, so the system picks fonts for it. The game's terms are worded in each language, as
-taiko.wiki words them, then Bandai Namco's own sites: the score ranks, the crowns, the charts, the
+names it, Traditional Chinese as Hong Kong's. That mark picks the language's system fonts for what
+the bundled Roboto lacks: Yu Gothic UI, Microsoft YaHei UI or Microsoft JhengHei UI on Windows,
+Hiragino Sans or PingFang on macOS, and what the system keeps for it on Android. The game's terms
+are worded in each language, as taiko.wiki words them, then Bandai Namco's own sites: the score ranks, the crowns, the charts, the
 dan, the Don Medals, My Don and the costume's parts, colours and slots. 日本語 keeps Hiroba's own
 words, and a dan is named by its board number, so its name follows the language while its picture
 stays Hiroba's. What Hiroba writes as data is never translated: the nickname, a title, a medal's
 name and the sentences it speaks in its own voice. An element that holds only such words is marked
-`lang="ja"`, so it keeps Japanese glyphs and a screen reader's Japanese voice; a sentence that
+`lang="ja"`, so it keeps Japanese fonts and a screen reader's Japanese voice; a sentence that
 only quotes them keeps the app's language. The catalogs are in `i18n`; the type checker
 and the tests hold each to every English key and its parameters, and keep Japanese in English and
 Chinese to Hiroba's own words.

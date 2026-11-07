@@ -1,6 +1,7 @@
 import { isLocale, LOCALE_NAMES, LOCALES, type Locale, type Translator } from "@abth/i18n";
 import { FormControlLabel, List, ListItem, Radio, RadioGroup } from "@mui/material";
 import { useId } from "react";
+import { langOf } from "../shared/language/show-language";
 import { TranslateIcon } from "../ui/icons";
 import { SettingsSection } from "./settings-section";
 
@@ -51,7 +52,7 @@ export function LanguageSetting({
               id={`language-${option}`}
               value={option}
               label={LOCALE_NAMES[option]}
-              lang={option}
+              lang={langOf(option)}
             />
           ))}
         </List>
@@ -69,7 +70,7 @@ function LanguageChoice({
   id: string;
   value: string;
   label: string;
-  lang?: Locale;
+  lang?: string;
 }) {
   return (
     <ListItem disablePadding>

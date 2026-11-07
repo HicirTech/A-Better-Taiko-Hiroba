@@ -74,7 +74,7 @@ export function Gallery({
           <Box key={member.name} sx={member.wide === true ? { gridColumn: "1 / -1" } : undefined}>
             <Typography
               variant="caption"
-              color="text.secondary"
+              color="textSecondary"
               sx={{ display: "block", mb: 0.5, fontFamily: "monospace" }}
             >
               {member.name}

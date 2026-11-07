@@ -284,7 +284,7 @@ function PageList({
         <Typography
           component="p"
           variant="subtitle2"
-          color="text.secondary"
+          color="textSecondary"
           noWrap
           sx={{ flexGrow: 1, minWidth: 0 }}
         >

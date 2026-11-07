@@ -47,7 +47,7 @@ export function ChoiceDialog({
       title={title}
       head={
         subtitle === null ? undefined : (
-          <Typography lang={subtitle.lang} variant="body2" color="text.secondary" noWrap>
+          <Typography lang={subtitle.lang} variant="body2" color="textSecondary" noWrap>
             {subtitle.text}
           </Typography>
         )

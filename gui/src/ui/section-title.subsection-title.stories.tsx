@@ -35,7 +35,7 @@ export const WithWordsAfterIt: Story = {
       <Box sx={{ maxWidth: 600 }}>
         <SubsectionTitle
           end={
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" color="textSecondary">
               {t("details.densityPeak", { value: 10 })}
             </Typography>
           }

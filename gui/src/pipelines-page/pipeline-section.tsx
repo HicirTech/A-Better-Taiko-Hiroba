@@ -130,7 +130,7 @@ export function PipelineSection({
         })}
         <Typography
           variant="body2"
-          color="text.secondary"
+          color="textSecondary"
           sx={{ gridColumn: "span 2", textAlign: "end" }}
         >
           {t("pipelines.waiting", { count: i18n.number(row.waiting) })}

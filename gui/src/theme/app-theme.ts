@@ -1,3 +1,4 @@
+import { LOCALES } from "@abth/i18n";
 import {
   createTheme,
   type PaletteMode,
@@ -9,7 +10,7 @@ import {
 import type { CSSProperties } from "react";
 
 import type { ThemeName } from "./appearance";
-import { DEFAULT_TOKENS, HIROBA_TOKENS, type ThemeTokens } from "./tokens";
+import { DEFAULT_TOKENS, HIROBA_TOKENS, SYSTEM_FONTS, type ThemeTokens } from "./tokens";
 
 declare module "@mui/material/styles" {
   interface Theme {
@@ -37,6 +38,15 @@ declare module "@mui/material/Typography" {
     figure: true;
   }
 }
+
+/** Each language's mark gives its fonts, on the page's root or on any words inside it. */
+const fontsByLanguageMark = ({ fontFamily, systemFonts }: ThemeTokens) => ({
+  // Marked words with no font of their own, or an input's `font: inherit`, keep their parent's.
+  ":where([lang]), input[lang]": { fontFamily },
+  ...Object.fromEntries(
+    LOCALES.map((locale) => [`[lang|="${locale}"]`, { [SYSTEM_FONTS]: systemFonts[locale] }]),
+  ),
+});
 
 const shapeAndType = (tokens: ThemeTokens): ThemeOptions => ({
   shape: { borderRadius: tokens.cornerPx },
@@ -85,6 +95,7 @@ export function createAppTheme(tokens: ThemeTokens): Theme {
             // A pull at the top reads again: no stretch or glow of the page's own competes with it.
             overscrollBehaviorY: "none",
           },
+          ...fontsByLanguageMark(tokens),
         },
       },
       MuiPopover: {

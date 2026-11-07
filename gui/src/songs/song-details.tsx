@@ -43,7 +43,7 @@ const chartButton = (difficulty: Difficulty) => {
   // Tight enough that five charts stand in one row on a phone 360 pixels wide.
   return {
     gap: 0.25,
-    px: 0.5,
+    px: 0.375,
     py: 0.5,
     textTransform: "none",
     fontWeight: "fontWeightBold",
@@ -257,7 +257,7 @@ function DetailsBody({
         <Stack spacing={2}>
           <Box>
             {otherNames(song, name).map(({ text, lang }) => (
-              <Typography key={text} lang={lang} variant="body2" color="text.secondary">
+              <Typography key={text} lang={lang} variant="body2" color="textSecondary">
                 {text}
               </Typography>
             ))}
@@ -285,7 +285,7 @@ function DetailsBody({
             id="song-details-charts"
             role="group"
             aria-label={t("details.charts")}
-            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
+            sx={{ display: "flex", flexWrap: "wrap", gap: 0.375 }}
           >
             {charted.map(({ difficulty, level }, index) => (
               <ToggleButton
@@ -303,7 +303,7 @@ function DetailsBody({
             ))}
           </Box>
           {facts !== null && (
-            <Typography id="song-details-facts" variant="body2" color="text.secondary">
+            <Typography id="song-details-facts" variant="body2" color="textSecondary">
               {[
                 facts.maxCombo !== null && t("details.maxCombo", { count: facts.maxCombo }),
                 facts.maxCombo !== null &&

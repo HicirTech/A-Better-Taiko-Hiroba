@@ -81,7 +81,7 @@ export function SetsDrawer({
         <Typography
           component="p"
           variant="subtitle2"
-          color="text.secondary"
+          color="textSecondary"
           noWrap
           sx={{ px: 3, pt: 2.5, pb: 1.5 }}
         >

@@ -1,8 +1,10 @@
 import type { Translator } from "@abth/i18n";
+import { langOf } from "./lang-of";
 
 export { HIROBA_LANG } from "./hiroba-lang";
+export { langOf } from "./lang-of";
 
 export function showLanguage(i18n: Translator): void {
-  document.documentElement.lang = i18n.locale;
+  document.documentElement.lang = langOf(i18n.locale);
   document.title = i18n.t("app.title");
 }

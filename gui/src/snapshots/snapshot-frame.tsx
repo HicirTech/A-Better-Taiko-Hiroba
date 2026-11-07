@@ -2,6 +2,7 @@ import type { Translator } from "@abth/i18n";
 import { AppBar, Box, Stack, ThemeProvider, Toolbar, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 
+import { langOf } from "../shared/language/show-language";
 import { SNAPSHOT_THEME } from "../theme/app-theme";
 import { SNAPSHOT_WIDTH_PX } from "./snapshot-picture";
 
@@ -36,7 +37,8 @@ export function SnapshotFrame({
   const { t } = i18n;
   return (
     <ThemeProvider theme={SNAPSHOT_THEME}>
-      <Box id={id} sx={{ ...FRAME, width }}>
+      {/* Drawn apart from the page: without its own mark it would lose the page's language. */}
+      <Box id={id} lang={langOf(i18n.locale)} sx={{ ...FRAME, width }}>
         <AppBar component="header" position="static" elevation={0}>
           {/* Dense: the regular bar's height follows the window, and a snapshot never does. */}
           <Toolbar variant="dense" sx={BAR}>

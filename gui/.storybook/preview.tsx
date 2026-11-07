@@ -3,12 +3,14 @@ import "../src/theme/fonts";
 import { LOCALE_NAMES, LOCALES } from "@abth/i18n";
 import { CssBaseline, type Theme, ThemeProvider } from "@mui/material";
 import type { Preview } from "@storybook/react-vite";
-import { type ReactNode, useMemo } from "react";
+import { type ReactNode, useLayoutEffect, useMemo } from "react";
 import { TIPS } from "../src/pages/page-tips";
 import { forgetSetting, pageStorage } from "../src/shared/kept-settings";
 import { systemLocale } from "../src/shared/language/locale-choice";
+import { langOf } from "../src/shared/language/show-language";
 import { keepSeenTips } from "../src/shared/tips/seen-tips";
 import { DEVICES, deviceOf, isTouchScreen } from "../src/story-kit/devices";
+import { localeOf } from "../src/story-kit/env";
 import { APP_THEMES } from "../src/theme/app-theme";
 import { THEME_MODES, THEME_NAMES, type ThemeMode, type ThemeName } from "../src/theme/appearance";
 import { FollowMode } from "../src/theme/follow-mode";
@@ -58,6 +60,10 @@ function StoryFrame({
   const name = themeNameOf(globals.theme);
   const theme = useMemo(() => themeFor(APP_THEMES[name], touch), [name, touch]);
   const mode = modeOf(globals.mode);
+  const lang = langOf(localeOf(globals));
+  useLayoutEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
   return (
     <ThemeProvider theme={theme} defaultMode={mode} storageManager={null}>
       <FollowMode mode={mode} />

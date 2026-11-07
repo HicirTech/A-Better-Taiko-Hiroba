@@ -135,7 +135,7 @@ function Tile({ entry }: { readonly entry: Entry }) {
       </Typography>
       <Typography
         variant="caption"
-        color={entry.fromPack ? "success.main" : "warning.main"}
+        color={entry.fromPack ? "success" : "warning"}
         sx={{ display: "block" }}
       >
         {entry.fromPack ? "pack" : "stand-in"} · {entry.view.width}×{entry.view.height}
@@ -152,7 +152,7 @@ function PackCoverage() {
     <Stack spacing={3} sx={{ p: 2 }}>
       <Box>
         <Typography variant="h6">Resource pack</Typography>
-        <Typography color="text.secondary">
+        <Typography color="textSecondary">
           {PACK_LABEL === null
             ? "No pack is named: every picture is a stand-in and every page's data made up."
             : `"${PACK_LABEL}" draws ${countFromPack(all)} of the ${all.length} pictures below.`}
@@ -183,7 +183,7 @@ function PackCoverage() {
           <Typography variant="subtitle1">
             {group.name}: {countFromPack(group.entries)} of {group.entries.length} from the pack
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
             Shown in {group.shownIn}.
           </Typography>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>

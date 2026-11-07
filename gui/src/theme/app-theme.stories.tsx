@@ -1,7 +1,10 @@
+import { LOCALES, type Locale } from "@abth/i18n";
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { HIROBA_LANG, langOf } from "../shared/language/show-language";
 import { CROWN_COLOUR, RANK_COLOUR, UNCLEARED_COLOUR } from "../shared/panel-colours";
 import { DIFFICULTY_COLOUR, GENRE_COLOUR } from "../shared/song-catalogue/genre-look";
+import { DEFAULT_TOKENS } from "./tokens";
 
 /** Colours in rows of swatches, each under the name the code gives it. */
 function Swatches({
@@ -33,7 +36,7 @@ function Swatches({
             </Typography>
             <Typography
               variant="caption"
-              color="text.secondary"
+              color="textSecondary"
               sx={{ display: "block", fontFamily: "fontFamilyMono", wordBreak: "break-all" }}
             >
               {colour}
@@ -89,6 +92,14 @@ const TYPE_VARIANTS = [
   "badge",
 ] as const;
 const SAMPLE = "太鼓の達人 Taiko no Tatsujin 太鼓达人 1234567890";
+const FONT_VARIANTS = ["h6", "subtitle1", "body1", "body2", "rowLine", "figure"] as const;
+const HIROBA_WORDS = "デッド・オア・ダイ 幽玄ノ乱";
+const WORDS_OF: Readonly<Record<Locale, string>> = {
+  en: "Read again 12.34",
+  ja: "もう一度読み込む 12.34",
+  "zh-Hans": "重新读取 设置 记录 谱面 12.34",
+  "zh-Hant": "重新讀取 設定 記錄 譜面 請求 12.34",
+};
 
 const meta = {
   title: "Foundations/Theme",
@@ -114,6 +125,30 @@ export const Type: Story = {
       <Typography variant="body2" sx={{ fontFamily: "fontFamilyMono" }}>
         fontFamilyMono: {SAMPLE}
       </Typography>
+    </Stack>
+  ),
+};
+
+/** Each language's words in its fonts, with Hiroba's Japanese marked among them. */
+export const FontsByLanguage: Story = {
+  render: () => (
+    <Stack spacing={3}>
+      {LOCALES.map((locale) => (
+        <Box key={locale} lang={langOf(locale)}>
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{ display: "block", fontFamily: "fontFamilyMono" }}
+          >
+            {locale}: {DEFAULT_TOKENS.systemFonts[locale]}
+          </Typography>
+          {FONT_VARIANTS.map((variant) => (
+            <Typography key={variant} component="p" variant={variant}>
+              {WORDS_OF[locale]} <span lang={HIROBA_LANG}>{HIROBA_WORDS}</span>
+            </Typography>
+          ))}
+        </Box>
+      ))}
     </Stack>
   ),
 };

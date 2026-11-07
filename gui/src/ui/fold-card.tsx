@@ -57,7 +57,7 @@ export function FoldCard({
         id={summaryId}
         component="span"
         variant="body2"
-        color="text.secondary"
+        color="textSecondary"
         sx={{ display: "block" }}
       >
         {summary}

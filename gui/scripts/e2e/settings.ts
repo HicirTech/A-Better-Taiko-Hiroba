@@ -1,4 +1,6 @@
 import { rmSync } from "node:fs";
+import type { Locale } from "@abth/i18n";
+import { DEFAULT_TOKENS } from "../../src/theme/tokens";
 import { launch, stop } from "./app";
 import { APPEARANCE_USER_DATA, en, ja, LANGUAGE_USER_DATA, NOON_JST, zhHant } from "./config";
 import type { Ctx } from "./context";
@@ -39,7 +41,7 @@ export async function language(ctx: Ctx) {
     await inLanguage.until("サンプルどん");
     await inLanguage.goTo("settings");
     results.systemLanguageTaken = same(await languageShown(inLanguage.page), {
-      lang: "zh-Hant",
+      lang: "zh-Hant-HK",
       title: "A Better Taiko Hiroba",
       overview: zhHant.t("nav.overview"),
       checked: SYSTEM_ZH_HANT,
@@ -57,7 +59,7 @@ export async function language(ctx: Ctx) {
         ["en", "English"],
         ["ja", "日本語"],
         ["zh-Hans", "简体中文"],
-        ["zh-Hant", "繁體中文"],
+        ["zh-Hant-HK", "繁體中文"],
       ]);
     await inLanguage.click("#language-zh-Hant");
     await stop(inLanguage);
@@ -74,7 +76,7 @@ export async function language(ctx: Ctx) {
       (await inLanguage.currentPage()) === "settings" &&
       (await inLanguage.textOf("#sign-in")) === null;
     const kept = await languageShown(inLanguage.page);
-    results.shownLanguagePickKept = same([kept.lang, kept.checked], ["zh-Hant", "繁體中文"]);
+    results.shownLanguagePickKept = same([kept.lang, kept.checked], ["zh-Hant-HK", "繁體中文"]);
     await inLanguage.click("#language-ja");
     await inLanguage.until(ja.t("settings.account"));
     results.pickTakesHold = same(await languageShown(inLanguage.page), {
@@ -94,7 +96,7 @@ export async function language(ctx: Ctx) {
     await inLanguage.click("#language-system");
     await inLanguage.until(zhHant.t("settings.account"));
     results.systemDefaultTakesHold = same(await languageShown(inLanguage.page), {
-      lang: "zh-Hant",
+      lang: "zh-Hant-HK",
       title: "A Better Taiko Hiroba",
       overview: zhHant.t("nav.overview"),
       checked: SYSTEM_ZH_HANT,
@@ -216,6 +218,8 @@ export const settingsKeys = [
   "settingsLaidOutLikeGmail",
   "githubOpensTheRepository",
   "languageRedrawsInPlace",
+  "fontsFollowTheLanguage",
+  "greyWordsDrawGrey",
   "languageAsksHirobaNothing",
   "hirobaWordsMarkedJapanese",
   "gameTermsLeftUnmarked",
@@ -286,7 +290,20 @@ export async function settings(ctx: Ctx) {
     !/\d{4}年/.test(japaneseTime) &&
     !/\d{2}:\d{2}:\d{2}/.test(japaneseTime) &&
     /\d{1,2}:\d{2}/.test(japaneseTime);
+  const fontsOf = (selector: string) =>
+    page.evaluate<string>(
+      `getComputedStyle(document.querySelector(${JSON.stringify(selector)})).fontFamily.replaceAll('"', "")`,
+    );
+  const fontsIn = (locale: Locale) => DEFAULT_TOKENS.systemFonts[locale].replaceAll('"', "");
+  await pickLanguage("zh-Hans");
+  results.fontsFollowTheLanguage =
+    (await fontsOf("#nav-last-updated")).includes(fontsIn("zh-Hans")) &&
+    (await fontsOf("#profile h2")).includes(fontsIn("ja")) &&
+    (await fontsOf('#title-plate span[lang="ja"]')).includes(fontsIn("ja"));
   await pickLanguage("en");
+  results.greyWordsDrawGrey = await page.evaluate<boolean>(
+    `getComputedStyle(document.querySelector("#nav-last-updated")).color !== getComputedStyle(document.body).color`,
+  );
   await Bun.sleep(1000);
   results.languageAsksHirobaNothing =
     (await readHits()) === readsBeforeLanguage &&

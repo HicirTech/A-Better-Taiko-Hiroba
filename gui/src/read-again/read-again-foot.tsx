@@ -34,7 +34,7 @@ export function ReadAgainFoot({
       <Typography
         id="nav-last-updated"
         variant="caption"
-        color="text.secondary"
+        color="textSecondary"
         sx={{ flexGrow: 1, minWidth: 0 }}
       >
         {progress != null && progress !== ""

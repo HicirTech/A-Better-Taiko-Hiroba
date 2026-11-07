@@ -41,7 +41,7 @@ export function ProgressBar({
       <Typography
         id={labelId}
         variant="body2"
-        color="text.secondary"
+        color="textSecondary"
         sx={{ mb: 0.75, textAlign: "center" }}
       >
         {label}
