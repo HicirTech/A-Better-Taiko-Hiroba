@@ -1,6 +1,7 @@
 import {
   type ChartDensity,
   err,
+  isRecord,
   type NoteDensity,
   ok,
   type Result,
@@ -140,9 +141,6 @@ export function keptDensities(bytes: Uint8Array | null): SongDensityRead | null 
     return null;
   }
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 function isSongDensities(value: unknown): value is SongDensityRead {
   const entries = isRecord(value) ? Object.entries(value) : [];

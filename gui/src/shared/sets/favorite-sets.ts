@@ -1,4 +1,4 @@
-import { FOLDER_SLOT_COUNT, type FolderState } from "@abth/core";
+import { FOLDER_SLOT_COUNT, type FolderState, isObject, isSongNo } from "@abth/core";
 
 import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
 
@@ -7,7 +7,6 @@ const KEY = "abth.favoriteSets";
 const UNREADABLE_KEY = "abth.favoriteSets.unreadable";
 /** The shape the sets are kept in, which a later shape would change. */
 const VERSION = 1;
-const SONG_NO = /^\d{1,5}$/;
 
 export const SET_NAME_MAX_LENGTH = 40;
 /** A set holds as many songs as the folder has slots. */
@@ -29,18 +28,16 @@ export function isSetName(value: unknown): value is string {
 
 /** The valid song numbers, each once, in order, as many as a set holds. */
 function cleanSongs(songs: readonly unknown[]): string[] {
-  const valid = songs.filter(
-    (song): song is string => typeof song === "string" && SONG_NO.test(song),
-  );
+  const valid = songs.filter(isSongNo);
   return [...new Set(valid)].slice(0, SET_SONG_LIMIT);
 }
 
 function cleanSet(value: unknown): FavoriteSet | null {
-  if (typeof value !== "object" || value === null) {
+  if (!isObject(value)) {
     return null;
   }
 
-  const { id, name, songs } = value as Record<string, unknown>;
+  const { id, name, songs } = value;
   if (typeof id !== "string" || id === "" || typeof name !== "string" || !Array.isArray(songs)) {
     return null;
   }
@@ -62,8 +59,8 @@ function keptSetsIn(storage: Storage | undefined): KeptSets {
 
   try {
     const kept: unknown = JSON.parse(text);
-    if (typeof kept === "object" && kept !== null) {
-      const { v, sets } = kept as Record<string, unknown>;
+    if (isObject(kept)) {
+      const { v, sets } = kept;
       if (typeof v === "number" && v > VERSION) {
         return { kind: "later" };
       }

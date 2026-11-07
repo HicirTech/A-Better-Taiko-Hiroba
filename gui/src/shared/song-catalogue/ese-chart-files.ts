@@ -1,4 +1,4 @@
-import { err, eseChartPath, ok, type Result, type Transport } from "@abth/core";
+import { err, eseChartPath, isRecord, isSongNo, ok, type Result, type Transport } from "@abth/core";
 
 import type { ChartFileFailure } from "./types";
 
@@ -6,7 +6,6 @@ import type { ChartFileFailure } from "./types";
 const CHART_MAX_BYTES = 512 * 1024;
 const MAPPING_MAX_BYTES = 4 * 1024 * 1024;
 const TIMEOUT_MS = 30_000;
-const SONG_NO = /^\d{1,5}$/;
 
 export interface EseChartFilesOptions {
   /** OurTaiko's map of song numbers to ESE's chart files; none in a run that reads none. */
@@ -84,12 +83,12 @@ export function mappingOf(text: string): ReadonlyMap<string, string> | null {
   } catch {
     return null;
   }
-  if (typeof answer !== "object" || answer === null || Array.isArray(answer)) {
+  if (!isRecord(answer)) {
     return null;
   }
   const mapping = new Map<string, string>();
   for (const [songNo, path] of Object.entries(answer)) {
-    const address = typeof path === "string" && SONG_NO.test(songNo) ? eseChartPath(path) : null;
+    const address = typeof path === "string" && isSongNo(songNo) ? eseChartPath(path) : null;
     if (address !== null) {
       mapping.set(songNo, address);
     }

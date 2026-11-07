@@ -1,13 +1,14 @@
 import {
   type ChartRating,
+  isLevel,
+  isObject,
+  isSongNo,
   type PlayerFigure,
   type RatingSnapshot,
   type RatingSystem,
   withSnapshot,
 } from "@abth/core";
 import type { HirobaSessionPort } from "../shared/session-port";
-import { isLevel, isObject } from "./recent-plays-store";
-import { isSongNo } from "./scores-store";
 
 /** One player's kept ratings, oldest first, for each rating system. */
 export type RatingHistory = Readonly<Record<RatingSystem, readonly RatingSnapshot[]>>;

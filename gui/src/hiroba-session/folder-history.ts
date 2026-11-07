@@ -1,4 +1,4 @@
-import { FOLDER_SLOT_COUNT, isSongNo } from "@abth/core";
+import { FOLDER_SLOT_COUNT, isObject, isSongNo } from "@abth/core";
 import type { FolderHistoryEntry } from "../shared/session-port";
 import { isSetName, sameSongs } from "../shared/sets/favorite-sets";
 
@@ -40,14 +40,14 @@ export function readFolderHistory(stored: unknown): FolderHistoryEntry[] {
 }
 
 function entryOf(value: unknown): FolderHistoryEntry[] {
-  if (typeof value !== "object" || value === null) {
+  if (!isObject(value)) {
     return [];
   }
 
-  const { songs, keptAt, setName } = value as Record<string, unknown>;
+  const { songs, keptAt, setName } = value;
   return Array.isArray(songs) &&
     songs.length <= FOLDER_SLOT_COUNT &&
-    songs.every((song) => typeof song === "string" && isSongNo(song)) &&
+    songs.every(isSongNo) &&
     typeof keptAt === "number" &&
     Number.isFinite(keptAt)
     ? [{ songs, keptAt, setName: isSetName(setName) ? setName : null }]

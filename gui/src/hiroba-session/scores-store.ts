@@ -3,6 +3,12 @@ import {
   chartKey,
   EMPTY_SCORE_BOOK,
   type Genre,
+  isGenre,
+  isLevel,
+  isObject,
+  isRank,
+  isSongNo,
+  isWholeNumber,
   type Score,
   type ScoreBook,
   type ScoreFidelity,
@@ -11,7 +17,7 @@ import {
   type UnlistedPlay,
 } from "@abth/core";
 
-import { CROWNS, isGenre, isLevel, isObject, isRank, recordOf } from "./recent-plays-store";
+import { CROWNS, recordOf } from "./recent-plays-store";
 
 /** One player's score book. A missing one reads as a book never read. */
 export interface ScoresStore {
@@ -20,7 +26,6 @@ export interface ScoresStore {
 }
 
 const FIDELITIES = new Set<ScoreFidelity>(["list", "detail", "recent"]);
-const SONG_NO = /^\d{1,5}$/;
 
 interface StoredBook {
   readonly songs: readonly unknown[];
@@ -144,10 +149,6 @@ function sectionOf(value: unknown): ScoreSection[] {
   ];
 }
 
-export function isWholeNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isInteger(value) && value >= 0;
-}
-
 function unlistedOf(value: unknown): UnlistedPlay[] {
   if (
     !isObject(value) ||
@@ -158,10 +159,6 @@ function unlistedOf(value: unknown): UnlistedPlay[] {
     return [];
   }
   return [{ songTitle: value.songTitle, genre: value.genre, level: value.level }];
-}
-
-export function isSongNo(value: unknown): value is string {
-  return typeof value === "string" && SONG_NO.test(value);
 }
 
 function isListedGenre(value: unknown): value is Genre {

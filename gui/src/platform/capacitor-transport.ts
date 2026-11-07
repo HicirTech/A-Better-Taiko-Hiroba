@@ -1,4 +1,11 @@
-import { err, ok, type Transport, type TransportFailure, type TransportResponse } from "@abth/core";
+import {
+  err,
+  isObject,
+  ok,
+  type Transport,
+  type TransportFailure,
+  type TransportResponse,
+} from "@abth/core";
 import { CapacitorHttp, type HttpOptions, type HttpResponse } from "@capacitor/core";
 
 import {
@@ -136,10 +143,10 @@ function abortion(signal: AbortSignal | undefined): Promise<"cancelled"> {
 // Android rejects with the Java exception's class name, a SocketTimeoutException for both timeouts.
 // iOS gives only URLSession's error domain and words in the device's language: the time tells.
 function isTimeout(error: unknown, startedAt: number): boolean {
-  if (typeof error !== "object" || error === null) {
+  if (!isObject(error)) {
     return false;
   }
-  const { code } = error as { code?: unknown };
+  const { code } = error;
   return (
     code === "SocketTimeoutException" ||
     (code === "NSURLErrorDomain" && Date.now() - startedAt >= TIMEOUT_MS)
