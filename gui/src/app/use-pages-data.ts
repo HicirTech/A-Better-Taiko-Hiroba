@@ -16,6 +16,7 @@ import { useScores } from "../shared/scores/use-scores";
 import type { HirobaSessionPort } from "../shared/session-port";
 import { useFavoriteSets } from "../shared/sets/use-favorite-sets";
 import { useSongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { whenIdle } from "../shared/when-idle";
 import { useKeptSearches } from "../song-search/use-kept-searches";
 import type { Session } from "./use-session";
 
@@ -127,8 +128,7 @@ export function usePagesData({
     if (!profileShown) {
       return;
     }
-    const idle = requestIdleCallback(() => loadScores());
-    return () => cancelIdleCallback(idle);
+    return whenIdle(() => loadScores());
   }, [profileShown, loadScores]);
 
   return {
