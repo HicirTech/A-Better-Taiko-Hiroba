@@ -8,8 +8,8 @@ const SRC = join(import.meta.dir, "../src");
 // not ours.
 const NOT_CHECKED = ["app", "story-kit", "vendor"];
 
-// Android Back's own contexts: a popup closes on Back wherever it is drawn.
-const BACK_CONTEXTS = ["BackClosersContext", "BackModesContext"];
+// Back's own contexts: a popup closes on Back wherever it is drawn, and makes room for iOS's button.
+const BACK_CONTEXTS = ["BackClosersContext", "BackModesContext", "OnScreenBackContext"];
 // What reads the window, the device or the frame for itself.
 const OWN_READS = /\b(useTouchFirst|useWideWindow|useMediaQuery|useWiderFrame)\s*\(/g;
 

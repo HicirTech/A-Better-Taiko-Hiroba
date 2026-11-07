@@ -12,6 +12,7 @@ export const en: Messages = {
   "nav.favorites": "Favourites",
   "nav.settings": "Settings",
   "nav.menu": "Menu",
+  "nav.back": "Back",
   "nav.pipelines": "Pipelines",
   "pipelines.io": "Hiroba interaction",
   "pipelines.external": "External sources",

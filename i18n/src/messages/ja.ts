@@ -12,6 +12,7 @@ export const ja: Messages = {
   "nav.favorites": "お気に入り",
   "nav.settings": "設定",
   "nav.menu": "メニュー",
+  "nav.back": "戻る",
   "nav.pipelines": "パイプライン",
   "pipelines.io": "ひろばとのやりとり",
   "pipelines.external": "外部データソース",

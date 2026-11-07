@@ -1,10 +1,10 @@
 import type { Translator } from "@abth/i18n";
 import { Box, Divider, IconButton, Modal, Paper, Slide, Typography, useTheme } from "@mui/material";
-import type { ReactNode, RefObject } from "react";
+import { type ReactNode, type RefObject, useContext } from "react";
 
-import { useBackCloses, useBackLeaves } from "./back-closers";
+import { OnScreenBackContext, useBackCloses, useBackLeaves } from "./back-closers";
 import { SAFE_TOP } from "./frame-top";
-import { CloseIcon } from "./icons";
+import { ArrowBackIcon, CloseIcon } from "./icons";
 import { VISUALLY_HIDDEN } from "./visually-hidden";
 
 /** How a large modal is drawn here, as the window and the frame say. */
@@ -26,7 +26,12 @@ const ROOM = `100% - ${2 * MARGIN_PX}px`;
 const CENTRED = { display: "flex", alignItems: "center", justifyContent: "center" } as const;
 const HEAD = { display: "flex", alignItems: "center", gap: 1, minHeight: 64 } as const;
 const BUTTONS = { display: "flex", flexShrink: 0 } as const;
-const OVER_THE_PICTURE = { position: "absolute", top: 8, right: 8, color: "common.white" } as const;
+const OVER_THE_PICTURE = {
+  position: "absolute",
+  top: `calc(8px + ${SAFE_TOP})`,
+  right: 8,
+  color: "common.white",
+} as const;
 
 /** The app's large modal for a deeper task: a title, its buttons, and content that scrolls. */
 export function LargeModal({
@@ -68,7 +73,7 @@ export function LargeModal({
   readonly pageLike?: boolean | undefined;
   /** The part that scrolls, which a pull to read again listens on. */
   readonly contentRef?: RefObject<HTMLDivElement | null> | undefined;
-  /** A touch screen: Back closes it, so it draws no close button. */
+  /** A touch screen: Back closes it, so it draws no close button; an on-screen Back, its arrow. */
   readonly touchFirst: boolean;
   readonly modalLook: ModalLook;
   readonly i18n: Translator;
@@ -84,16 +89,18 @@ export function LargeModal({
   const shown = open && !(pageLike && covered);
   const whole = picture || phone;
   const titleId = `${id}-title`;
-  const close = touchFirst ? null : (
-    <IconButton
-      id={`${id}-close`}
-      aria-label={i18n.t("picker.close")}
-      onClick={onClose}
-      sx={picture ? OVER_THE_PICTURE : undefined}
-    >
-      <CloseIcon />
-    </IconButton>
-  );
+  const { drawn: backDrawn } = useContext(OnScreenBackContext);
+  const close =
+    touchFirst && !(backDrawn && picture) ? null : (
+      <IconButton
+        id={`${id}-close`}
+        aria-label={i18n.t("picker.close")}
+        onClick={onClose}
+        sx={picture ? OVER_THE_PICTURE : undefined}
+      >
+        <CloseIcon />
+      </IconButton>
+    );
   const size = whole
     ? { width: 1, height: 1 }
     : { width: `min(${WIDTH_PX}px, ${ROOM})`, maxHeight: `calc(${ROOM})` };
@@ -144,10 +151,20 @@ export function LargeModal({
               <Box
                 sx={{
                   ...HEAD,
-                  pl: typeof title === "string" ? 3 : 1,
+                  pl: typeof title === "string" && !(backDrawn && close === null) ? 3 : 1,
                   pr: close === null ? 3 : 1.5,
                 }}
               >
+                {backDrawn && close === null && (
+                  <IconButton
+                    id={`${id}-back`}
+                    aria-label={i18n.t("nav.back")}
+                    title={i18n.t("nav.back")}
+                    onClick={onClose}
+                  >
+                    <ArrowBackIcon />
+                  </IconButton>
+                )}
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   {typeof title === "string" ? (
                     <Typography id={titleId} component="h2" variant="h6" lang={titleLang}>

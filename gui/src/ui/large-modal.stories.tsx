@@ -8,6 +8,7 @@ import { modalLookOf, touchOf } from "../story-kit/devices";
 import { i18nOf } from "../story-kit/env";
 import { pictureOf } from "../story-kit/picture-of";
 import { STORY_SONGS } from "../story-kit/songs";
+import { OnScreenBackContext } from "./back-closers";
 import { RefreshIcon } from "./icons";
 import { LargeModal } from "./large-modal";
 import { SearchField } from "./search-field";
@@ -96,6 +97,17 @@ type Story = StoryObj<typeof meta>;
 export const Words: Story = {};
 
 /** A button beside the close button, as a song's details read their chart again. */
+/** iOS has no Back of its own: on a touch screen the head draws an arrow in its place. */
+export const WithAnOnScreenBack: Story = {
+  decorators: [
+    (Story) => (
+      <OnScreenBackContext value={{ drawn: true, shown: false }}>
+        <Story />
+      </OnScreenBackContext>
+    ),
+  ],
+};
+
 export const WithAnAction: Story = {
   render: (args, { globals }) => {
     const i18n = i18nOf(globals);

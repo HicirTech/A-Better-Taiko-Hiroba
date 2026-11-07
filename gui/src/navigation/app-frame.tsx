@@ -20,13 +20,20 @@ import {
   useEffectEvent,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 
 import type { SystemBack } from "../platform";
 import { NavigationLook } from "../theme/navigation-look";
-import { BackClosersContext, BackModesContext, createBackClosers } from "../ui/back-closers";
+import {
+  BackClosersContext,
+  BackModesContext,
+  createBackClosers,
+  OnScreenBackContext,
+} from "../ui/back-closers";
 import { BELOW_TOP_BAND, MENU_INSET_PX, PAGE_BOTTOM_PX, SAFE_TOP } from "../ui/frame-top";
 import { ArrowBackIcon, ArrowForwardIcon, MenuIcon, QrCodeScannerIcon } from "../ui/icons";
 import { MenuOpenContext, MenuOpenerContext } from "../ui/menu-open";
@@ -149,7 +156,7 @@ export function AppFrame({
   });
   const [closers] = useState(createBackClosers);
   const [modes] = useState(createBackClosers);
-  const pressedBack = useEffectEvent((system: SystemBack) => {
+  const press = (system: SystemBack) => {
     const action = backAction({
       overlayOpen: closers.isOpen(),
       pipelinesShown,
@@ -170,68 +177,99 @@ export function AppFrame({
     } else {
       system.leave();
     }
-  });
+  };
+  const pressedBack = useEffectEvent(press);
   useEffect(() => back?.listen(() => pressedBack(back)), [back]);
+  const modeOn = useSyncExternalStore(modes.subscribe, modes.isOpen);
+  // An overlay lies over the button and takes the press first; an open menu has its own ways out.
+  const backHere = backAction({ overlayOpen: false, pipelinesShown, menuOpen, modeOn, page });
+  const backDrawn = back?.onScreen === true;
+  const backShown = backDrawn && navigation && backHere !== "leave" && backHere !== "closeMenu";
+  const onScreenBack = useMemo(
+    () => ({ drawn: backDrawn, shown: backShown }),
+    [backDrawn, backShown],
+  );
   return (
-    <BackClosersContext value={closers}>
-      <MenuOpenContext value={menuOpen}>
-        <MenuOpenerContext value={setMenuOpen}>
-          <WindowMoveStyles />
-          <Box aria-hidden sx={STATUS_BAR_ROOM} />
-          <Box sx={{ display: "flex", minHeight: "100vh" }}>
-            {navigation &&
-              (wide ? (
-                <SidePanel
-                  page={page}
-                  onNavigate={navigate}
-                  i18n={i18n}
-                  pages={pages}
-                  onScan={onScan}
-                  touchFirst={touchFirst}
-                  footRef={setFoot}
-                  toggle={toggle}
-                />
-              ) : (
-                <MenuDrawer
-                  page={page}
-                  onNavigate={navigate}
-                  i18n={i18n}
-                  pages={pages}
-                  onScan={onScan}
-                  touchFirst={touchFirst}
-                  footRef={setFoot}
-                  toggle={toggle}
-                  open={menuOpen}
-                  onOpenChange={setMenuOpen}
-                />
-              ))}
-            <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
-              <Container
-                maxWidth={wider ? "lg" : "md"}
-                sx={{ pt: BELOW_TOP_BAND, pb: `${PAGE_BOTTOM_PX}px` }}
+    <OnScreenBackContext value={onScreenBack}>
+      <BackClosersContext value={closers}>
+        <MenuOpenContext value={menuOpen}>
+          <MenuOpenerContext value={setMenuOpen}>
+            <WindowMoveStyles />
+            <Box aria-hidden sx={STATUS_BAR_ROOM} />
+            {backShown && back !== undefined && (
+              <Paper
+                elevation={2}
+                sx={{
+                  ...BAND_BUTTON,
+                  left: `calc(${wide ? PANEL_WIDTH_PX + MENU_INSET_PX : MENU_INSET_PX}px + env(safe-area-inset-left, 0px))`,
+                  viewTransitionName: STILL.backButton,
+                }}
               >
-                <Typography component="h1" sx={VISUALLY_HIDDEN}>
-                  {i18n.t(pipelinesShown ? "nav.pipelines" : pages[page].label)}
-                </Typography>
-                {/* Kept, only hidden, under the pipelines page: going back reads nothing again. */}
-                <Box hidden={pipelinesShown}>
-                  <WiderFrameContext value={setWider}>
-                    <FrameNavigationContext value={setNavigation}>
-                      <NavFootContext value={foot}>
-                        <PipelinesShownContext value={pipelinesShown}>
-                          <BackModesContext value={modes}>{children}</BackModesContext>
-                        </PipelinesShownContext>
-                      </NavFootContext>
-                    </FrameNavigationContext>
-                  </WiderFrameContext>
-                </Box>
-                {pipelines !== undefined && pipelinesShown && <Box>{pipelines}</Box>}
-              </Container>
+                <IconButton
+                  id="nav-back"
+                  aria-label={i18n.t("nav.back")}
+                  title={i18n.t("nav.back")}
+                  onClick={() => press(back)}
+                >
+                  <ArrowBackIcon />
+                </IconButton>
+              </Paper>
+            )}
+            <Box sx={{ display: "flex", minHeight: "100vh" }}>
+              {navigation &&
+                (wide ? (
+                  <SidePanel
+                    page={page}
+                    onNavigate={navigate}
+                    i18n={i18n}
+                    pages={pages}
+                    onScan={onScan}
+                    touchFirst={touchFirst}
+                    footRef={setFoot}
+                    toggle={toggle}
+                  />
+                ) : (
+                  <MenuDrawer
+                    page={page}
+                    onNavigate={navigate}
+                    i18n={i18n}
+                    pages={pages}
+                    onScan={onScan}
+                    touchFirst={touchFirst}
+                    footRef={setFoot}
+                    toggle={toggle}
+                    open={menuOpen}
+                    onOpenChange={setMenuOpen}
+                  />
+                ))}
+              <Box component="main" sx={{ flexGrow: 1, minWidth: 0 }}>
+                <Container
+                  maxWidth={wider ? "lg" : "md"}
+                  sx={{ pt: BELOW_TOP_BAND, pb: `${PAGE_BOTTOM_PX}px` }}
+                >
+                  <Typography component="h1" sx={VISUALLY_HIDDEN}>
+                    {i18n.t(pipelinesShown ? "nav.pipelines" : pages[page].label)}
+                  </Typography>
+                  {/* Kept, only hidden, under the pipelines page: going back reads nothing again. */}
+                  <Box hidden={pipelinesShown}>
+                    <WiderFrameContext value={setWider}>
+                      <FrameNavigationContext value={setNavigation}>
+                        <NavFootContext value={foot}>
+                          <PipelinesShownContext value={pipelinesShown}>
+                            <BackModesContext value={modes}>{children}</BackModesContext>
+                          </PipelinesShownContext>
+                        </NavFootContext>
+                      </FrameNavigationContext>
+                    </WiderFrameContext>
+                  </Box>
+                  {pipelines !== undefined && pipelinesShown && <Box>{pipelines}</Box>}
+                </Container>
+              </Box>
             </Box>
-          </Box>
-        </MenuOpenerContext>
-      </MenuOpenContext>
-    </BackClosersContext>
+          </MenuOpenerContext>
+        </MenuOpenContext>
+      </BackClosersContext>
+    </OnScreenBackContext>
   );
 }
 
@@ -355,6 +393,12 @@ function PageList({
   );
 }
 
+const BAND_BUTTON = {
+  position: "fixed",
+  top: `calc(${MENU_INSET_PX}px + ${SAFE_TOP})`,
+  zIndex: "appBar",
+  borderRadius: "50%",
+} as const;
 // Where the system draws over the page, as iOS does, the page scrolls away beneath its words.
 const STATUS_BAR_ROOM = {
   position: "fixed",
@@ -488,11 +532,8 @@ function MenuDrawer({
       <Paper
         elevation={2}
         sx={{
-          position: "fixed",
-          top: `calc(${MENU_INSET_PX}px + ${SAFE_TOP})`,
+          ...BAND_BUTTON,
           left: `calc(${MENU_INSET_PX}px + env(safe-area-inset-left, 0px))`,
-          zIndex: "appBar",
-          borderRadius: "50%",
           viewTransitionName: STILL.menuButton,
           ...(touchFirst ? HIDDEN_UNTIL_FOCUSED : {}),
         }}

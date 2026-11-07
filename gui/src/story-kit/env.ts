@@ -78,4 +78,13 @@ export const STORY_SHARE_OR_SAVE: SystemShare = { ways: ["share", "save"], hand:
 export const STORY_SHEET: SystemShare = { ways: ["share"], hand: handed };
 
 /** Android's Back, which no story presses. */
-export const STORY_BACK: SystemBack = { listen: () => () => {}, leave: action("leave the app") };
+export const STORY_ON_SCREEN_BACK: SystemBack = {
+  onScreen: true,
+  listen: () => () => {},
+  leave: () => {},
+};
+export const STORY_BACK: SystemBack = {
+  onScreen: false,
+  listen: () => () => {},
+  leave: action("leave the app"),
+};

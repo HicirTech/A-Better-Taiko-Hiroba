@@ -17,6 +17,7 @@ export const STILL = {
   nav: "abth-nav",
   scrim: "abth-scrim",
   menuButton: "abth-menu-button",
+  backButton: "abth-back-button",
 } as const;
 
 /** Where the system asks for less motion, nothing slides. */

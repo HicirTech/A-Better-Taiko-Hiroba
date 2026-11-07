@@ -12,6 +12,7 @@ export const zhHant: Messages = {
   "nav.favorites": "收藏",
   "nav.settings": "設定",
   "nav.menu": "選單",
+  "nav.back": "返回",
   "nav.pipelines": "管線",
   "pipelines.io": "廣場互動",
   "pipelines.external": "外部資料來源",

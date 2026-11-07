@@ -73,7 +73,7 @@ export async function connectPlatform({
   if (os === "android" || os === "ios") {
     const [
       { createCapacitorPort },
-      { capacitorBack },
+      { capacitorBack, onScreenBack },
       { capacitorCamera },
       { capacitorLaunch },
       { capacitorLink },
@@ -94,7 +94,7 @@ export async function connectPlatform({
       port,
       link: capacitorLink,
       share: await capacitorShare(os),
-      back: capacitorBack,
+      back: os === "ios" ? onScreenBack : capacitorBack,
       toast: capacitorToast,
       camera: capacitorCamera,
       launch: capacitorLaunch,

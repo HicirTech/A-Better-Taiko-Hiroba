@@ -7,29 +7,46 @@ export interface BackClosers {
   isOpen(): boolean;
   /** Closes the overlay opened last and no other. */
   closeLatest(): void;
+  /** Tells `listener` as one opens or shuts; the function returned stops telling it. */
+  subscribe(listener: () => void): () => void;
 }
 
 export function createBackClosers(): BackClosers {
   const open: { readonly close: () => void }[] = [];
+  const listeners = new Set<() => void>();
+  const told = () => {
+    for (const listener of listeners) {
+      listener();
+    }
+  };
   return {
     add(close) {
       const entry = { close };
       open.push(entry);
+      told();
       return () => {
         const at = open.indexOf(entry);
         if (at !== -1) {
           open.splice(at, 1);
+          told();
         }
       };
     },
     isOpen: () => open.length > 0,
     closeLatest: () => open.at(-1)?.close(),
+    subscribe(listener) {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
   };
 }
 
 export const BackClosersContext = createContext<BackClosers>(createBackClosers());
 /** A page's modes that Back leaves, such as editing; unlike overlays, they hold back no gesture. */
 export const BackModesContext = createContext<BackClosers>(createBackClosers());
+
+/** Where the app draws Back itself: `drawn` on this shell, `shown` in the top band just now. */
+export const OnScreenBackContext = createContext({ drawn: false, shown: false });
 
 function useStackedClose(stack: BackClosers, open: boolean, onClose: () => void): void {
   const close = useEffectEvent(onClose);
