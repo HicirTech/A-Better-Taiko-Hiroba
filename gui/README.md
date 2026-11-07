@@ -661,6 +661,7 @@ On a Mac with Xcode 26 or later:
 |---|---|
 | `bun run ios:build` | Web build, `cap sync`, an unsigned build for a device. CI runs this. |
 | `bun run ios:ipa` | Web build, `cap sync`, an unsigned release build for a device, packed as `release/ABTH-<version>.ipa`. The release workflow runs this. |
+| `bun run ios:source` | Writes `release/altstore.json`, the AltStore and SideStore source that lists this version's IPA. The release workflow runs this after `ios:ipa`. |
 | `bun run ios:run -- <simulator id>` | Web build, `cap sync`, then builds, installs and starts it on that simulator. |
 | `bun run ios:live -- <simulator id> [host]` | Vite's dev server on this Mac, and the debug app loading it with live reload. It runs only against the stand-in, like `android:live`. |
 
@@ -787,12 +788,12 @@ waiting on another:
 | **Android release APK** | Ubuntu 26.04, JDK 21 | `ABTH-<version>.apk`, signed with the release key from [the signing secrets](#setting-up-the-signing-secrets). |
 | **Windows installer and zip** | windows-latest | `ABTH-<version>-setup.exe`, the NSIS installer, and `ABTH-<version>-portable.zip`, the build that needs no install ([Desktop](#desktop) says how to run it). Both are x64 and not code-signed. |
 | **macOS disk images** | macos-latest | `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel Macs. Each app is signed ad hoc, with no Apple certificate, and is not notarized ([Desktop](#desktop) says how to open it). |
-| **iOS IPA, unsigned** | macos-26 | `ABTH-<version>.ipa`, a release build for a device that no one signs ([iOS](#ios) says how to install it). |
+| **iOS IPA, unsigned** | macos-26 | `ABTH-<version>.ipa`, a release build for a device that no one signs ([iOS](#ios) says how to install it), and `altstore.json`, the source AltStore and SideStore read it from. |
 
 Each uploads its files as an artifact of the run (**android**, **windows**, **mac** and **ios**, kept
 for 14 days). On a tag, a **Release** job then runs after all four. It downloads the artifacts and
 runs `gh release create v<version> --title "A Better Taiko Hiroba <version>" --generate-notes` with
-the six files and `gui/update.json` (the release's asset `update.json`, which the app reads), as
+the seven files and `gui/update.json` (the release's asset `update.json`, which the app reads), as
 `GITHUB_TOKEN` with `contents: write`; the notes list the pull requests merged since the last
 release. **The release is published, not a draft**: its files are public as soon as that
 job ends. A dry run never reaches that job.

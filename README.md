@@ -24,6 +24,12 @@ With [Sideloadly](https://sideloadly.io/), on a Windows PC or a Mac:
 
 A free Apple account has two limits: the app stops opening 7 days after it was signed, until it is signed again, and only 3 apps signed this way can be installed at once. Sideloadly's automatic refresh signs it again before then, while the computer is on and on the same Wi-Fi as the device. [AltStore](https://faq.altstore.io/) and [SideStore](https://docs.sidestore.io/) can sign it again from the phone once they are set up; their own guides say how. A paid developer account, or any other signing tool, works too.
 
+In AltStore or SideStore you can also add this project's source: open **Sources**, tap **+** and paste the address below. The app is then listed there, and each new version shows up as an update.
+
+```
+https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest/download/altstore.json
+```
+
 To update, sign the new IPA the same way, with the same Apple ID, and install it over the old app: deleting the app first deletes everything it keeps on the device.
 
 Download the IPA only from this project's Releases page.

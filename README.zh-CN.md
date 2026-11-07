@@ -24,6 +24,12 @@ App 没有上架 App Store。IPA 没有签名，安装时要用你自己的 Appl
 
 免费账号有两个限制：签名 7 天后 App 就打不开，要重新签名；同时最多只能装 3 个这样签名的 App。Sideloadly 的自动续签会在到期前重新签名，前提是电脑开着、和设备连着同一个 Wi-Fi。[AltStore](https://faq.altstore.io/) 和 [SideStore](https://docs.sidestore.io/) 设置好后可以直接在手机上续签，做法见它们自己的指南。付费开发者账号或其他签名工具也可以。
 
+在 AltStore 或 SideStore 里也可以添加本项目的源：打开 **Sources**，点 **+**，粘贴下面的地址。之后 App 会出现在源里，每个新版本都会作为更新出现。
+
+```
+https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest/download/altstore.json
+```
+
 更新时，用同一个 Apple 账号、同样的方式给新的 IPA 签名，直接覆盖安装：先删掉 App，会把它存在设备上的数据一起删掉。
 
 只从本项目的 Releases 页面下载 IPA。
