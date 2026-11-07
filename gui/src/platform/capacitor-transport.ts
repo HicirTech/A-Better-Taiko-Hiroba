@@ -15,7 +15,7 @@ const OWN_HEADERS: ReadonlySet<string> = new Set(["cookie", "user-agent", "conte
 
 /** Android's Transport: Capacitor's native HTTP client, which takes cookies from the WebView's own
  * cookie store, so no TypeScript ever holds the session's value. */
-export function createAndroidTransport(userAgent: string = navigator.userAgent): Transport {
+export function createCapacitorTransport(userAgent: string = navigator.userAgent): Transport {
   return {
     async send(request, signal) {
       const failure = (kind: TransportFailure["kind"]) => err({ kind, url: request.url });

@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { err } from "@abth/core";
 
-import type { DatabaseFactory } from "../src/platform/android-indexeddb";
-import { CLOSE_LABEL, memoryFlag } from "./android-port-fixtures";
+import type { DatabaseFactory } from "../src/platform/capacitor-indexeddb";
 import { native, nativeBase64 } from "./capacitor-fakes";
+import { CLOSE_LABEL, memoryFlag } from "./capacitor-port-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 import { FFMPEG_JPEG } from "./picture-fixtures";
 
-const { createAndroidPort } = await import("../src/platform/android");
+const { createCapacitorPort } = await import("../src/platform/capacitor");
 
 const FILE = "https://file.taiko.wiki/fumen/670/oni";
 const JPEG_VIEW = {
@@ -17,7 +17,7 @@ const JPEG_VIEW = {
 };
 
 const openPort = (indexedDb?: DatabaseFactory) =>
-  createAndroidPort({
+  createCapacitorPort({
     closeLabel: () => CLOSE_LABEL,
     signedInFlag: memoryFlag(true),
     ...(indexedDb !== undefined && { indexedDb }),

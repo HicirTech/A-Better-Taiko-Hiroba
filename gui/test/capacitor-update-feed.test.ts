@@ -1,15 +1,15 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
 import { UPDATE_FEED_URL } from "../src/shared/updates";
-import { CLOSE_LABEL, memoryFlag } from "./android-port-fixtures";
 import { native, nativeBase64 } from "./capacitor-fakes";
+import { CLOSE_LABEL, memoryFlag } from "./capacitor-port-fixtures";
 
-const { createAndroidPort } = await import("../src/platform/android");
+const { createCapacitorPort } = await import("../src/platform/capacitor");
 
 const FEED = { version: "0.2.0", notes: { en: ["Fixed a thing"] } };
 
 const openPort = () =>
-  createAndroidPort({ closeLabel: () => CLOSE_LABEL, signedInFlag: memoryFlag(true) });
+  createCapacitorPort({ closeLabel: () => CLOSE_LABEL, signedInFlag: memoryFlag(true) });
 
 describe("the Android port's readUpdateFeed", () => {
   beforeEach(() => native.reset());

@@ -9,6 +9,7 @@ import {
   thumbnailPng,
   titlePlatePng,
 } from "../scripts/mock-pictures";
+import { native, nativeBase64 } from "./capacitor-fakes";
 import {
   CLOSE_LABEL,
   HIROBA,
@@ -17,24 +18,23 @@ import {
   myPageAnswer,
   signOutAndIn,
   until,
-} from "./android-port-fixtures";
-import { native, nativeBase64 } from "./capacitor-fakes";
+} from "./capacitor-port-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
-const { createAndroidPort } = await import("../src/platform/android");
+const { createCapacitorPort } = await import("../src/platform/capacitor");
 
 async function startSignIn(signedInFlag = memoryFlag()) {
-  const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL, signedInFlag });
+  const port = await createCapacitorPort({ closeLabel: () => CLOSE_LABEL, signedInFlag });
   const outcome = port.signIn();
   await until(() => native.openedWith.length === 1);
   return { port, outcome };
 }
 
-describe("createAndroidPort", () => {
+describe("createCapacitorPort", () => {
   beforeEach(() => native.reset());
 
   test("opens signed in after an earlier sign-in, and wipes nothing as it starts", async () => {
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -44,7 +44,7 @@ describe("createAndroidPort", () => {
 
   test("a read hands the window the view alone: no taiko number and no picture's source", async () => {
     native.httpAnswer = myPageAnswer;
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -59,7 +59,7 @@ describe("createAndroidPort", () => {
   });
 
   test("opens signed out when no sign-in was remembered", async () => {
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(),
     });
@@ -129,7 +129,7 @@ describe("createAndroidPort", () => {
 
   test("a browser that cannot open ends the attempt instead of hanging", async () => {
     native.openFails = true;
-    const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL });
+    const port = await createCapacitorPort({ closeLabel: () => CLOSE_LABEL });
     expect(await port.signIn()).toEqual({ kind: "unavailable" });
     expect(native.listeners.size).toBe(0);
   });
@@ -155,7 +155,7 @@ describe("createAndroidPort", () => {
 
   test("tells what its pipelines run and ran: a read of my page that ended, in Hiroba's", async () => {
     native.httpAnswer = myPageAnswer;
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -202,7 +202,7 @@ describe("createAndroidPort", () => {
       const page = recentPlaysPage(plays.slice(start, start + 5));
       return { status: 200, url, headers: {}, data: nativeBase64(page) };
     };
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -222,7 +222,7 @@ describe("createAndroidPort", () => {
   });
 });
 
-describe("createAndroidPort's costume preview", () => {
+describe("createCapacitorPort's costume preview", () => {
   beforeEach(() => native.reset());
 
   const SET = {
@@ -238,7 +238,7 @@ describe("createAndroidPort's costume preview", () => {
   const PREVIEW_URL = `${HIROBA}/imgsrc_mydon.php?face=5&body=12&limb=13&cos1=0&cos2=21&cos3=68&cos4=37&cos5=140`;
 
   test("asks nothing while signed out", async () => {
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(),
     });
@@ -258,7 +258,7 @@ describe("createAndroidPort's costume preview", () => {
       headers: { "Content-Type": "image/png" },
       data: nativeBase64(picture),
     });
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -280,7 +280,7 @@ describe("createAndroidPort's costume preview", () => {
           resolve({ status: 200, url: PREVIEW_URL, headers: {}, data: nativeBase64("") }),
         );
       });
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -307,7 +307,7 @@ describe("createAndroidPort's costume preview", () => {
       headers: { "Content-Type": "image/gif" },
       data: nativeBase64(new Uint8Array(43)),
     });
-    const port = await createAndroidPort({ closeLabel: () => CLOSE_LABEL, signedInFlag: flag });
+    const port = await createCapacitorPort({ closeLabel: () => CLOSE_LABEL, signedInFlag: flag });
     expect(await port.previewCostume(SET)).toEqual({
       ok: false,
       error: { code: "preview=notPng status=200 type=image/gif bytes=43" },
@@ -317,7 +317,7 @@ describe("createAndroidPort's costume preview", () => {
   });
 });
 
-describe("createAndroidPort's pictures", () => {
+describe("createCapacitorPort's pictures", () => {
   beforeEach(() => native.reset());
 
   const THUMB = { kind: "costumeItem", slot: 1, id: 36 } as const;
@@ -361,7 +361,7 @@ describe("createAndroidPort's pictures", () => {
   }
 
   test("asks nothing while signed out", async () => {
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(),
     });
@@ -374,7 +374,7 @@ describe("createAndroidPort's pictures", () => {
 
   test("asks only for items the last editor read offered, once each, as a browser's picture", async () => {
     answerAsHiroba();
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -404,7 +404,7 @@ describe("createAndroidPort's pictures", () => {
 
   test("tells of a picture it fetched in a section of its own, by what it shows", async () => {
     answerAsHiroba();
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -426,7 +426,7 @@ describe("createAndroidPort's pictures", () => {
 
   test("a picture's fetch goes out beside a read already on its way", async () => {
     answerAsHiroba();
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -456,7 +456,7 @@ describe("createAndroidPort's pictures", () => {
 
   test("asks for the title plate only once my page is read, as my page does, and once", async () => {
     answerAsHiroba();
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -483,7 +483,7 @@ describe("createAndroidPort's pictures", () => {
 
   test("forgets whose page it read when the session goes, and keeps the plate", async () => {
     answerAsHiroba();
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -507,7 +507,7 @@ describe("createAndroidPort's pictures", () => {
 
   test("asks again after a sign-in for a plate no later read confirmed", async () => {
     answerAsHiroba();
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });
@@ -528,7 +528,7 @@ describe("createAndroidPort's pictures", () => {
     answerAsHiroba();
     const indexedDb = createFakeIndexedDb();
     const launch = () =>
-      createAndroidPort({
+      createCapacitorPort({
         closeLabel: () => CLOSE_LABEL,
         signedInFlag: memoryFlag(true),
         indexedDb: indexedDb.factory,
@@ -577,7 +577,7 @@ describe("createAndroidPort's pictures", () => {
     };
     const indexedDb = createFakeIndexedDb();
     const launch = () =>
-      createAndroidPort({
+      createCapacitorPort({
         closeLabel: () => CLOSE_LABEL,
         signedInFlag: memoryFlag(true),
         indexedDb: indexedDb.factory,
@@ -626,7 +626,7 @@ describe("createAndroidPort's pictures", () => {
         wearing = next;
       },
       launch: () =>
-        createAndroidPort({
+        createCapacitorPort({
           closeLabel: () => CLOSE_LABEL,
           signedInFlag: memoryFlag(true),
           indexedDb: indexedDb.factory,
@@ -690,7 +690,7 @@ describe("createAndroidPort's pictures", () => {
 
   test("forgets what the editor offered when the session goes", async () => {
     answerAsHiroba();
-    const port = await createAndroidPort({
+    const port = await createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(true),
     });

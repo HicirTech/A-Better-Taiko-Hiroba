@@ -65,7 +65,7 @@ async function cameraThatFocuses(first: MediaStream): Promise<MediaStream | null
 }
 
 /** The back camera through the WebView, which asks the player's leave the first time. */
-export const androidCamera: SystemCamera = {
+export const capacitorCamera: SystemCamera = {
   async open() {
     const first = await opened({ ...WANTED, facingMode: { ideal: "environment" } });
     const stream = first === null ? null : await cameraThatFocuses(first);

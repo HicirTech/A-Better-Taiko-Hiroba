@@ -15,6 +15,7 @@ import {
   REFUSED_NAME,
 } from "../scripts/mock-profile";
 import type { FolderNames, HirobaSessionPort, VerbsQueued } from "../src/shared/session-port";
+import { native } from "./capacitor-fakes";
 import {
   CLOSE_LABEL,
   HIROBA,
@@ -23,12 +24,11 @@ import {
   profilePage,
   signOutAndIn,
   until,
-} from "./android-port-fixtures";
-import { native } from "./capacitor-fakes";
+} from "./capacitor-port-fixtures";
 import { START_SET, standIn } from "./hiroba-stand-in";
 import { createFakeIndexedDb, type FakeIndexedDb } from "./indexeddb-fake";
 
-const { createAndroidPort } = await import("../src/platform/android");
+const { createCapacitorPort } = await import("../src/platform/capacitor");
 
 const OWNER = "000000000000";
 const OTHER = "111111111111";
@@ -62,7 +62,7 @@ function setUp(options: SetUpOptions = {}) {
   const hiroba = standIn({ editor, profile, favorites, session, myPage: profilePage(profile) });
   const indexedDb = options.indexedDb === undefined ? createFakeIndexedDb() : options.indexedDb;
   const launch = () =>
-    createAndroidPort({
+    createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(options.signedIn ?? true),
       ...(indexedDb !== null && { indexedDb: indexedDb.factory }),
@@ -101,7 +101,7 @@ async function signedInPort(world: ReturnType<typeof setUp>) {
   return port;
 }
 
-describe("createAndroidPort's costume writes", () => {
+describe("createCapacitorPort's costume writes", () => {
   beforeEach(() => native.reset());
 
   test("sends a change as the six requests a platform not yet checked sends, the posts as the site's script does", async () => {
@@ -254,7 +254,7 @@ describe("createAndroidPort's costume writes", () => {
   });
 });
 
-describe("createAndroidPort's folder history", () => {
+describe("createCapacitorPort's folder history", () => {
   beforeEach(() => native.reset());
 
   /** The stand-in's folder at the start. */
@@ -341,7 +341,7 @@ describe("createAndroidPort's folder history", () => {
   });
 });
 
-describe("createAndroidPort's costume history", () => {
+describe("createCapacitorPort's costume history", () => {
   beforeEach(() => native.reset());
 
   const PICTURE = /^data:image\/png;base64,/;
@@ -453,7 +453,7 @@ const TITLE_SIX_REQUESTS = [
   "GET /mypage_kisekae.php",
 ];
 
-describe("createAndroidPort's title writes", () => {
+describe("createCapacitorPort's title writes", () => {
   beforeEach(() => native.reset());
 
   test("reads the title page with one GET, and leaves its token with the platform", async () => {
@@ -627,7 +627,7 @@ const NAME_FIVE_REQUESTS = [
   "GET /mypage_top.php",
 ];
 
-describe("createAndroidPort's name writes", () => {
+describe("createCapacitorPort's name writes", () => {
   beforeEach(() => native.reset());
 
   test("sends a change as the five requests a platform not yet checked sends, with no pre-check, the post as the dialog's script does", async () => {
@@ -816,7 +816,7 @@ const READS_ASKED: Record<
 };
 
 describe.each(Object.keys(HELD_WRITES) as (keyof typeof HELD_WRITES)[])(
-  "createAndroidPort while a %s write waits mid-way",
+  "createCapacitorPort while a %s write waits mid-way",
   (kind) => {
     beforeEach(() => native.reset());
     const held = HELD_WRITES[kind];

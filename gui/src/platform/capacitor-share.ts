@@ -13,7 +13,7 @@ const SHEET_CLOSED = "Share canceled";
 
 /** Android's: the system's share sheet, and a file in the shared Documents where the system lets
  * the app keep one without asking, as from Android 11 on (the plugin says granted there). */
-export async function androidShare(): Promise<SystemShare> {
+export async function capacitorShare(): Promise<SystemShare> {
   const { publicStorage } = await Filesystem.checkPermissions();
   return {
     ways: publicStorage === "granted" ? ["share", "save"] : ["share"],

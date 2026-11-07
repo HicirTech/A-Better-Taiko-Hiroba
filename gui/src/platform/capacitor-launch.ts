@@ -4,7 +4,7 @@ import { SplashScreen } from "@capacitor/splash-screen";
 import type { SystemLaunch } from "./system-launch";
 
 /** Android's launch screen, held by Capacitor's SplashScreen plugin, and the app's pauses. */
-export const androidLaunch: SystemLaunch = {
+export const capacitorLaunch: SystemLaunch = {
   covered: () => void SplashScreen.hide(),
   listenReturns: (onReturn) => {
     // The wall clock: the steady one stands still while the device sleeps.

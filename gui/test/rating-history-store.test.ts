@@ -11,7 +11,7 @@ import {
   type RatingHistory,
   readStoredRatingHistory,
 } from "../src/hiroba-session";
-import { createIndexedDbRatingHistoryStore } from "../src/platform/android-rating-history-store";
+import { createIndexedDbRatingHistoryStore } from "../src/platform/capacitor-rating-history-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const PLAYER = "000000000000";

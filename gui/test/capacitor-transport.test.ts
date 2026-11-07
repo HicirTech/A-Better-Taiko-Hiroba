@@ -4,7 +4,7 @@ import { err, type TransportPost } from "@abth/core";
 import { ERROR_SHELL_BODY } from "../scripts/mock-costume";
 import { type NativeHttpAnswer, native, nativeBase64 } from "./capacitor-fakes";
 
-const { createAndroidTransport } = await import("../src/platform/android-transport");
+const { createCapacitorTransport } = await import("../src/platform/capacitor-transport");
 
 const UA = "Mozilla/5.0 (Linux; Android 16; wv) Chrome/153.0.0.0 Mobile Safari/537.36";
 const URL_ = "https://hiroba.test/mypage_top.php";
@@ -35,12 +35,12 @@ const post = (headers: Record<string, string> = {}): TransportPost => ({
   ],
 });
 
-describe("createAndroidTransport", () => {
+describe("createCapacitorTransport", () => {
   beforeEach(() => native.reset());
 
   test("sends the WebView's identity and no cookie of its own", async () => {
     native.httpAnswer = async () => ({ status: 200, url: URL_, headers: {}, data: "" });
-    await createAndroidTransport(UA).send({
+    await createCapacitorTransport(UA).send({
       method: "GET",
       url: URL_,
       headers: { Cookie: "x=1", "user-agent": "curl", "Content-Type": "text/plain" },
@@ -51,7 +51,7 @@ describe("createAndroidTransport", () => {
 
   test("a read keeps the platform's own redirect following and sends no body", async () => {
     native.httpAnswer = async () => ({ status: 200, url: URL_, headers: {}, data: "" });
-    await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+    await createCapacitorTransport(UA).send({ method: "GET", url: URL_ });
     const [asked] = native.httpRequests;
     expect(asked).toMatchObject({ method: "GET", connectTimeout: TIMEOUT_MS });
     expect(asked).not.toHaveProperty("disableRedirects");
@@ -66,7 +66,7 @@ describe("createAndroidTransport", () => {
       headers: { "Content-Type": "text/html", "Set-Cookie": "_token_v2=x" },
       data: nativeBase64("ドンだー\r\n\n"),
     });
-    const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+    const sent = await createCapacitorTransport(UA).send({ method: "GET", url: URL_ });
     expect(sent.ok && sent.value.url).toBe("https://hiroba.test/login.php");
     expect(sent.ok && sent.value.headers).toEqual({ "content-type": "text/html" });
     expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe("ドンだー\r\n\n");
@@ -81,7 +81,7 @@ describe("createAndroidTransport", () => {
       headers: { "Content-Type": "image/png" },
       data: nativeBase64(image),
     });
-    const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+    const sent = await createCapacitorTransport(UA).send({ method: "GET", url: URL_ });
     expect(nativeBase64(image).split("\n").length).toBeGreaterThan(2);
     expect(sent.ok && [...sent.value.body]).toEqual([...image]);
   });
@@ -94,7 +94,7 @@ describe("createAndroidTransport", () => {
         headers: { "Content-Type": "application/json; charset=UTF-8" },
         data,
       });
-      const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+      const sent = await createCapacitorTransport(UA).send({ method: "GET", url: URL_ });
       return sent.ok ? new TextDecoder().decode(sent.value.body) : null;
     };
     expect(await bodyOf({ result: 1 })).toBe('{"result":1}');
@@ -108,7 +108,7 @@ describe("createAndroidTransport", () => {
       headers: { "Content-Type": "text/html" },
       data: "not found",
     });
-    const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+    const sent = await createCapacitorTransport(UA).send({ method: "GET", url: URL_ });
     expect(sent.ok && sent.value.status).toBe(404);
     expect(sent.ok && new TextDecoder().decode(sent.value.body)).toBe("not found");
   });
@@ -118,7 +118,7 @@ describe("createAndroidTransport", () => {
       native.httpAnswer = async () => {
         throw error;
       };
-      const sent = await createAndroidTransport(UA).send({ method: "GET", url: URL_ });
+      const sent = await createCapacitorTransport(UA).send({ method: "GET", url: URL_ });
       return sent.ok ? "ok" : sent.error;
     };
     expect(
@@ -136,7 +136,7 @@ describe("createAndroidTransport", () => {
   });
 });
 
-describe("createAndroidTransport's posts", () => {
+describe("createCapacitorTransport's posts", () => {
   beforeEach(() => native.reset());
 
   const text = (body: Uint8Array) => new TextDecoder().decode(body);
@@ -144,7 +144,7 @@ describe("createAndroidTransport's posts", () => {
 
   test("is one native call: the form already encoded, its own type, and no redirect following", async () => {
     native.httpAnswers.push(answer(200, { "Content-Type": "application/json" }, { result: false }));
-    await createAndroidTransport(UA).send(
+    await createCapacitorTransport(UA).send(
       post({
         "X-Requested-With": "XMLHttpRequest",
         Accept: "application/json, text/javascript, */*; q=0.01",
@@ -180,7 +180,7 @@ describe("createAndroidTransport's posts", () => {
 
   test("keeps the pairs in the order given, repeated names included", async () => {
     native.httpAnswers.push(answer(200, {}));
-    await createAndroidTransport(UA).send({
+    await createCapacitorTransport(UA).send({
       method: "POST",
       url: POST_URL,
       form: [
@@ -205,7 +205,7 @@ describe("createAndroidTransport's posts", () => {
           landed,
         ),
       );
-      const sent = await createAndroidTransport(UA).send(
+      const sent = await createCapacitorTransport(UA).send(
         post({ "X-Requested-With": "XMLHttpRequest", "Content-Type": "text/plain" }),
       );
       expect(native.httpRequests.map(({ method, url }) => [method, url])).toEqual([
@@ -225,7 +225,7 @@ describe("createAndroidTransport's posts", () => {
     "hands back a post answered %p as it is, without a second call",
     async (status) => {
       native.httpAnswers.push(answer(status, { Location: "/mypage_top.php?again" }));
-      const sent = await createAndroidTransport(UA).send(post());
+      const sent = await createCapacitorTransport(UA).send(post());
       expect(native.httpRequests).toHaveLength(1);
       expect(sent.ok && sent.value).toMatchObject({
         status,
@@ -237,14 +237,14 @@ describe("createAndroidTransport's posts", () => {
 
   test("hands back a redirect that names no Location as it is", async () => {
     native.httpAnswers.push(answer(302, {}));
-    const sent = await createAndroidTransport(UA).send(post());
+    const sent = await createCapacitorTransport(UA).send(post());
     expect(native.httpRequests).toHaveLength(1);
     expect(sent.ok && sent.value.status).toBe(302);
   });
 
   test("fails a post whose redirect leads anywhere but http or https, after the post alone", async () => {
     native.httpAnswers.push(answer(302, { Location: "javascript:alert(1)" }));
-    expect(await createAndroidTransport(UA).send(post())).toEqual({
+    expect(await createCapacitorTransport(UA).send(post())).toEqual({
       ok: false,
       error: { kind: "unreachable", url: POST_URL },
     });
@@ -255,7 +255,7 @@ describe("createAndroidTransport's posts", () => {
     native.httpAnswers.push(
       answer(200, { "Content-Type": "application/json; charset=UTF-8" }, { result: 0 }),
     );
-    const sent = await createAndroidTransport(UA).send(post());
+    const sent = await createCapacitorTransport(UA).send(post());
     expect(sent.ok && text(sent.value.body)).toBe('{"result":0}');
     expect(sent.ok && sent.value.headers).toEqual({
       "content-type": "application/json; charset=UTF-8",
@@ -266,13 +266,13 @@ describe("createAndroidTransport's posts", () => {
     native.httpAnswers.push(
       answer(200, { "Content-Type": "text/html; charset=utf-8" }, nativeBase64(ERROR_SHELL_BODY)),
     );
-    const sent = await createAndroidTransport(UA).send(post());
+    const sent = await createCapacitorTransport(UA).send(post());
     expect(sent.ok && text(sent.value.body)).toBe(ERROR_SHELL_BODY);
   });
 
   test("brings a 404 back as the text Capacitor reads it as", async () => {
     native.httpAnswers.push(answer(404, { "Content-Type": "text/html" }, "not found"));
-    const sent = await createAndroidTransport(UA).send(post());
+    const sent = await createCapacitorTransport(UA).send(post());
     expect(sent.ok && [sent.value.status, text(sent.value.body)]).toEqual([404, "not found"]);
   });
 
@@ -282,7 +282,7 @@ describe("createAndroidTransport's posts", () => {
       native.httpAnswer = async () => {
         throw error;
       };
-      const sent = await createAndroidTransport(UA).send(post());
+      const sent = await createCapacitorTransport(UA).send(post());
       expect(native.httpRequests).toHaveLength(1);
       return sent.ok ? "ok" : sent.error;
     };
@@ -299,7 +299,7 @@ describe("createAndroidTransport's posts", () => {
     native.httpAnswers.push(answer(302, { Location: "/mypage_top.php" }), async () => {
       throw nativeError("SocketTimeoutException", "Read timed out");
     });
-    expect(await createAndroidTransport(UA).send(post())).toEqual({
+    expect(await createCapacitorTransport(UA).send(post())).toEqual({
       ok: false,
       error: { kind: "timedOut", url: POST_URL },
     });
@@ -307,7 +307,7 @@ describe("createAndroidTransport's posts", () => {
   });
 
   test("a signal aborted before the post makes no call at all", async () => {
-    const sent = await createAndroidTransport(UA).send(post(), AbortSignal.abort());
+    const sent = await createCapacitorTransport(UA).send(post(), AbortSignal.abort());
     expect(sent).toEqual(cancelled);
     expect(native.httpRequests).toEqual([]);
   });
@@ -319,7 +319,7 @@ describe("createAndroidTransport's posts", () => {
       new Promise((resolve) => {
         finish = () => resolve({ status: 200, url: POST_URL, headers: {}, data: "" });
       });
-    const sending = createAndroidTransport(UA).send(post(), controller.signal);
+    const sending = createCapacitorTransport(UA).send(post(), controller.signal);
     controller.abort();
     expect(await sending).toEqual(cancelled);
     expect(native.httpRequests).toHaveLength(1);

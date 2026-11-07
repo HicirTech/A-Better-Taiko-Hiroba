@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import { PICTURE_EPOCH, type PictureKey } from "../src/hiroba-session";
-import type { DatabaseFactory } from "../src/platform/android-indexeddb";
+import type { DatabaseFactory } from "../src/platform/capacitor-indexeddb";
 import {
   CHART_PICTURE_DATABASE,
   createIndexedDbPictureStore,
-} from "../src/platform/android-picture-store";
+} from "../src/platform/capacitor-picture-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const TAIKO_NO = "000000000000";

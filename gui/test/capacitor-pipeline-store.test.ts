@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createIndexedDbPipelineStores } from "../src/platform/android-pipeline-store";
+import { createIndexedDbPipelineStores } from "../src/platform/capacitor-pipeline-store";
 import type { PipelineHistory } from "../src/shared/pipelines";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 

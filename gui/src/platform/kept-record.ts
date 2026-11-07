@@ -1,5 +1,5 @@
 import { isObject } from "../hiroba-session/recent-plays-store";
-import { completed, type Database, succeeded } from "./android-indexeddb";
+import { completed, type Database, succeeded } from "./capacitor-indexeddb";
 
 /** The shape a record is kept in, which a later shape would change. */
 const RECORD_VERSION = 1;

@@ -1,5 +1,5 @@
 import { type PipelineHistoryStore, readPipelineHistory } from "../shared/pipelines";
-import { completed, type DatabaseFactory, lazyDatabase, succeeded } from "./android-indexeddb";
+import { completed, type DatabaseFactory, lazyDatabase, succeeded } from "./capacitor-indexeddb";
 
 const DATABASE = "abth-pipelines";
 const DATABASE_VERSION = 1;

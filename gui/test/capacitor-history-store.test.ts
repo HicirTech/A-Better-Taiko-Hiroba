@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import { createIndexedDbHistoryStore } from "../src/platform/android-history-store";
-import type { DatabaseFactory } from "../src/platform/android-indexeddb";
+import { createIndexedDbHistoryStore } from "../src/platform/capacitor-history-store";
+import type { DatabaseFactory } from "../src/platform/capacitor-indexeddb";
 import { entryOf, pictureOf, SET } from "./history-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 

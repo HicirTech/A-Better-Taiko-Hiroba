@@ -10,7 +10,7 @@ import {
   type DatabaseFactory,
   openDatabase,
   succeeded,
-} from "./android-indexeddb";
+} from "./capacitor-indexeddb";
 
 const PICTURE_DATABASE = "abth-pictures";
 /** Chart pictures have a database of their own, so neither kind's clearing reaches the other. */

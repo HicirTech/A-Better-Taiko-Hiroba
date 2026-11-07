@@ -7,7 +7,7 @@ import {
 } from "@capacitor/inappbrowser";
 
 import {
-  ANDROID_PICTURE_LIMITS,
+  CAPACITOR_PICTURE_LIMITS,
   createMemoryPictureStore,
   createMemoryRatingHistoryStore,
   createMemoryRecentPlaysStore,
@@ -74,20 +74,20 @@ import { feedUrlFor, readUpdateFeed } from "../shared/updates";
 import {
   createIndexedDbFolderHistoryStore,
   createIndexedDbHistoryStore,
-} from "./android-history-store";
-import type { DatabaseFactory } from "./android-indexeddb";
+} from "./capacitor-history-store";
+import type { DatabaseFactory } from "./capacitor-indexeddb";
 import {
   CHART_DENSITY_DATABASE,
   CHART_PICTURE_DATABASE,
   createIndexedDbPictureStore,
   DRAWN_CHART_DATABASE,
-} from "./android-picture-store";
-import { createIndexedDbPipelineStores } from "./android-pipeline-store";
-import { createIndexedDbRatingHistoryStore } from "./android-rating-history-store";
-import { createIndexedDbRecentPlaysStore } from "./android-recent-plays-store";
-import { createIndexedDbScoreChangesStore } from "./android-score-changes-store";
-import { createIndexedDbScoresStore } from "./android-scores-store";
-import { createAndroidTransport } from "./android-transport";
+} from "./capacitor-picture-store";
+import { createIndexedDbPipelineStores } from "./capacitor-pipeline-store";
+import { createIndexedDbRatingHistoryStore } from "./capacitor-rating-history-store";
+import { createIndexedDbRecentPlaysStore } from "./capacitor-recent-plays-store";
+import { createIndexedDbScoreChangesStore } from "./capacitor-score-changes-store";
+import { createIndexedDbScoresStore } from "./capacitor-scores-store";
+import { createCapacitorTransport } from "./capacitor-transport";
 
 const endpoints: HirobaEndpoints = import.meta.env.DEV
   ? endpointsFromOverrides(
@@ -150,7 +150,7 @@ const cdnUrl = catalogueUrlFor(
   ABTH_CDN_URL,
 );
 
-export interface AndroidPortOptions {
+export interface CapacitorPortOptions {
   /** Asked each time the browser opens, so it follows a language picked since. */
   readonly closeLabel: () => string;
   /** Remembers a finished sign-in: CapacitorCookies.getCookies cannot see the session cookie. */
@@ -197,8 +197,10 @@ const localStorageFlag: SignedInFlag = {
 };
 
 /** The Android port. Its session is the WebView's cookie store, which this code cannot read. */
-export async function createAndroidPort(options: AndroidPortOptions): Promise<HirobaSessionPort> {
-  const transport = createAndroidTransport();
+export async function createCapacitorPort(
+  options: CapacitorPortOptions,
+): Promise<HirobaSessionPort> {
+  const transport = createCapacitorTransport();
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
   const pipelineStore =
@@ -253,7 +255,7 @@ export async function createAndroidPort(options: AndroidPortOptions): Promise<Hi
         ? createMemoryPictureStore()
         : createIndexedDbPictureStore(options.indexedDb),
     pipeline: pipelines.io,
-    limits: ANDROID_PICTURE_LIMITS,
+    limits: CAPACITOR_PICTURE_LIMITS,
     state: () => ({ signedIn, offered, owner, sources }),
   });
   const chartPictures = createChartPictureReader({

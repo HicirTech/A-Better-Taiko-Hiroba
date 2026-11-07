@@ -10,7 +10,7 @@ import {
 import { type NativeHttpAnswer, native, nativeBase64 } from "./capacitor-fakes";
 import { START_SET, standIn } from "./hiroba-stand-in";
 
-const { createAndroidTransport } = await import("../src/platform/android-transport");
+const { createCapacitorTransport } = await import("../src/platform/capacitor-transport");
 
 const UA = "Mozilla/5.0 (Linux; Android 16; wv) Chrome/153.0.0.0 Mobile Safari/537.36";
 const ORIGIN = "https://hiroba.test";
@@ -29,7 +29,7 @@ const answer =
   (status: number, headers: Record<string, string>, data: unknown = "", url = SAVE_URL) =>
   async (): Promise<NativeHttpAnswer> => ({ status, url, headers, data });
 
-const sendPost = () => postAjax(createAndroidTransport(UA), ORIGIN, POST);
+const sendPost = () => postAjax(createCapacitorTransport(UA), ORIGIN, POST);
 
 describe("postAjax over Android's transport", () => {
   beforeEach(() => native.reset());
@@ -118,7 +118,7 @@ describe("a costume write over Android's transport", () => {
     const outcome = await changeCostume(
       { expected: START_SET, target: { ...START_SET, colorFace: 3 } },
       {
-        transport: createAndroidTransport(UA),
+        transport: createCapacitorTransport(UA),
         hirobaOrigin: ORIGIN,
         now: () => new Date("2026-09-27T03:00:00Z"),
         crossCheck: false,

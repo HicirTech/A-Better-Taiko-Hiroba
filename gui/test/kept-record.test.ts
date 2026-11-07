@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { lazyDatabase } from "../src/platform/android-indexeddb";
+import { lazyDatabase } from "../src/platform/capacitor-indexeddb";
 import { keptRecords } from "../src/platform/kept-record";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 

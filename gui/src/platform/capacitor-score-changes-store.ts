@@ -1,5 +1,5 @@
 import { readStoredScoreChanges, type ScoreChangesStore } from "../hiroba-session";
-import { type DatabaseFactory, lazyDatabase } from "./android-indexeddb";
+import { type DatabaseFactory, lazyDatabase } from "./capacitor-indexeddb";
 import { keptRecords } from "./kept-record";
 
 const DATABASE = "abth-score-changes-2";

@@ -64,32 +64,32 @@ export async function connectPlatform({
   }
   if (Capacitor.getPlatform() === "android") {
     const [
-      { createAndroidPort },
-      { androidBack },
-      { androidCamera },
-      { androidLaunch },
-      { androidLink },
-      { androidShare },
-      { androidToast },
+      { createCapacitorPort },
+      { capacitorBack },
+      { capacitorCamera },
+      { capacitorLaunch },
+      { capacitorLink },
+      { capacitorShare },
+      { capacitorToast },
     ] = await Promise.all([
-      import("./android"),
-      import("./android-back"),
-      import("./android-camera"),
-      import("./android-launch"),
-      import("./android-link"),
-      import("./android-share"),
-      import("./android-toast"),
+      import("./capacitor"),
+      import("./capacitor-back"),
+      import("./capacitor-camera"),
+      import("./capacitor-launch"),
+      import("./capacitor-link"),
+      import("./capacitor-share"),
+      import("./capacitor-toast"),
     ]);
-    const port = settledPort(await createAndroidPort({ closeLabel, indexedDb: indexedDB }));
+    const port = settledPort(await createCapacitorPort({ closeLabel, indexedDb: indexedDB }));
     return {
       shell: "android",
       port,
-      link: androidLink,
-      share: await androidShare(),
-      back: androidBack,
-      toast: androidToast,
-      camera: androidCamera,
-      launch: androidLaunch,
+      link: capacitorLink,
+      share: await capacitorShare(),
+      back: capacitorBack,
+      toast: capacitorToast,
+      camera: capacitorCamera,
+      launch: capacitorLaunch,
     };
   }
   return null;

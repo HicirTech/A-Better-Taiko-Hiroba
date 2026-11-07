@@ -74,7 +74,10 @@ export const DESKTOP_PICTURE_LIMITS: PictureLimits = {
   budget: 300,
 };
 
-export const ANDROID_PICTURE_LIMITS: PictureLimits = { ...DESKTOP_PICTURE_LIMITS, timeoutMs: null };
+export const CAPACITOR_PICTURE_LIMITS: PictureLimits = {
+  ...DESKTOP_PICTURE_LIMITS,
+  timeoutMs: null,
+};
 
 export interface PictureClock {
   now(): number;
