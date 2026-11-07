@@ -43,7 +43,7 @@ const chartButton = (difficulty: Difficulty) => {
   // Tight enough that five charts stand in one row on a phone 360 pixels wide.
   return {
     gap: 0.25,
-    px: 0.5,
+    px: 0.375,
     py: 0.5,
     textTransform: "none",
     fontWeight: "fontWeightBold",
@@ -285,7 +285,7 @@ function DetailsBody({
             id="song-details-charts"
             role="group"
             aria-label={t("details.charts")}
-            sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}
+            sx={{ display: "flex", flexWrap: "wrap", gap: 0.375 }}
           >
             {charted.map(({ difficulty, level }, index) => (
               <ToggleButton
