@@ -4,9 +4,9 @@ import { type ChartGroup, groupId } from "./groups";
 import type { KnownChart } from "./known-charts";
 
 /** The share of the played charts, by high score, that count as the player's good scores. */
-export const GOOD_PERCENT = 10;
+const GOOD_PERCENT = 10;
 /** The played charts a group needs before it can be marked: a few lucky ones say little. */
-export const MARK_MIN_PLAYED = 10;
+const MARK_MIN_PLAYED = 10;
 
 /** The keys of the charts whose high scores are among the best tenth, at least one. */
 export function goodScores(charts: readonly KnownChart[]): ReadonlySet<string> {

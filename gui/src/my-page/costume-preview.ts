@@ -13,7 +13,7 @@ export interface PreviewState {
 
 export const NO_PREVIEW: PreviewState = { image: null, loading: false, failure: null };
 
-export const PREVIEW_DELAY_MS = 300;
+const PREVIEW_DELAY_MS = 300;
 const MAX_KEPT_PICTURES = 8;
 
 export interface PreviewTimers {

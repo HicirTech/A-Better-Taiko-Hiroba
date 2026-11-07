@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { FADE_MS, moveWindow } from "./window-move";
 
 /** How long a read may run before its page shows a skeleton: a quicker one shows none. */
-export const SKELETON_AFTER_MS = 400;
+const SKELETON_AFTER_MS = 400;
 
 const FADE_IN = keyframes`from { opacity: 0; }`;
 

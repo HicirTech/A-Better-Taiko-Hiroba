@@ -1,9 +1,9 @@
 import type { KnownChart } from "./known-charts";
 
 /** A clear is near a full combo when its Bad are at most this many per mille of its notes. */
-export const NEAR_BAD_PER_MILLE = 8;
+const NEAR_BAD_PER_MILLE = 8;
 /** A full combo is near a donderful when its OK are at most this many per mille of its notes. */
-export const NEAR_OK_PER_MILLE = 15;
+const NEAR_OK_PER_MILLE = 15;
 
 /** A chart and how many Bad, or OK, stand between it and its next crown. */
 export interface NearMiss {

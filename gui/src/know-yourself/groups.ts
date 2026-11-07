@@ -1,12 +1,12 @@
 import type { KnownChart } from "./known-charts";
 
 /** How wide a band of hits per second is. */
-export const HITS_PER_SECOND_STEP = 0.5;
+const HITS_PER_SECOND_STEP = 0.5;
 /** How wide a band of BPM is. */
-export const BPM_STEP = 20;
+const BPM_STEP = 20;
 /** Tempos below this, and from this up, are one band each: few songs are that slow or that fast. */
-export const BPM_LOW = 80;
-export const BPM_HIGH = 300;
+const BPM_LOW = 80;
+const BPM_HIGH = 300;
 
 /** A row of charts: a star level, a band from `from` up to `to`, a changing tempo, or no data. */
 export type GroupKey =

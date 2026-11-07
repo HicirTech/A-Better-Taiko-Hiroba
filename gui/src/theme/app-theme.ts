@@ -81,7 +81,7 @@ const navigationTheme = (tokens: ThemeTokens, palette: PaletteOptions): Theme =>
   });
 
 /** The app's theme made from `tokens`, in light and in dark. */
-export function createAppTheme(tokens: ThemeTokens): Theme {
+function createAppTheme(tokens: ThemeTokens): Theme {
   const theme = createTheme({
     colorSchemes: { light: { palette: tokens.light }, dark: { palette: tokens.dark } },
     ...shapeAndType(tokens),

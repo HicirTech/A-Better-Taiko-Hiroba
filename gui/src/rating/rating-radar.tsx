@@ -16,7 +16,7 @@ export interface RadarFigure {
 }
 
 /** The scale's ends: from a whole step under the lowest figure to the step over the highest. */
-export function radarScale(values: readonly number[]): {
+function radarScale(values: readonly number[]): {
   readonly low: number;
   readonly high: number;
 } {

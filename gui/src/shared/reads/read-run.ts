@@ -42,7 +42,7 @@ export interface ReadRun<F, P> {
   forget(): void;
 }
 
-export const PROGRESS_POLL_MS = 200;
+const PROGRESS_POLL_MS = 200;
 
 const UNREAD = { phase: "unread", failure: null, progress: null } as const;
 

@@ -12,7 +12,7 @@ export const GIFT_CODE_PX = 560;
 export const SNAPSHOT_PIXEL_RATIO = 1;
 // A file goes out as a WebP, which Discord and WeChat take; the clipboard holds a PNG alone.
 // Either is encoded once, from the drawn card.
-export const SNAPSHOT_TYPE: Readonly<Record<PictureWay, PictureType>> = {
+const SNAPSHOT_TYPE: Readonly<Record<PictureWay, PictureType>> = {
   copy: "image/png",
   save: "image/webp",
   share: "image/webp",
