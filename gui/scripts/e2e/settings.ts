@@ -39,7 +39,7 @@ export async function language(ctx: Ctx) {
     await inLanguage.until("サンプルどん");
     await inLanguage.goTo("settings");
     results.systemLanguageTaken = same(await languageShown(inLanguage.page), {
-      lang: "zh-Hant",
+      lang: "zh-Hant-HK",
       title: "A Better Taiko Hiroba",
       overview: zhHant.t("nav.overview"),
       checked: SYSTEM_ZH_HANT,
@@ -57,7 +57,7 @@ export async function language(ctx: Ctx) {
         ["en", "English"],
         ["ja", "日本語"],
         ["zh-Hans", "简体中文"],
-        ["zh-Hant", "繁體中文"],
+        ["zh-Hant-HK", "繁體中文"],
       ]);
     await inLanguage.click("#language-zh-Hant");
     await stop(inLanguage);
@@ -74,7 +74,7 @@ export async function language(ctx: Ctx) {
       (await inLanguage.currentPage()) === "settings" &&
       (await inLanguage.textOf("#sign-in")) === null;
     const kept = await languageShown(inLanguage.page);
-    results.shownLanguagePickKept = same([kept.lang, kept.checked], ["zh-Hant", "繁體中文"]);
+    results.shownLanguagePickKept = same([kept.lang, kept.checked], ["zh-Hant-HK", "繁體中文"]);
     await inLanguage.click("#language-ja");
     await inLanguage.until(ja.t("settings.account"));
     results.pickTakesHold = same(await languageShown(inLanguage.page), {
@@ -94,7 +94,7 @@ export async function language(ctx: Ctx) {
     await inLanguage.click("#language-system");
     await inLanguage.until(zhHant.t("settings.account"));
     results.systemDefaultTakesHold = same(await languageShown(inLanguage.page), {
-      lang: "zh-Hant",
+      lang: "zh-Hant-HK",
       title: "A Better Taiko Hiroba",
       overview: zhHant.t("nav.overview"),
       checked: SYSTEM_ZH_HANT,
