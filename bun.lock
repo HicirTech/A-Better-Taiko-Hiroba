@@ -32,6 +32,7 @@
         "@capacitor/core": "8.5.2",
         "@capacitor/filesystem": "8.1.5",
         "@capacitor/inappbrowser": "4.0.3",
+        "@capacitor/ios": "8.5.2",
         "@capacitor/share": "8.0.3",
         "@capacitor/splash-screen": "8.0.2",
         "@capacitor/toast": "8.0.1",
@@ -138,6 +139,8 @@
     "@capacitor/filesystem": ["@capacitor/filesystem@8.1.5", "", { "dependencies": { "@capacitor/synapse": "^1.0.4" }, "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-m1RkI8L83NJeppEKyRWioK3MDp2vjlA+QfUQcF8/xRlcXNC2HYxqoyYJ+K4M0EcVovy+g+4F24S05+bhK4Vgdg=="],
 
     "@capacitor/inappbrowser": ["@capacitor/inappbrowser@4.0.3", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-Jnl6Ssp2QZByncO6QhDKzNpi3yeum1aSQM+70VMVh8TJ16HOwOrcTnf8E4+7FpT9ruSRGyhqQu1yBSrpl+wD1g=="],
+
+    "@capacitor/ios": ["@capacitor/ios@8.5.2", "", { "peerDependencies": { "@capacitor/core": "^8.5.0" } }, "sha512-eOT2S67AfTFG7KN0T3oxwAajrJz4rSye+ODfvChiwrk0F/+kWufFM1qU6cDjGJUOfwdAoeuEpZyWHSwZlu4GFg=="],
 
     "@capacitor/share": ["@capacitor/share@8.0.3", "", { "peerDependencies": { "@capacitor/core": ">=8.0.0" } }, "sha512-gnvZBV1NPu2B8vd1UKncR56G15ueHd0aZLqgDov++t3SmTBG9Q0VrAZ1VnHn5stxlmglVaTb4RwopMgbpLzroA=="],
 

@@ -1,0 +1,33 @@
+{
+  "originHash" : "4b78a4e6a15ce71b04d398fb978f47627f53179e57be2492c25e5b1fedf663be",
+  "pins" : [
+    {
+      "identity" : "capacitor-swift-pm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ionic-team/capacitor-swift-pm.git",
+      "state" : {
+        "revision" : "0b6882e9a3288342aacf36348e5a94e4f1dd7b13",
+        "version" : "8.5.2"
+      }
+    },
+    {
+      "identity" : "ion-ios-filesystem",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ionic-team/ion-ios-filesystem.git",
+      "state" : {
+        "revision" : "549c18ad9d9bb70d05df37cc3f6f7aa7f5d0ee52",
+        "version" : "2.0.1"
+      }
+    },
+    {
+      "identity" : "osinappbrowserlib-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/OutSystems/OSInAppBrowserLib-iOS.git",
+      "state" : {
+        "revision" : "dba78d3eb49df762896aaa527f2a2581f9066c8f",
+        "version" : "2.3.2"
+      }
+    }
+  ],
+  "version" : 3
+}
