@@ -29,6 +29,7 @@
     "android:release": "bun gui/scripts/android.ts release",
     "ios:build": "bun gui/scripts/ios.ts build",
     "ios:ipa": "bun gui/scripts/ios.ts ipa",
+    "ios:source": "bun gui/scripts/altstore-source.ts",
     "ios:run": "bun gui/scripts/ios.ts run",
     "ios:live": "bun gui/scripts/ios.ts live",
     "check": "bun run --parallel --no-exit-on-error format:check lint typecheck test check:update-feed",
