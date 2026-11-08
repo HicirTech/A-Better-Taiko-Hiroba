@@ -4,6 +4,7 @@ import { chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "./mock-dan-label";
 import { danPlatePng } from "./mock-dan-plate";
+import { editorAnswer, enteredPost, type MockAsk, page, redirect } from "./mock-editor-routes";
 import { ESE_CHARTS_PATH, ESE_MAPPING, ESE_MAPPING_PATH, eseChart } from "./mock-ese";
 import { createFavoritesEditor } from "./mock-favorites";
 import { createPlayHistory } from "./mock-history";
@@ -66,6 +67,7 @@ const costume = createCostumeEditor();
 const profile = createProfileEditor({ issue: costume.issueTicket });
 /** The favourite editors, and the favourites my page shows; the token is shared here too. */
 const favorites = createFavoritesEditor({ issue: costume.issueTicket });
+const EDITORS = { costume, profile, favorites };
 const history = createPlayHistory();
 const scores = createScorePages(history);
 /** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
@@ -95,15 +97,6 @@ function log(host: string, request: Request, note = "") {
   );
 }
 
-const page = (body: string) =>
-  new Response(
-    `<!doctype html><html><head><meta charset="utf-8"></head><body>${body}</body></html>`,
-    {
-      headers: { "content-type": "text/html; charset=utf-8" },
-    },
-  );
-const redirect = (location: string, headers: Record<string, string> = {}) =>
-  new Response(null, { status: 302, headers: { location, ...headers } });
 // As file.taiko.wiki sends a picture, with no Content-Type: Bun types bytes, but not a stream.
 const untyped = (bytes: Uint8Array) =>
   new Response(
@@ -247,28 +240,17 @@ ${favorites.myPageBlocks(ticket)}
 ${profile.renameDialog(ticket)}`;
 }
 
-async function ajaxEntry(
-  request: Request,
-  session: MockSession | undefined,
-  record: (form: URLSearchParams) => void,
-): Promise<{ form: URLSearchParams; session: MockSession } | Response> {
-  if (request.method !== "POST") {
-    return new Response("not found", { status: 404 });
-  }
-  const form = new URLSearchParams(await request.text());
-  record(form);
-  if (request.headers.get("x-requested-with") !== "XMLHttpRequest") {
-    return page(ERROR_SHELL_BODY);
-  }
-  if (postToLogin || !session?.cardChosen) {
+/** What `/__post-to-login` and `/__post-redirect` make of a signed-in post; null for nothing. */
+function postDetour(): Response | null {
+  if (postToLogin) {
     return redirect("/login.php");
   }
-  if (redirectNextPost !== null) {
-    const { status, rotate } = redirectNextPost;
-    redirectNextPost = null;
-    return redirectedPost(status, rotate);
+  if (redirectNextPost === null) {
+    return null;
   }
-  return { form, session };
+  const { status, rotate } = redirectNextPost;
+  redirectNextPost = null;
+  return redirectedPost(status, rotate);
 }
 
 function redirectedPost(status: number, rotate: boolean): Response {
@@ -337,6 +319,17 @@ Bun.serve({
               ? optionIconPng(option)
               : courseIconPng(Number(course));
       return new Response(body, { headers: { "content-type": "image/png" } });
+    }
+    const ask: MockAsk = {
+      request,
+      session,
+      signedIn: session?.cardChosen === true,
+      endSessions: () => sessions.clear(),
+      beforePost: postDetour,
+    };
+    const edited = await editorAnswer(EDITORS, ask);
+    if (edited !== null) {
+      return edited;
     }
     switch (pathname) {
       case "/login.php":
@@ -413,7 +406,7 @@ Bun.serve({
         return page(detail ?? ERROR_SHELL_BODY);
       }
       case "/ajax/update_score.php": {
-        const entered = await ajaxEntry(request, session, () => undefined);
+        const entered = await enteredPost(ask, () => undefined);
         if (entered instanceof Response) {
           return entered;
         }
@@ -421,89 +414,6 @@ Bun.serve({
           history.refresh(entered.session, entered.form, `${HIROBA}/mypage_top.php`),
         );
       }
-      case "/mypage_kisekae.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return page(costume.page(session));
-      case "/ajax/check_ip_kisekae.php":
-      case "/ajax/change_mydon.php": {
-        const entered = await ajaxEntry(request, session, (form) =>
-          costume.record(pathname, request, form, session),
-        );
-        if (entered instanceof Response) {
-          return entered;
-        }
-        if (pathname === "/ajax/check_ip_kisekae.php") {
-          await costume.precheckLetThrough();
-          return costume.precheck();
-        }
-        return costume.save(entered.session, entered.form, () => sessions.clear());
-      }
-      case "/mypage_title_edit.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return page(profile.titlePage(session));
-      case "/ajax/check_ip_title.php":
-      case "/ajax/change_mydon_profile.php": {
-        const entered = await ajaxEntry(request, session, (form) =>
-          profile.record(pathname, request, form, session),
-        );
-        if (entered instanceof Response) {
-          return entered;
-        }
-        if (pathname === "/ajax/check_ip_title.php") {
-          await profile.precheckLetThrough();
-          return profile.precheck();
-        }
-        await profile.saveLetThrough();
-        return profile.save(entered.session, entered.form, () => sessions.clear());
-      }
-      case "/favorite_song_select.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return page(favorites.folderPage(session, searchParams));
-      case "/portal_favorite_song_select.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return page(favorites.favoriteSongPage(session));
-      case "/form_data.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return redirect(
-          favorites.enterPicker(session, searchParams) ? "/select_song.php" : "/index.php",
-        );
-      case "/select_song.php": {
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        const shown = favorites.pickerPage(session, Number(searchParams.get("genre") ?? "1"));
-        return shown === null ? redirect("/index.php") : page(shown);
-      }
-      case "/ajax/myfavorite_song.php":
-      case "/ajax/mypage_song.php": {
-        const entered = await ajaxEntry(request, session, (form) =>
-          favorites.record(pathname, request, form, session),
-        );
-        if (entered instanceof Response) {
-          return entered;
-        }
-        return pathname === "/ajax/myfavorite_song.php"
-          ? favorites.saveFolder(entered.session, entered.form)
-          : favorites.saveFavoriteSong(entered.session, entered.form);
-      }
-      case "/imgsrc_mydon.php":
-        return costume.preview(new URL(request.url).search, session?.cardChosen === true);
-      case "/imgsrc_kisekae.php":
-        return costume.thumbnail(
-          searchParams,
-          session?.cardChosen === true,
-          request.headers.get("referer"),
-        );
       case "/imgsrc_titleplate.php": {
         // Drawn for the session: whoever holds it, wearing what my page shows now.
         const signedIn = session?.cardChosen === true;
