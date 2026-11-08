@@ -88,7 +88,7 @@ export function AppFrame({
   wide: boolean;
   /** A touch screen: swipes open the menu and the pipelines page. */
   touchFirst: boolean;
-  back?: SystemBack;
+  back?: SystemBack | undefined;
   /** The page one level past the menu; without it there is no way there. */
   pipelines?: ReactNode;
   children: ReactNode;

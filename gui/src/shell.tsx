@@ -48,7 +48,7 @@ export function Shell({
   const [page, navigate] = useShownPage(keptPage, keepPage);
   const [signedIn, setSignedIn] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const cover = useLaunchCover(platform?.shell === "capacitor" ? platform.launch : null);
+  const cover = useLaunchCover(platform?.launch ?? null);
   const { drawn } = cover;
   // With no app, the window's first screen is the page drawn here at once.
   useEffect(() => {
@@ -80,7 +80,7 @@ export function Shell({
         touchFirst={touchFirst}
         pages={PAGE_REGISTRY}
         onScan={signedIn ? () => setScanning(true) : undefined}
-        {...(platform?.shell === "capacitor" ? { back: platform.back } : {})}
+        back={platform?.back}
         {...(platform !== null
           ? { pipelines: <PipelinesPage port={platform.port} i18n={i18n} /> }
           : {})}
@@ -100,9 +100,8 @@ export function Shell({
             onSignedIn={setSignedIn}
             covered={cover.shown}
             onDrawn={drawn}
-            {...(platform.shell === "capacitor"
-              ? { toast: platform.toast, camera: platform.camera }
-              : {})}
+            toast={platform.toast}
+            camera={platform.camera}
           />
         ) : page === "settings" ? (
           <SettingsPage

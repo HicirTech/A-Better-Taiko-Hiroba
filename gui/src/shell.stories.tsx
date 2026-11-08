@@ -18,7 +18,7 @@ function OnTheDesktop({ globals }: { readonly globals: StoryGlobals }) {
   const [port] = useState(createStoryPort);
   return (
     <Shell
-      platform={{ shell: "desktop", port, link: STORY_LINK, share: STORY_COPY_OR_SAVE }}
+      platform={{ port, link: STORY_LINK, share: STORY_COPY_OR_SAVE }}
       onShown={action("shown in a language")}
       appearance={appearanceOf(globals)}
     />

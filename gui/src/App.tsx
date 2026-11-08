@@ -43,11 +43,11 @@ export interface AppProps {
   /** Settings' appearance section, drawn by the window that holds the theme. */
   readonly appearance: ReactNode;
   /** The shell's Toast, where it has one: a long-press names a legend's item by it. */
-  readonly toast?: SystemToast;
+  readonly toast?: SystemToast | undefined;
   /** The shell's ways out for a picture the app made of a page. */
   readonly share: SystemShare;
   /** The phone's camera, where the shell has one: a scan reads its view. */
-  readonly camera?: SystemCamera;
+  readonly camera?: SystemCamera | undefined;
   /** The navigation's scan button was pressed, until the scan says it has read. */
   readonly scanning: boolean;
   readonly onScanned: () => void;
@@ -56,7 +56,7 @@ export interface AppProps {
   /** The launch cover stands over the window: a page's tips wait for it to go. */
   readonly covered?: boolean;
   /** The window's first screen is drawn: a page, its skeleton, the sign-in or a failure. */
-  readonly onDrawn?: () => void;
+  readonly onDrawn?: (() => void) | undefined;
 }
 
 export function App({
