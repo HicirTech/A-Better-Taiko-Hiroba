@@ -1,9 +1,8 @@
-import type { RatingSystem } from "@abth/core";
-
 import {
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
+  type SiteAddresses,
 } from "../src/hiroba-session";
 import { RATING_DATA_URL } from "../src/shared/rating-data/rating-links";
 import {
@@ -18,7 +17,7 @@ import { feedUrlFor } from "../src/shared/updates";
 
 export type Environment = Readonly<Record<string, string | undefined>>;
 
-export interface DesktopEnvironment {
+export interface DesktopEnvironment extends SiteAddresses {
   /** Where the renderer comes from: Vite's dev server; undefined for the bundle the app serves. */
   readonly devServerUrl: string | undefined;
   /** Hiroba, the ID host and the picture host: the real sites, or the stand-in in development. */
@@ -27,22 +26,6 @@ export interface DesktopEnvironment {
   readonly userData: string | undefined;
   /** The clock a write checks Hiroba's daily break against; development can fix it. */
   readonly now: () => Date;
-  /** Where the update feed is read; undefined when this run checks for no update. */
-  readonly updateFeedUrl: string | undefined;
-  /** Where taiko.wiki's song list is read; undefined when this run reads none. */
-  readonly songCatalogueUrl: string | undefined;
-  /** Where the Chinese wiki's song names are read; undefined when this run reads none. */
-  readonly chineseNamesUrl: string | undefined;
-  /** Where each rating system's data is read; undefined when this run reads none. */
-  readonly ratingDataUrls: Readonly<Record<RatingSystem, string | undefined>>;
-  /** The stand-in's origin chart pictures are read from too; undefined when this run has none. */
-  readonly chartOrigin: string | undefined;
-  /** Where the map of song numbers to chart files is read; undefined when this run reads none. */
-  readonly eseMappingUrl: string | undefined;
-  /** Where the chart files are read; undefined when this run reads none. */
-  readonly eseChartsUrl: string | undefined;
-  /** Where ABTH CDN's drawings and note counts are read; undefined when this run reads none. */
-  readonly cdnUrl: string | undefined;
   /** Windows open off every display, out of the taskbar and unfocused, for runs nobody watches. */
   readonly offScreen: boolean;
   /** Where a saved picture goes without the save box asking; undefined asks the player where. */

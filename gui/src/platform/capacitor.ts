@@ -1,4 +1,3 @@
-import { err, ok, type Transport } from "@abth/core";
 import { CapacitorCookies } from "@capacitor/core";
 import {
   DefaultAndroidWebViewOptions,
@@ -9,73 +8,36 @@ import {
 
 import {
   CAPACITOR_PICTURE_LIMITS,
+  createHirobaServices,
   createMemoryPictureStore,
-  createPictureReader,
-  createRatingHistory,
-  createRecentPlaysReader,
-  createRecentPreviews,
-  createScoresReader,
-  createSessionWrites,
   endpointsFromOverrides,
   HIROBA_ENDPOINTS,
   type HirobaEndpoints,
-  type HistoryStore,
   idpOrigin,
   KEPT_COSTUME_HISTORY,
   KEPT_FOLDER_HISTORY,
-  KEPT_RATING_HISTORY,
-  KEPT_RECENT_PLAYS,
-  KEPT_SCORE_CHANGES,
-  KEPT_SCORES,
+  type KeptStore,
   type KeptThing,
-  keepHirobaEnded,
   keptMemoryStore,
   loginPageUrl,
-  offeredOf,
-  type PictureSources,
-  previewCostume,
   queuePort,
-  readOwnProfile,
-  sessionEnded,
+  type SiteAddresses,
   signInHost,
   signInStep,
   systemBrowserEntryUrl,
-  viewOfPipelines,
 } from "../hiroba-session";
-import {
-  createMemoryPipelineStore,
-  createPipeline,
-  createPipelineLog,
-  EXTERNAL_READ_CONSUMERS,
-  HISTORY_READ_CONSUMERS,
-  IO_READ_CONSUMERS,
-  SCORE_READ_CONSUMERS,
-} from "../shared/pipelines";
+import { createMemoryPipelineStore } from "../shared/pipelines";
 import { RATING_DATA_URL } from "../shared/rating-data/rating-links";
-import { readRatingData } from "../shared/rating-data/read-rating-data";
-import {
-  type CostumeSet,
-  checkedPort,
-  type HirobaSessionPort,
-  type SignInOutcome,
-} from "../shared/session-port";
+import { checkedPort, type HirobaSessionPort, type SignInOutcome } from "../shared/session-port";
 import {
   ABTH_CDN_URL,
   CHINESE_NAMES_URL,
   catalogueUrlFor,
-  cdnChartReader,
   chartOriginFor,
-  createChartDensityReader,
-  createChartPictureReader,
-  createChartTjaReader,
-  createDrawnCharts,
-  createEseChartFiles,
   ESE_CHARTS_URL,
   ESE_MAPPING_URL,
-  readChineseNames,
-  readSongCatalogue,
 } from "../shared/song-catalogue";
-import { feedUrlFor, readUpdateFeed } from "../shared/updates";
+import { feedUrlFor } from "../shared/updates";
 import type { DatabaseFactory } from "./capacitor-indexeddb";
 import {
   CHART_DENSITY_DATABASE,
@@ -98,57 +60,33 @@ const endpoints: HirobaEndpoints = import.meta.env.DEV
     )
   : HIROBA_ENDPOINTS;
 
-const updateFeedUrl = feedUrlFor(
-  Boolean(import.meta.env.DEV),
-  import.meta.env.VITE_ABTH_DEV_UPDATE_FEED,
-);
-
-const songCatalogueUrl = catalogueUrlFor(
-  Boolean(import.meta.env.DEV),
-  import.meta.env.VITE_ABTH_DEV_SONG_CATALOGUE,
-);
-
-const chineseNamesUrl = catalogueUrlFor(
-  Boolean(import.meta.env.DEV),
-  import.meta.env.VITE_ABTH_DEV_CHINESE_NAMES,
-  CHINESE_NAMES_URL,
-);
-
-const ratingDataUrls = {
-  ourtaikoV1: catalogueUrlFor(
-    Boolean(import.meta.env.DEV),
-    import.meta.env.VITE_ABTH_DEV_RATING_DATA,
-    RATING_DATA_URL.ourtaikoV1,
+const DEV = Boolean(import.meta.env.DEV);
+// Each variable is named outright: Vite fills in only the names it can see.
+const SITES: SiteAddresses = {
+  updateFeedUrl: feedUrlFor(DEV, import.meta.env.VITE_ABTH_DEV_UPDATE_FEED),
+  songCatalogueUrl: catalogueUrlFor(DEV, import.meta.env.VITE_ABTH_DEV_SONG_CATALOGUE),
+  chineseNamesUrl: catalogueUrlFor(
+    DEV,
+    import.meta.env.VITE_ABTH_DEV_CHINESE_NAMES,
+    CHINESE_NAMES_URL,
   ),
-  ourtaikoV2: catalogueUrlFor(
-    Boolean(import.meta.env.DEV),
-    import.meta.env.VITE_ABTH_DEV_RATING_DATA_V2,
-    RATING_DATA_URL.ourtaikoV2,
-  ),
+  ratingDataUrls: {
+    ourtaikoV1: catalogueUrlFor(
+      DEV,
+      import.meta.env.VITE_ABTH_DEV_RATING_DATA,
+      RATING_DATA_URL.ourtaikoV1,
+    ),
+    ourtaikoV2: catalogueUrlFor(
+      DEV,
+      import.meta.env.VITE_ABTH_DEV_RATING_DATA_V2,
+      RATING_DATA_URL.ourtaikoV2,
+    ),
+  },
+  chartOrigin: chartOriginFor(DEV, import.meta.env.VITE_ABTH_DEV_CHART_ORIGIN),
+  eseMappingUrl: catalogueUrlFor(DEV, import.meta.env.VITE_ABTH_DEV_ESE_MAPPING, ESE_MAPPING_URL),
+  eseChartsUrl: catalogueUrlFor(DEV, import.meta.env.VITE_ABTH_DEV_ESE_CHARTS, ESE_CHARTS_URL),
+  cdnUrl: catalogueUrlFor(DEV, import.meta.env.VITE_ABTH_DEV_ABTH_CDN, ABTH_CDN_URL),
 };
-
-const chartOrigin = chartOriginFor(
-  Boolean(import.meta.env.DEV),
-  import.meta.env.VITE_ABTH_DEV_CHART_ORIGIN,
-);
-
-const eseMappingUrl = catalogueUrlFor(
-  Boolean(import.meta.env.DEV),
-  import.meta.env.VITE_ABTH_DEV_ESE_MAPPING,
-  ESE_MAPPING_URL,
-);
-
-const eseChartsUrl = catalogueUrlFor(
-  Boolean(import.meta.env.DEV),
-  import.meta.env.VITE_ABTH_DEV_ESE_CHARTS,
-  ESE_CHARTS_URL,
-);
-
-const cdnUrl = catalogueUrlFor(
-  Boolean(import.meta.env.DEV),
-  import.meta.env.VITE_ABTH_DEV_ABTH_CDN,
-  ABTH_CDN_URL,
-);
 
 export interface CapacitorPortOptions {
   /** Android unless said otherwise. */
@@ -165,10 +103,22 @@ export interface CapacitorPortOptions {
 }
 
 /** Refuses every call, so a history is simply empty. */
-const NO_HISTORY_STORE: HistoryStore<never> = {
+const nowhere = <T, M>(): KeptStore<T, M> => ({
   load: () => Promise.reject(new Error("There is nowhere to keep a history")),
   save: () => Promise.reject(new Error("There is nowhere to keep a history")),
-};
+});
+const HISTORIES: ReadonlySet<object> = new Set([KEPT_COSTUME_HISTORY, KEPT_FOLDER_HISTORY]);
+
+/** Kept in IndexedDB; without it in memory, but for the histories, which are kept nowhere. */
+function keptOnDevice<T, M>(
+  indexedDb: DatabaseFactory | undefined,
+  thing: KeptThing<T, M>,
+): KeptStore<T, M> {
+  if (indexedDb !== undefined) {
+    return keptIndexedDbStore(indexedDb, thing);
+  }
+  return HISTORIES.has(thing) ? nowhere() : keptMemoryStore(thing);
+}
 
 export interface SignedInFlag {
   get(): boolean;
@@ -207,151 +157,43 @@ export async function createCapacitorPort(
   const transport = createCapacitorTransport(userAgent, os);
   const flag = options.signedInFlag ?? localStorageFlag;
   let signedIn = flag.get();
-  const pipelineStore =
-    options.indexedDb === undefined
-      ? () => createMemoryPipelineStore()
-      : createIndexedDbPipelineStores(options.indexedDb);
-  const logs = {
-    io: createPipelineLog({ store: pipelineStore("io") }),
-    pictures: createPipelineLog({ store: pipelineStore("pictures") }),
-    history: createPipelineLog({ store: pipelineStore("history") }),
-    scores: createPipelineLog({ store: pipelineStore("scores") }),
-    external: createPipelineLog({ store: pipelineStore("external") }),
-  };
-  // One transport for every site: a group sends through its own, made from it.
-  const pipelines = {
-    io: createPipeline({
-      readConsumers: IO_READ_CONSUMERS,
-      transport,
-      ended: keepHirobaEnded(logs),
-    }),
-    history: createPipeline({
-      readConsumers: HISTORY_READ_CONSUMERS,
-      transport,
-      ended: logs.history.add,
-    }),
-    scores: createPipeline({
-      readConsumers: SCORE_READ_CONSUMERS,
-      transport,
-      ended: logs.scores.add,
-    }),
-    external: createPipeline({
-      readConsumers: EXTERNAL_READ_CONSUMERS,
-      transport,
-      ended: logs.external.add,
-    }),
-  };
-  let offered: ReadonlySet<string> = new Set();
-  let owner: string | null = null;
-  let sources: PictureSources | null = null;
-  const previews = createRecentPreviews((set, picture) => void writes.previewKept(set, picture));
-  const servedPreview = (hiroba: Transport) =>
-    previews.keeping(async (set: CostumeSet) => {
-      if (!signedIn) {
-        return err({ code: "preview=notSignedIn" });
-      }
-      return previewCostume(hiroba, endpoints, set);
-    });
-  const pictures = createPictureReader({
-    endpoints,
-    store:
-      options.indexedDb === undefined
-        ? createMemoryPictureStore()
-        : createIndexedDbPictureStore(options.indexedDb),
-    pipeline: pipelines.io,
-    limits: CAPACITOR_PICTURE_LIMITS,
-    state: () => ({ signedIn, offered, owner, sources }),
-  });
-  const chartPictures = createChartPictureReader({
-    store:
-      options.indexedDb === undefined
-        ? createMemoryPictureStore()
-        : createIndexedDbPictureStore(options.indexedDb, CHART_PICTURE_DATABASE),
-    pipeline: pipelines.external,
-    chartOrigin,
-  });
-  const chartFiles = createEseChartFiles({ mappingUrl: eseMappingUrl, chartsUrl: eseChartsUrl });
-  const chartDensities = createChartDensityReader({
-    store:
-      options.indexedDb === undefined
-        ? createMemoryPictureStore()
-        : createIndexedDbPictureStore(options.indexedDb, CHART_DENSITY_DATABASE),
-    pipeline: pipelines.external,
-    cdnUrl,
-    files: chartFiles,
-  });
-  const chartTja = createChartTjaReader({ pipeline: pipelines.external, files: chartFiles });
-  const drawnCharts = createDrawnCharts(
-    options.indexedDb === undefined
-      ? createMemoryPictureStore()
-      : createIndexedDbPictureStore(options.indexedDb, DRAWN_CHART_DATABASE),
-  );
-
-  const forget = async () => {
-    pipelines.io.stop();
-    pipelines.history.stop();
-    pipelines.scores.stop();
-    signedIn = false;
-    flag.set(false);
-    offered = new Set();
-    owner = null;
-    sources = null;
-    pictures.forget();
-    previews.clear();
-    await CapacitorCookies.clearAllCookies();
-  };
-
   const { indexedDb } = options;
-  const keptOnDevice = <T, M>(thing: KeptThing<T, M>) =>
-    indexedDb === undefined ? keptMemoryStore(thing) : keptIndexedDbStore(indexedDb, thing);
-  const writes = createSessionWrites({
+  const pictureStore = (database?: string) =>
+    indexedDb === undefined
+      ? createMemoryPictureStore()
+      : createIndexedDbPictureStore(indexedDb, database);
+  const services = createHirobaServices({
     endpoints,
+    sites: SITES,
     platform: os,
     now: options.now ?? (() => new Date()),
-    historyStore:
-      indexedDb === undefined
-        ? NO_HISTORY_STORE
-        : keptIndexedDbStore(indexedDb, KEPT_COSTUME_HISTORY),
-    folderHistoryStore:
-      indexedDb === undefined
-        ? NO_HISTORY_STORE
-        : keptIndexedDbStore(indexedDb, KEPT_FOLDER_HISTORY),
-    recentPreview: previews.pictureOf,
-    signedIn: () => signedIn,
-    endSession: forget,
-    owner: () => owner,
-    costumeChanged: (worn) => {
-      pictures.costumeChanged();
-      previews.wear(worn);
+    hiroba: transport,
+    external: transport,
+    pictureLimits: CAPACITOR_PICTURE_LIMITS,
+    stores: {
+      pipeline:
+        indexedDb === undefined
+          ? () => createMemoryPipelineStore()
+          : createIndexedDbPipelineStores(indexedDb),
+      kept: (thing) => keptOnDevice(indexedDb, thing),
+      pictures: pictureStore(),
+      charts: pictureStore(CHART_PICTURE_DATABASE),
+      densities: pictureStore(CHART_DENSITY_DATABASE),
+      drawnCharts: pictureStore(DRAWN_CHART_DATABASE),
     },
+    signedIn: () => signedIn,
+    endSession: async () => {
+      signedIn = false;
+      flag.set(false);
+      await CapacitorCookies.clearAllCookies();
+    },
+    // Hiroba may renew the session on a read or a write; keep the new one.
+    afterHiroba: saveCookieStore,
   });
-  const recentPlays = createRecentPlaysReader({
-    endpoints,
-    pipeline: pipelines.history,
-    store: keptOnDevice(KEPT_RECENT_PLAYS),
-    owner: () => owner,
-    endSession: forget,
-    walked: (taikoNo, reading) => scores.noteWalk(taikoNo, reading),
-  });
-  const scores = createScoresReader({
-    endpoints,
-    io: pipelines.io,
-    pipeline: pipelines.scores,
-    store: keptOnDevice(KEPT_SCORES),
-    changes: keptOnDevice(KEPT_SCORE_CHANGES),
-    owner: () => owner,
-    endSession: forget,
-    walk: recentPlays.readRecentPlays,
-    walkProgress: recentPlays.recentPlaysProgress,
-    recentPlays: recentPlays.recentPlays,
-  });
+  const { forget } = services;
 
-  const ratings = createRatingHistory({
-    store: keptOnDevice(KEPT_RATING_HISTORY),
-    owner: () => owner,
-  });
-
-  const port = queuePort(pipelines, {
+  const port = queuePort(services.pipelines, {
+    ...services.verbs,
     async isSignedIn() {
       return signedIn;
     },
@@ -433,119 +275,9 @@ export async function createCapacitorPort(
     async cancelSignIn() {
       await InAppBrowser.close().catch(() => undefined);
     },
-
-    readProfile: async (hiroba, options) => {
-      if (!signedIn) {
-        return err({ kind: "notSignedIn" });
-      }
-      if (options?.renewsPortrait !== false) {
-        pictures.myPageAsked();
-      }
-      const read = await readOwnProfile(hiroba, endpoints);
-      if (!read.ok && sessionEnded(read.error)) {
-        await forget();
-      } else {
-        // Hiroba may renew the session on a read; keep the new one.
-        await saveCookieStore();
-      }
-      if (!read.ok) {
-        return read;
-      }
-      owner = read.value.taikoNo;
-      sources = read.value.pictures;
-      await pictures.confirm(read.value.taikoNo);
-      return ok(read.value.view);
-    },
-
-    async signOut() {
-      await forget();
-    },
-
-    openCostumeEditor: flushed(async (hiroba) => {
-      const read = await writes.openCostumeEditor(hiroba);
-      if (read.ok) {
-        previews.wear(read.value.state);
-        offered = offeredOf(read.value);
-      }
-      return read;
-    }),
-
-    openTitleEditor: flushed(writes.openTitleEditor),
-
-    // Its failure forgets nothing: the next page read says whether the session is over.
-    previewCostume: (hiroba, set) => servedPreview(hiroba)(set),
-
-    readPicture: (want, again) => pictures.read(want, again),
-
-    changeCostume: flushed(writes.changeCostume),
-
-    changeTitle: flushed(writes.changeTitle),
-
-    changeName: flushed(writes.changeName),
-
-    // Asks Hiroba nothing, so it skips the pipelines.
-    costumeHistory: writes.costumeHistory,
-
-    readUpdateFeed: (site) => readUpdateFeed(site, updateFeedUrl),
-
-    openFavorites: flushed(writes.openFavorites),
-
-    changeFolder: flushed(writes.changeFolder),
-
-    changeFavoriteSong: flushed(writes.changeFavoriteSong),
-    folderHistory: writes.folderHistory,
-
-    readSongPicker: flushed(writes.readSongPicker),
-
-    refreshHiroba: flushed(writes.refreshHiroba),
-
-    scores: scores.scores,
-    listedCharts: scores.listedCharts,
-
-    readScores: flushed(scores.readScores),
-    readEveryScore: flushed(scores.readEveryScore),
-
-    readSongScores: flushed(scores.readSongScores),
-
-    scoresProgress: scores.scoresProgress,
-    ratingHistory: ratings.ratingHistory,
-    keepRating: ratings.keepRating,
-
-    readSongCatalogue: (site, since) => readSongCatalogue(site, songCatalogueUrl, since),
-
-    readChineseNames: (site) => readChineseNames(site, chineseNamesUrl),
-
-    readRatingData: (site, system) => readRatingData(site, system, ratingDataUrls[system]),
-
-    readChartPicture: chartPictures,
-
-    readCdnChart: cdnChartReader(cdnUrl, chartPictures),
-
-    readChartDensity: chartDensities,
-
-    readChartTja: chartTja,
-
-    readDrawnChart: drawnCharts.read,
-
-    keepDrawnChart: drawnCharts.keep,
-
-    readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });
 
   return checkedPort(port);
-}
-
-/** Runs, then saves the cookie store however it ended: Hiroba may have renewed the session. */
-function flushed<A extends unknown[], R>(
-  run: (...args: A) => Promise<R>,
-): (...args: A) => Promise<R> {
-  return async (...args) => {
-    try {
-      return await run(...args);
-    } finally {
-      await saveCookieStore();
-    }
-  };
 }
 
 // The WebView saves cookies on its own schedule; a swiped-away app could lose a fresh session.
