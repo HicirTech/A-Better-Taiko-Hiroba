@@ -1,5 +1,4 @@
 import { join } from "node:path";
-import { err, ok, type Transport } from "@abth/core";
 import { createTranslator, detectLocale } from "@abth/i18n";
 import {
   app,
@@ -13,58 +12,16 @@ import {
   shell,
 } from "electron";
 
-import {
-  createPictureReader,
-  createRatingHistory,
-  createRecentPlaysReader,
-  createRecentPreviews,
-  createScoresReader,
-  createSessionWrites,
-  DESKTOP_PICTURE_LIMITS,
-  KEPT_COSTUME_HISTORY,
-  KEPT_FOLDER_HISTORY,
-  KEPT_RATING_HISTORY,
-  KEPT_RECENT_PLAYS,
-  KEPT_SCORE_CHANGES,
-  KEPT_SCORES,
-  keepHirobaEnded,
-  offeredOf,
-  type PictureSources,
-  previewCostume,
-  queuePort,
-  readOwnProfile,
-  sessionEnded,
-  viewOfPipelines,
-} from "../src/hiroba-session";
+import { createHirobaServices, DESKTOP_PICTURE_LIMITS, queuePort } from "../src/hiroba-session";
 import { PAGE_GONE_FRAGMENT, WINDOW_CONTENT_PX } from "../src/platform/desktop-window";
 import { crashCodeOf } from "../src/shared/crash-code";
 import {
-  createPipeline,
-  createPipelineLog,
-  EXTERNAL_READ_CONSUMERS,
-  HISTORY_READ_CONSUMERS,
-  IO_READ_CONSUMERS,
-  SCORE_READ_CONSUMERS,
-} from "../src/shared/pipelines";
-import { readRatingData } from "../src/shared/rating-data/read-rating-data";
-import {
   BRIDGE_CHANNELS,
-  type CostumeSet,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
   type SignInOutcome,
 } from "../src/shared/session-port";
-import {
-  cdnChartReader,
-  createChartDensityReader,
-  createChartPictureReader,
-  createChartTjaReader,
-  createDrawnCharts,
-  createEseChartFiles,
-  readChineseNames,
-  readSongCatalogue,
-} from "../src/shared/song-catalogue";
-import { openableUrlOf, readUpdateFeed } from "../src/shared/updates";
+import { openableUrlOf } from "../src/shared/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { DATA_FOLDER } from "./data-folder";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
@@ -113,23 +70,16 @@ registerAppScheme();
 // The session cookie is held in this process: never logged, never sent to a renderer.
 let sessionCookie: string | null = null;
 let sessionStore: SessionStore | null = null;
-// Held in this process and forgotten with the session: whose my page was last read (the taiko
-// number), where its pictures are, and which costume items the editor offered.
-let owner: string | null = null;
-let sources: PictureSources | null = null;
-let offered: ReadonlySet<string> = new Set();
-const setSession = (value: string | null) => {
+const keepSession = (value: string | null) => {
   sessionCookie = value;
   sessionStore?.save(value);
+};
+// A session Hiroba ends is ended here too, and the services let go of what they held of it.
+const setSession = (value: string | null) => {
   if (value === null) {
-    pipelines.io.stop();
-    pipelines.history.stop();
-    pipelines.scores.stop();
-    owner = null;
-    sources = null;
-    offered = new Set();
-    pictures.forget();
-    previews.clear();
+    void services.forget();
+  } else {
+    keepSession(value);
   }
 };
 let signInAttempt: SignInAttempt | null = null;
@@ -147,83 +97,27 @@ const readTransport =
     ? saveReads(transport, join(app.getPath("userData"), "debug"))
     : transport;
 
-const feedTransport = createUpdateFeedTransport({
-  userAgent,
-  hirobaOrigin: endpoints.hirobaOrigin,
-});
-
-const pipelineStore = (name: string) =>
-  createPipelineHistoryStore(join(app.getPath("userData"), DATA_FOLDER.pipelines, `${name}.json`));
-const logs = {
-  io: createPipelineLog({ store: pipelineStore("io") }),
-  pictures: createPipelineLog({ store: pipelineStore("pictures") }),
-  history: createPipelineLog({ store: pipelineStore("history") }),
-  scores: createPipelineLog({ store: pipelineStore("scores") }),
-  external: createPipelineLog({ store: pipelineStore("external") }),
-};
-// Hiroba is asked through `io`, so no read lands inside a write, but for its play history and
-// score details: those pages carry no form token. A group sends through its own transport.
-const pipelines = {
-  io: createPipeline({
-    readConsumers: IO_READ_CONSUMERS,
-    transport: readTransport,
-    ended: keepHirobaEnded(logs),
-  }),
-  history: createPipeline({
-    readConsumers: HISTORY_READ_CONSUMERS,
-    transport: readTransport,
-    ended: logs.history.add,
-  }),
-  scores: createPipeline({
-    readConsumers: SCORE_READ_CONSUMERS,
-    transport: readTransport,
-    ended: logs.scores.add,
-  }),
-  external: createPipeline({
-    readConsumers: EXTERNAL_READ_CONSUMERS,
-    transport: feedTransport,
-    ended: logs.external.add,
-  }),
-};
-
-// A kept picture answers at once, even while a write runs; only a fetch waits in the pipeline.
-const pictures = createPictureReader({
+const inDataFolder = (...names: string[]) => join(app.getPath("userData"), ...names);
+const services = createHirobaServices({
   endpoints,
-  store: createDiskPictureStore(join(app.getPath("userData"), DATA_FOLDER.pictures)),
-  pipeline: pipelines.io,
-  limits: DESKTOP_PICTURE_LIMITS,
-  state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
+  sites: environment,
+  platform: "desktop",
+  now: environment.now,
+  hiroba: readTransport,
+  external: createUpdateFeedTransport({ userAgent, hirobaOrigin: endpoints.hirobaOrigin }),
+  pictureLimits: DESKTOP_PICTURE_LIMITS,
+  stores: {
+    pipeline: (name) =>
+      createPipelineHistoryStore(inDataFolder(DATA_FOLDER.pipelines, `${name}.json`)),
+    kept: (thing) => keptFileStore(inDataFolder(), thing),
+    pictures: createDiskPictureStore(inDataFolder(DATA_FOLDER.pictures)),
+    charts: createDiskPictureStore(inDataFolder(DATA_FOLDER.charts)),
+    densities: createDiskPictureStore(inDataFolder(DATA_FOLDER.densities)),
+    drawnCharts: createDiskPictureStore(inDataFolder(DATA_FOLDER.drawnCharts)),
+  },
+  signedIn: () => sessionCookie !== null,
+  endSession: () => keepSession(null),
 });
-// Asked of the wiki's hosts, not Hiroba: the external pipeline's transport holds no session.
-const chartPictures = createChartPictureReader({
-  store: createDiskPictureStore(join(app.getPath("userData"), DATA_FOLDER.charts)),
-  pipeline: pipelines.external,
-  chartOrigin: environment.chartOrigin,
-});
-const chartFiles = createEseChartFiles({
-  mappingUrl: environment.eseMappingUrl,
-  chartsUrl: environment.eseChartsUrl,
-});
-const chartDensities = createChartDensityReader({
-  store: createDiskPictureStore(join(app.getPath("userData"), DATA_FOLDER.densities)),
-  pipeline: pipelines.external,
-  cdnUrl: environment.cdnUrl,
-  files: chartFiles,
-});
-const chartTja = createChartTjaReader({ pipeline: pipelines.external, files: chartFiles });
-const drawnCharts = createDrawnCharts(
-  createDiskPictureStore(join(app.getPath("userData"), DATA_FOLDER.drawnCharts)),
-);
-// The writes come up with the window: until then a kept picture fills no history.
-let previewKept: (set: CostumeSet, picture: string) => void = () => undefined;
-const previews = createRecentPreviews((set, picture) => previewKept(set, picture));
-const servedPreview = (hiroba: Transport) =>
-  previews.keeping(async (set: CostumeSet) => {
-    if (sessionCookie === null) {
-      return err({ code: "preview=notSignedIn" });
-    }
-    return previewCostume(hiroba, endpoints, set);
-  });
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -280,49 +174,8 @@ const started = app.whenReady().then(async () => {
     return { action: "deny" };
   });
 
-  const writes = createSessionWrites({
-    endpoints,
-    platform: "desktop",
-    now: environment.now,
-    historyStore: keptFileStore(app.getPath("userData"), KEPT_COSTUME_HISTORY),
-    folderHistoryStore: keptFileStore(app.getPath("userData"), KEPT_FOLDER_HISTORY),
-    recentPreview: previews.pictureOf,
-    signedIn: () => sessionCookie !== null,
-    endSession: () => setSession(null),
-    owner: () => owner,
-    costumeChanged: (worn) => {
-      pictures.costumeChanged();
-      previews.wear(worn);
-    },
-  });
-  previewKept = (set, picture) => void writes.previewKept(set, picture);
-  const recentPlays = createRecentPlaysReader({
-    endpoints,
-    pipeline: pipelines.history,
-    store: keptFileStore(app.getPath("userData"), KEPT_RECENT_PLAYS),
-    owner: () => owner,
-    endSession: () => setSession(null),
-    walked: (taikoNo, reading) => scores.noteWalk(taikoNo, reading),
-  });
-  const scores = createScoresReader({
-    endpoints,
-    io: pipelines.io,
-    pipeline: pipelines.scores,
-    store: keptFileStore(app.getPath("userData"), KEPT_SCORES),
-    changes: keptFileStore(app.getPath("userData"), KEPT_SCORE_CHANGES),
-    owner: () => owner,
-    endSession: () => setSession(null),
-    walk: recentPlays.readRecentPlays,
-    walkProgress: recentPlays.recentPlaysProgress,
-    recentPlays: recentPlays.recentPlays,
-  });
-
-  const ratings = createRatingHistory({
-    store: keptFileStore(app.getPath("userData"), KEPT_RATING_HISTORY),
-    owner: () => owner,
-  });
-
-  const port = queuePort(pipelines, {
+  const port = queuePort(services.pipelines, {
+    ...services.verbs,
     async isSignedIn() {
       return sessionCookie !== null;
     },
@@ -344,71 +197,6 @@ const started = app.whenReady().then(async () => {
     async cancelSignIn() {
       signInAttempt?.cancel();
     },
-    readProfile: async (hiroba, options) => {
-      if (sessionCookie === null) {
-        return err({ kind: "notSignedIn" });
-      }
-      if (options?.renewsPortrait !== false) {
-        pictures.myPageAsked();
-      }
-      const read = await readOwnProfile(hiroba, endpoints);
-      if (!read.ok) {
-        if (sessionEnded(read.error)) {
-          setSession(null);
-        }
-        return read;
-      }
-      owner = read.value.taikoNo;
-      sources = read.value.pictures;
-      await pictures.confirm(read.value.taikoNo);
-      return ok(read.value.view);
-    },
-    async signOut() {
-      setSession(null);
-    },
-    openCostumeEditor: async (hiroba) => {
-      const read = await writes.openCostumeEditor(hiroba);
-      if (read.ok) {
-        previews.wear(read.value.state);
-        offered = offeredOf(read.value);
-      }
-      return read;
-    },
-    openTitleEditor: writes.openTitleEditor,
-    // Its failure leaves the session be: the next page read says whether it is over.
-    previewCostume: (hiroba, set) => servedPreview(hiroba)(set),
-    readPicture: (want, again) => pictures.read(want, again),
-    changeCostume: writes.changeCostume,
-    changeTitle: writes.changeTitle,
-    changeName: writes.changeName,
-    costumeHistory: writes.costumeHistory,
-    readUpdateFeed: (site) => readUpdateFeed(site, environment.updateFeedUrl),
-    openFavorites: writes.openFavorites,
-    changeFolder: writes.changeFolder,
-    changeFavoriteSong: writes.changeFavoriteSong,
-    folderHistory: writes.folderHistory,
-    readSongPicker: writes.readSongPicker,
-    refreshHiroba: writes.refreshHiroba,
-    scores: scores.scores,
-    listedCharts: scores.listedCharts,
-    readScores: scores.readScores,
-    readEveryScore: scores.readEveryScore,
-    readSongScores: scores.readSongScores,
-    scoresProgress: scores.scoresProgress,
-    ratingHistory: ratings.ratingHistory,
-    keepRating: ratings.keepRating,
-    readSongCatalogue: (site, since) =>
-      readSongCatalogue(site, environment.songCatalogueUrl, since),
-    readChineseNames: (site) => readChineseNames(site, environment.chineseNamesUrl),
-    readRatingData: (site, system) =>
-      readRatingData(site, system, environment.ratingDataUrls[system]),
-    readChartPicture: chartPictures,
-    readCdnChart: cdnChartReader(environment.cdnUrl, chartPictures),
-    readChartDensity: chartDensities,
-    readChartTja: chartTja,
-    readDrawnChart: drawnCharts.read,
-    keepDrawnChart: drawnCharts.keep,
-    readPipelines: async (history) => viewOfPipelines(pipelines, logs, history),
   });
 
   // Scheme and host, compared by hand: URL.origin is "null" for a custom scheme such as app:.
