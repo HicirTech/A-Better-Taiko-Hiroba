@@ -7,7 +7,7 @@ import { createDesktopPort, handlePortCalls } from "../electron/port-handlers";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import { createFavoritesEditor } from "../scripts/mock-favorites";
 import { createProfileEditor, INITIAL_PROFILE, OWNED_TITLES } from "../scripts/mock-profile";
-import { BRIDGE_CHANNELS, type HirobaSessionPort } from "../src/shared/session-port";
+import { type HirobaSessionPort, PORT_CALLS } from "../src/shared/session-port";
 import { native } from "./capacitor-fakes";
 import { CLOSE_LABEL, HIROBA, memoryFlag, profilePage, until } from "./capacitor-port-fixtures";
 import {
@@ -102,7 +102,7 @@ function desktopMain(hiroba: StandIn, sent: string[] = []) {
 
 /** The desktop's port as the preload reaches it: each call on its channel, from the app's page. */
 function overChannels(answers: ReadonlyMap<string, Answer>): HirobaSessionPort {
-  const calls = Object.entries(BRIDGE_CHANNELS).map(([verb, channel]) => [
+  const calls = Object.entries(PORT_CALLS).map(([verb, { channel }]) => [
     verb,
     async (...args: unknown[]) => answers.get(channel)?.(APP_FRAME, ...args),
   ]);
@@ -275,8 +275,12 @@ describe("both shells' ports", () => {
     const answers = desktopMain(hirobaStandIn(hirobaWorld()))();
     const android = await createCapacitorPort({ closeLabel: () => CLOSE_LABEL });
 
-    expect([...answers.keys()].sort()).toEqual(Object.values(BRIDGE_CHANNELS).sort());
-    expect(Object.keys(android).sort()).toEqual(Object.keys(BRIDGE_CHANNELS).sort());
+    expect([...answers.keys()].sort()).toEqual(
+      Object.values(PORT_CALLS)
+        .map(({ channel }) => channel)
+        .sort(),
+    );
+    expect(Object.keys(android).sort()).toEqual(Object.keys(PORT_CALLS).sort());
   });
 });
 
@@ -284,7 +288,7 @@ describe("the desktop's port channels", () => {
   test("refuse a frame the app does not trust, or arguments a call does not take, unasked", async () => {
     const sent: string[] = [];
     const answers = desktopMain(hirobaStandIn(hirobaWorld()), sent)();
-    const answer = (verb: keyof HirobaSessionPort) => answers.get(BRIDGE_CHANNELS[verb]);
+    const answer = (verb: keyof HirobaSessionPort) => answers.get(PORT_CALLS[verb].channel);
     await answer("signIn")?.(APP_FRAME);
     sent.length = 0;
 

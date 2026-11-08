@@ -11,16 +11,10 @@ export {
   isWhole,
   PORT_ARGUMENTS,
 } from "./arguments";
-export { BRIDGE_CHANNELS } from "./bridge-channels";
 export { changedOnHiroba } from "./changed-on-hiroba";
 export { checkedPort } from "./checked-port";
-export {
-  PORT_QUEUEING,
-  type PortImplementation,
-  type VerbImplementation,
-  type VerbQueueing,
-  type VerbsQueued,
-} from "./queueing";
+export { PORT_CALLS, type VerbQueueing } from "./port-calls";
+export type { PortImplementation, VerbImplementation, VerbsQueued } from "./queueing";
 export { FAILED_CALL_ANSWERS, settledPort } from "./settled-port";
 export type {
   ChartHits,

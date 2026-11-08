@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import { ELECTRON_BUILD } from "../scripts/electron-build";
-import { BRIDGE_CHANNELS, PICTURE_CHANNELS } from "../src/shared/session-port/bridge-channels";
+import { PICTURE_CHANNELS } from "../src/shared/session-port/bridge-channels";
+import { PORT_CALLS } from "../src/shared/session-port/port-calls";
 import type { HirobaSessionPort } from "../src/shared/session-port/types";
 
 type Forwarder = (...args: unknown[]) => Promise<unknown>;
@@ -33,48 +34,6 @@ new Function("require", "module", "exports", preloadText)(
 const port = exposed.get("abth") ?? {};
 const pictures = exposed.get("abthPictures") ?? {};
 
-/** How many arguments each call carries to the main process. */
-const ARGUMENTS: Record<keyof HirobaSessionPort, number> = {
-  isSignedIn: 0,
-  signIn: 0,
-  cancelSignIn: 0,
-  readProfile: 1,
-  refreshHiroba: 0,
-  signOut: 0,
-  openCostumeEditor: 0,
-  openTitleEditor: 0,
-  previewCostume: 1,
-  readPicture: 2,
-  changeCostume: 1,
-  changeTitle: 1,
-  changeName: 1,
-  costumeHistory: 0,
-  readUpdateFeed: 0,
-  openFavorites: 0,
-  changeFolder: 1,
-  changeFavoriteSong: 1,
-  folderHistory: 0,
-  readSongPicker: 0,
-  scores: 0,
-  listedCharts: 0,
-  readScores: 0,
-  readEveryScore: 0,
-  readSongScores: 2,
-  scoresProgress: 0,
-  readSongCatalogue: 1,
-  readChineseNames: 0,
-  readRatingData: 1,
-  ratingHistory: 1,
-  keepRating: 2,
-  readChartPicture: 2,
-  readCdnChart: 3,
-  readChartDensity: 2,
-  readChartTja: 1,
-  readDrawnChart: 2,
-  keepDrawnChart: 3,
-  readPipelines: 1,
-};
-
 describe("the desktop's preload", () => {
   test("requires no module but electron, as a sandboxed preload can load no other", () => {
     expect(built.success).toBe(true);
@@ -82,13 +41,13 @@ describe("the desktop's preload", () => {
   });
 
   test("lays out every call of the port, each on a channel of its own, and nothing else", () => {
-    const channels = Object.values(BRIDGE_CHANNELS);
+    const channels = Object.values(PORT_CALLS).map(({ channel }) => channel);
 
-    expect(Object.keys(port).sort()).toEqual(Object.keys(BRIDGE_CHANNELS).sort());
+    expect(Object.keys(port).sort()).toEqual(Object.keys(PORT_CALLS).sort());
     expect(new Set(channels).size).toBe(channels.length);
   });
 
-  test.each(Object.entries(ARGUMENTS))(
+  test.each(Object.entries(PORT_CALLS).map(([call, { takes }]): [string, number] => [call, takes]))(
     "sends %s on its channel with its %i arguments, and none past them",
     async (call, count) => {
       invoked.length = 0;
@@ -96,7 +55,7 @@ describe("the desktop's preload", () => {
       await port[call]?.(...given);
 
       expect(invoked).toEqual([
-        [BRIDGE_CHANNELS[call as keyof HirobaSessionPort], ...given.slice(0, count)],
+        [PORT_CALLS[call as keyof HirobaSessionPort].channel, ...given.slice(0, count)],
       ]);
     },
   );
@@ -106,7 +65,10 @@ describe("the desktop's preload", () => {
     await port.readProfile?.(undefined);
     await port.readPicture?.("want", undefined);
 
-    expect(invoked).toEqual([[BRIDGE_CHANNELS.readProfile], [BRIDGE_CHANNELS.readPicture, "want"]]);
+    expect(invoked).toStrictEqual([
+      [PORT_CALLS.readProfile.channel],
+      [PORT_CALLS.readPicture.channel, "want"],
+    ]);
   });
 
   test("hands a picture to the clipboard or to a file on their own channels", async () => {

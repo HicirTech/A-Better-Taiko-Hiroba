@@ -1,4 +1,4 @@
-import { BRIDGE_CHANNELS } from "../../src/shared/session-port";
+import { PORT_CALLS } from "../../src/shared/session-port";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 
@@ -69,6 +69,6 @@ export async function signedOut(ctx: Ctx) {
   );
   results.bridgeIsThePortVerbs = same(
     (results.surface as { bridge: string[] }).bridge,
-    Object.keys(BRIDGE_CHANNELS),
+    Object.keys(PORT_CALLS),
   );
 }
