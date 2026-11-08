@@ -29,6 +29,9 @@ const BATCHES = [
   },
 ];
 
+/** Where the stand-in serves the API. */
+export const CHINESE_NAMES_PATH = "/__chinese-names";
+
 /** The batch the query's continuation asks for: the first without one. */
 export function chineseNamesBatch(continuation: string | null) {
   const batch = continuation === SECOND_BATCH ? BATCHES[1] : BATCHES[0];

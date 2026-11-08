@@ -1,6 +1,9 @@
 import { join } from "node:path";
 import { createTranslator } from "@abth/i18n";
 
+import { DEV_ADDRESS, mockOrigins } from "../mock-origins";
+import { RATING_DATA_PATHS } from "../mock-rating-data";
+
 export const root = join(import.meta.dir, "..", "..");
 
 /** Set by a run with lanes in each lane's process, to that lane's index. */
@@ -9,23 +12,27 @@ export const LANE_VARIABLE = "ABTH_E2E_LANE";
 export const LANE = Number(process.env[LANE_VARIABLE] ?? "0");
 const PORT_STEP = 10;
 
-// The dev run's stand-in takes 8807 and 8808, and may be running beside a run.
-export const HIROBA_PORT = 8907 + LANE * PORT_STEP;
-export const IDP_PORT = 8908 + LANE * PORT_STEP;
-export const HIROBA = `http://hiroba.127.0.0.1.sslip.io:${HIROBA_PORT}`;
+/** This lane's stand-in: the dev run's takes 8807 and 8808, and may be running beside a run. */
+export const ORIGINS = mockOrigins({
+  ip: DEV_ADDRESS.ip,
+  hirobaPort: 8907 + LANE * PORT_STEP,
+  idpPort: 8908 + LANE * PORT_STEP,
+});
+export const HIROBA_PORT = ORIGINS.hirobaPort;
+export const IDP_PORT = ORIGINS.idpPort;
+export const HIROBA = ORIGINS.hiroba;
 export const CDP_PORT = 9333 + LANE * PORT_STEP;
-export const IDP_HOST = `id.127.0.0.1.sslip.io:${IDP_PORT}`;
+export const IDP_HOST = ORIGINS.idpHost;
 /** The stand-in's picture host: outside Hiroba's cookie Domain. */
-export const IMG = `http://img.127.0.0.1.sslip.io:${HIROBA_PORT}`;
+export const IMG = ORIGINS.img;
 /** The stand-in for a service that refuses to sign in inside an app. */
-export const REFUSING_HOST = `refuses.127.0.0.1.sslip.io:${IDP_PORT}`;
-/** A sign-in page that is not on https. */
-export const OFFSITE_HOST = `offsite.127.0.0.1.sslip.io:${IDP_PORT}`;
+export const REFUSING_HOST = ORIGINS.refusingHost;
+export const OFFSITE_HOST = ORIGINS.offsiteHost;
 export const IDP_MARKER = "abth-mock-idp-marker";
 export const MY_PAGE = "/mypage_top.php";
 /** The stand-in's rating data, V1's and V2's. */
-export const RATING_DATA = "/__rating-data";
-export const RATING_DATA_V2 = "/__rating-data-v2";
+export const RATING_DATA = RATING_DATA_PATHS.ourtaikoV1;
+export const RATING_DATA_V2 = RATING_DATA_PATHS.ourtaikoV2;
 export const DAN_LABEL = "/imgsrc_danlabel.php";
 export const MEDAL_PLATE = "/imgsrc_tokenplate.php";
 export const PANEL_ART = "/image/sp/640/total_score_image_5.png";

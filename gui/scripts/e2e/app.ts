@@ -3,20 +3,7 @@
 import electronPath from "electron";
 import { TIPS } from "../../src/pages/page-tips";
 import { SEEN_TIPS_KEY } from "../../src/shared/tips/seen-tips";
-import { ABTH_CDN_PATH } from "../mock-abth-cdn";
-import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "../mock-ese";
-import {
-  CDP_PORT,
-  HIROBA,
-  IDP_HOST,
-  IMG,
-  PICTURES,
-  RATING_DATA,
-  RATING_DATA_V2,
-  REFUSING_HOST,
-  root,
-  USER_DATA,
-} from "./config";
+import { CDP_PORT, ORIGINS, PICTURES, root, USER_DATA } from "./config";
 import { connect, holdOwnSize, waitFor } from "./harness";
 
 let windowsShown = false;
@@ -79,20 +66,9 @@ export async function launch({
   const proc = Bun.spawn([String(electronPath), root, ...args], {
     env: {
       ...inherited,
-      ABTH_DEV_HIROBA_ORIGIN: HIROBA,
-      ABTH_DEV_IDP_HOST: IDP_HOST,
-      ABTH_DEV_IMG_ORIGIN: IMG,
-      ABTH_DEV_REFUSING_HOST: REFUSING_HOST,
+      ...ORIGINS.appEnvironment,
       ABTH_DEV_USER_DATA: userData,
       ABTH_DEV_NOW: now,
-      ABTH_DEV_SONG_CATALOGUE: `${HIROBA}/__song-catalogue`,
-      ABTH_DEV_RATING_DATA: `${HIROBA}${RATING_DATA}`,
-      ABTH_DEV_RATING_DATA_V2: `${HIROBA}${RATING_DATA_V2}`,
-      ABTH_DEV_ESE_MAPPING: `${HIROBA}${ESE_MAPPING_PATH}`,
-      ABTH_DEV_ESE_CHARTS: `${HIROBA}${ESE_CHARTS_PATH}`,
-      ABTH_DEV_ABTH_CDN: `${HIROBA}${ABTH_CDN_PATH}`,
-      ABTH_DEV_CHINESE_NAMES: `${HIROBA}/__chinese-names`,
-      ABTH_DEV_CHART_ORIGIN: HIROBA,
       ABTH_DEV_PICTURES_FOLDER: PICTURES,
       ABTH_DEBUG_SAVE_READS: "1",
       ...(windowsShown ? {} : { ABTH_DEV_OFF_SCREEN: "1" }),

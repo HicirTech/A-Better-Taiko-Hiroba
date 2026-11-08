@@ -1,6 +1,6 @@
 /** Stand-in for Hiroba and the Bandai Namco ID host, so sign-in runs without the real sites. */
 import { ABTH_CDN_PATH, abthCdnFile } from "./mock-abth-cdn";
-import { chineseNamesBatch } from "./mock-chinese-names";
+import { CHINESE_NAMES_PATH, chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "./mock-dan-label";
 import { danPlatePng } from "./mock-dan-plate";
@@ -8,6 +8,7 @@ import { editorAnswer, enteredPost, type MockAsk, page, redirect } from "./mock-
 import { ESE_CHARTS_PATH, ESE_MAPPING, ESE_MAPPING_PATH, eseChart } from "./mock-ese";
 import { createFavoritesEditor } from "./mock-favorites";
 import { createPlayHistory } from "./mock-history";
+import { mockAddressOf, mockOrigins } from "./mock-origins";
 import {
   blankPlatePng,
   chartPicturePng,
@@ -21,25 +22,24 @@ import {
   titlePlatePng,
 } from "./mock-pictures";
 import { createProfileEditor, escapeHtml } from "./mock-profile";
-import { ratingDataAnswer, ratingDataV2Answer } from "./mock-rating-data";
+import { RATING_DATA_PATHS, ratingDataAnswer, ratingDataV2Answer } from "./mock-rating-data";
 import { createScorePages } from "./mock-scores";
-import { CHART_PICTURE_PATHS, wikiSongsSince } from "./mock-song-catalogue";
+import { CHART_PICTURE_PATHS, SONG_CATALOGUE_PATH, wikiSongsSince } from "./mock-song-catalogue";
 
-const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
-const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
-const IDP_HOST = `id.${IP}.sslip.io`;
-/** The picture host's stand-in: on Hiroba's server and port, and outside its cookie's Domain. */
-const IMG_HOST = `img.${IP}.sslip.io`;
-// The end-to-end run starts one stand-in per lane, each on ports of its own.
-const HIROBA_PORT = Number(process.env.ABTH_MOCK_HIROBA_PORT ?? 8807);
-const IDP_PORT = Number(process.env.ABTH_MOCK_IDP_PORT ?? 8808);
-const HIROBA = `http://${HIROBA_HOST}:${HIROBA_PORT}`;
-const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
-// The OAuth hop is on a second ID host, as the real one: allowing only the form's host stops there.
-const IDP_AUTH = `http://auth.${IDP_HOST}:${IDP_PORT}`;
-const IMG = `http://${IMG_HOST}:${HIROBA_PORT}`;
-/** A service that refuses embedded browsers, off both sites, as Google is. */
-const REFUSER_HOST = `refuses.${IP}.sslip.io:${IDP_PORT}`;
+const {
+  ip: IP,
+  hirobaPort: HIROBA_PORT,
+  idpPort: IDP_PORT,
+  hirobaHostName: HIROBA_HOST,
+  idpHostName: IDP_HOST,
+  hiroba: HIROBA,
+  idp: IDP,
+  idpAuth: IDP_AUTH,
+  pictureHost: PICTURE_HOST,
+  img: IMG,
+  refusingHost: REFUSER_HOST,
+  offsiteHost: OFFSITE_HOST,
+} = mockOrigins(mockAddressOf(process.env));
 const TAIKO_NO = "000000000000";
 
 const sessions = new Map<string, MockSession>();
@@ -271,7 +271,7 @@ Bun.serve({
   async fetch(request) {
     const { host, pathname, searchParams } = new URL(request.url);
     const session = sessionOf(request);
-    const onPictureHost = host === `${IMG_HOST}:${HIROBA_PORT}`;
+    const onPictureHost = host === PICTURE_HOST;
     log(onPictureHost ? "img" : "hiroba", request);
     hits.set(pathname, (hits.get(pathname) ?? 0) + 1);
     if (!pathname.startsWith("/__")) {
@@ -338,7 +338,7 @@ Bun.serve({
         );
       case "/login_process.php":
         if (sendOffsite) {
-          return redirect(`http://offsite.${IP}.sslip.io:${IDP_PORT}/login.html`);
+          return redirect(`http://${OFFSITE_HOST}/login.html`);
         }
         return redirect(
           `${IDP_AUTH}/v2/oauth2/auth?redirect_uri=${encodeURIComponent(`${HIROBA}/callback.php`)}`,
@@ -493,13 +493,13 @@ Bun.serve({
         return Response.json(history.control(searchParams));
       case "/__scores":
         return Response.json(scores.control(searchParams));
-      case "/__song-catalogue":
+      case SONG_CATALOGUE_PATH:
         return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
-      case "/__rating-data":
+      case RATING_DATA_PATHS.ourtaikoV1:
         return Response.json(ratingDataAnswer());
-      case "/__rating-data-v2":
+      case RATING_DATA_PATHS.ourtaikoV2:
         return Response.json(ratingDataV2Answer());
-      case "/__chinese-names":
+      case CHINESE_NAMES_PATH:
         return Response.json(chineseNamesBatch(searchParams.get("gcmcontinue")));
       case "/__last-token":
         return new Response(lastIssued);
