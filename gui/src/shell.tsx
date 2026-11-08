@@ -1,14 +1,13 @@
 import { createTranslator, type Locale, type Translator } from "@abth/i18n";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
-import { App } from "./App";
 import { useDeviceChoices } from "./app/use-device-choices";
 import { useLaunchCover } from "./app/use-launch-cover";
+import { AppWindow } from "./app-window";
 import { AppFrame } from "./navigation/app-frame";
 import { keepPage, keptPage } from "./navigation/pages";
 import { useShownPage } from "./navigation/use-shown-page";
 import { PAGE_REGISTRY } from "./pages/registry";
-import { PipelinesPage } from "./pipelines-page/pipelines-page";
 import type { Platform } from "./platform";
 import { AppearanceSection } from "./settings/appearance-section";
 import { LanguageSetting } from "./settings/language-setting";
@@ -46,8 +45,6 @@ export function Shell({
     onShown(i18n);
   }, [i18n, onShown]);
   const [page, navigate] = useShownPage(keptPage, keepPage);
-  const [signedIn, setSignedIn] = useState(false);
-  const [scanning, setScanning] = useState(false);
   const cover = useLaunchCover(platform?.launch ?? null);
   const { drawn } = cover;
   // With no app, the window's first screen is the page drawn here at once.
@@ -72,49 +69,41 @@ export function Shell({
   const appearanceSection = <AppearanceSection {...appearance} i18n={i18n} />;
   return (
     <>
-      <AppFrame
-        page={page}
-        onNavigate={navigate}
-        i18n={i18n}
-        wide={wide}
-        touchFirst={touchFirst}
-        pages={PAGE_REGISTRY}
-        onScan={signedIn ? () => setScanning(true) : undefined}
-        back={platform?.back}
-        {...(platform !== null
-          ? { pipelines: <PipelinesPage port={platform.port} i18n={i18n} /> }
-          : {})}
-      >
-        {platform !== null ? (
-          <App
-            port={platform.port}
-            link={platform.link}
-            share={platform.share}
-            i18n={i18n}
-            page={page}
-            onNavigate={navigate}
-            language={language}
-            appearance={appearanceSection}
-            scanning={scanning}
-            onScanned={() => setScanning(false)}
-            onSignedIn={setSignedIn}
-            covered={cover.shown}
-            onDrawn={drawn}
-            toast={platform.toast}
-            camera={platform.camera}
-          />
-        ) : page === "settings" ? (
-          <SettingsPage
-            i18n={i18n}
-            language={language}
-            appearance={appearanceSection}
-            account={{ kind: "signedOut" }}
-            {...choices}
-          />
-        ) : (
-          <NoteAlert>{i18n.t("platform.unsupported")}</NoteAlert>
-        )}
-      </AppFrame>
+      {platform !== null ? (
+        <AppWindow
+          platform={platform}
+          i18n={i18n}
+          page={page}
+          onNavigate={navigate}
+          wide={wide}
+          touchFirst={touchFirst}
+          language={language}
+          appearance={appearanceSection}
+          covered={cover.shown}
+          onDrawn={drawn}
+        />
+      ) : (
+        <AppFrame
+          page={page}
+          onNavigate={navigate}
+          i18n={i18n}
+          wide={wide}
+          touchFirst={touchFirst}
+          pages={PAGE_REGISTRY}
+        >
+          {page === "settings" ? (
+            <SettingsPage
+              i18n={i18n}
+              language={language}
+              appearance={appearanceSection}
+              account={{ kind: "signedOut" }}
+              {...choices}
+            />
+          ) : (
+            <NoteAlert>{i18n.t("platform.unsupported")}</NoteAlert>
+          )}
+        </AppFrame>
+      )}
       <LaunchCover shown={cover.shown} />
     </>
   );

@@ -31,6 +31,7 @@ const LAYERS: readonly (readonly string[])[] = [
   ["pages"],
   ["app"],
   ["App.tsx"],
+  ["app-window.tsx"],
   ["shell.tsx"],
   ["main.tsx"],
 ];

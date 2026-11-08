@@ -1,12 +1,10 @@
 import { useState } from "react";
 import { action } from "storybook/actions";
 
-import { App } from "../App";
-import { AppFrame } from "../navigation/app-frame";
+import { AppWindow } from "../app-window";
 import type { Page } from "../navigation/pages";
 import { useShownPage } from "../navigation/use-shown-page";
-import { PAGE_REGISTRY } from "../pages/registry";
-import { PipelinesPage } from "../pipelines-page/pipelines-page";
+import type { Platform } from "../platform";
 import { AppearanceSection } from "../settings/appearance-section";
 import { LanguageSetting } from "../settings/language-setting";
 import type { HirobaSessionPort } from "../shared/session-port";
@@ -56,41 +54,33 @@ export function StoryApp({
   const i18n = i18nOf(globals);
   const android = touchOf(globals);
   const [page, navigate] = useShownPage(() => first);
-  const [signedIn, setSignedIn] = useState(false);
-  const [scanning, setScanning] = useState(false);
+  const platform: Platform = android
+    ? {
+        port,
+        link: STORY_LINK,
+        share: STORY_SHARE_OR_SAVE,
+        back: STORY_BACK,
+        toast: STORY_TOAST,
+        camera: STORY_CAMERA,
+      }
+    : { port, link: STORY_LINK, share: STORY_COPY_OR_SAVE };
   return (
-    <AppFrame
+    <AppWindow
+      platform={platform}
+      i18n={i18n}
       page={page}
       onNavigate={navigate}
-      i18n={i18n}
       wide={wideOf(globals)}
-      touchFirst={touchOf(globals)}
-      pages={PAGE_REGISTRY}
-      onScan={signedIn ? () => setScanning(true) : undefined}
-      {...(android ? { back: STORY_BACK } : {})}
-      pipelines={<PipelinesPage port={port} i18n={i18n} />}
-    >
-      <App
-        port={port}
-        link={STORY_LINK}
-        share={android ? STORY_SHARE_OR_SAVE : STORY_COPY_OR_SAVE}
-        i18n={i18n}
-        page={page}
-        onNavigate={navigate}
-        language={
-          <LanguageSetting
-            picked={null}
-            system={localeOf(globals)}
-            onPick={action("pick a language")}
-            i18n={i18n}
-          />
-        }
-        appearance={<AppearanceSection {...appearanceOf(globals)} i18n={i18n} />}
-        scanning={scanning}
-        onScanned={() => setScanning(false)}
-        onSignedIn={setSignedIn}
-        {...(android ? { toast: STORY_TOAST, camera: STORY_CAMERA } : {})}
-      />
-    </AppFrame>
+      touchFirst={android}
+      language={
+        <LanguageSetting
+          picked={null}
+          system={localeOf(globals)}
+          onPick={action("pick a language")}
+          i18n={i18n}
+        />
+      }
+      appearance={<AppearanceSection {...appearanceOf(globals)} i18n={i18n} />}
+    />
   );
 }
