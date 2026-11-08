@@ -33,7 +33,7 @@ import { changeName } from "./change-name";
 import { changeTitle } from "./change-title";
 import { mergeCostumeHistory } from "./costume-history";
 import { mergeFolderHistory } from "./folder-history";
-import type { CostumeHistoryStore, FolderHistoryStore, HistoryStore } from "./history-store";
+import type { CostumeHistoryStore, FolderHistoryStore, HistoryStore } from "./kept-things";
 import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
 import { openFavorites } from "./open-favorites";

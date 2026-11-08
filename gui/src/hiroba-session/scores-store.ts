@@ -1,7 +1,6 @@
 import {
   type CrownState,
   chartKey,
-  EMPTY_SCORE_BOOK,
   type Genre,
   isGenre,
   isLevel,
@@ -19,12 +18,6 @@ import {
 
 import { CROWNS, recordOf } from "./recent-plays-store";
 
-/** One player's score book. A missing one reads as a book never read. */
-export interface ScoresStore {
-  load(taikoNo: string): Promise<ScoreBook>;
-  save(taikoNo: string, book: ScoreBook): Promise<void>;
-}
-
 const FIDELITIES = new Set<ScoreFidelity>(["list", "detail", "recent"]);
 
 interface StoredBook {
@@ -36,7 +29,7 @@ interface StoredBook {
 }
 
 /** Whether a kept book has a book's shape, whatever its parts hold. */
-export function isStoredScoreBook(stored: unknown): stored is StoredBook {
+function isStoredScoreBook(stored: unknown): stored is StoredBook {
   return (
     isObject(stored) &&
     Array.isArray(stored.songs) &&
@@ -47,10 +40,10 @@ export function isStoredScoreBook(stored: unknown): stored is StoredBook {
   );
 }
 
-/** A kept book's well-formed parts. A broken book reads as one never read, not a crash. */
-export function readStoredScoreBook(stored: unknown): ScoreBook {
+/** A kept book's well-formed parts; what does not have a book's shape is none. */
+export function readStoredScoreBook(stored: unknown): ScoreBook | null {
   if (!isStoredScoreBook(stored)) {
-    return EMPTY_SCORE_BOOK;
+    return null;
   }
   const scores = Object.fromEntries(
     Object.values(stored.scores)
@@ -65,18 +58,6 @@ export function readStoredScoreBook(stored: unknown): ScoreBook {
     ),
     unlisted: stored.unlisted.flatMap(unlistedOf),
     full: stored.full,
-  };
-}
-
-export function createMemoryScoresStore(): ScoresStore {
-  const players = new Map<string, ScoreBook>();
-  return {
-    async load(taikoNo) {
-      return players.get(taikoNo) ?? EMPTY_SCORE_BOOK;
-    },
-    async save(taikoNo, book) {
-      players.set(taikoNo, book);
-    },
   };
 }
 

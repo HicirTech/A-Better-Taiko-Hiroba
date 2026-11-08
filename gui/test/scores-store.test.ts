@@ -7,16 +7,16 @@ import {
   type ScoreChange,
   type ScoreChangeLog,
 } from "@abth/core";
+import { keptFileStore } from "../electron/kept-file-store";
 import type { StoreFiles } from "../electron/replace-file";
-import { createScoreChangesStore } from "../electron/score-changes-store";
-import { createScoresStore } from "../electron/scores-store";
 import {
-  createMemoryScoreChangesStore,
+  KEPT_SCORE_CHANGES,
+  KEPT_SCORES,
+  keptMemoryStore,
   readStoredScoreBook,
   readStoredScoreChanges,
 } from "../src/hiroba-session";
-import { createIndexedDbScoreChangesStore } from "../src/platform/capacitor-score-changes-store";
-import { createIndexedDbScoresStore } from "../src/platform/capacitor-scores-store";
+import { keptIndexedDbStore } from "../src/platform/kept-indexeddb-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const PLAYER = "000000000000";
@@ -154,23 +154,23 @@ describe("readStoredScoreBook", () => {
     ["nothing", undefined],
     ["another shape", { songs: [], scores: [] }],
     ["a book whose full read is not a yes or a no", { ...BOOK, full: "yes" }],
-  ])("reads %s as a book never read", (_name, stored) => {
-    expect(readStoredScoreBook(stored)).toEqual(EMPTY_SCORE_BOOK);
+  ])("reads %s as none", (_name, stored) => {
+    expect(readStoredScoreBook(stored)).toBeNull();
   });
 
   test("reads a chart kept before its ranking and sections were read as having none", () => {
     const { ranking: _ranking, sections: _sections, ...older } = detailed;
     const kept = { ...BOOK, scores: { "1178/5": older } };
     const read = readStoredScoreBook(JSON.parse(JSON.stringify(kept)));
-    expect(read.scores["1178/5"]?.ranking).toBeNull();
-    expect(read.scores["1178/5"]?.sections).toEqual([]);
+    expect(read?.scores["1178/5"]?.ranking).toBeNull();
+    expect(read?.scores["1178/5"]?.sections).toEqual([]);
   });
 
   test("drops a chart whose record is broken, and the mark that named it", () => {
     const broken = { ...BOOK, scores: { ...BOOK.scores, "1178/5": { ...detailed, record: {} } } };
     const read = readStoredScoreBook(JSON.parse(JSON.stringify(broken)));
-    expect(Object.keys(read.scores)).toEqual(["1178/4"]);
-    expect(read.stale).toEqual([]);
+    expect(Object.keys(read?.scores ?? {})).toEqual(["1178/4"]);
+    expect(read?.stale).toEqual([]);
   });
 });
 
@@ -215,20 +215,20 @@ describe("readStoredScoreChanges", () => {
 describe("the score stores", () => {
   test("the desktop's keeps each player's book in one file, across stores", async () => {
     const { files } = fakeFiles();
-    await createScoresStore("scores.json", files).save(PLAYER, BOOK);
-    await createScoresStore("scores.json", files).save(OTHER, EMPTY_SCORE_BOOK);
+    await keptFileStore("", KEPT_SCORES, files).save(PLAYER, BOOK);
+    await keptFileStore("", KEPT_SCORES, files).save(OTHER, EMPTY_SCORE_BOOK);
 
-    const store = createScoresStore("scores.json", files);
+    const store = keptFileStore("", KEPT_SCORES, files);
     expect(await store.load(PLAYER)).toEqual(BOOK);
     expect(await store.load(OTHER)).toEqual(EMPTY_SCORE_BOOK);
   });
 
   test("Android's keeps each player's book in a database of its own", async () => {
     const indexedDb = createFakeIndexedDb();
-    await createIndexedDbScoresStore(indexedDb.factory).save(PLAYER, BOOK);
+    await keptIndexedDbStore(indexedDb.factory, KEPT_SCORES).save(PLAYER, BOOK);
 
-    expect(await createIndexedDbScoresStore(indexedDb.factory).load(PLAYER)).toEqual(BOOK);
-    expect(await createIndexedDbScoresStore(indexedDb.factory).load(OTHER)).toEqual(
+    expect(await keptIndexedDbStore(indexedDb.factory, KEPT_SCORES).load(PLAYER)).toEqual(BOOK);
+    expect(await keptIndexedDbStore(indexedDb.factory, KEPT_SCORES).load(OTHER)).toEqual(
       EMPTY_SCORE_BOOK,
     );
     expect([...indexedDb.tables.keys()]).toEqual(["books"]);
@@ -238,11 +238,11 @@ describe("the score stores", () => {
     const { files } = fakeFiles();
     const indexedDb = createFakeIndexedDb();
     const stores = [
-      () => createMemoryScoreChangesStore(),
-      () => createScoreChangesStore("score-changes-2.json", "score-changes.json", files),
-      () => createIndexedDbScoreChangesStore(indexedDb.factory),
+      () => keptMemoryStore(KEPT_SCORE_CHANGES),
+      () => keptFileStore("", KEPT_SCORE_CHANGES, files),
+      () => keptIndexedDbStore(indexedDb.factory, KEPT_SCORE_CHANGES),
     ];
-    const memory = createMemoryScoreChangesStore();
+    const memory = keptMemoryStore(KEPT_SCORE_CHANGES);
     for (const storeOf of stores) {
       const store = storeOf === stores[0] ? memory : storeOf();
       expect(await store.load(PLAYER)).toBeNull();
@@ -262,7 +262,7 @@ describe("the score stores", () => {
       "score-changes.json",
       JSON.stringify({ version: 1, players: { [PLAYER]: earlier } }),
     );
-    const store = createScoreChangesStore("score-changes-2.json", "score-changes.json", files);
+    const store = keptFileStore("", KEPT_SCORE_CHANGES, files);
     expect((await store.load(PLAYER))?.changes).toHaveLength(1);
     await store.save(PLAYER, LOG);
     expect((await store.load(PLAYER))?.changes).toEqual(CHANGES);

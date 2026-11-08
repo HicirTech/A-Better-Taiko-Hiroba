@@ -29,7 +29,24 @@ export {
   POST_FOLLOWED_AS_GET,
   resolveRedirect,
 } from "./form-post";
-export type { CostumeHistoryStore, FolderHistoryStore, HistoryStore } from "./history-store";
+export {
+  type CostumeHistoryStore,
+  type FolderHistoryStore,
+  type HistoryStore,
+  KEPT_COSTUME_HISTORY,
+  KEPT_FOLDER_HISTORY,
+  KEPT_RATING_HISTORY,
+  KEPT_RECENT_PLAYS,
+  KEPT_SCORE_CHANGES,
+  KEPT_SCORES,
+  type KeptStore,
+  type KeptThing,
+  keptMemoryStore,
+  type RatingHistoryStore,
+  type RecentPlaysStore,
+  type ScoreChangesStore,
+  type ScoresStore,
+} from "./kept-things";
 export { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 export { openCostumeEditor } from "./open-costume-editor";
 export { openTitleEditor } from "./open-title-editor";
@@ -51,9 +68,8 @@ export {
   viewOfPipelines,
   writeFailure,
 } from "./queue-port";
-export type { RatingHistory, RatingHistoryStore } from "./rating-history-store";
+export type { RatingHistory } from "./rating-history-store";
 export {
-  createMemoryRatingHistoryStore,
   createRatingHistory,
   NO_RATING_HISTORY,
   readStoredRatingHistory,
@@ -83,19 +99,10 @@ export {
   SCORE_DETAIL_OPERATION,
   SCORE_LIST_OPERATION,
 } from "./read-scores";
-export type { RecentPlaysStore } from "./recent-plays-store";
-export {
-  createMemoryRecentPlaysStore,
-  readStoredRecentPlays,
-} from "./recent-plays-store";
+export { readStoredRecentPlays } from "./recent-plays-store";
 export { createRecentPreviews } from "./recent-previews";
-export type { ScoreChangesStore } from "./score-changes-store";
-export {
-  createMemoryScoreChangesStore,
-  readStoredScoreChanges,
-} from "./score-changes-store";
-export type { ScoresStore } from "./scores-store";
-export { createMemoryScoresStore, isStoredScoreBook, readStoredScoreBook } from "./scores-store";
+export { readStoredScoreChanges } from "./score-changes-store";
+export { readStoredScoreBook } from "./scores-store";
 export { sessionEnded } from "./session-ended";
 export {
   BUSY_OUTCOME,

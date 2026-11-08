@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ok, type Transport } from "@abth/core";
 
-import { createCostumeHistoryStore } from "../electron/history-store";
+import { keptFileStore } from "../electron/kept-file-store";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import {
   createProfileEditor,
@@ -17,10 +17,11 @@ import {
 import {
   type CostumeHistoryStore,
   createSessionWrites,
+  KEPT_COSTUME_HISTORY,
   type WritePlatform,
 } from "../src/hiroba-session";
 import { MAX_COSTUME_HISTORY } from "../src/hiroba-session/costume-history";
-import { createIndexedDbHistoryStore } from "../src/platform/capacitor-history-store";
+import { keptIndexedDbStore } from "../src/platform/kept-indexeddb-store";
 import type { CostumeSet, WriteKind } from "../src/shared/session-port";
 import { costumeSetOf, START_SET } from "./hiroba-stand-in";
 import { pictureOfSet } from "./history-fixtures";
@@ -78,10 +79,10 @@ const STORES = {
   file(): CostumeHistoryStore {
     const folder = mkdtempSync(join(tmpdir(), "abth-writes-"));
     folders.push(folder);
-    return createCostumeHistoryStore(join(folder, "costume-history.json"));
+    return keptFileStore(folder, KEPT_COSTUME_HISTORY);
   },
   database(): CostumeHistoryStore {
-    return createIndexedDbHistoryStore(createFakeIndexedDb().factory);
+    return keptIndexedDbStore(createFakeIndexedDb().factory, KEPT_COSTUME_HISTORY);
   },
 };
 type StoreName = keyof typeof STORES;

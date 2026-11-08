@@ -1,16 +1,18 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
-import { createCostumeHistoryStore } from "../electron/history-store";
+import { keptFileStore } from "../electron/kept-file-store";
 import type { StoreFiles } from "../electron/replace-file";
+import { KEPT_COSTUME_HISTORY } from "../src/hiroba-session";
 import { entryOf, pictureOf, SET } from "./history-fixtures";
 
 const PLAYER = "000000000000";
 const OTHER = "111111111111";
 const HISTORY_CAP = 30;
-const PATH = join("data", "costume-history.json");
+const FOLDER = "data";
+const PATH = join(FOLDER, "costume-history.json");
 
 /** Files in memory, which record what the store did to them and can refuse a rename. */
 function fakeFiles(contents: Record<string, string> = {}) {
@@ -46,24 +48,24 @@ function fakeFiles(contents: Record<string, string> = {}) {
 
 const KEPT = [entryOf(1, pictureOf("one")), entryOf(2)];
 
-describe("createCostumeHistoryStore", () => {
+describe("keptFileStore, holding the costume history", () => {
   test("reads an empty history when nothing was kept", async () => {
     const { files } = fakeFiles();
 
-    expect(await createCostumeHistoryStore(PATH, files).load(PLAYER)).toEqual([]);
+    expect(await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).load(PLAYER)).toEqual([]);
   });
 
   test("keeps a history across stores, as across launches", async () => {
     const { files } = fakeFiles();
-    await createCostumeHistoryStore(PATH, files).save(PLAYER, KEPT);
+    await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).save(PLAYER, KEPT);
 
-    expect(await createCostumeHistoryStore(PATH, files).load(PLAYER)).toEqual(KEPT);
+    expect(await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).load(PLAYER)).toEqual(KEPT);
   });
 
   test("writes to a temporary file, flushed to the disk, and only then renames it over the last", async () => {
     const { files, calls, disk } = fakeFiles();
 
-    await createCostumeHistoryStore(PATH, files).save(PLAYER, KEPT);
+    await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).save(PLAYER, KEPT);
 
     expect(calls).toEqual([
       "mkdir data",
@@ -75,7 +77,7 @@ describe("createCostumeHistoryStore", () => {
 
   test("keeps each player's history apart, and drops one left empty", async () => {
     const { files, disk } = fakeFiles();
-    const store = createCostumeHistoryStore(PATH, files);
+    const store = keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files);
     const theirs = [entryOf(7, pictureOf("seven"))];
     await store.save(PLAYER, KEPT);
     await store.save(OTHER, theirs);
@@ -93,7 +95,7 @@ describe("createCostumeHistoryStore", () => {
   test("keeps no token, no URL and nothing but the sets and their pictures", async () => {
     const { files, disk } = fakeFiles();
 
-    await createCostumeHistoryStore(PATH, files).save(PLAYER, KEPT);
+    await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).save(PLAYER, KEPT);
 
     expect(Object.keys(JSON.parse(disk.get(PATH) ?? ""))).toEqual(["version", "players"]);
     expect(JSON.parse(disk.get(PATH) ?? "").players[PLAYER]).toEqual(KEPT);
@@ -110,7 +112,7 @@ describe("createCostumeHistoryStore", () => {
   ])("reads %s as no history", async (_label, text) => {
     const { files } = fakeFiles({ [PATH]: text });
 
-    expect(await createCostumeHistoryStore(PATH, files).load(PLAYER)).toEqual([]);
+    expect(await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).load(PLAYER)).toEqual([]);
   });
 
   test("reads another player's history as none for this one", async () => {
@@ -118,13 +120,15 @@ describe("createCostumeHistoryStore", () => {
       [PATH]: JSON.stringify({ version: 1, players: { [OTHER]: KEPT } }),
     });
 
-    expect(await createCostumeHistoryStore(PATH, files).load(PLAYER)).toEqual([]);
+    expect(await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).load(PLAYER)).toEqual([]);
   });
 
   test("does not read an inherited name as a player", async () => {
     const { files } = fakeFiles({ [PATH]: JSON.stringify({ version: 1, players: {} }) });
 
-    expect(await createCostumeHistoryStore(PATH, files).load("constructor")).toEqual([]);
+    expect(await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).load("constructor")).toEqual(
+      [],
+    );
   });
 
   test("gives back the well-formed entries only, each set once and at most the cap", async () => {
@@ -134,14 +138,14 @@ describe("createCostumeHistoryStore", () => {
       [PATH]: JSON.stringify({ version: 1, players: { [PLAYER]: kept } }),
     });
 
-    const read = await createCostumeHistoryStore(PATH, files).load(PLAYER);
+    const read = await keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files).load(PLAYER);
 
     expect(read).toEqual(crowd.slice(0, HISTORY_CAP));
   });
 
   test("rejects a rename that fails, and leaves the last file as it was", async () => {
     const { files, disk, refuse } = fakeFiles();
-    const store = createCostumeHistoryStore(PATH, files);
+    const store = keptFileStore(FOLDER, KEPT_COSTUME_HISTORY, files);
     await store.save(PLAYER, KEPT);
     const last = disk.get(PATH);
 
@@ -153,7 +157,7 @@ describe("createCostumeHistoryStore", () => {
   });
 });
 
-describe("createCostumeHistoryStore on the disk", () => {
+describe("keptFileStore on the disk", () => {
   const folders: string[] = [];
   afterEach(() => {
     for (const folder of folders.splice(0)) {
@@ -168,9 +172,9 @@ describe("createCostumeHistoryStore on the disk", () => {
 
   test("keeps a history across stores and leaves no temporary file", async () => {
     const path = storePath();
-    await createCostumeHistoryStore(path).save(PLAYER, KEPT);
+    await keptFileStore(dirname(path), KEPT_COSTUME_HISTORY).save(PLAYER, KEPT);
 
-    expect(await createCostumeHistoryStore(path).load(PLAYER)).toEqual(KEPT);
+    expect(await keptFileStore(dirname(path), KEPT_COSTUME_HISTORY).load(PLAYER)).toEqual(KEPT);
     expect(existsSync(`${path}.tmp`)).toBe(false);
     expect(JSON.parse(readFileSync(path, "utf8")).version).toBe(1);
   });
@@ -178,9 +182,9 @@ describe("createCostumeHistoryStore on the disk", () => {
   test("makes the folder it is kept in", async () => {
     const path = join(storePath(), "..", "later", "costume-history.json");
 
-    await createCostumeHistoryStore(path).save(PLAYER, KEPT);
+    await keptFileStore(dirname(path), KEPT_COSTUME_HISTORY).save(PLAYER, KEPT);
 
-    expect(await createCostumeHistoryStore(path).load(PLAYER)).toEqual(KEPT);
+    expect(await keptFileStore(dirname(path), KEPT_COSTUME_HISTORY).load(PLAYER)).toEqual(KEPT);
   });
 
   test("rejects when the history cannot be written", async () => {
@@ -188,7 +192,7 @@ describe("createCostumeHistoryStore on the disk", () => {
     writeFileSync(inTheWay, "");
 
     await expect(
-      createCostumeHistoryStore(join(inTheWay, "costume-history.json")).save(PLAYER, KEPT),
+      keptFileStore(inTheWay, KEPT_COSTUME_HISTORY).save(PLAYER, KEPT),
     ).rejects.toThrow();
   });
 });

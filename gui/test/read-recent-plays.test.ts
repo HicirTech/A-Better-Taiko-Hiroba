@@ -3,8 +3,9 @@ import { ok, type Transport } from "@abth/core";
 
 import { createPlayHistory } from "../scripts/mock-history";
 import {
-  createMemoryRecentPlaysStore,
   createRecentPlaysReader,
+  KEPT_RECENT_PLAYS,
+  keptMemoryStore,
   RECENT_PLAYS_PAGE_OPERATION,
 } from "../src/hiroba-session";
 import { createPipeline, type EndedGroup, HISTORY_READ_CONSUMERS } from "../src/shared/pipelines";
@@ -47,7 +48,7 @@ function hirobaWith(shown: number, options: { failing?: number; signedOut?: bool
 
 function readerOver(transport: Transport) {
   const ended: EndedGroup[] = [];
-  const store = createMemoryRecentPlaysStore();
+  const store = keptMemoryStore(KEPT_RECENT_PLAYS);
   let sessionEnds = 0;
   const reader = createRecentPlaysReader({
     endpoints: ENDPOINTS,

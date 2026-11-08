@@ -2,16 +2,17 @@ import { describe, expect, test } from "bun:test";
 
 import { MAX_RATING_SNAPSHOTS, type RatingSnapshot } from "@abth/core";
 
-import { createRatingHistoryStore } from "../electron/rating-history-store";
+import { keptFileStore } from "../electron/kept-file-store";
 import type { StoreFiles } from "../electron/replace-file";
 import {
-  createMemoryRatingHistoryStore,
   createRatingHistory,
+  KEPT_RATING_HISTORY,
+  keptMemoryStore,
   NO_RATING_HISTORY,
   type RatingHistory,
   readStoredRatingHistory,
 } from "../src/hiroba-session";
-import { createIndexedDbRatingHistoryStore } from "../src/platform/capacitor-rating-history-store";
+import { keptIndexedDbStore } from "../src/platform/kept-indexeddb-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const PLAYER = "000000000000";
@@ -88,11 +89,11 @@ describe("the rating history stores", () => {
   test("none until saved, then each player's own, on every platform", async () => {
     const files = fakeFiles();
     const indexedDb = createFakeIndexedDb();
-    const memory = createMemoryRatingHistoryStore();
+    const memory = keptMemoryStore(KEPT_RATING_HISTORY);
     const stores = [
       () => memory,
-      () => createRatingHistoryStore("rating-history.json", files),
-      () => createIndexedDbRatingHistoryStore(indexedDb.factory),
+      () => keptFileStore("", KEPT_RATING_HISTORY, files),
+      () => keptIndexedDbStore(indexedDb.factory, KEPT_RATING_HISTORY),
     ];
     for (const storeOf of stores) {
       expect(await storeOf().load(PLAYER)).toEqual(NO_RATING_HISTORY);
@@ -105,7 +106,7 @@ describe("the rating history stores", () => {
 
 describe("createRatingHistory", () => {
   const verbs = (owner: string | null = PLAYER) =>
-    createRatingHistory({ store: createMemoryRatingHistoryStore(), owner: () => owner });
+    createRatingHistory({ store: keptMemoryStore(KEPT_RATING_HISTORY), owner: () => owner });
 
   test("keeps a rating per system, and answers those kept", async () => {
     const { ratingHistory, keepRating } = verbs();

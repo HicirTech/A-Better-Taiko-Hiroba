@@ -9,17 +9,12 @@ import {
   withSnapshot,
 } from "@abth/core";
 import type { HirobaSessionPort } from "../shared/session-port";
+import type { RatingHistoryStore } from "./kept-things";
 
 /** One player's kept ratings, oldest first, for each rating system. */
 export type RatingHistory = Readonly<Record<RatingSystem, readonly RatingSnapshot[]>>;
 
 export const NO_RATING_HISTORY: RatingHistory = { ourtaikoV1: [], ourtaikoV2: [] };
-
-/** One player's kept ratings. A missing store reads as none. */
-export interface RatingHistoryStore {
-  load(taikoNo: string): Promise<RatingHistory>;
-  save(taikoNo: string, history: RatingHistory): Promise<void>;
-}
 
 const isNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
@@ -82,18 +77,6 @@ export function readStoredRatingHistory(stored: unknown): RatingHistory | null {
   return isObject(stored)
     ? { ourtaikoV1: snapshotsOf(stored.ourtaikoV1), ourtaikoV2: snapshotsOf(stored.ourtaikoV2) }
     : null;
-}
-
-export function createMemoryRatingHistoryStore(): RatingHistoryStore {
-  const players = new Map<string, RatingHistory>();
-  return {
-    async load(taikoNo) {
-      return players.get(taikoNo) ?? NO_RATING_HISTORY;
-    },
-    async save(taikoNo, history) {
-      players.set(taikoNo, history);
-    },
-  };
 }
 
 /** The port's two verbs on the kept ratings, the same on every shell. Asks no site anything. */

@@ -13,12 +13,6 @@ import {
 
 import { CROWNS } from "./recent-plays-store";
 
-/** One player's log of what reads of scores changed; null where none is kept. */
-export interface ScoreChangesStore {
-  load(taikoNo: string): Promise<ScoreChangeLog | null>;
-  save(taikoNo: string, log: ScoreChangeLog): Promise<void>;
-}
-
 const NUMBERS = [
   "highScore",
   "stageCount",
@@ -39,18 +33,6 @@ export function readStoredScoreChanges(stored: unknown): ScoreChangeLog | null {
     return null;
   }
   return { baselined: stored.baselined, changes: capChanges(stored.changes.flatMap(changeOf)) };
-}
-
-export function createMemoryScoreChangesStore(): ScoreChangesStore {
-  const players = new Map<string, ScoreChangeLog>();
-  return {
-    async load(taikoNo) {
-      return players.get(taikoNo) ?? null;
-    },
-    async save(taikoNo, log) {
-      players.set(taikoNo, log);
-    },
-  };
 }
 
 function changeOf(value: unknown): ScoreChange[] {

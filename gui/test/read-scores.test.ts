@@ -12,11 +12,12 @@ import type { MockSession } from "../scripts/mock-costume";
 import { createPlayHistory } from "../scripts/mock-history";
 import { createScorePages } from "../scripts/mock-scores";
 import {
-  createMemoryRecentPlaysStore,
-  createMemoryScoreChangesStore,
-  createMemoryScoresStore,
   createRecentPlaysReader,
   createScoresReader,
+  KEPT_RECENT_PLAYS,
+  KEPT_SCORE_CHANGES,
+  KEPT_SCORES,
+  keptMemoryStore,
   SCORE_DETAIL_OPERATION,
   SCORE_LIST_OPERATION,
   type ScoreChangesStore,
@@ -84,7 +85,7 @@ function hirobaWith(shown: number) {
 
 function readersOver(
   transport: Transport,
-  kept = { book: createMemoryScoresStore(), changes: createMemoryScoreChangesStore() },
+  kept = { book: keptMemoryStore(KEPT_SCORES), changes: keptMemoryStore(KEPT_SCORE_CHANGES) },
 ) {
   const ended: { readonly pipeline: string; readonly group: EndedGroup }[] = [];
   const pipeline = (name: string, readConsumers: number) =>
@@ -100,7 +101,7 @@ function readersOver(
   const recentPlays = createRecentPlaysReader({
     endpoints: ENDPOINTS,
     pipeline: pipeline("history", HISTORY_READ_CONSUMERS),
-    store: createMemoryRecentPlaysStore(),
+    store: keptMemoryStore(KEPT_RECENT_PLAYS),
     owner: () => OWNER,
     endSession,
     walked: (taikoNo, reading) => scores.noteWalk(taikoNo, reading),
@@ -418,14 +419,17 @@ describe("the log of what reads of scores change", () => {
 
   test("a player whose scores were read before the log was kept logs the next change", async () => {
     const hiroba = hirobaWith(12);
-    const book = createMemoryScoresStore();
+    const book = keptMemoryStore(KEPT_SCORES);
     await readersOver(hiroba.transport, {
       book,
-      changes: createMemoryScoreChangesStore(),
+      changes: keptMemoryStore(KEPT_SCORE_CHANGES),
     }).scores.readScores();
 
     hiroba.play({ replay: "3" });
-    const later = readersOver(hiroba.transport, { book, changes: createMemoryScoreChangesStore() });
+    const later = readersOver(hiroba.transport, {
+      book,
+      changes: keptMemoryStore(KEPT_SCORE_CHANGES),
+    });
     await later.scores.readScores();
 
     expect(rowsOf(await later.log())).toEqual(["1003/4 gold 800003 > gold 801003"]);
@@ -433,7 +437,10 @@ describe("the log of what reads of scores change", () => {
 
   test("the log is kept across launches, each launch adding to it", async () => {
     const hiroba = hirobaWith(12);
-    const kept = { book: createMemoryScoresStore(), changes: createMemoryScoreChangesStore() };
+    const kept = {
+      book: keptMemoryStore(KEPT_SCORES),
+      changes: keptMemoryStore(KEPT_SCORE_CHANGES),
+    };
     await readersOver(hiroba.transport, kept).scores.readScores();
     hiroba.play({ replay: "3" });
     await readersOver(hiroba.transport, kept).scores.readScores();
@@ -450,8 +457,8 @@ describe("the log of what reads of scores change", () => {
 
   test("every book a save writes has its rows in the log written before it", async () => {
     const hiroba = hirobaWith(30);
-    const books = createMemoryScoresStore();
-    const logs = createMemoryScoreChangesStore();
+    const books = keptMemoryStore(KEPT_SCORES);
+    const logs = keptMemoryStore(KEPT_SCORE_CHANGES);
     let written: ScoreChangeLog | null = null;
     const pairs: { readonly book: ScoreBook; readonly log: ScoreChangeLog | null }[] = [];
     // A slow log, so the other details fold in while it is written.
@@ -492,7 +499,7 @@ describe("the log of what reads of scores change", () => {
 
   test("a log that cannot be written keeps the book from being written", async () => {
     const hiroba = hirobaWith(12);
-    const book = createMemoryScoresStore();
+    const book = keptMemoryStore(KEPT_SCORES);
     const refusing: ScoreChangesStore = {
       load: async () => null,
       save: async () => {
