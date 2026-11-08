@@ -21,6 +21,12 @@ import {
   createScoresReader,
   createSessionWrites,
   DESKTOP_PICTURE_LIMITS,
+  KEPT_COSTUME_HISTORY,
+  KEPT_FOLDER_HISTORY,
+  KEPT_RATING_HISTORY,
+  KEPT_RECENT_PLAYS,
+  KEPT_SCORE_CHANGES,
+  KEPT_SCORES,
   keepHirobaEnded,
   offeredOf,
   type PictureSources,
@@ -63,16 +69,12 @@ import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
 import { DATA_FOLDER } from "./data-folder";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
-import { createCostumeHistoryStore, createFolderHistoryStore } from "./history-store";
+import { keptFileStore } from "./kept-file-store";
 import { OFF_SCREEN_OPTIONS, showOffScreen } from "./off-screen";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { handlePicturesOut } from "./pictures-out";
 import { createPipelineHistoryStore } from "./pipeline-history-store";
-import { createRatingHistoryStore } from "./rating-history-store";
-import { createRecentPlaysStore } from "./recent-plays-store";
 import { saveReads } from "./save-reads";
-import { createScoreChangesStore } from "./score-changes-store";
-import { createScoresStore } from "./scores-store";
 import { createSessionStore, type SessionStore } from "./session-store";
 import { openSignInWindow, type SignInAttempt } from "./sign-in-window";
 import { createUpdateFeedTransport } from "./update-feed-transport";
@@ -282,12 +284,8 @@ const started = app.whenReady().then(async () => {
     endpoints,
     platform: "desktop",
     now: environment.now,
-    historyStore: createCostumeHistoryStore(
-      join(app.getPath("userData"), DATA_FOLDER.costumeHistory),
-    ),
-    folderHistoryStore: createFolderHistoryStore(
-      join(app.getPath("userData"), DATA_FOLDER.folderHistory),
-    ),
+    historyStore: keptFileStore(app.getPath("userData"), KEPT_COSTUME_HISTORY),
+    folderHistoryStore: keptFileStore(app.getPath("userData"), KEPT_FOLDER_HISTORY),
     recentPreview: previews.pictureOf,
     signedIn: () => sessionCookie !== null,
     endSession: () => setSession(null),
@@ -301,7 +299,7 @@ const started = app.whenReady().then(async () => {
   const recentPlays = createRecentPlaysReader({
     endpoints,
     pipeline: pipelines.history,
-    store: createRecentPlaysStore(join(app.getPath("userData"), DATA_FOLDER.recentPlays)),
+    store: keptFileStore(app.getPath("userData"), KEPT_RECENT_PLAYS),
     owner: () => owner,
     endSession: () => setSession(null),
     walked: (taikoNo, reading) => scores.noteWalk(taikoNo, reading),
@@ -310,11 +308,8 @@ const started = app.whenReady().then(async () => {
     endpoints,
     io: pipelines.io,
     pipeline: pipelines.scores,
-    store: createScoresStore(join(app.getPath("userData"), DATA_FOLDER.scores)),
-    changes: createScoreChangesStore(
-      join(app.getPath("userData"), DATA_FOLDER.scoreChanges),
-      join(app.getPath("userData"), DATA_FOLDER.scoreChangesBeforeHits),
-    ),
+    store: keptFileStore(app.getPath("userData"), KEPT_SCORES),
+    changes: keptFileStore(app.getPath("userData"), KEPT_SCORE_CHANGES),
     owner: () => owner,
     endSession: () => setSession(null),
     walk: recentPlays.readRecentPlays,
@@ -323,7 +318,7 @@ const started = app.whenReady().then(async () => {
   });
 
   const ratings = createRatingHistory({
-    store: createRatingHistoryStore(join(app.getPath("userData"), DATA_FOLDER.ratingHistory)),
+    store: keptFileStore(app.getPath("userData"), KEPT_RATING_HISTORY),
     owner: () => owner,
   });
 

@@ -1,42 +1,17 @@
 import { describe, expect, test } from "bun:test";
 
-import { MAX_RATING_SNAPSHOTS, type RatingSnapshot } from "@abth/core";
+import { MAX_RATING_SNAPSHOTS, NO_RATING_HISTORY, type RatingSnapshot } from "@abth/core";
 
-import { createRatingHistoryStore } from "../electron/rating-history-store";
+import { HISTORY, snapshot } from "../../core/test/kept-fixtures";
+
+import { keptFileStore } from "../electron/kept-file-store";
 import type { StoreFiles } from "../electron/replace-file";
-import {
-  createMemoryRatingHistoryStore,
-  createRatingHistory,
-  NO_RATING_HISTORY,
-  type RatingHistory,
-  readStoredRatingHistory,
-} from "../src/hiroba-session";
-import { createIndexedDbRatingHistoryStore } from "../src/platform/capacitor-rating-history-store";
+import { createRatingHistory, KEPT_RATING_HISTORY, keptMemoryStore } from "../src/hiroba-session";
+import { keptIndexedDbStore } from "../src/platform/kept-indexeddb-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const PLAYER = "000000000000";
 const OTHER = "111111111111";
-
-const snapshot = (at: string, rating: number): RatingSnapshot => ({
-  at,
-  figures: [
-    { figure: "rating", value: rating, compensated: false },
-    { figure: "stamina", value: 7.5, compensated: true },
-  ],
-  charts: [
-    {
-      songNo: "1178",
-      level: 5,
-      accuracy: 0.98,
-      constant: 9.5,
-      figures: { rating: 10.25, stamina: 8 },
-    },
-  ],
-});
-const HISTORY: RatingHistory = {
-  ourtaikoV1: [snapshot("2026-10-13T00:00:00.000Z", 8.68)],
-  ourtaikoV2: [snapshot("2026-10-13T00:00:00.000Z", 8.8)],
-};
 
 /** Files in memory, as the desktop store writes them. */
 function fakeFiles(): StoreFiles {
@@ -60,39 +35,15 @@ function fakeFiles(): StoreFiles {
   } as unknown as StoreFiles;
 }
 
-describe("readStoredRatingHistory", () => {
-  test("reads a kept history back whole", () => {
-    expect(readStoredRatingHistory(JSON.parse(JSON.stringify(HISTORY)))).toEqual(HISTORY);
-  });
-
-  test("reads what is no history as none", () => {
-    expect(readStoredRatingHistory(undefined)).toBeNull();
-    expect(readStoredRatingHistory("ratings")).toBeNull();
-  });
-
-  test("drops a snapshot or a chart that does not read, and keeps the others", () => {
-    const good = snapshot("2026-10-13T00:00:00.000Z", 8.68);
-    const read = readStoredRatingHistory({
-      ourtaikoV1: [
-        good,
-        { at: 12, figures: [], charts: [] },
-        { ...good, charts: [...good.charts, { songNo: "1178", level: 9 }] },
-      ],
-    });
-    expect(read?.ourtaikoV1).toEqual([good, good]);
-    expect(read?.ourtaikoV2).toEqual([]);
-  });
-});
-
 describe("the rating history stores", () => {
   test("none until saved, then each player's own, on every platform", async () => {
     const files = fakeFiles();
     const indexedDb = createFakeIndexedDb();
-    const memory = createMemoryRatingHistoryStore();
+    const memory = keptMemoryStore(KEPT_RATING_HISTORY);
     const stores = [
       () => memory,
-      () => createRatingHistoryStore("rating-history.json", files),
-      () => createIndexedDbRatingHistoryStore(indexedDb.factory),
+      () => keptFileStore("", KEPT_RATING_HISTORY, files),
+      () => keptIndexedDbStore(indexedDb.factory, KEPT_RATING_HISTORY),
     ];
     for (const storeOf of stores) {
       expect(await storeOf().load(PLAYER)).toEqual(NO_RATING_HISTORY);
@@ -105,7 +56,7 @@ describe("the rating history stores", () => {
 
 describe("createRatingHistory", () => {
   const verbs = (owner: string | null = PLAYER) =>
-    createRatingHistory({ store: createMemoryRatingHistoryStore(), owner: () => owner });
+    createRatingHistory({ store: keptMemoryStore(KEPT_RATING_HISTORY), owner: () => owner });
 
   test("keeps a rating per system, and answers those kept", async () => {
     const { ratingHistory, keepRating } = verbs();

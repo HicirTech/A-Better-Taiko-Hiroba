@@ -10,10 +10,6 @@ import {
 import {
   CAPACITOR_PICTURE_LIMITS,
   createMemoryPictureStore,
-  createMemoryRatingHistoryStore,
-  createMemoryRecentPlaysStore,
-  createMemoryScoreChangesStore,
-  createMemoryScoresStore,
   createPictureReader,
   createRatingHistory,
   createRecentPlaysReader,
@@ -25,7 +21,15 @@ import {
   type HirobaEndpoints,
   type HistoryStore,
   idpOrigin,
+  KEPT_COSTUME_HISTORY,
+  KEPT_FOLDER_HISTORY,
+  KEPT_RATING_HISTORY,
+  KEPT_RECENT_PLAYS,
+  KEPT_SCORE_CHANGES,
+  KEPT_SCORES,
+  type KeptThing,
   keepHirobaEnded,
+  keptMemoryStore,
   loginPageUrl,
   offeredOf,
   type PictureSources,
@@ -72,10 +76,6 @@ import {
   readSongCatalogue,
 } from "../shared/song-catalogue";
 import { feedUrlFor, readUpdateFeed } from "../shared/updates";
-import {
-  createIndexedDbFolderHistoryStore,
-  createIndexedDbHistoryStore,
-} from "./capacitor-history-store";
 import type { DatabaseFactory } from "./capacitor-indexeddb";
 import {
   CHART_DENSITY_DATABASE,
@@ -84,11 +84,8 @@ import {
   DRAWN_CHART_DATABASE,
 } from "./capacitor-picture-store";
 import { createIndexedDbPipelineStores } from "./capacitor-pipeline-store";
-import { createIndexedDbRatingHistoryStore } from "./capacitor-rating-history-store";
-import { createIndexedDbRecentPlaysStore } from "./capacitor-recent-plays-store";
-import { createIndexedDbScoreChangesStore } from "./capacitor-score-changes-store";
-import { createIndexedDbScoresStore } from "./capacitor-scores-store";
 import { createCapacitorTransport } from "./capacitor-transport";
+import { keptIndexedDbStore } from "./kept-indexeddb-store";
 import { safariUserAgent } from "./safari-user-agent";
 import type { MobileOs } from "./system-os";
 
@@ -305,14 +302,20 @@ export async function createCapacitorPort(
   };
 
   const { indexedDb } = options;
+  const keptOnDevice = <T, M>(thing: KeptThing<T, M>) =>
+    indexedDb === undefined ? keptMemoryStore(thing) : keptIndexedDbStore(indexedDb, thing);
   const writes = createSessionWrites({
     endpoints,
     platform: os,
     now: options.now ?? (() => new Date()),
     historyStore:
-      indexedDb === undefined ? NO_HISTORY_STORE : createIndexedDbHistoryStore(indexedDb),
+      indexedDb === undefined
+        ? NO_HISTORY_STORE
+        : keptIndexedDbStore(indexedDb, KEPT_COSTUME_HISTORY),
     folderHistoryStore:
-      indexedDb === undefined ? NO_HISTORY_STORE : createIndexedDbFolderHistoryStore(indexedDb),
+      indexedDb === undefined
+        ? NO_HISTORY_STORE
+        : keptIndexedDbStore(indexedDb, KEPT_FOLDER_HISTORY),
     recentPreview: previews.pictureOf,
     signedIn: () => signedIn,
     endSession: forget,
@@ -325,10 +328,7 @@ export async function createCapacitorPort(
   const recentPlays = createRecentPlaysReader({
     endpoints,
     pipeline: pipelines.history,
-    store:
-      indexedDb === undefined
-        ? createMemoryRecentPlaysStore()
-        : createIndexedDbRecentPlaysStore(indexedDb),
+    store: keptOnDevice(KEPT_RECENT_PLAYS),
     owner: () => owner,
     endSession: forget,
     walked: (taikoNo, reading) => scores.noteWalk(taikoNo, reading),
@@ -337,12 +337,8 @@ export async function createCapacitorPort(
     endpoints,
     io: pipelines.io,
     pipeline: pipelines.scores,
-    store:
-      indexedDb === undefined ? createMemoryScoresStore() : createIndexedDbScoresStore(indexedDb),
-    changes:
-      indexedDb === undefined
-        ? createMemoryScoreChangesStore()
-        : createIndexedDbScoreChangesStore(indexedDb),
+    store: keptOnDevice(KEPT_SCORES),
+    changes: keptOnDevice(KEPT_SCORE_CHANGES),
     owner: () => owner,
     endSession: forget,
     walk: recentPlays.readRecentPlays,
@@ -351,10 +347,7 @@ export async function createCapacitorPort(
   });
 
   const ratings = createRatingHistory({
-    store:
-      indexedDb === undefined
-        ? createMemoryRatingHistoryStore()
-        : createIndexedDbRatingHistoryStore(indexedDb),
+    store: keptOnDevice(KEPT_RATING_HISTORY),
     owner: () => owner,
   });
 

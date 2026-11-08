@@ -1,7 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { createIndexedDbHistoryStore } from "../src/platform/capacitor-history-store";
+import { KEPT_COSTUME_HISTORY } from "../src/hiroba-session";
 import type { DatabaseFactory } from "../src/platform/capacitor-indexeddb";
+import { keptIndexedDbStore } from "../src/platform/kept-indexeddb-store";
 import { entryOf, pictureOf, SET } from "./history-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
@@ -10,23 +11,25 @@ const OTHER = "111111111111";
 const HISTORY_CAP = 30;
 const KEPT = [entryOf(1, pictureOf("one")), entryOf(2)];
 
-describe("createIndexedDbHistoryStore", () => {
+describe("keptIndexedDbStore, holding the costume history", () => {
   test("reads an empty history when nothing was kept", async () => {
-    const store = createIndexedDbHistoryStore(createFakeIndexedDb().factory);
+    const store = keptIndexedDbStore(createFakeIndexedDb().factory, KEPT_COSTUME_HISTORY);
 
     expect(await store.load(PLAYER)).toEqual([]);
   });
 
   test("keeps a history across stores, as across launches", async () => {
     const indexedDb = createFakeIndexedDb();
-    await createIndexedDbHistoryStore(indexedDb.factory).save(PLAYER, KEPT);
+    await keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY).save(PLAYER, KEPT);
 
-    expect(await createIndexedDbHistoryStore(indexedDb.factory).load(PLAYER)).toEqual(KEPT);
+    expect(await keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY).load(PLAYER)).toEqual(
+      KEPT,
+    );
   });
 
   test("keeps each player's history apart, and drops one left empty", async () => {
     const indexedDb = createFakeIndexedDb();
-    const store = createIndexedDbHistoryStore(indexedDb.factory);
+    const store = keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY);
     const theirs = [entryOf(7, pictureOf("seven"))];
     await store.save(PLAYER, KEPT);
     await store.save(OTHER, theirs);
@@ -51,7 +54,7 @@ describe("createIndexedDbHistoryStore", () => {
       },
     };
 
-    await createIndexedDbHistoryStore(factory).save(PLAYER, KEPT);
+    await keptIndexedDbStore(factory, KEPT_COSTUME_HISTORY).save(PLAYER, KEPT);
 
     expect(opened).toEqual([["abth-costume-history", 1]]);
     expect([...indexedDb.tables.keys()]).toEqual(["histories"]);
@@ -60,7 +63,7 @@ describe("createIndexedDbHistoryStore", () => {
 
   test("writes each history in a transaction on the histories alone", async () => {
     const indexedDb = createFakeIndexedDb();
-    const store = createIndexedDbHistoryStore(indexedDb.factory);
+    const store = keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY);
 
     await store.save(PLAYER, KEPT);
     await store.load(PLAYER);
@@ -73,7 +76,7 @@ describe("createIndexedDbHistoryStore", () => {
 
   test("rejects a save the storage refuses, and keeps what it held", async () => {
     const indexedDb = createFakeIndexedDb();
-    const store = createIndexedDbHistoryStore(indexedDb.factory);
+    const store = keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY);
     await store.save(PLAYER, KEPT);
     indexedDb.faults.writes = true;
 
@@ -86,7 +89,7 @@ describe("createIndexedDbHistoryStore", () => {
 
   test("fails every call while the database will not open, and recovers", async () => {
     const indexedDb = createFakeIndexedDb();
-    const store = createIndexedDbHistoryStore(indexedDb.factory);
+    const store = keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY);
     indexedDb.faults.open = true;
 
     await expect(store.save(PLAYER, KEPT)).rejects.toThrow();
@@ -95,12 +98,14 @@ describe("createIndexedDbHistoryStore", () => {
     indexedDb.faults.open = false;
     expect(await store.load(PLAYER)).toEqual([]);
     await store.save(PLAYER, KEPT);
-    expect(await createIndexedDbHistoryStore(indexedDb.factory).load(PLAYER)).toEqual(KEPT);
+    expect(await keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY).load(PLAYER)).toEqual(
+      KEPT,
+    );
   });
 
   test("reads a value it did not write, or one of another shape, as no history", async () => {
     const indexedDb = createFakeIndexedDb();
-    const store = createIndexedDbHistoryStore(indexedDb.factory);
+    const store = keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY);
     await store.load(PLAYER);
     const histories = indexedDb.tables.get("histories");
     const readAfterKeeping = async (value: unknown) => {
@@ -121,7 +126,7 @@ describe("createIndexedDbHistoryStore", () => {
 
   test("gives back the well-formed entries only, each set once and at most the cap", async () => {
     const indexedDb = createFakeIndexedDb();
-    const store = createIndexedDbHistoryStore(indexedDb.factory);
+    const store = keptIndexedDbStore(indexedDb.factory, KEPT_COSTUME_HISTORY);
     await store.load(PLAYER);
     const crowd = Array.from({ length: HISTORY_CAP + 5 }, (_, at) => entryOf(at + 1));
     const stored = [{ set: SET, picture: 7 }, entryOf(1), entryOf(1), ...crowd];

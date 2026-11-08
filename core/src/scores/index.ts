@@ -31,3 +31,5 @@ export {
   playsOverTime,
   ranksOverTime,
 } from "./history";
+export { readStoredScoreBook } from "./stored-book";
+export { readStoredScoreChanges } from "./stored-changes";

@@ -42,9 +42,8 @@ import type {
   ScoresView,
   ScoreView,
 } from "../shared/session-port";
+import type { ScoreChangesStore, ScoresStore } from "./kept-things";
 import { listedChartsOf } from "./listed-charts";
-import type { ScoreChangesStore } from "./score-changes-store";
-import type { ScoresStore } from "./scores-store";
 import { sessionEnded } from "./session-ended";
 import type { HirobaEndpoints } from "./types";
 

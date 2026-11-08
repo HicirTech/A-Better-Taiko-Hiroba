@@ -16,9 +16,12 @@ export { parseOurTaikoV2Data } from "./ourtaiko-v2-data";
 export { parseRatingData, type RatingData, ratePlayer } from "./rating-data";
 export {
   MAX_RATING_SNAPSHOTS,
+  NO_RATING_HISTORY,
   type PastRating,
   pastRatings,
+  type RatingHistory,
   type RatingSnapshot,
+  readStoredRatingHistory,
   snapshotOf,
   withSnapshot,
 } from "./rating-history";

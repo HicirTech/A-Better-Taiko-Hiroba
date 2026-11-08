@@ -17,7 +17,7 @@ import {
   resultFailure,
 } from "../shared/pipelines";
 import type { RecentPlaysFailure } from "../shared/session-port";
-import type { RecentPlaysStore } from "./recent-plays-store";
+import type { RecentPlaysStore } from "./kept-things";
 import { sessionEnded } from "./session-ended";
 import type { HirobaEndpoints } from "./types";
 

@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
-import { createFolderHistoryStore } from "../electron/history-store";
+import { keptFileStore } from "../electron/kept-file-store";
+import { KEPT_FOLDER_HISTORY } from "../src/hiroba-session";
 import {
   MAX_FOLDER_HISTORY,
   mergeFolderHistory,
@@ -109,12 +110,12 @@ describe("readFolderHistory", () => {
     expect(readFolderHistory(stored)).toEqual([kept(A, 1), kept(B, 1), kept(C, 1)]);
   });
 
-  test("reads anything but a list as no history", () => {
-    expect(readFolderHistory(kept(A, 1))).toEqual([]);
+  test("reads anything but a list as none", () => {
+    expect(readFolderHistory(kept(A, 1))).toBeNull();
   });
 });
 
-describe("createFolderHistoryStore on the disk", () => {
+describe("keptFileStore, holding the folder history", () => {
   const folders: string[] = [];
   afterEach(() => {
     for (const folder of folders.splice(0)) {
@@ -128,10 +129,10 @@ describe("createFolderHistoryStore on the disk", () => {
     const path = join(folder, "folder-history.json");
     const history = [kept(B, 1, "Party")];
 
-    await createFolderHistoryStore(path).save(PLAYER, history);
-    expect(await createFolderHistoryStore(path).load(PLAYER)).toEqual(history);
+    await keptFileStore(dirname(path), KEPT_FOLDER_HISTORY).save(PLAYER, history);
+    expect(await keptFileStore(dirname(path), KEPT_FOLDER_HISTORY).load(PLAYER)).toEqual(history);
 
-    await createFolderHistoryStore(path).save(PLAYER, []);
-    expect(await createFolderHistoryStore(path).load(PLAYER)).toEqual([]);
+    await keptFileStore(dirname(path), KEPT_FOLDER_HISTORY).save(PLAYER, []);
+    expect(await keptFileStore(dirname(path), KEPT_FOLDER_HISTORY).load(PLAYER)).toEqual([]);
   });
 });

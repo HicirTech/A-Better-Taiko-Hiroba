@@ -1,41 +1,14 @@
-import {
-  type CrownState,
-  isGenre,
-  isLevel,
-  isObject,
-  isRank,
-  type RandomMode,
-  type RecentPlay,
-} from "@abth/core";
-
-/** One player's recent plays, newest first. A missing store reads as none. */
-export interface RecentPlaysStore {
-  load(taikoNo: string): Promise<readonly RecentPlay[]>;
-  save(taikoNo: string, plays: readonly RecentPlay[]): Promise<void>;
-}
+import { isGenre, isLevel, isObject, isRank } from "../guards";
+import type { RecentPlay } from "../hiroba-dom-parser/types";
+import type { RandomMode } from "../hiroba-models/score";
+import type { CrownState } from "../hiroba-models/vocabulary";
 
 export const CROWNS = new Set<CrownState>(["none", "played", "silver", "gold", "donderful"]);
 const RANDOMS = new Set<RandomMode>(["none", "kimagure", "detarame"]);
 
-/** The well-formed rows of a stored walk. A broken file reads as a first read, not a crash. */
-export function readStoredRecentPlays(stored: unknown): RecentPlay[] {
-  return Array.isArray(stored) ? stored.flatMap(playOf) : [];
-}
-
-export function createMemoryRecentPlaysStore(): RecentPlaysStore {
-  const players = new Map<string, readonly RecentPlay[]>();
-  return {
-    async load(taikoNo) {
-      return players.get(taikoNo) ?? [];
-    },
-    async save(taikoNo, plays) {
-      if (plays.length === 0) {
-        players.delete(taikoNo);
-      } else {
-        players.set(taikoNo, plays);
-      }
-    },
-  };
+/** The well-formed rows of a stored walk; what is not a list of rows is none. */
+export function readStoredRecentPlays(stored: unknown): RecentPlay[] | null {
+  return Array.isArray(stored) ? stored.flatMap(playOf) : null;
 }
 
 function playOf(value: unknown): RecentPlay[] {

@@ -27,10 +27,10 @@ export function mergeCostumeHistory(
   return merged.slice(0, MAX_COSTUME_HISTORY);
 }
 
-/** The well-formed entries of a stored history, each set once and the list capped: what both
- * stores give back. */
-export function readCostumeHistory(stored: unknown): CostumeHistoryEntry[] {
-  return mergeCostumeHistory([], Array.isArray(stored) ? stored.flatMap(entryOf) : []);
+/** The well-formed entries of a stored history, each set once and the list capped; none for
+ * what is not a list. */
+export function readCostumeHistory(stored: unknown): CostumeHistoryEntry[] | null {
+  return Array.isArray(stored) ? mergeCostumeHistory([], stored.flatMap(entryOf)) : null;
 }
 
 function entryOf(value: unknown): CostumeHistoryEntry[] {

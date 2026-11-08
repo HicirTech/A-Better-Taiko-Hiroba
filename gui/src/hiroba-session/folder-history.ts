@@ -28,10 +28,14 @@ export function mergeFolderHistory(
   return [first, ...before, ...others].slice(0, MAX_FOLDER_HISTORY);
 }
 
-/** The well-formed entries of a stored history, each folder once and the list capped. */
-export function readFolderHistory(stored: unknown): FolderHistoryEntry[] {
+/** The well-formed entries of a stored history, each folder once and the list capped; none for
+ * what is not a list. */
+export function readFolderHistory(stored: unknown): FolderHistoryEntry[] | null {
+  if (!Array.isArray(stored)) {
+    return null;
+  }
   const read: FolderHistoryEntry[] = [];
-  for (const entry of Array.isArray(stored) ? stored.flatMap(entryOf) : []) {
+  for (const entry of stored.flatMap(entryOf)) {
     if (!read.some((kept) => sameSongs(kept.songs, entry.songs))) {
       read.push(entry);
     }

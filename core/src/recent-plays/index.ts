@@ -12,3 +12,4 @@ export {
   readRecentPlays,
   recentPlayKey,
 } from "./read";
+export { readStoredRecentPlays } from "./stored-plays";

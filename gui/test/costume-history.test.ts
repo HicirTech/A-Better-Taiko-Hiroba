@@ -113,8 +113,8 @@ describe("readCostumeHistory", () => {
     ["null", null],
     ["a string", "[]"],
     ["an object", { set: SET, picture: null }],
-  ])("reads %s as an empty history", (_label, value) => {
-    expect(readCostumeHistory(value)).toEqual([]);
+  ])("reads %s as none", (_label, value) => {
+    expect(readCostumeHistory(value)).toBeNull();
   });
 
   type BadEntry = [label: string, entry: unknown];
@@ -178,6 +178,6 @@ describe("readCostumeHistory", () => {
     const read = readCostumeHistory([{ set: SET, picture: null, token: "secret" }]);
 
     expect(read).toEqual([{ set: SET, picture: null }]);
-    expect(Object.keys(read[0] ?? {})).toEqual(["set", "picture"]);
+    expect(Object.keys(read?.[0] ?? {})).toEqual(["set", "picture"]);
   });
 });

@@ -1,21 +1,25 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { EMPTY_SCORE_BOOK, type RecentPlay, type ScoreChangeLog } from "@abth/core";
+import {
+  EMPTY_SCORE_BOOK,
+  NO_RATING_HISTORY,
+  type RecentPlay,
+  type ScoreChangeLog,
+} from "@abth/core";
 
 import { DATA_FOLDER } from "../electron/data-folder";
-import { createCostumeHistoryStore, createFolderHistoryStore } from "../electron/history-store";
+import { keptFileStore } from "../electron/kept-file-store";
 import { createPipelineHistoryStore } from "../electron/pipeline-history-store";
-import { createRatingHistoryStore } from "../electron/rating-history-store";
-import { createRecentPlaysStore } from "../electron/recent-plays-store";
-import { createScoreChangesStore } from "../electron/score-changes-store";
-import { createScoresStore } from "../electron/scores-store";
-import { NO_RATING_HISTORY } from "../src/hiroba-session";
 import {
-  createIndexedDbFolderHistoryStore,
-  createIndexedDbHistoryStore,
-} from "../src/platform/capacitor-history-store";
+  KEPT_COSTUME_HISTORY,
+  KEPT_FOLDER_HISTORY,
+  KEPT_RATING_HISTORY,
+  KEPT_RECENT_PLAYS,
+  KEPT_SCORE_CHANGES,
+  KEPT_SCORES,
+} from "../src/hiroba-session";
 import type { DatabaseFactory } from "../src/platform/capacitor-indexeddb";
 import {
   CHART_DENSITY_DATABASE,
@@ -24,10 +28,7 @@ import {
   DRAWN_CHART_DATABASE,
 } from "../src/platform/capacitor-picture-store";
 import { createIndexedDbPipelineStores } from "../src/platform/capacitor-pipeline-store";
-import { createIndexedDbRatingHistoryStore } from "../src/platform/capacitor-rating-history-store";
-import { createIndexedDbRecentPlaysStore } from "../src/platform/capacitor-recent-plays-store";
-import { createIndexedDbScoreChangesStore } from "../src/platform/capacitor-score-changes-store";
-import { createIndexedDbScoresStore } from "../src/platform/capacitor-scores-store";
+import { keptIndexedDbStore } from "../src/platform/kept-indexeddb-store";
 import type { PictureKey } from "../src/shared/picture-store";
 import type { PipelineHistory } from "../src/shared/pipelines";
 import type { FolderHistoryEntry } from "../src/shared/session-port";
@@ -80,7 +81,7 @@ function recordedIndexedDb() {
 describe("what Android keeps, by name", () => {
   test("keeps each player's score book in abth-scores, table books, field book", async () => {
     const { factory, opened, tables } = recordedIndexedDb();
-    await createIndexedDbScoresStore(factory).save(PLAYER, EMPTY_SCORE_BOOK);
+    await keptIndexedDbStore(factory, KEPT_SCORES).save(PLAYER, EMPTY_SCORE_BOOK);
 
     expect(opened).toEqual([["abth-scores", 1]]);
     expect(tables.get("books")?.get(PLAYER)).toEqual({ v: 1, book: EMPTY_SCORE_BOOK });
@@ -88,7 +89,7 @@ describe("what Android keeps, by name", () => {
 
   test("keeps each player's recent plays in abth-recent-plays, table plays, field plays", async () => {
     const { factory, opened, tables } = recordedIndexedDb();
-    await createIndexedDbRecentPlaysStore(factory).save(PLAYER, PLAYS);
+    await keptIndexedDbStore(factory, KEPT_RECENT_PLAYS).save(PLAYER, PLAYS);
 
     expect(opened).toEqual([["abth-recent-plays", 1]]);
     expect(tables.get("plays")?.get(PLAYER)).toEqual({ v: 1, plays: PLAYS });
@@ -96,7 +97,7 @@ describe("what Android keeps, by name", () => {
 
   test("keeps score changes in abth-score-changes-2 and reads abth-score-changes for none", async () => {
     const { factory, opened, tables } = recordedIndexedDb();
-    const store = createIndexedDbScoreChangesStore(factory);
+    const store = keptIndexedDbStore(factory, KEPT_SCORE_CHANGES);
     await store.save(PLAYER, LOG);
     // The fake holds tables by name alone, so the earlier database's opening empties this one.
     expect(tables.get("changes")?.get(PLAYER)).toEqual({ v: 1, log: LOG });
@@ -110,7 +111,7 @@ describe("what Android keeps, by name", () => {
 
   test("keeps the rating history in abth-rating-history, table ratings, field history", async () => {
     const { factory, opened, tables } = recordedIndexedDb();
-    await createIndexedDbRatingHistoryStore(factory).save(PLAYER, NO_RATING_HISTORY);
+    await keptIndexedDbStore(factory, KEPT_RATING_HISTORY).save(PLAYER, NO_RATING_HISTORY);
 
     expect(opened).toEqual([["abth-rating-history", 1]]);
     expect(tables.get("ratings")?.get(PLAYER)).toEqual({ v: 1, history: NO_RATING_HISTORY });
@@ -118,9 +119,9 @@ describe("what Android keeps, by name", () => {
 
   test("keeps the two histories apart, each in table histories, field entries", async () => {
     const costume = recordedIndexedDb();
-    await createIndexedDbHistoryStore(costume.factory).save(PLAYER, COSTUMES);
+    await keptIndexedDbStore(costume.factory, KEPT_COSTUME_HISTORY).save(PLAYER, COSTUMES);
     const folder = recordedIndexedDb();
-    await createIndexedDbFolderHistoryStore(folder.factory).save(PLAYER, FOLDERS);
+    await keptIndexedDbStore(folder.factory, KEPT_FOLDER_HISTORY).save(PLAYER, FOLDERS);
 
     expect(costume.opened).toEqual([["abth-costume-history", 1]]);
     expect(costume.tables.get("histories")?.get(PLAYER)).toEqual({ v: 1, entries: COSTUMES });
@@ -160,16 +161,9 @@ describe("what the desktop keeps, by name", () => {
   afterAll(() => rmSync(folder, { recursive: true, force: true }));
   const kept = (name: string) => JSON.parse(readFileSync(join(folder, name), "utf8"));
 
-  test("names every file and folder in the data folder as earlier builds did", () => {
+  test("names every other file and folder in the data folder as earlier builds did", () => {
     expect(DATA_FOLDER).toEqual({
       session: "session.json",
-      costumeHistory: "costume-history.json",
-      folderHistory: "folder-history.json",
-      recentPlays: "recent-plays.json",
-      scores: "scores.json",
-      scoreChanges: "score-changes-2.json",
-      scoreChangesBeforeHits: "score-changes.json",
-      ratingHistory: "rating-history.json",
       pipelines: "pipelines",
       pictures: "pictures",
       charts: "charts",
@@ -178,38 +172,32 @@ describe("what the desktop keeps, by name", () => {
     });
   });
 
-  test("keeps each kept thing as version 1 with every player under their taiko number", async () => {
-    await createScoresStore(join(folder, DATA_FOLDER.scores)).save(PLAYER, EMPTY_SCORE_BOOK);
-    await createRecentPlaysStore(join(folder, DATA_FOLDER.recentPlays)).save(PLAYER, PLAYS);
-    await createScoreChangesStore(
-      join(folder, DATA_FOLDER.scoreChanges),
-      join(folder, DATA_FOLDER.scoreChangesBeforeHits),
-    ).save(PLAYER, LOG);
-    await createRatingHistoryStore(join(folder, DATA_FOLDER.ratingHistory)).save(
-      PLAYER,
-      NO_RATING_HISTORY,
-    );
-    await createCostumeHistoryStore(join(folder, DATA_FOLDER.costumeHistory)).save(
-      PLAYER,
-      COSTUMES,
-    );
-    await createFolderHistoryStore(join(folder, DATA_FOLDER.folderHistory)).save(PLAYER, FOLDERS);
+  test("keeps each kept thing in its file as version 1, every player under the taiko number", async () => {
+    await keptFileStore(folder, KEPT_SCORES).save(PLAYER, EMPTY_SCORE_BOOK);
+    await keptFileStore(folder, KEPT_RECENT_PLAYS).save(PLAYER, PLAYS);
+    await keptFileStore(folder, KEPT_SCORE_CHANGES).save(PLAYER, LOG);
+    await keptFileStore(folder, KEPT_RATING_HISTORY).save(PLAYER, NO_RATING_HISTORY);
+    await keptFileStore(folder, KEPT_COSTUME_HISTORY).save(PLAYER, COSTUMES);
+    await keptFileStore(folder, KEPT_FOLDER_HISTORY).save(PLAYER, FOLDERS);
 
-    expect(kept(DATA_FOLDER.scores)).toEqual({
-      version: 1,
-      players: { [PLAYER]: EMPTY_SCORE_BOOK },
-    });
-    expect(kept(DATA_FOLDER.recentPlays)).toEqual({ version: 1, players: { [PLAYER]: PLAYS } });
-    expect(kept(DATA_FOLDER.scoreChanges)).toEqual({ version: 1, players: { [PLAYER]: LOG } });
-    expect(kept(DATA_FOLDER.ratingHistory)).toEqual({
+    expect(kept("scores.json")).toEqual({ version: 1, players: { [PLAYER]: EMPTY_SCORE_BOOK } });
+    expect(kept("recent-plays.json")).toEqual({ version: 1, players: { [PLAYER]: PLAYS } });
+    expect(kept("score-changes-2.json")).toEqual({ version: 1, players: { [PLAYER]: LOG } });
+    expect(kept("rating-history.json")).toEqual({
       version: 1,
       players: { [PLAYER]: NO_RATING_HISTORY },
     });
-    expect(kept(DATA_FOLDER.costumeHistory)).toEqual({
-      version: 1,
-      players: { [PLAYER]: COSTUMES },
-    });
-    expect(kept(DATA_FOLDER.folderHistory)).toEqual({ version: 1, players: { [PLAYER]: FOLDERS } });
+    expect(kept("costume-history.json")).toEqual({ version: 1, players: { [PLAYER]: COSTUMES } });
+    expect(kept("folder-history.json")).toEqual({ version: 1, players: { [PLAYER]: FOLDERS } });
+  });
+
+  test("reads score changes an earlier build kept in score-changes.json, for none", async () => {
+    writeFileSync(
+      join(folder, "score-changes.json"),
+      JSON.stringify({ version: 1, players: { [OTHER]: LOG } }),
+    );
+
+    expect(await keptFileStore(folder, KEPT_SCORE_CHANGES).load(OTHER)).toEqual(LOG);
   });
 
   test("keeps a pipeline's history as version 1, one file for each pipeline", async () => {
