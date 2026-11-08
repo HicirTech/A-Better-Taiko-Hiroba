@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import { pageWaiting } from "../src/app/page-waiting";
 import { PAGES, type Page } from "../src/navigation/pages";
-import { PAGE_MODELS, type PageState } from "../src/pages/page-model";
+import type { PageState } from "../src/pages/page-model";
+import { PAGE_MODELS } from "../src/pages/registry";
 
 /** A page's state with only what a test names; each read records itself in `calls`. */
 function pageState(overrides: Record<string, unknown> = {}) {
