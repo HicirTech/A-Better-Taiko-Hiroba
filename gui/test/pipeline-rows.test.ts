@@ -22,7 +22,7 @@ import {
   pickedNow,
 } from "../src/pipelines-page/pipeline-rows";
 import type { EndedGroup, GroupNow, PipelineView } from "../src/shared/pipelines";
-import { PORT_QUEUEING } from "../src/shared/session-port";
+import { PORT_CALLS } from "../src/shared/session-port";
 import {
   CHART_DENSITY_OPERATION,
   CHART_PICTURE_OPERATION,
@@ -117,8 +117,8 @@ describe("endedKey", () => {
 
 describe("operationName", () => {
   test("has a name for every group a pipeline runs: queued verbs, pictures and chart files", () => {
-    const queued = Object.entries(PORT_QUEUEING)
-      .filter(([, how]) => how !== "unqueued")
+    const queued = Object.entries(PORT_CALLS)
+      .filter(([, call]) => call.queueing !== "unqueued")
       .map(([verb]) => verb);
     const operations = [
       ...queued,

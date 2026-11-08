@@ -8,9 +8,9 @@ import {
   type SiteAddresses,
 } from "../src/hiroba-session";
 import {
-  BRIDGE_CHANNELS,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
+  PORT_CALLS,
   type SignInOutcome,
 } from "../src/shared/session-port";
 import { DATA_FOLDER } from "./data-folder";
@@ -128,7 +128,7 @@ export function handlePortCalls<E>(
   channels: PortChannels<E>,
   trusted: (event: E) => boolean,
 ): void {
-  for (const [method, channel] of Object.entries(BRIDGE_CHANNELS)) {
+  for (const [method, { channel }] of Object.entries(PORT_CALLS)) {
     const verb = method as keyof HirobaSessionPort;
     channels.handle(channel, (event, ...args) => {
       if (!trusted(event)) {

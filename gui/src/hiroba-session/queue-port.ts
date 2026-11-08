@@ -12,7 +12,7 @@ import {
 import {
   type HirobaSessionPort,
   type PipelinesView,
-  PORT_QUEUEING,
+  PORT_CALLS,
   type PortImplementation,
   type WriteOutcomeView,
 } from "../shared/session-port";
@@ -111,18 +111,18 @@ const writeAsked = (operation: keyof HirobaSessionPort): GroupAsked<unknown> => 
   failureOf: (outcome) => writeFailure(outcome as WriteOutcomeView<unknown>),
 });
 
-/** `port` with each verb run as `PORT_QUEUEING` says: the one place a shell queues its verbs. */
+/** `port` with each verb run as `PORT_CALLS` says: the one place a shell queues its verbs. */
 export function queuePort(pipelines: PortPipelines, port: PortImplementation): HirobaSessionPort {
   const { io, external } = pipelines;
   const queued: Partial<Record<keyof HirobaSessionPort, (...args: unknown[]) => Promise<unknown>>> =
     {};
-  for (const verb of Object.keys(PORT_QUEUEING) as (keyof HirobaSessionPort)[]) {
+  for (const verb of Object.keys(PORT_CALLS) as (keyof HirobaSessionPort)[]) {
     const run = port[verb] as (...args: unknown[]) => Promise<unknown>;
     const inGroup =
       (...args: unknown[]) =>
       (transport: Transport) =>
         run(transport, ...args);
-    switch (PORT_QUEUEING[verb]) {
+    switch (PORT_CALLS[verb].queueing) {
       case "read":
         queued[verb] = (...args) => io.read(readAsked(verb), inGroup(...args));
         break;

@@ -20,18 +20,17 @@ import {
   SCORE_READ_CONSUMERS,
 } from "../src/shared/pipelines";
 import {
-  BRIDGE_CHANNELS,
   type HirobaSessionPort,
   PORT_ARGUMENTS,
-  PORT_QUEUEING,
+  PORT_CALLS,
   type PortImplementation,
   type VerbQueueing,
   type WriteOutcomeView,
 } from "../src/shared/session-port";
 
 type Verb = keyof HirobaSessionPort;
-const VERBS = Object.keys(PORT_QUEUEING) as Verb[];
-const queuedAs = (how: VerbQueueing) => VERBS.filter((verb) => PORT_QUEUEING[verb] === how);
+const VERBS = Object.keys(PORT_CALLS) as Verb[];
+const queuedAs = (how: VerbQueueing) => VERBS.filter((verb) => PORT_CALLS[verb].queueing === how);
 const READS = queuedAs("read");
 const EXCLUSIVE = queuedAs("exclusive");
 const WRITES = queuedAs("write");
@@ -54,7 +53,7 @@ function watchedPort() {
       verb,
       async (...received: unknown[]) => {
         // A verb in a pipeline gets its group's transport first.
-        const args = PORT_QUEUEING[verb] === "unqueued" ? received : received.slice(1);
+        const args = PORT_CALLS[verb].queueing === "unqueued" ? received : received.slice(1);
         events.push(`begin ${verb}`);
         await new Promise<void>((resolve) => gates.set(verb, resolve));
         events.push(`end ${verb}`);
@@ -80,10 +79,9 @@ function watchedPort() {
   return { events, ask, letGo };
 }
 
-describe("PORT_QUEUEING", () => {
-  test("places every verb of the port, the bridge's and the argument checks' alike", () => {
+describe("PORT_CALLS", () => {
+  test("places every verb of the port, as the argument checks name them", () => {
     const placed: string[] = [...VERBS].sort();
-    expect(placed).toEqual(Object.keys(BRIDGE_CHANNELS).sort());
     expect(placed).toEqual(Object.keys(PORT_ARGUMENTS).sort());
   });
 

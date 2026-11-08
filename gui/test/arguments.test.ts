@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { PLAY_OPTION_CODES, SCORE_RANK_NAMES } from "@abth/core";
 
 import { KEPT_GROUPS } from "../src/shared/pipelines";
-import { PORT_ARGUMENTS } from "../src/shared/session-port";
+import { type HirobaSessionPort, PORT_ARGUMENTS, PORT_CALLS } from "../src/shared/session-port";
 import { CHART_PICTURE_MAX_BYTES } from "../src/shared/song-catalogue";
 
 const PLAYED = { level: 4, title: "サンプル曲", genre: 2 };
@@ -16,38 +16,20 @@ const SET = {
   costume4: 37,
   costume5: 140,
 };
+const TAKING_NOTHING = (Object.keys(PORT_CALLS) as (keyof HirobaSessionPort)[]).filter(
+  (verb) => PORT_CALLS[verb].takes === 0,
+);
 
 describe("PORT_ARGUMENTS", () => {
-  test("a verb that takes nothing accepts no arguments, and refuses any", () => {
-    const {
-      readProfile: _read,
-      changeCostume: _change,
-      changeTitle: _changeTitle,
-      changeName: _changeName,
-      previewCostume: _preview,
-      readPicture: _picture,
-      changeFolder: _changeFolder,
-      changeFavoriteSong: _changeFavoriteSong,
-      readSongCatalogue: _catalogue,
-      readRatingData: _ratingData,
-      ratingHistory: _ratingHistory,
-      keepRating: _keepRating,
-      readChartPicture: _chartPicture,
-      readCdnChart: _cdnChart,
-      readChartDensity: _chartDensity,
-      readChartTja: _chartTja,
-      readDrawnChart: _drawnChart,
-      keepDrawnChart: _keepDrawnChart,
-      readPipelines: _pipelines,
-      readSongScores: _songScores,
-      ...takingNothing
-    } = PORT_ARGUMENTS;
-    for (const check of Object.values(takingNothing)) {
+  test.each(TAKING_NOTHING)(
+    "%s takes nothing: it accepts no arguments, and refuses any",
+    (verb) => {
+      const check = PORT_ARGUMENTS[verb];
       expect(check([])).toBe(true);
       expect(check([undefined])).toBe(false);
       expect(check([{ url: "https://example.test/" }])).toBe(false);
-    }
-  });
+    },
+  );
 
   test("readRatingData takes one rating system the app knows, and nothing else", () => {
     const check = PORT_ARGUMENTS.readRatingData;
