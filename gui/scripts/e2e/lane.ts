@@ -1,11 +1,11 @@
 /** Runs a lane's sections on one app and stand-in, and the sections after every lane. */
 import { rmSync } from "node:fs";
 import { join } from "node:path";
-import electronPath from "electron";
 
 import { type App, launch, stop } from "./app";
 import {
   CDP_PORT,
+  electronBinary,
   HIROBA,
   HIROBA_PORT,
   IDP_PORT,
@@ -192,7 +192,7 @@ export async function runLane(
   const { results, tokens } = report;
 
   if (setupChecks) {
-    const halfSet = Bun.spawn([String(electronPath), root], {
+    const halfSet = Bun.spawn([await electronBinary(), root], {
       env: { ...process.env, ABTH_DEV_HIROBA_ORIGIN: HIROBA, ABTH_DEV_USER_DATA: USER_DATA },
       stdout: "ignore",
       stderr: "ignore",
