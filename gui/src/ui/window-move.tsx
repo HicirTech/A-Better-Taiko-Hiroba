@@ -40,6 +40,8 @@ export function moveWindow(move: WindowMove, change: () => void): void {
   document.documentElement.dataset.windowMove = move;
   const transition = document.startViewTransition(() => flushSync(change));
   running = transition;
+  // A move the next one cuts short skips its slide, and `ready` then rejects: the change is made.
+  void transition.ready.catch(() => undefined);
   const ended = () => {
     if (running === transition) {
       running = null;
