@@ -1,0 +1,8 @@
+{
+  // Tests that render React take the app's DOM and JSX settings, and bun's test types.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["bun", "vite/client"]
+  },
+  "include": ["./**/*.ts"]
+}
