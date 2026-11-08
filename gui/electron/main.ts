@@ -60,6 +60,7 @@ import {
 } from "../src/shared/song-catalogue";
 import { openableUrlOf, readUpdateFeed } from "../src/shared/updates";
 import { APP_ORIGIN, registerAppScheme, serveWebBundle } from "./app-protocol";
+import { DATA_FOLDER } from "./data-folder";
 import { type DesktopEnvironment, desktopEnvironment } from "./desktop-environment";
 import { createHirobaTransport } from "./hiroba-transport";
 import { createCostumeHistoryStore, createFolderHistoryStore } from "./history-store";
@@ -150,7 +151,7 @@ const feedTransport = createUpdateFeedTransport({
 });
 
 const pipelineStore = (name: string) =>
-  createPipelineHistoryStore(join(app.getPath("userData"), "pipelines", `${name}.json`));
+  createPipelineHistoryStore(join(app.getPath("userData"), DATA_FOLDER.pipelines, `${name}.json`));
 const logs = {
   io: createPipelineLog({ store: pipelineStore("io") }),
   pictures: createPipelineLog({ store: pipelineStore("pictures") }),
@@ -186,14 +187,14 @@ const pipelines = {
 // A kept picture answers at once, even while a write runs; only a fetch waits in the pipeline.
 const pictures = createPictureReader({
   endpoints,
-  store: createDiskPictureStore(join(app.getPath("userData"), "pictures")),
+  store: createDiskPictureStore(join(app.getPath("userData"), DATA_FOLDER.pictures)),
   pipeline: pipelines.io,
   limits: DESKTOP_PICTURE_LIMITS,
   state: () => ({ signedIn: sessionCookie !== null, offered, owner, sources }),
 });
 // Asked of the wiki's hosts, not Hiroba: the external pipeline's transport holds no session.
 const chartPictures = createChartPictureReader({
-  store: createDiskPictureStore(join(app.getPath("userData"), "charts")),
+  store: createDiskPictureStore(join(app.getPath("userData"), DATA_FOLDER.charts)),
   pipeline: pipelines.external,
   chartOrigin: environment.chartOrigin,
 });
@@ -202,14 +203,14 @@ const chartFiles = createEseChartFiles({
   chartsUrl: environment.eseChartsUrl,
 });
 const chartDensities = createChartDensityReader({
-  store: createDiskPictureStore(join(app.getPath("userData"), "densities")),
+  store: createDiskPictureStore(join(app.getPath("userData"), DATA_FOLDER.densities)),
   pipeline: pipelines.external,
   cdnUrl: environment.cdnUrl,
   files: chartFiles,
 });
 const chartTja = createChartTjaReader({ pipeline: pipelines.external, files: chartFiles });
 const drawnCharts = createDrawnCharts(
-  createDiskPictureStore(join(app.getPath("userData"), "drawn-charts")),
+  createDiskPictureStore(join(app.getPath("userData"), DATA_FOLDER.drawnCharts)),
 );
 // The writes come up with the window: until then a kept picture fills no history.
 let previewKept: (set: CostumeSet, picture: string) => void = () => undefined;
@@ -235,7 +236,7 @@ const started = app.whenReady().then(async () => {
     );
   }
   serveWebBundle();
-  sessionStore = createSessionStore(join(app.getPath("userData"), "session.json"));
+  sessionStore = createSessionStore(join(app.getPath("userData"), DATA_FOLDER.session));
   sessionCookie = sessionStore.load();
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) =>
     callback(false),
@@ -281,9 +282,11 @@ const started = app.whenReady().then(async () => {
     endpoints,
     platform: "desktop",
     now: environment.now,
-    historyStore: createCostumeHistoryStore(join(app.getPath("userData"), "costume-history.json")),
+    historyStore: createCostumeHistoryStore(
+      join(app.getPath("userData"), DATA_FOLDER.costumeHistory),
+    ),
     folderHistoryStore: createFolderHistoryStore(
-      join(app.getPath("userData"), "folder-history.json"),
+      join(app.getPath("userData"), DATA_FOLDER.folderHistory),
     ),
     recentPreview: previews.pictureOf,
     signedIn: () => sessionCookie !== null,
@@ -298,7 +301,7 @@ const started = app.whenReady().then(async () => {
   const recentPlays = createRecentPlaysReader({
     endpoints,
     pipeline: pipelines.history,
-    store: createRecentPlaysStore(join(app.getPath("userData"), "recent-plays.json")),
+    store: createRecentPlaysStore(join(app.getPath("userData"), DATA_FOLDER.recentPlays)),
     owner: () => owner,
     endSession: () => setSession(null),
     walked: (taikoNo, reading) => scores.noteWalk(taikoNo, reading),
@@ -307,10 +310,10 @@ const started = app.whenReady().then(async () => {
     endpoints,
     io: pipelines.io,
     pipeline: pipelines.scores,
-    store: createScoresStore(join(app.getPath("userData"), "scores.json")),
+    store: createScoresStore(join(app.getPath("userData"), DATA_FOLDER.scores)),
     changes: createScoreChangesStore(
-      join(app.getPath("userData"), "score-changes-2.json"),
-      join(app.getPath("userData"), "score-changes.json"),
+      join(app.getPath("userData"), DATA_FOLDER.scoreChanges),
+      join(app.getPath("userData"), DATA_FOLDER.scoreChangesBeforeHits),
     ),
     owner: () => owner,
     endSession: () => setSession(null),
@@ -320,7 +323,7 @@ const started = app.whenReady().then(async () => {
   });
 
   const ratings = createRatingHistory({
-    store: createRatingHistoryStore(join(app.getPath("userData"), "rating-history.json")),
+    store: createRatingHistoryStore(join(app.getPath("userData"), DATA_FOLDER.ratingHistory)),
     owner: () => owner,
   });
 
