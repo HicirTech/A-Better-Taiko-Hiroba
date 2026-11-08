@@ -29,24 +29,16 @@ declare global {
 const IOS_VIEWPORT =
   "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover";
 
-/** Which shell the bundle runs in: port, link, share; Capacitor's Back, Toast, camera, launch. */
-export type Platform =
-  | {
-      readonly shell: "desktop";
-      readonly port: HirobaSessionPort;
-      readonly link: SystemLink;
-      readonly share: SystemShare;
-    }
-  | {
-      readonly shell: "capacitor";
-      readonly port: HirobaSessionPort;
-      readonly link: SystemLink;
-      readonly share: SystemShare;
-      readonly back: SystemBack;
-      readonly toast: SystemToast;
-      readonly camera: SystemCamera;
-      readonly launch: SystemLaunch;
-    };
+/** What the shell gives: port, link, share, and Capacitor's Back, Toast, camera and launch. */
+export interface Platform {
+  readonly port: HirobaSessionPort;
+  readonly link: SystemLink;
+  readonly share: SystemShare;
+  readonly back?: SystemBack;
+  readonly toast?: SystemToast;
+  readonly camera?: SystemCamera;
+  readonly launch?: SystemLaunch;
+}
 
 /** Picks the platform layer; one bundle ships in all shells. Capacitor's modules load only there,
  * so the desktop never loads the in-app browser code. `closeLabel` is asked each time it opens. */
@@ -59,7 +51,6 @@ export async function connectPlatform({
   const { abth, abthPictures } = window;
   if (abth !== undefined && abthPictures !== undefined) {
     return {
-      shell: "desktop",
       port: settledPort(abth),
       link: desktopLink,
       share: desktopShare(abthPictures),
@@ -90,7 +81,6 @@ export async function connectPlatform({
     ]);
     const port = settledPort(await createCapacitorPort({ os, closeLabel, indexedDb: indexedDB }));
     return {
-      shell: "capacitor",
       port,
       link: capacitorLink,
       share: await capacitorShare(os),
