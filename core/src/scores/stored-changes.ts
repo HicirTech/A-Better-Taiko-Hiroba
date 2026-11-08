@@ -1,17 +1,7 @@
-import {
-  type ChartReading,
-  type CrownState,
-  capChanges,
-  isLevel,
-  isObject,
-  isRank,
-  isSongNo,
-  isWholeNumber,
-  type ScoreChange,
-  type ScoreChangeLog,
-} from "@abth/core";
-
-import { CROWNS } from "./recent-plays-store";
+import { isLevel, isObject, isRank, isSongNo, isWholeNumber } from "../guards";
+import type { CrownState } from "../hiroba-models/vocabulary";
+import { CROWNS } from "../recent-plays/stored-plays";
+import { type ChartReading, capChanges, type ScoreChange, type ScoreChangeLog } from "./changes";
 
 const NUMBERS = [
   "highScore",

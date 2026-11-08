@@ -1,9 +1,10 @@
+import { isLevel, isObject, isSongNo } from "../guards";
 import { chartKey } from "../scores/book";
 import type { ScoreChange } from "../scores/changes";
 import { type DayOf, pastDays } from "../scores/history";
 import { COUNTED } from "./ourtaiko-formulas";
 import { type RatingData, ratePlayer } from "./rating-data";
-import type { ChartRating, PlayerFigure, PlayerRating, RatedScore } from "./types";
+import type { ChartRating, PlayerFigure, PlayerRating, RatedScore, RatingSystem } from "./types";
 
 /** The changes of one rating system kept for a player, at most. */
 export const MAX_RATING_SNAPSHOTS = 100;
@@ -107,4 +108,72 @@ export function pastRatings(
     },
   );
   return days.flatMap(({ value }) => (value === null ? [] : [value]));
+}
+
+/** One player's kept ratings, oldest first, for each rating system. */
+export type RatingHistory = Readonly<Record<RatingSystem, readonly RatingSnapshot[]>>;
+
+export const NO_RATING_HISTORY: RatingHistory = { ourtaikoV1: [], ourtaikoV2: [] };
+
+const isNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+function figureOf(value: unknown): PlayerFigure[] {
+  return isObject(value) && typeof value.figure === "string" && isNumber(value.value)
+    ? [
+        {
+          figure: value.figure as PlayerFigure["figure"],
+          value: value.value,
+          compensated: value.compensated === true,
+        },
+      ]
+    : [];
+}
+
+function chartOf(value: unknown): ChartRating[] {
+  if (
+    !isObject(value) ||
+    !isSongNo(value.songNo) ||
+    !isLevel(value.level) ||
+    !isNumber(value.accuracy) ||
+    !isNumber(value.constant) ||
+    !isObject(value.figures) ||
+    !isNumber(value.figures.rating) ||
+    !Object.values(value.figures).every(isNumber)
+  ) {
+    return [];
+  }
+  return [
+    {
+      songNo: value.songNo,
+      level: value.level,
+      accuracy: value.accuracy,
+      constant: value.constant,
+      figures: value.figures as ChartRating["figures"],
+    },
+  ];
+}
+
+function snapshotsOf(value: unknown): RatingSnapshot[] {
+  return (Array.isArray(value) ? value : []).flatMap((snapshot): RatingSnapshot[] =>
+    isObject(snapshot) &&
+    typeof snapshot.at === "string" &&
+    Array.isArray(snapshot.figures) &&
+    Array.isArray(snapshot.charts)
+      ? [
+          {
+            at: snapshot.at,
+            figures: snapshot.figures.flatMap(figureOf),
+            charts: snapshot.charts.flatMap(chartOf),
+          },
+        ]
+      : [],
+  );
+}
+
+/** A kept history's well-formed snapshots; what does not read as a history at all is none. */
+export function readStoredRatingHistory(stored: unknown): RatingHistory | null {
+  return isObject(stored)
+    ? { ourtaikoV1: snapshotsOf(stored.ourtaikoV1), ourtaikoV2: snapshotsOf(stored.ourtaikoV2) }
+    : null;
 }

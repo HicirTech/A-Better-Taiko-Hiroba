@@ -68,12 +68,7 @@ export {
   viewOfPipelines,
   writeFailure,
 } from "./queue-port";
-export type { RatingHistory } from "./rating-history-store";
-export {
-  createRatingHistory,
-  NO_RATING_HISTORY,
-  readStoredRatingHistory,
-} from "./rating-history-store";
+export { createRatingHistory } from "./rating-history-store";
 export {
   CAPACITOR_PICTURE_LIMITS,
   createPictureReader,
@@ -99,10 +94,7 @@ export {
   SCORE_DETAIL_OPERATION,
   SCORE_LIST_OPERATION,
 } from "./read-scores";
-export { readStoredRecentPlays } from "./recent-plays-store";
 export { createRecentPreviews } from "./recent-previews";
-export { readStoredScoreChanges } from "./score-changes-store";
-export { readStoredScoreBook } from "./scores-store";
 export { sessionEnded } from "./session-ended";
 export {
   BUSY_OUTCOME,

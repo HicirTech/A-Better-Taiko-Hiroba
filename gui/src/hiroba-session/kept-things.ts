@@ -1,16 +1,19 @@
-import { EMPTY_SCORE_BOOK, type RecentPlay, type ScoreBook, type ScoreChangeLog } from "@abth/core";
+import {
+  EMPTY_SCORE_BOOK,
+  NO_RATING_HISTORY,
+  type RatingHistory,
+  type RecentPlay,
+  readStoredRatingHistory,
+  readStoredRecentPlays,
+  readStoredScoreBook,
+  readStoredScoreChanges,
+  type ScoreBook,
+  type ScoreChangeLog,
+} from "@abth/core";
 
 import type { CostumeHistoryEntry, FolderHistoryEntry } from "../shared/session-port";
 import { readCostumeHistory } from "./costume-history";
 import { readFolderHistory } from "./folder-history";
-import {
-  NO_RATING_HISTORY,
-  type RatingHistory,
-  readStoredRatingHistory,
-} from "./rating-history-store";
-import { readStoredRecentPlays } from "./recent-plays-store";
-import { readStoredScoreChanges } from "./score-changes-store";
-import { readStoredScoreBook } from "./scores-store";
 
 /** One kind of data kept for each player on the device, as every store of it names and reads it. */
 export interface KeptThing<T, M = T> {

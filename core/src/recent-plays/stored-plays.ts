@@ -1,12 +1,7 @@
-import {
-  type CrownState,
-  isGenre,
-  isLevel,
-  isObject,
-  isRank,
-  type RandomMode,
-  type RecentPlay,
-} from "@abth/core";
+import { isGenre, isLevel, isObject, isRank } from "../guards";
+import type { RecentPlay } from "../hiroba-dom-parser/types";
+import type { RandomMode } from "../hiroba-models/score";
+import type { CrownState } from "../hiroba-models/vocabulary";
 
 export const CROWNS = new Set<CrownState>(["none", "played", "silver", "gold", "donderful"]);
 const RANDOMS = new Set<RandomMode>(["none", "kimagure", "detarame"]);

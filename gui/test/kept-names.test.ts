@@ -2,7 +2,12 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { EMPTY_SCORE_BOOK, type RecentPlay, type ScoreChangeLog } from "@abth/core";
+import {
+  EMPTY_SCORE_BOOK,
+  NO_RATING_HISTORY,
+  type RecentPlay,
+  type ScoreChangeLog,
+} from "@abth/core";
 
 import { DATA_FOLDER } from "../electron/data-folder";
 import { keptFileStore } from "../electron/kept-file-store";
@@ -14,7 +19,6 @@ import {
   KEPT_RECENT_PLAYS,
   KEPT_SCORE_CHANGES,
   KEPT_SCORES,
-  NO_RATING_HISTORY,
 } from "../src/hiroba-session";
 import type { DatabaseFactory } from "../src/platform/capacitor-indexeddb";
 import {

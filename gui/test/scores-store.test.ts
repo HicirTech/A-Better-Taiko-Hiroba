@@ -1,126 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import {
-  EMPTY_SCORE_BOOK,
-  MAX_SCORE_CHANGES,
-  type Score,
-  type ScoreBook,
-  type ScoreChange,
-  type ScoreChangeLog,
-} from "@abth/core";
+import { EMPTY_SCORE_BOOK } from "@abth/core";
+
+import { BOOK, CHANGES, LOG } from "../../core/test/kept-fixtures";
 import { keptFileStore } from "../electron/kept-file-store";
 import type { StoreFiles } from "../electron/replace-file";
-import {
-  KEPT_SCORE_CHANGES,
-  KEPT_SCORES,
-  keptMemoryStore,
-  readStoredScoreBook,
-  readStoredScoreChanges,
-} from "../src/hiroba-session";
+import { KEPT_SCORE_CHANGES, KEPT_SCORES, keptMemoryStore } from "../src/hiroba-session";
 import { keptIndexedDbStore } from "../src/platform/kept-indexeddb-store";
 import { createFakeIndexedDb } from "./indexeddb-fake";
 
 const PLAYER = "000000000000";
 const OTHER = "111111111111";
-
-const listed: Score = {
-  taikoNo: PLAYER,
-  songNo: "1178",
-  level: 4,
-  crown: "gold",
-  scoreRank: 6,
-  fidelity: "list",
-  record: null,
-  fetchedAt: "2026-10-10T12:00:00.000Z",
-  ranking: null,
-  sections: [],
-};
-const detailed: Score = {
-  ...listed,
-  level: 5,
-  fidelity: "detail",
-  record: {
-    highScore: 950180,
-    good: 900,
-    ok: 12,
-    bad: 0,
-    drumroll: 30,
-    maxCombo: 912,
-    stageCount: 4,
-    clearCount: 4,
-    fullComboCount: 2,
-    donderfulComboCount: 0,
-    options: { speed: 1.5, doron: false, abekobe: false, random: "none", supportChart: null },
-  },
-  ranking: 5503,
-  sections: [{ crown: "gold", score: 139020, good: 100, ok: 6, bad: 0, drumroll: 0 }],
-};
-const BOOK: ScoreBook = {
-  songs: [{ songNo: "1178", title: "サンプル曲", genres: [1, 6] }],
-  scores: { "1178/4": listed, "1178/5": detailed },
-  stale: ["1178/5"],
-  unlisted: [{ songTitle: "新曲", genre: 2, level: 4 }],
-  full: false,
-};
-
-const NO_HITS = { good: null, ok: null, bad: null, drumroll: null, maxCombo: null } as const;
-const HITS = { good: 900, ok: 12, bad: 0, drumroll: 30, maxCombo: 912 } as const;
-
-/** 1178's Ura, first cleared, then played again for a better score. */
-const CHANGES: readonly ScoreChange[] = [
-  {
-    songNo: "1178",
-    level: 5,
-    from: {
-      crown: "none",
-      scoreRank: null,
-      highScore: null,
-      stageCount: null,
-      clearCount: null,
-      fullComboCount: null,
-      donderfulComboCount: null,
-      ...NO_HITS,
-      fetchedAt: "2026-10-09T12:00:00.000Z",
-    },
-    to: {
-      crown: "silver",
-      scoreRank: 5,
-      highScore: 940000,
-      stageCount: 3,
-      clearCount: 3,
-      fullComboCount: 0,
-      donderfulComboCount: 0,
-      ...HITS,
-      fetchedAt: "2026-10-10T12:00:00.000Z",
-    },
-  },
-  {
-    songNo: "1178",
-    level: 5,
-    from: {
-      crown: "silver",
-      scoreRank: 5,
-      highScore: 940000,
-      stageCount: 3,
-      clearCount: 3,
-      fullComboCount: 0,
-      donderfulComboCount: 0,
-      ...NO_HITS,
-      fetchedAt: "2026-10-10T12:00:00.000Z",
-    },
-    to: {
-      crown: "gold",
-      scoreRank: 6,
-      highScore: 950180,
-      stageCount: 4,
-      clearCount: 4,
-      fullComboCount: 2,
-      donderfulComboCount: 0,
-      ...HITS,
-      fetchedAt: "2026-10-11T12:00:00.000Z",
-    },
-  },
-];
-const LOG: ScoreChangeLog = { baselined: true, changes: CHANGES };
 
 /** Files in memory, as the desktop store writes them. */
 function fakeFiles() {
@@ -144,73 +33,6 @@ function fakeFiles() {
   } as unknown as StoreFiles;
   return { files, disk };
 }
-
-describe("readStoredScoreBook", () => {
-  test("reads a kept book back whole", () => {
-    expect(readStoredScoreBook(JSON.parse(JSON.stringify(BOOK)))).toEqual(BOOK);
-  });
-
-  test.each<[name: string, stored: unknown]>([
-    ["nothing", undefined],
-    ["another shape", { songs: [], scores: [] }],
-    ["a book whose full read is not a yes or a no", { ...BOOK, full: "yes" }],
-  ])("reads %s as none", (_name, stored) => {
-    expect(readStoredScoreBook(stored)).toBeNull();
-  });
-
-  test("reads a chart kept before its ranking and sections were read as having none", () => {
-    const { ranking: _ranking, sections: _sections, ...older } = detailed;
-    const kept = { ...BOOK, scores: { "1178/5": older } };
-    const read = readStoredScoreBook(JSON.parse(JSON.stringify(kept)));
-    expect(read?.scores["1178/5"]?.ranking).toBeNull();
-    expect(read?.scores["1178/5"]?.sections).toEqual([]);
-  });
-
-  test("drops a chart whose record is broken, and the mark that named it", () => {
-    const broken = { ...BOOK, scores: { ...BOOK.scores, "1178/5": { ...detailed, record: {} } } };
-    const read = readStoredScoreBook(JSON.parse(JSON.stringify(broken)));
-    expect(Object.keys(read?.scores ?? {})).toEqual(["1178/4"]);
-    expect(read?.stale).toEqual([]);
-  });
-});
-
-describe("readStoredScoreChanges", () => {
-  test("reads a kept log back whole", () => {
-    expect(readStoredScoreChanges(JSON.parse(JSON.stringify(LOG)))).toEqual(LOG);
-  });
-
-  test.each<[name: string, stored: unknown]>([
-    ["nothing", undefined],
-    ["another shape", { changes: {} }],
-    ["a log whose start is not a yes or a no", { ...LOG, baselined: "yes" }],
-  ])("reads %s as no log", (_name, stored) => {
-    expect(readStoredScoreChanges(stored)).toBeNull();
-  });
-
-  test("reads a row kept before hits were logged, with none", () => {
-    const { good, ok, bad, drumroll, maxCombo, ...before } = CHANGES[1]?.to ?? {};
-    const read = readStoredScoreChanges({
-      baselined: true,
-      changes: [{ ...CHANGES[1], from: before, to: before }],
-    });
-    expect(read?.changes[0]?.to).toEqual({ ...before, ...NO_HITS } as never);
-  });
-
-  test("drops a row with a broken reading, and keeps the others", () => {
-    const broken = { ...CHANGES[1], to: { ...CHANGES[1]?.to, stageCount: -1 } };
-    const read = readStoredScoreChanges({ baselined: true, changes: [CHANGES[0], broken] });
-    expect(read?.changes).toEqual(CHANGES.slice(0, 1));
-  });
-
-  test("keeps no more rows than the cap from what is kept", () => {
-    const gold = CHANGES[1]?.to;
-    const replayed = { songNo: "1178", level: 5, from: gold, to: { ...gold, stageCount: 5 } };
-    const changes = Array.from({ length: MAX_SCORE_CHANGES + 2 }, () => replayed);
-    expect(readStoredScoreChanges({ baselined: true, changes })?.changes).toHaveLength(
-      MAX_SCORE_CHANGES,
-    );
-  });
-});
 
 describe("the score stores", () => {
   test("the desktop's keeps each player's book in one file, across stores", async () => {
