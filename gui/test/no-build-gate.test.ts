@@ -76,7 +76,7 @@ const LOOKS_AT_THE_BUILD: Readonly<Record<string, readonly string[]>> = {
   // A development build behind Vite's dev server may point at the stand-in, at a feed for the
   // update check, at the song lists, the chart pictures and files and the rating data; a
   // production build, the release APK included, always reaches the real sites.
-  "src/platform/capacitor.ts": [
+  "src/platform/capacitor-sites.ts": [
     "import.meta.env.DEV",
     "import.meta.env.DEV",
     "import.meta.env.VITE_ABTH_DEV_ABTH_CDN",
