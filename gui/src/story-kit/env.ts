@@ -88,3 +88,42 @@ export const STORY_BACK: SystemBack = {
   listen: () => () => {},
   leave: action("leave the app"),
 };
+
+/** A Back a story's play presses by hand, counting each time it leaves the app. */
+export interface PressableBack {
+  readonly back: SystemBack;
+  press(): void;
+  leaves(): number;
+  /** Forgets the leaves counted, for a play run again. */
+  reset(): void;
+}
+
+/** Android's Back, or with `onScreen` the one the app draws, for a story's play to press. */
+export function pressableBack(onScreen = false): PressableBack {
+  const listeners = new Set<() => void>();
+  let left = 0;
+  return {
+    back: {
+      onScreen,
+      listen: (onPress) => {
+        listeners.add(onPress);
+        return () => {
+          listeners.delete(onPress);
+        };
+      },
+      leave: () => {
+        left += 1;
+        action("leave the app")();
+      },
+    },
+    press: () => {
+      for (const onPress of [...listeners]) {
+        onPress();
+      }
+    },
+    leaves: () => left,
+    reset: () => {
+      left = 0;
+    },
+  };
+}
