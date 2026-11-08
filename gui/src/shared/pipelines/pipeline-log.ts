@@ -1,3 +1,4 @@
+import { isRecord } from "@abth/core";
 import { KEPT_GROUPS } from "./kept-groups";
 import type { EndedGroup, GroupKind } from "./pipeline";
 
@@ -127,8 +128,4 @@ function isEndedAt(value: unknown): boolean {
 
 function isCount(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

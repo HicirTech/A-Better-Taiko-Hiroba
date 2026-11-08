@@ -1,4 +1,12 @@
-import type { CrownState, Genre, Level, RandomMode, RecentPlay, ScoreRank } from "@abth/core";
+import {
+  type CrownState,
+  isGenre,
+  isLevel,
+  isObject,
+  isRank,
+  type RandomMode,
+  type RecentPlay,
+} from "@abth/core";
 
 /** One player's recent plays, newest first. A missing store reads as none. */
 export interface RecentPlaysStore {
@@ -112,20 +120,4 @@ export function recordOf(value: unknown): RecentPlay["record"] | null {
       supportChart,
     },
   };
-}
-
-export function isGenre(value: unknown): value is Genre | null {
-  return value === null || (typeof value === "number" && value >= 1 && value <= 8);
-}
-
-export function isLevel(value: unknown): value is Level {
-  return typeof value === "number" && value >= 1 && value <= 5;
-}
-
-export function isRank(value: unknown): value is ScoreRank | null {
-  return value === null || (typeof value === "number" && value >= 2 && value <= 8);
-}
-
-export function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
 }

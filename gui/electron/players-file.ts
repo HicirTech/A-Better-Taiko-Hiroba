@@ -1,7 +1,7 @@
 import * as nodeFs from "node:fs";
 import { basename, dirname, join } from "node:path";
 
-import { isObject } from "../src/hiroba-session/recent-plays-store";
+import { isObject } from "@abth/core";
 import { replaceFile, type StoreFiles } from "./replace-file";
 
 /** The shape the file is kept in, which a later shape would change. */

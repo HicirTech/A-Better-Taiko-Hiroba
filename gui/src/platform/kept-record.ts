@@ -1,4 +1,4 @@
-import { isObject } from "../hiroba-session/recent-plays-store";
+import { isObject } from "@abth/core";
 import { completed, type Database, succeeded } from "./capacitor-indexeddb";
 
 /** The shape a record is kept in, which a later shape would change. */

@@ -1,4 +1,4 @@
-import type { RatingSystem } from "@abth/core";
+import { isObject, type RatingSystem } from "@abth/core";
 
 import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
 import type { RatingDataRead } from "../shared/rating-data/read-rating-data";
@@ -34,9 +34,9 @@ export function keepRatingData(
 }
 
 function isKept(value: unknown): value is { readonly text: string; readonly sentAt: number } {
-  if (typeof value !== "object" || value === null) {
+  if (!isObject(value)) {
     return false;
   }
-  const { v, text, sentAt } = value as Record<string, unknown>;
+  const { v, text, sentAt } = value;
   return v === VERSION && typeof text === "string" && typeof sentAt === "number";
 }

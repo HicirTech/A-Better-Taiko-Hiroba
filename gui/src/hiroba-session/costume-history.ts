@@ -1,4 +1,4 @@
-import { sameCostume } from "@abth/core";
+import { isObject, sameCostume } from "@abth/core";
 import { isPngDataUrl } from "../shared/png-answer";
 import { type CostumeHistoryEntry, type CostumeSet, isCostumeSet } from "../shared/session-port";
 import { MAX_PREVIEW_BYTES } from "./preview-costume";
@@ -34,11 +34,11 @@ export function readCostumeHistory(stored: unknown): CostumeHistoryEntry[] {
 }
 
 function entryOf(value: unknown): CostumeHistoryEntry[] {
-  if (typeof value !== "object" || value === null) {
+  if (!isObject(value)) {
     return [];
   }
 
-  const { set, picture } = value as Record<string, unknown>;
+  const { set, picture } = value;
   return isCostumeSet(set) && (picture === null || isPngDataUrl(picture, MAX_PREVIEW_BYTES))
     ? [{ set, picture }]
     : [];

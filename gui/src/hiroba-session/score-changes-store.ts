@@ -2,12 +2,16 @@ import {
   type ChartReading,
   type CrownState,
   capChanges,
+  isLevel,
+  isObject,
+  isRank,
+  isSongNo,
+  isWholeNumber,
   type ScoreChange,
   type ScoreChangeLog,
 } from "@abth/core";
 
-import { CROWNS, isLevel, isObject, isRank } from "./recent-plays-store";
-import { isSongNo, isWholeNumber } from "./scores-store";
+import { CROWNS } from "./recent-plays-store";
 
 /** One player's log of what reads of scores changed; null where none is kept. */
 export interface ScoreChangesStore {

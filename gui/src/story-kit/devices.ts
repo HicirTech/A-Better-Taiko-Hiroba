@@ -1,3 +1,4 @@
+import { isObject } from "@abth/core";
 import type { Viewport } from "storybook/viewport";
 
 import { WINDOW_CONTENT_PX } from "../platform/desktop-window";
@@ -23,10 +24,7 @@ const isDevice = (value: unknown): value is Device =>
 /** The device a story is seen on, from the viewport global; a PC's when the toolbar has none. */
 export function deviceOf(globals: { readonly viewport?: unknown }): Device {
   const { viewport } = globals;
-  const value =
-    typeof viewport === "object" && viewport !== null && "value" in viewport
-      ? viewport.value
-      : viewport;
+  const value = isObject(viewport) && "value" in viewport ? viewport.value : viewport;
   return isDevice(value) ? value : "pc";
 }
 

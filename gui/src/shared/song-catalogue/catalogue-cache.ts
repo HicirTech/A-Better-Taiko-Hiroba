@@ -1,9 +1,9 @@
+import { isObject, isSongNo } from "@abth/core";
 import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
 import { type CatalogueSong, DIFFICULTIES, type SongCatalogueRead } from "./types";
 
 const KEY = "abth.songCatalogue";
 const DAY_MS = 24 * 60 * 60 * 1000;
-const SONG_NO = /^\d{1,5}$/;
 
 // A list kept before its charts carried their play time is no list, so it is read again in full.
 const VERSION = 3;
@@ -24,19 +24,16 @@ const isGenre = (value: unknown): boolean =>
 const isLevel = (value: unknown): boolean =>
   value === null || (typeof value === "number" && Number.isInteger(value) && value >= 1);
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
-
 const isBpm = (value: unknown): boolean =>
   value === null ||
-  (isRecord(value) &&
+  (isObject(value) &&
     typeof value.min === "number" &&
     typeof value.max === "number" &&
     typeof value.wobbles === "boolean");
 
 const isChart = (value: unknown): boolean =>
   value === null ||
-  (isRecord(value) &&
+  (isObject(value) &&
     (value.maxCombo === null || typeof value.maxCombo === "number") &&
     (value.playTime === null || typeof value.playTime === "number") &&
     typeof value.branched === "boolean" &&
@@ -44,14 +41,13 @@ const isChart = (value: unknown): boolean =>
     value.images.every((image) => typeof image === "string"));
 
 function isCatalogueSong(song: unknown): song is CatalogueSong {
-  if (!isRecord(song)) {
+  if (!isObject(song)) {
     return false;
   }
 
   const { levels, charts } = song;
   return (
-    typeof song.songNo === "string" &&
-    SONG_NO.test(song.songNo) &&
+    isSongNo(song.songNo) &&
     typeof song.title === "string" &&
     isName(song.titleEn) &&
     isName(song.titleZh) &&
@@ -60,20 +56,20 @@ function isCatalogueSong(song: unknown): song is CatalogueSong {
     song.artists.every((artist) => typeof artist === "string") &&
     Array.isArray(song.genres) &&
     song.genres.every(isGenre) &&
-    isRecord(levels) &&
+    isObject(levels) &&
     DIFFICULTIES.every((difficulty) => isLevel(levels[difficulty])) &&
     isBpm(song.bpm) &&
-    isRecord(charts) &&
+    isObject(charts) &&
     DIFFICULTIES.every((difficulty) => isChart(charts[difficulty]))
   );
 }
 
 function isKept(value: unknown): value is KeptCatalogue {
-  if (typeof value !== "object" || value === null) {
+  if (!isObject(value)) {
     return false;
   }
 
-  const { v, sentAt, songs } = value as Record<string, unknown>;
+  const { v, sentAt, songs } = value;
   return (
     v === VERSION &&
     typeof sentAt === "number" &&

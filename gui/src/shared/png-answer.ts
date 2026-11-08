@@ -84,7 +84,7 @@ export function mediaTypeOf(response: TransportResponse): string {
   return (response.headers["content-type"] ?? "").split(";")[0]?.trim().toLowerCase() ?? "";
 }
 
-export function hasPngSignature(bytes: Uint8Array): boolean {
+function hasPngSignature(bytes: Uint8Array): boolean {
   return PNG_SIGNATURE.every((byte, at) => bytes[at] === byte);
 }
 

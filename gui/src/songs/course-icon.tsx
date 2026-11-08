@@ -2,7 +2,7 @@ import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { Difficulty } from "../shared/song-catalogue/types";
 
-export const COURSE_ICON_PX = 24;
+const COURSE_ICON_PX = 24;
 
 /** A chart's difficulty as Hiroba draws it, in a space of its own size until the picture comes. */
 export function CourseIcon({
