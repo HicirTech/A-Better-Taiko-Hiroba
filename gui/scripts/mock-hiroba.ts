@@ -1,12 +1,14 @@
 /** Stand-in for Hiroba and the Bandai Namco ID host, so sign-in runs without the real sites. */
 import { ABTH_CDN_PATH, abthCdnFile } from "./mock-abth-cdn";
-import { chineseNamesBatch } from "./mock-chinese-names";
+import { CHINESE_NAMES_PATH, chineseNamesBatch } from "./mock-chinese-names";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "./mock-dan-label";
 import { danPlatePng } from "./mock-dan-plate";
+import { editorAnswer, enteredPost, type MockAsk, page, redirect } from "./mock-editor-routes";
 import { ESE_CHARTS_PATH, ESE_MAPPING, ESE_MAPPING_PATH, eseChart } from "./mock-ese";
 import { createFavoritesEditor } from "./mock-favorites";
 import { createPlayHistory } from "./mock-history";
+import { mockAddressOf, mockOrigins } from "./mock-origins";
 import {
   blankPlatePng,
   chartPicturePng,
@@ -20,25 +22,24 @@ import {
   titlePlatePng,
 } from "./mock-pictures";
 import { createProfileEditor, escapeHtml } from "./mock-profile";
-import { ratingDataAnswer, ratingDataV2Answer } from "./mock-rating-data";
+import { RATING_DATA_PATHS, ratingDataAnswer, ratingDataV2Answer } from "./mock-rating-data";
 import { createScorePages } from "./mock-scores";
-import { CHART_PICTURE_PATHS, wikiSongsSince } from "./mock-song-catalogue";
+import { CHART_PICTURE_PATHS, SONG_CATALOGUE_PATH, wikiSongsSince } from "./mock-song-catalogue";
 
-const IP = process.env.ABTH_MOCK_IP ?? "127.0.0.1";
-const HIROBA_HOST = `hiroba.${IP}.sslip.io`;
-const IDP_HOST = `id.${IP}.sslip.io`;
-/** The picture host's stand-in: on Hiroba's server and port, and outside its cookie's Domain. */
-const IMG_HOST = `img.${IP}.sslip.io`;
-// The end-to-end run starts one stand-in per lane, each on ports of its own.
-const HIROBA_PORT = Number(process.env.ABTH_MOCK_HIROBA_PORT ?? 8807);
-const IDP_PORT = Number(process.env.ABTH_MOCK_IDP_PORT ?? 8808);
-const HIROBA = `http://${HIROBA_HOST}:${HIROBA_PORT}`;
-const IDP = `http://${IDP_HOST}:${IDP_PORT}`;
-// The OAuth hop is on a second ID host, as the real one: allowing only the form's host stops there.
-const IDP_AUTH = `http://auth.${IDP_HOST}:${IDP_PORT}`;
-const IMG = `http://${IMG_HOST}:${HIROBA_PORT}`;
-/** A service that refuses embedded browsers, off both sites, as Google is. */
-const REFUSER_HOST = `refuses.${IP}.sslip.io:${IDP_PORT}`;
+const {
+  ip: IP,
+  hirobaPort: HIROBA_PORT,
+  idpPort: IDP_PORT,
+  hirobaHostName: HIROBA_HOST,
+  idpHostName: IDP_HOST,
+  hiroba: HIROBA,
+  idp: IDP,
+  idpAuth: IDP_AUTH,
+  pictureHost: PICTURE_HOST,
+  img: IMG,
+  refusingHost: REFUSER_HOST,
+  offsiteHost: OFFSITE_HOST,
+} = mockOrigins(mockAddressOf(process.env));
 const TAIKO_NO = "000000000000";
 
 const sessions = new Map<string, MockSession>();
@@ -66,6 +67,7 @@ const costume = createCostumeEditor();
 const profile = createProfileEditor({ issue: costume.issueTicket });
 /** The favourite editors, and the favourites my page shows; the token is shared here too. */
 const favorites = createFavoritesEditor({ issue: costume.issueTicket });
+const EDITORS = { costume, profile, favorites };
 const history = createPlayHistory();
 const scores = createScorePages(history);
 /** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
@@ -95,15 +97,6 @@ function log(host: string, request: Request, note = "") {
   );
 }
 
-const page = (body: string) =>
-  new Response(
-    `<!doctype html><html><head><meta charset="utf-8"></head><body>${body}</body></html>`,
-    {
-      headers: { "content-type": "text/html; charset=utf-8" },
-    },
-  );
-const redirect = (location: string, headers: Record<string, string> = {}) =>
-  new Response(null, { status: 302, headers: { location, ...headers } });
 // As file.taiko.wiki sends a picture, with no Content-Type: Bun types bytes, but not a stream.
 const untyped = (bytes: Uint8Array) =>
   new Response(
@@ -247,28 +240,17 @@ ${favorites.myPageBlocks(ticket)}
 ${profile.renameDialog(ticket)}`;
 }
 
-async function ajaxEntry(
-  request: Request,
-  session: MockSession | undefined,
-  record: (form: URLSearchParams) => void,
-): Promise<{ form: URLSearchParams; session: MockSession } | Response> {
-  if (request.method !== "POST") {
-    return new Response("not found", { status: 404 });
-  }
-  const form = new URLSearchParams(await request.text());
-  record(form);
-  if (request.headers.get("x-requested-with") !== "XMLHttpRequest") {
-    return page(ERROR_SHELL_BODY);
-  }
-  if (postToLogin || !session?.cardChosen) {
+/** What `/__post-to-login` and `/__post-redirect` make of a signed-in post; null for nothing. */
+function postDetour(): Response | null {
+  if (postToLogin) {
     return redirect("/login.php");
   }
-  if (redirectNextPost !== null) {
-    const { status, rotate } = redirectNextPost;
-    redirectNextPost = null;
-    return redirectedPost(status, rotate);
+  if (redirectNextPost === null) {
+    return null;
   }
-  return { form, session };
+  const { status, rotate } = redirectNextPost;
+  redirectNextPost = null;
+  return redirectedPost(status, rotate);
 }
 
 function redirectedPost(status: number, rotate: boolean): Response {
@@ -289,7 +271,7 @@ Bun.serve({
   async fetch(request) {
     const { host, pathname, searchParams } = new URL(request.url);
     const session = sessionOf(request);
-    const onPictureHost = host === `${IMG_HOST}:${HIROBA_PORT}`;
+    const onPictureHost = host === PICTURE_HOST;
     log(onPictureHost ? "img" : "hiroba", request);
     hits.set(pathname, (hits.get(pathname) ?? 0) + 1);
     if (!pathname.startsWith("/__")) {
@@ -338,6 +320,17 @@ Bun.serve({
               : courseIconPng(Number(course));
       return new Response(body, { headers: { "content-type": "image/png" } });
     }
+    const ask: MockAsk = {
+      request,
+      session,
+      signedIn: session?.cardChosen === true,
+      endSessions: () => sessions.clear(),
+      beforePost: postDetour,
+    };
+    const edited = await editorAnswer(EDITORS, ask);
+    if (edited !== null) {
+      return edited;
+    }
     switch (pathname) {
       case "/login.php":
         return page(
@@ -345,7 +338,7 @@ Bun.serve({
         );
       case "/login_process.php":
         if (sendOffsite) {
-          return redirect(`http://offsite.${IP}.sslip.io:${IDP_PORT}/login.html`);
+          return redirect(`http://${OFFSITE_HOST}/login.html`);
         }
         return redirect(
           `${IDP_AUTH}/v2/oauth2/auth?redirect_uri=${encodeURIComponent(`${HIROBA}/callback.php`)}`,
@@ -413,7 +406,7 @@ Bun.serve({
         return page(detail ?? ERROR_SHELL_BODY);
       }
       case "/ajax/update_score.php": {
-        const entered = await ajaxEntry(request, session, () => undefined);
+        const entered = await enteredPost(ask, () => undefined);
         if (entered instanceof Response) {
           return entered;
         }
@@ -421,89 +414,6 @@ Bun.serve({
           history.refresh(entered.session, entered.form, `${HIROBA}/mypage_top.php`),
         );
       }
-      case "/mypage_kisekae.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return page(costume.page(session));
-      case "/ajax/check_ip_kisekae.php":
-      case "/ajax/change_mydon.php": {
-        const entered = await ajaxEntry(request, session, (form) =>
-          costume.record(pathname, request, form, session),
-        );
-        if (entered instanceof Response) {
-          return entered;
-        }
-        if (pathname === "/ajax/check_ip_kisekae.php") {
-          await costume.precheckLetThrough();
-          return costume.precheck();
-        }
-        return costume.save(entered.session, entered.form, () => sessions.clear());
-      }
-      case "/mypage_title_edit.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return page(profile.titlePage(session));
-      case "/ajax/check_ip_title.php":
-      case "/ajax/change_mydon_profile.php": {
-        const entered = await ajaxEntry(request, session, (form) =>
-          profile.record(pathname, request, form, session),
-        );
-        if (entered instanceof Response) {
-          return entered;
-        }
-        if (pathname === "/ajax/check_ip_title.php") {
-          await profile.precheckLetThrough();
-          return profile.precheck();
-        }
-        await profile.saveLetThrough();
-        return profile.save(entered.session, entered.form, () => sessions.clear());
-      }
-      case "/favorite_song_select.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return page(favorites.folderPage(session, searchParams));
-      case "/portal_favorite_song_select.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return page(favorites.favoriteSongPage(session));
-      case "/form_data.php":
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        return redirect(
-          favorites.enterPicker(session, searchParams) ? "/select_song.php" : "/index.php",
-        );
-      case "/select_song.php": {
-        if (!session?.cardChosen) {
-          return redirect("/login.php");
-        }
-        const shown = favorites.pickerPage(session, Number(searchParams.get("genre") ?? "1"));
-        return shown === null ? redirect("/index.php") : page(shown);
-      }
-      case "/ajax/myfavorite_song.php":
-      case "/ajax/mypage_song.php": {
-        const entered = await ajaxEntry(request, session, (form) =>
-          favorites.record(pathname, request, form, session),
-        );
-        if (entered instanceof Response) {
-          return entered;
-        }
-        return pathname === "/ajax/myfavorite_song.php"
-          ? favorites.saveFolder(entered.session, entered.form)
-          : favorites.saveFavoriteSong(entered.session, entered.form);
-      }
-      case "/imgsrc_mydon.php":
-        return costume.preview(new URL(request.url).search, session?.cardChosen === true);
-      case "/imgsrc_kisekae.php":
-        return costume.thumbnail(
-          searchParams,
-          session?.cardChosen === true,
-          request.headers.get("referer"),
-        );
       case "/imgsrc_titleplate.php": {
         // Drawn for the session: whoever holds it, wearing what my page shows now.
         const signedIn = session?.cardChosen === true;
@@ -583,13 +493,13 @@ Bun.serve({
         return Response.json(history.control(searchParams));
       case "/__scores":
         return Response.json(scores.control(searchParams));
-      case "/__song-catalogue":
+      case SONG_CATALOGUE_PATH:
         return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
-      case "/__rating-data":
+      case RATING_DATA_PATHS.ourtaikoV1:
         return Response.json(ratingDataAnswer());
-      case "/__rating-data-v2":
+      case RATING_DATA_PATHS.ourtaikoV2:
         return Response.json(ratingDataV2Answer());
-      case "/__chinese-names":
+      case CHINESE_NAMES_PATH:
         return Response.json(chineseNamesBatch(searchParams.get("gcmcontinue")));
       case "/__last-token":
         return new Response(lastIssued);

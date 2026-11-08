@@ -11,6 +11,7 @@ import {
   servedChartPath,
 } from "../mock-ese";
 import { TITLE_PLATE } from "../mock-pictures";
+import { SONG_CATALOGUE_PATH } from "../mock-song-catalogue";
 import { en, PHONE_TALL, TOP_BAND_PX } from "./config";
 import type { Ctx } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
@@ -19,8 +20,6 @@ import { hitsOn } from "./stand-in";
 /** The stand-in's one picture of 1005's inner chart. */
 const INNER_PICTURE = "/__charts/1005/ura-1.png";
 const EDGE_PX = 24;
-/** Where the stand-in serves taiko.wiki's song list. */
-const SONG_LIST = "/__song-catalogue";
 /** The narrowest phone the details are drawn for. */
 const NARROW_PHONE = { width: 360, height: 780 } as const;
 
@@ -202,14 +201,14 @@ export async function songSearch(ctx: Ctx) {
     (await textOf("#song-search-new-song")) ===
     en.t("search.newSongHold", { button: en.t("profile.readAgain"), seconds: LONG_HOLD_MS / 1000 });
   // Held with the search open, Read again reads taiko.wiki's whole song list again, asking nothing.
-  const listReads = await hitsOn(SONG_LIST);
+  const listReads = await hitsOn(SONG_CATALOGUE_PATH);
   await mousePress("#read-again", "left", LONG_HOLD_MS + 500);
   const listRead = await waitFor(
     "the song list read again",
     async () => (await attribute("#song-search-list-read", "data-outcome")) ?? undefined,
   );
   results.longHoldReadsTheSongListAgain =
-    listRead === "read" && (await hitsOn(SONG_LIST)) === listReads + 1;
+    listRead === "read" && (await hitsOn(SONG_CATALOGUE_PATH)) === listReads + 1;
   // Its note leaves on its own, out of the way of what follows.
   await gone("#song-search-list-read");
 

@@ -231,6 +231,9 @@ export const WIKI_SONGS: readonly WikiSong[] = [
   wikiSong("ns2_sample", "コンソール限定サンプル", "Pixel Garden", ["variety"], [2, 3, 5, 7]),
 ];
 
+/** Where the stand-in serves the list. */
+export const SONG_CATALOGUE_PATH = "/__song-catalogue";
+
 /** What the wiki gives for a read that asks only for the songs changed lately. */
 const CHANGED_LATELY: readonly WikiSong[] = [
   { ...WHITE_FLOWERS, titleEn: "Flowers of the White Season (Remastered)" },

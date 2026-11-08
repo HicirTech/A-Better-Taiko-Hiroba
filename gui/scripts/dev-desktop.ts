@@ -3,49 +3,28 @@ import { watch } from "node:fs";
 import { join } from "node:path";
 import electronPath from "electron";
 import { createServer } from "vite";
-import { RATING_DATA_URL } from "../src/shared/rating-data/rating-links";
-import {
-  ABTH_CDN_URL,
-  CHINESE_NAMES_URL,
-  ESE_CHARTS_URL,
-  ESE_MAPPING_URL,
-  SONG_CATALOGUE_URL,
-} from "../src/shared/song-catalogue";
-import { ABTH_CDN_PATH } from "./mock-abth-cdn";
-import { ESE_CHARTS_PATH, ESE_MAPPING_PATH } from "./mock-ese";
+import { mockAddressOf, mockOrigins, thirdPartyEnvironment } from "./mock-origins";
 
 const root = join(import.meta.dir, "..");
 const real = process.argv.includes("--real");
-const HIROBA_ORIGIN = "http://hiroba.127.0.0.1.sslip.io:8807";
+const origins = mockOrigins(mockAddressOf(process.env));
 
 const mock = real
   ? null
   : Bun.spawn(["bun", join(root, "scripts", "mock-hiroba.ts")], {
+      env: { ...process.env, ...origins.mockEnvironment },
       stdout: "inherit",
       stderr: "inherit",
     });
-const mockEnv = real
-  ? {}
+// An unpackaged build reads the song lists, the rating data and the chart files only from the
+// addresses it is given.
+const appEnv = real
+  ? thirdPartyEnvironment(null)
   : {
-      ABTH_DEV_HIROBA_ORIGIN: HIROBA_ORIGIN,
-      ABTH_DEV_IDP_HOST: "id.127.0.0.1.sslip.io:8808",
-      ABTH_DEV_IMG_ORIGIN: "http://img.127.0.0.1.sslip.io:8807",
-      ABTH_DEV_REFUSING_HOST: "refuses.127.0.0.1.sslip.io:8808",
-      ABTH_DEV_CHART_ORIGIN: HIROBA_ORIGIN,
+      ...origins.appEnvironment,
       // Not the installed app's %APPDATA%: its real session and history would meet the mock.
       ABTH_DEV_USER_DATA: join(root, "out", "dev-user-data"),
     };
-// An unpackaged build reads the song lists, the rating data and the chart files only from the
-// addresses it is given.
-const songCatalogueEnv = {
-  ABTH_DEV_SONG_CATALOGUE: real ? SONG_CATALOGUE_URL : `${HIROBA_ORIGIN}/__song-catalogue`,
-  ABTH_DEV_CHINESE_NAMES: real ? CHINESE_NAMES_URL : `${HIROBA_ORIGIN}/__chinese-names`,
-  ABTH_DEV_RATING_DATA: real ? RATING_DATA_URL.ourtaikoV1 : `${HIROBA_ORIGIN}/__rating-data`,
-  ABTH_DEV_RATING_DATA_V2: real ? RATING_DATA_URL.ourtaikoV2 : `${HIROBA_ORIGIN}/__rating-data-v2`,
-  ABTH_DEV_ESE_MAPPING: real ? ESE_MAPPING_URL : `${HIROBA_ORIGIN}${ESE_MAPPING_PATH}`,
-  ABTH_DEV_ESE_CHARTS: real ? ESE_CHARTS_URL : `${HIROBA_ORIGIN}${ESE_CHARTS_PATH}`,
-  ABTH_DEV_ABTH_CDN: real ? ABTH_CDN_URL : `${HIROBA_ORIGIN}${ABTH_CDN_PATH}`,
-};
 
 const vite = await createServer({ configFile: join(root, "vite.config.ts"), root });
 await vite.listen();
@@ -59,7 +38,7 @@ function startElectron() {
   electron?.kill();
   electron = Bun.spawn([String(electronPath), root], {
     cwd: root,
-    env: { ...process.env, ...mockEnv, ...songCatalogueEnv, ABTH_DEV_SERVER_URL: devServerUrl },
+    env: { ...process.env, ...appEnv, ABTH_DEV_SERVER_URL: devServerUrl },
     stdout: "inherit",
     stderr: "inherit",
   });

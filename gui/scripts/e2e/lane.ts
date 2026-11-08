@@ -11,6 +11,7 @@ import {
   IDP_PORT,
   MY_PAGE,
   NOON_JST,
+  ORIGINS,
   root,
   USER_DATA,
 } from "./config";
@@ -202,11 +203,7 @@ export async function runLane(
   }
 
   const mock = Bun.spawn(["bun", join(root, "scripts", "mock-hiroba.ts")], {
-    env: {
-      ...process.env,
-      ABTH_MOCK_HIROBA_PORT: String(HIROBA_PORT),
-      ABTH_MOCK_IDP_PORT: String(IDP_PORT),
-    },
+    env: { ...process.env, ...ORIGINS.mockEnvironment },
     stdout: "ignore",
   });
   // Every lane starting at once slows the stand-in's start; wait for its answer.

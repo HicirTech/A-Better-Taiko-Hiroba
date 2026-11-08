@@ -2,6 +2,12 @@
 import { COUNTS, mockPlay, mockTitle } from "./mock-history";
 import { SONG_NO_BASE } from "./mock-scores";
 
+/** Where the stand-in serves each version's feed. */
+export const RATING_DATA_PATHS = {
+  ourtaikoV1: "/__rating-data",
+  ourtaikoV2: "/__rating-data-v2",
+} as const;
+
 /** More songs than a run plays. */
 const SONGS = 400;
 /** Every chart's notes are its details' 良, 可 and 不可 together. */
