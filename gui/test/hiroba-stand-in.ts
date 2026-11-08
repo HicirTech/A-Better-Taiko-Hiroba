@@ -1,4 +1,4 @@
-/** The mock Hiroba behind the fake CapacitorHttp; the platform's redirect following is modelled. */
+/** The mock Hiroba behind a fetch, or behind the fake CapacitorHttp with its redirects modelled. */
 import type { CostumeSet } from "@abth/core";
 
 import {
@@ -9,7 +9,7 @@ import {
 import { editorAnswer, page, redirect } from "../scripts/mock-editor-routes";
 import type { FavoritesEditor } from "../scripts/mock-favorites";
 import type { ProfileEditor } from "../scripts/mock-profile";
-import { type NativeHttpRequest, native, nativeAnswerOf } from "./capacitor-fakes";
+import { native, nativeAnswerOf } from "./capacitor-fakes";
 
 /** HttpURLConnection's own limit. */
 const NATIVE_REDIRECTS = 5;
@@ -43,21 +43,24 @@ export interface StandIn {
   /** Hiroba ends every session: whatever is asked next finds the login page. */
   end(): void;
   restore(): void;
+  /** Hiroba's answer to one request, with no redirect followed. */
+  answer(request: Request): Promise<Response>;
 }
 
-/** Makes `native.httpAnswer` answer as the mock Hiroba would, for the calls the app makes next. */
-export function standIn({ editor, profile, favorites, session, myPage }: StandInOptions): StandIn {
+/** The mock Hiroba, answering one request at a time. */
+export function hirobaStandIn({
+  editor,
+  profile,
+  favorites,
+  session,
+  myPage,
+}: StandInOptions): StandIn {
   let ended = false;
   const editors = { costume: editor, profile, favorites };
 
-  const route = async (asked: NativeHttpRequest, url: URL): Promise<Response> => {
+  const route = async (request: Request): Promise<Response> => {
     const signedIn = !ended && session.cardChosen;
-    const request = new Request(url.href, {
-      method: asked.method,
-      headers: asked.headers,
-      ...(asked.method === "POST" && { body: String(asked.data) }),
-    });
-    switch (url.pathname) {
+    switch (new URL(request.url).pathname) {
       case "/login.php":
         return page(`<form id="login_form"></form>`);
       case "/mypage_top.php":
@@ -76,6 +79,20 @@ export function standIn({ editor, profile, favorites, session, myPage }: StandIn
     }
   };
 
+  return {
+    end: () => {
+      ended = true;
+    },
+    restore: () => {
+      ended = false;
+    },
+    answer: route,
+  };
+}
+
+/** Makes `native.httpAnswer` answer as the mock Hiroba would, for the calls the app makes next. */
+export function standIn(options: StandInOptions): StandIn {
+  const hiroba = hirobaStandIn(options);
   native.httpAnswer = async () => {
     // The call being answered is the latest, and is read before anything is awaited.
     const asked = native.httpRequests.at(-1);
@@ -86,7 +103,13 @@ export function standIn({ editor, profile, favorites, session, myPage }: StandIn
     let url = new URL(asked.url);
     // Unless disabled, up to five redirects are followed with a GET, as HttpURLConnection does.
     for (let hop = 0; ; hop++) {
-      const response = await route(current, url);
+      const response = await hiroba.answer(
+        new Request(url.href, {
+          method: current.method,
+          headers: current.headers,
+          ...(current.method === "POST" && { body: String(current.data) }),
+        }),
+      );
       const location = response.headers.get("location");
       if (
         location === null ||
@@ -105,13 +128,5 @@ export function standIn({ editor, profile, favorites, session, myPage }: StandIn
       };
     }
   };
-
-  return {
-    end: () => {
-      ended = true;
-    },
-    restore: () => {
-      ended = false;
-    },
-  };
+  return hiroba;
 }

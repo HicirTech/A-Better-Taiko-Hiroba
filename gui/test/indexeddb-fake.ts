@@ -131,3 +131,15 @@ export function createFakeIndexedDb(): FakeIndexedDb {
 
   return { factory, tables, faults, transactions };
 }
+
+/** The page's IndexedDB with each database apart, as a device keeps them: one fake for each. */
+export function fakeIndexedDbs(): DatabaseFactory {
+  const fakes = new Map<string, FakeIndexedDb>();
+  return {
+    open(name, version) {
+      const fake = fakes.get(name) ?? createFakeIndexedDb();
+      fakes.set(name, fake);
+      return fake.factory.open(name, version);
+    },
+  };
+}
