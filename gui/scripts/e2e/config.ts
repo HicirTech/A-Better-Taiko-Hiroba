@@ -6,6 +6,12 @@ import { RATING_DATA_PATHS } from "../mock-rating-data";
 
 export const root = join(import.meta.dir, "..", "..");
 
+/** Electron's binary, looked up only to start it: importing the package fetches a missing one. */
+export async function electronBinary(): Promise<string> {
+  const { default: binary } = await import("electron");
+  return String(binary);
+}
+
 /** Set by a run with lanes in each lane's process, to that lane's index. */
 export const LANE_VARIABLE = "ABTH_E2E_LANE";
 /** Which lane of a run this process is: each lane has its own stand-in, ports and folders. */

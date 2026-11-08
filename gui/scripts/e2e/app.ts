@@ -1,9 +1,8 @@
 /** Starts the desktop app under test, and closes it. */
 
-import electronPath from "electron";
 import { TIPS } from "../../src/pages/page-tips";
 import { SEEN_TIPS_KEY } from "../../src/shared/tips/seen-tips";
-import { CDP_PORT, ORIGINS, PICTURES, root, USER_DATA } from "./config";
+import { CDP_PORT, electronBinary, ORIGINS, PICTURES, root, USER_DATA } from "./config";
 import { connect, holdOwnSize, waitFor } from "./harness";
 
 let windowsShown = false;
@@ -63,7 +62,7 @@ export async function launch({
   ];
   // The flag that once opened writes is dropped from the environment: every check runs with none.
   const { ABTH_UNVERIFIED_WRITES: _gone, ...inherited } = process.env;
-  const proc = Bun.spawn([String(electronPath), root, ...args], {
+  const proc = Bun.spawn([await electronBinary(), root, ...args], {
     env: {
       ...inherited,
       ...ORIGINS.appEnvironment,
