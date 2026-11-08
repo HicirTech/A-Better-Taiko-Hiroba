@@ -4,7 +4,7 @@ import { type ReactNode, useContext, useEffect, useMemo, useState } from "react"
 import { NavFoot } from "./app/nav-foot";
 import { PageArea } from "./app/page-area";
 import { ScanGifts } from "./app/scan-gifts";
-import { useKeptChoice } from "./app/use-kept-choice";
+import { useDeviceChoices } from "./app/use-device-choices";
 import { useModalLook } from "./app/use-modal-look";
 import { usePageShown } from "./app/use-page-shown";
 import { usePageTips } from "./app/use-page-tips";
@@ -21,11 +21,7 @@ import type { SystemCamera, SystemLink, SystemShare, SystemToast } from "./platf
 import { PicturesReadNote } from "./read-again/pictures-read-note";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
 import { IO_READ_CONSUMERS } from "./shared/pipelines";
-import { keepStartingRating, keptStartingRating } from "./shared/rating-data/starting-rating";
-import { keepStartingSort, keptStartingSort } from "./shared/scores/starting-sort";
 import type { HirobaSessionPort } from "./shared/session-port";
-import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
-import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
 import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
@@ -87,13 +83,7 @@ export function App({
   const pipelinesShown = useContext(PipelinesShownContext);
   const modalLook = useModalLook(pipelinesShown);
   const [tipScene, setTipScene] = useState<TipScene | null>(null);
-  const [shownDifficulty, onShownDifficulty] = useKeptChoice(
-    keptShownDifficulty,
-    keepShownDifficulty,
-  );
-  const [startingSort, onStartingSort] = useKeptChoice(keptStartingSort, keepStartingSort);
-  const [startingRating, onStartingRating] = useKeptChoice(keptStartingRating, keepStartingRating);
-  const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
+  const choices = useDeviceChoices();
   const updates = useUpdateReminder(port, APP_VERSION);
   // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
   const lane = useMemo(
@@ -105,6 +95,7 @@ export function App({
     [port],
   );
   const session = useSession({ port, lane, page, onNavigate });
+  const { startingRating } = choices;
   const pagesData = usePagesData({ port, lane, page, session, startingRating });
   const data: PageData = {
     port,
@@ -117,14 +108,7 @@ export function App({
     menuOpen,
     pipelinesShown,
     tipScene,
-    shownDifficulty,
-    onShownDifficulty,
-    startingSort,
-    onStartingSort,
-    startingRating,
-    onStartingRating,
-    chartSource,
-    onChartSource,
+    ...choices,
     toast,
     share,
     language,

@@ -2,7 +2,7 @@ import { createTranslator, type Locale, type Translator } from "@abth/i18n";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
 import { App } from "./App";
-import { useKeptChoice } from "./app/use-kept-choice";
+import { useDeviceChoices } from "./app/use-device-choices";
 import { useLaunchCover } from "./app/use-launch-cover";
 import { AppFrame } from "./navigation/app-frame";
 import { keepPage, keptPage } from "./navigation/pages";
@@ -20,10 +20,6 @@ import {
   systemLocale,
 } from "./shared/language/locale-choice";
 import { showLanguage } from "./shared/language/show-language";
-import { keepStartingRating, keptStartingRating } from "./shared/rating-data/starting-rating";
-import { keepStartingSort, keptStartingSort } from "./shared/scores/starting-sort";
-import { keepChartSource, keptChartSource } from "./shared/song-catalogue/chart-source";
-import { keepShownDifficulty, keptShownDifficulty } from "./shared/song-catalogue/shown-difficulty";
 import type { AppearanceChoice } from "./theme/appearance";
 import { LaunchCover } from "./ui/launch-cover";
 import { NoteAlert } from "./ui/note-alert";
@@ -63,13 +59,7 @@ export function Shell({
   const wide = useWideWindow();
   const touchFirst = useTouchFirst();
   // Settings' choices, for the page drawn here where no app runs.
-  const [shownDifficulty, onShownDifficulty] = useKeptChoice(
-    keptShownDifficulty,
-    keepShownDifficulty,
-  );
-  const [startingSort, onStartingSort] = useKeptChoice(keptStartingSort, keepStartingSort);
-  const [startingRating, onStartingRating] = useKeptChoice(keptStartingRating, keepStartingRating);
-  const [chartSource, onChartSource] = useKeptChoice(keptChartSource, keepChartSource);
+  const choices = useDeviceChoices();
   const pick = (next: Locale | null) => {
     if (next === null) {
       forgetLocale();
@@ -120,14 +110,7 @@ export function Shell({
             language={language}
             appearance={appearanceSection}
             account={{ kind: "signedOut" }}
-            shownDifficulty={shownDifficulty}
-            onShownDifficulty={onShownDifficulty}
-            startingSort={startingSort}
-            onStartingSort={onStartingSort}
-            startingRating={startingRating}
-            onStartingRating={onStartingRating}
-            chartSource={chartSource}
-            onChartSource={onChartSource}
+            {...choices}
           />
         ) : (
           <NoteAlert>{i18n.t("platform.unsupported")}</NoteAlert>

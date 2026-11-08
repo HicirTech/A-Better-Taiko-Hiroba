@@ -29,8 +29,24 @@ export interface SessionView extends SessionReads {
   readonly signOut: () => Promise<void>;
 }
 
+/** Settings' choices, as the device keeps them: pages read them and Settings changes them. */
+export interface DeviceChoices {
+  /** The difficulty whose level songs show in front, as Settings chose it. */
+  readonly shownDifficulty: ShownDifficulty;
+  readonly onShownDifficulty: (next: ShownDifficulty) => void;
+  /** What Scores is sorted by as it opens, as Settings chose it. */
+  readonly startingSort: SortChoice;
+  readonly onStartingSort: (next: SortChoice) => void;
+  /** The rating Rating opens on, as Settings chose it. */
+  readonly startingRating: RatingSystem;
+  readonly onStartingRating: (next: RatingSystem) => void;
+  /** Where a song's details take their chart pictures from, as Settings chose it. */
+  readonly chartSource: ChartSource;
+  readonly onChartSource: (next: ChartSource) => void;
+}
+
 /** What a page sees of the window: its means, the session and every kind of data. */
-export interface PageData extends PageState {
+export interface PageData extends PageState, DeviceChoices {
   readonly port: HirobaSessionPort;
   readonly link: SystemLink;
   readonly i18n: Translator;
@@ -45,18 +61,6 @@ export interface PageData extends PageState {
   readonly pipelinesShown: boolean;
   /** What a tip told now opens on the page, as Favourites' sets drawer. */
   readonly tipScene: TipScene | null;
-  /** The difficulty whose level songs show in front, as Settings chose it. */
-  readonly shownDifficulty: ShownDifficulty;
-  readonly onShownDifficulty: (next: ShownDifficulty) => void;
-  /** What Scores is sorted by as it opens, as Settings chose it. */
-  readonly startingSort: SortChoice;
-  readonly onStartingSort: (next: SortChoice) => void;
-  /** The rating Rating opens on, as Settings chose it. */
-  readonly startingRating: RatingSystem;
-  readonly onStartingRating: (next: RatingSystem) => void;
-  /** Where a song's details take their chart pictures from, as Settings chose it. */
-  readonly chartSource: ChartSource;
-  readonly onChartSource: (next: ChartSource) => void;
   /** The shell's Toast, where it has one. */
   readonly toast: SystemToast | undefined;
   /** The shell's ways out for a picture the app made of a page. */
