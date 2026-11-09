@@ -96,7 +96,7 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
     options: WriteOptions,
   ) => Promise<WriteOutcome<WriteSets[K]>>;
   /** Told how a write of this kind ended, for what the platform keeps of its result. */
-  readonly ended: (
+  readonly ended?: (
     outcome: WriteOutcomeView<WriteSets[K]>,
     taikoNo: string | null,
     input: Input,
@@ -169,13 +169,11 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   const title: WriteKindDefinition<"title", TitleChange> = {
     kind: "title",
     run: changeTitle,
-    ended: () => undefined,
   };
 
   const name: WriteKindDefinition<"name", NameChange> = {
     kind: "name",
     run: changeName,
-    ended: () => undefined,
   };
 
   const folder: WriteKindDefinition<"folder", FolderChange> = {
@@ -191,7 +189,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   const favoriteSong: WriteKindDefinition<"favoriteSong", FavoriteSongChange> = {
     kind: "favoriteSong",
     run: changeFavoriteSong,
-    ended: () => undefined,
   };
 
   async function write<K extends WriteKind, Input>(
@@ -217,7 +214,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     if (outcome.kind === "sessionGone") {
       await options.endSession();
     }
-    await definition.ended(outcome, taikoNo, input);
+    await definition.ended?.(outcome, taikoNo, input);
     return outcome;
   }
 
