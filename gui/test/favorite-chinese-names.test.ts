@@ -62,4 +62,18 @@ describe("loadChineseNames and keepChineseNames", () => {
     storage.setItem("abth.chineseNames", "{");
     expect(loadChineseNames(storage)).toBeNull();
   });
+
+  test.each<[label: string, kept: object]>([
+    ["no read time", { v: 1, pages: [] }],
+    ["pages that are no list", { v: 1, sentAt: 1, pages: {} }],
+    ["a page with no title", { v: 1, sentAt: 1, pages: [{ names: ["天體觀測"] }] }],
+    [
+      "a page whose names are no text",
+      { v: 1, sentAt: 1, pages: [{ title: "天体観測", names: [3] }] },
+    ],
+  ])("give nothing for a kept read with %s", (_label, kept) => {
+    const storage = memoryStorage();
+    storage.setItem("abth.chineseNames", JSON.stringify(kept));
+    expect(loadChineseNames(storage)).toBeNull();
+  });
 });
