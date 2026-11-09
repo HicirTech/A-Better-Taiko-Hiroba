@@ -1,6 +1,5 @@
 import type { Translator } from "@abth/i18n";
-import { useMediaQuery } from "@mui/material";
-import { type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useContext, useEffect } from "react";
 import { NavFoot } from "./app/nav-foot";
 import { PageArea } from "./app/page-area";
 import { ScanGifts } from "./app/scan-gifts";
@@ -10,25 +9,25 @@ import { usePageShown } from "./app/use-page-shown";
 import { usePageTips } from "./app/use-page-tips";
 import { usePageVisits } from "./app/use-page-visits";
 import { usePagesData } from "./app/use-pages-data";
+import { usePictureLane } from "./app/use-picture-lane";
 import { useReadAgain } from "./app/use-read-again";
 import { useSession } from "./app/use-session";
+import { useTipScene } from "./app/use-tip-scene";
 import type { Page } from "./navigation/pages";
 import type { PageData } from "./pages/page";
-import { TIP_SCENES, type TipScene } from "./pages/page-tips";
 import { PAGE_REGISTRY } from "./pages/registry";
-import { createPictureLane } from "./pictures/picture-lane";
 import type { SystemCamera, SystemLink, SystemShare, SystemToast } from "./platform";
 import { PicturesReadNote } from "./read-again/pictures-read-note";
 import { ReadAgainFoot } from "./read-again/read-again-foot";
-import { IO_READ_CONSUMERS } from "./shared/pipelines";
 import type { HirobaSessionPort } from "./shared/session-port";
 import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
-import { MenuOpenContext, MenuOpenerContext } from "./ui/menu-open";
+import { MenuOpenContext } from "./ui/menu-open";
 import { PipelinesShownContext } from "./ui/pipelines-shown";
 import { PullToRead } from "./ui/pull-to-read";
 import { TipTour } from "./ui/tip-tour";
+import { useTouchFirst } from "./ui/use-touch-first";
 import { useWideWindow } from "./ui/use-wide-window";
 import { UpdateDialog } from "./updates/update-dialog";
 
@@ -76,24 +75,15 @@ export function App({
   covered = false,
   onDrawn,
 }: AppProps) {
-  const touchFirst = useMediaQuery("(pointer: coarse)", { noSsr: true });
+  const touchFirst = useTouchFirst();
   const wide = useWideWindow();
   const menuOpen = useContext(MenuOpenContext);
-  const openMenu = useContext(MenuOpenerContext);
   const pipelinesShown = useContext(PipelinesShownContext);
   const modalLook = useModalLook(pipelinesShown);
-  const [tipScene, setTipScene] = useState<TipScene | null>(null);
+  const { tipScene, onScene } = useTipScene();
   const choices = useDeviceChoices();
   const updates = useUpdateReminder(port, APP_VERSION);
-  // No more pictures at once than Hiroba's read consumers: the rest wait here, in screen order.
-  const lane = useMemo(
-    () =>
-      createPictureLane({
-        load: (want, again) => port.readPicture(want, again),
-        atOnce: IO_READ_CONSUMERS,
-      }),
-    [port],
-  );
+  const lane = usePictureLane(port);
   const session = useSession({ port, lane, page, onNavigate });
   const { startingRating } = choices;
   const pagesData = usePagesData({ port, lane, page, session, startingRating });
@@ -161,17 +151,7 @@ export function App({
       )}
       {again.question}
       <PicturesReadNote lane={lane} i18n={i18n} />
-      <TipTour
-        key={page}
-        steps={tips.steps}
-        i18n={i18n}
-        onSeen={tips.onSeen}
-        onScene={(scene) => {
-          const shown = TIP_SCENES.find((one) => one === scene) ?? null;
-          openMenu(shown === "menu");
-          setTipScene(shown);
-        }}
-      />
+      <TipTour key={page} steps={tips.steps} i18n={i18n} onSeen={tips.onSeen} onScene={onScene} />
       {entry.standsAlone === true ? (
         entry.draw(data)
       ) : (
