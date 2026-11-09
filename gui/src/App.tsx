@@ -1,7 +1,7 @@
 import type { Translator } from "@abth/i18n";
 import { type ReactNode, useContext, useEffect } from "react";
-import { NavFoot } from "./app/nav-foot";
 import { PageArea } from "./app/page-area";
+import { ReadAgainControls } from "./app/read-again-controls";
 import { ScanGifts } from "./app/scan-gifts";
 import { useDeviceChoices } from "./app/use-device-choices";
 import { useModalLook } from "./app/use-modal-look";
@@ -18,14 +18,12 @@ import type { PageData } from "./pages/page";
 import { PAGE_REGISTRY } from "./pages/registry";
 import type { SystemCamera, SystemLink, SystemShare, SystemToast } from "./platform";
 import { PicturesReadNote } from "./read-again/pictures-read-note";
-import { ReadAgainFoot } from "./read-again/read-again-foot";
 import type { HirobaSessionPort } from "./shared/session-port";
 import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
 import { MenuOpenContext } from "./ui/menu-open";
 import { PipelinesShownContext } from "./ui/pipelines-shown";
-import { PullToRead } from "./ui/pull-to-read";
 import { TipTour } from "./ui/tip-tour";
 import { useTouchFirst } from "./ui/use-touch-first";
 import { useWideWindow } from "./ui/use-wide-window";
@@ -114,13 +112,11 @@ export function App({
   const shown = usePageShown(page, entry, data);
   const tips = usePageTips(page, data, shown.shown && !covered);
   const again = useReadAgain(entry, data);
-  const { screen } = session;
   useEffect(() => {
     if (shown.drawn) {
       onDrawn?.();
     }
   }, [shown.drawn, onDrawn]);
-  const withFoot = again.signedIn || screen.name === "reading";
   const { signedIn } = again;
   useEffect(() => onSignedIn(signedIn), [signedIn, onSignedIn]);
   return (
@@ -128,28 +124,13 @@ export function App({
       {signedIn && (
         <ScanGifts data={data} camera={camera ?? null} scanning={scanning} onScanned={onScanned} />
       )}
-      {withFoot && (
-        <NavFoot>
-          <ReadAgainFoot
-            reading={again.reading}
-            canRead={again.canRead}
-            fetchedAt={screen.name === "profile" ? screen.profile.fetchedAt : null}
-            progress={again.progress}
-            onRead={again.read}
-            onHeld={again.readEvery}
-            i18n={i18n}
-          />
-        </NavFoot>
-      )}
-      {withFoot && entry.standsAlone !== true && (
-        <PullToRead
-          active={touchFirst}
-          canRead={again.canRead}
-          onRead={again.read}
-          onHeld={again.readEvery}
-        />
-      )}
-      {again.question}
+      <ReadAgainControls
+        again={again}
+        screen={session.screen}
+        pullable={entry.standsAlone !== true}
+        touchFirst={touchFirst}
+        i18n={i18n}
+      />
       <PicturesReadNote lane={lane} i18n={i18n} />
       <TipTour key={page} steps={tips.steps} i18n={i18n} onSeen={tips.onSeen} onScene={onScene} />
       {entry.standsAlone === true ? (
