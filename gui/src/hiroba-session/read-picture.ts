@@ -1,5 +1,6 @@
 import { err, isErr, ok, type Result, type TransportResponse } from "@abth/core";
-import type { PictureKey, PictureStore } from "../shared/picture-store";
+
+import type { PictureStore } from "../shared/picture-store";
 import { type GroupAsked, type Pipeline, resultFailure } from "../shared/pipelines";
 import { checkPng, describeAnswer, type PngRefusal, pngDataUrl } from "../shared/png-answer";
 import {
@@ -8,6 +9,7 @@ import {
   type PictureView,
   type PictureWant,
 } from "../shared/session-port";
+import { createPictureCache, pictureId } from "./picture-cache";
 import { type PictureReadState, type PictureRequest, requestOf } from "./picture-requests";
 import type { HirobaEndpoints } from "./types";
 
@@ -91,8 +93,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   /** Bumped by forget(): a fetch from before it keeps nothing. */
   let generation = 0;
   let lastFetchEnded = Number.NEGATIVE_INFINITY;
-  const unconfirmed = new Map<string, { readonly key: PictureKey; readonly bytes: Uint8Array }>();
-  const idOf = (key: PictureKey) => `${key.scope}|${key.player ?? ""}|${key.name}`;
+  const cache = createPictureCache(store);
   let myPageReads = 0;
   // How often the portrait may have changed this run, and as of which change the kept one was
   // fetched. They outlive the session: a change concerns whoever signs in next.
@@ -118,30 +119,6 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     return err({ code: parts.join(" ") });
   };
 
-  const viewOf = (bytes: Uint8Array, request: PictureRequest): PictureView | null => {
-    const checked = checkPng(
-      { status: 200, url: request.url, headers: { "content-type": "image/png" }, body: bytes },
-      request.rules,
-    );
-    if (isErr(checked) || checked.value.size === null) {
-      return null;
-    }
-    return { src: pngDataUrl(checked.value.bytes), ...checked.value.size };
-  };
-
-  const kept = async (request: PictureRequest): Promise<PictureView | null> => {
-    const shown = unconfirmed.get(idOf(request.key));
-    if (shown !== undefined) {
-      return viewOf(shown.bytes, request);
-    }
-    try {
-      const bytes = await store.get(request.key);
-      return bytes === null ? null : viewOf(bytes, request);
-    } catch {
-      return null;
-    }
-  };
-
   // A stale portrait falls back to the kept one: on a poor network, as at an arcade, the last
   // costume shown beats none.
   const orKept = async (
@@ -149,7 +126,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     request: PictureRequest,
     failure: Result<never, PictureFailure>,
   ): Promise<Result<PictureView, PictureFailure>> => {
-    const before = stale ? await kept(request) : null;
+    const before = stale ? await cache.kept(request) : null;
     return before === null ? failure : ok(before);
   };
 
@@ -158,7 +135,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     request: PictureRequest,
     failure: Result<never, PictureFailure>,
   ): Promise<Result<PictureView, PictureFailure>> => {
-    const before = await kept(request);
+    const before = await cache.kept(request);
     return before === null || failure.ok ? failure : err({ ...failure.error, kept: before });
   };
 
@@ -184,7 +161,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return failed(want.kind, request);
       }
       const stale = isStale(request);
-      const view = stale || again ? null : await kept(request);
+      const view = stale || again ? null : await cache.kept(request);
       if (view !== null) {
         budgetUsed -= 1;
         return ok(view);
@@ -217,7 +194,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return notCome(failed(request.kind, refusal.why, sent.value, request, refusal));
       }
       if (since === generation && request.keptAfterRead) {
-        unconfirmed.set(idOf(request.key), { key: request.key, bytes: checked.value.bytes });
+        cache.hold(request.key, checked.value.bytes);
       } else if (since === generation) {
         try {
           await store.put(request.key, checked.value.bytes);
@@ -246,12 +223,12 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return failed(want.kind, request);
       }
       const stale = isStale(request);
-      const view = stale || again ? null : await kept(request);
+      const view = stale || again ? null : await cache.kept(request);
       if (view !== null) {
         return ok(view);
       }
       // A fetch on its way may still answer from the store: one read again shares only its own.
-      const id = `${again ? "again|" : ""}${idOf(request.key)}`;
+      const id = `${again ? "again|" : ""}${pictureId(request.key)}`;
       const onItsWay = inFlight.get(id);
       if (onItsWay !== undefined) {
         return onItsWay;
@@ -269,17 +246,8 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       inFlight.set(id, fetching);
       return fetching;
     },
-    async confirm(owner) {
-      for (const [id, { key, bytes }] of unconfirmed) {
-        if (key.player === owner) {
-          try {
-            await store.put(key, bytes);
-          } catch {
-            // Only the store's copy is lost: the plate is fetched again the next time.
-          }
-        }
-        unconfirmed.delete(id);
-      }
+    confirm(owner) {
+      return cache.confirm(owner);
     },
     myPageAsked() {
       myPageReads += 1;
@@ -294,7 +262,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       generation += 1;
       myPageReads = 0;
       inFlight.clear();
-      unconfirmed.clear();
+      cache.forget();
     },
   };
 }
