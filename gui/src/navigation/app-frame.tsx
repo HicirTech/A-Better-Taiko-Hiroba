@@ -1,5 +1,5 @@
 import { Box, Container, Typography } from "@mui/material";
-import { createContext, type ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { createContext, type ReactNode, useState } from "react";
 
 import type { SystemBack } from "../platform";
 import { BackClosersContext, BackModesContext, OnScreenBackContext } from "../ui/back-closers";
@@ -9,14 +9,14 @@ import { PipelinesShownContext } from "../ui/pipelines-shown";
 import type { SwipeDirection } from "../ui/swipe-gesture";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { WiderFrameContext } from "../ui/wider-frame";
-import { moveWindow, WindowMoveStyles } from "../ui/window-move";
+import { WindowMoveStyles } from "../ui/window-move";
 import { BackButton } from "./back-button";
 import { FrameNavigationContext } from "./frame-navigation";
 import { type NavigationProps, PANEL_WIDTH_PX, type PipelinesToggle } from "./frame-parts";
 import { MenuDrawer } from "./menu-drawer";
-import type { Page } from "./pages";
 import { SidePanel } from "./side-panel";
 import { useFrameBack } from "./use-frame-back";
+import { usePipelinesPage } from "./use-pipelines-page";
 import { usePipelinesSwipe } from "./use-pipelines-swipe";
 
 /** The navigation's foot, where the window's root draws; none while it is shut. */
@@ -47,45 +47,16 @@ export function AppFrame({
   const [navigation, setNavigation] = useState(true);
   const [foot, setFoot] = useState<HTMLElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  // The page the pipelines page was opened over, while it is shown.
-  const [pipelinesOver, setPipelinesOver] = useState<Page | null>(null);
   // Shut a menu left open on a wide window, or by a sign-out, so it does not reopen unasked.
   if ((wide || !navigation) && menuOpen) {
     setMenuOpen(false);
   }
-  // A sign-out takes the pipelines page with the menu, and going to another page takes it too.
-  if (pipelinesOver !== null && (!navigation || pipelinesOver !== page)) {
-    setPipelinesOver(null);
-  }
-  const pipelinesShown = pipelinesOver !== null;
-  // The page under the pipelines page goes back to where it was scrolled.
-  const pageScroll = useRef(0);
-  useLayoutEffect(() => {
-    if (!pipelinesShown) {
-      window.scrollTo(0, pageScroll.current);
-    }
-  }, [pipelinesShown]);
-  const showPipelines = (shown: boolean, menuAfter = false) => {
-    if (shown) {
-      pageScroll.current = window.scrollY;
-    }
-    moveWindow(shown ? "pipelinesIn" : "pipelinesOut", () => {
-      if (shown) {
-        window.scrollTo(0, 0);
-      }
-      setMenuOpen(menuAfter);
-      setPipelinesOver(shown ? page : null);
-    });
-  };
-  const navigate = (next: Page) => {
-    // The page under the pipelines page: back to it as it was, as the arrow goes.
-    if (pipelinesShown && next === page) {
-      showPipelines(false);
-      return;
-    }
-    pageScroll.current = 0;
-    onNavigate(next);
-  };
+  const { pipelinesShown, showPipelines, navigate } = usePipelinesPage({
+    page,
+    navigation,
+    onNavigate,
+    setMenuOpen,
+  });
   const toggle: PipelinesToggle | undefined =
     pipelines === undefined ? undefined : { shown: pipelinesShown, onShownChange: showPipelines };
   usePipelinesSwipe({
