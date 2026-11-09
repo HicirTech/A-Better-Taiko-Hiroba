@@ -1,60 +1,20 @@
-import {
-  type CostumeEditorView,
-  err,
-  isErr,
-  ok,
-  type Result,
-  type TransportResponse,
-} from "@abth/core";
-import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../shared/picture-store";
+import { err, isErr, ok, type Result, type TransportResponse } from "@abth/core";
+
+import type { PictureStore } from "../shared/picture-store";
 import { type GroupAsked, type Pipeline, resultFailure } from "../shared/pipelines";
+import { checkPng, describeAnswer, type PngRefusal, pngDataUrl } from "../shared/png-answer";
 import {
-  type AskedPlace,
-  checkPng,
-  describeAnswer,
-  type PngRefusal,
-  type PngRules,
-  pngDataUrl,
-} from "../shared/png-answer";
-import {
-  type CostumeSlot,
-  type CourseIconWant,
-  type IconWant,
   isPictureWant,
-  type OptionIconWant,
   type PictureFailure,
   type PictureView,
   type PictureWant,
 } from "../shared/session-port";
-import {
-  courseIconPath,
-  crownIconPath,
-  MEDAL_PLATE_PATH,
-  type MedalPlateSource,
-  MY_DON_PATH,
-  type MyDonSource,
-  type NoPictureSource,
-  optionIconPath,
-  type PictureSources,
-  rankIconPath,
-  type ScorePanelSource,
-  scorePanelPath,
-  TITLE_PLATE_PATH,
-} from "./picture-sources";
+import { createPictureCache, pictureId } from "./picture-cache";
+import { type PictureReadState, type PictureRequest, requestOf } from "./picture-requests";
 import type { HirobaEndpoints } from "./types";
 
-const ITEM_PATH = "/imgsrc_kisekae.php";
 /** What a browser's `<img>` sends: Hiroba's own pages load these pictures that way. */
 const IMAGE_ACCEPT = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8";
-// Size bounds that tell the picture from a placeholder (a 43-byte GIF is Hiroba's "nothing to
-// draw") and from anything else.
-const ITEM_RULES = { minBytes: 128, maxBytes: 64 * 1024, maxSide: 512 } as const;
-const ICON_RULES = { ...ITEM_RULES, maxSide: 256 } as const;
-const PLATE_RULES = { minBytes: 1024, maxBytes: 256 * 1024, maxSide: 1280, maxHeight: 400 };
-const PANEL_RULES = { minBytes: 10 * 1024, maxBytes: 512 * 1024, maxSide: 1280, maxHeight: 800 };
-const MY_DON_RULES = { minBytes: 5 * 1024, maxBytes: 512 * 1024, maxSide: 640 } as const;
-const SLOT_FIELDS = ["costume1", "costume2", "costume3", "costume4", "costume5"] as const;
-
 export interface PictureLimits {
   /** Up to this many milliseconds, at random, waited before each fetch, outside the pipeline. */
   readonly jitterMs: number;
@@ -89,17 +49,6 @@ const REAL_CLOCK: PictureClock = {
   sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 };
 
-/** What the platform knows now that decides whether a picture may be asked for at all. */
-export interface PictureReadState {
-  readonly signedIn: boolean;
-  /** The items the last costume editor read offered, as `offerKey` writes them. */
-  readonly offered: ReadonlySet<string>;
-  /** Whose my page this run last read: the taiko number. Null before the first read. */
-  readonly owner: string | null;
-  /** Where the pictures that page showed are, checked. Null before the first read. */
-  readonly sources: PictureSources | null;
-}
-
 export interface PictureReaderOptions {
   readonly endpoints: HirobaEndpoints;
   readonly store: PictureStore;
@@ -127,207 +76,6 @@ export interface PictureReader {
   forget(): void;
 }
 
-export const offerKey = (slot: CostumeSlot, id: number) => `${slot}:${id}`;
-
-/** Each slot's owned items plus the worn one, which the owned list may lack: the only thumbnails
- * that may be asked for, so ids cannot be walked. */
-export function offeredOf(editor: CostumeEditorView): ReadonlySet<string> {
-  const offered = new Set<string>();
-  SLOT_FIELDS.forEach((part, index) => {
-    const slot = (index + 1) as CostumeSlot;
-    for (const id of editor.slots[index] ?? []) {
-      offered.add(offerKey(slot, id));
-    }
-    if (editor.state[part] !== 0) {
-      offered.add(offerKey(slot, editor.state[part]));
-    }
-  });
-  return offered;
-}
-
-/** One picture's request, built here from a checked want: never from anything the window sent. */
-interface PictureRequest {
-  readonly kind: PictureWant["kind"];
-  readonly url: string;
-  readonly referer: string;
-  /** The checks the answer passes, among them where it must come from. */
-  readonly rules: PngRules & { readonly at: AskedPlace };
-  readonly key: PictureKey;
-  /** Kept only once a later read of my page finds the session good: for a session it has ended,
-   * Hiroba draws the bare plate blank, a PNG no check can tell apart. */
-  readonly keptAfterRead: boolean;
-}
-
-type Refusal = "notOffered" | "notRead" | "notShown" | "unexpectedSrc" | "noHost";
-
-/** The request for `want` from a fixed path and `state`, or why there is none. */
-function requestOf(
-  want: PictureWant,
-  endpoints: HirobaEndpoints,
-  state: PictureReadState,
-): PictureRequest | Refusal {
-  const origin = endpoints.hirobaOrigin;
-  if (want.kind === "costumeItem") {
-    if (!state.offered.has(offerKey(want.slot, want.id))) {
-      return "notOffered";
-    }
-    return {
-      kind: want.kind,
-      url: `${origin}${ITEM_PATH}?cos=${want.id}&type=${want.slot}`,
-      referer: `${origin}/mypage_kisekae.php`,
-      rules: { ...ITEM_RULES, at: { origin, path: ITEM_PATH } },
-      // Shared by every account and kept for good: it names no player. The slot is in the key, as
-      // one id sits in several slots.
-      key: {
-        scope: "shared",
-        player: null,
-        name: `${PICTURE_EPOCH}/item/${want.slot}/${want.id}`,
-      },
-      // A session gone gets a 43-byte GIF, which no check lets through.
-      keptAfterRead: false,
-    };
-  }
-  if (
-    want.kind === "rankIcon" ||
-    want.kind === "crownIcon" ||
-    want.kind === "courseIcon" ||
-    want.kind === "optionIcon"
-  ) {
-    return iconRequest(want, origin);
-  }
-  const { owner, sources } = state;
-  if (owner === null || sources === null) {
-    return "notRead";
-  }
-  if (want.kind === "scorePanel") {
-    return scorePanelRequest(sources.scorePanel, origin);
-  }
-  if (want.kind === "medalPlate") {
-    return medalPlateRequest(sources.medalPlate, owner, origin);
-  }
-  if (want.kind === "myDon") {
-    return myDonRequest(sources.myDon, owner, endpoints);
-  }
-  const plate = sources.titlePlate;
-  if (typeof plate === "string") {
-    return plate;
-  }
-  // Bare is the plate of whoever holds the session; the other form names the taiko number.
-  const query = plate.form === "bare" ? "" : `?taiko_no=${owner}`;
-  return {
-    kind: want.kind,
-    url: `${origin}${TITLE_PLATE_PATH}${query}`,
-    referer: `${origin}/mypage_top.php`,
-    rules: { ...PLATE_RULES, at: { origin, path: TITLE_PLATE_PATH } },
-    // Per player. The title and the form are in the name: a changed title is a plate of its own,
-    // and the two forms are not known to draw the same.
-    key: {
-      scope: "player",
-      player: owner,
-      name: `${PICTURE_EPOCH}/titleplate/${plate.form}/${encodeURIComponent(plate.title)}`,
-    },
-    // Only the bare form depends on the session; the public one is the same without it.
-    keptAfterRead: plate.form === "bare",
-  };
-}
-
-type SharedIconWant = IconWant | CourseIconWant | OptionIconWant;
-
-function iconSource(want: SharedIconWant): { path: string; name: string } {
-  switch (want.kind) {
-    case "rankIcon":
-      return { path: rankIconPath(want.rank), name: `rank/${want.rank}` };
-    case "crownIcon":
-      return { path: crownIconPath(want.crown), name: `crown/${want.crown}` };
-    case "courseIcon":
-      return { path: courseIconPath(want.difficulty), name: `course/${want.difficulty}` };
-    case "optionIcon":
-      return { path: optionIconPath(want.option), name: `option/${want.option}` };
-  }
-}
-
-function iconRequest(want: SharedIconWant, origin: string): PictureRequest {
-  const { path, name } = iconSource(want);
-  return {
-    kind: want.kind,
-    url: `${origin}${path}`,
-    referer: `${origin}/mypage_top.php`,
-    rules: { ...ICON_RULES, at: { origin, path } },
-    // Shared and kept for good: static art that names no player, the same without a session.
-    key: { scope: "shared", player: null, name: `${PICTURE_EPOCH}/${name}` },
-    keptAfterRead: false,
-  };
-}
-
-function scorePanelRequest(
-  panel: ScorePanelSource | NoPictureSource,
-  origin: string,
-): PictureRequest | Refusal {
-  if (typeof panel === "string") {
-    return panel;
-  }
-  const path = scorePanelPath(panel.level);
-  return {
-    kind: "scorePanel",
-    url: `${origin}${path}`,
-    referer: `${origin}/mypage_top.php`,
-    rules: { ...PANEL_RULES, at: { origin, path } },
-    // Shared and kept for good: static art that names no player, the same without a session.
-    key: { scope: "shared", player: null, name: `${PICTURE_EPOCH}/panel/${panel.level}` },
-    keptAfterRead: false,
-  };
-}
-
-function medalPlateRequest(
-  plate: MedalPlateSource | NoPictureSource,
-  owner: string,
-  origin: string,
-): PictureRequest | Refusal {
-  if (typeof plate === "string") {
-    return plate;
-  }
-  return {
-    kind: "medalPlate",
-    url: `${origin}${MEDAL_PLATE_PATH}?id=${plate.id}`,
-    referer: `${origin}/mypage_top.php`,
-    rules: { ...PLATE_RULES, at: { origin, path: MEDAL_PLATE_PATH } },
-    // Per player. The season's id and progress are in the name: a new season is a plate of its
-    // own, and the art may change once the set is complete (unverified).
-    key: {
-      scope: "player",
-      player: owner,
-      name: `${PICTURE_EPOCH}/tokenplate/${plate.id}/${plate.progress}`,
-    },
-    keptAfterRead: false,
-  };
-}
-
-// Asked of the picture host, never with the session: the transports keep that for Hiroba.
-function myDonRequest(
-  portrait: MyDonSource | NoPictureSource,
-  owner: string,
-  endpoints: HirobaEndpoints,
-): PictureRequest | Refusal {
-  const origin = endpoints.imgOrigin;
-  if (origin === null) {
-    return "noHost";
-  }
-  if (typeof portrait === "string") {
-    return portrait;
-  }
-  return {
-    kind: "myDon",
-    url: `${origin}${MY_DON_PATH}?v=${portrait.v}&kind=mydon&fn=mydon_${owner}`,
-    // What a browser sends another site from my page: Hiroba's origin alone.
-    referer: `${endpoints.hirobaOrigin}/`,
-    rules: { ...MY_DON_RULES, at: { origin, path: MY_DON_PATH } },
-    // Per player, and only the last one fetched: a changed costume leaves it behind, so it is
-    // fetched anew then.
-    key: { scope: "player", player: owner, name: `${PICTURE_EPOCH}/mydon` },
-    keptAfterRead: false,
-  };
-}
-
 /** The operation a picture's fetch runs as in Hiroba's pipeline. */
 export const PICTURE_OPERATION = "picture";
 const PICTURE: GroupAsked<Result<PictureView, PictureFailure>> = {
@@ -345,8 +93,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
   /** Bumped by forget(): a fetch from before it keeps nothing. */
   let generation = 0;
   let lastFetchEnded = Number.NEGATIVE_INFINITY;
-  const unconfirmed = new Map<string, { readonly key: PictureKey; readonly bytes: Uint8Array }>();
-  const idOf = (key: PictureKey) => `${key.scope}|${key.player ?? ""}|${key.name}`;
+  const cache = createPictureCache(store);
   let myPageReads = 0;
   // How often the portrait may have changed this run, and as of which change the kept one was
   // fetched. They outlive the session: a change concerns whoever signs in next.
@@ -372,30 +119,6 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     return err({ code: parts.join(" ") });
   };
 
-  const viewOf = (bytes: Uint8Array, request: PictureRequest): PictureView | null => {
-    const checked = checkPng(
-      { status: 200, url: request.url, headers: { "content-type": "image/png" }, body: bytes },
-      request.rules,
-    );
-    if (isErr(checked) || checked.value.size === null) {
-      return null;
-    }
-    return { src: pngDataUrl(checked.value.bytes), ...checked.value.size };
-  };
-
-  const kept = async (request: PictureRequest): Promise<PictureView | null> => {
-    const shown = unconfirmed.get(idOf(request.key));
-    if (shown !== undefined) {
-      return viewOf(shown.bytes, request);
-    }
-    try {
-      const bytes = await store.get(request.key);
-      return bytes === null ? null : viewOf(bytes, request);
-    } catch {
-      return null;
-    }
-  };
-
   // A stale portrait falls back to the kept one: on a poor network, as at an arcade, the last
   // costume shown beats none.
   const orKept = async (
@@ -403,7 +126,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     request: PictureRequest,
     failure: Result<never, PictureFailure>,
   ): Promise<Result<PictureView, PictureFailure>> => {
-    const before = stale ? await kept(request) : null;
+    const before = stale ? await cache.kept(request) : null;
     return before === null ? failure : ok(before);
   };
 
@@ -412,7 +135,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
     request: PictureRequest,
     failure: Result<never, PictureFailure>,
   ): Promise<Result<PictureView, PictureFailure>> => {
-    const before = await kept(request);
+    const before = await cache.kept(request);
     return before === null || failure.ok ? failure : err({ ...failure.error, kept: before });
   };
 
@@ -438,7 +161,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return failed(want.kind, request);
       }
       const stale = isStale(request);
-      const view = stale || again ? null : await kept(request);
+      const view = stale || again ? null : await cache.kept(request);
       if (view !== null) {
         budgetUsed -= 1;
         return ok(view);
@@ -471,7 +194,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return notCome(failed(request.kind, refusal.why, sent.value, request, refusal));
       }
       if (since === generation && request.keptAfterRead) {
-        unconfirmed.set(idOf(request.key), { key: request.key, bytes: checked.value.bytes });
+        cache.hold(request.key, checked.value.bytes);
       } else if (since === generation) {
         try {
           await store.put(request.key, checked.value.bytes);
@@ -500,12 +223,12 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
         return failed(want.kind, request);
       }
       const stale = isStale(request);
-      const view = stale || again ? null : await kept(request);
+      const view = stale || again ? null : await cache.kept(request);
       if (view !== null) {
         return ok(view);
       }
       // A fetch on its way may still answer from the store: one read again shares only its own.
-      const id = `${again ? "again|" : ""}${idOf(request.key)}`;
+      const id = `${again ? "again|" : ""}${pictureId(request.key)}`;
       const onItsWay = inFlight.get(id);
       if (onItsWay !== undefined) {
         return onItsWay;
@@ -523,17 +246,8 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       inFlight.set(id, fetching);
       return fetching;
     },
-    async confirm(owner) {
-      for (const [id, { key, bytes }] of unconfirmed) {
-        if (key.player === owner) {
-          try {
-            await store.put(key, bytes);
-          } catch {
-            // Only the store's copy is lost: the plate is fetched again the next time.
-          }
-        }
-        unconfirmed.delete(id);
-      }
+    confirm(owner) {
+      return cache.confirm(owner);
     },
     myPageAsked() {
       myPageReads += 1;
@@ -548,7 +262,7 @@ export function createPictureReader(options: PictureReaderOptions): PictureReade
       generation += 1;
       myPageReads = 0;
       inFlight.clear();
-      unconfirmed.clear();
+      cache.forget();
     },
   };
 }
