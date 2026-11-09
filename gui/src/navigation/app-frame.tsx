@@ -1,42 +1,22 @@
-import { Box, Container, IconButton, Paper, Typography } from "@mui/material";
-import {
-  createContext,
-  type ReactNode,
-  useEffect,
-  useEffectEvent,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { Box, Container, Typography } from "@mui/material";
+import { createContext, type ReactNode, useLayoutEffect, useRef, useState } from "react";
 
 import type { SystemBack } from "../platform";
-import {
-  BackClosersContext,
-  BackModesContext,
-  createBackClosers,
-  OnScreenBackContext,
-} from "../ui/back-closers";
-import { BELOW_TOP_BAND, MENU_INSET_PX, PAGE_BOTTOM_PX, SAFE_TOP } from "../ui/frame-top";
-import { ArrowBackIcon } from "../ui/icons";
+import { BackClosersContext, BackModesContext, OnScreenBackContext } from "../ui/back-closers";
+import { BELOW_TOP_BAND, PAGE_BOTTOM_PX, SAFE_TOP } from "../ui/frame-top";
 import { MenuOpenContext, MenuOpenerContext } from "../ui/menu-open";
 import { PipelinesShownContext } from "../ui/pipelines-shown";
 import type { SwipeDirection } from "../ui/swipe-gesture";
 import { VISUALLY_HIDDEN } from "../ui/visually-hidden";
 import { WiderFrameContext } from "../ui/wider-frame";
-import { moveWindow, STILL, WindowMoveStyles } from "../ui/window-move";
-import { backAction } from "./back-action";
+import { moveWindow, WindowMoveStyles } from "../ui/window-move";
+import { BackButton } from "./back-button";
 import { FrameNavigationContext } from "./frame-navigation";
-import {
-  BAND_BUTTON,
-  type NavigationProps,
-  PANEL_WIDTH_PX,
-  type PipelinesToggle,
-} from "./frame-parts";
+import { type NavigationProps, PANEL_WIDTH_PX, type PipelinesToggle } from "./frame-parts";
 import { MenuDrawer } from "./menu-drawer";
 import type { Page } from "./pages";
 import { SidePanel } from "./side-panel";
+import { useFrameBack } from "./use-frame-back";
 import { usePipelinesSwipe } from "./use-pipelines-swipe";
 
 /** The navigation's foot, where the window's root draws; none while it is shut. */
@@ -119,41 +99,17 @@ export function AppFrame({
       showPipelines(direction === "right", direction === "left" && !wide);
     },
   });
-  const [closers] = useState(createBackClosers);
-  const [modes] = useState(createBackClosers);
-  const press = (system: SystemBack) => {
-    const action = backAction({
-      overlayOpen: closers.isOpen(),
-      pipelinesShown,
-      menuOpen,
-      modeOn: modes.isOpen(),
-      page,
-    });
-    if (action === "closeOverlay") {
-      closers.closeLatest();
-    } else if (action === "leavePipelines") {
-      showPipelines(false, !wide);
-    } else if (action === "closeMenu") {
-      setMenuOpen(false);
-    } else if (action === "leaveMode") {
-      modes.closeLatest();
-    } else if (action === "overview") {
-      onNavigate("overview");
-    } else {
-      system.leave();
-    }
-  };
-  const pressedBack = useEffectEvent(press);
-  useEffect(() => back?.listen(() => pressedBack(back)), [back]);
-  const modeOn = useSyncExternalStore(modes.subscribe, modes.isOpen);
-  // An overlay lies over the button and takes the press first; an open menu has its own ways out.
-  const backHere = backAction({ overlayOpen: false, pipelinesShown, menuOpen, modeOn, page });
-  const backDrawn = back?.onScreen === true;
-  const backShown = backDrawn && navigation && backHere !== "leave" && backHere !== "closeMenu";
-  const onScreenBack = useMemo(
-    () => ({ drawn: backDrawn, shown: backShown }),
-    [backDrawn, backShown],
-  );
+  const { closers, modes, onScreenBack, press } = useFrameBack({
+    back,
+    page,
+    pipelinesShown,
+    menuOpen,
+    wide,
+    navigation,
+    showPipelines,
+    setMenuOpen,
+    onNavigate,
+  });
   return (
     <OnScreenBackContext value={onScreenBack}>
       <BackClosersContext value={closers}>
@@ -161,24 +117,8 @@ export function AppFrame({
           <MenuOpenerContext value={setMenuOpen}>
             <WindowMoveStyles />
             <Box aria-hidden sx={STATUS_BAR_ROOM} />
-            {backShown && back !== undefined && (
-              <Paper
-                elevation={2}
-                sx={{
-                  ...BAND_BUTTON,
-                  left: `calc(${wide ? PANEL_WIDTH_PX + MENU_INSET_PX : MENU_INSET_PX}px + env(safe-area-inset-left, 0px))`,
-                  viewTransitionName: STILL.backButton,
-                }}
-              >
-                <IconButton
-                  id="nav-back"
-                  aria-label={i18n.t("nav.back")}
-                  title={i18n.t("nav.back")}
-                  onClick={() => press(back)}
-                >
-                  <ArrowBackIcon />
-                </IconButton>
-              </Paper>
+            {onScreenBack.shown && back !== undefined && (
+              <BackButton wide={wide} i18n={i18n} onPress={() => press(back)} />
             )}
             <Box sx={{ display: "flex", minHeight: "100vh" }}>
               {navigation &&
