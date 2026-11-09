@@ -1,6 +1,6 @@
 import { FOLDER_SLOT_COUNT, type FolderState, isObject, isSongNo } from "@abth/core";
 
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
+import { keepJson, keepSetting, keptSetting, pageStorage } from "../kept-settings";
 
 const KEY = "abth.favoriteSets";
 /** Where sets that do not read are kept before others are kept over them. */
@@ -104,7 +104,7 @@ export function keepSets(
   if (kept.kind === "unreadable") {
     keepSetting(UNREADABLE_KEY, kept.text, storage);
   }
-  keepSetting(KEY, JSON.stringify({ v: VERSION, sets }), storage);
+  keepJson(KEY, VERSION, { sets }, storage);
 }
 
 /** The sets with a new one at the end, and the new one. */

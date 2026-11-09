@@ -1,28 +1,21 @@
-import { isObject, type RatingSystem } from "@abth/core";
+import type { RatingSystem } from "@abth/core";
 
-import { keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
+import { keepJson, keptJson, pageStorage } from "../shared/kept-settings";
 import type { RatingDataRead } from "../shared/rating-data/read-rating-data";
 
 const VERSION = 1;
 
 const keyOf = (system: RatingSystem) => `abth.ratingData.${system}`;
-const isText = (value: unknown): value is string => typeof value === "string";
+
+const ratingDataIn = ({ text, sentAt }: Record<string, unknown>): RatingDataRead | null =>
+  typeof text === "string" && typeof sentAt === "number" ? { text, sentAt } : null;
 
 /** A rating system's data as last read on this device, or null when none was. */
 export function loadRatingData(
   system: RatingSystem,
   storage: Storage | undefined = pageStorage(),
 ): RatingDataRead | null {
-  const kept = keptSetting(keyOf(system), isText, storage);
-  if (kept === null) {
-    return null;
-  }
-  try {
-    const value: unknown = JSON.parse(kept);
-    return isKept(value) ? { text: value.text, sentAt: value.sentAt } : null;
-  } catch {
-    return null;
-  }
+  return keptJson(keyOf(system), VERSION, ratingDataIn, storage);
 }
 
 export function keepRatingData(
@@ -30,13 +23,5 @@ export function keepRatingData(
   read: RatingDataRead,
   storage: Storage | undefined = pageStorage(),
 ): void {
-  keepSetting(keyOf(system), JSON.stringify({ v: VERSION, ...read }), storage);
-}
-
-function isKept(value: unknown): value is { readonly text: string; readonly sentAt: number } {
-  if (!isObject(value)) {
-    return false;
-  }
-  const { v, text, sentAt } = value;
-  return v === VERSION && typeof text === "string" && typeof sentAt === "number";
+  keepJson(keyOf(system), VERSION, read, storage);
 }
