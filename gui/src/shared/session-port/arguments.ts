@@ -145,8 +145,20 @@ function isFolderTarget(value: unknown): value is readonly string[] {
   );
 }
 
-const KIND_ONLY_PICTURES: readonly string[] = ["titlePlate", "scorePanel", "medalPlate", "myDon"];
-// Records, so a rank or crown the app gains is a type error here until its icon may be asked for.
+/** A want's kind, where the kind alone names the picture. */
+type KindOnly<W> = W extends { readonly kind: infer K }
+  ? [Exclude<keyof W, "kind">] extends [never]
+    ? K
+    : never
+  : never;
+
+// Records, so a picture, rank or crown the app gains is a type error here until it can be asked.
+const KIND_ONLY_PICTURES: Readonly<Record<KindOnly<PictureWant>, true>> = {
+  titlePlate: true,
+  scorePanel: true,
+  medalPlate: true,
+  myDon: true,
+};
 const RANK_ICONS: Readonly<Record<ScoreRank, true>> = {
   2: true,
   3: true,
@@ -168,7 +180,7 @@ const OPTION_CODE = /^a\d{1,2}$/;
  * has no picture, so an item's id starts at 1. */
 export function isPictureWant(value: unknown): value is PictureWant {
   if (hasExactly(value, ["kind"])) {
-    return typeof value.kind === "string" && KIND_ONLY_PICTURES.includes(value.kind);
+    return typeof value.kind === "string" && Object.hasOwn(KIND_ONLY_PICTURES, value.kind);
   }
   if (hasExactly(value, ["kind", "rank"])) {
     return (
