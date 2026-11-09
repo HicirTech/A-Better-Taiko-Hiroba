@@ -3,6 +3,7 @@ import { type ReactNode, useContext, useEffect } from "react";
 import { PageArea } from "./app/page-area";
 import { ReadAgainControls } from "./app/read-again-controls";
 import { ScanGifts } from "./app/scan-gifts";
+import { UpdateReminderDialog } from "./app/update-reminder-dialog";
 import { useDeviceChoices } from "./app/use-device-choices";
 import { useModalLook } from "./app/use-modal-look";
 import { usePageShown } from "./app/use-page-shown";
@@ -19,7 +20,6 @@ import { PAGE_REGISTRY } from "./pages/registry";
 import type { SystemCamera, SystemLink, SystemShare, SystemToast } from "./platform";
 import { PicturesReadNote } from "./read-again/pictures-read-note";
 import type { HirobaSessionPort } from "./shared/session-port";
-import { releaseUrl } from "./shared/updates";
 import { APP_VERSION } from "./shared/updates/app-version";
 import { useUpdateReminder } from "./shared/updates/use-update-reminder";
 import { MenuOpenContext } from "./ui/menu-open";
@@ -27,7 +27,6 @@ import { PipelinesShownContext } from "./ui/pipelines-shown";
 import { TipTour } from "./ui/tip-tour";
 import { useTouchFirst } from "./ui/use-touch-first";
 import { useWideWindow } from "./ui/use-wide-window";
-import { UpdateDialog } from "./updates/update-dialog";
 
 export interface AppProps {
   readonly port: HirobaSessionPort;
@@ -138,15 +137,7 @@ export function App({
       ) : (
         <PageArea page={page} entry={entry} data={data} shown={shown} onSignIn={session.signIn} />
       )}
-      <UpdateDialog
-        offer={updates.offer}
-        i18n={i18n}
-        onDownload={(version) => {
-          link.open(releaseUrl(version));
-          updates.later();
-        }}
-        onLater={updates.later}
-      />
+      <UpdateReminderDialog updates={updates} link={link} i18n={i18n} />
     </>
   );
 }
