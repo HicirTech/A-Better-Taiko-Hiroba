@@ -96,7 +96,7 @@ interface WriteKindDefinition<K extends WriteKind, Input> {
     options: WriteOptions,
   ) => Promise<WriteOutcome<WriteSets[K]>>;
   /** Told how a write of this kind ended, for what the platform keeps of its result. */
-  readonly ended: (
+  readonly ended?: (
     outcome: WriteOutcomeView<WriteSets[K]>,
     taikoNo: string | null,
     input: Input,
@@ -169,13 +169,11 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   const title: WriteKindDefinition<"title", TitleChange> = {
     kind: "title",
     run: changeTitle,
-    ended: () => undefined,
   };
 
   const name: WriteKindDefinition<"name", NameChange> = {
     kind: "name",
     run: changeName,
-    ended: () => undefined,
   };
 
   const folder: WriteKindDefinition<"folder", FolderChange> = {
@@ -191,7 +189,6 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
   const favoriteSong: WriteKindDefinition<"favoriteSong", FavoriteSongChange> = {
     kind: "favoriteSong",
     run: changeFavoriteSong,
-    ended: () => undefined,
   };
 
   async function write<K extends WriteKind, Input>(
@@ -199,6 +196,9 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     definition: WriteKindDefinition<K, Input>,
     input: Input,
   ): Promise<WriteOutcomeView<WriteSets[K]>> {
+    if (!options.signedIn()) {
+      return { kind: "notSignedIn" };
+    }
     // Read first: a session that ends during the write clears the owner.
     const taikoNo = options.owner();
     let outcome: WriteOutcome<WriteSets[K]>;
@@ -214,7 +214,7 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     if (outcome.kind === "sessionGone") {
       await options.endSession();
     }
-    await definition.ended(outcome, taikoNo, input);
+    await definition.ended?.(outcome, taikoNo, input);
     return outcome;
   }
 
@@ -249,40 +249,15 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
         refreshHiroba({ transport: hiroba, hirobaOrigin, now: options.now }),
       ),
 
-    async changeCostume(transport, change) {
-      if (!options.signedIn()) {
-        return { kind: "notSignedIn" };
-      }
-      return write(transport, costume, change);
-    },
+    changeCostume: (transport, change) => write(transport, costume, change),
 
-    async changeTitle(transport, change) {
-      if (!options.signedIn()) {
-        return { kind: "notSignedIn" };
-      }
-      return write(transport, title, change);
-    },
+    changeTitle: (transport, change) => write(transport, title, change),
 
-    async changeName(transport, change) {
-      if (!options.signedIn()) {
-        return { kind: "notSignedIn" };
-      }
-      return write(transport, name, change);
-    },
+    changeName: (transport, change) => write(transport, name, change),
 
-    async changeFolder(transport, change) {
-      if (!options.signedIn()) {
-        return { kind: "notSignedIn" };
-      }
-      return write(transport, folder, change);
-    },
+    changeFolder: (transport, change) => write(transport, folder, change),
 
-    async changeFavoriteSong(transport, change) {
-      if (!options.signedIn()) {
-        return { kind: "notSignedIn" };
-      }
-      return write(transport, favoriteSong, change);
-    },
+    changeFavoriteSong: (transport, change) => write(transport, favoriteSong, change),
 
     async previewKept(set, picture) {
       const taikoNo = options.owner();
