@@ -12,7 +12,7 @@ import { song } from "./song-fixtures";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const kept = (songs: CatalogueSong[], sentAt = 1_000): KeptCatalogue => ({ v: 3, sentAt, songs });
+const kept = (songs: CatalogueSong[], sentAt = 1_000): KeptCatalogue => ({ sentAt, songs });
 const numbers = (catalogue: KeptCatalogue) => catalogue.songs.map((one) => one.songNo);
 
 describe("mergeCatalogue", () => {

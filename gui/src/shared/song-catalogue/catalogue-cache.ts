@@ -1,5 +1,5 @@
 import { isObject, isSongNo } from "@abth/core";
-import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
+import { keepJson, keptJson, pageStorage } from "../kept-settings";
 import { type CatalogueSong, DIFFICULTIES, type SongCatalogueRead } from "./types";
 
 const KEY = "abth.songCatalogue";
@@ -10,7 +10,6 @@ const VERSION = 3;
 
 /** The song list as kept on the device, and when the read that brought it was sent. */
 export interface KeptCatalogue {
-  readonly v: typeof VERSION;
   readonly sentAt: number;
   readonly songs: readonly CatalogueSong[];
 }
@@ -64,40 +63,22 @@ function isCatalogueSong(song: unknown): song is CatalogueSong {
   );
 }
 
-function isKept(value: unknown): value is KeptCatalogue {
-  if (!isObject(value)) {
-    return false;
+function catalogueIn({ sentAt, songs }: Record<string, unknown>): KeptCatalogue | null {
+  if (typeof sentAt !== "number" || !Number.isFinite(sentAt) || !Array.isArray(songs)) {
+    return null;
   }
-
-  const { v, sentAt, songs } = value;
-  return (
-    v === VERSION &&
-    typeof sentAt === "number" &&
-    Number.isFinite(sentAt) &&
-    Array.isArray(songs) &&
-    songs.every(isCatalogueSong)
-  );
+  return songs.every(isCatalogueSong) ? { sentAt, songs } : null;
 }
 
 export function loadCatalogue(storage: Storage | undefined = pageStorage()): KeptCatalogue | null {
-  const text = keptSetting(KEY, (value): value is string => typeof value === "string", storage);
-  if (text === null) {
-    return null;
-  }
-
-  try {
-    const kept: unknown = JSON.parse(text);
-    return isKept(kept) ? kept : null;
-  } catch {
-    return null;
-  }
+  return keptJson(KEY, VERSION, catalogueIn, storage);
 }
 
 export function keepCatalogue(
   kept: KeptCatalogue,
   storage: Storage | undefined = pageStorage(),
 ): void {
-  keepSetting(KEY, JSON.stringify(kept), storage);
+  keepJson(KEY, VERSION, kept, storage);
 }
 
 /** The read's songs replace or add to those kept by song number, and the ones it removed go. */
@@ -110,7 +91,7 @@ export function mergeCatalogue(kept: KeptCatalogue | null, read: SongCatalogueRe
   for (const songNo of read.removed) {
     bySongNo.delete(songNo);
   }
-  return { v: VERSION, sentAt: read.sentAt, songs: [...bySongNo.values()] };
+  return { sentAt: read.sentAt, songs: [...bySongNo.values()] };
 }
 
 /** What to ask taiko.wiki for, or none while the song list kept is a day old at most. */

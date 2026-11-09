@@ -1,5 +1,5 @@
-import { isObject, isSongNo } from "@abth/core";
-import { forgetSetting, keepSetting, keptSetting, pageStorage } from "../shared/kept-settings";
+import { isSongNo } from "@abth/core";
+import { forgetSetting, keepJson, keptJson, pageStorage } from "../shared/kept-settings";
 import type { PickableSongs, ReadFailure } from "../shared/session-port";
 
 const KEY = "abth.pickableSongs";
@@ -34,33 +34,16 @@ export function offeredOf(read: PickableSongs): OfferedSongs {
 const isSongNos = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(isSongNo);
 
+const offeredIn = ({ songs, ura }: Record<string, unknown>): OfferedSongs | null =>
+  isSongNos(songs) && isSongNos(ura) ? offeredOf({ songs, ura }) : null;
+
 /** The list kept on the device, from the last read; one of another shape is none. */
 export function loadPickable(storage: Storage | undefined = pageStorage()): OfferedSongs | null {
-  const text = keptSetting(KEY, (value): value is string => typeof value === "string", storage);
-  if (text === null) {
-    return null;
-  }
-  try {
-    const kept: unknown = JSON.parse(text);
-    if (
-      isObject(kept) &&
-      "v" in kept &&
-      kept.v === VERSION &&
-      "songs" in kept &&
-      isSongNos(kept.songs) &&
-      "ura" in kept &&
-      isSongNos(kept.ura)
-    ) {
-      return offeredOf({ songs: kept.songs, ura: kept.ura });
-    }
-    return null;
-  } catch {
-    return null;
-  }
+  return keptJson(KEY, VERSION, offeredIn, storage);
 }
 
 export function keepPickable(read: PickableSongs, storage: Storage | undefined = pageStorage()) {
-  keepSetting(KEY, JSON.stringify({ v: VERSION, songs: read.songs, ura: read.ura }), storage);
+  keepJson(KEY, VERSION, { songs: read.songs, ura: read.ura }, storage);
 }
 
 /** Another player may sign in next, and the list is one player's. */

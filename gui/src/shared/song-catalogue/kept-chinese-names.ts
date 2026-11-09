@@ -1,5 +1,5 @@
 import { isObject } from "@abth/core";
-import { keepSetting, pageStorage } from "../kept-settings";
+import { keepJson, keptJson, pageStorage } from "../kept-settings";
 import type { CatalogueSong, ChineseNamesPage, ChineseNamesRead } from ".";
 
 const KEY = "abth.chineseNames";
@@ -7,42 +7,29 @@ const VERSION = 1;
 /** Official names rarely change, so a month passes before they are read again. */
 export const CHINESE_NAMES_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 
+const isNamesPage = (page: unknown): page is ChineseNamesPage =>
+  isObject(page) &&
+  typeof page.title === "string" &&
+  Array.isArray(page.names) &&
+  page.names.every((name) => typeof name === "string");
+
+function namesIn({ sentAt, pages }: Record<string, unknown>): ChineseNamesRead | null {
+  return typeof sentAt === "number" && Array.isArray(pages) && pages.every(isNamesPage)
+    ? { sentAt, pages }
+    : null;
+}
+
 export function loadChineseNames(
   storage: Storage | undefined = pageStorage(),
 ): ChineseNamesRead | null {
-  try {
-    const kept: unknown = JSON.parse(storage?.getItem(KEY) ?? "null");
-    return isKept(kept) ? { sentAt: kept.sentAt, pages: kept.pages } : null;
-  } catch {
-    return null;
-  }
+  return keptJson(KEY, VERSION, namesIn, storage);
 }
 
 export function keepChineseNames(
   read: ChineseNamesRead,
   storage: Storage | undefined = pageStorage(),
 ): void {
-  keepSetting(KEY, JSON.stringify({ v: VERSION, ...read }), storage);
-}
-
-function isKept(
-  value: unknown,
-): value is { readonly sentAt: number; readonly pages: ChineseNamesPage[] } {
-  if (!isObject(value)) {
-    return false;
-  }
-  const { v, sentAt, pages } = value;
-  return (
-    v === VERSION &&
-    typeof sentAt === "number" &&
-    Array.isArray(pages) &&
-    pages.every(
-      (page) =>
-        typeof page?.title === "string" &&
-        Array.isArray(page.names) &&
-        page.names.every((name: unknown) => typeof name === "string"),
-    )
-  );
+  keepJson(KEY, VERSION, read, storage);
 }
 
 // The wikis tell songs that share a title apart with a note in brackets at the end.

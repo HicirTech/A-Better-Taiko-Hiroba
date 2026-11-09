@@ -120,11 +120,15 @@ describe("the kept rating data", () => {
     expect(loadRatingData("ourtaikoV1", storage)).toEqual({ text: ANSWER, sentAt: SENT_AT });
   });
 
-  test("reads as none when it is broken or from another version", () => {
+  test("reads as none when it is broken, from another version or of another shape", () => {
     const storage = memoryStorage();
     storage.setItem("abth.ratingData.ourtaikoV1", "{");
     expect(loadRatingData("ourtaikoV1", storage)).toBeNull();
     storage.setItem("abth.ratingData.ourtaikoV1", JSON.stringify({ v: 2, text: "", sentAt: 1 }));
+    expect(loadRatingData("ourtaikoV1", storage)).toBeNull();
+    storage.setItem("abth.ratingData.ourtaikoV1", JSON.stringify({ v: 1, text: 3, sentAt: 1 }));
+    expect(loadRatingData("ourtaikoV1", storage)).toBeNull();
+    storage.setItem("abth.ratingData.ourtaikoV1", JSON.stringify({ v: 1, text: "" }));
     expect(loadRatingData("ourtaikoV1", storage)).toBeNull();
   });
 
