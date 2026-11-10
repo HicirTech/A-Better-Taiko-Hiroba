@@ -4,6 +4,7 @@ import type { HirobaSessionPort, PictureView } from "../shared/session-port";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import { viewOf } from "../shared/song-catalogue/read-chart-picture";
 import type { ChartFileFailure, Difficulty } from "../shared/song-catalogue/types";
+import type { ChartPicturePort } from "./chart-port";
 
 /** What a song's details show for a chart. */
 export type ChartShown =
@@ -15,11 +16,6 @@ export type ChartShown =
 /** The failures that mean the song has no chart file, rather than one not read this time. */
 const NO_TJA: ReadonlySet<ChartFileFailure["code"]> = new Set(["noChart", "notConfigured"]);
 
-type ChartPort = Pick<
-  HirobaSessionPort,
-  "readChartPicture" | "readCdnChart" | "readDrawnChart" | "keepDrawnChart"
->;
-
 /** Draws a chart of a TJA as a PNG, or answers null for one it cannot draw. */
 export type DrawChart = (tja: string, difficulty: Difficulty) => Promise<Uint8Array | null>;
 
@@ -28,7 +24,7 @@ export interface ChartFinding {
   readonly difficulty: Difficulty;
   /** taiko.wiki's pictures of the chart. */
   readonly images: readonly string[];
-  readonly port: ChartPort;
+  readonly port: ChartPicturePort;
   /** The song's chart file. */
   readonly tja: () => Promise<Result<string, ChartFileFailure>>;
   readonly draw: DrawChart;
@@ -90,7 +86,7 @@ export interface SongReload {
     readonly images: readonly string[];
   }[];
   readonly source: ChartSource;
-  readonly port: ChartPort;
+  readonly port: ChartPicturePort;
   /** The song's chart file, read anew. */
   readonly tja: () => Promise<Result<string, ChartFileFailure>>;
   readonly draw: DrawChart;

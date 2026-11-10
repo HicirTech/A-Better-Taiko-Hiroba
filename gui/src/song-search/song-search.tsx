@@ -18,13 +18,13 @@ import {
   useState,
 } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { HirobaSessionPort } from "../shared/session-port";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { searchSongs } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue, WholeRead } from "../shared/song-catalogue/use-song-catalogue";
+import type { ChartPort } from "../songs/chart-port";
 import { type PickerEntry, PickerList } from "../songs/picker-list";
 import { SongDetails } from "../songs/song-details";
 import { bpmText } from "../songs/song-facts";
@@ -50,15 +50,7 @@ const FILLS_THE_PAGE = {
 
 export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
-  readonly port: Pick<
-    HirobaSessionPort,
-    | "readChartPicture"
-    | "readCdnChart"
-    | "readChartDensity"
-    | "readChartTja"
-    | "readDrawnChart"
-    | "keepDrawnChart"
-  >;
+  readonly port: ChartPort;
   readonly lane: PictureLane;
   readonly touchFirst: boolean;
   /** The window is wide enough for the side panel. */

@@ -12,7 +12,7 @@ import {
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemShare } from "../platform";
 import { GIFT_SONG_LIMIT } from "../shared/gifts/gift-code";
-import type { FolderHistoryEntry, HirobaSessionPort, ProfileView } from "../shared/session-port";
+import type { FolderHistoryEntry, ProfileView } from "../shared/session-port";
 import {
   filledSlots,
   moved,
@@ -28,6 +28,7 @@ import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty"
 import { rememberedSongs, resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotButton } from "../snapshots/snapshot-button";
+import type { ChartPort } from "../songs/chart-port";
 import { SetNameDialog } from "../songs/set-name-dialog";
 import { SetSongs } from "../songs/set-songs";
 import { SongDetails } from "../songs/song-details";
@@ -70,15 +71,7 @@ export interface FavoritesPageProps {
   readonly tipScene?: "sets" | "editedSet" | null;
   readonly catalogue: SongCatalogue;
   /** A song's details read its charts' pictures here, and Hiroba's difficulty icons from `lane`. */
-  readonly port: Pick<
-    HirobaSessionPort,
-    | "readChartPicture"
-    | "readCdnChart"
-    | "readChartDensity"
-    | "readChartTja"
-    | "readDrawnChart"
-    | "keepDrawnChart"
-  >;
+  readonly port: ChartPort;
   readonly lane: PictureLane;
   /** The songs Hiroba's own picker offers: neither picker lists any other. */
   readonly pickable: PickableState;

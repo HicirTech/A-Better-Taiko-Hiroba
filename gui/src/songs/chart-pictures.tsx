@@ -2,13 +2,13 @@ import type { Result } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { FormHelperText, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
-import type { HirobaSessionPort } from "../shared/session-port";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import { DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
 import type { ChartFileFailure, Difficulty } from "../shared/song-catalogue/types";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
 import { ChartPicture, PictureButton, PictureLoading } from "./chart-picture";
+import type { ChartPicturePort } from "./chart-port";
 import type { ShownChart } from "./chart-viewer";
 import { drawChart } from "./draw-chart";
 import { type ChartShown, findCdnPicture, findChartPicture } from "./find-chart-picture";
@@ -34,10 +34,7 @@ interface ChartPicturesProps {
   readonly tja: () => Promise<Result<string, ChartFileFailure>>;
   /** Bumped by a reload of the whole song, so the pictures kept are taken anew. */
   readonly generation: number;
-  readonly port: Pick<
-    HirobaSessionPort,
-    "readChartPicture" | "readCdnChart" | "readDrawnChart" | "keepDrawnChart"
-  >;
+  readonly port: ChartPicturePort;
   readonly i18n: Translator;
   readonly onOpen: (chart: ShownChart) => void;
 }

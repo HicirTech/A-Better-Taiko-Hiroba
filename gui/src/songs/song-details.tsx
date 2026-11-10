@@ -4,7 +4,6 @@ import { Box, Stack, ToggleButton, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { HIROBA_LANG } from "../shared/language/hiroba-lang";
-import type { HirobaSessionPort } from "../shared/session-port";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import {
   DIFFICULTY_COLOUR,
@@ -28,6 +27,7 @@ import { ReadAgainButton } from "../ui/read-again-button";
 import { StatusNote } from "../ui/status-note";
 import { ChartDensitySection, type DensityState, masterOf } from "./chart-density";
 import { ChartPictures } from "./chart-pictures";
+import type { ChartPort } from "./chart-port";
 import { ChartViewer, type ShownChart } from "./chart-viewer";
 import { CourseIcon } from "./course-icon";
 import { drawChart } from "./draw-chart";
@@ -58,15 +58,7 @@ const chartButton = (difficulty: Difficulty) => {
 export interface SongDetailsProps {
   /** The song to show; none shuts the dialog. */
   readonly song: ListedSong | null;
-  readonly port: Pick<
-    HirobaSessionPort,
-    | "readChartPicture"
-    | "readCdnChart"
-    | "readChartDensity"
-    | "readChartTja"
-    | "readDrawnChart"
-    | "keepDrawnChart"
-  >;
+  readonly port: ChartPort;
   /** Where the charts' difficulty icons, Hiroba's own, are read. */
   readonly lane: PictureLane;
   /** A touch screen: a pull reads the chart again, where a computer has the button. */

@@ -27,6 +27,7 @@ import {
   type Difficulty,
   type SongDensityRead,
 } from "../shared/song-catalogue/types";
+import type { ChartPort } from "../songs/chart-port";
 import { drawChart } from "../songs/draw-chart";
 import { portraitOf, STORY_EDITOR, STORY_HISTORY } from "./costume";
 import { STORY_PICKABLE, storyFavorites, storyFolderHistory } from "./favorites";
@@ -236,15 +237,7 @@ export const STORY_CHART_PORT = {
     drawn.set(`${songNo}/${difficulty}`, pictureOf(png));
     return Promise.resolve();
   },
-} satisfies Pick<
-  HirobaSessionPort,
-  | "readChartPicture"
-  | "readCdnChart"
-  | "readChartDensity"
-  | "readChartTja"
-  | "readDrawnChart"
-  | "keepDrawnChart"
->;
+} satisfies ChartPort;
 
 /** A port answering every verb from story data, taking every write; `changes` replace verbs. */
 export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): HirobaSessionPort {
