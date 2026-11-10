@@ -21,7 +21,7 @@ import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty"
 import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { searchSongs } from "../shared/song-catalogue/song-search";
-import type { SongCatalogue, WholeRead } from "../shared/song-catalogue/use-song-catalogue";
+import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { type PickerEntry, PickerList } from "../songs/picker-list";
 import { SongDetails, type SongDetailsSetting } from "../songs/song-details";
 import { bpmText } from "../songs/song-facts";
@@ -36,6 +36,7 @@ import { LONG_HOLD_MS } from "../ui/pull-gesture";
 import { SearchField } from "../ui/search-field";
 import { SectionCard } from "../ui/section-card";
 import { StatusNote } from "../ui/status-note";
+import { useOperationNote } from "../ui/use-operation-note";
 import type { KeptSearches } from "./use-kept-searches";
 
 // A search with nothing found fills the window's page, so its words stand in the middle of it.
@@ -107,16 +108,7 @@ export function SongSearch({
     return () => onOpenChange?.(false);
   }, [active, onOpenChange]);
   // Each read of the whole list asked for is said at the window's foot as it ends.
-  const [heard, setHeard] = useState<WholeRead | null>(catalogue.wholeRead);
-  const [said, setSaid] = useState<{ readonly read: WholeRead; readonly open: boolean } | null>(
-    null,
-  );
-  if (catalogue.wholeRead !== heard) {
-    setHeard(catalogue.wholeRead);
-    if (catalogue.wholeRead !== null) {
-      setSaid({ read: catalogue.wholeRead, open: true });
-    }
-  }
+  const listRead = useOperationNote(catalogue.wholeRead);
   const open = (songNo: string) => {
     keptSearches.remember(query);
     details.open(songNo);
@@ -236,18 +228,16 @@ export function SongSearch({
         ))}
       {children(active)}
       <SongDetails {...songDetails} song={details.song} onClose={details.close} />
-      {said !== null && (
+      {listRead.said !== null && (
         <OperationSnackbar
           id="song-search-list-read"
-          open={said.open}
-          outcome={said.read.failure === null ? "read" : "failed"}
+          {...listRead.snackbar}
+          outcome={listRead.said.failure === null ? "read" : "failed"}
           message={
-            said.read.failure === null
+            listRead.said.failure === null
               ? t("search.listRead")
-              : `${t("picker.failed")} ${t("failure.code", { code: said.read.failure })}`
+              : `${t("picker.failed")} ${t("failure.code", { code: listRead.said.failure })}`
           }
-          onClose={() => setSaid({ ...said, open: false })}
-          onExited={() => setSaid(null)}
         />
       )}
     </>

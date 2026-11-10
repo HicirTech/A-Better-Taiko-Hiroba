@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, mock, test } from "bun:test";
 
 import type { PictureLane } from "../src/pictures/picture-lane";
 import type { PictureWant } from "../src/shared/session-port";
@@ -63,6 +63,40 @@ test("a snapshot's lane is drawn off the window and asks the lane it wraps", () 
   expect(lane.offTheWindow).toBe(true);
   expect(hand.lane.offTheWindow).toBeUndefined();
   expect(hand.asked).toEqual([PLATE]);
+});
+
+test("every other call goes to the lane it wraps, its answer back", () => {
+  const wrapped = {
+    peek: mock(() => undefined),
+    settled: mock(() => true),
+    ask: mock(() => () => undefined),
+    hold: mock(() => undefined),
+    release: mock(() => undefined),
+    forgetFailures: mock(() => undefined),
+    renew: mock(() => undefined),
+    readAgain: mock(() => undefined),
+    readAgainEnded: mock(() => ({ failed: true })),
+    forget: mock(() => undefined),
+    subscribe: mock(() => () => undefined),
+    version: mock(() => 7),
+  } satisfies PictureLane;
+  const { lane } = snapshotLane(wrapped);
+
+  expect(lane.settled(PLATE)).toBe(true);
+  expect(lane.readAgainEnded()).toEqual({ failed: true });
+  expect(lane.version()).toBe(7);
+  lane.peek(PLATE);
+  lane.hold();
+  lane.release();
+  lane.forgetFailures();
+  lane.renew("myDon");
+  lane.readAgain(["myDon"]);
+  lane.forget();
+  lane.subscribe(() => undefined);
+
+  for (const [name, call] of Object.entries(wrapped)) {
+    expect([name, call.mock.calls.length]).toEqual([name, name === "ask" ? 0 : 1]);
+  }
 });
 
 test("its pictures have all come once every one asked has its answer", async () => {
