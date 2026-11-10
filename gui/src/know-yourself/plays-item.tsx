@@ -3,9 +3,8 @@ import { Typography } from "@mui/material";
 import { useMemo } from "react";
 import { localDayOf } from "../shared/local-day";
 import type { ScoreView } from "../shared/session-port";
-import { FoldCard } from "../ui/fold-card";
-import { StatusNote } from "../ui/status-note";
 import { LineChart } from "../ui/time-chart";
+import { OverTimeCard } from "./over-time-card";
 import type { PageParts } from "./page-parts";
 
 /** The charts' plays added up over time, as reads of scores found them. */
@@ -23,7 +22,8 @@ export function PlaysItem({
   /** Held open, as a story of it does. */
   readonly opened?: boolean;
 }) {
-  const { t, number, date } = parts.i18n;
+  const { i18n } = parts;
+  const { t, number, date } = i18n;
   const counted = useMemo(
     () =>
       charts.map((chart) => ({
@@ -36,7 +36,7 @@ export function PlaysItem({
   const total = counted.reduce((sum, { stageCount }) => sum + (stageCount ?? 0), 0);
   const first = points[0];
   return (
-    <FoldCard
+    <OverTimeCard
       id="know-plays"
       opened={opened}
       title={t("know.plays")}
@@ -49,20 +49,18 @@ export function PlaysItem({
               date: date(first.at),
             })
       }
-      details={() =>
-        points.length < 2 ? (
-          <StatusNote id="know-plays-one-read">{t("chart.oneRead")}</StatusNote>
-        ) : (
-          <LineChart
-            id="know-plays-line"
-            label={t("know.plays")}
-            points={points.map(({ at, value }) => ({ at: Date.parse(at), value }))}
-            format={number}
-            dateOf={date}
-            readout={(place) => <Typography>{number(points[place]?.value ?? 0)}</Typography>}
-          />
-        )
-      }
+      readings={points.length}
+      i18n={i18n}
+      chart={() => (
+        <LineChart
+          id="know-plays-line"
+          label={t("know.plays")}
+          points={points.map(({ at, value }) => ({ at: Date.parse(at), value }))}
+          format={number}
+          dateOf={date}
+          readout={(place) => <Typography>{number(points[place]?.value ?? 0)}</Typography>}
+        />
+      )}
     />
   );
 }
