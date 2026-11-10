@@ -1,8 +1,9 @@
 import type { Translator } from "@abth/i18n";
-import { useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
-import type { PictureLane, ReadAgainEnded } from "../pictures/picture-lane";
+import type { PictureLane } from "../pictures/picture-lane";
 import { OperationSnackbar } from "../ui/operation-snackbar";
+import { useOperationNote } from "../ui/use-operation-note";
 
 /** Says at the window's foot how each read again of a page's pictures ended. */
 export function PicturesReadNote({
@@ -14,30 +15,17 @@ export function PicturesReadNote({
 }) {
   const { t } = i18n;
   useSyncExternalStore(lane.subscribe, lane.version);
-  const ended = lane.readAgainEnded();
-  const [heard, setHeard] = useState<ReadAgainEnded | null>(ended);
-  const [said, setSaid] = useState<{
-    readonly ended: ReadAgainEnded;
-    readonly open: boolean;
-  } | null>(null);
-  if (ended !== heard) {
-    setHeard(ended);
-    if (ended !== null) {
-      setSaid({ ended, open: true });
-    }
-  }
-  if (said === null) {
+  const note = useOperationNote(lane.readAgainEnded());
+  if (note.said === null) {
     return null;
   }
 
   return (
     <OperationSnackbar
       id="pictures-read-again"
-      open={said.open}
-      outcome={said.ended.failed ? "failed" : "read"}
-      message={t(said.ended.failed ? "pictures.readAgain.failed" : "pictures.readAgain.done")}
-      onClose={() => setSaid({ ...said, open: false })}
-      onExited={() => setSaid(null)}
+      {...note.snackbar}
+      outcome={note.said.failed ? "failed" : "read"}
+      message={t(note.said.failed ? "pictures.readAgain.failed" : "pictures.readAgain.done")}
     />
   );
 }

@@ -10,6 +10,7 @@ import type { SongLook } from "../shared/song-catalogue/song-look";
 import { type Noticed, noticeOf } from "../shared/writes/write-ending";
 import type { ModalLook } from "../ui/large-modal";
 import { OperationSnackbar } from "../ui/operation-snackbar";
+import { useOperationNote } from "../ui/use-operation-note";
 import { WriteOutcomeSnackbar } from "../ui/write-outcome";
 import { GiftDialog } from "./gift-dialog";
 import { qrTextOfPicture } from "./picture-code";
@@ -29,15 +30,9 @@ export type GiftAccepted =
 type NoteOutcome = "accepted" | "notOffered" | "noCode" | "unknown" | "failed";
 
 /** What the window's foot says as a scan or a gift ends; each one its own, by `key`. */
-type Said = { readonly key: number } & (
-  | {
-      readonly kind: "note";
-      readonly outcome: NoteOutcome;
-      readonly message: string;
-      readonly open: boolean;
-    }
-  | { readonly kind: "write"; readonly outcome: Noticed<FolderState> }
-);
+type Said =
+  | { readonly kind: "note"; readonly outcome: NoteOutcome; readonly message: string }
+  | { readonly kind: "write"; readonly outcome: Noticed<FolderState> };
 
 export interface ScanFlowProps {
   /** The scan button was pressed: until `onScanned`, a picture or the camera's view is read. */
@@ -72,12 +67,12 @@ export function ScanFlow({
   const [view, setView] = useState<CameraState>({ kind: "starting" });
   const [note, setNote] = useState<string | null>(null);
   const [offer, setOffer] = useState<Offer | null>(null);
-  const [said, setSaid] = useState<Said | null>(null);
+  const outcomeNote = useOperationNote<Said>();
   const scanned = useEffectEvent(onScanned);
   const inTheWindow = scanning && camera !== null;
 
   const say = (outcome: NoteOutcome, message: string) =>
-    setSaid((now) => ({ key: (now?.key ?? 0) + 1, kind: "note", outcome, message, open: true }));
+    outcomeNote.say({ kind: "note", outcome, message });
   const offered = (gift: Gift) => {
     setOffer({ gift, open: true, syncing: false });
     onScanned();
@@ -125,7 +120,7 @@ export function ScanFlow({
         } else if (noticed === null) {
           say("failed", t("write.failed"));
         } else {
-          setSaid((now) => ({ key: (now?.key ?? 0) + 1, kind: "write", outcome: noticed }));
+          outcomeNote.say({ kind: "write", outcome: noticed });
         }
       });
   };
@@ -214,25 +209,23 @@ export function ScanFlow({
         onAccept={acceptOffered}
         onClose={() => setOffer((now) => (now === null ? null : { ...now, open: false }))}
       />
-      {said?.kind === "write" && (
+      {outcomeNote.said?.kind === "write" && (
         <WriteOutcomeSnackbar
-          key={said.key}
+          key={outcomeNote.key}
           id="scan-outcome"
           kind="folder"
-          outcome={said.outcome}
+          outcome={outcomeNote.said.outcome}
           i18n={i18n}
-          onClosed={() => setSaid(null)}
+          onClosed={outcomeNote.clear}
         />
       )}
-      {said?.kind === "note" && (
+      {outcomeNote.said?.kind === "note" && (
         <OperationSnackbar
-          key={said.key}
+          key={outcomeNote.key}
           id="scan-outcome"
-          open={said.open}
-          outcome={said.outcome}
-          message={said.message}
-          onClose={() => setSaid({ ...said, open: false })}
-          onExited={() => setSaid(null)}
+          {...outcomeNote.snackbar}
+          outcome={outcomeNote.said.outcome}
+          message={outcomeNote.said.message}
         />
       )}
     </>

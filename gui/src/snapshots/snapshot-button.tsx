@@ -7,6 +7,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import type { PictureWay, SystemShare } from "../platform";
 import { ShareIcon } from "../ui/icons";
 import { OperationSnackbar } from "../ui/operation-snackbar";
+import { useOperationNote } from "../ui/use-operation-note";
 import { canvasWritesWebp, pictureOf } from "./draw-snapshot";
 import { snapshotLane } from "./snapshot-lane";
 import { pictureTypeFor, snapshotName } from "./snapshot-picture";
@@ -37,7 +38,6 @@ interface Said {
   /** How it ended, for the checks that read it: the way done, or `failed`. */
   readonly outcome: PictureWay | "failed";
   readonly message: MessageKey;
-  readonly open: boolean;
 }
 
 export interface SnapshotButtonProps {
@@ -68,15 +68,15 @@ export function SnapshotButton({
   const [menu, setMenu] = useState<HTMLElement | null>(null);
   const [taking, setTaking] = useState<PictureWay | null>(null);
   const [handing, setHanding] = useState(false);
-  const [said, setSaid] = useState<Said | null>(null);
+  const note = useOperationNote<Said>();
   const busy = taking !== null || handing;
   const [only] = share.ways.length === 1 ? share.ways : [];
-  const failed: Said = { outcome: "failed", message: "snapshot.failed", open: true };
+  const failed: Said = { outcome: "failed", message: "snapshot.failed" };
 
   const hand = (way: PictureWay, picture: Uint8Array | null) => {
     setTaking(null);
     if (picture === null) {
-      setSaid(failed);
+      note.say(failed);
       return;
     }
     setHanding(true);
@@ -84,11 +84,13 @@ export function SnapshotButton({
       .hand(way, picture, snapshotName(shows, new Date(), pictureTypeFor(way, canvasWritesWebp())))
       .then((ended) => {
         const done = DONE[way];
-        setSaid(
-          ended === "done" && done !== null ? { outcome: way, message: done, open: true } : null,
-        );
+        if (ended === "done" && done !== null) {
+          note.say({ outcome: way, message: done });
+        } else {
+          note.clear();
+        }
       })
-      .catch(() => setSaid(failed))
+      .catch(() => note.say(failed))
       .finally(() => setHanding(false));
   };
 
@@ -128,17 +130,15 @@ export function SnapshotButton({
           onTaken={(picture) => hand(taking, picture)}
         />
       )}
-      {said !== null && (
+      {note.said !== null && (
         // At the window's foot as a write's outcome is, wherever the button stands: a band moves
         // what it holds, a fixed note too.
         <Portal>
           <OperationSnackbar
             id={`${id}-outcome`}
-            open={said.open}
-            outcome={said.outcome}
-            message={t(said.message)}
-            onClose={() => setSaid({ ...said, open: false })}
-            onExited={() => setSaid(null)}
+            {...note.snackbar}
+            outcome={note.said.outcome}
+            message={t(note.said.message)}
           />
         </Portal>
       )}
