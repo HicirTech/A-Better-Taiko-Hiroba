@@ -87,13 +87,18 @@ const search = (
         {(kept) => (
           <SongSearch
             catalogue={catalogue}
-            port={STORY_CHART_PORT}
-            lane={STORY_LANE}
+            songDetails={{
+              port: STORY_CHART_PORT,
+              lane: STORY_LANE,
+              touchFirst: touchOf(globals),
+              modalLook: modalLookOf(globals),
+              chartSource: DEFAULT_CHART_SOURCE,
+              shownDifficulty: DEFAULT_SHOWN,
+              i18n,
+            }}
             touchFirst={touchOf(globals)}
             wide={wideOf(globals)}
-            modalLook={modalLookOf(globals)}
             shownDifficulty={DEFAULT_SHOWN}
-            chartSource={DEFAULT_CHART_SOURCE}
             keptSearches={kept}
             i18n={i18n}
             onOpen={action("open the search")}

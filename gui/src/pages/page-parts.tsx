@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { ReadPicturesDialog } from "../read-again/read-pictures-dialog";
 import { scoresReadingProgress } from "../songs/scores-reading";
+import type { SongDetailsSetting } from "../songs/song-details";
 import { COLUMN_MAX_WIDTH_PX, FrameTop } from "../ui/frame-top";
 import { SearchFieldSkeleton } from "../ui/search-field";
 import { scoresRead } from "./model-parts";
@@ -15,6 +16,16 @@ export const askPictures = (
   open: boolean,
   onAnswer: (confirmed: boolean) => void,
 ) => <ReadPicturesDialog open={open} i18n={i18n} onAnswer={onAnswer} />;
+
+export const songDetailsOf = (data: PageData): SongDetailsSetting => ({
+  port: data.port,
+  lane: data.lane,
+  touchFirst: data.touchFirst,
+  modalLook: data.modalLook,
+  chartSource: data.chartSource,
+  shownDifficulty: data.shownDifficulty,
+  i18n: data.i18n,
+});
 
 // Centred by margins: the skeleton's box is no flex container for alignSelf to centre it in.
 export const COLUMN = { width: 1, maxWidth: COLUMN_MAX_WIDTH_PX, mx: "auto" } as const;

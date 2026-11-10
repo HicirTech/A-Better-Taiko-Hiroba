@@ -10,7 +10,7 @@ import { SYNC_BAR_PAGE, SyncBarSkeleton } from "../ui/sync-bar";
 import { dueFirst, readsFirst } from "./model-parts";
 import type { PageEntry, SkeletonProps } from "./page";
 import type { PageModel } from "./page-model";
-import { COLUMN, HEADING } from "./page-parts";
+import { COLUMN, HEADING, songDetailsOf } from "./page-parts";
 
 const FOLDER_ROWS = [...Array(8).keys()];
 
@@ -81,7 +81,7 @@ export const FAVORITES_PAGE: PageEntry = {
       favorites={data.favorites}
       tipScene={data.tipScene === "sets" || data.tipScene === "editedSet" ? data.tipScene : null}
       catalogue={data.catalogue}
-      port={data.port}
+      songDetails={songDetailsOf(data)}
       lane={data.lane}
       pickable={data.pickable.pickable}
       onPickerOpen={data.pickable.readIfStale}
@@ -90,7 +90,6 @@ export const FAVORITES_PAGE: PageEntry = {
       menuOpen={data.menuOpen}
       pipelinesShown={data.pipelinesShown}
       shownDifficulty={data.shownDifficulty}
-      chartSource={data.chartSource}
       modalLook={data.modalLook}
       profile={data.session.screen.name === "profile" ? data.session.screen.profile : null}
       share={data.share}

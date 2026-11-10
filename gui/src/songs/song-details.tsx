@@ -55,9 +55,8 @@ const chartButton = (difficulty: Difficulty) => {
   } as const;
 };
 
-export interface SongDetailsProps {
-  /** The song to show; none shuts the dialog. */
-  readonly song: ListedSong | null;
+/** What a song's details draw with, the same on every page that opens them. */
+export interface SongDetailsSetting {
   readonly port: ChartPort;
   /** Where the charts' difficulty icons, Hiroba's own, are read. */
   readonly lane: PictureLane;
@@ -69,6 +68,11 @@ export interface SongDetailsProps {
   /** The difficulty it opens on, where the song has a chart of it. */
   readonly shownDifficulty: ShownDifficulty;
   readonly i18n: Translator;
+}
+
+export interface SongDetailsProps extends SongDetailsSetting {
+  /** The song to show; none shuts the dialog. */
+  readonly song: ListedSong | null;
   readonly onClose: () => void;
 }
 

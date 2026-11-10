@@ -23,15 +23,13 @@ import {
   toggledSongs,
 } from "../shared/sets/favorite-sets";
 import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
-import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { rememberedSongs, resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotButton } from "../snapshots/snapshot-button";
-import type { ChartPort } from "../songs/chart-port";
 import { SetNameDialog } from "../songs/set-name-dialog";
 import { SetSongs } from "../songs/set-songs";
-import { SongDetails } from "../songs/song-details";
+import { SongDetails, type SongDetailsSetting } from "../songs/song-details";
 import type { DetailsOpener } from "../songs/song-look-row";
 import { useSongDetails } from "../songs/use-song-details";
 import { useBackLeaves } from "../ui/back-closers";
@@ -71,8 +69,7 @@ export interface FavoritesPageProps {
   /** What a tip told now opens: the sets drawer, or the first set being edited. */
   readonly tipScene?: "sets" | "editedSet" | null;
   readonly catalogue: SongCatalogue;
-  /** A song's details read its charts' pictures here, and Hiroba's difficulty icons from `lane`. */
-  readonly port: ChartPort;
+  readonly songDetails: SongDetailsSetting;
   readonly lane: PictureLane;
   /** The songs Hiroba's own picker offers: neither picker lists any other. */
   readonly pickable: PickableState;
@@ -88,8 +85,6 @@ export interface FavoritesPageProps {
   readonly pipelinesShown: boolean;
   /** The difficulty whose level the songs show in front of the others. */
   readonly shownDifficulty: ShownDifficulty;
-  /** Where a song's details take their chart pictures from. */
-  readonly chartSource: ChartSource;
   readonly modalLook: ModalLook;
   /** The player's, whose plate and My Don a gift's picture shows; none before it is read. */
   readonly profile: ProfileView | null;
@@ -103,7 +98,7 @@ export function FavoritesPage({
   favorites,
   tipScene = null,
   catalogue,
-  port,
+  songDetails,
   lane,
   pickable,
   onPickerOpen,
@@ -112,7 +107,6 @@ export function FavoritesPage({
   menuOpen,
   pipelinesShown,
   shownDifficulty,
-  chartSource,
   modalLook,
   profile,
   share,
@@ -580,17 +574,7 @@ export function FavoritesPage({
           onClose={() => setPicking(null)}
         />
       )}
-      <SongDetails
-        song={details.song}
-        port={port}
-        lane={lane}
-        modalLook={modalLook}
-        touchFirst={touchFirst}
-        chartSource={chartSource}
-        shownDifficulty={shownDifficulty}
-        i18n={i18n}
-        onClose={details.close}
-      />
+      <SongDetails {...songDetails} song={details.song} onClose={details.close} />
     </Box>
   );
 }
