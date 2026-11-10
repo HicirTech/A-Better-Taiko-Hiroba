@@ -14,22 +14,12 @@ export function snapshotLane(lane: PictureLane): SnapshotLane {
   const came = () => asked.every((want) => lane.settled(want));
   return {
     lane: {
+      ...lane,
       offTheWindow: true,
-      peek: (want) => lane.peek(want),
-      settled: (want) => lane.settled(want),
       ask: (want, options) => {
         asked.push(want);
         return lane.ask(want, options);
       },
-      hold: () => lane.hold(),
-      release: () => lane.release(),
-      forgetFailures: (kind) => lane.forgetFailures(kind),
-      renew: (kind) => lane.renew(kind),
-      readAgain: (kinds) => lane.readAgain(kinds),
-      readAgainEnded: () => lane.readAgainEnded(),
-      forget: () => lane.forget(),
-      subscribe: (listener) => lane.subscribe(listener),
-      version: () => lane.version(),
     },
     allCome: (ms) =>
       new Promise((resolve) => {
