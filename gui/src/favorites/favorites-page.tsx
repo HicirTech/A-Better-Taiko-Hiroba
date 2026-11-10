@@ -12,7 +12,7 @@ import {
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemShare } from "../platform";
 import { GIFT_SONG_LIMIT } from "../shared/gifts/gift-code";
-import type { FolderHistoryEntry, HirobaSessionPort, ProfileView } from "../shared/session-port";
+import type { FolderHistoryEntry, ProfileView } from "../shared/session-port";
 import {
   filledSlots,
   moved,
@@ -23,15 +23,15 @@ import {
   toggledSongs,
 } from "../shared/sets/favorite-sets";
 import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
-import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { rememberedSongs, resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotButton } from "../snapshots/snapshot-button";
 import { SetNameDialog } from "../songs/set-name-dialog";
 import { SetSongs } from "../songs/set-songs";
-import { SongDetails } from "../songs/song-details";
+import { SongDetails, type SongDetailsSetting } from "../songs/song-details";
 import type { DetailsOpener } from "../songs/song-look-row";
+import { useSongDetails } from "../songs/use-song-details";
 import { useBackLeaves } from "../ui/back-closers";
 import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
 import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
@@ -69,16 +69,7 @@ export interface FavoritesPageProps {
   /** What a tip told now opens: the sets drawer, or the first set being edited. */
   readonly tipScene?: "sets" | "editedSet" | null;
   readonly catalogue: SongCatalogue;
-  /** A song's details read its charts' pictures here, and Hiroba's difficulty icons from `lane`. */
-  readonly port: Pick<
-    HirobaSessionPort,
-    | "readChartPicture"
-    | "readCdnChart"
-    | "readChartDensity"
-    | "readChartTja"
-    | "readDrawnChart"
-    | "keepDrawnChart"
-  >;
+  readonly songDetails: SongDetailsSetting;
   readonly lane: PictureLane;
   /** The songs Hiroba's own picker offers: neither picker lists any other. */
   readonly pickable: PickableState;
@@ -94,8 +85,6 @@ export interface FavoritesPageProps {
   readonly pipelinesShown: boolean;
   /** The difficulty whose level the songs show in front of the others. */
   readonly shownDifficulty: ShownDifficulty;
-  /** Where a song's details take their chart pictures from. */
-  readonly chartSource: ChartSource;
   readonly modalLook: ModalLook;
   /** The player's, whose plate and My Don a gift's picture shows; none before it is read. */
   readonly profile: ProfileView | null;
@@ -109,7 +98,7 @@ export function FavoritesPage({
   favorites,
   tipScene = null,
   catalogue,
-  port,
+  songDetails,
   lane,
   pickable,
   onPickerOpen,
@@ -118,7 +107,6 @@ export function FavoritesPage({
   menuOpen,
   pipelinesShown,
   shownDifficulty,
-  chartSource,
   modalLook,
   profile,
   share,
@@ -154,12 +142,12 @@ export function FavoritesPage({
     catalogue.readIfFailed();
     setPicking(picker);
   };
-  const [openSongNo, setOpenSongNo] = useState<string | null>(null);
+  const details = useSongDetails(catalogue.songs);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
   // A song's details stand over the page, so the sets' swipe waits until they shut.
   useSetsSwipe({
-    active: touchFirst && openSongNo === null,
+    active: touchFirst && !details.shown,
     open: drawerOpen,
     menuOpen,
     covered: pipelinesShown,
@@ -177,8 +165,8 @@ export function FavoritesPage({
     [catalogue.songs, remembered, locale],
   );
   const openDetails = useCallback<DetailsOpener>(
-    (songNo) => (catalogue.songs.has(songNo) ? () => setOpenSongNo(songNo) : undefined),
-    [catalogue.songs],
+    (songNo) => (catalogue.songs.has(songNo) ? () => details.open(songNo) : undefined),
+    [catalogue.songs, details.open],
   );
   const songChoice = useMemo(() => ({ kind: "one", onPick: pickSong }) as const, [pickSong]);
   const savedSongs = set?.songs ?? NO_SONGS;
@@ -586,17 +574,7 @@ export function FavoritesPage({
           onClose={() => setPicking(null)}
         />
       )}
-      <SongDetails
-        song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
-        port={port}
-        lane={lane}
-        modalLook={modalLook}
-        touchFirst={touchFirst}
-        chartSource={chartSource}
-        shownDifficulty={shownDifficulty}
-        i18n={i18n}
-        onClose={() => setOpenSongNo(null)}
-      />
+      <SongDetails {...songDetails} song={details.song} onClose={details.close} />
     </Box>
   );
 }

@@ -10,6 +10,7 @@ import type { OpenAction } from "../ui/open-button";
 import { LoadFailed } from "../ui/read-failure-alert";
 import { MyPageFailure } from "./my-page-failure";
 import type { PageData } from "./page";
+import { songDetailsOf } from "./page-parts";
 
 const OVERVIEW_SPACING = 3;
 const HIDDEN = { display: "none" } as const;
@@ -17,19 +18,16 @@ const HIDDEN = { display: "none" } as const;
 /** My page under the song search, which asks Hiroba nothing, so it stays when my page fails. */
 export function OverviewPage({ data }: { readonly data: PageData }) {
   const { screen } = data.session;
-  const { catalogue, port, lane, i18n, touchFirst, toast, navigate } = data;
+  const { catalogue, lane, i18n, touchFirst, toast, navigate } = data;
   const portrait: OpenAction = { open: () => navigate("costume"), byLongPress: touchFirst };
   const namePlate: OpenAction = { open: () => navigate("nameTitle"), byLongPress: touchFirst };
   return (
     <SongSearch
       catalogue={catalogue}
-      port={port}
-      lane={lane}
+      songDetails={songDetailsOf(data)}
       touchFirst={touchFirst}
       wide={data.wide}
-      modalLook={data.modalLook}
       shownDifficulty={data.shownDifficulty}
-      chartSource={data.chartSource}
       keptSearches={data.keptSearches}
       i18n={i18n}
       onOpen={data.wantSongs}

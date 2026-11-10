@@ -17,22 +17,19 @@ import {
   useRef,
   useState,
 } from "react";
-import type { PictureLane } from "../pictures/picture-lane";
-import type { HirobaSessionPort } from "../shared/session-port";
-import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
 import { nameLanguage } from "../shared/song-catalogue/song-names";
 import { searchSongs } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue, WholeRead } from "../shared/song-catalogue/use-song-catalogue";
 import { type PickerEntry, PickerList } from "../songs/picker-list";
-import { SongDetails } from "../songs/song-details";
+import { SongDetails, type SongDetailsSetting } from "../songs/song-details";
 import { bpmText } from "../songs/song-facts";
 import { SongListFailed } from "../songs/song-list-failed";
+import { useSongDetails } from "../songs/use-song-details";
 import { OnScreenBackContext, useBackLeaves } from "../ui/back-closers";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
-import type { ModalLook } from "../ui/large-modal";
 import { OperationSnackbar } from "../ui/operation-snackbar";
 import { ProgressBar } from "../ui/progress-bar";
 import { LONG_HOLD_MS } from "../ui/pull-gesture";
@@ -50,24 +47,12 @@ const FILLS_THE_PAGE = {
 
 export interface SongSearchProps {
   readonly catalogue: SongCatalogue;
-  readonly port: Pick<
-    HirobaSessionPort,
-    | "readChartPicture"
-    | "readCdnChart"
-    | "readChartDensity"
-    | "readChartTja"
-    | "readDrawnChart"
-    | "keepDrawnChart"
-  >;
-  readonly lane: PictureLane;
+  readonly songDetails: SongDetailsSetting;
   readonly touchFirst: boolean;
   /** The window is wide enough for the side panel. */
   readonly wide: boolean;
-  readonly modalLook: ModalLook;
   /** The difficulty whose level the songs show in front of the others. */
   readonly shownDifficulty: ShownDifficulty;
-  /** Where a song's details take their chart pictures from. */
-  readonly chartSource: ChartSource;
   /** The searches kept on this device, offered before a query is typed. */
   readonly keptSearches: KeptSearches;
   readonly i18n: Translator;
@@ -84,13 +69,10 @@ export interface SongSearchProps {
 /** The songs searched for by name, the searches made before, and a song's details. */
 export function SongSearch({
   catalogue,
-  port,
-  lane,
+  songDetails,
   touchFirst,
   wide,
-  modalLook,
   shownDifficulty,
-  chartSource,
   keptSearches,
   i18n,
   onOpen,
@@ -103,7 +85,7 @@ export function SongSearch({
   const { shown: backShown } = useContext(OnScreenBackContext);
   const [query, setQuery] = useState("");
   const recent = keptSearches.searches;
-  const [openSongNo, setOpenSongNo] = useState<string | null>(null);
+  const details = useSongDetails(catalogue.songs);
   const input = useRef<HTMLInputElement>(null);
   const deferred = useDeferredValue(query);
 
@@ -137,7 +119,7 @@ export function SongSearch({
   }
   const open = (songNo: string) => {
     keptSearches.remember(query);
-    setOpenSongNo(songNo);
+    details.open(songNo);
   };
 
   const entries = useMemo<readonly PickerEntry[]>(
@@ -253,17 +235,7 @@ export function SongSearch({
           </Box>
         ))}
       {children(active)}
-      <SongDetails
-        song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
-        port={port}
-        lane={lane}
-        modalLook={modalLook}
-        touchFirst={touchFirst}
-        chartSource={chartSource}
-        shownDifficulty={shownDifficulty}
-        i18n={i18n}
-        onClose={() => setOpenSongNo(null)}
-      />
+      <SongDetails {...songDetails} song={details.song} onClose={details.close} />
       {said !== null && (
         <OperationSnackbar
           id="song-search-list-read"
