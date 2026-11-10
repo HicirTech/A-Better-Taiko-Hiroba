@@ -29,6 +29,7 @@ import { type PickerEntry, PickerList } from "../songs/picker-list";
 import { SongDetails } from "../songs/song-details";
 import { bpmText } from "../songs/song-facts";
 import { SongListFailed } from "../songs/song-list-failed";
+import { useSongDetails } from "../songs/use-song-details";
 import { OnScreenBackContext, useBackLeaves } from "../ui/back-closers";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import { CloseIcon, HistoryIcon } from "../ui/icons";
@@ -95,7 +96,7 @@ export function SongSearch({
   const { shown: backShown } = useContext(OnScreenBackContext);
   const [query, setQuery] = useState("");
   const recent = keptSearches.searches;
-  const [openSongNo, setOpenSongNo] = useState<string | null>(null);
+  const details = useSongDetails(catalogue.songs);
   const input = useRef<HTMLInputElement>(null);
   const deferred = useDeferredValue(query);
 
@@ -129,7 +130,7 @@ export function SongSearch({
   }
   const open = (songNo: string) => {
     keptSearches.remember(query);
-    setOpenSongNo(songNo);
+    details.open(songNo);
   };
 
   const entries = useMemo<readonly PickerEntry[]>(
@@ -246,7 +247,7 @@ export function SongSearch({
         ))}
       {children(active)}
       <SongDetails
-        song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
+        song={details.song}
         port={port}
         lane={lane}
         modalLook={modalLook}
@@ -254,7 +255,7 @@ export function SongSearch({
         chartSource={chartSource}
         shownDifficulty={shownDifficulty}
         i18n={i18n}
-        onClose={() => setOpenSongNo(null)}
+        onClose={details.close}
       />
       {said !== null && (
         <OperationSnackbar

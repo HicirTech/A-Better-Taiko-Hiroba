@@ -33,6 +33,7 @@ import { SetNameDialog } from "../songs/set-name-dialog";
 import { SetSongs } from "../songs/set-songs";
 import { SongDetails } from "../songs/song-details";
 import type { DetailsOpener } from "../songs/song-look-row";
+import { useSongDetails } from "../songs/use-song-details";
 import { useBackLeaves } from "../ui/back-closers";
 import { HELD_STILL, useFocusKept } from "../ui/editor-parts";
 import { COLUMN_MAX_WIDTH_PX } from "../ui/frame-top";
@@ -147,12 +148,12 @@ export function FavoritesPage({
     catalogue.readIfFailed();
     setPicking(picker);
   };
-  const [openSongNo, setOpenSongNo] = useState<string | null>(null);
+  const details = useSongDetails(catalogue.songs);
   const page = useRef<HTMLDivElement>(null);
   useFocusKept(page, step.name);
   // A song's details stand over the page, so the sets' swipe waits until they shut.
   useSetsSwipe({
-    active: touchFirst && openSongNo === null,
+    active: touchFirst && !details.shown,
     open: drawerOpen,
     menuOpen,
     covered: pipelinesShown,
@@ -170,8 +171,8 @@ export function FavoritesPage({
     [catalogue.songs, remembered, locale],
   );
   const openDetails = useCallback<DetailsOpener>(
-    (songNo) => (catalogue.songs.has(songNo) ? () => setOpenSongNo(songNo) : undefined),
-    [catalogue.songs],
+    (songNo) => (catalogue.songs.has(songNo) ? () => details.open(songNo) : undefined),
+    [catalogue.songs, details.open],
   );
   const songChoice = useMemo(() => ({ kind: "one", onPick: pickSong }) as const, [pickSong]);
   const savedSongs = set?.songs ?? NO_SONGS;
@@ -580,7 +581,7 @@ export function FavoritesPage({
         />
       )}
       <SongDetails
-        song={openSongNo === null ? null : (catalogue.songs.get(openSongNo) ?? null)}
+        song={details.song}
         port={port}
         lane={lane}
         modalLook={modalLook}
@@ -588,7 +589,7 @@ export function FavoritesPage({
         chartSource={chartSource}
         shownDifficulty={shownDifficulty}
         i18n={i18n}
-        onClose={() => setOpenSongNo(null)}
+        onClose={details.close}
       />
     </Box>
   );
