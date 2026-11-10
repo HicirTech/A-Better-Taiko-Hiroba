@@ -7,7 +7,7 @@ import type { SystemToast } from "../platform";
 import { listedOf } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../shared/session-port";
-import { newSetName, SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
+import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import {
   DIFFICULTY_COLOUR,
@@ -23,6 +23,7 @@ import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue"
 import { ScoreDetails } from "../songs/score-details";
 import { SetNameDialog } from "../songs/set-name-dialog";
 import { SongListFailed } from "../songs/song-list-failed";
+import { useAddToSet } from "../songs/use-add-to-set";
 import { FilterChip } from "../ui/filter-chip";
 import { PAGE_HEIGHT } from "../ui/frame-top";
 import type { ModalLook } from "../ui/large-modal";
@@ -80,8 +81,8 @@ export function KnowYourselfPage({
   const [shown, setShown] = useState(shownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);
   const [details, setDetails] = useState<string | null>(null);
-  const [adding, setAdding] = useState<readonly string[] | null>(null);
-  const [naming, setNaming] = useState<readonly string[] | null>(null);
+  const toSet = useAddToSet<readonly string[]>(keptSets, i18n);
+  const { adding } = toSet;
 
   const known = useMemo(
     () =>
@@ -122,7 +123,7 @@ export function KnowYourselfPage({
       opener={opener}
       lane={lane}
       i18n={i18n}
-      onAdd={setAdding}
+      onAdd={toSet.choose}
     />
   );
   const parts: PageParts = {
@@ -148,7 +149,7 @@ export function KnowYourselfPage({
               opener={opener}
               lane={lane}
               i18n={i18n}
-              onAdd={setAdding}
+              onAdd={toSet.choose}
             />
           );
     },
@@ -229,27 +230,12 @@ export function KnowYourselfPage({
           touchFirst={touchFirst}
           modalLook={modalLook}
           i18n={i18n}
-          onAdd={(set, added) => {
-            keptSets.replaceSongs(set.id, [...set.songs, ...added]);
-            setAdding(null);
-          }}
-          onNewSet={() => setNaming(adding.slice(0, SET_SONG_LIMIT))}
-          onClose={() => setAdding(null)}
+          onAdd={toSet.addTo}
+          onNewSet={() => toSet.nameNew(adding.slice(0, SET_SONG_LIMIT))}
+          onClose={toSet.close}
         />
       )}
-      {naming !== null && (
-        <SetNameDialog
-          title={t("favorites.newSet")}
-          initial={newSetName(keptSets.sets, (count) => t("favorites.setName", { number: count }))}
-          i18n={i18n}
-          onCancel={() => setNaming(null)}
-          onSave={(name) => {
-            keptSets.add(name, naming);
-            setNaming(null);
-            setAdding(null);
-          }}
-        />
-      )}
+      {toSet.naming !== null && <SetNameDialog {...toSet.naming} />}
     </Stack>
   );
 }

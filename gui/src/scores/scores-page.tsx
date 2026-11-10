@@ -16,7 +16,6 @@ import {
 } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
 import type { ScoresStop, ScoreView } from "../shared/session-port";
-import { newSetName } from "../shared/sets/favorite-sets";
 import type { FavoriteSets } from "../shared/sets/use-favorite-sets";
 import {
   DIFFICULTY_LABEL,
@@ -29,6 +28,7 @@ import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue"
 import { PLAY_ROW_PX, PlayRow } from "../songs/play-row";
 import { ScoreDetails } from "../songs/score-details";
 import { SetNameDialog } from "../songs/set-name-dialog";
+import { useAddToSet } from "../songs/use-add-to-set";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
 import type { ItemAction, Point } from "../ui/item-actions";
 import { ItemMenu, useItemMenu, useItemPress } from "../ui/item-menu";
@@ -80,12 +80,10 @@ export function ScoresPage({
   const [filter, setFilter] = useState<ScoreFilter>(() => startingFilter(shownDifficulty));
   const [sort, setSort] = useState<ScoreSort | null>(() => sortOf(startingSort));
   const [opened, setOpened] = useState<string | null>(null);
-  // The chart whose song is being added to a set.
-  const [adding, setAdding] = useState<ListedScore | null>(null);
-  // The song a new set starts with, while its name is asked.
-  const [naming, setNaming] = useState<string | null>(null);
+  const toSet = useAddToSet<ListedScore>(keptSets, i18n);
+  const { adding } = toSet;
   const rowActions = (one: ListedScore): readonly ItemAction[] => [
-    { key: "add", label: t("history.addToSet"), chooses: true, onPick: () => setAdding(one) },
+    { key: "add", label: t("history.addToSet"), chooses: true, onPick: () => toSet.choose(one) },
   ];
   const menu = useItemMenu(rowActions);
 
@@ -200,29 +198,12 @@ export function ScoresPage({
             touchFirst={touchFirst}
             modalLook={modalLook}
             i18n={i18n}
-            onAdd={(set) => {
-              keptSets.replaceSongs(set.id, [...set.songs, adding.score.songNo]);
-              setAdding(null);
-            }}
-            onNewSet={() => setNaming(adding.score.songNo)}
-            onClose={() => setAdding(null)}
+            onAdd={(set) => toSet.addTo(set, [adding.score.songNo])}
+            onNewSet={() => toSet.nameNew([adding.score.songNo])}
+            onClose={toSet.close}
           />
         )}
-        {naming !== null && (
-          <SetNameDialog
-            title={t("favorites.newSet")}
-            initial={newSetName(keptSets.sets, (count) =>
-              t("favorites.setName", { number: count }),
-            )}
-            i18n={i18n}
-            onCancel={() => setNaming(null)}
-            onSave={(name) => {
-              keptSets.add(name, [naming]);
-              setNaming(null);
-              setAdding(null);
-            }}
-          />
-        )}
+        {toSet.naming !== null && <SetNameDialog {...toSet.naming} />}
       </Stack>
     </>
   );
