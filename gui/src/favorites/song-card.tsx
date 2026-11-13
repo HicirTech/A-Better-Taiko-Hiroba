@@ -4,7 +4,6 @@ import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty"
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { type DetailsOpener, SongLookRow } from "../songs/song-look-row";
 import { SectionCard, TO_THE_CARD_SIDES } from "../ui/section-card";
-import { SectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import type { ShownFavorites } from "./favorites-state";
 
@@ -31,8 +30,10 @@ export function SongCard({
   const { view, draft, shut } = shown;
   const { songNo, ura } = draft ?? view.song.state;
   return (
-    <SectionCard id="favorite-song-card">
-      <SectionTitle level={3}>{t("favorites.song.heading")}</SectionTitle>
+    <SectionCard
+      id="favorite-song-card"
+      heading={{ level: 3, children: t("favorites.song.heading") }}
+    >
       <Stack spacing={1.5} useFlexGap>
         {songNo === null ? (
           <StatusNote id="favorite-song-none">{t("favorites.song.none")}</StatusNote>

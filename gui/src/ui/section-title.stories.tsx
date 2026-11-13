@@ -29,8 +29,10 @@ export const AboveItsContent: Story = {};
 /** A card's title (h3 under the page's own), as the favourites' cards have. */
 export const InACard: Story = {
   render: (_args, { globals }) => (
-    <SectionCard sx={{ maxWidth: 600 }}>
-      <SectionTitle level={3}>{i18nOf(globals).t("favorites.song.heading")}</SectionTitle>
+    <SectionCard
+      heading={{ level: 3, children: i18nOf(globals).t("favorites.song.heading") }}
+      sx={{ maxWidth: 600 }}
+    >
       {CONTENT}
     </SectionCard>
   ),
@@ -40,18 +42,16 @@ export const InACard: Story = {
 export const WithThingsAtItsEnd: Story = {
   render: (_args, { globals }) => {
     const { t } = i18nOf(globals);
+    const end = (
+      <Button variant="outlined" size="small">
+        {t("favorites.saveToSet")}
+      </Button>
+    );
     return (
-      <SectionCard sx={{ maxWidth: 600 }}>
-        <SectionTitle
-          level={3}
-          end={
-            <Button variant="outlined" size="small">
-              {t("favorites.saveToSet")}
-            </Button>
-          }
-        >
-          {t("favorites.folder.heading")}
-        </SectionTitle>
+      <SectionCard
+        heading={{ level: 3, end, children: t("favorites.folder.heading") }}
+        sx={{ maxWidth: 600 }}
+      >
         {CONTENT}
       </SectionCard>
     );
@@ -63,12 +63,11 @@ export const WithAnIconAtItsStart: Story = {
   render: (_args, { globals }) => {
     const { t } = i18nOf(globals);
     return (
-      <SectionCard flush sx={{ maxWidth: 600 }}>
-        <Box sx={{ px: 1, pt: 1 }}>
-          <SectionTitle start={<TranslateIcon fontSize="small" />}>
-            {t("settings.language")}
-          </SectionTitle>
-        </Box>
+      <SectionCard
+        heading={{ start: <TranslateIcon fontSize="small" />, children: t("settings.language") }}
+        flush
+        sx={{ maxWidth: 600 }}
+      >
         <List>
           <ListItem sx={{ px: 1 }}>
             <ListItemText primary={t("language.system", { name: "English" })} />
