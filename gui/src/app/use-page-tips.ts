@@ -4,7 +4,7 @@ import type { Page } from "../navigation/pages";
 import type { PageData } from "../pages/page";
 import { dueTips } from "../pages/page-tips";
 import { keepSeenTips, keptSeenTips } from "../shared/tips/seen-tips";
-import type { TipStep } from "../ui/tip-tour";
+import type { TipStep } from "../ui/tip-tour-state";
 
 /** The page stands drawn this long before its tips start, so they point at it settled. */
 const SETTLED_MS = 600;
