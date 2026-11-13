@@ -1,6 +1,6 @@
 import type { TitleOption } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
-import { useCallback, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
 import type { ReadStatus } from "../shared/reads/read-run";
@@ -12,7 +12,8 @@ import type {
   TitleState,
   WriteOutcomeView,
 } from "../shared/session-port";
-import { noticeOf, seenAfter, sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
+import { useWriteSession } from "../shared/writes/use-write-session";
+import { noticeOf, seenAfter, sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   changesTitle,
   IDLE,
@@ -65,8 +66,7 @@ export function useTitleEditor({
 }: TitleEditorOptions): TitleEditor {
   const [step, dispatch] = useReducer(reduceTitle, IDLE);
   // An answer on its way is let go when a session ends, the list is forgotten or a write ends.
-  const generation = useRef(0);
-  const writing = useRef(false);
+  const session = useWriteSession(lane);
   const [reads, status] = useReadRun<ReadFailure>({
     callFailed: { kind: "callFailed" },
     endsTheSession: (failure) => SESSION_GONE.has(failure.kind),
@@ -77,23 +77,23 @@ export function useTitleEditor({
   });
 
   const forget = useCallback(() => {
-    generation.current += 1;
+    session.bump();
     reads.forget();
     dispatch({ type: "forget" });
-  }, [reads]);
+  }, [session, reads]);
 
   const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
 
   const forgetList = useCallback(() => {
-    generation.current += 1;
+    session.bump();
     reads.forget();
     dispatch({ type: "listForgotten" });
-  }, [reads]);
+  }, [session, reads]);
 
   const mayRead = mayReadTitles(step);
   const readList = useCallback(async () => {
     // One read at a time, also when the picker opens twice before the page draws.
-    if (!mayRead || writing.current || reads.status().phase === "reading") {
+    if (!mayRead || session.writing() || reads.status().phase === "reading") {
       return;
     }
 
@@ -101,10 +101,10 @@ export function useTitleEditor({
     await reads.run(() => port.openTitleEditor(), {
       keep: (result) => dispatch({ type: "readEnded", result }),
     });
-  }, [mayRead, reads, port]);
+  }, [mayRead, session, reads, port]);
 
   const writeEnded = (outcome: WriteOutcomeView<TitleState>) => {
-    generation.current += 1;
+    session.bump();
     if (reads.status().phase === "reading") {
       reads.forget();
     }
@@ -132,24 +132,20 @@ export function useTitleEditor({
       profile === null ||
       picked === null ||
       !changesTitle(profile.title, picked) ||
-      writing.current
+      session.writing()
     ) {
       return false;
     }
 
     const expected = { title: profile.title };
-    writing.current = true;
-    const mine = generation.current;
     dispatch({ type: "saveStarted" });
-    const outcome = await sendHeld(lane, () =>
+    const outcome = await session.send(() =>
       port.changeTitle({ expected, target: { id: picked.id, title: picked.label } }),
     );
-    writing.current = false;
-    const current = mine === generation.current;
-    if (current) {
+    if (outcome !== null) {
       writeEnded(outcome);
     }
-    return current && noticeOf(outcome) === null;
+    return outcome !== null && noticeOf(outcome) === null;
   };
 
   return {

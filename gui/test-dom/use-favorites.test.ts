@@ -8,6 +8,8 @@ import type {
   FavoriteSongState,
   FavoritesView,
   FolderHistoryEntry,
+  FolderNames,
+  FolderState,
   WriteOutcomeView,
 } from "../src/shared/session-port";
 import { inADocument } from "./document";
@@ -33,14 +35,18 @@ const SESSION_GONE: WriteOutcomeView<FavoriteSongState> = {
   writeMayHaveHappened: false,
 };
 const NOT_SIGNED_IN: WriteOutcomeView<FavoriteSongState> = { kind: "notSignedIn" };
+const BUSY: WriteOutcomeView<FavoriteSongState> = { kind: "busy" };
+const NAMES: FolderNames = { expected: null, target: null };
 
 /** The Favourites page on a port whose writes wait for the test's answers. */
 function favoritesPage() {
   const changeFavoriteSong = answeredByHand<WriteOutcomeView<FavoriteSongState>>();
+  const changeFolder = answeredByHand<WriteOutcomeView<FolderState>>();
   const openFavorites = counted(ok(VIEW));
   const folderHistory = counted([KEPT]);
   const port = portAnswering({
     changeFavoriteSong: changeFavoriteSong.call,
+    changeFolder: changeFolder.call,
     openFavorites: openFavorites.call,
     folderHistory: folderHistory.call,
   });
@@ -57,6 +63,7 @@ function favoritesPage() {
   return {
     result,
     changeFavoriteSong,
+    changeFolder,
     openFavorites,
     folderHistory,
     held,
@@ -96,6 +103,27 @@ describe("the 大好きな曲's write when the session ends on its way", () => {
     expect(page.onSessionGone).toHaveBeenCalledWith("write.sessionGone");
     expect(page.result.current.history).toEqual([]);
     expect(page.result.current.step).toEqual(UNREAD);
+    expect(page.held()).toBe(0);
+  });
+});
+
+describe("the favourites' writes", () => {
+  test("send one write when more are asked at once, and replace no folder meanwhile", async () => {
+    const page = favoritesPage();
+    await act(() => page.result.current.read());
+    act(() => page.result.current.pickSong(PICKED));
+    act(() => {
+      void page.result.current.saveSong();
+      void page.result.current.saveSong();
+      void page.result.current.applySet(SONGS, NAMES);
+    });
+
+    expect(await page.result.current.replaceFolder(SONGS, () => NAMES)).toBeNull();
+    expect(page.changeFavoriteSong.made()).toBe(1);
+    expect(page.changeFolder.made()).toBe(0);
+    expect(page.openFavorites.made()).toBe(1);
+
+    await act(async () => page.changeFavoriteSong.answer(BUSY));
     expect(page.held()).toBe(0);
   });
 });

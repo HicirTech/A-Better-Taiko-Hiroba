@@ -3,7 +3,7 @@ import type { MessageKey } from "@abth/i18n";
 import type { WriteOutcomeView } from "../session-port";
 
 /** The picture lane, by the two calls a write makes of it: shared code stands below `pictures/`. */
-interface HeldLane {
+export interface HeldLane {
   hold(): void;
   release(): void;
 }
