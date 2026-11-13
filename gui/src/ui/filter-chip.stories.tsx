@@ -10,7 +10,8 @@ import {
 import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 import { i18nOf } from "../story-kit/env";
 import { press } from "../story-kit/steps";
-import { FilterChip, type FilterOption } from "./filter-chip";
+import { FilterChip } from "./filter-chip";
+import type { FilterOption } from "./filter-chip-parts";
 
 const charts = ({ t }: Translator): readonly FilterOption<Difficulty>[] =>
   DIFFICULTIES.map((chart) => ({
