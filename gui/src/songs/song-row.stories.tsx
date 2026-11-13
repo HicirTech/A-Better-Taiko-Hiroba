@@ -12,7 +12,6 @@ import { lookOf } from "../story-kit/songs";
 import { STORY_LANE } from "../story-kit/story-pictures";
 import { CloseIcon, DragIndicatorIcon } from "../ui/icons";
 import { CARD_ROWS, SectionCard } from "../ui/section-card";
-import { SectionTitle } from "../ui/section-title";
 import { ChartMarks } from "./chart-level";
 import { LevelBadges } from "./level-badges";
 import { PlayMarks } from "./play-marks";
@@ -223,8 +222,10 @@ export const NotPressed: Story = {
 /** A card's list reaches the card's sides through its room; each row keeps its own 8 px. */
 export const InACard: Story = {
   render: (_args, { globals }) => (
-    <SectionCard sx={{ maxWidth: 640 }}>
-      <SectionTitle level={3}>{i18nOf(globals).t("favorites.folder.heading")}</SectionTitle>
+    <SectionCard
+      heading={{ level: 3, children: i18nOf(globals).t("favorites.folder.heading") }}
+      sx={{ maxWidth: 640 }}
+    >
       <Box component="ul" sx={CARD_ROWS}>
         {SONGS.map((songNo) => (
           <SongLookRow

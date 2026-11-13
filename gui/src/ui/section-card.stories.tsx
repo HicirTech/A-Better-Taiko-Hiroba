@@ -8,16 +8,14 @@ import { i18nOf, localeOf, type StoryGlobals } from "../story-kit/env";
 import { FOLDER_SONGS } from "../story-kit/favorites";
 import { lookOf } from "../story-kit/songs";
 import { CARD_GAP, CARD_ROWS, SectionCard, TO_THE_CARD_SIDES } from "./section-card";
-import { SectionTitle } from "./section-title";
 
 const COLUMN = { maxWidth: 600 } as const;
 
-/** What the favourites' song card holds: its title, the song, and the button under it. */
-function SongParts({ globals }: { readonly globals: StoryGlobals }) {
+/** A card as the favourites' song card: its title, the song, and the button under it. */
+function LikeTheSongCard({ globals }: { readonly globals: StoryGlobals }) {
   const i18n = i18nOf(globals);
   return (
-    <>
-      <SectionTitle level={3}>{i18n.t("favorites.song.heading")}</SectionTitle>
+    <SectionCard heading={{ level: 3, children: i18n.t("favorites.song.heading") }}>
       <Stack spacing={1.5} useFlexGap>
         <Box sx={TO_THE_CARD_SIDES}>
           <SongLookRow
@@ -32,25 +30,20 @@ function SongParts({ globals }: { readonly globals: StoryGlobals }) {
           <Button variant="outlined">{i18n.t("favorites.song.change")}</Button>
         </Box>
       </Stack>
-    </>
+    </SectionCard>
   );
 }
 
-/** What the favourites' folder card holds: its title with a button at its end, and its songs. */
-function FolderParts({ globals }: { readonly globals: StoryGlobals }) {
+/** A card as the favourites' folder card: its title with a button at its end, and its songs. */
+function LikeTheFolderCard({ globals }: { readonly globals: StoryGlobals }) {
   const i18n = i18nOf(globals);
+  const end = (
+    <Button variant="outlined" size="small">
+      {i18n.t("favorites.saveToSet")}
+    </Button>
+  );
   return (
-    <>
-      <SectionTitle
-        level={3}
-        end={
-          <Button variant="outlined" size="small">
-            {i18n.t("favorites.saveToSet")}
-          </Button>
-        }
-      >
-        {i18n.t("favorites.folder.heading")}
-      </SectionTitle>
+    <SectionCard heading={{ level: 3, end, children: i18n.t("favorites.folder.heading") }}>
       <Box component="ul" sx={CARD_ROWS}>
         {FOLDER_SONGS.slice(0, 3).map((songNo) => (
           <SongLookRow
@@ -62,7 +55,7 @@ function FolderParts({ globals }: { readonly globals: StoryGlobals }) {
           />
         ))}
       </Box>
-    </>
+    </SectionCard>
   );
 }
 
@@ -78,9 +71,7 @@ const meta = {
   tags: ["ui"],
   render: (_args, { globals }) => (
     <Box sx={COLUMN}>
-      <SectionCard>
-        <SongParts globals={globals} />
-      </SectionCard>
+      <LikeTheSongCard globals={globals} />
     </Box>
   ),
 } satisfies Meta;
@@ -95,9 +86,7 @@ export const Titled: Story = {};
 export const WithThingsAtItsEnd: Story = {
   render: (_args, { globals }) => (
     <Box sx={COLUMN}>
-      <SectionCard>
-        <FolderParts globals={globals} />
-      </SectionCard>
+      <LikeTheFolderCard globals={globals} />
     </Box>
   ),
 };
@@ -113,16 +102,26 @@ export const FlushList: Story = {
   ),
 };
 
+/** Rows that reach the card's edges under a title that keeps the card's room, as in Settings. */
+export const FlushListUnderItsTitle: Story = {
+  render: (_args, { globals }) => {
+    const i18n = i18nOf(globals);
+    return (
+      <Box sx={COLUMN}>
+        <SectionCard flush heading={{ children: i18n.t("nav.favorites") }}>
+          <List disablePadding>{rowsOf(i18n)}</List>
+        </SectionCard>
+      </Box>
+    );
+  },
+};
+
 /** Cards one after another, 8 px apart. */
 export const Stacked: Story = {
   render: (_args, { globals }) => (
     <Stack spacing={CARD_GAP} sx={COLUMN}>
-      <SectionCard>
-        <SongParts globals={globals} />
-      </SectionCard>
-      <SectionCard>
-        <FolderParts globals={globals} />
-      </SectionCard>
+      <LikeTheSongCard globals={globals} />
+      <LikeTheFolderCard globals={globals} />
     </Stack>
   ),
 };

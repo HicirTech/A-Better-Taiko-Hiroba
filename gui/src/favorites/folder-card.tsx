@@ -10,7 +10,6 @@ import { CheckIcon } from "../ui/icons";
 import { LabelChip } from "../ui/label-chip";
 import type { ModalLook } from "../ui/large-modal";
 import { CARD_ROWS, SectionCard } from "../ui/section-card";
-import { SectionTitle } from "../ui/section-title";
 import { SimpleDialog } from "../ui/simple-dialog";
 import { StatusNote } from "../ui/status-note";
 import type { ShownFavorites } from "./favorites-state";
@@ -54,35 +53,32 @@ export function FolderCard({
   const [choosing, setChoosing] = useState(false);
   const [replacing, setReplacing] = useState<FavoriteSet | null>(null);
   const stopReplacing = () => setReplacing(null);
+  const end =
+    inUse !== null ? (
+      <LabelChip
+        id="favorite-folder-set"
+        icon={<CheckIcon fontSize="small" />}
+        label={t("favorites.inUse", { name: inUse.name })}
+      />
+    ) : (
+      songs.length > 0 && (
+        <Button
+          id="favorite-folder-save-to-set"
+          variant="outlined"
+          size="small"
+          disabled={shut}
+          aria-haspopup="dialog"
+          onClick={() => setChoosing(true)}
+        >
+          {t("favorites.saveToSet")}
+        </Button>
+      )
+    );
   return (
-    <SectionCard id="favorite-folder-card">
-      <SectionTitle
-        level={3}
-        end={
-          inUse !== null ? (
-            <LabelChip
-              id="favorite-folder-set"
-              icon={<CheckIcon fontSize="small" />}
-              label={t("favorites.inUse", { name: inUse.name })}
-            />
-          ) : (
-            songs.length > 0 && (
-              <Button
-                id="favorite-folder-save-to-set"
-                variant="outlined"
-                size="small"
-                disabled={shut}
-                aria-haspopup="dialog"
-                onClick={() => setChoosing(true)}
-              >
-                {t("favorites.saveToSet")}
-              </Button>
-            )
-          )
-        }
-      >
-        {t("favorites.folder.heading")}
-      </SectionTitle>
+    <SectionCard
+      id="favorite-folder-card"
+      heading={{ level: 3, end, children: t("favorites.folder.heading") }}
+    >
       <Stack spacing={1.5} useFlexGap>
         {songs.length === 0 ? (
           <StatusNote id="favorite-folder-empty">{t("favorites.folderEmpty")}</StatusNote>
