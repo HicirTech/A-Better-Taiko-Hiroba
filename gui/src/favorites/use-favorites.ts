@@ -1,5 +1,5 @@
 import type { MessageKey } from "@abth/i18n";
-import { useCallback, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
 import { afterRefresh } from "../shared/reads/after-refresh";
@@ -15,7 +15,8 @@ import type {
   WriteOutcomeView,
 } from "../shared/session-port";
 import { useKeptHistory } from "../shared/use-kept-history";
-import { sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
+import { useWriteSession } from "../shared/writes/use-write-session";
+import { sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   canReadFavoritesAgain,
   type FavoritesAction,
@@ -65,10 +66,9 @@ export interface FavoritesEditor {
 
 export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): FavoritesEditor {
   const [step, dispatch] = useReducer(reduceFavorites, UNREAD);
-  const generation = useRef(0);
-  const writing = useRef(false);
+  const session = useWriteSession(lane);
   const readHistory = useCallback(() => port.folderHistory(), [port]);
-  const { history, refreshHistory, clearHistory } = useKeptHistory(readHistory, generation);
+  const { history, refreshHistory, clearHistory } = useKeptHistory(readHistory, session.generation);
   const [reads, status] = useReadRun<ReadFailure>({
     callFailed: { kind: "callFailed" },
     endsTheSession: (failure) => SESSION_GONE.has(failure.kind),
@@ -79,11 +79,11 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
   });
 
   const forget = useCallback(() => {
-    generation.current += 1;
+    session.bump();
     reads.forget();
     clearHistory();
     dispatch({ type: "forget" });
-  }, [reads, clearHistory]);
+  }, [session, reads, clearHistory]);
   const dropEdits = useCallback(() => {
     reads.settle();
     dispatch({ type: "draftDropped" });
@@ -97,7 +97,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
   const read = useCallback(
     async (refreshFirst?: boolean) => {
       // One read at a time, also under StrictMode's double effects, which would ask Hiroba twice.
-      if (!mayRead || writing.current || reads.status().phase === "reading") {
+      if (!mayRead || session.writing() || reads.status().phase === "reading") {
         return;
       }
 
@@ -108,7 +108,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
       });
       await refreshHistory();
     },
-    [mayRead, reads, port, refreshHistory],
+    [mayRead, session, reads, port, refreshHistory],
   );
 
   const write = async <S>(
@@ -116,12 +116,9 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     send: () => Promise<WriteOutcomeView<S>>,
     ended: (outcome: WriteOutcomeView<S>) => FavoritesAction,
   ): Promise<WriteOutcomeView<S> | null> => {
-    writing.current = true;
-    const mine = generation.current;
     dispatch({ type: "saveStarted", write: kind });
-    const outcome = await sendHeld(lane, send);
-    writing.current = false;
-    if (mine !== generation.current) {
+    const outcome = await session.send(send);
+    if (outcome === null) {
       return null;
     }
 
@@ -135,7 +132,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
   };
 
   const saveSong = async () => {
-    if (step.name !== "ready" || step.draft === null || writing.current) {
+    if (step.name !== "ready" || step.draft === null || session.writing()) {
       return;
     }
 
@@ -148,7 +145,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
   };
 
   const applySet = async (songs: readonly string[], names: FolderNames) => {
-    if (step.name !== "ready" || writing.current) {
+    if (step.name !== "ready" || session.writing()) {
       return;
     }
 
@@ -165,7 +162,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     songs: readonly string[],
     names: (replaced: FolderState) => FolderNames,
   ) => {
-    if (writing.current) {
+    if (session.writing()) {
       return null;
     }
 

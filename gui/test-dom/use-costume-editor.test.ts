@@ -97,3 +97,20 @@ describe("the costume's write when the session ends on its way", () => {
     expect(page.held()).toBe(0);
   });
 });
+
+describe("the costume's writes", () => {
+  test("send one write when two are asked for at once", async () => {
+    const page = costumePage();
+    await act(() => page.result.current.read());
+    act(() => page.result.current.pickHistory(PICKED));
+    act(() => {
+      void page.result.current.save();
+      void page.result.current.save();
+    });
+
+    expect(page.changeCostume.made()).toBe(1);
+
+    await act(async () => page.changeCostume.answer(APPLIED));
+    expect(page.held()).toBe(0);
+  });
+});

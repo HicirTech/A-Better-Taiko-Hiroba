@@ -1,5 +1,5 @@
 import type { MessageKey } from "@abth/i18n";
-import { useCallback, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type {
   HirobaSessionPort,
@@ -7,7 +7,8 @@ import type {
   ProfileView,
   WriteOutcomeView,
 } from "../shared/session-port";
-import { noticeOf, sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
+import { useWriteSession } from "../shared/writes/use-write-session";
+import { noticeOf, sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   IDLE,
   isWritingName,
@@ -49,13 +50,12 @@ export function useNameEditor({
   onNickname,
 }: NameEditorOptions): NameEditor {
   const [step, dispatch] = useReducer(reduceName, IDLE);
-  const sessionGeneration = useRef(0);
-  const writing = useRef(false);
+  const session = useWriteSession(lane);
 
   const forget = useCallback(() => {
-    sessionGeneration.current += 1;
+    session.bump();
     dispatch({ type: "forget" });
-  }, []);
+  }, [session]);
 
   const dropEdits = useCallback(() => dispatch({ type: "editsDropped" }), []);
 
@@ -75,7 +75,7 @@ export function useNameEditor({
   };
 
   const save = async () => {
-    if (step.name !== "idle" || profile === null || writing.current) {
+    if (step.name !== "idle" || profile === null || session.writing()) {
       return false;
     }
 
@@ -85,18 +85,12 @@ export function useNameEditor({
       return false;
     }
 
-    writing.current = true;
-    const mine = sessionGeneration.current;
     dispatch({ type: "saveStarted" });
-    const outcome = await sendHeld(lane, () =>
-      port.changeName({ expected, target: verdict.target }),
-    );
-    writing.current = false;
-    const current = mine === sessionGeneration.current;
-    if (current) {
+    const outcome = await session.send(() => port.changeName({ expected, target: verdict.target }));
+    if (outcome !== null) {
       writeEnded(outcome);
     }
-    return current && noticeOf(outcome) === null;
+    return outcome !== null && noticeOf(outcome) === null;
   };
 
   return {

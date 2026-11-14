@@ -1,6 +1,6 @@
 import { sameCostume } from "@abth/core";
 import type { MessageKey } from "@abth/i18n";
-import { useCallback, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
 import type { ColourPart, SlotPart } from "../shared/costume-parts";
@@ -16,7 +16,8 @@ import {
   type WriteOutcomeView,
 } from "../shared/session-port";
 import { useKeptHistory } from "../shared/use-kept-history";
-import { sendHeld, sessionNoticeOf } from "../shared/writes/write-ending";
+import { useWriteSession } from "../shared/writes/use-write-session";
+import { sessionNoticeOf } from "../shared/writes/write-ending";
 import {
   canReadEditorAgain,
   type EditorStep,
@@ -75,10 +76,9 @@ export function useCostumeEditor({
     reset: resetPreview,
     keep: keepPreview,
   } = useCostumePreview(port, previewSetOf(step), shown);
-  const sessionGeneration = useRef(0);
+  const session = useWriteSession(lane);
   const readHistory = useCallback(() => port.costumeHistory(), [port]);
-  const { history, refreshHistory, clearHistory } = useKeptHistory(readHistory, sessionGeneration);
-  const writing = useRef(false);
+  const { history, refreshHistory, clearHistory } = useKeptHistory(readHistory, session.generation);
   const [reads, status] = useReadRun<ReadFailure>({
     callFailed: { kind: "callFailed" },
     endsTheSession: (failure) => SESSION_GONE.has(failure.kind),
@@ -89,12 +89,12 @@ export function useCostumeEditor({
   });
 
   const forget = useCallback(() => {
-    sessionGeneration.current += 1;
+    session.bump();
     reads.forget();
     dispatch({ type: "forget" });
     clearHistory();
     resetPreview();
-  }, [reads, clearHistory, resetPreview]);
+  }, [session, reads, clearHistory, resetPreview]);
 
   const dropEdits = useCallback(() => {
     reads.settle();
@@ -105,7 +105,7 @@ export function useCostumeEditor({
   const read = useCallback(
     async (refreshFirst?: boolean) => {
       // One read at a time, also under StrictMode's double effects, which would ask Hiroba twice.
-      if (!mayRead || writing.current || reads.status().phase === "reading") {
+      if (!mayRead || session.writing() || reads.status().phase === "reading") {
         return;
       }
 
@@ -120,7 +120,7 @@ export function useCostumeEditor({
         await refreshHistory();
       }
     },
-    [mayRead, reads, port, lane, refreshHistory],
+    [mayRead, session, reads, port, lane, refreshHistory],
   );
 
   const writeEnded = (outcome: WriteOutcomeView) => {
@@ -139,19 +139,20 @@ export function useCostumeEditor({
   };
 
   const save = async () => {
-    if (step.name !== "editing" || sameCostume(step.editor.state, step.draft) || writing.current) {
+    if (
+      step.name !== "editing" ||
+      sameCostume(step.editor.state, step.draft) ||
+      session.writing()
+    ) {
       return;
     }
 
     const { editor, draft } = step;
-    writing.current = true;
-    const mine = sessionGeneration.current;
     dispatch({ type: "saveStarted" });
-    const outcome = await sendHeld(lane, () =>
+    const outcome = await session.send(() =>
       port.changeCostume({ expected: editor.state, target: draft }),
     );
-    writing.current = false;
-    if (mine === sessionGeneration.current) {
+    if (outcome !== null) {
       writeEnded(outcome);
     }
   };
