@@ -1,12 +1,11 @@
 import { describe, expect, test } from "bun:test";
-
+import { song } from "../../core/test/song-fixtures";
 import {
   matchesCharts,
   matchesFilter,
   NO_FILTER,
   type SongFilter,
 } from "../src/favorites/song-filter";
-import { song } from "./song-fixtures";
 
 const INNER_TEN = song({
   songNo: "1004",

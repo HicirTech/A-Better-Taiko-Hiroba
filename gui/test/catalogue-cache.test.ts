@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { CatalogueSong } from "@abth/core";
+import { song } from "../../core/test/song-fixtures";
 import {
   type KeptCatalogue,
   keepCatalogue,
@@ -7,7 +8,6 @@ import {
   mergeCatalogue,
   nextCatalogueRead,
 } from "../src/shared/song-catalogue/catalogue-cache";
-import { song } from "./song-fixtures";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 const DAY_MS = 24 * 60 * 60 * 1000;

@@ -1,4 +1,4 @@
-import type { CatalogueSong, ChartFacts } from "@abth/core";
+import type { CatalogueSong, ChartFacts } from "../src/index";
 
 /** A chart with a combo and no pictures; every field can be overridden. */
 export const chart = (overrides: Partial<ChartFacts> = {}): ChartFacts => ({

@@ -1,9 +1,8 @@
-import { chartKey } from "@abth/core";
+import { chartKey, HIROBA_LANG } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
-import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { ChartMarks } from "../songs/chart-level";

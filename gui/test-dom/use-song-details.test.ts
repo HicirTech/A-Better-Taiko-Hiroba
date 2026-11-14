@@ -1,9 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react/pure";
-
+import { song } from "../../core/test/song-fixtures";
 import type { ListedSong } from "../src/shared/song-catalogue/use-song-catalogue";
 import { useSongDetails } from "../src/songs/use-song-details";
-import { song } from "../test/song-fixtures";
 import { inADocument } from "./document";
 
 inADocument();

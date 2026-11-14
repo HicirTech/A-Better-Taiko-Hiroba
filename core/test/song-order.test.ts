@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { newestFirst } from "../src/shared/song-catalogue/song-order";
+import { newestFirst } from "../src/index";
 
 describe("newestFirst", () => {
   test("puts the higher song number first, comparing numbers and not text", () => {

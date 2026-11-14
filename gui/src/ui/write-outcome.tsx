@@ -1,7 +1,7 @@
+import { HIROBA_LANG } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { useState } from "react";
 
-import { HIROBA_LANG } from "../shared/language/show-language";
 import type { WriteKind, WriteSets } from "../shared/session-port";
 import { type OutcomeWords, outcomeWords } from "../shared/writes/outcome-words";
 import type { Noticed } from "../shared/writes/write-ending";

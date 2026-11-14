@@ -1,9 +1,9 @@
+import { type Marked, segmentsOf } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Fragment, type ReactNode, type RefObject } from "react";
 import { DIFFICULTY_COLOUR } from "../shared/song-catalogue/genre-look";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
-import { type Marked, segmentsOf } from "../shared/song-catalogue/song-search";
 import { RowList } from "../ui/row-list";
 import { LevelBadges } from "./level-badges";
 import { artistsLine } from "./song-look-row";

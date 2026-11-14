@@ -1,9 +1,8 @@
-import type { Genre, RecentPlay } from "@abth/core";
+import { type Genre, HIROBA_LANG, type RecentPlay } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Stack, type SxProps, type Theme } from "@mui/material";
 import type { ReactNode } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
-import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import { GENRE_LABEL, LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
 import type { RowPlace } from "../ui/row-list";
 import { CHART_MARK_PX, ChartMarks } from "./chart-level";
