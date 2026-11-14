@@ -1,8 +1,7 @@
-import { NAME_FIELDS, NAME_FORM_MAX_LENGTH } from "@abth/core";
+import { HIROBA_LANG, NAME_FIELDS, NAME_FORM_MAX_LENGTH } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Stack, TextField } from "@mui/material";
 import { type KeyboardEvent, useRef } from "react";
-import { HIROBA_LANG } from "../shared/language/show-language";
 import type { ProfileView } from "../shared/session-port";
 import { invalidFieldText } from "../shared/writes/outcome-words";
 import { useFocusKept } from "../ui/editor-parts";

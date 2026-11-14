@@ -1,8 +1,7 @@
+import { HIROBA_LANG } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Skeleton } from "@mui/material";
 import type { ReactNode } from "react";
-
-import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { LEVEL_BADGE_PX, LevelBadges } from "./level-badges";

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, mock, setSystemTime, test } from "bun:test";
 import { act, renderHook } from "@testing-library/react/pure";
 import { createElement, type ReactNode, useState } from "react";
-
+import { song } from "../../core/test/song-fixtures";
 import type { GiftDraft } from "../src/favorites/gift-maker";
 import { type FavoritesScene, useFavoritesLevel } from "../src/favorites/use-favorites-level";
 import { useGiftDraft } from "../src/favorites/use-gift-draft";
@@ -11,7 +11,6 @@ import type { FolderHistoryEntry } from "../src/shared/session-port";
 import { type FavoriteSet, SET_SONG_LIMIT } from "../src/shared/sets/favorite-sets";
 import type { ListedSong } from "../src/shared/song-catalogue/use-song-catalogue";
 import { BackModesContext, createBackClosers } from "../src/ui/back-closers";
-import { song } from "../test/song-fixtures";
 import { inADocument } from "./document";
 
 inADocument();
