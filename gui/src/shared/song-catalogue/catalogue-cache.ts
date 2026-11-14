@@ -1,6 +1,11 @@
-import { isObject, isSongNo } from "@abth/core";
+import {
+  type CatalogueSong,
+  DIFFICULTIES,
+  isObject,
+  isSongNo,
+  type SongCatalogueRead,
+} from "@abth/core";
 import { keepJson, keptJson, pageStorage } from "../kept-settings";
-import { type CatalogueSong, DIFFICULTIES, type SongCatalogueRead } from "./types";
 
 const KEY = "abth.songCatalogue";
 const DAY_MS = 24 * 60 * 60 * 1000;

@@ -1,5 +1,5 @@
+import { DIFFICULTIES, type Difficulty } from "@abth/core";
 import { keepSetting, keptSetting, pageStorage } from "../kept-settings";
-import { DIFFICULTIES, type Difficulty } from "./types";
 
 /** The difficulty whose level a song shows in front of the others; Extreme brings its inner chart. */
 export type ShownDifficulty = Exclude<Difficulty, "ura">;

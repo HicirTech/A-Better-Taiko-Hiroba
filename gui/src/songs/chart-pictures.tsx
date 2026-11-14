@@ -1,10 +1,10 @@
-import type { Result } from "@abth/core";
+import type { Difficulty, Result } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 import { FormHelperText, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import { DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
-import type { ChartFileFailure, Difficulty } from "../shared/song-catalogue/types";
+import type { ChartFileFailure } from "../shared/song-catalogue/types";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { StatusNote } from "../ui/status-note";
 import { ChartPicture, PictureButton, PictureLoading } from "./chart-picture";

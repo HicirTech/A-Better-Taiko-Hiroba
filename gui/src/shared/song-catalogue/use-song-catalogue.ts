@@ -1,3 +1,4 @@
+import type { CatalogueSong, ChineseNamesRead } from "@abth/core";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type { ReadStatus } from "../reads/read-run";
@@ -16,7 +17,7 @@ import {
   keepChineseNames,
   loadChineseNames,
 } from "./kept-chinese-names";
-import type { CatalogueSong, ChineseNamesRead, SongCatalogueFailure } from "./types";
+import type { SongCatalogueFailure } from "./types";
 
 /** A song with the Chinese wiki's names for it, none until they are read. */
 export type ListedSong = CatalogueSong & { readonly chineseNames: readonly string[] };

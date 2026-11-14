@@ -1,8 +1,9 @@
+import type { Difficulty } from "@abth/core";
 import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../picture-store";
 import type { PictureView } from "../session-port/types";
 import { viewOf } from "./read-chart-picture";
 import { sniffPicture } from "./sniff-picture";
-import { CHART_PICTURE_MAX_BYTES, type Difficulty } from "./types";
+import { CHART_PICTURE_MAX_BYTES } from "./types";
 
 /** The charts the page drew from TJA, kept on the device until it draws them again. */
 export interface DrawnCharts {

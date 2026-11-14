@@ -1,4 +1,4 @@
-import { CROWN_ORDER, type Genre } from "@abth/core";
+import { CROWN_ORDER, DIFFICULTIES, type Difficulty, type Genre } from "@abth/core";
 import type { MessageKey, Translator } from "@abth/i18n";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
@@ -7,7 +7,6 @@ import { GENRE_ORDER, LEVEL_DIFFICULTY } from "../song-catalogue/genre-look";
 import { type ShownDifficulty, shownFor } from "../song-catalogue/shown-difficulty";
 import { nameLanguage, shownName } from "../song-catalogue/song-names";
 import { fold, searchedNames } from "../song-catalogue/song-search";
-import { DIFFICULTIES, type Difficulty } from "../song-catalogue/types";
 import type { SongCatalogue } from "../song-catalogue/use-song-catalogue";
 
 /** What the scores page sorts by; with none chosen it lists the songs by name. */

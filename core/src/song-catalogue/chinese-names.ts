@@ -1,4 +1,5 @@
-import { err, isRecord, ok, type Result } from "@abth/core";
+import { isRecord } from "../guards";
+import { err, ok, type Result } from "../operation-results";
 
 import type { ChineseNamesPage } from "./types";
 

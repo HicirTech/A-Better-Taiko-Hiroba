@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { DIFFICULTIES } from "@abth/core";
 import { createTranslator } from "@abth/i18n";
-
 import {
   DIFFICULTY_COLOUR,
   DIFFICULTY_LABEL,
@@ -8,7 +8,6 @@ import {
   GENRE_LABEL,
   GENRE_ORDER,
 } from "../src/shared/song-catalogue/genre-look";
-import { DIFFICULTIES } from "../src/shared/song-catalogue/types";
 
 describe("GENRE_ORDER", () => {
   test("lists the eight genres in the game's order, each once", () => {

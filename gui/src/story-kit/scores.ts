@@ -1,15 +1,16 @@
-import type {
-  ChartReading,
-  CrownState,
-  Level,
-  RatingSystem,
-  ScoreChange,
-  ScoreRank,
-  Song,
+import {
+  type ChartReading,
+  type CrownState,
+  DIFFICULTIES,
+  type Difficulty,
+  type Level,
+  type RatingSystem,
+  type ScoreChange,
+  type ScoreRank,
+  type Song,
 } from "@abth/core";
 
 import type { ListedChart, ListedChartsView, ScoresView, ScoreView } from "../shared/session-port";
-import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 import { packData } from "./pack";
 import { storyRecord } from "./plays";
 import { STORY_SONGS } from "./songs";

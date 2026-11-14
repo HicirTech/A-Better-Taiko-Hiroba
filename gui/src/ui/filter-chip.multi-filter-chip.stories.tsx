@@ -1,3 +1,4 @@
+import { DIFFICULTIES, type Difficulty } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useState } from "react";
@@ -7,7 +8,6 @@ import {
   DIFFICULTY_LABEL,
   DIFFICULTY_TEXT,
 } from "../shared/song-catalogue/genre-look";
-import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 import { i18nOf } from "../story-kit/env";
 import { press } from "../story-kit/steps";
 import { MultiFilterChip } from "./filter-chip";

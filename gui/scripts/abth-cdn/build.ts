@@ -11,13 +11,13 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { parseArgs } from "node:util";
+import { DIFFICULTIES, isDifficulty } from "@abth/core";
 import electronPath from "electron";
 import { cdnChartPath, cdnDensityPath } from "../../src/shared/song-catalogue/abth-cdn";
 import {
   densitiesByDifficulty,
   densityFile,
 } from "../../src/shared/song-catalogue/read-chart-density";
-import { DIFFICULTIES, isDifficulty } from "../../src/shared/song-catalogue/types";
 import { webpOf } from "./encode";
 import { workOf } from "./work-list";
 

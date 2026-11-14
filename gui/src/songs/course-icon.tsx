@@ -1,6 +1,6 @@
+import type { Difficulty } from "@abth/core";
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
-import type { Difficulty } from "../shared/song-catalogue/types";
 
 const COURSE_ICON_PX = 24;
 

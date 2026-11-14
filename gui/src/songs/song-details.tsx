@@ -1,4 +1,4 @@
-import type { Result } from "@abth/core";
+import { DIFFICULTIES, type Difficulty, type Result } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Stack, ToggleButton, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -14,11 +14,7 @@ import {
 } from "../shared/song-catalogue/genre-look";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { nameLanguage, shownName } from "../shared/song-catalogue/song-names";
-import {
-  type ChartFileFailure,
-  DIFFICULTIES,
-  type Difficulty,
-} from "../shared/song-catalogue/types";
+import type { ChartFileFailure } from "../shared/song-catalogue/types";
 import type { ListedSong } from "../shared/song-catalogue/use-song-catalogue";
 import { LabelChip } from "../ui/label-chip";
 import { LargeModal, type ModalLook } from "../ui/large-modal";

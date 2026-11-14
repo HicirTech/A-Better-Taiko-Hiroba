@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-
+import type { CatalogueSong } from "@abth/core";
 import {
   type KeptCatalogue,
   keepCatalogue,
@@ -7,7 +7,6 @@ import {
   mergeCatalogue,
   nextCatalogueRead,
 } from "../src/shared/song-catalogue/catalogue-cache";
-import type { CatalogueSong } from "../src/shared/song-catalogue/types";
 import { song } from "./song-fixtures";
 import { memoryStorage, refusing } from "./storage-fakes";
 

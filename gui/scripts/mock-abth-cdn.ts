@@ -1,10 +1,11 @@
 /** The stand-in's ABTH CDN: a drawing of each chart the stand-in's ESE holds, and its counts. */
+
+import { isDifficulty } from "@abth/core";
 import { cdnChartPath, cdnDensityPath } from "../src/shared/song-catalogue/abth-cdn";
 import {
   densitiesByDifficulty,
   densityFile,
 } from "../src/shared/song-catalogue/read-chart-density";
-import { isDifficulty } from "../src/shared/song-catalogue/types";
 import { ESE_MAPPING, eseChart, servedChartPath } from "./mock-ese";
 
 export const ABTH_CDN_PATH = "/__abth-cdn/";

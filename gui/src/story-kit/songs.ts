@@ -1,8 +1,7 @@
+import { parseWikiSongs } from "@abth/core";
 import type { Locale } from "@abth/i18n";
 import { action } from "storybook/actions";
-
 import { wikiSongsSince } from "../../scripts/mock-song-catalogue";
-import { parseWikiSongs } from "../shared/song-catalogue";
 import { lookOfCatalogue, type SongLook } from "../shared/song-catalogue/song-look";
 import type { ListedSong, SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { packData } from "./pack";

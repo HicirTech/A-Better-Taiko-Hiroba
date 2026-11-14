@@ -1,5 +1,5 @@
 /** The pictures stories draw: the pack's where it has them, else the e2e's stand-ins. */
-import { err, ok } from "@abth/core";
+import { DIFFICULTIES, err, ok } from "@abth/core";
 
 import {
   courseIconPng,
@@ -21,7 +21,6 @@ import {
 } from "../pictures/picture-lane";
 import { IO_READ_CONSUMERS } from "../shared/pipelines";
 import type { CrownKind, PictureView, PictureWant } from "../shared/session-port";
-import { DIFFICULTIES } from "../shared/song-catalogue/types";
 import { packView } from "./pack";
 import { pictureOf } from "./picture-of";
 import { STORY_PROFILE, STORY_SET } from "./profile";

@@ -1,5 +1,5 @@
 // The page ABTH CDN's charts are drawn in: the app's own drawChart, so each picture is the app's.
-import { DIFFICULTIES } from "../../src/shared/song-catalogue/types";
+import { DIFFICULTIES } from "@abth/core";
 import { drawChart } from "../../src/songs/draw-chart";
 
 function base64(bytes: Uint8Array): string {

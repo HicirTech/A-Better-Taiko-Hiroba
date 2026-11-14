@@ -1,6 +1,10 @@
-import { isObject } from "@abth/core";
+import {
+  type CatalogueSong,
+  type ChineseNamesPage,
+  type ChineseNamesRead,
+  isObject,
+} from "@abth/core";
 import { keepJson, keptJson, pageStorage } from "../kept-settings";
-import type { CatalogueSong, ChineseNamesPage, ChineseNamesRead } from ".";
 
 const KEY = "abth.chineseNames";
 const VERSION = 1;

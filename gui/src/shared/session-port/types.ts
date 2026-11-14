@@ -1,7 +1,9 @@
 import type {
+  ChineseNamesRead,
   CostumeEditorView,
   CostumeSet,
   CrownState,
+  Difficulty,
   FavoriteSongEditorView,
   FavoriteSongState,
   FolderEditorView,
@@ -24,6 +26,8 @@ import type {
   ScoreSection,
   ShownSong,
   Song,
+  SongCatalogueRead,
+  SongDensityRead,
   TitleEditorView,
   TitleState,
   TitleTarget,
@@ -34,11 +38,7 @@ import type { RatingDataRead } from "../rating-data/read-rating-data";
 import type {
   ChartFileFailure,
   ChartPictureRead,
-  ChineseNamesRead,
-  Difficulty,
   SongCatalogueFailure,
-  SongCatalogueRead,
-  SongDensityRead,
 } from "../song-catalogue/types";
 import type { UpdateFeed, UpdateFeedFailure } from "../updates/update-feed";
 
