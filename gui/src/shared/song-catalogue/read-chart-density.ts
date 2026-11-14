@@ -1,10 +1,13 @@
 import {
   type ChartDensity,
+  type Difficulty,
   err,
+  isDifficulty,
   isRecord,
   type NoteDensity,
   ok,
   type Result,
+  type SongDensityRead,
   type Transport,
   tjaDensities,
 } from "@abth/core";
@@ -13,12 +16,7 @@ import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
 import { cdnDensityPath } from "./abth-cdn";
 import type { EseChartFiles } from "./ese-chart-files";
 import { LEVEL_DIFFICULTY } from "./genre-look";
-import {
-  type ChartFileFailure,
-  type Difficulty,
-  isDifficulty,
-  type SongDensityRead,
-} from "./types";
+import type { ChartFileFailure } from "./types";
 
 /** The operation a song's chart read runs as in the pipeline for other sites. */
 export const CHART_DENSITY_OPERATION = "chartDensity";

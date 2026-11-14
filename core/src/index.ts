@@ -10,4 +10,5 @@ export * from "./operation-results";
 export * from "./rating";
 export * from "./recent-plays";
 export * from "./scores";
+export * from "./song-catalogue";
 export * from "./tja";

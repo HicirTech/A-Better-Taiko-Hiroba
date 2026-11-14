@@ -1,9 +1,9 @@
+import type { Difficulty } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 import type { ReactNode } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { DIFFICULTY_COLOUR, DIFFICULTY_LABEL } from "../shared/song-catalogue/genre-look";
-import type { Difficulty } from "../shared/song-catalogue/types";
 import { CourseIcon } from "./course-icon";
 import { LEVEL_BADGE_PX, LEVEL_BADGES_LOOK } from "./level-badges";
 

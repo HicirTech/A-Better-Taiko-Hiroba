@@ -1,9 +1,12 @@
 import {
   type ChartDensity,
+  DIFFICULTIES,
+  type Difficulty,
   err,
   ok,
   type RatingSnapshot,
   type RatingSystem,
+  type SongDensityRead,
   tjaDensities,
   withSnapshot,
 } from "@abth/core";
@@ -21,12 +24,7 @@ import type {
 } from "../shared/session-port";
 import { filledSlots } from "../shared/sets/favorite-sets";
 import { LEVEL_DIFFICULTY } from "../shared/song-catalogue/genre-look";
-import {
-  type ChartPictureRead,
-  DIFFICULTIES,
-  type Difficulty,
-  type SongDensityRead,
-} from "../shared/song-catalogue/types";
+import type { ChartPictureRead } from "../shared/song-catalogue/types";
 import type { ChartPort } from "../songs/chart-port";
 import { drawChart } from "../songs/draw-chart";
 import { portraitOf, STORY_EDITOR, STORY_HISTORY } from "./costume";

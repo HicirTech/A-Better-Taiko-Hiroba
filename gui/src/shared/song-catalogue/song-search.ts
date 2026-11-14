@@ -1,8 +1,8 @@
+import type { CatalogueSong } from "@abth/core";
 import type { Locale } from "@abth/i18n";
 import { foldHan } from "./han-fold";
 import { type NamedSong, shownName } from "./song-names";
 import { newestFirst } from "./song-order";
-import type { CatalogueSong } from "./types";
 
 export const SEARCH_LIMIT = 200;
 

@@ -1,7 +1,6 @@
+import { DIFFICULTIES, type Difficulty } from "@abth/core";
 import { Box, Stack } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-
-import { DIFFICULTIES, type Difficulty } from "../shared/song-catalogue/types";
 import { i18nOf } from "../story-kit/env";
 import { STORY_PLAYS } from "../story-kit/plays";
 import { storySong } from "../story-kit/songs";

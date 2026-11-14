@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { CatalogueSong } from "../src/shared/song-catalogue";
+import type { CatalogueSong } from "@abth/core";
 import {
   chineseNamesBySong,
   keepChineseNames,

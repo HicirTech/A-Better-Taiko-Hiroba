@@ -1,7 +1,14 @@
-import { err, ok, type Result, type Transport } from "@abth/core";
+import {
+  type ChineseNamesPage,
+  type ChineseNamesRead,
+  err,
+  ok,
+  parseChineseNamesBatch,
+  type Result,
+  type Transport,
+} from "@abth/core";
 
-import { parseChineseNamesBatch } from "./chinese-names";
-import type { ChineseNamesPage, ChineseNamesRead, SongCatalogueFailure } from "./types";
+import type { SongCatalogueFailure } from "./types";
 
 const BATCH_TIMEOUT_MS = 20_000;
 // The category holds some 2,400 songs, 50 a batch; a wiki that never stops is cut off here.

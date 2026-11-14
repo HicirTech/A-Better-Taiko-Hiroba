@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { isOk } from "@abth/core";
+import { DIFFICULTIES, isOk, parseWikiSongs } from "@abth/core";
 
 import { CHART_PICTURE_PATHS, WIKI_SONGS, wikiSongsSince } from "../scripts/mock-song-catalogue";
-import { DIFFICULTIES, parseWikiSongs } from "../src/shared/song-catalogue";
 
 const ORIGIN = "http://hiroba.test:8807";
 

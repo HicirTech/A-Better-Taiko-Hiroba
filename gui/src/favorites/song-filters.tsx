@@ -1,3 +1,4 @@
+import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, type Theme } from "@mui/material";
 import {
@@ -8,7 +9,6 @@ import {
   GENRE_LABEL,
   GENRE_ORDER,
 } from "../shared/song-catalogue/genre-look";
-import { DIFFICULTIES, MAX_LEVEL, MIN_LEVEL } from "../shared/song-catalogue/types";
 import { FilterChip } from "../ui/filter-chip";
 import type { SongFilter } from "./song-filter";
 

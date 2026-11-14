@@ -1,10 +1,9 @@
-import type { Genre } from "@abth/core";
+import type { CatalogueSong, Difficulty, Genre } from "@abth/core";
 import type { Locale } from "@abth/i18n";
 
 import { HIROBA_LANG } from "../language/hiroba-lang";
 import type { FavoritesView, ShownSong } from "../session-port";
 import { nameLanguage, numberedSong, shownName } from "./song-names";
-import type { CatalogueSong, Difficulty } from "./types";
 
 /** One song as a row draws it: from the catalogue, or from Hiroba's own words when it lacks it. */
 export interface SongLook {

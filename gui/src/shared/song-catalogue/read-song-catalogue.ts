@@ -1,7 +1,13 @@
-import { err, ok, type Result, type Transport } from "@abth/core";
+import {
+  err,
+  ok,
+  parseWikiSongs,
+  type Result,
+  type SongCatalogueRead,
+  type Transport,
+} from "@abth/core";
 
-import type { SongCatalogueFailure, SongCatalogueRead } from "./types";
-import { parseWikiSongs } from "./wiki-songs";
+import type { SongCatalogueFailure } from "./types";
 
 // The whole list is a few megabytes.
 const CATALOGUE_TIMEOUT_MS = 30_000;

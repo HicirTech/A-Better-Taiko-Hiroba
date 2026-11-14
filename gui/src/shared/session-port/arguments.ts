@@ -1,14 +1,16 @@
-import type { Genre, Level, RatingSystem, ScoreRank } from "@abth/core";
+import {
+  DIFFICULTIES,
+  type Genre,
+  isDifficulty,
+  type Level,
+  type RatingSystem,
+  type ScoreRank,
+} from "@abth/core";
 
 // Not the index: the preload must not load the pipelines, and the core with them.
 import { KEPT_GROUPS } from "../pipelines/kept-groups";
 import { isSetName } from "../sets/favorite-sets";
-import {
-  CHART_PICTURE_MAX_BYTES,
-  type ChartPictureRead,
-  DIFFICULTIES,
-  isDifficulty,
-} from "../song-catalogue/types";
+import { CHART_PICTURE_MAX_BYTES, type ChartPictureRead } from "../song-catalogue/types";
 
 import type {
   CostumeSet,

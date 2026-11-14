@@ -1,4 +1,4 @@
-import type { Difficulty } from "./types";
+import type { Difficulty } from "@abth/core";
 
 /** ABTH CDN: ESE's charts drawn ahead of time, with their note counts, on GitHub Pages. */
 export const ABTH_CDN_URL = "https://hicirtech.github.io/abth-cdn/";

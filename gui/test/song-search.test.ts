@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import type { CatalogueSong } from "@abth/core";
 import type { Locale } from "@abth/i18n";
-
 import {
   fold,
   foldChar,
@@ -9,7 +9,6 @@ import {
   searchSongs,
   segmentsOf,
 } from "../src/shared/song-catalogue/song-search";
-import type { CatalogueSong } from "../src/shared/song-catalogue/types";
 import { song } from "./song-fixtures";
 
 describe("fold", () => {

@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "@abth/core";
+import { type Difficulty, err, ok, type Result } from "@abth/core";
 
 import { PICTURE_EPOCH, type PictureKey, type PictureStore } from "../picture-store";
 import { type GroupAsked, type Pipeline, resultFailure } from "../pipelines";
@@ -7,7 +7,7 @@ import type { PictureFailure, PictureView } from "../session-port/types";
 import { cdnChartPath } from "./abth-cdn";
 import { isChartPictureAddress } from "./catalogue-links";
 import { sniffPicture } from "./sniff-picture";
-import { CHART_PICTURE_MAX_BYTES, type ChartPictureRead, type Difficulty } from "./types";
+import { CHART_PICTURE_MAX_BYTES, type ChartPictureRead } from "./types";
 
 const CHART_PICTURE_TIMEOUT_MS = 30_000;
 

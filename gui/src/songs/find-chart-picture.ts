@@ -1,9 +1,9 @@
-import type { Result } from "@abth/core";
+import type { Difficulty, Result } from "@abth/core";
 
 import type { HirobaSessionPort, PictureView } from "../shared/session-port";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import { viewOf } from "../shared/song-catalogue/read-chart-picture";
-import type { ChartFileFailure, Difficulty } from "../shared/song-catalogue/types";
+import type { ChartFileFailure } from "../shared/song-catalogue/types";
 import type { ChartPicturePort } from "./chart-port";
 
 /** What a song's details show for a chart. */
