@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { PICTURE_EPOCH } from "../../src/hiroba-session";
 import { IDP_MARKER, root, userDataOf } from "./config";
-import { type Ctx, LANES } from "./context";
+import { type AfterSection, type Ctx, LANES } from "./context";
 
 function* walk(dir: string): Generator<string> {
   for (const name of readdirSync(dir)) {
@@ -15,7 +15,7 @@ function* walk(dir: string): Generator<string> {
   }
 }
 
-export const dataFolderKeys = [
+const dataFolderKeys = [
   "userDataHits",
   "partitionsFolder",
   "debugReadsRedacted",
@@ -34,7 +34,7 @@ interface KeptChange {
   readonly to: { readonly highScore: number | null };
 }
 
-export async function dataFolder(ctx: Ctx) {
+async function dataFolder(ctx: Ctx) {
   const { medalIds, results, tokens } = ctx;
   const folders = [...LANES.keys()]
     .map((lane) => userDataOf(lane))
@@ -124,3 +124,10 @@ export async function dataFolder(ctx: Ctx) {
     ),
   );
 }
+
+export const DATA_FOLDER_SECTION: AfterSection = {
+  name: "data-folder",
+  phase: "after",
+  keys: dataFolderKeys,
+  run: dataFolder,
+};

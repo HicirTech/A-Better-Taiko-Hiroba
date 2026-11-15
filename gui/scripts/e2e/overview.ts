@@ -2,7 +2,7 @@ import { SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
 import { TITLE_PLATE } from "../mock-pictures";
 import type { App } from "./app";
 import { PANEL_ART, REPORT_CODE } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import {
   holdOwnSize,
   pageHelpers,
@@ -148,7 +148,7 @@ export function overviewHelpers(app: App) {
   };
 }
 
-export const overviewKeys = [
+const overviewKeys = [
   "profileShown",
   "panelSharesShown",
   "panelBlocksShown",
@@ -170,7 +170,7 @@ export const overviewKeys = [
   "overviewSharePicture",
 ] as const;
 
-export async function overview(ctx: Ctx) {
+async function overview(ctx: Ctx) {
   const running = ctx.app;
   const { results, state, tokens } = ctx;
   const { page, text, textOf } = running;
@@ -320,3 +320,11 @@ export async function overview(ctx: Ctx) {
   results.overviewSharePicture = picture;
   results.overviewShareSavesThePicture = savedWhole(picture, SNAPSHOT_WIDTH_PX);
 }
+
+export const OVERVIEW_SECTION: LaneSection = {
+  name: "overview",
+  phase: "signedIn",
+  lane: "profile",
+  keys: overviewKeys,
+  run: overview,
+};

@@ -1,7 +1,7 @@
 /** The favourites' verbs through the bridge: what each sends Hiroba, and how a folder is staged. */
 import type { FavoritesState } from "../mock-favorites";
 import { HIROBA } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { same } from "./harness";
 import { requestLog, resetLog } from "./stand-in";
 
@@ -18,7 +18,7 @@ const favoritesNow = async (query = "") =>
 const slotsOf = (songs: string[]) => Array.from({ length: 30 }, (_, index) => songs[index] ?? null);
 const stagingGets = (log: string[]) => log.filter((line) => line === FOLDER_PAGE).length - 2;
 
-export const favoriteWritesKeys = [
+const favoriteWritesKeys = [
   "favoritesOpenReadsBothEditors",
   "folderWriteStagesOnlyTheChangedSlots",
   "folderWriteEmptiesTheSlotsLeftOver",
@@ -30,7 +30,7 @@ export const favoriteWritesKeys = [
   "chineseNamesRead",
 ] as const;
 
-export async function favoriteWrites(ctx: Ctx) {
+async function favoriteWrites(ctx: Ctx) {
   const { results } = ctx;
   const { page } = ctx.app;
   const call = <T>(script: string) => page.evaluate<T>(script);
@@ -131,3 +131,11 @@ export async function favoriteWrites(ctx: Ctx) {
   );
   results.chineseNamesRead = names.ok && names.value?.pages.length === 5;
 }
+
+export const FAVORITE_WRITES_SECTION: LaneSection = {
+  name: "favorite-writes",
+  phase: "signedIn",
+  lane: "names",
+  keys: favoriteWritesKeys,
+  run: favoriteWrites,
+};

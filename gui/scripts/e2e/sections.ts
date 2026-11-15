@@ -1,271 +1,104 @@
 import type { Section } from "./context";
 import {
-  costumeEditor,
-  costumeEditorKeys,
-  costumeWrite,
-  costumeWriteKeys,
-  portraitPreview,
-  portraitPreviewKeys,
+  COSTUME_EDITOR_SECTION,
+  COSTUME_WRITE_SECTION,
+  PORTRAIT_PREVIEW_SECTION,
 } from "./costume-editor";
 import {
-  costumeLayout,
-  costumeLayoutKeys,
-  costumePhone,
-  costumePhoneKeys,
-  costumeTiles,
-  costumeTilesKeys,
+  COSTUME_LAYOUT_SECTION,
+  COSTUME_PHONE_SECTION,
+  COSTUME_TILES_SECTION,
 } from "./costume-layout";
 import {
-  saveInPlace,
-  saveInPlaceKeys,
-  thumbnails,
-  thumbnailsKeys,
-  tileThumbnails,
-  tileThumbnailsKeys,
+  SAVE_IN_PLACE_SECTION,
+  THUMBNAILS_SECTION,
+  TILE_THUMBNAILS_SECTION,
 } from "./costume-thumbnails";
-import { dataFolder, dataFolderKeys } from "./data-folder";
-import { favoriteWrites, favoriteWritesKeys } from "./favorite-writes";
-import { favorites, favoritesKeys } from "./favorites";
-import { gifts, giftsKeys } from "./gifts";
-import { knowYourself, knowYourselfKeys } from "./know-yourself";
-import { menuSwipe, menuSwipeKeys } from "./menu-swipe";
+import { DATA_FOLDER_SECTION } from "./data-folder";
+import { FAVORITE_WRITES_SECTION } from "./favorite-writes";
+import { FAVORITES_SECTION } from "./favorites";
+import { GIFTS_SECTION } from "./gifts";
+import { KNOW_YOURSELF_SECTION } from "./know-yourself";
+import { MENU_SWIPE_SECTION } from "./menu-swipe";
 import {
-  namePlate,
-  namePlateKeys,
-  nameTitleWrites,
-  nameTitleWritesKeys,
-  nickname,
-  nicknameKeys,
-  title,
-  titleKeys,
+  NAME_PLATE_SECTION,
+  NAME_TITLE_WRITES_SECTION,
+  NICKNAME_SECTION,
+  TITLE_SECTION,
 } from "./name-title";
-import { overview, overviewKeys } from "./overview";
-import { pageGone, pageGoneKeys } from "./page-gone";
+import { OVERVIEW_SECTION } from "./overview";
+import { PAGE_GONE_SECTION } from "./page-gone";
 import {
-  medalPlate,
-  medalPlateKeys,
-  myDonFailure,
-  myDonFailureKeys,
-  pictures,
-  picturesKeys,
-  titlePlate,
-  titlePlateKeys,
+  MEDAL_PLATE_SECTION,
+  MY_DON_FAILURE_SECTION,
+  PICTURES_SECTION,
+  TITLE_PLATE_SECTION,
 } from "./pictures";
-import { picturesAgain, picturesAgainKeys } from "./pictures-again";
-import { pipelinesPage, pipelinesPageKeys } from "./pipelines-page";
-import { rating, ratingKeys } from "./rating";
-import { profileVariants, profileVariantsKeys, readAgain, readAgainKeys } from "./read-again";
-import { scoreSets, scoreSetsKeys } from "./score-sets";
-import { scores, scoresKeys } from "./scores";
+import { PICTURES_AGAIN_SECTION } from "./pictures-again";
+import { PIPELINES_PAGE_SECTION } from "./pipelines-page";
+import { RATING_SECTION } from "./rating";
+import { PROFILE_VARIANTS_SECTION, READ_AGAIN_SECTION } from "./read-again";
+import { SCORE_SETS_SECTION } from "./score-sets";
+import { SCORES_SECTION } from "./scores";
 import {
-  portraitRequests,
-  portraitRequestsKeys,
-  reopen,
-  reopenKeys,
-  sessionExpiry,
-  sessionExpiryKeys,
-  signedOutReopen,
-  signedOutReopenKeys,
+  PORTRAIT_REQUESTS_SECTION,
+  REOPEN_SECTION,
+  SESSION_EXPIRY_SECTION,
+  SIGNED_OUT_REOPEN_SECTION,
 } from "./session";
-import {
-  appearance,
-  appearanceKeys,
-  language,
-  languageKeys,
-  settings,
-  settingsKeys,
-} from "./settings";
-import { signedOut, signedOutKeys } from "./signed-out";
-import { songSearch, songSearchKeys } from "./song-search";
-import { tips, tipsKeys } from "./tips";
-import { updates, updatesKeys } from "./updates";
-import {
-  bridgeWrites,
-  bridgeWritesKeys,
-  firstReads,
-  firstReadsKeys,
-  heldWrites,
-  heldWritesKeys,
-} from "./writes";
+import { APPEARANCE_SECTION, LANGUAGE_SECTION, SETTINGS_SECTION } from "./settings";
+import { SIGNED_OUT_SECTION } from "./signed-out";
+import { SONG_SEARCH_SECTION } from "./song-search";
+import { TIPS_SECTION } from "./tips";
+import { UPDATES_SECTION } from "./updates";
+import { BRIDGE_WRITES_SECTION, FIRST_READS_SECTION, HELD_WRITES_SECTION } from "./writes";
 
 /** Every section in the order they run: in a serial run all of them, in a lane its own. */
 export const SECTIONS: readonly Section[] = [
-  { name: "language", phase: "none", lane: "names", keys: languageKeys, run: language },
-  { name: "appearance", phase: "none", lane: "names", keys: appearanceKeys, run: appearance },
-  { name: "updates", phase: "none", lane: "names", keys: updatesKeys, run: updates },
-  { name: "page-gone", phase: "none", lane: "names", keys: pageGoneKeys, run: pageGone },
-  { name: "signed-out", phase: "signedOut", lane: "names", keys: signedOutKeys, run: signedOut },
-  { name: "overview", phase: "signedIn", lane: "profile", keys: overviewKeys, run: overview },
-  { name: "settings", phase: "signedIn", lane: "profile", keys: settingsKeys, run: settings },
-  { name: "menu-swipe", phase: "signedIn", lane: "profile", keys: menuSwipeKeys, run: menuSwipe },
-  {
-    name: "my-don-failure",
-    phase: "signedIn",
-    lane: "profile",
-    keys: myDonFailureKeys,
-    run: myDonFailure,
-  },
-  {
-    name: "costume-editor",
-    phase: "signedIn",
-    lane: "profile",
-    keys: costumeEditorKeys,
-    run: costumeEditor,
-  },
-  { name: "pictures", phase: "signedIn", lane: "profile", keys: picturesKeys, run: pictures },
-  { name: "read-again", phase: "signedIn", lane: "profile", keys: readAgainKeys, run: readAgain },
-  {
-    name: "profile-variants",
-    phase: "signedIn",
-    lane: "profile",
-    keys: profileVariantsKeys,
-    run: profileVariants,
-  },
-  {
-    name: "title-plate",
-    phase: "signedIn",
-    lane: "profile",
-    keys: titlePlateKeys,
-    run: titlePlate,
-  },
-  {
-    name: "medal-plate",
-    phase: "signedIn",
-    lane: "profile",
-    keys: medalPlateKeys,
-    run: medalPlate,
-  },
-  {
-    name: "pictures-again",
-    phase: "signedIn",
-    lane: "profile",
-    keys: picturesAgainKeys,
-    run: picturesAgain,
-  },
-  {
-    name: "portrait-preview",
-    phase: "signedIn",
-    lane: "costume",
-    keys: portraitPreviewKeys,
-    run: portraitPreview,
-  },
-  { name: "thumbnails", phase: "signedIn", lane: "costume", keys: thumbnailsKeys, run: thumbnails },
-  {
-    name: "costume-write",
-    phase: "signedIn",
-    lane: "costume",
-    keys: costumeWriteKeys,
-    run: costumeWrite,
-  },
-  {
-    name: "costume-layout",
-    phase: "signedIn",
-    lane: "costume",
-    keys: costumeLayoutKeys,
-    run: costumeLayout,
-  },
-  {
-    name: "costume-tiles",
-    phase: "signedIn",
-    lane: "costume",
-    keys: costumeTilesKeys,
-    run: costumeTiles,
-  },
-  {
-    name: "tile-thumbnails",
-    phase: "signedIn",
-    lane: "costume",
-    keys: tileThumbnailsKeys,
-    run: tileThumbnails,
-  },
-  {
-    name: "save-in-place",
-    phase: "signedIn",
-    lane: "costume",
-    keys: saveInPlaceKeys,
-    run: saveInPlace,
-  },
-  {
-    name: "costume-phone",
-    phase: "signedIn",
-    lane: "costume",
-    keys: costumePhoneKeys,
-    run: costumePhone,
-  },
-  {
-    name: "bridge-writes",
-    phase: "signedIn",
-    lane: "costume",
-    keys: bridgeWritesKeys,
-    run: bridgeWrites,
-  },
-  { name: "title", phase: "signedIn", lane: "names", keys: titleKeys, run: title },
-  { name: "nickname", phase: "signedIn", lane: "names", keys: nicknameKeys, run: nickname },
-  {
-    name: "name-title-writes",
-    phase: "signedIn",
-    lane: "names",
-    keys: nameTitleWritesKeys,
-    run: nameTitleWrites,
-  },
-  { name: "name-plate", phase: "signedIn", lane: "names", keys: namePlateKeys, run: namePlate },
-  {
-    name: "favorite-writes",
-    phase: "signedIn",
-    lane: "names",
-    keys: favoriteWritesKeys,
-    run: favoriteWrites,
-  },
-  { name: "favorites", phase: "signedIn", lane: "names", keys: favoritesKeys, run: favorites },
-  { name: "gifts", phase: "signedIn", lane: "names", keys: giftsKeys, run: gifts },
-  { name: "song-search", phase: "signedIn", lane: "songs", keys: songSearchKeys, run: songSearch },
-  { name: "scores", phase: "signedIn", lane: "songs", keys: scoresKeys, run: scores },
-  {
-    name: "pipelines-page",
-    phase: "signedIn",
-    lane: "songs",
-    keys: pipelinesPageKeys,
-    run: pipelinesPage,
-  },
-  { name: "rating", phase: "signedIn", lane: "songs", keys: ratingKeys, run: rating },
-  { name: "score-sets", phase: "signedIn", lane: "songs", keys: scoreSetsKeys, run: scoreSets },
-  {
-    name: "know-yourself",
-    phase: "signedIn",
-    lane: "songs",
-    keys: knowYourselfKeys,
-    run: knowYourself,
-  },
-  { name: "tips", phase: "signedIn", lane: "songs", keys: tipsKeys, run: tips },
-  {
-    name: "session-expiry",
-    phase: "signedIn",
-    lane: "costume",
-    keys: sessionExpiryKeys,
-    run: sessionExpiry,
-  },
-  { name: "reopen", phase: "signedIn", lane: "costume", keys: reopenKeys, run: reopen },
-  {
-    name: "signed-out-reopen",
-    phase: "signedIn",
-    lane: "costume",
-    keys: signedOutReopenKeys,
-    run: signedOutReopen,
-  },
-  {
-    name: "held-writes",
-    phase: "signedIn",
-    lane: "costume",
-    keys: heldWritesKeys,
-    run: heldWrites,
-  },
-  {
-    name: "first-reads",
-    phase: "signedIn",
-    lane: "costume",
-    keys: firstReadsKeys,
-    run: firstReads,
-  },
-  { name: "portrait-requests", phase: "after", keys: portraitRequestsKeys, run: portraitRequests },
-  { name: "data-folder", phase: "after", keys: dataFolderKeys, run: dataFolder },
+  LANGUAGE_SECTION,
+  APPEARANCE_SECTION,
+  UPDATES_SECTION,
+  PAGE_GONE_SECTION,
+  SIGNED_OUT_SECTION,
+  OVERVIEW_SECTION,
+  SETTINGS_SECTION,
+  MENU_SWIPE_SECTION,
+  MY_DON_FAILURE_SECTION,
+  COSTUME_EDITOR_SECTION,
+  PICTURES_SECTION,
+  READ_AGAIN_SECTION,
+  PROFILE_VARIANTS_SECTION,
+  TITLE_PLATE_SECTION,
+  MEDAL_PLATE_SECTION,
+  PICTURES_AGAIN_SECTION,
+  PORTRAIT_PREVIEW_SECTION,
+  THUMBNAILS_SECTION,
+  COSTUME_WRITE_SECTION,
+  COSTUME_LAYOUT_SECTION,
+  COSTUME_TILES_SECTION,
+  TILE_THUMBNAILS_SECTION,
+  SAVE_IN_PLACE_SECTION,
+  COSTUME_PHONE_SECTION,
+  BRIDGE_WRITES_SECTION,
+  TITLE_SECTION,
+  NICKNAME_SECTION,
+  NAME_TITLE_WRITES_SECTION,
+  NAME_PLATE_SECTION,
+  FAVORITE_WRITES_SECTION,
+  FAVORITES_SECTION,
+  GIFTS_SECTION,
+  SONG_SEARCH_SECTION,
+  SCORES_SECTION,
+  PIPELINES_PAGE_SECTION,
+  RATING_SECTION,
+  SCORE_SETS_SECTION,
+  KNOW_YOURSELF_SECTION,
+  TIPS_SECTION,
+  SESSION_EXPIRY_SECTION,
+  REOPEN_SECTION,
+  SIGNED_OUT_REOPEN_SECTION,
+  HELD_WRITES_SECTION,
+  FIRST_READS_SECTION,
+  PORTRAIT_REQUESTS_SECTION,
+  DATA_FOLDER_SECTION,
 ];

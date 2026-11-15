@@ -3,11 +3,11 @@ import type { Locale } from "@abth/i18n";
 import { DEFAULT_TOKENS } from "../../src/theme/tokens";
 import { launch, stop } from "./app";
 import { APPEARANCE_USER_DATA, en, ja, LANGUAGE_USER_DATA, NOON_JST, zhHant } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { same, waitFor } from "./harness";
 import { platesAsked, readHits } from "./stand-in";
 
-export const languageKeys = [
+const languageKeys = [
   "systemLanguageTaken",
   "choicesNameEachLanguage",
   "pageKeptAcrossLaunches",
@@ -19,7 +19,7 @@ export const languageKeys = [
   "choicesMoveByArrows",
 ] as const;
 
-export async function language(ctx: Ctx) {
+async function language(ctx: Ctx) {
   const { results } = ctx;
 
   const SYSTEM_ZH_HANT = zhHant.t("language.system", { name: "繁體中文" });
@@ -137,7 +137,7 @@ export async function language(ctx: Ctx) {
   }
 }
 
-export const appearanceKeys = [
+const appearanceKeys = [
   "appearanceStartsAsInstalled",
   "hirobasColoursTakeHold",
   "darkModeTakesHold",
@@ -149,7 +149,7 @@ export const appearanceKeys = [
 const HIROBA_LIGHT = { page: "rgb(255, 204, 0)", panel: "rgb(154, 18, 0)" };
 const HIROBA_DARK = { page: "rgb(21, 8, 38)", panel: "rgb(77, 9, 0)" };
 
-export async function appearance(ctx: Ctx) {
+async function appearance(ctx: Ctx) {
   const { results } = ctx;
   const lookOf = (app: Awaited<ReturnType<typeof launch>>) =>
     app.page.evaluate<Record<string, string | null>>(
@@ -214,7 +214,7 @@ export async function appearance(ctx: Ctx) {
   }
 }
 
-export const settingsKeys = [
+const settingsKeys = [
   "settingsLaidOutLikeGmail",
   "githubOpensTheRepository",
   "languageRedrawsInPlace",
@@ -225,7 +225,7 @@ export const settingsKeys = [
   "gameTermsLeftUnmarked",
 ] as const;
 
-export async function settings(ctx: Ctx) {
+async function settings(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
 
@@ -324,3 +324,27 @@ export async function settings(ctx: Ctx) {
       `document.querySelectorAll("#ranks [lang], #crowns [lang]").length`,
     )) === 0;
 }
+
+export const LANGUAGE_SECTION: LaneSection = {
+  name: "language",
+  phase: "none",
+  lane: "names",
+  keys: languageKeys,
+  run: language,
+};
+
+export const APPEARANCE_SECTION: LaneSection = {
+  name: "appearance",
+  phase: "none",
+  lane: "names",
+  keys: appearanceKeys,
+  run: appearance,
+};
+
+export const SETTINGS_SECTION: LaneSection = {
+  name: "settings",
+  phase: "signedIn",
+  lane: "profile",
+  keys: settingsKeys,
+  run: settings,
+};

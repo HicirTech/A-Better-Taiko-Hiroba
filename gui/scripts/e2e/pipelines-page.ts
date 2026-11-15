@@ -1,11 +1,11 @@
 /** The pipelines page, one level past the pages' list: by its arrow, or by a swipe on a touch screen. */
 import { PICTURE_NAMES } from "../../src/pipelines-page/operation-names";
 import { en } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import { platesAsked, readHits } from "./stand-in";
 
-export const pipelinesPageKeys = [
+const pipelinesPageKeys = [
   "pipelinesArrowBesideTheLastRead",
   "pipelinesOpenByTheArrow",
   "playHistoryListsItsPages",
@@ -35,7 +35,7 @@ const namesAPicture = (line: string) =>
 const FACTS = /^started \d{1,2}:\d{2}:\d{2}(\s[AP]M)? · took \d+(\.\d)? s · requests: \d+$/;
 const ENDED_ROW = '[aria-label="Recently ended"] button';
 
-export async function pipelinesPage(ctx: Ctx) {
+async function pipelinesPage(ctx: Ctx) {
   const { results } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
   const { atSize, attribute, boxOf, exists, menuClosed, swipe, touchEmulated } = pageHelpers(page);
@@ -241,3 +241,11 @@ export async function pipelinesPage(ctx: Ctx) {
   });
   await goTo("overview");
 }
+
+export const PIPELINES_PAGE_SECTION: LaneSection = {
+  name: "pipelines-page",
+  phase: "signedIn",
+  lane: "songs",
+  keys: pipelinesPageKeys,
+  run: pipelinesPage,
+};

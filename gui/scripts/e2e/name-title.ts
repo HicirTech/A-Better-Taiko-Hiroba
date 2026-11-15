@@ -7,7 +7,7 @@ import {
   REFUSED_NAME,
 } from "../mock-profile";
 import { en, HIROBA } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import {
   hoverOver,
   middleOf,
@@ -43,7 +43,7 @@ import {
   titleOf,
 } from "./stand-in";
 
-export const titleKeys = [
+const titleKeys = [
   "titleListShown",
   "titleWornMarked",
   "titleAndNameWordsMarkedJapanese",
@@ -66,7 +66,7 @@ export const titleKeys = [
   "titleCostumeMovedIsDiverged",
 ] as const;
 
-export async function title(ctx: Ctx) {
+async function title(ctx: Ctx) {
   const { results } = ctx;
   const { goTo, page, text, textOf } = ctx.app;
   const { exists } = pageHelpers(page);
@@ -328,7 +328,7 @@ export async function title(ctx: Ctx) {
   await readTitlesAgain();
 }
 
-export const nicknameKeys = [
+const nicknameKeys = [
   "nameTitleEditsDroppedOnLeaving",
   "nameFieldPrefilled",
   "nameMaxLengthAndCounter",
@@ -345,7 +345,7 @@ export const nicknameKeys = [
   "nameEnterWhileComposingSendsNothing",
 ] as const;
 
-export async function nickname(ctx: Ctx) {
+async function nickname(ctx: Ctx) {
   const { results } = ctx;
   const { page, text, textOf } = ctx.app;
   const { attribute, exists } = pageHelpers(page);
@@ -559,7 +559,7 @@ export async function nickname(ctx: Ctx) {
     enterInComposition.step === "idle";
 }
 
-export const nameTitleWritesKeys = [
+const nameTitleWritesKeys = [
   "nameEnterSavesAValidNickname",
   "noReadInsideAWriteHeldAtASave",
   "noReadInsideAWriteHeldAtAPrecheck",
@@ -568,7 +568,7 @@ export const nameTitleWritesKeys = [
   "formTokensKeptOutOfDom",
 ] as const;
 
-export async function nameTitleWrites(ctx: Ctx) {
+async function nameTitleWrites(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, goTo, page, textOf, until } = ctx.app;
   const { fabState, press } = pageHelpers(page);
@@ -683,13 +683,13 @@ export async function nameTitleWrites(ctx: Ctx) {
     handedOut.length > 0 && !handedOut.some((ticket) => windowNow.includes(ticket));
 }
 
-export const namePlateKeys = [
+const namePlateKeys = [
   "namePlateIsTheNicknameAndTitleButton",
   "namePlateOpensNicknameAndTitleByClickAndKeys",
   "namePlateOpensNicknameAndTitleByLongPress",
 ] as const;
 
-export async function namePlate(ctx: Ctx) {
+async function namePlate(ctx: Ctx) {
   const { results } = ctx;
   const { currentPage, goTo, page, textOf } = ctx.app;
   const { attribute, boxOf, press, recordClicks, swipe, tooltipClosed, touchClicks } =
@@ -796,3 +796,35 @@ export async function namePlate(ctx: Ctx) {
   await page.send("Emulation.setTouchEmulationEnabled", { enabled: false });
   await goTo("overview");
 }
+
+export const TITLE_SECTION: LaneSection = {
+  name: "title",
+  phase: "signedIn",
+  lane: "names",
+  keys: titleKeys,
+  run: title,
+};
+
+export const NICKNAME_SECTION: LaneSection = {
+  name: "nickname",
+  phase: "signedIn",
+  lane: "names",
+  keys: nicknameKeys,
+  run: nickname,
+};
+
+export const NAME_TITLE_WRITES_SECTION: LaneSection = {
+  name: "name-title-writes",
+  phase: "signedIn",
+  lane: "names",
+  keys: nameTitleWritesKeys,
+  run: nameTitleWrites,
+};
+
+export const NAME_PLATE_SECTION: LaneSection = {
+  name: "name-plate",
+  phase: "signedIn",
+  lane: "names",
+  keys: namePlateKeys,
+  run: namePlate,
+};

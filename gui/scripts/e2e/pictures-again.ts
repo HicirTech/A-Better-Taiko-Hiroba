@@ -1,7 +1,7 @@
 /** A long hold reads a page's pictures again from Hiroba, after a question: three pages. */
 import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
 import { HIROBA, PAGE_SIZE, PANEL_ART } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import {
   hitsOn,
@@ -16,7 +16,7 @@ import {
 /** Tall enough for the whole Overview, so every picture of it is on screen. */
 const WHOLE_OVERVIEW_PX = 1800;
 
-export const picturesAgainKeys = [
+const picturesAgainKeys = [
   "pictureHoldAsksFirst",
   "pictureHoldCancelledReadsNothing",
   "overviewPicturesReadAgain",
@@ -34,7 +34,7 @@ const myPagePictures = async () => ({
   icons: await iconsSettled(),
 });
 
-export async function picturesAgain(ctx: Ctx) {
+async function picturesAgain(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page } = ctx.app;
   const { atSize, attribute, exists, mousePress } = pageHelpers(page);
@@ -118,3 +118,11 @@ export async function picturesAgain(ctx: Ctx) {
   results.titlePlateReadAgain =
     titleSaid === "read" && (await platesSettled()).length === platesBefore + 1;
 }
+
+export const PICTURES_AGAIN_SECTION: LaneSection = {
+  name: "pictures-again",
+  phase: "signedIn",
+  lane: "profile",
+  keys: picturesAgainKeys,
+  run: picturesAgain,
+};

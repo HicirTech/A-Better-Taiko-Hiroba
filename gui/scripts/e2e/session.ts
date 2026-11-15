@@ -11,7 +11,7 @@ import {
   REFUSING_HOST,
   SESSION_FILE,
 } from "./config";
-import type { Ctx } from "./context";
+import type { AfterSection, Ctx, LaneSection } from "./context";
 import { costumeHelpers, type HistoryEntry } from "./costume-helpers";
 import { pageHelpers, same, waitFor, waitForSeen } from "./harness";
 import { overviewHelpers } from "./overview";
@@ -87,7 +87,7 @@ export function sessionHelpers(ctx: Ctx) {
   return { panelArtShownOn, myDonShownOn, medalPlateShown, shownOnReopen, signOut };
 }
 
-export const sessionExpiryKeys = [
+const sessionExpiryKeys = [
   "sessionGoneBeforeSaveSendsNothing",
   "sessionLossLandsOnTheSignIn",
   "sessionGoneAfterSaveIsDroppedAndTheEditorShowsTheSet",
@@ -101,7 +101,7 @@ export const sessionExpiryKeys = [
   "sessionKept",
 ] as const;
 
-export async function sessionExpiry(ctx: Ctx) {
+async function sessionExpiry(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, clickButton, goTo, page, until } = ctx.app;
   const { exists, fabState } = pageHelpers(page);
@@ -216,7 +216,7 @@ export async function sessionExpiry(ctx: Ctx) {
     existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
 }
 
-export const reopenKeys = [
+const reopenKeys = [
   "signedInAfterReopen",
   "readsOnReopen",
   "editorNotReadOnReopen",
@@ -233,7 +233,7 @@ export const reopenKeys = [
   "signOutHandled",
 ] as const;
 
-export async function reopen(ctx: Ctx) {
+async function reopen(ctx: Ctx) {
   let running = ctx.app;
   const { results, state } = ctx;
   const { historyNow, showPartOn } = costumeHelpers(running);
@@ -334,7 +334,7 @@ export async function reopen(ctx: Ctx) {
   results.signOutHandled = (await signOut()) && !existsSync(SESSION_FILE);
 }
 
-export const signedOutReopenKeys = [
+const signedOutReopenKeys = [
   "signedOutAfterReopen",
   "signedOutWritesSendNothing",
   "writesOpenOnAFlaglessLaunch",
@@ -350,7 +350,7 @@ export const signedOutReopenKeys = [
   "historyPickShowsThePictureAtOnceAsksNothing",
 ] as const;
 
-export async function signedOutReopen(ctx: Ctx) {
+async function signedOutReopen(ctx: Ctx) {
   let running = ctx.app;
   const { results, state, tokens } = ctx;
   const { legendIconsShownOn } = overviewHelpers(running);
@@ -520,10 +520,10 @@ export async function signedOutReopen(ctx: Ctx) {
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
 }
 
-export const portraitRequestsKeys = ["myDonSentNoCookie"] as const;
+const portraitRequestsKeys = ["myDonSentNoCookie"] as const;
 
 /** Every lane's My Don requests went bare, from Hiroba's top page, once the lanes have stopped. */
-export async function portraitRequests(ctx: Ctx) {
+async function portraitRequests(ctx: Ctx) {
   const asked = ctx.portraits.flatMap(({ hiroba, asked }) =>
     asked.map((portrait) => ({ hiroba, ...portrait })),
   );
@@ -536,3 +536,34 @@ export async function portraitRequests(ctx: Ctx) {
         query === "?v=&kind=mydon&fn=mydon_000000000000",
     );
 }
+
+export const SESSION_EXPIRY_SECTION: LaneSection = {
+  name: "session-expiry",
+  phase: "signedIn",
+  lane: "costume",
+  keys: sessionExpiryKeys,
+  run: sessionExpiry,
+};
+
+export const REOPEN_SECTION: LaneSection = {
+  name: "reopen",
+  phase: "signedIn",
+  lane: "costume",
+  keys: reopenKeys,
+  run: reopen,
+};
+
+export const SIGNED_OUT_REOPEN_SECTION: LaneSection = {
+  name: "signed-out-reopen",
+  phase: "signedIn",
+  lane: "costume",
+  keys: signedOutReopenKeys,
+  run: signedOutReopen,
+};
+
+export const PORTRAIT_REQUESTS_SECTION: AfterSection = {
+  name: "portrait-requests",
+  phase: "after",
+  keys: portraitRequestsKeys,
+  run: portraitRequests,
+};

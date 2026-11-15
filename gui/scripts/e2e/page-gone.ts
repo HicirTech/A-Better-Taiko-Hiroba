@@ -1,10 +1,10 @@
 import { rmSync } from "node:fs";
 import { launch, stop } from "./app";
 import { CDP_PORT, en, NOON_JST, PAGE_GONE_USER_DATA } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { connect, waitFor } from "./harness";
 
-export const pageGoneKeys = ["pageGoneShowsTheWindowsNote", "pageGoneNoteReloadsTheApp"] as const;
+const pageGoneKeys = ["pageGoneShowsTheWindowsNote", "pageGoneNoteReloadsTheApp"] as const;
 
 /** The window's page attached to anew, once its address is one `wanted` takes. */
 async function pageAt(wanted: (url: string) => boolean) {
@@ -18,7 +18,7 @@ async function pageAt(wanted: (url: string) => boolean) {
   return connect(target.webSocketDebuggerUrl);
 }
 
-export async function pageGone(ctx: Ctx) {
+async function pageGone(ctx: Ctx) {
   const { results } = ctx;
   const signIn = JSON.stringify(en.t("signIn.action"));
   rmSync(PAGE_GONE_USER_DATA, { recursive: true, force: true });
@@ -45,3 +45,11 @@ export async function pageGone(ctx: Ctx) {
     await stop(app);
   }
 }
+
+export const PAGE_GONE_SECTION: LaneSection = {
+  name: "page-gone",
+  phase: "none",
+  lane: "names",
+  keys: pageGoneKeys,
+  run: pageGone,
+};

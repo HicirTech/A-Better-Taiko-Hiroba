@@ -1,10 +1,10 @@
 /** Know yourself: folded parts that each sum up what they find, asking Hiroba nothing. */
 import { en } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import { requestLog, resetLog } from "./stand-in";
 
-export const knowYourselfKeys = [
+const knowYourselfKeys = [
   "knowYourselfAsksHirobaNothing",
   "pagesStartOnTheSettingsDifficulty",
   "partsStartFoldedWithASummary",
@@ -41,7 +41,7 @@ const CHANGING_ROW = "#know-bpm-rows-changing";
 /** Pictures and the stand-in's own data feeds: anything else is a request to Hiroba. */
 const isHirobaPage = (line: string) => !/\.(png|gif|jpe?g)$/.test(line) && !line.includes(" /__");
 
-export async function knowYourself(ctx: Ctx) {
+async function knowYourself(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
   const { attribute, exists, listRows, press } = pageHelpers(page);
@@ -215,3 +215,11 @@ export async function knowYourself(ctx: Ctx) {
   );
   await goTo("overview");
 }
+
+export const KNOW_YOURSELF_SECTION: LaneSection = {
+  name: "know-yourself",
+  phase: "signedIn",
+  lane: "songs",
+  keys: knowYourselfKeys,
+  run: knowYourself,
+};

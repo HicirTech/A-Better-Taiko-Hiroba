@@ -1,11 +1,11 @@
 import { RING_ROOM_PX } from "../../src/my-page/pick-ring";
 import { HIROBA, PHONE_SHORT, PHONE_TALL, TOP_BAND_PX } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { at, costumeHelpers, evenSides, gapsOf, near } from "./costume-helpers";
 import { type Box, hoverOver, pageHelpers, SHIFT_MODIFIER, same, waitFor } from "./harness";
 import { editorHits, hitsOn, START, savedCostume } from "./stand-in";
 
-export const costumeLayoutKeys = [
+const costumeLayoutKeys = [
   "costumeTilesNamedPartFirst",
   "costumeInTwoColumns",
   "costumePreviewIsSquare",
@@ -20,7 +20,7 @@ export const costumeLayoutKeys = [
   "costumeLeftColumnScrollsAwayOnAShortWindow",
 ] as const;
 
-export async function costumeLayout(ctx: Ctx) {
+async function costumeLayout(ctx: Ctx) {
   const { results } = ctx;
   const { page } = ctx.app;
   const { atSize, boxOf, exists } = pageHelpers(page);
@@ -209,7 +209,7 @@ export async function costumeLayout(ctx: Ctx) {
   await fetch(`${HIROBA}/__items?many=0`);
 }
 
-export const costumeTilesKeys = [
+const costumeTilesKeys = [
   "costumePartPickedInTheTileShowsItsGrid",
   "costumeTilesMoveByArrowsAndTabAndPickByEnterAndSpace",
   "costumeTilesNamedByTooltipOnHoverAndFocus",
@@ -217,7 +217,7 @@ export const costumeTilesKeys = [
   "costumeGridPickChangesItsTile",
 ] as const;
 
-export async function costumeTiles(ctx: Ctx) {
+async function costumeTiles(ctx: Ctx) {
   const { results } = ctx;
   const { click, page, textOf } = ctx.app;
   const { exists, press } = pageHelpers(page);
@@ -314,7 +314,7 @@ export async function costumeTiles(ctx: Ctx) {
   results.costumeGridPickChangesItsTile = await gridPickChangesItsTile();
 }
 
-export const costumePhoneKeys = [
+const costumePhoneKeys = [
   "costumePhoneFocusStaysClearOfTheBlockAndTheBar",
   "costumePhoneGridScrollsOutOfSightUnderTheTopBlock",
   "costumeKeepsThePartPickedAcrossWidths",
@@ -334,7 +334,7 @@ export const costumePhoneKeys = [
   "pullReadsTheEditorOnAPhone",
 ] as const;
 
-export async function costumePhone(ctx: Ctx) {
+async function costumePhone(ctx: Ctx) {
   const { results } = ctx;
   const { click, page } = ctx.app;
   const { atSize, attribute, boxOf, exists, press, pullIndicator, swipe, touchEmulated } =
@@ -660,3 +660,27 @@ export async function costumePhone(ctx: Ctx) {
   await fetch(`${HIROBA}/__state?reset=1`);
   await readEditorAgain();
 }
+
+export const COSTUME_LAYOUT_SECTION: LaneSection = {
+  name: "costume-layout",
+  phase: "signedIn",
+  lane: "costume",
+  keys: costumeLayoutKeys,
+  run: costumeLayout,
+};
+
+export const COSTUME_TILES_SECTION: LaneSection = {
+  name: "costume-tiles",
+  phase: "signedIn",
+  lane: "costume",
+  keys: costumeTilesKeys,
+  run: costumeTiles,
+};
+
+export const COSTUME_PHONE_SECTION: LaneSection = {
+  name: "costume-phone",
+  phase: "signedIn",
+  lane: "costume",
+  keys: costumePhoneKeys,
+  run: costumePhone,
+};

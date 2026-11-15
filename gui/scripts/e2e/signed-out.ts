@@ -1,8 +1,8 @@
 import { PORT_CALLS } from "../../src/shared/session-port";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 
-export const signedOutKeys = [
+const signedOutKeys = [
   "launchCoverShowsThenLeaves",
   "launchCoverHidesThePageScrollbar",
   "noNavigationSignedOut",
@@ -11,7 +11,7 @@ export const signedOutKeys = [
   "bridgeIsThePortVerbs",
 ] as const;
 
-export async function signedOut(ctx: Ctx) {
+async function signedOut(ctx: Ctx) {
   const { results } = ctx;
   const { page, textOf, cover } = ctx.app;
   const { atSize, exists, swipe, touchEmulated } = pageHelpers(page);
@@ -72,3 +72,11 @@ export async function signedOut(ctx: Ctx) {
     Object.keys(PORT_CALLS),
   );
 }
+
+export const SIGNED_OUT_SECTION: LaneSection = {
+  name: "signed-out",
+  phase: "signedOut",
+  lane: "names",
+  keys: signedOutKeys,
+  run: signedOut,
+};

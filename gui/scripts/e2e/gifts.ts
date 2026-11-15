@@ -9,7 +9,7 @@ import { SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
 import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
 import { launch, stop } from "./app";
 import { en, HIROBA, LANE, NOON_JST, PICTURES, userDataOf } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { type Page, pageHelpers, same, waitFor } from "./harness";
 import { savedPicture, savedWhole } from "./snapshots";
 
@@ -24,7 +24,7 @@ const SCANNED = userDataOf(LANE, "e2e-scanned");
 // A picture with every picture in it takes a few seconds, and a write as long again.
 const SAID_MS = 60_000;
 
-export const giftsKeys = [
+const giftsKeys = [
   "giftStartsWithItsShareShut",
   "giftPickerListsEverySong",
   "giftHoldsFourSongsAtMost",
@@ -69,7 +69,7 @@ async function pictureInto(page: Page, selector: string, file: string) {
   await page.call("DOM.setFileInputFiles", { files: [file], objectId: found.result?.objectId });
 }
 
-export async function gifts(ctx: Ctx) {
+async function gifts(ctx: Ctx) {
   const { results } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
   const { attribute, exists, rowInView } = pageHelpers(page);
@@ -234,3 +234,11 @@ export async function gifts(ctx: Ctx) {
   ).catch(() => false);
   await opened.click("#gift-dialog-cancel");
 }
+
+export const GIFTS_SECTION: LaneSection = {
+  name: "gifts",
+  phase: "signedIn",
+  lane: "names",
+  keys: giftsKeys,
+  run: gifts,
+};

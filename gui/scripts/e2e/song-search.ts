@@ -13,7 +13,7 @@ import {
 import { TITLE_PLATE } from "../mock-pictures";
 import { SONG_CATALOGUE_PATH } from "../mock-song-catalogue";
 import { en, PHONE_TALL, TOP_BAND_PX } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import { hitsOn } from "./stand-in";
 
@@ -29,7 +29,7 @@ interface LongHold {
   readonly events: readonly string[];
 }
 
-export const songSearchKeys = [
+const songSearchKeys = [
   "searchBarInTheTopBand",
   "searchBarAcrossAPhone",
   "searchFieldKeepsItsPlace",
@@ -77,7 +77,7 @@ export const songSearchKeys = [
   "portraitCloseToItsPlateOnAPhone",
 ] as const;
 
-export async function songSearch(ctx: Ctx) {
+async function songSearch(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
   const { atSize, attribute, boxOf, exists, inPlace, mousePress, press, swipe, touchEmulated } =
@@ -519,3 +519,11 @@ export async function songSearch(ctx: Ctx) {
     }),
   );
 }
+
+export const SONG_SEARCH_SECTION: LaneSection = {
+  name: "song-search",
+  phase: "signedIn",
+  lane: "songs",
+  keys: songSearchKeys,
+  run: songSearch,
+};

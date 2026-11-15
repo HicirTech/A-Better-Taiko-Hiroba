@@ -1,7 +1,7 @@
 import type { VerbsQueued } from "../../src/shared/session-port";
 import { INITIAL_PROFILE } from "../mock-profile";
 import { DAN_LABEL, HIROBA } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { costumeHelpers } from "./costume-helpers";
 import { pageHelpers, pullAt, same, waitFor } from "./harness";
 import { sessionHelpers } from "./session";
@@ -26,7 +26,7 @@ import {
   titleOf,
 } from "./stand-in";
 
-export const bridgeWritesKeys = [
+const bridgeWritesKeys = [
   "trapRefusedUnsent",
   "previewWaitsOutAWrite",
   "pictureWaitsOutAWrite",
@@ -41,7 +41,7 @@ export const bridgeWritesKeys = [
   "saveStoppedForAMovedSetGoesOnceTheEditorHasIt",
 ] as const;
 
-export async function bridgeWrites(ctx: Ctx) {
+async function bridgeWrites(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
   const { boxOf, countTouchMoves, exists, fabState, swipe, touchEmulated, touchMoves } =
@@ -231,9 +231,9 @@ export async function bridgeWrites(ctx: Ctx) {
   await readEditorAgain();
 }
 
-export const heldWritesKeys = ["everyReadWaitsOutEveryWrite"] as const;
+const heldWritesKeys = ["everyReadWaitsOutEveryWrite"] as const;
 
-export async function heldWrites(ctx: Ctx) {
+async function heldWrites(ctx: Ctx) {
   const running = ctx.app;
   const { results, tokens } = ctx;
 
@@ -321,12 +321,12 @@ export async function heldWrites(ctx: Ctx) {
   await fetch(`${HIROBA}/__profile?reset=1`);
 }
 
-export const firstReadsKeys = [
+const firstReadsKeys = [
   "firstTitleReadWaitsOutACostumeWrite",
   "firstEditorReadWaitsOutARename",
 ] as const;
 
-export async function firstReads(ctx: Ctx) {
+async function firstReads(ctx: Ctx) {
   const running = ctx.app;
   const { results, tokens } = ctx;
   const { signOut } = sessionHelpers(ctx);
@@ -437,3 +437,27 @@ export async function firstReads(ctx: Ctx) {
   await signOut();
   tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
 }
+
+export const BRIDGE_WRITES_SECTION: LaneSection = {
+  name: "bridge-writes",
+  phase: "signedIn",
+  lane: "costume",
+  keys: bridgeWritesKeys,
+  run: bridgeWrites,
+};
+
+export const HELD_WRITES_SECTION: LaneSection = {
+  name: "held-writes",
+  phase: "signedIn",
+  lane: "costume",
+  keys: heldWritesKeys,
+  run: heldWrites,
+};
+
+export const FIRST_READS_SECTION: LaneSection = {
+  name: "first-reads",
+  phase: "signedIn",
+  lane: "costume",
+  keys: firstReadsKeys,
+  run: firstReads,
+};
