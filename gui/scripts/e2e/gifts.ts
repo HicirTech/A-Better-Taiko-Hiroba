@@ -1,11 +1,10 @@
 /** Gifts: one made on Favourites and saved as a picture, read by the scan, then accepted. */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { numberedSong } from "@abth/core";
 import sharp from "sharp";
-
 import { giftCode, scannedCodeOf } from "../../src/shared/gifts/gift-code";
 import { qrCodePath, qrTextIn } from "../../src/shared/gifts/qr-codes";
-import { numberedSong } from "../../src/shared/song-catalogue/song-names";
 import { SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
 import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
 import { launch, stop } from "./app";

@@ -1,3 +1,4 @@
+import { fold } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Stack, Typography } from "@mui/material";
 import { useDeferredValue, useMemo, useState } from "react";
@@ -23,7 +24,6 @@ import {
   LEVEL_DIFFICULTY,
 } from "../shared/song-catalogue/genre-look";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
-import { fold } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { PLAY_ROW_PX, PlayRow } from "../songs/play-row";
 import { ScoreDetails } from "../songs/score-details";

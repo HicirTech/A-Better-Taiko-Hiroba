@@ -1,14 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import type { CatalogueSong } from "@abth/core";
 import type { Locale } from "@abth/i18n";
+
 import {
+  type CatalogueSong,
   fold,
   foldChar,
   SEARCH_LIMIT,
   searchedNames,
   searchSongs,
   segmentsOf,
-} from "../src/shared/song-catalogue/song-search";
+} from "../src/index";
 import { song } from "./song-fixtures";
 
 describe("fold", () => {

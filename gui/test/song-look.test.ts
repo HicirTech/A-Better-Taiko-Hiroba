@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { song } from "../../core/test/song-fixtures";
 import type { FavoritesView, ShownSong } from "../src/shared/session-port";
 import {
   levelsOfEntry,
@@ -7,7 +8,6 @@ import {
   rememberedSongs,
   resolveSong,
 } from "../src/shared/song-catalogue/song-look";
-import { song } from "./song-fixtures";
 
 const ALPHA = song({
   songNo: "1001",

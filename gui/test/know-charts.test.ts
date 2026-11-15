@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { CatalogueSong } from "@abth/core";
+import { chart, song } from "../../core/test/song-fixtures";
 import { isCleared, isTried, knownCharts, shownAt } from "../src/know-yourself/known-charts";
 import type { ListedChart, ListedChartsView } from "../src/shared/session-port";
 import { known } from "./known-fixtures";
-import { chart, song } from "./song-fixtures";
 
 const listedChart = (songNo: string, level: ListedChart["level"]): ListedChart => ({
   songNo,

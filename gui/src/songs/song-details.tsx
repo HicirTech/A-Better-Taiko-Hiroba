@@ -1,9 +1,15 @@
-import { DIFFICULTIES, type Difficulty, type Result } from "@abth/core";
+import {
+  DIFFICULTIES,
+  type Difficulty,
+  HIROBA_LANG,
+  nameLanguage,
+  type Result,
+  shownName,
+} from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Stack, ToggleButton, Typography } from "@mui/material";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
-import { HIROBA_LANG } from "../shared/language/hiroba-lang";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
 import {
   DIFFICULTY_COLOUR,
@@ -13,7 +19,6 @@ import {
   GENRE_LABEL,
 } from "../shared/song-catalogue/genre-look";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
-import { nameLanguage, shownName } from "../shared/song-catalogue/song-names";
 import type { ChartFileFailure } from "../shared/song-catalogue/types";
 import type { ListedSong } from "../shared/song-catalogue/use-song-catalogue";
 import { LabelChip } from "../ui/label-chip";

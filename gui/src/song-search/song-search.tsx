@@ -1,3 +1,4 @@
+import { nameLanguage, searchSongs } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import {
   Box,
@@ -19,8 +20,6 @@ import {
 } from "react";
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import { lookOfCatalogue } from "../shared/song-catalogue/song-look";
-import { nameLanguage } from "../shared/song-catalogue/song-names";
-import { searchSongs } from "../shared/song-catalogue/song-search";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { type PickerEntry, PickerList } from "../songs/picker-list";
 import { SongDetails, type SongDetailsSetting } from "../songs/song-details";

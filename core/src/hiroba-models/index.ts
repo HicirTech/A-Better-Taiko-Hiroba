@@ -17,6 +17,7 @@ export {
 export type { FavoriteSongState, FolderState, PickableSongs, ShownSong } from "./favorite";
 export { FOLDER_SLOT_COUNT } from "./favorite";
 export { FormToken } from "./form-token";
+export { HIROBA_LANG } from "./hiroba-lang";
 export type { NameState, TitleOption, TitleState } from "./identity";
 export type {
   CrownCounts,

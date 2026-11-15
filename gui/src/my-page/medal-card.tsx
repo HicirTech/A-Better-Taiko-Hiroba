@@ -1,4 +1,4 @@
-import type { MedalProgress } from "@abth/core";
+import { HIROBA_LANG, type MedalProgress } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Skeleton, Typography } from "@mui/material";
 import { useRef } from "react";
@@ -6,7 +6,6 @@ import { HirobaPicture } from "../pictures/hiroba-picture";
 import { HIROBA_BLOCK, hirobaPx, MAX_BLOCK_SCALE } from "../pictures/hiroba-px";
 import { type PictureLane, viewOf } from "../pictures/picture-lane";
 import { usePicture } from "../pictures/use-picture";
-import { HIROBA_LANG } from "../shared/language/show-language";
 import type { PictureWant, ProfileView } from "../shared/session-port";
 import { ReadFailureAlert } from "../ui/read-failure-alert";
 import { SectionTitle, SectionTitleSkeleton } from "../ui/section-title";
