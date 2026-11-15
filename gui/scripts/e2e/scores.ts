@@ -1,7 +1,7 @@
 /** Scores: read only when asked, every list and played chart first, then what recent plays name. */
 import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
 import { en, HIROBA, TOP_BAND_PX } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import { hitsOn, myPageHits, READ_AGAIN_MY_PAGE_READS, refreshHits } from "./stand-in";
 
@@ -9,7 +9,7 @@ const SCORE_LIST = "/score_list.php";
 const SCORE_DETAIL = "/score_detail.php";
 const HISTORY_PAGE = "/history_recent_score.php";
 
-export const scoresKeys = [
+const scoresKeys = [
   "scoresReadOnlyWhenAsked",
   "scoresStartAtTheShownDifficulty",
   "scoresOpenSortedByRecentPlay",
@@ -76,7 +76,7 @@ interface RowLook {
   readonly facts: readonly string[];
 }
 
-export async function scores(ctx: Ctx) {
+async function scores(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, goTo, page, textOf, until } = ctx.app;
   const {
@@ -489,3 +489,11 @@ export async function scores(ctx: Ctx) {
   });
   await goTo("overview");
 }
+
+export const SCORES_SECTION: LaneSection = {
+  name: "scores",
+  phase: "signedIn",
+  lane: "songs",
+  keys: scoresKeys,
+  run: scores,
+};

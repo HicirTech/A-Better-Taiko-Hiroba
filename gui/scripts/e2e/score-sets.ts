@@ -2,11 +2,11 @@
 
 import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
 import { en } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { middleOf, pageHelpers, same, waitFor } from "./harness";
 import { requestLog, resetLog } from "./stand-in";
 
-export const scoreSetsKeys = [
+const scoreSetsKeys = [
   "rightClickOffersOneAction",
   "chooserOpensWithANewSet",
   "rowMenuAddsToANewSet",
@@ -38,7 +38,7 @@ const isChart = (charted: string) => {
 };
 const songOf = (charted: string) => charted.split("/")[0] ?? "";
 
-export async function scoreSets(ctx: Ctx) {
+async function scoreSets(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page } = ctx.app;
   const { exists, listRows, mousePress, press, rowInView, touchEmulated } = pageHelpers(page);
@@ -174,3 +174,11 @@ export async function scoreSets(ctx: Ctx) {
   );
   await goTo("overview");
 }
+
+export const SCORE_SETS_SECTION: LaneSection = {
+  name: "score-sets",
+  phase: "signedIn",
+  lane: "songs",
+  keys: scoreSetsKeys,
+  run: scoreSets,
+};

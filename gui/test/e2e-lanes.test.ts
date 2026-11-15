@@ -4,7 +4,7 @@ import type { Ctx, LanePortraits, LaneSection } from "../scripts/e2e/context";
 import { newShared } from "../scripts/e2e/context";
 import { mergeReports, newReport, printedReport, REPORT_MARK } from "../scripts/e2e/lane";
 import { SECTIONS } from "../scripts/e2e/sections";
-import { portraitRequests } from "../scripts/e2e/session";
+import { PORTRAIT_REQUESTS_SECTION } from "../scripts/e2e/session";
 
 const section = (name: string, keys: string[]): LaneSection => ({
   name,
@@ -69,7 +69,7 @@ describe("e2e lanes", () => {
 
   test("passes My Don requests that went bare from each lane's own Hiroba", async () => {
     const results: Record<string, unknown> = {};
-    await portraitRequests(contextWith(results, twoLanes()));
+    await PORTRAIT_REQUESTS_SECTION.run(contextWith(results, twoLanes()));
     expect(results.myDonSentNoCookie).toBe(true);
   });
 
@@ -80,7 +80,7 @@ describe("e2e lanes", () => {
     crossed[1]?.asked.push(bare(PROFILE_HIROBA));
     for (const portraits of [withCookie, crossed]) {
       const results: Record<string, unknown> = {};
-      await portraitRequests(contextWith(results, portraits));
+      await PORTRAIT_REQUESTS_SECTION.run(contextWith(results, portraits));
       expect(results.myDonSentNoCookie).toBe(false);
     }
   });

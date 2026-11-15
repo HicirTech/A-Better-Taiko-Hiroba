@@ -1,7 +1,7 @@
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { type Point, pageHelpers, same, waitFor } from "./harness";
 
-export const menuSwipeKeys = [
+const menuSwipeKeys = [
   "navigationShown",
   "menuOnNarrowWindow",
   "everyPageInNavigation",
@@ -34,7 +34,7 @@ const PAGE_ENTRIES = [
   "nav-settings",
 ];
 
-export async function menuSwipe(ctx: Ctx) {
+async function menuSwipe(ctx: Ctx) {
   const { results } = ctx;
   const { click, page, goTo, textOf } = ctx.app;
   const { atSize, attribute, boxOf, exists, menuClosed, menuOpened, press, swipe, touchEmulated } =
@@ -149,3 +149,11 @@ export async function menuSwipe(ctx: Ctx) {
   });
   await goTo("overview");
 }
+
+export const MENU_SWIPE_SECTION: LaneSection = {
+  name: "menu-swipe",
+  phase: "signedIn",
+  lane: "profile",
+  keys: menuSwipeKeys,
+  run: menuSwipe,
+};

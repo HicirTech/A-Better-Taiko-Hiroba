@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { HIROBA, PAGE_SIZE, PANEL_ART, REPORT_CODE, USER_DATA } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import {
   holdOwnSize,
   hoverOver,
@@ -44,9 +44,9 @@ function pictureHelpers(page: Page) {
   return { quiet, shownNow, standsIn };
 }
 
-export const myDonFailureKeys = ["readsAfterReadAgain", "myDonFailureSaysNothing"] as const;
+const myDonFailureKeys = ["readsAfterReadAgain", "myDonFailureSaysNothing"] as const;
 
-export async function myDonFailure(ctx: Ctx) {
+async function myDonFailure(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page, text, until } = ctx.app;
   const { attribute, exists } = pageHelpers(page);
@@ -72,7 +72,7 @@ export async function myDonFailure(ctx: Ctx) {
     !(await text()).includes(REPORT_CODE);
 }
 
-export const picturesKeys = [
+const picturesKeys = [
   "myDonShown",
   "myDonAddressKeptOutOfDom",
   "myDonAgainOnReadAgain",
@@ -83,7 +83,7 @@ export const picturesKeys = [
   "myDonMissingKeepsTheLast",
 ] as const;
 
-export async function pictures(ctx: Ctx) {
+async function pictures(ctx: Ctx) {
   const running = ctx.app;
   const { results, state } = ctx;
   const { click, page, text, textOf, until } = running;
@@ -232,13 +232,13 @@ export async function pictures(ctx: Ctx) {
   await fetch(`${HIROBA}/__mydon?answer=png`);
 }
 
-export const titlePlateKeys = [
+const titlePlateKeys = [
   "myDonAlignedWithoutThePlate",
   "plateBlankFallsBack",
   "plateOncePerTitle",
 ] as const;
 
-export async function titlePlate(ctx: Ctx) {
+async function titlePlate(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page, text, textOf, until } = ctx.app;
   const { tileAlignedAt } = overviewHelpers(ctx.app);
@@ -283,7 +283,7 @@ export async function titlePlate(ctx: Ctx) {
     askedAsMyPage(afterTitles);
 }
 
-export const medalPlateKeys = [
+const medalPlateKeys = [
   "medalPlateAskedOnlyOnScreen",
   "medalPlateMissingReadsAsText",
   "medalPlateDrawnUnderText",
@@ -293,7 +293,7 @@ export const medalPlateKeys = [
   "medalPlateOncePerIdAndState",
 ] as const;
 
-export async function medalPlate(ctx: Ctx) {
+async function medalPlate(ctx: Ctx) {
   const { medalIds, results } = ctx;
   const { click, page, text, textOf, until } = ctx.app;
   const { attribute } = pageHelpers(page);
@@ -452,3 +452,35 @@ export async function medalPlate(ctx: Ctx) {
   await readMedalShowing(() => shownNow("#medal-plate-image"));
   await page.evaluate("window.scrollTo(0, 0)");
 }
+
+export const MY_DON_FAILURE_SECTION: LaneSection = {
+  name: "my-don-failure",
+  phase: "signedIn",
+  lane: "profile",
+  keys: myDonFailureKeys,
+  run: myDonFailure,
+};
+
+export const PICTURES_SECTION: LaneSection = {
+  name: "pictures",
+  phase: "signedIn",
+  lane: "profile",
+  keys: picturesKeys,
+  run: pictures,
+};
+
+export const TITLE_PLATE_SECTION: LaneSection = {
+  name: "title-plate",
+  phase: "signedIn",
+  lane: "profile",
+  keys: titlePlateKeys,
+  run: titlePlate,
+};
+
+export const MEDAL_PLATE_SECTION: LaneSection = {
+  name: "medal-plate",
+  phase: "signedIn",
+  lane: "profile",
+  keys: medalPlateKeys,
+  run: medalPlate,
+};

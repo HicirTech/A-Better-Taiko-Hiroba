@@ -1,6 +1,6 @@
 import { NO_THUMBNAIL_ITEM } from "../mock-costume";
 import { HIROBA, PHONE_SHORT, TOP_BAND_PX } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { at, costumeHelpers, near } from "./costume-helpers";
 import { pageHelpers, same, waitFor, withoutPictureBytes } from "./harness";
 import {
@@ -17,7 +17,7 @@ import {
   thumbsSettled,
 } from "./stand-in";
 
-export const thumbnailsKeys = [
+const thumbnailsKeys = [
   "thumbnailsShownAsPictures",
   "thumbnailsOnlyWhenSeen",
   "pullFromTheGridLeavesAScrolledPageAlone",
@@ -33,7 +33,7 @@ export const thumbnailsKeys = [
   "itemWithNoThumbnailShown",
 ] as const;
 
-export async function thumbnails(ctx: Ctx) {
+async function thumbnails(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, page, textOf } = ctx.app;
   const { boxOf, exists, pullIndicator, swipe, touchEmulated } = pageHelpers(page);
@@ -216,7 +216,7 @@ export async function thumbnails(ctx: Ctx) {
     ) && (await thumbs()).length === thumbsBeforeRefusals;
 }
 
-export const tileThumbnailsKeys = [
+const tileThumbnailsKeys = [
   "tileThumbnailWaitsOutAWriteThenIsAskedOnce",
   "thumbnailsOnlyWhenSeenOnAShortWindow",
   "tileThumbnailWaitsOutAWriteOnAPhone",
@@ -224,7 +224,7 @@ export const tileThumbnailsKeys = [
   "narrowThumbnailsAskedOncePerRun",
 ] as const;
 
-export async function tileThumbnails(ctx: Ctx) {
+async function tileThumbnails(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page } = ctx.app;
   const { atSize, exists, menuClosed, menuOpened } = pageHelpers(page);
@@ -317,7 +317,7 @@ export async function tileThumbnails(ctx: Ctx) {
     thumbnailsOnAPhone.askedAfterReopen === thumbnailsOnAPhone.asked;
 }
 
-export const saveInPlaceKeys = [
+const saveInPlaceKeys = [
   "costumeThumbnailsInViewDuringASaveWaitForIt",
   "costumeSaveKeepsTheEditorAndThePageInPlace",
   "costumePhoneSaveKeepsTheEditorAndThePageInPlace",
@@ -327,7 +327,7 @@ export const saveInPlaceKeys = [
   "costumePhoneNoticeIsBetweenTheBlockAndTheBar",
 ] as const;
 
-export async function saveInPlace(ctx: Ctx) {
+async function saveInPlace(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page } = ctx.app;
   const { atSize, boxOf, exists } = pageHelpers(page);
@@ -517,3 +517,27 @@ export async function saveInPlace(ctx: Ctx) {
     ),
   );
 }
+
+export const THUMBNAILS_SECTION: LaneSection = {
+  name: "thumbnails",
+  phase: "signedIn",
+  lane: "costume",
+  keys: thumbnailsKeys,
+  run: thumbnails,
+};
+
+export const TILE_THUMBNAILS_SECTION: LaneSection = {
+  name: "tile-thumbnails",
+  phase: "signedIn",
+  lane: "costume",
+  keys: tileThumbnailsKeys,
+  run: tileThumbnails,
+};
+
+export const SAVE_IN_PLACE_SECTION: LaneSection = {
+  name: "save-in-place",
+  phase: "signedIn",
+  lane: "costume",
+  keys: saveInPlaceKeys,
+  run: saveInPlace,
+};

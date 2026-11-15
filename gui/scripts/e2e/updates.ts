@@ -2,11 +2,11 @@ import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { type App, launch, stop } from "./app";
 import { en, HIROBA, NOON_JST, root, UPDATE_FEED, UPDATES_USER_DATA } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { same, waitFor } from "./harness";
 import { hitsOn } from "./stand-in";
 
-export const updatesKeys = [
+const updatesKeys = [
   "updateNotAskedWithoutTheFeed",
   "updateDialogForANewerFeed",
   "updateDownloadOpensTheRelease",
@@ -27,7 +27,7 @@ const APP_VERSION = (
 const setFeed = (query: string) => fetch(`${HIROBA}/__update-feed?${query}`);
 const feedHits = () => hitsOn(UPDATE_FEED);
 
-export async function updates(ctx: Ctx) {
+async function updates(ctx: Ctx) {
   const { results } = ctx;
   const launchUpdates = (env: Record<string, string> = FEED_ENV) =>
     launch({ now: NOON_JST, userData: UPDATES_USER_DATA, env });
@@ -149,3 +149,11 @@ export async function updates(ctx: Ctx) {
     rmSync(UPDATES_USER_DATA, { recursive: true, force: true });
   }
 }
+
+export const UPDATES_SECTION: LaneSection = {
+  name: "updates",
+  phase: "none",
+  lane: "names",
+  keys: updatesKeys,
+  run: updates,
+};

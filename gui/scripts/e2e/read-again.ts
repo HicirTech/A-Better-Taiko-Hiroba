@@ -1,5 +1,5 @@
 import { HIROBA } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import {
   hoverOver,
   middleOf,
@@ -24,7 +24,7 @@ import {
   resetLog,
 } from "./stand-in";
 
-export const readAgainKeys = [
+const readAgainKeys = [
   "rotationTakenUp",
   "readAgainAtTheNavFoot",
   "readAgainShutWhileReading",
@@ -42,7 +42,7 @@ export const readAgainKeys = [
 
 const SEARCHES_KEY = "abth.songSearches";
 
-export async function readAgain(ctx: Ctx) {
+async function readAgain(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, currentPage, goTo, page, text, textOf, until } = ctx.app;
   const { atSize, attribute, boxOf, exists, fabState, pullIndicator, swipe, touchEmulated } =
@@ -258,7 +258,7 @@ export async function readAgain(ctx: Ctx) {
   await goTo("overview");
 }
 
-export const profileVariantsKeys = [
+const profileVariantsKeys = [
   "medalCompleteShown",
   "medalOddShownWithTheRest",
   "medalNoneShown",
@@ -273,7 +273,7 @@ export const profileVariantsKeys = [
   "panelZerosShown",
 ] as const;
 
-export async function profileVariants(ctx: Ctx) {
+async function profileVariants(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, page, text, textOf } = ctx.app;
   const { allOf } = pageHelpers(page);
@@ -388,3 +388,19 @@ export async function profileVariants(ctx: Ctx) {
     (await textOf("#score-panel-rank-5")) === "31";
   await fetch(`${HIROBA}/__variant?panel=counts`);
 }
+
+export const READ_AGAIN_SECTION: LaneSection = {
+  name: "read-again",
+  phase: "signedIn",
+  lane: "profile",
+  keys: readAgainKeys,
+  run: readAgain,
+};
+
+export const PROFILE_VARIANTS_SECTION: LaneSection = {
+  name: "profile-variants",
+  phase: "signedIn",
+  lane: "profile",
+  keys: profileVariantsKeys,
+  run: profileVariants,
+};

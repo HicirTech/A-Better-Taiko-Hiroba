@@ -2,14 +2,14 @@
 import { TIPS } from "../../src/pages/page-tips";
 import { SEEN_TIPS_KEY } from "../../src/shared/tips/seen-tips";
 import { en } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 
 const ALL_TIPS = TIPS.map(({ id }) => id);
 /** Long past the time a drawn page waits before its tips start. */
 const NO_TIP_MS = 2500;
 
-export const tipsKeys = [
+const tipsKeys = [
   "tipsShowOnAPageFirstOpened",
   "tipPointsAtWhatItTells",
   "tipNextMarksItSeen",
@@ -21,7 +21,7 @@ export const tipsKeys = [
   "newerTipAloneWhereTheRestWereSeen",
 ] as const;
 
-export async function tips(ctx: Ctx) {
+async function tips(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
   const { attribute, boxOf, exists } = pageHelpers(page);
@@ -126,3 +126,11 @@ export async function tips(ctx: Ctx) {
   await tipsGone();
   await keepSeen(ALL_TIPS);
 }
+
+export const TIPS_SECTION: LaneSection = {
+  name: "tips",
+  phase: "signedIn",
+  lane: "songs",
+  keys: tipsKeys,
+  run: tips,
+};

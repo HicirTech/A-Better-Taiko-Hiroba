@@ -1,7 +1,7 @@
 import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
 import { COSTUME_FIELDS } from "../mock-costume";
 import { HIROBA, PHONE } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { costumeHelpers, PNG_URL } from "./costume-helpers";
 import {
   hoverOver,
@@ -32,7 +32,7 @@ import {
   thumbsSettled,
 } from "./stand-in";
 
-export const costumeEditorKeys = [
+const costumeEditorKeys = [
   "portraitJumpsToCostumeByClick",
   "editorNotReadAtStart",
   "previewShownOnOpen",
@@ -53,7 +53,7 @@ export const costumeEditorKeys = [
   "myDonNotAskedAfterNoChange",
 ] as const;
 
-export async function costumeEditor(ctx: Ctx) {
+async function costumeEditor(ctx: Ctx) {
   const { results, state } = ctx;
   const { click, currentPage, goTo, page, text, textOf } = ctx.app;
   const { atSize, boxOf, exists } = pageHelpers(page);
@@ -213,7 +213,7 @@ export async function costumeEditor(ctx: Ctx) {
     same(await savedCostume(), START);
 }
 
-export const portraitPreviewKeys = [
+const portraitPreviewKeys = [
   "portraitIsTheCostumeButton",
   "portraitJumpsToCostumeByKeyboard",
   "portraitJumpsToCostumeByLongPress",
@@ -225,7 +225,7 @@ export const portraitPreviewKeys = [
   "previewNoneOnceShut",
 ] as const;
 
-export async function portraitPreview(ctx: Ctx) {
+async function portraitPreview(ctx: Ctx) {
   const { results, tokens } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
   const { atSize, attribute, column, exists, press, recordClicks, sameColumn, swipe, touchClicks } =
@@ -384,7 +384,7 @@ export async function portraitPreview(ctx: Ctx) {
   results.previewNoneOnceShut = same(await previewQueries(), []);
 }
 
-export const costumeWriteKeys = [
+const costumeWriteKeys = [
   "colourApplied",
   "appliedShowsNoNotice",
   "colourSentOnlyThePlannedRequests",
@@ -408,7 +408,7 @@ export const costumeWriteKeys = [
   "kigurumiGoneBackInOnePost",
 ] as const;
 
-export async function costumeWrite(ctx: Ctx) {
+async function costumeWrite(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
   const { atSize, attribute, boxOf, exists, press } = pageHelpers(page);
@@ -631,3 +631,27 @@ export async function costumeWrite(ctx: Ctx) {
     same(await savedCostume(), START) &&
     (await hitsOn("/ajax/change_mydon.php")) - savesBeforeGoingBack === 1;
 }
+
+export const COSTUME_EDITOR_SECTION: LaneSection = {
+  name: "costume-editor",
+  phase: "signedIn",
+  lane: "profile",
+  keys: costumeEditorKeys,
+  run: costumeEditor,
+};
+
+export const PORTRAIT_PREVIEW_SECTION: LaneSection = {
+  name: "portrait-preview",
+  phase: "signedIn",
+  lane: "costume",
+  keys: portraitPreviewKeys,
+  run: portraitPreview,
+};
+
+export const COSTUME_WRITE_SECTION: LaneSection = {
+  name: "costume-write",
+  phase: "signedIn",
+  lane: "costume",
+  keys: costumeWriteKeys,
+  run: costumeWrite,
+};

@@ -1,12 +1,12 @@
 /** Rating: from the kept scores and the rating data, which every refresh reads again. */
 import { RATING_SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
 import { en, RATING_DATA, RATING_DATA_V2 } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
 import { savedPicture, savedWhole } from "./snapshots";
 import { hitsOn, refreshHits } from "./stand-in";
 
-export const ratingKeys = [
+const ratingKeys = [
   "ratingDataReadAsThePageFirstOpens",
   "ratingV2DataReadAsThePageFirstOpens",
   "ratingOpensOnV1",
@@ -58,7 +58,7 @@ const descending = (values: readonly number[]) =>
 const skillNames = (skills: readonly Skill[]) =>
   skills.map((skill) => en.t(`rating.figure.${skill}`));
 
-export async function rating(ctx: Ctx) {
+async function rating(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
   const { attribute, exists, fabState, press } = pageHelpers(page);
@@ -179,3 +179,11 @@ export async function rating(ctx: Ctx) {
   await click("#starting-rating-ourtaikoV1");
   await goTo("overview");
 }
+
+export const RATING_SECTION: LaneSection = {
+  name: "rating",
+  phase: "signedIn",
+  lane: "songs",
+  keys: ratingKeys,
+  run: rating,
+};

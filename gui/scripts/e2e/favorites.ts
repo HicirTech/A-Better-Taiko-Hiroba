@@ -2,7 +2,7 @@
 import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
 import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
 import { HIROBA, PHONE_TALL } from "./config";
-import type { Ctx } from "./context";
+import type { Ctx, LaneSection } from "./context";
 import { middleOf, type Point, pageHelpers, same, waitFor } from "./harness";
 import { hitsOn, myPageHits, requestLog, resetLog } from "./stand-in";
 
@@ -26,7 +26,7 @@ const FILTER_CHIPS = ["#song-picker-genre", "#song-picker-difficulty", "#song-pi
 const favoritesNow = async (query = "") =>
   (await (await fetch(`${HIROBA}/__favorites${query}`)).json()) as FavoritesState;
 
-export const favoritesKeys = [
+const favoritesKeys = [
   "readAgainReadsBothEditors",
   "songsShownWithGenreAndLevels",
   "levelsStackBehindTheShownDifficulty",
@@ -82,7 +82,7 @@ export const favoritesKeys = [
   "setActionsStayUnderTheirDialogs",
 ] as const;
 
-export async function favorites(ctx: Ctx) {
+async function favorites(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
   const { atSize, boxOf, exists, fabState, listRows, press, rowInView, swipe, touchEmulated } =
@@ -736,3 +736,11 @@ export async function favorites(ctx: Ctx) {
   });
   await favoritesNow("?reset=1");
 }
+
+export const FAVORITES_SECTION: LaneSection = {
+  name: "favorites",
+  phase: "signedIn",
+  lane: "names",
+  keys: favoritesKeys,
+  run: favorites,
+};
