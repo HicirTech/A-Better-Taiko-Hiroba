@@ -6,12 +6,13 @@ import sharp from "sharp";
 import { giftCode, scannedCodeOf } from "../../src/shared/gifts/gift-code";
 import { qrCodePath, qrTextIn } from "../../src/shared/gifts/qr-codes";
 import { SNAPSHOT_WIDTH_PX } from "../../src/snapshots/snapshot-picture";
-import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
+import { LOCKED_SONG } from "../mock-favorites";
 import { launch, stop } from "./app";
-import { en, HIROBA, LANE, NOON_JST, PICTURES, userDataOf } from "./config";
+import { en, LANE, NOON_JST, PICTURES, userDataOf } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import { type Page, pageHelpers, same, waitFor } from "./harness";
 import { savedPicture, savedWhole } from "./snapshots";
+import { favoritesNow } from "./stand-in";
 
 const GIFT_SONGS = ["1001", "1003", "1005", "1008"];
 /** A fifth song, past what a gift holds: the picker leaves it unticked. */
@@ -40,8 +41,6 @@ const giftsKeys = [
   "giftNamesItsSongsInANewWindow",
 ] as const;
 
-const favoritesNow = async () =>
-  (await (await fetch(`${HIROBA}/__favorites`)).json()) as FavoritesState;
 const folderNow = async () =>
   (await favoritesNow()).folder.filter((songNo): songNo is string => songNo !== null);
 
@@ -72,7 +71,7 @@ async function pictureInto(page: Page, selector: string, file: string) {
 async function gifts(ctx: Ctx) {
   const { results } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
-  const { attribute, exists, rowInView } = pageHelpers(page);
+  const { attribute, exists, rowInView, typeInto } = pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
@@ -80,10 +79,6 @@ async function gifts(ctx: Ctx) {
   const shut = (selector: string) =>
     page.evaluate<boolean>(
       `document.querySelector(${JSON.stringify(selector)})?.disabled === true`,
-    );
-  const typeInto = (selector: string, text: string) =>
-    page.evaluate(
-      `(() => { const input = document.querySelector(${JSON.stringify(selector)}); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
     );
   const said = (outcome: string) =>
     waitFor(

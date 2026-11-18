@@ -6,6 +6,7 @@ import {
   INITIAL_COSTUME,
   type PostRecord,
 } from "../mock-costume";
+import type { FavoritesState } from "../mock-favorites";
 import { crownIconPng, rankIconPng } from "../mock-pictures";
 import { INITIAL_PROFILE, OWNED_TITLES } from "../mock-profile";
 import { DAN_LABEL, HIROBA, MEDAL_PLATE, MY_PAGE, PANEL_ART } from "./config";
@@ -163,6 +164,10 @@ export const previewQuery = (set: Record<string, number>) =>
     .map(([name, part]) => `${name}=${set[part as string]}`)
     .join("&");
 export const resetLog = () => fetch(`${HIROBA}/__log-reset`);
+
+/** The favourites the stand-in holds, after what the query asks of it. */
+export const favoritesNow = async (query = "") =>
+  (await (await fetch(`${HIROBA}/__favorites${query}`)).json()) as FavoritesState;
 
 export const sameBesideLanePictures = (log: string[], expected: string[]) => {
   const kept = log.flatMap((line, index) => (LANE_PICTURES.includes(line) ? [] : [index]));

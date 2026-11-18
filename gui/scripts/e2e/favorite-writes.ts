@@ -1,9 +1,6 @@
-/** The favourites' verbs through the bridge: what each sends Hiroba, and how a folder is staged. */
-import type { FavoritesState } from "../mock-favorites";
-import { HIROBA } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import { same } from "./harness";
-import { requestLog, resetLog } from "./stand-in";
+import { favoritesNow, requestLog, resetLog } from "./stand-in";
 
 const FOLDER_PAGE = "GET /favorite_song_select.php";
 const SONG_PAGE = "GET /portal_favorite_song_select.php";
@@ -13,8 +10,6 @@ const START_FOLDER = ["1001", "1008", "1014", "1020", "1031", "1026"];
 
 type Outcome = { kind: string; after?: { slots?: (string | null)[]; songNo?: string | null } };
 
-const favoritesNow = async (query = "") =>
-  (await (await fetch(`${HIROBA}/__favorites${query}`)).json()) as FavoritesState;
 const slotsOf = (songs: string[]) => Array.from({ length: 30 }, (_, index) => songs[index] ?? null);
 const stagingGets = (log: string[]) => log.filter((line) => line === FOLDER_PAGE).length - 2;
 

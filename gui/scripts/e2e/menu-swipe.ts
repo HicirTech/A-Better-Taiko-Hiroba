@@ -1,5 +1,5 @@
 import type { Ctx, LaneSection } from "./context";
-import { type Point, pageHelpers, same, waitFor } from "./harness";
+import { type Point, pageHelpers, same, settle, waitFor } from "./harness";
 
 const menuSwipeKeys = [
   "navigationShown",
@@ -37,15 +37,23 @@ const PAGE_ENTRIES = [
 async function menuSwipe(ctx: Ctx) {
   const { results } = ctx;
   const { click, page, goTo, textOf } = ctx.app;
-  const { atSize, attribute, boxOf, exists, menuClosed, menuOpened, press, swipe, touchEmulated } =
-    pageHelpers(page);
-  const opened = async () => (await attribute("#nav-menu", "aria-expanded")) === "true";
+  const {
+    atSize,
+    attribute,
+    boxOf,
+    exists,
+    menuClosed,
+    menuOpen,
+    menuOpened,
+    press,
+    swipe,
+    touchEmulated,
+  } = pageHelpers(page);
   // The button's round frame is what a finger would see.
   const frameWidth = () =>
     page.evaluate<number>(
       `document.querySelector("#nav-menu")?.parentElement?.getBoundingClientRect().width ?? -1`,
     );
-  const settle = () => Bun.sleep(500);
   const entriesIn = (selector: string) =>
     page.evaluate<string[]>(
       `[...document.querySelectorAll(${JSON.stringify(`${selector} [id^="nav-"]`)})].map((entry) => entry.id + (entry.querySelector("svg") === null ? ":no-icon" : ""))`,
@@ -112,12 +120,12 @@ async function menuSwipe(ctx: Ctx) {
         (await page.evaluate<boolean>(`document.querySelector("#nav-menu") !== null`));
 
       await swipe({ x: 120, y: 420 }, { x: 220, y: 430 });
-      await waitFor("the menu opened by a swipe", async () => (await opened()) || undefined);
+      await waitFor("the menu opened by a swipe", async () => (await menuOpen()) || undefined);
       results.menuOpensBySwipe = true;
       await settle();
       await swipe({ x: 220, y: 420 }, { x: 100, y: 425 });
       await waitFor("the menu closed by a swipe", async () =>
-        (await opened()) ? undefined : true,
+        (await menuOpen()) ? undefined : true,
       );
       results.menuClosesBySwipe = true;
       await settle();
@@ -140,7 +148,7 @@ async function menuSwipe(ctx: Ctx) {
       for (const [from, to] of others) {
         await swipe(from, to);
         await settle();
-        openedByAnother ||= await opened();
+        openedByAnother ||= await menuOpen();
       }
       results.menuIgnoresOtherMoves = !openedByAnother;
     } finally {
