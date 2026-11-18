@@ -61,7 +61,7 @@ const skillNames = (skills: readonly Skill[]) =>
 async function rating(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { attribute, exists, fabState, press } = pageHelpers(page);
+  const { attribute, exists, press, settled } = pageHelpers(page);
   const values = (list: string) =>
     page.evaluate<number[]>(
       `[...document.querySelectorAll("#${list} .rating-value")].map((cell) => Number(cell.textContent))`,
@@ -74,12 +74,6 @@ async function rating(ctx: Ctx) {
     (await attribute(`#rating-system-${system}`, "aria-pressed")) === "true";
   const totalShown = () =>
     waitFor("the rating", async () => (await textOf("#rating-total")) ?? undefined);
-  const settled = () =>
-    waitFor("the read settled", async () =>
-      same(await fabState(), { shut: false, spinning: false }) && !(await exists("#page-skeleton"))
-        ? true
-        : undefined,
-    );
 
   // The scores section read every played chart; the data is read as the page first opens.
   const dataReads = await hitsOn(RATING_DATA);

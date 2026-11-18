@@ -14,7 +14,7 @@ import { TITLE_PLATE } from "../mock-pictures";
 import { SONG_CATALOGUE_PATH } from "../mock-song-catalogue";
 import { en, PHONE_TALL, TOP_BAND_PX } from "./config";
 import type { Ctx, LaneSection } from "./context";
-import { pageHelpers, same, waitFor } from "./harness";
+import { pageHelpers, same, settle, waitFor } from "./harness";
 import { hitsOn } from "./stand-in";
 
 /** The stand-in's one picture of 1005's inner chart. */
@@ -80,8 +80,18 @@ const songSearchKeys = [
 async function songSearch(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, boxOf, exists, inPlace, mousePress, press, swipe, touchEmulated } =
-    pageHelpers(page);
+  const {
+    atSize,
+    attribute,
+    boxOf,
+    exists,
+    inPlace,
+    menuOpen,
+    mousePress,
+    press,
+    swipe,
+    touchEmulated,
+  } = pageHelpers(page);
   const shown = (selector: string) =>
     waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
   const gone = (selector: string) =>
@@ -459,9 +469,6 @@ async function songSearch(ctx: Ctx) {
       }
     }));
 
-  const menuOpen = async () => (await attribute("#nav-menu", "aria-expanded")) === "true";
-  // Each slide ends before the next move: a closing menu still holds the keys from the details.
-  const settle = () => Bun.sleep(500);
   results.menuSwipesOverTheDetails = await atSize(PHONE_TALL.width, PHONE_TALL.height, async () => {
     await touchEmulated(true);
     try {

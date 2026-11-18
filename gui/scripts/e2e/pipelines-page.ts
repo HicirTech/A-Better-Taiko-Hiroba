@@ -2,7 +2,7 @@
 import { PICTURE_NAMES } from "../../src/pipelines-page/operation-names";
 import { en } from "./config";
 import type { Ctx, LaneSection } from "./context";
-import { pageHelpers, same, waitFor } from "./harness";
+import { pageHelpers, same, settle, waitFor } from "./harness";
 import { platesAsked, readHits } from "./stand-in";
 
 const pipelinesPageKeys = [
@@ -38,8 +38,8 @@ const ENDED_ROW = '[aria-label="Recently ended"] button';
 async function pipelinesPage(ctx: Ctx) {
   const { results } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
-  const { atSize, attribute, boxOf, exists, menuClosed, swipe, touchEmulated } = pageHelpers(page);
-  const settle = () => Bun.sleep(500);
+  const { atSize, attribute, boxOf, exists, menuClosed, menuOpen, swipe, touchEmulated } =
+    pageHelpers(page);
   // The page is there only while it is shown.
   const shown = () => exists("#pipeline-io");
   const opened = () => waitFor("the pipelines page", async () => (await shown()) || undefined);
@@ -216,7 +216,6 @@ async function pipelinesPage(ctx: Ctx) {
 
   // On a phone the menu holds the pages' list: the swipe goes on past it, and back to it.
   await atSize(PHONE.width, PHONE.height, async () => {
-    const menuOpen = async () => (await attribute("#nav-menu", "aria-expanded")) === "true";
     await touchEmulated(true);
     try {
       await settle();

@@ -1,10 +1,10 @@
 /** The Favourites page: its two cards, the sets drawer, the song picker, its filters and search. */
 import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
-import { type FavoritesState, LOCKED_SONG } from "../mock-favorites";
-import { HIROBA, PHONE_TALL } from "./config";
+import { LOCKED_SONG } from "../mock-favorites";
+import { PHONE_TALL } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import { middleOf, type Point, pageHelpers, same, waitFor } from "./harness";
-import { hitsOn, myPageHits, requestLog, resetLog } from "./stand-in";
+import { favoritesNow, hitsOn, myPageHits, requestLog, resetLog } from "./stand-in";
 
 const START_FOLDER = ["1001", "1008", "1014", "1020", "1031", "1026"];
 const FOLDER_PAGE = "GET /favorite_song_select.php";
@@ -22,9 +22,6 @@ const WITH_INNER = "1005";
 const INNER_TEN = ["1036", "1027", "1021", "1017", "1008", "1005"];
 const EXTREME_OR_INNER_TEN = ["1036", "1027", "1021", "1019", "1017", "1008", "1005"];
 const FILTER_CHIPS = ["#song-picker-genre", "#song-picker-difficulty", "#song-picker-level"];
-
-const favoritesNow = async (query = "") =>
-  (await (await fetch(`${HIROBA}/__favorites${query}`)).json()) as FavoritesState;
 
 const favoritesKeys = [
   "readAgainReadsBothEditors",
@@ -85,8 +82,18 @@ const favoritesKeys = [
 async function favorites(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { atSize, boxOf, exists, fabState, listRows, press, rowInView, swipe, touchEmulated } =
-    pageHelpers(page);
+  const {
+    atSize,
+    boxOf,
+    exists,
+    fabState,
+    listRows,
+    press,
+    rowInView,
+    swipe,
+    touchEmulated,
+    typeInto,
+  } = pageHelpers(page);
   const stepIs = (step: string) =>
     waitFor(`favourites ${step}`, async () =>
       (await page.evaluate<string | null>(
@@ -104,10 +111,6 @@ async function favorites(ctx: Ctx) {
     page.evaluate<boolean>(`document.querySelector("#favorites-save")?.disabled !== false`);
   const syncLit = () =>
     waitFor("Sync to Hiroba lit", async () => ((await syncShut()) ? undefined : true));
-  const typeInto = (selector: string, text: string) =>
-    page.evaluate(
-      `(() => { const input = document.querySelector(${JSON.stringify(selector)}); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
-    );
   const search = (query: string) => typeInto("#song-picker-search-input", query);
   const rowText = (songNo: string) => textOf(`#song-picker-row-${songNo}`);
   const placesIn = (selector: string) =>

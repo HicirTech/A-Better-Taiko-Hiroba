@@ -61,6 +61,10 @@ export function middleOf(page: Page, selector: string): Promise<{ x: number; y: 
   );
 }
 
+const SLIDE_MS = 500;
+/** Waits out a menu's or a dialog's slide: while it runs it still takes the keys and touches. */
+export const settle = () => Bun.sleep(SLIDE_MS);
+
 /** The section that is running, named by a wait that times out. */
 let runningSection = "";
 export const setSection = (name: string) => {
@@ -216,6 +220,22 @@ export function pageHelpers(page: Page) {
       `(() => { const fab = document.querySelector("#read-again"); return { shut: fab.disabled, spinning: fab.querySelector(".MuiCircularProgress-root") !== null }; })()`,
     );
 
+  /** Waits until a read has ended: Read again idle, no skeleton over the page. */
+  const settled = () =>
+    waitFor("the read settled", async () =>
+      same(await fabState(), { shut: false, spinning: false }) && !(await exists("#page-skeleton"))
+        ? true
+        : undefined,
+    );
+
+  const menuOpen = async () => (await attribute("#nav-menu", "aria-expanded")) === "true";
+
+  /** Fills an input as React hears it: its own value setter, then an input event. */
+  const typeInto = (selector: string, text: string) =>
+    page.evaluate(
+      `(() => { const input = document.querySelector(${JSON.stringify(selector)}); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
+    );
+
   const swipe = async <T>(from: Point, to: Point, whileDown?: () => Promise<T>) => {
     const STEPS = 12;
     await page.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [from] });
@@ -367,6 +387,9 @@ export function pageHelpers(page: Page) {
     sameColumn,
     tooltipClosed,
     fabState,
+    settled,
+    menuOpen,
+    typeInto,
     swipe,
     pullIndicator,
     touchEmulated,

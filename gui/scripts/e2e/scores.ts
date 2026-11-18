@@ -90,8 +90,11 @@ async function scores(ctx: Ctx) {
     mousePress,
     press,
     rowInView,
+    menuOpen,
+    settled,
     swipe,
     touchEmulated,
+    typeInto,
   } = pageHelpers(page);
   const shownRows = () =>
     listRows<ShownRow>(
@@ -101,12 +104,6 @@ async function scores(ctx: Ctx) {
   const rowOf = (charted: string) => rowInView("#scores-list", isChart(charted));
   const rowsAre = (count: number) =>
     waitFor(`${count} score rows`, async () => (await shownRows()).length === count || undefined);
-  const settled = () =>
-    waitFor("the read settled", async () =>
-      same(await fabState(), { shut: false, spinning: false }) && !(await exists("#page-skeleton"))
-        ? true
-        : undefined,
-    );
   // Every read the player asks for starts with Hiroba's own refresh.
   const readAfter = async (ask: () => Promise<unknown>) => {
     const refreshes = await refreshHits();
@@ -135,10 +132,6 @@ async function scores(ctx: Ctx) {
     );
     await Bun.sleep(500);
   };
-  const typeInto = (selector: string, text: string) =>
-    page.evaluate(
-      `(() => { const input = document.querySelector(${JSON.stringify(selector)}); input.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value").set.call(input, ${JSON.stringify(text)}); input.dispatchEvent(new Event("input", { bubbles: true })); })()`,
-    );
 
   // The difficulty filter starts at Settings' difficulty: Extreme, which brings its Ura charts.
   await goTo("settings");
@@ -436,7 +429,6 @@ async function scores(ctx: Ctx) {
   // On a phone a pull on the details reads their song again, and they step aside for the
   // pipelines page until the swipe comes back past the menu.
   await atSize(PHONE.width, PHONE.height, async () => {
-    const menuOpen = async () => (await attribute("#nav-menu", "aria-expanded")) === "true";
     await touchEmulated(true);
     try {
       await Bun.sleep(500);
