@@ -3,8 +3,8 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ok, type Transport } from "@abth/core";
-
 import { keptFileStore } from "../electron/kept-file-store";
+import { CONTROL } from "../scripts/mock-controls";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import {
   createProfileEditor,
@@ -208,9 +208,9 @@ function setUpOver(storeName: StoreName, options: SetUpOptions) {
   });
   const saved = async () =>
     costumeSetOf(
-      (await editor.hook("/__state", new URLSearchParams())?.json()) as Record<string, number>,
+      (await editor.hook(CONTROL.state, new URLSearchParams())?.json()) as Record<string, number>,
     );
-  const setElsewhere = (params: string) => editor.hook("/__state", new URLSearchParams(params));
+  const setElsewhere = (params: string) => editor.hook(CONTROL.state, new URLSearchParams(params));
   const signInAgain = () => {
     hiroba.ended = false;
     signedIn = true;
@@ -278,7 +278,7 @@ describe("createSessionWrites, the costume", () => {
     expect((await writes.changeCostume({ expected: START, target: START })).kind).toBe(
       "nothingToChange",
     );
-    editor.hook("/__noop-save", new URLSearchParams());
+    editor.hook(CONTROL.noopSave, new URLSearchParams());
     expect((await writes.changeCostume({ expected: START, target })).kind).toBe("notApplied");
     setElsewhere("color_body=40");
     expect((await writes.changeCostume({ expected: START, target })).kind).toBe(
@@ -289,7 +289,7 @@ describe("createSessionWrites, the costume", () => {
 
   test("a session Hiroba ends after the save is dropped, and the editor shows the set once signed in again", async () => {
     const { editor, hiroba, writes, signInAgain } = setUp();
-    editor.hook("/__expire-on-save", new URLSearchParams());
+    editor.hook(CONTROL.expireOnSave, new URLSearchParams());
     const outcome = await writes.changeCostume({ expected: START, target });
     expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
     expect(hiroba.endedByApp).toBe(1);
@@ -369,7 +369,7 @@ describe("createSessionWrites, the title", () => {
 
   test("the title page shows the title that a write whose end was unknown left", async () => {
     const { profile, writes, signInAgain } = setUp();
-    profile.hook("/__profile-expire-on-save", new URLSearchParams());
+    profile.hook(CONTROL.profileExpireOnSave, new URLSearchParams());
     await writes.changeTitle(titleChange(START_TITLE, 102));
     signInAgain();
     const opened = await writes.openTitleEditor();
@@ -480,7 +480,7 @@ describe("createSessionWrites, the name", () => {
 
   test("refuses every name unsent while the page says renames are closed, though it reads the page", async () => {
     const { profile, hiroba, writes } = setUp();
-    profile.hook("/__rename", new URLSearchParams("state=closed"));
+    profile.hook(CONTROL.rename, new URLSearchParams("state=closed"));
     expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({
       kind: "invalidTarget",
       field: "name.closed",
@@ -496,7 +496,7 @@ describe("createSessionWrites, the name", () => {
 
   test("a rename after the name changed elsewhere sends nothing, and reports the name now", async () => {
     const { profile, hiroba, writes } = setUp({ liveChecked: ["costume", "name"] });
-    profile.hook("/__profile", new URLSearchParams("nickname=べつのなまえ"));
+    profile.hook(CONTROL.profile, new URLSearchParams("nickname=べつのなまえ"));
     expect(await writes.changeName(renameTo(NEW_NAME))).toEqual({
       kind: "changedSincePreview",
       current: { nickname: "べつのなまえ" },
@@ -614,7 +614,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (sto
       "a save that moved nothing",
       "notApplied",
       ({ editor, writes }) => {
-        editor.hook("/__noop-save", new URLSearchParams());
+        editor.hook(CONTROL.noopSave, new URLSearchParams());
         return writes.changeCostume(CHANGE);
       },
     ],
@@ -640,7 +640,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (sto
       "a pre-check that stops the write",
       "stoppedBeforeWrite",
       ({ editor, writes }) => {
-        editor.hook("/__precheck", new URLSearchParams("answer=0"));
+        editor.hook(CONTROL.precheck, new URLSearchParams("answer=0"));
         return writes.changeCostume(CHANGE);
       },
     ],
@@ -648,7 +648,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (sto
       "a pre-check that asks for a confirmation",
       "needsConfirmation",
       ({ editor, writes }) => {
-        editor.hook("/__precheck", new URLSearchParams("answer=true"));
+        editor.hook(CONTROL.precheck, new URLSearchParams("answer=true"));
         return writes.changeCostume(CHANGE);
       },
     ],
@@ -656,7 +656,7 @@ describe.each(STORE_NAMES)("createSessionWrites over the %s history store", (sto
       "a session that ends after the save",
       "sessionGone",
       ({ editor, writes }) => {
-        editor.hook("/__expire-on-save", new URLSearchParams());
+        editor.hook(CONTROL.expireOnSave, new URLSearchParams());
         return writes.changeCostume(CHANGE);
       },
     ],

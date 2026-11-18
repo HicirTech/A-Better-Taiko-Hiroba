@@ -1,4 +1,5 @@
 import { RING_ROOM_PX } from "../../src/my-page/pick-ring";
+import { CONTROL } from "../mock-controls";
 import { HIROBA, PHONE_SHORT, PHONE_TALL, TOP_BAND_PX } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import { at, costumeHelpers, evenSides, gapsOf, near } from "./costume-helpers";
@@ -38,7 +39,7 @@ async function costumeLayout(ctx: Ctx) {
     tracksOf,
   } = costumeHelpers(ctx.app);
 
-  await fetch(`${HIROBA}/__items?many=1`);
+  await fetch(`${HIROBA}${CONTROL.items}?many=1`);
   await openFreshEditor();
   results.costumeTilesNamedPartFirst = same(
     await page.evaluate<(string | null)[]>(
@@ -206,7 +207,7 @@ async function costumeLayout(ctx: Ctx) {
     onAShortWindow.after.top < onAShortWindow.before.top - 50 &&
     !onAShortWindow.own &&
     onAShortWindow.scrolling.length === 0;
-  await fetch(`${HIROBA}/__items?many=0`);
+  await fetch(`${HIROBA}${CONTROL.items}?many=0`);
 }
 
 const costumeTilesKeys = [
@@ -424,8 +425,8 @@ async function costumePhone(ctx: Ctx) {
     scrolledUnderTheBlock.counts.some(({ over }) => over > 0) &&
     scrolledUnderTheBlock.counts.every(({ seen }) => seen === 0);
 
-  await fetch(`${HIROBA}/__state?reset=1`);
-  await fetch(`${HIROBA}/__items?many=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.items}?many=1`);
   await readEditorAgain();
 
   await openFreshEditor();
@@ -478,7 +479,7 @@ async function costumePhone(ctx: Ctx) {
       saves: (await hitsOn("/ajax/change_mydon.php")) - savesBefore,
       moved: same(await savedCostume(), { ...START, colorBody: 40 }),
     };
-    await fetch(`${HIROBA}/__noop-save`);
+    await fetch(`${HIROBA}${CONTROL.noopSave}`);
     await click("#swatch-colorBody-41");
     const unmoved = await savedFrom(await savedCostume());
     // Material keeps a snackbar 8 pixels off a phone's foot; here it keeps them off the bar.
@@ -656,8 +657,8 @@ async function costumePhone(ctx: Ctx) {
   });
   results.pullFromTheGridLeavesAScrolledPageAloneOnAPhone = pullOnAPhone.leftAlone;
   results.pullReadsTheEditorOnAPhone = pullOnAPhone.reads;
-  await fetch(`${HIROBA}/__items?many=0`);
-  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.items}?many=0`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
   await readEditorAgain();
 }
 

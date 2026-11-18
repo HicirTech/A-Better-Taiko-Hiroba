@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { changeCostume, postAjax } from "@abth/core";
+import { CONTROL } from "../scripts/mock-controls";
 
 import {
   createCostumeEditor,
@@ -126,7 +127,7 @@ describe("a costume write over Android's transport", () => {
     );
 
     expect(outcome.kind).toBe("applied");
-    const posts = (await editor.hook("/__posts", new URLSearchParams())?.json()) as PostRecord[];
+    const posts = (await editor.hook(CONTROL.posts, new URLSearchParams())?.json()) as PostRecord[];
     expect(posts.map(({ path }) => path)).toEqual([
       "/ajax/check_ip_kisekae.php",
       "/ajax/change_mydon.php",

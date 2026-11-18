@@ -1,5 +1,6 @@
 import { readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { CONTROL } from "../mock-controls";
 import { type App, launch, stop } from "./app";
 import { en, HIROBA, NOON_JST, root, UPDATE_FEED, UPDATES_USER_DATA } from "./config";
 import type { Ctx, LaneSection } from "./context";
@@ -24,7 +25,7 @@ const APP_VERSION = (
   JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { version: string }
 ).version;
 
-const setFeed = (query: string) => fetch(`${HIROBA}/__update-feed?${query}`);
+const setFeed = (query: string) => fetch(`${HIROBA}${CONTROL.updateFeed}?${query}`);
 const feedHits = () => hitsOn(UPDATE_FEED);
 
 async function updates(ctx: Ctx) {

@@ -1,4 +1,5 @@
 import type { VerbsQueued } from "../../src/shared/session-port";
+import { CONTROL } from "../mock-controls";
 import { INITIAL_PROFILE } from "../mock-profile";
 import { DAN_LABEL, HIROBA } from "./config";
 import type { Ctx, LaneSection } from "./context";
@@ -69,7 +70,7 @@ async function bridgeWrites(ctx: Ctx) {
     sameBesideLanePictures(await requestLog(), ["GET /mypage_kisekae.php"]);
 
   await resetLog();
-  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=1`);
   const prechecksBeforeHeld = await hitsOn("/ajax/check_ip_kisekae.php");
   const heldWrite = bridgeChange({ ...START, colorLimb: 20 });
   await waitFor(
@@ -80,15 +81,15 @@ async function bridgeWrites(ctx: Ctx) {
     `window.abth.previewCostume(${JSON.stringify({ ...START, colorBody: 39 })}).then((result) => result.ok)`,
   );
   await Bun.sleep(300);
-  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=0`);
   results.previewWaitsOutAWrite =
     (await heldWrite).kind === "applied" &&
     (await previewDuringWrite) &&
     sameBesideLanePictures(await requestLog(), [...COLOUR_REQUESTS, PREVIEW]);
-  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
 
   await resetLog();
-  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=1`);
   const prechecksBeforeThumbnail = await hitsOn("/ajax/check_ip_kisekae.php");
   const writeBeforeThumbnail = bridgeChange({ ...START, colorLimb: 20 });
   await waitFor(
@@ -100,18 +101,18 @@ async function bridgeWrites(ctx: Ctx) {
     `window.abth.readPicture({ kind: "costumeItem", slot: 5, id: 143 }).then((result) => result.ok)`,
   );
   await Bun.sleep(300);
-  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=0`);
   results.pictureWaitsOutAWrite =
     (await writeBeforeThumbnail).kind === "applied" &&
     (await thumbnailDuringWrite) &&
     same(await requestLog(), [...COLOUR_REQUESTS, THUMBNAIL]);
-  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
 
   await openFreshEditor();
   await click("#costume-part-colorLimb");
   await click("#swatch-colorLimb-20");
   await resetLog();
-  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=1`);
   const prechecksBeforeHeldSave = await hitsOn("/ajax/check_ip_kisekae.php");
   await click("#costume-save");
   await waitFor(
@@ -133,7 +134,7 @@ async function bridgeWrites(ctx: Ctx) {
   const pullHeard = (await touchMoves()) > 0;
   await touchEmulated(false);
   await Bun.sleep(300);
-  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=0`);
   results.signOutShutWhileAWriteRuns = signOutShutInWrite && signedInInWrite && savingOnReturn;
   await inStep("editing");
   results.noReadInsideAWrite =
@@ -142,9 +143,9 @@ async function bridgeWrites(ctx: Ctx) {
     !(await exists("#write-outcome")) &&
     sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&
     same(await savedCostume(), { ...START, colorLimb: 20 });
-  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
 
-  await fetch(`${HIROBA}/__noop-save`);
+  await fetch(`${HIROBA}${CONTROL.noopSave}`);
   const noop = await bridgeChange({ ...START, colorLimb: 20 });
   results.noopSaveNotApplied =
     noop.kind === "notApplied" &&
@@ -154,10 +155,10 @@ async function bridgeWrites(ctx: Ctx) {
   const savesBeforePrechecks = await hitsOn("/ajax/change_mydon.php");
   const stops: string[] = [];
   for (const answer of ["true", "1", "string1", "0", "html"]) {
-    await fetch(`${HIROBA}/__precheck?answer=${answer}`);
+    await fetch(`${HIROBA}${CONTROL.precheck}?answer=${answer}`);
     stops.push((await bridgeChange({ ...START, colorLimb: 20 })).kind);
   }
-  await fetch(`${HIROBA}/__precheck?answer=false`);
+  await fetch(`${HIROBA}${CONTROL.precheck}?answer=false`);
   results.precheckStopsTheSave =
     same(stops, [
       "needsConfirmation",
@@ -167,9 +168,9 @@ async function bridgeWrites(ctx: Ctx) {
       "stoppedBeforeWrite",
     ]) && (await hitsOn("/ajax/change_mydon.php")) === savesBeforePrechecks;
 
-  await fetch(`${HIROBA}/__post-to-login?on=1`);
+  await fetch(`${HIROBA}${CONTROL.postToLogin}?on=1`);
   const atLogin = await bridgeChange({ ...START, colorLimb: 20 });
-  await fetch(`${HIROBA}/__post-to-login?on=0`);
+  await fetch(`${HIROBA}${CONTROL.postToLogin}?on=0`);
   results.postToLoginKeepsTheSession =
     atLogin.kind === "stoppedBeforeWrite" &&
     atLogin.reason === "precheckAtLogin" &&
@@ -183,12 +184,12 @@ async function bridgeWrites(ctx: Ctx) {
     log: string[];
   }[] = [];
   for (const status of [302, 303, 307, 308]) {
-    await fetch(`${HIROBA}/__post-redirect?status=${status}`);
+    await fetch(`${HIROBA}${CONTROL.postRedirect}?status=${status}`);
     await resetLog();
     const stopped = await bridgeChange({ ...START, colorLimb: 20 });
     redirectRuns.push({ status, stopped, log: await requestLog() });
   }
-  await fetch(`${HIROBA}/__post-redirect`);
+  await fetch(`${HIROBA}${CONTROL.postRedirect}`);
   const THEN_MY_PAGE = [
     "GET /mypage_kisekae.php",
     "POST /ajax/check_ip_kisekae.php",
@@ -206,7 +207,7 @@ async function bridgeWrites(ctx: Ctx) {
 
   await openFreshEditor();
   await click("#swatch-colorFace-3");
-  await fetch(`${HIROBA}/__state?color_body=40`);
+  await fetch(`${HIROBA}${CONTROL.state}?color_body=40`);
   const savesBeforeStaleSave = await hitsOn("/ajax/change_mydon.php");
   const staleOutcome = await savedFrom(await savedCostume());
   const staleDraftDropped =
@@ -227,7 +228,7 @@ async function bridgeWrites(ctx: Ctx) {
     (await savedFrom(await savedCostume())) === "applied" &&
     same(await savedCostume(), { ...START, colorBody: 40, colorFace: 3 });
   // Hiroba's set goes back to the start, and the editor reads it.
-  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
   await readEditorAgain();
 }
 
@@ -239,7 +240,7 @@ async function heldWrites(ctx: Ctx) {
 
   await running.click("#sign-in");
   await running.until("サンプルどん");
-  tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  tokens.push((await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text()).trim());
   await Bun.sleep(1500);
   const READS_ASKED: Record<VerbsQueued<"read">, { call: string; requests: string[] }> = {
     readProfile: {
@@ -267,22 +268,22 @@ async function heldWrites(ctx: Ctx) {
   const readsAsked = Object.values(READS_ASKED);
   const HELD_WRITES = [
     {
-      hold: "/__hold-precheck",
-      reset: "/__state?reset=1",
+      hold: CONTROL.holdPrecheck,
+      reset: `${CONTROL.state}?reset=1`,
       heldAt: "/ajax/check_ip_kisekae.php",
       run: COLOUR_REQUESTS,
       call: `window.abth.changeCostume(${JSON.stringify({ expected: START, target: { ...START, colorLimb: 20 } })})`,
     },
     {
-      hold: "/__title-hold-precheck",
-      reset: "/__profile?reset=1",
+      hold: CONTROL.titleHoldPrecheck,
+      reset: `${CONTROL.profile}?reset=1`,
       heldAt: "/ajax/check_ip_title.php",
       run: TITLE_REQUESTS,
       call: `window.abth.changeTitle(${JSON.stringify({ expected: { title: INITIAL_PROFILE.title }, target: { id: 102, title: titleOf(102).label } })})`,
     },
     {
-      hold: "/__profile-hold-save",
-      reset: "/__profile?reset=1",
+      hold: CONTROL.profileHoldSave,
+      reset: `${CONTROL.profile}?reset=1`,
       heldAt: "/ajax/change_mydon_profile.php",
       run: NAME_REQUESTS,
       call: `window.abth.changeName(${JSON.stringify({ expected: { nickname: INITIAL_PROFILE.nickname }, target: { nickname: "あたらしい" } })})`,
@@ -317,8 +318,8 @@ async function heldWrites(ctx: Ctx) {
   }
   results.everyReadWaitsOutEveryWrite =
     waitedOut.length === HELD_WRITES.length && waitedOut.every(Boolean);
-  await fetch(`${HIROBA}/__state?reset=1`);
-  await fetch(`${HIROBA}/__profile?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
 }
 
 const firstReadsKeys = [
@@ -344,7 +345,7 @@ async function firstReads(ctx: Ctx) {
   await running.click("#swatch-colorFace-3");
   await Bun.sleep(600);
   await resetLog();
-  await fetch(`${HIROBA}/__hold-precheck?on=1`);
+  await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=1`);
   const prechecksBeforeFirstRead = await hitsOn("/ajax/check_ip_kisekae.php");
   const titleReadsBeforeFirstRead = await hitsOn(TITLE_PAGE);
   await running.click("#costume-save");
@@ -361,7 +362,7 @@ async function firstReads(ctx: Ctx) {
     );
   const pickerShutWhileHeld = await pickerShut();
   const titleReadsWhileHeld = await hitsOn(TITLE_PAGE);
-  await fetch(`${HIROBA}/__hold-precheck?on=0`);
+  await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=0`);
   await stepIs("#title-section", "idle");
   await waitFor("title picker enabled", async () =>
     (await pickerShut()) === false ? true : undefined,
@@ -391,12 +392,12 @@ async function firstReads(ctx: Ctx) {
     runThen(await requestsSettled(COLOUR_REQUESTS.length + 1), COLOUR_REQUESTS, [
       `GET ${TITLE_PAGE}`,
     ]);
-  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
 
   await signOut();
   await running.click("#sign-in");
   await running.until("サンプルどん");
-  tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  tokens.push((await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text()).trim());
   await running.goTo("nameTitle");
   await stepIs("#name-section", "idle");
   await running.page.evaluate(
@@ -410,7 +411,7 @@ async function firstReads(ctx: Ctx) {
       : undefined,
   );
   await resetLog();
-  await fetch(`${HIROBA}/__profile-hold-save?on=1`);
+  await fetch(`${HIROBA}${CONTROL.profileHoldSave}?on=1`);
   const savesBeforeFirstRead = await hitsOn("/ajax/change_mydon_profile.php");
   const editorReadsBeforeFirstRead = await hitsOn("/mypage_kisekae.php");
   await running.click("#name-title-save");
@@ -425,7 +426,7 @@ async function firstReads(ctx: Ctx) {
     `document.querySelector('#page-skeleton[data-page="costume"]') !== null && document.querySelector("#costume-page") === null`,
   );
   const editorReadsWhileHeld = await hitsOn("/mypage_kisekae.php");
-  await fetch(`${HIROBA}/__profile-hold-save?on=0`);
+  await fetch(`${HIROBA}${CONTROL.profileHoldSave}?on=0`);
   await stepIs("#costume-page", "editing");
   results.firstEditorReadWaitsOutARename =
     skeletonWhileHeld &&
@@ -433,9 +434,9 @@ async function firstReads(ctx: Ctx) {
     runThen(await requestsSettled(NAME_REQUESTS.length + 1), NAME_REQUESTS, [
       "GET /mypage_kisekae.php",
     ]);
-  await fetch(`${HIROBA}/__profile?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
   await signOut();
-  tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
+  tokens.push(...((await (await fetch(`${HIROBA}${CONTROL.tickets}`)).json()) as string[]));
 }
 
 export const BRIDGE_WRITES_SECTION: LaneSection = {

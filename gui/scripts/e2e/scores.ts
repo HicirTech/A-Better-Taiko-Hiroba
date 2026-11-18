@@ -1,5 +1,7 @@
 /** Scores: read only when asked, every list and played chart first, then what recent plays name. */
+
 import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
+import { CONTROL } from "../mock-controls";
 import { en, HIROBA, TOP_BAND_PX } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
@@ -300,7 +302,7 @@ async function scores(ctx: Ctx) {
   await until("Sign in to Hiroba");
   await click("#sign-in");
   await until("サンプルどん");
-  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
+  tokens.push(await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text());
   await goTo("scores");
   const pagesBeforeTheRead = await hitsOn(HISTORY_PAGE);
   await readAgain();
