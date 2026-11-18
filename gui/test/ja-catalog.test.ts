@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { DAN_NAMES, SCORE_RANK_NAMES, type ScoreRank } from "@abth/core";
-import { createTranslator, type MessageKey } from "@abth/i18n";
+import { createTranslator, type PlainMessageKey } from "@abth/i18n";
 
 const { t } = createTranslator("ja");
 
@@ -13,7 +13,7 @@ describe("the Japanese catalog", () => {
   });
 
   test("names each dan as core does, by its board number", () => {
-    const named = DAN_NAMES.map((_, index) => t(`dan.${index + 1}` as MessageKey));
+    const named = DAN_NAMES.map((_, index) => t(`dan.${index + 1}` as PlainMessageKey));
     expect(named).toEqual([...DAN_NAMES]);
   });
 });

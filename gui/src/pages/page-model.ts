@@ -1,4 +1,4 @@
-import type { MessageKey, TranslateParams } from "@abth/i18n";
+import type { Message, PlainMessageKey } from "@abth/i18n";
 
 import type { PickableReading } from "../favorites/use-pickable-songs";
 import type { NameEditor } from "../name-title/use-name-editor";
@@ -18,8 +18,7 @@ export type Screen =
   | { readonly name: "checking" }
   | {
       readonly name: "signedOut";
-      readonly notice: MessageKey | null;
-      readonly noticeParams?: TranslateParams;
+      readonly notice: Message | null;
     }
   | { readonly name: "signingIn" }
   | { readonly name: "reading" }
@@ -84,9 +83,9 @@ export interface EveryRead {
 /** What a page reads, and when: the part of a page that draws nothing. */
 export interface PageModel {
   /** Its name in the navigation. */
-  readonly label: MessageKey;
+  readonly label: PlainMessageKey;
   /** What its skeleton says is read, where that is not my page. */
-  readonly readLabel?: MessageKey;
+  readonly readLabel?: PlainMessageKey;
   /** It names songs: Read again also reads taiko.wiki's song list when the one kept is old. */
   readonly namesSongs: boolean;
   /** It shows taiko.wiki's song list, which is read once it opens. */

@@ -23,7 +23,7 @@ const picture = (
   <Box sx={{ maxWidth: 480 }}>
     <ChartPicture
       url={FIRST_PICTURE}
-      label={i18n.t("details.picture", { difficulty: i18n.t("difficulty.oni"), number: 1 })}
+      label={i18n.t("details.picture", { difficulty: i18n.t("difficulty.oni"), n: 1, count: 1 })}
       port={port}
       i18n={i18n}
       onOpen={args.onOpen}

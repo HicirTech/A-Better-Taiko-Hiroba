@@ -1,5 +1,5 @@
 import type { Result } from "@abth/core";
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { useCallback, useMemo, useRef, useState } from "react";
 
 import { hirobaSession } from "../shared/read-failure-message";
@@ -33,7 +33,7 @@ export interface PickableReading {
 
 export function usePickableSongs(
   port: Pick<HirobaSessionPort, "readSongPicker">,
-  onSessionGone: (notice: MessageKey) => void,
+  onSessionGone: (notice: PlainMessageKey) => void,
 ): PickableReading {
   const [offered, setOffered] = useState<OfferedSongs | null>(loadPickable);
   const latest = useRef(offered);

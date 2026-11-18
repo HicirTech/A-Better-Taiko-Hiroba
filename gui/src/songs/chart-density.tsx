@@ -5,7 +5,7 @@ import {
   type NoteDensity,
   type SongDensityRead,
 } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useState } from "react";
 
@@ -15,7 +15,7 @@ import { SubsectionTitle } from "../ui/section-title";
 import { StatusNote } from "../ui/status-note";
 import { clockText, DensityLine, peakOf } from "./density-line";
 
-const BRANCH_LABEL: Readonly<Record<ChartBranch, MessageKey>> = {
+const BRANCH_LABEL: Readonly<Record<ChartBranch, PlainMessageKey>> = {
   normal: "details.branch.normal",
   advanced: "details.branch.advanced",
   master: "details.branch.master",

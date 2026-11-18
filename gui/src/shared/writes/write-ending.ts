@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 
 import type { WriteOutcomeView } from "../session-port";
 
@@ -62,7 +62,7 @@ export async function sendHeld<S>(
   }
 }
 
-export function sessionNoticeOf(outcome: WriteOutcomeView<unknown>): MessageKey | null {
+export function sessionNoticeOf(outcome: WriteOutcomeView<unknown>): PlainMessageKey | null {
   switch (outcome.kind) {
     case "notSignedIn":
       return "failure.notSignedIn";

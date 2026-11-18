@@ -1,4 +1,4 @@
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { Box, CircularProgress, IconButton, Menu, MenuItem, Portal } from "@mui/material";
 import { type ReactNode, useEffect, useEffectEvent, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -26,9 +26,9 @@ const WAY_LABEL = {
   share: "snapshot.share",
   copy: "snapshot.copy",
   save: "snapshot.save",
-} as const satisfies Record<PictureWay, MessageKey>;
+} as const satisfies Record<PictureWay, PlainMessageKey>;
 /** What the foot of the window says once a way is done; a share sheet says it for itself. */
-const DONE: Readonly<Record<PictureWay, MessageKey | null>> = {
+const DONE: Readonly<Record<PictureWay, PlainMessageKey | null>> = {
   share: null,
   copy: "snapshot.copied",
   save: "snapshot.saved",
@@ -37,7 +37,7 @@ const DONE: Readonly<Record<PictureWay, MessageKey | null>> = {
 interface Said {
   /** How it ended, for the checks that read it: the way done, or `failed`. */
   readonly outcome: PictureWay | "failed";
-  readonly message: MessageKey;
+  readonly message: PlainMessageKey;
 }
 
 export interface SnapshotButtonProps {

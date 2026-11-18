@@ -1,5 +1,5 @@
 import { type ChartRating, chartKey } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
@@ -33,7 +33,7 @@ const LEAD = {
 
 export interface RatedListProps {
   readonly id: string;
-  readonly heading: MessageKey;
+  readonly heading: PlainMessageKey;
   readonly charts: readonly ChartRating[];
   /** Each kept score by its chart's key. */
   readonly scoreOf: ReadonlyMap<string, ScoreView>;

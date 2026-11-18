@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
@@ -6,7 +6,7 @@ import { i18nOf } from "../story-kit/env";
 import { ReadFailureAlert } from "./read-failure-alert";
 
 interface Args {
-  readonly message: MessageKey;
+  readonly message: PlainMessageKey;
   readonly code: string | null;
 }
 

@@ -6,6 +6,10 @@ export {
   LOCALE_NAMES,
   LOCALES,
   type Locale,
+  type Message,
+  type MessageArgs,
   type MessageKey,
+  type MessageParams,
   type Messages,
+  type PlainMessageKey,
 } from "./types";

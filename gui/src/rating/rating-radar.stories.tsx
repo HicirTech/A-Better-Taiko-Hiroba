@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { Box } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
@@ -6,7 +6,7 @@ import { i18nOf } from "../story-kit/env";
 import { RatingRadar } from "./rating-radar";
 
 /** The six skills the radar draws, in the page's order, with made-up values. */
-const SKILLS: readonly (readonly [MessageKey, number])[] = [
+const SKILLS: readonly (readonly [PlainMessageKey, number])[] = [
   ["rating.figure.power", 8.1],
   ["rating.figure.stamina", 6.4],
   ["rating.figure.speed", 9.2],

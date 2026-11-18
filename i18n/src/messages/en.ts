@@ -1,7 +1,6 @@
-import type { Messages } from "../types";
-
-export const en: Messages = {
+export const en = {
   "app.title": "A Better Taiko Hiroba",
+  /** Param: {name}, the system's language in its own words (LOCALE_NAMES). */
   "language.system": "System default ({name})",
   "nav.overview": "Overview",
   "nav.scores": "Scores",
@@ -43,8 +42,11 @@ export const en: Messages = {
   "pipelines.code": "Code: {code}",
   "pipelines.op.readProfile": "My page",
   "pipelines.op.refreshHiroba": "Hiroba refresh",
+  /** Param: {page}. A page of the recent plays walk, in the play history pipeline. */
   "pipelines.op.recentPlaysPage": "Recent plays, page {page}",
+  /** Param: {genre}, its name. A genre's score list, in Hiroba's IO pipeline. */
   "pipelines.op.scoreList": "Score list: {genre}",
+  /** Params: {song}, its number, and {difficulty}. A chart's details, in the scores pipeline. */
   "pipelines.op.scoreDetail": "Score details: song {song}, {difficulty}",
   "pipelines.op.openCostumeEditor": "Costume editor",
   "pipelines.op.openTitleEditor": "Title editor",
@@ -73,13 +75,17 @@ export const en: Messages = {
   "pipelines.picture.courseIcon": "Difficulty icon",
   "pipelines.picture.optionIcon": "Play option icon",
   "pipelines.picture.costumeItem": "Costume thumbnail",
+  /** Param: {page}. Under a walk's failure: the page whose request failed. */
   "history.failedPage": "It stopped at page {page}.",
+  /** 良, 可, 不可, 連打 and the longest combo: a row's hit counts, in taiko.wiki's words. */
   "history.good": "Good",
   "history.ok": "OK",
   "history.bad": "Bad",
   "history.roll": "Drumroll",
   "history.combo": "Max combo",
+  /** Param: {speed}, the speed option's multiplier: its icon's name, shown when it is not 1. */
   "history.speed": "Speed ×{speed}",
+  /** The play options ドロン, あべこべ, きまぐれ, でたらめ and サポート譜面: their icons' names. */
   "history.doron": "Vanish",
   "history.abekobe": "Inverse",
   "history.kimagure": "Whimsical",
@@ -88,18 +94,26 @@ export const en: Messages = {
   "history.addToSet": "Add to a set",
   "history.setHolds": "Already has this song",
   "history.setFull": "Already holds {count} songs",
+  /** Param: {page}. While a read of scores walks recent plays. */
   "scores.readingPlays": "Reading recent plays, page {page}…",
+  /** Params: {done} and {total}, the lists or the charts read so far, and how many in all. */
   "scores.readingLists": "Reading the score lists ({done} of {total})…",
   "scores.readingCharts": "Reading scores ({done} of {total})…",
+  /** Param: {song}, Hiroba's title. While one song's scores are read again. */
   "scores.readingSong": "Reading the scores of {song}…",
+  /** Param: {genre}. Under a read's failure: the list whose request failed. */
   "scores.failedList": "It stopped at the {genre} list.",
+  /** Params: {song} and {difficulty}. Under a read's failure: the chart whose request failed. */
   "scores.failedChart": "It stopped at {song} ({difficulty}). Read again goes on from there.",
+  /** On the scores page with nothing kept yet: how to read them, on a touch screen or not. */
   "scores.emptyPull":
     "No scores here yet. Pull the page down to read them all; the first read takes a few minutes.",
   "scores.emptyReadAgain":
     "No scores here yet. Press Read again, or F5, to read them all; the first read takes a few minutes.",
+  /** After a read of all scores that found no chart played since the last: why nothing changed. */
   "scores.nothingNew":
     "No chart was played since the last read, so no score changed. Scores follow recent plays: play some, then read again.",
+  /** Param: {count}, charts played or stopped at but not read yet. */
   "scores.unread": "Charts still to read: {count}. Read again reads them.",
   "rating.figure.rating": "Rating",
   "rating.figure.power": "Power",
@@ -112,7 +126,9 @@ export const en: Messages = {
   "rating.best": "The 20 that count",
   "rating.overTime": "Rating over time",
   "rating.next": "The next 20",
+  /** Param: {value}, the chart's constant in its system. */
   "rating.constant": "Const. {value}",
+  /** Param: {value}, the chart's accuracy as a percentage. */
   "rating.accuracy": "{value}%",
   "rating.readingData": "Reading the rating data…",
   "rating.dataFailed": "The rating data could not be read.",
@@ -120,50 +136,67 @@ export const en: Messages = {
     "No Extreme or Extreme (Ura) chart is rated yet: a chart needs at least 75% accuracy to count.",
   "rating.noneRatedV2":
     "No Hard, Extreme or Extreme (Ura) chart is rated yet: a chart needs at least 75% accuracy to count.",
+  /** Rating's switch between the two versions, as screen readers name it. */
   "rating.switch": "Rating version",
   "rating.system.ourtaikoV1": "OurTaiko V1",
   "rating.system.ourtaikoV2": "OurTaiko V2",
   "rating.systemShort.ourtaikoV1": "V1",
   "rating.systemShort.ourtaikoV2": "V2",
+  /** The Overview's and Rating's button that makes the page a picture to share. */
   "snapshot.button": "Share as a picture",
+  /** The picture's ways out, as its menu lists them: the system's share sheet, a copy, a file. */
   "snapshot.share": "Share picture",
   "snapshot.copy": "Copy picture",
   "snapshot.save": "Save picture",
+  /** The button's name while the picture is made. */
   "snapshot.making": "Making the picture…",
   "snapshot.copied": "Picture copied.",
   "snapshot.saved": "Picture saved.",
   "snapshot.failed": "The picture could not be made. Please try again.",
+  /** A song's action: read its charts again. */
   "scores.readSong": "Read this song's scores again",
+  /** Asks before a read of every score, after a long hold on the page's read again. */
   "scores.readEvery.title": "Read every score again?",
+  /** Param: {count}, the played charts, as the locale writes a count. */
   "scores.readEvery.body":
     "This reads the scores of all {count} charts you have played from Hiroba again. It is slow: it takes several minutes.",
   "scores.readEvery.cancel": "Cancel",
   "scores.readEvery.confirm": "Read all again",
+  /** The sort chip's name, and its menu's. */
   "scores.sort": "Sort",
+  /** The sorts: by name, the order with none chosen, then the others. */
   "scores.sort.name": "Name",
   "scores.sort.score": "Score",
   "scores.sort.rank": "Score rank",
   "scores.sort.crown": "Crown",
   "scores.sort.recent": "Recently played",
+  /** With charts kept, but none the search and the filters leave. */
   "scores.noMatch": "No chart matches the search and the filters.",
+  /** A chart's details: Hiroba's Japan ranking, and its place there. */
   "scores.ranking": "Japan ranking",
+  /** Param: {place}, the place, as the locale writes a count. */
   "scores.place": "No. {place}",
   "scores.noPlace": "Not ranked",
+  /** The four play counts: also the sorts by plays, full combos and clears. */
   "scores.plays": "Plays",
   "scores.clears": "Clears",
   "scores.fullCombos": "Full Combos",
   "scores.donderfuls": "Donderful Combos",
+  /** 区間毎詳細成績, and one section of it. Param: {number}, from 1. */
   "scores.sections": "By section",
   "scores.overTime": "High score over time",
   "chart.oneRead": "Read your scores again on another day, and the change shows here.",
   "scores.section": "Section {number}",
+  /** Param: {time}, when the chart's details were read. */
   "scores.readAt": "Read on {time}",
   "settings.language": "Language",
   "settings.account": "Account",
+  /** Param: {name}, the nickname, as Hiroba writes it. */
   "settings.signedInAs": "Signed in as {name}",
   "settings.signedIn": "Signed in",
   "settings.signedOut": "Not signed in",
   "settings.updates": "Updates",
+  /** Param: {version}, this build's version, such as 0.1.0. */
   "settings.version": "Version {version}",
   "settings.songData": "Song data",
   "settings.chartSource": "Chart pictures",
@@ -219,12 +252,15 @@ export const en: Messages = {
   "signIn.action": "Sign in to Hiroba",
   "signIn.inProgress": "Finish signing in, including choosing your card, in the sign-in window.",
   "signIn.cancel": "Cancel sign-in",
+  /** The in-app browser's own close button (Android). */
   "signIn.closeBrowser": "Close",
   "signIn.cancelled": "Sign-in was cancelled.",
   "signIn.noSession": "Sign-in finished, but Hiroba did not start a session. Please try again.",
   "signIn.unavailable": "The sign-in window could not be opened. Please try again.",
+  /** Param: {host}, where the sign-in was sent, on a page that is not https. */
   "signIn.refused":
     "Sign-in stopped: it was sent to {host}, which is not on https and which this app does not open. Please report that host name.",
+  /** Param: {host}, a service that refuses to sign in inside an app; the system's browser opens. */
   "signIn.refuser":
     "Sign-in stopped: {host} does not allow signing in inside an app. Hiroba's sign-in page is opening in your browser; signing in there does not sign this app in. Add a mail address and password to your Bandai Namco ID there once, then sign in here with them.",
   "signOut.action": "Sign out",
@@ -239,11 +275,16 @@ export const en: Messages = {
   "update.later": "Later",
   "profile.reading": "Reading your profile from Hiroba…",
   "profile.readAgain": "Read again",
+  /** Param: {title}. */
   "profile.title": "Title: {title}",
+  /** Param: {time}, already formatted. */
   "profile.fetchedAt": "Last updated {time}",
   "profile.noTitle": "No title",
+  /** Param: {dan}, a `dan.N` text, N being the board number read off my page's label. */
   "profile.dan": "Dan-i: {dan}",
   "profile.danUnreadable": "Your dan-i could not be read.",
+  /** Board numbers as core numbers them: 1 (五級) to 15 (十段); 16 to 19 are 玄人, 名人, 超人, 達人. */
+  // 日本語 is core's DAN_NAMES, which a test holds it to; the others are taiko.wiki's.
   "dan.1": "5th Kyu",
   "dan.2": "4th Kyu",
   "dan.3": "3rd Kyu",
@@ -320,6 +361,8 @@ export const en: Messages = {
     "While a set is being edited, drag a song by its handle to move it.",
   "tips.favorites.history": "The folders you synced before are kept here.",
   "tips.favorites.gift": "This button makes a gift of songs for another player.",
+  /** Score ranks by Hiroba's rank image number (best_score_rank_N, 2 to 8); no page names them. */
+  // 日本語 is core's SCORE_RANK_NAMES, held by a test; English romanises colour and tier; pink is 粉.
   "scoreRank.2": "White Iki",
   "scoreRank.3": "Bronze Iki",
   "scoreRank.4": "Silver Iki",
@@ -328,11 +371,15 @@ export const en: Messages = {
   "scoreRank.7": "Purple Miyabi",
   "scoreRank.8": "Rainbow Kiwami",
   "crowns.heading": "Crowns",
+  /** Crowns by what they record (clear, full combo, Donderful Combo), as taiko.wiki words it. */
   "crowns.silver": "Clear",
   "crowns.gold": "Full Combo",
   "crowns.donderful": "Donderful Combo",
+  /** The score-rank block heading. Not 评级/評級: taiko.wiki uses those for the skill Rating. */
   "panel.ranks": "Score ranks",
+  /** Params: {count} and {total} (the sum of its block), both already formatted. */
   "panel.countOf": "{count} of {total}",
+  /** The same count, named. Adds {name}. */
   "panel.countTitle": "{name}: {count} of {total}",
   "know.ladder": "Clear ladder",
   "know.never": "Never played",
@@ -349,24 +396,32 @@ export const en: Messages = {
   "know.ranksSince": "{rank} or better went from {from} to {to} since {date}.",
   "know.noRank": "No rank yet",
   "know.unknown": "No wiki data",
+  /** Param: {stars}, a star level. */
   "know.wall": "Your wall is ★{stars}: fewer than half of the charts you tried there are cleared.",
   "know.noWall":
     "No wall yet: no star level with five or more tried charts has fewer than half of them cleared.",
   "know.addTicked": "Add ticked songs to a set",
+  /** Param: {count}, the songs it adds. */
   "know.addNearest": "Add the nearest {count} to a set",
+  /** Params: {count}, the songs a set has room for, and {total}, the songs to add. */
   "know.setTakes": "Adds {count} of {total}",
   "know.setHoldsAll": "Already has these songs",
   "know.perSecond": "Hits/s",
   "know.bpm": "BPM",
   "know.reach.help": "Where the top 10% of your high scores at this difficulty are most common",
+  /** Param: {count}, the charts. */
   "know.almost.fullCombo.count": "Charts within a few Bad hits of a Full Combo: {count}.",
   "know.almost.fullCombo.none": "No chart is a few Bad from a Full Combo yet.",
+  /** Param: {count}, the charts. */
   "know.almost.donderful.count": "Charts within a few OK hits of a Donderful Combo: {count}.",
   "know.almost.donderful.none": "No chart is a few OK from a Donderful Combo yet.",
+  /** Param: {rank}, a score rank's name. */
   "know.ranks.middle": "Half of the charts you played rank {rank} or better.",
   "know.ranks.middleNone": "Half of the charts you played have no rank yet.",
   "know.ranks.none": "You have not played a chart at this difficulty yet.",
+  /** Param: {range}, one or more bands such as 5.5–6.0. */
   "know.best.perSecond": "Your best range is {range} hits/s.",
+  /** Param: {range}, one or more bands such as 160–179. */
   "know.best.bpm": "Your best BPM range is {range}.",
   "know.best.changing": "You do best on songs whose tempo changes.",
   "know.best.none": "Not enough plays yet to name your best range.",
@@ -374,7 +429,9 @@ export const en: Messages = {
   "know.almost.fullCombo": "Near a Full Combo",
   "know.almost.donderful": "Near a Donderful Combo",
   "panel.art": "Score panel",
+  /** The plate's own name is Hiroba's data, shown as written. */
   "medal.heading": "Don Medals",
+  /** Param: {count}, the medals collected this season. */
   "medal.count": "Collected: {count}",
   "medal.complete": "COMPLETE",
   "medal.none": "Hiroba isn't showing a Don Medal plate right now.",
@@ -395,6 +452,7 @@ export const en: Messages = {
   "failure.notRefreshed": "Hiroba could not refresh your play data, so nothing more was read.",
   "failure.callFailed": "Something went wrong in the app while reading this.",
   "failure.mayClear": "Refreshing or trying again may fix this.",
+  /** Param: {code}, codes for a report (path, status, parser verdict); never page text. */
   "failure.code": "Code for a report: {code}",
   "crash.page":
     "Something went wrong on this page. Opening another page or restarting the app may fix this.",
@@ -402,6 +460,7 @@ export const en: Messages = {
   "crash.reload": "Reload",
   "crash.start": "The app could not start. Installing it again may fix this.",
   "platform.unsupported": "This build runs only inside the desktop or Android app.",
+  /** The name plate on the Overview: its accessible name, and what a long-press on it opens. */
   "plate.open": "Open the Nickname & title page",
   "plate.openByLongPress": "Long-press your name plate to open the Nickname & title page.",
   "costume.open": "Open the Costume page",
@@ -412,6 +471,7 @@ export const en: Messages = {
   "costume.preview.unavailable": "The preview could not be shown.",
   "costume.tab.colours": "Colours",
   "costume.tab.items": "Costume",
+  /** By the tab's name in Hiroba's guide: かお, どう, てあし, then the five slots from きぐるみ (mascot). */
   "costume.part.colorFace": "Face",
   "costume.part.colorBody": "Torso",
   "costume.part.colorLimb": "Limbs",
@@ -420,9 +480,12 @@ export const en: Messages = {
   "costume.part.costume3": "Body",
   "costume.part.costume4": "Makeup",
   "costume.part.costume5": "Mini Character",
+  /** Param: {id}. An item or a colour by its number: the page gives no names. */
   "costume.id": "#{id}",
   "costume.remove": "Remove",
+  /** Params: {part} (a costume.part text) and {id}. */
   "costume.item.label": "{part} #{id}",
+  /** Param: {count}, how many did not come. */
   "costume.thumbnails.unavailable":
     "Some thumbnails didn't load ({count}); their numbers are shown instead.",
   "costume.kigurumiWarning": "A Mascot takes off Head, Body, Makeup and Mini Character.",
@@ -431,9 +494,13 @@ export const en: Messages = {
   "write.saving": "Syncing… then reading it back",
   "costume.history": "History",
   "costume.history.title": "Costume history",
+  /** Marks the entry that is the set Hiroba shows now. */
   "costume.history.wornNow": "Worn now",
+  /** Param: {position}, 1 for the newest. An entry's name as a button. */
   "costume.history.entry": "Costume {position}",
+  /** Param: {position}. As costume.history.entry, for the entry worn now. */
   "costume.history.entryWorn": "Costume {position}, worn now",
+  /** Also the title row's label in a write's comparison. */
   "title.heading": "Title",
   "title.reading": "Reading your titles from Hiroba…",
   "title.open": "Show the titles",
@@ -442,31 +509,39 @@ export const en: Messages = {
   "title.noMatch": "No title matches.",
   "title.none": "Hiroba lists no titles for you to choose from.",
   "title.current": "Current",
+  /** Param: {count}, how many titles of the list have the worn title's name. */
   "title.shared":
     "{count} of your titles have this name, so the app cannot tell which one you wear.",
   "title.notListed":
     "Your current title is not in this list. It may be built from parts, which this version cannot read or change back.",
   "name.heading": "Nickname",
+  /** Params: {count}, how many characters it holds, and {max}. */
   "name.counter": "{count} / {max}",
+  /** Hiroba's own warning above the field, as the site writes it, in every language. */
   "name.siteWarning":
     "※本名などの個人情報の入力は、おやめください ※Do not enter any personal information.",
   "name.same": "That is your nickname already.",
+  /** Quotes Hiroba's sentence that nicknames cannot be changed now, as the site writes it. */
   "name.closed":
     "Hiroba says nicknames can't be changed right now: 今はドンだーネームは変更できないドン！",
   "write.sessionGone": "Hiroba ended the session before anything was saved. Please sign in again.",
   "write.sessionGoneAfterSave":
     "Hiroba ended the session. Whether the change was saved is unknown; check it after signing in.",
+  /** Param: {field}, which value of the set was refused, as a costume.part text. */
   "write.invalidTarget": "This app refused the change before sending it: {field}.",
   "write.failed": "Sync to Hiroba failed. Please try again.",
+  /** Param: {words}, Hiroba's own words for the failure, as the site writes them. */
   "write.failedBecause": "Sync to Hiroba failed ({words}). Please try again.",
   "write.readBack":
     "Hiroba's result differs from what was expected, so the page now shows what Hiroba holds.",
+  /** The words of {field} in "write.invalidTarget": a phrase, with no capital and no full stop. */
   "write.invalid.titleNotOwned": "that title is not in your list",
   "write.invalid.nameEmpty": "the nickname is empty",
   "write.invalid.nameEdge": "the nickname starts or ends with a space",
   "write.invalid.nameTooLong": "the nickname is longer than Hiroba's form takes",
   "write.invalid.nameControl": "the nickname has a character that cannot be sent",
   "write.invalid.nameClosed": "Hiroba is not taking nickname changes right now",
+  /** The genres as taiko.wiki's own locale files name them. */
   "genre.pops": "POPS",
   "genre.anime": "Anime",
   "genre.kids": "Kids",
@@ -475,20 +550,27 @@ export const en: Messages = {
   "genre.namco": "Namco Original",
   "genre.variety": "Variety",
   "genre.classic": "Classic",
+  /** The charts as the game's terms name them. */
   "difficulty.easy": "Easy",
   "difficulty.normal": "Normal",
   "difficulty.hard": "Hard",
   "difficulty.oni": "Extreme",
   "difficulty.ura": "Extreme (Ura)",
+  /** Params: {difficulty} (a difficulty.* text) and {level}, its stars. A level badge's name. */
   "song.level": "{difficulty} ★{level}",
+  /** Param: {bpm}, the tempo as taiko.wiki gives it, such as 154 or 120–240. */
   "song.bpm": "BPM {bpm}",
   "favorites.reading": "Reading your favourites from Hiroba…",
+  /** The お気に入り folder on Hiroba, as the Favourites page names it. */
   "favorites.folder.heading": "Songs in the folder",
+  /** The same folder in the sets drawer, among the sets kept on the device. */
   "favorites.folderEmpty": "The favourites folder is empty.",
   "favorites.sets": "Sets",
   "favorites.newSet": "New set",
+  /** Param: {number}, from 1. A new set's name until the player renames it. */
   "favorites.setName": "Set {number}",
   "favorites.set.nameLabel": "Set name",
+  /** Marks a set whose songs are the folder's, in the order of its slots. */
   "favorites.set.sameAsFolder": "Same as the folder on Hiroba",
   "favorites.setEmpty": "No songs in this set yet.",
   "favorites.saveToSet": "Save to a set",
@@ -509,32 +591,50 @@ export const en: Messages = {
   "favorites.replace.body":
     "{name} will hold the folder's songs, in the folder's order, instead of its current songs. The folder on Hiroba stays as it is.",
   "favorites.replace.confirm": "Replace",
+  /** A gift's picture: what it is, in its bar's middle. */
   "gift.picture": "Gift",
+  /** Param: {time}, when the gift was made; at the picture's bar's right. */
   "gift.givenAt": "Given {time}",
+  /** The gift's QR code, for screen readers. */
   "gift.code": "QR code of the gift",
+  /** Under the code: what reads it. */
   "gift.scanHint": "Scan it in A Better Taiko Hiroba to accept the gift",
+  /** A gift whose songs stay hidden until it is accepted. */
   "gift.mystery": "A mystery gift",
+  /** Param: {count}, the songs a mystery gift holds. */
   "gift.mysterySongs": "Songs: {count}. They show once the gift is accepted.",
+  /** A received gift's title where its giver gave none. */
   "gift.untitled": "A gift",
+  /** Params: {giver}, the giver's nickname; {time}, when the gift was made. */
   "gift.offer":
     "{giver} gave you these songs on {time}. Accepting syncs them to your favourites folder on Hiroba; the songs in it now stay in its history.",
+  /** Params: {giver}; {time}. The same for a mystery gift, whose songs show once it is accepted. */
   "gift.offerMystery":
     "{giver} gave you a mystery gift on {time}: its songs show once you accept it. Accepting syncs them to your favourites folder on Hiroba; the songs in it now stay in its history.",
   "gift.accept": "Accept",
+  /** The gift's songs are in the folder on Hiroba now. */
   "gift.accepted": "Gift accepted. Its songs are in your favourites folder on Hiroba.",
+  /** Param: {giver}. The folder history's name for a gift that has no title. */
   "gift.from": "A gift from {giver}",
+  /** Param: {songs}, the gift's songs the player's own picker on Hiroba does not offer yet. */
   "gift.notOffered":
     "Not accepted: Hiroba does not let you pick {songs} yet. Your favourites folder is as it was.",
+  /** The same for a mystery gift, whose songs stay unnamed. */
   "gift.notOfferedMystery":
     "Not accepted: Hiroba does not let you pick some of its songs yet. Your favourites folder is as it was.",
+  /** The Favourites page's button that starts a gift, and the page's name while one is made. */
   "gift.make": "Make a gift",
   "gift.new": "New gift",
+  /** Param: {count}, the most songs a gift holds. */
   "gift.empty": "No songs yet. A gift holds up to {count}.",
   "gift.titleLabel": "Title",
   "gift.titleHint": "Shown on the picture, and to whoever accepts the gift",
+  /** The choice between showing the songs and a mystery gift, and its name. */
   "gift.shown": "Show the songs",
   "gift.shownLabel": "Songs on the picture",
+  /** Over the gift's picture as it will be shared. */
   "gift.preview": "Preview",
+  /** The navigation's button that reads a QR code, and the window it opens on a phone. */
   "scan.button": "Scan a QR code",
   "scan.hint": "Point the camera at a QR code, or choose a picture of one.",
   "scan.pick": "Choose a picture",
@@ -549,9 +649,11 @@ export const en: Messages = {
   "sort.dropped": "Put {name} down at number {position} of {total}.",
   "sort.cancelled": "{name} went back to where it was.",
   "favorites.addSongs": "Add songs",
+  /** Param: {name}, the song as the page shows it. */
   "favorites.removeSong": "Remove {name}",
   "favorites.delete": "Delete",
   "favorites.delete.title": "Delete this set?",
+  /** Param: {name}, the set's name. */
   "favorites.delete.body":
     "{name} is removed from this device. The folder on Hiroba stays as it is.",
   "favorites.delete.cancel": "Cancel",
@@ -562,10 +664,12 @@ export const en: Messages = {
   "picker.title.single": "Choose your favourite song",
   "picker.title.multi": "Add songs",
   "picker.search": "Search songs",
+  /** The search field's helper: what it looks in. */
   "picker.searchHint": "Japanese, English, Chinese or romaji",
   "picker.genre": "Genre",
   "picker.difficulty": "Difficulty",
   "picker.stars": "Stars",
+  /** A filter menu's first choice, which takes every song. */
   "picker.all": "All",
   "picker.level": "★{level}",
   "picker.none": "No songs found.",
@@ -573,37 +677,49 @@ export const en: Messages = {
   "picker.failed": "The song list could not be loaded from taiko.wiki. Check your connection.",
   "picker.offeredReading": "Reading the songs Hiroba offers…",
   "picker.offeredFailed": "The songs Hiroba offers could not be read, so none can be picked yet.",
+  /** Param: {max}, how many songs a set holds. */
   "picker.limit": "A set holds {max} songs at most. Remove one to add another.",
   "picker.close": "Close",
+  /** The song search's way back out to the page under it. */
   "search.leave": "Close the search",
   "search.clear": "Clear",
+  /** Param: {query}, a search kept on the device. */
   "search.forget": "Remove “{query}”",
+  /** While the song search reads taiko.wiki's whole song list again. */
   "search.readingList": "Reading taiko.wiki's song list again…",
   "search.listRead": "taiko.wiki's song list was read again.",
+  /** Under "nothing found" on a touch screen. Param: {seconds}, the long hold's. */
   "search.newSongPull":
     "A new song? Pull down and hold for {seconds} seconds to read taiko.wiki's song list again.",
+  /** Under "nothing found" on a computer. Params: {button}, Read again's name; {seconds}. */
   "search.newSongHold":
     "A new song? Hold “{button}” for {seconds} seconds to read taiko.wiki's song list again.",
   "details.charts": "Charts",
+  /** Param: {count}, the chart's most notes in a row. */
   "details.maxCombo": "Max combo: {count}",
   "details.branched": "Branched chart",
   "details.noPicture": "No picture of this chart yet.",
+  /** Notes hit in each second over a song: 烈度 in Chinese, 密度 in Japanese. */
   "details.density": "Note density",
+  /** Param: {value}, the most notes in one second. */
   "details.densityPeak": "Peak {value} hits/s",
+  /** Params: {peak}, the most notes in one second, and {at}, when it comes, as m:ss. */
   "details.densityLine": "Notes in each second over the song, peaking at {peak} hits/s at {at}",
   "details.densityReading": "Reading the chart…",
   "details.noDensity": "No note density for this chart.",
   "details.densityFailed": "Could not read this song's chart.",
   "details.readDensity": "Read the chart again",
+  /** Param: {value}, the chart's notes over its length, two decimals. */
   "details.averageDensity": "Average {value} hits/s",
   "details.branch": "Branch",
   "details.branch.normal": "Normal",
   "details.branch.advanced": "Professional",
   "details.branch.master": "Master",
   "details.pictureFailed": "Couldn't load the chart picture.",
+  /** Params: {difficulty} (a difficulty.* text), {n} and {count}. A chart picture's name. */
   "details.picture": "{difficulty} chart, picture {n} of {count}",
   "details.drawnPicture": "{difficulty} chart, drawn from its TJA file",
   "details.noTja": "TJA Renderer cannot draw this chart, so taiko.wiki's pictures are shown.",
   "details.noCdn": "ABTH CDN has no drawing of this chart, so taiko.wiki's pictures are shown.",
   "details.chartDiffers": "This chart differs from the game's.",
-};
+} as const satisfies Readonly<Record<string, string>>;

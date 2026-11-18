@@ -1,5 +1,5 @@
 import { type CrownState, playOptionIcons, type RecentPlay, type ScoreRank } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 
 import { HirobaIcon } from "../pictures/hiroba-icon";
 import type { PictureLane } from "../pictures/picture-lane";
@@ -11,7 +11,7 @@ export const CROWN_KEY = {
   silver: "crowns.silver",
   gold: "crowns.gold",
   donderful: "crowns.donderful",
-} as const satisfies Record<CrownKind, MessageKey>;
+} as const satisfies Record<CrownKind, PlainMessageKey>;
 
 const RANK_KEY = {
   2: "scoreRank.2",
@@ -21,7 +21,7 @@ const RANK_KEY = {
   6: "scoreRank.6",
   7: "scoreRank.7",
   8: "scoreRank.8",
-} as const satisfies Record<ScoreRank, MessageKey>;
+} as const satisfies Record<ScoreRank, PlainMessageKey>;
 
 // The art's proportions: a crown is taller than wide, a rank wider than tall, an option square.
 export const CROWN_RATIO = 52 / 59;

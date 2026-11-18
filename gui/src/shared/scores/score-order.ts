@@ -9,7 +9,7 @@ import {
   searchedNames,
   shownName,
 } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 
 import type { ScoreView } from "../session-port";
 import { GENRE_ORDER, LEVEL_DIFFICULTY } from "../song-catalogue/genre-look";
@@ -43,7 +43,7 @@ export const SORT_LABEL = {
   fullCombos: "scores.fullCombos",
   clears: "scores.clears",
   recent: "scores.sort.recent",
-} as const satisfies Record<SortChoice, MessageKey>;
+} as const satisfies Record<SortChoice, PlainMessageKey>;
 
 /** The page's sort for a choice: by name is no sort chosen. */
 export const sortOf = (choice: SortChoice): ScoreSort | null => (choice === "name" ? null : choice);

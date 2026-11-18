@@ -6,8 +6,20 @@ import {
   LOCALES,
   type Locale,
   type MessageKey,
+  type Messages,
 } from "../src/index";
 import { en } from "../src/messages/en";
+import { ja } from "../src/messages/ja";
+import { zhHans } from "../src/messages/zh-Hans";
+import { zhHant } from "../src/messages/zh-Hant";
+
+// What the checks of the catalogs read: each key's words as written, placeholders and all.
+const CATALOGS: Readonly<Record<Locale, Messages>> = {
+  en,
+  ja,
+  "zh-Hans": zhHans,
+  "zh-Hant": zhHant,
+};
 
 describe("createTranslator", () => {
   test("fills a parameter the message names", () => {
@@ -20,6 +32,21 @@ describe("createTranslator", () => {
     expect(t("medal.count", { count: 0 })).toBe("Collected: 0");
   });
 
+  test("asks each message for the parameters its words name, and no other", () => {
+    const { t } = createTranslator("en");
+    // @ts-expect-error: a message whose words name no parameter takes none.
+    t("app.title", { name: "x" });
+    // @ts-expect-error: a parameter is named as the words name it.
+    t("medal.count", { total: 1 });
+    expect(t("language.system", { name: "English" })).toBe("System default (English)");
+  });
+
+  test("says a message kept to be said later, with its parameters or with none", () => {
+    const { say } = createTranslator("en");
+    expect(say({ key: "medal.count", params: { count: 3 } })).toBe("Collected: 3");
+    expect(say({ key: "app.title" })).toBe("A Better Taiko Hiroba");
+  });
+
   test("keeps a site word it is given as written", () => {
     const { t } = createTranslator("en");
     expect(t("profile.dan", { dan: "九段" })).toBe("Dan-i: 九段");
@@ -27,6 +54,7 @@ describe("createTranslator", () => {
 
   test("leaves a placeholder without a parameter as written", () => {
     const { t } = createTranslator("en");
+    // @ts-expect-error: called without its parameter on purpose, to see the placeholder kept.
     expect(t("profile.fetchedAt")).toContain("{time}");
   });
 
@@ -160,7 +188,7 @@ describe("the Nickname & title page's name", () => {
   test.each([...LOCALES])(
     "words the player's name as its one term in every key about it in %s",
     (locale) => {
-      const { t } = createTranslator(locale);
+      const t = (key: MessageKey) => CATALOGS[locale][key];
       const plain = keysAboutTheNickname.filter((key) =>
         BANNED_NAME_WORD[locale].test(t(key).replace(/\{\w+\}/g, "")),
       );
@@ -379,7 +407,7 @@ function withoutHirobasSentences(key: MessageKey, locale: Locale, text: string):
 }
 
 describe.each<Locale>(["en", "zh-Hans", "zh-Hant"])("the %s catalog's language", (locale) => {
-  const { t } = createTranslator(locale);
+  const t = (key: MessageKey) => CATALOGS[locale][key];
   const keys = Object.keys(en) as MessageKey[];
 
   test("is Japanese only where Hiroba's own words are", () => {
@@ -395,7 +423,7 @@ describe.each<Locale>(["en", "zh-Hans", "zh-Hant"])("the %s catalog's language",
 });
 
 describe("the zh-Hant catalog", () => {
-  const { t } = createTranslator("zh-Hant");
+  const t = (key: MessageKey) => CATALOGS["zh-Hant"][key];
   const keys = Object.keys(en) as MessageKey[];
   const ownWords = (key: MessageKey) => withoutHirobasSentences(key, "zh-Hant", t(key));
 
@@ -448,7 +476,7 @@ describe("the language guards' own checks", () => {
 });
 
 describe.each([...LOCALES])("the %s catalog", (locale) => {
-  const { t } = createTranslator(locale);
+  const t = (key: MessageKey) => CATALOGS[locale][key];
   const keys = Object.keys(en) as MessageKey[];
 
   test("words every key with text and English's parameters", () => {

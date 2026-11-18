@@ -1,5 +1,5 @@
 import type { TitleOption } from "@abth/core";
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { useCallback, useReducer } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
@@ -29,7 +29,7 @@ export interface TitleEditorOptions {
   readonly lane: PictureLane;
   /** The profile as the window last read it: the title worn, which a save is made against. */
   readonly profile: Pick<ProfileView, "title"> | null;
-  readonly onSessionGone: (notice: MessageKey) => void;
+  readonly onSessionGone: (notice: PlainMessageKey) => void;
   /** A write read the title back as this: the window puts it in its copy of the profile. */
   readonly onTitle: (title: string) => void;
   /** A write left the title moved, or maybe moved: the window reads my page again for the plate. */
