@@ -1,11 +1,11 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { i18nOf } from "../story-kit/env";
 import { NoteAlert } from "./note-alert";
 
 interface Args {
-  readonly words: MessageKey;
+  readonly words: PlainMessageKey;
   readonly warns: boolean;
 }
 

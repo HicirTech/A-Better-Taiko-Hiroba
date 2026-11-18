@@ -2,7 +2,14 @@ import { en } from "./messages/en";
 import { ja } from "./messages/ja";
 import { zhHans } from "./messages/zh-Hans";
 import { zhHant } from "./messages/zh-Hant";
-import { DEFAULT_LOCALE, type Locale, type MessageKey, type Messages } from "./types";
+import {
+  DEFAULT_LOCALE,
+  type Locale,
+  type Message,
+  type MessageArgs,
+  type MessageKey,
+  type Messages,
+} from "./types";
 
 const CATALOG: Readonly<Record<Locale, Messages>> = {
   en,
@@ -15,7 +22,10 @@ export type TranslateParams = Readonly<Record<string, string | number>>;
 
 export interface Translator {
   readonly locale: Locale;
-  t(key: MessageKey, params?: TranslateParams): string;
+  /** A message in the locale's words, given the parameters its English words name. */
+  t<Key extends MessageKey>(key: Key, ...params: MessageArgs<Key>): string;
+  /** A message kept to be said later, in the locale's words. */
+  say(message: Message): string;
   /** A count as the locale writes it: 1,234 in English. */
   number(value: number): string;
   /** A date and time of day as the locale writes them, in the device's zone; a dash for none. */
@@ -66,7 +76,9 @@ export function createTranslator(locale: Locale = DEFAULT_LOCALE): Translator {
   };
   return {
     locale,
-    t: (key, params) => interpolate(table[key], params),
+    t: (key, ...params) => interpolate(table[key], params[0]),
+    say: (message) =>
+      interpolate(table[message.key], "params" in message ? message.params : undefined),
     number: (value) => numbers.format(value),
     dateTime: formatted(dates),
     date: formatted(days),

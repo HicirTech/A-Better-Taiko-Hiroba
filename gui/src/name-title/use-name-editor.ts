@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { useCallback, useReducer } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type {
@@ -23,7 +23,7 @@ export interface NameEditorOptions {
   readonly lane: PictureLane;
   /** The profile as the window last read it: what the field shows and a save is made against. */
   readonly profile: Pick<ProfileView, "nickname" | "rename"> | null;
-  readonly onSessionGone: (notice: MessageKey) => void;
+  readonly onSessionGone: (notice: PlainMessageKey) => void;
   /** A write read the name back as this: the window puts it in its copy of the profile. */
   readonly onNickname: (nickname: string) => void;
 }

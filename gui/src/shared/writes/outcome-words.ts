@@ -1,5 +1,5 @@
 import { NAME_FIELDS, TITLE_FIELDS } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { isCostumePart, PART_LABEL } from "../costume-parts";
 import type { WriteKind, WriteSets } from "../session-port";
 import type { Noticed } from "./write-ending";
@@ -44,7 +44,7 @@ const INVALID_FIELD_MESSAGE = {
   [NAME_FIELDS.tooLong]: "write.invalid.nameTooLong",
   [NAME_FIELDS.control]: "write.invalid.nameControl",
   [NAME_FIELDS.closed]: "write.invalid.nameClosed",
-} as const satisfies Record<InvalidField, MessageKey>;
+} as const satisfies Record<InvalidField, PlainMessageKey>;
 
 export function invalidFieldText(field: string, { t }: Translator): string {
   if (isCostumePart(field)) {

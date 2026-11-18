@@ -1,5 +1,5 @@
 import type { Genre, Level } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { MessageKey, PlainMessageKey, Translator } from "@abth/i18n";
 import type { PictureWant } from "../shared/session-port";
 import {
   DIFFICULTY_LABEL,
@@ -8,7 +8,7 @@ import {
 } from "../shared/song-catalogue/genre-look";
 
 /** Each operation's name on the pipelines page, by the name its group runs as. */
-export const OPERATION_NAMES: Readonly<Record<string, MessageKey>> = {
+export const OPERATION_NAMES: Readonly<Record<string, PlainMessageKey>> = {
   readProfile: "pipelines.op.readProfile",
   refreshHiroba: "pipelines.op.refreshHiroba",
   openCostumeEditor: "pipelines.op.openCostumeEditor",
@@ -32,7 +32,7 @@ export const OPERATION_NAMES: Readonly<Record<string, MessageKey>> = {
 };
 
 /** Each of Hiroba's pictures' names, by the kind its group is for. */
-export const PICTURE_NAMES: Readonly<Record<string, MessageKey>> = {
+export const PICTURE_NAMES: Readonly<Record<string, PlainMessageKey>> = {
   myDon: "pipelines.picture.myDon",
   titlePlate: "pipelines.picture.titlePlate",
   medalPlate: "pipelines.picture.medalPlate",
@@ -42,7 +42,7 @@ export const PICTURE_NAMES: Readonly<Record<string, MessageKey>> = {
   courseIcon: "pipelines.picture.courseIcon",
   optionIcon: "pipelines.picture.optionIcon",
   costumeItem: "pipelines.picture.costumeItem",
-} satisfies Record<PictureWant["kind"], MessageKey>;
+} satisfies Record<PictureWant["kind"], PlainMessageKey>;
 
 /** An operation's name, or the name it runs as when this version has none for it. */
 export function operationName(i18n: Translator, operation: string): string {
@@ -51,9 +51,9 @@ export function operationName(i18n: Translator, operation: string): string {
 }
 
 /** The operations whose subject is the page they read, named with that page. */
-export const PAGE_NAMES: Readonly<Record<string, MessageKey>> = {
+export const PAGE_NAMES = {
   recentPlaysPage: "pipelines.op.recentPlaysPage",
-};
+} as const satisfies Record<string, MessageKey>;
 
 /** A score read's name, from its subject: a genre's list, or a chart as `songNo/level`. */
 function scoreReadName(i18n: Translator, operation: string, subject: string): string | null {
@@ -79,7 +79,7 @@ export function groupName(
 ): string {
   const { subject } = group;
   const pageKey = Object.hasOwn(PAGE_NAMES, group.operation)
-    ? PAGE_NAMES[group.operation]
+    ? PAGE_NAMES[group.operation as keyof typeof PAGE_NAMES]
     : undefined;
   if (subject !== undefined && pageKey !== undefined) {
     return i18n.t(pageKey, { page: subject });

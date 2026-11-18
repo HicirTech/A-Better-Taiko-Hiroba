@@ -23,9 +23,7 @@ export function SignInCard({
       <Stack spacing={2}>
         {screen.name === "signedOut" ? (
           <>
-            {screen.notice !== null && (
-              <NoteAlert>{t(screen.notice, screen.noticeParams)}</NoteAlert>
-            )}
+            {screen.notice !== null && <NoteAlert>{i18n.say(screen.notice)}</NoteAlert>}
             <Typography>{t("signIn.intro")}</Typography>
             <Button id="sign-in" variant="contained" onClick={onSignIn}>
               {t("signIn.action")}

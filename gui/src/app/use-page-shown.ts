@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { useEffect } from "react";
 
 import type { Page } from "../navigation/pages";
@@ -19,7 +19,7 @@ export interface PageShown {
   /** Something stands in the page's place: the page, its skeleton, the sign-in or a failure. */
   readonly drawn: boolean;
   /** What the skeleton says is read. */
-  readonly label: MessageKey;
+  readonly label: PlainMessageKey;
   readonly progress: SkeletonProgress | null;
 }
 

@@ -1,5 +1,5 @@
 import { sameCostume } from "@abth/core";
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { useCallback, useReducer } from "react";
 
 import type { PictureLane } from "../pictures/picture-lane";
@@ -34,7 +34,7 @@ export interface CostumeEditorOptions {
   readonly lane: PictureLane;
   /** The Costume page is shown, signed in: the only time Hiroba is asked for the set's picture. */
   readonly shown: boolean;
-  readonly onSessionGone: (notice: MessageKey) => void;
+  readonly onSessionGone: (notice: PlainMessageKey) => void;
 }
 
 export interface CostumeEditor {

@@ -1,4 +1,4 @@
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { keyframes } from "@emotion/react";
 import {
   Box,
@@ -89,7 +89,7 @@ export function PipelineSection({
 }: {
   readonly id: string;
   readonly i18n: Translator;
-  readonly name: MessageKey;
+  readonly name: PlainMessageKey;
   /** Null until the first read. */
   readonly view: PipelineView | null;
   /** Whether its whole kept history is listed. */

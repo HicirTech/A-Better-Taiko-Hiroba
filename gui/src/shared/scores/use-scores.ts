@@ -1,5 +1,5 @@
 import type { Result } from "@abth/core";
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { useCallback, useState } from "react";
 import { hirobaSession } from "../read-failure-message";
 import { afterRefresh } from "../reads/after-refresh";
@@ -58,7 +58,7 @@ export function useScores(
     | "readSongScores"
     | "scoresProgress"
   >,
-  onSessionGone: (notice: MessageKey) => void,
+  onSessionGone: (notice: PlainMessageKey) => void,
 ): ScoresState {
   const kept = useHeldCopy(useCallback(() => port.scores(), [port]));
   const { load: loadKept, hold, forget: forgetKept } = kept;

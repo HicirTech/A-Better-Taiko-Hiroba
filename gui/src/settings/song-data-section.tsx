@@ -1,4 +1,4 @@
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { List, ListItem, ListItemText, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { useId } from "react";
 
@@ -7,7 +7,7 @@ import { MusicNoteIcon } from "../ui/icons";
 import { SettingsSection } from "./settings-section";
 
 /** Each source, and what of the songs it gives. */
-const SOURCES: readonly { id: string; name: MessageKey; gives: MessageKey }[] = [
+const SOURCES: readonly { id: string; name: PlainMessageKey; gives: PlainMessageKey }[] = [
   { id: "taiko-wiki", name: "settings.taikoWiki", gives: "settings.taikoWikiGives" },
   { id: "chinese-wiki", name: "settings.chineseWiki", gives: "settings.chineseWikiGives" },
   { id: "chart-wiki", name: "settings.chartWiki", gives: "settings.chartWikiGives" },
@@ -18,7 +18,7 @@ const SOURCES: readonly { id: string; name: MessageKey; gives: MessageKey }[] = 
   { id: "tja-renderer", name: "settings.tjaRenderer", gives: "settings.tjaRendererGives" },
 ];
 
-const SOURCE_LABEL: Readonly<Record<ChartSource, MessageKey>> = {
+const SOURCE_LABEL: Readonly<Record<ChartSource, PlainMessageKey>> = {
   cdn: "settings.chartSource.cdn",
   tja: "settings.chartSource.tja",
   wiki: "settings.chartSource.wiki",

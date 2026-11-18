@@ -1,5 +1,5 @@
 import { inMaintenance } from "@abth/core";
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 
 import type { ReadFailureKind } from "./session-port";
 
@@ -15,10 +15,10 @@ export const FAILURE_MESSAGE = {
   maintenance: "failure.maintenance",
   notRefreshed: "failure.notRefreshed",
   callFailed: "failure.callFailed",
-} as const satisfies Record<ReadFailureKind, MessageKey>;
+} as const satisfies Record<ReadFailureKind, PlainMessageKey>;
 
 /** The words for a failed read; in Hiroba's daily maintenance hours its error says so. */
-export function failureMessageOf(kind: ReadFailureKind, at: Date): MessageKey {
+export function failureMessageOf(kind: ReadFailureKind, at: Date): PlainMessageKey {
   return kind === "siteError" && inMaintenance(at)
     ? "failure.siteErrorInMaintenance"
     : FAILURE_MESSAGE[kind];
@@ -32,7 +32,7 @@ export const SESSION_GONE: ReadonlySet<ReadFailureKind> = new Set([
 ]);
 
 /** A read of Hiroba's options: a failure that ended the session sends the window to sign in. */
-export function hirobaSession(onSessionGone: (notice: MessageKey) => void) {
+export function hirobaSession(onSessionGone: (notice: PlainMessageKey) => void) {
   return {
     callFailed: { kind: "callFailed" } as const,
     endsTheSession: (failure: { readonly kind: ReadFailureKind }) => SESSION_GONE.has(failure.kind),

@@ -1,5 +1,5 @@
 import type { Difficulty, Result } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { FormHelperText, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import type { ChartSource } from "../shared/song-catalogue/chart-source";
@@ -16,11 +16,12 @@ import { type ChartShown, findCdnPicture, findChartPicture } from "./find-chart-
 const WIKI: ChartShown = { kind: "wiki", lacking: null };
 
 /** Why taiko.wiki's pictures stand in, by the source that had no drawing. */
-const LACKING: Readonly<Record<"tja" | "cdn", { readonly id: string; readonly note: MessageKey }>> =
-  {
-    tja: { id: "song-details-no-tja", note: "details.noTja" },
-    cdn: { id: "song-details-no-cdn", note: "details.noCdn" },
-  };
+const LACKING: Readonly<
+  Record<"tja" | "cdn", { readonly id: string; readonly note: PlainMessageKey }>
+> = {
+  tja: { id: "song-details-no-tja", note: "details.noTja" },
+  cdn: { id: "song-details-no-cdn", note: "details.noCdn" },
+};
 
 interface ChartPicturesProps {
   readonly songNo: string;

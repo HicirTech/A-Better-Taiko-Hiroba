@@ -1,4 +1,4 @@
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 
 import type { CostumeEditorView, CostumeSet, CostumeSlot } from "./session-port";
 
@@ -24,7 +24,7 @@ export const PART_LABEL = {
   costume3: "costume.part.costume3",
   costume4: "costume.part.costume4",
   costume5: "costume.part.costume5",
-} as const satisfies Record<CostumePart, MessageKey>;
+} as const satisfies Record<CostumePart, PlainMessageKey>;
 
 export function isCostumePart(field: string): field is CostumePart {
   return Object.hasOwn(PART_LABEL, field);

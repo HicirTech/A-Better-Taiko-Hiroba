@@ -1,5 +1,5 @@
 import { type ChartRating, COUNTED, chartKey, ratePlayer } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { Box, Stack, Typography } from "@mui/material";
 import { useMemo, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
@@ -76,7 +76,7 @@ export function RatingPage({
     (newest, score) => (score.fetchedAt > newest ? score.fetchedAt : newest),
     "",
   );
-  const list = (id: string, heading: MessageKey, shown: readonly ChartRating[]) => (
+  const list = (id: string, heading: PlainMessageKey, shown: readonly ChartRating[]) => (
     <RatedList
       id={id}
       heading={heading}

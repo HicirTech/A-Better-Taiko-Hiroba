@@ -1,5 +1,5 @@
 import { type ChartRating, COUNTED, type PlayerRating } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 import { useMemo, useRef } from "react";
 
@@ -70,7 +70,7 @@ export function RatingSnapshot({
   const myDon = usePicture(lane, MY_DON, portraitBox, { ...IN_THE_WINDOW, order: 1 });
   const formats = useMemo(() => ratingFormats(locale, rated.system), [locale, rated.system]);
   const { total, skills } = ratingAndSkills(rated, t);
-  const list = (id: string, heading: MessageKey, shown: readonly ChartRating[]) => (
+  const list = (id: string, heading: PlainMessageKey, shown: readonly ChartRating[]) => (
     <RatedList
       id={id}
       heading={heading}

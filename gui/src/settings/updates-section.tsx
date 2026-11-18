@@ -1,4 +1,4 @@
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { Box, Button, List, ListItem, ListItemText } from "@mui/material";
 import { useId } from "react";
 import type { ManualCheck } from "../shared/updates/use-update-reminder";
@@ -13,7 +13,7 @@ export interface UpdatesSectionProps {
   readonly onOpenReleases: () => void;
 }
 
-const STATUS: Readonly<Record<ManualCheck, MessageKey | null>> = {
+const STATUS: Readonly<Record<ManualCheck, PlainMessageKey | null>> = {
   idle: null,
   checking: "update.checking",
   upToDate: "update.upToDate",

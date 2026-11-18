@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import { useCallback, useReducer } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import { FAILURE_MESSAGE, SESSION_GONE } from "../shared/read-failure-message";
@@ -30,7 +30,7 @@ import {
 export interface FavoritesOptions {
   readonly port: HirobaSessionPort;
   readonly lane: PictureLane;
-  readonly onSessionGone: (notice: MessageKey) => void;
+  readonly onSessionGone: (notice: PlainMessageKey) => void;
 }
 
 export interface FavoritesEditor {

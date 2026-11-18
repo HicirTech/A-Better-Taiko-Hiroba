@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 
 import type { Page } from "../navigation/pages";
 
@@ -10,7 +10,7 @@ export type TipScene = (typeof TIP_SCENES)[number];
 export interface TipFace {
   /** Selectors tried in order; none: the bubble stands at the window's top, pointing at nothing. */
   readonly at: readonly string[];
-  readonly words: MessageKey;
+  readonly words: PlainMessageKey;
   /** What the tip opens to show what it tells, shut again after it. */
   readonly scene?: TipScene;
   /** Told only where the navigation is a menu that opens, not a panel always beside the page. */
@@ -34,7 +34,7 @@ const AT_THE_TOP: readonly string[] = [];
 const FIRST_CARD = "#know-yourself-page .MuiCard-root";
 /** The first set in the drawer, or the drawer where there is none yet. */
 const FIRST_SET = ["#favorites-item-set-0", "#favorites-drawer"];
-const both = (at: readonly string[], words: MessageKey) => ({
+const both = (at: readonly string[], words: PlainMessageKey) => ({
   touch: { at, words },
   mouse: { at, words },
 });

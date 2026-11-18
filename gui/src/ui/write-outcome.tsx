@@ -7,6 +7,9 @@ import { type OutcomeWords, outcomeWords } from "../shared/writes/outcome-words"
 import type { Noticed } from "../shared/writes/write-ending";
 import { OperationSnackbar } from "./operation-snackbar";
 
+// Stands where Hiroba's words go, so the sentence can be split there; no message holds it.
+const WORDS_MARK = "\u0000";
+
 /** How a write ended, said at the window's foot; `onClosed` lets the page drop the notice. */
 export function WriteOutcomeSnackbar<K extends WriteKind>({
   outcome,
@@ -41,8 +44,7 @@ function Sentence({ words, i18n: { t } }: { words: OutcomeWords; i18n: Translato
   if (words.hirobas === null) {
     return t("write.failed");
   }
-  // A placeholder given no value stays as written, so it splits the sentence around the words.
-  const [lead, tail] = t("write.failedBecause").split("{words}");
+  const [lead, tail] = t("write.failedBecause", { words: WORDS_MARK }).split(WORDS_MARK);
   return (
     <>
       {lead}

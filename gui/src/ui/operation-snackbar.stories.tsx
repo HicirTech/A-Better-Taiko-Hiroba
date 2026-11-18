@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { PlainMessageKey } from "@abth/i18n";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 
@@ -6,7 +6,7 @@ import { i18nOf } from "../story-kit/env";
 import { OperationSnackbar } from "./operation-snackbar";
 
 interface Args {
-  readonly message: MessageKey;
+  readonly message: PlainMessageKey;
   readonly onClose: () => void;
   readonly onExited: () => void;
 }

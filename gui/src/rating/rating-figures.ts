@@ -1,9 +1,9 @@
 import type { PlayerRating, RatingFigure, RatingSystem } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 
 import type { RadarFigure } from "./rating-radar";
 
-const FIGURE_LABEL: Readonly<Record<RatingFigure, MessageKey>> = {
+const FIGURE_LABEL: Readonly<Record<RatingFigure, PlainMessageKey>> = {
   rating: "rating.figure.rating",
   power: "rating.figure.power",
   stamina: "rating.figure.stamina",
@@ -15,13 +15,13 @@ const FIGURE_LABEL: Readonly<Record<RatingFigure, MessageKey>> = {
 };
 
 /** Each rating's short name, as its switch on Rating writes it. */
-export const RATING_SYSTEM_SHORT: Readonly<Record<RatingSystem, MessageKey>> = {
+export const RATING_SYSTEM_SHORT: Readonly<Record<RatingSystem, PlainMessageKey>> = {
   ourtaikoV1: "rating.systemShort.ourtaikoV1",
   ourtaikoV2: "rating.systemShort.ourtaikoV2",
 };
 
 /** What a rating says when no chart is rated yet: the difficulties it rates. */
-export const NONE_RATED: Readonly<Record<RatingSystem, MessageKey>> = {
+export const NONE_RATED: Readonly<Record<RatingSystem, PlainMessageKey>> = {
   ourtaikoV1: "rating.noneRated",
   ourtaikoV2: "rating.noneRatedV2",
 };

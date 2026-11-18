@@ -1,5 +1,5 @@
 import type { CrownState } from "@abth/core";
-import type { MessageKey, Translator } from "@abth/i18n";
+import type { PlainMessageKey, Translator } from "@abth/i18n";
 
 import { CROWN_COLOUR, RANK_COLOUR, UNCLEARED_COLOUR } from "../shared/panel-colours";
 import type { IconWant } from "../shared/session-port";
@@ -13,7 +13,7 @@ export interface Segment {
   readonly icon?: IconWant;
 }
 
-const CROWN_NAME: Readonly<Record<CrownState, MessageKey>> = {
+const CROWN_NAME: Readonly<Record<CrownState, PlainMessageKey>> = {
   none: "know.never",
   played: "know.tried",
   silver: "crowns.silver",

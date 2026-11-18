@@ -1,4 +1,4 @@
-import type { MessageKey } from "@abth/i18n";
+import type { MessageKey, PlainMessageKey } from "@abth/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useFrameNavigation } from "../navigation/frame-navigation";
@@ -30,7 +30,7 @@ const SIGN_IN_NOTICE = {
 export interface Session extends SessionView {
   readonly signIn: () => Promise<void>;
   /** A read found the session gone: back to the sign-in, saying why. */
-  readonly sessionGone: (notice: MessageKey) => void;
+  readonly sessionGone: (notice: PlainMessageKey) => void;
   /** Signed out or signing in: nothing of the last session is kept. */
   readonly noSession: boolean;
   readonly readBehindThePage: () => void;
@@ -56,7 +56,7 @@ export function useSession({
   // Whether the read of my page running is the page's own: one behind it, after a write, is not.
   const [readInView, setReadInView] = useState(false);
   const sessionGone = useCallback(
-    (notice: MessageKey) => setScreen({ name: "signedOut", notice }),
+    (notice: PlainMessageKey) => setScreen({ name: "signedOut", notice: { key: notice } }),
     [],
   );
   const [myPage, myPageStatus] = useReadRun<ReadFailure>(hirobaSession(sessionGone));
@@ -125,10 +125,10 @@ export function useSession({
     } else {
       setScreen({
         name: "signedOut",
-        notice: SIGN_IN_NOTICE[outcome.kind],
-        ...((outcome.kind === "refused" || outcome.kind === "refuser") && {
-          noticeParams: { host: outcome.host },
-        }),
+        notice:
+          outcome.kind === "refused" || outcome.kind === "refuser"
+            ? { key: SIGN_IN_NOTICE[outcome.kind], params: { host: outcome.host } }
+            : { key: SIGN_IN_NOTICE[outcome.kind] },
       });
     }
   };
