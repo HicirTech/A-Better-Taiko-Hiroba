@@ -1,3 +1,4 @@
+import { CONTROL } from "../mock-controls";
 import { HIROBA } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import {
@@ -48,11 +49,11 @@ async function readAgain(ctx: Ctx) {
   const { atSize, attribute, boxOf, exists, fabState, pullIndicator, swipe, touchEmulated } =
     pageHelpers(page);
 
-  await fetch(`${HIROBA}/__rotate`);
+  await fetch(`${HIROBA}${CONTROL.rotate}`);
   await click("#read-again");
   await Bun.sleep(500);
   await until("Last updated");
-  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
+  tokens.push(await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text());
   await click("#read-again");
   await Bun.sleep(500);
   await until("Last updated");
@@ -82,7 +83,7 @@ async function readAgain(ctx: Ctx) {
     ((await textOf("#nav-last-updated")) ?? "").startsWith("Last updated");
 
   const readsBeforeHeld = await myPageHits();
-  await fetch(`${HIROBA}/__hold-read?on=1`);
+  await fetch(`${HIROBA}${CONTROL.holdRead}?on=1`);
   await click("#read-again");
   // A read again shuts the page at once and keeps it a moment, then its skeleton stands in.
   const pageAtOnce = await waitFor("the page shut", async () => {
@@ -106,7 +107,7 @@ async function readAgain(ctx: Ctx) {
     `({ who: document.querySelector("#account-who")?.textContent ?? null, signOutShut: document.querySelector("#sign-out")?.disabled ?? null })`,
   );
   await goTo("overview");
-  await fetch(`${HIROBA}/__hold-read?on=0`);
+  await fetch(`${HIROBA}${CONTROL.holdRead}?on=0`);
   // The page stays through a read, so its words say nothing of when the read ends.
   await waitFor("the read ended", async () =>
     same(await fabState(), { shut: false, spinning: false }) ? true : undefined,
@@ -161,7 +162,7 @@ async function readAgain(ctx: Ctx) {
     same(sinceF5.slice(0, 3), ["GET /mypage_top.php", `POST ${REFRESH}`, "GET /mypage_top.php"]);
 
   // A refresh Hiroba refuses is the read's failure, and nothing is read after it.
-  await fetch(`${HIROBA}/__history?refresh=901`);
+  await fetch(`${HIROBA}${CONTROL.history}?refresh=901`);
   const readsBeforeRefused = await myPageHits();
   await click("#read-again");
   await waitFor("the refused refresh", async () => (await exists("#failure-detail")) || undefined);
@@ -206,7 +207,7 @@ async function readAgain(ctx: Ctx) {
       : `localStorage.setItem(${JSON.stringify(SEARCHES_KEY)}, ${JSON.stringify(searchesBefore)})`,
   );
   results.songSearchKeptWhenMyPageFails = fieldThere && !failureWhileSearching && failureBack;
-  await fetch(`${HIROBA}/__history?refresh=0`);
+  await fetch(`${HIROBA}${CONTROL.history}?refresh=0`);
   const readsBeforeAgain = await myPageHits();
   await click("#read-again");
   await waitFor("the page read again", async () =>
@@ -289,22 +290,22 @@ async function profileVariants(ctx: Ctx) {
     return (await readHits()) - before;
   };
   const requestsPerRead: number[] = [];
-  await fetch(`${HIROBA}/__medal?state=complete`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=complete`);
   requestsPerRead.push(await readShowing("#medal-complete"));
   results.medalCompleteShown =
     (await textOf("#medal-complete")) === "COMPLETE" && (await textOf("#medal-count")) === null;
-  await fetch(`${HIROBA}/__medal?state=odd`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=odd`);
   requestsPerRead.push(await readShowing("#medal-code"));
   results.medalOddShownWithTheRest =
     (await textOf("#medal-code")) === "Code for a report: medal=noCountNoComplete" &&
     (await textOf("#crowns-silver")) === "11 of 14" &&
     (await textOf("#rank-8")) === "3 of 102" &&
     !(await text()).includes("did not expect");
-  await fetch(`${HIROBA}/__medal?state=none`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=none`);
   requestsPerRead.push(await readShowing("#medal-none"));
   results.medalNoneShown = (await textOf("#medal-name")) === null;
-  await fetch(`${HIROBA}/__medal?state=collecting`);
-  await fetch(`${HIROBA}/__variant?dan=0&title=empty&region=unset`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=collecting`);
+  await fetch(`${HIROBA}${CONTROL.variant}?dan=0&title=empty&region=unset`);
   requestsPerRead.push(await readShowing("#no-title"));
   results.medalCountShown = (await textOf("#medal-count")) === "Collected: 12";
   results.danLessRowRead =
@@ -315,7 +316,7 @@ async function profileVariants(ctx: Ctx) {
   const LAST_UPDATED = /^Last updated [A-Z][a-z]{2}\s\d{1,2},\s\d{1,2}:\d{2}\s[AP]M$/;
   results.lastUpdatedAtTheNavFoot =
     LAST_UPDATED.test(lastUpdated.text) && lastUpdated.fontSize === "12px";
-  await fetch(`${HIROBA}/__variant?dan=14&label=gif`);
+  await fetch(`${HIROBA}${CONTROL.variant}?dan=14&label=gif`);
   requestsPerRead.push(await readShowing("#dan-unreadable"));
   const afterGif = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
@@ -340,7 +341,7 @@ async function profileVariants(ctx: Ctx) {
   // A 名人's label reads as its dan, with no plate asked.
   const PLATE = "/imgsrc_dani.php";
   let plates = await hitsOn(PLATE);
-  await fetch(`${HIROBA}/__variant?dan=17&label=png`);
+  await fetch(`${HIROBA}${CONTROL.variant}?dan=17&label=png`);
   await readShowing("#dan");
   results.namedRankReadOffItsLabel =
     (await textOf("#dan")) === "Dan-i: Meijin" &&
@@ -348,15 +349,15 @@ async function profileVariants(ctx: Ctx) {
     (await hitsOn(PLATE)) === plates;
   // A label in a styling no template holds sends the read to the plates: 19, then a stamped 18.
   plates = await hitsOn(PLATE);
-  await fetch(`${HIROBA}/__variant?dan=18&label=unknown`);
+  await fetch(`${HIROBA}${CONTROL.variant}?dan=18&label=unknown`);
   await click("#read-again");
   await waitFor("超人 read off the plates", async () =>
     (await textOf("#dan")) === "Dan-i: Chojin" ? true : undefined,
   );
   results.unknownLabelReadOffThePlates = (await hitsOn(PLATE)) - plates === 2;
-  await fetch(`${HIROBA}/__variant?dan=14&label=png&title=set&region=set`);
+  await fetch(`${HIROBA}${CONTROL.variant}?dan=14&label=png&title=set&region=set`);
 
-  await fetch(`${HIROBA}/__variant?panel=zeros`);
+  await fetch(`${HIROBA}${CONTROL.variant}?panel=zeros`);
   await click("#read-again");
   await waitFor("zero panel", async () =>
     (await textOf("#crowns-silver")) === "0 of 0" ? true : undefined,
@@ -386,7 +387,7 @@ async function profileVariants(ctx: Ctx) {
     (await textOf("#score-panel-rank-8")) === "0" &&
     same(await allOf("#score-panel [id^='score-panel-crowns-']", "textContent"), ["0", "0", "0"]) &&
     (await textOf("#score-panel-rank-5")) === "31";
-  await fetch(`${HIROBA}/__variant?panel=counts`);
+  await fetch(`${HIROBA}${CONTROL.variant}?panel=counts`);
 }
 
 export const READ_AGAIN_SECTION: LaneSection = {

@@ -1,4 +1,5 @@
 import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
+import { CONTROL } from "../mock-controls";
 import {
   COOLDOWN_MESSAGE,
   FILTER_MESSAGE,
@@ -166,14 +167,14 @@ async function title(ctx: Ctx) {
     [en.t("title.open"), en.t("title.close"), en.t("title.clear")],
   );
 
-  await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(titleOf(104).label)}`);
+  await fetch(`${HIROBA}${CONTROL.profile}?title=${encodeURIComponent(titleOf(104).label)}`);
   await readTitlesAgain();
   await popupOpened();
   const sharedMarks = (await listed()).filter((one) => one.current).map((one) => one.id);
   idsShown.push(await idShownIn('#title-section, [role="listbox"]'));
   await popupClosed();
   const sharedNote = await textOf("#title-pick-helper-text");
-  await fetch(`${HIROBA}/__profile?title=${encodeURIComponent(UNLISTED_TITLE)}`);
+  await fetch(`${HIROBA}${CONTROL.profile}?title=${encodeURIComponent(UNLISTED_TITLE)}`);
   await readTitlesAgain();
   await popupOpened();
   const unlistedMarks = (await listed()).filter((one) => one.current).length;
@@ -184,7 +185,7 @@ async function title(ctx: Ctx) {
     (await textOf("#title-pick-helper-text")) ===
       "Your current title is not in this list. It may be built from parts, which this version cannot read or change back." &&
     unlistedMarks === 0;
-  await fetch(`${HIROBA}/__profile?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
   await readTitlesAgain();
 
   // Settle the portrait fetches of earlier reads, so only a title write's are counted below.
@@ -200,7 +201,7 @@ async function title(ctx: Ctx) {
 
   await titlesRead();
   await resetLog();
-  await fetch(`${HIROBA}/__profile-posts?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profilePosts}?reset=1`);
   const readsBeforeTitle = await myPageHits();
   await pickTitle("最後", 108);
   await Bun.sleep(600);
@@ -268,10 +269,10 @@ async function title(ctx: Ctx) {
   await goTo("nameTitle");
   await inSection("title", "idle");
   // Hiroba's title goes back to the start, and the page reads it.
-  await fetch(`${HIROBA}/__profile?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
   await readTitlesAgain();
 
-  await fetch(`${HIROBA}/__profile-next-result?code=5&message=`);
+  await fetch(`${HIROBA}${CONTROL.profileNextResult}?code=5&message=`);
   const titleRefused = await changeTitleInTheWindow("別の", 102, false);
   const titleRefusedText = (await textOf("#title-outcome")) ?? "";
   results.titleRefusedSaysSoInItsPagesWords =
@@ -285,10 +286,10 @@ async function title(ctx: Ctx) {
   const savesBeforeTitlePrechecks = await hitsOn("/ajax/change_mydon_profile.php");
   const titleStops: string[] = [];
   for (const answer of ["true", "1", "string1", "0", "html"]) {
-    await fetch(`${HIROBA}/__title-precheck?answer=${answer}`);
+    await fetch(`${HIROBA}${CONTROL.titlePrecheck}?answer=${answer}`);
     titleStops.push((await bridgeTitle()).kind);
   }
-  await fetch(`${HIROBA}/__title-precheck?answer=false`);
+  await fetch(`${HIROBA}${CONTROL.titlePrecheck}?answer=false`);
   results.titlePrecheckStopsTheSave =
     same(titleStops, [
       "needsConfirmation",
@@ -300,31 +301,31 @@ async function title(ctx: Ctx) {
     (await hitsOn("/ajax/change_mydon_profile.php")) === savesBeforeTitlePrechecks &&
     same(await profileNow(), profileAsStarted);
 
-  await fetch(`${HIROBA}/__profile-noop-save`);
+  await fetch(`${HIROBA}${CONTROL.profileNoopSave}`);
   const titleNoop = await bridgeTitle();
   results.titleNoopSaveNotApplied =
     titleNoop.kind === "notApplied" &&
     same(titleNoop.reason, { kind: "unchanged" }) &&
     same(await profileNow(), profileAsStarted);
-  await fetch(`${HIROBA}/__profile-next-result?code=705&message=`);
+  await fetch(`${HIROBA}${CONTROL.profileNextResult}?code=705&message=`);
   const titleStale = await bridgeTitle();
   results.titleStaleSaysStale =
     titleStale.kind === "notApplied" &&
     same(titleStale.reason, { kind: "stale" }) &&
     same(await profileNow(), profileAsStarted);
-  await fetch(`${HIROBA}/__title-hold-precheck?on=1`);
+  await fetch(`${HIROBA}${CONTROL.titleHoldPrecheck}?on=1`);
   const titlePrechecksBefore = await hitsOn("/ajax/check_ip_title.php");
   const titleWhileCostumeMoves = bridgeTitle();
   await waitFor("held title pre-check", async () =>
     (await hitsOn("/ajax/check_ip_title.php")) > titlePrechecksBefore ? true : undefined,
   );
-  await fetch(`${HIROBA}/__state?color_face=9`);
-  await fetch(`${HIROBA}/__title-hold-precheck?on=0`);
+  await fetch(`${HIROBA}${CONTROL.state}?color_face=9`);
+  await fetch(`${HIROBA}${CONTROL.titleHoldPrecheck}?on=0`);
   const titleDiverged = await titleWhileCostumeMoves;
   results.titleCostumeMovedIsDiverged =
     titleDiverged.kind === "diverged" && titleDiverged.cross === "changed";
-  await fetch(`${HIROBA}/__state?reset=1`);
-  await fetch(`${HIROBA}/__profile?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
   await readTitlesAgain();
 }
 
@@ -379,7 +380,7 @@ async function nickname(ctx: Ctx) {
     (await hitsOn("/mypage_kisekae.php")) === editorReads;
 
   await resetLog();
-  await fetch(`${HIROBA}/__profile-posts?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profilePosts}?reset=1`);
   results.nameFieldPrefilled =
     (await inputValueOf("#name-input")) === INITIAL_PROFILE.nickname &&
     (await disabledOf("#name-title-save")) === true &&
@@ -426,15 +427,15 @@ async function nickname(ctx: Ctx) {
     (await profileSaves()).length === 0;
   await typeName(INITIAL_PROFILE.nickname);
 
-  await fetch(`${HIROBA}/__rename?state=closed`);
+  await fetch(`${HIROBA}${CONTROL.rename}?state=closed`);
   await readTitlesAgain();
   const closedNote = await textOf("#name-closed");
   const closedShut = [await disabledOf("#name-input"), await disabledOf("#name-title-save")];
-  await fetch(`${HIROBA}/__rename?state=odd`);
+  await fetch(`${HIROBA}${CONTROL.rename}?state=odd`);
   await readTitlesAgain();
   const unknownOpen = await disabledOf("#name-input");
   const unknownNoted = (await exists("#name-closed")) || (await exists("#name-unknown"));
-  await fetch(`${HIROBA}/__rename?state=open`);
+  await fetch(`${HIROBA}${CONTROL.rename}?state=open`);
   await readTitlesAgain();
   results.nameClosedShowsWhy =
     closedNote ===
@@ -446,7 +447,7 @@ async function nickname(ctx: Ctx) {
     (await profileSaves()).length === 0;
 
   await resetLog();
-  await fetch(`${HIROBA}/__profile-posts?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profilePosts}?reset=1`);
   await typeName("あたらしい");
   await nameSavable();
   await saveSection("name");
@@ -477,14 +478,14 @@ async function nickname(ctx: Ctx) {
     namePosts[0]?.ticketMatched === true;
 
   // A change back made too soon is refused: the field shows the name worn, and typed again it saves.
-  await fetch(`${HIROBA}/__rename-cooldown?on=1`);
+  await fetch(`${HIROBA}${CONTROL.renameCooldown}?on=1`);
   const tooSoon = await changeNameInTheWindow(INITIAL_PROFILE.nickname);
   const tooSoonText = (await textOf("#name-outcome")) ?? "";
   const wornAfterTheRefusal =
     (await inputValueOf("#name-input")) === "あたらしい" &&
     (await profileNow()).nickname === "あたらしい" &&
     (await disabledOf("#name-title-save")) === true;
-  await fetch(`${HIROBA}/__rename-cooldown?on=0`);
+  await fetch(`${HIROBA}${CONTROL.renameCooldown}?on=0`);
   await changeNameInTheWindow(INITIAL_PROFILE.nickname);
   results.nameRefusedForAQuickChangeCanBeSavedAgain =
     tooSoon === "notApplied" &&
@@ -497,7 +498,7 @@ async function nickname(ctx: Ctx) {
   const filteredText = (await textOf("#name-outcome")) ?? "";
   const fieldAfterRefusal = await inputValueOf("#name-input");
   await fetch(
-    `${HIROBA}/__profile-next-result?code=1&message=${encodeURIComponent("<b>不適切</b>な名前")}`,
+    `${HIROBA}${CONTROL.profileNextResult}?code=1&message=${encodeURIComponent("<b>不適切</b>な名前")}`,
   );
   const markedUp = await changeNameInTheWindow("あたらしい");
   const markedUpText = (await textOf("#name-outcome")) ?? "";
@@ -586,7 +587,7 @@ async function nameTitleWrites(ctx: Ctx) {
     typeName,
   } = nameTitleHelpers(ctx.app);
 
-  await fetch(`${HIROBA}/__profile-hold-save?on=1`);
+  await fetch(`${HIROBA}${CONTROL.profileHoldSave}?on=1`);
   const savesBeforeHeldName = await hitsOn(SAVE);
   await typeName("あたらしい");
   await nameSavable();
@@ -609,7 +610,7 @@ async function nameTitleWrites(ctx: Ctx) {
   await click("#read-again");
   await Bun.sleep(300);
   const requestsWhileHeld = await requestLog();
-  await fetch(`${HIROBA}/__profile-hold-save?on=0`);
+  await fetch(`${HIROBA}${CONTROL.profileHoldSave}?on=0`);
   await inSection("name", "idle");
   results.noReadInsideAWriteHeldAtASave =
     fabShutInNameWrite &&
@@ -618,9 +619,9 @@ async function nameTitleWrites(ctx: Ctx) {
     sameBesideLanePictures(requestsWhileHeld, []) &&
     (await outcomeOf("name")) === null &&
     (await profileNow()).nickname === "あたらしい";
-  await fetch(`${HIROBA}/__profile?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
   await readTitlesAgain();
-  await fetch(`${HIROBA}/__title-hold-precheck?on=1`);
+  await fetch(`${HIROBA}${CONTROL.titleHoldPrecheck}?on=1`);
   const prechecksBeforeHeldTitle = await hitsOn("/ajax/check_ip_title.php");
   const readsBeforeHeldTitle = await myPageHits();
   await pickTitle("別の", 102);
@@ -642,7 +643,7 @@ async function nameTitleWrites(ctx: Ctx) {
   await click("#read-again");
   await Bun.sleep(300);
   const requestsWhileTitleHeld = await requestLog();
-  await fetch(`${HIROBA}/__title-hold-precheck?on=0`);
+  await fetch(`${HIROBA}${CONTROL.titleHoldPrecheck}?on=0`);
   await inSection("title", "idle");
   await rereadDone(readsBeforeHeldTitle);
   results.noReadInsideAWriteHeldAtAPrecheck =
@@ -653,11 +654,11 @@ async function nameTitleWrites(ctx: Ctx) {
     (await outcomeOf("title")) === null &&
     (await profileNow()).title === titleOf(102).label;
   results.signOutShutWhileATitleOrNameWriteRuns = signOutShutInNameWrite && signOutShutInTitleWrite;
-  await fetch(`${HIROBA}/__profile?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
   await readTitlesAgain();
 
   await goTo("overview");
-  await fetch(`${HIROBA}/__profile-expire-on-save`);
+  await fetch(`${HIROBA}${CONTROL.profileExpireOnSave}`);
   const afterTitleSave = await bridgeTitle();
   const titleDropped =
     afterTitleSave.kind === "sessionGone" &&
@@ -667,15 +668,15 @@ async function nameTitleWrites(ctx: Ctx) {
   await until("You are not signed in.");
   await click("#sign-in");
   await until("サンプルどん");
-  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
+  tokens.push(await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text());
   results.sessionGoneAfterTitleSaveDropsTheSession = titleDropped;
-  await fetch(`${HIROBA}/__profile?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
   await click("#read-again");
   await Bun.sleep(300);
   await until("Last updated");
   await resetLog();
 
-  const handedOut = (await (await fetch(`${HIROBA}/__tickets`)).json()) as string[];
+  const handedOut = (await (await fetch(`${HIROBA}${CONTROL.tickets}`)).json()) as string[];
   const windowNow = withoutPictureBytes(
     await page.evaluate<string>("document.documentElement.outerHTML"),
   );

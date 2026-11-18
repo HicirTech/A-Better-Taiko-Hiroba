@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+import { CONTROL } from "../scripts/mock-controls";
 
 import {
   COSTUME_FIELDS,
@@ -71,12 +72,13 @@ function setUp(options: SetUpOptions = {}) {
   const sent = () =>
     native.httpRequests.map(({ method, url }) => `${method} ${new URL(url).pathname}`);
   const posts = async () =>
-    (await editor.hook("/__posts", new URLSearchParams())?.json()) as PostRecord[];
+    (await editor.hook(CONTROL.posts, new URLSearchParams())?.json()) as PostRecord[];
   const saved = async () =>
-    (await editor.hook("/__state", new URLSearchParams())?.json()) as Record<string, number>;
+    (await editor.hook(CONTROL.state, new URLSearchParams())?.json()) as Record<string, number>;
   const hook = (path: string, query = "") => editor.hook(path, new URLSearchParams(query));
   const profileHook = (path: string, query = "") => profile.hook(path, new URLSearchParams(query));
-  const profilePosts = async () => (await profileHook("/__profile-posts")?.json()) as PostRecord[];
+  const profilePosts = async () =>
+    (await profileHook(CONTROL.profilePosts)?.json()) as PostRecord[];
   return {
     editor,
     profile,
@@ -162,7 +164,7 @@ describe("createCapacitorPort's costume writes", () => {
   test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
     const world = setUp();
     const port = await signedInPort(world);
-    world.hook("/__expire-on-save");
+    world.hook(CONTROL.expireOnSave);
     const outcome = await port.changeCostume(CHANGE);
 
     expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
@@ -175,7 +177,7 @@ describe("createCapacitorPort's costume writes", () => {
     const port = await signedInPort(world);
     const flushes = () => native.cookieCalls.filter((call) => call === FLUSH).length;
 
-    world.hook("/__noop-save");
+    world.hook(CONTROL.noopSave);
     expect((await port.changeCostume(CHANGE)).kind).toBe("notApplied");
     expect(flushes()).toBe(1);
 
@@ -191,7 +193,7 @@ describe("createCapacitorPort's costume writes", () => {
     const port = await signedInPort(world);
     await port.openCostumeEditor();
     native.httpRequests.length = 0;
-    world.hook("/__hold-precheck", "on=1");
+    world.hook(CONTROL.holdPrecheck, "on=1");
 
     const writing = port.changeCostume(CHANGE);
     await until(() => world.sent().includes("POST /ajax/check_ip_kisekae.php"));
@@ -201,7 +203,7 @@ describe("createCapacitorPort's costume writes", () => {
     await Bun.sleep(300);
     expect(world.sent()).toHaveLength(requestsInTheWrite);
 
-    world.hook("/__hold-precheck", "on=0");
+    world.hook(CONTROL.holdPrecheck, "on=0");
     expect((await writing).kind).toBe("applied");
     expect((await picture).ok).toBe(true);
     expect(world.sent()).toEqual([...SIX_REQUESTS, "GET /imgsrc_kisekae.php"]);
@@ -388,7 +390,7 @@ describe("createCapacitorPort's costume history", () => {
     const port = await signedInPort(world);
     await port.changeCostume(CHANGE);
     native.httpRequests.length = 0;
-    world.hook("/__hold-precheck", "on=1");
+    world.hook(CONTROL.holdPrecheck, "on=1");
     const writing = port.changeCostume({ expected: TARGET, target: START_SET });
     await until(() => world.sent().includes("POST /ajax/check_ip_kisekae.php"));
     const sentInTheWrite = world.sent().length;
@@ -397,7 +399,7 @@ describe("createCapacitorPort's costume history", () => {
 
     expect(history.map(({ set }) => set)).toEqual([TARGET, START_SET]);
     expect(world.sent()).toHaveLength(sentInTheWrite);
-    world.hook("/__hold-precheck", "on=0");
+    world.hook(CONTROL.holdPrecheck, "on=0");
     expect((await writing).kind).toBe("applied");
   });
 
@@ -465,7 +467,7 @@ describe("createCapacitorPort's title writes", () => {
     expect(opened.ok && opened.value.state).toEqual({ title: START_TITLE });
     expect(opened.ok && opened.value.options).toEqual(OWNED_TITLES);
     expect(opened.ok && Object.keys(opened.value)).toEqual(["state", "options"]);
-    const handedOut = (await world.hook("/__tickets")?.json()) as string[];
+    const handedOut = (await world.hook(CONTROL.tickets)?.json()) as string[];
     expect(handedOut.some((ticket) => JSON.stringify(opened).includes(ticket))).toBe(false);
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
@@ -508,7 +510,7 @@ describe("createCapacitorPort's title writes", () => {
   test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
     const world = setUp();
     const port = await signedInPort(world);
-    world.profileHook("/__profile-expire-on-save");
+    world.profileHook(CONTROL.profileExpireOnSave);
     const outcome = await port.changeTitle(TITLE_CHANGE);
 
     expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
@@ -519,7 +521,7 @@ describe("createCapacitorPort's title writes", () => {
   test("answers a write busy while another kind's waits on its pre-check, and sends nothing for it", async () => {
     const world = setUp();
     const port = await signedInPort(world);
-    world.profileHook("/__title-hold-precheck", "on=1");
+    world.profileHook(CONTROL.titleHoldPrecheck, "on=1");
 
     const writing = port.changeTitle(TITLE_CHANGE);
     await until(() => world.sent().includes("POST /ajax/check_ip_title.php"));
@@ -528,7 +530,7 @@ describe("createCapacitorPort's title writes", () => {
     expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "busy" });
     expect(world.sent()).toHaveLength(requestsInTheWrite);
 
-    world.profileHook("/__title-hold-precheck", "on=0");
+    world.profileHook(CONTROL.titleHoldPrecheck, "on=0");
     expect((await writing).kind).toBe("applied");
     expect(world.sent()).toEqual(TITLE_SIX_REQUESTS);
   });
@@ -538,7 +540,7 @@ describe("createCapacitorPort's title writes", () => {
     const port = await signedInPort(world);
     const flushes = () => native.cookieCalls.filter((call) => call === FLUSH).length;
 
-    world.profileHook("/__profile-noop-save");
+    world.profileHook(CONTROL.profileNoopSave);
     expect((await port.changeTitle(TITLE_CHANGE)).kind).toBe("notApplied");
     expect(flushes()).toBe(1);
 
@@ -552,7 +554,7 @@ describe("createCapacitorPort's title writes", () => {
   test("stops at a pre-check that is not the plain false, and saves nothing", async () => {
     const world = setUp();
     const port = await signedInPort(world);
-    world.profileHook("/__title-precheck", "answer=true");
+    world.profileHook(CONTROL.titlePrecheck, "answer=true");
 
     expect((await port.changeTitle(TITLE_CHANGE)).kind).toBe("needsConfirmation");
     expect(
@@ -669,7 +671,7 @@ describe("createCapacitorPort's name writes", () => {
   test("refuses every name unsent while my page says renames are closed", async () => {
     const world = setUp();
     const port = await signedInPort(world);
-    world.profileHook("/__rename", "state=closed");
+    world.profileHook(CONTROL.rename, "state=closed");
 
     expect(await port.changeName(NAME_CHANGE)).toEqual({
       kind: "invalidTarget",
@@ -682,7 +684,7 @@ describe("createCapacitorPort's name writes", () => {
   test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
     const world = setUp();
     const port = await signedInPort(world);
-    world.profileHook("/__profile-expire-on-save");
+    world.profileHook(CONTROL.profileExpireOnSave);
     const outcome = await port.changeName(NAME_CHANGE);
 
     expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
@@ -693,7 +695,7 @@ describe("createCapacitorPort's name writes", () => {
   test("answers any other write busy while a rename waits on its save, and sends nothing for it", async () => {
     const world = setUp();
     const port = await signedInPort(world);
-    world.profileHook("/__profile-hold-save", "on=1");
+    world.profileHook(CONTROL.profileHoldSave, "on=1");
 
     const writing = port.changeName(NAME_CHANGE);
     await until(() => world.sent().includes("POST /ajax/change_mydon_profile.php"));
@@ -703,7 +705,7 @@ describe("createCapacitorPort's name writes", () => {
     expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "busy" });
     expect(world.sent()).toHaveLength(requestsInTheWrite);
 
-    world.profileHook("/__profile-hold-save", "on=0");
+    world.profileHook(CONTROL.profileHoldSave, "on=0");
     expect((await writing).kind).toBe("applied");
     expect(world.sent()).toEqual(NAME_FIVE_REQUESTS);
   });
@@ -713,7 +715,7 @@ describe("createCapacitorPort's name writes", () => {
     const port = await signedInPort(world);
     const flushes = () => native.cookieCalls.filter((call) => call === FLUSH).length;
 
-    world.profileHook("/__profile-noop-save");
+    world.profileHook(CONTROL.profileNoopSave);
     expect((await port.changeName(NAME_CHANGE)).kind).toBe("notApplied");
     expect(flushes()).toBe(1);
 
@@ -772,21 +774,21 @@ const HELD_WRITES = {
   costume: {
     start: (port: HirobaSessionPort) => port.changeCostume(CHANGE),
     hold: (world: ReturnType<typeof setUp>, on: 0 | 1) =>
-      world.hook("/__hold-precheck", `on=${on}`),
+      world.hook(CONTROL.holdPrecheck, `on=${on}`),
     heldAt: "POST /ajax/check_ip_kisekae.php",
     requests: SIX_REQUESTS,
   },
   title: {
     start: (port: HirobaSessionPort) => port.changeTitle(TITLE_CHANGE),
     hold: (world: ReturnType<typeof setUp>, on: 0 | 1) =>
-      world.profileHook("/__title-hold-precheck", `on=${on}`),
+      world.profileHook(CONTROL.titleHoldPrecheck, `on=${on}`),
     heldAt: "POST /ajax/check_ip_title.php",
     requests: TITLE_SIX_REQUESTS,
   },
   name: {
     start: (port: HirobaSessionPort) => port.changeName(NAME_CHANGE),
     hold: (world: ReturnType<typeof setUp>, on: 0 | 1) =>
-      world.profileHook("/__profile-hold-save", `on=${on}`),
+      world.profileHook(CONTROL.profileHoldSave, `on=${on}`),
     heldAt: "POST /ajax/change_mydon_profile.php",
     requests: NAME_FIVE_REQUESTS,
   },

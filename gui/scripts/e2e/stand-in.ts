@@ -1,5 +1,6 @@
 /** What the stand-in was asked, and the switches that steer its answers. */
 
+import { CONTROL } from "../mock-controls";
 import {
   COSTUME_FIELDS,
   type CostumeState,
@@ -27,7 +28,7 @@ const asAppSet = (state: CostumeState) =>
 export const START = asAppSet(INITIAL_COSTUME);
 
 export const hitsOn = async (path: string) =>
-  Number(await (await fetch(`${HIROBA}/__hits?path=${path}`)).text());
+  Number(await (await fetch(`${HIROBA}${CONTROL.hits}?path=${path}`)).text());
 export const myPageHits = () => hitsOn(MY_PAGE);
 export const readHits = async () => (await hitsOn(MY_PAGE)) + (await hitsOn(DAN_LABEL));
 /** Hiroba's own ↻: a read again first reads my page for its token, then posts it. */
@@ -37,7 +38,7 @@ export const refreshHits = () => hitsOn(REFRESH);
 export const READ_AGAIN_MY_PAGE_READS = 2;
 
 export const savedCostume = async () =>
-  asAppSet((await (await fetch(`${HIROBA}/__state`)).json()) as CostumeState);
+  asAppSet((await (await fetch(`${HIROBA}${CONTROL.state}`)).json()) as CostumeState);
 export const PREVIEW = "GET /imgsrc_mydon.php";
 export const THUMBNAIL = "GET /imgsrc_kisekae.php";
 const TITLE_PLATE = "GET /imgsrc_titleplate.php";
@@ -99,7 +100,8 @@ export const medalPlatesSettled = async () => {
   return last;
 };
 
-export const requestLog = async () => (await (await fetch(`${HIROBA}/__log`)).json()) as string[];
+export const requestLog = async () =>
+  (await (await fetch(`${HIROBA}${CONTROL.log}`)).json()) as string[];
 
 /** Main queues pictures with the writes: one lands before or after a write, never inside it. */
 export const sentAsPlanned = (log: string[], before: string[], run: string[]) => {
@@ -116,7 +118,7 @@ export const sentAsPlanned = (log: string[], before: string[], run: string[]) =>
 
 export type PlateAsked = { query: string; referer: string | null; session: boolean };
 export const platesAsked = async () =>
-  (await (await fetch(`${HIROBA}/__titleplates`)).json()) as PlateAsked[];
+  (await (await fetch(`${HIROBA}${CONTROL.titleplates}`)).json()) as PlateAsked[];
 export const platesSettled = async () => {
   let last = -1;
   for (let tries = 0; tries < 30; tries++) {
@@ -131,7 +133,7 @@ export const platesSettled = async () => {
 };
 export type PortraitAsked = { query: string; referer: string | null; cookies: string[] };
 export const myDonsAsked = async () =>
-  (await (await fetch(`${HIROBA}/__mydons`)).json()) as PortraitAsked[];
+  (await (await fetch(`${HIROBA}${CONTROL.mydons}`)).json()) as PortraitAsked[];
 export const myDonsSettled = async () => {
   let last = -1;
   for (let tries = 0; tries < 30; tries++) {
@@ -149,7 +151,7 @@ export const askedAsMyPage = (plates: PlateAsked[]) =>
     (plate) => plate.query === "" && plate.referer === `${HIROBA}/mypage_top.php` && plate.session,
   );
 export const previewQueries = async () =>
-  (await (await fetch(`${HIROBA}/__previews`)).json()) as string[];
+  (await (await fetch(`${HIROBA}${CONTROL.previews}`)).json()) as string[];
 export const previewQuery = (set: Record<string, number>) =>
   [
     ["face", "colorFace"],
@@ -163,11 +165,11 @@ export const previewQuery = (set: Record<string, number>) =>
   ]
     .map(([name, part]) => `${name}=${set[part as string]}`)
     .join("&");
-export const resetLog = () => fetch(`${HIROBA}/__log-reset`);
+export const resetLog = () => fetch(`${HIROBA}${CONTROL.logReset}`);
 
 /** The favourites the stand-in holds, after what the query asks of it. */
 export const favoritesNow = async (query = "") =>
-  (await (await fetch(`${HIROBA}/__favorites${query}`)).json()) as FavoritesState;
+  (await (await fetch(`${HIROBA}${CONTROL.favorites}${query}`)).json()) as FavoritesState;
 
 export const sameBesideLanePictures = (log: string[], expected: string[]) => {
   const kept = log.flatMap((line, index) => (LANE_PICTURES.includes(line) ? [] : [index]));
@@ -213,7 +215,8 @@ const EDITOR = "/mypage_kisekae.php";
 export const editorHits = () => hitsOn(EDITOR);
 
 export type Thumb = { cos: number; type: number; referer: string | null };
-export const thumbs = async () => (await (await fetch(`${HIROBA}/__thumbs`)).json()) as Thumb[];
+export const thumbs = async () =>
+  (await (await fetch(`${HIROBA}${CONTROL.thumbs}`)).json()) as Thumb[];
 export const thumbsSettled = async () => {
   let last = -1;
   for (let tries = 0; tries < 30; tries++) {
@@ -273,13 +276,16 @@ export const titleOf = (id: number) => {
 };
 
 export const profileNow = async () =>
-  (await (await fetch(`${HIROBA}/__profile`)).json()) as { title: string; nickname: string };
+  (await (await fetch(`${HIROBA}${CONTROL.profile}`)).json()) as {
+    title: string;
+    nickname: string;
+  };
 export const profileAsStarted = {
   title: INITIAL_PROFILE.title,
   nickname: INITIAL_PROFILE.nickname,
 };
 export const profilePosts = async () =>
-  (await (await fetch(`${HIROBA}/__profile-posts`)).json()) as PostRecord[];
+  (await (await fetch(`${HIROBA}${CONTROL.profilePosts}`)).json()) as PostRecord[];
 export const profileSaves = async () =>
   (await profilePosts()).filter((post) => post.path === "/ajax/change_mydon_profile.php");
 export const AJAX_HEADERS = (referer: string) => (post: PostRecord) =>

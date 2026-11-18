@@ -1,5 +1,7 @@
 /** A long hold reads a page's pictures again from Hiroba, after a question: three pages. */
+
 import { LONG_HOLD_MS } from "../../src/ui/pull-gesture";
+import { CONTROL } from "../mock-controls";
 import { HIROBA, PAGE_SIZE, PANEL_ART } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
@@ -83,14 +85,14 @@ async function picturesAgain(ctx: Ctx) {
 
     // The どんメダル plate Hiroba does not send keeps the one kept, and the note says so.
     const medalShown = await attribute("#medal-plate-image", "src");
-    await fetch(`${HIROBA}/__tokenplate?answer=gif`);
+    await fetch(`${HIROBA}${CONTROL.tokenplate}?answer=gif`);
     await readAgainHeld();
     const failedSaid = await confirmed();
     results.pictureNotComeStaysAndSaysSo =
       failedSaid === "failed" &&
       medalShown !== null &&
       (await attribute("#medal-plate-image", "src")) === medalShown;
-    await fetch(`${HIROBA}/__tokenplate?answer=png`);
+    await fetch(`${HIROBA}${CONTROL.tokenplate}?answer=png`);
   });
 
   // The items on screen, each asked for once more, none asked for the first time.

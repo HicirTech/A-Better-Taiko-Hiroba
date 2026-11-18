@@ -1,6 +1,8 @@
 /** Stand-in for Hiroba and the Bandai Namco ID host, so sign-in runs without the real sites. */
+
 import { ABTH_CDN_PATH, abthCdnFile } from "./mock-abth-cdn";
 import { CHINESE_NAMES_PATH, chineseNamesBatch } from "./mock-chinese-names";
+import { CONTROL } from "./mock-controls";
 import { createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import { danLabelPng, NO_LABEL_GIF, unknownLabelPng } from "./mock-dan-label";
 import { danPlatePng } from "./mock-dan-plate";
@@ -467,7 +469,7 @@ Bun.serve({
           headers: { "content-type": "image/png" },
         });
       }
-      case "/__update-feed": {
+      case CONTROL.updateFeed: {
         const version = searchParams.get("version");
         updateFeed =
           version === null
@@ -484,14 +486,14 @@ Bun.serve({
               };
         return new Response("feed set");
       }
-      case "/__update-feed/update.json":
+      case `${CONTROL.updateFeed}/update.json`:
         return new Response(updateFeed.body, {
           status: updateFeed.status,
           headers: { "content-type": "application/json" },
         });
-      case "/__history":
+      case CONTROL.history:
         return Response.json(history.control(searchParams));
-      case "/__scores":
+      case CONTROL.scores:
         return Response.json(scores.control(searchParams));
       case SONG_CATALOGUE_PATH:
         return Response.json(wikiSongsSince(searchParams.get("after"), HIROBA));
@@ -501,35 +503,35 @@ Bun.serve({
         return Response.json(ratingDataV2Answer());
       case CHINESE_NAMES_PATH:
         return Response.json(chineseNamesBatch(searchParams.get("gcmcontinue")));
-      case "/__last-token":
+      case CONTROL.lastToken:
         return new Response(lastIssued);
-      case "/__expire":
+      case CONTROL.expire:
         sessions.clear();
         return new Response("expired");
-      case "/__rotate":
+      case CONTROL.rotate:
         rotateNext = true;
         return new Response("rotating");
-      case "/__hits":
+      case CONTROL.hits:
         return new Response(String(hits.get(searchParams.get("path") ?? "") ?? 0));
-      case "/__hits-reset":
+      case CONTROL.hitsReset:
         hits.clear();
         return new Response("reset");
-      case "/__hold":
+      case CONTROL.hold:
         holdIdForm = searchParams.get("on") === "1";
         return new Response(holdIdForm ? "holding" : "flowing");
-      case "/__offsite":
+      case CONTROL.offsite:
         sendOffsite = searchParams.get("on") === "1";
         return new Response(sendOffsite ? "offsite" : "onsite");
-      case "/__popup": {
+      case CONTROL.popup: {
         signInByPopup = searchParams.get("on") === "1";
         const signIns = popupSignIns;
         popupSignIns = 0;
         return Response.json({ signIns });
       }
-      case "/__refuser":
+      case CONTROL.refuser:
         signInByRefuser = searchParams.get("on") === "1";
         return new Response(signInByRefuser ? "refusing" : "accepting");
-      case "/__hold-read": {
+      case CONTROL.holdRead: {
         const on = searchParams.get("on");
         if (on === "1" && releaseReads === null) {
           readsHeld = new Promise((resolve) => {
@@ -542,7 +544,7 @@ Bun.serve({
         }
         return new Response(releaseReads === null ? "flowing" : "holding");
       }
-      case "/__medal": {
+      case CONTROL.medal: {
         const state = searchParams.get("state");
         if (state === "none" || state === "collecting" || state === "complete" || state === "odd") {
           medalState = state;
@@ -553,7 +555,7 @@ Bun.serve({
         }
         return new Response(`${medalState} ${medalSeason}`);
       }
-      case "/__variant": {
+      case CONTROL.variant: {
         const flag = (name: string, on: string) =>
           searchParams.has(name) ? searchParams.get(name) === on : undefined;
         const dan = searchParams.get("dan") ?? "";
@@ -575,66 +577,66 @@ Bun.serve({
         }
         return Response.json({ ...variant, title: profile.title() });
       }
-      case "/__titleplate": {
+      case CONTROL.titleplate: {
         const answer = searchParams.get("answer");
         if (answer === "png" || answer === "blank" || answer === "gif") {
           titlePlateAnswer = answer;
         }
         return new Response(titlePlateAnswer);
       }
-      case "/__tokenplate": {
+      case CONTROL.tokenplate: {
         const answer = searchParams.get("answer");
         if (answer === "png" || answer === "gif") {
           tokenPlateAnswer = answer;
         }
         return new Response(tokenPlateAnswer);
       }
-      case "/__panel": {
+      case CONTROL.panel: {
         const answer = searchParams.get("answer");
         if (answer === "png" || answer === "404") {
           panelAnswer = answer;
         }
         return new Response(panelAnswer);
       }
-      case "/__icons": {
+      case CONTROL.icons: {
         const answer = searchParams.get("answer");
         if (answer === "png" || answer === "404") {
           iconAnswer = answer;
         }
         return new Response(iconAnswer);
       }
-      case "/__titleplates":
+      case CONTROL.titleplates:
         if (searchParams.get("reset") === "1") {
           titlePlates.length = 0;
         }
         return Response.json(titlePlates);
-      case "/__mydon": {
+      case CONTROL.mydon: {
         const answer = searchParams.get("answer");
         if (answer === "png" || answer === "gif") {
           portraitAnswer = answer;
         }
         return new Response(portraitAnswer);
       }
-      case "/__mydons":
+      case CONTROL.mydons:
         if (searchParams.get("reset") === "1") {
           portraits.length = 0;
         }
         return Response.json(portraits);
-      case "/__cross-origin":
-        return redirect(`${IDP}/__echo-cookie`);
-      case "/__same-origin":
-        return redirect("/__echo-cookie");
-      case "/__echo-cookie":
+      case CONTROL.crossOrigin:
+        return redirect(`${IDP}${CONTROL.echoCookie}`);
+      case CONTROL.sameOrigin:
+        return redirect(CONTROL.echoCookie);
+      case CONTROL.echoCookie:
         return Response.json({ cookieArrived: request.headers.has("cookie") });
-      case "/__log":
+      case CONTROL.log:
         return Response.json(requestLog);
-      case "/__log-reset":
+      case CONTROL.logReset:
         requestLog.length = 0;
         return new Response("reset");
-      case "/__post-to-login":
+      case CONTROL.postToLogin:
         postToLogin = searchParams.get("on") === "1";
         return new Response(postToLogin ? "to login" : "answering");
-      case "/__post-redirect": {
+      case CONTROL.postRedirect: {
         const status = Number(searchParams.get("status"));
         redirectNextPost = POST_REDIRECT_STATUSES.includes(status)
           ? { status, rotate: searchParams.get("rotate") === "1" }
@@ -711,7 +713,7 @@ Bun.serve({
         );
       case "/later":
         return redirect(`${url.searchParams.get("back")}?code=mock`);
-      case "/__echo-cookie":
+      case CONTROL.echoCookie:
         return Response.json({ cookieArrived: request.headers.has("cookie") });
       default:
         return new Response("not found", { status: 404 });

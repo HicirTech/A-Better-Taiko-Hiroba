@@ -1,3 +1,4 @@
+import { CONTROL } from "../mock-controls";
 import { NO_THUMBNAIL_ITEM } from "../mock-costume";
 import { HIROBA, PHONE_SHORT, TOP_BAND_PX } from "./config";
 import type { Ctx, LaneSection } from "./context";
@@ -55,8 +56,8 @@ async function thumbnails(ctx: Ctx) {
       async () => (await exists("#costume-items-costume1")) || undefined,
     );
   };
-  await fetch(`${HIROBA}/__thumbs?reset=1`);
-  const owned = (await (await fetch(`${HIROBA}/__items?many=1`)).json()) as Record<
+  await fetch(`${HIROBA}${CONTROL.thumbs}?reset=1`);
+  const owned = (await (await fetch(`${HIROBA}${CONTROL.items}?many=1`)).json()) as Record<
     string,
     number[]
   >;
@@ -143,7 +144,7 @@ async function thumbnails(ctx: Ctx) {
   );
   await Bun.sleep(1500);
   results.thumbnailsAskedOncePerRun = (await thumbs()).length === askedBeforeReopen;
-  await fetch(`${HIROBA}/__thumb?answer=gif`);
+  await fetch(`${HIROBA}${CONTROL.thumb}?answer=gif`);
   await click("#costume-part-costume2");
   await waitFor(
     "thumbnail notice",
@@ -171,7 +172,7 @@ async function thumbnails(ctx: Ctx) {
     slotTwoAsked.length === unfetchedIn(2).length &&
     slotTwoAsked.every((thumb) => thumb.type === 2) &&
     (await thumbs()).length === thumbsAfterGif.length;
-  await fetch(`${HIROBA}/__thumb?answer=png`);
+  await fetch(`${HIROBA}${CONTROL.thumb}?answer=png`);
   await leaveTheCostumePage();
   await openItems();
   await click("#costume-part-costume2");
@@ -189,7 +190,7 @@ async function thumbnails(ctx: Ctx) {
     )) === ownedIn(2).length &&
     !(await exists("#costume-thumbnails-unavailable"));
   await leaveTheCostumePage();
-  await fetch(`${HIROBA}/__items?many=0`);
+  await fetch(`${HIROBA}${CONTROL.items}?many=0`);
   const thumbsBeforeRefusals = (await thumbs()).length;
   results.thumbnailNotOfferedRefusedUnsent =
     same(
@@ -240,7 +241,7 @@ async function tileThumbnails(ctx: Ctx) {
     const farItem = items[items.length - 1];
     const thumbsBeforePick = (await thumbsSettled()).length;
     await resetLog();
-    await fetch(`${HIROBA}/__hold-precheck?on=1`);
+    await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=1`);
     const prechecksBeforeFarSave = await hitsOn("/ajax/check_ip_kisekae.php");
     await page.evaluate(
       `(async () => { document.querySelector("#item-costume1-${farItem}").click(); await new Promise((resolve) => requestAnimationFrame(resolve)); document.querySelector("#costume-save").click(); })()`,
@@ -252,17 +253,17 @@ async function tileThumbnails(ctx: Ctx) {
     );
     await Bun.sleep(700);
     const thumbsDuringTheWrite = (await thumbs()).length - thumbsBeforePick;
-    await fetch(`${HIROBA}/__hold-precheck?on=0`);
+    await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=0`);
     await inStep("editing");
     // The worn tile does not ask again; the write renews the preview instead.
     const waitedItOut =
       thumbsDuringTheWrite === 0 &&
       sentAsPlanned(await requestLog(), [], COLOUR_REQUESTS) &&
       (await savedCostume()).costume1 === farItem;
-    await fetch(`${HIROBA}/__state?reset=1`);
+    await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
     return waitedItOut;
   };
-  await fetch(`${HIROBA}/__items?many=1`);
+  await fetch(`${HIROBA}${CONTROL.items}?many=1`);
   await openFreshEditor();
   results.tileThumbnailWaitsOutAWriteThenIsAskedOnce = await farItemSavedAtOnce(ownedIn(1));
 
@@ -274,7 +275,7 @@ async function tileThumbnails(ctx: Ctx) {
     );
   };
   const freshList = async (which: "2" | "3") => {
-    const fresh = (await (await fetch(`${HIROBA}/__items?many=${which}`)).json()) as Record<
+    const fresh = (await (await fetch(`${HIROBA}${CONTROL.items}?many=${which}`)).json()) as Record<
       string,
       number[]
     >;
@@ -284,7 +285,7 @@ async function tileThumbnails(ctx: Ctx) {
     await inStep("editing");
     await showPart("colorFace");
     await openFreshEditor();
-    await fetch(`${HIROBA}/__thumbs?reset=1`);
+    await fetch(`${HIROBA}${CONTROL.thumbs}?reset=1`);
     return fresh["1"] ?? [];
   };
   const goOnAPhone = async (to: "overview" | "costume") => {
@@ -336,7 +337,9 @@ async function saveInPlace(ctx: Ctx) {
 
   // The other slots empty, so a saved Mascot leaves no note behind to change the page's height.
   const withOnlyTheMascotSlot = async () => {
-    await fetch(`${HIROBA}/__state?reset=1&costume_2=0&costume_3=0&costume_4=0&costume_5=0`);
+    await fetch(
+      `${HIROBA}${CONTROL.state}?reset=1&costume_2=0&costume_3=0&costume_4=0&costume_5=0`,
+    );
     await readEditorAgain();
   };
   const heldFacts = () =>
@@ -360,11 +363,11 @@ async function saveInPlace(ctx: Ctx) {
       await page.evaluate(`document.querySelector("#item-costume1-${farItem}").click()`);
       const end = await scrollToTheEnd();
       await page.evaluate(`window.gridKept = document.querySelector("#costume-items-costume1")`);
-      await fetch(`${HIROBA}/__hold-precheck?on=1`);
+      await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=1`);
       await click("#costume-save");
       await inStep("saving");
       const held = await heldFacts();
-      await fetch(`${HIROBA}/__hold-precheck?on=0`);
+      await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=0`);
       await inStep("editing");
       const settled = await heldFacts();
       const saved = (await savedCostume()).costume1 === farItem;
@@ -395,13 +398,13 @@ async function saveInPlace(ctx: Ctx) {
     await page.evaluate("window.scrollTo(0, 0)");
     await click(`#item-costume1-${phoneItems[0]}`);
     const askedBefore = (await thumbsSettled()).length;
-    await fetch(`${HIROBA}/__hold-precheck?on=1`);
+    await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=1`);
     await click("#costume-save");
     await inStep("saving");
     await page.evaluate("window.scrollBy(0, 160)");
     await Bun.sleep(700);
     const askedDuringTheWrite = (await thumbs()).length - askedBefore;
-    await fetch(`${HIROBA}/__hold-precheck?on=0`);
+    await fetch(`${HIROBA}${CONTROL.holdPrecheck}?on=0`);
     await inStep("editing");
     const askedAfterTheWrite = (await thumbsSettled()).length - askedBefore;
     await page.evaluate("window.scrollTo(0, 0)");
@@ -416,10 +419,10 @@ async function saveInPlace(ctx: Ctx) {
     "costume-bar",
   );
 
-  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
   await readEditorAgain();
   const withTheNotesUp = async <T>(width: number, height: number, run: () => Promise<T>) => {
-    await fetch(`${HIROBA}/__preview?answer=gif`);
+    await fetch(`${HIROBA}${CONTROL.preview}?answer=gif`);
     try {
       return await atSize(width, height, async () => {
         await showPart("colorFace");
@@ -440,14 +443,14 @@ async function saveInPlace(ctx: Ctx) {
         );
         await scrollToTheEnd();
         // A save stopped for a confirmation reads nothing back, so the draft and its notes stay.
-        await fetch(`${HIROBA}/__precheck?answer=true`);
+        await fetch(`${HIROBA}${CONTROL.precheck}?answer=true`);
         await click("#costume-save");
         await waitFor("write notice", async () => (await exists("#write-outcome")) || undefined);
         return await run();
       });
     } finally {
-      await fetch(`${HIROBA}/__precheck?answer=false`);
-      await fetch(`${HIROBA}/__preview?answer=png`);
+      await fetch(`${HIROBA}${CONTROL.precheck}?answer=false`);
+      await fetch(`${HIROBA}${CONTROL.preview}?answer=png`);
       await click("#costume-reset");
     }
   };

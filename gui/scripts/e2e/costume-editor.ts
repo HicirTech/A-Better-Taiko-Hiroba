@@ -1,4 +1,5 @@
 import { LONG_PRESS_MS } from "../../src/ui/use-long-press";
+import { CONTROL } from "../mock-controls";
 import { COSTUME_FIELDS } from "../mock-costume";
 import { HIROBA, PHONE } from "./config";
 import type { Ctx, LaneSection } from "./context";
@@ -72,7 +73,7 @@ async function costumeEditor(ctx: Ctx) {
   const { myDonsFailed } = state;
 
   const editorReadsAtStart = await editorHits();
-  await fetch(`${HIROBA}/__previews?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.previews}?reset=1`);
   await click("#costume-open");
   await waitFor("costume page", async () => (await currentPage()) === "costume" || undefined);
   const jumpedByClick = (await textOf("main h1")) === "Costume";
@@ -143,7 +144,7 @@ async function costumeEditor(ctx: Ctx) {
   await readEditorAgain();
   results.readAgainKeepsADraftOverAnUnchangedSet =
     (await pressedOf("#swatch-colorFace-3")) === "true" && (await savable());
-  await fetch(`${HIROBA}/__state?color_body=40`);
+  await fetch(`${HIROBA}${CONTROL.state}?color_body=40`);
   await readEditorAgain();
   await click("#costume-part-colorBody");
   const bodyAsRead = (await pressedOf("#swatch-colorBody-40")) === "true";
@@ -153,7 +154,7 @@ async function costumeEditor(ctx: Ctx) {
     (await pressedOf("#swatch-colorFace-5")) === "true" &&
     (await pressedOf("#swatch-colorFace-3")) === "false" &&
     !(await savable());
-  await fetch(`${HIROBA}/__state?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
   await readEditorAgain();
 
   results.saveBarStaysAtTheBottom = await atSize(PHONE.width, PHONE.height, async () => {
@@ -195,7 +196,7 @@ async function costumeEditor(ctx: Ctx) {
     Math.abs(onAWideWindow.settings.width - 900) < 1;
   await goTo("overview");
 
-  await fetch(`${HIROBA}/__noop-save`);
+  await fetch(`${HIROBA}${CONTROL.noopSave}`);
   const noChange = await changeInTheWindow(() => click("#swatch-colorFace-3"));
 
   results.failedSaveSaysSoAndShowsHirobasSet =
@@ -340,14 +341,14 @@ async function portraitPreview(ctx: Ctx) {
     measured.overviewScrolls &&
     sameColumn(measured.columnOnOverview, measured.columnOnSettings) &&
     sameColumn(measured.columnOnSettings, await column());
-  await fetch(`${HIROBA}/__previews?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.previews}?reset=1`);
   await click("#swatch-colorFace-4");
   const afterColour = await previewOtherThan(onOpen);
   await Bun.sleep(500);
   results.previewChangesAfterColour =
     afterColour.startsWith("data:image/png;base64,") &&
     same(await previewQueries(), [previewQuery({ ...START, colorFace: 4 })]);
-  await fetch(`${HIROBA}/__previews?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.previews}?reset=1`);
   for (const id of [7, 9, 11, 13, 15]) {
     await click(`#swatch-colorFace-${id}`);
     await Bun.sleep(40);
@@ -365,7 +366,7 @@ async function portraitPreview(ctx: Ctx) {
     !withPreview.includes("cos1=") &&
     !withPreview.includes("_token_v2") &&
     !tokens.some((token) => withPreview.includes(token));
-  await fetch(`${HIROBA}/__preview?answer=gif`);
+  await fetch(`${HIROBA}${CONTROL.preview}?answer=gif`);
   await click("#swatch-colorFace-20");
   await waitFor(
     "preview unavailable notice",
@@ -376,8 +377,8 @@ async function portraitPreview(ctx: Ctx) {
       "Code for a report: preview=notPng status=200 type=image/gif bytes=43" &&
     (await previewSrc()) === afterBurst &&
     (await savable());
-  await fetch(`${HIROBA}/__preview?answer=png`);
-  await fetch(`${HIROBA}/__previews?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.preview}?answer=png`);
+  await fetch(`${HIROBA}${CONTROL.previews}?reset=1`);
   await click("#swatch-colorFace-21");
   await leaveTheCostumePage();
   await Bun.sleep(800);
@@ -433,7 +434,7 @@ async function costumeWrite(ctx: Ctx) {
   const myDonsBeforeColour = await myDonsSettled();
   const myDonBeforeColour = await attribute("#my-don-image", "src");
   await resetLog();
-  await fetch(`${HIROBA}/__posts?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.posts}?reset=1`);
   const colourOutcome = await changeInTheWindow(() => click("#swatch-colorFace-3"), true);
   results.colourApplied = colourOutcome === "applied";
   results.appliedShowsNoNotice =
@@ -445,7 +446,7 @@ async function costumeWrite(ctx: Ctx) {
     COLOUR_REQUESTS,
   );
   results.colourMovedOneField = same(await savedCostume(), { ...START, colorFace: 3 });
-  const posts = (await (await fetch(`${HIROBA}/__posts`)).json()) as {
+  const posts = (await (await fetch(`${HIROBA}${CONTROL.posts}`)).json()) as {
     path: string;
     xRequestedWith: string | null;
     origin: string | null;

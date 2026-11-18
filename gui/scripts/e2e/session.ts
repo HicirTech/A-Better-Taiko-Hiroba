@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { CONTROL } from "../mock-controls";
 import { INITIAL_PROFILE, OWNED_TITLES } from "../mock-profile";
 import { type App, launch, stop } from "./app";
 import {
@@ -120,7 +121,7 @@ async function sessionExpiry(ctx: Ctx) {
   await openFreshEditor();
   const postsBeforeExpiry = await hitsOn("/ajax/check_ip_kisekae.php");
   await click("#swatch-colorFace-9");
-  await fetch(`${HIROBA}/__expire`);
+  await fetch(`${HIROBA}${CONTROL.expire}`);
   await Bun.sleep(100);
   await click("#costume-save");
   await until("Hiroba ended the session before anything was saved");
@@ -139,8 +140,8 @@ async function sessionExpiry(ctx: Ctx) {
 
   await click("#sign-in");
   await until("サンプルどん");
-  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
-  await fetch(`${HIROBA}/__expire-on-save`);
+  tokens.push(await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text());
+  await fetch(`${HIROBA}${CONTROL.expireOnSave}`);
   const afterSave = await bridgeChange({ ...START, colorFace: 7 });
   const droppedAfterSave =
     afterSave.kind === "sessionGone" &&
@@ -150,7 +151,7 @@ async function sessionExpiry(ctx: Ctx) {
   await until("You are not signed in.");
   await click("#sign-in");
   await until("サンプルどん");
-  tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
+  tokens.push(await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text());
   const editorAfterTheLostSave = await page.evaluate<{ ok: boolean; value?: { state: unknown } }>(
     "window.abth.openCostumeEditor()",
   );
@@ -159,9 +160,9 @@ async function sessionExpiry(ctx: Ctx) {
     editorAfterTheLostSave.ok &&
     same(editorAfterTheLostSave.value?.state, { ...START, colorFace: 7 });
   // The checks after the reopen start from the set the lost save left.
-  await fetch(`${HIROBA}/__state?reset=1&color_face=7`);
+  await fetch(`${HIROBA}${CONTROL.state}?reset=1&color_face=7`);
 
-  await fetch(`${HIROBA}/__expire`);
+  await fetch(`${HIROBA}${CONTROL.expire}`);
   await click("#read-again");
   await until("Your Hiroba session has ended");
   results.lostSessionHandled = true;
@@ -172,28 +173,30 @@ async function sessionExpiry(ctx: Ctx) {
   await until("Sign-in was cancelled.");
   results.cancelHandled = true;
 
-  await fetch(`${HIROBA}/__offsite?on=1`);
+  await fetch(`${HIROBA}${CONTROL.offsite}?on=1`);
   await click("#sign-in");
   await until(`${OFFSITE_HOST}, which is not on https`);
-  await fetch(`${HIROBA}/__offsite?on=0`);
+  await fetch(`${HIROBA}${CONTROL.offsite}?on=0`);
   results.refusalNamed = true;
 
   // A service that refuses embedded browsers is never loaded: its popup ends the attempt. The
   // stand-in's entry page is http, so no browser opens here.
-  await fetch(`${HIROBA}/__refuser?on=1`);
+  await fetch(`${HIROBA}${CONTROL.refuser}?on=1`);
   await click("#sign-in");
   await until(`${REFUSING_HOST} does not allow signing in inside an app`);
-  await fetch(`${HIROBA}/__refuser?on=0`);
+  await fetch(`${HIROBA}${CONTROL.refuser}?on=0`);
   results.refuserEndsTheAttempt = true;
 
   await page.evaluate(
     `(() => { window.firstCard = null; const observer = new MutationObserver(() => { if (document.querySelector("#profile") === null) return; window.firstCard = ["#title-plate-image", "#my-don-image"].map((selector) => document.querySelector(selector) !== null); observer.disconnect(); }); observer.observe(document.body, { childList: true, subtree: true }); })()`,
   );
   // This sign-in finishes in a popup, as some services' do: it must share the sign-in's session.
-  await fetch(`${HIROBA}/__popup?on=1`);
+  await fetch(`${HIROBA}${CONTROL.popup}?on=1`);
   await click("#sign-in");
   await until("サンプルどん");
-  const popup = (await (await fetch(`${HIROBA}/__popup?on=0`)).json()) as { signIns: number };
+  const popup = (await (await fetch(`${HIROBA}${CONTROL.popup}?on=0`)).json()) as {
+    signIns: number;
+  };
   results.signInThroughAPopup = popup.signIns === 1;
   await waitForSeen(
     "My Don picture",
@@ -210,7 +213,7 @@ async function sessionExpiry(ctx: Ctx) {
   await previewOtherThan(null);
   results.signInForgetsTheCostumePreview = (await previewQueries()).length > previewsBefore;
   await goTo("overview");
-  const kept = (await (await fetch(`${HIROBA}/__last-token`)).text()).trim();
+  const kept = (await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text()).trim();
   tokens.push(kept);
   results.sessionKept =
     existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
@@ -379,7 +382,7 @@ async function signedOutReopen(ctx: Ctx) {
   const thumbsSignedOut = (await thumbs()).length;
   await running.click("#sign-in");
   await running.until("サンプルどん");
-  tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+  tokens.push((await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text()).trim());
   const editorReadsBeforeOpening = await editorHits();
   await running.click("#costume-open");
   await waitFor(
@@ -444,12 +447,12 @@ async function signedOutReopen(ctx: Ctx) {
     await signOut();
     await running.click("#sign-in");
     await running.until("サンプルどん");
-    tokens.push((await (await fetch(`${HIROBA}/__last-token`)).text()).trim());
+    tokens.push((await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text()).trim());
     await plateShown();
     return (await platesSettled()).length;
   };
   const platesBeforeThird = (await platesSettled()).length;
-  await fetch(`${HIROBA}/__variant?title=third`);
+  await fetch(`${HIROBA}${CONTROL.variant}?title=third`);
   await running.click("#read-again");
   await running.until("三つ目のサンプル称号");
   await waitFor(
@@ -491,7 +494,7 @@ async function signedOutReopen(ctx: Ctx) {
     }
 
     const hitsBefore = await hitsOn("/imgsrc_mydon.php");
-    await fetch(`${HIROBA}/__previews?reset=1`);
+    await fetch(`${HIROBA}${CONTROL.previews}?reset=1`);
     await running.click("#costume-history");
     await waitFor(
       "history entry",
@@ -517,7 +520,7 @@ async function signedOutReopen(ctx: Ctx) {
   };
   results.historyPickShowsThePictureAtOnceAsksNothing = await historyPickAfterSignIn();
   await signOut();
-  tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
+  tokens.push(...((await (await fetch(`${HIROBA}${CONTROL.tickets}`)).json()) as string[]));
 }
 
 const portraitRequestsKeys = ["myDonSentNoCookie"] as const;

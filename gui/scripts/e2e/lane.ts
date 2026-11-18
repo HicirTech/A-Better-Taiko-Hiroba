@@ -1,6 +1,8 @@
 /** Runs a lane's sections on one app and stand-in, and the sections after every lane. */
+
 import { rmSync } from "node:fs";
 import { join } from "node:path";
+import { CONTROL } from "../mock-controls";
 
 import { type App, launch, stop } from "./app";
 import {
@@ -157,13 +159,13 @@ async function runSection(
 }
 
 const RECOVERY = [
-  "/__hold-precheck?on=0",
-  "/__title-hold-precheck?on=0",
-  "/__profile-hold-save?on=0",
-  "/__hold-read?on=0",
-  "/__state?reset=1",
-  "/__profile?reset=1",
-  "/__items?many=0",
+  `${CONTROL.holdPrecheck}?on=0`,
+  `${CONTROL.titleHoldPrecheck}?on=0`,
+  `${CONTROL.profileHoldSave}?on=0`,
+  `${CONTROL.holdRead}?on=0`,
+  `${CONTROL.state}?reset=1`,
+  `${CONTROL.profile}?reset=1`,
+  `${CONTROL.items}?many=0`,
 ];
 
 /** Whether a process listens on `port` already, as the apps of a run stopped midway do. */
@@ -209,13 +211,13 @@ export async function runLane(
   // Every lane starting at once slows the stand-in's start; wait for its answer.
   await waitFor(
     "the stand-in",
-    async () => (await fetch(`${HIROBA}/__hits-reset`)).ok || undefined,
+    async () => (await fetch(`${HIROBA}${CONTROL.hitsReset}`)).ok || undefined,
   );
   if (setupChecks) {
     results.uaGateActive = (await (await fetch(`${HIROBA}${MY_PAGE}`)).text()).includes(
       "recommended browsers",
     );
-    await fetch(`${HIROBA}/__hits-reset`);
+    await fetch(`${HIROBA}${CONTROL.hitsReset}`);
     results.pictureBytesAloneLeftOut =
       withoutPictureBytes(
         `<img src="data:image/png;base64,AAimgsrc000000000000AA==#imgsrc_kisekae.php?cos=4&amp;_token_v2=x">`,
@@ -241,15 +243,15 @@ export async function runLane(
   async function signIn() {
     const { click, until } = ctx.app;
     if (picturesFail) {
-      await fetch(`${HIROBA}/__mydon?answer=gif`);
-      await fetch(`${HIROBA}/__panel?answer=404`);
-      await fetch(`${HIROBA}/__icons?answer=404`);
+      await fetch(`${HIROBA}${CONTROL.mydon}?answer=gif`);
+      await fetch(`${HIROBA}${CONTROL.panel}?answer=404`);
+      await fetch(`${HIROBA}${CONTROL.icons}?answer=404`);
     }
     // Earlier sections sign in on their own apps; this count is the main run's.
-    await fetch(`${HIROBA}/__hits-reset`);
+    await fetch(`${HIROBA}${CONTROL.hitsReset}`);
     await click("#sign-in");
     await until("サンプルどん");
-    tokens.push(await (await fetch(`${HIROBA}/__last-token`)).text());
+    tokens.push(await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text());
   }
 
   /** Set once the app cannot be started or signed in, so the sections that need it say so at once. */
@@ -318,7 +320,7 @@ export async function runLane(
     } catch (error) {
       report.errors.push({ section: "sign-out at the lane's end", message: messageOf(error) });
     }
-    tokens.push(...((await (await fetch(`${HIROBA}/__tickets`)).json()) as string[]));
+    tokens.push(...((await (await fetch(`${HIROBA}${CONTROL.tickets}`)).json()) as string[]));
     report.portraits.push({ hiroba: HIROBA, asked: await myDonsAsked() });
   } finally {
     if (held.app !== undefined) {

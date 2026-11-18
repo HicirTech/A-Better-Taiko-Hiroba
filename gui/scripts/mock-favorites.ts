@@ -1,5 +1,7 @@
 /** Stateful stand-in for the two favourite editors, their ajax saves and my page's favourites. */
+
 import { FOLDER_SLOT_COUNT } from "@abth/core";
+import { CONTROL } from "./mock-controls";
 
 import { type MockSession, type PostRecord, postRecordOf } from "./mock-costume";
 import { escapeHtml } from "./mock-profile";
@@ -271,14 +273,14 @@ ${songSpan(songOf(favoriteSong))}
     /** A test hook's answer, or null when the path is none of the favourites' hooks. */
     hook(pathname: string, params: URLSearchParams): Response | null {
       switch (pathname) {
-        case "/__favorites":
+        case CONTROL.favorites:
           if (params.get("reset") === "1") {
             state = startState();
           }
           state.initStages = flagOf(params.get("initStages")) ?? state.initStages;
           state.emptyClears = flagOf(params.get("emptyClears")) ?? state.emptyClears;
           return Response.json(state);
-        case "/__favorites-posts":
+        case CONTROL.favoritesPosts:
           if (params.get("reset") === "1") {
             posts.length = 0;
           }

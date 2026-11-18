@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { FOLDER_SLOT_COUNT } from "@abth/core";
+import { CONTROL } from "../scripts/mock-controls";
 
 import type { MockSession } from "../scripts/mock-costume";
 import { createFavoritesEditor, type FavoritesState } from "../scripts/mock-favorites";
@@ -32,7 +33,7 @@ function standIn() {
   });
   const session: MockSession = { cardChosen: true };
   const change = async (query = "") =>
-    (await editor.hook("/__favorites", new URLSearchParams(query))?.json()) as FavoritesState;
+    (await editor.hook(CONTROL.favorites, new URLSearchParams(query))?.json()) as FavoritesState;
   const token = () => session.ticket ?? "";
   return {
     editor,
@@ -369,7 +370,7 @@ describe("the hooks", () => {
       new URLSearchParams({ _tckt: stand.session.ticket ?? "" }),
       stand.session,
     );
-    const posts = await stand.editor.hook("/__favorites-posts", new URLSearchParams())?.json();
+    const posts = await stand.editor.hook(CONTROL.favoritesPosts, new URLSearchParams())?.json();
     expect(posts).toMatchObject([
       {
         path: "/ajax/myfavorite_song.php",
@@ -379,12 +380,12 @@ describe("the hooks", () => {
       },
     ]);
     const cleared = await stand.editor
-      .hook("/__favorites-posts", new URLSearchParams("reset=1"))
+      .hook(CONTROL.favoritesPosts, new URLSearchParams("reset=1"))
       ?.json();
     expect(cleared).toEqual([]);
   });
 
   test("leaves a path that is none of its own", () => {
-    expect(standIn().editor.hook("/__profile", new URLSearchParams())).toBeNull();
+    expect(standIn().editor.hook(CONTROL.profile, new URLSearchParams())).toBeNull();
   });
 });

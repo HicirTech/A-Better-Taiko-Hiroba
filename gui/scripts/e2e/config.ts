@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { createTranslator } from "@abth/i18n";
+import { CONTROL } from "../mock-controls";
 
 import { DEV_ADDRESS, mockOrigins } from "../mock-origins";
 import { RATING_DATA_PATHS } from "../mock-rating-data";
@@ -54,7 +55,7 @@ export const UPDATES_USER_DATA = userDataOf(LANE, "e2e-user-data-updates");
 export const PAGE_GONE_USER_DATA = userDataOf(LANE, "e2e-user-data-page-gone");
 /** Where the app saves a picture of a page, in place of asking where in the save box. */
 export const PICTURES = userDataOf(LANE, "e2e-pictures");
-export const UPDATE_FEED = "/__update-feed/update.json";
+export const UPDATE_FEED = `${CONTROL.updateFeed}/update.json`;
 /** MUI's md: from this width the app frame shows its side panel. */
 export const MD_WIDTH_PX = 900;
 /** The page size every app is held to: a display that sleeps or goes resizes windows, not pages. */

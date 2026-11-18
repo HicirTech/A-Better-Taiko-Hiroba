@@ -1,5 +1,7 @@
 /** Stateful stand-in for the costume editor: mypage_kisekae.php and its two ajax posts. */
+
 import { encode } from "fast-png";
+import { CONTROL } from "./mock-controls";
 
 import { NO_LABEL_GIF } from "./mock-dan-label";
 import { thumbnailPng } from "./mock-pictures";
@@ -366,7 +368,7 @@ ${slotTabs}
     /** A test hook's answer, or null when the path is none of the costume's hooks. */
     hook(pathname: string, params: URLSearchParams): Response | null {
       switch (pathname) {
-        case "/__state": {
+        case CONTROL.state: {
           if (params.get("reset") === "1") {
             state = { ...INITIAL_COSTUME };
           }
@@ -378,14 +380,14 @@ ${slotTabs}
           }
           return json(state);
         }
-        case "/__precheck": {
+        case CONTROL.precheck: {
           const answer = params.get("answer");
           if (PRECHECK_ANSWERS.includes(answer as PrecheckAnswer)) {
             precheckAnswer = answer as PrecheckAnswer;
           }
           return new Response(precheckAnswer);
         }
-        case "/__hold-precheck": {
+        case CONTROL.holdPrecheck: {
           const on = params.get("on");
           if (on === "1" && releasePrechecks === null) {
             prechecksHeld = new Promise((resolve) => {
@@ -398,49 +400,49 @@ ${slotTabs}
           }
           return new Response(releasePrechecks === null ? "flowing" : "holding");
         }
-        case "/__next-result": {
+        case CONTROL.nextResult: {
           const code = params.get("code") ?? "";
           nextResult = /^\d+$/.test(code) ? Number(code) : null;
           return new Response(String(nextResult));
         }
-        case "/__noop-save":
+        case CONTROL.noopSave:
           noopNext = true;
           return new Response("noop");
-        case "/__expire-on-save":
+        case CONTROL.expireOnSave:
           expireNext = true;
           return new Response("expiring");
-        case "/__tickets":
+        case CONTROL.tickets:
           return json(issued);
-        case "/__posts":
+        case CONTROL.posts:
           if (params.get("reset") === "1") {
             posts.length = 0;
           }
           return json(posts);
-        case "/__previews":
+        case CONTROL.previews:
           if (params.get("reset") === "1") {
             previews.length = 0;
           }
           return json(previews);
-        case "/__preview": {
+        case CONTROL.preview: {
           const answer = params.get("answer");
           if (answer === "png" || answer === "gif") {
             previewAnswer = answer;
           }
           return new Response(previewAnswer);
         }
-        case "/__thumbs":
+        case CONTROL.thumbs:
           if (params.get("reset") === "1") {
             thumbnails.length = 0;
           }
           return json(thumbnails);
-        case "/__thumb": {
+        case CONTROL.thumb: {
           const answer = params.get("answer");
           if (answer === "png" || answer === "gif" || answer === "html") {
             thumbnailAnswer = answer;
           }
           return new Response(thumbnailAnswer);
         }
-        case "/__items": {
+        case CONTROL.items: {
           const wanted = params.get("many");
           if (wanted === "0" || wanted === "1" || wanted === "2" || wanted === "3") {
             many = wanted;

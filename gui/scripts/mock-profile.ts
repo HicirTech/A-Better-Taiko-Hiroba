@@ -1,4 +1,5 @@
 /** Stateful stand-in for the title page, the rename dialog and the profile's two ajax posts. */
+import { CONTROL } from "./mock-controls";
 import { ERROR_SHELL_BODY, type MockSession, type PostRecord, postRecordOf } from "./mock-costume";
 
 export interface OwnedTitle {
@@ -250,7 +251,7 @@ jQuery(function($){
     /** A test hook's answer, or null when the path is none of the profile's hooks. */
     hook(pathname: string, params: URLSearchParams): Response | null {
       switch (pathname) {
-        case "/__profile": {
+        case CONTROL.profile: {
           if (params.get("reset") === "1") {
             title = INITIAL_PROFILE.title;
             nickname = INITIAL_PROFILE.nickname;
@@ -259,14 +260,14 @@ jQuery(function($){
           nickname = params.get("nickname") ?? nickname;
           return Response.json({ title, nickname });
         }
-        case "/__title-precheck": {
+        case CONTROL.titlePrecheck: {
           const wanted = params.get("answer");
           if (PRECHECK_ANSWERS.includes(wanted as PrecheckAnswer)) {
             precheckAnswer = wanted as PrecheckAnswer;
           }
           return new Response(precheckAnswer);
         }
-        case "/__title-hold-precheck": {
+        case CONTROL.titleHoldPrecheck: {
           const on = params.get("on");
           if (on === "1" && releasePrechecks === null) {
             prechecksHeld = new Promise((resolve) => {
@@ -279,7 +280,7 @@ jQuery(function($){
           }
           return new Response(releasePrechecks === null ? "flowing" : "holding");
         }
-        case "/__profile-hold-save": {
+        case CONTROL.profileHoldSave: {
           const on = params.get("on");
           if (on === "1" && releaseSaves === null) {
             savesHeld = new Promise((resolve) => {
@@ -292,30 +293,30 @@ jQuery(function($){
           }
           return new Response(releaseSaves === null ? "flowing" : "holding");
         }
-        case "/__profile-next-result": {
+        case CONTROL.profileNextResult: {
           const code = params.get("code") ?? "";
           nextResult = /^\d+$/.test(code)
             ? { code: Number(code), message: params.get("message") ?? "" }
             : null;
           return new Response(String(nextResult?.code ?? null));
         }
-        case "/__profile-noop-save":
+        case CONTROL.profileNoopSave:
           noopNext = true;
           return new Response("noop");
-        case "/__profile-expire-on-save":
+        case CONTROL.profileExpireOnSave:
           expireNext = true;
           return new Response("expiring");
-        case "/__rename": {
+        case CONTROL.rename: {
           const state = params.get("state");
           if (RENAME_STATES.includes(state as RenameMockState)) {
             renameState = state as RenameMockState;
           }
           return new Response(renameState);
         }
-        case "/__rename-cooldown":
+        case CONTROL.renameCooldown:
           cooldown = params.get("on") === "1";
           return new Response(cooldown ? "cooling down" : "open");
-        case "/__profile-posts":
+        case CONTROL.profilePosts:
           if (params.get("reset") === "1") {
             posts.length = 0;
           }

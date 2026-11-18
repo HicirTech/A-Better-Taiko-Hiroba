@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { CONTROL } from "../mock-controls";
 import { HIROBA, PAGE_SIZE, PANEL_ART, REPORT_CODE, USER_DATA } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import {
@@ -91,7 +92,7 @@ async function pictures(ctx: Ctx) {
   const { legendIconsShownOn, legendPictures, panelCountsInPlace } = overviewHelpers(running);
   const { myDonsFailed } = state;
 
-  await fetch(`${HIROBA}/__mydon?answer=png`);
+  await fetch(`${HIROBA}${CONTROL.mydon}?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
   await until("Last updated");
@@ -122,8 +123,8 @@ async function pictures(ctx: Ctx) {
     !withMyDon.includes("000000000000");
 
   const iconsBeforeRecovery = await iconsSettled();
-  await fetch(`${HIROBA}/__panel?answer=png`);
-  await fetch(`${HIROBA}/__icons?answer=png`);
+  await fetch(`${HIROBA}${CONTROL.panel}?answer=png`);
+  await fetch(`${HIROBA}${CONTROL.icons}?answer=png`);
   await click("#read-again");
   await Bun.sleep(300);
   await until("Last updated");
@@ -216,7 +217,7 @@ async function pictures(ctx: Ctx) {
     keyboardReachable;
   await page.evaluate("window.scrollTo(0, 0)");
   const keptMyDon = await attribute("#my-don-image", "src");
-  await fetch(`${HIROBA}/__mydon?answer=gif`);
+  await fetch(`${HIROBA}${CONTROL.mydon}?answer=gif`);
   await click("#read-again");
   await Bun.sleep(300);
   await until("Last updated");
@@ -229,7 +230,7 @@ async function pictures(ctx: Ctx) {
   results.myDonMissingKeepsTheLast =
     myDonsAfterGif === myDonsAfterReadAgain + 1 &&
     (await attribute("#my-don-image", "src")) === keptMyDon;
-  await fetch(`${HIROBA}/__mydon?answer=png`);
+  await fetch(`${HIROBA}${CONTROL.mydon}?answer=png`);
 }
 
 const titlePlateKeys = [
@@ -254,8 +255,8 @@ async function titlePlate(ctx: Ctx) {
     return platesSettled();
   };
 
-  await fetch(`${HIROBA}/__titleplate?answer=gif`);
-  await fetch(`${HIROBA}/__variant?title=other`);
+  await fetch(`${HIROBA}${CONTROL.titleplate}?answer=gif`);
+  await fetch(`${HIROBA}${CONTROL.variant}?title=other`);
   await readAndWait(async () => (await standsIn("#title-plate")) && (await quiet("#title-plate")));
   const blankShown =
     !(await text()).includes(REPORT_CODE) &&
@@ -265,14 +266,14 @@ async function titlePlate(ctx: Ctx) {
     (await textOf("#profile h2")) === "サンプルどん" &&
     (await textOf("#dan")) === "Dan-i: 9th Dan";
   results.myDonAlignedWithoutThePlate = await tileAlignedAt(1100);
-  await fetch(`${HIROBA}/__titleplate?answer=png`);
+  await fetch(`${HIROBA}${CONTROL.titleplate}?answer=png`);
   const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
   results.plateBlankFallsBack = blankShown && afterOther.length - platesBeforeOther === 2;
-  await fetch(`${HIROBA}/__variant?title=set`);
+  await fetch(`${HIROBA}${CONTROL.variant}?title=set`);
   await readAndWait(async () => (await textOf("#profile-title")) === "Title: サンプルの称号");
-  await fetch(`${HIROBA}/__variant?title=other`);
+  await fetch(`${HIROBA}${CONTROL.variant}?title=other`);
   await readAndWait(async () => (await textOf("#profile-title")) === "Title: 別のサンプル称号");
-  await fetch(`${HIROBA}/__variant?title=set`);
+  await fetch(`${HIROBA}${CONTROL.variant}?title=set`);
   const afterTitles = await readAndWait(
     async () => (await textOf("#profile-title")) === "Title: サンプルの称号",
   );
@@ -365,8 +366,8 @@ async function medalPlate(ctx: Ctx) {
     );
   };
   medalIds.push(medalIdShown());
-  await fetch(`${HIROBA}/__tokenplate?answer=gif`);
-  await fetch(`${HIROBA}/__medal?state=collecting&season=2`);
+  await fetch(`${HIROBA}${CONTROL.tokenplate}?answer=gif`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=collecting&season=2`);
   const medalPlatesBefore = await medalPlatesSettled();
   // A viewport this short puts the card below the fold; the default 960×720 shows its top edge.
   const SHORT_VIEWPORT_PX = 400;
@@ -398,7 +399,7 @@ async function medalPlate(ctx: Ctx) {
     !(await shownNow("#medal-plate-image")) &&
     (await textOf("#medal-name")) === "どんメダル2026冬" &&
     (await textOf("#medal-count")) === "Collected: 12";
-  await fetch(`${HIROBA}/__tokenplate?answer=png`);
+  await fetch(`${HIROBA}${CONTROL.tokenplate}?answer=png`);
   medalPlatesPerRead.push(await readMedalShowing(() => shownNow("#medal-plate-image")));
   const medalBox = await page.evaluate<{ width: number; height: number }>(
     `(() => { const box = document.querySelector("#medal-plate-image").getBoundingClientRect(); return { width: box.width, height: box.height }; })()`,
@@ -423,7 +424,7 @@ async function medalPlate(ctx: Ctx) {
     !withMedalPlate.includes("tokenplate");
   medalPlatesPerRead.push(await readMedalShowing(() => shownNow("#medal-plate-image")));
   const collectingSrc = await medalPlateSrc();
-  await fetch(`${HIROBA}/__medal?state=complete`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=complete`);
   medalPlatesPerRead.push(
     await readMedalShowing(async () => (await medalPlateSrc()) !== collectingSrc),
   );
@@ -433,11 +434,11 @@ async function medalPlate(ctx: Ctx) {
   results.medalPlateLaidOutAsOnHiroba =
     medalLaidOutAsOnHiroba(collectingLayout, "#medal-count-shown", 215) &&
     medalLaidOutAsOnHiroba(completeLayout, "#medal-complete", 190);
-  await fetch(`${HIROBA}/__medal?state=collecting`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=collecting`);
   medalPlatesPerRead.push(
     await readMedalShowing(async () => (await medalPlateSrc()) === collectingSrc),
   );
-  await fetch(`${HIROBA}/__medal?state=complete`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=complete`);
   medalPlatesPerRead.push(
     await readMedalShowing(async () => (await textOf("#medal-complete")) !== null),
   );
@@ -448,7 +449,7 @@ async function medalPlate(ctx: Ctx) {
       [1, 2, 2, 3, 3, 3],
     );
   // Season 1 again, its plate kept for the reopen below; scrolled up for the title plate.
-  await fetch(`${HIROBA}/__medal?state=collecting&season=1`);
+  await fetch(`${HIROBA}${CONTROL.medal}?state=collecting&season=1`);
   await readMedalShowing(() => shownNow("#medal-plate-image"));
   await page.evaluate("window.scrollTo(0, 0)");
 }
