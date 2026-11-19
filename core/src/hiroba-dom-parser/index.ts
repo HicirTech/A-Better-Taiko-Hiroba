@@ -3,6 +3,7 @@ export { parseCostumePage, parseCostumeSet } from "./costume-page";
 export { parseDanBoardPage, parseDanDetailPage } from "./dan-pages";
 export { parseFolderEditorPage } from "./favorite-folder-page";
 export { parseFavoriteSongEditorPage } from "./favorite-song-page";
+export { GAME_SETTING_LISTS, parseGameSettingsPage } from "./game-settings-page";
 export { type ParseOptions, parsePage, requireMarker } from "./parser";
 export {
   PLAY_OPTION_CODES,
@@ -28,6 +29,8 @@ export type {
   DanBoardReading,
   FavoriteSongEditorReading,
   FolderEditorReading,
+  GameSettingsControl,
+  GameSettingsEditorReading,
   LoggedOutFailure,
   MissingMarkerFailure,
   ParseFailure,

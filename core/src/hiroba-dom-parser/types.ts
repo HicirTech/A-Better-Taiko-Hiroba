@@ -5,6 +5,9 @@ import type {
   FavoriteSongState,
   FolderState,
   FormToken,
+  GameSettingChoices,
+  GameSettingKey,
+  GameSettings,
   Genre,
   Level,
   NameState,
@@ -62,6 +65,20 @@ export interface RenameEditorReading {
   /** The form's `maxlength`, which a browser counts in UTF-16 code units. */
   readonly maxLength: number;
   readonly rename: RenameState;
+}
+
+/** One control the settings form posts, in the page's order. */
+export type GameSettingsControl =
+  | { readonly kind: "token"; readonly name: string }
+  | { readonly kind: "setting"; readonly name: string; readonly key: GameSettingKey }
+  /** A control no setting is read from: it goes back as the page served it. */
+  | { readonly kind: "served"; readonly name: string; readonly value: string };
+
+export interface GameSettingsEditorReading extends EditorReading<GameSettings> {
+  readonly choices: GameSettingChoices;
+  /** The page's script shuts the 双打 list, as Hiroba's help says it is during a competition. */
+  readonly doubleChartsLocked: boolean;
+  readonly controls: readonly GameSettingsControl[];
 }
 
 /** Failure kinds are codes, not sentences: the interface translates them. */

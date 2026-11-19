@@ -17,6 +17,13 @@ export {
 export type { FavoriteSongState, FolderState, PickableSongs, ShownSong } from "./favorite";
 export { FOLDER_SLOT_COUNT } from "./favorite";
 export { FormToken } from "./form-token";
+export type {
+  GameSettingChoice,
+  GameSettingChoices,
+  GameSettingKey,
+  GameSettings,
+} from "./game-settings";
+export { GAME_SETTING_KEYS, isGameSettingValue } from "./game-settings";
 export { HIROBA_LANG } from "./hiroba-lang";
 export type { NameState, TitleOption, TitleState } from "./identity";
 export type {
