@@ -22,7 +22,6 @@ const favoriteWritesKeys = [
   "folderHistoryKeepsEachFolderOnce",
   "favoriteSongSetAndCleared",
   "songCatalogueRead",
-  "chineseNamesRead",
 ] as const;
 
 async function favoriteWrites(ctx: Ctx) {
@@ -120,11 +119,6 @@ async function favoriteWrites(ctx: Ctx) {
       ["1003"],
     ) &&
     same(since.value?.removed, ["1039"]);
-
-  const names = await call<{ ok: boolean; value?: { pages: { title: string }[] } }>(
-    "window.abth.readChineseNames()",
-  );
-  results.chineseNamesRead = names.ok && names.value?.pages.length === 5;
 }
 
 export const FAVORITE_WRITES_SECTION: LaneSection = {

@@ -490,7 +490,6 @@ async function costumeWrite(ctx: Ctx) {
     (await exists("#write-outcome")) || (await exists(".MuiSnackbar-root"));
   const noticeOnOverview = await noticeElsewhere();
   await goTo("favorites");
-  await Bun.sleep(1000);
   const noticeOnFavorites = await noticeElsewhere();
   await goTo("costume");
   await inStep("editing");

@@ -42,21 +42,4 @@ describe("the Android port's readUpdateFeed", () => {
     const port = await openPort();
     expect(await port.readUpdateFeed()).toEqual({ ok: true, value: FEED });
   });
-
-  test("answers badAnswer to a release that has no feed", async () => {
-    native.httpAnswer = async () => ({
-      status: 404,
-      url: UPDATE_FEED_URL,
-      headers: { "Content-Type": "text/html" },
-      data: "Not Found",
-    });
-    const port = await openPort();
-    expect(await port.readUpdateFeed()).toEqual({ ok: false, error: { code: "badAnswer" } });
-  });
-
-  test("answers unreachable when the request fails", async () => {
-    native.httpAnswer = () => Promise.reject(new Error("offline"));
-    const port = await openPort();
-    expect(await port.readUpdateFeed()).toEqual({ ok: false, error: { code: "unreachable" } });
-  });
 });

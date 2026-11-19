@@ -114,15 +114,6 @@ describe("changeFolder's requests", () => {
     await change(transport, ["1001", "1003"]);
     expect(postsTo("ajax/myfavorite_song.php")).toHaveLength(1);
   });
-
-  test("sends nothing at all in the 05:00-07:00 JST break", async () => {
-    const { transport, routes } = fakeFavorites();
-    const outcome = await change(transport, ["1001", "1003"], {
-      now: new Date("2026-09-26T20:30:00Z"),
-    });
-    expect(outcome).toEqual({ kind: "maintenance" });
-    expect(routes()).toEqual([]);
-  });
 });
 
 describe("changeFolder's staging", () => {

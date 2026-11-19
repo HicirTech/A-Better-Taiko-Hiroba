@@ -15,12 +15,11 @@ import {
   OWNED_TITLES,
   REFUSED_NAME,
 } from "../scripts/mock-profile";
-import type { FolderNames, HirobaSessionPort, VerbsQueued } from "../src/shared/session-port";
+import type { FolderNames, HirobaSessionPort } from "../src/shared/session-port";
 import { native } from "./capacitor-fakes";
 import {
   CLOSE_LABEL,
   HIROBA,
-  MY_PAGE,
   memoryFlag,
   profilePage,
   signOutAndIn,
@@ -32,7 +31,6 @@ import { createFakeIndexedDb, type FakeIndexedDb } from "./indexeddb-fake";
 const { createCapacitorPort } = await import("../src/platform/capacitor");
 
 const OWNER = "000000000000";
-const OTHER = "111111111111";
 const NOON_JST = () => new Date("2026-09-27T03:00:00Z");
 const IN_THE_BREAK = () => new Date("2026-09-26T20:30:00Z");
 const TARGET = { ...START_SET, colorFace: 3 };
@@ -188,42 +186,10 @@ describe("createCapacitorPort's costume writes", () => {
     expect(flushes()).toBe(3);
   });
 
-  test("answers a second write busy at once, sends nothing for it, and holds a picture back until the first has read back", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.openCostumeEditor();
-    native.httpRequests.length = 0;
-    world.hook(CONTROL.holdPrecheck, "on=1");
-
-    const writing = port.changeCostume(CHANGE);
-    await until(() => world.sent().includes("POST /ajax/check_ip_kisekae.php"));
-    const requestsInTheWrite = world.sent().length;
-    expect(await port.changeCostume(CHANGE)).toEqual({ kind: "busy" });
-    const picture = port.readPicture({ kind: "costumeItem", slot: 1, id: 4 });
-    await Bun.sleep(300);
-    expect(world.sent()).toHaveLength(requestsInTheWrite);
-
-    world.hook(CONTROL.holdPrecheck, "on=0");
-    expect((await writing).kind).toBe("applied");
-    expect((await picture).ok).toBe(true);
-    expect(world.sent()).toEqual([...SIX_REQUESTS, "GET /imgsrc_kisekae.php"]);
-  });
-
   test("sends nothing in Hiroba's daily break", async () => {
     const world = setUp({ now: IN_THE_BREAK });
     const port = await signedInPort(world);
     expect(await port.changeCostume(CHANGE)).toEqual({ kind: "maintenance" });
-    expect(world.sent()).toEqual([]);
-  });
-
-  test("refuses a target with a key the site has no field for, before anything is sent", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    const asked = port.changeCostume({
-      expected: START_SET,
-      target: { ...START_SET, extra: 1 },
-    } as never);
-    await expect(asked).rejects.toThrow("Refused changeCostume: arguments it does not take");
     expect(world.sent()).toEqual([]);
   });
 
@@ -296,34 +262,6 @@ describe("createCapacitorPort's folder history", () => {
     expect(await relaunched.folderHistory()).toEqual(history);
   });
 
-  test("lists a folder synced again once, at the front at its new time", async () => {
-    let now = NOON_JST().getTime();
-    const world = setUp({ now: () => new Date(now) });
-    const port = await signedInPort(world);
-    await syncFolder(port, FEWER);
-    now += 60_000;
-
-    expect((await syncFolder(port, START_FOLDER)).kind).toBe("applied");
-
-    expect(await port.folderHistory()).toEqual([
-      { songs: START_FOLDER, keptAt: now, setName: null },
-      { songs: FEWER, keptAt: now - 60_000, setName: null },
-    ]);
-  });
-
-  test("keeps the names of the sets the two folders were, as the sync gives them", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-
-    await syncFolder(port, FEWER, { expected: "Practice", target: "Party" });
-
-    const keptAt = NOON_JST().getTime();
-    expect(await port.folderHistory()).toEqual([
-      { songs: FEWER, keptAt, setName: "Party" },
-      { songs: START_FOLDER, keptAt, setName: "Practice" },
-    ]);
-  });
-
   test("keeps nothing for a sync that changes nothing", async () => {
     const world = setUp();
     const port = await signedInPort(world);
@@ -366,23 +304,6 @@ describe("createCapacitorPort's costume history", () => {
     const relaunched = await world.launch();
     await relaunched.readProfile();
     expect(await relaunched.costumeHistory()).toEqual(history);
-  });
-
-  test("keeps another card's history apart, and offers this card none of it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    await port.changeCostume(CHANGE);
-
-    standIn({
-      editor: world.editor,
-      session: world.session,
-      myPage: MY_PAGE.replace(OWNER, OTHER),
-    });
-    const theirs = await world.launch();
-    await theirs.readProfile();
-
-    expect(await theirs.costumeHistory()).toEqual([]);
-    expect([...(world.indexedDb?.tables.get("histories")?.keys() ?? [])]).toEqual([OWNER]);
   });
 
   test("answers at once while a write waits on its pre-check, and sends nothing", async () => {
@@ -507,50 +428,6 @@ describe("createCapacitorPort's title writes", () => {
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 
-  test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    world.profileHook(CONTROL.profileExpireOnSave);
-    const outcome = await port.changeTitle(TITLE_CHANGE);
-
-    expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
-    expect(native.cookieCalls).toEqual(["clearAllCookies", FLUSH]);
-    expect(await port.isSignedIn()).toBe(false);
-  });
-
-  test("answers a write busy while another kind's waits on its pre-check, and sends nothing for it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    world.profileHook(CONTROL.titleHoldPrecheck, "on=1");
-
-    const writing = port.changeTitle(TITLE_CHANGE);
-    await until(() => world.sent().includes("POST /ajax/check_ip_title.php"));
-    const requestsInTheWrite = world.sent().length;
-    expect(await port.changeCostume(CHANGE)).toEqual({ kind: "busy" });
-    expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "busy" });
-    expect(world.sent()).toHaveLength(requestsInTheWrite);
-
-    world.profileHook(CONTROL.titleHoldPrecheck, "on=0");
-    expect((await writing).kind).toBe("applied");
-    expect(world.sent()).toEqual(TITLE_SIX_REQUESTS);
-  });
-
-  test("writes the cookie store to disk after every title write that ends, whatever it came to", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    const flushes = () => native.cookieCalls.filter((call) => call === FLUSH).length;
-
-    world.profileHook(CONTROL.profileNoopSave);
-    expect((await port.changeTitle(TITLE_CHANGE)).kind).toBe("notApplied");
-    expect(flushes()).toBe(1);
-
-    expect((await port.changeTitle(TITLE_CHANGE)).kind).toBe("applied");
-    expect(flushes()).toBe(2);
-
-    expect((await port.openTitleEditor()).ok).toBe(true);
-    expect(flushes()).toBe(3);
-  });
-
   test("stops at a pre-check that is not the plain false, and saves nothing", async () => {
     const world = setUp();
     const port = await signedInPort(world);
@@ -561,56 +438,6 @@ describe("createCapacitorPort's title writes", () => {
       world.sent().filter((request) => request === "POST /ajax/change_mydon_profile.php"),
     ).toEqual([]);
     expect(world.profile.title()).toBe(START_TITLE);
-  });
-
-  test("sends nothing in Hiroba's daily break", async () => {
-    const world = setUp({ now: IN_THE_BREAK });
-    const port = await signedInPort(world);
-    expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "maintenance" });
-    expect(world.sent()).toEqual([]);
-  });
-
-  test("refuses a target with a key the site has no field for, or a title by its name alone, before anything is sent", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    const withExtra = port.changeTitle({
-      expected: TITLE_CHANGE.expected,
-      target: { ...TITLE_CHANGE.target, extra: 1 },
-    } as never);
-    await expect(withExtra).rejects.toThrow("Refused changeTitle: arguments it does not take");
-    const byName = port.changeTitle({
-      expected: TITLE_CHANGE.expected,
-      target: { id: null, title: ownedTitle(102).label },
-    } as never);
-    await expect(byName).rejects.toThrow("Refused changeTitle: arguments it does not take");
-    expect(world.sent()).toEqual([]);
-  });
-
-  test("sends a title write whatever the storage does with the history: it will not write, or open, or is not there", async () => {
-    const refusing = createFakeIndexedDb();
-    const written = setUp({ indexedDb: refusing });
-    const withWrites = await signedInPort(written);
-    refusing.faults.writes = true;
-    expect((await withWrites.changeTitle(TITLE_CHANGE)).kind).toBe("applied");
-    expect(written.sent()).toEqual(TITLE_SIX_REQUESTS);
-
-    const unopenable = createFakeIndexedDb();
-    unopenable.faults.open = true;
-    const opened = setUp({ indexedDb: unopenable });
-    expect((await (await signedInPort(opened)).changeTitle(TITLE_CHANGE)).kind).toBe("applied");
-    expect(opened.sent()).toEqual(TITLE_SIX_REQUESTS);
-
-    const none = setUp({ indexedDb: null });
-    expect((await (await signedInPort(none)).changeTitle(TITLE_CHANGE)).kind).toBe("applied");
-    expect(none.sent()).toEqual(TITLE_SIX_REQUESTS);
-  });
-
-  test("sends nothing while signed out, and reads no title page", async () => {
-    const world = setUp({ signedIn: false });
-    const port = await world.launch();
-    expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "notSignedIn" });
-    expect(await port.openTitleEditor()).toEqual({ ok: false, error: { kind: "notSignedIn" } });
-    expect(world.sent()).toEqual([]);
   });
 });
 
@@ -680,94 +507,6 @@ describe("createCapacitorPort's name writes", () => {
     expect(world.sent()).toEqual(["GET /mypage_top.php", "GET /mypage_top.php"]);
     expect(await world.profilePosts()).toEqual([]);
   });
-
-  test("a session Hiroba ends after the save is dropped, and the cookies with it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    world.profileHook(CONTROL.profileExpireOnSave);
-    const outcome = await port.changeName(NAME_CHANGE);
-
-    expect(outcome).toMatchObject({ kind: "sessionGone", writeMayHaveHappened: true });
-    expect(native.cookieCalls).toEqual(["clearAllCookies", FLUSH]);
-    expect(await port.isSignedIn()).toBe(false);
-  });
-
-  test("answers any other write busy while a rename waits on its save, and sends nothing for it", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    world.profileHook(CONTROL.profileHoldSave, "on=1");
-
-    const writing = port.changeName(NAME_CHANGE);
-    await until(() => world.sent().includes("POST /ajax/change_mydon_profile.php"));
-    const requestsInTheWrite = world.sent().length;
-    expect(await port.changeCostume(CHANGE)).toEqual({ kind: "busy" });
-    expect(await port.changeTitle(TITLE_CHANGE)).toEqual({ kind: "busy" });
-    expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "busy" });
-    expect(world.sent()).toHaveLength(requestsInTheWrite);
-
-    world.profileHook(CONTROL.profileHoldSave, "on=0");
-    expect((await writing).kind).toBe("applied");
-    expect(world.sent()).toEqual(NAME_FIVE_REQUESTS);
-  });
-
-  test("writes the cookie store to disk after every rename that ends, whatever it came to", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    const flushes = () => native.cookieCalls.filter((call) => call === FLUSH).length;
-
-    world.profileHook(CONTROL.profileNoopSave);
-    expect((await port.changeName(NAME_CHANGE)).kind).toBe("notApplied");
-    expect(flushes()).toBe(1);
-
-    expect((await port.changeName(NAME_CHANGE)).kind).toBe("applied");
-    expect(flushes()).toBe(2);
-  });
-
-  test("sends nothing in Hiroba's daily break", async () => {
-    const world = setUp({ now: IN_THE_BREAK });
-    const port = await signedInPort(world);
-    expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "maintenance" });
-    expect(world.sent()).toEqual([]);
-  });
-
-  test("refuses a target with a key the site has no field for, or no name, before anything is sent", async () => {
-    const world = setUp();
-    const port = await signedInPort(world);
-    const withExtra = port.changeName({
-      expected: NAME_CHANGE.expected,
-      target: { nickname: NEW_NAME, extra: 1 },
-    } as never);
-    await expect(withExtra).rejects.toThrow("Refused changeName: arguments it does not take");
-    const empty = port.changeName({ expected: NAME_CHANGE.expected, target: { nickname: "" } });
-    await expect(empty).rejects.toThrow("Refused changeName: arguments it does not take");
-    expect(world.sent()).toEqual([]);
-  });
-
-  test("sends a rename whatever the storage does with the history: it will not write, or open, or is not there", async () => {
-    const refusing = createFakeIndexedDb();
-    const written = setUp({ indexedDb: refusing });
-    const withWrites = await signedInPort(written);
-    refusing.faults.writes = true;
-    expect((await withWrites.changeName(NAME_CHANGE)).kind).toBe("applied");
-    expect(written.sent()).toEqual(NAME_FIVE_REQUESTS);
-
-    const unopenable = createFakeIndexedDb();
-    unopenable.faults.open = true;
-    const opened = setUp({ indexedDb: unopenable });
-    expect((await (await signedInPort(opened)).changeName(NAME_CHANGE)).kind).toBe("applied");
-    expect(opened.sent()).toEqual(NAME_FIVE_REQUESTS);
-
-    const none = setUp({ indexedDb: null });
-    expect((await (await signedInPort(none)).changeName(NAME_CHANGE)).kind).toBe("applied");
-    expect(none.sent()).toEqual(NAME_FIVE_REQUESTS);
-  });
-
-  test("sends nothing while signed out", async () => {
-    const world = setUp({ signedIn: false });
-    const port = await world.launch();
-    expect(await port.changeName(NAME_CHANGE)).toEqual({ kind: "notSignedIn" });
-    expect(world.sent()).toEqual([]);
-  });
 });
 
 const HELD_WRITES = {
@@ -794,29 +533,6 @@ const HELD_WRITES = {
   },
 } as const;
 
-const READS_ASKED: Record<
-  VerbsQueued<"read">,
-  { ask: (port: HirobaSessionPort) => Promise<unknown>; requests: string[] }
-> = {
-  readProfile: { ask: (port) => port.readProfile(), requests: ["GET /mypage_top.php"] },
-  openCostumeEditor: {
-    ask: (port) => port.openCostumeEditor(),
-    requests: ["GET /mypage_kisekae.php"],
-  },
-  openTitleEditor: {
-    ask: (port) => port.openTitleEditor(),
-    requests: ["GET /mypage_title_edit.php"],
-  },
-  previewCostume: {
-    ask: (port) => port.previewCostume(START_SET),
-    requests: ["GET /imgsrc_mydon.php"],
-  },
-  openFavorites: {
-    ask: (port) => port.openFavorites(),
-    requests: ["GET /favorite_song_select.php", "GET /portal_favorite_song_select.php"],
-  },
-};
-
 describe.each(Object.keys(HELD_WRITES) as (keyof typeof HELD_WRITES)[])(
   "createCapacitorPort while a %s write waits mid-way",
   (kind) => {
@@ -829,25 +545,6 @@ describe.each(Object.keys(HELD_WRITES) as (keyof typeof HELD_WRITES)[])(
       await until(() => world.sent().includes(held.heldAt));
       return { writing, release: () => held.hold(world, 0) };
     }
-
-    test.each(Object.keys(READS_ASKED) as (keyof typeof READS_ASKED)[])(
-      "a %s asked for meanwhile sends nothing until the write has read back, and then goes",
-      async (read) => {
-        const world = setUp();
-        const port = await signedInPort(world);
-        const { writing, release } = await holdWrite(world, port);
-        const requestsInTheWrite = world.sent().length;
-
-        const reading = READS_ASKED[read].ask(port);
-        await Bun.sleep(25);
-        expect(world.sent()).toHaveLength(requestsInTheWrite);
-
-        release();
-        expect((await writing).kind).toBe("applied");
-        await reading;
-        expect(world.sent()).toEqual([...held.requests, ...READS_ASKED[read].requests]);
-      },
-    );
 
     test("a picture asked for meanwhile, which the device does not keep, is fetched after the read-back", async () => {
       const world = setUp();

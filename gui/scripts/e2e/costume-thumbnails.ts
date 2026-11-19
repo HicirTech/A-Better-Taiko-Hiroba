@@ -142,8 +142,7 @@ async function thumbnails(ctx: Ctx) {
     "Mascot #4 picture",
     async () => (await exists("#item-costume1-4 img")) || undefined,
   );
-  await Bun.sleep(1500);
-  results.thumbnailsAskedOncePerRun = (await thumbs()).length === askedBeforeReopen;
+  results.thumbnailsAskedOncePerRun = (await thumbsSettled()).length === askedBeforeReopen;
   await fetch(`${HIROBA}${CONTROL.thumb}?answer=gif`);
   await click("#costume-part-costume2");
   await waitFor(
@@ -154,7 +153,7 @@ async function thumbnails(ctx: Ctx) {
   await click("#costume-part-costume1");
   await Bun.sleep(300);
   await click("#costume-part-costume2");
-  await Bun.sleep(1500);
+  await thumbsSettled();
   const slotTwoAsked = thumbsAfterGif.slice(askedBeforeReopen);
   results.thumbnailGifLeavesTheId =
     ((await textOf("#costume-thumbnails-unavailable"))?.startsWith(
@@ -307,8 +306,7 @@ async function tileThumbnails(ctx: Ctx) {
     await goOnAPhone("overview");
     await goOnAPhone("costume");
     await slotInTheWindow(phoneItems[0]);
-    await Bun.sleep(1500);
-    const askedAfterReopen = (await thumbs()).length;
+    const askedAfterReopen = (await thumbsSettled()).length;
     const waitsOutAWrite = await farItemSavedAtOnce(phoneItems);
     return { asked: firstView.length, onlyWhatIsOnShow, askedAfterReopen, waitsOutAWrite };
   });

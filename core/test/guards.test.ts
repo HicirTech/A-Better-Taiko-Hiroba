@@ -28,7 +28,9 @@ describe("the guards", () => {
 
   test("take one to five digits as a song number, and nothing else", () => {
     expect(["1", "01538", "99999"].map(isSongNo)).toEqual([true, true, true]);
-    expect(["", "123456", "12a", 1538].map(isSongNo)).toEqual([false, false, false, false]);
+    expect(["", "100000", "123456", "12a", " 1001", "-5", "1.5", 1538].map(isSongNo)).toEqual(
+      Array(8).fill(false),
+    );
   });
 
   test("take the five difficulties as levels", () => {

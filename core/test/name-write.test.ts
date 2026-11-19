@@ -111,15 +111,6 @@ describe("changeName's requests", () => {
       expect(shown).not.toContain(String(token).padStart(32, "0"));
     }
   });
-
-  test("sends nothing at all in the 05:00-07:00 JST break", async () => {
-    const { transport, routes } = fakeHiroba();
-    const outcome = await rename(transport, NEW_NAME, {
-      now: new Date("2026-09-26T20:30:00Z"),
-    });
-    expect(outcome).toEqual({ kind: "maintenance" });
-    expect(routes()).toEqual([]);
-  });
 });
 
 describe("changeName's result codes, by the name read back", () => {

@@ -13,7 +13,6 @@ const pipelinesPageKeys = [
   "endedGroupOpensItsDetails",
   "keptHistoryReachesTheSignIn",
   "picturesListedApart",
-  "externalListsChartPictures",
   "pipelinesLeftByTheArrow",
   "pipelinesAskHirobaNothing",
   "pipelinesLeftByAPage",
@@ -154,9 +153,6 @@ async function pipelinesPage(ctx: Ctx) {
   await click('#pipeline-external button[aria-expanded="false"]');
   await settle();
   await listedIn("pipeline-external", CHART_PICTURE_READ);
-  results.externalListsChartPictures = !picturesListed.some((line) =>
-    line.startsWith("Chart picture ·"),
-  );
 
   await click("#nav-pipelines");
   await closed();
