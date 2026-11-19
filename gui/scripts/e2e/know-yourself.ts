@@ -44,11 +44,7 @@ const isHirobaPage = (line: string) => !/\.(png|gif|jpe?g)$/.test(line) && !line
 async function knowYourself(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page, textOf } = ctx.app;
-  const { attribute, exists, listRows, press } = pageHelpers(page);
-  const shown = (selector: string) =>
-    waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
-  const gone = (selector: string) =>
-    waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  const { attribute, exists, gone, listRows, press, shown } = pageHelpers(page);
   // A part unfolds over a moment and clips what it holds until it has: a check waits it out.
   const unfold = async (part: string) => {
     await click(`#know-${part}-header`);

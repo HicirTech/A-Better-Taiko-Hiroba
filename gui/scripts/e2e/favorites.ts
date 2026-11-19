@@ -87,9 +87,11 @@ async function favorites(ctx: Ctx) {
     boxOf,
     exists,
     fabState,
+    gone,
     listRows,
     press,
     rowInView,
+    shown,
     swipe,
     touchEmulated,
     typeInto,
@@ -102,10 +104,6 @@ async function favorites(ctx: Ctx) {
         ? true
         : undefined,
     );
-  const shown = (selector: string) =>
-    waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
-  const gone = (selector: string) =>
-    waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
   /** Whether the page's Sync to Hiroba is shut, or not there at all. */
   const syncShut = () =>
     page.evaluate<boolean>(`document.querySelector("#favorites-save")?.disabled !== false`);

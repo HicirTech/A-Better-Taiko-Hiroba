@@ -71,11 +71,7 @@ async function pictureInto(page: Page, selector: string, file: string) {
 async function gifts(ctx: Ctx) {
   const { results } = ctx;
   const { click, currentPage, goTo, page, textOf } = ctx.app;
-  const { attribute, exists, rowInView, typeInto } = pageHelpers(page);
-  const shown = (selector: string) =>
-    waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
-  const gone = (selector: string) =>
-    waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  const { attribute, exists, gone, rowInView, shown, typeInto } = pageHelpers(page);
   const shut = (selector: string) =>
     page.evaluate<boolean>(
       `document.querySelector(${JSON.stringify(selector)})?.disabled === true`,
