@@ -3,7 +3,7 @@ import { Box, Button, List, ListItem, ListItemText } from "@mui/material";
 import { useId } from "react";
 import type { ManualCheck } from "../shared/updates/use-update-reminder";
 import { FileDownloadIcon } from "../ui/icons";
-import { SettingsSection } from "./settings-section";
+import { SettingsSection } from "../ui/settings-section";
 
 export interface UpdatesSectionProps {
   readonly i18n: Translator;

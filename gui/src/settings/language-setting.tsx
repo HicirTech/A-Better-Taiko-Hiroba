@@ -3,7 +3,7 @@ import { FormControlLabel, List, ListItem, Radio, RadioGroup } from "@mui/materi
 import { useId } from "react";
 import { langOf } from "../shared/language/show-language";
 import { TranslateIcon } from "../ui/icons";
-import { SettingsSection } from "./settings-section";
+import { SettingsSection } from "../ui/settings-section";
 
 const SYSTEM_CHOICE = "system";
 

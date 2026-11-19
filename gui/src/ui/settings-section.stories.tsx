@@ -2,7 +2,7 @@ import { Box, List, ListItem, ListItemText } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { i18nOf } from "../story-kit/env";
-import { AccountCircleIcon } from "../ui/icons";
+import { AccountCircleIcon } from "./icons";
 import { SettingsSection } from "./settings-section";
 
 const meta = {

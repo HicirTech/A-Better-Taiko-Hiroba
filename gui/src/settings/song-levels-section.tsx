@@ -7,9 +7,9 @@ import {
   SHOWN_DIFFICULTIES,
   type ShownDifficulty,
 } from "../shared/song-catalogue/shown-difficulty";
+import { ChoiceRow } from "../ui/choice-row";
 import { StarIcon } from "../ui/icons";
-import { ChoiceRow } from "./choice-row";
-import { SettingsSection } from "./settings-section";
+import { SettingsSection } from "../ui/settings-section";
 
 /** The difficulty whose level a song shows in front, its other levels stacked behind it. */
 export function SongLevelsSection({

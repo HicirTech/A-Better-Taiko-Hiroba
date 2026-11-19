@@ -4,9 +4,9 @@ import { List } from "@mui/material";
 import { useId } from "react";
 
 import { RATING_SYSTEM_NAME, RATING_SYSTEMS } from "../shared/rating-data/rating-systems";
+import { ChoiceRow } from "../ui/choice-row";
 import { LeaderboardIcon } from "../ui/icons";
-import { ChoiceRow } from "./choice-row";
-import { SettingsSection } from "./settings-section";
+import { SettingsSection } from "../ui/settings-section";
 
 /** The rating Rating opens on. */
 export function RatingSection({

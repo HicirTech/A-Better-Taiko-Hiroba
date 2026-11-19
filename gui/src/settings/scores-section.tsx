@@ -4,8 +4,8 @@ import { useId } from "react";
 
 import { SORT_CHOICES, SORT_LABEL, type SortChoice } from "../shared/scores/score-order";
 import { SortIcon } from "../ui/icons";
-import { SelectRow } from "./select-row";
-import { SettingsSection } from "./settings-section";
+import { SelectRow } from "../ui/select-row";
+import { SettingsSection } from "../ui/settings-section";
 
 /** What Scores is sorted by as it opens. */
 export function ScoresSection({

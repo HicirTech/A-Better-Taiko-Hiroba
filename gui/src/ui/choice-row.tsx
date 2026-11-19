@@ -1,7 +1,7 @@
 import { ListItem, ListItemText } from "@mui/material";
 import { useId } from "react";
 
-import { type Choice, ChoiceToggles } from "../ui/choice-toggles";
+import { type Choice, ChoiceToggles } from "./choice-toggles";
 
 /** A setting's row: its name and hint, and a toggle for each choice, one of them always chosen. */
 export function ChoiceRow<T extends string>({
