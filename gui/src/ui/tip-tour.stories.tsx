@@ -25,7 +25,7 @@ export const OnScores: Story = { render: appOn("scores") };
 /** Rating's switch between V1 and V2, and its share button. */
 export const OnRating: Story = { render: appOn("rating") };
 
-/** Know yourself's cards. */
+/** Know yourself's cards, then its three cards of charts to play next. */
 export const OnKnowYourself: Story = { render: appOn("knowYourself") };
 
 /** Costume's six-second hold for the items' pictures, and its history. */

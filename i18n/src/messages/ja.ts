@@ -303,6 +303,8 @@ export const ja: Messages = {
   "tips.rating.share": "このボタンで、レーティングを画像にして共有できます。",
   "tips.knowYourself.cards":
     "カードを開くと、まだクリアしていない譜面が並びます。その曲をセットに追加することもできます。",
+  "tips.knowYourself.suggestions":
+    "3枚のカードが次に遊ぶ譜面をおすすめします：レベルの少し上、もう少しでレーティング対象、よく遊ぶテンポと密度の譜面です。",
   "tips.costume.readAgain.touch":
     "下に引いたまま6秒待つと、アイテムの画像をひろばから読み込み直します。",
   "tips.costume.readAgain.mouse":

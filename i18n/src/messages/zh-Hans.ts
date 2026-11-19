@@ -288,6 +288,8 @@ export const zhHans: Messages = {
   "tips.rating.system": "在这里切换 OurTaiko V1 和 V2。",
   "tips.rating.share": "这个按钮把 Rating 做成图片分享。",
   "tips.knowYourself.cards": "点开每张卡，看还没通关的谱面，还可以把歌加入套装。",
+  "tips.knowYourself.suggestions":
+    "三张卡片推荐接下来玩的谱面：比你水平稍高的、差一点就能计入 Rating 的，以及你最常玩的速度和烈度的。",
   "tips.costume.readAgain.touch": "往下拉并按住 6 秒，从广场重新读取道具图。",
   "tips.costume.readAgain.mouse": "按住这个箭头 6 秒，从广场重新读取道具图。",
   "tips.costume.history": "以前穿过的换装都在这里。",

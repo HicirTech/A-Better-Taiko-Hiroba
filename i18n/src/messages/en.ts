@@ -343,6 +343,9 @@ export const en = {
   "tips.rating.share": "This button shares your rating as a picture.",
   "tips.knowYourself.cards":
     "Open a card for the charts you have not cleared yet, and add their songs to a set.",
+  /** Points at "A little harder", first of Know yourself's three cards of charts to play next. */
+  "tips.knowYourself.suggestions":
+    "Three cards suggest what to play next: just above your level, nearly counting in your rating, and at the tempo and density you play most.",
   "tips.costume.readAgain.touch":
     "Pull down and hold six seconds to read the items' pictures from Hiroba again.",
   "tips.costume.readAgain.mouse":
