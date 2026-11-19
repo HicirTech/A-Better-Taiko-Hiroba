@@ -19,6 +19,7 @@ const REFUSED_WORDS: Readonly<Record<WriteKind, Readonly<Partial<Record<number, 
     1: "この曲はまだ開放されていないため、設定できません。",
     2: "楽曲が公開されていません。",
   },
+  gameSettings: {},
 };
 
 // What Hiroba's pages say for a save it kept but could not pass to the game server (result 3).

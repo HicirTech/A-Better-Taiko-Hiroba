@@ -247,6 +247,7 @@ export const NAME_REQUESTS = [
   "GET /mypage_top.php",
 ];
 export const TITLE_REREAD = ["GET /mypage_top.php", `GET ${DAN_LABEL}`];
+export const GAME_SETTINGS_PAGE = "/mypage_other_setting.php";
 const isPicture = (line: string) => line === PREVIEW || LANE_PICTURES.includes(line);
 /** Whether `log` is `run` with no picture inside it, then `after`, pictures aside. */
 export const runThen = (log: string[], run: string[], after: string[]) => {

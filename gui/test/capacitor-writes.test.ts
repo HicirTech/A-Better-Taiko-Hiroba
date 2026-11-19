@@ -9,6 +9,8 @@ import {
   type PostRecord,
 } from "../scripts/mock-costume";
 import { createFavoritesEditor } from "../scripts/mock-favorites";
+import { BAD_VALUE_MESSAGE, createGameSettingsEditor } from "../scripts/mock-game-settings";
+import { appSettingsOf, INITIAL_GAME_SETTINGS } from "../scripts/mock-game-settings-lists";
 import {
   createProfileEditor,
   FILTER_MESSAGE,
@@ -58,8 +60,16 @@ function setUp(options: SetUpOptions = {}) {
   const editor = createCostumeEditor();
   const profile = createProfileEditor({ issue: editor.issueTicket });
   const favorites = createFavoritesEditor({ issue: editor.issueTicket });
+  const gameSettings = createGameSettingsEditor({ issue: editor.issueTicket });
   const session: MockSession = { cardChosen: true };
-  const hiroba = standIn({ editor, profile, favorites, session, myPage: profilePage(profile) });
+  const hiroba = standIn({
+    editor,
+    profile,
+    favorites,
+    gameSettings,
+    session,
+    myPage: profilePage(profile),
+  });
   const indexedDb = options.indexedDb === undefined ? createFakeIndexedDb() : options.indexedDb;
   const launch = () =>
     createCapacitorPort({
@@ -78,9 +88,16 @@ function setUp(options: SetUpOptions = {}) {
   const profileHook = (path: string, query = "") => profile.hook(path, new URLSearchParams(query));
   const profilePosts = async () =>
     (await profileHook(CONTROL.profilePosts)?.json()) as PostRecord[];
+  const settingsHook = (path: string, query: Record<string, string> = {}) =>
+    gameSettings.hook(path, new URLSearchParams(query));
+  const settingsPosts = async () =>
+    (await settingsHook(CONTROL.gameSettingsPosts)?.json()) as PostRecord[];
   return {
     editor,
     profile,
+    gameSettings,
+    settingsHook,
+    settingsPosts,
     session,
     hiroba,
     indexedDb,
@@ -510,6 +527,109 @@ describe("createCapacitorPort's name writes", () => {
   });
 });
 
+const SHOWN_SETTINGS = appSettingsOf(INITIAL_GAME_SETTINGS);
+const SETTINGS_CHANGE = {
+  expected: SHOWN_SETTINGS,
+  target: { ...SHOWN_SETTINGS, region: "TWN", speed: "35" },
+};
+const SETTINGS_REQUESTS = [
+  "GET /mypage_other_setting.php",
+  "POST /ajax/mypage_other.php",
+  "GET /mypage_other_setting.php",
+];
+/** The page's form serialised, then what its script adds. */
+const SETTINGS_POST_FIELDS = [
+  "_tckt",
+  "area_id",
+  "country_code",
+  "open_status",
+  "disp_achievement",
+  "disp_achievement_type",
+  "dan_disp",
+  "op1",
+  "op2",
+  "op3",
+  "op4",
+  "skip",
+  "notes_position",
+  "voice",
+  "default_tone_setting",
+  "default_tone_setting",
+  "double_song_disp",
+  "select_double_song_disp",
+  "applicable_flg",
+  "default_difficulty_course",
+  "select_default_difficulty_course",
+  "default_difficulty_star",
+  "select_default_difficulty_star",
+  "default_difficulty_sort",
+  "select_default_difficulty_sort",
+  "disp_level_self",
+  "disp_level_chassis",
+  "op1",
+  "op2",
+  "op3",
+  "op4",
+  "notes_position",
+];
+
+describe("createCapacitorPort's game settings writes", () => {
+  beforeEach(() => native.reset());
+
+  test("reads the settings page with one GET, and leaves its token with the platform", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    const opened = await port.openGameSettings();
+
+    expect(world.sent()).toEqual(["GET /mypage_other_setting.php"]);
+    expect(opened.ok && opened.value.state).toEqual(SHOWN_SETTINGS);
+    expect(opened.ok && Object.keys(opened.value)).toEqual([
+      "state",
+      "choices",
+      "doubleChartsLocked",
+    ]);
+    const handedOut = (await world.hook(CONTROL.tickets)?.json()) as string[];
+    expect(handedOut.some((ticket) => JSON.stringify(opened).includes(ticket))).toBe(false);
+    expect(native.cookieCalls).toEqual([FLUSH]);
+  });
+
+  test("sends a change as three requests with no pre-check, the post as the page's script does", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    const outcome = await port.changeGameSettings(SETTINGS_CHANGE);
+
+    expect(outcome).toMatchObject({ kind: "applied", after: SETTINGS_CHANGE.target });
+    expect(world.sent()).toEqual(SETTINGS_REQUESTS);
+    expect(world.gameSettings.state()).toMatchObject({ country_code: "TWN", op1: "35" });
+    expect(await world.settingsPosts()).toEqual([
+      expect.objectContaining({
+        path: "/ajax/mypage_other.php",
+        xRequestedWith: "XMLHttpRequest",
+        origin: HIROBA,
+        referer: `${HIROBA}/mypage_other_setting.php`,
+        contentType: "application/x-www-form-urlencoded; charset=UTF-8",
+        accept: "application/json, text/javascript, */*; q=0.01",
+        fields: SETTINGS_POST_FIELDS,
+        ticketMatched: true,
+      }),
+    ]);
+    expect(native.cookieCalls).toEqual([FLUSH]);
+  });
+
+  test("shows a value Hiroba refuses with its words, and the settings read back", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    world.settingsHook(CONTROL.gameSettingsNextResult, { code: "25", message: BAD_VALUE_MESSAGE });
+
+    expect(await port.changeGameSettings(SETTINGS_CHANGE)).toMatchObject({
+      kind: "notApplied",
+      reason: { kind: "refused", code: 25, message: BAD_VALUE_MESSAGE },
+      after: SHOWN_SETTINGS,
+    });
+    expect(world.sent()).toEqual(SETTINGS_REQUESTS);
+  });
+});
+
 const HELD_WRITES = {
   costume: {
     start: (port: HirobaSessionPort) => port.changeCostume(CHANGE),
@@ -531,6 +651,13 @@ const HELD_WRITES = {
       world.profileHook(CONTROL.profileHoldSave, `on=${on}`),
     heldAt: "POST /ajax/change_mydon_profile.php",
     requests: NAME_FIVE_REQUESTS,
+  },
+  gameSettings: {
+    start: (port: HirobaSessionPort) => port.changeGameSettings(SETTINGS_CHANGE),
+    hold: (world: ReturnType<typeof setUp>, on: 0 | 1) =>
+      world.settingsHook(CONTROL.gameSettingsHoldSave, { on: String(on) }),
+    heldAt: "POST /ajax/mypage_other.php",
+    requests: SETTINGS_REQUESTS,
   },
 } as const;
 
@@ -593,6 +720,8 @@ describe("createCapacitorPort's cookie store", () => {
         }),
     ],
     ["readSongPicker", (port) => port.readSongPicker()],
+    ["openGameSettings", (port) => port.openGameSettings()],
+    ["changeGameSettings", (port) => port.changeGameSettings(SETTINGS_CHANGE)],
     ["refreshHiroba", (port) => port.refreshHiroba()],
     ["readScores", (port) => port.readScores()],
     ["readEveryScore", (port) => port.readEveryScore()],

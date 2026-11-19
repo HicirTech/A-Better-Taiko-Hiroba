@@ -56,6 +56,8 @@ export const zhHans: Messages = {
   "pipelines.op.changeFolder": "收藏夹同步",
   "pipelines.op.changeFavoriteSong": "最爱歌曲同步",
   "pipelines.op.readSongPicker": "选歌列表",
+  "pipelines.op.openGameSettings": "游戏设定",
+  "pipelines.op.changeGameSettings": "游戏设定同步",
   "pipelines.op.readUpdateFeed": "检查更新",
   "pipelines.op.readSongCatalogue": "taiko.wiki 歌曲列表",
   "pipelines.op.readChineseNames": "中文歌名",

@@ -56,6 +56,8 @@ export const ja: Messages = {
   "pipelines.op.changeFolder": "フォルダの同期",
   "pipelines.op.changeFavoriteSong": "大好きな曲の同期",
   "pipelines.op.readSongPicker": "選曲リスト",
+  "pipelines.op.openGameSettings": "ゲーム設定",
+  "pipelines.op.changeGameSettings": "ゲーム設定の同期",
   "pipelines.op.readUpdateFeed": "アップデートの確認",
   "pipelines.op.readSongCatalogue": "taiko.wiki の曲リスト",
   "pipelines.op.readChineseNames": "中国語の曲名",

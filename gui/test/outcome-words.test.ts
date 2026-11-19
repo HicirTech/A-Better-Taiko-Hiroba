@@ -8,7 +8,7 @@ import { START_SET } from "./hiroba-stand-in";
 const i18n = createTranslator("en");
 const { t } = i18n;
 
-const KINDS: WriteKind[] = ["costume", "title", "name", "folder", "favoriteSong"];
+const KINDS: WriteKind[] = ["costume", "title", "name", "folder", "favoriteSong", "gameSettings"];
 const SAVE = { answer: "json", code: 0, message: null, report: "path=/ajax/x status=200" } as const;
 const MOVED = { ...START_SET, colorFace: 3 };
 

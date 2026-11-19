@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { PLAY_OPTION_CODES, SCORE_RANK_NAMES } from "@abth/core";
 
+import { SETTINGS } from "../../core/test/game-settings-fixtures";
 import { KEPT_GROUPS } from "../src/shared/pipelines";
 import { type HirobaSessionPort, PORT_ARGUMENTS, PORT_CALLS } from "../src/shared/session-port";
 import { CHART_PICTURE_MAX_BYTES } from "../src/shared/song-catalogue";
@@ -312,6 +313,52 @@ describe("PORT_ARGUMENTS.changeName", () => {
           target: NAME_TARGET,
         }),
       ],
+    ];
+    for (const args of refused) {
+      expect(check(args)).toBe(false);
+    }
+  });
+});
+
+const withoutRegion = Object.fromEntries(
+  Object.entries(SETTINGS).filter(([key]) => key !== "region"),
+);
+
+describe("PORT_ARGUMENTS.changeGameSettings", () => {
+  test("takes one change: every setting as the page showed it, and every setting wanted", () => {
+    const check = PORT_ARGUMENTS.changeGameSettings;
+    expect(check([{ expected: SETTINGS, target: SETTINGS }])).toBe(true);
+    expect(
+      check([{ expected: SETTINGS, target: { ...SETTINGS, notePosition: "-5", region: "JPN" } }]),
+    ).toBe(true);
+    // The core refuses what the page's lists do not offer; the port only bounds the value's shape.
+    expect(check([{ expected: SETTINGS, target: { ...SETTINGS, tone: "12345678" } }])).toBe(true);
+  });
+
+  test("refuses anything else: a setting more or less, or a value no list could hold", () => {
+    const check = PORT_ARGUMENTS.changeGameSettings;
+    const refused: unknown[][] = [
+      [],
+      [{ expected: SETTINGS, target: SETTINGS }, "extra"],
+      [{ expected: SETTINGS }],
+      [{ target: SETTINGS }],
+      [{ expected: SETTINGS, target: SETTINGS, token: "x" }],
+      [{ expected: SETTINGS, target: { ...SETTINGS, area_id: "26" } }],
+      [{ expected: SETTINGS, target: withoutRegion }],
+      [{ expected: withoutRegion, target: SETTINGS }],
+      [{ expected: SETTINGS, target: { ...SETTINGS, speed: 20 } }],
+      [{ expected: SETTINGS, target: { ...SETTINGS, speed: null } }],
+      [{ expected: SETTINGS, target: { ...SETTINGS, region: "" } }],
+      [{ expected: SETTINGS, target: { ...SETTINGS, notePosition: "-" } }],
+      [{ expected: SETTINGS, target: { ...SETTINGS, region: "JPN&_tckt=x" } }],
+      [{ expected: SETTINGS, target: { ...SETTINGS, region: "J P N" } }],
+      [{ expected: SETTINGS, target: { ...SETTINGS, tone: "123456789" } }],
+      [{ expected: [], target: SETTINGS }],
+      [{ expected: null, target: SETTINGS }],
+      [{ expected: SETTINGS, target: null }],
+      [[SETTINGS, SETTINGS]],
+      [Object.assign(Object.create({ inherited: true }), { expected: SETTINGS, target: SETTINGS })],
+      [{ expected: SETTINGS, target: Object.assign(Object.create({ inherited: true }), SETTINGS) }],
     ];
     for (const args of refused) {
       expect(check(args)).toBe(false);

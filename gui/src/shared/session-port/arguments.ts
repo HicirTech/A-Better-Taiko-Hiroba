@@ -1,7 +1,9 @@
 import {
   DIFFICULTIES,
+  GAME_SETTING_KEYS,
   type Genre,
   isDifficulty,
+  isGameSettingValue,
   type Level,
   type RatingSystem,
   type ScoreRank,
@@ -16,6 +18,7 @@ import type {
   CrownKind,
   FavoriteSongState,
   FolderState,
+  GameSettings,
   HirobaSessionPort,
   NameState,
   PictureWant,
@@ -262,6 +265,20 @@ const favoriteSongChange: ArgumentCheck = (args) =>
   isFavoriteSongState(args[0].expected) &&
   isFavoriteSongState(args[0].target);
 
+/** Every setting of the page and no other key, each a value in the shape the page's lists write. */
+export function isGameSettings(value: unknown): value is GameSettings {
+  return (
+    hasExactly(value, GAME_SETTING_KEYS) &&
+    GAME_SETTING_KEYS.every((key) => isGameSettingValue(value[key]))
+  );
+}
+
+const gameSettingsChange: ArgumentCheck = (args) =>
+  args.length === 1 &&
+  hasExactly(args[0], ["expected", "target"]) &&
+  isGameSettings(args[0].expected) &&
+  isGameSettings(args[0].target);
+
 const oneSongNo: ArgumentCheck = (args) => args.length === 1 && isSongNo(args[0]);
 
 const LEVEL: Readonly<Record<Level, true>> = { 1: true, 2: true, 3: true, 4: true, 5: true };
@@ -389,6 +406,8 @@ export const PORT_ARGUMENTS = {
   changeFavoriteSong: favoriteSongChange,
   folderHistory: none,
   readSongPicker: none,
+  openGameSettings: none,
+  changeGameSettings: gameSettingsChange,
   scores: none,
   listedCharts: none,
   readScores: none,

@@ -58,6 +58,8 @@ export const en = {
   "pipelines.op.changeFolder": "Folder sync",
   "pipelines.op.changeFavoriteSong": "Favourite song sync",
   "pipelines.op.readSongPicker": "Song picker list",
+  "pipelines.op.openGameSettings": "Game settings",
+  "pipelines.op.changeGameSettings": "Game settings sync",
   "pipelines.op.readUpdateFeed": "Update check",
   "pipelines.op.readSongCatalogue": "taiko.wiki song list",
   "pipelines.op.readChineseNames": "Chinese song names",

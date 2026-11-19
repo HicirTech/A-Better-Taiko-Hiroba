@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { createDesktopPort, handlePortCalls } from "../electron/port-handlers";
 import { createCostumeEditor, type MockSession } from "../scripts/mock-costume";
 import { createFavoritesEditor } from "../scripts/mock-favorites";
+import { createGameSettingsEditor } from "../scripts/mock-game-settings";
 import { createProfileEditor, INITIAL_PROFILE, OWNED_TITLES } from "../scripts/mock-profile";
 import { type HirobaSessionPort, PORT_CALLS } from "../src/shared/session-port";
 import { native } from "./capacitor-fakes";
@@ -57,8 +58,9 @@ function hirobaWorld(): StandInOptions {
   const editor = createCostumeEditor();
   const profile = createProfileEditor({ issue: editor.issueTicket });
   const favorites = createFavoritesEditor({ issue: editor.issueTicket });
+  const gameSettings = createGameSettingsEditor({ issue: editor.issueTicket });
   const session: MockSession = { cardChosen: true };
-  return { editor, profile, favorites, session, myPage: profilePage(profile) };
+  return { editor, profile, favorites, gameSettings, session, myPage: profilePage(profile) };
 }
 
 /** A shell's port as its window calls it, its own way to sign in, and a launch on what it kept. */
@@ -172,6 +174,12 @@ async function firstLaunches({ port, signIn, relaunch }: Shell) {
     target: { songNo: "1001", ura: false },
   });
   const songPicker = await port().readSongPicker();
+  const gameSettings = await port().openGameSettings();
+  const shown = gameSettings.ok ? gameSettings.value.state : null;
+  const settingsChange =
+    shown === null
+      ? null
+      : await port().changeGameSettings({ expected: shown, target: { ...shown, speed: "35" } });
   const scores = await port().scores();
   await relaunch();
   const signedInOnRelaunch = await port().isSignedIn();
@@ -197,6 +205,8 @@ async function firstLaunches({ port, signIn, relaunch }: Shell) {
     folderChange,
     songChange,
     songPicker,
+    gameSettings,
+    settingsChange,
     scores,
     signedInOnRelaunch,
     profileOnRelaunch,
@@ -248,6 +258,8 @@ describe("both shells' ports", () => {
       folderChange: { kind: "applied" },
       songChange: { kind: "applied" },
       songPicker: { ok: true },
+      gameSettings: { ok: true, value: { doubleChartsLocked: false } },
+      settingsChange: { kind: "applied", after: { speed: "35" } },
       signedInOnRelaunch: true,
       profileOnRelaunch: { ok: true, value: { nickname: "あたらしい" } },
       signedOut: false,

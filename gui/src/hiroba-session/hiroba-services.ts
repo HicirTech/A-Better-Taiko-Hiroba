@@ -292,6 +292,8 @@ export function createHirobaServices(parts: HirobaServiceParts): HirobaServices 
       changeFavoriteSong: renewing(writes.changeFavoriteSong),
       folderHistory: writes.folderHistory,
       readSongPicker: renewing(writes.readSongPicker),
+      openGameSettings: renewing(writes.openGameSettings),
+      changeGameSettings: renewing(writes.changeGameSettings),
       refreshHiroba: renewing(writes.refreshHiroba),
       scores: scores.scores,
       listedCharts: scores.listedCharts,

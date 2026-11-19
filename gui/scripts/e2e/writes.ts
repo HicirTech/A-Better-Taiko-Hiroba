@@ -8,6 +8,7 @@ import { pageHelpers, pullAt, same, waitFor } from "./harness";
 import { sessionHelpers } from "./session";
 import {
   COLOUR_REQUESTS,
+  GAME_SETTINGS_PAGE,
   hitsOn,
   myDonsSettled,
   NAME_REQUESTS,
@@ -263,6 +264,10 @@ async function heldWrites(ctx: Ctx) {
     openFavorites: {
       call: "window.abth.openFavorites().then((result) => result.ok)",
       requests: ["GET /favorite_song_select.php", "GET /portal_favorite_song_select.php"],
+    },
+    openGameSettings: {
+      call: "window.abth.openGameSettings().then((result) => result.ok)",
+      requests: [`GET ${GAME_SETTINGS_PAGE}`],
     },
   };
   const readsAsked = Object.values(READS_ASKED);
