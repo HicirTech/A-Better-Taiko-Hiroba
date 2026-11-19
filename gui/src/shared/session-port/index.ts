@@ -1,4 +1,4 @@
-// The interface/platform contract. It imports no parser, so the Electron preload can use it.
+// The interface/platform contract.
 export {
   type ArgumentCheck,
   isCostumeSet,

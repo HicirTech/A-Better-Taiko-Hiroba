@@ -7,7 +7,6 @@ import {
   type ScoreRank,
 } from "@abth/core";
 
-// Not the index: the preload must not load the pipelines, and the core with them.
 import { KEPT_GROUPS } from "../pipelines/kept-groups";
 import { isSetName } from "../sets/favorite-sets";
 import { CHART_PICTURE_MAX_BYTES, type ChartPictureRead } from "../song-catalogue/types";
@@ -175,7 +174,6 @@ const CROWN_ICONS: Readonly<Record<CrownKind, true>> = {
   gold: true,
   donderful: true,
 };
-// The shape of core's `PLAY_OPTION_CODES`, not the list: the preload loads no core.
 const OPTION_CODE = /^a\d{1,2}$/;
 
 /** A picture the interface may ask for, and nothing else: no URL, no source, no other key. はずす (0)
