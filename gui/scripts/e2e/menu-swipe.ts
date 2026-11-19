@@ -21,6 +21,7 @@ const NAVIGATION = [
   "Costume",
   "Nickname & title",
   "Favourites",
+  "Game settings",
   "Settings",
 ].join("");
 const PAGE_ENTRIES = [
@@ -31,6 +32,7 @@ const PAGE_ENTRIES = [
   "nav-costume",
   "nav-nameTitle",
   "nav-favorites",
+  "nav-gameSettings",
   "nav-settings",
 ];
 
