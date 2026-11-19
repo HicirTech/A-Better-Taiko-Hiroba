@@ -16,7 +16,7 @@ import type {
 } from "../shared/session-port";
 import { useKeptHistory } from "../shared/use-kept-history";
 import { useWriteSession } from "../shared/writes/use-write-session";
-import { sessionNoticeOf } from "../shared/writes/write-ending";
+import { endSessionIfGone } from "../shared/writes/write-ending";
 import {
   canReadFavoritesAgain,
   type FavoritesAction,
@@ -123,11 +123,7 @@ export function useFavorites({ port, lane, onSessionGone }: FavoritesOptions): F
     }
 
     dispatch(ended(outcome));
-    const gone = sessionNoticeOf(outcome);
-    if (gone !== null) {
-      forget();
-      onSessionGone(gone);
-    }
+    endSessionIfGone(outcome, forget, onSessionGone);
     return outcome;
   };
 

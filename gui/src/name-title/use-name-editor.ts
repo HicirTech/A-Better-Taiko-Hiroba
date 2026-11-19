@@ -8,7 +8,7 @@ import type {
   WriteOutcomeView,
 } from "../shared/session-port";
 import { useWriteSession } from "../shared/writes/use-write-session";
-import { noticeOf, sessionNoticeOf } from "../shared/writes/write-ending";
+import { endSessionIfGone, noticeOf } from "../shared/writes/write-ending";
 import {
   IDLE,
   isWritingName,
@@ -61,10 +61,7 @@ export function useNameEditor({
 
   const writeEnded = (outcome: WriteOutcomeView<NameState>) => {
     dispatch({ type: "writeEnded", outcome });
-    const gone = sessionNoticeOf(outcome);
-    if (gone !== null) {
-      forget();
-      onSessionGone(gone);
+    if (endSessionIfGone(outcome, forget, onSessionGone)) {
       return;
     }
 
