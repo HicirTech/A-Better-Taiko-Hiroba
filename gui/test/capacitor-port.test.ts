@@ -281,6 +281,18 @@ describe("createCapacitorPort's kept read of my page", () => {
     expect(storage.getItem(KEY)).toBe(kept);
   });
 
+  test("answers nothing kept while signed out, whatever the storage still holds", async () => {
+    const { storage } = await readThenKept();
+    const port = await createCapacitorPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(false),
+      storage,
+    });
+
+    expect(storage.getItem(KEY)).not.toBeNull();
+    expect(await port.keptProfile()).toBeNull();
+  });
+
   test("keeps nothing of a read that ends after a sign-out", async () => {
     const { port, storage } = await signedInWith();
     let release: () => void = () => undefined;

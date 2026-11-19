@@ -280,6 +280,18 @@ export function createHirobaServices(parts: HirobaServiceParts): HirobaServices 
         await pictures.confirm(read.value.taikoNo);
         return ok(read.value.view);
       },
+      keptProfile: async () => {
+        const kept = signedIn() ? await stores.profile.load() : null;
+        if (kept === null || !signedIn()) {
+          return null;
+        }
+        // Until my page is read again, whose kept data and pictures to show is the kept read's.
+        if (owner === null) {
+          owner = kept.taikoNo;
+          sources = { ...kept.pictures, medalPlate: "notShown" };
+        }
+        return { ...kept.view, medal: null };
+      },
       signOut: forget,
       openCostumeEditor: renewing(async (hiroba) => {
         const read = await writes.openCostumeEditor(hiroba);

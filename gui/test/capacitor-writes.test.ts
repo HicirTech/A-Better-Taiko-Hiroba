@@ -28,6 +28,7 @@ import {
 } from "./capacitor-port-fixtures";
 import { START_SET, standIn } from "./hiroba-stand-in";
 import { createFakeIndexedDb, type FakeIndexedDb } from "./indexeddb-fake";
+import { memoryStorage } from "./storage-fakes";
 
 const { createCapacitorPort } = await import("../src/platform/capacitor");
 
@@ -61,11 +62,13 @@ function setUp(options: SetUpOptions = {}) {
   const session: MockSession = { cardChosen: true };
   const hiroba = standIn({ editor, profile, favorites, session, myPage: profilePage(profile) });
   const indexedDb = options.indexedDb === undefined ? createFakeIndexedDb() : options.indexedDb;
+  const storage = memoryStorage();
   const launch = () =>
     createCapacitorPort({
       closeLabel: () => CLOSE_LABEL,
       signedInFlag: memoryFlag(options.signedIn ?? true),
       ...(indexedDb !== null && { indexedDb: indexedDb.factory }),
+      storage,
       now: options.now ?? NOON_JST,
     });
   const sent = () =>
@@ -352,6 +355,46 @@ describe("createCapacitorPort's costume history", () => {
     const port = await world.launch();
 
     expect(await port.costumeHistory()).toEqual([]);
+  });
+});
+
+describe("createCapacitorPort when Hiroba cannot be reached", () => {
+  beforeEach(() => native.reset());
+
+  const unreachable = () => Promise.reject({ code: "UnknownHostException" });
+
+  test("answers my page as last read, then what the device keeps for its player", async () => {
+    const world = setUp();
+    const port = await signedInPort(world);
+    await port.previewCostume(TARGET);
+    await port.changeCostume(CHANGE);
+    const history = await port.costumeHistory();
+    native.httpAnswer = unreachable;
+    const offline = await world.launch();
+
+    expect(await offline.readProfile()).toEqual({ ok: false, error: { kind: "unreachable" } });
+    expect(await offline.costumeHistory()).toEqual([]);
+    expect(await offline.keptProfile()).toMatchObject({
+      nickname: INITIAL_PROFILE.nickname,
+      medal: null,
+    });
+    expect(await offline.costumeHistory()).toEqual(history);
+  });
+
+  test("asks Hiroba as that player once it answers again, and never ends the session", async () => {
+    const world = setUp();
+    await signedInPort(world);
+    const answering = native.httpAnswer;
+    native.httpAnswer = unreachable;
+    const offline = await world.launch();
+    await offline.readProfile();
+    await offline.keptProfile();
+    native.httpAnswer = answering;
+    native.httpRequests.length = 0;
+
+    expect(await offline.readScores()).not.toEqual({ ok: false, error: { kind: "notSignedIn" } });
+    expect(world.sent().length).toBeGreaterThan(0);
+    expect(await offline.isSignedIn()).toBe(true);
   });
 });
 
