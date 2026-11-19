@@ -179,7 +179,6 @@ export function createCostumeEditor() {
   /** Set while /__hold-precheck?on=1 holds every pre-check's answer back; lets them all go. */
   let releasePrechecks: (() => void) | null = null;
   let prechecksHeld: Promise<void> = Promise.resolve();
-  let nextResult: number | null = null;
   let noopNext = false;
   let expireNext = false;
   const previews: string[] = [];
@@ -333,11 +332,6 @@ ${slotTabs}
           _tckt: ticket,
         });
       }
-      if (nextResult !== null) {
-        const result = nextResult;
-        nextResult = null;
-        return json({ result, errmsg: `（モック）コード ${result}`, _tckt: "" });
-      }
       session.ticket = undefined;
       if (noopNext) {
         noopNext = false;
@@ -399,11 +393,6 @@ ${slotTabs}
             prechecksHeld = Promise.resolve();
           }
           return new Response(releasePrechecks === null ? "flowing" : "holding");
-        }
-        case CONTROL.nextResult: {
-          const code = params.get("code") ?? "";
-          nextResult = /^\d+$/.test(code) ? Number(code) : null;
-          return new Response(String(nextResult));
         }
         case CONTROL.noopSave:
           noopNext = true;

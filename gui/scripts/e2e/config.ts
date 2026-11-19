@@ -29,9 +29,6 @@ export const HIROBA_PORT = ORIGINS.hirobaPort;
 export const IDP_PORT = ORIGINS.idpPort;
 export const HIROBA = ORIGINS.hiroba;
 export const CDP_PORT = 9333 + LANE * PORT_STEP;
-export const IDP_HOST = ORIGINS.idpHost;
-/** The stand-in's picture host: outside Hiroba's cookie Domain. */
-export const IMG = ORIGINS.img;
 /** The stand-in for a service that refuses to sign in inside an app. */
 export const REFUSING_HOST = ORIGINS.refusingHost;
 export const OFFSITE_HOST = ORIGINS.offsiteHost;

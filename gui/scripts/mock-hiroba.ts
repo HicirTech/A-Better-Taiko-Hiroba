@@ -47,7 +47,6 @@ const TAIKO_NO = "000000000000";
 const sessions = new Map<string, MockSession>();
 let lastIssued = "";
 let rotateNext = false;
-let holdIdForm = false;
 let sendOffsite = false;
 /** Set while /__popup?on=1 has the ID form finish in a popup, as some services' sign-ins do. */
 let signInByPopup = false;
@@ -516,9 +515,6 @@ Bun.serve({
       case CONTROL.hitsReset:
         hits.clear();
         return new Response("reset");
-      case CONTROL.hold:
-        holdIdForm = searchParams.get("on") === "1";
-        return new Response(holdIdForm ? "holding" : "flowing");
       case CONTROL.offsite:
         sendOffsite = searchParams.get("on") === "1";
         return new Response(sendOffsite ? "offsite" : "onsite");
@@ -622,12 +618,6 @@ Bun.serve({
           portraits.length = 0;
         }
         return Response.json(portraits);
-      case CONTROL.crossOrigin:
-        return redirect(`${IDP}${CONTROL.echoCookie}`);
-      case CONTROL.sameOrigin:
-        return redirect(CONTROL.echoCookie);
-      case CONTROL.echoCookie:
-        return Response.json({ cookieArrived: request.headers.has("cookie") });
       case CONTROL.log:
         return Response.json(requestLog);
       case CONTROL.logReset:
@@ -671,7 +661,7 @@ Bun.serve({
         );
       case "/login.html":
         return page(
-          `<form id="f" method="post" action="/login"><input name="back" type="hidden" value="${url.searchParams.get("redirect_uri") ?? ""}"></form><button form="f">Sign in</button><script>localStorage.setItem("abth_mock_idp", "${IDP_MARKER}-storage")</script>${holdIdForm ? "" : signInByRefuser ? REFUSER_SIGN_IN : signInByPopup ? POPUP_SIGN_IN : submitSoon("f")}`,
+          `<form id="f" method="post" action="/login"><input name="back" type="hidden" value="${url.searchParams.get("redirect_uri") ?? ""}"></form><button form="f">Sign in</button><script>localStorage.setItem("abth_mock_idp", "${IDP_MARKER}-storage")</script>${signInByRefuser ? REFUSER_SIGN_IN : signInByPopup ? POPUP_SIGN_IN : submitSoon("f")}`,
         );
       case "/signin.html":
         return page("<p>This service does not sign in inside apps.</p>");
@@ -713,8 +703,6 @@ Bun.serve({
         );
       case "/later":
         return redirect(`${url.searchParams.get("back")}?code=mock`);
-      case CONTROL.echoCookie:
-        return Response.json({ cookieArrived: request.headers.has("cookie") });
       default:
         return new Response("not found", { status: 404 });
     }
