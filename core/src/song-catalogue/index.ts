@@ -1,4 +1,10 @@
-export { type ChineseNamesBatch, officialNames, parseChineseNamesBatch } from "./chinese-names";
+export {
+  type ChineseNamesBatch,
+  chineseNamesBySong,
+  officialNames,
+  parseChineseNamesBatch,
+  titleKey,
+} from "./chinese-names";
 export { foldHan } from "./han-fold";
 export { type NamedSong, nameLanguage, numberedSong, shownName } from "./song-names";
 export { newestFirst } from "./song-order";

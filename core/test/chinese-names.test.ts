@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
-import { err, officialNames, ok, parseChineseNamesBatch } from "../src/index";
+import {
+  chineseNamesBySong,
+  err,
+  officialNames,
+  ok,
+  parseChineseNamesBatch,
+  titleKey,
+} from "../src/index";
 import { batch, page, songbox } from "./chinese-names-fixtures";
+import { song } from "./song-fixtures";
 
 describe("officialNames", () => {
   test("reads one name", () => {
@@ -48,5 +56,34 @@ describe("parseChineseNamesBatch", () => {
     JSON.stringify({ continue: { gcmcontinue: 1 }, query: { pages: [] } }),
   ])("answers badAnswer to %p", (text) => {
     expect(parseChineseNamesBatch(text)).toEqual(err({ code: "badAnswer" }));
+  });
+});
+
+describe("titleKey", () => {
+  test("folds full-width forms, dashes, quotes, spaces and case", () => {
+    expect(titleKey("EAT’EM UP！")).toBe(titleKey("Eat'em up!"));
+    expect(titleKey("SORA‐Ⅱ グリーゼ581")).toBe(titleKey("SORA-II グリーゼ581"));
+  });
+});
+
+describe("chineseNamesBySong", () => {
+  test("matches by Japanese title, and without a note in brackets", () => {
+    const names = chineseNamesBySong(
+      [
+        song({ songNo: "2", title: "天体観測" }),
+        song({ songNo: "153", title: "エンジェル ドリーム(デレマス)" }),
+        song({ songNo: "9", title: "其他" }),
+      ],
+      [
+        { title: "天体観測", names: ["天體觀測"] },
+        { title: "エンジェル ドリーム (偶像大師)", names: ["Angel Dream"] },
+      ],
+    );
+    expect(names).toEqual(
+      new Map([
+        ["2", ["天體觀測"]],
+        ["153", ["Angel Dream"]],
+      ]),
+    );
   });
 });

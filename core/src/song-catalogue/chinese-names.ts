@@ -1,7 +1,7 @@
 import { isRecord } from "../guards";
 import { err, ok, type Result } from "../operation-results";
 
-import type { ChineseNamesPage } from "./types";
+import type { CatalogueSong, ChineseNamesPage } from "./types";
 
 /** One answer of the Chinese wiki's API: the names on its pages, and where the next batch starts. */
 export interface ChineseNamesBatch {
@@ -77,4 +77,43 @@ function wikitextOf(revisions: unknown): string | undefined {
   const main = isRecord(slots) ? slots.main : undefined;
   const content = isRecord(main) ? main.content : undefined;
   return typeof content === "string" ? content : undefined;
+}
+
+// The wikis tell songs that share a title apart with a note in brackets at the end.
+const DISAMBIGUATION = /\s*[(（][^()（）]*[)）]\s*$/;
+
+/** A title as both wikis can be matched by: compatibility forms, dashes, quotes and spaces folded. */
+export function titleKey(title: string): string {
+  return title
+    .normalize("NFKC")
+    .replace(/[‐-―−]/g, "-")
+    .replace(/[‘’′`´]/g, "'")
+    .replace(/\s+/g, "")
+    .toLowerCase();
+}
+
+/** The Chinese wiki's names for each song, matched by its Japanese title, then without a note. */
+export function chineseNamesBySong(
+  songs: readonly CatalogueSong[],
+  pages: readonly ChineseNamesPage[],
+): ReadonlyMap<string, readonly string[]> {
+  const byTitle = new Map<string, string[]>();
+  for (const page of pages) {
+    for (const key of new Set([
+      titleKey(page.title),
+      titleKey(page.title.replace(DISAMBIGUATION, "")),
+    ])) {
+      byTitle.set(key, [...(byTitle.get(key) ?? []), ...page.names]);
+    }
+  }
+  const names = new Map<string, readonly string[]>();
+  for (const song of songs) {
+    const found =
+      byTitle.get(titleKey(song.title)) ??
+      byTitle.get(titleKey(song.title.replace(DISAMBIGUATION, "")));
+    if (found !== undefined) {
+      names.set(song.songNo, [...new Set(found)]);
+    }
+  }
+  return names;
 }
