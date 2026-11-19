@@ -233,6 +233,7 @@ export const zhHans: Messages = {
   "profile.readAgain": "重新读取",
   "profile.title": "称号：{title}",
   "profile.fetchedAt": "最后更新于 {time}",
+  "profile.lastRead": "读不到广场，这是你上次读到的资料（{time}）。",
   "profile.noTitle": "无称号",
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "无法读取段位。",

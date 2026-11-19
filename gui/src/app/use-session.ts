@@ -76,11 +76,17 @@ export function useSession({
       const result = await myPage.run(
         () => (refreshFirst ? afterRefresh(port, readProfile) : readProfile()),
         {
-          keep: (answer) => {
+          keep: async (answer) => {
             if (!answer.ok) {
-              // My page shown stays, the failure over it; with none, the failure takes its place.
+              // My page shown stays, the failure over it; with none, the one kept from an earlier
+              // read takes its place, or else the failure.
+              const kept = await port.keptProfile();
               setScreen((now) =>
-                now.name === "profile" ? now : { name: "readFailed", ...answer.error },
+                now.name === "profile"
+                  ? now
+                  : kept === null
+                    ? { name: "readFailed", ...answer.error }
+                    : { name: "profile", profile: kept, kept: true },
               );
               return;
             }
@@ -94,7 +100,7 @@ export function useSession({
             for (const kind of FIXED_ART) {
               lane.forgetFailures(kind);
             }
-            setScreen({ name: "profile", profile: answer.value });
+            setScreen({ name: "profile", profile: answer.value, kept: false });
           },
         },
       );
@@ -108,7 +114,7 @@ export function useSession({
   const putInProfile = useCallback(
     (worn: Partial<Pick<ProfileView, "nickname" | "title">>) =>
       setScreen((now) =>
-        now.name === "profile" ? { name: "profile", profile: { ...now.profile, ...worn } } : now,
+        now.name === "profile" ? { ...now, profile: { ...now.profile, ...worn } } : now,
       ),
     [],
   );

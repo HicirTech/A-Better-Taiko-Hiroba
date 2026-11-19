@@ -279,6 +279,8 @@ export const en = {
   "profile.title": "Title: {title}",
   /** Param: {time}, already formatted. */
   "profile.fetchedAt": "Last updated {time}",
+  /** The grey line over my page kept from an earlier read. Param: {time}, already formatted. */
+  "profile.lastRead": "Hiroba could not be read. This is your profile as last read ({time}).",
   "profile.noTitle": "No title",
   /** Param: {dan}, a `dan.N` text, N being the board number read off my page's label. */
   "profile.dan": "Dan-i: {dan}",

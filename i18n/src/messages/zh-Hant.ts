@@ -233,6 +233,7 @@ export const zhHant: Messages = {
   "profile.readAgain": "重新讀取",
   "profile.title": "稱號：{title}",
   "profile.fetchedAt": "最後更新於 {time}",
+  "profile.lastRead": "讀不到廣場，這是你上次讀到的資料（{time}）。",
   "profile.noTitle": "無稱號",
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "無法讀取段位。",

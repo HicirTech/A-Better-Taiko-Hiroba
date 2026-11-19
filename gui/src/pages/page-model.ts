@@ -22,7 +22,12 @@ export type Screen =
     }
   | { readonly name: "signingIn" }
   | { readonly name: "reading" }
-  | { readonly name: "profile"; readonly profile: ProfileView }
+  | {
+      readonly name: "profile";
+      readonly profile: ProfileView;
+      /** My page as last read on this device, shown as no read of it has come since launch. */
+      readonly kept: boolean;
+    }
   | { readonly name: "readFailed"; readonly kind: ReadFailureKind; readonly detail?: string };
 
 /** The read the Read again button follows: it turns with it and waits for it. */

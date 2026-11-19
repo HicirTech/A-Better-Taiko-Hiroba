@@ -242,6 +242,7 @@ export const ja: Messages = {
   "profile.readAgain": "再読み込み",
   "profile.title": "称号：{title}",
   "profile.fetchedAt": "最終更新：{time}",
+  "profile.lastRead": "ひろばを読み込めませんでした。前回読み込んだプロフィールです（{time}）。",
   "profile.noTitle": "称号なし",
   "profile.dan": "段位：{dan}",
   "profile.danUnreadable": "段位を読み取れませんでした。",
