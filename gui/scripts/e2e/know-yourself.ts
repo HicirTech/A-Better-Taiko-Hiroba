@@ -1,4 +1,7 @@
 /** Know yourself: folded parts that each sum up what they find, asking Hiroba nothing. */
+import type { Level } from "@abth/core";
+
+import { LEVEL_DIFFICULTY } from "../../src/shared/song-catalogue/genre-look";
 import { en } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, waitFor } from "./harness";
@@ -18,6 +21,9 @@ const knowYourselfKeys = [
   "bpmBandsAWobblingTempoByItsNumber",
   "nearMissSummaryCountsItsList",
   "nearMissOpensItsScoreDetails",
+  "suggestionsReadTheRatingThemselves",
+  "suggestedChartOpensItsDetails",
+  "joyLeavesNeverPlayedOutByChoice",
   "overTimeCardsWaitForAnotherDay",
 ] as const;
 
@@ -30,10 +36,14 @@ const PARTS = [
   "bpm",
   "full-combo",
   "donderful",
+  "harder",
+  "comfort",
+  "joy",
   "plays",
   "crowns-over-time",
   "ranks-over-time",
 ] as const;
+const JOY = "know-joy-list";
 // The stand-in's song 1010 wobbles about 168; 1005 runs from 120 to 240.
 const WOBBLING_BAND = "#know-bpm-rows-band-160";
 const CHANGING_ROW = "#know-bpm-rows-changing";
@@ -192,6 +202,56 @@ async function knowYourself(ctx: Ctx) {
   await press("Escape");
   await gone("#score-details");
   results.nearMissOpensItsScoreDetails = opened === true;
+
+  // The rating's data comes as the page opens: no visit to Rating comes first.
+  const harder = await waitFor("the harder card's sentence", async () => {
+    const summary = (await textOf("#know-harder-summary")) ?? "";
+    return summary === en.t("rating.readingData") ? undefined : summary;
+  });
+  results.suggestionsReadTheRatingThemselves = harder !== en.t("rating.dataFailed");
+
+  // The stand-in's joy offers a chart never played first, which opens its song on its own chart.
+  await unfold("joy");
+  await shown(`#${JOY} li`);
+  const level = Number(await attribute(`#${JOY} li`, "data-level")) as Level;
+  await click(`#${JOY} li .song-open`);
+  const details = await waitFor("the suggested chart's details", async () =>
+    (await exists("#score-details-title"))
+      ? "#score-details"
+      : (await exists("#song-details-charts"))
+        ? "#song-details"
+        : undefined,
+  );
+  const onItsChart =
+    details === "#song-details" &&
+    (await attribute(`#song-details-chart-${LEVEL_DIFFICULTY[level]}`, "aria-pressed")) === "true";
+  await press("Escape");
+  await gone(details);
+  results.suggestedChartOpensItsDetails = onItsChart;
+
+  // The charts never played come by choice, the tick box on by default.
+  const joyRows = async () =>
+    (await exists(`#${JOY}-rows`))
+      ? await listRows<string>(
+          `#${JOY}-rows`,
+          "(row) => row.dataset.songNo + '/' + row.dataset.level",
+        )
+      : [];
+  const neverShown = () =>
+    page.evaluate<boolean>(`document.querySelector("#know-joy-never")?.checked === true`);
+  const withNever = await joyRows();
+  const startsWithNever = await neverShown();
+  await click("#know-joy-never");
+  await Bun.sleep(300);
+  const withoutNever = await joyRows();
+  const leftOut = !(await neverShown());
+  await click("#know-joy-never");
+  await Bun.sleep(300);
+  results.joyLeavesNeverPlayedOutByChoice =
+    startsWithNever &&
+    leftOut &&
+    withoutNever.length < withNever.length &&
+    same(await joyRows(), withNever);
 
   // Every read of this run falls on one day: a point a day leaves nothing to draw yet.
   await unfold("plays");
