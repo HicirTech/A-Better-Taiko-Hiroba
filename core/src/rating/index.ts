@@ -1,5 +1,6 @@
 export { accuracyToRate, type MeasuredChart, measuredChart } from "./chart-measure";
 export { COUNTED } from "./ourtaiko-formulas";
+export { sameChartKey } from "./ourtaiko-lists";
 export {
   OURTAIKO_V1_FIGURES,
   type OurTaikoV1Chart,

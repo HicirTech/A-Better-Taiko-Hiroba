@@ -43,6 +43,13 @@ export function isLeftOut(chart: Chart): boolean {
   return LEFT_OUT_SONGS.has(chart.songNo);
 }
 
+/** The chart's key; the pair's first song number's for a chart the ratings hold under two. */
+export function sameChartKey(chart: Chart): string {
+  const group = SAME_CHART_GROUP.get(chartKey(chart));
+  const pair = group === undefined ? undefined : SAME_CHARTS[group];
+  return pair === undefined ? chartKey(chart) : chartKey({ songNo: pair[0], level: pair[2] });
+}
+
 /** Whether a donderful play on this chart counts as perfect. */
 export function donderfulCountsAsPerfect(chart: Chart): boolean {
   return !DONDERFUL_BY_HITS.has(chartKey(chart));
