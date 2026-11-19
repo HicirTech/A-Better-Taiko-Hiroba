@@ -42,6 +42,7 @@ Download the IPA only from this project's Releases page.
 - [x] Work out your rating and skills from your scores, by OurTaiko's first or second rating, and show the charts it counts
 - [x] Share your profile or your rating as a picture: copy or save it on a computer; on Android, share it, or save it from Android 11 on
 - [x] See where you stand: clears by star level, by hits per second and by BPM, and the charts closest to their next crown; add the charts to work on to a set
+- [x] Get charts to play next three ways, from your rating and the tempo and density you play most: a little harder, scores in comfort, and for the joy of it
 - [x] See how things change as you read your scores: a chart's high score, your plays, crowns and score ranks, and your rating by both versions
 - [x] Change your title
 - [ ] Build your title part by part
