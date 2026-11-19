@@ -78,6 +78,19 @@ describe("dueTips", () => {
     expect(idsOf(dueTips("favorites", COMPUTER, older))).toEqual(["favorites.gift"]);
     expect(dueTips("favorites", COMPUTER, new Set(idsOf(TIPS)))).toEqual([]);
   });
+
+  test("tells Game settings what the page is for, then that Sync to Hiroba sends it, on every screen", () => {
+    for (const screen of [PHONE, TABLET, COMPUTER]) {
+      expect(dueTips("gameSettings", screen, new Set())).toEqual([
+        {
+          id: "gameSettings.page",
+          at: ["#game-settings-profile"],
+          words: "tips.gameSettings.page",
+        },
+        { id: "gameSettings.sync", at: ["#game-settings-save"], words: "tips.gameSettings.sync" },
+      ]);
+    }
+  });
 });
 
 describe("the tips seen on this device", () => {

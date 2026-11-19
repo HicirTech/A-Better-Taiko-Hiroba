@@ -42,6 +42,11 @@ function pageState(overrides: Record<string, unknown> = {}) {
       step: { name: "ready" },
       dropEdits: call("favorites.drop"),
     },
+    gameSettings: {
+      ...reads("gameSettings"),
+      step: { name: "ready" },
+      dropEdits: call("gameSettings.drop"),
+    },
     keptSets: { reload: call("sets.reload") },
     keptSearches: { reload: call("searches.reload") },
     songSearchOpen: false,
@@ -89,6 +94,7 @@ describe("PAGE_MODELS", () => {
     ["costume", []],
     ["nameTitle", []],
     ["favorites", ["sets.reload"]],
+    ["gameSettings", []],
     ["settings", []],
   ])("opens %s with the reads it shows: %p", (page, reads) => {
     const { state, calls } = pageState();
@@ -117,6 +123,14 @@ describe("PAGE_MODELS", () => {
       PAGE_MODELS.costume.firstRead?.(pageState({ editor: unread, writing: true }).state),
     ).toBeNull();
     expect(PAGE_MODELS.costume.firstRead?.(pageState().state)).toBeNull();
+    expect(PAGE_MODELS.gameSettings.firstRead?.(pageState({ gameSettings: unread }).state)).toBe(
+      unread.read,
+    );
+    expect(
+      PAGE_MODELS.gameSettings.firstRead?.(
+        pageState({ gameSettings: unread, writing: true }).state,
+      ),
+    ).toBeNull();
   });
 
   type ReadAgainCase = [page: Page, reads: readonly string[]];
@@ -128,6 +142,7 @@ describe("PAGE_MODELS", () => {
     ["costume", ["costume.read"]],
     ["nameTitle", ["myPage.read", "titles.forget"]],
     ["favorites", ["pickable.markStale", "favorites.read"]],
+    ["gameSettings", ["gameSettings.read"]],
     ["settings", ["myPage.read"]],
   ])("reads again on %s what it shows, each once: %p", async (page, reads) => {
     const { state, calls } = pageState();
@@ -156,7 +171,13 @@ describe("PAGE_MODELS", () => {
       }
     }
 
-    expect(calls).toEqual(["costume.drop", "title.drop", "name.drop", "favorites.drop"]);
+    expect(calls).toEqual([
+      "costume.drop",
+      "title.drop",
+      "name.drop",
+      "favorites.drop",
+      "gameSettings.drop",
+    ]);
   });
 
   test("asks before reading every score again only where some are kept", () => {
@@ -201,6 +222,7 @@ describe("PAGE_MODELS", () => {
       "rating",
       "knowYourself",
       "favorites",
+      "gameSettings",
       "settings",
     ]);
   });

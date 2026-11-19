@@ -9,6 +9,7 @@ export const PAGES = [
   "costume",
   "nameTitle",
   "favorites",
+  "gameSettings",
   "settings",
 ] as const;
 export type Page = (typeof PAGES)[number];

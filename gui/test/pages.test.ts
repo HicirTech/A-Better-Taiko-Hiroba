@@ -4,7 +4,7 @@ import { isPage, keepPage, keptPage, PAGES } from "../src/navigation/pages";
 import { memoryStorage, refusing } from "./storage-fakes";
 
 describe("PAGES", () => {
-  test("lists Scores after the Overview, Know yourself after Rating, then Costume and Nickname & title before Favourites", () => {
+  test("lists Scores after the Overview, Know yourself after Rating, Costume and Nickname & title before Favourites, then Game settings", () => {
     expect([...PAGES]).toEqual([
       "overview",
       "scores",
@@ -13,6 +13,7 @@ describe("PAGES", () => {
       "costume",
       "nameTitle",
       "favorites",
+      "gameSettings",
       "settings",
     ]);
   });
@@ -31,6 +32,8 @@ describe("keptPage", () => {
     expect(keptPage(storage)).toBe("costume");
     keepPage("nameTitle", storage);
     expect(keptPage(storage)).toBe("nameTitle");
+    keepPage("gameSettings", storage);
+    expect(keptPage(storage)).toBe("gameSettings");
     keepPage("settings", storage);
     expect(keptPage(storage)).toBe("settings");
   });
@@ -55,7 +58,7 @@ describe("keptPage", () => {
 });
 
 describe("isPage", () => {
-  test("accepts the eight pages and nothing else", () => {
+  test("accepts the nine pages and nothing else", () => {
     expect(
       [
         "overview",
@@ -65,13 +68,21 @@ describe("isPage", () => {
         "costume",
         "nameTitle",
         "favorites",
+        "gameSettings",
         "settings",
       ].every(isPage),
     ).toBe(true);
     expect(
-      [null, "", "Overview", "Costume", "favourites", "name-title", "nametitle", "history"].some(
-        isPage,
-      ),
+      [
+        null,
+        "",
+        "Overview",
+        "Costume",
+        "favourites",
+        "name-title",
+        "game-settings",
+        "history",
+      ].some(isPage),
     ).toBe(false);
   });
 });

@@ -3,6 +3,7 @@ import type { Translator } from "@abth/i18n";
 import type { ComponentType, ReactNode } from "react";
 
 import type { FavoritesEditor } from "../favorites/use-favorites";
+import type { GameSettingsEditor } from "../game-settings/use-game-settings";
 import type { CostumeEditor } from "../my-page/use-costume-editor";
 import type { NameEditor } from "../name-title/use-name-editor";
 import type { TitleEditor } from "../name-title/use-title-editor";
@@ -77,6 +78,7 @@ export interface PageData extends PageState, DeviceChoices {
   readonly titleEditor: TitleEditor;
   readonly nameEditor: NameEditor;
   readonly favorites: FavoritesEditor;
+  readonly gameSettings: GameSettingsEditor;
   readonly keptSets: FavoriteSets;
   readonly keptSearches: KeptSearches;
   /** The song search opened: the song list is read from then on. */

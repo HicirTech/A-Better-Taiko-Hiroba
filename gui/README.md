@@ -42,7 +42,7 @@ GUI bundle: format, lint, typecheck, the tests and the update feed.
 | The look | `theme` |
 | Shared components, and the lane Hiroba's pictures come through | `ui`, `pictures` |
 | Parts several pages draw | `songs`, `profile`, `snapshots` |
-| A page or a feature each | `favorites`, `know-yourself`, `my-page`, `name-title`, `navigation`, `pipelines-page`, `rating`, `read-again`, `scan`, `scores`, `settings`, `song-search`, `updates` |
+| A page or a feature each | `favorites`, `game-settings`, `know-yourself`, `my-page`, `name-title`, `navigation`, `pipelines-page`, `rating`, `read-again`, `scan`, `scores`, `settings`, `song-search`, `updates` |
 | Every page, in one registry | `pages` |
 | The window | `app`, then `App.tsx`, `app-window.tsx`, `shell.tsx` and `main.tsx` |
 

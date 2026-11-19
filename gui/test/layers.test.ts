@@ -15,6 +15,7 @@ const LAYERS: readonly (readonly string[])[] = [
   ["songs", "profile", "snapshots"],
   [
     "favorites",
+    "game-settings",
     "know-yourself",
     "my-page",
     "name-title",

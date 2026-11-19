@@ -3,6 +3,9 @@ import { ToggleButton, ToggleButtonGroup } from "@mui/material";
 export interface Choice<T extends string> {
   readonly value: T;
   readonly label: string;
+  /** The label's language where it is not the app's own, such as Hiroba's words. */
+  readonly lang?: string | undefined;
+  readonly disabled?: boolean | undefined;
 }
 
 /** A toggle for each choice, one of them always chosen. */
@@ -11,6 +14,7 @@ export function ChoiceToggles<T extends string>({
   choices,
   chosen,
   onChoose,
+  disabled = false,
   ...named
 }: {
   /** Each choice's toggle is `<id>-<value>`. */
@@ -18,6 +22,7 @@ export function ChoiceToggles<T extends string>({
   readonly choices: readonly Choice<T>[];
   readonly chosen: T;
   readonly onChoose: (next: T) => void;
+  readonly disabled?: boolean | undefined;
   /** The group's name: the id of what names it, or a name of its own. */
   readonly "aria-labelledby"?: string;
   readonly "aria-label"?: string;
@@ -36,6 +41,7 @@ export function ChoiceToggles<T extends string>({
       size="small"
       color="primary"
       value={chosen}
+      disabled={disabled}
       {...named}
       onChange={(_event, next: T | null) => choose(next)}
     >
@@ -44,6 +50,8 @@ export function ChoiceToggles<T extends string>({
           key={choice.value}
           id={`${id}-${choice.value}`}
           value={choice.value}
+          disabled={disabled || choice.disabled === true}
+          lang={choice.lang}
           sx={{ px: 1.5, textTransform: "none" }}
         >
           {choice.label}

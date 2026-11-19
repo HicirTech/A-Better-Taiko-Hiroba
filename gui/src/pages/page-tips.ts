@@ -190,6 +190,18 @@ export const TIPS: readonly Tip[] = [
     since: "0.7.0",
     ...both(["#favorites-gift"], "tips.favorites.gift"),
   },
+  {
+    id: "gameSettings.page",
+    page: "gameSettings",
+    since: "0.9.0",
+    ...both(["#game-settings-profile"], "tips.gameSettings.page"),
+  },
+  {
+    id: "gameSettings.sync",
+    page: "gameSettings",
+    since: "0.9.0",
+    ...both(["#game-settings-save"], "tips.gameSettings.sync"),
+  },
 ];
 
 /** A tip as the bubble shows it on the screen in use. */
