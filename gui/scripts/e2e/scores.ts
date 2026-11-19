@@ -44,11 +44,11 @@ const scoresKeys = [
 const PHONE = { width: 390, height: 844 } as const;
 
 const control = async <T>(path: string, params = ""): Promise<T> =>
-  (await (await fetch(`${HIROBA}/${path}?${params}`)).json()) as T;
+  (await (await fetch(`${HIROBA}${path}?${params}`)).json()) as T;
 const history = (params = "") =>
-  control<{ readonly shown: number; readonly asked: readonly number[] }>("__history", params);
+  control<{ readonly shown: number; readonly asked: readonly number[] }>(CONTROL.history, params);
 const detailsAsked = async (params = "") =>
-  (await control<{ readonly asked: readonly string[] }>("__scores", params)).asked;
+  (await control<{ readonly asked: readonly string[] }>(CONTROL.scores, params)).asked;
 /** The charts whose details were asked since the last take. */
 const takeAsked = async () => {
   const asked = await detailsAsked();

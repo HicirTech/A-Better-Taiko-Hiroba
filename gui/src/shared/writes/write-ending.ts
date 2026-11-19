@@ -72,3 +72,18 @@ export function sessionNoticeOf(outcome: WriteOutcomeView<unknown>): PlainMessag
       return null;
   }
 }
+
+/** When the write found the session gone: forgets what the page read, says why, answers true. */
+export function endSessionIfGone(
+  outcome: WriteOutcomeView<unknown>,
+  forget: () => void,
+  onSessionGone: (notice: PlainMessageKey) => void,
+): boolean {
+  const notice = sessionNoticeOf(outcome);
+  if (notice === null) {
+    return false;
+  }
+  forget();
+  onSessionGone(notice);
+  return true;
+}

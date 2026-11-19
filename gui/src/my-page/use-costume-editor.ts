@@ -17,7 +17,7 @@ import {
 } from "../shared/session-port";
 import { useKeptHistory } from "../shared/use-kept-history";
 import { useWriteSession } from "../shared/writes/use-write-session";
-import { sessionNoticeOf } from "../shared/writes/write-ending";
+import { endSessionIfGone } from "../shared/writes/write-ending";
 import {
   canReadEditorAgain,
   type EditorStep,
@@ -125,10 +125,7 @@ export function useCostumeEditor({
 
   const writeEnded = (outcome: WriteOutcomeView) => {
     dispatch({ type: "writeEnded", outcome });
-    const gone = sessionNoticeOf(outcome);
-    if (gone !== null) {
-      forget();
-      onSessionGone(gone);
+    if (endSessionIfGone(outcome, forget, onSessionGone)) {
       return;
     }
 

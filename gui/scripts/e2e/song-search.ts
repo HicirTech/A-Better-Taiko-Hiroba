@@ -11,14 +11,14 @@ import {
   servedChartPath,
 } from "../mock-ese";
 import { TITLE_PLATE } from "../mock-pictures";
-import { SONG_CATALOGUE_PATH } from "../mock-song-catalogue";
+import { chartPicturePath, SONG_CATALOGUE_PATH } from "../mock-song-catalogue";
 import { en, PHONE_TALL, TOP_BAND_PX } from "./config";
 import type { Ctx, LaneSection } from "./context";
 import { pageHelpers, same, settle, waitFor } from "./harness";
 import { hitsOn } from "./stand-in";
 
 /** The stand-in's one picture of 1005's inner chart. */
-const INNER_PICTURE = "/__charts/1005/ura-1.png";
+const INNER_PICTURE = chartPicturePath("1005", "ura", 1);
 const EDGE_PX = 24;
 /** The narrowest phone the details are drawn for. */
 const NARROW_PHONE = { width: 360, height: 780 } as const;
@@ -85,17 +85,15 @@ async function songSearch(ctx: Ctx) {
     attribute,
     boxOf,
     exists,
+    gone,
     inPlace,
     menuOpen,
     mousePress,
     press,
+    shown,
     swipe,
     touchEmulated,
   } = pageHelpers(page);
-  const shown = (selector: string) =>
-    waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
-  const gone = (selector: string) =>
-    waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
   // A button slid out of the band keeps its box: only its visibility says it is gone.
   const seen = (selector: string) =>
     page.evaluate<boolean>(
@@ -395,7 +393,8 @@ async function songSearch(ctx: Ctx) {
   await click("#song-details-chart-easy");
   await chartDrawn();
   results.chartDrawnFromTheTja =
-    (await plainHits()) === plainRead + 1 && (await hitsOn("/__charts/1001/easy-1.png")) === 0;
+    (await plainHits()) === plainRead + 1 &&
+    (await hitsOn(chartPicturePath("1001", "easy", 1))) === 0;
   await closeSong();
   await openSong("夜明け", PLAIN_CHART);
   await click("#song-details-chart-easy");

@@ -41,11 +41,7 @@ const myPagePictures = async () => {
 async function picturesAgain(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page } = ctx.app;
-  const { atSize, attribute, exists, mousePress } = pageHelpers(page);
-  const shown = (selector: string) =>
-    waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
-  const gone = (selector: string) =>
-    waitFor(`${selector} gone`, async () => !(await exists(selector)) || undefined);
+  const { atSize, attribute, gone, mousePress, shown } = pageHelpers(page);
   const readAgainHeld = async () => {
     await mousePress("#read-again", "left", LONG_HOLD_MS + 500);
     await shown("#read-pictures");

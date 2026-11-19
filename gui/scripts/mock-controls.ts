@@ -1,7 +1,5 @@
 /** The stand-in's own addresses, which the tests call to set the stand-in up or to read it. */
 export const CONTROL = {
-  crossOrigin: "/__cross-origin",
-  echoCookie: "/__echo-cookie",
   expire: "/__expire",
   expireOnSave: "/__expire-on-save",
   favorites: "/__favorites",
@@ -9,7 +7,6 @@ export const CONTROL = {
   history: "/__history",
   hits: "/__hits",
   hitsReset: "/__hits-reset",
-  hold: "/__hold",
   holdPrecheck: "/__hold-precheck",
   holdRead: "/__hold-read",
   icons: "/__icons",
@@ -20,7 +17,6 @@ export const CONTROL = {
   medal: "/__medal",
   mydon: "/__mydon",
   mydons: "/__mydons",
-  nextResult: "/__next-result",
   noopSave: "/__noop-save",
   offsite: "/__offsite",
   panel: "/__panel",
@@ -41,7 +37,6 @@ export const CONTROL = {
   rename: "/__rename",
   renameCooldown: "/__rename-cooldown",
   rotate: "/__rotate",
-  sameOrigin: "/__same-origin",
   scores: "/__scores",
   state: "/__state",
   thumb: "/__thumb",

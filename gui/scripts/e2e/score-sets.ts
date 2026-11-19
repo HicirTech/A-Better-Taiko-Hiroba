@@ -41,11 +41,8 @@ const songOf = (charted: string) => charted.split("/")[0] ?? "";
 async function scoreSets(ctx: Ctx) {
   const { results } = ctx;
   const { click, goTo, page } = ctx.app;
-  const { exists, listRows, mousePress, press, rowInView, touchEmulated } = pageHelpers(page);
-  const shown = (selector: string) =>
-    waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
-  const gone = (selector: string) =>
-    waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
+  const { exists, gone, listRows, mousePress, press, rowInView, shown, touchEmulated } =
+    pageHelpers(page);
   const kept = () =>
     page.evaluate<KeptSet[]>(
       `(JSON.parse(localStorage.getItem(${JSON.stringify(SETS_KEY)}) ?? "{}").sets ?? []).map(({ name, songs }) => ({ name, songs }))`,

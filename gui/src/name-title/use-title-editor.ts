@@ -13,7 +13,7 @@ import type {
   WriteOutcomeView,
 } from "../shared/session-port";
 import { useWriteSession } from "../shared/writes/use-write-session";
-import { noticeOf, seenAfter, sessionNoticeOf } from "../shared/writes/write-ending";
+import { endSessionIfGone, noticeOf, seenAfter } from "../shared/writes/write-ending";
 import {
   changesTitle,
   IDLE,
@@ -109,10 +109,7 @@ export function useTitleEditor({
       reads.forget();
     }
     dispatch({ type: "writeEnded", outcome });
-    const gone = sessionNoticeOf(outcome);
-    if (gone !== null) {
-      forget();
-      onSessionGone(gone);
+    if (endSessionIfGone(outcome, forget, onSessionGone)) {
       return;
     }
 

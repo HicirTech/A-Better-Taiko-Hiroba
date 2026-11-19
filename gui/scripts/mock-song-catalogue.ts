@@ -51,10 +51,13 @@ const CHART_PICTURES: Readonly<Record<string, PictureCounts>> = {
   "1019": { oni: 1 },
 };
 
+/** Where the stand-in serves picture `n` of a chart, counting from 1. */
+export const chartPicturePath = (songNo: string, difficulty: WikiDifficulty, n: number) =>
+  `/__charts/${songNo}/${difficulty}-${n}.png`;
+
 const chartPicturePaths = (songNo: string, difficulty: WikiDifficulty): string[] =>
-  Array.from(
-    { length: CHART_PICTURES[songNo]?.[difficulty] ?? 0 },
-    (_, at) => `/__charts/${songNo}/${difficulty}-${at + 1}.png`,
+  Array.from({ length: CHART_PICTURES[songNo]?.[difficulty] ?? 0 }, (_, at) =>
+    chartPicturePath(songNo, difficulty, at + 1),
   );
 
 /** Where the stand-in serves each chart picture, a song's easiest chart first. */

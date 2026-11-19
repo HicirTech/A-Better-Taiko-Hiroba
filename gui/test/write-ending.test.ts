@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { SaveReading } from "@abth/core";
 import type { WriteOutcomeView } from "../src/shared/session-port";
 import {
+  endSessionIfGone,
   endsTheEdit,
   type Noticed,
   noticeOf,
@@ -205,5 +206,29 @@ describe("sessionNoticeOf", () => {
     ] as const) {
       expect(sessionNoticeOf(outcome)).toBeNull();
     }
+  });
+});
+
+describe("endSessionIfGone", () => {
+  const page = () => {
+    const calls: string[] = [];
+    return {
+      calls,
+      forget: () => calls.push("forget"),
+      onSessionGone: (notice: string) => calls.push(notice),
+    };
+  };
+
+  test("forgets what the page read, then says why, for a write that found the session gone", () => {
+    const { calls, forget, onSessionGone } = page();
+    const gone = { kind: "sessionGone", writeMayHaveHappened: false } as const;
+    expect(endSessionIfGone(gone, forget, onSessionGone)).toBe(true);
+    expect(calls).toEqual(["forget", "write.sessionGone"]);
+  });
+
+  test("leaves the session alone after any other ending", () => {
+    const { calls, forget, onSessionGone } = page();
+    expect(endSessionIfGone({ kind: "busy" }, forget, onSessionGone)).toBe(false);
+    expect(calls).toEqual([]);
   });
 });

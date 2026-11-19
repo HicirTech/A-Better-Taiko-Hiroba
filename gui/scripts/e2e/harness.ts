@@ -140,6 +140,10 @@ export async function connect(url: string) {
 export function pageHelpers(page: Page) {
   const exists = (selector: string) =>
     page.evaluate<boolean>(`document.querySelector(${JSON.stringify(selector)}) !== null`);
+  const shown = (selector: string) =>
+    waitFor(`${selector} shown`, async () => (await exists(selector)) || undefined);
+  const gone = (selector: string) =>
+    waitFor(`${selector} gone`, async () => ((await exists(selector)) ? undefined : true));
   const attribute = (selector: string, name: string) =>
     page.evaluate<string | null>(
       `document.querySelector(${JSON.stringify(selector)})?.getAttribute(${JSON.stringify(name)}) ?? null`,
@@ -376,6 +380,8 @@ export function pageHelpers(page: Page) {
 
   return {
     exists,
+    shown,
+    gone,
     attribute,
     press,
     menuOpened,
