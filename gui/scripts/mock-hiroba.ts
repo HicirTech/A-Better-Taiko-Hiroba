@@ -9,6 +9,7 @@ import { danPlatePng } from "./mock-dan-plate";
 import { editorAnswer, enteredPost, type MockAsk, page, redirect } from "./mock-editor-routes";
 import { ESE_CHARTS_PATH, ESE_MAPPING, ESE_MAPPING_PATH, eseChart } from "./mock-ese";
 import { createFavoritesEditor } from "./mock-favorites";
+import { createGameSettingsEditor } from "./mock-game-settings";
 import { createPlayHistory } from "./mock-history";
 import { mockAddressOf, mockOrigins } from "./mock-origins";
 import {
@@ -68,7 +69,8 @@ const costume = createCostumeEditor();
 const profile = createProfileEditor({ issue: costume.issueTicket });
 /** The favourite editors, and the favourites my page shows; the token is shared here too. */
 const favorites = createFavoritesEditor({ issue: costume.issueTicket });
-const EDITORS = { costume, profile, favorites };
+const gameSettings = createGameSettingsEditor({ issue: costume.issueTicket });
+const EDITORS = { costume, profile, favorites, gameSettings };
 const history = createPlayHistory();
 const scores = createScorePages(history);
 /** Marks what the ID host leaves behind (cookies, localStorage) so a test can find it on disk. */
@@ -642,6 +644,7 @@ Bun.serve({
           costume.hook(pathname, searchParams) ??
           profile.hook(pathname, searchParams) ??
           favorites.hook(pathname, searchParams) ??
+          gameSettings.hook(pathname, searchParams) ??
           new Response("not found", { status: 404 })
         );
     }
