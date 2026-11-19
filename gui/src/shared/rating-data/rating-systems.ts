@@ -9,3 +9,9 @@ export const RATING_SYSTEM_NAME: Readonly<Record<RatingSystem, PlainMessageKey>>
   ourtaikoV1: "rating.system.ourtaikoV1",
   ourtaikoV2: "rating.system.ourtaikoV2",
 };
+
+/** What a rating says when no chart is rated yet: the difficulties it rates. */
+export const NONE_RATED: Readonly<Record<RatingSystem, PlainMessageKey>> = {
+  ourtaikoV1: "rating.noneRated",
+  ourtaikoV2: "rating.noneRatedV2",
+};

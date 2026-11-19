@@ -9,10 +9,11 @@ import type { Translator } from "@abth/i18n";
 import { Box, Typography } from "@mui/material";
 import { useMemo } from "react";
 import { localDayOf } from "../shared/local-day";
+import type { RatingFormats } from "../shared/rating-data/rating-formats";
 import type { ScoresView } from "../shared/session-port";
 import { SectionTitle } from "../ui/section-title";
 import { LineChart } from "../ui/time-chart";
-import { type RatingFormats, ratingAndSkills } from "./rating-figures";
+import { ratingAndSkills } from "./rating-figures";
 
 interface RatingPoint {
   readonly at: string;
