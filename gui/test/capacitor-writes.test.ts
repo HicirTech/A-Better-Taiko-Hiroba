@@ -579,6 +579,7 @@ describe("createCapacitorPort's cookie store", () => {
   test.each<SavingCall>([
     ["openCostumeEditor", (port) => port.openCostumeEditor()],
     ["openTitleEditor", (port) => port.openTitleEditor()],
+    ["previewCostume", (port) => port.previewCostume(TARGET)],
     ["changeCostume", (port) => port.changeCostume(CHANGE)],
     ["changeTitle", (port) => port.changeTitle(TITLE_CHANGE)],
     ["changeName", (port) => port.changeName(NAME_CHANGE)],
@@ -601,6 +602,27 @@ describe("createCapacitorPort's cookie store", () => {
     const port = await signedInPort(setUp());
     await call(port);
 
+    expect(native.cookieCalls).toEqual([FLUSH]);
+  });
+
+  test("writes the cookie store to disk only once a preview's answer has come", async () => {
+    const port = await signedInPort(setUp());
+    const answer = native.httpAnswer;
+    let release: () => void = () => undefined;
+    native.httpAnswer = () => {
+      // Answered for the preview as it is asked, and held back until released.
+      const answered = answer();
+      return new Promise((resolve) => {
+        release = () => resolve(answered);
+      });
+    };
+    const previewing = port.previewCostume(TARGET);
+    await until(() => native.httpRequests.length === 1);
+    expect(native.cookieCalls).toEqual([]);
+
+    release();
+
+    expect((await previewing).ok).toBe(true);
     expect(native.cookieCalls).toEqual([FLUSH]);
   });
 });

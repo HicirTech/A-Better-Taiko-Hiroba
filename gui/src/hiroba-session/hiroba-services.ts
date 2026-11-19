@@ -280,7 +280,7 @@ export function createHirobaServices(parts: HirobaServiceParts): HirobaServices 
       }),
       openTitleEditor: renewing(writes.openTitleEditor),
       // Its failure forgets nothing: the next page read says whether the session is over.
-      previewCostume: (hiroba, set) => servedPreview(hiroba)(set),
+      previewCostume: renewing((hiroba, set) => servedPreview(hiroba)(set)),
       readPicture: (want, again) => pictures.read(want, again),
       changeCostume: renewing(writes.changeCostume),
       changeTitle: renewing(writes.changeTitle),

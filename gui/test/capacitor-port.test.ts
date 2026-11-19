@@ -262,8 +262,8 @@ describe("createCapacitorPort's costume preview", () => {
       { url: PREVIEW_URL, method: "GET" },
     ]);
     expect(native.httpRequests[0]?.headers).not.toHaveProperty("Cookie");
-    // A preview is not a read of the session: it neither saves nor wipes the cookie store.
-    expect(native.cookieCalls).toEqual([]);
+    // It saves the cookie store as the other calls to Hiroba do, and wipes nothing.
+    expect(native.cookieCalls).toEqual(["deleteCookie abth-save"]);
   });
 
   test("asks Hiroba for reads side by side: a preview goes out beside the reads on their way", async () => {
@@ -306,7 +306,7 @@ describe("createCapacitorPort's costume preview", () => {
       ok: false,
       error: { code: "preview=notPng status=200 type=image/gif bytes=43" },
     });
-    expect(native.cookieCalls).toEqual([]);
+    expect(native.cookieCalls).toEqual(["deleteCookie abth-save"]);
     expect(flag.get()).toBe(true);
   });
 });
