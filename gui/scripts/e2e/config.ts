@@ -1,5 +1,6 @@
 import { join } from "node:path";
 import { createTranslator } from "@abth/i18n";
+import { DATA_FOLDER } from "../../electron/data-folder";
 import { CONTROL } from "../mock-controls";
 
 import { DEV_ADDRESS, mockOrigins } from "../mock-origins";
@@ -66,6 +67,9 @@ export const NOON_JST = "2026-09-27T03:00:00Z";
 export const IN_THE_BREAK = "2026-09-26T20:30:00Z";
 
 export const SESSION_FILE = join(USER_DATA, "session.json");
+export const KEPT_PROFILE_FILE = join(USER_DATA, DATA_FOLDER.keptProfile);
+/** A port nothing listens on: every request to it fails at once, as with no network. */
+export const OUT_OF_REACH = "http://127.0.0.1:9";
 
 export const en = createTranslator("en");
 export const ja = createTranslator("ja");
