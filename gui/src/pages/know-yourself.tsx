@@ -17,10 +17,11 @@ export const KNOW_YOURSELF_MODEL: PageModel = {
   namesSongs: true,
   needsSongs: true,
   // A song list that could not be read is read again as the page opens.
-  opens: ({ scores, catalogue, keptSets }) => [
+  opens: ({ scores, catalogue, keptSets, ratingData }) => [
     scores.load,
     catalogue.readIfFailed,
     keptSets.reload,
+    ratingData.load,
   ],
   waits: ({ scores, listed, catalogue }) =>
     scores.view === null || listed === null || catalogue.state === "loading",
@@ -56,6 +57,7 @@ export const KNOW_YOURSELF_PAGE: PageEntry = {
       cardOpened={data.tipScene === "knowItem"}
       listed={data.listed}
       catalogue={data.catalogue}
+      rating={data.ratingData}
       songDetails={songDetailsOf(data)}
       lane={data.lane}
       keptSets={data.keptSets}

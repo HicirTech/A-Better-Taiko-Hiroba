@@ -391,6 +391,7 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "禮物贈掃神秘揭曉份描標準識",
     "樣",
     "道跳教學螢幕左邊右滑鈕箭做具都緣拖調給家返",
+    "輕鬆純水常推薦",
   ].join(""),
 );
 

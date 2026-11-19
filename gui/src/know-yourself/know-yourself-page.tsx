@@ -1,9 +1,10 @@
-import { chartKey } from "@abth/core";
+import { chartKey, ratePlayer } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Stack } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
+import { ratingFormats } from "../shared/rating-data/rating-formats";
 import { listedOf } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../shared/session-port";
@@ -44,6 +45,10 @@ import type { PageParts } from "./page-parts";
 import { PlaysItem } from "./plays-item";
 import { RanksItem } from "./ranks-item";
 import { RanksOverTimeItem } from "./ranks-over-time-item";
+import { ComfortItem, HarderItem, JoyItem, type SuggestedBy } from "./suggestion-items";
+import { ratedPicksOf, shownBy } from "./suggestions";
+
+const NONE_SHOWN: ReadonlySet<string> = new Set();
 
 /** Where the player stands, from the kept scores and taiko.wiki's list; asks Hiroba nothing. */
 export function KnowYourselfPage({
@@ -51,6 +56,7 @@ export function KnowYourselfPage({
   cardOpened = false,
   listed,
   catalogue,
+  rating,
   songDetails,
   lane,
   keptSets,
@@ -67,6 +73,8 @@ export function KnowYourselfPage({
   readonly listed: ListedChartsView | null;
   /** taiko.wiki's song list: each chart's stars, notes and tempo, and the names. */
   readonly catalogue: SongCatalogue;
+  /** The rating the charts to play next are picked by. */
+  readonly rating: SuggestedBy;
   /** How a chart never played opens its song's details. */
   readonly songDetails: SongDetailsSetting;
   readonly lane: PictureLane;
@@ -102,6 +110,20 @@ export function KnowYourselfPage({
     [view],
   );
   const changes = useMemo(() => (view?.scores ?? []).flatMap((one) => one.changes), [view]);
+  const formats = useMemo(() => ratingFormats(locale, rating.system), [locale, rating.system]);
+  const rated = useMemo(
+    () => (view === null || rating.data === null ? null : ratePlayer(view.scores, rating.data)),
+    [view, rating.data],
+  );
+  const picks = useMemo(
+    () => (rated === null || rating.data === null ? null : ratedPicksOf(here, rating.data, rated)),
+    [here, rating.data, rated],
+  );
+  const shownByRating = useMemo(() => (picks === null ? NONE_SHOWN : shownBy(picks)), [picks]);
+  const playsOf = useCallback(
+    (chart: KnownChart) => scoreOf.get(chartKey(chart))?.record.stageCount ?? 0,
+    [scoreOf],
+  );
   const remembered = useMemo(
     () =>
       new Map<string, ShownSong>(
@@ -216,6 +238,20 @@ export function KnowYourselfPage({
             <BandItem view="bpm" charts={here} parts={parts} />
             <NearMissItem crown="fullCombo" charts={here} parts={parts} />
             <NearMissItem crown="donderful" charts={here} parts={parts} />
+            <HarderItem by={rating} pick={picks?.harder ?? null} formats={formats} parts={parts} />
+            <ComfortItem
+              by={rating}
+              pick={picks?.comfort ?? null}
+              formats={formats}
+              parts={parts}
+            />
+            <JoyItem
+              charts={here}
+              playsOf={playsOf}
+              shown={shownByRating}
+              formats={formats}
+              parts={parts}
+            />
             <PlaysItem charts={here} scoreOf={scoreOf} changes={changes} parts={parts} />
             <CrownsOverTimeItem charts={here} changes={changes} parts={parts} />
             <RanksOverTimeItem charts={here} changes={changes} parts={parts} />
