@@ -87,6 +87,7 @@ https://github.com/HicirTech/A-Better-Taiko-Hiroba/releases/latest/download/alts
 
 * [Wiki](https://github.com/HicirTech/A-Better-Taiko-Hiroba/wiki) —— 鼓众广场本身是如何运作的：
   每个页面、每个写入端点的真实请求与响应，以及目前仍未确认的部分
+* [构建应用](gui/README.md) —— 从源码构建、运行、测试和发布应用
 
 ## 许可证
 
