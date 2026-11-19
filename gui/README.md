@@ -1,131 +1,13 @@
 # @abth/gui
 
-The desktop and Android app of A Better Taiko Hiroba. One React and Material UI web bundle runs in
-two shells: Electron on Windows, Capacitor on Android. It signs in to Donder Hiroba on Hiroba's own
-pages and reads your own page: one request per read, and one more for your dan label when the page
-shows one, since the page gives the dan only as that picture. A label it cannot read, such as one
-drawn in a styling never seen, sends it to your dan plates instead, from 達人 down to the first one
-stamped: up to four requests more. The Overview opens as your page's
-header does: your My Don as Hiroba draws it, beside your nickname, title and dan on Hiroba's own
-title plate and dan label, and under them Hiroba's score panel, its ten counts written over its art.
-Under that come the seven score ranks and the three crowns again, each block as one bar of shares
-with a legend of Hiroba's own icons and percents, like GitHub's "Languages" box (an item's name shows
-on hover or keyboard focus, and on Android as a Toast on a long-press; its count is the bar's
-tooltip); the season's どんメダル on Hiroba's own plate, and your favourite songs. It can also change your costume (きせかえ), your title (称号) and your nickname
-(ドンだーネーム), on the desktop and on Android alike, in every build (see [Writes](#writes)).
+The app of A Better Taiko Hiroba: one React and Material UI web bundle in two shells, Electron on
+Windows and macOS, Capacitor on Android and iOS. It reads and changes the player's own data on
+Donder Hiroba through `@abth/core`, and keeps what it read on the device. What the app does is in
+the [repository's README](../README.md); this file says how to build, run, test and release it.
 
-The window has no header. It opens under a cover of its own, the app's picture, until its
-first screen is drawn, and on Android the cover shows again when the app comes back after more than
-five minutes away. On the desktop it opens as tall as the Overview, so the Overview shows
-whole with no scrollbar, unless the screen has less room. On a wide window a side panel, like Gmail's, lists its eight pages:
-**Overview** (the identity card with the score panel, the shares and the どんメダル, under a song search, see [The song search](#the-song-search)),
-**Scores** (every chart you played, the most recent first, see [Scores](#scores)),
-**Rating** (your rating and skills, worked out from your scores, see [Rating](#rating)),
-**Know yourself** (where you stand, from your scores, see [Know yourself](#know-yourself)),
-**Costume** (the きせかえ editor, see [The Costume page](#the-costume-page)),
-**Nickname & title** (the title and the nickname, see [The Nickname & title page](#the-nickname--title-page)),
-**Favourites** (the 大好きな曲, and the お気に入り folder, see [The Favourites page](#the-favourites-page)) and **Settings** (the language, the appearance, the difficulty whose level songs show first, the sort Scores opens
-on, and signing out). On a narrow one, a menu button
-at the top left opens the same list in a drawer. On a touch-first screen (`pointer: coarse`) a swipe to the right, from anywhere in the left two thirds of the window, opens the drawer and a swipe to the left closes it, over a page or a song's details but not over a dialog, and the button is drawn only when the keyboard's focus is on it; it stays for screen readers. Before a sign-in there is no navigation at all: no side panel, no menu button and no swipe. On Android, Back goes one level back: it closes the drawer or the dialog on top (the Costume page's History, say), and a dialog opened from a drawer, a menu or another dialog goes back to it; it goes from
-Costume, Nickname & title, Favourites, Scores, Rating, Know yourself or Settings back to the Overview, and from the Overview leaves
-the app as before.
-A page lower in the list slides in from below and one higher up from above, as the list's highlight
-slides to its row; picking the page already shown does nothing. Scores, Rating and Know
-yourself show at once what they showed before, and what the device keeps for them is brought in while
-the window is idle once the Overview is read. A page whose own data is being read, the first time or again (my page, the Costume page's and
-Favourites' editors, the scores, the rating data or the song list), cannot be used
-meanwhile, and past 0.4 seconds shows its own shape in grey with a short bar in the middle of the
-window, which names and fills the read's progress where the read can tell (the page of recent plays a
-read of the scores has reached, then its lists and charts); the page comes back at its top over that
-shape once the read ends, and a quicker read leaves it as it was; a page moved to while it waits
-slides in with that shape. A read again that fails on a page that had content shows that content with
-the failure over it, and Costume and Favourites can still be edited and synced then. Where there is nothing to show, grey
-words say why, and how to fill it: in the middle of the window when a page, or a search, has nothing at
-all, and in its place in a card, a song's details or a dialog; what a read found, such as charts still
-unread, is said in the same words over the list. The list of Scores, the song
-picker, the song search's results and Know yourself's charts draw only the rows near the window, so
-thousands of them open and scroll as quickly as a few. A question
-or a name to type opens in one small dialog; a deeper task (a song's or a chart's details, the song
-picker, the costume history, a chart picture) slides in from below in one large panel, the whole
-window on a phone, with one way to close it: its × on a computer, Back on a touch screen.
-One level past the list lies the pipelines page (see [The pipelines page](#the-pipelines-page)). On a
-touch-first screen a swipe to the right that starts on the list, the drawer or a wide window's panel,
-opens it, and a swipe to the left or Back goes back to the list. Elsewhere a ← button at the foot of the
-list, beside the last update, opens it, and → or any page of the list goes back; on a touch-first screen
-that button is drawn only when the keyboard's focus is on it. The pipelines page slides in from the left
-and back out the same way. Where the system asks for reduced motion, nothing slides.
-Every page keeps room for the scrollbar, so the page does not shift sideways from page to page.
-The app wears MUI's blue and white or Hiroba's own colours (its yellow page, its red title bar as
-the panel), light, dark or as the system is (Windows' app mode, Android's dark theme), as Settings
-choose; the page's `color-scheme` follows, so its scrollbars and the system's own widgets do too.
-The app opens on the page last shown on the device. Signed out, the window holds the sign-in card
-alone, on the Overview: a sign-out, or a session Hiroba ends, goes back to it, and Settings opens
-again after the next sign-in.
-Settings is laid out as Gmail's settings are: sections with headings, each with its icon, and
-each setting one row with its name, a line on it where one helps, and its control. **Language**
-lists its choices with radio buttons; **Appearance** chooses the theme and light or dark with toggle
-buttons, both kept on the device; **Account** says who is signed in, by the nickname your page
-gives, with the note on staying signed in and **Sign out** beside it. While a read runs it says
-**Signed in**, and **Sign out** is shut until the read ends. **Updates** gives the version of the
-build and a **Check for updates** button; once a day, when the app opens, it also reads `update.json`
-from the latest GitHub release, and a newer version it has not told of yet opens a dialog with the
-release's notes, **Download** (that release's page, in the system's browser) and **Later**. An
-unpackaged build reads no feed, and so never asks GitHub, unless `ABTH_DEV_UPDATE_FEED`
-(`VITE_ABTH_DEV_UPDATE_FEED` on Android) names one. At the foot of the page, **GitHub** opens the
-project's repository in the system's browser.
-
-Signed in, the foot of the navigation (the side panel, or the drawer) says when your page was last
-read, in the device's time zone, with the month as a short name and the time to the minute, and it
-holds **Read again**, a refresh arrow; F5, Ctrl+R or ⌘R read again too, unless a dialog is open. The
-Overview itself has no line for the time. The button spins while a read runs, and it is shut then, and while a costume, title or
-nickname save runs, so one read runs at a time and none inside a write. On a touch-first screen
-(`pointer: coarse`), pull the page down from its top instead: a round indicator follows the finger,
-and letting go once its ring is full reads again (a page that has scrolled is the finger's to scroll
-back, and pulls nothing). On the Costume and Favourites pages
-the same button, keys and pull read the page's editors again instead of your page; on the
-Nickname & title page they read your page and then the list of titles. On a page that names songs
-they also read taiko.wiki's song list again when the one kept is a day old. On the Overview (its
-song search shut), the Costume page and the Nickname & title page, a pull held six seconds, or Read
-again held as long on a computer, asks first, then reads the page's pictures from Hiroba again in
-place of the ones kept, each as it comes into view; a picture that does not come stays as it was,
-and a note at the window's foot says how the pictures on screen came.
-
-The first time a page opens on a device, its tips walk through what nothing on screen shows, one
-bubble at a time over the dimmed window, opening what a tip needs, such as the menu on a phone or
-Favourites' sets. A tip gone past, by Next or by Skip for the rest of the page, is not told again on
-that device, so an update tells only the tips it brought; the navigation's are told on the Overview.
-Each of them first asks Hiroba to refresh its copy of your play from the game server, as the ↻ on
-Hiroba's own pages does: my page is read for a fresh form token and the ↻'s post sent once, alone in
-the queue, and a refresh Hiroba refuses stops the read there, with the reason. The read after a
-sign-in or at a launch does not ask for one.
-
-The app id is `com.hicirtech.taikohiroba` on both platforms. Android debug builds are
+The app id is `com.hicirtech.taikohiroba` on every platform. Debug builds are
 `com.hicirtech.taikohiroba.debug`, labelled "A Better Taiko Hiroba (debug)", so a debug and a release
 build can sit on one device side by side.
-
-## Languages
-
-The app is in English, 日本語, 简体中文 and 繁體中文. Until you pick one, it opens in the first of the
-system's languages it carries, as `navigator.languages` lists them (on the desktop, Electron's
-locale first, then the system's list); zh-HK, zh-TW and zh-MO read as Traditional Chinese, any other
-Chinese as Simplified, and English is the fallback. The language setting in **Settings**, a radio
-button per choice as in Gmail's quick settings, **System default** first and then each language
-named in itself, changes the language at once, asking Hiroba nothing, and keeps the pick on the device (the page's
-localStorage) for the next launch, a pick of the language already shown included. Its **System
-default** forgets the pick, so the app follows the system's language again, at once and at each
-launch. Counts, percents and times follow the language through `Intl`, and the page's `lang`
-names it, Traditional Chinese as Hong Kong's. That mark picks the language's system fonts for what
-the bundled Roboto lacks: Yu Gothic UI, Microsoft YaHei UI or Microsoft JhengHei UI on Windows,
-Hiragino Sans or PingFang on macOS, and what the system keeps for it on Android. The game's terms
-are worded in each language, as taiko.wiki words them, then Bandai Namco's own sites: the score ranks, the crowns, the charts, the
-dan, the Don Medals, My Don and the costume's parts, colours and slots. 日本語 keeps Hiroba's own
-words, and a dan is named by its board number, so its name follows the language while its picture
-stays Hiroba's. What Hiroba writes as data is never translated: the nickname, a title, a medal's
-name and the sentences it speaks in its own voice. An element that holds only such words is marked
-`lang="ja"`, so it keeps Japanese fonts and a screen reader's Japanese voice; a sentence that
-only quotes them keeps the app's language. The catalogs are in `i18n`; the type checker
-and the tests hold each to every English key and its parameters, and keep Japanese in English and
-Chinese to Hiroba's own words.
 
 ## What you need
 
@@ -146,7 +28,38 @@ Run every `bun run` script below from the repository's root; other commands, and
 file, are relative to this folder. `bun run check` runs the checks of CI side by side, all but the
 GUI bundle: format, lint, typecheck, the tests and the update feed.
 
-## Desktop
+## The code
+
+`src` is the web bundle, in layers: a folder imports only from the layers below it, which
+`test/layers.test.ts` checks.
+
+| Layer | Folders |
+|---|---|
+| Code kept from elsewhere | `vendor` (TJA Renderer, under its own licence) |
+| Shared logic, types and hooks | `shared` |
+| Hiroba's session: its services, reads, writes and pictures, and what it keeps | `hiroba-session` |
+| Each shell's own parts | `platform` |
+| The look | `theme` |
+| Shared components, and the lane Hiroba's pictures come through | `ui`, `pictures` |
+| Parts several pages draw | `songs`, `profile`, `snapshots` |
+| A page or a feature each | `favorites`, `know-yourself`, `my-page`, `name-title`, `navigation`, `pipelines-page`, `rating`, `read-again`, `scan`, `scores`, `settings`, `song-search`, `updates` |
+| Every page, in one registry | `pages` |
+| The window | `app`, then `App.tsx`, `app-window.tsx`, `shell.tsx` and `main.tsx` |
+
+`story-kit`, what the stories share, stands above every layer.
+
+Beside `src`:
+
+- `electron`: the desktop shell, its main process, preload and window;
+- `android` and `ios`: the Capacitor projects;
+- `scripts`: the local stand-in for Hiroba and the other sites (`mock-*.ts`), the end-to-end run
+  (`e2e`), the build scripts and ABTH CDN's generator (`abth-cdn`);
+- `test` and `test-dom`: the unit tests (see [Testing](#testing));
+- `.storybook`: Storybook's configuration (see [Storybook](#storybook)).
+
+## Running it
+
+### On a computer
 
 | Script | What it does |
 |---|---|
@@ -154,477 +67,13 @@ GUI bundle: format, lint, typecheck, the tests and the update feed.
 | `bun run dev -- --real` | The same against the real Hiroba and Bandai Namco ID, in the installed app's data folder, `%APPDATA%\A Better Taiko Hiroba`. Only for a person signing in with their own account. |
 | `bun run build` | The web bundle (`out/web`) and Electron's main process and preload (`out/electron`). CI runs this. |
 | `bun run start` | Runs the last build in Electron. |
-| `bun run e2e` | Builds the app, drives it against the local stand-in (nothing reaches the real sites) and prints a JSON report with one key per check. Its sections run in lanes side by side, each lane with an app, a stand-in, ports and a data folder of its own (each section's `lane`); `--serial` runs them one after another in one app. `--only <section,...>` runs just those sections (named in `scripts/e2e/sections.ts`), and `--no-build` skips the build, to fix one check without the whole run. A pass has no `errors` entry and every key `true`, except `tokenInRendererDom` and `partitionsFolder` (`false`), `readsAfterSignIn`, `readsAfterReadAgain` and `readsOnReopen` (`1`, `3` and `1`) and `userDataHits` (empty); `scripts/e2e/verdict.ts` holds that list, and the run exits with an error when a check misses it. `surface`, `longHoldPresses`, `setupMs` (the build), `laneMs` (each lane's time) and `sectionMs` (each section's) only inform. The app's windows open off every display, out of the taskbar and unfocused, so the computer stays in use during a run; `--show` opens them on screen to watch. Each page is held at 946×738, so a display that sleeps or goes, and moves or shrinks the windows, leaves the layout as it was, and a lane refuses to start while its ports are taken, as an earlier run's apps still hold them. A window shown may be covered, since the run stops Chromium counting a covered window as hidden, but not minimised: a hidden page asks for no picture. |
-| `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
-| `bun run dist:win` | An NSIS installer and a portable zip in `release/`, for x64: `ABTH-<version>-setup.exe` and `ABTH-<version>-portable.zip`. |
-| `bun run dist:mac` | On a Mac only: a disk image per processor in `release/`, `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel, each app signed ad hoc. |
-| `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
 
 A packaged build talks only to the real sites. The stand-in is reachable only from an unpackaged
 build, and only when both `ABTH_DEV_HIROBA_ORIGIN` and `ABTH_DEV_IDP_HOST` are set; one without the
 other stops the app. `ABTH_DEV_IMG_ORIGIN` adds the stand-in's picture host, which `bun run dev` and
 the end-to-end run set; without it no picture host is asked anything, and set alone it stops the app.
-`ABTH_DEV_OFF_SCREEN=1` opens the windows off every display at their full size, out of the taskbar
-and unfocused, and keeps them there; the end-to-end run sets it unless given `--show`.
 
-The installer and the exe in the zip are not code-signed, so Windows SmartScreen warns before the
-first run.
-
-The macOS app has no Apple certificate and is not notarized, so macOS blocks its first start: drag
-it from the disk image to Applications, open it once, then allow it under System Settings → Privacy
-& Security → **Open Anyway**. It keeps its data in
-`~/Library/Application Support/A Better Taiko Hiroba`, and keeps the menu bar's app and Edit menus,
-through which a Mac copies, pastes and quits.
-
-The zip needs no install: unzip it into a folder of its own (Explorer's **Extract All** makes one)
-and run `A Better Taiko Hiroba.exe` in it. It starts faster than a self-extracting exe, which
-unpacks itself at every launch. Like the installer's app, it keeps its data in
-`%APPDATA%\A Better Taiko Hiroba`.
-
-### Writes
-
-The app can change three things on Hiroba: the costume, the title and the nickname. Every
-write is open in every build, on both platforms: the desktop in development, the installer and the
-portable zip, and the Android debug and release APKs. There is no flag to set and nothing to
-unlock. The costume is changed on [the Costume page](#the-costume-page), the title and the nickname on
-[the Nickname & title page](#the-nickname--title-page).
-
-Every write goes the same way: read the editor for a fresh form token and the whole set, send the
-pre-check (a rename has none), send the save exactly once, and read the whole set back. The set
-read back decides the outcome, not Hiroba's answer. Nothing is kept before the first post, so no
-store can stop a write. No request is retried, and no post goes out between 05:00 and 07:00 JST,
-Hiroba's daily maintenance: the clock is looked at before a write starts and again just before
-each post.
-
-Every read of Hiroba goes in the same queue as the writes, on both platforms: your page, the costume
-editor, the list of titles and Hiroba's picture of the set, and a picture's fetch too. Up to five
-reads run at once. A write waits for the running reads to end, goes before the reads still waiting
-and holds the queue for all its requests, so no read and no picture lands between them. A page
-first shown while a write of any kind runs reads when the write has ended, not before. Pictures go
-five at a time too, the rest waiting their turn in screen order. Your play history is read beside
-the queue, in a pipeline of its own, up to three pages at once and during a write too: its pages
-carry no form token.
-
-When the session ends, by a sign-out or because Hiroba ended it, the queue stops: a read or a write
-that is running sends nothing after the request on its way, and one still waiting sends nothing.
-Each sends through a transport of its own, so what is asked after that does not wait for them.
-
-A kind of write that has not been made for real from a platform also reads one other page before
-and after, to see that nothing else moved: a costume write reads your title on my page (six
-requests, not four), a title write reads your costume (six, not four), and a rename reads your title
-on my page (five, not three). The title write reads only the set you wear, not the lists of items,
-so an item the Costume page cannot read does not stop it. `LIVE_CHECKED_WRITES` in `src/hiroba-session/live-checked-writes.ts`
-lists, for each platform, the kinds that have. That list decides those two reads and nothing else:
-it opens nothing and shuts nothing.
-
-Three variables are read by the desktop app alone. `ABTH_DEV_NOW` (an ISO time) fixes the clock the
-maintenance check uses, for tests, and only an unpackaged run takes it. `ABTH_DEV_PICTURES_FOLDER`
-(a folder) is where Save picture puts a page's picture without the save box asking, as the
-end-to-end run sets it; only an unpackaged run takes it too. `ABTH_DEBUG_SAVE_READS=1`
-is taken by a packaged build too, so the installer's or the portable zip's app keeps each page a
-read brings back in the data folder's `debug` folder, named after the page, with every form token
-replaced by `<tckt>`, once it is started with the variable set. Every answer is also kept in
-`debug\history`, in the order it came and with its time, so a write can be followed step by step; of
-a post, only Hiroba's answer is kept, never the form the app sent. A rename's answer holds the
-nickname that was asked for, taken or refused, so the folder holds those too, beside pages that
-carry your nickname, taiko number and title already: keep the folder to yourself, and delete it
-when you are done.
-
-### Scores
-
-Every chart you played, read from Hiroba's score lists and detail pages, second in the navigation,
-between the Overview and Rating. It reads only when you ask, by a pull on a touch screen, or Read
-again and its keys, and each read first asks Hiroba to refresh, then walks the recent plays of
-`history_recent_score.php`: page 1 alone, then up to three pages at once, in the play history's
-pipeline, up to 200 pages of five charts the first time, and later only down to the first chart
-whose record is already stored. The walk is kept on the device, after a sign-out too, and the page's
-skeleton and the navigation's foot name the page it has reached. The first read takes the eight
-score lists, in Hiroba's own pipeline since a list carries a form token, then the details of every
-chart they show played, five at once in a pipeline of their own; it takes a few minutes, and the
-page says how far it has come. A later read reads again the details of each chart the walk found
-played since; a read that finds none says that nothing changed, since the scores follow recent
-plays. A title the lists do not carry yet reads its genre's list again. A chart that fails stops the read, which keeps what it read, names the chart, and goes on
-from there next time. A row is a bar for each of the song's genres, the song named in the player's
-language from taiko.wiki's list, the score with the longest combo and the 良/可/不可/連打 hits; at
-its end Hiroba's icons of the difficulty, the crown, the rank and the play options (the support
-chart, whose picture has not been seen, as a lifebuoy), with the chart's star level under them. A
-search over every name of a song, in the top band as the Overview's is and staying there as the list
-scrolls, chips that each tick any number of difficulties (Settings' one at first, Extreme with its
-Ura charts), star levels and genres, and a sort chip (recent plays first, a chart they no longer
-show last, unless Settings chose another sort to open on; score, rank, genre, crown, plays, full
-combos, clears; by name with none) work together, ties going by song number. A right-click on a row
-opens its menu, and a long press let go in place on a touch screen goes straight to what it offers:
-the song added to a new set, or to the end of a set kept on the device; a set that holds the song
-already, or is full, says so and cannot be chosen, and nothing is sent to Hiroba. A
-click on a row opens the chart in full, as Hiroba's own detail page has it, headed as its row is
-but for the hits, listed below with the Japan place, the four play counts and, where the chart has
-them, each section's hits and score with its crown over it (a section not cleared has none); a pull
-there, or its refresh button on a computer, reads all the song's charts again. A pull held past
-the point for six seconds, or Read again held down as long on a computer, asks first, then reads
-every list and every played chart again, as the first read does. The scores stay on the device,
-each player's apart, after a sign-out too. From the end of a player's first full read on, each read
-also keeps a log of the charts it changed, their crown, rank, high score and play counts before and
-after: at most 5000 rows, never dropping a chart's first clear, full combo or donderful. A chart's
-details draw its high score over time from it, Know yourself the player's plays, crowns and score
-ranks, and Rating the days before the first rating it kept.
-
-### Rating
-
-Your rating, worked out on the device from the kept scores as OurTaikoWiki's first or second rating
-does, third in the navigation, between Scores and Know yourself. Settings chooses the one the page
-opens on, the first until changed, and a switch in the page's band shows the other until the page is
-left. The first rates each Oni or Ura chart played with 75% accuracy or more from its constant and
-its accuracy; the second rates Hard charts too, from three constants, and counts Bad hits against
-complexity. Either takes the rating from the best twenty. The page shows it above a radar of its six
-skills, then the twenty charts it counts and the next twenty; a click on one opens its details, as on
-Scores, and a picture of the page lists them four to a line and names its rating in the middle of
-its bar. Each rating's constants are OurTaiko's published list, read as the page first opens and
-again with each Read again or pull while that rating is shown, which reads the scores too, and kept
-on the device; Settings names OurTaiko with the song data's other sources.
-
-Each change of a rating is kept on the device, the newest hundred of each version with its figures
-and its forty charts, and the page draws the rating over time; a press on a point tells its date and
-skills. A date is when the app read your scores, not when you played. Days before the first one kept
-are worked out from the log of score changes by today's constants, and drawn dashed where a chart's
-old hits were not logged.
-
-### Know yourself
-
-Where you stand, worked out on the device from the kept scores and taiko.wiki's song list, fifth in
-the navigation, between Rating and Costume. It asks Hiroba nothing of its own; Read again and a pull
-read the scores, as on Scores. A chip picks the difficulty, Settings' one at first, Extreme with its
-Ura charts, and every chart the score lists name counts, played or not, but double-play songs. The
-page is six parts, each folded at first under one sentence of what it finds:
-- **Clear ladder**: a bar per star level of the charts never played, played, cleared, full combo and
-  donderful; its sentence names the wall, the first level, going up, with five or more tried charts
-  of which fewer than half are cleared.
-- **Score ranks**: each rank's share of the played charts per star level, and the rank half of
-  them reach.
-- **Hits/s** and **BPM**: the same bars as the clear ladder by hits per second (taiko.wiki's max
-  combo over play time, in bands of half a hit) or by BPM (the one tempo the song search shows, in
-  bands of twenty, below 80 and from 300 up in one band each; songs given a range of tempos in a row
-  of their own). Each names the band, marked by a trophy, whose played charts are most often among
-  the top tenth of high scores at the difficulty, of the bands with ten or more.
-- **Near a Full Combo** and **Near a Donderful Combo**: cleared charts a few Bad from a full combo,
-  and full combos a few OK from a donderful, from each chart's highest-score play, and how many.
-
-A row of the clear ladder, Hits/s or BPM opens its charts not yet cleared, the nearest to the
-player's level first, which chips narrow to those never played or those played; some of them, or
-the nearest thirty songs, go to a set on the device.
-
-Three more parts draw the log of what each read of scores changed, a point for each day it changed
-something: **Plays over time**, a line of the total plays; **Crowns over time**, the crowns stacked,
-with the charts never played left out unless asked for; and **Score ranks over time**, each rank's
-share of the charts played.
-
-### The Costume page
-
-The page of the きせかえ editor, fifth in the navigation, between Know yourself and Nickname & title. The
-My Don portrait on the Overview is the way to it, whenever you like: a click, Enter or Space, and
-on a touch-first screen (`pointer: coarse`) a long-press of 0.7 seconds, held still, so a
-tap, a scroll or a pull begun on it goes nowhere; a pointer on it shows its name, and where a
-long-press opens it, screen readers are told to long-press.
-
-On a wide window (the side panel showing) the page is two columns, and only the page scrolls. The
-left holds Hiroba's picture of the set as picked, a square, and under it the eight parts as tiles in
-two rows, **Colours** and **Costume** (Hiroba's いろ and きせかえ; Head, Body, Makeup and Mini
-Character, then the Mascot, which is often empty), each tile holding what the draft has there: a
-swatch, the item's thumbnail, or a blank tile for none. A click, or Enter or Space, picks a part, the
-arrow keys move along a row and Tab goes to the other, and a tile's name shows on hover and on
-keyboard focus. The column starts level with the first row of the part's cells, so a notice over
-them moves it down; it stays in view as the page scrolls, on a window at least 640 px tall, and holds
-only the picture and the tiles, so it is never taller than the window. The right is the part picked:
-over its name stand the words for a picture that did not come and the Mascot note, when there are
-any, then its name, the words for thumbnails that did not come, and its palette or
-items' thumbnails, as many to a row as fit from the left; the items begin with **None** (Hiroba's
-はずす), which empties the slot. On a narrow window the page is a column, as wide as the window on a
-phone: a square picture of 160 px with the same tiles in one row under it, which stay in view as the
-page scrolls on a window at least 640 px tall, hiding the cells from the window's top edge to a gap
-under the tiles, then the same notes and the part's grid. On any window the buttons are in a bar at
-the bottom edge of the window, which stays there as the page scrolls: **History** at the left, then
-**Reset**, which puts the draft back to the set as read, and **Sync to Hiroba**, each label on one
-line, the bar's padding and gaps shrinking on a window under 390 px wide; while a write runs, its
-words over a moving bar stand in for the buttons. The part picked is the same in both. On a narrow window a cell reached by Tab or
-Shift+Tab is scrolled clear of the tiles above it and the bar below.
-
-- **Reading.** The editor (`mypage_kisekae.php`) is read once, when the page is first shown in a
-  run, and never while another page is shown: an app that opens on the Overview does not read it
-  at all until you go there. Shown while a write of any kind runs, it reads when the write has
-  ended. After that it is read again only when you press **Read again** on
-  this page, or pull it down on a touch screen, which read the editor here, not your page; a
-  write's own read-back brings the set up to date without another read. A draft made over the set
-  a read finds unchanged is kept by it; one made over a set that has moved is dropped for the set
-  as read.
-- **The draft** is dropped when you leave the page for another: it goes back to the set as read, and
-  the notice of a write is cleared. What was read is kept, so coming back reads nothing again, and a
-  set already drawn is shown without asking.
-- **The write.** **Sync to Hiroba** is one press, with no review, and shut while the draft is the
-  set as read. The write goes the way [Writes](#writes) says, and the page shows its progress where
-  the buttons were, with the tiles and the grid held still, dimmed and out of reach, and the page
-  scrolled where it was. When it ends the editor is ready at once, and a write that applied says
-  nothing: the picture and the My Don show it. Any other ending is said in a snackbar at the
-  window's foot (above the bar on a narrow window) for a few seconds, or until the next pick,
-  **Reset**, save, history pick or read: a failed sync says so, with Hiroba's own words in
-  parentheses when there are some, and a set found other than planned says Hiroba was read back. A
-  write that read the set back leaves the editor on it with no draft; one that read nothing back
-  leaves the draft as it was, so it can be synced again. The page has no undo.
-- **History.** The costumes you wore, newest first, each set once and at most 30, kept on the
-  device per taiko number (`costume-history.json` in the app's data folder on the desktop, the
-  `abth-costume-history` database on Android), across relaunches and sign-outs, and shown only to
-  the player they belong to. It asks Hiroba nothing, and a history that cannot be read or saved
-  changes nothing of a write and shows no error. A write that changed the costume adds the set it
-  moved to and the set it moved from, each moved up if it was listed. An entry keeps Hiroba's
-  picture of its set from the last previews the app fetched in that session (eight are held in
-  memory, and dropped when the session ends), or the picture it had. A failed or unknown
-  write changes nothing. **History** opens a dialog, full screen on a narrow window, with a button
-  for each entry and the set worn now marked. A pick puts its set in the draft and its picture on
-  the big preview at once, asking Hiroba for nothing; **Sync to Hiroba** then writes it like any
-  other change.
-
-### The Nickname & title page
-
-The page that changes your title (称号) and your nickname (ドンだーネーム): sixth in the navigation,
-between Costume and Favourites, with a pencil beside its name. The name plate on the Overview is the
-way to it, as the portrait is to Costume: a click, Enter or Space, and on a touch-first screen a
-long-press. It opens on Hiroba's title plate as the Overview draws it, so the result is seen at
-once, then two sections, **Title** and **Nickname**, over the same bar as the Costume page's: one
-press of **Sync to Hiroba** sends what changed, with no review, the title first and then the
-nickname, and a title Hiroba does not take keeps the nickname back, to be sent again; **Reset** drops
-both. Both are open in every build. One write runs at a time, from either section: while
-it does, nothing on the page is pressed, and a write asked for elsewhere answers busy and sends
-nothing. Leaving the page for another drops both sections' edits: the field goes back to the
-nickname worn, the pick is cleared and so are both notices, while the titles already read are kept,
-so coming back reads nothing again. A pick or a typed nickname survives a read of your page.
-
-- **Reading.** The list of titles you own (`mypage_title_edit.php`, one request) is read once, when
-  the page is first shown in a run, and never at start-up or while another page is shown; shown
-  while a write of any kind runs, it reads when the write has ended. After that it is read again
-  only when you press **Read again** here (or pull the page down), which
-  reads your page and then the list. The nickname has no read of its own: it is the one your page last
-  showed, and a write's read-back is put in that copy with no request.
-- **Title.** An owned title is picked by its name from a list you can search (full-width and
-  half-width forms, capitals and the two kinds of space Hiroba writes are not told apart); each is
-  shown as Hiroba writes it, with no number. The title worn is marked **Current**. Hiroba shows only
-  a worn title's name, never its number, and a name can belong to several of your titles, so a name
-  that several share marks all of them and says the app cannot tell which you wear, and a name none
-  has says it may be built from parts, which this version can neither read nor change back. There
-  is no remove and no composer. The picker's own buttons, to show the list and to clear what was
-  picked, are named in the app's language too. A pick alone writes nothing: **Sync to Hiroba** is
-  shut until the pick is not the title worn, and the write starts when it is pressed.
-- **Nickname.** The field holds the nickname you wear, to the ten characters Hiroba's form takes,
-  with a counter, Hiroba's own warning against personal information under it, and the nickname is
-  trimmed before it is sent. What the form itself would not take is refused, in the page and again
-  by the core: no nickname, white space at either end, more than ten, a character that cannot be
-  sent. Nothing else is judged, since nicknames outside Hiroba's help page exist on the site. A
-  nickname is not sent if it is the one worn. **Sync to Hiroba** saves it, and so does Enter in the
-  field, except while an IME composition is open: then the field judges nothing, and the counter,
-  the note that it is the nickname worn and **Sync to Hiroba** read the nickname as it stood, until
-  the composition is committed.
-- **Nickname, closed.** When my page hands its rename dialog the flag that says renames are closed,
-  the field is shut and the section says why, in Hiroba's words; when it hands none the app can
-  read, the field stays open. The editor read at write time decides again.
-- **Outcomes.** A write that applied says nothing: the page shows the new title or nickname. Any
-  other ending is said in a snackbar, as the costume's is, with Hiroba's own words shown as the
-  plain text they are (for a code that comes with no message, the words Hiroba's page shows for
-  it), until the next pick, typing or save. A write that read Hiroba back shows the title or
-  nickname Hiroba holds, with no pick or typing left; one that read nothing back keeps them, so it
-  can be synced again. After a title write that moved the title, your page is read again once, for
-  the plate, behind the page, so the section keeps the keyboard's focus; the My Don is not fetched
-  anew for it, since only a costume change and your own **Read again** do that. **Read again**
-  spins and Sign out is shut meanwhile. A rename puts the nickname it read back into the window's
-  copy of your page, and reads nothing more. The page has no undo and no history.
-
-### The Favourites page
-
-The page of the 大好きな曲 and the お気に入り folder, read from Hiroba's own editors. A 大好きな曲 is picked from taiko.wiki's song list, which the app keeps on the device, and saved to Hiroba by the bar at the window's foot, as on the Costume page; the folder has sets of songs kept on the device, in a drawer that slides out from the right (by a button, or on a touch screen by a swipe from the right edge), and applying a set replaces the whole folder in one write. The song picker lists only the songs Hiroba's own picker offers, and opens on all of them. They are read, alone, as a picker opens, if no read has brought them since the app started or the page was last read again: the requests already sent end first, and the rest wait until the list is read; they are kept on the device for the next launch, and gone at a sign-out. The list kept serves while a newer one is read; with none yet, the picker says it is reading, or why it could not, and reads them again when it next opens; the 大好きな曲's picker also lists a song's Ura chart as a row of its own, as Hiroba's does, showing only that chart's level and leaving it off the song's own row; a difficulty or star filter keeps only the rows whose charts match, and an Ura row is tinted with that chart's colour. A 大好きな曲 set to one says so under its name. Three chips under its search, for the genre, the difficulty and the star level, each open a menu and narrow the songs together with the search (a star level alone takes any chart at it), and a chosen chip's × clears it. A song shows a bar for each of its genres, and the star level of the difficulty chosen in Settings (Extreme, with its Ura chart, unless another is chosen) with its other levels stacked behind it until a click spreads them out sideways; in the picker, a difficulty chosen in its menu comes first instead. A search matches any of a song's names, in Japanese, English or Chinese (taiko.wiki's, and the official ones on the Chinese Taiko wiki), and takes Traditional, Simplified and Japanese forms of a character as one. The drawer lists the current favourites, then the sets, which move by a handle or, on a touch screen, by a long press; a set's menu (a right-click, or on a touch screen a long press let go in place) renames or deletes it, and a new set first asks for its name. A set opens with Edit, its Sync to Hiroba in the bar: Edit lets its songs be added, taken out and moved, with Save and Reset for the edits, kept on the device, and Sync to Hiroba waits for Save; Android's Back drops the edits and leaves editing, and from a set shown goes back to the current favourites. The folder's card names the set the folder is, or offers to keep it as a new set or in place of an old one's songs, and a name too long for its row scrolls. Each Sync to Hiroba that changes the folder keeps it and the folder it replaced on the device, each folder once (the same songs in the same order) and at most 30, with the name of the set it was then; History, at the start of the bar in the current favourites, lists them newest first, each folded to its time and first songs, and one is put back to be shown as a set is, for Sync to Hiroba to write, or kept as a new set under a name it asks for. In the current favourites, and in a set while it is only shown, a click on a song's row opens its details, as [the song search](#the-song-search) does (its level badges keep their own click, and a song taiko.wiki's list lacks has no details); while they are open, a swipe from the right edge leaves the drawer shut. A gift button beside the page's name makes a gift of up to four songs, any taiko.wiki lists whether or not Hiroba offers them to the giver, with a title and its songs shown or kept a mystery, shared as a picture whose QR code holds the songs, the giver's nickname, the time and the title, never a taiko number. The scan button beside the app's name in the navigation reads such a code, from a picture file on a computer, and from the camera or a picture on Android; accepting a gift first checks its songs against those Hiroba's own picker offers the receiver, and a song it does not offer yet keeps the gift out, named unless the gift is a mystery; otherwise it syncs the songs to the folder on Hiroba, the folder before kept in the history, and a note at the window's foot says how it ended.
-
-### The song search
-
-The Overview's top band holds a search field, as Gmail's does, and at its right the button that shares the page as a picture; while the search stands open the button slides out of the band and the field widens across all of it, across the window on a touch screen; the button slides back as the search is left. It is there too when my page cannot be read, whatever the reason, as the search asks Hiroba nothing. It searches taiko.wiki's song list as the song picker does, by part of any of a song's names, and lists each song with its tempo as taiko.wiki gives it: a range for a song whose tempo changes, and ≈ for one whose tempo wobbles. The last ten searches are listed under the empty field, kept on the device, and each can be removed. A song opens in a dialog, full screen on a phone, with its names, artists, genres and tempo, and a button for each chart with Hiroba's icon of its difficulty and its level. A chart shows its max combo, whether it branches, and a picture of its notes that TJA Renderer draws from the chart's TJA in ESE, every branch stacked: by default drawn ahead on ABTH CDN and read from it compressed, or, as Settings choose, drawn on the device, and either kept on the device until the song is reloaded; Settings may choose instead the pictures taiko.wiki links on its own host, on the Taiko no Tatsujin Fumen Wiki (wikiwiki.jp) and on Imgur, each read once and kept on the device, and Settings names the sites. A chart with no drawing shows taiko.wiki's pictures and says which source had none, a taiko.wiki picture kept before stays until the song is reloaded when charts are drawn on the device, and a drawn chart whose notes differ from taiko.wiki's count says so under it. A picture opens full screen, where two fingers, the mouse wheel or a double click zoom it and a drag moves it; a pinch zooms nothing else in the app. The dialog opens on the difficulty chosen in Settings, and on the Ura chart for Extreme when the song has one; on a touch screen it has no close button, as Back closes it, and the menu's swipe opens the menu over it as over a page, Back closing the menu first. Above a chart's pictures sits its note density: the notes in each second as a line over the song, counted ahead by ABTH CDN, or else read from the chart's TJA in ESE, which OurTaiko's map matches to the song, the first time the details open. Only the counts are kept on the device, never the chart, and a pull or the refresh button reads them again; a pull held six seconds, or the refresh button held as long, reloads the whole song, its pictures and its density; a branched chart has a branch selector, and a chart whose notes differ from taiko.wiki's count draws no line. With the search open, a pull held six seconds, or Read again held as long on a computer, reads taiko.wiki's whole song list again at once, for a song added since the list was kept: a bar stands over the search while it runs, a note at the window's foot says how it ended, and a search that finds nothing says how to ask for it. Back, the arrow or Escape leaves the search.
-
-### The pipelines page
-
-What the four pipelines run, have waiting and ended, read again four times a second while the page
-is shown and not at all otherwise. **Hiroba interaction**, **Hiroba pictures**, **Recent plays**,
-**Scores** and **External sources** each have a section: Hiroba's pictures run in its pipeline, beside its other
-reads, and are shown apart, each by what it shows (My Don, a plate, the score panel, an icon or a
-costume thumbnail); Recent plays lists each page it read by its number; Scores
-lists each chart's details it read by song number and difficulty, and Hiroba interaction each score
-list by its genre; External
-sources lists its chart pictures as it does its other groups. A section's first row has a
-block for each operation group, ten at most: the running ones first and solid, the waiting ones
-after them and pale, blue for a read, purple for a read that runs alone (the song picker's, and
-Hiroba's refresh) and orange for a write. With more than ten groups the tenth breathes, or shows a + with reduced motion,
-and the number at the row's end is how many groups wait. Its second row has the last twelve groups
-that ended, each new one pushing in from the left on a wash of its mark's colour: ✓ succeeded, ✕
-failed and ⊘ stopped by a sign-out. **More** lists every group kept. A block, a cell or a row of
-that list shows at the section's foot the operation, how it ended, when it started, how long it took
-and how many requests it sent; for one that did not succeed, the last request it sent and the code
-for a report; for one still running, how long it has run and the request it is on. Each section
-keeps its last 1000 groups on the device, across sign-outs and relaunches, a picture only once it
-was asked of Hiroba: `pipelines\io.json`, `pipelines\pictures.json`, `pipelines\history.json` and
-`pipelines\external.json` in the app's data folder on the desktop, the `abth-pipelines` database on
-Android. They hold
-operations, outcomes, codes, times and the paths of requests, never a query, a form or anything of
-the player's.
-
-### The costume preview
-
-The Costume page shows at its top Hiroba's own picture of the set as picked, as Hiroba's editor
-does in its 今のきせかえセット box: `imgsrc_mydon.php` with the three colours and five slots in its
-query. The platform fetches it with the session and hands the window a `data:` URL, so neither the
-address nor the cookie reaches the window. It asks once when the page is first shown, then once per
-pause in the picks (300 ms), one request at a time and never retried, and nothing while the page is
-not shown; a set already drawn is shown again without asking, after a visit to another page too, but
-not after a sign-out or a lost session: those forget every picture of the set, so the next player's
-page never opens on the last one's. It is a read, so both platforms allow it. A picture that does
-not come leaves "Preview unavailable" and a code for a report; the editor works without it. With
-`ABTH_DEBUG_SAVE_READS=1`, only the latest picture is kept, as `debug\imgsrc_mydon.php.png`, and
-none in `debug\history`.
-
-### Item thumbnails
-
-Under **Costume**, each slot shows its items by Hiroba's own thumbnails in a grid with no box and no
-scroll of its own, as many cells to a row as fit from the left (larger cells on a wide window), the
-first cell **None** (Hiroba's はずす). The grid is as tall as its rows, and the page scrolls. Each
-thumbnail is `imgsrc_kisekae.php?cos=<id>&type=<slot>`. The platform builds that address itself, only for an
-item the last editor read offered (one the account owns, or the one it wears), fetches it with the
-session, checks that it is a PNG of a thumbnail's size, and hands the window a `data:` URL. The
-window names an item by its slot and number, never by an address.
-
-What it costs Hiroba:
-
-- Showing the page costs the thumbnail of the item worn in each slot, five at most, for the tiles;
-  it opens on **Colours**, whose grid asks for none.
-- A thumbnail is asked for only once its cell has stayed in the window, or within a row of it, for
-  150 ms, so a fling past a row asks nothing: the rows on screen and the one after, and each row
-  that scrolls into view.
-- Five at a time at most, in the queue with every other request to Hiroba, after a random pause
-  of up to 100 ms, so never between a write's requests; none is asked for while a save runs.
-  At most 300 in a run, and 8 s each on the desktop.
-- Never retried while the page stays shown. One that did not come is asked for once more the next
-  time the page is shown or the editor is read again, and its cell is seen, within the same 300: if
-  Hiroba sends none, each showing asks again for those seen.
-- Each is fetched once and kept on the device for good: showing the page again, going back to a
-  slot, signing in again or a relaunch asks Hiroba for nothing already shown. See
-  [Where pictures are kept](#where-pictures-are-kept).
-
-Hiroba's own editor, for comparison, asks for a whole tab of thumbnails (38 to 76) at once on every
-tab click. A thumbnail that does not come leaves the item's number in its cell, and one line above
-the grid says how many did not, with a code for a report; the editor works as before. Android does
-the same. With `ABTH_DEBUG_SAVE_READS=1`, only the latest thumbnail is kept, as
-`debug\imgsrc_kisekae.php.png`, and none in `debug\history`; its `.json` counts how many came in
-the run.
-
-### The identity card
-
-The block at the top is drawn as my page draws its header: your My Don on the left, a square that
-spans the right column from the top of the plate to the foot of the score panel; on the right your
-title over Hiroba's own title plate, your nickname in its cream box and your dan's own label in the
-blue one, and under the plate [the score panel](#the-score-panel). On a narrow window they stack,
-the portrait first, and the plate's top, the room Hiroba keeps over its band for decorations,
-tucks under the portrait: the first thing the plate draws below the portrait sits as close to it as
-the panel sits to the plate, decorations beside the portrait stay in view, and a tap on the portrait
-is the portrait's. All sit on the app's own surface rather than Hiroba's yellow, with no
-background art and no frame. Your region is not shown. The words stay text over the pictures, and
-the block keeps Hiroba's proportions at any width, up to half again its size. The plate is also the
-button to [the Nickname & title page](#the-nickname--title-page). The label is the picture the read already fetches to read
-your dan, so it costs nothing more. The plate is `imgsrc_titleplate.php` as your page writes it,
-with no query: Hiroba draws it for whoever holds the session. The platform fetches it with the
-session, only after a read of my page that shows one, checks that it is a PNG of a plate's size
-from that address, and hands the window a `data:` URL. The window asks for "the title plate", and
-nothing more.
-
-What it costs Hiroba:
-
-- One request per title. The plate is kept per player, under the title shown over it, so a read
-  that finds the same title asks Hiroba for nothing once its plate has come, and a title changed
-  anywhere, on Hiroba's own site too, costs one request after the next read.
-- Asked for once the card is on screen after a read, in the queue with every other request, so
-  never between a write's requests. Never retried: a plate that did not come is asked for once more
-  after each read, and only then.
-- Kept on the device for good, sign-outs and relaunches included, once a later read has found the
-  session still good, and kept under your player, so never given to another account. Until then it
-  is shown, not kept: a sign-out before that read asks for it again.
-
-Until the plate comes, or if it does not, a plain band stands in where the plate's band goes, and
-nothing is said: the pipelines page keeps the code for a report. Without a session, Hiroba answers
-a blank plate, a PNG that no check can tell from yours, which is why the plate is asked for only
-after a read that found the session good, and kept only once the next read finds it good still: a
-blank plate that came as Hiroba ended the session unseen is shown until that read at most, and
-never kept. With `ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`.
-
-### The score panel
-
-Under the plate is Hiroba's score panel, drawn as my page draws it: the counts of the seven score
-ranks and the three crowns written as text over its art, where my page writes them. The art is
-`image/sp/640/total_score_image_<n>.png`; the platform takes `<n>` from the art your page shows,
-and the window asks for "the score panel", and nothing more. The art shows no count and names no
-player, so it is kept on the device for good for every account: fetched once, asked for only once
-the panel is on screen, in the queue, and never again after it came, relaunches and
-sign-outs included. Until it comes, if it does not, or for a panel of a layout not yet seen (only
-`total_score_image_5` has been), a plain panel of the same geometry stands in and names what each
-count counts, and nothing is said: the pipelines page keeps the code. Art that did not come is asked
-for once more after each read.
-
-### The legends' icons
-
-Each item of the score-rank and crown legends shows Hiroba's own icon beside its percent. Its name
-shows as a tooltip on hover or keyboard focus, and on Android as a Toast on a long-press, and
-screen readers get the name and the percent. The icons are static art on Hiroba's host:
-`image/sp/640/best_score_rank_<n>_640.png` for the ranks, and `image/sp/640/crown_0<n>_640.png` for
-the crowns, by the recent-plays page's numbering, where gold is 02 and silver is 03. The window asks
-for "a rank's icon" or "a crown's icon", and nothing more. The art names no player, so it is kept on
-the device for good for every account: fetched once, asked for only once its item is on screen, in
-the queue, and never again after it came, relaunches and sign-outs included. Until it
-comes, or if it does not, the item's colour as a dot stands in, as in the bar above it; an icon that
-did not come is asked for once more after each read.
-
-### The どんメダル plate
-
-The medal card is drawn as my page draws it: the season's name and the count, or COMPLETE, as text
-over Hiroba's own plate, at my page's own offsets and size, on the app's own surface. The plate is `imgsrc_tokenplate.php?id=` and the
-id your page writes, which names your season: the platform keeps it, and it never reaches the
-window, a code or a file name. The window asks for "the どんメダル plate", and nothing more.
-
-- One request per season, and one more once the set is COMPLETE, in case the art changes then. The
-  plate is kept on the device for good, under your player, by its id and state, so a read that
-  finds the same season asks Hiroba for nothing, and no other account is given it.
-- Asked for once the card is on screen after a read, in the queue with every other request. Never
-  retried: a plate that did not come is asked for once more after each read.
-
-Until the plate comes, or if it does not, a pale pill of the same shape stands in under the same
-words, and nothing is said: the pipelines page keeps the code. A page with no どんメダル plate says
-so in grey words; one this version cannot read says so in a yellow notice with its code for a
-report, as a read that failed does, though a refresh cannot bring it; neither asks for a picture.
-With `ABTH_DEBUG_SAVE_READS=1`, every plate is kept in `debug\history`, named by its path alone.
-
-### The My Don portrait
-
-Beside the plate stands your My Don, Hiroba's own picture of your Don in the costume it wears, on
-a pale blue tile of Hiroba's shape. It is the button to [the Costume page](#the-costume-page). It is
-the one picture from off Hiroba:
-`https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_` and your taiko number, as your page
-writes it. The platform holds that address to that exact origin, path and query, builds it again
-itself, and fetches it with no cookie at all and Hiroba's origin alone as the Referer, as a browser
-does. The taiko number stays with the platform: it reaches neither the window, a code nor a file
-name. The window asks for "the My Don", and nothing more.
-
-- Kept on the device, one per player: the last one fetched. A launch or a sign-in shows it and asks
-  nothing.
-- Fetched anew only after a costume change applies, and after you press **Read again**, so
-  a change made on Hiroba's own site shows after the next **Read again**. Asked for once the tile is
-  on screen, in the queue, so never between a write's requests. If that fetch fails,
-  the one kept stays on the tile until the next of those.
-
-Until the first one comes the tile is empty, with a small spinner; if it does not come, the tile
-stays empty and nothing is said (the pipelines page keeps the code); it is asked for once more after
-the next read. With `ABTH_DEBUG_SAVE_READS=1`,
-each is kept in `debug\history`, named by its path alone. On Android, the WebView's cookie store
-decides what the native HTTP client sends: Hiroba's session is kept for Hiroba's domain alone, so
-the picture host never gets it, though a cookie the picture host set itself would go back to it.
-
-## Android
+### On Android
 
 | Script | What it does |
 |---|---|
@@ -654,7 +103,7 @@ On Windows, the `NoDefaultCurrentDirectoryInExePath` setting stops `cmd.exe` fin
 the current folder, which is how Capacitor starts Gradle. `scripts/android.ts` removes it from every
 command it starts, so use the scripts rather than a bare `bunx cap run`.
 
-## iOS
+### On iOS
 
 On a Mac with Xcode 26 or later:
 
@@ -671,26 +120,69 @@ The debug build has its own id and name, and may reach the stand-in's `sslip.io`
 No one signs the IPA: whoever installs it signs it with their own Apple account, as [Installing on
 iOS](../README.md#installing-on-ios) says.
 
-iOS has no Back, so the app draws one at the top left wherever Android's Back would go somewhere: on
-every page but the Overview, in a page's modes, and over the pipelines page. A large modal draws its
-arrow beside its title.
+### Environment variables
 
-A picture to share goes out as a PNG on iOS, whose canvas writes no WebP, and the share sheet saves it
-to Photos.
+Only an unpackaged build reads them: a packaged one uses the real sites, whatever they say.
+`bun run dev` and the end-to-end run set them. Android's live reload reads the same names with
+`VITE_` in front, where the table says so.
 
-### Costume writes on Android
+| Variable | Read by | What it does |
+|---|---|---|
+| `ABTH_DEV_HIROBA_ORIGIN`, `ABTH_DEV_IDP_HOST` | desktop, Android | Hiroba and the Bandai Namco ID host: the stand-in. One without the other stops the app. |
+| `ABTH_DEV_IMG_ORIGIN` | desktop, Android | The stand-in's picture host. Without it no picture host is asked anything; set alone, it stops the app. |
+| `ABTH_DEV_REFUSING_HOST` | desktop, Android | A host that refuses a sign-in inside an app, as Google does. |
+| `ABTH_DEV_SONG_CATALOGUE`, `ABTH_DEV_CHINESE_NAMES` | desktop, Android | Where taiko.wiki's song list and the songs' Chinese names are read. |
+| `ABTH_DEV_RATING_DATA`, `ABTH_DEV_RATING_DATA_V2` | desktop, Android | Where the data of OurTaiko's two ratings is read. |
+| `ABTH_DEV_ESE_MAPPING`, `ABTH_DEV_ESE_CHARTS` | desktop, Android | Where ESE's mapping of songs and its chart files are read. |
+| `ABTH_DEV_ABTH_CDN` | desktop, Android | Where ABTH CDN's drawn charts and note densities are read. |
+| `ABTH_DEV_CHART_ORIGIN` | desktop, Android | One more origin chart pictures may come from: the stand-in's. |
+| `ABTH_DEV_UPDATE_FEED` | desktop, Android | The update feed. Without it an unpackaged build reads no feed, and so never asks GitHub. |
+| `ABTH_DEV_USER_DATA` | desktop | The data folder, in place of the installed app's. |
+| `ABTH_DEV_SERVER_URL` | desktop | Vite's dev server, which the window loads from. |
+| `ABTH_DEV_NOW` | desktop | An ISO time that the check for Hiroba's daily maintenance takes as now. |
+| `ABTH_DEV_OFF_SCREEN` | desktop | `1` opens the windows off every display at their full size, out of the taskbar and unfocused, and keeps them there. |
+| `ABTH_DEV_PICTURES_FOLDER` | desktop | Where Save picture puts a page's picture, without the save box asking. |
+| `ABTH_DEBUG_SAVE_READS` | desktop, packaged too | `1` keeps each page a read brings back (see [How it talks to Hiroba](#how-it-talks-to-hiroba)). |
+| `ABTH_MOCK_IP`, `ABTH_MOCK_HIROBA_PORT`, `ABTH_MOCK_IDP_PORT` | the stand-in | The address and the two ports it listens on: `127.0.0.1`, 8807 and 8808 unless set. |
+| `ABTH_E2E_LANE` | the end-to-end run | Set by the run for each lane, which takes ports and a data folder of its own. |
+| `ABTH_STORY_PACK` | Storybook | Set by `--pack` alone (see [Storybook](#storybook)). |
 
-A write on Android, of any kind, is the desktop's own, over Capacitor's HTTP client. A post is one native call,
-with its form already encoded in the order the page's form holds it and a `Content-Type` of the
-app's own, since Capacitor writes no body without one. Capacitor is told not to follow a post's
-redirects: a 301, 302 or 303 is followed in the app with one GET that has no body, as the desktop
-does, and a 307 or 308 is handed back unfollowed. A write is one turn of the queue, all its
-requests: no read and no picture goes out between them. The WebView's cookie store is written to
-disk after each write. The port also checks every call's arguments, as the desktop's main process
-does for its window. Nothing is shut by the build: the release APK writes as the debug one does,
-and the list that decides the two extra reads is the one [Writes](#writes) describes.
+## Testing
 
-## Storybook
+Each check `bun run check` runs also runs alone, from the repository's root: `bun run format:check`,
+`bun run lint`, `bun run typecheck`, `bun test` and `bun run check:update-feed`.
+
+`bun test` runs every unit test: `core/test`, `i18n/test`, and here `test` and `test-dom`.
+
+- `test` holds the tests that need no page. It is typechecked with no DOM and no JSX, so a test there
+  may import only modules whose whole import graph, type-only imports included, holds no `.tsx` file
+  and no DOM global, and none that loads `electron` as it starts.
+- `test-dom` holds the tests that render React. Each file calls `inADocument()` first, which
+  registers happy-dom for that file, and takes Testing Library from `@testing-library/react/pure`.
+- Hiroba's pages appear in tests only as hand-written excerpts, as `core/test/README.md` says.
+
+### The end-to-end run
+
+`bun run e2e` builds the app, drives it against the local stand-in (nothing reaches the real sites)
+and prints a JSON report with one key per check. Its sections run in lanes side by side, each lane
+with an app, a stand-in, ports and a data folder of its own (each section's `lane`); `--serial` runs
+them one after another in one app. `--only <section,...>` runs just those sections (named in
+`scripts/e2e/sections.ts`), and `--no-build` skips the build, to fix one check without the whole run.
+
+A pass has no `errors` entry and every key `true`, except `tokenInRendererDom` and
+`partitionsFolder` (`false`), `readsAfterSignIn`, `readsAfterReadAgain` and `readsOnReopen` (`1`,
+`3` and `1`) and `userDataHits` (empty); `scripts/e2e/verdict.ts` holds that list, and the run exits
+with an error when a check misses it. `surface`, `longHoldPresses`, `setupMs` (the build), `laneMs`
+(each lane's time) and `sectionMs` (each section's) only inform.
+
+The app's windows open off every display, out of the taskbar and unfocused, so the computer stays in
+use during a run; `--show` opens them on screen to watch. Each page is held at 946×738, so a display
+that sleeps or goes, and moves or shrinks the windows, leaves the layout as it was, and a lane
+refuses to start while its ports are taken, as an earlier run's apps still hold them. A window shown
+may be covered, since the run stops Chromium counting a covered window as hidden, but not minimised:
+a hidden page asks for no picture.
+
+### Storybook
 
 | Script | What it does |
 |---|---|
@@ -723,6 +215,180 @@ A resource pack is a folder, outside every git work tree, named by its absolute 
 Whole pages read the pack's data and the components keep the made-up data; anything the pack lacks
 keeps its stand-in. The repository ships no pack, only the local Storybook reads one, it then
 answers this machine alone, and a build refuses to start while a pack is named.
+
+## How it talks to Hiroba
+
+Every read of Hiroba goes through one queue, on both platforms, a picture's fetch included. Up to
+five reads run at once, and pictures go five at a time in screen order. A write waits for the
+running reads to end, goes before the reads still waiting and holds the queue for all its requests,
+so no read and no picture lands between them; a second write asked for meanwhile is answered busy.
+The play history is read beside the queue, in a pipeline of its own, up to three pages at once and
+during a write too: its pages carry no form token. When the session ends, the queue stops: a read or
+a write that is running sends nothing after the request on its way, and one still waiting sends
+nothing.
+
+Read again first asks Hiroba to refresh its copy of the play from the game server, as the ↻ on
+Hiroba's own pages does: my page is read for a fresh form token and the ↻'s post sent once, alone in
+the queue. The read after a sign-in or at a launch does not ask for one.
+
+Every write goes through core's `runWrite`, and every write is open in every build. It reads the
+editor for a fresh form token and the whole set, sends the pre-check (a rename has none), sends the
+save exactly once, and reads the whole set back: the set read back decides the outcome, not Hiroba's
+answer. No request is retried, and no post goes out between 05:00 and 07:00 JST, Hiroba's daily
+maintenance: the clock is looked at before a write starts and again just before each post.
+
+A kind of write that has not been made for real from a platform also reads one other page before and
+after, to see that nothing else moved. `LIVE_CHECKED_WRITES` in
+`src/hiroba-session/live-checked-writes.ts` lists, for each platform, the kinds that have; it decides
+those two reads and nothing else.
+
+On Android a write goes over Capacitor's HTTP client. A post is one native call, with its form
+encoded in the order the page's form holds it; a 301, 302 or 303 is followed in the app with one GET
+that has no body, as the desktop does, and a 307 or 308 is handed back unfollowed. The WebView's
+cookie store is written to disk after each write.
+
+`ABTH_DEBUG_SAVE_READS=1` makes the desktop app, a packaged one too, keep each page a read brings
+back in the data folder's `debug` folder, named after the page, with every form token replaced by
+`<tckt>`. Every answer is also kept in `debug\history`, in the order it came and with its time; of a
+post, only Hiroba's answer is kept, never the form the app sent. The folder holds the player's
+nickname, taiko number and title: keep it to yourself, and delete it when you are done.
+
+## Where data lives
+
+### The session
+
+Hiroba's session is one cookie, `_token_v2`. No code in the interface ever holds its value.
+
+**Desktop.** The sign-in window runs on an in-memory browser session, new for every attempt and
+cleared when the window closes. It opens any https page the sign-in passes through, such as the
+sign-in of another account Bandai Namco ID offers, and the popups such pages open, on that same
+session and each titled with the host it is on; a page that is not https ends the attempt. A
+service known to refuse a sign-in inside an app (Google) is never loaded: the attempt ends, and
+Hiroba's sign-in page opens in the system's browser, where a mail address and password can be
+added to the Bandai Namco ID once, for signing in here. The cookie is held in the main process,
+and kept on disk, in plain text, in `session.json` in the app's data folder
+(`%APPDATA%\A Better Taiko Hiroba`), so you stay signed in across launches until you sign out or
+Hiroba ends the session. Signing out, or a read or write that finds the session gone, deletes the
+file.
+
+**Android.** The sign-in runs in the in-app browser, which shares the app's WebView cookie store,
+and Capacitor's native HTTP client reads Hiroba through that same store. A service known to refuse
+a sign-in inside an app is closed as soon as its page has loaded, and the system's browser opens
+as on the desktop. The store is kept across launches, so you stay signed in there too. The app
+wipes every cookie when a sign-in starts, when one is cancelled, ends at such a service or cannot
+open, at sign-out, and when a read finds the session gone. Between a sign-in and the next
+sign-out, the app's private storage holds:
+
+- `_token_v2`, in plain text, in the WebView cookie database (`app_webview/Default/Cookies`);
+- the Bandai Namco ID host's Domain cookies (its host-only cookies are cleared after sign-in);
+- the WebView's HTTP cache, which is cleared when the next sign-in browser opens;
+- web storage of donderhiroba.jp and bandainamcoid.com, which the app cannot clear.
+
+This is an accepted exception to the rule that the session is never stored in plain text. The app
+turns off Android backup and device transfer for all of its data, so none of it leaves the device
+that way.
+
+### Pictures
+
+Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, a legend's or a
+difficulty's icon, your title plate or your どんメダル plate, is fetched once and kept on the device
+for good, since arcades often have poor networks. Your My Don is kept too, the last one fetched, and
+fetched anew once after each read of your page but a session's first, and after a costume write.
+Signing out deletes none of them, and neither does the next sign-in, though the card lets go of
+those it showed and takes them from the device again, so it never shows the last player's while the
+next one's come. Thumbnails, the panel's art and the icons show no player and are kept for any
+account on the device; a plate is kept under its player, so no other account is given it. Only the
+checked PNG bytes are kept, under SHA-256 names: no URL, header, cookie, taiko number, title or
+medal id.
+
+- **Desktop:** one file per picture in `pictures` in the app's data folder:
+  `v1\shared\<hash>.png` for a thumbnail, the panel's art or an icon, `v1\player\<hash>\<hash>.png` for a
+  plate or the portrait.
+- **Android:** the app page's IndexedDB, `abth-pictures`, under the same names. The system may drop
+  it when storage runs short, which costs only fetches. Live reload loads the page from another
+  origin, so a run against the stand-in keeps its pictures and its costume and folder histories
+  (`abth-costume-history`, `abth-folder-history`), each in a database of its own that no
+  `PICTURE_EPOCH` clears, apart from the installed build's.
+
+The pictures of charts, from off Hiroba, are kept the same way, as checked PNG, JPEG, WebP or GIF bytes
+under hashed names, but apart: in `charts` beside `pictures` on the desktop, and in the IndexedDB
+`abth-charts` on Android.
+
+Nothing in the app deletes a picture but a new `PICTURE_EPOCH` in
+`src/shared/picture-store.ts`: the next launch clears whatever an older one kept. To clear
+them by hand, delete the `pictures` folder, or clear the Android app's data.
+
+### Everything else
+
+| What | Desktop: in the data folder | Android: IndexedDB |
+|---|---|---|
+| Scores, for each player | `scores.json` | `abth-scores` |
+| Recent plays | `recent-plays.json` | `abth-recent-plays` |
+| Score changes | `score-changes-2.json` | `abth-score-changes-2` |
+| Rating history | `rating-history.json` | `abth-rating-history` |
+| Costume history | `costume-history.json` | `abth-costume-history` |
+| Favourites folder history | `folder-history.json` | `abth-folder-history` |
+| What the pipelines did | `pipelines` | `abth-pipelines` |
+| Note densities | `densities` | `abth-densities` |
+| Charts drawn on the device | `drawn-charts` | `abth-drawn-charts` |
+
+`src/hiroba-session/kept-things.ts` describes each kind kept for a player: its file, its database,
+table and record field, and the names it had before. `electron/data-folder.ts` names the data
+folder's other files and folders. Renaming one loses data. A kind whose shape changes is kept under
+a new name and read from the old one until its first save, and the old one stays as it was, as
+builds already released still write it (score changes were `score-changes.json` and
+`abth-score-changes`).
+
+Data that does not read is never written over: a save first keeps it aside, as
+`<name>.unreadable.json` beside the file on the desktop, and as the record
+`<taiko number>.unreadable` on Android.
+
+The page's own storage (`localStorage`) holds, on both platforms:
+
+- the settings: `abth.locale`, `abth.theme`, `abth.themeMode`, `abth.shownDifficulty`,
+  `abth.scoresSort`, `abth.chartSource` and `abth.ratingSystem`;
+- the page last shown, `abth.page`, the song searches, `abth.songSearches`, and the tips seen,
+  `abth.tipsSeen`;
+- the favourite sets, `abth.favoriteSets`, with sets that do not read kept aside in
+  `abth.favoriteSets.unreadable`;
+- when updates were last checked and told, `abth.update.checkedAt` and `abth.update.shown`;
+- copies of what other sites answered: taiko.wiki's song list (`abth.songCatalogue`), the Chinese
+  names (`abth.chineseNames`), the songs Hiroba's picker offers (`abth.pickableSongs`) and each
+  rating's data (`abth.ratingData.<rating>`);
+- on Android, whether the player signed in, `abth.signedIn`.
+
+## Translations
+
+The app's words are in `i18n`, one catalog for each of English, 日本語, 简体中文 and 繁體中文, which
+reads as Hong Kong writes it. `i18n/src/messages/en.ts` is where the keys come from: a message's
+English words name its parameters (`{name}`), and the type checker holds every other catalog to the
+same keys and each call of `t` to the parameters its words name. A new message is one line in each
+catalog, with its note above it in `en.ts`. Game terms are worded as taiko.wiki words them. What
+Hiroba writes as data, such as a nickname, a title or a medal's name, is never translated, and an
+element that holds only such words is marked `lang="ja"`.
+
+## Building
+
+| Script | What it does |
+|---|---|
+| `bun run dist:dir` | A packaged app in `release/win-unpacked`. |
+| `bun run dist:win` | An NSIS installer and a portable zip in `release/`, for x64: `ABTH-<version>-setup.exe` and `ABTH-<version>-portable.zip`. |
+| `bun run dist:mac` | On a Mac only: a disk image per processor in `release/`, `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel, each app signed ad hoc. |
+| `bun run smoke:packaged` | Starts `release/win-unpacked` and checks its first screen. It never presses "Sign in", and refuses to start at all while the packaged app keeps a session in `%APPDATA%\A Better Taiko Hiroba`, since the app would then read the real Hiroba by itself. |
+
+The installer and the exe in the zip are not code-signed, so Windows SmartScreen warns before the
+first run.
+
+The macOS app has no Apple certificate and is not notarized, so macOS blocks its first start: drag
+it from the disk image to Applications, open it once, then allow it under System Settings → Privacy
+& Security → **Open Anyway**. It keeps its data in
+`~/Library/Application Support/A Better Taiko Hiroba`, and keeps the menu bar's app and Edit menus,
+through which a Mac copies, pastes and quits.
+
+The zip needs no install: unzip it into a folder of its own (Explorer's **Extract All** makes one)
+and run `A Better Taiko Hiroba.exe` in it. It starts faster than a self-extracting exe, which
+unpacks itself at every launch. Like the installer's app, it keeps its data in
+`%APPDATA%\A Better Taiko Hiroba`.
 
 ## Releases
 
@@ -787,9 +453,9 @@ waiting on another:
 | Job | Runs on | Makes |
 |---|---|---|
 | **Android release APK** | Ubuntu 26.04, JDK 21 | `ABTH-<version>.apk`, signed with the release key from [the signing secrets](#setting-up-the-signing-secrets). |
-| **Windows installer and zip** | windows-latest | `ABTH-<version>-setup.exe`, the NSIS installer, and `ABTH-<version>-portable.zip`, the build that needs no install ([Desktop](#desktop) says how to run it). Both are x64 and not code-signed. |
-| **macOS disk images** | macos-latest | `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel Macs. Each app is signed ad hoc, with no Apple certificate, and is not notarized ([Desktop](#desktop) says how to open it). |
-| **iOS IPA, unsigned** | macos-26 | `ABTH-<version>.ipa`, a release build for a device that no one signs ([iOS](#ios) says how to install it), and `altstore.json`, the source AltStore and SideStore read it from. |
+| **Windows installer and zip** | windows-latest | `ABTH-<version>-setup.exe`, the NSIS installer, and `ABTH-<version>-portable.zip`, the build that needs no install ([Building](#building) says how to run it). Both are x64 and not code-signed. |
+| **macOS disk images** | macos-latest | `ABTH-<version>-mac-arm64.dmg` for Apple silicon and `ABTH-<version>-mac-x64.dmg` for Intel Macs. Each app is signed ad hoc, with no Apple certificate, and is not notarized ([Building](#building) says how to open it). |
+| **iOS IPA, unsigned** | macos-26 | `ABTH-<version>.ipa`, a release build for a device that no one signs ([On iOS](#on-ios) says how to install it), and `altstore.json`, the source AltStore and SideStore read it from. |
 
 Each uploads its files as an artifact of the run (**android**, **windows**, **mac** and **ios**, kept
 for 14 days). On a tag, a **Release** job then runs after all four. It downloads the artifacts and
@@ -839,68 +505,6 @@ gh secret list
 
 `gh secret list` shows the four names, never the values, and no secret can be read back, so keep the
 keystore backed up elsewhere: an app signed with another key cannot update the installed one.
-
-## Where the session lives
-
-Hiroba's session is one cookie, `_token_v2`. No code in the interface ever holds its value.
-
-**Desktop.** The sign-in window runs on an in-memory browser session, new for every attempt and
-cleared when the window closes. It opens any https page the sign-in passes through, such as the
-sign-in of another account Bandai Namco ID offers, and the popups such pages open, on that same
-session and each titled with the host it is on; a page that is not https ends the attempt. A
-service known to refuse a sign-in inside an app (Google) is never loaded: the attempt ends, and
-Hiroba's sign-in page opens in the system's browser, where a mail address and password can be
-added to the Bandai Namco ID once, for signing in here. The cookie is held in the main process,
-and kept on disk, in plain text, in `session.json` in the app's data folder
-(`%APPDATA%\A Better Taiko Hiroba`), so you stay signed in across launches until you sign out or
-Hiroba ends the session. Signing out, or a read or write that finds the session gone, deletes the
-file.
-
-**Android.** The sign-in runs in the in-app browser, which shares the app's WebView cookie store,
-and Capacitor's native HTTP client reads Hiroba through that same store. A service known to refuse
-a sign-in inside an app is closed as soon as its page has loaded, and the system's browser opens
-as on the desktop. The store is kept across launches, so you stay signed in there too. The app
-wipes every cookie when a sign-in starts, when one is cancelled, ends at such a service or cannot
-open, at sign-out, and when a read finds the session gone. Between a sign-in and the next
-sign-out, the app's private storage holds:
-
-- `_token_v2`, in plain text, in the WebView cookie database (`app_webview/Default/Cookies`);
-- the Bandai Namco ID host's Domain cookies (its host-only cookies are cleared after sign-in);
-- the WebView's HTTP cache, which is cleared when the next sign-in browser opens;
-- web storage of donderhiroba.jp and bandainamcoid.com, which the app cannot clear.
-
-This is an accepted exception to the rule that the session is never stored in plain text. The app
-turns off Android backup and device transfer for all of its data, so none of it leaves the device
-that way.
-
-## Where pictures are kept
-
-Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, a legend's or a difficulty's icon,
-your title plate or your どんメダル plate, is fetched once and kept on the device for good, since arcades often
-have poor networks. Your My Don is kept too, the last one fetched, and fetched anew only as
-[The My Don portrait](#the-my-don-portrait) says. Signing out deletes none of them, and neither
-does the next sign-in, though the card lets go of those it showed and takes them from the device
-again, so it never shows the last player's while the next one's come.
-Thumbnails, the panel's art and the icons show no player and are kept for any account on the device; a plate
-is kept under its player, so no other account is given it. Only the checked PNG bytes are kept, under SHA-256 names:
-no URL, header, cookie, taiko number, title or medal id.
-
-- **Desktop:** one file per picture in `pictures` in the app's data folder:
-  `v1\shared\<hash>.png` for a thumbnail, the panel's art or an icon, `v1\player\<hash>\<hash>.png` for a
-  plate or the portrait.
-- **Android:** the app page's IndexedDB, `abth-pictures`, under the same names. The system may drop
-  it when storage runs short, which costs only fetches. Live reload loads the page from another
-  origin, so a run against the stand-in keeps its pictures and its costume and folder histories
-  (`abth-costume-history`, `abth-folder-history`), each in a database of its own that no
-  `PICTURE_EPOCH` clears, apart from the installed build's.
-
-The pictures of charts, from off Hiroba, are kept the same way, as checked PNG, JPEG, WebP or GIF bytes
-under hashed names, but apart: in `charts` beside `pictures` on the desktop, and in the IndexedDB
-`abth-charts` on Android.
-
-Nothing in the app deletes a picture but a new `PICTURE_EPOCH` in
-`src/shared/picture-store.ts`: the next launch clears whatever an older one kept. To clear
-them by hand, delete the `pictures` folder, or clear the Android app's data.
 
 ## Signing in for real
 
