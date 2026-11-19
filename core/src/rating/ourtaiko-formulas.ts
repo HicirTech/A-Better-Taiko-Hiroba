@@ -7,7 +7,8 @@ import type { ChartRating, RatedScore } from "./types";
 export const SCALE_TOP = 15.5;
 /** The best charts a player's figure is taken from. */
 export const COUNTED = 20;
-const LOWEST_ACCURACY = 0.75;
+/** Below this accuracy a play is not rated. */
+export const LOWEST_ACCURACY = 0.75;
 
 /** How a play went, as the ratings count it. */
 export interface RatedPlay {

@@ -1,3 +1,4 @@
+export { accuracyToRate, type MeasuredChart, measuredChart } from "./chart-measure";
 export { COUNTED } from "./ourtaiko-formulas";
 export {
   OURTAIKO_V1_FIGURES,
