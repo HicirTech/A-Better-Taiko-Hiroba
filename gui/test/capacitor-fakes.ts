@@ -61,6 +61,8 @@ export const native = {
   httpAnswers: [] as (() => Promise<unknown>)[],
   /** Cookie-store calls in order: "clearAllCookies", "clearCookies <url>", "deleteCookie <key>". */
   cookieCalls: [] as string[],
+  /** What a cookie save waits on before it ends: nothing, unless a test holds it. */
+  cookieSaveHeld: Promise.resolve() as Promise<void>,
   openedWith: [] as { url: string; options: Record<string, unknown> }[],
   /** Each page the app sent to the default browser. */
   externalUrls: [] as string[],
@@ -77,6 +79,7 @@ export const native = {
     this.httpAnswer = async () => ({});
     this.httpAnswers.length = 0;
     this.cookieCalls.length = 0;
+    this.cookieSaveHeld = Promise.resolve();
     this.closeIgnored = false;
     this.openedWith.length = 0;
     this.externalUrls.length = 0;
@@ -105,6 +108,7 @@ mock.module("@capacitor/core", () => ({
     },
     deleteCookie: async ({ key, url }: { key: string; url?: string }) => {
       native.cookieCalls.push(`deleteCookie ${key}${url === undefined ? "" : ` ${url}`}`);
+      await native.cookieSaveHeld;
     },
     clearCookies: async ({ url }: { url: string }) => {
       native.cookieCalls.push(`clearCookies ${url}`);

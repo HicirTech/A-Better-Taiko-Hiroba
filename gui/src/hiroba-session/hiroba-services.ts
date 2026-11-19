@@ -23,6 +23,7 @@ import {
   readSongCatalogue,
 } from "../shared/song-catalogue";
 import { readUpdateFeed } from "../shared/updates";
+import { type KeptProfileStore, keptProfileOf } from "./kept-profile";
 import {
   KEPT_COSTUME_HISTORY,
   KEPT_FOLDER_HISTORY,
@@ -70,6 +71,8 @@ export interface ServiceStores {
   /** A pipeline's history, by the pipeline's name. */
   pipeline(name: string): PipelineHistoryStore;
   kept<T, M>(thing: KeptThing<T, M>): KeptStore<T, M>;
+  /** The last good read of my page, until the session ends. */
+  readonly profile: KeptProfileStore;
   readonly pictures: PictureStore;
   readonly charts: PictureStore;
   readonly densities: PictureStore;
@@ -189,7 +192,12 @@ export function createHirobaServices(parts: HirobaServiceParts): HirobaServices 
     offered = new Set();
     pictures.forget();
     previews.clear();
-    await parts.endSession();
+    try {
+      await parts.endSession();
+    } finally {
+      // After the shell's end: a read that ends meanwhile finds the session gone and keeps nothing.
+      await stores.profile.save(null);
+    }
   };
   const { afterHiroba } = parts;
   /** Runs, then lets the shell keep what Hiroba renewed, however the call ended. */
@@ -266,6 +274,9 @@ export function createHirobaServices(parts: HirobaServiceParts): HirobaServices 
         }
         owner = read.value.taikoNo;
         sources = read.value.pictures;
+        if (signedIn()) {
+          await stores.profile.save(keptProfileOf(read.value));
+        }
         await pictures.confirm(read.value.taikoNo);
         return ok(read.value.view);
       },

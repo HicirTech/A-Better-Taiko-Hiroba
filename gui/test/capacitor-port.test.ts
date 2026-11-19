@@ -14,6 +14,7 @@ import {
   until,
 } from "./capacitor-port-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";
+import { memoryStorage } from "./storage-fakes";
 
 const { createCapacitorPort } = await import("../src/platform/capacitor");
 
@@ -213,6 +214,86 @@ describe("createCapacitorPort", () => {
     expect(pages(first)).toEqual(["1", "2", "3", "4"]);
     // The second walk stops on its first page, at the plays the first walk kept.
     expect(pages(second)).toEqual(["1", "1", "2", "3", "4"]);
+  });
+});
+
+describe("createCapacitorPort's kept read of my page", () => {
+  beforeEach(() => native.reset());
+
+  const KEY = "abth.keptProfile";
+  const loggedOutAnswer = async () => ({
+    status: 200,
+    url: `${HIROBA}/login.php`,
+    headers: {},
+    data: nativeBase64("<form id=login_form></form>"),
+  });
+  async function signedInWith(storage = memoryStorage()) {
+    native.httpAnswer = myPageAnswer;
+    const port = await createCapacitorPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+      storage,
+    });
+    return { port, storage };
+  }
+  async function readThenKept() {
+    const signedIn = await signedInWith();
+    await signedIn.port.readProfile();
+    return signedIn;
+  }
+
+  test("keeps a good read in the page's storage, under the taiko number, until a sign-out", async () => {
+    const { port, storage } = await readThenKept();
+
+    expect(JSON.parse(storage.getItem(KEY) ?? "null")).toMatchObject({
+      v: 1,
+      taikoNo: "000000000000",
+      view: { nickname: "サンプルどん", title: "サンプルの称号" },
+    });
+    await port.signOut();
+    expect(storage.getItem(KEY)).toBeNull();
+  });
+
+  test("deletes it when a read finds the session gone", async () => {
+    const { port, storage } = await readThenKept();
+    native.httpAnswer = loggedOutAnswer;
+
+    expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "loggedOut" } });
+    expect(storage.getItem(KEY)).toBeNull();
+  });
+
+  test("deletes it as a sign-in starts", async () => {
+    const { port, storage } = await readThenKept();
+    const outcome = port.signIn();
+    await until(() => native.openedWith.length === 1);
+
+    expect(storage.getItem(KEY)).toBeNull();
+    native.emit("browserClosed");
+    expect(await outcome).toEqual({ kind: "cancelled" });
+  });
+
+  test("keeps what it kept when a read fails but the session holds", async () => {
+    const { port, storage } = await readThenKept();
+    const kept = storage.getItem(KEY);
+    native.httpAnswer = () => Promise.reject({ code: "UnknownHostException" });
+
+    expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "unreachable" } });
+    expect(storage.getItem(KEY)).toBe(kept);
+  });
+
+  test("keeps nothing of a read that ends after a sign-out", async () => {
+    const { port, storage } = await signedInWith();
+    let release: () => void = () => undefined;
+    native.cookieSaveHeld = new Promise((resolve) => {
+      release = resolve;
+    });
+    const reading = port.readProfile();
+    await until(() => native.cookieCalls.includes("deleteCookie abth-save"));
+    await port.signOut();
+    release();
+
+    await reading;
+    expect(storage.getItem(KEY)).toBeNull();
   });
 });
 
