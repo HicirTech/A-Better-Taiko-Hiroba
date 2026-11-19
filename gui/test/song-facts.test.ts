@@ -40,4 +40,13 @@ describe("openingChart", () => {
     const none = { easy: null, normal: null, hard: null, oni: null, ura: null };
     expect(openingChart(none, "oni")).toBeNull();
   });
+
+  test("opens on the chart asked for, Extreme too where the song has an inner one", () => {
+    expect(openingChart(WITH_INNER, "oni", "oni")).toBe("oni");
+    expect(openingChart(WITH_INNER, "oni", "normal")).toBe("normal");
+  });
+
+  test("opens as without asking where the song lacks the chart asked for", () => {
+    expect(openingChart(NO_INNER, "hard", "ura")).toBe("hard");
+  });
 });
