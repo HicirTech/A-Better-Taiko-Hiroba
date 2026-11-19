@@ -7,7 +7,7 @@ import { CARD_GAP, SectionCard } from "../ui/section-card";
 import { readScores, scoresRead } from "./model-parts";
 import type { PageEntry } from "./page";
 import type { PageModel } from "./page-model";
-import { HEADING, scoresProgress } from "./page-parts";
+import { HEADING, scoresProgress, songDetailsOf } from "./page-parts";
 
 const KNOW_CARDS = [...Array(6).keys()];
 
@@ -56,6 +56,7 @@ export const KNOW_YOURSELF_PAGE: PageEntry = {
       cardOpened={data.tipScene === "knowItem"}
       listed={data.listed}
       catalogue={data.catalogue}
+      songDetails={songDetailsOf(data)}
       lane={data.lane}
       keptSets={data.keptSets}
       shownDifficulty={data.shownDifficulty}

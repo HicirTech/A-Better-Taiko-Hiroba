@@ -22,8 +22,10 @@ import { resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { ScoreDetails } from "../songs/score-details";
 import { SetNameDialog } from "../songs/set-name-dialog";
+import { SongDetails, type SongDetailsSetting } from "../songs/song-details";
 import { SongListFailed } from "../songs/song-list-failed";
 import { useAddToSet } from "../songs/use-add-to-set";
+import { useSongDetails } from "../songs/use-song-details";
 import { FilterChip } from "../ui/filter-chip";
 import { PAGE_HEIGHT } from "../ui/frame-top";
 import type { ModalLook } from "../ui/large-modal";
@@ -49,6 +51,7 @@ export function KnowYourselfPage({
   cardOpened = false,
   listed,
   catalogue,
+  songDetails,
   lane,
   keptSets,
   shownDifficulty,
@@ -64,6 +67,8 @@ export function KnowYourselfPage({
   readonly listed: ListedChartsView | null;
   /** taiko.wiki's song list: each chart's stars, notes and tempo, and the names. */
   readonly catalogue: SongCatalogue;
+  /** How a chart never played opens its song's details. */
+  readonly songDetails: SongDetailsSetting;
   readonly lane: PictureLane;
   /** The sets kept on this device, which a row's songs can go into. */
   readonly keptSets: FavoriteSets;
@@ -81,6 +86,7 @@ export function KnowYourselfPage({
   const [shown, setShown] = useState(shownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);
   const [details, setDetails] = useState<string | null>(null);
+  const songOpened = useSongDetails(catalogue.songs);
   const toSet = useAddToSet<readonly string[]>(keptSets, i18n);
   const { adding } = toSet;
 
@@ -111,7 +117,11 @@ export function KnowYourselfPage({
     [catalogue.songs, remembered, locale],
   );
   const opener = (chart: KnownChart) =>
-    scoreOf.has(chartKey(chart)) ? () => setDetails(chartKey(chart)) : undefined;
+    scoreOf.has(chartKey(chart))
+      ? () => setDetails(chartKey(chart))
+      : catalogue.songs.has(chart.songNo)
+        ? () => songOpened.open(chart.songNo, chart.difficulty)
+        : undefined;
   const chartList: PageParts["chartList"] = (id, charts, note) => (
     <ChartList
       key={id}
@@ -222,6 +232,12 @@ export function KnowYourselfPage({
         i18n={i18n}
         onReadSong={(score) => void readSong(score)}
         onClose={() => setDetails(null)}
+      />
+      <SongDetails
+        {...songDetails}
+        song={songOpened.song}
+        difficulty={songOpened.difficulty}
+        onClose={songOpened.close}
       />
       {adding !== null && (
         <AddSongsDialog
