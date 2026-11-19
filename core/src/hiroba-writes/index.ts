@@ -28,6 +28,19 @@ export {
   type FolderEditorView,
   openFolderEditor,
 } from "./folder-write";
+export {
+  allowsStars,
+  checkGameSettingsTarget,
+  draftGameSettings,
+  GAME_SETTINGS_FIELDS,
+  sameGameSettings,
+} from "./game-settings-rule";
+export {
+  changeGameSettings,
+  GAME_SETTINGS_WRITE,
+  type GameSettingsView,
+  openGameSettings,
+} from "./game-settings-write";
 export { inMaintenance } from "./maintenance";
 export {
   checkNameTarget,

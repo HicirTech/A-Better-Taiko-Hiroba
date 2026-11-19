@@ -1,8 +1,22 @@
 // A made-up settings page in the real one's shape: each list inside a box that has its id, the best
 // score block commented out, and a hidden twin before the drum sound's list and each pair's list.
-import type { GameSettingKey, GameSettings } from "../src/index";
+import {
+  GAME_SETTING_KEYS,
+  type GameSettingChoice,
+  type GameSettingKey,
+  type GameSettings,
+  type Transport,
+  type TransportPost,
+  type TransportRequest,
+} from "../src/index";
+import { type Answer, answer, type SaveBehaviour } from "./profile-fixtures";
 
+export const PAGE_PATH = "mypage_other_setting.php";
+export const SAVE_PATH = "ajax/mypage_other.php";
 export const TOKEN = "0123456789abcdef0123456789abcdef";
+const STALE_MESSAGE = "更新に失敗しました。再度画面の読み込みを行ってください。";
+const BAD_SHAPE_MESSAGE = "パラメータが不正です。";
+export const BAD_VALUE_MESSAGE = "不明な値が設定されています。再度設定してください。";
 
 type List = readonly (readonly [value: string, label: string])[];
 
@@ -92,6 +106,11 @@ export const LISTS: Readonly<Record<GameSettingKey, List>> = {
     ["4", "未ドンダフルコンボ優先"],
   ],
 };
+
+/** The lists as the parser gives them. */
+export const CHOICES = Object.fromEntries(
+  GAME_SETTING_KEYS.map((key) => [key, LISTS[key].map(([value, label]) => ({ value, label }))]),
+) as Record<GameSettingKey, GameSettingChoice[]>;
 
 /** A made-up player's settings, most of them not the page's defaults. */
 export const SETTINGS: GameSettings = {
@@ -222,4 +241,141 @@ ${(["folderDifficulty", "folderStars", "folderOrder"] as const).map((key) => row
 </div>
 </div>
 </body></html>`;
+}
+
+const LISTS_ALONE = [
+  "region",
+  "visibility",
+  "scoresShown",
+  "scoresDifficulty",
+  "danShown",
+  "speed",
+  "doron",
+  "abekobe",
+  "random",
+  "skip",
+  "notePosition",
+  "voice",
+] as const;
+
+/** The form's fields after `_tckt`, in the page's order, as `settingComp` serialises them. */
+export function servedFields(settings: GameSettings = SETTINGS): [string, string][] {
+  const fields: [string, string][] = [["area_id", "0"]];
+  for (const key of LISTS_ALONE) {
+    fields.push([NAME_OF[key], settings[key]]);
+  }
+  fields.push(
+    ["default_tone_setting", "0"],
+    ["default_tone_setting", settings.tone],
+    ["double_song_disp", settings.doubleCharts],
+    ["select_double_song_disp", settings.doubleCharts],
+    ["applicable_flg", "1"],
+  );
+  for (const key of ["folderDifficulty", "folderStars", "folderOrder"] as const) {
+    fields.push([NAME_OF[key], settings[key]], [listName(key), settings[key]]);
+  }
+  return fields;
+}
+
+/** What `settingComp` adds after the form: two fields with no control, and five again. */
+export function appendedFields(settings: GameSettings = SETTINGS): [string, string][] {
+  return [
+    ["disp_level_self", "0"],
+    ["disp_level_chassis", "0"],
+    ["op1", settings.speed],
+    ["op2", settings.doron],
+    ["op3", settings.abekobe],
+    ["op4", settings.random],
+    ["notes_position", settings.notePosition],
+  ];
+}
+
+const MOST_STARS: Readonly<Record<string, number>> = { "1": 5, "2": 7, "3": 8, "4": 10, "5": 10 };
+
+/** Whether the folder's ★ is one its difficulty takes, as Hiroba checks the body it gets. */
+function legalStars(difficulty: string, stars: string): boolean {
+  const most = MOST_STARS[difficulty];
+  return stars === "0" || (most !== undefined && (stars === "99" || Number(stars) <= most));
+}
+
+// Every page with the form issues a new token, and a save carrying any but the newest answers 705
+// and changes nothing, as on the real site.
+export function fakeGameSettings() {
+  const hiroba = {
+    settings: { ...SETTINGS } as Record<GameSettingKey, string>,
+    token: "",
+    tokens: 0,
+    doubleChartsShut: false,
+    requests: [] as TransportRequest[],
+    /** The answer to a save; `message` goes into `errmsg`. */
+    save: { code: 0, stores: true, message: "" } as SaveBehaviour,
+    /** Run just after a save is handled, as a change made at that moment elsewhere. */
+    afterSave: () => {},
+  };
+  const issue = () => {
+    hiroba.token = `${++hiroba.tokens}`.padStart(32, "0");
+    return hiroba.token;
+  };
+  const json = (value: unknown) => answer(SAVE_PATH, JSON.stringify(value), "application/json");
+
+  const save = (request: TransportPost): Answer => {
+    const form = new URLSearchParams(
+      request.form.map(([name, value]): [string, string] => [name, value]),
+    );
+    const last = (name: string) => form.getAll(name).at(-1) ?? null;
+    if (form.get("_tckt") !== hiroba.token) {
+      issue();
+      return json({ result: 705, errmsg: STALE_MESSAGE });
+    }
+    hiroba.token = "";
+    if (!form.has("disp_level_self") || !form.has("disp_level_chassis")) {
+      return json({ result: 600, errmsg: BAD_SHAPE_MESSAGE });
+    }
+    const posted = Object.fromEntries(
+      (Object.keys(NAME_OF) as GameSettingKey[]).map((key) => [
+        key,
+        // Hiroba reads the list's half of the folder's pairs and the hidden half of the 双打 pair.
+        key === "doubleCharts" ? last(NAME_OF[key]) : last(listName(key)),
+      ]),
+    ) as Record<GameSettingKey, string | null>;
+    const stars = posted.folderStars ?? "";
+    if (!legalStars(posted.folderDifficulty ?? "", stars)) {
+      return json({ result: 25, errmsg: BAD_VALUE_MESSAGE });
+    }
+    const { code, stores, message } = hiroba.save;
+    if (stores) {
+      for (const [key, value] of Object.entries(posted)) {
+        if (value !== null) {
+          hiroba.settings[key as GameSettingKey] = value;
+        }
+      }
+    }
+    hiroba.afterSave();
+    return json({ result: code, errmsg: message });
+  };
+
+  const transport: Transport = {
+    async send(request) {
+      hiroba.requests.push(request);
+      const path = new URL(request.url).pathname.slice(1);
+      if (request.method === "GET" && path === PAGE_PATH) {
+        const page = settingsPage({
+          settings: hiroba.settings,
+          token: issue(),
+          doubleChartsShut: hiroba.doubleChartsShut,
+        });
+        return answer(path, page, "text/html");
+      }
+      if (request.method === "POST" && path === SAVE_PATH) {
+        return save(request);
+      }
+      return answer(path, "not found", "text/plain");
+    },
+  };
+  /** Every request so far, as "METHOD path". */
+  const routes = () =>
+    hiroba.requests.map((request) => `${request.method} ${new URL(request.url).pathname.slice(1)}`);
+  const posts = () =>
+    hiroba.requests.filter((request): request is TransportPost => request.method === "POST");
+  return { hiroba, transport, routes, posts };
 }
