@@ -86,6 +86,7 @@ Download the IPA only from this project's Releases page.
 ## More
 
 - [Wiki](https://github.com/HicirTech/A-Better-Taiko-Hiroba/wiki) — how Donder Hiroba itself works: every page, every write endpoint with its real request and response, and what is still unknown
+- [Building the app](gui/README.md) — building it from source, running it, testing it and making a release
 
 ## License
 
