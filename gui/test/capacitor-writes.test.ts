@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
+import { FOLDER_SLOT_COUNT } from "@abth/core";
 import { CONTROL } from "../scripts/mock-controls";
 
 import {
@@ -565,3 +566,41 @@ describe.each(Object.keys(HELD_WRITES) as (keyof typeof HELD_WRITES)[])(
     });
   },
 );
+
+describe("createCapacitorPort's cookie store", () => {
+  beforeEach(() => native.reset());
+
+  type SavingCall = [
+    verb: keyof HirobaSessionPort,
+    call: (port: Awaited<ReturnType<typeof signedInPort>>) => Promise<unknown>,
+  ];
+  const EMPTY_FOLDER = { slots: Array.from({ length: FOLDER_SLOT_COUNT }, () => null) };
+
+  test.each<SavingCall>([
+    ["openCostumeEditor", (port) => port.openCostumeEditor()],
+    ["openTitleEditor", (port) => port.openTitleEditor()],
+    ["changeCostume", (port) => port.changeCostume(CHANGE)],
+    ["changeTitle", (port) => port.changeTitle(TITLE_CHANGE)],
+    ["changeName", (port) => port.changeName(NAME_CHANGE)],
+    ["openFavorites", (port) => port.openFavorites()],
+    ["changeFolder", (port) => port.changeFolder({ expected: EMPTY_FOLDER, target: ["1001"] })],
+    [
+      "changeFavoriteSong",
+      (port) =>
+        port.changeFavoriteSong({
+          expected: { songNo: null, ura: false },
+          target: { songNo: "1001", ura: false },
+        }),
+    ],
+    ["readSongPicker", (port) => port.readSongPicker()],
+    ["refreshHiroba", (port) => port.refreshHiroba()],
+    ["readScores", (port) => port.readScores()],
+    ["readEveryScore", (port) => port.readEveryScore()],
+    ["readSongScores", (port) => port.readSongScores("1001", null)],
+  ])("writes the cookie store to disk after %s, whatever it came to", async (_verb, call) => {
+    const port = await signedInPort(setUp());
+    await call(port);
+
+    expect(native.cookieCalls).toEqual([FLUSH]);
+  });
+});
