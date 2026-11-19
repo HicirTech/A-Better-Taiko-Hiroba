@@ -247,15 +247,20 @@ async function reopen(ctx: Ctx) {
   await panelArtShownOn(running);
   const panelArtFetches = await hitsOn(PANEL_ART);
   await legendIconsShownOn(running);
-  const iconFetches = await iconsSettled();
   const historyBeforeReopen = await historyNow();
   state.historyBeforeReopen = historyBeforeReopen;
   const readsBeforeReopen = await myPageHits();
   const editorReadsBeforeReopen = await editorHits();
-  const platesBeforeReopen = (await platesSettled()).length;
-  const myDonsBeforeReopen = await myDonsSettled();
-  const medalPlatesBeforeReopen = await medalPlatesSettled();
-  const thumbsBeforeReopen = (await thumbsSettled()).length;
+  const [iconFetches, platesSettledBefore, myDonsBeforeReopen, medalPlatesBeforeReopen, thumbs] =
+    await Promise.all([
+      iconsSettled(),
+      platesSettled(),
+      myDonsSettled(),
+      medalPlatesSettled(),
+      thumbsSettled(),
+    ]);
+  const platesBeforeReopen = platesSettledBefore.length;
+  const thumbsBeforeReopen = thumbs.length;
   await stop(running);
   running = await launch({ now: IN_THE_BREAK });
   ctx.app = running;

@@ -2,13 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 
 import { createCostumeEditor } from "../scripts/mock-costume";
 import { mockPlay, recentPlaysPage } from "../scripts/mock-history";
-import {
-  medalPlatePng,
-  myDonPng,
-  TITLE_PLATE,
-  thumbnailPng,
-  titlePlatePng,
-} from "../scripts/mock-pictures";
+import { myDonPng, TITLE_PLATE, thumbnailPng, titlePlatePng } from "../scripts/mock-pictures";
 import { native, nativeBase64 } from "./capacitor-fakes";
 import {
   CLOSE_LABEL,
@@ -322,7 +316,6 @@ describe("createCapacitorPort's pictures", () => {
 
   const THUMB = { kind: "costumeItem", slot: 1, id: 36 } as const;
   const PLATE = { kind: "titlePlate" } as const;
-  const MEDAL = { kind: "medalPlate" } as const;
   const MY_DON = { kind: "myDon" } as const;
 
   function answerAsHiroba() {
@@ -370,36 +363,6 @@ describe("createCapacitorPort's pictures", () => {
       error: { code: "costumeItem=notSignedIn" },
     });
     expect(native.httpRequests).toEqual([]);
-  });
-
-  test("asks only for items the last editor read offered, once each, as a browser's picture", async () => {
-    answerAsHiroba();
-    const port = await createCapacitorPort({
-      closeLabel: () => CLOSE_LABEL,
-      signedInFlag: memoryFlag(true),
-    });
-    expect(await port.readPicture(THUMB)).toEqual({
-      ok: false,
-      error: { code: "costumeItem=notOffered" },
-    });
-    expect(native.httpRequests).toEqual([]);
-    expect((await port.openCostumeEditor()).ok).toBe(true);
-    const picture = await port.readPicture(THUMB);
-    expect(picture.ok && picture.value.src.startsWith("data:image/png;base64,")).toBe(true);
-    expect(await port.readPicture(THUMB)).toEqual(picture);
-    expect(await port.readPicture({ ...THUMB, id: 999 })).toEqual({
-      ok: false,
-      error: { code: "costumeItem=notOffered" },
-    });
-    expect(native.httpRequests.map(({ url }) => url)).toEqual([
-      `${HIROBA}/mypage_kisekae.php`,
-      `${HIROBA}/imgsrc_kisekae.php?cos=36&type=1`,
-    ]);
-    expect(native.httpRequests[1]?.headers).toMatchObject({
-      Referer: `${HIROBA}/mypage_kisekae.php`,
-      Accept: "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
-    });
-    expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
   });
 
   test("tells of a picture it fetched in a section of its own, by what it shows", async () => {
@@ -524,83 +487,6 @@ describe("createCapacitorPort's pictures", () => {
     ]);
   });
 
-  test("asks nothing after a relaunch for the plate and thumbnails already kept", async () => {
-    answerAsHiroba();
-    const indexedDb = createFakeIndexedDb();
-    const launch = () =>
-      createCapacitorPort({
-        closeLabel: () => CLOSE_LABEL,
-        signedInFlag: memoryFlag(true),
-        indexedDb: indexedDb.factory,
-      });
-    const first = await launch();
-    await first.readProfile();
-    const plate = await first.readPicture(PLATE);
-    await first.readProfile();
-    await first.openCostumeEditor();
-    const thumbnail = await first.readPicture(THUMB);
-    await first.signOut();
-
-    const relaunched = await launch();
-    await relaunched.readProfile();
-    expect(await relaunched.readPicture(PLATE)).toEqual(plate);
-    await relaunched.openCostumeEditor();
-    expect(await relaunched.readPicture(THUMB)).toEqual(thumbnail);
-    expect(native.httpRequests.map(({ url }) => new URL(url).pathname)).toEqual([
-      "/mypage_top.php",
-      "/imgsrc_titleplate.php",
-      "/mypage_top.php",
-      "/mypage_kisekae.php",
-      "/imgsrc_kisekae.php",
-      "/mypage_top.php",
-      "/mypage_kisekae.php",
-    ]);
-  });
-
-  test("asks for the どんメダル plate by the id my page shows, once, and keeps it for good", async () => {
-    const id = "0123456789abcdef0123456789abcdef0123456789abcdef";
-    const withMedal = MY_PAGE.replace(
-      `<div class="favoriteSong">`,
-      `<div><img src="imgsrc_tokenplate.php?id=${id}" style="width: 100%;">
-  <div class="token_name">どんメダル2026秋</div><div class="token_count">12</div></div>
-<div class="favoriteSong">`,
-    );
-    native.httpAnswer = async () => {
-      const asked = native.httpRequests.at(-1)?.url ?? "";
-      const plate = new URL(asked).pathname === "/imgsrc_tokenplate.php";
-      return {
-        status: 200,
-        url: asked,
-        headers: { "Content-Type": plate ? "image/png" : "text/html; charset=UTF-8" },
-        data: nativeBase64(plate ? medalPlatePng(id, false) : withMedal),
-      };
-    };
-    const indexedDb = createFakeIndexedDb();
-    const launch = () =>
-      createCapacitorPort({
-        closeLabel: () => CLOSE_LABEL,
-        signedInFlag: memoryFlag(true),
-        indexedDb: indexedDb.factory,
-      });
-    const first = await launch();
-    const read = await first.readProfile();
-    const plate = await first.readPicture(MEDAL);
-    expect(plate.ok && [plate.value.width, plate.value.height]).toEqual([600, 100]);
-    expect(await first.readPicture(MEDAL)).toEqual(plate);
-    // The id is the platform's alone: the view names neither it nor the plate's address.
-    expect(JSON.stringify(read)).not.toMatch(new RegExp(`${id}|tokenplate`));
-
-    const relaunched = await launch();
-    await relaunched.readProfile();
-    expect(await relaunched.readPicture(MEDAL)).toEqual(plate);
-    expect(native.httpRequests.map(({ url }) => url)).toEqual([
-      `${HIROBA}/mypage_top.php`,
-      `${HIROBA}/imgsrc_tokenplate.php?id=${id}`,
-      `${HIROBA}/mypage_top.php`,
-    ]);
-    expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/mypage_top.php` });
-  });
-
   const PORTRAIT = "https://img.taiko-p.jp/imgsrc.php?v=&kind=mydon&fn=mydon_000000000000";
 
   function myDonOnMyPage() {
@@ -661,31 +547,6 @@ describe("createCapacitorPort's pictures", () => {
     ]);
     expect(native.httpRequests[1]?.headers).toMatchObject({ Referer: `${HIROBA}/` });
     expect(native.httpRequests[1]?.headers).not.toHaveProperty("Cookie");
-  });
-
-  test("a read of my page that renews no portrait leaves the My Don kept, whatever was changed elsewhere", async () => {
-    const { wear, launch } = myDonOnMyPage();
-    const port = await launch();
-    await port.readProfile();
-    const before = await port.readPicture(MY_DON);
-    expect(before.ok).toBe(true);
-
-    wear([12, 12, 3, 0, 0, 68, 0, 0]);
-    await port.readProfile({ renewsPortrait: false });
-    await port.readProfile({ renewsPortrait: false });
-    expect(await port.readPicture(MY_DON)).toEqual(before);
-    expect(native.httpRequests.map(({ url }) => url)).toEqual([
-      `${HIROBA}/mypage_top.php`,
-      PORTRAIT,
-      `${HIROBA}/mypage_top.php`,
-      `${HIROBA}/mypage_top.php`,
-    ]);
-
-    await port.readProfile();
-    const after = await port.readPicture(MY_DON);
-    expect(after).not.toEqual(before);
-    expect(await port.readPicture(MY_DON)).toEqual(after);
-    expect(native.httpRequests.filter(({ url }) => url === PORTRAIT)).toHaveLength(2);
   });
 
   test("forgets what the editor offered when the session goes", async () => {

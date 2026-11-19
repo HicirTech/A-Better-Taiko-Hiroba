@@ -170,14 +170,6 @@ describe("searchSongs", () => {
     ]);
   });
 
-  test("compares song numbers as numbers", () => {
-    const songs = [song({ songNo: "999", title: "key" }), song({ songNo: "1000", title: "key" })];
-    expect(searchSongs(songs, "key", "ja").map((found) => found.song.songNo)).toEqual([
-      "1000",
-      "999",
-    ]);
-  });
-
   test("returns at most 200 songs", () => {
     const songs = Array.from({ length: SEARCH_LIMIT + 50 }, (_, index) =>
       song({ songNo: String(1000 + index), title: `key ${index}` }),

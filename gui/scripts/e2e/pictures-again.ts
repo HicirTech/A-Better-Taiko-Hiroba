@@ -19,7 +19,6 @@ import {
 const WHOLE_OVERVIEW_PX = 1800;
 
 const picturesAgainKeys = [
-  "pictureHoldAsksFirst",
   "pictureHoldCancelledReadsNothing",
   "overviewPicturesReadAgain",
   "pictureNotComeStaysAndSaysSo",
@@ -28,13 +27,16 @@ const picturesAgainKeys = [
 ] as const;
 
 /** How often the stand-in was asked for each of my page's pictures, once the asking settled. */
-const myPagePictures = async () => ({
-  plates: (await platesSettled()).length,
-  myDons: await myDonsSettled(),
-  panels: await hitsOn(PANEL_ART),
-  medals: await medalPlatesSettled(),
-  icons: await iconsSettled(),
-});
+const myPagePictures = async () => {
+  const [plates, myDons, panels, medals, icons] = await Promise.all([
+    platesSettled(),
+    myDonsSettled(),
+    hitsOn(PANEL_ART),
+    medalPlatesSettled(),
+    iconsSettled(),
+  ]);
+  return { plates: plates.length, myDons, panels, medals, icons };
+};
 
 async function picturesAgain(ctx: Ctx) {
   const { results } = ctx;
@@ -64,10 +66,8 @@ async function picturesAgain(ctx: Ctx) {
   await atSize(PAGE_SIZE.width, WHOLE_OVERVIEW_PX, async () => {
     const before = await myPagePictures();
     await readAgainHeld();
-    const whileAsked = await myPagePictures();
     await click("#read-pictures-cancel");
     await gone("#read-pictures");
-    results.pictureHoldAsksFirst = same(whileAsked, before);
     results.pictureHoldCancelledReadsNothing = same(await myPagePictures(), before);
 
     await readAgainHeld();

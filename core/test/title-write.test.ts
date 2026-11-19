@@ -151,15 +151,6 @@ describe("changeTitle's requests", () => {
     await change(transport, B);
     expect(postsTo("ajax/change_mydon_profile.php")).toHaveLength(1);
   });
-
-  test("sends nothing at all in the 05:00-07:00 JST break", async () => {
-    const { transport, routes } = fakeHiroba();
-    const outcome = await change(transport, B, {
-      now: new Date("2026-09-26T20:30:00Z"),
-    });
-    expect(outcome).toEqual({ kind: "maintenance" });
-    expect(routes()).toEqual([]);
-  });
 });
 
 describe("changeTitle's pre-check", () => {

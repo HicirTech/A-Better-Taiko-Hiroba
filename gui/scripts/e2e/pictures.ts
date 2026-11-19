@@ -252,7 +252,6 @@ async function titlePlate(ctx: Ctx) {
     await Bun.sleep(300);
     await until("Last updated");
     await waitForSeen("read result", page, async () => (await ready()) || undefined);
-    return platesSettled();
   };
 
   await fetch(`${HIROBA}${CONTROL.titleplate}?answer=gif`);
@@ -267,16 +266,16 @@ async function titlePlate(ctx: Ctx) {
     (await textOf("#dan")) === "Dan-i: 9th Dan";
   results.myDonAlignedWithoutThePlate = await tileAlignedAt(1100);
   await fetch(`${HIROBA}${CONTROL.titleplate}?answer=png`);
-  const afterOther = await readAndWait(() => shownNow("#title-plate-image"));
+  await readAndWait(() => shownNow("#title-plate-image"));
+  const afterOther = await platesSettled();
   results.plateBlankFallsBack = blankShown && afterOther.length - platesBeforeOther === 2;
   await fetch(`${HIROBA}${CONTROL.variant}?title=set`);
   await readAndWait(async () => (await textOf("#profile-title")) === "Title: サンプルの称号");
   await fetch(`${HIROBA}${CONTROL.variant}?title=other`);
   await readAndWait(async () => (await textOf("#profile-title")) === "Title: 別のサンプル称号");
   await fetch(`${HIROBA}${CONTROL.variant}?title=set`);
-  const afterTitles = await readAndWait(
-    async () => (await textOf("#profile-title")) === "Title: サンプルの称号",
-  );
+  await readAndWait(async () => (await textOf("#profile-title")) === "Title: サンプルの称号");
+  const afterTitles = await platesSettled();
   results.plateOncePerTitle =
     platesAtSignIn.length === 1 &&
     platesAfterRereads.length === 1 &&

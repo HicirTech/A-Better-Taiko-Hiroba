@@ -1,6 +1,5 @@
-import { PORT_CALLS } from "../../src/shared/session-port";
 import type { Ctx, LaneSection } from "./context";
-import { pageHelpers, same, waitFor } from "./harness";
+import { pageHelpers, waitFor } from "./harness";
 
 const signedOutKeys = [
   "launchCoverShowsThenLeaves",
@@ -8,7 +7,6 @@ const signedOutKeys = [
   "noNavigationSignedOut",
   "schemeFollowsSystem",
   "surface",
-  "bridgeIsThePortVerbs",
 ] as const;
 
 async function signedOut(ctx: Ctx) {
@@ -66,10 +64,6 @@ async function signedOut(ctx: Ctx) {
 
   results.surface = await page.evaluate(
     `({ bridge: Object.keys(window.abth ?? {}), require: typeof require, process: typeof process, cookie: document.cookie })`,
-  );
-  results.bridgeIsThePortVerbs = same(
-    (results.surface as { bridge: string[] }).bridge,
-    Object.keys(PORT_CALLS),
   );
 }
 

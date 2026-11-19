@@ -241,7 +241,7 @@ async function heldWrites(ctx: Ctx) {
   await running.click("#sign-in");
   await running.until("サンプルどん");
   tokens.push((await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text()).trim());
-  await Bun.sleep(1500);
+  await pageHelpers(running.page).settled();
   const READS_ASKED: Record<VerbsQueued<"read">, { call: string; requests: string[] }> = {
     readProfile: {
       call: "window.abth.readProfile().then((result) => result.ok)",

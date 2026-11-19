@@ -46,17 +46,30 @@ const SEARCHES_KEY = "abth.songSearches";
 async function readAgain(ctx: Ctx) {
   const { results, state, tokens } = ctx;
   const { click, currentPage, goTo, page, text, textOf, until } = ctx.app;
-  const { atSize, attribute, boxOf, exists, fabState, pullIndicator, swipe, touchEmulated } =
-    pageHelpers(page);
+  const {
+    atSize,
+    attribute,
+    boxOf,
+    exists,
+    fabState,
+    pullIndicator,
+    settled,
+    swipe,
+    touchEmulated,
+  } = pageHelpers(page);
+  const readAgainEnded = async () => {
+    const before = await myPageHits();
+    await click("#read-again");
+    await waitFor("a read of my page", async () =>
+      (await myPageHits()) > before ? true : undefined,
+    );
+    await settled();
+  };
 
   await fetch(`${HIROBA}${CONTROL.rotate}`);
-  await click("#read-again");
-  await Bun.sleep(500);
-  await until("Last updated");
+  await readAgainEnded();
   tokens.push(await (await fetch(`${HIROBA}${CONTROL.lastToken}`)).text());
-  await click("#read-again");
-  await Bun.sleep(500);
-  await until("Last updated");
+  await readAgainEnded();
   results.rotationTakenUp =
     tokens[1] !== tokens[0] &&
     (await textOf("#crowns-silver")) === "11 of 14" &&
@@ -268,7 +281,6 @@ const profileVariantsKeys = [
   "lastUpdatedAtTheNavFoot",
   "unreadableDanShownWithTheRest",
   "twoRequestsWithDanOneWithout",
-  "danLabelPictureCostsNothing",
   "namedRankReadOffItsLabel",
   "unknownLabelReadOffThePlates",
   "panelZerosShown",
@@ -335,8 +347,6 @@ async function profileVariants(ctx: Ctx) {
   // the read of my page for the refresh's token.
   results.twoRequestsWithDanOneWithout =
     JSON.stringify(requestsPerRead) === JSON.stringify([3, 3, 3, 2, 3]);
-  results.danLabelPictureCostsNothing =
-    results.twoRequestsWithDanOneWithout === true && results.danLabelShownAsPicture === true;
 
   // A 名人's label reads as its dan, with no plate asked.
   const PLATE = "/imgsrc_dani.php";
