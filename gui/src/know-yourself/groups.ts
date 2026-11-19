@@ -1,9 +1,11 @@
+import type { SongBpm } from "@abth/core";
+
 import type { KnownChart } from "./known-charts";
 
 /** How wide a band of hits per second is. */
-const HITS_PER_SECOND_STEP = 0.5;
+export const HITS_PER_SECOND_STEP = 0.5;
 /** How wide a band of BPM is. */
-const BPM_STEP = 20;
+export const BPM_STEP = 20;
 /** Tempos below this, and from this up, are one band each: few songs are that slow or that fast. */
 const BPM_LOW = 80;
 const BPM_HIGH = 300;
@@ -78,12 +80,17 @@ const bpmBand = (bpm: number): GroupKey =>
       ? { kind: "band", from: BPM_HIGH, to: null }
       : band(bpm, BPM_STEP);
 
-/** By the one tempo the song search shows, wobbling or not; a range has no one BPM to band by. */
+/** The one tempo the song search shows, wobbling or not; none for a range or no tempo known. */
+export const oneTempo = (bpm: SongBpm | null): number | null =>
+  bpm === null || bpm.min !== bpm.max ? null : bpm.min;
+
+/** By the one tempo, wobbling or not; a range has no one BPM to band by. */
 export const byBpm = (charts: readonly KnownChart[]) =>
-  groupBy(charts, ({ bpm }) =>
-    bpm === null
+  groupBy(charts, ({ bpm }) => {
+    const tempo = oneTempo(bpm);
+    return bpm === null
       ? { kind: "unknown" }
-      : bpm.min !== bpm.max
+      : tempo === null
         ? { kind: "changing" }
-        : bpmBand(bpm.min),
-  );
+        : bpmBand(tempo);
+  });

@@ -10,14 +10,15 @@ export const gapKindOf = (chart: KnownChart): GapKind | null =>
 export const gapsOf = (charts: readonly KnownChart[]) =>
   charts.filter((chart) => gapKindOf(chart) !== null && chart.stars !== null);
 
-/** The upper median star level of the cleared charts: where the player stands. */
-export function anchorOf(charts: readonly KnownChart[]): number | null {
-  const stars = charts
-    .filter(isCleared)
-    .flatMap(({ stars }) => (stars === null ? [] : [stars]))
-    .sort((left, right) => left - right);
-  return stars[Math.floor(stars.length / 2)] ?? null;
+/** The middle value, the higher of the two middles of an even count; none of no values. */
+export function upperMedian(values: readonly number[]): number | null {
+  const sorted = [...values].sort((left, right) => left - right);
+  return sorted[Math.floor(sorted.length / 2)] ?? null;
 }
+
+/** The upper median star level of the cleared charts: where the player stands. */
+export const anchorOf = (charts: readonly KnownChart[]): number | null =>
+  upperMedian(charts.filter(isCleared).flatMap(({ stars }) => (stars === null ? [] : [stars])));
 
 /** The gaps nearest the player's level first; then the higher level, then the played chart. */
 export function nearestFirst(gaps: readonly KnownChart[], anchor: number | null): KnownChart[] {
