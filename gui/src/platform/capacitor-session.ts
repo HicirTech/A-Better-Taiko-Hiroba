@@ -141,7 +141,7 @@ export async function closeSignInBrowser(): Promise<void> {
 }
 
 // The WebView saves cookies on its own schedule; a swiped-away app could lose a fresh session.
-// Capacitor has no flush; any cookie write ends in one, so delete a cookie that does not exist.
+// On Android any cookie write ends in a flush, so delete a missing one; on iOS it writes nothing.
 export async function saveCookieStore(): Promise<void> {
   await CapacitorCookies.deleteCookie({ key: "abth-save" });
 }
