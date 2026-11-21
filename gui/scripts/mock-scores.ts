@@ -89,12 +89,14 @@ const NOT_PLAYED = `<div class="error"><div id="error" class="contentBox errorAr
 
 export function createScorePages(played: PlayedCharts) {
   let failing = "";
+  // A song Hiroba took off its lists, whose details answer the error shell too.
+  let removed = "";
   const asked: string[] = [];
   const songs = () =>
     Array.from(
       { length: Math.max(played.songCount() + UNPLAYED_SONGS, 2 * GENRE_FONTS.length) },
       (_, index) => index + 1,
-    );
+    ).filter((n) => String(SONG_NO_BASE + n) !== removed);
 
   return {
     /** One genre's `score_list.php`, carrying a form token as Hiroba's does. */
@@ -120,11 +122,13 @@ export function createScorePages(played: PlayedCharts) {
       return best === undefined ? NOT_PLAYED : detailPage(n, best);
     },
 
-    /** `/__scores`: a chart whose details fail (`fail=1012/3`, `fail=` for none), and the charts
-     * asked so far. */
+    /** `/__scores`: the chart that fails, the song off its list, and the charts asked so far. */
     control(params: URLSearchParams): unknown {
       if (params.has("fail")) {
         failing = params.get("fail") ?? "";
+      }
+      if (params.has("removed")) {
+        removed = params.get("removed") ?? "";
       }
       if (params.get("forget") === "1") {
         asked.length = 0;

@@ -23,6 +23,8 @@ export interface KnownChart {
   readonly stars: number | null;
   readonly hitsPerSecond: number | null;
   readonly bpm: SongBpm | null;
+  /** Hiroba took the song off its lists: the chart is shown as last read, never opened. */
+  readonly removed: boolean;
 }
 
 // Hiroba marks a double-play song only in its title: such songs count for neither shares nor sets.
@@ -36,7 +38,8 @@ export function knownCharts(
   const doubles = new Set(
     listed.songs.filter(({ title }) => isDoublePlay(title)).map(({ songNo }) => songNo),
   );
-  return listed.charts.flatMap(({ songNo, level, crown, scoreRank, hits }): KnownChart[] => {
+  return listed.charts.flatMap((chart): KnownChart[] => {
+    const { songNo, level, crown, scoreRank, hits, removed } = chart;
     if (doubles.has(songNo)) {
       return [];
     }
@@ -56,6 +59,7 @@ export function knownCharts(
         stars: song?.levels[difficulty] ?? null,
         hitsPerSecond: notes === null || seconds === null || seconds <= 0 ? null : notes / seconds,
         bpm: song?.bpm ?? null,
+        removed,
       },
     ];
   });
@@ -69,3 +73,6 @@ export const isTried = ({ crown }: KnownChart): boolean => crown !== "none";
 
 export const isCleared = ({ crown }: KnownChart): boolean =>
   CROWN_ORDER[crown] >= CROWN_ORDER.silver;
+
+/** Hiroba still lists the chart's song, so it can be played and read. */
+export const isListed = ({ removed }: KnownChart): boolean => !removed;

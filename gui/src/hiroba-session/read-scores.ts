@@ -12,6 +12,7 @@ import {
   isErr,
   notePlayedSong,
   noteWalk as noteWalkInBook,
+  numberedSong,
   ok,
   parseScoreDetailPage,
   parseScoreListPage,
@@ -24,6 +25,7 @@ import {
   type ScoreChange,
   type ScoreChangeLog,
   songCharts,
+  songRemoved,
 } from "@abth/core";
 
 import { type Pipeline, resultFailure, SCORE_READ_CONSUMERS } from "../shared/pipelines";
@@ -261,6 +263,10 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
       if (taikoNo === null) {
         return err({ kind: "notSignedIn" });
       }
+      // Its kept scores stand: Hiroba serves no details for a song it took off its lists.
+      if (songRemoved(await books.of(taikoNo), songNo)) {
+        return readOf(taikoNo, []);
+      }
       if (played !== null) {
         const { title, genre } = played;
         const genres = genre === null ? [] : [genre];
@@ -301,17 +307,18 @@ function viewOf(
     rows.set(key, [...(rows.get(key) ?? []), change]);
   }
   const scores = Object.entries(book.scores).flatMap(([key, score]): ScoreView[] => {
-    const song = songs.get(score.songNo);
-    if (score.record === null || song === undefined) {
+    if (score.record === null) {
       return [];
     }
     const { songNo, level, crown, scoreRank, record, fetchedAt } = score;
+    // The lists name the songs; one they no longer name was taken off Hiroba, its title with it.
+    const song = songs.get(songNo);
     return [
       {
         songNo,
-        songTitle: song.title,
-        genre: song.genres[0] ?? null,
-        genres: song.genres,
+        songTitle: song?.title ?? numberedSong(songNo),
+        genre: song?.genres[0] ?? null,
+        genres: song?.genres ?? [],
         level,
         crown,
         scoreRank,
@@ -321,6 +328,7 @@ function viewOf(
         recent: recent.get(key) ?? null,
         fetchedAt,
         changes: rows.get(key) ?? [],
+        removed: song === undefined,
       },
     ];
   });

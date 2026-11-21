@@ -8,6 +8,7 @@ import type { RowPlace } from "../ui/row-list";
 import { CHART_MARK_PX, ChartMarks } from "./chart-level";
 import { LEVEL_BADGE_PX } from "./level-badges";
 import { PLAY_MARKS_SKELETON, PlayMarks } from "./play-marks";
+import { withRemovedMark } from "./removed-song";
 import { type RowHandlers, SongRow, SongRowSkeleton } from "./song-row";
 
 /** About how tall a play's row draws, before a list measures it. */
@@ -35,6 +36,8 @@ export interface PlayRowProps {
   readonly lead?: ReactNode;
   /** What a press on the row opens: its chart's details. */
   readonly onOpen?: (() => void) | undefined;
+  /** Hiroba took the song off its lists: the row is marked, and its press opens no details. */
+  readonly removed?: boolean;
   readonly handlers?: RowHandlers;
   /** A long press on it has held long enough. */
   readonly held?: boolean;
@@ -55,6 +58,7 @@ export function PlayRow({
   heading,
   lead,
   onOpen,
+  removed = false,
   handlers,
   held = false,
   place,
@@ -85,7 +89,7 @@ export function PlayRow({
           ? undefined
           : shownGenres.map((genre) => t(GENRE_LABEL[genre])).join(", ")
       }
-      name={name?.text ?? play.songTitle}
+      name={withRemovedMark(name?.text ?? play.songTitle, removed, i18n)}
       lang={name?.lang ?? HIROBA_LANG}
       scrolling={heading !== undefined}
       {...(heading === undefined ? {} : { nameId: heading })}
@@ -102,7 +106,7 @@ export function PlayRow({
         </ChartMarks>
       }
       onPress={onOpen}
-      pressOpens
+      pressOpens={!removed}
       handlers={handlers}
       held={held}
       place={place}

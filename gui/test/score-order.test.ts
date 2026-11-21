@@ -55,6 +55,7 @@ function listed(
       recent: set.recent ?? null,
       fetchedAt: "2026-10-11T00:00:00.000Z",
       changes: [],
+      removed: false,
     },
     name,
     nameLang: "ja",

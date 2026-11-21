@@ -18,6 +18,7 @@ import {
   recentOrder,
   type ScoreBook,
   songCharts,
+  songRemoved,
 } from "../src/index";
 
 import { detailOf, LATER, listed, RECORD } from "./score-fixtures";
@@ -56,6 +57,15 @@ const LISTS: readonly GenreList[] = GENRES.map((genre) => {
         : [];
   return { genre, reading: { songs, scores } };
 });
+
+/** The lists once Hiroba took song 101 off genre 1. */
+const WITHOUT_101: readonly GenreList[] = LISTS.map(({ genre, reading }) => ({
+  genre,
+  reading: {
+    songs: reading.songs.filter(({ songNo }) => songNo !== "101"),
+    scores: reading.scores.filter(({ songNo }) => songNo !== "101"),
+  },
+}));
 
 const keys = (book: ScoreBook) =>
   chartsToRead(book).map(({ songNo, level }) => `${songNo}/${level}`);
@@ -195,5 +205,28 @@ describe("the score book", () => {
   test("a song's charts are the levels its lists name, easiest first", () => {
     expect(songCharts(readInFull(), "100").map(({ level }) => level)).toEqual([1, 2, 3, 4]);
     expect(songCharts(readInFull(), "999")).toEqual([]);
+  });
+
+  test("a full read that finds a song off the lists keeps its scores, and reads none of them", () => {
+    const book = foldLists(askedInFull(readInFull()), WITHOUT_101);
+
+    expect(keys(book)).toEqual(["100/2", "100/4", "102/4"]);
+    expect(book.scores["101/4"]?.record).toEqual(RECORD);
+    expect(songRemoved(book, "101")).toBe(true);
+  });
+
+  test("a played chart never detailed is not read once its song is off the lists", () => {
+    const book = foldLists(foldLists(EMPTY_SCORE_BOOK, LISTS), WITHOUT_101.slice(0, 1));
+
+    expect(keys(book)).toEqual(["100/2", "100/4", "102/4"]);
+  });
+
+  test("a song is removed only where the book keeps its charts and no list names it", () => {
+    const book = foldLists(askedInFull(readInFull()), WITHOUT_101);
+    const noted = notePlayedSong(book, { songNo: "103", title: "新曲", genres: [2 as const] });
+
+    expect(songRemoved(book, "100")).toBe(false);
+    expect(songRemoved(book, "999")).toBe(false);
+    expect(songRemoved(noted, "103")).toBe(false);
   });
 });

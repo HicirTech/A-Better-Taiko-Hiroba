@@ -11,6 +11,7 @@ const listedChart = (songNo: string, level: ListedChart["level"]): ListedChart =
   crown: "silver",
   scoreRank: 5,
   hits: { highScore: 900000, good: 500, ok: 20, bad: 5 },
+  removed: false,
 });
 
 const viewOf = (

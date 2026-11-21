@@ -183,6 +183,8 @@ export interface ScoreView extends RecentPlay {
   readonly fetchedAt: string;
   /** What reads of scores changed in the chart, oldest first. */
   readonly changes: readonly ScoreChange[];
+  /** Hiroba took the song off its lists: its scores stay as last read, and nothing reads it. */
+  readonly removed: boolean;
 }
 
 /** The kept scores: each played chart with its details, and the charts a read has yet to detail. */
@@ -204,9 +206,11 @@ export interface ListedChart {
   readonly scoreRank: ScoreRank | null;
   /** None where no details of it were ever read. */
   readonly hits: ChartHits | null;
+  /** Hiroba took the song off its lists: the chart stays as last read, and nothing reads it. */
+  readonly removed: boolean;
 }
 
-/** Every chart the lists name, with the songs by Hiroba's own titles. */
+/** Every chart the lists name, the played ones of songs taken off them, and the songs listed. */
 export interface ListedChartsView {
   readonly charts: readonly ListedChart[];
   readonly songs: readonly Song[];

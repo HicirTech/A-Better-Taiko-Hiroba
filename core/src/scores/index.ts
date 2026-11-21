@@ -7,10 +7,12 @@ export {
   foldDetail,
   foldLists,
   genresToRead,
+  listedSongNos,
   notePlayedSong,
   noteWalk,
   recentOrder,
   songCharts,
+  songRemoved,
 } from "./book";
 export type { ChartReading, ScoreChange, ScoreChangeLog } from "./changes";
 export {

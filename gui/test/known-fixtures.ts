@@ -11,6 +11,7 @@ export const known = (overrides: Partial<KnownChart> = {}): KnownChart => ({
   stars: 8,
   hitsPerSecond: 5.2,
   bpm: { min: 150, max: 150, wobbles: false },
+  removed: false,
   ...overrides,
 });
 

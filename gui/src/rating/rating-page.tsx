@@ -11,6 +11,7 @@ import type { ScoresState } from "../shared/scores/use-scores";
 import type { ProfileView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotButton } from "../snapshots/snapshot-button";
+import { useRemovedNote } from "../songs/removed-song";
 import { ScoreDetails } from "../songs/score-details";
 import { ChoiceToggles } from "../ui/choice-toggles";
 import { FrameTop, PAGE_HEIGHT } from "../ui/frame-top";
@@ -58,6 +59,7 @@ export function RatingPage({
   const { view, reading, song, failure, readSong } = scores;
   const { data, system } = ratingData;
   const [opened, setOpened] = useState<string | null>(null);
+  const removedNote = useRemovedNote("rating-removed-note", i18n);
   const formats = useMemo(() => ratingFormats(locale, system), [locale, system]);
   const rated = useMemo(
     () => (view === null || data === null ? null : ratePlayer(view.scores, data)),
@@ -87,7 +89,11 @@ export function RatingPage({
       lane={lane}
       formats={formats}
       i18n={i18n}
-      onOpen={(chart) => setOpened(chartKey(chart))}
+      onOpen={(chart) =>
+        scoreOf.get(chartKey(chart))?.removed === true
+          ? removedNote.tell()
+          : setOpened(chartKey(chart))
+      }
     />
   );
 
@@ -196,6 +202,7 @@ export function RatingPage({
           onReadSong={(score) => void readSong(score)}
           onClose={() => setOpened(null)}
         />
+        {removedNote.note}
       </Stack>
     </>
   );

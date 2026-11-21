@@ -102,6 +102,7 @@ function scoreOf({ song, difficulty, turn }: (typeof playedCharts)[number]): Sco
     sections: [],
     recent: turn < 7 ? turn : null,
     fetchedAt: READ_AT,
+    removed: false,
   };
   return { ...score, changes: madeUpChanges(score, turn) };
 }
@@ -142,6 +143,7 @@ export const STORY_LISTED: ListedChartsView = {
                   ok: score.record.ok,
                   bad: score.record.bad,
                 },
+          removed: false,
         };
       },
     ),

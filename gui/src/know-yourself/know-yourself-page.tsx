@@ -21,6 +21,7 @@ import {
 } from "../shared/song-catalogue/shown-difficulty";
 import { resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
+import { useRemovedNote } from "../songs/removed-song";
 import { ScoreDetails } from "../songs/score-details";
 import { SetNameDialog } from "../songs/set-name-dialog";
 import { SongDetails, type SongDetailsSetting } from "../songs/song-details";
@@ -97,6 +98,7 @@ export function KnowYourselfPage({
   const songOpened = useSongDetails(catalogue.songs);
   const toSet = useAddToSet<readonly string[]>(keptSets, i18n);
   const { adding } = toSet;
+  const removedNote = useRemovedNote("know-removed-note", i18n);
 
   const known = useMemo(
     () =>
@@ -139,11 +141,13 @@ export function KnowYourselfPage({
     [catalogue.songs, remembered, locale],
   );
   const opener = (chart: KnownChart) =>
-    scoreOf.has(chartKey(chart))
-      ? () => setDetails(chartKey(chart))
-      : catalogue.songs.has(chart.songNo)
-        ? () => songOpened.open(chart.songNo, chart.difficulty)
-        : undefined;
+    chart.removed
+      ? removedNote.tell
+      : scoreOf.has(chartKey(chart))
+        ? () => setDetails(chartKey(chart))
+        : catalogue.songs.has(chart.songNo)
+          ? () => songOpened.open(chart.songNo, chart.difficulty)
+          : undefined;
   const chartList: PageParts["chartList"] = (id, charts, note) => (
     <ChartList
       key={id}
@@ -275,6 +279,7 @@ export function KnowYourselfPage({
         difficulty={songOpened.difficulty}
         onClose={songOpened.close}
       />
+      {removedNote.note}
       {adding !== null && (
         <AddSongsDialog
           songs={adding}

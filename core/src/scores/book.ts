@@ -59,12 +59,23 @@ export function genresToRead(book: ScoreBook): readonly Genre[] {
 
 /** The charts a read details: those played since, then any played chart never detailed. */
 export function chartsToRead(book: ScoreBook): readonly Chart[] {
+  // Hiroba answers its error page for the details of a song it took off its lists.
+  const listed = listedSongNos(book);
   const stale = new Set(book.stale);
   const undetailed = Object.entries(book.scores)
-    .filter(([key, score]) => !stale.has(key) && score.crown !== "none" && score.record === null)
+    .filter(
+      ([key, score]) =>
+        !stale.has(key) &&
+        listed.has(score.songNo) &&
+        score.crown !== "none" &&
+        score.record === null,
+    )
     .map(([, { songNo, level }]) => ({ songNo, level }))
     .sort(byChart);
-  return [...book.stale.flatMap((key) => chartOfKey(book, key)), ...undetailed];
+  const played = book.stale
+    .flatMap((key) => chartOfKey(book, key))
+    .filter(({ songNo }) => listed.has(songNo));
+  return [...played, ...undetailed];
 }
 
 /** A song's charts as the lists name them, easiest first. */
@@ -73,6 +84,16 @@ export function songCharts(book: ScoreBook, songNo: string): readonly Chart[] {
     .filter((score) => score.songNo === songNo)
     .sort(byChart)
     .map(({ level }) => ({ songNo, level }));
+}
+
+/** The numbers of the book's songs: a kept chart of any other song left Hiroba's lists. */
+export function listedSongNos(book: ScoreBook): ReadonlySet<string> {
+  return new Set(book.songs.map(({ songNo }) => songNo));
+}
+
+/** Whether Hiroba took the song off its lists: its charts are kept, and no list names it now. */
+export function songRemoved(book: ScoreBook, songNo: string): boolean {
+  return songCharts(book, songNo).length > 0 && !listedSongNos(book).has(songNo);
 }
 
 /** Each chart's place in recent plays, 0 the newest; a chart they no longer show has none. */
