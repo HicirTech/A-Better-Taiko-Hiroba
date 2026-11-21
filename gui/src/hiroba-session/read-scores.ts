@@ -24,6 +24,7 @@ import {
   type ScoreChange,
   type ScoreChangeLog,
   songCharts,
+  songRemoved,
 } from "@abth/core";
 
 import { type Pipeline, resultFailure, SCORE_READ_CONSUMERS } from "../shared/pipelines";
@@ -260,6 +261,10 @@ export function createScoresReader(options: ScoresReaderOptions): ScoresReader {
       const taikoNo = owner();
       if (taikoNo === null) {
         return err({ kind: "notSignedIn" });
+      }
+      // Its kept scores stand: Hiroba serves no details for a song it took off its lists.
+      if (songRemoved(await books.of(taikoNo), songNo)) {
+        return readOf(taikoNo, []);
       }
       if (played !== null) {
         const { title, genre } = played;

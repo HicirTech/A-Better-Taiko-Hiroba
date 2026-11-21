@@ -1,10 +1,10 @@
-import type { ScoreBook } from "@abth/core";
+import { listedSongNos, type ScoreBook } from "@abth/core";
 
 import type { ListedChart, ListedChartsView } from "../shared/session-port";
 
 /** Every chart the lists name, in song number order; one whose song left the lists is not. */
 export function listedChartsOf(book: ScoreBook): ListedChartsView {
-  const listed = new Set(book.songs.map(({ songNo }) => songNo));
+  const listed = listedSongNos(book);
   const charts = Object.values(book.scores).flatMap(
     ({ songNo, level, crown, scoreRank, record }): ListedChart[] =>
       listed.has(songNo)

@@ -291,6 +291,20 @@ describe("createScoresReader", () => {
     expect(hiroba.detailsAsked()).toHaveLength(12 - before.length + 1);
   });
 
+  test("reads go past a song Hiroba took off its lists, asking nothing for it", async () => {
+    const hiroba = hirobaWith(12);
+    const { scores } = readersOver(hiroba.transport);
+    await scores.readScores();
+    hiroba.scores.control(new URLSearchParams({ removed: "1009" }));
+    hiroba.detailsAsked(true);
+
+    const every = await scores.readEveryScore();
+    const song = await scores.readSongScores("1009", null);
+
+    expect(every.ok && song.ok).toBe(true);
+    expect(hiroba.detailsAsked().filter((chart) => chart.startsWith("1009/"))).toEqual([]);
+  });
+
   test("a read of one song details each chart its lists name", async () => {
     const hiroba = hirobaWith(12);
     const { scores } = readersOver(hiroba.transport);
