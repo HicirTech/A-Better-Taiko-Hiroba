@@ -1,33 +1,33 @@
 {
-  "version": "0.8.0",
+  "version": "0.9.0",
   "notes": {
     "en": [
-      "The app now runs on iPhone and iPad, from iOS 17.5 on. It is not on the App Store: each release carries an unsigned IPA, which you sign with your own Apple account as you install it, a free account being enough; the README shows how, step by step, and AltStore and SideStore can add this project's source to get each new version as an update",
-      "See how you are getting on: a chart's score details draw its high score over time, Know yourself draws your plays, crowns and score ranks over time, and Rating draws your rating over time by either version; each point is a day the app read your scores, and none of it asks Hiroba for anything more",
-      "The app opens on a cover of its own, its icon on the theme's background, until the first page is drawn, and on Android again when you come back after more than five minutes away; Android's launch screen shows the app's icon instead of a stock logo, and on a computer the window appears once its page is drawn, no longer white at first",
-      "Japanese, Simplified Chinese and Traditional Chinese, as used in Hong Kong, are each drawn in the system's own fonts for that language on Windows, macOS and Android; Hiroba's Japanese names keep Japanese fonts on a Chinese page, a code for a report is set in a fixed-width font, and grey words such as Last updated are grey again",
-      "Fixes: the Costume page now opens when one of your items has no thumbnail, and a gift scanned right after the app opens names its songs and their levels, not only their numbers"
+      "A Game settings page, after Favourites, changes what Hiroba's own settings page holds: your region and who sees your profile, the score panel and Dan-i, the default play options such as speed, song skip, note position, voice and drum sound, song select, and choosing by difficulty; Sync to Hiroba sends the changes in one go and reads them back, as on every other page",
+      "Know yourself suggests charts to play next in three cards of up to 30 each: A little harder, charts not yet cleared just above your level; Scores in comfort, charts nearly counting in your rating; and For the joy of it, at the tempo and density you play most, charts never played among them unless you untick them. They follow your default rating, are worked out on the device from the scores it keeps and ask Hiroba for nothing, and a card's charts can go to a set",
+      "When Hiroba cannot be reached, the app opens on your profile as last read, saying so and when, and the other pages show what the device keeps; that profile is put away once Hiroba answers again, and deleted when you sign out",
+      "Inside, the app's code was put in order, so that a new feature touches fewer files; nothing you see changes because of it",
+      "Fixes: a read of the scores no longer stops at a song Hiroba has taken off its lists, whose played charts stay in Scores, Rating and Know yourself marked Removed, asking Hiroba nothing; and on Android the cookies of a costume preview are now saved, as after every other call to Hiroba"
     ],
     "ja": [
-      "iPhone と iPad（iOS 17.5 以降）で使えるようになりました。App Store にはなく、リリースごとに署名なしの IPA を添えるので、インストールするときに自分の Apple アカウントで署名します（無料のアカウントで足ります）。手順は README に順を追って書いてあり、AltStore と SideStore では、このプロジェクトのソースを追加すると新しいバージョンがアップデートとして届きます",
-      "成績の移り変わりを見られます。譜面の詳細にハイスコアの推移、自分を知るにプレイ回数・王冠・スコアランクの推移、レーティングにどちらのバージョンでもレーティングの推移を描きます。点はアプリがスコアを読み込んだ日で、ひろばへの読み込みは増えません",
-      "アプリは独自の起動画面で開きます。最初のページが描かれるまでテーマの背景にアプリのアイコンを表示し、Android では 5 分以上離れてから戻ったときにも表示します。Android の起動時の画像はアプリのアイコンになり、パソコンではページを描いてからウィンドウを表示するので、最初に白い画面が出なくなりました",
-      "日本語、簡体字中国語、繁体字中国語（香港の用法）を、Windows、macOS、Android のそれぞれの言語のシステムフォントで表示します。中国語のページでもひろばの日本語の名前は日本語のフォントで、報告用コードは等幅フォントで表示し、「最終更新」などの灰色の文字も灰色に戻りました",
-      "修正：サムネイルのないアイテムがあってもきせかえのページが開くようになり、アプリを開いてすぐ読み取ったギフトも、曲番号だけでなく曲名とレベルを表示します"
+      "お気に入りの次に「ゲーム設定」ページができました。国・地域とプロフィールの公開先、成績パネルと段位、はやさ・演奏スキップ・音符位置調整・ボイス・音色などのデフォルト演奏オプション、選曲、「むずかしさからえらぶ」と、ひろばの設定ページの内容を変えられます。ほかのページと同じく「ひろばに同期」でまとめて送り、読み込み直して確かめます",
+      "自分を知るで、次に遊ぶ譜面を 3 つのカードで最大 30 譜面ずつ提案します。「少し上の譜面」はまだクリアしていない、レベルを少し上回る譜面、「無理なくスコアアップ」はもう少しでレーティング対象に入る譜面、「気ままに楽しむ」はよく遊ぶテンポと密度に近い譜面で、チェックを外さない限り未プレイの譜面も入ります。最初のレーティングに沿って、端末に残したスコアから端末上で選ぶので、ひろばへの読み込みは増えません。カードの譜面はセットに追加できます",
+      "ひろばにつながらないときは、前回読み込んだプロフィールで開き、そのことと読み込んだ日時を表示します。ほかのページは端末に残っている内容を表示します。このプロフィールは、ひろばが応答すると表示をやめ、ログアウトすると削除します",
+      "アプリのコードを内部で整理し、新しい機能で変えるファイルが少なくて済むようにしました。見た目や動きは変わりません",
+      "修正：ひろばの一覧から消えた曲でスコアの読み込みが止まらなくなりました。その曲の遊んだ譜面はスコアデータ、レーティング、自分を知るに「配信終了」と示して残り、ひろばには何も問い合わせません。Android では、きせかえのプレビューのあとも、ほかの読み込みと同じく Cookie を保存します"
     ],
     "zh-Hans": [
-      "iPhone 和 iPad（iOS 17.5 或更新）也能用了：应用没有上架 App Store，每个版本都附带未签名的 IPA，安装时用你自己的 Apple 账号签名，免费账号就够；README 里有分步说明，在 AltStore 和 SideStore 里添加本项目的源后，新版本会作为更新出现",
-      "可以看到自己的进步：谱面详情画出最高分的变化，自我认知画出游玩次数、王冠和成绩排名的变化，Rating 页按两个版本画出 Rating 的变化；每个点是应用读取成绩的那天，不会因此向广场多请求任何内容",
-      "应用有了自己的开屏：打开时在主题背景上显示应用图标，直到第一个页面画好；Android 上离开超过 5 分钟再回来时也会显示。Android 启动时的图片换成了应用图标，电脑上页面画好后才显示窗口，不会先出现一片白色",
-      "日文、简体中文和繁体中文（按香港用法）在 Windows、macOS 和 Android 上分别使用各自语言的系统字体；中文页面上广场的日文名称仍用日文字体，报告代码改用等宽字体，「最后更新于」等灰色文字也恢复成灰色",
-      "修复：服装里有一件没有缩略图时，换装页现在也能正常打开；应用刚打开就扫描的礼物，现在会显示歌名和星级，而不只是歌曲编号"
+      "新增「游戏设定」页面，位于「收藏」之后，可以修改广场设定页面里的内容：国家／地区和个人资料公开对象、成绩面板与段位、速度、演奏跳过、音符位置调整、语音、音色等默认演奏选项、选歌，以及按难度选歌；和其他页面一样，按「同步到广场」一次发送全部修改，再读回确认",
+      "自我认知用三张卡片推荐接下来玩的谱面，每张卡片最多 30 个谱面：「稍难一点」是还没通关、比你的水平稍高的谱面，「轻松提分」是差一点就能计入 Rating 的谱面，「纯粹享受」是接近你最常玩的速度和烈度的谱面，除非取消勾选，也包括没玩过的谱面。推荐按默认 Rating、在设备上根据保存的成绩算出，不会向广场请求任何内容；每张卡片的谱面都可以加入套装",
+      "连不上广场时，应用会打开上次读到的个人资料，并注明这一点和读取时间；其他页面显示设备上保存的内容。广场恢复响应后就不再显示这份资料，退出登录时会把它删除",
+      "应用的代码在内部做了一次整理，以后加新功能要改的文件更少；你看到的界面和功能都不会因此改变",
+      "修复：读取成绩不会再卡在广场已不再列出的歌曲上；这些歌玩过的谱面会保留在成绩、Rating 和自我认知中，标为「已移除」，也不会为它们向广场请求任何内容。Android 上，换装预览之后也会像其他请求一样保存 Cookie"
     ],
     "zh-Hant": [
-      "iPhone 和 iPad（iOS 17.5 或更新版本）也能使用了：應用程式沒有在 App Store 上架，每個版本都附帶未簽名的 IPA，安裝時用你自己的 Apple 帳戶簽名，免費帳戶就足夠；README 裏有逐步說明，在 AltStore 和 SideStore 加入本項目的來源後，新版本會以更新形式出現",
-      "可以看到自己的進步：譜面詳情畫出最高分的變化，自我認知畫出遊玩次數、王冠和成績排名的變化，Rating 頁按兩個版本畫出 Rating 的變化；每個點是應用程式讀取成績的那天，不會因此向廣場多發任何請求",
-      "應用程式有了自己的開屏畫面：開啟時在主題背景上顯示應用程式圖示，直到第一個頁面畫好；Android 上離開超過 5 分鐘再回來時也會顯示。Android 啟動時的圖片換成了應用程式圖示，電腦上頁面畫好後才顯示視窗，不會先出現一片白色",
-      "日文、簡體中文和繁體中文（按香港用法）在 Windows、macOS 和 Android 上分別使用各自語言的系統字型；中文頁面上廣場的日文名稱仍用日文字型，回報代碼改用等寬字型，「最後更新於」等灰色文字也恢復成灰色",
-      "修正：服裝中有一件沒有縮圖時，換裝頁現在也能正常開啟；應用程式剛開啟就掃描的禮物，現在會顯示歌名和星級，而不只是歌曲編號"
+      "新增「遊戲設定」頁面，位於「收藏」之後，可以修改廣場設定頁面裏的內容：國家／地區和個人資料公開對象、成績面板與段位、速度、演奏跳過、音符位置調整、語音、音色等預設演奏選項、選歌，以及按難度選歌；和其他頁面一樣，按「同步到廣場」一次送出全部修改，再讀回確認",
+      "自我認知用三張卡片推薦接下來玩的譜面，每張卡片最多 30 個譜面：「稍難一點」是還沒通關、比你的水平稍高的譜面，「輕鬆提分」是差一點就能計入 Rating 的譜面，「純粹享受」是接近你最常玩的速度和烈度的譜面，除非取消勾選，也包括沒玩過的譜面。推薦按預設 Rating、在裝置上根據儲存的成績算出，不會向廣場發出任何請求；每張卡片的譜面都可以加入套裝",
+      "連不上廣場時，應用程式會開啟上次讀到的個人資料，並註明這一點和讀取時間；其他頁面顯示裝置上儲存的內容。廣場恢復回應後就不再顯示這份資料，登出時會把它刪除",
+      "應用程式內部做了一次整理，以後加新功能要改的檔案更少；你看到的介面和功能都不會因此改變",
+      "修正：讀取成績不會再卡在廣場已不再列出的歌曲上；這些歌玩過的譜面會保留在成績、Rating 和自我認知中，標為「已移除」，也不會為它們向廣場發出任何請求。Android 上，換裝預覽之後也會像其他請求一樣儲存 Cookie"
     ]
   }
 }

@@ -23,7 +23,7 @@
     },
     "gui": {
       "name": "@abth/gui",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "devDependencies": {
         "@abth/core": "workspace:*",
         "@abth/i18n": "workspace:*",
