@@ -1,9 +1,10 @@
-import { chartKey } from "@abth/core";
+import { chartKey, ratePlayer } from "@abth/core";
 import type { Translator } from "@abth/i18n";
 import { Box, Stack } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
 import type { PictureLane } from "../pictures/picture-lane";
 import type { SystemToast } from "../platform";
+import { ratingFormats } from "../shared/rating-data/rating-formats";
 import { listedOf } from "../shared/scores/score-order";
 import type { ScoresState } from "../shared/scores/use-scores";
 import type { ListedChartsView, ShownSong } from "../shared/session-port";
@@ -22,8 +23,10 @@ import { resolveSong } from "../shared/song-catalogue/song-look";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { ScoreDetails } from "../songs/score-details";
 import { SetNameDialog } from "../songs/set-name-dialog";
+import { SongDetails, type SongDetailsSetting } from "../songs/song-details";
 import { SongListFailed } from "../songs/song-list-failed";
 import { useAddToSet } from "../songs/use-add-to-set";
+import { useSongDetails } from "../songs/use-song-details";
 import { FilterChip } from "../ui/filter-chip";
 import { PAGE_HEIGHT } from "../ui/frame-top";
 import type { ModalLook } from "../ui/large-modal";
@@ -42,6 +45,10 @@ import type { PageParts } from "./page-parts";
 import { PlaysItem } from "./plays-item";
 import { RanksItem } from "./ranks-item";
 import { RanksOverTimeItem } from "./ranks-over-time-item";
+import { ComfortItem, HarderItem, JoyItem, type SuggestedBy } from "./suggestion-items";
+import { ratedPicksOf, shownBy } from "./suggestions";
+
+const NONE_SHOWN: ReadonlySet<string> = new Set();
 
 /** Where the player stands, from the kept scores and taiko.wiki's list; asks Hiroba nothing. */
 export function KnowYourselfPage({
@@ -49,6 +56,8 @@ export function KnowYourselfPage({
   cardOpened = false,
   listed,
   catalogue,
+  rating,
+  songDetails,
   lane,
   keptSets,
   shownDifficulty,
@@ -64,6 +73,10 @@ export function KnowYourselfPage({
   readonly listed: ListedChartsView | null;
   /** taiko.wiki's song list: each chart's stars, notes and tempo, and the names. */
   readonly catalogue: SongCatalogue;
+  /** The rating the charts to play next are picked by. */
+  readonly rating: SuggestedBy;
+  /** How a chart never played opens its song's details. */
+  readonly songDetails: SongDetailsSetting;
   readonly lane: PictureLane;
   /** The sets kept on this device, which a row's songs can go into. */
   readonly keptSets: FavoriteSets;
@@ -81,6 +94,7 @@ export function KnowYourselfPage({
   const [shown, setShown] = useState(shownDifficulty);
   const [opened, setOpened] = useState<string | null>(null);
   const [details, setDetails] = useState<string | null>(null);
+  const songOpened = useSongDetails(catalogue.songs);
   const toSet = useAddToSet<readonly string[]>(keptSets, i18n);
   const { adding } = toSet;
 
@@ -96,6 +110,20 @@ export function KnowYourselfPage({
     [view],
   );
   const changes = useMemo(() => (view?.scores ?? []).flatMap((one) => one.changes), [view]);
+  const formats = useMemo(() => ratingFormats(locale, rating.system), [locale, rating.system]);
+  const rated = useMemo(
+    () => (view === null || rating.data === null ? null : ratePlayer(view.scores, rating.data)),
+    [view, rating.data],
+  );
+  const picks = useMemo(
+    () => (rated === null || rating.data === null ? null : ratedPicksOf(here, rating.data, rated)),
+    [here, rating.data, rated],
+  );
+  const shownByRating = useMemo(() => (picks === null ? NONE_SHOWN : shownBy(picks)), [picks]);
+  const playsOf = useCallback(
+    (chart: KnownChart) => scoreOf.get(chartKey(chart))?.record.stageCount ?? 0,
+    [scoreOf],
+  );
   const remembered = useMemo(
     () =>
       new Map<string, ShownSong>(
@@ -111,7 +139,11 @@ export function KnowYourselfPage({
     [catalogue.songs, remembered, locale],
   );
   const opener = (chart: KnownChart) =>
-    scoreOf.has(chartKey(chart)) ? () => setDetails(chartKey(chart)) : undefined;
+    scoreOf.has(chartKey(chart))
+      ? () => setDetails(chartKey(chart))
+      : catalogue.songs.has(chart.songNo)
+        ? () => songOpened.open(chart.songNo, chart.difficulty)
+        : undefined;
   const chartList: PageParts["chartList"] = (id, charts, note) => (
     <ChartList
       key={id}
@@ -206,6 +238,20 @@ export function KnowYourselfPage({
             <BandItem view="bpm" charts={here} parts={parts} />
             <NearMissItem crown="fullCombo" charts={here} parts={parts} />
             <NearMissItem crown="donderful" charts={here} parts={parts} />
+            <HarderItem by={rating} pick={picks?.harder ?? null} formats={formats} parts={parts} />
+            <ComfortItem
+              by={rating}
+              pick={picks?.comfort ?? null}
+              formats={formats}
+              parts={parts}
+            />
+            <JoyItem
+              charts={here}
+              playsOf={playsOf}
+              shown={shownByRating}
+              formats={formats}
+              parts={parts}
+            />
             <PlaysItem charts={here} scoreOf={scoreOf} changes={changes} parts={parts} />
             <CrownsOverTimeItem charts={here} changes={changes} parts={parts} />
             <RanksOverTimeItem charts={here} changes={changes} parts={parts} />
@@ -222,6 +268,12 @@ export function KnowYourselfPage({
         i18n={i18n}
         onReadSong={(score) => void readSong(score)}
         onClose={() => setDetails(null)}
+      />
+      <SongDetails
+        {...songDetails}
+        song={songOpened.song}
+        difficulty={songOpened.difficulty}
+        onClose={songOpened.close}
       />
       {adding !== null && (
         <AddSongsDialog

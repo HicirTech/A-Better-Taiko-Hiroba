@@ -8,13 +8,14 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { IN_THE_WINDOW, usePicture } from "../pictures/use-picture";
 import { MY_DON, MyDonTile } from "../profile/my-don-portrait";
 import { PLATE_BAND_MAX_PX, TitlePlate } from "../profile/title-plate";
+import { ratingFormats } from "../shared/rating-data/rating-formats";
 import { RATING_SYSTEM_NAME } from "../shared/rating-data/rating-systems";
 import type { PictureWant, ProfileView, ScoreView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { SnapshotFrame } from "../snapshots/snapshot-frame";
 import { RATING_SNAPSHOT_WIDTH_PX } from "../snapshots/snapshot-picture";
 import { RatedList } from "./rated-list";
-import { ratingAndSkills, ratingFormats } from "./rating-figures";
+import { ratingAndSkills } from "./rating-figures";
 import { RatingRadar } from "./rating-radar";
 
 const PLATE: PictureWant = { kind: "titlePlate" };

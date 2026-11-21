@@ -1,3 +1,4 @@
+import type { Difficulty } from "@abth/core";
 import { useCallback, useState } from "react";
 
 import type { ListedSong } from "../shared/song-catalogue/use-song-catalogue";
@@ -6,20 +7,30 @@ import type { ListedSong } from "../shared/song-catalogue/use-song-catalogue";
 export interface SongDetailsState {
   /** None while shut, and once the list no longer holds the song. */
   readonly song: ListedSong | null;
+  /** The chart they open on, where one was asked for. */
+  readonly difficulty: Difficulty | null;
   /** Opened and not closed yet, whatever the list holds. */
   readonly shown: boolean;
-  readonly open: (songNo: string) => void;
+  readonly open: (songNo: string, difficulty?: Difficulty) => void;
   readonly close: () => void;
 }
 
 /** The song whose details stand over a page, looked up in `songs` as they are now. */
 export function useSongDetails(songs: ReadonlyMap<string, ListedSong>): SongDetailsState {
-  const [songNo, setSongNo] = useState<string | null>(null);
-  const open = useCallback((next: string) => setSongNo(next), []);
-  const close = useCallback(() => setSongNo(null), []);
+  const [opened, setOpened] = useState<{
+    readonly songNo: string;
+    readonly difficulty: Difficulty | null;
+  } | null>(null);
+  const open = useCallback(
+    (songNo: string, difficulty?: Difficulty) =>
+      setOpened({ songNo, difficulty: difficulty ?? null }),
+    [],
+  );
+  const close = useCallback(() => setOpened(null), []);
   return {
-    song: songNo === null ? null : (songs.get(songNo) ?? null),
-    shown: songNo !== null,
+    song: opened === null ? null : (songs.get(opened.songNo) ?? null),
+    difficulty: opened?.difficulty ?? null,
+    shown: opened !== null,
     open,
     close,
   };

@@ -7,7 +7,7 @@ import { CARD_GAP, SectionCard } from "../ui/section-card";
 import { readScores, scoresRead } from "./model-parts";
 import type { PageEntry } from "./page";
 import type { PageModel } from "./page-model";
-import { HEADING, scoresProgress } from "./page-parts";
+import { HEADING, scoresProgress, songDetailsOf } from "./page-parts";
 
 const KNOW_CARDS = [...Array(6).keys()];
 
@@ -17,10 +17,11 @@ export const KNOW_YOURSELF_MODEL: PageModel = {
   namesSongs: true,
   needsSongs: true,
   // A song list that could not be read is read again as the page opens.
-  opens: ({ scores, catalogue, keptSets }) => [
+  opens: ({ scores, catalogue, keptSets, ratingData }) => [
     scores.load,
     catalogue.readIfFailed,
     keptSets.reload,
+    ratingData.load,
   ],
   waits: ({ scores, listed, catalogue }) =>
     scores.view === null || listed === null || catalogue.state === "loading",
@@ -56,6 +57,8 @@ export const KNOW_YOURSELF_PAGE: PageEntry = {
       cardOpened={data.tipScene === "knowItem"}
       listed={data.listed}
       catalogue={data.catalogue}
+      rating={data.ratingData}
+      songDetails={songDetailsOf(data)}
       lane={data.lane}
       keptSets={data.keptSets}
       shownDifficulty={data.shownDifficulty}

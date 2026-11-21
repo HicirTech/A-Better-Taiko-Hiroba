@@ -238,7 +238,7 @@ export const en = {
   "settings.rating": "Rating",
   "settings.startingRating": "Default rating",
   "settings.startingRatingHint":
-    "Rating opens on this one; the switch at the page's top shows the other until you leave it.",
+    "Rating opens on this one, and Know yourself suggests charts by it; the switch at Rating's top shows the other until you leave it.",
   "settings.appearance": "Appearance",
   "settings.theme": "Theme",
   "settings.theme.default": "Default",
@@ -345,6 +345,9 @@ export const en = {
   "tips.rating.share": "This button shares your rating as a picture.",
   "tips.knowYourself.cards":
     "Open a card for the charts you have not cleared yet, and add their songs to a set.",
+  /** Points at "A little harder", first of Know yourself's three cards of charts to play next. */
+  "tips.knowYourself.suggestions":
+    "Three cards suggest what to play next: just above your level, nearly counting in your rating, and at the tempo and density you play most.",
   "tips.costume.readAgain.touch":
     "Pull down and hold six seconds to read the items' pictures from Hiroba again.",
   "tips.costume.readAgain.mouse":
@@ -430,6 +433,33 @@ export const en = {
   "know.changing": "Tempo changes",
   "know.almost.fullCombo": "Near a Full Combo",
   "know.almost.donderful": "Near a Donderful Combo",
+  /** Know yourself's three cards of charts to play next. */
+  "know.suggest.harder": "A little harder",
+  "know.suggest.comfort": "Scores in comfort",
+  "know.suggest.joy": "For the joy of it",
+  /** Params: {level}, a constant as its rating writes it, and {rating}, the rating's full name. */
+  "know.suggest.harder.summary":
+    "Not cleared yet, just above your level: Const. {level} by {rating}.",
+  /** Param: {accuracy}, a percentage such as 95.24%. */
+  "know.suggest.comfort.summary":
+    "Cleared charts within your level that would count at your usual {accuracy}.",
+  /** Params: {bpm}, a tempo, and {hits}, hits per second. */
+  "know.suggest.joy.summary":
+    "Charts near {bpm} BPM and {hits} hits/s, the tempo and density you play most.",
+  "know.suggest.harder.none": "Every chart above your level is cleared.",
+  "know.suggest.comfort.none":
+    "No cleared chart within your level would count at your usual accuracy.",
+  "know.suggest.comfort.fewRated":
+    "Once 20 charts are rated, the cleared ones closest to counting show here.",
+  "know.suggest.joy.none": "No chart is near the tempo and density you play most.",
+  "know.suggest.joy.noPlays": "Not enough plays yet to tell the tempo and density you play most.",
+  /** On a difficulty the rating does not rate. */
+  "know.suggest.unrated": "OurTaiko V1 rates only Extreme and Extreme (Ura) charts.",
+  "know.suggest.unratedV2": "OurTaiko V2 rates only Hard, Extreme and Extreme (Ura) charts.",
+  /** A chart's step to count: params {now} and {needed}, both percentages such as 95.24%. */
+  "know.suggest.toCount": "{now} → {needed}",
+  /** Param: {value}, hits per second. */
+  "know.suggest.hitsPerSecond": "{value} hits/s",
   "panel.art": "Score panel",
   /** The plate's own name is Hiroba's data, shown as written. */
   "medal.heading": "Don Medals",
