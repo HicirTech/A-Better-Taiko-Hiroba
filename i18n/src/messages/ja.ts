@@ -205,7 +205,7 @@ export const ja: Messages = {
   "settings.rating": "レーティング",
   "settings.startingRating": "最初のレーティング",
   "settings.startingRatingHint":
-    "レーティングを開いたときの版です。ページ上部の切り替えで、離れるまでもう一方を表示できます。",
+    "レーティングを開いたときの版で、「自分を知る」のおすすめもこの版で選びます。ページ上部の切り替えで、離れるまでもう一方を表示できます。",
   "settings.appearance": "外観",
   "settings.theme": "テーマ",
   "settings.theme.default": "標準",
@@ -303,6 +303,8 @@ export const ja: Messages = {
   "tips.rating.share": "このボタンで、レーティングを画像にして共有できます。",
   "tips.knowYourself.cards":
     "カードを開くと、まだクリアしていない譜面が並びます。その曲をセットに追加することもできます。",
+  "tips.knowYourself.suggestions":
+    "3枚のカードが次に遊ぶ譜面をおすすめします：レベルの少し上、もう少しでレーティング対象、よく遊ぶテンポと密度の譜面です。",
   "tips.costume.readAgain.touch":
     "下に引いたまま6秒待つと、アイテムの画像をひろばから読み込み直します。",
   "tips.costume.readAgain.mouse":
@@ -374,6 +376,25 @@ export const ja: Messages = {
   "know.changing": "テンポが変わる曲",
   "know.almost.fullCombo": "フルコンボまであと少し",
   "know.almost.donderful": "ドンダフルコンボまであと少し",
+  "know.suggest.harder": "少し上の譜面",
+  "know.suggest.comfort": "無理なくスコアアップ",
+  "know.suggest.joy": "気ままに楽しむ",
+  "know.suggest.harder.summary":
+    "まだクリアしていない、レベル（{rating} の定数 {level}）を少し上回る譜面です。",
+  "know.suggest.comfort.summary":
+    "レベル以内のクリア済みで、いつもの精度 {accuracy} ならレーティング対象に入る譜面です。",
+  "know.suggest.joy.summary": "よく遊ぶテンポと密度（BPM {bpm}・{hits} 打/秒）に近い譜面です。",
+  "know.suggest.harder.none": "レベルより上の譜面はすべてクリア済みです。",
+  "know.suggest.comfort.none":
+    "いつもの精度でレーティング対象に入る、レベル以内のクリア済み譜面はありません。",
+  "know.suggest.comfort.fewRated":
+    "レーティング対象が 20 曲そろうと、対象入りに近いクリア済み譜面がここに出ます。",
+  "know.suggest.joy.none": "よく遊ぶテンポと密度に近い譜面はありません。",
+  "know.suggest.joy.noPlays": "よく遊ぶテンポと密度を出すにはまだプレイが足りません。",
+  "know.suggest.unrated": "OurTaiko V1 が計算するのはおにとおに裏の譜面だけです。",
+  "know.suggest.unratedV2": "OurTaiko V2 が計算するのはむずかしい、おに、おに裏の譜面だけです。",
+  "know.suggest.toCount": "{now} → {needed}",
+  "know.suggest.hitsPerSecond": "{value} 打/秒",
   "panel.art": "成績パネル",
   "medal.heading": "どんメダル",
   "medal.count": "獲得数：{count}枚",

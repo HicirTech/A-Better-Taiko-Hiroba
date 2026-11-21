@@ -17,6 +17,7 @@ const tipsKeys = [
   "tipsSeenDoNotShowAgain",
   "navigationTipsOnTheOverview",
   "otherPagesTipsComeAlone",
+  "suggestionsTipRingsTheHarderCard",
   "tipOpensWhatItTells",
   "newerTipAloneWhereTheRestWereSeen",
 ] as const;
@@ -88,8 +89,32 @@ async function tips(ctx: Ctx) {
   const cardOpenWhileTold = await exists('#know-crowns [aria-expanded="true"]');
   results.otherPagesTipsComeAlone =
     own === "knowYourself.cards" &&
-    (await count()) === of(1, 1) &&
-    (await textOf("#tip-next")) === en.t("tips.done");
+    (await count()) === of(1, 2) &&
+    (await textOf("#tip-next")) === en.t("tips.next");
+  await click("#tip-next");
+
+  // 0.9.0's tip on the cards of charts to play next comes second, round the first of them.
+  const suggestions = await tipShown(own);
+  const ringsHarder = await waitFor(
+    "the ring round A little harder",
+    async () => {
+      const ringed = await boxOf("#tip-ring");
+      const card = await boxOf("#know-harder");
+      return (
+        (ringed.left <= card.left &&
+          ringed.right >= card.right &&
+          ringed.top <= card.top &&
+          ringed.bottom >= card.bottom) ||
+        undefined
+      );
+    },
+    5000,
+  ).catch(() => false);
+  results.suggestionsTipRingsTheHarderCard =
+    suggestions === "knowYourself.suggestions" &&
+    (await count()) === of(2, 2) &&
+    (await textOf("#tip-next")) === en.t("tips.done") &&
+    ringsHarder;
   await click("#tip-next");
   await tipsGone();
   const cardFoldedAfter = await waitFor(

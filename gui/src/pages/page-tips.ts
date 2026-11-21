@@ -131,6 +131,12 @@ export const TIPS: readonly Tip[] = [
     mouse: { at: [FIRST_CARD], words: "tips.knowYourself.cards", scene: "knowItem" },
   },
   {
+    id: "knowYourself.suggestions",
+    page: "knowYourself",
+    since: "0.9.0",
+    ...both(["#know-harder"], "tips.knowYourself.suggestions"),
+  },
+  {
     id: "costume.readAgain",
     page: "costume",
     since: "0.7.0",

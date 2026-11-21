@@ -73,6 +73,20 @@ describe("dueTips", () => {
     });
   });
 
+  test("tells Know yourself's cards of charts to play next after its older tip, at the first", () => {
+    expect(idsOf(dueTips("knowYourself", PHONE, new Set()))).toEqual([
+      "knowYourself.cards",
+      "knowYourself.suggestions",
+    ]);
+    expect(dueTips("knowYourself", COMPUTER, new Set(["knowYourself.cards"]))).toEqual([
+      {
+        id: "knowYourself.suggestions",
+        at: ["#know-harder"],
+        words: "tips.knowYourself.suggestions",
+      },
+    ]);
+  });
+
   test("leaves out every tip seen, so a newer version's tip comes alone where the rest were seen", () => {
     const older = new Set(idsOf(TIPS).filter((id) => id !== "favorites.gift"));
     expect(idsOf(dueTips("favorites", COMPUTER, older))).toEqual(["favorites.gift"]);

@@ -85,7 +85,7 @@ describe("PAGE_MODELS", () => {
     ["overview", ["searches.reload"]],
     ["scores", ["scores.load", "sets.reload"]],
     ["rating", ["scores.load", "ratingData.load"]],
-    ["knowYourself", ["scores.load", "songList.readIfFailed", "sets.reload"]],
+    ["knowYourself", ["scores.load", "songList.readIfFailed", "sets.reload", "ratingData.load"]],
     ["costume", []],
     ["nameTitle", []],
     ["favorites", ["sets.reload"]],

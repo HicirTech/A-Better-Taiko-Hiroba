@@ -7,11 +7,16 @@ export function bpmText({ min, max, wobbles }: SongBpm): string {
   return wobbles ? `≈${range}` : range;
 }
 
-/** The chart a song's details open on: the shown difficulty's, and the inner one for Extreme. */
+/** The chart details open on: one asked for, else the shown difficulty's; Extreme's inner first. */
 export function openingChart(
   levels: Readonly<Record<Difficulty, number | null>>,
   shown: ShownDifficulty,
+  asked: Difficulty | null = null,
 ): Difficulty | null {
+  if (asked !== null && levels[asked] !== null) {
+    return asked;
+  }
+
   if (shown === "oni" && levels.ura !== null) {
     return "ura";
   }

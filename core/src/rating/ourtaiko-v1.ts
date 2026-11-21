@@ -142,6 +142,12 @@ export function rateOurTaikoV1(scores: readonly RatedScore[], data: OurTaikoV1Da
   };
 }
 
+const xOf = (constant: number): number => X_OF_CONSTANT.get(constant) ?? LOWEST_X;
+
+/** What a play of the chart at an accuracy from 0.75 to 1 rates in V1. */
+export const ratingAtV1 = (chart: OurTaikoV1Chart, accuracy: number): number =>
+  blend(xOf(chart.constant), curvedAccuracy(accuracy));
+
 function rateChart(score: RatedScore, chart: OurTaikoV1Chart): ChartRating | null {
   const play = ratedPlay(score, chart.notes);
   if (play === null) {
@@ -149,9 +155,9 @@ function rateChart(score: RatedScore, chart: OurTaikoV1Chart): ChartRating | nul
   }
 
   const { accuracy } = play;
-  const x = X_OF_CONSTANT.get(chart.constant) ?? LOWEST_X;
+  const x = xOf(chart.constant);
   const y = curvedAccuracy(accuracy);
-  const rating = blend(x, y);
+  const rating = ratingAtV1(chart, accuracy);
   const skill = (raw: number) => Math.sqrt((rating * raw * SCALE_TOP) / 100);
   // A chart measured with no density has no stamina or speed: its formula divides by zero.
   const skills = Object.entries({
