@@ -8,7 +8,7 @@ import type { RowPlace } from "../ui/row-list";
 import { CHART_MARK_PX, ChartMarks } from "./chart-level";
 import { LEVEL_BADGE_PX } from "./level-badges";
 import { PLAY_MARKS_SKELETON, PlayMarks } from "./play-marks";
-import { RemovedMark } from "./removed-song";
+import { withRemovedMark } from "./removed-song";
 import { type RowHandlers, SongRow, SongRowSkeleton } from "./song-row";
 
 /** About how tall a play's row draws, before a list measures it. */
@@ -78,14 +78,6 @@ export function PlayRow({
   ];
   const line = (parts: readonly (string | null)[]) =>
     parts.filter((part) => part !== null).join(" · ");
-  const scoreLine = removed ? (
-    <>
-      <RemovedMark i18n={i18n} />
-      {line(score)}
-    </>
-  ) : (
-    line(score)
-  );
   return (
     <SongRow
       component={heading === undefined ? "li" : "div"}
@@ -97,11 +89,11 @@ export function PlayRow({
           ? undefined
           : shownGenres.map((genre) => t(GENRE_LABEL[genre])).join(", ")
       }
-      name={name?.text ?? play.songTitle}
+      name={withRemovedMark(name?.text ?? play.songTitle, removed, i18n)}
       lang={name?.lang ?? HIROBA_LANG}
       scrolling={heading !== undefined}
       {...(heading === undefined ? {} : { nameId: heading })}
-      lines={heading === undefined ? [scoreLine, line(hits)] : [scoreLine]}
+      lines={heading === undefined ? [line(score), line(hits)] : [line(score)]}
       marks={
         <ChartMarks
           difficulty={LEVEL_DIFFICULTY[play.level]}

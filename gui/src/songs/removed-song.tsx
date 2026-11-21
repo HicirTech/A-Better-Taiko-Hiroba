@@ -1,19 +1,30 @@
 import type { Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { LabelChip } from "../ui/label-chip";
 import { OperationSnackbar } from "../ui/operation-snackbar";
 
-// The mark rides in a line of text, its middle set to the words'.
-const IN_THE_LINE = { display: "inline-flex", verticalAlign: "middle", mr: 0.5 } as const;
+// The chip is taller than a name's line: `middle` would set it two pixels below the letters'.
+const IN_THE_LINE = { display: "inline-flex", verticalAlign: "top", mr: 0.5 } as const;
 
-/** The mark on a row of a song Hiroba took off its lists. */
-export function RemovedMark({ i18n }: { readonly i18n: Translator }) {
+function RemovedMark({ i18n }: { readonly i18n: Translator }) {
   return (
     <Box component="span" className="removed-mark" lang={i18n.locale} sx={IN_THE_LINE}>
       <LabelChip label={i18n.t("scores.removed")} />
     </Box>
+  );
+}
+
+/** A song's name in its row, after a mark where Hiroba took the song off its lists. */
+export function withRemovedMark(name: string, removed: boolean, i18n: Translator): ReactNode {
+  return removed ? (
+    <>
+      <RemovedMark i18n={i18n} />
+      {name}
+    </>
+  ) : (
+    name
   );
 }
 

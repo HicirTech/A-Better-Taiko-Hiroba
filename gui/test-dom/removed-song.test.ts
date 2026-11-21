@@ -40,7 +40,7 @@ const press = (element: Element | null) => {
 };
 
 describe("a song Hiroba took off its lists", () => {
-  test("has its play row marked beside its score, and a press that opens no dialog", () => {
+  test("has its play row marked before its name, and a press that opens no dialog", () => {
     const play = (removed: boolean) =>
       render(
         createElement(PlayRow, {
@@ -63,9 +63,10 @@ describe("a song Hiroba took off its lists", () => {
     const removed = play(true);
     const listed = play(false);
 
-    expect(removed.querySelector(".song-line .removed-mark .MuiChip-label")?.textContent).toBe(
+    expect(removed.querySelector(".song-name .removed-mark .MuiChip-label")?.textContent).toBe(
       "Removed",
     );
+    expect(removed.querySelector(".song-line .removed-mark")).toBeNull();
     expect(removed.querySelector("button.song-open")?.getAttribute("aria-haspopup")).toBeNull();
     expect(listed.querySelector(".removed-mark")).toBeNull();
     expect(listed.querySelector("button.song-open")?.getAttribute("aria-haspopup")).toBe("dialog");
@@ -95,7 +96,9 @@ describe("a song Hiroba took off its lists", () => {
     press(removed.querySelector("button.song-open"));
     press(container.querySelector("#gaps-add-nearest"));
 
-    expect(removed.querySelector(".removed-mark .MuiChip-label")?.textContent).toBe("Removed");
+    expect(removed.querySelector(".song-name .removed-mark .MuiChip-label")?.textContent).toBe(
+      "Removed",
+    );
     expect(removed.querySelector("input")?.disabled).toBe(true);
     expect(rowOf(container, "1002").querySelector("input")?.disabled).toBe(false);
     expect(pressed).toEqual(["1001"]);

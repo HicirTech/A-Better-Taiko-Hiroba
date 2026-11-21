@@ -6,7 +6,7 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { ChartMarks } from "../songs/chart-level";
-import { RemovedMark } from "../songs/removed-song";
+import { withRemovedMark } from "../songs/removed-song";
 import { RowCheckbox, SongRow } from "../songs/song-row";
 import { FilterToggles } from "../ui/filter-chip";
 import { RowList } from "../ui/row-list";
@@ -105,18 +105,17 @@ export function ChartList({
                 />
               }
               genres={look.genres}
-              name={look.name}
+              name={withRemovedMark(look.name, chart.removed, i18n)}
               lang={look.lang}
-              lines={[
-                ...(chart.removed ? [<RemovedMark key="removed" i18n={i18n} />] : []),
-                ...(look.artists.length > 0
+              lines={
+                look.artists.length > 0
                   ? [
                       <span key="artists" lang={HIROBA_LANG}>
                         {look.artists.join(", ")}
                       </span>,
                     ]
-                  : []),
-              ]}
+                  : []
+              }
               marks={
                 <ChartMarks
                   difficulty={chart.difficulty}
