@@ -2,6 +2,7 @@ import { err, ok } from "@abth/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 
 import { onDevice, touchOf } from "./story-kit/devices";
+import { PAGE_PROFILE } from "./story-kit/profile";
 import { found, press } from "./story-kit/steps";
 import { appOn } from "./story-kit/story-app";
 import { neverAnswers } from "./story-kit/story-port";
@@ -38,6 +39,15 @@ export const ReadFailed: Story = {
 /** Hiroba's own error page came in place of my page: the song search works all the same. */
 export const HirobaError: Story = {
   render: appOn("overview", { readProfile: () => Promise.resolve(err({ kind: "siteError" })) }),
+};
+
+/** Hiroba could not be reached: my page as last read, under why and when, with no どんメダル. */
+export const KeptProfile: Story = {
+  render: appOn("overview", {
+    readProfile: () => Promise.resolve(err({ kind: "unreachable" })),
+    keptProfile: () =>
+      Promise.resolve({ ...PAGE_PROFILE, medal: null, fetchedAt: "2026-11-19T05:30:00.000Z" }),
+  }),
 };
 
 /** A newer release is out: what is new, with Download and Later. */

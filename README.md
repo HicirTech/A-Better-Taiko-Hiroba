@@ -58,6 +58,7 @@ Download the IPA only from this project's Releases page.
 - [x] See how many notes a chart asks for each second, as a line over the song, branch by branch
 - [x] See each chart drawn from its TJA file, every branch at once, drawn ahead on ABTH CDN and compressed for slow networks or drawn on your device, or taiko.wiki's pictures of it, as you choose
 - [x] See what the app is asking each site, and how each request went, on a page of its own
+- [x] Open on your profile as last read, and what your device keeps, when Hiroba cannot be read
 - [ ] Browse offline, from a local database
 - [ ] Hold several accounts at once
 - [ ] Sync incrementally, and resume where it stopped

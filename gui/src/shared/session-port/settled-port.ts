@@ -21,6 +21,7 @@ export const FAILED_CALL_ANSWERS: FailedCallAnswers = {
   signIn: () => ({ kind: "unavailable" }),
   cancelSignIn: () => undefined,
   readProfile: () => READ_FAILED,
+  keptProfile: () => null,
   refreshHiroba: () => READ_FAILED,
   signOut: () => undefined,
   openCostumeEditor: () => READ_FAILED,

@@ -37,6 +37,13 @@ export {
   type SiteAddresses,
 } from "./hiroba-services";
 export {
+  KEPT_PROFILE_VERSION,
+  type KeptProfile,
+  type KeptProfileStore,
+  keptProfileIn,
+  keptProfileOf,
+} from "./kept-profile";
+export {
   type CostumeHistoryStore,
   type FolderHistoryStore,
   type HistoryStore,

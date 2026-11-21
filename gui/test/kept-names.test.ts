@@ -164,6 +164,7 @@ describe("what the desktop keeps, by name", () => {
   test("names every other file and folder in the data folder as earlier builds did", () => {
     expect(DATA_FOLDER).toEqual({
       session: "session.json",
+      keptProfile: "kept-profile.json",
       pipelines: "pipelines",
       pictures: "pictures",
       charts: "charts",

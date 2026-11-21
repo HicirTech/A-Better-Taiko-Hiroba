@@ -1,4 +1,11 @@
-import type { Difficulty, MedalProgress, PlayOptionCode, Profile, ScoreRank } from "@abth/core";
+import {
+  type Difficulty,
+  isRecord,
+  type MedalProgress,
+  type PlayOptionCode,
+  type Profile,
+  type ScoreRank,
+} from "@abth/core";
 
 import { type CrownKind, isWhole } from "../shared/session-port";
 import type { HirobaEndpoints } from "./types";
@@ -33,6 +40,12 @@ const MY_DON_QUERY = /^\?v=([\w.-]{0,32})&kind=mydon&fn=mydon_\d+$/;
 
 /** Why there is no source: the page showed none, or it failed its pattern, never corrected. */
 export type NoPictureSource = "notShown" | "unexpectedSrc";
+
+const NO_SOURCE = { notShown: true, unexpectedSrc: true } as const satisfies Record<
+  NoPictureSource,
+  true
+>;
+const isNoSource = (value: string): value is NoPictureSource => Object.hasOwn(NO_SOURCE, value);
 
 export interface TitlePlateSource {
   /** `bare` is the plate of whoever holds the session; `byTaikoNo` names the page's own taiko
@@ -86,6 +99,50 @@ export function pictureSourcesOf(profile: Profile, endpoints: HirobaEndpoints): 
     myDon: myDonOf(profile, endpoints),
   };
 }
+
+/** The sources a kept read holds: never the どんメダル plate, whose id stays off the disk. */
+export type KeptPictureSources = Omit<PictureSources, "medalPlate">;
+
+export function keptSourcesOf({
+  titlePlate,
+  scorePanel,
+  myDon,
+}: PictureSources): KeptPictureSources {
+  return { titlePlate, scorePanel, myDon };
+}
+
+/** Kept sources, each held to the pattern a page's is read with; null for anything else. */
+export function keptSourcesIn(value: unknown): KeptPictureSources | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const titlePlate = keptSourceIn(value.titlePlate, titlePlateIn);
+  const scorePanel = keptSourceIn(value.scorePanel, scorePanelIn);
+  const myDon = keptSourceIn(value.myDon, myDonIn);
+  return titlePlate === null || scorePanel === null || myDon === null
+    ? null
+    : { titlePlate, scorePanel, myDon };
+}
+
+function keptSourceIn<S>(
+  value: unknown,
+  sourceIn: (kept: Record<string, unknown>) => S | null,
+): S | NoPictureSource | null {
+  if (typeof value === "string") {
+    return isNoSource(value) ? value : null;
+  }
+  return isRecord(value) ? sourceIn(value) : null;
+}
+
+const titlePlateIn = ({ form, title }: Record<string, unknown>): TitlePlateSource | null =>
+  (form === "bare" || form === "byTaikoNo") && typeof title === "string" ? { form, title } : null;
+
+const scorePanelIn = ({ level }: Record<string, unknown>): ScorePanelSource | null =>
+  isWhole(level, PANEL_LEVEL_LEAST, PANEL_LEVEL_MOST) ? { level } : null;
+
+const myDonIn = ({ v }: Record<string, unknown>): MyDonSource | null =>
+  typeof v === "string" && MY_DON_QUERY.test(`?v=${v}&kind=mydon&fn=mydon_0`) ? { v } : null;
 
 function scorePanelOf(profile: Profile): ScorePanelSource | NoPictureSource {
   const level = profile.summary.countLevel;

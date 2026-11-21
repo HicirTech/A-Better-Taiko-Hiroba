@@ -18,6 +18,7 @@ export const PORT_CALLS = {
   signIn: { channel: "abth:sign-in", queueing: "unqueued", takes: 0 },
   cancelSignIn: { channel: "abth:cancel-sign-in", queueing: "unqueued", takes: 0 },
   readProfile: { channel: "abth:read-profile", queueing: "read", takes: 1 },
+  keptProfile: { channel: "abth:kept-profile", queueing: "unqueued", takes: 0 },
   refreshHiroba: { channel: "abth:refresh-hiroba", queueing: "exclusive", takes: 0 },
   signOut: { channel: "abth:sign-out", queueing: "unqueued", takes: 0 },
   openCostumeEditor: { channel: "abth:open-costume-editor", queueing: "read", takes: 0 },

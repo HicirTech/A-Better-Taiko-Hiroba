@@ -16,6 +16,7 @@ import {
 import { DATA_FOLDER } from "./data-folder";
 import { createHirobaTransport, type HirobaTransportOptions } from "./hiroba-transport";
 import { keptFileStore } from "./kept-file-store";
+import { keptProfileFile } from "./kept-profile-file";
 import { createDiskPictureStore } from "./picture-disk-store";
 import { createPipelineHistoryStore } from "./pipeline-history-store";
 import { saveReads } from "./save-reads";
@@ -81,6 +82,7 @@ export function createDesktopPort(parts: DesktopPortParts): HirobaSessionPort {
       pipeline: (name) =>
         createPipelineHistoryStore(inDataFolder(DATA_FOLDER.pipelines, `${name}.json`)),
       kept: (thing) => keptFileStore(dataFolder, thing),
+      profile: keptProfileFile(inDataFolder(DATA_FOLDER.keptProfile)),
       pictures: createDiskPictureStore(inDataFolder(DATA_FOLDER.pictures)),
       charts: createDiskPictureStore(inDataFolder(DATA_FOLDER.charts)),
       densities: createDiskPictureStore(inDataFolder(DATA_FOLDER.densities)),

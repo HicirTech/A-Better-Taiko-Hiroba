@@ -24,6 +24,7 @@ const CASES: VerbCase[] = [
   ["signIn", [], ["https://example.test/"]],
   ["cancelSignIn", [], [null]],
   ["readProfile", [], [{ force: true }]],
+  ["keptProfile", [], [1]],
   ["refreshHiroba", [], [true]],
   ["signOut", [], [1]],
   ["openCostumeEditor", [], [{ url: "https://example.test/" }]],

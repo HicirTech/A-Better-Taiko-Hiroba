@@ -23,6 +23,7 @@ import {
   readSongCatalogue,
 } from "../shared/song-catalogue";
 import { readUpdateFeed } from "../shared/updates";
+import { type KeptProfileStore, keptProfileOf } from "./kept-profile";
 import {
   KEPT_COSTUME_HISTORY,
   KEPT_FOLDER_HISTORY,
@@ -70,6 +71,8 @@ export interface ServiceStores {
   /** A pipeline's history, by the pipeline's name. */
   pipeline(name: string): PipelineHistoryStore;
   kept<T, M>(thing: KeptThing<T, M>): KeptStore<T, M>;
+  /** The last good read of my page, until the session ends. */
+  readonly profile: KeptProfileStore;
   readonly pictures: PictureStore;
   readonly charts: PictureStore;
   readonly densities: PictureStore;
@@ -189,7 +192,12 @@ export function createHirobaServices(parts: HirobaServiceParts): HirobaServices 
     offered = new Set();
     pictures.forget();
     previews.clear();
-    await parts.endSession();
+    try {
+      await parts.endSession();
+    } finally {
+      // After the shell's end: a read that ends meanwhile finds the session gone and keeps nothing.
+      await stores.profile.save(null);
+    }
   };
   const { afterHiroba } = parts;
   /** Runs, then lets the shell keep what Hiroba renewed, however the call ended. */
@@ -266,8 +274,23 @@ export function createHirobaServices(parts: HirobaServiceParts): HirobaServices 
         }
         owner = read.value.taikoNo;
         sources = read.value.pictures;
+        if (signedIn()) {
+          await stores.profile.save(keptProfileOf(read.value));
+        }
         await pictures.confirm(read.value.taikoNo);
         return ok(read.value.view);
+      },
+      keptProfile: async () => {
+        const kept = signedIn() ? await stores.profile.load() : null;
+        if (kept === null || !signedIn()) {
+          return null;
+        }
+        // Until my page is read again, whose kept data and pictures to show is the kept read's.
+        if (owner === null) {
+          owner = kept.taikoNo;
+          sources = { ...kept.pictures, medalPlate: "notShown" };
+        }
+        return { ...kept.view, medal: null };
       },
       signOut: forget,
       openCostumeEditor: renewing(async (hiroba) => {
@@ -280,7 +303,7 @@ export function createHirobaServices(parts: HirobaServiceParts): HirobaServices 
       }),
       openTitleEditor: renewing(writes.openTitleEditor),
       // Its failure forgets nothing: the next page read says whether the session is over.
-      previewCostume: (hiroba, set) => servedPreview(hiroba)(set),
+      previewCostume: renewing((hiroba, set) => servedPreview(hiroba)(set)),
       readPicture: (want, again) => pictures.read(want, again),
       changeCostume: renewing(writes.changeCostume),
       changeTitle: renewing(writes.changeTitle),
