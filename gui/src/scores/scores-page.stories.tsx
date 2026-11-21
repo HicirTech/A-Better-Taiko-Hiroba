@@ -44,7 +44,7 @@ export const SomeUnread: Story = {
   render: appOn("scores", { scores: () => Promise.resolve({ ...STORY_SCORES, unread: 12 }) }),
 };
 
-/** A song off Hiroba's lists and missing from the song list: its row marked, opening nothing. */
+/** A song off Hiroba's lists, played lately: its row marked and first, opening nothing. */
 export const ARemovedSong: Story = {
   render: appOn("scores", {
     scores: () =>
@@ -52,15 +52,17 @@ export const ARemovedSong: Story = {
         ...STORY_SCORES,
         scores: [
           ...STORY_SCORES.scores,
-          ...STORY_SCORES.scores.slice(0, 1).map((score) => ({
-            ...score,
-            songNo: "660",
-            songTitle: numberedSong("660"),
-            genre: null,
-            genres: [],
-            recent: null,
-            removed: true,
-          })),
+          ...STORY_SCORES.scores
+            .filter(({ level }) => level === 4)
+            .slice(0, 1)
+            .map((score) => ({
+              ...score,
+              songNo: "660",
+              songTitle: numberedSong("660"),
+              genre: null,
+              genres: [],
+              removed: true,
+            })),
         ],
       }),
   }),
