@@ -97,6 +97,8 @@ export const zhHant: Messages = {
   "scores.readingSong": "正在讀取「{song}」的成績…",
   "scores.failedList": "在{genre}的成績列表停下了。",
   "scores.failedChart": "在「{song}」（{difficulty}）停下了。重新讀取會從這裏繼續。",
+  "scores.removed": "已移除",
+  "scores.removedNote": "這首歌已被官方移除，廣場不再列出它。這裏顯示的是之前讀到的成績。",
   "scores.emptyPull": "還沒有成績。把頁面往下拉即可讀取全部成績，第一次要幾分鐘。",
   "scores.emptyReadAgain": "還沒有成績。按「重新讀取」或 F5 即可讀取全部成績，第一次要幾分鐘。",
   "scores.nothingNew":

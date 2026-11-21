@@ -124,6 +124,7 @@ function RatedRow({
       order={order}
       i18n={i18n}
       onOpen={onOpen}
+      removed={score.removed}
       data-song-no={score.songNo}
       data-level={score.level}
       lead={

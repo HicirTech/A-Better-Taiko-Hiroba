@@ -6,11 +6,12 @@ import type { PictureLane } from "../pictures/picture-lane";
 import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import type { SongLook } from "../shared/song-catalogue/song-look";
 import { ChartMarks } from "../songs/chart-level";
+import { RemovedMark } from "../songs/removed-song";
 import { RowCheckbox, SongRow } from "../songs/song-row";
 import { FilterToggles } from "../ui/filter-chip";
 import { RowList } from "../ui/row-list";
 import { type GapKind, gapKindOf, songsOf } from "./gaps";
-import type { KnownChart } from "./known-charts";
+import { isListed, type KnownChart } from "./known-charts";
 
 const GAP_KINDS: readonly GapKind[] = ["never", "notCleared"];
 const GAP_LABEL = { never: "know.never", notCleared: "know.tried" } as const;
@@ -49,7 +50,7 @@ export function ChartList({
   const [kind, setKind] = useState<GapKind | null>(null);
   const shown = kind === null ? charts : charts.filter((chart) => gapKindOf(chart) === kind);
   const tickedSongs = songsOf(shown.filter((chart) => ticked.has(chartKey(chart))));
-  const nearest = songsOf(shown).slice(0, SET_SONG_LIMIT);
+  const nearest = songsOf(shown.filter(isListed)).slice(0, SET_SONG_LIMIT);
   const tick = (key: string) =>
     setTicked((now) => {
       const next = new Set(now);
@@ -98,6 +99,7 @@ export function ChartList({
               start={
                 <RowCheckbox
                   checked={ticked.has(key)}
+                  disabled={chart.removed}
                   label={look.name}
                   onChange={() => tick(key)}
                 />
@@ -105,15 +107,16 @@ export function ChartList({
               genres={look.genres}
               name={look.name}
               lang={look.lang}
-              lines={
-                look.artists.length > 0
+              lines={[
+                ...(chart.removed ? [<RemovedMark key="removed" i18n={i18n} />] : []),
+                ...(look.artists.length > 0
                   ? [
                       <span key="artists" lang={HIROBA_LANG}>
                         {look.artists.join(", ")}
                       </span>,
                     ]
-                  : []
-              }
+                  : []),
+              ]}
               marks={
                 <ChartMarks
                   difficulty={chart.difficulty}
@@ -134,7 +137,7 @@ export function ChartList({
                 </ChartMarks>
               }
               onPress={opener(chart)}
-              pressOpens
+              pressOpens={!chart.removed}
               place={place}
             />
           );

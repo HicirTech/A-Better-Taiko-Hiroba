@@ -11,7 +11,7 @@ import {
 import { SET_SONG_LIMIT } from "../shared/sets/favorite-sets";
 import { upperMedian } from "./gaps";
 import { BPM_STEP, HITS_PER_SECOND_STEP, oneTempo } from "./groups";
-import { isCleared, type KnownChart } from "./known-charts";
+import { isCleared, isListed, type KnownChart } from "./known-charts";
 
 /** The most charts a kind suggests: as many as a set holds, so one kind fills a set. */
 export const SUGGESTED = SET_SONG_LIMIT;
@@ -200,6 +200,7 @@ export function joyCharts(
     if (
       tempo === null ||
       hitsPerSecond === null ||
+      !isListed(chart) ||
       shown.has(chartKey(chart)) ||
       (!withNever && chart.crown === "none")
     ) {
@@ -236,15 +237,16 @@ export function ratedPicksOf(
     return { harder: { kind: "noneRated" }, comfort: { kind: "noneRated" } };
   }
 
+  const listed = charts.filter(isListed);
   return {
-    harder: { kind: "picked", level: level.level, charts: harderCharts(charts, data, level) },
+    harder: { kind: "picked", level: level.level, charts: harderCharts(listed, data, level) },
     comfort:
       level.floor === null
         ? { kind: "fewRated" }
         : {
             kind: "picked",
             usual: level.usual,
-            charts: comfortCharts(charts, data, rated, level, level.floor),
+            charts: comfortCharts(listed, data, rated, level, level.floor),
           },
   };
 }

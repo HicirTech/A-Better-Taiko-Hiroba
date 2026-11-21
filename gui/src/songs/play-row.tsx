@@ -8,6 +8,7 @@ import type { RowPlace } from "../ui/row-list";
 import { CHART_MARK_PX, ChartMarks } from "./chart-level";
 import { LEVEL_BADGE_PX } from "./level-badges";
 import { PLAY_MARKS_SKELETON, PlayMarks } from "./play-marks";
+import { RemovedMark } from "./removed-song";
 import { type RowHandlers, SongRow, SongRowSkeleton } from "./song-row";
 
 /** About how tall a play's row draws, before a list measures it. */
@@ -35,6 +36,8 @@ export interface PlayRowProps {
   readonly lead?: ReactNode;
   /** What a press on the row opens: its chart's details. */
   readonly onOpen?: (() => void) | undefined;
+  /** Hiroba took the song off its lists: the row is marked, and its press opens no details. */
+  readonly removed?: boolean;
   readonly handlers?: RowHandlers;
   /** A long press on it has held long enough. */
   readonly held?: boolean;
@@ -55,6 +58,7 @@ export function PlayRow({
   heading,
   lead,
   onOpen,
+  removed = false,
   handlers,
   held = false,
   place,
@@ -74,6 +78,14 @@ export function PlayRow({
   ];
   const line = (parts: readonly (string | null)[]) =>
     parts.filter((part) => part !== null).join(" · ");
+  const scoreLine = removed ? (
+    <>
+      <RemovedMark i18n={i18n} />
+      {line(score)}
+    </>
+  ) : (
+    line(score)
+  );
   return (
     <SongRow
       component={heading === undefined ? "li" : "div"}
@@ -89,7 +101,7 @@ export function PlayRow({
       lang={name?.lang ?? HIROBA_LANG}
       scrolling={heading !== undefined}
       {...(heading === undefined ? {} : { nameId: heading })}
-      lines={heading === undefined ? [line(score), line(hits)] : [line(score)]}
+      lines={heading === undefined ? [scoreLine, line(hits)] : [scoreLine]}
       marks={
         <ChartMarks
           difficulty={LEVEL_DIFFICULTY[play.level]}
@@ -102,7 +114,7 @@ export function PlayRow({
         </ChartMarks>
       }
       onPress={onOpen}
-      pressOpens
+      pressOpens={!removed}
       handlers={handlers}
       held={held}
       place={place}

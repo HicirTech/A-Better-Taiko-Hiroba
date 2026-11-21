@@ -291,7 +291,7 @@ describe("createScoresReader", () => {
     expect(hiroba.detailsAsked()).toHaveLength(12 - before.length + 1);
   });
 
-  test("reads go past a song Hiroba took off its lists, asking nothing for it", async () => {
+  test("reads go past a song Hiroba took off its lists, asking nothing for it; its scores stay, marked", async () => {
     const hiroba = hirobaWith(12);
     const { scores } = readersOver(hiroba.transport);
     await scores.readScores();
@@ -303,6 +303,10 @@ describe("createScoresReader", () => {
 
     expect(every.ok && song.ok).toBe(true);
     expect(hiroba.detailsAsked().filter((chart) => chart.startsWith("1009/"))).toEqual([]);
+    const kept = (await scores.scores()).scores.filter((one) => one.removed);
+    expect(
+      kept.map(({ songNo, level, songTitle, genre }) => [songNo, level, songTitle, genre]),
+    ).toEqual([["1009", 5, "#1009", null]]);
   });
 
   test("a read of one song details each chart its lists name", async () => {

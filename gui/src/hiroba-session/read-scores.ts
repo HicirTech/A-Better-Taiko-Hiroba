@@ -12,6 +12,7 @@ import {
   isErr,
   notePlayedSong,
   noteWalk as noteWalkInBook,
+  numberedSong,
   ok,
   parseScoreDetailPage,
   parseScoreListPage,
@@ -306,17 +307,18 @@ function viewOf(
     rows.set(key, [...(rows.get(key) ?? []), change]);
   }
   const scores = Object.entries(book.scores).flatMap(([key, score]): ScoreView[] => {
-    const song = songs.get(score.songNo);
-    if (score.record === null || song === undefined) {
+    if (score.record === null) {
       return [];
     }
     const { songNo, level, crown, scoreRank, record, fetchedAt } = score;
+    // The lists name the songs; one they no longer name was taken off Hiroba, its title with it.
+    const song = songs.get(songNo);
     return [
       {
         songNo,
-        songTitle: song.title,
-        genre: song.genres[0] ?? null,
-        genres: song.genres,
+        songTitle: song?.title ?? numberedSong(songNo),
+        genre: song?.genres[0] ?? null,
+        genres: song?.genres ?? [],
         level,
         crown,
         scoreRank,
@@ -326,6 +328,7 @@ function viewOf(
         recent: recent.get(key) ?? null,
         fetchedAt,
         changes: rows.get(key) ?? [],
+        removed: song === undefined,
       },
     ];
   });

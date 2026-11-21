@@ -85,3 +85,31 @@ export const NotInTheSongList: Story = {
   render: (_args, { globals }) =>
     rows(i18nOf(globals), STORY_LANE, [{ ...storyPlay("1001"), songTitle: "曲リストにない曲" }]),
 };
+
+/** A play of a song off Hiroba's lists and missing from the song list: marked, opening nothing. */
+export const RemovedSong: Story = {
+  render: (_args, { globals }) => {
+    const i18n = i18nOf(globals);
+    const kept = storyPlay("1001", { crown: "gold", scoreRank: 7 });
+    return (
+      <Box component="ul" sx={LIST}>
+        <PlayRow
+          play={kept}
+          {...listed(kept, i18n)}
+          lane={STORY_LANE}
+          order={0}
+          i18n={i18n}
+          onOpen={action("open details")}
+        />
+        <PlayRow
+          play={{ ...kept, songTitle: "#660", genre: null }}
+          lane={STORY_LANE}
+          order={1}
+          i18n={i18n}
+          onOpen={action("tell why it opens nothing")}
+          removed
+        />
+      </Box>
+    );
+  },
+};

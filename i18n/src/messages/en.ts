@@ -108,6 +108,11 @@ export const en = {
   "scores.failedList": "It stopped at the {genre} list.",
   /** Params: {song} and {difficulty}. Under a read's failure: the chart whose request failed. */
   "scores.failedChart": "It stopped at {song} ({difficulty}). Read again goes on from there.",
+  /** On the row of a song Hiroba took off its lists: its scores stay, and the row opens nothing. */
+  "scores.removed": "Removed",
+  /** Said at the window's foot as such a row is pressed. */
+  "scores.removedNote":
+    "This song was removed from the game: Hiroba no longer lists it. These are the scores read before.",
   /** On the scores page with nothing kept yet: how to read them, on a touch screen or not. */
   "scores.emptyPull":
     "No scores here yet. Pull the page down to read them all; the first read takes a few minutes.",

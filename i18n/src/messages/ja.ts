@@ -98,6 +98,9 @@ export const ja: Messages = {
   "scores.failedList": "{genre}のスコア一覧で止まりました。",
   "scores.failedChart":
     "「{song}」（{difficulty}）で止まりました。もう一度読み込むと、そこから続けます。",
+  "scores.removed": "配信終了",
+  "scores.removedNote":
+    "この曲は配信終了しました。ひろばの一覧にもうありません。以前に読み込んだスコアです。",
   "scores.emptyPull":
     "まだスコアがありません。画面を下に引っぱると全部読み込みます。初回は数分かかります。",
   "scores.emptyReadAgain":

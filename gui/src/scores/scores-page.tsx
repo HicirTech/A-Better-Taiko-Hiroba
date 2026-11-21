@@ -26,6 +26,7 @@ import {
 import type { ShownDifficulty } from "../shared/song-catalogue/shown-difficulty";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { PLAY_ROW_PX, PlayRow } from "../songs/play-row";
+import { useRemovedNote } from "../songs/removed-song";
 import { ScoreDetails } from "../songs/score-details";
 import { SetNameDialog } from "../songs/set-name-dialog";
 import { useAddToSet } from "../songs/use-add-to-set";
@@ -86,6 +87,7 @@ export function ScoresPage({
     { key: "add", label: t("history.addToSet"), chooses: true, onPick: () => toSet.choose(one) },
   ];
   const menu = useItemMenu(rowActions);
+  const removedNote = useRemovedNote("scores-removed-note", i18n);
 
   const rows = view?.scores ?? [];
   const listed = useMemo(
@@ -165,11 +167,12 @@ export function ScoresPage({
               place={place}
               touchFirst={touchFirst}
               i18n={i18n}
-              onOpen={() => setOpened(listedChart(one))}
+              onOpen={one.score.removed ? removedNote.tell : () => setOpened(listedChart(one))}
               onMenu={(at) => menu.open(one, at)}
             />
           )}
         </RowList>
+        {removedNote.note}
         <ScoreDetails
           listed={openedScore}
           lane={lane}
@@ -209,7 +212,7 @@ export function ScoresPage({
   );
 }
 
-/** A chart's row: a press opens its details; a right-click or a long press, its menu. */
+/** A chart's row: a press opens its details, a long press its menu; a removed song's, neither. */
 function ScoreRow({
   listed,
   lane,
@@ -242,8 +245,8 @@ function ScoreRow({
       order={order}
       i18n={i18n}
       onOpen={onOpen}
-      handlers={handlers}
-      held={held}
+      removed={score.removed}
+      {...(score.removed ? {} : { handlers, held })}
       place={place}
       data-song-no={score.songNo}
       data-level={score.level}

@@ -52,9 +52,17 @@ describe("listedChartsOf", () => {
     expect(charts[1]?.hits).toBeNull();
   });
 
-  test("leaves out a chart whose song no list names any more", () => {
-    const book = bookOf([score("1002", 4, true), score("1003", 4, true)], ["1002"]);
+  test("marks the played charts of a song no list names any more, and leaves out its others", () => {
+    const book = bookOf(
+      [score("1002", 4, true), score("1003", 4, true), score("1003", 3, false)],
+      ["1002"],
+    );
 
-    expect(listedChartsOf(book).charts.map((chart) => chart.songNo)).toEqual(["1002"]);
+    const { charts } = listedChartsOf(book);
+
+    expect(charts.map((chart) => `${chart.songNo}/${chart.level} ${chart.removed}`)).toEqual([
+      "1002/4 false",
+      "1003/4 true",
+    ]);
   });
 });

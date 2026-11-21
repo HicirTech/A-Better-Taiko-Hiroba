@@ -173,6 +173,25 @@ describe("ratedPicksOf: a little harder", () => {
 
     expect(harder.kind === "picked" && harder.charts.length).toBe(SUGGESTED);
   });
+
+  test("never offers a chart of a song Hiroba took off its lists", () => {
+    const data = dataOf([
+      ["1", 10],
+      ["2", 10.5],
+      ["3", 10.5],
+    ]);
+    const charts = [
+      known({ songNo: "1", crown: "gold" }),
+      unplayed({ songNo: "2" }),
+      known({ songNo: "3", crown: "played", removed: true }),
+    ];
+
+    const { harder } = ratedPicksOf(charts, data, ratedOf(data, LEVEL_10));
+
+    expect(harder.kind === "picked" && harder.charts.map(({ chart }) => chart.songNo)).toEqual([
+      "2",
+    ]);
+  });
 });
 
 describe("ratedPicksOf: scores in comfort", () => {
@@ -334,6 +353,15 @@ describe("joyCharts", () => {
     const picked = joyCharts(charts, playsOf, FAVOURITES, { withNever: false, shown });
 
     expect(songsOf(picked)).toEqual(["2", "9", "1"]);
+  });
+
+  test("never offers a chart of a song Hiroba took off its lists", () => {
+    const kept = charts.map((chart) =>
+      chart.songNo === "3" ? { ...chart, removed: true } : chart,
+    );
+    const picked = joyCharts(kept, playsOf, FAVOURITES, { withNever: true, shown: new Set() });
+
+    expect(songsOf(picked)).toEqual(["7", "2", "9", "1"]);
   });
 });
 
