@@ -253,6 +253,7 @@ export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): Hirob
     },
     cancelSignIn: () => Promise.resolve(),
     readProfile: () => later(ok(PAGE_PROFILE)),
+    keptProfile: () => later(null),
     refreshHiroba: () => later(ok(undefined)),
     signOut: () => {
       signedIn = false;

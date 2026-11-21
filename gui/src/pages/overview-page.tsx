@@ -8,6 +8,7 @@ import { SnapshotButton } from "../snapshots/snapshot-button";
 import { SongSearch } from "../song-search/song-search";
 import type { OpenAction } from "../ui/open-button";
 import { LoadFailed } from "../ui/read-failure-alert";
+import { StatusNote } from "../ui/status-note";
 import { MyPageFailure } from "./my-page-failure";
 import type { PageData } from "./page";
 import { songDetailsOf } from "./page-parts";
@@ -52,6 +53,11 @@ export function OverviewPage({ data }: { readonly data: PageData }) {
           {screen.name === "profile" ? (
             <>
               <MyPageFailure data={data} />
+              {screen.kept && (
+                <StatusNote id="profile-kept">
+                  {i18n.t("profile.lastRead", { time: i18n.dateTime(screen.profile.fetchedAt) })}
+                </StatusNote>
+              )}
               <OverviewHeader
                 profile={screen.profile}
                 lane={lane}
@@ -66,7 +72,7 @@ export function OverviewPage({ data }: { readonly data: PageData }) {
                 toast={touchFirst ? toast : undefined}
                 i18n={i18n}
               />
-              <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />
+              {!screen.kept && <MedalCard medal={screen.profile.medal} lane={lane} i18n={i18n} />}
             </>
           ) : (
             screen.name === "readFailed" && (

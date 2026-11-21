@@ -3,13 +3,13 @@ import type { PlainMessageKey, Translator } from "@abth/i18n";
 import { Box } from "@mui/material";
 
 import type { PictureLane } from "../pictures/picture-lane";
+import type { RatingFormats } from "../shared/rating-data/rating-formats";
 import { listedOf } from "../shared/scores/score-order";
 import type { ScoreView } from "../shared/session-port";
 import type { SongCatalogue } from "../shared/song-catalogue/use-song-catalogue";
 import { PlayRow } from "../songs/play-row";
 import { textSize } from "../theme/app-theme";
 import { SectionTitle } from "../ui/section-title";
-import type { RatingFormats } from "./rating-figures";
 
 const LIST = { listStyle: "none", m: 0, p: 0 } as const;
 const ONE_COLUMN = { ...LIST, display: "flex", flexDirection: "column" } as const;

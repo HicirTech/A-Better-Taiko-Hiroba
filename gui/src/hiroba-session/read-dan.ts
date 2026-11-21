@@ -1,11 +1,12 @@
 import {
   isErr,
+  isRecord,
   readDanLabel,
   readDanPlate,
   type Transport,
   type TransportResponse,
 } from "@abth/core";
-import { checkPng, describeAnswer, pngDataUrl } from "../shared/png-answer";
+import { checkPng, describeAnswer, isPngDataUrl, pngDataUrl } from "../shared/png-answer";
 import { type DanNumber, type DanView, isWhole, type PictureView } from "../shared/session-port";
 import type { HirobaEndpoints } from "./types";
 
@@ -22,7 +23,7 @@ const LAST_DAN = 19;
 const NAMED_RANKS = [19, 18, 17, 16] as const;
 // A plate is a 640×198 PNG of tens of kilobytes.
 const MAX_PLATE_BYTES = 256 * 1024;
-const TAIKO_NO = /^\d{12}$/;
+export const TAIKO_NO = /^\d{12}$/;
 
 /** Reads the dan off the label my page shows with one GET; whatever goes wrong comes back as
  * `unreadable` with codes. The source holds the taiko number, so it is never named in them. */
@@ -74,6 +75,36 @@ export async function readDan(
 }
 
 const isDanNumber = (board: number): board is DanNumber => isWhole(board, FIRST_DAN, LAST_DAN);
+
+/** A dan as `readDan` answers one, as a kept read of my page holds it; null for anything else. */
+export function keptDanIn(value: unknown): DanView | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const { board, code, picture } = value;
+  const kept = picture === null ? null : keptLabelIn(picture);
+  if (picture !== null && kept === null) {
+    return null;
+  }
+  if (value.unreadable === true) {
+    return typeof code === "string" ? unreadable(code, kept) : null;
+  }
+  return typeof board === "number" && isDanNumber(board) ? { board, picture: kept } : null;
+}
+
+function keptLabelIn(value: unknown): PictureView | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const { src, width, height } = value;
+  return isPngDataUrl(src, MAX_LABEL_BYTES) &&
+    isWhole(width, 1, MAX_LABEL_SIDE) &&
+    isWhole(height, 1, MAX_LABEL_SIDE)
+    ? { src, width, height }
+    : null;
+}
 
 /** The highest named rank whose plate carries a stamp, asked from the highest down, or a code. */
 async function readNamedRank(

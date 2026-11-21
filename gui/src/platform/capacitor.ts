@@ -25,6 +25,8 @@ export interface CapacitorPortOptions {
   /** Keeps pictures and costume histories across launches. Without it, pictures stay in memory
    * and the history is empty. */
   readonly indexedDb?: DatabaseFactory;
+  /** Where the last good read of my page is kept: the page's own storage unless said otherwise. */
+  readonly storage?: Storage;
   /** The clock a write checks Hiroba's daily break against. */
   readonly now?: () => Date;
 }
@@ -46,7 +48,7 @@ export async function createCapacitorPort(
     hiroba: transport,
     external: transport,
     pictureLimits: CAPACITOR_PICTURE_LIMITS,
-    stores: capacitorStores(options.indexedDb),
+    stores: capacitorStores(options.indexedDb, options.storage),
     signedIn: () => signedIn,
     endSession: async () => {
       signedIn = false;

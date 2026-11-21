@@ -74,11 +74,14 @@ export interface SongDetailsSetting {
 export interface SongDetailsProps extends SongDetailsSetting {
   /** The song to show; none shuts the dialog. */
   readonly song: ListedSong | null;
+  /** The chart it opens on, where the song has it; else as the shown difficulty decides. */
+  readonly difficulty?: Difficulty | null;
   readonly onClose: () => void;
 }
 
 export function SongDetails({
   song,
+  difficulty = null,
   port,
   lane,
   touchFirst,
@@ -90,15 +93,16 @@ export function SongDetails({
 }: SongDetailsProps) {
   // Kept while the modal slides away, so it does not go blank on its way, then dropped, so the
   // song opens afresh; stepping aside for the pipelines page keeps it.
-  const [last, setLast] = useState(song);
-  if (song !== null && song !== last) {
-    setLast(song);
+  const [last, setLast] = useState(song === null ? null : { song, difficulty });
+  if (song !== null && (song !== last?.song || difficulty !== last.difficulty)) {
+    setLast({ song, difficulty });
   }
   return last === null ? null : (
     <DetailsBody
-      key={last.songNo}
+      key={`${last.song.songNo}/${last.difficulty}`}
       open={song !== null}
-      song={last}
+      song={last.song}
+      opening={last.difficulty}
       port={port}
       lane={lane}
       touchFirst={touchFirst}
@@ -133,6 +137,7 @@ const averageText = (value: number, locale: Translator["locale"]) =>
 function DetailsBody({
   open,
   song,
+  opening,
   port,
   lane,
   touchFirst,
@@ -142,7 +147,12 @@ function DetailsBody({
   i18n,
   onClose,
   onExited,
-}: Omit<SongDetailsProps, "song"> & { open: boolean; song: ListedSong; onExited: () => void }) {
+}: Omit<SongDetailsProps, "song" | "difficulty"> & {
+  open: boolean;
+  song: ListedSong;
+  opening: Difficulty | null;
+  onExited: () => void;
+}) {
   const { t, locale } = i18n;
   const content = useRef<HTMLDivElement>(null);
   const [density, setDensity] = useState<DensityState>({
@@ -184,7 +194,7 @@ function DetailsBody({
   const [reloading, setReloading] = useState(false);
   const busy = density.reading || reloading;
   const readLabel = t("details.readDensity");
-  const [chart, setChart] = useState(() => openingChart(song.levels, shownDifficulty));
+  const [chart, setChart] = useState(() => openingChart(song.levels, shownDifficulty, opening));
   const [viewing, setViewing] = useState<ShownChart | null>(null);
   const name = shownName(song, locale);
   const charted = DIFFICULTIES.flatMap((difficulty) => {

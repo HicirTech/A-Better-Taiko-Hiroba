@@ -25,9 +25,10 @@ export function useReadAgain(entry: PageEntry, data: PageData): ReadAgain {
   const { session, writing, catalogue, scores, i18n } = data;
   const { screen } = session;
   const profileShown = screen.name === "profile";
+  const myPageRead = profileShown && !screen.kept;
   const signedIn = profileShown || screen.name === "readFailed";
   const myPageReading = session.myPage.phase === "reading";
-  const following = profileShown ? (entry.follows?.(data) ?? null) : null;
+  const following = myPageRead ? (entry.follows?.(data) ?? null) : null;
   const canRead =
     signedIn && !writing && !myPageReading && (following === null || following.canRead);
   // Turns away a second ask, by the button or a key, that lands before the button is shut.
@@ -41,15 +42,15 @@ export function useReadAgain(entry: PageEntry, data: PageData): ReadAgain {
       if (entry.namesSongs) {
         catalogue.readIfStale();
       }
-      // With my page unread, every page waits on it, so it alone is read.
-      await (profileShown ? entry.readAgain(data) : session.read(false, true));
+      // With my page unread, or shown only as kept, it alone is read: it says whose data it is.
+      await (myPageRead ? entry.readAgain(data) : session.read(false, true));
     } finally {
       started.current = false;
     }
   };
   useReadAgainKeys(signedIn, read);
   // All of a page's data is read again by a long hold, asked about first where that read asks.
-  const every = profileShown ? (entry.readsEvery?.(data) ?? null) : null;
+  const every = myPageRead ? (entry.readsEvery?.(data) ?? null) : null;
   const ask = every?.asks === true ? entry.askEvery : undefined;
   const [asking, setAsking] = useState(false);
   if (asking && ask === undefined) {

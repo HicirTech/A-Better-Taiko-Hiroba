@@ -1,3 +1,4 @@
+import type { Difficulty } from "@abth/core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { fn } from "storybook/test";
 import { type ChartSource, DEFAULT_CHART_SOURCE } from "../shared/song-catalogue/chart-source";
@@ -14,6 +15,8 @@ interface Args {
   readonly songNo: string;
   /** Where the charts' pictures come from, as Settings chose it. */
   readonly chartSource: ChartSource;
+  /** The chart they open on, as a suggested chart asks. */
+  readonly difficulty?: Difficulty;
   readonly onClose: () => void;
 }
 
@@ -21,9 +24,10 @@ const meta = {
   title: "Dialogs/SongDetails",
   tags: ["songs"],
   parameters: { layout: "fullscreen" },
-  render: ({ songNo, chartSource, onClose }, { globals }) => (
+  render: ({ songNo, chartSource, difficulty, onClose }, { globals }) => (
     <SongDetails
       song={storySong(songNo)}
+      difficulty={difficulty ?? null}
       port={STORY_CHART_PORT}
       lane={STORY_LANE}
       touchFirst={touchOf(globals)}
@@ -45,6 +49,9 @@ export const Song: Story = {};
 
 /** Branched charts and an inner chart; the tempo changes halfway. */
 export const BranchedWithAnInnerChart: Story = { args: { songNo: "1005" } };
+
+/** Opens on the chart asked for, as a suggestion asks: Extreme, though an inner one exists. */
+export const OpensOnTheChartAsked: Story = { args: { songNo: "1005", difficulty: "oni" } };
 
 /** No chart file: taiko.wiki's pictures, with a note, and no density. */
 export const NoChartFile: Story = { args: { songNo: "1003" } };

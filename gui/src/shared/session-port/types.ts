@@ -405,6 +405,8 @@ export interface HirobaSessionPort {
   cancelSignIn(): Promise<void>;
   /** My page, then its dan label if it shows one: one request, or two with a dan. Never retried. */
   readProfile(options?: ReadProfileOptions): Promise<Result<ProfileView, ReadFailure>>;
+  /** My page as last read here, for the session held, its どんメダル null. Asks Hiroba nothing. */
+  keptProfile(): Promise<ProfileView | null>;
   /** Hiroba's own ↻: my page for a fresh token, then one post, alone. Never retried. */
   refreshHiroba(): Promise<Result<void, ReadFailure>>;
   /** Forgets the session on this device. Hiroba is not told. */

@@ -289,6 +289,11 @@ This is an accepted exception to the rule that the session is never stored in pl
 turns off Android backup and device transfer for all of its data, so none of it leaves the device
 that way.
 
+**The profile last read.** Each good read of your page is kept beside the session, until the
+session ends, so that a launch that cannot read Hiroba opens on your profile as last read. It is
+`kept-profile.json` in the data folder on the desktop, and `abth.keptProfile` in the page's own
+storage on Android and iOS. It keeps nothing of the どんメダル.
+
 ### Pictures
 
 Each of Hiroba's pictures the app shows, an item's thumbnail, the score panel's art, a legend's or a
@@ -356,7 +361,8 @@ The page's own storage (`localStorage`) holds, on both platforms:
 - copies of what other sites answered: taiko.wiki's song list (`abth.songCatalogue`), the Chinese
   names (`abth.chineseNames`), the songs Hiroba's picker offers (`abth.pickableSongs`) and each
   rating's data (`abth.ratingData.<rating>`);
-- on Android, whether the player signed in, `abth.signedIn`.
+- on Android, whether the player signed in, `abth.signedIn`, and the profile last read,
+  `abth.keptProfile`.
 
 ## Translations
 

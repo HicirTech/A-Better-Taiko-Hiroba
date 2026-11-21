@@ -3,11 +3,14 @@ import { CONTROL } from "../mock-controls";
 import { INITIAL_PROFILE, OWNED_TITLES } from "../mock-profile";
 import { type App, launch, stop } from "./app";
 import {
+  en,
   HIROBA,
   IN_THE_BREAK,
+  KEPT_PROFILE_FILE,
   MEDAL_PLATE,
   NOON_JST,
   OFFSITE_HOST,
+  OUT_OF_REACH,
   PANEL_ART,
   REFUSING_HOST,
   SESSION_FILE,
@@ -219,6 +222,67 @@ async function sessionExpiry(ctx: Ctx) {
     existsSync(SESSION_FILE) && readFileSync(SESSION_FILE, "utf8").includes(kept);
 }
 
+const offlineKeys = [
+  "offlineOpensOnTheKeptProfile",
+  "offlineSaysWhenItWasRead",
+  "offlineKeptPicturesShown",
+  "offlineLeavesTheMedalOut",
+  "offlineReadAgainKeepsTheKeptProfile",
+  "onlineReadPutsTheKeptProfileAway",
+] as const;
+
+/** The grey line's words before and after the time it names. */
+const [LAST_READ_BEFORE = "", LAST_READ_AFTER = ""] = en
+  .t("profile.lastRead", { time: "\u0000" })
+  .split("\u0000");
+
+/** A launch with Hiroba and its picture host out of reach opens on my page as last read. */
+async function offline(ctx: Ctx) {
+  const { results } = ctx;
+  await stop(ctx.app);
+  let running = await launch({
+    now: NOON_JST,
+    env: { ABTH_DEV_HIROBA_ORIGIN: OUT_OF_REACH, ABTH_DEV_IMG_ORIGIN: OUT_OF_REACH },
+  });
+  ctx.app = running;
+  const offlinePage = pageHelpers(running.page);
+  await offlinePage.shown("#profile-kept");
+  results.offlineOpensOnTheKeptProfile =
+    (await running.textOf("#read-failure"))?.startsWith(en.t("failure.unreachable")) === true &&
+    ((await running.textOf("#profile")) ?? "").includes(INITIAL_PROFILE.nickname) &&
+    !(await offlinePage.exists("#sign-in"));
+  const line = (await running.textOf("#profile-kept")) ?? "";
+  results.offlineSaysWhenItWasRead =
+    line.startsWith(LAST_READ_BEFORE) &&
+    line.endsWith(LAST_READ_AFTER) &&
+    line.length > LAST_READ_BEFORE.length + LAST_READ_AFTER.length;
+  for (const picture of ["#title-plate-image", "#my-don-image"]) {
+    await waitForSeen(
+      picture,
+      running.page,
+      async () => (await offlinePage.exists(picture)) || undefined,
+    );
+  }
+  results.offlineKeptPicturesShown = true;
+  results.offlineLeavesTheMedalOut = !(await offlinePage.exists("#medal"));
+  await running.click("#read-again");
+  await Bun.sleep(300);
+  await offlinePage.settled();
+  results.offlineReadAgainKeepsTheKeptProfile =
+    (await offlinePage.exists("#profile-kept")) && (await offlinePage.exists("#read-failure"));
+
+  await stop(running);
+  running = await launch({ now: NOON_JST });
+  ctx.app = running;
+  const onlinePage = pageHelpers(running.page);
+  await running.until(INITIAL_PROFILE.nickname);
+  await onlinePage.settled();
+  results.onlineReadPutsTheKeptProfileAway =
+    (await onlinePage.exists("#profile")) &&
+    !(await onlinePage.exists("#profile-kept")) &&
+    !(await onlinePage.exists("#read-failure"));
+}
+
 const reopenKeys = [
   "signedInAfterReopen",
   "readsOnReopen",
@@ -356,6 +420,7 @@ const signedOutReopenKeys = [
   "playerPicturesKeptAtSignOut",
   "historyKeptAcrossSignOutAndIn",
   "historyPickShowsThePictureAtOnceAsksNothing",
+  "signOutForgetsTheKeptProfile",
 ] as const;
 
 async function signedOutReopen(ctx: Ctx) {
@@ -524,7 +589,9 @@ async function signedOutReopen(ctx: Ctx) {
     return asksNothing && draftChanged;
   };
   results.historyPickShowsThePictureAtOnceAsksNothing = await historyPickAfterSignIn();
+  const keptBeforeSignOut = existsSync(KEPT_PROFILE_FILE);
   await signOut();
+  results.signOutForgetsTheKeptProfile = keptBeforeSignOut && !existsSync(KEPT_PROFILE_FILE);
   tokens.push(...((await (await fetch(`${HIROBA}${CONTROL.tickets}`)).json()) as string[]));
 }
 
@@ -551,6 +618,14 @@ export const SESSION_EXPIRY_SECTION: LaneSection = {
   lane: "costume",
   keys: sessionExpiryKeys,
   run: sessionExpiry,
+};
+
+export const OFFLINE_SECTION: LaneSection = {
+  name: "offline",
+  phase: "signedIn",
+  lane: "costume",
+  keys: offlineKeys,
+  run: offline,
 };
 
 export const REOPEN_SECTION: LaneSection = {

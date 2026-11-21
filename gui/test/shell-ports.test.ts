@@ -19,6 +19,7 @@ import {
   standIn,
 } from "./hiroba-stand-in";
 import { fakeIndexedDbs } from "./indexeddb-fake";
+import { memoryStorage } from "./storage-fakes";
 
 const { createCapacitorPort } = await import("../src/platform/capacitor");
 const { CAPACITOR_ENDPOINTS, CAPACITOR_SITES } = await import("../src/platform/capacitor-sites");
@@ -129,8 +130,15 @@ async function androidShell(): Promise<Shell> {
   const hiroba = standIn(hirobaWorld());
   const signedInFlag = memoryFlag();
   const indexedDb = fakeIndexedDbs();
+  const storage = memoryStorage();
   const launch = () =>
-    createCapacitorPort({ closeLabel: () => CLOSE_LABEL, signedInFlag, indexedDb, now: NOON_JST });
+    createCapacitorPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag,
+      indexedDb,
+      storage,
+      now: NOON_JST,
+    });
   let port = await launch();
   return {
     port: () => port,
@@ -153,6 +161,7 @@ async function firstLaunches({ port, signIn, relaunch }: Shell) {
   const signedInAtFirst = await port().isSignedIn();
   const signedIn = await signIn();
   const profile = await port().readProfile();
+  const keptAfterRead = await port().keptProfile();
   const costume = await port().openCostumeEditor();
   const preview = await port().previewCostume(TARGET);
   const costumeChange = await port().changeCostume({ expected: START_SET, target: TARGET });
@@ -183,18 +192,22 @@ async function firstLaunches({ port, signIn, relaunch }: Shell) {
   const scores = await port().scores();
   await relaunch();
   const signedInOnRelaunch = await port().isSignedIn();
+  const keptOnRelaunch = await port().keptProfile();
   const profileOnRelaunch = await port().readProfile();
   const costumeHistory = await port().costumeHistory();
   const folderHistory = await port().folderHistory();
   const signOut = await port().signOut();
   const signedOut = await port().isSignedIn();
   const profileSignedOut = await port().readProfile();
+  const keptSignedOut = await port().keptProfile();
   await relaunch();
   const signedInAfterSignOut = await port().isSignedIn();
+  const keptAfterSignOut = await port().keptProfile();
   return {
     signedInAtFirst,
     signedIn,
     profile,
+    keptAfterRead,
     costume,
     preview,
     costumeChange,
@@ -209,13 +222,16 @@ async function firstLaunches({ port, signIn, relaunch }: Shell) {
     settingsChange,
     scores,
     signedInOnRelaunch,
+    keptOnRelaunch,
     profileOnRelaunch,
     costumeHistory,
     folderHistory,
     signOut,
     signedOut,
     profileSignedOut,
+    keptSignedOut,
     signedInAfterSignOut,
+    keptAfterSignOut,
   };
 }
 
@@ -226,10 +242,11 @@ async function endedByHiroba({ port, signIn, relaunch, hiroba }: Shell) {
   hiroba.end();
   const profileEnded = await port().readProfile();
   const signedIn = await port().isSignedIn();
+  const keptEnded = await port().keptProfile();
   hiroba.restore();
   await relaunch();
   const signedInOnRelaunch = await port().isSignedIn();
-  return { profile, profileEnded, signedIn, signedInOnRelaunch };
+  return { profile, profileEnded, signedIn, keptEnded, signedInOnRelaunch };
 }
 
 describe("both shells' ports", () => {
@@ -253,6 +270,7 @@ describe("both shells' ports", () => {
       signedInAtFirst: false,
       signedIn: { kind: "signedIn" },
       profile: { ok: true, value: { nickname: INITIAL_PROFILE.nickname } },
+      keptAfterRead: { nickname: INITIAL_PROFILE.nickname, medal: null },
       titleChange: { kind: "applied" },
       nameChange: { kind: "applied" },
       folderChange: { kind: "applied" },
@@ -261,10 +279,14 @@ describe("both shells' ports", () => {
       gameSettings: { ok: true, value: { doubleChartsLocked: false } },
       settingsChange: { kind: "applied", after: { speed: "35" } },
       signedInOnRelaunch: true,
+      // A rename's read-back is no read of my page: the kept read has the name read before it.
+      keptOnRelaunch: { nickname: INITIAL_PROFILE.nickname, medal: null },
       profileOnRelaunch: { ok: true, value: { nickname: "あたらしい" } },
       signedOut: false,
       profileSignedOut: { ok: false, error: { kind: "notSignedIn" } },
+      keptSignedOut: null,
       signedInAfterSignOut: false,
+      keptAfterSignOut: null,
     });
     expect(android.costumeHistory).toHaveLength(2);
     expect(android.folderHistory).toHaveLength(2);
@@ -279,6 +301,7 @@ describe("both shells' ports", () => {
       profile: { ok: true },
       profileEnded: { ok: false },
       signedIn: false,
+      keptEnded: null,
       signedInOnRelaunch: false,
     });
   });

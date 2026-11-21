@@ -14,6 +14,7 @@ import {
   until,
 } from "./capacitor-port-fixtures";
 import { createFakeIndexedDb } from "./indexeddb-fake";
+import { memoryStorage } from "./storage-fakes";
 
 const { createCapacitorPort } = await import("../src/platform/capacitor");
 
@@ -216,6 +217,98 @@ describe("createCapacitorPort", () => {
   });
 });
 
+describe("createCapacitorPort's kept read of my page", () => {
+  beforeEach(() => native.reset());
+
+  const KEY = "abth.keptProfile";
+  const loggedOutAnswer = async () => ({
+    status: 200,
+    url: `${HIROBA}/login.php`,
+    headers: {},
+    data: nativeBase64("<form id=login_form></form>"),
+  });
+  async function signedInWith(storage = memoryStorage()) {
+    native.httpAnswer = myPageAnswer;
+    const port = await createCapacitorPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(true),
+      storage,
+    });
+    return { port, storage };
+  }
+  async function readThenKept() {
+    const signedIn = await signedInWith();
+    await signedIn.port.readProfile();
+    return signedIn;
+  }
+
+  test("keeps a good read in the page's storage, under the taiko number, until a sign-out", async () => {
+    const { port, storage } = await readThenKept();
+
+    expect(JSON.parse(storage.getItem(KEY) ?? "null")).toMatchObject({
+      v: 1,
+      taikoNo: "000000000000",
+      view: { nickname: "サンプルどん", title: "サンプルの称号" },
+    });
+    await port.signOut();
+    expect(storage.getItem(KEY)).toBeNull();
+  });
+
+  test("deletes it when a read finds the session gone", async () => {
+    const { port, storage } = await readThenKept();
+    native.httpAnswer = loggedOutAnswer;
+
+    expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "loggedOut" } });
+    expect(storage.getItem(KEY)).toBeNull();
+  });
+
+  test("deletes it as a sign-in starts", async () => {
+    const { port, storage } = await readThenKept();
+    const outcome = port.signIn();
+    await until(() => native.openedWith.length === 1);
+
+    expect(storage.getItem(KEY)).toBeNull();
+    native.emit("browserClosed");
+    expect(await outcome).toEqual({ kind: "cancelled" });
+  });
+
+  test("keeps what it kept when a read fails but the session holds", async () => {
+    const { port, storage } = await readThenKept();
+    const kept = storage.getItem(KEY);
+    native.httpAnswer = () => Promise.reject({ code: "UnknownHostException" });
+
+    expect(await port.readProfile()).toEqual({ ok: false, error: { kind: "unreachable" } });
+    expect(storage.getItem(KEY)).toBe(kept);
+  });
+
+  test("answers nothing kept while signed out, whatever the storage still holds", async () => {
+    const { storage } = await readThenKept();
+    const port = await createCapacitorPort({
+      closeLabel: () => CLOSE_LABEL,
+      signedInFlag: memoryFlag(false),
+      storage,
+    });
+
+    expect(storage.getItem(KEY)).not.toBeNull();
+    expect(await port.keptProfile()).toBeNull();
+  });
+
+  test("keeps nothing of a read that ends after a sign-out", async () => {
+    const { port, storage } = await signedInWith();
+    let release: () => void = () => undefined;
+    native.cookieSaveHeld = new Promise((resolve) => {
+      release = resolve;
+    });
+    const reading = port.readProfile();
+    await until(() => native.cookieCalls.includes("deleteCookie abth-save"));
+    await port.signOut();
+    release();
+
+    await reading;
+    expect(storage.getItem(KEY)).toBeNull();
+  });
+});
+
 describe("createCapacitorPort's costume preview", () => {
   beforeEach(() => native.reset());
 
@@ -262,8 +355,8 @@ describe("createCapacitorPort's costume preview", () => {
       { url: PREVIEW_URL, method: "GET" },
     ]);
     expect(native.httpRequests[0]?.headers).not.toHaveProperty("Cookie");
-    // A preview is not a read of the session: it neither saves nor wipes the cookie store.
-    expect(native.cookieCalls).toEqual([]);
+    // It saves the cookie store as the other calls to Hiroba do, and wipes nothing.
+    expect(native.cookieCalls).toEqual(["deleteCookie abth-save"]);
   });
 
   test("asks Hiroba for reads side by side: a preview goes out beside the reads on their way", async () => {
@@ -306,7 +399,7 @@ describe("createCapacitorPort's costume preview", () => {
       ok: false,
       error: { code: "preview=notPng status=200 type=image/gif bytes=43" },
     });
-    expect(native.cookieCalls).toEqual([]);
+    expect(native.cookieCalls).toEqual(["deleteCookie abth-save"]);
     expect(flag.get()).toBe(true);
   });
 });

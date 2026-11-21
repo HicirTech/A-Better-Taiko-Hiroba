@@ -102,6 +102,10 @@ function figuresOf(
   };
 }
 
+/** What a play of the chart at an accuracy from 0.75 to 1 rates in V2. */
+export const ratingAtV2 = (chart: OurTaikoV2Chart, accuracy: number): number =>
+  ratingOf(chart, accuracy, curvedAccuracy(accuracy));
+
 /** From the low constant up to 90 %, toward the main one at 95 % and the high one at 100 %. */
 function ratingOf(chart: OurTaikoV2Chart, accuracy: number, y: number): number {
   const at = (constant: number, share: number) => blend(constant, curvedAccuracy(share));

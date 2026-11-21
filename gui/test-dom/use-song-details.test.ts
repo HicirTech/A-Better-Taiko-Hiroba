@@ -24,6 +24,19 @@ describe("the song whose details stand over a page", () => {
     expect(result.current).toMatchObject({ song: null, shown: false });
   });
 
+  test("opens on the chart asked for, and asks for none unless told", () => {
+    const { result } = renderHook(() => useSongDetails(SONGS));
+
+    act(() => result.current.open("1001", "ura"));
+    expect(result.current).toMatchObject({ song: ALPHA, difficulty: "ura" });
+
+    act(() => result.current.open("1002"));
+    expect(result.current).toMatchObject({ song: BETA, difficulty: null });
+
+    act(() => result.current.close());
+    expect(result.current.difficulty).toBeNull();
+  });
+
   test("shows no song once the list drops it, and stays open until it is closed", () => {
     const { result, rerender } = renderHook(({ songs }) => useSongDetails(songs), {
       initialProps: { songs: SONGS },
