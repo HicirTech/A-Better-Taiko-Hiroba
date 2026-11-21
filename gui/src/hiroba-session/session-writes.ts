@@ -16,6 +16,7 @@ import {
   type FolderChange,
   type FolderNames,
   type FolderState,
+  type GameSettingsChange,
   type HirobaSessionPort,
   type NameChange,
   type ReadFailure,
@@ -29,6 +30,7 @@ import { filledSlots } from "../shared/sets/favorite-sets";
 import { changeCostume } from "./change-costume";
 import { changeFavoriteSong } from "./change-favorite-song";
 import { changeFolder } from "./change-folder";
+import { changeGameSettings } from "./change-game-settings";
 import { changeName } from "./change-name";
 import { changeTitle } from "./change-title";
 import { mergeCostumeHistory } from "./costume-history";
@@ -37,6 +39,7 @@ import type { CostumeHistoryStore, FolderHistoryStore, HistoryStore } from "./ke
 import { LIVE_CHECKED_WRITES, type WritePlatform } from "./live-checked-writes";
 import { openCostumeEditor } from "./open-costume-editor";
 import { openFavorites } from "./open-favorites";
+import { openGameSettings } from "./open-game-settings";
 import { openTitleEditor } from "./open-title-editor";
 import { readSongPicker } from "./read-song-picker";
 import { sessionEnded } from "./session-ended";
@@ -67,11 +70,13 @@ type QueuedWrites = {
     | "openCostumeEditor"
     | "openTitleEditor"
     | "openFavorites"
+    | "openGameSettings"
     | "changeCostume"
     | "changeTitle"
     | "changeName"
     | "changeFolder"
     | "changeFavoriteSong"
+    | "changeGameSettings"
     | "readSongPicker"
     | "refreshHiroba"]: VerbImplementation<V>;
 };
@@ -191,6 +196,11 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     run: changeFavoriteSong,
   };
 
+  const gameSettings: WriteKindDefinition<"gameSettings", GameSettingsChange> = {
+    kind: "gameSettings",
+    run: changeGameSettings,
+  };
+
   async function write<K extends WriteKind, Input>(
     transport: Transport,
     definition: WriteKindDefinition<K, Input>,
@@ -242,6 +252,8 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
 
     openFavorites: (transport) => opened(transport, openFavorites),
 
+    openGameSettings: (transport) => opened(transport, openGameSettings),
+
     readSongPicker: (transport) => opened(transport, readSongPicker),
 
     refreshHiroba: (transport) =>
@@ -258,6 +270,8 @@ export function createSessionWrites(options: SessionWritesOptions): SessionWrite
     changeFolder: (transport, change) => write(transport, folder, change),
 
     changeFavoriteSong: (transport, change) => write(transport, favoriteSong, change),
+
+    changeGameSettings: (transport, change) => write(transport, gameSettings, change),
 
     async previewKept(set, picture) {
       const taikoNo = options.owner();

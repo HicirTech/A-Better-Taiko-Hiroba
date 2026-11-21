@@ -3,9 +3,9 @@ import { List } from "@mui/material";
 import { useId } from "react";
 
 import type { AppearanceChoice } from "../theme/appearance";
+import { ChoiceRow } from "../ui/choice-row";
 import { PaletteIcon } from "../ui/icons";
-import { ChoiceRow } from "./choice-row";
-import { SettingsSection } from "./settings-section";
+import { SettingsSection } from "../ui/settings-section";
 
 /** The theme the app wears, and whether it is light, dark or as the system is. */
 export function AppearanceSection({

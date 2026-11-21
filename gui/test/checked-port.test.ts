@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { SETTINGS } from "../../core/test/game-settings-fixtures";
 import { checkedPort, type HirobaSessionPort, PORT_ARGUMENTS } from "../src/shared/session-port";
 
 const SET = {
@@ -61,6 +62,12 @@ const CASES: VerbCase[] = [
     [{ expected: { songNo: "1178", ura: false }, target: { songNo: null, ura: true } }],
   ],
   ["readSongPicker", [], [{ genre: 1 }]],
+  ["openGameSettings", [], [{ page: "mypage_other_setting.php" }]],
+  [
+    "changeGameSettings",
+    [{ expected: SETTINGS, target: { ...SETTINGS, speed: "35" } }],
+    [{ expected: SETTINGS, target: { ...SETTINGS, area_id: "26" } }],
+  ],
   ["scores", [], [{ taikoNo: "000000000000" }]],
   ["listedCharts", [], [{ taikoNo: "000000000000" }]],
   ["readScores", [], [{ full: true }]],

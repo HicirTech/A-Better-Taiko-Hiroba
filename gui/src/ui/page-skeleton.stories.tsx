@@ -57,6 +57,9 @@ export const NicknameAndTitle = reading("nameTitle");
 /** Favourites: the heading, the favourite song and the folder's rows. */
 export const Favourites = reading("favorites");
 
+/** Game settings: its five cards' rows. */
+export const GameSettings = reading("gameSettings");
+
 // A whole window's first reads can take longer than a play's usual wait of a second.
 const FIRST_READS_MS = 10_000;
 

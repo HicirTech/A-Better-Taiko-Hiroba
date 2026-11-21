@@ -8,6 +8,8 @@ import type {
   FavoriteSongState,
   FolderEditorView,
   FolderState,
+  GameSettings,
+  GameSettingsView,
   Genre,
   Level,
   MedalProgress,
@@ -50,6 +52,8 @@ export type {
   FavoriteSongState,
   FolderEditorView,
   FolderState,
+  GameSettings,
+  GameSettingsView,
   NameState,
   PickableSongs,
   RecentPlay,
@@ -300,10 +304,11 @@ export interface WriteSets {
   readonly name: NameState;
   readonly folder: FolderState;
   readonly favoriteSong: FavoriteSongState;
+  readonly gameSettings: GameSettings;
 }
 
 /** The kinds of write: the costume (きせかえ), the title (称号), the Donder name (ドンだーネーム), the
- * お気に入り folder and the 大好きな曲. */
+ * お気に入り folder, the 大好きな曲 and the game settings (その他設定・編集). */
 export type WriteKind = keyof WriteSets;
 
 /** A costume write as asked by the interface: the set it was made against, and the set wanted. */
@@ -351,6 +356,12 @@ export interface FolderNames {
 export interface FavoriteSongChange {
   readonly expected: FavoriteSongState;
   readonly target: FavoriteSongState;
+}
+
+/** A game settings write: every setting as the page showed it, and every setting wanted. */
+export interface GameSettingsChange {
+  readonly expected: GameSettings;
+  readonly target: GameSettings;
 }
 
 /** How a write ended per the core's `runWrite`, or was refused by the platform before it began. */
@@ -434,6 +445,10 @@ export interface HirobaSessionPort {
   /** The songs Hiroba's own 大好きな曲 picker offers: its editor, the handoff that opens the picker,
    * then a GET for each of the eight genres. Its form token stays with the platform. */
   readSongPicker(): Promise<Result<PickableSongs, ReadFailure>>;
+  /** Hiroba's settings page: one GET. Its form token stays with the platform. */
+  openGameSettings(): Promise<Result<GameSettingsView, ReadFailure>>;
+  /** One settings write, no pre-check: the page, one save, the page read back. Never retried. */
+  changeGameSettings(change: GameSettingsChange): Promise<WriteOutcomeView<GameSettings>>;
   /** The kept scores. Asks Hiroba nothing. */
   scores(): Promise<ScoresView>;
   /** Every chart the lists name, played or not. Asks Hiroba nothing. */

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { SectionCard } from "../ui/section-card";
+import { SectionCard } from "./section-card";
 
 // The rows reach the card's edges, and keep the card's room before their words.
 const ROWS = {

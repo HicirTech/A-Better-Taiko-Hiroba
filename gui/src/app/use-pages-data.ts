@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useFavorites } from "../favorites/use-favorites";
 import { usePickableSongs } from "../favorites/use-pickable-songs";
+import { useGameSettings } from "../game-settings/use-game-settings";
 import { useListedCharts } from "../know-yourself/use-listed-charts";
 import { useCostumeEditor } from "../my-page/use-costume-editor";
 import { useNameEditor } from "../name-title/use-name-editor";
@@ -33,6 +34,7 @@ export type PagesData = Pick<
   | "titleEditor"
   | "nameEditor"
   | "favorites"
+  | "gameSettings"
   | "keptSets"
   | "keptSearches"
   | "wantSongs"
@@ -94,6 +96,8 @@ export function usePagesData({
   const keptSets = useFavoriteSets();
   const keptSearches = useKeptSearches();
   const { forget: forgetFavorites } = favorites;
+  const gameSettings = useGameSettings({ port, lane, onSessionGone: sessionGone });
+  const { forget: forgetGameSettings } = gameSettings;
   // Read once a page that shows it, the song search or a scan opens, and kept from then on.
   const [songsWanted, setSongsWanted] = useState(false);
   const wantSongs = useCallback(() => setSongsWanted(true), []);
@@ -102,7 +106,12 @@ export function usePagesData({
     port,
     (profileShown && PAGE_REGISTRY[page].needsSongs) || songsWanted,
   );
-  const writing = editor.writing || titleEditor.writing || nameEditor.writing || favorites.writing;
+  const writing =
+    editor.writing ||
+    titleEditor.writing ||
+    nameEditor.writing ||
+    favorites.writing ||
+    gameSettings.writing;
 
   // Another player may sign in next: keep nothing of the last session's editors.
   useEffect(() => {
@@ -111,6 +120,7 @@ export function usePagesData({
       forgetTitleEditor();
       forgetNameEditor();
       forgetFavorites();
+      forgetGameSettings();
       forgetPickable();
       forgetScores();
     }
@@ -120,6 +130,7 @@ export function usePagesData({
     forgetTitleEditor,
     forgetNameEditor,
     forgetFavorites,
+    forgetGameSettings,
     forgetPickable,
     forgetScores,
   ]);
@@ -142,6 +153,7 @@ export function usePagesData({
     titleEditor,
     nameEditor,
     favorites,
+    gameSettings,
     keptSets,
     keptSearches,
     wantSongs,

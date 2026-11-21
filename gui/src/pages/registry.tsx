@@ -1,6 +1,7 @@
 import type { Page } from "../navigation/pages";
 import { COSTUME_MODEL, COSTUME_PAGE } from "./costume";
 import { FAVORITES_MODEL, FAVORITES_PAGE } from "./favorites";
+import { GAME_SETTINGS_MODEL, GAME_SETTINGS_PAGE } from "./game-settings";
 import { KNOW_YOURSELF_MODEL, KNOW_YOURSELF_PAGE } from "./know-yourself";
 import { NAME_TITLE_MODEL, NAME_TITLE_PAGE } from "./name-title";
 import { OVERVIEW_MODEL, OVERVIEW_PAGE } from "./overview";
@@ -19,6 +20,7 @@ export const PAGE_MODELS: Readonly<Record<Page, PageModel>> = {
   costume: COSTUME_MODEL,
   nameTitle: NAME_TITLE_MODEL,
   favorites: FAVORITES_MODEL,
+  gameSettings: GAME_SETTINGS_MODEL,
   settings: SETTINGS_MODEL,
 };
 
@@ -31,5 +33,6 @@ export const PAGE_REGISTRY: Readonly<Record<Page, PageEntry>> = {
   costume: COSTUME_PAGE,
   nameTitle: NAME_TITLE_PAGE,
   favorites: FAVORITES_PAGE,
+  gameSettings: GAME_SETTINGS_PAGE,
   settings: SETTINGS_PAGE,
 };

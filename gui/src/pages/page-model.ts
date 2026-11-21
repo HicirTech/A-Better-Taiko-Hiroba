@@ -66,6 +66,7 @@ export interface PageState {
   readonly titleEditor: Pick<TitleEditor, "dropEdits" | "forgetList">;
   readonly nameEditor: Pick<NameEditor, "dropEdits">;
   readonly favorites: EditorReads;
+  readonly gameSettings: EditorReads;
   /** The sets kept on this device, read again as a page that shows them opens. */
   readonly keptSets: { readonly reload: () => void };
   /** The searches kept on this device, read again as the Overview opens. */

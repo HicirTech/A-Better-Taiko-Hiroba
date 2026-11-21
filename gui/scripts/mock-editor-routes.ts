@@ -1,6 +1,7 @@
-/** Hiroba's costume, title and favourites pages, posts and pictures, for both stand-ins. */
+/** Hiroba's costume, title, favourites and settings pages, posts and pictures, for stand-ins. */
 import { type createCostumeEditor, ERROR_SHELL_BODY, type MockSession } from "./mock-costume";
 import type { FavoritesEditor } from "./mock-favorites";
+import type { GameSettingsEditor } from "./mock-game-settings";
 import type { ProfileEditor } from "./mock-profile";
 
 const LOGIN = "/login.php";
@@ -16,11 +17,12 @@ export const redirect = (location: string, headers: Record<string, string> = {})
   new Response(null, { status: 302, headers: { location, ...headers } });
 const notFound = () => new Response("not found", { status: 404 });
 
-/** The editors a stand-in holds: one without the title's or the favourites' has no such pages. */
+/** The editors a stand-in holds: one without the title's, say, has no such pages. */
 export interface MockEditors {
   readonly costume: ReturnType<typeof createCostumeEditor>;
   readonly profile?: ProfileEditor | undefined;
   readonly favorites?: FavoritesEditor | undefined;
+  readonly gameSettings?: GameSettingsEditor | undefined;
 }
 
 /** A request, the session its cookie names, and what the stand-in makes of that session. */
@@ -57,7 +59,7 @@ export async function enteredPost(
 
 /** An editor's page, post or picture for the asked path; null for any other path. */
 export async function editorAnswer(
-  { costume, profile, favorites }: MockEditors,
+  { costume, profile, favorites, gameSettings }: MockEditors,
   ask: MockAsk,
 ): Promise<Response | null> {
   const { request } = ask;
@@ -137,6 +139,21 @@ export async function editorAnswer(
       return pathname === "/ajax/myfavorite_song.php"
         ? favorites.saveFolder(entered.session, entered.form)
         : favorites.saveFavoriteSong(entered.session, entered.form);
+    }
+    case "/mypage_other_setting.php":
+      return gameSettings === undefined
+        ? notFound()
+        : signedInOnly((session) => page(gameSettings.page(session)));
+    case "/ajax/mypage_other.php": {
+      if (gameSettings === undefined) {
+        return notFound();
+      }
+      const entered = await enteredPost(ask, recorded(gameSettings));
+      if (entered instanceof Response) {
+        return entered;
+      }
+      await gameSettings.saveLetThrough();
+      return gameSettings.save(entered.session, entered.form, ask.endSessions);
     }
     case "/imgsrc_mydon.php":
       return costume.preview(search, ask.signedIn);

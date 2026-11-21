@@ -29,6 +29,7 @@ import type { ChartPort } from "../songs/chart-port";
 import { drawChart } from "../songs/draw-chart";
 import { portraitOf, STORY_EDITOR, STORY_HISTORY } from "./costume";
 import { STORY_PICKABLE, storyFavorites, storyFolderHistory } from "./favorites";
+import { STORY_GAME_SETTINGS } from "./game-settings";
 import { packData, packView } from "./pack";
 import { pictureOf } from "./picture-of";
 import { PAGE_PROFILE, STORY_PROFILE } from "./profile";
@@ -286,6 +287,8 @@ export function createStoryPort(changes: Partial<HirobaSessionPort> = {}): Hirob
           ura: [...(STORY_PICKABLE.offered?.ura ?? [])],
         }),
       ),
+    openGameSettings: () => later(ok(STORY_GAME_SETTINGS)),
+    changeGameSettings: ({ expected, target }) => later(applied(expected, target)),
     scores: () => Promise.resolve(PAGE_SCORES),
     listedCharts: () => Promise.resolve(PAGE_LISTED),
     readScores: () => later(ok({ ...PAGE_SCORES, detailed: 0 })),

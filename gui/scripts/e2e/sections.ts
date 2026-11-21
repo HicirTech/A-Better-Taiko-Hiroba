@@ -17,6 +17,7 @@ import {
 import { DATA_FOLDER_SECTION } from "./data-folder";
 import { FAVORITE_WRITES_SECTION } from "./favorite-writes";
 import { FAVORITES_SECTION } from "./favorites";
+import { GAME_SETTINGS_SECTION } from "./game-settings";
 import { GIFTS_SECTION } from "./gifts";
 import { KNOW_YOURSELF_SECTION } from "./know-yourself";
 import { MENU_SWIPE_SECTION } from "./menu-swipe";
@@ -88,6 +89,7 @@ export const SECTIONS: readonly Section[] = [
   FAVORITE_WRITES_SECTION,
   FAVORITES_SECTION,
   GIFTS_SECTION,
+  GAME_SETTINGS_SECTION,
   SONG_SEARCH_SECTION,
   SCORES_SECTION,
   PIPELINES_PAGE_SECTION,

@@ -1,7 +1,7 @@
 import { ListItem, ListItemText, MenuItem, Select } from "@mui/material";
 import { useId } from "react";
 
-import type { Choice } from "../ui/choice-toggles";
+import type { Choice } from "./choice-toggles";
 
 /** A setting's row: its name and hint, and a list dropping down its choices, one always chosen. */
 export function SelectRow<T extends string>({
@@ -21,6 +21,15 @@ export function SelectRow<T extends string>({
   readonly onChoose: (next: T) => void;
 }) {
   const labelId = useId();
+  // The closed list draws the chosen label as plain text: one in another language is marked again.
+  const marked = choices.some((choice) => choice.lang !== undefined)
+    ? {
+        renderValue: (value: T) => {
+          const shown = choices.find((choice) => choice.value === value);
+          return <span lang={shown?.lang}>{shown?.label}</span>;
+        },
+      }
+    : {};
   return (
     <ListItem sx={{ flexWrap: "wrap", columnGap: 2 }}>
       <ListItemText
@@ -34,10 +43,17 @@ export function SelectRow<T extends string>({
         labelId={labelId}
         size="small"
         value={chosen}
+        {...marked}
         onChange={(event) => onChoose(event.target.value as T)}
       >
         {choices.map((choice) => (
-          <MenuItem key={choice.value} id={`${id}-${choice.value}`} value={choice.value}>
+          <MenuItem
+            key={choice.value}
+            id={`${id}-${choice.value}`}
+            value={choice.value}
+            disabled={choice.disabled === true}
+            lang={choice.lang}
+          >
             {choice.label}
           </MenuItem>
         ))}

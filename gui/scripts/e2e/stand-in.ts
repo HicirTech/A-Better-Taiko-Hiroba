@@ -8,6 +8,11 @@ import {
   type PostRecord,
 } from "../mock-costume";
 import type { FavoritesState } from "../mock-favorites";
+import {
+  appSettingsOf,
+  type GameSettingsState,
+  INITIAL_GAME_SETTINGS,
+} from "../mock-game-settings-lists";
 import { crownIconPng, rankIconPng } from "../mock-pictures";
 import { INITIAL_PROFILE, OWNED_TITLES } from "../mock-profile";
 import { DAN_LABEL, HIROBA, MEDAL_PLATE, MY_PAGE, PANEL_ART } from "./config";
@@ -247,6 +252,57 @@ export const NAME_REQUESTS = [
   "GET /mypage_top.php",
 ];
 export const TITLE_REREAD = ["GET /mypage_top.php", `GET ${DAN_LABEL}`];
+export const GAME_SETTINGS_PAGE = "/mypage_other_setting.php";
+export const GAME_SETTINGS_SAVE = "/ajax/mypage_other.php";
+/** A settings write, from any platform: it has no pre-check and reads no other page. */
+export const GAME_SETTINGS_REQUESTS = [
+  `GET ${GAME_SETTINGS_PAGE}`,
+  `POST ${GAME_SETTINGS_SAVE}`,
+  `GET ${GAME_SETTINGS_PAGE}`,
+];
+/** The page's form serialised, then what its script adds. */
+export const GAME_SETTINGS_POST_FIELDS = [
+  "_tckt",
+  "area_id",
+  "country_code",
+  "open_status",
+  "disp_achievement",
+  "disp_achievement_type",
+  "dan_disp",
+  "op1",
+  "op2",
+  "op3",
+  "op4",
+  "skip",
+  "notes_position",
+  "voice",
+  "default_tone_setting",
+  "default_tone_setting",
+  "double_song_disp",
+  "select_double_song_disp",
+  "applicable_flg",
+  "default_difficulty_course",
+  "select_default_difficulty_course",
+  "default_difficulty_star",
+  "select_default_difficulty_star",
+  "default_difficulty_sort",
+  "select_default_difficulty_sort",
+  "disp_level_self",
+  "disp_level_chassis",
+  "op1",
+  "op2",
+  "op3",
+  "op4",
+  "notes_position",
+];
+export const GAME_SETTINGS_START = appSettingsOf(INITIAL_GAME_SETTINGS);
+/** The settings the stand-in holds, by its lists' names, after what the query asks of it. */
+export const gameSettingsNow = async (query = "") =>
+  (await (await fetch(`${HIROBA}${CONTROL.gameSettings}${query}`)).json()) as GameSettingsState & {
+    shut: boolean;
+  };
+export const gameSettingsPosts = async (query = "") =>
+  (await (await fetch(`${HIROBA}${CONTROL.gameSettingsPosts}${query}`)).json()) as PostRecord[];
 const isPicture = (line: string) => line === PREVIEW || LANE_PICTURES.includes(line);
 /** Whether `log` is `run` with no picture inside it, then `after`, pictures aside. */
 export const runThen = (log: string[], run: string[], after: string[]) => {

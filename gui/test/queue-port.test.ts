@@ -92,6 +92,7 @@ describe("PORT_CALLS", () => {
       "openTitleEditor",
       "previewCostume",
       "openFavorites",
+      "openGameSettings",
     ]);
     expect(WRITES).toEqual([
       "changeCostume",
@@ -99,6 +100,7 @@ describe("PORT_CALLS", () => {
       "changeName",
       "changeFolder",
       "changeFavoriteSong",
+      "changeGameSettings",
     ]);
   });
 

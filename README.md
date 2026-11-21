@@ -49,7 +49,7 @@ Download the IPA only from this project's Releases page.
 - [x] Change your nickname
 - [x] Change My Don's costumes and colours
 - [x] Preview a costume before saving it, and go back to one you wore before
-- [ ] Change your game settings
+- [x] Change your game settings
 - [x] Change your favourite song and your favourites folder
 - [x] Keep sets of favourite songs on your device, and swap the whole folder for one in a single save
 - [x] Give up to four songs as a gift: a picture with a QR code, its songs shown or kept a mystery; scan one from a picture, or with the camera on Android, and accept it into your favourites folder

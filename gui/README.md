@@ -42,7 +42,7 @@ GUI bundle: format, lint, typecheck, the tests and the update feed.
 | The look | `theme` |
 | Shared components, and the lane Hiroba's pictures come through | `ui`, `pictures` |
 | Parts several pages draw | `songs`, `profile`, `snapshots` |
-| A page or a feature each | `favorites`, `know-yourself`, `my-page`, `name-title`, `navigation`, `pipelines-page`, `rating`, `read-again`, `scan`, `scores`, `settings`, `song-search`, `updates` |
+| A page or a feature each | `favorites`, `game-settings`, `know-yourself`, `my-page`, `name-title`, `navigation`, `pipelines-page`, `rating`, `read-again`, `scan`, `scores`, `settings`, `song-search`, `updates` |
 | Every page, in one registry | `pages` |
 | The window | `app`, then `App.tsx`, `app-window.tsx`, `shell.tsx` and `main.tsx` |
 
@@ -232,10 +232,11 @@ Hiroba's own pages does: my page is read for a fresh form token and the ↻'s po
 the queue. The read after a sign-in or at a launch does not ask for one.
 
 Every write goes through core's `runWrite`, and every write is open in every build. It reads the
-editor for a fresh form token and the whole set, sends the pre-check (a rename has none), sends the
-save exactly once, and reads the whole set back: the set read back decides the outcome, not Hiroba's
-answer. No request is retried, and no post goes out between 05:00 and 07:00 JST, Hiroba's daily
-maintenance: the clock is looked at before a write starts and again just before each post.
+editor for a fresh form token and the whole set, sends the pre-check (a rename and the game settings
+have none), sends the save exactly once, and reads the whole set back: the set read back decides the
+outcome, not Hiroba's answer. No request is retried, and no post goes out between 05:00 and 07:00
+JST, Hiroba's daily maintenance: the clock is looked at before a write starts and again just before
+each post.
 
 A kind of write that has not been made for real from a platform also reads one other page before and
 after, to see that nothing else moved. `LIVE_CHECKED_WRITES` in

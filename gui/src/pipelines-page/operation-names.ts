@@ -21,6 +21,8 @@ export const OPERATION_NAMES: Readonly<Record<string, PlainMessageKey>> = {
   changeFolder: "pipelines.op.changeFolder",
   changeFavoriteSong: "pipelines.op.changeFavoriteSong",
   readSongPicker: "pipelines.op.readSongPicker",
+  openGameSettings: "pipelines.op.openGameSettings",
+  changeGameSettings: "pipelines.op.changeGameSettings",
   readUpdateFeed: "pipelines.op.readUpdateFeed",
   readSongCatalogue: "pipelines.op.readSongCatalogue",
   readChineseNames: "pipelines.op.readChineseNames",

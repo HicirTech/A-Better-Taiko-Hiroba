@@ -8,6 +8,7 @@ import {
 } from "../scripts/mock-costume";
 import { editorAnswer, page, redirect } from "../scripts/mock-editor-routes";
 import type { FavoritesEditor } from "../scripts/mock-favorites";
+import type { GameSettingsEditor } from "../scripts/mock-game-settings";
 import type { ProfileEditor } from "../scripts/mock-profile";
 import { native, nativeAnswerOf } from "./capacitor-fakes";
 
@@ -34,6 +35,8 @@ export interface StandInOptions {
   readonly profile?: ProfileEditor;
   /** The お気に入り folder and the 大好きな曲; without one, those pages and posts are not there. */
   readonly favorites?: FavoritesEditor;
+  /** The settings page; without one, it and its post are not there. */
+  readonly gameSettings?: GameSettingsEditor;
   readonly session: MockSession;
   /** My page: as it is, or built from the token the read just issued (for the rename dialog). */
   readonly myPage: string | ((ticket: string) => string);
@@ -52,11 +55,12 @@ export function hirobaStandIn({
   editor,
   profile,
   favorites,
+  gameSettings,
   session,
   myPage,
 }: StandInOptions): StandIn {
   let ended = false;
-  const editors = { costume: editor, profile, favorites };
+  const editors = { costume: editor, profile, favorites, gameSettings };
 
   const route = async (request: Request): Promise<Response> => {
     const signedIn = !ended && session.cardChosen;

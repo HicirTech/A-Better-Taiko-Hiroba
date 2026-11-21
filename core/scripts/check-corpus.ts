@@ -12,6 +12,7 @@ import {
   parseDanDetailPage,
   parseFavoriteSongEditorPage,
   parseFolderEditorPage,
+  parseGameSettingsPage,
   parsePlayerRowsPage,
   parseProfilePage,
   parsePublicProfilePage,
@@ -182,6 +183,11 @@ const ROUTES: readonly Route[] = [
     run: (html) => attempt(parseFavoriteSongEditorPage(html)),
   },
   {
+    match: /^settings/,
+    parser: "parseGameSettingsPage",
+    run: (html) => attempt(parseGameSettingsPage(html)),
+  },
+  {
     match: /^select-song-favorite-genre\d/,
     parser: "parseSongPickerPage",
     run: (html, file) => attempt(parseSongPickerPage(html, genreOf(file))),
@@ -243,7 +249,7 @@ const UNROUTED: readonly { readonly match: RegExp; readonly reason: string }[] =
     reason: "out of scope",
   },
   { match: /^(compe|challenge)/, reason: "competitions and challenges are out of scope" },
-  { match: /^(settings|mypage-other|mypage-titleparts)/, reason: "write pages — E12's job" },
+  { match: /^(mypage-other|mypage-titleparts)/, reason: "write pages — E12's job" },
   {
     match: /^title-parts/,
     reason: "the parts composer is a separate feature, not in the first title and name writes",

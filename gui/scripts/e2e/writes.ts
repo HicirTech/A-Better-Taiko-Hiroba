@@ -8,6 +8,10 @@ import { pageHelpers, pullAt, same, waitFor } from "./harness";
 import { sessionHelpers } from "./session";
 import {
   COLOUR_REQUESTS,
+  GAME_SETTINGS_PAGE,
+  GAME_SETTINGS_REQUESTS,
+  GAME_SETTINGS_SAVE,
+  GAME_SETTINGS_START,
   hitsOn,
   myDonsSettled,
   NAME_REQUESTS,
@@ -264,6 +268,10 @@ async function heldWrites(ctx: Ctx) {
       call: "window.abth.openFavorites().then((result) => result.ok)",
       requests: ["GET /favorite_song_select.php", "GET /portal_favorite_song_select.php"],
     },
+    openGameSettings: {
+      call: "window.abth.openGameSettings().then((result) => result.ok)",
+      requests: [`GET ${GAME_SETTINGS_PAGE}`],
+    },
   };
   const readsAsked = Object.values(READS_ASKED);
   const HELD_WRITES = [
@@ -287,6 +295,13 @@ async function heldWrites(ctx: Ctx) {
       heldAt: "/ajax/change_mydon_profile.php",
       run: NAME_REQUESTS,
       call: `window.abth.changeName(${JSON.stringify({ expected: { nickname: INITIAL_PROFILE.nickname }, target: { nickname: "あたらしい" } })})`,
+    },
+    {
+      hold: CONTROL.gameSettingsHoldSave,
+      reset: `${CONTROL.gameSettings}?reset=1`,
+      heldAt: GAME_SETTINGS_SAVE,
+      run: GAME_SETTINGS_REQUESTS,
+      call: `window.abth.changeGameSettings(${JSON.stringify({ expected: GAME_SETTINGS_START, target: { ...GAME_SETTINGS_START, speed: "35" } })})`,
     },
   ];
   const waitedOut: boolean[] = [];
@@ -320,6 +335,7 @@ async function heldWrites(ctx: Ctx) {
     waitedOut.length === HELD_WRITES.length && waitedOut.every(Boolean);
   await fetch(`${HIROBA}${CONTROL.state}?reset=1`);
   await fetch(`${HIROBA}${CONTROL.profile}?reset=1`);
+  await fetch(`${HIROBA}${CONTROL.gameSettings}?reset=1`);
 }
 
 const firstReadsKeys = [

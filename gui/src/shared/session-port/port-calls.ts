@@ -35,6 +35,8 @@ export const PORT_CALLS = {
   changeFavoriteSong: { channel: "abth:change-favorite-song", queueing: "write", takes: 1 },
   folderHistory: { channel: "abth:folder-history", queueing: "unqueued", takes: 0 },
   readSongPicker: { channel: "abth:read-song-picker", queueing: "exclusive", takes: 0 },
+  openGameSettings: { channel: "abth:open-game-settings", queueing: "read", takes: 0 },
+  changeGameSettings: { channel: "abth:change-game-settings", queueing: "write", takes: 1 },
   scores: { channel: "abth:scores", queueing: "unqueued", takes: 0 },
   listedCharts: { channel: "abth:listed-charts", queueing: "unqueued", takes: 0 },
   readScores: { channel: "abth:read-scores", queueing: "unqueued", takes: 0 },

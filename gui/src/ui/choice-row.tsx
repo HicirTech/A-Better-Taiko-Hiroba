@@ -1,7 +1,7 @@
 import { ListItem, ListItemText } from "@mui/material";
 import { useId } from "react";
 
-import { type Choice, ChoiceToggles } from "../ui/choice-toggles";
+import { type Choice, ChoiceToggles } from "./choice-toggles";
 
 /** A setting's row: its name and hint, and a toggle for each choice, one of them always chosen. */
 export function ChoiceRow<T extends string>({
@@ -11,6 +11,7 @@ export function ChoiceRow<T extends string>({
   choices,
   chosen,
   onChoose,
+  disabled = false,
 }: {
   /** Each choice's toggle is `<id>-<value>`. */
   readonly id: string;
@@ -19,6 +20,7 @@ export function ChoiceRow<T extends string>({
   readonly choices: readonly Choice<T>[];
   readonly chosen: T;
   readonly onChoose: (next: T) => void;
+  readonly disabled?: boolean | undefined;
 }) {
   const labelId = useId();
   return (
@@ -34,6 +36,7 @@ export function ChoiceRow<T extends string>({
         choices={choices}
         chosen={chosen}
         onChoose={onChoose}
+        disabled={disabled}
         aria-labelledby={labelId}
       />
     </ListItem>

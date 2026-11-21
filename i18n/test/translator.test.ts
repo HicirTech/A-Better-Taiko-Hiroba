@@ -392,13 +392,19 @@ const TRADITIONAL: ReadonlySet<string> = new Set(
     "樣",
     "道跳教學螢幕左邊右滑鈕箭做具都緣拖調給家返",
     "輕鬆純水常推薦",
+    "修己演台灣韓西亞香港澳門坡洲蘭越印尼泰菲律賓柬埔寨汶萊斯緬甸北美象友雙參賽挑戰書規優",
   ].join(""),
 );
+
+// 里 is reviewed only inside 斯里蘭卡: anywhere else it is the Simplified form of 裏.
+const REVIEWED_WORDS = ["斯里蘭卡"];
 
 const hanOf = (text: string): string[] => [...new Set(text.match(HAN) ?? [])];
 
 const outsideTraditional = (text: string): string[] =>
-  hanOf(text).filter((char) => !TRADITIONAL.has(char));
+  hanOf(REVIEWED_WORDS.reduce((rest, word) => rest.replaceAll(word, ""), text)).filter(
+    (char) => !TRADITIONAL.has(char),
+  );
 
 /** A message in its catalog's own language, with Hiroba's quoted Japanese sentences taken out. */
 function withoutHirobasSentences(key: MessageKey, locale: Locale, text: string): string {
@@ -456,6 +462,8 @@ describe("the language guards' own checks", () => {
     ["広場", ["広"]],
     ["Settings 設定", []],
     ["Settings 设定 and 广場", ["设", "广"]],
+    ["斯里蘭卡", []],
+    ["在這里", ["里"]],
   ])("see in %p these Han characters no one reviewed as Traditional: %p", (text, outside) => {
     expect(outsideTraditional(text)).toEqual(outside);
   });

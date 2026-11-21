@@ -4,7 +4,7 @@ import { useId } from "react";
 
 import { CHART_SOURCES, type ChartSource } from "../shared/song-catalogue/chart-source";
 import { MusicNoteIcon } from "../ui/icons";
-import { SettingsSection } from "./settings-section";
+import { SettingsSection } from "../ui/settings-section";
 
 /** Each source, and what of the songs it gives. */
 const SOURCES: readonly { id: string; name: PlainMessageKey; gives: PlainMessageKey }[] = [

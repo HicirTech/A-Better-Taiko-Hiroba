@@ -124,6 +124,7 @@ export async function launch({
       | "costume"
       | "nameTitle"
       | "favorites"
+      | "gameSettings"
       | "settings",
   ) => {
     await click(`#nav-${to}`);
